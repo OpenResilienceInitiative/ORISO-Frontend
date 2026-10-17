@@ -4,7 +4,7 @@ import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
-import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
 import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
@@ -46,6 +46,13 @@ export interface GroupWaitingRoomProps {
 	nowMs?: number;
 	/** Where "Einloggen" in the header goes. Off for someone already in. */
 	showLoginLink?: boolean;
+	/**
+	 * The same room inside the app's chat card, under the chat's own header:
+	 * no stage around it, the bar at the card's bottom edge (#1219).
+	 */
+	embedded?: boolean;
+	/** "Beitreten" stays shut although the room is open (a banned member). */
+	joinBlocked?: boolean;
 }
 
 /**
@@ -73,7 +80,9 @@ export const GroupWaitingRoom = ({
 	joinBusy = false,
 	upcomingDates,
 	nowMs,
-	showLoginLink = false
+	showLoginLink = false,
+	embedded = false,
+	joinBlocked = false
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -86,7 +95,10 @@ export const GroupWaitingRoom = ({
 	const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(
 		null
 	);
-	const clockHeight = useClockHeight();
+	const stageClockHeight = useClockHeight();
+	const [column, setColumn] = useState<HTMLElement | null>(null);
+	const cardClockHeight = useCardClockHeight(embedded ? column : null);
+	const clockHeight = embedded ? cardClockHeight : stageClockHeight;
 	/* Gate 2 of ADR-022 is asked here, on "Beitreten", like the live chat
 	   asks when the counsellor is there (Frank, 2026-10-16). */
 	const groupConsent = useGroupConsent(agencyId);
@@ -124,7 +136,11 @@ export const GroupWaitingRoom = ({
 	 * für Überschriften" Frank saw on the phone.
 	 */
 	const groupHeading = (
-		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
+		<Box
+			sx={{
+				textAlign: embedded ? 'center' : { xs: 'center', lg: 'left' }
+			}}
+		>
 			{topicName && (
 				<Typography
 					sx={{
@@ -164,7 +180,7 @@ export const GroupWaitingRoom = ({
 	const joinAction = {
 		label: joinLabel,
 		onClick: () => setAsking(true),
-		disabled: !active || joinBusy,
+		disabled: !active || joinBusy || joinBlocked,
 		testId: 'group-entry-join'
 	};
 	const calendarAction = plannedStart
@@ -180,6 +196,293 @@ export const GroupWaitingRoom = ({
 				testId: 'group-entry-calendar'
 			}
 		: undefined;
+
+	const middle = moreOpen ? (
+		<GroupInfoGallery
+			onBack={() => setMoreOpen(false)}
+			upcomingDates={upcomingDates}
+		/>
+	) : (
+		<>
+			<Box
+				sx={{
+					flex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					gap: 0.75
+				}}
+			>
+				<Box
+					sx={{
+						display: embedded
+							? 'block'
+							: { xs: 'block', lg: 'none' }
+					}}
+				>
+					{groupHeading}
+				</Box>
+				{plannedStart ? (
+					/* The clock is a picture, not a text line: on a
+			   phone it may use half of the column's inset,
+			   which is one mini-clock step of extra diameter
+			   (the width, not the height, is what limits it
+			   there). */
+					<Box
+						sx={{
+							mx: { xs: -1, sm: 0 },
+							minWidth: 0
+						}}
+					>
+						<WaitingAreaCountdown
+							plannedStart={plannedStart}
+							welcomeText={welcomeText}
+							rules={rules}
+							nowMs={nowMs}
+							clockSize="fit"
+							fitHeight={clockHeight}
+							spacing="tight"
+							labelsOutside
+							reducedMotion={motionOff}
+							hideMotionToggle
+							gap={8}
+						/>
+					</Box>
+				) : (
+					<Box sx={{ textAlign: 'center' }}>
+						<Typography
+							component="h1"
+							sx={{
+								fontSize: { xs: 22, sm: 26 },
+								fontWeight: 600,
+								color: registrationMd3.onSurface,
+								mb: 1
+							}}
+						>
+							{active
+								? tr('openHeadline', 'Die Gruppe hat begonnen.')
+								: tr(
+										'noTimeHeadline',
+										'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
+									)}
+						</Typography>
+						{welcomeText && (
+							<Typography
+								sx={{
+									color: registrationMd3.onSurfaceVariant,
+									mb: 2
+								}}
+							>
+								{welcomeText}
+							</Typography>
+						)}
+						{rules.length > 0 && (
+							<WaitingAreaRules
+								rules={rules}
+								animationOff={motionOff}
+								ariaLabel={t(
+									'groupChat.join.waitingArea.rulesLabel',
+									'Chat rules'
+								)}
+							/>
+						)}
+					</Box>
+				)}
+			</Box>
+			{/* One block with the bar, not a stranded row: same inset
+	    as the buttons (from the column above), 12 px of air to
+	    the hairline (from the column's bottom padding) and
+	    exactly the height of the larger of its two controls. */}
+			<Box
+				sx={{
+					mt: 'auto',
+					minHeight: 44,
+					display: 'flex',
+					/* Three controls do not fit one 343 px line,
+					   and a switch without its sentence is a
+					   riddle. So the row wraps on a phone: the
+					   switch keeps its label, the two buttons
+					   drop underneath and stay flush with the
+					   bar's right edge. */
+					flexWrap: { xs: 'wrap', sm: 'nowrap' },
+					rowGap: 1,
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					gap: 1.5
+				}}
+			>
+				{plannedStart ? (
+					<Box
+						component="label"
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							minWidth: 0,
+							gap: 1,
+							cursor: 'pointer'
+						}}
+					>
+						<Switch
+							checked={motionOff}
+							onChange={(next) => setMotionOff(next)}
+							aria-label={tr('motionOff', 'Animation abschalten')}
+						/>
+						{/* The label is what gives when a translation
+				    is longer than the German one — the button
+				    beside it must never be pushed past the
+				    edge the bar's buttons stop at. On a phone the
+				    row wraps instead of dropping this sentence —
+				    a naked switch says nothing (Frank drew the
+				    row with its label, 2026-09-05). */}
+						<Typography
+							sx={{
+								fontSize: 13,
+								minWidth: 0,
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+								color: registrationMd3.onSurfaceVariant
+							}}
+						>
+							{tr('motionOff', 'Animation abschalten')}
+						</Typography>
+					</Box>
+				) : (
+					<span />
+				)}
+				<Box
+					sx={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: 1,
+						minWidth: 0,
+						/* On the wrapped phone line the pair
+						   takes the whole width, so its outer
+						   edges sit on the bar's edges again. */
+						width: { xs: '100%', sm: 'auto' },
+						justifyContent: {
+							xs: 'space-between',
+							sm: 'flex-end'
+						}
+					}}
+				>
+					<Button
+						variant="outlined"
+						size="small"
+						endIcon={<ArrowForwardRoundedIcon />}
+						sx={moreButtonSx}
+						onClick={() => setMoreOpen(true)}
+						data-testid="group-entry-more"
+					>
+						{tr('more', 'Mehr erfahren')}
+					</Button>
+				</Box>
+			</Box>
+		</>
+	);
+
+	/* Calendar beside a visible but shut "Beitreten", at
+	    every width: the waiting room says what happens next,
+	    and hiding the way in said nothing (Frank's Figma of
+	    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
+	    gesperrt"). The phone keeps both by shortening the
+	    calendar label, not by dropping a button. */
+	const bar =
+		asking && active ? (
+			<WaitingRoomBar
+				contained={embedded}
+				consent={
+					<WaitingRoomConsentPanel
+						consent={consent}
+						heading={t(
+							'groupChat.consent.headline',
+							'Bevor Sie schreiben'
+						)}
+						subtitle={t(
+							'groupChat.consent.description',
+							'Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.'
+						)}
+						declineLabel={t('groupChat.consent.reject', 'Ablehnen')}
+						onDecline={() => setAsking(false)}
+						missingText={t(
+							'groupChat.consent.rejected',
+							'Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.'
+						)}
+						error={
+							saveFailed
+								? t(
+										'groupChat.consent.saveFailed',
+										'Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.'
+									)
+								: undefined
+						}
+						errorId="groupWaitingConsentError"
+						disabled={saving || joinBusy}
+					/>
+				}
+				primary={{
+					...joinAction,
+					onClick: joinAfterConsent,
+					disabled:
+						joinBusy ||
+						saving ||
+						joinBlocked ||
+						!groupConsent.readable
+				}}
+			/>
+		) : (
+			<WaitingRoomBar
+				contained={embedded}
+				secondary={calendarAction}
+				primary={joinAction}
+			/>
+		);
+	const popover = plannedStart && (
+		<GroupChatCalendarPopover
+			id={menuId}
+			anchorEl={calendarAnchor}
+			onClose={() => setCalendarAnchor(null)}
+			start={plannedStart}
+			durationMinutes={durationMinutes}
+			eventId={eventId}
+		/>
+	);
+
+	if (embedded) {
+		return (
+			<Box
+				sx={{
+					flex: 1,
+					minHeight: 0,
+					display: 'flex',
+					flexDirection: 'column'
+				}}
+				data-cy="group-entry-room"
+				data-embedded="true"
+			>
+				{/* Only the column scrolls; the bar stays the card's last
+				    row. */}
+				<Box
+					ref={setColumn}
+					sx={{
+						...barInsetSx,
+						flex: 1,
+						minHeight: 0,
+						overflowY: 'auto',
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'safe center',
+						pt: 2,
+						pb: 1.5
+					}}
+				>
+					{middle}
+				</Box>
+				{bar}
+				{popover}
+			</Box>
+		);
+	}
 
 	/*
 	 * `.stageLayout` asks for `min-height: 100%`, which resolves against a
@@ -270,264 +573,9 @@ export const GroupWaitingRoom = ({
 					    stage, the header and the bar stay where they are (Frank,
 					    2026-09-07: "nur den Mittelteil bei den Selbsthilfegruppen
 					    abzuändern", "und auch ein Backbutton wieder haben"). */}
-					{moreOpen ? (
-						<GroupInfoGallery
-							onBack={() => setMoreOpen(false)}
-							upcomingDates={upcomingDates}
-						/>
-					) : (
-						<>
-							<Box
-								sx={{
-									flex: 1,
-									display: 'flex',
-									flexDirection: 'column',
-									justifyContent: 'center',
-									gap: 0.75
-								}}
-							>
-								<Box
-									sx={{
-										display: { xs: 'block', lg: 'none' }
-									}}
-								>
-									{groupHeading}
-								</Box>
-								{plannedStart ? (
-									/* The clock is a picture, not a text line: on a
-							   phone it may use half of the column's inset,
-							   which is one mini-clock step of extra diameter
-							   (the width, not the height, is what limits it
-							   there). */
-									<Box
-										sx={{
-											mx: { xs: -1, sm: 0 },
-											minWidth: 0
-										}}
-									>
-										<WaitingAreaCountdown
-											plannedStart={plannedStart}
-											welcomeText={welcomeText}
-											rules={rules}
-											nowMs={nowMs}
-											clockSize="fit"
-											fitHeight={clockHeight}
-											spacing="tight"
-											labelsOutside
-											reducedMotion={motionOff}
-											hideMotionToggle
-											gap={8}
-										/>
-									</Box>
-								) : (
-									<Box sx={{ textAlign: 'center' }}>
-										<Typography
-											component="h1"
-											sx={{
-												fontSize: { xs: 22, sm: 26 },
-												fontWeight: 600,
-												color: registrationMd3.onSurface,
-												mb: 1
-											}}
-										>
-											{active
-												? tr(
-														'openHeadline',
-														'Die Gruppe hat begonnen.'
-													)
-												: tr(
-														'noTimeHeadline',
-														'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
-													)}
-										</Typography>
-										{welcomeText && (
-											<Typography
-												sx={{
-													color: registrationMd3.onSurfaceVariant,
-													mb: 2
-												}}
-											>
-												{welcomeText}
-											</Typography>
-										)}
-										{rules.length > 0 && (
-											<WaitingAreaRules
-												rules={rules}
-												animationOff={motionOff}
-												ariaLabel={t(
-													'groupChat.join.waitingArea.rulesLabel',
-													'Chat rules'
-												)}
-											/>
-										)}
-									</Box>
-								)}
-							</Box>
-							{/* One block with the bar, not a stranded row: same inset
-					    as the buttons (from the column above), 12 px of air to
-					    the hairline (from the column's bottom padding) and
-					    exactly the height of the larger of its two controls. */}
-							<Box
-								sx={{
-									mt: 'auto',
-									minHeight: 44,
-									display: 'flex',
-									/* Three controls do not fit one 343 px line,
-									   and a switch without its sentence is a
-									   riddle. So the row wraps on a phone: the
-									   switch keeps its label, the two buttons
-									   drop underneath and stay flush with the
-									   bar's right edge. */
-									flexWrap: { xs: 'wrap', sm: 'nowrap' },
-									rowGap: 1,
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									gap: 1.5
-								}}
-							>
-								{plannedStart ? (
-									<Box
-										component="label"
-										sx={{
-											display: 'flex',
-											alignItems: 'center',
-											minWidth: 0,
-											gap: 1,
-											cursor: 'pointer'
-										}}
-									>
-										<Switch
-											checked={motionOff}
-											onChange={(next) =>
-												setMotionOff(next)
-											}
-											aria-label={tr(
-												'motionOff',
-												'Animation abschalten'
-											)}
-										/>
-										{/* The label is what gives when a translation
-								    is longer than the German one — the button
-								    beside it must never be pushed past the
-								    edge the bar's buttons stop at. On a phone the
-								    row wraps instead of dropping this sentence —
-								    a naked switch says nothing (Frank drew the
-								    row with its label, 2026-09-05). */}
-										<Typography
-											sx={{
-												fontSize: 13,
-												minWidth: 0,
-												overflow: 'hidden',
-												textOverflow: 'ellipsis',
-												whiteSpace: 'nowrap',
-												color: registrationMd3.onSurfaceVariant
-											}}
-										>
-											{tr(
-												'motionOff',
-												'Animation abschalten'
-											)}
-										</Typography>
-									</Box>
-								) : (
-									<span />
-								)}
-								<Box
-									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										gap: 1,
-										minWidth: 0,
-										/* On the wrapped phone line the pair
-										   takes the whole width, so its outer
-										   edges sit on the bar's edges again. */
-										width: { xs: '100%', sm: 'auto' },
-										justifyContent: {
-											xs: 'space-between',
-											sm: 'flex-end'
-										}
-									}}
-								>
-									<Button
-										variant="outlined"
-										size="small"
-										endIcon={<ArrowForwardRoundedIcon />}
-										sx={moreButtonSx}
-										onClick={() => setMoreOpen(true)}
-										data-testid="group-entry-more"
-									>
-										{tr('more', 'Mehr erfahren')}
-									</Button>
-								</Box>
-							</Box>
-						</>
-					)}
-					{/* Calendar beside a visible but shut "Beitreten", at
-					    every width: the waiting room says what happens next,
-					    and hiding the way in said nothing (Frank's Figma of
-					    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
-					    gesperrt"). The phone keeps both by shortening the
-					    calendar label, not by dropping a button. */}
-					{asking && active ? (
-						<RegistrationFooter
-							key="consent"
-							animateIn
-							consent={
-								<WaitingRoomConsentPanel
-									consent={consent}
-									heading={t(
-										'groupChat.consent.headline',
-										'Bevor Sie schreiben'
-									)}
-									subtitle={t(
-										'groupChat.consent.description',
-										'Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.'
-									)}
-									declineLabel={t(
-										'groupChat.consent.reject',
-										'Ablehnen'
-									)}
-									onDecline={() => setAsking(false)}
-									missingText={t(
-										'groupChat.consent.rejected',
-										'Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.'
-									)}
-									error={
-										saveFailed
-											? t(
-													'groupChat.consent.saveFailed',
-													'Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.'
-												)
-											: undefined
-									}
-									errorId="groupWaitingConsentError"
-									disabled={saving || joinBusy}
-								/>
-							}
-							primary={{
-								...joinAction,
-								onClick: joinAfterConsent,
-								disabled:
-									joinBusy || saving || !groupConsent.readable
-							}}
-						/>
-					) : (
-						<RegistrationFooter
-							key="gate"
-							secondary={calendarAction}
-							primary={joinAction}
-						/>
-					)}
-					{plannedStart && (
-						<GroupChatCalendarPopover
-							id={menuId}
-							anchorEl={calendarAnchor}
-							onClose={() => setCalendarAnchor(null)}
-							start={plannedStart}
-							durationMinutes={durationMinutes}
-							eventId={eventId}
-						/>
-					)}
+					{middle}
+					{bar}
+					{popover}
 				</Box>
 			</WaitingRoomFrame>
 		</Box>
@@ -637,5 +685,33 @@ const useClockHeight = () => {
 			window.visualViewport?.removeEventListener('resize', onResize);
 		};
 	}, []);
+	return height;
+};
+
+/**
+ * The clock in the chat card: the column's own height minus the rows around
+ * the clock (topic and agency, headline, switch row and the column's padding),
+ * the same bands `entryRoomClockHeight` subtracts from the window.
+ */
+export const cardClockHeight = (columnHeight: number, columnWidth: number) =>
+	Math.max(
+		160,
+		columnHeight -
+			(16 + 42 + (columnWidth >= 600 ? 78 : 108) + 8 + 8 + 44 + 12)
+	);
+
+const useCardClockHeight = (column: HTMLElement | null) => {
+	const [height, setHeight] = useState(320);
+	useEffect(() => {
+		if (!column) return;
+		const measure = () =>
+			setHeight(cardClockHeight(column.clientHeight, column.clientWidth));
+		measure();
+		const RO = globalThis.ResizeObserver;
+		if (!RO) return;
+		const observer = new RO(measure);
+		observer.observe(column);
+		return () => observer.disconnect();
+	}, [column]);
 	return height;
 };

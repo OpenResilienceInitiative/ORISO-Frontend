@@ -1,5 +1,4 @@
 import * as React from 'react';
-import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
@@ -28,6 +27,10 @@ import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
+import {
+	getGroupUpcomingDates,
+	getGroupWaitingRoomTopic
+} from './groupWaitingRoomData';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import {
@@ -183,34 +186,7 @@ const ClientGroupEntryRoom = () => {
 		groupChatRulesTranslations: item?.groupChatRulesTranslations
 	});
 
-	/**
-	 * The next dates of a repeating group, for the explainer behind "Mehr
-	 * erfahren" — looked up, never booked (Frank, 2026-09-07). Derived from
-	 * the start and the interval the chat carries; a one-off group has only
-	 * its own date, and a group without a date has none.
-	 */
-	const upcomingDates = useMemo(() => {
-		const start = item ? getGroupChatPlannedStart(item) : null;
-		if (!start) {
-			return undefined;
-		}
-		/* Calendar arithmetic, not fixed milliseconds: a month is not 30 days
-		   (a 31 January start would have shown 2 March), and a day is not
-		   always 24 hours — across the DST change the fixed step moved the
-		   meeting by an hour. */
-		const unit: 'week' | 'day' | 'month' | null =
-			item?.chatInterval === 'WEEKLY'
-				? 'week'
-				: item?.chatInterval === 'DAILY'
-					? 'day'
-					: item?.chatInterval === 'MONTHLY'
-						? 'month'
-						: null;
-		if (!unit) {
-			return [start];
-		}
-		return [0, 1, 2].map((step) => dayjs(start).add(step, unit).toDate());
-	}, [item]);
+	const upcomingDates = useMemo(() => getGroupUpcomingDates(item), [item]);
 
 	const plannedStart = useMemo(
 		() => (item ? getGroupChatPlannedStart(item) : null),
@@ -275,17 +251,10 @@ const ClientGroupEntryRoom = () => {
 		);
 	}
 
-	/* #1499: the group's topic stays out of the waiting room until the
-	   client's agreement to the group's privacy statement is on record. */
-	const privacyAcceptanceRecorded = Boolean(
-		userData?.dataPrivacyConfirmation &&
-			String(userData.dataPrivacyConfirmation).trim() !== ''
+	const topicName = getGroupWaitingRoomTopic(
+		item,
+		userData?.dataPrivacyConfirmation
 	);
-	const topicName = privacyAcceptanceRecorded
-		? typeof item.topic === 'string'
-			? item.topic
-			: item.topic?.name
-		: undefined;
 	const agencyName = item.assignedAgencies?.[0]?.name;
 
 	return (
