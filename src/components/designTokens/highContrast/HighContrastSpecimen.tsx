@@ -272,7 +272,7 @@ const ChatMessages: React.FC = () => (
 								username: 'karina.p@oriso.invalid',
 								isNotRead: false,
 								message:
-									'Diese Nachricht wurde bereits gelesen.'
+									'<span class="messageItem__mention" data-mention-id="sanftes-alpaka-kala">@Sanftes Alpaka Kala</span> Diese Nachricht wurde bereits gelesen.'
 							})}
 							onReact={() => {}}
 							{...handlers}
