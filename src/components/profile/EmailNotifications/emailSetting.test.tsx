@@ -135,6 +135,57 @@ describe('useSaveEmailSetting', () => {
 		});
 	});
 
+	it('lets fresher user data win over the snapshot kept after a failed reload', async () => {
+		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
+		const reload = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValue(undefined);
+		let userData: typeof snapshot = snapshot;
+		const hook = renderHook(() => useSaveEmailSetting(), {
+			wrapper: ({ children }: { children: React.ReactNode }) => (
+				<UserDataContext.Provider
+					value={{ userData, reloadUserData: reload } as never}
+				>
+					{children}
+				</UserDataContext.Provider>
+			)
+		});
+		await act(async () => {
+			await hook.result.current(
+				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
+				false
+			);
+		});
+		// Later, fresher data arrives (Fachaustausch switched off elsewhere).
+		userData = {
+			...snapshot,
+			emailNotifications: {
+				emailNotificationsEnabled: true,
+				settings: {
+					appointmentNotificationEnabled: false,
+					feedbackNotificationEnabled: false
+				}
+			}
+		};
+		hook.rerender();
+		await act(async () => {
+			await hook.result.current(
+				{ kind: 'path', name: 'emailNotificationsEnabled' },
+				false
+			);
+		});
+		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
+			emailNotifications: {
+				emailNotificationsEnabled: false,
+				settings: {
+					appointmentNotificationEnabled: false,
+					feedbackNotificationEnabled: false
+				}
+			}
+		});
+	});
+
 	it('still resolves false when the PATCH and the reload both fail', async () => {
 		vi.mocked(apiPatchUserData).mockRejectedValue(new Error('offline'));
 		const save = renderSave(

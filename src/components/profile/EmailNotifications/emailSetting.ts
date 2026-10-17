@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
@@ -64,10 +64,16 @@ export const emailSettingPatch = (
  * Shared by every caller: the endpoint replaces the settings blob and the
  * toggle list whole, so writes go one at a time, each built on the state
  * the previous one left (Codex review on FE#1752).
+ *
+ * `latestStored` lifecycle: set by each write (then by its reload); wins
+ * over the context while writes are queued. When the queue drains it is
+ * dropped after a successful reload, else kept until the context's
+ * `userData` changes (`seenUserData`), since only then is the context fresh.
  */
 let writeQueue: Promise<unknown> = Promise.resolve();
 let queuedWrites = 0;
 let latestStored: Partial<UserDataInterface> | null = null;
+let seenUserData: unknown;
 
 /**
  * The one write path for e-mail preferences: the profile's switches and the
@@ -79,6 +85,11 @@ export const useSaveEmailSetting = () => {
 	// Tolerates a missing provider (list screens rendered in isolation).
 	const { userData, reloadUserData } = useContext(UserDataContext) ?? {};
 	const addNotification = useContext(NotificationsContext)?.addNotification;
+	useEffect(() => {
+		if (userData === seenUserData) return;
+		seenUserData = userData;
+		if (queuedWrites === 0) latestStored = null;
+	}, [userData]);
 	return useCallback(
 		(source: EmailSettingSource, next: boolean): Promise<boolean> => {
 			queuedWrites += 1;
