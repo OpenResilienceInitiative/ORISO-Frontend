@@ -59,6 +59,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** The profile's `profile.notifications.noEmail.info` (de). */
+const NO_EMAIL_REASON = 'Sie haben noch keine E-Mail-Adresse hinzugefügt.';
+
 /**
  * A story stand-in for `useDisplayFilterEmailColumn`: the same kind →
  * profile-switch mapping (counsellor), the stored values kept in memory.
@@ -66,15 +69,17 @@ type Story = StoryObj<typeof meta>;
  */
 const useStoryEmail = (
 	section: DisplayFilterSection | undefined,
-	onEmailChange?: (kindId: string, next: boolean) => void
+	onEmailChange?: (kindId: string, next: boolean) => void,
+	noAddress = false
 ): DisplayFilterEmailColumn | undefined => {
 	const [stored, setStored] = useState<Record<string, boolean>>({});
 	if (!section) return undefined;
 	return {
 		cell: (kindId) =>
-			emailSettingForKind(section, kindId, 'consultant')
+			!noAddress && emailSettingForKind(section, kindId, 'consultant')
 				? { checked: stored[kindId] ?? true }
 				: null,
+		unavailableReason: noAddress ? NO_EMAIL_REASON : undefined,
 		onChange: (kindId, next) => {
 			setStored((current) => ({ ...current, [kindId]: next }));
 			onEmailChange?.(kindId, next);
@@ -87,9 +92,14 @@ const Controlled = (
 		initialValue?: DisplayFilterValue;
 		emailSection?: DisplayFilterSection;
 		onEmailChange?: (kindId: string, next: boolean) => void;
+		emailNoAddress?: boolean;
 	}
 ) => {
-	const email = useStoryEmail(args.emailSection, args.onEmailChange);
+	const email = useStoryEmail(
+		args.emailSection,
+		args.onEmailChange,
+		args.emailNoAddress
+	);
 	// Mirrors the slice-2 store contract: the section override is a key that
 	// either exists or not (`null`); `canReset` is that presence, never
 	// inferred from the value's contents (an empty override still exists).
@@ -722,6 +732,51 @@ export const EmailChange: Story = {
 		);
 		await expect(emailChange).toHaveBeenCalledWith('oneToOne', false);
 		await waitFor(() => expect(picker).toHaveTextContent('Aus'));
+	}
+};
+
+/**
+ * No e-mail address yet: the profile shows only "add an address", so every
+ * E-Mail cell is "nicht verfügbar" with the profile's reason — no switch.
+ */
+const noAddressArgs = {
+	...sessionsArgs,
+	fullScreen: false,
+	emailNoAddress: true
+};
+export const EmailNoAddress: Story = {
+	globals: desktop1440Globals,
+	args: noAddressArgs,
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		const row = await dialog.findByRole('row', { name: /Mail-Beratung/ });
+		await expect(row).toHaveTextContent(NO_EMAIL_REASON);
+		await expect(
+			dialog.queryByRole('button', { name: 'E-Mail: Mail-Beratung' })
+		).toBeNull();
+	}
+};
+
+/**
+ * `enableNewNotifications` off: the profile routes the legacy screens, so
+ * `useDisplayFilterEmailColumn` returns no column and the dialog has none.
+ */
+const legacyArgs = {
+	...sessionsArgs,
+	fullScreen: false,
+	emailSection: undefined
+};
+export const EmailLegacyNotifications: Story = {
+	globals: desktop1440Globals,
+	args: legacyArgs,
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		await dialog.findByRole('row', { name: /Mail-Beratung/ });
+		await expect(
+			dialog.queryByRole('columnheader', { name: 'E-Mail' })
+		).toBeNull();
 	}
 };
 

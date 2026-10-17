@@ -2,6 +2,7 @@ import { notificationChannelPolicy } from '../components/erstantwort/notificatio
 import { getTenantSettings } from './tenantSettingsHelper';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './appConfig';
+import { usesNewNotifications } from './newNotificationsToggle';
 import { isNotificationSuppressed } from './notificationSettings/model';
 import { BannerMode } from './notificationSettings/notificationConfig';
 import { resolveEventChannelContract } from './notificationSettings/occasionChannelContract';
@@ -99,8 +100,7 @@ export const optInToBrowserNotifications = (): Promise<void> =>
  * the user actually made, so only it may decide. Before the config has loaded
  * we assume the legacy panel — that is what shipped.
  */
-const usesCrossDevicePanel = (): boolean =>
-	appConfig?.releaseToggles?.enableNewNotifications === true;
+const usesCrossDevicePanel = (): boolean => usesNewNotifications(appConfig);
 
 /**
  * How the legacy panel's two per-type switches map onto event families. Every

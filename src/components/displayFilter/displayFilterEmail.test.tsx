@@ -9,7 +9,11 @@ import {
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NotificationsContext, UserDataContext } from '../../globalState';
+import {
+	AppConfigContext,
+	NotificationsContext,
+	UserDataContext
+} from '../../globalState';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { EmailNotification } from '../profile/EmailNotifications';
 import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
@@ -43,22 +47,36 @@ const userData = () => ({
 	]
 });
 
-const withUser = (ui: React.ReactNode) => (
+const withUser = (
+	ui: React.ReactNode,
+	{
+		newNotifications = true,
+		email = 'counsellor@example.test'
+	}: { newNotifications?: boolean; email?: string } = {}
+) => (
 	<MemoryRouter>
-		<NotificationsContext.Provider
-			value={{ addNotification: vi.fn() } as never}
+		<AppConfigContext.Provider
+			value={
+				{
+					releaseToggles: { enableNewNotifications: newNotifications }
+				} as never
+			}
 		>
-			<UserDataContext.Provider
-				value={
-					{
-						userData: userData(),
-						reloadUserData: vi.fn(async () => undefined)
-					} as never
-				}
+			<NotificationsContext.Provider
+				value={{ addNotification: vi.fn() } as never}
 			>
-				{ui}
-			</UserDataContext.Provider>
-		</NotificationsContext.Provider>
+				<UserDataContext.Provider
+					value={
+						{
+							userData: { ...userData(), email },
+							reloadUserData: vi.fn(async () => undefined)
+						} as never
+					}
+				>
+					{ui}
+				</UserDataContext.Provider>
+			</NotificationsContext.Provider>
+		</AppConfigContext.Provider>
 	</MemoryRouter>
 );
 
@@ -190,5 +208,30 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		expect(
 			unavailable.querySelector('[tabindex], button, input')
 		).toBeNull();
+	});
+	it('omits the column while the profile still routes the legacy notification screens', () => {
+		render(withUser(<ConnectedDialog />, { newNotifications: false }));
+		expect(
+			screen.queryByRole('columnheader', {
+				name: STORY_LABELS.emailColumn
+			})
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'E-Mail: Mail-Beratung' })
+		).toBeNull();
+	});
+
+	it('offers no switch without an e-mail address, as the profile does, and says why', () => {
+		render(withUser(<ConnectedDialog />, { email: '' }));
+		expect(
+			screen.queryByRole('button', { name: 'E-Mail: Mail-Beratung' })
+		).toBeNull();
+		const row = screen.getByRole('row', { name: /Mail-Beratung/ });
+		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(
+			row
+				.querySelector('.displayFilterDialog__unavailable')
+				?.getAttribute('title')
+		).toBe('profile.notifications.noEmail.info');
 	});
 });

@@ -73,6 +73,8 @@ export interface DisplayFilterKindTableLabels {
 export interface DisplayFilterEmailColumn {
 	cell: (kindId: string) => { checked: boolean } | null;
 	onChange: (kindId: string, next: boolean) => void;
+	/** Replaces the unavailable cell's reason, e.g. no e-mail address yet. */
+	unavailableReason?: string;
 }
 
 /**
@@ -531,6 +533,7 @@ export const DisplayFilterKindTable = ({
 											<span
 												className="displayFilterDialog__unavailable"
 												title={
+													email?.unavailableReason ??
 													labels.emailUnavailableReason
 												}
 												data-cy={`${dataCyPrefix}-email-${kind.id}-unavailable`}
@@ -539,7 +542,7 @@ export const DisplayFilterKindTable = ({
 													{labels.emailUnavailable}
 												</span>
 												<span className="sr-only">
-													{`${labels.emailUnavailable}. ${labels.emailUnavailableReason}`}
+													{`${labels.emailUnavailable}. ${email?.unavailableReason ?? labels.emailUnavailableReason}`}
 												</span>
 											</span>
 										)}
