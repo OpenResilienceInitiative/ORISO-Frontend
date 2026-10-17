@@ -62,7 +62,8 @@
 		}
 
 		&--button {
-			outline: 2px solid #199fff;
+			// What Button's `:focus` draws today (settings.scss `$focus-outline`).
+			outline: $focus-outline;
 		}
 	}
 

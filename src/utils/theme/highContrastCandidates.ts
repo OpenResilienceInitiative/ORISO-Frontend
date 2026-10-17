@@ -226,10 +226,14 @@ export const computeHighContrastTokens = (
 		reaches(c, [surface, lowest, incoming], target)
 	);
 
-	// Brand. A fill keeps the exact seed when white already reads on it.
-	const fill = reaches(WHITE, [seedHex], target)
+	// Brand. A fill keeps the exact seed when white already reads on it AND it
+	// reads as text on the page (a focused input label is --m3-primary text
+	// over --m3-surface).
+	const fillOk = (c: string): boolean =>
+		reaches(WHITE, [c], target) && reaches(c, [surface, lowest], target);
+	const fill = fillOk(seedHex)
 		? seedHex
-		: lightestTone(brand, seedTone, (c) => reaches(WHITE, [c], target));
+		: lightestTone(brand, seedTone, fillOk);
 	// --m3-primary-container is the fill of the selected topic tag (white text
 	// on it) AND the text colour of a mention on the own-bubble tint, so it
 	// has to reach the target against both. For a dark seed on a light tint
@@ -390,7 +394,7 @@ const over = (
 const ROW_NAME_INK = '#4f5864';
 const ROW_PREVIEW_INK = '#1e1e1e';
 
-/** Button.scss `$focus-blue`, used by `.button__item:focus`. */
+/** settings.scss `$focus-blue`, which Button's `$focus-outline` draws on `:focus`. */
 const BUTTON_FOCUS_BLUE = '#199fff';
 
 /**
@@ -564,7 +568,7 @@ export const evaluateContrastPairs = (
 			foreground: BUTTON_FOCUS_BLUE,
 			background: surface,
 			enforced: false,
-			note: 'button.styles.scss draws .button__item:focus with $focus-blue #199fff, not a token. Same in every column until Button is wired to --m3-primary-outline.'
+			note: 'button.styles.scss draws .button__item:focus with $focus-outline (settings.scss, $focus-blue #199fff), not a token. Same in every column until Button is wired to --m3-primary-outline.'
 		},
 		{
 			id: 'row-name',
@@ -651,6 +655,16 @@ export const evaluateContrastPairs = (
 			foreground: token('--m3-on-surface-variant'),
 			background: token('--m3-surface-container-lowest'),
 			enforced: true
+		},
+		{
+			id: 'input-label-focused',
+			group: 'Input',
+			label: 'Label, focused field',
+			kind: 'text',
+			foreground: token('--m3-primary'),
+			background: surface,
+			enforced: true,
+			note: 'orisoInputDesign.ts: a focused label is --m3-primary text, transparent over the page surface.'
 		},
 		{
 			id: 'input-border',
