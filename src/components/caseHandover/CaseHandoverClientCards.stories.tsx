@@ -487,6 +487,119 @@ export const PendingClientConsentFailed: Story = {
 	)
 };
 
+/**
+ * The asker approves in the chat: the same message turns from the decision
+ * prompt into the confirmed outcome — no approve/decline controls and no stale
+ * "could not be sent" error are left behind (ORISO-Frontend#1705).
+ */
+const ApprovalFlow = () => {
+	const [status, setStatus] = React.useState<string | undefined>();
+	return (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => setStatus('GRANTED')}
+				onDecline={() => setStatus('CLIENT_CONSENT_DECLINED')}
+				timestamp="12:54"
+			/>
+		</Stream>
+	);
+};
+
+export const PendingToApprovedMobile: Story = {
+	tags: ['device-regression'],
+	name: 'Pending client consent → approved — phone 390',
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => <ApprovalFlow />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Approve access' })
+		);
+		await waitFor(() =>
+			expect(canvas.getByRole('status')).toHaveTextContent(
+				'Access has been confirmed.'
+			)
+		);
+		expect(canvas.queryByRole('button', { name: 'Approve access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('button', { name: 'Decline access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('alert')).toBe(null);
+	}
+};
+
+export const PendingToApprovedGermanMobile: Story = {
+	tags: ['device-regression'],
+	name: 'Ausstehende Zustimmung → freigegeben — Telefon 390 (Deutsch)',
+	globals: { ...phone390Globals, locale: 'de' },
+	render: () => <ApprovalFlow />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Zugriff freigeben' })
+		);
+		await waitFor(() =>
+			expect(canvas.getByRole('status')).toHaveTextContent(
+				'Der Zugriff wurde bestätigt.'
+			)
+		);
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff freigeben' })
+		).toBe(null);
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+		).toBe(null);
+	}
+};
+
+/**
+ * The takeover changed the case owner before the asker answered, so the
+ * decision is refused with 409. The message settles on the closed outcome
+ * instead of keeping the approve/decline controls next to a failure
+ * (ORISO-Frontend#1705).
+ */
+const OwnerChangedFlow = () => {
+	const [status, setStatus] = React.useState<string | undefined>();
+	return (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => setStatus('OWNER_CHANGED')}
+				onDecline={() => setStatus('OWNER_CHANGED')}
+				timestamp="12:54"
+			/>
+		</Stream>
+	);
+};
+
+export const SettledAfterOwnerChange: Story = {
+	tags: ['device-regression'],
+	name: 'Settled after the case owner changed — phone 390',
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => <OwnerChangedFlow />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Approve access' })
+		);
+		await waitFor(() =>
+			expect(canvas.getByRole('status')).toHaveTextContent(
+				'This request is complete. No further decision is pending.'
+			)
+		);
+		expect(canvas.queryByRole('button', { name: 'Approve access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('button', { name: 'Decline access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('alert')).toBe(null);
+	}
+};
+
 export const PendingClientConsentSubmitting: Story = {
 	name: 'Pending client consent — submitting',
 	render: () => (

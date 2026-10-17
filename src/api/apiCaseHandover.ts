@@ -17,6 +17,12 @@ export type CaseHandoverStatusValue =
 	| 'GRANTED'
 	| 'DENIED'
 	| 'CLIENT_CONSENT_DECLINED'
+	| 'EXPIRED'
+	/**
+	 * Client-side only, never sent by the server: the decision was refused
+	 * with 409 because the case owner changed after the request was created.
+	 */
+	| 'OWNER_CHANGED'
 	| (string & {});
 
 /** Pending requests retain their decision controls and feed acknowledgement. */
@@ -246,7 +252,10 @@ export const apiDecideCaseHandoverClientConsent = async (
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
-			FETCH_ERRORS.FORBIDDEN
+			FETCH_ERRORS.FORBIDDEN,
+			// 409 is rejected with the response: its X-Reason says whether the
+			// case owner changed (CASE_OWNER_CHANGED) or it was a plain conflict.
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE
 		]
 	});
 
