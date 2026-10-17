@@ -20,6 +20,13 @@ export interface CallDevices {
 
 export type CallDeviceSelection = Partial<Record<CallDeviceKind, string>>;
 
+/** What the person has switched and chosen; applied to the real stream. */
+export interface CallDeviceControls {
+	micOn: boolean;
+	cameraOn: boolean;
+	selection: CallDeviceSelection;
+}
+
 /** What stands in the column instead of the device check. */
 export type CallEntryBlocker =
 	| 'permissionDenied'
