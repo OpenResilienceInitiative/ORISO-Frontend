@@ -2342,6 +2342,11 @@
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
 		},
+		"curtain": {
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			}
+		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
 			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
