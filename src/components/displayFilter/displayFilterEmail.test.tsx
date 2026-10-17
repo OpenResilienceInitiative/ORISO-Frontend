@@ -52,8 +52,14 @@ const withUser = (
 	{
 		newNotifications = true,
 		email = 'counsellor@example.test',
-		emailsOn = true
-	}: { newNotifications?: boolean; email?: string; emailsOn?: boolean } = {}
+		emailsOn = true,
+		reloadFails = false
+	}: {
+		newNotifications?: boolean;
+		email?: string;
+		emailsOn?: boolean;
+		reloadFails?: boolean;
+	} = {}
 ) => (
 	<MemoryRouter>
 		<AppConfigContext.Provider
@@ -77,7 +83,10 @@ const withUser = (
 									emailNotificationsEnabled: emailsOn
 								}
 							},
-							reloadUserData: vi.fn(async () => undefined)
+							reloadUserData: vi.fn(async () => {
+								if (reloadFails) throw new Error('offline');
+								return undefined;
+							})
 						} as never
 					}
 				>
@@ -309,5 +318,49 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		await waitFor(() => expect(picker.textContent).toContain('An'));
+	});
+	it('keeps the last choice when an older queued write fails after newer ones succeed', async () => {
+		const answers: Array<{ ok: boolean; settle: () => void }> = [];
+		const outcomes = [false, true, true];
+		vi.mocked(apiPatchUserData).mockImplementation(
+			() =>
+				new Promise((resolve, reject) => {
+					const ok = outcomes[answers.length];
+					answers.push({
+						ok,
+						settle: () =>
+							ok
+								? resolve(undefined)
+								: reject(new Error('offline'))
+					});
+				})
+		);
+		render(withUser(<ConnectedDialog />, { reloadFails: true }));
+		const picker = screen.getByRole('button', { name: 'E-Mail: Termine' });
+		const choose = (option: 'An' | 'Aus') => {
+			fireEvent.click(
+				screen.getByRole('button', { name: 'E-Mail wählen: Termine' })
+			);
+			fireEvent.click(
+				screen.getByRole('menuitemradio', { name: option })
+			);
+		};
+		// Stored: An. Off → On → Off before the first write answers; the
+		// first PATCH fails, the later two succeed, reloads stay down.
+		choose('Aus');
+		choose('An');
+		choose('Aus');
+		for (let index = 0; index < 3; index += 1) {
+			await waitFor(() => expect(answers).toHaveLength(index + 1));
+			answers[index].settle();
+		}
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(3));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(
+			vi.mocked(apiPatchUserData).mock.calls[2][0].emailNotifications
+				?.settings?.appointmentNotificationEnabled
+		).toBe(false);
+		await waitFor(() => expect(picker.textContent).toContain('Aus'));
+		expect(picker.textContent).not.toContain('An');
 	});
 });

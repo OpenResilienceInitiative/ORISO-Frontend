@@ -2076,7 +2076,7 @@
 			"emailKind": "Courriel : {{kind}}",
 			"emailMenu": "Choisir le courriel : {{kind}}",
 			"channelUnavailable": "non disponible",
-			"emailUnavailableReason": "Il n’existe pas encore de courriel pour ce type",
+			"emailUnavailableReason": "Les notifications par courriel ne sont pas encore disponibles pour ce type",
 			"emailMasterOff": "Les notifications par courriel sont désactivées dans votre profil",
 			"browserOff": "Les fenêtres contextuelles sont désactivées dans votre profil",
 			"descriptions": {

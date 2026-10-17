@@ -1,4 +1,11 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AUTHORITIES,
@@ -49,6 +56,9 @@ export const useDisplayFilterEmailColumn = (
 	const [pending, setPending] = useState<Record<string, boolean>>({});
 	// Fresh user data is the stored truth: drop the optimistic values.
 	useEffect(() => setPending({}), [userData]);
+	// Per setting: the newest write's number. Only that write may settle
+	// `pending`; an older completion must not undo a newer choice.
+	const latestWrite = useRef<Record<string, number>>({});
 
 	const onChange = useCallback(
 		async (kindId: string, next: boolean) => {
@@ -60,7 +70,10 @@ export const useDisplayFilterEmailColumn = (
 				pending[key] ?? readEmailSetting(userData, entry.source);
 			if (next === previous) return;
 			setPending((current) => ({ ...current, [key]: next }));
+			const write = (latestWrite.current[key] ?? 0) + 1;
+			latestWrite.current[key] = write;
 			const { saved, stored } = await save(entry.source, next);
+			if (write !== latestWrite.current[key]) return;
 			if (!saved) {
 				// The last confirmed value, not `previous`: with two queued
 				// writes, `previous` is the first one's optimistic value.
