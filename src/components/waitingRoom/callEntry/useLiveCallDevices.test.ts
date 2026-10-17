@@ -176,6 +176,56 @@ describe('useLiveCallDevices', () => {
 		expect(second.tracks[0].stop).not.toHaveBeenCalled();
 	});
 
+	it('falls back to any microphone when the chosen one is unplugged', async () => {
+		const stream = fakeStream(['audio']);
+		const media = devicesFor((constraints) =>
+			constraints.audio === true
+				? Promise.resolve(stream)
+				: Promise.reject(domError('NotFoundError'))
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices(
+				'audio',
+				{ ...on, selection: { microphone: 'gone' } },
+				media
+			)
+		);
+		await waitFor(() => expect(result.current.stream).toBe(stream));
+		expect(result.current.blocker).toBeUndefined();
+	});
+
+	it('falls back to any camera when the chosen one is unplugged', async () => {
+		const stream = fakeStream(['audio', 'video']);
+		const media = devicesFor((constraints) =>
+			constraints.video === true
+				? Promise.resolve(stream)
+				: Promise.reject(domError('NotFoundError'))
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices(
+				'video',
+				{ ...on, selection: { camera: 'gone' } },
+				media
+			)
+		);
+		await waitFor(() => expect(result.current.stream).toBe(stream));
+		expect(result.current.cameraMissing).toBe(false);
+	});
+
+	it('runs the check with empty pickers when the device list fails', async () => {
+		const stream = fakeStream(['audio']);
+		const media = devicesFor(
+			() => Promise.resolve(stream),
+			() => Promise.reject(domError('InvalidStateError'))
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('audio', on, media)
+		);
+		await waitFor(() => expect(result.current.stream).toBe(stream));
+		expect(result.current.devices.microphone).toEqual([]);
+		expect(result.current.blocker).toBeUndefined();
+	});
+
 	it('leaves nothing running when unmounted while the devices are listed', async () => {
 		const stream = fakeStream(['audio']);
 		let list: (devices: MediaDeviceInfo[]) => void = () => undefined;
