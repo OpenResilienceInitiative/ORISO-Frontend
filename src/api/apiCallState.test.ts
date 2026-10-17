@@ -49,21 +49,75 @@ it('restores persisted attendees when the room card has no participant names yet
 	]);
 });
 
-it('corrects a provisional missed card when the server confirms attendance and completion', async () => {
-	fetchDataMock.mockResolvedValue({
-		sourceRoomId: '!source:example',
-		callId: 'stable-call',
-		callRoomId: '!media:example',
-		callType: 'video',
-		state: 'ended',
-		invitedAt: 1000,
-		startedAt: 2000,
-		endedAt: 127000,
-		durationSeconds: 125
-	});
+const endedResponse = (
+	participantMatrixIds?: string[]
+): Record<string, unknown> => ({
+	sourceRoomId: '!source:example',
+	callId: 'stable-call',
+	callRoomId: '!media:example',
+	callType: 'video',
+	state: 'ended',
+	invitedAt: 1000,
+	startedAt: 2000,
+	endedAt: 127000,
+	durationSeconds: 125,
+	...(participantMatrixIds === undefined ? {} : { participantMatrixIds })
+});
+
+it('corrects a provisional missed card when somebody else is shown to have attended', async () => {
+	getMemberMock.mockImplementation(() => ({ name: 'Sam Test' }));
+	fetchDataMock.mockResolvedValue(
+		endedResponse(['@caller:example', '@receiver:example'])
+	);
+	expect(
+		await apiCallState({
+			...original,
+			state: 'missed',
+			actorUserId: '@caller:example'
+		})
+	).toMatchObject({ state: 'ended', durationSeconds: 125 });
+});
+
+it('leaves a missed call missed when the only attendee is the caller', async () => {
+	/*
+	 * The whole reason this guard exists. UserService "defines attendance as
+	 * any observed Matrix membership; it does not prove two-person media"
+	 * (docs/agent-tasks/2026-09-14-calls/README.md), and the caller's own
+	 * membership is published while the phone is merely ringing — so an
+	 * unanswered outgoing call comes back as `ended` with the ringing time as
+	 * its duration. Accepting that would re-import, from the server, exactly
+	 * the mistake `callLifecycleTracker` was fixed to stop making here.
+	 */
+	fetchDataMock.mockResolvedValue(endedResponse(['@caller:example']));
+	expect(
+		await apiCallState({
+			...original,
+			state: 'missed',
+			actorUserId: '@caller:example'
+		})
+	).toBeNull();
+});
+
+it('leaves a missed call missed when the server offers no attendance at all', async () => {
+	// No ids is no evidence, and a terminal answer would stop the retries
+	// that could ever correct it.
+	fetchDataMock.mockResolvedValue(endedResponse());
+	expect(
+		await apiCallState({
+			...original,
+			state: 'missed',
+			actorUserId: '@caller:example'
+		})
+	).toBeNull();
+});
+
+it('still corrects a missed card that never recorded an actor', async () => {
+	// An older card, or a client that could not name itself: any attendance
+	// counts, which is the same fallback the tracker uses.
+	getMemberMock.mockImplementation(() => ({ name: 'Sam Test' }));
+	fetchDataMock.mockResolvedValue(endedResponse(['@someone:example']));
 	expect(await apiCallState({ ...original, state: 'missed' })).toMatchObject({
-		state: 'ended',
-		durationSeconds: 125
+		state: 'ended'
 	});
 });
 

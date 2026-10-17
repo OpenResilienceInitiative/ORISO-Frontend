@@ -51,6 +51,21 @@ export interface CallLifecycleMessage {
 	 * counts is worse than no count.
 	 */
 	actorUserId?: string;
+	/**
+	 * Whether this call is a group call, as the side that STARTED it decided.
+	 *
+	 * Carried rather than re-derived, because the two derivations disagree
+	 * exactly where it matters. `startSupervisionCall` counts the side room's
+	 * participants; the rejoin path had only the client-facing session's
+	 * `isGroup`, which is false for a supervision call inside a 1:1 session.
+	 * A call rejoined as non-group is ended for everybody when one person
+	 * leaves — `endCall` publishes a remote hangup and finalises the
+	 * lifecycle — while the other supervisors are still in it.
+	 *
+	 * Optional, because cards written before this exist. A reader without it
+	 * falls back to what it used to do.
+	 */
+	isGroup?: boolean;
 	invitedAt?: string;
 	startedAt?: string;
 	endedAt?: string;
@@ -94,7 +109,8 @@ export function parseCallLifecycleMessage(
 		call_type,
 		participants,
 		present,
-		actor_user_id: actorUserId
+		actor_user_id: actorUserId,
+		is_group: isGroup
 	} = payload;
 	if (!isString(call_id) || !isString(room_ref) || !isString(call_room_id))
 		return null;
@@ -117,6 +133,9 @@ export function parseCallLifecycleMessage(
 	// Absent is fine; present but not a user id is not. It reaches a card as
 	// a name, and a card is a thing people read and believe.
 	if (actorUserId !== undefined && !isString(actorUserId)) return null;
+	// Absent is fine; present but not a boolean is not. It decides whether
+	// leaving ends the call for everybody else.
+	if (isGroup !== undefined && typeof isGroup !== 'boolean') return null;
 	if (
 		![payload.invited_at, payload.started_at, payload.ended_at].every(
 			validTimestamp
@@ -156,6 +175,7 @@ export function parseCallLifecycleMessage(
 		...(actorUserId === undefined
 			? {}
 			: { actorUserId: actorUserId as string }),
+		...(isGroup === undefined ? {} : { isGroup: isGroup as boolean }),
 		invitedAt: payload.invited_at as string | undefined,
 		startedAt: payload.started_at as string | undefined,
 		endedAt: payload.ended_at as string | undefined,
@@ -179,6 +199,7 @@ export function buildCallLifecycleContent(
 			participants: message.participants,
 			present: message.present,
 			actor_user_id: message.actorUserId,
+			is_group: message.isGroup,
 			invited_at: message.invitedAt,
 			started_at: message.startedAt,
 			ended_at: message.endedAt,

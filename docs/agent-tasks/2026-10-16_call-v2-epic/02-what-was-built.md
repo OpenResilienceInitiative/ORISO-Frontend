@@ -666,3 +666,114 @@ That is three rounds in a row where the defect was something that looked
 finished and did nothing. The countermeasure that keeps working is the same
 one: assert the thing at the level where it can actually be wrong, and check
 the assertion fails before keeping it.
+
+## 14. The sixth round, three P1s in the lifecycle
+
+All four findings held. Three of them were in the consolidated lifecycle rather
+than in the design, and one of them was documented on this branch as a hazard
+while the code walked into it anyway.
+
+### `missed` was being corrected back to `ended` by a server that cannot tell
+
+`docs/agent-tasks/2026-09-14-calls/README.md`, on this branch:
+
+> UserService PR1153 defines attendance as any observed Matrix membership; it
+> does not prove two-person media.
+
+The caller's own membership is published the moment their iframe opens, so an
+unanswered outgoing call comes back from the backend as `ended` with the
+ringing time as its duration. `apiCallState` accepted that — **permanently**,
+because a terminal answer stops the retries. It is the mistake
+`callLifecycleTracker` was fixed to stop making two rounds ago, re-imported
+from the other side of the API.
+
+A correction out of `missed` now needs the one piece of evidence only a real
+peer produces: an attendee in `participantMatrixIds` who is not the card's
+`actorUserId`. No ids is no evidence. A card with no actor accepts any
+attendance, which is the tracker's own fallback.
+
+**An existing test asserted the wrong behaviour and passed** — a response with
+no `participantMatrixIds` at all, expected to become `ended`. Replaced by four
+cases; two of them fail against the previous code. That is the fifth defect in
+this epic of exactly that shape.
+
+### Side-room call cards never received a single revision
+
+Lifecycle folding ran on the main timeline only. The supervision and team
+timelines had `applyMessageEdits`, which **filters out** every `m.replace`
+rather than folding it — so a call started in a side room (and
+`startSupervisionCall` does exactly that) sat at whatever it was first written
+as: "running" after it had ended, with a Join button for a call nobody was in.
+
+All three timelines now share one `prepareRoomMessages`, so there is no longer
+a place where a new side timeline can be added with the shorter version by
+accident — which is how this happened.
+
+### Leaving a supervision call ended it for everybody
+
+`startSupervisionCall` decides group mode from the side room's participant
+count; the rejoin path had `Boolean(activeSession?.isGroup)`, which describes
+the **client** session and is false for a supervision call inside a 1:1 one.
+Rejoined as non-group, leaving takes `endCall` — a remote hangup and a
+finalised lifecycle — while the other supervisors are still in the call.
+
+`CallLifecycleMessage` carries an optional `isGroup` now, written by the
+tracker from the `CallData` the starting side already resolved and validated on
+the wire as a boolean. Carried rather than re-derived, because re-deriving is
+what produced two disagreeing answers.
+
+### And the newer running revision now wins
+
+The fix in §12 compared `state`, which is too little: a membership edit leaves
+both revisions `running` while attendance changes, so an accepted answer kept
+winning with the live revision already in its props — and attendance-only edits
+do not change `callKey`, so nothing re-read it before the next poll. It
+compares the whole revision now, by value, via the same helper the superseded-
+response guard uses.
+
+Every one of the four has a test confirmed to fail against the code as it stood.
+
+## 15. The seventh round: the phone routing's own consequences
+
+Four findings, all four real, and three of them were consequences of the phone
+routing itself — things that had been true only because the design used to hold
+at one window size.
+
+**The spotlight was landscape on a portrait phone.** The point of routing the
+design through the view model is that the grove, the fields and the
+Einzelgespräch are *ORISO's* and hold at every size. The spotlight is
+upstream's, one of the three the rail offers, so it still has to respect the
+window: `spotlight-landscape` reserves a 180px rail and 60px of padding, which
+on a 390px phone leaves about 150px for the person being spotlit.
+`orisoArrangement` is a function of the window mode now, and its spotlight
+branch follows upstream's own mapping — expanded, portrait when narrow,
+landscape otherwise. The grid branch is unchanged.
+
+**A shared screen was cut off on a phone.** The fixed slot was 404×233,
+upstream's size; upstream's grid can hard-code it because its narrow branch
+hands a screen share to the portrait spotlight instead. The grove has no such
+escape any more, and `.inRoom` hides horizontal overflow. It is
+`min(404px, calc(100% - 2 * inset))` with the aspect ratio kept, so clamping
+does not squash what is being shared.
+
+**The Einzelgespräch chrome, on the third attempt.** Translating `.fg` was not
+enough: it spans 84% of the *whole* box, so moving it carries a left-aligned
+capsule and a right-aligned button the same distance — the left tile's button
+went from about 92% to about 67%, still past the 50% seam, still clipped away.
+The chrome is now *sized* to the half. The bounds follow exactly from `focusX`,
+which the layout sets to the middle of the half it gave the tile
+(`share / 2` and `share + (1 - share) / 2`), so the seam is at `2 * focusX` or
+`2 * focusX - 1` and the 8% inset comes off the half's own width.
+
+Three attempts at one rule, two of which looked right and did nothing. Every
+one of the three failures was invisible to jsdom and to the screenshot harness.
+
+**And a redaction found a second bug behind it.** `RoomEvent.Redaction` is
+listened for now — but the test still failed, because **the newest record was
+not winning**: `readIdentities` read each event as it walked and stored only
+valid ones, so a redacted latest record (empty content, rejected) left the
+*previous* valid record standing. Somebody who withdrew their animal kept it.
+It collects the newest content per sender first and reads only that: the newest
+thing a person said about themselves wins, including when it is nothing.
+
+Each of the four has a test confirmed to fail against the code as it stood.

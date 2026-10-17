@@ -68,15 +68,23 @@ export function useCallTimelineState(
 		stored &&
 		sameCardAsStored &&
 		// A terminal answer always wins. Otherwise the stored value only
-		// stands while the card it was loaded for says the same thing: once
-		// the timeline itself has moved on, the timeline is newer.
+		// stands while the card it was loaded for still says the same thing:
+		// once the timeline itself has moved on, the timeline is newer.
 		//
 		// This used to compare the prop by OBJECT IDENTITY, which is not
 		// stable. The session rebuilds every message on each fetch, so an
 		// accepted running value was thrown away on the next incoming chat
 		// message and the card snapped back to the durable copy.
+		//
+		// Then it compared only `state`, which is too little: a membership
+		// edit leaves both revisions `running` while `participants` and
+		// `present` change, so an accepted running answer kept winning and
+		// the card showed departed or missing attendees until the next
+		// fifteen-second poll — with the live revision already in its props.
+		// Attendance-only edits do not change `callKey` either, so nothing
+		// re-read it sooner. The whole revision is compared now.
 		(stored.value.state !== 'running' ||
-			stored.original.state === initialCall.state)
+			sameTimelineRevision(stored.original, initialCall))
 			? stored.value
 			: initialCall;
 

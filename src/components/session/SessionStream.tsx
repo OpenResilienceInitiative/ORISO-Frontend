@@ -551,10 +551,35 @@ export const SessionStream = ({
 						}
 					});
 				}
-				const formattedMessages = formatRoomMessages(
-					clientEvents,
-					resolvedMatrixRoomId
-				);
+				/*
+				 * One pipeline, for every room.
+				 *
+				 * A call card is a series of REVISIONS: the lifecycle writes
+				 * an edit per membership change and a terminal one at the
+				 * end. `applyCallLifecycleEdits` folds those onto the
+				 * original and `collapseCallLifecycleMessages` keeps one card
+				 * per call — and the side rooms ran neither. They had only
+				 * `applyMessageEdits`, which DROPS every `m.replace` without
+				 * folding it, so a call started in a supervision or team room
+				 * sat at whatever it was first written as: no live presence,
+				 * no ending, and a Join button for a call that had finished,
+				 * unless the authenticated backend read happened to answer.
+				 * Calls can be started in those rooms — see
+				 * `startSupervisionCall` — so they need the same treatment.
+				 */
+				const prepareRoomMessages = (
+					events: any[],
+					roomId?: string | null
+				): any[] =>
+					prepareMessages(
+						collapseCallLifecycleMessages(
+							applyMessageEdits(
+								applyCallLifecycleEdits(
+									formatRoomMessages(events, roomId)
+								)
+							)
+						)
+					);
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
 				// Side-room reactions stay out of the client timeline; the
@@ -562,24 +587,17 @@ export const SessionStream = ({
 				const reactionEvents = [...extractReactionEvents(clientEvents)];
 
 				setMessagesItem({
-					messages: prepareMessages(
-						collapseCallLifecycleMessages(
-							applyMessageEdits(
-								applyCallLifecycleEdits(formattedMessages)
-							)
-						)
+					messages: prepareRoomMessages(
+						clientEvents,
+						resolvedMatrixRoomId
 					),
 					reactionEvents
 				});
 				setSupervisionMessages(
 					supervisionRoomId
-						? prepareMessages(
-								applyMessageEdits(
-									formatRoomMessages(
-										supervisionEvents,
-										supervisionRoomId
-									)
-								)
+						? prepareRoomMessages(
+								supervisionEvents,
+								supervisionRoomId
 							)
 						: []
 				);
@@ -587,11 +605,7 @@ export const SessionStream = ({
 					sessionId: activeSession.item?.id,
 					roomId: teamRoomId,
 					messages: teamRoomId
-						? prepareMessages(
-								applyMessageEdits(
-									formatRoomMessages(teamEvents, teamRoomId)
-								)
-							)
+						? prepareRoomMessages(teamEvents, teamRoomId)
 						: []
 				});
 				setLoading(false);

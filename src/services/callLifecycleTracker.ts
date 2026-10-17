@@ -51,6 +51,11 @@ class CallLifecycleTracker {
 				callRoomId: call.elementCallRoomId || call.roomId,
 				state: 'running',
 				callType: call.isVideo ? 'video' : 'audio',
+				// Carried on the card so that rejoining it later does not have
+				// to guess: the client-facing session's `isGroup` is false for a
+				// supervision call inside a 1:1 session, and a call rejoined as
+				// non-group is ended for everybody when one person leaves.
+				isGroup: call.isGroup,
 				// Whoever this client is, since this client is the one
 				// starting the call. Nobody else can say it, and it is the
 				// only thing on the card that the participant lists cannot

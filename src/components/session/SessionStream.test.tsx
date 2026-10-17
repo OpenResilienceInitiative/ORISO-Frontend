@@ -815,6 +815,101 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(item.rid).toBe(item.callLifecycle.roomRef);
 	});
 
+	it('folds the revisions of a supervision call card too', async () => {
+		/*
+		 * A call card is a series of REVISIONS: an edit per membership change
+		 * and a terminal one at the end. The main timeline folded them; the
+		 * side timelines ran only `applyMessageEdits`, which DROPS every
+		 * `m.replace` without folding it. So a call started in a supervision
+		 * room — `startSupervisionCall` does exactly that — stayed at
+		 * whatever it was first written as: still "running" after it had
+		 * ended, with a Join button for a call nobody was in.
+		 */
+		const SUPERVISION = '!supervision:matrix.example.org';
+		const card = {
+			callId: 'call-sv',
+			roomRef: SUPERVISION,
+			callRoomId: '!media-sv:matrix.example.org',
+			callType: 'video' as const,
+			participants: []
+		};
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId !== SUPERVISION
+				? []
+				: [
+						{
+							getType: () => 'm.room.message',
+							getContent: () =>
+								buildCallLifecycleContent({
+									...card,
+									state: 'running'
+								}),
+							getSender: () => '@supervisor:matrix.example.org',
+							getId: () => '$sv-card:matrix.example.org',
+							getTs: () => 1700000000000
+						},
+						{
+							getType: () => 'm.room.message',
+							getContent: () =>
+								buildCallLifecycleContent(
+									{
+										...card,
+										state: 'ended',
+										startedAt: new Date(
+											1700000001000
+										).toISOString(),
+										endedAt: new Date(
+											1700000061000
+										).toISOString(),
+										durationSeconds: 60
+									},
+									'$sv-card:matrix.example.org'
+								),
+							getSender: () => '@supervisor:matrix.example.org',
+							getId: () => '$sv-edit:matrix.example.org',
+							getTs: () => 1700000061000
+						}
+					]
+		);
+
+		mocks.getSessionSupervisors.mockResolvedValueOnce([
+			{
+				id: 7,
+				supervisorConsultantId: 'supervisor-1',
+				supervisorUsername: 'supervisor@example.invalid',
+				matrixRoomId: SUPERVISION
+			}
+		]);
+		renderSessionStream({
+			isGroup: false,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				consultant: { id: 'owner-2' },
+				item: { id: 1, matrixRoomId: ROOM_ID, active: true, status: 2 }
+			} as any,
+			userData: {
+				userId: 'supervisor-1',
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			} as any
+		});
+
+		await waitFor(() =>
+			expect(
+				mocks.sessionItemProps?.supervisionMessages?.length
+			).toBeGreaterThan(0)
+		);
+		const cards = mocks.sessionItemProps.supervisionMessages.filter(
+			(message: { callLifecycle?: unknown }) => message.callLifecycle
+		);
+		// One card for one call, carrying the revision rather than the
+		// original — the edit is folded on, not discarded.
+		expect(cards).toHaveLength(1);
+		expect(cards[0].callLifecycle.state).toBe('ended');
+		expect(cards[0].callLifecycle.durationSeconds).toBe(60);
+	});
+
 	it('does not curtain a backend-authorized session supervisor', async () => {
 		mocks.getSessionSupervisors.mockResolvedValueOnce([
 			{

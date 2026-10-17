@@ -2620,7 +2620,24 @@ export const MessageItemComponent = ({
 							: () =>
 									callManager.joinExistingCall(
 										callLifecycle,
-										Boolean(activeSession?.isGroup)
+										/*
+										 * The card's own answer first.
+										 *
+										 * `activeSession.isGroup` describes
+										 * the CLIENT session, which is false
+										 * for a supervision call inside a 1:1
+										 * one — and a call rejoined as
+										 * non-group is ended for everybody
+										 * when one person leaves, because
+										 * `endCall` publishes a remote hangup
+										 * and finalises the lifecycle. The
+										 * side that started the call wrote
+										 * what it is; cards from before that
+										 * field existed fall back to the old
+										 * guess.
+										 */
+										callLifecycle.isGroup ??
+											Boolean(activeSession?.isGroup)
 									)
 					}
 				/>

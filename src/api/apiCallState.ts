@@ -35,6 +35,33 @@ export async function apiCallState(
 	)
 		return null;
 	if (call.state !== 'running' && data.state === 'running') return null;
+	/*
+	 * `missed` does not become `ended` on the server's word alone.
+	 *
+	 * UserService "defines attendance as any observed Matrix membership; it
+	 * does not prove two-person media" — this branch's own
+	 * `docs/agent-tasks/2026-09-14-calls/README.md`. The caller's membership is
+	 * published while the phone is merely ringing, so an unanswered outgoing
+	 * call can come back as `ended` with the ringing time as its duration. That
+	 * is precisely the distinction `missed` exists to make, and the one
+	 * `callLifecycleTracker` was fixed to get right on this side; accepting it
+	 * back from the server would re-import the same mistake — and permanently,
+	 * because a terminal answer stops the retries.
+	 *
+	 * So a correction out of `missed` needs the one piece of evidence the
+	 * server could only have from somebody else being there: an attendee who
+	 * is not the actor. No ids at all is no evidence, and the local answer
+	 * stands. A card with no actor recorded accepts any attendance, which is
+	 * the same fallback the tracker uses.
+	 */
+	if (call.state === 'missed' && data.state !== 'missed') {
+		const attended = Array.isArray(data.participantMatrixIds)
+			? data.participantMatrixIds.filter(
+					(id): id is string => typeof id === 'string'
+				)
+			: [];
+		if (!attended.some((id) => id !== call.actorUserId)) return null;
+	}
 	if (data.state === 'missed') {
 		if (
 			data.startedAt !== null ||

@@ -118,6 +118,34 @@ describe('useCallTimelineState', () => {
 		expect(loadState).toHaveBeenCalledTimes(1);
 	});
 
+	it('prefers a newer running revision over an accepted running answer', async () => {
+		/*
+		 * A membership edit leaves both revisions `running`, so comparing
+		 * only `state` kept the accepted answer winning while `participants`
+		 * and `present` had already changed — the card showed departed or
+		 * missing attendees although the live revision was right there in its
+		 * props. Attendance-only edits do not change `callKey` either, so
+		 * nothing re-read it until the next fifteen-second poll.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn().mockResolvedValue(initial);
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(result.current.participants).toEqual([]);
+
+		const joined = runningCall({
+			participants: [{ userId: '@late:example', displayName: 'Late' }],
+			present: [{ userId: '@late:example', displayName: 'Late' }]
+		});
+		rerender({ call: joined });
+		expect(result.current.participants).toEqual(joined.participants);
+		expect(result.current.present).toEqual(joined.present);
+	});
+
 	it('discards a response built from a revision the timeline has left behind', async () => {
 		/*
 		 * `apiCallState` answers by spreading the revision it was asked
