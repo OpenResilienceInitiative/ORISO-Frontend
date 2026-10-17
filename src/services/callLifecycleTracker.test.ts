@@ -278,3 +278,101 @@ describe('live presence', () => {
 		expect(lastPayload().state).toBe('running');
 	});
 });
+
+describe('a call that outlives the Matrix client it started on', () => {
+	/*
+	 * A token refresh builds a NEW `MatrixClient` for the same account and
+	 * tears the old one down. Every guard in the tracker used to compare
+	 * against the object captured at `begin()`, so after an ordinary refresh
+	 * the card was stranded: the membership listener hung off a dead client
+	 * and never fired again, the mismatch cleanup inside it was therefore
+	 * never reached, and the terminal write found `isCurrentClient()` false
+	 * and gave up. The durable card stayed `running` for good, after
+	 * something the user can neither see nor avoid.
+	 */
+	const ME = '@me:example';
+	let call: CallData;
+	let sequence = 0;
+
+	const clientDouble = (userId: string) => ({
+		sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
+		getUserId: () => userId,
+		getRoom: () => null,
+		on: vi.fn(),
+		off: vi.fn()
+	});
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		call = {
+			callId: `rotate-call-${++sequence}`,
+			roomId: '!media:example',
+			signalRoomId: '!source:example',
+			isVideo: true,
+			isIncoming: false,
+			isGroup: false,
+			usesElementCall: true,
+			state: 'connecting'
+		};
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+	});
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+		vi.clearAllTimers();
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+	});
+
+	/** A service whose client can be swapped, as a token refresh swaps it. */
+	const rotatingService = (initial: ReturnType<typeof clientDouble>) => {
+		let current = initial;
+		const listeners = new Set<(client: unknown) => void>();
+		setMatrixClientServiceRef({
+			getClient: () => current,
+			onClientChange: (listener: (client: unknown) => void) => {
+				listeners.add(listener);
+				return () => listeners.delete(listener);
+			}
+		} as never);
+		return {
+			rotateTo: (next: ReturnType<typeof clientDouble>) => {
+				current = next;
+				listeners.forEach((listener) => listener(next));
+			}
+		};
+	};
+
+	it('writes the ending through the replacement client', async () => {
+		const before = clientDouble(ME);
+		const service = rotatingService(before);
+		await callLifecycleTracker.begin(call);
+		expect(before.sendMessage).toHaveBeenCalledTimes(1);
+
+		// The token refresh: same account, new client object.
+		const after = clientDouble(ME);
+		service.rotateTo(after);
+
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(after.sendMessage).toHaveBeenCalledTimes(1);
+		expect(after.sendMessage.mock.calls[0][1]['org.oriso.call'].state).toBe(
+			'missed'
+		);
+	});
+
+	it('writes nothing through a different account', async () => {
+		// Not a refresh but a logout and a new login. Nothing may write this
+		// card any more, and writing it as somebody else would be worse than
+		// leaving it: the card names an actor.
+		const before = clientDouble(ME);
+		const service = rotatingService(before);
+		await callLifecycleTracker.begin(call);
+
+		const somebodyElse = clientDouble('@other:example');
+		service.rotateTo(somebodyElse);
+
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(60000);
+		expect(somebodyElse.sendMessage).not.toHaveBeenCalled();
+	});
+});

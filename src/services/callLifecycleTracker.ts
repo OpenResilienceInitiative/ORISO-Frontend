@@ -23,9 +23,27 @@ class CallLifecycleTracker {
 
 	async begin(call: CallData): Promise<void> {
 		if (this.calls.has(call.callId)) return;
-		const client = getMatrixClientService()?.getClient?.();
-		if (!client)
+		const first = getMatrixClientService()?.getClient?.();
+		if (!first)
 			throw new Error('Matrix client unavailable for call timeline');
+		/*
+		 * The client this call is tracked on, which can be REPLACED mid-call.
+		 *
+		 * A token refresh builds a new `MatrixClient` for the same account and
+		 * tears the old one down. Capturing it in a `const` left every guard
+		 * here comparing against an object the service had thrown away, so
+		 * after an ordinary refresh: the membership listener was attached to a
+		 * dead client and never fired again, the mismatch cleanup inside it
+		 * was therefore never reached either, and the terminal write found
+		 * `isCurrentClient()` false and gave up. The durable card stayed
+		 * `running` for good — on a refresh the user cannot see or avoid.
+		 *
+		 * So it is a variable, and `onClientChange` moves it. Which is the
+		 * mechanism `SessionStream` already uses for its room listeners; the
+		 * tracker simply was not using it.
+		 */
+		let client = first;
+		const ownUserId = first.getUserId?.() ?? undefined;
 		const writer = new CallTimelineMessageService(() => {
 			return getMatrixClientService()?.getClient?.() === client
 				? {
@@ -60,7 +78,7 @@ class CallLifecycleTracker {
 				// starting the call. Nobody else can say it, and it is the
 				// only thing on the card that the participant lists cannot
 				// reconstruct.
-				actorUserId: client.getUserId?.() ?? undefined,
+				actorUserId: ownUserId,
 				invitedAt: new Date().toISOString(),
 				participants: []
 			},
@@ -164,7 +182,35 @@ class CallLifecycleTracker {
 			refresh();
 		};
 		client.on?.(ClientEvent.Room, attach);
+
+		/*
+		 * Follow the account, not the object.
+		 *
+		 * A replacement client for the SAME account is a token refresh and the
+		 * call is still the same call, so the listeners move to it. A different
+		 * account — or none — is a logout, and then there is nothing left that
+		 * may write this card: the tracked call is dropped, which is what the
+		 * mismatch check inside `refresh` used to be for and could no longer
+		 * reach, because it was driven by the dead client's own listener.
+		 */
+		const unsubscribeClientChange =
+			getMatrixClientService()?.onClientChange?.((next) => {
+				if (next === client) return;
+				client.off?.(ClientEvent.Room, attach);
+				detachMembership?.();
+				detachMembership = undefined;
+				if (!next || (next.getUserId?.() ?? undefined) !== ownUserId) {
+					tracked.stop();
+					this.calls.delete(call.callId);
+					return;
+				}
+				client = next;
+				client.on?.(ClientEvent.Room, attach);
+				attach();
+			}) ?? undefined;
+
 		tracked.stop = () => {
+			unsubscribeClientChange?.();
 			client.off?.(ClientEvent.Room, attach);
 			detachMembership?.();
 		};

@@ -983,6 +983,37 @@ trap as the earlier rounds, caught this time before it was written down as
 evidence — and the first version of the fix was caught by the test failing,
 not by my reading it.
 
+### And a P1 in the same round: a call that outlives its client
+
+`callLifecycleTracker.begin()` captured the `MatrixClient` in a `const`, and a
+**token refresh builds a new one for the same account** and tears the old one
+down. Every guard in the tracker then compared against an object the service had
+thrown away:
+
+* the MatrixRTC membership listener hung off the dead client and never fired
+  again, so attendance stopped updating;
+* the mismatch cleanup that was supposed to catch this lived *inside* that
+  listener, so it was never reached either;
+* and on leaving, the terminal write found `isCurrentClient()` false and its
+  retry chain stopped on the same check.
+
+The durable card therefore stayed `running` for good — after something the user
+can neither see nor avoid. That is the same class of defect as the missed-call
+bug: a card stuck in a state the call is not in, with a Join button for a call
+nobody is in.
+
+The tracker follows the **account** now, not the object: `onClientChange` moves
+the listeners and the writer to a replacement client with the same user id, and
+drops the tracked call for a different user id or none — a logout, where nothing
+left may write that card, and writing it as somebody else would be worse than
+leaving it, since the card names an actor. `SessionStream` was already using
+`onClientChange` for its room listeners; the tracker simply was not.
+
+Two tests. The replacement-client one fails against the old binding
+(`expected "spy" to be called 1 times, but got 0 times` — the ending never
+written). The different-account one passes either way and is there to keep the
+fix from writing a card as the wrong person.
+
 ## 21. Where both branches stand, and what is still unverified
 
 **Gates, on the pushed heads.**

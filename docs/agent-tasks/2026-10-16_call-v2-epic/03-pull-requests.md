@@ -290,10 +290,19 @@ pond.js noise this suite has been carrying.
     this repository executes none of its CSS — jsdom applies no stylesheet and
     the screenshot harness never renders the host shell.
 
-The last five steps need two accounts and a deployed fork; none of them can be
-reached from this container, and #780 should not be called covered until
-somebody has run them and written down what happened. Step 10 needs only one
-account and a browser.
+11. **A token refresh during a live call**, which needs one account and either
+    patience or a shortened token lifetime. With a group call running and the
+    card showing `running`, let the access token refresh, then leave the call.
+    The card must reach its ending — `ended` with the attendance, or `missed`
+    if nobody ever joined. Before this round it stayed `running` for good,
+    because the tracker was bound to the client the refresh replaced.
+    Attendance must keep updating across the refresh too: have somebody join
+    after it.
+
+Steps 5 to 9 need two accounts and a deployed fork; none of them can be reached
+from this container, and #780 should not be called covered until somebody has
+run them and written down what happened. Steps 10 and 11 need only one
+account.
 
 ### Not in this branch, deliberately
 
