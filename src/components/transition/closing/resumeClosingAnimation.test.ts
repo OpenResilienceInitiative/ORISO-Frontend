@@ -1,0 +1,445 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { transitionMotion } from '../transitionMotion';
+import { resumeClosingAnimation } from './playClosingAnimation';
+import { CLOSING_VARIANTS, ClosingVariant } from './closingVariants';
+import {
+	CLOSING_HANDOVER_KEY,
+	ClosingHandover,
+	leaveClosingHandover
+} from './closingHandover';
+
+const ROOT = '[data-closing-animation]';
+/** The viewport jsdom stands in for is 1024 x 768. */
+const ORIGIN = { x: 256, y: 384 };
+
+interface Call {
+	layer: string | undefined;
+	phase: string;
+	keyframes: Keyframe[];
+	finish: ReturnType<typeof vi.fn>;
+}
+
+/**
+ * jsdom has no Web Animations. What matters is which animations were started
+ * in which phase, whether the cover was put at its end state at once
+ * (`finish`), and whether the reveal reports back.
+ */
+const installAnimate = (reveal: 'at once' | 'never' = 'at once') => {
+	const calls: Call[] = [];
+	const animate = vi.fn(function (this: HTMLElement, keyframes: Keyframe[]) {
+		// Looked up from the animated element: the cover may be off the page by now.
+		const phase =
+			this.closest<HTMLElement>(ROOT)?.dataset.closingPhase ?? '';
+		const finish = vi.fn();
+		calls.push({
+			layer: this.dataset?.closingLayer,
+			phase,
+			keyframes,
+			finish
+		});
+		return {
+			finish,
+			finished:
+				phase !== 'reveal' || reveal === 'at once'
+					? Promise.resolve()
+					: new Promise<void>(() => undefined)
+		};
+	});
+	(Element.prototype as unknown as { animate: unknown }).animate = animate;
+	(document.documentElement as unknown as { animate: unknown }).animate =
+		animate;
+	return {
+		calls,
+		cover: () => calls.filter((call) => call.phase !== 'reveal'),
+		reveal: () => calls.filter((call) => call.phase === 'reveal')
+	};
+};
+const removeAnimate = () => {
+	delete (Element.prototype as unknown as { animate?: unknown }).animate;
+	delete (document.documentElement as unknown as { animate?: unknown })
+		.animate;
+};
+
+const field = (name: 'message-field' | 'call' = 'message-field') => {
+	const element = document.createElement('div');
+	element.setAttribute('data-closing-focal', name);
+	element.getBoundingClientRect = () =>
+		({ left: 10, top: 700, width: 300, height: 60 }) as DOMRect;
+	document.body.appendChild(element);
+};
+/** The centre of the field above. */
+const FIELD = { x: 160, y: 730 };
+
+const leaveNote = (overrides: Partial<ClosingHandover> = {}) =>
+	leaveClosingHandover(window, {
+		variant: 'circleZoom',
+		focal: 'messageField',
+		origin: { x: ORIGIN.x / 1024, y: ORIGIN.y / 768 },
+		at: Date.now(),
+		...overrides
+	});
+
+const root = () => document.querySelector<HTMLElement>(ROOT);
+const phase = () => root()?.getAttribute('data-closing-phase');
+const circleReveal = (calls: Call[]) =>
+	calls.find((call) => call.layer === 'circle')?.keyframes.at(-1)?.transform;
+
+/**
+ * ORISO-Frontend#1737. The new document picks the closing animation up where
+ * the old one let go: the screen is covered before anything else is on it, the
+ * app starts underneath, and the reveal ends on the message field.
+ */
+describe('resumeClosingAnimation', () => {
+	beforeEach(() => {
+		vi.useFakeTimers({
+			toFake: [
+				'setTimeout',
+				'clearTimeout',
+				'Date',
+				'requestAnimationFrame'
+			]
+		});
+	});
+	afterEach(() => {
+		vi.restoreAllMocks();
+		vi.useRealTimers();
+		removeAnimate();
+		delete (window as unknown as { matchMedia?: unknown }).matchMedia;
+		document.body.innerHTML = '';
+		window.sessionStorage.clear();
+	});
+
+	it('plays nothing when the old document left no note', async () => {
+		const play = installAnimate();
+		const result = await resumeClosingAnimation();
+		expect(result.played).toBe(false);
+		expect(root()).toBeNull();
+		expect(play.calls).toHaveLength(0);
+	});
+
+	it.each(CLOSING_VARIANTS)(
+		'%s: covers the screen before anything else, in the design the old document chose',
+		(variant) => {
+			const play = installAnimate();
+			leaveNote({ variant });
+
+			void resumeClosingAnimation();
+
+			// Synchronously: nothing may be painted between the page load and the cover.
+			expect(root()?.getAttribute('data-closing-animation')).toBe(
+				variant
+			);
+			expect(phase()).toBe('covered');
+			expect(
+				root()?.querySelectorAll('[data-closing-layer]').length
+			).toBeGreaterThan(0);
+			expect(play.cover().length).toBeGreaterThan(0);
+			play.cover().forEach((call) =>
+				expect(
+					call.finish,
+					'the cover is put at its end at once, not played again'
+				).toHaveBeenCalledTimes(1)
+			);
+			expect(play.reveal(), 'the reveal waits for the app').toHaveLength(
+				0
+			);
+		}
+	);
+
+	it('is picked up once: a reload while it plays does not play it again', async () => {
+		installAnimate();
+		leaveNote();
+		void resumeClosingAnimation();
+		expect(window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)).toBeNull();
+	});
+
+	it('opens the circle from the spot the old document pressed, on this screen', () => {
+		installAnimate();
+		leaveNote({ variant: 'circleZoom', origin: { x: 0.75, y: 0.25 } });
+
+		void resumeClosingAnimation();
+
+		const disc = root()!.querySelector<HTMLElement>(
+			'[data-closing-layer="circle"]'
+		)!;
+		const centre = {
+			x: parseFloat(disc.style.left) + parseFloat(disc.style.width) / 2,
+			y: parseFloat(disc.style.top) + parseFloat(disc.style.height) / 2
+		};
+		expect(centre).toEqual({
+			x: 0.75 * window.innerWidth,
+			y: 0.25 * window.innerHeight
+		});
+	});
+
+	it("covers in the tenant's own colours, which the palette of this document has not reached yet", () => {
+		installAnimate();
+		leaveNote({
+			variant: 'circleZoom',
+			colors: { primary: '#0050a0', primaryDark: '#00305f' }
+		});
+
+		void resumeClosingAnimation();
+
+		const normalised = (colour: string) => {
+			const probe = document.createElement('div');
+			probe.style.background = colour;
+			return probe.style.background;
+		};
+		const disc = root()!.querySelector<HTMLElement>(
+			'[data-closing-layer="circle"]'
+		)!;
+		expect(disc.style.background).toBe(normalised('#0050a0'));
+		// The deeper shade grows over the disc while it closes.
+		expect(disc.firstElementChild).not.toBeNull();
+		expect((disc.firstElementChild as HTMLElement).style.background).toBe(
+			normalised('#00305f')
+		);
+	});
+
+	it("covers every design in the tenant's colours", () => {
+		const normalised = (colour: string) => {
+			const probe = document.createElement('div');
+			probe.style.background = colour;
+			return probe.style.background;
+		};
+		for (const variant of ['curtain', 'slideReveal'] as const) {
+			installAnimate();
+			document.body.innerHTML = '';
+			leaveNote({
+				variant,
+				colors: { primary: '#0050a0', primaryDark: '#00305f' }
+			});
+			void resumeClosingAnimation();
+			const layers = [
+				...root()!.querySelectorAll<HTMLElement>('[data-closing-layer]')
+			];
+			expect(layers.length).toBeGreaterThan(0);
+			layers.forEach((layer) =>
+				expect(
+					[normalised('#0050a0'), normalised('#00305f')],
+					`${variant}: ${layer.dataset.closingLayer}`
+				).toContain(layer.style.background)
+			);
+			root()!.remove();
+		}
+	});
+
+	it('waits for the app, reveals onto the message field and leaves nothing behind', async () => {
+		const play = installAnimate();
+		leaveNote();
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(phase(), 'still covered while the app starts').toBe('covered');
+		expect(play.reveal()).toHaveLength(0);
+
+		field();
+		await vi.advanceTimersByTimeAsync(100);
+		const result = await pending;
+
+		expect(result.played).toBe(true);
+		expect(circleReveal(play.reveal())).toBe(
+			`translate(${FIELD.x - ORIGIN.x}px, ${FIELD.y - ORIGIN.y}px) scale(0)`
+		);
+		expect(root(), 'nothing covers the page afterwards').toBeNull();
+	});
+
+	it('passes through the same phases as the animation in one document', async () => {
+		const seen: string[] = [];
+		installAnimate();
+		leaveNote();
+		field();
+		new MutationObserver(() => {
+			const now = phase();
+			if (now && seen.at(-1) !== now) seen.push(now);
+		}).observe(document.body, {
+			subtree: true,
+			attributes: true,
+			childList: true
+		});
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(200);
+		await pending;
+		await Promise.resolve();
+		expect(seen).toEqual(['covered', 'reveal', 'revealed']);
+	});
+
+	it('ends on the call when the old document was on its way to one', async () => {
+		const play = installAnimate();
+		leaveNote({ focal: 'call' });
+		field('call');
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(200);
+		await pending;
+		expect(circleReveal(play.reveal())).toContain(
+			`${FIELD.x - ORIGIN.x}px`
+		);
+	});
+
+	it('gives the app the time a new document needs before it settles for the fallback point', async () => {
+		const play = installAnimate();
+		leaveNote();
+		const pending = resumeClosingAnimation();
+		// Later than a swap inside one document may take, earlier than a page load may.
+		const { focalWaitMs, handoverFocalWaitMs } = transitionMotion.closing;
+		const late = focalWaitMs + 700;
+		expect(late).toBeLessThan(handoverFocalWaitMs);
+		await vi.advanceTimersByTimeAsync(late);
+		field();
+		await vi.advanceTimersByTimeAsync(200);
+		await pending;
+
+		expect(circleReveal(play.reveal())).toBe(
+			`translate(${FIELD.x - ORIGIN.x}px, ${FIELD.y - ORIGIN.y}px) scale(0)`
+		);
+	});
+
+	it('settles for the fallback point when the app never shows the field, and still gives the page back', async () => {
+		const play = installAnimate();
+		leaveNote();
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(
+			transitionMotion.closing.handoverFocalWaitMs - 100
+		);
+		expect(phase(), 'still waiting just before the end of the wait').toBe(
+			'covered'
+		);
+		await vi.advanceTimersByTimeAsync(300);
+		await pending;
+
+		expect(circleReveal(play.reveal())).toBe(
+			`translate(${window.innerWidth / 2 - ORIGIN.x}px, ${
+				window.innerHeight * 0.82 - ORIGIN.y
+			}px) scale(0)`
+		);
+		expect(root()).toBeNull();
+	});
+
+	it('never leaves the page covered when the reveal never reports back', async () => {
+		installAnimate('never');
+		leaveNote();
+		field();
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs - 50);
+		expect(root(), 'still playing just before the cap').not.toBeNull();
+		await vi.advanceTimersByTimeAsync(100);
+
+		expect((await pending).played).toBe(true);
+		expect(root(), 'nothing covers the page after the cap').toBeNull();
+	});
+
+	it('does not open onto layers that are gone when a hidden tab comes back after the cap', async () => {
+		const play = installAnimate();
+		leaveNote();
+		const waiting: FrameRequestCallback[] = [];
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+			(callback) => waiting.push(callback)
+		);
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs + 50);
+		await pending;
+		expect(root()).toBeNull();
+		expect(waiting.length, 'it was still looking').toBeGreaterThan(0);
+
+		waiting.splice(0).forEach((frame) => frame(0));
+		await vi.advanceTimersByTimeAsync(3000);
+
+		expect(play.reveal()).toHaveLength(0);
+	});
+
+	it('never takes a pointer: the root and every layer let it through', () => {
+		installAnimate();
+		leaveNote({ variant: 'curtain' });
+		void resumeClosingAnimation();
+
+		expect(root()!.style.pointerEvents).toBe('none');
+		expect(root()!.getAttribute('aria-hidden')).toBe('true');
+		root()!
+			.querySelectorAll<HTMLElement>('[data-closing-layer]')
+			.forEach((layer) => expect(layer.style.pointerEvents).toBe('none'));
+	});
+
+	describe('when it should not play', () => {
+		it('throws a note away that is older than the animation may cover the page', async () => {
+			const play = installAnimate();
+			leaveNote({ at: Date.now() - transitionMotion.closing.capMs - 1 });
+
+			const result = await resumeClosingAnimation();
+
+			expect(result.played).toBe(false);
+			expect(root()).toBeNull();
+			expect(play.calls).toHaveLength(0);
+			expect(
+				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
+			).toBeNull();
+		});
+
+		it.each<ClosingVariant>(['curtain', 'circleZoom', 'slideReveal'])(
+			'%s: draws nothing for a person who asked for less motion, and throws the note away',
+			async (variant) => {
+				const play = installAnimate();
+				leaveNote({ variant });
+
+				const result = await resumeClosingAnimation({
+					reducedMotion: true
+				});
+
+				expect(result.played).toBe(false);
+				expect(root()).toBeNull();
+				expect(play.calls).toHaveLength(0);
+				expect(
+					window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
+				).toBeNull();
+			}
+		);
+
+		it('asks the system by itself whether the person wants less motion', async () => {
+			const play = installAnimate();
+			window.matchMedia = vi.fn(
+				(query: string) =>
+					({
+						matches: query.includes('prefers-reduced-motion'),
+						media: query
+					}) as MediaQueryList
+			) as unknown as typeof window.matchMedia;
+			leaveNote();
+
+			const result = await resumeClosingAnimation();
+
+			expect(result.played).toBe(false);
+			expect(play.calls).toHaveLength(0);
+			expect(root()).toBeNull();
+		});
+
+		it('leaves the note alone when there is no page to cover yet', async () => {
+			installAnimate();
+			leaveNote();
+			const noBody = {
+				defaultView: window,
+				body: null,
+				documentElement: document.documentElement
+			} as unknown as Document;
+
+			const result = await resumeClosingAnimation({ document: noBody });
+
+			expect(result.played).toBe(false);
+			expect(
+				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
+			).not.toBeNull();
+		});
+
+		it('draws nothing in a browser that cannot animate, and throws the note away', async () => {
+			removeAnimate();
+			leaveNote();
+
+			const result = await resumeClosingAnimation();
+
+			expect(result.played).toBe(false);
+			expect(root()).toBeNull();
+			expect(
+				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
+			).toBeNull();
+		});
+	});
+});

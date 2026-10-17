@@ -49,7 +49,8 @@ const centreOf = (element: HTMLElement): FocalPoint | null => {
 
 /**
  * Finds the destination's focal element, waiting for it to appear after the
- * room was swapped. Gives up after `transitionMotion.closing.focalWaitMs` and
+ * room was swapped. Gives up after `waitMs` (`transitionMotion.closing.focalWaitMs`
+ * unless the destination is a new document, which needs longer) and
  * returns the fallback point, so a destination without a marked element only
  * costs the animation its precision, never the person their arrival. `isOver`
  * tells it the animation was cut short (the cap) and nobody needs the answer.
@@ -57,10 +58,11 @@ const centreOf = (element: HTMLElement): FocalPoint | null => {
 export const resolveFocalPoint = (
 	doc: Document,
 	focal: ClosingFocal,
-	isOver: () => boolean = () => false
+	isOver: () => boolean = () => false,
+	waitMs: number = transitionMotion.closing.focalWaitMs
 ): Promise<FocalPoint> => {
 	const win = doc.defaultView as Window;
-	const deadline = Date.now() + transitionMotion.closing.focalWaitMs;
+	const deadline = Date.now() + waitMs;
 	return new Promise((resolve) => {
 		const look = () => {
 			if (isOver()) {

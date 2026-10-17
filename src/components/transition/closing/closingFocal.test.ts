@@ -114,4 +114,49 @@ describe('resolveFocalPoint', () => {
 			'no frame is asked for once it is over'
 		).toBe(framesBefore);
 	});
+
+	it('waits as long as it is told to, when the destination is a new document', async () => {
+		const waitMs = transitionMotion.closing.handoverFocalWaitMs;
+		expect(waitMs).toBeGreaterThan(transitionMotion.closing.focalWaitMs);
+		let settled = false;
+		const pending = resolveFocalPoint(
+			document,
+			'messageField',
+			() => false,
+			waitMs
+		).then((point) => {
+			settled = true;
+			return point;
+		});
+		await vi.advanceTimersByTimeAsync(
+			transitionMotion.closing.focalWaitMs + 200
+		);
+		expect(settled, 'the default wait would be over by now').toBe(false);
+
+		const field = focalElement('message-field', {
+			left: 0,
+			top: 700,
+			width: 200,
+			height: 100
+		});
+		await vi.advanceTimersByTimeAsync(40);
+		expect((await pending).element).toBe(field);
+	});
+
+	it('gives up at the end of the wait it was told, not before and not after', async () => {
+		const waitMs = 2500;
+		let settled = false;
+		void resolveFocalPoint(
+			document,
+			'messageField',
+			() => false,
+			waitMs
+		).then(() => {
+			settled = true;
+		});
+		await vi.advanceTimersByTimeAsync(waitMs - 100);
+		expect(settled).toBe(false);
+		await vi.advanceTimersByTimeAsync(200);
+		expect(settled).toBe(true);
+	});
 });

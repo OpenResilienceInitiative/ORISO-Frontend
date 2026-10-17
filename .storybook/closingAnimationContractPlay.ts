@@ -37,6 +37,8 @@ interface LayerSnapshot {
 	/** Disc only: where it is centred and how wide it is. */
 	disc: { x: number; y: number; radius: number } | null;
 	pointerEvents: string;
+	/** The colour a person sees on it, as the browser computes it. */
+	background: string;
 }
 
 interface ClosingSnapshot {
@@ -118,7 +120,8 @@ const snapshotOf = (
 							radius: rect.width / 2
 						}
 					: null,
-			pointerEvents: win.getComputedStyle(layer).pointerEvents
+			pointerEvents: win.getComputedStyle(layer).pointerEvents,
+			background: win.getComputedStyle(layer).backgroundColor
 		};
 	});
 	const surfaceEl = doc.querySelector('.stageLayout__content');
@@ -196,18 +199,22 @@ export const recordClosing = (
 	frame = win.requestAnimationFrame(sample);
 	const take = (root: HTMLElement) =>
 		recording.snapshots.push(snapshotOf(doc, root, focal));
+	// The page may be a frame's document: its elements are not instances of
+	// this realm's HTMLElement.
+	const isRoot = (node: Node): node is HTMLElement =>
+		node instanceof win.HTMLElement && node.matches(ROOT);
 	const observer = new MutationObserver((records) => {
 		for (const record of records) {
 			if (record.type === 'attributes') {
 				take(record.target as HTMLElement);
 			}
 			record.addedNodes.forEach((node) => {
-				if (node instanceof HTMLElement && node.matches(ROOT)) {
+				if (isRoot(node)) {
 					take(node);
 				}
 			});
 			record.removedNodes.forEach((node) => {
-				if (node instanceof HTMLElement && node.matches(ROOT)) {
+				if (isRoot(node)) {
 					recording.removedAt = performance.now();
 				}
 			});
@@ -477,5 +484,173 @@ export const verifyClosingSkipped = async (
 		expect(doc.querySelector(ROOT)).toBeNull();
 	} finally {
 		recording.stop();
+	}
+};
+
+export interface ClosingHandoverContractOptions {
+	variant: 'curtain' | 'circleZoom' | 'slideReveal';
+	/** The button that starts the animation in the old document (outside the frame). */
+	press: () => HTMLElement | null;
+	/** The frame the old document lives in; it is navigated to the new one. */
+	frame: () => HTMLIFrameElement | null;
+	/**
+	 * The tenant's colours as the old document's palette computes them. The new
+	 * document has no palette of its own, so a cover in these colours can only
+	 * have been handed over.
+	 */
+	colours: { primary: string; primaryDark: string };
+	/** False: the new document never shows the focal element. */
+	destinationShowsFocal: boolean;
+}
+
+/**
+ * A waiting room that replaces the whole page (the live-chat room): the closing
+ * animation starts in the old document, the browser really navigates, and the
+ * new document must (1) show the finished cover in its very first frame, in
+ * the colours of the old one, (2) reveal onto the message field, and (3) leave
+ * nothing on the page, also when the destination never shows its field.
+ *
+ * The harness announces the new document with a `handover-boot` event on the
+ * frame, just before the app's first module would run, so the recording is
+ * already watching when the cover appears.
+ */
+export const verifyClosingHandover = async (
+	canvasElement: HTMLElement,
+	options: ClosingHandoverContractOptions
+) => {
+	const focal: ContractFocal = 'messageField';
+	const frame = await waitFor(() => {
+		const found = options.frame();
+		expect(found?.contentDocument?.readyState).toBe('complete');
+		return found!;
+	});
+	const oldDocument = frame.contentDocument!;
+	expect(oldDocument.querySelector(ROOT)).toBeNull();
+
+	let next: Document | undefined;
+	let recording: ClosingRecording | undefined;
+	canvasElement.addEventListener(
+		'handover-boot',
+		(event) => {
+			next = (event as CustomEvent<{ document: Document }>).detail
+				.document;
+			recording = recordClosing(next, focal);
+		},
+		{ once: true }
+	);
+
+	const press = await waitFor(() => {
+		const found = options.press();
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	try {
+		await userEvent.click(press);
+
+		// The browser really navigated: a different document, not the old one repainted.
+		await waitFor(() => expect(next).toBeDefined(), {
+			timeout: transitionMotion.closing.capMs
+		});
+		expect(next).not.toBe(oldDocument);
+		expect(next!.URL.startsWith('blob:')).toBe(true);
+
+		// The first thing the new document shows is the finished cover: nothing
+		// is painted between the old page and the cover, and it is not played again.
+		await waitFor(() =>
+			expect(recording!.snapshots.length).toBeGreaterThan(0)
+		);
+		const first = recording!.snapshots[0];
+		expect(first.variant).toBe(options.variant);
+		expect(first.phase).toBe('covered');
+		expect(first.running, 'the cover is not played a second time').toBe(0);
+		expect(first.layers.length).toBeGreaterThan(0);
+		expect(covers(first, first.viewport)).toBe(true);
+
+		// In the colours of the old document, which this one has no palette for.
+		const palette = [options.colours.primary, options.colours.primaryDark];
+		for (const layer of first.layers) {
+			expect(
+				palette,
+				`layer "${layer.name}" is painted in the tenant's colour`
+			).toContain(layer.background);
+		}
+		expect(
+			first.layers.some(
+				(layer) => layer.background === options.colours.primary
+			)
+		).toBe(true);
+
+		await waitFor(() => expect(recording!.removedAt).not.toBeNull(), {
+			timeout: transitionMotion.closing.capMs + 2000
+		});
+		const startedAt = first.at;
+
+		// It never swallows a click.
+		for (const snapshot of recording!.snapshots) {
+			expect(snapshot.rootPointerEvents).toBe('none');
+			for (const layer of snapshot.layers) {
+				expect(layer.pointerEvents).toBe('none');
+			}
+		}
+
+		// It reveals, then ends on the message field.
+		const revealing = phaseOf(recording!, 'reveal');
+		expect(revealing.running).toBeGreaterThan(0);
+		const ended = phaseOf(recording!, 'revealed');
+		expect(
+			ended.at - revealing.at,
+			'the reveal takes long enough to see'
+		).toBeGreaterThanOrEqual(300);
+
+		if (options.destinationShowsFocal) {
+			expect(ended.focal).not.toBeNull();
+			const focalBox = ended.focal!;
+			if (options.variant === 'circleZoom') {
+				const disc = ended.layers.find((layer) => layer.disc)?.disc;
+				expect(
+					disc,
+					'the circle is still there at the end'
+				).toBeDefined();
+				expect(
+					Math.hypot(
+						disc!.x - (focalBox.left + focalBox.right) / 2,
+						disc!.y - (focalBox.top + focalBox.bottom) / 2
+					)
+				).toBeLessThanOrEqual(POINT_TOLERANCE_PX);
+				expect(disc!.radius).toBeLessThanOrEqual(POINT_TOLERANCE_PX);
+			}
+			for (const layer of ended.layers) {
+				expect(
+					layer.visible && intersect(layer.visible, focalBox),
+					`layer "${layer.name}" no longer covers the message field`
+				).toBeFalsy();
+			}
+		} else {
+			// Nothing to end on: it settles for a point near the bottom, and still gives the page back.
+			expect(ended.focal).toBeNull();
+		}
+
+		// Never longer than the cap, and nothing is left on the page.
+		expect(recording!.removedAt! - startedAt).toBeLessThan(
+			transitionMotion.closing.capMs
+		);
+		expect(next!.querySelector(ROOT)).toBeNull();
+		if (options.destinationShowsFocal) {
+			const focalBox = ended.focal!;
+			const field = next!.querySelector<HTMLElement>(FOCAL[focal]);
+			const hit = next!.elementFromPoint(
+				(focalBox.left + focalBox.right) / 2,
+				(focalBox.top + focalBox.bottom) / 2
+			);
+			expect(hit && field!.contains(hit)).toBe(true);
+		}
+		expect(
+			frame.contentWindow?.sessionStorage.getItem(
+				'oriso.closingHandover.v1'
+			),
+			'the note is used up'
+		).toBeNull();
+	} finally {
+		recording?.stop();
 	}
 };

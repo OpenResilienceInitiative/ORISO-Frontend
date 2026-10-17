@@ -34,6 +34,11 @@ export const transitionMotion = {
 		 * second away; the red holds the screen instead of showing the half-way.
 		 */
 		focalWaitMs: 1800,
+		/**
+		 * The same wait when the destination is a new document: the chat is
+		 * further away, behind a page load and the app's start-up.
+		 */
+		handoverFocalWaitMs: 3000,
 		/** Whatever happens, nothing covers the page longer than this. */
 		capMs: 4000
 	}

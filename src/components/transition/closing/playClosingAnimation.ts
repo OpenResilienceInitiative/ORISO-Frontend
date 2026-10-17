@@ -1,6 +1,12 @@
 import { orisoInputColors } from '../../form/orisoInputDesign';
+import { prefersReducedMotion } from '../prefersReducedMotion';
 import { transitionMotion } from '../transitionMotion';
 import { ClosingFocal, FocalPoint, resolveFocalPoint } from './closingFocal';
+import {
+	ClosingHandoverColors,
+	leaveClosingHandover,
+	takeClosingHandover
+} from './closingHandover';
 import { ClosingVariant } from './closingVariants';
 
 export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
@@ -34,8 +40,11 @@ const { closing } = transitionMotion;
 /** Above every dialog, snackbar and tooltip, and never in the way of a pointer. */
 const Z_INDEX = '1600';
 
-const primary = orisoInputColors.primary;
-const primaryDark = orisoInputColors.primaryDark;
+/** The platform's colours: tokens, so a tenant's palette reaches them live. */
+const TOKEN_COLORS: ClosingHandoverColors = {
+	primary: orisoInputColors.primary,
+	primaryDark: orisoInputColors.primaryDark
+};
 
 interface Plan {
 	/** Starts the cover. Everything it needs exists already. */
@@ -50,6 +59,7 @@ interface Frame {
 	width: number;
 	height: number;
 	origin: { x: number; y: number };
+	colors: ClosingHandoverColors;
 }
 
 const settle = (animations: Animation[]) =>
@@ -102,6 +112,7 @@ const px = (value: number) => `${value}px`;
  */
 const curtain = (frame: Frame): Plan => {
 	const { doc, width, height } = frame;
+	const { primary, primaryDark } = frame.colors;
 	const box = doc
 		.querySelector('.stageLayout__content')
 		?.getBoundingClientRect();
@@ -257,6 +268,7 @@ const curtain = (frame: Frame): Plan => {
  */
 const circleZoom = (frame: Frame): Plan => {
 	const { width, height, origin } = frame;
+	const { primary, primaryDark } = frame.colors;
 	const radius =
 		Math.max(
 			Math.hypot(origin.x, origin.y),
@@ -326,6 +338,7 @@ const circleZoom = (frame: Frame): Plan => {
  */
 const slideReveal = (frame: Frame): Plan => {
 	const { width, height } = frame;
+	const { primary, primaryDark } = frame.colors;
 	const sheet = (name: string, background: string) =>
 		layer(frame, name, {
 			left: '0',
@@ -383,6 +396,81 @@ const canAnimate = (doc: Document) =>
 	typeof doc.documentElement.animate === 'function';
 
 /**
+ * The root every animation draws into. It is appended to the document body and
+ * not rendered by the room: the room is unmounted while the screen is covered,
+ * and the animation has to outlive it.
+ */
+const createStage = (
+	doc: Document,
+	win: Window,
+	variant: ClosingVariant,
+	origin: { x: number; y: number },
+	colors: ClosingHandoverColors = TOKEN_COLORS
+) => {
+	const width = win.innerWidth;
+	const height = win.innerHeight;
+	const root = doc.createElement('div');
+	root.setAttribute('aria-hidden', 'true');
+	root.dataset.closingAnimation = variant;
+	root.dataset.closingPhase = 'cover';
+	Object.assign(root.style, {
+		position: 'fixed',
+		inset: '0',
+		zIndex: Z_INDEX,
+		overflow: 'hidden',
+		pointerEvents: 'none'
+	});
+	const setPhase = (phase: ClosingPhase) => {
+		root.dataset.closingPhase = phase;
+	};
+	const plan = PLANS[variant]({
+		doc,
+		root,
+		width,
+		height,
+		origin,
+		colors
+	});
+	return { root, plan, setPhase };
+};
+
+type Stage = ReturnType<typeof createStage>;
+
+/**
+ * The second half: look for where the destination wants the person's eye, then
+ * give the screen back, ending there. Does nothing once `isOver` says the cap
+ * has taken the layers away.
+ */
+const uncover = async (
+	doc: Document,
+	win: Window,
+	stage: Stage,
+	focal: ClosingFocal,
+	isOver: () => boolean,
+	waitMs?: number
+) => {
+	const point = await resolveFocalPoint(doc, focal, isOver, waitMs);
+	// The cap won while it waited: nobody is looking at these layers.
+	if (isOver()) return;
+	stage.setPhase('reveal');
+	await settle(stage.plan.reveal(point));
+	stage.setPhase('revealed');
+	// One frame at rest, so the end state can be seen (and measured).
+	await new Promise<void>((resolve) =>
+		win.requestAnimationFrame(() => resolve())
+	);
+};
+
+const readTokenColors = (doc: Document, win: Window) => {
+	const style = win.getComputedStyle(doc.documentElement);
+	const primary = style.getPropertyValue('--m3-primary').trim();
+	const primaryDark = style.getPropertyValue('--m3-primary-hover').trim();
+	return primary && primaryDark ? { primary, primaryDark } : undefined;
+};
+
+const clamp = (share: number) => Math.min(1, Math.max(0, share));
+
+/**
  * Plays the platform's closing animation and swaps the room in the middle of it.
  *
  * The layers are appended to the document body and not rendered by the room:
@@ -393,6 +481,10 @@ const canAnimate = (doc: Document) =>
  * - the layers never take a pointer (`pointer-events: none` on every one);
  * - after `closing.capMs` the layers are removed even if an animation never
  *   reports back, so nothing is ever left covering the page.
+ *
+ * A room that replaces the whole page cannot reveal in its own document. When
+ * the page goes while the screen is covered, the animation leaves a note for
+ * the next document (`resumeClosingAnimation`), which plays the reveal.
  */
 export const playClosingAnimation = async (
 	options: PlayClosingAnimationOptions
@@ -418,47 +510,42 @@ export const playClosingAnimation = async (
 		return { played: false };
 	}
 
-	const width = win.innerWidth;
-	const height = win.innerHeight;
-	const root = doc.createElement('div');
-	root.setAttribute('aria-hidden', 'true');
-	root.dataset.closingAnimation = options.variant;
-	root.dataset.closingPhase = 'cover';
-	Object.assign(root.style, {
-		position: 'fixed',
-		inset: '0',
-		zIndex: Z_INDEX,
-		overflow: 'hidden',
-		pointerEvents: 'none'
-	});
-	const setPhase = (phase: ClosingPhase) => {
-		root.dataset.closingPhase = phase;
+	const origin = options.origin ?? {
+		x: win.innerWidth / 2,
+		y: win.innerHeight * 0.82
 	};
+	const stage = createStage(doc, win, options.variant, origin);
+	const { root, plan, setPhase } = stage;
 
-	const plan = PLANS[options.variant]({
-		doc,
-		root,
-		width,
-		height,
-		origin: options.origin ?? { x: width / 2, y: height * 0.82 }
-	});
+	// The page is being replaced while the screen is covered: the next
+	// document picks the animation up.
+	const handOver = () => {
+		// Only a cover that is on the page and standing: nothing is carried on
+		// that is not there to see.
+		if (!root.isConnected || root.dataset.closingPhase !== 'covered') {
+			return;
+		}
+		const colors = readTokenColors(doc, win);
+		leaveClosingHandover(win, {
+			variant: options.variant,
+			focal: options.focal,
+			origin: {
+				x: clamp(origin.x / win.innerWidth),
+				y: clamp(origin.y / win.innerHeight)
+			},
+			...(colors && { colors }),
+			at: Date.now()
+		});
+	};
 
 	let over = false;
 	const sequence = async () => {
 		doc.body.appendChild(root);
+		win.addEventListener('pagehide', handOver);
 		await settle(plan.cover());
 		setPhase('covered');
 		await swap();
-		const focal = await resolveFocalPoint(doc, options.focal, () => over);
-		// The cap won while it waited: nobody is looking at these layers.
-		if (over) return;
-		setPhase('reveal');
-		await settle(plan.reveal(focal));
-		setPhase('revealed');
-		// One frame at rest, so the end state can be seen (and measured).
-		await new Promise<void>((resolve) =>
-			win.requestAnimationFrame(() => resolve())
-		);
+		await uncover(doc, win, stage, options.focal, () => over);
 	};
 
 	let capTimer: number | undefined;
@@ -469,9 +556,84 @@ export const playClosingAnimation = async (
 		await Promise.race([sequence(), cap]);
 	} finally {
 		win.clearTimeout(capTimer);
+		win.removeEventListener('pagehide', handOver);
 		over = true;
 		root.remove();
 		swap();
+	}
+	return { played: true };
+};
+
+export interface ResumeClosingAnimationOptions {
+	/** Defaults to what the person asked the system for. */
+	reducedMotion?: boolean;
+	document?: Document;
+}
+
+/**
+ * The other half of a closing animation that began in the previous document.
+ *
+ * Called by the app's first module. If the previous document left a note, the
+ * screen is covered at once, in the design and colours it had, before anything
+ * else is on it; the app starts underneath; and the reveal plays as soon as the
+ * destination shows its focal element, ending there. It plays at most once per
+ * note, never longer than `closing.capMs`, and not at all for a person who
+ * asked for less motion (the previous document drew nothing for them either).
+ */
+export const resumeClosingAnimation = async (
+	options: ResumeClosingAnimationOptions = {}
+): Promise<PlayClosingAnimationResult> => {
+	const doc = options.document ?? document;
+	const win = doc.defaultView;
+	if (!win || !doc.body) {
+		return { played: false };
+	}
+	const handover = takeClosingHandover(win);
+	if (
+		!handover ||
+		(options.reducedMotion ?? prefersReducedMotion(win)) ||
+		!canAnimate(doc)
+	) {
+		return { played: false };
+	}
+
+	const stage = createStage(
+		doc,
+		win,
+		handover.variant,
+		{
+			x: handover.origin.x * win.innerWidth,
+			y: handover.origin.y * win.innerHeight
+		},
+		handover.colors
+	);
+	let over = false;
+	let capTimer: number | undefined;
+	const cap = new Promise<void>((resolve) => {
+		capTimer = win.setTimeout(resolve, closing.capMs);
+	});
+	doc.body.appendChild(stage.root);
+	try {
+		await Promise.race([
+			(async () => {
+				// The cover was played in the old document: here it only stands.
+				stage.plan.cover().forEach((animation) => animation.finish());
+				stage.setPhase('covered');
+				await uncover(
+					doc,
+					win,
+					stage,
+					handover.focal,
+					() => over,
+					closing.handoverFocalWaitMs
+				);
+			})(),
+			cap
+		]);
+	} finally {
+		win.clearTimeout(capTimer);
+		over = true;
+		stage.root.remove();
 	}
 	return { played: true };
 };
