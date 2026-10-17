@@ -25,13 +25,16 @@ const COLLAPSE_KEY_PREFIX = 'oriso.notificationSetup.';
 const Fixture = ({
 	email = false,
 	browser = false,
-	messageId = '$story-message'
+	messageId = '$story-message',
+	startOpen = false
 }: {
 	email?: boolean;
 	browser?: boolean;
 	messageId?: string;
+	startOpen?: boolean;
 }) => {
 	const [ready, setReady] = React.useState(false);
+	const [reloadKey, setReloadKey] = React.useState(0);
 	const [userData, setUserData] = React.useState(() =>
 		mockUserData({
 			email: 'ratsuchend@example.org',
@@ -129,7 +132,9 @@ const Fixture = ({
 				<ModalProvider>
 					<MessageStoryShell>
 						<NotificationSetupMessage
+							key={reloadKey}
 							messageId={messageId}
+							startOpen={startOpen}
 							copy={
 								<p>
 									Wir können Sie benachrichtigen, wenn eine
@@ -137,6 +142,12 @@ const Fixture = ({
 								</p>
 							}
 						/>
+						<button
+							type="button"
+							onClick={() => setReloadKey((key) => key + 1)}
+						>
+							Fixture: reload conversation
+						</button>
 					</MessageStoryShell>
 				</ModalProvider>
 			</TenantContext.Provider>
@@ -259,7 +270,7 @@ export const CollapsedSignalDesktopEn: Story = {
 	name: 'Collapsed — signal active — desktop 1440 (EN)',
 	args: { browser: true },
 	globals: { ...desktop1440Globals, ...EN },
-	play: summary(/Notifications: signal on this device on/)
+	play: summary(/Notifications: signal active on this device/)
 };
 
 export const CollapsedBothPhoneDe: Story = {
@@ -292,7 +303,9 @@ export const ClosedWithXNoChannelDesktopDe: Story = {
 				canvas.getByText(/Benachrichtigung: nicht eingerichtet/)
 			).toBeVisible()
 		);
-		expect(canvas.getByRole('button', { name: 'ändern' })).toBeVisible();
+		expect(
+			canvas.getByRole('button', { name: 'Benachrichtigung ändern' })
+		).toBeVisible();
 	}
 };
 
@@ -326,7 +339,9 @@ export const ChooseThenChangeDesktopDe: Story = {
 				canvas.getByText(/Benachrichtigung: E-Mail aktiv/)
 			).toBeVisible()
 		);
-		await userEvent.click(canvas.getByRole('button', { name: 'ändern' }));
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Benachrichtigung ändern' })
+		);
 		await waitFor(() =>
 			expect(
 				canvas.getByRole('button', {
@@ -334,5 +349,46 @@ export const ChooseThenChangeDesktopDe: Story = {
 				})
 			).toBeVisible()
 		);
+	}
+};
+
+export const ClosedWithXSurvivesReloadDesktopDe: Story = {
+	name: 'X survives a reload — still one line (DE)',
+	globals: { ...desktop1440Globals, ...DE },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const close = await canvas.findByRole('button', {
+			name: 'Einrichtung ausblenden'
+		});
+		await waitFor(() => expect(close).toBeVisible());
+		await userEvent.click(close);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Fixture: reload conversation' })
+		);
+		await waitFor(() =>
+			expect(
+				canvas.getByText(/Benachrichtigung: nicht eingerichtet/)
+			).toBeVisible()
+		);
+		expect(
+			canvas.queryByRole('button', {
+				name: /Schreiben Sie mir eine E-Mail/
+			})
+		).toBeNull();
+	}
+};
+
+export const OpenedOnPurposeWithChannelEn: Story = {
+	name: 'Opened on purpose — stays in full although e-mail is active (EN)',
+	args: { email: true, startOpen: true },
+	globals: { ...desktop1440Globals, ...EN },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Hide setup' })
+			).toBeVisible()
+		);
+		expect(canvas.queryByText(/Notifications: email on/)).toBeNull();
 	}
 };

@@ -81,7 +81,7 @@ const emailOn = {
 } as UserDataInterface;
 
 const SUMMARY = 'erstantwort.notificationSummary.label';
-const CHANGE = 'erstantwort.notificationSummary.change';
+const CHANGE = 'erstantwort.notificationSummary.changeLabel';
 const DISMISS = 'erstantwort.notificationSummary.dismiss';
 const EMAIL_CHOICE = /notificationChoice\.email/;
 const BOTH_CHOICE = /notificationChoice\.bothSetup/;
@@ -202,15 +202,42 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		expect(screen.getByRole('button', { name: CHANGE })).toBeTruthy();
 	});
 
-	it('"change" opens the setup again and it stays open after a reload', () => {
+	it('"change" opens the setup again; a reload follows the account again', () => {
 		const first = mount(emailOn);
 		fireEvent.click(screen.getByRole('button', { name: CHANGE }));
 		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
 		expect(screen.queryByRole('button', { name: CHANGE })).toBeNull();
 		first.unmount();
 
+		// A channel is active, so the card has done its job: collapsed.
 		mount(emailOn);
+		expect(screen.getByRole('button', { name: CHANGE })).toBeTruthy();
+		expect(screen.queryByRole('button', { name: EMAIL_CHOICE })).toBeNull();
+	});
+
+	it('"change" clears a remembered X, so the card is open again after a reload', () => {
+		const first = mount(noChannel);
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
+		fireEvent.click(screen.getByRole('button', { name: CHANGE }));
+		first.unmount();
+
+		mount(noChannel);
 		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
+	});
+
+	it('does not let a remembered X hide a setup the person opened on purpose', () => {
+		const first = mount(noChannel);
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
+		first.unmount();
+
+		mount(noChannel, { startOpen: true });
+		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
+	});
+
+	it('shows a setup opened on purpose in full even when a channel is already active', () => {
+		mount(emailOn, { startOpen: true });
+		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
+		expect(screen.queryByRole('button', { name: CHANGE })).toBeNull();
 	});
 
 	it('collapses again when a different channel is chosen after "change"', async () => {
@@ -250,16 +277,18 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		).toBeTruthy();
 	});
 
-	it('remembers each message on its own', () => {
-		const first = mount(emailOn, { messageId: '$event-1' });
+	it('remembers the X for each message on its own', () => {
+		const first = mount(noChannel, { messageId: '$event-1' });
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
 		first.unmount();
 
 		mount(noChannel, { messageId: '$event-2' });
 		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
 	});
 
-	it('does not carry the state over to another account in the same browser', () => {
-		const first = mount(emailOn);
+	it('does not carry an X over to another account in the same browser', () => {
+		const first = mount(noChannel);
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
 		first.unmount();
 
 		mount({ ...noChannel, userId: 'someone-else' });
@@ -267,7 +296,8 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 	});
 
 	it('writes no personal data into the storage key', () => {
-		mount(emailOn);
+		mount(noChannel);
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
 
 		const keys = Object.keys(localStorage).filter((key) =>
 			key.includes('notificationSetup')
@@ -277,6 +307,60 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 			expect(key).not.toContain(USER_ID);
 			expect(key).not.toContain(EMAIL);
 		});
+	});
+
+	it('stores nothing just because a channel is active', () => {
+		mount(emailOn);
+		expect(
+			Object.keys(localStorage).filter((key) =>
+				key.includes('notificationSetup')
+			)
+		).toEqual([]);
+	});
+
+	it('stops waiting for "both" after that flow ended without it', async () => {
+		// The browser refuses, so "both" ends with e-mail only.
+		request.mockImplementation(async () => {
+			Object.defineProperty(Notification, 'permission', {
+				value: 'denied',
+				configurable: true
+			});
+			return 'denied';
+		});
+		mount(noChannel);
+		fireEvent.click(screen.getByRole('button', { name: BOTH_CHOICE }));
+		fireEvent.click(
+			await screen.findByRole('button', { name: ENABLE_BROWSER })
+		);
+		await screen.findByRole('alert');
+		// Still open: the person has to see why the browser step failed.
+		expect(screen.queryByRole('button', { name: CHANGE })).toBeNull();
+
+		// A plain e-mail choice afterwards is no longer part of "both".
+		fireEvent.click(screen.getByRole('button', { name: EMAIL_CHOICE }));
+
+		await waitFor(() =>
+			expect(screen.getByRole('button', { name: CHANGE })).toBeTruthy()
+		);
+	});
+
+	it('keeps the status region mounted, so the collapse is announced', () => {
+		const view = mount(noChannel);
+		const region = view.container.querySelector(
+			'[data-cy="notification-setup-summary-region"]'
+		)!;
+		expect(region.textContent).toBe('');
+
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
+
+		expect(
+			view.container.querySelector(
+				'[data-cy="notification-setup-summary-region"]'
+			)
+		).toBe(region);
+		expect(region.textContent).toContain(
+			'erstantwort.notificationSummary.label'
+		);
 	});
 
 	it('hands keyboard focus to "change" when the message collapses under it', async () => {

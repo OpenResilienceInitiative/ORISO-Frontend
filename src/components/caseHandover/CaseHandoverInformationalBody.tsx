@@ -5,14 +5,12 @@ import { StandingAccessSettings } from './StandingAccessSettings';
 export const CaseHandoverInformationalBody = ({
 	description,
 	sessionId,
-	messageId,
 	onSetupNotifications,
 	mode = 'NONE',
 	conversationType
 }: {
 	description: string;
 	sessionId: number;
-	messageId?: string;
 	onSetupNotifications?: () => void;
 	mode?: 'NONE' | 'OPT_IN' | 'OPT_OUT';
 	conversationType?: string;
@@ -24,7 +22,6 @@ export const CaseHandoverInformationalBody = ({
 			</p>
 			<StandingAccessSettings
 				sessionId={sessionId}
-				messageId={messageId}
 				conversationType={conversationType}
 				accessMode={mode}
 				onSetupNotifications={onSetupNotifications}

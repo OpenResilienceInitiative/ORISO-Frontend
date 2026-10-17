@@ -259,7 +259,7 @@ it('draws the e-mail suggestion as a one-line summary when another channel alrea
 
 	expect(
 		await screen.findByRole('button', {
-			name: 'erstantwort.notificationSummary.change'
+			name: 'erstantwort.notificationSummary.changeLabel'
 		})
 	).toBeTruthy();
 	expect(
@@ -268,7 +268,7 @@ it('draws the e-mail suggestion as a one-line summary when another channel alrea
 
 	fireEvent.click(
 		screen.getByRole('button', {
-			name: 'erstantwort.notificationSummary.change'
+			name: 'erstantwort.notificationSummary.changeLabel'
 		})
 	);
 	expect(

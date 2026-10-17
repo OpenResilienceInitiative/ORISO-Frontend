@@ -5251,6 +5251,7 @@
 		"notificationSummary": {
 			"label": "ሓበሬታ: {{state}}",
 			"change": "ቀይር",
+			"changeLabel": "ሓበሬታ ቀይር",
 			"dismiss": "ምድላው ሕባእ",
 			"none": "ኣይተዳለወን",
 			"email": "ኢመይል ተኸፊቱ",

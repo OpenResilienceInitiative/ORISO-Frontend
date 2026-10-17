@@ -27,15 +27,12 @@ import { CaseHandoverInfoDialog } from './CaseHandoverClientCards';
 /** Manual per-conversation setting. This never decides a pending request. */
 export const StandingAccessSettings = ({
 	sessionId,
-	messageId,
 	conversationType,
 	accessMode,
 	compact = false,
 	onSetupNotifications
 }: {
 	sessionId: number;
-	/** Chat message this sits in; remembers whether its setup card is collapsed. */
-	messageId?: string;
 	conversationType?: string;
 	/** Only a persisted acceptance/grant notice supplies this context. */
 	accessMode?: 'OPT_IN' | 'OPT_OUT' | 'NONE';
@@ -255,7 +252,6 @@ export const StandingAccessSettings = ({
 				policy.emailAllowed &&
 				(setupStarted || !consentEmailActive) && (
 					<NotificationSetupMessage
-						messageId={messageId && `${messageId}:standingAccess`}
 						onStart={() => setSetupStarted(true)}
 						isEmailEnabled={policy.emailAllowed}
 						isBrowserEnabled={policy.browserAllowed}

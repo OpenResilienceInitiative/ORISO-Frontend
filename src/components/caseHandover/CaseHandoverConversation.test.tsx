@@ -6,7 +6,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
@@ -188,6 +189,27 @@ it('opens and focuses one same-conversation setup message without changing conse
 			name: 'caseHandover.consent.info.notificationsAction'
 		})
 	).toHaveLength(1);
+});
+it('collapses the opened setup message to one line once a channel is chosen (ORISO-Frontend#1700)', async () => {
+	setup();
+	const message = await openSetup();
+
+	fireEvent.click(
+		within(message).getByRole('button', {
+			name: /notificationChoice\.email/
+		})
+	);
+
+	expect(
+		await screen.findByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+	expect(
+		within(message).queryByRole('button', {
+			name: /notificationChoice\.email/
+		})
+	).toBeNull();
 });
 it('reading and closing the explanation does not start notification setup', async () => {
 	setup();

@@ -10,7 +10,7 @@ import {
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
-import { NotificationSetup } from './NotificationSetup';
+import { NotificationSetupCollapse } from './NotificationSetupMessage';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { notificationChannelPolicy } from './notificationChannelPolicy';
 import { useNotificationChannels } from './useNotificationChannels';
@@ -37,6 +37,8 @@ import { ErstantwortTrigger } from './erstantwortCatalogue';
 export interface ErstantwortMessageProps {
 	/** The raw, already decrypted message body of the FIRST_RESPONSE event. */
 	rawMessage?: string | null;
+	/** Chat message id; lets an X on the notification setup survive a reload. */
+	messageId?: string;
 	/** Used only when no event exists — the client-side triggers of #825. */
 	trigger?: ErstantwortTrigger;
 	conversationType?: string | null;
@@ -54,6 +56,7 @@ export interface ErstantwortMessageProps {
 
 export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	rawMessage,
+	messageId,
 	trigger,
 	conversationType,
 	deadlineDays,
@@ -203,7 +206,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						persistedInvitation &&
 						!hasChoice &&
 						offerNotificationSetup ? (
-							<NotificationSetup
+							<NotificationSetupCollapse
+								messageId={messageId}
 								isEmailEnabled={emailAllowed}
 								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
@@ -212,7 +216,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 							/>
 						) : undefined,
 					notificationChoice: offerNotificationSetup ? (
-						<NotificationSetup
+						<NotificationSetupCollapse
+							messageId={messageId}
 							isEmailEnabled={emailAllowed}
 							isBrowserEnabled={channels.browserAllowed}
 							onStart={() => setNotificationSetupStarted(true)}

@@ -2181,7 +2181,6 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
-												messageId={_id}
 												onSetupNotifications={
 													grantNotificationPolicy.emailAllowed ||
 													grantNotificationPolicy.browserAllowed
@@ -2207,7 +2206,6 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
-												messageId={_id}
 												onSetupNotifications={
 													grantNotificationPolicy.emailAllowed ||
 													grantNotificationPolicy.browserAllowed
@@ -2616,6 +2614,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
+					messageId={_id}
 					conversationType={erstantwortModality}
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
@@ -2697,7 +2696,7 @@ export const MessageItemComponent = ({
 				(grantNotificationPolicy.emailAllowed ||
 					grantNotificationPolicy.browserAllowed) && (
 					<NotificationSetupMessage
-						messageId={`${_id}:grantNotifications`}
+						startOpen
 						subtitle={translate('profile.notifications.title')}
 						isEmailEnabled={grantNotificationPolicy.emailAllowed}
 						isBrowserEnabled={

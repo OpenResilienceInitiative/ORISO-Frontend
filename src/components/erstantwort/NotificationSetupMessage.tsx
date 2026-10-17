@@ -8,121 +8,120 @@ import { ErstantwortSequence } from './ErstantwortSequence';
 import { NotificationSetup } from './NotificationSetup';
 import { useNotificationChannels } from './useNotificationChannels';
 import {
-	readNotificationSetupCollapseState,
-	writeNotificationSetupCollapseState,
-	type NotificationSetupCollapseState
+	readNotificationSetupDismissed,
+	writeNotificationSetupDismissed
 } from './notificationSetupCollapseState';
 import './NotificationSetupMessage.styles.scss';
 
-interface NotificationSetupMessageProps {
+interface NotificationSetupCollapseProps {
 	/**
-	 * Id of the chat message this setup belongs to. Together with the account
-	 * it decides which collapsed/expanded state is remembered; without it the
-	 * state lasts only while the message is on screen.
+	 * Id of the chat message this setup sits in. Pass it only where the setup
+	 * is really part of the history and renders again after a reload: it lets
+	 * an X survive a reload. Without it the X lasts while the message is on
+	 * screen.
 	 */
 	messageId?: string;
+	/**
+	 * The person opened this setup on purpose (a "set up notifications"
+	 * button): show it in full even if a channel is already active.
+	 */
+	startOpen?: boolean;
 	isEmailEnabled?: boolean;
 	isBrowserEnabled?: boolean;
-	/** Sender subtitle in the kicker line; defaults to the Erstantwort one. */
-	subtitle?: string;
 	/** Short copy above the choices; shown with them, gone when collapsed. */
 	copy?: React.ReactNode;
 	onStart?: () => void;
 }
 
+interface NotificationSetupMessageProps extends NotificationSetupCollapseProps {
+	/** Sender subtitle in the kicker line; defaults to the Erstantwort one. */
+	subtitle?: string;
+}
+
 type ActiveChannels = 'none' | 'email' | 'browser' | 'both';
 
 /**
- * A notification-setup message in the conversation: the full choice while the
- * person still has something to do, one quiet line ("Benachrichtigung: E-Mail
- * aktiv · ändern") once they have chosen or closed it. The message itself stays
- * in the history; only its card gets out of the way.
+ * The setup inside a message bubble: the full choice while the person still
+ * has something to do, one quiet line ("Benachrichtigung: E-Mail aktiv ·
+ * ändern") once a channel is reachable or they pressed the X.
+ *
+ * Collapse follows the account first: a reachable channel collapses the card.
+ * The only thing remembered is an explicit X. "ändern" always wins: it opens
+ * the setup and clears a remembered X, so a card the person asked for is never
+ * hidden by something stale.
  *
  * The setup keeps running while collapsed (it is hidden, not unmounted), so a
- * browser dialog or a half-finished "both" setup is never torn down by a
- * collapse.
+ * browser dialog or a half-finished "both" setup is never torn down.
  */
-export const NotificationSetupMessage = ({
+export const NotificationSetupCollapse = ({
 	messageId,
+	startOpen = false,
 	isEmailEnabled = true,
 	isBrowserEnabled = true,
-	subtitle,
 	copy,
 	onStart
-}: NotificationSetupMessageProps) => {
+}: NotificationSetupCollapseProps) => {
 	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const accountId = userData?.userId;
-	const { emailActive, browserActive } = useNotificationChannels(
-		isEmailEnabled,
-		isBrowserEnabled
-	);
+	const { emailActive, browserActive, browserSilenced } =
+		useNotificationChannels(isEmailEnabled, isBrowserEnabled);
+	// A silenced browser does not reach anyone: the setup stays in full.
+	const browserReachable = browserActive && !browserSilenced;
 	const active: ActiveChannels =
-		emailActive && browserActive
+		emailActive && browserReachable
 			? 'both'
 			: emailActive
 				? 'email'
-				: browserActive
+				: browserReachable
 					? 'browser'
 					: 'none';
 
-	const [stored, setStored] = useState<
-		NotificationSetupCollapseState | undefined
-	>(() =>
-		messageId
-			? readNotificationSetupCollapseState(accountId, messageId)
-			: undefined
+	const [dismissed, setDismissed] = useState(() =>
+		messageId ? readNotificationSetupDismissed(accountId, messageId) : false
 	);
+	// Opened on purpose (startOpen or "ändern"): wins over the account state
+	// until a channel is chosen.
+	const [opened, setOpened] = useState(startOpen);
 	// "Set up both" is two steps; the message waits for the second one.
 	const [bothPending, setBothPending] = useState(false);
 	const root = useRef<HTMLDivElement>(null);
 	const change = useRef<HTMLButtonElement>(null);
-	const dismiss = useRef<HTMLButtonElement>(null);
+	const close = useRef<HTMLButtonElement>(null);
 	const focusChangeNext = useRef(false);
 	const focusSetupNext = useRef(false);
 
 	// Another message or another account in the same mounted tree.
 	useEffect(() => {
-		setStored(
+		setDismissed(
 			messageId
-				? readNotificationSetupCollapseState(accountId, messageId)
-				: undefined
+				? readNotificationSetupDismissed(accountId, messageId)
+				: false
 		);
 		setBothPending(false);
 	}, [accountId, messageId]);
 
-	const remember = (state: NotificationSetupCollapseState) => {
-		const focusInside = !!root.current?.contains(document.activeElement);
-		focusChangeNext.current = state === 'collapsed' && focusInside;
-		focusSetupNext.current = state === 'expanded' && focusInside;
-		setStored(state);
-		if (messageId) {
-			writeNotificationSetupCollapseState(accountId, messageId, state);
-		}
-	};
-
-	/* Nothing remembered: follow the account. A reachable channel means the
-	   card has done its job. */
 	const collapsed =
-		stored === 'collapsed' ||
-		(stored === undefined && active !== 'none' && !bothPending);
+		!opened && (dismissed || (active !== 'none' && !bothPending));
+
+	const noteFocus = (toSummary: boolean) => {
+		const focusInside = !!root.current?.contains(document.activeElement);
+		focusChangeNext.current = toSummary && focusInside;
+		focusSetupNext.current = !toSummary && focusInside;
+	};
 
 	const seenActive = useRef(active);
 	useEffect(() => {
 		const changed = seenActive.current !== active;
 		seenActive.current = active;
-		if (active === 'none') return;
-		if (bothPending) {
-			if (active !== 'both') return;
-			setBothPending(false);
+		if (bothPending && active === 'both') setBothPending(false);
+		// A channel chosen while the setup was open collapses it again. A setup
+		// that was merely opened while a channel was already active stays open.
+		if (opened && changed && active !== 'none' && !bothPending) {
+			noteFocus(true);
+			setOpened(false);
 		}
-		// A channel chosen while the setup was reopened collapses it again; a
-		// reopened setup is never closed just because it loaded with one.
-		if (stored === undefined || (stored === 'expanded' && changed)) {
-			remember('collapsed');
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [active, bothPending, stored]);
+	}, [active, bothPending, opened]);
 
 	useEffect(() => {
 		if (collapsed && focusChangeNext.current) {
@@ -132,95 +131,122 @@ export const NotificationSetupMessage = ({
 		// "ändern" is unmounted when the setup opens; keep keyboard focus inside the message.
 		if (!collapsed && focusSetupNext.current) {
 			focusSetupNext.current = false;
-			dismiss.current?.focus();
+			close.current?.focus();
 		}
 	}, [collapsed]);
+
+	const reopen = () => {
+		noteFocus(false);
+		setDismissed(false);
+		if (messageId) {
+			writeNotificationSetupDismissed(accountId, messageId, false);
+		}
+		setOpened(true);
+	};
+	const dismiss = () => {
+		noteFocus(true);
+		setBothPending(false);
+		setOpened(false);
+		setDismissed(true);
+		if (messageId) {
+			writeNotificationSetupDismissed(accountId, messageId, true);
+		}
+	};
 
 	const stateLabel = t(`erstantwort.notificationSummary.${active}`);
 
 	return (
-		<ErstantwortSequence
-			skipAnimation
-			subtitle={subtitle}
-			bausteine={[{ id: 'notificationSetup', headline: '', body: '' }]}
-			slots={{
-				notificationSetup: (
-					<div ref={root}>
-						{collapsed && (
-							<p
-								className="notificationSetupMessage__summary"
-								role="status"
-							>
-								<span>
-									{t(
-										'erstantwort.notificationSummary.label',
-										{
-											state: stateLabel
-										}
-									)}
-								</span>
-								<span aria-hidden> · </span>
-								<Link
-									component="button"
-									type="button"
-									variant="body2"
-									ref={change}
-									onClick={() => remember('expanded')}
-									sx={{ verticalAlign: 'baseline' }}
-								>
-									{t(
-										'erstantwort.notificationSummary.change'
-									)}
-								</Link>
-							</p>
-						)}
-						{/* Hidden, not unmounted: an open browser dialog or a
-						    half-finished "both" setup keeps its state. */}
-						{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-						<div
-							hidden={collapsed}
-							onClickCapture={(event) => {
-								if (
-									(event.target as Element).closest?.(
-										'.notificationChoiceCard__option--both'
-									)
-								)
-									setBothPending(true);
-							}}
+		<div ref={root}>
+			{/* Always mounted: a live region that appears together with its
+			    text is announced unreliably. */}
+			<div
+				aria-live="polite"
+				aria-atomic="true"
+				data-cy="notification-setup-summary-region"
+			>
+				{collapsed && (
+					<p className="notificationSetupMessage__summary">
+						<span>
+							{t('erstantwort.notificationSummary.label', {
+								state: stateLabel
+							})}
+						</span>
+						<span aria-hidden> · </span>
+						<Link
+							component="button"
+							type="button"
+							variant="body2"
+							ref={change}
+							aria-label={t(
+								'erstantwort.notificationSummary.changeLabel'
+							)}
+							onClick={reopen}
+							sx={{ verticalAlign: 'baseline' }}
 						>
-							<div className="notificationSetupMessage__head">
-								<div className="notificationSetupMessage__copy">
-									{copy}
-								</div>
-								<IconButton
-									ref={dismiss}
-									aria-label={t(
-										'erstantwort.notificationSummary.dismiss'
-									)}
-									onClick={() => {
-										setBothPending(false);
-										remember('collapsed');
-									}}
-									sx={{
-										'flexShrink': 0,
-										'width': 44,
-										'height': 44,
-										'color': 'var(--m3-on-surface-variant)',
-										'& svg': { width: 20, height: 20 }
-									}}
-								>
-									<CloseIcon aria-hidden focusable="false" />
-								</IconButton>
-							</div>
-							<NotificationSetup
-								isEmailEnabled={isEmailEnabled}
-								isBrowserEnabled={isBrowserEnabled}
-								onStart={onStart}
-							/>
-						</div>
-					</div>
-				)
-			}}
-		/>
+							{t('erstantwort.notificationSummary.change')}
+						</Link>
+					</p>
+				)}
+			</div>
+			{/* Hidden, not unmounted: an open browser dialog or a
+			    half-finished "both" setup keeps its state. */}
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+			<div
+				hidden={collapsed}
+				onClickCapture={(event) => {
+					// Only a click on "both" starts the two-step flow. Any other
+					// choice (also after a cancelled "both") ends the wait.
+					const option = (event.target as Element).closest?.(
+						'.notificationChoiceCard__option'
+					);
+					if (option)
+						setBothPending(
+							option.classList.contains(
+								'notificationChoiceCard__option--both'
+							)
+						);
+				}}
+			>
+				<div className="notificationSetupMessage__head">
+					<div className="notificationSetupMessage__copy">{copy}</div>
+					<IconButton
+						ref={close}
+						aria-label={t(
+							'erstantwort.notificationSummary.dismiss'
+						)}
+						onClick={dismiss}
+						sx={{
+							'flexShrink': 0,
+							'width': 44,
+							'height': 44,
+							'color': 'var(--m3-on-surface-variant)',
+							'& svg': { width: 20, height: 20 }
+						}}
+					>
+						<CloseIcon aria-hidden focusable="false" />
+					</IconButton>
+				</div>
+				<NotificationSetup
+					isEmailEnabled={isEmailEnabled}
+					isBrowserEnabled={isBrowserEnabled}
+					onStart={onStart}
+				/>
+			</div>
+		</div>
 	);
 };
+
+/** A stand-alone setup message: the Carimat bubble around the setup. */
+export const NotificationSetupMessage = ({
+	subtitle,
+	...setup
+}: NotificationSetupMessageProps) => (
+	<ErstantwortSequence
+		skipAnimation
+		subtitle={subtitle}
+		bausteine={[{ id: 'notificationSetup', headline: '', body: '' }]}
+		slots={{
+			notificationSetup: <NotificationSetupCollapse {...setup} />
+		}}
+	/>
+);

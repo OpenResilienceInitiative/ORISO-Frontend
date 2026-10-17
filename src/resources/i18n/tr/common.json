@@ -5255,6 +5255,7 @@
 		"notificationSummary": {
 			"label": "Bildirim: {{state}}",
 			"change": "değiştir",
+			"changeLabel": "Bildirimi değiştir",
 			"dismiss": "Kurulumu gizle",
 			"none": "kurulmadı",
 			"email": "e-posta açık",

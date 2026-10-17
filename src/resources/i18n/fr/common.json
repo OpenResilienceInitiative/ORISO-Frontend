@@ -5255,6 +5255,7 @@
 		"notificationSummary": {
 			"label": "Notification : {{state}}",
 			"change": "modifier",
+			"changeLabel": "Modifier la notification",
 			"dismiss": "Masquer la configuration",
 			"none": "non configurée",
 			"email": "e-mail activé",
