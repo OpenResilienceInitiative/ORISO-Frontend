@@ -166,7 +166,10 @@ export const RegistrationHandover = ({
 								state={state}
 								onEnter={handleEnter}
 								label={copy?.cta}
-								status={copy?.status?.[state]}
+								/* The room's status line above already says
+								   (and announces) this state; a second live
+								   region would read it twice. */
+								status=""
 								progress={fill}
 							/>
 						</Box>

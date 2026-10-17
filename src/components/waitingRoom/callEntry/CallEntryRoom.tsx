@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
-import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { WaitingRoomBar } from '../WaitingRoomBar';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
 import {
@@ -83,7 +83,7 @@ export interface CallEntryRoomProps {
 
 /**
  * The call entry (ORISO-Frontend#1386), built from the shared waiting-room
- * parts: `EntryRoomShell` → `WaitingRoomFrame`, `RegistrationFooter`,
+ * parts: `EntryRoomShell` → `WaitingRoomFrame`, `WaitingRoomBar`,
  * `HandoverGateButton`. Prototype in Storybook only; nothing calls Element
  * Call yet.
  *
@@ -186,7 +186,7 @@ export const CallEntryRoom = ({
 		return (
 			<EntryRoomShell kicker={kicker} statusLine={text.title}>
 				<CallNotice blocker={blocker} />
-				<RegistrationFooter>
+				<WaitingRoomBar>
 					<Box sx={{ width: '100%' }}>
 						<HandoverGateButton
 							state={waiting ? 'queued' : 'ready'}
@@ -197,7 +197,7 @@ export const CallEntryRoom = ({
 							testingAttribute="call-entry-gate"
 						/>
 					</Box>
-				</RegistrationFooter>
+				</WaitingRoomBar>
 			</EntryRoomShell>
 		);
 	}
@@ -317,10 +317,7 @@ export const CallEntryRoom = ({
 					</Box>
 				</Box>
 			</Box>
-			<RegistrationFooter
-				/* Mounted anew when the sheet opens, so it slides in. */
-				key={consentOpen ? 'consent' : 'gate'}
-				animateIn={consentOpen}
+			<WaitingRoomBar
 				consent={
 					consentOpen ? (
 						<WaitingRoomConsentPanel
@@ -364,7 +361,7 @@ export const CallEntryRoom = ({
 						testingAttribute="call-entry-gate"
 					/>
 				</Box>
-			</RegistrationFooter>
+			</WaitingRoomBar>
 		</EntryRoomShell>
 	);
 };

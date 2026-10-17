@@ -16,7 +16,10 @@ vi.mock('../../../api/apiPatchUserData', () => ({
 	apiPatchUserData: (...args: unknown[]) =>
 		(apiPatchUserData as (...a: unknown[]) => Promise<void>)(...args)
 }));
-const freshUserData = { dataPrivacyConfirmation: '2026-10-16T12:00:00Z' };
+const freshUserData = {
+	dataPrivacyConfirmation: '2026-10-16T12:00:00Z',
+	termsAndConditionsConfirmation: '2026-10-16T12:00:00Z'
+};
 const apiGetUserData = vi.fn(() => Promise.resolve(freshUserData));
 vi.mock('../../../api/apiGetUserData', () => ({
 	apiGetUserData: () => apiGetUserData()
@@ -172,6 +175,11 @@ describe('GroupWaitingRoom', () => {
 		await waitFor(() =>
 			expect(setUserData).toHaveBeenLastCalledWith(freshUserData)
 		);
+		// Both agreements survive the refresh — neither is lost after joining.
+		expect(setUserData.mock.lastCall?.[0]).toMatchObject({
+			dataPrivacyConfirmation: expect.any(String),
+			termsAndConditionsConfirmation: expect.any(String)
+		});
 	});
 
 	it('stays outside when the agreement cannot be saved', async () => {

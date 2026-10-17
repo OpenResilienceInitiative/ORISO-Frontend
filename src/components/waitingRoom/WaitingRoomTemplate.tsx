@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Box, Typography } from '@mui/material';
-import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
+import { WaitingRoomBar } from './WaitingRoomBar';
 import {
 	registrationMd3,
 	registrationMotion
@@ -130,12 +130,6 @@ export const WaitingRoomTemplate = ({
 			</Box>
 		)}
 
-		{consent ? (
-			<RegistrationFooter key="consent" animateIn consent={consent}>
-				{gate}
-			</RegistrationFooter>
-		) : (
-			<RegistrationFooter key="gate">{gate}</RegistrationFooter>
-		)}
+		<WaitingRoomBar consent={consent}>{gate}</WaitingRoomBar>
 	</>
 );

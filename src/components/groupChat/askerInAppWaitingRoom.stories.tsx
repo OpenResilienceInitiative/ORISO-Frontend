@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { JoinGroupChatView } from './JoinGroupChatView';
 import {
 	buildGroupStageListItem,
@@ -161,5 +161,29 @@ export const Open1440: Story = {
 	play: async ({ canvasElement }) => {
 		await expectBarInCard(canvasElement);
 		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
+	}
+};
+
+/**
+ * Frank, 2026-10-17: "Beitreten" in the app opens the same consent sheet as
+ * behind the link — waving hand, checkbox, round X — inside the chat card,
+ * with whose privacy statement the person agrees to.
+ */
+export const OpenConsent1440: Story = {
+	name: 'Room open · "Beitreten" asks for consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <Stage layout="desktop" variant="open" />,
+	play: async ({ canvasElement }) => {
+		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
+		await userEvent.click(joinButton(canvasElement)!);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.session.joinChat [role="checkbox"], .session.joinChat input[type="checkbox"]'
+				)
+			).not.toBeNull()
+		);
+		// The consent bar slides in; measure it once it has arrived.
+		await waitFor(() => expectBarInCard(canvasElement), { timeout: 3000 });
 	}
 };
