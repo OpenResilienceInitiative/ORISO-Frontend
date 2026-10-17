@@ -61,6 +61,14 @@ const GROUP_MIN = { width: 280, height: 180 };
 const NOTES_PANEL_WIDTH = 320;
 const NOTES_SIDE_BY_SIDE_MIN_WIDTH = NOTES_PANEL_WIDTH + GROUP_MIN.width;
 
+/**
+ * How long the surface waits for the call's own goodbye, in ms.
+ *
+ * Long enough for a postMessage round trip and the leave it triggers, short
+ * enough that a wedged iframe is not something the user has to sit through.
+ */
+const HANGUP_HANDSHAKE_MS = 1500;
+
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
@@ -534,14 +542,37 @@ export const GroupCallWidget: React.FC = () => {
 	};
 
 	const handleEndCall = () => {
-		void widget.hangup().catch(() => {
-			/* local teardown still completes if the iframe already closed */
-		});
-
-		if (iframeRef.current) {
-			iframeRef.current.src = 'about:blank';
-		}
-		closeCallSurface();
+		/*
+		 * Let the call say goodbye before its document is destroyed.
+		 *
+		 * `hangup()` is a widget action: the leave happens INSIDE the iframe,
+		 * once it has processed the message, and `transport.send` resolves on
+		 * its reply. Firing it and blanking the iframe in the same tick raced
+		 * that — the document went away before the membership left, so
+		 * everybody else went on seeing this person in the call, and the
+		 * durable card went on saying `running`, until the delayed leave
+		 * expired. Which is a safety net for a browser that crashes, not for
+		 * a button somebody pressed.
+		 *
+		 * Capped, because a wedged iframe must not trap anybody in a call
+		 * surface that will not close: past the cap the teardown goes ahead
+		 * and the delayed leave does its job after all. `closeCallSurface`
+		 * blanks the iframe itself — doing it here as well was how the race
+		 * got in.
+		 */
+		void (async () => {
+			try {
+				await Promise.race([
+					widget.hangup(),
+					new Promise<void>((resolve) =>
+						setTimeout(resolve, HANGUP_HANDSHAKE_MS)
+					)
+				]);
+			} catch {
+				/* local teardown still completes if the iframe already closed */
+			}
+			closeCallSurface();
+		})();
 	};
 
 	const handleToggleFullscreen = () => {

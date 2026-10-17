@@ -445,6 +445,116 @@ describe('a call that outlives the Matrix client it started on', () => {
 		);
 	});
 
+	it('follows a refresh that lands while the root write is in flight', async () => {
+		/*
+		 * The one window `onClientChange` cannot cover.
+		 *
+		 * The subscription is registered AFTER the root write, and it does
+		 * not replay. A same-account refresh completing inside that await
+		 * therefore passed the account check and was never heard about: the
+		 * captured client stayed the stopped instance, the membership
+		 * listeners attached to it, and nobody joining or leaving ever
+		 * reached the card.
+		 */
+		const before = clientDouble(ME);
+		let acknowledge!: (value: { event_id: string }) => void;
+		before.sendMessage.mockReturnValueOnce(
+			new Promise((resolve) => {
+				acknowledge = resolve;
+			})
+		);
+		const service = rotatingService(before);
+
+		// Only the replacement can see the call room, so a listener on the
+		// old client is a listener that will never fire.
+		const memberships: { sender: string }[] = [];
+		let refreshMemberships: (() => void) | undefined;
+		const after = Object.assign(clientDouble(ME), {
+			getRoom: () => ({
+				getMember: (userId: string) => ({ name: `Name of ${userId}` })
+			}),
+			matrixRTC: {
+				getRoomSession: () => ({
+					get memberships() {
+						return memberships;
+					},
+					on: (_event: string, handler: () => void) => {
+						refreshMemberships = handler;
+					},
+					off: vi.fn()
+				})
+			}
+		});
+
+		const begun = callLifecycleTracker.begin(call);
+		await vi.advanceTimersByTimeAsync(0);
+		service.rotateTo(after);
+		acknowledge({ event_id: '$root' });
+		await begun;
+
+		memberships.push({ sender: '@alex:example' });
+		refreshMemberships?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(after.sendMessage).toHaveBeenCalled();
+		expect(
+			after.sendMessage.mock.calls.at(-1)?.[1]['org.oriso.call'].present
+		).toEqual([
+			{ userId: '@alex:example', displayName: 'Name of @alex:example' }
+		]);
+	});
+
+	it('closes a card whose root write lost its acknowledgement', async () => {
+		/*
+		 * The event lands, the response does not.
+		 *
+		 * Indistinguishable here from a request that never arrived, and the
+		 * difference matters: dropping the tracked call made the caller's
+		 * `finish` a no-op on a call id nothing knew any more, so an accepted
+		 * card stayed `running` for good — with a Join button for a call room
+		 * startup had already discarded.
+		 */
+		const client = clientDouble(ME);
+		client.sendMessage
+			.mockRejectedValueOnce(new Error('synthetic acknowledgement loss'))
+			.mockResolvedValue({ event_id: '$root' });
+		rotatingService(client);
+
+		await expect(callLifecycleTracker.begin(call)).rejects.toThrow();
+		// Attempted again under the transaction id the writer retained, which
+		// is what stops the second attempt producing a second card.
+		expect(client.sendMessage).toHaveBeenCalledTimes(2);
+		expect(client.sendMessage.mock.calls[1][2]).toBe(
+			client.sendMessage.mock.calls[0][2]
+		);
+
+		// And the card is now something the caller's cleanup can close.
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(client.sendMessage).toHaveBeenCalledTimes(3);
+		expect(
+			client.sendMessage.mock.calls[2][1]['org.oriso.call'].state
+		).toBe('missed');
+		expect(
+			client.sendMessage.mock.calls[2][1]['m.relates_to'].event_id
+		).toBe('$root');
+	});
+
+	it('drops a call whose root write never reached the server', async () => {
+		// The other side of it: both attempts fail, so nothing was published
+		// that anybody can act on and there is no card to close. Written down
+		// because the recovery above must not turn every failed start into a
+		// phantom card.
+		const client = clientDouble(ME);
+		client.sendMessage.mockRejectedValue(new Error('synthetic outage'));
+		rotatingService(client);
+
+		await expect(callLifecycleTracker.begin(call)).rejects.toThrow();
+		expect(client.sendMessage).toHaveBeenCalledTimes(2);
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(60000);
+		expect(client.sendMessage).toHaveBeenCalledTimes(2);
+	});
+
 	it('writes nothing through a different account', async () => {
 		// Not a refresh but a logout and a new login. Nothing may write this
 		// card any more, and writing it as somebody else would be worse than

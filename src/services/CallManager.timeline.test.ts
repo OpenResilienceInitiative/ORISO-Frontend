@@ -13,6 +13,8 @@ describe('call manager durable timeline', () => {
 	const sendEvent = vi.fn();
 	const getRoom = vi.fn();
 	const joinRoom = vi.fn();
+	const leave = vi.fn();
+	const forget = vi.fn();
 	const session = Object.assign(new EventEmitter(), {
 		memberships: [] as { sender: string }[]
 	});
@@ -29,11 +31,15 @@ describe('call manager durable timeline', () => {
 		);
 		sendMessage.mockResolvedValue({ event_id: '$call-root' });
 		sendEvent.mockResolvedValue({ event_id: '$signal' });
+		leave.mockResolvedValue(undefined);
+		forget.mockResolvedValue(undefined);
 		const client = {
 			getUserId: () => '@caller:example',
 			getDeviceId: () => 'DEVICE',
 			getRoom,
 			joinRoom,
+			leave,
+			forget,
 			matrixRTC: { getRoomSession: () => session },
 			createRoom: vi
 				.fn()
@@ -240,6 +246,72 @@ describe('call manager durable timeline', () => {
 		expect(sendMessage).not.toHaveBeenCalled();
 	});
 
+	it('joins through a refreshed login of the same account', async () => {
+		/*
+		 * A token refresh hands out a new client object for the same person.
+		 * Comparing objects across the confirmation await read that as
+		 * somebody else and refused a call that was still theirs — and the
+		 * refusal was silent, a Join button that just did nothing.
+		 */
+		const source = { getMyMembership: () => 'join' };
+		const media = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => true
+		};
+		const call = {
+			callId: 'refreshed-call',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			callType: 'video' as const,
+			state: 'running' as const,
+			participants: []
+		};
+		let confirm!: (value: typeof call) => void;
+		vi.mocked(apiCallState).mockReturnValue(
+			new Promise((resolve) => {
+				confirm = resolve;
+			})
+		);
+		getRoom.mockImplementation((id: string) =>
+			id === call.roomRef ? source : null
+		);
+		session.memberships = [{ sender: '@receiver:example' }];
+
+		const pending = callManager.joinExistingCall(call, true);
+		await vi.waitFor(() => expect(apiCallState).toHaveBeenCalled());
+
+		// Same account, new client — and the join has to go through it, not
+		// through the client whose token has just been thrown away.
+		let inMediaRoom = false;
+		const refreshedJoin = vi.fn().mockImplementation(async () => {
+			inMediaRoom = true;
+			return media;
+		});
+		const refreshed = {
+			getUserId: () => '@caller:example',
+			getDeviceId: () => 'DEVICE',
+			getRoom: (id: string) =>
+				id === call.roomRef ? source : inMediaRoom ? media : null,
+			joinRoom: refreshedJoin,
+			leave,
+			forget,
+			matrixRTC: { getRoomSession: () => session },
+			sendEvent,
+			sendMessage
+		};
+		setMatrixClientServiceRef({ getClient: () => refreshed } as never);
+		confirm(call);
+
+		expect(await pending).toBe('joined');
+		expect(refreshedJoin).toHaveBeenCalledWith('!media:example');
+		expect(joinRoom).not.toHaveBeenCalled();
+		expect(leave).not.toHaveBeenCalled();
+		expect(callManager.getCurrentCall()).toMatchObject({
+			callId: 'refreshed-call',
+			roomId: '!media:example'
+		});
+	});
+
 	it('does not replace a newer incoming call when an older timeline join finishes', async () => {
 		const source = { getMyMembership: () => 'join' };
 		const media = {
@@ -312,6 +384,51 @@ describe('call manager durable timeline', () => {
 		);
 		expect(result).toBe('unavailable');
 		expect(callManager.getCurrentCall()).toBeNull();
+		/*
+		 * And the seat goes back.
+		 *
+		 * Refusing to OPEN the call is not enough: the join of the media room
+		 * had already gone through, so somebody whose access to the
+		 * counselling session was revoked mid-join stayed a member of its
+		 * call room — where the encrypted timeline and the RTC state keep
+		 * arriving — for as long as nobody noticed.
+		 */
+		await vi.waitFor(() =>
+			expect(leave).toHaveBeenCalledWith('!media:example')
+		);
+		expect(forget).toHaveBeenCalledWith('!media:example');
+	});
+
+	it('keeps a membership it did not take', async () => {
+		// The other half: already in the call room before this attempt, so
+		// there is nothing of ours to give back and leaving would throw the
+		// person out of a room they were legitimately in.
+		const source = { getMyMembership: () => 'join' };
+		const media = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => true
+		};
+		getRoom.mockImplementation((id: string) =>
+			id === '!conversation:example' ? source : media
+		);
+		// Nobody is in the call any more, so the attempt is refused.
+		session.memberships = [];
+
+		const result = await callManager.joinExistingCall(
+			{
+				callId: 'empty-call',
+				roomRef: '!conversation:example',
+				callRoomId: '!media:example',
+				callType: 'video',
+				state: 'running',
+				participants: []
+			},
+			true
+		);
+
+		expect(result).toBe('unavailable');
+		expect(joinRoom).not.toHaveBeenCalled();
+		expect(leave).not.toHaveBeenCalled();
 	});
 
 	it('notifies the caller when the receiver declines a one-to-one Element call', () => {

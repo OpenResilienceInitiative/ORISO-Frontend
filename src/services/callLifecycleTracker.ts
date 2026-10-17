@@ -122,13 +122,48 @@ class CallLifecycleTracker {
 		this.calls.set(call.callId, tracked);
 		try {
 			await tracked.writer.publish(tracked.message);
-			if (currentClient() === null) {
+			const live = currentClient();
+			if (live === null) {
 				throw new Error(
 					'The Matrix account changed during call startup'
 				);
 			}
+			/*
+			 * And take the replacement, not just the permission.
+			 *
+			 * `onClientChange` is subscribed below — AFTER this await — and
+			 * it does not replay. A same-account token refresh landing while
+			 * the root write was in flight therefore passed the check above
+			 * and was then never heard about again: `client` stayed the
+			 * stopped instance, the membership listeners attached to it, and
+			 * nobody joining or leaving ever reached the card. Same stuck
+			 * `running` card as the refresh bugs this guard was written for,
+			 * through the one window the subscription cannot cover.
+			 */
+			client = live;
 		} catch (error) {
-			this.calls.delete(call.callId);
+			/*
+			 * The card may be out there even though the write failed.
+			 *
+			 * A lost ACKNOWLEDGEMENT is indistinguishable here from a lost
+			 * request: the event is stored, the response never arrives, and
+			 * `publish` rejects. Deleting the tracker on the way out made the
+			 * caller's `finish` a no-op on a call id nothing knows any more,
+			 * so that accepted card stayed `running` for good — offering a
+			 * Join button for a call room that startup had already discarded.
+			 *
+			 * So the root is attempted once more, under the transaction id
+			 * the writer retained for exactly this. Matrix treats a repeated
+			 * transaction id as idempotent: if the first attempt did land,
+			 * the server returns its event id and stores nothing, which gives
+			 * the tracker the root to edit; if it did not, this writes it.
+			 * Either way the tracker survives with a card the caller's
+			 * cleanup can close. Only when the second attempt fails too —
+			 * the server is genuinely unreachable, and nothing was published
+			 * that anybody can act on — is the call dropped as before.
+			 */
+			if (!(await this.retryRootWrite(tracked)))
+				this.calls.delete(call.callId);
 			throw error;
 		}
 		if (tracked.message.state !== 'running') return;
@@ -315,6 +350,21 @@ class CallLifecycleTracker {
 		 * for as long as the tab stayed open.
 		 */
 		this.calls.delete(callId);
+	}
+
+	/**
+	 * One more attempt at the root write, under the transaction it already
+	 * used — so it cannot produce a second card.
+	 *
+	 * @returns whether the card is now known to be on the server.
+	 */
+	private async retryRootWrite(tracked: TrackedCall): Promise<boolean> {
+		try {
+			await tracked.writer.publish(tracked.message);
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	private publish(tracked: TrackedCall): void {

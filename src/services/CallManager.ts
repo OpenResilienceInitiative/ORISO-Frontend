@@ -153,20 +153,50 @@ class CallManager {
 				: 'busy';
 		}
 		if (this.pendingStart || this.pendingJoin) return 'busy';
-		const client = getMatrixClientService()?.getClient?.();
+		let client = getMatrixClientService()?.getClient?.();
 		if (
 			!client ||
 			client.getRoom(call.roomRef)?.getMyMembership() !== 'join'
 		)
 			return 'unavailable';
+		const ownUserId = client.getUserId?.() ?? undefined;
+		/*
+		 * The client this ACCOUNT is signed in with right now, or null.
+		 *
+		 * A token refresh builds a new client for the same account, and the
+		 * joins below straddle two awaits. Comparing objects failed the Join
+		 * action for an ordinary refresh — the call was still valid, the
+		 * person was still themselves, and the button said no. Same shape as
+		 * the lifecycle tracker's guard, including its fallback: a client
+		 * that cannot say who it is leaves object identity as the only
+		 * signal there is.
+		 */
+		const liveClient = (): MatrixClient | null => {
+			const now = getMatrixClientService()?.getClient?.();
+			if (!now) return null;
+			if (ownUserId === undefined) return now === client ? now : null;
+			return (now.getUserId?.() ?? undefined) === ownUserId ? now : null;
+		};
 		const join = {};
 		this.pendingJoin = join;
+		/*
+		 * Whether THIS attempt put us in the call room, and whether it got
+		 * all the way to a call. Every refusal after the join has to give the
+		 * membership back: the checks below include losing access to the
+		 * SOURCE room, and a person who is no longer in the counselling
+		 * session must not be left holding a seat in its call room, where the
+		 * encrypted timeline and the RTC state keep arriving.
+		 */
+		let joinedHere = false;
+		let joined = false;
 		try {
 			const { apiCallState } = await import('../api/apiCallState');
 			const confirmed = await apiCallState(call);
+			const afterLookup = liveClient();
+			if (!afterLookup) return 'unavailable';
+			client = afterLookup;
 			if (
 				this.pendingJoin !== join ||
-				getMatrixClientService()?.getClient?.() !== client ||
 				client.getRoom(call.roomRef)?.getMyMembership() !== 'join' ||
 				!confirmed ||
 				confirmed.callId !== call.callId ||
@@ -177,13 +207,14 @@ class CallManager {
 				return 'unavailable';
 			if (confirmed.state !== 'running') return 'ended';
 			let room = client.getRoom(call.callRoomId);
-			if (room?.getMyMembership() !== 'join')
+			if (room?.getMyMembership() !== 'join') {
 				room = await client.joinRoom(call.callRoomId);
-			if (
-				this.pendingJoin !== join ||
-				getMatrixClientService()?.getClient?.() !== client
-			)
-				return 'unavailable';
+				joinedHere = true;
+			}
+			const afterJoin = liveClient();
+			if (!afterJoin) return 'unavailable';
+			client = afterJoin;
+			if (this.pendingJoin !== join) return 'unavailable';
 			// Membership may have changed while the server processed the room join.
 			if (client.getRoom(call.roomRef)?.getMyMembership() !== 'join')
 				return 'unavailable';
@@ -206,11 +237,44 @@ class CallManager {
 				state: 'connecting'
 			};
 			this.notifyListeners();
+			joined = true;
 			return 'joined';
 		} catch {
 			return 'unavailable';
 		} finally {
 			if (this.pendingJoin === join) this.pendingJoin = null;
+			// Best effort, and deliberately not awaited: the answer this
+			// method gives must not wait on tidying up after a refusal.
+			if (joinedHere && !joined)
+				void this.leaveCallRoomAfterRefusedJoin(
+					client,
+					call.callRoomId
+				);
+		}
+	}
+
+	/**
+	 * Give back a call-room membership this attempt took and then refused.
+	 *
+	 * Not `discardElementCallRoom`: that one is for a room this client
+	 * created and never told anybody about. This is somebody else's room,
+	 * which other people are in — so it leaves, and forgets so the room does
+	 * not sit in this account's list, and touches nothing else.
+	 */
+	private async leaveCallRoomAfterRefusedJoin(
+		client: MatrixClient | undefined,
+		roomId: string
+	): Promise<void> {
+		if (!client || !roomId) return;
+		try {
+			await client.leave(roomId);
+		} catch {
+			// The server may be gone, or the membership may already be lost.
+		}
+		try {
+			await client.forget(roomId);
+		} catch {
+			// Forgetting is tidiness, not correctness.
 		}
 	}
 

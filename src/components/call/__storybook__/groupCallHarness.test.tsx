@@ -38,7 +38,10 @@ import {
 } from './groupCallHarness';
 
 const widgetApiMocks = vi.hoisted(() => ({
-	instances: [] as Array<{ stop: ReturnType<typeof vi.fn> }>
+	instances: [] as Array<{
+		stop: ReturnType<typeof vi.fn>;
+		transport: { send: ReturnType<typeof vi.fn> };
+	}>
 }));
 
 vi.mock('matrix-widget-api', async (importOriginal) => {
@@ -137,14 +140,18 @@ describe('GroupCallWidget Storybook harness', () => {
 
 		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
 
-		expect(callManager.getCurrentCall()).toEqual(
-			expect.objectContaining({
-				callId: FAKE_CALL_ID,
-				roomId: FAKE_ELEMENT_CALL_ROOM_ID,
-				signalRoomId: FAKE_SIGNAL_ROOM_ID,
-				isGroup: true,
-				state: 'left'
-			})
+		// Awaited, not immediate: the surface now waits for the call's own
+		// goodbye before its document is destroyed. See `HANGUP_HANDSHAKE_MS`.
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: FAKE_CALL_ID,
+					roomId: FAKE_ELEMENT_CALL_ROOM_ID,
+					signalRoomId: FAKE_SIGNAL_ROOM_ID,
+					isGroup: true,
+					state: 'left'
+				})
+			)
 		);
 		expect(callManager.hasActiveCall()).toBe(false);
 
@@ -156,6 +163,105 @@ describe('GroupCallWidget Storybook harness', () => {
 
 		resetCallManager();
 		expect(callManager.getCurrentCall()).toBeNull();
+	});
+
+	it('waits for the call to say goodbye before destroying its document', async () => {
+		/*
+		 * `hangup()` is a widget action and the MatrixRTC leave happens INSIDE
+		 * the iframe, once it has processed the message. Firing it and blanking
+		 * the iframe in the same tick raced that: the document went away before
+		 * the membership left, so everybody else went on seeing this person in
+		 * the call — and the durable card went on saying `running` — until the
+		 * delayed leave expired. That net is for a browser that crashes, not
+		 * for a button somebody pressed.
+		 */
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		const iframe = await waitFor(() => {
+			const found = view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement | null;
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		const callUrl = iframe.src;
+		expect(callUrl).not.toBe('about:blank');
+
+		// The call takes its time replying.
+		let replied!: () => void;
+		widgetApiMocks.instances
+			.at(-1)!
+			.transport.send.mockImplementation(async (action: string) => {
+				if (action !== 'im.vector.hangup') return {};
+				await new Promise<void>((resolve) => {
+					replied = resolve;
+				});
+				return {};
+			});
+
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+		await Promise.resolve();
+
+		// Still here, and still holding the call: nothing has been torn down
+		// under the iframe's feet.
+		expect(iframe.src).toBe(callUrl);
+		expect(callManager.hasActiveCall()).toBe(true);
+
+		replied();
+		await waitFor(() => expect(callManager.hasActiveCall()).toBe(false));
+		expect(iframe.src).toBe('about:blank');
+	});
+
+	it('closes anyway when the call never answers', async () => {
+		// The cap. A wedged iframe must not trap anybody in a surface that
+		// will not close; past it the teardown goes ahead and the delayed
+		// leave does its job after all.
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+
+			const view = renderTranslated(
+				<MatrixClientContext.Provider
+					value={{
+						matrixClientService,
+						setMatrixClientService: () => {}
+					}}
+				>
+					<GroupCallWidget />
+				</MatrixClientContext.Provider>
+			);
+			await waitFor(() => {
+				expect(
+					view.container.querySelector('.element-call-iframe')
+				).toBeTruthy();
+			});
+
+			widgetApiMocks.instances
+				.at(-1)!
+				.transport.send.mockImplementation(async (action: string) =>
+					action === 'im.vector.hangup' ? new Promise(() => {}) : {}
+				);
+
+			fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(callManager.hasActiveCall()).toBe(false);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('moves all subscriptions to a fresh client and cleans up on unmount', async () => {
@@ -208,12 +314,14 @@ describe('GroupCallWidget Storybook harness', () => {
 			).toBeTruthy();
 		});
 		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
-		expect(callManager.getCurrentCall()).toEqual(
-			expect.objectContaining({
-				callId: FAKE_CALL_ID,
-				state: 'left',
-				isGroup: true
-			})
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: FAKE_CALL_ID,
+					state: 'left',
+					isGroup: true
+				})
+			)
 		);
 
 		view.unmount();
