@@ -21,21 +21,27 @@ export const isNobodyLiveConfirmed = (
 	available === 0 && consecutiveUnavailablePolls >= CLOSED_CONFIRMATION_POLLS;
 
 /**
- * Polls overlap (a request may take far longer than the interval), so an
- * older answer can arrive after a newer one. `begin()` numbers a request;
- * `accept(n)` is true only while no newer answer has been applied, and marks
- * `n` as the latest applied. A stale answer must not be counted, or the
- * confirmed-zero rule is fed in the wrong order.
+ * One poll at a time. A request may take far longer than the interval, and
+ * answers of overlapping requests can land out of order, which would feed the
+ * confirmed-zero rule non-consecutive samples. So a tick that finds the
+ * previous request still open is skipped: the returned function runs `request`
+ * only when none is in flight, and the slot is free again once it settles
+ * (resolved or rejected). Skipping a tick costs at most one request's
+ * latency (`fetchData` gives up after 30 s); counting a stale answer would
+ * wrongly turn somebody away.
  */
-export const createLatestResponseGuard = () => {
-	let issued = 0;
-	let applied = 0;
-	return {
-		begin: (): number => ++issued,
-		accept: (request: number): boolean => {
-			if (request < applied) return false;
-			applied = request;
-			return true;
+export const createSingleFlightPoll = () => {
+	let inFlight = false;
+	return (request: () => Promise<unknown>): void => {
+		if (inFlight) return;
+		inFlight = true;
+		const release = () => {
+			inFlight = false;
+		};
+		try {
+			request().then(release, release);
+		} catch {
+			release();
 		}
 	};
 };

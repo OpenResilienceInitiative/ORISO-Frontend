@@ -200,7 +200,7 @@ import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
 import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
 import {
-	createLatestResponseGuard,
+	createSingleFlightPoll,
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from '../anonymousChat/entryRoom/liveChatAvailability';
@@ -1231,15 +1231,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
 		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
-		/* Polls overlap (30 s per request against a 4 s interval); an older
-		   answer arriving late must not be counted (#1270). */
-		const latestResponse = createLatestResponseGuard();
+		/* A request may outlive the 4 s interval (`fetchData` allows 30 s) and
+		   overlapping answers can land out of order, so only one poll is in
+		   flight: the zeros below are counted in the order they were asked
+		   (#1270). */
+		const pollOnce = createSingleFlightPoll();
 
-		const refresh = () => {
-			const request = latestResponse.begin();
-			apiGetAnonymousEnquiryDetails(sessionId)
+		const fetchPoll = () => {
+			return apiGetAnonymousEnquiryDetails(sessionId)
 				.then((details) => {
-					if (cancelled || !latestResponse.accept(request)) return;
+					if (cancelled) return;
 					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
 					   Consultants can never see or accept it — stop polling
 					   and show the closed notice instead of queue position
@@ -1284,6 +1285,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/* swallow — UI falls back to "Wird verbunden …" */
 				});
 		};
+		const refresh = () => pollOnce(fetchPoll);
 
 		refresh();
 		/* Poll every 4s so acceptance feels real-time without reload. */

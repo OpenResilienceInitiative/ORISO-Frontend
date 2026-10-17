@@ -254,6 +254,17 @@ const tick = (ms: number) =>
 		await vi.advanceTimersByTimeAsync(ms);
 	});
 const dialog = () => screen.queryByRole('dialog');
+/* Every poll stays unanswered until the test resolves it. */
+const deferredPolls = () => {
+	const pending: Array<(value: never) => void> = [];
+	vi.mocked(apiGetAnonymousEnquiryDetails).mockImplementation(
+		() =>
+			new Promise((resolve) => {
+				pending.push(resolve as (value: never) => void);
+			})
+	);
+	return pending;
+};
 const NO_AVAILABILITY = 'anonymousChat.noAvailability';
 
 describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', () => {
@@ -315,34 +326,51 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		expect(dialog()).not.toBeNull();
 	});
 
-	/* `fetchData` allows 30 s per request against a 4 s interval, so polls overlap
-	   and may complete out of order. The dialog cannot be waved away any more, so
-	   an old answer arriving late must not count towards opening it. */
-	it('ignores a slow, older poll that answers after a newer one', async () => {
-		let answerSlowPoll: (value: never) => void = () => {};
-		vi.mocked(apiGetAnonymousEnquiryDetails)
-			.mockResolvedValueOnce(poll(0)) // t=0   first look: nobody
-			.mockImplementationOnce(
-				() =>
-					new Promise((resolve) => {
-						answerSlowPoll = resolve as (value: never) => void;
-					}) // t=4s  slow, still in flight
-			)
-			.mockResolvedValueOnce(poll(1)) // t=8s  somebody is live
-			.mockResolvedValue(poll(0)); // t=12s nobody again
+	/* `fetchData` allows 30 s per request against a 4 s interval. If polls were
+	   allowed to overlap, answers could land out of order, and the dialog cannot be
+	   waved away any more: two zeros that were never consecutive must not open it.
+	   A tick that finds the previous request still open is skipped. */
+	it('does not start another poll while the previous one is unanswered', async () => {
+		const pending = deferredPolls();
 		renderSession(1);
 		await tick(0);
-		await tick(4000);
-		await tick(4000);
+		expect(pending).toHaveLength(1);
 
-		/* The 4 s poll finally answers "nobody" — older than the "somebody"
-		   that already arrived. */
+		await tick(12000);
+		/* Three intervals went by with the first request still open. */
+		expect(pending).toHaveLength(1);
+
 		await act(async () => {
-			answerSlowPoll(poll(0));
+			pending[0](poll(0));
 		});
+		expect(dialog()).toBeNull();
 		await tick(4000);
+		expect(pending).toHaveLength(2);
+	});
 
-		/* In real order the zeros were 0, 0, 1, 0: one zero in a row. */
+	it('does not open on zeros that were not consecutive, however the answers arrive', async () => {
+		const pending = deferredPolls();
+		renderSession(1);
+		await tick(0);
+		await tick(8000);
+
+		/* The worst case: the oldest and the newest request say nobody, the one
+		   in between says somebody. Whatever requests exist, answer them in that
+		   order. */
+		const last = pending.length - 1;
+		await act(async () => {
+			pending[0](poll(0));
+		});
+		if (last > 0) {
+			await act(async () => {
+				pending[last](poll(0));
+			});
+		}
+		for (let i = 1; i < last; i += 1) {
+			await act(async () => {
+				pending[i](poll(1));
+			});
+		}
 		expect(dialog()).toBeNull();
 	});
 

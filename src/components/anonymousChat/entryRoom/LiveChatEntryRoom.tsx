@@ -41,7 +41,7 @@ import {
 } from './entryRoomIdentity';
 import {
 	CLOSED_CONFIRMATION_POLLS,
-	createLatestResponseGuard,
+	createSingleFlightPoll,
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from './liveChatAvailability';
@@ -469,13 +469,13 @@ const LiveChatEntryRoomContent = ({
 		if (stage !== 'waiting' || accepted || sessionId === null)
 			return undefined;
 		let stop = false;
-		const latestResponse = createLatestResponseGuard();
-		const refresh = () => {
-			const request = latestResponse.begin();
-			return apiGetAnonymousEnquiryDetails(sessionId)
+		/* One poll in flight: overlapping answers could land out of order and
+		   feed the confirmed-zero rule non-consecutive samples (#1270). */
+		const pollOnce = createSingleFlightPoll();
+		const fetchPoll = () =>
+			apiGetAnonymousEnquiryDetails(sessionId)
 				.then((d) => {
-					// A slow response must not overwrite a newer poll's room state.
-					if (stop || !latestResponse.accept(request)) return;
+					if (stop) return;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
 					const nextAvailable =
@@ -501,7 +501,7 @@ const LiveChatEntryRoomContent = ({
 					if (d?.status === 'IN_PROGRESS') setAccepted(true);
 				})
 				.catch(() => undefined);
-		};
+		const refresh = () => pollOnce(fetchPoll);
 		refresh();
 		const timer = window.setInterval(refresh, POLL_MS);
 		return () => {
