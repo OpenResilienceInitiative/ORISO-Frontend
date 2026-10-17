@@ -82,6 +82,11 @@ const owl: Pseudonym = {
 	name: 'Mika'
 };
 
+const TAKEN_USERNAME = 'eule_mika_taken';
+/** Every User-ID is free, except the one a story marks as taken. */
+const freeUsername = (username: string) =>
+	Promise.resolve(username !== TAKEN_USERNAME);
+
 /** The tone takes no time in tests; nothing is played. */
 const silentTone = () => Promise.resolve();
 
@@ -91,6 +96,7 @@ const base: Partial<CallEntryRoomProps> = {
 	initialIdentity: owl,
 	initialUsername: 'eule_mika_4821',
 	playTone: silentTone,
+	checkUsername: freeUsername,
 	onJoin: () => undefined,
 	onBlockerAction: () => undefined
 };
@@ -131,7 +137,11 @@ export const VideoReady: Story = {
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
 		await expectProgress(canvasElement, 100);
-		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
+		await waitFor(() =>
+			expect(gate(canvasElement).getAttribute('data-cy-state')).toBe(
+				'ready'
+			)
+		);
 	}
 };
 
@@ -145,7 +155,11 @@ export const VideoCameraOff: Story = {
 		await expect(canvas.getByText('Ihre Kamera ist aus')).toBeVisible();
 		// Without a picture the others see the chosen animal.
 		await expect(canvas.getByTestId('video-avatar')).toBeVisible();
-		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
+		await waitFor(() =>
+			expect(gate(canvasElement).getAttribute('data-cy-state')).toBe(
+				'ready'
+			)
+		);
 	}
 };
 
@@ -158,7 +172,11 @@ export const VideoNoCamera: Story = {
 		// Nothing to switch on: the camera switch cannot pretend otherwise.
 		await expect(canvas.getByTestId('toggle-camera')).toBeDisabled();
 		await expect(canvas.getByTestId('video-avatar')).toBeVisible();
-		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
+		await waitFor(() =>
+			expect(gate(canvasElement).getAttribute('data-cy-state')).toBe(
+				'ready'
+			)
+		);
 	}
 };
 
@@ -182,7 +200,11 @@ export const VideoPasswordMissing: Story = {
 			'Sonnenblume-2026!'
 		);
 		await expectProgress(canvasElement, 100);
-		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
+		await waitFor(() =>
+			expect(gate(canvasElement).getAttribute('data-cy-state')).toBe(
+				'ready'
+			)
+		);
 	}
 };
 
@@ -220,6 +242,21 @@ export const VideoUserIdTooShort: Story = {
 	play: async ({ canvasElement, canvas }) => {
 		await expectWaitingRoomLayout(canvasElement);
 		// The registration's rule (5–30 characters), not "not empty".
+		await expectProgress(canvasElement, 67);
+		await expect(canvas.getByText('Noch offen: User-ID')).toBeVisible();
+	}
+};
+
+export const VideoUserIdTaken: Story = {
+	name: 'Video · User-ID already taken',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', initialUsername: TAKEN_USERNAME },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The backend has the last word, as in the registration.
+		await expect(
+			await canvas.findByText('Diese User-ID ist bereits vergeben.')
+		).toBeVisible();
 		await expectProgress(canvasElement, 67);
 		await expect(canvas.getByText('Noch offen: User-ID')).toBeVisible();
 	}

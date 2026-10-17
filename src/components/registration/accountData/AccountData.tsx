@@ -34,7 +34,7 @@ import {
 } from '../../../globalState/provider/RegistrationProvider';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
-import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
+import { useUsernameAvailability } from './useUsernameAvailability';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { getEmailFeedback } from './emailFeedback';
 import {
@@ -181,13 +181,7 @@ export const AccountData: FC<{
 	// frontend-only guard until the backend module (email confirmation,
 	// persisted preference) lands; see #260.
 	const effectiveEmailRequired = emailRequired || twoFactorAuthEnabled;
-	const [isUsernameAvailable, setIsUsernameAvailable] =
-		useState<boolean>(true);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
-		useState<boolean>(false);
-	const [usernameAvailabilityChecked, setUsernameAvailabilityChecked] =
-		useState<boolean>(false);
-	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
 		useState<boolean>(false);
 	const { setDisabledNextButton, registrationData } =
 		useContext(RegistrationContext);
@@ -296,9 +290,6 @@ export const AccountData: FC<{
 		(isConsentSentenceResolved && dataProtectionChecked);
 
 	const resetUsernameAvailability = useCallback(() => {
-		setUsernameAvailabilityChecked(false);
-		setIsUsernameAvailable(true);
-		setUsernameAvailabilityFailed(false);
 		setUsernameWasBlurred(false);
 	}, []);
 
@@ -351,6 +342,11 @@ export const AccountData: FC<{
 
 	const isUsernameLongEnough =
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
+	const {
+		isAvailable: isUsernameAvailable,
+		checked: usernameAvailabilityChecked,
+		failed: usernameAvailabilityFailed
+	} = useUsernameAvailability(username, isUsernameLongEnough);
 	const isPasswordValid = allPasswordCriteriaPass(password);
 	const repeatPasswordMismatch =
 		repeatPassword.length > 0 && repeatPassword !== password;
@@ -371,42 +367,6 @@ export const AccountData: FC<{
 		isPasswordValid &&
 		password === repeatPassword &&
 		emailFeedback.isSatisfied;
-
-	useEffect(() => {
-		if (!isUsernameLongEnough) {
-			setIsUsernameAvailable(true);
-			setUsernameAvailabilityChecked(false);
-			setUsernameAvailabilityFailed(false);
-			return;
-		}
-
-		setUsernameAvailabilityChecked(false);
-		setUsernameAvailabilityFailed(false);
-
-		let canceled = false;
-		const timeout = window.setTimeout(async () => {
-			try {
-				const usernameAvailable =
-					await apiGetIsUsernameAvailable(username);
-
-				if (!canceled) {
-					setIsUsernameAvailable(usernameAvailable);
-					setUsernameAvailabilityChecked(true);
-				}
-			} catch {
-				if (!canceled) {
-					setIsUsernameAvailable(true);
-					setUsernameAvailabilityChecked(false);
-					setUsernameAvailabilityFailed(true);
-				}
-			}
-		}, 350);
-
-		return () => {
-			canceled = true;
-			window.clearTimeout(timeout);
-		};
-	}, [isUsernameLongEnough, username]);
 
 	useEffect(() => {
 		if (
@@ -721,8 +681,6 @@ export const AccountData: FC<{
 					if (normalizedVal === currentUsername.current) return;
 					currentUsername.current = normalizedVal;
 					setUsername(normalizedVal);
-					setUsernameAvailabilityChecked(false);
-					setIsUsernameAvailable(true);
 				}}
 				onBlur={() => setUsernameWasBlurred(true)}
 				placeholder={t('registration.account.username.label')}
