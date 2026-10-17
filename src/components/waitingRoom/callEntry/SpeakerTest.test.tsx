@@ -116,6 +116,18 @@ describe('SpeakerTest', () => {
 		expect(document.activeElement?.textContent).toBe('Ja');
 	});
 
+	it('rests the keyboard on the confirmation after "Ja"', async () => {
+		render(<Room playTone={() => Promise.resolve()} />);
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('speaker-test'));
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Ja' }));
+		expect(row().getAttribute('data-state')).toBe('heard');
+		expect(document.activeElement?.textContent).toBe(
+			'Ihr Lautsprecher funktioniert.'
+		);
+	});
+
 	it('moves the keyboard to "Testton abspielen" after "Nein"', async () => {
 		render(<Room playTone={() => Promise.resolve()} />);
 		await act(async () => {
