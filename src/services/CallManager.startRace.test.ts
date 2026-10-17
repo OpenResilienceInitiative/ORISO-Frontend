@@ -355,13 +355,20 @@ describe('outgoing call startup ownership', () => {
 		await vi.waitFor(() => expect(finishCreate).toBeTypeOf('function'));
 
 		// Somebody else signs in while the room is still being created.
+		//
+		// With its OWN leave and forget: sharing the mocks let either client
+		// satisfy the assertion below, so the test passed whichever account
+		// discarded the room — and discarding it through the account that did
+		// not create it does nothing at all, since that account is not in it.
+		const otherLeave = vi.fn().mockResolvedValue(undefined);
+		const otherForget = vi.fn().mockResolvedValue(undefined);
 		const otherClient = {
 			createRoom,
 			sendEvent,
 			sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
 			invite,
-			leave,
-			forget,
+			leave: otherLeave,
+			forget: otherForget,
 			getUserId: () => '@someone-else:oriso.example',
 			getDeviceId: () => 'OTHER',
 			getRoom: () => null
@@ -369,8 +376,12 @@ describe('outgoing call startup ownership', () => {
 		setMatrixClientServiceRef({ getClient: () => otherClient } as never);
 		finishCreate({ room_id: ROOM });
 
-		// Nothing is published for the previous account's call.
+		// Nothing is published for the previous account's call, and the room
+		// goes back through the account that made it.
 		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(forget).toHaveBeenCalledWith(ROOM);
+		expect(otherLeave).not.toHaveBeenCalled();
+		expect(otherForget).not.toHaveBeenCalled();
 		expect(sendEvent).not.toHaveBeenCalledWith(
 			SOURCE,
 			'org.oriso.call.invite',
