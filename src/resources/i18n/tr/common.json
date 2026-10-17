@@ -893,6 +893,7 @@
 		},
 		"loadError": {
 			"consultants": "Meslektaşlar yüklenemedi.",
+			"info": "Sohbet bilgileri yüklenemedi.",
 			"retry": "Tekrar deneyin",
 			"topics": "Konular yüklenemedi."
 		},
@@ -910,6 +911,7 @@
 			"headline": "Sohbet bilgileri",
 			"settings": {
 				"agency": "Danışma Merkezi",
+				"agencyLine": "Danışma Merkezi: {{name}}",
 				"createDate": "Oluşturulma tarihi",
 				"creator": "Yaratıcı",
 				"duration": "Süre",
@@ -5424,6 +5426,7 @@
 			"ready": "Giriş parolanızla kurtarma kuruldu. Ayrıca kaydettiğiniz kurtarma anahtarı da geçerli kalır.",
 			"needs-password": "Parolayla kurtarma bu oturumda henüz doğrulanmadı. Yeniden giriş yapın veya mevcut kurtarma anahtarınızla kurun.",
 			"needs-recovery-key": "Bu cihazda önceki konuşmalarınıza erişmek için kurtarma anahtarınız gerekiyor.",
+			"needs-sign-in": "Önceki konuşmalarınız, şifrenizle yeniden giriş yaptığınızda bu cihazda açılır.",
 			"retryable-failure": "Anahtar yedeklemesi tamamlanamadı. Talebinizi yazmaya devam edebilir ve güvenlik ayarlarında yedeği kontrol edebilirsiniz.",
 			"settings": "Güvenlik ayarları",
 			"reauthenticate": "Çıkış yap ve yeniden giriş yap",
@@ -5907,6 +5910,10 @@
 			"restricted": {
 				"title": "Yeni danışmanlık şu anda başlatılamıyor",
 				"text": "Danışmanlık kuruluşunun güncel veri işleme sözleşmesini onaylaması gerekiyor. Lütfen danışmanlık merkezinize başvurun. Başlamış danışmanlıklar devam eder."
+			},
+			"restrictedGroupJoin": {
+				"title": "Gruba katılım şu anda mümkün değil",
+				"text": "Bu gruba katılmak şu anda mümkün değil, çünkü danışmanlık kuruluşunun güncel veri işleme sözleşmesini henüz onaylaması gerekiyor. Lütfen danışmanlık merkezinize başvurun."
 			},
 			"unavailable": {
 				"title": "Danışmanlık durumu şu anda doğrulanamıyor",

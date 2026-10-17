@@ -24,7 +24,9 @@ import { RegistrationHandover } from '../app/registrationLoader/RegistrationHand
 import { WaitingRoomFrame } from '../waitingRoom/WaitingRoomFrame';
 import {
 	HandoverDepartment,
-	rememberHandoverDepartment
+	rememberHandoverDepartment,
+	rememberHandoverGroupJoin,
+	toHandoverDepartment
 } from '../app/registrationLoader/handoverDepartment';
 import {
 	markHandoverMilestone,
@@ -427,16 +429,9 @@ export const Registration = () => {
 	const selectedAgency = mergedRegistrationData.agency;
 	/* The waiting room's legal links open the chosen counselling centre's
 	   documents, before and after the document load (ADR-022). */
-	const registeredTopicId = (
-		mergedRegistrationData.topic || mergedRegistrationData.mainTopic
-	)?.id;
-	const handoverDepartment: HandoverDepartment | null =
-		selectedAgency?.id && registeredTopicId
-			? {
-					agencyId: Number(selectedAgency.id),
-					topicId: Number(registeredTopicId)
-				}
-			: null;
+	const handoverDepartment: HandoverDepartment | null = toHandoverDepartment(
+		mergedRegistrationData
+	);
 	const selectedTopicLabel =
 		(selectedTopic
 			? getRegistrationTopicDisplay(selectedTopic, locale).title
@@ -680,19 +675,14 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
-		rememberHandoverDepartment(
-			mergedData.agency?.id && selectedTopic?.id
-				? {
-						agencyId: Number(mergedData.agency.id),
-						topicId: Number(selectedTopic.id)
-					}
-				: null
-		);
+		rememberHandoverDepartment(toHandoverDepartment(mergedData));
 		const groupJoin = getGroupJoin({
 			gcid: groupChatId,
 			aid: inviteAgencyId,
 			agencyId: mergedData.agency?.id
 		});
+		/* The app after the load shows the same words as this frame (#1219). */
+		rememberHandoverGroupJoin(Boolean(groupJoin));
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),

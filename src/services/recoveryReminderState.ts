@@ -76,6 +76,7 @@ export type RecoveryRuntimeStatus =
 	| 'device-ready'
 	| 'ready'
 	| 'needs-password'
+	| 'needs-sign-in'
 	| 'needs-recovery-key'
 	| 'retryable-failure';
 const statuses = new Map<string, RecoveryRuntimeStatus>();
@@ -120,6 +121,9 @@ export const useRecoveryRuntimeStatus = (
 export const isActionableRecoveryStatus = (
 	status: RecoveryRuntimeStatus
 ): boolean =>
-	['needs-password', 'needs-recovery-key', 'retryable-failure'].includes(
-		status
-	);
+	[
+		'needs-password',
+		'needs-sign-in',
+		'needs-recovery-key',
+		'retryable-failure'
+	].includes(status);

@@ -112,6 +112,11 @@
 	}
 
 	&__button-container {
+		// The footer row below is laid out by the width of THIS box (container
+		// query), not by the window: with the chat-info column open at 1366 px
+		// the middle column is ~370 px wide while the window still counts as
+		// "large", and three columns squeezed the calendar button to 64 px.
+		container: joinChatFooter / inline-size;
 		text-align: center;
 		padding: $grid-base-two $grid-base-two $grid-base-three;
 
@@ -120,8 +125,11 @@
 		}
 	}
 
-	// Footer row (#1499): calendar | main button | motion switch on desktop,
-	// main button first and the two secondary controls under it on a phone.
+	// Footer row (#1499): calendar | main button | motion switch when the box is
+	// wide enough for all three at full size, main button first and the two
+	// secondary controls under it otherwise (phone, or a narrow column next to
+	// the chat info). 50rem = two side columns that fit the longest calendar
+	// label (~16 rem) plus the main button.
 	&__actions {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
@@ -133,7 +141,7 @@
 		align-items: center;
 		justify-items: center;
 
-		@include breakpoint($fromLarge) {
+		@container joinChatFooter (min-width: 50rem) {
 			grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 			grid-template-areas: 'start main end';
 		}
@@ -142,7 +150,7 @@
 	&__actionsStart {
 		grid-area: start;
 
-		@include breakpoint($fromLarge) {
+		@container joinChatFooter (min-width: 50rem) {
 			justify-self: start;
 		}
 	}
@@ -159,7 +167,7 @@
 	&__actionsEnd {
 		grid-area: end;
 
-		@include breakpoint($fromLarge) {
+		@container joinChatFooter (min-width: 50rem) {
 			justify-self: end;
 		}
 	}

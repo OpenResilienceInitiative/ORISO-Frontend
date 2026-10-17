@@ -138,7 +138,8 @@ const expectGroupWords = async (canvasElement: HTMLElement) => {
 export const JoiningBefore1440: Story = {
 	name: '2 · Joining — before (counselling words) · 1440',
 	globals: desktop1440Globals,
-	render: () => <JoiningBefore />
+	render: () => <JoiningBefore />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement)
 };
 
 export const JoiningAfter1440: Story = {
@@ -151,7 +152,8 @@ export const JoiningAfter1440: Story = {
 export const JoiningBefore390: Story = {
 	name: '2 · Joining — before (counselling words) · 390',
 	globals: phone390Globals,
-	render: () => <JoiningBefore />
+	render: () => <JoiningBefore />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement)
 };
 
 export const JoiningAfter390: Story = {
