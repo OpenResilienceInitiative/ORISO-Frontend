@@ -1944,7 +1944,8 @@
 			"participants": {
 				"current": "In the call",
 				"attended": "Attended"
-			}
+			},
+			"startedBy": "Called by {{name}}."
 		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",

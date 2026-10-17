@@ -1938,7 +1938,8 @@
 			"participants": {
 				"current": "Dans l’appel",
 				"attended": "A participé"
-			}
+			},
+			"startedBy": "Appel lancé par {{name}}."
 		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",

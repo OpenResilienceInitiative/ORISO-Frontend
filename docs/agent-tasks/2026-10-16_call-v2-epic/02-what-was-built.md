@@ -163,19 +163,30 @@ into "S". Neither repository's own suite could have seen it.
 Each of these is a decision for the product owner, not an omission.
 
 - **The `scheduled` state** from #1361, and the calendar action and
-  notification-centre entries behind it. There is **no producer** on either
-  side — no frontend code and no backend endpoint emits it — so the UI
-  would be dead code by construction.
+  notification-centre entries behind it. Verified rather than assumed: in
+  #1361 itself `scheduled` appears only in the type, the parser and the
+  serialiser — `git grep` over that branch finds nothing that ever
+  constructs a message with it. It is a schema written for a producer that
+  was never built, so the UI would be dead code by construction.
 - **The call notification emails** from #1361. `dev` already carries 126
   `anruf-*` templates with different content; which set ships is a product
   decision, not a merge.
-- **`actor_user_id` and `participant_count`** in the payload. Cheap to add,
-  but they need a place on the card and seven translations for something the
-  handoff does not ask for.
-- **The legacy 1:1 pair** (`FloatingCallWidget` and `MatrixCallView`). Still
-  mounted in `app.tsx` and on `/videoanruf`. The plan makes removing them
-  conditional on the new path working end to end, which cannot be verified
-  without a running backend. The two files nothing imported at all
+- **`participant_count`** in the payload. It duplicates
+  `participants.length`, and a count that can disagree with the list it
+  counts is worse than no count. (`actor_user_id` **was** built — it is the
+  one field from #1361 carrying information nothing else does, and the card
+  now says who started the call, by the name the room knows them under. A
+  raw Matrix id is never shown: on a counselling platform that is the
+  identifier the pseudonym exists to keep out of sight.)
+- **The legacy 1:1 pair** (`FloatingCallWidget` and `MatrixCallView`), and
+  this is now settled with evidence rather than deferred. It is
+  **reachable**: `matrixLiveEventBridge` decides `isElementCall` from
+  `isElementOrGroupCallInvite(content)`, and for a plain `m.call.invite`
+  without ORISO's marker it calls `receiveCall` _without_
+  `usesElementCall`, which defaults to `false` — so
+  `FloatingCallWidget`'s `return null` guard does not fire and the legacy
+  UI renders. Removing it would break receiving a call from any peer that
+  has not moved to MatrixRTC. The two files nothing imported at all
   (`.OLD.tsx`, `.PROFESSIONAL.tsx`, 1022 lines) are gone.
 - **A tenant setting for the backdrop.** The preset reaches the fork on the
   URL and falls back to the handoff's default, but ORISO has no setting to

@@ -274,3 +274,37 @@ it('shows attendance once the call has ended, presence being meaningless then', 
 	expect(screen.getByLabelText('Alex Test')).toBeTruthy();
 	expect(screen.getByLabelText('Sam Test')).toBeTruthy();
 });
+
+it('says who started the call, by the name the room knows them under', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		actorUserId: '@alex:example',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }],
+		present: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.getByText(/message\.callLifecycle\.startedBy/)).toBeTruthy();
+});
+
+it('says nothing about who started it when it has no name for them', () => {
+	// A raw Matrix id on a card is worse than silence, and on a counselling
+	// platform it is the identifier the pseudonym exists to keep out of sight.
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		actorUserId: '@nobody-we-know:example',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByText(/startedBy/)).toBeNull();
+	expect(screen.queryByText(/@nobody-we-know/)).toBeNull();
+});

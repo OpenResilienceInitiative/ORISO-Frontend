@@ -51,6 +51,11 @@ class CallLifecycleTracker {
 				callRoomId: call.elementCallRoomId || call.roomId,
 				state: 'running',
 				callType: call.isVideo ? 'video' : 'audio',
+				// Whoever this client is, since this client is the one
+				// starting the call. Nobody else can say it, and it is the
+				// only thing on the card that the participant lists cannot
+				// reconstruct.
+				actorUserId: client.getUserId?.() ?? undefined,
 				invitedAt: new Date().toISOString(),
 				participants: []
 			},

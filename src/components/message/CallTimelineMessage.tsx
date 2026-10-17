@@ -38,6 +38,21 @@ export const CallTimelineMessage = ({
 	// Live presence only means anything while the call is running.
 	const live = call.state === 'running' ? call.present : undefined;
 	const shown = live ?? call.participants;
+
+	/*
+	 * Who started it, by the name the room already knows them under.
+	 *
+	 * Only when we have a name for them: a raw Matrix id on a card is worse
+	 * than saying nothing, and on a counselling platform it is an identifier
+	 * the pseudonym exists to keep out of sight. The lists are the only
+	 * place a name is available here, which is also why this cannot be
+	 * reconstructed without `actorUserId` — a user id alone is not a person.
+	 */
+	const actorName = call.actorUserId
+		? [...call.participants, ...(call.present ?? [])].find(
+				(participant) => participant.userId === call.actorUserId
+			)?.displayName
+		: undefined;
 	const label = t(`videoCall.timeline.${call.callType}.${call.state}`);
 	const callLabel = t(`message.callLifecycle.type.${call.callType}`);
 	const statusLabel = t(`message.callLifecycle.state.${call.state}`);
@@ -48,12 +63,17 @@ export const CallTimelineMessage = ({
 				timeStyle: 'short'
 			}).format(new Date(startedAt))
 		: undefined;
-	const description =
+	const baseDescription =
 		call.state === 'missed' || formattedStart
 			? t(`message.callLifecycle.description.${call.state}`, {
 					start: formattedStart
 				})
 			: label;
+	const description = actorName
+		? `${baseDescription} ${t('message.callLifecycle.startedBy', {
+				name: actorName
+			})}`
+		: baseDescription;
 	const seconds = call.durationSeconds;
 	const duration =
 		seconds === undefined

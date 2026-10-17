@@ -37,6 +37,20 @@ export interface CallLifecycleMessage {
 	 * and because an ended call has no present.
 	 */
 	present?: CallLifecycleParticipant[];
+	/**
+	 * Who started the call.
+	 *
+	 * The one field from #1361 that carries information nothing else does:
+	 * `participants` says who was there and `present` who is there, but
+	 * neither says who picked up the phone. Optional, because cards written
+	 * before this exist and because a call reconstructed from the backend may
+	 * not know.
+	 *
+	 * #1361's `participant_count` is deliberately NOT here. It duplicates
+	 * `participants.length`, and a count that can disagree with the list it
+	 * counts is worse than no count.
+	 */
+	actorUserId?: string;
 	invitedAt?: string;
 	startedAt?: string;
 	endedAt?: string;
@@ -79,7 +93,8 @@ export function parseCallLifecycleMessage(
 		state,
 		call_type,
 		participants,
-		present
+		present,
+		actor_user_id: actorUserId
 	} = payload;
 	if (!isString(call_id) || !isString(room_ref) || !isString(call_room_id))
 		return null;
@@ -99,6 +114,9 @@ export function parseCallLifecycleMessage(
 	// call. Present but malformed is not: it would reach a card as a list of
 	// people who are not there.
 	if (present !== undefined && !isParticipantList(present)) return null;
+	// Absent is fine; present but not a user id is not. It reaches a card as
+	// a name, and a card is a thing people read and believe.
+	if (actorUserId !== undefined && !isString(actorUserId)) return null;
 	if (
 		![payload.invited_at, payload.started_at, payload.ended_at].every(
 			validTimestamp
@@ -135,6 +153,9 @@ export function parseCallLifecycleMessage(
 						})
 					)
 				}),
+		...(actorUserId === undefined
+			? {}
+			: { actorUserId: actorUserId as string }),
 		invitedAt: payload.invited_at as string | undefined,
 		startedAt: payload.started_at as string | undefined,
 		endedAt: payload.ended_at as string | undefined,
@@ -157,6 +178,7 @@ export function buildCallLifecycleContent(
 			call_type: message.callType,
 			participants: message.participants,
 			present: message.present,
+			actor_user_id: message.actorUserId,
 			invited_at: message.invitedAt,
 			started_at: message.startedAt,
 			ended_at: message.endedAt,

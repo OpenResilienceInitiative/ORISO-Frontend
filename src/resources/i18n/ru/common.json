@@ -1939,7 +1939,8 @@
 			"participants": {
 				"current": "В звонке",
 				"attended": "Участвовали"
-			}
+			},
+			"startedBy": "Звонок начал {{name}}."
 		},
 		"systemNotification": "Системное уведомление",
 		"systemNotificationTitle": "Системное уведомление",

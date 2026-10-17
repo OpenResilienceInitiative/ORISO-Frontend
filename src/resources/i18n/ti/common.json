@@ -1938,7 +1938,8 @@
 			"participants": {
 				"current": "ኣብ ጻውዒት",
 				"attended": "ተሳቲፎም"
-			}
+			},
+			"startedBy": "ብ{{name}} ተጸዊዑ።"
 		},
 		"systemNotification": "መፍለጢ ሲስተም",
 		"systemNotificationTitle": "መፍለጢ ሲስተም",

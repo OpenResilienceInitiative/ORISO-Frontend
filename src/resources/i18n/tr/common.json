@@ -1938,7 +1938,8 @@
 			"participants": {
 				"current": "Aramada",
 				"attended": "Katıldı"
-			}
+			},
+			"startedBy": "{{name}} tarafından arandı."
 		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",

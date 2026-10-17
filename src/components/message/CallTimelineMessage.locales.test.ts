@@ -46,7 +46,8 @@ describe('call timeline translation resources', () => {
 				'participants.attended',
 				// Used again: a running card says who is in the call now, which is
 				// a different question from who attended.
-				'participants.current'
+				'participants.current',
+				'startedBy'
 			]) {
 				expect(catalog).toHaveProperty(`message.callLifecycle.${key}`);
 			}
