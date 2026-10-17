@@ -173,6 +173,32 @@ describe('usePendingGroupChatJoin', () => {
 		});
 	});
 
+	/* The profile can change while the assignment runs. Its answer is then
+	   discarded, so the link must be joined again rather than dropped, or the
+	   waiting room never opens its gate. */
+	it('joins again when the profile changes while the assignment runs', async () => {
+		let finishStale: (assigned: boolean) => void = () => undefined;
+		joinGroupChat.mockReturnValueOnce(
+			new Promise<boolean>((resolve) => (finishStale = resolve))
+		);
+
+		const { result, rerender } = renderHook(
+			({ userData }) => usePendingGroupChatJoin(userData),
+			{ initialProps: { userData: settled } }
+		);
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalledTimes(1));
+
+		rerender({ userData: { ...settled, userId: 'reloaded' } });
+		finishStale(true);
+
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalledTimes(2));
+		await waitFor(() => expect(result.current).toBe(true));
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+			replace: true
+		});
+	});
+
 	it('has nothing to wait for without a group link', () => {
 		window.history.replaceState({}, '', '/');
 		const { result } = renderHook(() => usePendingGroupChatJoin(settled));

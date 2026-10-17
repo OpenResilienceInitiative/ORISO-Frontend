@@ -23,7 +23,10 @@ import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
 import { canCloseHandover } from './registrationLoader/handoverClose';
-import { forgetHandoverDepartment } from './registrationLoader/handoverDepartment';
+import {
+	forgetHandoverDepartment,
+	readHandoverGroupJoin
+} from './registrationLoader/handoverDepartment';
 import {
 	markHandoverMilestone,
 	resetHandoverProgress
@@ -134,9 +137,12 @@ export const AuthenticatedApp = ({
 	/* Someone who registered through a group link sees the group's words in
 	   the same waiting room, and its button opens the group's entry room
 	   instead of an enquiry. It used to get no waiting room at all here —
-	   a spinner page, then the group (#1219). */
-	const [postRegForGroup] = useState(() =>
-		Boolean(new URLSearchParams(window.location.search).get('gcid'))
+	   a spinner page, then the group (#1219). The URL keeps `gcid` even when
+	   `Registration` did not accept the link, so its decision wins. */
+	const [postRegForGroup] = useState(
+		() =>
+			readHandoverGroupJoin() ??
+			Boolean(new URLSearchParams(window.location.search).get('gcid'))
 	);
 	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 
