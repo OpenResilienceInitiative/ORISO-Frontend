@@ -625,6 +625,10 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"browserOff": "Pop-ups sind in deinem Profil ausgeschaltet",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in deinem Profil ausgeschaltet"
+		},
 		"enquiry": {
 			"new": "Du hast eine neue Live-Chat Anfrage!"
 		},
