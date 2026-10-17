@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor, within } from 'storybook/test';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -146,7 +147,8 @@ const buildWaitingSession = (
 				messageDate: Math.floor(start.getTime() / 1000),
 				messagesRead: true,
 				moderators: [],
-				repetitive: false,
+				repetitive: true,
+				conversationType: 'SELF_HELP',
 				startDate: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
 				startTime: `${pad(start.getHours())}:${pad(start.getMinutes())}:${pad(start.getSeconds())}`,
 				subscribed: true,
@@ -162,21 +164,39 @@ const buildWaitingSession = (
  * Providers (SessionHeader.stories pattern)
  * ------------------------------------------------------------------ */
 
+// One stable client: the notification store re-attaches on every new instance.
+const storyMatrixClient = {
+	getRoom: () => null,
+	getRooms: () => [],
+	// The header's ⋮ menu reads notification settings from account data.
+	getAccountData: () => undefined,
+	setAccountData: async () => ({}),
+	on: () => undefined,
+	removeListener: () => undefined
+};
+
 const matrixClientService = {
-	getClient: () => ({
-		getRoom: () => null,
-		getRooms: () => []
-	})
+	getClient: () => storyMatrixClient
 } as any;
 
 const StoryProviders = ({
 	session,
-	children
+	children,
+	columnWidth
 }: {
 	session: ExtendedSessionInterface;
 	children: React.ReactNode;
+	/** Pins the chat column to the width it really has next to the lists. */
+	columnWidth?: number;
 }) => (
-	<div style={{ maxWidth: 920, margin: '0 auto', background: '#fcf9f9' }}>
+	<div
+		style={{
+			...(columnWidth
+				? { width: columnWidth }
+				: { maxWidth: 920, margin: '0 auto' }),
+			background: '#fcf9f9'
+		}}
+	>
 		<UserDataContext.Provider
 			value={{
 				userData: storyUserData,
@@ -300,4 +320,106 @@ export const WaitingOverdue: Story = {
 			<JoinGroupChatView />
 		</StoryProviders>
 	)
+};
+
+/**
+ * Footer controls of the waiting room, measured in the browser: the calendar
+ * button, the main button and the motion switch. One-letter-per-line wrapping
+ * shows as a tall, narrow button, so the assertions are on size, not on text.
+ */
+const measureFooter = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const calendar = await canvas.findByRole('button', {
+		name: /Zum Kalender hinzufügen|Add to calendar/
+	});
+	const motion = await canvas.findByRole('switch');
+	await waitFor(() =>
+		expect(calendar.getBoundingClientRect().width).toBeGreaterThan(0)
+	);
+	const label = motion.closest('label') as HTMLElement;
+	return { calendar, motion, label };
+};
+
+/**
+ * #1499 follow-up, measured on dev at 1366 px with the chat info open: the
+ * chat column is only ~370 px wide while the window counts as "large". The
+ * calendar button shrank to 64 px and both texts wrapped one letter per line.
+ */
+export const NarrowColumnAt1366: Story = {
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(24 * 86400 + 3 * 3600)}
+			columnWidth={370}
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		const { calendar, label } = await measureFooter(canvasElement);
+		const button = calendar.getBoundingClientRect();
+		/* 174 px is the width at 1920; a one-letter column is 64 px. */
+		await expect(button.width).toBeGreaterThanOrEqual(150);
+		/* One line of text plus padding; one letter per line is 200+ px tall. */
+		await expect(button.height).toBeLessThanOrEqual(56);
+		const text = label.getBoundingClientRect();
+		await expect(text.width).toBeGreaterThanOrEqual(150);
+		await expect(text.height).toBeLessThanOrEqual(40);
+		/* Nothing pokes out of the column. */
+		await expect(button.right).toBeLessThanOrEqual(370);
+		await expect(text.right).toBeLessThanOrEqual(370);
+	}
+};
+
+/** Wide column (1920 px window): calendar | main button | switch in one row. */
+export const WideColumnAt1920: Story = {
+	globals: { viewport: { value: 'desktop1920' } },
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(24 * 86400 + 3 * 3600)}
+			columnWidth={900}
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		const { calendar, label } = await measureFooter(canvasElement);
+		const canvas = within(canvasElement);
+		const main = canvas.getByRole('button', {
+			name: /Teilnehmen|Chat starten|Join/
+		});
+		const c = calendar.getBoundingClientRect();
+		const m = main.getBoundingClientRect();
+		const l = label.getBoundingClientRect();
+		await expect(c.width).toBeGreaterThanOrEqual(150);
+		await expect(c.height).toBeLessThanOrEqual(56);
+		/* Same row, left to right. */
+		await expect(
+			Math.abs(c.top + c.height / 2 - (m.top + m.height / 2))
+		).toBeLessThan(20);
+		await expect(c.right).toBeLessThanOrEqual(m.left);
+		await expect(m.right).toBeLessThanOrEqual(l.left);
+	}
+};
+
+/** Phone: one column, main button first, nothing squeezed. */
+export const PhoneAt390: Story = {
+	globals: { viewport: { value: 'phone390' } },
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(24 * 86400 + 3 * 3600)}
+			columnWidth={390}
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		const { calendar, label } = await measureFooter(canvasElement);
+		const button = calendar.getBoundingClientRect();
+		await expect(button.width).toBeGreaterThanOrEqual(150);
+		await expect(button.height).toBeLessThanOrEqual(56);
+		await expect(label.getBoundingClientRect().height).toBeLessThanOrEqual(
+			40
+		);
+	}
 };

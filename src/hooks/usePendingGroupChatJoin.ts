@@ -133,7 +133,9 @@ export const usePendingGroupChatJoin = (
 			} catch (error) {
 				if (!isCurrent()) return;
 				setSettled(true);
-				const notice = getCounsellingDpaNotification(error, t);
+				const notice = getCounsellingDpaNotification(error, t, {
+					groupJoin: true
+				});
 				if (notice && notificationsRef.current) {
 					noticeId.current = `group-assignment:${notice.id}`;
 					notificationsRef.current.addNotification({
