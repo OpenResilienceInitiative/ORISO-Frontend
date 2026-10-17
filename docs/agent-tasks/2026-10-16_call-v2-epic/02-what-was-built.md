@@ -611,3 +611,58 @@ nothing to look at, which is the state the bug was in.
 
 Every one of the five has a test that was confirmed to fail against the code as
 it stood before the fix.
+
+## 13. The fifth round, where two of my own fixes turned out to do nothing
+
+Three findings, all three mine from the round immediately before, and two of
+them were fixes that had changed no behaviour at all while passing every test.
+
+**The grove hit-target fix did nothing.** `.fg` — the chrome layer — is
+`position: absolute` with a small inset, so it covers essentially the whole
+tile. The rule I wrote, `… > * { pointer-events: auto }`, re-enabled it, which
+handed the transparent square corners straight back to the pointer. The root
+was non-hit-testable and the overlay on top of it was not. `.fg` now stays off
+and its children are listed individually: the form, the name capsule, the
+status glyphs (they carry tooltips, which need hover) and the options button —
+all of which sit *inside* the form in this design, because
+`--media-view-fg-inset` insets the chrome by the corner rather than by the
+rectangle's padding.
+
+**The Einzelgespräch chrome shift missed the button.** `{primaryButton}` is
+rendered inside `.fg`, so `.media.oriso[data-oriso-half="true"] > button` never
+matched. The capsule moved into its half and the button stayed at the shared
+box's bottom-right, where the seam clips it away entirely — removing the tile's
+only menu control, keyboard route included. The shift now moves the whole
+chrome layer, which is one rule instead of a list and has nothing left to
+forget.
+
+**And the two-person rail still lied in spotlight mode.** `alone` read
+`layout.type === "one-on-one"`, which answers the question only in grid mode:
+pick the spotlight at two people and the layout becomes a spotlight, so the
+rail decided it was no longer a two-person call and offered the grove and the
+fields again — both of which land back on the Einzelgespräch. The state is now
+derived from `orisoOneOnOne$` on the view model, straight off
+`oneOnOneLayoutMedia$`, so it cannot drift from the real condition: exactly two
+media items, one local and one remote. Not a count of people — a screen share
+makes a third media item, and `participantCount === 2` would have been the same
+lie in the other direction.
+
+### The lesson, which is now a test
+
+Two of these were selectors written for a DOM that was not the one there, and
+**nothing in this repository could observe either**: jsdom applies no CSS, and
+the browser harness mounts `OrisoFace` rather than `MediaView`. So the
+stylesheet is now asserted directly — `MediaView.orisoCss.test.ts` beside
+`InCallView.orisoRail.test.ts` — on three invariants: no `pointer-events: auto`
+rule may use `> *` or name `.fg` as its subject, and exactly one rule may carry
+the focus shift, naming `.fg` and never `> button`. All of them fail against the
+previous stylesheet.
+
+Writing that test caught a third mistake in passing: its first version read its
+own explanatory comment as part of a selector, because the comment quotes the
+`> *` it replaced. It strips comments before parsing now.
+
+That is three rounds in a row where the defect was something that looked
+finished and did nothing. The countermeasure that keeps working is the same
+one: assert the thing at the level where it can actually be wrong, and check
+the assertion fails before keeping it.
