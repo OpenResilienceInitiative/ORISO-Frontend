@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { UserDataContext } from '../../../globalState';
+import { useEffect } from 'react';
 import { Switch } from '../../Switch';
-import { readEmailSetting, useSaveEmailSetting } from './emailSetting';
+import { useEmailSettings } from './emailSetting';
 import { EmailToggle } from './EmailToggle';
 import { NotificationSwitch } from './notificationMatrix';
 
@@ -76,35 +75,17 @@ const EmailTypeToggle = ({
 	titleKey: string;
 	descriptionKey?: string;
 }) => {
-	const { userData } = useContext(UserDataContext);
-	const save = useSaveEmailSetting();
-	const current = readEmailSetting(userData, { kind: 'emailToggle', type });
-	const [checked, setChecked] = useState(current);
-
-	useEffect(() => {
-		setChecked(current);
-	}, [current]);
-
-	const onChange = useCallback(
-		async (next: boolean) => {
-			setChecked(next);
-			const { revertTo } = await save(
-				{ kind: 'emailToggle', type },
-				next
-			);
-			// Put the switch back to what is stored: leaving it in the new
-			// position would tell the user a lie about what is stored.
-			if (revertTo !== undefined) setChecked(revertTo);
-		},
-		[save, type]
-	);
+	// Shows what is stored once saving settles: a failed save puts the
+	// switch back instead of telling the user a lie.
+	const { read, change } = useEmailSettings();
+	const source = { kind: 'emailToggle', type } as const;
 
 	return (
 		<Switch
 			titleKey={titleKey}
 			descriptionKey={descriptionKey}
-			onChange={onChange}
-			checked={checked}
+			onChange={(next) => change(source, next)}
+			checked={read(source)}
 		/>
 	);
 };

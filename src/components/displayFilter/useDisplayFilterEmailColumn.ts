@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AUTHORITIES,
@@ -6,9 +6,8 @@ import {
 	hasUserAuthority
 } from '../../globalState';
 import {
-	emailSettingKey,
 	readEmailSetting,
-	useSaveEmailSetting
+	useEmailSettings
 } from '../profile/EmailNotifications/emailSetting';
 import type { DisplayFilterSection } from '../../utils/displayFilter/model';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
@@ -19,8 +18,8 @@ import type { DisplayFilterEmailColumn } from './DisplayFilterKindTable';
 /**
  * Connects the dialog's E-Mail column to the profile's stored e-mail
  * preferences (FE#1377 redesign): reads them from the user data and saves
- * through the same write path as the profile page. Optimistic while saving,
- * put back when the save fails. Mirrors the profile: no column while the
+ * through the same write path as the profile page, which also decides what
+ * a cell shows while saving (`useEmailSettings`). Mirrors the profile: no column while the
  * legacy notification screens are routed, no switches without an address
  * or while the master e-mail switch is off.
  */
@@ -42,33 +41,16 @@ export const useDisplayFilterEmailColumn = (
 		: !emailsOn
 			? t('notifications.displayFilter.emailMasterOff')
 			: undefined;
-	const save = useSaveEmailSetting();
+	const { read, change } = useEmailSettings();
 	const role = hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		? 'consultant'
 		: 'asker';
-	const [pending, setPending] = useState<Record<string, boolean>>({});
-	// Fresh user data is the stored truth: drop the optimistic values.
-	useEffect(() => setPending({}), [userData]);
-
 	const onChange = useCallback(
 		async (kindId: string, next: boolean) => {
 			const entry = emailSettingForKind(section, kindId, role);
-			if (!entry) return;
-			const key = emailSettingKey(entry.source);
-			// The active option stays clickable: no write, nothing to undo.
-			const previous =
-				pending[key] ?? readEmailSetting(userData, entry.source);
-			if (next === previous) return;
-			setPending((current) => ({ ...current, [key]: next }));
-			// Only the newest write to this setting may undo `pending`.
-			const { revertTo } = await save(entry.source, next);
-			if (revertTo !== undefined) {
-				// The last confirmed value, not `previous`: with two queued
-				// writes, `previous` is the first one's optimistic value.
-				setPending((current) => ({ ...current, [key]: revertTo }));
-			}
+			if (entry) await change(entry.source, next);
 		},
-		[pending, role, save, section, userData]
+		[change, role, section]
 	);
 
 	const column = useMemo(
@@ -77,16 +59,12 @@ export const useDisplayFilterEmailColumn = (
 				if (unavailableReason) return null;
 				const entry = emailSettingForKind(section, kindId, role);
 				if (!entry) return null;
-				return {
-					checked:
-						pending[emailSettingKey(entry.source)] ??
-						readEmailSetting(userData, entry.source)
-				};
+				return { checked: read(entry.source) };
 			},
 			onChange,
 			unavailableReason
 		}),
-		[onChange, pending, role, section, unavailableReason, userData]
+		[onChange, read, role, section, unavailableReason]
 	);
 	return newNotifications ? column : undefined;
 };

@@ -197,16 +197,14 @@ describe('useSaveEmailSetting', () => {
 				.mockRejectedValueOnce(new Error('offline'))
 				.mockResolvedValue(undefined)
 		);
-		let result:
-			| { saved: boolean; stored: boolean; revertTo?: boolean }
-			| undefined;
+		let result: { saved: boolean; stored: boolean } | undefined;
 		await act(async () => {
 			result = await save(
 				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
 				false
 			);
 		});
-		expect(result).toEqual({ saved: false, stored: true, revertTo: true });
+		expect(result).toEqual({ saved: false, stored: true });
 		// Drain the shared queue state for later tests.
 		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
 		await act(async () => {

@@ -1,7 +1,6 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { UserDataContext } from '../../../../globalState';
+import React from 'react';
 import { Switch } from '../../../Switch';
-import { readEmailSetting, useSaveEmailSetting } from '../emailSetting';
+import { useEmailSettings } from '../emailSetting';
 
 interface EmailToggleProps {
 	name: string;
@@ -14,30 +13,16 @@ export const EmailToggle = ({
 	titleKey,
 	descriptionKey
 }: EmailToggleProps) => {
-	const { userData } = useContext(UserDataContext);
-	const [internalChecked, setInternalChecked] = useState(false);
 	// Shared with the display filter's E-Mail column: one write path.
-	const save = useSaveEmailSetting();
-
-	useEffect(() => {
-		setInternalChecked(readEmailSetting(userData, { kind: 'path', name }));
-	}, [userData.emailNotifications, name]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	const onChange = useCallback(
-		async (checked: boolean) => {
-			setInternalChecked(checked);
-			const { revertTo } = await save({ kind: 'path', name }, checked);
-			if (revertTo !== undefined) setInternalChecked(revertTo);
-		},
-		[name, save]
-	);
+	const { read, change } = useEmailSettings();
+	const source = { kind: 'path', name } as const;
 
 	return (
 		<Switch
 			titleKey={titleKey}
 			descriptionKey={descriptionKey}
-			onChange={onChange}
-			checked={internalChecked}
+			onChange={(checked) => change(source, checked)}
+			checked={read(source)}
 		/>
 	);
 };
