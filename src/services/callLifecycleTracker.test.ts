@@ -427,6 +427,41 @@ describe('a call that outlives the Matrix client it started on', () => {
 		};
 	};
 
+	it('waits for the replacement client to be able to encrypt', async () => {
+		/*
+		 * `MatrixClientService.initializeClient` announces the replacement
+		 * BEFORE `initRustCrypto()` resolves, on purpose, so room listeners
+		 * re-attach without missing events. A WRITE in that window reaches a
+		 * client that cannot encrypt yet — and this card carries the
+		 * participants' display names into a counselling room.
+		 *
+		 * So the write waits, and because it waits it must also be retried:
+		 * a running card is normally re-sent by the next membership change,
+		 * and in this window there may not be another one.
+		 */
+		const before = clientDouble(ME);
+		const service = rotatingService(before);
+		await callLifecycleTracker.begin(call);
+
+		let crypto: object | undefined = undefined;
+		const after = Object.assign(clientDouble(ME), {
+			getCrypto: () => crypto
+		});
+		service.rotateTo(after);
+
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		// Nothing goes out while the answer is "not yet".
+		expect(after.sendMessage).not.toHaveBeenCalled();
+
+		crypto = { ready: true };
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(after.sendMessage).toHaveBeenCalledTimes(1);
+		expect(after.sendMessage.mock.calls[0][1]['org.oriso.call'].state).toBe(
+			'missed'
+		);
+	});
+
 	it('writes the ending through the replacement client', async () => {
 		const before = clientDouble(ME);
 		const service = rotatingService(before);

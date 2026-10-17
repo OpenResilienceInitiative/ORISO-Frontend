@@ -2,7 +2,10 @@ import { ClientEvent, type MatrixClient } from 'matrix-js-sdk';
 import type { RoomMessageEventContent } from 'matrix-js-sdk/lib/@types/events';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { getMatrixClientService } from './matrixClientRegistry';
-import { CallTimelineMessageService } from './callTimelineMessageService';
+import {
+	CallTimelineMessageService,
+	TimelineClientUnavailableError
+} from './callTimelineMessageService';
 import type { CallData } from './CallManager';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
@@ -79,8 +82,29 @@ class CallLifecycleTracker {
 			}
 			return (now.getUserId?.() ?? undefined) === ownUserId ? now : null;
 		};
+		/*
+		 * Crypto first, then the card.
+		 *
+		 * `MatrixClientService.initializeClient` announces the replacement
+		 * client BEFORE `initRustCrypto()` resolves — deliberately, so room
+		 * listeners re-attach without missing events. For a listener that is
+		 * right; for a WRITE into an encrypted counselling room it is not.
+		 * A membership change or a hangup landing in that window reaches
+		 * `sendMessage` on a client that cannot encrypt yet, and this card
+		 * carries the participants' display names.
+		 *
+		 * A client that does not have the method at all cannot be asked —
+		 * an older SDK, a test double — and is left alone; only one that
+		 * answers "not yet" is made to wait. The wait is not a loss: the
+		 * write throws `TimelineClientUnavailableError`, which `publish`
+		 * retries for any state rather than only for a terminal one.
+		 */
+		const canWrite = (client: MatrixClient): boolean =>
+			typeof client.getCrypto !== 'function' ||
+			client.getCrypto() !== undefined;
 		const writer = new CallTimelineMessageService(() => {
-			const now = currentClient();
+			const live = currentClient();
+			const now = live && canWrite(live) ? live : null;
 			return now
 				? {
 						sendMessage: (roomId, content, transactionId) =>
@@ -394,12 +418,23 @@ class CallLifecycleTracker {
 	}
 
 	private publish(tracked: TrackedCall): void {
-		void tracked.writer.publish(tracked.message).catch(() => {
+		void tracked.writer.publish(tracked.message).catch((error: unknown) => {
 			// The writer retains the original transaction ID and root event after
 			// failure, so retrying a terminal edit cannot create another call card.
 			// Never send it through a replacement login client.
 			if (!tracked.isCurrentClient()) return;
-			if (tracked.message.state !== 'running') {
+			/*
+			 * A client that is not ready YET is retried whatever the state.
+			 *
+			 * Only terminal writes are retried otherwise, because a running
+			 * one is re-sent by the next membership change anyway. That
+			 * reasoning fails for the crypto window: it closes in seconds
+			 * and nothing re-triggers a publish afterwards, so a presence
+			 * update that fell into it would leave the card showing the
+			 * wrong people for the rest of the call.
+			 */
+			const notReadyYet = error instanceof TimelineClientUnavailableError;
+			if (tracked.message.state !== 'running' || notReadyYet) {
 				if (tracked.retryTimer !== undefined) return;
 				const delay = TERMINAL_RETRY_DELAYS_MS[tracked.retryAttempts];
 				if (delay !== undefined) {
