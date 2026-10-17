@@ -222,14 +222,16 @@ export const JoinGroupChatView = ({
 		setOverlayActive(false);
 	};
 
-	const handleButtonClick = () => {
+	/* The request is handed back: the embedded waiting room's closing animation
+	   keeps the screen covered until it has settled (ORISO-Frontend#1737). */
+	const handleButtonClick = (): Promise<void> | undefined => {
 		if (bannedUsers.includes(userData.userName)) {
 			setOverlayItem(bannedUserOverlay);
 			setOverlayActive(true);
-			return;
+			return undefined;
 		}
 		if (isRequestInProgress) {
-			return;
+			return undefined;
 		}
 		setIsRequestInProgress(true);
 		const groupChatApiCall =
@@ -237,7 +239,7 @@ export const JoinGroupChatView = ({
 			!activeSession.item.active
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
-		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
+		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
 				const notice = getCounsellingDpaNotification(error, translate, {
