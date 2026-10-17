@@ -48,11 +48,23 @@ export const CallTimelineMessage = ({
 	 * place a name is available here, which is also why this cannot be
 	 * reconstructed without `actorUserId` — a user id alone is not a person.
 	 */
-	const actorName = call.actorUserId
+	/*
+	 * And a stand-in name is not a name.
+	 *
+	 * Both producers fall back to the id when the room has no display name
+	 * for somebody — `callLifecycleTracker` writes
+	 * `room.getMember(userId)?.name || userId`, and `apiCallState` does the
+	 * same — so finding an entry was never enough. The one check this had
+	 * caught an actor MISSING from the lists and let the id through whenever
+	 * it was present as its own display name, which is the commoner case: a
+	 * member whose profile has not synced yet.
+	 */
+	const named = call.actorUserId
 		? [...call.participants, ...(call.present ?? [])].find(
 				(participant) => participant.userId === call.actorUserId
 			)?.displayName
 		: undefined;
+	const actorName = named === call.actorUserId ? undefined : named;
 	/*
 	 * The date in the language the interface is in, not the browser's.
 	 *

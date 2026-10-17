@@ -316,6 +316,32 @@ it('says nothing about who started it when it has no name for them', () => {
 	expect(screen.queryByText(/@nobody-we-know/)).toBeNull();
 });
 
+it('says nothing when the only name it has for them is their id', () => {
+	/*
+	 * The commoner case than an actor missing from the lists, and the one the
+	 * existing test above did not reach: both producers fall back to
+	 * `displayName: userId` when the room has no display name yet, so the
+	 * entry IS there and its name is the identifier the pseudonym exists to
+	 * keep out of sight.
+	 */
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		actorUserId: '@alex:example',
+		participants: [
+			{ userId: '@alex:example', displayName: '@alex:example' }
+		],
+		present: [{ userId: '@alex:example', displayName: '@alex:example' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByText(/startedBy/)).toBeNull();
+	expect(screen.queryByText(/@alex:example/)).toBeNull();
+});
+
 const STARTED_AT = '2026-10-16T08:00:00.000Z';
 const formatIn = (locale?: string) =>
 	new Intl.DateTimeFormat(locale, {
