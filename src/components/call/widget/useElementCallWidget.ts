@@ -24,8 +24,8 @@ import {
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
 import {
+	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
-	ALLOWED_ROOM_EVENT_TYPES,
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
@@ -381,7 +381,10 @@ export const useElementCallWidget = (
 		};
 		const feedAllowedRoomEvent = (event: MatrixEvent) => {
 			if (event.getRoomId() !== roomId) return;
-			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
+			// The RECEIVE set: this is the path that carries an identity into
+			// the call, and identity is readable by the widget but not
+			// writable by it, so the two sets differ by exactly that event.
+			if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedEvent(event.getEffectiveEvent() as never, roomId)
 				.catch(() => {

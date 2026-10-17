@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	CALL_IDENTITY_EVENT_TYPE,
@@ -7,8 +7,10 @@ import {
 } from './callIdentity';
 import {
 	brandPairFrom,
+	forgetPublishedIdentity,
 	type IdentityClient,
-	publishCallIdentity
+	publishCallIdentity,
+	republishCallIdentity
 } from './publishCallIdentity';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 
@@ -132,55 +134,93 @@ describe('reading the brand off the document', () => {
 });
 
 describe('publishing it', () => {
-	const makeClient = (
-		existing: unknown = null
-	): IdentityClient & { sendStateEvent: ReturnType<typeof vi.fn> } => ({
+	const ROOM = '!room:oriso.test';
+	const makeClient = (): IdentityClient & {
+		sendEvent: ReturnType<typeof vi.fn>;
+	} => ({
 		getUserId: () => SEEKER,
-		getRoom: () => ({
-			currentState: {
-				getStateEvents: () =>
-					existing === null ? null : { getContent: () => existing }
-			}
-		}),
-		sendStateEvent: vi.fn().mockResolvedValue({})
+		sendEvent: vi.fn().mockResolvedValue({ event_id: '$one' })
 	});
+	/** The production check asks the room; these tests say so directly. */
+	const inAnEncryptedRoom = { isEncrypted: (): boolean => true };
 
-	it('writes the record under the person’s own user id', async () => {
+	beforeEach(() => forgetPublishedIdentity());
+
+	it('sends the record to the timeline, never to room state', async () => {
+		/*
+		 * The whole point of the transport.
+		 *
+		 * Matrix room encryption covers message events. State events are sent
+		 * in the clear in an encrypted room exactly as in any other, so an
+		 * identity in state is a record the homeserver — and every server it
+		 * federates to — can read and keep: on this platform, which advice
+		 * seeker chose which animal. A timeline event in a Megolm room is
+		 * ciphertext to the server.
+		 */
 		const client = makeClient();
-		await publishCallIdentity(client, '!room:oriso.test', {
-			userData: {},
-			isConsultant: false,
-			brand: BRAND
-		});
-		expect(client.sendStateEvent).toHaveBeenCalledTimes(1);
-		const [roomId, type, content, stateKey] =
-			client.sendStateEvent.mock.calls[0];
-		expect(roomId).toBe('!room:oriso.test');
+		await publishCallIdentity(
+			client,
+			ROOM,
+			{ userData: {}, isConsultant: false, brand: BRAND },
+			inAnEncryptedRoom
+		);
+		expect(client.sendEvent).toHaveBeenCalledTimes(1);
+		const call = client.sendEvent.mock.calls[0];
+		const [roomId, type, content] = call;
+		expect(roomId).toBe(ROOM);
 		expect(type).toBe(CALL_IDENTITY_EVENT_TYPE);
-		expect(stateKey).toBe(SEEKER);
 		expect(content).toMatchObject({ kind: 'animal' });
+		// No fourth argument: a state key is what this no longer has, and
+		// `sendEvent` with one would be `sendStateEvent` by another name.
+		expect(call).toHaveLength(3);
+		expect('sendStateEvent' in client).toBe(false);
 	});
 
-	it('keys the record by the Matrix id even when the seed is another', async () => {
+	it('refuses to publish into a room that is not encrypted', async () => {
+		/*
+		 * The guarantee, not merely tidiness.
+		 *
+		 * The call room is created with Megolm on, but the group-call path
+		 * falls back to the session room when that creation fails, and an
+		 * identity sent in the clear is the exact leak this module exists to
+		 * close. Silence costs the person their animal for one call — the
+		 * fork shows initials — rather than a durable record on a server.
+		 */
+		const client = makeClient();
+		await expect(
+			publishCallIdentity(
+				client,
+				ROOM,
+				{ userData: {}, isConsultant: false, brand: BRAND },
+				{ isEncrypted: () => false }
+			)
+		).resolves.toBeNull();
+		expect(client.sendEvent).not.toHaveBeenCalled();
+	});
+
+	it('derives the palette from the seed, not from the Matrix id', async () => {
 		/*
 		 * `useOwnAvatarUserId` prefers the Matrix id but falls back to the
-		 * userservice id, and the two uses are not interchangeable: the state
-		 * key must be the Matrix id or the server refuses the write and the
-		 * fork, which looks identities up by the Matrix id on its tiles,
-		 * would never find it anyway. The SEED stays whatever the chat
-		 * derives the palette from, so the animal matches on both sides.
+		 * userservice id, and the two uses are not interchangeable. The SEED
+		 * stays whatever the chat derives the palette from, so the animal
+		 * matches on both sides. There is no longer a key to get wrong: the
+		 * fork files the record under the event's SENDER, which the Matrix id
+		 * is by construction.
 		 */
 		const client = makeClient();
 		const userserviceId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-		await publishCallIdentity(client, '!room:oriso.test', {
-			userId: userserviceId,
-			userData: {},
-			isConsultant: false,
-			brand: BRAND
-		});
-		const [, , content, stateKey] = client.sendStateEvent.mock.calls[0];
-		expect(stateKey).toBe(SEEKER);
-		// The palette still comes from the seed, not from the state key.
+		await publishCallIdentity(
+			client,
+			ROOM,
+			{
+				userId: userserviceId,
+				userData: {},
+				isConsultant: false,
+				brand: BRAND
+			},
+			inAnEncryptedRoom
+		);
+		const [, , content] = client.sendEvent.mock.calls[0];
 		const seeded = generateAvatarForUser(userserviceId);
 		expect(content).toMatchObject({
 			bg: seeded.bg,
@@ -188,59 +228,93 @@ describe('publishing it', () => {
 		});
 	});
 
-	it('says nothing when the same record is already there', async () => {
-		const derived = generateAvatarForUser(SEEKER);
-		const client = makeClient({
-			kind: 'animal',
-			file: derived.file,
-			bg: derived.bg,
-			ink: derived.iconColor
-		});
-		await publishCallIdentity(client, '!room:oriso.test', {
-			userData: {},
-			isConsultant: false,
-			brand: BRAND
-		});
-		expect(client.sendStateEvent).not.toHaveBeenCalled();
+	it('says nothing the second time when nothing changed', async () => {
+		// A timeline event has no state key, so nothing dedupes it for us: a
+		// re-render would otherwise put another copy in the room.
+		const client = makeClient();
+		const source = { userData: {}, isConsultant: false, brand: BRAND };
+		await publishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		await publishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		expect(client.sendEvent).toHaveBeenCalledTimes(1);
 	});
 
-	it('rewrites it when the person changed their motif', async () => {
-		const client = makeClient({
-			kind: 'animal',
-			file: 'fox.svg',
-			bg: '#165e83',
-			ink: '#ffffff'
-		});
-		await publishCallIdentity(client, '!room:oriso.test', {
-			userData: { avatarId: 'magpie' },
-			isConsultant: false,
-			brand: BRAND
-		});
-		expect(client.sendStateEvent).toHaveBeenCalledTimes(1);
+	it('says it again when the person changed their motif', async () => {
+		const client = makeClient();
+		await publishCallIdentity(
+			client,
+			ROOM,
+			{ userData: {}, isConsultant: false, brand: BRAND },
+			inAnEncryptedRoom
+		);
+		await publishCallIdentity(
+			client,
+			ROOM,
+			{
+				userData: { avatarId: 'magpie' },
+				isConsultant: false,
+				brand: BRAND
+			},
+			inAnEncryptedRoom
+		);
+		expect(client.sendEvent).toHaveBeenCalledTimes(2);
+		const [, , second] = client.sendEvent.mock.calls[1];
+		expect(second).toMatchObject({ file: 'magpie.svg' });
+	});
+
+	it('says it again, unchanged, for somebody who just arrived', async () => {
+		/*
+		 * What replaces a state event's "always current".
+		 *
+		 * Room state is there for whoever reads it next; a timeline event
+		 * reaches whoever was listening. The widget is fed live events and
+		 * the call room's history is `joined`, so a newcomer is handed
+		 * nothing — everybody already present re-announces instead, and that
+		 * resend is identical content, which the dedupe above would otherwise
+		 * swallow.
+		 */
+		const client = makeClient();
+		const source = { userData: {}, isConsultant: false, brand: BRAND };
+		await publishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		await republishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		expect(client.sendEvent).toHaveBeenCalledTimes(2);
+		expect(client.sendEvent.mock.calls[0][2]).toEqual(
+			client.sendEvent.mock.calls[1][2]
+		);
 	});
 
 	it('does not break the call when the send fails', async () => {
 		const client = makeClient();
-		client.sendStateEvent.mockRejectedValue(new Error('M_FORBIDDEN'));
+		client.sendEvent.mockRejectedValue(new Error('M_FORBIDDEN'));
 		await expect(
-			publishCallIdentity(client, '!room:oriso.test', {
-				userData: {},
-				isConsultant: false,
-				brand: BRAND
-			})
+			publishCallIdentity(
+				client,
+				ROOM,
+				{ userData: {}, isConsultant: false, brand: BRAND },
+				inAnEncryptedRoom
+			)
 		).resolves.toBeNull();
+	});
+
+	it('tries again after a failure rather than believing it landed', async () => {
+		const client = makeClient();
+		client.sendEvent.mockRejectedValueOnce(new Error('M_FORBIDDEN'));
+		const source = { userData: {}, isConsultant: false, brand: BRAND };
+		await publishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		await publishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		expect(client.sendEvent).toHaveBeenCalledTimes(2);
 	});
 
 	it('does nothing without a user id', async () => {
 		const client = makeClient();
 		client.getUserId = () => null;
 		await expect(
-			publishCallIdentity(client, '!room:oriso.test', {
-				userData: {},
-				isConsultant: false,
-				brand: BRAND
-			})
+			publishCallIdentity(
+				client,
+				ROOM,
+				{ userData: {}, isConsultant: false, brand: BRAND },
+				inAnEncryptedRoom
+			)
 		).resolves.toBeNull();
-		expect(client.sendStateEvent).not.toHaveBeenCalled();
+		expect(client.sendEvent).not.toHaveBeenCalled();
 	});
 });

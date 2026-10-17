@@ -129,15 +129,20 @@ describe('createElementCallRoom', () => {
 
 	it('lets every participant say who they are', async () => {
 		/*
-		 * `state_default: 100` closed the room to participant state writes,
-		 * which is the point — but it also closed the identity record, which
-		 * each person's own client writes under their own user id. Only the
-		 * person who started the call could publish one; everybody else
-		 * appeared in the call as initials, which is exactly what "identity
-		 * is inherited, never derived" forbids.
+		 * Identity travels as an ENCRYPTED TIMELINE event, because room state
+		 * is not encrypted and an identity in state is a record the
+		 * homeserver can read — on this platform, which advice seeker chose
+		 * which animal.
 		 *
-		 * Safe to grant: the state key is the sender's user id, and the
-		 * server already refuses a state key belonging to anyone else.
+		 * In an encrypted room the power-level check sees the outer type,
+		 * `m.room.encrypted`, whatever is sealed inside it. That was 50 while
+		 * `users_default` is 0, so only the person who created the call could
+		 * have sent one and everybody else would have appeared as initials —
+		 * which is exactly what "identity is inherited, never derived"
+		 * forbids.
+		 *
+		 * `state_default` stays shut: no participant writes room state here
+		 * beyond their own call membership, granted above.
 		 */
 		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
 		installClient({
@@ -151,8 +156,11 @@ describe('createElementCallRoom', () => {
 
 		const levels = (createRoom.mock.calls[0][0] as any)
 			.power_level_content_override;
-		expect(levels.events[CALL_IDENTITY_EVENT_TYPE]).toBe(0);
+		expect(levels.events['m.room.encrypted']).toBe(0);
+		expect(levels.users_default).toBe(0);
 		expect(levels.state_default).toBeGreaterThanOrEqual(100);
+		// And it is no longer room state at all.
+		expect(levels.events[CALL_IDENTITY_EVENT_TYPE]).toBeUndefined();
 	});
 
 	it('falls back to invites — never to a public room — on an old homeserver', async () => {

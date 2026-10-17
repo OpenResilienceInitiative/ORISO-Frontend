@@ -13,6 +13,7 @@ import React, {
 	useRef
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RoomStateEvent } from 'matrix-js-sdk';
 import { callManager, CallData } from '../../services/CallManager';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -32,8 +33,10 @@ import {
 } from '../../globalState';
 import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
 import {
+	forgetPublishedIdentity,
 	type IdentityClient,
-	publishCallIdentity
+	publishCallIdentity,
+	republishCallIdentity
 } from './publishCallIdentity';
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import './GroupCallWidget.scss';
@@ -96,7 +99,8 @@ export const GroupCallWidget: React.FC = () => {
 	);
 
 	/*
-	 * Tell the call who we are, before it opens.
+	 * Tell the call who we are, before it opens — and tell it again for
+	 * whoever arrives later.
 	 *
 	 * The iframe cannot work this out: the animal is a stored choice from the
 	 * userservice, an advice seeker's colours come from the anonymous-name
@@ -105,29 +109,66 @@ export const GroupCallWidget: React.FC = () => {
 	 * thing the design forbids. So each client publishes its own identity into
 	 * the call room and the fork reads what it is given.
 	 *
-	 * Own identity only. A client that wrote somebody else's would be guessing
-	 * on their behalf, and the state key is the user id, so it cannot.
+	 * Own identity only. A client that announced somebody else's would be
+	 * guessing on their behalf, and the fork keys what it reads by the event's
+	 * sender, so it could not be believed anyway.
+	 *
+	 * It is an encrypted timeline event rather than room state, because room
+	 * state is not encrypted — see `publishCallIdentity`. The price of that is
+	 * paid here: a timeline event reaches whoever is listening at the time, so
+	 * when a new member joins, everybody already in the call says it again and
+	 * the newcomer learns the room from the people in it.
 	 *
 	 * After the join, not beside it. `useElementCallWidget` joins the call
 	 * room and only then produces a URL, so waiting for the URL is waiting
-	 * for the membership — a state event sent to a room this client has not
-	 * joined yet is refused, and the first version of this raced it.
+	 * for the membership — an event sent to a room this client has not joined
+	 * yet is refused, and the first version of this raced it.
 	 */
 	useEffect(() => {
 		const client = matrixClientService?.getClient();
 		if (!client || !callRoomId || !widget.url || !userData) return;
-		void publishCallIdentity(
-			client as unknown as IdentityClient,
-			callRoomId,
-			{
-				userId: ownAvatarUserId,
-				userData,
-				isConsultant: hasUserAuthority(
-					AUTHORITIES.CONSULTANT_DEFAULT,
-					userData
-				)
-			}
+		const identityClient = client as unknown as IdentityClient;
+		const source = {
+			userId: ownAvatarUserId,
+			userData,
+			isConsultant: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+		};
+		void publishCallIdentity(identityClient, callRoomId, source);
+
+		/*
+		 * Whoever is already here heard the publish above live. Seeding the
+		 * set with them is what stops this from re-announcing to the room on
+		 * every membership change that is not an arrival — a leave, a profile
+		 * edit, or our own join echoing back.
+		 */
+		const announced = new Set<string>(
+			(
+				client
+					.getRoom?.(callRoomId)
+					?.getMembersWithMembership?.('join') ?? []
+			)
+				.map((member: { userId: string }) => member.userId)
+				.concat(client.getUserId?.() ?? [])
 		);
+		const onMember = (
+			_event: unknown,
+			_state: unknown,
+			member: { roomId?: string; userId?: string; membership?: string }
+		): void => {
+			if (member?.roomId !== callRoomId) return;
+			if (member.membership !== 'join') return;
+			const userId = member.userId;
+			if (!userId || announced.has(userId)) return;
+			announced.add(userId);
+			void republishCallIdentity(identityClient, callRoomId, source);
+		};
+		client.on?.(RoomStateEvent.Members, onMember as never);
+		return (): void => {
+			client.off?.(RoomStateEvent.Members, onMember as never);
+		};
 	}, [
 		matrixClientService,
 		callRoomId,
@@ -135,6 +176,18 @@ export const GroupCallWidget: React.FC = () => {
 		ownAvatarUserId,
 		userData
 	]);
+
+	/*
+	 * A new call to the same room announces again.
+	 *
+	 * Keyed on the room alone, so it does not fire when the effect above
+	 * re-runs for a changed profile — that would clear the record and resend
+	 * identical content as a duplicate event.
+	 */
+	useEffect(() => {
+		if (!callRoomId) return;
+		return (): void => forgetPublishedIdentity(callRoomId);
+	}, [callRoomId]);
 
 	/*
 	 * Only a counsellor gets the notepad.

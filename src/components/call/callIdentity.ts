@@ -14,9 +14,13 @@
  * a counsellor's come from the tenant's brand pair. None of that is visible
  * from inside the iframe.
  *
- * So ORISO publishes it. One small state event per person per room, state key
- * the user id, written by that person's own client and read by everybody. Not
- * the MatrixRTC membership, which was the first plan and does not work:
+ * So ORISO publishes it. One small ENCRYPTED TIMELINE EVENT per person per
+ * room, sent by that person's own client and read by everybody, keyed on the
+ * other side by its sender. Not room state, which was the second plan: state
+ * events are not encrypted even in an encrypted room, so an identity in state
+ * is a record the homeserver and every server it federates to can read — on
+ * this platform, which advice seeker chose which animal. Not the MatrixRTC
+ * membership either, which was the first plan and does not work:
  * `MembershipManager.makeMyMembership` in matrix-js-sdk is `protected` and
  * builds its content from a fixed literal, and `joinRoomSession` constructs
  * the manager itself, so there is no hook for an extra field short of

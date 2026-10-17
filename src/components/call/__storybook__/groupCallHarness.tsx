@@ -29,7 +29,19 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 		getMyMembership: () => membership,
 		getLiveTimeline: () => ({
 			getState: () => ({ getStateEvents: () => [] })
-		})
+		}),
+		/*
+		 * The identity record is only sent into an ENCRYPTED room — see
+		 * `publishCallIdentity`. A fake boundary that forgot to say so would
+		 * make the host's refusal look like the host being broken.
+		 */
+		hasEncryptionStateEvent: () => true,
+		// Who is already here, so the re-announce for a newcomer can tell the
+		// difference between an arrival and everything else.
+		getMembersWithMembership: (which: string) =>
+			which === 'join'
+				? [{ userId: FAKE_CURRENT_USER_ID, membership: 'join' }]
+				: []
 	};
 	const on = (eventName: string, listener: MatrixListener) => {
 		const eventListeners = listeners.get(eventName) ?? new Set();
@@ -42,9 +54,16 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 	const client = {
 		getUserId: () => FAKE_CURRENT_USER_ID,
 		getDeviceId: () => FAKE_DEVICE_ID,
-		// The host publishes its own ORISO identity into the call room before
-		// the widget opens, so the fake boundary has to answer for it.
-		sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
+		/*
+		 * The host announces its own ORISO identity into the call room before
+		 * the widget opens, so the fake boundary has to answer for it.
+		 *
+		 * `sendEvent`, not `sendStateEvent`: it is a timeline event precisely
+		 * so the room's encryption covers it. `sendStateEvent` is kept here
+		 * only so a test can assert it is never used for this again.
+		 */
+		sendEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
+		sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
 		getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
 		getRoom: (roomId: string) =>
 			roomId === FAKE_ELEMENT_CALL_ROOM_ID ? room : null,
@@ -64,9 +83,13 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 			Array.from(listeners.values()).reduce(
 				(count, eventListeners) => count + eventListeners.size,
 				0
-			)
+			),
+		/** Fire a Matrix client event at whatever the host subscribed. */
+		emitHarnessEvent: (eventName: string, ...args: unknown[]) =>
+			listeners.get(eventName)?.forEach((listener) => listener(...args))
 	} as unknown as MatrixClientService & {
 		getHarnessListenerCount(): number;
+		emitHarnessEvent(eventName: string, ...args: unknown[]): void;
 	};
 };
 

@@ -544,6 +544,67 @@ describe('useElementCallWidget', () => {
 		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
 	});
 
+	it('feeds the widget an identity it may read but not send', async () => {
+		/*
+		 * The live wire of the whole transport.
+		 *
+		 * Identity moved out of room state — which Matrix does not encrypt —
+		 * into an encrypted timeline event. The feed below filtered by the
+		 * set of types the widget may SEND, so with the transport changed and
+		 * this line left alone the event would have been dropped here: every
+		 * test green, the capability granted, and every face in the call
+		 * showing initials. It is now the RECEIVE set, which is wider by
+		 * exactly this event.
+		 */
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+
+		const identityRaw = {
+			type: 'org.oriso.call.identity',
+			content: {
+				kind: 'animal',
+				file: 'fox.svg',
+				bg: '#165E83',
+				ink: '#ffffff'
+			}
+		};
+		// It arrives sealed, as it must: that is the point of the move.
+		let type = 'm.room.encrypted';
+		const listeners = new Set<(event: unknown, error?: Error) => void>();
+		const identityEvent = {
+			getRoomId: () => CALL_ROOM,
+			getType: () => type,
+			getWireType: () => 'm.room.encrypted',
+			getEffectiveEvent: () => identityRaw,
+			on: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.add(listener);
+			},
+			off: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.delete(listener);
+			}
+		};
+
+		act(() => {
+			client.emitTest('Room.timeline', identityEvent, {}, false);
+		});
+		// Nothing is fed while it is still ciphertext.
+		expect(api.feedEvent).not.toHaveBeenCalled();
+
+		act(() => {
+			type = 'org.oriso.call.identity';
+			listeners.forEach((listener) => listener(identityEvent));
+		});
+		expect(api.feedEvent).toHaveBeenCalledWith(identityRaw, CALL_ROOM);
+		expect(api.feedEvent).toHaveBeenCalledTimes(1);
+	});
+
 	it('reports, and does not silently swallow, a call event that never decrypts', async () => {
 		vi.useFakeTimers();
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

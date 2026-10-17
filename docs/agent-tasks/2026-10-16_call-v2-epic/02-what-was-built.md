@@ -381,3 +381,109 @@ No live call has been made against any of this, on a phone or anywhere else.
 There is no homeserver, no LiveKit and no Docker daemon in this environment.
 The reviewer plans on both pull requests list what needs two accounts and a
 deployed fork, and a phone is now on that list.
+
+## 10. Identity stopped travelling in the clear
+
+Codex raised this on #1775 as P1, against `AGENTS.md:29` — "Preserve
+Matrix/chat/draft privacy boundaries. Do not move plaintext previews or draft
+contents into server-visible state." It was right on the fact, and I handled it
+badly: I laid out four options with their costs and left the choice to the
+product owner as a blocking question on the epic.
+
+That was the wrong call. The owner's decision would have been whether to
+*relax* a rule this delivery is bound by; compliance is not a decision, it is
+the default. And the option I had leaned towards was available all along once
+its one real cost was solved. So it is implemented.
+
+### The fact
+
+Matrix room encryption covers message events, sent as `m.room.encrypted`. State
+events are **not** encrypted — in an encrypted room exactly as in any other.
+The call room is created with Megolm on (`buildMatrixRoomEncryptionInitialState`,
+and `assertMatrixRoomEncrypted` before any write), and that did nothing for
+`org.oriso.call.identity`, which was a state event. The homeserver, and every
+server it federates to, could read and keep it.
+
+### What was actually exposed, and what was not
+
+Worth stating precisely, because the review's phrase — "identity data imported
+from the user service" — is broader than what travelled:
+
+- `bg` and `ink` for an advice seeker are `generateAvatarForUser(userId)`, a
+  pure function of the Matrix user id the homeserver already has. It could
+  compute them itself. Those fields exposed nothing.
+- `file` for a seeker who never chose anything is that same derived default.
+- `file` for a seeker who **did** choose an animal is a userservice-stored
+  preference the server could not otherwise derive. That is a real leak.
+- A counsellor's `initials` come from their display name, which is already in
+  plaintext `m.room.member` state. The tenant brand pair is tenant-wide, not
+  personal.
+
+So the new exposure was narrow — an avatar preference, and letters already
+visible elsewhere. Narrow is not nothing, on a platform whose promise is that
+the counselling centre keeps no record of the person.
+
+### The fix: an encrypted timeline event
+
+`m.room.encrypted` genuinely is end-to-end encrypted, so the record moved from
+room state to the call room's timeline. The server stores ciphertext.
+
+Three properties of state had to be replaced, and each is why a piece of this
+change exists:
+
+1. **State is idempotent; a timeline event is not.** `publishCallIdentity` now
+   keeps what it last sent per room, so a re-render does not put a second copy
+   in the room.
+2. **State is always current for whoever reads it next; a timeline event
+   reaches whoever was listening.** The widget is fed live events and the call
+   room's `history_visibility` is `joined`, so a late joiner is handed nothing.
+   Everybody already in the call therefore re-announces when a new member
+   appears, and the newcomer learns the room from the people in it. One small
+   encrypted event per participant per join — for a counselling call, a
+   handful.
+3. **A state key had to be checked against the sender by hand.** It does not
+   any more: the fork files each record under the event's **sender**, which a
+   decrypted event attests. Forgery has nowhere to stand — a mischief-maker can
+   only ever change their own face. The reader-side sender check added in the
+   previous round is now structural.
+
+### What that took
+
+| Where | Change |
+| --- | --- |
+| `publishCallIdentity.ts` | `sendEvent` instead of `sendStateEvent`; last-sent memo; `republishCallIdentity` for an arrival; **refuses to publish into an unencrypted room at all** |
+| `GroupCallWidget.tsx` | announces once, then re-announces on a `join` that is a genuine arrival — not a leave, not our own join echoing back, not another room |
+| `CallManager.ts` | `'m.room.encrypted': 0`. In an encrypted room the power-level check sees the **outer** type, so at 50 with `users_default: 0` only the call's creator could have sent one and everybody else would have shown initials. The per-type grant for the state event is gone. |
+| `orisoWidgetCapabilities.ts` (host) | room events split into send and receive sets, as state already was. Identity is receive-only: a widget that could write one could write somebody else's. |
+| `useElementCallWidget.ts` | the feed filter uses the **receive** set |
+| `OrisoWidgetDriver.ts` | timeline reads use the receive set; sends keep the narrow one |
+| fork `orisoWidgetCapabilities.ts` | identity moves from `receiveState` to `receiveEvent`, still absent from `sendEvent` |
+| fork `useOrisoIdentities.ts` | reads the live timeline, keyed by sender, newest wins; follows `RoomEvent.Timeline` and `TimelineReset` |
+
+### The line that would have made all of it silent
+
+`useElementCallWidget.ts` filtered the event feed by the set of types the
+widget may **send**. With the transport changed and that line left alone, every
+test would still have passed, the capability would have been granted, the host
+would have sent the event — and it would have been dropped on the way into the
+iframe, leaving every face in the call showing initials. It is the same shape of
+bug as the four this epic has already found: green, and doing nothing.
+
+It now has a test of its own, and that test was confirmed to fail against the
+old filter before being kept.
+
+### What this does not fix
+
+The homeserver still sees who joined which call room and when, and the
+anonymous pseudonym of everybody in it. Both are ordinary Matrix membership
+state and predate this epic. What it no longer sees is which animal a person
+chose.
+
+### Verified
+
+Local only, as everything in this epic: no homeserver, no LiveKit, no Docker.
+The widget-boundary behaviour is covered against the real `GroupCallWidget` in
+`groupCallHarness.test.tsx`, and `embedded.ts` in matrix-js-sdk was read to
+confirm the production path — `onEvent` injects a fed event into the room's
+live timeline and fires `RoomEvent.Timeline`, which is exactly what the fork
+subscribes to.

@@ -11,6 +11,22 @@ export const ALLOWED_ROOM_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'io.element.call.reaction'
 ]);
 
+/**
+ * Timeline events the widget may READ but not send.
+ *
+ * Split from the set above for one event. Identity travels as an encrypted
+ * timeline event rather than as room state, because room state is not
+ * encrypted and an identity in state is a record the homeserver can read —
+ * on this platform, which advice seeker chose which animal. The widget has to
+ * receive it to draw anybody, and must not be able to send it: a widget that
+ * could write these could write somebody else's, and the whole rule of the
+ * design is that the call does not decide who anyone is.
+ */
+export const ALLOWED_RECEIVE_ROOM_EVENT_TYPES: ReadonlySet<string> = new Set([
+	...ALLOWED_ROOM_EVENT_TYPES,
+	'org.oriso.call.identity'
+]);
+
 export const ALLOWED_SEND_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'org.matrix.msc3401.call.member'
 ]);
@@ -22,13 +38,7 @@ export const ALLOWED_RECEIVE_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'm.room.create',
 	'm.room.name',
 	'm.room.member',
-	'm.room.encryption',
-	// Read-only, deliberately. Each client publishes its OWN identity — the
-	// animal, the circle colour and the ink it already carries in the chat —
-	// and the call reads what it was given rather than deriving a substitute.
-	// It is absent from the send set: a widget that could write these could
-	// write somebody else's, and the whole rule is that it does not decide.
-	'org.oriso.call.identity'
+	'm.room.encryption'
 ]);
 
 export const ALLOWED_TO_DEVICE_EVENT_TYPES: ReadonlySet<string> = new Set([
@@ -47,10 +57,8 @@ const ALLOWED_PLAIN_CAPABILITIES: ReadonlySet<string> = new Set([
 	'org.matrix.msc4039.download_file'
 ]);
 
-const ROOM_EVENT_PREFIXES = [
-	'org.matrix.msc2762.send.event:',
-	'org.matrix.msc2762.receive.event:'
-];
+const SEND_ROOM_EVENT_PREFIX = 'org.matrix.msc2762.send.event:';
+const RECEIVE_ROOM_EVENT_PREFIX = 'org.matrix.msc2762.receive.event:';
 const ROOM_TIMELINE_PREFIX = 'org.matrix.msc2762.timeline:';
 const SEND_STATE_EVENT_PREFIX = 'org.matrix.msc2762.send.state_event:';
 const RECEIVE_STATE_EVENT_PREFIX = 'org.matrix.msc2762.receive.state_event:';
@@ -105,10 +113,16 @@ export const isAllowedWidgetCapability = (
 		return capability === `${ROOM_TIMELINE_PREFIX}${roomId}`;
 	}
 
-	const roomPrefix = matchPrefix(capability, ROOM_EVENT_PREFIXES);
-	if (roomPrefix) {
+	// Send and receive are checked against different sets, as for state below:
+	// the widget reads identities and must not write one.
+	if (capability.startsWith(SEND_ROOM_EVENT_PREFIX)) {
 		return ALLOWED_ROOM_EVENT_TYPES.has(
-			eventTypeFromCapability(capability, roomPrefix)
+			eventTypeFromCapability(capability, SEND_ROOM_EVENT_PREFIX)
+		);
+	}
+	if (capability.startsWith(RECEIVE_ROOM_EVENT_PREFIX)) {
+		return ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(
+			eventTypeFromCapability(capability, RECEIVE_ROOM_EVENT_PREFIX)
 		);
 	}
 

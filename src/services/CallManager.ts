@@ -17,7 +17,6 @@ import {
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 import { callLifecycleTracker } from './callLifecycleTracker';
-import { CALL_IDENTITY_EVENT_TYPE } from '../components/call/callIdentity';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
 export type CallState =
@@ -487,26 +486,27 @@ class CallManager {
 					'm.room.encryption': 100,
 					'm.room.name': 100,
 					'm.room.message': 0,
-					'm.room.encrypted': 50,
+					/*
+					 * Every participant may send an encrypted event.
+					 *
+					 * In an encrypted room the power-level check sees the
+					 * OUTER type, `m.room.encrypted`, whatever is sealed
+					 * inside it. At level 50 only the person who created the
+					 * call could send one, so the identity record — which
+					 * each client sends about itself, and which is a timeline
+					 * event precisely so that the room's encryption covers
+					 * it — was refused for everybody else and they all
+					 * appeared as initials.
+					 *
+					 * The room is restricted to members of the counselling
+					 * session and has no chat surface, so this grants them
+					 * nothing they do not already have in the session room.
+					 */
+					'm.room.encrypted': 0,
 					'm.sticker': 50,
 					// IMPORTANT: allow everyone to send group call membership
 					// events so Element Call can join from any participant.
-					'org.matrix.msc3401.call.member': 0,
-					/*
-					 * And to say who they are.
-					 *
-					 * `state_default: 100` above means every state event a
-					 * participant sends needs the creator's level. The
-					 * identity record is written by each person's OWN client
-					 * under their own user id, so without this line only the
-					 * person who started the call could publish one and
-					 * everybody else appeared in the call as initials — which
-					 * is precisely what "identity is inherited, never
-					 * derived" forbids. Harmless to grant: the state key is
-					 * the sender's user id, which the server already refuses
-					 * to let anyone else write.
-					 */
-					[CALL_IDENTITY_EVENT_TYPE]: 0
+					'org.matrix.msc3401.call.member': 0
 				},
 				users: {
 					[client.getUserId()!]: 100

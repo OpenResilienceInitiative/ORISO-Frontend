@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
+import { RoomStateEvent } from 'matrix-js-sdk';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import {
 	afterEach,
@@ -328,9 +329,20 @@ describe('what the host adds around the call', () => {
 		expect(view.container.querySelector('.element-call-notes')).toBeFalsy();
 	});
 
-	it('publishes the own identity into the call room before the call opens', async () => {
+	it('announces the own identity to the call room, in the timeline', async () => {
+		/*
+		 * Not into room state, which is the point.
+		 *
+		 * Matrix room encryption covers message events; state events travel
+		 * in the clear in an encrypted room exactly as in any other, so an
+		 * identity in state is a durable record the homeserver and every
+		 * server it federates to can read — here, which advice seeker chose
+		 * which animal. As a timeline event in a Megolm room the server
+		 * stores ciphertext.
+		 */
 		const service = makeFakeMatrixClientService('active');
 		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
 			sendStateEvent: ReturnType<typeof vi.fn>;
 		};
 		activeCall();
@@ -342,25 +354,87 @@ describe('what the host adds around the call', () => {
 			service
 		);
 		await waitFor(() =>
-			expect(client.sendStateEvent).toHaveBeenCalledWith(
+			expect(client.sendEvent).toHaveBeenCalledWith(
 				FAKE_ELEMENT_CALL_ROOM_ID,
 				'org.oriso.call.identity',
-				expect.objectContaining({ kind: 'animal' }),
-				FAKE_CURRENT_USER_ID
+				expect.objectContaining({ kind: 'animal' })
 			)
 		);
+		// And never as room state again.
+		expect(client.sendStateEvent).not.toHaveBeenCalled();
+	});
+
+	it('says it again when somebody new joins, and not otherwise', async () => {
+		/*
+		 * What replaces a state event's "always current".
+		 *
+		 * Room state is there for whoever reads it next; a timeline event
+		 * reaches whoever was listening at the time. The widget is fed live
+		 * events and the call room's history is closed to non-members, so a
+		 * newcomer is handed nothing — everybody already in the call
+		 * re-announces instead.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const emit = (
+			service as unknown as {
+				emitHarnessEvent(name: string, ...args: unknown[]): void;
+			}
+		).emitHarnessEvent;
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(1));
+
+		const member = (userId: string, membership: string) => [
+			{},
+			{},
+			{ roomId: FAKE_ELEMENT_CALL_ROOM_ID, userId, membership }
+		];
+
+		// Somebody leaving is not an arrival.
+		emit(RoomStateEvent.Members, ...member('@gone:x.test', 'leave'));
+		// Nor is our own join echoing back.
+		emit(RoomStateEvent.Members, ...member(FAKE_CURRENT_USER_ID, 'join'));
+		// Nor is a membership event in another room.
+		emit(
+			RoomStateEvent.Members,
+			{},
+			{},
+			{
+				roomId: '!elsewhere:x.test',
+				userId: '@other:x.test',
+				membership: 'join'
+			}
+		);
+		expect(client.sendEvent).toHaveBeenCalledTimes(1);
+
+		// An arrival is.
+		emit(RoomStateEvent.Members, ...member('@newcomer:x.test', 'join'));
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(2));
+
+		// And it is said once per newcomer, not once per event about them.
+		emit(RoomStateEvent.Members, ...member('@newcomer:x.test', 'join'));
+		expect(client.sendEvent).toHaveBeenCalledTimes(2);
 	});
 
 	it('says nothing when there is no user data to say it from', async () => {
 		const service = makeFakeMatrixClientService('active');
 		const client = service.getClient() as unknown as {
-			sendStateEvent: ReturnType<typeof vi.fn>;
+			sendEvent: ReturnType<typeof vi.fn>;
 		};
 		activeCall();
 		withUser(null, service);
 		await waitFor(() =>
 			expect(widgetApiMocks.instances.length).toBeGreaterThan(0)
 		);
-		expect(client.sendStateEvent).not.toHaveBeenCalled();
+		expect(client.sendEvent).not.toHaveBeenCalled();
 	});
 });

@@ -8,8 +8,8 @@
 | Fork — the design                        | `ORISO-ElementCall#83` |
 | Host — consolidation, presence, identity | `ORISO-Frontend#1775`  |
 
-Land the fork first: the host's new state event is inert until something
-reads it, while the fork without the host shows initials.
+Land the fork first: the host's new identity event is inert until
+something reads it, while the fork without the host shows initials.
 
 **One thing a human has to finish.** `ORISO-ElementCall#83` has **no
 reviewers requested** — the permission layer in this session refused that
@@ -132,7 +132,14 @@ spotlight all keep working.
    grove at nine people. Every shape should be a different lopsided form
    with its own lean; round bubbles mean the engine was rewritten.
 4. With the host branch deployed: start a group call and confirm each
-   person's animal and circle colour match the chat beside it.
+   person's animal and circle colour match the chat beside it. Then have a
+   third person join a call already in progress: they must see the other
+   two as their own animals rather than initials, because identity is an
+   encrypted timeline event and the people already present re-announce for
+   a newcomer.
+5. Confirm the room **state** of the call room holds no
+   `org.oriso.call.identity`. Identity travels in the encrypted timeline
+   precisely because Matrix does not encrypt state.
 
 ### Not in this branch, deliberately
 
@@ -163,9 +170,14 @@ everybody is.
   `participants`: replaced on every membership change, emptied when the
   call ends. A running card answers "who is in there", an ended one "who
   was". Both are true and they are different questions.
-- **Identity across the boundary.** Each client publishes its own identity
-  as `org.oriso.call.identity`, keyed by its user id. Not the MatrixRTC
-  membership, which was the plan until it was tried:
+- **Identity across the boundary, encrypted.** Each client sends its own
+  identity as `org.oriso.call.identity` — an **encrypted timeline event**,
+  not room state. Matrix does not encrypt state events, in an encrypted
+  room or any other, so an identity in state was a record the homeserver
+  and every federated server could keep: which advice seeker chose which
+  animal. The reader files each record under the event's **sender**, so
+  there is no state key for one participant to claim. Not the MatrixRTC
+  membership either, which was the first plan until it was tried:
   `MembershipManager.makeMyMembership` is `protected` and built from a
   fixed literal. The widget may **receive** the event and may **not** send
   it — one that could write this could write somebody else's.
@@ -234,7 +246,20 @@ pond.js noise this suite has been carrying.
    form rather than a black rectangle. With two people, check the view rail
    offers "Conversation" and "Spotlight" and nothing that does nothing.
 
-Steps 4 to 7 need two accounts and a deployed fork; none of them can be
+8. **Identity, and that it is sealed.** With both branches deployed, join a
+   call from two accounts and confirm both faces are right. Then look at the
+   call room on the server — `/_synapse/admin/v1/rooms/<id>/state` or a
+   client with developer tools — and confirm there is **no**
+   `org.oriso.call.identity` in the room state, and that the room's
+   timeline holds `m.room.encrypted` events rather than readable identity
+   content. That is the whole privacy claim, and it is the one thing a unit
+   test cannot show.
+   Then test the arrival: with the call already running between two people,
+   have a **third** join. Their stage must show the other two as their own
+   animals, not initials — everybody already in the call re-announces for a
+   newcomer, which is what replaces a state event's "always current".
+
+Steps 4 to 8 need two accounts and a deployed fork; none of them can be
 reached from this container, and #780 should not be called covered until
 somebody has run them and written down what happened.
 
