@@ -512,6 +512,9 @@ export const DisplayFilterKindTable = ({
 												menuLabel={labels.emailMenu(
 													kind.label
 												)}
+												// Only read-only locks it: the cell is a
+												// profile setting, live on placeholder kinds.
+												disabled={readOnly}
 												className="displayFilterDialog__picker"
 												dataCy={`${dataCyPrefix}-email-${kind.id}`}
 												onSelect={(id) =>

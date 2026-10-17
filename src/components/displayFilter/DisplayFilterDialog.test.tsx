@@ -46,6 +46,7 @@ const Harness = ({
 	showAutoRead?: boolean;
 	onReset?: () => void;
 	canReset?: boolean;
+	email?: React.ComponentProps<typeof DisplayFilterDialog>['email'];
 }) => {
 	const [value, setValue] = useState(initial);
 	return (
@@ -60,6 +61,7 @@ const Harness = ({
 			labels={STORY_LABELS}
 			readOnly={rest.readOnly}
 			showAutoRead={rest.showAutoRead}
+			email={rest.email}
 			onChange={(next) => {
 				setValue(next);
 				onValue(next);
@@ -208,9 +210,33 @@ describe('DisplayFilterDialog (#1377)', () => {
 
 	it('inerts everything in read-only mode', () => {
 		const onReset = vi.fn();
+		const email = {
+			cell: (kindId: string) =>
+				kindId === 'messages' ? { checked: true } : null,
+			onChange: vi.fn()
+		};
 		render(
-			<Harness onValue={() => undefined} readOnly onReset={onReset} />
+			<Harness
+				onValue={() => undefined}
+				readOnly
+				onReset={onReset}
+				email={email}
+			/>
 		);
+		// The e-mail cell writes the profile: locked like every other control.
+		const emailPicker = screen.getByRole('button', {
+			name: STORY_LABELS.emailKind('Nachrichten')
+		}) as HTMLButtonElement;
+		expect(emailPicker.disabled).toBe(true);
+		expect(
+			(
+				screen.getByRole('button', {
+					name: STORY_LABELS.emailMenu('Nachrichten')
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+		fireEvent.click(emailPicker);
+		expect(email.onChange).not.toHaveBeenCalled();
 		expect(screen.getByRole('status').textContent).toContain(
 			'neueren App-Version'
 		);

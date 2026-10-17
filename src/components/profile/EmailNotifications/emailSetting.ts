@@ -60,6 +60,15 @@ export const emailSettingPatch = (
 				) as UserDataInterface['emailNotifications']
 			};
 
+/*
+ * Shared by every caller: the endpoint replaces the settings blob and the
+ * toggle list whole, so writes go one at a time, each built on the state
+ * the previous one left (Codex review on FE#1752).
+ */
+let writeQueue: Promise<unknown> = Promise.resolve();
+let queuedWrites = 0;
+let latestStored: Partial<UserDataInterface> | null = null;
+
 /**
  * The one write path for e-mail preferences: the profile's switches and the
  * display filter's E-Mail column both call it. Resolves `false` after a
@@ -71,23 +80,38 @@ export const useSaveEmailSetting = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext) ?? {};
 	const addNotification = useContext(NotificationsContext)?.addNotification;
 	return useCallback(
-		async (source: EmailSettingSource, next: boolean): Promise<boolean> => {
-			try {
-				await apiPatchUserData(
-					emailSettingPatch(userData, source, next)
-				);
-				return true;
-			} catch {
-				addNotification?.({
-					title: t('profile.notifications.toggleError.title'),
-					text: t('profile.notifications.toggleError.description'),
-					notificationType: 'error'
-				});
-				return false;
-			} finally {
-				// Always re-read: what is stored is what the switch must show.
-				await reloadUserData?.();
-			}
+		(source: EmailSettingSource, next: boolean): Promise<boolean> => {
+			queuedWrites += 1;
+			const write = writeQueue.then(async () => {
+				const base = latestStored ?? userData;
+				const patch = emailSettingPatch(base, source, next);
+				try {
+					await apiPatchUserData(patch);
+					latestStored = { ...base, ...patch };
+					return true;
+				} catch {
+					addNotification?.({
+						title: t('profile.notifications.toggleError.title'),
+						text: t(
+							'profile.notifications.toggleError.description'
+						),
+						notificationType: 'error'
+					});
+					latestStored = base ?? null;
+					return false;
+				} finally {
+					try {
+						// Always re-read: what is stored is what the switch must show.
+						const fresh = await reloadUserData?.();
+						if (fresh) latestStored = fresh;
+					} finally {
+						queuedWrites -= 1;
+						if (queuedWrites === 0) latestStored = null;
+					}
+				}
+			});
+			writeQueue = write.catch(() => undefined);
+			return write;
 		},
 		[addNotification, reloadUserData, t, userData]
 	);

@@ -176,10 +176,23 @@ export const RequestsWithoutAutoRead: Story = {
 	render: (args) => <Controlled {...args} />
 };
 
-/** A newer app version saved these settings: everything inert, hint shown. */
+/**
+ * A newer app version saved these settings: everything inert, hint shown —
+ * the E-Mail column too, although it writes the profile.
+ */
+const readOnlyArgs = { readOnly: true, emailSection: 'timeline' as const };
 export const ReadOnly: Story = {
-	args: { readOnly: true },
-	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />
+	args: readOnlyArgs,
+	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		await expect(
+			await dialog.findByRole('button', { name: 'E-Mail: Nachrichten' })
+		).toBeDisabled();
+		await expect(
+			dialog.getByRole('button', { name: 'E-Mail wählen: Nachrichten' })
+		).toBeDisabled();
+	}
 };
 
 /** Some event types of a family hidden in the profile → mixed checkbox (spec §5.1). */
