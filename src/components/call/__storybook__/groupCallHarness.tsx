@@ -64,8 +64,10 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 		 * from nothing happening.
 		 */
 		const rtcListeners = new Map<string, Set<MatrixListener>>();
-		const callMemberships: { sender: string }[] = [
-			{ sender: FAKE_CURRENT_USER_ID }
+		// Per DEVICE, as MatrixRTC memberships are: the same person on a
+		// second device is a second membership, and an arrival of its own.
+		const callMemberships: { sender: string; deviceId: string }[] = [
+			{ sender: FAKE_CURRENT_USER_ID, deviceId: FAKE_DEVICE_ID }
 		];
 		const rtcSession = {
 			memberships: callMemberships,
@@ -124,9 +126,20 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 				listeners
 					.get(eventName)
 					?.forEach((listener) => listener(...args)),
-			setCallMemberships: (senders: string[]) => {
+			setCallMemberships: (
+				senders: Array<string | { sender: string; deviceId?: string }>
+			) => {
 				callMemberships.length = 0;
-				senders.forEach((sender) => callMemberships.push({ sender }));
+				senders.forEach((entry) =>
+					callMemberships.push(
+						typeof entry === 'string'
+							? { sender: entry, deviceId: FAKE_DEVICE_ID }
+							: {
+									sender: entry.sender,
+									deviceId: entry.deviceId ?? FAKE_DEVICE_ID
+								}
+					)
+				);
 				rtcListeners
 					.get('memberships_changed')
 					?.forEach((listener) => listener());
@@ -149,8 +162,9 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 		emitHarnessEvent: (eventName: string, ...args: unknown[]) =>
 			current.emit(eventName, ...args),
 		/** Replace who is in the CALL and tell whoever is listening. */
-		setCallMemberships: (senders: string[]) =>
-			current.setCallMemberships(senders),
+		setCallMemberships: (
+			senders: Array<string | { sender: string; deviceId?: string }>
+		) => current.setCallMemberships(senders),
 		/** A token refresh: a new client, the same service. */
 		replaceClient: () => {
 			current = makeClient();
@@ -162,7 +176,9 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 	} as unknown as MatrixClientService & {
 		getHarnessListenerCount(): number;
 		emitHarnessEvent(eventName: string, ...args: unknown[]): void;
-		setCallMemberships(senders: string[]): void;
+		setCallMemberships(
+			senders: Array<string | { sender: string; deviceId?: string }>
+		): void;
 		replaceClient(): MatrixClient;
 	};
 };

@@ -12,6 +12,7 @@ describe('outgoing call startup ownership', () => {
 	const invite = vi.fn();
 	const leave = vi.fn();
 	const forget = vi.fn();
+	const sendMessage = vi.fn();
 
 	beforeEach(() => {
 		callManager.endCall(false);
@@ -24,10 +25,11 @@ describe('outgoing call startup ownership', () => {
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		leave.mockResolvedValue(undefined);
 		forget.mockResolvedValue(undefined);
+		sendMessage.mockResolvedValue({ event_id: '$call-root' });
 		const client = {
 			createRoom,
 			sendEvent,
-			sendMessage: vi.fn().mockResolvedValue({ event_id: '$call-root' }),
+			sendMessage,
 			invite,
 			leave,
 			forget,
@@ -375,6 +377,27 @@ describe('outgoing call startup ownership', () => {
 			expect.anything()
 		);
 		expect(callManager.getCurrentCall()).toBeNull();
+	});
+
+	it('discards the room when a write after creation fails', async () => {
+		/*
+		 * `createElementCallRoom` cleans up after itself, and the caller
+		 * cleans up after a superseded start — but between them sits
+		 * everything that happens once the room exists: the lifecycle root
+		 * write and the invitation. Either can reject on a transient or a
+		 * permission failure, and the catch finished the card and cleared the
+		 * surface while leaving the room joined, carrying the plaintext
+		 * call/source binding and the membership-reader invitation. Every
+		 * retry made another one.
+		 */
+		createRoom.mockResolvedValue({ room_id: ROOM });
+		sendMessage.mockRejectedValue(new Error('timeline write refused'));
+		vi.stubGlobal('alert', vi.fn());
+
+		callManager.startCall(SOURCE, true, true);
+
+		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(forget).toHaveBeenCalledWith(ROOM);
 	});
 
 	it('discards the superseded room through the account that created it', async () => {

@@ -1259,25 +1259,40 @@ Two things then had to be true that are not obvious:
 
 ### What the call showed that nothing else could
 
-`scripts/verifyLiveCall.mjs` in the fork makes the call and checks six things,
-and fails loudly rather than producing a pretty screenshot of something wrong.
-Against the local stack, all six hold:
+`scripts/verifyLiveCall.mjs` in the fork makes the call and checks seven
+things, and fails loudly rather than producing a pretty screenshot of
+something wrong. The room is **encrypted** and the records are published by
+real clients with rust crypto, because a verification that sent them in clear
+would pass with the encrypted transport entirely broken — which is what the
+first version of this did, and what a reviewer caught. Against the local
+stack, all seven hold:
 
 1. Each person wears the colour and animal **their own client published** —
    `#165E83` with the otter, `#F0908D` with the fox, read back off the
    rendered tile rather than off the event.
 2. Somebody who joins a call in progress sees the other two as their animals,
    not as initials.
-3. The call room's state holds **no** identity: twelve state events, none of
+3. The homeserver holds **ciphertext**: five identity-shaped events in the
+   room's history, every one of them `m.room.encrypted`, none readable.
+4. The call room's state holds **no** identity: thirteen state events, none of
    them `org.oriso.call.identity`.
-4. The view rail is on screen at 390×844 with four people in the call, with
+5. The view rail is on screen at 390×844 with four people in the call, with
    all three views on it, and no form runs off the edge.
-5. A form's square tile box does not swallow the clicks around it: every tile
+6. A form's square tile box does not swallow the clicks around it: every tile
    root computes `pointer-events: none`, and all four corners of each square
    fall through.
-6. The spotlight still reserves exactly 32px for the halo on every side —
+7. The spotlight still reserves exactly 32px for the halo on every side —
    `HALO_ROOM_PX`, measured against `SpotlightTile`'s clipping scroller, with
    the speaking ring and glow lit in the speaker's own colour.
+
+Making the encrypted version work cost one more lesson. The browsers are
+signed in by writing the account's session into local storage, so they hold
+that account's device — and the publisher, built from the same session, was a
+second crypto store claiming the same device id. Each overwrote the other's
+device keys, the one-time keys stopped verifying, and the Megolm key never
+reached the browser. It looked exactly like the transport being broken. The
+publisher now logs in as a device of its own, which is also the truer model:
+in production a client publishes the record, not a script.
 
 A fourth person publishes nothing on purpose, and gets initials in their own
 palette colour. That is the "we were not told" path, and it is as much part of

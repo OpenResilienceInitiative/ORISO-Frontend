@@ -271,10 +271,20 @@ class CallManager {
 			 * call, and that was wrong: an INCOMING group call was never
 			 * tracked here at all — its card belongs to the caller — so the
 			 * gate refused the very rejoin the branch exists for. The full
-			 * suite caught it. The flag records the thing that actually
-			 * matters: did WE finish this card.
+			 * suite caught it.
+			 *
+			 * Two gates, because neither answers for the other. The flag
+			 * records whether WE closed this card, which is the only thing
+			 * that can be known about a call nobody ever joined. Live
+			 * MatrixRTC membership answers the question the branch is really
+			 * asking — is anybody still in there — and catches the case the
+			 * flag cannot see: somebody joined, so `finishIfUnattended`
+			 * declined to finish and left no flag, and then THEY left and the
+			 * tracker ended the card. Reuse would reopen a terminal call into
+			 * an empty room, with no invitation and nothing to ring.
 			 */
-			!this.currentCall.lifecycleFinalised
+			!this.currentCall.lifecycleFinalised &&
+			this.retainedCallMayStillBeLive(this.currentCall)
 		) {
 			// Reopen the existing MatrixRTC room. Creating another dedicated room
 			// here would strand the participants who stayed in the active call.
@@ -366,6 +376,17 @@ class CallManager {
 		// Run the heavy work asynchronously so callers don't have to `await`
 		// but we can still create a dedicated Element Call room before
 		// notifying listeners.
+		/*
+		 * Hoisted out of the block below so the failure path can reach it.
+		 *
+		 * Everything between creating the room and the invitation landing can
+		 * throw — the lifecycle root write, the invitation itself — and the
+		 * catch then finished the card and cleared the surface while leaving
+		 * the room behind: joined, carrying the plaintext call/source binding
+		 * and the membership-reader invitation, one more for every retry.
+		 */
+		let created: { roomId: string; createdBy: MatrixClient } | undefined;
+
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
@@ -373,7 +394,7 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// a standalone Element Call deployment, where each call lives in its
 			// own Matrix room with appropriate power levels.
-			const created = await this.createElementCallRoom(roomId, callId);
+			created = await this.createElementCallRoom(roomId, callId);
 			elementCallRoomId = created.roomId;
 			// Room creation may finish after cancellation or a different call.
 			// Only the request that still owns startup can publish its invite.
@@ -479,6 +500,20 @@ class CallManager {
 				 * What the new account does not get is an alert about the old
 				 * one's failure.
 				 */
+				/*
+				 * The room goes with the failure, whoever owns the surface
+				 * now. Nothing was published that anybody could act on: a
+				 * failed invite write means nobody was told about this room,
+				 * and if the write did land despite rejecting, the caller is
+				 * not in the call either — the invitation is already broken,
+				 * and a persistent orphan is the worse of the two.
+				 */
+				if (created) {
+					void this.discardElementCallRoom(
+						created.roomId,
+						created.createdBy
+					);
+				}
 				if (this.pendingStart !== start) return;
 				const sameAccount = this.currentAccount() === start.startedBy;
 				if (sameAccount) {
@@ -494,6 +529,28 @@ class CallManager {
 			.finally(() => {
 				if (this.pendingStart === start) this.pendingStart = null;
 			});
+	}
+
+	/**
+	 * Whether a call we left might still have somebody in it.
+	 *
+	 * "Might": a client that cannot answer — no room, no `matrixRTC`, an
+	 * older SDK, a test double — gets a yes. Refusing reuse on a shrug would
+	 * strand the participants who stayed, which is the failure this branch
+	 * exists to prevent; an empty room is only reopened when the client
+	 * states, positively, that the session is empty.
+	 */
+	private retainedCallMayStillBeLive(call: CallData): boolean {
+		const client = getMatrixClientService()?.getClient?.();
+		const room = client?.getRoom?.(call.roomId);
+		if (!room || !client?.matrixRTC?.getRoomSession) return true;
+		try {
+			return (
+				client.matrixRTC.getRoomSession(room).memberships.length > 0
+			);
+		} catch {
+			return true;
+		}
 	}
 
 	/** Whoever is signed in right now, or `undefined` after a sign-out. */

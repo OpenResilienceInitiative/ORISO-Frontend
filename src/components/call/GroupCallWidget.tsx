@@ -256,26 +256,41 @@ export const GroupCallWidget: React.FC = () => {
 				? client.matrixRTC.getRoomSession(room)
 				: undefined;
 		const ownUserId = client.getUserId?.() ?? undefined;
+		/*
+		 * Keyed by DEVICE, not by person.
+		 *
+		 * MatrixRTC memberships are per device, and somebody already in the
+		 * call joining from a second one is an arrival like any other: that
+		 * device received none of the identities sent before it existed, and
+		 * collapsing the memberships to a set of user ids hid it. It saw
+		 * everybody as initials for the rest of the call. A user id cannot
+		 * contain `|`, so the first one separates the two halves.
+		 */
 		const inTheCall = (): Set<string> =>
 			new Set<string>(
 				(session
 					? session.memberships.map(
-							(membership: { sender?: string | null }) =>
-								membership.sender ?? undefined
+							(membership: {
+								sender?: string | null;
+								deviceId?: string | null;
+							}) =>
+								typeof membership.sender === 'string'
+									? `${membership.sender}|${membership.deviceId ?? ''}`
+									: undefined
 						)
 					: (room?.getMembersWithMembership?.('join') ?? []).map(
-							(member: { userId: string }) => member.userId
+							(member: { userId: string }) => `${member.userId}|`
 						)
-				).filter(
-					(userId): userId is string => typeof userId === 'string'
-				)
+				).filter((key): key is string => typeof key === 'string')
 			);
 
 		let present = inTheCall();
 		const refresh = (): void => {
 			const now = inTheCall();
 			const arrived = [...now].some(
-				(userId) => userId !== ownUserId && !present.has(userId)
+				(key) =>
+					key.slice(0, key.indexOf('|')) !== ownUserId &&
+					!present.has(key)
 			);
 			present = now;
 			if (arrived)

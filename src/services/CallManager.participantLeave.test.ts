@@ -111,6 +111,79 @@ describe('Element Call participant leave', () => {
 		expect(sendEvent).not.toHaveBeenCalled();
 	});
 
+	it('does not reopen a group call everybody has already left', async () => {
+		/*
+		 * Reuse exists for the call others are still in. `lifecycleFinalised`
+		 * cannot see this sequence: somebody joined, so `finishIfUnattended`
+		 * declined to close the card and left no flag; then THEY left and the
+		 * tracker ended it. Reuse then reopened a terminal call into an empty
+		 * room — no invitation, no tracker, nothing to ring — which is the
+		 * same "call that can never ring" the flag was added to prevent.
+		 */
+		const invite = vi.fn().mockResolvedValue(undefined);
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$root' });
+		/*
+		 * This double has no encryption state, so the startup path gets as far
+		 * as `sendGroupCallInvite` and then fails — and its failure path calls
+		 * `alert`, which jsdom does not provide. Unstubbed, that lands as an
+		 * unhandled rejection AFTER the test has passed, and vitest exits
+		 * non-zero on a suite whose every test is green.
+		 */
+		vi.stubGlobal('alert', vi.fn());
+		createRoom.mockResolvedValue({ room_id: '!fresh-call:oriso.example' });
+		vi.stubEnv(
+			'REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID',
+			'@matrixrtc-auth:oriso.example'
+		);
+		// Nobody is in the call room any more.
+		const memberships: unknown[] = [];
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				sendEvent,
+				sendMessage,
+				createRoom,
+				invite,
+				getUserId: () => '@patty:oriso.example',
+				getDeviceId: () => 'PATTY',
+				getRoom: (id: string) => (id === CALL_ROOM ? {} : null),
+				matrixRTC: { getRoomSession: () => ({ memberships }) }
+			})
+		} as never);
+
+		callManager.receiveCall(
+			CALL_ROOM,
+			false,
+			'group-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+		callManager.leaveCall();
+
+		callManager.startCall(SIGNAL_ROOM, false, true);
+
+		/*
+		 * A fresh room for a fresh call, rather than the terminal one
+		 * reopened — read off the binding the room was created with rather
+		 * than off `getCurrentCall()`. This double has no encryption state,
+		 * so startup goes on to fail at `sendGroupCallInvite` and clears the
+		 * surface again; the room creation is the part that is durable, and
+		 * reuse would never have reached it at all.
+		 */
+		await vi.waitFor(() => expect(createRoom).toHaveBeenCalledTimes(1));
+		const binding = (
+			createRoom.mock.calls[0][0].initial_state as {
+				type: string;
+				content: { call_id: string; source_room_id: string };
+			}[]
+		).find((event) => event.type === 'org.oriso.call.binding');
+		expect(binding?.content.source_room_id).toBe(SIGNAL_ROOM);
+		expect(binding?.content.call_id).not.toBe('group-call');
+		vi.unstubAllEnvs();
+		vi.unstubAllGlobals();
+	});
+
 	it('replaces left metadata when starting a group call in a different room', async () => {
 		const invite = vi.fn().mockResolvedValue(undefined);
 		createRoom.mockResolvedValue({
