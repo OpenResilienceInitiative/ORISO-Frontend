@@ -100,8 +100,9 @@ export const SpeakerTest = ({
 	// makes an older tone's end meaningless.
 	const attempt = useRef(0);
 	// Where the keyboard goes once the control it was on disappears.
-	const focusNext = useRef<'yes' | 'play' | null>(null);
+	const focusNext = useRef<'yes' | 'play' | 'heard' | null>(null);
 	const yes = useRef<HTMLButtonElement>(null);
+	const heard = useRef<HTMLElement>(null);
 	const playButton = useRef<HTMLButtonElement>(null);
 	useEffect(() => {
 		attempt.current += 1;
@@ -118,6 +119,9 @@ export const SpeakerTest = ({
 		}
 		if (state === 'notHeard' && focusNext.current === 'play') {
 			playButton.current?.focus();
+		}
+		if (state === 'heard' && focusNext.current === 'heard') {
+			heard.current?.focus();
 		}
 		focusNext.current = null;
 	}, [state]);
@@ -170,7 +174,10 @@ export const SpeakerTest = ({
 					ref={yes}
 					size="small"
 					variant="contained"
-					onClick={() => onChange('heard')}
+					onClick={() => {
+						focusNext.current = 'heard';
+						onChange('heard');
+					}}
 				>
 					{copy.speakerYes}
 				</Button>
@@ -195,8 +202,16 @@ export const SpeakerTest = ({
 						sx={{ fontSize: 20, color: registrationMd3.primary }}
 					/>
 				)}
+				{/* Focusable by script only: the keyboard rests on the answer
+				    instead of falling back to the top of the page. */}
 				<Typography
-					sx={{ ...textSx, color: registrationMd3.onSurface }}
+					ref={heard}
+					tabIndex={-1}
+					sx={{
+						...textSx,
+						color: registrationMd3.onSurface,
+						outline: 'none'
+					}}
 				>
 					{copy.speakerHeard}
 				</Typography>

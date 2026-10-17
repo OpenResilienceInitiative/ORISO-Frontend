@@ -627,6 +627,7 @@ export const LiveMicrophoneUnplugged: Story = {
 				'ready'
 			)
 		);
+		await expectWaitingRoomLayout(canvasElement);
 		// What the browser fires when the device goes away.
 		unplugTarget!.given[0]
 			.getAudioTracks()[0]
@@ -638,6 +639,7 @@ export const LiveMicrophoneUnplugged: Story = {
 				'preparing'
 			)
 		);
+		await expectWaitingRoomLayout(canvasElement);
 	}
 };
 
