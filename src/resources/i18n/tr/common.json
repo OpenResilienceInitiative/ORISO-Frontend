@@ -2082,7 +2082,8 @@
 			"descriptions": {
 				"sessions": "Her görüşme türü için filtre düğmesi alıp almayacağını ve yeni mesajlardan nasıl haberdar olacağınızı belirleyin.",
 				"requests": "Her talep türü için filtre düğmesi alıp almayacağını ve yeni taleplerden nasıl haberdar olacağınızı belirleyin.",
-				"timeline": "Her tür için listede görünüp görünmeyeceğini, filtre düğmesi alıp almayacağını ve e-posta alıp almayacağınızı belirleyin."
+				"timeline": "Her tür için listede görünüp görünmeyeceğini, filtre düğmesi alıp almayacağını ve e-posta alıp almayacağınızı belirleyin.",
+				"timelineWithoutEmail": "Her tür için listede görünüp görünmeyeceğini ve filtre düğmesi alıp almayacağını belirleyin."
 			},
 			"kindsHeadings": {
 				"sessions": "Görüşme türleri",

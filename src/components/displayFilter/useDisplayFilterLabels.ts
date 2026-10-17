@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DisplayFilterDialogLabels } from './DisplayFilterDialog';
+import { useAppConfig } from '../../hooks/useAppConfig';
+import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 
 import type { DisplayFilterSection } from '../../utils/displayFilter/model';
 
@@ -19,6 +21,7 @@ export const useDisplayFilterLabels = (
 	dialogLabels: DisplayFilterDialogLabels;
 } => {
 	const { t } = useTranslation();
+	const newNotifications = usesNewNotifications(useAppConfig());
 	return useMemo(
 		() => ({
 			buttonLabel: t('notifications.displayFilter.button'),
@@ -29,8 +32,11 @@ export const useDisplayFilterLabels = (
 				title: `${t('notifications.displayFilter.title')} · ${t(
 					`notifications.displayFilter.sections.${section}`
 				)}`,
+				// Without the new notifications there is no E-Mail column to promise.
 				description: t(
-					`notifications.displayFilter.descriptions.${section}`
+					section === 'timeline' && !newNotifications
+						? 'notifications.displayFilter.descriptions.timelineWithoutEmail'
+						: `notifications.displayFilter.descriptions.${section}`
 				),
 				showColumn: t('notifications.displayFilter.showColumn'),
 				pillColumn: t('notifications.displayFilter.pillColumn'),
@@ -128,6 +134,6 @@ export const useDisplayFilterLabels = (
 				)
 			}
 		}),
-		[section, t]
+		[section, t, newNotifications]
 	);
 };

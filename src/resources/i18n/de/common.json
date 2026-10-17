@@ -2103,7 +2103,8 @@
 			"descriptions": {
 				"sessions": "Legen Sie für jede Gesprächsart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Nachrichten benachrichtigt werden.",
 				"requests": "Legen Sie für jede Anfrageart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Anfragen benachrichtigt werden.",
-				"timeline": "Legen Sie für jede Art fest, ob sie in der Liste erscheint, einen Filter-Knopf bekommt und ob Sie eine E-Mail erhalten."
+				"timeline": "Legen Sie für jede Art fest, ob sie in der Liste erscheint, einen Filter-Knopf bekommt und ob Sie eine E-Mail erhalten.",
+				"timelineWithoutEmail": "Legen Sie für jede Art fest, ob sie in der Liste erscheint und einen Filter-Knopf bekommt."
 			},
 			"kindsHeadings": {
 				"sessions": "Gesprächsarten",

@@ -2079,7 +2079,8 @@
 			"descriptions": {
 				"sessions": "Choose for each kind of conversation whether it gets a filter button and how you are notified about new messages.",
 				"requests": "Choose for each kind of request whether it gets a filter button and how you are notified about new requests.",
-				"timeline": "Choose for each kind whether it appears in the list, gets a filter button and whether you receive an e-mail."
+				"timeline": "Choose for each kind whether it appears in the list, gets a filter button and whether you receive an e-mail.",
+				"timelineWithoutEmail": "Choose for each kind whether it appears in the list and gets a filter button."
 			},
 			"kindsHeadings": {
 				"sessions": "Kinds of conversation",
