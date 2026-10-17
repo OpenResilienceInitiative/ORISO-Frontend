@@ -538,6 +538,74 @@ describe('a call that outlives the Matrix client it started on', () => {
 		]);
 	});
 
+	it("does not let a retried presence update spend the hangup's budget", async () => {
+		/*
+		 * `retryAttempts` counts for the whole call, and until now it only
+		 * ever grew. Harmless while a terminal write was the only thing
+		 * retried — there is one per call — and not harmless once a RUNNING
+		 * update retries too, which it must in order to survive the window
+		 * where a replacement client cannot encrypt yet.
+		 *
+		 * The sequence: somebody arrives inside that window, so the presence
+		 * update spends all three delays before it lands; then the hangup
+		 * fails once, the way a blip makes it fail. With a budget that was
+		 * never returned, that single failure indexed past the end of the
+		 * delay table and the card stayed `running` for good.
+		 */
+		const memberships: { sender: string }[] = [];
+		let refreshMemberships: (() => void) | undefined;
+		let crypto: object | undefined = { ready: true };
+		const client = Object.assign(clientDouble(ME), {
+			getCrypto: () => crypto,
+			getRoom: () => ({
+				getMember: (userId: string) => ({ name: `Name of ${userId}` })
+			}),
+			matrixRTC: {
+				getRoomSession: () => ({
+					get memberships() {
+						return memberships;
+					},
+					on: (_event: string, handler: () => void) => {
+						refreshMemberships = handler;
+					},
+					off: vi.fn()
+				})
+			}
+		});
+		rotatingService(client);
+		await callLifecycleTracker.begin(call);
+		const afterRoot = client.sendMessage.mock.calls.length;
+
+		// The refresh window opens, and somebody arrives inside it.
+		crypto = undefined;
+		memberships.push({ sender: '@alex:example' });
+		refreshMemberships?.();
+		await vi.advanceTimersByTimeAsync(0);
+		await vi.advanceTimersByTimeAsync(1000);
+		await vi.advanceTimersByTimeAsync(2000);
+		// Nothing could be written while the client could not encrypt.
+		expect(client.sendMessage.mock.calls.length).toBe(afterRoot);
+
+		crypto = { ready: true };
+		await vi.advanceTimersByTimeAsync(4000);
+		expect(client.sendMessage.mock.calls.length).toBe(afterRoot + 1);
+
+		// And now the hangup, failing once.
+		client.sendMessage
+			.mockRejectedValueOnce(new Error('synthetic'))
+			.mockResolvedValue({ event_id: '$root' });
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		const afterFirstTry = client.sendMessage.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(client.sendMessage.mock.calls.length).toBeGreaterThan(
+			afterFirstTry
+		);
+		expect(
+			client.sendMessage.mock.calls.at(-1)?.[1]['org.oriso.call'].state
+		).toBe('ended');
+	});
+
 	it('closes a card whose root write lost its acknowledgement', async () => {
 		/*
 		 * The event lands, the response does not.

@@ -247,7 +247,26 @@ export const useElementCallWidget = (
 				messageGuardRef.current = null;
 			}
 
-			if (!iframe || !client || !roomId || !url) return;
+			if (!iframe) return;
+			/*
+			 * The node is still ours even when no channel can be opened for it
+			 * yet, and recording that here is what keeps a live call alive.
+			 *
+			 * A token refresh gives this hook a new `client`, and the effect
+			 * above answers by setting `url` to null for the moment it takes to
+			 * rebuild it. That changes this callback's identity, so React
+			 * detaches with null and re-attaches the SAME node — and the
+			 * re-attachment used to return below without claiming the node.
+			 * The microtask above then found nothing attached, concluded the
+			 * iframe had gone, and navigated a running call to `about:blank`.
+			 * The rebuilt URL is byte-identical for the same account, so
+			 * nothing ever navigated it back; what followed was an origin
+			 * mismatch and a closed call surface, from an ordinary refresh the
+			 * user cannot see or avoid.
+			 */
+			attachedIframeRef.current = iframe;
+
+			if (!client || !roomId || !url) return;
 
 			const userId = client.getUserId();
 			if (!userId) return;
@@ -298,6 +317,8 @@ export const useElementCallWidget = (
 			});
 
 			driverRef.current = driver;
+			// Already recorded above; repeated here so the channel setup
+			// reads as a whole.
 			attachedIframeRef.current = iframe;
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;

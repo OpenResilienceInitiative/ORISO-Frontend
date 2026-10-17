@@ -779,6 +779,51 @@ describe('useElementCallWidget', () => {
 		expect(replacement.src).toBe('about:blank');
 	});
 
+	it('keeps a live call running through the client refresh that blanks its URL', async () => {
+		/*
+		 * A token refresh hands this hook a new `client`, and the preparation
+		 * effect answers by setting `url` to null while it rebuilds. React
+		 * sees the ref callback's identity change, detaches with null and
+		 * re-attaches the SAME node — and the re-attachment happens while
+		 * `url` is still null.
+		 *
+		 * The re-attachment used to return before claiming the node, so the
+		 * microtask that decides whether an iframe has really gone found
+		 * nothing attached and navigated a RUNNING call to `about:blank`. The
+		 * rebuilt URL is byte-identical for the same account, so nothing
+		 * navigated it back.
+		 */
+		const client = createClient();
+		const { result, rerender } = renderHook(
+			({ c }: { c: ReturnType<typeof createClient> }) =>
+				useElementCallWidget(c, { roomId: CALL_ROOM, isVideo: true }),
+			{ initialProps: { c: client } }
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const source = result.current.url!;
+
+		const iframe = document.createElement('iframe');
+		iframe.src = source;
+		act(() => result.current.attachIframe(iframe));
+		const detach = result.current.attachIframe;
+
+		// The refresh: same account, new client object.
+		rerender({ c: createClient() });
+		expect(result.current.url).toBeNull();
+
+		// What React does in that one commit.
+		act(() => detach(null));
+		act(() => result.current.attachIframe(iframe));
+		await act(async () => {});
+
+		expect(iframe.src).toBe(source);
+
+		// And the rebuilt URL still finds a live iframe to talk to.
+		await waitFor(() => expect(result.current.url).toBe(source));
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(source);
+	});
+
 	it('keeps a live call running when the same iframe is re-attached', async () => {
 		const client = createClient();
 		const { result } = renderHook(() =>

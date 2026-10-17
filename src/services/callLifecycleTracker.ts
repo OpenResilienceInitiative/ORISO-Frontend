@@ -418,37 +418,57 @@ class CallLifecycleTracker {
 	}
 
 	private publish(tracked: TrackedCall): void {
-		void tracked.writer.publish(tracked.message).catch((error: unknown) => {
-			// The writer retains the original transaction ID and root event after
-			// failure, so retrying a terminal edit cannot create another call card.
-			// Never send it through a replacement login client.
-			if (!tracked.isCurrentClient()) return;
-			/*
-			 * A client that is not ready YET is retried whatever the state.
-			 *
-			 * Only terminal writes are retried otherwise, because a running
-			 * one is re-sent by the next membership change anyway. That
-			 * reasoning fails for the crypto window: it closes in seconds
-			 * and nothing re-triggers a publish afterwards, so a presence
-			 * update that fell into it would leave the card showing the
-			 * wrong people for the rest of the call.
-			 */
-			const notReadyYet = error instanceof TimelineClientUnavailableError;
-			if (tracked.message.state !== 'running' || notReadyYet) {
-				if (tracked.retryTimer !== undefined) return;
-				const delay = TERMINAL_RETRY_DELAYS_MS[tracked.retryAttempts];
-				if (delay !== undefined) {
-					tracked.retryAttempts += 1;
-					tracked.retryTimer = setTimeout(() => {
-						tracked.retryTimer = undefined;
-						if (tracked.isCurrentClient()) this.publish(tracked);
-					}, delay);
-					return;
+		void tracked.writer
+			.publish(tracked.message)
+			.then(() => {
+				/*
+				 * A write that lands gives the budget back.
+				 *
+				 * `retryAttempts` counts for the whole CALL, and it only ever
+				 * grew. That was harmless while a terminal write was the only
+				 * thing retried — there is one of those per call — and stopped
+				 * being harmless the moment a running update could retry too:
+				 * a presence update caught in the crypto window could spend all
+				 * three delays, and the hangup that followed would then index
+				 * past the end of the table and be abandoned on its first
+				 * failure, leaving the durable card `running` for good.
+				 */
+				tracked.retryAttempts = 0;
+			})
+			.catch((error: unknown) => {
+				// The writer retains the original transaction ID and root event after
+				// failure, so retrying a terminal edit cannot create another call card.
+				// Never send it through a replacement login client.
+				if (!tracked.isCurrentClient()) return;
+				/*
+				 * A client that is not ready YET is retried whatever the state.
+				 *
+				 * Only terminal writes are retried otherwise, because a running
+				 * one is re-sent by the next membership change anyway. That
+				 * reasoning fails for the crypto window: it closes in seconds
+				 * and nothing re-triggers a publish afterwards, so a presence
+				 * update that fell into it would leave the card showing the
+				 * wrong people for the rest of the call.
+				 */
+				const notReadyYet =
+					error instanceof TimelineClientUnavailableError;
+				if (tracked.message.state !== 'running' || notReadyYet) {
+					if (tracked.retryTimer !== undefined) return;
+					const delay =
+						TERMINAL_RETRY_DELAYS_MS[tracked.retryAttempts];
+					if (delay !== undefined) {
+						tracked.retryAttempts += 1;
+						tracked.retryTimer = setTimeout(() => {
+							tracked.retryTimer = undefined;
+							if (tracked.isCurrentClient())
+								this.publish(tracked);
+						}, delay);
+						return;
+					}
 				}
-			}
-			// Avoid logging room IDs or raw transport errors from counselling calls.
-			console.warn('Call timeline update could not be saved');
-		});
+				// Avoid logging room IDs or raw transport errors from counselling calls.
+				console.warn('Call timeline update could not be saved');
+			});
 	}
 }
 
