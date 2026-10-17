@@ -390,11 +390,11 @@ const BUTTON_FOCUS_BLUE = '#199fff';
 export const evaluateContrastPairs = (
 	tokens: Record<string, string>
 ): EvaluatedPair[] => {
-	const t = (name: string): string => tokens[name];
-	const surface = t('--m3-surface');
-	const incoming = t('--m3-surface-container-high');
-	const own = t('--m3-primary-fixed');
-	const card = t('--m3-surface-container-low');
+	const token = (name: string): string => tokens[name];
+	const surface = token('--m3-surface');
+	const incoming = token('--m3-surface-container-high');
+	const own = token('--m3-primary-fixed');
+	const card = token('--m3-surface-container-low');
 	const disabledFill = over('#000000', 0.05, surface);
 
 	const pairs: ContrastPair[] = [
@@ -403,7 +403,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Message text, received',
 			kind: 'text',
-			foreground: t('--m3-on-surface'),
+			foreground: token('--m3-on-surface'),
 			background: incoming,
 			enforced: true
 		},
@@ -412,7 +412,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Message text, own',
 			kind: 'text',
-			foreground: t('--m3-on-surface'),
+			foreground: token('--m3-on-surface'),
 			background: own,
 			enforced: true
 		},
@@ -421,7 +421,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Time, received',
 			kind: 'text',
-			foreground: t('--m3-on-surface-variant'),
+			foreground: token('--m3-on-surface-variant'),
 			background: incoming,
 			enforced: true
 		},
@@ -430,7 +430,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Time, own',
 			kind: 'text',
-			foreground: t('--m3-on-surface-variant'),
+			foreground: token('--m3-on-surface-variant'),
 			background: own,
 			enforced: true
 		},
@@ -439,8 +439,8 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Date divider pill',
 			kind: 'text',
-			foreground: t('--m3-secondary'),
-			background: t('--m3-primary-fixed-dim'),
+			foreground: token('--m3-secondary'),
+			background: token('--m3-primary-fixed-dim'),
 			enforced: true
 		},
 		{
@@ -448,7 +448,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Delivery tick / cross',
 			kind: 'ui',
-			foreground: t('--oriso-primary-text'),
+			foreground: token('--oriso-primary-text'),
 			background: own,
 			enforced: true
 		},
@@ -457,7 +457,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Link, own bubble',
 			kind: 'text',
-			foreground: t('--oriso-primary-text'),
+			foreground: token('--oriso-primary-text'),
 			background: own,
 			enforced: true
 		},
@@ -466,7 +466,7 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Link, received bubble',
 			kind: 'text',
-			foreground: t('--oriso-primary-text'),
+			foreground: token('--oriso-primary-text'),
 			background: incoming,
 			enforced: true
 		},
@@ -475,8 +475,8 @@ export const evaluateContrastPairs = (
 			group: 'Buttons',
 			label: 'Primary: label on fill',
 			kind: 'text',
-			foreground: t('--m3-on-primary'),
-			background: t('--m3-primary'),
+			foreground: token('--m3-on-primary'),
+			background: token('--m3-primary'),
 			enforced: true
 		},
 		{
@@ -484,7 +484,7 @@ export const evaluateContrastPairs = (
 			group: 'Buttons',
 			label: 'Primary: fill against page',
 			kind: 'ui',
-			foreground: t('--m3-primary'),
+			foreground: token('--m3-primary'),
 			background: surface,
 			enforced: true
 		},
@@ -493,7 +493,7 @@ export const evaluateContrastPairs = (
 			group: 'Buttons',
 			label: 'Secondary: label on page',
 			kind: 'text',
-			foreground: t('--oriso-primary-text'),
+			foreground: token('--oriso-primary-text'),
 			background: surface,
 			enforced: true
 		},
@@ -502,7 +502,7 @@ export const evaluateContrastPairs = (
 			group: 'Buttons',
 			label: 'Secondary: outline against page',
 			kind: 'ui',
-			foreground: t('--m3-primary'),
+			foreground: token('--m3-primary'),
 			background: surface,
 			enforced: true
 		},
@@ -521,7 +521,7 @@ export const evaluateContrastPairs = (
 			group: 'Focus',
 			label: 'Focus ring (--m3-primary-outline)',
 			kind: 'ui',
-			foreground: t('--m3-primary-outline'),
+			foreground: token('--m3-primary-outline'),
 			background: surface,
 			enforced: true
 		},
@@ -560,7 +560,7 @@ export const evaluateContrastPairs = (
 			group: 'Session list',
 			label: 'Date',
 			kind: 'text',
-			foreground: t('--m3-on-surface-variant'),
+			foreground: token('--m3-on-surface-variant'),
 			background: card,
 			enforced: true
 		},
@@ -569,7 +569,7 @@ export const evaluateContrastPairs = (
 			group: 'Session list',
 			label: 'Agency subtitle (not in this row)',
 			kind: 'text',
-			foreground: t('--m3-secondary-container'),
+			foreground: token('--m3-secondary-container'),
 			background: incoming,
 			enforced: true,
 			note: '12px text on rows and message headers with an agency line. --m3-secondary-container is read as a text colour here and as a chip fill elsewhere; production wiring should give the text its own role.'
@@ -579,8 +579,8 @@ export const evaluateContrastPairs = (
 			group: 'Session list',
 			label: 'Topic tag, selected row',
 			kind: 'text',
-			foreground: t('--m3-on-primary-container'),
-			background: t('--m3-primary-container'),
+			foreground: token('--m3-on-primary-container'),
+			background: token('--m3-primary-container'),
 			enforced: true
 		},
 		{
@@ -588,8 +588,8 @@ export const evaluateContrastPairs = (
 			group: 'Session list',
 			label: 'Topic tag, resting',
 			kind: 'text',
-			foreground: t('--oriso-topic-tag-fg'),
-			background: t('--oriso-topic-tag-bg'),
+			foreground: token('--oriso-topic-tag-fg'),
+			background: token('--oriso-topic-tag-bg'),
 			enforced: true
 		},
 		{
@@ -597,7 +597,7 @@ export const evaluateContrastPairs = (
 			group: 'Session list',
 			label: 'Selected-row edge',
 			kind: 'ui',
-			foreground: t('--m3-primary'),
+			foreground: token('--m3-primary'),
 			background: incoming,
 			enforced: true
 		},
@@ -606,8 +606,8 @@ export const evaluateContrastPairs = (
 			group: 'Input',
 			label: 'Typed text',
 			kind: 'text',
-			foreground: t('--m3-on-surface'),
-			background: t('--m3-surface-container-lowest'),
+			foreground: token('--m3-on-surface'),
+			background: token('--m3-surface-container-lowest'),
 			enforced: true
 		},
 		{
@@ -615,8 +615,8 @@ export const evaluateContrastPairs = (
 			group: 'Input',
 			label: 'Label / placeholder',
 			kind: 'text',
-			foreground: t('--m3-on-surface-variant'),
-			background: t('--m3-surface-container-lowest'),
+			foreground: token('--m3-on-surface-variant'),
+			background: token('--m3-surface-container-lowest'),
 			enforced: true
 		},
 		{
@@ -624,8 +624,8 @@ export const evaluateContrastPairs = (
 			group: 'Input',
 			label: 'Field border',
 			kind: 'ui',
-			foreground: t('--m3-outline'),
-			background: t('--m3-surface-container-lowest'),
+			foreground: token('--m3-outline'),
+			background: token('--m3-surface-container-lowest'),
 			enforced: true
 		},
 		{
@@ -633,8 +633,8 @@ export const evaluateContrastPairs = (
 			group: 'Input',
 			label: 'Field border, focused',
 			kind: 'ui',
-			foreground: t('--m3-primary'),
-			background: t('--m3-surface-container-lowest'),
+			foreground: token('--m3-primary'),
+			background: token('--m3-surface-container-lowest'),
 			enforced: true
 		}
 	];

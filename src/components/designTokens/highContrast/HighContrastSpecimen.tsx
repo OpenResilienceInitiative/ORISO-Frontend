@@ -259,7 +259,7 @@ const ChatMessages: React.FC = () => (
 								username: 'karina.p@oriso.invalid',
 								isNotRead: true,
 								message:
-									'Ja, schauen Sie bitte hier: https://www.caritas.de/hilfeundberatung. Danach sprechen wir darüber.'
+									'Ja, schauen Sie bitte hier: https://www.example.org/hilfe-und-beratung. Danach sprechen wir darüber.'
 							})}
 							onReact={() => {}}
 							{...handlers}
