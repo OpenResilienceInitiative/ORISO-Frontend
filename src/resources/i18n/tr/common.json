@@ -4937,6 +4937,7 @@
 			"responseTime": "2 iş günü içinde yanıt",
 			"back": "Önceki sayfaya dön",
 			"later": "Daha sonra tekrar gelin",
+			"laterNotice": "Şu anda canlı olan kimse yok. Biri geldiği anda sohbet burada devam eder.",
 			"title": "Canlı sohbet şu anda maalesef kapalı",
 			"topicLabel": "Talep edilen konu: {{topic}}",
 			"weekdays": {
@@ -5688,6 +5689,7 @@
 			"status": {
 				"access": "Bu görüşme için erişiminiz",
 				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
+				"nobodyLive": "Şu anda çevrimiçi kimse yok",
 				"accepted": "Bir danışman görüşmenizi kabul etti",
 				"closed": "Şu anda kapalı",
 				"checking": "Şu anda kim çevrimiçi?",
@@ -5704,6 +5706,8 @@
 			"waiting": {
 				"headline": "Az kaldı.",
 				"aheadUnknown": "Sizin için müsait bir danışman arıyoruz.",
+				"nobodyLiveHeadline": "Şu anda çevrimiçi danışman yok.",
+				"nobodyLive": "Bunu takip ediyoruz ve biri müsait olur olmaz sizi bağlayacağız.",
 				"aheadNone": "Sıradaki sizsiniz.",
 				"aheadOne": "Önünüzde bir kişi",
 				"aheadMany": "Önünüzde {{count}} kişi",
@@ -5735,7 +5739,8 @@
 			"steps": {
 				"wait": {
 					"title": "Biri müsait olana kadar beklersiniz",
-					"text": "Danışmanlar şu anda başka görüşmelerde."
+					"text": "Danışmanlar şu anda başka görüşmelerde.",
+					"textNobodyLive": "Bir danışman çevrimiçi olur olmaz görüşmeniz başlar."
 				},
 				"consent": {
 					"title": "Sonra bir kez onaylarsınız",
