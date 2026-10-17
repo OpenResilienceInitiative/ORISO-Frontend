@@ -1,4 +1,4 @@
-import { ClientEvent } from 'matrix-js-sdk';
+import { ClientEvent, type MatrixClient } from 'matrix-js-sdk';
 import type { RoomMessageEventContent } from 'matrix-js-sdk/lib/@types/events';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { getMatrixClientService } from './matrixClientRegistry';
@@ -44,11 +44,47 @@ class CallLifecycleTracker {
 		 */
 		let client = first;
 		const ownUserId = first.getUserId?.() ?? undefined;
+		/*
+		 * The client this ACCOUNT is signed in with right now, or null.
+		 *
+		 * Every guard that asks "may this card still be written" wants the
+		 * account, not the object. Asking the object question instead had two
+		 * consequences that only show up around a token refresh, and both end
+		 * the same way — a durable card stuck on `running`, on a surface the
+		 * user cannot see or avoid:
+		 *
+		 *   - startup read a same-account replacement as an account change
+		 *     and aborted, AFTER the root write had already published the
+		 *     card;
+		 *   - `finish` unsubscribes from `onClientChange` before the terminal
+		 *     write has succeeded, so a refresh during the retry delay left
+		 *     `client` pointing at the discarded instance and every retry was
+		 *     silently abandoned.
+		 *
+		 * `client` stays a variable for the LISTENERS, which genuinely need
+		 * an object to attach to; the writing guards ask here instead.
+		 */
+		const currentClient = (): MatrixClient | null => {
+			const now = getMatrixClientService()?.getClient?.();
+			if (!now) return null;
+			if (ownUserId === undefined) {
+				/*
+				 * Nothing to compare accounts with. A client that cannot say
+				 * who it is — an older SDK, a test double — leaves object
+				 * identity as the only signal there is, which is what this
+				 * guard used before and is still the safe answer: an unknown
+				 * account is not knowably ours.
+				 */
+				return now === client ? now : null;
+			}
+			return (now.getUserId?.() ?? undefined) === ownUserId ? now : null;
+		};
 		const writer = new CallTimelineMessageService(() => {
-			return getMatrixClientService()?.getClient?.() === client
+			const now = currentClient();
+			return now
 				? {
 						sendMessage: (roomId, content, transactionId) =>
-							client.sendMessage(
+							now.sendMessage(
 								roomId,
 								// The SDK union only lists standard msgtypes; our builder
 								// supplies the required body and an application msgtype.
@@ -60,8 +96,7 @@ class CallLifecycleTracker {
 		});
 		const tracked: TrackedCall = {
 			writer,
-			isCurrentClient: () =>
-				getMatrixClientService()?.getClient?.() === client,
+			isCurrentClient: () => currentClient() !== null,
 			retryAttempts: 0,
 			message: {
 				callId: call.callId,
@@ -87,7 +122,7 @@ class CallLifecycleTracker {
 		this.calls.set(call.callId, tracked);
 		try {
 			await tracked.writer.publish(tracked.message);
-			if (getMatrixClientService()?.getClient?.() !== client) {
+			if (currentClient() === null) {
 				throw new Error(
 					'The Matrix account changed during call startup'
 				);

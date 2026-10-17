@@ -60,6 +60,91 @@ describe('terminal call timeline persistence', () => {
 		expect(console.warn).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps a call that a token refresh replaced the client under', async () => {
+		/*
+		 * A refresh for the SAME account, mid-startup.
+		 *
+		 * The check after the root write compared client OBJECTS, so an
+		 * ordinary token refresh read as an account change and aborted — but
+		 * `publish()` had already resolved, so the room held a durable
+		 * `running` card while the tracker threw its record away and the
+		 * outer `finish()` became a no-op. The card stayed `running`, and
+		 * joinable-looking, for good.
+		 */
+		const mine = '@counsellor:example';
+		const refreshedSend = vi.fn().mockResolvedValue({ event_id: '$root' });
+		const refreshed = {
+			sendMessage: refreshedSend,
+			getUserId: () => mine,
+			getRoom: () => null,
+			on: vi.fn(),
+			off: vi.fn()
+		};
+		const firstSend = vi.fn().mockImplementation(() => {
+			// The refresh lands while the root write is in flight.
+			setMatrixClientServiceRef({ getClient: () => refreshed } as never);
+			return Promise.resolve({ event_id: '$root' });
+		});
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				sendMessage: firstSend,
+				getUserId: () => mine,
+				getRoom: () => null,
+				on: vi.fn(),
+				off: vi.fn()
+			})
+		} as never);
+
+		await expect(callLifecycleTracker.begin(call)).resolves.not.toThrow();
+
+		// And the card can still be ended, which is what being tracked means.
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(refreshedSend).toHaveBeenCalled();
+	});
+
+	it('finishes a terminal write through a client installed after the retry was scheduled', async () => {
+		/*
+		 * `finish` unsubscribes from `onClientChange` before the terminal
+		 * write has succeeded, so a refresh during the retry delay left the
+		 * captured client pointing at the discarded instance. Every retry was
+		 * then abandoned by its own guard and the card stayed `running` —
+		 * the same ending as the bug above, by a different road.
+		 */
+		const mine = '@counsellor:example';
+		const firstSend = vi
+			.fn()
+			.mockResolvedValueOnce({ event_id: '$root' })
+			.mockRejectedValueOnce(new Error('temporary outage'));
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				sendMessage: firstSend,
+				getUserId: () => mine,
+				getRoom: () => null,
+				on: vi.fn(),
+				off: vi.fn()
+			})
+		} as never);
+		await callLifecycleTracker.begin(call);
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+
+		// The refresh happens while the retry is still waiting on its timer.
+		const refreshedSend = vi.fn().mockResolvedValue({ event_id: '$edit' });
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				sendMessage: refreshedSend,
+				getUserId: () => mine,
+				getRoom: () => null,
+				on: vi.fn(),
+				off: vi.fn()
+			})
+		} as never);
+		await vi.advanceTimersByTimeAsync(60000);
+
+		expect(refreshedSend).toHaveBeenCalled();
+	});
+
 	it('does not retry through a replacement login client', async () => {
 		await callLifecycleTracker.begin(call);
 		sendMessage.mockRejectedValueOnce(new Error('temporary outage'));
