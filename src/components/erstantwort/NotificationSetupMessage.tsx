@@ -114,10 +114,17 @@ export const NotificationSetupCollapse = ({
 	useEffect(() => {
 		const changed = seenActive.current !== active;
 		seenActive.current = active;
-		if (bothPending && active === 'both') setBothPending(false);
+		const bothDone = bothPending && active === 'both';
+		if (bothDone) setBothPending(false);
 		// A channel chosen while the setup was open collapses it again. A setup
 		// that was merely opened while a channel was already active stays open.
-		if (opened && changed && active !== 'none' && !bothPending) {
+		// The end of "set up both" counts as that choice, even though the
+		// channel changed one step earlier while the message was still waiting.
+		if (
+			opened &&
+			active !== 'none' &&
+			(bothDone || (changed && !bothPending))
+		) {
 			noteFocus(true);
 			setOpened(false);
 		}

@@ -277,6 +277,21 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		).toBeTruthy();
 	});
 
+	it('collapses a setup opened on purpose once "both" is complete', async () => {
+		mount(noChannel, { startOpen: true });
+
+		fireEvent.click(screen.getByRole('button', { name: BOTH_CHOICE }));
+		fireEvent.click(
+			await screen.findByRole('button', { name: ENABLE_BROWSER })
+		);
+
+		expect(
+			await screen.findByText(
+				'erstantwort.notificationSummary.label|erstantwort.notificationSummary.both'
+			)
+		).toBeTruthy();
+	});
+
 	it('remembers the X for each message on its own', () => {
 		const first = mount(noChannel, { messageId: '$event-1' });
 		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
