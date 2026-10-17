@@ -184,6 +184,21 @@ describe('useLiveCallDevices', () => {
 		expect(media.getUserMedia).toHaveBeenCalledTimes(2);
 	});
 
+	it('shows the camera as unavailable when the webcam is unplugged', async () => {
+		const stream = fakeStream(['audio', 'video']);
+		const media = devicesFor(() => Promise.resolve(stream));
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		await waitFor(() => expect(result.current.stream).toBe(stream));
+		expect(result.current.cameraMissing).toBe(false);
+		act(() => stream.tracks[1].end());
+		expect(result.current.cameraMissing).toBe(true);
+		// The microphone keeps running: no new request, same stream.
+		expect(result.current.stream).toBe(stream);
+		expect(media.getUserMedia).toHaveBeenCalledTimes(1);
+	});
+
 	it('asks again on retry and clears the blocker once it works', async () => {
 		const stream = fakeStream(['audio']);
 		let allow = false;

@@ -206,6 +206,16 @@ export const useLiveCallDevices = (
 					setAttempt((count) => count + 1);
 				})
 			);
+			// An unplugged or revoked webcam: the room shows the animal and
+			// the camera as unavailable; the microphone keeps running, so the
+			// person need not speak again. Choosing a camera asks anew.
+			live.getVideoTracks().forEach((track) =>
+				track.addEventListener('ended', () => {
+					if (cancelled) return;
+					cameraMissing = true;
+					setState((s) => ({ ...s, cameraMissing: true }));
+				})
+			);
 			const tick = () => {
 				analyser.getByteTimeDomainData(samples);
 				let peak = 0;
