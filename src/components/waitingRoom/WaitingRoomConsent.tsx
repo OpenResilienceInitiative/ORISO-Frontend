@@ -60,6 +60,11 @@ export const useWaitingRoomConsent = ({
 			setAcceptedBinding(accepted ? null : binding);
 			setMissing(false);
 		},
+		/** "Nicht zustimmen" takes the tick back: reopening asks again. */
+		reset: () => {
+			setAcceptedBinding(null);
+			setMissing(false);
+		},
 		/**
 		 * The gate. The button stays live rather than going disabled: a dead
 		 * primary action tells nobody why, and "why" is the point of the
@@ -132,7 +137,12 @@ export const WaitingRoomConsentPanel = ({
 			trailingAction: (
 				<ButtonBase
 					aria-label={declineLabel}
-					onClick={onDecline}
+					onClick={() => {
+						// Every room: declining withdraws the tick, so a
+						// reopened sheet never joins on the old agreement.
+						consent.reset();
+						onDecline();
+					}}
 					disabled={disabled}
 					sx={{
 						width: 48,

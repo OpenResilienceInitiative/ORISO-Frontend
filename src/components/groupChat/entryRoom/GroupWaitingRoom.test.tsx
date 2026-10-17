@@ -26,6 +26,27 @@ vi.mock('../../../api/apiGetUserData', () => ({
 	apiGetUserData: () => apiGetUserData()
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
+/* The group's department: only a room with an agency has one. */
+vi.mock('../consent/useGroupDepartment', () => ({
+	useGroupDepartment: (agencyId?: number | null) =>
+		agencyId
+			? { status: 'ready', department: { agencyId, topicId: 3 } }
+			: { status: 'ready', department: null }
+}));
+const DEPARTMENT_SENTENCE =
+	'Ich stimme der Datenschutzerklärung der Caritas Berlin zu.';
+const apiGetConsentText = vi.fn((agencyId: number, topicId: number) =>
+	Promise.resolve({
+		status: 'ok',
+		consentText: { sentence: DEPARTMENT_SENTENCE, versionId: 4 },
+		agencyId,
+		topicId
+	})
+);
+vi.mock('../../../api/apiGetConsentText', () => ({
+	apiGetConsentText: (agencyId: number, topicId: number) =>
+		apiGetConsentText(agencyId, topicId)
+}));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 vi.mock('../../stageLayout/StageLayout', () => ({
 	StageLayout: ({
@@ -212,6 +233,54 @@ describe('GroupWaitingRoom', () => {
 			join.click();
 			join.click();
 		});
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+	});
+
+	it('takes the tick back on "Ablehnen", so reopening asks again', async () => {
+		const { onJoin } = renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(screen.getByRole('button', { name: 'Ablehnen' }));
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-completion"]')
+			).toBeNull()
+		);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(
+			false
+		);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		expect(onJoin).not.toHaveBeenCalled();
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+	});
+
+	it("asks with the group department's own sentence, then records and joins", async () => {
+		const onJoin = vi.fn();
+		render(
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				agencyName="Caritas Berlin"
+				agencyId={7}
+				plannedStart={new Date(NOW + 3 * 24 * 3600e3)}
+				durationMinutes={90}
+				eventId={15}
+				rules={[]}
+				active
+				onJoin={onJoin}
+				nowMs={NOW}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		const sheet = () =>
+			document.querySelector('[data-cy="consent-completion"]');
+		await waitFor(() =>
+			expect(sheet()?.textContent).toContain(DEPARTMENT_SENTENCE)
+		);
+		expect(apiGetConsentText).toHaveBeenCalledWith(7, 3);
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(screen.getByTestId('group-entry-join'));
 		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
 		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
 	});

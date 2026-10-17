@@ -444,12 +444,22 @@ export const VideoConsentDeclined: Story = {
 	},
 	play: async ({ args, canvasElement }) => {
 		const body = within(canvasElement.ownerDocument.body);
+		// Ticked, then declined: the tick goes with the sheet.
+		await userEvent.click(body.getByRole('checkbox'));
 		await userEvent.click(
 			body.getByRole('button', { name: 'Nicht zustimmen' })
 		);
 		await waitFor(() => expect(consentPanel(canvasElement)).toBeNull());
 		expect(args.onJoin).not.toHaveBeenCalled();
 		await expectWaitingRoomLayout(canvasElement);
+
+		// Reopened, the sheet asks again instead of joining on the old tick.
+		await gateOpens(canvasElement);
+		await userEvent.click(gate(canvasElement));
+		await waitFor(() => expect(consentPanel(canvasElement)).not.toBeNull());
+		await expect(body.getByRole('checkbox')).not.toBeChecked();
+		await userEvent.click(gate(canvasElement));
+		expect(args.onJoin).not.toHaveBeenCalled();
 	}
 };
 
