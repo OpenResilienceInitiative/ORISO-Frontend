@@ -2506,6 +2506,10 @@
 					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
 					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
 					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
+				},
+				"dpaRestricted": {
+					"title": "Advice seekers cannot start a live chat with you",
+					"text": "Your provider has not confirmed the current data processing agreement. Until it does, new advice seekers cannot start a live chat or an enquiry. Counselling that has already begun continues."
 				}
 			},
 			"masterKey": {
