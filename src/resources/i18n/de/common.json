@@ -3714,7 +3714,6 @@
 			"organisationFallback": "Ihrer Beratungsstelle"
 		},
 		"systemMessage": {
-			"dismiss": "Nachricht ausblenden",
 			"badge": "System-Benachrichtigung",
 			"selectedReason": "Ausgewählter Grund: {{reason}}",
 			"explanation": "Erläuterung: {{explanation}}",
@@ -5291,6 +5290,15 @@
 			"channelBoth": "E-Mail und Browser auf diesem Gerät",
 			"channelEmail": "E-Mail",
 			"channelBrowser": "Browser auf diesem Gerät"
+		},
+		"notificationSummary": {
+			"label": "Benachrichtigung: {{state}}",
+			"change": "ändern",
+			"dismiss": "Einrichtung ausblenden",
+			"none": "nicht eingerichtet",
+			"email": "E-Mail aktiv",
+			"browser": "Signal auf diesem Gerät aktiv",
+			"both": "E-Mail und Signal aktiv"
 		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {

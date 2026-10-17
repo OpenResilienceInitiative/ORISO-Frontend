@@ -20,20 +20,22 @@ import { StandingAccessPreference } from './StandingAccessPreference';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { useNotificationChannels } from '../erstantwort/useNotificationChannels';
-import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { CaseHandoverInfoDialog } from './CaseHandoverClientCards';
-import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 
 /** Manual per-conversation setting. This never decides a pending request. */
 export const StandingAccessSettings = ({
 	sessionId,
+	messageId,
 	conversationType,
 	accessMode,
 	compact = false,
 	onSetupNotifications
 }: {
 	sessionId: number;
+	/** Chat message this sits in; remembers whether its setup card is collapsed. */
+	messageId?: string;
 	conversationType?: string;
 	/** Only a persisted acceptance/grant notice supplies this context. */
 	accessMode?: 'OPT_IN' | 'OPT_OUT' | 'NONE';
@@ -252,31 +254,18 @@ export const StandingAccessSettings = ({
 			{recommendation &&
 				policy.emailAllowed &&
 				(setupStarted || !consentEmailActive) && (
-					<ErstantwortSequence
-						skipAnimation
-						bausteine={[
-							{
-								id: 'standingConsentNotifications',
-								body: '',
-								headline: ''
-							}
-						]}
-						slots={{
-							standingConsentNotifications: (
-								<>
-									<p>
-										{t(
-											'caseHandover.consent.info.notificationsCopy'
-										)}
-									</p>
-									<NotificationSetup
-										onStart={() => setSetupStarted(true)}
-										isEmailEnabled={policy.emailAllowed}
-										isBrowserEnabled={policy.browserAllowed}
-									/>
-								</>
-							)
-						}}
+					<NotificationSetupMessage
+						messageId={messageId && `${messageId}:standingAccess`}
+						onStart={() => setSetupStarted(true)}
+						isEmailEnabled={policy.emailAllowed}
+						isBrowserEnabled={policy.browserAllowed}
+						copy={
+							<p>
+								{t(
+									'caseHandover.consent.info.notificationsCopy'
+								)}
+							</p>
+						}
 					/>
 				)}
 		</>

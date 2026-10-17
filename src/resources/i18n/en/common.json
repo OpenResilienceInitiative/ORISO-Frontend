@@ -3660,7 +3660,6 @@
 			"organisationFallback": "your counselling centre"
 		},
 		"systemMessage": {
-			"dismiss": "Dismiss message",
 			"badge": "System notification",
 			"selectedReason": "Selected reason: {{reason}}",
 			"explanation": "Explanation: {{explanation}}",
@@ -5216,6 +5215,15 @@
 			"channelBoth": "Email and browser on this device",
 			"channelEmail": "Email",
 			"channelBrowser": "Browser on this device"
+		},
+		"notificationSummary": {
+			"label": "Notifications: {{state}}",
+			"change": "change",
+			"dismiss": "Hide setup",
+			"none": "not set up",
+			"email": "email on",
+			"browser": "signal on this device on",
+			"both": "email and signal on"
 		},
 		"subtitle": "Your first steps",
 		"greeting": {

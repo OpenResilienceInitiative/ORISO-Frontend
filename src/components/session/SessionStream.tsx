@@ -1457,7 +1457,6 @@ export const SessionStream = ({
 								activeSession
 							)}
 							key={String(activeSession.item?.id)}
-							dismissKey={String(displayedConsent.id)}
 							status={
 								displayedConsent.id ===
 								confirmedConsent?.notification.id

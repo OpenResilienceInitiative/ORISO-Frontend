@@ -225,6 +225,12 @@ it('preserves a started channel setup after email readback becomes active so BOT
 	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
 		preference(true)
 	);
+	// No channel yet: a message whose account already reaches the person
+	// through the browser starts as its one-line summary (ORISO-Frontend#1700).
+	channels.mockReturnValue({
+		consentEmailActive: false,
+		browserActive: false
+	});
 	const view = render(<StandingAccessSettings sessionId={1} />);
 	open();
 	fireEvent.click(await screen.findByRole('switch'));
@@ -239,6 +245,36 @@ it('preserves a started channel setup after email readback becomes active so BOT
 	expect(
 		screen.getByRole('button', { name: 'Notification setup' })
 	).toBeTruthy();
+});
+it('draws the e-mail suggestion as a one-line summary when another channel already reaches the person', async () => {
+	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
+		preference(true)
+	);
+	// Default mock: browser channel active, consent e-mail not.
+	const view = render(
+		<StandingAccessSettings sessionId={1} messageId="$accepted-1" />
+	);
+	open();
+	fireEvent.click(await screen.findByRole('switch'));
+
+	expect(
+		await screen.findByRole('button', {
+			name: 'erstantwort.notificationSummary.change'
+		})
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: 'Notification setup' })
+	).toBeNull();
+
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.change'
+		})
+	);
+	expect(
+		screen.getByRole('button', { name: 'Notification setup' })
+	).toBeTruthy();
+	view.unmount();
 });
 it('suppresses an unstarted recommendation if the allowed email channel is configured elsewhere', async () => {
 	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(

@@ -4,8 +4,6 @@ import './CaseHandoverConversation.styles.scss';
 import { useEffect, useRef, useState } from 'react';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useTranslation } from 'react-i18next';
-import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
-import { useDismissibleNotice } from '../../hooks/useDismissibleNotice';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
@@ -15,12 +13,9 @@ import { NotificationSetup } from '../erstantwort/NotificationSetup';
  * into another conversation. Account/device settings remain their existing stores. */
 export const CaseHandoverConversation = ({
 	conversationType,
-	dismissKey,
 	...consent
-}: Omit<React.ComponentProps<typeof CaseHandoverConsentCard>, 'onDismiss'> & {
+}: React.ComponentProps<typeof CaseHandoverConsentCard> & {
 	conversationType?: string;
-	/** Id of the notification behind the message; remembers its dismissal. */
-	dismissKey?: string;
 }) => {
 	const { t } = useTranslation();
 	const tenant = useTenant();
@@ -31,18 +26,6 @@ export const CaseHandoverConversation = ({
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	const [focusRequest, setFocusRequest] = useState(0);
 	const notificationMessage = useRef<HTMLDivElement>(null);
-	/*
-	 * The message can be closed (ORISO-Frontend#1700). Only a message with
-	 * nothing left to act on stays closed after a reload; one that still waits
-	 * for the client's decision comes back, so closing it can't lose the choice.
-	 */
-	const isSettled =
-		consent.mode === 'NONE' ||
-		(!!consent.status && !isPendingCaseHandoverStatus(consent.status));
-	const { dismissed, dismiss } = useDismissibleNotice(dismissKey, {
-		persist: isSettled
-	});
-	const [composerFocusRequest, setComposerFocusRequest] = useState(0);
 
 	useEffect(() => {
 		if (!focusRequest) return;
@@ -57,39 +40,19 @@ export const CaseHandoverConversation = ({
 		return () => window.clearTimeout(timer);
 	}, [focusRequest]);
 
-	useEffect(() => {
-		if (!composerFocusRequest) return;
-		// The closed message took focus with it; hand it to the person's next
-		// step, writing. Keyboard dismissal only, so a tap never raises the
-		// on-screen keyboard.
-		document
-			.querySelector<HTMLElement>(
-				'.messageSubmit__wrapper [contenteditable="true"]'
-			)
-			?.focus();
-	}, [composerFocusRequest]);
-
 	return (
 		<>
-			{!dismissed && (
-				<CaseHandoverConsentCard
-					{...consent}
-					onDismiss={(viaKeyboard) => {
-						dismiss();
-						if (viaKeyboard) {
-							setComposerFocusRequest((value) => value + 1);
-						}
-					}}
-					onSetupNotifications={
-						channels.emailAllowed || channels.browserAllowed
-							? () => {
-									setNotificationsOpen(true);
-									setFocusRequest((value) => value + 1);
-								}
-							: undefined
-					}
-				/>
-			)}
+			<CaseHandoverConsentCard
+				{...consent}
+				onSetupNotifications={
+					channels.emailAllowed || channels.browserAllowed
+						? () => {
+								setNotificationsOpen(true);
+								setFocusRequest((value) => value + 1);
+							}
+						: undefined
+				}
+			/>
 			{notificationsOpen &&
 				(channels.emailAllowed || channels.browserAllowed) && (
 					<div

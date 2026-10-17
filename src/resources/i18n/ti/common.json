@@ -3694,7 +3694,6 @@
 			"organisationFallback": "ማእከል ምኽርኹም"
 		},
 		"systemMessage": {
-			"dismiss": "መልእኽቲ ሕባእ",
 			"badge": "መፍለጢ ሲስተም",
 			"selectedReason": "ዝተመርጸ ምኽንያት፦ {{reason}}",
 			"explanation": "መብርሂ፦ {{explanation}}",
@@ -5249,6 +5248,15 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "ሓበሬታ: {{state}}",
+			"change": "ቀይር",
+			"dismiss": "ምድላው ሕባእ",
+			"none": "ኣይተዳለወን",
+			"email": "ኢመይል ተኸፊቱ",
+			"browser": "ኣብዚ መሳርሒ ምልክት ተኸፊቱ",
+			"both": "ኢመይልን ምልክትን ተኸፊቱ"
+		},
 		"subtitle": "ናይ መጀመርታ ስጉምትታትኩም",
 		"greeting": {
 			"body": "ብምርኻብኩም ጽቡቕ። መልእኽትኹም በጺሑና ኣሎ።"
