@@ -92,7 +92,8 @@ const Worst: React.FC<{ column: Column }> = ({ column }) => {
 	const ui = lowest(column.pairs, 'ui');
 	return (
 		<p className="hcCompare__worst">
-			Lowest text: {text ? formatRatio(text.rating.ratio) : '–'}
+			Lowest text (token-driven):{' '}
+			{text ? formatRatio(text.rating.ratio) : '–'}
 			<br />
 			Lowest UI/icon: {ui ? formatRatio(ui.rating.ratio) : '–'}
 		</p>
@@ -247,7 +248,8 @@ export const HighContrastComparison: React.FC<{ tenants: TenantSeed[] }> = ({
 			Ratios are computed from the token pairs the component stylesheets
 			read, with the same function the unit tests assert. Italic rows are
 			not held to a target: WCAG exempts disabled controls, and the button
-			focus ring is hard-coded in CSS so no palette reaches it.
+			focus ring, the session-row inks and the sender name under an own
+			message are hard-coded in CSS, so no palette reaches them.
 		</p>
 	</div>
 );

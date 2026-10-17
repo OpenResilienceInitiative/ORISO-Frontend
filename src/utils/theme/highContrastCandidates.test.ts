@@ -127,6 +127,44 @@ describe('evaluateContrastPairs', () => {
 		expect(bypasses).toEqual([false, false]);
 	});
 
+	it('lists the own sender name as a token bypass, below the 7:1 target', () => {
+		const tokens = computeOrisoPalette(
+			{ primary: SEEDS.red },
+			'light'
+		).tokens;
+
+		const name = evaluateContrastPairs({
+			...tokens,
+			'--m3-surface': '#ffffff'
+		}).find(({ pair }) => pair.id === 'sender-name-own');
+
+		// .messageItem__senderInfoName is $text-low-emphasis, rgba(0,0,0,0.6):
+		// #666666 on white, 5.74:1. Not a token, so no palette lifts it.
+		expect(name?.pair.enforced).toBe(false);
+		expect(name?.rating.ratio).toBeCloseTo(5.74, 2);
+	});
+
+	it('measures the agency subtitle on the page surface, not on the received bubble', () => {
+		const tokens = computeOrisoPalette(
+			{ primary: SEEDS.red },
+			'light'
+		).tokens;
+
+		// The subtitle sits under an own bubble in the transparent
+		// .messageItem__content, so the page surface is its background.
+		// #767676 on white is the textbook 4.54:1; the (darker) received
+		// bubble below would give a lower number.
+		const subtitle = evaluateContrastPairs({
+			...tokens,
+			'--m3-surface': '#ffffff',
+			'--m3-surface-container-high': '#d9d9d9',
+			'--m3-secondary-container': '#767676'
+		}).find(({ pair }) => pair.id === 'row-subtitle');
+
+		expect(subtitle?.pair.background).toBe('#ffffff');
+		expect(subtitle?.rating.ratio).toBeCloseTo(4.54, 2);
+	});
+
 	it('does not hold disabled controls to the text minimum', () => {
 		const tokens = computeOrisoPalette(
 			{ primary: SEEDS.red },

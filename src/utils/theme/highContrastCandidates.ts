@@ -435,6 +435,16 @@ export const evaluateContrastPairs = (
 			enforced: true
 		},
 		{
+			id: 'sender-name-own',
+			group: 'Chat',
+			label: 'Sender name under own message (hard-coded)',
+			kind: 'text',
+			foreground: over('#000000', 0.6, surface),
+			background: surface,
+			enforced: false,
+			note: 'message.styles.scss sets .messageItem__senderInfoName to $text-low-emphasis, rgba(0, 0, 0, 0.6), not a token. About 5.7:1 on every column, so under the 7:1 target until it is moved onto a token.'
+		},
+		{
 			id: 'date-divider',
 			group: 'Chat',
 			label: 'Date divider pill',
@@ -570,7 +580,9 @@ export const evaluateContrastPairs = (
 			label: 'Agency subtitle (not in this row)',
 			kind: 'text',
 			foreground: token('--m3-secondary-container'),
-			background: incoming,
+			// Under an own bubble, in the transparent .messageItem__content,
+			// so the page surface is what it sits on (not the received bubble).
+			background: surface,
 			enforced: true,
 			note: '12px text on rows and message headers with an agency line. --m3-secondary-container is read as a text colour here and as a chip fill elsewhere; production wiring should give the text its own role.'
 		},
