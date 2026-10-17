@@ -1034,10 +1034,16 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const stopVoiceRecording = useCallback(
 		(options?: { discard?: boolean }) => {
-			voiceDiscardAfterStopRef.current = !!options?.discard;
+			// Sticky until `onstop` runs: Cancel after Stop must still win.
+			voiceDiscardAfterStopRef.current =
+				voiceDiscardAfterStopRef.current || !!options?.discard;
 			const recorder = mediaRecorderRef.current;
-			if (recorder && recorder.state !== 'inactive') {
-				recorder.stop();
+			if (recorder) {
+				if (recorder.state !== 'inactive') {
+					recorder.stop();
+				}
+				// An inactive recorder has been stopped already; its
+				// `onstop` reads the flag and cleans up.
 				return;
 			}
 			cleanupVoiceRecorder();
@@ -1048,7 +1054,14 @@ export const MessageSubmitInterfaceComponent = ({
 	// #1142: a take belongs to the chat it was made in. If the composer is
 	// reused for another session or side channel while a take is recording
 	// or under review, drop it instead of letting Send deliver it there.
-	const voiceDestinationKey = `${activeSession.item.id}|${targetRoomId ?? ''}`;
+	// Starting a message edit counts as a change too: an edit is never sent
+	// as a voice note.
+	const voiceDestinationKey = [
+		activeSession.item.id,
+		targetRoomId ?? '',
+		threadRootId ?? '',
+		editingMessage?.eventId ?? editingMessageId ?? ''
+	].join('|');
 	const voiceDestinationRef = useRef(voiceDestinationKey);
 	useEffect(() => {
 		if (voiceDestinationRef.current === voiceDestinationKey) {
@@ -1839,9 +1852,11 @@ export const MessageSubmitInterfaceComponent = ({
 							messageOverride
 						)
 				);
+			// A voice note carries no text, so the kept draft's length is moot.
 			if (
+				!isRecordedVoiceSend &&
 				getPlainTextFromComposerValue(currentTypedMessage).length >
-				INPUT_MAX_LENGTH
+					INPUT_MAX_LENGTH
 			) {
 				return null;
 			}
@@ -2024,8 +2039,9 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 		if (
+			!recordedVoiceRef.current &&
 			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
-			INPUT_MAX_LENGTH
+				INPUT_MAX_LENGTH
 		) {
 			return null;
 		}
@@ -2212,6 +2228,13 @@ export const MessageSubmitInterfaceComponent = ({
 		};
 	}, [cleanupVoiceRecorder]);
 
+	// The preview URL pins the recording's Blob until it is revoked. It is
+	// revoked once it is replaced, and here when the composer unmounts.
+	useEffect(() => {
+		if (!voicePreviewUrl) return;
+		return () => URL.revokeObjectURL(voicePreviewUrl);
+	}, [voicePreviewUrl]);
+
 	// Image thumbnail for the pre-send attachment card. Create/revoke are paired
 	// inside the hook's effect so StrictMode's mount → cleanup → mount recreates
 	// a fresh URL instead of leaving the <img> on a revoked blob (broken thumb).
@@ -2337,7 +2360,10 @@ export const MessageSubmitInterfaceComponent = ({
 		featureVoiceMessagesGroupChatsEnabled = true,
 		featureVoiceMessagesSupervisionChatsEnabled = true
 	} = tenant?.settings || {};
+	// A voice note is never sent as an edit: no microphone while editing.
 	const isVoiceMessageEnabledForCurrentChat =
+		!editingMessage &&
+		!editingMessageId &&
 		featureVoiceMessagesEnabled !== false &&
 		(currentChatType === 'anonymous'
 			? featureVoiceMessagesAnonymousChatsEnabled !== false
@@ -3196,10 +3222,16 @@ export const MessageSubmitInterfaceComponent = ({
 			supervisorFeedbackAction: !!isSupervisor,
 			teamDiscussion
 		});
+		const startedFor = voiceDestinationRef.current;
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true
 			});
+			if (voiceDestinationRef.current !== startedFor) {
+				// The chat changed while the permission prompt was open.
+				stream.getTracks().forEach((track) => track.stop());
+				return;
+			}
 			mediaStreamRef.current = stream;
 			const mimeTypeCandidates = [
 				'audio/webm;codecs=opus',
@@ -3371,7 +3403,8 @@ export const MessageSubmitInterfaceComponent = ({
 			: '';
 	const canSendMessage =
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
-		!isMessageOverLimit;
+		(!isMessageOverLimit ||
+			(isVoiceAttachmentSelected && !!voicePreviewUrl));
 
 	const handleToolbarAction = useCallback((action: string) => {
 		composerRef.current?.runAction(action);

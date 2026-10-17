@@ -573,6 +573,13 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 
 	// #978 must not come back through the newly visible preview text.
 	expect(banner.textContent).not.toMatch(/\[\[/);
+
+	// #1142: an edit replaces text; a voice note can never be sent as one.
+	expect(
+		within(canvasElement).queryByRole('button', {
+			name: /Sprachaufnahme|Voice recording/
+		})
+	).toBeNull();
 };
 
 export const EditingMessage: Story = {

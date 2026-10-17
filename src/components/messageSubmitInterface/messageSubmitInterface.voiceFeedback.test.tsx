@@ -97,7 +97,9 @@ vi.mock('./TipTapComposer', async () => {
 				clear: () => mocks.composerClear(),
 				runAction: () => {},
 				isActionActive: () => false,
-				setInsertionMarker: () => {}
+				setInsertionMarker: () => {},
+				setText: () => {},
+				focus: () => {}
 			}));
 			return (
 				<div
@@ -117,6 +119,10 @@ class Recorder {
 	static isTypeSupported = () => true;
 	state = 'inactive';
 	static nextMimeType = 'audio/webm';
+	// A real MediaRecorder fires `stop` in a later task, after `stop()` has
+	// already made the state inactive.
+	static deferStop = false;
+	pendingStop: (() => void) | null = null;
 	mimeType = Recorder.nextMimeType;
 	ondataavailable: ((event: { data: Blob }) => void) | null = null;
 	onstop: (() => void) | null = null;
@@ -132,6 +138,10 @@ class Recorder {
 		this.ondataavailable?.({
 			data: new Blob(['recorded audio'], { type: this.mimeType })
 		});
+		if (Recorder.deferStop) {
+			this.pendingStop = () => this.onstop?.();
+			return;
+		}
 		this.onstop?.();
 	}
 }
@@ -208,6 +218,7 @@ function Composer({
 beforeEach(() => {
 	vi.clearAllMocks();
 	Recorder.nextMimeType = 'audio/webm';
+	Recorder.deferStop = false;
 	mocks.clearDraft.mockResolvedValue(undefined);
 	vi.stubGlobal('MediaRecorder', Recorder);
 	Object.assign(URL, {
@@ -617,6 +628,115 @@ describe('voice note review before sending (#1142)', () => {
 			.calls[0][1] as File;
 		expect(sent.type).toBe('audio/mp4');
 		expect(sent.name).toMatch(/^voice-message-\d+-s\d+-ms\d+\.m4a$/);
+	});
+
+	it('keeps Cancel pressed between Stop and the recorder stop event a discard', async () => {
+		Recorder.deferStop = true;
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', { name: 'app.cancel' }));
+		});
+		await act(async () => {
+			Recorder.current.pendingStop?.();
+		});
+
+		expect(
+			screen.queryByRole('button', { name: 'voicePlayer.play' })
+		).toBeNull();
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('drops a thread-A take when the same composer is reused for thread B', async () => {
+		const view = render(<Composer threadRootId="$threadA" />);
+		await startRecording();
+		await stopRecording();
+		expect(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		).toBeTruthy();
+
+		view.rerender(<Composer threadRootId="$threadB" />);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('button', { name: 'voicePlayer.play' })
+			).toBeNull()
+		);
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('revokes the preview URL when the composer unmounts during the review', async () => {
+		const view = render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(
+			'blob:voice-preview'
+		);
+
+		view.unmount();
+
+		expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:voice-preview');
+	});
+
+	it('drops a recording whose microphone permission resolves after the chat changed', async () => {
+		let grantMicrophone: (stream: unknown) => void = () => {};
+		vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValueOnce(
+			new Promise((resolve) => {
+				grantMicrophone = resolve;
+			}) as Promise<MediaStream>
+		);
+		const view = render(<Composer sessionId={360} />);
+		fireEvent.click(screen.getByRole('button', MIC));
+
+		view.rerender(<Composer sessionId={361} />);
+		await act(async () => {
+			grantMicrophone({ getTracks: () => [{ stop: trackStop }] });
+		});
+
+		await waitFor(() => expect(trackStop).toHaveBeenCalled());
+		expect(Recorder.current).toBeUndefined();
+		expect(screen.queryByRole('button', { name: 'app.stop' })).toBeNull();
+	});
+
+	it('still sends a reviewed voice note when the preserved draft is over the length limit', async () => {
+		render(<Composer />);
+		act(() => mocks.typeDraft('x'.repeat(7501)));
+		await startRecording();
+		await stopRecording();
+
+		expect(
+			(screen.getByRole('button', SEND) as HTMLButtonElement).disabled
+		).toBe(false);
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+		expect(apiSendMessage).not.toHaveBeenCalled();
+	});
+
+	it('offers no microphone while a message is being edited', () => {
+		render(
+			<Composer editingMessage={{ eventId: '$e1', text: 'old text' }} />
+		);
+
+		expect(screen.queryByRole('button', MIC)).toBeNull();
+	});
+
+	it('drops a running take when a message edit starts', async () => {
+		const view = render(<Composer />);
+		await startRecording();
+
+		view.rerender(
+			<Composer editingMessage={{ eventId: '$e1', text: 'old text' }} />
+		);
+
+		await waitFor(() => expect(trackStop).toHaveBeenCalled());
+		expect(screen.queryByRole('button', { name: 'app.stop' })).toBeNull();
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
 	});
 
 	it('cancel while recording drops the take without sending or opening a review', async () => {
