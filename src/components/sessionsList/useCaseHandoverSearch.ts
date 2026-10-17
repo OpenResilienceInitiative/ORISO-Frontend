@@ -329,7 +329,8 @@ export const useSearchPeopleResults = (
 	pairs: SessionToolbarPair[],
 	labels: SessionSearchPeopleLabels,
 	currentUser: { id: string; name?: string },
-	eligibleCases: ListItemInterface[]
+	/** Handover search only; without it every counsellor stays a row. */
+	eligibleCases: ListItemInterface[] | undefined
 ) =>
 	useMemo(
 		() =>

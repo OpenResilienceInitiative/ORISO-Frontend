@@ -523,6 +523,8 @@ export function buildSearchPeopleResults(
 						readable(raw.user.displayName) ||
 						readable(raw.user.username) ||
 						labels.unknown,
+					// UserService matches clients by username, not display name.
+					lookupQuery: raw.user.username || undefined,
 					subtitle: subtitleOf(labels.asker, agencyName),
 					role: 'asker',
 					agencyId,

@@ -28,6 +28,7 @@ import { SessionsList } from './SessionsList';
 
 const http = vi.hoisted(() => ({
 	getList: vi.fn(),
+	getAskerList: vi.fn(),
 	getCandidates: vi.fn(),
 	getAgencyConsultants: vi.fn(),
 	getHandoverStatus: vi.fn(),
@@ -36,6 +37,7 @@ const http = vi.hoisted(() => ({
 vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api')>()),
 	apiGetConsultantSessionList: http.getList,
+	apiGetAskerSessionList: http.getAskerList,
 	apiGetCaseHandoverCandidates: http.getCandidates,
 	apiGetAgencyConsultantList: http.getAgencyConsultants,
 	apiGetCaseHandoverStatus: http.getHandoverStatus,
@@ -204,33 +206,34 @@ const handoverStatusOf = (sessionId: number) => {
 	};
 };
 
-const renderList = (sessions: ListItemInterface[] = ownCases) => {
+const herbUserData = {
+	userId: 'herb-id',
+	userName: 'herb',
+	displayName: 'Herb',
+	userRoles: ['consultant'],
+	grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'],
+	agencies: [SPRINGFIELD]
+};
+
+const renderList = (
+	sessions: ListItemInterface[] = ownCases,
+	{
+		userData = herbUserData,
+		path = '/sessions/consultant/sessionView'
+	}: { userData?: Record<string, unknown>; path?: string } = {}
+) => {
 	http.getList.mockResolvedValue({
 		sessions,
 		total: sessions.length
 	});
+	http.getAskerList.mockResolvedValue({ sessions });
 	const view = render(
-		<MemoryRouter initialEntries={['/sessions/consultant/sessionView']}>
-			<UserDataContext.Provider
-				value={
-					{
-						userData: {
-							userId: 'herb-id',
-							userName: 'herb',
-							displayName: 'Herb',
-							userRoles: ['consultant'],
-							grantedAuthorities: [
-								'AUTHORIZATION_CONSULTANT_DEFAULT'
-							],
-							agencies: [SPRINGFIELD]
-						}
-					} as any
-				}
-			>
+		<MemoryRouter initialEntries={[path]}>
+			<UserDataContext.Provider value={{ userData } as any}>
 				<SessionTypeContext.Provider
 					value={{
 						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: '/sessions/consultant/sessionView'
+						path
 					}}
 				>
 					<SessionsDataContext.Provider
@@ -977,6 +980,37 @@ describe('case-handover search — archive scope and closing (FE#1725)', () => {
 		);
 
 		await waitFor(() => expect(signals[0].aborted).toBe(true));
+	});
+});
+
+describe('people search for an advice seeker (no handover)', () => {
+	it('still finds the own counsellors by name and by role word', async () => {
+		const askerCases = [
+			makeCase(51, 'bart', patty, SPRINGFIELD, 10001),
+			makeCase(52, 'bart', marge, SPRINGFIELD, 10002)
+		];
+		await ready(
+			renderList(askerCases, {
+				userData: {
+					userId: 'bart-id',
+					userName: 'bart',
+					userRoles: ['user'],
+					grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
+				},
+				path: '/sessions/user/view'
+			})
+		);
+
+		type('Patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(1)
+		);
+
+		fireEvent.change(searchbox(), { target: { value: 'Berater:in' } });
+		await waitFor(() =>
+			expect(personRowsNamed('Marge S.')).toHaveLength(1)
+		);
+		expect(http.getCandidates).not.toHaveBeenCalled();
 	});
 });
 

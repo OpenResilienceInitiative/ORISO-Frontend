@@ -12,6 +12,7 @@ import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInte
 import {
 	buildSearchPeopleResults,
 	filterSearchPeople,
+	lookupTermsOf,
 	SessionSearchPeopleLabels
 } from './sessionSearchPeople';
 
@@ -402,5 +403,19 @@ describe('buildSearchPeopleResults — eligible colleagues (FE#1152)', () => {
 		);
 
 		expect(people.map((entry) => entry.role)).toEqual(['asker']);
+	});
+});
+
+describe('buildSearchPeopleResults — client lookup (FE#1725)', () => {
+	it('looks a client up by her username when her display name differs', () => {
+		const item = {
+			...sessionWithBoth(),
+			user: { username: 'iene_lou_7575', displayName: 'Iene L.' }
+		} as unknown as ListItemInterface;
+
+		const asker = build([item]).find((entry) => entry.role === 'asker');
+
+		expect(asker?.name).toBe('Iene L.');
+		expect(lookupTermsOf(asker!)).toEqual(['iene_lou_7575']);
 	});
 });
