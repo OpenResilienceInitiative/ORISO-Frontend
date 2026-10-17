@@ -120,6 +120,13 @@ const isBausteinSilenced = (
 	action: ErstantwortAction | undefined,
 	state: ErstantwortLiveState
 ): boolean => {
+	/* The second-factor invitation is not part of the first answer (Frank,
+	   2026-10-14). It is silenced as a whole — prose and button — so events
+	   already persisted with it stop showing it too. The catalogue entry and
+	   the `ENABLE_2FA` wire kind stay, so bringing it back is one line here. */
+	if (id === 'accountProtection' || action?.kind === 'ENABLE_2FA') {
+		return true;
+	}
 	const emailRelated =
 		id === 'emailNotification' || action?.kind === 'ADD_EMAIL';
 	return emailRelated && state.isAskerEmailEnabled === false;

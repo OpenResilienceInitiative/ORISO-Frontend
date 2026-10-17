@@ -127,7 +127,10 @@ describe('resolveErstantwortBausteine — live action state (ADR-018 §4)', () =
 		expect(resolved.bausteine[0].action).toBeUndefined();
 	});
 
-	it('drops the 2FA button when two-factor auth is already active', () => {
+	it('never invites a second factor in the first answer, whatever the tenant or account state', () => {
+		// Frank, 2026-10-14: the second-factor invitation is not wanted in the
+		// first answer. It must disappear as a whole — prose and button — for
+		// events already persisted as well as for the catalogue.
 		const twoFactorEvent = event([
 			{
 				id: 'accountProtection',
@@ -136,31 +139,37 @@ describe('resolveErstantwortBausteine — live action state (ADR-018 §4)', () =
 			}
 		]);
 
-		expect(
-			resolveErstantwortBausteine({
-				rawMessage: twoFactorEvent,
-				translate,
-				state: { ...baseState, isTwoFactorActive: true }
-			}).bausteine[0].action
-		).toBeUndefined();
+		for (const state of [
+			{
+				...baseState,
+				isTwoFactorEnabled: true,
+				isTwoFactorActive: false
+			},
+			{ ...baseState, isTwoFactorEnabled: true, isTwoFactorActive: true },
+			{ ...baseState, isTwoFactorEnabled: false }
+		]) {
+			expect(
+				resolveErstantwortBausteine({
+					rawMessage: twoFactorEvent,
+					translate,
+					state
+				}).bausteine
+			).toEqual([]);
+		}
 	});
 
-	it('drops the 2FA button when the tenant has not enabled two-factor auth at all', () => {
-		const twoFactorEvent = event([
-			{
-				id: 'accountProtection',
-				body: 'Schützen Sie Ihren Zugang.',
-				action: { kind: 'ENABLE_2FA', label: 'Zugang schützen' }
-			}
-		]);
+	it('leaves the platform-default sequence without the account-protection Baustein', () => {
+		const resolved = resolveErstantwortBausteine({
+			trigger: 'AFTER_FIRST_MESSAGE',
+			context: { conversationType: 'AGENCY_COUNSELLING' },
+			translate,
+			state: { ...baseState, isTwoFactorEnabled: true }
+		});
 
-		expect(
-			resolveErstantwortBausteine({
-				rawMessage: twoFactorEvent,
-				translate,
-				state: { ...baseState, isTwoFactorEnabled: false }
-			}).bausteine[0].action
-		).toBeUndefined();
+		expect(resolved.bausteine.map((b) => b.id)).not.toContain(
+			'accountProtection'
+		);
+		expect(resolved.bausteine.length).toBeGreaterThan(0);
 	});
 
 	it('silences the e-mail Baustein entirely when the Träger switched e-mail off', () => {
