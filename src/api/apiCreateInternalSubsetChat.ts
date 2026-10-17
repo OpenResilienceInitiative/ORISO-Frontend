@@ -16,6 +16,13 @@ export const INTERNAL_SUBSET_REASON = {
 	RECIPIENT_OUT_OF_SCOPE: 'INTERNAL_CHAT_RECIPIENT_OUT_OF_SCOPE',
 	MEMBERSHIP_FAILED: 'INTERNAL_CHAT_MEMBERSHIP_FAILED',
 	ENCRYPTION_REQUIRED: 'INTERNAL_CHAT_ENCRYPTION_REQUIRED',
+	/** 503: a request for the same people is still running. */
+	BUSY: 'INTERNAL_CHAT_BUSY',
+	/**
+	 * 404 / 405 / 501 without a reason: the UserService does not know the
+	 * endpoint yet (Frontend deployed ahead of ORISO-UserService#1426).
+	 */
+	NOT_AVAILABLE: 'INTERNAL_CHAT_NOT_AVAILABLE',
 	/** A 403 without a reason: internal group chats are switched off. */
 	DISABLED: 'INTERNAL_CHAT_DISABLED',
 	UNKNOWN: 'INTERNAL_CHAT_UNKNOWN'
@@ -23,6 +30,9 @@ export const INTERNAL_SUBSET_REASON = {
 
 export type InternalSubsetReason =
 	(typeof INTERNAL_SUBSET_REASON)[keyof typeof INTERNAL_SUBSET_REASON];
+
+/** Wait before the single automatic retry of a busy refusal. */
+export const INTERNAL_SUBSET_BUSY_RETRY_MS = 1500;
 
 /** Server limit: 1..50 colleagues besides the caller. */
 export const INTERNAL_SUBSET_MAX_RECIPIENTS = 50;
@@ -56,8 +66,12 @@ const KNOWN_REASONS: readonly string[] = [
 	INTERNAL_SUBSET_REASON.RECIPIENT_UNKNOWN,
 	INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE,
 	INTERNAL_SUBSET_REASON.MEMBERSHIP_FAILED,
-	INTERNAL_SUBSET_REASON.ENCRYPTION_REQUIRED
+	INTERNAL_SUBSET_REASON.ENCRYPTION_REQUIRED,
+	INTERNAL_SUBSET_REASON.BUSY
 ];
+
+/** Statuses a UserService without the endpoint answers with. */
+const NOT_AVAILABLE_STATUSES = [404, 405, 501];
 
 const isKnownReason = (value: unknown): value is InternalSubsetReason =>
 	typeof value === 'string' && KNOWN_REASONS.includes(value);
@@ -84,6 +98,12 @@ const toError = async (
 	if (isKnownReason(reason)) {
 		return new InternalSubsetChatError(reason, rejection.status);
 	}
+	if (!reason && NOT_AVAILABLE_STATUSES.includes(rejection.status)) {
+		return new InternalSubsetChatError(
+			INTERNAL_SUBSET_REASON.NOT_AVAILABLE,
+			rejection.status
+		);
+	}
 	return new InternalSubsetChatError(
 		rejection.status === 403 && !reason
 			? INTERNAL_SUBSET_REASON.DISABLED
@@ -92,12 +112,9 @@ const toError = async (
 	);
 };
 
-export const apiCreateInternalSubsetChat = async (
-	request: InternalSubsetChatRequest
-): Promise<InternalSubsetChatResult> => {
-	let response: Response;
+const post = async (request: InternalSubsetChatRequest): Promise<Response> => {
 	try {
-		response = await fetchData({
+		return await fetchData({
 			url: endpoints.internalSubsetChat,
 			method: FETCH_METHODS.POST,
 			bodyData: JSON.stringify(request),
@@ -105,6 +122,32 @@ export const apiCreateInternalSubsetChat = async (
 		});
 	} catch (rejection) {
 		throw await toError(rejection);
+	}
+};
+
+const wait = (ms: number) =>
+	new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * A busy refusal means a request for the same people is still running, so the
+ * same request is repeated once after a short wait (it then finds the room
+ * instead of building a second one). A second refusal is shown as it is.
+ */
+export const apiCreateInternalSubsetChat = async (
+	request: InternalSubsetChatRequest
+): Promise<InternalSubsetChatResult> => {
+	let response: Response;
+	try {
+		response = await post(request);
+	} catch (error) {
+		if (
+			!(error instanceof InternalSubsetChatError) ||
+			error.reason !== INTERNAL_SUBSET_REASON.BUSY
+		) {
+			throw error;
+		}
+		await wait(INTERNAL_SUBSET_BUSY_RETRY_MS);
+		response = await post(request);
 	}
 	const { matrixRoomId, chatId } = await response.json();
 	return { matrixRoomId, chatId, reused: response.status === 200 };

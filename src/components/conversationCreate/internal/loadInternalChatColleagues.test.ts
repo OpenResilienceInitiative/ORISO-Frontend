@@ -58,7 +58,7 @@ describe('loadInternalChatColleagues', () => {
 		).resolves.toEqual([]);
 	});
 
-	it('falls back to the Träger directory narrowed to the centre when the centre list is refused', async () => {
+	it('falls back to the Träger directory, narrowed where centres are known, when the centre list is refused', async () => {
 		vi.mocked(fetchAgencyConsultantList).mockRejectedValue(
 			new Error('FORBIDDEN')
 		);
@@ -75,7 +75,25 @@ describe('loadInternalChatColleagues', () => {
 			currentUserId: 'me'
 		});
 
-		expect(result).toEqual([sameCentre]);
+		// Known other centres are dropped; a colleague whose centres the
+		// directory does not deliver is kept and the UserService decides.
+		expect(result).toEqual([sameCentre, person('centre-unknown')]);
+	});
+
+	it('does not end up with an empty picker when the directory delivers no centres at all', async () => {
+		vi.mocked(fetchAgencyConsultantList).mockRejectedValue(
+			new Error('FORBIDDEN')
+		);
+		const directory = [person('a'), person('b')];
+		vi.mocked(apiGetTenantConsultantList).mockResolvedValue(directory);
+
+		await expect(
+			loadInternalChatColleagues({
+				scope: 'AGENCY',
+				agencyId: 7,
+				currentUserId: 'me'
+			})
+		).resolves.toEqual(directory);
 	});
 
 	it('fails when neither list can be read, so the picker can offer a retry', async () => {

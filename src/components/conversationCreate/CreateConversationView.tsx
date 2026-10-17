@@ -384,23 +384,36 @@ const CreateConversationFlow = ({
 	}, [availability.circle, selectedAgency, step, userData?.userId]);
 
 	// People for the internal card: only colleagues inside the recipient scope
-	// of the Träger (#1772), without the current user.
+	// of the Träger (#1772), without the current user. Every load gets a
+	// number; an answer that is not for the latest load (another centre was
+	// chosen meanwhile, the view went away) is dropped, and the previous list
+	// is cleared when a load starts so it can never be picked from.
+	const colleaguesLoadRef = useRef(0);
+	const invalidateColleaguesLoad = useCallback(() => {
+		colleaguesLoadRef.current += 1;
+	}, []);
 	const loadInternalColleagues = useCallback(() => {
+		const load = ++colleaguesLoadRef.current;
+		setInternalColleagues([]);
+		setConsultantsLoadFailed(false);
 		if (selectedAgency === null || !availability.internal) {
-			setInternalColleagues([]);
-			setConsultantsLoadFailed(false);
 			return;
 		}
-		setConsultantsLoadFailed(false);
+		const isCurrent = () => colleaguesLoadRef.current === load;
 		loadInternalChatColleagues({
 			scope: recipientScope,
 			agencyId: selectedAgency,
 			currentUserId: userData?.userId
 		})
-			.then(setInternalColleagues)
+			.then((colleagues) => {
+				if (isCurrent()) {
+					setInternalColleagues(colleagues);
+				}
+			})
 			.catch(() => {
-				setInternalColleagues([]);
-				setConsultantsLoadFailed(true);
+				if (isCurrent()) {
+					setConsultantsLoadFailed(true);
+				}
 			});
 	}, [
 		availability.internal,
@@ -411,7 +424,8 @@ const CreateConversationFlow = ({
 
 	useEffect(() => {
 		loadInternalColleagues();
-	}, [loadInternalColleagues]);
+		return invalidateColleaguesLoad;
+	}, [invalidateColleaguesLoad, loadInternalColleagues]);
 
 	const loadTopics = useCallback(() => {
 		if (!availability.circle) {
@@ -535,7 +549,11 @@ const CreateConversationFlow = ({
 				people={internalPeople}
 				draft={internalDraft}
 				onDraftChange={(draft) => {
-					clearError();
+					// A refusal stays while the name is typed (a screen reader
+					// may still be reading it); it goes with a new selection.
+					if (draft.selectedIds !== internalDraft.selectedIds) {
+						clearError();
+					}
 					setInternalDraft(draft);
 				}}
 				onCreate={handleInternalCreate}

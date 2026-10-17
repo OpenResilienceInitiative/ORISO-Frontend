@@ -52,7 +52,7 @@ describe('filterColleaguesForScope', () => {
 				colleagues: all,
 				agencyId: 7
 			})
-		).toEqual([sameCentre]);
+		).toEqual([sameCentre, unknownCentre]);
 	});
 
 	it('offers nobody for AGENCY while no centre is chosen', () => {
@@ -65,13 +65,24 @@ describe('filterColleaguesForScope', () => {
 		).toEqual([]);
 	});
 
-	it('never offers a colleague whose centre is unknown for AGENCY', () => {
-		const result = filterColleaguesForScope({
-			scope: 'AGENCY',
-			colleagues: [unknownCentre],
-			agencyId: 7
-		});
-		expect(result).toEqual([]);
+	it('keeps a colleague whose centres are not delivered; the UserService decides', () => {
+		expect(
+			filterColleaguesForScope({
+				scope: 'AGENCY',
+				colleagues: [unknownCentre],
+				agencyId: 7
+			})
+		).toEqual([unknownCentre]);
+	});
+
+	it('drops only colleagues known to belong to other centres only', () => {
+		expect(
+			filterColleaguesForScope({
+				scope: 'AGENCY',
+				colleagues: all,
+				agencyId: 7
+			})
+		).toEqual([sameCentre, unknownCentre]);
 	});
 
 	it.each(['TENANT', 'PLATFORM'] as const)(

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -124,13 +125,15 @@ const colleague = (
 const sameCentre = colleague('c-same', 'Anna', [5]);
 const otherCentre = colleague('c-other', 'Boris', [9]);
 
-const renderView = () =>
+const renderView = (
+	agencies: { id: number; name: string }[] = [{ id: 5, name: 'Agency Five' }]
+) =>
 	render(
 		<UserDataContext.Provider
 			value={{
 				userData: {
 					userId: 'me',
-					agencies: [{ id: 5, name: 'Agency Five' }]
+					agencies
 				}
 			}}
 		>
@@ -208,7 +211,7 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 			);
 			expect(within(menu).getByText('Anna Test')).toBeTruthy();
 			expect(
-				screen.getByText(`groupChat.internal.scope.${scope}`, {
+				screen.getByText('groupChat.internal.scope.TENANT', {
 					exact: false
 				})
 			).toBeTruthy();
@@ -285,4 +288,106 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 			expect(navigate).not.toHaveBeenCalled();
 		}
 	);
+
+	it('keeps the refusal while the name is typed and drops it when the selection changes', async () => {
+		tenantState.tenant = tenantWithScope('TENANT');
+		vi.mocked(apiCreateInternalSubsetChat).mockRejectedValue(
+			new InternalSubsetChatError(
+				INTERNAL_SUBSET_REASON.MEMBERSHIP_FAILED,
+				502
+			)
+		);
+		renderView();
+
+		const menu = await openPersonMenu();
+		fireEvent.click(await within(menu).findByText('Anna Test'));
+		const name = screen.getByLabelText('groupChat.internal.nameLabel');
+		fireEvent.change(name, { target: { value: 'Fallbesprechung' } });
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.internal.createLabel'
+			})
+		);
+		await screen.findByRole('alert');
+
+		fireEvent.change(name, { target: { value: 'Fallbesprechung 2' } });
+		expect(screen.queryByRole('alert')).not.toBeNull();
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.internal.removePerson'
+			})
+		);
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('never lets a late answer for the previous centre replace the list of the current one', async () => {
+		tenantState.tenant = tenantWithScope();
+		let answerFirstCentre: (list: Consultant[]) => void = () => undefined;
+		vi.mocked(fetchAgencyConsultantList).mockImplementation(
+			(agencyId: string) =>
+				agencyId === '5'
+					? new Promise((resolve) => {
+							answerFirstCentre = resolve as never;
+						})
+					: Promise.resolve([colleague('c-six', 'Cem', [6])])
+		);
+		renderView([
+			{ id: 5, name: 'Agency Five' },
+			{ id: 6, name: 'Agency Six' }
+		]);
+
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency Five' })
+		);
+		await waitFor(() =>
+			expect(fetchAgencyConsultantList).toHaveBeenCalledWith('5')
+		);
+		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency Six' })
+		);
+		await waitFor(() =>
+			expect(fetchAgencyConsultantList).toHaveBeenCalledWith('6')
+		);
+
+		// The slow answer for centre five arrives last.
+		await act(async () => answerFirstCentre([sameCentre]));
+
+		const menu = await openPersonMenu();
+		await waitFor(() =>
+			expect(within(menu).getByText('Cem Test')).toBeTruthy()
+		);
+		expect(within(menu).queryByText('Anna Test')).toBeNull();
+	});
+
+	it('shows no colleague of the previous centre while the new list loads', async () => {
+		tenantState.tenant = tenantWithScope();
+		vi.mocked(fetchAgencyConsultantList).mockImplementation(
+			(agencyId: string) =>
+				agencyId === '5'
+					? Promise.resolve([sameCentre])
+					: new Promise(() => undefined)
+		);
+		renderView([
+			{ id: 5, name: 'Agency Five' },
+			{ id: 6, name: 'Agency Six' }
+		]);
+
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency Five' })
+		);
+		await waitFor(() =>
+			expect(fetchAgencyConsultantList).toHaveBeenCalledWith('5')
+		);
+		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency Six' })
+		);
+
+		const menu = await openPersonMenu();
+		expect(within(menu).queryByText('Anna Test')).toBeNull();
+	});
 });

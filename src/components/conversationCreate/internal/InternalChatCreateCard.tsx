@@ -237,6 +237,7 @@ export const InternalChatCreateCard = ({
 					<SplitButton
 						ref={splitButtonRef}
 						id="internalChatPersonButton"
+						describedBy="internalChatScopeHint"
 						label={splitButtonLabel}
 						icon={<PersonAddIcon />}
 						variant={

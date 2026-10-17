@@ -327,17 +327,18 @@
 			"vacatedHint": "nicht mehr in der Beratungsstelle",
 			"scope": {
 				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
-				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen.",
-				"PLATFORM": "Du kannst Kolleg:innen der gesamten Plattform auswählen."
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
 			},
 			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
 			"error": {
 				"recipientsRequired": "Bitte wähle mindestens eine Kollegin oder einen Kollegen aus.",
-				"recipientUnknown": "Eine ausgewählte Person ist nicht mehr verfügbar. Entferne sie aus der Auswahl und versuche es erneut.",
-				"outOfScope": "Mindestens eine ausgewählte Person liegt außerhalb des Bereichs, den deine Organisation für Interna erlaubt. Es wurde nichts erstellt.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entferne die Person oder versuche es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den deine Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
 				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuche es erneut.",
-				"disabled": "Interna sind für deine Beratungsstelle nicht freigeschaltet.",
-				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut."
+				"disabled": "Interna mit ausgewählten Personen sind für dich nicht verfügbar: Sie sind nicht freigeschaltet, dir fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wende dich an deine Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warte einen Moment und versuche es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wende dich an den Support."
 			}
 		},
 		"circle": {

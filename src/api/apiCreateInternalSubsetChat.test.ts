@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiCreateInternalSubsetChat,
 	InternalSubsetChatError,
+	INTERNAL_SUBSET_BUSY_RETRY_MS,
 	INTERNAL_SUBSET_REASON
 } from './apiCreateInternalSubsetChat';
 
@@ -103,7 +104,8 @@ describe('apiCreateInternalSubsetChat', () => {
 		[400, INTERNAL_SUBSET_REASON.RECIPIENT_UNKNOWN],
 		[403, INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE],
 		[502, INTERNAL_SUBSET_REASON.MEMBERSHIP_FAILED],
-		[503, INTERNAL_SUBSET_REASON.ENCRYPTION_REQUIRED]
+		[503, INTERNAL_SUBSET_REASON.ENCRYPTION_REQUIRED],
+		[403, INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE]
 	])(
 		'names the reason of a %i refusal (%s) from the X-Reason header',
 		async (status, reason) => {
@@ -133,6 +135,66 @@ describe('apiCreateInternalSubsetChat', () => {
 	])('reports %s as unknown', async (_label, status, body) => {
 		answer(status, body);
 		expect((await failure()).reason).toBe(INTERNAL_SUBSET_REASON.UNKNOWN);
+	});
+
+	it.each([404, 405, 501])(
+		'reads a %i from an UserService without the endpoint as "not available yet"',
+		async (status) => {
+			answer(status);
+			const error = await failure();
+			expect(error.reason).toBe(INTERNAL_SUBSET_REASON.NOT_AVAILABLE);
+			expect(error.status).toBe(status);
+		}
+	);
+
+	it('retries once when the same people are still being set up, then succeeds', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				new Response(null, {
+					status: 503,
+					headers: { 'X-Reason': INTERNAL_SUBSET_REASON.BUSY }
+				})
+			)
+			.mockResolvedValueOnce(
+				new Response(JSON.stringify(room), { status: 200 })
+			);
+		vi.stubGlobal('fetch', fetchMock);
+
+		const result = apiCreateInternalSubsetChat(request);
+		await vi.advanceTimersByTimeAsync(INTERNAL_SUBSET_BUSY_RETRY_MS);
+
+		await expect(result).resolves.toEqual({ ...room, reused: true });
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('names the busy refusal after one automatic retry and does not retry again', async () => {
+		const busy = () =>
+			new Response(null, {
+				status: 503,
+				headers: { 'X-Reason': INTERNAL_SUBSET_REASON.BUSY }
+			});
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(busy())
+			.mockResolvedValueOnce(busy());
+		vi.stubGlobal('fetch', fetchMock);
+
+		const result = apiCreateInternalSubsetChat(request).catch(
+			(error) => error as InternalSubsetChatError
+		);
+		await vi.advanceTimersByTimeAsync(INTERNAL_SUBSET_BUSY_RETRY_MS * 3);
+
+		expect((await result).reason).toBe(INTERNAL_SUBSET_REASON.BUSY);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('does not retry any other refusal', async () => {
+		answer(502, undefined, {
+			'X-Reason': INTERNAL_SUBSET_REASON.MEMBERSHIP_FAILED
+		});
+		await failure();
+		expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
 	});
 
 	it('reports a network failure as unknown', async () => {

@@ -43,4 +43,21 @@ describe('internal subset chat messages', () => {
 			});
 		}
 	);
+
+	it('words PLATFORM like TENANT while only the Träger directory can be listed', () => {
+		expect(recipientScopeHintKey('PLATFORM')).toBe(
+			recipientScopeHintKey('TENANT')
+		);
+	});
+
+	it('has its own message for a busy room and for a backend that cannot do this yet', () => {
+		const keys = [
+			internalSubsetErrorKey(INTERNAL_SUBSET_REASON.BUSY),
+			internalSubsetErrorKey(INTERNAL_SUBSET_REASON.NOT_AVAILABLE)
+		];
+		expect(new Set(keys).size).toBe(2);
+		expect(keys).not.toContain(
+			internalSubsetErrorKey(INTERNAL_SUBSET_REASON.UNKNOWN)
+		);
+	});
 });

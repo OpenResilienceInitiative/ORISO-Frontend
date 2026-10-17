@@ -1113,12 +1113,14 @@
 			"deselectPerson": "Retirer {{name}}",
 			"error": {
 				"recipientsRequired": "Veuillez sélectionner au moins un collègue.",
-				"recipientUnknown": "Une personne sélectionnée n'est plus disponible. Retirez-la de la sélection et réessayez.",
-				"outOfScope": "Au moins une personne sélectionnée se trouve en dehors du périmètre autorisé par votre organisation pour les échanges internes. Rien n'a été créé.",
+				"recipientUnknown": "Au moins un collègue sélectionné ne peut pas encore être ajouté, car il n'a pas encore de compte de chat. Retirez-le ou réessayez plus tard.",
+				"outOfScope": "Au moins une personne sélectionnée ne peut pas être choisie : elle se trouve en dehors du périmètre autorisé par votre organisation pour les échanges internes, ou est introuvable. Rien n'a été créé.",
 				"membershipFailed": "L'espace n'a pas pu être configuré avec toutes les personnes sélectionnées. Rien n'a été créé. Veuillez réessayer.",
 				"encryptionRequired": "Les échanges internes avec des personnes sélectionnées ne sont possibles qu'avec chiffrement, et le chiffrement est actuellement indisponible. Rien n'a été créé.",
-				"disabled": "Les échanges internes ne sont pas activés pour votre service de consultation.",
-				"unknown": "L'espace n'a pas pu être créé. Veuillez réessayer."
+				"disabled": "Les échanges internes avec des personnes sélectionnées ne sont pas disponibles pour vous : ils ne sont pas activés, il vous manque l'autorisation, ou cette installation ne les prend pas encore en charge. Veuillez contacter votre administration.",
+				"unknown": "L'espace n'a pas pu être créé. Veuillez réessayer.",
+				"busy": "Cet espace est en cours de création. Veuillez patienter un instant, puis réessayer.",
+				"notAvailable": "Les échanges internes avec des personnes sélectionnées ne sont pas encore disponibles sur cette installation. Rien n'a été créé. Veuillez contacter le support."
 			},
 			"nameLabel": "Nom de l'échange interne",
 			"noColleagues": "Aucun collègue à sélectionner",
@@ -1132,8 +1134,7 @@
 			},
 			"scope": {
 				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
-				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
-				"PLATFORM": "Vous pouvez choisir des collègues de l'ensemble de la plateforme."
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
 			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",

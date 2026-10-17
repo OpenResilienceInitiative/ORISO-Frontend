@@ -1113,12 +1113,14 @@
 			"deselectPerson": "{{name}} kişisini kaldır",
 			"error": {
 				"recipientsRequired": "Lütfen en az bir meslektaş seçin.",
-				"recipientUnknown": "Seçilen bir kişi artık mevcut değil. Onu seçimden çıkarın ve tekrar deneyin.",
-				"outOfScope": "Seçilen kişilerden en az biri, kuruluşunuzun dahili sohbetler için izin verdiği kapsamın dışında. Hiçbir şey oluşturulmadı.",
+				"recipientUnknown": "Seçilen en az bir meslektaş henüz eklenemiyor, çünkü henüz bir sohbet hesabı yok. Onu çıkarın veya daha sonra tekrar deneyin.",
+				"outOfScope": "Seçilen kişilerden en az biri seçilemez: kuruluşunuzun dahili sohbetler için izin verdiği kapsamın dışında veya bulunamıyor. Hiçbir şey oluşturulmadı.",
 				"membershipFailed": "Oda, seçilen tüm kişilerle kurulamadı. Hiçbir şey oluşturulmadı. Lütfen tekrar deneyin.",
 				"encryptionRequired": "Seçilen kişilerle dahili sohbetler yalnızca şifreli olarak mümkündür ve şifreleme şu anda kullanılamıyor. Hiçbir şey oluşturulmadı.",
-				"disabled": "Dahili sohbetler danışma merkeziniz için etkinleştirilmemiş.",
-				"unknown": "Oda oluşturulamadı. Lütfen tekrar deneyin."
+				"disabled": "Seçilen kişilerle dahili sohbetler sizin için kullanılamıyor: etkinleştirilmemiş, yetkiniz yok veya bu kurulum henüz desteklemiyor. Lütfen yöneticinizle iletişime geçin.",
+				"unknown": "Oda oluşturulamadı. Lütfen tekrar deneyin.",
+				"busy": "Bu oda şu anda oluşturuluyor. Lütfen biraz bekleyin ve tekrar deneyin.",
+				"notAvailable": "Seçilen kişilerle dahili sohbetler bu kurulumda henüz kullanılamıyor. Hiçbir şey oluşturulmadı. Lütfen destek ekibiyle iletişime geçin."
 			},
 			"nameLabel": "Dahili sohbetin adı",
 			"noColleagues": "Seçilebilecek meslektaş yok",
@@ -1132,8 +1134,7 @@
 			},
 			"scope": {
 				"AGENCY": "Danışma merkezinizdeki meslektaşlarınızı seçebilirsiniz.",
-				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz.",
-				"PLATFORM": "Platformun tamamındaki meslektaşlarınızı seçebilirsiniz."
+				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz."
 			},
 			"selectPerson": "{{name}} kişisini seç",
 			"subtitle": "meslektaşlarınızla",

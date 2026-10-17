@@ -45,12 +45,17 @@ describe('InternalChatCreateCard (#1772)', () => {
 		expect(onCreate).toHaveBeenCalledTimes(1);
 	});
 
-	it.each(['AGENCY', 'TENANT', 'PLATFORM'] as const)(
-		'names the scope %s next to the picker',
-		(scope) => {
+	it.each([
+		['AGENCY', 'AGENCY'],
+		['TENANT', 'TENANT'],
+		// No platform-wide directory yet: the Träger wording, not a promise.
+		['PLATFORM', 'TENANT']
+	] as const)(
+		'names the scope %s next to the picker (wording %s)',
+		(scope, wording) => {
 			renderCard({ scope });
 			expect(
-				screen.getByText(`groupChat.internal.scope.${scope}`, {
+				screen.getByText(`groupChat.internal.scope.${wording}`, {
 					exact: false
 				})
 			).toBeTruthy();
@@ -103,5 +108,22 @@ describe('InternalChatCreateCard (#1772)', () => {
 		expect(
 			screen.getByText('groupChat.internal.noColleagues')
 		).toBeTruthy();
+	});
+
+	it('describes the picker button with the scope and private-room statement', () => {
+		renderCard({ draft: { name: '', selectedIds: [] } });
+		const button = screen.getByRole('button', {
+			name: 'groupChat.internal.addPerson'
+		});
+		const describedBy = button.getAttribute('aria-describedby');
+		expect(describedBy).toBeTruthy();
+		expect(
+			document.getElementById(describedBy as string)?.textContent
+		).toContain('groupChat.internal.scope.AGENCY');
+	});
+
+	it('disables create while the request runs', () => {
+		renderCard({ isSubmitting: true });
+		expect((createButton() as HTMLButtonElement).disabled).toBe(true);
 	});
 });

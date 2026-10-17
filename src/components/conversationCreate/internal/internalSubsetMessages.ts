@@ -21,6 +21,9 @@ const ERROR_KEYS: Record<InternalSubsetReason, string> = {
 		'groupChat.internal.error.membershipFailed',
 	[INTERNAL_SUBSET_REASON.ENCRYPTION_REQUIRED]:
 		'groupChat.internal.error.encryptionRequired',
+	[INTERNAL_SUBSET_REASON.BUSY]: 'groupChat.internal.error.busy',
+	[INTERNAL_SUBSET_REASON.NOT_AVAILABLE]:
+		'groupChat.internal.error.notAvailable',
 	[INTERNAL_SUBSET_REASON.DISABLED]: 'groupChat.internal.error.disabled',
 	[INTERNAL_SUBSET_REASON.UNKNOWN]: 'groupChat.internal.error.unknown'
 };
@@ -31,7 +34,10 @@ export const internalSubsetErrorKey = (reason: InternalSubsetReason): string =>
 const SCOPE_HINT_KEYS: Record<InternalChatRecipientScope, string> = {
 	AGENCY: 'groupChat.internal.scope.AGENCY',
 	TENANT: 'groupChat.internal.scope.TENANT',
-	PLATFORM: 'groupChat.internal.scope.PLATFORM'
+	// The platform scope lists the Träger's directory until a platform-wide
+	// directory exists (ORISO-Frontend#1269 follow-up), so it must not promise
+	// more than that.
+	PLATFORM: 'groupChat.internal.scope.TENANT'
 };
 
 export const recipientScopeHintKey = (

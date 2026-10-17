@@ -188,7 +188,7 @@ export const ScopePlatform: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'The directory the Frontend can read is the Träger’s, so the platform scope lists the same people as the Träger scope until a platform-wide directory exists. The UserService accepts the wider choice.'
+				story: 'The directory the Frontend can read is the Träger\u2019s, so the platform scope lists the same people as the Träger scope and uses the Träger wording until a platform-wide directory exists (follow-up issue in ORISO-UserService). The UserService accepts the wider choice.'
 			}
 		}
 	},

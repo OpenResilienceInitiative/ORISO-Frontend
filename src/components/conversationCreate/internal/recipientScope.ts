@@ -38,14 +38,16 @@ interface ScopeFilterInput {
 
 /**
  * Narrows a colleague directory to what the scope allows. The UserService
- * enforces the same rule and refuses anything else; this keeps the picker
- * from offering people it would refuse.
+ * enforces the same rule and refuses anything else with a clear reason; this
+ * keeps the picker from offering people it would refuse.
  *
- * - AGENCY: only colleagues known to belong to the chosen centre. A colleague
- *   whose centres are not delivered is never offered (fail closed).
+ * - AGENCY: colleagues known to belong only to other centres are dropped. A
+ *   colleague whose centres are not delivered is kept: nothing guarantees the
+ *   directory fills them, and an empty picker would be worse than a clearly
+ *   worded refusal.
  * - TENANT / PLATFORM: the directory as delivered. The directory the
  *   Frontend can read is the Träger's; a platform-wide directory does not
- *   exist yet, so PLATFORM shows the same people as TENANT for now.
+ *   exist yet, so PLATFORM lists the same people as TENANT for now.
  */
 export const filterColleaguesForScope = ({
 	scope,
@@ -58,7 +60,9 @@ export const filterColleaguesForScope = ({
 	if (agencyId === null) {
 		return [];
 	}
-	return colleagues.filter((colleague) =>
-		colleague.agencies?.some((agency) => agency.id === agencyId)
+	return colleagues.filter(
+		(colleague) =>
+			!colleague.agencies?.length ||
+			colleague.agencies.some((agency) => agency.id === agencyId)
 	);
 };
