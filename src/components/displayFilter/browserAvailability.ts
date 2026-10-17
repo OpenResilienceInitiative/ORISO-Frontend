@@ -7,21 +7,34 @@
  * The dialog never flips these; they live in the profile.
  */
 import type { DisplayFilterSection } from '../../utils/displayFilter/model';
+import type { EventFamily } from '../notificationsCenter/eventDescriptors/types';
 import type { OrisoNotificationSettings } from '../../utils/notificationSettings/model';
 import {
 	AREA_KINDS,
 	NotificationArea
 } from '../../utils/notificationSettings/notificationConfig';
 
-/** Sections with a Browser column → their area and legacy per-type switch. */
+/** Sections with a Browser column → area, legacy per-type switch, family. */
 export const BROWSER_SECTIONS: Partial<
 	Record<
 		DisplayFilterSection,
-		{ area: NotificationArea; legacyType: 'newMessage' | 'initialEnquiry' }
+		{
+			area: NotificationArea;
+			legacyType: 'newMessage' | 'initialEnquiry';
+			family: EventFamily;
+		}
 	>
 > = {
-	sessions: { area: 'conversations', legacyType: 'newMessage' },
-	requests: { area: 'requests', legacyType: 'initialEnquiry' }
+	sessions: {
+		area: 'conversations',
+		legacyType: 'newMessage',
+		family: 'messages'
+	},
+	requests: {
+		area: 'requests',
+		legacyType: 'initialEnquiry',
+		family: 'requests'
+	}
 };
 
 export const browserPopupsOff = (

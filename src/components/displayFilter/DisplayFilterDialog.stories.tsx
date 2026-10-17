@@ -839,6 +839,36 @@ export const BrowserMasterOff: Story = {
 	}
 };
 
+/** `erstantwort.notificationChoice.browserSilenced` (de). */
+const BROWSER_MUTED_NOTICE =
+	'Browser-Benachrichtigungen sind in Ihren Benachrichtigungseinstellungen stummgeschaltet.';
+
+/**
+ * Muted (do not disturb, account mute, device silenced): a notice, not a
+ * lock — the state is often temporary and the column edits durable
+ * preferences, so every Browser cell stays editable.
+ */
+const browserMutedArgs = {
+	...sessionsArgs,
+	fullScreen: false,
+	browserMutedNotice: BROWSER_MUTED_NOTICE
+};
+export const BrowserMuted: Story = {
+	globals: desktop1440Globals,
+	args: browserMutedArgs,
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		await expect(
+			await dialog.findByText(BROWSER_MUTED_NOTICE)
+		).toHaveAttribute('role', 'status');
+		const row = dialog.getByRole('row', { name: /Mail-Beratung/ });
+		await expect(
+			within(row).getByRole('button', { name: /Ton anhören/ })
+		).toBeEnabled();
+	}
+};
+
 const supervisionEmailChange = fn();
 
 /**

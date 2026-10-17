@@ -21,3 +21,20 @@ export const useDisplayFilterBrowserUnavailable = (
 		? t('notifications.displayFilter.browserOff')
 		: undefined;
 };
+
+/**
+ * A notice, not a lock: while delivery's own gate (`isSuppressed`: do not
+ * disturb, account mute, this device silenced) holds pop-ups back, the
+ * cells stay editable. That state is often temporary, and the column edits
+ * durable preferences.
+ */
+export const useDisplayFilterBrowserMuted = (
+	section: DisplayFilterSection
+): string | undefined => {
+	const { t } = useTranslation();
+	const { isSuppressed } = useNotificationSettings();
+	const family = BROWSER_SECTIONS[section]?.family;
+	return family && isSuppressed(family)
+		? t('erstantwort.notificationChoice.browserSilenced')
+		: undefined;
+};

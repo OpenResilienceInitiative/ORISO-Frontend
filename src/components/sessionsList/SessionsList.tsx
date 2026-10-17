@@ -110,6 +110,7 @@ import {
 	isDisplayFilterCustomised,
 	useDisplayFilterEmailColumn,
 	useDisplayFilterBrowserUnavailable,
+	useDisplayFilterBrowserMuted,
 	useDisplayFilterLabels,
 	visiblePillKinds,
 	reconcileActiveKind,
@@ -395,6 +396,8 @@ export const SessionsList = ({
 		useDisplayFilterEmailColumn(displayFilterSection);
 	const displayFilterBrowserUnavailable =
 		useDisplayFilterBrowserUnavailable(displayFilterSection);
+	const displayFilterBrowserMuted =
+		useDisplayFilterBrowserMuted(displayFilterSection);
 	// The kind options are built further down (they need the unread counts);
 	// the toolbar predicate above them reads the latest list through a ref.
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
@@ -2417,6 +2420,7 @@ export const SessionsList = ({
 					kinds={displayFilterKinds}
 					email={displayFilterEmail}
 					browserUnavailableReason={displayFilterBrowserUnavailable}
+					browserMutedNotice={displayFilterBrowserMuted}
 					value={listDisplayFilter}
 					canReset={listDisplayOverride !== null}
 					readOnly={displayFilterReadOnly || !canEditDisplayFilter}

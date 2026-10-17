@@ -133,6 +133,8 @@ export interface DisplayFilterDialogProps {
 	email?: DisplayFilterEmailColumn;
 	/** Set while no pop-up can show: the Browser cells' unavailable reason. */
 	browserUnavailableReason?: string;
+	/** Set while delivery holds pop-ups back (mute, DND): a notice, cells stay editable. */
+	browserMutedNotice?: string;
 }
 
 export interface DisplayFilterColumns {
@@ -174,7 +176,8 @@ export const DisplayFilterDialog = ({
 	columns = TIMELINE_COLUMNS,
 	icon,
 	email,
-	browserUnavailableReason
+	browserUnavailableReason,
+	browserMutedNotice
 }: DisplayFilterDialogProps) => {
 	// Show-only kinds (the future timeline panel) have no row in the sound
 	// mode table; they keep a plain switch so the panel stays toggleable.
@@ -265,6 +268,15 @@ export const DisplayFilterDialog = ({
 				>
 					{labels.kindsHeading}
 				</h3>
+				{columns.sound && browserMutedNotice && (
+					<p
+						className="displayFilterDialog__sectionNote"
+						role="status"
+						data-cy="display-filter-browser-muted"
+					>
+						{browserMutedNotice}
+					</p>
+				)}
 				<DisplayFilterKindTable
 					kinds={mainKinds}
 					value={value}

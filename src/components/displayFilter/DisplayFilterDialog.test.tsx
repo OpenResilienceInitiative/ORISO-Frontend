@@ -522,4 +522,29 @@ describe('DisplayFilterDialog Browser column gate (Codex review on #1752)', () =
 				.querySelector('[tabindex], button, input')
 		).toBeNull();
 	});
+	it('shows the muted notice while the Browser cells stay editable', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onOpenProfile={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={SESSION_COLUMNS}
+				browserMutedNotice="Gerade stummgeschaltet"
+			/>
+		);
+		expect(
+			screen
+				.getAllByRole('status')
+				.some((node) => node.textContent === 'Gerade stummgeschaltet')
+		).toBe(true);
+		const picker = screen.getByRole('button', {
+			name: STORY_LABELS.soundMenu('Nachrichten')
+		}) as HTMLButtonElement;
+		expect(picker.disabled).toBe(false);
+	});
 });
