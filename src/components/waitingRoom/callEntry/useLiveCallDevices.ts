@@ -247,6 +247,27 @@ export const useLiveCallDevices = (
 		};
 	}, [modality, microphoneId, cameraId, attempt, mediaDevices]);
 
+	// No camera (never had one, or it was unplugged): a webcam plugged in
+	// later is taken up, instead of a room stuck without video until reload.
+	const { cameraMissing } = state;
+	useEffect(() => {
+		if (modality !== 'video' || !cameraMissing) return;
+		if (!mediaDevices?.addEventListener) return;
+		const onDeviceChange = () => {
+			void mediaDevices.enumerateDevices().then(
+				(list) => {
+					if (list.some((device) => device.kind === 'videoinput')) {
+						retry();
+					}
+				},
+				() => undefined
+			);
+		};
+		mediaDevices.addEventListener('devicechange', onDeviceChange);
+		return () =>
+			mediaDevices.removeEventListener('devicechange', onDeviceChange);
+	}, [modality, cameraMissing, mediaDevices, retry]);
+
 	// The switches mute the real tracks, not only the icon.
 	useEffect(() => {
 		state.stream?.getAudioTracks().forEach((track) => {

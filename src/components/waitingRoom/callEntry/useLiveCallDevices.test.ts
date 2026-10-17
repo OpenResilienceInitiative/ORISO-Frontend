@@ -199,6 +199,48 @@ describe('useLiveCallDevices', () => {
 		expect(media.getUserMedia).toHaveBeenCalledTimes(1);
 	});
 
+	it('takes the camera back when a webcam is plugged in again', async () => {
+		const audioOnly = fakeStream(['audio']);
+		const withCamera = fakeStream(['audio', 'video']);
+		let cameraThere = false;
+		const listeners: (() => void)[] = [];
+		const media = Object.assign(
+			devicesFor(
+				(constraints) =>
+					constraints.video && !cameraThere
+						? Promise.reject(domError('NotFoundError'))
+						: Promise.resolve(
+								constraints.video ? withCamera : audioOnly
+							),
+				() =>
+					Promise.resolve(
+						(cameraThere
+							? [
+									{
+										kind: 'videoinput',
+										deviceId: 'cam',
+										label: ''
+									}
+								]
+							: []) as MediaDeviceInfo[]
+					)
+			),
+			{
+				addEventListener: (_: string, listener: () => void) =>
+					listeners.push(listener),
+				removeEventListener: vi.fn()
+			}
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		await waitFor(() => expect(result.current.cameraMissing).toBe(true));
+		cameraThere = true;
+		await act(async () => listeners.forEach((listener) => listener()));
+		await waitFor(() => expect(result.current.stream).toBe(withCamera));
+		expect(result.current.cameraMissing).toBe(false);
+	});
+
 	it('asks again on retry and clears the blocker once it works', async () => {
 		const stream = fakeStream(['audio']);
 		let allow = false;
