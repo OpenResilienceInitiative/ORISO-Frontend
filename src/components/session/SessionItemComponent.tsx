@@ -276,6 +276,7 @@ interface SessionItemProps {
 	onLoadEarlierMessages?: () => Promise<boolean>;
 	/** The viewer's case-handover grant; a CO_ACCESS grant is read-only (#200). */
 	caseHandoverStatus?: CaseHandoverStatus | null;
+	onCaseHandoverStatusChange?: (status: CaseHandoverStatus) => void;
 }
 
 let initMessageCount: number;
@@ -3645,6 +3646,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{isCoAccessViewer && (
 					<CaseHandoverReadOnlyNotice
 						expiresAt={props.caseHandoverStatus?.expiresAt}
+						sessionId={activeSession.item?.id}
+						canExtend={props.caseHandoverStatus?.canExtend}
+						onStatusChange={props.onCaseHandoverStatusChange}
 					/>
 				)}
 

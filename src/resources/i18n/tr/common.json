@@ -3707,7 +3707,8 @@
 		},
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz."
+			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
+			"extend": "Erişimi uzat"
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",

@@ -1524,6 +1524,7 @@ export const SessionStream = ({
 				refreshMessages={fetchSessionMessages}
 				onLoadEarlierMessages={loadEarlierMessages}
 				caseHandoverStatus={caseHandoverStatus}
+				onCaseHandoverStatusChange={setCaseHandoverStatus}
 			/>
 			{isOverlayActive && (
 				<Overlay
