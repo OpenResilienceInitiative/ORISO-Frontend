@@ -4464,6 +4464,9 @@ export const MessageSubmitInterfaceComponent = ({
 										'textarea__input--editing'
 								)}
 								ref={textareaInputRef}
+								// Where the closing animation of a waiting room ends
+								// (ORISO-Frontend#1737).
+								data-closing-focal="message-field"
 								onKeyUp={(e) => {
 									resizeTextarea();
 									// Auto-scroll on Enter key or any key press

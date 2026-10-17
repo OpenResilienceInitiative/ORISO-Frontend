@@ -237,6 +237,38 @@ describe('GroupWaitingRoom', () => {
 		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
 	});
 
+	/* ORISO-Frontend#1737. The closing animation belongs to the press that lets
+	   the person in, not to the one that only asks for consent. */
+	it("declares the group chat's message field only on the press that lets the person in", () => {
+		renderRoom(true);
+		const join = () => screen.getByTestId('group-entry-join');
+		expect(join().getAttribute('data-cy-closing')).toBeNull();
+		fireEvent.click(join());
+		expect(join().getAttribute('data-cy-closing')).toBe('messageField');
+	});
+
+	it('keeps the screen covered until the join request has settled', async () => {
+		let settle: () => void = () => undefined;
+		const pending = new Promise<void>((resolve) => {
+			settle = resolve;
+		});
+		const { onJoin } = renderRoom(
+			true,
+			vi.fn(() => pending)
+		);
+		const join = () => screen.getByTestId('group-entry-join');
+		fireEvent.click(join());
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(join().getAttribute('data-cy-state')).toBe('entering');
+		await act(async () => settle());
+		await waitFor(() =>
+			expect(join().getAttribute('data-cy-state')).not.toBe('entering')
+		);
+	});
+
 	it('takes the tick back on "Ablehnen", so reopening asks again', async () => {
 		const { onJoin } = renderRoom(true);
 		fireEvent.click(screen.getByTestId('group-entry-join'));
