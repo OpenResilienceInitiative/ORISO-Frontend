@@ -1,6 +1,7 @@
 import { apiUrl } from '../resources/scripts/endpoints';
 import { FETCH_METHODS } from './fetchData';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 /** Response from POST /service/users/invitelinks/{token}/redeem (topic-based links). */
 export interface RedeemInviteLinkSessionResponse {
@@ -36,7 +37,7 @@ export const redeemInviteLink = async (
 	const url = `${apiUrl}/service/users/invitelinks/${encodeURIComponent(token)}/redeem`;
 	const response = await fetch(url, {
 		method: FETCH_METHODS.POST,
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'application/json', ...traceHeaders(url) },
 		credentials: 'include'
 	});
 

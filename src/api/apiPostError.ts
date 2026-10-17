@@ -1,5 +1,6 @@
 import { ErrorInfo } from 'react';
 import { endpoints } from '../resources/scripts/endpoints';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 export interface ErrorResponse {}
 
@@ -82,7 +83,10 @@ export const apiPostError = async (
 
 		await fetch(endpoints.error, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: {
+				'Content-Type': 'application/json',
+				...traceHeaders(endpoints.error)
+			},
 			body: JSON.stringify(body)
 		});
 	} catch (e) {
