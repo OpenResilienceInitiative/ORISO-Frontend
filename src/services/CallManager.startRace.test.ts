@@ -300,4 +300,80 @@ describe('outgoing call startup ownership', () => {
 			)
 		);
 	});
+
+	it('discards the room when provisioning fails after creation', async () => {
+		/*
+		 * The other half of the cleanup, and the half the caller cannot do.
+		 *
+		 * Past `createRoom` three things can throw: the membership reader may
+		 * be unconfigured, its invite can reject, and `inviteSessionMembers`
+		 * throws if any invite failed. Each threw before the room id was
+		 * returned, so the caller's `elementCallRoomId` stayed undefined and
+		 * its own cleanup could not run — every retry left another JOINED room
+		 * carrying the plaintext call/source binding and a name that reads
+		 * "Group call for <session room>".
+		 */
+		createRoom.mockResolvedValue({ room_id: ROOM });
+		invite.mockRejectedValue(new Error('reader cannot be invited'));
+		vi.stubGlobal('alert', vi.fn());
+
+		callManager.startCall(SOURCE, true, true);
+
+		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(forget).toHaveBeenCalledWith(ROOM);
+		// And nothing was published for a call that never got off the ground.
+		expect(sendEvent).not.toHaveBeenCalledWith(
+			SOURCE,
+			'org.oriso.call.invite',
+			expect.anything()
+		);
+	});
+
+	it('refuses to publish a pending start after the account changes', async () => {
+		/*
+		 * `teardownLocalSession` nulls the Matrix registry but does NOT clear
+		 * `pendingStart`, so identity alone still said "this start is current"
+		 * after a sign-out. If another account was installed before the await
+		 * returned, the lifecycle card and the invitation were published by
+		 * THAT account for a room the previous one created — on a shared
+		 * browser where both counsellors belong to the session room, the
+		 * second could publish the first one's pending call.
+		 *
+		 * A replacement client for the same account is a token refresh and
+		 * must still be allowed; only a different account aborts.
+		 */
+		let finishCreate!: (response: { room_id: string }) => void;
+		createRoom.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finishCreate = resolve;
+				})
+		);
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(finishCreate).toBeTypeOf('function'));
+
+		// Somebody else signs in while the room is still being created.
+		const otherClient = {
+			createRoom,
+			sendEvent,
+			sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
+			invite,
+			leave,
+			forget,
+			getUserId: () => '@someone-else:oriso.example',
+			getDeviceId: () => 'OTHER',
+			getRoom: () => null
+		};
+		setMatrixClientServiceRef({ getClient: () => otherClient } as never);
+		finishCreate({ room_id: ROOM });
+
+		// Nothing is published for the previous account's call.
+		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(sendEvent).not.toHaveBeenCalledWith(
+			SOURCE,
+			'org.oriso.call.invite',
+			expect.anything()
+		);
+		expect(callManager.getCurrentCall()).toBeNull();
+	});
 });

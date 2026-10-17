@@ -1081,7 +1081,104 @@ their only representation, so the fallback is the stand-in the design replaced.
 The geometry was measured at every PiP size rather than assumed, and a test
 records the decision so it can be overturned in one place.
 
-## 22. Where both branches stand, and what is still unverified
+## 22. The fourteenth round: the startup path pays for its edits
+
+Both findings were in `CallManager`'s startup path — the place I had just been
+changing — and **the full suite caught a third thing, which was my own fix from
+the round before being wrong.**
+
+### The gate I added broke the rejoin it was meant to protect
+
+§21 stopped the reuse branch from reopening a call whose card had been
+finalised, by asking `callLifecycleTracker.isTracking(callId)`. That question
+cannot tell apart the two reasons a retained `left` call has no tracker:
+
+* **we** started it and already wrote its card as `missed` — reopening it under
+  the same id publishes nothing, so a fresh start is right;
+* we never tracked it at all because **somebody else** started it. An incoming
+  group call's card belongs to the caller, and its room may well still have
+  people in it.
+
+The gate refused both, so it broke the one case the branch exists for. A
+pre-existing test said so in its name — *rejoins that same group-call room
+instead of creating a new call* — and it failed. Not a test I wrote; the suite
+earned its keep.
+
+The call now carries `lifecycleFinalised`, set only when `leaveCall` actually
+wrote the ending (`finishIfUnattended` reports whether it did). "Did we finish
+this card" separates the two cases; "do we still know this call" does not.
+
+### A pending start could be published by a different account
+
+`teardownLocalSession` nulls the Matrix registry but does **not** clear
+`pendingStart`, so the ownership check I added still read "this start is
+current" after a sign-out. If another account was installed before the await
+returned, `callLifecycleTracker.begin` and `sendGroupCallInvite` ran on *that*
+account for a room the previous one created — on a shared browser where both
+counsellors belong to the session room, the second could publish the first
+one's pending call. In a counselling product that is a confidentiality fault,
+not an inconvenience.
+
+A pending start now records the account that asked for it, and
+`stillOwnsStart` requires identity **and** the same account — a replacement
+client for the same account is a token refresh and keeps going, matching how
+the tracker follows the account rather than the object. The early
+same-parameters dedupe also compares the account, so a stale pending start
+cannot swallow another account's click.
+
+I did not clear `pendingStart` from `logout.ts`. It would work, but it puts the
+correctness in a place that has already been shown not to cover this; the check
+reads the current truth where it is used.
+
+### And the cleanup I added only covered one of two paths
+
+Inside `createElementCallRoom`, three things can throw *after* `createRoom`
+succeeded: `inviteSessionMembers` (which throws if any invite failed), the
+membership-reader configuration check, and that invite itself. Each threw
+before the room id was returned, so the caller's `elementCallRoomId` stayed
+undefined and §21's cleanup could not run. Every retry left another **joined**
+room carrying the plaintext call/source binding and a name that reads `Group
+call for <session room>`.
+
+Post-creation provisioning is now wrapped: discard, then rethrow. The caller's
+cleanup covers a start that was *superseded*; this covers one that *failed*.
+
+Also fixed: inserting that helper had orphaned `createElementCallRoom`'s doc
+comment — the same comment-displacement mistake as §17's, caught this time by
+reading the file rather than by a reviewer.
+
+### And the account check went one place too far
+
+The first version used `stillOwnsStart` in the startup `catch` as well, and a
+pre-existing test caught that too, by name: *does not send an old invitation
+through a replacement account after root acknowledgement*. After an account
+change the error path returned **before** `endCall`, so the previous account's
+dead call stayed on screen.
+
+Two different questions live in that `catch`, and the check answers only one:
+
+* a **newer start** owns the surface → leave it alone;
+* a changed **account** → the surface is still this request's, and it is now a
+  dead call belonging to an account that is gone. It must be cleared. What the
+  new account does not get is an alert about the old one's failure.
+
+`stillOwnsStart` is for "may I still publish", not for "should I clean up after
+myself". That distinction is now written where the check is used.
+
+### What these two rounds cost, stated plainly
+
+Two commits in a row needed a follow-up, and **one of them went red in CI**:
+`ad8c2deebb` broke *rejoins that same group-call room instead of creating a new
+call*. Both breakages were invisible to the tests written for the fix and
+visible to the pre-existing suite — the targeted test proves the new behaviour,
+the old suite protects the behaviour already paid for.
+
+The cause is procedural, not conceptual: those commits were pushed while the
+full suite was still running, because an idle session is pressed to commit.
+Running the gate to completion first is slower by one suite and would have cost
+nothing; it is what the remaining work does.
+
+## 23. Where both branches stand, and what is still unverified
 
 **Gates, on the pushed heads.**
 

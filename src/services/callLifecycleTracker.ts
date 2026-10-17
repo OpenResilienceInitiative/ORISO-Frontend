@@ -232,23 +232,19 @@ class CallLifecycleTracker {
 	 * case is.
 	 */
 	/**
-	 * Whether this call still has a live card.
+	 * @returns whether it actually wrote the ending.
 	 *
-	 * A finalised call is removed from the map, so this answers "is the card
-	 * still open" — which is what decides whether reopening the same call is
-	 * reuse or a fresh start. `CallManager.startCall` asks before taking its
-	 * reuse path: an unattended group call that `leaveCall` already wrote as
-	 * `missed` must not be reopened under its own id, because the card is
-	 * terminal and nothing would publish a new one.
+	 * `CallManager.leaveCall` records that on the retained call: a card this
+	 * client has closed must not be reopened under the same id, while a call
+	 * it never tracked — an incoming one, whose card belongs to the caller —
+	 * must still be rejoinable. "Did we finish it" separates those; "do we
+	 * still know it" does not.
 	 */
-	isTracking(callId: string): boolean {
-		return this.calls.has(callId);
-	}
-
-	finishIfUnattended(callId: string): void {
+	finishIfUnattended(callId: string): boolean {
 		const tracked = this.calls.get(callId);
-		if (!tracked || tracked.message.startedAt) return;
+		if (!tracked || tracked.message.startedAt) return false;
 		this.finish(callId);
+		return true;
 	}
 
 	finish(callId: string): void {
