@@ -188,22 +188,50 @@ Each of these is a decision for the product owner, not an omission.
   UI renders. Removing it would break receiving a call from any peer that
   has not moved to MatrixRTC. The two files nothing imported at all
   (`.OLD.tsx`, `.PROFESSIONAL.tsx`, 1022 lines) are gone.
-- **A tenant setting for the backdrop.** The preset reaches the fork on the
-  URL and falls back to the handoff's default, but ORISO has no setting to
-  put there yet, so every call currently gets `fluss`.
+  _(The tenant setting for the backdrop **was** built in the end:
+  `appConfig.calls.atmosphere`, passed on the widget URL when a centre sets
+  one and left off entirely when it does not — an empty parameter is not the
+  same as no parameter, and only the second falls back to the default.)_
 
 ---
 
-## 7. Open questions, unchanged from the plan
+## 7. Open questions — four answered, two left
 
-1. Does Call v2 want the **scheduled** state at all?
+**Answered, with evidence:**
+
+**4. Hain overlap** was measured rather than eyeballed
+(`scripts/measureHainOverlap.mjs` in the fork). Overlap as a share of the
+_smaller_ shape's area, which is the one at risk of disappearing:
+
+| people | silent | one speaks |
+| ------ | ------ | ---------- |
+| 3      | 10.6%  | 4.4%       |
+| 4      | 2.8%   | 11.9%      |
+| 5      | 2.0%   | 0.6%       |
+| 6      | 0.6%   | 7.7%       |
+| 9      | 0.7%   | 0.9%       |
+
+The worst case — 20–25% at two people — is **unreachable**:
+`layoutMedia$` reaches for `oneOnOneLayoutMedia$` first in grid mode and it
+matches at exactly two media items, so two people get the Einzelgespräch
+whichever view the switcher is on. At the counts the grove can actually be
+shown at, the worst is 11.9% and most are under 3%. The shapes abut, which
+is the design; they do not cover. The script holds 20% as a ceiling so
+nobody has to look again.
+
+**5. Middle truncation** is built. The head shrinks and ellipsises, the
+tail never does, so "ruhiger Fuchs 432" keeps the number that tells two
+foxes apart. Two spans and a flex rule — no measuring, no JavaScript, and
+the tag's text content stays whole for a screen reader and a copy-paste.
+
+**6. The backdrop setting** is built: `appConfig.calls.atmosphere`.
+
+**Still open, and each is a judgement rather than a measurement:**
+
+1. Does Call v2 want the **scheduled** state at all? (It has no producer —
+   §6.)
 2. Do the **call notification emails** belong in this epic?
-3. The handoff's own **"Kacheln" icon draws a house**. The fork uses
-   Compound's grid icon; the handoff's three are not inherited the way the
-   animals are, because they are chrome rather than identity.
-4. **Hain overlap at 2, 3, 5 and 6 people** — the packer is the prototype's
-   own and the shapes genuinely abut, which is the design. Worth a look at
-   the screenshots before it ships.
-5. **Middle truncation for phones**: five names still truncate on
-   `Hain-Handy`.
-6. The **0.11 AA margin** on the 12px subtitle.
+3. The handoff's **"Kacheln" icon draws a house**. The fork uses Compound's
+   grid icon; unlike the animals, the chrome icons are not inherited,
+   because they are chrome rather than identity.
+4. The **0.11 AA margin** on the 12px subtitle.

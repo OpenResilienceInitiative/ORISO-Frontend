@@ -196,6 +196,46 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
+	it('passes the counselling centre’s backdrop, when it set one', async () => {
+		setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).get(
+				'orisoAtmosphere'
+			)
+		).toBe('nebel');
+	});
+
+	it('leaves the backdrop off the URL entirely when no centre set one', async () => {
+		// An empty parameter is not the same as no parameter: the call falls
+		// back to the handoff's default only when it is told nothing at all.
+		setAppConfig({} as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).has(
+				'orisoAtmosphere'
+			)
+		).toBe(false);
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });

@@ -175,6 +175,12 @@ export const useElementCallWidget = (
 					...(appConfig?.releaseToggles?.enableCallMediaE2EE === false
 						? {}
 						: { perParticipantE2EE: 'true' }),
+					// The counselling centre's backdrop, if it set one. Left off
+					// the URL entirely when it did not, so the call falls back
+					// to the handoff's default rather than to an empty string.
+					...(appConfig?.calls?.atmosphere
+						? { orisoAtmosphere: appConfig.calls.atmosphere }
+						: {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString()}`;
