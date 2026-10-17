@@ -367,6 +367,94 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 		await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 	});
 
+	describe('a create request that is still pending', () => {
+		const startPendingCreate = async () => {
+			tenantState.tenant = tenantWithScope();
+			vi.mocked(fetchAgencyConsultantList).mockImplementation(
+				(agencyId: string) =>
+					Promise.resolve(
+						agencyId === '5'
+							? [sameCentre]
+							: [colleague('c-six', 'Cem', [6])]
+					)
+			);
+			let refuse: (error: Error) => void = () => undefined;
+			vi.mocked(apiCreateInternalSubsetChat).mockReturnValue(
+				new Promise((_resolve, reject) => {
+					refuse = reject;
+				})
+			);
+			renderView([
+				{ id: 5, name: 'Agency Five' },
+				{ id: 6, name: 'Agency Six' }
+			]);
+			fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
+			fireEvent.click(
+				await screen.findByRole('option', { name: 'Agency Five' })
+			);
+			const menu = await openPersonMenu();
+			fireEvent.click(await within(menu).findByText('Anna Test'));
+			fireEvent.change(
+				screen.getByLabelText('groupChat.internal.nameLabel'),
+				{ target: { value: 'Fallbesprechung' } }
+			);
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'groupChat.internal.createLabel'
+				})
+			);
+			await waitFor(() =>
+				expect(apiCreateInternalSubsetChat).toHaveBeenCalledTimes(1)
+			);
+			return () =>
+				act(async () =>
+					refuse(
+						new InternalSubsetChatError(
+							INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE,
+							403
+						)
+					)
+				);
+		};
+
+		it('does not show its refusal after another centre was chosen', async () => {
+			const refuseOldRequest = await startPendingCreate();
+
+			fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+			fireEvent.click(
+				await screen.findByRole('option', { name: 'Agency Six' })
+			);
+			await refuseOldRequest();
+
+			expect(screen.queryByRole('alert')).toBeNull();
+		});
+
+		it('does not show its refusal after the selection was changed', async () => {
+			const refuseOldRequest = await startPendingCreate();
+
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'groupChat.internal.removePerson'
+				})
+			);
+			await refuseOldRequest();
+
+			expect(screen.queryByRole('alert')).toBeNull();
+		});
+
+		it('still shows its refusal when only the name was edited', async () => {
+			const refuseOldRequest = await startPendingCreate();
+
+			fireEvent.change(
+				screen.getByLabelText('groupChat.internal.nameLabel'),
+				{ target: { value: 'Fallbesprechung 2' } }
+			);
+			await refuseOldRequest();
+
+			expect(screen.queryByRole('alert')).not.toBeNull();
+		});
+	});
+
 	it('never lets a late answer for the previous centre replace the list of the current one', async () => {
 		tenantState.tenant = tenantWithScope();
 		let answerFirstCentre: (list: Consultant[]) => void = () => undefined;

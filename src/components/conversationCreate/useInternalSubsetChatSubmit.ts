@@ -43,6 +43,14 @@ export const useInternalSubsetChatSubmit = () => {
 	// Synchronous guard against a duplicate request: state updates are async,
 	// so a rapid second click would slip through `isSubmitting`.
 	const inFlightRef = useRef(false);
+	// Bumped whenever the picker context changes (clearError: another centre
+	// or another selection). A refusal that arrives for an older context
+	// belongs to a request the counsellor has moved on from and is dropped.
+	const contextRef = useRef(0);
+	const clearError = useCallback(() => {
+		contextRef.current += 1;
+		setErrorReason(null);
+	}, []);
 
 	const submit = useCallback(
 		({ selectedIds, agencyId, name }: SubsetSubmitInput) => {
@@ -50,6 +58,7 @@ export const useInternalSubsetChatSubmit = () => {
 				return;
 			}
 			inFlightRef.current = true;
+			const context = contextRef.current;
 			setIsSubmitting(true);
 			setErrorReason(null);
 
@@ -95,6 +104,9 @@ export const useInternalSubsetChatSubmit = () => {
 					);
 				})
 				.catch((error) => {
+					if (context !== contextRef.current) {
+						return;
+					}
 					setErrorReason(
 						error instanceof InternalSubsetChatError
 							? error.reason
@@ -113,6 +125,6 @@ export const useInternalSubsetChatSubmit = () => {
 		submit,
 		isSubmitting,
 		errorReason,
-		clearError: () => setErrorReason(null)
+		clearError
 	};
 };
