@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { JoinGroupChatView } from './JoinGroupChatView';
 import {
 	buildGroupStageListItem,
@@ -14,6 +14,10 @@ import {
 	phone390Globals
 } from '../message/messageStoryShell';
 import type { GroupChatItemInterface } from '../../globalState/interfaces';
+import {
+	LegalLinksContext,
+	TProvidedLegalLink
+} from '../../globalState/provider/LegalLinksProvider';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 /**
@@ -53,6 +57,19 @@ const buildItem = (variant: Variant) => {
 	return item;
 };
 
+const legalLinks: TProvidedLegalLink[] = [
+	{
+		label: 'login.legal.infoText.dataprotection',
+		registration: true,
+		getUrl: () => 'https://oriso.example/datenschutz'
+	} as TProvidedLegalLink,
+	{
+		label: 'login.legal.infoText.impressum',
+		registration: true,
+		getUrl: () => 'https://oriso.example/impressum'
+	} as TProvidedLegalLink
+];
+
 const Stage = ({
 	layout,
 	variant
@@ -67,7 +84,11 @@ const Stage = ({
 			layout={layout}
 			viewer={groupStageAsker}
 		>
-			<JoinGroupChatView />
+			{/* The platform's documents, so the consent sentence carries its
+			    two links as in the app. */}
+			<LegalLinksContext.Provider value={legalLinks}>
+				<JoinGroupChatView />
+			</LegalLinksContext.Provider>
 		</GroupChatStage>
 	);
 };
@@ -143,5 +164,29 @@ export const Open1440: Story = {
 	play: async ({ canvasElement }) => {
 		await expectCardRoom(canvasElement);
 		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
+	}
+};
+
+/**
+ * Frank, 2026-10-17: "Beitreten" in the app opens the same consent sheet as
+ * behind the link — waving hand, checkbox, round X — inside the chat card,
+ * with whose privacy statement the person agrees to.
+ */
+export const OpenConsent1440: Story = {
+	name: 'Room open · "Beitreten" asks for consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <Stage layout="desktop" variant="open" />,
+	play: async ({ canvasElement }) => {
+		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
+		await userEvent.click(joinButton(canvasElement)!);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.session.joinChat [role="checkbox"], .session.joinChat input[type="checkbox"]'
+				)
+			).not.toBeNull()
+		);
+		// The contract waits until the sliding consent bar has arrived.
+		await expectCardRoom(canvasElement);
 	}
 };

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
-import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { WaitingRoomBar } from '../WaitingRoomBar';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
 import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
@@ -16,6 +16,11 @@ import {
 	registrationScreenTitleSx
 } from '../../registration/registrationDesign/registrationDesign';
 import { CallEntryIdentity } from './CallEntryIdentity';
+import {
+	useWaitingRoomConsent,
+	WaitingRoomConsentPanel
+} from '../WaitingRoomConsent';
+import { useConsentSentences } from '../useConsentSentences';
 import { toRegistrationUsername } from '../../registration/accountData/registrationUsername';
 import {
 	generatePseudonym,
@@ -65,6 +70,22 @@ export interface CallEntryRoomProps {
 	/** Switches and picker choices, for whoever owns the real stream. */
 	onDeviceStateChange?: (controls: CallDeviceControls) => void;
 	joining?: boolean;
+	/**
+	 * The consent asked on "Beitreten", with the live chat's sheet (Frank,
+	 * 2026-10-16: "per Default ja"). Omitted: the platform sentence. Once the
+	 * room is wired, the caller resolves the sentence exactly as the live chat
+	 * does (`resolveEntryRoomConsent`: the department's own wording, else the
+	 * fixed warning, else the platform's) and passes the department, so the
+	 * legal links open its documents. `false` switches the question off.
+	 */
+	consent?:
+		| false
+		| {
+				html: string;
+				department?: { agencyId: number; topicId: number } | null;
+		  };
+	/** Starts with the consent sheet open, as after a click on "Beitreten". */
+	initialConsentOpen?: boolean;
 	onJoin?: () => void;
 	onBlockerAction?: () => void;
 	playTone?: (sinkId?: string) => Promise<void>;
@@ -74,7 +95,7 @@ export interface CallEntryRoomProps {
 
 /**
  * The call entry (ORISO-Frontend#1386), built from the shared waiting-room
- * parts: `EntryRoomShell` → `WaitingRoomFrame`, `RegistrationFooter`,
+ * parts: `EntryRoomShell` → `WaitingRoomFrame`, `WaitingRoomBar`,
  * `HandoverGateButton`. Prototype in Storybook only; nothing calls Element
  * Call yet.
  *
@@ -102,6 +123,8 @@ export const CallEntryRoom = ({
 	onCameraRetry,
 	onDeviceStateChange,
 	joining = false,
+	consent: consentOption,
+	initialConsentOpen = false,
 	onJoin,
 	onBlockerAction,
 	playTone,
@@ -121,6 +144,15 @@ export const CallEntryRoom = ({
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
 	const [micHeard, setMicHeard] = useState(initialMicHeard);
 	const [selection, setSelection] = useState(initialSelection);
+	const { platformHtml } = useConsentSentences();
+	const askConsent = consentOption !== false;
+	const consent = useWaitingRoomConsent({
+		consentHtml: (consentOption && consentOption.html) || platformHtml,
+		department: (consentOption && consentOption.department) || null
+	});
+	const [consentOpen, setConsentOpen] = useState(
+		askConsent && initialConsentOpen
+	);
 
 	useEffect(() => {
 		if (micOn && micLevel > HEARD_LEVEL) setMicHeard(true);
@@ -185,6 +217,18 @@ export const CallEntryRoom = ({
 		.map((condition) => condition.missing)
 		.join(', ');
 
+	/* "Beitreten" first opens the consent; with the sheet open it joins once
+	   the box is ticked (the live chat's flow). */
+	const handleJoin = () => {
+		if (!askConsent) {
+			onJoin?.();
+		} else if (!consentOpen) {
+			setConsentOpen(true);
+		} else {
+			consent.guard(() => onJoin?.());
+		}
+	};
+
 	const kicker = topic
 		? `${copy.kicker[modality]} · ${topic}`
 		: copy.kicker[modality];
@@ -195,7 +239,7 @@ export const CallEntryRoom = ({
 		return (
 			<EntryRoomShell kicker={kicker} statusLine={text.title}>
 				<CallNotice blocker={blocker} />
-				<RegistrationFooter>
+				<WaitingRoomBar>
 					<Box sx={{ width: '100%' }}>
 						<HandoverGateButton
 							state={waiting ? 'queued' : 'ready'}
@@ -208,7 +252,7 @@ export const CallEntryRoom = ({
 							testingAttribute="call-entry-gate"
 						/>
 					</Box>
-				</RegistrationFooter>
+				</WaitingRoomBar>
 			</EntryRoomShell>
 		);
 	}
@@ -340,7 +384,22 @@ export const CallEntryRoom = ({
 					</Box>
 				</Box>
 			</Box>
-			<RegistrationFooter>
+			<WaitingRoomBar
+				consent={
+					consentOpen ? (
+						<WaitingRoomConsentPanel
+							consent={consent}
+							heading={copy.consent.heading}
+							subtitle={copy.consent.subtitle}
+							declineLabel={copy.consent.decline}
+							onDecline={() => setConsentOpen(false)}
+							missingText={copy.consent.missing}
+							errorId="callEntryConsentError"
+							disabled={joining}
+						/>
+					) : undefined
+				}
+			>
 				<Box
 					sx={{ width: '100%' }}
 					data-cy-progress={Math.round(
@@ -357,7 +416,7 @@ export const CallEntryRoom = ({
 								? undefined
 								: (doneCount / conditions.length) * 100
 						}
-						onEnter={onJoin}
+						onEnter={handleJoin}
 						label={copy.join[modality]}
 						status={
 							joining
@@ -369,7 +428,7 @@ export const CallEntryRoom = ({
 						testingAttribute="call-entry-gate"
 					/>
 				</Box>
-			</RegistrationFooter>
+			</WaitingRoomBar>
 		</EntryRoomShell>
 	);
 };

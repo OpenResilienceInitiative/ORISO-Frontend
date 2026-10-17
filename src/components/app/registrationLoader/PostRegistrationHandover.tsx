@@ -1,26 +1,20 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { readHandoverDepartment } from './handoverDepartment';
-import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import {
 	RegistrationHandover,
 	RegistrationHandoverProps
 } from './RegistrationHandover';
 
 /**
- * The handover after the document load that follows registering, in the one
- * waiting-room frame the registration side and the entry rooms use. The red
- * stage, partner logos and legal links stay put, so the reload no longer swaps
- * the page (#1219, #1735; Frank, 2026-10-15). The stage does not replay its
- * intro: the person has already watched it on the form.
+ * The handover after the document load that follows registering: the very
+ * waiting room `Registration` showed before the load, frame included, so the
+ * reload swaps nothing (#1219, #1735; Frank, 2026-10-15). The stage does not
+ * replay its intro: the person has already watched it on the form.
  */
 export const PostRegistrationHandover = (props: RegistrationHandoverProps) => {
 	/* The department `Registration` remembered before the load, so the legal
 	   links open the same documents on both sides. */
-	const [legalDepartment] = useState(readHandoverDepartment);
-	return (
-		<WaitingRoomFrame legalDepartment={legalDepartment}>
-			<RegistrationHandover {...props} />
-		</WaitingRoomFrame>
-	);
+	const [department] = useState(readHandoverDepartment);
+	return <RegistrationHandover department={department} {...props} />;
 };

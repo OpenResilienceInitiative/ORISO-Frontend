@@ -456,6 +456,12 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 						path === '/service/users/chat/19'
 					)
 						return Response.json({ id: 19, active });
+					// The seeker's consent is recorded before the join.
+					if (
+						request.method === 'PATCH' &&
+						path === '/service/users/data'
+					)
+						return new Response(null, { status: 200 });
 					expect(path).toBe(`/service/users/chat/19/${command}`);
 					expect(request.method).toBe('PUT');
 					requests.push(request.url);
@@ -474,15 +480,21 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			);
 			// The seeker joins from the shared waiting room ("Beitreten",
 			// #1219); the moderator starts from her own view.
-			const submit = await screen.findByRole('button', {
-				name: i18n.t(
-					active
-						? 'groupChat.entry.join'
-						: 'groupChat.join.button.label.start'
-				)
-			});
+			const label = i18n.t(
+				active
+					? 'groupChat.entry.join'
+					: 'groupChat.join.button.label.start'
+			);
+			await screen.findByRole('button', { name: label });
+			// The bar remounts when the consent sheet opens: look it up anew.
+			const submit = () => screen.getByRole('button', { name: label });
 			const actor = userEvent.setup();
-			await actor.click(submit);
+			await actor.click(submit());
+			if (active) {
+				// "Beitreten" asks for consent first (Frank, 2026-10-16).
+				await actor.click(screen.getByRole('checkbox'));
+				await actor.click(submit());
+			}
 			const notice = await screen.findByRole('alert');
 			expect(
 				within(notice).getByText(
@@ -500,7 +512,7 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 					name: i18n.t('app.close')
 				})
 			);
-			await actor.click(submit);
+			await actor.click(submit());
 			await waitFor(() => expect(requests).toHaveLength(2));
 			expect(requests[1]).toBe(requests[0]);
 			expect(
@@ -547,6 +559,12 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 						path === '/service/users/chat/19'
 					)
 						return Response.json({ id: 19, active: true });
+					// The consent ticked on "Beitreten" is recorded first.
+					if (
+						request.method === 'PATCH' &&
+						path === '/service/users/data'
+					)
+						return new Response(null, { status: 200 });
 					expect(path).toBe('/service/users/chat/19/join');
 					expect(request.method).toBe('PUT');
 					requests.push(request.url);
@@ -569,16 +587,21 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			);
 			// The room's own button: while the group loads, the bar already
 			// shows a waiting one of the same name.
-			const join = await screen.findByTestId('group-entry-join');
-			expect(join.textContent).toContain(i18n.t('groupChat.entry.join'));
+			const joinButton = () => screen.getByTestId('group-entry-join');
+			expect(
+				(await screen.findByTestId('group-entry-join')).textContent
+			).toContain(i18n.t('groupChat.entry.join'));
 			const user = userEvent.setup();
-			await user.click(join);
+			// "Beitreten" asks for consent first (Frank, 2026-10-16).
+			await user.click(joinButton());
+			await user.click(screen.getByRole('checkbox'));
+			await user.click(joinButton());
 			const notice = await screen.findByRole('alert');
 			expect(
 				within(notice).getByText(groupJoinTitle(status, title))
 			).toBeTruthy();
 			await waitFor(() =>
-				expect((join as HTMLButtonElement).disabled).toBe(false)
+				expect((joinButton() as HTMLButtonElement).disabled).toBe(false)
 			);
 			expect(screen.getByLabelText('Current route').textContent).toBe(
 				'/groups/19/entry'
@@ -588,7 +611,7 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 					name: i18n.t('app.close')
 				})
 			);
-			await user.click(join);
+			await user.click(joinButton());
 			await waitFor(() => expect(requests).toHaveLength(2));
 			expect(requests[1]).toBe(requests[0]);
 		}

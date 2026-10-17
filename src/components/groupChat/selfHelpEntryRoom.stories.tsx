@@ -320,7 +320,40 @@ export const WaitingAreaOverdue: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der Termin ist vorbei: „Beitreten" im Fuß ist jetzt frei, sonst ändert sich an der Leiste nichts. Ob vor dem Eintritt noch ein Dialog fragt, ist weiter offen.'
+				story: 'Der Termin ist vorbei: „Beitreten" im Fuß ist jetzt frei, sonst ändert sich an der Leiste nichts.'
+			}
+		}
+	}
+};
+
+/**
+ * Frank, 2026-10-16: the live chat's consent ("Sie sind dran", waving hand,
+ * checkbox) in every waiting room. Here it slides into the bar on
+ * "Beitreten", instead of a dialog inside the chat afterwards.
+ */
+export const WaitingAreaConsent: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		(await canvas.findByTestId('group-entry-join')).click();
+		await expect(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'checkbox'
+			)
+		).toBeInTheDocument();
+		await expect(
+			canvasElement.ownerDocument.querySelector(
+				'[data-cy="consent-completion"]'
+			)
+		).not.toBeNull();
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '2b — Beitreten: Einwilligung',
+	render: () => <Room start={OVERDUE} />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: '„Beitreten" öffnet die Einwilligung des Live-Chats in der Leiste: winkende Hand, Kästchen, rundes X. Erst mit Haken geht es in die Gruppe; die Zustimmung wird dabei gespeichert.'
 			}
 		}
 	}

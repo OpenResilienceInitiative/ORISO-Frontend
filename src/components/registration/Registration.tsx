@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
-import { WaitingRoomFrame } from '../waitingRoom/WaitingRoomFrame';
 import {
 	HandoverDepartment,
 	rememberHandoverDepartment,
@@ -854,21 +853,20 @@ export const Registration = () => {
 	);
 
 	/* From the click on, the waiting room replaces the whole page, frame
-	   included: `WaitingRoomFrame` is the same component `AuthenticatedApp`
-	   mounts after the document load, so both sides of that load paint the
+	   included: `RegistrationHandover` brings its own `WaitingRoomFrame` and is
+	   the same component `AuthenticatedApp` mounts after the document load, so both sides of that load paint the
 	   same screen (#1219). `forcedState` keeps the gate shut — there is no app
 	   behind it yet. The `catch` in `onRegisterClick` clears `isRegistering`,
 	   which puts the form back with its error. */
 	if (isRegistering) {
 		return (
-			<WaitingRoomFrame legalDepartment={handoverDepartment}>
-				<RegistrationHandover
-					ready={false}
-					forcedState="preparing"
-					onEnter={() => undefined}
-					copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
-				/>
-			</WaitingRoomFrame>
+			<RegistrationHandover
+				ready={false}
+				forcedState="preparing"
+				onEnter={() => undefined}
+				department={handoverDepartment}
+				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
+			/>
 		);
 	}
 
