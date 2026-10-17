@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -199,6 +200,20 @@ describe('GroupWaitingRoom', () => {
 			dataPrivacyConfirmation: expect.any(String),
 			termsAndConditionsConfirmation: expect.any(String)
 		});
+	});
+
+	it('records and joins once when "Beitreten" is pressed twice in a row', async () => {
+		const { onJoin } = renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		fireEvent.click(screen.getByRole('checkbox'));
+		const join = screen.getByTestId('group-entry-join');
+		// Both clicks before React renders the busy state.
+		act(() => {
+			join.click();
+			join.click();
+		});
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
 	});
 
 	it('stays outside when the agreement cannot be saved', async () => {

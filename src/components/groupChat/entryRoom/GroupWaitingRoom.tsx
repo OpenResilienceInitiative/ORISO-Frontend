@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useTranslation } from 'react-i18next';
@@ -110,16 +110,23 @@ export const GroupWaitingRoom = ({
 	const [asking, setAsking] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	// `saving` only disables the button after the next render; two quick
+	// presses before it would record and join twice.
+	const inFlight = useRef(false);
 	const joinAfterConsent = () =>
 		consent.guard(() => {
-			if (!groupConsent.readable || saving) return;
+			if (!groupConsent.readable || inFlight.current) return;
+			inFlight.current = true;
 			setSaving(true);
 			setSaveFailed(false);
 			groupConsent
 				.record()
 				.then(() => onJoin())
 				.catch(() => setSaveFailed(true))
-				.finally(() => setSaving(false));
+				.finally(() => {
+					inFlight.current = false;
+					setSaving(false);
+				});
 		});
 	const phone = useMediaQuery('(max-width:599px)');
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;

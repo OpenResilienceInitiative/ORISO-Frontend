@@ -113,6 +113,12 @@ const gate = (canvasElement: HTMLElement) =>
 		'[data-cy="call-entry-gate"]'
 	)!;
 
+/** The User-ID check answers after a short pause; then the gate opens. */
+const gateOpens = async (canvasElement: HTMLElement) =>
+	waitFor(() =>
+		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready')
+	);
+
 const expectProgress = async (canvasElement: HTMLElement, fill: number) =>
 	waitFor(() =>
 		expect(
@@ -408,6 +414,7 @@ export const VideoJoinAsksConsent: Story = {
 		const body = within(canvasElement.ownerDocument.body);
 		expect(consentPanel(canvasElement)).toBeNull();
 
+		await gateOpens(canvasElement);
 		await userEvent.click(gate(canvasElement));
 		await waitFor(() => expect(consentPanel(canvasElement)).not.toBeNull());
 		await expectWaitingRoomLayout(canvasElement);
@@ -482,6 +489,8 @@ export const VideoConsentOff: Story = {
 	globals: desktop1440Globals,
 	args: { ...ready, modality: 'video', consent: false, onJoin: fn() },
 	play: async ({ args, canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await gateOpens(canvasElement);
 		await userEvent.click(gate(canvasElement));
 		expect(consentPanel(canvasElement)).toBeNull();
 		expect(args.onJoin).toHaveBeenCalledTimes(1);
