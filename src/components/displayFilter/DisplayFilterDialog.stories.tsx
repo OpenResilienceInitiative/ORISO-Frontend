@@ -926,13 +926,14 @@ export const SupervisionEmail: Story = {
  * Phone: every unavailable Browser and E-Mail cell shows its reason as
  * small secondary text under "nicht verfügbar" — no tooltip to reach.
  */
+const phoneUnavailableArgs = {
+	...sessionsArgs,
+	emailUnavailableReason: EMAILS_OFF_REASON,
+	browserUnavailableReason: BROWSER_OFF_REASON
+};
 export const PhoneUnavailableReasons: Story = {
 	globals: phone390Globals,
-	args: {
-		...sessionsArgs,
-		emailUnavailableReason: EMAILS_OFF_REASON,
-		browserUnavailableReason: BROWSER_OFF_REASON
-	},
+	args: phoneUnavailableArgs,
 	render: (args) => <Controlled {...args} />,
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
