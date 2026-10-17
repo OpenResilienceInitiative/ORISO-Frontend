@@ -1211,15 +1211,109 @@ measured on `main` rather than assumed.
 
 **What cannot be verified from this container, and is therefore not claimed.**
 
-No live call has been made. There is no homeserver for the app itself, no
-LiveKit, no Docker, and no ORISO backend or Keycloak here, so nothing in this
-epic has been seen working end to end by one person in one call. Both reviewer
-test plans enumerate what that needs — two accounts and a deployed fork for
-most of it — and #780 should not be called covered until somebody has run them
-and written down what happened.
+A live call HAS now been made — four people, real media, the fork's own
+design. See §24, which also says what that call could not reach: everything on
+the host's side of the widget boundary, because there is no ORISO backend and
+no Keycloak here. The host's reviewer plan stays unverified except for the
+Matrix rules, and #780 should not be called covered until somebody has run
+both plans against a deployment and written down what happened.
 
 Three classes of defect found in this review are invisible to every check in
 either repository, and all three are CSS: a rule hidden by a media query jsdom
 does not apply, a hit target jsdom cannot test, and a shadow nothing here
 paints. Stylesheet tests now pin what can be stated as text. The rest is a
 reviewer with a browser.
+
+## 24. The fifteenth round: the live call, which turned out to be possible
+
+Every round before this one ended with the same sentence — no live call can be
+made from here — and that sentence had never been tested. It was wrong.
+
+There is no Docker daemon in this container, which is what I had been reading
+as the boundary. But there is Go 1.24.7, there is cargo 1.94.1, and
+`proxy.golang.org`, `index.crates.io` and `registry.npmjs.org` are all
+reachable (GitHub release downloads are not, which is what made this look
+closed). So the stack was built rather than pulled:
+
+* **LiveKit 1.13.10**, built from the module cache — `go install` trips over
+  the repository's `replace` directives, so the module zip was extracted and
+  built in tree.
+* **lk-jwt-service 0.9.0**, which is Rust, not Go, and builds with
+  `cargo build --release` in about three minutes.
+* **Synapse**, already here from §20's Matrix-rules work. It needed one change:
+  MatrixRTC wants delayed events, and in Synapse 1.163 those are switched on by
+  `max_event_delay_duration`, not by an `msc4140_enabled` flag.
+
+Two things then had to be true that are not obvious:
+
+* `lk-jwt-service` verifies an OpenID token against `https://<server
+  name>:8448`, so a plain-HTTP Synapse needs a TLS terminator on the
+  federation port and a hosts entry — and the service has to run **without**
+  this container's `HTTPS_PROXY` in its environment, or reqwest sends the
+  local connection through the agent proxy and it is reset.
+* A call room needs `org.matrix.msc3401.call.member: 0` in its power levels.
+  Without it every participant but the room's creator is refused when
+  MatrixRTC writes their membership, and the call dies with "Connection lost"
+  — which is live confirmation that the host's room provisioning
+  (`CallManager.createElementCallRoom`) is load-bearing rather than decorative.
+
+### What the call showed that nothing else could
+
+`scripts/verifyLiveCall.mjs` in the fork makes the call and checks six things,
+and fails loudly rather than producing a pretty screenshot of something wrong.
+Against the local stack, all six hold:
+
+1. Each person wears the colour and animal **their own client published** —
+   `#165E83` with the otter, `#F0908D` with the fox, read back off the
+   rendered tile rather than off the event.
+2. Somebody who joins a call in progress sees the other two as their animals,
+   not as initials.
+3. The call room's state holds **no** identity: twelve state events, none of
+   them `org.oriso.call.identity`.
+4. The view rail is on screen at 390×844 with four people in the call, with
+   all three views on it, and no form runs off the edge.
+5. A form's square tile box does not swallow the clicks around it: every tile
+   root computes `pointer-events: none`, and all four corners of each square
+   fall through.
+6. The spotlight still reserves exactly 32px for the halo on every side —
+   `HALO_ROOM_PX`, measured against `SpotlightTile`'s clipping scroller, with
+   the speaking ring and glow lit in the speaker's own colour.
+
+A fourth person publishes nothing on purpose, and gets initials in their own
+palette colour. That is the "we were not told" path, and it is as much part of
+the design as the animals.
+
+### Two things the attempt corrected about my own understanding
+
+**The re-announce is not an optimisation; it is the whole mechanism.** The
+widget client backfills `receiveState` only — `embedded.ts` reads room state
+on start and has no path at all for timeline history. So an identity published
+before somebody's call surface existed never reaches them, by construction,
+and the host's `republishCallIdentity` on arrival is what makes a late joiner
+possible rather than a nicety. The SPA shows the same thing from the other
+side: a fresh client's sync window here was ten events, all of them MatrixRTC
+membership, with the identity events already pushed out of it.
+
+**A test can fail on correct behaviour.** My first version of check 5 asked
+that "a click reaches the form you aimed at", and it reported half the points
+missing. They were not missing: where two forms genuinely overlap, the one
+painted on top rightly wins, and the sampling could not tell that apart from a
+square box stealing the click. The property is about the box, not about which
+form wins, and the check now says so.
+
+Three findings in this round turned out, on measurement, not to be findings at
+all: an artwork that looked clipped at the Einzelgespräch seam (both are 134px
+and symmetric about the centre, 63px clear of it), a form that looked cut off
+at the right edge of a phone (every tile measured fully inside, overflow 0),
+and clicks that looked stolen by a neighbour (the page was reconnecting behind
+a backdrop that correctly takes pointer events). Eyeballing a screenshot
+produced three false alarms in one session; each was settled by reading the
+numbers back out of the browser.
+
+### What this still does not cover
+
+Everything on the host's side of the widget boundary. The call above runs the
+fork in standalone mode against Synapse directly, because the ORISO frontend
+needs a backend and a Keycloak that are not here. So the matryoshka transport,
+the notepad, the timeline card and the lifecycle all remain for a reviewer
+with a deployment, exactly as the host's plan lists them.

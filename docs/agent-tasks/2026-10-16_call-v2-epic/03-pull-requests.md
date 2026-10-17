@@ -124,6 +124,22 @@ spotlight all keep working.
 
 ### Reviewer test plan
 
+**Steps 4 to 7 have an automated form, and it has been run.** `yarn backend`
+stands up Synapse, LiveKit and lk-jwt-service; with `yarn dev` beside it,
+`node scripts/verifyLiveCall.mjs` makes a four-person call with real media and
+checks what only a call can show — that everybody wears the colour and animal
+their own client published, that somebody joining a call in progress is told
+who is already there, that the room's STATE holds no identity, that the view
+rail is reachable at 390px with four people in the call, that a form's square
+box does not swallow the clicks around it, and that the spotlight still
+reserves 32px for the halo. It fails loudly, and plates land in `_shots/live/`.
+All six held against a local stack; §24 of `02-what-was-built.md` has the
+numbers, and records that a call room missing
+`org.matrix.msc3401.call.member: 0` from its power levels dies with
+"Connection lost". The numbered steps still want doing by hand: the script
+runs the fork standalone, so nothing on the host's side of the widget boundary
+is in it.
+
 1. `yarn install && yarn lint && yarn build` — all green.
 2. `ORISO_ARTWORK_DIR=<oriso-frontend>/public/static/anon-animals npx vite --config harness/vite.harness.config.ts`,
    then `node scripts/shootOrisoStage.mjs`. Ten plates in `_shots/`, and
