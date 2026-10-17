@@ -1062,8 +1062,9 @@ export const MessageSubmitInterfaceComponent = ({
 		threadRootId ?? '',
 		// Supervision routing resolves asynchronously: a take made before it
 		// settled would be sent to the side room with a stale feedback intent.
-		isSupervisor ? 'supervisor' : '',
-		supervisionRoomId ?? '',
+		// The side room only matters for a supervisor; for everyone else a
+		// late `supervisionRoomId` leaves the take's route unchanged.
+		isSupervisor ? `supervisor:${supervisionRoomId ?? ''}` : '',
 		editingMessage?.eventId ?? editingMessageId ?? ''
 	].join('|');
 	const voiceDestinationRef = useRef(voiceDestinationKey);

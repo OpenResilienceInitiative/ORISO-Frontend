@@ -687,6 +687,44 @@ describe('voice note review before sending (#1142)', () => {
 		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
 	});
 
+	it('drops a supervisor take when the supervision room resolves to another room', async () => {
+		const view = render(
+			<Composer isSupervisor supervisionRoomId="!old:example.org" />
+		);
+		await startRecording();
+		await stopRecording();
+
+		view.rerender(
+			<Composer isSupervisor supervisionRoomId="!new:example.org" />
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('button', { name: 'voicePlayer.play' })
+			).toBeNull()
+		);
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('keeps a client-room take when only the unused supervision room resolves', async () => {
+		const view = render(<Composer />);
+		await startRecording();
+		await stopRecording();
+
+		view.rerender(<Composer supervisionRoomId="!feedback:example.org" />);
+
+		await act(async () => {});
+		expect(
+			screen.getByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+	});
+
 	it('revokes the preview URL when the composer unmounts during the review', async () => {
 		const view = render(<Composer />);
 		await startRecording();
