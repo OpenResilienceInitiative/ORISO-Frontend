@@ -257,4 +257,28 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 				?.getAttribute('title')
 		).toBe('notifications.displayFilter.emailMasterOff');
 	});
+	it('does not write when the active option is chosen again', async () => {
+		render(withUser(<ConnectedDialog />));
+		const picker = screen.getByRole('button', { name: 'E-Mail: Termine' });
+		expect(picker.textContent).toContain('An');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'E-Mail wählen: Termine' })
+		);
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'An' }));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+		expect(picker.textContent).toContain('An');
+	});
+
+	it('puts the previous value back when the save fails', async () => {
+		vi.mocked(apiPatchUserData).mockRejectedValue(new Error('offline'));
+		render(withUser(<ConnectedDialog />));
+		const picker = screen.getByRole('button', { name: 'E-Mail: Termine' });
+		fireEvent.click(
+			screen.getByRole('button', { name: 'E-Mail wählen: Termine' })
+		);
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Aus' }));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
+		await waitFor(() => expect(picker.textContent).toContain('An'));
+	});
 });

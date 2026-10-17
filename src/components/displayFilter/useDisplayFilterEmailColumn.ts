@@ -55,12 +55,16 @@ export const useDisplayFilterEmailColumn = (
 			const entry = emailSettingForKind(section, kindId, role);
 			if (!entry) return;
 			const key = emailSettingKey(entry.source);
+			// The active option stays clickable: no write, nothing to undo.
+			const previous =
+				pending[key] ?? readEmailSetting(userData, entry.source);
+			if (next === previous) return;
 			setPending((current) => ({ ...current, [key]: next }));
 			if (!(await save(entry.source, next))) {
-				setPending((current) => ({ ...current, [key]: !next }));
+				setPending((current) => ({ ...current, [key]: previous }));
 			}
 		},
-		[role, save, section]
+		[pending, role, save, section, userData]
 	);
 
 	const column = useMemo(
