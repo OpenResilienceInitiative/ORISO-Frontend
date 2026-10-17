@@ -214,24 +214,31 @@ pond.js noise this suite has been carrying.
 ### Reviewer test plan
 
 1. `npm ci && npm run test:unit && npm run lint && npm run build`.
-2. Start a group call with two accounts. The timeline card should show
+2. **Against a real homeserver, which needs no LiveKit and no backend.**
+   Start a Synapse with open registration and run
+   `HS=http://127.0.0.1:8008 node scripts/verifyCallRoomMatrixRules.mjs`.
+   17 checks: the call room's power levels, the room-version-12 rule that
+   stopped the room being created at all, the state-key forgery rule, and
+   `history_visibility: joined` hiding pre-join events. It exits non-zero if
+   any of them stops holding.
+3. Start a group call with two accounts. The timeline card should show
    **only the people currently in the call**, and somebody who leaves
    should disappear from it within one membership change.
-3. End the call. The card should switch to the attendance list and show
+4. End the call. The card should switch to the attendance list and show
    everybody who was ever there.
-4. **Durable, not just live.** Reload the page with the ended card on
+5. **Durable, not just live.** Reload the page with the ended card on
    screen: it must come back with the same state, duration and attendance,
    because it is a room message rather than browser state. Then open the
    same conversation as somebody who was **not** in the call — a
    supervisor with access, or the other account — and check the card reads
    the same there. This is the whole point of #780, and the part that a
    single-browser session cannot show.
-5. **A missed call.** Start a call and hang up before the other side
+6. **A missed call.** Start a call and hang up before the other side
    answers. The card must read **missed**, with no duration — not "ended"
    with the ringing time, which is what it used to do. Leave an unanswered
    group call the same way: it must not sit at "running" with a Join button
    that answers `unavailable`.
-6. With the fork branch deployed: check that each person's animal and
+7. With the fork branch deployed: check that each person's animal and
    circle colour in the call match the chat beside it, and that a
    counsellor with a chosen motif shows the motif on the tenant's brand
    colour rather than an animal. Check this for a participant who did
@@ -239,14 +246,14 @@ pond.js noise this suite has been carrying.
    `createElementCallRoom` exists for, and the case that was silently
    falling back to initials.
 
-7. **On a phone.** Make the same 1:1 on a phone in portrait: it must be the
+8. **On a phone.** Make the same 1:1 on a phone in portrait: it must be the
    Einzelgespräch, with the seam and the backdrop, not a rectangular tile.
    Turn the phone to landscape: a spotlight is correct there — upstream turns
    a flat window into one on purpose — but the person in it must be their own
    form rather than a black rectangle. With two people, check the view rail
    offers "Conversation" and "Spotlight" and nothing that does nothing.
 
-8. **Identity, and that it is sealed.** With both branches deployed, join a
+9. **Identity, and that it is sealed.** With both branches deployed, join a
    call from two accounts and confirm both faces are right. Then look at the
    call room on the server — `/_synapse/admin/v1/rooms/<id>/state` or a
    client with developer tools — and confirm there is **no**
@@ -259,7 +266,7 @@ pond.js noise this suite has been carrying.
    animals, not initials — everybody already in the call re-announces for a
    newcomer, which is what replaces a state event's "always current".
 
-Steps 4 to 8 need two accounts and a deployed fork; none of them can be
+The last five steps need two accounts and a deployed fork; none of them can be
 reached from this container, and #780 should not be called covered until
 somebody has run them and written down what happened.
 

@@ -507,10 +507,28 @@ class CallManager {
 					// IMPORTANT: allow everyone to send group call membership
 					// events so Element Call can join from any participant.
 					'org.matrix.msc3401.call.member': 0
-				},
-				users: {
-					[client.getUserId()!]: 100
 				}
+				/*
+				 * The creator is deliberately NOT named here.
+				 *
+				 * `power_level_content_override` updates the default power
+				 * level content key by key, and the default already gives the
+				 * room's creator 100 — so omitting `users` leaves them in
+				 * charge, which was measured on room versions 10, 11 and 12.
+				 *
+				 * Naming them is not merely redundant: from room version 12
+				 * the creator holds power implicitly and must NOT appear in
+				 * `content.users`. Synapse rejects the whole `createRoom`
+				 * call — `M_UNKNOWN`, "Creator user ... must not appear in
+				 * content.users" — and room version 12 is the default on a
+				 * current Synapse, so with the entry present the call room
+				 * could not be created at all and every group call fell back
+				 * into the counselling session room. The fallback below did
+				 * not help: it retried with the same power levels.
+				 *
+				 * `scripts/verifyCallRoomMatrixRules.mjs` holds all of this
+				 * against a real homeserver.
+				 */
 			}
 		};
 

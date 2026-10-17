@@ -391,7 +391,7 @@ badly: I laid out four options with their costs and left the choice to the
 product owner as a blocking question on the epic.
 
 That was the wrong call. The owner's decision would have been whether to
-*relax* a rule this delivery is bound by; compliance is not a decision, it is
+_relax_ a rule this delivery is bound by; compliance is not a decision, it is
 the default. And the option I had leaned towards was available all along once
 its one real cost was solved. So it is implemented.
 
@@ -449,16 +449,16 @@ change exists:
 
 ### What that took
 
-| Where | Change |
-| --- | --- |
-| `publishCallIdentity.ts` | `sendEvent` instead of `sendStateEvent`; last-sent memo; `republishCallIdentity` for an arrival; **refuses to publish into an unencrypted room at all** |
-| `GroupCallWidget.tsx` | announces once, then re-announces on a `join` that is a genuine arrival — not a leave, not our own join echoing back, not another room |
-| `CallManager.ts` | `'m.room.encrypted': 0`. In an encrypted room the power-level check sees the **outer** type, so at 50 with `users_default: 0` only the call's creator could have sent one and everybody else would have shown initials. The per-type grant for the state event is gone. |
-| `orisoWidgetCapabilities.ts` (host) | room events split into send and receive sets, as state already was. Identity is receive-only: a widget that could write one could write somebody else's. |
-| `useElementCallWidget.ts` | the feed filter uses the **receive** set |
-| `OrisoWidgetDriver.ts` | timeline reads use the receive set; sends keep the narrow one |
-| fork `orisoWidgetCapabilities.ts` | identity moves from `receiveState` to `receiveEvent`, still absent from `sendEvent` |
-| fork `useOrisoIdentities.ts` | reads the live timeline, keyed by sender, newest wins; follows `RoomEvent.Timeline` and `TimelineReset` |
+| Where                               | Change                                                                                                                                                                                                                                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `publishCallIdentity.ts`            | `sendEvent` instead of `sendStateEvent`; last-sent memo; `republishCallIdentity` for an arrival; **refuses to publish into an unencrypted room at all**                                                                                                                 |
+| `GroupCallWidget.tsx`               | announces once, then re-announces on a `join` that is a genuine arrival — not a leave, not our own join echoing back, not another room                                                                                                                                  |
+| `CallManager.ts`                    | `'m.room.encrypted': 0`. In an encrypted room the power-level check sees the **outer** type, so at 50 with `users_default: 0` only the call's creator could have sent one and everybody else would have shown initials. The per-type grant for the state event is gone. |
+| `orisoWidgetCapabilities.ts` (host) | room events split into send and receive sets, as state already was. Identity is receive-only: a widget that could write one could write somebody else's.                                                                                                                |
+| `useElementCallWidget.ts`           | the feed filter uses the **receive** set                                                                                                                                                                                                                                |
+| `OrisoWidgetDriver.ts`              | timeline reads use the receive set; sends keep the narrow one                                                                                                                                                                                                           |
+| fork `orisoWidgetCapabilities.ts`   | identity moves from `receiveState` to `receiveEvent`, still absent from `sendEvent`                                                                                                                                                                                     |
+| fork `useOrisoIdentities.ts`        | reads the live timeline, keyed by sender, newest wins; follows `RoomEvent.Timeline` and `TimelineReset`                                                                                                                                                                 |
 
 ### The line that would have made all of it silent
 
@@ -487,3 +487,80 @@ The widget-boundary behaviour is covered against the real `GroupCallWidget` in
 confirm the production path — `onEvent` injects a fed event into the room's
 live timeline and fires `RoomEvent.Timeline`, which is exactly what the fork
 subscribes to.
+
+## 11. A homeserver, and the blocker it found in ten minutes
+
+Everything above was verified locally, which in this epic has meant unit tests,
+Chromium screenshots with measurements, and reading the SDK. All of those can
+only confirm that our code does what we told it to. The identity transport
+rests on three assumptions about what **Synapse** does, and if any of them were
+wrong the failure would be silent — the shape of bug this epic has already
+produced five times.
+
+So Synapse was installed (`pip install matrix-synapse` in a venv, 1.163.0,
+bound to 127.0.0.1:8008) and the assumptions were checked against it:
+`scripts/verifyCallRoomMatrixRules.mjs`. No LiveKit and no ORISO backend are
+involved — these are plain client-server API calls, which is all the rules are.
+
+### It found something nobody was looking for
+
+**The call room could not be created at all on a current homeserver.**
+
+`createElementCallRoom` passed `users: { [creator]: 100 }` in
+`power_level_content_override`. From **room version 12** the creator holds
+power implicitly and must **not** appear in `content.users`: Synapse rejects
+the whole `createRoom` call with `M_UNKNOWN`, "Creator user ... must not appear
+in content.users". Room version 12 is the **default** on a current Synapse.
+
+The existing fallback did not help. It catches a failed restricted-join
+creation and retries invite-only — with the same power levels, so both attempts
+failed. Every group call would have fallen back into the counselling session
+room, which is also where the identity events would then have gone.
+
+Measured: accepted on room versions 10 and 11, refused on 12 and on this
+server's default.
+
+### And it corrected me while I fixed it
+
+My first fix was a retry: attempt it with the creator named, and on that
+specific rejection try again without. The comment I wrote for it said the entry
+was still _required_ on room version 10, because
+`power_level_content_override` "replaces the default content outright".
+
+That is wrong, and the homeserver said so: with `users` omitted on room version
+10, the creator could still write `m.room.name`, which needs level 100. The
+override updates the default content **key by key**, and the default already
+gives the creator 100. So the entry is simply never needed, on any version, and
+the fix is to leave it out — no retry, no error-message matching, no extra
+round trip. The retry is deleted.
+
+I would not have found that by thinking about it; I had already thought about
+it and reached the opposite conclusion.
+
+### What else now holds against a real server
+
+- **`m.room.encrypted` at 50 refuses an ordinary participant**, and at 0 allows
+  them. That is the change in §10 shown to be both necessary and sufficient:
+  with `users_default: 0`, the old level would have refused every identity but
+  the call creator's.
+- **A state event whose state key is another user's id is refused**, even with
+  the event type granted at level 0. This was the forgery argument for the old
+  transport, and I could not check it when I made it — `spec.matrix.org` is
+  blocked from this container — so I argued it from memory and gave the reader
+  its own sender check instead. It is now measured rather than remembered.
+- **`history_visibility: joined` hides timeline events sent before a member
+  joined.** This is the premise of the re-announce: a newcomer genuinely cannot
+  read what was said before they arrived, so somebody has to repeat it.
+- **The room state of a call room holds no identity record at all.**
+
+17 checks, all holding. The script fails loudly and exits non-zero if any stops
+holding, and it guards itself against drift: it reads `CallManager.ts` and fails
+if the power levels it mirrors have changed.
+
+### What this still is not
+
+A call. There is no LiveKit and no ORISO backend here, so no media flows and
+nobody logs in through Keycloak. What now has evidence is the Matrix layer
+underneath the call — the room, its power levels, its history rules and the
+transport the identity rides on. The reviewer plans still carry every step that
+needs two accounts and a deployed fork.
