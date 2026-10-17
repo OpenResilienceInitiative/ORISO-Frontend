@@ -267,4 +267,46 @@ describe('e-mail setting: shown value equals the stored one after any write sequ
 			expect(picker.textContent).not.toContain(stored ? 'Aus' : 'An');
 		}
 	);
+
+	// The master switch gates the column: its availability must follow the
+	// shown master value too, not the possibly stale context.
+	it.each(CASES.map((steps) => [label(steps), steps] as const))(
+		'display-filter availability follows the profile master switch, rapid: %s',
+		async (_, steps) => {
+			const { server, reload } = serve(steps);
+			render(
+				<Harness reload={reload}>
+					<EmailToggle
+						name="emailNotificationsEnabled"
+						titleKey="profile.notifications.mainEmail.title"
+					/>
+					<ConnectedDialog />
+				</Harness>
+			);
+			// The open dialog is modal: the profile behind it is aria-hidden.
+			const master = screen.getByRole('switch', {
+				name: 'profile.notifications.mainEmail.title',
+				hidden: true
+			}) as HTMLInputElement;
+			for (let i = 0; i < steps.length; i += 1) fireEvent.click(master);
+			await settle(server, steps.length);
+			const masterOn = readEmailSetting(server.data, {
+				kind: 'path',
+				name: 'emailNotificationsEnabled'
+			});
+			expect(master.checked).toBe(masterOn);
+			expect(
+				screen.queryByRole('button', { name: 'E-Mail: Termine' }) !==
+					null
+			).toBe(masterOn);
+			const row = screen.getByRole('row', { name: /Termine/ });
+			expect(
+				row
+					.querySelector('.displayFilterDialog__unavailable')
+					?.getAttribute('title') ?? null
+			).toBe(
+				masterOn ? null : 'notifications.displayFilter.emailMasterOff'
+			);
+		}
+	);
 });

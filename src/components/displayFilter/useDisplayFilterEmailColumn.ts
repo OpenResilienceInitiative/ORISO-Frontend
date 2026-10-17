@@ -5,10 +5,7 @@ import {
 	UserDataContext,
 	hasUserAuthority
 } from '../../globalState';
-import {
-	readEmailSetting,
-	useEmailSettings
-} from '../profile/EmailNotifications/emailSetting';
+import { useEmailSettings } from '../profile/EmailNotifications/emailSetting';
 import type { DisplayFilterSection } from '../../utils/displayFilter/model';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -30,18 +27,16 @@ export const useDisplayFilterEmailColumn = (
 	const newNotifications = usesNewNotifications(useAppConfig());
 	const userData = useContext(UserDataContext)?.userData;
 	const hasEmail = Boolean(userData?.email);
+	const { read, change } = useEmailSettings();
 	// Delivery needs the profile's master switch too: without it, no cell
-	// may claim "An" (gate, never flip the master from here).
-	const emailsOn = readEmailSetting(userData, {
-		kind: 'path',
-		name: 'emailNotificationsEnabled'
-	});
+	// may claim "An" (gate, never flip the master from here). Read as shown,
+	// not from the context, which may be stale after a failed reload.
+	const emailsOn = read({ kind: 'path', name: 'emailNotificationsEnabled' });
 	const unavailableReason = !hasEmail
 		? t('profile.notifications.noEmail.info')
 		: !emailsOn
 			? t('notifications.displayFilter.emailMasterOff')
 			: undefined;
-	const { read, change } = useEmailSettings();
 	const role = hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		? 'consultant'
 		: 'asker';
