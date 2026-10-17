@@ -1,4 +1,6 @@
+import { logout } from '../components/logout/logout';
 import { endpoints } from '../resources/scripts/endpoints';
+import { appConfig } from '../utils/appConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 /**
@@ -121,6 +123,16 @@ const post = async (request: InternalSubsetChatRequest): Promise<Response> => {
 			responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE]
 		});
 	} catch (rejection) {
+		// `CATCH_ALL_WITH_RESPONSE` hands the raw response back before
+		// `fetchData` reaches its own 401 branch, so the expired session is
+		// ended here the same way: log out and go to the login.
+		if (rejection instanceof Response && rejection.status === 401) {
+			logout(true, appConfig.urls.toLogin);
+			throw new InternalSubsetChatError(
+				INTERNAL_SUBSET_REASON.UNKNOWN,
+				rejection.status
+			);
+		}
 		throw await toError(rejection);
 	}
 };
@@ -149,6 +161,17 @@ export const apiCreateInternalSubsetChat = async (
 		await wait(INTERNAL_SUBSET_BUSY_RETRY_MS);
 		response = await post(request);
 	}
-	const { matrixRoomId, chatId } = await response.json();
+	// A success without a room would navigate to /undefined/undefined.
+	const body = await response.json().catch(() => null);
+	if (
+		typeof body?.matrixRoomId !== 'string' ||
+		typeof body?.chatId !== 'number'
+	) {
+		throw new InternalSubsetChatError(
+			INTERNAL_SUBSET_REASON.UNKNOWN,
+			response.status
+		);
+	}
+	const { matrixRoomId, chatId } = body;
 	return { matrixRoomId, chatId, reused: response.status === 200 };
 };

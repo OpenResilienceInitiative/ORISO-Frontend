@@ -41,10 +41,10 @@ interface ScopeFilterInput {
  * enforces the same rule and refuses anything else with a clear reason; this
  * keeps the picker from offering people it would refuse.
  *
- * - AGENCY: colleagues known to belong only to other centres are dropped. A
- *   colleague whose centres are not delivered is kept: nothing guarantees the
- *   directory fills them, and an empty picker would be worse than a clearly
- *   worded refusal.
+ * - AGENCY: only colleagues known to belong to the chosen centre are kept.
+ *   Fail closed: a colleague whose centres are not delivered is dropped, so a
+ *   directory that does not fill them yields an empty picker (the "no
+ *   colleagues" state) and never an offer of people from other centres.
  * - TENANT / PLATFORM: the directory as delivered. The directory the
  *   Frontend can read is the Träger's; a platform-wide directory does not
  *   exist yet, so PLATFORM lists the same people as TENANT for now.
@@ -62,7 +62,7 @@ export const filterColleaguesForScope = ({
 	}
 	return colleagues.filter(
 		(colleague) =>
-			!colleague.agencies?.length ||
-			colleague.agencies.some((agency) => agency.id === agencyId)
+			colleague.agencies?.some((agency) => agency.id === agencyId) ??
+			false
 	);
 };

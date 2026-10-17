@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logout } from '../components/logout/logout';
+import { appConfig, setAppConfig } from '../utils/appConfig';
 import {
 	apiCreateInternalSubsetChat,
 	InternalSubsetChatError,
 	INTERNAL_SUBSET_BUSY_RETRY_MS,
 	INTERNAL_SUBSET_REASON
 } from './apiCreateInternalSubsetChat';
+
+vi.mock('../components/logout/logout', () => ({ logout: vi.fn() }));
 
 vi.mock('../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -55,6 +59,8 @@ const failure = async () => {
 };
 
 beforeEach(() => {
+	vi.mocked(logout).mockClear();
+	setAppConfig({ urls: { toLogin: '/login' } } as never);
 	vi.useFakeTimers();
 	vi.stubGlobal('Request', TestRequest);
 });
@@ -195,6 +201,36 @@ describe('apiCreateInternalSubsetChat', () => {
 		});
 		await failure();
 		expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+	});
+
+	it('sends the counsellor to the login on a 401, like every other authenticated call', async () => {
+		answer(401);
+		const error = await failure();
+		expect(logout).toHaveBeenCalledWith(true, appConfig.urls.toLogin);
+		expect(error.reason).toBe(INTERNAL_SUBSET_REASON.UNKNOWN);
+		expect(error.status).toBe(401);
+		expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not log out on any other refusal', async () => {
+		answer(403, undefined, {
+			'X-Reason': INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE
+		});
+		await failure();
+		expect(logout).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		['no body', undefined],
+		['an empty object', {}],
+		['no room id', { chatId: 123 }],
+		['no chat id', { matrixRoomId: '!abc:matrix.test' }],
+		['a room id of the wrong type', { matrixRoomId: 7, chatId: 123 }]
+	])('does not report success for a 201 with %s', async (_label, body) => {
+		answer(201, body);
+		const error = await failure();
+		expect(error.reason).toBe(INTERNAL_SUBSET_REASON.UNKNOWN);
+		expect(error.status).toBe(201);
 	});
 
 	it('reports a network failure as unknown', async () => {

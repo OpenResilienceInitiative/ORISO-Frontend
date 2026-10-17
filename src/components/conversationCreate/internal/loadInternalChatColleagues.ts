@@ -34,8 +34,9 @@ const withoutSelfAndDuplicates = (
  *
  * - AGENCY: the chosen counselling centre. The centre list needs an authority
  *   not every role carries (#993); when it is refused the Träger directory is
- *   used instead, narrowed where it names a colleague's centres (see
- *   `filterColleaguesForScope`). The UserService refuses anyone out of scope.
+ *   used instead, narrowed to colleagues it names as members of the centre
+ *   (see `filterColleaguesForScope`; unknown membership is not offered). The
+ *   UserService refuses anyone out of scope as well.
  * - TENANT / PLATFORM: the Träger directory (see `filterColleaguesForScope`).
  *
  * Rejects when no list can be read, so the caller can offer a retry instead
