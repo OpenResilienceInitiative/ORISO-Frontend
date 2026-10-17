@@ -51,8 +51,9 @@ const withUser = (
 	ui: React.ReactNode,
 	{
 		newNotifications = true,
-		email = 'counsellor@example.test'
-	}: { newNotifications?: boolean; email?: string } = {}
+		email = 'counsellor@example.test',
+		emailsOn = true
+	}: { newNotifications?: boolean; email?: string; emailsOn?: boolean } = {}
 ) => (
 	<MemoryRouter>
 		<AppConfigContext.Provider
@@ -68,7 +69,14 @@ const withUser = (
 				<UserDataContext.Provider
 					value={
 						{
-							userData: { ...userData(), email },
+							userData: {
+								...userData(),
+								email,
+								emailNotifications: {
+									...userData().emailNotifications,
+									emailNotificationsEnabled: emailsOn
+								}
+							},
 							reloadUserData: vi.fn(async () => undefined)
 						} as never
 					}
@@ -233,5 +241,20 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 				.querySelector('.displayFilterDialog__unavailable')
 				?.getAttribute('title')
 		).toBe('profile.notifications.noEmail.info');
+	});
+	it('offers no switch while all e-mails are off in the profile, and says why', () => {
+		render(withUser(<ConnectedDialog />, { emailsOn: false }));
+		for (const kind of ['Mail-Beratung', 'Termine', 'Supervision']) {
+			expect(
+				screen.queryByRole('button', { name: `E-Mail: ${kind}` })
+			).toBeNull();
+		}
+		const row = screen.getByRole('row', { name: /Mail-Beratung/ });
+		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(
+			row
+				.querySelector('.displayFilterDialog__unavailable')
+				?.getAttribute('title')
+		).toBe('notifications.displayFilter.emailMasterOff');
 	});
 });

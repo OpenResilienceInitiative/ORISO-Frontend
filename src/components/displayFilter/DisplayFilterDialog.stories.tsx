@@ -61,6 +61,9 @@ type Story = StoryObj<typeof meta>;
 
 /** The profile's `profile.notifications.noEmail.info` (de). */
 const NO_EMAIL_REASON = 'Sie haben noch keine E-Mail-Adresse hinzugefügt.';
+/** `notifications.displayFilter.emailMasterOff` (de). */
+const EMAILS_OFF_REASON =
+	'E-Mail-Benachrichtigungen sind in Ihrem Profil ausgeschaltet';
 
 /**
  * A story stand-in for `useDisplayFilterEmailColumn`: the same kind →
@@ -70,16 +73,18 @@ const NO_EMAIL_REASON = 'Sie haben noch keine E-Mail-Adresse hinzugefügt.';
 const useStoryEmail = (
 	section: DisplayFilterSection | undefined,
 	onEmailChange?: (kindId: string, next: boolean) => void,
-	noAddress = false
+	/** Set: every cell is unavailable, for this reason (no address, master off). */
+	unavailableReason?: string
 ): DisplayFilterEmailColumn | undefined => {
 	const [stored, setStored] = useState<Record<string, boolean>>({});
 	if (!section) return undefined;
 	return {
 		cell: (kindId) =>
-			!noAddress && emailSettingForKind(section, kindId, 'consultant')
+			!unavailableReason &&
+			emailSettingForKind(section, kindId, 'consultant')
 				? { checked: stored[kindId] ?? true }
 				: null,
-		unavailableReason: noAddress ? NO_EMAIL_REASON : undefined,
+		unavailableReason,
 		onChange: (kindId, next) => {
 			setStored((current) => ({ ...current, [kindId]: next }));
 			onEmailChange?.(kindId, next);
@@ -92,13 +97,13 @@ const Controlled = (
 		initialValue?: DisplayFilterValue;
 		emailSection?: DisplayFilterSection;
 		onEmailChange?: (kindId: string, next: boolean) => void;
-		emailNoAddress?: boolean;
+		emailUnavailableReason?: string;
 	}
 ) => {
 	const email = useStoryEmail(
 		args.emailSection,
 		args.onEmailChange,
-		args.emailNoAddress
+		args.emailUnavailableReason
 	);
 	// Mirrors the slice-2 store contract: the section override is a key that
 	// either exists or not (`null`); `canReset` is that presence, never
@@ -742,7 +747,7 @@ export const EmailChange: Story = {
 const noAddressArgs = {
 	...sessionsArgs,
 	fullScreen: false,
-	emailNoAddress: true
+	emailUnavailableReason: NO_EMAIL_REASON
 };
 export const EmailNoAddress: Story = {
 	globals: desktop1440Globals,
@@ -754,6 +759,30 @@ export const EmailNoAddress: Story = {
 		await expect(row).toHaveTextContent(NO_EMAIL_REASON);
 		await expect(
 			dialog.queryByRole('button', { name: 'E-Mail: Mail-Beratung' })
+		).toBeNull();
+	}
+};
+
+/**
+ * The profile's master e-mail switch is off: delivery needs it, so no cell
+ * claims "An" — every cell is unavailable with that reason, and the dialog
+ * never flips the master itself.
+ */
+const masterOffArgs = {
+	...sessionsArgs,
+	fullScreen: false,
+	emailUnavailableReason: EMAILS_OFF_REASON
+};
+export const EmailMasterOff: Story = {
+	globals: desktop1440Globals,
+	args: masterOffArgs,
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		const row = await dialog.findByRole('row', { name: /Supervision/ });
+		await expect(row).toHaveTextContent(EMAILS_OFF_REASON);
+		await expect(
+			dialog.queryByRole('button', { name: 'E-Mail: Supervision' })
 		).toBeNull();
 	}
 };

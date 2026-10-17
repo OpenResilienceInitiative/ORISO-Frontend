@@ -21,7 +21,8 @@ import type { DisplayFilterEmailColumn } from './DisplayFilterKindTable';
  * preferences (FE#1377 redesign): reads them from the user data and saves
  * through the same write path as the profile page. Optimistic while saving,
  * put back when the save fails. Mirrors the profile: no column while the
- * legacy notification screens are routed, no switches without an address.
+ * legacy notification screens are routed, no switches without an address
+ * or while the master e-mail switch is off.
  */
 export const useDisplayFilterEmailColumn = (
 	section: DisplayFilterSection
@@ -30,6 +31,17 @@ export const useDisplayFilterEmailColumn = (
 	const newNotifications = usesNewNotifications(useAppConfig());
 	const userData = useContext(UserDataContext)?.userData;
 	const hasEmail = Boolean(userData?.email);
+	// Delivery needs the profile's master switch too: without it, no cell
+	// may claim "An" (gate, never flip the master from here).
+	const emailsOn = readEmailSetting(userData, {
+		kind: 'path',
+		name: 'emailNotificationsEnabled'
+	});
+	const unavailableReason = !hasEmail
+		? t('profile.notifications.noEmail.info')
+		: !emailsOn
+			? t('notifications.displayFilter.emailMasterOff')
+			: undefined;
 	const save = useSaveEmailSetting();
 	const role = hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		? 'consultant'
@@ -54,7 +66,7 @@ export const useDisplayFilterEmailColumn = (
 	const column = useMemo(
 		() => ({
 			cell: (kindId: string) => {
-				if (!hasEmail) return null;
+				if (unavailableReason) return null;
 				const entry = emailSettingForKind(section, kindId, role);
 				if (!entry) return null;
 				return {
@@ -64,11 +76,9 @@ export const useDisplayFilterEmailColumn = (
 				};
 			},
 			onChange,
-			unavailableReason: hasEmail
-				? undefined
-				: t('profile.notifications.noEmail.info')
+			unavailableReason
 		}),
-		[hasEmail, onChange, pending, role, section, t, userData]
+		[onChange, pending, role, section, unavailableReason, userData]
 	);
 	return newNotifications ? column : undefined;
 };

@@ -2074,6 +2074,7 @@
 			"emailMenu": "Choose e-mail: {{kind}}",
 			"emailUnavailable": "not available",
 			"emailUnavailableReason": "There is no e-mail for this kind yet",
+			"emailMasterOff": "E-mail notifications are switched off in your profile",
 			"descriptions": {
 				"sessions": "Choose for each kind of conversation whether it gets a filter button and how you are notified about new messages.",
 				"requests": "Choose for each kind of request whether it gets a filter button and how you are notified about new requests.",

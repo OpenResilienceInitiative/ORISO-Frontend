@@ -2098,6 +2098,7 @@
 			"emailMenu": "E-Mail wählen: {{kind}}",
 			"emailUnavailable": "nicht verfügbar",
 			"emailUnavailableReason": "Für diese Art gibt es noch keine E-Mail",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in Ihrem Profil ausgeschaltet",
 			"descriptions": {
 				"sessions": "Legen Sie für jede Gesprächsart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Nachrichten benachrichtigt werden.",
 				"requests": "Legen Sie für jede Anfrageart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Anfragen benachrichtigt werden.",
