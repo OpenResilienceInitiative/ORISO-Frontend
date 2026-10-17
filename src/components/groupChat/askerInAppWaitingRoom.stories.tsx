@@ -14,6 +14,10 @@ import {
 	phone390Globals
 } from '../message/messageStoryShell';
 import type { GroupChatItemInterface } from '../../globalState/interfaces';
+import {
+	LegalLinksContext,
+	TProvidedLegalLink
+} from '../../globalState/provider/LegalLinksProvider';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 /**
@@ -53,6 +57,19 @@ const buildItem = (variant: Variant) => {
 	return item;
 };
 
+const legalLinks: TProvidedLegalLink[] = [
+	{
+		label: 'login.legal.infoText.dataprotection',
+		registration: true,
+		getUrl: () => 'https://oriso.example/datenschutz'
+	} as TProvidedLegalLink,
+	{
+		label: 'login.legal.infoText.impressum',
+		registration: true,
+		getUrl: () => 'https://oriso.example/impressum'
+	} as TProvidedLegalLink
+];
+
 const Stage = ({
 	layout,
 	variant
@@ -67,7 +84,11 @@ const Stage = ({
 			layout={layout}
 			viewer={groupStageAsker}
 		>
-			<JoinGroupChatView />
+			{/* The platform's documents, so the consent sentence carries its
+			    two links as in the app. */}
+			<LegalLinksContext.Provider value={legalLinks}>
+				<JoinGroupChatView />
+			</LegalLinksContext.Provider>
 		</GroupChatStage>
 	);
 };
@@ -165,7 +186,7 @@ export const OpenConsent1440: Story = {
 				)
 			).not.toBeNull()
 		);
-		// The consent bar slides in; measure it once it has arrived.
-		await waitFor(() => expectBarInCard(canvasElement), { timeout: 3000 });
+		// The contract waits until the sliding consent bar has arrived.
+		await expectCardRoom(canvasElement);
 	}
 };
