@@ -157,11 +157,17 @@ export const Overdue1440: Story = {
 		await expect(
 			canvas.getByRole('button', { name: 'Chat starten' })
 		).toBeVisible();
-		// Desktop keeps its "Chat-Info" link; the phone menu stays away.
+		// #1760: no text link in the header; Chat-Info sits in the ⋮ menu.
 		await expect(
-			canvas.getByRole('link', { name: CHAT_INFO })
-		).toBeVisible();
-		await expect(canvasElement.querySelector('#iconV')).toBeNull();
+			canvas.queryByRole('link', { name: CHAT_INFO })
+		).toBeNull();
+		const menuButton = canvasElement.querySelector<HTMLElement>('#iconH');
+		await expect(menuButton).toBeVisible();
+		await userEvent.click(menuButton!);
+		const menu = within(menuOf(canvasElement));
+		await waitFor(() =>
+			expect(menu.getByRole('link', { name: CHAT_INFO })).toBeVisible()
+		);
 	}
 };
 

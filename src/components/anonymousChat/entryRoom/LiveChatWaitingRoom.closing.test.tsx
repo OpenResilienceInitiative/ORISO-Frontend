@@ -107,3 +107,61 @@ describe('LiveChatWaitingRoom — consent while the screen closes', () => {
 		expect(screen.getByRole('alert')).toBeTruthy();
 	});
 });
+
+/**
+ * ORISO-Frontend#1737 (review). "Chat starten" inside the leave dialog is
+ * still starting: it presses the very gate button, so the closing animation
+ * plays and the consent is asked there too.
+ */
+describe('LiveChatWaitingRoom — "start chat" in the leave dialog', () => {
+	beforeEach(() => {
+		play.mockReset();
+		play.mockImplementation(
+			({ onCovered }: { onCovered: () => unknown }) =>
+				new Promise<{ played: boolean }>((resolve) => {
+					void Promise.resolve(onCovered()).then(() =>
+						resolve({ played: true })
+					);
+				})
+		);
+	});
+
+	const openDialog = () => {
+		const onAccept = vi.fn();
+		render(
+			<LiveChatWaitingRoom
+				ahead={0}
+				accepted
+				consentHtml={CONSENT_HTML}
+				onAccept={onAccept}
+				onLeave={vi.fn()}
+				onMailCounselling={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: /Nicht zustimmen/i })
+		);
+		return onAccept;
+	};
+	const dialogStart = () =>
+		screen.getByRole('button', { name: /leaveQueue\.startChat/ });
+
+	it('plays the closing animation and starts the chat when the consent stands', async () => {
+		const onAccept = openDialog();
+		// The dialog stands in front; the box behind it is still reachable here.
+		fireEvent.click(consentBox(), { target: { checked: true } });
+		await act(async () => dialogStart().click());
+
+		expect(play).toHaveBeenCalledTimes(1);
+		expect(onAccept).toHaveBeenCalledTimes(1);
+	});
+
+	it('neither plays nor starts without the consent, and says why', async () => {
+		const onAccept = openDialog();
+		await act(async () => dialogStart().click());
+
+		expect(play).not.toHaveBeenCalled();
+		expect(onAccept).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert')).toBeTruthy();
+	});
+});

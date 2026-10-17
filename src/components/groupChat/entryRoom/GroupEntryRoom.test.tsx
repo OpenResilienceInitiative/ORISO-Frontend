@@ -58,17 +58,30 @@ vi.mock('../useGroupChatAuthorContent', () => ({
 		rules: ['Regel eins']
 	})
 }));
+vi.mock('../../waitingRoom/WaitingRoomFrame', () => ({
+	WaitingRoomFrame: ({ children }: { children: React.ReactNode }) => (
+		<>{children}</>
+	)
+}));
+/* What the room's onJoin hands back: the closing animation holds the screen
+   covered for it (ORISO-Frontend#1737). */
+const joinResult = vi.hoisted(() => ({ value: undefined as unknown }));
 vi.mock('./GroupWaitingRoom', () => ({
 	GroupWaitingRoom: (props: {
 		topicName?: string;
 		agencyName?: string;
 		active: boolean;
-		onJoin: () => void;
+		onJoin: () => unknown;
 	}) => (
 		<div data-testid="waiting-room">
 			<span>{props.topicName}</span>
 			<span>{props.agencyName}</span>
-			<button onClick={props.onJoin} disabled={!props.active}>
+			<button
+				onClick={() => {
+					joinResult.value = props.onJoin();
+				}}
+				disabled={!props.active}
+			>
 				join
 			</button>
 		</div>
@@ -190,6 +203,29 @@ describe('GroupEntryRoom', () => {
 				{ replace: true }
 			)
 		);
+	});
+
+	it('hands the join request back to the room, so the closing animation can hold the screen for it', async () => {
+		let settle: () => void = () => undefined;
+		vi.mocked(apiPutGroupChat).mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					settle = resolve;
+				}) as never
+		);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+
+		const handed = joinResult.value as Promise<unknown>;
+		expect(handed).toBeInstanceOf(Promise);
+		expect(
+			navigate,
+			'not before the request settles'
+		).not.toHaveBeenCalled();
+		settle();
+		await handed;
+		expect(navigate).toHaveBeenCalledTimes(1);
 	});
 
 	it('says so when the chat is gone', async () => {

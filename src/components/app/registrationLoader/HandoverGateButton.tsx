@@ -62,6 +62,12 @@ export interface HandoverGateButtonProps {
 	 * Asked again, as the room is by then, when the screen is covered.
 	 */
 	beforeEnter?: () => boolean;
+	/**
+	 * The button element, for a second way to press it: the live-chat dialog's
+	 * "start chat" goes through the same gate, consent and closing animation
+	 * included.
+	 */
+	buttonRef?: React.Ref<HTMLButtonElement>;
 }
 
 /**
@@ -86,7 +92,8 @@ export const HandoverGateButton = ({
 	testId,
 	testingAttribute = 'handover-gate-button',
 	closing,
-	beforeEnter
+	beforeEnter,
+	buttonRef
 }: HandoverGateButtonProps) => {
 	const { t } = useTranslation();
 	const { play } = useClosingAnimation();
@@ -137,6 +144,7 @@ export const HandoverGateButton = ({
 
 	return (
 		<ButtonBase
+			ref={buttonRef}
 			onClick={open ? handleClick : undefined}
 			type={type}
 			disabled={!open}

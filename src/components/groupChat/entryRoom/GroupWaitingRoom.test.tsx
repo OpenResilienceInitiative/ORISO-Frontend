@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -11,7 +12,41 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('lottie-web', () => ({ default: {} }));
+const apiPatchUserData = vi.fn(() => Promise.resolve());
+vi.mock('../../../api/apiPatchUserData', () => ({
+	apiPatchUserData: (...args: unknown[]) =>
+		(apiPatchUserData as (...a: unknown[]) => Promise<void>)(...args)
+}));
+const freshUserData = {
+	dataPrivacyConfirmation: '2026-10-16T12:00:00Z',
+	termsAndConditionsConfirmation: '2026-10-16T12:00:00Z'
+};
+const apiGetUserData = vi.fn(() => Promise.resolve(freshUserData));
+vi.mock('../../../api/apiGetUserData', () => ({
+	apiGetUserData: () => apiGetUserData()
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
+/* The group's department: only a room with an agency has one. */
+vi.mock('../consent/useGroupDepartment', () => ({
+	useGroupDepartment: (agencyId?: number | null) =>
+		agencyId
+			? { status: 'ready', department: { agencyId, topicId: 3 } }
+			: { status: 'ready', department: null }
+}));
+const DEPARTMENT_SENTENCE =
+	'Ich stimme der Datenschutzerklärung der Caritas Berlin zu.';
+const apiGetConsentText = vi.fn((agencyId: number, topicId: number) =>
+	Promise.resolve({
+		status: 'ok',
+		consentText: { sentence: DEPARTMENT_SENTENCE, versionId: 4 },
+		agencyId,
+		topicId
+	})
+);
+vi.mock('../../../api/apiGetConsentText', () => ({
+	apiGetConsentText: (agencyId: number, topicId: number) =>
+		apiGetConsentText(agencyId, topicId)
+}));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 vi.mock('../../stageLayout/StageLayout', () => ({
 	StageLayout: ({
@@ -29,11 +64,23 @@ vi.mock('../../stageLayout/StageLayout', () => ({
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key,
+		t: (
+			_key: string,
+			fallback?: string | { defaultValue?: string; agency?: string }
+		) =>
+			typeof fallback === 'object'
+				? (fallback.defaultValue ?? _key).replace(
+						'{{agency}}',
+						fallback.agency ?? ''
+					)
+				: (fallback ?? _key),
 		i18n: { language: 'de', resolvedLanguage: 'de' }
 	})
 }));
 
+const { UserDataContext } = await import(
+	'../../../globalState/context/UserDataContext'
+);
 const { GroupWaitingRoom, entryRoomClockHeight } = await import(
 	'./GroupWaitingRoom'
 );
@@ -58,7 +105,11 @@ const renderRoom = (active: boolean, onJoin = vi.fn()) => {
 };
 
 describe('GroupWaitingRoom', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		apiPatchUserData.mockClear();
+		apiGetUserData.mockClear();
+	});
 	it('names topic and agency in the stage header', () => {
 		renderRoom(false);
 		const header = screen.getByTestId('header-start');
@@ -83,21 +134,199 @@ describe('GroupWaitingRoom', () => {
 		expect(onJoin).not.toHaveBeenCalled();
 	});
 
-	it('has the person arrive on the message field of the group chat', () => {
+	/* Frank, 2026-10-17: the sheet says whom the person joins. */
+	it('names the counselling centre in the consent sheet', () => {
 		renderRoom(true);
-		expect(
-			screen
-				.getByTestId('group-entry-join')
-				.getAttribute('data-cy-closing')
-		).toBe('messageField');
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		const sheet = document.querySelector('[data-cy="consent-completion"]');
+		expect(sheet?.textContent).toContain(
+			'Diese Gruppe wird von Caritas Berlin geleitet.'
+		);
 	});
 
-	it('lets the person in once the group is open', () => {
+	/* Frank, 2026-10-16: like the live chat, "Beitreten" first slides the
+	   consent into the bar; only a ticked box lets the person in, and the
+	   agreement is recorded on the account on the way (ADR-022 gate 2). */
+	it('asks for consent on "Beitreten" and lets the person in once agreed', async () => {
 		const { onJoin } = renderRoom(true);
+		const join = () => screen.getByTestId('group-entry-join');
+		expect((join() as HTMLButtonElement).disabled).toBe(false);
+		fireEvent.click(join());
+		expect(onJoin).not.toHaveBeenCalled();
+		expect(
+			document.querySelector('[data-cy="consent-completion"]')
+		).not.toBeNull();
+
+		// Without the tick: no way in, the reason is shown.
+		fireEvent.click(join());
+		expect(onJoin).not.toHaveBeenCalled();
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert')).toBeTruthy();
+
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(apiPatchUserData).toHaveBeenCalledWith({
+			dataPrivacyConfirmation: true,
+			termsAndConditionsConfirmation: true
+		});
+	});
+
+	/* The chat's own consent dialog asks when the account shows no agreement.
+	   The account in memory must learn about the one just given, or the
+	   person is asked a second time right after entering. */
+	it('marks the agreement on the account before letting the person in', async () => {
+		const setUserData = vi.fn();
+		const onJoin = vi.fn();
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: { userName: 'eule' },
+						setUserData
+					} as never
+				}
+			>
+				<GroupWaitingRoom
+					topicName="Trauerbegleitung"
+					agencyName="Caritas Berlin"
+					plannedStart={new Date(NOW + 3 * 24 * 3600e3)}
+					durationMinutes={90}
+					eventId={15}
+					rules={[]}
+					active
+					onJoin={onJoin}
+					nowMs={NOW}
+				/>
+			</UserDataContext.Provider>
+		);
+		const join = () => screen.getByTestId('group-entry-join');
+		fireEvent.click(join());
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(setUserData.mock.calls[0][0]).toMatchObject({
+			userName: 'eule',
+			dataPrivacyConfirmation: expect.any(String)
+		});
+		expect(setUserData.mock.invocationCallOrder[0]).toBeLessThan(
+			onJoin.mock.invocationCallOrder[0]
+		);
+		// Then the real account, behind.
+		await waitFor(() =>
+			expect(setUserData).toHaveBeenLastCalledWith(freshUserData)
+		);
+		// Both agreements survive the refresh — neither is lost after joining.
+		expect(setUserData.mock.lastCall?.[0]).toMatchObject({
+			dataPrivacyConfirmation: expect.any(String),
+			termsAndConditionsConfirmation: expect.any(String)
+		});
+	});
+
+	it('records and joins once when "Beitreten" is pressed twice in a row', async () => {
+		const { onJoin } = renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		fireEvent.click(screen.getByRole('checkbox'));
 		const join = screen.getByTestId('group-entry-join');
-		expect((join as HTMLButtonElement).disabled).toBe(false);
-		fireEvent.click(join);
-		expect(onJoin).toHaveBeenCalledTimes(1);
+		// Both clicks before React renders the busy state.
+		act(() => {
+			join.click();
+			join.click();
+		});
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+	});
+
+	/* ORISO-Frontend#1737. The closing animation belongs to the press that lets
+	   the person in, not to the one that only asks for consent. */
+	it("declares the group chat's message field only on the press that lets the person in", () => {
+		renderRoom(true);
+		const join = () => screen.getByTestId('group-entry-join');
+		expect(join().getAttribute('data-cy-closing')).toBeNull();
+		fireEvent.click(join());
+		expect(join().getAttribute('data-cy-closing')).toBe('messageField');
+	});
+
+	it('keeps the screen covered until the join request has settled', async () => {
+		let settle: () => void = () => undefined;
+		const pending = new Promise<void>((resolve) => {
+			settle = resolve;
+		});
+		const { onJoin } = renderRoom(
+			true,
+			vi.fn(() => pending)
+		);
+		const join = () => screen.getByTestId('group-entry-join');
+		fireEvent.click(join());
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(join().getAttribute('data-cy-state')).toBe('entering');
+		await act(async () => settle());
+		await waitFor(() =>
+			expect(join().getAttribute('data-cy-state')).not.toBe('entering')
+		);
+	});
+
+	it('takes the tick back on "Ablehnen", so reopening asks again', async () => {
+		const { onJoin } = renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(screen.getByRole('button', { name: 'Ablehnen' }));
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-completion"]')
+			).toBeNull()
+		);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(
+			false
+		);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		expect(onJoin).not.toHaveBeenCalled();
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+	});
+
+	it("asks with the group department's own sentence, then records and joins", async () => {
+		const onJoin = vi.fn();
+		render(
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				agencyName="Caritas Berlin"
+				agencyId={7}
+				plannedStart={new Date(NOW + 3 * 24 * 3600e3)}
+				durationMinutes={90}
+				eventId={15}
+				rules={[]}
+				active
+				onJoin={onJoin}
+				nowMs={NOW}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		const sheet = () =>
+			document.querySelector('[data-cy="consent-completion"]');
+		await waitFor(() =>
+			expect(sheet()?.textContent).toContain(DEPARTMENT_SENTENCE)
+		);
+		expect(apiGetConsentText).toHaveBeenCalledWith(7, 3);
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+	});
+
+	it('stays outside when the agreement cannot be saved', async () => {
+		apiPatchUserData.mockImplementationOnce(() =>
+			Promise.reject(new Error('down'))
+		);
+		const { onJoin } = renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+		expect(onJoin).not.toHaveBeenCalled();
 	});
 
 	it('puts the explainer in the middle and the clock back on return', async () => {
