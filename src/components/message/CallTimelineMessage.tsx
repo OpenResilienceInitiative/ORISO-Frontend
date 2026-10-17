@@ -136,10 +136,28 @@ export const CallTimelineMessage = ({
 			 * running call that is the old, cumulative behaviour, which is
 			 * better than an empty room.
 			 */
-			participants={shown.map((participant) => ({
-				...participant,
-				username: participant.displayName
-			}))}
+			/*
+			 * And the same rule for the avatars, one layer deeper.
+			 *
+			 * The actor line above drops a display name that is only the
+			 * user id. This mapping fed that id to `UserAvatar` as BOTH the
+			 * display name and the username, and `formatMessagePersonName`
+			 * turns `@alex:example` into an accessible name of `alex` — so a
+			 * screen-reader user was still told the identifier the visible
+			 * card had just been taught to hide, which is the worse half of
+			 * the two.
+			 *
+			 * `userId` stays, because the avatar's colour and letters are
+			 * derived from it and that derivation reveals nothing. What goes
+			 * is the claim that the id is a NAME.
+			 */
+			participants={shown.map((participant) => {
+				const named =
+					participant.displayName === participant.userId
+						? undefined
+						: participant.displayName;
+				return { ...participant, displayName: named, username: named };
+			})}
 			participantsLabel={t(
 				`message.callLifecycle.participants.${
 					live === undefined ? 'attended' : 'current'

@@ -342,6 +342,39 @@ it('says nothing when the only name it has for them is their id', () => {
 	expect(screen.queryByText(/@alex:example/)).toBeNull();
 });
 
+it('keeps the id out of the avatars a screen reader reads', () => {
+	/*
+	 * The worse half of the actor-label case, and the one its test could not
+	 * see because it only checked visible text.
+	 *
+	 * The participant mapping handed the id to `UserAvatar` as both the
+	 * display name and the username, and `formatMessagePersonName` turns
+	 * `@alex:example` into an accessible name of `alex` — so the identifier
+	 * the visible card had just been taught to hide was still being read out.
+	 * The avatar keeps `userId`, because its colour and letters are derived
+	 * from it and that reveals nothing; what goes is the claim that the id is
+	 * a name.
+	 */
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [
+			{ userId: '@alex:example', displayName: '@alex:example' }
+		],
+		present: [{ userId: '@alex:example', displayName: '@alex:example' }]
+	};
+	const { container } = render(<CallTimelineMessage call={call} />);
+
+	const spoken = [...container.querySelectorAll('*')]
+		.map((node) => node.getAttribute('aria-label') ?? '')
+		.join(' ');
+	expect(spoken).not.toMatch(/alex/i);
+	expect(container.textContent ?? '').not.toMatch(/alex/i);
+});
+
 const STARTED_AT = '2026-10-16T08:00:00.000Z';
 const formatIn = (locale?: string) =>
 	new Intl.DateTimeFormat(locale, {
