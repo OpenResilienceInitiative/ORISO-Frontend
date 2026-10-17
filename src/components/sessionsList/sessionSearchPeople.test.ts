@@ -13,6 +13,9 @@ import {
 	buildSearchPeopleResults,
 	filterSearchPeople,
 	lookupTermsOf,
+	roleOfSearchWord,
+	sessionMatchesSearchText,
+	textAxisQuery,
 	SessionSearchPeopleLabels
 } from './sessionSearchPeople';
 
@@ -417,5 +420,55 @@ describe('buildSearchPeopleResults — client lookup (FE#1725)', () => {
 
 		expect(asker?.name).toBe('Iene L.');
 		expect(lookupTermsOf(asker!)).toEqual(['iene_lou_7575']);
+	});
+});
+
+describe('role words in the shown language (FE#1725)', () => {
+	const fr = {
+		consultant: 'Conseiller·ère',
+		asker: 'Personne en quête de conseil'
+	};
+	const tr = { consultant: 'Danışman', asker: 'Danışan' };
+
+	it('recognises the role labels the People tab shows', () => {
+		expect(roleOfSearchWord('Conseiller·ère', fr)).toBe('consultant');
+		expect(roleOfSearchWord('personne en quête de conseil', fr)).toBe(
+			'asker'
+		);
+		expect(roleOfSearchWord('Danışan', tr)).toBe('asker');
+		expect(roleOfSearchWord('Danışan')).toBeNull();
+	});
+
+	it('keeps the cases with that role in the list', () => {
+		expect(
+			sessionMatchesSearchText(
+				sessionWithBoth(),
+				undefined,
+				'Conseiller·ère',
+				fr
+			)
+		).toBe(true);
+	});
+
+	it('stops narrowing by the role label once a person is picked', () => {
+		expect(
+			textAxisQuery('Danışman', [{ name: 'Ingrid Koschmider' }], tr)
+		).toBe('');
+		expect(
+			textAxisQuery('Danışman 30232', [{ name: 'Ingrid Koschmider' }], tr)
+		).toBe('30232');
+	});
+
+	it('lists the people of that role in the People tab', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			{ ...labels, ...tr }
+		);
+
+		expect(
+			filterSearchPeople(people, 'Danışan', { roleLabels: tr }).map(
+				(entry) => entry.role
+			)
+		).toEqual(['asker']);
 	});
 });

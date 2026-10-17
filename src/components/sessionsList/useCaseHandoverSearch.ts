@@ -211,15 +211,45 @@ export const useCaseHandoverSearch = ({
 		};
 	}, [archived, enabled, searchOpen]);
 
-	/** Adds a person's cases to her pin while she stays picked. */
-	const pinCases = useCallback(
-		(id: string, cases: ListItemInterface[]) =>
-			setPinned((prev) =>
-				Object.prototype.hasOwnProperty.call(prev, id)
-					? { ...prev, [id]: mergeListItems(prev[id], cases) }
-					: prev
-			),
-		[]
+	/**
+	 * Per-person case loads of the current archive scope. Switching the
+	 * scope, the X (reset) and unmounting abort them, so a late answer for
+	 * the old scope never reaches the pins. Closing with the red check keeps
+	 * the picked people and lets their loads finish (US5).
+	 */
+	const personLoadsRef = useRef<AbortController | null>(null);
+	const personLoadSignal = useCallback(() => {
+		personLoadsRef.current ??= new AbortController();
+		return personLoadsRef.current.signal;
+	}, []);
+	const abortPersonLoads = useCallback(() => {
+		personLoadsRef.current?.abort();
+		personLoadsRef.current = null;
+	}, []);
+	useEffect(() => abortPersonLoads, [abortPersonLoads]);
+
+	/** Loads a person's cases into her pin while she stays picked. */
+	const loadPersonCases = useCallback(
+		(person: SessionSearchPersonResult, scope: boolean) => {
+			const signal = personLoadSignal();
+			fetchPersonCases(person, scope, signal)
+				.then((cases) => {
+					if (signal.aborted) return;
+					setPinned((prev) =>
+						Object.prototype.hasOwnProperty.call(prev, person.id)
+							? {
+									...prev,
+									[person.id]: mergeListItems(
+										prev[person.id],
+										cases
+									)
+								}
+							: prev
+					);
+				})
+				.catch(() => undefined);
+		},
+		[personLoadSignal]
 	);
 
 	/**
@@ -232,17 +262,12 @@ export const useCaseHandoverSearch = ({
 	useEffect(() => {
 		if (scopeRef.current === archived) return;
 		scopeRef.current = archived;
+		abortPersonLoads();
 		const people = pickedRef.current;
 		setPinned(Object.fromEntries(people.map((person) => [person.id, []])));
-		if (!enabled || people.length === 0) return;
-		const controller = new AbortController();
-		people.forEach((person) =>
-			fetchPersonCases(person, archived, controller.signal)
-				.then((cases) => pinCases(person.id, cases))
-				.catch(() => undefined)
-		);
-		return () => controller.abort();
-	}, [archived, enabled, pinCases]);
+		if (!enabled) return;
+		people.forEach((person) => loadPersonCases(person, archived));
+	}, [abortPersonLoads, archived, enabled, loadPersonCases]);
 
 	/**
 	 * Picking keeps the text (US3) and loads all of each new person's cases,
@@ -280,26 +305,24 @@ export const useCaseHandoverSearch = ({
 			if (!enabled) return;
 			added.forEach((id) => {
 				const person = known.get(id);
-				if (!person) return;
-				fetchPersonCases(person, archived)
-					.then((cases) => pinCases(id, cases))
-					.catch(() => undefined);
+				if (person) loadPersonCases(person, archived);
 			});
 		},
 		[
 			archived,
 			eligibleCases,
 			enabled,
+			loadPersonCases,
 			pickedPeople,
-			pinCases,
 			textCandidates
 		]
 	);
 
 	const reset = useCallback(() => {
+		abortPersonLoads();
 		setPickedPeople([]);
 		setPinned({});
-	}, []);
+	}, [abortPersonLoads]);
 
 	const candidateSessions = useMemo(
 		() => mergeListItems(textCandidates, ...Object.values(pinned)),

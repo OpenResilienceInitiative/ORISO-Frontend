@@ -961,6 +961,61 @@ describe('case-handover search — archive scope and closing (FE#1725)', () => {
 		expect(listText(view)).not.toContain('Client eleven');
 	});
 
+	it('drops a picked colleague\'s late active-scope cases after switching to "Archive only"', async () => {
+		const archivedCase = {
+			...makeCase(16, 'Archived sixteen', patty, SPRINGFIELD, 10006),
+			session: {
+				...makeCase(16, 'Archived sixteen', patty, SPRINGFIELD, 10006)
+					.session,
+				status: 4
+			}
+		} as ListItemInterface;
+		let finishLateLoad: (value: {
+			sessions: any[];
+			total: number;
+		}) => void = () => undefined;
+		http.getCandidates.mockImplementation(({ query, archived, offset }) => {
+			if (archived) {
+				return Promise.resolve({
+					sessions: query.toLowerCase().includes('patty')
+						? [archivedCase]
+						: [],
+					total: 0
+				});
+			}
+			// The person lookup (paged, offset 0) for Patty stays open.
+			if (offset === 0 && query === 'patty') {
+				return new Promise((resolve) => {
+					finishLateLoad = resolve;
+				});
+			}
+			return Promise.resolve({
+				sessions: serverCandidates(query),
+				total: 0
+			});
+		});
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		fireEvent.change(searchbox(), { target: { value: '' } });
+		fireEvent.click(
+			screen.getByRole('button', { name: /tabs\.archiveOnly/ })
+		);
+		await waitFor(() =>
+			expect(listText(view)).toContain('Archived sixteen')
+		);
+
+		finishLateLoad({ sessions: pattyCases, total: 0 });
+		await new Promise((resolve) => setTimeout(resolve, 50));
+
+		expect(listText(view)).not.toContain('Client eleven');
+		expect(listText(view)).toContain('Archived sixteen');
+	});
+
 	it('stops loading the eligible colleagues when the search closes', async () => {
 		const signals: AbortSignal[] = [];
 		http.getCandidates.mockImplementation(
@@ -980,6 +1035,32 @@ describe('case-handover search — archive scope and closing (FE#1725)', () => {
 		);
 
 		await waitFor(() => expect(signals[0].aborted).toBe(true));
+	});
+});
+
+describe('case-handover search — role label of the shown language (FE#1725)', () => {
+	// The i18n mock renders keys, so the shown counsellor label is the key.
+	const shownCounsellorLabel = 'sessionList.toolbar.search.role.consultant';
+
+	it('keeps the cases when the shown role label is typed', async () => {
+		const view = await ready(renderList());
+
+		type(shownCounsellorLabel);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		expect(listText(view)).toContain('Own client');
+	});
+
+	it('lists the cases of a person picked after typing the shown role label', async () => {
+		const view = await ready(renderList());
+
+		type(shownCounsellorLabel);
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		fireEvent.click(personRowsNamed('Lisa S.')[0]);
+
+		await waitFor(() =>
+			expect(listText(view)).toContain('Client thirtyone')
+		);
 	});
 });
 

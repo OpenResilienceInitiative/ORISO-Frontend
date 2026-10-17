@@ -1577,11 +1577,19 @@ export const SessionsList = ({
 			a.label.localeCompare(b.label)
 		);
 	}, [sessionToolbarPairs, sessionToolbarSelectedAgency]);
+	const askerRoleLabel = translate('sessionList.toolbar.search.role.asker');
+	const consultantRoleLabel = translate(
+		'sessionList.toolbar.search.role.consultant'
+	);
+	/** The role labels the People tab shows also count as role words. */
+	const searchRoleLabels = React.useMemo(
+		() => ({ asker: askerRoleLabel, consultant: consultantRoleLabel }),
+		[askerRoleLabel, consultantRoleLabel]
+	);
 	const toolbarSearchPeopleResults = useSearchPeopleResults(
 		sessionToolbarPairs,
 		{
-			asker: translate('sessionList.toolbar.search.role.asker'),
-			consultant: translate('sessionList.toolbar.search.role.consultant'),
+			...searchRoleLabels,
 			unknown: translate('sessionList.user.consultantUnknown')
 		},
 		{
@@ -1600,7 +1608,8 @@ export const SessionsList = ({
 	);
 	const listSearchQuery = textAxisQuery(
 		sessionToolbarSearch,
-		caseHandoverSearch.pickedPeople
+		caseHandoverSearch.pickedPeople,
+		searchRoleLabels
 	);
 	const { selectPeople } = caseHandoverSearch;
 	const handleSelectedPeopleChange = useCallback(
@@ -1894,7 +1903,8 @@ export const SessionsList = ({
 				/* #1404: never let the chip hide the conversation that is
 				   open — the same route-active exception the display filter
 				   already makes one layer earlier. */
-				isSessionListItemActive(extended)
+				isSessionListItemActive(extended),
+				searchRoleLabels
 			) &&
 			sessionMatchesAgency(raw, sessionToolbarSelectedAgency) &&
 			(!sessionToolbarSelectedTopic ||
@@ -1910,6 +1920,7 @@ export const SessionsList = ({
 			isSessionListItemActive,
 			sessionToolbarChip,
 			listSearchQuery,
+			searchRoleLabels,
 			sessionToolbarSelectedAgency,
 			sessionToolbarSelectedPeople,
 			sessionToolbarSelectedTopic,

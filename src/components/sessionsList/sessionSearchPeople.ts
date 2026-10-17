@@ -211,14 +211,32 @@ const ROLE_WORDS: Record<SessionSearchPersonRole, string[]> = {
 	].map(normalizeRoleWord)
 };
 
+/**
+ * The role labels the People tab shows in the current language, so a typed
+ * label counts as a role word in every locale, not only de + en.
+ */
+export type SessionSearchRoleLabels = Partial<
+	Record<SessionSearchPersonRole, string>
+>;
+
+const isRoleWord = (
+	word: string,
+	role: SessionSearchPersonRole,
+	roleLabels?: SessionSearchRoleLabels
+) =>
+	ROLE_WORDS[role].includes(word) ||
+	(Boolean(roleLabels?.[role]) &&
+		normalizeRoleWord(roleLabels![role]!) === word);
+
 /** The role a query names, if it is a role word (FE#1725 US6). */
 export const roleOfSearchWord = (
-	query: string
+	query: string,
+	roleLabels?: SessionSearchRoleLabels
 ): SessionSearchPersonRole | null => {
 	const word = normalizeRoleWord(query);
 	if (!word) return null;
-	if (ROLE_WORDS.consultant.includes(word)) return 'consultant';
-	if (ROLE_WORDS.asker.includes(word)) return 'asker';
+	if (isRoleWord(word, 'consultant', roleLabels)) return 'consultant';
+	if (isRoleWord(word, 'asker', roleLabels)) return 'asker';
 	return null;
 };
 
@@ -269,10 +287,11 @@ export const sessionSearchText = (
 export const sessionMatchesSearchText = (
 	raw: ListItemInterface,
 	extended: Pick<ExtendedSessionInterface, 'item'> | undefined,
-	query: string
+	query: string,
+	roleLabels?: SessionSearchRoleLabels
 ): boolean => {
 	if (!query.trim()) return true;
-	const role = roleOfSearchWord(query);
+	const role = roleOfSearchWord(query, roleLabels);
 	if (role === 'asker') return Boolean(raw.user);
 	if (role === 'consultant') return Boolean(raw.consultant);
 	return searchTextMatches(sessionSearchText(raw, extended), query);
@@ -302,6 +321,7 @@ export function filterSearchPeople<
 		 * clients and the signed-in counsellor need a search text.
 		 */
 		eligibleOnlyWhenBlank?: boolean;
+		roleLabels?: SessionSearchRoleLabels;
 	} = {}
 ): T[] {
 	if (!query.trim()) {
@@ -309,7 +329,7 @@ export function filterSearchPeople<
 			? people.filter((entry) => entry.eligible)
 			: people;
 	}
-	const role = roleOfSearchWord(query);
+	const role = roleOfSearchWord(query, options.roleLabels);
 	if (role) {
 		return people.filter((entry) => entry.role === role);
 	}
@@ -343,10 +363,11 @@ const nameWordsOf = (person: NamedPerson) =>
  */
 export const textAxisQuery = (
 	query: string,
-	pickedPeople: NamedPerson[]
+	pickedPeople: NamedPerson[],
+	roleLabels?: SessionSearchRoleLabels
 ): string => {
 	if (!query.trim() || !pickedPeople.length) return query;
-	if (roleOfSearchWord(query) !== null) return '';
+	if (roleOfSearchWord(query, roleLabels) !== null) return '';
 	const nameWords = pickedPeople.flatMap(nameWordsOf);
 	const needle = query.trim().toLowerCase();
 	if (nameWords.some((word) => word.startsWith(needle))) return '';
@@ -356,7 +377,7 @@ export const textAxisQuery = (
 		.filter((word) => {
 			const lower = word.toLowerCase();
 			return (
-				roleOfSearchWord(word) === null &&
+				roleOfSearchWord(word, roleLabels) === null &&
 				!nameWords.some((name) => name.startsWith(lower))
 			);
 		})

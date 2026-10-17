@@ -8,6 +8,7 @@ import {
 	hasSupervisionMarker
 } from '../sessionsListItem/supervisionListState';
 import {
+	SessionSearchRoleLabels,
 	sessionMatchesPeople,
 	sessionMatchesSearchText
 } from './sessionSearchPeople';
@@ -178,7 +179,9 @@ export function sessionMatchesToolbar(
 	 * chatting in as soon as the chip flipped — an accepted live chat vanished
 	 * behind the "Chats" chip and could not be reopened (#1404).
 	 */
-	isRouteActive: boolean = false
+	isRouteActive: boolean = false,
+	/** Role labels of the shown language (FE#1725 US6). */
+	roleLabels?: SessionSearchRoleLabels
 ): boolean {
 	const chatItem = getToolbarChatItem(raw);
 
@@ -249,5 +252,5 @@ export function sessionMatchesToolbar(
 		return false;
 	}
 
-	return sessionMatchesSearchText(raw, extended, query);
+	return sessionMatchesSearchText(raw, extended, query, roleLabels);
 }

@@ -401,12 +401,27 @@ export const SessionsListToolbar = ({
 	 * Selection never removes rows (JOB7); the text and, when chosen, the
 	 * counselling centre narrow them. Paging lives in the panel.
 	 */
+	const askerRoleLabel = translate('sessionList.toolbar.search.role.asker');
+	const consultantRoleLabel = translate(
+		'sessionList.toolbar.search.role.consultant'
+	);
 	const foundPeople = React.useMemo(
 		() =>
 			filterSearchPeople(searchPeopleResults, searchValue, {
-				eligibleOnlyWhenBlank: searchPeopleEligibleOnlyWhenBlank
+				eligibleOnlyWhenBlank: searchPeopleEligibleOnlyWhenBlank,
+				// The role labels shown in the rows count as role words.
+				roleLabels: {
+					asker: askerRoleLabel,
+					consultant: consultantRoleLabel
+				}
 			}),
-		[searchPeopleEligibleOnlyWhenBlank, searchPeopleResults, searchValue]
+		[
+			askerRoleLabel,
+			consultantRoleLabel,
+			searchPeopleEligibleOnlyWhenBlank,
+			searchPeopleResults,
+			searchValue
+		]
 	);
 	const filteredPeople = React.useMemo(
 		() =>
