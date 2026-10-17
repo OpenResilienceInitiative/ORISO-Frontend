@@ -87,8 +87,11 @@ export const useLiveCallDevices = (
 			stream?.getTracks().forEach((track) => track.stop());
 		};
 
-		const acquire = async () => {
-			const audio = constraintFor(microphoneId);
+		const acquire = async (
+			micId?: string,
+			camId?: string
+		): Promise<{ stream: MediaStream; cameraMissing: boolean }> => {
+			const audio = constraintFor(micId);
 			if (modality === 'audio') {
 				return {
 					stream: await mediaDevices!.getUserMedia({
@@ -102,13 +105,15 @@ export const useLiveCallDevices = (
 				return {
 					stream: await mediaDevices!.getUserMedia({
 						audio,
-						video: constraintFor(cameraId)
+						video: constraintFor(camId)
 					}),
 					cameraMissing: false
 				};
 			} catch (error) {
-				// No webcam must not stop a person who can be heard.
 				if (!isMissing(error)) throw error;
+				// The chosen camera may be unplugged: any camera first.
+				if (camId) return acquire(micId, undefined);
+				// No webcam must not stop a person who can be heard.
 				return {
 					stream: await mediaDevices!.getUserMedia({
 						audio,
@@ -119,6 +124,19 @@ export const useLiveCallDevices = (
 			}
 		};
 
+		// The chosen microphone may be unplugged: any microphone rather than a
+		// "no device" blocker that a retry would only repeat.
+		const acquireAny = async () => {
+			try {
+				return await acquire(microphoneId, cameraId);
+			} catch (error) {
+				if (microphoneId && isMissing(error)) {
+					return acquire(undefined, cameraId);
+				}
+				throw error;
+			}
+		};
+
 		const start = async () => {
 			if (!mediaDevices?.getUserMedia) {
 				setState((s) => ({ ...s, blocker: 'noDevice' }));
@@ -126,7 +144,7 @@ export const useLiveCallDevices = (
 			}
 			let cameraMissing: boolean;
 			try {
-				({ stream, cameraMissing } = await acquire());
+				({ stream, cameraMissing } = await acquireAny());
 			} catch (error) {
 				if (cancelled) return;
 				setState((s) => ({
@@ -139,7 +157,10 @@ export const useLiveCallDevices = (
 				release();
 				return;
 			}
-			const devices = toDevices(await mediaDevices.enumerateDevices());
+			// The list only fills the pickers; the check runs without it.
+			const devices = await mediaDevices
+				.enumerateDevices()
+				.then(toDevices, () => EMPTY);
 			if (cancelled) {
 				release();
 				return;

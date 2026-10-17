@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useEffect, useRef } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -89,9 +90,34 @@ export const SpeakerTest = ({
 	sinkId,
 	playTone = playTestTone
 }: SpeakerTestProps) => {
+	// Each tone is one attempt; a newer one, another speaker or leaving
+	// makes an older tone's end meaningless.
+	const attempt = useRef(0);
+	const toneEnded = useRef(false);
+	const yes = useRef<HTMLButtonElement>(null);
+	useEffect(() => {
+		attempt.current += 1;
+	}, [sinkId]);
+	useEffect(
+		() => () => {
+			attempt.current += 1;
+		},
+		[]
+	);
+	// The play button disappears with the question; the keyboard follows.
+	useEffect(() => {
+		if (state === 'asking' && toneEnded.current) yes.current?.focus();
+		toneEnded.current = false;
+	}, [state]);
+
 	const play = () => {
+		const mine = ++attempt.current;
 		onChange('playing');
-		void playTone(sinkId).then(() => onChange('asking'));
+		void playTone(sinkId).then(() => {
+			if (mine !== attempt.current) return;
+			toneEnded.current = true;
+			onChange('asking');
+		});
 	};
 	const textSx = {
 		fontSize: 14,
@@ -120,6 +146,7 @@ export const SpeakerTest = ({
 					{copy.speakerQuestion}
 				</Typography>
 				<Button
+					ref={yes}
 					size="small"
 					variant="contained"
 					onClick={() => onChange('heard')}
