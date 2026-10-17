@@ -2067,7 +2067,7 @@
 			"legendSound": "Fenêtre sur cet appareil, avec ou sans son",
 			"legendEmail": "Avis dans votre boîte de réception, sans le contenu du message",
 			"quickHeading": "Autres boutons de filtre",
-			"quickNote": "Ces boutons trient seulement la liste. Ils ne déclenchent aucune notification.",
+			"quickNote": "Ces boutons filtrent la liste ou ouvrent une action. Ils ne déclenchent aucune notification.",
 			"presentationHeading": "Apparence des boutons de filtre",
 			"soundWithTone": "Fenêtre avec son",
 			"soundSilent": "Fenêtre sans son",

@@ -2088,7 +2088,7 @@
 			"legendSound": "Pop-up auf diesem Gerät, mit Ton oder stumm",
 			"legendEmail": "Hinweis ins Postfach, ohne Inhalt der Nachricht",
 			"quickHeading": "Weitere Filter-Knöpfe",
-			"quickNote": "Diese Knöpfe sortieren nur die Liste. Sie lösen keine Benachrichtigung aus.",
+			"quickNote": "Diese Knöpfe filtern die Liste oder öffnen eine Aktion. Sie lösen keine Benachrichtigung aus.",
 			"presentationHeading": "Darstellung der Filter-Knöpfe",
 			"soundWithTone": "Pop-up mit Ton",
 			"soundSilent": "Pop-up ohne Ton",

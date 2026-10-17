@@ -92,7 +92,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	kindsHeading: 'Ereignisarten',
 	quickHeading: 'Weitere Filter-Knöpfe',
 	quickNote:
-		'Diese Knöpfe sortieren nur die Liste. Sie lösen keine Benachrichtigung aus.',
+		'Diese Knöpfe filtern die Liste oder öffnen eine Aktion. Sie lösen keine Benachrichtigung aus.',
 	presentationHeading: 'Darstellung der Filter-Knöpfe',
 	soundWithTone: 'Pop-up mit Ton',
 	soundSilent: 'Pop-up ohne Ton',

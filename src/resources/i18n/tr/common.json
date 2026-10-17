@@ -2067,7 +2067,7 @@
 			"legendSound": "Bu cihazda açılır pencere, sesli veya sessiz",
 			"legendEmail": "Gelen kutusuna bildirim, mesaj içeriği olmadan",
 			"quickHeading": "Diğer filtre düğmeleri",
-			"quickNote": "Bu düğmeler yalnızca listeyi sıralar. Bildirim göndermez.",
+			"quickNote": "Bu düğmeler listeyi filtreler veya bir işlem açar. Bildirim göndermez.",
 			"presentationHeading": "Filtre düğmelerinin görünümü",
 			"soundWithTone": "Sesli açılır pencere",
 			"soundSilent": "Sessiz açılır pencere",

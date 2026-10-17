@@ -2064,7 +2064,7 @@
 			"legendSound": "Pop-up on this device, with a sound or silent",
 			"legendEmail": "Notice to your inbox, never the message content",
 			"quickHeading": "More filter buttons",
-			"quickNote": "These buttons only sort the list. They never notify you.",
+			"quickNote": "These buttons filter the list or open an action. They never notify you.",
 			"presentationHeading": "How the filter buttons look",
 			"soundWithTone": "Pop-up with sound",
 			"soundSilent": "Pop-up without sound",
