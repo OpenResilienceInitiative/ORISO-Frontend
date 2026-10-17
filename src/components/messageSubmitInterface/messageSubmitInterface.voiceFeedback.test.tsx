@@ -666,6 +666,27 @@ describe('voice note review before sending (#1142)', () => {
 		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
 	});
 
+	it('drops a take recorded before the supervision route resolved', async () => {
+		const view = render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		expect(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		).toBeTruthy();
+
+		// SessionItemComponent resolves the supervisor route asynchronously.
+		view.rerender(
+			<Composer isSupervisor supervisionRoomId="!feedback:example.org" />
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('button', { name: 'voicePlayer.play' })
+			).toBeNull()
+		);
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
 	it('revokes the preview URL when the composer unmounts during the review', async () => {
 		const view = render(<Composer />);
 		await startRecording();
