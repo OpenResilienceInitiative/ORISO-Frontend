@@ -1525,6 +1525,9 @@
 				"close": "Suche schließen",
 				"clear": "Suche leeren",
 				"emptyPeople": "Keine passenden Personen gefunden.",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuche es später erneut.",
+				"handoverPeopleHint": "Hier siehst du nur Kolleg:innen, deren Fälle du über „Zugriff anfragen“ übernehmen kannst. Das hängt von deiner Abteilung und deinen Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenze die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
@@ -1532,7 +1535,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -2373,6 +2377,14 @@
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+		},
+		"bulkBar": {
+			"emptyHint": "Wähle mindestens einen Fall aus."
+		},
+		"curtain": {
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
+			}
 		}
 	},
 	"supervisorDialog": {

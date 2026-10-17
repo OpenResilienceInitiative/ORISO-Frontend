@@ -3676,7 +3676,10 @@
 			},
 			"reason": {
 				"title": "Lütfen bir neden seçin",
-				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz."
+				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz.",
+				"empty": "Danışma merkeziniz için vaka devri nedeni tanımlanmamış. Lütfen yöneticinize başvurun.",
+				"loadFailed": "Vaka devri nedenleri yüklenemedi.",
+				"retry": "Tekrar dene"
 			},
 			"describe": {
 				"title": "Lütfen nedeni açıklayın",
@@ -3715,6 +3718,13 @@
 			"saved": "Ayar kaydedildi.",
 			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
 			"loading": "Ayar yükleniyor …"
+		},
+		"bulkBar": {
+			"label": "Vaka seçimi",
+			"selected": "{{count}} tanesi seçildi",
+			"continue": "Devam",
+			"cancel": "İptal",
+			"emptyHint": "En az bir vaka seçin."
 		}
 	},
 	"supervisorDialog": {
@@ -4126,6 +4136,10 @@
 				"clear": "Aramayı temizle",
 				"removeSelectedPerson": "{{name}} kişisini kaldır",
 				"emptyPeople": "Eşleşen kişi bulunamadı.",
+				"peopleLoading": "Meslektaşlar yükleniyor …",
+				"peopleLoadError": "Meslektaşlar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+				"handoverPeopleHint": "Burada yalnızca vakalarını «Erişim talep et» ile devralabileceğiniz meslektaşlar gösterilir. Bu, bölümünüze ve konularınıza bağlıdır.",
+				"handoverPeopleCapped": "Yüklenebilenden daha fazla vaka var – lütfen aramayı daraltın.",
 				"emptyTypes": "Kullanılabilir sohbet türü yok.",
 				"emptyTopics": "Danışma merkezleriniz için konu bulunamadı.",
 				"tabs": {
@@ -4138,7 +4152,15 @@
 				"role": {
 					"asker": "Danışan",
 					"consultant": "Danışman"
-				}
+				},
+				"internalName": "Dahili ad",
+				"publicName": "Herkese açık ad",
+				"agencyGroup": "Danışma merkezi",
+				"topicGroup": "Konu",
+				"agencyFallback": "Danışma merkezi {{id}}",
+				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
+				"removeFilters": "Filtreleri kaldır",
+				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru"
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"

@@ -3642,7 +3642,10 @@
 			},
 			"reason": {
 				"title": "Please select a reason",
-				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry",
+				"empty": "No case handover reasons are set up for your counseling center. Please contact your administrator.",
+				"loadFailed": "The reasons for a case handover could not be loaded.",
+				"retry": "Try again"
 			},
 			"describe": {
 				"title": "Please describe the reason",
@@ -3681,6 +3684,13 @@
 			"saved": "Setting saved.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"loading": "Loading setting …"
+		},
+		"bulkBar": {
+			"label": "Case selection",
+			"selected": "{{count}} selected",
+			"continue": "Continue",
+			"cancel": "Cancel",
+			"emptyHint": "Select at least one case."
 		}
 	},
 	"supervisorDialog": {
@@ -4100,6 +4110,10 @@
 				"clear": "Clear search",
 				"removeSelectedPerson": "Remove {{name}}",
 				"emptyPeople": "No matching people found.",
+				"peopleLoading": "Loading colleagues …",
+				"peopleLoadError": "The colleagues could not be loaded. Please try again later.",
+				"handoverPeopleHint": "Only colleagues whose cases you can take over via “Request access” are shown here. This depends on your department and topics.",
+				"handoverPeopleCapped": "More cases exist than could be loaded – please refine the search.",
 				"emptyTypes": "No chat types available.",
 				"emptyTopics": "No topics found for your counseling centers.",
 				"tabs": {
@@ -4112,7 +4126,15 @@
 				"role": {
 					"asker": "Advice seeker",
 					"consultant": "Counsellor"
-				}
+				},
+				"internalName": "Internal name",
+				"publicName": "Public name",
+				"agencyGroup": "Counseling center",
+				"topicGroup": "Topic",
+				"agencyFallback": "Counseling center {{id}}",
+				"filteredOutAll": "Your search and filters hide every consultation.",
+				"removeFilters": "Remove filters",
+				"removeFiltersKeepSearch": "Remove filters, keep search"
 			},
 			"menu": {
 				"ariaLabel": "List options"

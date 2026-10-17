@@ -93,6 +93,37 @@ export const ErrorState: Story = {
 	)
 };
 
+/** No reasons configured: a message instead of a Next that never enables. */
+export const NoReasonsAvailable: Story = {
+	render: () => <CurtainPlayground initialStep="reason" noReasons />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('status')).toHaveTextContent(
+			/keine Gründe|No case handover reasons/
+		);
+		await expect(
+			canvas.queryByRole('button', { name: /Weiter|Next/ })
+		).toBeNull();
+	}
+};
+
+/** Reasons request failed: its own message and a retry, not "none configured". */
+export const ReasonsLoadFailed: Story = {
+	render: () => <CurtainPlayground initialStep="reason" reasonsFail />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('alert')).toHaveTextContent(
+			/nicht geladen|could not be loaded/
+		);
+		await expect(canvas.queryByRole('status')).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Erneut versuchen|Try again/ })
+		);
+		await expect(canvas.queryByRole('alert')).toBeNull();
+		await expect(canvas.getAllByRole('radio').length).toBeGreaterThan(0);
+	}
+};
+
 /** Full wizard walk: intro → reason (radio) → describe → submit → pending. */
 export const WizardWalkthrough: Story = {
 	render: () => <CurtainPlayground />,
