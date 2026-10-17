@@ -346,7 +346,10 @@ describe('resuming a confirmed live-chat identity (#1404)', () => {
 			vi.clearAllMocks();
 			render(<LiveChatEntryRoom sessionId={17} />);
 			await waitFor(() =>
-				expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(17)
+				expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(
+					17,
+					expect.any(AbortSignal)
+				)
 			);
 			expect(screen.queryAllByRole('radio')).toHaveLength(0);
 			expect(apiPutSessionData).not.toHaveBeenCalled();

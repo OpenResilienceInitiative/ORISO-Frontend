@@ -186,3 +186,77 @@ describe('LiveChatEntryRoom — "Ich warte" with a session (#1270)', () => {
 		expect(screen.getByText(NORMAL_HEADLINE)).toBeTruthy();
 	});
 });
+
+describe('LiveChatEntryRoom — a hanging poll in the waiting room (#1270)', () => {
+	/* Every poll stays unanswered until the test resolves it. */
+	const deferredPolls = () => {
+		const pending: Array<(value: never) => void> = [];
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					pending.push(resolve as (value: never) => void);
+				})
+		);
+		return pending;
+	};
+	const enterWaitingRoom = async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue({
+			available: true,
+			numAvailableConsultants: 1
+		});
+		render(
+			<LiveChatEntryRoom
+				invite={{
+					topicId: 3,
+					consultingTypeId: 1,
+					redeem: () => Promise.resolve(42)
+				}}
+				topicSlug="U25"
+			/>
+		);
+		await flush();
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+	};
+
+	it('aborts a poll that hangs for 15 s and asks again on the next tick', async () => {
+		const pending = deferredPolls();
+		await enterWaitingRoom();
+		expect(pending).toHaveLength(1);
+
+		await flush(12000);
+		expect(pending).toHaveLength(1);
+
+		await flush(3000);
+		const signal = vi.mocked(apiGetAnonymousEnquiryDetails).mock
+			.calls[0][1] as AbortSignal | undefined;
+		expect(signal?.aborted).toBe(true);
+
+		await flush(1000);
+		expect(pending).toHaveLength(2);
+	});
+
+	it('keeps the last known state: the late answer of an abandoned poll is ignored', async () => {
+		const pending = deferredPolls();
+		await enterWaitingRoom();
+		await flush(16000);
+		expect(pending).toHaveLength(2);
+
+		await act(async () => {
+			pending[1](details(1) as never);
+		});
+		/* Two zeros in a row would confirm "nobody is live" - the abandoned
+		   request's zero must not be one of them. */
+		await act(async () => {
+			pending[0](details(0) as never);
+		});
+		await flush(4000);
+		await act(async () => {
+			pending[2](details(0) as never);
+		});
+		await flush();
+
+		expect(screen.queryByText(NOBODY_HEADLINE)).toBeNull();
+		expect(screen.getByText(NORMAL_HEADLINE)).toBeTruthy();
+	});
+});

@@ -1231,16 +1231,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
 		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
-		/* A request may outlive the 4 s interval (`fetchData` allows 30 s) and
-		   overlapping answers can land out of order, so only one poll is in
-		   flight: the zeros below are counted in the order they were asked
-		   (#1270). */
+		/* A request may outlive the 4 s interval and overlapping answers can
+		   land out of order, so only one poll is in flight: the zeros below
+		   are counted in the order they were asked (#1270). A hung request is
+		   aborted after 15 s and the next tick goes out normally. */
 		const pollOnce = createSingleFlightPoll();
 
-		const fetchPoll = () => {
-			return apiGetAnonymousEnquiryDetails(sessionId)
+		const fetchPoll = (signal: AbortSignal) => {
+			return apiGetAnonymousEnquiryDetails(sessionId, signal)
 				.then((details) => {
-					if (cancelled) return;
+					/* A poll given up on after 15 s is stale: keep the last
+					   known state. */
+					if (cancelled || signal.aborted) return;
 					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
 					   Consultants can never see or accept it — stop polling
 					   and show the closed notice instead of queue position

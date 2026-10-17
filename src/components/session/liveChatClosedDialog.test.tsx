@@ -348,6 +348,49 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		expect(pending).toHaveLength(2);
 	});
 
+	/* A request that hangs must not hold the next sample for fetchData's 30 s:
+	   after 15 s it is aborted and the next tick asks again. */
+	it('aborts a poll that hangs for 15 s and asks again on the next tick', async () => {
+		const pending = deferredPolls();
+		renderSession(1);
+		await tick(0);
+		await tick(12000);
+		expect(pending).toHaveLength(1);
+
+		await tick(3000);
+		const signal = vi.mocked(apiGetAnonymousEnquiryDetails).mock
+			.calls[0][1] as AbortSignal | undefined;
+		expect(signal?.aborted).toBe(true);
+
+		await tick(1000);
+		expect(pending).toHaveLength(2);
+	});
+
+	it('ignores the late answer of a poll it gave up on, and shows no error', async () => {
+		const pending = deferredPolls();
+		renderSession(1);
+		await tick(0);
+		await tick(16000);
+		expect(pending).toHaveLength(2);
+
+		/* The newer request says somebody is live, the abandoned one then
+		   answers zero. Counted, that zero plus the next one would be two in a
+		   row although the newest state was "somebody". */
+		await act(async () => {
+			pending[1](poll(1));
+		});
+		await act(async () => {
+			pending[0](poll(0));
+		});
+		await tick(4000);
+		expect(pending).toHaveLength(3);
+		await act(async () => {
+			pending[2](poll(0));
+		});
+		expect(dialog()).toBeNull();
+		expect(screen.queryByText(/error/i)).toBeNull();
+	});
+
 	it('does not open on zeros that were not consecutive, however the answers arrive', async () => {
 		const pending = deferredPolls();
 		renderSession(1);

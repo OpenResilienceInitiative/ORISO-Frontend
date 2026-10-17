@@ -472,10 +472,12 @@ const LiveChatEntryRoomContent = ({
 		/* One poll in flight: overlapping answers could land out of order and
 		   feed the confirmed-zero rule non-consecutive samples (#1270). */
 		const pollOnce = createSingleFlightPoll();
-		const fetchPoll = () =>
-			apiGetAnonymousEnquiryDetails(sessionId)
+		const fetchPoll = (signal: AbortSignal) =>
+			apiGetAnonymousEnquiryDetails(sessionId, signal)
 				.then((d) => {
-					if (stop) return;
+					/* A poll given up on after 15 s is stale: keep the last
+					   known state. */
+					if (stop || signal.aborted) return;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
 					const nextAvailable =
