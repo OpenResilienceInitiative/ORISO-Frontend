@@ -227,7 +227,14 @@ pond.js noise this suite has been carrying.
    `createElementCallRoom` exists for, and the case that was silently
    falling back to initials.
 
-Steps 4, 5 and 6 need two accounts and a deployed fork; none of them can be
+7. **On a phone.** Make the same 1:1 on a phone in portrait: it must be the
+   Einzelgespräch, with the seam and the backdrop, not a rectangular tile.
+   Turn the phone to landscape: a spotlight is correct there — upstream turns
+   a flat window into one on purpose — but the person in it must be their own
+   form rather than a black rectangle. With two people, check the view rail
+   offers "Conversation" and "Spotlight" and nothing that does nothing.
+
+Steps 4 to 7 need two accounts and a deployed fork; none of them can be
 reached from this container, and #780 should not be called covered until
 somebody has run them and written down what happened.
 

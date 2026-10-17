@@ -310,3 +310,74 @@ say why: a sanitiser dependency (the pass does the job without diverging
 from the host's own `AnimalAvatar`), and a 60-second invite timer for an
 unanswered group call (the narrower `finishIfUnattended` covers the
 reachable case without a timer nobody asked for).
+
+---
+
+## 9. The design on a phone
+
+The second review round found that the integration reached only two of
+upstream's layout entries. I first wrote that up as a scope gap for somebody
+else to schedule, which was wrong: the handoff draws all three arrangements at
+phone width — `Einzel-handy`, `Hain-Handy`, `Felder-Handy` — so phones were
+part of the design this work was asked to finish, with no decision left for
+anybody to make.
+
+What was actually happening, read branch by branch out of `layoutMedia$`:
+
+| window mode                  | people                        | layout               | the design?          |
+| ---------------------------- | ----------------------------- | -------------------- | -------------------- |
+| normal                       | 2                             | `one-on-one`         | yes                  |
+| normal                       | 3+                            | `grid`               | yes                  |
+| **narrow (phone, portrait)** | **2**                         | `spotlight-expanded` | **no**               |
+| narrow                       | 3+ under the mobile threshold | `grid`               | yes                  |
+| narrow                       | 3+ over it                    | `spotlight-portrait` | **no**               |
+| flat (phone, landscape)      | any                           | spotlight layouts    | **no**               |
+| pip                          | any                           | `pip`                | no, and correctly so |
+
+So one advice seeker and one counsellor on a phone — the most common call this
+platform has — saw upstream's rectangular tiles, with a view rail claiming
+otherwise.
+
+Three changes close it:
+
+1. **The arrangement follows the call, not the window.** With the design on,
+   the choice is made the same way at every size: by the grid mode and the
+   number of people. Screen sharing is untouched, because
+   `gridLayoutMedia$` puts a share in the spotlight slot and the grove renders
+   that slot in its fixed layer exactly as upstream's grid does.
+   Picture-in-picture stays upstream's — it is a thumbnail of a call happening
+   elsewhere and the handoff draws nothing for it. The flag is a
+   `CallViewModelOptions` field, not a `getUrlParams()` call inside the view
+   model: a view model that reaches for `window.location` cannot be reasoned
+   about from its arguments.
+
+2. **The spotlight carries the person.** Landscape turning into spotlight mode
+   is upstream's deliberate gesture — "flipping your phone into landscape is a
+   quick way of maximising the spotlight tile" — and the spotlight is one of
+   the three views ORISO's own rail offers, so it is the right arrangement
+   there rather than a missing one. What was wrong is that its big tile was a
+   black rectangle while the rail beside it showed everybody as a form.
+   `SpotlightTile` now carries the identity for a person. No `TileShape` and
+   none wanted: the spotlight is one form filling the stage. A shared screen is
+   left alone — structurally, since the identity is attached in
+   `SpotlightUserMediaItem` and a `ScreenShareViewModel` never goes through it.
+
+3. **The rail cannot lie.** At exactly two people the stage is the
+   Einzelgespräch whichever arrangement is selected, so Kreis and Kacheln were
+   both no-ops: the radio moved and the stage did not. (The fact was written
+   down in `measureHainOverlap.mjs` and used to rule out an unreachable overlap
+   row; nobody asked what the control does in that state.) The rail now names
+   the arrangement that is on and offers the one real alternative. Its default
+   is still the handoff's three — the Einzelgespräch is not a fourth choice but
+   the name of the one two people are already in.
+
+A marble test walks all four window shapes beside the existing "layout reacts
+to window size" test; the only difference between the two is the host asking
+for the design.
+
+### What is still not verified
+
+No live call has been made against any of this, on a phone or anywhere else.
+There is no homeserver, no LiveKit and no Docker daemon in this environment.
+The reviewer plans on both pull requests list what needs two accounts and a
+deployed fork, and a phone is now on that list.
