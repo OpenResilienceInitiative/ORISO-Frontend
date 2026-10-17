@@ -92,4 +92,72 @@ describe('useSaveEmailSetting', () => {
 			feedbackNotificationEnabled: false
 		});
 	});
+	const renderSave = (reloadUserData: () => Promise<unknown>) =>
+		renderHook(() => useSaveEmailSetting(), {
+			wrapper: ({ children }: { children: React.ReactNode }) => (
+				<UserDataContext.Provider
+					value={{ userData: snapshot, reloadUserData } as never}
+				>
+					{children}
+				</UserDataContext.Provider>
+			)
+		}).result.current;
+
+	it('builds on a stored change even when the reload after it failed', async () => {
+		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
+		const reload = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('offline'))
+			// Later reloads succeed (and drain the shared queue state).
+			.mockResolvedValue(undefined);
+		const save = renderSave(reload);
+		let first: boolean | undefined;
+		await act(async () => {
+			first = await save(
+				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
+				false
+			);
+		});
+		expect(first).toBe(true);
+		// userData is still the old snapshot: the next PATCH must keep the change.
+		await act(async () => {
+			await save(
+				{ kind: 'settings', field: 'feedbackNotificationEnabled' },
+				false
+			);
+		});
+		expect(
+			vi.mocked(apiPatchUserData).mock.calls[1][0].emailNotifications
+				.settings
+		).toEqual({
+			appointmentNotificationEnabled: false,
+			feedbackNotificationEnabled: false
+		});
+	});
+
+	it('still resolves false when the PATCH and the reload both fail', async () => {
+		vi.mocked(apiPatchUserData).mockRejectedValue(new Error('offline'));
+		const save = renderSave(
+			vi
+				.fn()
+				.mockRejectedValueOnce(new Error('offline'))
+				.mockResolvedValue(undefined)
+		);
+		let result: boolean | undefined;
+		await act(async () => {
+			result = await save(
+				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
+				false
+			);
+		});
+		expect(result).toBe(false);
+		// Drain the shared queue state for later tests.
+		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
+		await act(async () => {
+			await save(
+				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
+				true
+			);
+		});
+	});
 });

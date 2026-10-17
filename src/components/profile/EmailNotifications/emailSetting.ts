@@ -100,14 +100,19 @@ export const useSaveEmailSetting = () => {
 					latestStored = base ?? null;
 					return false;
 				} finally {
+					// Always re-read: what is stored is what the switch must show.
+					// A failed reload keeps the save's result and the last
+					// known stored state: the context may now be stale.
+					let reloaded = false;
 					try {
-						// Always re-read: what is stored is what the switch must show.
 						const fresh = await reloadUserData?.();
 						if (fresh) latestStored = fresh;
-					} finally {
-						queuedWrites -= 1;
-						if (queuedWrites === 0) latestStored = null;
+						reloaded = true;
+					} catch {
+						// Keep latestStored: the next write builds on it.
 					}
+					queuedWrites -= 1;
+					if (queuedWrites === 0 && reloaded) latestStored = null;
 				}
 			});
 			writeQueue = write.catch(() => undefined);
