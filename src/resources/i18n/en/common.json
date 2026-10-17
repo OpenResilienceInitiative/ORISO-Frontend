@@ -880,15 +880,36 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
+			"error": {
+				"recipientsRequired": "Please select at least one colleague.",
+				"recipientUnknown": "A selected person is no longer available. Remove them from the selection and try again.",
+				"outOfScope": "At least one selected person is outside the range your organisation allows for internal chats. Nothing was created.",
+				"membershipFailed": "The room could not be set up with all selected people. Nothing was created. Please try again.",
+				"encryptionRequired": "Internal chats with selected people are only available encrypted, and encryption is currently unavailable. Nothing was created.",
+				"disabled": "Internal chats are not enabled for your counselling centre.",
+				"unknown": "The room could not be created. Please try again."
+			},
 			"nameLabel": "Internal name",
+			"noColleagues": "No colleagues to choose from",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
+			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
 			"removePerson": "Remove {{name}}",
+			"reusedNotice": {
+				"title": "Existing room opened",
+				"text": "A room with exactly these people already existed. It was opened and no new one was created."
+			},
+			"scope": {
+				"AGENCY": "You can pick colleagues from your counselling centre.",
+				"TENANT": "You can pick colleagues from your organisation.",
+				"PLATFORM": "You can pick colleagues from the whole platform."
+			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
 			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
 			"title": "Internal discussion",
 			"togglePersonList": "Open or close the person list",
+			"tooMany": "You can select up to {{max}} people.",
 			"vacatedHint": "no longer at this counselling centre"
 		},
 		"circle": {

@@ -892,15 +892,36 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
+			"error": {
+				"recipientsRequired": "Bitte wählen Sie mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Eine ausgewählte Person ist nicht mehr verfügbar. Entfernen Sie sie aus der Auswahl und versuchen Sie es erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person liegt außerhalb des Bereichs, den Ihre Organisation für Interna erlaubt. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuchen Sie es erneut.",
+				"encryptionRequired": "Interna mit ausgewählten Personen gibt es nur verschlüsselt, und die Verschlüsselung ist derzeit nicht verfügbar. Es wurde nichts erstellt.",
+				"disabled": "Interna sind für Ihre Beratungsstelle nicht freigeschaltet.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+			},
 			"nameLabel": "Name Interna",
+			"noColleagues": "Keine Kolleg:innen zur Auswahl",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
+			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",
 			"removePerson": "{{name}} entfernen",
+			"reusedNotice": {
+				"title": "Bestehender Raum geöffnet",
+				"text": "Mit genau diesen Personen gab es schon einen Raum. Er wurde geöffnet, es wurde kein neuer erstellt."
+			},
+			"scope": {
+				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen.",
+				"PLATFORM": "Sie können Kolleg:innen der gesamten Plattform auswählen."
+			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
 			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
 			"title": "Interna besprechen",
 			"togglePersonList": "Personenliste öffnen oder schließen",
+			"tooMany": "Sie können bis zu {{max}} Personen auswählen.",
 			"vacatedHint": "nicht mehr in der Beratungsstelle"
 		},
 		"circle": {

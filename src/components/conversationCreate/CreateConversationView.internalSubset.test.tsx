@@ -1,0 +1,288 @@
+// @vitest-environment jsdom
+import * as React from 'react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	apiCreateInternalSubsetChat,
+	InternalSubsetChatError,
+	INTERNAL_SUBSET_REASON
+} from '../../api/apiCreateInternalSubsetChat';
+import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
+import {
+	apiGetTenantConsultantList,
+	Consultant,
+	fetchAgencyConsultantList
+} from '../../api/apiGetAgencyConsultantList';
+import { useSession } from '../../hooks/useSession';
+import { UserDataContext, SessionsDataContext } from '../../globalState';
+import { CreateConversationView } from './CreateConversationView';
+import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
+
+// react-i18next: identity translator so we can assert on keys.
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string) => key,
+		i18n: { language: 'de', resolvedLanguage: 'de' }
+	})
+}));
+
+const tenantState = vi.hoisted(() => ({
+	tenant: {} as Record<string, unknown>
+}));
+
+// The globalState barrel pulls lottie-web (crashes in jsdom): stub the parts
+// the flow reads.
+vi.mock('../../globalState', async () => {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const react = require('react');
+	const { UserDataContext } = await vi.importActual<any>(
+		'../../globalState/context/UserDataContext'
+	);
+	return {
+		UserDataContext,
+		NotificationsContext: react.createContext(null),
+		SessionsDataContext: react.createContext({ dispatch: () => {} }),
+		UPDATE_SESSIONS: 'UPDATE_SESSIONS',
+		useTenant: () => tenantState.tenant,
+		useTenantState: () => ({ tenant: tenantState.tenant, isLoading: false })
+	};
+});
+vi.mock('../app/navigationHandler', () => ({
+	desktopView: vi.fn(),
+	mobileDetailView: vi.fn(),
+	mobileListView: vi.fn()
+}));
+vi.mock('../../hooks/useResponsive', () => ({
+	useResponsive: () => ({ fromL: true })
+}));
+vi.mock('../../hooks/useSession', () => ({ useSession: vi.fn() }));
+vi.mock('../../api/apiGetAgencyConsultantList', () => ({
+	apiGetTenantConsultantList: vi.fn(),
+	fetchAgencyConsultantList: vi.fn()
+}));
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
+}));
+vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
+	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])
+}));
+vi.mock('../../api/apiGroupChatSettings', () => ({
+	apiCreateGroupChat: vi.fn(),
+	apiUpdateGroupChat: vi.fn()
+}));
+vi.mock('../../api/apiGetSessionRooms', () => ({
+	apiGetSessionRoomsByRoomIds: vi.fn()
+}));
+vi.mock('../../api/apiCreateInternalSubsetChat', async () => {
+	const actual = await vi.importActual<
+		typeof import('../../api/apiCreateInternalSubsetChat')
+	>('../../api/apiCreateInternalSubsetChat');
+	return { ...actual, apiCreateInternalSubsetChat: vi.fn() };
+});
+vi.mock(
+	'../../resources/img/illustrations/conversation/internal-team.png',
+	() => ({ default: 'internal-team.png' })
+);
+vi.mock('../../resources/img/topics', () => ({
+	getTopicCardImage: () => 'topic.png',
+	hasTopicCardImage: () => false,
+	topicSlug: (value: string) => value
+}));
+
+const navigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+	const actual = await vi.importActual<any>('react-router-dom');
+	return {
+		...actual,
+		useNavigate: () => navigate,
+		useLocation: () => ({ state: null }),
+		useParams: () => ({})
+	};
+});
+
+const colleague = (
+	consultantId: string,
+	firstName: string,
+	agencyIds: number[]
+): Consultant => ({
+	consultantId,
+	firstName,
+	lastName: 'Test',
+	displayName: firstName,
+	username: firstName.toLowerCase(),
+	agencies: agencyIds.map((id) => ({ id }))
+});
+
+const sameCentre = colleague('c-same', 'Anna', [5]);
+const otherCentre = colleague('c-other', 'Boris', [9]);
+
+const renderView = () =>
+	render(
+		<UserDataContext.Provider
+			value={{
+				userData: {
+					userId: 'me',
+					agencies: [{ id: 5, name: 'Agency Five' }]
+				}
+			}}
+		>
+			<SessionsDataContext.Provider value={{ dispatch: vi.fn() }}>
+				<CreateConversationView />
+			</SessionsDataContext.Provider>
+		</UserDataContext.Provider>
+	);
+
+const tenantWithScope = (scope?: 'AGENCY' | 'TENANT' | 'PLATFORM') => ({
+	settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] },
+	...(scope && { internalGroupChat: { recipientScope: { value: scope } } })
+});
+
+const openPersonMenu = async () => {
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'groupChat.internal.addPerson'
+		})
+	);
+	return screen.findByRole('listbox');
+};
+
+describe('Interna picker with the recipient scope (#1772)', () => {
+	beforeEach(() => {
+		vi.mocked(useSession).mockReturnValue({
+			session: undefined,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: true
+		} as any);
+		vi.mocked(fetchAgencyConsultantList).mockResolvedValue([sameCentre]);
+		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
+			sameCentre,
+			otherCentre
+		]);
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: []
+		} as any);
+	});
+	afterEach(() => {
+		cleanup();
+		resetCounsellorAgencyFormatsForTests();
+		vi.clearAllMocks();
+	});
+
+	it('offers only colleagues of the counselling centre when the Träger has not widened the scope', async () => {
+		tenantState.tenant = tenantWithScope();
+		renderView();
+
+		const menu = await openPersonMenu();
+
+		await waitFor(() =>
+			expect(within(menu).getByText('Anna Test')).toBeTruthy()
+		);
+		expect(within(menu).queryByText('Boris Test')).toBeNull();
+		expect(fetchAgencyConsultantList).toHaveBeenCalledWith('5');
+		expect(
+			screen.getByText('groupChat.internal.scope.AGENCY', {
+				exact: false
+			})
+		).toBeTruthy();
+	});
+
+	it.each(['TENANT', 'PLATFORM'] as const)(
+		'offers the whole directory for the scope %s',
+		async (scope) => {
+			tenantState.tenant = tenantWithScope(scope);
+			renderView();
+
+			const menu = await openPersonMenu();
+
+			await waitFor(() =>
+				expect(within(menu).getByText('Boris Test')).toBeTruthy()
+			);
+			expect(within(menu).getByText('Anna Test')).toBeTruthy();
+			expect(
+				screen.getByText(`groupChat.internal.scope.${scope}`, {
+					exact: false
+				})
+			).toBeTruthy();
+		}
+	);
+
+	it('sends the picked colleague to a dedicated room and nobody else', async () => {
+		tenantState.tenant = tenantWithScope('TENANT');
+		vi.mocked(apiCreateInternalSubsetChat).mockResolvedValue({
+			matrixRoomId: '!room:matrix.test',
+			chatId: 321,
+			reused: false
+		});
+		renderView();
+
+		const menu = await openPersonMenu();
+		fireEvent.click(await within(menu).findByText('Boris Test'));
+		fireEvent.change(
+			screen.getByLabelText('groupChat.internal.nameLabel'),
+			{ target: { value: 'Fallbesprechung' } }
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.internal.createLabel'
+			})
+		);
+
+		await waitFor(() =>
+			expect(apiCreateInternalSubsetChat).toHaveBeenCalledWith({
+				consultantIds: ['c-other'],
+				agencyId: 5,
+				topic: 'Fallbesprechung'
+			})
+		);
+		expect(apiCreateGroupChat).not.toHaveBeenCalled();
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/!room%3Amatrix.test/321'
+			)
+		);
+	});
+
+	it.each([
+		[
+			INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE,
+			'groupChat.internal.error.outOfScope'
+		],
+		[
+			INTERNAL_SUBSET_REASON.ENCRYPTION_REQUIRED,
+			'groupChat.internal.error.encryptionRequired'
+		]
+	])(
+		'shows the refusal %s as a readable message and stays on the picker',
+		async (reason, key) => {
+			tenantState.tenant = tenantWithScope('TENANT');
+			vi.mocked(apiCreateInternalSubsetChat).mockRejectedValue(
+				new InternalSubsetChatError(reason, 403)
+			);
+			renderView();
+
+			const menu = await openPersonMenu();
+			fireEvent.click(await within(menu).findByText('Anna Test'));
+			fireEvent.change(
+				screen.getByLabelText('groupChat.internal.nameLabel'),
+				{ target: { value: 'Fallbesprechung' } }
+			);
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'groupChat.internal.createLabel'
+				})
+			);
+
+			expect((await screen.findByRole('alert')).textContent).toBe(key);
+			expect(navigate).not.toHaveBeenCalled();
+		}
+	);
+});
