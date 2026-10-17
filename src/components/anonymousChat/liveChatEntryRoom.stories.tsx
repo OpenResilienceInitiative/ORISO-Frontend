@@ -314,6 +314,8 @@ export const StepWaitingNobodyLive: StoryObj = {
 	globals: desktop1440Globals,
 	name: 'B — Warteraum: niemand live',
 	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
 	parameters: full(
 		'Nach „Ich warte" mit Sitzung: dieselbe Warteschlange, aber die Seite sagt ehrlich, dass gerade niemand live ist und dass wir dranbleiben. Gesteuert vom selben bestätigten Signal wie die Geschlossen-Seite (zwei Polls mit 0); sobald `numAvailableConsultants > 0`, springt der Raum von selbst auf „Gleich geht es los." zurück.'
 	)
@@ -322,18 +324,22 @@ export const StepWaitingNobodyLiveEnglish: StoryObj = {
 	globals: { ...desktop1440Globals, locale: 'en' },
 	name: 'B — Warteraum: niemand live (EN)',
 	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
 	parameters: full('The same state in English.')
 };
 export const StepWaitingNobodyLiveMobile: StoryObj = {
 	name: 'B — Warteraum: niemand live, mobil (390)',
 	globals: phone390Globals,
 	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	parameters: { layout: 'fullscreen' }
 };
 export const StepWaitingNobodyLiveMobileEnglish: StoryObj = {
 	name: 'B — Warteraum: niemand live, mobil (390, EN)',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	parameters: { layout: 'fullscreen' }
 };
 export const StepCompanion: StoryObj = {
