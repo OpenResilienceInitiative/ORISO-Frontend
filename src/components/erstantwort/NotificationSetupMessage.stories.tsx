@@ -439,3 +439,21 @@ export const ConsentSuggestionBrowserOnlyPhoneDe: Story = {
 		expect(close.getBoundingClientRect().right).toBeLessThanOrEqual(390);
 	}
 };
+
+export const KeyboardChoiceKeepsFocusDesktopDe: Story = {
+	name: 'Keyboard: choosing e-mail collapses the card and focus lands on "ändern" (DE)',
+	globals: { ...desktop1440Globals, ...DE },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const choice = await canvas.findByRole('button', {
+			name: /Schreiben Sie mir eine E-Mail/
+		});
+		await waitFor(() => expect(choice).toBeVisible());
+		choice.focus();
+		await userEvent.keyboard('{Enter}');
+		const change = await canvas.findByRole('button', {
+			name: 'Benachrichtigung ändern'
+		});
+		await waitFor(() => expect(change).toHaveFocus());
+	}
+};

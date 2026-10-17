@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { useContext, useEffect, useRef, useState } from 'react';
+import {
+	useContext,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { IconButton, Link } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
@@ -142,11 +148,43 @@ export const NotificationSetupCollapse = ({
 		}
 	}, [active, done, bothPending, opened]);
 
+	// Any collapse (the X, a chosen channel, an account change) moves keyboard
+	// focus to "ändern" when it was inside the card, before the browser drops
+	// it with the hidden choices.
+	// A choice disables the options while it saves, so the browser may already
+	// have dropped focus to the body when the collapse arrives: remember whether
+	// focus was last in the card, until the person focuses or clicks elsewhere.
+	const focusLastInCard = useRef(false);
 	useEffect(() => {
-		if (collapsed && focusChangeNext.current) {
+		const track = (event: Event) => {
+			focusLastInCard.current = !!root.current?.contains(
+				event.target as Node
+			);
+		};
+		document.addEventListener('focusin', track);
+		document.addEventListener('pointerdown', track);
+		return () => {
+			document.removeEventListener('focusin', track);
+			document.removeEventListener('pointerdown', track);
+		};
+	}, []);
+	const wasCollapsed = useRef(collapsed);
+	useLayoutEffect(() => {
+		const justCollapsed = collapsed && !wasCollapsed.current;
+		wasCollapsed.current = collapsed;
+		const active = document.activeElement;
+		const focusDropped = !active || active === document.body;
+		if (
+			justCollapsed &&
+			(focusChangeNext.current ||
+				root.current?.contains(active) ||
+				(focusDropped && focusLastInCard.current))
+		) {
 			focusChangeNext.current = false;
 			change.current?.focus();
 		}
+	}, [collapsed]);
+	useEffect(() => {
 		// "ändern" is unmounted when the setup opens; keep keyboard focus inside the message.
 		if (!collapsed && focusSetupNext.current) {
 			focusSetupNext.current = false;

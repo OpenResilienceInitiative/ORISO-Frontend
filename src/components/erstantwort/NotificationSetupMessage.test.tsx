@@ -420,6 +420,45 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		);
 	});
 
+	it('hands keyboard focus to "change" when a channel chosen from the initially open setup collapses it (#1767 review)', async () => {
+		mount(noChannel);
+		const choice = screen.getByRole('button', { name: EMAIL_CHOICE });
+		choice.focus();
+
+		fireEvent.click(choice, { detail: 0 });
+
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByRole('button', { name: CHANGE })
+			)
+		);
+	});
+
+	it('still hands focus to "change" when the browser dropped it while the choice was saving', async () => {
+		mount(noChannel);
+		const choice = screen.getByRole('button', { name: EMAIL_CHOICE });
+		choice.focus();
+		fireEvent.click(choice, { detail: 0 });
+		// A disabled option loses focus to the body.
+		choice.blur();
+
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByRole('button', { name: CHANGE })
+			)
+		);
+	});
+
+	it('does not steal focus when the setup collapses for a channel chosen elsewhere', async () => {
+		mount(noChannel);
+		const choice = screen.getByRole('button', { name: EMAIL_CHOICE });
+
+		fireEvent.click(choice, { detail: 0 });
+
+		await screen.findByRole('button', { name: CHANGE });
+		expect(document.activeElement).toBe(document.body);
+	});
+
 	it('keeps keyboard focus in the message when "change" opens the setup again', async () => {
 		mount(emailOn);
 		const change = screen.getByRole('button', { name: CHANGE });
