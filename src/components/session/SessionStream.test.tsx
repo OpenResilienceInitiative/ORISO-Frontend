@@ -664,6 +664,75 @@ describe('SessionStream Matrix room lifecycle', () => {
 			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
 		});
 
+		// The per-request URL already scopes the answer, and requestId is optional
+		// on CaseHandoverStatus: only a non-null id that differs is a mismatch.
+		it.each([undefined, null])(
+			'accepts a successful decision response whose requestId is absent (%s)',
+			async (absent) => {
+				vi.mocked(
+					apiDecideCaseHandoverClientConsent
+				).mockResolvedValueOnce({
+					sessionId: 1,
+					requestId: absent,
+					status: 'GRANTED',
+					canViewContent: true,
+					clientConsentRequired: false
+				} as never);
+				renderSessionStream({
+					isGroup: false,
+					notificationFeed: [consentNotification()]
+				});
+
+				await clickApprove();
+
+				await expectCardSettled('caseHandover.consent.info.granted');
+				expect(mocks.markNotificationAsRead).toHaveBeenCalledWith(
+					'1481'
+				);
+			}
+		);
+
+		it.each([undefined, null])(
+			'accepts a reconcile read whose requestId is absent after a failed decision (%s)',
+			async (absent) => {
+				vi.mocked(
+					apiDecideCaseHandoverClientConsent
+				).mockRejectedValueOnce(new Error('CATCH_ALL'));
+				closedAfterTheDecision({
+					requestId: absent,
+					status: 'GRANTED',
+					canViewContent: true
+				});
+				renderSessionStream({
+					isGroup: false,
+					notificationFeed: [consentNotification()]
+				});
+
+				await clickApprove();
+
+				await expectCardSettled('caseHandover.consent.info.granted');
+				expect(mocks.markNotificationAsRead).toHaveBeenCalledWith(
+					'1481'
+				);
+			}
+		);
+
+		it('settles on load from a closed status whose requestId is absent', async () => {
+			mocks.getCaseHandoverRequestStatus.mockResolvedValue(
+				requestStatus({
+					requestId: undefined,
+					status: 'CLIENT_CONSENT_DECLINED'
+				})
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await expectCardSettled('caseHandover.consent.info.closed');
+			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
+		});
+
 		it.each(['FORBIDDEN', 'NO_MATCH'])(
 			'keeps the controls and the error when the status read is refused (%s)',
 			async (refusal) => {

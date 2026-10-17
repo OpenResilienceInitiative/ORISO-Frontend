@@ -1369,6 +1369,21 @@ export const SessionStream = ({
 	};
 
 	/**
+	 * A status answers this card when it names this session and does not name
+	 * another request. `requestId` is optional on CaseHandoverStatus and the
+	 * per-request URL already scopes the answer, so an absent id is accepted;
+	 * only a non-null id that differs is a mismatch.
+	 */
+	const isStatusOfConsentRequest = (
+		status: CaseHandoverStatus | undefined,
+		sessionId: number,
+		requestId: number
+	): status is CaseHandoverStatus =>
+		!!status?.status &&
+		status.sessionId === sessionId &&
+		(status.requestId == null || status.requestId === requestId);
+
+	/**
 	 * The server state of exactly this consent request, read through the
 	 * per-request endpoint an advice seeker is allowed to call (the session-level
 	 * status is consultant-only and answers 403). A status that names another
@@ -1379,11 +1394,7 @@ export const SessionStream = ({
 		requestId: number
 	) =>
 		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
-			if (
-				!status?.status ||
-				status.sessionId !== sessionId ||
-				status.requestId !== requestId
-			) {
+			if (!isStatusOfConsentRequest(status, sessionId, requestId)) {
 				throw new Error('Status does not belong to this request');
 			}
 			return status;
@@ -1460,9 +1471,11 @@ export const SessionStream = ({
 		apiDecideCaseHandoverClientConsent(sessionId, requestId, approved)
 			.then((confirmedStatus) => {
 				if (
-					!confirmedStatus?.status ||
-					confirmedStatus.sessionId !== sessionId ||
-					confirmedStatus.requestId !== requestId
+					!isStatusOfConsentRequest(
+						confirmedStatus,
+						sessionId,
+						requestId
+					)
 				) {
 					throw new Error(
 						'Consent response does not match the request'
