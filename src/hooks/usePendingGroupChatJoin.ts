@@ -69,9 +69,9 @@ export const usePendingGroupChatJoin = (
 		userData?.grantedAuthorities,
 		isAccountSetupPending(userData)
 	]);
-	const currentScope = useRef({ key: scopeKey });
+	const currentScope = useRef({ key: scopeKey, tenantId: tenant?.id });
 	if (currentScope.current.key !== scopeKey)
-		currentScope.current = { key: scopeKey };
+		currentScope.current = { key: scopeKey, tenantId: tenant?.id };
 	const scope = currentScope.current;
 	const mounted = useRef(false);
 	const inFlight = useRef<typeof scope | null>(null);
@@ -100,10 +100,25 @@ export const usePendingGroupChatJoin = (
 		},
 		[scope]
 	);
+	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
+		() => new URLSearchParams(window.location.search).get('gcid')
+	);
 	const assign = useCallback(
 		async (gcid: string, operationScope: typeof scope): Promise<void> => {
 			const isCurrent = () =>
 				mounted.current && currentScope.current === operationScope;
+			/* The scope changed while the request ran, so its answer is
+			   discarded. The waiting room still waits on the link. After a
+			   profile refresh in the same tenant, join it again in the current
+			   scope. A link from another tenant is dropped; it is settled so
+			   that the gate still opens. */
+			const requeueIfStale = () => {
+				if (!mounted.current || currentScope.current === operationScope)
+					return;
+				if (currentScope.current.tenantId === operationScope.tenantId)
+					setPendingGroupChatId(gcid);
+				else setSettled(true);
+			};
 			if (!isCurrent() || inFlight.current === operationScope) return;
 			inFlight.current = operationScope;
 			// Retire this operation's previous notice before the next HTTP result.
@@ -120,8 +135,12 @@ export const usePendingGroupChatJoin = (
 			const entryRoom = groupEntryRoomPath(invite?.seriesId ?? gcid);
 			try {
 				const assigned = await joinGroupChat(gcid);
-				if (isCurrent()) setSettled(true);
-				if (assigned && isCurrent()) {
+				if (!isCurrent()) {
+					requeueIfStale();
+					return;
+				}
+				setSettled(true);
+				if (assigned) {
 					if (noticeId.current)
 						notificationsRef.current?.removeNotification(
 							noticeId.current,
@@ -131,9 +150,14 @@ export const usePendingGroupChatJoin = (
 					navigate(entryRoom, { replace: true });
 				}
 			} catch (error) {
-				if (!isCurrent()) return;
+				if (!isCurrent()) {
+					requeueIfStale();
+					return;
+				}
 				setSettled(true);
-				const notice = getCounsellingDpaNotification(error, t);
+				const notice = getCounsellingDpaNotification(error, t, {
+					groupJoin: true
+				});
 				if (notice && notificationsRef.current) {
 					noticeId.current = `group-assignment:${notice.id}`;
 					notificationsRef.current.addNotification({
@@ -159,10 +183,6 @@ export const usePendingGroupChatJoin = (
 		},
 		[joinGroupChat, navigate, t]
 	);
-	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
-		() => new URLSearchParams(window.location.search).get('gcid')
-	);
-
 	useEffect(() => {
 		if (!pendingGroupChatId || !tenantReady) {
 			return;

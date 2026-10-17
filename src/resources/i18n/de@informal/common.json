@@ -2428,6 +2428,7 @@
 		"passwordRecovery": {
 			"needs-password": "Die Wiederherstellung mit deinem Passwort wurde in dieser Sitzung noch nicht bestätigt. Melde dich erneut an oder richte sie mit deinem vorhandenen Ersatzschlüssel ein.",
 			"needs-recovery-key": "Dein bisheriger Verlauf benötigt auf diesem Gerät deinen Ersatzschlüssel.",
+			"needs-sign-in": "Dein bisheriger Verlauf öffnet sich auf diesem Gerät, sobald du dich erneut mit deinem Passwort anmeldest.",
 			"retryable-failure": "Die Wiederherstellung mit deinem Passwort konnte nicht eingerichtet werden. Du kannst deine Anfrage trotzdem schreiben und die Einrichtung in den Sicherheitseinstellungen erneut prüfen.",
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
@@ -2647,6 +2648,9 @@
 		"dpa": {
 			"restricted": {
 				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wende Dich an Deine Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"restrictedGroupJoin": {
+				"text": "Der Beitritt zu dieser Gruppe ist derzeit nicht möglich, weil die Beratungsorganisation die aktuelle Auftragsverarbeitungsvereinbarung (AVV) noch bestätigen muss. Bitte wende Dich an Deine Beratungsstelle."
 			},
 			"unavailable": {
 				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",

@@ -944,6 +944,7 @@
 		},
 		"loadError": {
 			"consultants": "The colleagues could not be loaded.",
+			"info": "The chat info could not be loaded.",
 			"retry": "Try again",
 			"topics": "The topics could not be loaded."
 		},
@@ -959,6 +960,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Agency",
+				"agencyLine": "Agency: {{name}}",
 				"createDate": "Creation date",
 				"creator": "Creator",
 				"duration": "Duration",
@@ -5340,6 +5342,7 @@
 			"ready": "Recovery with your password is set up. A saved recovery key also stays valid.",
 			"needs-password": "Recovery with your password has not been confirmed in this session. Sign in again or set it up with your existing recovery key.",
 			"needs-recovery-key": "Your previous history needs your recovery key on this device.",
+			"needs-sign-in": "Your previous history opens on this device as soon as you sign in again with your password.",
 			"retryable-failure": "Recovery with your password could not be set up. You can still write your enquiry and check the setup again in security settings.",
 			"settings": "Security settings",
 			"reauthenticate": "Sign out and sign in again",
@@ -5823,6 +5826,10 @@
 			"restricted": {
 				"title": "New counselling is currently restricted",
 				"text": "The counselling organisation must confirm the current data processing agreement. Contact your counselling centre. Counselling that has already begun can continue."
+			},
+			"restrictedGroupJoin": {
+				"title": "Joining this group is currently not possible",
+				"text": "Joining this group is currently not possible because the counselling organisation still has to confirm the current data processing agreement. Please contact your counselling centre."
 			},
 			"unavailable": {
 				"title": "Counselling availability cannot be checked",

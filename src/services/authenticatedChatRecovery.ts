@@ -4,7 +4,10 @@ import {
 	getChatRecoveryPolicy,
 	type ChatRecoveryPolicy
 } from './chatRecoveryPolicy';
-import { consumeLoginRecoveryPassword } from './loginRecoveryHandoff';
+import {
+	consumeLoginRecoveryHandoff,
+	restageLoginRecoveryPassword
+} from './loginRecoveryHandoff';
 import {
 	canBootstrapSilently,
 	getEncryptionStatus,
@@ -22,7 +25,10 @@ import {
 	savePendingRecoveryKey,
 	withRecoverySetupLock
 } from './pendingRecoveryKeyStore';
-import { setRecoveryRuntimeStatus } from './recoveryReminderState';
+import {
+	setRecoveryRuntimeStatus,
+	type RecoveryRuntimeStatus
+} from './recoveryReminderState';
 
 /** All automatic branches preserve any existing root/backup/enrollment evidence. */
 export const initializeChatRecovery = async (
@@ -30,12 +36,17 @@ export const initializeChatRecovery = async (
 	policy: ChatRecoveryPolicy,
 	password: string | null,
 	cancelled: () => boolean = () => false
-): Promise<void> => {
+): Promise<RecoveryRuntimeStatus | undefined> => {
 	const userId = client.getUserId();
 	if (!userId || cancelled()) return;
-	setRecoveryRuntimeStatus(userId, 'pending');
+	let last: RecoveryRuntimeStatus = 'pending';
+	const report = (status: RecoveryRuntimeStatus) => {
+		last = status;
+		setRecoveryRuntimeStatus(userId, status);
+	};
+	report('pending');
 	const deadline = setTimeout(() => {
-		if (!cancelled()) setRecoveryRuntimeStatus(userId, 'retryable-failure');
+		if (!cancelled()) report('retryable-failure');
 	}, 45000);
 	try {
 		await withRecoverySetupLock(userId, async () => {
@@ -50,7 +61,7 @@ export const initializeChatRecovery = async (
 						await loadPendingRecoveryKey(userId);
 						markPendingRecoveryKeyPasswordProtected(userId);
 					}
-					setRecoveryRuntimeStatus(userId, recovery.kind);
+					report(recovery.kind);
 					return;
 				}
 			}
@@ -72,8 +83,15 @@ export const initializeChatRecovery = async (
 			if (cancelled()) return;
 			if (policy.mode === 'LOGIN_PASSWORD') {
 				if (!password) {
-					setRecoveryRuntimeStatus(
-						userId,
+					// Enrolled: the next sign-in unlocks it, no key needed (#1741).
+					if (
+						status.keyStorageOutOfSync &&
+						(await hasPasswordRecoveryEvidence(client))
+					) {
+						report('needs-sign-in');
+						return;
+					}
+					report(
 						status.keyStorageOutOfSync
 							? 'needs-recovery-key'
 							: status.secretStorageReady ||
@@ -86,7 +104,7 @@ export const initializeChatRecovery = async (
 					return;
 				}
 				if (!recoveryKey) {
-					setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+					report('needs-recovery-key');
 					return;
 				}
 				await enrollPasswordRecovery(
@@ -96,10 +114,9 @@ export const initializeChatRecovery = async (
 					policy.revision
 				);
 				markPendingRecoveryKeyPasswordProtected(userId);
-				setRecoveryRuntimeStatus(userId, 'ready');
+				report('ready');
 			} else {
-				setRecoveryRuntimeStatus(
-					userId,
+				report(
 					status.keyStorageOutOfSync
 						? 'needs-recovery-key'
 						: status.secretStorageReady
@@ -110,8 +127,7 @@ export const initializeChatRecovery = async (
 		});
 	} catch (error) {
 		if (!cancelled())
-			setRecoveryRuntimeStatus(
-				userId,
+			report(
 				error instanceof RecoverySetupBusyError
 					? 'busy'
 					: 'retryable-failure'
@@ -119,6 +135,7 @@ export const initializeChatRecovery = async (
 	} finally {
 		clearTimeout(deadline);
 	}
+	return cancelled() ? undefined : last;
 };
 
 /** Validate before claiming this client or consuming its one-use credential. */
@@ -140,9 +157,26 @@ export const startAuthenticatedChatRecovery = (
 	return holdTokenRefresh(async () => {
 		// Replaced by a refresh while waiting: the replacement client runs its own recovery.
 		if (!client.clientRunning) return;
-		const password = await consumeLoginRecoveryPassword(
-			client.getUserId()!
+		const userId = client.getUserId()!;
+		const handoff = await consumeLoginRecoveryHandoff(userId);
+		const outcome = await initializeChatRecovery(
+			client,
+			policy,
+			handoff?.password ?? null,
+			cancelled
 		);
-		await initializeChatRecovery(client, policy, password, cancelled);
+		// Unfinished, not rejected: keep the password for a retry (#1741).
+		// Never after a cancel (logout, unmount) or for a replaced client.
+		if (
+			handoff &&
+			!cancelled() &&
+			client.clientRunning &&
+			(outcome === 'retryable-failure' || outcome === 'busy')
+		)
+			await restageLoginRecoveryPassword(
+				userId,
+				handoff.password,
+				handoff.expiresAt
+			);
 	});
 };
