@@ -106,6 +106,9 @@ export const useLiveCallDevices = (
 		let context: AudioContext | null = null;
 		let frame = 0;
 		let cancelled = false;
+		// The old tracks stop now; until the new ones arrive there is no
+		// stream, so nothing (the gate included) leans on a stopped one.
+		setState((s) => (s.stream ? { ...s, stream: null, micLevel: 0 } : s));
 		const release = () => {
 			stream?.getTracks().forEach((track) => track.stop());
 		};

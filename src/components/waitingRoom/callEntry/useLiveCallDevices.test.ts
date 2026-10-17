@@ -349,6 +349,29 @@ describe('useLiveCallDevices', () => {
 		expect(result.current.blocker).toBeUndefined();
 	});
 
+	it('drops the stream at once while another camera is acquired', async () => {
+		const first = fakeStream(['audio', 'video']);
+		const second = fakeStream(['audio', 'video']);
+		let deliver: (stream: MediaStream) => void = () => undefined;
+		const media = devicesFor((constraints) =>
+			constraints.video === true
+				? Promise.resolve(first)
+				: new Promise((resolve) => (deliver = resolve))
+		);
+		const { result, rerender } = renderHook(
+			(controls: LiveCallControls) =>
+				useLiveCallDevices('video', controls, media),
+			{ initialProps: on }
+		);
+		await waitFor(() => expect(result.current.stream).toBe(first));
+		rerender({ ...on, selection: { camera: 'cam-2' } });
+		// The old tracks are stopped: no stream until the new one is there.
+		expect(result.current.stream).toBeNull();
+		expect(first.tracks[0].stop).toHaveBeenCalled();
+		await act(async () => deliver(second));
+		await waitFor(() => expect(result.current.stream).toBe(second));
+	});
+
 	it('leaves nothing running when unmounted while the devices are listed', async () => {
 		const stream = fakeStream(['audio']);
 		let list: (devices: MediaDeviceInfo[]) => void = () => undefined;

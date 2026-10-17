@@ -24,6 +24,11 @@ export interface VideoCheckProps {
 	micOn: boolean;
 	micLevel: number;
 	onToggleCamera: () => void;
+	/**
+	 * Ask for the camera again while it is unavailable (busy, unplugged);
+	 * without it the switch is disabled.
+	 */
+	onCameraRetry?: () => void;
 	onToggleMic: () => void;
 }
 
@@ -42,6 +47,7 @@ export const VideoCheck = ({
 	micOn,
 	micLevel,
 	onToggleCamera,
+	onCameraRetry,
 	onToggleMic
 }: VideoCheckProps) => {
 	const phone = useMediaQuery('(max-width: 599.95px)');
@@ -219,13 +225,19 @@ export const VideoCheck = ({
 					<DeviceToggle
 						tone="onDark"
 						on={cameraOn}
-						onToggle={onToggleCamera}
+						onToggle={
+							cameraAvailable ? onToggleCamera : onCameraRetry!
+						}
 						iconOn={<VideocamRoundedIcon />}
 						iconOff={<VideocamOffRoundedIcon />}
 						name={copy.devices.camera}
 						labelOn={copy.cameraOffToggle}
-						labelOff={copy.cameraOn}
-						disabled={!cameraAvailable}
+						labelOff={
+							!cameraAvailable && onCameraRetry
+								? copy.cameraRetry
+								: copy.cameraOn
+						}
+						disabled={!cameraAvailable && !onCameraRetry}
 						labelDisabled={copy.cameraMissing}
 						testId="toggle-camera"
 					/>
