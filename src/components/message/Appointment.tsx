@@ -27,6 +27,24 @@ const appointmentPresentations: Partial<
 		icon: 'check',
 		showCalendarAction: true
 	},
+	/*
+	 * Not reachable from the room timeline today, and deliberately kept.
+	 *
+	 * `MessageItemComponent` returns null for `INITIAL_APPOINTMENT_DEFINED`
+	 * before it reaches this component — upstream behaviour, unchanged by
+	 * this branch, and nothing in this repository sends the alias either. So
+	 * no reviewer will see this entry in the product, and a story that shows
+	 * it is showing a possibility rather than a surface.
+	 *
+	 * It stays because the alternative is worse than dead code: the version
+	 * this replaced ended in an `else` that treated every unknown type as a
+	 * CANCELLATION, so the day anything does route an initial appointment
+	 * here, it would have announced a cancelled one. An entry that says what
+	 * the message means costs nothing; being wrong about it is not free.
+	 *
+	 * Making those messages visible is a product decision and not this
+	 * branch's to take.
+	 */
 	[ALIAS_MESSAGE_TYPES.INITIAL_APPOINTMENT_DEFINED]: {
 		headerKey: 'message.appointment.component.header.confirmation',
 		titleKey: 'message.appointmentSet.title',
