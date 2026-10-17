@@ -1,5 +1,7 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import { Tooltip } from '@mui/material';
+import { useResponsive } from '../../hooks/useResponsive';
 import { M3Checkbox } from '../M3Checkbox';
 import {
 	DisplayFilterKindOption,
@@ -163,6 +165,50 @@ const CellLabel = ({ children }: { children: string }) => (
 		{children}
 	</span>
 );
+
+/**
+ * "nicht verfügbar" and its reason. Phone: the reason is visible secondary
+ * text, no focus stop. Desktop: the compact pill, the reason visually
+ * hidden but reachable — a focus stop with a tooltip on hover, focus and
+ * tap. Either way screen readers read the reason once, from the cell's own
+ * text: the tooltip adds no label or description.
+ */
+const UnavailableCell = ({
+	label,
+	reason,
+	dataCy
+}: {
+	label: string;
+	reason: string;
+	dataCy: string;
+}) => {
+	const { fromM } = useResponsive();
+	const cell = (
+		<span
+			className="displayFilterDialog__unavailable"
+			data-cy={dataCy}
+			tabIndex={fromM ? 0 : undefined}
+			// Override what Tooltip would add: the reason is already text.
+			aria-describedby={undefined}
+			title={undefined}
+		>
+			<span className="displayFilterDialog__unavailableLabel">
+				{label}
+				<span className="sr-only">.</span>
+			</span>{' '}
+			<span className="displayFilterDialog__unavailableReason">
+				{reason}
+			</span>
+		</span>
+	);
+	return fromM ? (
+		<Tooltip title={reason} describeChild enterTouchDelay={0}>
+			{cell}
+		</Tooltip>
+	) : (
+		cell
+	);
+};
 
 /**
  * One row per kind (#1377 spec §3; redesign 2026-10-15 with Frank). Columns
@@ -445,18 +491,15 @@ export const DisplayFilterKindTable = ({
 										) : browserUnavailableReason ? (
 											// Same unavailable cell as E-Mail:
 											// no pop-up can show, so no choice.
-											<span
-												className="displayFilterDialog__unavailable"
-												title={browserUnavailableReason}
-												data-cy={`${dataCyPrefix}-sound-${kind.id}-unavailable`}
-											>
-												<span aria-hidden="true">
-													{labels.channelUnavailable}
-												</span>
-												<span className="sr-only">
-													{`${labels.channelUnavailable}. ${browserUnavailableReason}`}
-												</span>
-											</span>
+											<UnavailableCell
+												label={
+													labels.channelUnavailable
+												}
+												reason={
+													browserUnavailableReason
+												}
+												dataCy={`${dataCyPrefix}-sound-${kind.id}-unavailable`}
+											/>
 										) : (
 											<KindOptionPicker
 												options={browserOptions(
@@ -546,24 +589,16 @@ export const DisplayFilterKindTable = ({
 												}
 											/>
 										) : (
-											// Not a control: no focus stop. The
-											// reason is read with the cell and
-											// shown as a tooltip.
-											<span
-												className="displayFilterDialog__unavailable"
-												title={
+											<UnavailableCell
+												label={
+													labels.channelUnavailable
+												}
+												reason={
 													email?.unavailableReason ??
 													labels.emailUnavailableReason
 												}
-												data-cy={`${dataCyPrefix}-email-${kind.id}-unavailable`}
-											>
-												<span aria-hidden="true">
-													{labels.channelUnavailable}
-												</span>
-												<span className="sr-only">
-													{`${labels.channelUnavailable}. ${email?.unavailableReason ?? labels.emailUnavailableReason}`}
-												</span>
-											</span>
+												dataCy={`${dataCyPrefix}-email-${kind.id}-unavailable`}
+											/>
 										)}
 									</td>
 								)}

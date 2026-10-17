@@ -668,7 +668,9 @@ export const BrowserMenuOpen: Story = {
 
 /**
  * No stored e-mail setting for Live-Chat: the cell is text, not a control.
- * Tab skips it (no focus trap), and the reason is part of the cell's text.
+ * On desktop it stays a compact pill and is one Tab stop, so keyboard and
+ * touch users can reach the reason: a tooltip on focus, hover and tap. The
+ * reason is the cell's own text for screen readers, read once.
  */
 export const EmailUnavailable: Story = {
 	globals: desktop1440Globals,
@@ -681,10 +683,6 @@ export const EmailUnavailable: Story = {
 			'.displayFilterDialog__unavailable'
 		) as HTMLElement;
 		await expect(cell).toHaveTextContent('nicht verfügbar');
-		await expect(cell).toHaveAttribute(
-			'title',
-			'Für diese Art gibt es noch keine E-Mail'
-		);
 		await expect(cell).toHaveTextContent(
 			'Für diese Art gibt es noch keine E-Mail'
 		);
@@ -692,12 +690,18 @@ export const EmailUnavailable: Story = {
 			within(row).queryByRole('button', { name: /^E-Mail/ })
 		).toBeNull();
 		// Keyboard: from the Live-Chat browser menu button, Tab lands on the
-		// next row's first control — the unavailable cell is no stop.
+		// unavailable cell and its tooltip names the reason; the next Tab
+		// goes on to the next row's first control.
 		within(row)
 			.getByRole('button', {
 				name: 'Browser-Benachrichtigung: Live-Chat'
 			})
 			.focus();
+		await userEvent.tab();
+		await expect(canvasElement.ownerDocument.activeElement).toBe(cell);
+		await expect(await dialog.findByRole('tooltip')).toHaveTextContent(
+			'Für diese Art gibt es noch keine E-Mail'
+		);
 		await userEvent.tab();
 		await expect(canvasElement.ownerDocument.activeElement).toBe(
 			dialog.getByRole('button', {
@@ -830,9 +834,16 @@ export const BrowserMasterOff: Story = {
 		const dialog = within(canvasElement.ownerDocument.body);
 		const row = await dialog.findByRole('row', { name: /Mail-Beratung/ });
 		await expect(row).toHaveTextContent(BROWSER_OFF_REASON);
-		await expect(
-			within(row).getByTitle(BROWSER_OFF_REASON)
-		).toBeInTheDocument();
+		await expect(row).toHaveTextContent(BROWSER_OFF_REASON);
+		// Pointer: hovering the compact cell shows the reason.
+		await userEvent.hover(
+			row.querySelector(
+				'.displayFilterDialog__unavailable'
+			) as HTMLElement
+		);
+		await expect(await dialog.findByRole('tooltip')).toHaveTextContent(
+			BROWSER_OFF_REASON
+		);
 		await expect(
 			within(row).queryByRole('button', { name: /Ton anhören/ })
 		).toBeNull();
@@ -908,5 +919,31 @@ export const SupervisionEmail: Story = {
 			false
 		);
 		await waitFor(() => expect(picker).toHaveTextContent('Aus'));
+	}
+};
+
+/**
+ * Phone: every unavailable Browser and E-Mail cell shows its reason as
+ * small secondary text under "nicht verfügbar" — no tooltip to reach.
+ */
+export const PhoneUnavailableReasons: Story = {
+	globals: phone390Globals,
+	args: {
+		...sessionsArgs,
+		emailUnavailableReason: EMAILS_OFF_REASON,
+		browserUnavailableReason: BROWSER_OFF_REASON
+	},
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		const row = await dialog.findByRole('row', { name: /Mail-Beratung/ });
+		const browser = within(row).getByText(BROWSER_OFF_REASON);
+		const email = within(row).getByText(EMAILS_OFF_REASON);
+		// After the sheet's slide-in.
+		await waitFor(() => expect(browser).toBeVisible());
+		await expect(email).toBeVisible();
+		// Readable size, not clipped to a sliver.
+		await expect(email.getBoundingClientRect().height).toBeGreaterThan(10);
+		await expect(email.getBoundingClientRect().width).toBeGreaterThan(80);
 	}
 };

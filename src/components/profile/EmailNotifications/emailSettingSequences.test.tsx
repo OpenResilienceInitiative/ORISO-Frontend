@@ -301,9 +301,8 @@ describe('e-mail setting: shown value equals the stored one after any write sequ
 			).toBe(masterOn);
 			const row = screen.getByRole('row', { name: /Termine/ });
 			expect(
-				row
-					.querySelector('.displayFilterDialog__unavailable')
-					?.getAttribute('title') ?? null
+				row.querySelector('.displayFilterDialog__unavailableReason')
+					?.textContent ?? null
 			).toBe(
 				masterOn ? null : 'notifications.displayFilter.emailMasterOff'
 			);

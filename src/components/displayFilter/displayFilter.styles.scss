@@ -606,20 +606,43 @@
 	width: 160px;
 }
 
-/* No stored e-mail setting for this kind: text, not a control. */
+/* Unavailable Browser / E-Mail cell: text, not a control. Desktop: the
+   dashed "nicht verfügbar" pill; the reason is visually hidden here and
+   shown as a tooltip on hover, focus and tap. Phone: below. */
 .displayFilterDialog__unavailable {
 	display: inline-flex;
-	align-items: center;
-	box-sizing: border-box;
+	flex-direction: column;
+	gap: 4px;
 	width: 128px;
-	min-height: 32px;
-	padding: 0 12px;
-	border: 1px dashed var(--m3-outline-variant, #c4c7c7);
 	border-radius: 16px;
 	font-size: 12px;
 	line-height: 16px;
 	color: var(--m3-on-surface-variant, #444748);
 	cursor: help;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+}
+
+.displayFilterDialog__unavailableLabel {
+	display: inline-flex;
+	align-items: center;
+	box-sizing: border-box;
+	min-height: 32px;
+	padding: 0 12px;
+	border: 1px dashed var(--m3-outline-variant, #c4c7c7);
+	border-radius: 16px;
+}
+
+.displayFilterDialog__unavailableReason {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
 }
 
 /* Filter-only buttons: name and the "Im Filter" picker. */
@@ -756,9 +779,25 @@
 		width: 100%;
 	}
 
-	.displayFilterDialog__unavailable {
+	.displayFilterDialog__unavailableLabel {
+		min-height: 0;
 		border: 0;
 		padding: 0;
+	}
+
+	/* Phone: the reason is visible body-small text under the label. */
+	.displayFilterDialog__unavailable {
+		cursor: default;
+	}
+
+	.displayFilterDialog__unavailableReason {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+		white-space: normal;
+		overflow-wrap: anywhere;
 	}
 
 	.displayFilterDialog__noPill {

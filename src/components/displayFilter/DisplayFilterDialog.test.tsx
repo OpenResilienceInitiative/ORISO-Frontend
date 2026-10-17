@@ -7,6 +7,7 @@ import {
 	fireEvent,
 	render,
 	screen,
+	waitFor,
 	within
 } from '@testing-library/react';
 import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
@@ -17,6 +18,10 @@ import {
 } from './displayFilterTypes';
 import { STORY_LABELS } from './displayFilterStoryData';
 
+const viewport = vi.hoisted(() => ({ fromM: false }));
+vi.mock('../../hooks/useResponsive', () => ({
+	useResponsive: () => ({ fromM: viewport.fromM })
+}));
 vi.mock('../../utils/notificationSettings/soundPlayback', () => ({
 	previewNotificationSound: vi.fn(),
 	soundAssetFor: () => null
@@ -518,9 +523,95 @@ describe('DisplayFilterDialog Browser column gate (Codex review on #1752)', () =
 		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(
 			within(row)
-				.getByTitle('Pop-ups sind aus')
-				.querySelector('[tabindex], button, input')
+				.getByText('Pop-ups sind aus')
+				.closest('.displayFilterDialog__unavailable')
+				?.querySelector('[tabindex], button, input')
 		).toBeNull();
+	});
+	// Touch and sighted keyboard users get no tooltip: the reason is cell
+	// text, read once, and the cell stays no focus stop.
+	const expectVisibleReason = (cell: HTMLElement, reason: string) => {
+		const text = within(cell).getByText(reason);
+		for (
+			let node: HTMLElement | null = text;
+			node && node !== cell.parentElement;
+			node = node.parentElement
+		) {
+			expect(node.classList.contains('sr-only')).toBe(false);
+			expect(node.getAttribute('aria-hidden')).not.toBe('true');
+		}
+		expect(cell.textContent?.split(reason)).toHaveLength(2);
+		expect(
+			cell.textContent?.split(STORY_LABELS.channelUnavailable)
+		).toHaveLength(2);
+		expect(cell.hasAttribute('tabindex')).toBe(false);
+		expect(cell.querySelector('[tabindex], button, input')).toBeNull();
+	};
+	const renderUnavailable = () =>
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onOpenProfile={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={SESSION_COLUMNS}
+				browserUnavailableReason="Pop-ups sind aus"
+				email={{
+					cell: () => null,
+					onChange: () => undefined,
+					unavailableReason: 'Keine E-Mail-Adresse'
+				}}
+			/>
+		);
+	const unavailableCells = () =>
+		Array.from(
+			screen
+				.getByRole('row', { name: /Nachrichten/ })
+				.querySelectorAll<HTMLElement>(
+					'.displayFilterDialog__unavailable'
+				)
+		);
+	it('phone: shows the reason of an unavailable Browser and E-Mail cell as visible text', () => {
+		viewport.fromM = false;
+		renderUnavailable();
+		const [browser, email] = unavailableCells();
+		expectVisibleReason(browser, 'Pop-ups sind aus');
+		expectVisibleReason(email, 'Keine E-Mail-Adresse');
+	});
+	it('desktop: keeps the cell compact and shows the reason on keyboard focus, read once', async () => {
+		viewport.fromM = true;
+		try {
+			renderUnavailable();
+			const [browser, email] = unavailableCells();
+			for (const [cell, reason] of [
+				[browser, 'Pop-ups sind aus'],
+				[email, 'Keine E-Mail-Adresse']
+			] as const) {
+				expect(cell.getAttribute('tabindex')).toBe('0');
+				// The reason stays the cell's own text, so no description
+				// or label repeats it.
+				expect(cell.textContent?.split(reason)).toHaveLength(2);
+				// Keyboard focus (MUI opens on focus-visible only).
+				fireEvent.keyDown(document.body, { key: 'Tab' });
+				cell.focus();
+				await waitFor(() =>
+					expect(screen.getByRole('tooltip').textContent).toBe(reason)
+				);
+				expect(cell.hasAttribute('aria-describedby')).toBe(false);
+				expect(cell.hasAttribute('aria-label')).toBe(false);
+				expect(cell.hasAttribute('title')).toBe(false);
+				cell.blur();
+				await waitFor(() =>
+					expect(screen.queryByRole('tooltip')).toBeNull()
+				);
+			}
+		} finally {
+			viewport.fromM = false;
+		}
 	});
 	it('shows the muted notice while the Browser cells stay editable', () => {
 		render(

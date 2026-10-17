@@ -219,9 +219,10 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		const unavailable = row.querySelector(
 			'.displayFilterDialog__unavailable'
 		) as HTMLElement;
-		expect(unavailable.getAttribute('title')).toBe(
-			STORY_LABELS.emailUnavailableReason
-		);
+		expect(
+			unavailable.querySelector('.displayFilterDialog__unavailableReason')
+				?.textContent
+		).toBe(STORY_LABELS.emailUnavailableReason);
 		expect(
 			unavailable.querySelector('[tabindex], button, input')
 		).toBeNull();
@@ -246,9 +247,8 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		const row = screen.getByRole('row', { name: /Mail-Beratung/ });
 		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(
-			row
-				.querySelector('.displayFilterDialog__unavailable')
-				?.getAttribute('title')
+			row.querySelector('.displayFilterDialog__unavailableReason')
+				?.textContent
 		).toBe('profile.notifications.noEmail.info');
 	});
 	it('offers no switch while all e-mails are off in the profile, and says why', () => {
@@ -261,9 +261,8 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		const row = screen.getByRole('row', { name: /Mail-Beratung/ });
 		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(
-			row
-				.querySelector('.displayFilterDialog__unavailable')
-				?.getAttribute('title')
+			row.querySelector('.displayFilterDialog__unavailableReason')
+				?.textContent
 		).toBe('notifications.displayFilter.emailMasterOff');
 	});
 	it('does not write when the active option is chosen again', async () => {
