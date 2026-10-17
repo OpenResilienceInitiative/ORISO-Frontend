@@ -119,9 +119,14 @@ export const useCaseHandoverSearch = ({
 	keepFound,
 	searchOpen
 }: CaseHandoverSearchOptions) => {
-	const [textCandidates, setTextCandidates] = useState<ListItemInterface[]>(
-		[]
-	);
+	/** Text-query results, tagged with the archive scope they belong to. */
+	const [textResult, setTextResult] = useState<{
+		archived: boolean;
+		cases: ListItemInterface[];
+	}>({ archived, cases: NO_CASES });
+	// Batch mode keeps found cases, but never across the archive scope.
+	const textCandidates =
+		textResult.archived === archived ? textResult.cases : NO_CASES;
 	/** Cases of picked people, by person key. */
 	const [pinned, setPinned] = useState<Record<string, ListItemInterface[]>>(
 		{}
@@ -146,11 +151,11 @@ export const useCaseHandoverSearch = ({
 	useEffect(() => {
 		const trimmed = query.trim();
 		if (!enabled) {
-			setTextCandidates([]);
+			setTextResult({ archived, cases: NO_CASES });
 			return;
 		}
 		if (!trimmed) {
-			if (!keepFound) setTextCandidates([]);
+			if (!keepFound) setTextResult({ archived, cases: NO_CASES });
 			return;
 		}
 		const controller = new AbortController();
@@ -162,13 +167,17 @@ export const useCaseHandoverSearch = ({
 				signal: controller.signal
 			})
 				.then(({ sessions = [] }) =>
-					setTextCandidates((prev) =>
-						keepFound ? mergeListItems(sessions, prev) : sessions
-					)
+					setTextResult((prev) => ({
+						archived,
+						cases:
+							keepFound && prev.archived === archived
+								? mergeListItems(sessions, prev.cases)
+								: sessions
+					}))
 				)
 				.catch((error) => {
 					if (error?.message !== FETCH_ERRORS.ABORT && !keepFound) {
-						setTextCandidates([]);
+						setTextResult({ archived, cases: NO_CASES });
 					}
 				});
 		}, SEARCH_DEBOUNCE_MS);

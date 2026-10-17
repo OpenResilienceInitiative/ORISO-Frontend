@@ -59,6 +59,7 @@ import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
+import FocusTrap from 'focus-trap-react';
 import { useTranslation } from 'react-i18next';
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
@@ -2371,6 +2372,7 @@ export const SessionsList = ({
 					}
 					onSearchOpenChange={setSessionToolbarSearchOpen}
 					selectedPersonIds={sessionToolbarSelectedPeople}
+					selectedPeopleDetails={caseHandoverSearch.pickedPeople}
 					onSelectedPersonIdsChange={handleSelectedPeopleChange}
 					onSearchReset={resetToolbarSearch}
 					activeChip={isCreateChatActive ? null : sessionToolbarChip}
@@ -2571,74 +2573,91 @@ export const SessionsList = ({
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				caseHandoverReviewOpen && (
-					<div
-						className="sessionsList__caseHandoverWizardOverlay"
-						role="dialog"
-						aria-modal="true"
-						aria-label={translate('caseHandover.batch.title')}
-						ref={caseHandoverWizardRef}
-						tabIndex={-1}
+					// aria-modal promises an inert page: Tab and Shift+Tab stay
+					// inside. Focus in and back to Continue is handled above.
+					<FocusTrap
+						focusTrapOptions={{
+							initialFocus: false,
+							returnFocusOnDeactivate: false,
+							escapeDeactivates: false,
+							allowOutsideClick: true,
+							fallbackFocus: () =>
+								caseHandoverWizardRef.current ?? document.body
+						}}
 					>
-						<div className="sessionsList__caseHandoverWizardShell">
-							<div className="sessionsList__caseHandoverWizardBar">
-								<strong>
-									{translate('caseHandover.batch.title')}
-								</strong>
-								<span>
-									{translate(
-										'caseHandover.batch.selectedCount',
-										{
-											count: caseHandoverSelectedIds.length
-										}
-									)}
-								</span>
-								<button
-									type="button"
-									className="sessionsList__caseHandoverWizardClose"
-									onClick={() => {
-										caseHandoverBatch.close(
-											caseHandoverSelectedIds
-										);
-										setCaseHandoverReviewOpen(false);
-										setCaseHandoverWizardStep('reason');
-										setCaseHandoverBatchSummary('');
-									}}
-								>
-									{translate('caseHandover.batch.cancel')}
-								</button>
+						<div
+							className="sessionsList__caseHandoverWizardOverlay"
+							role="dialog"
+							aria-modal="true"
+							aria-label={translate('caseHandover.batch.title')}
+							ref={caseHandoverWizardRef}
+							tabIndex={-1}
+						>
+							<div className="sessionsList__caseHandoverWizardShell">
+								<div className="sessionsList__caseHandoverWizardBar">
+									<strong>
+										{translate('caseHandover.batch.title')}
+									</strong>
+									<span>
+										{translate(
+											'caseHandover.batch.selectedCount',
+											{
+												count: caseHandoverSelectedIds.length
+											}
+										)}
+									</span>
+									<button
+										type="button"
+										className="sessionsList__caseHandoverWizardClose"
+										onClick={() => {
+											caseHandoverBatch.close(
+												caseHandoverSelectedIds
+											);
+											setCaseHandoverReviewOpen(false);
+											setCaseHandoverWizardStep('reason');
+											setCaseHandoverBatchSummary('');
+										}}
+									>
+										{translate('caseHandover.batch.cancel')}
+									</button>
+								</div>
+								<CaseHandoverCurtainView
+									step={caseHandoverWizardStep}
+									reasons={caseHandoverReasons.reasons}
+									reasonCode={caseHandoverReasonCode}
+									explanation={caseHandoverExplanation}
+									isSubmitting={caseHandoverBatch.submitting}
+									reasonsUnavailable={
+										caseHandoverReasons.unavailable
+									}
+									reasonsLoadFailed={
+										caseHandoverReasons.failed
+									}
+									onRetryReasons={caseHandoverReasons.retry}
+									error={
+										caseHandoverReviewOpen &&
+										caseHandoverBatchSummary
+											? caseHandoverBatchSummary
+											: undefined
+									}
+									onStart={() =>
+										setCaseHandoverWizardStep('reason')
+									}
+									onBack={() =>
+										setCaseHandoverWizardStep('reason')
+									}
+									onNext={() =>
+										setCaseHandoverWizardStep('describe')
+									}
+									onReasonSelect={setCaseHandoverReasonCode}
+									onExplanationChange={
+										setCaseHandoverExplanation
+									}
+									onSubmit={handleSubmitCaseHandoverBatch}
+								/>
 							</div>
-							<CaseHandoverCurtainView
-								step={caseHandoverWizardStep}
-								reasons={caseHandoverReasons.reasons}
-								reasonCode={caseHandoverReasonCode}
-								explanation={caseHandoverExplanation}
-								isSubmitting={caseHandoverBatch.submitting}
-								reasonsUnavailable={
-									caseHandoverReasons.unavailable
-								}
-								reasonsLoadFailed={caseHandoverReasons.failed}
-								onRetryReasons={caseHandoverReasons.retry}
-								error={
-									caseHandoverReviewOpen &&
-									caseHandoverBatchSummary
-										? caseHandoverBatchSummary
-										: undefined
-								}
-								onStart={() =>
-									setCaseHandoverWizardStep('reason')
-								}
-								onBack={() =>
-									setCaseHandoverWizardStep('reason')
-								}
-								onNext={() =>
-									setCaseHandoverWizardStep('describe')
-								}
-								onReasonSelect={setCaseHandoverReasonCode}
-								onExplanationChange={setCaseHandoverExplanation}
-								onSubmit={handleSubmitCaseHandoverBatch}
-							/>
 						</div>
-					</div>
+					</FocusTrap>
 				)}
 			<div className="sessionsList__scrollArea">
 				<div

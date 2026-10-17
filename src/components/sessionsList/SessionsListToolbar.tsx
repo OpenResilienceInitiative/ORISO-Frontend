@@ -87,6 +87,12 @@ interface SessionsListToolbarProps {
 	/** Told whenever the search menu opens or closes. */
 	onSearchOpenChange?: (open: boolean) => void;
 	selectedPersonIds?: string[];
+	/**
+	 * The picked people as remembered when picked, so a pick that has no
+	 * row in the current results (no cases in this scope, failed lookup)
+	 * still shows as a removable pill.
+	 */
+	selectedPeopleDetails?: SessionSearchPersonOption[];
 	onSelectedPersonIdsChange?: (ids: string[]) => void;
 	/**
 	 * Agencies the signed-in counsellor belongs to. The panel adds the agencies
@@ -339,6 +345,7 @@ export const SessionsListToolbar = ({
 	searchPeopleEligibleOnlyWhenBlank = false,
 	onSearchOpenChange,
 	selectedPersonIds = [],
+	selectedPeopleDetails = [],
 	onSelectedPersonIdsChange,
 	searchAgencyResults = [],
 	selectedAgencyId = null,
@@ -482,14 +489,16 @@ export const SessionsListToolbar = ({
 	const selectedPeople = React.useMemo(
 		() =>
 			selectedPersonIds
-				.map((id) =>
-					searchPeopleResults.find((entry) => entry.id === id)
+				.map(
+					(id) =>
+						searchPeopleResults.find((entry) => entry.id === id) ??
+						selectedPeopleDetails.find((entry) => entry.id === id)
 				)
 				.filter(
 					(entry): entry is SessionSearchPersonResult =>
 						entry !== undefined
 				),
-		[selectedPersonIds, searchPeopleResults]
+		[selectedPeopleDetails, selectedPersonIds, searchPeopleResults]
 	);
 
 	/**

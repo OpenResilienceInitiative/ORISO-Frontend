@@ -13,6 +13,7 @@ import {
 	waitFor,
 	within
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -1039,6 +1040,40 @@ describe('case-handover search — archive scope and closing (FE#1725)', () => {
 		expect(listText(view)).toContain('Archived sixteen');
 	});
 
+	it('keeps a picked colleague with no archived cases visible as a removable pill', async () => {
+		http.getCandidates.mockImplementation(async ({ query, archived }) => ({
+			sessions: archived ? [] : serverCandidates(query),
+			total: 0
+		}));
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		fireEvent.change(searchbox(), { target: { value: '' } });
+		fireEvent.click(
+			screen.getByRole('button', { name: /tabs\.archiveOnly/ })
+		);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		const pill = await waitFor(() =>
+			screen.getByRole('button', {
+				name: 'sessionList.toolbar.search.removeSelectedPerson'
+			})
+		);
+		expect(pill.textContent).toContain('Patty B.');
+		fireEvent.click(pill);
+
+		await waitFor(() => expect(listText(view)).toContain('Own client'));
+		expect(
+			screen.queryByRole('button', {
+				name: 'sessionList.toolbar.search.removeSelectedPerson'
+			})
+		).toBeNull();
+	});
+
 	it('stops loading the eligible colleagues when the search closes', async () => {
 		const signals: AbortSignal[] = [];
 		http.getCandidates.mockImplementation(
@@ -1683,6 +1718,77 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		expect(wizard.textContent).not.toContain(
 			'caseHandover.curtain.reason.loadFailed'
 		);
+	});
+
+	it('drops the active-scope text results kept by batch mode when "Archive only" is switched on', async () => {
+		const view = await ready(renderList());
+		await listPattysSpringfieldCases(view);
+		await startBatchModeOn(view, 'Client eleven');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'sessionList.toolbar.search.removeSelectedPerson'
+			})
+		);
+		await waitFor(() =>
+			expect(listText(view)).toContain('Client fourteen')
+		);
+		// The archive answers never arrive in this test.
+		http.getCandidates.mockImplementation(({ archived, query }) =>
+			archived
+				? new Promise(() => undefined)
+				: Promise.resolve({
+						sessions: serverCandidates(query),
+						total: 0
+					})
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', { name: /tabs\.archiveOnly/ })
+		);
+
+		await waitFor(() =>
+			expect(listText(view)).not.toContain('Client fourteen')
+		);
+	});
+
+	it('keeps Tab and Shift+Tab inside the open wizard', async () => {
+		// jsdom has no layout; tabbable treats elements without client rects
+		// as hidden, so give every element one for this keyboard test.
+		const rects = vi
+			.spyOn(HTMLElement.prototype, 'getClientRects')
+			.mockReturnValue([{}] as unknown as DOMRectList);
+		const user = userEvent.setup();
+		try {
+			const view = await ready(renderList());
+			await listPattysSpringfieldCases(view);
+			await startBatchModeOn(view, 'Client eleven');
+			await waitFor(() =>
+				expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+			);
+			fireEvent.click(caseCheckbox(view, 'Client eleven'));
+			fireEvent.click(
+				within(bulkBar()).getByRole('button', {
+					name: 'caseHandover.bulkBar.continue'
+				})
+			);
+			const wizard = await screen.findByRole('dialog', {
+				name: 'caseHandover.batch.title'
+			});
+			await waitFor(() =>
+				expect(wizard.contains(document.activeElement)).toBe(true)
+			);
+
+			for (let step = 0; step < 12; step++) {
+				await user.tab();
+				expect(wizard.contains(document.activeElement)).toBe(true);
+			}
+			for (let step = 0; step < 12; step++) {
+				await user.tab({ shift: true });
+				expect(wizard.contains(document.activeElement)).toBe(true);
+			}
+		} finally {
+			rects.mockRestore();
+		}
 	});
 
 	it('moves keyboard focus into the wizard and back to Continue when it closes', async () => {
