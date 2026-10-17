@@ -117,10 +117,28 @@ export function useCallTimelineState(
 		initialCall.callType,
 		initialCall.state
 	].join('\u0000');
+	/*
+	 * Mirrored DURING the render, not in an effect.
+	 *
+	 * A passive effect runs after the commit; a pending request's `.then` is
+	 * a microtask and runs before that. So a membership edit that rerendered
+	 * this card while `loadState` was in flight left the ref holding the
+	 * PREVIOUS card at the moment the answer arrived — and the guard below
+	 * compares `latest.current` against the card it asked about, so it
+	 * compared the old one with the old one and said "nothing moved".
+	 *
+	 * Which matters most in the one case that cannot recover: if that stale
+	 * answer is terminal, `storedStands` keeps it against the newer running
+	 * timeline and `hasAcceptedTerminal` stops the polling, so the card is
+	 * frozen on an attendance that is already wrong, for as long as it is on
+	 * screen.
+	 *
+	 * Writing a mirror ref in render is the documented exception to "no side
+	 * effects in render": it is idempotent, and nothing reads it during the
+	 * render it is written in.
+	 */
 	const latest = React.useRef(initialCall);
-	React.useEffect(() => {
-		latest.current = initialCall;
-	}, [initialCall]);
+	latest.current = initialCall;
 
 	React.useEffect(() => {
 		if (!loadState || hasAcceptedTerminal) return;
