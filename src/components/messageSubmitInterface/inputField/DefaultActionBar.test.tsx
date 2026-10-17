@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DefaultActionBar } from './DefaultActionBar';
 
@@ -72,6 +72,30 @@ describe('DefaultActionBar', () => {
 				.getByRole('button', { name: 'Voice recording' })
 				.getAttribute('title')
 		).toBe('Record voice message');
+	});
+
+	it('keeps the mic visible but unavailable, focusable and explained when a reason is given', () => {
+		const onMicClick = vi.fn();
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				onMicClick={onMicClick}
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		expect(mic.getAttribute('aria-disabled')).toBe('true');
+		expect((mic as HTMLButtonElement).disabled).toBe(false);
+		expect(mic.getAttribute('title')).toBe('Not while editing');
+		expect(
+			document.getElementById(mic.getAttribute('aria-describedby')!)
+				?.textContent
+		).toBe('Not while editing');
+		mic.focus();
+		expect(document.activeElement).toBe(mic);
+		fireEvent.click(mic);
+		expect(onMicClick).not.toHaveBeenCalled();
 	});
 
 	it('puts every compact control on the larger default action bar', () => {

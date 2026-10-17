@@ -1878,7 +1878,8 @@
 				"mention": "Person erwähnen",
 				"voiceRecording": {
 					"label": "Sprachaufnahme",
-					"tooltip": "Sprachnachricht aufnehmen"
+					"tooltip": "Sprachnachricht aufnehmen",
+					"disabledWhileEditing": "Sprachnachrichten sind beim Bearbeiten nicht möglich"
 				},
 				"imageUrlPrompt": "Bild-URL",
 				"urlPrompt": "URL"
@@ -4771,6 +4772,7 @@
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
 			},
+			"discard": "Sprachnachricht verwerfen",
 			"preview": "Sprachnachricht"
 		}
 	},
