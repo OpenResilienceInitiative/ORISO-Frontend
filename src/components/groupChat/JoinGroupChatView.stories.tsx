@@ -164,11 +164,19 @@ const buildWaitingSession = (
  * Providers (SessionHeader.stories pattern)
  * ------------------------------------------------------------------ */
 
+// One stable client: the notification store re-attaches on every new instance.
+const storyMatrixClient = {
+	getRoom: () => null,
+	getRooms: () => [],
+	// The header's ⋮ menu reads notification settings from account data.
+	getAccountData: () => undefined,
+	setAccountData: async () => ({}),
+	on: () => undefined,
+	removeListener: () => undefined
+};
+
 const matrixClientService = {
-	getClient: () => ({
-		getRoom: () => null,
-		getRooms: () => []
-	})
+	getClient: () => storyMatrixClient
 } as any;
 
 const StoryProviders = ({
