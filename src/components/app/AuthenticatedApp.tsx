@@ -21,7 +21,7 @@ import {
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
-import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
+import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import {
 	handleTokenRefresh,
@@ -340,7 +340,7 @@ export const AuthenticatedApp = ({
 	// usual branches on error (loading=false, appReady=false → redirect to login).
 	if (showPostRegLoader && (loading || appReady)) {
 		return (
-			<RegistrationHandover
+			<PostRegistrationHandover
 				ready={appReady}
 				onEnter={handlePostRegLoaderFinish}
 			/>
