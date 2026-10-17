@@ -169,6 +169,65 @@ it('restores the stored terminal state and duration for the same call', async ()
 	});
 });
 
+it('does not end a call nobody here ever answered, on caller-only attendance', async () => {
+	/*
+	 * The road around the `missed` guard: an unanswered call whose terminal
+	 * edit exhausted its retries — or a reload before that edit syncs —
+	 * leaves the card `running`, and the server reports `ended` because
+	 * attendance is "any observed Matrix membership" and the caller's is
+	 * published while the phone is merely ringing. Accepting that records an
+	 * unanswered call as answered, with the ringing time as its duration, and
+	 * permanently: a terminal answer stops the retries.
+	 *
+	 * `startedAt` absent on a `running` card is this client saying nobody but
+	 * the actor ever arrived.
+	 */
+	const ringing: CallLifecycleMessage = {
+		...original,
+		actorUserId: '@caller:example'
+	};
+	fetchDataMock.mockResolvedValue({
+		sourceRoomId: original.roomRef,
+		callId: original.callId,
+		callRoomId: original.callRoomId,
+		callType: 'video',
+		state: 'ended',
+		invitedAt: 1000,
+		startedAt: 2000,
+		endedAt: 14000,
+		durationSeconds: 12,
+		participantMatrixIds: ['@caller:example']
+	});
+
+	expect(await apiCallState(ringing)).toBeNull();
+});
+
+it('ends it once somebody other than the caller is on the roll', async () => {
+	// The other side, so the guard cannot be satisfied by refusing
+	// everything: real attendance still corrects the card.
+	const ringing: CallLifecycleMessage = {
+		...original,
+		actorUserId: '@caller:example'
+	};
+	fetchDataMock.mockResolvedValue({
+		sourceRoomId: original.roomRef,
+		callId: original.callId,
+		callRoomId: original.callRoomId,
+		callType: 'video',
+		state: 'ended',
+		invitedAt: 1000,
+		startedAt: 2000,
+		endedAt: 14000,
+		durationSeconds: 12,
+		participantMatrixIds: ['@caller:example', '@callee:example']
+	});
+
+	expect(await apiCallState(ringing)).toMatchObject({
+		state: 'ended',
+		durationSeconds: 12
+	});
+});
+
 it('accepts a server-confirmed missed state over a provisional ended room card', async () => {
 	fetchDataMock.mockResolvedValue({
 		sourceRoomId: original.roomRef,

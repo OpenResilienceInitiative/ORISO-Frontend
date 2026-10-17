@@ -71,7 +71,38 @@ export async function apiCallState(
 	 * stands. A card with no actor recorded accepts any attendance, which is
 	 * the same fallback the tracker uses.
 	 */
-	if (call.state === 'missed' && data.state !== 'missed') {
+	/*
+	 * And `running` does not become `ended` on the server's word alone when
+	 * nothing ever started HERE.
+	 *
+	 * The guard above only fired for a card that had already reached
+	 * `missed`, which left the same mistake reachable by another road: an
+	 * unanswered call whose terminal edit exhausted its retries — or a reload
+	 * before that edit syncs — leaves the card `running`, and the server's
+	 * caller-only `ended` was then accepted as an answered call with the
+	 * ringing time as its duration. Permanently, because a terminal answer
+	 * stops the retries.
+	 *
+	 * `startedAt` is the evidence, and it is better than the payload's:
+	 * `callLifecycleTracker` sets it only when somebody who is NOT the actor
+	 * appears in the RTC session. So a `running` card without it means
+	 * nobody else ever arrived as far as this client saw, and a server
+	 * `ended` with no attendee but the actor is contradicting that on no
+	 * evidence at all.
+	 *
+	 * Only when the card names an actor. Without one, "attendance that is
+	 * only the actor" is not a statement anything can check, and the branch's
+	 * written contract — "the authenticated UserService state may correct
+	 * either provisional terminal card state" — stands.
+	 */
+	const neverAnsweredHere =
+		call.state === 'running' &&
+		!call.startedAt &&
+		call.actorUserId !== undefined;
+	if (
+		(call.state === 'missed' && data.state !== 'missed') ||
+		(neverAnsweredHere && data.state === 'ended')
+	) {
 		const attended = Array.isArray(data.participantMatrixIds)
 			? data.participantMatrixIds.filter(
 					(id): id is string => typeof id === 'string'
