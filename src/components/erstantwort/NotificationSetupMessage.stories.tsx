@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { useTranslation } from 'react-i18next';
 import { NotificationSetupMessage } from './NotificationSetupMessage';
 import { UserDataContext, TenantContext } from '../../globalState';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
@@ -15,6 +16,12 @@ import { notificationSettingsStore } from '../../utils/notificationSettings/stor
 
 const tablet820Globals = { viewport: { value: 'tablet820' } };
 const COLLAPSE_KEY_PREFIX = 'oriso.notificationSetup.';
+
+/** The suggestion text the consent settings put above the choices. */
+const Copy = () => {
+	const { t } = useTranslation();
+	return <p>{t('caseHandover.consent.info.notificationsCopy')}</p>;
+};
 
 /**
  * The account the message is rendered for. Real `NotificationSetup`, real
@@ -143,12 +150,7 @@ const Fixture = ({
 							messageId={messageId}
 							startOpen={startOpen}
 							requireConsentEmail={requireConsentEmail}
-							copy={
-								<p>
-									Wir können Sie benachrichtigen, wenn eine
-									Antwort da ist.
-								</p>
-							}
+							copy={<Copy />}
 						/>
 						<button
 							type="button"
