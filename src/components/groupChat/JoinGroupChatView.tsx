@@ -44,6 +44,11 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
+import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import {
+	getGroupUpcomingDates,
+	getGroupWaitingRoomTopic
+} from './entryRoom/groupWaitingRoomData';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -297,6 +302,59 @@ export const JoinGroupChatView = ({
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
+	const overlays = (
+		<>
+			{requestOverlayVisible && (
+				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
+			)}
+
+			{overlayActive && (
+				<Overlay
+					item={overlayItem}
+					handleOverlay={handleOverlayAction}
+					handleOverlayClose={handleOverlayClose}
+				/>
+			)}
+		</>
+	);
+
+	/* An advice seeker waits in the same room as behind the group's link —
+	   clock, "Mehr erfahren", calendar and "Beitreten" in the bar — only
+	   inside the chat card instead of on the stage (#1219; Frank,
+	   2026-10-16: the room in the app must look like the one behind the
+	   link). The moderator keeps the view below: hers starts the chat. */
+	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+		const item = activeSession.item;
+		return (
+			<div className="session joinChat joinChat--room">
+				<SessionHeaderComponent
+					isJoinGroupChatView={true}
+					bannedUsers={bannedUsers}
+				/>
+				<GroupWaitingRoom
+					embedded
+					topicName={getGroupWaitingRoomTopic(
+						item,
+						userData.dataPrivacyConfirmation
+					)}
+					agencyName={item.assignedAgencies?.[0]?.name}
+					agencyId={item.assignedAgencies?.[0]?.id}
+					plannedStart={plannedStart}
+					upcomingDates={getGroupUpcomingDates(item)}
+					durationMinutes={item.duration}
+					eventId={item.id}
+					welcomeText={authorContent.hintMessage || undefined}
+					rules={groupChatRules}
+					active={Boolean(item.active)}
+					joinBlocked={bannedUsers.includes(userData.userName)}
+					onJoin={handleButtonClick}
+					joinBusy={isRequestInProgress}
+				/>
+				{overlays}
+			</div>
+		);
+	}
+
 	return (
 		<div className="session joinChat">
 			<SessionHeaderComponent
@@ -409,17 +467,7 @@ export const JoinGroupChatView = ({
 				</div>
 			</div>
 
-			{requestOverlayVisible && (
-				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
-			)}
-
-			{overlayActive && (
-				<Overlay
-					item={overlayItem}
-					handleOverlay={handleOverlayAction}
-					handleOverlayClose={handleOverlayClose}
-				/>
-			)}
+			{overlays}
 		</div>
 	);
 };
