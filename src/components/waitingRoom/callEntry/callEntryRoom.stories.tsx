@@ -128,6 +128,14 @@ const expectProgress = async (canvasElement: HTMLElement, fill: number) =>
 		).toBe(String(fill))
 	);
 
+/** A retry is clickable, but its bar stays empty: nothing has been checked. */
+const expectRetryNotProgress = async (canvasElement: HTMLElement) => {
+	const button = gate(canvasElement);
+	expect(button).toBeEnabled();
+	const fill = button.querySelector<HTMLElement>('[aria-hidden]')!;
+	expect(parseFloat(getComputedStyle(fill).width)).toBe(0);
+};
+
 /* ---------- Video ---------- */
 
 export const VideoReady: Story = {
@@ -150,6 +158,19 @@ export const VideoCameraOff: Story = {
 		// The camera may stay off; the gate is still open.
 		await expect(canvas.getByText('Ihre Kamera ist aus')).toBeVisible();
 		// Without a picture the others see the chosen animal.
+		await expect(canvas.getByTestId('video-avatar')).toBeVisible();
+		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
+	}
+};
+
+export const VideoNoCamera: Story = {
+	name: 'Video · no camera found',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', cameraAvailable: false },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// Nothing to switch on: the camera switch cannot pretend otherwise.
+		await expect(canvas.getByTestId('toggle-camera')).toBeDisabled();
 		await expect(canvas.getByTestId('video-avatar')).toBeVisible();
 		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
 	}
@@ -360,6 +381,7 @@ export const PermissionDenied: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+		await expectRetryNotProgress(canvasElement);
 	}
 };
 
@@ -383,6 +405,7 @@ export const NoDevice: Story = {
 	args: { ...base, modality: 'audio', micLevel: 0, blocker: 'noDevice' },
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+		await expectRetryNotProgress(canvasElement);
 	}
 };
 

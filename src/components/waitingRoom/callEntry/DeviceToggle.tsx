@@ -19,6 +19,10 @@ export interface DeviceToggleProps {
 	tone: 'onDark' | 'onSurface';
 	size?: number;
 	testId?: string;
+	/** No such device: the switch cannot turn anything on. */
+	disabled?: boolean;
+	/** The tooltip while disabled, e.g. "Keine Kamera gefunden". */
+	labelDisabled?: string;
 }
 
 /**
@@ -36,9 +40,12 @@ export const DeviceToggle = ({
 	labelOff,
 	tone,
 	size = 48,
-	testId
+	testId,
+	disabled = false,
+	labelDisabled
 }: DeviceToggleProps) => {
-	const label = on ? labelOn : labelOff;
+	const label =
+		disabled && labelDisabled ? labelDisabled : on ? labelOn : labelOff;
 	const idle =
 		tone === 'onDark'
 			? {
@@ -53,38 +60,50 @@ export const DeviceToggle = ({
 				};
 	return (
 		<Tooltip title={label} describeChild>
-			<IconButton
-				aria-label={name}
-				aria-pressed={on}
-				onClick={onToggle}
-				data-testid={testId}
-				sx={{
-					'width': size,
-					'height': size,
-					...(on
-						? idle
-						: {
-								bgcolor: registrationMd3.primary,
-								color: registrationMd3.onPrimary,
-								border: `1px solid ${registrationMd3.primary}`
-							}),
-					'&:hover': {
-						bgcolor: on
-							? tone === 'onDark'
-								? 'rgba(255,255,255,.26)'
-								: registrationMd3.surfaceContainer
-							: registrationMd3.primaryDark
-					},
-					'&:focus-visible': {
-						outline: `3px solid ${
-							tone === 'onDark' ? '#fff' : registrationMd3.primary
-						}`,
-						outlineOffset: 2
-					}
-				}}
-			>
-				{on ? iconOn : iconOff}
-			</IconButton>
+			{/* A disabled button fires no events; the span keeps the tooltip. */}
+			<span style={{ display: 'inline-flex' }}>
+				<IconButton
+					aria-label={name}
+					aria-pressed={on}
+					onClick={onToggle}
+					disabled={disabled}
+					data-testid={testId}
+					sx={{
+						'width': size,
+						'height': size,
+						...(on
+							? idle
+							: {
+									bgcolor: registrationMd3.primary,
+									color: registrationMd3.onPrimary,
+									border: `1px solid ${registrationMd3.primary}`
+								}),
+						'&:hover': {
+							bgcolor: on
+								? tone === 'onDark'
+									? 'rgba(255,255,255,.26)'
+									: registrationMd3.surfaceContainer
+								: registrationMd3.primaryDark
+						},
+						// Still the same switch, just dimmed: MUI's grey vanishes on
+						// the dark tile.
+						'&.Mui-disabled': {
+							color: on ? idle.color : registrationMd3.onPrimary,
+							opacity: 0.5
+						},
+						'&:focus-visible': {
+							outline: `3px solid ${
+								tone === 'onDark'
+									? '#fff'
+									: registrationMd3.primary
+							}`,
+							outlineOffset: 2
+						}
+					}}
+				>
+					{on ? iconOn : iconOff}
+				</IconButton>
+			</span>
 		</Tooltip>
 	);
 };

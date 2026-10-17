@@ -25,7 +25,9 @@ export interface VoiceCheckProps {
 	onToggleMic: () => void;
 	speakerTest: SpeakerTestState;
 	onSpeakerTest: (next: SpeakerTestState) => void;
-	playTone?: () => Promise<void>;
+	/** The chosen speaker, for the test tone. */
+	sinkId?: string;
+	playTone?: (sinkId?: string) => Promise<void>;
 }
 
 const RINGS = [0, 1, 2];
@@ -49,6 +51,7 @@ export const VoiceCheck = ({
 	onToggleMic,
 	speakerTest,
 	onSpeakerTest,
+	sinkId,
 	playTone
 }: VoiceCheckProps) => {
 	const phone = useMediaQuery('(max-width: 599.95px)');
@@ -186,6 +189,7 @@ export const VoiceCheck = ({
 					<SpeakerTest
 						state={speakerTest}
 						onChange={onSpeakerTest}
+						sinkId={sinkId}
 						playTone={playTone}
 					/>
 				</VoiceStep>

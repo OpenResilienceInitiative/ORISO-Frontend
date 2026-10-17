@@ -15,13 +15,39 @@ export type SpeakerTestState =
 
 const TONE_MS = 1200;
 
+/** The two-note chime; closes the context when it is over. */
+const chime = (ctx: AudioContext, resolve: () => void) => {
+	const gain = ctx.createGain();
+	gain.connect(ctx.destination);
+	[659.25, 880].forEach((frequency, index) => {
+		const start = ctx.currentTime + index * 0.5;
+		const osc = ctx.createOscillator();
+		osc.frequency.value = frequency;
+		osc.connect(gain);
+		gain.gain.setValueAtTime(0.0001, start);
+		gain.gain.exponentialRampToValueAtTime(0.2, start + 0.04);
+		gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.45);
+		osc.start(start);
+		osc.stop(start + 0.5);
+	});
+	setTimeout(() => {
+		void ctx.close();
+		resolve();
+	}, TONE_MS);
+};
+
+/** Chrome and Edge can pick the output of an `AudioContext`. */
+type SinkAudioContext = AudioContext & {
+	setSinkId?: (sinkId: string) => Promise<void>;
+};
+
 /**
- * A short two-note chime through the default output. The app will route it
- * to the chosen speaker with `setSinkId`; Safari has no speaker choice at
- * all (#1383), which is why the question afterwards matters more than the
- * picker.
+ * A short two-note chime through the chosen speaker (`setSinkId`), or the
+ * default output where the browser cannot choose. Safari has no speaker
+ * choice at all (#1383), which is why the question afterwards matters more
+ * than the picker.
  */
-export const playTestTone = (): Promise<void> =>
+export const playTestTone = (sinkId?: string): Promise<void> =>
 	new Promise((resolve) => {
 		const Ctx =
 			globalThis.AudioContext ??
@@ -34,24 +60,12 @@ export const playTestTone = (): Promise<void> =>
 			setTimeout(resolve, TONE_MS);
 			return;
 		}
-		const ctx = new Ctx();
-		const gain = ctx.createGain();
-		gain.connect(ctx.destination);
-		[659.25, 880].forEach((frequency, index) => {
-			const start = ctx.currentTime + index * 0.5;
-			const osc = ctx.createOscillator();
-			osc.frequency.value = frequency;
-			osc.connect(gain);
-			gain.gain.setValueAtTime(0.0001, start);
-			gain.gain.exponentialRampToValueAtTime(0.2, start + 0.04);
-			gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.45);
-			osc.start(start);
-			osc.stop(start + 0.5);
-		});
-		setTimeout(() => {
-			void ctx.close();
-			resolve();
-		}, TONE_MS);
+		const ctx: SinkAudioContext = new Ctx();
+		const routed =
+			sinkId && ctx.setSinkId
+				? ctx.setSinkId(sinkId).catch(() => undefined)
+				: Promise.resolve();
+		void routed.then(() => chime(ctx, resolve));
 	});
 
 export interface SpeakerTestProps {
@@ -59,7 +73,9 @@ export interface SpeakerTestProps {
 	onChange: (next: SpeakerTestState) => void;
 	/** One line under the video picture; a full card in the voice check. */
 	compact?: boolean;
-	playTone?: () => Promise<void>;
+	/** The chosen speaker; the tone plays there. */
+	sinkId?: string;
+	playTone?: (sinkId?: string) => Promise<void>;
 }
 
 /**
@@ -70,11 +86,12 @@ export const SpeakerTest = ({
 	state,
 	onChange,
 	compact = false,
+	sinkId,
 	playTone = playTestTone
 }: SpeakerTestProps) => {
 	const play = () => {
 		onChange('playing');
-		void playTone().then(() => onChange('asking'));
+		void playTone(sinkId).then(() => onChange('asking'));
 	};
 	const textSx = {
 		fontSize: 14,

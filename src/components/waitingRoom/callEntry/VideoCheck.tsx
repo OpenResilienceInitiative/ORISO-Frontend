@@ -19,6 +19,8 @@ export interface VideoCheckProps {
 	/** The live camera; without one the tile shows a neutral stand-in. */
 	stream?: MediaStream | null;
 	cameraOn: boolean;
+	/** `false` when there is no webcam: the camera switch is disabled. */
+	cameraAvailable?: boolean;
 	micOn: boolean;
 	micLevel: number;
 	onToggleCamera: () => void;
@@ -36,6 +38,7 @@ export const VideoCheck = ({
 	avatar,
 	stream,
 	cameraOn,
+	cameraAvailable = true,
 	micOn,
 	micLevel,
 	onToggleCamera,
@@ -222,6 +225,8 @@ export const VideoCheck = ({
 						name={copy.devices.camera}
 						labelOn={copy.cameraOffToggle}
 						labelOff={copy.cameraOn}
+						disabled={!cameraAvailable}
+						labelDisabled={copy.cameraMissing}
 						testId="toggle-camera"
 					/>
 				</Box>
