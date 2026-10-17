@@ -1,4 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 export const DPA_SIGN_ERRORS = {
 	INVALID_OR_EXPIRED_TOKEN: 'DPA_SIGN_INVALID_OR_EXPIRED_TOKEN',
@@ -41,9 +42,10 @@ export interface DpaSignPreviewResponse {
 export const apiGetDpaSignPreview = async (
 	token: string
 ): Promise<DpaSignPreviewResponse> => {
-	const response = await fetch(endpoints.dpaSignaturePreview(token), {
+	const url = endpoints.dpaSignaturePreview(token);
+	const response = await fetch(url, {
 		method: 'GET',
-		headers: { Accept: 'application/json' },
+		headers: { Accept: 'application/json', ...traceHeaders(url) },
 		credentials: 'include'
 	});
 
@@ -62,9 +64,10 @@ export const apiConfirmDpaSignature = async (
 	token: string,
 	request: DpaSignatureRequest
 ): Promise<DpaSignatureResponse> => {
-	const response = await fetch(endpoints.dpaSignatureConfirm(token), {
+	const url = endpoints.dpaSignatureConfirm(token);
+	const response = await fetch(url, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'application/json', ...traceHeaders(url) },
 		credentials: 'include',
 		body: JSON.stringify(request)
 	});
