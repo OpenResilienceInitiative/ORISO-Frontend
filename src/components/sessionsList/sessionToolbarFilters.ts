@@ -8,7 +8,7 @@ import {
 	hasSupervisionMarker
 } from '../sessionsListItem/supervisionListState';
 import {
-	SessionSearchRoleLabels,
+	SessionSearchTextOptions,
 	sessionMatchesPeople,
 	sessionMatchesSearchText
 } from './sessionSearchPeople';
@@ -180,8 +180,8 @@ export function sessionMatchesToolbar(
 	 * behind the "Chats" chip and could not be reopened (#1404).
 	 */
 	isRouteActive: boolean = false,
-	/** Role labels of the shown language (FE#1725 US6). */
-	roleLabels?: SessionSearchRoleLabels
+	/** Role labels of the shown language; staff-only internal names. */
+	textOptions?: SessionSearchTextOptions
 ): boolean {
 	const chatItem = getToolbarChatItem(raw);
 
@@ -252,5 +252,5 @@ export function sessionMatchesToolbar(
 		return false;
 	}
 
-	return sessionMatchesSearchText(raw, extended, query, roleLabels);
+	return sessionMatchesSearchText(raw, extended, query, textOptions);
 }

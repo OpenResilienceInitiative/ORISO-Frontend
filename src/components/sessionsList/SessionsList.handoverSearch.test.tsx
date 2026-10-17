@@ -1056,7 +1056,12 @@ describe('case-handover search — archive scope and closing (FE#1725)', () => {
 		fireEvent.click(
 			screen.getByRole('button', { name: /tabs\.archiveOnly/ })
 		);
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		// Her lookup for the archive scope has run (and found nothing).
+		await waitFor(() =>
+			expect(http.getCandidates).toHaveBeenCalledWith(
+				expect.objectContaining({ archived: true, query: 'patty' })
+			)
+		);
 
 		const pill = await waitFor(() =>
 			screen.getByRole('button', {
@@ -1123,6 +1128,48 @@ describe('case-handover search — role label of the shown language (FE#1725)', 
 });
 
 describe('people search for an advice seeker (no handover)', () => {
+	const renderAsAsker = () =>
+		renderList(
+			[
+				makeCase(51, 'bart', patty, SPRINGFIELD, 10001),
+				makeCase(52, 'bart', marge, SPRINGFIELD, 10002)
+			],
+			{
+				userData: {
+					userId: 'bart-id',
+					userName: 'bart',
+					userRoles: ['user'],
+					grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
+				},
+				path: '/sessions/user/view'
+			}
+		);
+
+	it("never shows a counsellor's internal or legal name", async () => {
+		await ready(renderAsAsker());
+
+		type('Patty');
+		const [row] = await waitFor(() => {
+			const rows = personRowsNamed('Patty B.');
+			expect(rows).toHaveLength(1);
+			return rows;
+		});
+
+		expect(row.textContent).not.toContain('Patricia');
+		expect(row.textContent).not.toContain('Bouvier');
+	});
+
+	it('cannot find a counsellor or her cases by her internal or legal name', async () => {
+		const view = await ready(renderAsAsker());
+
+		type('Bouvier');
+		await new Promise((resolve) => setTimeout(resolve, 50));
+
+		expect(personRowsNamed('Patty B.')).toHaveLength(0);
+		expect(listText(view)).not.toContain('10001');
+		expect(listItems(view)).toHaveLength(0);
+	});
+
 	it('still finds the own counsellors by name and by role word', async () => {
 		const askerCases = [
 			makeCase(51, 'bart', patty, SPRINGFIELD, 10001),
@@ -1748,6 +1795,47 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 
 		await waitFor(() =>
 			expect(listText(view)).not.toContain('Client fourteen')
+		);
+	});
+
+	it('closes the wizard with Escape like Cancel, keeping the selection', async () => {
+		const view = await ready(renderList());
+		await listPattysSpringfieldCases(view);
+		await startBatchModeOn(view, 'Client eleven');
+		await waitFor(() =>
+			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+		);
+		fireEvent.click(caseCheckbox(view, 'Client eleven'));
+		fireEvent.click(
+			within(bulkBar()).getByRole('button', {
+				name: 'caseHandover.bulkBar.continue'
+			})
+		);
+		const wizard = await screen.findByRole('dialog', {
+			name: 'caseHandover.batch.title'
+		});
+		await waitFor(() =>
+			expect(wizard.contains(document.activeElement)).toBe(true)
+		);
+
+		fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('dialog', {
+					name: 'caseHandover.batch.title'
+				})
+			).toBeNull()
+		);
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				within(bulkBar()).getByRole('button', {
+					name: 'caseHandover.bulkBar.continue'
+				})
+			)
+		);
+		expect(bulkBar().textContent).toContain(
+			'caseHandover.bulkBar.selected:1'
 		);
 	});
 

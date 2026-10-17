@@ -125,13 +125,15 @@ const consultantNameOf = (
 		firstName?: string;
 		lastName?: string;
 	},
-	ownName?: string
+	ownName?: string,
+	/** Staff only: an advice seeker never sees internal or legal names. */
+	internalNames = false
 ) => {
 	const username = readable(consultant.username);
 	const publicName = readable(consultant.displayName);
 	return (
 		(publicName !== username && publicName) ||
-		readable(internalNameOf(consultant)) ||
+		(internalNames && readable(internalNameOf(consultant))) ||
 		ownName ||
 		username
 	);
@@ -262,7 +264,8 @@ const topicNameOf = (
  */
 export const sessionSearchText = (
 	raw: ListItemInterface,
-	extended?: Pick<ExtendedSessionInterface, 'item'>
+	extended?: Pick<ExtendedSessionInterface, 'item'>,
+	{ internalNames = false }: { internalNames?: boolean } = {}
 ): string => {
 	const consultant = raw.consultant as ConsultantLike | undefined;
 	return [
@@ -272,9 +275,14 @@ export const sessionSearchText = (
 		consultant?.displayName,
 		consultant?.username,
 		readable(consultant?.username),
-		consultant?.firstName,
-		consultant?.lastName,
-		consultant?.internalName,
+		// Internal and legal names are staff-only: never an asker's search.
+		...(internalNames
+			? [
+					consultant?.firstName,
+					consultant?.lastName,
+					consultant?.internalName
+				]
+			: []),
 		raw.agency?.name,
 		postcodeOf(raw)
 	]
@@ -283,18 +291,29 @@ export const sessionSearchText = (
 		.toLowerCase();
 };
 
+/** How the text axis reads a session for the signed-in user. */
+export interface SessionSearchTextOptions {
+	/** Role labels of the shown language (FE#1725 US6). */
+	roleLabels?: SessionSearchRoleLabels;
+	/** Staff only: match counsellors' internal and legal names too. */
+	internalNames?: boolean;
+}
+
 /** Text axis of the session list; a role word keeps sessions with that role. */
 export const sessionMatchesSearchText = (
 	raw: ListItemInterface,
 	extended: Pick<ExtendedSessionInterface, 'item'> | undefined,
 	query: string,
-	roleLabels?: SessionSearchRoleLabels
+	{ roleLabels, internalNames }: SessionSearchTextOptions = {}
 ): boolean => {
 	if (!query.trim()) return true;
 	const role = roleOfSearchWord(query, roleLabels);
 	if (role === 'asker') return Boolean(raw.user);
 	if (role === 'consultant') return Boolean(raw.consultant);
-	return searchTextMatches(sessionSearchText(raw, extended), query);
+	return searchTextMatches(
+		sessionSearchText(raw, extended, { internalNames }),
+		query
+	);
 };
 
 /**
@@ -420,6 +439,11 @@ export function buildSearchPeopleResults(
 		 * eligible colleague, and the signed-in counsellor never appears.
 		 */
 		eligibleCases?: ListItemInterface[];
+		/**
+		 * Staff only: counsellor rows carry and match the internal name.
+		 * An advice seeker sees and searches the public name only.
+		 */
+		internalNames?: boolean;
 	} = {}
 ): SessionSearchPersonResult[] {
 	const byKey = new Map<
@@ -473,7 +497,8 @@ export function buildSearchPeopleResults(
 				name:
 					consultantNameOf(
 						consultant,
-						isMe ? options.currentUser?.name : undefined
+						isMe ? options.currentUser?.name : undefined,
+						options.internalNames
 					) || labels.unknown,
 				subtitle: '',
 				role: 'consultant',
@@ -489,8 +514,10 @@ export function buildSearchPeopleResults(
 		);
 		// The signed-in counsellor is never a colleague to take over from.
 		if (eligible && !isMe) entry.eligible = true;
-		entry.internalName ||=
-			readable(internalNameOf(consultant)) || undefined;
+		if (options.internalNames) {
+			entry.internalName ||=
+				readable(internalNameOf(consultant)) || undefined;
+		}
 		entry.agencyName ||= agencyName;
 		entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
 	};

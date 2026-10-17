@@ -1587,6 +1587,16 @@ export const SessionsList = ({
 		() => ({ asker: askerRoleLabel, consultant: consultantRoleLabel }),
 		[askerRoleLabel, consultantRoleLabel]
 	);
+	// Counsellors' internal and legal names are for staff only: an advice
+	// seeker sees and searches the public name alone.
+	const showStaffNames = !hasUserAuthority(
+		AUTHORITIES.ASKER_DEFAULT,
+		userData
+	);
+	const searchTextOptions = React.useMemo(
+		() => ({ roleLabels: searchRoleLabels, internalNames: showStaffNames }),
+		[searchRoleLabels, showStaffNames]
+	);
 	const toolbarSearchPeopleResults = useSearchPeopleResults(
 		sessionToolbarPairs,
 		{
@@ -1605,7 +1615,8 @@ export const SessionsList = ({
 		// Only the handover search limits counsellors to takeable ones.
 		showConsultantToolbarActions
 			? caseHandoverSearch.takeableCases
-			: undefined
+			: undefined,
+		showStaffNames
 	);
 	const listSearchQuery = textAxisQuery(
 		sessionToolbarSearch,
@@ -1905,7 +1916,7 @@ export const SessionsList = ({
 				   open — the same route-active exception the display filter
 				   already makes one layer earlier. */
 				isSessionListItemActive(extended),
-				searchRoleLabels
+				searchTextOptions
 			) &&
 			sessionMatchesAgency(raw, sessionToolbarSelectedAgency) &&
 			(!sessionToolbarSelectedTopic ||
@@ -1921,7 +1932,7 @@ export const SessionsList = ({
 			isSessionListItemActive,
 			sessionToolbarChip,
 			listSearchQuery,
-			searchRoleLabels,
+			searchTextOptions,
 			sessionToolbarSelectedAgency,
 			sessionToolbarSelectedPeople,
 			sessionToolbarSelectedTopic,
@@ -1989,6 +2000,13 @@ export const SessionsList = ({
 		setCaseHandoverBatchSummary('');
 		setCaseHandoverReviewOpen(true);
 	}, []);
+	/** Cancel and Escape: back to the selection, which stays as it was. */
+	const handleCancelCaseHandoverWizard = useCallback(() => {
+		caseHandoverBatch.close(caseHandoverSelectedIds);
+		setCaseHandoverReviewOpen(false);
+		setCaseHandoverWizardStep('reason');
+		setCaseHandoverBatchSummary('');
+	}, [caseHandoverBatch, caseHandoverSelectedIds]);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
 		caseHandoverBatch.close(caseHandoverSelectedIds, true);
 		setCaseHandoverBatchMode(false);
@@ -2592,6 +2610,11 @@ export const SessionsList = ({
 							aria-label={translate('caseHandover.batch.title')}
 							ref={caseHandoverWizardRef}
 							tabIndex={-1}
+							onKeyDown={(event) => {
+								if (event.key !== 'Escape') return;
+								event.stopPropagation();
+								handleCancelCaseHandoverWizard();
+							}}
 						>
 							<div className="sessionsList__caseHandoverWizardShell">
 								<div className="sessionsList__caseHandoverWizardBar">
@@ -2609,14 +2632,7 @@ export const SessionsList = ({
 									<button
 										type="button"
 										className="sessionsList__caseHandoverWizardClose"
-										onClick={() => {
-											caseHandoverBatch.close(
-												caseHandoverSelectedIds
-											);
-											setCaseHandoverReviewOpen(false);
-											setCaseHandoverWizardStep('reason');
-											setCaseHandoverBatchSummary('');
-										}}
+										onClick={handleCancelCaseHandoverWizard}
 									>
 										{translate('caseHandover.batch.cancel')}
 									</button>

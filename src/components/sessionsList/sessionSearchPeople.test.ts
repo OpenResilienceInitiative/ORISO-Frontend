@@ -236,7 +236,8 @@ describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () 
 					},
 					session: { id: 3, agencyId: 2 }
 				} as unknown as ListItemInterface
-			]
+			],
+			internalNames: true
 		});
 
 		expect(person.name).toBe('agency admin1');
@@ -267,11 +268,43 @@ describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () 
 			}
 		} as unknown as ListItemInterface;
 
+		const consultant = buildSearchPeopleResults(
+			[{ raw: item, extended: {} as any }],
+			labels,
+			{ internalNames: true }
+		).find((entry) => entry.role === 'consultant');
+
+		expect(consultant?.name).toBe('Patty Bouvier');
+	});
+
+	it('gives an advice seeker only the public name, never the internal or legal one', () => {
+		const item = {
+			...sessionWithBoth(),
+			consultant: {
+				consultantId: 'c-2',
+				username: 'patty',
+				displayName: 'Patty B.',
+				firstName: 'Patricia',
+				lastName: 'Bouvier',
+				internalName: 'Patricia Bouvier'
+			}
+		} as unknown as ListItemInterface;
+
 		const consultant = build([item]).find(
 			(entry) => entry.role === 'consultant'
 		);
 
-		expect(consultant?.name).toBe('Patty Bouvier');
+		expect(consultant?.name).toBe('Patty B.');
+		expect(consultant?.internalName).toBeUndefined();
+		expect(consultant?.searchText).not.toContain('bouvier');
+		expect(sessionMatchesSearchText(item, undefined, 'Bouvier')).toBe(
+			false
+		);
+		expect(
+			sessionMatchesSearchText(item, undefined, 'Bouvier', {
+				internalNames: true
+			})
+		).toBe(true);
 	});
 });
 
@@ -445,7 +478,7 @@ describe('role words in the shown language (FE#1725)', () => {
 				sessionWithBoth(),
 				undefined,
 				'Conseiller·ère',
-				fr
+				{ roleLabels: fr }
 			)
 		).toBe(true);
 	});

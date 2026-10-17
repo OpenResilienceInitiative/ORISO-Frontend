@@ -375,18 +375,22 @@ export const useSearchPeopleResults = (
 	labels: SessionSearchPeopleLabels,
 	currentUser: { id: string; name?: string },
 	/** Handover search only; without it every counsellor stays a row. */
-	eligibleCases: ListItemInterface[] | undefined
+	eligibleCases: ListItemInterface[] | undefined,
+	/** Staff only: show and match counsellors' internal names. */
+	internalNames = false
 ) =>
 	useMemo(
 		() =>
 			buildSearchPeopleResults(pairs, labels, {
 				currentUser,
-				eligibleCases
+				eligibleCases,
+				internalNames
 			}),
 		// Labels and user are primitives in practice; key on their values.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			eligibleCases,
+			internalNames,
 			pairs,
 			labels.asker,
 			labels.consultant,
