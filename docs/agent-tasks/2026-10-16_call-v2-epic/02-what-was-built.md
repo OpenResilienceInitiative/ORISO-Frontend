@@ -926,3 +926,49 @@ Two details worth keeping:
 
 The lift follows the form too, since it interpolates on size: it is judged
 against the side actually drawn, not against the tile.
+
+## 20. Where both branches stand, and what is still unverified
+
+**Gates, on the pushed heads.**
+
+| | fork `ddf443a0` | host `81b3881f3` |
+|---|---|---|
+| types | clean in `src/` | `tsc` clean |
+| eslint | clean, `--max-warnings 0` | clean, `--max-warnings 0` |
+| stylelint | n/a | clean |
+| prettier | no drift from this branch | n/a (not in the gate) |
+| knip | clean | n/a |
+| build | ✓ | ✓ |
+| unit tests | 648 passed, 19 failed | 13014 passed, 0 failed |
+
+The fork's 19 failures are **pre-existing**: nine files, identical on pristine
+`main`, none of them under `src/oriso`, `src/grid` or `src/tile`. They were
+measured on `main` rather than assumed.
+
+**Also re-verified on this state, not inherited from an earlier round:**
+
+* `scripts/verifyCallRoomMatrixRules.mjs` against a real Synapse — all 17
+  checks held, including that a participant at level 0 may send
+  `m.room.encrypted`, that they may not write another user's state key, that a
+  newcomer cannot read an identity sent before they joined (which is why
+  everybody re-announces), and that a call room's state holds no identity
+  record at all.
+* All ten harness plates re-shot in Chromium, every handoff measurement
+  holding: the fields' artwork at 0.558–0.562 of the form against the handoff's
+  0.560, the Einzelgespräch halves at 0.256 against 0.256.
+* Every review thread on both pull requests — 40 and 40 — carries a reply.
+
+**What cannot be verified from this container, and is therefore not claimed.**
+
+No live call has been made. There is no homeserver for the app itself, no
+LiveKit, no Docker, and no ORISO backend or Keycloak here, so nothing in this
+epic has been seen working end to end by one person in one call. Both reviewer
+test plans enumerate what that needs — two accounts and a deployed fork for
+most of it — and #780 should not be called covered until somebody has run them
+and written down what happened.
+
+Three classes of defect found in this review are invisible to every check in
+either repository, and all three are CSS: a rule hidden by a media query jsdom
+does not apply, a hit target jsdom cannot test, and a shadow nothing here
+paints. Stylesheet tests now pin what can be stated as text. The rest is a
+reviewer with a browser.
