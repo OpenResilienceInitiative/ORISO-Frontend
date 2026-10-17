@@ -292,4 +292,26 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 			)
 		);
 	});
+
+	it('keeps keyboard focus in the message when "change" opens the setup again', async () => {
+		mount(emailOn);
+		const change = screen.getByRole('button', { name: CHANGE });
+		change.focus();
+
+		fireEvent.click(change, { detail: 0 });
+
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByRole('button', { name: DISMISS })
+			)
+		);
+	});
+
+	it('does not take focus when "change" was not focused', () => {
+		mount(emailOn);
+
+		fireEvent.click(screen.getByRole('button', { name: CHANGE }));
+
+		expect(document.activeElement).toBe(document.body);
+	});
 });

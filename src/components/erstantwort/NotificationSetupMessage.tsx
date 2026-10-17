@@ -77,7 +77,9 @@ export const NotificationSetupMessage = ({
 	const [bothPending, setBothPending] = useState(false);
 	const root = useRef<HTMLDivElement>(null);
 	const change = useRef<HTMLButtonElement>(null);
+	const dismiss = useRef<HTMLButtonElement>(null);
 	const focusChangeNext = useRef(false);
+	const focusSetupNext = useRef(false);
 
 	// Another message or another account in the same mounted tree.
 	useEffect(() => {
@@ -90,9 +92,9 @@ export const NotificationSetupMessage = ({
 	}, [accountId, messageId]);
 
 	const remember = (state: NotificationSetupCollapseState) => {
-		focusChangeNext.current =
-			state === 'collapsed' &&
-			!!root.current?.contains(document.activeElement);
+		const focusInside = !!root.current?.contains(document.activeElement);
+		focusChangeNext.current = state === 'collapsed' && focusInside;
+		focusSetupNext.current = state === 'expanded' && focusInside;
 		setStored(state);
 		if (messageId) {
 			writeNotificationSetupCollapseState(accountId, messageId, state);
@@ -126,6 +128,11 @@ export const NotificationSetupMessage = ({
 		if (collapsed && focusChangeNext.current) {
 			focusChangeNext.current = false;
 			change.current?.focus();
+		}
+		// "ändern" is unmounted when the setup opens; keep keyboard focus inside the message.
+		if (!collapsed && focusSetupNext.current) {
+			focusSetupNext.current = false;
+			dismiss.current?.focus();
 		}
 	}, [collapsed]);
 
@@ -186,6 +193,7 @@ export const NotificationSetupMessage = ({
 									{copy}
 								</div>
 								<IconButton
+									ref={dismiss}
 									aria-label={t(
 										'erstantwort.notificationSummary.dismiss'
 									)}

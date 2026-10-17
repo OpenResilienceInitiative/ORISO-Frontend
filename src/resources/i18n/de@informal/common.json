@@ -2258,6 +2258,15 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Benachrichtigung: {{state}}",
+			"change": "ändern",
+			"dismiss": "Einrichtung ausblenden",
+			"none": "nicht eingerichtet",
+			"email": "E-Mail aktiv",
+			"browser": "Signal auf diesem Gerät aktiv",
+			"both": "E-Mail und Signal aktiv"
+		},
 		"subtitle": "Deine ersten Schritte",
 		"greeting": {
 			"body": "Schön, dass Du Dich gemeldet hast. Deine Nachricht ist bei uns angekommen."
