@@ -893,6 +893,7 @@
 		},
 		"loadError": {
 			"consultants": "እቶም መሳርሕቲ ክጽዕኑ ኣይከኣሉን።",
+			"info": "ናይ ዕላል ሓበሬታ ክጽዓን ኣይከኣለን።",
 			"retry": "ደጊምኩም ፈትኑ",
 			"topics": "እቶም ኣርእስቲ ክጽዕኑ ኣይከኣሉን።"
 		},
@@ -910,6 +911,7 @@
 			"headline": "ናይ ዕላል ሓበሬታ",
 			"settings": {
 				"agency": "ማእከል ምኽሪ",
+				"agencyLine": "ማእከል ምኽሪ: {{name}}",
 				"createDate": "ዕለት ምፍጣር",
 				"creator": "ፈጣሪ",
 				"duration": "ንውሓት ግዜ",

@@ -893,6 +893,7 @@
 		},
 		"loadError": {
 			"consultants": "Meslektaşlar yüklenemedi.",
+			"info": "Sohbet bilgileri yüklenemedi.",
 			"retry": "Tekrar deneyin",
 			"topics": "Konular yüklenemedi."
 		},
@@ -910,6 +911,7 @@
 			"headline": "Sohbet bilgileri",
 			"settings": {
 				"agency": "Danışma Merkezi",
+				"agencyLine": "Danışma Merkezi: {{name}}",
 				"createDate": "Oluşturulma tarihi",
 				"creator": "Yaratıcı",
 				"duration": "Süre",
