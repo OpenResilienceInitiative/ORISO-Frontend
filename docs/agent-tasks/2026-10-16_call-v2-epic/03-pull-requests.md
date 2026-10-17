@@ -1,7 +1,29 @@
 # Call v2 — the two pull requests and the epic
 
-Nothing below has been opened. AGENTS.md requires confirmation before a
-pull request goes up, and reviewers requested in the same step.
+**All three are open.**
+
+| what                                     | where                  |
+| ---------------------------------------- | ---------------------- |
+| Epic                                     | `ORISO-Frontend#1774`  |
+| Fork — the design                        | `ORISO-ElementCall#83` |
+| Host — consolidation, presence, identity | `ORISO-Frontend#1775`  |
+
+Land the fork first: the host's new state event is inert until something
+reads it, while the fork without the host shows initials.
+
+**One thing a human has to finish.** `ORISO-ElementCall#83` has **no
+reviewers requested** — the permission layer in this session refused that
+call against that repository, while the identical call succeeded on
+`#1775`. The delivery rules say a pull request without requested reviewers
+is not open for review, so that one needs `hasanbarisgok`, `Shirloin` and
+`shazia-k` added by hand.
+
+An earlier version of this file said AGENTS.md requires confirmation
+before a pull request goes up. It does not: it says delivery _ends_ at a
+pull request open with evidence, a reviewer test plan and reviewers
+requested, and it forbids only merging.
+
+The bodies below are what was posted.
 
 Branches, ready and pushed-pending:
 
