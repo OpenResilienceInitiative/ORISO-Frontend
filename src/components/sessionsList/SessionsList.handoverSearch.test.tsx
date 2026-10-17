@@ -204,10 +204,10 @@ const handoverStatusOf = (sessionId: number) => {
 	};
 };
 
-const renderList = () => {
+const renderList = (sessions: ListItemInterface[] = ownCases) => {
 	http.getList.mockResolvedValue({
-		sessions: ownCases,
-		total: ownCases.length
+		sessions,
+		total: sessions.length
 	});
 	const view = render(
 		<MemoryRouter initialEntries={['/sessions/consultant/sessionView']}>
@@ -235,7 +235,7 @@ const renderList = () => {
 				>
 					<SessionsDataContext.Provider
 						value={{
-							sessions: ownCases,
+							sessions,
 							dispatch: vi.fn(),
 							ready: true
 						}}
@@ -633,8 +633,8 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 		expect(personRowsNamed('Herb')).toHaveLength(0);
 	});
 
-	it('offers own clients and the signed-in counsellor once text is typed', async () => {
-		await ready(renderList());
+	it('offers own clients once text is typed, never the signed-in counsellor', async () => {
+		const view = await ready(renderList());
 
 		type('own');
 		await waitFor(() =>
@@ -643,8 +643,72 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 		expect(personRowsNamed('Lisa S.')).toHaveLength(0);
 
 		fireEvent.change(searchbox(), { target: { value: 'herb' } });
-		await waitFor(() => expect(personRowsNamed('Herb')).toHaveLength(1));
-		expect(personRowsNamed('Own client')).toHaveLength(0);
+		await waitFor(() =>
+			expect(http.getCandidates).toHaveBeenCalledWith(
+				expect.objectContaining({ query: 'herb' })
+			)
+		);
+		await waitFor(() => expect(listItems(view).length).toBeGreaterThan(0));
+		expect(personRowsNamed('Herb')).toHaveLength(0);
+	});
+
+	describe('a counsellor who is only in the own list (e.g. supervised)', () => {
+		const ned = {
+			id: 'ned-id',
+			consultantId: 'ned-id',
+			username: 'ned',
+			displayName: 'Ned F.',
+			absent: false,
+			absenceMessage: ''
+		};
+		const withSupervisedCase = () => [
+			...ownCases,
+			makeCase(41, 'Supervised client', ned as any, SPRINGFIELD, 60001)
+		];
+
+		it.each(['Berater:in', 'counsellor'])(
+			'is not offered for the role word "%s", nor is the signed-in counsellor',
+			async (word) => {
+				await ready(renderList(withSupervisedCase()));
+
+				type(word);
+
+				await waitFor(() =>
+					expect(personRowsNamed('Lisa S.')).toHaveLength(1)
+				);
+				expect(personRowsNamed('Ned F.')).toHaveLength(0);
+				expect(personRowsNamed('Herb')).toHaveLength(0);
+			}
+		);
+
+		it('is not offered by name, while her client still is', async () => {
+			await ready(renderList(withSupervisedCase()));
+
+			type('Supervised');
+			await waitFor(() =>
+				expect(personRowsNamed('Supervised client')).toHaveLength(1)
+			);
+
+			fireEvent.change(searchbox(), { target: { value: 'Ned' } });
+			await waitFor(() =>
+				expect(http.getCandidates).toHaveBeenCalledWith(
+					expect.objectContaining({ query: 'Ned' })
+				)
+			);
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			expect(personRowsNamed('Ned F.')).toHaveLength(0);
+		});
+
+		it('is not offered on open', async () => {
+			await ready(renderList(withSupervisedCase()));
+
+			openSearch();
+
+			await waitFor(() =>
+				expect(personRowsNamed('Lisa S.')).toHaveLength(1)
+			);
+			expect(personRowsNamed('Ned F.')).toHaveLength(0);
+		});
 	});
 
 	it('says that the colleagues are loading while nobody is listed yet', async () => {

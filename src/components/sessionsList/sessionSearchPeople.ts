@@ -394,7 +394,9 @@ export function buildSearchPeopleResults(
 		 * Cases the signed-in counsellor may take over (blank candidates
 		 * query, FE#1152). Only their counsellors become rows, never the
 		 * clients; these rows are marked `eligible`, and only they are
-		 * listed while the search text is blank.
+		 * listed while the search text is blank. When given, no other
+		 * counsellor becomes a row: an own-list case only enriches an
+		 * eligible colleague, and the signed-in counsellor never appears.
 		 */
 		eligibleCases?: ListItemInterface[];
 	} = {}
@@ -557,16 +559,22 @@ export function buildSearchPeopleResults(
 		);
 	});
 
-	return Array.from(byKey.values()).map(({ parts, ...person }) => ({
-		...person,
-		searchText: [
-			person.name,
-			person.internalName,
-			person.subtitle,
-			...Array.from(parts)
-		]
-			.filter(Boolean)
-			.join(' ')
-			.toLowerCase()
-	}));
+	const takeoverOnly = options.eligibleCases !== undefined;
+	return Array.from(byKey.values())
+		.filter(
+			(person) =>
+				!takeoverOnly || person.role !== 'consultant' || person.eligible
+		)
+		.map(({ parts, ...person }) => ({
+			...person,
+			searchText: [
+				person.name,
+				person.internalName,
+				person.subtitle,
+				...Array.from(parts)
+			]
+				.filter(Boolean)
+				.join(' ')
+				.toLowerCase()
+		}));
 }

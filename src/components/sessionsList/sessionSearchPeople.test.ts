@@ -351,8 +351,56 @@ describe('buildSearchPeopleResults — eligible colleagues (FE#1152)', () => {
 			{ eligibleCases: [eligibleCase('client_a', 1)] }
 		);
 
+		const colleague = people.filter(
+			(entry) => entry.id === 'consultant:c-1:77'
+		);
+		expect(colleague).toHaveLength(1);
+		// The own-list case enriches her row: picking her lists it too.
+		expect(colleague[0].sessionKeys).toContain('14055');
+	});
+
+	it('adds no counsellor who is only in the own list (e.g. supervised)', () => {
+		const supervised = {
+			...sessionWithBoth(),
+			consultant: { consultantId: 'c-3', username: 'ned' },
+			session: { id: 20, agencyId: 77 }
+		} as unknown as ListItemInterface;
+		const people = buildSearchPeopleResults(
+			[{ raw: supervised, extended: {} as any }],
+			labels,
+			{ eligibleCases: [eligibleCase('client_a', 1)] }
+		);
+
+		expect(people.map((entry) => entry.id)).not.toContain(
+			'consultant:c-3:77'
+		);
+		// Her client stays findable.
+		expect(people.some((entry) => entry.role === 'asker')).toBe(true);
+	});
+
+	it('never lists the signed-in counsellor, even with own eligible-looking cases', () => {
+		const mine = {
+			...sessionWithBoth(),
+			consultant: { consultantId: 'me-1', username: 'me' }
+		} as unknown as ListItemInterface;
+		const people = buildSearchPeopleResults(
+			[{ raw: mine, extended: {} as any }],
+			labels,
+			{ currentUser: { id: 'me-1', name: 'Me' }, eligibleCases: [mine] }
+		);
+
 		expect(
-			people.filter((entry) => entry.id === 'consultant:c-1:77')
-		).toHaveLength(1);
+			people.filter((entry) => entry.role === 'consultant')
+		).toHaveLength(0);
+	});
+
+	it('lists no counsellor at all while nothing is eligible', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			labels,
+			{ eligibleCases: [] }
+		);
+
+		expect(people.map((entry) => entry.role)).toEqual(['asker']);
 	});
 });
