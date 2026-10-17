@@ -13,8 +13,12 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
-/* `_shots/` is the repo's gitignored evidence scratch dir (AGENTS.md: the
-   evidence lives on the pull request, not in git). */
+/* `_shots/` is the repo's gitignored scratch dir: all 38 plates, at 2x, are
+   for MEASURING, and they are far too heavy for git. The handful that the
+   pull request shows goes through `shootCallEvidence.mjs` and is committed
+   under `docs/storybook/issue-<number>-<slug>/`, which is what AGENTS.md
+   asks for — an earlier version of this comment claimed the opposite, that
+   evidence stays out of git, and that was simply wrong. */
 const OUT = process.argv[2] ?? '_shots/call';
 const STORIES = [
 	['call-stages-hain--ruhig', 'Hain-9-ruhig', 900],
