@@ -767,6 +767,44 @@ describe('voice note review before sending (#1142)', () => {
 		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
 	});
 
+	it('drops the staged recording when another file is selected, so Send sends what is shown', async () => {
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		expect(
+			screen.getByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+
+		const other = new File(['other audio'], 'other-take.webm', {
+			type: 'audio/webm'
+		});
+		const input = document.getElementById('dataUpload') as HTMLInputElement;
+		Object.defineProperty(input, 'files', {
+			configurable: true,
+			value: [other]
+		});
+		await act(async () => {
+			fireEvent.change(input);
+		});
+
+		// The old take is no longer previewed and its URL is released.
+		expect(
+			screen.queryByRole('button', { name: 'voicePlayer.play' })
+		).toBeNull();
+		expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:voice-preview');
+		expect(screen.getByText('other-take.webm')).toBeTruthy();
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+		expect(vi.mocked(apiSendMatrixAttachmentMessage).mock.calls[0][1]).toBe(
+			other
+		);
+	});
+
 	it('cancel while recording drops the take without sending or opening a review', async () => {
 		render(<Composer />);
 		await startRecording();

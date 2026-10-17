@@ -2137,6 +2137,14 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const displayAttachmentToUpload = useCallback(
 		(attachment: File, options?: { keepDraft?: boolean }) => {
+			// #1142: the voice review always shows the file that will be
+			// sent. Any other file (upload, drop, paste) replaces the staged
+			// recording; the preview URL is revoked by its effect cleanup.
+			if (recordedVoiceRef.current?.file !== attachment) {
+				recordedVoiceRef.current = null;
+				setVoicePreviewUrl(null);
+				setVoiceAttachmentDurationSec(0);
+			}
 			setAttachmentSelected(attachment);
 			setActiveInfo('');
 			if (options?.keepDraft) {
