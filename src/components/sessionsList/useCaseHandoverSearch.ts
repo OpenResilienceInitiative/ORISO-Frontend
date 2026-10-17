@@ -328,10 +328,23 @@ export const useCaseHandoverSearch = ({
 		() => mergeListItems(textCandidates, ...Object.values(pinned)),
 		[pinned, textCandidates]
 	);
+	/**
+	 * Cases I may take over: the blank roster plus what a typed query found
+	 * on the same endpoint, so a colleague beyond the roster's page cap is
+	 * offered once her name is typed.
+	 */
+	const takeableCases = useMemo(
+		() =>
+			textCandidates.length
+				? mergeListItems(eligibleCases, textCandidates)
+				: eligibleCases,
+		[eligibleCases, textCandidates]
+	);
 
 	return {
 		candidateSessions,
 		eligibleCases,
+		takeableCases,
 		eligibleStatus,
 		eligibleCapped,
 		selectedPersonIds: useMemo(

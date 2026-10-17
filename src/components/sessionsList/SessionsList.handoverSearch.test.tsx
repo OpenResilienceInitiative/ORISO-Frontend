@@ -816,6 +816,29 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 		}
 	);
 
+	it('offers a colleague missing from the blank roster (e.g. beyond the cap) once her name finds her cases', async () => {
+		http.getCandidates.mockImplementation(async ({ query }) => ({
+			sessions: query
+				? serverCandidates(query)
+				: [...pattyCases, ...margeCases],
+			total: 0
+		}));
+		const view = await ready(renderList());
+
+		fireEvent.focus(searchbox());
+		await waitFor(() =>
+			expect(personRowsNamed('Marge S.')).toHaveLength(1)
+		);
+		expect(personRowsNamed('Lisa S.')).toHaveLength(0);
+
+		type('lisa');
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		fireEvent.click(personRowsNamed('Lisa S.')[0]);
+		await waitFor(() =>
+			expect(listText(view)).toContain('Client thirtyone')
+		);
+	});
+
 	it('says why nobody is listed when no colleague is eligible', async () => {
 		http.getCandidates.mockResolvedValue({ sessions: [], total: 0 });
 		await ready(renderList());

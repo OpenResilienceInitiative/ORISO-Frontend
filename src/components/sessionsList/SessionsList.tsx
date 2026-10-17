@@ -1603,7 +1603,7 @@ export const SessionsList = ({
 		},
 		// Only the handover search limits counsellors to takeable ones.
 		showConsultantToolbarActions
-			? caseHandoverSearch.eligibleCases
+			? caseHandoverSearch.takeableCases
 			: undefined
 	);
 	const listSearchQuery = textAxisQuery(
