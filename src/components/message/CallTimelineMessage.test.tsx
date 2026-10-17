@@ -11,15 +11,22 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 
+/** The interface language, switchable per test. */
+const ui = vi.hoisted(() => ({ language: '' }));
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, values?: { start?: string }) =>
-			values?.start ? `${key}: ${values.start}` : key
+			values?.start ? `${key}: ${values.start}` : key,
+		i18n: ui
 	})
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	ui.language = '';
+});
 
 it('renders the actual running call through the shared card with named participant avatars', () => {
 	const call: CallLifecycleMessage = {
@@ -308,3 +315,51 @@ it('says nothing about who started it when it has no name for them', () => {
 	expect(screen.queryByText(/startedBy/)).toBeNull();
 	expect(screen.queryByText(/@nobody-we-know/)).toBeNull();
 });
+
+const STARTED_AT = '2026-10-16T08:00:00.000Z';
+const formatIn = (locale?: string) =>
+	new Intl.DateTimeFormat(locale, {
+		dateStyle: 'medium',
+		timeStyle: 'short'
+	}).format(new Date(STARTED_AT));
+const literal = (text: string) =>
+	new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+it.each([
+	['de', 'de'],
+	['de@informal', 'de'],
+	['en-GB', 'en-GB']
+])(
+	'formats the start time in the interface language, not the browser one (%s)',
+	(language, tag) => {
+		/*
+		 * `Intl.DateTimeFormat(undefined, …)` takes the BROWSER locale, so a
+		 * German interface in an English browser read "Gestartet am Oct 16,
+		 * 2026, 10:00 AM". `de@informal` is our own variant rather than a
+		 * BCP 47 tag and `Intl` throws on it, so the suffix has to come off
+		 * before `Intl` sees it; that is why it is in the table.
+		 *
+		 * The expected text is built with `Intl` rather than written out,
+		 * because what is under test is WHICH locale the component asks for,
+		 * not how ICU renders it — and spelling a date out here would pin the
+		 * test to one time zone and one ICU version.
+		 */
+		ui.language = language;
+		const call: CallLifecycleMessage = {
+			callId: 'started-call',
+			roomRef: '!source:example',
+			callRoomId: '!media:example',
+			callType: 'video',
+			state: 'ended',
+			participants: [],
+			startedAt: STARTED_AT,
+			durationSeconds: 60
+		};
+		render(<CallTimelineMessage call={call} />);
+
+		expect(screen.getByText(literal(formatIn(tag)))).toBeDefined();
+		// And not the browser's own idea of it, which is what the bug showed.
+		if (formatIn(undefined) !== formatIn(tag))
+			expect(screen.queryByText(literal(formatIn(undefined)))).toBeNull();
+	}
+);

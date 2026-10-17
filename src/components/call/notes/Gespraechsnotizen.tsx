@@ -141,7 +141,8 @@ export const Gespraechsnotizen = ({
 			setCopied(true);
 		} catch {
 			// A refused clipboard permission is not worth an error state the
-			// counsellor cannot act on; the text is still on screen.
+			// counsellor cannot act on: the notes are on screen above the
+			// button, and the acknowledgement simply does not appear.
 			setCopied(false);
 		}
 	}, [notes, labels.types, writeText]);
@@ -277,6 +278,16 @@ export const Gespraechsnotizen = ({
 							{copied ? labels.copied : labels.copy}
 						</button>
 					)}
+					{/* Said out loud, not only shown.
+					    The button swapping its own label from "Kopieren" to
+					    "Kopiert" replaces its accessible NAME, which no
+					    screen reader announces on its own, so a counsellor
+					    using one got no confirmation that anything had been
+					    copied. A live region says it once and goes quiet
+					    again when the acknowledgement times out. */}
+					<span role="status" className={styles.srOnly}>
+						{copied ? labels.copied : ''}
+					</span>
 				</>
 			)}
 		</aside>

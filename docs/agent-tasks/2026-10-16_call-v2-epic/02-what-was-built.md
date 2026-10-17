@@ -235,3 +235,78 @@ the tag's text content stays whole for a screen reader and a copy-paste.
    grid icon; unlike the animals, the chrome icons are not inherited,
    because they are chrome rather than identity.
 4. The **0.11 AA margin** on the 12px subtitle.
+
+---
+
+## 8. What the review round changed
+
+Codex and CodeRabbit reviewed both pull requests. Every finding was traced
+to a caller before it was touched; what follows is what held. The two that
+mattered most would both have shipped a feature that silently did nothing.
+
+### The call card never rendered in the conversation
+
+`MessageItemComponent` draws the card only when the lifecycle record's
+`roomRef` matches the item's `rid` — so a supervision call cannot surface in
+the client timeline. The stamp that puts `rid` on an item was opt-in, and
+only the two side rooms opted in. For the main timeline the guard therefore
+compared a room id against `undefined`, which is never equal, and a call in
+the conversation rendered as an ordinary message. Every test of the card
+passed, because they all hand it `rid` directly.
+
+The flag is gone: `formatRoomMessages` always stamps, so there is no
+"forgot to opt in" state left to be in. `SessionStream.test.tsx` now drives
+a lifecycle event through the stream that builds the items and asserts the
+comparison the card is gated on can hold. It fails without the fix.
+
+### Nobody but the call's creator could say who they are
+
+`createElementCallRoom` sets `state_default: 100`, deliberately — without
+it any joined participant could rewrite `m.room.join_rules` back to
+`public` from inside the call. But the identity record is a state event
+written by each person's **own** client, so the only participant whose
+write the server accepted was the one who created the room. Everybody else
+appeared in the call as initials: the exact outcome the handoff's first rule
+exists to prevent.
+
+`org.oriso.call.identity` now joins `org.matrix.msc3401.call.member` in the
+power-level grant at PL 0. Safe, because the state key is the sender's user
+id and the server already refuses anyone else's.
+
+Two smaller faults in the same path: the state key came from
+`useOwnAvatarUserId`, whose fallback is a userservice id that the server
+would refuse outright — the key is now strictly `client.getUserId()`, while
+the palette SEED stays the id the chat derives colours from. And the write
+raced `joinRoom`; it now waits for the widget URL, which only exists after
+the join has returned.
+
+### The rest
+
+| finding                                                                              | where                                           |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `parentUrl` is the generic widget parameter, so any Element Web embed got the design | fork: new `orisoDesign` opt-in, set by the host |
+| Speaking read as a snapshot — the seam never bowed, the grove never re-packed        | fork: both layouts subscribe                    |
+| Shapes keyed by user id collided across two devices                                  | fork: keyed by the media's own id               |
+| `GridTile` passed the filtered `showSpeaking`, so the one-on-one rim never showed    | fork: raw `speaking`                            |
+| Stale shapes survived into upstream's spotlight                                      | fork: cleared on unmount                        |
+| `position: relative` on the backdrop's siblings broke the sticky header and footer   | fork: `z-index: -1` in an isolated context      |
+| Artwork URL concatenated onto a `parentUrl` that may carry a path                    | fork: resolved against its origin               |
+| A published animal had no letters to show while its artwork loaded                   | fork: initials from the display name            |
+| Fetched SVG went into `dangerouslySetInnerHTML` unexamined                           | fork: one pass removes anything that could run  |
+| Transaction IDs were reused after a successful write, so a rejoin vanished           | host: released once the write lands             |
+| `finish()` left every call of the session in memory                                  | host: the entry is dropped                      |
+| A group call nobody joined stayed "running" for good                                 | host: `finishIfUnattended`                      |
+| Each call card re-polled on every timeline refresh, and never stopped on `null`      | host: keyed on identity, stops when settled     |
+| The notepad vanished below 1280px — the consultant's only one                        | host: keeps its rail, overlays when opened      |
+| The start time used the browser locale, not the interface language                   | host: `i18n.language`, `de@informal` normalised |
+| A copy gave a screen reader no confirmation                                          | host: a live region                             |
+| `2026-02-30` passed validation and rendered as 2 March                               | host: real calendar days only                   |
+| The roving tabindex never moved DOM focus                                            | both: focus follows the selection               |
+| The video spike measured orphaned canvas loops, penalising the clip path             | fork: loops stopped between runs                |
+| `shootCallStages.mjs` defaulted to one machine's Chromium path                       | host: Playwright's own unless told otherwise    |
+
+Two findings were **not** taken as written, and the pull request comments
+say why: a sanitiser dependency (the pass does the job without diverging
+from the host's own `AnimalAvatar`), and a 60-second invite timer for an
+unanswered group call (the narrower `finishIfUnattended` covers the
+reachable case without a timer nobody asked for).

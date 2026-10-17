@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { callManager } from './CallManager';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';
+import { CALL_IDENTITY_EVENT_TYPE } from '../components/call/callIdentity';
 
 const SESSION_ROOM = '!counselling:oriso.example';
 const CALL_ROOM = '!call:oriso.example';
@@ -124,6 +125,34 @@ describe('createElementCallRoom', () => {
 		expect(levels.events['m.room.encryption']).toBe(100);
 		// The one exception: Element Call must publish call membership.
 		expect(levels.events['org.matrix.msc3401.call.member']).toBe(0);
+	});
+
+	it('lets every participant say who they are', async () => {
+		/*
+		 * `state_default: 100` closed the room to participant state writes,
+		 * which is the point — but it also closed the identity record, which
+		 * each person's own client writes under their own user id. Only the
+		 * person who started the call could publish one; everybody else
+		 * appeared in the call as initials, which is exactly what "identity
+		 * is inherited, never derived" forbids.
+		 *
+		 * Safe to grant: the state key is the sender's user id, and the
+		 * server already refuses a state key belonging to anyone else.
+		 */
+		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
+		installClient({
+			createRoom,
+			getUserId: () => OWN_USER,
+			getRoom: () => null,
+			invite: vi.fn()
+		});
+
+		await createCallRoom();
+
+		const levels = (createRoom.mock.calls[0][0] as any)
+			.power_level_content_override;
+		expect(levels.events[CALL_IDENTITY_EVENT_TYPE]).toBe(0);
+		expect(levels.state_default).toBeGreaterThanOrEqual(100);
 	});
 
 	it('falls back to invites — never to a public room — on an old homeserver', async () => {

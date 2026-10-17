@@ -535,6 +535,8 @@
 	display: flex;
 	flex-direction: row;
 	align-items: stretch;
+	/* The containing block for the narrow-screen notepad overlay below. */
+	position: relative;
 }
 
 .element-call-notes {
@@ -544,10 +546,19 @@
 	overflow: hidden;
 }
 
-/* Below the handoff's breakpoint the stage needs the whole width, so the
-   notepad steps out of the row entirely rather than squeezing it. */
+/* Below the handoff's breakpoint the stage needs the whole width — but the
+   notepad is the consultant's ONLY notepad, and `display: none` here took it
+   away outright on any laptop at 1280 or less, with nothing to open. It keeps
+   its 44px rail instead, and opening it lays it over the stage rather than
+   squeezing it: on a narrow screen there is no width to give away, and a
+   counsellor reading their own notes is not watching the stage at that
+   moment anyway. */
 @media (width <= 1279px) {
-	.element-call-notes {
-		display: none;
+	.element-call-notes:not([data-collapsed='true']) {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-end: 0;
+		z-index: 2;
+		max-inline-size: 100%;
 	}
 }

@@ -39,6 +39,14 @@ describe('Appointment', () => {
 		],
 		['date without time or offset', appointment({ date: '2026-08-12' })],
 		['locale-specific date', appointment({ date: 'August 12, 2026' })],
+		// Correctly shaped and impossible. `new Date` reads this as 2 March
+		// rather than refusing it, so the card showed a date nobody wrote.
+		[
+			'a day the month does not have',
+			appointment({ date: '2026-02-30T09:00:00.000Z' })
+		],
+		['a 25th hour', appointment({ date: '2026-08-12T24:30:00.000Z' })],
+		['a 13th month', appointment({ date: '2026-13-01T09:00:00.000Z' })],
 		['zero duration', appointment({ duration: 0 })],
 		['negative duration', appointment({ duration: -15 })],
 		[

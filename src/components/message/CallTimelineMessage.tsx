@@ -17,7 +17,7 @@ export const CallTimelineMessage = ({
 	) => Promise<CallLifecycleMessage | null>;
 }) => {
 	const call = useCallTimelineState(initialCall, loadState);
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [joining, setJoining] = React.useState(false);
 	const [joinFailed, setJoinFailed] = React.useState(false);
 	const joinPending = React.useRef(false);
@@ -53,15 +53,31 @@ export const CallTimelineMessage = ({
 				(participant) => participant.userId === call.actorUserId
 			)?.displayName
 		: undefined;
+	/*
+	 * The date in the language the interface is in, not the browser's.
+	 *
+	 * `Intl.DateTimeFormat(undefined, …)` takes the browser locale, so a
+	 * German interface in an English browser said "Gestartet am Oct 16, 2026,
+	 * 10:00 AM", and the reverse happened too. `i18n.language` can be
+	 * `de@informal`, which is our own variant and not a BCP 47 tag, so the
+	 * suffix comes off before `Intl` sees it. Built once per language rather
+	 * than per render: constructing a formatter is not cheap.
+	 */
+	const uiLanguage = (i18n?.language ?? '').split('@')[0] || undefined;
+	const startFormat = React.useMemo(
+		() =>
+			new Intl.DateTimeFormat(uiLanguage, {
+				dateStyle: 'medium',
+				timeStyle: 'short'
+			}),
+		[uiLanguage]
+	);
 	const label = t(`videoCall.timeline.${call.callType}.${call.state}`);
 	const callLabel = t(`message.callLifecycle.type.${call.callType}`);
 	const statusLabel = t(`message.callLifecycle.state.${call.state}`);
 	const startedAt = call.startedAt;
 	const formattedStart = startedAt
-		? new Intl.DateTimeFormat(undefined, {
-				dateStyle: 'medium',
-				timeStyle: 'short'
-			}).format(new Date(startedAt))
+		? startFormat.format(new Date(startedAt))
 		: undefined;
 	const baseDescription =
 		call.state === 'missed' || formattedStart

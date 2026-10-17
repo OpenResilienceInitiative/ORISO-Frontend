@@ -54,7 +54,9 @@ afterEach(cleanup);
 describe('ViewSwitcher', () => {
 	it('is one choice among the views, not three separate toggles', () => {
 		renderSwitcher();
-		expect(screen.getByRole('radiogroup', { name: 'Ansicht' })).toBeDefined();
+		expect(
+			screen.getByRole('radiogroup', { name: 'Ansicht' })
+		).toBeDefined();
 		expect(screen.getAllByRole('radio')).toHaveLength(3);
 	});
 
@@ -131,6 +133,27 @@ describe('ViewSwitcher', () => {
 		expect(onChange).toHaveBeenLastCalledWith('kacheln');
 		await user.keyboard('{ArrowDown}');
 		expect(onChange).toHaveBeenLastCalledWith('kacheln');
+	});
+
+	it('takes focus with it', async () => {
+		/*
+		 * With a roving tabindex it has to. The first version only reported
+		 * the new view: the browser left focus on the old button, which the
+		 * re-render then set to `tabIndex={-1}`, so an arrow press lost the
+		 * user's place in the rail and announced nothing.
+		 */
+		renderSwitcher('kreis');
+		const user = userEvent.setup();
+		screen.getByRole('radio', { name: 'Kreis' }).focus();
+
+		await user.keyboard('{ArrowRight}');
+		expect(document.activeElement).toBe(
+			screen.getByRole('radio', { name: 'Kacheln' })
+		);
+		await user.keyboard('{End}');
+		expect(document.activeElement).toBe(
+			screen.getByRole('radio', { name: 'Spotlight' })
+		);
 	});
 
 	it('wraps at both ends', async () => {

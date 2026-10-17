@@ -107,10 +107,15 @@ export const GroupCallWidget: React.FC = () => {
 	 *
 	 * Own identity only. A client that wrote somebody else's would be guessing
 	 * on their behalf, and the state key is the user id, so it cannot.
+	 *
+	 * After the join, not beside it. `useElementCallWidget` joins the call
+	 * room and only then produces a URL, so waiting for the URL is waiting
+	 * for the membership — a state event sent to a room this client has not
+	 * joined yet is refused, and the first version of this raced it.
 	 */
 	useEffect(() => {
 		const client = matrixClientService?.getClient();
-		if (!client || !callRoomId || !shouldPrepareWidget || !userData) return;
+		if (!client || !callRoomId || !widget.url || !userData) return;
 		void publishCallIdentity(
 			client as unknown as IdentityClient,
 			callRoomId,
@@ -126,7 +131,7 @@ export const GroupCallWidget: React.FC = () => {
 	}, [
 		matrixClientService,
 		callRoomId,
-		shouldPrepareWidget,
+		widget.url,
 		ownAvatarUserId,
 		userData
 	]);

@@ -157,8 +157,6 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 				height: size,
 				boxSizing: 'border-box',
 				border: outline ? `${borderWidth}px solid #c4c7c8` : 0,
-				// Scaled by the avatar's own size: at 104px and below this is
-				// exactly the judged value, so nothing in the app moves.
 				// Scaled by the avatar's own size unless a caller hands over
 				// an exact stack: at 104px and below the scaled value is
 				// byte-for-byte the judged one, so nothing in the app moves.

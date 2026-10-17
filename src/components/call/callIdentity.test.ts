@@ -161,6 +161,33 @@ describe('publishing it', () => {
 		expect(content).toMatchObject({ kind: 'animal' });
 	});
 
+	it('keys the record by the Matrix id even when the seed is another', async () => {
+		/*
+		 * `useOwnAvatarUserId` prefers the Matrix id but falls back to the
+		 * userservice id, and the two uses are not interchangeable: the state
+		 * key must be the Matrix id or the server refuses the write and the
+		 * fork, which looks identities up by the Matrix id on its tiles,
+		 * would never find it anyway. The SEED stays whatever the chat
+		 * derives the palette from, so the animal matches on both sides.
+		 */
+		const client = makeClient();
+		const userserviceId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+		await publishCallIdentity(client, '!room:oriso.test', {
+			userId: userserviceId,
+			userData: {},
+			isConsultant: false,
+			brand: BRAND
+		});
+		const [, , content, stateKey] = client.sendStateEvent.mock.calls[0];
+		expect(stateKey).toBe(SEEKER);
+		// The palette still comes from the seed, not from the state key.
+		const seeded = generateAvatarForUser(userserviceId);
+		expect(content).toMatchObject({
+			bg: seeded.bg,
+			ink: seeded.iconColor
+		});
+	});
+
 	it('says nothing when the same record is already there', async () => {
 		const derived = generateAvatarForUser(SEEKER);
 		const client = makeClient({

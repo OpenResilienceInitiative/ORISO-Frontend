@@ -137,6 +137,26 @@ class CallLifecycleTracker {
 		attach();
 	}
 
+	/**
+	 * Close a call that nobody ever joined.
+	 *
+	 * A MatrixRTC group call belongs to the room rather than to whoever
+	 * invited everybody, so one person leaving must not end it for the rest —
+	 * which is why `endCall` does not finish group calls, and why the tracker
+	 * waits for memberships to drop to zero instead. A call nobody joined is
+	 * the exception: there is no rest. Without this, cancelling or leaving an
+	 * unanswered group call left the card saying "running" for good, offering
+	 * a Join button that could only ever answer `unavailable`.
+	 *
+	 * `finish` writes `missed` when nothing ever started, which is what this
+	 * case is.
+	 */
+	finishIfUnattended(callId: string): void {
+		const tracked = this.calls.get(callId);
+		if (!tracked || tracked.message.startedAt) return;
+		this.finish(callId);
+	}
+
 	finish(callId: string): void {
 		const tracked = this.calls.get(callId);
 		if (!tracked || tracked.message.state !== 'running') return;
@@ -162,6 +182,14 @@ class CallLifecycleTracker {
 		};
 		tracked.stop();
 		this.publish(tracked);
+		/*
+		 * Done with it. The retry chain below holds `tracked` directly, so
+		 * the terminal write still finishes its attempts — but nothing looks
+		 * a finished call up again, and keeping every call of the session in
+		 * this map kept its writer, its participant list and its timers alive
+		 * for as long as the tab stayed open.
+		 */
+		this.calls.delete(callId);
 	}
 
 	private publish(tracked: TrackedCall): void {

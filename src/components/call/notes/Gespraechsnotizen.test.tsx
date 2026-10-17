@@ -182,6 +182,29 @@ describe('Gesprächsnotizen', () => {
 		expect(
 			screen.getByRole('button', { name: labels.copied })
 		).toBeDefined();
+		/*
+		 * And said out loud. The button swapping its own label replaces its
+		 * accessible NAME, which no screen reader announces by itself, so a
+		 * counsellor using one had no way to know the copy had worked.
+		 */
+		expect(screen.getByRole('status').textContent).toBe(labels.copied);
+	});
+
+	it('says nothing when the clipboard refuses', async () => {
+		// Only the acknowledgement is withheld; the notes are still on screen
+		// above the button, which is the whole of the recovery.
+		const writeText = vi
+			.fn<(t: string) => Promise<void>>()
+			.mockRejectedValue(new Error('denied'));
+		render(<Gespraechsnotizen labels={labels} writeText={writeText} />);
+		await write('wirkt erschöpft', 'Anmerkung');
+
+		await userEvent
+			.setup()
+			.click(screen.getByRole('button', { name: labels.copy }));
+
+		expect(screen.getByRole('status').textContent).toBe('');
+		expect(screen.getByText('wirkt erschöpft')).toBeDefined();
 	});
 
 	it('collapses to a rail and keeps the notes', async () => {

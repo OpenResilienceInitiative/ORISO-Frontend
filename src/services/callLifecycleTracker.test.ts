@@ -190,4 +190,32 @@ describe('live presence', () => {
 		expect(lastPayload().present).toEqual([]);
 		expect(lastPayload().participants).toHaveLength(1);
 	});
+
+	it('closes a group call nobody ever joined', async () => {
+		/*
+		 * A group call belongs to the room rather than to whoever invited
+		 * everybody, so `endCall` deliberately does not end one when a
+		 * participant leaves — the tracker waits for memberships to drop to
+		 * zero instead. For a call nobody joined there is no such moment, so
+		 * the card said "running" for as long as the conversation was open,
+		 * offering a Join button that could only answer `unavailable`.
+		 */
+		await callLifecycleTracker.begin(call);
+		callLifecycleTracker.finishIfUnattended(call.callId);
+		await settled();
+		expect(lastPayload().state).toBe('missed');
+		expect(lastPayload().present).toEqual([]);
+	});
+
+	it('leaves a group call somebody is in alone', async () => {
+		// The other half of the same rule: one person leaving a call that is
+		// under way must not end it for everybody still in it.
+		session.memberships = [{ sender: '@alex:example' }];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		callLifecycleTracker.finishIfUnattended(call.callId);
+		await settled();
+		expect(lastPayload().state).toBe('running');
+	});
 });

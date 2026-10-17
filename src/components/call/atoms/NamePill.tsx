@@ -2,6 +2,27 @@ import * as React from 'react';
 
 import styles from './namePill.module.scss';
 
+/**
+ * What the capsule says to a screen reader.
+ *
+ * Injected rather than translated in here, like every other label in these
+ * atoms: the stages are a design reference, rendered from stories and from
+ * the browser checks, and an atom that reaches for `useTranslation` cannot be
+ * rendered from either without an i18n provider around it. The default is
+ * German because the handoff is, and it exists so a story can render the
+ * component without restating it; anything user-facing passes `t(...)`.
+ */
+export interface NamePillLabels {
+	/** Reads the duration out, e.g. "Hand gehoben seit 1:20". */
+	readonly handRaisedFor: (duration: string) => string;
+	readonly micOff: string;
+}
+
+export const DEFAULT_NAME_PILL_LABELS: NamePillLabels = {
+	handRaisedFor: (duration) => `Hand gehoben seit ${duration}`,
+	micOff: 'Mikrofon aus'
+};
+
 export interface NamePillProps {
 	/** What this person is called. Never omitted — see below. */
 	name: string;
@@ -22,6 +43,8 @@ export interface NamePillProps {
 	 * ellipsis stays as the guard behind it.
 	 */
 	maxWidth?: number;
+	/** Screen-reader copy. Defaults to the handoff's German. */
+	labels?: NamePillLabels;
 	className?: string;
 }
 
@@ -84,6 +107,7 @@ export const NamePill: React.FC<NamePillProps> = ({
 	micOff = false,
 	speaking = false,
 	maxWidth,
+	labels = DEFAULT_NAME_PILL_LABELS,
 	className
 }) => {
 	const handUp = handRaisedForMs !== null && handRaisedForMs !== undefined;
@@ -111,14 +135,16 @@ export const NamePill: React.FC<NamePillProps> = ({
 						{formatHandDuration(handRaisedForMs)}
 					</span>
 					<span className={styles.srOnly}>
-						Hand gehoben seit {formatHandDuration(handRaisedForMs)}
+						{labels.handRaisedFor(
+							formatHandDuration(handRaisedForMs)
+						)}
 					</span>
 				</span>
 			)}
 			{micOff && (
 				<span data-testid="glyph-mic-off" className={styles.glyph}>
 					<MicOffIcon />
-					<span className={styles.srOnly}>Mikrofon aus</span>
+					<span className={styles.srOnly}>{labels.micOff}</span>
 				</span>
 			)}
 			<span data-testid="name-pill-text" className={styles.name}>

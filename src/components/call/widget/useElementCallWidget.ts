@@ -161,6 +161,12 @@ export const useElementCallWidget = (
 					baseUrl,
 					confineToRoom: 'true',
 					header: 'none',
+					// Ask for the ORISO design explicitly. The call must not
+					// infer it from `parentUrl`: that is the generic widget
+					// parameter every embedded Element Call carries, so a plain
+					// Element Web embedding of the same build would otherwise
+					// get our grove, our backdrop and our animals.
+					orisoDesign: 'true',
 					// The call UI is deliberately dark even though the app
 					// around it is light; app-wide dark is a separate decision
 					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element

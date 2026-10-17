@@ -487,33 +487,44 @@ export const SessionStream = ({
 					);
 				};
 
+				/*
+				 * Every item carries the id of the room it came from.
+				 *
+				 * This used to be opt-in, and the main timeline did not opt
+				 * in — which silently cost us every call card. WP-B2 added
+				 * the stamp so the client timeline could reject side-room
+				 * items (`excludeSideRoomMessages`), and only the side rooms
+				 * asked for it; then `MessageItemComponent` started asking
+				 * `callLifecycle.roomRef === rid` to keep a supervision call
+				 * card out of the client timeline, and for the main timeline
+				 * that compared a room id against `undefined`. Always false,
+				 * so a call in the conversation rendered as an ordinary
+				 * message rather than as a card. Its own tests passed
+				 * because they pass `rid` by hand.
+				 *
+				 * A flag that one caller in three has to remember is the
+				 * shape of that bug, so there is no flag: `MessageItem`
+				 * declares `rid` as required, and now it always is.
+				 */
 				const formatRoomMessages = (
 					events: any[],
-					roomId?: string | null,
-					stampRoomId = false
+					roomId?: string | null
 				) => {
 					const matrixRoom = roomId
 						? chatTransportService.getMatrixRoom(roomId)
 						: null;
-					return (
-						events
-							.map((event: any) =>
-								formatMatrixTimelineEvent(
-									event,
-									matrixRoom,
-									encryptedFallbackText
-								)
+					return events
+						.map((event: any) =>
+							formatMatrixTimelineEvent(
+								event,
+								matrixRoom,
+								encryptedFallbackText
 							)
-							.filter(Boolean)
-							// WP-B2: side-room items carry their room id so the
-							// client timeline can reject them as a safety net
-							// (`excludeSideRoomMessages`).
-							.map((item: any) =>
-								stampRoomId && roomId
-									? { ...item, rid: roomId }
-									: item
-							)
-					);
+						)
+						.filter(Boolean)
+						.map((item: any) =>
+							roomId ? { ...item, rid: roomId } : item
+						);
 				};
 
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
@@ -566,8 +577,7 @@ export const SessionStream = ({
 								applyMessageEdits(
 									formatRoomMessages(
 										supervisionEvents,
-										supervisionRoomId,
-										true
+										supervisionRoomId
 									)
 								)
 							)
@@ -579,11 +589,7 @@ export const SessionStream = ({
 					messages: teamRoomId
 						? prepareMessages(
 								applyMessageEdits(
-									formatRoomMessages(
-										teamEvents,
-										teamRoomId,
-										true
-									)
+									formatRoomMessages(teamEvents, teamRoomId)
 								)
 							)
 						: []

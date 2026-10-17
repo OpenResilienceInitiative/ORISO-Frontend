@@ -64,6 +64,35 @@ describe('encrypted call timeline writes', () => {
 		expect(sendMessage.mock.calls[2][1]['m.relates_to'].event_id).toBe(
 			'$root'
 		);
+		// Under the SAME transaction ID, which is the whole point of keeping
+		// one: the server stores the terminal edit once however many times
+		// this client has to ask.
+		expect(sendMessage.mock.calls[1][2]).toBe(sendMessage.mock.calls[2][2]);
+	});
+	it('gives a rejoin its own transaction ID', async () => {
+		/*
+		 * A content signature comes back. A and B are present, B leaves, B
+		 * rejoins — and the two-person revision is byte-for-byte the one
+		 * already sent. Reusing its transaction ID made the rejoin vanish:
+		 * Matrix treats a repeated ID from the same access token as
+		 * idempotent, returns the earlier event ID and stores nothing, so the
+		 * card went on showing A alone while this client recorded the write
+		 * as done.
+		 */
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$root' });
+		const service = new CallTimelineMessageService(() => ({ sendMessage }));
+		const a = { userId: '@asker:example', displayName: 'Asker' };
+		const b = { userId: '@berater:example', displayName: 'Berater' };
+		const both = { ...call, participants: [a, b], present: [a, b] };
+		const alone = { ...call, participants: [a, b], present: [a] };
+
+		await service.publish(both);
+		await service.publish(alone);
+		await service.publish(both);
+
+		expect(sendMessage).toHaveBeenCalledTimes(3);
+		const ids = sendMessage.mock.calls.map((callArgs) => callArgs[2]);
+		expect(new Set(ids).size).toBe(3);
 	});
 	it('coalesces identical updates without losing a later participant update', async () => {
 		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$root' });

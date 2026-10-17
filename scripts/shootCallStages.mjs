@@ -127,9 +127,14 @@ const NOTES_STORIES = new Set([
 ]);
 
 await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch({
-	executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium'
-});
+// Playwright's own bundled browser unless the environment names one. The
+// default used to be this author's sandbox path, which exists nowhere else
+// and made the script fail at launch on any other machine.
+const browser = await chromium.launch(
+	process.env.CHROMIUM_PATH
+		? { executablePath: process.env.CHROMIUM_PATH }
+		: {}
+);
 const failures = [];
 
 for (const [id, name, width] of STORIES) {

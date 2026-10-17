@@ -79,6 +79,25 @@ export class CallTimelineMessageService {
 				throw new Error('Call timeline write returned no event ID');
 			state.rootEventId ??= response.event_id;
 			state.lastContent = signature;
+			/*
+			 * The transaction ID has done its job; keeping it makes the next
+			 * identical revision disappear.
+			 *
+			 * It exists so that RETRYING a failed write cannot create a
+			 * second call card — the same ID means the server either stores
+			 * the event once or tells us it already did. But the map kept
+			 * every signature forever, and a signature comes back: A and B
+			 * present, B leaves, B rejoins. `lastContent` is the two-person
+			 * state's predecessor by then, so the dedupe check lets the
+			 * revision through — and it goes out under the ID that revision
+			 * already used. Matrix treats a repeated transaction ID from the
+			 * same access token as idempotent, returns the earlier event ID
+			 * and stores nothing, so the card went on showing A alone while
+			 * this client recorded the write as done.
+			 *
+			 * A failed write keeps its ID, which is the case the ID is for.
+			 */
+			state.transactions.delete(signature);
 		};
 		const next = state.queue.then(write, write);
 		state.queue = next.catch(() => undefined);

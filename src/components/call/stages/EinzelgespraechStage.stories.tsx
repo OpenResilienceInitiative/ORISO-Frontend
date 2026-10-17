@@ -70,7 +70,7 @@ export const MitStatus: Story = {
 	args: {
 		participants: [
 			{ ...seeker(), handRaisedForMs: 95000 },
-			{ ...counsellor(true), micOff: false }
+			{ ...counsellor(true), micOff: true }
 		],
 		size: 560
 	}

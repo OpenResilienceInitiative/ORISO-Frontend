@@ -86,12 +86,25 @@ export async function publishCallIdentity(
 		brand?: BrandPair;
 	}
 ): Promise<CallIdentity | null> {
-	const userId = source.userId ?? client.getUserId();
-	if (!userId) return null;
+	/*
+	 * Two ids, and they are not interchangeable.
+	 *
+	 * The STATE KEY has to be the Matrix user id: the server refuses a state
+	 * key that looks like a user and is not the sender, and the fork looks
+	 * identities up by the Matrix id its own tiles carry. The SEED is
+	 * whatever ORISO derives the palette from, which is the same id the chat
+	 * uses so that the animal beside the call and the animal in it match.
+	 * They are the same value in practice — `useOwnAvatarUserId` prefers the
+	 * Matrix id — but its fallback is a userservice id, and passing that as
+	 * the state key would have had the write rejected outright.
+	 */
+	const stateKey = client.getUserId();
+	if (!stateKey) return null;
+	const seedUserId = source.userId ?? stateKey;
 
 	const identity = ownCallIdentity({
 		...source,
-		userId,
+		userId: seedUserId,
 		brand:
 			source.brand ??
 			brandPairFrom(
@@ -101,7 +114,7 @@ export async function publishCallIdentity(
 			)
 	});
 
-	if (sameCallIdentity(published(client, roomId, userId), identity))
+	if (sameCallIdentity(published(client, roomId, stateKey), identity))
 		return identity;
 
 	try {
@@ -109,7 +122,7 @@ export async function publishCallIdentity(
 			roomId,
 			CALL_IDENTITY_EVENT_TYPE,
 			identity as unknown as Record<string, unknown>,
-			userId
+			stateKey
 		);
 		return identity;
 	} catch {

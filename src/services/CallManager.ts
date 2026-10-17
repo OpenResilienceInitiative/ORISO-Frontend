@@ -17,6 +17,7 @@ import {
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 import { callLifecycleTracker } from './callLifecycleTracker';
+import { CALL_IDENTITY_EVENT_TYPE } from '../components/call/callIdentity';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
 export type CallState =
@@ -365,6 +366,12 @@ class CallManager {
 				// its matching hangup after acknowledgement, never for a newer call.
 				if (!outgoingCall.isGroup)
 					this.sendElementCallHangup(outgoingCall);
+				// And close the card, as the cancellation check above does.
+				// Without this a group call cancelled between the invite and
+				// the acknowledgement kept a "running" card with no ending,
+				// because the tracker only ends a group call once somebody
+				// has joined and then left.
+				callLifecycleTracker.finish(outgoingCall.callId);
 				return;
 			}
 
@@ -484,7 +491,22 @@ class CallManager {
 					'm.sticker': 50,
 					// IMPORTANT: allow everyone to send group call membership
 					// events so Element Call can join from any participant.
-					'org.matrix.msc3401.call.member': 0
+					'org.matrix.msc3401.call.member': 0,
+					/*
+					 * And to say who they are.
+					 *
+					 * `state_default: 100` above means every state event a
+					 * participant sends needs the creator's level. The
+					 * identity record is written by each person's OWN client
+					 * under their own user id, so without this line only the
+					 * person who started the call could publish one and
+					 * everybody else appeared in the call as initials — which
+					 * is precisely what "identity is inherited, never
+					 * derived" forbids. Harmless to grant: the state key is
+					 * the sender's user id, which the server already refuses
+					 * to let anyone else write.
+					 */
+					[CALL_IDENTITY_EVENT_TYPE]: 0
 				},
 				users: {
 					[client.getUserId()!]: 100
@@ -830,6 +852,10 @@ class CallManager {
 		// used to make every other participant tear down the same active call.
 		// One-to-one Element Call still needs the remote hangup notification.
 		if (!call.isGroup) callLifecycleTracker.finish(call.callId);
+		// A group call outlives the person who started it — but only once
+		// somebody has actually arrived. Leaving one nobody ever joined ends
+		// it, rather than leaving a card that says "running" for good.
+		else callLifecycleTracker.finishIfUnattended(call.callId);
 		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
 		}

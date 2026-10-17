@@ -177,6 +177,61 @@ describe('useCallTimelineState', () => {
 		expect(loadState).toHaveBeenLastCalledWith(newCall);
 	});
 
+	it('does not ask again when the same card is merely rebuilt', async () => {
+		/*
+		 * The session rebuilds every message object on every
+		 * `fetchSessionMessages()` — per incoming message, per reaction, per
+		 * decryption burst, plus a 60-second fallback. Keying the effect on
+		 * the prop object meant one immediate read per card per rebuild: ten
+		 * call cards in a conversation sent ten requests for every chat
+		 * message that arrived.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(() => Promise.resolve(null));
+		const { rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(loadState).toHaveBeenCalledTimes(1);
+
+		for (let i = 0; i < 5; i += 1) {
+			rerender({ call: { ...initial, participants: [] } });
+			await act(async () => {});
+		}
+
+		expect(loadState).toHaveBeenCalledTimes(1);
+		// And the fifteen-second schedule is still the only thing asking.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(2);
+	});
+
+	it('stops asking about a finished card the server knows nothing about', async () => {
+		/*
+		 * A null answer for a terminal card is as much as there is to learn:
+		 * a card written before the backend held a record, or one whose
+		 * record is gone. It used to reschedule every fifteen seconds for as
+		 * long as the card stayed on screen.
+		 */
+		vi.useFakeTimers();
+		const loadState = vi.fn(() => Promise.resolve(null));
+		renderHook(() =>
+			useCallTimelineState(
+				runningCall({ state: 'ended', durationSeconds: 42 }),
+				loadState
+			)
+		);
+		await act(async () => {});
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(120000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(1);
+	});
+
 	it('cancels retries and ignores a pending response after unmount', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall();

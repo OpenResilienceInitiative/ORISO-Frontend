@@ -22,6 +22,7 @@ import { SessionStream } from './SessionStream';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
+import { buildCallLifecycleContent } from '../../utils/callLifecycleMessage';
 
 const ROOM_ID = '!session:matrix.example.org';
 const LIST_PATH = '/sessions/user/view';
@@ -768,6 +769,50 @@ describe('SessionStream Matrix room lifecycle', () => {
 			).toBeGreaterThan(callsAtAttach)
 		);
 		expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(ROOM_ID);
+	});
+
+	it('gives a call in the conversation the room id its card is matched on', async () => {
+		/*
+		 * `MessageItemComponent` only draws the card when the lifecycle
+		 * record's `roomRef` matches the item's `rid`, so that a supervision
+		 * call never surfaces in the client timeline. The main timeline did
+		 * not stamp `rid` at all, so that compared a room id against
+		 * `undefined` and the card never appeared — a call in the
+		 * conversation rendered as an ordinary message. The component's own
+		 * tests pass `rid` by hand and so could not see it; this one goes
+		 * through the stream that builds the items.
+		 */
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId !== ROOM_ID
+				? []
+				: [
+						{
+							getType: () => 'm.room.message',
+							getContent: () =>
+								buildCallLifecycleContent({
+									callId: 'call-1',
+									roomRef: ROOM_ID,
+									callRoomId: '!media:matrix.example.org',
+									callType: 'video',
+									state: 'running',
+									participants: []
+								}),
+							getSender: () => '@consultant:matrix.example.org',
+							getId: () => '$call-card:matrix.example.org',
+							getTs: () => 1700000000000
+						}
+					]
+		);
+
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() =>
+			expect(mocks.sessionItemProps?.messages?.length).toBe(1)
+		);
+		const item = mocks.sessionItemProps.messages[0];
+		expect(item.callLifecycle?.roomRef).toBe(ROOM_ID);
+		// The comparison the card is gated on, which must be able to hold.
+		expect(item.rid).toBe(item.callLifecycle.roomRef);
 	});
 
 	it('does not curtain a backend-authorized session supervisor', async () => {
