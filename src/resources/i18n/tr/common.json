@@ -2078,6 +2078,7 @@
 			"emailUnavailable": "mevcut değil",
 			"emailUnavailableReason": "Bu tür için henüz e-posta yok",
 			"emailMasterOff": "E-posta bildirimleri profilinizde kapalı",
+			"browserOff": "Açılır bildirimler profilinizde kapalı",
 			"descriptions": {
 				"sessions": "Her görüşme türü için filtre düğmesi alıp almayacağını ve yeni mesajlardan nasıl haberdar olacağınızı belirleyin.",
 				"requests": "Her talep türü için filtre düğmesi alıp almayacağını ve yeni taleplerden nasıl haberdar olacağınızı belirleyin.",

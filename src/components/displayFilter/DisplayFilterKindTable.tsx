@@ -142,6 +142,8 @@ export interface DisplayFilterKindTableProps {
 	columns?: { show: boolean; sound: boolean };
 	/** Adds the E-Mail column; omitted, the table has none. */
 	email?: DisplayFilterEmailColumn;
+	/** Set while no pop-up can show: Browser cells are unavailable, with this reason. */
+	browserUnavailableReason?: string;
 	/**
 	 * `quick`: the filter-only buttons (Ungelesen, Entwürfe, …) — a name and
 	 * the "Im Filter" picker, nothing else.
@@ -181,6 +183,7 @@ export const DisplayFilterKindTable = ({
 	dataCyPrefix = 'display-filter',
 	columns = { show: true, sound: false },
 	email,
+	browserUnavailableReason,
 	variant = 'kinds'
 }: DisplayFilterKindTableProps) => {
 	const quick = variant === 'quick';
@@ -437,6 +440,21 @@ export const DisplayFilterKindTable = ({
 												aria-hidden="true"
 											>
 												–
+											</span>
+										) : browserUnavailableReason ? (
+											// Same unavailable cell as E-Mail:
+											// no pop-up can show, so no choice.
+											<span
+												className="displayFilterDialog__unavailable"
+												title={browserUnavailableReason}
+												data-cy={`${dataCyPrefix}-sound-${kind.id}-unavailable`}
+											>
+												<span aria-hidden="true">
+													{labels.emailUnavailable}
+												</span>
+												<span className="sr-only">
+													{`${labels.emailUnavailable}. ${browserUnavailableReason}`}
+												</span>
 											</span>
 										) : (
 											<KindOptionPicker

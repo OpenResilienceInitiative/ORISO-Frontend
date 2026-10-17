@@ -9,7 +9,7 @@ import {
 	screen,
 	within
 } from '@testing-library/react';
-import { DisplayFilterDialog } from './DisplayFilterDialog';
+import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
@@ -488,5 +488,38 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 			).disabled
 		).toBe(true);
 		expect(screen.getByText('Kommt bald.')).toBeTruthy();
+	});
+});
+
+describe('DisplayFilterDialog Browser column gate (Codex review on #1752)', () => {
+	afterEach(cleanup);
+
+	it('shows "nicht verfügbar" with the reason instead of a pop-up picker while pop-ups are off', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onOpenProfile={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={SESSION_COLUMNS}
+				browserUnavailableReason="Pop-ups sind aus"
+			/>
+		);
+		expect(
+			screen.queryByRole('button', {
+				name: STORY_LABELS.soundMenu('Nachrichten')
+			})
+		).toBeNull();
+		const row = screen.getByRole('row', { name: /Nachrichten/ });
+		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(
+			within(row)
+				.getByTitle('Pop-ups sind aus')
+				.querySelector('[tabindex], button, input')
+		).toBeNull();
 	});
 });

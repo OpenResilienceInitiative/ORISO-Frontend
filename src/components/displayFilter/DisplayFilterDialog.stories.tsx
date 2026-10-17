@@ -809,6 +809,36 @@ export const EmailLegacyNotifications: Story = {
 	}
 };
 
+/** `notifications.displayFilter.browserOff` (de). */
+const BROWSER_OFF_REASON = 'Pop-ups sind in Ihrem Profil ausgeschaltet';
+
+/**
+ * Pop-ups switched off in the profile (master switch, or every banner of the
+ * area): no pop-up can show, so every Browser cell is "nicht verfügbar"
+ * with that reason. The dialog never flips the switch itself.
+ */
+const browserOffArgs = {
+	...sessionsArgs,
+	fullScreen: false,
+	browserUnavailableReason: BROWSER_OFF_REASON
+};
+export const BrowserMasterOff: Story = {
+	globals: desktop1440Globals,
+	args: browserOffArgs,
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		const row = await dialog.findByRole('row', { name: /Mail-Beratung/ });
+		await expect(row).toHaveTextContent(BROWSER_OFF_REASON);
+		await expect(
+			within(row).getByTitle(BROWSER_OFF_REASON)
+		).toBeInTheDocument();
+		await expect(
+			within(row).queryByRole('button', { name: /Ton anhören/ })
+		).toBeNull();
+	}
+};
+
 const supervisionEmailChange = fn();
 
 /**

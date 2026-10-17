@@ -2078,6 +2078,7 @@
 			"emailUnavailable": "non disponible",
 			"emailUnavailableReason": "Il n’existe pas encore d’e-mail pour ce type",
 			"emailMasterOff": "Les notifications par e-mail sont désactivées dans votre profil",
+			"browserOff": "Les fenêtres contextuelles sont désactivées dans votre profil",
 			"descriptions": {
 				"sessions": "Choisissez pour chaque type d’échange s’il reçoit un bouton de filtre et comment vous êtes averti des nouveaux messages.",
 				"requests": "Choisissez pour chaque type de demande s’il reçoit un bouton de filtre et comment vous êtes averti des nouvelles demandes.",

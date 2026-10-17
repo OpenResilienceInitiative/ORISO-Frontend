@@ -131,6 +131,8 @@ export interface DisplayFilterDialogProps {
 	icon?: React.ReactNode;
 	/** The E-Mail column; omitted where the area offers none. */
 	email?: DisplayFilterEmailColumn;
+	/** Set while no pop-up can show: the Browser cells' unavailable reason. */
+	browserUnavailableReason?: string;
 }
 
 export interface DisplayFilterColumns {
@@ -171,7 +173,8 @@ export const DisplayFilterDialog = ({
 	id,
 	columns = TIMELINE_COLUMNS,
 	icon,
-	email
+	email,
+	browserUnavailableReason
 }: DisplayFilterDialogProps) => {
 	// Show-only kinds (the future timeline panel) have no row in the sound
 	// mode table; they keep a plain switch so the panel stays toggleable.
@@ -271,6 +274,7 @@ export const DisplayFilterDialog = ({
 					idPrefix={dialogId}
 					columns={columns}
 					email={email}
+					browserUnavailableReason={browserUnavailableReason}
 				/>
 			</section>
 
