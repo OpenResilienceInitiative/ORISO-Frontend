@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LegalLinkModal, getInternalPath } from './LegalLinkModal';
 import { useLegalLinkContent } from './useLegalLinkContent';
+import { useDepartmentLegal } from '../../api/useDepartmentLegal';
 
 vi.mock('./useLegalLinkContent', async () => ({
 	...(await vi.importActual<typeof import('./useLegalLinkContent')>(
@@ -13,9 +14,18 @@ vi.mock('./useLegalLinkContent', async () => ({
 	useLegalLinkContent: vi.fn()
 }));
 
+vi.mock('../../api/useDepartmentLegal', () => ({
+	useDepartmentLegal: vi.fn(() => ({
+		data: null,
+		loading: false,
+		error: null
+	}))
+}));
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) => key,
+		t: (key: string, fallback?: string) =>
+			key === 'legal.modal.missing.text' ? (fallback ?? key) : key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -258,5 +268,133 @@ describe('getInternalPath', () => {
 	/** A malformed address is handed to the browser, never fed to the router. */
 	it('returns null for a URL it cannot parse', () => {
 		expect(getInternalPath('http://[::1')).toBeNull();
+	});
+});
+
+/** The approved profile contract preserves the shared registration dialog. */
+describe('LegalLinkModal agency hierarchy (#1213)', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	const renderAgency = (url = '') =>
+		render(
+			<LegalLinkModal
+				title="Datenschutz"
+				rawLabel="login.legal.infoText.dataprotection"
+				url={url}
+				scope="agency"
+				agencyId={7}
+				topicId={3}
+				onClose={() => undefined}
+			/>
+		);
+
+	it.each(['privacy', 'imprint'] as const)(
+		'prefers the own agency %s over the carrier text',
+		(kind) => {
+			mockedContent.mockReturnValue({
+				kind,
+				content: '<p>Trägertext</p>'
+			});
+			vi.mocked(useDepartmentLegal).mockReturnValue({
+				data: {
+					dpp: {
+						content: '{"de":"<p>Eigener Datenschutz</p>"}',
+						consentText: null
+					},
+					imprint: {
+						content: '{"de":"<p>Eigenes Impressum</p>"}',
+						consentText: null
+					}
+				},
+				loading: false,
+				error: null
+			});
+			renderAgency();
+			expect(
+				screen.getByText(
+					kind === 'privacy'
+						? 'Eigener Datenschutz'
+						: 'Eigenes Impressum'
+				)
+			).toBeTruthy();
+			expect(screen.queryByText('Trägertext')).toBeNull();
+			expect(useDepartmentLegal).toHaveBeenCalledWith(7, 3, {
+				enabled: true
+			});
+		}
+	);
+
+	it.each(['privacy', 'imprint'] as const)(
+		'uses the carrier %s when the agency has none',
+		(kind) => {
+			mockedContent.mockReturnValue({
+				kind,
+				content: '<p>Trägertext</p>'
+			});
+			vi.mocked(useDepartmentLegal).mockReturnValue({
+				data: null,
+				loading: false,
+				error: null
+			});
+			renderAgency();
+			expect(screen.getByText('Trägertext')).toBeTruthy();
+			expect(screen.queryByTestId('legal-missing')).toBeNull();
+		}
+	);
+
+	it('keeps the exact approved missing-text notice and configured address when neither text exists', () => {
+		mockedContent.mockReturnValue({ kind: 'privacy', content: null });
+		vi.mocked(useDepartmentLegal).mockReturnValue({
+			data: null,
+			loading: false,
+			error: null
+		});
+		renderAgency('https://traeger.example/datenschutz');
+		expect(
+			screen.getByText(
+				'Für dieses Angebot ist hier kein Rechtstext hinterlegt.'
+			)
+		).toBeTruthy();
+		expect(screen.getByRole('link').getAttribute('href')).toBe(
+			'https://traeger.example/datenschutz'
+		);
+		expect(screen.getByRole('link').getAttribute('rel')).toContain(
+			'noopener'
+		);
+	});
+
+	it('keeps the notice without inventing an address when none is configured', () => {
+		mockedContent.mockReturnValue({ kind: 'privacy', content: null });
+		vi.mocked(useDepartmentLegal).mockReturnValue({
+			data: null,
+			loading: false,
+			error: null
+		});
+		renderAgency();
+		expect(
+			screen.getByText(
+				'Für dieses Angebot ist hier kein Rechtstext hinterlegt.'
+			)
+		).toBeTruthy();
+		expect(screen.queryByRole('link')).toBeNull();
+	});
+
+	it('waits for the selected agency before displaying a fallback', () => {
+		mockedContent.mockReturnValue({
+			kind: 'privacy',
+			content: '<p>Trägertext</p>'
+		});
+		vi.mocked(useDepartmentLegal).mockReturnValue({
+			data: null,
+			loading: true,
+			error: null
+		});
+		renderAgency();
+		expect(screen.getByTestId('legal-loading')).toBeTruthy();
+		expect(screen.queryByText('Trägertext')).toBeNull();
+		expect(screen.queryByTestId('legal-missing')).toBeNull();
 	});
 });
