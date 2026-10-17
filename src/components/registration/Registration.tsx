@@ -909,7 +909,7 @@ export const Registration = () => {
 			<StageLayout
 				className="stageLayout--registration"
 				showLegalLinks={true}
-				showLoginLink={!isRegistering}
+				showLoginLink={true}
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				showRegistrationInfoDrawer={true}
 				mobileHero="bar"
