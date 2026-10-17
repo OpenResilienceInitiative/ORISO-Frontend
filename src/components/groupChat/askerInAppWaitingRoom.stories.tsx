@@ -14,6 +14,7 @@ import {
 	phone390Globals
 } from '../message/messageStoryShell';
 import type { GroupChatItemInterface } from '../../globalState/interfaces';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 /**
  * #1219 — the self-help group's waiting room as an advice seeker sees it in
@@ -29,7 +30,10 @@ const FUTURE_SECONDS = 2 * 86400 + 3 * 3600 + 21 * 60 + 50;
 type Variant = 'future' | 'open' | 'noTime';
 
 const buildItem = (variant: Variant) => {
-	const item = buildGroupStageListItem(FUTURE_SECONDS);
+	// An open room started a few minutes ago; the others start in two days.
+	const item = buildGroupStageListItem(
+		variant === 'open' ? -4 * 60 : FUTURE_SECONDS
+	);
 	const chat = item.chat as GroupChatItemInterface & {
 		startDate?: string;
 		startTime?: string;
@@ -68,31 +72,9 @@ const Stage = ({
 	);
 };
 
-/**
- * The room's bar belongs to the chat card: inside its edges, at its bottom,
- * never over the session list or the navigation.
- */
-const expectBarInCard = async (canvasElement: HTMLElement) => {
-	const card = canvasElement.querySelector<HTMLElement>('.session.joinChat');
-	await expect(card).not.toBeNull();
-	await waitFor(() =>
-		expect(
-			card!.querySelector('[data-cy="registration-footer"]')
-		).not.toBeNull()
-	);
-	const bar = card!.querySelector<HTMLElement>(
-		'[data-cy="registration-footer"]'
-	)!;
-	const cardRect = card!.getBoundingClientRect();
-	const barRect = bar.getBoundingClientRect();
-	await expect(barRect.left).toBeGreaterThanOrEqual(cardRect.left - 1);
-	await expect(barRect.right).toBeLessThanOrEqual(cardRect.right + 1);
-	await expect(Math.abs(cardRect.bottom - barRect.bottom)).toBeLessThan(3);
-	// The card does not scroll as a whole; only the column above the bar may.
-	await expect(card!.scrollHeight).toBeLessThanOrEqual(
-		card!.clientHeight + 1
-	);
-};
+/** The shared waiting-room contract, in its chat-card form. */
+const expectCardRoom = (canvasElement: HTMLElement) =>
+	expectWaitingRoomLayout(canvasElement, { frame: 'card' });
 
 const joinButton = (canvasElement: HTMLElement) =>
 	canvasElement.querySelector<HTMLButtonElement>(
@@ -124,7 +106,7 @@ export const Future1440: Story = {
 	globals: desktop1440Globals,
 	render: () => <Stage layout="desktop" variant="future" />,
 	play: async ({ canvasElement }) => {
-		await expectBarInCard(canvasElement);
+		await expectCardRoom(canvasElement);
 		await waitFor(() => expect(joinButton(canvasElement)).not.toBeNull());
 		await expect(joinButton(canvasElement)).toHaveTextContent('Beitreten');
 		await expect(joinButton(canvasElement)).toBeDisabled();
@@ -139,7 +121,7 @@ export const Future390: Story = {
 	globals: phone390Globals,
 	render: () => <Stage layout="mobile" variant="future" />,
 	play: async ({ canvasElement }) => {
-		await expectBarInCard(canvasElement);
+		await expectCardRoom(canvasElement);
 		await expect(joinButton(canvasElement)).toBeDisabled();
 	}
 };
@@ -149,7 +131,7 @@ export const NoTime1440: Story = {
 	globals: desktop1440Globals,
 	render: () => <Stage layout="desktop" variant="noTime" />,
 	play: async ({ canvasElement }) => {
-		await expectBarInCard(canvasElement);
+		await expectCardRoom(canvasElement);
 		await expect(joinButton(canvasElement)).toBeDisabled();
 	}
 };
@@ -159,7 +141,7 @@ export const Open1440: Story = {
 	globals: desktop1440Globals,
 	render: () => <Stage layout="desktop" variant="open" />,
 	play: async ({ canvasElement }) => {
-		await expectBarInCard(canvasElement);
+		await expectCardRoom(canvasElement);
 		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
 	}
 };

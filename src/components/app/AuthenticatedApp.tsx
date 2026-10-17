@@ -22,6 +22,7 @@ import {
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
+import { canCloseHandover } from './registrationLoader/handoverClose';
 import { forgetHandoverDepartment } from './registrationLoader/handoverDepartment';
 import {
 	markHandoverMilestone,
@@ -358,12 +359,18 @@ export const AuthenticatedApp = ({
 	}, []);
 
 	useEffect(() => {
-		if (handoverEntered && appReady) {
+		if (
+			canCloseHandover({
+				entered: handoverEntered,
+				appReady,
+				groupJoinSettled
+			})
+		) {
 			setShowPostRegLoader(false);
 			resetHandoverProgress();
 			forgetHandoverDepartment();
 		}
-	}, [handoverEntered, appReady]);
+	}, [handoverEntered, appReady, groupJoinSettled]);
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
