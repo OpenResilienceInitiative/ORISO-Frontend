@@ -400,6 +400,46 @@ describe('outgoing call startup ownership', () => {
 		expect(forget).toHaveBeenCalledWith(ROOM);
 	});
 
+	it('discards the room when a newer start arrives during the lifecycle write', async () => {
+		/*
+		 * The third place a start can be overtaken, and the one the other two
+		 * cleanups miss. `callLifecycleTracker.begin` is an await of its own,
+		 * and a second press lands inside it easily; nothing has been
+		 * published that anybody could act on while it runs, because the
+		 * invitation comes after. This branch returned without discarding,
+		 * leaving a joined room naming the counselling session with the
+		 * call/source binding in it.
+		 *
+		 * A CHANGED ACCOUNT does not test this: since the tracker started
+		 * refusing to write for a different account, `begin` throws there and
+		 * the catch does the cleanup. It is the same-account supersession
+		 * that reaches this line.
+		 */
+		createRoom
+			.mockResolvedValueOnce({ room_id: ROOM })
+			.mockResolvedValue({ room_id: '!second-call:oriso.example' });
+		let finishRootWrite!: (value: { event_id: string }) => void;
+		sendMessage.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					finishRootWrite = resolve;
+				})
+		);
+		vi.stubGlobal('alert', vi.fn());
+
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(finishRootWrite).toBeTypeOf('function'));
+
+		// The same counsellor presses call again, for another conversation.
+		callManager.startCall('!other:oriso.example', true, true);
+		finishRootWrite({ event_id: '$call-root' });
+
+		// The superseded call takes its room with it; the newer one keeps its own.
+		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(forget).toHaveBeenCalledWith(ROOM);
+		expect(leave).not.toHaveBeenCalledWith('!second-call:oriso.example');
+	});
+
 	it('discards the superseded room through the account that created it', async () => {
 		/*
 		 * The cleanup above runs precisely BECAUSE the account changed, so

@@ -454,6 +454,23 @@ class CallManager {
 			await callLifecycleTracker.begin(outgoingCall);
 			if (!this.stillOwnsStart(start)) {
 				callLifecycleTracker.finish(outgoingCall.callId);
+				/*
+				 * ...and this room goes too.
+				 *
+				 * The lifecycle root write is another await, and a
+				 * cancellation or a second start can land inside it. Nothing
+				 * has been published that anybody could act on — the
+				 * invitation is still two lines below — so the room is as
+				 * strandable as the one the check before this discards, and
+				 * leaving it behind leaves the same thing behind: a joined
+				 * room naming a counselling session, with the call/source
+				 * binding and the membership reader in it.
+				 */
+				if (created)
+					void this.discardElementCallRoom(
+						created.roomId,
+						created.createdBy
+					);
 				return;
 			}
 			await this.sendGroupCallInvite(
@@ -464,16 +481,34 @@ class CallManager {
 				isGroup
 			);
 			if (!this.stillOwnsStart(start)) {
-				// The invite can reach the server after local cancellation. Send
-				// its matching hangup after acknowledgement, never for a newer call.
-				if (!outgoingCall.isGroup)
+				if (outgoingCall.isGroup) {
+					/*
+					 * The room's call, not ours to end.
+					 *
+					 * The invitation reached the server, so somebody may have
+					 * answered it in the time the acknowledgement took — and
+					 * the hangup is already skipped for a group so the people
+					 * who joined can carry on. Finishing the card
+					 * unconditionally undid that from the other side: it
+					 * wrote a terminal card and dropped the tracker while the
+					 * MatrixRTC call was still live, so the Join button went
+					 * away from a call that was running.
+					 *
+					 * `finishIfUnattended` asks the only question that
+					 * separates the two: did anybody ever join. A card nobody
+					 * answered is still closed, which is what this check was
+					 * added for.
+					 */
+					callLifecycleTracker.finishIfUnattended(
+						outgoingCall.callId
+					);
+				} else {
+					// The invite can reach the server after local cancellation.
+					// Send its matching hangup after acknowledgement, never for
+					// a newer call.
 					this.sendElementCallHangup(outgoingCall);
-				// And close the card, as the cancellation check above does.
-				// Without this a group call cancelled between the invite and
-				// the acknowledgement kept a "running" card with no ending,
-				// because the tracker only ends a group call once somebody
-				// has joined and then left.
-				callLifecycleTracker.finish(outgoingCall.callId);
+					callLifecycleTracker.finish(outgoingCall.callId);
+				}
 				return;
 			}
 
@@ -545,9 +580,7 @@ class CallManager {
 		const room = client?.getRoom?.(call.roomId);
 		if (!room || !client?.matrixRTC?.getRoomSession) return true;
 		try {
-			return (
-				client.matrixRTC.getRoomSession(room).memberships.length > 0
-			);
+			return client.matrixRTC.getRoomSession(room).memberships.length > 0;
 		} catch {
 			return true;
 		}
