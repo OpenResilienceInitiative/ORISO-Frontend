@@ -16,7 +16,7 @@ import {
 } from '../../message/messageStoryShell';
 import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
 import { CallEntryRoom, CallEntryRoomProps } from './CallEntryRoom';
-import { CallDevices } from './callEntryTypes';
+import { CallDeviceControls, CallDevices } from './callEntryTypes';
 import type { Pseudonym } from '../../../utils/pseudonymGenerator';
 import { useLiveCallDevices } from './useLiveCallDevices';
 
@@ -185,9 +185,17 @@ export const VideoSwitchesAndSpeaker: Story = {
 	args: { ...ready, modality: 'video' },
 	play: async ({ canvasElement, canvas }) => {
 		await expectWaitingRoomLayout(canvasElement);
-		const mic = canvas.getByTestId('toggle-mic');
+		// A stable name; `aria-pressed` says whether the device is on.
+		const mic = canvas.getByRole('button', {
+			name: 'Mikrofon',
+			pressed: true
+		});
+		await expect(
+			canvas.getByRole('button', { name: 'Kamera', pressed: true })
+		).toBeVisible();
 		await userEvent.click(mic);
-		await expect(mic).toHaveAttribute('aria-pressed', 'true');
+		await expect(mic).toHaveAttribute('aria-pressed', 'false');
+		await expect(mic).toHaveAccessibleName('Mikrofon');
 		await userEvent.click(canvas.getByTestId('speaker-test'));
 		await userEvent.click(
 			await canvas.findByRole('button', { name: 'Ja' })
@@ -195,6 +203,18 @@ export const VideoSwitchesAndSpeaker: Story = {
 		await expect(
 			canvas.getByText('Ihr Lautsprecher funktioniert.')
 		).toBeVisible();
+	}
+};
+
+export const VideoUserIdTooShort: Story = {
+	name: 'Video · User-ID too short',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', initialUsername: 'eu' },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The registration's rule (5–30 characters), not "not empty".
+		await expectProgress(canvasElement, 67);
+		await expect(canvas.getByText('Noch offen: User-ID')).toBeVisible();
 	}
 };
 
@@ -416,14 +436,24 @@ const DemoVoice = (props: CallEntryRoomProps) => (
 
 export const AudioDemoSpeaking: Story = {
 	name: 'Audio · demo: speaking (invented levels)',
-	tags: ['!test'],
 	globals: desktop1440Globals,
 	args: { ...ready, modality: 'audio' },
-	render: (args) => <DemoVoice {...args} />
+	render: (args) => <DemoVoice {...args} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+	}
 };
 
-const Live = (props: CallEntryRoomProps) => {
-	const live = useLiveCallDevices(props.modality);
+const Live = ({
+	mediaDevices,
+	...props
+}: CallEntryRoomProps & { mediaDevices?: MediaDevices }) => {
+	const [controls, setControls] = useState<CallDeviceControls>(() => ({
+		micOn: props.initialMicOn ?? true,
+		cameraOn: props.initialCameraOn ?? true,
+		selection: props.initialSelection ?? {}
+	}));
+	const live = useLiveCallDevices(props.modality, controls, mediaDevices);
 	return (
 		<CallEntryRoom
 			{...props}
@@ -431,23 +461,123 @@ const Live = (props: CallEntryRoomProps) => {
 			stream={live.stream}
 			micLevel={live.micLevel}
 			blocker={live.blocker}
+			cameraAvailable={!live.cameraMissing}
+			onDeviceStateChange={setControls}
+			onBlockerAction={live.retry}
 			playTone={undefined}
 		/>
 	);
 };
 
+/**
+ * Real devices. In the headless test run nobody answers the permission
+ * prompt, so the room stays in whatever state the browser leaves it in
+ * (waiting, denied or no device); the layout contract holds in each. The
+ * scripted stories below pin the hook's behaviour itself.
+ */
 export const LiveVideo: Story = {
 	name: 'Live devices · video (asks for camera and mic)',
-	tags: ['!test'],
 	globals: desktop1440Globals,
 	args: { ...base, modality: 'video', micLevel: 0 },
-	render: (args) => <Live {...args} />
+	render: (args) => <Live {...args} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+	}
 };
 
 export const LiveAudio: Story = {
 	name: 'Live devices · audio (asks for the mic)',
-	tags: ['!test'],
 	globals: desktop1440Globals,
 	args: { ...base, modality: 'audio', micLevel: 0 },
-	render: (args) => <Live {...args} />
+	render: (args) => <Live {...args} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+/** A real, silent microphone track, so the analyser has something to read. */
+const silentMicrophone = () =>
+	new AudioContext().createMediaStreamDestination().stream;
+
+const scriptedDevices = (
+	getUserMedia: (constraints: MediaStreamConstraints) => Promise<MediaStream>
+) =>
+	({
+		getUserMedia,
+		enumerateDevices: () =>
+			Promise.resolve([
+				{
+					kind: 'audioinput',
+					deviceId: 'mic-1',
+					label: 'Headset-Mikrofon'
+				},
+				{
+					kind: 'audiooutput',
+					deviceId: 'spk-1',
+					label: 'Headset'
+				}
+			] as MediaDeviceInfo[])
+	}) as unknown as MediaDevices;
+
+const domError = (name: string) =>
+	Promise.reject(Object.assign(new Error(name), { name }));
+
+/** No webcam, a working microphone: the check goes on, camera off. */
+const noWebcam = scriptedDevices((constraints) =>
+	constraints.video
+		? domError('NotFoundError')
+		: Promise.resolve(silentMicrophone())
+);
+
+export const LiveVideoNoWebcam: Story = {
+	name: 'Live hook · video without a webcam (scripted devices)',
+	globals: desktop1440Globals,
+	args: {
+		...base,
+		modality: 'video',
+		micLevel: 0,
+		initialPassword: 'Sonnenblume-2026!'
+	},
+	render: (args) => <Live {...args} mediaDevices={noWebcam} />,
+	play: async ({ canvasElement, canvas }) => {
+		await expect(
+			await canvas.findByTestId('device-picker-microphone')
+		).toHaveAccessibleName('Mikrofon: Headset-Mikrofon');
+		await expectWaitingRoomLayout(canvasElement);
+		await expect(canvas.getByText('Ihre Kamera ist aus')).toBeVisible();
+		await expect(
+			canvas.getByRole('button', { name: 'Kamera', pressed: false })
+		).toBeVisible();
+	}
+};
+
+/** Denied once, allowed on "Erneut prüfen" (fresh on every render). */
+const deniedOnce = () => {
+	let asked = 0;
+	return scriptedDevices(() =>
+		asked++ === 0
+			? domError('NotAllowedError')
+			: Promise.resolve(silentMicrophone())
+	);
+};
+
+const LiveDeniedOnce = (props: CallEntryRoomProps) => {
+	const [mediaDevices] = useState(deniedOnce);
+	return <Live {...props} mediaDevices={mediaDevices} />;
+};
+
+export const LiveRetryAfterDenied: Story = {
+	name: 'Live hook · "Erneut prüfen" asks again (scripted devices)',
+	globals: desktop1440Globals,
+	args: { ...base, modality: 'audio', micLevel: 0 },
+	render: (args) => <LiveDeniedOnce {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await waitFor(() =>
+			expect(gate(canvasElement)).toHaveTextContent('Erneut prüfen')
+		);
+		await expectWaitingRoomLayout(canvasElement);
+		await userEvent.click(gate(canvasElement));
+		await expect(await canvas.findByTestId('voice-check')).toBeVisible();
+		await expectWaitingRoomLayout(canvasElement);
+	}
 };

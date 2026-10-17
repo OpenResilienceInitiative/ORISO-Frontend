@@ -7,7 +7,12 @@ export interface DeviceToggleProps {
 	onToggle: () => void;
 	iconOn: React.ReactNode;
 	iconOff: React.ReactNode;
-	/** Says what a press does, e.g. "Mikrofon aus". */
+	/**
+	 * The stable accessible name, e.g. "Mikrofon"; `aria-pressed` says
+	 * whether the device is on.
+	 */
+	name: string;
+	/** The tooltip: what a press does, e.g. "Mikrofon aus". */
 	labelOn: string;
 	labelOff: string;
 	/** On the dark video tile, or on the white column (voice check). */
@@ -26,6 +31,7 @@ export const DeviceToggle = ({
 	onToggle,
 	iconOn,
 	iconOff,
+	name,
 	labelOn,
 	labelOff,
 	tone,
@@ -46,10 +52,10 @@ export const DeviceToggle = ({
 					border: `1px solid ${registrationMd3.outline}`
 				};
 	return (
-		<Tooltip title={label}>
+		<Tooltip title={label} describeChild>
 			<IconButton
-				aria-label={label}
-				aria-pressed={!on}
+				aria-label={name}
+				aria-pressed={on}
 				onClick={onToggle}
 				data-testid={testId}
 				sx={{

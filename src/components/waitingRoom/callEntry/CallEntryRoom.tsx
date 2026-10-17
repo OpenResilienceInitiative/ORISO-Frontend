@@ -7,6 +7,7 @@ import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import { REGISTRATION_DATA_VALIDATION } from '../../registration/registrationDataValidation';
 import {
 	registrationMd3,
 	registrationScreenIntroSx,
@@ -25,6 +26,7 @@ import { VideoCheck } from './VideoCheck';
 import { VoiceCheck } from './VoiceCheck';
 import { callEntryCopy as copy } from './callEntryCopy';
 import {
+	CallDeviceControls,
 	CallDeviceKind,
 	CallDevices,
 	CallDeviceSelection,
@@ -54,6 +56,10 @@ export interface CallEntryRoomProps {
 	initialSpeakerTest?: SpeakerTestState;
 	initialMicHeard?: boolean;
 	initialSelection?: CallDeviceSelection;
+	/** `false` when there is no webcam: the camera stays off. */
+	cameraAvailable?: boolean;
+	/** Switches and picker choices, for whoever owns the real stream. */
+	onDeviceStateChange?: (controls: CallDeviceControls) => void;
 	joining?: boolean;
 	onJoin?: () => void;
 	onBlockerAction?: () => void;
@@ -86,6 +92,8 @@ export const CallEntryRoom = ({
 	initialSpeakerTest = 'idle',
 	initialMicHeard = false,
 	initialSelection = {},
+	cameraAvailable = true,
+	onDeviceStateChange,
 	joining = false,
 	onJoin,
 	onBlockerAction,
@@ -110,6 +118,10 @@ export const CallEntryRoom = ({
 		if (micOn && micLevel > HEARD_LEVEL) setMicHeard(true);
 	}, [micLevel, micOn]);
 
+	useEffect(() => {
+		onDeviceStateChange?.({ micOn, cameraOn, selection });
+	}, [onDeviceStateChange, micOn, cameraOn, selection]);
+
 	const select = (kind: CallDeviceKind, id: string) => {
 		setSelection((current) => ({ ...current, [kind]: id }));
 		// A different microphone has not been heard yet.
@@ -118,7 +130,12 @@ export const CallEntryRoom = ({
 	};
 
 	const conditions = [
-		{ done: username.length > 0, missing: copy.missingName },
+		{
+			// The registration's own rule, so the gate never opens on a
+			// User-ID the account creation would reject.
+			done: REGISTRATION_DATA_VALIDATION.username.validation(username),
+			missing: copy.missingName
+		},
 		{
 			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
@@ -211,7 +228,7 @@ export const CallEntryRoom = ({
 								name={username}
 								avatar={identity.avatar}
 								stream={stream}
-								cameraOn={cameraOn}
+								cameraOn={cameraOn && cameraAvailable}
 								micOn={micOn}
 								micLevel={micLevel}
 								onToggleCamera={() => setCameraOn(!cameraOn)}

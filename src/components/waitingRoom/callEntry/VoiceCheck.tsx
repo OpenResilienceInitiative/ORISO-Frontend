@@ -143,6 +143,7 @@ export const VoiceCheck = ({
 						onToggle={onToggleMic}
 						iconOn={<MicRoundedIcon />}
 						iconOff={<MicOffRoundedIcon />}
+						name={copy.devices.microphone}
 						labelOn={copy.micOff}
 						labelOff={copy.micOn}
 						testId="toggle-mic"
