@@ -65,6 +65,8 @@ export interface CallEntryRoomProps {
 	initialSelection?: CallDeviceSelection;
 	/** `false` when there is no webcam: the camera stays off. */
 	cameraAvailable?: boolean;
+	/** Ask for an unavailable camera again (busy, unplugged). */
+	onCameraRetry?: () => void;
 	/** Switches and picker choices, for whoever owns the real stream. */
 	onDeviceStateChange?: (controls: CallDeviceControls) => void;
 	joining?: boolean;
@@ -118,6 +120,7 @@ export const CallEntryRoom = ({
 	initialMicHeard = false,
 	initialSelection = {},
 	cameraAvailable = true,
+	onCameraRetry,
 	onDeviceStateChange,
 	joining = false,
 	consent: consentOption,
@@ -314,6 +317,13 @@ export const CallEntryRoom = ({
 								micOn={micOn}
 								micLevel={micLevel}
 								onToggleCamera={() => setCameraOn(!cameraOn)}
+								onCameraRetry={
+									onCameraRetry &&
+									(() => {
+										setCameraOn(true);
+										onCameraRetry();
+									})
+								}
 								onToggleMic={() => setMicOn(!micOn)}
 							/>
 						) : (

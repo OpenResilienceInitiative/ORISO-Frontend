@@ -630,6 +630,7 @@ const Live = ({
 			micLevel={live.micLevel}
 			blocker={live.blocker}
 			cameraAvailable={!live.cameraMissing}
+			onCameraRetry={live.retry}
 			onDeviceStateChange={setControls}
 			onBlockerAction={live.retry}
 			playTone={undefined}
@@ -691,11 +692,13 @@ const domError = (name: string) =>
 	Promise.reject(Object.assign(new Error(name), { name }));
 
 /** No webcam, a working microphone: the check goes on, camera off. */
-const noWebcam = scriptedDevices((constraints) =>
-	constraints.video
+let noWebcamAsks = 0;
+const noWebcam = scriptedDevices((constraints) => {
+	noWebcamAsks += 1;
+	return constraints.video
 		? domError('NotFoundError')
-		: Promise.resolve(silentMicrophone())
-);
+		: Promise.resolve(silentMicrophone());
+});
 
 export const LiveVideoNoWebcam: Story = {
 	name: 'Live hook · video without a webcam (scripted devices)',
@@ -713,9 +716,18 @@ export const LiveVideoNoWebcam: Story = {
 		).toHaveAccessibleName('Mikrofon: Headset-Mikrofon');
 		await expectWaitingRoomLayout(canvasElement);
 		await expect(canvas.getByText('Ihre Kamera ist aus')).toBeVisible();
-		await expect(
-			canvas.getByRole('button', { name: 'Kamera', pressed: false })
-		).toBeVisible();
+		const camera = canvas.getByRole('button', {
+			name: 'Kamera',
+			pressed: false
+		});
+		await expect(camera).toBeVisible();
+		// A busy camera frees up without a device change: the switch asks
+		// again instead of being dead until a reload.
+		await expect(camera).toBeEnabled();
+		const asked = noWebcamAsks;
+		await userEvent.click(camera);
+		await waitFor(() => expect(noWebcamAsks).toBeGreaterThan(asked));
+		await expectWaitingRoomLayout(canvasElement);
 	}
 };
 

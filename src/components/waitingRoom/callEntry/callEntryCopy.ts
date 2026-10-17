@@ -31,6 +31,7 @@ export const callEntryCopy = {
 	cameraOn: 'Kamera an',
 	cameraOffToggle: 'Kamera aus',
 	cameraMissing: 'Kamera nicht verfügbar',
+	cameraRetry: 'Kamera erneut suchen',
 	micMeter: 'Lautstärke Ihres Mikrofons',
 	micHeard: 'Wir hören Sie.',
 	micWaiting: 'Sagen Sie etwas, dann schlägt die Anzeige aus.',
