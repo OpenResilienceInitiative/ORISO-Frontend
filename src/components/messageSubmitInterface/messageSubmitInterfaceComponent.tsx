@@ -514,6 +514,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	// Bumped when the composer unmounts: a permission prompt or recorder
+	// `stop` event that settles afterwards must not start or keep a take.
+	const voiceLifecycleRef = useRef(0);
 	const mediaStreamRef = useRef<MediaStream | null>(null);
 	const voiceRecordingTimerRef = useRef<number | null>(null);
 	const voiceRecordingDurationRef = useRef(0);
@@ -1729,7 +1732,11 @@ export const MessageSubmitInterfaceComponent = ({
 					.then(() => {
 						onSendButton && onSendButton();
 						handleMessageSendSuccess(preserveComposerOnSuccess);
-						cleanupAttachment();
+						// A retried text send owns no attachment: it must not
+						// drop a voice take that is under review.
+						if (!retryOfId) {
+							cleanupAttachment();
+						}
 						// Reply context is consumed by the send (#435).
 						if (!retryOfId) {
 							onCancelReply && onCancelReply();
@@ -2237,6 +2244,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	useEffect(() => {
 		return () => {
+			voiceLifecycleRef.current += 1;
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
@@ -3238,12 +3246,17 @@ export const MessageSubmitInterfaceComponent = ({
 			teamDiscussion
 		});
 		const startedFor = voiceDestinationRef.current;
+		const startedLifecycle = voiceLifecycleRef.current;
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true
 			});
-			if (voiceDestinationRef.current !== startedFor) {
-				// The chat changed while the permission prompt was open.
+			if (
+				voiceDestinationRef.current !== startedFor ||
+				voiceLifecycleRef.current !== startedLifecycle
+			) {
+				// The chat changed or the composer unmounted while the
+				// permission prompt was open.
 				stream.getTracks().forEach((track) => track.stop());
 				return;
 			}
@@ -3267,6 +3280,11 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 			};
 			recorder.onstop = () => {
+				if (voiceLifecycleRef.current !== startedLifecycle) {
+					// Unmounted before the stop event: keep no take, no URL.
+					stream.getTracks().forEach((track) => track.stop());
+					return;
+				}
 				const discardAfterStop = voiceDiscardAfterStopRef.current;
 				voiceDiscardAfterStopRef.current = false;
 				if (discardAfterStop) {

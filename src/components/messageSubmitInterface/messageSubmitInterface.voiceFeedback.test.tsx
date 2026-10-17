@@ -725,6 +725,70 @@ describe('voice note review before sending (#1142)', () => {
 		);
 	});
 
+	it('keeps a staged take when an unrelated text retry succeeds', async () => {
+		const view = render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		expect(
+			screen.getByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+
+		view.rerender(
+			<Composer
+				retryRequest={{
+					requestId: 'retry-while-reviewing',
+					failedSendId: 'original-failure',
+					message: 'original message',
+					transportMessage: 'original message',
+					isAside: false,
+					mentionedUserIds: [],
+					targetRoomId: '!case:example.org',
+					feedbackMailIntent: false
+				}}
+			/>
+		);
+		await waitFor(() => expect(apiSendMessage).toHaveBeenCalledOnce());
+		await act(async () => {});
+
+		expect(
+			screen.getByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('does not start a recorder when the composer unmounts while the microphone permission is pending', async () => {
+		let grant: (stream: unknown) => void = () => {};
+		vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValueOnce(
+			new Promise((resolve) => {
+				grant = resolve;
+			}) as Promise<MediaStream>
+		);
+		const view = render(<Composer />);
+		fireEvent.click(screen.getByRole('button', MIC));
+		view.unmount();
+
+		await act(async () => {
+			grant({ getTracks: () => [{ stop: trackStop }] });
+		});
+
+		expect(Recorder.current).toBeUndefined();
+		expect(trackStop).toHaveBeenCalledOnce();
+	});
+
+	it('creates no preview URL when the recorder stops after the composer unmounted', async () => {
+		Recorder.deferStop = true;
+		const view = render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		view.unmount();
+
+		await act(async () => {
+			Recorder.current.pendingStop?.();
+		});
+
+		expect(URL.createObjectURL).not.toHaveBeenCalled();
+	});
+
 	it('revokes the preview URL when the composer unmounts during the review', async () => {
 		const view = render(<Composer />);
 		await startRecording();
