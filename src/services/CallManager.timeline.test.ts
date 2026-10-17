@@ -312,6 +312,91 @@ describe('call manager durable timeline', () => {
 		});
 	});
 
+	it('resolves the call room on a client installed while the join was in flight', async () => {
+		/*
+		 * The refresh lands INSIDE `joinRoom`, so the seat is taken by the
+		 * client whose token is then thrown away.
+		 *
+		 * The membership belongs to the account and survives that, but the
+		 * replacement's room cache has not synced it — and the checks after
+		 * the join all ask the client. Adopting the replacement and carrying
+		 * on asked it about a room it had never heard of: the encryption
+		 * assertion read that as "not encrypted" and refused a join that had
+		 * succeeded, and the RTC lookup was handed the old client's room
+		 * object.
+		 */
+		const source = { getMyMembership: () => 'join' };
+		const joinedByOldClient = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => true
+		};
+		const resolvedOnReplacement = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => true
+		};
+		const call = {
+			callId: 'mid-join-refresh',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			callType: 'video' as const,
+			state: 'running' as const,
+			participants: []
+		};
+		getRoom.mockImplementation((id: string) =>
+			id === call.roomRef ? source : null
+		);
+		let completeJoin!: (room: typeof joinedByOldClient) => void;
+		joinRoom.mockReturnValue(
+			new Promise((resolve) => {
+				completeJoin = resolve;
+			})
+		);
+		session.memberships = [{ sender: '@receiver:example' }];
+		let sessionRoom: unknown;
+
+		const pending = callManager.joinExistingCall(call, true);
+		await vi.waitFor(() =>
+			expect(joinRoom).toHaveBeenCalledWith('!media:example')
+		);
+
+		let synced = false;
+		const refreshedJoin = vi.fn().mockImplementation(async () => {
+			synced = true;
+			return resolvedOnReplacement;
+		});
+		const refreshed = {
+			getUserId: () => '@caller:example',
+			getDeviceId: () => 'DEVICE',
+			getRoom: (id: string) =>
+				id === call.roomRef
+					? source
+					: synced
+						? resolvedOnReplacement
+						: null,
+			joinRoom: refreshedJoin,
+			leave,
+			forget,
+			matrixRTC: {
+				getRoomSession: (room: unknown) => {
+					sessionRoom = room;
+					return session;
+				}
+			},
+			sendEvent,
+			sendMessage
+		};
+		setMatrixClientServiceRef({ getClient: () => refreshed } as never);
+		completeJoin(joinedByOldClient);
+
+		expect(await pending).toBe('joined');
+		// Re-resolved on the client that will be used, which for a cache that
+		// has not synced the room means asking the server again.
+		expect(refreshedJoin).toHaveBeenCalledWith('!media:example');
+		expect(sessionRoom).toBe(resolvedOnReplacement);
+		// Nothing was refused, so nothing is given back.
+		expect(leave).not.toHaveBeenCalled();
+	});
+
 	it('does not replace a newer incoming call when an older timeline join finishes', async () => {
 		const source = { getMyMembership: () => 'join' };
 		const media = {

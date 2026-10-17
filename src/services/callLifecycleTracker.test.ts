@@ -539,20 +539,59 @@ describe('a call that outlives the Matrix client it started on', () => {
 		).toBe('$root');
 	});
 
-	it('drops a call whose root write never reached the server', async () => {
-		// The other side of it: both attempts fail, so nothing was published
-		// that anybody can act on and there is no card to close. Written down
-		// because the recovery above must not turn every failed start into a
-		// phantom card.
+	it('closes a card the immediate retry could not confirm either', async () => {
+		/*
+		 * One outage, both attempts.
+		 *
+		 * They are milliseconds apart, so a failed immediate retry says
+		 * almost nothing about whether the first event is on the server — it
+		 * says the connection is still down. Dropping the tracked call on it
+		 * put the lost acknowledgement straight back: `finish` had nothing to
+		 * finish, and the card the server kept stayed `running` with a Join
+		 * button for a room startup had discarded.
+		 *
+		 * An earlier version of this file asserted the opposite ("drops a
+		 * call whose root write never reached the server"), to keep a start
+		 * that published nothing from leaving a phantom card behind. That
+		 * trade is the wrong way round. Which world this is cannot be known
+		 * from here, and they are not equally bad: one `missed` notice
+		 * against a card that offers to join a dead call for ever. A failure
+		 * that is NOT transient — no client, no permission, no room — fails
+		 * the delayed retries too and writes nothing at all.
+		 */
 		const client = clientDouble(ME);
-		client.sendMessage.mockRejectedValue(new Error('synthetic outage'));
+		client.sendMessage
+			.mockRejectedValueOnce(new Error('synthetic outage'))
+			.mockRejectedValueOnce(new Error('synthetic outage'))
+			.mockRejectedValueOnce(new Error('synthetic outage'))
+			.mockResolvedValue({ event_id: '$terminal' });
 		rotatingService(client);
 
 		await expect(callLifecycleTracker.begin(call)).rejects.toThrow();
 		expect(client.sendMessage).toHaveBeenCalledTimes(2);
+
+		// The caller's cleanup, with the outage still on: its write fails too
+		// and goes to the retry chain, which has the seconds the immediate
+		// attempt did not.
 		callLifecycleTracker.finish(call.callId);
-		await vi.advanceTimersByTimeAsync(60000);
-		expect(client.sendMessage).toHaveBeenCalledTimes(2);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(client.sendMessage).toHaveBeenCalledTimes(3);
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(client.sendMessage).toHaveBeenCalledTimes(4);
+		expect(
+			client.sendMessage.mock.calls[3][1]['org.oriso.call'].state
+		).toBe('missed');
+		/*
+		 * A second root rather than an edit, because no root event id was
+		 * ever acknowledged. The reader folds two roots with the same
+		 * `[roomRef, callId]` from the same sender and takes the terminal one
+		 * — `collapseCallLifecycleMessages`, "keeps the first durable
+		 * identity through three revisions" — so whichever of the two the
+		 * server kept, the card ends up closed.
+		 */
+		expect(
+			client.sendMessage.mock.calls[3][1]['m.relates_to']
+		).toBeUndefined();
 	});
 
 	it('writes nothing through a different account', async () => {

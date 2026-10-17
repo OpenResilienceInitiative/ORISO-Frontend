@@ -158,12 +158,37 @@ class CallLifecycleTracker {
 			 * the server returns its event id and stores nothing, which gives
 			 * the tracker the root to edit; if it did not, this writes it.
 			 * Either way the tracker survives with a card the caller's
-			 * cleanup can close. Only when the second attempt fails too —
-			 * the server is genuinely unreachable, and nothing was published
-			 * that anybody can act on — is the call dropped as before.
+			 * cleanup can close.
+			 *
+			 * And it survives a FAILED second attempt too, which it did not
+			 * before. One outage covers both writes easily — they are
+			 * milliseconds apart — so "the immediate retry failed" says
+			 * nothing about whether the first event is on the server; it
+			 * mostly says the connection is still down. Dropping the tracker
+			 * on it put the lost-acknowledgement case straight back where it
+			 * started: a retained `running` card, a Join button for a
+			 * discarded room, and a `finish` with nothing to finish.
+			 *
+			 * So the tracker is kept and the caller's cleanup writes the
+			 * ending through the delayed retry path, which has the seconds
+			 * this one does not. Without an acknowledged root that ending is
+			 * a second root rather than an edit, and the reader folds the two
+			 * by `[roomRef, callId]` from the same sender — "keeps the first
+			 * durable identity through three revisions" — so the card the
+			 * server kept ends up closed.
+			 *
+			 * The cost is the other world: if nothing ever landed, this
+			 * writes one `missed` card for a call that never rang. An earlier
+			 * version of this chose the opposite and said so in a test. It is
+			 * the wrong way round. The two worlds are indistinguishable from
+			 * here, and they are not equally bad — a `missed` notice is a
+			 * line in a timeline, while a stuck `running` card offers a Join
+			 * button for ever. And if the failure is not transient at all —
+			 * no client, no permission, no room — the delayed retries fail
+			 * too and nothing is written, so the phantom is confined to an
+			 * outage that clears within seconds of a start that failed.
 			 */
-			if (!(await this.retryRootWrite(tracked)))
-				this.calls.delete(call.callId);
+			await this.retryRootWrite(tracked);
 			throw error;
 		}
 		if (tracked.message.state !== 'running') return;
@@ -356,14 +381,15 @@ class CallLifecycleTracker {
 	 * One more attempt at the root write, under the transaction it already
 	 * used — so it cannot produce a second card.
 	 *
-	 * @returns whether the card is now known to be on the server.
+	 * Worth attempting even though nothing branches on the outcome: when it
+	 * lands, the writer learns the root event id, and the ending the caller
+	 * writes next is an edit of the card rather than a second one.
 	 */
-	private async retryRootWrite(tracked: TrackedCall): Promise<boolean> {
+	private async retryRootWrite(tracked: TrackedCall): Promise<void> {
 		try {
 			await tracked.writer.publish(tracked.message);
-			return true;
 		} catch {
-			return false;
+			// Nothing to decide on it; the ending is written either way.
 		}
 	}
 

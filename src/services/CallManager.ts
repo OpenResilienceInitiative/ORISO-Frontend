@@ -213,7 +213,36 @@ class CallManager {
 			}
 			const afterJoin = liveClient();
 			if (!afterJoin) return 'unavailable';
-			client = afterJoin;
+			/*
+			 * The client that joined and the client that will be used have
+			 * to be the same one.
+			 *
+			 * A refresh landing inside `joinRoom` leaves the membership on
+			 * the server — that part is the account's, not the object's — but
+			 * the replacement has its own room cache, and it has not synced
+			 * the room this join just entered. Adopting it without
+			 * re-resolving had the encryption assertion below ask the new
+			 * cache about a room it has never heard of, which reads exactly
+			 * like an unencrypted room and refused a join that had in fact
+			 * succeeded; and it then handed the RTC lookup the OLD client's
+			 * `room` object, which is the half of this that an earlier round
+			 * caught.
+			 *
+			 * So the room is resolved again on the adopted client, and joined
+			 * again if its cache does not have it. The server treats a join
+			 * of a room one is already in as a no-op and returns it, so this
+			 * costs a round trip and nothing else.
+			 *
+			 * `joinedHere` is deliberately not set here: it records whether
+			 * THIS attempt took a seat the person did not already have, and
+			 * re-confirming an existing membership takes nothing.
+			 */
+			if (afterJoin !== client) {
+				client = afterJoin;
+				room = client.getRoom(call.callRoomId);
+				if (room?.getMyMembership() !== 'join')
+					room = await client.joinRoom(call.callRoomId);
+			}
 			if (this.pendingJoin !== join) return 'unavailable';
 			// Membership may have changed while the server processed the room join.
 			if (client.getRoom(call.roomRef)?.getMyMembership() !== 'join')
