@@ -157,6 +157,11 @@
 
 	&__actionsMain {
 		grid-area: main;
+		width: 100%;
+
+		@include breakpoint($fromLarge) {
+			width: 22rem;
+		}
 	}
 
 	&__actionsEnd {
