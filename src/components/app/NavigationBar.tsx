@@ -227,6 +227,14 @@ export const NavigationBar = ({
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
 	}, [isFirstVisit]);
+	// A timer left running past unmount sets state on a torn-down tree.
+	useEffect(
+		() => () => {
+			clearTimeout(animateNavIconTimeoutRef.current);
+			animateNavIconTimeoutRef.current = null;
+		},
+		[]
+	);
 
 	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
 	// server total minus hidden unread rows on loaded pages, an upper bound);
