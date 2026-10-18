@@ -47,6 +47,12 @@ export interface ElementCallWidgetOptions {
 export interface ElementCallWidget {
 	/** `null` until every precondition is met; render nothing before then. */
 	url: string | null;
+	/**
+	 * True once the widget has negotiated its capabilities. Events fed before
+	 * that are dropped by `ClientWidgetApi.feedEvent`, so anything the widget
+	 * must see from before — this person's own identity — is sent again then.
+	 */
+	ready: boolean;
 	/** Ref callback for the iframe. Pass `null` on unmount to tear down. */
 	attachIframe: (iframe: HTMLIFrameElement | null) => void;
 	/** Requests a clean MatrixRTC leave through the widget protocol. */
@@ -103,6 +109,7 @@ export const useElementCallWidget = (
 ): ElementCallWidget => {
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
+	const [ready, setReady] = useState(false);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
 	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -116,6 +123,7 @@ export const useElementCallWidget = (
 	useEffect(() => {
 		let cancelled = false;
 		setUrl(null);
+		setReady(false);
 		setError(null);
 
 		if (!client || !roomId) return undefined;
@@ -322,9 +330,11 @@ export const useElementCallWidget = (
 			attachedIframeRef.current = iframe;
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
+			setReady(false);
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
+				if (apiRef.current === api) setReady(true);
 				// Re-assert the same scheme the URL pins (`theme=dark` above):
 				// the ready-time update guards against Element Call defaulting
 				// differently, and must never contradict the URL parameter.
@@ -538,5 +548,5 @@ export const useElementCallWidget = (
 		[]
 	);
 
-	return { url, attachIframe, hangup, error };
+	return { url, ready, attachIframe, hangup, error };
 };

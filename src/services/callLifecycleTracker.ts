@@ -8,6 +8,7 @@ import {
 } from './callTimelineMessageService';
 import type { CallData } from './CallManager';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
+import { isMatrixRoomEncrypted } from '../utils/matrixRoomEncryption';
 
 interface TrackedCall {
 	message: CallLifecycleMessage;
@@ -98,10 +99,17 @@ class CallLifecycleTracker {
 		 * answers "not yet" is made to wait. The wait is not a loss: the
 		 * write throws `TimelineClientUnavailableError`, which `publish`
 		 * retries for any state rather than only for a terminal one.
+		 *
+		 * Crypto alone is not enough. Right after a refresh the room is not
+		 * loaded yet, and the SDK's `encryptEventIfNeeded` returns early for
+		 * an unknown room — so the card would go out in plaintext. The room
+		 * must be known to be encrypted too, as `publishCallIdentity` asks.
 		 */
+		const roomRef = call.signalRoomId || call.roomId;
 		const canWrite = (client: MatrixClient): boolean =>
 			typeof client.getCrypto !== 'function' ||
-			client.getCrypto() !== undefined;
+			(client.getCrypto() !== undefined &&
+				isMatrixRoomEncrypted(client, roomRef));
 		const writer = new CallTimelineMessageService(() => {
 			const live = currentClient();
 			const now = live && canWrite(live) ? live : null;
@@ -124,7 +132,7 @@ class CallLifecycleTracker {
 			retryAttempts: 0,
 			message: {
 				callId: call.callId,
-				roomRef: call.signalRoomId || call.roomId,
+				roomRef,
 				callRoomId: call.elementCallRoomId || call.roomId,
 				state: 'running',
 				callType: call.isVideo ? 'video' : 'audio',
@@ -390,6 +398,13 @@ class CallLifecycleTracker {
 				: undefined
 		};
 		tracked.stop();
+		/*
+		 * The ending gets a budget of its own. A running update that never
+		 * landed — a crypto window longer than all three delays — leaves the
+		 * counter spent, and a hangup failing once after that would get no
+		 * retry at all.
+		 */
+		tracked.retryAttempts = 0;
 		this.publish(tracked);
 		/*
 		 * Done with it. The retry chain below holds `tracked` directly, so

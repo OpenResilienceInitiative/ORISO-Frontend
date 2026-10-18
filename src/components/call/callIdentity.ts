@@ -37,7 +37,7 @@ import {
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 import { counsellorInitials } from '../../utils/counsellorAvatar';
 
-/** The room state event that carries it. Mirrored in the fork. */
+/** The timeline event that carries it. Mirrored in the fork. */
 export const CALL_IDENTITY_EVENT_TYPE = 'org.oriso.call.identity';
 
 export interface CallIdentity {

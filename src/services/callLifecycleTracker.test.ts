@@ -445,7 +445,8 @@ describe('a call that outlives the Matrix client it started on', () => {
 
 		let crypto: object | undefined = undefined;
 		const after = Object.assign(clientDouble(ME), {
-			getCrypto: () => crypto
+			getCrypto: () => crypto,
+			isRoomEncrypted: () => true
 		});
 		service.rotateTo(after);
 
@@ -557,6 +558,7 @@ describe('a call that outlives the Matrix client it started on', () => {
 		let crypto: object | undefined = { ready: true };
 		const client = Object.assign(clientDouble(ME), {
 			getCrypto: () => crypto,
+			isRoomEncrypted: () => true,
 			getRoom: () => ({
 				getMember: (userId: string) => ({ name: `Name of ${userId}` })
 			}),
@@ -591,6 +593,92 @@ describe('a call that outlives the Matrix client it started on', () => {
 		expect(client.sendMessage.mock.calls.length).toBe(afterRoot + 1);
 
 		// And now the hangup, failing once.
+		client.sendMessage
+			.mockRejectedValueOnce(new Error('synthetic'))
+			.mockResolvedValue({ event_id: '$root' });
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		const afterFirstTry = client.sendMessage.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(client.sendMessage.mock.calls.length).toBeGreaterThan(
+			afterFirstTry
+		);
+		expect(
+			client.sendMessage.mock.calls.at(-1)?.[1]['org.oriso.call'].state
+		).toBe('ended');
+	});
+
+	it('waits for the room to be known as encrypted', async () => {
+		/*
+		 * Crypto ready is not enough. Right after a refresh the room is not
+		 * loaded yet, and the SDK's `encryptEventIfNeeded` returns early for
+		 * an unknown room — the card would go out in plaintext.
+		 */
+		const before = clientDouble(ME);
+		const service = rotatingService(before);
+		await callLifecycleTracker.begin(call);
+
+		let encrypted = false;
+		const after = Object.assign(clientDouble(ME), {
+			getCrypto: () => ({ ready: true }),
+			isRoomEncrypted: () => encrypted
+		});
+		service.rotateTo(after);
+
+		callLifecycleTracker.finish(call.callId);
+		await vi.advanceTimersByTimeAsync(0);
+		expect(after.sendMessage).not.toHaveBeenCalled();
+
+		encrypted = true;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(after.sendMessage).toHaveBeenCalledTimes(1);
+		expect(after.sendMessage.mock.calls[0][1]['org.oriso.call'].state).toBe(
+			'missed'
+		);
+	});
+
+	it('gives the hangup a fresh budget after a presence update gave up', async () => {
+		/*
+		 * The crypto window outlasts all three delays, so the presence update
+		 * is abandoned with the budget spent. The hangup that follows must
+		 * still be retried when it fails once.
+		 */
+		const memberships: { sender: string }[] = [];
+		let refreshMemberships: (() => void) | undefined;
+		let crypto: object | undefined = { ready: true };
+		const client = Object.assign(clientDouble(ME), {
+			getCrypto: () => crypto,
+			isRoomEncrypted: () => true,
+			getRoom: () => ({
+				getMember: (userId: string) => ({ name: `Name of ${userId}` })
+			}),
+			matrixRTC: {
+				getRoomSession: () => ({
+					get memberships() {
+						return memberships;
+					},
+					on: (_event: string, handler: () => void) => {
+						refreshMemberships = handler;
+					},
+					off: vi.fn()
+				})
+			}
+		});
+		rotatingService(client);
+		await callLifecycleTracker.begin(call);
+		const afterRoot = client.sendMessage.mock.calls.length;
+
+		crypto = undefined;
+		memberships.push({ sender: '@alex:example' });
+		refreshMemberships?.();
+		await vi.advanceTimersByTimeAsync(0);
+		await vi.advanceTimersByTimeAsync(1000);
+		await vi.advanceTimersByTimeAsync(2000);
+		await vi.advanceTimersByTimeAsync(4000);
+		// All three delays spent; the presence update was given up on.
+		expect(client.sendMessage.mock.calls.length).toBe(afterRoot);
+
+		crypto = { ready: true };
 		client.sendMessage
 			.mockRejectedValueOnce(new Error('synthetic'))
 			.mockResolvedValue({ event_id: '$root' });

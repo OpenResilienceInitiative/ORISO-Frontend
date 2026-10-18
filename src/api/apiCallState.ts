@@ -99,6 +99,7 @@ export async function apiCallState(
 		call.state === 'running' &&
 		!call.startedAt &&
 		call.actorUserId !== undefined;
+	let state: CallLifecycleMessage['state'] = data.state;
 	if (
 		(call.state === 'missed' && data.state !== 'missed') ||
 		(neverAnsweredHere && data.state === 'ended')
@@ -108,9 +109,26 @@ export async function apiCallState(
 					(id): id is string => typeof id === 'string'
 				)
 			: [];
-		if (!attended.some((id) => id !== call.actorUserId)) return null;
+		if (!attended.some((id) => id !== call.actorUserId)) {
+			/*
+			 * Refusing is not enough for a `running` card. The caller's tab
+			 * died while ringing, so no terminal edit is coming, and a `null`
+			 * leaves `useCallTimelineState` polling a card that says "running"
+			 * for good. The server's answer does settle it — the call is over
+			 * — only not as `ended`: nobody but the caller was ever there.
+			 */
+			if (
+				!neverAnsweredHere ||
+				!timestamp(data.endedAt) ||
+				data.endedAt < data.invitedAt
+			)
+				return null;
+			state = 'missed';
+		}
 	}
-	if (data.state === 'missed') {
+	if (state !== data.state) {
+		// Downgraded above; its `endedAt` is already checked.
+	} else if (data.state === 'missed') {
 		if (
 			data.startedAt !== null ||
 			!timestamp(data.endedAt) ||
@@ -157,15 +175,15 @@ export async function apiCallState(
 	return {
 		...call,
 		participants,
-		state: data.state,
+		state,
 		invitedAt: new Date(data.invitedAt).toISOString(),
-		startedAt: timestamp(data.startedAt)
-			? new Date(data.startedAt).toISOString()
-			: undefined,
+		startedAt:
+			state !== 'missed' && timestamp(data.startedAt)
+				? new Date(data.startedAt).toISOString()
+				: undefined,
 		endedAt: timestamp(data.endedAt)
 			? new Date(data.endedAt).toISOString()
 			: undefined,
-		durationSeconds:
-			data.state === 'missed' ? undefined : data.durationSeconds
+		durationSeconds: state === 'missed' ? undefined : data.durationSeconds
 	};
 }

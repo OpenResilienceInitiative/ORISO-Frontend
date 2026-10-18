@@ -13,7 +13,7 @@ import React, {
 	useRef
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RoomStateEvent } from 'matrix-js-sdk';
+import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { useElementCallWidget } from './widget/useElementCallWidget';
@@ -191,6 +191,16 @@ export const GroupCallWidget: React.FC = () => {
 	 * refresh, against a window nothing else closes.
 	 */
 	const lastGeneration = useRef(clientGeneration);
+	/*
+	 * Whether the widget had negotiated its capabilities last time.
+	 *
+	 * The first publish goes out as soon as the URL exists, before the iframe
+	 * can receive anything, and `feedEvent` drops what the widget cannot take
+	 * yet. Everybody else gets the event; our own widget does not, and the
+	 * arrival re-announce skips our own id — so we saw ourselves as initials.
+	 * Becoming ready therefore forces one more publish.
+	 */
+	const lastReady = useRef(widget.ready);
 
 	useEffect(() => {
 		// Recorded before the guard, so that closing the surface — which sets
@@ -199,6 +209,8 @@ export const GroupCallWidget: React.FC = () => {
 		lastSessionUrl.current = widget.url;
 		const clientChanged = lastGeneration.current !== clientGeneration;
 		lastGeneration.current = clientGeneration;
+		const becameReady = widget.ready && !lastReady.current;
+		lastReady.current = widget.ready;
 
 		const client = matrixClientService?.getClient();
 		if (!client || !callRoomId || !widget.url || !userData) return;
@@ -264,7 +276,10 @@ export const GroupCallWidget: React.FC = () => {
 				identityClient,
 				callRoomId,
 				source,
-				{ force: previousUrl !== widget.url || clientChanged }
+				{
+					force:
+						previousUrl !== widget.url || clientChanged || becameReady
+				}
 			);
 			if (sent !== null || cancelled) return;
 			const delay = IDENTITY_RETRY_DELAYS_MS[attempt];
@@ -296,11 +311,21 @@ export const GroupCallWidget: React.FC = () => {
 		 * re-announce silently is the failure mode this whole mechanism exists
 		 * to avoid.
 		 */
-		const room = client.getRoom?.(callRoomId);
-		const session =
-			room && client.matrixRTC?.getRoomSession
-				? client.matrixRTC.getRoomSession(room)
+		/*
+		 * Not there yet, right after a client swap.
+		 *
+		 * `getRoom` answers null until the replacement's first sync, and
+		 * capturing that left the listeners below attached to nothing for the
+		 * rest of the call. So a missing room is bound when the client learns
+		 * of it, and the first refresh then treats everybody as an arrival —
+		 * which is right: they may have come in during the gap.
+		 */
+		const sessionOf = (of: Room | null) =>
+			of && client.matrixRTC?.getRoomSession
+				? client.matrixRTC.getRoomSession(of)
 				: undefined;
+		let room = client.getRoom?.(callRoomId) ?? null;
+		let session = sessionOf(room);
 		const ownUserId = client.getUserId?.() ?? undefined;
 		/*
 		 * Keyed by DEVICE, not by person.
@@ -343,10 +368,19 @@ export const GroupCallWidget: React.FC = () => {
 				void republishCallIdentity(identityClient, callRoomId, source);
 		};
 
+		const onRoom = (joined: Room): void => {
+			if (room || joined?.roomId !== callRoomId) return;
+			room = joined;
+			session = sessionOf(room);
+			session?.on?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+			refresh();
+		};
 		session?.on?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+		if (!room) client.on?.(ClientEvent.Room, onRoom);
 		client.on?.(RoomStateEvent.Members, refresh as never);
 		return (): void => {
 			cancelled = true;
+			client.off?.(ClientEvent.Room, onRoom);
 			session?.off?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
 			client.off?.(RoomStateEvent.Members, refresh as never);
 		};
@@ -355,6 +389,7 @@ export const GroupCallWidget: React.FC = () => {
 		clientGeneration,
 		callRoomId,
 		widget.url,
+		widget.ready,
 		ownAvatarUserId,
 		userData
 	]);

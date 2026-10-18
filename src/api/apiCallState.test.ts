@@ -169,7 +169,7 @@ it('restores the stored terminal state and duration for the same call', async ()
 	});
 });
 
-it('does not end a call nobody here ever answered, on caller-only attendance', async () => {
+it('settles a call nobody here ever answered as missed, on caller-only attendance', async () => {
 	/*
 	 * The road around the `missed` guard: an unanswered call whose terminal
 	 * edit exhausted its retries — or a reload before that edit syncs —
@@ -180,7 +180,9 @@ it('does not end a call nobody here ever answered, on caller-only attendance', a
 	 * permanently: a terminal answer stops the retries.
 	 *
 	 * `startedAt` absent on a `running` card is this client saying nobody but
-	 * the actor ever arrived.
+	 * the actor ever arrived. And `null` is no answer either: with the
+	 * caller's tab gone no terminal edit follows, so the card would poll on
+	 * "running" for good. It is over, and it was missed.
 	 */
 	const ringing: CallLifecycleMessage = {
 		...original,
@@ -199,7 +201,12 @@ it('does not end a call nobody here ever answered, on caller-only attendance', a
 		participantMatrixIds: ['@caller:example']
 	});
 
-	expect(await apiCallState(ringing)).toBeNull();
+	expect(await apiCallState(ringing)).toMatchObject({
+		state: 'missed',
+		startedAt: undefined,
+		endedAt: '1970-01-01T00:00:14.000Z',
+		durationSeconds: undefined
+	});
 });
 
 it('ends it once somebody other than the caller is on the roll', async () => {

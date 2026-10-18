@@ -353,7 +353,11 @@ describe('useElementCallWidget', () => {
 		});
 		const api = widgetApiMocks.apiInstances[0];
 
+		// Events fed before capability negotiation are dropped, so callers
+		// wait for this before sending what the widget must see.
+		expect(result.current.ready).toBe(false);
 		act(() => api.emit('ready', new CustomEvent('ready')));
+		expect(result.current.ready).toBe(true);
 		// Must match the `theme=dark` pin in the widget URL — a ready-time
 		// update to any other scheme would flip the call after launch.
 		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
