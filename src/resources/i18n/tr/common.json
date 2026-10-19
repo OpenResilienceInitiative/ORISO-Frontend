@@ -2076,7 +2076,7 @@
 			"emailKind": "E-posta: {{kind}}",
 			"emailMenu": "E-posta seç: {{kind}}",
 			"channelUnavailable": "mevcut değil",
-			"emailUnavailableReason": "Bu tür için henüz e-posta yok",
+			"emailUnavailableReason": "Bu tür için henüz e-posta bildirimi yok",
 			"emailMasterOff": "E-posta bildirimleri profilinizde kapalı",
 			"browserOff": "Açılır bildirimler profilinizde kapalı",
 			"descriptions": {

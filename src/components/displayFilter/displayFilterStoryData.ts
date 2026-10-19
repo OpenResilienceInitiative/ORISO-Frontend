@@ -101,7 +101,8 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	emailKind: (kind) => `E-Mail: ${kind}`,
 	emailMenu: (kind) => `E-Mail wählen: ${kind}`,
 	channelUnavailable: 'nicht verfügbar',
-	emailUnavailableReason: 'Für diese Art gibt es noch keine E-Mail'
+	emailUnavailableReason:
+		'Für diese Art gibt es noch keine E-Mail-Benachrichtigung'
 };
 
 /** Labels of the Gespräche dialog (title, intro, heading of its kinds). */

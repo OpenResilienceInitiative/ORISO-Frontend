@@ -2077,7 +2077,7 @@
 			"emailKind": "Эл. почта: {{kind}}",
 			"emailMenu": "Выбрать e-mail: {{kind}}",
 			"channelUnavailable": "недоступно",
-			"emailUnavailableReason": "Для этого типа пока нет e-mail",
+			"emailUnavailableReason": "Для этого типа пока нет уведомлений по электронной почте",
 			"emailMasterOff": "Уведомления по эл. почте отключены в вашем профиле",
 			"browserOff": "Всплывающие уведомления отключены в вашем профиле",
 			"descriptions": {

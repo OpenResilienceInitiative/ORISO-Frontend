@@ -684,7 +684,7 @@ export const EmailUnavailable: Story = {
 		) as HTMLElement;
 		await expect(cell).toHaveTextContent('nicht verfügbar');
 		await expect(cell).toHaveTextContent(
-			'Für diese Art gibt es noch keine E-Mail'
+			'Für diese Art gibt es noch keine E-Mail-Benachrichtigung'
 		);
 		await expect(
 			within(row).queryByRole('button', { name: /^E-Mail/ })
@@ -700,7 +700,7 @@ export const EmailUnavailable: Story = {
 		await userEvent.tab();
 		await expect(canvasElement.ownerDocument.activeElement).toBe(cell);
 		await expect(await dialog.findByRole('tooltip')).toHaveTextContent(
-			'Für diese Art gibt es noch keine E-Mail'
+			'Für diese Art gibt es noch keine E-Mail-Benachrichtigung'
 		);
 		await userEvent.tab();
 		await expect(canvasElement.ownerDocument.activeElement).toBe(
