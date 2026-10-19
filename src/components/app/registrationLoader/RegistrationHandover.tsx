@@ -28,9 +28,12 @@ export interface RegistrationHandoverProps {
 	/**
 	 * Where the person ends up. The platform's closing animation plays on the
 	 * way and ends on this focal point (ORISO-Frontend#1737). A standard
-	 * counselling chat is the default; a video call says `call`.
+	 * counselling chat is the default; a video call says `call`. `null` plays
+	 * no closing animation: after a group link the next screen is the group's
+	 * entry room, another waiting room with no message field to end on (its own
+	 * "join" gate carries the animation into the chat).
 	 */
-	closing?: ClosingFocal;
+	closing?: ClosingFocal | null;
 	/** Force a gate state instead of deriving it from `ready`. */
 	forcedState?: HandoverGateState;
 	/**
@@ -173,7 +176,7 @@ export const RegistrationHandover = ({
 							<HandoverGateButton
 								state={state}
 								onEnter={handleEnter}
-								closing={closing}
+								closing={closing ?? undefined}
 								label={copy?.cta}
 								/* The room's status line above already says
 								   (and announces) this state; a second live
