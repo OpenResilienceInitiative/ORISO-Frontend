@@ -199,7 +199,10 @@ export const sendNotification = (
 		icon: '/logo192.png',
 		// 'persistent' keeps the banner until dismissed (Chromium honours
 		// requireInteraction; Firefox/Safari fall back to temporary).
-		requireInteraction: bannerMode === 'persistent'
+		requireInteraction: bannerMode === 'persistent',
+		// The app owns the tone (soundPlayback.ts, focused or not, and none
+		// for "Pop-up ohne Ton"): the OS must never add a second one.
+		silent: true
 	});
 
 	notification.onshow = () => {
