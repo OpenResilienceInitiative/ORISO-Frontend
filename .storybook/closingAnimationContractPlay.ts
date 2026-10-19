@@ -333,9 +333,16 @@ export const verifyClosingAnimation = async (
 		const covered = phaseOf(recording, 'covered');
 		expect(covers(covered, covered.viewport)).toBe(true);
 
-		// It never swallows a click: the root and every layer let pointers through.
+		// While it covers, the root takes the pointer so no blind tap reaches the
+		// room that is being swapped; from the reveal on it lets the pointer
+		// through. No layer ever takes one.
 		for (const snapshot of recording.snapshots) {
-			expect(snapshot.rootPointerEvents).toBe('none');
+			const blocking =
+				snapshot.phase === 'cover' || snapshot.phase === 'covered';
+			expect(
+				snapshot.rootPointerEvents,
+				`the root in its "${snapshot.phase}" phase`
+			).toBe(blocking ? 'auto' : 'none');
 			for (const layer of snapshot.layers) {
 				expect(layer.pointerEvents).toBe('none');
 			}
