@@ -8,6 +8,7 @@ import {
 	useSyncExternalStore
 } from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
+import { getLinkAgencyId } from './linkAgencyId';
 import { TenantContext, useLocaleData } from '../globalState';
 import { TenantDataInterface } from '../globalState/interfaces';
 import getLocationVariables from './getLocationVariables';
@@ -109,6 +110,11 @@ const useTenantTheming = () => {
 		subscribeToAuthenticatedTenant,
 		getAuthenticatedTenantId
 	);
+	// The Beratungsstelle a shared link names. Read from the address, not the
+	// router: this hook also runs above the router (#1689).
+	const linkAgencyId = authenticatedTenantId
+		? null
+		: getLinkAgencyId(window.location.search);
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
@@ -210,7 +216,7 @@ const useTenantTheming = () => {
 			tenantContext?.setTenant(null as any);
 		}
 
-		apiGetTenantTheming()
+		apiGetTenantTheming(linkAgencyId)
 			.then((tenant) => {
 				if (!active) {
 					return;
@@ -244,7 +250,13 @@ const useTenantTheming = () => {
 		};
 		// False positive
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tenantContext?.setTenant, subdomain, locale, authenticatedTenantId]);
+	}, [
+		tenantContext?.setTenant,
+		subdomain,
+		locale,
+		authenticatedTenantId,
+		linkAgencyId
+	]);
 
 	return isLoadingTenant;
 };

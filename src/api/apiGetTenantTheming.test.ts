@@ -1,9 +1,16 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiGetTenantTheming } from './apiGetTenantTheming';
+import {
+	apiGetTenantTheming,
+	resetLinkTenantCache
+} from './apiGetTenantTheming';
+import { getLinkAgencyId } from '../utils/linkAgencyId';
 import { setValueInCookie } from '../components/sessionCookie/accessSessionCookie';
 
-const mocks = vi.hoisted(() => ({ fetchData: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+	fetchData: vi.fn(),
+	apiGetAgencyById: vi.fn()
+}));
 
 vi.mock('./fetchData', async (importOriginal) => ({
 	...(await importOriginal<typeof import('./fetchData')>()),
@@ -14,11 +21,17 @@ vi.mock('./fetchData', async (importOriginal) => ({
 const tokenForTenant = (tenantId: unknown) =>
 	`header.${btoa(JSON.stringify({ tenantId }))}.signature`;
 
+vi.mock('./apiGetAgencyId', () => ({
+	apiGetAgencyById: mocks.apiGetAgencyById
+}));
+
 const requestedUrl = () => mocks.fetchData.mock.calls.at(-1)[0].url as string;
 
 describe('apiGetTenantTheming – which tenant is asked for', () => {
 	beforeEach(() => {
 		mocks.fetchData.mockReset().mockResolvedValue({});
+		mocks.apiGetAgencyById.mockReset().mockResolvedValue(null);
+		resetLinkTenantCache();
 		document.cookie = 'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 		window.localStorage.clear();
 	});
@@ -56,5 +69,79 @@ describe('apiGetTenantTheming – which tenant is asked for', () => {
 		await apiGetTenantTheming();
 
 		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/$/);
+	});
+});
+
+/**
+ * #1689: a shared link names its Beratungsstelle (`?aid=`), so a visitor who
+ * is not signed in — not even registered — already sees that Träger's CI.
+ */
+describe('apiGetTenantTheming – the Träger behind a shared link', () => {
+	beforeEach(() => {
+		mocks.fetchData.mockReset().mockResolvedValue({});
+		mocks.apiGetAgencyById.mockReset();
+		resetLinkTenantCache();
+		document.cookie = 'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		window.localStorage.clear();
+	});
+
+	it("asks for the tenant of the link's Beratungsstelle", async () => {
+		mocks.apiGetAgencyById.mockResolvedValue({ id: 1, tenantId: 2 });
+
+		await apiGetTenantTheming(1);
+
+		expect(mocks.apiGetAgencyById).toHaveBeenCalledWith(1);
+		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/id\/2$/);
+	});
+
+	it('asks for the agency once for both theming hooks', async () => {
+		mocks.apiGetAgencyById.mockResolvedValue({ id: 1, tenantId: 2 });
+
+		await Promise.all([apiGetTenantTheming(1), apiGetTenantTheming(1)]);
+
+		expect(mocks.apiGetAgencyById).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		['an unknown agency', null],
+		['an agency without a tenant', { id: 1 }],
+		['the technical tenant 0', { id: 1, tenantId: 0 }]
+	])('keeps the subdomain tenant for %s', async (_, agency) => {
+		mocks.apiGetAgencyById.mockResolvedValue(agency);
+
+		await apiGetTenantTheming(1);
+
+		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/$/);
+	});
+
+	it("falls back to the subdomain tenant when the link's tenant fails", async () => {
+		mocks.apiGetAgencyById.mockResolvedValue({ id: 1, tenantId: 2 });
+		mocks.fetchData
+			.mockRejectedValueOnce(new Error('404'))
+			.mockResolvedValueOnce({});
+
+		await apiGetTenantTheming(1);
+
+		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/$/);
+	});
+
+	it('lets the signed-in tenant win over the link', async () => {
+		setValueInCookie('keycloak', tokenForTenant(14));
+		mocks.apiGetAgencyById.mockResolvedValue({ id: 1, tenantId: 2 });
+
+		await apiGetTenantTheming(1);
+
+		expect(mocks.apiGetAgencyById).not.toHaveBeenCalled();
+		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/id\/14$/);
+	});
+
+	it.each([
+		['?gcid=7&aid=19', 19],
+		['?aid=0', null],
+		['?aid=abc', null],
+		['?aid=-3', null],
+		['?gcid=7', null]
+	])('reads the link agency from %s', (search, expected) => {
+		expect(getLinkAgencyId(search)).toBe(expected);
 	});
 });

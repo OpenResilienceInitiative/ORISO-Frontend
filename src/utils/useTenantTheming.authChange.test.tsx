@@ -247,3 +247,38 @@ describe('useTenantTheming – tenant of the signed-in user', () => {
 		);
 	});
 });
+
+/**
+ * #1689: a shared link names its Beratungsstelle (`?aid=`). A visitor who is
+ * not signed in sees that Träger; signing in hands over to the own tenant.
+ */
+describe('useTenantTheming – the Träger behind a shared link', () => {
+	beforeEach(() => {
+		cleanup();
+		mocks.apiGetTenantTheming.mockReset();
+		document.cookie = 'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		window.localStorage.clear();
+		window.history.replaceState(null, '', '/login?gcid=7&aid=19');
+	});
+
+	it("asks for the link's agency before sign-in, not after", async () => {
+		mocks.apiGetTenantTheming
+			.mockResolvedValueOnce(SUBDOMAIN_TENANT)
+			.mockResolvedValueOnce(USER_TENANT);
+
+		renderApp();
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalledWith(19)
+		);
+
+		act(() => {
+			setValueInCookie('keycloak', tokenForTenant(14));
+		});
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenLastCalledWith(null)
+		);
+		window.history.replaceState(null, '', '/');
+	});
+});
