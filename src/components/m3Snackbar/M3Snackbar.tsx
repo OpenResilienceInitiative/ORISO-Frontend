@@ -3,6 +3,7 @@ import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { COMPOSER_BOTTOM_CLEARANCE } from './composerClearance';
 
 /**
  * The M3 snackbar roles, as the design system publishes them
@@ -198,8 +199,7 @@ export const useFloatingSnackbarPresence = (active: boolean) => {
  */
 export const M3_SNACKBAR_PHONE_QUERY = '(max-width: 899.98px)';
 export const M3_SNACKBAR_PHONE_MEDIA = `@media ${M3_SNACKBAR_PHONE_QUERY}`;
-export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM =
-	'calc(88px + env(safe-area-inset-bottom, 0px))';
+export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM = `max(calc(88px + env(safe-area-inset-bottom, 0px)), ${COMPOSER_BOTTOM_CLEARANCE})`;
 
 /** For surfaces that share the snackbar's role but not its anatomy (the join request). */
 export const M3_SNACKBAR_ELEVATION = elevation3;
@@ -384,7 +384,16 @@ export const M3Snackbar = ({
 				onClose?.();
 			}}
 			sx={[
-				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: 'calc(100% - 32px)' },
+				{
+					maxWidth: M3_SNACKBAR_MAX_WIDTH,
+					width: 'calc(100% - 32px)',
+					...(anchorOrigin.vertical === 'bottom' && {
+						bottom: (theme: Theme) => ({
+							xs: `max(${theme.spacing(1)}, ${COMPOSER_BOTTOM_CLEARANCE})`,
+							sm: `max(${theme.spacing(3)}, ${COMPOSER_BOTTOM_CLEARANCE})`
+						})
+					})
+				},
 				...(Array.isArray(containerSx) ? containerSx : [containerSx])
 			]}
 		>

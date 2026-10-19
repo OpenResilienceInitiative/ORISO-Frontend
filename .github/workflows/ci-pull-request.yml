@@ -124,6 +124,9 @@ jobs:
           npx cypress install
           node node_modules/playwright/cli.js install --with-deps chrome
 
+      - name: Verify complete Matrix chat history through the actual chat
+        run: npm run test:chat-history
+
       - name: Verify enquiry and team discussion through the actual app
         run: npm run test:enquiry-team
 
@@ -132,7 +135,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: enquiry-team-browser
-          path: cypress/screenshots
+          path: |
+            cypress/screenshots
+            test-results/history1718
           if-no-files-found: ignore
           retention-days: 7
 # The public-route Playwright smoke still needs the real backend and remains local.

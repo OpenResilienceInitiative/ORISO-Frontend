@@ -414,6 +414,7 @@
 		"consent": {
 			"headline": "Bevor du schreibst",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimme der Datenschutzerklärung dieser Beratungsstelle zu, bevor du in der Gruppe schreibst.",
 			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
 			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}
@@ -1241,6 +1242,7 @@
 				"success": "Dein Benutzername ist geeignet."
 			},
 			"temporary": {
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
 			}
@@ -2326,12 +2328,24 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
+			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
+			"declined": "Du hast diese Übergabe abgelehnt.",
+			"noContent": "Diese Anfrage erlaubt dir nicht, das Gespräch zu lesen.",
+			"forbidden": "Du darfst diese Übergabeanfrage nicht aufrufen.",
+			"loadForbidden": "Du darfst die berechtigten Kolleg:innen nicht laden."
+		},
 		"accepted": {
 			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
 			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Bei Bedarf können weitere Fachkräfte dieser Beratungsstelle hinzugezogen werden, etwa zur Vertretung oder zur fachlichen Rücksprache — alle sind zur Verschwiegenheit verpflichtet.",
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
 		},
 		"consent": {
 			"senderRole": "Kurze Orientierung",
@@ -2360,6 +2374,19 @@
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+		}
+	},
+	"supervisorDialog": {
+		"description": {
+			"add": "Hol eine erfahrene Kolleg:in in diesen Fall.",
+			"change": "Ersetze die aktuelle Supervision.",
+			"handover": "Biete diese Beratung einer anderen berechtigten Kolleg:in an."
+		},
+		"reasonPlaceholder": "Beschreibe kurz den Grund.",
+		"reasonError": "Bitte wähle einen Grund aus.",
+		"explanation": {
+			"add": "Eine Supervisor:in unterstützt dich in einem getrennten Teambereich.",
+			"handover": "Zuerst entscheidet die ausgewählte Kolleg:in. Falls die Richtlinie es verlangt, wird danach die ratsuchende Person gefragt. Bis alle nötigen Entscheidungen vorliegen, bleibst du zuständig."
 		}
 	},
 	"dpaSign": {
@@ -2401,6 +2428,7 @@
 		"passwordRecovery": {
 			"needs-password": "Die Wiederherstellung mit deinem Passwort wurde in dieser Sitzung noch nicht bestätigt. Melde dich erneut an oder richte sie mit deinem vorhandenen Ersatzschlüssel ein.",
 			"needs-recovery-key": "Dein bisheriger Verlauf benötigt auf diesem Gerät deinen Ersatzschlüssel.",
+			"needs-sign-in": "Dein bisheriger Verlauf öffnet sich auf diesem Gerät, sobald du dich erneut mit deinem Passwort anmeldest.",
 			"retryable-failure": "Die Wiederherstellung mit deinem Passwort konnte nicht eingerichtet werden. Du kannst deine Anfrage trotzdem schreiben und die Einrichtung in den Sicherheitseinstellungen erneut prüfen.",
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
@@ -2620,6 +2648,9 @@
 		"dpa": {
 			"restricted": {
 				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wende Dich an Deine Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"restrictedGroupJoin": {
+				"text": "Der Beitritt zu dieser Gruppe ist derzeit nicht möglich, weil die Beratungsorganisation die aktuelle Auftragsverarbeitungsvereinbarung (AVV) noch bestätigen muss. Bitte wende Dich an Deine Beratungsstelle."
 			},
 			"unavailable": {
 				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",

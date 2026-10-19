@@ -1,0 +1,5 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
+  1 passed (3.9s)

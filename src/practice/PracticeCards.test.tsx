@@ -141,7 +141,8 @@ describe('PracticeCards', () => {
 		});
 		const accept = await card('Anfrage annehmen');
 
-		expect(within(accept).getByText('In Bearbeitung')).toBeTruthy();
+		expect(within(accept).getByText('Nicht gestartet')).toBeTruthy();
+		expect(within(accept).queryByText('In Bearbeitung')).toBeNull();
 		expect(
 			within(accept).queryByRole('button', { name: /fortsetzen/i })
 		).toBeNull();
