@@ -336,7 +336,9 @@ const circleZoom = (frame: Frame): Plan => {
 /**
  * Slide reveal: the red area swipes to the right as one piece. A second red
  * layer sits behind it and travels the same way a beat later, so the swipe
- * leaves a trailing band before the chat is uncovered.
+ * leaves a trailing band before the chat is uncovered. The beat is part of the
+ * phase, not added to it: both sheets end together, so this design takes as
+ * long as the other two.
  */
 const slideReveal = (frame: Frame): Plan => {
 	const { width, height } = frame;
@@ -361,10 +363,11 @@ const slideReveal = (frame: Frame): Plan => {
 				closing.coverMs,
 				transitionMotion.easeIn
 			),
+			// Starts late, ends with the front sheet: the trail is inside the phase.
 			run(
 				rear,
 				[{ transform: from }, { transform: 'none' }],
-				closing.coverMs,
+				closing.coverMs - closing.trailMs,
 				transitionMotion.easeIn,
 				closing.trailMs
 			)
@@ -379,7 +382,7 @@ const slideReveal = (frame: Frame): Plan => {
 			run(
 				rear,
 				[{ transform: 'none' }, { transform: to }],
-				closing.revealMs,
+				closing.revealMs - closing.trailMs,
 				transitionMotion.easeOut,
 				closing.trailMs
 			)

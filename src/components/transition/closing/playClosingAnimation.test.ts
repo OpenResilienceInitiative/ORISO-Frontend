@@ -200,6 +200,57 @@ describe('playClosingAnimation', () => {
 	 * by keyboard or assistive technology while the screen is held red either,
 	 * or Tab and Enter could still press a control nobody can see.
 	 */
+	/**
+	 * One timeline for all three designs (`transitionMotion.closing`): a design
+	 * differs in what it draws, never in how long a person waits. A piece that
+	 * starts late (the slide's trailing sheet) has to end with the others, not
+	 * after them.
+	 */
+	describe('one timeline for every design', () => {
+		type Call = [Keyframe[], KeyframeAnimationOptions];
+		const endsFrom = (
+			animate: { mock: { calls: unknown[] } },
+			from: number
+		) =>
+			(animate.mock.calls.slice(from) as Call[]).map(
+				([, options]) =>
+					Number(options.delay ?? 0) + Number(options.duration)
+			);
+
+		it.each(CLOSING_VARIANTS)(
+			'%s: the cover takes the shared cover time and the reveal the shared reveal time, to the last piece',
+			async (variant) => {
+				const late = installLateAnimate();
+				focalOnPage();
+				const pending = playClosingAnimation({
+					variant,
+					focal: 'messageField',
+					onCovered: () => undefined
+				});
+				const { coverMs, revealMs } = transitionMotion.closing;
+				const cover = endsFrom(late.animate, 0);
+				expect(cover.length).toBeGreaterThan(0);
+				expect(Math.max(...cover), 'cover').toBe(coverMs);
+
+				const made = late.animate.mock.calls.length;
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				expect(
+					document
+						.querySelector(ROOT)!
+						.getAttribute('data-closing-phase')
+				).toBe('reveal');
+				const reveal = endsFrom(late.animate, made);
+				expect(reveal.length).toBeGreaterThan(0);
+				expect(Math.max(...reveal), 'reveal').toBe(revealMs);
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				await pending;
+			}
+		);
+	});
+
 	describe('the room underneath', () => {
 		const app = () => document.getElementById('app')!;
 		const mountApp = () => {
