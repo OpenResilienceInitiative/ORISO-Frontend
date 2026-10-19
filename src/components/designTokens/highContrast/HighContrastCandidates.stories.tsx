@@ -42,7 +42,7 @@ const meta = {
 					'',
 					'Each column renders the **real** chat bubble, buttons, session row and input inside a wrapper that carries one token map. Standard vs. A · Tinted AAA vs. B · Graphite vs. C · Maximum, for a red and a blue tenant colour, plus a light yellow stress test. Ratios are WCAG 2.2: text 4.5:1 (AA) / 7:1 (AAA target), UI parts and icons 3:1.',
 					'',
-					'**Where a token swap does not reach** (identical in every column, listed in the table): the button focus ring is hard-coded `#199fff` (2.7:1 on the standard page surface, 2.82:1 on white), the disabled button is a hard-coded `rgba` pair, the session-row name (`#4f5864`) and preview (`#1e1e1e`) and the sender name under an own message (`rgba(0, 0, 0, 0.6)`, about 5.7:1) are literals, and `--m3-secondary-container` is used both as a chip fill and as a text colour. Wiring a chosen candidate has to move those onto tokens first.'
+					'**Where a token swap does not reach** (identical in every column, listed in the table): the button focus ring is hard-coded `#199fff` (2.7:1 on the standard page surface, 2.82:1 on white), the disabled button is a hard-coded `rgba` pair, the session-row name (`#4f5864`) and preview (`#1e1e1e`) and the sender name under an own message (`rgba(0, 0, 0, 0.6)`, about 5.7:1) are literals, and `--m3-secondary-container` is used both as a chip fill and as a text colour. Wiring a chosen candidate has to move those onto tokens first. The keyboard halo of the active session row is the exception that is already measured as rendered: it reads `--oriso-session-focus-ring` (set by the candidates, falling back to the own-bubble tint, about 1.05:1, in the standard palette).'
 				].join('\n')
 			}
 		}

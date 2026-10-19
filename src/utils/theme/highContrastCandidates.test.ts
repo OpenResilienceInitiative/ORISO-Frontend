@@ -89,8 +89,12 @@ describe('computeHighContrastTokens', () => {
 				primary: SEEDS.blue
 			});
 
+			// Every standard token, plus the one the candidates add.
 			expect(Object.keys(tokens).sort()).toEqual(
-				Object.keys(standard.tokens).sort()
+				[
+					...Object.keys(standard.tokens),
+					'--oriso-session-focus-ring'
+				].sort()
 			);
 		}
 	});
@@ -127,19 +131,62 @@ describe('evaluateContrastPairs', () => {
 		expect(bypasses).toEqual([false, false]);
 	});
 
-	it('lists the session-row keyboard halo with the tokens it is drawn with', () => {
+	it('measures the session-row halo with the token the stylesheet reads', () => {
+		const tokens = {
+			...computeOrisoPalette({ primary: SEEDS.red }, 'light').tokens,
+			'--m3-primary-fixed': '#eeeeee',
+			'--m3-surface-container-high': '#ffffff',
+			'--oriso-session-focus-ring': '#000000'
+		};
+		const halo = evaluateContrastPairs(tokens).find(
+			({ pair }) => pair.id === 'row-focus-halo'
+		);
+		// sessionsListItem.styles.scss: $session-focus-ring is
+		// --oriso-session-focus-ring, falling back to --m3-primary-fixed, drawn
+		// on the --m3-surface-container-high list surface.
+		expect(halo?.pair.foreground).toBe('#000000');
+		expect(halo?.pair.background).toBe('#ffffff');
+		expect(halo?.pair.enforced).toBe(true);
+		expect(halo?.rating.ratio).toBeCloseTo(21, 0);
+	});
+
+	it('falls back to --m3-primary-fixed for the halo when no focus-ring token is set (standard palette)', () => {
 		const tokens = {
 			...computeOrisoPalette({ primary: SEEDS.red }, 'light').tokens,
 			'--m3-primary-fixed': '#000000',
 			'--m3-surface-container-high': '#ffffff'
 		};
+		delete (tokens as Record<string, string>)['--oriso-session-focus-ring'];
 		const halo = evaluateContrastPairs(tokens).find(
 			({ pair }) => pair.id === 'row-focus-halo'
 		);
-		// sessionsListItem.styles.scss: $session-focus-ring is --m3-primary-fixed,
-		// on the --m3-surface-container-high list surface.
-		expect(halo?.pair.enforced).toBe(false);
+		expect(halo?.pair.foreground).toBe('#000000');
 		expect(halo?.rating.ratio).toBeCloseTo(21, 0);
+	});
+
+	it('gives every candidate a halo of at least 3:1 on the list surface', () => {
+		for (const candidate of HIGH_CONTRAST_CANDIDATES) {
+			for (const seed of Object.values(SEEDS)) {
+				const tokens = computeHighContrastTokens(candidate.id, {
+					primary: seed
+				});
+				const halo = evaluateContrastPairs(tokens).find(
+					({ pair }) => pair.id === 'row-focus-halo'
+				);
+				expect(halo?.rating.ratio).toBeGreaterThanOrEqual(UI_MINIMUM);
+			}
+		}
+	});
+
+	it('shows the halo of the standard palette below 3:1 (the finding)', () => {
+		const tokens = computeOrisoPalette(
+			{ primary: SEEDS.red },
+			'light'
+		).tokens;
+		const halo = evaluateContrastPairs(tokens).find(
+			({ pair }) => pair.id === 'row-focus-halo'
+		);
+		expect(halo?.rating.ratio).toBeLessThan(UI_MINIMUM);
 	});
 
 	it('measures the selected topic tag with the shared active-tag tokens', () => {

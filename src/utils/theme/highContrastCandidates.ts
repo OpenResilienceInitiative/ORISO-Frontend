@@ -318,6 +318,10 @@ export const computeHighContrastTokens = (
 	);
 	tokens['--oriso-primary-text-hover'] = brandTextHover;
 	tokens['--m3-primary-outline'] = focusRing;
+	// sessionsListItem.styles.scss `$session-focus-ring`: the keyboard halo of
+	// the active row. Without this token it falls back to --m3-primary-fixed
+	// (the own-bubble tint), which is not a focus indicator.
+	tokens['--oriso-session-focus-ring'] = focusRing;
 
 	// Topic tag: resting = own-bubble tint with ink, emphasised = brand fill.
 	tokens['--oriso-topic-tag-bg'] = own;
@@ -633,12 +637,16 @@ export const evaluateContrastPairs = (
 		{
 			id: 'row-focus-halo',
 			group: 'Focus',
-			label: 'Session row focus halo (--m3-primary-fixed)',
+			label: 'Session row focus halo',
 			kind: 'ui',
-			foreground: token('--m3-primary-fixed'),
+			// --oriso-session-focus-ring is unset in the standard palette, where
+			// the stylesheet falls back to the own-bubble tint (--m3-primary-fixed).
+			foreground:
+				tokens['--oriso-session-focus-ring'] ??
+				token('--m3-primary-fixed'),
 			background: incoming,
-			enforced: false,
-			note: 'sessionsListItem.styles.scss draws the keyboard halo of the active row with $session-focus-ring (--m3-primary-fixed) on the --m3-surface-container-high list surface, not with --m3-primary-outline. It misses 3:1 in every column; production wiring should point it at --m3-primary-outline.'
+			enforced: true,
+			note: 'sessionsListItem.styles.scss draws the keyboard halo of the active row as a 3px box-shadow of $session-focus-ring: --oriso-session-focus-ring, else --m3-primary-fixed (the own-bubble tint, about 1.05:1 in the standard palette), on the --m3-surface-container-high list surface. The candidates set the new token to their focus-ring colour.'
 		},
 		{
 			id: 'row-selected-edge',
