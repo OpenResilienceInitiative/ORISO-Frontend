@@ -9,6 +9,7 @@ import {
 import { useKeyboardInset } from '../../utils/useKeyboardInset';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { ClosingFocal } from '../transition/closing/closingFocal';
+import { ClosingSwapResult } from '../transition/closing/playClosingAnimation';
 import { useRegistrationCompletionContent } from '../registration/consentCompletion/RegistrationCompletionContext';
 
 export interface RegistrationFooterAction {
@@ -18,7 +19,7 @@ export interface RegistrationFooterAction {
 	 * With `closing`, a promise it returns keeps the screen covered until it
 	 * settles (the group room saves the consent, then joins).
 	 */
-	onClick?: (event: React.MouseEvent<HTMLElement>) => void | Promise<unknown>;
+	onClick?: (event: React.MouseEvent<HTMLElement>) => ClosingSwapResult;
 	/**
 	 * Asked before the closing animation starts; `false` keeps the person where
 	 * they are. Only meaningful together with `closing`.

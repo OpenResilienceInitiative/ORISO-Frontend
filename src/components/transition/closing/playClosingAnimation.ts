@@ -5,6 +5,14 @@ import { ClosingVariant } from './closingVariants';
 
 export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
 
+/**
+ * What a room's swap hands back to the animation. `false`, alone or as the
+ * value of the promise, says the person stays: the entry was refused or failed,
+ * so there is no destination to look for and the room is given back at once.
+ * Anything else means the person is on the way to the destination.
+ */
+export type ClosingSwapResult = void | boolean | Promise<unknown>;
+
 export interface PlayClosingAnimationOptions {
 	variant: ClosingVariant;
 	/** Where the animation ends. The destination marks it, see `closingFocal`. */
@@ -14,9 +22,10 @@ export interface PlayClosingAnimationOptions {
 	 * here. It runs exactly once, also when the animation cannot play at all.
 	 * A swap that takes time (the live-chat room saves its consent and then
 	 * replaces the whole page) returns a promise: the screen stays covered until
-	 * it settles, but never longer than `closing.capMs`.
+	 * it settles, but never longer than `closing.capMs`. `false` (or a promise
+	 * of it) says the person stays, see `ClosingSwapResult`.
 	 */
-	onCovered: () => void | Promise<unknown>;
+	onCovered: () => ClosingSwapResult;
 	/** The person asked for less motion: the room is swapped at once. */
 	reducedMotion?: boolean;
 	/** Where the press happened; the circle opens from here. */
@@ -441,21 +450,20 @@ export const playClosingAnimation = async (
 		if (phase === 'reveal') root.style.pointerEvents = 'none';
 	};
 
-	const plan = PLANS[options.variant]({
-		doc,
-		root,
-		width,
-		height,
-		origin: options.origin ?? { x: width / 2, y: height * 0.82 }
-	});
+	const origin = options.origin ?? { x: width / 2, y: height * 0.82 };
+	const plan = PLANS[options.variant]({ doc, root, width, height, origin });
 
 	let over = false;
 	const sequence = async () => {
 		doc.body.appendChild(root);
 		await settle(plan.cover());
 		setPhase('covered');
-		await swap();
-		const focal = await resolveFocalPoint(doc, options.focal, () => over);
+		const stays = (await swap()) === false;
+		// Nothing took the person on, so the room is still there: open onto
+		// the button that was pressed instead of waiting for a destination.
+		const focal: FocalPoint = stays
+			? { ...origin, element: null }
+			: await resolveFocalPoint(doc, options.focal, () => over);
 		// The cap won while it waited: nobody is looking at these layers.
 		if (over) return;
 		setPhase('reveal');

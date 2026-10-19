@@ -4,6 +4,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { ClosingFocal } from '../../transition/closing/closingFocal';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import { useClosingAnimation } from '../../transition/closing/useClosingAnimation';
 import {
 	GATE_IS_OPEN,
@@ -17,11 +18,11 @@ export interface HandoverGateButtonProps {
 	/**
 	 * What entering does. With `closing`, it runs once the screen is covered,
 	 * and a promise it returns keeps the screen covered until it settles (the
-	 * live-chat room saves its consent, then replaces the whole page).
+	 * live-chat room saves its consent, then replaces the whole page). `false`,
+	 * or a promise of it, says the entry was refused or failed and the person
+	 * stays, so the room is given back without waiting for a destination.
 	 */
-	onEnter?: (
-		event: React.MouseEvent<HTMLButtonElement>
-	) => void | Promise<unknown>;
+	onEnter?: (event: React.MouseEvent<HTMLButtonElement>) => ClosingSwapResult;
 	/** Registration completion stays owned by its containing form. */
 	type?: 'button' | 'submit';
 	disabled?: boolean;
@@ -131,7 +132,7 @@ export const HandoverGateButton = ({
 				const { beforeEnter: stillAgrees, onEnter: enter } =
 					room.current;
 				if (stillAgrees && !stillAgrees()) {
-					return;
+					return false;
 				}
 				return enter?.(event);
 			}

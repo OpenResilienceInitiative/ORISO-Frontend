@@ -228,6 +228,16 @@ describe('GroupEntryRoom', () => {
 		expect(navigate).toHaveBeenCalledTimes(1);
 	});
 
+	it('tells the room the person stays when the join fails, so the closing animation does not wait for a chat', async () => {
+		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(new Error('full'));
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+
+		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
+		expect(navigate).not.toHaveBeenCalled();
+	});
+
 	it('says so when the chat is gone', async () => {
 		sessionState.item = null;
 		renderRoom();

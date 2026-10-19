@@ -208,6 +208,49 @@ describe('playClosingAnimation', () => {
 		expect(document.querySelector(ROOT)).toBeNull();
 	});
 
+	/**
+	 * A swap that was refused or failed leaves the person where they are, so
+	 * there is no destination to look for: waiting for one would keep the
+	 * screen red for the whole focal wait, with the pointer blocked.
+	 */
+	describe.each([
+		['a promise of false', () => Promise.resolve(false)],
+		['false', () => false as const]
+	])('when the room says the person stays (%s)', (_name, onCovered) => {
+		it('does not wait for a destination and gives the room back quickly', async () => {
+			installAnimate('at once');
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered
+			});
+			await vi.advanceTimersByTimeAsync(300);
+
+			const result = await pending;
+			expect(result.played).toBe(true);
+			expect(document.querySelector(ROOT)).toBeNull();
+		});
+	});
+
+	it('still waits for the destination when the swap says nothing about it', async () => {
+		installAnimate('at once');
+		const pending = playClosingAnimation({
+			variant: 'curtain',
+			focal: 'messageField',
+			onCovered: () => Promise.resolve()
+		});
+		let over = false;
+		void pending.then(() => {
+			over = true;
+		});
+		await vi.advanceTimersByTimeAsync(300);
+		expect(over, 'looking for the message field').toBe(false);
+		await vi.advanceTimersByTimeAsync(
+			transitionMotion.closing.focalWaitMs + 200
+		);
+		expect((await pending).played).toBe(true);
+	});
+
 	it('removes the layers and still swaps once when an animation never reports back', async () => {
 		installAnimate('never');
 		const onCovered = vi.fn();

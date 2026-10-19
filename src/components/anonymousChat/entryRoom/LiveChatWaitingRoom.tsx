@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import {
 	HandoverCarousel,
 	HandoverStep
@@ -42,7 +43,7 @@ export interface LiveChatWaitingRoomProps {
 	 * Start the chat. A promise it returns keeps the closing animation's cover
 	 * on until the page is replaced (or the start failed).
 	 */
-	onAccept: () => void | Promise<unknown>;
+	onAccept: () => ClosingSwapResult;
 	/** The way out: finish the enquiry and delete the access. */
 	onLeave: () => Promise<void> | void;
 	/** Written alternative — the registration. */

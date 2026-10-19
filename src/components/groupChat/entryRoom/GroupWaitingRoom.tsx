@@ -14,6 +14,7 @@ import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { GroupLegalMenu } from './GroupLegalMenu';
 import { useGroupConsent } from '../consent/useGroupConsent';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import {
 	useWaitingRoomConsent,
 	WaitingRoomConsentPanel
@@ -42,7 +43,7 @@ export interface GroupWaitingRoomProps {
 	 * Join the group. The promise it returns keeps the closing animation's
 	 * cover on until the request has settled and the chat has opened.
 	 */
-	onJoin: () => void | Promise<unknown>;
+	onJoin: () => ClosingSwapResult;
 	joinBusy?: boolean;
 	/** The group's next dates, soonest first — shown behind "Mehr erfahren". */
 	upcomingDates?: Date[];
@@ -118,14 +119,17 @@ export const GroupWaitingRoom = ({
 	// presses before it would record and join twice.
 	const inFlight = useRef(false);
 	const joinAfterConsent = () => {
-		if (!groupConsent.readable || inFlight.current) return undefined;
+		if (!groupConsent.readable || inFlight.current) return false;
 		inFlight.current = true;
 		setSaving(true);
 		setSaveFailed(false);
 		return groupConsent
 			.record()
 			.then(() => onJoin())
-			.catch(() => setSaveFailed(true))
+			.catch(() => {
+				setSaveFailed(true);
+				return false;
+			})
 			.finally(() => {
 				inFlight.current = false;
 				setSaving(false);

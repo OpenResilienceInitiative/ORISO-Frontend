@@ -185,9 +185,9 @@ describe('HandoverGateButton closing animation', () => {
 	});
 
 	/**
-	 * The overlay lets every pointer through, so for the 340 ms the screen takes
-	 * to cover, the room can still change under the person's hand: an unticked
-	 * consent box must not be walked past.
+	 * For the 340 ms the screen takes to cover, the room can still change under
+	 * the person's hand (a key press is never stopped by the overlay): an
+	 * unticked consent box must not be walked past.
 	 */
 	it('asks the room once more when the screen is covered, and stays put if it says no now', async () => {
 		const timeline = controlledPlay();
@@ -205,14 +205,41 @@ describe('HandoverGateButton closing animation', () => {
 		fireEvent.click(gate());
 		expect(play).toHaveBeenCalledTimes(1);
 		agreed = false;
-		await act(async () => timeline.cover());
+		let told: unknown;
+		await act(async () => {
+			told = timeline.cover();
+		});
 		expect(
 			onEnter,
 			'the person took the consent back'
 		).not.toHaveBeenCalled();
+		expect(
+			told,
+			'the animation is told the person stays, so it does not wait for a destination'
+		).toBe(false);
 
 		await act(async () => timeline.finish());
 		expect(gate().getAttribute('data-cy-state')).toBe('ready');
+	});
+
+	it("hands the room's own answer on, so a refused or failed entry can say the person stays", async () => {
+		const timeline = controlledPlay();
+		const onEnter = vi.fn(() => Promise.resolve(false));
+		render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={onEnter}
+			/>
+		);
+		fireEvent.click(gate());
+
+		let told: unknown;
+		await act(async () => {
+			told = timeline.cover();
+		});
+		await expect(told).resolves.toBe(false);
+		await act(async () => timeline.finish());
 	});
 
 	it('asks the room as it is now, not as it was at the press', async () => {
