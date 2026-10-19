@@ -2,10 +2,7 @@ import * as React from 'react';
 import { accountConsentPlay } from '../../../.storybook/consentCompletionStoryPlay';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
-import { AccountData } from '../registration/accountData/AccountData';
 import { clearAccountDataDraft } from '../registration/accountData/accountDataDraft';
-import { RegistrationCompletionProvider } from '../registration/consentCompletion/RegistrationCompletionContext';
-import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
 import {
 	LegalLinksContext,
@@ -15,7 +12,7 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { StageLayout } from '../stageLayout/StageLayout';
+import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
@@ -163,57 +160,28 @@ const GroupEntry = ({
 					setDisabledNextButton
 				}}
 			>
-				<RegistrationCompletionProvider>
-					<Box sx={{ minHeight: '100vh' }}>
-						<AgencySpecificContext.Provider
-							value={{
-								specificAgency: null,
-								setSpecificAgency: () => undefined
-							}}
-						>
-							<StageLayout
-								className="stageLayout--registration"
-								showLegalLinks={true}
-								showLoginLink={true}
-								showRegistrationLink={false}
-								stage={<Stage hasAnimation={false} />}
-								mobileHero="bar"
-							>
-								<Box
-									sx={{
-										width: '100%',
-										minWidth: 0,
-										maxWidth: '100%',
-										px: { xs: 2.5, sm: 5 },
-										pt: { xs: 3, sm: 4 },
-										pb: { xs: '128px', sm: '136px' }
-									}}
-								>
-									<AccountData
-										onChange={() => undefined}
-										entry="link"
-										temporary={temporary}
-									/>
-									<RegistrationFooter
-										secondary={{
-											label: temporary
-												? 'Konto anlegen'
-												: 'Ohne Konto beitreten',
-											onClick: () =>
-												setTemporary((v) => !v)
-										}}
-										primary={{
-											label: temporary
-												? 'Der Gruppe beitreten'
-												: 'Registrieren',
-											disabled: disabledNextButton
-										}}
-									/>
-								</Box>
-							</StageLayout>
-						</AgencySpecificContext.Provider>
-					</Box>
-				</RegistrationCompletionProvider>
+				<Box sx={{ minHeight: '100vh' }}>
+					<AgencySpecificContext.Provider
+						value={{
+							specificAgency: null,
+							setSpecificAgency: () => undefined
+						}}
+					>
+						{/* The real entry, not a copy of it (#1689). */}
+						<GroupInviteEntry
+							stage={<Stage hasAnimation={false} />}
+							gcid="15"
+							aid={String(agency.id)}
+							temporary={temporary}
+							onToggleTemporary={() => setTemporary((v) => !v)}
+							onChange={() => undefined}
+							onJoin={() => undefined}
+							joinDisabled={disabledNextButton}
+							busy={false}
+							agencyName={agency.name}
+						/>
+					</AgencySpecificContext.Provider>
+				</Box>
 			</RegistrationContext.Provider>
 		</LegalLinksContext.Provider>
 	);

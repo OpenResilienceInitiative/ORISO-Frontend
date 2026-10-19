@@ -904,6 +904,7 @@ export const Registration = () => {
 				onJoin={onRegisterClick}
 				joinDisabled={Boolean(disabledNextButton) || isRegistering}
 				busy={isRegistering}
+				agencyName={urlParamsAgency?.name}
 			/>
 		);
 	}

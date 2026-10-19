@@ -9,6 +9,7 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
+import { GroupHeading } from './GroupHeading';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -131,50 +132,13 @@ export const GroupWaitingRoom = ({
 	const phone = useMediaQuery('(max-width:599px)');
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
-	/*
-	 * Topic and agency are two lines, never one joined sentence: both come
-	 * from the API and an em dash glued between them reads as part of the
-	 * agency's name the moment one of the two is missing or already carries
-	 * punctuation (Frank, 2026-09-07: "diese Bindestriche musst du dann hart
-	 * reincoden … da werden ja Daten dynamisch geladen").
-	 *
-	 * The line height is the tight one: at 11 and 14 px the inherited 24 px
-	 * leading spends 48 px on two short lines, which is the "so viel Space
-	 * für Überschriften" Frank saw on the phone.
-	 */
+	// Same heading as the invitation's account step (#1689).
 	const groupHeading = (
-		<Box
-			sx={{
-				textAlign: embedded ? 'center' : { xs: 'center', lg: 'left' }
-			}}
-		>
-			{topicName && (
-				<Typography
-					sx={{
-						fontSize: 11,
-						lineHeight: 1.35,
-						fontWeight: 600,
-						letterSpacing: '.12em',
-						textTransform: 'uppercase',
-						color: registrationMd3.onSurfaceVariant
-					}}
-				>
-					{topicName}
-				</Typography>
-			)}
-			{agencyName && (
-				<Typography
-					sx={{
-						fontSize: 14,
-						lineHeight: 1.35,
-						fontWeight: 600,
-						color: registrationMd3.onSurface
-					}}
-				>
-					{agencyName}
-				</Typography>
-			)}
-		</Box>
+		<GroupHeading
+			topicName={topicName}
+			agencyName={agencyName}
+			textAlign={embedded ? 'center' : { xs: 'center', lg: 'left' }}
+		/>
 	);
 
 	const joinLabel = tr('join', 'Beitreten');
