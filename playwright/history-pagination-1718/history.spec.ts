@@ -493,10 +493,19 @@ test('cold chat mount waits for initial Matrix sync before deciding history is e
 	expect(errors).toEqual([]);
 });
 
-for (const navigateToNewest of [false, true]) {
-	test(`delayed older history preserves ${navigateToNewest ? 'the reader’s new position at the newest message' : 'a stationary reading anchor'}`, async ({
-		page
-	}) => {
+for (const { navigateToNewest, composerResize, title } of [
+	{ navigateToNewest: false, title: 'a stationary reading anchor' },
+	{
+		navigateToNewest: true,
+		title: 'the reader’s new position at the newest message'
+	},
+	{
+		navigateToNewest: true,
+		composerResize: true,
+		title: 'the reader’s new position after the composer resized'
+	}
+]) {
+	test(`delayed older history preserves ${title}`, async ({ page }) => {
 		let releaseHistory!: () => void;
 		const firstHistoryGate = new Promise<void>((resolve) => {
 			releaseHistory = resolve;
@@ -520,6 +529,22 @@ for (const navigateToNewest of [false, true]) {
 			await scroll.hover();
 			await page.mouse.wheel(0, -100000);
 			await expect.poll(() => historyPages.length).toBe(1);
+			// The composer republishes its measured height (first measure, an
+			// info bar, auto-grow) while the page is in flight. The bottom
+			// reservation shrinks, so the timeline height changes before the
+			// reader moves — the race CI hit when the first measure was late.
+			if (composerResize)
+				await scroll.evaluate((element) => {
+					const before = element.scrollHeight;
+					element.style.setProperty(
+						'--composer-dock-height',
+						'120px'
+					);
+					if (element.scrollHeight === before)
+						throw new Error(
+							'composer resize did not change height'
+						);
+				});
 			if (navigateToNewest) await page.mouse.wheel(0, 100000);
 			const chosenMessage = page.locator(
 				`[data-message-id="$history-${navigateToNewest ? 140 : 121}"]`

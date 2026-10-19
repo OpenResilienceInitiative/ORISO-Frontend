@@ -12,11 +12,16 @@ interface PendingPage {
 	generation: number;
 	anchorId?: string;
 	anchorTop?: number;
+	oldestId?: string;
 	top: number;
 	height: number;
 	completed: boolean;
 	hasMore: boolean;
 }
+
+const oldestRenderedId = (container: HTMLElement) =>
+	container.querySelector<HTMLElement>('[data-message-id]')?.dataset
+		.messageId;
 
 const captureReadingPosition = (container: HTMLElement) => {
 	const visibleTop = container.getBoundingClientRect().top;
@@ -25,6 +30,7 @@ const captureReadingPosition = (container: HTMLElement) => {
 	).find((message) => message.getBoundingClientRect().bottom > visibleTop);
 	return {
 		anchorId: anchor?.dataset.messageId,
+		oldestId: oldestRenderedId(container),
 		anchorTop: anchor?.getBoundingClientRect().top,
 		top: container.scrollTop,
 		height: container.scrollHeight
@@ -107,11 +113,12 @@ export const useChatHistoryPagination = (
 		const trackNavigation = () => {
 			if (
 				pending.current !== page ||
-				container.scrollHeight !== page.height
+				oldestRenderedId(container) !== page.oldestId
 			)
 				return;
-			// Rebase while the original DOM is still present. A scroll caused by
+			// Rebase while the older page is not rendered yet. A scroll caused by
 			// native anchoring after prepend must not replace this chosen position.
+			// Not keyed on height: a composer resize changes it before the page lands.
 			Object.assign(page, captureReadingPosition(container));
 		};
 		pending.current = page;
