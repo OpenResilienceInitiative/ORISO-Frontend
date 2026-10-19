@@ -436,11 +436,14 @@ const shutRoomBehind = (doc: Document, root: HTMLElement) => {
 		// button that had it, or to the field the person arrives in; the room
 		// that arrived while the page was shut could not take it.
 		if (!nothingFocused(doc)) return;
-		const target = pressed?.isConnected
-			? pressed
-			: landing?.matches(FOCUSABLE)
-				? landing
-				: landing?.querySelector<HTMLElement>(FOCUSABLE);
+		// A button that is still disabled (the gate is shut until the
+		// animation is over) ignores focus: that one sees to itself.
+		const target =
+			pressed?.isConnected && !pressed.matches(':disabled')
+				? pressed
+				: landing?.matches(FOCUSABLE)
+					? landing
+					: landing?.querySelector<HTMLElement>(FOCUSABLE);
 		target?.focus({ preventScroll: true });
 	};
 };

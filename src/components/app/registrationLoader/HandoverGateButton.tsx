@@ -105,6 +105,25 @@ export const HandoverGateButton = ({
 	React.useEffect(() => {
 		room.current = { beforeEnter, onEnter };
 	}, [beforeEnter, onEnter]);
+	/* The button is shut while the screen is covered, and a browser ignores
+	   focus on a shut button: whoever pressed it with the keyboard gets it back
+	   here, once it is open again and nobody else has taken the focus. */
+	const keyboardOn = React.useRef<HTMLButtonElement | null>(null);
+	React.useEffect(() => {
+		const pressed = keyboardOn.current;
+		if (closingBusy || !pressed) {
+			return;
+		}
+		keyboardOn.current = null;
+		const active = document.activeElement;
+		if (
+			pressed.isConnected &&
+			!pressed.disabled &&
+			(!active || active === document.body)
+		) {
+			pressed.focus({ preventScroll: true });
+		}
+	}, [closingBusy]);
 	const shownState: HandoverGateState = closingBusy ? 'entering' : state;
 	const open = GATE_IS_OPEN[shownState] && !disabled;
 	const statusLabel = status ?? t(GATE_STATUS_KEY[shownState]);
@@ -121,6 +140,10 @@ export const HandoverGateButton = ({
 			return;
 		}
 		setClosingBusy(true);
+		keyboardOn.current =
+			document.activeElement === event.currentTarget
+				? event.currentTarget
+				: null;
 		const rect = event.currentTarget.getBoundingClientRect();
 		void play({
 			focal: closing,
