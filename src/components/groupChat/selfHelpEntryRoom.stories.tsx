@@ -241,7 +241,15 @@ export const EntryScreenWithAccountMobile: StoryObj = {
    assignment. Here it gets fixtures instead of the chat; nothing else differs.
    --------------------------------------------------------------------------- */
 
-const Room = ({ start = IN_THREE_DAYS }: { start?: Date }) => (
+/* `active` is the moderator having opened the group, not the clock: a
+   start that has passed still waits for her (#1787). */
+const Room = ({
+	start = IN_THREE_DAYS,
+	active = false
+}: {
+	start?: Date;
+	active?: boolean;
+}) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
 			value={{
@@ -257,7 +265,7 @@ const Room = ({ start = IN_THREE_DAYS }: { start?: Date }) => (
 				eventId={15}
 				welcomeText={WELCOME}
 				rules={RULES}
-				active={start.getTime() <= NOW}
+				active={active}
 				onJoin={() => undefined}
 				nowMs={NOW}
 				showLoginLink
@@ -282,13 +290,38 @@ export const WaitingArea: StoryObj = {
 
 export const WaitingAreaOverdue: StoryObj = {
 	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
-	name: '2 — Läuft schon',
+	name: '2 — Termin vorbei, Moderation fehlt noch',
 	render: () => <Room start={OVERDUE} />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der Termin ist vorbei: „Beitreten" im Fuß ist jetzt frei, sonst ändert sich an der Leiste nichts.'
+				story: 'Der Termin ist vorbei, die Moderation hat die Gruppe noch nicht geöffnet: die Uhr zählt hoch, „Die Gruppe beginnt gleich.", „Beitreten" bleibt gesperrt.'
+			}
+		}
+	}
+};
+
+/** #1787: the moderator has opened the group — no clock counting up. */
+export const WaitingAreaOpen: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByText('Die Gruppe hat begonnen.')
+		).toBeVisible();
+		await expect(
+			canvas.queryByText('Die Gruppe beginnt gleich.')
+		).toBeNull();
+		await expect(canvas.getByTestId('group-entry-join')).toBeEnabled();
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '2c — Gruppe läuft',
+	render: () => <Room start={OVERDUE} active />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Die Moderation hat die Gruppe geöffnet: statt der hochzählenden Uhr „Die Gruppe hat begonnen.", „Beitreten" ist frei.'
 			}
 		}
 	}
@@ -316,7 +349,7 @@ export const WaitingAreaConsent: StoryObj = {
 		await expectWaitingRoomLayout(canvasElement);
 	},
 	name: '2b — Beitreten: Einwilligung',
-	render: () => <Room start={OVERDUE} />,
+	render: () => <Room start={OVERDUE} active />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {

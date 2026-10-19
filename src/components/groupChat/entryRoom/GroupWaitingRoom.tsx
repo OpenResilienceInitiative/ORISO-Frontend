@@ -158,6 +158,9 @@ export const GroupWaitingRoom = ({
 	);
 
 	const moderator = audience === 'moderator';
+	/* The clock is for waiting. Once the group runs it would count up a
+	   start that already happened, so the room says it has begun (#1787). */
+	const showClock = Boolean(plannedStart) && !active;
 	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
 	const calendarLabel = t(
 		'groupChat.calendar.add',
@@ -210,7 +213,7 @@ export const GroupWaitingRoom = ({
 				>
 					{groupHeading}
 				</Box>
-				{plannedStart ? (
+				{showClock ? (
 					/* The clock is a picture, not a text line: on a
 			   phone it may use half of the column's inset,
 			   which is one mini-clock step of extra diameter
@@ -308,7 +311,7 @@ export const GroupWaitingRoom = ({
 					gap: 1.5
 				}}
 			>
-				{plannedStart ? (
+				{showClock ? (
 					<Box
 						component="label"
 						sx={{
