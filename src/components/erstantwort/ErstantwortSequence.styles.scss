@@ -133,14 +133,60 @@
 	padding: 12px 0;
 
 	summary {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		cursor: pointer;
 		font-weight: 600;
 		line-height: 1.4;
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
 	}
 
 	p {
 		margin-top: 12px;
 	}
+}
+
+.erstantwort__faq:last-child {
+	border-bottom: 1px solid var(--md-sys-color-outline-variant, #ddd);
+}
+
+.erstantwort__faqLabel {
+	flex: 1;
+	min-width: 0;
+}
+
+.erstantwort__faqChevron {
+	flex: none;
+	transition: transform 0.2s ease;
+
+	.erstantwort__faq[open] & {
+		transform: rotate(180deg);
+	}
+}
+
+/* Emergency numbers: the last question, collapsed, red text and a phone icon
+   (not colour alone). The divider lines stay neutral — no red frame. */
+.erstantwort__faq--emergency summary {
+	color: var(--m3-primary, #a5000a);
+}
+
+.erstantwort__faq .erstantwort__faqIcon {
+	flex: none;
+	font-size: 20px;
+}
+
+/* One complete message: greeting, questions and goodbye in one bubble. */
+.erstantwort__bubble--message {
+	gap: 12px;
+}
+
+.erstantwort__questions {
+	margin-top: 4px;
 }
 
 /* Structured Carimat rows use the same 60px avatar rail and overlap as the
