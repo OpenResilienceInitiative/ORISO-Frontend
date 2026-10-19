@@ -16,7 +16,7 @@ import { GroupHeading } from './GroupHeading';
 import { usePanelHistory } from './EntryRoomPanel';
 import { GroupRunningNow, useIntlLocale } from './GroupRunningNow';
 import { GroupRulesIntro } from './GroupRulesIntro';
-import type { GroupChatRepeat } from '../groupChatCalendar';
+import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -50,8 +50,11 @@ export interface GroupWaitingRoomProps {
 	joinBusy?: boolean;
 	/** The group's next dates, soonest first — shown behind "Alle Termine". */
 	upcomingDates?: Date[];
-	/** How the group repeats: the rhythm under the headline, the series export. */
-	repeat?: GroupChatRepeat;
+	/**
+	 * How the group repeats and how many dates are left from its start on:
+	 * the rhythm under the headline, the series export.
+	 */
+	series?: GroupChatSeries;
 	/** A fixed "now" for stories and tests; the app leaves it unset. */
 	nowMs?: number;
 	/** Where "Einloggen" in the header goes. Off for someone already in. */
@@ -102,7 +105,7 @@ export const GroupWaitingRoom = ({
 	onJoin,
 	joinBusy = false,
 	upcomingDates,
-	repeat,
+	series,
 	nowMs,
 	showLoginLink = false,
 	embedded = false,
@@ -132,6 +135,14 @@ export const GroupWaitingRoom = ({
 	const datesAhead = (
 		upcomingDates ?? (plannedStart ? [plannedStart] : [])
 	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
+	/* The series from the first date still ahead: the dates left behind,
+	   the running one among them, no longer count. */
+	const seriesAhead = series && {
+		...series,
+		count:
+			series.count -
+			((upcomingDates?.length ?? datesAhead.length) - datesAhead.length)
+	};
 	const canAddThis = Boolean(plannedStart) && !started;
 	const hasMoreDates = datesAhead.length > (canAddThis ? 1 : 0);
 	/* The room's own width, not the window's: in the chat card a desktop
@@ -255,7 +266,7 @@ export const GroupWaitingRoom = ({
 			<GroupRhythm
 				start={plannedStart}
 				durationMinutes={durationMinutes}
-				repeat={repeat}
+				repeat={series?.repeat}
 				locale={locale}
 			/>
 		) : undefined;
@@ -287,7 +298,7 @@ export const GroupWaitingRoom = ({
 				dates={datesAhead}
 				durationMinutes={durationMinutes}
 				eventId={eventId}
-				repeat={repeat}
+				series={seriesAhead}
 			/>
 		) : showRulesIntro ? (
 			<Box
@@ -730,7 +741,10 @@ const INLINE_MIN_WIDTH = 640;
 const RHYTHM: Record<GroupChatRepeat, string> = {
 	DAILY: 'jeden Tag',
 	WEEKLY: 'jede Woche',
-	MONTHLY: 'jeden Monat'
+	BIWEEKLY: 'alle zwei Wochen',
+	MONTHLY: 'jeden Monat',
+	QUARTERLY: 'jedes Quartal',
+	YEARLY: 'jedes Jahr'
 };
 
 /** The calendar row above "Beitreten" on a phone: 44 px pills, 16 px gap. */

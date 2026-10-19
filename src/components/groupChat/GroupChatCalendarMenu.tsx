@@ -25,15 +25,15 @@ import { useTranslation } from 'react-i18next';
 import {
 	buildNeutralGroupChatCalendar,
 	downloadNeutralGroupChatIcs,
-	type GroupChatRepeat
+	type GroupChatSeries
 } from './groupChatCalendar';
 
 interface GroupChatCalendarMenuProps {
 	start: Date;
 	durationMinutes: number;
 	eventId: string | number;
-	/** All dates from `start` on as one series. */
-	repeat?: GroupChatRepeat;
+	/** The dates left of the series from `start` on, instead of this one. */
+	series?: GroupChatSeries;
 }
 
 interface GroupChatCalendarPopoverProps extends GroupChatCalendarMenuProps {
@@ -47,7 +47,7 @@ export const GroupChatCalendarPopover = ({
 	start,
 	durationMinutes,
 	eventId,
-	repeat,
+	series,
 	anchorEl: anchor,
 	onClose: closeMenu,
 	triggerId,
@@ -108,9 +108,9 @@ export const GroupChatCalendarPopover = ({
 				title,
 				defaultTitle,
 				eventId,
-				repeat
+				series
 			}),
-		[defaultTitle, durationMinutes, eventId, repeat, start, title]
+		[defaultTitle, durationMinutes, eventId, series, start, title]
 	);
 
 	return (
@@ -171,7 +171,7 @@ export const GroupChatCalendarPopover = ({
 				<Box sx={{ px: 1, pb: 1 }}>
 					<Typography variant="body2" color="text.secondary">
 						{translate(
-							repeat
+							series
 								? 'groupChat.calendar.shareHintSeries'
 								: 'groupChat.calendar.shareHint'
 						)}

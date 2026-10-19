@@ -1193,7 +1193,10 @@
 				"repeat": {
 					"DAILY": "Grup her gün aynı saatte buluşur.",
 					"WEEKLY": "Grup her hafta aynı saatte buluşur.",
-					"MONTHLY": "Grup her ay aynı saatte buluşur."
+					"BIWEEKLY": "Grup iki haftada bir aynı saatte buluşur.",
+					"MONTHLY": "Grup her ay aynı saatte buluşur.",
+					"QUARTERLY": "Grup üç ayda bir aynı saatte buluşur.",
+					"YEARLY": "Grup her yıl aynı saatte buluşur."
 				}
 			},
 			"addDate": "Takvime ekle",
@@ -1203,7 +1206,10 @@
 			"rhythm": {
 				"DAILY": "her gün",
 				"WEEKLY": "her hafta",
-				"MONTHLY": "her ay"
+				"BIWEEKLY": "iki haftada bir",
+				"MONTHLY": "her ay",
+				"QUARTERLY": "üç ayda bir",
+				"YEARLY": "her yıl"
 			},
 			"running": {
 				"since": "Devam süresi",

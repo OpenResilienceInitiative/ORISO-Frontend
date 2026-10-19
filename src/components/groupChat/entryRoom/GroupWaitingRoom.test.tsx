@@ -10,6 +10,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { GroupChatSeries } from '../groupChatSeries';
 
 vi.mock('lottie-web', () => ({ default: {} }));
 const apiPatchUserData = vi.fn(() => Promise.resolve());
@@ -334,12 +335,12 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		active = false,
 		nowMs = NOW,
 		upcomingDates = WEEKLY,
-		repeat
+		series
 	}: {
 		active?: boolean;
 		nowMs?: number;
 		upcomingDates?: Date[];
-		repeat?: 'WEEKLY';
+		series?: GroupChatSeries;
 	} = {}) =>
 		render(
 			<GroupWaitingRoom
@@ -351,7 +352,7 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 				onJoin={vi.fn()}
 				nowMs={nowMs}
 				upcomingDates={upcomingDates}
-				repeat={repeat}
+				series={series}
 			/>
 		);
 	const bar = () =>
@@ -509,21 +510,26 @@ describe('GroupWaitingRoom – dates and calendar', () => {
    "Beitreten". */
 describe('GroupWaitingRoom – dates as a series', () => {
 	const START = new Date(NOW + 3 * 24 * 3600e3);
+	const WEEKLY_SERIES: GroupChatSeries = {
+		repeat: 'WEEKLY',
+		count: 6,
+		timeZone: 'Europe/Berlin'
+	};
 	const WEEKLY = [0, 7, 14].map(
 		(d) => new Date(START.getTime() + d * 24 * 3600e3)
 	);
-	const open = (repeat?: 'WEEKLY') => {
+	const open = (series?: GroupChatSeries, nowMs = NOW, active = false) => {
 		render(
 			<GroupWaitingRoom
 				plannedStart={START}
 				durationMinutes={90}
 				eventId={15}
 				rules={[]}
-				active={false}
+				active={active}
 				onJoin={vi.fn()}
-				nowMs={NOW}
+				nowMs={nowMs}
 				upcomingDates={WEEKLY}
-				repeat={repeat}
+				series={series}
 			/>
 		);
 		fireEvent.click(screen.getByTestId('group-entry-dates'));
@@ -532,7 +538,7 @@ describe('GroupWaitingRoom – dates as a series', () => {
 	afterEach(cleanup);
 
 	it('marks the next meeting and offers the whole series', () => {
-		open('WEEKLY');
+		open(WEEKLY_SERIES);
 		const dates = document.querySelectorAll(
 			'[data-cy="group-upcoming-date"]'
 		);
@@ -542,8 +548,20 @@ describe('GroupWaitingRoom – dates as a series', () => {
 		const google = Array.from(document.querySelectorAll('a')).find((a) =>
 			a.href.includes('calendar.google.com')
 		) as HTMLAnchorElement;
+		// Bounded by the six dates the series has left.
 		expect(new URL(google.href).searchParams.get('recur')).toBe(
-			'RRULE:FREQ=WEEKLY'
+			'RRULE:FREQ=WEEKLY;COUNT=6'
+		);
+	});
+
+	it('leaves the running date out of the series it offers', () => {
+		open(WEEKLY_SERIES, START.getTime() + 60e3, true);
+		fireEvent.click(screen.getByTestId('group-upcoming-series'));
+		const google = Array.from(document.querySelectorAll('a')).find((a) =>
+			a.href.includes('calendar.google.com')
+		) as HTMLAnchorElement;
+		expect(new URL(google.href).searchParams.get('recur')).toBe(
+			'RRULE:FREQ=WEEKLY;COUNT=5'
 		);
 	});
 
@@ -562,12 +580,12 @@ describe('GroupWaitingRoom – running group and rules', () => {
 	const renderRunning = ({
 		active = true,
 		nowMs = NOW + (12 * 60 + 47) * 1000,
-		repeat,
+		series,
 		plannedStart = START
 	}: {
 		active?: boolean;
 		nowMs?: number;
-		repeat?: 'WEEKLY';
+		series?: GroupChatSeries;
 		plannedStart?: Date | null;
 	} = {}) =>
 		render(
@@ -581,7 +599,7 @@ describe('GroupWaitingRoom – running group and rules', () => {
 				active={active}
 				onJoin={vi.fn()}
 				nowMs={nowMs}
-				repeat={repeat}
+				series={series}
 			/>
 		);
 
@@ -591,7 +609,7 @@ describe('GroupWaitingRoom – running group and rules', () => {
 		renderRunning({
 			active: false,
 			nowMs: NOW - 3 * 24 * 3600e3,
-			repeat: 'WEEKLY'
+			series: { repeat: 'WEEKLY', count: 6 }
 		});
 		const rhythm = document.querySelector(
 			'[data-cy="group-entry-rhythm"]'

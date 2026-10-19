@@ -1,6 +1,9 @@
-import dayjs from 'dayjs';
 import { getGroupChatPlannedStart } from '../groupChatDate';
-import type { GroupChatRepeat } from '../groupChatCalendar';
+import {
+	getGroupChatOccurrences,
+	isGroupChatRepeat,
+	type GroupChatSeries
+} from '../groupChatSeries';
 
 /**
  * What both places that show the self-help group's waiting room read from the
@@ -14,13 +17,41 @@ interface GroupWaitingRoomChat {
 	startTime?: string;
 	timezone?: string;
 	chatInterval?: string;
+	repeatCount?: number;
+	currentOccurrenceIndex?: number;
 	topic?: string | { name?: string } | null;
 }
 
 /**
+ * The series from the date the chat carries on: how it repeats and how many
+ * dates are left including that one. The chat's start is its current date
+ * (`currentOccurrenceIndex`, from 0), so `repeatCount` minus that index are
+ * left — the UserService's `Chat.nextStart` stops at the same place. Unset
+ * for a one-off group and on a series' last date.
+ */
+export const getGroupSeries = (
+	chat: GroupWaitingRoomChat | undefined | null
+): GroupChatSeries | undefined => {
+	if (!chat || !isGroupChatRepeat(chat.chatInterval)) {
+		return undefined;
+	}
+	const count = (chat.repeatCount ?? 0) - (chat.currentOccurrenceIndex ?? 0);
+	return count > 1
+		? {
+				repeat: chat.chatInterval,
+				count,
+				timeZone: chat.timezone || undefined
+			}
+		: undefined;
+};
+
+/** How many dates the explainer behind "Mehr erfahren" lists at most. */
+const UPCOMING_PREVIEW = 3;
+
+/**
  * The next dates of a repeating group, for the explainer behind "Mehr
  * erfahren" — looked up, never booked (Frank, 2026-09-07). Derived from the
- * start and the interval the chat carries; a one-off group has only its own
+ * start, the interval and the dates left; a one-off group has only its own
  * date, and a group without a date has none.
  */
 export const getGroupUpcomingDates = (
@@ -30,36 +61,14 @@ export const getGroupUpcomingDates = (
 	if (!start) {
 		return undefined;
 	}
-	/* Calendar arithmetic, not fixed milliseconds: a month is not 30 days
-	   (a 31 January start would have shown 2 March), and a day is not
-	   always 24 hours — across the DST change the fixed step moved the
-	   meeting by an hour. */
-	const unit: 'week' | 'day' | 'month' | null =
-		chat?.chatInterval === 'WEEKLY'
-			? 'week'
-			: chat?.chatInterval === 'DAILY'
-				? 'day'
-				: chat?.chatInterval === 'MONTHLY'
-					? 'month'
-					: null;
-	if (!unit) {
-		return [start];
-	}
-	return [0, 1, 2].map((step) => dayjs(start).add(step, unit).toDate());
+	const series = getGroupSeries(chat);
+	return series
+		? getGroupChatOccurrences(start, {
+				...series,
+				count: Math.min(series.count, UPCOMING_PREVIEW)
+			})
+		: [start];
 };
-
-/**
- * How the group repeats, for the rhythm under the clock and the series
- * export; unset for a one-off group.
- */
-export const getGroupRepeat = (
-	chat: GroupWaitingRoomChat | undefined | null
-): GroupChatRepeat | undefined =>
-	chat?.chatInterval === 'WEEKLY' ||
-	chat?.chatInterval === 'DAILY' ||
-	chat?.chatInterval === 'MONTHLY'
-		? chat.chatInterval
-		: undefined;
 
 /**
  * #1499: the group's topic stays out of the waiting room until the client's

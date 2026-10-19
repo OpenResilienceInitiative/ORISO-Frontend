@@ -1193,7 +1193,10 @@
 				"repeat": {
 					"DAILY": "Le groupe se réunit chaque jour à la même heure.",
 					"WEEKLY": "Le groupe se réunit chaque semaine à la même heure.",
-					"MONTHLY": "Le groupe se réunit chaque mois à la même heure."
+					"BIWEEKLY": "Le groupe se réunit toutes les deux semaines à la même heure.",
+					"MONTHLY": "Le groupe se réunit chaque mois à la même heure.",
+					"QUARTERLY": "Le groupe se réunit tous les trimestres à la même heure.",
+					"YEARLY": "Le groupe se réunit tous les ans à la même heure."
 				}
 			},
 			"addDate": "Ajouter au calendrier",
@@ -1203,7 +1206,10 @@
 			"rhythm": {
 				"DAILY": "chaque jour",
 				"WEEKLY": "chaque semaine",
-				"MONTHLY": "chaque mois"
+				"BIWEEKLY": "toutes les deux semaines",
+				"MONTHLY": "chaque mois",
+				"QUARTERLY": "tous les trimestres",
+				"YEARLY": "tous les ans"
 			},
 			"running": {
 				"since": "En cours depuis",

@@ -1188,7 +1188,10 @@
 				"repeat": {
 					"DAILY": "Die Gruppe trifft sich jeden Tag zur selben Zeit.",
 					"WEEKLY": "Die Gruppe trifft sich jede Woche zur selben Zeit.",
-					"MONTHLY": "Die Gruppe trifft sich jeden Monat zur selben Zeit."
+					"BIWEEKLY": "Die Gruppe trifft sich alle zwei Wochen zur selben Zeit.",
+					"MONTHLY": "Die Gruppe trifft sich jeden Monat zur selben Zeit.",
+					"QUARTERLY": "Die Gruppe trifft sich jedes Quartal zur selben Zeit.",
+					"YEARLY": "Die Gruppe trifft sich jedes Jahr zur selben Zeit."
 				}
 			},
 			"addDate": "Termin eintragen",
@@ -1198,7 +1201,10 @@
 			"rhythm": {
 				"DAILY": "jeden Tag",
 				"WEEKLY": "jede Woche",
-				"MONTHLY": "jeden Monat"
+				"BIWEEKLY": "alle zwei Wochen",
+				"MONTHLY": "jeden Monat",
+				"QUARTERLY": "jedes Quartal",
+				"YEARLY": "jedes Jahr"
 			},
 			"running": {
 				"since": "Läuft seit",

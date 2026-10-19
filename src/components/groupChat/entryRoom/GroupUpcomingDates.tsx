@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
-import type { GroupChatRepeat } from '../groupChatCalendar';
+import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { EntryRoomPanel } from './EntryRoomPanel';
 import { useIntlLocale } from './GroupRunningNow';
 
@@ -20,8 +20,11 @@ export interface GroupUpcomingDatesProps {
 	durationMinutes: number;
 	/** The chat id; the calendar event's UID adds the date to it. */
 	eventId: string | number;
-	/** How the group repeats; a repeating group can go in as one series. */
-	repeat?: GroupChatRepeat;
+	/**
+	 * How the group repeats and how many dates are left from `dates[0]` on;
+	 * those can go in all at once.
+	 */
+	series?: GroupChatSeries;
 }
 
 type Open = { anchor: HTMLElement; date: Date; series: boolean };
@@ -38,7 +41,7 @@ export const GroupUpcomingDates = ({
 	dates,
 	durationMinutes,
 	eventId,
-	repeat
+	series
 }: GroupUpcomingDatesProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -66,7 +69,8 @@ export const GroupUpcomingDates = ({
 		[locale]
 	);
 	const [open, setOpen] = useState<Open | null>(null);
-	const series = Boolean(repeat) && dates.length > 0;
+	const repeat = series?.repeat;
+	const canExportSeries = Boolean(series && series.count > 1 && dates.length);
 
 	const describe = (date: Date) => {
 		const end = new Date(date.getTime() + durationMinutes * 60e3);
@@ -314,7 +318,7 @@ export const GroupUpcomingDates = ({
 						</Box>
 					);
 				})}
-				{series && (
+				{canExportSeries && (
 					<Box component="li">
 						<ButtonBase
 							onClick={(event) =>
@@ -379,7 +383,7 @@ export const GroupUpcomingDates = ({
 					start={open.date}
 					durationMinutes={durationMinutes}
 					eventId={eventId}
-					repeat={open.series ? repeat : undefined}
+					series={open.series ? series : undefined}
 				/>
 			)}
 		</EntryRoomPanel>
@@ -389,7 +393,10 @@ export const GroupUpcomingDates = ({
 const REPEAT_SENTENCE: Record<GroupChatRepeat, string> = {
 	DAILY: 'Die Gruppe trifft sich jeden Tag zur selben Zeit.',
 	WEEKLY: 'Die Gruppe trifft sich jede Woche zur selben Zeit.',
-	MONTHLY: 'Die Gruppe trifft sich jeden Monat zur selben Zeit.'
+	BIWEEKLY: 'Die Gruppe trifft sich alle zwei Wochen zur selben Zeit.',
+	MONTHLY: 'Die Gruppe trifft sich jeden Monat zur selben Zeit.',
+	QUARTERLY: 'Die Gruppe trifft sich jedes Quartal zur selben Zeit.',
+	YEARLY: 'Die Gruppe trifft sich jedes Jahr zur selben Zeit.'
 };
 
 const NextMark = () => {

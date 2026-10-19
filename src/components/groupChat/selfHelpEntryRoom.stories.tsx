@@ -275,7 +275,11 @@ const Room = ({
 				onJoin={() => undefined}
 				nowMs={NOW}
 				upcomingDates={weekly(start)}
-				repeat="WEEKLY"
+				series={{
+					repeat: 'WEEKLY',
+					count: 8,
+					timeZone: 'Europe/Berlin'
+				}}
 				showLoginLink
 			/>
 		</AgencySpecificContext.Provider>

@@ -1170,7 +1170,10 @@
 				"repeat": {
 					"DAILY": "The group meets every day at the same time.",
 					"WEEKLY": "The group meets every week at the same time.",
-					"MONTHLY": "The group meets every month at the same time."
+					"BIWEEKLY": "The group meets every two weeks at the same time.",
+					"MONTHLY": "The group meets every month at the same time.",
+					"QUARTERLY": "The group meets every quarter at the same time.",
+					"YEARLY": "The group meets every year at the same time."
 				}
 			},
 			"addDate": "Add to calendar",
@@ -1180,7 +1183,10 @@
 			"rhythm": {
 				"DAILY": "every day",
 				"WEEKLY": "every week",
-				"MONTHLY": "every month"
+				"BIWEEKLY": "every two weeks",
+				"MONTHLY": "every month",
+				"QUARTERLY": "every quarter",
+				"YEARLY": "every year"
 			},
 			"running": {
 				"since": "Running for",
