@@ -1,9 +1,6 @@
 import type { TraegerDpo } from '../../utils/traegerDpo';
 
-export type ClosingAnimationContractValue =
-	| 'CURTAIN'
-	| 'CIRCLE_ZOOM'
-	| 'SLIDE_REVEAL';
+export type ClosingAnimationContractValue = 'CURTAIN' | 'SLIDE_REVEAL';
 
 export interface TenantDataInterface {
 	id: number | null;

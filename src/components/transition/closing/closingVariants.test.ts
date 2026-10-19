@@ -21,7 +21,6 @@ describe('resolveTenantClosingAnimation', () => {
 	it('maps every contract value to its design', () => {
 		const names = {
 			CURTAIN: 'curtain',
-			CIRCLE_ZOOM: 'circleZoom',
 			SLIDE_REVEAL: 'slideReveal'
 		} as const;
 		for (const [value, design] of Object.entries(names)) {
@@ -35,10 +34,18 @@ describe('resolveTenantClosingAnimation', () => {
 	});
 
 	it('reads the desktop choice on desktop and the mobile choice on mobile', () => {
-		const tenant = tenantWith('CIRCLE_ZOOM', 'SLIDE_REVEAL');
-		expect(resolveTenantClosingAnimation(tenant, true)).toBe('circleZoom');
+		const tenant = tenantWith('SLIDE_REVEAL', 'CURTAIN');
+		expect(resolveTenantClosingAnimation(tenant, true)).toBe('slideReveal');
+		expect(resolveTenantClosingAnimation(tenant, false)).toBe('curtain');
+	});
+
+	it('gives a tenant that chose the circle zoom, taken out before release, the default', () => {
+		const tenant = tenantWith('CIRCLE_ZOOM', 'CIRCLE_ZOOM');
+		expect(resolveTenantClosingAnimation(tenant, true)).toBe(
+			DEFAULT_CLOSING_VARIANT
+		);
 		expect(resolveTenantClosingAnimation(tenant, false)).toBe(
-			'slideReveal'
+			DEFAULT_CLOSING_VARIANT
 		);
 	});
 

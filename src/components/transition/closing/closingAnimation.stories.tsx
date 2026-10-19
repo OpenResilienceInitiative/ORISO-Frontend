@@ -48,13 +48,14 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component: [
-					'Three designs, chosen per tenant for desktop and for mobile in the Admin panel:',
+					'Two designs, chosen per tenant for desktop and for mobile in the Admin panel:',
 					'',
-					'1. **Curtain** — two halves close over the right-hand surface, the stage steps in beside them, and they open again onto the message field.',
-					'2. **Circle zoom** — the red grows out of the gate button, then closes into a circle on the focal point, deepening in colour, and is gone.',
-					'3. **Slide reveal** — the red area swipes to the right as one piece, a second red layer trails it, and the chat is uncovered.',
+					'1. **Curtain** — two pleated halves are drawn over the right-hand surface, the stage steps in beside them, and they open again onto the message field.',
+					'2. **Slide reveal** — the red area swipes to the right as one piece, a second red layer trails it, and the chat is uncovered.',
 					'',
-					'Reduced motion skips all three. The person still arrives.'
+					'Reduced motion skips both. The person still arrives.',
+					'',
+					'The room the person arrives in ("Chat — Platzhalter") is a stand-in for these stories only; the product shows the real chat there.'
 				].join('\n')
 			}
 		}
@@ -67,15 +68,13 @@ type Story = StoryObj;
 
 const CONTRACT = {
 	curtain: 'CURTAIN',
-	circleZoom: 'CIRCLE_ZOOM',
 	slideReveal: 'SLIDE_REVEAL'
 } as const;
 
 /** The two fields differ on purpose: a design read from the wrong one fails. */
 const OTHER: Record<ClosingVariant, (typeof CONTRACT)[ClosingVariant]> = {
 	curtain: 'SLIDE_REVEAL',
-	circleZoom: 'CURTAIN',
-	slideReveal: 'CIRCLE_ZOOM'
+	slideReveal: 'CURTAIN'
 };
 
 const tenantFor = (variant: ClosingVariant, desktop: boolean) =>
@@ -129,9 +128,11 @@ const Destination = ({ focal }: { focal: ClosingFocal }) =>
 		>
 			<Box sx={{ flex: 1, p: 3 }}>
 				<Typography variant="h6" component="h1">
-					Ihr Gespräch
+					Chat — Platzhalter
 				</Typography>
-				<Typography>Schreiben Sie, wenn Sie so weit sind.</Typography>
+				<Typography>
+					Nur für diese Stories: Hier steht im Produkt der echte Chat.
+				</Typography>
 			</Box>
 			<Box sx={{ p: 2, borderTop: '1px solid #747878' }}>
 				<Box
@@ -283,11 +284,6 @@ const tryStory = (
 });
 
 export const TryCurtain = tryStory('curtain', 'desktop', 'Try it — curtain');
-export const TryCircleZoom = tryStory(
-	'circleZoom',
-	'desktop',
-	'Try it — circle zoom'
-);
 export const TrySlideReveal = tryStory(
 	'slideReveal',
 	'desktop',
@@ -297,11 +293,6 @@ export const TryCurtainPhone = tryStory(
 	'curtain',
 	'phone',
 	'Try it — curtain, phone'
-);
-export const TryCircleZoomPhone = tryStory(
-	'circleZoom',
-	'phone',
-	'Try it — circle zoom, phone'
 );
 export const TrySlideRevealPhone = tryStory(
 	'slideReveal',
@@ -319,16 +310,6 @@ export const CurtainPhone = closingStory('curtain', 'phone', {
 	name: 'Curtain — phone'
 });
 
-export const CircleZoomDesktop = closingStory('circleZoom', 'desktop', {
-	name: 'Circle zoom — desktop'
-});
-export const CircleZoomTablet = closingStory('circleZoom', 'tablet', {
-	name: 'Circle zoom — tablet'
-});
-export const CircleZoomPhone = closingStory('circleZoom', 'phone', {
-	name: 'Circle zoom — phone'
-});
-
 export const SlideRevealDesktop = closingStory('slideReveal', 'desktop', {
 	name: 'Slide reveal — desktop'
 });
@@ -340,8 +321,8 @@ export const SlideRevealPhone = closingStory('slideReveal', 'phone', {
 });
 
 /* A video call has its own focal point; the same module ends there. */
-export const CircleZoomEndsOnTheCall = closingStory('circleZoom', 'desktop', {
-	name: 'Circle zoom — ends on the video call',
+export const CurtainEndsOnTheCall = closingStory('curtain', 'desktop', {
+	name: 'Curtain — ends on the video call',
 	focal: 'call'
 });
 export const SlideRevealEndsOnTheCall = closingStory('slideReveal', 'desktop', {
@@ -354,14 +335,6 @@ export const CurtainGivesTheGateBack = closingStory('curtain', 'desktop', {
 	name: 'Curtain — gives the gate back when the room stays',
 	swaps: false
 });
-export const CircleZoomGivesTheGateBack = closingStory(
-	'circleZoom',
-	'desktop',
-	{
-		name: 'Circle zoom — gives the gate back when the room stays',
-		swaps: false
-	}
-);
 export const SlideRevealGivesTheGateBack = closingStory(
 	'slideReveal',
 	'desktop',
@@ -425,10 +398,10 @@ export const CurtainReducedMotion = reducedMotionStory(
 	'desktop',
 	'Reduced motion — curtain is skipped, the person arrives'
 );
-export const CircleZoomReducedMotionPhone = reducedMotionStory(
-	'circleZoom',
+export const CurtainReducedMotionPhone = reducedMotionStory(
+	'curtain',
 	'phone',
-	'Reduced motion — circle zoom is skipped on a phone'
+	'Reduced motion — curtain is skipped on a phone'
 );
 export const SlideRevealReducedMotion = reducedMotionStory(
 	'slideReveal',

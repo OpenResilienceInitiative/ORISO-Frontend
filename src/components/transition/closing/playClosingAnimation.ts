@@ -33,7 +33,7 @@ export interface PlayClosingAnimationOptions {
 	onCovered: () => ClosingSwapResult;
 	/** The person asked for less motion: the room is swapped at once. */
 	reducedMotion?: boolean;
-	/** Where the press happened; the circle opens from here. */
+	/** Where the press happened: the focal point when the person stays. */
 	origin?: { x: number; y: number };
 	document?: Document;
 }
@@ -54,8 +54,8 @@ const primaryDark = orisoInputColors.primaryDark;
 interface Plan {
 	/** Starts the cover. Everything it needs exists already. */
 	cover: () => Animation[];
-	/** Starts the reveal, ending on the focal point. */
-	reveal: (focal: FocalPoint) => Animation[];
+	/** Starts the reveal. */
+	reveal: () => Animation[];
 }
 
 interface Frame {
@@ -63,7 +63,6 @@ interface Frame {
 	root: HTMLElement;
 	width: number;
 	height: number;
-	origin: { x: number; y: number };
 }
 
 const settle = (animations: Animation[]) =>
@@ -75,12 +74,10 @@ const layer = (
 	frame: Frame,
 	name: string,
 	style: Partial<CSSStyleDeclaration>,
-	shape: 'rect' | 'disc' = 'rect',
 	parent: HTMLElement = frame.root
 ) => {
 	const element = frame.doc.createElement('div');
 	element.dataset.closingLayer = name;
-	element.dataset.closingShape = shape;
 	Object.assign(element.style, {
 		position: 'absolute',
 		pointerEvents: 'none',
@@ -171,7 +168,6 @@ const curtain = (frame: Frame): Plan => {
 							height: px(bottom - top),
 							background: primary
 						},
-						'rect',
 						element
 					)
 				: undefined;
@@ -219,7 +215,6 @@ const curtain = (frame: Frame): Plan => {
 				// halves read as cloth and not as one flat sheet.
 				boxShadow: `inset ${side === 'left' ? '-' : ''}8px 0 0 ${primaryDark}`
 			},
-			'rect',
 			clip
 		);
 		return { element, strips, panel, away: side === 'left' ? -1 : 1 };
@@ -260,76 +255,6 @@ const curtain = (frame: Frame): Plan => {
 					transitionMotion.easeOut
 				)
 			)
-	};
-};
-
-/**
- * Circle zoom: the red grows out of the gate button until the screen is red,
- * then closes into a circle on the focal point, a shade deeper as it goes,
- * and is gone. "Reddish" is the brand colour deepening (the primary token
- * family), never a literal red — a blue tenant sees blue.
- */
-const circleZoom = (frame: Frame): Plan => {
-	const { width, height, origin } = frame;
-	const radius =
-		Math.max(
-			Math.hypot(origin.x, origin.y),
-			Math.hypot(width - origin.x, origin.y),
-			Math.hypot(origin.x, height - origin.y),
-			Math.hypot(width - origin.x, height - origin.y)
-		) + 2;
-	const disc = layer(
-		frame,
-		'circle',
-		{
-			left: px(origin.x - radius),
-			top: px(origin.y - radius),
-			width: px(radius * 2),
-			height: px(radius * 2),
-			borderRadius: '50%',
-			background: primary
-		},
-		'disc'
-	);
-	const deep = frame.doc.createElement('div');
-	Object.assign(deep.style, {
-		position: 'absolute',
-		inset: '0',
-		borderRadius: '50%',
-		background: primaryDark,
-		opacity: '0',
-		pointerEvents: 'none'
-	});
-	disc.appendChild(deep);
-
-	return {
-		cover: () => [
-			run(
-				disc,
-				[{ transform: 'scale(0)' }, { transform: 'scale(1)' }],
-				closing.coverMs,
-				transitionMotion.easeIn
-			)
-		],
-		reveal: (focal) => [
-			run(
-				disc,
-				[
-					{ transform: 'translate(0px, 0px) scale(1)' },
-					{
-						transform: `translate(${px(focal.x - origin.x)}, ${px(focal.y - origin.y)}) scale(0)`
-					}
-				],
-				closing.revealMs,
-				transitionMotion.easeInOut
-			),
-			run(
-				deep,
-				[{ opacity: 0 }, { opacity: 1 }],
-				closing.revealMs * 0.7,
-				'linear'
-			)
-		]
 	};
 };
 
@@ -392,7 +317,6 @@ const slideReveal = (frame: Frame): Plan => {
 
 const PLANS: Record<ClosingVariant, (frame: Frame) => Plan> = {
 	curtain,
-	circleZoom,
 	slideReveal
 };
 
@@ -506,8 +430,7 @@ export const playClosingAnimation = async (
 		x: size.width / 2,
 		y: size.height * 0.82
 	};
-	const buildPlan = () =>
-		PLANS[options.variant]({ doc, root, ...size, origin });
+	const buildPlan = () => PLANS[options.variant]({ doc, root, ...size });
 	let plan = buildPlan();
 	/* The pieces are sized in pixels at the press. A viewport that changed
 	   while the screen is held covered (a phone turned) would show the room
@@ -549,7 +472,7 @@ export const playClosingAnimation = async (
 			win.innerWidth > FIELD_FOCUS_AFTER_WIDTH ? focal.element : null
 		);
 		setPhase('reveal');
-		await settle(plan.reveal(focal));
+		await settle(plan.reveal());
 		setPhase('revealed');
 		// One frame at rest, so the end state can be seen (and measured).
 		await new Promise<void>((resolve) =>

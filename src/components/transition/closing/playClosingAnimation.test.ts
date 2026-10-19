@@ -759,7 +759,7 @@ describe('playClosingAnimation', () => {
 		installAnimate('never');
 		const onCovered = vi.fn();
 		const pending = playClosingAnimation({
-			variant: 'circleZoom',
+			variant: 'curtain',
 			focal: 'messageField',
 			onCovered
 		});
@@ -851,7 +851,7 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const swap = held();
 			const pending = playClosingAnimation({
-				variant: 'circleZoom',
+				variant: 'slideReveal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -900,7 +900,7 @@ describe('playClosingAnimation', () => {
 				(callback) => waiting.push(callback)
 			);
 			const pending = playClosingAnimation({
-				variant: 'circleZoom',
+				variant: 'slideReveal',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
