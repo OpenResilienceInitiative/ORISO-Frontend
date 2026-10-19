@@ -193,14 +193,26 @@ describe('HandoverGateButton closing animation', () => {
 			other.remove();
 		});
 
-		it('is not put on a button that did not have it when it was pressed', async () => {
+		it('is not put on a button that a mouse pressed without focusing it', async () => {
 			const timeline = controlledPlay();
 			render(refused());
-			fireEvent.click(gate());
+			// A mouse click carries a count; a key press or a script has none.
+			fireEvent.click(gate(), { detail: 1 });
 			await act(async () => timeline.finish());
 
 			expect(gate().disabled).toBe(false);
 			expect(document.activeElement).toBe(document.body);
+		});
+
+		it('is put on a button that a key or a script pressed, such as the leave dialog starting the chat', async () => {
+			const timeline = controlledPlay();
+			render(refused());
+			// The dialog's own button had the focus, and it is gone by then.
+			fireEvent.click(gate());
+			await act(async () => timeline.finish());
+
+			expect(gate().disabled).toBe(false);
+			expect(document.activeElement).toBe(gate());
 		});
 	});
 

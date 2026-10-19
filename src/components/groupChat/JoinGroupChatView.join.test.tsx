@@ -76,8 +76,20 @@ vi.mock('../overlay/Overlay', () => ({
 vi.mock('../button/Button', () => ({
 	BUTTON_TYPES: { PRIMARY: 'PRIMARY', SECONDARY: 'SECONDARY' }
 }));
+/* The counsellor's own waiting area presses the platform's gate directly. */
+const gateProps = vi.hoisted(() => ({
+	value: undefined as
+		| { closing?: string; onEnter?: () => unknown }
+		| undefined
+}));
 vi.mock('../app/registrationLoader/HandoverGateButton', () => ({
-	HandoverGateButton: () => null
+	HandoverGateButton: (props: {
+		closing?: string;
+		onEnter?: () => unknown;
+	}) => {
+		gateProps.value = props;
+		return null;
+	}
 }));
 vi.mock('../sessionHeader/SessionHeaderComponent', () => ({
 	SessionHeaderComponent: () => null
@@ -135,6 +147,9 @@ vi.mock('./entryRoom/GroupWaitingRoom', () => ({
 
 const { JoinGroupChatView } = await import('./JoinGroupChatView');
 const { apiPutGroupChat } = await import('../../api');
+const { UserDataContext, ActiveSessionContext } = await import(
+	'../../globalState'
+);
 
 describe('JoinGroupChatView — the embedded room hands its join request back', () => {
 	beforeEach(() => {
@@ -144,6 +159,7 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 			userName: 'asker',
 			grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
 		};
+		gateProps.value = undefined;
 	});
 	afterEach(cleanup);
 
@@ -176,6 +192,65 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 
 		await act(async () => settleRequest());
 		expect(reloadActiveSession).toHaveBeenCalledTimes(1);
+		expect(over, 'the session is still being reloaded').toBe(false);
+
+		await act(async () => settleReload());
+		await handed;
+		expect(over).toBe(true);
+	});
+
+	it("closes the counsellor's own waiting area over the chat too, and holds the red until the chat has started", async () => {
+		let settleReload: () => void = () => undefined;
+		vi.mocked(apiPutGroupChat).mockResolvedValue(undefined as never);
+		reloadActiveSession.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					settleReload = resolve;
+				})
+		);
+
+		// The contexts above hold the advice seeker; this one is the counsellor
+		// who opens a room that is not active yet.
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							userName: 'counsellor',
+							grantedAuthorities: [
+								'AUTHORIZATION_CREATE_NEW_CHAT'
+							]
+						}
+					} as never
+				}
+			>
+				<ActiveSessionContext.Provider
+					value={
+						{
+							activeSession: {
+								item: {
+									id: 15,
+									active: false,
+									consultingType: 1
+								}
+							},
+							reloadActiveSession
+						} as never
+					}
+				>
+					<JoinGroupChatView />
+				</ActiveSessionContext.Provider>
+			</UserDataContext.Provider>
+		);
+		expect(gateProps.value?.closing).toBe('messageField');
+
+		const handed = gateProps.value!.onEnter!() as Promise<unknown>;
+		expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/start');
+		let over = false;
+		void handed.then(() => {
+			over = true;
+		});
+		await act(async () => undefined);
 		expect(over, 'the session is still being reloaded').toBe(false);
 
 		await act(async () => settleReload());
