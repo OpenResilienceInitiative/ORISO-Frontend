@@ -11,6 +11,14 @@ import { ClosingVariant } from './closingVariants';
 
 export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
 
+/**
+ * What a room's swap hands back to the animation. `false`, alone or as the
+ * value of the promise, says the person stays: the entry was refused or failed,
+ * so there is no destination to look for and the room is given back at once.
+ * Anything else means the person is on the way to the destination.
+ */
+export type ClosingSwapResult = void | boolean | Promise<unknown>;
+
 export interface PlayClosingAnimationOptions {
 	variant: ClosingVariant;
 	/** Where the animation ends. The destination marks it, see `closingFocal`. */
@@ -20,9 +28,10 @@ export interface PlayClosingAnimationOptions {
 	 * here. It runs exactly once, also when the animation cannot play at all.
 	 * A swap that takes time (the live-chat room saves its consent and then
 	 * replaces the whole page) returns a promise: the screen stays covered until
-	 * it settles, but never longer than `closing.capMs`.
+	 * it settles, but never longer than `closing.capMs`. `false` (or a promise
+	 * of it) says the person stays, see `ClosingSwapResult`.
 	 */
-	onCovered: () => void | Promise<unknown>;
+	onCovered: () => ClosingSwapResult;
 	/** The person asked for less motion: the room is swapped at once. */
 	reducedMotion?: boolean;
 	/** Where the press happened; the circle opens from here. */
@@ -395,6 +404,47 @@ const PLANS: Record<ClosingVariant, (frame: Frame) => Plan> = {
 const canAnimate = (doc: Document) =>
 	typeof doc.documentElement.animate === 'function';
 
+const FOCUSABLE =
+	'textarea, input, select, button, a[href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+const nothingFocused = (doc: Document) =>
+	!doc.activeElement ||
+	doc.activeElement === doc.body ||
+	doc.activeElement === doc.documentElement;
+
+/**
+ * Shuts everything on the page but the overlay for keyboard and assistive
+ * technology: the root only stops the pointer, so Tab and Enter could still
+ * press a control that is being swapped out. Gives the page back, and the
+ * keyboard where it was, when called. Elements that were shut before stay shut.
+ */
+const shutRoomBehind = (doc: Document, root: HTMLElement) => {
+	const shut = Array.from(doc.body.children).filter(
+		(element) => element !== root && !element.hasAttribute('inert')
+	);
+	shut.forEach((element) => element.setAttribute('inert', ''));
+	const pressed = nothingFocused(doc)
+		? null
+		: (doc.activeElement as HTMLElement);
+
+	let open = false;
+	return (landing: HTMLElement | null = null) => {
+		if (open) return;
+		open = true;
+		shut.forEach((element) => element.removeAttribute('inert'));
+		// A browser drops the focus of a shut element. Hand it back to the
+		// button that had it, or to the field the person arrives in; the room
+		// that arrived while the page was shut could not take it.
+		if (!nothingFocused(doc)) return;
+		const target = pressed?.isConnected
+			? pressed
+			: landing?.matches(FOCUSABLE)
+				? landing
+				: landing?.querySelector<HTMLElement>(FOCUSABLE);
+		target?.focus({ preventScroll: true });
+	};
+};
+
 /**
  * The root every animation draws into. It is appended to the document body and
  * not rendered by the room: the room is unmounted while the screen is covered,
@@ -440,6 +490,15 @@ const createStage = (
 
 type Stage = ReturnType<typeof createStage>;
 
+interface UncoverOptions {
+	/** Defaults to `closing.focalWaitMs`. */
+	waitMs?: number;
+	/** Opens the page behind the cover again, and hands the keyboard back. */
+	giveRoomBack: (landing: HTMLElement | null) => void;
+	/** Set when the person stays: the reveal ends here, with no destination to find. */
+	staysAt?: { x: number; y: number };
+}
+
 /**
  * The second half: look for where the destination wants the person's eye, then
  * give the screen back, ending there. Does nothing once `isOver` says the cap
@@ -451,11 +510,14 @@ const uncover = async (
 	stage: Stage,
 	focal: ClosingFocal,
 	isOver: () => boolean,
-	waitMs?: number
+	{ waitMs, giveRoomBack, staysAt }: UncoverOptions
 ) => {
-	const point = await resolveFocalPoint(doc, focal, isOver, waitMs);
+	const point: FocalPoint = staysAt
+		? { ...staysAt, element: null }
+		: await resolveFocalPoint(doc, focal, isOver, waitMs);
 	// The cap won while it waited: nobody is looking at these layers.
 	if (isOver()) return;
+	giveRoomBack(point.element);
 	stage.setPhase('reveal');
 	await settle(stage.plan.reveal(point));
 	stage.setPhase('revealed');
@@ -484,7 +546,8 @@ const clamp = (share: number) => Math.min(1, Math.max(0, share));
  * - `onCovered` runs exactly once, also when nothing can be animated;
  * - the root takes the pointer while the screen is covered, so no tap reaches
  *   the room that is being swapped, and lets it through from the reveal on; the
- *   layers themselves never take one;
+ *   layers themselves never take one. The rest of the page is `inert` for the
+ *   same time, so the keyboard cannot reach that room either;
  * - after `closing.capMs` the layers are removed even if an animation never
  *   reports back, so nothing is ever left covering the page.
  *
@@ -545,13 +608,20 @@ export const playClosingAnimation = async (
 	};
 
 	let over = false;
+	let giveRoomBack: (landing?: HTMLElement | null) => void = () => undefined;
 	const sequence = async () => {
 		doc.body.appendChild(root);
+		giveRoomBack = shutRoomBehind(doc, root);
 		win.addEventListener('pagehide', handOver);
 		await settle(plan.cover());
 		setPhase('covered');
-		await swap();
-		await uncover(doc, win, stage, options.focal, () => over);
+		const stays = (await swap()) === false;
+		await uncover(doc, win, stage, options.focal, () => over, {
+			giveRoomBack: (landing) => giveRoomBack(landing),
+			// Nothing took the person on, so the room is still there: open onto
+			// the button that was pressed instead of waiting for a destination.
+			staysAt: stays ? origin : undefined
+		});
 	};
 
 	let capTimer: number | undefined;
@@ -565,6 +635,7 @@ export const playClosingAnimation = async (
 		win.removeEventListener('pagehide', handOver);
 		over = true;
 		root.remove();
+		giveRoomBack();
 		swap();
 	}
 	return { played: true };
@@ -619,20 +690,19 @@ export const resumeClosingAnimation = async (
 		capTimer = win.setTimeout(resolve, closing.capMs);
 	});
 	doc.body.appendChild(stage.root);
+	// The app starts underneath: nothing on the page can be reached by the
+	// keyboard until the reveal, as in the document that began the animation.
+	const giveRoomBack = shutRoomBehind(doc, stage.root);
 	try {
 		await Promise.race([
 			(async () => {
 				// The cover was played in the old document: here it only stands.
 				stage.plan.cover().forEach((animation) => animation.finish());
 				stage.setPhase('covered');
-				await uncover(
-					doc,
-					win,
-					stage,
-					handover.focal,
-					() => over,
-					closing.handoverFocalWaitMs
-				);
+				await uncover(doc, win, stage, handover.focal, () => over, {
+					waitMs: closing.handoverFocalWaitMs,
+					giveRoomBack
+				});
 			})(),
 			cap
 		]);
@@ -640,6 +710,7 @@ export const resumeClosingAnimation = async (
 		win.clearTimeout(capTimer);
 		over = true;
 		stage.root.remove();
+		giveRoomBack();
 	}
 	return { played: true };
 };

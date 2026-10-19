@@ -195,6 +195,183 @@ describe('playClosingAnimation', () => {
 		expect(document.querySelector(ROOT)).toBeNull();
 	});
 
+	/**
+	 * The overlay stops the pointer only. The room underneath must not be reachable
+	 * by keyboard or assistive technology while the screen is held red either,
+	 * or Tab and Enter could still press a control nobody can see.
+	 */
+	describe('the room underneath', () => {
+		const app = () => document.getElementById('app')!;
+		const mountApp = () => {
+			const root = document.createElement('div');
+			root.id = 'app';
+			const button = document.createElement('button');
+			button.id = 'gate';
+			root.appendChild(button);
+			document.body.appendChild(root);
+			button.focus();
+			return button;
+		};
+
+		it('cannot be reached while the screen covers, and is open again from the reveal on', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const gate = mountApp();
+			const swap = held();
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			const overlay = document.querySelector<HTMLElement>(ROOT)!;
+
+			expect(app().hasAttribute('inert')).toBe(true);
+			expect(
+				overlay.hasAttribute('inert'),
+				'the overlay itself is not shut'
+			).toBe(false);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(
+				app().hasAttribute('inert'),
+				'still shut while the screen is held red'
+			).toBe(true);
+
+			swap.release();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(overlay.getAttribute('data-closing-phase')).toBe('reveal');
+			expect(app().hasAttribute('inert')).toBe(false);
+			expect(
+				document.activeElement,
+				'the keyboard is back where it was'
+			).toBe(gate);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+		});
+
+		it('is open again when the cap removes the overlay, and what was shut before stays shut', async () => {
+			installAnimate('never');
+			const gate = mountApp();
+			const shutBefore = document.createElement('div');
+			shutBefore.setAttribute('inert', '');
+			document.body.appendChild(shutBefore);
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			expect(app().hasAttribute('inert')).toBe(true);
+
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 10
+			);
+			await pending;
+			expect(document.querySelector(ROOT)).toBeNull();
+			expect(app().hasAttribute('inert')).toBe(false);
+			expect(shutBefore.hasAttribute('inert')).toBe(true);
+			expect(document.activeElement).toBe(gate);
+		});
+
+		/* A browser drops the focus of an element that is shut (jsdom does not). */
+		it('hands the keyboard back to the button when the person stays', async () => {
+			const late = installLateAnimate();
+			const gate = mountApp();
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => false
+			});
+			gate.blur();
+			expect(document.activeElement).toBe(document.body);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(app().hasAttribute('inert')).toBe(false);
+			expect(document.activeElement).toBe(gate);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+		});
+
+		it('puts the keyboard into the field the person arrives in when the room was swapped', async () => {
+			const late = installLateAnimate();
+			const gate = mountApp();
+			let editor!: HTMLElement;
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => {
+					// The room goes, the next one arrives inside the shut page.
+					app().replaceChildren();
+					const field = document.createElement('div');
+					field.setAttribute('data-closing-focal', 'message-field');
+					field.getBoundingClientRect = () =>
+						({
+							left: 10,
+							top: 700,
+							width: 300,
+							height: 60
+						}) as DOMRect;
+					editor = document.createElement('div');
+					editor.setAttribute('contenteditable', 'true');
+					editor.tabIndex = 0;
+					field.appendChild(editor);
+					app().appendChild(field);
+				}
+			});
+			gate.blur();
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(app().hasAttribute('inert')).toBe(false);
+			expect(gate.isConnected).toBe(false);
+			expect(document.activeElement).toBe(editor);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+		});
+
+		it('does not take the keyboard from something that already has it', async () => {
+			const late = installLateAnimate();
+			const gate = mountApp();
+			const other = document.createElement('button');
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => {
+					document.body.appendChild(other);
+					other.focus();
+					return false;
+				}
+			});
+			gate.blur();
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(document.activeElement).toBe(other);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+		});
+
+		it('is left alone when nothing is animated, since nothing covers it', async () => {
+			mountApp();
+			await playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				reducedMotion: true,
+				onCovered: () => undefined
+			});
+			expect(app().hasAttribute('inert')).toBe(false);
+		});
+	});
+
 	it('is removed by the cap even when it still blocks the pointer', async () => {
 		installAnimate('never');
 		const pending = playClosingAnimation({
@@ -208,6 +385,49 @@ describe('playClosingAnimation', () => {
 		await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs + 10);
 		await pending;
 		expect(document.querySelector(ROOT)).toBeNull();
+	});
+
+	/**
+	 * A swap that was refused or failed leaves the person where they are, so
+	 * there is no destination to look for: waiting for one would keep the
+	 * screen red for the whole focal wait, with the pointer blocked.
+	 */
+	describe.each([
+		['a promise of false', () => Promise.resolve(false)],
+		['false', () => false as const]
+	])('when the room says the person stays (%s)', (_name, onCovered) => {
+		it('does not wait for a destination and gives the room back quickly', async () => {
+			installAnimate('at once');
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered
+			});
+			await vi.advanceTimersByTimeAsync(300);
+
+			const result = await pending;
+			expect(result.played).toBe(true);
+			expect(document.querySelector(ROOT)).toBeNull();
+		});
+	});
+
+	it('still waits for the destination when the swap says nothing about it', async () => {
+		installAnimate('at once');
+		const pending = playClosingAnimation({
+			variant: 'curtain',
+			focal: 'messageField',
+			onCovered: () => Promise.resolve()
+		});
+		let over = false;
+		void pending.then(() => {
+			over = true;
+		});
+		await vi.advanceTimersByTimeAsync(300);
+		expect(over, 'looking for the message field').toBe(false);
+		await vi.advanceTimersByTimeAsync(
+			transitionMotion.closing.focalWaitMs + 200
+		);
+		expect((await pending).played).toBe(true);
 	});
 
 	it('removes the layers and still swaps once when an animation never reports back', async () => {

@@ -26,6 +26,17 @@ vi.mock('../../../api/apiGetUserData', () => ({
 	apiGetUserData: () => apiGetUserData()
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
+/* The closing animation has its own tests. Here it only runs the swap and notes
+   what the swap handed back: `false` says the person stays. */
+const swapResult = vi.hoisted(() => ({ value: undefined as unknown }));
+vi.mock('../../transition/closing/useClosingAnimation', () => ({
+	useClosingAnimation: () => ({
+		play: async ({ onCovered }: { onCovered: () => unknown }) => {
+			swapResult.value = await onCovered();
+			return { played: true };
+		}
+	})
+}));
 /* The group's department: only a room with an agency has one. */
 vi.mock('../consent/useGroupDepartment', () => ({
 	useGroupDepartment: (agencyId?: number | null) =>
@@ -109,6 +120,7 @@ describe('GroupWaitingRoom', () => {
 		cleanup();
 		apiPatchUserData.mockClear();
 		apiGetUserData.mockClear();
+		swapResult.value = undefined;
 	});
 	it('names topic and agency in the stage header', () => {
 		renderRoom(false);
@@ -267,6 +279,7 @@ describe('GroupWaitingRoom', () => {
 		await waitFor(() =>
 			expect(join().getAttribute('data-cy-state')).not.toBe('entering')
 		);
+		expect(swapResult.value, 'the person is on the way').not.toBe(false);
 	});
 
 	it('takes the tick back on "Ablehnen", so reopening asks again', async () => {
@@ -327,6 +340,24 @@ describe('GroupWaitingRoom', () => {
 		fireEvent.click(screen.getByTestId('group-entry-join'));
 		await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
 		expect(onJoin).not.toHaveBeenCalled();
+		expect(
+			swapResult.value,
+			'the closing animation is told the person stays'
+		).toBe(false);
+	});
+
+	it('tells the closing animation the person stays when the join request fails', async () => {
+		const { onJoin } = renderRoom(
+			true,
+			vi.fn(() => Promise.reject(new Error('join failed')))
+		);
+		const join = () => screen.getByTestId('group-entry-join');
+		fireEvent.click(join());
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		await waitFor(() => expect(swapResult.value).toBe(false));
 	});
 
 	it('puts the explainer in the middle and the clock back on return', async () => {

@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /* The advice seeker's waiting room inside the app hands its join request back
@@ -141,18 +147,21 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 	});
 	afterEach(cleanup);
 
-	it('holds the closing animation until the join request and the session reload are done', async () => {
-		let settle: () => void = () => undefined;
+	it('holds the closing animation until the join request is done and the session has been reloaded', async () => {
+		let settleRequest: () => void = () => undefined;
+		let settleReload: () => void = () => undefined;
 		vi.mocked(apiPutGroupChat).mockImplementation(
 			() =>
 				new Promise<void>((resolve) => {
-					settle = resolve;
+					settleRequest = resolve;
 				}) as never
 		);
-		let reloaded = false;
-		reloadActiveSession.mockImplementation(async () => {
-			reloaded = true;
-		});
+		reloadActiveSession.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					settleReload = resolve;
+				})
+		);
 
 		render(<JoinGroupChatView />);
 		fireEvent.click(screen.getByText('join'));
@@ -160,22 +169,35 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 		const handed = joinResult.value as Promise<unknown>;
 		expect(handed).toBeInstanceOf(Promise);
 		expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join');
-		expect(reloaded, 'not before the request settles').toBe(false);
+		let over = false;
+		void handed.then(() => {
+			over = true;
+		});
 
-		settle();
+		await act(async () => settleRequest());
+		expect(reloadActiveSession).toHaveBeenCalledTimes(1);
+		expect(over, 'the session is still being reloaded').toBe(false);
+
+		await act(async () => settleReload());
 		await handed;
-		expect(reloaded).toBe(true);
+		expect(over).toBe(true);
 	});
 
-	it('hands back nothing to wait for when the request fails — the cover then lifts at once', async () => {
+	it('tells the closing animation the person stays when the request fails', async () => {
 		vi.mocked(apiPutGroupChat).mockRejectedValue(new Error('boom'));
 
 		render(<JoinGroupChatView />);
 		fireEvent.click(screen.getByText('join'));
 
-		await expect(
-			joinResult.value as Promise<unknown>
-		).resolves.toBeUndefined();
+		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
 		expect(reloadActiveSession).not.toHaveBeenCalled();
+	});
+
+	it('tells it the person stays when a banned person presses join', () => {
+		render(<JoinGroupChatView bannedUsers={['asker']} />);
+		fireEvent.click(screen.getByText('join'));
+
+		expect(joinResult.value).toBe(false);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
 	});
 });

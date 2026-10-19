@@ -195,7 +195,7 @@ const ClientGroupEntryRoom = () => {
 
 	const handleJoin = useCallback(() => {
 		if (!item?.id || joinBusy) {
-			return;
+			return false;
 		}
 		setJoinBusy(true);
 		setJoinFailed(false);
@@ -225,6 +225,8 @@ const ClientGroupEntryRoom = () => {
 					notifications.addNotification(notice);
 				else setJoinFailed(true);
 				setJoinBusy(false);
+				// The person stays: the closing animation need not wait for a chat.
+				return false;
 			});
 	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
 

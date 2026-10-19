@@ -223,15 +223,16 @@ export const JoinGroupChatView = ({
 	};
 
 	/* The request is handed back: the embedded waiting room's closing animation
-	   keeps the screen covered until it has settled (ORISO-Frontend#1737). */
-	const handleButtonClick = (): Promise<void> | undefined => {
+	   keeps the screen covered until it has settled and the session has been
+	   reloaded; `false` says the person stays (ORISO-Frontend#1737). */
+	const handleButtonClick = (): Promise<unknown> | false => {
 		if (bannedUsers.includes(userData.userName)) {
 			setOverlayItem(bannedUserOverlay);
 			setOverlayActive(true);
-			return undefined;
+			return false;
 		}
 		if (isRequestInProgress) {
-			return undefined;
+			return false;
 		}
 		setIsRequestInProgress(true);
 		const groupChatApiCall =
@@ -247,10 +248,11 @@ export const JoinGroupChatView = ({
 				});
 				if (notice && notifications) {
 					notifications.addNotification(notice);
-					return;
+					return false;
 				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
+				return false;
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);

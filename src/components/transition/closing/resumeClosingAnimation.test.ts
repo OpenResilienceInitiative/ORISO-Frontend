@@ -385,6 +385,180 @@ describe('resumeClosingAnimation', () => {
 		expect(root(), 'the cap still removes it').toBeNull();
 	});
 
+	describe('the page behind the cover', () => {
+		/** The container the app mounts into: it is in the HTML before any script runs. */
+		const appPage = () => {
+			const page = document.createElement('div');
+			page.id = 'appRoot';
+			document.body.appendChild(page);
+			return page;
+		};
+		/** The chat's message field, with something to type in, once the app has rendered it. */
+		const typingField = (page: HTMLElement) => {
+			const wrapper = document.createElement('div');
+			wrapper.setAttribute('data-closing-focal', 'message-field');
+			wrapper.getBoundingClientRect = () =>
+				({ left: 10, top: 700, width: 300, height: 60 }) as DOMRect;
+			const input = document.createElement('textarea');
+			wrapper.appendChild(input);
+			page.appendChild(wrapper);
+			return input;
+		};
+		const shut = (element: Element) => element.hasAttribute('inert');
+
+		it('is shut for the keyboard and for screen readers while the app starts underneath, and the cover itself stays open', () => {
+			installAnimate();
+			const page = appPage();
+			leaveNote();
+
+			void resumeClosingAnimation();
+
+			expect(shut(page)).toBe(true);
+			expect(shut(root()!)).toBe(false);
+		});
+
+		it('stays shut for whatever the app renders into it', () => {
+			installAnimate();
+			const page = appPage();
+			leaveNote();
+			void resumeClosingAnimation();
+
+			const input = typingField(page);
+			input.focus();
+
+			expect(shut(page)).toBe(true);
+		});
+
+		it('is opened again at the reveal, and the keyboard goes to the message field', async () => {
+			// The reveal never reports back, so the moment it begins can be looked at.
+			installAnimate('never');
+			const page = appPage();
+			leaveNote();
+			const pending = resumeClosingAnimation();
+			const input = typingField(page);
+			await vi.advanceTimersByTimeAsync(100);
+
+			expect(phase()).toBe('reveal');
+			expect(shut(page), 'open as the reveal begins').toBe(false);
+			expect(document.activeElement).toBe(input);
+
+			await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs);
+			await pending;
+		});
+
+		it('leaves shut what was shut before, and opens only what it shut', async () => {
+			installAnimate();
+			const page = appPage();
+			const before = document.createElement('div');
+			before.setAttribute('inert', '');
+			document.body.appendChild(before);
+			leaveNote();
+			const pending = resumeClosingAnimation();
+			typingField(page);
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+
+			expect(shut(page)).toBe(false);
+			expect(shut(before)).toBe(true);
+		});
+
+		it.each<
+			[
+				string,
+				(pending: Promise<unknown>, page: HTMLElement) => Promise<void>
+			]
+		>([
+			[
+				'the reveal ends',
+				async (pending, page) => {
+					typingField(page);
+					await vi.advanceTimersByTimeAsync(200);
+					await pending;
+				}
+			],
+			[
+				'the reveal never reports back and the cap takes over',
+				async (pending, page) => {
+					typingField(page);
+					await vi.advanceTimersByTimeAsync(
+						transitionMotion.closing.capMs + 50
+					);
+					await pending;
+				}
+			],
+			[
+				'the app never shows its field and the fallback point is used',
+				async (pending) => {
+					await vi.advanceTimersByTimeAsync(
+						transitionMotion.closing.handoverFocalWaitMs + 400
+					);
+					await pending;
+				}
+			]
+		])('is opened again on every path: %s', async (name, finish) => {
+			installAnimate(
+				name.includes('never reports') ? 'never' : 'at once'
+			);
+			const page = appPage();
+			leaveNote();
+			const pending = resumeClosingAnimation();
+			expect(shut(page)).toBe(true);
+
+			await finish(pending, page);
+
+			expect(root(), 'nothing covers the page').toBeNull();
+			expect(shut(page), 'the page is open').toBe(false);
+		});
+
+		it('is opened again when a hidden tab comes back only after the cap', async () => {
+			installAnimate();
+			const page = appPage();
+			leaveNote();
+			const waiting: FrameRequestCallback[] = [];
+			vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+				(callback) => waiting.push(callback)
+			);
+			const pending = resumeClosingAnimation();
+			expect(shut(page)).toBe(true);
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 50
+			);
+			await pending;
+
+			expect(shut(page)).toBe(false);
+			waiting.splice(0).forEach((frame) => frame(0));
+			await vi.advanceTimersByTimeAsync(3000);
+			expect(shut(page), 'a late frame shuts nothing again').toBe(false);
+		});
+
+		it.each([
+			['the old document left no note', () => undefined],
+			['a person asked for less motion', () => leaveNote()]
+		])('is not touched when %s', async (name, prepare) => {
+			installAnimate();
+			const page = appPage();
+			prepare();
+
+			await resumeClosingAnimation({
+				reducedMotion: name.includes('less motion')
+			});
+
+			expect(shut(page)).toBe(false);
+			expect(
+				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
+			).toBeNull();
+		});
+
+		it('is not touched in a browser that cannot animate', async () => {
+			const page = appPage();
+			leaveNote();
+
+			await resumeClosingAnimation();
+
+			expect(shut(page)).toBe(false);
+		});
+	});
+
 	describe('when it should not play', () => {
 		it('throws a note away that is older than the animation may cover the page', async () => {
 			const play = installAnimate();

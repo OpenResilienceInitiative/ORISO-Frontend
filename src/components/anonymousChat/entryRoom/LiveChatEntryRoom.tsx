@@ -548,8 +548,8 @@ const LiveChatEntryRoomContent = ({
 	   component, then the hand-over — a full load, as the redeem did before,
 	   so the app boots with the tokens the redeem set. */
 	const handleAccept = useCallback(async () => {
-		if (sessionId === null) return;
-		if (busy) return;
+		if (sessionId === null) return false;
+		if (busy) return false;
 		setBusy(true);
 		try {
 			await apiPatchUserData({
@@ -585,6 +585,8 @@ const LiveChatEntryRoomContent = ({
 			return new Promise<void>(() => undefined);
 		} catch {
 			if (!cancelled.current) setBusy(false);
+			// The person stays: the closing animation need not wait for a chat.
+			return false;
 		}
 	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -452,9 +452,9 @@ const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"
 
 /* The new document has no palette: only a cover that was handed over is blue. */
 const newDocument = (showsField: boolean) =>
-	`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Ihr Gespräch</title><style>html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main>Ihr Gespräch (neues Dokument)</main>${
+	`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Ihr Gespräch</title><style>html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main class="stageLayout__content">Ihr Gespräch (neues Dokument)</main>${
 		showsField
-			? '<div data-closing-focal="message-field" style="position:absolute;left:120px;bottom:48px;width:520px;height:64px;box-sizing:border-box;border:1px solid #747878;border-radius:8px"></div>'
+			? '<div data-closing-focal="message-field" style="position:absolute;left:120px;bottom:48px;width:520px;height:64px;box-sizing:border-box;border:1px solid #747878;border-radius:8px"><textarea aria-label="Nachricht" style="width:100%;height:100%;box-sizing:border-box;padding:0 12px;border:0;outline:0;background:transparent;resize:none;font:inherit"></textarea></div>'
 			: ''
 	}</body></html>`;
 

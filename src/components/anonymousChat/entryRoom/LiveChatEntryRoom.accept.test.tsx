@@ -105,4 +105,14 @@ describe('LiveChatEntryRoom — starting the chat while the screen closes', () =
 		expect(isOver()).toBe(true);
 		expect(room.props.busy).toBe(false);
 	});
+
+	it('tells the closing animation the person stays when the start failed', async () => {
+		vi.mocked(apiPatchUserData).mockRejectedValueOnce(new Error('offline'));
+		render(<LiveChatEntryRoom sessionId={197} topicSlug="Migration" />);
+		await flush();
+
+		await expect(room.props.onAccept() as Promise<unknown>).resolves.toBe(
+			false
+		);
+	});
 });
