@@ -111,6 +111,12 @@ export const RegistrationHandover = ({
 	   here too. */
 	const handoverDone = state === 'ready' || state === 'entering';
 
+	/* The gate that opened itself (the escape hatch) is pressed while the app is
+	   still loading: the room is only given up once it is ready, so there is no
+	   message field to close onto. The press is remembered and the room closes
+	   when the app is ready, without the animation it could not finish. */
+	const slowGate = state === 'slow';
+
 	const handleEnter = useCallback(() => {
 		if (enteredRef.current) {
 			return;
@@ -176,7 +182,11 @@ export const RegistrationHandover = ({
 							<HandoverGateButton
 								state={state}
 								onEnter={handleEnter}
-								closing={closing ?? undefined}
+								closing={
+									slowGate
+										? undefined
+										: (closing ?? undefined)
+								}
 								label={copy?.cta}
 								/* The room's status line above already says
 								   (and announces) this state; a second live
