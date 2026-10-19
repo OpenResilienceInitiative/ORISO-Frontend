@@ -584,7 +584,8 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 	const reason =
 		/Sprachnachrichten sind beim Bearbeiten nicht möglich|Voice messages are not available while editing a message/;
 	expect(mic.getAttribute('aria-disabled')).toBe('true');
-	expect(mic.getAttribute('title') ?? '').toMatch(reason);
+	// The reason is a MUI Tooltip + aria-describedby, not a native title.
+	expect(mic.getAttribute('title')).toBeNull();
 	expect(
 		document.getElementById(mic.getAttribute('aria-describedby') ?? '')
 			?.textContent ?? ''

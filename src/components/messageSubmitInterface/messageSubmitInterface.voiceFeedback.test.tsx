@@ -890,7 +890,8 @@ describe('voice note review before sending (#1142)', () => {
 		// Still focusable (aria-disabled, not `disabled`) so keyboard and
 		// screen-reader users reach the explanation.
 		expect((mic as HTMLButtonElement).disabled).toBe(false);
-		expect(mic.getAttribute('title')).toBe(reason);
+		// No native title: the reason is the MUI Tooltip + aria-describedby.
+		expect(mic.getAttribute('title')).toBeNull();
 		expect(
 			document.getElementById(
 				mic.getAttribute('aria-describedby') ?? 'missing'
