@@ -1728,7 +1728,14 @@
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
 				},
 				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici.",
-				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer."
+				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer.",
+				"tooManyRequestsWaitSeconds": "Trop de tentatives. Veuillez patienter environ {{seconds}} secondes, puis réessayer.",
+				"tooManyRequestsWaitMinute": "Trop de tentatives. Veuillez patienter environ une minute, puis réessayer.",
+				"tooManyRequestsWaitMinutes": "Trop de tentatives. Veuillez patienter environ {{minutes}} minutes, puis réessayer.",
+				"tooManyRequestsWaitHour": "Trop de tentatives. Veuillez patienter environ une heure, puis réessayer.",
+				"tooManyRequestsWaitHours": "Trop de tentatives. Veuillez patienter environ {{hours}} heures, puis réessayer.",
+				"tooManyRequestsWaitDay": "Trop de tentatives. Veuillez patienter environ une journée, puis réessayer.",
+				"tooManyRequestsWaitDays": "Trop de tentatives. Veuillez patienter environ {{days}} jours, puis réessayer."
 			}
 		},
 		"mobile": {

@@ -1728,7 +1728,14 @@
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
 				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
-				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSeconds": "Çok fazla deneme. Lütfen yaklaşık {{seconds}} saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinute": "Çok fazla deneme. Lütfen yaklaşık bir dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinutes": "Çok fazla deneme. Lütfen yaklaşık {{minutes}} dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHour": "Çok fazla deneme. Lütfen yaklaşık bir saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHours": "Çok fazla deneme. Lütfen yaklaşık {{hours}} saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDay": "Çok fazla deneme. Lütfen yaklaşık bir gün bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDays": "Çok fazla deneme. Lütfen yaklaşık {{days}} gün bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
