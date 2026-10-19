@@ -136,7 +136,7 @@ text may be changed. They do not relax the delivery rules above.
 
 ## Agent skills
 
-For Matt Pocock engineering workflows, resolve `~/.config/agent-routing/paths.env` and follow `${PROJECT_ORISO_ROOT}/AGENTS.md`. Reuse shared installed skills; load these adapters on demand.
+For Matt Pocock engineering workflows, apply the **Parent Router First** rules above. In a multi-repo workspace, load `../AGENTS.md` first, then resolve `~/.config/agent-routing/paths.env` (if it exists) and follow `${PROJECT_ORISO_ROOT}/AGENTS.md`. In a standalone clone, skip `../AGENTS.md` and `paths.env` and use the local adapters below directly. Reuse shared installed skills; load these adapters on demand.
 
 ### Issue tracker
 
