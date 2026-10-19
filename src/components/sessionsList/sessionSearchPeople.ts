@@ -272,17 +272,18 @@ export const sessionSearchText = (
 		topicNameOf(raw, extended),
 		raw.user?.username,
 		raw.user?.displayName,
-		consultant?.displayName,
-		consultant?.username,
-		readable(consultant?.username),
-		// Internal and legal names are staff-only: never an asker's search.
+		// Usernames, internal and legal names are staff-only: an advice
+		// seeker searches the counsellor name she is shown, nothing else.
 		...(internalNames
 			? [
+					consultant?.displayName,
+					consultant?.username,
+					readable(consultant?.username),
 					consultant?.firstName,
 					consultant?.lastName,
 					consultant?.internalName
 				]
-			: []),
+			: [consultant && consultantNameOf(consultant)]),
 		raw.agency?.name,
 		postcodeOf(raw)
 	]
@@ -505,7 +506,10 @@ export function buildSearchPeopleResults(
 				agencyId,
 				avatarSeed: consultant.consultantId,
 				avatar: consultant.avatar ?? {},
-				lookupQuery: consultant.username || consultant.displayName,
+				// A hidden username is staff-only, like the internal name.
+				lookupQuery: options.internalNames
+					? consultant.username || consultant.displayName
+					: undefined,
 				sessionKeys: [],
 				searchText: ''
 			}),

@@ -505,3 +505,53 @@ describe('role words in the shown language (FE#1725)', () => {
 		).toEqual(['asker']);
 	});
 });
+
+describe('advice seekers search only what they see (privacy)', () => {
+	const withHandle = (displayName?: string) =>
+		({
+			...sessionWithBoth(),
+			consultant: {
+				consultantId: 'c-7',
+				username: 'ms.hiddenhandle',
+				...(displayName ? { displayName } : {})
+			}
+		}) as unknown as ListItemInterface;
+
+	it('does not match a hidden counsellor username for an advice seeker', () => {
+		expect(
+			sessionMatchesSearchText(
+				withHandle('Patty B.'),
+				undefined,
+				'hidden'
+			)
+		).toBe(false);
+		expect(
+			sessionMatchesSearchText(withHandle('Patty B.'), undefined, 'Patty')
+		).toBe(true);
+	});
+
+	it('matches the username when it is the name shown, and always for staff', () => {
+		expect(
+			sessionMatchesSearchText(withHandle(), undefined, 'hiddenhandle')
+		).toBe(true);
+		expect(
+			sessionMatchesSearchText(
+				withHandle('Patty B.'),
+				undefined,
+				'hidden',
+				{
+					internalNames: true
+				}
+			)
+		).toBe(true);
+	});
+
+	it('gives an advice seeker no hidden username as lookup term', () => {
+		const consultant = build([withHandle('Patty B.')]).find(
+			(entry) => entry.role === 'consultant'
+		);
+
+		expect(lookupTermsOf(consultant!)).toEqual(['Patty B.']);
+		expect(textAxisQuery('hidden', [consultant!])).toBe('hidden');
+	});
+});

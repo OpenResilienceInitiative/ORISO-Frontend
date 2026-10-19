@@ -1145,6 +1145,36 @@ describe('people search for an advice seeker (no handover)', () => {
 			}
 		);
 
+	it('cannot find a counsellor or her cases by a hidden username', async () => {
+		const handle = {
+			...patty,
+			id: 'handle-id',
+			consultantId: 'handle-id',
+			username: 'ms.hiddenhandle',
+			displayName: 'Patty B.'
+		};
+		const view = await ready(
+			renderList(
+				[makeCase(53, 'bart', handle as any, SPRINGFIELD, 10003)],
+				{
+					userData: {
+						userId: 'bart-id',
+						userName: 'bart',
+						userRoles: ['user'],
+						grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
+					},
+					path: '/sessions/user/view'
+				}
+			)
+		);
+		await waitFor(() => expect(listItems(view)).toHaveLength(1));
+
+		type('hiddenhandle');
+
+		await waitFor(() => expect(listItems(view)).toHaveLength(0));
+		expect(personRowsNamed('Patty B.')).toHaveLength(0);
+	});
+
 	it("never shows a counsellor's internal or legal name", async () => {
 		await ready(renderAsAsker());
 
