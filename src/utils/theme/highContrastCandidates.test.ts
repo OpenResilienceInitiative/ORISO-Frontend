@@ -127,6 +127,35 @@ describe('evaluateContrastPairs', () => {
 		expect(bypasses).toEqual([false, false]);
 	});
 
+	it('lists the session-row keyboard halo with the tokens it is drawn with', () => {
+		const tokens = {
+			...computeOrisoPalette({ primary: SEEDS.red }, 'light').tokens,
+			'--m3-primary-fixed': '#000000',
+			'--m3-surface-container-high': '#ffffff'
+		};
+		const halo = evaluateContrastPairs(tokens).find(
+			({ pair }) => pair.id === 'row-focus-halo'
+		);
+		// sessionsListItem.styles.scss: $session-focus-ring is --m3-primary-fixed,
+		// on the --m3-surface-container-high list surface.
+		expect(halo?.pair.enforced).toBe(false);
+		expect(halo?.rating.ratio).toBeCloseTo(21, 0);
+	});
+
+	it('measures the selected topic tag with the shared active-tag tokens', () => {
+		const tokens = {
+			...computeOrisoPalette({ primary: SEEDS.red }, 'light').tokens,
+			'--oriso-topic-tag-active-fg': '#000000',
+			'--oriso-topic-tag-active-bg': '#ffffff',
+			'--m3-on-primary-container': '#777777',
+			'--m3-primary-container': '#888888'
+		};
+		const tag = evaluateContrastPairs(tokens).find(
+			({ pair }) => pair.id === 'row-tag'
+		);
+		expect(tag?.rating.ratio).toBeCloseTo(21, 0);
+	});
+
 	it('lists the own sender name as a token bypass, below the 7:1 target', () => {
 		const tokens = computeOrisoPalette(
 			{ primary: SEEDS.red },

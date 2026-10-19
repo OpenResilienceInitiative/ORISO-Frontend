@@ -616,9 +616,10 @@ export const evaluateContrastPairs = (
 			group: 'Session list',
 			label: 'Topic tag, selected row',
 			kind: 'text',
-			foreground: token('--m3-on-primary-container'),
-			background: token('--m3-primary-container'),
-			enforced: true
+			foreground: token('--oriso-topic-tag-active-fg'),
+			background: token('--oriso-topic-tag-active-bg'),
+			enforced: true,
+			note: '_topicTag.scss: the selected tag reads the shared --oriso-topic-tag-active-* roles.'
 		},
 		{
 			id: 'row-tag-resting',
@@ -628,6 +629,16 @@ export const evaluateContrastPairs = (
 			foreground: token('--oriso-topic-tag-fg'),
 			background: token('--oriso-topic-tag-bg'),
 			enforced: true
+		},
+		{
+			id: 'row-focus-halo',
+			group: 'Focus',
+			label: 'Session row focus halo (--m3-primary-fixed)',
+			kind: 'ui',
+			foreground: token('--m3-primary-fixed'),
+			background: incoming,
+			enforced: false,
+			note: 'sessionsListItem.styles.scss draws the keyboard halo of the active row with $session-focus-ring (--m3-primary-fixed) on the --m3-surface-container-high list surface, not with --m3-primary-outline. It misses 3:1 in every column; production wiring should point it at --m3-primary-outline.'
 		},
 		{
 			id: 'row-selected-edge',
