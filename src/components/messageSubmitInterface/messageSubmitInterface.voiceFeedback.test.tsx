@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
 	encryptRoom: vi.fn().mockResolvedValue(undefined),
 	translate: (key: string) => key,
 	composerClear: vi.fn(),
+	composerFocus: vi.fn(),
 	typeDraft: (_text: string) => {},
 	matrixService: { getClient: () => null }
 }));
@@ -99,7 +100,7 @@ vi.mock('./TipTapComposer', async () => {
 				isActionActive: () => false,
 				setInsertionMarker: () => {},
 				setText: () => {},
-				focus: () => {}
+				focus: () => mocks.composerFocus()
 			}));
 			return (
 				<div
@@ -754,6 +755,42 @@ describe('voice note review before sending (#1142)', () => {
 			screen.getByRole('button', { name: 'voicePlayer.play' })
 		).toBeTruthy();
 		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('starts one recorder when the microphone is clicked twice while the permission is pending', async () => {
+		let grant: (stream: unknown) => void = () => {};
+		vi.mocked(navigator.mediaDevices.getUserMedia).mockClear();
+		vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValueOnce(
+			new Promise((resolve) => {
+				grant = resolve;
+			}) as Promise<MediaStream>
+		);
+		render(<Composer />);
+		fireEvent.click(screen.getByRole('button', MIC));
+		fireEvent.click(screen.getByRole('button', MIC));
+		await act(async () => {
+			grant({ getTracks: () => [{ stop: trackStop }] });
+		});
+
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce();
+		await waitFor(() => expect(Recorder.current?.state).toBe('recording'));
+	});
+
+	it('moves keyboard focus into the review after Stop, and back to the editor after Discard', async () => {
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+
+		const review = screen.getByRole('group', {
+			name: 'voice.recording.preview'
+		});
+		await waitFor(() => expect(document.activeElement).toBe(review));
+
+		mocks.composerFocus.mockClear();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		);
+		await waitFor(() => expect(mocks.composerFocus).toHaveBeenCalled());
 	});
 
 	it('does not start a recorder when the composer unmounts while the microphone permission is pending', async () => {

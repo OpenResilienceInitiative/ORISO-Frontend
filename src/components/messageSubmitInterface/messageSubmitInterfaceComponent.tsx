@@ -517,6 +517,10 @@ export const MessageSubmitInterfaceComponent = ({
 	// Bumped when the composer unmounts: a permission prompt or recorder
 	// `stop` event that settles afterwards must not start or keep a take.
 	const voiceLifecycleRef = useRef(0);
+	// A second click while the permission prompt is open must not open a
+	// second stream (the first would keep the microphone on).
+	const voiceStartPendingRef = useRef(false);
+	const voiceReviewRef = useRef<HTMLDivElement>(null);
 	const mediaStreamRef = useRef<MediaStream | null>(null);
 	const voiceRecordingTimerRef = useRef<number | null>(null);
 	const voiceRecordingDurationRef = useRef(0);
@@ -2270,6 +2274,13 @@ export const MessageSubmitInterfaceComponent = ({
 		cleanupAttachment();
 	}, [attachmentUpload, cleanupAttachment, uploadProgress]);
 
+	// #1142: after Discard the review card unmounts; hand focus back to the
+	// editor so a keyboard user is not dropped on <body>.
+	const handleVoiceDiscard = useCallback(() => {
+		handleAttachmentRemoval();
+		requestAnimationFrame(() => composerRef.current?.focus());
+	}, [handleAttachmentRemoval]);
+
 	const getMessageSubmitInfo = useCallback((): MessageSubmitInfoInterface => {
 		let infoData;
 		if (activeInfo === INFO_TYPES.ABSENT) {
@@ -3228,7 +3239,9 @@ export const MessageSubmitInterfaceComponent = ({
 			!hasUploadFunctionality ||
 			!isVoiceMessageEnabledForCurrentChat ||
 			attachmentSelected ||
-			uploadProgress
+			uploadProgress ||
+			voiceStartPendingRef.current ||
+			mediaRecorderRef.current
 		) {
 			return;
 		}
@@ -3247,10 +3260,16 @@ export const MessageSubmitInterfaceComponent = ({
 		});
 		const startedFor = voiceDestinationRef.current;
 		const startedLifecycle = voiceLifecycleRef.current;
+		voiceStartPendingRef.current = true;
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				audio: true
-			});
+			let stream: MediaStream;
+			try {
+				stream = await navigator.mediaDevices.getUserMedia({
+					audio: true
+				});
+			} finally {
+				voiceStartPendingRef.current = false;
+			}
 			if (
 				voiceDestinationRef.current !== startedFor ||
 				voiceLifecycleRef.current !== startedLifecycle
@@ -3415,6 +3434,14 @@ export const MessageSubmitInterfaceComponent = ({
 	 */
 	const isVoiceInsertionPending =
 		isVoiceRecording || isVoiceAttachmentSelected;
+	// #1142: Stop unmounts the button that had focus. Move focus to the
+	// review (announced by its group label) instead of dropping it on <body>.
+	const isVoiceReviewOpen = isVoiceAttachmentSelected && !!voicePreviewUrl;
+	useEffect(() => {
+		if (isVoiceReviewOpen) {
+			voiceReviewRef.current?.focus();
+		}
+	}, [isVoiceReviewOpen]);
 	useEffect(() => {
 		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
 	}, [isVoiceInsertionPending]);
@@ -4619,6 +4646,8 @@ export const MessageSubmitInterfaceComponent = ({
 										<div
 											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"
 											role="group"
+											ref={voiceReviewRef}
+											tabIndex={-1}
 											aria-label={translate(
 												'voice.recording.preview'
 											)}
@@ -4644,9 +4673,7 @@ export const MessageSubmitInterfaceComponent = ({
 											<button
 												type="button"
 												className="textarea__voicePreview__discard"
-												onClick={
-													handleAttachmentRemoval
-												}
+												onClick={handleVoiceDiscard}
 												title={translate(
 													'voice.recording.discard'
 												)}
