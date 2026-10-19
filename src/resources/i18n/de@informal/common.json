@@ -429,6 +429,7 @@
 		"consent": {
 			"headline": "Bevor du schreibst",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimme der Datenschutzerklärung dieser Beratungsstelle zu, bevor du in der Gruppe schreibst.",
 			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
 			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}

@@ -50,10 +50,11 @@ const AssignmentRetry = ({ retry }: { retry: () => Promise<void> }) => {
  * group in her own session view (#1499).
  *
  * A hook of its own so the conditions are testable without mounting the authenticated app.
+ * Returns whether the link has been acted on (always true without one).
  */
 export const usePendingGroupChatJoin = (
 	userData: Partial<UserDataInterface> | undefined
-): void => {
+): boolean => {
 	const { joinGroupChat, tenantReady } = useJoinGroupChat();
 	const navigate = useNavigate();
 	const { t } = useTranslation();
@@ -68,13 +69,19 @@ export const usePendingGroupChatJoin = (
 		userData?.grantedAuthorities,
 		isAccountSetupPending(userData)
 	]);
-	const currentScope = useRef({ key: scopeKey });
+	const currentScope = useRef({ key: scopeKey, tenantId: tenant?.id });
 	if (currentScope.current.key !== scopeKey)
-		currentScope.current = { key: scopeKey };
+		currentScope.current = { key: scopeKey, tenantId: tenant?.id };
 	const scope = currentScope.current;
 	const mounted = useRef(false);
 	const inFlight = useRef<typeof scope | null>(null);
 	const noticeId = useRef<string | number>(undefined);
+	/* Whether the link has been acted on: assigned and in the entry room,
+	   refused, or a notice shown. The waiting room after "Registrieren"
+	   holds its gate until then (#1219). */
+	const [settled, setSettled] = useState(
+		() => !new URLSearchParams(window.location.search).get('gcid')
+	);
 	useEffect(() => {
 		mounted.current = true;
 		return () => {
@@ -93,10 +100,25 @@ export const usePendingGroupChatJoin = (
 		},
 		[scope]
 	);
+	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
+		() => new URLSearchParams(window.location.search).get('gcid')
+	);
 	const assign = useCallback(
 		async (gcid: string, operationScope: typeof scope): Promise<void> => {
 			const isCurrent = () =>
 				mounted.current && currentScope.current === operationScope;
+			/* The scope changed while the request ran, so its answer is
+			   discarded. The waiting room still waits on the link. After a
+			   profile refresh in the same tenant, join it again in the current
+			   scope. A link from another tenant is dropped; it is settled so
+			   that the gate still opens. */
+			const requeueIfStale = () => {
+				if (!mounted.current || currentScope.current === operationScope)
+					return;
+				if (currentScope.current.tenantId === operationScope.tenantId)
+					setPendingGroupChatId(gcid);
+				else setSettled(true);
+			};
 			if (!isCurrent() || inFlight.current === operationScope) return;
 			inFlight.current = operationScope;
 			// Retire this operation's previous notice before the next HTTP result.
@@ -113,7 +135,12 @@ export const usePendingGroupChatJoin = (
 			const entryRoom = groupEntryRoomPath(invite?.seriesId ?? gcid);
 			try {
 				const assigned = await joinGroupChat(gcid);
-				if (assigned && isCurrent()) {
+				if (!isCurrent()) {
+					requeueIfStale();
+					return;
+				}
+				setSettled(true);
+				if (assigned) {
 					if (noticeId.current)
 						notificationsRef.current?.removeNotification(
 							noticeId.current,
@@ -123,7 +150,11 @@ export const usePendingGroupChatJoin = (
 					navigate(entryRoom, { replace: true });
 				}
 			} catch (error) {
-				if (!isCurrent()) return;
+				if (!isCurrent()) {
+					requeueIfStale();
+					return;
+				}
+				setSettled(true);
 				const notice = getCounsellingDpaNotification(error, t, {
 					groupJoin: true
 				});
@@ -152,10 +183,6 @@ export const usePendingGroupChatJoin = (
 		},
 		[joinGroupChat, navigate, t]
 	);
-	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
-		() => new URLSearchParams(window.location.search).get('gcid')
-	);
-
 	useEffect(() => {
 		if (!pendingGroupChatId || !tenantReady) {
 			return;
@@ -197,8 +224,11 @@ export const usePendingGroupChatJoin = (
 				}
 				navigate(consultantGroupChatPath(seriesId), { replace: true });
 			}
+			setSettled(true);
 			return;
 		}
 		void assign(gcid, scope);
 	}, [pendingGroupChatId, tenantReady, navigate, userData, assign, scope]);
+
+	return settled;
 };

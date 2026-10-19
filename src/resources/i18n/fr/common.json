@@ -893,6 +893,7 @@
 		},
 		"loadError": {
 			"consultants": "Les collègues n'ont pas pu être chargés.",
+			"info": "Les informations du chat n'ont pas pu être chargées.",
 			"retry": "Réessayer",
 			"topics": "Les sujets n'ont pas pu être chargés."
 		},
@@ -910,6 +911,7 @@
 			"headline": "Infos sur le chat",
 			"settings": {
 				"agency": "Service de consultation",
+				"agencyLine": "Service de consultation : {{name}}",
 				"createDate": "Date de création",
 				"creator": "Créateur",
 				"duration": "Durée",
@@ -1298,6 +1300,7 @@
 		"consent": {
 			"headline": "Avant d'écrire",
 			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
+			"descriptionNamed": "Ce groupe est animé par {{agency}}. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
 			"reject": "Refuser",
 			"accept": "J'accepte",
 			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",

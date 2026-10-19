@@ -154,6 +154,63 @@ describe('usePendingGroupChatJoin', () => {
 		);
 	});
 
+	/* The waiting room after "Registrieren" opens its gate only once the
+	   assignment has settled, or the click lands before the entry room. */
+	it('reports the assignment as settled only after it has landed', async () => {
+		let finish: (assigned: boolean) => void = () => undefined;
+		joinGroupChat.mockReturnValue(
+			new Promise<boolean>((resolve) => (finish = resolve))
+		);
+
+		const { result } = renderHook(() => usePendingGroupChatJoin(settled));
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalled());
+		expect(result.current).toBe(false);
+
+		finish(true);
+		await waitFor(() => expect(result.current).toBe(true));
+		expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+			replace: true
+		});
+	});
+
+	/* The profile can change while the assignment runs. Its answer is then
+	   discarded, so the link must be joined again rather than dropped, or the
+	   waiting room never opens its gate. */
+	it('joins again when the profile changes while the assignment runs', async () => {
+		let finishStale: (assigned: boolean) => void = () => undefined;
+		joinGroupChat.mockReturnValueOnce(
+			new Promise<boolean>((resolve) => (finishStale = resolve))
+		);
+
+		const { result, rerender } = renderHook(
+			({ userData }) => usePendingGroupChatJoin(userData),
+			{ initialProps: { userData: settled } }
+		);
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalledTimes(1));
+
+		rerender({ userData: { ...settled, userId: 'reloaded' } });
+		finishStale(true);
+
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalledTimes(2));
+		await waitFor(() => expect(result.current).toBe(true));
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+			replace: true
+		});
+	});
+
+	it('has nothing to wait for without a group link', () => {
+		window.history.replaceState({}, '', '/');
+		const { result } = renderHook(() => usePendingGroupChatJoin(settled));
+		expect(result.current).toBe(true);
+	});
+
+	it('reports a refused assignment as settled too', async () => {
+		joinGroupChat.mockRejectedValue(new Error('CONFLICT'));
+		const { result } = renderHook(() => usePendingGroupChatJoin(settled));
+		await waitFor(() => expect(result.current).toBe(true));
+	});
+
 	/**
 	 * #1499: a counsellor, the group's own moderator included, landed in the
 	 * client's entry room — the assignment is a client action (404 for her)

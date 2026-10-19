@@ -381,7 +381,11 @@ export const Mobile: Story = {
 	globals: phone390Globals
 };
 
-/** Frozen content can be read without leaving the chat or opening setup. */
+/**
+ * Frozen content can be read without leaving the chat or opening setup. One
+ * complete message: greeting, questions (emergency numbers last, red,
+ * collapsed) and goodbye share one bubble (Frank, 15.10.).
+ */
 export const CompactFaq: Story = {
 	args: { bausteine: platformDefaults(OPEN_STATE), skipAnimation: true },
 	play: async ({ canvasElement }) => {
@@ -396,7 +400,13 @@ export const CompactFaq: Story = {
 		).toBeVisible();
 		await userEvent.click(question);
 		await expect(detail).not.toHaveAttribute('open');
-		// Crisis numbers stay outside the collapsed FAQ.
+		// Crisis numbers: last question, collapsed, red with a phone icon.
+		const emergency = canvas
+			.getByText('Wenn es nicht warten kann')
+			.closest('details');
+		await expect(emergency).not.toHaveAttribute('open');
+		await expect(emergency).toHaveClass('erstantwort__faq--emergency');
+		await userEvent.click(canvas.getByText('Wenn es nicht warten kann'));
 		await expect(canvas.getByText(/0800 111 0 111/)).toBeVisible();
 	}
 };

@@ -893,6 +893,7 @@
 		},
 		"loadError": {
 			"consultants": "Meslektaşlar yüklenemedi.",
+			"info": "Sohbet bilgileri yüklenemedi.",
 			"retry": "Tekrar deneyin",
 			"topics": "Konular yüklenemedi."
 		},
@@ -910,6 +911,7 @@
 			"headline": "Sohbet bilgileri",
 			"settings": {
 				"agency": "Danışma Merkezi",
+				"agencyLine": "Danışma Merkezi: {{name}}",
 				"createDate": "Oluşturulma tarihi",
 				"creator": "Yaratıcı",
 				"duration": "Süre",
@@ -1298,6 +1300,7 @@
 		"consent": {
 			"headline": "Yazmadan önce",
 			"description": "Bu grup bir danışma merkezi tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin.",
+			"descriptionNamed": "Bu grup {{agency}} tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin.",
 			"reject": "Reddet",
 			"accept": "Kabul ediyorum",
 			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz.",
