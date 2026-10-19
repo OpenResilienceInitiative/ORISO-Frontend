@@ -19,7 +19,7 @@ import {
 } from '../session/sessionHelpers';
 
 const CANDIDATE_PAGE_SIZE = 50;
-/** Upper bound for one person's lookup (20 x 50 cases). */
+/** Upper bound for the blank roster load (20 x 50 cases). */
 const CANDIDATE_MAX_PAGES = 20;
 const SEARCH_DEBOUNCE_MS = 250;
 const NO_CASES: ListItemInterface[] = [];
@@ -48,79 +48,81 @@ export const mergeListItems = (...lists: ListItemInterface[][]) => {
 	return merged;
 };
 
+type CasePage = { sessions?: ListItemInterface[]; total?: number };
+
 /**
- * Every candidate page for one query (FE#1725 US2: all of her cases).
- * `capped` is set when the page limit stopped the load while more cases
- * may exist.
+ * Pages a case list from offset 0 until the reported total, an empty page
+ * or (without a total) a short page. `capped` is set when `maxPages`
+ * stopped it while more cases may exist.
  */
-const fetchAllCandidates = async (
-	query: string,
-	archived: boolean,
-	signal?: AbortSignal
+const pageThrough = async (
+	fetchPage: (offset: number, count: number) => Promise<CasePage>,
+	maxPages = Number.POSITIVE_INFINITY
 ) => {
 	const found: ListItemInterface[] = [];
-	for (let page = 0; page < CANDIDATE_MAX_PAGES; page++) {
-		const { sessions = [], total } = await apiGetCaseHandoverCandidates({
-			query,
-			offset: page * CANDIDATE_PAGE_SIZE,
-			count: CANDIDATE_PAGE_SIZE,
-			archived,
-			signal
-		});
+	for (let page = 0; page < maxPages; page++) {
+		const { sessions = [], total } = await fetchPage(
+			found.length,
+			CANDIDATE_PAGE_SIZE
+		);
 		found.push(...sessions);
-		const reachedTotal = typeof total === 'number' && total > 0;
-		if (
-			sessions.length < CANDIDATE_PAGE_SIZE ||
-			(reachedTotal && found.length >= total)
-		) {
-			return { cases: found, capped: false };
-		}
+		const done =
+			typeof total === 'number' && total > 0
+				? found.length >= total
+				: sessions.length < CANDIDATE_PAGE_SIZE;
+		if (!sessions.length || done) return { cases: found, capped: false };
 	}
 	return { cases: found, capped: true };
 };
 
 /**
+ * Candidate pages for one query. Only the blank roster passes a page cap
+ * (FE#1725 US2: a picked person's lookup always runs to the end).
+ */
+const fetchAllCandidates = (
+	query: string,
+	archived: boolean,
+	signal?: AbortSignal,
+	maxPages?: number
+) =>
+	pageThrough(
+		(offset, count) =>
+			apiGetCaseHandoverCandidates({
+				query,
+				offset,
+				count,
+				archived,
+				signal
+			}),
+		maxPages
+	);
+
+/**
  * The cases of one person in my own list, paged to the end: the list has no
  * server-side person filter, and the candidate endpoint leaves out my own
- * cases. No scan cap, so a client deep in a long list is never missed;
- * paging stops at the reported total, an empty page, or a short page.
+ * cases.
  */
 const fetchOwnListCases = async (
 	personId: string,
 	archived: boolean,
 	signal?: AbortSignal
 ) => {
-	const matched: ListItemInterface[] = [];
-	let seen = 0;
-	for (;;) {
-		let response;
-		try {
-			response = await apiGetConsultantSessionList({
-				type: SESSION_LIST_TYPES.MY_SESSION,
-				offset: seen,
-				count: CANDIDATE_PAGE_SIZE,
-				sessionListTab: archived ? SESSION_LIST_TAB_ARCHIVE : undefined,
-				signal
-			});
-		} catch (error) {
+	const { cases } = await pageThrough((offset, count) =>
+		apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.MY_SESSION,
+			offset,
+			count,
+			sessionListTab: archived ? SESSION_LIST_TAB_ARCHIVE : undefined,
+			signal
+		}).catch((error) => {
 			// 204: nothing (more) in the list.
-			if ((error as Error)?.message === FETCH_ERRORS.EMPTY) break;
+			if ((error as Error)?.message === FETCH_ERRORS.EMPTY) {
+				return { sessions: [] };
+			}
 			throw error;
-		}
-		const { sessions = [], total } = response;
-		matched.push(
-			...sessions.filter((item) =>
-				personKeysOfSession(item).includes(personId)
-			)
-		);
-		seen += sessions.length;
-		const done =
-			typeof total === 'number' && total > 0
-				? seen >= total
-				: sessions.length < CANDIDATE_PAGE_SIZE;
-		if (!sessions.length || done) break;
-	}
-	return matched;
+		})
+	);
+	return cases.filter((item) => personKeysOfSession(item).includes(personId));
 };
 
 /**
@@ -256,7 +258,7 @@ export const useCaseHandoverSearch = ({
 				? prev
 				: { archived, cases: [], capped: false, status: 'loading' }
 		);
-		fetchAllCandidates('', archived, controller.signal)
+		fetchAllCandidates('', archived, controller.signal, CANDIDATE_MAX_PAGES)
 			.then(({ cases, capped }) => {
 				if (!cancelled)
 					setEligible({ archived, cases, capped, status: 'ready' });

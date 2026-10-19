@@ -548,6 +548,43 @@ describe('case-handover search — people (FE#1725)', () => {
 		await waitFor(() => expect(listText(view)).toContain('30777'));
 	});
 
+	it("finds a picked colleague's 1,001st matching case", async () => {
+		const deepCase = makeCase(19, 'Client deep', patty, SPRINGFIELD, 19999);
+		// 999 clients of Marge also match "patty"; Patty's last case is the
+		// 1,001st match.
+		const fans = Array.from({ length: 999 }, (_, index) =>
+			makeCase(
+				6000 + index,
+				`patty fan ${index}`,
+				marge,
+				SPRINGFIELD,
+				41000
+			)
+		);
+		const matches = [pattyCases[0], ...fans, deepCase];
+		http.getCandidates.mockImplementation(
+			async ({ query, offset = 0, count = 50 }) =>
+				query === ''
+					? { sessions: [pattyCases[0]], total: 1 }
+					: query === 'patty'
+						? {
+								sessions: matches.slice(offset, offset + count),
+								total: matches.length
+							}
+						: { sessions: [], total: 0 }
+		);
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(1)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+
+		await waitFor(() => expect(listText(view)).toContain('Client deep'));
+		expect(listText(view)).toContain('Client eleven');
+	});
+
 	it('loads all cases of a colleague found through one of them', async () => {
 		const view = await ready(renderList());
 
