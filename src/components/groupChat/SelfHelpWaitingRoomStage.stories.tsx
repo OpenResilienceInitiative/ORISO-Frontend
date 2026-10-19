@@ -18,6 +18,7 @@ import {
 	expectOverdueClockOnOneRow
 } from './waitingClock/waitingClockStoryChecks';
 import './joinChat.styles';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import {
 	effectiveBackground,
 	wcagContrast
@@ -29,13 +30,9 @@ import {
  * group's row, and the white chat card with the waiting room and "Chat
  * starten".
  *
- * Frank (21.09.2026): "bringe das design einer selbsthilfe gruppe ins zentrum
- * sonst ist es wie gerade abgeschnitten". Cause: the waiting room's content
- * carries the chat timeline's class `session__content`, which reserves
- * 240–344 px at the bottom for a composer the waiting room does not have. The
- * clock was pushed out of the centre and the panel scrolled. The fix lives in
- * `joinChat.styles.scss`; `Before fix` re-applies the old reserve so the two
- * can be compared side by side.
+ * Since #1689 it is the same `GroupWaitingRoom` the advice seeker sees in the
+ * card and behind the group link — her own words on the clock, "Chat starten"
+ * in the bar, no consent — so the shared waiting-room contract holds here too.
  */
 
 const OVERDUE_SECONDS = -252;
@@ -47,75 +44,44 @@ const FUTURE_SECONDS = 2 * 86400 + 3 * 3600 + 21 * 60 + 50;
 
 const desktop1280Globals = { viewport: { value: 'desktop1280' } };
 
-/** Re-creates the pre-#1499 layout: composer reserve, top-aligned on phones. */
-const BEFORE_FIX_CSS = `
-	.groupStage--beforeFix .joinChat__content.session__content {
-		justify-content: flex-start;
-		padding: 16px 16px calc(var(--composer-dock-height, 240px) + 24px);
-	}
-	@media screen and (width <= 1366px) {
-		.groupStage--beforeFix .joinChat__content.session__content {
-			padding-bottom: calc(var(--composer-dock-height, 320px) + 24px);
-		}
-	}
-	@media screen and (min-width: 900px) {
-		.groupStage--beforeFix .joinChat__content.session__content {
-			justify-content: center;
-		}
-	}
-`;
-
 const Stage = ({
 	layout,
-	deltaSeconds,
-	beforeFix = false
+	deltaSeconds
 }: {
 	layout: 'desktop' | 'mobile';
 	deltaSeconds: number;
-	beforeFix?: boolean;
 }) => {
 	const listItem = React.useMemo(
 		() => buildGroupStageListItem(deltaSeconds),
 		[deltaSeconds]
 	);
 	return (
-		<div className={beforeFix ? 'groupStage--beforeFix' : undefined}>
-			{beforeFix && <style>{BEFORE_FIX_CSS}</style>}
-			<GroupChatStage listItem={listItem} layout={layout}>
-				<JoinGroupChatView />
-			</GroupChatStage>
-		</div>
+		<GroupChatStage listItem={listItem} layout={layout}>
+			<JoinGroupChatView />
+		</GroupChatStage>
 	);
 };
 
 /**
- * The waiting-room block (heading, clock, caption, toggle, rules) must sit in
- * the middle of the free panel height and must not make the panel scroll.
+ * The shared waiting-room contract in its chat-card form, and the
+ * moderator's own bar: "Chat starten" live before the group opens, no
+ * "Beitreten" and no consent sheet (#1689).
  */
 const assertCentred = async (canvasElement: HTMLElement) => {
-	const panel =
-		canvasElement.querySelector<HTMLElement>('.joinChat__content');
-	await expect(panel).not.toBeNull();
 	await waitFor(() =>
-		expect(panel!.querySelector('.joinChat__waitingBox')).not.toBeNull()
+		expect(
+			canvasElement.querySelector('[data-cy="group-entry-room"]')
+		).not.toBeNull()
 	);
-	const children = Array.from(panel!.children) as HTMLElement[];
-	const panelRect = panel!.getBoundingClientRect();
-	const top = Math.min(
-		...children.map((child) => child.getBoundingClientRect().top)
-	);
-	const bottom = Math.max(
-		...children.map((child) => child.getBoundingClientRect().bottom)
-	);
-	// Never above the panel's top edge — that part could not be scrolled to.
-	await expect(top).toBeGreaterThanOrEqual(panelRect.top - 1);
-
-	if (panel!.scrollHeight <= panel!.clientHeight + 1) {
-		// Room to spare: the gap above equals the gap below (±16 px rounding).
-		const gapAbove = top - panelRect.top;
-		const gapBelow = panelRect.bottom - bottom;
-		await expect(Math.abs(gapAbove - gapBelow)).toBeLessThanOrEqual(16);
-	}
+	await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+	const start = within(canvasElement).getByRole('button', {
+		name: 'Chat starten'
+	});
+	await expect(start).toBeEnabled();
+	await expect(
+		within(canvasElement).queryByRole('button', { name: 'Beitreten' })
+	).toBeNull();
+	await expect(within(canvasElement).queryByRole('checkbox')).toBeNull();
 };
 
 const meta = {
@@ -129,7 +95,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'#1499 item 1 — the self-help group before its start, as the counsellor sees it in the app: the waiting room (clock, caption, animation switch, rules) centred in the white chat card, "Chat starten" at the bottom. Compare with `Before fix`.'
+					'#1499 item 1 — the self-help group before its start, as the counsellor sees it in the app. Since #1689 the same `GroupWaitingRoom` as the advice seeker: clock with the moderator\'s words in the white chat card, "Chat starten" in the bar.'
 			}
 		}
 	}
@@ -322,13 +288,4 @@ export const LightBrandColour390: Story = {
 			'rgb(180, 221, 238)'
 		);
 	}
-};
-
-/** The shipped layout before #1499, for comparison only. */
-export const BeforeFix1440: Story = {
-	name: 'Before fix · 1440',
-	globals: desktop1440Globals,
-	render: () => (
-		<Stage layout="desktop" deltaSeconds={OVERDUE_SECONDS} beforeFix />
-	)
 };

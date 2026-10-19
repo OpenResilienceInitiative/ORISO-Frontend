@@ -320,13 +320,17 @@ export const JoinGroupChatView = ({
 		</>
 	);
 
-	/* An advice seeker waits in the same room as behind the group's link —
-	   clock, "Mehr erfahren", calendar and "Beitreten" in the bar — only
-	   inside the chat card instead of on the stage (#1219; Frank,
-	   2026-10-16: the room in the app must look like the one behind the
-	   link). The moderator keeps the view below: hers starts the chat. */
-	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+	/* Everyone waits in the same room as behind the group's link — clock,
+	   "Mehr erfahren", calendar and the main action in the bar — only inside
+	   the chat card instead of on the stage (#1219; Frank, 2026-10-16: the
+	   room in the app must look like the one behind the link). The moderator
+	   gets her own words and "Chat starten" (#1689). Internal team chats keep
+	   the plain view below: no clock, no rules (#979). */
+	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	if (isAsker || showRules) {
 		const item = activeSession.item;
+		const topic =
+			typeof item.topic === 'string' ? item.topic : item.topic?.name;
 		return (
 			<div className="session joinChat joinChat--room">
 				<SessionHeaderComponent
@@ -335,10 +339,16 @@ export const JoinGroupChatView = ({
 				/>
 				<GroupWaitingRoom
 					embedded
-					topicName={getGroupWaitingRoomTopic(
-						item,
-						userData.dataPrivacyConfirmation
-					)}
+					audience={canStartChat ? 'moderator' : 'participant'}
+					primaryLabel={isAsker ? undefined : buttonItem.label}
+					topicName={
+						isAsker
+							? getGroupWaitingRoomTopic(
+									item,
+									userData.dataPrivacyConfirmation
+								)
+							: topic || undefined
+					}
 					agencyName={item.assignedAgencies?.[0]?.name}
 					agencyId={item.assignedAgencies?.[0]?.id}
 					plannedStart={plannedStart}

@@ -54,6 +54,14 @@ export interface GroupWaitingRoomProps {
 	embedded?: boolean;
 	/** "Beitreten" stays shut although the room is open (a banned member). */
 	joinBlocked?: boolean;
+	/**
+	 * Who waits. `moderator` is the counsellor who opens the group: the clock
+	 * speaks to her, the bar says "Chat starten" and is live before the
+	 * group is open, and no consent is asked (#1689).
+	 */
+	audience?: 'participant' | 'moderator';
+	/** The bar's main label when it is not "Beitreten". */
+	primaryLabel?: string;
 }
 
 /**
@@ -83,7 +91,9 @@ export const GroupWaitingRoom = ({
 	nowMs,
 	showLoginLink = false,
 	embedded = false,
-	joinBlocked = false
+	joinBlocked = false,
+	audience = 'participant',
+	primaryLabel
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -141,7 +151,8 @@ export const GroupWaitingRoom = ({
 		/>
 	);
 
-	const joinLabel = tr('join', 'Beitreten');
+	const moderator = audience === 'moderator';
+	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
 	const calendarLabel = t(
 		'groupChat.calendar.add',
 		'Zum Kalender hinzufügen'
@@ -150,8 +161,9 @@ export const GroupWaitingRoom = ({
 		setCalendarAnchor(event.currentTarget);
 	const joinAction = {
 		label: joinLabel,
-		onClick: () => setAsking(true),
-		disabled: !active || joinBusy || joinBlocked,
+		// Staff agreed to the documents with their contract, not here.
+		onClick: moderator ? onJoin : () => setAsking(true),
+		disabled: (!active && !moderator) || joinBusy || joinBlocked,
 		testId: 'group-entry-join'
 	};
 	const calendarAction = plannedStart
@@ -214,6 +226,7 @@ export const GroupWaitingRoom = ({
 							fitHeight={clockHeight}
 							spacing="tight"
 							labelsOutside
+							audience={audience}
 							reducedMotion={motionOff}
 							hideMotionToggle
 							gap={8}
@@ -230,12 +243,20 @@ export const GroupWaitingRoom = ({
 								mb: 1
 							}}
 						>
-							{active
-								? tr('openHeadline', 'Die Gruppe hat begonnen.')
-								: tr(
-										'noTimeHeadline',
-										'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
-									)}
+							{moderator && !active
+								? t(
+										'groupChat.join.waitingArea.countdown.moderatorSubtitle',
+										'Sie können den Chat starten, sobald Sie bereit sind.'
+									)
+								: active
+									? tr(
+											'openHeadline',
+											'Die Gruppe hat begonnen.'
+										)
+									: tr(
+											'noTimeHeadline',
+											'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
+										)}
 						</Typography>
 						{welcomeText && (
 							<Typography
@@ -359,7 +380,7 @@ export const GroupWaitingRoom = ({
 	    gesperrt"). The phone keeps both by shortening the
 	    calendar label, not by dropping a button. */
 	const bar =
-		asking && active ? (
+		asking && active && !moderator ? (
 			<WaitingRoomBar
 				contained={embedded}
 				consent={
