@@ -16,7 +16,7 @@ import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { EntryRoomLoading } from './entryRoom/GroupEntryRoom';
 import { GroupConsentGate } from './consent/GroupConsentGate';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
-import { JoinGroupChatView } from './JoinGroupChatView';
+import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import {
 	buildGroupStageListItem,
 	GROUP_STAGE_CHAT_ID,
@@ -191,17 +191,34 @@ const groupRoomRoute = {
 	}
 };
 
+/** The running group a member enters before agreeing, as the session
+    renders it: header, then the gate where messages and composer would be. */
 const GateOverGroupRoom = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
-	const listItem = React.useMemo(() => buildGroupStageListItem(-252), []);
+	const stopOrLeaveRef = React.useRef(false);
+	const listItem = React.useMemo(() => {
+		const item = buildGroupStageListItem(-15 * 60);
+		return {
+			...item,
+			chat: { ...item.chat, active: true, subscribed: true }
+		} as typeof item;
+	}, []);
 	return (
 		<GroupChatStage listItem={listItem} layout={layout}>
-			<JoinGroupChatView />
-			<LegalLinksContext.Provider value={gateLegalLinks}>
-				<GroupConsentGate
-					agencyId={null}
-					onAccepted={() => undefined}
+			<div className="session">
+				<SessionHeaderComponent
+					isJoinGroupChatView={false}
+					bannedUsers={[]}
+					hasUserInitiatedStopOrLeaveRequest={stopOrLeaveRef}
 				/>
-			</LegalLinksContext.Provider>
+				<div className="session__content session__content--groupConsentGate">
+					<LegalLinksContext.Provider value={gateLegalLinks}>
+						<GroupConsentGate
+							agencyId={null}
+							onAccepted={() => undefined}
+						/>
+					</LegalLinksContext.Provider>
+				</div>
+			</div>
 		</GroupChatStage>
 	);
 };
