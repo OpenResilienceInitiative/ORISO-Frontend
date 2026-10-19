@@ -21,6 +21,17 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import {
+	HandoverDepartment,
+	rememberHandoverDepartment,
+	rememberHandoverGroupJoin,
+	toHandoverDepartment
+} from '../app/registrationLoader/handoverDepartment';
+import {
+	markHandoverMilestone,
+	resetHandoverProgress
+} from '../app/registrationLoader/handoverProgress';
+import { warmAppChunks } from '../app/appChunks';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import {
 	RegistrationContext,
@@ -384,6 +395,20 @@ export const Registration = () => {
 		];
 	}, [availableSteps, currStepIndex, makeStepUrl]);
 
+	/* On the step that ends in "Registrieren", fetch the app's code while the
+	   person types, so the waiting room after the document load is not held
+	   up by downloads (#1219). Idle time only: the form comes first. */
+	const onLastStep = inviteEntry === 'entry' || !nextStepUrl;
+	useEffect(() => {
+		if (!onLastStep) return undefined;
+		if (typeof window.requestIdleCallback === 'function') {
+			const handle = window.requestIdleCallback(warmAppChunks);
+			return () => window.cancelIdleCallback(handle);
+		}
+		const timer = window.setTimeout(warmAppChunks, 1000);
+		return () => window.clearTimeout(timer);
+	}, [onLastStep]);
+
 	const mergedRegistrationData = useMemo(
 		() => ({
 			...registrationData,
@@ -401,6 +426,11 @@ export const Registration = () => {
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
+	/* The waiting room's legal links open the chosen counselling centre's
+	   documents, before and after the document load (ADR-022). */
+	const handoverDepartment: HandoverDepartment | null = toHandoverDepartment(
+		mergedRegistrationData
+	);
 	const selectedTopicLabel =
 		(selectedTopic
 			? getRegistrationTopicDisplay(selectedTopic, locale).title
@@ -644,11 +674,14 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		rememberHandoverDepartment(toHandoverDepartment(mergedData));
 		const groupJoin = getGroupJoin({
 			gcid: groupChatId,
 			aid: inviteAgencyId,
 			agencyId: mergedData.agency?.id
 		});
+		/* The app after the load shows the same words as this frame (#1219). */
+		rememberHandoverGroupJoin(Boolean(groupJoin));
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -686,6 +719,7 @@ export const Registration = () => {
 				REGISTRATION_DATA_VALIDATION[item].validation(data[item])
 			)
 		) {
+			resetHandoverProgress();
 			markRegistrationSubmitting();
 			/* The account either exists or it does not, and only the request
 			   below decides that. Everything after it is tidying up and
@@ -704,9 +738,11 @@ export const Registration = () => {
 				tenant,
 				() => {
 					accountCreated = true;
+					markHandoverMilestone('account');
 				}
 			)
 				.then(async () => {
+					markHandoverMilestone('signedIn');
 					/* Best-effort, every one of them: Web Storage throws when
 					   it is disabled or full (Safari's private mode is the
 					   classic), and none of this is worth not arriving in the
@@ -721,13 +757,19 @@ export const Registration = () => {
 					} catch {
 						sessionId = undefined;
 					}
+					markHandoverMilestone('sessions');
 					/* Keep a document load for both registration handover and
 					   the browser's password-save signal (#1208, #1402).
 					   A client-side transition can leave the submitted form
 					   painted while the app URL already shows. The welcome
 					   animation survives via POST_REGISTRATION_LOADER_KEY. */
+					/* A link the registration did not accept (another agency)
+					   joins no group afterwards either: no `gcid` for the app,
+					   so assignment and copy agree. */
 					redirectToApp(
-						getPostRegistrationGroupChatId(location.search),
+						groupJoin
+							? getPostRegistrationGroupChatId(location.search)
+							: undefined,
 						{ sessionId }
 					);
 				})
@@ -751,6 +793,7 @@ export const Registration = () => {
 						return;
 					}
 					clearRegistrationSubmitting();
+					resetHandoverProgress();
 					const dpaNotice = getCounsellingDpaNotification(error, t);
 					if (dpaNotice) {
 						addNotification(dpaNotice);
@@ -813,6 +856,24 @@ export const Registration = () => {
 			onRegisterClick
 		]
 	);
+
+	/* From the click on, the waiting room replaces the whole page, frame
+	   included: `RegistrationHandover` brings its own `WaitingRoomFrame` and is
+	   the same component `AuthenticatedApp` mounts after the document load, so both sides of that load paint the
+	   same screen (#1219). `forcedState` keeps the gate shut — there is no app
+	   behind it yet. The `catch` in `onRegisterClick` clears `isRegistering`,
+	   which puts the form back with its error. */
+	if (isRegistering) {
+		return (
+			<RegistrationHandover
+				ready={false}
+				forcedState="preparing"
+				onEnter={() => undefined}
+				department={handoverDepartment}
+				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
+			/>
+		);
+	}
 
 	if (inviteEntry === 'pending') {
 		return hasRegistrationDataError && retryRegistrationData ? (
@@ -884,37 +945,7 @@ export const Registration = () => {
 							maxWidth: '100%'
 						}}
 					>
-						{isRegistering ? (
-							/* The account is being created and auto-login is running.
-						   That wait used to show nothing but a disabled button,
-						   and the handover screen only appeared after the hard
-						   reload in `redirectToApp` — so it read as a separate
-						   thing rather than the cushion it is. Showing it here
-						   already means the same screen stands before and after
-						   the reload, and the reload reads as a flicker instead
-						   of a break.
-
-						   `forcedState="preparing"` rather than deriving from
-						   `ready`: there is no app behind the gate yet, so it
-						   must never open here. The 20s "slow" escape hatch is
-						   deliberately bypassed for the same reason.
-
-						   No cleanup is needed for the failure path: the `catch`
-						   in `onRegisterClick` resets `isRegistering`, which
-						   takes this branch away and puts the form back with its
-						   error notification. */
-							<RegistrationHandover
-								ready={false}
-								forcedState="preparing"
-								variant="inline"
-								onEnter={() => undefined}
-								copy={
-									joinsTheGroup
-										? groupJoinHandoverCopy
-										: undefined
-								}
-							/>
-						) : activeStep ? (
+						{activeStep ? (
 							<>
 								<Helmet>
 									<meta

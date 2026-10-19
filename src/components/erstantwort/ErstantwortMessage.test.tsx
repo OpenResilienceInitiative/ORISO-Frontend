@@ -170,7 +170,9 @@ it('keeps frozen FAQ and invitation words when the saved channel suppresses its 
 			]
 		});
 	setup(true, 'AGENCY_COUNSELLING', true, rawMessage);
-	expect(screen.getByText('Who reads this?').tagName).toBe('SUMMARY');
+	expect(
+		screen.getByText('Who reads this?').closest('summary')
+	).not.toBeNull();
 	expect(screen.getByText('You can add an email address.')).toBeTruthy();
 	expect(
 		screen.queryByRole('button', { name: /notificationChoice.email / })

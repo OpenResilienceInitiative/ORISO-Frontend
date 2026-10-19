@@ -65,6 +65,8 @@ export interface M3DialogProps {
 	 * free so Storybook can render both presentations side by side.
 	 */
 	'fullScreen'?: boolean;
+	/** Keep the content mounted while closed, e.g. to keep its scroll and state. */
+	'keepMounted'?: boolean;
 	'className'?: string;
 	/** DOM id of the dialog surface, for a trigger's `aria-controls`. */
 	'id'?: string;
@@ -107,6 +109,7 @@ export const M3Dialog = ({
 	severity = 'info',
 	width = 560,
 	fullScreen = false,
+	keepMounted = false,
 	className,
 	id,
 	'data-testid': testId
@@ -122,6 +125,7 @@ export const M3Dialog = ({
 			aria-describedby={description ? descriptionId : undefined}
 			maxWidth={false}
 			fullScreen={fullScreen}
+			keepMounted={keepMounted}
 			className={clsx(
 				'm3Dialog',
 				severity === 'error' && 'm3Dialog--error',

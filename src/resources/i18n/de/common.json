@@ -956,6 +956,7 @@
 		},
 		"loadError": {
 			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"info": "Die Chat-Info konnte nicht geladen werden.",
 			"retry": "Erneut versuchen",
 			"topics": "Die Themen konnten nicht geladen werden."
 		},
@@ -973,6 +974,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Beratungsstelle",
+				"agencyLine": "Beratungsstelle: {{name}}",
 				"createDate": "Erstellungsdatum",
 				"creator": "Ersteller",
 				"duration": "Dauer",
@@ -1271,6 +1273,7 @@
 		"consent": {
 			"headline": "Bevor Sie schreiben",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimmen Sie der Datenschutzerklärung dieser Beratungsstelle zu, bevor Sie in der Gruppe schreiben.",
 			"reject": "Ablehnen",
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",

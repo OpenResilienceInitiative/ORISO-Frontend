@@ -2,16 +2,22 @@ import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import CallRoundedIcon from '@mui/icons-material/CallRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
+import { bausteinById } from './erstantwortCatalogue';
 import { ResolvedBaustein } from './erstantwortResolve';
 import '../pseudonym/PseudonymCard.styles.scss';
 import './ErstantwortSequence.styles.scss';
 
 /**
  * ADR-018: renders the Erstantwort as a **staged** sequence of Carimat bubbles.
+ * In the compact (agency) layout that is one complete message — greeting,
+ * questions with the emergency numbers as last, red, collapsed row, goodbye —
+ * followed by the optional actions as their own bubbles (Frank, 15.10.).
  *
  * Staged, not all at once, for a reason that is not decoration: this is a
  * ~10-bubble message that lands on someone who has just written about something
@@ -66,6 +72,42 @@ const FAQ_IDS = new Set([
 	'noPersonalData',
 	'dataProtection'
 ]);
+const EMERGENCY_ID = 'emergencyNumbers';
+/* One complete message (Frank, 15.10.): greeting, the questions with the
+   emergency numbers as their last row, the free notice and the goodbye share
+   one bubble. Optional actions (e-mail, 2FA, …) follow as their own bubbles. */
+const MESSAGE_IDS = new Set([
+	'greeting',
+	...FAQ_IDS,
+	EMERGENCY_ID,
+	'freeNotice',
+	'closing'
+]);
+
+interface Bubble {
+	key: string;
+	items: ResolvedBaustein[];
+	combined: boolean;
+}
+
+const toBubbles = (
+	bausteine: ResolvedBaustein[],
+	compactFaq: boolean
+): Bubble[] => {
+	const single = (item: ResolvedBaustein): Bubble => ({
+		key: item.id,
+		items: [item],
+		combined: false
+	});
+	if (!compactFaq) return bausteine.map(single);
+	const message = bausteine.filter((item) => MESSAGE_IDS.has(item.id));
+	return [
+		...(message.length
+			? [{ key: 'message', items: message, combined: true }]
+			: []),
+		...bausteine.filter((item) => !MESSAGE_IDS.has(item.id)).map(single)
+	];
+};
 
 /**
  * No handler, no button. An enabled control that does nothing is worse than an
@@ -120,6 +162,92 @@ const BausteinContent = ({
 	</>
 );
 
+const CombinedMessage = ({
+	items,
+	slots,
+	onAction
+}: {
+	items: ResolvedBaustein[];
+	slots?: Record<string, React.ReactNode>;
+	onAction?: (kind: ErstantwortActionKind) => void;
+}) => {
+	const { t } = useTranslation();
+	const isQuestion = (item: ResolvedBaustein) =>
+		FAQ_IDS.has(item.id) || item.id === EMERGENCY_ID;
+	const lead = items.filter((item) => item.id === 'greeting');
+	// The emergency row always closes the list, collapsed but marked red.
+	const questions = [
+		...items.filter((item) => FAQ_IDS.has(item.id)),
+		...items.filter((item) => item.id === EMERGENCY_ID)
+	];
+	const tail = items.filter(
+		(item) => item.id !== 'greeting' && !isQuestion(item)
+	);
+	const content = (item: ResolvedBaustein) => (
+		<BausteinContent baustein={item} slots={slots} onAction={onAction} />
+	);
+
+	return (
+		<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--message">
+			{lead.map((item) => (
+				<React.Fragment key={item.id}>{content(item)}</React.Fragment>
+			))}
+			{questions.length > 0 && (
+				<div className="erstantwort__questions">
+					<h4 className="erstantwort__headline">
+						{t('erstantwort.faq.title', 'Häufige Fragen')}
+					</h4>
+					{questions.map((item) => {
+						const emergency = item.id === EMERGENCY_ID;
+						return (
+							<details
+								key={item.id}
+								className={`erstantwort__faq${
+									emergency
+										? ' erstantwort__faq--emergency'
+										: ''
+								}`}
+							>
+								<summary>
+									{emergency && (
+										<CallRoundedIcon
+											className="erstantwort__faqIcon"
+											aria-hidden="true"
+										/>
+									)}
+									<span className="erstantwort__faqLabel">
+										{item.headline ??
+											t(
+												bausteinById(item.id)
+													?.headlineKey ??
+													`erstantwort.faq.${item.id}`
+											)}
+									</span>
+									<ExpandMoreRoundedIcon
+										className="erstantwort__faqChevron"
+										aria-hidden="true"
+									/>
+								</summary>
+								{content(item)}
+							</details>
+						);
+					})}
+				</div>
+			)}
+			{tail.map((item) => (
+				<div key={item.id} className="erstantwort__part">
+					{item.headline && (
+						<h4 className="erstantwort__headline">
+							{item.headline}
+						</h4>
+					)}
+					{content(item)}
+				</div>
+			))}
+		</div>
+	);
+};
+
 export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	bausteine,
 	compactFaq = true,
@@ -133,7 +261,11 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const assistant = useAssistantIdentity();
-	const total = bausteine.length;
+	const bubbles = useMemo(
+		() => toBubbles(bausteine, compactFaq),
+		[bausteine, compactFaq]
+	);
+	const total = bubbles.length;
 
 	/* How many bubbles have revealed so far. With the animation skipped every
 	   bubble is present from the first render, which is what history re-renders
@@ -178,10 +310,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 		if (callback) callback();
 	}, [revealed]);
 
-	const visible = useMemo(
-		() => bausteine.slice(0, revealed),
-		[bausteine, revealed]
-	);
+	const visible = bubbles.slice(0, revealed);
 	/* Typing dots stand in for the bubble that is still coming, so a short
 	   Baustein is not immediately followed by the next one out of nowhere. */
 	const isTyping = revealed < total;
@@ -214,67 +343,32 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 							</span>
 						</div>
 
-						{visible.map((baustein) => {
-							const faq = compactFaq && FAQ_IDS.has(baustein.id);
-							const faqItems = visible.filter((item) =>
-								FAQ_IDS.has(item.id)
-							);
-							if (faq && baustein.id !== faqItems[0]?.id)
-								return null;
-							if (faq)
-								return (
-									<div
-										key="faq"
-										className="pseudonymCard__bubble erstantwort__bubble"
-									>
-										<h4 className="erstantwort__headline">
-											{t(
-												'erstantwort.faq.title',
-												'Häufige Fragen'
-											)}
-										</h4>
-										{faqItems.map((item) => (
-											<details
-												key={item.id}
-												className="erstantwort__faq"
-											>
-												<summary>
-													{item.headline ??
-														t(
-															`erstantwort.faq.${item.id}`,
-															item.id ===
-																'modalityNote'
-																? 'Wie läuft die Beratung ab?'
-																: 'Was passiert mit meinen Daten?'
-														)}
-												</summary>
-												<BausteinContent
-													baustein={item}
-													slots={slots}
-													onAction={onAction}
-												/>
-											</details>
-										))}
-									</div>
-								);
-							return (
+						{visible.map((bubble) =>
+							bubble.combined ? (
+								<CombinedMessage
+									key={bubble.key}
+									items={bubble.items}
+									slots={slots}
+									onAction={onAction}
+								/>
+							) : (
 								<div
-									key={baustein.id}
+									key={bubble.key}
 									className="pseudonymCard__bubble erstantwort__bubble"
 								>
-									{baustein.headline && (
+									{bubble.items[0].headline && (
 										<h4 className="erstantwort__headline">
-											{baustein.headline}
+											{bubble.items[0].headline}
 										</h4>
 									)}
 									<BausteinContent
-										baustein={baustein}
+										baustein={bubble.items[0]}
 										slots={slots}
 										onAction={onAction}
 									/>
 								</div>
-							);
-						})}
+							)
+						)}
 
 						{isTyping && (
 							<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--typing">

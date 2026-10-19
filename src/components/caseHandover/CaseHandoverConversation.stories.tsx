@@ -390,7 +390,7 @@ const regular: Story['play'] = async ({ canvasElement, parameters }) => {
 		{ name: label },
 		{ timeout: 10_000 }
 	);
-	expect(faq.tagName).toBe('SUMMARY');
+	expect(faq.closest('summary')).not.toBeNull();
 	expect(
 		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy();
