@@ -171,9 +171,11 @@ export const GroupWaitingRoom = ({
 	   (#1785); the dates after it still are. */
 	const started =
 		active || (plannedStart !== null && now >= plannedStart.getTime());
+	// An opened group runs its planned date even before the clock says so.
+	const runningMs = started ? plannedStart?.getTime() : undefined;
 	const datesAhead = (
 		upcomingDates ?? (plannedStart ? [plannedStart] : [])
-	).filter((date) => date.getTime() > now);
+	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
 	const canAddThis = Boolean(plannedStart) && !started;
 	const hasMoreDates = datesAhead.length > (canAddThis ? 1 : 0);
 	const backToRoom = useCallback(() => setView('room'), []);

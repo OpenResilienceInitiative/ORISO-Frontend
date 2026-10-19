@@ -382,6 +382,21 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		expect(screen.queryByTestId('group-entry-calendar')).toBeNull();
 	});
 
+	it('never offers the date that runs early as a further date', () => {
+		// Opened before its start: that date runs, the later ones are ahead.
+		renderDates({ active: true });
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+		expect(
+			document.querySelectorAll('[data-cy="group-upcoming-date"]')
+		).toHaveLength(2);
+	});
+
+	it('shows no "Weitere Termine" for a one-off group opened early', () => {
+		renderDates({ active: true, upcomingDates: [START] });
+		expect(screen.queryByTestId('group-entry-dates')).toBeNull();
+		expect(screen.queryByTestId('group-entry-calendar')).toBeNull();
+	});
+
 	it('shows no calendar row for a single date that has begun', () => {
 		renderDates({
 			nowMs: START.getTime() + 60e3,
