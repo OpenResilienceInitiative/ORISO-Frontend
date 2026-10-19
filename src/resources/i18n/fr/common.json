@@ -2082,7 +2082,7 @@
 			"descriptions": {
 				"sessions": "Choisissez pour chaque type d’échange s’il reçoit un bouton de filtre et comment vous êtes averti des nouveaux messages.",
 				"requests": "Choisissez pour chaque type de demande s’il reçoit un bouton de filtre et comment vous êtes averti des nouvelles demandes.",
-				"timeline": "Choisissez pour chaque type s’il apparaît dans la liste, reçoit un bouton de filtre et si vous recevez un e-mail.",
+				"timeline": "Choisissez pour chaque type s’il apparaît dans la liste, reçoit un bouton de filtre et si vous recevez un courriel.",
 				"timelineWithoutEmail": "Choisissez pour chaque type s’il apparaît dans la liste et reçoit un bouton de filtre."
 			},
 			"kindsHeadings": {
