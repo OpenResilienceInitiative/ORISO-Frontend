@@ -479,8 +479,6 @@ export const playClosingAnimation = async (
 		return { played: false };
 	}
 
-	const width = win.innerWidth;
-	const height = win.innerHeight;
 	const root = doc.createElement('div');
 	root.setAttribute('aria-hidden', 'true');
 	root.dataset.closingAnimation = options.variant;
@@ -500,8 +498,32 @@ export const playClosingAnimation = async (
 		if (phase === 'reveal') root.style.pointerEvents = 'none';
 	};
 
-	const origin = options.origin ?? { x: width / 2, y: height * 0.82 };
-	const plan = PLANS[options.variant]({ doc, root, width, height, origin });
+	let size = { width: win.innerWidth, height: win.innerHeight };
+	const origin = options.origin ?? {
+		x: size.width / 2,
+		y: size.height * 0.82
+	};
+	const buildPlan = () =>
+		PLANS[options.variant]({ doc, root, ...size, origin });
+	let plan = buildPlan();
+	/* The pieces are sized in pixels at the press. A viewport that changed
+	   while the screen is held covered (a phone turned) would show the room
+	   through the strip that was added, so the pieces are built again for the
+	   new size and set straight to where the cover ends. Mid-cover and mid-reveal
+	   the cover is not touched: the first is checked once it is covered, the
+	   second is over in a few hundred milliseconds. */
+	const refit = () => {
+		if (win.innerWidth === size.width && win.innerHeight === size.height) {
+			return;
+		}
+		size = { width: win.innerWidth, height: win.innerHeight };
+		root.replaceChildren();
+		plan = buildPlan();
+		plan.cover().forEach((animation) => animation.finish());
+	};
+	const onResize = () => {
+		if (root.dataset.closingPhase === 'covered') refit();
+	};
 
 	let over = false;
 	let giveRoomBack: (landing?: HTMLElement | null) => void = () => undefined;
@@ -510,6 +532,7 @@ export const playClosingAnimation = async (
 		giveRoomBack = shutRoomBehind(doc, root);
 		await settle(plan.cover());
 		setPhase('covered');
+		refit();
 		const stays = (await swap()) === false;
 		// Nothing took the person on, so the room is still there: open onto
 		// the button that was pressed instead of waiting for a destination.
@@ -535,9 +558,11 @@ export const playClosingAnimation = async (
 	const cap = new Promise<void>((resolve) => {
 		capTimer = win.setTimeout(resolve, closing.capMs);
 	});
+	win.addEventListener('resize', onResize);
 	try {
 		await Promise.race([sequence(), cap]);
 	} finally {
+		win.removeEventListener('resize', onResize);
 		win.clearTimeout(capTimer);
 		over = true;
 		root.remove();
