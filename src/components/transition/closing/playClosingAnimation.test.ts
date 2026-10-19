@@ -334,6 +334,60 @@ describe('playClosingAnimation', () => {
 			await pending;
 		});
 
+		/* The composer skips its own autofocus up to 900 px: a focused field opens
+		   the soft keyboard and shifts the header and the composer there. */
+		it('leaves the arrival field alone on a narrow viewport, as the composer does', async () => {
+			const width = Object.getOwnPropertyDescriptor(
+				window,
+				'innerWidth'
+			)!;
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: 390
+			});
+			try {
+				const late = installLateAnimate();
+				const gate = mountApp();
+				let editor!: HTMLElement;
+				const pending = playClosingAnimation({
+					variant: 'curtain',
+					focal: 'messageField',
+					onCovered: () => {
+						app().replaceChildren();
+						const field = document.createElement('div');
+						field.setAttribute(
+							'data-closing-focal',
+							'message-field'
+						);
+						field.getBoundingClientRect = () =>
+							({
+								left: 10,
+								top: 700,
+								width: 300,
+								height: 60
+							}) as DOMRect;
+						editor = document.createElement('div');
+						editor.setAttribute('contenteditable', 'true');
+						editor.tabIndex = 0;
+						field.appendChild(editor);
+						app().appendChild(field);
+					}
+				});
+				gate.blur();
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(50);
+				expect(app().hasAttribute('inert')).toBe(false);
+				expect(document.activeElement).not.toBe(editor);
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(200);
+				await pending;
+			} finally {
+				Object.defineProperty(window, 'innerWidth', width);
+			}
+		});
+
 		it('does not hand the keyboard to a button that is still shut, but to the field the person arrives in', async () => {
 			const late = installLateAnimate();
 			const gate = mountApp();

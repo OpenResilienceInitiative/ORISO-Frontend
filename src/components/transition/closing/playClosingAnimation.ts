@@ -1,6 +1,11 @@
 import { orisoInputColors } from '../../form/orisoInputDesign';
 import { transitionMotion } from '../transitionMotion';
-import { ClosingFocal, FocalPoint, resolveFocalPoint } from './closingFocal';
+import {
+	ClosingFocal,
+	FIELD_FOCUS_AFTER_WIDTH,
+	FocalPoint,
+	resolveFocalPoint
+} from './closingFocal';
 import { ClosingVariant } from './closingVariants';
 
 export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
@@ -513,7 +518,10 @@ export const playClosingAnimation = async (
 			: await resolveFocalPoint(doc, options.focal, () => over);
 		// The cap won while it waited: nobody is looking at these layers.
 		if (over) return;
-		giveRoomBack(focal.element);
+		// A narrow viewport gets no focused field (the composer's own rule).
+		giveRoomBack(
+			win.innerWidth > FIELD_FOCUS_AFTER_WIDTH ? focal.element : null
+		);
 		setPhase('reveal');
 		await settle(plan.reveal(focal));
 		setPhase('revealed');
