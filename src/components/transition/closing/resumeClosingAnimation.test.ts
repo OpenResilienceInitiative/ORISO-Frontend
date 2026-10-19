@@ -348,16 +348,41 @@ describe('resumeClosingAnimation', () => {
 		expect(play.reveal()).toHaveLength(0);
 	});
 
-	it('never takes a pointer: the root and every layer let it through', () => {
-		installAnimate();
+	it('takes the pointer while it covers, so no blind tap reaches the app starting underneath, and lets it through from the reveal on', async () => {
+		// The reveal never reports back, so the phases can be looked at one by one.
+		installAnimate('never');
 		leaveNote({ variant: 'curtain' });
-		void resumeClosingAnimation();
+		const pending = resumeClosingAnimation();
 
-		expect(root()!.style.pointerEvents).toBe('none');
+		expect(phase()).toBe('covered');
+		expect(
+			root()!.style.pointerEvents,
+			'blocked while the app starts underneath'
+		).toBe('auto');
 		expect(root()!.getAttribute('aria-hidden')).toBe('true');
-		root()!
-			.querySelectorAll<HTMLElement>('[data-closing-layer]')
-			.forEach((layer) => expect(layer.style.pointerEvents).toBe('none'));
+		const layers = root()!.querySelectorAll<HTMLElement>(
+			'[data-closing-layer]'
+		);
+		expect(layers.length).toBeGreaterThan(0);
+		layers.forEach((layer) =>
+			expect(layer.style.pointerEvents).toBe('none')
+		);
+
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(phase(), 'still waiting for the app').toBe('covered');
+		expect(root()!.style.pointerEvents).toBe('auto');
+
+		field();
+		await vi.advanceTimersByTimeAsync(100);
+		expect(phase()).toBe('reveal');
+		expect(
+			root()!.style.pointerEvents,
+			'the destination can be used while it is revealed'
+		).toBe('none');
+
+		await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs);
+		await pending;
+		expect(root(), 'the cap still removes it').toBeNull();
 	});
 
 	describe('when it should not play', () => {

@@ -50,6 +50,24 @@ const focalOnPage = () => {
 	document.body.appendChild(field);
 };
 
+/** A room that needs time to swap: `onCovered` stays open until released. */
+const held = () => {
+	let release: () => void = () => undefined;
+	let fail: (reason: Error) => void = () => undefined;
+	const onCovered = vi.fn(
+		() =>
+			new Promise<void>((resolve, reject) => {
+				release = resolve;
+				fail = reject;
+			})
+	);
+	return {
+		onCovered,
+		release: () => release(),
+		fail: (reason: Error) => fail(reason)
+	};
+};
+
 /**
  * ORISO-Frontend#1737. Whatever the browser or the person allows, the room is
  * swapped exactly once and nothing is left over the page.
@@ -132,15 +150,20 @@ describe('playClosingAnimation', () => {
 		}
 	);
 
-	it('never takes a pointer: the root and every layer let it through', async () => {
-		installAnimate('never');
+	it('takes the pointer while it covers, so blind taps cannot reach the room underneath, and lets it through once it reveals', async () => {
+		const late = installLateAnimate();
+		focalOnPage();
+		const swap = held();
 		const pending = playClosingAnimation({
 			variant: 'curtain',
 			focal: 'messageField',
-			onCovered: () => undefined
+			onCovered: swap.onCovered
 		});
 		const root = document.querySelector<HTMLElement>(ROOT)!;
-		expect(root.style.pointerEvents).toBe('none');
+		const phase = () => root.getAttribute('data-closing-phase');
+
+		expect(phase()).toBe('cover');
+		expect(root.style.pointerEvents).toBe('auto');
 		const layers = root.querySelectorAll<HTMLElement>(
 			'[data-closing-layer]'
 		);
@@ -149,8 +172,42 @@ describe('playClosingAnimation', () => {
 			expect(layer.style.pointerEvents).toBe('none')
 		);
 		expect(root.getAttribute('aria-hidden')).toBe('true');
+
+		late.finishAll();
+		await vi.advanceTimersByTimeAsync(50);
+		expect(phase()).toBe('covered');
+		expect(
+			root.style.pointerEvents,
+			'still blocked while the room swaps and the screen is held red'
+		).toBe('auto');
+
+		swap.release();
+		await vi.advanceTimersByTimeAsync(50);
+		expect(phase()).toBe('reveal');
+		expect(
+			root.style.pointerEvents,
+			'the destination can be used while it is revealed'
+		).toBe('none');
+
+		late.finishAll();
+		await vi.advanceTimersByTimeAsync(200);
+		await pending;
+		expect(document.querySelector(ROOT)).toBeNull();
+	});
+
+	it('is removed by the cap even when it still blocks the pointer', async () => {
+		installAnimate('never');
+		const pending = playClosingAnimation({
+			variant: 'curtain',
+			focal: 'messageField',
+			onCovered: () => undefined
+		});
+		expect(
+			document.querySelector<HTMLElement>(ROOT)!.style.pointerEvents
+		).toBe('auto');
 		await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs + 10);
 		await pending;
+		expect(document.querySelector(ROOT)).toBeNull();
 	});
 
 	it('removes the layers and still swaps once when an animation never reports back', async () => {
@@ -181,23 +238,6 @@ describe('playClosingAnimation', () => {
 	 * replaces the whole page) keeps the screen covered until it is done.
 	 */
 	describe('when the room needs time to swap', () => {
-		const held = () => {
-			let release: () => void = () => undefined;
-			let fail: (reason: Error) => void = () => undefined;
-			const onCovered = vi.fn(
-				() =>
-					new Promise<void>((resolve, reject) => {
-						release = resolve;
-						fail = reject;
-					})
-			);
-			return {
-				onCovered,
-				release: () => release(),
-				fail: (reason: Error) => fail(reason)
-			};
-		};
-
 		it('keeps the screen covered until the room has finished, then opens', async () => {
 			installAnimate('at once');
 			focalOnPage();

@@ -418,10 +418,14 @@ const createStage = (
 		inset: '0',
 		zIndex: Z_INDEX,
 		overflow: 'hidden',
-		pointerEvents: 'none'
+		// Presses meant for the room that is being swapped must not reach it
+		// while the screen is held red; the cap always removes the root.
+		pointerEvents: 'auto'
 	});
 	const setPhase = (phase: ClosingPhase) => {
 		root.dataset.closingPhase = phase;
+		// The destination can be used while it is revealed.
+		if (phase === 'reveal') root.style.pointerEvents = 'none';
 	};
 	const plan = PLANS[variant]({
 		doc,
@@ -478,7 +482,9 @@ const clamp = (share: number) => Math.min(1, Math.max(0, share));
  * outlive it. Three promises hold whatever happens:
  *
  * - `onCovered` runs exactly once, also when nothing can be animated;
- * - the layers never take a pointer (`pointer-events: none` on every one);
+ * - the root takes the pointer while the screen is covered, so no tap reaches
+ *   the room that is being swapped, and lets it through from the reveal on; the
+ *   layers themselves never take one;
  * - after `closing.capMs` the layers are removed even if an animation never
  *   reports back, so nothing is ever left covering the page.
  *
