@@ -3186,6 +3186,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							agencyId={
 								activeSession.item?.assignedAgencies?.[0]?.id
 							}
+							agencyName={
+								activeSession.item?.assignedAgencies?.[0]?.name
+							}
 							onAccepted={() => {
 								setGroupConsentAccepted(true);
 								apiGetUserData()

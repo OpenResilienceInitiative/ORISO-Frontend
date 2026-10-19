@@ -208,32 +208,26 @@ const GateOverGroupRoom = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
 
 const expectGate = async (canvasElement: HTMLElement) => {
 	const body = within(canvasElement.ownerDocument.body);
-	const dialog = await body.findByRole('dialog');
-	// MUI fades the dialog in: it exists at opacity 0 before it is visible.
-	await waitFor(() => expect(dialog).toBeVisible());
-	await expect(body.getByText('Bevor Sie schreiben')).toBeVisible();
-	await expect(body.queryByText(/beratende Person einen Chat/)).toBeNull();
-	// The app's font, not the legacy dialog's Helvetica/Arial stack.
-	await expect(getComputedStyle(dialog).fontFamily).toMatch(/Inter/);
-	// Full-size actions, and the sentence at normal weight.
-	for (const name of ['Ablehnen', 'Einverstanden']) {
-		const button = body.getByRole('button', { name });
-		await expect(
-			button.getBoundingClientRect().height
-		).toBeGreaterThanOrEqual(40);
-	}
-	const sentence = canvasElement.ownerDocument.querySelector(
-		'.groupConsentGate__sentence'
-	) as HTMLElement;
-	await expect(Number(getComputedStyle(sentence).fontWeight)).toBeLessThan(
-		500
+	// Since #1689: the waiting room's consent panel in the bar, no dialog.
+	const gate = await body.findByTestId('group-consent-gate');
+	await expect(body.queryByRole('dialog')).toBeNull();
+	await waitFor(() =>
+		expect(body.getByText('Bevor Sie schreiben')).toBeVisible()
 	);
-	// No focus outline drawn around the whole viewport.
-	const active = canvasElement.ownerDocument.activeElement as HTMLElement;
-	const outline = getComputedStyle(active);
+	await expect(body.queryByText(/beratende Person einen Chat/)).toBeNull();
+	await expect(getComputedStyle(gate).fontFamily).toMatch(/Inter/);
+	// A real checkbox bound to the sentence, a full-size primary action.
+	await expect(body.getByRole('checkbox')).toBeInTheDocument();
+	const accept = body.getByRole('button', { name: 'Einverstanden' });
+	await expect(accept.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+		40
+	);
+	await expect(body.getByRole('button', { name: 'Ablehnen' })).toBeVisible();
+	// Where the composer would be: the bar sits at the foot of the gate.
 	await expect(
-		outline.outlineStyle === 'none' || outline.outlineWidth === '0px'
-	).toBe(true);
+		gate.getBoundingClientRect().bottom -
+			accept.getBoundingClientRect().bottom
+	).toBeLessThan(120);
 };
 
 export const PrivacyGate1440: Story = {
