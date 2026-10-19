@@ -175,6 +175,28 @@ class CallLifecycleTracker {
 			client = live;
 		} catch (error) {
 			/*
+			 * Unless nothing was ever sent, in which case there is nothing
+			 * out there to reconcile.
+			 *
+			 * `TimelineClientUnavailableError` is thrown by the writer BEFORE
+			 * `sendMessage` — it is how the guard above says "this client
+			 * cannot encrypt into that room yet". So this one failure is not
+			 * the ambiguous kind the rest of this comment is about: no
+			 * request left the browser, no acknowledgement can have been
+			 * lost, and no card can exist. Keeping the tracker here had
+			 * `CallManager` abort the uninvited call, discard its room, and
+			 * call `finish()` — whose delayed retry then published a `missed`
+			 * card, once crypto was ready, for a call that never rang and
+			 * whose room is gone.
+			 *
+			 * The named error is what makes the two worlds distinguishable;
+			 * where they are not, the reasoning below still holds.
+			 */
+			if (error instanceof TimelineClientUnavailableError) {
+				this.calls.delete(call.callId);
+				throw error;
+			}
+			/*
 			 * The card may be out there even though the write failed.
 			 *
 			 * A lost ACKNOWLEDGEMENT is indistinguishable here from a lost

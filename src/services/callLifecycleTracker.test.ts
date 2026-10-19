@@ -463,6 +463,37 @@ describe('a call that outlives the Matrix client it started on', () => {
 		);
 	});
 
+	it('leaves no card at all for a start that was never written', async () => {
+		/*
+		 * The one failure where both worlds are NOT indistinguishable.
+		 *
+		 * `TimelineClientUnavailableError` is thrown before `sendMessage`:
+		 * it is the guard saying the client cannot encrypt into that room
+		 * yet, so no request left the browser and no card can exist. The
+		 * tracker used to be kept anyway, on the reasoning that a lost
+		 * acknowledgement is unknowable — and `CallManager`, whose uninvited
+		 * call this rejection aborts, then discarded the room and called
+		 * `finish()`, whose delayed retry wrote a `missed` card as soon as
+		 * crypto was ready. A call that never rang, in a room that is gone.
+		 */
+		let crypto: object | undefined = undefined;
+		const client = Object.assign(clientDouble(ME), {
+			getCrypto: () => crypto,
+			isRoomEncrypted: () => true
+		});
+		rotatingService(client);
+
+		await expect(callLifecycleTracker.begin(call)).rejects.toThrow();
+		expect(client.sendMessage).not.toHaveBeenCalled();
+
+		// Exactly what the aborting caller does next, and then the window
+		// closes — which is when the phantom used to appear.
+		callLifecycleTracker.finish(call.callId);
+		crypto = { ready: true };
+		await vi.advanceTimersByTimeAsync(60000);
+		expect(client.sendMessage).not.toHaveBeenCalled();
+	});
+
 	it('writes the ending through the replacement client', async () => {
 		const before = clientDouble(ME);
 		const service = rotatingService(before);

@@ -542,6 +542,56 @@ describe('what the host adds around the call', () => {
 		});
 	}, 20000);
 
+	it('is still announcing after a crypto window longer than the ladder', async () => {
+		/*
+		 * Seven seconds was a guess about somebody else's machine.
+		 *
+		 * The ladder had three rungs — 1s, 2s, 4s — and then stopped for
+		 * good. `initRustCrypto()` plus a first sync on a cold profile can
+		 * outlast that, and nothing re-runs this publication afterwards: an
+		 * arrival makes the OTHER participants re-announce, and whoever was
+		 * already in the call was seeded into the arrival set at mount. The
+		 * person sat there as initials for the rest of the call.
+		 *
+		 * Four refusals is one more than the old ladder could answer, so the
+		 * fifth send only happens if the last rung repeats.
+		 */
+		forgetPublishedIdentity();
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn> & {
+				mock: { calls: unknown[][] };
+			};
+		};
+		const notReady = (): Error => new Error('crypto is not ready yet');
+		client.sendEvent
+			.mockRejectedValueOnce(notReady())
+			.mockRejectedValueOnce(notReady())
+			.mockRejectedValueOnce(notReady())
+			.mockRejectedValueOnce(notReady());
+		activeCall();
+
+		const identitySends = (): number =>
+			client.sendEvent.mock.calls.filter(
+				(call) => call[1] === CALL_IDENTITY_EVENT_TYPE
+			).length;
+
+		const view = withUser(
+			{ userId: '@berater:matrix.storybook.test' },
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+
+		// 1 + 2 + 4 seconds of ladder, then the repeated rung.
+		await waitFor(() => expect(identitySends()).toBeGreaterThan(4), {
+			timeout: 20000
+		});
+	}, 40000);
+
 	const counsellorWithStage = async (
 		innerWidth: number,
 		innerHeight: number

@@ -397,6 +397,107 @@ describe('call manager durable timeline', () => {
 		expect(leave).not.toHaveBeenCalled();
 	});
 
+	it('refuses the call when the account changes while the second join is in flight', async () => {
+		/*
+		 * The replacement join is an await of its own, and a different
+		 * ACCOUNT can arrive inside it.
+		 *
+		 * Everything after it asks the client captured before: the source
+		 * room membership, the encryption assertion, the RTC session. Those
+		 * are account A's and keep answering yes long after the browser has
+		 * signed in as B — so the call was installed from A's cached state
+		 * and then opened by the widget on B's live client. Wherever both
+		 * accounts can reach the counselling room, B was carried into A's
+		 * call.
+		 */
+		const source = { getMyMembership: () => 'join' };
+		const joinedByOldClient = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => true
+		};
+		const call = {
+			callId: 'account-swap-mid-join',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			callType: 'video' as const,
+			state: 'running' as const,
+			participants: []
+		};
+		getRoom.mockImplementation((id: string) =>
+			id === call.roomRef ? source : null
+		);
+		let completeFirstJoin!: (room: typeof joinedByOldClient) => void;
+		joinRoom.mockReturnValue(
+			new Promise((resolve) => {
+				completeFirstJoin = resolve;
+			})
+		);
+		session.memberships = [{ sender: '@receiver:example' }];
+
+		const pending = callManager.joinExistingCall(call, true);
+		await vi.waitFor(() =>
+			expect(joinRoom).toHaveBeenCalledWith('!media:example')
+		);
+
+		// A same-account refresh first: this is the adoption the previous
+		// round added, and it must still happen. Its join SUCCEEDS and the
+		// room comes back encrypted and in session, so that nothing but the
+		// account change can refuse what follows.
+		let synced = false;
+		let completeSecondJoin!: (room: typeof joinedByOldClient) => void;
+		const refreshedJoin = vi.fn().mockReturnValue(
+			new Promise<typeof joinedByOldClient>((resolve) => {
+				completeSecondJoin = (room) => {
+					synced = true;
+					resolve(room);
+				};
+			})
+		);
+		const refreshed = {
+			getUserId: () => '@caller:example',
+			getDeviceId: () => 'DEVICE',
+			getRoom: (id: string) =>
+				id === call.roomRef
+					? source
+					: synced
+						? joinedByOldClient
+						: null,
+			joinRoom: refreshedJoin,
+			leave,
+			forget,
+			matrixRTC: { getRoomSession: () => session },
+			sendEvent,
+			sendMessage
+		};
+		setMatrixClientServiceRef({ getClient: () => refreshed } as never);
+		completeFirstJoin(joinedByOldClient);
+		await vi.waitFor(() =>
+			expect(refreshedJoin).toHaveBeenCalledWith('!media:example')
+		);
+
+		// And now somebody else is signed in.
+		const otherAccount = {
+			getUserId: () => '@somebody-else:example',
+			getDeviceId: () => 'OTHER',
+			getRoom: () => source,
+			joinRoom: vi.fn(),
+			leave,
+			forget,
+			matrixRTC: { getRoomSession: () => session },
+			sendEvent,
+			sendMessage
+		};
+		setMatrixClientServiceRef({ getClient: () => otherAccount } as never);
+		completeSecondJoin(joinedByOldClient);
+
+		expect(await pending).toBe('unavailable');
+		expect(callManager.getCurrentCall()).toBeNull();
+		// The seat this attempt took is given back, as after any refusal.
+		await vi.waitFor(() =>
+			expect(leave).toHaveBeenCalledWith('!media:example')
+		);
+	});
+
 	it('does not replace a newer incoming call when an older timeline join finishes', async () => {
 		const source = { getMyMembership: () => 'join' };
 		const media = {

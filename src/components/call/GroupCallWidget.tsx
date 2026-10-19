@@ -70,13 +70,28 @@ const NOTES_SIDE_BY_SIDE_MIN_WIDTH = NOTES_PANEL_WIDTH + GROUP_MIN.width;
 const HANGUP_HANDSHAKE_MS = 1500;
 
 /*
- * How long to keep trying to say who we are after a client is replaced.
+ * How long to wait between attempts to say who we are, in ms.
  *
- * The same ladder the lifecycle card uses, for the same window: a refreshed
- * client is announced before its crypto is up and before its first sync has
- * the room's encryption state, and both make an identity publication refuse.
+ * The window is the one the lifecycle card waits out: a refreshed client is
+ * announced before its crypto is up and before its first sync has the room's
+ * encryption state, and both make an identity publication refuse.
+ *
+ * The ladder used to END — three delays, seven seconds, and then silence for
+ * the rest of the call. Seven seconds is a guess about somebody else's
+ * machine: `initRustCrypto()` plus a first sync on a cold profile can take
+ * longer, and nothing else re-runs this. The people already in the call were
+ * seeded into the arrival set at mount, so no membership change announces to
+ * them afterwards either; the person stayed initials for good.
+ *
+ * So the ladder no longer runs out: its last rung repeats until the publish
+ * gets through or the effect's cleanup cancels it. An attempt is a local
+ * encryption check and at most one state send that fails fast, every eight
+ * seconds — and in the only case where it can go on forever (a call room
+ * that is somehow not encrypted) the identity may never be published at all,
+ * which is the refusal working.
  */
 const IDENTITY_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
+const IDENTITY_RETRY_CEILING_MS = 8000;
 
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
@@ -265,10 +280,12 @@ export const GroupCallWidget: React.FC = () => {
 		 * ready and nothing else re-runs this. Somebody arriving in that gap
 		 * saw this person as initials for the rest of the call.
 		 *
-		 * So a refusal is retried on the same bounded ladder the lifecycle
-		 * card uses, and the effect's cleanup cancels it — a closed surface
-		 * or another refresh must not leave a timer announcing into a call
-		 * that has moved on.
+		 * So a refusal is retried for as long as this effect lives, and the
+		 * effect's cleanup cancels it — a closed surface or another refresh
+		 * must not leave a timer announcing into a call that has moved on.
+		 * Nothing else will do it instead: an arrival makes the OTHERS
+		 * re-announce, and the people already here were seeded into the
+		 * arrival set before anybody could arrive.
 		 */
 		let cancelled = false;
 		const announce = async (attempt: number): Promise<void> => {
@@ -282,8 +299,8 @@ export const GroupCallWidget: React.FC = () => {
 				}
 			);
 			if (sent !== null || cancelled) return;
-			const delay = IDENTITY_RETRY_DELAYS_MS[attempt];
-			if (delay === undefined) return;
+			const delay =
+				IDENTITY_RETRY_DELAYS_MS[attempt] ?? IDENTITY_RETRY_CEILING_MS;
 			await new Promise((resolve) => setTimeout(resolve, delay));
 			if (!cancelled) await announce(attempt + 1);
 		};

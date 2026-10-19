@@ -240,8 +240,29 @@ class CallManager {
 			if (afterJoin !== client) {
 				client = afterJoin;
 				room = client.getRoom(call.callRoomId);
-				if (room?.getMyMembership() !== 'join')
+				if (room?.getMyMembership() !== 'join') {
 					room = await client.joinRoom(call.callRoomId);
+					/*
+					 * And the second join has to be asked the same question.
+					 *
+					 * This await is one more window, and the checks that
+					 * follow cannot see through it: `pendingJoin` is cleared
+					 * by starting or receiving a call, not by signing in as
+					 * somebody else, and the source-room membership below is
+					 * asked of the client captured HERE — account A's — which
+					 * still answers `join` long after the browser has moved
+					 * on to account B. The call would then be installed from
+					 * A's cached membership and RTC state and opened by the
+					 * widget on B's live client: B carried into A's call,
+					 * wherever both accounts can reach the source room.
+					 *
+					 * One adoption is enough, and a second swap inside one
+					 * attempt is not worth chasing: the person can press Join
+					 * again, and the seat this attempt may have taken is
+					 * given back by the cleanup like any other refusal.
+					 */
+					if (liveClient() !== client) return 'unavailable';
+				}
 			}
 			if (this.pendingJoin !== join) return 'unavailable';
 			// Membership may have changed while the server processed the room join.
