@@ -10,6 +10,10 @@ Animations at fixed instants: 60 ms into the cover, 300 ms and 430 ms into the r
 - `03`, `04`, `07`, `08` — **after**: the room, the screen being covered, two frames of the reveal,
   and the message field the person arrives on.
 
+Re-shot on 2026-10-19 at `8f43d89d3`: the curtain is the pleated one, the slide reveal runs on the shared
+timeline. The flat red band above and below the folds is the part of the screen outside the
+room's content box (top bar, bottom edge); it travels with its half.
+
 What these images prove: the geometry of each design at those instants, on a
 1440 px desktop and a 390 px phone. What they cannot show: timing, easing and
 smoothness. Those are covered by the Storybook contract
