@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { apiGetCaseHandoverCandidates } from '../../api';
+import {
+	apiGetCaseHandoverCandidates,
+	apiGetConsultantSessionList
+} from '../../api';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -10,6 +13,10 @@ import {
 	SessionSearchPersonResult,
 	SessionToolbarPair
 } from './sessionSearchPeople';
+import {
+	SESSION_LIST_TAB_ARCHIVE,
+	SESSION_LIST_TYPES
+} from '../session/sessionHelpers';
 
 const CANDIDATE_PAGE_SIZE = 50;
 /** Upper bound for one person's lookup (20 x 50 cases). */
@@ -72,21 +79,68 @@ const fetchAllCandidates = async (
 	return { cases: found, capped: true };
 };
 
-/** All cases of one person in one archive scope, by her lookup terms. */
+/**
+ * The cases of one person in my own list, paged to the end (same cap as a
+ * candidate lookup). The candidate endpoint leaves out my own cases.
+ */
+const fetchOwnListCases = async (
+	personId: string,
+	archived: boolean,
+	signal?: AbortSignal
+) => {
+	const matched: ListItemInterface[] = [];
+	let seen = 0;
+	for (let page = 0; page < CANDIDATE_MAX_PAGES; page++) {
+		let response;
+		try {
+			response = await apiGetConsultantSessionList({
+				type: SESSION_LIST_TYPES.MY_SESSION,
+				offset: seen,
+				count: CANDIDATE_PAGE_SIZE,
+				sessionListTab: archived ? SESSION_LIST_TAB_ARCHIVE : undefined,
+				signal
+			});
+		} catch (error) {
+			// 204: nothing (more) in the list.
+			if ((error as Error)?.message === FETCH_ERRORS.EMPTY) break;
+			throw error;
+		}
+		const { sessions = [], total } = response;
+		matched.push(
+			...sessions.filter((item) =>
+				personKeysOfSession(item).includes(personId)
+			)
+		);
+		seen += sessions.length;
+		const done =
+			typeof total === 'number' && total > 0
+				? seen >= total
+				: sessions.length < CANDIDATE_PAGE_SIZE;
+		if (!sessions.length || done) break;
+	}
+	return matched;
+};
+
+/**
+ * All cases of one person in one archive scope: her takeable cases by her
+ * lookup terms, and for a client also her cases in my own list.
+ */
 const fetchPersonCases = async (
 	person: SessionSearchPersonResult,
 	archived: boolean,
 	signal?: AbortSignal
 ) => {
-	const lists = await Promise.all(
-		lookupTermsOf(person).map(
-			async (term) =>
-				(await fetchAllCandidates(term, archived, signal)).cases
-		)
-	);
-	return lists
-		.flat()
-		.filter((item) => personKeysOfSession(item).includes(person.id));
+	const lists = await Promise.all([
+		...lookupTermsOf(person).map(async (term) =>
+			(await fetchAllCandidates(term, archived, signal)).cases.filter(
+				(item) => personKeysOfSession(item).includes(person.id)
+			)
+		),
+		...(person.role === 'asker'
+			? [fetchOwnListCases(person.id, archived, signal)]
+			: [])
+	]);
+	return mergeListItems(...lists);
 };
 
 interface CaseHandoverSearchOptions {

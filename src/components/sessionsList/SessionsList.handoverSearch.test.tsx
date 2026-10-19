@@ -491,6 +491,31 @@ describe('case-handover search — people (FE#1725)', () => {
 		);
 	});
 
+	it('loads all cases of an own client, also those beyond the loaded page', async () => {
+		const ownSecond = makeCase(2, 'Own client', me, SPRINGFIELD, 30099, {
+			id: 5,
+			name: 'Family'
+		});
+		const view = await ready(renderList());
+		// The own list pages one case at a time; the second is not loaded.
+		http.getList.mockImplementation(async ({ offset = 0 }) => ({
+			sessions: [ownCases[0], ownSecond].slice(offset, offset + 1),
+			total: 2,
+			count: 1,
+			offset
+		}));
+		expect(listText(view)).not.toContain('30099');
+
+		type('own');
+		await waitFor(() =>
+			expect(personRowsNamed('Own client')).toHaveLength(1)
+		);
+		fireEvent.click(personRowsNamed('Own client')[0]);
+
+		await waitFor(() => expect(listText(view)).toContain('30099'));
+		expect(listText(view)).toContain('30000');
+	});
+
 	it('loads all cases of a colleague found through one of them', async () => {
 		const view = await ready(renderList());
 
