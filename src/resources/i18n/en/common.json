@@ -727,7 +727,7 @@
 			"copyError": "The calendar link could not be copied. Please try again.",
 			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates.",
 			"addThis": "Add this date to your calendar",
-			"addThisShort": "Add to calendar"
+			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -1157,13 +1157,41 @@
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown",
 			"legalMenu": "Legal",
-			"moreDates": "More dates",
 			"dates": {
-				"headline": "Next dates",
-				"subline": "Add each date to your calendar on its own.",
+				"headline": "The next meetings",
+				"subline": "Tap a date to add it to your calendar.",
 				"none": "No further dates are planned at the moment.",
 				"add": "Add",
-				"addLabel": "Add {{date}} to your calendar"
+				"addLabel": "Add {{date}} to your calendar",
+				"next": "Next",
+				"seriesTitle": "All at once",
+				"seriesSub": "add as a series",
+				"seriesLong": "Add all as a series",
+				"repeat": {
+					"DAILY": "The group meets every day at the same time.",
+					"WEEKLY": "The group meets every week at the same time.",
+					"MONTHLY": "The group meets every month at the same time."
+				}
+			},
+			"addDate": "Add to calendar",
+			"allDates": "All dates",
+			"nextDates": "Next dates",
+			"joinFrom": "from {{time}}",
+			"rhythm": {
+				"DAILY": "every day",
+				"WEEKLY": "every week",
+				"MONTHLY": "every month"
+			},
+			"running": {
+				"since": "Running for",
+				"status": "Running now",
+				"statusModerated": "Running now · moderator is here",
+				"headline": "The group started {{ago}}.",
+				"subline": "You can join at any time – nobody has to say anything."
+			},
+			"rules": {
+				"headline": "How we treat each other",
+				"subline": "Read it once – then you are in."
 			}
 		},
 		"shareDialog": {

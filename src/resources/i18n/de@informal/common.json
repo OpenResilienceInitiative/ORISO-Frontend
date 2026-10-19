@@ -363,7 +363,13 @@
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
 			"dates": {
-				"subline": "Trag jeden Termin einzeln in deinen Kalender ein."
+				"subline": "Tipp auf einen Termin, um ihn einzutragen."
+			},
+			"running": {
+				"subline": "Du kannst jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"subline": "Einmal kurz lesen – dann bist du dabei."
 			}
 		},
 		"info": {

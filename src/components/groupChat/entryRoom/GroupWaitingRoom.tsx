@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
@@ -12,6 +13,9 @@ import { GroupInfoGallery } from './GroupInfoGallery';
 import { GroupUpcomingDates } from './GroupUpcomingDates';
 import { GroupCalendarActions } from './GroupCalendarActions';
 import { GroupHeading } from './GroupHeading';
+import { GroupRunningNow, useIntlLocale } from './GroupRunningNow';
+import { GroupRulesIntro } from './GroupRulesIntro';
+import type { GroupChatRepeat } from '../groupChatCalendar';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -43,8 +47,10 @@ export interface GroupWaitingRoomProps {
 	active: boolean;
 	onJoin: () => void;
 	joinBusy?: boolean;
-	/** The group's next dates, soonest first — shown behind "Weitere Termine". */
+	/** The group's next dates, soonest first — shown behind "Alle Termine". */
 	upcomingDates?: Date[];
+	/** How the group repeats: the rhythm under the headline, the series export. */
+	repeat?: GroupChatRepeat;
 	/** A fixed "now" for stories and tests; the app leaves it unset. */
 	nowMs?: number;
 	/** Where "Einloggen" in the header goes. Off for someone already in. */
@@ -95,6 +101,7 @@ export const GroupWaitingRoom = ({
 	onJoin,
 	joinBusy = false,
 	upcomingDates,
+	repeat,
 	nowMs,
 	showLoginLink = false,
 	embedded = false,
@@ -115,9 +122,40 @@ export const GroupWaitingRoom = ({
 	const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(
 		null
 	);
-	const stageClockHeight = useClockHeight();
+	/* A date that has begun is not one to put in a calendar any more
+	   (#1785); the dates after it still are. */
+	const started =
+		active || (plannedStart !== null && now >= plannedStart.getTime());
+	// An opened group runs its planned date even before the clock says so.
+	const runningMs = started ? plannedStart?.getTime() : undefined;
+	const datesAhead = (
+		upcomingDates ?? (plannedStart ? [plannedStart] : [])
+	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
+	const canAddThis = Boolean(plannedStart) && !started;
+	const hasMoreDates = datesAhead.length > (canAddThis ? 1 : 0);
+	/* The room's own width, not the window's: in the chat card a desktop
+	   window can leave a 370 px column (#1499). */
+	const [room, setRoom] = useState<HTMLElement | null>(null);
+	const roomWidth = useWidth(room);
+	const phone = useMediaQuery('(max-width:599px)');
+	const inlineCalendar =
+		roomWidth === null ? !phone : roomWidth >= INLINE_MIN_WIDTH;
+	/* The dates view has its own buttons per date; the bar would repeat
+	   them. */
+	const calendarInBar = view !== 'dates' && (canAddThis || hasMoreDates);
+	/* What the clock gives up: the rhythm line under the headline, and on
+	   the stage the calendar row when it stands above "Beitreten" — the
+	   bar is fixed, so its extra height is not the column's to see. */
+	const showRhythm = Boolean(plannedStart) && !active;
+	const rhythmReserve = showRhythm ? RHYTHM_HEIGHT : 0;
+	const stageClockHeight = useClockHeight(
+		rhythmReserve + (calendarInBar && !inlineCalendar ? STACKED_ROW : 0)
+	);
 	const [column, setColumn] = useState<HTMLElement | null>(null);
-	const cardClockHeight = useCardClockHeight(embedded ? column : null);
+	const cardClockHeight = useCardClockHeight(
+		embedded ? column : null,
+		rhythmReserve
+	);
 	const clockHeight = embedded ? cardClockHeight : stageClockHeight;
 	/* Gate 2 of ADR-022 is asked here, on "Beitreten", like the live chat
 	   asks when the counsellor is there (Frank, 2026-10-16). */
@@ -148,7 +186,7 @@ export const GroupWaitingRoom = ({
 					setSaving(false);
 				});
 		});
-	const phone = useMediaQuery('(max-width:599px)');
+	const locale = useIntlLocale();
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
 	// Same heading as the invitation's account step (#1689).
@@ -167,38 +205,56 @@ export const GroupWaitingRoom = ({
 	// The switch stops whatever moves: the clock, or the rules without it.
 	const showMotionSwitch = showClock || rules.length > 0;
 	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
-	/* A date that has begun is not one to put in a calendar any more
-	   (#1785); the dates after it still are. */
-	const started =
-		active || (plannedStart !== null && now >= plannedStart.getTime());
-	// An opened group runs its planned date even before the clock says so.
-	const runningMs = started ? plannedStart?.getTime() : undefined;
-	const datesAhead = (
-		upcomingDates ?? (plannedStart ? [plannedStart] : [])
-	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
-	const canAddThis = Boolean(plannedStart) && !started;
-	const hasMoreDates = datesAhead.length > (canAddThis ? 1 : 0);
 	const backToRoom = useCallback(() => setView('room'), []);
+	/* A shut "Beitreten" says when it opens (Frank, 2026-10-19). */
+	const opensAtTime =
+		plannedStart && !started && !moderator
+			? new Intl.DateTimeFormat(locale, {
+					weekday: 'short',
+					hour: '2-digit',
+					minute: '2-digit'
+				}).format(plannedStart)
+			: undefined;
+	const opensAt =
+		opensAtTime &&
+		translateWithFallback(
+			t,
+			'groupChat.entry.joinFrom',
+			`ab ${opensAtTime}`,
+			{
+				time: opensAtTime
+			}
+		);
 	const joinAction = {
 		label: joinLabel,
 		onClick: askConsent ? () => setAsking(true) : onJoin,
 		disabled: (!active && !moderator) || joinBusy || joinBlocked,
+		status: opensAt,
 		testId: 'group-entry-join'
 	};
-	/* The dates view has its own buttons per date; the row would repeat
-	   them. */
-	const calendarRow =
-		view !== 'dates' && (canAddThis || hasMoreDates) ? (
-			<GroupCalendarActions
-				phone={phone}
-				onAddThis={
-					canAddThis
-						? (event) => setCalendarAnchor(event.currentTarget)
-						: undefined
-				}
-				onMoreDates={hasMoreDates ? () => setView('dates') : undefined}
+	const rhythm =
+		showRhythm && plannedStart ? (
+			<GroupRhythm
+				start={plannedStart}
+				durationMinutes={durationMinutes}
+				repeat={repeat}
+				locale={locale}
 			/>
-		) : null;
+		) : undefined;
+	/* On "Beitreten" in a running group the rules come up once, calm and
+	   all at once, while the bar asks for consent. */
+	const showRulesIntro = asking && active && askConsent && rules.length > 0;
+	const calendarRow = calendarInBar ? (
+		<GroupCalendarActions
+			inline={inlineCalendar}
+			onAddThis={
+				canAddThis
+					? (event) => setCalendarAnchor(event.currentTarget)
+					: undefined
+			}
+			onMoreDates={hasMoreDates ? () => setView('dates') : undefined}
+		/>
+	) : null;
 
 	const middle =
 		view === 'more' ? (
@@ -209,7 +265,23 @@ export const GroupWaitingRoom = ({
 				dates={datesAhead}
 				durationMinutes={durationMinutes}
 				eventId={eventId}
+				repeat={repeat}
 			/>
+		) : showRulesIntro ? (
+			<Box
+				sx={{
+					flex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center'
+				}}
+			>
+				<GroupRulesIntro
+					rules={rules}
+					since={plannedStart}
+					nowMs={nowMs}
+				/>
+			</Box>
 		) : (
 			<>
 				<Box
@@ -254,9 +326,18 @@ export const GroupWaitingRoom = ({
 								audience={audience}
 								reducedMotion={motionOff}
 								hideMotionToggle
+								calendarSlot={rhythm}
 								gap={8}
 							/>
 						</Box>
+					) : active ? (
+						<GroupRunningNow
+							since={plannedStart}
+							nowMs={nowMs}
+							rules={rules}
+							motionOff={motionOff}
+							moderator={moderator}
+						/>
 					) : (
 						<Box sx={{ textAlign: 'center' }}>
 							<Typography
@@ -268,20 +349,15 @@ export const GroupWaitingRoom = ({
 									mb: 1
 								}}
 							>
-								{moderator && !active
+								{moderator
 									? t(
 											'groupChat.join.waitingArea.countdown.moderatorSubtitle',
 											'Sie können den Chat starten, sobald Sie bereit sind.'
 										)
-									: active
-										? tr(
-												'openHeadline',
-												'Die Gruppe hat begonnen.'
-											)
-										: tr(
-												'noTimeHeadline',
-												'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
-											)}
+									: tr(
+											'noTimeHeadline',
+											'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
+										)}
 							</Typography>
 							{welcomeText && (
 								<Typography
@@ -461,7 +537,7 @@ export const GroupWaitingRoom = ({
 		) : (
 			<WaitingRoomBar
 				contained={embedded}
-				stacked={Boolean(calendarRow)}
+				stacked={Boolean(calendarRow) && !inlineCalendar}
 				primary={joinAction}
 			>
 				{calendarRow}
@@ -487,6 +563,7 @@ export const GroupWaitingRoom = ({
 					display: 'flex',
 					flexDirection: 'column'
 				}}
+				ref={setRoom}
 				data-cy="group-entry-room"
 				data-embedded="true"
 			>
@@ -545,6 +622,7 @@ export const GroupWaitingRoom = ({
 				}
 			>
 				<Box
+					ref={setRoom}
 					sx={{
 						'width': '100%',
 						'minWidth': 0,
@@ -621,6 +699,102 @@ export const GroupWaitingRoom = ({
 const barInsetSx = { px: { xs: 2, sm: 3, lg: 4 } } as const;
 
 /**
+ * From this room width the calendar pill stands beside "Beitreten" in one
+ * row: the split pill is ~330 px, "Beitreten" keeps ~200, plus the bar's
+ * inset. Below it the pills get their own row above.
+ */
+const INLINE_MIN_WIDTH = 640;
+
+const RHYTHM: Record<GroupChatRepeat, string> = {
+	DAILY: 'jeden Tag',
+	WEEKLY: 'jede Woche',
+	MONTHLY: 'jeden Monat'
+};
+
+/** The calendar row above "Beitreten" on a phone: 44 px pills, 16 px gap. */
+const STACKED_ROW = 60;
+
+/** The rhythm line under the headline: 36 px chip plus 10 px of air. */
+const RHYTHM_HEIGHT = 46;
+
+/**
+ * "Do., 10.09. · 18:00 – 19:30 · jede Woche" — when the group meets, in one
+ * line under the headline, so the date is readable without the clock.
+ */
+const GroupRhythm = ({
+	start,
+	durationMinutes,
+	repeat,
+	locale
+}: {
+	start: Date;
+	durationMinutes: number;
+	repeat?: GroupChatRepeat;
+	locale: string;
+}) => {
+	const { t } = useTranslation();
+	const day = new Intl.DateTimeFormat(locale, {
+		weekday: 'short',
+		day: '2-digit',
+		month: '2-digit'
+	}).format(start);
+	const time = new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+	const end = new Date(start.getTime() + durationMinutes * 60e3);
+	const parts = [
+		day,
+		`${time.format(start)} – ${time.format(end)}`,
+		repeat
+			? translateWithFallback(
+					t,
+					`groupChat.entry.rhythm.${repeat}`,
+					RHYTHM[repeat]
+				)
+			: null
+	].filter(Boolean);
+	return (
+		<Box
+			data-cy="group-entry-rhythm"
+			sx={{
+				'display': 'inline-flex',
+				'alignItems': 'center',
+				'gap': 1,
+				'minHeight': 36,
+				'px': 1.75,
+				'borderRadius': '18px',
+				'bgcolor': registrationMd3.selectedLayer,
+				'color': registrationMd3.primaryDark,
+				'fontSize': 13,
+				'fontWeight': 600,
+				'& svg': { fontSize: 18 }
+			}}
+		>
+			<CalendarMonthRoundedIcon aria-hidden />
+			<span>{parts.join(' · ')}</span>
+		</Box>
+	);
+};
+
+/** An element's width, renewed when it changes; `null` before it is measured. */
+const useWidth = (element: HTMLElement | null) => {
+	const [width, setWidth] = useState<number | null>(null);
+	React.useLayoutEffect(() => {
+		if (!element) return;
+		const measure = () =>
+			setWidth(element.getBoundingClientRect().width || null);
+		measure();
+		const RO = globalThis.ResizeObserver;
+		if (!RO) return;
+		const observer = new RO(measure);
+		observer.observe(element);
+		return () => observer.disconnect();
+	}, [element]);
+	return width;
+};
+
+/**
  * "Mehr erfahren" is the quiet way into the greeting and the rules, so it is
  * the small control in this row, not a second primary (Frank, 2026-09-07: "das
  * Mehr erfahren ist viel zu groß"). The theme's outlined button pads itself to
@@ -686,12 +860,16 @@ const moreButtonSx = {
  * Exported as a plain function so the numbers above can be asserted without a
  * browser; the hook is only the window listener around it.
  */
-export const entryRoomClockHeight = (width: number, height: number) => {
+export const entryRoomClockHeight = (
+	width: number,
+	height: number,
+	extra = 0
+) => {
 	const split = width >= 1200;
 	const above = split ? 96 : 66 + 36 + 6;
 	const headline = split ? 78 : 108;
 	const bar = (width >= 520 ? 96 : 81) + 12;
-	const reserved = above + 8 + headline + 8 + 8 + 44 + bar;
+	const reserved = above + 8 + headline + extra + 8 + 8 + 44 + bar;
 	return Math.max(160, height - reserved);
 };
 
@@ -717,7 +895,7 @@ const useNow = (plannedStart: Date | null, nowMs?: number) => {
 	return nowMs ?? realNow;
 };
 
-const useClockHeight = () => {
+const useClockHeight = (extra: number) => {
 	/* The visual viewport is the part the person can actually see: a mobile
 	   URL bar sliding in or a keyboard opening shrinks it without a `window`
 	   resize, and the clock would keep a size that pushes the switch row and
@@ -725,18 +903,21 @@ const useClockHeight = () => {
 	const measure = () =>
 		entryRoomClockHeight(
 			window.visualViewport?.width ?? window.innerWidth,
-			window.visualViewport?.height ?? window.innerHeight
+			window.visualViewport?.height ?? window.innerHeight,
+			extra
 		);
 	const [height, setHeight] = useState(measure);
 	useEffect(() => {
 		const onResize = () => setHeight(measure());
+		onResize();
 		window.addEventListener('resize', onResize);
 		window.visualViewport?.addEventListener('resize', onResize);
 		return () => {
 			window.removeEventListener('resize', onResize);
 			window.visualViewport?.removeEventListener('resize', onResize);
 		};
-	}, []);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- `measure` only closes over `extra`
+	}, [extra]);
 	return height;
 };
 
@@ -745,25 +926,38 @@ const useClockHeight = () => {
  * the clock (topic and agency, headline, switch row and the column's padding),
  * the same bands `entryRoomClockHeight` subtracts from the window.
  */
-export const cardClockHeight = (columnHeight: number, columnWidth: number) =>
+export const cardClockHeight = (
+	columnHeight: number,
+	columnWidth: number,
+	extra = 0
+) =>
 	Math.max(
 		160,
 		columnHeight -
-			(16 + 42 + (columnWidth >= 600 ? 78 : 108) + 8 + 8 + 44 + 12)
+			(16 +
+				42 +
+				(columnWidth >= 600 ? 78 : 108) +
+				extra +
+				8 +
+				8 +
+				44 +
+				12)
 	);
 
-const useCardClockHeight = (column: HTMLElement | null) => {
+const useCardClockHeight = (column: HTMLElement | null, extra: number) => {
 	const [height, setHeight] = useState(320);
 	useEffect(() => {
 		if (!column) return;
 		const measure = () =>
-			setHeight(cardClockHeight(column.clientHeight, column.clientWidth));
+			setHeight(
+				cardClockHeight(column.clientHeight, column.clientWidth, extra)
+			);
 		measure();
 		const RO = globalThis.ResizeObserver;
 		if (!RO) return;
 		const observer = new RO(measure);
 		observer.observe(column);
 		return () => observer.disconnect();
-	}, [column]);
+	}, [column, extra]);
 	return height;
 };

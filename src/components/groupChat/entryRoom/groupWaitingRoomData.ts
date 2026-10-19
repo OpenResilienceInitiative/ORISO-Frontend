@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { getGroupChatPlannedStart } from '../groupChatDate';
+import type { GroupChatRepeat } from '../groupChatCalendar';
 
 /**
  * What both places that show the self-help group's waiting room read from the
@@ -46,6 +47,19 @@ export const getGroupUpcomingDates = (
 	}
 	return [0, 1, 2].map((step) => dayjs(start).add(step, unit).toDate());
 };
+
+/**
+ * How the group repeats, for the rhythm under the clock and the series
+ * export; unset for a one-off group.
+ */
+export const getGroupRepeat = (
+	chat: GroupWaitingRoomChat | undefined | null
+): GroupChatRepeat | undefined =>
+	chat?.chatInterval === 'WEEKLY' ||
+	chat?.chatInterval === 'DAILY' ||
+	chat?.chatInterval === 'MONTHLY'
+		? chat.chatInterval
+		: undefined;
 
 /**
  * #1499: the group's topic stays out of the waiting room until the client's

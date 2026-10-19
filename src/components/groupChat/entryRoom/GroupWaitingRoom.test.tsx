@@ -333,11 +333,13 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 	const renderDates = ({
 		active = false,
 		nowMs = NOW,
-		upcomingDates = WEEKLY
+		upcomingDates = WEEKLY,
+		repeat
 	}: {
 		active?: boolean;
 		nowMs?: number;
 		upcomingDates?: Date[];
+		repeat?: 'WEEKLY';
 	} = {}) =>
 		render(
 			<GroupWaitingRoom
@@ -349,6 +351,7 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 				onJoin={vi.fn()}
 				nowMs={nowMs}
 				upcomingDates={upcomingDates}
+				repeat={repeat}
 			/>
 		);
 	const bar = () =>
@@ -366,8 +369,35 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		expect(bar().contains(screen.getByTestId('group-entry-dates'))).toBe(
 			true
 		);
-		expect(screen.getByTestId('group-entry-calendar').textContent).toBe(
+		const add = screen.getByTestId('group-entry-calendar');
+		expect(add.textContent).toBe('Termin eintragen');
+		// The short label stands for the whole sentence.
+		expect(add.getAttribute('aria-label')).toBe(
 			'Diesen Termin zum Kalender hinzufügen'
+		);
+		expect(screen.getByTestId('group-entry-dates').textContent).toBe(
+			'Alle Termine'
+		);
+	});
+
+	it('says on the shut "Beitreten" when it opens', () => {
+		renderDates();
+		expect(screen.getByTestId('group-entry-join').textContent).toMatch(
+			/ab .*\d{2}:\d{2}/
+		);
+	});
+
+	it('drops the opening time once the moderator has opened the group', () => {
+		renderDates({ active: true });
+		expect(screen.getByTestId('group-entry-join').textContent).not.toMatch(
+			/ab /
+		);
+	});
+
+	it('calls the way to the dates "Nächste Termine" once the group runs', () => {
+		renderDates({ active: true, nowMs: START.getTime() + 60e3 });
+		expect(screen.getByTestId('group-entry-dates').textContent).toBe(
+			'Nächste Termine'
 		);
 	});
 
@@ -442,6 +472,155 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 	});
 });
 
+/* Frank, 2026-10-19: the rhythm under the headline, a calm clock counting
+   up once the group runs (not the red overdue one), and the rules once on
+   "Beitreten". */
+describe('GroupWaitingRoom – dates as a series', () => {
+	const START = new Date(NOW + 3 * 24 * 3600e3);
+	const WEEKLY = [0, 7, 14].map(
+		(d) => new Date(START.getTime() + d * 24 * 3600e3)
+	);
+	const open = (repeat?: 'WEEKLY') => {
+		render(
+			<GroupWaitingRoom
+				plannedStart={START}
+				durationMinutes={90}
+				eventId={15}
+				rules={[]}
+				active={false}
+				onJoin={vi.fn()}
+				nowMs={NOW}
+				upcomingDates={WEEKLY}
+				repeat={repeat}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+	};
+
+	afterEach(cleanup);
+
+	it('marks the next meeting and offers the whole series', () => {
+		open('WEEKLY');
+		const dates = document.querySelectorAll(
+			'[data-cy="group-upcoming-date"]'
+		);
+		expect(dates[0].getAttribute('data-next')).toBe('true');
+		expect(dates[1].hasAttribute('data-next')).toBe(false);
+		fireEvent.click(screen.getByTestId('group-upcoming-series'));
+		const google = Array.from(document.querySelectorAll('a')).find((a) =>
+			a.href.includes('calendar.google.com')
+		) as HTMLAnchorElement;
+		expect(new URL(google.href).searchParams.get('recur')).toBe(
+			'RRULE:FREQ=WEEKLY'
+		);
+	});
+
+	it('offers no series for a group that does not repeat', () => {
+		open();
+		expect(screen.queryByTestId('group-upcoming-series')).toBeNull();
+	});
+});
+
+describe('GroupWaitingRoom – running group and rules', () => {
+	const START = new Date(NOW);
+	const RULES = [
+		'Was hier gesagt wird, bleibt hier.',
+		'Niemand muss etwas sagen.'
+	];
+	const renderRunning = ({
+		active = true,
+		nowMs = NOW + (12 * 60 + 47) * 1000,
+		repeat,
+		plannedStart = START
+	}: {
+		active?: boolean;
+		nowMs?: number;
+		repeat?: 'WEEKLY';
+		plannedStart?: Date | null;
+	} = {}) =>
+		render(
+			<GroupWaitingRoom
+				agencyName="Caritas Berlin"
+				agencyId={7}
+				plannedStart={plannedStart}
+				durationMinutes={90}
+				eventId={15}
+				rules={RULES}
+				active={active}
+				onJoin={vi.fn()}
+				nowMs={nowMs}
+				repeat={repeat}
+			/>
+		);
+
+	afterEach(cleanup);
+
+	it('names date, time and rhythm under the headline before the start', () => {
+		renderRunning({
+			active: false,
+			nowMs: NOW - 3 * 24 * 3600e3,
+			repeat: 'WEEKLY'
+		});
+		const rhythm = document.querySelector(
+			'[data-cy="group-entry-rhythm"]'
+		) as HTMLElement;
+		expect(rhythm.textContent).toMatch(
+			/\d{2}\.\d{2}\. · \d{2}:\d{2} – \d{2}:\d{2} · jede Woche/
+		);
+	});
+
+	it('counts up how long the group has run, in grey, without the overdue clock', () => {
+		renderRunning();
+		const running = document.querySelector(
+			'[data-cy="group-running"]'
+		) as HTMLElement;
+		expect(running).toBeTruthy();
+		expect(screen.getByRole('timer').textContent).toBe(
+			'Läuft seit00Stunden12Minuten47Sekunden'
+		);
+		expect(running.textContent).toContain(
+			'Läuft gerade · Moderation ist da'
+		);
+		expect(
+			document.querySelector('.waitingClock__overdueCaption')
+		).toBeNull();
+		expect(
+			document.querySelector('[data-cy="group-entry-rhythm"]')
+		).toBeNull();
+	});
+
+	it('shows no clock for a group opened before its time', () => {
+		renderRunning({ nowMs: NOW - 5 * 60e3 });
+		expect(screen.queryByRole('timer')).toBeNull();
+		expect(
+			document.querySelector('[data-cy="group-running"]')?.textContent
+		).toContain('Die Gruppe hat begonnen.');
+	});
+
+	it('shows the rules once on "Beitreten", the consent in the bar', async () => {
+		renderRunning();
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		const intro = document.querySelector(
+			'[data-cy="group-rules-intro"]'
+		) as HTMLElement;
+		expect(intro).toBeTruthy();
+		expect(
+			Array.from(intro.querySelectorAll('li')).map((li) =>
+				li.textContent?.replace(/^\d/, '')
+			)
+		).toEqual(RULES);
+		expect(intro.textContent).toContain('Läuft seit 12:47');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="consent-completion"]')
+			).toBeTruthy()
+		);
+		// Nothing red, nothing moving: the clock and the switch are gone.
+		expect(document.querySelector('[data-cy="group-running"]')).toBeNull();
+		expect(screen.queryByTestId('group-entry-more')).toBeNull();
+	});
+});
+
 describe('entryRoomClockHeight', () => {
 	/*
 	 * The budget the clock is handed. Every number is a band measured on the
@@ -464,5 +643,9 @@ describe('entryRoomClockHeight', () => {
 
 	it('never asks for a negative clock on a tiny window', () => {
 		expect(entryRoomClockHeight(320, 400)).toBe(160);
+	});
+
+	it('gives the rhythm line under the headline its height', () => {
+		expect(entryRoomClockHeight(1440, 950, 46)).toBe(554);
 	});
 });

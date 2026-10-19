@@ -744,7 +744,7 @@
 			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
 			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique.",
 			"addThis": "Ajouter cette date au calendrier",
-			"addThisShort": "Au calendrier"
+			"shareHintSeries": "Liens pour votre site : toutes les dates en série, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -1180,13 +1180,41 @@
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours",
 			"legalMenu": "Mentions légales",
-			"moreDates": "Autres dates",
 			"dates": {
-				"headline": "Prochaines dates",
-				"subline": "Ajoutez chaque date séparément à votre calendrier.",
+				"headline": "Les prochaines rencontres",
+				"subline": "Touchez une date pour l’ajouter à votre calendrier.",
 				"none": "Aucune autre date n’est prévue pour le moment.",
 				"add": "Ajouter",
-				"addLabel": "Ajouter {{date}} au calendrier"
+				"addLabel": "Ajouter {{date}} au calendrier",
+				"next": "Prochaine",
+				"seriesTitle": "Toutes à la fois",
+				"seriesSub": "ajouter en série",
+				"seriesLong": "Tout ajouter en série",
+				"repeat": {
+					"DAILY": "Le groupe se réunit chaque jour à la même heure.",
+					"WEEKLY": "Le groupe se réunit chaque semaine à la même heure.",
+					"MONTHLY": "Le groupe se réunit chaque mois à la même heure."
+				}
+			},
+			"addDate": "Ajouter au calendrier",
+			"allDates": "Toutes les dates",
+			"nextDates": "Prochaines dates",
+			"joinFrom": "à partir de {{time}}",
+			"rhythm": {
+				"DAILY": "chaque jour",
+				"WEEKLY": "chaque semaine",
+				"MONTHLY": "chaque mois"
+			},
+			"running": {
+				"since": "En cours depuis",
+				"status": "En cours",
+				"statusModerated": "En cours · la modération est là",
+				"headline": "Le groupe a commencé {{ago}}.",
+				"subline": "Vous pouvez rejoindre à tout moment – personne n’est obligé de parler."
+			},
+			"rules": {
+				"headline": "Comment nous nous traitons",
+				"subline": "Lisez-les une fois – et vous êtes des nôtres."
 			}
 		},
 		"shareDialog": {

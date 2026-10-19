@@ -739,7 +739,7 @@
 			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
 			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung.",
 			"addThis": "Diesen Termin zum Kalender hinzufügen",
-			"addThisShort": "In den Kalender"
+			"shareHintSeries": "Kalenderlinks für Ihre Webseite: alle Termine als Serie, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -1175,13 +1175,41 @@
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
 			"backToCountdown": "Zurück zum Countdown",
 			"legalMenu": "Rechtliches",
-			"moreDates": "Weitere Termine",
 			"dates": {
-				"headline": "Nächste Termine",
-				"subline": "Tragen Sie jeden Termin einzeln in Ihren Kalender ein.",
+				"headline": "Die nächsten Treffen",
+				"subline": "Tippen Sie auf einen Termin, um ihn einzutragen.",
 				"none": "Zurzeit sind keine weiteren Termine geplant.",
 				"add": "Eintragen",
-				"addLabel": "{{date}} zum Kalender hinzufügen"
+				"addLabel": "{{date}} zum Kalender hinzufügen",
+				"next": "Nächster",
+				"seriesTitle": "Alle auf einmal",
+				"seriesSub": "als Serie eintragen",
+				"seriesLong": "Alle als Serie eintragen",
+				"repeat": {
+					"DAILY": "Die Gruppe trifft sich jeden Tag zur selben Zeit.",
+					"WEEKLY": "Die Gruppe trifft sich jede Woche zur selben Zeit.",
+					"MONTHLY": "Die Gruppe trifft sich jeden Monat zur selben Zeit."
+				}
+			},
+			"addDate": "Termin eintragen",
+			"allDates": "Alle Termine",
+			"nextDates": "Nächste Termine",
+			"joinFrom": "ab {{time}}",
+			"rhythm": {
+				"DAILY": "jeden Tag",
+				"WEEKLY": "jede Woche",
+				"MONTHLY": "jeden Monat"
+			},
+			"running": {
+				"since": "Läuft seit",
+				"status": "Läuft gerade",
+				"statusModerated": "Läuft gerade · Moderation ist da",
+				"headline": "Die Gruppe hat {{ago}} begonnen.",
+				"subline": "Sie können jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"headline": "So gehen wir miteinander um",
+				"subline": "Einmal kurz lesen – dann sind Sie dabei."
 			}
 		},
 		"shareDialog": {

@@ -141,7 +141,7 @@ export const InfoGalleryMobile: StoryObj = {
 
 /* A common laptop is shorter than 1440 × 900: the cards keep their height,
    and since #1689 nothing stands under them any more — the dates have their
-   own view behind the bar's "Weitere Termine". */
+   own view behind the bar's "Alle Termine". */
 export const InfoGalleryLaptop: StoryObj = {
 	name: '3 — Laptop 1366 × 768, nur Karten',
 	globals: { viewport: { value: 'desktop1366' } },
@@ -156,7 +156,7 @@ export const InfoGalleryLaptop: StoryObj = {
 			expect(found.length).toBeGreaterThan(0);
 			return found;
 		});
-		await expect(canvas.queryByText('Nächste Termine')).toBeNull();
+		await expect(canvas.queryByText('Die nächsten Treffen')).toBeNull();
 		// The way back is a visible button above the cards, once slid in.
 		await waitFor(() => expect(back).toBeVisible());
 		await expect(back.className).toContain('MuiButton-outlined');
@@ -170,7 +170,7 @@ export const InfoGalleryLaptop: StoryObj = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Nur die drei Karten (Frank, 19.10.: die Termine liefen in die Karten). Die Termine stehen jetzt hinter „Weitere Termine“ in der Leiste; „Zurück zum Countdown“ ist ein sichtbarer Knopf.'
+				story: 'Nur die drei Karten (Frank, 19.10.: die Termine liefen in die Karten). Die Termine stehen jetzt hinter „Alle Termine“ in der Leiste; „Zurück zum Countdown“ ist ein sichtbarer Knopf.'
 			}
 		}
 	}

@@ -46,6 +46,7 @@ import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import {
+	getGroupRepeat,
 	getGroupUpcomingDates,
 	getGroupWaitingRoomTopic
 } from './entryRoom/groupWaitingRoomData';
@@ -354,6 +355,7 @@ export const JoinGroupChatView = ({
 					agencyId={item.assignedAgencies?.[0]?.id}
 					plannedStart={plannedStart}
 					upcomingDates={getGroupUpcomingDates(item)}
+					repeat={getGroupRepeat(item)}
 					durationMinutes={item.duration}
 					eventId={item.id}
 					welcomeText={authorContent.hintMessage || undefined}

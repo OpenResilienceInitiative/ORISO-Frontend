@@ -164,10 +164,14 @@ export const Open1440: Story = {
 	play: async ({ canvasElement }) => {
 		await expectCardRoom(canvasElement);
 		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
-		// #1787: a running group says so instead of counting up its start.
+		/* #1787, Frank 2026-10-19: a running group says so — calm, grey,
+		   never the red overdue clock. */
 		await expect(
-			within(canvasElement).getByText('Die Gruppe hat begonnen.')
+			within(canvasElement).getByText(/Die Gruppe hat .*begonnen\./)
 		).toBeVisible();
+		await expect(
+			canvasElement.querySelector('[data-cy="group-running"]')
+		).toHaveTextContent('Läuft gerade');
 		await expect(
 			within(canvasElement).queryByText('Die Gruppe beginnt gleich.')
 		).toBeNull();

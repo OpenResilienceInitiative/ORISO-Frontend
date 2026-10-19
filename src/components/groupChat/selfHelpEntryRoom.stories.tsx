@@ -82,6 +82,8 @@ const WELCOME =
 const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 const IN_THREE_DAYS = new Date(NOW + 3 * 24 * 3600e3 + 5 * 3600e3 + 12 * 60e3);
 const OVERDUE = new Date(NOW - 7 * 60e3);
+/* The group runs for 12:47 when the late one arrives (Frank, 2026-10-19). */
+const RUNNING = new Date(NOW - (12 * 60 + 47) * 1000);
 /* Bug A in #1499: a group two hours and twenty minutes past its start. Any
    group created on Dev reaches this within minutes because UserService stores
    the start two hours early, so this is the state a client most often sees. */
@@ -273,6 +275,7 @@ const Room = ({
 				onJoin={() => undefined}
 				nowMs={NOW}
 				upcomingDates={weekly(start)}
+				repeat="WEEKLY"
 				showLoginLink
 			/>
 		</AgencySpecificContext.Provider>
@@ -307,36 +310,64 @@ export const WaitingAreaOverdue: StoryObj = {
 	}
 };
 
-/** #1787: the moderator has opened the group — no clock counting up. */
+/**
+ * #1787, Frank 2026-10-19: the moderator has opened the group. No red
+ * overdue clock — a grey one counts up how long the group has been on, so
+ * whoever comes late sees they can still join.
+ */
 export const WaitingAreaOpen: StoryObj = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(
-			canvas.getByText('Die Gruppe hat begonnen.')
-		).toBeVisible();
+		const running = canvasElement.querySelector(
+			'[data-cy="group-running"]'
+		) as HTMLElement;
+		await expect(running).toBeVisible();
+		await expect(running).toHaveTextContent('Läuft gerade');
+		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
 		await expect(
 			canvas.queryByText('Die Gruppe beginnt gleich.')
 		).toBeNull();
 		await expect(canvas.getByTestId('group-entry-join')).toBeEnabled();
 		// #1785: a date that runs is not one for the calendar; the next ones are.
 		await expect(canvas.queryByTestId('group-entry-calendar')).toBeNull();
-		await expect(canvas.getByTestId('group-entry-dates')).toBeVisible();
+		await expect(canvas.getByTestId('group-entry-dates')).toHaveTextContent(
+			'Nächste Termine'
+		);
 		// The rules still move, so the switch to stop them stays.
 		await expect(
 			canvas.getByRole('switch', { name: 'Animation abschalten' })
 		).toBeInTheDocument();
 		await expectWaitingRoomLayout(canvasElement);
 	},
-	name: '2c — Gruppe läuft',
-	render: () => <Room start={OVERDUE} active />,
+	name: '2c — Gruppe läuft · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room start={RUNNING} active />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Die Moderation hat die Gruppe geöffnet: statt der hochzählenden Uhr „Die Gruppe hat begonnen.", „Beitreten" ist frei. „Diesen Termin zum Kalender hinzufügen" ist weg (#1785), „Weitere Termine" bleibt.'
+				story: 'Die Moderation hat die Gruppe geöffnet: grünes „Läuft gerade", eine graue Uhr zählt hoch, wie lange die Gruppe schon läuft, darunter die Regeln in einer ruhigen Pille. In der Leiste „Nächste Termine" neben „Beitreten". Nichts ist rot (Frank, 19.10.).'
 			}
 		}
 	}
+};
+
+export const WaitingAreaOpenMobile: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
+		const dates = canvas.getByTestId('group-entry-dates');
+		const join = canvas.getByTestId('group-entry-join');
+		// Its own row above "Beitreten", the full width.
+		await expect(dates.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			join.getBoundingClientRect().top
+		);
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '3c — Gruppe läuft, mobil',
+	globals: phone390Globals,
+	render: () => <Room start={RUNNING} active />,
+	parameters: { layout: 'fullscreen' }
 };
 
 /**
@@ -353,6 +384,12 @@ export const WaitingAreaConsent: StoryObj = {
 				'checkbox'
 			)
 		).toBeInTheDocument();
+		// The rules once, numbered and grey, while the bar asks.
+		const intro = canvasElement.querySelector(
+			'[data-cy="group-rules-intro"]'
+		) as HTMLElement;
+		await expect(intro.querySelectorAll('li')).toHaveLength(RULES.length);
+		await expect(intro).toHaveTextContent('Läuft seit 12:47');
 		await expect(
 			canvasElement.ownerDocument.querySelector(
 				'[data-cy="consent-completion"]'
@@ -360,16 +397,37 @@ export const WaitingAreaConsent: StoryObj = {
 		).not.toBeNull();
 		await expectWaitingRoomLayout(canvasElement);
 	},
-	name: '2b — Beitreten: Einwilligung',
-	render: () => <Room start={OVERDUE} active />,
+	name: '2b — Beitreten: Regeln und Einwilligung · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room start={RUNNING} active />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: '„Beitreten" öffnet die Einwilligung des Live-Chats in der Leiste: winkende Hand, Kästchen, rundes X. Erst mit Haken geht es in die Gruppe; die Zustimmung wird dabei gespeichert.'
+				story: '„Beitreten" zeigt einmal die Regeln der Gruppe — nummeriert, grau, alle auf einmal, nichts bewegt sich (Frank, 19.10.: „ohne dass die eben rot sind") — und öffnet die Einwilligung des Live-Chats in der Leiste: winkende Hand, Kästchen, rundes X. Erst mit Haken geht es in die Gruppe; die Zustimmung wird dabei gespeichert.'
 			}
 		}
 	}
+};
+
+export const WaitingAreaConsentMobile: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		(await canvas.findByTestId('group-entry-join')).click();
+		const intro = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'[data-cy="group-rules-intro"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		await expect(intro.querySelectorAll('li')).toHaveLength(RULES.length);
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '3d — Beitreten: Regeln und Einwilligung, mobil',
+	globals: phone390Globals,
+	render: () => <Room start={RUNNING} active />,
+	parameters: { layout: 'fullscreen' }
 };
 
 /**
@@ -442,28 +500,46 @@ const calendarRow = async (canvasElement: HTMLElement) => {
 };
 
 /**
- * Frank, 2026-10-19: the calendar is a split button in the bar — this date on
- * the left, the other dates on the right — instead of dates under the cards.
+ * Frank, 2026-10-19 ("auf dem Desktop … ein bisschen schwach"): the calendar
+ * is a split pill beside "Beitreten" in the bar's one row, the date and the
+ * rhythm stand under the headline, and the shut "Beitreten" says when it
+ * opens.
  */
 export const WaitingAreaCalendarSplit: StoryObj = {
-	name: '1c — Kalender in der Leiste: geteilter Knopf · 1440',
+	name: '1c — Kalender neben „Beitreten": geteilte Pille · 1440',
 	globals: desktop1440Globals,
 	render: () => <Room />,
 	play: async ({ canvasElement }) => {
-		const { add, dates } = await calendarRow(canvasElement);
-		await expect(add).toHaveTextContent(
-			'Diesen Termin zum Kalender hinzufügen'
+		const canvas = within(canvasElement);
+		const add = await canvas.findByTestId('group-entry-calendar');
+		const dates = canvas.getByTestId('group-entry-dates');
+		const join = canvas.getByTestId('group-entry-join');
+		await waitFor(() =>
+			expect(add.getBoundingClientRect().width).toBeGreaterThan(0)
 		);
-		await expect(dates).toHaveTextContent('Weitere Termine');
-		// One button with two segments: the full label, not cut off.
+		await expect(add).toHaveTextContent('Termin eintragen');
+		await expect(dates).toHaveTextContent('Alle Termine');
+		// One row: pill left, "Beitreten" right, centred on one line.
+		const a = add.getBoundingClientRect();
+		const d = dates.getBoundingClientRect();
+		const j = join.getBoundingClientRect();
+		await expect(a.right).toBeLessThanOrEqual(d.left);
+		await expect(d.right).toBeLessThanOrEqual(j.left);
+		await expect(
+			Math.abs(a.top + a.height / 2 - (j.top + j.height / 2))
+		).toBeLessThanOrEqual(2);
 		await expect(add.scrollWidth).toBeLessThanOrEqual(add.clientWidth);
+		await expect(join).toHaveTextContent(/ab .*\d{2}:\d{2}/);
+		await expect(
+			canvasElement.querySelector('[data-cy="group-entry-rhythm"]')
+		).toHaveTextContent('jede Woche');
 		await expectWaitingRoomLayout(canvasElement);
 	},
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Über „Beitreten" ein geteilter Knopf: links „Diesen Termin zum Kalender hinzufügen" (öffnet Google, Outlook, .ics), rechts „Weitere Termine" (öffnet die Termin-Ansicht). Sobald die Gruppe läuft, bleibt nur der rechte Teil (2c).'
+				story: 'In der Leiste eine Zeile: links die geteilte Pille „Termin eintragen | Alle Termine →", rechts „Beitreten" mit „ab Do., 18:00". Unter der Überschrift Datum, Uhrzeit und Rhythmus. Sobald die Gruppe läuft, bleibt nur „Nächste Termine" (2c).'
 			}
 		}
 	}
@@ -471,7 +547,7 @@ export const WaitingAreaCalendarSplit: StoryObj = {
 
 /** The dates view: the middle changes, "Beitreten" stays. */
 export const WaitingAreaDates: StoryObj = {
-	name: '1d — Weitere Termine · 1440',
+	name: '1d — Die nächsten Treffen · 1440',
 	globals: desktop1440Globals,
 	render: () => <Room />,
 	play: async ({ canvasElement }) => {
@@ -486,8 +562,12 @@ export const WaitingAreaDates: StoryObj = {
 		);
 		// The panel slides in from the right; judge it once it has arrived.
 		await waitFor(() =>
-			expect(canvas.getByText('Nächste Termine')).toBeVisible()
+			expect(canvas.getByText('Die nächsten Treffen')).toBeVisible()
 		);
+		await expect(canvas.getByTestId('group-upcoming-series')).toBeVisible();
+		await expect(
+			canvasElement.querySelector('[data-next="true"]')
+		).toHaveTextContent('Nächster');
 		await expect(canvas.getByTestId('group-dates-back')).toBeVisible();
 		await expect(
 			canvas.getAllByTestId('group-upcoming-date-add')
@@ -500,7 +580,7 @@ export const WaitingAreaDates: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: '„Weitere Termine" ersetzt die Uhr wie „Mehr erfahren": oben „Zurück zum Countdown", dann die nächsten Termine mit Uhrzeit von–bis, jeder einzeln mit „Eintragen". Unten bleibt „Beitreten".'
+				story: '„Alle Termine" ersetzt die Uhr wie „Mehr erfahren": oben „Zurück zum Countdown", dann die Treffen als Kacheln wie die Öffnungszeiten des Live-Chats — der nächste markiert, jeder mit „Eintragen" — und eine Kachel „Alle auf einmal" für die ganze Serie (Google und .ics; Outlooks Weblink kennt keine Serie). Unten bleibt „Beitreten".'
 			}
 		}
 	}
@@ -512,9 +592,10 @@ export const WaitingAreaDatesMobile: StoryObj = {
 	render: () => <Room />,
 	play: async ({ canvasElement }) => {
 		const { add, dates } = await calendarRow(canvasElement);
-		await expect(add).toHaveTextContent('In den Kalender');
-		// Quiet text buttons, not a second outlined row.
-		await expect(add.className).toContain('MuiButton-text');
+		await expect(add).toHaveTextContent('Eintragen');
+		await expect(dates).toHaveTextContent('Alle Termine');
+		// Assist pills: a finger's 44 px, not the bar's 56.
+		await expect(Math.round(add.getBoundingClientRect().height)).toBe(44);
 		dates.click();
 		await waitFor(() =>
 			expect(
@@ -528,7 +609,7 @@ export const WaitingAreaDatesMobile: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Auf dem Handy zwei dezente Knöpfe nebeneinander über „Beitreten": „In den Kalender" und „Weitere Termine". „Beitreten" behält die ganze Breite.'
+				story: 'Auf dem Handy zwei ruhige Pillen nebeneinander über „Beitreten": „Eintragen" und „Alle Termine →". „Beitreten" behält die ganze Breite und sagt, ab wann es offen ist. Die Termine als Zeilen mit Datumsmarke.'
 			}
 		}
 	}
@@ -565,7 +646,7 @@ export const WaitingAreaLightBrandColour: StoryObj = {
 			name: /zum Kalender hinzufügen/i
 		});
 		const dates = within(canvasElement).getByRole('button', {
-			name: /Weitere Termine/
+			name: /Alle Termine/
 		});
 		const more = within(canvasElement).getByRole('button', {
 			name: /Mehr erfahren/

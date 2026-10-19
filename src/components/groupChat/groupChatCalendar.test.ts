@@ -28,6 +28,32 @@ describe('buildNeutralGroupChatCalendar', () => {
 		expect(calendar.outlookUrl).toContain('outlook.live.com');
 	});
 
+	it('exports a repeating group as one series from its next date', () => {
+		const input = {
+			start: new Date('2026-09-10T16:00:00Z'),
+			durationMinutes: 90,
+			title: 'Online appointment',
+			defaultTitle: 'Online appointment',
+			eventId: 'group-7'
+		};
+		const single = buildNeutralGroupChatCalendar(input);
+		const series = buildNeutralGroupChatCalendar({
+			...input,
+			repeat: 'WEEKLY'
+		});
+
+		expect(series.ics).toContain('\r\nRRULE:FREQ=WEEKLY\r\n');
+		expect(single.ics).not.toContain('RRULE');
+		expect(new URL(series.googleUrl).searchParams.get('recur')).toBe(
+			'RRULE:FREQ=WEEKLY'
+		);
+		// Outlook's web link cannot carry a rule; a single date would lie.
+		expect(series.outlookUrl).toBeNull();
+		// A series must not replace the single date already in a calendar.
+		const uid = (ics: string) => ics.match(/UID:(.*)/)?.[1];
+		expect(uid(series.ics)).not.toBe(uid(single.ics));
+	});
+
 	it('escapes CRLF and punctuation without injecting ICS fields', () => {
 		const calendar = buildNeutralGroupChatCalendar({
 			start: new Date('2026-08-04T18:00:00Z'),

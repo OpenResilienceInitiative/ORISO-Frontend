@@ -4,7 +4,14 @@ interface GroupChatCalendarInput {
 	title: string;
 	defaultTitle: string;
 	eventId: string | number;
+	/**
+	 * Export the whole series from `start` on instead of this one date. The
+	 * Outlook web link has no field for it, so a series has no Outlook link.
+	 */
+	repeat?: GroupChatRepeat;
 }
+
+export type GroupChatRepeat = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 const compactUtc = (date: Date) =>
 	date
@@ -44,7 +51,8 @@ export const buildNeutralGroupChatCalendar = ({
 	durationMinutes,
 	title,
 	defaultTitle,
-	eventId
+	eventId,
+	repeat
 }: GroupChatCalendarInput) => {
 	if (!Number.isFinite(durationMinutes) || durationMinutes < 0) {
 		throw new Error(
@@ -63,17 +71,19 @@ export const buildNeutralGroupChatCalendar = ({
 		'VERSION:2.0',
 		'PRODID:-//Online Appointment//Calendar//EN',
 		'BEGIN:VEVENT',
-		`UID:${safeUidSegment(eventId)}-${start.getTime()}-online-appointment@localhost`,
+		`UID:${safeUidSegment(eventId)}-${repeat ? 'series-' : ''}${start.getTime()}-online-appointment@localhost`,
 		`DTSTAMP:${compactUtc(new Date())}`,
 		`DTSTART:${startUtc}`,
 		`DTEND:${endUtc}`,
+		...(repeat ? [`RRULE:FREQ=${repeat}`] : []),
 		foldIcsLine(`SUMMARY:${escapeIcs(safeTitle)}`),
 		'END:VEVENT',
 		'END:VCALENDAR'
 	].join('\r\n');
 	const common = new URLSearchParams({
 		text: safeTitle,
-		dates: `${startUtc}/${endUtc}`
+		dates: `${startUtc}/${endUtc}`,
+		...(repeat ? { recur: `RRULE:FREQ=${repeat}` } : {})
 	});
 	const outlook = new URLSearchParams({
 		path: '/calendar/action/compose',
@@ -86,7 +96,9 @@ export const buildNeutralGroupChatCalendar = ({
 	return {
 		ics,
 		googleUrl: `https://calendar.google.com/calendar/render?action=TEMPLATE&${common}`,
-		outlookUrl: `https://outlook.live.com/calendar/0/deeplink/compose?${outlook}`
+		outlookUrl: repeat
+			? null
+			: `https://outlook.live.com/calendar/0/deeplink/compose?${outlook}`
 	};
 };
 

@@ -349,11 +349,16 @@ const measureBar = async (canvasElement: HTMLElement) => {
 	};
 };
 
-/** Both buttons on one line each, inside the column, calendar above. */
+/**
+ * Both buttons on one line each, inside the column: the calendar above
+ * "Beitreten" in a narrow column, beside it in a wide one (Frank,
+ * 2026-10-19).
+ */
 const expectBarFits = async (
 	canvasElement: HTMLElement,
 	columnWidth: number,
-	minCalendarWidth: number
+	minCalendarWidth: number,
+	layout: 'stacked' | 'inline' = 'stacked'
 ) => {
 	await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
 	const { calendar, join } = await measureBar(canvasElement);
@@ -364,7 +369,17 @@ const expectBarFits = async (
 	/* Nothing pokes out of the column. */
 	await expect(calendar.right).toBeLessThanOrEqual(columnWidth);
 	await expect(join.right).toBeLessThanOrEqual(columnWidth);
-	/* Stacked: the calendar above "Beitreten". */
+	if (layout === 'inline') {
+		await expect(calendar.right).toBeLessThanOrEqual(join.left);
+		await expect(
+			Math.abs(
+				calendar.top +
+					calendar.height / 2 -
+					(join.top + join.height / 2)
+			)
+		).toBeLessThanOrEqual(2);
+		return;
+	}
 	await expect(calendar.bottom).toBeLessThanOrEqual(join.top);
 };
 
@@ -389,7 +404,7 @@ export const NarrowColumnAt1366: Story = {
 	}
 };
 
-/** Wide column (1920 px window): the same stacked bar, full column width. */
+/** Wide column (1920 px window): the calendar pill beside "Beitreten". */
 export const WideColumnAt1920: Story = {
 	globals: { viewport: { value: 'desktop1920' } },
 	render: () => (
@@ -401,7 +416,7 @@ export const WideColumnAt1920: Story = {
 		</StoryProviders>
 	),
 	play: async ({ canvasElement }) => {
-		await expectBarFits(canvasElement, 900, 150);
+		await expectBarFits(canvasElement, 900, 150, 'inline');
 	}
 };
 

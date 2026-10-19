@@ -2,63 +2,46 @@ import * as React from 'react';
 import { Box, Button } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import { useTranslation } from 'react-i18next';
+import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 
 export interface GroupCalendarActionsProps {
 	/** Opens the calendar choice for this date; unset once it has begun. */
 	onAddThis?: (event: React.MouseEvent<HTMLElement>) => void;
-	/** Opens "Nächste Termine"; unset while there is no other date. */
+	/** Opens the dates view; unset while there is no other date. */
 	onMoreDates?: () => void;
-	/** The first guess before the row has been measured. */
-	phone: boolean;
+	/**
+	 * Beside "Beitreten" in the bar's one row. Off on a phone and in a narrow
+	 * chat column, where the actions get their own row above it.
+	 */
+	inline: boolean;
 }
 
-/** Below this the split button's long label would be cut off. */
-const SPLIT_MIN_WIDTH = 560;
-
-/* The row's own width, not the window's: in the chat card a desktop window
-   can leave a 370 px column (#1499). */
-const useRowWidth = () => {
-	const [row, setRow] = React.useState<HTMLElement | null>(null);
-	const [width, setWidth] = React.useState<number | null>(null);
-	React.useLayoutEffect(() => {
-		if (!row) return;
-		const measure = () =>
-			setWidth(row.getBoundingClientRect().width || null);
-		measure();
-		const RO = globalThis.ResizeObserver;
-		if (!RO) return;
-		const observer = new RO(measure);
-		observer.observe(row);
-		return () => observer.disconnect();
-	}, [row]);
-	return [setRow, width] as const;
-};
-
 /**
- * The calendar row above "Beitreten" (Frank, 2026-10-19). Where there is room
- * one split button: this date on the left, the other dates on the right. On
- * a phone or in a narrow chat column two quiet buttons side by side.
+ * The calendar actions in the waiting room's bar (Frank, 2026-10-19: "lame
+ * auf dem Desktop"). Wide: one M3 split pill beside "Beitreten" — this date
+ * on the left, all dates on the right. Narrow: two quiet pills side by side
+ * above it. Once the group runs only the way to the next dates is left.
  */
 export const GroupCalendarActions = ({
 	onAddThis,
 	onMoreDates,
-	phone
+	inline
 }: GroupCalendarActionsProps) => {
 	const { t } = useTranslation();
-	const addLabel = t(
+	const addTitle = t(
 		'groupChat.calendar.addThis',
 		'Diesen Termin zum Kalender hinzufügen'
 	);
-	const moreLabel = t('groupChat.entry.moreDates', 'Weitere Termine');
+	const datesLabel = onAddThis
+		? t('groupChat.entry.allDates', 'Alle Termine')
+		: t('groupChat.entry.nextDates', 'Nächste Termine');
 	const both = Boolean(onAddThis && onMoreDates);
-	const [rowRef, width] = useRowWidth();
-	const compact = width === null ? phone : width < SPLIT_MIN_WIDTH;
 
-	if (compact) {
+	if (!inline) {
 		return (
 			<Box
-				ref={rowRef}
 				sx={{
 					display: 'grid',
 					gridTemplateColumns: both ? '1fr 1fr' : '1fr',
@@ -67,28 +50,31 @@ export const GroupCalendarActions = ({
 			>
 				{onAddThis && (
 					<Button
-						variant="text"
-						size="small"
+						variant="outlined"
+						startIcon={<EventAvailableRoundedIcon />}
 						onClick={onAddThis}
-						title={addLabel}
+						title={addTitle}
+						aria-label={addTitle}
 						data-testid="group-entry-calendar"
-						sx={phoneSx}
+						sx={{ ...pillSx, ...assistSx }}
 					>
-						{t(
-							'groupChat.calendar.addThisShort',
-							'In den Kalender'
-						)}
+						{t('groupChat.entry.dates.add', 'Eintragen')}
 					</Button>
 				)}
 				{onMoreDates && (
 					<Button
-						variant="text"
-						size="small"
+						variant="outlined"
+						startIcon={
+							onAddThis ? undefined : <CalendarMonthRoundedIcon />
+						}
+						endIcon={
+							onAddThis ? <ArrowForwardRoundedIcon /> : undefined
+						}
 						onClick={onMoreDates}
 						data-testid="group-entry-dates"
-						sx={phoneSx}
+						sx={{ ...pillSx, ...assistSx }}
 					>
-						{moreLabel}
+						{datesLabel}
 					</Button>
 				)}
 			</Box>
@@ -97,49 +83,91 @@ export const GroupCalendarActions = ({
 
 	/* M3 split button: two segments, a 2 px gap, the inner corners small. */
 	return (
-		<Box ref={rowRef} sx={{ display: 'flex', gap: '2px', width: '100%' }}>
+		<Box
+			data-bar-side
+			sx={{
+				display: 'flex',
+				gap: '2px',
+				flex: '0 1 auto',
+				minWidth: 0
+			}}
+		>
 			{onAddThis && (
 				<Button
 					variant="outlined"
-					startIcon={<CalendarMonthRoundedIcon />}
+					startIcon={<EventAvailableRoundedIcon />}
 					onClick={onAddThis}
-					title={addLabel}
+					title={addTitle}
+					aria-label={addTitle}
 					data-testid="group-entry-calendar"
 					sx={{
+						...pillSx,
 						...segmentSx,
-						flex: '1 1 0',
 						...(both ? innerEnd : {})
 					}}
 				>
-					{addLabel}
+					{t('groupChat.entry.addDate', 'Termin eintragen')}
 				</Button>
 			)}
 			{onMoreDates && (
 				<Button
 					variant="outlined"
-					endIcon={<ArrowForwardRoundedIcon />}
+					startIcon={
+						onAddThis ? undefined : <CalendarMonthRoundedIcon />
+					}
+					endIcon={
+						onAddThis ? <ArrowForwardRoundedIcon /> : undefined
+					}
 					onClick={onMoreDates}
 					data-testid="group-entry-dates"
 					sx={{
+						...pillSx,
 						...segmentSx,
-						flex: both ? '0 0 auto' : '1 1 0',
 						...(both ? innerStart : {})
 					}}
 				>
-					{moreLabel}
+					{datesLabel}
 				</Button>
 			)}
 		</Box>
 	);
 };
 
-/** Layout only; colour and hover come from the theme's outlined button. */
+/**
+ * Neutral, not a second red button: dark type on a grey outline, the icon in
+ * the brand colour. The theme's hover (red fill, white type) stays, so the
+ * icon follows the type there.
+ */
+const pillSx = {
+	'minWidth': 0,
+	'overflow': 'hidden',
+	'textOverflow': 'ellipsis',
+	'whiteSpace': 'nowrap',
+	'textTransform': 'none',
+	'fontWeight': 600,
+	'color': registrationMd3.onSurface,
+	'borderColor': registrationMd3.outline,
+	'& .MuiButton-startIcon': { color: registrationMd3.primary, mr: 1 },
+	'& .MuiButton-endIcon': { ml: 0.75 },
+	'&:hover .MuiButton-startIcon': { color: 'inherit' }
+} as const;
+
 const segmentSx = {
-	minWidth: 0,
+	flex: '0 1 auto',
 	minHeight: 56,
-	overflow: 'hidden',
-	textOverflow: 'ellipsis',
-	whiteSpace: 'nowrap'
+	py: 0,
+	px: 2.25,
+	fontSize: 15,
+	borderRadius: '28px'
+} as const;
+
+/* An M3 assist chip's size: a finger's 44 px, not the bar's 56. */
+const assistSx = {
+	minHeight: 44,
+	py: 0,
+	px: 1.5,
+	fontSize: 14,
+	borderRadius: '22px'
 } as const;
 
 const innerEnd = {
@@ -150,16 +178,4 @@ const innerEnd = {
 const innerStart = {
 	borderTopLeftRadius: 4,
 	borderBottomLeftRadius: 4
-} as const;
-
-/* Quiet: sentence case, not the theme's capitals (Frank: "dezent"). */
-const phoneSx = {
-	minHeight: 36,
-	px: 1,
-	fontSize: 14,
-	fontWeight: 600,
-	textTransform: 'none',
-	whiteSpace: 'nowrap',
-	overflow: 'hidden',
-	textOverflow: 'ellipsis'
 } as const;
