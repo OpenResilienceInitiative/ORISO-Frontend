@@ -27,7 +27,10 @@ import {
 } from '../../displayFilter/displayFilterStoryData';
 import { useDisplayFilterEmailColumn } from '../../displayFilter/useDisplayFilterEmailColumn';
 import { EmailToggle } from './EmailToggle';
-import { readEmailSetting } from './emailSetting';
+import { readEmailSetting, resetEmailSettingSession } from './emailSetting';
+
+// The e-mail write state is module-wide: no case inherits another's.
+afterEach(() => resetEmailSettingSession());
 
 vi.mock('../../../api/apiPatchUserData', () => ({
 	apiPatchUserData: vi.fn()
@@ -105,6 +108,9 @@ const serve = (steps: Step[]) => {
 	return { server, reload };
 };
 
+/** A local, non-server context update (e.g. useLiveChatViaSidebar). */
+let localUpdate: () => void = () => undefined;
+
 const Harness = ({
 	reload,
 	children
@@ -113,6 +119,10 @@ const Harness = ({
 	children: React.ReactNode;
 }) => {
 	const [userData, setUserData] = React.useState(initialUserData);
+	localUpdate = () =>
+		setUserData(
+			(previous) => ({ ...previous, liveChatViaSidebar: true }) as never
+		);
 	const reloadUserData = React.useCallback(async () => {
 		const fresh = await reload();
 		setUserData(fresh as never);
@@ -198,12 +208,14 @@ describe('e-mail setting: shown value equals the stored one after any write sequ
 			const toggle = screen.getByRole('switch') as HTMLInputElement;
 			for (let i = 0; i < steps.length; i += 1) fireEvent.click(toggle);
 			await settle(server, steps.length);
-			expect(toggle.checked).toBe(
-				readEmailSetting(server.data, {
-					kind: 'path',
-					name: 'emailNotificationsEnabled'
-				})
-			);
+			const stored = readEmailSetting(server.data, {
+				kind: 'path',
+				name: 'emailNotificationsEnabled'
+			});
+			expect(toggle.checked).toBe(stored);
+			// An unrelated local context update is no server data.
+			act(() => localUpdate());
+			expect(toggle.checked).toBe(stored);
 		}
 	);
 

@@ -7,6 +7,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
+import isEqual from 'lodash/isEqual';
 import set from 'lodash/set';
 import { NotificationsContext, UserDataContext } from '../../../globalState';
 import type { UserDataInterface } from '../../../globalState/interfaces';
@@ -95,6 +96,8 @@ interface ShownSetting {
  * render a reload's snapshot only after later writes settled, so every
  * snapshot a write's reload fetched is tagged with that write's number
  * (`fetchedBy`); one older than the newest write is never taken as fresh.
+ * A context update whose e-mail part did not change (`emailPart`, e.g. a
+ * local `{ ...previous, liveChatViaSidebar }`) is no fresh data at all.
  */
 interface AccountSession {
 	userId: string | undefined;
@@ -102,6 +105,7 @@ interface AccountSession {
 	queuedWrites: number;
 	latestStored: Partial<UserDataInterface> | null;
 	seenUserData: unknown;
+	seenEmailPart: unknown;
 	writeNumber: number;
 	fetchedBy: WeakMap<object, number>;
 	shown: Map<string, ShownSetting>;
@@ -112,6 +116,7 @@ const newSession = (userId: string | undefined): AccountSession => ({
 	queuedWrites: 0,
 	latestStored: null,
 	seenUserData: undefined,
+	seenEmailPart: undefined,
 	writeNumber: 0,
 	fetchedBy: new WeakMap(),
 	shown: new Map()
@@ -133,6 +138,18 @@ const subscribeShown = (listener: () => void) => {
 const shownSnapshot = () => shownVersion;
 
 type MaybeUserData = Partial<UserDataInterface> | null | undefined;
+
+/** What of `userData` the e-mail settings are made of. */
+const emailPart = (userData: MaybeUserData) => ({
+	emailNotifications: userData?.emailNotifications,
+	emailToggles: userData?.emailToggles
+});
+
+/** Forgets all write state, as a sign-out would; for tests between cases. */
+export const resetEmailSettingSession = () => {
+	session = newSession(undefined);
+	publishShown();
+};
 
 /** The session of `userData`'s account; another account starts a fresh one. */
 const sessionOf = (userData: MaybeUserData): AccountSession => {
@@ -162,6 +179,9 @@ export const useSaveEmailSetting = () => {
 		const own = sessionOf(userData);
 		if (userData === own.seenUserData) return;
 		own.seenUserData = userData;
+		const part = emailPart(userData);
+		if (isEqual(part, own.seenEmailPart)) return;
+		own.seenEmailPart = part;
 		const from = userData ? own.fetchedBy.get(userData) : undefined;
 		if (
 			own.queuedWrites === 0 &&

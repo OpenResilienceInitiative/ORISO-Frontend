@@ -5,7 +5,10 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../../globalState';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
-import { useSaveEmailSetting } from './emailSetting';
+import { resetEmailSettingSession, useSaveEmailSetting } from './emailSetting';
+
+// The e-mail write state is module-wide: no case inherits another's.
+afterEach(() => resetEmailSettingSession());
 
 vi.mock('../../../api/apiPatchUserData', () => ({ apiPatchUserData: vi.fn() }));
 vi.mock('lottie-react', () => ({ default: () => null }));

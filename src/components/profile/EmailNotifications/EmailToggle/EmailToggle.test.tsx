@@ -11,6 +11,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotificationsContext, UserDataContext } from '../../../../globalState';
 import { apiPatchUserData } from '../../../../api/apiPatchUserData';
 import { EmailToggle } from '.';
+import { resetEmailSettingSession } from '../emailSetting';
+
+// The e-mail write state is module-wide: no case inherits another's.
+afterEach(() => resetEmailSettingSession());
 
 vi.mock('../../../../api/apiPatchUserData', () => ({
 	apiPatchUserData: vi.fn()

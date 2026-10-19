@@ -20,6 +20,10 @@ import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
 import { EMPTY_DISPLAY_FILTER } from './displayFilterTypes';
 import { SESSION_KINDS, STORY_LABELS } from './displayFilterStoryData';
 import { useDisplayFilterEmailColumn } from './useDisplayFilterEmailColumn';
+import { resetEmailSettingSession } from '../profile/EmailNotifications/emailSetting';
+
+// The e-mail write state is module-wide: no case inherits another's.
+afterEach(() => resetEmailSettingSession());
 
 vi.mock('../../api/apiPatchUserData', () => ({ apiPatchUserData: vi.fn() }));
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -136,6 +140,8 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
 		const fromProfile = vi.mocked(apiPatchUserData).mock.calls[0][0];
 		profile.unmount();
+		// A fresh app over the same stored data, not the saved state.
+		resetEmailSettingSession();
 		vi.mocked(apiPatchUserData).mockClear();
 
 		// The dialog: Mail-Beratung → E-Mail → Aus.
@@ -170,6 +176,8 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
 		const fromProfile = vi.mocked(apiPatchUserData).mock.calls[0][0];
 		profile.unmount();
+		// A fresh app over the same stored data, not the saved state.
+		resetEmailSettingSession();
 		vi.mocked(apiPatchUserData).mockClear();
 
 		render(withUser(<ConnectedDialog />));
@@ -193,6 +201,8 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
 		const fromProfile = vi.mocked(apiPatchUserData).mock.calls[0][0];
 		profile.unmount();
+		// A fresh app over the same stored data, not the saved state.
+		resetEmailSettingSession();
 		vi.mocked(apiPatchUserData).mockClear();
 
 		render(withUser(<ConnectedDialog />));
