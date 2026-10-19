@@ -151,6 +151,59 @@ describe('HandoverGateButton closing animation', () => {
 		expect(gate().disabled).toBe(false);
 	});
 
+	/* The button is shut while the screen is covered, so the closing animation
+	   cannot hand the keyboard back to it (a browser ignores focus on a disabled
+	   button). The gate does it itself once it is open again. */
+	describe('the keyboard after a refused entry', () => {
+		const refused = () => (
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={() => false}
+			/>
+		);
+
+		it('is back on the button once the gate is open again', async () => {
+			const timeline = controlledPlay();
+			render(refused());
+			gate().focus();
+			fireEvent.click(gate());
+			expect(gate().disabled).toBe(true);
+			// A browser drops the focus of a button that is shut.
+			gate().blur();
+			await act(async () => timeline.cover());
+			await act(async () => timeline.finish());
+
+			expect(gate().disabled).toBe(false);
+			expect(document.activeElement).toBe(gate());
+		});
+
+		it('is not taken from something that has it by then', async () => {
+			const timeline = controlledPlay();
+			render(refused());
+			gate().focus();
+			fireEvent.click(gate());
+			gate().blur();
+			const other = document.createElement('button');
+			document.body.appendChild(other);
+			other.focus();
+			await act(async () => timeline.finish());
+
+			expect(document.activeElement).toBe(other);
+			other.remove();
+		});
+
+		it('is not put on a button that did not have it when it was pressed', async () => {
+			const timeline = controlledPlay();
+			render(refused());
+			fireEvent.click(gate());
+			await act(async () => timeline.finish());
+
+			expect(gate().disabled).toBe(false);
+			expect(document.activeElement).toBe(document.body);
+		});
+	});
+
 	it('does not play, and does not enter, when the room refuses first', () => {
 		const onEnter = vi.fn();
 		const beforeEnter = vi.fn(() => false);

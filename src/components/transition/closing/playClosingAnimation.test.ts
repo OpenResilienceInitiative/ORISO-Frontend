@@ -334,6 +334,36 @@ describe('playClosingAnimation', () => {
 			await pending;
 		});
 
+		it('does not hand the keyboard to a button that is still shut, but to the field the person arrives in', async () => {
+			const late = installLateAnimate();
+			const gate = mountApp();
+			const field = document.createElement('div');
+			field.setAttribute('data-closing-focal', 'message-field');
+			field.getBoundingClientRect = () =>
+				({ left: 10, top: 700, width: 300, height: 60 }) as DOMRect;
+			const editor = document.createElement('div');
+			editor.setAttribute('contenteditable', 'true');
+			editor.tabIndex = 0;
+			field.appendChild(editor);
+			document.body.appendChild(field);
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			// jsdom cannot blur a button that is already disabled.
+			gate.blur();
+			gate.disabled = true;
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(document.activeElement).toBe(editor);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+		});
+
 		it('does not take the keyboard from something that already has it', async () => {
 			const late = installLateAnimate();
 			const gate = mountApp();
