@@ -265,10 +265,8 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
-					"greetingLabel": "Begrüßung der Moderation",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
 					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
-					"overdueHeadline": "Die Gruppe beginnt gleich.",
 					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
 				}
