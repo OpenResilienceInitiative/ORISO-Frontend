@@ -409,7 +409,7 @@ const consentPanel = (canvasElement: HTMLElement) =>
 export const VideoJoinAsksConsent: Story = {
 	name: 'Video · "Beitreten" asks for consent',
 	globals: desktop1440Globals,
-	args: { ...ready, modality: 'video', onJoin: fn() },
+	args: { ...ready, modality: 'video', onJoin: fn(), closing: null },
 	play: async ({ args, canvasElement }) => {
 		const body = within(canvasElement.ownerDocument.body);
 		expect(consentPanel(canvasElement)).toBeNull();
@@ -497,13 +497,162 @@ export const VideoConsentNoAgencyPolicy: Story = {
 export const VideoConsentOff: Story = {
 	name: 'Video · consent switched off',
 	globals: desktop1440Globals,
-	args: { ...ready, modality: 'video', consent: false, onJoin: fn() },
+	args: {
+		...ready,
+		modality: 'video',
+		consent: false,
+		onJoin: fn(),
+		closing: null
+	},
 	play: async ({ args, canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
 		await gateOpens(canvasElement);
 		await userEvent.click(gate(canvasElement));
 		expect(consentPanel(canvasElement)).toBeNull();
 		expect(args.onJoin).toHaveBeenCalledTimes(1);
+	}
+};
+
+/* ---------- The closing animation (ORISO-Frontend#1737) ---------- */
+
+const closingRoot = (canvasElement: HTMLElement) =>
+	canvasElement.ownerDocument.querySelector('[data-closing-animation]');
+
+/**
+ * The call itself is not built yet. The room that swaps in marks its main area
+ * with `data-closing-focal="call"`; this stand-in does the same when the join
+ * runs, so the animation can end on it.
+ */
+const joinWithStandInCall = () => {
+	const call = document.createElement('div');
+	call.setAttribute('data-closing-focal', 'call');
+	Object.assign(call.style, {
+		position: 'fixed',
+		left: '20%',
+		top: '20%',
+		width: '60%',
+		height: '40%'
+	});
+	document.body.appendChild(call);
+};
+const removeStandInCall = () =>
+	document
+		.querySelectorAll('[data-closing-focal="call"]')
+		.forEach((call) => call.remove());
+
+export const VideoJoinClosesOverTheCall: Story = {
+	name: 'Video · "Beitreten" closes the screen, then joins',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		consent: false,
+		closing: 'call',
+		onJoin: fn(joinWithStandInCall)
+	},
+	play: async ({ args, canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const onJoin = args.onJoin as ReturnType<typeof fn>;
+		try {
+			await gateOpens(canvasElement);
+			await userEvent.click(gate(canvasElement));
+
+			// The red comes first; the room is left only once it covers.
+			expect(closingRoot(canvasElement)).not.toBeNull();
+			expect(onJoin).not.toHaveBeenCalled();
+			await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+			expect(
+				closingRoot(canvasElement)?.getAttribute('data-closing-phase')
+			).toMatch(/covered|reveal/);
+
+			await waitFor(() => expect(closingRoot(canvasElement)).toBeNull(), {
+				timeout: 6000
+			});
+			// Nothing is left shut, and the gate is back.
+			expect(
+				[...doc.body.children].filter((el) => el.hasAttribute('inert'))
+			).toHaveLength(0);
+			await gateOpens(canvasElement);
+		} finally {
+			removeStandInCall();
+		}
+	}
+};
+
+export const VideoFailedJoinGivesTheRoomBack: Story = {
+	name: 'Video · a join that fails gives the room back at once',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		consent: false,
+		closing: 'call',
+		onJoin: fn(() => false)
+	},
+	play: async ({ args, canvasElement }) => {
+		await gateOpens(canvasElement);
+		await userEvent.click(gate(canvasElement));
+		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
+
+		// No call arrives, so there is nothing to wait for: the reveal starts at
+		// once (the wait for a destination is 1.8 s) and ends on the button.
+		await waitFor(
+			() =>
+				expect(
+					closingRoot(canvasElement)?.getAttribute(
+						'data-closing-phase'
+					)
+				).toMatch(/reveal/),
+			{ timeout: 1200 }
+		);
+		await waitFor(() => expect(closingRoot(canvasElement)).toBeNull(), {
+			timeout: 6000
+		});
+		await gateOpens(canvasElement);
+	}
+};
+
+export const VideoConsentFirstThenCloses: Story = {
+	name: 'Video · the consent is asked before anything closes',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		closing: 'call',
+		onJoin: fn(joinWithStandInCall)
+	},
+	play: async ({ args, canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		const onJoin = args.onJoin as ReturnType<typeof fn>;
+		try {
+			await gateOpens(canvasElement);
+			// "Beitreten" opens the sheet; nothing closes over it.
+			await userEvent.click(gate(canvasElement));
+			await waitFor(() =>
+				expect(consentPanel(canvasElement)).not.toBeNull()
+			);
+			expect(closingRoot(canvasElement)).toBeNull();
+
+			// Without the tick the gate explains; still nothing closes.
+			await userEvent.click(gate(canvasElement));
+			await expect(
+				await body.findByText(/ohne Ihre Zustimmung/)
+			).toBeInTheDocument();
+			expect(closingRoot(canvasElement)).toBeNull();
+			expect(onJoin).not.toHaveBeenCalled();
+
+			// Ticked, it closes first and joins when covered.
+			await userEvent.click(body.getByRole('checkbox'));
+			await userEvent.click(gate(canvasElement));
+			expect(closingRoot(canvasElement)).not.toBeNull();
+			expect(onJoin).not.toHaveBeenCalled();
+			await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+			await waitFor(() => expect(closingRoot(canvasElement)).toBeNull(), {
+				timeout: 6000
+			});
+		} finally {
+			removeStandInCall();
+		}
 	}
 };
 
