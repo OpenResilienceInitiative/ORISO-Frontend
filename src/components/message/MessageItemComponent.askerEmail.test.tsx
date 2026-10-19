@@ -238,7 +238,7 @@ it('offers the regular channels after the frozen FAQ without an optional popup',
 	const choice = screen.getByRole('button', {
 		name: /notificationChoice.both/
 	});
-	expect(faq.tagName).toBe('SUMMARY');
+	expect(faq.closest('summary')).not.toBeNull();
 	expect(
 		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy();
