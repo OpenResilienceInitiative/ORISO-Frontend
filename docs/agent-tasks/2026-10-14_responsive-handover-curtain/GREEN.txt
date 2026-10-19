@@ -1,0 +1,16 @@
+
+Running 12 tests using 1 worker
+
+[1/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 390px (de)
+[2/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 820px (de)
+[3/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 1440px (de)
+[4/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 320px (de)
+[5/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 390px (en)
+[6/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 820px (en)
+[7/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 1440px (en)
+[8/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 320px (en)
+[9/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 390px (fr)
+[10/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 820px (fr)
+[11/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 1440px (fr)
+[12/12] playwright/responsive-handover-1187/protected-request.spec.ts:10:7 › protected request controls remain readable and reachable at 320px (fr)
+  12 passed (13.5s)

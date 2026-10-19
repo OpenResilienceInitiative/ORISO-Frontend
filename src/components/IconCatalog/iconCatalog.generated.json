@@ -1703,6 +1703,19 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:case-handover:200",
+		"family": "case-handover",
+		"state": "200",
+		"role": "alternate-outline",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "case_handover_200_24px.svg",
+		"sourcePath": "src/resources/img/icons/case_handover_200_24px.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/supervisorDialog/SupervisorDialog.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:case-accepted:base",
 		"family": "case-accepted",
 		"state": "base",
@@ -4158,7 +4171,8 @@
 		"usageFiles": [
 			"src/components/chatStage/ChannelMenu.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/sessionsList/SessionRailPill.tsx"
+			"src/components/sessionsList/SessionRailPill.tsx",
+			"src/components/supervisorDialog/SupervisorDialog.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -4687,6 +4701,7 @@
 			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
+			"src/components/supervisorDialog/SupervisorDialog.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
 		],

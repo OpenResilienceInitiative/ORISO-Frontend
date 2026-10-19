@@ -904,6 +904,7 @@
 		},
 		"loadError": {
 			"consultants": "Les collègues n'ont pas pu être chargés.",
+			"info": "Les informations du chat n'ont pas pu être chargées.",
 			"retry": "Réessayer",
 			"topics": "Les sujets n'ont pas pu être chargés."
 		},
@@ -921,6 +922,7 @@
 			"headline": "Infos sur le chat",
 			"settings": {
 				"agency": "Service de consultation",
+				"agencyLine": "Service de consultation : {{name}}",
 				"createDate": "Date de création",
 				"creator": "Créateur",
 				"duration": "Durée",
@@ -1228,7 +1230,9 @@
 			"openGroup": "Ouvrir le groupe de parole",
 			"declinedHeadline": "Cette fois, cela n’a pas fonctionné.",
 			"declinedBody": "La modération n’a pas accepté votre demande. Pour toute question, adressez-vous à la personne qui vous a envoyé le lien.",
-			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération."
+			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération.",
+			"admittingHeadline": "Votre demande est approuvée.",
+			"admittingBody": "L’accès au groupe est encore en cours de préparation. Gardez cette page ouverte."
 		},
 		"accessUnavailable": {
 			"headline": "Ce groupe de parole ne peut pas être ouvert pour le moment.",
@@ -1266,7 +1270,9 @@
 				"coModeratorOwnerOnly": "Seule la direction du groupe de parole peut attribuer la co-modération.",
 				"coModeratorSameTenant": "La co-modération est réservée aux professionnel·les de votre propre organisme.",
 				"privacy": "Tant que vous n’avez pas décidé, {{name}} ne voit rien de ce groupe de parole."
-			}
+			},
+			"admissionQueued": "L’admission de {{name}} est approuvée. L’accès au groupe doit encore être confirmé.",
+			"coModerationQueued": "La co-modération de {{name}} est approuvée. L’accès au groupe doit encore être confirmé."
 		},
 		"joinHandover": {
 			"badge": "Groupe de parole",
@@ -1283,6 +1289,7 @@
 		"consent": {
 			"headline": "Avant d'écrire",
 			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
+			"descriptionNamed": "Ce groupe est animé par {{agency}}. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
 			"reject": "Refuser",
 			"accept": "J'accepte",
 			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",
@@ -1725,6 +1732,7 @@
 					}
 				},
 				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
+				"setupIncomplete": "Votre compte n'est pas encore entièrement configuré. Veuillez utiliser le lien de votre e-mail d'invitation ou réinitialiser votre mot de passe via « Mot de passe oublié ? » pour terminer la configuration.",
 				"unavailable": "La connexion n'est pas possible pour le moment. Veuillez réessayer dans quelques minutes.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
@@ -2170,6 +2178,10 @@
 			"caseHandoverConsentDeclined": {
 				"title": "Transfert de dossier refusé",
 				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
+			},
+			"caseHandoverOfferReceived": {
+				"title": "Proposition de transfert",
+				"text": "Un collègue souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation."
 			},
 			"callStarted": {
 				"title": "Appel en cours",
@@ -3400,6 +3412,7 @@
 			"temporary": {
 				"join": "Rejoindre",
 				"joinGroup": "Rejoindre le groupe",
+				"incompleteLink": "Ce lien d’invitation est incomplet : il n’est donc pas possible de rejoindre sans compte. Veuillez créer un compte ou demander un nouveau lien.",
 				"toggleOff": "Créer un compte",
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
@@ -3557,12 +3570,40 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Transfert de dossier",
+			"pending": "Un collègue souhaite vous transférer cette consultation.",
+			"accept": "Accepter",
+			"decline": "Refuser",
+			"awaitingClientConsent": "Vous avez accepté. L’accès reste bloqué jusqu’au consentement de la personne conseillée.",
+			"declined": "Vous avez refusé ce transfert.",
+			"denied": "Ce transfert a été refusé.",
+			"clientConsentDeclined": "La personne conseillée a refusé ce transfert.",
+			"noContent": "Cette demande ne vous autorise pas à lire la conversation.",
+			"forbidden": "Vous n’êtes pas autorisé à consulter cette demande.",
+			"notFound": "Cette demande n’existe plus.",
+			"generic": "La demande n’a pas pu être chargée.",
+			"retry": "Réessayer",
+			"open": "Transférer la consultation",
+			"loadForbidden": "Vous n’êtes pas autorisé à charger les collègues éligibles.",
+			"loadError": "Le formulaire n’a pas pu être chargé.",
+			"submitError": "La demande n’a pas pu être envoyée.",
+			"conflict": "Cette consultation a déjà une offre de transfert en attente, ou elle a été modifiée. Vérifiez l’état actuel avant d’envoyer une nouvelle offre.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "En attente du collègue sélectionné.",
+				"PENDING_CLIENT_CONSENT": "Le collègue a accepté. En attente du consentement du client.",
+				"GRANTED": "Le transfert est terminé.",
+				"RECIPIENT_DECLINED": "Le collègue sélectionné a refusé.",
+				"DENIED": "Le transfert a été refusé.",
+				"CLIENT_CONSENT_DECLINED": "Le client a refusé le transfert."
+			}
+		},
 		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",
 		"batch": {
 			"cancel": "Fermer la sélection",
 			"confirm": "Demander pour la sélection",
 			"required": "Choisissez au moins un dossier, un motif et une explication.",
-			"result": "{{successful}} demande(s) envoyée(s), {{failed}} en échec.",
+			"result": "{{granted}} transféré(s), {{pending}} en attente, {{denied}} refusé(s), {{failed}} en échec.",
 			"selectCase": "Sélectionner le dossier",
 			"selectedCount": "{{count}} sélectionné(s)",
 			"start": "Sélectionner plusieurs dossiers",
@@ -3700,6 +3741,10 @@
 			"supervisionTitle": "Supervision activée !",
 			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
 		},
+		"readOnly": {
+			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
+			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages."
+		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
 			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
@@ -3709,6 +3754,47 @@
 			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
 			"loading": "Chargement du paramètre …"
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Demander une supervision",
+			"change": "Changer de superviseur",
+			"handover": "Transférer la consultation"
+		},
+		"description": {
+			"add": "Invitez un collègue expérimenté.",
+			"change": "Remplacez le superviseur actuel.",
+			"handover": "Proposez cette consultation à un collègue éligible."
+		},
+		"currentHeading": "Supervision actuelle",
+		"noneYet": "Aucun superviseur n’est affecté.",
+		"personLabel": {
+			"add": "Choisir un superviseur",
+			"change": "Choisir le nouveau superviseur",
+			"handover": "Choisir un collègue"
+		},
+		"reasonLabel": {
+			"add": "Motif de la supervision",
+			"change": "Motif du changement",
+			"handover": "Motif du transfert"
+		},
+		"reasonPlaceholder": "Décrivez brièvement le motif.",
+		"reasonError": "Choisissez un motif.",
+		"reasonEmptyOption": "Choisir un motif…",
+		"explanation": {
+			"add": "Un superviseur peut vous aider dans un espace d’équipe séparé.",
+			"change": "Le nouveau superviseur remplace le précédent.",
+			"handover": "Le collègue sélectionné décide d’abord. Si la politique l’exige, le client est ensuite consulté. Vous restez responsable jusqu’à toutes les décisions requises."
+		},
+		"handoverPending": "La demande est d’abord envoyée au collègue sélectionné. Elle ne prend effet qu’après toutes les décisions requises.",
+		"confirm": {
+			"add": "Demander",
+			"change": "Demander le changement",
+			"handover": "Envoyer la proposition"
+		},
+		"cancel": "Annuler",
+		"close": "Fermer",
+		"emptyOption": "Veuillez choisir…"
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -5391,6 +5477,7 @@
 			"ready": "La récupération avec votre mot de passe de connexion est configurée. Une clé de récupération enregistrée reste également valide.",
 			"needs-password": "La récupération par mot de passe n’a pas encore été vérifiée dans cette session. Reconnectez-vous ou configurez-la avec votre clé de récupération existante.",
 			"needs-recovery-key": "Votre historique nécessite votre clé de récupération sur cet appareil.",
+			"needs-sign-in": "Votre historique s’ouvre sur cet appareil dès que vous vous reconnectez avec votre mot de passe.",
 			"retryable-failure": "La sauvegarde des clés n’a pas pu être terminée. Vous pouvez continuer à rédiger votre demande et vérifier la sauvegarde dans les paramètres de sécurité.",
 			"settings": "Paramètres de sécurité",
 			"reauthenticate": "Se déconnecter et se reconnecter",
@@ -5874,6 +5961,10 @@
 			"restricted": {
 				"title": "Les nouvelles consultations sont actuellement suspendues",
 				"text": "L’organisme de conseil doit confirmer l’accord actuel de traitement des données. Contactez votre centre de conseil. Les consultations déjà commencées peuvent continuer."
+			},
+			"restrictedGroupJoin": {
+				"title": "Impossible de rejoindre ce groupe pour le moment",
+				"text": "Il n’est pas possible de rejoindre ce groupe pour le moment, car l’organisme de conseil doit encore confirmer l’accord actuel de traitement des données. Contactez votre centre de conseil."
 			},
 			"unavailable": {
 				"title": "La disponibilité des consultations ne peut pas être vérifiée",

@@ -1,3 +1,4 @@
+import { getSessionMenuAgency } from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
@@ -419,6 +420,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//list item icons only shown on outside
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
+	const menuAgency = getSessionMenuAgency(activeSession);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
@@ -621,9 +623,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 						>
 							<ChatMenuDropdownHeader
-								subtitle={translate(
-									'groupChat.info.settings.subtitle'
-								)}
+								subtitle={
+									activeSession.isGroup && menuAgency?.name
+										? translate(
+												'groupChat.info.settings.agencyLine',
+												{ name: menuAgency.name }
+											)
+										: translate(
+												'groupChat.info.settings.subtitle'
+											)
+								}
 								title={translate(
 									'groupChat.info.settings.headline'
 								)}
@@ -1025,13 +1034,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									handleLeaveGroupChat={handleLeaveGroupChat}
 									handleStopGroupChat={handleStopGroupChat}
 									bannedUsers={props.bannedUsers}
+									isJoinGroupChatView={
+										props.isJoinGroupChatView
+									}
 								/>
 							)}
 
 							<div className="legalInformationLinks--menu">
 								<LegalLinks
 									legalLinks={legalLinks}
-									params={{ aid: activeSession?.agency?.id }}
+									params={{ aid: menuAgency?.id }}
 								>
 									{(label, url, rawLabel) => {
 										const kind = getLegalLinkKind(
@@ -1111,7 +1123,8 @@ const SessionMenuFlyoutGroup = ({
 	editGroupChatSettingsLink,
 	handleLeaveGroupChat,
 	handleStopGroupChat,
-	bannedUsers
+	bannedUsers,
+	isJoinGroupChatView
 }: {
 	groupChatInfoLink: string;
 	onOpenInfo: () => void;
@@ -1119,6 +1132,7 @@ const SessionMenuFlyoutGroup = ({
 	handleStopGroupChat: MouseEventHandler;
 	handleLeaveGroupChat: MouseEventHandler;
 	bannedUsers: string[];
+	isJoinGroupChatView?: boolean;
 }) => {
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
@@ -1126,9 +1140,15 @@ const SessionMenuFlyoutGroup = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
+	// Leave/stop only mean something in a running group the user has joined;
+	// the waiting room and the join view show this menu on phones too (#1499).
+	const isRunning =
+		Boolean(activeSession.item.active) && !isJoinGroupChatView;
+
 	return (
 		<>
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
 				moderators.length > 1 && (
 					<div
@@ -1149,9 +1169,9 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
+			{/* Askers who have not joined get the schedule-only Chat-Info. */}
 			{(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
-				(activeSession.item.subscribed &&
-					!bannedUsers?.includes(userData.userName))) && (
+				!bannedUsers?.includes(userData.userName)) && (
 				<Link
 					to={groupChatInfoLink}
 					onClick={onOpenInfo}
@@ -1163,7 +1183,8 @@ const SessionMenuFlyoutGroup = ({
 					/>
 				</Link>
 			)}
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 				canModerateGroupChat(activeSession, userData) && (
 					<div

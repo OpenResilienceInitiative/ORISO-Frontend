@@ -21,7 +21,7 @@ import {
 } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
-import { chosenAvatarOf } from '../../utils/avatarChoice';
+import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
@@ -96,6 +96,7 @@ import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelp
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
+import { TopicTag } from '../topicTag/TopicTag';
 import { useMatrixSessionEvents } from '../../hooks/useMatrixSessionPreview';
 import {
 	filterVisibleMatrixPreviewEvents,
@@ -1065,7 +1066,9 @@ export const SessionListItemComponent = ({
 					activeSession.consultant?.consultantId ||
 					'unknown'
 				}
-				choice={chosenAvatarOf(activeSession.consultant)}
+				choice={counsellorChoiceOf(
+					chosenAvatarOf(activeSession.consultant)
+				)}
 				avatarDisplayName={activeSession.consultant?.displayName}
 				size={AVATAR_SIZES.session}
 				ring={false}
@@ -1161,9 +1164,9 @@ export const SessionListItemComponent = ({
 					<div className="sessionsListItem__row">
 						<div className="sessionsListItem__rowLeft">
 							{activeSession.isGroup && (
-								<div className="sessionsListItem__topic">
+								<TopicTag className="sessionsListItem__topic">
 									{translate('groupChat.noTopicSpecified')}
-								</div>
+								</TopicTag>
 							)}
 						</div>
 						<div className="sessionsListItem__rowRight">
@@ -1375,17 +1378,17 @@ export const SessionListItemComponent = ({
 								   pick a topic. Fall back to the "No topic
 								   specified" chip used by group-chat cards
 								   so the topic column is never empty. */}
-								<div className="sessionsListItem__topic">
+								<TopicTag className="sessionsListItem__topic">
 									{topic?.name ||
 										translate('groupChat.noTopicSpecified')}
-								</div>
+								</TopicTag>
 								<div className="sessionsListItem__consultingType" />
 							</>
 						) : shouldShowPostcode && topic?.name ? (
 							<div className="sessionsListItem__topicPostcodeGroup">
-								<div className="sessionsListItem__topic">
+								<TopicTag className="sessionsListItem__topic">
 									{topic.name}
-								</div>
+								</TopicTag>
 								<div className="sessionsListItem__postcode">
 									{postcodeLabel}
 								</div>
@@ -1393,9 +1396,9 @@ export const SessionListItemComponent = ({
 						) : (
 							<>
 								{topic?.name && (
-									<div className="sessionsListItem__topic">
+									<TopicTag className="sessionsListItem__topic">
 										{topic.name}
-									</div>
+									</TopicTag>
 								)}
 								<div className="sessionsListItem__consultingType">
 									{shouldShowPostcode ? (
@@ -1551,8 +1554,8 @@ export const SessionListItemComponent = ({
 											?.consultantId ||
 										'unknown'
 									}
-									choice={chosenAvatarOf(
-										activeSession.consultant
+									choice={counsellorChoiceOf(
+										chosenAvatarOf(activeSession.consultant)
 									)}
 									avatarDisplayName={
 										activeSession.consultant?.displayName

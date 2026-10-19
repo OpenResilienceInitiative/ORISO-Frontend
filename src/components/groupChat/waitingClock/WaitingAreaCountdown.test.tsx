@@ -4,7 +4,12 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import de from '../../../resources/i18n/de/common.json';
 import deInformal from '../../../resources/i18n/de@informal/common.json';
-import { WaitingAreaCountdown } from './WaitingAreaCountdown';
+import {
+	type ClockShape,
+	clockRowWidth,
+	fitClockSize,
+	WaitingAreaCountdown
+} from './WaitingAreaCountdown';
 
 const readKey = (catalogue: unknown, path: string): unknown =>
 	path.split('.').reduce<unknown>((value, part) => {
@@ -217,6 +222,73 @@ describe('WaitingAreaCountdown', () => {
 		);
 	});
 
+	// #1499. A group 140 minutes late used to draw "99" on the face while its
+	// own timer label said 140 — the face and the label disagreed one digit
+	// further out than #1293 fixed. The third digit group is 24 more cells.
+	it('grows a third digit past 99 minutes instead of clamping', () => {
+		const { container } = renderCountdown(-(140 * 60 + 7));
+
+		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
+			'Minuten: 140, Sekunden: 7'
+		);
+		// 3 digits (minutes) + 2 digits (seconds) = 5 x 24 mini-clocks.
+		expect(container.querySelectorAll('.waitingClock__cell')).toHaveLength(
+			5 * 24
+		);
+	});
+
+	// The face stops at three cells; past that it must not pass 999 off as exact.
+	it('marks the face as a lower bound from 1000 minutes late', () => {
+		const { container } = renderCountdown(-(1200 * 60 + 3));
+
+		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
+			'Minuten: 1200, Sekunden: 3'
+		);
+		const cue = container.querySelector('.waitingClock__faceOverflow');
+		expect(cue?.textContent).toBe('+');
+		expect(container.querySelectorAll('.waitingClock__cell')).toHaveLength(
+			5 * 24
+		);
+	});
+
+	it('shows 999 minutes as exact, without the overflow cue', () => {
+		const { container } = renderCountdown(-(999 * 60 + 3));
+
+		expect(
+			container.querySelector('.waitingClock__faceOverflow')
+		).toBeNull();
+	});
+
+	it('marks the motionless face as a lower bound from 1000 minutes late', () => {
+		const { container } = renderCountdown(-(1200 * 60 + 3), {
+			reducedMotion: true
+		});
+
+		const values = Array.from(
+			container.querySelectorAll('.waitingClock__stillValue'),
+			(node) => node.textContent
+		);
+		expect(values).toEqual(['999+', '03']);
+	});
+
+	it('keeps 999 motionless minutes exact', () => {
+		const { container } = renderCountdown(-(999 * 60 + 3), {
+			reducedMotion: true
+		});
+
+		expect(
+			container.querySelector('.waitingClock__faceOverflow')
+		).toBeNull();
+		expect(screen.getByText('999')).toBeTruthy();
+	});
+
+	it('prints the true minutes in the motionless fallback too', () => {
+		renderCountdown(-(140 * 60 + 7), { reducedMotion: true });
+
+		expect(screen.getByText('140')).toBeTruthy();
+		expect(screen.getByText('07')).toBeTruthy();
+	});
+
 	it('starts the card on the netiquette when no welcome text exists', () => {
 		renderCountdown(2 * 86400, { welcomeText: undefined });
 
@@ -247,5 +319,80 @@ describe('WaitingAreaCountdown', () => {
 
 		expect(screen.queryByRole('button')).toBeNull();
 		expect(screen.getByText('Tage')).toBeTruthy();
+	});
+});
+
+/**
+ * #1499. The overdue row may not wrap: it sits inside a flip card whose height
+ * is one group tall, so a second row paints over the caption underneath it.
+ * The row cannot wrap as long as the size the fit picks really fits — which is
+ * what these assert, at the widths of the two surfaces that show this clock.
+ */
+describe('clock geometry', () => {
+	const shape = (over: Partial<ClockShape> = {}): ClockShape => ({
+		overdue: true,
+		tight: true,
+		compact: false,
+		digits: [2, 2],
+		...over
+	});
+
+	/*
+	 * The columns the two surfaces really give the clock, measured in the
+	 * browser: 800 px on the client entry page at 1440, 374 px at 390, and
+	 * 644 px in the counsellor's chat card at 1280. 320 px is the narrowest
+	 * phone anyone still ships. Seconds are never more than two digits, so
+	 * `[3, 2]` is the widest overdue row that exists.
+	 */
+	const CASES = [
+		{ width: 800, compact: false },
+		{ width: 644, compact: false },
+		{ width: 374, compact: true },
+		{ width: 320, compact: true }
+	];
+
+	it.each(CASES)(
+		'fits the overdue row into a $width px column',
+		({ width, compact }) => {
+			for (const digits of [
+				[2, 2],
+				[3, 2]
+			]) {
+				const s = shape({ digits, compact });
+				const row = clockRowWidth(fitClockSize(width, undefined, s), s);
+				expect([digits.join('/'), row <= width]).toEqual([
+					digits.join('/'),
+					true
+				]);
+			}
+		}
+	);
+
+	// A fixed clockSize above the fit maximum stays as long as the column holds it.
+	it('keeps a fixed size above the fit maximum when it fits', () => {
+		const s = shape({ compact: false });
+		expect(clockRowWidth(120, s)).toBeLessThan(4000);
+		expect(fitClockSize(4000, undefined, s, 120)).toBe(120);
+		// ...and still shrinks it where the column is too narrow.
+		expect(fitClockSize(644, undefined, s, 120)).toBe(
+			fitClockSize(644, undefined, s)
+		);
+	});
+
+	it('keeps the clock as big as the column allows', () => {
+		const s = shape();
+		const size = fitClockSize(800, undefined, s);
+		// One step larger would no longer fit — the fit is not conservative.
+		expect(clockRowWidth(size + 1, s)).toBeGreaterThan(800);
+	});
+
+	it('pays for the third minute digit with a smaller mini-clock, not a wrap', () => {
+		const two = shape({ digits: [2, 2] });
+		const three = shape({ digits: [3, 2] });
+		const sizeTwo = fitClockSize(800, undefined, two);
+		const sizeThree = fitClockSize(800, undefined, three);
+
+		expect(sizeThree).toBeLessThan(sizeTwo);
+		expect(clockRowWidth(sizeThree, three)).toBeLessThanOrEqual(800);
 	});
 });

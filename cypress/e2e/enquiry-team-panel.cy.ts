@@ -311,6 +311,11 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.intercept('GET', '**/service/users/sessions/room/1375', {
 			sessions: [session]
 		});
+		// Unmocked, this lookup falls through to the dev server; on a slow runner
+		// it outlasts AcceptAssign's 3 s reload, so no reload ever finishes.
+		cy.intercept('GET', '**/service/users/case-handover/candidates*', {
+			sessions: []
+		});
 		cy.intercept(
 			'GET',
 			'**/conversations/consultants/enquiries/registered*',

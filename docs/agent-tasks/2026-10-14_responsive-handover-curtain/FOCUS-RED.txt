@@ -1,0 +1,34 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
+  1) playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator:  getByRole('button', { name: 'Zurück', exact: true })
+    Expected: focused
+    Received: inactive
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeFocused" with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Zurück', exact: true })
+        9 × locator resolved to <button type="button" title="Zurück" aria-label="Zurück" data-cy="case-handover-curtain-back" class="sideScrollerFooter__button sideScrollerFooter__button--back">…</button>
+          - unexpected value "inactive"
+
+
+      171 | 	await expect(
+      172 | 		page.getByRole('button', { name: 'Zurück', exact: true })
+    > 173 | 	).toBeFocused();
+          | 	  ^
+      174 | 	await page.getByRole('textbox').fill('Fictional advice request.');
+      175 | 	await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+      176 | 	await assertStepStartsVisible();
+        at /Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/persistent-footer.spec.ts:173:4
+
+    Error Context: test-results/responsive-handover-1187/persistent-footer-each-wiz-c33cf-d-focus-stays-in-the-footer/error-context.md
+
+
+  1 failed
+    playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
