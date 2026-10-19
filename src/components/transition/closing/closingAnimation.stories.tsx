@@ -3,9 +3,6 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
 import { PostRegistrationHandover } from '../../app/registrationLoader/PostRegistrationHandover';
-import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
-import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
-import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
 import { AgencySpecificContext } from '../../../globalState';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
@@ -19,6 +16,7 @@ import {
 	tablet834Globals
 } from '../../message/messageStoryShell';
 import {
+	expectWaitingRoomTemplate,
 	verifyClosingAnimation,
 	verifyClosingSkipped
 } from '../../../../.storybook/closingAnimationContractPlay';
@@ -182,33 +180,22 @@ const Room = ({
 				}}
 			>
 				<GlobalComponentContext.Provider value={{ Stage }}>
-					{!swaps ? (
-						// The shared waiting-room parts (frame, bar, gate), not a
-						// hand-laid layout. Nothing takes the person on: the gate
-						// has to give them the room back.
-						<EntryRoomShell
-							kicker="Gespräch"
-							statusLine="Fast geschafft."
-						>
-							<WaitingRoomBar>
-								<Box sx={{ width: '100%' }}>
-									<HandoverGateButton
-										state="ready"
-										closing={focal}
-										onEnter={() => undefined}
-									/>
-								</Box>
-							</WaitingRoomBar>
-						</EntryRoomShell>
-					) : arrived ? (
+					{arrived ? (
 						<Destination focal={focal} />
 					) : (
+						// The real waiting room (frame, template, bar, gate), never a
+						// hand-laid one. When nothing takes the person on, the gate has
+						// to give them the room back: a room that refuses or fails to
+						// take them on stays as it was, so its gate stays `ready`.
 						<PostRegistrationHandover
 							ready
+							forcedState={swaps ? undefined : 'ready'}
 							// The registration room names no destination of its own:
 							// the chat is where it arrives. Only a call has to say so.
 							closing={focal === 'call' ? 'call' : undefined}
-							onEnter={() => setArrived(true)}
+							onEnter={
+								swaps ? () => setArrived(true) : () => undefined
+							}
 						/>
 					)}
 				</GlobalComponentContext.Provider>
@@ -250,6 +237,7 @@ const closingStory = (
 		play: async ({ canvasElement }) => {
 			// The room is a waiting room: its layout holds before it closes.
 			await expectWaitingRoomLayout(canvasElement);
+			await expectWaitingRoomTemplate(canvasElement);
 			await verifyClosingAnimation(canvasElement, {
 				variant,
 				focal,
@@ -280,6 +268,7 @@ const tryStory = (
 	),
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+		await expectWaitingRoomTemplate(canvasElement);
 	}
 });
 
@@ -387,6 +376,7 @@ const reducedMotionStory = (
 	),
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+		await expectWaitingRoomTemplate(canvasElement);
 		await verifyClosingSkipped(canvasElement, {
 			gate: gateOf(canvasElement)
 		});

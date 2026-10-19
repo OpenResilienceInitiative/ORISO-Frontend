@@ -514,6 +514,75 @@ describe('playClosingAnimation', () => {
 			await pending;
 		});
 
+		/* The marker sits on a wrapper, and the formatting toolbar stands before the
+		   editor in the document: the first focusable thing is a button. */
+		it.each([
+			[
+				'a contenteditable editor',
+				() => {
+					const editor = document.createElement('div');
+					editor.setAttribute('contenteditable', 'true');
+					editor.tabIndex = 0;
+					return editor;
+				}
+			],
+			['a textarea', () => document.createElement('textarea')],
+			[
+				'a textbox',
+				() => {
+					const editor = document.createElement('div');
+					editor.setAttribute('role', 'textbox');
+					editor.tabIndex = 0;
+					return editor;
+				}
+			]
+		])(
+			'puts the keyboard into %s, not into a toolbar button that stands before it',
+			async (_kind, makeEditor) => {
+				const late = installLateAnimate();
+				const gate = mountApp();
+				let editor!: HTMLElement;
+				let bold!: HTMLElement;
+				const pending = playClosingAnimation({
+					variant: 'curtain',
+					focal: 'messageField',
+					onCovered: () => {
+						app().replaceChildren();
+						const field = document.createElement('div');
+						field.setAttribute(
+							'data-closing-focal',
+							'message-field'
+						);
+						field.getBoundingClientRect = () =>
+							({
+								left: 10,
+								top: 700,
+								width: 300,
+								height: 60
+							}) as DOMRect;
+						bold = document.createElement('button');
+						editor = makeEditor();
+						field.append(
+							bold,
+							document.createElement('button'),
+							editor
+						);
+						app().appendChild(field);
+					}
+				});
+				gate.blur();
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(50);
+				expect(document.activeElement).not.toBe(bold);
+				expect(document.activeElement).toBe(editor);
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(200);
+				await pending;
+			}
+		);
+
 		/* The composer skips its own autofocus up to 900 px: a focused field opens
 		   the soft keyboard and shifts the header and the composer there. */
 		it('leaves the arrival field alone on a narrow viewport, as the composer does', async () => {

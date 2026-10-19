@@ -243,6 +243,18 @@ const phaseOf = (recording: ClosingRecording, phase: string) => {
 	return found!;
 };
 
+/**
+ * The room these stories close is a real waiting room, laid out by the shared
+ * template (headline, status, middle, bar) and not by hand. The layout
+ * contract checks the frame and the bar; this names the template.
+ */
+export const expectWaitingRoomTemplate = (canvasElement: HTMLElement) =>
+	waitFor(() =>
+		expect(
+			canvasElement.querySelector('[data-cy="waiting-room-template"]')
+		).not.toBeNull()
+	);
+
 export interface ClosingContractOptions {
 	/** Which design the tenant chose for this width. */
 	variant: 'curtain' | 'slideReveal';

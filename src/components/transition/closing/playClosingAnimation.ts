@@ -360,6 +360,15 @@ const canAnimate = (doc: Document) =>
 const FOCUSABLE =
 	'textarea, input, select, button, a[href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
 
+/** Where a person types: the arrival field wraps its editor, a toolbar stands before it. */
+const TYPING =
+	'textarea, input:not([type="button"], [type="submit"], [type="checkbox"], [type="radio"]), [contenteditable="true"], [role="textbox"]';
+
+const firstIn = (landing: HTMLElement | null, selector: string) =>
+	landing?.matches(selector)
+		? landing
+		: landing?.querySelector<HTMLElement>(selector);
+
 const nothingFocused = (doc: Document) =>
 	!doc.activeElement ||
 	doc.activeElement === doc.body ||
@@ -394,9 +403,7 @@ const shutRoomBehind = (doc: Document, root: HTMLElement) => {
 		const target =
 			pressed?.isConnected && !pressed.matches(':disabled')
 				? pressed
-				: landing?.matches(FOCUSABLE)
-					? landing
-					: landing?.querySelector<HTMLElement>(FOCUSABLE);
+				: (firstIn(landing, TYPING) ?? firstIn(landing, FOCUSABLE));
 		target?.focus({ preventScroll: true });
 	};
 };
