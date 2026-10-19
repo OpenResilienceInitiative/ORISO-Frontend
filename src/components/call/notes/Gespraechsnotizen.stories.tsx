@@ -3,8 +3,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within } from 'storybook/test';
 
 import { Gespraechsnotizen } from './Gespraechsnotizen';
-import { HainStage, type CallParticipant } from '../stages/HainStage';
-import { pickIconColor } from '../../../utils/pseudonymGenerator';
 
 /**
  * Gesprächsnotizen (6) — the counsellor's private scratchpad.
@@ -112,52 +110,6 @@ export const Beschrieben: Story = {
 	}
 };
 
-const person = (name: string, file: string, bg: string): CallParticipant => ({
-	name,
-	avatar: { file, bg, iconColor: pickIconColor(bg) },
-	speaking: false
-});
-
-const ROOM: CallParticipant[] = [
-	person('wacher Igel 118', 'hedgehog.svg', '#FCE7E6'),
-	person('ruhiger Fuchs 432', 'fox.svg', '#D6E9CA'),
-	person('später Kauz 512', 'owl.svg', '#BBBCDE'),
-	person('klarer Schwan 77', 'swan.svg', '#F0DC82'),
-	person('naher Otter 303', 'otter.svg', '#1F3134'),
-	person('stilles Pferd 907', 'horse.svg', '#6E2A3A')
-];
-
-/*
- * `HainStage` is sized by a `box` prop in pixels, not by its container, so a
- * story that hardcodes it cannot show the stage reflowing — it would only
- * show the panel failing to cover a stage that was never going to move.
- *
- * Measuring the free width is the stage shell's job (ticket 05). Until the
- * shell exists this stands in for it, deliberately small and deliberately
- * here rather than in the stage: the stage's own contract stays unchanged,
- * and when the shell lands it replaces these few lines.
- */
-const useFreeBox = (): [React.RefObject<HTMLDivElement>, number] => {
-	const ref = React.useRef<HTMLDivElement>(null);
-	const [box, setBox] = React.useState(0);
-	React.useEffect(() => {
-		const host = ref.current;
-		if (!host || typeof ResizeObserver === 'undefined') return;
-		// The Hain is square, so the smaller of the two free dimensions is
-		// what binds. On a 1280x700 desktop that is the height — which is
-		// why collapsing the panel widens the stage's margins rather than
-		// growing the shapes. Worth knowing before anyone reads the freed
-		// width as wasted.
-		const measure = () =>
-			setBox(Math.min(host.clientWidth, host.clientHeight));
-		measure();
-		const observer = new ResizeObserver(measure);
-		observer.observe(host);
-		return () => observer.disconnect();
-	}, []);
-	return [ref, box];
-};
-
 /**
  * The acceptance criterion, measured rather than asserted: **"the panel never
  * covers the stage on a 1280 px screen; the stage reflows."**
@@ -167,9 +119,14 @@ const useFreeBox = (): [React.RefObject<HTMLDivElement>, number] => {
  * takes the width that is left, and collapsing the panel to the rail hands it
  * the freed space.
  *
- * `scripts/shootCallStages.mjs` checks both halves of that sentence in a real
- * browser: the two rectangles must not intersect, and the stage must actually
- * get wider when the panel collapses.
+ * The stage beside it is a PLACEHOLDER, and was a real `HainStage` until the
+ * host's copy of the stage was deleted: the call is drawn by the Element Call
+ * fork now, and the second copy here was dead code the next design fix could
+ * have landed in while every test stayed green. What this story is about
+ * survives the swap — the panel is a docked flex sibling with `position:
+ * static`, so it cannot cover whatever stands next to it, and that neighbour
+ * takes the width the panel leaves. The stage's own arrangements are
+ * photographed in the fork, by `scripts/shootOrisoStage.mjs` there.
  */
 export const NebenDerBuehne: Story = {
 	args: { labels },
@@ -180,43 +137,39 @@ export const NebenDerBuehne: Story = {
 	render: (args) => <BuehneMitNotizen {...args} />
 };
 
-/* A named component, because the hook above has to live in one. */
+/* A named component, so the story's markup stays readable. */
 const BuehneMitNotizen = (
 	args: React.ComponentProps<typeof Gespraechsnotizen>
-) => {
-	const [hostRef, free] = useFreeBox();
-	return (
+) => (
+	<div
+		style={{
+			display: 'flex',
+			gap: 16,
+			alignItems: 'stretch',
+			inlineSize: 1280,
+			blockSize: 680,
+			padding: 16,
+			boxSizing: 'border-box',
+			background: '#f0edee'
+		}}
+	>
 		<div
+			data-testid="stage-area"
 			style={{
+				flex: 1,
+				minInlineSize: 0,
 				display: 'flex',
-				gap: 16,
-				alignItems: 'stretch',
-				inlineSize: 1280,
-				blockSize: 680,
-				padding: 16,
-				boxSizing: 'border-box',
-				background: '#f0edee'
+				alignItems: 'center',
+				justifyContent: 'center',
+				borderRadius: 16,
+				background: '#dfe6e4',
+				color: '#4d5f5c',
+				font: '14px/1.4 system-ui, sans-serif',
+				textAlign: 'center'
 			}}
 		>
-			<div
-				ref={hostRef}
-				data-testid="stage-area"
-				style={{
-					flex: 1,
-					minInlineSize: 0,
-					display: 'flex',
-					justifyContent: 'center'
-				}}
-			>
-				{free > 0 && (
-					<HainStage
-						participants={ROOM}
-						box={free}
-						atmosphere="lichtung"
-					/>
-				)}
-			</div>
-			<Gespraechsnotizen {...args} />
+			Bühne (Element-Call-Fork)
 		</div>
-	);
-};
+		<Gespraechsnotizen {...args} />
+	</div>
+);

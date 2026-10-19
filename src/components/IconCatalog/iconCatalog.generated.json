@@ -2874,8 +2874,8 @@
 		"fileName": "image-filled.svg",
 		"sourcePath": "src/resources/img/icons/image-filled.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/call/stage/AtmosphereControl.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:imprint:base",

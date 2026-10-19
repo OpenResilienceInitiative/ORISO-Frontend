@@ -4,6 +4,18 @@ Fifteen plates from Storybook, shot with
 `node scripts/shootCallEvidence.mjs <outDir>` against `npm run storybook`,
 at a 1x device pixel ratio, locale `de-DE`, timezone `Europe/Berlin`.
 
+**Five of them can no longer be re-shot from this repository, and that is the
+point.** `06` to `09` and `12` were taken from the host's own copy of the
+stage — the Hain, the Felder, the Einzelgespräch, the atmospheres and the
+view switcher. That copy has been deleted: the call is drawn by
+ORISO-ElementCall, and a second implementation that nothing renders is where
+the next design fix would have landed while every test here stayed green. The
+plates stay as the evidence this pull request was reviewed with; the living
+pictures of those arrangements are in the fork, under `docs/evidence/`,
+shot by `scripts/shootOrisoStage.mjs` there. What `shootCallEvidence.mjs`
+still reproduces is what this repository still renders: the timeline cards,
+the appointment fix and the notes.
+
 What each plate proves, and what it cannot:
 
 | Plate                                                      | What it shows                                                                                                                                                                                                                                                                                              |
@@ -19,20 +31,21 @@ What each plate proves, and what it cannot:
 | `07-after-felder-scrollt`                                  | The Felder past eight people, where the fields stop subdividing and the sheet scrolls.                                                                                                                                                                                                                     |
 | `08-after-einzelgespraech`                                 | The two-person circle, with the seam moved towards the person who is speaking.                                                                                                                                                                                                                             |
 | `09-after-atmosphaeren`                                    | All eleven atmosphere presets side by side.                                                                                                                                                                                                                                                                |
-| `10-after-notizen-neben-der-buehne`                        | Gesprächsnotizen docked **beside** the stage at a wide viewport — the dock, measured as 0px² overlap by `shootCallStages.mjs`.                                                                                                                                                                             |
+| `10-after-notizen-neben-der-buehne`                        | Gesprächsnotizen docked **beside** the stage at a wide viewport — the dock, measured as 0px² overlap at the time by `shootCallStages.mjs`, which went with the stage copy. The story now puts a placeholder where the Hain stood; what it shows is the panel not covering its neighbour.                   |
 | `11-after-notizen-beschrieben`                             | The notes panel with notes in it, including the line that says they are private and last only as long as the call.                                                                                                                                                                                         |
 | `12-after-wechsler-ueber-der-buehne`                       | The view switcher over a stage: the three views, with the active one named.                                                                                                                                                                                                                                |
 
 Not shown here, and deliberately:
 
-- **The stage plates are Storybook only.** The copy that a real call renders
-  lives in `ORISO-ElementCall#83`; this branch carries the host-side design
-  tree with its stories and tests. The pictures are the same design, not a
-  photograph of a call.
+- **The stage plates are Storybook only, and historical.** They were shot
+  from the host-side copy before it was removed; what a real call renders
+  lives in `ORISO-ElementCall` (#83, merged). The pictures are the same
+  design, not a photograph of a call.
 - **The keyboard behaviour** of the stage resize handles, the view switcher's
   roving focus and the notes panel's announcements cannot be photographed.
-  They are covered by tests (`GroupCallWidget`, `ViewSwitcher`,
-  `Gespraechsnotizen`) and by the Storybook play functions, which run in CI.
+  They are covered by tests — `GroupCallWidget` and `Gespraechsnotizen` here,
+  the view switcher's in the fork — and by the Storybook play functions,
+  which run in CI.
 - **The call itself**, with two accounts and the fork deployed, is step 5 to 8
   of the reviewer test plan on the pull request. No screenshot here shows
   that, and none should be read as showing it.

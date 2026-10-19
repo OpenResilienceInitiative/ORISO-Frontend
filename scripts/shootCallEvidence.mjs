@@ -97,30 +97,18 @@ const PLATES = [
 		null,
 		'11:00'
 	],
-	// The stage stack as this branch carries it. Storybook only: the copy a
-	// call renders lives in ORISO-ElementCall#83.
-	[
-		'call-stages-hain--jemand-spricht',
-		'06-after-hain-spricht',
-		900,
-		'[data-testid="hain-stage"]',
-		null
-	],
-	[
-		'call-stages-felder--neun-scrollt',
-		'07-after-felder-scrollt',
-		960,
-		'[data-testid="felder-stage"]',
-		null
-	],
-	[
-		'call-stages-einzelgespräch--beraterin-spricht',
-		'08-after-einzelgespraech',
-		700,
-		'[data-testid="einzelgespraech-stage"]',
-		null
-	],
-	['call-atmosphere--alle-welten', '09-after-atmosphaeren', 980, null, null],
+	/*
+	 * The stage's own plates are not shot here any more.
+	 *
+	 * 06 to 09 and 12 came from the host's copy of the Hain, the Felder, the
+	 * Einzelgespräch, the atmospheres and the view switcher. That copy is
+	 * gone — the call is drawn by ORISO-ElementCall, which is where those
+	 * arrangements are photographed now (`scripts/shootOrisoStage.mjs` and
+	 * `docs/evidence/` there). The plates themselves stay committed under
+	 * `docs/storybook/issue-780-call-v2-stage-and-timeline/`, with a line in
+	 * its README saying where they came from; what this script can still
+	 * reproduce is what this repository still renders.
+	 */
 	[
 		'call-notizen--neben-der-buehne',
 		'10-after-notizen-neben-der-buehne',
@@ -133,13 +121,6 @@ const PLATES = [
 		'11-after-notizen-beschrieben',
 		520,
 		'[data-testid="note"]',
-		null
-	],
-	[
-		'call-ansichtswechsler--ueber-der-buehne',
-		'12-after-wechsler-ueber-der-buehne',
-		820,
-		'[data-testid="view-switcher"]',
 		null
 	]
 ];
