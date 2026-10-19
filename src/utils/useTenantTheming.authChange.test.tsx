@@ -281,4 +281,39 @@ describe('useTenantTheming – the Träger behind a shared link', () => {
 		);
 		window.history.replaceState(null, '', '/');
 	});
+
+	// Review of #1782: switching links is a switch of Träger like a sign-in.
+	// If the new one cannot be resolved, the previous link's Träger must not
+	// stay in the context.
+	it("drops the previous link's Träger when the next one fails", async () => {
+		mocks.apiGetTenantTheming
+			.mockResolvedValueOnce(SUBDOMAIN_TENANT)
+			.mockRejectedValueOnce(new Error('tenant service unavailable'));
+
+		const view = renderApp();
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe(
+				'caritas-berlin|true'
+			)
+		);
+
+		window.history.replaceState(null, '', '/login?gcid=8&aid=20');
+		view.rerender(
+			<AppConfigContext.Provider
+				value={{ useTenantService: true } as AppConfigInterface}
+			>
+				<TenantProvider>
+					<Probe />
+				</TenantProvider>
+			</AppConfigContext.Provider>
+		);
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenLastCalledWith(20)
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe('unresolved')
+		);
+		window.history.replaceState(null, '', '/');
+	});
 });

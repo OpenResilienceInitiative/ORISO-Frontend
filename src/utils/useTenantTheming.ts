@@ -118,9 +118,10 @@ const useTenantTheming = () => {
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
-	// Which tenant the state currently in the context was resolved for. Only
+	// Which request the state currently in the context was resolved for: the
+	// signed-in tenant and, before sign-in, the link's agency (#1782). Only
 	// meaningful once a resolution has succeeded.
-	const appliedTenantId = useRef<number | null | undefined>(undefined);
+	const appliedTenantId = useRef<string | undefined>(undefined);
 
 	const cypressTenantEnabled = useMemo(
 		() => (window as any).Cypress?.env('TENANT_ENABLED'),
@@ -200,7 +201,7 @@ const useTenantTheming = () => {
 		// anonymous response landing after the signed-in one puts the
 		// subdomain tenant back, which is the leak this hook exists to close.
 		let active = true;
-		const requestedTenantId = authenticatedTenantId;
+		const requestedTenantId = `${authenticatedTenantId ?? ''}|${linkAgencyId ?? ''}`;
 
 		// The switch starts the moment the token changes, not when the answer
 		// arrives. Until then the context would still hand out the previous
