@@ -50,7 +50,9 @@ updates:
             update-types: ['version-update:semver-major']
 
     - package-ecosystem: 'github-actions'
-      directory: '/'
+      directories:
+          - '/'
+          - '/.github/actions/*'
       target-branch: 'dev'
       schedule:
           interval: 'monthly'
