@@ -738,12 +738,13 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda",
 			"copyGoogle": "Copier le lien Google Agenda",
 			"copyOutlook": "Copier le lien du calendrier Outlook",
 			"linkCopied": "Lien du calendrier copié.",
 			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
-			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique.",
+			"addThis": "Ajouter cette date au calendrier",
+			"addThisShort": "Au calendrier"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -937,7 +938,6 @@
 				"back": "Retour au compte à rebours",
 				"headline": "Comment fonctionne le groupe",
 				"subline": "Trois choses utiles avant la première fois.",
-				"appointments": "Ajouter les dates au calendrier",
 				"steps": {
 					"formats": {
 						"title": "Comment le groupe se réunit",
@@ -954,8 +954,7 @@
 						"text": "L’espace des liens propose régulièrement de nouvelles rencontres et vous mène directement à la prochaine date.",
 						"alt": "De nouvelles cartes de rendez-vous apparaissent l’une après l’autre ; un symbole de lien clair mène la personne curieuse à la prochaine rencontre du groupe."
 					}
-				},
-				"upcoming": "Prochaines dates"
+				}
 			},
 			"status": {
 				"active": "En cours",
@@ -1180,7 +1179,15 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours",
-			"legalMenu": "Mentions légales"
+			"legalMenu": "Mentions légales",
+			"moreDates": "Autres dates",
+			"dates": {
+				"headline": "Prochaines dates",
+				"subline": "Ajoutez chaque date séparément à votre calendrier.",
+				"none": "Aucune autre date n’est prévue pour le moment.",
+				"add": "Ajouter",
+				"addLabel": "Ajouter {{date}} au calendrier"
+			}
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",

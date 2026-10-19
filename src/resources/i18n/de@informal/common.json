@@ -361,7 +361,10 @@
 		"entry": {
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"dates": {
+				"subline": "Trag jeden Termin einzeln in deinen Kalender ein."
+			}
 		},
 		"info": {
 			"gallery": {

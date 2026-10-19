@@ -733,12 +733,13 @@
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
 			"titleLabel": "Neutraler Kalendertitel",
-			"addShort": "Kalender",
 			"copyGoogle": "Google-Kalenderlink kopieren",
 			"copyOutlook": "Outlook-Kalenderlink kopieren",
 			"linkCopied": "Kalenderlink kopiert.",
 			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
-			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung.",
+			"addThis": "Diesen Termin zum Kalender hinzufügen",
+			"addThisShort": "In den Kalender"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -1000,7 +1001,6 @@
 				"back": "Zurück zum Countdown",
 				"headline": "So funktioniert die Gruppe",
 				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
-				"appointments": "Termine in den Kalender",
 				"steps": {
 					"formats": {
 						"title": "So findet die Gruppe statt",
@@ -1017,8 +1017,7 @@
 						"text": "Im Link-Bereich finden Sie regelmäßig frische Treffen und gelangen direkt zum nächsten Termin.",
 						"alt": "Neue Terminkarten erscheinen nacheinander; ein klares Linksymbol führt die neugierige Person zum nächsten Gruppentreffen."
 					}
-				},
-				"upcoming": "Nächste Termine"
+				}
 			},
 			"status": {
 				"active": "Läuft gerade",
@@ -1175,7 +1174,15 @@
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
 			"backToCountdown": "Zurück zum Countdown",
-			"legalMenu": "Rechtliches"
+			"legalMenu": "Rechtliches",
+			"moreDates": "Weitere Termine",
+			"dates": {
+				"headline": "Nächste Termine",
+				"subline": "Tragen Sie jeden Termin einzeln in Ihren Kalender ein.",
+				"none": "Zurzeit sind keine weiteren Termine geplant.",
+				"add": "Eintragen",
+				"addLabel": "{{date}} zum Kalender hinzufügen"
+			}
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",

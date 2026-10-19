@@ -738,12 +738,13 @@
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
 			"titleLabel": "Nötr takvim başlığı",
-			"addShort": "Takvim",
 			"copyGoogle": "Google Takvim bağlantısını kopyala",
 			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
 			"linkCopied": "Takvim bağlantısı kopyalandı.",
 			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
-			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez."
+			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez.",
+			"addThis": "Bu randevuyu takvime ekle",
+			"addThisShort": "Takvime ekle"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",
@@ -937,7 +938,6 @@
 				"back": "Geri sayıma dön",
 				"headline": "Grup nasıl işler",
 				"subline": "İlk kezden önce yardımcı olacak üç şey.",
-				"appointments": "Tarihleri takvime ekle",
 				"steps": {
 					"formats": {
 						"title": "Grup nasıl bir araya gelir",
@@ -954,8 +954,7 @@
 						"text": "Bağlantı alanında düzenli olarak yeni buluşmalar bulur ve doğrudan bir sonraki randevuya gidersiniz.",
 						"alt": "Yeni randevu kartları arka arkaya beliriyor; net bir bağlantı simgesi meraklı kişiyi bir sonraki grup buluşmasına götürüyor."
 					}
-				},
-				"upcoming": "Sonraki randevular"
+				}
 			},
 			"status": {
 				"active": "Şu anda sürüyor",
@@ -1180,7 +1179,15 @@
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
 			"backToCountdown": "Geri sayıma dön",
-			"legalMenu": "Yasal bilgiler"
+			"legalMenu": "Yasal bilgiler",
+			"moreDates": "Diğer randevular",
+			"dates": {
+				"headline": "Sonraki randevular",
+				"subline": "Her randevuyu takviminize ayrı ayrı ekleyin.",
+				"none": "Şu anda başka randevu planlanmadı.",
+				"add": "Ekle",
+				"addLabel": "{{date}} takvime ekle"
+			}
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",

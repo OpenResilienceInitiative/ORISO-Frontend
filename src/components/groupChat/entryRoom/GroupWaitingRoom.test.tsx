@@ -323,6 +323,110 @@ describe('GroupWaitingRoom', () => {
 	});
 });
 
+/* #1689 / #1785 (Frank, 2026-10-19): the calendar lives in the bar — this
+   date on the left, the other dates on the right — and leaves "this date"
+   behind once the group has begun. The dates have their own view. */
+describe('GroupWaitingRoom – dates and calendar', () => {
+	const DAY = 24 * 3600e3;
+	const START = new Date(NOW + 3 * DAY);
+	const WEEKLY = [0, 7, 14].map((d) => new Date(START.getTime() + d * DAY));
+	const renderDates = ({
+		active = false,
+		nowMs = NOW,
+		upcomingDates = WEEKLY
+	}: {
+		active?: boolean;
+		nowMs?: number;
+		upcomingDates?: Date[];
+	} = {}) =>
+		render(
+			<GroupWaitingRoom
+				plannedStart={START}
+				durationMinutes={90}
+				eventId={15}
+				rules={[]}
+				active={active}
+				onJoin={vi.fn()}
+				nowMs={nowMs}
+				upcomingDates={upcomingDates}
+			/>
+		);
+	const bar = () =>
+		document.querySelector(
+			'[data-cy="registration-footer"]'
+		) as HTMLElement;
+
+	afterEach(cleanup);
+
+	it('offers this date and the other dates above "Beitreten" before the start', () => {
+		renderDates();
+		expect(bar().contains(screen.getByTestId('group-entry-calendar'))).toBe(
+			true
+		);
+		expect(bar().contains(screen.getByTestId('group-entry-dates'))).toBe(
+			true
+		);
+		expect(screen.getByTestId('group-entry-calendar').textContent).toBe(
+			'Diesen Termin zum Kalender hinzufügen'
+		);
+	});
+
+	it('drops "this date" once the start has passed, keeps the later ones', () => {
+		renderDates({ nowMs: START.getTime() + 60e3 });
+		expect(screen.queryByTestId('group-entry-calendar')).toBeNull();
+		expect(screen.getByTestId('group-entry-dates')).toBeTruthy();
+	});
+
+	it('drops "this date" once the moderator has opened the group', () => {
+		renderDates({ active: true });
+		expect(screen.queryByTestId('group-entry-calendar')).toBeNull();
+	});
+
+	it('shows no calendar row for a single date that has begun', () => {
+		renderDates({
+			nowMs: START.getTime() + 60e3,
+			upcomingDates: [START]
+		});
+		expect(screen.queryByTestId('group-entry-calendar')).toBeNull();
+		expect(screen.queryByTestId('group-entry-dates')).toBeNull();
+		expect(screen.getByTestId('group-entry-join')).toBeTruthy();
+	});
+
+	it('offers only this date when the group has no other', () => {
+		renderDates({ upcomingDates: [START] });
+		expect(screen.getByTestId('group-entry-calendar')).toBeTruthy();
+		expect(screen.queryByTestId('group-entry-dates')).toBeNull();
+	});
+
+	it('lists the dates ahead in the middle, "Beitreten" stays below', async () => {
+		renderDates({ nowMs: START.getTime() + 60e3 });
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+
+		const view = document.querySelector('[data-cy="group-upcoming-dates"]');
+		expect(view).toBeTruthy();
+		// The date that has begun is not offered any more.
+		expect(
+			document.querySelectorAll('[data-cy="group-upcoming-date"]')
+		).toHaveLength(2);
+		expect(screen.getAllByTestId('group-upcoming-date-add')).toHaveLength(
+			2
+		);
+		expect(bar().contains(screen.getByTestId('group-entry-join'))).toBe(
+			true
+		);
+		// The row would repeat the list's own buttons.
+		expect(screen.queryByTestId('group-entry-dates')).toBeNull();
+
+		fireEvent.click(screen.getByTestId('group-dates-back'));
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="group-upcoming-dates"]')
+			).toBeNull()
+		);
+		expect(screen.getByTestId('group-entry-dates')).toBeTruthy();
+	});
+});
+
 describe('entryRoomClockHeight', () => {
 	/*
 	 * The budget the clock is handed. Every number is a band measured on the

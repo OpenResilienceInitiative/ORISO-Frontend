@@ -721,12 +721,13 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar",
 			"copyGoogle": "Copy Google Calendar link",
 			"copyOutlook": "Copy Outlook Calendar link",
 			"linkCopied": "Calendar link copied.",
 			"copyError": "The calendar link could not be copied. Please try again.",
-			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates.",
+			"addThis": "Add this date to your calendar",
+			"addThisShort": "Add to calendar"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -986,7 +987,6 @@
 				"back": "Back to the countdown",
 				"headline": "How the group works",
 				"subline": "Three things that help before your first time.",
-				"appointments": "Add the dates to your calendar",
 				"steps": {
 					"formats": {
 						"title": "How the group meets",
@@ -1003,8 +1003,7 @@
 						"text": "The link area regularly holds fresh meetings and takes you straight to the next date.",
 						"alt": "New date cards appear one after another; a clear link symbol leads the curious person to the next group meeting."
 					}
-				},
-				"upcoming": "Next dates"
+				}
 			},
 			"status": {
 				"active": "Running now",
@@ -1157,7 +1156,15 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown",
-			"legalMenu": "Legal"
+			"legalMenu": "Legal",
+			"moreDates": "More dates",
+			"dates": {
+				"headline": "Next dates",
+				"subline": "Add each date to your calendar on its own.",
+				"none": "No further dates are planned at the moment.",
+				"add": "Add",
+				"addLabel": "Add {{date}} to your calendar"
+			}
 		},
 		"shareDialog": {
 			"title_text": "Circle created",

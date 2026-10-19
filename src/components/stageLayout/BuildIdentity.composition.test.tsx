@@ -259,7 +259,7 @@ it('places the single nested waiting identity in the stage footer outside its ac
 					plannedStart={new Date('2026-09-17T12:00:00Z')}
 					eventId={42}
 					rules={[]}
-					active
+					active={false}
 					onJoin={() => {}}
 					nowMs={0}
 				/>

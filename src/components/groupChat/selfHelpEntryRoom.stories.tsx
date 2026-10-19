@@ -25,7 +25,7 @@ import {
 	expectCaptionClear,
 	expectOverdueClockOnOneRow
 } from './waitingClock/waitingClockStoryChecks';
-import { expect, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import {
 	effectiveBackground,
 	wcagContrast
@@ -241,6 +241,10 @@ export const EntryScreenWithAccountMobile: StoryObj = {
    assignment. Here it gets fixtures instead of the chat; nothing else differs.
    --------------------------------------------------------------------------- */
 
+/** A weekly group: this date and the next two. */
+const weekly = (start: Date) =>
+	[0, 7, 14].map((days) => new Date(start.getTime() + days * 86400e3));
+
 /* `active` is the moderator having opened the group, not the clock: a
    start that has passed still waits for her (#1787). */
 const Room = ({
@@ -268,6 +272,7 @@ const Room = ({
 				active={active}
 				onJoin={() => undefined}
 				nowMs={NOW}
+				upcomingDates={weekly(start)}
 				showLoginLink
 			/>
 		</AgencySpecificContext.Provider>
@@ -313,6 +318,9 @@ export const WaitingAreaOpen: StoryObj = {
 			canvas.queryByText('Die Gruppe beginnt gleich.')
 		).toBeNull();
 		await expect(canvas.getByTestId('group-entry-join')).toBeEnabled();
+		// #1785: a date that runs is not one for the calendar; the next ones are.
+		await expect(canvas.queryByTestId('group-entry-calendar')).toBeNull();
+		await expect(canvas.getByTestId('group-entry-dates')).toBeVisible();
 		// The rules still move, so the switch to stop them stays.
 		await expect(
 			canvas.getByRole('switch', { name: 'Animation abschalten' })
@@ -325,7 +333,7 @@ export const WaitingAreaOpen: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Die Moderation hat die Gruppe geöffnet: statt der hochzählenden Uhr „Die Gruppe hat begonnen.", „Beitreten" ist frei.'
+				story: 'Die Moderation hat die Gruppe geöffnet: statt der hochzählenden Uhr „Die Gruppe hat begonnen.", „Beitreten" ist frei. „Diesen Termin zum Kalender hinzufügen" ist weg (#1785), „Weitere Termine" bleibt.'
 			}
 		}
 	}
@@ -408,6 +416,124 @@ export const WaitingAreaOverdue3DigitsMobile: StoryObj = {
 	}
 };
 
+/** Where the calendar row sits: one line above "Beitreten". */
+const calendarRow = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const add = await canvas.findByTestId('group-entry-calendar');
+	const dates = canvas.getByTestId('group-entry-dates');
+	const join = canvas.getByTestId('group-entry-join');
+	const bar = canvasElement.ownerDocument.querySelector(
+		'[data-cy="registration-footer"]'
+	) as HTMLElement;
+	await expect(bar.contains(add)).toBe(true);
+	await expect(bar.contains(dates)).toBe(true);
+	await waitFor(() =>
+		expect(add.getBoundingClientRect().width).toBeGreaterThan(0)
+	);
+	const a = add.getBoundingClientRect();
+	const d = dates.getBoundingClientRect();
+	// Side by side, both above "Beitreten".
+	await expect(Math.abs(a.top - d.top)).toBeLessThanOrEqual(1);
+	await expect(a.right).toBeLessThanOrEqual(d.left);
+	await expect(a.bottom).toBeLessThanOrEqual(
+		join.getBoundingClientRect().top
+	);
+	return { add, dates };
+};
+
+/**
+ * Frank, 2026-10-19: the calendar is a split button in the bar — this date on
+ * the left, the other dates on the right — instead of dates under the cards.
+ */
+export const WaitingAreaCalendarSplit: StoryObj = {
+	name: '1c — Kalender in der Leiste: geteilter Knopf · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room />,
+	play: async ({ canvasElement }) => {
+		const { add, dates } = await calendarRow(canvasElement);
+		await expect(add).toHaveTextContent(
+			'Diesen Termin zum Kalender hinzufügen'
+		);
+		await expect(dates).toHaveTextContent('Weitere Termine');
+		// One button with two segments: the full label, not cut off.
+		await expect(add.scrollWidth).toBeLessThanOrEqual(add.clientWidth);
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Über „Beitreten" ein geteilter Knopf: links „Diesen Termin zum Kalender hinzufügen" (öffnet Google, Outlook, .ics), rechts „Weitere Termine" (öffnet die Termin-Ansicht). Sobald die Gruppe läuft, bleibt nur der rechte Teil (2c).'
+			}
+		}
+	}
+};
+
+/** The dates view: the middle changes, "Beitreten" stays. */
+export const WaitingAreaDates: StoryObj = {
+	name: '1d — Weitere Termine · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		(await canvas.findByTestId('group-entry-dates')).click();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-cy="group-upcoming-date"]'
+				)
+			).toHaveLength(3)
+		);
+		// The panel slides in from the right; judge it once it has arrived.
+		await waitFor(() =>
+			expect(canvas.getByText('Nächste Termine')).toBeVisible()
+		);
+		await expect(canvas.getByTestId('group-dates-back')).toBeVisible();
+		await expect(
+			canvas.getAllByTestId('group-upcoming-date-add')
+		).toHaveLength(3);
+		await expect(canvas.getByTestId('group-entry-join')).toBeVisible();
+		// The list has its own buttons; the bar does not repeat them.
+		await expect(canvas.queryByTestId('group-entry-dates')).toBeNull();
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: '„Weitere Termine" ersetzt die Uhr wie „Mehr erfahren": oben „Zurück zum Countdown", dann die nächsten Termine mit Uhrzeit von–bis, jeder einzeln mit „Eintragen". Unten bleibt „Beitreten".'
+			}
+		}
+	}
+};
+
+export const WaitingAreaDatesMobile: StoryObj = {
+	name: '3b — Kalender-Zeile und Termine, mobil',
+	globals: phone375Globals,
+	render: () => <Room />,
+	play: async ({ canvasElement }) => {
+		const { add, dates } = await calendarRow(canvasElement);
+		await expect(add).toHaveTextContent('In den Kalender');
+		// Quiet text buttons, not a second outlined row.
+		await expect(add.className).toContain('MuiButton-text');
+		dates.click();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-cy="group-upcoming-date"]'
+				)
+			).toHaveLength(3)
+		);
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Auf dem Handy zwei dezente Knöpfe nebeneinander über „Beitreten": „In den Kalender" und „Weitere Termine". „Beitreten" behält die ganze Breite.'
+			}
+		}
+	}
+};
+
 export const WaitingAreaMobile: StoryObj = {
 	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: '3 — Wartebereich, mobil',
@@ -436,12 +562,15 @@ export const WaitingAreaLightBrandColour: StoryObj = {
 	parameters: { layout: 'fullscreen', orisoSeed: '#b4ddee' },
 	play: async ({ canvasElement }) => {
 		const calendar = within(canvasElement).getByRole('button', {
-			name: /Zum Kalender hinzufügen/
+			name: /zum Kalender hinzufügen/i
+		});
+		const dates = within(canvasElement).getByRole('button', {
+			name: /Weitere Termine/
 		});
 		const more = within(canvasElement).getByRole('button', {
 			name: /Mehr erfahren/
 		});
-		for (const button of [calendar, more]) {
+		for (const button of [calendar, dates, more]) {
 			await expect(
 				wcagContrast(
 					getComputedStyle(button).color,

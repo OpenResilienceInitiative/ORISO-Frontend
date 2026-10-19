@@ -9,6 +9,8 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
+import { GroupUpcomingDates } from './GroupUpcomingDates';
+import { GroupCalendarActions } from './GroupCalendarActions';
 import { GroupHeading } from './GroupHeading';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
@@ -41,7 +43,7 @@ export interface GroupWaitingRoomProps {
 	active: boolean;
 	onJoin: () => void;
 	joinBusy?: boolean;
-	/** The group's next dates, soonest first — shown behind "Mehr erfahren". */
+	/** The group's next dates, soonest first — shown behind "Weitere Termine". */
 	upcomingDates?: Date[];
 	/** A fixed "now" for stories and tests; the app leaves it unset. */
 	nowMs?: number;
@@ -108,7 +110,8 @@ export const GroupWaitingRoom = ({
 		[t]
 	);
 	const [motionOff, setMotionOff] = useState(false);
-	const [moreOpen, setMoreOpen] = useState(false);
+	const [view, setView] = useState<'room' | 'more' | 'dates'>('room');
+	const now = useNow(plannedStart, nowMs);
 	const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -164,231 +167,243 @@ export const GroupWaitingRoom = ({
 	// The switch stops whatever moves: the clock, or the rules without it.
 	const showMotionSwitch = showClock || rules.length > 0;
 	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
-	const calendarLabel = t(
-		'groupChat.calendar.add',
-		'Zum Kalender hinzufügen'
-	);
-	const openCalendar = (event: React.MouseEvent<HTMLElement>) =>
-		setCalendarAnchor(event.currentTarget);
+	/* A date that has begun is not one to put in a calendar any more
+	   (#1785); the dates after it still are. */
+	const started =
+		active || (plannedStart !== null && now >= plannedStart.getTime());
+	const datesAhead = (
+		upcomingDates ?? (plannedStart ? [plannedStart] : [])
+	).filter((date) => date.getTime() > now);
+	const canAddThis = Boolean(plannedStart) && !started;
+	const hasMoreDates = datesAhead.length > (canAddThis ? 1 : 0);
+	const backToRoom = useCallback(() => setView('room'), []);
 	const joinAction = {
 		label: joinLabel,
 		onClick: askConsent ? () => setAsking(true) : onJoin,
 		disabled: (!active && !moderator) || joinBusy || joinBlocked,
 		testId: 'group-entry-join'
 	};
-	const calendarAction = plannedStart
-		? {
-				/* On a phone the long label would push "Beitreten" out of the
-				   bar; the full one stays in the tooltip. */
-				label: phone
-					? t('groupChat.calendar.addShort', 'Kalender')
-					: calendarLabel,
-				title: calendarLabel,
-				compact: phone,
-				onClick: openCalendar,
-				testId: 'group-entry-calendar'
-			}
-		: undefined;
+	/* The dates view has its own buttons per date; the row would repeat
+	   them. */
+	const calendarRow =
+		view !== 'dates' && (canAddThis || hasMoreDates) ? (
+			<GroupCalendarActions
+				phone={phone}
+				onAddThis={
+					canAddThis
+						? (event) => setCalendarAnchor(event.currentTarget)
+						: undefined
+				}
+				onMoreDates={hasMoreDates ? () => setView('dates') : undefined}
+			/>
+		) : null;
 
-	const middle = moreOpen ? (
-		<GroupInfoGallery
-			onBack={() => setMoreOpen(false)}
-			upcomingDates={upcomingDates}
-		/>
-	) : (
-		<>
-			<Box
-				sx={{
-					flex: 1,
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					gap: 0.75
-				}}
-			>
+	const middle =
+		view === 'more' ? (
+			<GroupInfoGallery onBack={backToRoom} />
+		) : view === 'dates' ? (
+			<GroupUpcomingDates
+				onBack={backToRoom}
+				dates={datesAhead}
+				durationMinutes={durationMinutes}
+				eventId={eventId}
+			/>
+		) : (
+			<>
 				<Box
 					sx={{
-						display: embedded
-							? 'block'
-							: { xs: 'block', lg: 'none' }
+						flex: 1,
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'center',
+						gap: 0.75
 					}}
 				>
-					{groupHeading}
-				</Box>
-				{showClock ? (
-					/* The clock is a picture, not a text line: on a
+					<Box
+						sx={{
+							display: embedded
+								? 'block'
+								: { xs: 'block', lg: 'none' }
+						}}
+					>
+						{groupHeading}
+					</Box>
+					{showClock ? (
+						/* The clock is a picture, not a text line: on a
 			   phone it may use half of the column's inset,
 			   which is one mini-clock step of extra diameter
 			   (the width, not the height, is what limits it
 			   there). */
-					<Box
-						sx={{
-							mx: { xs: -1, sm: 0 },
-							minWidth: 0
-						}}
-					>
-						<WaitingAreaCountdown
-							plannedStart={plannedStart}
-							welcomeText={welcomeText}
-							rules={rules}
-							nowMs={nowMs}
-							clockSize="fit"
-							fitHeight={clockHeight}
-							spacing="tight"
-							labelsOutside
-							audience={audience}
-							reducedMotion={motionOff}
-							hideMotionToggle
-							gap={8}
-						/>
-					</Box>
-				) : (
-					<Box sx={{ textAlign: 'center' }}>
-						<Typography
-							component="h1"
+						<Box
 							sx={{
-								fontSize: { xs: 22, sm: 26 },
-								fontWeight: 600,
-								color: registrationMd3.onSurface,
-								mb: 1
+								mx: { xs: -1, sm: 0 },
+								minWidth: 0
 							}}
 						>
-							{moderator && !active
-								? t(
-										'groupChat.join.waitingArea.countdown.moderatorSubtitle',
-										'Sie können den Chat starten, sobald Sie bereit sind.'
-									)
-								: active
-									? tr(
-											'openHeadline',
-											'Die Gruppe hat begonnen.'
-										)
-									: tr(
-											'noTimeHeadline',
-											'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
-										)}
-						</Typography>
-						{welcomeText && (
+							<WaitingAreaCountdown
+								plannedStart={plannedStart}
+								welcomeText={welcomeText}
+								rules={rules}
+								nowMs={nowMs}
+								clockSize="fit"
+								fitHeight={clockHeight}
+								spacing="tight"
+								labelsOutside
+								audience={audience}
+								reducedMotion={motionOff}
+								hideMotionToggle
+								gap={8}
+							/>
+						</Box>
+					) : (
+						<Box sx={{ textAlign: 'center' }}>
 							<Typography
+								component="h1"
 								sx={{
-									color: registrationMd3.onSurfaceVariant,
-									mb: 2
+									fontSize: { xs: 22, sm: 26 },
+									fontWeight: 600,
+									color: registrationMd3.onSurface,
+									mb: 1
 								}}
 							>
-								{welcomeText}
+								{moderator && !active
+									? t(
+											'groupChat.join.waitingArea.countdown.moderatorSubtitle',
+											'Sie können den Chat starten, sobald Sie bereit sind.'
+										)
+									: active
+										? tr(
+												'openHeadline',
+												'Die Gruppe hat begonnen.'
+											)
+										: tr(
+												'noTimeHeadline',
+												'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
+											)}
 							</Typography>
-						)}
-						{rules.length > 0 && (
-							<WaitingAreaRules
-								rules={rules}
-								animationOff={motionOff}
-								ariaLabel={t(
-									'groupChat.join.waitingArea.rulesLabel',
-									'Chat rules'
-								)}
-							/>
-						)}
-					</Box>
-				)}
-			</Box>
-			{/* One block with the bar, not a stranded row: same inset
+							{welcomeText && (
+								<Typography
+									sx={{
+										color: registrationMd3.onSurfaceVariant,
+										mb: 2
+									}}
+								>
+									{welcomeText}
+								</Typography>
+							)}
+							{rules.length > 0 && (
+								<WaitingAreaRules
+									rules={rules}
+									animationOff={motionOff}
+									ariaLabel={t(
+										'groupChat.join.waitingArea.rulesLabel',
+										'Chat rules'
+									)}
+								/>
+							)}
+						</Box>
+					)}
+				</Box>
+				{/* One block with the bar, not a stranded row: same inset
 	    as the buttons (from the column above), 12 px of air to
 	    the hairline (from the column's bottom padding) and
 	    exactly the height of the larger of its two controls. */}
-			<Box
-				sx={{
-					mt: 'auto',
-					minHeight: 44,
-					display: 'flex',
-					/* Three controls do not fit one 343 px line,
+				<Box
+					sx={{
+						mt: 'auto',
+						minHeight: 44,
+						display: 'flex',
+						/* Three controls do not fit one 343 px line,
 					   and a switch without its sentence is a
 					   riddle. So the row wraps on a phone: the
 					   switch keeps its label, the two buttons
 					   drop underneath and stay flush with the
 					   bar's right edge. */
-					flexWrap: { xs: 'wrap', sm: 'nowrap' },
-					rowGap: 1,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					gap: 1.5
-				}}
-			>
-				{showMotionSwitch ? (
-					<Box
-						component="label"
-						sx={{
-							display: 'flex',
-							alignItems: 'center',
-							minWidth: 0,
-							gap: 1,
-							cursor: 'pointer'
-						}}
-					>
-						<Switch
-							checked={motionOff}
-							onChange={(next) => setMotionOff(next)}
-							aria-label={tr('motionOff', 'Animation abschalten')}
-						/>
-						{/* The label is what gives when a translation
+						flexWrap: { xs: 'wrap', sm: 'nowrap' },
+						rowGap: 1,
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						gap: 1.5
+					}}
+				>
+					{showMotionSwitch ? (
+						<Box
+							component="label"
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								minWidth: 0,
+								gap: 1,
+								cursor: 'pointer'
+							}}
+						>
+							<Switch
+								checked={motionOff}
+								onChange={(next) => setMotionOff(next)}
+								aria-label={tr(
+									'motionOff',
+									'Animation abschalten'
+								)}
+							/>
+							{/* The label is what gives when a translation
 				    is longer than the German one — the button
 				    beside it must never be pushed past the
 				    edge the bar's buttons stop at. On a phone the
 				    row wraps instead of dropping this sentence —
 				    a naked switch says nothing (Frank drew the
 				    row with its label, 2026-09-05). */}
-						<Typography
-							sx={{
-								fontSize: 13,
-								minWidth: 0,
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-								color: registrationMd3.onSurfaceVariant
-							}}
-						>
-							{tr('motionOff', 'Animation abschalten')}
-						</Typography>
-					</Box>
-				) : (
-					<span />
-				)}
-				<Box
-					sx={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: 1,
-						minWidth: 0,
-						/* On the wrapped phone line the pair
+							<Typography
+								sx={{
+									fontSize: 13,
+									minWidth: 0,
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap',
+									color: registrationMd3.onSurfaceVariant
+								}}
+							>
+								{tr('motionOff', 'Animation abschalten')}
+							</Typography>
+						</Box>
+					) : (
+						<span />
+					)}
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: 1,
+							minWidth: 0,
+							/* On the wrapped phone line the pair
 						   takes the whole width, so its outer
 						   edges sit on the bar's edges again. */
-						width: { xs: '100%', sm: 'auto' },
-						justifyContent: {
-							xs: 'space-between',
-							sm: 'flex-end'
-						}
-					}}
-				>
-					<Button
-						variant="outlined"
-						size="small"
-						endIcon={<ArrowForwardRoundedIcon />}
-						sx={moreButtonSx}
-						onClick={() => setMoreOpen(true)}
-						data-testid="group-entry-more"
+							width: { xs: '100%', sm: 'auto' },
+							justifyContent: {
+								xs: 'space-between',
+								sm: 'flex-end'
+							}
+						}}
 					>
-						{tr('more', 'Mehr erfahren')}
-					</Button>
+						<Button
+							variant="outlined"
+							size="small"
+							endIcon={<ArrowForwardRoundedIcon />}
+							sx={moreButtonSx}
+							onClick={() => setView('more')}
+							data-testid="group-entry-more"
+						>
+							{tr('more', 'Mehr erfahren')}
+						</Button>
+					</Box>
 				</Box>
-			</Box>
-		</>
-	);
+			</>
+		);
 
-	/* Calendar beside a visible but shut "Beitreten", at
+	/* Calendar above a visible but shut "Beitreten", at
 	    every width: the waiting room says what happens next,
 	    and hiding the way in said nothing (Frank's Figma of
 	    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
-	    gesperrt"). The phone keeps both by shortening the
-	    calendar label, not by dropping a button. */
+	    gesperrt"). */
 	const bar =
 		asking && active && askConsent ? (
 			<WaitingRoomBar
@@ -444,11 +459,13 @@ export const GroupWaitingRoom = ({
 		) : (
 			<WaitingRoomBar
 				contained={embedded}
-				secondary={calendarAction}
+				stacked={Boolean(calendarRow)}
 				primary={joinAction}
-			/>
+			>
+				{calendarRow}
+			</WaitingRoomBar>
 		);
-	const popover = plannedStart && (
+	const popover = canAddThis && plannedStart && (
 		<GroupChatCalendarPopover
 			id={menuId}
 			anchorEl={calendarAnchor}
@@ -674,6 +691,28 @@ export const entryRoomClockHeight = (width: number, height: number) => {
 	const bar = (width >= 520 ? 96 : 81) + 12;
 	const reserved = above + 8 + headline + 8 + 8 + 44 + bar;
 	return Math.max(160, height - reserved);
+};
+
+/**
+ * "Now" for deciding whether the date has begun: the fixed `nowMs` of a
+ * story, or the real time, renewed once when the start passes so the room
+ * drops "Diesen Termin" without a reload.
+ */
+const useNow = (plannedStart: Date | null, nowMs?: number) => {
+	const [realNow, setRealNow] = useState(() => Date.now());
+	const startMs = plannedStart?.getTime();
+	useEffect(() => {
+		if (nowMs !== undefined || startMs === undefined) return;
+		const wait = startMs - Date.now();
+		if (wait <= 0) return;
+		// setTimeout overflows past ~24.8 days and would fire at once.
+		const timer = setTimeout(
+			() => setRealNow(Date.now()),
+			Math.min(wait + 50, 2 ** 31 - 1)
+		);
+		return () => clearTimeout(timer);
+	}, [nowMs, startMs, realNow]);
+	return nowMs ?? realNow;
 };
 
 const useClockHeight = () => {

@@ -46,10 +46,6 @@ const meta: Meta = {
 
 export default meta;
 
-const UPCOMING = [0, 7, 14].map(
-	(days) => new Date(Date.UTC(2026, 8, 10, 16, 0) + days * 86400e3)
-);
-
 const legalLinks: TProvidedLegalLink[] = [
 	{
 		label: 'login.legal.infoText.dataprotection',
@@ -64,11 +60,7 @@ const legalLinks: TProvidedLegalLink[] = [
 ];
 
 /** The waiting room's frame, so the gallery is judged where it will stand. */
-const Screen = ({
-	withAppointments = false
-}: {
-	withAppointments?: boolean;
-}) => (
+const Screen = () => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
 			value={{
@@ -106,13 +98,7 @@ const Screen = ({
 							pb: { xs: 4, sm: 5 }
 						}}
 					>
-						<GroupInfoGallery
-							upcomingDates={UPCOMING}
-							onBack={() => undefined}
-							onOpenAppointments={
-								withAppointments ? () => undefined : undefined
-							}
-						/>
+						<GroupInfoGallery onBack={() => undefined} />
 					</Box>
 				</StageLayout>
 			</Box>
@@ -153,28 +139,16 @@ export const InfoGalleryMobile: StoryObj = {
 	}
 };
 
-export const InfoGalleryWithAppointments: StoryObj = {
-	name: '3 — Mit Termin-Aktion',
-	globals: desktop1440Globals,
-	render: () => <Screen withAppointments />,
-	parameters: {
-		docs: {
-			description: {
-				story: 'Karte 2 verspricht, dass man die Termine vorher eintragen kann. Sobald es dafür ein Ziel gibt, reicht die Ansicht `onOpenAppointments` durch und der Knopf steht unter der Galerie. Hier ist kein Link erfunden — die Aktion tut in der Story nichts.'
-			}
-		}
-	}
-};
-
-/* A common laptop is shorter than 1440 × 900: the cards must keep their
-   height and the panel scroll, never the dates slide over the card text. */
-export const InfoGalleryLaptopWithDates: StoryObj = {
-	name: '4 — Laptop 1366 × 768, Termine unter den Karten',
+/* A common laptop is shorter than 1440 × 900: the cards keep their height,
+   and since #1689 nothing stands under them any more — the dates have their
+   own view behind the bar's "Weitere Termine". */
+export const InfoGalleryLaptop: StoryObj = {
+	name: '3 — Laptop 1366 × 768, nur Karten',
 	globals: { viewport: { value: 'desktop1366' } },
-	render: () => <Screen withAppointments />,
+	render: () => <Screen />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const upcoming = await canvas.findByText('Nächste Termine');
+		const back = await canvas.findByTestId('group-info-back');
 		const cards = await waitFor(() => {
 			const found = canvasElement.querySelectorAll<HTMLElement>(
 				'[data-cy^="handover-card-"]'
@@ -182,11 +156,22 @@ export const InfoGalleryLaptopWithDates: StoryObj = {
 			expect(found.length).toBeGreaterThan(0);
 			return found;
 		});
-		const cardBottom = Math.max(
-			...Array.from(cards).map((c) => c.getBoundingClientRect().bottom)
+		await expect(canvas.queryByText('Nächste Termine')).toBeNull();
+		// The way back is a visible button above the cards, once slid in.
+		await waitFor(() => expect(back).toBeVisible());
+		await expect(back.className).toContain('MuiButton-outlined');
+		const cardTop = Math.min(
+			...Array.from(cards).map((c) => c.getBoundingClientRect().top)
 		);
-		await expect(
-			upcoming.getBoundingClientRect().top
-		).toBeGreaterThanOrEqual(cardBottom);
+		await expect(back.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			cardTop
+		);
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Nur die drei Karten (Frank, 19.10.: die Termine liefen in die Karten). Die Termine stehen jetzt hinter „Weitere Termine“ in der Leiste; „Zurück zum Countdown“ ist ein sichtbarer Knopf.'
+			}
+		}
 	}
 };
