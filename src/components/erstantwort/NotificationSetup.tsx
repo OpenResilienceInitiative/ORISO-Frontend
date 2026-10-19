@@ -51,6 +51,8 @@ export const NotificationSetup = ({
 	const [busy, setBusy] = useState(false);
 	const [awaitingBrowser, setAwaitingBrowser] = useState(false);
 	const [browserDialogOpen, setBrowserDialogOpen] = useState(false);
+	// Only used to re-render: the permission itself is read live below.
+	const [, setPermissionCheck] = useState(0);
 	const browserBlocked =
 		browserSupported && Notification.permission === 'denied';
 	const chosen: NotificationChoice | null =
@@ -74,6 +76,22 @@ export const NotificationSetup = ({
 			continuation.current += 1;
 		};
 	}, [isEmailEnabled, isBrowserEnabled, tenant?.id, userData?.userId]);
+
+	// The person may lift a browser block in the browser settings and come
+	// back to this page: read the permission again on return.
+	useEffect(() => {
+		if (!browserSupported) return;
+		const recheck = () => setPermissionCheck((count) => count + 1);
+		const onVisibility = () => {
+			if (document.visibilityState !== 'hidden') recheck();
+		};
+		window.addEventListener('focus', recheck);
+		document.addEventListener('visibilitychange', onVisibility);
+		return () => {
+			window.removeEventListener('focus', recheck);
+			document.removeEventListener('visibilitychange', onVisibility);
+		};
+	}, [browserSupported]);
 
 	/** Resolves true only when the browser opt-in really completed. */
 	const finish = async (choice: NotificationChoice): Promise<boolean> => {
