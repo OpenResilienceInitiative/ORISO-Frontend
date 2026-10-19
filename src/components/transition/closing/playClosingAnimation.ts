@@ -391,6 +391,47 @@ const PLANS: Record<ClosingVariant, (frame: Frame) => Plan> = {
 const canAnimate = (doc: Document) =>
 	typeof doc.documentElement.animate === 'function';
 
+const FOCUSABLE =
+	'textarea, input, select, button, a[href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+const nothingFocused = (doc: Document) =>
+	!doc.activeElement ||
+	doc.activeElement === doc.body ||
+	doc.activeElement === doc.documentElement;
+
+/**
+ * Shuts everything on the page but the overlay for keyboard and assistive
+ * technology: the root only stops the pointer, so Tab and Enter could still
+ * press a control that is being swapped out. Gives the page back, and the
+ * keyboard where it was, when called. Elements that were shut before stay shut.
+ */
+const shutRoomBehind = (doc: Document, root: HTMLElement) => {
+	const shut = Array.from(doc.body.children).filter(
+		(element) => element !== root && !element.hasAttribute('inert')
+	);
+	shut.forEach((element) => element.setAttribute('inert', ''));
+	const pressed = nothingFocused(doc)
+		? null
+		: (doc.activeElement as HTMLElement);
+
+	let open = false;
+	return (landing: HTMLElement | null = null) => {
+		if (open) return;
+		open = true;
+		shut.forEach((element) => element.removeAttribute('inert'));
+		// A browser drops the focus of a shut element. Hand it back to the
+		// button that had it, or to the field the person arrives in; the room
+		// that arrived while the page was shut could not take it.
+		if (!nothingFocused(doc)) return;
+		const target = pressed?.isConnected
+			? pressed
+			: landing?.matches(FOCUSABLE)
+				? landing
+				: landing?.querySelector<HTMLElement>(FOCUSABLE);
+		target?.focus({ preventScroll: true });
+	};
+};
+
 /**
  * Plays the platform's closing animation and swaps the room in the middle of it.
  *
@@ -401,7 +442,8 @@ const canAnimate = (doc: Document) =>
  * - `onCovered` runs exactly once, also when nothing can be animated;
  * - the root takes the pointer while the screen is covered, so no tap reaches
  *   the room that is being swapped, and lets it through from the reveal on; the
- *   layers themselves never take one;
+ *   layers themselves never take one. The rest of the page is `inert` for the
+ *   same time, so the keyboard cannot reach that room either;
  * - after `closing.capMs` the layers are removed even if an animation never
  *   reports back, so nothing is ever left covering the page.
  */
@@ -454,8 +496,10 @@ export const playClosingAnimation = async (
 	const plan = PLANS[options.variant]({ doc, root, width, height, origin });
 
 	let over = false;
+	let giveRoomBack: (landing?: HTMLElement | null) => void = () => undefined;
 	const sequence = async () => {
 		doc.body.appendChild(root);
+		giveRoomBack = shutRoomBehind(doc, root);
 		await settle(plan.cover());
 		setPhase('covered');
 		const stays = (await swap()) === false;
@@ -466,6 +510,7 @@ export const playClosingAnimation = async (
 			: await resolveFocalPoint(doc, options.focal, () => over);
 		// The cap won while it waited: nobody is looking at these layers.
 		if (over) return;
+		giveRoomBack(focal.element);
 		setPhase('reveal');
 		await settle(plan.reveal(focal));
 		setPhase('revealed');
@@ -485,6 +530,7 @@ export const playClosingAnimation = async (
 		win.clearTimeout(capTimer);
 		over = true;
 		root.remove();
+		giveRoomBack();
 		swap();
 	}
 	return { played: true };

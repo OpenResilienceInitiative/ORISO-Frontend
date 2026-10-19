@@ -42,6 +42,8 @@ interface LayerSnapshot {
 interface ClosingSnapshot {
 	phase: string;
 	rootPointerEvents: string;
+	/** Whether the story's own page is shut for keyboard and screen readers. */
+	pageInert: boolean | null;
 	variant: string;
 	at: number;
 	running: number;
@@ -95,6 +97,17 @@ const visibleBox = (root: HTMLElement, layer: HTMLElement): Box | null => {
 	return visible;
 };
 
+/** The top-level element of the page the story renders its room in. */
+const pageHostOf = (doc: Document, root: HTMLElement) => {
+	let host: HTMLElement | null = doc.querySelector<HTMLElement>(
+		`.stageLayout__content, ${FOCAL.messageField}, ${FOCAL.call}`
+	);
+	while (host && host.parentElement !== doc.body) {
+		host = host.parentElement;
+	}
+	return host === root ? null : host;
+};
+
 const snapshotOf = (
 	doc: Document,
 	root: HTMLElement,
@@ -126,6 +139,7 @@ const snapshotOf = (
 	return {
 		phase: root.dataset.closingPhase ?? '',
 		rootPointerEvents: win.getComputedStyle(root).pointerEvents,
+		pageInert: pageHostOf(doc, root)?.hasAttribute('inert') ?? null,
 		variant: root.dataset.closingAnimation ?? '',
 		at: performance.now(),
 		running: root
@@ -334,8 +348,9 @@ export const verifyClosingAnimation = async (
 		expect(covers(covered, covered.viewport)).toBe(true);
 
 		// While it covers, the root takes the pointer so no blind tap reaches the
-		// room that is being swapped; from the reveal on it lets the pointer
-		// through. No layer ever takes one.
+		// room that is being swapped, and the page behind it is inert so no key
+		// does either; from the reveal on both let the person through. No layer
+		// ever takes a pointer.
 		for (const snapshot of recording.snapshots) {
 			const blocking =
 				snapshot.phase === 'cover' || snapshot.phase === 'covered';
@@ -343,6 +358,11 @@ export const verifyClosingAnimation = async (
 				snapshot.rootPointerEvents,
 				`the root in its "${snapshot.phase}" phase`
 			).toBe(blocking ? 'auto' : 'none');
+			// The keyboard is shut out for as long as the pointer is.
+			expect(
+				snapshot.pageInert,
+				`the page in the "${snapshot.phase}" phase`
+			).toBe(blocking);
 			for (const layer of snapshot.layers) {
 				expect(layer.pointerEvents).toBe('none');
 			}
