@@ -8,6 +8,32 @@ import { prefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 /** How long the panel takes to slide in or out. Mirrored in the keyframes. */
 const SLIDE_MS = 320;
 
+/**
+ * The panels are a step, not a page: while one is open a marker entry makes
+ * the browser's back (and the phone's back gesture) mean "back to the
+ * waiting room" instead of "leave the group". Owned by the room, not by a
+ * panel: going from "Mehr erfahren" straight to "Alle Termine" keeps the one
+ * marker — two panels each pushing and popping their own raced, and the
+ * queued back closed the new panel (#1782 review). Popped again on the way
+ * out so the history does not grow with every look.
+ */
+export const usePanelHistory = (open: boolean, onPop: () => void) => {
+	const onPopRef = useRef(onPop);
+	onPopRef.current = onPop;
+	useEffect(() => {
+		if (!open) return;
+		window.history.pushState({ groupInfoGallery: true }, '');
+		const onPopState = () => onPopRef.current();
+		window.addEventListener('popstate', onPopState);
+		return () => {
+			window.removeEventListener('popstate', onPopState);
+			if (window.history.state?.groupInfoGallery) {
+				window.history.back();
+			}
+		};
+	}, [open]);
+};
+
 export interface EntryRoomPanelProps {
 	/** Back to the waiting room. Called once the slide-back has played. */
 	onBack: () => void;
@@ -23,7 +49,8 @@ export interface EntryRoomPanelProps {
  * "Nächste Termine" (#1689). It comes in from the right edge and moves left
  * into place, and it leaves the same way it came — Frank asked for the "back
  * and forth" explicitly. `prefers-reduced-motion` gets neither, the panel is
- * simply there and simply gone. Escape and the browser's back go back too.
+ * simply there and simply gone. Escape goes back too; the browser's back is
+ * the room's (`usePanelHistory`).
  */
 export const EntryRoomPanel = ({
 	onBack,
@@ -73,22 +100,11 @@ export const EntryRoomPanel = ({
 		return () => document.removeEventListener('keydown', onKeyDown);
 	}, [requestBack]);
 
-	/* The panel is a step, not a page: a marker entry makes the browser's
-	   back button (and the phone's back gesture) mean "back to the waiting
-	   room" instead of "leave the group". Popped again on the way out so the
-	   history does not grow with every look. */
-	const finishRef = useRef(finish);
-	finishRef.current = finish;
+	/* Into the panel, not to the page: the control that opened it is gone,
+	   and focus left on the body skips the panel on the next Tab. */
+	const backRef = useRef<HTMLButtonElement>(null);
 	useEffect(() => {
-		window.history.pushState({ groupInfoGallery: true }, '');
-		const onPopState = () => finishRef.current();
-		window.addEventListener('popstate', onPopState);
-		return () => {
-			window.removeEventListener('popstate', onPopState);
-			if (window.history.state?.groupInfoGallery) {
-				window.history.back();
-			}
-		};
+		backRef.current?.focus({ preventScroll: true });
 	}, []);
 
 	return (
@@ -146,6 +162,7 @@ export const EntryRoomPanel = ({
 					    found at a glance (Frank, 2026-10-19: "sichtbarer
 					    machen"). */}
 					<Button
+						ref={backRef}
 						variant="outlined"
 						onClick={requestBack}
 						data-testid={backTestId}

@@ -443,6 +443,38 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		expect(screen.queryByTestId('group-entry-dates')).toBeNull();
 	});
 
+	/* #1782 review: the gallery's history marker was popped after the dates
+	   view had pushed its own, and the queued back closed the dates. */
+	it('keeps one history marker from "Mehr erfahren" to the dates', () => {
+		renderDates();
+		const push = vi.spyOn(window.history, 'pushState');
+		const back = vi.spyOn(window.history, 'back');
+		fireEvent.click(screen.getByTestId('group-entry-more'));
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+		expect(
+			document.querySelector('[data-cy="group-upcoming-dates"]')
+		).toBeTruthy();
+		// One marker for the whole excursion; no queued back to race.
+		expect(push).toHaveBeenCalledTimes(1);
+		expect(back).not.toHaveBeenCalled();
+		push.mockRestore();
+		back.mockRestore();
+	});
+
+	it('moves focus into the dates and back to "Alle Termine"', async () => {
+		renderDates();
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+		expect(document.activeElement).toBe(
+			screen.getByTestId('group-dates-back')
+		);
+		fireEvent.click(screen.getByTestId('group-dates-back'));
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByTestId('group-entry-dates')
+			)
+		);
+	});
+
 	it('lists the dates ahead in the middle, "Beitreten" stays below', async () => {
 		renderDates({ nowMs: START.getTime() + 60e3 });
 		fireEvent.click(screen.getByTestId('group-entry-dates'));

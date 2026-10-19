@@ -13,6 +13,7 @@ import { GroupInfoGallery } from './GroupInfoGallery';
 import { GroupUpcomingDates } from './GroupUpcomingDates';
 import { GroupCalendarActions } from './GroupCalendarActions';
 import { GroupHeading } from './GroupHeading';
+import { usePanelHistory } from './EntryRoomPanel';
 import { GroupRunningNow, useIntlLocale } from './GroupRunningNow';
 import { GroupRulesIntro } from './GroupRulesIntro';
 import type { GroupChatRepeat } from '../groupChatCalendar';
@@ -206,6 +207,23 @@ export const GroupWaitingRoom = ({
 	const showMotionSwitch = showClock || rules.length > 0;
 	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
 	const backToRoom = useCallback(() => setView('room'), []);
+	usePanelHistory(view !== 'room', backToRoom);
+	/* Back in the room, focus returns to the control that left it. */
+	const roomTrigger = useRef<string | null>(null);
+	const openView = (next: 'more' | 'dates', trigger: string) => {
+		if (view === 'room') roomTrigger.current = trigger;
+		setView(next);
+	};
+	useEffect(() => {
+		if (view !== 'room' || !roomTrigger.current || !room) return;
+		const trigger =
+			room.querySelector<HTMLElement>(
+				`[data-testid="${roomTrigger.current}"]`
+			) ??
+			room.querySelector<HTMLElement>('[data-testid="group-entry-join"]');
+		roomTrigger.current = null;
+		trigger?.focus({ preventScroll: true });
+	}, [view, room]);
 	/* A shut "Beitreten" says when it opens (Frank, 2026-10-19). */
 	const opensAtTime =
 		plannedStart && !started && !moderator
@@ -252,7 +270,11 @@ export const GroupWaitingRoom = ({
 					? (event) => setCalendarAnchor(event.currentTarget)
 					: undefined
 			}
-			onMoreDates={hasMoreDates ? () => setView('dates') : undefined}
+			onMoreDates={
+				hasMoreDates
+					? () => openView('dates', 'group-entry-dates')
+					: undefined
+			}
 		/>
 	) : null;
 
@@ -467,7 +489,7 @@ export const GroupWaitingRoom = ({
 							size="small"
 							endIcon={<ArrowForwardRoundedIcon />}
 							sx={moreButtonSx}
-							onClick={() => setView('more')}
+							onClick={() => openView('more', 'group-entry-more')}
 							data-testid="group-entry-more"
 						>
 							{tr('more', 'Mehr erfahren')}

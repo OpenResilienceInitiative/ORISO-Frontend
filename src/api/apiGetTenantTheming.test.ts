@@ -102,6 +102,24 @@ describe('apiGetTenantTheming – the Träger behind a shared link', () => {
 		expect(mocks.apiGetAgencyById).toHaveBeenCalledTimes(1);
 	});
 
+	/* Codex on #1782: two separate tenant fetches could disagree, and the
+	   one that failed then painted the main tenant over the link's. */
+	it('gives both theming hooks the same link tenant from one request', async () => {
+		mocks.apiGetAgencyById.mockResolvedValue({ id: 1, tenantId: 2 });
+		mocks.fetchData
+			.mockResolvedValueOnce({ id: 2 })
+			.mockRejectedValueOnce(new Error('503'));
+
+		const [first, second] = await Promise.all([
+			apiGetTenantTheming(1),
+			apiGetTenantTheming(1)
+		]);
+
+		expect(first).toEqual({ id: 2 });
+		expect(second).toEqual({ id: 2 });
+		expect(mocks.fetchData).toHaveBeenCalledTimes(1);
+	});
+
 	it.each([
 		['an unknown agency', null],
 		['an agency without a tenant', { id: 1 }],
