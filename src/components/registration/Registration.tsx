@@ -872,6 +872,7 @@ export const Registration = () => {
 				onEnter={() => undefined}
 				department={handoverDepartment}
 				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
+				closing={joinsTheGroup ? null : undefined}
 			/>
 		);
 	}
