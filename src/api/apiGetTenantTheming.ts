@@ -11,9 +11,13 @@ const getLinkTenantId = (agencyId: number) => {
 	if (!linkTenantIds.has(agencyId)) {
 		linkTenantIds.set(
 			agencyId,
-			apiGetAgencyById(agencyId).then((agency) =>
-				agency?.tenantId && agency.tenantId > 0 ? agency.tenantId : null
-			)
+			apiGetAgencyById(agencyId).then((agency) => {
+				// `null` is also a failed request: ask again next time.
+				if (!agency) linkTenantIds.delete(agencyId);
+				return agency?.tenantId && agency.tenantId > 0
+					? agency.tenantId
+					: null;
+			})
 		);
 	}
 	return linkTenantIds.get(agencyId)!;

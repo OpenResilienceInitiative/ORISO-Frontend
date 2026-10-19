@@ -175,10 +175,13 @@ export const InfoGalleryLaptopWithDates: StoryObj = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const upcoming = await canvas.findByText('Nächste Termine');
-		const cards = canvasElement.querySelectorAll<HTMLElement>(
-			'[data-cy^="handover-card-"]'
-		);
-		await waitFor(() => expect(cards.length).toBeGreaterThan(0));
+		const cards = await waitFor(() => {
+			const found = canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy^="handover-card-"]'
+			);
+			expect(found.length).toBeGreaterThan(0);
+			return found;
+		});
 		const cardBottom = Math.max(
 			...Array.from(cards).map((c) => c.getBoundingClientRect().bottom)
 		);

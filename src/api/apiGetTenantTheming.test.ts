@@ -144,4 +144,17 @@ describe('apiGetTenantTheming – the Träger behind a shared link', () => {
 	])('reads the link agency from %s', (search, expected) => {
 		expect(getLinkAgencyId(search)).toBe(expected);
 	});
+
+	it('asks for the agency again after a failed lookup', async () => {
+		mocks.apiGetAgencyById
+			.mockResolvedValueOnce(null)
+			.mockResolvedValueOnce({ id: 1, tenantId: 2 });
+
+		await apiGetTenantTheming(1);
+		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/$/);
+
+		await apiGetTenantTheming(1);
+		expect(mocks.apiGetAgencyById).toHaveBeenCalledTimes(2);
+		expect(requestedUrl()).toMatch(/\/service\/tenant\/public\/id\/2$/);
+	});
 });

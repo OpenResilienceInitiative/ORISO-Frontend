@@ -56,12 +56,17 @@ export interface GroupWaitingRoomProps {
 	joinBlocked?: boolean;
 	/**
 	 * Who waits. `moderator` is the counsellor who opens the group: the clock
-	 * speaks to her, the bar says "Chat starten" and is live before the
-	 * group is open, and no consent is asked (#1689).
+	 * speaks to her, and the bar is live before the group is open (#1689).
+	 * Whether consent is asked is `askConsent`'s business.
 	 */
 	audience?: 'participant' | 'moderator';
 	/** The bar's main label when it is not "Beitreten". */
 	primaryLabel?: string;
+	/**
+	 * Ask the group's consent on "Beitreten". Off for staff: they agreed to
+	 * the documents with their contract, not here.
+	 */
+	askConsent?: boolean;
 }
 
 /**
@@ -93,7 +98,8 @@ export const GroupWaitingRoom = ({
 	embedded = false,
 	joinBlocked = false,
 	audience = 'participant',
-	primaryLabel
+	primaryLabel,
+	askConsent = true
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -161,8 +167,7 @@ export const GroupWaitingRoom = ({
 		setCalendarAnchor(event.currentTarget);
 	const joinAction = {
 		label: joinLabel,
-		// Staff agreed to the documents with their contract, not here.
-		onClick: moderator ? onJoin : () => setAsking(true),
+		onClick: askConsent ? () => setAsking(true) : onJoin,
 		disabled: (!active && !moderator) || joinBusy || joinBlocked,
 		testId: 'group-entry-join'
 	};
@@ -380,7 +385,7 @@ export const GroupWaitingRoom = ({
 	    gesperrt"). The phone keeps both by shortening the
 	    calendar label, not by dropping a button. */
 	const bar =
-		asking && active && !moderator ? (
+		asking && active && askConsent ? (
 			<WaitingRoomBar
 				contained={embedded}
 				consent={

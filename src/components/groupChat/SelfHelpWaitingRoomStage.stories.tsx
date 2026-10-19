@@ -225,6 +225,45 @@ export const ChatInfoMenu390: Story = {
 	}
 };
 
+/**
+ * Review of #1782: a counsellor who comes into a group that already runs is
+ * staff, not a client. "Beitreten" takes her in without the clients'
+ * consent sheet — she agreed to the documents with her contract.
+ */
+const OpenGroupStage = () => {
+	const listItem = React.useMemo(() => {
+		const item = buildGroupStageListItem(-15 * 60);
+		return {
+			...item,
+			chat: { ...item.chat, active: true, subscribed: false }
+		} as typeof item;
+	}, []);
+	return (
+		<GroupChatStage listItem={listItem} layout="desktop">
+			<JoinGroupChatView />
+		</GroupChatStage>
+	);
+};
+
+export const StaffJoinsOpenGroup1440: Story = {
+	name: 'Staff joins a running group · no consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <OpenGroupStage />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="group-entry-room"]')
+			).not.toBeNull()
+		);
+		const join = canvas.getByTestId('group-entry-join');
+		await expect(join).toBeEnabled();
+		await userEvent.click(join);
+		await expect(canvas.queryByRole('checkbox')).toBeNull();
+		await expect(canvas.queryByText('Bevor Sie schreiben')).toBeNull();
+	}
+};
+
 /** The same group once it runs: header with the ⋮ menu and its Chat-Info row. */
 const RunningStage = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
 	const stopOrLeaveRef = React.useRef(false);

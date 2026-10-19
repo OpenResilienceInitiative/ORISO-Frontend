@@ -105,10 +105,7 @@ export const GroupConsentGate = ({
 						declineLabel={t('groupChat.consent.reject', 'Ablehnen')}
 						/* There is no room behind this gate to go back to: the
 						   tick is taken back and the reason stays visible. */
-						onDecline={() => {
-							consent.reset();
-							setDeclined(true);
-						}}
+						onDecline={() => setDeclined(true)}
 						missingText={rejectedText}
 						error={
 							saveFailed
@@ -116,7 +113,7 @@ export const GroupConsentGate = ({
 										'groupChat.consent.saveFailed',
 										'Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.'
 									)
-								: declined
+								: declined && !consent.accepted
 									? rejectedText
 									: undefined
 						}

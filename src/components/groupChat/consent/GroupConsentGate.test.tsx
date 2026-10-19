@@ -171,4 +171,18 @@ describe('GroupConsentGate', () => {
 			'Ohne Ihre Zustimmung'
 		);
 	});
+
+	it('drops the decline note once the person ticks the box', async () => {
+		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);
+		await screen.findByText(
+			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
+		);
+		const gate = screen.getByTestId('group-consent-gate');
+
+		fireEvent.click(screen.getByRole('button', { name: 'Ablehnen' }));
+		expect(gate.textContent).toContain('Ohne Ihre Zustimmung');
+
+		fireEvent.click(screen.getByRole('checkbox'));
+		expect(gate.textContent).not.toContain('Ohne Ihre Zustimmung');
+	});
 });

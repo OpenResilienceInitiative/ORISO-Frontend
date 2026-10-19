@@ -341,6 +341,7 @@ export const JoinGroupChatView = ({
 					embedded
 					audience={canStartChat ? 'moderator' : 'participant'}
 					primaryLabel={isAsker ? undefined : buttonItem.label}
+					askConsent={isAsker}
 					topicName={
 						isAsker
 							? getGroupWaitingRoomTopic(
