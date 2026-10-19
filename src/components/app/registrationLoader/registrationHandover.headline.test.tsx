@@ -7,6 +7,12 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('./HandoverCarousel', () => ({
 	HandoverCarousel: () => <div data-testid="carousel" />
 }));
+// The room's frame (stage, language switch) is not what this test is about.
+vi.mock('../../anonymousChat/entryRoom/EntryRoomShell', () => ({
+	EntryRoomShell: ({ children }: { children: React.ReactNode }) => (
+		<>{children}</>
+	)
+}));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => {
 		const catalogue: Record<string, string> = {
@@ -26,13 +32,12 @@ const { RegistrationHandover } = await import('./RegistrationHandover');
  * 'Fast geschafft' machen … und dann wenn 'Anfrage schreiben' fertig ist, dann
  * geht das 'Fast' eben da auch weg und es ist geschafft."
  *
- * Both lines are always in the DOM — they share one grid cell so the line
- * below never jumps — so the test asks which one is shown, not which one
- * exists. `aria-hidden` is the same answer a screen reader gets.
+ * The template fades a new headline in, so only one line is in the DOM; the
+ * test still asks which one is shown, the same answer a screen reader gets.
  */
 const shown = (text: string) =>
 	screen
-		.getAllByText(text)
+		.queryAllByText(text)
 		.some((node) => node.getAttribute('aria-hidden') !== 'true');
 
 describe('RegistrationHandover headline', () => {

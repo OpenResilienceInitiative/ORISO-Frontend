@@ -60,6 +60,12 @@ export interface RegistrationFooterProps {
 	animateIn?: boolean;
 	/** Consent is above the action row, never squeezed into a button column. */
 	consent?: React.ReactNode;
+	/**
+	 * The bar of a room that stands inside the app's chat card rather than on
+	 * the stage: it sits in the flow at the card's bottom edge, as wide as the
+	 * card, instead of being fixed to the window (#1219).
+	 */
+	contained?: boolean;
 }
 
 /**
@@ -91,7 +97,8 @@ export const RegistrationFooter = ({
 	secondary,
 	children,
 	animateIn = false,
-	consent
+	consent,
+	contained = false
 }: RegistrationFooterProps) => {
 	/* The bar rides above the software keyboard instead of disappearing behind
 	   it — see `useKeyboardInset`. Written as an inline style rather than into
@@ -120,16 +127,20 @@ export const RegistrationFooter = ({
 	return (
 		<>
 			{/* Reserve the real height, including long/mobile consent wording. */}
-			<Box
-				aria-hidden
-				sx={{ height: footerHeight, width: '100%', flexShrink: 0 }}
-			/>
+			{!contained && (
+				<Box
+					aria-hidden
+					sx={{ height: footerHeight, width: '100%', flexShrink: 0 }}
+				/>
+			)}
 			<Box
 				ref={footerRef}
 				data-cy="registration-footer"
 				data-keyboard-inset={keyboardInset || undefined}
 				style={
-					keyboardInset ? { bottom: `${keyboardInset}px` } : undefined
+					keyboardInset && !contained
+						? { bottom: `${keyboardInset}px` }
+						: undefined
 				}
 				sx={{
 					...(animateIn ? footerEnterSx : {}),
@@ -172,7 +183,8 @@ export const RegistrationFooter = ({
 						animation: 'none',
 						transition: 'none'
 					},
-					'zIndex': 65
+					'zIndex': 65,
+					...(contained ? containedSx : {})
 				}}
 			>
 				{consent ?? completion}
@@ -272,6 +284,21 @@ export const RegistrationFooter = ({
  * blocks would be two keys of the same name in one object, and only the last
  * would survive.
  */
+/**
+ * In the chat card the bar is the card's last row: in the flow, as wide as the
+ * card, and clear of the screen edge (the app's navigation sits below it on a
+ * phone, so there is no safe area to pad against).
+ */
+const containedSx = {
+	position: 'relative',
+	bottom: 'auto',
+	right: 'auto',
+	width: '100%',
+	flexShrink: 0,
+	pb: { xs: '12px', sm: 0 },
+	zIndex: 1
+} as const;
+
 const footerEnterSx = {
 	'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
 	'@keyframes registrationFooterEnter': {

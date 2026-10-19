@@ -1,13 +1,9 @@
 import * as React from 'react';
-import { useRef, useState } from 'react';
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, ButtonBase } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
-import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
-import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
-import { ConsentCompletionPanel } from '../../registration/consentCompletion/ConsentCompletionPanel';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import {
 	HandoverCarousel,
@@ -15,9 +11,11 @@ import {
 } from '../../app/registrationLoader/HandoverCarousel';
 import { BreathingCompanionHost } from '../../pseudonym/breathingCompanion/BreathingCompanionHost';
 import { LeaveQueueDialog } from '../../pseudonym/LeaveQueueDialog';
-import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
-import { consentBindingKey } from '../../registration/accountData/consentAcceptance';
-import { useLegalHtmlWithDialogs } from '../../legalLinks/useLegalHtmlWithDialogs';
+import { WaitingRoomTemplate } from '../../waitingRoom/WaitingRoomTemplate';
+import {
+	useWaitingRoomConsent,
+	WaitingRoomConsentPanel
+} from '../../waitingRoom/WaitingRoomConsent';
 import { liveChatArtwork } from '../../../resources/img/registration-md3/registrationArtwork';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -134,41 +132,8 @@ export const LiveChatWaitingRoom = ({
 		);
 	const [leaving, setLeaving] = useState(false);
 	const [companion, setCompanion] = useState(companionStart);
-	const consentBoxRef = useRef<HTMLInputElement>(null);
-	/* What is on offer, not merely "something was ticked" — the registration's
-	   rule (`consentAcceptance.ts`), reused rather than re-invented. Agency and
-	   topic are unknown here, so the wording alone is the identity: switch
-	   language and the sentence changes, the binding stops matching, and the
-	   box unticks instead of carrying agreement onto words nobody read. */
-	const consentBinding = consentBindingKey(null, null, null, consentHtml);
-	const renderConsentHtml = useLegalHtmlWithDialogs(
-		department
-			? {
-					scope: 'agency',
-					agencyId: department.agencyId,
-					topicId: department.topicId
-				}
-			: { scope: 'platform' }
-	);
-	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
-		string | null
-	>(null);
-	const [consentMissing, setConsentMissing] = useState(false);
-	const consentAccepted =
-		acceptedConsentBinding !== null &&
-		acceptedConsentBinding === consentBinding;
-
-	/* The gate. The button stays live rather than going disabled: a dead
-	   primary action tells nobody why, and "why" is the whole point of the
-	   error state Frank asked for (#1341 item 2). */
-	const handleStart = () => {
-		if (!consentAccepted) {
-			setConsentMissing(true);
-			consentBoxRef.current?.focus();
-			return;
-		}
-		onAccept();
-	};
+	const consent = useWaitingRoomConsent({ consentHtml, department });
+	const handleStart = () => consent.guard(onAccept);
 	/* The contract: when counselling starts, unmount. Accepted wins over
 	   whatever the person was doing — the breathing companion included. */
 	const companionOpen = companion && !accepted;
@@ -206,228 +171,142 @@ export const LiveChatWaitingRoom = ({
 
 	return (
 		<>
-			<Box sx={{ mb: 3 }}>
-				<Typography
-					component="h1"
-					sx={{
-						fontSize: { xs: 30, sm: 34 },
-						lineHeight: { xs: '36px', sm: '41px' },
-						fontWeight: 700,
-						color: registrationMd3.onSurface
-					}}
-				>
-					{tr('headline', 'Gleich geht es los.')}
-				</Typography>
-				<Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-					{!accepted && ahead !== null && (
+			<WaitingRoomTemplate
+				headline={tr('headline', 'Gleich geht es los.')}
+				statusLeading={
+					!accepted && ahead !== null ? (
 						<QueueDots ahead={ahead} total={total} />
-					)}
-					<Typography
-						role="status"
-						aria-live="polite"
-						sx={{
-							fontSize: 16,
-							fontWeight: accepted ? 700 : 400,
-							color: accepted
-								? registrationMd3.primary
-								: registrationMd3.onSurfaceVariant
-						}}
-					>
-						{accepted
-							? tr('accepted', 'Eine Beraterin ist da.')
-							: aheadLine}
-					</Typography>
-				</Box>
-			</Box>
-
-			{companionOpen ? (
-				<BreathingCompanionHost onClose={() => setCompanion(false)} />
-			) : (
-				<Box
-					sx={{
-						flex: 1,
-						minHeight: 0,
-						display: 'flex',
-						flexDirection: 'column',
-						mx: { xs: -2.5, sm: 0 }
-					}}
-				>
-					<HandoverCarousel
-						steps={cards}
-						cardWidth={{ xs: 300, sm: 372 }}
-					/>
-				</Box>
-			)}
-
-			{!accepted && !companionOpen && (
-				<Box
-					sx={{
-						mt: 1.5,
-						mb: -1,
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'space-between',
-						gap: 2,
-						flexWrap: 'wrap'
-					}}
-				>
-					<ButtonBase
-						onClick={() => setCompanion(true)}
-						sx={{
-							'display': 'flex',
-							'alignItems': 'center',
-							'gap': 1.5,
-							'px': 2,
-							'py': 1.25,
-							'borderRadius': '999px',
-							'bgcolor': registrationMd3.surfaceContainer,
-							'fontSize': 14,
-							'& svg': { color: registrationMd3.primary }
-						}}
-					>
-						<SentimentSatisfiedAltOutlinedIcon />
-						{tr('companion', 'Ruhige Begleitung, bis es losgeht')}
-					</ButtonBase>
-					<ButtonBase
-						onClick={onMailCounselling}
-						sx={{
-							fontSize: 14,
-							color: registrationMd3.onSurfaceVariant,
-							textAlign: 'left'
-						}}
-					>
-						{tr(
-							'mail',
-							'Lieber schreiben statt warten? Zur Mail-Beratung →'
-						)}
-					</ButtonBase>
-				</Box>
-			)}
-
-			{!accepted && (
-				<RegistrationFooter>
-					<Box sx={{ width: '100%' }}>
-						<HandoverGateButton
-							state="queued"
-							onEnter={() => undefined}
-							label={tr('bar', 'Warteraum')}
-							status={
-								ahead === null
-									? tr(
-											'barStatusUnknown',
-											'Sie müssen nichts tun'
-										)
-									: tr(
-											'barStatus',
-											`${ahead} vor Ihnen — Sie müssen nichts tun`,
-											{ count: ahead }
-										)
-							}
-							indeterminate
-							icon={<TurningClock />}
-						/>
-					</Box>
-				</RegistrationFooter>
-			)}
-
-			{accepted && (
-				<RegistrationFooter
-					animateIn
-					consent={
-						<ConsentCompletionPanel
-							ariaLabel={tr('yourTurn', 'Sie sind dran.')}
-							status={{
-								heading: tr('yourTurn', 'Sie sind dran.'),
-								icon: <WavingHandOutlinedIcon />,
-								subtitle:
-									counsellorLine ??
-									tr(
-										'yourTurnSub',
-										'Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.'
-									),
-								trailingAction: (
-									<ButtonBase
-										aria-label={tr(
-											'decline',
-											'Nicht zustimmen und Chat verlassen'
-										)}
-										onClick={() => setLeaving(true)}
-										disabled={busy}
-										sx={{
-											width: 48,
-											height: 48,
-											flexShrink: 0,
-											borderRadius: '50%',
-											border: `1.5px solid ${registrationMd3.outline}`,
-											color: registrationMd3.onSurfaceVariant
-										}}
-									>
-										<CloseRoundedIcon />
-									</ButtonBase>
-								)
-							}}
-							checked={consentAccepted}
-							disabled={busy}
-							inputRef={consentBoxRef}
-							onChange={() => {
-								setAcceptedConsentBinding(
-									consentAccepted ? null : consentBinding
-								);
-								setConsentMissing(false);
-							}}
-							label={
-								<Typography
-									component="div"
-									sx={{
-										'fontSize': 14,
-										'lineHeight': '20px',
-										'fontWeight': 600,
-										'& a': {
-											color: registrationMd3.primary
-										}
-									}}
-								>
-									{renderConsentHtml(
-										sanitizeConsentHtml(consentHtml)
-									)}
-								</Typography>
-							}
-							errorId={CONSENT_ERROR_ID}
-							error={
-								consentMissing
-									? tr(
-											'consentRequired',
-											'Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.'
-										)
-									: undefined
-							}
-						/>
-					}
-				>
-					<Box
-						data-cy="live-chat-consent"
-						sx={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: 2,
-							width: '100%',
-							minWidth: 0
-						}}
-					>
-						<Box sx={{ flex: 1, minWidth: 0 }}>
-							<HandoverGateButton
-								state={busy ? 'entering' : 'ready'}
-								onEnter={handleStart}
-								label={tr('start', 'Gespräch beginnen')}
-								status={tr(
-									'startStatus',
-									'Ihre Beraterin wartet auf Sie'
+					) : undefined
+				}
+				statusEmphasis={accepted}
+				status={
+					accepted
+						? tr('accepted', 'Eine Beraterin ist da.')
+						: aheadLine
+				}
+				contentBox={!companionOpen}
+				aside={
+					!accepted && !companionOpen ? (
+						<>
+							<ButtonBase
+								onClick={() => setCompanion(true)}
+								sx={{
+									'display': 'flex',
+									'alignItems': 'center',
+									'gap': 1.5,
+									'px': 2,
+									'py': 1.25,
+									'borderRadius': '999px',
+									'bgcolor': registrationMd3.surfaceContainer,
+									'fontSize': 14,
+									'& svg': { color: registrationMd3.primary }
+								}}
+							>
+								<SentimentSatisfiedAltOutlinedIcon />
+								{tr(
+									'companion',
+									'Ruhige Begleitung, bis es losgeht'
 								)}
+							</ButtonBase>
+							<ButtonBase
+								onClick={onMailCounselling}
+								sx={{
+									fontSize: 14,
+									color: registrationMd3.onSurfaceVariant,
+									textAlign: 'left'
+								}}
+							>
+								{tr(
+									'mail',
+									'Lieber schreiben statt warten? Zur Mail-Beratung →'
+								)}
+							</ButtonBase>
+						</>
+					) : undefined
+				}
+				consent={
+					accepted ? (
+						<WaitingRoomConsentPanel
+							consent={consent}
+							heading={tr('yourTurn', 'Sie sind dran.')}
+							subtitle={
+								counsellorLine ??
+								tr(
+									'yourTurnSub',
+									'Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.'
+								)
+							}
+							declineLabel={tr(
+								'decline',
+								'Nicht zustimmen und Chat verlassen'
+							)}
+							onDecline={() => setLeaving(true)}
+							missingText={tr(
+								'consentRequired',
+								'Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.'
+							)}
+							errorId={CONSENT_ERROR_ID}
+							disabled={busy}
+						/>
+					) : undefined
+				}
+				gate={
+					accepted ? (
+						<Box
+							data-cy="live-chat-consent"
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: 2,
+								width: '100%',
+								minWidth: 0
+							}}
+						>
+							<Box sx={{ flex: 1, minWidth: 0 }}>
+								<HandoverGateButton
+									state={busy ? 'entering' : 'ready'}
+									onEnter={handleStart}
+									label={tr('start', 'Gespräch beginnen')}
+									status={tr(
+										'startStatus',
+										'Ihre Beraterin wartet auf Sie'
+									)}
+								/>
+							</Box>
+						</Box>
+					) : (
+						<Box sx={{ width: '100%' }}>
+							<HandoverGateButton
+								state="queued"
+								onEnter={() => undefined}
+								label={tr('bar', 'Warteraum')}
+								status={
+									ahead === null
+										? tr(
+												'barStatusUnknown',
+												'Sie müssen nichts tun'
+											)
+										: tr(
+												'barStatus',
+												`${ahead} vor Ihnen — Sie müssen nichts tun`,
+												{ count: ahead }
+											)
+								}
+								indeterminate
+								icon={<TurningClock />}
 							/>
 						</Box>
-					</Box>
-				</RegistrationFooter>
-			)}
+					)
+				}
+			>
+				{companionOpen ? (
+					<BreathingCompanionHost
+						onClose={() => setCompanion(false)}
+					/>
+				) : (
+					<HandoverCarousel steps={cards} />
+				)}
+			</WaitingRoomTemplate>
 
 			<LeaveQueueDialog
 				open={leaving}
