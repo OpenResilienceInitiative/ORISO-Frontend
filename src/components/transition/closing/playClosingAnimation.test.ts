@@ -253,6 +253,133 @@ describe('playClosingAnimation', () => {
 		);
 	});
 
+	/**
+	 * The curtain hangs in pleats and is drawn like one: gathered at the outer
+	 * edge, it spreads as it closes and gathers again as it opens. All of it is
+	 * painted once with gradients and moved with transforms, so it stays light
+	 * (Frank, 2026-10-19: realistic, but not heavy).
+	 */
+	describe('the curtain', () => {
+		type Call = [Keyframe[], KeyframeAnimationOptions];
+		const callsOf = (animate: { mock: { calls: unknown[] } }) =>
+			animate.mock.calls as Call[];
+		const panelCalls = (animate: {
+			mock: { calls: unknown[]; contexts: unknown[] };
+		}) =>
+			callsOf(animate)
+				.map((call, index) => ({
+					call,
+					element: animate.mock.contexts[index] as HTMLElement
+				}))
+				.filter(({ element }) =>
+					element.dataset.closingLayer?.startsWith('curtain-')
+				);
+		const scaleOf = (transform: unknown) =>
+			Number(/scaleX\(([\d.]+)\)/.exec(String(transform))?.[1] ?? NaN);
+
+		const play = async (variant: 'curtain' | 'slideReveal') => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const pending = playClosingAnimation({
+				variant,
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			const atCover = late.animate.mock.calls.length;
+			const nodes = document
+				.querySelector(ROOT)!
+				.querySelectorAll('*').length;
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(300);
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(300);
+			await pending;
+			return { late, atCover, nodes };
+		};
+
+		it('hangs in pleats: each half is painted with folds', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			const halves = [
+				...document.querySelectorAll<HTMLElement>(
+					'[data-closing-layer^="curtain-"]'
+				)
+			];
+			expect(halves).toHaveLength(2);
+			halves.forEach((half) =>
+				expect(half.style.backgroundImage).toContain(
+					'repeating-linear-gradient'
+				)
+			);
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(600);
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(600);
+			await pending;
+		});
+
+		it('is gathered at the outer edge, spreads as it is drawn and gathers as it opens', async () => {
+			const { late } = await play('curtain');
+			const panels = panelCalls(late.animate);
+			// Two halves, each animated on the way in and on the way out.
+			expect(panels).toHaveLength(4);
+			const sides = ['left', 'right'] as const;
+			sides.forEach((side) => {
+				const own = panels.filter(
+					({ element }) =>
+						element.dataset.closingLayer === `curtain-${side}`
+				);
+				expect(own).toHaveLength(2);
+				expect(
+					own[0].element.style.transformOrigin,
+					'the folds gather at the edge the half comes from'
+				).toBe(`${side} center`);
+				const [cover, reveal] = own.map(({ call }) => call[0]);
+				expect(
+					scaleOf(cover[0].transform),
+					'gathered, then drawn'
+				).toBeLessThan(1);
+				expect(
+					scaleOf(reveal[reveal.length - 1].transform),
+					'opens, gathering'
+				).toBeLessThan(1);
+			});
+		});
+
+		it.each(CLOSING_VARIANTS)(
+			'%s moves only transform and opacity, the properties a browser animates on the graphics card',
+			async (variant) => {
+				const { late } = await play(variant);
+				const properties = new Set(
+					callsOf(late.animate).flatMap(([keyframes]) =>
+						keyframes.flatMap((frame) => Object.keys(frame))
+					)
+				);
+				properties.delete('offset');
+				properties.delete('easing');
+				expect([...properties].sort()).toEqual(
+					[...properties]
+						.filter((p) => p === 'transform' || p === 'opacity')
+						.sort()
+				);
+				expect(properties.size).toBeGreaterThan(0);
+			}
+		);
+
+		it.each(CLOSING_VARIANTS)(
+			'%s stays within a small number of elements',
+			async (variant) => {
+				const { nodes } = await play(variant);
+				expect(nodes).toBeLessThanOrEqual(16);
+			}
+		);
+	});
+
 	describe('the room underneath', () => {
 		const app = () => document.getElementById('app')!;
 		const mountApp = () => {
@@ -388,6 +515,75 @@ describe('playClosingAnimation', () => {
 			await vi.advanceTimersByTimeAsync(200);
 			await pending;
 		});
+
+		/* The marker sits on a wrapper, and the formatting toolbar stands before the
+		   editor in the document: the first focusable thing is a button. */
+		it.each([
+			[
+				'a contenteditable editor',
+				() => {
+					const editor = document.createElement('div');
+					editor.setAttribute('contenteditable', 'true');
+					editor.tabIndex = 0;
+					return editor;
+				}
+			],
+			['a textarea', () => document.createElement('textarea')],
+			[
+				'a textbox',
+				() => {
+					const editor = document.createElement('div');
+					editor.setAttribute('role', 'textbox');
+					editor.tabIndex = 0;
+					return editor;
+				}
+			]
+		])(
+			'puts the keyboard into %s, not into a toolbar button that stands before it',
+			async (_kind, makeEditor) => {
+				const late = installLateAnimate();
+				const gate = mountApp();
+				let editor!: HTMLElement;
+				let bold!: HTMLElement;
+				const pending = playClosingAnimation({
+					variant: 'curtain',
+					focal: 'messageField',
+					onCovered: () => {
+						app().replaceChildren();
+						const field = document.createElement('div');
+						field.setAttribute(
+							'data-closing-focal',
+							'message-field'
+						);
+						field.getBoundingClientRect = () =>
+							({
+								left: 10,
+								top: 700,
+								width: 300,
+								height: 60
+							}) as DOMRect;
+						bold = document.createElement('button');
+						editor = makeEditor();
+						field.append(
+							bold,
+							document.createElement('button'),
+							editor
+						);
+						app().appendChild(field);
+					}
+				});
+				gate.blur();
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(50);
+				expect(document.activeElement).not.toBe(bold);
+				expect(document.activeElement).toBe(editor);
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(200);
+				await pending;
+			}
+		);
 
 		/* The composer skips its own autofocus up to 900 px: a focused field opens
 		   the soft keyboard and shifts the header and the composer there. */
@@ -761,7 +957,7 @@ describe('playClosingAnimation', () => {
 		installAnimate('never');
 		const onCovered = vi.fn();
 		const pending = playClosingAnimation({
-			variant: 'circleZoom',
+			variant: 'curtain',
 			focal: 'messageField',
 			onCovered
 		});
@@ -853,7 +1049,7 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const swap = held();
 			const pending = playClosingAnimation({
-				variant: 'circleZoom',
+				variant: 'slideReveal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -902,7 +1098,7 @@ describe('playClosingAnimation', () => {
 				(callback) => waiting.push(callback)
 			);
 			const pending = playClosingAnimation({
-				variant: 'circleZoom',
+				variant: 'slideReveal',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
@@ -1025,7 +1221,6 @@ describe('playClosingAnimation', () => {
 				void playClosingAnimation({
 					variant,
 					focal: 'call',
-					origin: { x: 256, y: 384 },
 					onCovered: never
 				});
 				await vi.advanceTimersByTimeAsync(200);
@@ -1040,29 +1235,10 @@ describe('playClosingAnimation', () => {
 				expect(note()).toEqual({
 					variant,
 					focal: 'call',
-					origin: {
-						x: 256 / window.innerWidth,
-						y: 384 / window.innerHeight
-					},
 					at: Date.now()
 				});
 			}
 		);
-
-		it('clamps the spot that was pressed to the screen, so the next document can always open from it', async () => {
-			installAnimate('at once');
-			void playClosingAnimation({
-				variant: 'circleZoom',
-				focal: 'messageField',
-				origin: { x: -50, y: window.innerHeight * 3 },
-				onCovered: never
-			});
-			await vi.advanceTimersByTimeAsync(200);
-
-			leave();
-
-			expect(note().origin).toEqual({ x: 0, y: 1 });
-		});
 
 		it("carries the tenant's colours, which the next document does not have yet", async () => {
 			installAnimate('at once');
@@ -1143,20 +1319,24 @@ describe('playClosingAnimation', () => {
 
 		it('leaves no note once the reveal has begun: the room has arrived', async () => {
 			// The cover finishes, the reveal never does.
-			let calls = 0;
 			(Element.prototype as unknown as { animate: unknown }).animate =
-				vi.fn(() => ({
-					finished:
-						calls++ < 1
-							? Promise.resolve()
-							: new Promise<void>(() => undefined)
-				}));
+				vi.fn(function (this: HTMLElement) {
+					const revealing =
+						this.closest<HTMLElement>(ROOT)?.dataset
+							.closingPhase === 'reveal';
+					return {
+						finished: revealing
+							? new Promise<void>(() => undefined)
+							: Promise.resolve(),
+						finish: vi.fn()
+					};
+				});
 			(
 				document.documentElement as unknown as { animate: unknown }
 			).animate = Element.prototype.animate;
 			focalOnPage();
 			void playClosingAnimation({
-				variant: 'circleZoom',
+				variant: 'curtain',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});

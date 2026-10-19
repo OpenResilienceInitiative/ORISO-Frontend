@@ -21,8 +21,6 @@ export interface ClosingHandoverColors {
 export interface ClosingHandover {
 	variant: ClosingVariant;
 	focal: ClosingFocal;
-	/** Where the press happened, as a share of the viewport (0 to 1). */
-	origin: { x: number; y: number };
 	/**
 	 * The new document starts before the tenant's palette has arrived, so the
 	 * colours travel with the note. Absent when the tenant has none of its own.
@@ -42,9 +40,6 @@ const isColour = (value: unknown): value is string =>
 	value.length <= MAX_COLOUR_LENGTH &&
 	COLOUR.test(value);
 
-const isShare = (value: unknown): value is number =>
-	typeof value === 'number' && value >= 0 && value <= 1;
-
 const readColors = (value: unknown): ClosingHandoverColors | undefined => {
 	const { primary, primaryDark } = (value ?? {}) as Record<string, unknown>;
 	return isColour(primary) && isColour(primaryDark)
@@ -62,13 +57,10 @@ const parse = (raw: string, now: number): ClosingHandover | null => {
 	if (value === null) {
 		return null;
 	}
-	const { variant, focal, origin, colors, at } = value;
-	const point = (origin ?? {}) as Record<string, unknown>;
+	const { variant, focal, colors, at } = value;
 	if (
 		!CLOSING_VARIANTS.includes(variant as ClosingVariant) ||
 		!Object.keys(CLOSING_FOCAL_SELECTOR).includes(focal as string) ||
-		!isShare(point.x) ||
-		!isShare(point.y) ||
 		typeof at !== 'number' ||
 		!(Math.abs(now - at) <= transitionMotion.closing.capMs)
 	) {
@@ -78,7 +70,6 @@ const parse = (raw: string, now: number): ClosingHandover | null => {
 	return {
 		variant: variant as ClosingVariant,
 		focal: focal as ClosingFocal,
-		origin: { x: point.x, y: point.y },
 		...(readable && { colors: readable }),
 		at
 	};

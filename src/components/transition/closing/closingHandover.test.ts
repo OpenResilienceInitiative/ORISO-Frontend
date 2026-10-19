@@ -13,9 +13,8 @@ const NOW = 1_800_000_000_000;
 const handover = (
 	overrides: Partial<ClosingHandover> = {}
 ): ClosingHandover => ({
-	variant: 'circleZoom',
+	variant: 'curtain',
 	focal: 'messageField',
-	origin: { x: 0.25, y: 0.8 },
 	at: NOW,
 	...overrides
 });
@@ -77,18 +76,9 @@ describe('closing handover note', () => {
 			JSON.stringify(handover({ focal: 'sky' as never }))
 		],
 		[
-			'an origin outside the screen',
-			JSON.stringify(handover({ origin: { x: 1.5, y: 0.5 } }))
+			'the circle zoom, which was taken out',
+			JSON.stringify(handover({ variant: 'circleZoom' as never }))
 		],
-		[
-			'a negative origin',
-			JSON.stringify(handover({ origin: { x: 0.5, y: -0.1 } }))
-		],
-		[
-			'an origin that is not a number',
-			JSON.stringify({ ...handover(), origin: { x: 'left', y: 0.5 } })
-		],
-		['no origin', JSON.stringify({ ...handover(), origin: undefined })],
 		['no time', JSON.stringify({ ...handover(), at: undefined })],
 		[
 			'a time that is not a number',

@@ -74,18 +74,18 @@ describe('useClosingAnimation', () => {
 	afterEach(() => vi.restoreAllMocks());
 
 	const theming = {
-		closingAnimationDesktop: 'CIRCLE_ZOOM',
-		closingAnimationMobile: 'SLIDE_REVEAL'
+		closingAnimationDesktop: 'SLIDE_REVEAL',
+		closingAnimationMobile: 'CURTAIN'
 	};
 
 	it("plays the tenant's desktop design on a desktop width", async () => {
 		screenIs({ desktop: true, reducedMotion: false });
-		expect((await pressed(theming)).variant).toBe('circleZoom');
+		expect((await pressed(theming)).variant).toBe('slideReveal');
 	});
 
 	it("plays the tenant's mobile design on anything narrower", async () => {
 		screenIs({ desktop: false, reducedMotion: false });
-		expect((await pressed(theming)).variant).toBe('slideReveal');
+		expect((await pressed(theming)).variant).toBe('curtain');
 	});
 
 	it('plays the platform default when no tenant is known', async () => {

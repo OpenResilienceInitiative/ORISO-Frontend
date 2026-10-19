@@ -10,8 +10,6 @@ import {
 } from './closingHandover';
 
 const ROOT = '[data-closing-animation]';
-/** The viewport jsdom stands in for is 1024 x 768. */
-const ORIGIN = { x: 256, y: 384 };
 
 interface Call {
 	layer: string | undefined;
@@ -68,22 +66,17 @@ const field = (name: 'message-field' | 'call' = 'message-field') => {
 		({ left: 10, top: 700, width: 300, height: 60 }) as DOMRect;
 	document.body.appendChild(element);
 };
-/** The centre of the field above. */
-const FIELD = { x: 160, y: 730 };
 
 const leaveNote = (overrides: Partial<ClosingHandover> = {}) =>
 	leaveClosingHandover(window, {
-		variant: 'circleZoom',
+		variant: 'curtain',
 		focal: 'messageField',
-		origin: { x: ORIGIN.x / 1024, y: ORIGIN.y / 768 },
 		at: Date.now(),
 		...overrides
 	});
 
 const root = () => document.querySelector<HTMLElement>(ROOT);
 const phase = () => root()?.getAttribute('data-closing-phase');
-const circleReveal = (calls: Call[]) =>
-	calls.find((call) => call.layer === 'circle')?.keyframes.at(-1)?.transform;
 
 /**
  * ORISO-Frontend#1737. The new document picks the closing animation up where
@@ -154,56 +147,13 @@ describe('resumeClosingAnimation', () => {
 		expect(window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)).toBeNull();
 	});
 
-	it('opens the circle from the spot the old document pressed, on this screen', () => {
-		installAnimate();
-		leaveNote({ variant: 'circleZoom', origin: { x: 0.75, y: 0.25 } });
-
-		void resumeClosingAnimation();
-
-		const disc = root()!.querySelector<HTMLElement>(
-			'[data-closing-layer="circle"]'
-		)!;
-		const centre = {
-			x: parseFloat(disc.style.left) + parseFloat(disc.style.width) / 2,
-			y: parseFloat(disc.style.top) + parseFloat(disc.style.height) / 2
-		};
-		expect(centre).toEqual({
-			x: 0.75 * window.innerWidth,
-			y: 0.25 * window.innerHeight
-		});
-	});
-
-	it("covers in the tenant's own colours, which the palette of this document has not reached yet", () => {
-		installAnimate();
-		leaveNote({
-			variant: 'circleZoom',
-			colors: { primary: '#0050a0', primaryDark: '#00305f' }
-		});
-
-		void resumeClosingAnimation();
-
-		const normalised = (colour: string) => {
-			const probe = document.createElement('div');
-			probe.style.background = colour;
-			return probe.style.background;
-		};
-		const disc = root()!.querySelector<HTMLElement>(
-			'[data-closing-layer="circle"]'
-		)!;
-		expect(disc.style.background).toBe(normalised('#0050a0'));
-		// The deeper shade grows over the disc while it closes.
-		expect(disc.firstElementChild).not.toBeNull();
-		expect((disc.firstElementChild as HTMLElement).style.background).toBe(
-			normalised('#00305f')
-		);
-	});
-
 	it("covers every design in the tenant's colours", () => {
 		const normalised = (colour: string) => {
 			const probe = document.createElement('div');
-			probe.style.background = colour;
-			return probe.style.background;
+			probe.style.backgroundColor = colour;
+			return probe.style.backgroundColor;
 		};
+		const palette = [normalised('#0050a0'), normalised('#00305f')];
 		for (const variant of ['curtain', 'slideReveal'] as const) {
 			installAnimate();
 			document.body.innerHTML = '';
@@ -218,12 +168,27 @@ describe('resumeClosingAnimation', () => {
 			expect(layers.length).toBeGreaterThan(0);
 			layers.forEach((layer) =>
 				expect(
-					[normalised('#0050a0'), normalised('#00305f')],
+					palette,
 					`${variant}: ${layer.dataset.closingLayer}`
-				).toContain(layer.style.background)
+				).toContain(layer.style.backgroundColor)
 			);
 			root()!.remove();
 		}
+	});
+
+	it("shades the edge of the curtain's halves in the tenant's deeper colour", () => {
+		installAnimate();
+		leaveNote({
+			variant: 'curtain',
+			colors: { primary: '#0050a0', primaryDark: '#00305f' }
+		});
+
+		void resumeClosingAnimation();
+
+		const panel = root()!.querySelector<HTMLElement>(
+			'[data-closing-layer="curtain-left"]'
+		)!;
+		expect(panel.style.boxShadow).toContain('#00305f');
 	});
 
 	it('waits for the app, reveals onto the message field and leaves nothing behind', async () => {
@@ -239,9 +204,10 @@ describe('resumeClosingAnimation', () => {
 		const result = await pending;
 
 		expect(result.played).toBe(true);
-		expect(circleReveal(play.reveal())).toBe(
-			`translate(${FIELD.x - ORIGIN.x}px, ${FIELD.y - ORIGIN.y}px) scale(0)`
-		);
+		expect(
+			play.reveal().length,
+			'it opened once the field was there'
+		).toBeGreaterThan(0);
 		expect(root(), 'nothing covers the page afterwards').toBeNull();
 	});
 
@@ -265,16 +231,22 @@ describe('resumeClosingAnimation', () => {
 		expect(seen).toEqual(['covered', 'reveal', 'revealed']);
 	});
 
-	it('ends on the call when the old document was on its way to one', async () => {
+	it('waits for the call, not for the message field, when the old document was on its way to one', async () => {
 		const play = installAnimate();
 		leaveNote({ focal: 'call' });
-		field('call');
+		field('message-field');
 		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(
+			play.reveal(),
+			'a message field is not what it is waiting for'
+		).toHaveLength(0);
+
+		field('call');
 		await vi.advanceTimersByTimeAsync(200);
 		await pending;
-		expect(circleReveal(play.reveal())).toContain(
-			`${FIELD.x - ORIGIN.x}px`
-		);
+		expect(play.reveal().length).toBeGreaterThan(0);
+		expect(root()).toBeNull();
 	});
 
 	it('gives the app the time a new document needs before it settles for the fallback point', async () => {
@@ -286,16 +258,19 @@ describe('resumeClosingAnimation', () => {
 		const late = focalWaitMs + 700;
 		expect(late).toBeLessThan(handoverFocalWaitMs);
 		await vi.advanceTimersByTimeAsync(late);
+		expect(phase(), 'still waiting for a field that comes late').toBe(
+			'covered'
+		);
+		expect(play.reveal()).toHaveLength(0);
 		field();
 		await vi.advanceTimersByTimeAsync(200);
 		await pending;
 
-		expect(circleReveal(play.reveal())).toBe(
-			`translate(${FIELD.x - ORIGIN.x}px, ${FIELD.y - ORIGIN.y}px) scale(0)`
-		);
+		expect(play.reveal().length).toBeGreaterThan(0);
+		expect(root()).toBeNull();
 	});
 
-	it('settles for the fallback point when the app never shows the field, and still gives the page back', async () => {
+	it('opens anyway when the app never shows the field, and still gives the page back', async () => {
 		const play = installAnimate();
 		leaveNote();
 		const pending = resumeClosingAnimation();
@@ -308,11 +283,7 @@ describe('resumeClosingAnimation', () => {
 		await vi.advanceTimersByTimeAsync(300);
 		await pending;
 
-		expect(circleReveal(play.reveal())).toBe(
-			`translate(${window.innerWidth / 2 - ORIGIN.x}px, ${
-				window.innerHeight * 0.82 - ORIGIN.y
-			}px) scale(0)`
-		);
+		expect(play.reveal().length, 'it opened at the end of the wait').toBeGreaterThan(0);
 		expect(root()).toBeNull();
 	});
 
@@ -713,7 +684,7 @@ describe('resumeClosingAnimation', () => {
 			).toBeNull();
 		});
 
-		it.each<ClosingVariant>(['curtain', 'circleZoom', 'slideReveal'])(
+		it.each<ClosingVariant>(['curtain', 'slideReveal'])(
 			'%s: draws nothing for a person who asked for less motion, and throws the note away',
 			async (variant) => {
 				const play = installAnimate();

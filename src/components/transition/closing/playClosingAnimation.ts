@@ -39,7 +39,7 @@ export interface PlayClosingAnimationOptions {
 	onCovered: () => ClosingSwapResult;
 	/** The person asked for less motion: the room is swapped at once. */
 	reducedMotion?: boolean;
-	/** Where the press happened; the circle opens from here. */
+	/** Where the press happened: the focal point when the person stays. */
 	origin?: { x: number; y: number };
 	document?: Document;
 }
@@ -63,8 +63,8 @@ const TOKEN_COLORS: ClosingHandoverColors = {
 interface Plan {
 	/** Starts the cover. Everything it needs exists already. */
 	cover: () => Animation[];
-	/** Starts the reveal, ending on the focal point. */
-	reveal: (focal: FocalPoint) => Animation[];
+	/** Starts the reveal. */
+	reveal: () => Animation[];
 }
 
 interface Frame {
@@ -72,7 +72,6 @@ interface Frame {
 	root: HTMLElement;
 	width: number;
 	height: number;
-	origin: { x: number; y: number };
 	colors: ClosingHandoverColors;
 }
 
@@ -85,12 +84,10 @@ const layer = (
 	frame: Frame,
 	name: string,
 	style: Partial<CSSStyleDeclaration>,
-	shape: 'rect' | 'disc' = 'rect',
 	parent: HTMLElement = frame.root
 ) => {
 	const element = frame.doc.createElement('div');
 	element.dataset.closingLayer = name;
-	element.dataset.closingShape = shape;
 	Object.assign(element.style, {
 		position: 'absolute',
 		pointerEvents: 'none',
@@ -116,6 +113,25 @@ const run = (
 	});
 
 const px = (value: number) => `${value}px`;
+
+/**
+ * What makes the curtain a curtain, painted once with gradients (never a filter
+ * or a shadow that has to be redrawn): light from above that falls off toward
+ * the hem, soft folds every 56 px and a fainter set at 91 px. Black and white
+ * at a low alpha, so they shade whatever brand colour the tenant has.
+ */
+const PLEATS = [
+	'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.16) 100%)',
+	'repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0) 12px, rgba(255,255,255,0.12) 30px, rgba(0,0,0,0) 44px, rgba(0,0,0,0.2) 56px)',
+	// A second, fainter set at another pitch, so the folds do not repeat evenly.
+	'repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0) 23px, rgba(255,255,255,0.06) 47px, rgba(0,0,0,0) 71px, rgba(0,0,0,0.08) 91px)'
+].join(', ');
+
+/**
+ * How narrow the folds are when the curtain is gathered at the side it comes
+ * from. It spreads to 1 as it is drawn and gathers again as it opens.
+ */
+const GATHERED = 0.62;
 
 /**
  * Curtain: two halves close over the right-hand surface and open again. The
@@ -182,7 +198,6 @@ const curtain = (frame: Frame): Plan => {
 							height: px(bottom - top),
 							background: primary
 						},
-						'rect',
 						element
 					)
 				: undefined;
@@ -225,12 +240,14 @@ const curtain = (frame: Frame): Plan => {
 				top: '0',
 				width: '100%',
 				height: '100%',
-				background: primary,
+				backgroundColor: primary,
+				backgroundImage: PLEATS,
+				// The folds gather at the edge the half comes from.
+				transformOrigin: `${side} center`,
 				// The edge that meets in the middle is a shade deeper, so two
 				// halves read as cloth and not as one flat sheet.
 				boxShadow: `inset ${side === 'left' ? '-' : ''}8px 0 0 ${primaryDark}`
 			},
-			'rect',
 			clip
 		);
 		return { element, strips, panel, away: side === 'left' ? -1 : 1 };
@@ -252,7 +269,9 @@ const curtain = (frame: Frame): Plan => {
 				run(
 					panel,
 					[
-						{ transform: `translateX(${away * 101}%)` },
+						{
+							transform: `translateX(${away * 101}%) scaleX(${GATHERED})`
+						},
 						{ transform: 'none' }
 					],
 					closing.coverMs,
@@ -260,7 +279,7 @@ const curtain = (frame: Frame): Plan => {
 				)
 			]),
 		reveal: () =>
-			halves.map(({ element, away }) =>
+			halves.flatMap(({ element, panel, away }) => [
 				run(
 					element,
 					[
@@ -269,79 +288,18 @@ const curtain = (frame: Frame): Plan => {
 					],
 					closing.revealMs,
 					transitionMotion.easeOut
+				),
+				// Opening, the folds gather again toward the side it parts to.
+				run(
+					panel,
+					[
+						{ transform: 'none' },
+						{ transform: `scaleX(${GATHERED})` }
+					],
+					closing.revealMs,
+					transitionMotion.easeOut
 				)
-			)
-	};
-};
-
-/**
- * Circle zoom: the red grows out of the gate button until the screen is red,
- * then closes into a circle on the focal point, a shade deeper as it goes,
- * and is gone. "Reddish" is the brand colour deepening (the primary token
- * family), never a literal red — a blue tenant sees blue.
- */
-const circleZoom = (frame: Frame): Plan => {
-	const { width, height, origin } = frame;
-	const { primary, primaryDark } = frame.colors;
-	const radius =
-		Math.max(
-			Math.hypot(origin.x, origin.y),
-			Math.hypot(width - origin.x, origin.y),
-			Math.hypot(origin.x, height - origin.y),
-			Math.hypot(width - origin.x, height - origin.y)
-		) + 2;
-	const disc = layer(
-		frame,
-		'circle',
-		{
-			left: px(origin.x - radius),
-			top: px(origin.y - radius),
-			width: px(radius * 2),
-			height: px(radius * 2),
-			borderRadius: '50%',
-			background: primary
-		},
-		'disc'
-	);
-	const deep = frame.doc.createElement('div');
-	Object.assign(deep.style, {
-		position: 'absolute',
-		inset: '0',
-		borderRadius: '50%',
-		background: primaryDark,
-		opacity: '0',
-		pointerEvents: 'none'
-	});
-	disc.appendChild(deep);
-
-	return {
-		cover: () => [
-			run(
-				disc,
-				[{ transform: 'scale(0)' }, { transform: 'scale(1)' }],
-				closing.coverMs,
-				transitionMotion.easeIn
-			)
-		],
-		reveal: (focal) => [
-			run(
-				disc,
-				[
-					{ transform: 'translate(0px, 0px) scale(1)' },
-					{
-						transform: `translate(${px(focal.x - origin.x)}, ${px(focal.y - origin.y)}) scale(0)`
-					}
-				],
-				closing.revealMs,
-				transitionMotion.easeInOut
-			),
-			run(
-				deep,
-				[{ opacity: 0 }, { opacity: 1 }],
-				closing.revealMs * 0.7,
-				'linear'
-			)
-		]
+			])
 	};
 };
 
@@ -405,7 +363,6 @@ const slideReveal = (frame: Frame): Plan => {
 
 const PLANS: Record<ClosingVariant, (frame: Frame) => Plan> = {
 	curtain,
-	circleZoom,
 	slideReveal
 };
 
@@ -414,6 +371,15 @@ const canAnimate = (doc: Document) =>
 
 const FOCUSABLE =
 	'textarea, input, select, button, a[href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+/** Where a person types: the arrival field wraps its editor, a toolbar stands before it. */
+const TYPING =
+	'textarea, input:not([type="button"], [type="submit"], [type="checkbox"], [type="radio"]), [contenteditable="true"], [role="textbox"]';
+
+const firstIn = (landing: HTMLElement | null, selector: string) =>
+	landing?.matches(selector)
+		? landing
+		: landing?.querySelector<HTMLElement>(selector);
 
 const nothingFocused = (doc: Document) =>
 	!doc.activeElement ||
@@ -449,9 +415,7 @@ const shutRoomBehind = (doc: Document, root: HTMLElement) => {
 		const target =
 			pressed?.isConnected && !pressed.matches(':disabled')
 				? pressed
-				: landing?.matches(FOCUSABLE)
-					? landing
-					: landing?.querySelector<HTMLElement>(FOCUSABLE);
+				: (firstIn(landing, TYPING) ?? firstIn(landing, FOCUSABLE));
 		target?.focus({ preventScroll: true });
 	};
 };
@@ -465,7 +429,6 @@ const createStage = (
 	doc: Document,
 	win: Window,
 	variant: ClosingVariant,
-	origin: { x: number; y: number },
 	colors: ClosingHandoverColors = TOKEN_COLORS
 ) => {
 	const root = doc.createElement('div');
@@ -487,8 +450,7 @@ const createStage = (
 		if (phase === 'reveal') root.style.pointerEvents = 'none';
 	};
 	let size = { width: win.innerWidth, height: win.innerHeight };
-	const buildPlan = () =>
-		PLANS[variant]({ doc, root, ...size, origin, colors });
+	const buildPlan = () => PLANS[variant]({ doc, root, ...size, colors });
 	let plan = buildPlan();
 	/* The pieces are sized in pixels when the stage is made. A viewport that
 	   changed while the screen is held covered (a phone turned) would show the
@@ -554,7 +516,7 @@ const uncover = async (
 		win.innerWidth > FIELD_FOCUS_AFTER_WIDTH ? point.element : null
 	);
 	stage.setPhase('reveal');
-	await settle(stage.plan.reveal(point));
+	await settle(stage.plan.reveal());
 	stage.setPhase('revealed');
 	// One frame at rest, so the end state can be seen (and measured).
 	await new Promise<void>((resolve) =>
@@ -568,8 +530,6 @@ const readTokenColors = (doc: Document, win: Window) => {
 	const primaryDark = style.getPropertyValue('--m3-primary-hover').trim();
 	return primary && primaryDark ? { primary, primaryDark } : undefined;
 };
-
-const clamp = (share: number) => Math.min(1, Math.max(0, share));
 
 /**
  * Plays the platform's closing animation and swaps the room in the middle of it.
@@ -618,7 +578,7 @@ export const playClosingAnimation = async (
 		x: win.innerWidth / 2,
 		y: win.innerHeight * 0.82
 	};
-	const stage = createStage(doc, win, options.variant, origin);
+	const stage = createStage(doc, win, options.variant);
 	const { root, setPhase } = stage;
 
 	// The page is being replaced while the screen is covered: the next
@@ -633,10 +593,6 @@ export const playClosingAnimation = async (
 		leaveClosingHandover(win, {
 			variant: options.variant,
 			focal: options.focal,
-			origin: {
-				x: clamp(origin.x / win.innerWidth),
-				y: clamp(origin.y / win.innerHeight)
-			},
 			...(colors && { colors }),
 			at: Date.now()
 		});
@@ -712,16 +668,7 @@ export const resumeClosingAnimation = async (
 		return { played: false };
 	}
 
-	const stage = createStage(
-		doc,
-		win,
-		handover.variant,
-		{
-			x: handover.origin.x * win.innerWidth,
-			y: handover.origin.y * win.innerHeight
-		},
-		handover.colors
-	);
+	const stage = createStage(doc, win, handover.variant, handover.colors);
 	let over = false;
 	let capTimer: number | undefined;
 	const cap = new Promise<void>((resolve) => {

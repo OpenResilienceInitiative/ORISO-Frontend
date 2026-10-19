@@ -2,8 +2,8 @@ import { expect, userEvent, waitFor } from 'storybook/test';
 import { transitionMotion } from '../src/components/transition/transitionMotion';
 
 /**
- * The closing-animation contract (ORISO-Frontend#1737), asserted once for all
- * three designs and every waiting room: it plays, it covers before it reveals,
+ * The closing-animation contract (ORISO-Frontend#1737), asserted once for both
+ * designs and every waiting room: it plays, it covers before it reveals,
  * it ends on the room's focal point, it never leaves a layer behind that could
  * swallow a click, and reduced motion skips it while the person still arrives.
  *
@@ -19,9 +19,6 @@ const FOCAL = {
 } as const;
 export type ContractFocal = keyof typeof FOCAL;
 
-/** What a person can tell apart: below a few pixels a circle is "a point". */
-const POINT_TOLERANCE_PX = 3;
-
 interface Box {
 	left: number;
 	top: number;
@@ -31,11 +28,8 @@ interface Box {
 
 interface LayerSnapshot {
 	name: string;
-	shape: 'rect' | 'disc';
 	/** The part of the layer a person can see: clipped by every clipping ancestor. */
 	visible: Box | null;
-	/** Disc only: where it is centred and how wide it is. */
-	disc: { x: number; y: number; radius: number } | null;
 	pointerEvents: string;
 	/** The colour a person sees on it, as the browser computes it. */
 	background: string;
@@ -118,25 +112,14 @@ const snapshotOf = (
 	const win = doc.defaultView!;
 	const layers = [
 		...root.querySelectorAll<HTMLElement>('[data-closing-layer]')
-	].map((layer): LayerSnapshot => {
-		const rect = layer.getBoundingClientRect();
-		const shape = layer.dataset.closingShape === 'disc' ? 'disc' : 'rect';
-		return {
+	].map(
+		(layer): LayerSnapshot => ({
 			name: layer.dataset.closingLayer ?? '',
-			shape,
 			visible: visibleBox(root, layer),
-			disc:
-				shape === 'disc'
-					? {
-							x: rect.left + rect.width / 2,
-							y: rect.top + rect.height / 2,
-							radius: rect.width / 2
-						}
-					: null,
 			pointerEvents: win.getComputedStyle(layer).pointerEvents,
 			background: win.getComputedStyle(layer).backgroundColor
-		};
-	});
+		})
+	);
 	const surfaceEl = doc.querySelector('.stageLayout__content');
 	const focalEl = doc.querySelector(FOCAL[focal]);
 	return {
@@ -251,15 +234,13 @@ const covers = (snapshot: ClosingSnapshot, area: Box) =>
 		[area.right - 1, area.bottom - 1],
 		[(area.left + area.right) / 2, (area.top + area.bottom) / 2]
 	].every(([x, y]) =>
-		snapshot.layers.some((layer) =>
-			layer.disc
-				? Math.hypot(x - layer.disc.x, y - layer.disc.y) <=
-					layer.disc.radius
-				: !!layer.visible &&
-					x >= layer.visible.left &&
-					x <= layer.visible.right &&
-					y >= layer.visible.top &&
-					y <= layer.visible.bottom
+		snapshot.layers.some(
+			(layer) =>
+				!!layer.visible &&
+				x >= layer.visible.left &&
+				x <= layer.visible.right &&
+				y >= layer.visible.top &&
+				y <= layer.visible.bottom
 		)
 	);
 
@@ -269,9 +250,21 @@ const phaseOf = (recording: ClosingRecording, phase: string) => {
 	return found!;
 };
 
+/**
+ * The room these stories close is a real waiting room, laid out by the shared
+ * template (headline, status, middle, bar) and not by hand. The layout
+ * contract checks the frame and the bar; this names the template.
+ */
+export const expectWaitingRoomTemplate = (canvasElement: HTMLElement) =>
+	waitFor(() =>
+		expect(
+			canvasElement.querySelector('[data-cy="waiting-room-template"]')
+		).not.toBeNull()
+	);
+
 export interface ClosingContractOptions {
 	/** Which design the tenant chose for this width. */
-	variant: 'curtain' | 'circleZoom' | 'slideReveal';
+	variant: 'curtain' | 'slideReveal';
 	focal?: ContractFocal;
 	/** The gate button, found fresh each time (the room is swapped away). */
 	gate: () => HTMLElement | null;
@@ -414,21 +407,6 @@ export const verifyClosingAnimation = async (
 				'the destination shows its focal element'
 			).not.toBeNull();
 			const focalBox = ended.focal!;
-			const focalCentre = {
-				x: (focalBox.left + focalBox.right) / 2,
-				y: (focalBox.top + focalBox.bottom) / 2
-			};
-			if (options.variant === 'circleZoom') {
-				const disc = ended.layers.find((layer) => layer.disc)?.disc;
-				expect(
-					disc,
-					'the circle is still there at the end'
-				).toBeDefined();
-				expect(
-					Math.hypot(disc!.x - focalCentre.x, disc!.y - focalCentre.y)
-				).toBeLessThanOrEqual(POINT_TOLERANCE_PX);
-				expect(disc!.radius).toBeLessThanOrEqual(POINT_TOLERANCE_PX);
-			}
 			for (const layer of ended.layers) {
 				expect(
 					layer.visible && intersect(layer.visible, focalBox),
@@ -515,7 +493,7 @@ export const verifyClosingSkipped = async (
 };
 
 export interface ClosingHandoverContractOptions {
-	variant: 'curtain' | 'circleZoom' | 'slideReveal';
+	variant: 'curtain' | 'slideReveal';
 	/** The button that starts the animation in the old document (outside the frame). */
 	press: () => HTMLElement | null;
 	/** The frame the old document lives in; it is navigated to the new one. */
@@ -644,20 +622,6 @@ export const verifyClosingHandover = async (
 		if (options.destinationShowsFocal) {
 			expect(ended.focal).not.toBeNull();
 			const focalBox = ended.focal!;
-			if (options.variant === 'circleZoom') {
-				const disc = ended.layers.find((layer) => layer.disc)?.disc;
-				expect(
-					disc,
-					'the circle is still there at the end'
-				).toBeDefined();
-				expect(
-					Math.hypot(
-						disc!.x - (focalBox.left + focalBox.right) / 2,
-						disc!.y - (focalBox.top + focalBox.bottom) / 2
-					)
-				).toBeLessThanOrEqual(POINT_TOLERANCE_PX);
-				expect(disc!.radius).toBeLessThanOrEqual(POINT_TOLERANCE_PX);
-			}
 			for (const layer of ended.layers) {
 				expect(
 					layer.visible && intersect(layer.visible, focalBox),

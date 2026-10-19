@@ -98,17 +98,6 @@ describe('a waiting room that replaces the page', () => {
 				/>
 			</TenantContext.Provider>
 		);
-		vi.spyOn(gate(), 'getBoundingClientRect').mockReturnValue({
-			left: 412,
-			top: 600,
-			width: 200,
-			height: 60,
-			right: 612,
-			bottom: 660,
-			x: 412,
-			y: 600,
-			toJSON: () => ({})
-		});
 		fireEvent.click(gate());
 		await act(async () => {
 			await vi.advanceTimersByTimeAsync(400);
@@ -133,11 +122,7 @@ describe('a waiting room that replaces the page', () => {
 			);
 			expect(note).toMatchObject({
 				variant,
-				focal: 'messageField',
-				origin: {
-					x: 512 / window.innerWidth,
-					y: 630 / window.innerHeight
-				}
+				focal: 'messageField'
 			});
 
 			// The old document is gone; the next one starts.

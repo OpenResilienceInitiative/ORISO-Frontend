@@ -3,9 +3,6 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
 import { PostRegistrationHandover } from '../../app/registrationLoader/PostRegistrationHandover';
-import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
-import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
-import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
 import { AgencySpecificContext } from '../../../globalState';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
@@ -19,6 +16,7 @@ import {
 	tablet834Globals
 } from '../../message/messageStoryShell';
 import {
+	expectWaitingRoomTemplate,
 	verifyClosingAnimation,
 	verifyClosingHandover,
 	verifyClosingSkipped
@@ -53,13 +51,14 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component: [
-					'Three designs, chosen per tenant for desktop and for mobile in the Admin panel:',
+					'Two designs, chosen per tenant for desktop and for mobile in the Admin panel:',
 					'',
-					'1. **Curtain** — two halves close over the right-hand surface, the stage steps in beside them, and they open again onto the message field.',
-					'2. **Circle zoom** — the red grows out of the gate button, then closes into a circle on the focal point, deepening in colour, and is gone.',
-					'3. **Slide reveal** — the red area swipes to the right as one piece, a second red layer trails it, and the chat is uncovered.',
+					'1. **Curtain** — two pleated halves are drawn over the right-hand surface, the stage steps in beside them, and they open again onto the message field.',
+					'2. **Slide reveal** — the red area swipes to the right as one piece, a second red layer trails it, and the chat is uncovered.',
 					'',
-					'Reduced motion skips all three. The person still arrives.'
+					'Reduced motion skips both. The person still arrives.',
+					'',
+					'The room the person arrives in ("Chat — Platzhalter") is a stand-in for these stories only; the product shows the real chat there.'
 				].join('\n')
 			}
 		}
@@ -72,15 +71,13 @@ type Story = StoryObj;
 
 const CONTRACT = {
 	curtain: 'CURTAIN',
-	circleZoom: 'CIRCLE_ZOOM',
 	slideReveal: 'SLIDE_REVEAL'
 } as const;
 
 /** The two fields differ on purpose: a design read from the wrong one fails. */
 const OTHER: Record<ClosingVariant, (typeof CONTRACT)[ClosingVariant]> = {
 	curtain: 'SLIDE_REVEAL',
-	circleZoom: 'CURTAIN',
-	slideReveal: 'CIRCLE_ZOOM'
+	slideReveal: 'CURTAIN'
 };
 
 const tenantFor = (variant: ClosingVariant, desktop: boolean) =>
@@ -134,9 +131,11 @@ const Destination = ({ focal }: { focal: ClosingFocal }) =>
 		>
 			<Box sx={{ flex: 1, p: 3 }}>
 				<Typography variant="h6" component="h1">
-					Ihr Gespräch
+					Chat — Platzhalter
 				</Typography>
-				<Typography>Schreiben Sie, wenn Sie so weit sind.</Typography>
+				<Typography>
+					Nur für diese Stories: Hier steht im Produkt der echte Chat.
+				</Typography>
 			</Box>
 			<Box sx={{ p: 2, borderTop: '1px solid #747878' }}>
 				<Box
@@ -186,33 +185,22 @@ const Room = ({
 				}}
 			>
 				<GlobalComponentContext.Provider value={{ Stage }}>
-					{!swaps ? (
-						// The shared waiting-room parts (frame, bar, gate), not a
-						// hand-laid layout. Nothing takes the person on: the gate
-						// has to give them the room back.
-						<EntryRoomShell
-							kicker="Gespräch"
-							statusLine="Fast geschafft."
-						>
-							<WaitingRoomBar>
-								<Box sx={{ width: '100%' }}>
-									<HandoverGateButton
-										state="ready"
-										closing={focal}
-										onEnter={() => undefined}
-									/>
-								</Box>
-							</WaitingRoomBar>
-						</EntryRoomShell>
-					) : arrived ? (
+					{arrived ? (
 						<Destination focal={focal} />
 					) : (
+						// The real waiting room (frame, template, bar, gate), never a
+						// hand-laid one. When nothing takes the person on, the gate has
+						// to give them the room back: a room that refuses or fails to
+						// take them on stays as it was, so its gate stays `ready`.
 						<PostRegistrationHandover
 							ready
+							forcedState={swaps ? undefined : 'ready'}
 							// The registration room names no destination of its own:
 							// the chat is where it arrives. Only a call has to say so.
 							closing={focal === 'call' ? 'call' : undefined}
-							onEnter={() => setArrived(true)}
+							onEnter={
+								swaps ? () => setArrived(true) : () => undefined
+							}
 						/>
 					)}
 				</GlobalComponentContext.Provider>
@@ -254,6 +242,7 @@ const closingStory = (
 		play: async ({ canvasElement }) => {
 			// The room is a waiting room: its layout holds before it closes.
 			await expectWaitingRoomLayout(canvasElement);
+			await expectWaitingRoomTemplate(canvasElement);
 			await verifyClosingAnimation(canvasElement, {
 				variant,
 				focal,
@@ -284,15 +273,11 @@ const tryStory = (
 	),
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+		await expectWaitingRoomTemplate(canvasElement);
 	}
 });
 
 export const TryCurtain = tryStory('curtain', 'desktop', 'Try it — curtain');
-export const TryCircleZoom = tryStory(
-	'circleZoom',
-	'desktop',
-	'Try it — circle zoom'
-);
 export const TrySlideReveal = tryStory(
 	'slideReveal',
 	'desktop',
@@ -302,11 +287,6 @@ export const TryCurtainPhone = tryStory(
 	'curtain',
 	'phone',
 	'Try it — curtain, phone'
-);
-export const TryCircleZoomPhone = tryStory(
-	'circleZoom',
-	'phone',
-	'Try it — circle zoom, phone'
 );
 export const TrySlideRevealPhone = tryStory(
 	'slideReveal',
@@ -324,16 +304,6 @@ export const CurtainPhone = closingStory('curtain', 'phone', {
 	name: 'Curtain — phone'
 });
 
-export const CircleZoomDesktop = closingStory('circleZoom', 'desktop', {
-	name: 'Circle zoom — desktop'
-});
-export const CircleZoomTablet = closingStory('circleZoom', 'tablet', {
-	name: 'Circle zoom — tablet'
-});
-export const CircleZoomPhone = closingStory('circleZoom', 'phone', {
-	name: 'Circle zoom — phone'
-});
-
 export const SlideRevealDesktop = closingStory('slideReveal', 'desktop', {
 	name: 'Slide reveal — desktop'
 });
@@ -345,8 +315,8 @@ export const SlideRevealPhone = closingStory('slideReveal', 'phone', {
 });
 
 /* A video call has its own focal point; the same module ends there. */
-export const CircleZoomEndsOnTheCall = closingStory('circleZoom', 'desktop', {
-	name: 'Circle zoom — ends on the video call',
+export const CurtainEndsOnTheCall = closingStory('curtain', 'desktop', {
+	name: 'Curtain — ends on the video call',
 	focal: 'call'
 });
 export const SlideRevealEndsOnTheCall = closingStory('slideReveal', 'desktop', {
@@ -359,14 +329,6 @@ export const CurtainGivesTheGateBack = closingStory('curtain', 'desktop', {
 	name: 'Curtain — gives the gate back when the room stays',
 	swaps: false
 });
-export const CircleZoomGivesTheGateBack = closingStory(
-	'circleZoom',
-	'desktop',
-	{
-		name: 'Circle zoom — gives the gate back when the room stays',
-		swaps: false
-	}
-);
 export const SlideRevealGivesTheGateBack = closingStory(
 	'slideReveal',
 	'desktop',
@@ -419,6 +381,7 @@ const reducedMotionStory = (
 	),
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+		await expectWaitingRoomTemplate(canvasElement);
 		await verifyClosingSkipped(canvasElement, {
 			gate: gateOf(canvasElement)
 		});
@@ -430,10 +393,10 @@ export const CurtainReducedMotion = reducedMotionStory(
 	'desktop',
 	'Reduced motion — curtain is skipped, the person arrives'
 );
-export const CircleZoomReducedMotionPhone = reducedMotionStory(
-	'circleZoom',
+export const CurtainReducedMotionPhone = reducedMotionStory(
+	'curtain',
 	'phone',
-	'Reduced motion — circle zoom is skipped on a phone'
+	'Reduced motion — curtain is skipped on a phone'
 );
 export const SlideRevealReducedMotion = reducedMotionStory(
 	'slideReveal',
@@ -458,7 +421,7 @@ const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"
 
 /* The new document has no palette: only a cover that was handed over is blue. */
 const newDocument = (showsField: boolean) =>
-	`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Ihr Gespräch</title><style>html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main class="stageLayout__content">Ihr Gespräch (neues Dokument)</main>${
+	`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Ihr Gespräch</title><style>html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{box-sizing:border-box;height:calc(100% - 96px);margin:48px 120px;padding:24px;background:#fff;border:1px solid #d9d9d9;border-radius:12px}</style></head><body><main class="stageLayout__content">Ihr Gespräch (neues Dokument)</main>${
 		showsField
 			? '<div data-closing-focal="message-field" style="position:absolute;left:120px;bottom:48px;width:520px;height:64px;box-sizing:border-box;border:1px solid #747878;border-radius:8px"><textarea aria-label="Nachricht" style="width:100%;height:100%;box-sizing:border-box;padding:0 12px;border:0;outline:0;background:transparent;resize:none;font:inherit"></textarea></div>'
 			: ''
@@ -486,10 +449,6 @@ const HandoverRoom = ({
 			document: oldDocument,
 			variant,
 			focal: 'messageField',
-			origin: {
-				x: oldWindow.innerWidth / 2,
-				y: oldWindow.innerHeight * 0.8
-			},
 			// The room replaces the page: this never settles.
 			onCovered: () =>
 				new Promise<void>(() => {
@@ -569,10 +528,6 @@ export const TryHandOverCurtain = tryHandOver(
 	'curtain',
 	'Try it — the page is replaced (curtain)'
 );
-export const TryHandOverCircleZoom = tryHandOver(
-	'circleZoom',
-	'Try it — the page is replaced (circle zoom)'
-);
 export const TryHandOverSlideReveal = tryHandOver(
 	'slideReveal',
 	'Try it — the page is replaced (slide reveal)'
@@ -581,10 +536,6 @@ export const TryHandOverSlideReveal = tryHandOver(
 export const CurtainHandsOverToTheNextDocument = handoverStory(
 	'curtain',
 	'Curtain — the cover carries over into the next document'
-);
-export const CircleZoomHandsOverToTheNextDocument = handoverStory(
-	'circleZoom',
-	'Circle zoom — the cover carries over into the next document'
 );
 export const SlideRevealHandsOverToTheNextDocument = handoverStory(
 	'slideReveal',
