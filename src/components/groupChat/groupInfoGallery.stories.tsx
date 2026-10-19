@@ -1,5 +1,6 @@
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
+import { expect, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { GroupInfoGallery } from './entryRoom/GroupInfoGallery';
@@ -162,5 +163,27 @@ export const InfoGalleryWithAppointments: StoryObj = {
 				story: 'Karte 2 verspricht, dass man die Termine vorher eintragen kann. Sobald es dafür ein Ziel gibt, reicht die Ansicht `onOpenAppointments` durch und der Knopf steht unter der Galerie. Hier ist kein Link erfunden — die Aktion tut in der Story nichts.'
 			}
 		}
+	}
+};
+
+/* A common laptop is shorter than 1440 × 900: the cards must keep their
+   height and the panel scroll, never the dates slide over the card text. */
+export const InfoGalleryLaptopWithDates: StoryObj = {
+	name: '4 — Laptop 1366 × 768, Termine unter den Karten',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <Screen withAppointments />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const upcoming = await canvas.findByText('Nächste Termine');
+		const cards = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy^="handover-card-"]'
+		);
+		await waitFor(() => expect(cards.length).toBeGreaterThan(0));
+		const cardBottom = Math.max(
+			...Array.from(cards).map((c) => c.getBoundingClientRect().bottom)
+		);
+		await expect(
+			upcoming.getBoundingClientRect().top
+		).toBeGreaterThanOrEqual(cardBottom);
 	}
 };

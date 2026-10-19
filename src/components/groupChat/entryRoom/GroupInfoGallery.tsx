@@ -288,8 +288,11 @@ export const GroupInfoGallery = ({
 
 				<Box
 					sx={{
-						flex: 1,
-						minHeight: 0,
+						/* From `sm` the cards have their own height; shrinking
+						   this box let the dates below slide over the card text
+						   on a 1366 × 768 laptop. The panel above scrolls. */
+						flex: { xs: 1, sm: 'none' },
+						minHeight: { xs: 0, sm: 'auto' },
 						display: 'flex',
 						flexDirection: 'column'
 						/* No negative margin for a full-bleed row: the panel
@@ -305,7 +308,10 @@ export const GroupInfoGallery = ({
 				</Box>
 
 				{!!upcomingDates?.length && (
-					<Box sx={{ mt: { xs: 1.5, sm: 2 } }}>
+					<Box
+						data-cy="group-info-upcoming"
+						sx={{ mt: { xs: 1.5, sm: 2 } }}
+					>
 						<Typography
 							component="h2"
 							sx={{
