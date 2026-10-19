@@ -455,6 +455,7 @@ export const JoinGroupChatView = ({
 							label={buttonItem.label}
 							status=""
 							onEnter={handleButtonClick}
+							closing="messageField"
 							testingAttribute="group-join-button"
 						/>
 					</div>

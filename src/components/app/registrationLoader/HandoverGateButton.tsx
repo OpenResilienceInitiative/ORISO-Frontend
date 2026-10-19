@@ -140,8 +140,10 @@ export const HandoverGateButton = ({
 			return;
 		}
 		setClosingBusy(true);
+		// A mouse click has a count; a key press or a script (the live-chat
+		// leave dialog presses this button for the person) has none.
 		keyboardOn.current =
-			document.activeElement === event.currentTarget
+			document.activeElement === event.currentTarget || event.detail === 0
 				? event.currentTarget
 				: null;
 		const rect = event.currentTarget.getBoundingClientRect();
