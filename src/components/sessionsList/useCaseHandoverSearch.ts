@@ -80,8 +80,10 @@ const fetchAllCandidates = async (
 };
 
 /**
- * The cases of one person in my own list, paged to the end (same cap as a
- * candidate lookup). The candidate endpoint leaves out my own cases.
+ * The cases of one person in my own list, paged to the end: the list has no
+ * server-side person filter, and the candidate endpoint leaves out my own
+ * cases. No scan cap, so a client deep in a long list is never missed;
+ * paging stops at the reported total, an empty page, or a short page.
  */
 const fetchOwnListCases = async (
 	personId: string,
@@ -90,7 +92,7 @@ const fetchOwnListCases = async (
 ) => {
 	const matched: ListItemInterface[] = [];
 	let seen = 0;
-	for (let page = 0; page < CANDIDATE_MAX_PAGES; page++) {
+	for (;;) {
 		let response;
 		try {
 			response = await apiGetConsultantSessionList({

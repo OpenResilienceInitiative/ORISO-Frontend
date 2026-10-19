@@ -516,6 +516,38 @@ describe('case-handover search — people (FE#1725)', () => {
 		expect(listText(view)).toContain('30000');
 	});
 
+	it("finds an own client's case beyond row 1,000 of the own list", async () => {
+		const deepCase = makeCase(2, 'Own client', me, SPRINGFIELD, 30777, {
+			id: 5,
+			name: 'Family'
+		});
+		const filler = Array.from({ length: 1040 }, (_, index) =>
+			makeCase(
+				5000 + index,
+				`Other client ${index}`,
+				me,
+				SPRINGFIELD,
+				40000
+			)
+		);
+		const ownList = [ownCases[0], ...filler, deepCase];
+		const view = await ready(renderList());
+		http.getList.mockImplementation(async ({ offset = 0, count = 15 }) => ({
+			sessions: ownList.slice(offset, offset + count),
+			total: ownList.length,
+			count,
+			offset
+		}));
+
+		type('own client');
+		await waitFor(() =>
+			expect(personRowsNamed('Own client')).toHaveLength(1)
+		);
+		fireEvent.click(personRowsNamed('Own client')[0]);
+
+		await waitFor(() => expect(listText(view)).toContain('30777'));
+	});
+
 	it('loads all cases of a colleague found through one of them', async () => {
 		const view = await ready(renderList());
 
