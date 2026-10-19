@@ -25,12 +25,12 @@ vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
 
-const account = (userId: string, appointment: boolean) => ({
+const account = (userId: string, master: boolean) => ({
 	userId,
 	email: `${userId}@example.test`,
 	emailNotifications: {
-		emailNotificationsEnabled: true,
-		settings: { appointmentNotificationEnabled: appointment }
+		emailNotificationsEnabled: master,
+		settings: { appointmentNotificationEnabled: true }
 	},
 	emailToggles: []
 });
@@ -81,26 +81,27 @@ describe('e-mail settings across a sign-out and sign-in in place', () => {
 		await waitFor(() => expect(patches).toHaveLength(1));
 		expect(toggle.checked).toBe(true);
 
-		// Signed out and B signed in, in place, while A's write is pending.
+		// Signed out and B (master stored off) signed in, in place, while
+		// A's writes are pending; A's newest pending value is on.
 		act(() => switchTo(account('b', false)));
-		expect(toggle.checked).toBe(true);
+		expect(toggle.checked).toBe(false);
 		act(() => patches.shift()?.()); // A's PATCH lands; its reload fails.
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 0));
 		});
 		// B sees B's stored value, and A's queued write never went out.
-		expect(toggle.checked).toBe(true);
+		expect(toggle.checked).toBe(false);
 		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
 
-		// B's own change carries only B's change, nothing of A.
+		// B's own change goes from B's stored off to on, nothing of A.
 		fireEvent.click(toggle);
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
 		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
 			emailNotifications: {
-				emailNotificationsEnabled: false,
+				emailNotificationsEnabled: true,
 				settings: {}
 			}
 		});
-		expect(toggle.checked).toBe(false);
+		expect(toggle.checked).toBe(true);
 	});
 });
