@@ -263,7 +263,34 @@ export const StaffJoinsOpenGroup1440: Story = {
 		await expect(canvas.queryByText('Die Gruppe wartet.')).toBeNull();
 		const join = canvas.getByTestId('group-entry-join');
 		await expect(join).toBeEnabled();
-		await userEvent.click(join);
+		// The join goes out directly: a PUT on the group's /join, no
+		// consent written to the account on the way.
+		const requests: string[] = [];
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (input, init) => {
+			const url = String(input instanceof Request ? input.url : input);
+			// `fetchData` passes a Request, which carries the method.
+			const method = (
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET')
+			).toUpperCase();
+			if (method !== 'GET') requests.push(`${method} ${url}`);
+			if (method === 'PUT' && /\/join$/.test(url)) {
+				return new Response(null, { status: 200 });
+			}
+			return originalFetch(input, init);
+		};
+		try {
+			await userEvent.click(join);
+			await waitFor(() =>
+				expect(requests.some((r) => /^PUT .*\/join$/.test(r))).toBe(
+					true
+				)
+			);
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
+		await expect(requests.some((r) => /users\/data/.test(r))).toBe(false);
 		await expect(canvas.queryByRole('checkbox')).toBeNull();
 		await expect(canvas.queryByText('Bevor Sie schreiben')).toBeNull();
 	}
