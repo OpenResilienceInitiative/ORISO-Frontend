@@ -313,6 +313,10 @@ export const WaitingAreaOpen: StoryObj = {
 			canvas.queryByText('Die Gruppe beginnt gleich.')
 		).toBeNull();
 		await expect(canvas.getByTestId('group-entry-join')).toBeEnabled();
+		// The rules still move, so the switch to stop them stays.
+		await expect(
+			canvas.getByRole('switch', { name: 'Animation abschalten' })
+		).toBeInTheDocument();
 		await expectWaitingRoomLayout(canvasElement);
 	},
 	name: '2c — Gruppe läuft',
