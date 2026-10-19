@@ -4,7 +4,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
 import { PostRegistrationHandover } from '../../app/registrationLoader/PostRegistrationHandover';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
-import { StageLayout } from '../../stageLayout/StageLayout';
+import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
+import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
 import { AgencySpecificContext } from '../../../globalState';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
@@ -22,6 +23,7 @@ import {
 	verifyClosingHandover,
 	verifyClosingSkipped
 } from '../../../../.storybook/closingAnimationContractPlay';
+import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
 import { ClosingFocal } from './closingFocal';
 import { ClosingVariant } from './closingVariants';
 import {
@@ -185,26 +187,23 @@ const Room = ({
 			>
 				<GlobalComponentContext.Provider value={{ Stage }}>
 					{!swaps ? (
-						<StageLayout
-							className="stageLayout--registration"
-							showLegalLinks={true}
-							showLoginLink={false}
-							showRegistrationLink={false}
-							stage={
-								<Stage hasAnimation={false} isReady={true} />
-							}
-							mobileHero="bar"
+						// The shared waiting-room parts (frame, bar, gate), not a
+						// hand-laid layout. Nothing takes the person on: the gate
+						// has to give them the room back.
+						<EntryRoomShell
+							kicker="Gespräch"
+							statusLine="Fast geschafft."
 						>
-							{/* Nothing takes the person on: the gate has to give
-							    them the room back. */}
-							<Box sx={{ mt: 'auto', p: 3 }}>
-								<HandoverGateButton
-									state="ready"
-									closing={focal}
-									onEnter={() => undefined}
-								/>
-							</Box>
-						</StageLayout>
+							<WaitingRoomBar>
+								<Box sx={{ width: '100%' }}>
+									<HandoverGateButton
+										state="ready"
+										closing={focal}
+										onEnter={() => undefined}
+									/>
+								</Box>
+							</WaitingRoomBar>
+						</EntryRoomShell>
 					) : arrived ? (
 						<Destination focal={focal} />
 					) : (
@@ -253,6 +252,8 @@ const closingStory = (
 			/>
 		),
 		play: async ({ canvasElement }) => {
+			// The room is a waiting room: its layout holds before it closes.
+			await expectWaitingRoomLayout(canvasElement);
 			await verifyClosingAnimation(canvasElement, {
 				variant,
 				focal,
@@ -264,7 +265,8 @@ const closingStory = (
 	};
 };
 
-/* Press the button yourself. These carry no assertions; the stories below do. */
+/* Press the button yourself. The room's layout is checked; the stories below
+   check the animation. */
 const tryStory = (
 	variant: ClosingVariant,
 	width: keyof typeof WIDTH,
@@ -279,7 +281,10 @@ const tryStory = (
 			focal="messageField"
 			swaps
 		/>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+	}
 });
 
 export const TryCurtain = tryStory('curtain', 'desktop', 'Try it — curtain');
@@ -413,6 +418,7 @@ const reducedMotionStory = (
 		/>
 	),
 	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
 		await verifyClosingSkipped(canvasElement, {
 			gate: gateOf(canvasElement)
 		});

@@ -446,6 +446,38 @@ describe('resumeClosingAnimation', () => {
 			await pending;
 		});
 
+		/* The composer skips its own autofocus up to 900 px: a focused field opens
+		   the soft keyboard and shifts the header and the composer there. */
+		it('leaves the message field alone on a narrow viewport, as the composer does', async () => {
+			installAnimate('never');
+			const width = Object.getOwnPropertyDescriptor(
+				window,
+				'innerWidth'
+			)!;
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: 390
+			});
+			try {
+				const page = appPage();
+				leaveNote();
+				const pending = resumeClosingAnimation();
+				const input = typingField(page);
+				await vi.advanceTimersByTimeAsync(100);
+
+				expect(phase()).toBe('reveal');
+				expect(shut(page), 'open as the reveal begins').toBe(false);
+				expect(document.activeElement).not.toBe(input);
+
+				await vi.advanceTimersByTimeAsync(
+					transitionMotion.closing.capMs
+				);
+				await pending;
+			} finally {
+				Object.defineProperty(window, 'innerWidth', width);
+			}
+		});
+
 		it('leaves shut what was shut before, and opens only what it shut', async () => {
 			installAnimate();
 			const page = appPage();
@@ -556,6 +588,113 @@ describe('resumeClosingAnimation', () => {
 			await resumeClosingAnimation();
 
 			expect(shut(page)).toBe(false);
+		});
+	});
+
+	/**
+	 * The pieces are sized in pixels when the stage is made. A phone that turns
+	 * while the new document holds the screen covered must not show the app
+	 * through the strip that has been added.
+	 */
+	describe('when the viewport changes', () => {
+		const resizeTo = (width: number, height: number) => {
+			const saved = {
+				width: Object.getOwnPropertyDescriptor(window, 'innerWidth')!,
+				height: Object.getOwnPropertyDescriptor(window, 'innerHeight')!
+			};
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: width
+			});
+			Object.defineProperty(window, 'innerHeight', {
+				configurable: true,
+				value: height
+			});
+			return () => {
+				Object.defineProperty(window, 'innerWidth', saved.width);
+				Object.defineProperty(window, 'innerHeight', saved.height);
+			};
+		};
+		const front = () =>
+			document.querySelector<HTMLElement>(
+				'[data-closing-layer="slide-front"]'
+			)!;
+		const layerCount = () =>
+			document.querySelectorAll('[data-closing-layer]').length;
+
+		it('fits the pieces to the new size while the app starts underneath', async () => {
+			const play = installAnimate();
+			leaveNote({ variant: 'slideReveal' });
+			const pending = resumeClosingAnimation();
+			expect(phase()).toBe('covered');
+			const before = front().style.width;
+			const count = layerCount();
+
+			const restore = resizeTo(1366, 640);
+			try {
+				const made = play.calls.length;
+				window.dispatchEvent(new Event('resize'));
+				expect(front().style.width).toBe('1366px');
+				expect(front().style.height).toBe('640px');
+				expect(front().style.width).not.toBe(before);
+				expect(layerCount(), 'rebuilt, not added to').toBe(count);
+				const rebuilt = play.calls.slice(made);
+				expect(rebuilt.length).toBeGreaterThan(0);
+				rebuilt.forEach((call) =>
+					expect(
+						call.finish,
+						'the new pieces start where the cover ended, not at its beginning'
+					).toHaveBeenCalled()
+				);
+			} finally {
+				restore();
+			}
+			await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs);
+			await pending;
+		});
+
+		it('leaves the pieces alone once the reveal has started', async () => {
+			installAnimate('never');
+			leaveNote({ variant: 'slideReveal' });
+			field();
+			const pending = resumeClosingAnimation();
+			await vi.advanceTimersByTimeAsync(100);
+			expect(phase()).toBe('reveal');
+			const before = front().style.width;
+
+			const restore = resizeTo(1366, 640);
+			try {
+				window.dispatchEvent(new Event('resize'));
+				expect(front().style.width).toBe(before);
+			} finally {
+				restore();
+			}
+			await vi.advanceTimersByTimeAsync(transitionMotion.closing.capMs);
+			await pending;
+		});
+
+		it('stops listening when it is over', async () => {
+			installAnimate();
+			leaveNote();
+			field();
+			const remove = vi.spyOn(window, 'removeEventListener');
+			const pending = resumeClosingAnimation();
+			await vi.advanceTimersByTimeAsync(2000);
+			await pending;
+			expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
+		});
+
+		it('stops listening when the cap takes the cover away first', async () => {
+			installAnimate('never');
+			leaveNote();
+			field();
+			const remove = vi.spyOn(window, 'removeEventListener');
+			const pending = resumeClosingAnimation();
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 50
+			);
+			await pending;
+			expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
 		});
 	});
 

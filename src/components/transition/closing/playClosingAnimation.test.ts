@@ -13,7 +13,8 @@ const installAnimate = (finish: 'at once' | 'never') => {
 		finished:
 			finish === 'at once'
 				? Promise.resolve()
-				: new Promise<void>(() => undefined)
+				: new Promise<void>(() => undefined),
+		finish: vi.fn()
 	}));
 	(Element.prototype as unknown as { animate: unknown }).animate = animate;
 	(document.documentElement as unknown as { animate: unknown }).animate =
@@ -26,7 +27,8 @@ const installLateAnimate = () => {
 	const animate = vi.fn(() => ({
 		finished: new Promise<void>((resolve) => {
 			finishers.push(resolve);
-		})
+		}),
+		finish: vi.fn()
 	}));
 	(Element.prototype as unknown as { animate: unknown }).animate = animate;
 	(document.documentElement as unknown as { animate: unknown }).animate =
@@ -336,6 +338,60 @@ describe('playClosingAnimation', () => {
 			await pending;
 		});
 
+		/* The composer skips its own autofocus up to 900 px: a focused field opens
+		   the soft keyboard and shifts the header and the composer there. */
+		it('leaves the arrival field alone on a narrow viewport, as the composer does', async () => {
+			const width = Object.getOwnPropertyDescriptor(
+				window,
+				'innerWidth'
+			)!;
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: 390
+			});
+			try {
+				const late = installLateAnimate();
+				const gate = mountApp();
+				let editor!: HTMLElement;
+				const pending = playClosingAnimation({
+					variant: 'curtain',
+					focal: 'messageField',
+					onCovered: () => {
+						app().replaceChildren();
+						const field = document.createElement('div');
+						field.setAttribute(
+							'data-closing-focal',
+							'message-field'
+						);
+						field.getBoundingClientRect = () =>
+							({
+								left: 10,
+								top: 700,
+								width: 300,
+								height: 60
+							}) as DOMRect;
+						editor = document.createElement('div');
+						editor.setAttribute('contenteditable', 'true');
+						editor.tabIndex = 0;
+						field.appendChild(editor);
+						app().appendChild(field);
+					}
+				});
+				gate.blur();
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(50);
+				expect(app().hasAttribute('inert')).toBe(false);
+				expect(document.activeElement).not.toBe(editor);
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(200);
+				await pending;
+			} finally {
+				Object.defineProperty(window, 'innerWidth', width);
+			}
+		});
+
 		it('does not hand the keyboard to a button that is still shut, but to the field the person arrives in', async () => {
 			const late = installLateAnimate();
 			const gate = mountApp();
@@ -399,6 +455,196 @@ describe('playClosingAnimation', () => {
 				onCovered: () => undefined
 			});
 			expect(app().hasAttribute('inert')).toBe(false);
+		});
+	});
+
+	/**
+	 * The pieces are sized in pixels when the press happens. A phone that turns
+	 * while the screen is held covered must not show the room through the strip
+	 * that has been added.
+	 */
+	describe('when the viewport changes', () => {
+		const resizeTo = (width: number, height: number) => {
+			const saved = {
+				width: Object.getOwnPropertyDescriptor(window, 'innerWidth')!,
+				height: Object.getOwnPropertyDescriptor(window, 'innerHeight')!
+			};
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: width
+			});
+			Object.defineProperty(window, 'innerHeight', {
+				configurable: true,
+				value: height
+			});
+			return () => {
+				Object.defineProperty(window, 'innerWidth', saved.width);
+				Object.defineProperty(window, 'innerHeight', saved.height);
+			};
+		};
+		const front = () =>
+			document.querySelector<HTMLElement>(
+				'[data-closing-layer="slide-front"]'
+			)!;
+		const layerCount = () =>
+			document.querySelectorAll('[data-closing-layer]').length;
+
+		it('fits the pieces to the new size while the screen is held covered', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const swap = held();
+			const pending = playClosingAnimation({
+				variant: 'slideReveal',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			const before = {
+				width: front().style.width,
+				height: front().style.height
+			};
+			const count = layerCount();
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(
+				document.querySelector(ROOT)!.getAttribute('data-closing-phase')
+			).toBe('covered');
+
+			const restore = resizeTo(1366, 640);
+			try {
+				const made = late.animate.mock.results.length;
+				window.dispatchEvent(new Event('resize'));
+				expect(front().style.width).toBe('1366px');
+				expect(front().style.height).toBe('640px');
+				expect(front().style.width).not.toBe(before.width);
+				expect(layerCount(), 'rebuilt, not added to').toBe(count);
+				const rebuilt = late.animate.mock.results.slice(made);
+				expect(rebuilt.length).toBeGreaterThan(0);
+				rebuilt.forEach((result) =>
+					expect(
+						(result.value as { finish: () => void }).finish,
+						'the new pieces start where the cover ended, not at its beginning'
+					).toHaveBeenCalled()
+				);
+
+				swap.release();
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				await pending;
+			} finally {
+				restore();
+			}
+		});
+
+		it('fits them when the size changed while the cover was still closing', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const swap = held();
+			const pending = playClosingAnimation({
+				variant: 'slideReveal',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			const restore = resizeTo(900, 1200);
+			try {
+				// Mid-cover nothing is rebuilt; it is checked once the screen is covered.
+				window.dispatchEvent(new Event('resize'));
+				expect(front().style.width).toBe('1024px');
+
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(50);
+				expect(front().style.width).toBe('900px');
+				expect(front().style.height).toBe('1200px');
+
+				swap.release();
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				await pending;
+			} finally {
+				restore();
+			}
+		});
+
+		it.each([
+			['only the height', 1024, 1000],
+			['only the width', 800, 768]
+		])(
+			"fits them when %s changes (a phone's address bar, a window dragged narrower)",
+			async (_which, width, height) => {
+				const late = installLateAnimate();
+				focalOnPage();
+				const swap = held();
+				const pending = playClosingAnimation({
+					variant: 'slideReveal',
+					focal: 'messageField',
+					onCovered: swap.onCovered
+				});
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(50);
+
+				const restore = resizeTo(width, height);
+				try {
+					window.dispatchEvent(new Event('resize'));
+					expect(front().style.width).toBe(`${width}px`);
+					expect(front().style.height).toBe(`${height}px`);
+
+					swap.release();
+					late.finishAll();
+					await vi.advanceTimersByTimeAsync(300);
+					late.finishAll();
+					await vi.advanceTimersByTimeAsync(300);
+					await pending;
+				} finally {
+					restore();
+				}
+			}
+		);
+
+		it('leaves the pieces alone once the reveal has started', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const swap = held();
+			const pending = playClosingAnimation({
+				variant: 'slideReveal',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			swap.release();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(
+				document.querySelector(ROOT)!.getAttribute('data-closing-phase')
+			).toBe('reveal');
+
+			const restore = resizeTo(1366, 640);
+			try {
+				window.dispatchEvent(new Event('resize'));
+				expect(front().style.width).toBe('1024px');
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				await pending;
+			} finally {
+				restore();
+			}
+		});
+
+		it('stops listening when it is over', async () => {
+			installAnimate('at once');
+			focalOnPage();
+			const remove = vi.spyOn(window, 'removeEventListener');
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			await vi.advanceTimersByTimeAsync(2000);
+			await pending;
+			expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
+			remove.mockRestore();
 		});
 	});
 

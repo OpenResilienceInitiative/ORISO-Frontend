@@ -554,6 +554,7 @@ export const VideoJoinClosesOverTheCall: Story = {
 		const doc = canvasElement.ownerDocument;
 		const onJoin = args.onJoin as ReturnType<typeof fn>;
 		try {
+			await expectWaitingRoomLayout(canvasElement);
 			await gateOpens(canvasElement);
 			await userEvent.click(gate(canvasElement));
 
@@ -590,6 +591,7 @@ export const VideoFailedJoinGivesTheRoomBack: Story = {
 		onJoin: fn(() => false)
 	},
 	play: async ({ args, canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
 		await gateOpens(canvasElement);
 		await userEvent.click(gate(canvasElement));
 		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
@@ -625,6 +627,7 @@ export const VideoConsentFirstThenCloses: Story = {
 		const body = within(canvasElement.ownerDocument.body);
 		const onJoin = args.onJoin as ReturnType<typeof fn>;
 		try {
+			await expectWaitingRoomLayout(canvasElement);
 			await gateOpens(canvasElement);
 			// "Beitreten" opens the sheet; nothing closes over it.
 			await userEvent.click(gate(canvasElement));

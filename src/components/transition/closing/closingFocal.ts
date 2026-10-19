@@ -16,6 +16,14 @@ export type ClosingFocal = 'messageField' | 'call';
 
 export const CLOSING_FOCAL_ATTRIBUTE = 'data-closing-focal';
 
+/**
+ * Up to this width no field is focused for the person: the composer skips its
+ * own autofocus there (a focused field opens the soft keyboard and shifts the
+ * header and the composer, `messageSubmitInterfaceComponent`), and the closing
+ * animation follows the same rule when it hands the keyboard back.
+ */
+export const FIELD_FOCUS_AFTER_WIDTH = 900;
+
 export const CLOSING_FOCAL_SELECTOR: Record<ClosingFocal, string> = {
 	messageField: `[${CLOSING_FOCAL_ATTRIBUTE}="message-field"]`,
 	call: `[${CLOSING_FOCAL_ATTRIBUTE}="call"]`

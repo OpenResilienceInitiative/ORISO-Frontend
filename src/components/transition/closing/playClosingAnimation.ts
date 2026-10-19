@@ -1,7 +1,12 @@
 import { orisoInputColors } from '../../form/orisoInputDesign';
 import { prefersReducedMotion } from '../prefersReducedMotion';
 import { transitionMotion } from '../transitionMotion';
-import { ClosingFocal, FocalPoint, resolveFocalPoint } from './closingFocal';
+import {
+	ClosingFocal,
+	FIELD_FOCUS_AFTER_WIDTH,
+	FocalPoint,
+	resolveFocalPoint
+} from './closingFocal';
 import {
 	ClosingHandoverColors,
 	leaveClosingHandover,
@@ -460,8 +465,6 @@ const createStage = (
 	origin: { x: number; y: number },
 	colors: ClosingHandoverColors = TOKEN_COLORS
 ) => {
-	const width = win.innerWidth;
-	const height = win.innerHeight;
 	const root = doc.createElement('div');
 	root.setAttribute('aria-hidden', 'true');
 	root.dataset.closingAnimation = variant;
@@ -480,15 +483,38 @@ const createStage = (
 		// The destination can be used while it is revealed.
 		if (phase === 'reveal') root.style.pointerEvents = 'none';
 	};
-	const plan = PLANS[variant]({
-		doc,
+	let size = { width: win.innerWidth, height: win.innerHeight };
+	const buildPlan = () =>
+		PLANS[variant]({ doc, root, ...size, origin, colors });
+	let plan = buildPlan();
+	/* The pieces are sized in pixels when the stage is made. A viewport that
+	   changed while the screen is held covered (a phone turned) would show the
+	   page through the strip that was added, so the pieces are built again for
+	   the new size and set straight to where the cover ends. Mid-cover and
+	   mid-reveal the cover is not touched: the first is checked once it is
+	   covered, the second is over in a few hundred milliseconds. */
+	const refit = () => {
+		if (win.innerWidth === size.width && win.innerHeight === size.height) {
+			return;
+		}
+		size = { width: win.innerWidth, height: win.innerHeight };
+		root.replaceChildren();
+		plan = buildPlan();
+		plan.cover().forEach((animation) => animation.finish());
+	};
+	const onResize = () => {
+		if (root.dataset.closingPhase === 'covered') refit();
+	};
+	return {
 		root,
-		width,
-		height,
-		origin,
-		colors
-	});
-	return { root, plan, setPhase };
+		setPhase,
+		/** The current plan: `refit` replaces it. */
+		get plan() {
+			return plan;
+		},
+		refit,
+		onResize
+	};
 };
 
 type Stage = ReturnType<typeof createStage>;
@@ -520,7 +546,10 @@ const uncover = async (
 		: await resolveFocalPoint(doc, focal, isOver, waitMs);
 	// The cap won while it waited: nobody is looking at these layers.
 	if (isOver()) return;
-	giveRoomBack(point.element);
+	// A narrow viewport gets no focused field (the composer's own rule).
+	giveRoomBack(
+		win.innerWidth > FIELD_FOCUS_AFTER_WIDTH ? point.element : null
+	);
 	stage.setPhase('reveal');
 	await settle(stage.plan.reveal(point));
 	stage.setPhase('revealed');
@@ -587,7 +616,7 @@ export const playClosingAnimation = async (
 		y: win.innerHeight * 0.82
 	};
 	const stage = createStage(doc, win, options.variant, origin);
-	const { root, plan, setPhase } = stage;
+	const { root, setPhase } = stage;
 
 	// The page is being replaced while the screen is covered: the next
 	// document picks the animation up.
@@ -616,8 +645,9 @@ export const playClosingAnimation = async (
 		doc.body.appendChild(root);
 		giveRoomBack = shutRoomBehind(doc, root);
 		win.addEventListener('pagehide', handOver);
-		await settle(plan.cover());
+		await settle(stage.plan.cover());
 		setPhase('covered');
+		stage.refit();
 		const stays = (await swap()) === false;
 		await uncover(doc, win, stage, options.focal, () => over, {
 			giveRoomBack: (landing) => giveRoomBack(landing),
@@ -631,9 +661,11 @@ export const playClosingAnimation = async (
 	const cap = new Promise<void>((resolve) => {
 		capTimer = win.setTimeout(resolve, closing.capMs);
 	});
+	win.addEventListener('resize', stage.onResize);
 	try {
 		await Promise.race([sequence(), cap]);
 	} finally {
+		win.removeEventListener('resize', stage.onResize);
 		win.clearTimeout(capTimer);
 		win.removeEventListener('pagehide', handOver);
 		over = true;
@@ -696,6 +728,7 @@ export const resumeClosingAnimation = async (
 	// The app starts underneath: nothing on the page can be reached by the
 	// keyboard until the reveal, as in the document that began the animation.
 	const giveRoomBack = shutRoomBehind(doc, stage.root);
+	win.addEventListener('resize', stage.onResize);
 	try {
 		await Promise.race([
 			(async () => {
@@ -710,6 +743,7 @@ export const resumeClosingAnimation = async (
 			cap
 		]);
 	} finally {
+		win.removeEventListener('resize', stage.onResize);
 		win.clearTimeout(capTimer);
 		over = true;
 		stage.root.remove();
