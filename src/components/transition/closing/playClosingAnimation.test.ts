@@ -251,6 +251,133 @@ describe('playClosingAnimation', () => {
 		);
 	});
 
+	/**
+	 * The curtain hangs in pleats and is drawn like one: gathered at the outer
+	 * edge, it spreads as it closes and gathers again as it opens. All of it is
+	 * painted once with gradients and moved with transforms, so it stays light
+	 * (Frank, 2026-10-19: realistic, but not heavy).
+	 */
+	describe('the curtain', () => {
+		type Call = [Keyframe[], KeyframeAnimationOptions];
+		const callsOf = (animate: { mock: { calls: unknown[] } }) =>
+			animate.mock.calls as Call[];
+		const panelCalls = (animate: {
+			mock: { calls: unknown[]; contexts: unknown[] };
+		}) =>
+			callsOf(animate)
+				.map((call, index) => ({
+					call,
+					element: animate.mock.contexts[index] as HTMLElement
+				}))
+				.filter(({ element }) =>
+					element.dataset.closingLayer?.startsWith('curtain-')
+				);
+		const scaleOf = (transform: unknown) =>
+			Number(/scaleX\(([\d.]+)\)/.exec(String(transform))?.[1] ?? NaN);
+
+		const play = async (variant: 'curtain' | 'slideReveal') => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const pending = playClosingAnimation({
+				variant,
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			const atCover = late.animate.mock.calls.length;
+			const nodes = document
+				.querySelector(ROOT)!
+				.querySelectorAll('*').length;
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(300);
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(300);
+			await pending;
+			return { late, atCover, nodes };
+		};
+
+		it('hangs in pleats: each half is painted with folds', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			const halves = [
+				...document.querySelectorAll<HTMLElement>(
+					'[data-closing-layer^="curtain-"]'
+				)
+			];
+			expect(halves).toHaveLength(2);
+			halves.forEach((half) =>
+				expect(half.style.backgroundImage).toContain(
+					'repeating-linear-gradient'
+				)
+			);
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(600);
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(600);
+			await pending;
+		});
+
+		it('is gathered at the outer edge, spreads as it is drawn and gathers as it opens', async () => {
+			const { late } = await play('curtain');
+			const panels = panelCalls(late.animate);
+			// Two halves, each animated on the way in and on the way out.
+			expect(panels).toHaveLength(4);
+			const sides = ['left', 'right'] as const;
+			sides.forEach((side) => {
+				const own = panels.filter(
+					({ element }) =>
+						element.dataset.closingLayer === `curtain-${side}`
+				);
+				expect(own).toHaveLength(2);
+				expect(
+					own[0].element.style.transformOrigin,
+					'the folds gather at the edge the half comes from'
+				).toBe(`${side} center`);
+				const [cover, reveal] = own.map(({ call }) => call[0]);
+				expect(
+					scaleOf(cover[0].transform),
+					'gathered, then drawn'
+				).toBeLessThan(1);
+				expect(
+					scaleOf(reveal[reveal.length - 1].transform),
+					'opens, gathering'
+				).toBeLessThan(1);
+			});
+		});
+
+		it.each(CLOSING_VARIANTS)(
+			'%s moves only transform and opacity, the properties a browser animates on the graphics card',
+			async (variant) => {
+				const { late } = await play(variant);
+				const properties = new Set(
+					callsOf(late.animate).flatMap(([keyframes]) =>
+						keyframes.flatMap((frame) => Object.keys(frame))
+					)
+				);
+				properties.delete('offset');
+				properties.delete('easing');
+				expect([...properties].sort()).toEqual(
+					[...properties]
+						.filter((p) => p === 'transform' || p === 'opacity')
+						.sort()
+				);
+				expect(properties.size).toBeGreaterThan(0);
+			}
+		);
+
+		it.each(CLOSING_VARIANTS)(
+			'%s stays within a small number of elements',
+			async (variant) => {
+				const { nodes } = await play(variant);
+				expect(nodes).toBeLessThanOrEqual(16);
+			}
+		);
+	});
+
 	describe('the room underneath', () => {
 		const app = () => document.getElementById('app')!;
 		const mountApp = () => {

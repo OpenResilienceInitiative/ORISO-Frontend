@@ -105,6 +105,25 @@ const run = (
 const px = (value: number) => `${value}px`;
 
 /**
+ * What makes the curtain a curtain, painted once with gradients (never a filter
+ * or a shadow that has to be redrawn): light from above that falls off toward
+ * the hem, soft folds every 56 px and a fainter set at 91 px. Black and white
+ * at a low alpha, so they shade whatever brand colour the tenant has.
+ */
+const PLEATS = [
+	'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.16) 100%)',
+	'repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0) 12px, rgba(255,255,255,0.12) 30px, rgba(0,0,0,0) 44px, rgba(0,0,0,0.2) 56px)',
+	// A second, fainter set at another pitch, so the folds do not repeat evenly.
+	'repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0) 23px, rgba(255,255,255,0.06) 47px, rgba(0,0,0,0) 71px, rgba(0,0,0,0.08) 91px)'
+].join(', ');
+
+/**
+ * How narrow the folds are when the curtain is gathered at the side it comes
+ * from. It spreads to 1 as it is drawn and gathers again as it opens.
+ */
+const GATHERED = 0.62;
+
+/**
  * Curtain: two halves close over the right-hand surface and open again. The
  * stage beside the surface is red already, so the pieces that stand in for it
  * only fade in. Every piece belongs to the left or the right half, and a half
@@ -210,7 +229,10 @@ const curtain = (frame: Frame): Plan => {
 				top: '0',
 				width: '100%',
 				height: '100%',
-				background: primary,
+				backgroundColor: primary,
+				backgroundImage: PLEATS,
+				// The folds gather at the edge the half comes from.
+				transformOrigin: `${side} center`,
 				// The edge that meets in the middle is a shade deeper, so two
 				// halves read as cloth and not as one flat sheet.
 				boxShadow: `inset ${side === 'left' ? '-' : ''}8px 0 0 ${primaryDark}`
@@ -236,7 +258,9 @@ const curtain = (frame: Frame): Plan => {
 				run(
 					panel,
 					[
-						{ transform: `translateX(${away * 101}%)` },
+						{
+							transform: `translateX(${away * 101}%) scaleX(${GATHERED})`
+						},
 						{ transform: 'none' }
 					],
 					closing.coverMs,
@@ -244,7 +268,7 @@ const curtain = (frame: Frame): Plan => {
 				)
 			]),
 		reveal: () =>
-			halves.map(({ element, away }) =>
+			halves.flatMap(({ element, panel, away }) => [
 				run(
 					element,
 					[
@@ -253,8 +277,18 @@ const curtain = (frame: Frame): Plan => {
 					],
 					closing.revealMs,
 					transitionMotion.easeOut
+				),
+				// Opening, the folds gather again toward the side it parts to.
+				run(
+					panel,
+					[
+						{ transform: 'none' },
+						{ transform: `scaleX(${GATHERED})` }
+					],
+					closing.revealMs,
+					transitionMotion.easeOut
 				)
-			)
+			])
 	};
 };
 
