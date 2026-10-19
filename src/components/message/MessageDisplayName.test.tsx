@@ -30,9 +30,7 @@ describe('MessageDisplayName', () => {
 			/>
 		);
 
-		const identity = container.querySelector(
-			'.messageItem__nameBlock'
-		);
+		const identity = container.querySelector('.messageItem__nameBlock');
 		expect(identity).toBeTruthy();
 		expect(identity?.children).toHaveLength(2);
 		expect(identity?.children[0]?.textContent).toBe('spider pig');
@@ -46,9 +44,7 @@ describe('MessageDisplayName', () => {
 			<MessageDisplayName {...baseProps} type="user" subtitle="" />
 		);
 
-		const identity = container.querySelector(
-			'.messageItem__nameBlock'
-		);
+		const identity = container.querySelector('.messageItem__nameBlock');
 		expect(identity).toBeTruthy();
 		expect(identity?.children).toHaveLength(1);
 		expect(screen.queryByText(/Caritasverband/)).toBeNull();

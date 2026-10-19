@@ -1,0 +1,57 @@
+.caseHandoverReasonList {
+	gap: $grid-base * 0.75;
+	margin-bottom: $grid-base-two;
+
+	&__option.MuiListItemButton-root {
+		display: grid;
+		grid-template-columns: $grid-base-six minmax(0, 1fr) auto auto;
+		gap: $grid-base * 1.5;
+		min-height: $grid-base-six;
+		padding: $grid-base * 1.25 $grid-base-two;
+		border-radius: $grid-base * 1.5;
+		color: var(--m3-on-surface, #1b1b1c);
+
+		.MuiRadio-root,
+		.MuiRadio-root.Mui-checked,
+		.MuiRadio-root.Mui-disabled {
+			color: inherit;
+		}
+
+		&.Mui-selected,
+		&.Mui-selected:hover {
+			border-radius: $grid-base-two;
+			background: var(--m3-secondary, #4b515a);
+			color: var(--m3-on-secondary, #ffffff);
+		}
+
+		&:has(.MuiRadio-root.Mui-focusVisible) {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	&__consentHint {
+		max-width: 220px;
+		text-align: right;
+	}
+
+	&__shortcut {
+		font-family: inherit;
+		font-size: $font-size-tertiary;
+		line-height: $grid-base * 2.5;
+		font-weight: $font-weight-medium;
+		letter-spacing: 0.1px;
+		white-space: nowrap;
+	}
+
+	@media (width <= 600px) {
+		&__option.MuiListItemButton-root {
+			grid-template-columns: $grid-base-six minmax(0, 1fr) auto;
+		}
+
+		&__consentHint {
+			grid-column: 2 / -1;
+			text-align: left;
+		}
+	}
+}

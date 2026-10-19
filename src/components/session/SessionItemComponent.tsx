@@ -1,4 +1,5 @@
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
+import { useChatHistoryPagination } from './useChatHistoryPagination';
 import * as React from 'react';
 import {
 	useCallback,
@@ -275,6 +276,7 @@ interface SessionItemProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
+	onLoadEarlierMessages?: () => Promise<boolean>;
 	/** The viewer's case-handover grant; a CO_ACCESS grant is read-only (#200). */
 	caseHandoverStatus?: CaseHandoverStatus | null;
 }
@@ -778,6 +780,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+	const loadEarlierMessages = useChatHistoryPagination(
+		scrollContainerRef,
+		activeSession.item.id,
+		props.messages?.length,
+		props.onLoadEarlierMessages
+	);
+	const previousTimelineTail = useRef<{
+		sessionId: number;
+		id?: string;
+		count: number;
+	} | null>(null);
+
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
 	const [draggedFile, setDraggedFile] = useState<File | null>(null);
 	const [isDragOverDropArea, setDragOverDropArea] = useState(false);
@@ -1508,8 +1522,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		const contactName =
 			getContact(activeSession)?.username ||
 			translate('sessionList.user.consultantUnknown');
-		const newThreadReplies = messages.filter((message) => {
-			if (knownMessageIdsRef.current.has(message._id)) {
+		// Backfilled replies precede the newest event already observed. Only
+		// replies appended after that boundary are new-arrival notifications.
+		const newestKnownIndex = messages.reduce(
+			(index, message, candidate) =>
+				knownMessageIdsRef.current.has(message._id) ? candidate : index,
+			-1
+		);
+		const newThreadReplies = messages.filter((message, index) => {
+			if (
+				index <= newestKnownIndex ||
+				knownMessageIdsRef.current.has(message._id)
+			) {
 				return false;
 			}
 			// ADR-017 hard cut: thread identity is the m.thread relation only.
@@ -1624,6 +1648,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
+		const lastId = messages[messages.length - 1]?._id;
+		const previous = previousTimelineTail.current;
+		previousTimelineTail.current = {
+			sessionId: activeSession.item.id,
+			id: lastId,
+			count: messages.length
+		};
+		if (
+			previous?.sessionId === activeSession.item.id &&
+			previous.id === lastId
+		) {
+			initMessageCount += Math.max(0, messages.length - previous.count);
+			return; // Older history is not a new arrival or an unread message.
+		}
+
 		const isOwnMessage = isMyMessageMatrix(
 			messages[messages.length - 1]?.userId
 		);
@@ -1728,6 +1767,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	/* eslint-disable */
 	const handleScroll = useDebouncedCallback((e) => {
+		if (initialScrollCompleted) loadEarlierMessages();
 		// The ±1 px window this used to require was missed by every composer
 		// resize (auto-grow while typing, the drag handle, an info bar
 		// appearing) and by fractional layout heights — after which the chat
@@ -3135,6 +3175,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					)}
 					ref={scrollContainerRef}
 					onScroll={(e) => handleScroll(e)}
+					onWheel={loadEarlierMessages}
 					onDragEnter={onDragEnter}
 				>
 					{shouldShowConsentGate && (

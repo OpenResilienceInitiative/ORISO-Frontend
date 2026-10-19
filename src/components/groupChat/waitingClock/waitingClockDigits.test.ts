@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { CELL, DIGITS, digitCells, twoDigits } from './waitingClockDigits';
+import {
+	CELL,
+	DIGITS,
+	digitCells,
+	FACE_MAX,
+	faceDigitCount,
+	faceDigits
+} from './waitingClockDigits';
 
 const PRESETS = Object.values(CELL);
 
@@ -24,21 +31,32 @@ describe('waitingClockDigits', () => {
 		expect(digitCells(-1)).toBe(DIGITS[0]);
 	});
 
-	it('twoDigits splits a padded value into digit indices', () => {
-		expect(twoDigits(0)).toEqual([0, 0]);
-		expect(twoDigits(7)).toEqual([0, 7]);
-		expect(twoDigits(42)).toEqual([4, 2]);
-		expect(twoDigits(59)).toEqual([5, 9]);
+	it('faceDigits splits a padded value into digit indices', () => {
+		expect(faceDigits(0)).toEqual([0, 0]);
+		expect(faceDigits(7)).toEqual([0, 7]);
+		expect(faceDigits(42)).toEqual([4, 2]);
+		expect(faceDigits(59)).toEqual([5, 9]);
 	});
 
-	it('twoDigits clamps at 99 so the face and the motionless fallback agree', () => {
-		expect(twoDigits(99)).toEqual([9, 9]);
-		expect(twoDigits(100)).toEqual([9, 9]);
-		expect(twoDigits(250)).toEqual([9, 9]);
+	// #1499: the face used to clamp at 99, so a group 140 minutes late drew
+	// "99" while its timer label said 140. It grows a third cell instead.
+	it('faceDigits grows a third cell from 100 up', () => {
+		expect(faceDigits(99)).toEqual([9, 9]);
+		expect(faceDigits(100)).toEqual([1, 0, 0]);
+		expect(faceDigits(140)).toEqual([1, 4, 0]);
+		expect(faceDigitCount(99)).toBe(2);
+		expect(faceDigitCount(100)).toBe(3);
 	});
 
-	it('twoDigits clamps negatives and floors fractions', () => {
-		expect(twoDigits(-5)).toEqual([0, 0]);
-		expect(twoDigits(23.9)).toEqual([2, 3]);
+	it('faceDigits stops at three cells', () => {
+		expect(faceDigits(FACE_MAX)).toEqual([9, 9, 9]);
+		expect(faceDigits(FACE_MAX + 1)).toEqual([9, 9, 9]);
+		expect(faceDigits(12345)).toEqual([9, 9, 9]);
+		expect(faceDigitCount(12345)).toBe(3);
+	});
+
+	it('faceDigits clamps negatives and floors fractions', () => {
+		expect(faceDigits(-5)).toEqual([0, 0]);
+		expect(faceDigits(23.9)).toEqual([2, 3]);
 	});
 });

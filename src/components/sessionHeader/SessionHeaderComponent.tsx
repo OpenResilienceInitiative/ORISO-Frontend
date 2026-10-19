@@ -85,6 +85,7 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
+import { SessionTopic } from './SessionTopic';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import { GroupChatHeader } from './GroupChatHeader';
@@ -1274,11 +1275,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							{agencyLine}
 						</div>
 					)}
-					{topic?.name && (
-						<div className="sessionInfo__metaInfo__content">
-							{topic.name}
-						</div>
-					)}
+					{topic?.name && <SessionTopic name={topic.name} />}
 				</div>
 			)}
 			{isAskerUser &&

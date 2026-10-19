@@ -26,7 +26,10 @@ $emoji-popover-height: 433px;
 
 			&:hover {
 				* {
-					fill: var(--m3-primary, $primary);
+					fill: var(
+						--oriso-primary-text,
+						var(--m3-primary, $primary)
+					);
 				}
 			}
 		}
@@ -37,7 +40,7 @@ $emoji-popover-height: 433px;
 	}
 	.emoji__selectButton--pressed {
 		svg * {
-			fill: var(--m3-primary, $primary);
+			fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 	}
 	.emoji__selectPopover {
@@ -179,7 +182,7 @@ $emoji-popover-height: 433px;
 		outline: none;
 	}
 	.emoji__selectPopover__navEntry--active {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 	}
 	.emoji__selectPopover__scrollbar {
 		position: absolute;

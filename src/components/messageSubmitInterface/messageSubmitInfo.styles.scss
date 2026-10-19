@@ -41,7 +41,7 @@
 			height: 18px;
 
 			* {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 		}
 	}

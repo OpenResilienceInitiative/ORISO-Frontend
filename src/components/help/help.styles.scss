@@ -90,7 +90,7 @@
 
 	&__copyLink {
 		display: block;
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		width: max-content;
 
 		&:focus {
