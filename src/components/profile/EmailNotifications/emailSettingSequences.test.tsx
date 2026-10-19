@@ -28,6 +28,8 @@ import {
 import { useDisplayFilterEmailColumn } from '../../displayFilter/useDisplayFilterEmailColumn';
 import { EmailToggle } from './EmailToggle';
 import { readEmailSetting, resetEmailSettingSession } from './emailSetting';
+import { markServerUserData } from '../../../globalState/serverUserData';
+import { applyUserDataPatch } from '../../../test-utils/userDataPatchServer';
 
 // The e-mail write state is module-wide: no case inherits another's.
 afterEach(() => resetEmailSettingSession());
@@ -88,7 +90,7 @@ const initialUserData = () => ({
 	]
 });
 
-/** A fake server: PATCH replaces fields whole, reload returns a copy. */
+/** A fake server: PATCH merges as UserService does, reload returns a copy. */
 const serve = (steps: Step[]) => {
 	const server = { data: initialUserData(), patches: 0, reloads: 0 };
 	vi.mocked(apiPatchUserData).mockImplementation(async (patch) => {
@@ -96,20 +98,22 @@ const serve = (steps: Step[]) => {
 		server.patches += 1;
 		await Promise.resolve();
 		if (!step?.patch) throw new Error('offline');
-		server.data = { ...server.data, ...structuredClone(patch) } as never;
+		server.data = applyUserDataPatch(server.data, patch);
 	});
 	const reload = async () => {
 		const step = steps[server.reloads];
 		server.reloads += 1;
 		await Promise.resolve();
 		if (!step?.reload) throw new Error('offline');
-		return structuredClone(server.data);
+		return markServerUserData(structuredClone(server.data));
 	};
 	return { server, reload };
 };
 
 /** A local, non-server context update (e.g. useLiveChatViaSidebar). */
 let localUpdate: () => void = () => undefined;
+/** A reload elsewhere in the app brings this server state. */
+let serverUpdate: (data: object) => void = () => undefined;
 
 const Harness = ({
 	reload,
@@ -118,7 +122,11 @@ const Harness = ({
 	reload: () => Promise<unknown>;
 	children: React.ReactNode;
 }) => {
-	const [userData, setUserData] = React.useState(initialUserData);
+	const [userData, setUserData] = React.useState(() =>
+		markServerUserData(initialUserData())
+	);
+	serverUpdate = (data) =>
+		setUserData(markServerUserData(structuredClone(data)) as never);
 	localUpdate = () =>
 		setUserData(
 			(previous) => ({ ...previous, liveChatViaSidebar: true }) as never
@@ -216,6 +224,11 @@ describe('e-mail setting: shown value equals the stored one after any write sequ
 			// An unrelated local context update is no server data.
 			act(() => localUpdate());
 			expect(toggle.checked).toBe(stored);
+			// Another device switches it back; a reload brings exactly the
+			// value from before the writes. Server data always wins.
+			server.data = initialUserData();
+			act(() => serverUpdate(server.data));
+			expect(toggle.checked).toBe(true);
 		}
 	);
 

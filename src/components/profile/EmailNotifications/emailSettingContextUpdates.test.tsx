@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotificationsContext, UserDataContext } from '../../../globalState';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { EmailToggle } from './EmailToggle';
+import { markServerUserData } from '../../../globalState/serverUserData';
 import { resetEmailSettingSession } from './emailSetting';
 
 // The e-mail write state is module-wide: no case inherits another's.
@@ -37,7 +38,9 @@ const stored = () => ({
 
 let setUserData: React.Dispatch<React.SetStateAction<object>> = () => undefined;
 const Harness = () => {
-	const [userData, set] = React.useState<object>(stored);
+	const [userData, set] = React.useState<object>(() =>
+		markServerUserData(stored())
+	);
 	setUserData = set;
 	const reloadUserData = React.useCallback(async () => {
 		throw new Error('offline');
@@ -108,13 +111,15 @@ describe('e-mail settings and other context updates', () => {
 		await masterOffWithoutReload();
 		// A later reload: another device switched e-mails back on.
 		act(() =>
-			setUserData({
-				...stored(),
-				emailNotifications: {
-					emailNotificationsEnabled: true,
-					settings: { appointmentNotificationEnabled: false }
-				}
-			})
+			setUserData(
+				markServerUserData({
+					...stored(),
+					emailNotifications: {
+						emailNotificationsEnabled: true,
+						settings: { appointmentNotificationEnabled: false }
+					}
+				})
+			)
 		);
 		expect(switchNamed('master').checked).toBe(true);
 		expect(switchNamed('appointments').checked).toBe(false);
@@ -124,6 +129,23 @@ describe('e-mail settings and other context updates', () => {
 			emailNotifications: {
 				emailNotificationsEnabled: true,
 				settings: { appointmentNotificationEnabled: true }
+			}
+		});
+	});
+
+	it('takes a server reload equal to the value before the write, and builds the next PATCH on it', async () => {
+		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
+		await masterOffWithoutReload();
+		// Another device switched it back: the reload equals the pre-write data.
+		act(() => setUserData(markServerUserData(stored())));
+		expect(switchNamed('master').checked).toBe(true);
+		fireEvent.click(switchNamed('appointments'));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
+		// Only the changed key, plus the master the server confirmed.
+		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
+			emailNotifications: {
+				emailNotificationsEnabled: true,
+				settings: { appointmentNotificationEnabled: false }
 			}
 		});
 	});

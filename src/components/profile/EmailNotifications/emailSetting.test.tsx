@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../../globalState';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { resetEmailSettingSession, useSaveEmailSetting } from './emailSetting';
+import { markServerUserData } from '../../../globalState/serverUserData';
+import { applyUserDataPatch } from '../../../test-utils/userDataPatchServer';
 
 // The e-mail write state is module-wide: no case inherits another's.
 afterEach(() => resetEmailSettingSession());
@@ -31,14 +33,17 @@ afterEach(() => vi.mocked(apiPatchUserData).mockReset());
 
 describe('useSaveEmailSetting', () => {
 	it('keeps both of two rapid changes made before the first reload lands', async () => {
-		// The stored blob the server holds; each PATCH replaces it whole.
+		// The stored blob the server holds; PATCHes merge as UserService does.
 		let stored = structuredClone(snapshot.emailNotifications);
 		const releases: Array<() => void> = [];
 		vi.mocked(apiPatchUserData).mockImplementation(
 			(body) =>
 				new Promise((resolve) => {
 					releases.push(() => {
-						stored = body.emailNotifications;
+						stored = applyUserDataPatch(
+							{ emailNotifications: stored },
+							body
+						).emailNotifications as typeof stored;
 						resolve(undefined);
 					});
 				})
@@ -109,7 +114,7 @@ describe('useSaveEmailSetting', () => {
 			)
 		}).result.current;
 
-	it('builds on a stored change even when the reload after it failed', async () => {
+	it('sends only the changed key, so a stored change survives a failed reload', async () => {
 		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
 		const reload = vi
 			.fn()
@@ -132,12 +137,11 @@ describe('useSaveEmailSetting', () => {
 				false
 			);
 		});
-		expect(
-			vi.mocked(apiPatchUserData).mock.calls[1][0].emailNotifications
-				.settings
-		).toEqual({
-			appointmentNotificationEnabled: false,
-			feedbackNotificationEnabled: false
+		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
+			emailNotifications: {
+				emailNotificationsEnabled: true,
+				settings: { feedbackNotificationEnabled: false }
+			}
 		});
 	});
 
@@ -163,31 +167,29 @@ describe('useSaveEmailSetting', () => {
 				false
 			);
 		});
-		// Later, fresher data arrives (Fachaustausch switched off elsewhere).
-		userData = {
+		// Later, fresher server data arrives: e-mails switched off elsewhere.
+		userData = markServerUserData({
 			...snapshot,
-			emailNotifications: {
-				emailNotificationsEnabled: true,
-				settings: {
-					appointmentNotificationEnabled: false,
-					feedbackNotificationEnabled: false
-				}
-			}
-		};
-		hook.rerender();
-		await act(async () => {
-			await hook.result.current(
-				{ kind: 'path', name: 'emailNotificationsEnabled' },
-				false
-			);
-		});
-		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
 			emailNotifications: {
 				emailNotificationsEnabled: false,
 				settings: {
 					appointmentNotificationEnabled: false,
-					feedbackNotificationEnabled: false
+					feedbackNotificationEnabled: true
 				}
+			}
+		});
+		hook.rerender();
+		await act(async () => {
+			await hook.result.current(
+				{ kind: 'settings', field: 'feedbackNotificationEnabled' },
+				false
+			);
+		});
+		// The master goes along as the server last confirmed it.
+		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
+			emailNotifications: {
+				emailNotificationsEnabled: false,
+				settings: { feedbackNotificationEnabled: false }
 			}
 		});
 	});

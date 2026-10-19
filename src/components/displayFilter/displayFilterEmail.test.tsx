@@ -158,9 +158,9 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		expect(vi.mocked(apiPatchUserData).mock.calls[0][0]).toEqual(
 			fromProfile
 		);
+		// Only the changed toggle: UserService merges toggles one by one.
 		expect(fromProfile).toEqual({
 			emailToggles: [
-				{ name: 'DAILY_ENQUIRY', state: true },
 				{ name: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER', state: false }
 			]
 		});

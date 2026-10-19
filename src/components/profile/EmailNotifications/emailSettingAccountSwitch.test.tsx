@@ -92,13 +92,13 @@ describe('e-mail settings across a sign-out and sign-in in place', () => {
 		expect(toggle.checked).toBe(true);
 		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
 
-		// B's own change builds on B's settings, not on A's.
+		// B's own change carries only B's change, nothing of A.
 		fireEvent.click(toggle);
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
 		expect(vi.mocked(apiPatchUserData).mock.calls[1][0]).toEqual({
 			emailNotifications: {
 				emailNotificationsEnabled: false,
-				settings: { appointmentNotificationEnabled: false }
+				settings: {}
 			}
 		});
 		expect(toggle.checked).toBe(false);

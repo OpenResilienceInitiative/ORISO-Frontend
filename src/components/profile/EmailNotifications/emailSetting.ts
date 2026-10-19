@@ -7,11 +7,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
-import isEqual from 'lodash/isEqual';
 import set from 'lodash/set';
 import { NotificationsContext, UserDataContext } from '../../../globalState';
 import type { UserDataInterface } from '../../../globalState/interfaces';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
+import { isServerUserData } from '../../../globalState/serverUserData';
 import type { NotificationSource } from './notificationMatrix';
 
 /**
@@ -40,16 +40,14 @@ export const readEmailSetting = (
 				?.state ?? false)
 		: Boolean(get(userData?.emailNotifications, pathOf(source), false));
 
-/**
- * The PATCH body that stores `next` for `source`. `emailToggles` must go
- * back whole (the endpoint replaces the list), the settings blob too.
- */
-export const emailSettingPatch = (
+/** `userData` with `next` stored for `source`: the confirmed state after a save. */
+const withEmailSetting = (
 	userData: Partial<UserDataInterface> | null | undefined,
 	source: EmailSettingSource,
 	next: boolean
-): Partial<UserDataInterface> =>
-	source.kind === 'emailToggle'
+): Partial<UserDataInterface> => ({
+	...userData,
+	...(source.kind === 'emailToggle'
 		? {
 				emailToggles: [...(userData?.emailToggles ?? [])].map(
 					(toggle) =>
@@ -64,7 +62,36 @@ export const emailSettingPatch = (
 					pathOf(source),
 					next
 				) as UserDataInterface['emailNotifications']
-			};
+			})
+});
+
+/**
+ * The PATCH body that stores `next` for `source`: only that key. UserService
+ * merges `emailToggles` per toggle and `emailNotifications.settings` per key
+ * (null = not sent), so nothing else can be overwritten. Only the master
+ * `emailNotificationsEnabled` is replaced (absent = off) and `settings` must
+ * be present, so both go along: the master as `confirmed` (server) holds it.
+ */
+export const emailSettingPatch = (
+	confirmed: Partial<UserDataInterface> | null | undefined,
+	source: EmailSettingSource,
+	next: boolean
+): Partial<UserDataInterface> => {
+	if (source.kind === 'emailToggle') {
+		return { emailToggles: [{ name: source.type, state: next }] };
+	}
+	const emailNotifications = {
+		emailNotificationsEnabled: Boolean(
+			confirmed?.emailNotifications?.emailNotificationsEnabled
+		),
+		settings: {}
+	};
+	set(emailNotifications, pathOf(source), next);
+	return {
+		emailNotifications:
+			emailNotifications as UserDataInterface['emailNotifications']
+	};
+};
 
 /*
  * What each setting's control shows, shared by every caller (the profile
@@ -87,8 +114,8 @@ interface ShownSetting {
  * writes never send, its completions touch only itself, so nothing of the
  * previous account shows or is written for the next one (Codex, FE#1752).
  *
- * The endpoint replaces the settings blob and the toggle list whole, so
- * writes go one at a time, each built on the state the previous one left.
+ * Each PATCH carries only its own key (see `emailSettingPatch`); writes
+ * still go one at a time, so the master sent along is the confirmed one.
  * `latestStored`: set by each write (then by its reload); wins over the
  * context while writes are queued. When the queue drains it is dropped
  * after a successful reload, else kept until the context's `userData`
@@ -96,8 +123,8 @@ interface ShownSetting {
  * render a reload's snapshot only after later writes settled, so every
  * snapshot a write's reload fetched is tagged with that write's number
  * (`fetchedBy`); one older than the newest write is never taken as fresh.
- * A context update whose e-mail part did not change (`emailPart`, e.g. a
- * local `{ ...previous, liveChatViaSidebar }`) is no fresh data at all.
+ * Only server data settles (`isServerUserData`, whatever its value); a local
+ * update such as `{ ...previous, liveChatViaSidebar }` never does.
  */
 interface AccountSession {
 	userId: string | undefined;
@@ -105,7 +132,6 @@ interface AccountSession {
 	queuedWrites: number;
 	latestStored: Partial<UserDataInterface> | null;
 	seenUserData: unknown;
-	seenEmailPart: unknown;
 	writeNumber: number;
 	fetchedBy: WeakMap<object, number>;
 	shown: Map<string, ShownSetting>;
@@ -116,7 +142,6 @@ const newSession = (userId: string | undefined): AccountSession => ({
 	queuedWrites: 0,
 	latestStored: null,
 	seenUserData: undefined,
-	seenEmailPart: undefined,
 	writeNumber: 0,
 	fetchedBy: new WeakMap(),
 	shown: new Map()
@@ -138,12 +163,6 @@ const subscribeShown = (listener: () => void) => {
 const shownSnapshot = () => shownVersion;
 
 type MaybeUserData = Partial<UserDataInterface> | null | undefined;
-
-/** What of `userData` the e-mail settings are made of. */
-const emailPart = (userData: MaybeUserData) => ({
-	emailNotifications: userData?.emailNotifications,
-	emailToggles: userData?.emailToggles
-});
 
 /** Forgets all write state, as a sign-out would; for tests between cases. */
 export const resetEmailSettingSession = () => {
@@ -179,10 +198,8 @@ export const useSaveEmailSetting = () => {
 		const own = sessionOf(userData);
 		if (userData === own.seenUserData) return;
 		own.seenUserData = userData;
-		const part = emailPart(userData);
-		if (isEqual(part, own.seenEmailPart)) return;
-		own.seenEmailPart = part;
-		const from = userData ? own.fetchedBy.get(userData) : undefined;
+		if (!isServerUserData(userData)) return;
+		const from = own.fetchedBy.get(userData);
 		if (
 			own.queuedWrites === 0 &&
 			(from === undefined || from === own.writeNumber)
@@ -220,7 +237,7 @@ export const useSaveEmailSetting = () => {
 				let saved = false;
 				try {
 					await apiPatchUserData(patch);
-					own.latestStored = { ...base, ...patch };
+					own.latestStored = withEmailSetting(base, source, next);
 					saved = true;
 				} catch {
 					addNotification?.({
