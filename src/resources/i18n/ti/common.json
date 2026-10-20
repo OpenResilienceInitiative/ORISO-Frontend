@@ -1931,6 +1931,27 @@
 		"visibleOnlyTo": "ዝርእይዎ ጥራይ፦",
 		"showLess": "ኣነስ ኣርእይ",
 		"showMore": "ብዝሓት ኣርእይ",
+		"callLifecycle": {
+			"type": {
+				"audio": "ናይ ድምጺ ጻውዒት",
+				"video": "ናይ ቪድዮ ጻውዒት"
+			},
+			"state": {
+				"running": "ይካየድ ኣሎ",
+				"ended": "ተወዲኡ",
+				"missed": "ዘይተመለሰ"
+			},
+			"description": {
+				"running": "እቲ ጻውዒት ካብ {{start}} ይካየድ ኣሎ።",
+				"ended": "እቲ ጻውዒት ኣብ {{start}} ጀሚሩ።",
+				"missed": "እቲ ጻውዒት ኣይተመለሰን።"
+			},
+			"participants": {
+				"current": "ኣብ ጻውዒት",
+				"attended": "ተሳቲፎም"
+			},
+			"startedBy": "ብ{{name}} ተጸዊዑ።"
+		},
 		"systemNotification": "መፍለጢ ሲስተም",
 		"systemNotificationTitle": "መፍለጢ ሲስተም",
 		"userLeftChat": "እቲ ተጠቃሚ ካብቲ ቻት ወጺኡ",
@@ -3760,7 +3781,11 @@
 			"handover": "መጀመርታ እቲ ዝተመርጸ መሳርሕቲ ይውስን። ፖሊሲ እንተደልዩ ድሕሪኡ ዓሚል ይሕተት።"
 		},
 		"handoverPending": "እቲ ሕቶ መጀመርታ ናብ ዝተመርጸ መሳርሕቲ ይለኣኽ።",
-		"confirm": { "add": "ሕተት", "change": "ለውጢ ሕተት", "handover": "ሓሳብ ለኣኽ" },
+		"confirm": {
+			"add": "ሕተት",
+			"change": "ለውጢ ሕተት",
+			"handover": "ሓሳብ ለኣኽ"
+		},
 		"cancel": "ሰርዝ",
 		"close": "ዕጸው",
 		"emptyOption": "በጃኹም ምረጹ…"
@@ -4704,6 +4729,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "ናብ ጻውዒት ተጸንበር",
+			"joinFailed": "ሕጂ ምጽንባር ኣይተኻእለን። ካልእ ጻውዒት እንተሎ ዛዝሙ እሞ ደጊምኩም ፈትኑ።",
+			"video": {
+				"running": "ቪድዮ ጻውዒት ይካየድ ኣሎ",
+				"ended": "ቪድዮ ጻውዒት ተዛዚሙ",
+				"missed": "ዘይተመለሰ ቪድዮ ጻውዒት"
+			},
+			"audio": {
+				"running": "ናይ ድምጺ ጻውዒት ይካየድ ኣሎ",
+				"ended": "ናይ ድምጺ ጻውዒት ተዛዚሙ",
+				"missed": "ዘይተመለሰ ናይ ድምጺ ጻውዒት"
+			},
+			"duration": "ንውሓት ግዜ፦ {{duration}}"
+		},
 		"button": {
 			"answerCall": "ቪድዮ ጻውዒት ተቐበል",
 			"answerVideoCall": "ቪድዮ ጻውዒት ተቐበል",
@@ -5818,6 +5858,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "መዝገብ ዝርርብ",
+			"privacy": "ብሕታዊ። ንዓኻ ጥራይ፣ ከምኡ’ውን ክሳብ እቲ ዝርርብ ዝጸንሕ ጥራይ።",
+			"type": "ዓይነት መዝገብ",
+			"text": "መዝገብ",
+			"add": "መዝገብ ወስኽ",
+			"remove": "መዝገብ ኣውጽእ",
+			"copy": "ኩሉ ቅዳሕ",
+			"copied": "ተቐድሐ",
+			"empty": "ክሳብ ሕጂ ዝተመዝገበ የለን።",
+			"collapse": "መዛግብቲ ዕጸው",
+			"expand": "መዛግብቲ ክፈት",
+			"open": "መዝገብ ዝርርብ",
+			"types": {
+				"frage": "ሕቶ",
+				"anmerkung": "መብርሂ",
+				"aufgabe": "ዕዮ"
+			}
 		}
 	},
 	"form": {
