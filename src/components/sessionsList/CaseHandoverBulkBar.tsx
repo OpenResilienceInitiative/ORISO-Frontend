@@ -36,7 +36,8 @@ interface CaseHandoverBulkBarProps {
 /**
  * FE#1725 US23/24: sticky bar while batch mode is on. Always shows the way
  * forward ("N selected – Continue") and a way out ("Cancel"). Buttons are
- * the shared M3 ButtonGroup (outline + primary). The ref is Continue.
+ * the shared M3 ButtonGroup (outline + primary). The ref is the focus
+ * target: Continue, or Cancel while Continue is disabled.
  */
 export const CaseHandoverBulkBar = forwardRef<
 	HTMLButtonElement | null,
@@ -44,13 +45,23 @@ export const CaseHandoverBulkBar = forwardRef<
 >(({ count, labels, onContinue, onCancel }, continueRef) => {
 	const continueId = React.useId();
 	const rootRef = useRef<HTMLElement>(null);
-	useImperativeHandle(
-		continueRef,
-		() =>
-			rootRef.current?.querySelector<HTMLButtonElement>(
-				`[id="${continueId}"]`
-			) ?? null
-	);
+	// The ref is where focus returns: Continue, or Cancel while Continue is
+	// disabled (nothing selected, e.g. after every request succeeded), since
+	// a disabled button cannot take focus.
+	useImperativeHandle(continueRef, () => {
+		const root = rootRef.current;
+		const next = root?.querySelector<HTMLButtonElement>(
+			`[id="${continueId}"]`
+		);
+		if (next && !next.disabled) return next;
+		return (
+			root?.querySelector<HTMLButtonElement>(
+				'[data-cy="case-handover-bulk-cancel"]'
+			) ??
+			next ??
+			null
+		);
+	});
 	// Floating snackbars (e.g. the recovery-key notice) rest above the bar,
 	// as they do above a chat composer, so Continue stays tappable.
 	useLayoutEffect(() => {

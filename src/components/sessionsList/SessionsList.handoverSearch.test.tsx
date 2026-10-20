@@ -33,7 +33,8 @@ const http = vi.hoisted(() => ({
 	getCandidates: vi.fn(),
 	getAgencyConsultants: vi.fn(),
 	getHandoverStatus: vi.fn(),
-	getHandoverReasons: vi.fn()
+	getHandoverReasons: vi.fn(),
+	requestBatch: vi.fn()
 }));
 vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api')>()),
@@ -47,7 +48,8 @@ vi.mock('../../api', async (importOriginal) => ({
 vi.mock('../../api/apiCaseHandover', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api/apiCaseHandover')>()),
 	apiGetCaseHandoverStatus: http.getHandoverStatus,
-	apiGetCaseHandoverReasons: http.getHandoverReasons
+	apiGetCaseHandoverReasons: http.getHandoverReasons,
+	apiRequestCaseHandoverBatchAccess: http.requestBatch
 }));
 vi.mock('../../api/apiGetAgencyConsultantList', async (importOriginal) => ({
 	...(await importOriginal<
@@ -1995,6 +1997,64 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		expect(bulkBar().textContent).toContain(
 			'caseHandover.bulkBar.selected:1'
 		);
+	});
+
+	it('moves focus to the enabled Cancel when every selected case succeeds', async () => {
+		http.requestBatch.mockImplementation(async (operations: any[]) =>
+			operations.map((operation) => ({
+				sessionId: operation.sessionId,
+				operationId: operation.operationId,
+				success: true,
+				status: {
+					sessionId: operation.sessionId,
+					status: 'GRANTED',
+					canViewContent: true
+				}
+			}))
+		);
+		const view = await ready(renderList());
+		await listPattysSpringfieldCases(view);
+		await startBatchModeOn(view, 'Client eleven');
+		await waitFor(() =>
+			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+		);
+		fireEvent.click(caseCheckbox(view, 'Client eleven'));
+		fireEvent.click(
+			within(bulkBar()).getByRole('button', {
+				name: 'caseHandover.bulkBar.continue'
+			})
+		);
+		const wizard = await screen.findByRole('dialog', {
+			name: 'caseHandover.batch.title'
+		});
+		fireEvent.click(await within(wizard).findByRole('radio'));
+		fireEvent.click(
+			within(wizard).getByRole('button', {
+				name: 'caseHandover.curtain.next'
+			})
+		);
+		fireEvent.change(within(wizard).getByRole('textbox'), {
+			target: { value: 'Covering a planned absence' }
+		});
+		fireEvent.click(
+			within(wizard).getByRole('button', { name: 'caseHandover.submit' })
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('dialog', {
+					name: 'caseHandover.batch.title'
+				})
+			).toBeNull()
+		);
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				within(bulkBar()).getByRole('button', {
+					name: 'caseHandover.bulkBar.cancel'
+				})
+			)
+		);
+		expect(document.activeElement).not.toBe(document.body);
 	});
 
 	it('keeps Tab and Shift+Tab inside the open wizard', async () => {
