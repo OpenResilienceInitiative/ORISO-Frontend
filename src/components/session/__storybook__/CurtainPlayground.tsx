@@ -44,6 +44,7 @@ type PlaygroundProps = {
 	initialExplanation?: string;
 	error?: string;
 	topicLabel?: string;
+	canReclaim?: boolean;
 };
 
 export function CurtainPlayground({
@@ -52,7 +53,8 @@ export function CurtainPlayground({
 	initialReasonCode = '',
 	initialExplanation = '',
 	error,
-	topicLabel = 'Schwangerschaftsberatung'
+	topicLabel = 'Schwangerschaftsberatung',
+	canReclaim = false
 }: PlaygroundProps) {
 	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
 	const [reasonCode, setReasonCode] = useState(initialReasonCode);
@@ -66,6 +68,8 @@ export function CurtainPlayground({
 			reasonCode={reasonCode}
 			explanation={explanation}
 			error={error}
+			canReclaim={canReclaim}
+			onReclaim={() => {}}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
 			onNext={() => setStep('describe')}

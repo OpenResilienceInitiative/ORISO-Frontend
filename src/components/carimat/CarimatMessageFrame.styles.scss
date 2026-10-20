@@ -28,6 +28,7 @@
 		height: 60px;
 		min-width: 60px;
 		min-height: 60px;
+
 		/* The ring is surface backdrop, not an outline stroke. Background paints
 		   beneath this transparent sizing border without misusing a surface role. */
 		border: 6px solid transparent;

@@ -20,6 +20,8 @@ vi.mock('react-i18next', () => ({
 				'legal.notice.showTranslation': 'Übersetzung anzeigen'
 			})[key] ?? key,
 		i18n: {
+			getFixedT: (language: string) => (key: string) =>
+				`fixed:${language}:${key}`,
 			get language() {
 				return mockLanguage;
 			}
@@ -35,6 +37,31 @@ describe('LegalContentRenderer', () => {
 	afterEach(() => {
 		cleanup();
 		mockLanguage = 'de';
+	});
+
+	it('uses the explicit contract language for notices when it differs from the app language', () => {
+		mockLanguage = 'ru';
+		render(
+			<LegalContentRenderer
+				content={map({ de: '<p>Original text</p>' })}
+				language="en"
+			/>
+		);
+		expect(screen.getByRole('note').textContent).toBe(
+			'fixed:en:legal.notice.fallbackLanguage'
+		);
+	});
+
+	it('keeps the ambient translator for notices without an explicit contract language', () => {
+		mockLanguage = 'en';
+		render(
+			<LegalContentRenderer
+				content={map({ de: '<p>Original text</p>' })}
+			/>
+		);
+		expect(screen.getByRole('note').textContent).toBe(
+			'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
+		);
 	});
 
 	it('renders plain HTML without any notice', () => {
