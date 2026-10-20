@@ -51,6 +51,7 @@ const setup = () => {
 		},
 		emit: (name = 'RoomState.members', id = room.roomId) =>
 			listeners.get(name)?.forEach((fn) => fn({}, { roomId: id })),
+		emitRoom: () => listeners.get('Room')?.forEach((fn) => fn(room)),
 		emitSync: (state: string, previous: string) =>
 			listeners.get('sync')?.forEach((fn) => fn(state, previous)),
 		replace: (replacement: any) => change(replacement)
@@ -129,6 +130,22 @@ describe('useGroupCardMembers (#1806)', () => {
 		act(() => fixture.emitSync('SYNCING', 'ERROR'));
 		await waitFor(() => expect(result.current.status).toBe('ready'));
 		expect(fixture.room.loadMembersIfNeeded).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps membership live after a room-availability retry succeeds', async () => {
+		const fixture = setup();
+		fixture.room.loadMembersIfNeeded
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValueOnce(true);
+		const { result } = renderHook(() =>
+			useGroupCardMembers('!group:example.org', true)
+		);
+		await waitFor(() => expect(result.current.status).toBe('error'));
+		act(() => fixture.emitRoom());
+		await waitFor(() => expect(result.current.status).toBe('ready'));
+		fixture.setMembers([]);
+		act(() => fixture.emit());
+		expect(result.current.members).toEqual([]);
 	});
 
 	it('hides old members when the client changes and ignores unrelated room updates', async () => {

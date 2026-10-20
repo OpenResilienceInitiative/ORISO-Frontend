@@ -79,6 +79,7 @@ export const useGroupCardMembers = (
 					});
 				} else if (trackedRoom !== room) {
 					trackedRoom = room;
+					loadFailed = false;
 					publish(EMPTY);
 					loadOnce(room)
 						.then(() => {
