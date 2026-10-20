@@ -1,3 +1,4 @@
+import { isTechnicalMatrixUser } from '../../../utils/systemMatrixUsers';
 import {
 	STACK_AVATAR_SIZE,
 	STACK_OVERLAP,
@@ -66,6 +67,16 @@ export const sortMembersByActivity = <T extends MemberLike>(
 		}
 		return (a.name || a.userId).localeCompare(b.name || b.userId);
 	});
+
+/** Apply before avatar rendering/counting so technical accounts never enter +N. */
+export const getVisibleGroupMembers = <T extends MemberLike>(
+	members: readonly T[],
+	activity: ActivityMap
+): T[] =>
+	sortMembersByActivity(
+		members.filter((member) => !isTechnicalMatrixUser(member.userId)),
+		activity
+	);
 
 export interface AvatarStackMetrics {
 	/** Rendered avatar diameter in px (`.sessionInfo__memberBubble`). */

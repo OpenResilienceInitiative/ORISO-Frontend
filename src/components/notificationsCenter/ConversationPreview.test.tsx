@@ -158,7 +158,7 @@ describe('ConversationPreview (#847)', () => {
 		expect(screen.getAllByText('lisa').length).toBeGreaterThan(0);
 	});
 
-	it('excludes system and agency service senders from the preview header', () => {
+	it('excludes system, group-chat and agency service senders from the preview header', () => {
 		arrange([
 			matrixEvent({
 				id: '$human',
@@ -169,6 +169,11 @@ describe('ConversationPreview (#847)', () => {
 				id: '$system',
 				sender: '@system:matrix.example',
 				body: 'Notice'
+			}),
+			matrixEvent({
+				id: '$group-system',
+				sender: '@group-chat-system-40:matrix.example',
+				body: 'Group notice'
 			}),
 			matrixEvent({
 				id: '$agency',

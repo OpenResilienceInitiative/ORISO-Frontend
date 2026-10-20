@@ -6,7 +6,7 @@ import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
-import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
+import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
 import { resolveRoomHeaderDensity } from '../sessionHeader/roomHeaderDensity';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -136,11 +136,7 @@ export const ConversationPreview = ({
 	const participants = useMemo<StackParticipant[]>(() => {
 		const authors = new Map<string, StackParticipant>();
 		messages.forEach((message) => {
-			if (
-				!message.senderId ||
-				isSystemMatrixUser(message.senderId) ||
-				/^@agency-\d+-service:/.test(message.senderId)
-			)
+			if (!message.senderId || isTechnicalMatrixUser(message.senderId))
 				return;
 			const previous = authors.get(message.senderId);
 			const lastActivity = message.timestamp.getTime();

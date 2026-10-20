@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	AVATAR_STACK_METRICS,
+	getVisibleGroupMembers,
 	computeVisibleAvatarCount,
 	getLastActivityByUserId,
 	sortMembersByActivity
@@ -122,5 +123,28 @@ describe('computeVisibleAvatarCount (Job 2: overlap with +N fallback)', () => {
 		expect(computeVisibleAvatarCount(27, onePlusChip)).toBe(1);
 		// Only the chip fits → 0 avatars, chip shows the full count.
 		expect(computeVisibleAvatarCount(27, onePlusChip - 1)).toBe(0);
+	});
+});
+
+describe('getVisibleGroupMembers', () => {
+	it('filters technical senders before header ordering and overflow', () => {
+		const members = [
+			member('@bart:x', 'Bart'),
+			member('@agency-12-service:x', 'Agency'),
+			member('@group-chat-system-40:x', 'System'),
+			member('@homer:x', 'Homer')
+		];
+		const visible = getVisibleGroupMembers(
+			members,
+			new Map([
+				['@homer:x', 5],
+				['@group-chat-system-40:x', 10]
+			])
+		);
+		expect(visible.map((item) => item.userId)).toEqual([
+			'@homer:x',
+			'@bart:x'
+		]);
+		expect(computeVisibleAvatarCount(visible.length, null)).toBe(2);
 	});
 });

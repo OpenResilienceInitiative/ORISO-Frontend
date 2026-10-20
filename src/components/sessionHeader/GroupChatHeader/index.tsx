@@ -21,7 +21,7 @@ import { chatTransportService } from '../../../services/chatTransportService';
 import {
 	ActivityMap,
 	getLastActivityByUserId,
-	sortMembersByActivity
+	getVisibleGroupMembers
 } from './memberActivity';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
@@ -35,7 +35,6 @@ import {
 } from './groupChatHeaderMenu';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { getModality, Modality } from '../../session/getModality';
-import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -310,13 +309,7 @@ export const GroupChatHeader = ({
 	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
 	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
 	const visibleMembers = useMemo(
-		() =>
-			sortMembersByActivity(
-				matrixMembers.filter(
-					(member) => !isSystemMatrixUser(member.userId)
-				),
-				memberActivity
-			),
+		() => getVisibleGroupMembers(matrixMembers, memberActivity),
 		[matrixMembers, memberActivity]
 	);
 	const stackMembers: StackMember[] = useMemo(
