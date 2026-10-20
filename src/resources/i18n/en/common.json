@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Loading participants …",
+		"unavailable": "Participants could not be loaded.",
+		"empty": "No participants."
+	},
 	"menuEffects": {
 		"title": "Menu appearance",
 		"label": "Backdrop and gentle menu animations",

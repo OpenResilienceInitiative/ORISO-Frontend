@@ -60,6 +60,7 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 	}
 
 	&__main {
+		min-width: 0;
 		border-radius: 28px 4px 4px 28px;
 		font-size: 16px;
 		font-weight: 500;

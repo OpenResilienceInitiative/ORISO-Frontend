@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Katılımcılar yükleniyor …",
+		"unavailable": "Katılımcılar yüklenemedi.",
+		"empty": "Katılımcı yok."
+	},
 	"menuEffects": {
 		"title": "Menü görünümü",
 		"label": "Arka plan perdesi ve yumuşak menü animasyonları",

@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Chargement des participants …",
+		"unavailable": "Les participants n’ont pas pu être chargés.",
+		"empty": "Aucun participant."
+	},
 	"menuEffects": {
 		"title": "Affichage des menus",
 		"label": "Voile et animations douces",

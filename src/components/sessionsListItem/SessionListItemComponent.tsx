@@ -23,6 +23,7 @@ import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
+import { GroupCardParticipants } from './GroupCardParticipants';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
@@ -1212,31 +1213,14 @@ export const SessionListItemComponent = ({
 						</div>
 					</div>
 					<div className="sessionsListItem__row">
-						<div className="sessionInfo__groupIcon">
-							<div className="sessionsListItem__stackedAvatars">
-								{/* Always render 2 avatar placeholders */}
-								{[0, 1].map((_, index) => (
-									<div
-										key={index}
-										className="sessionsListItem__avatarWrapper"
-									>
-										<UserAvatar
-											username={`placeholder-${index}`}
-											displayName="User"
-											userId={`placeholder-${index}`}
-											size="32px"
-											ring={false}
-										/>
-									</div>
-								))}
-
-								{/* Optional third circle */}
-								<div className="sessionsListItem__avatarWrapper sessionsListItem__avatarWrapper--plus">
-									<div className="sessionsListItem__plusAvatar">
-										+1
-									</div>
-								</div>
-							</div>
+						<div className="sessionsListItem__participants">
+							<GroupCardParticipants
+								roomId={matrixRoomId}
+								enabled={
+									Boolean(activeSession?.isGroup) &&
+									!caseHandoverContentLocked
+								}
+							/>
 						</div>
 						<div
 							className={clsx(

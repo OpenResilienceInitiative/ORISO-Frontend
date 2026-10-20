@@ -789,64 +789,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		text-overflow: ellipsis;
 	}
 
-	&__stackedAvatars {
-		position: relative;
-		width: 48px; // Wider to accommodate 3 overlapping 32px circles
-		height: 32px;
-		display: flex;
+	&__participants {
+		display: inline-flex;
 		align-items: center;
-		justify-content: flex-start;
-	}
-
-	&__avatarWrapper {
-		position: absolute;
-		border-radius: 50%;
-		border: 2px solid $white;
-		overflow: hidden;
-
-		&:nth-child(1) {
-			right: 16px; // Reversed order - right to left
-			top: 0;
-			z-index: 1;
-		}
-
-		&:nth-child(2) {
-			right: 6px; // Reversed order - right to left
-			top: 0;
-			z-index: 2;
-		}
-
-		&:nth-child(3) {
-			right: 0; // Reversed order - right to left
-			top: 0;
-			z-index: 3;
-		}
-
-		&--plus {
-			background-color: var(--m3-primary-container, #cc1e1c);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: var(--m3-on-primary-container, #ffe2de);
-			font-weight: $font-weight-bold;
-			font-size: 12px;
-		}
-
-		// Ensure the avatar fills the wrapper
-		> * {
-			display: block;
-		}
-	}
-
-	&__plusAvatar {
-		width: 32px;
-		height: 32px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 12px;
-		font-weight: $font-weight-bold;
-		color: $white;
+		flex-shrink: 0;
 	}
 
 	&__username {

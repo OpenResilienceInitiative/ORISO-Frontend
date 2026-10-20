@@ -1057,15 +1057,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			right: 62px;
 		}
 
-		/*
-		 * The chip's own geometry and colour live with the component that
-		 * renders it, `recipientSplitButton.styles.scss`. Rules for
-		 * `__audienceSelectorMain`, `__audienceSelectorChevron` and the
-		 * `--all` / `--target` colour pair used to sit here, but no component
-		 * has rendered those class names since the split button replaced the
-		 * hand-rolled chip — which is why "Alle" never turned grey (#894).
-		 */
-
 		&__audienceSelectorMenu {
 			position: absolute;
 			right: 0;

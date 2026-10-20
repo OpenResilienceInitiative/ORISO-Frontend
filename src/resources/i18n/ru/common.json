@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Загрузка участников …",
+		"unavailable": "Не удалось загрузить участников.",
+		"empty": "Нет участников."
+	},
 	"menuEffects": {
 		"title": "Вид меню",
 		"label": "Фон и плавная анимация меню",

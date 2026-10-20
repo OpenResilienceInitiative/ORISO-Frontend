@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
+		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
+		"empty": "ተሳተፍቲ የለዉን።"
+	},
 	"menuEffects": {
 		"title": "ኣቀራርባ ምናሌ",
 		"label": "መጋረጃን ቀሊል ምንቅስቓስ ምናሌን",
