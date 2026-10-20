@@ -1,5 +1,5 @@
 import type { StackParticipant } from '../message/participantStack';
-import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
+import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
 
 interface GroupMember {
 	userId: string;
@@ -17,8 +17,7 @@ export const groupCardParticipants = (
 		if (
 			!userId ||
 			member.membership !== 'join' ||
-			isSystemMatrixUser(userId) ||
-			/^@(group-chat-system-\d+|agency-\d+-service):/.test(userId) ||
+			isTechnicalMatrixUser(userId) ||
 			seen.has(userId)
 		)
 			return [];
