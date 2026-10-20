@@ -1728,7 +1728,15 @@
 					"text": "ስም ተጠቃሚ ወይ ምልክት ቃል ጌጋ እዩ። በጃኹም ደጊምኩም ፈትኑ።"
 				},
 				"consultantBlocked": "ናይ ኣማኸርቲ ኣካውንታት ኣብዚ ክኣትዉ ኣይክእሉን።",
-				"tooManyRequests": "ብዙሓት ፈተነታት። በጃኹም ውሑዳት ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።"
+				"tooManyRequests": "ብዙሓት ፈተነታት። በጃኹም ውሑዳት ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitSecond": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ሰከንድ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitSeconds": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{seconds}} ሰከንድ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitMinute": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ደቒቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitMinutes": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{minutes}} ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitHour": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ሰዓት ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitHours": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{hours}} ሰዓታት ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitDay": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ መዓልቲ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitDays": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{days}} መዓልትታት ተጸቢኹም እንደገና ፈትኑ።"
 			}
 		},
 		"mobile": {
