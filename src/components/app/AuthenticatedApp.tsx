@@ -47,6 +47,7 @@ import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRe
 import { usePendingGroupChatJoin } from '../../hooks/usePendingGroupChatJoin';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { useOneShotSessionFlag } from '../../hooks/useOneShotSessionFlag';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
@@ -127,17 +128,10 @@ export const AuthenticatedApp = ({
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
 	// Freshly-registered askers keep the waiting room they saw before the
 	// document load, while the bootstrap below runs (one-shot flag set just
-	// before the post-registration redirect).
-	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(
-		() => sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true'
-	);
-	// Clear the one-shot flag only once a render is committed. React can throw
-	// away the first render after the reload and run it again; clearing it
-	// during render left the repeat without the flag, so the waiting room never
-	// showed and its gate (and the closing wave) never opened.
-	useEffect(() => {
-		sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
-	}, []);
+	// before the post-registration redirect, cleared after the first commit).
+	const postRegFlagged = useOneShotSessionFlag(POST_REGISTRATION_LOADER_KEY);
+	const [showPostRegLoader, setShowPostRegLoader] =
+		useState<boolean>(postRegFlagged);
 	/* Someone who registered through a group link sees the group's words in
 	   the same waiting room, and its button opens the group's entry room
 	   instead of an enquiry. It used to get no waiting room at all here —
