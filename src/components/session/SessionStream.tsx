@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -62,6 +63,10 @@ import {
 	extractReactionEvents
 } from '../../utils/matrixTimelineEventFormatter';
 import { applyMessageEdits } from '../../utils/messageRelations';
+import {
+	applyCallLifecycleEdits,
+	collapseCallLifecycleMessages
+} from '../../utils/callLifecycleMessage';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import {
 	isCaseHandoverAccessControlled,
@@ -263,6 +268,33 @@ export const SessionStream = ({
 				pendingCaseHandoverConsent?.actionPath
 			),
 		[pendingCaseHandoverConsent?.actionPath]
+	);
+
+	// A late decision or fallback belongs only to the committed card that started it.
+	// Layout effects run synchronously at commit; a suspended render must not invalidate
+	// a decision on the still-visible card.
+	const consentScopeKey = JSON.stringify([
+		activeSession.item?.id,
+		pendingCaseHandoverConsent?.id,
+		pendingCaseHandoverRequestId,
+		userData.userId
+	]);
+	const consentScope = useRef({ key: consentScopeKey, generation: 0 });
+	useLayoutEffect(() => {
+		if (consentScope.current.key !== consentScopeKey) {
+			consentScope.current = {
+				key: consentScopeKey,
+				generation: consentScope.current.generation + 1
+			};
+		}
+		setCaseHandoverConsentSubmitting(false);
+		setCaseHandoverConsentError('');
+	}, [consentScopeKey]);
+	useLayoutEffect(
+		() => () => {
+			consentScope.current.generation += 1;
+		},
+		[]
 	);
 
 	const { setConsultantList } = useContext(ConsultantListContext);
@@ -485,33 +517,44 @@ export const SessionStream = ({
 					);
 				};
 
+				/*
+				 * Every item carries the id of the room it came from.
+				 *
+				 * This used to be opt-in, and the main timeline did not opt
+				 * in — which silently cost us every call card. WP-B2 added
+				 * the stamp so the client timeline could reject side-room
+				 * items (`excludeSideRoomMessages`), and only the side rooms
+				 * asked for it; then `MessageItemComponent` started asking
+				 * `callLifecycle.roomRef === rid` to keep a supervision call
+				 * card out of the client timeline, and for the main timeline
+				 * that compared a room id against `undefined`. Always false,
+				 * so a call in the conversation rendered as an ordinary
+				 * message rather than as a card. Its own tests passed
+				 * because they pass `rid` by hand.
+				 *
+				 * A flag that one caller in three has to remember is the
+				 * shape of that bug, so there is no flag: `MessageItem`
+				 * declares `rid` as required, and now it always is.
+				 */
 				const formatRoomMessages = (
 					events: any[],
-					roomId?: string | null,
-					stampRoomId = false
+					roomId?: string | null
 				) => {
 					const matrixRoom = roomId
 						? chatTransportService.getMatrixRoom(roomId)
 						: null;
-					return (
-						events
-							.map((event: any) =>
-								formatMatrixTimelineEvent(
-									event,
-									matrixRoom,
-									encryptedFallbackText
-								)
+					return events
+						.map((event: any) =>
+							formatMatrixTimelineEvent(
+								event,
+								matrixRoom,
+								encryptedFallbackText
 							)
-							.filter(Boolean)
-							// WP-B2: side-room items carry their room id so the
-							// client timeline can reject them as a safety net
-							// (`excludeSideRoomMessages`).
-							.map((item: any) =>
-								stampRoomId && roomId
-									? { ...item, rid: roomId }
-									: item
-							)
-					);
+						)
+						.filter(Boolean)
+						.map((item: any) =>
+							roomId ? { ...item, rid: roomId } : item
+						);
 				};
 
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
@@ -538,10 +581,35 @@ export const SessionStream = ({
 						}
 					});
 				}
-				const formattedMessages = formatRoomMessages(
-					clientEvents,
-					resolvedMatrixRoomId
-				);
+				/*
+				 * One pipeline, for every room.
+				 *
+				 * A call card is a series of REVISIONS: the lifecycle writes
+				 * an edit per membership change and a terminal one at the
+				 * end. `applyCallLifecycleEdits` folds those onto the
+				 * original and `collapseCallLifecycleMessages` keeps one card
+				 * per call — and the side rooms ran neither. They had only
+				 * `applyMessageEdits`, which DROPS every `m.replace` without
+				 * folding it, so a call started in a supervision or team room
+				 * sat at whatever it was first written as: no live presence,
+				 * no ending, and a Join button for a call that had finished,
+				 * unless the authenticated backend read happened to answer.
+				 * Calls can be started in those rooms — see
+				 * `startSupervisionCall` — so they need the same treatment.
+				 */
+				const prepareRoomMessages = (
+					events: any[],
+					roomId?: string | null
+				): any[] =>
+					prepareMessages(
+						collapseCallLifecycleMessages(
+							applyMessageEdits(
+								applyCallLifecycleEdits(
+									formatRoomMessages(events, roomId)
+								)
+							)
+						)
+					);
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
 				// Side-room reactions stay out of the client timeline; the
@@ -549,21 +617,17 @@ export const SessionStream = ({
 				const reactionEvents = [...extractReactionEvents(clientEvents)];
 
 				setMessagesItem({
-					messages: prepareMessages(
-						applyMessageEdits(formattedMessages)
+					messages: prepareRoomMessages(
+						clientEvents,
+						resolvedMatrixRoomId
 					),
 					reactionEvents
 				});
 				setSupervisionMessages(
 					supervisionRoomId
-						? prepareMessages(
-								applyMessageEdits(
-									formatRoomMessages(
-										supervisionEvents,
-										supervisionRoomId,
-										true
-									)
-								)
+						? prepareRoomMessages(
+								supervisionEvents,
+								supervisionRoomId
 							)
 						: []
 				);
@@ -571,15 +635,7 @@ export const SessionStream = ({
 					sessionId: activeSession.item?.id,
 					roomId: teamRoomId,
 					messages: teamRoomId
-						? prepareMessages(
-								applyMessageEdits(
-									formatRoomMessages(
-										teamEvents,
-										teamRoomId,
-										true
-									)
-								)
-							)
+						? prepareRoomMessages(teamEvents, teamRoomId)
 						: []
 				});
 				setLoading(false);
@@ -1413,10 +1469,15 @@ export const SessionStream = ({
 			return;
 		}
 		const notification = pendingCaseHandoverConsent;
+		const generation = consentScope.current.generation;
 		let cancelled = false;
 		readCaseHandoverRequestStatus(sessionId, pendingCaseHandoverRequestId)
 			.then((status) => {
-				if (!cancelled && !isPendingCaseHandoverStatus(status.status)) {
+				if (
+					!cancelled &&
+					consentScope.current.generation === generation &&
+					!isPendingCaseHandoverStatus(status.status)
+				) {
 					settleCaseHandoverConsent(notification, status);
 				}
 			})
@@ -1430,7 +1491,8 @@ export const SessionStream = ({
 	}, [
 		activeSession.item?.id,
 		pendingCaseHandoverConsent?.id,
-		pendingCaseHandoverRequestId
+		pendingCaseHandoverRequestId,
+		consentScopeKey
 	]);
 
 	if (caseHandoverCurtainNeeded && caseHandoverStatusLoading) {
@@ -1466,10 +1528,13 @@ export const SessionStream = ({
 		const notification = pendingCaseHandoverConsent;
 		const requestId = pendingCaseHandoverRequestId;
 		const sessionId = activeSession.item.id;
+		const generation = consentScope.current.generation;
+		const current = () => consentScope.current.generation === generation;
 		setCaseHandoverConsentSubmitting(true);
 		setCaseHandoverConsentError('');
 		apiDecideCaseHandoverClientConsent(sessionId, requestId, approved)
 			.then((confirmedStatus) => {
+				if (!current()) return;
 				if (
 					!isStatusOfConsentRequest(
 						confirmedStatus,
@@ -1493,6 +1558,7 @@ export const SessionStream = ({
 			// - anything else: read this request's own status and only report a
 			//   failure while it is really still open.
 			.catch((error: Error | Response) => {
+				if (!current()) return;
 				if (
 					(error as Response)?.headers?.get(FETCH_ERRORS.X_REASON) ===
 					X_REASON.CASE_OWNER_CHANGED
@@ -1508,6 +1574,7 @@ export const SessionStream = ({
 				}
 				return readCaseHandoverRequestStatus(sessionId, requestId).then(
 					(currentStatus) => {
+						if (!current()) return;
 						if (isPendingCaseHandoverStatus(currentStatus.status)) {
 							throw new Error('Consent request is still open');
 						}
@@ -1516,11 +1583,15 @@ export const SessionStream = ({
 				);
 			})
 			.catch(() => {
-				setCaseHandoverConsentError(
-					translate('caseHandover.error.failed')
-				);
+				if (current()) {
+					setCaseHandoverConsentError(
+						translate('caseHandover.error.failed')
+					);
+				}
 			})
-			.finally(() => setCaseHandoverConsentSubmitting(false));
+			.finally(() => {
+				if (current()) setCaseHandoverConsentSubmitting(false);
+			});
 	};
 
 	if (caseHandoverCurtainNeeded && !caseHandoverStatus?.canViewContent) {
@@ -1558,6 +1629,7 @@ export const SessionStream = ({
 						displayedConsent.actionPath
 					) !== null && (
 						<CaseHandoverConversation
+							sessionId={activeSession.item.id}
 							conversationType={notificationConversationType(
 								activeSession
 							)}
@@ -1629,6 +1701,7 @@ export const SessionStream = ({
 				refreshMessages={fetchSessionMessages}
 				onLoadEarlierMessages={loadEarlierMessages}
 				caseHandoverStatus={caseHandoverStatus}
+				onCaseHandoverStatusChange={setCaseHandoverStatus}
 			/>
 			{isOverlayActive && (
 				<Overlay

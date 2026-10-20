@@ -944,6 +944,7 @@
 		},
 		"loadError": {
 			"consultants": "The colleagues could not be loaded.",
+			"info": "The chat info could not be loaded.",
 			"retry": "Try again",
 			"topics": "The topics could not be loaded."
 		},
@@ -959,6 +960,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Agency",
+				"agencyLine": "Agency: {{name}}",
 				"createDate": "Creation date",
 				"creator": "Creator",
 				"duration": "Duration",
@@ -1253,6 +1255,7 @@
 		"consent": {
 			"headline": "Before you write",
 			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group.",
+			"descriptionNamed": "This group is run by {{agency}}. Please agree to its privacy policy before you write in the group.",
 			"reject": "Decline",
 			"accept": "Agree",
 			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
@@ -1731,7 +1734,15 @@
 					"text": "Username or password are not correct. Please try again."
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here.",
-				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again.",
+				"tooManyRequestsWaitSecond": "Too many attempts. Please wait about a second and try again.",
+				"tooManyRequestsWaitSeconds": "Too many attempts. Please wait about {{seconds}} seconds and try again.",
+				"tooManyRequestsWaitMinute": "Too many attempts. Please wait about a minute and try again.",
+				"tooManyRequestsWaitMinutes": "Too many attempts. Please wait about {{minutes}} minutes and try again.",
+				"tooManyRequestsWaitHour": "Too many attempts. Please wait about an hour and try again.",
+				"tooManyRequestsWaitHours": "Too many attempts. Please wait about {{hours}} hours and try again.",
+				"tooManyRequestsWaitDay": "Too many attempts. Please wait about a day and try again.",
+				"tooManyRequestsWaitDays": "Too many attempts. Please wait about {{days}} days and try again."
 			}
 		},
 		"mobile": {
@@ -1926,6 +1937,27 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			},
+			"state": {
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"description": {
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			},
+			"startedBy": "Called by {{name}}."
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
@@ -2504,6 +2536,10 @@
 					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
 					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
 					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
+				},
+				"dpaRestricted": {
+					"title": "Advice seekers cannot start a live chat with you",
+					"text": "Your provider has not confirmed the current data processing agreement. Until it does, new advice seekers cannot start a live chat or an enquiry. Counselling that has already begun continues."
 				}
 			},
 			"masterKey": {
@@ -3650,7 +3686,12 @@
 			},
 			"back": "Back",
 			"next": "Next",
-			"consentPending": "Client consent is required before access is activated."
+			"consentPending": "Client consent is required before access is activated.",
+			"reclaim": {
+				"copy": "A colleague took over this case while you were away. You can take it back now.",
+				"cta": "Take the case back",
+				"unavailable": "This case can no longer be taken back."
+			}
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",
@@ -3671,11 +3712,12 @@
 		},
 		"readOnly": {
 			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
-			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages."
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
+			"extend": "Extend access"
 		},
 		"standingPreference": {
 			"label": "Always ask before additional access",
-			"description": "Applies to future requests in this conversation. Current requests and access already granted remain unchanged.",
+			"description": "Applies only to future requests in this conversation within your counselling centre. Current requests and access already granted remain unchanged.",
 			"baselineDescription": "When off, your counselling agency’s settings apply. Any consent required by the agency is still required.",
 			"saving": "Saving …",
 			"saved": "Setting saved.",
@@ -4662,6 +4704,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",
@@ -5283,6 +5340,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Print / save as PDF",
+		"confirmedBy": "Confirmed by",
+		"confirmedAt": "Confirmed on (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "You can save as PDF in the print dialog. Turn off headers and footers to keep the link address out of the printed document.",
+		"printUnavailable": "Your confirmation was saved. The print view is unavailable because the confirmation details are incomplete.",
 		"title": "Review and confirm contract documents",
 		"subtitle": "Please read the contract documents in full, provide your details, and then confirm.",
 		"signerName": "Full name",
@@ -5726,6 +5789,25 @@
 			"callFailed": "Call failed: {{message}}",
 			"startFailed": "Failed to start call: {{message}}",
 			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
+		},
+		"notes": {
+			"title": "Call notes",
+			"privacy": "Private. Only for you, and only for as long as the call lasts.",
+			"type": "Kind of note",
+			"text": "Note",
+			"add": "Add note",
+			"remove": "Remove note",
+			"copy": "Copy all",
+			"copied": "Copied",
+			"empty": "Nothing noted yet.",
+			"collapse": "Collapse notes",
+			"expand": "Expand notes",
+			"open": "Call notes",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remark",
+				"aufgabe": "Task"
+			}
 		}
 	},
 	"form": {

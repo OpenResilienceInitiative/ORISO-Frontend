@@ -956,6 +956,7 @@
 		},
 		"loadError": {
 			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"info": "Die Chat-Info konnte nicht geladen werden.",
 			"retry": "Erneut versuchen",
 			"topics": "Die Themen konnten nicht geladen werden."
 		},
@@ -973,6 +974,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Beratungsstelle",
+				"agencyLine": "Beratungsstelle: {{name}}",
 				"createDate": "Erstellungsdatum",
 				"creator": "Ersteller",
 				"duration": "Dauer",
@@ -1271,6 +1273,7 @@
 		"consent": {
 			"headline": "Bevor Sie schreiben",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimmen Sie der Datenschutzerklärung dieser Beratungsstelle zu, bevor Sie in der Gruppe schreiben.",
 			"reject": "Ablehnen",
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
@@ -1746,7 +1749,15 @@
 					"text": "Benutzername oder Passwort sind nicht korrekt. Bitte versuchen Sie es erneut."
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
-				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warten Sie etwa eine Sekunde und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warten Sie etwa {{seconds}} Sekunden und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warten Sie etwa eine Minute und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warten Sie etwa {{minutes}} Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitHour": "Zu viele Versuche. Bitte warten Sie etwa eine Stunde und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitHours": "Zu viele Versuche. Bitte warten Sie etwa {{hours}} Stunden und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitDay": "Zu viele Versuche. Bitte warten Sie etwa einen Tag und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitDays": "Zu viele Versuche. Bitte warten Sie etwa {{days}} Tage und versuchen Sie es dann erneut."
 			}
 		},
 		"mobile": {
@@ -1941,6 +1952,27 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
+			"state": {
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"description": {
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			},
+			"startedBy": "Angerufen von {{name}}."
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
@@ -2529,6 +2561,10 @@
 					"sessionExpired": "Ihre Anmeldung ist abgelaufen. Melden Sie sich neu an und schalten Sie den Live-Chat danach wieder ein.",
 					"leaseLost": "Der Server führt Sie nicht mehr als verfügbar. Schalten Sie den Live-Chat wieder ein, um erreichbar zu sein.",
 					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalten Sie den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				},
+				"dpaRestricted": {
+					"title": "Ratsuchende können gerade keinen Live-Chat mit Ihnen beginnen",
+					"text": "Ihr Träger hat die aktuelle Auftragsverarbeitungsvereinbarung noch nicht bestätigt. Bis dahin können neue Ratsuchende weder einen Live-Chat noch eine Anfrage beginnen. Bereits begonnene Beratungen laufen weiter."
 				}
 			},
 			"masterKey": {
@@ -3704,7 +3740,12 @@
 			},
 			"back": "Zurück",
 			"next": "Weiter",
-			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird.",
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während Ihrer Abwesenheit übernommen. Sie können ihn jetzt zurücknehmen.",
+				"cta": "Fall zurücknehmen",
+				"unavailable": "Dieser Fall kann nicht mehr zurückgenommen werden."
+			}
 		},
 		"accepted": {
 			"title": "Ihre Anfrage wurde von einer Berater:in angenommen.",
@@ -3725,11 +3766,12 @@
 		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden."
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"extend": "Zugriff verlängern"
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
-			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb Ihrer Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saving": "Wird gespeichert …",
 			"saved": "Einstellung gespeichert.",
@@ -4714,6 +4756,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",
@@ -5358,6 +5415,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Drucken / als PDF speichern",
+		"confirmedBy": "Bestätigt von",
+		"confirmedAt": "Bestätigt am (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "Im Druckdialog können Sie als PDF speichern. Schalten Sie Kopf- und Fußzeilen aus, damit die Linkadresse nicht mitgedruckt wird.",
+		"printUnavailable": "Ihre Bestätigung wurde gespeichert. Die Druckansicht ist nicht verfügbar, weil die Bestätigungsdaten unvollständig sind.",
 		"title": "Vertragsunterlagen prüfen und bestätigen",
 		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.",
 		"signerName": "Vollständiger Name",
@@ -5801,6 +5864,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "Gesprächsnotizen",
+			"privacy": "Privat. Nur für Sie und nur für die Dauer des Gesprächs.",
+			"type": "Art der Notiz",
+			"text": "Notiz",
+			"add": "Notiz hinzufügen",
+			"remove": "Notiz entfernen",
+			"copy": "Alles kopieren",
+			"copied": "Kopiert",
+			"empty": "Noch nichts notiert.",
+			"collapse": "Notizen einklappen",
+			"expand": "Notizen ausklappen",
+			"open": "Gesprächsnotizen",
+			"types": {
+				"frage": "Frage",
+				"anmerkung": "Anmerkung",
+				"aufgabe": "Aufgabe"
+			}
 		}
 	},
 	"form": {

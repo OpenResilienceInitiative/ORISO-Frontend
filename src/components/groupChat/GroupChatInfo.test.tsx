@@ -26,6 +26,7 @@ vi.mock('../../globalState', async () => {
 		UserDataContext: react.createContext({ userData: {} }),
 		SessionTypeContext: react.createContext({ path: '/sessions' }),
 		ActiveSessionContext: react.createContext({}),
+		NotificationsContext: react.createContext({}),
 		ActiveSessionProvider: ({ children }: any) => children
 	};
 });
@@ -41,7 +42,9 @@ vi.mock('../../hooks/useResponsive', () => ({
 vi.mock('../../hooks/useSession', () => ({
 	useSession: () => ({ session: null, ready: false })
 }));
-vi.mock('../../hooks/useAppConfig', () => ({ useAppConfig: () => ({}) }));
+vi.mock('../../hooks/useAppConfig', () => ({
+	useAppConfig: () => ({ urls: { toLogin: '' } })
+}));
 
 const renderInfo = (props: { dialog?: boolean }) =>
 	render(

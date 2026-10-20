@@ -138,7 +138,10 @@ export default defineConfig({
 					include: [
 						'@storybook/addon-docs > @storybook/react-dom-shim',
 						// Loaded by the Help/Profile route; discover before stories run.
-						'@mui/icons-material/AnimationOutlined'
+						'@mui/icons-material/AnimationOutlined',
+						// Waiting-room stories otherwise discover this mid-shard and
+						// reload React modules while other stories are rendering.
+						'@mui/icons-material/WavingHandOutlined'
 					]
 				},
 				test: {
