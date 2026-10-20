@@ -1101,8 +1101,7 @@ async function recipientLayoutJourney(
 	}
 	await userEvent.click(
 		within(dialog).getByRole('button', {
-			name: LONG_RECIPIENT,
-			exact: true
+			name: LONG_RECIPIENT
 		})
 	);
 	await userEvent.keyboard('{Escape}');
