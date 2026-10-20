@@ -14,8 +14,9 @@ gh issue create --repo OpenResilienceInitiative/ORISO-Frontend --title '<title>'
 
 ## Project workflow
 
-Resolve machine-local paths through `~/.config/agent-routing/paths.env` before reading `${PROJECT_ORISO_ROOT}/AGENTS.md`.
-For issue/PR work, follow `${PROJECT_ORISO_ROOT}/0 - Docs/issue-task-workflow.md` and the portable `issue-subtask-pr-loop` skill resolved by the project/global router. These sources own classification, board fields, ownership, review, and delivery gates; this adapter does not replace them.
+In a multi-repo workspace, resolve machine-local paths through `~/.config/agent-routing/paths.env` when it exists before reading `${PROJECT_ORISO_ROOT}/AGENTS.md`.
+For issue/PR work in that workspace, follow `${PROJECT_ORISO_ROOT}/0 - Docs/issue-task-workflow.md` and the portable `issue-subtask-pr-loop` skill resolved by the project/global router. These sources own classification, board fields, ownership, review, and delivery gates; this adapter does not replace them.
+In a standalone clone, skip the parent paths and use this repository's `AGENTS.md`, existing workflow documentation, and the local adapters directly. If an operation requires an unavailable shared workflow or capability, report that limitation rather than inventing a replacement or treating it as authorization.
 Read `triage-labels.md` before applying a label. Ticket publication requires authorization from the current task; setup alone grants none.
 
 **PRs as a request surface: no.**
