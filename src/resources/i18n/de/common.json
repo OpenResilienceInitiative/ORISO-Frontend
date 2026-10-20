@@ -3771,7 +3771,7 @@
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
-			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb Ihrer Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saving": "Wird gespeichert …",
 			"saved": "Einstellung gespeichert.",

@@ -1733,6 +1733,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/message/MessageItemComponent.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
 		],
 		"usage": "app-used"
@@ -1760,8 +1761,12 @@
 		"fileName": "case-handover.svg",
 		"sourcePath": "src/resources/img/icons/case-handover/case-handover.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/message/MessageItemComponent.tsx",
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:data-policy:base",
@@ -2838,7 +2843,6 @@
 			"src/components/profile/ConsultantInformation.tsx",
 			"src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
 			"src/components/registration/metaInfo/MetaInfo.tsx",
-			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
@@ -3459,8 +3463,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/app/NavigationBar.tsx",
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/session/SessionItemComponent.tsx"
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3690,7 +3693,6 @@
 		"sourcePath": "src/resources/img/icons/persons-two.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/sessionHeader/MemberAvatarStack.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx"
 		],
@@ -4893,7 +4895,8 @@
 		"sourcePath": "src/resources/img/registration-md3/icons/gen-avatar.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/registration/accountData/AccountData.tsx"
+			"src/components/registration/accountData/AccountData.tsx",
+			"src/components/waitingRoom/callEntry/CallEntryIdentity.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -4909,7 +4912,8 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/invite/InviteLink.tsx",
-			"src/components/registration/accountData/AccountData.tsx"
+			"src/components/registration/accountData/AccountData.tsx",
+			"src/components/waitingRoom/callEntry/CallEntryIdentity.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -4924,7 +4928,8 @@
 		"sourcePath": "src/resources/img/registration-md3/icons/gen-key.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/registration/accountData/AccountData.tsx"
+			"src/components/registration/accountData/AccountData.tsx",
+			"src/components/waitingRoom/callEntry/CallEntryIdentity.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -4939,7 +4944,8 @@
 		"sourcePath": "src/resources/img/registration-md3/icons/gen-user.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/registration/accountData/AccountData.tsx"
+			"src/components/registration/accountData/AccountData.tsx",
+			"src/components/waitingRoom/callEntry/CallEntryIdentity.tsx"
 		],
 		"usage": "app-used"
 	},

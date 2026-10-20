@@ -102,7 +102,7 @@ describe('CaseHandoverConsentCard', () => {
 		expect(decline).not.toHaveBeenCalled();
 	});
 
-	it('keeps the optional overview decision and notification continuation actionable', async () => {
+	it('keeps notification setup actionable without putting a current-request decision in the optional overview', async () => {
 		const approve = vi.fn();
 		const setup = vi.fn();
 		render(
@@ -121,8 +121,8 @@ describe('CaseHandoverConsentCard', () => {
 		expect(
 			dialog.getByText('caseHandover.consent.info.description')
 		).toBeTruthy();
-		fireEvent.click(dialog.getByRole('switch'));
-		expect(approve).toHaveBeenCalledOnce();
+		expect(dialog.queryByRole('switch')).toBeNull();
+		expect(approve).not.toHaveBeenCalled();
 		fireEvent.click(
 			dialog.getByRole('button', {
 				name: 'caseHandover.consent.info.notificationsAction'
@@ -144,8 +144,8 @@ describe('CaseHandoverConsentCard', () => {
 		expect(screen.getByText('Carimat')).toBeTruthy();
 		expect(screen.getByText('Quick Guide')).toBeTruthy();
 		const bubble = screen
-			.getByText('A counsellor requested access to this conversation')
-			.closest('.messageItem__message--systemNotification');
+			.getByRole('button', { name: 'Approve access' })
+			.closest('.carimatMessageFrame__bubble');
 		expect(bubble).toBeTruthy();
 		expect(
 			bubble?.contains(

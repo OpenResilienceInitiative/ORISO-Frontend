@@ -385,6 +385,27 @@ const emitLifecycle = (change: any) => {
 
 describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
+		vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+			const request =
+				input instanceof Request ? input : new Request(String(input));
+			if (
+				request.method !== 'GET' ||
+				!request.url.endsWith(
+					'/sessions/1/case-handover/consent-preference'
+				)
+			)
+				throw new Error('Unexpected future-preference HTTP request');
+			return new Response(
+				JSON.stringify({
+					sessionId: 1,
+					alwaysAskBeforeAdditionalAccess: false
+				}),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
+		});
 		vi.clearAllMocks();
 		mocks.getCaseHandoverStatus.mockReset();
 		mocks.lifecycleListeners.length = 0;
@@ -402,6 +423,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 	afterEach(() => {
 		cleanup();
+		vi.unstubAllGlobals();
 	});
 
 	it.each([0, 1, 2])(
@@ -506,11 +528,23 @@ describe('SessionStream Matrix room lifecycle', () => {
 				}
 			]
 		});
-		fireEvent.click(await screen.findByRole('switch'));
-		expect((await screen.findByRole('status')).textContent).toBe(
-			'caseHandover.consent.info.takeoverContinues'
+		fireEvent.click(
+			await screen.findByRole('switch', {
+				name: 'caseHandover.consent.optOut.switchLabel'
+			})
 		);
-		expect(screen.queryByRole('switch')).toBeNull();
+		expect(
+			(
+				await screen.findByText(
+					'caseHandover.consent.info.takeoverContinues'
+				)
+			).getAttribute('role')
+		).toBe('status');
+		expect(
+			screen.queryByRole('switch', {
+				name: 'caseHandover.consent.optOut.switchLabel'
+			})
+		).toBeNull();
 	});
 
 	it('keeps the real request available when saving fails', async () => {
@@ -530,11 +564,26 @@ describe('SessionStream Matrix room lifecycle', () => {
 				}
 			]
 		});
-		fireEvent.click(await screen.findByRole('switch'));
-		expect(await screen.findByRole('alert')).toBeTruthy();
-		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
-			true
+		fireEvent.click(
+			await screen.findByRole('switch', {
+				name: 'caseHandover.consent.optOut.switchLabel'
+			})
 		);
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'caseHandover.error.failed'
+		);
+		expect(
+			await screen.findByRole('switch', {
+				name: 'caseHandover.standingPreference.label'
+			})
+		).toBeTruthy();
+		expect(
+			(
+				screen.getByRole('switch', {
+					name: 'caseHandover.consent.optOut.switchLabel'
+				}) as HTMLInputElement
+			).checked
+		).toBe(true);
 	});
 
 	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {

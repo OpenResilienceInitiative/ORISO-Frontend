@@ -155,7 +155,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './session.styles';
 import { focusSessionChromeOnPointerDown } from './focusSessionChrome';
 import { useDebouncedCallback } from 'use-debounce';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
+import {
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
@@ -3241,97 +3244,62 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className={'message-holder'}>
 							{shouldShowRobotMessages &&
 								!showWaitingMiniGame &&
-								visibleRobotCards.map((card, index) => (
-									<div className="messageItem" key={card._id}>
-										<div className="messageItem__messageWrap">
-											{index === 0 && (
-												<div
-													className="messageItem__systemAvatar"
-													aria-hidden="true"
-												>
-													<NotificationBellIcon className="messageItem__systemAvatarIcon" />
-												</div>
-											)}
-											{index !== 0 && (
-												<div
-													className="session__robotIncomingAvatarSpacer"
-													aria-hidden="true"
-												/>
-											)}
-											<div className="messageItem__content">
-												{index === 0 && (
-													<div className="messageItem__header">
-														<div className="messageItem__username messageItem__username--system">
-															{translate(
-																'message.systemNotification'
-															)}
-														</div>
-														<span className="messageItem__headerTime">
-															5:00
-														</span>
-													</div>
-												)}
-												<div className="messageItem__message messageItem__message--systemNotification">
-													{index === 0 && (
-														<div className="messageItem__systemNotificationTag">
-															{translate(
-																'message.systemNotification'
-															)}
-														</div>
-													)}
-													<div className="messageItem__systemNotificationTitle">
-														{card.title}
-													</div>
-													{card.playLabel ? (
-														<div className="session__robotSystemActionRow">
-															<div className="messageItem__systemNotificationDescription">
-																{
-																	card.description
-																}
-															</div>
-															<button
-																type="button"
-																className="session__robotSystemInlinePlayButton"
-																onClick={(
-																	event
-																) => {
-																	event.preventDefault();
-																	event.stopPropagation();
-																	setShowWaitingMiniGame(
-																		true
-																	);
-																}}
-															>
-																{card.playLabel}
-															</button>
-														</div>
-													) : (
+								visibleRobotCards.length > 0 && (
+									<CarimatMessageFrame
+										subtitle={translate(
+											'message.systemNotification'
+										)}
+									>
+										{visibleRobotCards.map((card) => (
+											<CarimatMessageBubble
+												key={card._id}
+												topic={card.title}
+											>
+												{card.playLabel ? (
+													<div className="session__robotSystemActionRow">
 														<div className="messageItem__systemNotificationDescription">
 															{card.description}
 														</div>
-													)}
-													{card.cta && (
 														<button
 															type="button"
-															className="session__robotSystemRegistrationLink"
+															className="session__robotSystemInlinePlayButton"
 															onClick={(
 																event
 															) => {
 																event.preventDefault();
 																event.stopPropagation();
-																navigate(
-																	'/registration'
+																setShowWaitingMiniGame(
+																	true
 																);
 															}}
 														>
-															{card.cta}
+															{card.playLabel}
 														</button>
-													)}
-												</div>
-											</div>
-										</div>
-									</div>
-								))}
+													</div>
+												) : (
+													<div className="messageItem__systemNotificationDescription">
+														{card.description}
+													</div>
+												)}
+												{card.cta && (
+													<button
+														type="button"
+														className="session__robotSystemRegistrationLink"
+														onClick={(event) => {
+															event.preventDefault();
+															event.stopPropagation();
+															navigate(
+																'/registration'
+															);
+														}}
+													>
+														{card.cta}
+													</button>
+												)}
+											</CarimatMessageBubble>
+										))}
+									</CarimatMessageFrame>
+								)}
 							{shouldShowRobotTypingIndicator && (
 								<div className="messageItem session__robotTypingIndicator">
 									<div className="messageItem__messageWrap">

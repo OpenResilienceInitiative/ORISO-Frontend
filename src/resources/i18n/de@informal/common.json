@@ -2390,7 +2390,8 @@
 		},
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
-			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb deiner Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert."
 		}
 	},
 	"supervisorDialog": {
