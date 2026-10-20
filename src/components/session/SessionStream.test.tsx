@@ -168,9 +168,8 @@ vi.mock(
 // the contexts and helpers SessionStream consumes.
 vi.mock('../../globalState', async () => {
 	const ReactModule = await import('react');
-	const { UserDataContext } = await import(
-		'../../globalState/context/UserDataContext'
-	);
+	const { UserDataContext } =
+		await import('../../globalState/context/UserDataContext');
 	return {
 		AUTHORITIES: {
 			ASKER_DEFAULT: 'AUTHORIZATION_USER_DEFAULT',
@@ -709,6 +708,21 @@ describe('SessionStream Matrix room lifecycle', () => {
 			});
 			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
 		});
+
+		it.each(['PENDING_RECIPIENT_ACCEPTANCE', 'SOME_FUTURE_STATUS'])(
+			'keeps the consent card and notification unread for status %s',
+			async (status) => {
+				vi.mocked(
+					apiDecideCaseHandoverClientConsent
+				).mockResolvedValueOnce(requestStatus({ status }));
+				renderSessionStream({
+					isGroup: false,
+					notificationFeed: [consentNotification()]
+				});
+				await clickApprove();
+				expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+			}
+		);
 
 		it('ignores a closed request load after the signed-in asker changes', async () => {
 			const oldLoad = deferred<any>();

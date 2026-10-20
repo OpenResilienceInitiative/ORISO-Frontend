@@ -26,11 +26,21 @@ export type CaseHandoverStatusValue =
 	| 'OWNER_CHANGED'
 	| (string & {});
 
+/** Statuses that end a request; anything else (incl. unknown) stays open. */
+const CLOSED_CASE_HANDOVER_STATUSES: readonly string[] = [
+	'NOT_REQUESTED',
+	'RECIPIENT_DECLINED',
+	'GRANTED',
+	'DENIED',
+	'CLIENT_CONSENT_DECLINED',
+	'RECLAIMED',
+	'EXPIRED',
+	'OWNER_CHANGED'
+];
+
 /** Pending requests retain their decision controls and feed acknowledgement. */
 export const isPendingCaseHandoverStatus = (status: CaseHandoverStatusValue) =>
-	status === 'PENDING' ||
-	status === 'PENDING_CLIENT_CONSENT' ||
-	status === 'GRANTED_PENDING_CLIENT_OPTOUT';
+	!CLOSED_CASE_HANDOVER_STATUSES.includes(status);
 
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 
