@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import de from '../../resources/i18n/de/common.json';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
@@ -1898,25 +1901,56 @@ export const SupervisionRowLabel: Story = {
 /**
  * The label truncates rather than pushing the row apart. "Supervision" fits
  * German and English; a longer translation must not shove the date out of the
- * card, and `title` keeps the full word one hover away.
+ * card, and `title` preserves the descriptive supervision tooltip.
  */
+const longSupervisionLabel =
+	'Supervision mit einer absichtlich sehr langen Bezeichnung';
+const supervisionDescription = 'Supervision – Sie lesen in diesem Chat mit';
+const longSupervisionTranslations = createInstance();
+void longSupervisionTranslations.init({
+	lng: 'de',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: {
+		de: {
+			common: {
+				...de,
+				sessionList: {
+					...de.sessionList,
+					toolbar: {
+						...de.sessionList.toolbar,
+						chips: {
+							...de.sessionList.toolbar.chips,
+							supervision: longSupervisionLabel
+						}
+					}
+				}
+			}
+		}
+	},
+	interpolation: { escapeValue: false }
+});
+
 export const SupervisionRowLabelTruncates: Story = {
 	name: 'Supervision — a long translation truncates instead of pushing (#1306)',
 	render: () => {
 		seedMatrixRoom(0);
 		return (
-			<div style={{ width: 320 }}>
-				<RuntimeSessionListItem
-					viewerId={SUPERVISOR_ID}
-					sessionOverrides={{
-						supervision: {
-							supervisedByMe: true,
-							supervisorConsultantIds: [SUPERVISOR_ID],
-							supervisorDisplayNames: ['Sabine Supervisor']
-						}
-					}}
-				/>
-			</div>
+			<I18nextProvider i18n={longSupervisionTranslations}>
+				<div style={{ width: 320 }}>
+					<RuntimeSessionListItem
+						viewerId={SUPERVISOR_ID}
+						sessionOverrides={{
+							supervision: {
+								supervisedByMe: true,
+								supervisorConsultantIds: [SUPERVISOR_ID],
+								supervisorDisplayNames: ['Sabine Supervisor']
+							}
+						}}
+					/>
+				</div>
+			</I18nextProvider>
 		);
 	},
 	play: async ({ canvasElement }) => {
@@ -1925,17 +1959,17 @@ export const SupervisionRowLabelTruncates: Story = {
 				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
 			) as HTMLElement | null;
 			expect(label).not.toBeNull();
-			// The affordance that survives the cut: the full word on `title`.
-			expect(label!.getAttribute('title')).toBeTruthy();
+			expect(label!.textContent).toBe(longSupervisionLabel);
+			expect(label!.scrollWidth).toBeGreaterThan(label!.clientWidth);
+			expect(label!.getAttribute('title')).toBe(supervisionDescription);
 			// The row must not grow wider than the card it sits in.
 			const card = canvasElement.querySelector(
 				'.sessionsListItem__content'
 			) as HTMLElement | null;
-			if (card) {
-				expect(
-					label!.getBoundingClientRect().right
-				).toBeLessThanOrEqual(card.getBoundingClientRect().right + 1);
-			}
+			expect(card).not.toBeNull();
+			expect(label!.getBoundingClientRect().right).toBeLessThanOrEqual(
+				card!.getBoundingClientRect().right + 1
+			);
 		});
 	}
 };

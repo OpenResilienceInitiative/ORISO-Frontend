@@ -974,16 +974,29 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 38px;
 		}
 
+		&--supervision,
+		&--liveChat,
+		&--nearby,
+		&--internal,
+		&--selfHelp {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+		}
+
+		&--supervision,
+		&--liveChat,
+		&--internal,
+		&--selfHelp {
+			height: 38px;
+		}
+
 		/* #1306: the supervisor's row reads "Supervision" where the
 		   consulting type would be. Same shape as --liveChat (icon + word,
 		   kept inside the card), with one difference: the label TRUNCATES.
 		   "Supervision" fits, but a longer translation must not push the
-		   date out of the card — the full word stays on `title`. */
+		   date out of the card — the description stays on `title`. */
 		&--supervision {
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
-			height: 38px;
 			min-width: 0;
 			align-items: center;
 
@@ -1009,10 +1022,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			/* Stay inside the card — the base rule pushes the icon 12px
 			   past its grid cell, which would clip the wider "Live Chat"
 			   label under the __content overflow: hidden. */
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
 
 			/* Undo the parent .sessionsListItem__consultingTypeIcon svg
@@ -1039,9 +1048,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		&--nearby {
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
 			white-space: nowrap;
 
 			// Centre icon and word on each other; the base rule's `end` hangs them
@@ -1077,10 +1083,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		&--internal,
 		&--selfHelp {
-			margin-right: 0;
-			padding-right: 12px;
-			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
 		}
 

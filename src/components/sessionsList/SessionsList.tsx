@@ -76,6 +76,7 @@ import {
 } from './SessionsListToolbar';
 import {
 	countUnreadSupervisedSessions,
+	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
 	normalizeSessionToolbarChip,
@@ -2131,10 +2132,11 @@ export const SessionsList = ({
 			}
 		});
 		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
-		kindsUnderOther(listDisplayFilter, displayFilterKinds).forEach(
-			(kind) => {
-				counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
-			}
+		counts.other = countUnreadOtherSessions(
+			kindsUnderOther(listDisplayFilter, displayFilterKinds),
+			unreadByKind,
+			unreadSource,
+			userData?.userId
 		);
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps

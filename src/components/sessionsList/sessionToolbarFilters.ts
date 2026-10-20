@@ -220,6 +220,22 @@ export const countUnreadSupervisedSessions = (
 				isRoomUnread(extended.item?.supervision?.sideRoomId))
 	).length;
 
+/** Count unread kinds bundled into Other using the same supervision source as its pill. */
+export const countUnreadOtherSessions = (
+	kinds: ReadonlyArray<string>,
+	unreadByKind: Readonly<Record<string, number>>,
+	pairs: Parameters<typeof countUnreadSupervisedSessions>[0],
+	currentUserId?: string
+): number =>
+	kinds.reduce(
+		(total, kind) =>
+			total +
+			(kind === 'supervision'
+				? countUnreadSupervisedSessions(pairs, currentUserId)
+				: (unreadByKind[kind] ?? 0)),
+		0
+	);
+
 export function sessionMatchesToolbar(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface,

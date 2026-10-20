@@ -29,9 +29,8 @@ vi.mock('../../utils/sessionUnread', async (importOriginal) => {
 	};
 });
 
-const { countUnreadSupervisedSessions } = await import(
-	'./sessionToolbarFilters'
-);
+const { countUnreadSupervisedSessions, countUnreadOtherSessions } =
+	await import('./sessionToolbarFilters');
 
 const ME = 'consultant-me';
 const OWNER = 'consultant-owner';
@@ -153,5 +152,66 @@ describe('countUnreadSupervisedSessions', () => {
 
 	it('is zero for an empty list', () => {
 		expect(countUnreadSupervisedSessions([], ME)).toBe(0);
+	});
+});
+
+describe('supervision bundled under Other', () => {
+	beforeEach(() => unreadRooms.clear());
+
+	it.each([false, true])(
+		'counts one case with an unread supervision side room when main unread is %s',
+		(mainUnread) => {
+			unreadRooms.add('!side:hs');
+			if (mainUnread) unreadRooms.add('!case:hs');
+			const pairs = [
+				pair('!case:hs', { ...supervisedByMe, sideRoomId: '!side:hs' })
+			];
+			expect(
+				countUnreadOtherSessions(
+					['supervision', 'liveChat'],
+					{
+						supervision: mainUnread ? 1 : 0,
+						liveChat: 2
+					},
+					pairs,
+					ME
+				)
+			).toBe(3);
+		}
+	);
+
+	it('does not add supervision when it has its own pill', () => {
+		unreadRooms.add('!side:hs');
+		expect(
+			countUnreadOtherSessions(
+				['liveChat'],
+				{ supervision: 0, liveChat: 2 },
+				[
+					pair('!case:hs', {
+						...supervisedByMe,
+						sideRoomId: '!side:hs'
+					})
+				],
+				ME
+			)
+		).toBe(2);
+	});
+
+	it('ignores another supervisor and read cases, and retains other-kind counts', () => {
+		unreadRooms.add('!side:hs');
+		expect(
+			countUnreadOtherSessions(
+				['supervision', 'liveChat', 'missing'],
+				{ liveChat: 2 },
+				[
+					pair('!other:hs', {
+						...supervisedByOther,
+						sideRoomId: '!side:hs'
+					}),
+					pair('!read:hs', supervisedByMe)
+				],
+				ME
+			)
+		).toBe(2);
 	});
 });
