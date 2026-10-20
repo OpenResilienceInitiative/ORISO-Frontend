@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { CurtainPlayground } from './__storybook__/CurtainPlayground';
@@ -121,4 +122,29 @@ export const WizardWalkthrough: Story = {
 			await canvas.findByText(/awaiting approval|warten auf freigabe/i)
 		).toBeVisible();
 	}
+};
+
+/** ADR-002 reclaim: the counsellor a takeover moved the case away from is back. */
+export const ReclaimAvailable: Story = {
+	render: () => <CurtainPlayground canReclaim />
+};
+
+function ReclaimConflictPlayground() {
+	const { t: translate } = useTranslation();
+	return (
+		<CurtainPlayground
+			canReclaim
+			error={translate('caseHandover.curtain.reclaim.unavailable')}
+		/>
+	);
+}
+
+/** 409: a permanent reason, or the cover counsellor no longer owns the case. */
+export const ReclaimConflict: Story = {
+	render: () => <ReclaimConflictPlayground />
+};
+
+/** No reclaim offered: the normal "request access" intro, unchanged. */
+export const IntroWithoutReclaim: Story = {
+	render: () => <CurtainPlayground canReclaim={false} />
 };
