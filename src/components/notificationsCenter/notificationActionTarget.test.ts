@@ -112,6 +112,17 @@ describe('shared params contract (#846)', () => {
 		).toEqual({});
 	});
 
+	it('keeps the exact Case Handover request id used by the recipient route', () => {
+		expect(
+			parseEventActionParams(
+				'{"sessionId":41,"caseHandoverRequestId":501}'
+			)
+		).toMatchObject({
+			sourceSessionId: 41,
+			caseHandoverRequestId: 501
+		});
+	});
+
 	it('pins the shared key set mirrored by the backend contract test', () => {
 		// ORISO-UserService EventNotificationServiceTest
 		// .allEmittedParamKeysStayInsideTheSharedFrontendContract pins the
@@ -136,6 +147,7 @@ describe('shared params contract (#846)', () => {
 				'recipientRole',
 				'conversationType',
 				'clientConsent',
+				'caseHandoverRequestId',
 				'threadRootId',
 				'mentioned',
 				'seriesId',

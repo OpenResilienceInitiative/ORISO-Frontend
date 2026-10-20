@@ -41,12 +41,19 @@ interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	isJoinGroupChatView: boolean;
 	bannedUsers: string[];
+	/**
+	 * Leave the group's topic out of the header. Set while the group's
+	 * privacy gate is open: nothing about the group's topic is shown to
+	 * someone who has not yet agreed (#1499). Hidden, not dimmed.
+	 */
+	hideTopic?: boolean;
 }
 
 export const GroupChatHeader = ({
 	hasUserInitiatedStopOrLeaveRequest,
 	isJoinGroupChatView,
-	bannedUsers
+	bannedUsers,
+	hideTopic = false
 }: GroupChatHeaderProps) => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -348,11 +355,13 @@ export const GroupChatHeader = ({
 								}
 							/>
 						</div>
-						<h3>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</h3>
+						{!hideTopic && (
+							<h3 data-cy="group-header-topic">
+								{typeof activeSession.item.topic === 'string'
+									? activeSession.item.topic
+									: activeSession.item.topic?.name || ''}
+							</h3>
+						)}
 					</div>
 					{/* Matrix room participants */}
 					{isLoadingMembers ? (

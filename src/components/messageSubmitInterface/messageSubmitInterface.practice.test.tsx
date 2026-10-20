@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceComponent';
@@ -15,6 +22,7 @@ import { enterPracticeMode, exitPracticeMode } from '../../practice';
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
 	draftChange: vi.fn(),
+	draftEnabled: vi.fn(),
 	encryptRoom: vi.fn().mockResolvedValue(undefined),
 	translate: (key: string) => key,
 	matrixService: { getClient: () => null }
@@ -66,25 +74,39 @@ vi.mock('../../hooks/useTimeoutOverlay', () => ({
 	useTimeoutOverlay: () => ({ visible: false })
 }));
 vi.mock('./useDraftMessage', () => ({
-	useDraftMessage: () => ({
-		loaded: true,
-		onChange: mocks.draftChange,
-		clearDraftMessage: mocks.clearDraft
-	})
+	useDraftMessage: (enabled: boolean) => {
+		mocks.draftEnabled(enabled);
+		return {
+			loaded: true,
+			onChange: mocks.draftChange,
+			clearDraftMessage: mocks.clearDraft
+		};
+	}
 }));
 vi.mock('./TipTapComposer', async () => {
 	const react = await import('react');
 	return {
-		TipTapComposer: react.forwardRef((_props, ref) => {
-			react.useImperativeHandle(ref, () => ({
-				getHTML: () => '',
-				clear: () => {},
-				runAction: () => {},
-				isActionActive: () => false,
-				setInsertionMarker: () => {}
-			}));
-			return <div contentEditable suppressContentEditableWarning />;
-		})
+		TipTapComposer: react.forwardRef(
+			(
+				props: { value: string; onChange: (text: string) => void },
+				ref
+			) => {
+				react.useImperativeHandle(ref, () => ({
+					getHTML: () => props.value,
+					clear: () => {},
+					runAction: () => {},
+					isActionActive: () => false,
+					setInsertionMarker: () => {}
+				}));
+				return (
+					<textarea
+						aria-label="Test composer"
+						value={props.value}
+						onChange={(event) => props.onChange(event.target.value)}
+					/>
+				);
+			}
+		)
 	};
 });
 
@@ -147,10 +169,12 @@ const ATTACHMENT = { name: 'message.submit.toolbar.attachment' };
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mocks.clearDraft.mockResolvedValue(undefined);
 });
 afterEach(() => {
 	cleanup();
 	exitPracticeMode();
+	vi.useRealTimers();
 });
 
 describe('composer media controls and practice mode (no voice, no attachments)', () => {
@@ -182,3 +206,52 @@ describe('composer media controls and practice mode (no voice, no attachments)',
 		expect(container.querySelector('input[type="file"]')).toBeNull();
 	});
 });
+
+it.each([false, true])(
+	'keeps draft loading disabled until sent draft clear settles (failure=%s)',
+	async (fails) => {
+		let settleClear: () => void;
+		mocks.clearDraft.mockImplementation(
+			() =>
+				new Promise<void>((resolve, reject) => {
+					settleClear = () =>
+						fails
+							? reject(new Error('Draft unavailable'))
+							: resolve();
+				})
+		);
+		render(<Composer />);
+		fireEvent.change(screen.getByLabelText('Test composer'), {
+			target: { value: '<p>Sent reply</p>' }
+		});
+		await act(async () => {
+			fireEvent.submit(
+				screen
+					.getByRole('button', {
+						name: 'enquiry.write.input.button.title'
+					})
+					.closest('form')!
+			);
+		});
+		await waitFor(() => expect(mocks.clearDraft).toHaveBeenCalledOnce());
+		expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(false);
+		// The editor stays editable: typing the next reply must survive clear settlement.
+		fireEvent.change(screen.getByLabelText('Test composer'), {
+			target: { value: '<p>Next unsent reply</p>' }
+		});
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 1350));
+		});
+		expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(false);
+		await act(async () => {
+			settleClear!();
+		});
+		await waitFor(() =>
+			expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(true)
+		);
+		expect(
+			(screen.getByLabelText('Test composer') as HTMLTextAreaElement)
+				.value
+		).toBe('<p>Next unsent reply</p>');
+	}
+);

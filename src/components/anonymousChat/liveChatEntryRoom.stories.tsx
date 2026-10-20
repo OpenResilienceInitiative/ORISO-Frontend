@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { verifyConsentOpening } from '../../../.storybook/consentCompletionStoryPlay';
 import { renderToString } from 'react-dom/server';
 import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { generatePseudonym } from '../../utils/pseudonymGenerator';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../globalState';
@@ -20,7 +21,11 @@ import { LiveChatClosed } from './entryRoom/LiveChatClosed';
 import { LiveChatChecking } from './entryRoom/LiveChatChecking';
 import { EntryRoomView } from './entryRoom/EntryRoomView';
 import LegalLinks from '../legalLinks/LegalLinks';
-import { phone375Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone375Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 
 /**
  * The **live chat** entry room — the real views (`entryRoom/`), which the
@@ -29,7 +34,8 @@ import { phone375Globals } from '../message/messageStoryShell';
  * poll, so what Storybook shows is what the link shows.
  */
 const meta: Meta = {
-	title: 'Live chat/Entry room',
+	id: 'live-chat-entry-room',
+	title: 'Entry flows/Live chat/Entry room',
 	parameters: {
 		docs: {
 			description: {
@@ -294,6 +300,7 @@ export const StepAccessMobile: StoryObj = {
 	)
 };
 export const StepWaiting: StoryObj = {
+	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
 	parameters: full(
@@ -319,9 +326,42 @@ export const StepCompanionMobile: StoryObj = {
 	render: () => <Waiting companionStart />,
 	parameters: { layout: 'fullscreen' }
 };
+const verifyAcceptedLayout: NonNullable<StoryObj['play']> = async ({
+	canvasElement
+}) => {
+	const canvas = within(canvasElement);
+	const panel = await canvas.findByRole('region', { name: 'Sie sind dran.' });
+	await verifyConsentOpening(panel);
+	const checkbox = within(panel).getByRole('checkbox');
+	const action = canvas.getByRole('button', { name: /Gespräch beginnen/i });
+	await waitFor(() => {
+		const panelRect = panel.getBoundingClientRect();
+		const labelRect = checkbox.closest('label')!.getBoundingClientRect();
+		const consentTextRect = within(panel)
+			.getByText(/Ich habe die/)
+			.getBoundingClientRect();
+		const headingRect = within(panel)
+			.getByRole('heading', { level: 2 })
+			.getBoundingClientRect();
+		const actionRect = action.getBoundingClientRect();
+		expect(Math.abs(headingRect.left - consentTextRect.left)).toBeLessThan(
+			1
+		);
+		expect(checkbox).not.toBeChecked();
+		expect(Math.abs(labelRect.left - panelRect.left)).toBeLessThan(1);
+		expect(Math.abs(labelRect.width - panelRect.width)).toBeLessThan(1);
+		expect(Math.abs(actionRect.width - panelRect.width)).toBeLessThan(1);
+		expect(actionRect.bottom).toBeLessThanOrEqual(
+			document.documentElement.clientHeight + 1
+		);
+	});
+};
+
 export const StepAccepted: StoryObj = {
 	name: 'B — Warteraum: Beraterin ist da',
+	globals: desktop1440Globals,
 	render: () => <Waiting accepted />,
+	play: verifyAcceptedLayout,
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
 	)
@@ -387,6 +427,14 @@ export const StepAcceptedMobile: StoryObj = {
 	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting accepted />,
+	play: verifyAcceptedLayout,
+	parameters: { layout: 'fullscreen' }
+};
+export const StepAcceptedTablet: StoryObj = {
+	name: 'B — Beraterin ist da, Tablet',
+	globals: tablet834Globals,
+	render: () => <Waiting accepted />,
+	play: verifyAcceptedLayout,
 	parameters: { layout: 'fullscreen' }
 };
 export const StepClosed: StoryObj = {

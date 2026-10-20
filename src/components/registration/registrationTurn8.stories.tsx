@@ -16,9 +16,19 @@ import { phone375Globals } from '../message/messageStoryShell';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { config } from '../../resources/scripts/config';
 
 const meta: Meta = {
-	title: 'Registration/Turn 8 — Mobile Dichte',
+	id: 'registration-turn-8-mobile-dichte',
+	title: 'Entry flows/Postcode counselling/Mobile steps and handover',
+	decorators: [
+		(Story) => (
+			<LegalLinksProvider legalLinks={config.legalLinks}>
+				<Story />
+			</LegalLinksProvider>
+		)
+	],
 	// No Router decorator here: the Storybook preview already provides one, and
 	// nesting a second router throws.
 	parameters: {

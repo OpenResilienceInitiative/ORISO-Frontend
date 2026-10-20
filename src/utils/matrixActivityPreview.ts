@@ -1,6 +1,7 @@
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
 import { toMessagePreviewText } from './messagePreviewText';
+import { parseErstantwortPayload } from '../components/erstantwort/erstantwortPayload';
 
 const normalizePreviewText = (value: string): string =>
 	value.replace(/\s+/g, ' ').trim();
@@ -90,9 +91,18 @@ export const buildMatrixActivityTextPreview = (
 		);
 	}
 
-	const body = toMessagePreviewText(
-		getDecryptedMatrixMessageText(resolution.event)
-	);
+	const rawBody = getDecryptedMatrixMessageText(resolution.event);
+	const firstResponse = parseErstantwortPayload(rawBody);
+	if (firstResponse.status !== 'none') {
+		const preview =
+			firstResponse.status === 'ok'
+				? toMessagePreviewText(firstResponse.bausteine[0]?.body) ||
+					labels?.notice ||
+					fallbackText
+				: labels?.unsupported || fallbackText;
+		return withSender(senderName, preview);
+	}
+	const body = toMessagePreviewText(rawBody);
 	if (!body) {
 		return fallbackText;
 	}

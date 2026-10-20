@@ -95,7 +95,9 @@ export const EntryRoomShell = ({
 					'@supports (overflow-x: clip)': { overflowX: 'clip' },
 					'px': { xs: 2.5, sm: 5 },
 					'pt': { xs: 3, sm: 4 },
-					'pb': '104px'
+					/* RegistrationFooter reserves its measured height, including
+					   the consent panel, rather than a fixed guessed clearance. */
+					'pb': 2
 				}}
 			>
 				<Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3 }}>

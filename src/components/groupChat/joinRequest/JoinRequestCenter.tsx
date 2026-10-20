@@ -13,6 +13,7 @@ import {
 	GroupChatJoinRequest
 } from './joinRequestModel';
 import { JoinRequestTransport } from './joinRequestTransport';
+import { getCounsellingDpaFailure } from '../../../api/counsellingDpaFailure';
 import { AUTH_SESSION_CHANGE_EVENT } from '../../sessionCookie/accessSessionCookie';
 
 export interface JoinRequestCenterProps {
@@ -123,10 +124,17 @@ export const JoinRequestCenter = ({
 					setDetailsId((id) => (id === request.id ? null : id));
 					if (live()) note(confirmation, CONFIRMATION_MS);
 				})
-				.catch(() => {
-					if (live()) {
-						note(t('groupChat.joinRequest.failed'), FAILURE_MS);
-					}
+				.catch((error) => {
+					if (!live()) return;
+					const failure = getCounsellingDpaFailure(error);
+					note(
+						failure
+							? t(
+									`${failure.key}.${failure.retryable ? 'inviteText' : 'text'}`
+								)
+							: t('groupChat.joinRequest.failed'),
+						FAILURE_MS
+					);
 				})
 				.finally(() => setBusyFor(request.id, false));
 		},
@@ -140,8 +148,8 @@ export const JoinRequestCenter = ({
 				transport.admit(request, role),
 				t(
 					role === 'CO_MODERATOR'
-						? 'groupChat.joinRequest.admittedAsCoModerator'
-						: 'groupChat.joinRequest.admitted',
+						? 'groupChat.joinRequest.coModerationQueued'
+						: 'groupChat.joinRequest.admissionQueued',
 					{ name: request.requester.displayName }
 				)
 			),

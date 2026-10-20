@@ -38,7 +38,10 @@ vi.mock('../../api/apiGetConsultantAvailability', () => ({
 	apiGetConsultantAvailability: api.apiGetConsultantAvailability
 }));
 vi.mock('../../api/apiPostRegistration', () => ({
-	apiPostRegistration: api.apiPostRegistration
+	apiPostRegistration: api.apiPostRegistration,
+	// The retry goes through the deadline wrapper; the login behind it is what
+	// these tests watch.
+	autoLoginWithDeadline: api.autoLogin
 }));
 vi.mock('../registration/autoLogin', () => ({
 	autoLogin: api.autoLogin,
