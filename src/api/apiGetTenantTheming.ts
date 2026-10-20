@@ -16,12 +16,14 @@ const fetchTenant = (url: string): Promise<TenantDataInterface> =>
 	});
 
 /* Both theming hooks resolve on load. They share the whole link
-   resolution — agency and tenant — so one of them failing cannot overwrite
-   the tenant the other one found. A miss is not kept: ask again next time. */
-const linkTenants = new Map<number, Promise<TenantDataInterface | null>>();
+   resolution — agency, tenant and the fallback to the subdomain tenant — so
+   one of them failing cannot overwrite the tenant the other one found. A
+   miss is not kept: ask again next time. */
+const linkTenants = new Map<number, Promise<TenantDataInterface>>();
 
 const getLinkTenant = (agencyId: number) => {
 	if (!linkTenants.has(agencyId)) {
+		let missed = false;
 		const pending = apiGetAgencyById(agencyId)
 			.then((agency) =>
 				agency?.tenantId && agency.tenantId > 0
@@ -32,8 +34,12 @@ const getLinkTenant = (agencyId: number) => {
 			)
 			.catch(() => null)
 			.then((tenant) => {
-				if (!tenant) linkTenants.delete(agencyId);
-				return tenant;
+				if (tenant) return tenant;
+				missed = true;
+				return fetchTenant(`${endpoints.tenantServiceBase}/public/`);
+			})
+			.finally(() => {
+				if (missed) linkTenants.delete(agencyId);
 			});
 		linkTenants.set(agencyId, pending);
 	}
@@ -57,9 +63,7 @@ export const apiGetTenantTheming = async (
 	   who is not registered yet sees the Träger of the Beratungsstelle the
 	   link names, not the platform's main tenant (#1689). A link that
 	   resolves to nothing keeps the old answer. */
-	const linkTenant = linkAgencyId ? await getLinkTenant(linkAgencyId) : null;
-	if (linkTenant) {
-		return linkTenant;
-	}
-	return fetchTenant(`${endpoints.tenantServiceBase}/public/`);
+	return linkAgencyId
+		? getLinkTenant(linkAgencyId)
+		: fetchTenant(`${endpoints.tenantServiceBase}/public/`);
 };

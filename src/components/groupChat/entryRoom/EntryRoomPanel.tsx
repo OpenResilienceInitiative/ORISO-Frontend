@@ -22,7 +22,11 @@ export const usePanelHistory = (open: boolean, onPop: () => void) => {
 	onPopRef.current = onPop;
 	useEffect(() => {
 		if (!open) return;
-		window.history.pushState({ groupInfoGallery: true }, '');
+		// Keep the router's own state (idx, key, usr) on the marker entry.
+		window.history.pushState(
+			{ ...(window.history.state ?? {}), groupInfoGallery: true },
+			''
+		);
 		const onPopState = () => onPopRef.current();
 		window.addEventListener('popstate', onPopState);
 		return () => {

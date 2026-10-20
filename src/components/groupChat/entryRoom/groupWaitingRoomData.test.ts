@@ -44,15 +44,16 @@ describe('groupWaitingRoomData', () => {
 		);
 	});
 
-	it('lists three dates for a weekly group and one for a single date', () => {
+	it('lists every date left of a weekly group and one for a single date', () => {
 		const start = '2026-10-20T18:00:00Z';
 		const weekly = getGroupUpcomingDates({
 			startDateWithTime: start,
 			chatInterval: 'WEEKLY',
 			repeatCount: 10
 		});
+		// All ten, not a preview of three (Codex on #1782).
+		expect(weekly).toHaveLength(10);
 		// Calendar weeks: same local time, even across the DST change.
-		expect(weekly).toHaveLength(3);
 		const first = new Date(start);
 		weekly?.forEach((date, step) => {
 			expect(date.getHours()).toBe(first.getHours());
@@ -75,7 +76,7 @@ describe('groupWaitingRoomData', () => {
 		const daily = getGroupUpcomingDates({
 			startDateWithTime: start.toISOString(),
 			chatInterval: 'DAILY',
-			repeatCount: 5
+			repeatCount: 3
 		});
 		expect(daily?.map((date) => [date.getDate(), date.getHours()])).toEqual(
 			[
@@ -90,7 +91,7 @@ describe('groupWaitingRoomData', () => {
 		const monthly = getGroupUpcomingDates({
 			startDateWithTime: new Date(2027, 0, 31, 18, 0).toISOString(),
 			chatInterval: 'MONTHLY',
-			repeatCount: 12
+			repeatCount: 3
 		});
 		// Clamped to the end of February, never 2 or 3 March.
 		expect(
@@ -109,11 +110,13 @@ describe('groupWaitingRoomData', () => {
 				startDateWithTime: start,
 				chatInterval,
 				repeatCount: 6
-			})?.map((date) => [
-				date.getFullYear(),
-				date.getMonth(),
-				date.getDate()
-			]);
+			})
+				?.slice(0, 3)
+				.map((date) => [
+					date.getFullYear(),
+					date.getMonth(),
+					date.getDate()
+				]);
 		expect(steps('BIWEEKLY')).toEqual([
 			[2026, 0, 6],
 			[2026, 0, 20],

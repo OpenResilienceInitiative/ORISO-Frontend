@@ -388,6 +388,20 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		);
 	});
 
+	/* CodeRabbit on #1782: a weekday alone is ambiguous a week ahead, and
+	   the status is all a screen reader hears on the button. */
+	it('adds the date to the opening time a week or more ahead', () => {
+		renderDates({ nowMs: START.getTime() - 10 * 24 * 3600e3 });
+		expect(screen.getByTestId('group-entry-join').textContent).toMatch(
+			/ab .*\d{2}\.\d{2}\..*\d{2}:\d{2}/
+		);
+		cleanup();
+		renderDates();
+		expect(screen.getByTestId('group-entry-join').textContent).not.toMatch(
+			/\d{2}\.\d{2}\./
+		);
+	});
+
 	it('drops the opening time once the moderator has opened the group', () => {
 		renderDates({ active: true });
 		expect(screen.getByTestId('group-entry-join').textContent).not.toMatch(
@@ -460,6 +474,19 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 		expect(back).not.toHaveBeenCalled();
 		push.mockRestore();
 		back.mockRestore();
+	});
+
+	/* CodeRabbit on #1782: the marker keeps the router's state, or a later
+	   POP onto it loses React Router's position. */
+	it("keeps the router's state on the history marker", () => {
+		window.history.replaceState({ idx: 3, key: 'k1', usr: null }, '');
+		renderDates();
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+		expect(window.history.state).toMatchObject({
+			idx: 3,
+			key: 'k1',
+			groupInfoGallery: true
+		});
 	});
 
 	it('moves focus into the dates and back to "Alle Termine"', async () => {
@@ -637,6 +664,28 @@ describe('GroupWaitingRoom – running group and rules', () => {
 		expect(
 			document.querySelector('[data-cy="group-entry-rhythm"]')
 		).toBeNull();
+	});
+
+	/* CodeRabbit on #1782: staff in a running group are the moderation,
+	   not participants waiting for it. */
+	it('gives staff in a running group the moderator status', () => {
+		render(
+			<GroupWaitingRoom
+				plannedStart={START}
+				durationMinutes={90}
+				eventId={15}
+				rules={RULES}
+				active
+				askConsent={false}
+				onJoin={vi.fn()}
+				nowMs={NOW + 60e3}
+			/>
+		);
+		const running = document.querySelector(
+			'[data-cy="group-running"]'
+		) as HTMLElement;
+		expect(running.textContent).toContain('Läuft gerade');
+		expect(running.textContent).not.toContain('Moderation ist da');
 	});
 
 	it('shows no clock for a group opened before its time', () => {

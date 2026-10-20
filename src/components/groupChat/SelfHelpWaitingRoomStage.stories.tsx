@@ -256,10 +256,12 @@ export const StaffJoinsOpenGroup1440: Story = {
 				canvasElement.querySelector('[data-cy="group-entry-room"]')
 			).not.toBeNull()
 		);
-		// #1787: the group runs, so no counting clock and no "starts soon".
+		// #1787: the group runs, so no "starts soon"; the calm clock says
+		// how long it has run, and staff are the moderation themselves.
 		await expect(
-			canvas.getByText('Die Gruppe hat begonnen.')
+			canvas.getByText(/^Die Gruppe hat .*begonnen\.$/)
 		).toBeVisible();
+		await expect(canvas.getByText('Läuft gerade')).toBeVisible();
 		await expect(canvas.queryByText('Die Gruppe wartet.')).toBeNull();
 		const join = canvas.getByTestId('group-entry-join');
 		await expect(join).toBeEnabled();

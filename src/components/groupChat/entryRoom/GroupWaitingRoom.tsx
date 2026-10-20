@@ -235,11 +235,15 @@ export const GroupWaitingRoom = ({
 		roomTrigger.current = null;
 		trigger?.focus({ preventScroll: true });
 	}, [view, room]);
-	/* A shut "Beitreten" says when it opens (Frank, 2026-10-19). */
+	/* A shut "Beitreten" says when it opens (Frank, 2026-10-19); a week or
+	   more ahead with the date, since a weekday alone is ambiguous. */
 	const opensAtTime =
 		plannedStart && !started && !moderator
 			? new Intl.DateTimeFormat(locale, {
 					weekday: 'short',
+					...(plannedStart.getTime() - now > 6 * 24 * 3600e3
+						? { day: '2-digit', month: '2-digit' }
+						: {}),
 					hour: '2-digit',
 					minute: '2-digit'
 				}).format(plannedStart)
@@ -369,7 +373,8 @@ export const GroupWaitingRoom = ({
 							nowMs={nowMs}
 							rules={rules}
 							motionOff={motionOff}
-							moderator={moderator}
+							// Staff in a running group are the moderation.
+							moderator={moderator || !askConsent}
 						/>
 					) : (
 						<Box sx={{ textAlign: 'center' }}>

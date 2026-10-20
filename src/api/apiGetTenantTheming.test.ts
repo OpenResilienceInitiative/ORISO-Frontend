@@ -120,6 +120,28 @@ describe('apiGetTenantTheming – the Träger behind a shared link', () => {
 		expect(mocks.fetchData).toHaveBeenCalledTimes(1);
 	});
 
+	/* Codex on #1782: the fallback is shared too, or a late failing
+	   fallback could replace the subdomain tenant the other hook found. */
+	it('gives both theming hooks the same fallback tenant from one request', async () => {
+		mocks.apiGetAgencyById.mockResolvedValue(null);
+		mocks.fetchData
+			.mockResolvedValueOnce({ id: 9 })
+			.mockRejectedValueOnce(new Error('503'));
+
+		const [first, second] = await Promise.all([
+			apiGetTenantTheming(1),
+			apiGetTenantTheming(1)
+		]);
+
+		expect(first).toEqual({ id: 9 });
+		expect(second).toEqual({ id: 9 });
+		expect(mocks.fetchData).toHaveBeenCalledTimes(1);
+		// A miss is not kept: the next load asks for the agency again.
+		mocks.fetchData.mockReset().mockResolvedValue({ id: 9 });
+		await apiGetTenantTheming(1);
+		expect(mocks.apiGetAgencyById).toHaveBeenCalledTimes(2);
+	});
+
 	it.each([
 		['an unknown agency', null],
 		['an agency without a tenant', { id: 1 }],

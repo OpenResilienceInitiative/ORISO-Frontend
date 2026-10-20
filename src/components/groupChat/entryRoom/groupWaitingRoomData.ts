@@ -45,14 +45,11 @@ export const getGroupSeries = (
 		: undefined;
 };
 
-/** How many dates the explainer behind "Mehr erfahren" lists at most. */
-const UPCOMING_PREVIEW = 3;
-
 /**
- * The next dates of a repeating group, for the explainer behind "Mehr
- * erfahren" — looked up, never booked (Frank, 2026-09-07). Derived from the
- * start, the interval and the dates left; a one-off group has only its own
- * date, and a group without a date has none.
+ * The dates still left of a group, for "Alle Termine" — looked up, never
+ * booked (Frank, 2026-09-07). All of them, so each one can go into a
+ * calendar on its own; a one-off group has only its own date, and a group
+ * without a date has none.
  */
 export const getGroupUpcomingDates = (
 	chat: GroupWaitingRoomChat | undefined | null
@@ -62,12 +59,7 @@ export const getGroupUpcomingDates = (
 		return undefined;
 	}
 	const series = getGroupSeries(chat);
-	return series
-		? getGroupChatOccurrences(start, {
-				...series,
-				count: Math.min(series.count, UPCOMING_PREVIEW)
-			})
-		: [start];
+	return series ? getGroupChatOccurrences(start, series) : [start];
 };
 
 /**
