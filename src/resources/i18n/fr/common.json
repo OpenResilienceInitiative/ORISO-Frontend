@@ -2540,6 +2540,10 @@
 					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
 					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
 					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
+				},
+				"dpaRestricted": {
+					"title": "Les personnes qui cherchent conseil ne peuvent pas démarrer de chat en direct avec vous",
+					"text": "Votre organisme n’a pas encore confirmé l’accord actuel de traitement des données. D’ici là, les nouvelles personnes ne peuvent démarrer ni chat en direct ni demande. Les consultations déjà commencées continuent."
 				}
 			},
 			"masterKey": {
