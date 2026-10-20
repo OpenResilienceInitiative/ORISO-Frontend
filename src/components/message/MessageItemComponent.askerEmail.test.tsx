@@ -238,7 +238,7 @@ it('offers the regular channels after the frozen FAQ without an optional popup',
 	const choice = screen.getByRole('button', {
 		name: /notificationChoice.both/
 	});
-	expect(faq.tagName).toBe('SUMMARY');
+	expect(faq.closest('summary')).not.toBeNull();
 	expect(
 		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy();
@@ -627,70 +627,83 @@ describe('initial acceptance is its own persisted chat event', () => {
 });
 
 it('keeps initial acceptance in the real chronological message rail on remount, with one notice and no invented first-response action', () => {
-	const message = (id: string, time: number, body: string) =>
-		({
-			...mockMessageItemComponentProps({
-				message: body,
-				messageTime: String(time),
-				t: null
-			}),
-			_id: id
-		}) as MessageItem;
-	const timelineMessages = [
-		message('enquiry', 1, 'Original enquiry'),
-		message(
-			'acceptance',
-			2,
-			'[SYSTEM_NOTIFICATION]' +
-				JSON.stringify({
-					type: 'INQUIRY_ACCEPTED',
-					acceptance: {
-						sessionId: 73,
-						acceptedAt: '2026-10-09T10:20:00Z'
-					},
-					description: 'Accepted in the timeline'
-				})
-		),
-		message('answer', 3, 'The later answer')
-	];
-	const setup = () =>
-		renderErstantwortMessage(tenantWith(true), {
-			timelineMessages,
-			session: { id: 73, status: 2 },
-			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] }
-		});
-	let result = setup();
-	const check = () => {
-		const rows = [...result.container.querySelectorAll('.messageItem')];
-		expect(rows.map((row) => row.textContent)).toEqual([
-			expect.stringContaining('Original enquiry'),
-			expect.stringContaining(
-				'notifications.events.inquiryAccepted.text'
+	const diagnostics = vi.spyOn(console, 'error');
+	try {
+		const message = (id: string, time: number, body: string) =>
+			({
+				...mockMessageItemComponentProps({
+					message: body,
+					messageTime: String(time),
+					t: null
+				}),
+				_id: id
+			}) as MessageItem;
+		const timelineMessages = [
+			message('enquiry', 1, 'Original enquiry'),
+			message(
+				'acceptance',
+				2,
+				'[SYSTEM_NOTIFICATION]' +
+					JSON.stringify({
+						type: 'INQUIRY_ACCEPTED',
+						acceptance: {
+							sessionId: 73,
+							acceptedAt: '2026-10-09T10:20:00Z'
+						},
+						description: 'Accepted in the timeline'
+					})
 			),
-			expect.stringContaining('The later answer')
-		]);
+			message('answer', 3, 'The later answer')
+		];
+		const setup = () =>
+			renderErstantwortMessage(tenantWith(true), {
+				timelineMessages,
+				session: { id: 73, status: 2 },
+				account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] }
+			});
+		let result = setup();
+		const check = () => {
+			const rows = [...result.container.querySelectorAll('.messageItem')];
+			expect(rows.map((row) => row.textContent)).toEqual([
+				expect.stringContaining('Original enquiry'),
+				expect.stringContaining(
+					'notifications.events.inquiryAccepted.text'
+				),
+				expect.stringContaining('The later answer')
+			]);
+			expect(
+				screen.getAllByRole('button', {
+					name: 'caseHandover.consent.info.more'
+				})
+			).toHaveLength(1);
+			expect(
+				result.container.querySelectorAll(
+					'.messageItem__message--systemNotification'
+				)
+			).toHaveLength(1);
+		};
+		check();
+		result.unmount();
+		result = setup();
+		check();
 		expect(
-			screen.getAllByRole('button', {
-				name: 'caseHandover.consent.info.more'
-			})
-		).toHaveLength(1);
+			result.container.querySelector('[topicicon], [topic], [variant]')
+		).toBeNull();
 		expect(
-			result.container.querySelectorAll(
-				'.messageItem__message--systemNotification'
+			diagnostics.mock.calls.some((args) =>
+				args.map(String).join(' ').includes('topicIcon')
 			)
-		).toHaveLength(1);
-	};
-	check();
-	result.unmount();
-	result = setup();
-	check();
+		).toBe(false);
+	} finally {
+		diagnostics.mockRestore();
+	}
 });
 
 it.each([
 	['CO_ACCESS', 'caseHandover.consent.info.noticeTitle'],
 	['TAKEOVER', 'caseHandover.systemMessage.tookOverTitle']
 ])(
-	'names the immutable %s grant correctly in the real message header',
+	'names the immutable %s grant correctly in its recorded access topic',
 	(accessType, expectedTitle) => {
 		const result = renderErstantwortMessage(tenantWith(true), {
 			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
@@ -707,14 +720,15 @@ it.each([
 					}
 				})
 		});
-		const header = result.container.querySelector(
-			'.messageItem__systemNotificationHeaderText'
-		);
-		expect(header?.textContent).toContain(expectedTitle);
+		const message = within(result.container);
+		expect(message.getByText(expectedTitle)).toBeTruthy();
+		expect(
+			message.getByText('The recorded access was granted.')
+		).toBeTruthy();
 		if (accessType === 'CO_ACCESS')
-			expect(header?.textContent).not.toContain(
-				'caseHandover.systemMessage.tookOverTitle'
-			);
+			expect(
+				message.queryByText('caseHandover.systemMessage.tookOverTitle')
+			).toBeNull();
 	}
 );
 

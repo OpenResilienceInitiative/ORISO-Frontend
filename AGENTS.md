@@ -29,6 +29,32 @@
 - Preserve Matrix/chat/draft privacy boundaries. Do not move plaintext previews or draft contents into server-visible state.
 - UI changes need accessible focus/keyboard behavior and should not rely on color alone.
 
+## Waiting rooms: one frame, one bar, one gate
+
+Every screen where a person waits to get in — after "Registrieren", group
+invitation, self-help group, live chat, call entry — is built from the same
+three parts. Do not write a fourth.
+
+- **Frame:** `WaitingRoomFrame` (`src/components/waitingRoom/`). No
+  hand-written `StageLayout` and no direct `Stage` import in a waiting room.
+- **Bar:** `RegistrationFooter`. No own fixed bar, no own spacer.
+- **Layout:** `WaitingRoomTemplate` (`src/components/waitingRoom/`), taken
+  from the live-chat room: headline, status line, the middle (cards, or a
+  waiting component such as the self-help countdown), a quiet row, the bar.
+  Consent slides into the bar via `WaitingRoomConsentPanel` (waving hand,
+  checkbox bound to the words, decline X). Proportions come from the live
+  chat; do not re-lay a room by hand.
+- **Button:** `HandoverGateButton`. Its fill shows real progress only — for
+  the registration handover that is `handoverProgress` milestones. Never a
+  timer, never a fixed value.
+- **Proof:** every waiting-room story runs `expectWaitingRoomLayout`
+  (`waitingRoomLayoutContract.ts`). If it fails, fix the layout, not the
+  contract. Change the contract only with the product owner's approval and
+  say so in the PR.
+- **After "Registrieren"** the person sees one screen on both sides of the
+  document load (#1219). Keep the load — it is how browsers offer to save the
+  password (#1208) — and keep both sides identical instead.
+
 ## Validation
 
 - Prefer red-green TDD for behavior changes: add or update the smallest test that would fail without the fix, then implement.
