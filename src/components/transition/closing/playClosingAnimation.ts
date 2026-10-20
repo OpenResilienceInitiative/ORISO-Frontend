@@ -6,7 +6,7 @@ import {
 	FocalPoint,
 	resolveFocalPoint
 } from './closingFocal';
-import { ClosingVariant } from './closingVariants';
+import { ClosingDirection } from './closingDirection';
 
 export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
 
@@ -19,7 +19,8 @@ export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
 export type ClosingSwapResult = void | boolean | Promise<unknown>;
 
 export interface PlayClosingAnimationOptions {
-	variant: ClosingVariant;
+	/** Which way the sheets sweep: sideways beside the stage, upward on one column. */
+	direction: ClosingDirection;
 	/** Where the animation ends. The destination marks it, see `closingFocal`. */
 	focal: ClosingFocal;
 	/**
@@ -105,201 +106,13 @@ const run = (
 const px = (value: number) => `${value}px`;
 
 /**
- * What makes the curtain a curtain, painted once with gradients (never a filter
- * or a shadow that has to be redrawn): light from above that falls off toward
- * the hem, soft folds every 56 px and a fainter set at 91 px. Black and white
- * at a low alpha, so they shade whatever brand colour the tenant has.
+ * Slide reveal: the red area swipes over the room as one piece, to the right
+ * beside the stage and upward on one column. A second red layer sits behind it
+ * and travels the same way a beat later, so the swipe leaves a trailing band
+ * before the chat is uncovered. The beat is part of the phase, not added to
+ * it: both sheets end together.
  */
-const PLEATS = [
-	'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.16) 100%)',
-	'repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0) 12px, rgba(255,255,255,0.12) 30px, rgba(0,0,0,0) 44px, rgba(0,0,0,0.2) 56px)',
-	// A second, fainter set at another pitch, so the folds do not repeat evenly.
-	'repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0) 23px, rgba(255,255,255,0.06) 47px, rgba(0,0,0,0) 71px, rgba(0,0,0,0.08) 91px)'
-].join(', ');
-
-/**
- * How narrow the folds are when the curtain is gathered at the side it comes
- * from. It spreads to 1 as it is drawn and gathers again as it opens.
- */
-const GATHERED = 0.62;
-
-/**
- * Curtain: two halves close over the right-hand surface and open again. The
- * stage beside the surface is red already, so the pieces that stand in for it
- * only fade in. Every piece belongs to the left or the right half, and a half
- * travels as one: when the curtain opens the whole screen parts at the middle
- * of the surface and nothing is left behind.
- */
-const curtain = (frame: Frame): Plan => {
-	const { doc, width, height } = frame;
-	const box = doc
-		.querySelector('.stageLayout__content')
-		?.getBoundingClientRect();
-	const measured = box
-		? {
-				left: Math.max(0, Math.round(box.left)),
-				top: Math.max(0, Math.round(box.top)),
-				right: Math.min(width, Math.round(box.right)),
-				bottom: Math.min(height, Math.round(box.bottom))
-			}
-		: undefined;
-	const surface =
-		measured &&
-		measured.right - measured.left > 40 &&
-		measured.bottom - measured.top > 40
-			? measured
-			: { left: 0, top: 0, right: width, bottom: height };
-	const centre = Math.round((surface.left + surface.right) / 2);
-
-	const half = (side: 'left' | 'right') => {
-		const x0 = side === 'left' ? 0 : centre;
-		// One pixel of overlap into the other half, so no seam shows where they meet.
-		const x1 = side === 'left' ? centre + 1 : width;
-		const element = doc.createElement('div');
-		Object.assign(element.style, {
-			position: 'absolute',
-			pointerEvents: 'none',
-			willChange: 'transform',
-			left: px(x0),
-			top: '0',
-			width: px(x1 - x0),
-			height: px(height)
-		});
-		frame.root.appendChild(element);
-		const own = (left: number, right: number) => [
-			Math.max(left, x0),
-			Math.min(right, x1)
-		];
-		const rect = (
-			name: string,
-			[l, r]: number[],
-			top: number,
-			bottom: number
-		) =>
-			r - l > 0.5 && bottom - top > 0.5
-				? layer(
-						frame,
-						name,
-						{
-							left: px(l - x0),
-							top: px(top),
-							width: px(r - l),
-							height: px(bottom - top),
-							background: primary
-						},
-						element
-					)
-				: undefined;
-		const strips = [
-			// Each piece runs one pixel under the next, so no seam shows while a half moves.
-			rect(`stage-${side}`, own(0, surface.left + 1), 0, height),
-			rect(`stage-${side}-end`, own(surface.right - 1, width), 0, height),
-			rect(
-				`top-${side}`,
-				own(surface.left, surface.right),
-				0,
-				surface.top + 1
-			),
-			rect(
-				`bottom-${side}`,
-				own(surface.left, surface.right),
-				surface.bottom - 1,
-				height
-			)
-		].filter((strip): strip is HTMLDivElement => Boolean(strip));
-
-		// A frame that only clips: it paints nothing, so it is not a layer.
-		const [l, r] = own(surface.left, surface.right);
-		const clip = doc.createElement('div');
-		Object.assign(clip.style, {
-			position: 'absolute',
-			pointerEvents: 'none',
-			left: px(l - x0),
-			top: px(surface.top),
-			width: px(r - l),
-			height: px(surface.bottom - surface.top),
-			overflow: 'hidden'
-		});
-		element.appendChild(clip);
-		const panel = layer(
-			frame,
-			`curtain-${side}`,
-			{
-				left: '0',
-				top: '0',
-				width: '100%',
-				height: '100%',
-				backgroundColor: primary,
-				backgroundImage: PLEATS,
-				// The folds gather at the edge the half comes from.
-				transformOrigin: `${side} center`,
-				// The edge that meets in the middle is a shade deeper, so two
-				// halves read as cloth and not as one flat sheet.
-				boxShadow: `inset ${side === 'left' ? '-' : ''}8px 0 0 ${primaryDark}`
-			},
-			clip
-		);
-		return { element, strips, panel, away: side === 'left' ? -1 : 1 };
-	};
-
-	const halves = [half('left'), half('right')];
-
-	return {
-		cover: () =>
-			halves.flatMap(({ strips, panel, away }) => [
-				...strips.map((strip) =>
-					run(
-						strip,
-						[{ opacity: 0 }, { opacity: 1 }],
-						closing.coverMs * 0.6,
-						transitionMotion.easeIn
-					)
-				),
-				run(
-					panel,
-					[
-						{
-							transform: `translateX(${away * 101}%) scaleX(${GATHERED})`
-						},
-						{ transform: 'none' }
-					],
-					closing.coverMs,
-					transitionMotion.easeIn
-				)
-			]),
-		reveal: () =>
-			halves.flatMap(({ element, panel, away }) => [
-				run(
-					element,
-					[
-						{ transform: 'none' },
-						{ transform: `translateX(${away * 100}%)` }
-					],
-					closing.revealMs,
-					transitionMotion.easeOut
-				),
-				// Opening, the folds gather again toward the side it parts to.
-				run(
-					panel,
-					[
-						{ transform: 'none' },
-						{ transform: `scaleX(${GATHERED})` }
-					],
-					closing.revealMs,
-					transitionMotion.easeOut
-				)
-			])
-	};
-};
-
-/**
- * Slide reveal: the red area swipes to the right as one piece. A second red
- * layer sits behind it and travels the same way a beat later, so the swipe
- * leaves a trailing band before the chat is uncovered. The beat is part of the
- * phase, not added to it: both sheets end together, so this design takes as
- * long as the other two.
- */
-const slideReveal = (frame: Frame): Plan => {
+const slideReveal = (frame: Frame, direction: ClosingDirection): Plan => {
 	const { width, height } = frame;
 	const sheet = (name: string, background: string) =>
 		layer(frame, name, {
@@ -311,8 +124,12 @@ const slideReveal = (frame: Frame): Plan => {
 		});
 	const rear = sheet('slide-rear', primaryDark);
 	const front = sheet('slide-front', primary);
-	const from = 'translateX(-100%)';
-	const to = 'translateX(100%)';
+	// One continuous sweep: in from the left and out to the right, or in from
+	// the bottom and out at the top.
+	const axis = direction === 'vertical' ? 'Y' : 'X';
+	const sign = direction === 'vertical' ? -1 : 1;
+	const from = `translate${axis}(${-sign * 100}%)`;
+	const to = `translate${axis}(${sign * 100}%)`;
 
 	return {
 		cover: () => [
@@ -347,11 +164,6 @@ const slideReveal = (frame: Frame): Plan => {
 			)
 		]
 	};
-};
-
-const PLANS: Record<ClosingVariant, (frame: Frame) => Plan> = {
-	curtain,
-	slideReveal
 };
 
 const canAnimate = (doc: Document) =>
@@ -449,7 +261,8 @@ export const playClosingAnimation = async (
 
 	const root = doc.createElement('div');
 	root.setAttribute('aria-hidden', 'true');
-	root.dataset.closingAnimation = options.variant;
+	root.dataset.closingAnimation = 'slide-reveal';
+	root.dataset.closingDirection = options.direction;
 	root.dataset.closingPhase = 'cover';
 	Object.assign(root.style, {
 		position: 'fixed',
@@ -471,7 +284,8 @@ export const playClosingAnimation = async (
 		x: size.width / 2,
 		y: size.height * 0.82
 	};
-	const buildPlan = () => PLANS[options.variant]({ doc, root, ...size });
+	const buildPlan = () =>
+		slideReveal({ doc, root, ...size }, options.direction);
 	let plan = buildPlan();
 	/* The pieces are sized in pixels at the press. A viewport that changed
 	   while the screen is held covered (a phone turned) would show the room

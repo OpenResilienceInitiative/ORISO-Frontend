@@ -1,10 +1,9 @@
 import { useCallback } from 'react';
-import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { prefersReducedMotion } from '../useReducedMotion';
 import {
 	CLOSING_DESKTOP_MIN_WIDTH,
-	resolveTenantClosingAnimation
-} from './closingVariants';
+	closingDirectionFor
+} from './closingDirection';
 import {
 	playClosingAnimation,
 	PlayClosingAnimationOptions,
@@ -15,20 +14,18 @@ import {
  * The closing animation a waiting room plays when the person goes on.
  *
  * The room says only where it ends (`focal`) and what to do once the screen is
- * covered (`onCovered`). The design comes from the tenant's setting for the
- * width the person is on, and reduced motion is answered here, once, for every
- * room. Both are read at the press: nothing is subscribed to while the room
- * is on screen, and a person who rotates their phone gets the design that
- * belongs to the screen they are looking at when they press.
+ * covered (`onCovered`). The direction follows the width the person is on, and
+ * reduced motion is answered here, once, for every room. Both are read at the
+ * press: nothing is subscribed to while the room is on screen, and a person who
+ * rotates their phone gets the direction that belongs to the screen they are
+ * looking at when they press.
  */
 export const useClosingAnimation = () => {
-	const tenant = useTenant();
-
 	const play = useCallback(
 		(
 			options: Omit<
 				PlayClosingAnimationOptions,
-				'variant' | 'reducedMotion'
+				'direction' | 'reducedMotion'
 			>
 		): Promise<PlayClosingAnimationResult> => {
 			const win = (options.document ?? document).defaultView ?? window;
@@ -38,11 +35,11 @@ export const useClosingAnimation = () => {
 					.matches;
 			return playClosingAnimation({
 				...options,
-				variant: resolveTenantClosingAnimation(tenant, desktop),
+				direction: closingDirectionFor(desktop),
 				reducedMotion: prefersReducedMotion(win)
 			});
 		},
-		[tenant]
+		[]
 	);
 
 	return { play };
