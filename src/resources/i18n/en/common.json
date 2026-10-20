@@ -2536,6 +2536,10 @@
 					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
 					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
 					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
+				},
+				"dpaRestricted": {
+					"title": "Advice seekers cannot start a live chat with you",
+					"text": "Your provider has not confirmed the current data processing agreement. Until it does, new advice seekers cannot start a live chat or an enquiry. Counselling that has already begun continues."
 				}
 			},
 			"masterKey": {
@@ -3685,7 +3689,12 @@
 			},
 			"back": "Back",
 			"next": "Next",
-			"consentPending": "Client consent is required before access is activated."
+			"consentPending": "Client consent is required before access is activated.",
+			"reclaim": {
+				"copy": "A colleague took over this case while you were away. You can take it back now.",
+				"cta": "Take the case back",
+				"unavailable": "This case can no longer be taken back."
+			}
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",
@@ -3706,7 +3715,8 @@
 		},
 		"readOnly": {
 			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
-			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages."
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
+			"extend": "Extend access"
 		},
 		"standingPreference": {
 			"label": "Always ask before additional access",

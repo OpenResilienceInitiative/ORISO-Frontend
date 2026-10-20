@@ -48,6 +48,7 @@ type PlaygroundProps = {
 	noReasons?: boolean;
 	/** Simulates a failed reasons request; Retry then loads them. */
 	reasonsFail?: boolean;
+	canReclaim?: boolean;
 };
 
 export function CurtainPlayground({
@@ -58,7 +59,8 @@ export function CurtainPlayground({
 	error,
 	topicLabel = 'Schwangerschaftsberatung',
 	noReasons = false,
-	reasonsFail = false
+	reasonsFail = false,
+	canReclaim = false
 }: PlaygroundProps) {
 	const [failed, setFailed] = useState(reasonsFail);
 	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
@@ -76,6 +78,8 @@ export function CurtainPlayground({
 			reasonCode={reasonCode}
 			explanation={explanation}
 			error={error}
+			canReclaim={canReclaim}
+			onReclaim={() => {}}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
 			onNext={() => setStep('describe')}

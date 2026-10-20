@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetCaseHandoverStatus,
+	apiReclaimCaseHandover,
 	apiRequestCaseHandoverAccess,
 	CaseHandoverReason,
 	CaseHandoverStatus
@@ -78,6 +79,9 @@ export interface CaseHandoverCurtainViewProps {
 	onReasonSelect: (code: string) => void;
 	onExplanationChange: (value: string) => void;
 	onSubmit: () => void;
+	/** The viewer is the counsellor a takeover moved this case away from. */
+	canReclaim?: boolean;
+	onReclaim?: () => void;
 }
 
 /** Presentational curtain (stories render this directly). */
@@ -97,7 +101,9 @@ export const CaseHandoverCurtainView = ({
 	onNext,
 	onReasonSelect,
 	onExplanationChange,
-	onSubmit
+	onSubmit,
+	canReclaim = false,
+	onReclaim
 }: CaseHandoverCurtainViewProps) => {
 	const { t: translate } = useTranslation();
 	const selectedReason = useMemo(
@@ -146,27 +152,60 @@ export const CaseHandoverCurtainView = ({
 											)}
 										</h3>
 									</div>
-									<p className="caseHandoverCurtain__copy">
-										{translate(
-											'caseHandover.curtain.intro.copy'
-										)}
-									</p>
-									<div className="caseHandoverCurtain__introActions">
-										<button
-											type="button"
-											className="caseHandoverCurtain__stepByStep"
-											onClick={onStart}
-											data-cy="case-handover-curtain-start"
-										>
-											<TutorialIcon
-												className="caseHandoverCurtain__stepByStepIcon"
-												aria-hidden
-											/>
-											{translate(
-												'caseHandover.curtain.intro.cta'
+									{canReclaim ? (
+										<>
+											<p className="caseHandoverCurtain__copy">
+												{translate(
+													'caseHandover.curtain.reclaim.copy'
+												)}
+											</p>
+											{error && (
+												<p
+													className="caseHandoverCurtain__error"
+													role="alert"
+												>
+													{error}
+												</p>
 											)}
-										</button>
-									</div>
+											<div className="caseHandoverCurtain__introActions">
+												<button
+													type="button"
+													className="caseHandoverCurtain__stepByStep"
+													onClick={onReclaim}
+													disabled={isSubmitting}
+													data-cy="case-handover-curtain-reclaim"
+												>
+													{translate(
+														'caseHandover.curtain.reclaim.cta'
+													)}
+												</button>
+											</div>
+										</>
+									) : (
+										<>
+											<p className="caseHandoverCurtain__copy">
+												{translate(
+													'caseHandover.curtain.intro.copy'
+												)}
+											</p>
+											<div className="caseHandoverCurtain__introActions">
+												<button
+													type="button"
+													className="caseHandoverCurtain__stepByStep"
+													onClick={onStart}
+													data-cy="case-handover-curtain-start"
+												>
+													<TutorialIcon
+														className="caseHandoverCurtain__stepByStepIcon"
+														aria-hidden
+													/>
+													{translate(
+														'caseHandover.curtain.intro.cta'
+													)}
+												</button>
+											</div>
+										</>
+									)}
 								</>
 							)}
 
@@ -413,7 +452,13 @@ export const CaseHandoverCurtain = ({
 		);
 	}, [reasons, reasonsLoaded]);
 
+	const canReclaim = status?.canReclaim === true;
+
 	const derivedStep: CaseHandoverCurtainStep = useMemo(() => {
+		// An own request from before the reclaim action existed must not hide it.
+		if (canReclaim) {
+			return 'intro';
+		}
 		if (status?.status === 'PENDING_CLIENT_CONSENT') {
 			return 'consentPending';
 		}
@@ -424,7 +469,24 @@ export const CaseHandoverCurtain = ({
 			return 'denied';
 		}
 		return step;
-	}, [status?.status, step]);
+	}, [canReclaim, status?.status, step]);
+
+	const handleReclaim = () => {
+		setIsSubmitting(true);
+		setError('');
+		apiReclaimCaseHandover(sessionId)
+			.then(onStatusChange)
+			.catch((reclaimError) => {
+				setError(
+					reclaimError?.message === FETCH_ERRORS.CONFLICT
+						? translate('caseHandover.curtain.reclaim.unavailable')
+						: reclaimError?.message === FETCH_ERRORS.FORBIDDEN
+							? translate('caseHandover.error.forbidden')
+							: translate('caseHandover.error.failed')
+				);
+			})
+			.finally(() => setIsSubmitting(false));
+	};
 
 	const handleSubmit = () => {
 		if (!reasonCode || !explanation.trim() || isSubmitting) {
@@ -526,6 +588,8 @@ export const CaseHandoverCurtain = ({
 			onReasonSelect={setReasonCode}
 			onExplanationChange={setExplanation}
 			onSubmit={handleSubmit}
+			canReclaim={canReclaim}
+			onReclaim={handleReclaim}
 		/>
 	);
 };

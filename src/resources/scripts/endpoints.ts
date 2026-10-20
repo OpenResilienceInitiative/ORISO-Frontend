@@ -16,6 +16,8 @@ const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
 const keycloakOrigin = getKeycloakOrigin(apiUrl);
 
 export const endpoints = {
+	accountInactivityActivity:
+		userServiceOrigin + '/service/users/account-inactivity/activity',
 	accountInvite: (token: string) =>
 		userServiceOrigin +
 		`/service/users/account-invites/${encodeURIComponent(token)}`,
