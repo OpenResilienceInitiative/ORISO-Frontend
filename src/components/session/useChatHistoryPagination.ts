@@ -12,16 +12,11 @@ interface PendingPage {
 	generation: number;
 	anchorId?: string;
 	anchorTop?: number;
-	oldestId?: string;
 	top: number;
 	height: number;
 	completed: boolean;
 	hasMore: boolean;
 }
-
-const oldestRenderedId = (container: HTMLElement) =>
-	container.querySelector<HTMLElement>('[data-message-id]')?.dataset
-		.messageId;
 
 const captureReadingPosition = (container: HTMLElement) => {
 	const visibleTop = container.getBoundingClientRect().top;
@@ -30,7 +25,6 @@ const captureReadingPosition = (container: HTMLElement) => {
 	).find((message) => message.getBoundingClientRect().bottom > visibleTop);
 	return {
 		anchorId: anchor?.dataset.messageId,
-		oldestId: oldestRenderedId(container),
 		anchorTop: anchor?.getBoundingClientRect().top,
 		top: container.scrollTop,
 		height: container.scrollHeight
@@ -66,8 +60,8 @@ export const useChatHistoryPagination = (
 		const page = pending.current;
 		const container = timeline.current;
 		if (!page?.completed || page.generation !== generation.current) return;
-		page.stopTracking();
 		if (!container || container !== page.container) {
+			page.stopTracking();
 			pending.current = null;
 			busy.current = false;
 			return; // A replacement card owns its own reading position.
@@ -75,13 +69,19 @@ export const useChatHistoryPagination = (
 		const anchor = Array.from(
 			container.querySelectorAll<HTMLElement>('[data-message-id]')
 		).find((message) => message.dataset.messageId === page.anchorId);
+		// Geometry changes before the browser delivers its scroll event. With
+		// native anchoring paused, this delta is navigation since the last sample,
+		// even when the event is still queued when React prepends the page.
+		const navigationDelta = container.scrollTop - page.top;
 		if (anchor && page.anchorTop !== undefined) {
 			container.scrollTop +=
-				anchor.getBoundingClientRect().top - page.anchorTop;
+				anchor.getBoundingClientRect().top -
+				(page.anchorTop - navigationDelta);
 		} else {
 			container.scrollTop =
-				page.top + container.scrollHeight - page.height;
+				container.scrollTop + container.scrollHeight - page.height;
 		}
+		page.stopTracking();
 		pending.current = null;
 		busy.current = false;
 		// Metadata-only pages may add no visible height. Keep going until
@@ -101,10 +101,30 @@ export const useChatHistoryPagination = (
 			container.scrollTop > 48
 		)
 			return;
+		const previousAnchoring =
+			container.style.getPropertyValue('overflow-anchor');
+		const previousPriority =
+			container.style.getPropertyPriority('overflow-anchor');
+		// Let this hook own prepend correction. Otherwise browser anchoring and
+		// user navigation both change scrollTop and cannot be distinguished.
+		container.style.setProperty('overflow-anchor', 'none');
+		let tracking = true;
 		const page: PendingPage = {
 			container,
-			stopTracking: () =>
-				container.removeEventListener('scroll', trackNavigation),
+			stopTracking: () => {
+				if (!tracking) return;
+				tracking = false;
+				container.removeEventListener('scroll', trackNavigation);
+				if (previousAnchoring) {
+					container.style.setProperty(
+						'overflow-anchor',
+						previousAnchoring,
+						previousPriority
+					);
+				} else {
+					container.style.removeProperty('overflow-anchor');
+				}
+			},
 			generation: generation.current,
 			...captureReadingPosition(container),
 			completed: false,
@@ -113,12 +133,11 @@ export const useChatHistoryPagination = (
 		const trackNavigation = () => {
 			if (
 				pending.current !== page ||
-				oldestRenderedId(container) !== page.oldestId
+				container.scrollHeight !== page.height
 			)
 				return;
-			// Rebase while the older page is not rendered yet. A scroll caused by
+			// Rebase while the original DOM is still present. A scroll caused by
 			// native anchoring after prepend must not replace this chosen position.
-			// Not keyed on height: a composer resize changes it before the page lands.
 			Object.assign(page, captureReadingPosition(container));
 		};
 		pending.current = page;

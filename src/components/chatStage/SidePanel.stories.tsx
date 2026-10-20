@@ -415,13 +415,26 @@ export const Supervision: Story = {
 		await expect(
 			panel.querySelector('.panelHeader')!.textContent
 		).not.toMatch(/Antworten auf|Replies to/);
-		// T49: the notice is the Carimat organism (`pseudonymCard`), not the
-		// generic system-notification chrome — no kebab next to it.
+		// The shared assistant sender and the recorded supervision topic are separate.
+		const notice = panel.querySelector<HTMLElement>(
+			'.messageItem--supervisionNotice'
+		)!;
+		await expect(notice).not.toBeNull();
+		const noticeContent = within(notice);
 		await expect(
-			panel.querySelector(
-				'.messageItem.pseudonymCard .pseudonymCard__headerName'
-			)?.textContent
-		).toBe('Supervision');
+			noticeContent.getByText('Carimat', { exact: true })
+		).toBeInTheDocument();
+		await expect(
+			noticeContent.getByText('Supervision', { exact: true })
+		).toBeInTheDocument();
+		for (const part of [
+			'.carimatMessageFrame',
+			'.carimatMessageFrame__avatar',
+			'.carimatMessageFrame__header',
+			'.carimatMessageFrame__bubble'
+		]) {
+			await expect(notice.querySelector(part), part).not.toBeNull();
+		}
 		await expect(
 			panel.querySelector('.messageItem__message--systemNotification')
 		).toBeNull();
@@ -651,10 +664,9 @@ export const EmptyWithSupervisionNotice: Story = {
 				canvasElement.querySelector('.textarea__wrapper-send-message')
 			).not.toBeNull()
 		);
-		// (T49: the Carimat organism nests its own `.messageItem` row inside
-		// the timeline item — count timeline items, not organism rows.)
+		// Count recorded timeline items; the assistant presentation is not another event.
 		await expect(
-			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+			canvasElement.querySelectorAll('.messageItem[data-message-id]')
 				.length
 		).toBe(1);
 		await expect(canvasElement.textContent).toContain(SUPERVISOR_NAME);

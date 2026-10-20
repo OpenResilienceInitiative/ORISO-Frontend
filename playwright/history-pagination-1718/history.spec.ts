@@ -529,6 +529,11 @@ for (const { navigateToNewest, composerResize, title } of [
 			await scroll.hover();
 			await page.mouse.wheel(0, -100000);
 			await expect.poll(() => historyPages.length).toBe(1);
+			// mouse.wheel returns before scrolling finishes. Capture a stationary
+			// position at the intended edge before releasing the delayed response.
+			await expect
+				.poll(() => scroll.evaluate((element) => element.scrollTop))
+				.toBe(0);
 			// The composer republishes its measured height (first measure, an
 			// info bar, auto-grow) while the page is in flight. The bottom
 			// reservation shrinks, so the timeline height changes before the
@@ -545,7 +550,20 @@ for (const { navigateToNewest, composerResize, title } of [
 							'composer resize did not change height'
 						);
 				});
-			if (navigateToNewest) await page.mouse.wheel(0, 100000);
+			if (navigateToNewest) {
+				await page.mouse.wheel(0, 100000);
+				await expect
+					.poll(() =>
+						scroll.evaluate(
+							(element) =>
+								element.scrollHeight -
+								element.clientHeight -
+								element.scrollTop
+						)
+					)
+					.toBeLessThanOrEqual(1);
+			}
+
 			const chosenMessage = page.locator(
 				`[data-message-id="$history-${navigateToNewest ? 140 : 121}"]`
 			);

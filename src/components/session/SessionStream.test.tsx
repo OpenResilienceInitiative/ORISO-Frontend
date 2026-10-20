@@ -22,6 +22,7 @@ import { SessionStream } from './SessionStream';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
+import { buildCallLifecycleContent } from '../../utils/callLifecycleMessage';
 
 const ROOM_ID = '!session:matrix.example.org';
 const LIST_PATH = '/sessions/user/view';
@@ -384,6 +385,27 @@ const emitLifecycle = (change: any) => {
 
 describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
+		vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+			const request =
+				input instanceof Request ? input : new Request(String(input));
+			if (
+				request.method !== 'GET' ||
+				!request.url.endsWith(
+					'/sessions/1/case-handover/consent-preference'
+				)
+			)
+				throw new Error('Unexpected future-preference HTTP request');
+			return new Response(
+				JSON.stringify({
+					sessionId: 1,
+					alwaysAskBeforeAdditionalAccess: false
+				}),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
+		});
 		vi.clearAllMocks();
 		mocks.getCaseHandoverStatus.mockReset();
 		mocks.lifecycleListeners.length = 0;
@@ -401,6 +423,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 	afterEach(() => {
 		cleanup();
+		vi.unstubAllGlobals();
 	});
 
 	it.each([0, 1, 2])(
@@ -505,11 +528,23 @@ describe('SessionStream Matrix room lifecycle', () => {
 				}
 			]
 		});
-		fireEvent.click(await screen.findByRole('switch'));
-		expect((await screen.findByRole('status')).textContent).toBe(
-			'caseHandover.consent.info.takeoverContinues'
+		fireEvent.click(
+			await screen.findByRole('switch', {
+				name: 'caseHandover.consent.optOut.switchLabel'
+			})
 		);
-		expect(screen.queryByRole('switch')).toBeNull();
+		expect(
+			(
+				await screen.findByText(
+					'caseHandover.consent.info.takeoverContinues'
+				)
+			).getAttribute('role')
+		).toBe('status');
+		expect(
+			screen.queryByRole('switch', {
+				name: 'caseHandover.consent.optOut.switchLabel'
+			})
+		).toBeNull();
 	});
 
 	it('keeps the real request available when saving fails', async () => {
@@ -529,11 +564,26 @@ describe('SessionStream Matrix room lifecycle', () => {
 				}
 			]
 		});
-		fireEvent.click(await screen.findByRole('switch'));
-		expect(await screen.findByRole('alert')).toBeTruthy();
-		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
-			true
+		fireEvent.click(
+			await screen.findByRole('switch', {
+				name: 'caseHandover.consent.optOut.switchLabel'
+			})
 		);
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'caseHandover.error.failed'
+		);
+		expect(
+			await screen.findByRole('switch', {
+				name: 'caseHandover.standingPreference.label'
+			})
+		).toBeTruthy();
+		expect(
+			(
+				screen.getByRole('switch', {
+					name: 'caseHandover.consent.optOut.switchLabel'
+				}) as HTMLInputElement
+			).checked
+		).toBe(true);
 	});
 
 	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {
@@ -768,6 +818,145 @@ describe('SessionStream Matrix room lifecycle', () => {
 			).toBeGreaterThan(callsAtAttach)
 		);
 		expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(ROOM_ID);
+	});
+
+	it('gives a call in the conversation the room id its card is matched on', async () => {
+		/*
+		 * `MessageItemComponent` only draws the card when the lifecycle
+		 * record's `roomRef` matches the item's `rid`, so that a supervision
+		 * call never surfaces in the client timeline. The main timeline did
+		 * not stamp `rid` at all, so that compared a room id against
+		 * `undefined` and the card never appeared — a call in the
+		 * conversation rendered as an ordinary message. The component's own
+		 * tests pass `rid` by hand and so could not see it; this one goes
+		 * through the stream that builds the items.
+		 */
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId !== ROOM_ID
+				? []
+				: [
+						{
+							getType: () => 'm.room.message',
+							getContent: () =>
+								buildCallLifecycleContent({
+									callId: 'call-1',
+									roomRef: ROOM_ID,
+									callRoomId: '!media:matrix.example.org',
+									callType: 'video',
+									state: 'running',
+									participants: []
+								}),
+							getSender: () => '@consultant:matrix.example.org',
+							getId: () => '$call-card:matrix.example.org',
+							getTs: () => 1700000000000
+						}
+					]
+		);
+
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() =>
+			expect(mocks.sessionItemProps?.messages?.length).toBe(1)
+		);
+		const item = mocks.sessionItemProps.messages[0];
+		expect(item.callLifecycle?.roomRef).toBe(ROOM_ID);
+		// The comparison the card is gated on, which must be able to hold.
+		expect(item.rid).toBe(item.callLifecycle.roomRef);
+	});
+
+	it('folds the revisions of a supervision call card too', async () => {
+		/*
+		 * A call card is a series of REVISIONS: an edit per membership change
+		 * and a terminal one at the end. The main timeline folded them; the
+		 * side timelines ran only `applyMessageEdits`, which DROPS every
+		 * `m.replace` without folding it. So a call started in a supervision
+		 * room — `startSupervisionCall` does exactly that — stayed at
+		 * whatever it was first written as: still "running" after it had
+		 * ended, with a Join button for a call nobody was in.
+		 */
+		const SUPERVISION = '!supervision:matrix.example.org';
+		const card = {
+			callId: 'call-sv',
+			roomRef: SUPERVISION,
+			callRoomId: '!media-sv:matrix.example.org',
+			callType: 'video' as const,
+			participants: []
+		};
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId !== SUPERVISION
+				? []
+				: [
+						{
+							getType: () => 'm.room.message',
+							getContent: () =>
+								buildCallLifecycleContent({
+									...card,
+									state: 'running'
+								}),
+							getSender: () => '@supervisor:matrix.example.org',
+							getId: () => '$sv-card:matrix.example.org',
+							getTs: () => 1700000000000
+						},
+						{
+							getType: () => 'm.room.message',
+							getContent: () =>
+								buildCallLifecycleContent(
+									{
+										...card,
+										state: 'ended',
+										startedAt: new Date(
+											1700000001000
+										).toISOString(),
+										endedAt: new Date(
+											1700000061000
+										).toISOString(),
+										durationSeconds: 60
+									},
+									'$sv-card:matrix.example.org'
+								),
+							getSender: () => '@supervisor:matrix.example.org',
+							getId: () => '$sv-edit:matrix.example.org',
+							getTs: () => 1700000061000
+						}
+					]
+		);
+
+		mocks.getSessionSupervisors.mockResolvedValueOnce([
+			{
+				id: 7,
+				supervisorConsultantId: 'supervisor-1',
+				supervisorUsername: 'supervisor@example.invalid',
+				matrixRoomId: SUPERVISION
+			}
+		]);
+		renderSessionStream({
+			isGroup: false,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				consultant: { id: 'owner-2' },
+				item: { id: 1, matrixRoomId: ROOM_ID, active: true, status: 2 }
+			} as any,
+			userData: {
+				userId: 'supervisor-1',
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			} as any
+		});
+
+		await waitFor(() =>
+			expect(
+				mocks.sessionItemProps?.supervisionMessages?.length
+			).toBeGreaterThan(0)
+		);
+		const cards = mocks.sessionItemProps.supervisionMessages.filter(
+			(message: { callLifecycle?: unknown }) => message.callLifecycle
+		);
+		// One card for one call, carrying the revision rather than the
+		// original — the edit is folded on, not discarded.
+		expect(cards).toHaveLength(1);
+		expect(cards[0].callLifecycle.state).toBe('ended');
+		expect(cards[0].callLifecycle.durationSeconds).toBe(60);
 	});
 
 	it('does not curtain a backend-authorized session supervisor', async () => {
