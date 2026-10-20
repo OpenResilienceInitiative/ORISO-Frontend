@@ -229,4 +229,35 @@ describe('useGroupCardMembers (#1806)', () => {
 		);
 		expect(maximum).toBe(2);
 	});
+	it('keeps the replacement room live when the old room finishes hydration last', async () => {
+		const fixture = setup();
+		let members = [
+			{ userId: '@homer:example.org', name: 'Homer', membership: 'join' }
+		];
+		const replacement = {
+			...fixture.room,
+			loadMembersIfNeeded: vi.fn().mockResolvedValue(true),
+			getJoinedMembers: () => members
+		};
+		let currentRoom = fixture.room;
+		vi.spyOn(fixture.client, 'getRoom').mockImplementation(
+			() => currentRoom
+		);
+		const { result } = renderHook(() =>
+			useGroupCardMembers('!group:example.org', true)
+		);
+		await waitFor(() =>
+			expect(fixture.room.loadMembersIfNeeded).toHaveBeenCalledTimes(1)
+		);
+		currentRoom = replacement;
+		act(() => fixture.emitRoom());
+		await waitFor(() =>
+			expect(result.current.members[0]?.userId).toBe('@homer:example.org')
+		);
+		await act(async () => fixture.finish());
+		members = [];
+		act(() => fixture.emit());
+		expect(result.current).toMatchObject({ status: 'ready', members: [] });
+		expect(replacement.loadMembersIfNeeded).toHaveBeenCalledTimes(1);
+	});
 });

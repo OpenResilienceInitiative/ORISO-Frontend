@@ -83,12 +83,12 @@ export const useGroupCardMembers = (
 					publish(EMPTY);
 					loadOnce(room)
 						.then(() => {
+							if (trackedRoom !== room) return;
 							readyRoom = room;
-							if (trackedRoom === room)
-								publish({
-									status: 'ready',
-									members: room.getJoinedMembers()
-								});
+							publish({
+								status: 'ready',
+								members: room.getJoinedMembers()
+							});
 						})
 						.catch(() => {
 							if (trackedRoom === room) {
