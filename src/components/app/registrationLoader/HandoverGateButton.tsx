@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Box, ButtonBase, Typography } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useTranslation } from 'react-i18next';
+import { warmClosingDestination, warmWhenIdle } from '../appChunks';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { ClosingFocal } from '../../transition/closing/closingFocal';
 import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
@@ -124,6 +125,15 @@ export const HandoverGateButton = ({
 			pressed.focus({ preventScroll: true });
 		}
 	}, [closingBusy]);
+	/* The screen behind the button is fetched while the person reads, so the
+	   click lands on a screen that is already loaded. */
+	React.useEffect(
+		() =>
+			closing
+				? warmWhenIdle(() => warmClosingDestination(closing))
+				: undefined,
+		[closing]
+	);
 	const shownState: HandoverGateState = closingBusy ? 'entering' : state;
 	const open = GATE_IS_OPEN[shownState] && !disabled;
 	const statusLabel = status ?? t(GATE_STATUS_KEY[shownState]);
@@ -139,6 +149,9 @@ export const HandoverGateButton = ({
 			onEnter?.(event);
 			return;
 		}
+		// Already warm in nearly every case; if not, the download starts now and
+		// has the cover (340 ms) before the room is swapped.
+		warmClosingDestination(closing);
 		setClosingBusy(true);
 		// A mouse click has a count; a key press or a script (the live-chat
 		// leave dialog presses this button for the person) has none.

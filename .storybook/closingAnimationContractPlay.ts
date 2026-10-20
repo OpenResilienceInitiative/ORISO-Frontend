@@ -3,10 +3,11 @@ import { FIELD_FOCUS_AFTER_WIDTH } from '../src/components/transition/closing/cl
 import { transitionMotion } from '../src/components/transition/transitionMotion';
 
 /**
- * The closing-animation contract (ORISO-Frontend#1737), asserted once for both
- * designs and every waiting room: it plays, it covers before it reveals,
- * it ends on the room's focal point, it never leaves a layer behind that could
- * swallow a click, and reduced motion skips it while the person still arrives.
+ * The closing-animation contract (ORISO-Frontend#1737), asserted once for every
+ * width and every waiting room: it plays, it covers before it reveals, it
+ * sweeps upward, it ends on the room's focal point, it never leaves a layer
+ * behind that could swallow a click, and reduced motion skips it while the
+ * person still arrives.
  *
  * Nothing here reads the implementation. It watches the DOM the way a person
  * would: layers appear on the page, they cover or uncover things, and the
@@ -28,12 +29,18 @@ interface Box {
 }
 
 interface LayerSnapshot {
+	/** `wave` for the sheet, `body` for its solid part, `edge:leading` / `edge:trailing` for its two waves. */
 	name: string;
 	/** The part of the layer a person can see: clipped by every clipping ancestor. */
 	visible: Box | null;
 	pointerEvents: string;
-	/** The colour a person sees on it, as the browser computes it. */
-	background: string;
+	/** The curves a wave is drawn with (0 for the sheet): a wave is not a straight cut. */
+	curves: number;
+	/**
+	 * The colour a person sees on it, as the browser computes it: the body's
+	 * background or a wave's fill. Empty for the sheet, which is not painted.
+	 */
+	colour: string;
 }
 
 interface ClosingSnapshot {
@@ -42,8 +49,10 @@ interface ClosingSnapshot {
 	/** Whether the story's own page is shut for keyboard and screen readers. */
 	pageInert: boolean | null;
 	animation: string;
-	direction: string;
 	at: number;
+	/** Where the sheet's top edge stood, and where the trailing wave's left edge. */
+	sheetTop: number;
+	waveLeft: number;
 	running: number;
 	layers: LayerSnapshot[];
 	/** The viewport and the surface the cover is meant to close over. */
@@ -113,13 +122,27 @@ const snapshotOf = (
 ): ClosingSnapshot => {
 	const win = doc.defaultView!;
 	const layers = [
-		...root.querySelectorAll<HTMLElement>('[data-closing-layer]')
+		...root.querySelectorAll<HTMLElement>(
+			'[data-closing-layer], [data-closing-body], [data-closing-edge]'
+		)
 	].map(
 		(layer): LayerSnapshot => ({
-			name: layer.dataset.closingLayer ?? '',
+			name: layer.dataset.closingLayer
+				? layer.dataset.closingLayer
+				: layer.hasAttribute('data-closing-body')
+					? 'body'
+					: `edge:${layer.dataset.closingEdge}`,
 			visible: visibleBox(root, layer),
 			pointerEvents: win.getComputedStyle(layer).pointerEvents,
-			background: win.getComputedStyle(layer).backgroundColor
+			curves: (
+				layer.querySelector('path')?.getAttribute('d')?.match(/C/g) ??
+				[]
+			).length,
+			colour: layer.hasAttribute('data-closing-body')
+				? win.getComputedStyle(layer).backgroundColor
+				: layer.dataset.closingEdge
+					? win.getComputedStyle(layer.querySelector('path')!).fill
+					: ''
 		})
 	);
 	const surfaceEl = doc.querySelector('.stageLayout__content');
@@ -129,8 +152,14 @@ const snapshotOf = (
 		rootPointerEvents: win.getComputedStyle(root).pointerEvents,
 		pageInert: pageHostOf(doc, root)?.hasAttribute('inert') ?? null,
 		animation: root.dataset.closingAnimation ?? '',
-		direction: root.dataset.closingDirection ?? '',
 		at: performance.now(),
+		sheetTop:
+			root.querySelector('[data-closing-layer]')?.getBoundingClientRect()
+				.top ?? 0,
+		waveLeft:
+			root
+				.querySelector('[data-closing-edge="trailing"]')
+				?.getBoundingClientRect().left ?? 0,
 		running: root
 			.getAnimations({ subtree: true })
 			.filter((a) => a.playState === 'running' || a.pending).length,
@@ -147,13 +176,14 @@ const snapshotOf = (
 };
 
 /**
- * How far along the sweep each layer's leading edge stood on one frame, in the
- * order the layers sit in the page: the left edge going right, the top edge
- * going up (so a larger number is always further along).
+ * How far along the sweep the sheet and its trailing wave stood on one frame:
+ * the sheet's top edge going up and the wave drifting to the left, so a larger
+ * number is always further along.
  */
 interface SweepSample {
 	phase: string;
-	edges: number[];
+	sheet: number;
+	drift: number;
 }
 
 export interface ClosingRecording {
@@ -189,18 +219,19 @@ export const recordClosing = (
 	const sample = () => {
 		const root = doc.querySelector<HTMLElement>(ROOT);
 		if (root) {
-			const vertical = root.dataset.closingDirection === 'vertical';
-			recording.samples.push({
-				phase: root.dataset.closingPhase ?? '',
-				edges: [
-					...root.querySelectorAll<HTMLElement>(
-						'[data-closing-layer]'
-					)
-				].map((layer) => {
-					const rect = layer.getBoundingClientRect();
-					return vertical ? -rect.top : rect.left;
-				})
-			});
+			const sheet = root.querySelector<HTMLElement>(
+				'[data-closing-layer]'
+			);
+			const wave = root.querySelector<HTMLElement>(
+				'[data-closing-edge="trailing"]'
+			);
+			if (sheet && wave) {
+				recording.samples.push({
+					phase: root.dataset.closingPhase ?? '',
+					sheet: -sheet.getBoundingClientRect().top,
+					drift: -wave.getBoundingClientRect().left
+				});
+			}
 		}
 		frame = win.requestAnimationFrame(sample);
 	};
@@ -237,16 +268,23 @@ export const recordClosing = (
 	return recording;
 };
 
-const covers = (snapshot: ClosingSnapshot, area: Box) =>
-	[
-		[area.left + 1, area.top + 1],
-		[area.right - 1, area.top + 1],
-		[area.left + 1, area.bottom - 1],
-		[area.right - 1, area.bottom - 1],
-		[(area.left + area.right) / 2, (area.top + area.bottom) / 2]
-	].every(([x, y]) =>
+/**
+ * Whether the sheet's solid body alone covers every point of a grid over the
+ * area, its edges and its middle included. The waves hang outside the body and
+ * are not counted: a body that falls short would show the room through the gap.
+ */
+const covers = (snapshot: ClosingSnapshot, area: Box) => {
+	const steps = [0, 0.25, 0.5, 0.75, 1];
+	const points = steps.flatMap((fx) =>
+		steps.map((fy) => [
+			area.left + 1 + fx * (area.right - area.left - 2),
+			area.top + 1 + fy * (area.bottom - area.top - 2)
+		])
+	);
+	return points.every(([x, y]) =>
 		snapshot.layers.some(
 			(layer) =>
+				layer.name === 'body' &&
 				!!layer.visible &&
 				x >= layer.visible.left &&
 				x <= layer.visible.right &&
@@ -254,6 +292,7 @@ const covers = (snapshot: ClosingSnapshot, area: Box) =>
 				y <= layer.visible.bottom
 		)
 	);
+};
 
 const phaseOf = (recording: ClosingRecording, phase: string) => {
 	const found = recording.snapshots.find((s) => s.phase === phase);
@@ -274,8 +313,6 @@ export const expectWaitingRoomTemplate = (canvasElement: HTMLElement) =>
 	);
 
 export interface ClosingContractOptions {
-	/** Which way the slide reveal sweeps on this width. */
-	direction: 'horizontal' | 'vertical';
 	focal?: ContractFocal;
 	/** The gate button, found fresh each time (the room is swapped away). */
 	gate: () => HTMLElement | null;
@@ -339,9 +376,19 @@ export const verifyClosingAnimation = async (
 			expect(recording.snapshots.length).toBeGreaterThan(0)
 		);
 		const started = recording.snapshots[0];
-		expect(started.animation).toBe('slide-reveal');
-		expect(started.direction).toBe(options.direction);
-		expect(started.layers.length).toBeGreaterThan(0);
+		expect(started.animation).toBe('wave-reveal');
+		expect(
+			started.layers.map((layer) => layer.name),
+			'one sheet: a body and its two waves'
+		).toEqual(['wave', 'body', 'edge:leading', 'edge:trailing']);
+		for (const layer of started.layers.filter((l) =>
+			l.name.startsWith('edge:')
+		)) {
+			expect(
+				layer.curves,
+				`"${layer.name}" is drawn with curves`
+			).toBeGreaterThanOrEqual(8);
+		}
 		expect(
 			started.running,
 			'animations are running on its layers'
@@ -395,21 +442,32 @@ export const verifyClosingAnimation = async (
 			'the reveal takes long enough to see'
 		).toBeGreaterThanOrEqual(300);
 
-		// The red swipes away as one piece, and a second red layer behind it
-		// travels along a beat later: two edges, one trailing the other.
-		const sweep = recording.samples.filter(
-			(s) => s.phase === 'reveal' && s.edges.length === 2
-		);
-		expect(sweep.length, 'the sweep was watched').toBeGreaterThan(3);
-		// The layer behind sits first in the page.
-		const lead = sweep.map((s) => s.edges[1] - s.edges[0]);
+		// The red leaves as one sheet, upward on every width: from the start of
+		// the reveal to its end the sheet's top edge has climbed across the whole
+		// screen, and the trailing wave has drifted sideways on the way (the edge
+		// flows, it does not slide). Measured at those two moments, which stand
+		// still, so a busy machine cannot fail it.
 		expect(
-			Math.max(...lead),
-			'the second layer trails the first'
-		).toBeGreaterThanOrEqual(8);
-		expect(Math.min(...lead), 'and never leads it').toBeGreaterThanOrEqual(
-			-1
-		);
+			revealing.sheetTop - ended.sheetTop,
+			'the sheet crosses most of the screen, upward'
+		).toBeGreaterThanOrEqual(win.innerHeight * 0.6);
+		expect(
+			revealing.waveLeft - ended.waveLeft,
+			'the wave drifts sideways while it leaves'
+		).toBeGreaterThanOrEqual(win.innerWidth * 0.1);
+		// And on the frames in between it only ever goes on, never back.
+		const sweep = recording.samples.filter((s) => s.phase === 'reveal');
+		expect(sweep.length, 'the sweep was watched').toBeGreaterThan(1);
+		for (let i = 1; i < sweep.length; i++) {
+			expect(
+				sweep[i].sheet - sweep[i - 1].sheet,
+				'the sheet never moves back down'
+			).toBeGreaterThanOrEqual(-1);
+			expect(
+				sweep[i].drift - sweep[i - 1].drift,
+				'the wave never drifts back'
+			).toBeGreaterThanOrEqual(-1);
+		}
 		if (swaps) {
 			expect(
 				ended.focal,
@@ -502,18 +560,16 @@ export const verifyClosingSkipped = async (
 };
 
 export interface ClosingHandoverContractOptions {
-	/** Which way the slide reveal sweeps on this width. */
-	direction: 'horizontal' | 'vertical';
 	/** The button that starts the animation in the old document (outside the frame). */
 	press: () => HTMLElement | null;
 	/** The frame the old document lives in; it is navigated to the new one. */
 	frame: () => HTMLIFrameElement | null;
 	/**
-	 * The tenant's colours as the old document's palette computes them. The new
-	 * document has no palette of its own, so a cover in these colours can only
+	 * The tenant's colour as the old document's palette computes it. The new
+	 * document has no palette of its own, so a cover in this colour can only
 	 * have been handed over.
 	 */
-	colours: { primary: string; primaryDark: string };
+	colour: string;
 	/** False: the new document never shows the focal element. */
 	destinationShowsFocal: boolean;
 }
@@ -575,26 +631,26 @@ export const verifyClosingHandover = async (
 			expect(recording!.snapshots.length).toBeGreaterThan(0)
 		);
 		const first = recording!.snapshots[0];
-		expect(first.animation).toBe('slide-reveal');
-		expect(first.direction).toBe(options.direction);
+		expect(first.animation).toBe('wave-reveal');
 		expect(first.phase).toBe('covered');
 		expect(first.running, 'the cover is not played a second time').toBe(0);
 		expect(first.layers.length).toBeGreaterThan(0);
 		expect(covers(first, first.viewport)).toBe(true);
 
-		// In the colours of the old document, which this one has no palette for.
-		const palette = [options.colours.primary, options.colours.primaryDark];
-		for (const layer of first.layers) {
+		// In the colour of the old document, which this one has no palette for:
+		// the body and both waves, and nothing else is painted.
+		const painted = first.layers.filter((layer) => layer.colour !== '');
+		expect(painted.map((layer) => layer.name).sort()).toEqual([
+			'body',
+			'edge:leading',
+			'edge:trailing'
+		]);
+		for (const layer of painted) {
 			expect(
-				palette,
+				layer.colour,
 				`layer "${layer.name}" is painted in the tenant's colour`
-			).toContain(layer.background);
+			).toBe(options.colour);
 		}
-		expect(
-			first.layers.some(
-				(layer) => layer.background === options.colours.primary
-			)
-		).toBe(true);
 
 		await waitFor(() => expect(recording!.removedAt).not.toBeNull(), {
 			timeout: transitionMotion.closing.capMs + 2000

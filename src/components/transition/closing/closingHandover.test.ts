@@ -13,7 +13,6 @@ const NOW = 1_800_000_000_000;
 const handover = (
 	overrides: Partial<ClosingHandover> = {}
 ): ClosingHandover => ({
-	direction: 'horizontal',
 	focal: 'messageField',
 	at: NOW,
 	...overrides
@@ -68,24 +67,8 @@ describe('closing handover note', () => {
 		['null', 'null'],
 		['not an object', '"curtain"'],
 		[
-			'an unknown direction',
-			JSON.stringify(handover({ direction: 'diagonal' as never }))
-		],
-		[
 			'an unknown destination',
 			JSON.stringify(handover({ focal: 'sky' as never }))
-		],
-		[
-			'no direction',
-			JSON.stringify({ ...handover(), direction: undefined })
-		],
-		[
-			'the old format, which named a design and no direction',
-			JSON.stringify({
-				...handover(),
-				direction: undefined,
-				variant: 'slideReveal'
-			})
 		],
 		['no time', JSON.stringify({ ...handover(), at: undefined })],
 		[
@@ -102,15 +85,15 @@ describe('closing handover note', () => {
 		expect(stored()).toBeNull();
 	});
 
-	describe('the tenant colours it carries', () => {
-		const colors = { primary: '#0050a0', primaryDark: 'rgb(0, 48, 95)' };
+	describe('the tenant colour it carries', () => {
+		const colors = { primary: '#0050a0' };
 
-		it('are handed over with it, because the next document starts before the palette arrives', () => {
+		it('is handed over with it, because the next document starts before the palette arrives', () => {
 			leaveClosingHandover(window, handover({ colors }));
 			expect(takeClosingHandover(window, NOW)?.colors).toEqual(colors);
 		});
 
-		it('may be absent: the platform colours apply', () => {
+		it('may be absent: the platform colour applies', () => {
 			leaveClosingHandover(window, handover());
 			const taken = takeClosingHandover(window, NOW);
 			expect(taken).not.toBeNull();
@@ -124,21 +107,19 @@ describe('closing handover note', () => {
 			['far too long', `rgb(${'0, '.repeat(30)}0)`],
 			['empty', '']
 		])(
-			'are dropped when one is %s, and the animation still plays',
+			'is dropped when it is %s, and the animation still plays',
 			(_name, bad) => {
-				for (const colors of [
-					{ primary: bad, primaryDark: '#000' },
-					{ primary: '#000', primaryDark: bad }
-				]) {
-					leaveClosingHandover(window, handover({ colors }));
-					const taken = takeClosingHandover(window, NOW);
-					expect(taken).not.toBeNull();
-					expect(taken).not.toHaveProperty('colors');
-				}
+				leaveClosingHandover(
+					window,
+					handover({ colors: { primary: bad } })
+				);
+				const taken = takeClosingHandover(window, NOW);
+				expect(taken).not.toBeNull();
+				expect(taken).not.toHaveProperty('colors');
 			}
 		);
 
-		it('are taken in the notations a browser computes, not only hex', () => {
+		it('is taken in the notations a browser computes, not only hex', () => {
 			for (const colour of [
 				'#fff',
 				'#00305f',
@@ -149,7 +130,7 @@ describe('closing handover note', () => {
 				'oklch(0.4 0.1 250)',
 				'color(srgb 0 0.19 0.37)'
 			]) {
-				const colors = { primary: colour, primaryDark: colour };
+				const colors = { primary: colour };
 				leaveClosingHandover(window, handover({ colors }));
 				expect(takeClosingHandover(window, NOW)?.colors).toEqual(
 					colors
@@ -157,12 +138,12 @@ describe('closing handover note', () => {
 			}
 		});
 
-		it('are dropped when they are not text', () => {
+		it('is dropped when it is not text', () => {
 			window.sessionStorage.setItem(
 				CLOSING_HANDOVER_KEY,
 				JSON.stringify({
 					...handover(),
-					colors: { primary: 7, primaryDark: null }
+					colors: { primary: 7 }
 				})
 			);
 			const taken = takeClosingHandover(window, NOW);

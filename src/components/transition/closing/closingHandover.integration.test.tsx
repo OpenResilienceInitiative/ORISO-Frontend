@@ -29,22 +29,11 @@ const gate = () =>
 		'[data-cy="handover-gate-button"]'
 	)!;
 
-const viewportIs = (desktop: boolean) => {
-	window.matchMedia = vi.fn(
-		(query: string) =>
-			({
-				matches: desktop && query.includes('min-width'),
-				media: query
-			}) as MediaQueryList
-	) as unknown as typeof window.matchMedia;
-};
-
 /**
  * ORISO-Frontend#1737, both halves through the real gate button. The live-chat
  * room saves the consent and then replaces the whole page, so its `onEnter`
  * never settles. The cover must survive that: the old document leaves a note
- * when it goes, and the next document plays the reveal in the direction that
- * belongs to the screen the person pressed on.
+ * when it goes, and the next document plays the reveal.
  */
 describe('a waiting room that replaces the page', () => {
 	beforeEach(() => {
@@ -65,7 +54,6 @@ describe('a waiting room that replaces the page', () => {
 		delete (Element.prototype as unknown as { animate?: unknown }).animate;
 		delete (document.documentElement as unknown as { animate?: unknown })
 			.animate;
-		delete (window as unknown as { matchMedia?: unknown }).matchMedia;
 		document.body.innerHTML = '';
 		window.sessionStorage.clear();
 	});
@@ -89,41 +77,28 @@ describe('a waiting room that replaces the page', () => {
 		window.dispatchEvent(new Event('pagehide'));
 	};
 
-	it.each([
-		['a wide screen', true, 'horizontal'],
-		['a phone', false, 'vertical']
-	] as const)(
-		'hands the direction for %s to the next document, which covers its page with it',
-		async (_name, desktop, direction) => {
-			viewportIs(desktop);
-			await pressAndReplaceThePage();
+	it('hands the cover to the next document, which covers its page with it', async () => {
+		await pressAndReplaceThePage();
 
-			const note = JSON.parse(
-				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY) ?? 'null'
-			);
-			expect(note).toMatchObject({
-				direction,
-				focal: 'messageField'
-			});
+		const note = JSON.parse(
+			window.sessionStorage.getItem(CLOSING_HANDOVER_KEY) ?? 'null'
+		);
+		expect(note).toMatchObject({ focal: 'messageField' });
 
-			// The old document is gone; the next one starts.
-			document.body.innerHTML = '';
-			void resumeClosingAnimation();
-			const resumed = document.querySelector(ROOT);
-			expect(resumed?.getAttribute('data-closing-animation')).toBe(
-				'slide-reveal'
-			);
-			expect(resumed?.getAttribute('data-closing-direction')).toBe(
-				direction
-			);
-			expect(resumed?.getAttribute('data-closing-phase')).toBe('covered');
+		// The old document is gone; the next one starts.
+		document.body.innerHTML = '';
+		void resumeClosingAnimation();
+		const resumed = document.querySelector(ROOT);
+		expect(resumed?.getAttribute('data-closing-animation')).toBe(
+			'wave-reveal'
+		);
+		expect(resumed?.getAttribute('data-closing-phase')).toBe('covered');
 
-			await act(async () => {
-				await vi.advanceTimersByTimeAsync(
-					transitionMotion.closing.handoverFocalWaitMs + 1500
-				);
-			});
-			expect(document.querySelector(ROOT)).toBeNull();
-		}
-	);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.handoverFocalWaitMs + 1500
+			);
+		});
+		expect(document.querySelector(ROOT)).toBeNull();
+	});
 });

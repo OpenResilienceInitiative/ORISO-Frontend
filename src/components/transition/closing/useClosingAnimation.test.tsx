@@ -9,13 +9,9 @@ vi.mock('./playClosingAnimation', () => ({
 
 const { useClosingAnimation } = await import('./useClosingAnimation');
 
-const screenIs = (query: { desktop: boolean; reducedMotion: boolean }) => {
+const reducedMotionIs = (reduce: boolean) => {
 	window.matchMedia = ((q: string) => ({
-		matches: q.includes('prefers-reduced-motion')
-			? query.reducedMotion
-			: q.includes('min-width: 1200px')
-				? query.desktop
-				: false,
+		matches: q.includes('prefers-reduced-motion') ? reduce : false,
 		media: q,
 		addEventListener: () => undefined,
 		removeEventListener: () => undefined,
@@ -33,48 +29,57 @@ const pressed = async (focal: 'messageField' | 'call' = 'messageField') => {
 		onCovered: () => undefined
 	});
 	return playClosingAnimation.mock.calls.at(-1)?.[0] as unknown as {
-		direction: string;
 		reducedMotion: boolean;
 		focal: string;
 	};
 };
 
 /**
- * ORISO-Frontend#1737. One hook answers, for every waiting room, which way the
- * slide reveal sweeps and whether it plays at all.
+ * ORISO-Frontend#1737. One hook answers, for every waiting room, whether the
+ * wave reveal plays at all. There is one design and one direction, so the width
+ * of the screen is not asked.
  */
 describe('useClosingAnimation', () => {
 	beforeEach(() => playClosingAnimation.mockClear());
 	afterEach(() => vi.restoreAllMocks());
 
-	it('sweeps sideways on a desktop width', async () => {
-		screenIs({ desktop: true, reducedMotion: false });
-		expect((await pressed()).direction).toBe('horizontal');
+	it('asks the engine for no direction: it sweeps upward on every screen', async () => {
+		reducedMotionIs(false);
+		expect(await pressed()).not.toHaveProperty('direction');
 	});
 
-	it('sweeps upward on anything narrower', async () => {
-		screenIs({ desktop: false, reducedMotion: false });
-		expect((await pressed()).direction).toBe('vertical');
-	});
-
-	it('sweeps upward in a browser that cannot answer the width query', async () => {
-		(window as unknown as { matchMedia?: unknown }).matchMedia = undefined;
-		expect((await pressed()).direction).toBe('vertical');
+	it('does not look at the width of the screen', async () => {
+		const asked: string[] = [];
+		window.matchMedia = ((q: string) => {
+			asked.push(q);
+			return {
+				matches: false,
+				media: q,
+				addEventListener: () => undefined,
+				removeEventListener: () => undefined,
+				addListener: () => undefined,
+				removeListener: () => undefined,
+				dispatchEvent: () => false,
+				onchange: null
+			};
+		}) as typeof window.matchMedia;
+		await pressed();
+		expect(asked.filter((q) => q.includes('width'))).toEqual([]);
 	});
 
 	it("hands the room's focal point on untouched", async () => {
-		screenIs({ desktop: true, reducedMotion: false });
+		reducedMotionIs(false);
 		expect((await pressed('call')).focal).toBe('call');
 		expect((await pressed('messageField')).focal).toBe('messageField');
 	});
 
 	it('tells the engine to skip when the person asked for less motion', async () => {
-		screenIs({ desktop: true, reducedMotion: true });
+		reducedMotionIs(true);
 		expect((await pressed()).reducedMotion).toBe(true);
 	});
 
 	it('does not skip for a person who did not ask', async () => {
-		screenIs({ desktop: true, reducedMotion: false });
+		reducedMotionIs(false);
 		expect((await pressed()).reducedMotion).toBe(false);
 	});
 });

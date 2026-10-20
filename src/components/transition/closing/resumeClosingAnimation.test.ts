@@ -2,7 +2,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { transitionMotion } from '../transitionMotion';
 import { resumeClosingAnimation } from './playClosingAnimation';
-import { CLOSING_DIRECTIONS, ClosingDirection } from './closingDirection';
 import {
 	CLOSING_HANDOVER_KEY,
 	ClosingHandover,
@@ -69,7 +68,6 @@ const field = (name: 'message-field' | 'call' = 'message-field') => {
 
 const leaveNote = (overrides: Partial<ClosingHandover> = {}) =>
 	leaveClosingHandover(window, {
-		direction: 'horizontal',
 		focal: 'messageField',
 		at: Date.now(),
 		...overrides
@@ -111,37 +109,29 @@ describe('resumeClosingAnimation', () => {
 		expect(play.calls).toHaveLength(0);
 	});
 
-	it.each(CLOSING_DIRECTIONS)(
-		'%s: covers the screen before anything else, in the direction the old document chose',
-		(direction) => {
-			const play = installAnimate();
-			leaveNote({ direction });
+	it('covers the screen before anything else, with the wave', () => {
+		const play = installAnimate();
+		leaveNote();
 
-			void resumeClosingAnimation();
+		void resumeClosingAnimation();
 
-			// Synchronously: nothing may be painted between the page load and the cover.
-			expect(root()?.getAttribute('data-closing-animation')).toBe(
-				'slide-reveal'
-			);
-			expect(root()?.getAttribute('data-closing-direction')).toBe(
-				direction
-			);
-			expect(phase()).toBe('covered');
+		// Synchronously: nothing may be painted between the page load and the cover.
+		expect(root()?.getAttribute('data-closing-animation')).toBe(
+			'wave-reveal'
+		);
+		expect(phase()).toBe('covered');
+		expect(
+			root()?.querySelectorAll('[data-closing-layer]').length
+		).toBeGreaterThan(0);
+		expect(play.cover().length).toBeGreaterThan(0);
+		play.cover().forEach((call) =>
 			expect(
-				root()?.querySelectorAll('[data-closing-layer]').length
-			).toBeGreaterThan(0);
-			expect(play.cover().length).toBeGreaterThan(0);
-			play.cover().forEach((call) =>
-				expect(
-					call.finish,
-					'the cover is put at its end at once, not played again'
-				).toHaveBeenCalledTimes(1)
-			);
-			expect(play.reveal(), 'the reveal waits for the app').toHaveLength(
-				0
-			);
-		}
-	);
+				call.finish,
+				'the cover is put at its end at once, not played again'
+			).toHaveBeenCalledTimes(1)
+		);
+		expect(play.reveal(), 'the reveal waits for the app').toHaveLength(0);
+	});
 
 	it('is picked up once: a reload while it plays does not play it again', async () => {
 		installAnimate();
@@ -150,56 +140,35 @@ describe('resumeClosingAnimation', () => {
 		expect(window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)).toBeNull();
 	});
 
-	it.each([
-		['horizontal', 'translateX(100%)'],
-		['vertical', 'translateY(-100%)']
-	] as const)(
-		'%s: reveals along the axis the old document swept on',
-		async (direction, end) => {
-			const play = installAnimate();
-			leaveNote({ direction });
-			field();
-			const pending = resumeClosingAnimation();
-			await vi.advanceTimersByTimeAsync(200);
-			await pending;
+	it('reveals upward, as the old document covered', async () => {
+		const play = installAnimate();
+		leaveNote();
+		field();
+		const pending = resumeClosingAnimation();
+		await vi.advanceTimersByTimeAsync(200);
+		await pending;
 
-			const sheets = play
-				.reveal()
-				.filter((call) => call.layer?.startsWith('slide-'));
-			expect(sheets).toHaveLength(2);
-			sheets.forEach((call) =>
-				expect(call.keyframes.at(-1)?.transform).toBe(end)
-			);
-		}
-	);
+		const sheets = play.reveal().filter((call) => call.layer === 'wave');
+		expect(sheets).toHaveLength(1);
+		expect(sheets[0].keyframes.at(-1)?.transform).toMatch(
+			/^translateY\(-\d+(\.\d+)?px\)$/
+		);
+	});
 
-	it("covers both directions in the tenant's colours", () => {
-		const normalised = (colour: string) => {
-			const probe = document.createElement('div');
-			probe.style.backgroundColor = colour;
-			return probe.style.backgroundColor;
-		};
-		const palette = [normalised('#0050a0'), normalised('#00305f')];
-		for (const direction of CLOSING_DIRECTIONS) {
-			installAnimate();
-			document.body.innerHTML = '';
-			leaveNote({
-				direction,
-				colors: { primary: '#0050a0', primaryDark: '#00305f' }
-			});
-			void resumeClosingAnimation();
-			const layers = [
-				...root()!.querySelectorAll<HTMLElement>('[data-closing-layer]')
-			];
-			expect(layers.length).toBeGreaterThan(0);
-			layers.forEach((layer) =>
-				expect(
-					palette,
-					`${direction}: ${layer.dataset.closingLayer}`
-				).toContain(layer.style.backgroundColor)
-			);
-			root()!.remove();
-		}
+	it("covers in the tenant's colour, and in no other", () => {
+		installAnimate();
+		leaveNote({ colors: { primary: '#0050a0' } });
+		void resumeClosingAnimation();
+
+		const body = root()!.querySelector<HTMLElement>('[data-closing-body]')!;
+		const probe = document.createElement('div');
+		probe.style.backgroundColor = '#0050a0';
+		expect(body.style.backgroundColor).toBe(probe.style.backgroundColor);
+		const waves = root()!.querySelectorAll('[data-closing-edge] path');
+		expect(waves).toHaveLength(2);
+		waves.forEach((path) =>
+			expect(path.getAttribute('style')).toBe('fill:#0050a0')
+		);
 	});
 
 	it('waits for the app, reveals onto the message field and leaves nothing behind', async () => {
@@ -294,7 +263,10 @@ describe('resumeClosingAnimation', () => {
 		await vi.advanceTimersByTimeAsync(300);
 		await pending;
 
-		expect(play.reveal().length, 'it opened at the end of the wait').toBeGreaterThan(0);
+		expect(
+			play.reveal().length,
+			'it opened at the end of the wait'
+		).toBeGreaterThan(0);
 		expect(root()).toBeNull();
 	});
 
@@ -333,7 +305,7 @@ describe('resumeClosingAnimation', () => {
 	it('takes the pointer while it covers, so no blind tap reaches the app starting underneath, and lets it through from the reveal on', async () => {
 		// The reveal never reports back, so the phases can be looked at one by one.
 		installAnimate('never');
-		leaveNote({ direction: 'horizontal' });
+		leaveNote();
 		const pending = resumeClosingAnimation();
 
 		expect(phase()).toBe('covered');
@@ -598,15 +570,13 @@ describe('resumeClosingAnimation', () => {
 			};
 		};
 		const front = () =>
-			document.querySelector<HTMLElement>(
-				'[data-closing-layer="slide-front"]'
-			)!;
+			document.querySelector<HTMLElement>('[data-closing-layer="wave"]')!;
 		const layerCount = () =>
 			document.querySelectorAll('[data-closing-layer]').length;
 
 		it('fits the pieces to the new size while the app starts underneath', async () => {
 			const play = installAnimate();
-			leaveNote({ direction: 'vertical' });
+			leaveNote();
 			const pending = resumeClosingAnimation();
 			expect(phase()).toBe('covered');
 			const before = front().style.width;
@@ -637,7 +607,7 @@ describe('resumeClosingAnimation', () => {
 
 		it('leaves the pieces alone once the reveal has started', async () => {
 			installAnimate('never');
-			leaveNote({ direction: 'vertical' });
+			leaveNote();
 			field();
 			const pending = resumeClosingAnimation();
 			await vi.advanceTimersByTimeAsync(100);
@@ -695,24 +665,21 @@ describe('resumeClosingAnimation', () => {
 			).toBeNull();
 		});
 
-		it.each<ClosingDirection>(['horizontal', 'vertical'])(
-			'%s: draws nothing for a person who asked for less motion, and throws the note away',
-			async (direction) => {
-				const play = installAnimate();
-				leaveNote({ direction });
+		it('draws nothing for a person who asked for less motion, and throws the note away', async () => {
+			const play = installAnimate();
+			leaveNote();
 
-				const result = await resumeClosingAnimation({
-					reducedMotion: true
-				});
+			const result = await resumeClosingAnimation({
+				reducedMotion: true
+			});
 
-				expect(result.played).toBe(false);
-				expect(root()).toBeNull();
-				expect(play.calls).toHaveLength(0);
-				expect(
-					window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
-				).toBeNull();
-			}
-		);
+			expect(result.played).toBe(false);
+			expect(root()).toBeNull();
+			expect(play.calls).toHaveLength(0);
+			expect(
+				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)
+			).toBeNull();
+		});
 
 		it('asks the system by itself whether the person wants less motion', async () => {
 			const play = installAnimate();

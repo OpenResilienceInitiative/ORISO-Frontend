@@ -18,16 +18,14 @@ export const transitionMotion = {
 	exitMs: 240,
 	/**
 	 * The closing animation, when a person leaves a waiting room for the chat or
-	 * the call (ORISO-Frontend#1737). One timeline for all three designs, so a
-	 * design differs in what it draws, never in how long a person waits.
+	 * the call (ORISO-Frontend#1737). One design, one timeline: cover and reveal
+	 * take the same time in every room.
 	 */
 	closing: {
 		/** The red takes the screen. */
 		coverMs: 340,
 		/** And gives it back, ending on the focal point. */
 		revealMs: 520,
-		/** The second red layer of the slide reveal trails the first by this. */
-		trailMs: 110,
 		/**
 		 * Longest wait for the destination's focal element once the room is
 		 * swapped. A join or an accept is a request first, so the chat can be a

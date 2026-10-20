@@ -1,6 +1,5 @@
 import { transitionMotion } from '../transitionMotion';
 import { CLOSING_FOCAL_SELECTOR, ClosingFocal } from './closingFocal';
-import { CLOSING_DIRECTIONS, ClosingDirection } from './closingDirection';
 
 /**
  * A waiting room that replaces the whole page (the live-chat room) takes its
@@ -12,18 +11,16 @@ import { CLOSING_DIRECTIONS, ClosingDirection } from './closingDirection';
  */
 export const CLOSING_HANDOVER_KEY = 'oriso.closingHandover.v1';
 
-/** The tenant's two colours, read off the old document's palette. */
+/** The tenant's colour, read off the old document's palette. The sheet is painted in it and in nothing else. */
 export interface ClosingHandoverColors {
 	primary: string;
-	primaryDark: string;
 }
 
 export interface ClosingHandover {
-	direction: ClosingDirection;
 	focal: ClosingFocal;
 	/**
 	 * The new document starts before the tenant's palette has arrived, so the
-	 * colours travel with the note. Absent when the tenant has none of its own.
+	 * colour travels with the note. Absent when the tenant has none of its own.
 	 */
 	colors?: ClosingHandoverColors;
 	/** When the old document let go of the cover, in milliseconds. */
@@ -41,10 +38,8 @@ const isColour = (value: unknown): value is string =>
 	COLOUR.test(value);
 
 const readColors = (value: unknown): ClosingHandoverColors | undefined => {
-	const { primary, primaryDark } = (value ?? {}) as Record<string, unknown>;
-	return isColour(primary) && isColour(primaryDark)
-		? { primary, primaryDark }
-		: undefined;
+	const { primary } = (value ?? {}) as Record<string, unknown>;
+	return isColour(primary) ? { primary } : undefined;
 };
 
 const parse = (raw: string, now: number): ClosingHandover | null => {
@@ -57,9 +52,8 @@ const parse = (raw: string, now: number): ClosingHandover | null => {
 	if (value === null) {
 		return null;
 	}
-	const { direction, focal, colors, at } = value;
+	const { focal, colors, at } = value;
 	if (
-		!CLOSING_DIRECTIONS.includes(direction as ClosingDirection) ||
 		!Object.keys(CLOSING_FOCAL_SELECTOR).includes(focal as string) ||
 		typeof at !== 'number' ||
 		!(Math.abs(now - at) <= transitionMotion.closing.capMs)
@@ -68,7 +62,6 @@ const parse = (raw: string, now: number): ClosingHandover | null => {
 	}
 	const readable = readColors(colors);
 	return {
-		direction: direction as ClosingDirection,
 		focal: focal as ClosingFocal,
 		...(readable && { colors: readable }),
 		at

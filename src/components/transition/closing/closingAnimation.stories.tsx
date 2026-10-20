@@ -21,14 +21,13 @@ import {
 } from '../../../../.storybook/closingAnimationContractPlay';
 import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
 import { ClosingFocal } from './closingFocal';
-import { ClosingDirection } from './closingDirection';
 import {
 	playClosingAnimation,
 	resumeClosingAnimation
 } from './playClosingAnimation';
 
 /**
- * The closing animation is one platform module with one design, the slide
+ * The closing animation is one platform module with one design, the wave
  * reveal; the room only says where the person arrives. These stories render a real waiting room
  * (the handover after registering, in the split layout with the brand stage) and
  * press its real gate button. Every story shows a destination that has the
@@ -49,9 +48,9 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component: [
-					'One design, the **slide reveal**: the red area swipes over the room as one piece, a second red layer trails it, and the chat is uncovered.',
+					'One design, the **wave reveal**: one big calm red sheet with a wave at each end comes up from below, covers the room and leaves at the top, and the chat is uncovered.',
 					'',
-					'It sweeps **sideways** (to the right) on a desktop width, where the room stands beside the brand stage, and **upward** on a phone or a tablet, where the screen is one column. The line is 1200 px.',
+					'It always sweeps **upward**, on a phone, a tablet and a desktop alike. It is drawn in the Träger colour only (the primary colour, no tints), so every Träger colour works as it is.',
 					'',
 					'Reduced motion skips it. The person still arrives.',
 					'',
@@ -172,11 +171,11 @@ const gateOf = (canvasElement: HTMLElement) => () =>
 		'[data-cy="handover-gate-button"]'
 	);
 
-/* Sideways beside the brand stage, upward on one column. */
+/* Upward on every width: the three are here to prove it. */
 const WIDTH = {
-	desktop: { globals: desktop1440Globals, direction: 'horizontal' },
-	tablet: { globals: tablet834Globals, direction: 'vertical' },
-	phone: { globals: phone390Globals, direction: 'vertical' }
+	desktop: { globals: desktop1440Globals },
+	tablet: { globals: tablet834Globals },
+	phone: { globals: phone390Globals }
 } as const;
 
 /* A story per width. `play` is the whole contract. */
@@ -195,7 +194,6 @@ const closingStory = (
 			await expectWaitingRoomLayout(canvasElement);
 			await expectWaitingRoomTemplate(canvasElement);
 			await verifyClosingAnimation(canvasElement, {
-				direction: WIDTH[width].direction,
 				focal,
 				swaps,
 				width,
@@ -217,46 +215,46 @@ const tryStory = (width: keyof typeof WIDTH, name: string): Story => ({
 	}
 });
 
-export const TrySlideReveal = tryStory(
+export const TryWaveReveal = tryStory(
 	'desktop',
-	'Try it — slide reveal, sideways'
+	'Try it — wave reveal, desktop'
 );
-export const TrySlideRevealTablet = tryStory(
+export const TryWaveRevealTablet = tryStory(
 	'tablet',
-	'Try it — slide reveal, upward, tablet'
+	'Try it — wave reveal, tablet'
 );
-export const TrySlideRevealPhone = tryStory(
+export const TryWaveRevealPhone = tryStory(
 	'phone',
-	'Try it — slide reveal, upward, phone'
+	'Try it — wave reveal, phone'
 );
 
-export const SlideRevealDesktop = closingStory('desktop', {
-	name: 'Slide reveal — desktop, sideways'
+export const WaveRevealDesktop = closingStory('desktop', {
+	name: 'Wave reveal — desktop'
 });
-export const SlideRevealTablet = closingStory('tablet', {
-	name: 'Slide reveal — tablet, upward'
+export const WaveRevealTablet = closingStory('tablet', {
+	name: 'Wave reveal — tablet'
 });
-export const SlideRevealPhone = closingStory('phone', {
-	name: 'Slide reveal — phone, upward'
+export const WaveRevealPhone = closingStory('phone', {
+	name: 'Wave reveal — phone'
 });
 
 /* A video call has its own focal point; the same module ends there. */
-export const SlideRevealEndsOnTheCall = closingStory('desktop', {
-	name: 'Slide reveal — ends on the video call',
+export const WaveRevealEndsOnTheCall = closingStory('desktop', {
+	name: 'Wave reveal — ends on the video call',
 	focal: 'call'
 });
-export const SlideRevealEndsOnTheCallPhone = closingStory('phone', {
-	name: 'Slide reveal — ends on the video call, phone',
+export const WaveRevealEndsOnTheCallPhone = closingStory('phone', {
+	name: 'Wave reveal — ends on the video call, phone',
 	focal: 'call'
 });
 
 /* Nothing takes the person on (the room stays): the gate must be theirs again. */
-export const SlideRevealGivesTheGateBack = closingStory('desktop', {
-	name: 'Slide reveal — gives the gate back when the room stays',
+export const WaveRevealGivesTheGateBack = closingStory('desktop', {
+	name: 'Wave reveal — gives the gate back when the room stays',
 	swaps: false
 });
-export const SlideRevealGivesTheGateBackPhone = closingStory('phone', {
-	name: 'Slide reveal — gives the gate back when the room stays, phone',
+export const WaveRevealGivesTheGateBackPhone = closingStory('phone', {
+	name: 'Wave reveal — gives the gate back when the room stays, phone',
 	swaps: false
 });
 
@@ -302,13 +300,13 @@ const reducedMotionStory = (
 	}
 });
 
-export const SlideRevealReducedMotion = reducedMotionStory(
+export const WaveRevealReducedMotion = reducedMotionStory(
 	'desktop',
-	'Reduced motion — slide reveal is skipped, the person arrives'
+	'Reduced motion — wave reveal is skipped, the person arrives'
 );
-export const SlideRevealReducedMotionPhone = reducedMotionStory(
+export const WaveRevealReducedMotionPhone = reducedMotionStory(
 	'phone',
-	'Reduced motion — slide reveal is skipped on a phone'
+	'Reduced motion — wave reveal is skipped on a phone'
 );
 
 /**
@@ -319,12 +317,9 @@ export const SlideRevealReducedMotionPhone = reducedMotionStory(
  * taking Storybook with it. The harness stands in for the one thing the app
  * does on its own: calling `resumeClosingAnimation` from its first module.
  */
-const OLD_DOCUMENT_COLOURS = {
-	primary: 'rgb(0, 80, 160)',
-	primaryDark: 'rgb(0, 48, 95)'
-} as const;
+const OLD_DOCUMENT_COLOUR = 'rgb(0, 80, 160)';
 
-const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Warteraum</title><style>:root{--m3-primary:#0050a0;--m3-primary-hover:#00305f}html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main>Warteraum (altes Dokument)</main></body></html>`;
+const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Warteraum</title><style>:root{--m3-primary:#0050a0}html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main>Warteraum (altes Dokument)</main></body></html>`;
 
 /* The new document has no palette: only a cover that was handed over is blue. */
 const newDocument = (showsField: boolean) =>
@@ -334,13 +329,7 @@ const newDocument = (showsField: boolean) =>
 			: ''
 	}</body></html>`;
 
-const HandoverRoom = ({
-	direction,
-	showsField
-}: {
-	direction: ClosingDirection;
-	showsField: boolean;
-}) => {
+const HandoverRoom = ({ showsField }: { showsField: boolean }) => {
 	const frame = React.useRef<HTMLIFrameElement>(null);
 	const press = () => {
 		const iframe = frame.current;
@@ -354,7 +343,6 @@ const HandoverRoom = ({
 		);
 		void playClosingAnimation({
 			document: oldDocument,
-			direction,
 			focal: 'messageField',
 			// The room replaces the page: this never settles.
 			onCovered: () =>
@@ -409,21 +397,15 @@ const handoverStory = (
 ): Story => ({
 	name,
 	globals: WIDTH[width].globals,
-	render: () => (
-		<HandoverRoom
-			direction={WIDTH[width].direction}
-			showsField={showsField}
-		/>
-	),
+	render: () => <HandoverRoom showsField={showsField} />,
 	play: async ({ canvasElement }) => {
 		await verifyClosingHandover(canvasElement, {
-			direction: WIDTH[width].direction,
 			press: () =>
 				canvasElement.querySelector<HTMLElement>(
 					'[data-testid="handover-press"]'
 				),
 			frame: () => canvasElement.querySelector('iframe'),
-			colours: OLD_DOCUMENT_COLOURS,
+			colour: OLD_DOCUMENT_COLOUR,
 			destinationShowsFocal: showsField
 		});
 	}
@@ -433,27 +415,25 @@ const handoverStory = (
 const tryHandOver = (width: keyof typeof WIDTH, name: string): Story => ({
 	name,
 	globals: WIDTH[width].globals,
-	render: () => (
-		<HandoverRoom direction={WIDTH[width].direction} showsField />
-	)
+	render: () => <HandoverRoom showsField />
 });
 
-export const TryHandOverSlideReveal = tryHandOver(
+export const TryHandOverWaveReveal = tryHandOver(
 	'desktop',
-	'Try it — the page is replaced, sideways'
+	'Try it — the page is replaced'
 );
-export const TryHandOverSlideRevealPhone = tryHandOver(
+export const TryHandOverWaveRevealPhone = tryHandOver(
 	'phone',
-	'Try it — the page is replaced, upward, phone'
+	'Try it — the page is replaced, phone'
 );
 
-export const SlideRevealHandsOverToTheNextDocument = handoverStory(
+export const WaveRevealHandsOverToTheNextDocument = handoverStory(
 	'desktop',
-	'Slide reveal — the cover carries over into the next document, sideways'
+	'Wave reveal — the cover carries over into the next document'
 );
-export const SlideRevealHandsOverToTheNextDocumentPhone = handoverStory(
+export const WaveRevealHandsOverToTheNextDocumentPhone = handoverStory(
 	'phone',
-	'Slide reveal — the cover carries over into the next document, upward, phone'
+	'Wave reveal — the cover carries over into the next document, phone'
 );
 export const HandOverGivesThePageBackWithoutAField = handoverStory(
 	'desktop',

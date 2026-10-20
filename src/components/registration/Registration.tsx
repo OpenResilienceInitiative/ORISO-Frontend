@@ -32,7 +32,7 @@ import {
 	markHandoverMilestone,
 	resetHandoverProgress
 } from '../app/registrationLoader/handoverProgress';
-import { warmAppChunks } from '../app/appChunks';
+import { warmAppChunks, warmWhenIdle } from '../app/appChunks';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import {
 	RegistrationContext,
@@ -400,15 +400,10 @@ export const Registration = () => {
 	   person types, so the waiting room after the document load is not held
 	   up by downloads (#1219). Idle time only: the form comes first. */
 	const onLastStep = inviteEntry === 'entry' || !nextStepUrl;
-	useEffect(() => {
-		if (!onLastStep) return undefined;
-		if (typeof window.requestIdleCallback === 'function') {
-			const handle = window.requestIdleCallback(warmAppChunks);
-			return () => window.cancelIdleCallback(handle);
-		}
-		const timer = window.setTimeout(warmAppChunks, 1000);
-		return () => window.clearTimeout(timer);
-	}, [onLastStep]);
+	useEffect(
+		() => (onLastStep ? warmWhenIdle(warmAppChunks) : undefined),
+		[onLastStep]
+	);
 
 	const mergedRegistrationData = useMemo(
 		() => ({
