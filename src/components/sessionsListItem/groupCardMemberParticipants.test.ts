@@ -17,7 +17,8 @@ describe('group-card human participants (#1806)', () => {
 			member('@agency-40-service:example.org'),
 			member('@old:caritas.local'),
 			member('@left:example.org', 'Left', 'leave'),
-			member('@invited:example.org', 'Invited', 'invite')
+			member('@invited:example.org', 'Invited', 'invite'),
+			{ userId: '@not-yet-known:example.org', name: 'Unknown membership' }
 		]);
 		expect(members.map((person) => person.userId)).toEqual([
 			'@bart:example.org',

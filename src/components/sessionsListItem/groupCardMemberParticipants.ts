@@ -4,7 +4,7 @@ import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
 interface GroupMember {
 	userId: string;
 	name?: string;
-	membership: string;
+	membership?: string;
 }
 
 /** Group rooms have no silent counsellors; service owners are never people. */
