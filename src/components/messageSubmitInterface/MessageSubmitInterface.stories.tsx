@@ -45,6 +45,7 @@ function ComposerShell({
 	roomMembers,
 	userData,
 	shellHeight,
+	productionSessionFade = false,
 	...composerProps
 }: {
 	activeSession?: any;
@@ -56,7 +57,24 @@ function ComposerShell({
 	 * as tall as a real one (852 px at a 900 px window).
 	 */
 	shellHeight?: number;
+	/** Match SessionItemComponent's real transformed reveal ancestor. */
+	productionSessionFade?: boolean;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
+	const composer = (
+		<ComposerStoryDecorator
+			activeSession={activeSession}
+			roomMembers={roomMembers}
+			userData={userData}
+		>
+			<MessageSubmitInterfaceComponent
+				placeholder="Nachricht an Klient:in schreiben"
+				onSendButton={() => {}}
+				isTyping={() => {}}
+				language="de"
+				{...composerProps}
+			/>
+		</ComposerStoryDecorator>
+	);
 	return (
 		<div
 			className="session"
@@ -68,19 +86,13 @@ function ComposerShell({
 					: shellStyle
 			}
 		>
-			<ComposerStoryDecorator
-				activeSession={activeSession}
-				roomMembers={roomMembers}
-				userData={userData}
-			>
-				<MessageSubmitInterfaceComponent
-					placeholder="Nachricht an Klient:in schreiben"
-					onSendButton={() => {}}
-					isTyping={() => {}}
-					language="de"
-					{...composerProps}
-				/>
-			</ComposerStoryDecorator>
+			{productionSessionFade ? (
+				<div className="session__gameInputFadeTarget session__gameInputFadeTarget--reveal">
+					{composer}
+				</div>
+			) : (
+				composer
+			)}
 		</div>
 	);
 }
@@ -992,8 +1004,13 @@ const recipientLayoutMembers = [
 		name: 'Patty BouvierMitSehrLangemNachnamen'
 	}
 ];
-const RecipientLayoutScenario = () => (
+const RecipientLayoutScenario = ({
+	productionSessionFade = true
+}: {
+	productionSessionFade?: boolean;
+}) => (
 	<ComposerShell
+		productionSessionFade={productionSessionFade}
 		activeSession={buildMockGroupSession()}
 		roomMembers={recipientLayoutMembers}
 		autoFocusEditor={false}
@@ -1017,6 +1034,13 @@ async function expectRecipientClearOfComposer(
 				.getAnimations()
 				.some((animation) => animation.playState === 'running')
 		).toBe(false);
+		const fade = card.closest<HTMLElement>('.session__gameInputFadeTarget');
+		if (fade)
+			expect(
+				fade
+					.getAnimations()
+					.some((animation) => animation.playState === 'running')
+			).toBe(false);
 		const selector = canvasElement.querySelector<HTMLElement>(
 			'.textarea__audienceSelector'
 		)!;
@@ -1145,6 +1169,57 @@ async function recipientLayoutJourney(
 			.querySelector('.textarea__wrapper-send-message--expanded')!
 			.getBoundingClientRect().height
 	).toBeGreaterThan(window.innerHeight * 0.5);
+	const viewport = window.visualViewport;
+	const viewTop = viewport?.offsetTop || 0;
+	const viewLeft = viewport?.offsetLeft || 0;
+	const viewBottom = viewTop + (viewport?.height || window.innerHeight);
+	const viewRight = viewLeft + (viewport?.width || window.innerWidth);
+	await waitFor(() => {
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message--expanded'
+		)!;
+		const cardBox = card.getBoundingClientRect();
+		const recipient = canvasElement
+			.querySelector<HTMLElement>('.textarea__audienceSelector')!
+			.getBoundingClientRect();
+		expect(
+			cardBox.top,
+			'expanded composer must remain below the viewport top'
+		).toBeGreaterThanOrEqual(viewTop - 0.5);
+		expect(
+			cardBox.bottom,
+			'expanded composer must remain above the viewport bottom'
+		).toBeLessThanOrEqual(viewBottom + 0.5);
+		expect(cardBox.left).toBeGreaterThanOrEqual(viewLeft - 0.5);
+		expect(cardBox.right).toBeLessThanOrEqual(viewRight + 0.5);
+		expect(
+			recipient.bottom,
+			'recipient must remain reachable inside the visible viewport'
+		).toBeLessThanOrEqual(viewBottom + 0.5);
+	});
+	const fade = canvasElement.querySelector<HTMLElement>(
+		'.session__gameInputFadeTarget'
+	);
+	if (fade) {
+		await expect(getComputedStyle(fade).transform).toBe('none');
+		const collapse = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__figmaToolbar button'
+			)
+		).find((button) =>
+			/minim|verkleiner/i.test(button.getAttribute('aria-label') || '')
+		);
+		expect(collapse).toBeTruthy();
+		await userEvent.click(collapse!);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.textarea__wrapper-send-message--expanded'
+				)
+			).toBeNull()
+		);
+		await expect(getComputedStyle(fade).transform).not.toBe('none');
+	}
 }
 
 export const RecipientLayoutPhone: Story = {
@@ -1175,7 +1250,7 @@ export const RecipientLayoutTablet: Story = {
 export const RecipientLayoutDesktop: Story = {
 	name: 'Recipient layout — desktop retains the shared control',
 	globals: desktop1440Globals,
-	render: () => <RecipientLayoutScenario />,
+	render: () => <RecipientLayoutScenario productionSessionFade={false} />,
 	play: async ({ canvasElement }) =>
 		recipientLayoutJourney(canvasElement, false)
 };
