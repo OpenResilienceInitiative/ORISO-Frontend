@@ -62,6 +62,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// width 863 inside the 895 dock. 17px = the 16px inset of
 		// `.textarea__inputWrapper` plus the card's 1px border.
 		--composer-edge-inset: 17px;
+		--composer-phone-rest-height: 100px;
+		--composer-audience-control-height: 32px;
 
 		// The editor's box, derived once so the docked bars never restate it.
 		--composer-inner-width: calc(
@@ -157,6 +159,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&-send-message {
+				--composer-expanded-height: min(
+					calc(var(--composer-visible-height, 100dvh) * 0.78),
+					760px
+				);
+
 				display: block;
 				width: 100%;
 
@@ -306,10 +313,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					) !important;
 					margin-top: 0;
 					max-width: none;
-					height: min(
-						calc(var(--composer-visible-height, 100dvh) * 0.78),
-						760px
-					);
+					height: var(--composer-expanded-height);
 					max-height: calc(
 						var(--composer-visible-height, 100dvh) - 96px
 					);
@@ -332,8 +336,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 						// T10: one line by default (`composerResize.ts`
 						// MIN_HEIGHT_MOBILE = 100); `--composer-height` grows it.
-						min-height: var(--composer-height, 100px);
-						height: var(--composer-height, 100px);
+						min-height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
+						height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
 					}
 
 					&::before {
@@ -345,8 +355,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 100px);
-						height: var(--composer-height, 100px);
+						min-height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
+						height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
 					}
 				}
 			}
@@ -1039,22 +1055,78 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			right: 30px;
 			bottom: 30px;
 			top: auto;
-			height: 32px;
+			height: var(--composer-audience-control-height);
 			max-width: 230px;
 			z-index: 999990;
 			display: inline-flex;
 			align-items: center;
 			gap: 2px;
 			touch-action: manipulation;
-
-			@media screen and (width <= 899px) {
-				bottom: 45px;
-			}
 		}
 
 		&__wrapper-send-message--expanded .textarea__audienceSelector {
 			bottom: 30px;
 			right: 62px;
+		}
+
+		// Narrow composers reserve an intrinsic footer for recipients. It is a
+		// separate grid row from the toolbar, attachments and editable field;
+		// increasing a bottom offset alone only moves the collision elsewhere.
+		@media screen and (width <= 899px) {
+			&__wrapper-send-message:has(.textarea__audienceSelector) {
+				--composer-audience-row-height: calc(
+					var(--composer-audience-control-height) + 2 * #{$grid-base}
+				);
+
+				display: grid;
+				grid-template-columns: minmax(0, 1fr);
+				grid-template-rows:
+					minmax(var(--composer-phone-rest-height), 1fr)
+					auto;
+
+				min-height: calc(
+					var(--composer-phone-rest-height) +
+						var(--composer-audience-row-height)
+				);
+
+				&:not(.textarea__wrapper-send-message--expanded) {
+					// --composer-height already includes measured chrome from auto-grow.
+					// Never add the footer to that value a second time.
+					height: max(
+						var(--composer-height, 0px),
+						calc(
+							var(--composer-phone-rest-height) +
+								var(--composer-audience-row-height)
+						)
+					);
+				}
+
+				> .textarea__inputWrapper {
+					grid-row: 1;
+					position: relative;
+					inset: auto;
+					height: auto;
+				}
+
+				> .textarea__audienceSelector {
+					grid-row: 2;
+					justify-self: end;
+					position: relative;
+					inset: auto;
+					margin: $grid-base $grid-base-two;
+					max-width: min(230px, calc(100% - 2 * #{$grid-base-two}));
+				}
+
+				&.textarea__wrapper-send-message--expanded {
+					// Keep the existing overlay height even when the ready-state
+					// narrow rule would otherwise restore the one-line height.
+					height: var(--composer-expanded-height);
+
+					> .textarea__inputWrapper {
+						margin: $grid-base-two $grid-base-two 0;
+					}
+				}
+			}
 		}
 
 		&__audienceSelectorMenu {

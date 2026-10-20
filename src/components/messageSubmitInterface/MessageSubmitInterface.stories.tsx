@@ -15,6 +15,7 @@ import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import {
 	phone390Globals,
+	desktop1440Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
 
@@ -981,4 +982,201 @@ export const RepeatedMaximiseToggle: Story = {
 		// The toggle survives all ten cycles.
 		await expect(toggle()).toBeTruthy();
 	}
+};
+
+const LONG_RECIPIENT = 'P. BouvierMitSehrLangemNachnamen';
+const recipientLayoutMembers = [
+	...storybookGroupRoomMembers,
+	{
+		userId: '@andrea:beratung.local',
+		name: 'Patty BouvierMitSehrLangemNachnamen'
+	}
+];
+const RecipientLayoutScenario = () => (
+	<ComposerShell
+		activeSession={buildMockGroupSession()}
+		roomMembers={recipientLayoutMembers}
+		autoFocusEditor={false}
+	/>
+);
+const overlaps = (a: DOMRect, b: DOMRect) =>
+	Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 &&
+	Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5;
+
+async function expectRecipientClearOfComposer(
+	canvasElement: HTMLElement,
+	reserveEditor: boolean
+) {
+	await document.fonts.ready;
+	await waitFor(() => {
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		expect(
+			card
+				.getAnimations()
+				.some((animation) => animation.playState === 'running')
+		).toBe(false);
+		const selector = canvasElement.querySelector<HTMLElement>(
+			'.textarea__audienceSelector'
+		)!;
+		const chip = selector
+			.querySelector<HTMLElement>('.splitButton')!
+			.getBoundingClientRect();
+		expect(Math.round(chip.height)).toBe(32);
+		const cardBox = card.getBoundingClientRect();
+		expect(chip.left).toBeGreaterThanOrEqual(cardBox.left - 0.5);
+		expect(chip.right).toBeLessThanOrEqual(cardBox.right + 0.5);
+		expect(chip.bottom).toBeLessThanOrEqual(cardBox.bottom + 0.5);
+		const controls = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.textarea__figmaToolbar button, .textarea__attachmentSelect button'
+			)
+		);
+		for (const control of controls) {
+			const box = control.getBoundingClientRect();
+			if (box.width && box.height)
+				expect(
+					overlaps(chip, box),
+					`recipient overlaps ${control.getAttribute('aria-label')}`
+				).toBe(false);
+		}
+		const editor =
+			canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+		const text = editor.querySelector<HTMLElement>('p')!;
+		expect(editor.getBoundingClientRect().height).toBeGreaterThan(0);
+		expect(
+			overlaps(
+				chip,
+				(reserveEditor ? editor : text).getBoundingClientRect()
+			),
+			'recipient overlaps editable text'
+		).toBe(false);
+	});
+}
+
+async function recipientLayoutJourney(
+	canvasElement: HTMLElement,
+	reserveEditor: boolean
+) {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton'
+			)
+		).not.toBeNull()
+	);
+	const canvas = within(canvasElement);
+	const toggle = () =>
+		canvasElement.querySelector<HTMLButtonElement>(
+			'.textarea__audienceSelector .splitButton__trailing'
+		)!;
+	// Explicitly choose All so per-chat memory from another scenario cannot
+	// substitute a previously narrowed audience for this geometry check.
+	await userEvent.click(toggle());
+	const allDialog = await canvas.findByRole('dialog');
+	await userEvent.click(
+		allDialog.querySelector<HTMLButtonElement>(
+			'.textarea__audienceSelectorMenuSelectAll'
+		)!
+	);
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton__label'
+			)?.textContent
+		).toBe('Alle')
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	await userEvent.click(toggle());
+	const dialog = await canvas.findByRole('dialog');
+	for (const button of Array.from(
+		dialog.querySelectorAll<HTMLButtonElement>(
+			'.textarea__audienceSelectorSectionChevron'
+		)
+	)) {
+		if (button.getAttribute('aria-expanded') === 'false')
+			await userEvent.click(button);
+	}
+	await userEvent.click(
+		within(dialog).getByRole('button', {
+			name: LONG_RECIPIENT,
+			exact: true
+		})
+	);
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton__label'
+			)?.textContent
+		).toBe(LONG_RECIPIENT)
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	const editor = canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+	await userEvent.click(editor);
+	await userEvent.keyboard('Eine Nachricht an die Gruppe.');
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	const expand =
+		canvasElement.querySelector<HTMLButtonElement>(
+			'.textarea__figmaToolbar button[aria-label="Maximieren"]'
+		) ||
+		Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__figmaToolbar button'
+			)
+		).find((button) =>
+			/maxim|expand|vergröß/i.test(
+				button.getAttribute('aria-label') || ''
+			)
+		);
+	expect(expand).toBeTruthy();
+	await userEvent.click(expand!);
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__wrapper-send-message--expanded'
+			)
+		).not.toBeNull()
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	await expect(
+		canvasElement
+			.querySelector('.textarea__wrapper-send-message--expanded')!
+			.getBoundingClientRect().height
+	).toBeGreaterThan(window.innerHeight * 0.5);
+}
+
+export const RecipientLayoutPhone: Story = {
+	name: 'Recipient layout — 390px All, long target and expanded',
+	globals: phone390Globals,
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, true)
+};
+export const RecipientLayoutTablet: Story = {
+	name: 'Recipient layout — 820px All, long target and expanded',
+	parameters: {
+		viewport: {
+			options: {
+				recipientTablet820: {
+					name: 'Recipient tablet 820',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'recipientTablet820' } },
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, true)
+};
+export const RecipientLayoutDesktop: Story = {
+	name: 'Recipient layout — desktop retains the shared control',
+	globals: desktop1440Globals,
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, false)
 };
