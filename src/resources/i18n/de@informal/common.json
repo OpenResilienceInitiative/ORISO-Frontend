@@ -2255,7 +2255,7 @@
 		"warning": {
 			"failed": {
 				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut.",
-				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warte etwa eine Sekunde und versuche es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warte etwa eine Sekunde und versuch es dann erneut.",
 				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warte etwa {{seconds}} Sekunden und versuch es dann erneut.",
 				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warte etwa eine Minute und versuch es dann erneut.",
 				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warte etwa {{minutes}} Minuten und versuch es dann erneut.",
