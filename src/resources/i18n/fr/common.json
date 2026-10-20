@@ -1728,7 +1728,15 @@
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
 				},
 				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici.",
-				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer."
+				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer.",
+				"tooManyRequestsWaitSecond": "Trop de tentatives. Veuillez patienter environ une seconde, puis réessayer.",
+				"tooManyRequestsWaitSeconds": "Trop de tentatives. Veuillez patienter environ {{seconds}} secondes, puis réessayer.",
+				"tooManyRequestsWaitMinute": "Trop de tentatives. Veuillez patienter environ une minute, puis réessayer.",
+				"tooManyRequestsWaitMinutes": "Trop de tentatives. Veuillez patienter environ {{minutes}} minutes, puis réessayer.",
+				"tooManyRequestsWaitHour": "Trop de tentatives. Veuillez patienter environ une heure, puis réessayer.",
+				"tooManyRequestsWaitHours": "Trop de tentatives. Veuillez patienter environ {{hours}} heures, puis réessayer.",
+				"tooManyRequestsWaitDay": "Trop de tentatives. Veuillez patienter environ une journée, puis réessayer.",
+				"tooManyRequestsWaitDays": "Trop de tentatives. Veuillez patienter environ {{days}} jours, puis réessayer."
 			}
 		},
 		"mobile": {
@@ -1923,6 +1931,27 @@
 		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"callLifecycle": {
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			},
+			"state": {
+				"running": "En cours",
+				"ended": "Terminé",
+				"missed": "Manqué"
+			},
+			"description": {
+				"running": "L’appel est en cours depuis {{start}}.",
+				"ended": "L’appel a commencé à {{start}}.",
+				"missed": "L’appel n’a pas reçu de réponse."
+			},
+			"participants": {
+				"current": "Dans l’appel",
+				"attended": "A participé"
+			},
+			"startedBy": "Appel lancé par {{name}}."
+		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
@@ -2511,6 +2540,10 @@
 					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
 					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
 					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
+				},
+				"dpaRestricted": {
+					"title": "Les personnes qui cherchent conseil ne peuvent pas démarrer de chat en direct avec vous",
+					"text": "Votre organisme n’a pas encore confirmé l’accord actuel de traitement des données. D’ici là, les nouvelles personnes ne peuvent démarrer ni chat en direct ni demande. Les consultations déjà commencées continuent."
 				}
 			},
 			"masterKey": {
@@ -3687,7 +3720,12 @@
 			},
 			"back": "Retour",
 			"next": "Continuer",
-			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé."
+			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé.",
+			"reclaim": {
+				"copy": "Un·e collègue a repris ce dossier pendant votre absence. Vous pouvez le reprendre maintenant.",
+				"cta": "Reprendre le dossier",
+				"unavailable": "Ce dossier ne peut plus être repris."
+			}
 		},
 		"accepted": {
 			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
@@ -3708,7 +3746,8 @@
 		},
 		"readOnly": {
 			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
-			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages."
+			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
+			"extend": "Prolonger l'accès"
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
@@ -4700,6 +4739,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Rejoindre l’appel",
+			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"video": {
+				"running": "Appel vidéo en cours",
+				"ended": "Appel vidéo terminé",
+				"missed": "Appel vidéo manqué"
+			},
+			"audio": {
+				"running": "Appel audio en cours",
+				"ended": "Appel audio terminé",
+				"missed": "Appel audio manqué"
+			},
+			"duration": "Durée : {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accepter un appel vidéo",
 			"answerVideoCall": "Accepter un appel vidéo",
@@ -5814,6 +5868,25 @@
 			"callFailed": "L'appel a échoué : {{message}}",
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		},
+		"notes": {
+			"title": "Notes d’entretien",
+			"privacy": "Privé. Seulement pour vous, et seulement pendant l’entretien.",
+			"type": "Type de note",
+			"text": "Note",
+			"add": "Ajouter une note",
+			"remove": "Supprimer la note",
+			"copy": "Tout copier",
+			"copied": "Copié",
+			"empty": "Rien de noté pour l’instant.",
+			"collapse": "Replier les notes",
+			"expand": "Déplier les notes",
+			"open": "Notes d’entretien",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remarque",
+				"aufgabe": "Tâche"
+			}
 		}
 	},
 	"form": {

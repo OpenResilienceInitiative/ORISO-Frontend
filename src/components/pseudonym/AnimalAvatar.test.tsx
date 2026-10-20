@@ -81,3 +81,98 @@ describe('AnimalAvatar artwork size (#1059)', () => {
 		}
 	);
 });
+
+/*
+ * The call's arrangements draw people as organic forms, not circles — every
+ * participant has their own silhouette from `ownShape`, and the Hain packs
+ * them until they abut. That is the same avatar, the same artwork and the
+ * same colours; only the outline differs.
+ *
+ * So the shape is a prop rather than a second component. A fork would be two
+ * places to fix a padding, and the per-animal padding above was judged by eye
+ * at 104px — nobody is going to judge it twice.
+ */
+describe('an organic shape for the call arrangements', () => {
+	it('is a circle unless asked otherwise', () => {
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} />
+		);
+		expect((container.firstChild as HTMLElement).style.borderRadius).toBe(
+			'50px'
+		);
+	});
+
+	it('takes the silhouette the arrangement hands it', () => {
+		const blob = '38% 62% 55% 45% / 47% 41% 59% 53%';
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} radius={blob} />
+		);
+		expect((container.firstChild as HTMLElement).style.borderRadius).toBe(
+			blob
+		);
+	});
+
+	/*
+	 * The lift.
+	 *
+	 * `outline` used to mean two things at once — the 2px grey ring AND the
+	 * soft shadow — so the call arrangements, which must not have a ring
+	 * (the Hain packs shapes until they abut, and a ring there reads as a
+	 * seam), lost the shadow with it. Flat shapes on a flat backdrop, and
+	 * the design had them lifting off it.
+	 *
+	 * They are two props now. `shadow` still defaults to `outline`, so every
+	 * screen that was asking for both keeps getting both.
+	 */
+	it('lifts off the backdrop without wearing a ring', () => {
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} outline={false} shadow />
+		);
+		const outer = container.firstChild as HTMLElement;
+		expect(outer.style.boxShadow).not.toBe('none');
+		expect(outer.style.boxShadow).not.toBe('');
+		// No ring: the shapes abut, and a border would be the seam.
+		expect(outer.style.border).toBe('0px');
+	});
+
+	it('still ties the shadow to the outline when nothing says otherwise', () => {
+		// Backwards compatible on purpose: every existing caller passes only
+		// `outline`, and none of them should change.
+		const withRing = render(
+			<AnimalAvatar avatar={avatar()} size={100} />
+		);
+		expect(
+			(withRing.container.firstChild as HTMLElement).style.boxShadow
+		).not.toBe('none');
+		cleanup();
+
+		const without = render(
+			<AnimalAvatar avatar={avatar()} size={100} outline={false} />
+		);
+		expect(
+			(without.container.firstChild as HTMLElement).style.boxShadow
+		).toBe('none');
+	});
+
+	it('can be asked for a ring with no shadow', () => {
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} shadow={false} />
+		);
+		const outer = container.firstChild as HTMLElement;
+		expect(outer.style.boxShadow).toBe('none');
+		expect(outer.style.border).not.toBe('0px');
+	});
+
+	it('tilts without tilting the artwork out of its box', () => {
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} tilt={-7.4} />
+		);
+		const outer = container.firstChild as HTMLElement;
+		expect(outer.style.transform).toBe('rotate(-7.4deg)');
+		// The animal stays upright; only the form leans.
+		const inner = container.querySelector(
+			'[aria-hidden="true"]'
+		) as HTMLElement;
+		expect(inner.style.transform).toBe('rotate(7.4deg)');
+	});
+});

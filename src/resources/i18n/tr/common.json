@@ -1728,7 +1728,15 @@
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
 				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
-				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSecond": "Çok fazla deneme. Lütfen yaklaşık bir saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSeconds": "Çok fazla deneme. Lütfen yaklaşık {{seconds}} saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinute": "Çok fazla deneme. Lütfen yaklaşık bir dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinutes": "Çok fazla deneme. Lütfen yaklaşık {{minutes}} dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHour": "Çok fazla deneme. Lütfen yaklaşık bir saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHours": "Çok fazla deneme. Lütfen yaklaşık {{hours}} saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDay": "Çok fazla deneme. Lütfen yaklaşık bir gün bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDays": "Çok fazla deneme. Lütfen yaklaşık {{days}} gün bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -1923,6 +1931,27 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
+			"state": {
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"description": {
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			},
+			"startedBy": "{{name}} tarafından arandı."
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
@@ -2511,6 +2540,10 @@
 					"sessionExpired": "Oturumunuzun süresi doldu. Yeniden giriş yapın, ardından canlı sohbeti tekrar açın.",
 					"leaseLost": "Sunucu sizi artık uygun olarak göstermiyor. Ulaşılabilir olmak için canlı sohbeti yeniden açın.",
 					"connectionLost": "Sunucuyla bağlantı iki dakikadan uzun süre kesildi. Bağlantı yeniden kurulunca canlı sohbeti tekrar açın."
+				},
+				"dpaRestricted": {
+					"title": "Danışanlar sizinle canlı sohbet başlatamıyor",
+					"text": "Kuruluşunuz güncel veri işleme sözleşmesini henüz onaylamadı. Onaylanana kadar yeni danışanlar canlı sohbet veya talep başlatamaz. Başlamış danışmanlıklar devam eder."
 				}
 			},
 			"masterKey": {
@@ -3687,7 +3720,12 @@
 			},
 			"back": "Geri",
 			"next": "İleri",
-			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir."
+			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir.",
+			"reclaim": {
+				"copy": "Siz yokken bir meslektaşınız bu vakayı devraldı. Vakayı şimdi geri alabilirsiniz.",
+				"cta": "Vakayı geri al",
+				"unavailable": "Bu vaka artık geri alınamaz."
+			}
 		},
 		"accepted": {
 			"title": "Talebiniz bir danışman tarafından kabul edildi.",
@@ -3708,7 +3746,8 @@
 		},
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz."
+			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
+			"extend": "Erişimi uzat"
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
@@ -4700,6 +4739,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",
@@ -5814,6 +5868,25 @@
 			"callFailed": "Çağrı başarısız: {{message}}",
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		},
+		"notes": {
+			"title": "Görüşme notları",
+			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
+			"type": "Not türü",
+			"text": "Not",
+			"add": "Not ekle",
+			"remove": "Notu kaldır",
+			"copy": "Tümünü kopyala",
+			"copied": "Kopyalandı",
+			"empty": "Henüz bir not yok.",
+			"collapse": "Notları daralt",
+			"expand": "Notları genişlet",
+			"open": "Görüşme notları",
+			"types": {
+				"frage": "Soru",
+				"anmerkung": "Açıklama",
+				"aufgabe": "Görev"
+			}
 		}
 	},
 	"form": {
