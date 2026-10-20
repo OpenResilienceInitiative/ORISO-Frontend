@@ -3754,7 +3754,7 @@
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
-			"description": "Bu görüşmedeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
+			"description": "Yalnızca bu görüşmede, kendi danışmanlık merkeziniz içindeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
 			"baselineDescription": "Kapalıyken danışmanlık merkezinizin ayarları geçerlidir. Merkezin gerekli gördüğü onay yine gereklidir.",
 			"saving": "Kaydediliyor …",
 			"saved": "Ayar kaydedildi.",
@@ -5447,6 +5447,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Yazdır / PDF olarak kaydet",
+		"confirmedBy": "Onaylayan",
+		"confirmedAt": "Onay tarihi (Europe/Berlin)",
+		"organisation": "Kuruluş",
+		"printHint": "Yazdırma penceresinde PDF olarak kaydedebilirsiniz. Bağlantı adresinin yazdırılmaması için üst ve alt bilgileri kapatın.",
+		"printUnavailable": "Onayınız kaydedildi. Onay bilgileri eksik olduğu için yazdırma görünümü kullanılamıyor.",
 		"title": "Sözleşme belgelerini incele ve onayla",
 		"subtitle": "Lütfen sözleşme belgelerini tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
 		"signerName": "Ad soyad",

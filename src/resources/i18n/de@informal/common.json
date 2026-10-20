@@ -2362,6 +2362,9 @@
 		"curtain": {
 			"reclaim": {
 				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			},
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
 			}
 		},
 		"readOnly": {
@@ -2394,15 +2397,11 @@
 		},
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
-			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb deiner Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert."
 		},
 		"bulkBar": {
 			"emptyHint": "Wähle mindestens einen Fall aus."
-		},
-		"curtain": {
-			"reason": {
-				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
-			}
 		}
 	},
 	"supervisorDialog": {

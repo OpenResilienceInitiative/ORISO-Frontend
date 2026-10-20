@@ -3754,7 +3754,7 @@
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
-			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
+			"description": "S’applique uniquement aux futures demandes dans cette conversation au sein de votre service de conseil. Les demandes en cours et les accès déjà accordés restent inchangés.",
 			"baselineDescription": "Si cette option est désactivée, les paramètres de votre service de conseil s’appliquent. Tout consentement requis par ce service reste nécessaire.",
 			"saving": "Enregistrement …",
 			"saved": "Paramètre enregistré.",
@@ -5447,6 +5447,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Imprimer / enregistrer en PDF",
+		"confirmedBy": "Confirmé par",
+		"confirmedAt": "Confirmé le (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "Vous pouvez enregistrer en PDF dans la fenêtre d’impression. Désactivez les en-têtes et pieds de page pour ne pas imprimer l’adresse du lien.",
+		"printUnavailable": "Votre confirmation a été enregistrée. La vue d’impression n’est pas disponible car les informations de confirmation sont incomplètes.",
 		"title": "Vérifier et confirmer les documents contractuels",
 		"subtitle": "Veuillez lire les documents contractuels dans leur intégralité, puis confirmez les informations concernant la personne signataire.",
 		"signerName": "Nom complet",

@@ -3774,7 +3774,7 @@
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
-			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb Ihrer Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saving": "Wird gespeichert …",
 			"saved": "Einstellung gespeichert.",
@@ -5437,6 +5437,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Drucken / als PDF speichern",
+		"confirmedBy": "Bestätigt von",
+		"confirmedAt": "Bestätigt am (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "Im Druckdialog können Sie als PDF speichern. Schalten Sie Kopf- und Fußzeilen aus, damit die Linkadresse nicht mitgedruckt wird.",
+		"printUnavailable": "Ihre Bestätigung wurde gespeichert. Die Druckansicht ist nicht verfügbar, weil die Bestätigungsdaten unvollständig sind.",
 		"title": "Vertragsunterlagen prüfen und bestätigen",
 		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.",
 		"signerName": "Vollständiger Name",
