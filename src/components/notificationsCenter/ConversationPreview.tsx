@@ -1,9 +1,15 @@
 import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chatTransportService } from '../../services/chatTransportService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
+import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import type { StackParticipant } from '../message/participantStack';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
+import { resolveRoomHeaderDensity } from '../sessionHeader/roomHeaderDensity';
+import useMeasure from 'react-use-measure';
+import { ResizeObserver } from '@juggle/resize-observer';
 import './conversationPreview.styles';
 
 const PREVIEW_MESSAGE_LIMIT = 50;
@@ -48,6 +54,10 @@ export const ConversationPreview = ({
 	const { t: translate, i18n } = useTranslation();
 	const [messages, setMessages] = useState<PreviewMessage[]>(EMPTY_MESSAGES);
 	const [roomAvailable, setRoomAvailable] = useState<boolean>(false);
+	const [previewRef, previewBounds] = useMeasure({
+		polyfill: ResizeObserver
+	});
+	const density = resolveRoomHeaderDensity({ width: previewBounds.width });
 	const listRef = useRef<HTMLDivElement | null>(null);
 	// Deliberately a ref: loadMessages must stay identity-stable across
 	// renders (its identity drives the subscription effect), and translate's
@@ -120,6 +130,32 @@ export const ConversationPreview = ({
 		}
 	}, [messages.length]);
 
+	// The preview knows visible messages, not the session's privacy allow-list.
+	// Derive authors from that exact slice; joined room members can include
+	// silent agency counsellors and must never be exposed here (ADR-002).
+	const participants = useMemo<StackParticipant[]>(() => {
+		const authors = new Map<string, StackParticipant>();
+		messages.forEach((message) => {
+			if (
+				!message.senderId ||
+				isSystemMatrixUser(message.senderId) ||
+				/^@agency-\d+-service:/.test(message.senderId)
+			)
+				return;
+			const previous = authors.get(message.senderId);
+			const lastActivity = message.timestamp.getTime();
+			if (!previous || lastActivity > (previous.lastActivity ?? 0)) {
+				authors.set(message.senderId, {
+					userId: message.senderId,
+					username: message.senderId,
+					displayName: message.senderName,
+					lastActivity
+				});
+			}
+		});
+		return [...authors.values()];
+	}, [messages]);
+
 	if (!roomId || !roomAvailable) {
 		return (
 			<div className="conversationPreview conversationPreview--empty">
@@ -141,42 +177,55 @@ export const ConversationPreview = ({
 	}
 
 	return (
-		<div className="conversationPreview" ref={listRef}>
-			{messages.map((message) => {
-				const isOwn =
-					Boolean(ownUserId) && message.senderId === ownUserId;
-				return (
-					<div
-						key={message.id}
-						className={`conversationPreview__message ${
-							isOwn ? 'conversationPreview__message--own' : ''
-						}`}
-					>
-						<div className="conversationPreview__meta">
-							<span className="conversationPreview__sender">
-								{message.senderName}
-							</span>
-							<span className="conversationPreview__time">
-								{message.timestamp.toLocaleTimeString(
-									i18n.language,
-									{
-										hour: '2-digit',
-										minute: '2-digit'
-									}
-								)}
-							</span>
-						</div>
-						<div className="conversationPreview__bubble">
-							{message.text}
-							{message.attachmentTitle && (
-								<span className="conversationPreview__attachment">
-									📎 {message.attachmentTitle}
+		<div className="conversationPreview" ref={previewRef}>
+			{participants.length > 0 && (
+				<div className="conversationPreview__header">
+					<ParticipantAvatarStack
+						participants={participants}
+						maxVisible={density.stackMaxVisible}
+					/>
+					<span className="conversationPreview__participantLabel">
+						{translate('notifications.center.preview.authors')}
+					</span>
+				</div>
+			)}
+			<div className="conversationPreview__messages" ref={listRef}>
+				{messages.map((message) => {
+					const isOwn =
+						Boolean(ownUserId) && message.senderId === ownUserId;
+					return (
+						<div
+							key={message.id}
+							className={`conversationPreview__message ${
+								isOwn ? 'conversationPreview__message--own' : ''
+							}`}
+						>
+							<div className="conversationPreview__meta">
+								<span className="conversationPreview__sender">
+									{message.senderName}
 								</span>
-							)}
+								<span className="conversationPreview__time">
+									{message.timestamp.toLocaleTimeString(
+										i18n.language,
+										{
+											hour: '2-digit',
+											minute: '2-digit'
+										}
+									)}
+								</span>
+							</div>
+							<div className="conversationPreview__bubble">
+								{message.text}
+								{message.attachmentTitle && (
+									<span className="conversationPreview__attachment">
+										📎 {message.attachmentTitle}
+									</span>
+								)}
+							</div>
 						</div>
-					</div>
-				);
-			})}
+					);
+				})}
+			</div>
 		</div>
 	);
 };

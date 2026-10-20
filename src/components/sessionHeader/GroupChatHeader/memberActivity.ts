@@ -1,3 +1,8 @@
+import {
+	STACK_AVATAR_SIZE,
+	STACK_OVERLAP,
+	STACK_MAX_VISIBLE
+} from '../../message/participantStack';
 /**
  * Pure helpers for the conversation header participant stack (#1193).
  *
@@ -74,10 +79,10 @@ export interface AvatarStackMetrics {
 }
 
 export const AVATAR_STACK_METRICS: AvatarStackMetrics = {
-	avatarSize: 32,
-	overlap: 10,
+	avatarSize: STACK_AVATAR_SIZE,
+	overlap: STACK_OVERLAP,
 	chipWidth: 64,
-	maxVisible: 4
+	maxVisible: STACK_MAX_VISIBLE
 };
 
 const stackWidth = (

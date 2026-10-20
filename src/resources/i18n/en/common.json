@@ -2254,6 +2254,7 @@
 			"markRead": "Mark as read",
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
+				"authors": "People in this preview",
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
 				"empty": "No messages in this conversation yet.",
 				"image": "Image",

@@ -659,6 +659,7 @@
 			"markRead": "Als gelesen markieren",
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
+				"authors": "Personen in dieser Vorschau",
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen."
 			}
 		},

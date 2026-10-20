@@ -2257,6 +2257,7 @@
 			"showPreview": "Sohbet önizlemesini göster",
 			"showDetails": "Detayları göster",
 			"preview": {
+				"authors": "Bu önizlemedeki kişiler",
 				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
 				"empty": "Bu sohbette henüz mesaj yok.",
 				"image": "Görsel",

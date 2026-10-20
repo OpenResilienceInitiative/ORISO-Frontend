@@ -355,11 +355,6 @@ export const GroupChatHeader = ({
 								members={stackMembers}
 								measureRef={titleRowRef}
 								reservedWidth={TITLE_ROW_RESERVED_WIDTH}
-								countLabel={(hidden) =>
-									`+${t('message.audience.multiCount', {
-										count: hidden
-									})}`
-								}
 							/>
 						</div>
 						{!hideTopic && (

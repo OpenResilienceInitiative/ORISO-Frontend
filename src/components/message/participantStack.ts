@@ -34,6 +34,10 @@ export interface ParticipantStack {
 	overflow: number;
 }
 
+/** Measured Room Header All (1320:38281): diameter and overlap. */
+export const STACK_AVATAR_SIZE = 40;
+export const STACK_OVERLAP = 12;
+
 /** Figma #430: a room header shows at most four avatars before "+N". */
 export const STACK_MAX_VISIBLE = 4;
 /**

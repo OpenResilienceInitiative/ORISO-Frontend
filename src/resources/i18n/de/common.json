@@ -2278,6 +2278,7 @@
 			"markRead": "Als gelesen markieren",
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
+				"authors": "Personen in dieser Vorschau",
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
 				"empty": "Noch keine Nachrichten in diesem Gespräch.",
 				"image": "Bild",

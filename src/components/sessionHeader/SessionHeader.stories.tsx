@@ -663,11 +663,27 @@ type Story = StoryObj<typeof meta>;
 /**
  * Group chat with ≤4 members.
  * Expected (Figma #430): every member avatar is shown (no cap), no overflow badge.
- * TODO: keep verifying against Figma until Fix 1 (GroupChatHeader member logic)
- * is merged — the ≤4 branch now renders all avatars instead of the old 3-cap.
+ * Uses the canonical 40px stack shared with the 1:1 and side-panel headers.
  */
 export const GroupChatSmall: Story = {
-	render: () => renderGroupHeader(mockGroupSessionSmall())
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		for (const avatar of canvasElement.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		)) {
+			await expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+				40
+			);
+			await expect(
+				Math.round(avatar.getBoundingClientRect().height)
+			).toBe(40);
+		}
+	}
 };
 
 /**
@@ -680,18 +696,24 @@ export const GroupChatLarge: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const badge = canvasElement.querySelector(
-				'.sessionInfo__memberCount'
+				'[data-cy="participant-overflow"]'
 			);
 			expect(badge).toBeTruthy();
 			expect(
-				canvasElement.querySelector('.sessionInfo__memberCountNumber')
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
 					?.textContent
 			).toContain('+23');
-			// Four stacked avatars, the remaining 23 collapse into the chip.
+			// Canonical 40px participant avatars, the remaining 23 collapse into the chip.
 			expect(
-				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
 					.length
 			).toBe(4);
+			for (const avatar of canvasElement.querySelectorAll(
+				'[data-cy="participant-avatar"]'
+			))
+				expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+					40
+				);
 		});
 	}
 };

@@ -17,6 +17,8 @@ import { MessageAvatar } from './MessageAvatar';
 import {
 	resolveParticipantStack,
 	STACK_MAX_VISIBLE,
+	STACK_AVATAR_SIZE,
+	STACK_OVERLAP,
 	type StackParticipant
 } from './participantStack';
 import './participantAvatarStack.styles.scss';
@@ -40,8 +42,7 @@ export interface ParticipantAvatarStackProps {
  * same 12 px overlap. The group starts 8 px inside the type pill
  * (`x = 65.5` in a 73.5 px pill) and the title text follows 6 px after it.
  */
-export const STACK_AVATAR_SIZE = 40;
-export const STACK_OVERLAP = 12;
+export { STACK_AVATAR_SIZE, STACK_OVERLAP } from './participantStack';
 export const STACK_PILL_OVERLAP = 8;
 export const STACK_TITLE_INSET = 6;
 /** Visible step per avatar for the room header (40 − 12). */
@@ -65,7 +66,7 @@ export const ParticipantAvatarStack = ({
 		maxVisible
 	);
 
-	if (visible.length === 0) {
+	if (visible.length === 0 && overflow === 0) {
 		return null;
 	}
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConversationPreview } from './ConversationPreview';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
@@ -64,11 +64,79 @@ const arrange = (events: any[], roomExists = true) => {
 };
 
 afterEach(() => {
+	cleanup();
 	vi.clearAllMocks();
 	setMatrixClientServiceRef(null);
 });
 
 describe('ConversationPreview (#847)', () => {
+	it('shows canonical header avatars only for visible message authors, latest first', () => {
+		arrange([
+			matrixEvent({
+				id: '$1',
+				sender: '@lisa:matrix.example',
+				body: 'Older',
+				ts: 1
+			}),
+			matrixEvent({
+				id: '$2',
+				sender: '@consultant:matrix.example',
+				body: 'Latest',
+				ts: 2
+			}),
+			matrixEvent({
+				id: '$3',
+				sender: '@lisa:matrix.example',
+				body: 'Again',
+				ts: 1
+			})
+		]);
+		const { container } = render(
+			<ConversationPreview roomId="!room:matrix.example" />
+		);
+		const avatars = container.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		);
+		expect(
+			Array.from(avatars).map((avatar) =>
+				avatar.getAttribute('data-user-id')
+			)
+		).toEqual(['@consultant:matrix.example', '@lisa:matrix.example']);
+		expect(
+			container.querySelector('.participantStack')?.getAttribute('style')
+		).toContain('--participant-size: 40px');
+	});
+
+	it('updates preview authors on timeline events without exposing technical members', () => {
+		arrange([
+			matrixEvent({
+				id: '$1',
+				sender: '@lisa:matrix.example',
+				body: 'First',
+				ts: 1
+			})
+		]);
+		const { container } = render(
+			<ConversationPreview roomId="!room:matrix.example" />
+		);
+		transport.getMatrixRoomMessages.mockReturnValue([
+			matrixEvent({
+				id: '$2',
+				sender: '@consultant:matrix.example',
+				body: 'New',
+				ts: 2
+			})
+		]);
+		act(() => (transport.onMatrixTimeline.mock.calls[0] as any)[1]());
+		expect(
+			container
+				.querySelector('[data-cy="participant-avatar"]')
+				?.getAttribute('data-user-id')
+		).toBe('@consultant:matrix.example');
+		expect(
+			container.querySelector('[data-user-id="@silent:matrix.example"]')
+		).toBeNull();
+	});
 	it('renders the room timeline from the local Matrix client', () => {
 		arrange([
 			matrixEvent({
@@ -87,9 +155,36 @@ describe('ConversationPreview (#847)', () => {
 
 		expect(screen.getByText('Hallo, ich brauche Hilfe.')).toBeTruthy();
 		expect(screen.getByText('Gern — erzählen Sie.')).toBeTruthy();
-		expect(screen.getByText('lisa')).toBeTruthy();
+		expect(screen.getAllByText('lisa').length).toBeGreaterThan(0);
 	});
 
+	it('excludes system and agency service senders from the preview header', () => {
+		arrange([
+			matrixEvent({
+				id: '$human',
+				sender: '@lisa:matrix.example',
+				body: 'Visible person'
+			}),
+			matrixEvent({
+				id: '$system',
+				sender: '@system:matrix.example',
+				body: 'Notice'
+			}),
+			matrixEvent({
+				id: '$agency',
+				sender: '@agency-12-service:matrix.example',
+				body: 'Agency notice'
+			})
+		]);
+		const { container } = render(
+			<ConversationPreview roomId="!room:matrix.example" />
+		);
+		expect(
+			Array.from(
+				container.querySelectorAll('[data-cy="participant-avatar"]')
+			).map((avatar) => avatar.getAttribute('data-user-id'))
+		).toEqual(['@lisa:matrix.example']);
+	});
 	it('marks own messages so the bubble aligns right', () => {
 		arrange([
 			matrixEvent({
@@ -125,7 +220,9 @@ describe('ConversationPreview (#847)', () => {
 			<ConversationPreview roomId="!room:matrix.example" />
 		);
 
-		expect(container.querySelector('img')).toBeNull();
+		expect(
+			container.querySelector('.conversationPreview__bubble img')
+		).toBeNull();
 		expect(container.querySelector('b')).toBeNull();
 		expect(screen.getByText('bold')).toBeTruthy();
 	});
@@ -205,7 +302,7 @@ describe('ConversationPreview (#847)', () => {
 		).toBeTruthy();
 	});
 
-	it('subscribes to the room timeline but never issues a network call', () => {
+	it('subscribes read-only without API calls, active-view registration or read receipts', () => {
 		// #847 core guarantee: the old iframe booted a session view that
 		// PATCHed /event-notifications/active-view and made the backend drop
 		// message.new for the previewed room. The preview reads the synced
@@ -225,7 +322,13 @@ describe('ConversationPreview (#847)', () => {
 			'!room:matrix.example',
 			expect.any(Function)
 		);
-		expect(fetchSpy).not.toHaveBeenCalled();
+		// Canonical avatars may request static artwork, never product APIs.
+		expect(
+			fetchSpy.mock.calls.every(
+				([url, options]) =>
+					String(url).startsWith('/static/anon-animals/') && !options
+			)
+		).toBe(true);
 		fetchSpy.mockRestore();
 	});
 });
