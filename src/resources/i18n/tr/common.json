@@ -1729,6 +1729,7 @@
 				},
 				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
 				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSecond": "Çok fazla deneme. Lütfen yaklaşık bir saniye bekleyip tekrar deneyin.",
 				"tooManyRequestsWaitSeconds": "Çok fazla deneme. Lütfen yaklaşık {{seconds}} saniye bekleyip tekrar deneyin.",
 				"tooManyRequestsWaitMinute": "Çok fazla deneme. Lütfen yaklaşık bir dakika bekleyip tekrar deneyin.",
 				"tooManyRequestsWaitMinutes": "Çok fazla deneme. Lütfen yaklaşık {{minutes}} dakika bekleyip tekrar deneyin.",

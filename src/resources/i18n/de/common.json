@@ -1750,6 +1750,7 @@
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
 				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warten Sie etwa eine Sekunde und versuchen Sie es dann erneut.",
 				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warten Sie etwa {{seconds}} Sekunden und versuchen Sie es dann erneut.",
 				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warten Sie etwa eine Minute und versuchen Sie es dann erneut.",
 				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warten Sie etwa {{minutes}} Minuten und versuchen Sie es dann erneut.",

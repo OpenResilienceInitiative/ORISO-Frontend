@@ -1729,6 +1729,7 @@
 				},
 				"consultantBlocked": "ናይ ኣማኸርቲ ኣካውንታት ኣብዚ ክኣትዉ ኣይክእሉን።",
 				"tooManyRequests": "ብዙሓት ፈተነታት። በጃኹም ውሑዳት ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitSecond": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ሰከንድ ተጸቢኹም እንደገና ፈትኑ።",
 				"tooManyRequestsWaitSeconds": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{seconds}} ሰከንድ ተጸቢኹም እንደገና ፈትኑ።",
 				"tooManyRequestsWaitMinute": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ደቒቕ ተጸቢኹም እንደገና ፈትኑ።",
 				"tooManyRequestsWaitMinutes": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{minutes}} ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።",

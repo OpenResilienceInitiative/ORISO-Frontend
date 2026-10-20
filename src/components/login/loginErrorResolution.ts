@@ -57,6 +57,7 @@ export const LOGIN_ERROR_KEYS = {
 	 * so a gap costs the number — never a German sentence in a French screen.
 	 */
 	TOO_MANY_REQUESTS_WAIT: {
+		second: 'login.warning.failed.tooManyRequestsWaitSecond',
 		seconds: 'login.warning.failed.tooManyRequestsWaitSeconds',
 		minute: 'login.warning.failed.tooManyRequestsWaitMinute',
 		minutes: 'login.warning.failed.tooManyRequestsWaitMinutes',
@@ -189,7 +190,9 @@ const waitMessage = (
 ): { key: string; values: Record<string, number> } => {
 	const keys = LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS_WAIT;
 	if (seconds < SECONDS_PER_MINUTE) {
-		return { key: keys.seconds, values: { seconds } };
+		return seconds === 1
+			? { key: keys.second, values: {} }
+			: { key: keys.seconds, values: { seconds } };
 	}
 	if (seconds < SECONDS_PER_HOUR) {
 		const minutes = Math.ceil(seconds / SECONDS_PER_MINUTE);

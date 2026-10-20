@@ -314,6 +314,7 @@ describe('resolveLoginError', () => {
 		const KEYS = LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS_WAIT;
 
 		it.each([
+			['exactly a second', 1, KEYS.second, {}],
 			['below a minute, in seconds', 45, KEYS.seconds, { seconds: 45 }],
 			['exactly a minute', 60, KEYS.minute, {}],
 			// 89 s rounded DOWN would say "a minute" and invite a retry 29 s early

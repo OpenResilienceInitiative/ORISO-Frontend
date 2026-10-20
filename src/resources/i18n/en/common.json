@@ -1735,6 +1735,7 @@
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here.",
 				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again.",
+				"tooManyRequestsWaitSecond": "Too many attempts. Please wait about a second and try again.",
 				"tooManyRequestsWaitSeconds": "Too many attempts. Please wait about {{seconds}} seconds and try again.",
 				"tooManyRequestsWaitMinute": "Too many attempts. Please wait about a minute and try again.",
 				"tooManyRequestsWaitMinutes": "Too many attempts. Please wait about {{minutes}} minutes and try again.",
