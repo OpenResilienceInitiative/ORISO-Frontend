@@ -6,7 +6,6 @@ import {
 	FocalPoint,
 	resolveFocalPoint
 } from './closingFocal';
-import { ClosingDirection } from './closingDirection';
 
 export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
 
@@ -19,8 +18,6 @@ export type ClosingPhase = 'cover' | 'covered' | 'reveal' | 'revealed';
 export type ClosingSwapResult = void | boolean | Promise<unknown>;
 
 export interface PlayClosingAnimationOptions {
-	/** Which way the sheets sweep: sideways beside the stage, upward on one column. */
-	direction: ClosingDirection;
 	/** Where the animation ends. The destination marks it, see `closingFocal`. */
 	focal: ClosingFocal;
 	/**
@@ -50,7 +47,6 @@ const { closing } = transitionMotion;
 const Z_INDEX = '1600';
 
 const primary = orisoInputColors.primary;
-const primaryDark = orisoInputColors.primaryDark;
 
 interface Plan {
 	/** Starts the cover. Everything it needs exists already. */
@@ -71,18 +67,18 @@ const settle = (animations: Animation[]) =>
 		animations.map((animation) => animation.finished.catch(() => undefined))
 	);
 
-const layer = (
+/** One element of the sheet. Only the sheet itself is a named layer. */
+const piece = (
 	frame: Frame,
-	name: string,
+	parent: HTMLElement,
 	style: Partial<CSSStyleDeclaration>,
-	parent: HTMLElement = frame.root
+	data: Record<string, string> = {}
 ) => {
 	const element = frame.doc.createElement('div');
-	element.dataset.closingLayer = name;
+	Object.assign(element.dataset, data);
 	Object.assign(element.style, {
 		position: 'absolute',
 		pointerEvents: 'none',
-		willChange: 'transform',
 		...style
 	});
 	parent.appendChild(element);
@@ -93,75 +89,177 @@ const run = (
 	element: HTMLElement,
 	keyframes: Keyframe[],
 	duration: number,
-	easing: string,
-	delay = 0
+	easing: string
 ) =>
 	element.animate(keyframes, {
 		duration,
 		easing,
-		delay,
 		fill: 'both'
 	});
 
 const px = (value: number) => `${value}px`;
 
 /**
- * Slide reveal: the red area swipes over the room as one piece, to the right
- * beside the stage and upward on one column. A second red layer sits behind it
- * and travels the same way a beat later, so the swipe leaves a trailing band
- * before the chat is uncovered. The beat is part of the phase, not added to
- * it: both sheets end together.
+ * The wave: one long S, as long as 1.15 screen widths so that one screen shows
+ * a bit more than one period, and as deep as 14% of that, but never deeper than
+ * 16% of the screen is high (a phone held upright would otherwise be all curve).
  */
-const slideReveal = (frame: Frame, direction: ClosingDirection): Plan => {
+const WAVE_LENGTH = 1.15;
+const WAVE_DEPTH = 0.14;
+const WAVE_DEPTH_MAX = 0.16;
+/** How far the wave drifts sideways while it is on screen, as a share of its length. */
+const WAVE_DRIFT = 0.35;
+/** The edge reaches this far into the body, so no seam can show between them. */
+const OVERLAP = 2;
+/** Eight cubic curves per period follow a sine to a fraction of a pixel. */
+const CURVES_PER_WAVE = 8;
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+const round = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * `top + depth * (1 - sin(2 pi x / length))`, drawn from `0` to `reach` as
+ * cubic curves whose ends carry the exact slope of the sine. The shape is
+ * closed along `base`, the side the body is on.
+ */
+const waveShape = (
+	reach: number,
+	length: number,
+	depth: number,
+	top: number,
+	base: number
+) => {
+	const turn = (2 * Math.PI) / length;
+	const at = (x: number) => top + depth * (1 - Math.sin(turn * x));
+	const slope = (x: number) => -depth * turn * Math.cos(turn * x);
+	const step = length / CURVES_PER_WAVE;
+	const knots = Math.ceil(reach / step);
+	let d = `M0 ${base} L0 ${round(at(0))}`;
+	for (let k = 1; k <= knots; k += 1) {
+		const from = (k - 1) * step;
+		const to = Math.min(k * step, reach);
+		const third = (to - from) / 3;
+		d +=
+			` C${round(from + third)} ${round(at(from) + slope(from) * third)}` +
+			` ${round(to - third)} ${round(at(to) - slope(to) * third)}` +
+			` ${round(to)} ${round(at(to))}`;
+	}
+	return `${d}V${base}Z`;
+};
+
+/**
+ * The wave reveal: one big calm red sheet comes up from below, covers the room
+ * and leaves at the top, so the chat is uncovered from below. Its leading and
+ * its trailing end are waves. The sheet is one layer moved by a transform only;
+ * each wave also drifts sideways while it is in sight, which makes the edge
+ * flow instead of slide. The colour is the Träger's primary colour and nothing
+ * else: no tint is derived from it, so every Träger colour works as it is.
+ */
+const waveReveal = (frame: Frame): Plan => {
 	const { width, height } = frame;
-	const sheet = (name: string, background: string) =>
-		layer(frame, name, {
+	const length = Math.round(WAVE_LENGTH * width);
+	const depth = Math.round(
+		Math.min(WAVE_DEPTH * length, WAVE_DEPTH_MAX * height)
+	);
+	const edgeHeight = 2 * depth + OVERLAP;
+	const drift = Math.round(WAVE_DRIFT * length);
+	const reach = width + drift;
+	const travel = height + 2 * depth + OVERLAP;
+
+	const sheet = piece(
+		frame,
+		frame.root,
+		{
 			left: '0',
 			top: '0',
 			width: px(width),
 			height: px(height),
-			background
-		});
-	const rear = sheet('slide-rear', primaryDark);
-	const front = sheet('slide-front', primary);
-	// One continuous sweep: in from the left and out to the right, or in from
-	// the bottom and out at the top.
-	const axis = direction === 'vertical' ? 'Y' : 'X';
-	const sign = direction === 'vertical' ? -1 : 1;
-	const from = `translate${axis}(${-sign * 100}%)`;
-	const to = `translate${axis}(${sign * 100}%)`;
+			willChange: 'transform'
+		},
+		{ closingLayer: 'wave' }
+	);
+	piece(
+		frame,
+		sheet,
+		{
+			left: '0',
+			top: '0',
+			width: px(width),
+			height: px(height),
+			background: primary
+		},
+		{ closingBody: '' }
+	);
+	const edge = (side: 'leading' | 'trailing') => {
+		const leading = side === 'leading';
+		const element = piece(
+			frame,
+			sheet,
+			{
+				left: '0',
+				top: px(leading ? -2 * depth : height - OVERLAP),
+				width: px(reach),
+				height: px(edgeHeight),
+				willChange: 'transform'
+			},
+			{ closingEdge: side }
+		);
+		const svg = frame.doc.createElementNS(SVG_NS, 'svg');
+		svg.setAttribute('viewBox', `0 0 ${reach} ${edgeHeight}`);
+		svg.setAttribute('preserveAspectRatio', 'none');
+		svg.setAttribute('width', '100%');
+		svg.setAttribute('height', '100%');
+		svg.style.display = 'block';
+		const path = frame.doc.createElementNS(SVG_NS, 'path');
+		path.setAttribute(
+			'd',
+			leading
+				? waveShape(reach, length, depth, 0, edgeHeight)
+				: waveShape(reach, length, depth, OVERLAP, 0)
+		);
+		path.setAttribute('style', `fill:${primary}`);
+		svg.appendChild(path);
+		element.appendChild(svg);
+		return element;
+	};
+	const leading = edge('leading');
+	const trailing = edge('trailing');
+	const drifting = (element: HTMLElement, duration: number) =>
+		run(
+			element,
+			[
+				{ transform: 'translateX(0px)' },
+				{ transform: `translateX(${px(-drift)})` }
+			],
+			duration,
+			'linear'
+		);
 
 	return {
 		cover: () => [
 			run(
-				front,
-				[{ transform: from }, { transform: 'none' }],
+				sheet,
+				[
+					{ transform: `translateY(${px(travel)})` },
+					{ transform: 'none' }
+				],
 				closing.coverMs,
 				transitionMotion.easeIn
 			),
-			// Starts late, ends with the front sheet: the trail is inside the phase.
-			run(
-				rear,
-				[{ transform: from }, { transform: 'none' }],
-				closing.coverMs - closing.trailMs,
-				transitionMotion.easeIn,
-				closing.trailMs
-			)
+			drifting(leading, closing.coverMs)
 		],
 		reveal: () => [
 			run(
-				front,
-				[{ transform: 'none' }, { transform: to }],
+				sheet,
+				[
+					{ transform: 'none' },
+					{ transform: `translateY(${px(-travel)})` }
+				],
 				closing.revealMs,
 				transitionMotion.easeOut
 			),
-			run(
-				rear,
-				[{ transform: 'none' }, { transform: to }],
-				closing.revealMs - closing.trailMs,
-				transitionMotion.easeOut,
-				closing.trailMs
-			)
+			drifting(trailing, closing.revealMs)
 		]
 	};
 };
@@ -261,8 +359,7 @@ export const playClosingAnimation = async (
 
 	const root = doc.createElement('div');
 	root.setAttribute('aria-hidden', 'true');
-	root.dataset.closingAnimation = 'slide-reveal';
-	root.dataset.closingDirection = options.direction;
+	root.dataset.closingAnimation = 'wave-reveal';
 	root.dataset.closingPhase = 'cover';
 	Object.assign(root.style, {
 		position: 'fixed',
@@ -284,8 +381,7 @@ export const playClosingAnimation = async (
 		x: size.width / 2,
 		y: size.height * 0.82
 	};
-	const buildPlan = () =>
-		slideReveal({ doc, root, ...size }, options.direction);
+	const buildPlan = () => waveReveal({ doc, root, ...size });
 	let plan = buildPlan();
 	/* The pieces are sized in pixels at the press. A viewport that changed
 	   while the screen is held covered (a phone turned) would show the room

@@ -12,6 +12,22 @@ vi.mock('../../transition/closing/useClosingAnimation', () => ({
 	useClosingAnimation: () => ({ play })
 }));
 
+/* What the room warms is the app's business (appChunks.test.ts); here only
+   that the gate asks, when, and for which destination. */
+const calls: string[] = [];
+const warmClosingDestination = vi.fn((focal: string) => {
+	calls.push(`warm:${focal}`);
+});
+let idle: Array<() => void> = [];
+const stopWaiting = vi.fn();
+vi.mock('../appChunks', () => ({
+	warmClosingDestination: (focal: string) => warmClosingDestination(focal),
+	warmWhenIdle: (task: () => void) => {
+		idle.push(task);
+		return stopWaiting;
+	}
+}));
+
 const { HandoverGateButton } = await import('./HandoverGateButton');
 
 const gate = () =>
@@ -42,6 +58,10 @@ describe('HandoverGateButton closing animation', () => {
 	beforeEach(() => {
 		// Braces matter: a function returned from a hook is run as its cleanup.
 		play.mockReset();
+		warmClosingDestination.mockClear();
+		stopWaiting.mockClear();
+		calls.length = 0;
+		idle = [];
 	});
 	afterEach(cleanup);
 
@@ -412,5 +432,63 @@ describe('HandoverGateButton closing animation', () => {
 		fireEvent.click(gate());
 		expect(play).not.toHaveBeenCalled();
 		expect(onEnter).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * ORISO-Frontend#1737. A person who presses the button must arrive in a screen
+ * that is already there. The gate warms the destination its room declared while
+ * the person reads, and once more at the press, 340 ms before the room is
+ * swapped.
+ */
+describe('HandoverGateButton warms the destination', () => {
+	beforeEach(() => {
+		play.mockReset();
+		warmClosingDestination.mockClear();
+		stopWaiting.mockClear();
+		calls.length = 0;
+		idle = [];
+	});
+	afterEach(cleanup);
+
+	it('when the browser is idle, for the focal point the room declared', () => {
+		render(<HandoverGateButton state="preparing" closing="messageField" />);
+		expect(
+			warmClosingDestination,
+			'not before the browser has time'
+		).not.toHaveBeenCalled();
+		idle.forEach((task) => task());
+		expect(warmClosingDestination).toHaveBeenCalledWith('messageField');
+	});
+
+	it('for the call when the room ends on the call', () => {
+		render(<HandoverGateButton state="preparing" closing="call" />);
+		idle.forEach((task) => task());
+		expect(warmClosingDestination).toHaveBeenCalledWith('call');
+	});
+
+	it('not at all for a button that does not leave the room (the registration form)', () => {
+		render(<HandoverGateButton state="preparing" />);
+		expect(idle).toHaveLength(0);
+		fireEvent.click(gate());
+		expect(warmClosingDestination).not.toHaveBeenCalled();
+	});
+
+	it('stops waiting for idle time when the room goes away first', () => {
+		const { unmount } = render(
+			<HandoverGateButton state="preparing" closing="messageField" />
+		);
+		unmount();
+		expect(stopWaiting).toHaveBeenCalledTimes(1);
+	});
+
+	it('at the press as well, before the animation starts and long before the room is swapped', async () => {
+		play.mockImplementation(() => {
+			calls.push('play');
+			return new Promise(() => undefined);
+		});
+		render(<HandoverGateButton state="ready" closing="messageField" />);
+		fireEvent.click(gate());
+		expect(calls).toEqual(['warm:messageField', 'play']);
 	});
 });

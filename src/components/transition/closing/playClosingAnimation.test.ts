@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { orisoInputColors } from '../../form/orisoInputDesign';
 import { transitionMotion } from '../transitionMotion';
 import { playClosingAnimation } from './playClosingAnimation';
-import { CLOSING_DIRECTIONS, ClosingDirection } from './closingDirection';
 
 const ROOT = '[data-closing-animation]';
+const primary = orisoInputColors.primary;
 
 /** jsdom has no Web Animations; a finished animation is all the engine needs. */
 const installAnimate = (finish: 'at once' | 'never') => {
@@ -95,7 +96,6 @@ describe('playClosingAnimation', () => {
 		const animate = installAnimate('at once');
 		const onCovered = vi.fn();
 		const result = await playClosingAnimation({
-			direction: 'horizontal',
 			focal: 'messageField',
 			reducedMotion: true,
 			onCovered
@@ -110,7 +110,6 @@ describe('playClosingAnimation', () => {
 		removeAnimate();
 		const onCovered = vi.fn();
 		const result = await playClosingAnimation({
-			direction: 'horizontal',
 			focal: 'messageField',
 			onCovered
 		});
@@ -119,43 +118,36 @@ describe('playClosingAnimation', () => {
 		expect(document.querySelector(ROOT)).toBeNull();
 	});
 
-	it.each(CLOSING_DIRECTIONS)(
-		'%s: swaps once, in the middle, and leaves nothing behind',
-		async (direction) => {
-			installAnimate('at once');
-			focalOnPage();
-			const seen: string[] = [];
-			const onCovered = vi.fn(() => {
-				seen.push(
-					`covered:${document.querySelector(ROOT)?.getAttribute('data-closing-phase')}`
-				);
-			});
-			const pending = playClosingAnimation({
-				direction,
-				focal: 'messageField',
-				onCovered
-			});
-			expect(
-				document
-					.querySelector(ROOT)
-					?.getAttribute('data-closing-direction')
-			).toBe(direction);
-			await vi.advanceTimersByTimeAsync(200);
-			const result = await pending;
+	it('swaps once, in the middle, and leaves nothing behind', async () => {
+		installAnimate('at once');
+		focalOnPage();
+		const seen: string[] = [];
+		const onCovered = vi.fn(() => {
+			seen.push(
+				`covered:${document.querySelector(ROOT)?.getAttribute('data-closing-phase')}`
+			);
+		});
+		const pending = playClosingAnimation({
+			focal: 'messageField',
+			onCovered
+		});
+		expect(
+			document.querySelector(ROOT)?.getAttribute('data-closing-animation')
+		).toBe('wave-reveal');
+		await vi.advanceTimersByTimeAsync(200);
+		const result = await pending;
 
-			expect(result.played).toBe(true);
-			expect(onCovered).toHaveBeenCalledTimes(1);
-			expect(seen).toEqual(['covered:covered']);
-			expect(document.querySelector(ROOT)).toBeNull();
-		}
-	);
+		expect(result.played).toBe(true);
+		expect(onCovered).toHaveBeenCalledTimes(1);
+		expect(seen).toEqual(['covered:covered']);
+		expect(document.querySelector(ROOT)).toBeNull();
+	});
 
 	it('takes the pointer while it covers, so blind taps cannot reach the room underneath, and lets it through once it reveals', async () => {
 		const late = installLateAnimate();
 		focalOnPage();
 		const swap = held();
 		const pending = playClosingAnimation({
-			direction: 'horizontal',
 			focal: 'messageField',
 			onCovered: swap.onCovered
 		});
@@ -196,17 +188,11 @@ describe('playClosingAnimation', () => {
 	});
 
 	/**
-	 * The overlay stops the pointer only. The room underneath must not be reachable
-	 * by keyboard or assistive technology while the screen is held red either,
-	 * or Tab and Enter could still press a control nobody can see.
+	 * One timeline (`transitionMotion.closing`): cover and reveal take the same
+	 * time in every room. A piece that starts late would have to end with the
+	 * others, not after them.
 	 */
-	/**
-	 * One timeline for all three designs (`transitionMotion.closing`): a design
-	 * differs in what it draws, never in how long a person waits. A piece that
-	 * starts late (the slide's trailing sheet) has to end with the others, not
-	 * after them.
-	 */
-	describe('one timeline for every direction', () => {
+	describe('one timeline', () => {
 		type Call = [Keyframe[], KeyframeAnimationOptions];
 		const endsFrom = (
 			animate: { mock: { calls: unknown[] } },
@@ -217,156 +203,273 @@ describe('playClosingAnimation', () => {
 					Number(options.delay ?? 0) + Number(options.duration)
 			);
 
-		it.each(CLOSING_DIRECTIONS)(
-			'%s: the cover takes the shared cover time and the reveal the shared reveal time, to the last piece',
-			async (direction) => {
-				const late = installLateAnimate();
-				focalOnPage();
-				const pending = playClosingAnimation({
-					direction,
-					focal: 'messageField',
-					onCovered: () => undefined
-				});
-				const { coverMs, revealMs } = transitionMotion.closing;
-				const cover = endsFrom(late.animate, 0);
-				expect(cover.length).toBeGreaterThan(0);
-				expect(Math.max(...cover), 'cover').toBe(coverMs);
-
-				const made = late.animate.mock.calls.length;
-				late.finishAll();
-				await vi.advanceTimersByTimeAsync(300);
-				expect(
-					document
-						.querySelector(ROOT)!
-						.getAttribute('data-closing-phase')
-				).toBe('reveal');
-				const reveal = endsFrom(late.animate, made);
-				expect(reveal.length).toBeGreaterThan(0);
-				expect(Math.max(...reveal), 'reveal').toBe(revealMs);
-
-				late.finishAll();
-				await vi.advanceTimersByTimeAsync(300);
-				await pending;
-			}
-		);
-	});
-
-	/**
-	 * One design, two directions (Frank, 2026-10-20: the curtain is out, the slide
-	 * reveal stays and goes vertical on mobile). Two sheets sweep the viewport
-	 * along one axis, always the same way, so the cover and the reveal read as one
-	 * wipe. They are moved with transforms only, so it stays light.
-	 */
-	describe('the slide reveal', () => {
-		type Call = [Keyframe[], KeyframeAnimationOptions];
-		const callsOf = (animate: { mock: { calls: unknown[] } }) =>
-			animate.mock.calls as Call[];
-		const sheetCalls = (
-			animate: { mock: { calls: unknown[]; contexts: unknown[] } },
-			name: 'slide-front' | 'slide-rear'
-		) =>
-			callsOf(animate)
-				.map((call, index) => ({
-					call,
-					element: animate.mock.contexts[index] as HTMLElement
-				}))
-				.filter(({ element }) => element.dataset.closingLayer === name);
-
-		const play = async (direction: ClosingDirection) => {
+		it('the cover takes the shared cover time and the reveal the shared reveal time, to the last piece', async () => {
 			const late = installLateAnimate();
 			focalOnPage();
 			const pending = playClosingAnimation({
-				direction,
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
-			const sheets = [
-				...document
-					.querySelector(ROOT)!
-					.querySelectorAll<HTMLElement>('*')
-			];
+			const { coverMs, revealMs } = transitionMotion.closing;
+			const cover = endsFrom(late.animate, 0);
+			expect(cover.length).toBeGreaterThan(0);
+			expect(Math.max(...cover), 'cover').toBe(coverMs);
+
+			const made = late.animate.mock.calls.length;
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(300);
+			expect(
+				document.querySelector(ROOT)!.getAttribute('data-closing-phase')
+			).toBe('reveal');
+			const reveal = endsFrom(late.animate, made);
+			expect(reveal.length).toBeGreaterThan(0);
+			expect(Math.max(...reveal), 'reveal').toBe(revealMs);
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(300);
+			await pending;
+		});
+	});
+
+	/**
+	 * One design, one direction (Frank, 2026-10-20: the curtain and the slide are
+	 * out; one big calm S-wave sweeps upward on every screen). One red sheet comes
+	 * up from below and leaves at the top, so the cover and the reveal read as one
+	 * wipe. Its two ends are waves, drawn once and moved with transforms only, so
+	 * it stays light. Geometry at 1024 x 768 (what jsdom reports): the wave is
+	 * 1178 px long (1.15 x the width) and 123 px deep (the smaller of 14% of that
+	 * and 16% of the height), so an edge is 2 x 123 + 2 px tall and the sheet
+	 * travels 768 + 246 + 2 = 1016 px.
+	 */
+	describe('the wave reveal', () => {
+		type Call = [Keyframe[], KeyframeAnimationOptions];
+		const callsOf = (animate: { mock: { calls: unknown[] } }) =>
+			animate.mock.calls as Call[];
+		const callsOn = (
+			animate: { mock: { calls: unknown[]; contexts: unknown[] } },
+			element: Element
+		) =>
+			callsOf(animate).filter(
+				(_call, index) => animate.mock.contexts[index] === element
+			);
+
+		const play = async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			const overlay = document.querySelector(ROOT)!;
+			const sheet = overlay.querySelector<HTMLElement>(
+				'[data-closing-layer]'
+			)!;
+			const edge = (which: 'leading' | 'trailing') =>
+				overlay.querySelector<HTMLElement>(
+					`[data-closing-edge="${which}"]`
+				)!;
+			const pieces = {
+				overlay,
+				sheet,
+				body: sheet.querySelector<HTMLElement>('[data-closing-body]')!,
+				leading: edge('leading'),
+				trailing: edge('trailing'),
+				markup: overlay.outerHTML
+			};
 			late.finishAll();
 			await vi.advanceTimersByTimeAsync(300);
 			late.finishAll();
 			await vi.advanceTimersByTimeAsync(300);
 			await pending;
-			return { late, sheets };
+			return { late, ...pieces };
 		};
 
-		it.each([
-			['horizontal', 'translateX(-100%)', 'translateX(100%)'],
-			['vertical', 'translateY(100%)', 'translateY(-100%)']
-		] as const)(
-			'%s: both sheets come in from %s and leave to %s',
-			async (direction, from, to) => {
-				const { late } = await play(direction);
-				(['slide-front', 'slide-rear'] as const).forEach((name) => {
-					const own = sheetCalls(late.animate, name);
-					// Once on the way in, once on the way out.
-					expect(own, name).toHaveLength(2);
-					const [cover, reveal] = own.map(({ call }) => call[0]);
-					expect(cover[0].transform, `${name} starts`).toBe(from);
-					expect(
-						cover[cover.length - 1].transform,
-						`${name} covers`
-					).toBe('none');
-					expect(reveal[0].transform, `${name} is covering`).toBe(
-						'none'
-					);
-					expect(
-						reveal[reveal.length - 1].transform,
-						`${name} leaves`
-					).toBe(to);
-				});
-			}
-		);
+		it('the sheet comes up from below and leaves at the top', async () => {
+			const { late, sheet } = await play();
+			const own = callsOn(late.animate, sheet);
+			// Once on the way in, once on the way out.
+			expect(own).toHaveLength(2);
+			const [cover, reveal] = own.map(([keyframes]) => keyframes);
+			expect(cover[0].transform, 'starts below the screen').toBe(
+				'translateY(1016px)'
+			);
+			expect(cover[cover.length - 1].transform, 'covers').toBe('none');
+			expect(reveal[0].transform, 'is covering').toBe('none');
+			expect(
+				reveal[reveal.length - 1].transform,
+				'leaves above the screen'
+			).toBe('translateY(-1016px)');
+		});
 
-		it.each(CLOSING_DIRECTIONS)(
-			'%s: the sheet behind trails the one in front by the shared beat, on the way in and out',
-			async (direction) => {
-				const { late } = await play(direction);
-				const { trailMs } = transitionMotion.closing;
-				const delays = (name: 'slide-front' | 'slide-rear') =>
-					sheetCalls(late.animate, name).map(({ call }) =>
-						Number(call[1].delay ?? 0)
-					);
-				expect(delays('slide-front')).toEqual([0, 0]);
-				expect(delays('slide-rear')).toEqual([trailMs, trailMs]);
-			}
-		);
+		it('is one layer: a solid body with a wave at each end, and nothing else', async () => {
+			const { overlay, sheet, body, leading, trailing } = await play();
+			expect(
+				overlay.querySelectorAll('[data-closing-layer]')
+			).toHaveLength(1);
+			expect(sheet.dataset.closingLayer).toBe('wave');
+			expect([...sheet.children]).toEqual([body, leading, trailing]);
+			// The body fills the screen exactly.
+			expect(body.style.left).toBe('0px');
+			expect(body.style.top).toBe('0px');
+			expect(body.style.width).toBe('1024px');
+			expect(body.style.height).toBe('768px');
+			// The leading wave hangs above the body, the trailing one below it;
+			// each overlaps the body by 2 px so no seam can show.
+			expect(leading.style.top).toBe('-246px');
+			expect(trailing.style.top).toBe('766px');
+			[leading, trailing].forEach((edge) => {
+				expect(edge.style.left).toBe('0px');
+				expect(edge.style.width).toBe('1436px');
+				expect(edge.style.height).toBe('248px');
+			});
+		});
 
-		it.each(CLOSING_DIRECTIONS)(
-			'%s: two sheets that each fill the screen, and nothing else',
-			async (direction) => {
-				const { sheets } = await play(direction);
+		it('has waves one S deep: the line swings the whole depth and starts and ends on the body', async () => {
+			const { leading, trailing } = await play();
+			// The curve's own points are the last pair of every `C` segment.
+			const lineOf = (edge: HTMLElement) =>
+				(edge.querySelector('path')!.getAttribute('d') ?? '')
+					.split('C')
+					.slice(1)
+					.map((segment) =>
+						segment
+							.split('V')[0]
+							.trim()
+							.split(/\s+/)
+							.map(Number)
+							.slice(-2)
+					);
+			[leading, trailing].forEach((edge) => {
+				const d = edge.querySelector('path')!.getAttribute('d')!;
+				expect(d.endsWith('Z'), 'a closed shape').toBe(true);
+				const ys = lineOf(edge).map(([, y]) => y);
 				expect(
-					sheets.map((sheet) => sheet.dataset.closingLayer)
-				).toEqual(['slide-rear', 'slide-front']);
-				sheets.forEach((sheet) => {
-					expect(sheet.style.left).toBe('0px');
-					expect(sheet.style.top).toBe('0px');
-					expect(sheet.style.width).toBe(`${window.innerWidth}px`);
-					expect(sheet.style.height).toBe(`${window.innerHeight}px`);
-				});
-			}
-		);
+					ys.length,
+					'a handful of curve segments'
+				).toBeGreaterThan(8);
+				expect(ys.length).toBeLessThan(40);
+				const [low, high] = [Math.min(...ys), Math.max(...ys)];
+				const lowest = edge === leading ? 0 : 2;
+				const highest = edge === leading ? 246 : 248;
+				expect(low).toBeGreaterThanOrEqual(lowest - 0.5);
+				expect(high).toBeLessThanOrEqual(highest + 0.5);
+				expect(
+					high - low,
+					'the wave is one full depth (2 x 123 px) deep'
+				).toBeGreaterThan(240);
+			});
+			// Solid below the leading line, solid above the trailing one.
+			expect(
+				leading
+					.querySelector('path')!
+					.getAttribute('d')!
+					.startsWith('M0 248')
+			).toBe(true);
+			expect(
+				trailing
+					.querySelector('path')!
+					.getAttribute('d')!
+					.startsWith('M0 0')
+			).toBe(true);
+		});
 
-		it.each(CLOSING_DIRECTIONS)(
-			'%s moves only transform, the property a browser animates on the graphics card',
-			async (direction) => {
-				const { late } = await play(direction);
-				const properties = new Set(
-					callsOf(late.animate).flatMap(([keyframes]) =>
-						keyframes.flatMap((frame) => Object.keys(frame))
-					)
-				);
-				properties.delete('offset');
-				properties.delete('easing');
-				expect([...properties]).toEqual(['transform']);
-			}
-		);
+		it('follows an exact sine: the middle of every curve lies within half a pixel of it', async () => {
+			const { leading, trailing } = await play();
+			const length = 1178;
+			const depth = 123;
+			[
+				{ edge: leading, top: 0 },
+				{ edge: trailing, top: 2 }
+			].forEach(({ edge, top }) => {
+				const sine = (x: number) =>
+					top + depth * (1 - Math.sin((2 * Math.PI * x) / length));
+				const d = edge.querySelector('path')!.getAttribute('d')!;
+				const start = d.match(/L(\S+) (\S+)/)!;
+				let from = [Number(start[1]), Number(start[2])];
+				const curves = d
+					.split('C')
+					.slice(1)
+					.map((curve) =>
+						curve.split('V')[0].trim().split(/\s+/).map(Number)
+					);
+				expect(curves.length).toBeGreaterThan(8);
+				curves.forEach(([x1, y1, x2, y2, x3, y3]) => {
+					// The point of a cubic curve halfway along it.
+					const x = (from[0] + 3 * x1 + 3 * x2 + x3) / 8;
+					const y = (from[1] + 3 * y1 + 3 * y2 + y3) / 8;
+					expect(Math.abs(y - sine(x))).toBeLessThan(0.5);
+					from = [x3, y3];
+				});
+			});
+		});
+
+		it('drifts the wave sideways while it is on screen: the leading one on the way in, the trailing one on the way out', async () => {
+			const { late, leading, trailing } = await play();
+			const { coverMs, revealMs } = transitionMotion.closing;
+			const lead = callsOn(late.animate, leading);
+			const trail = callsOn(late.animate, trailing);
+			expect(lead).toHaveLength(1);
+			expect(trail).toHaveLength(1);
+			expect(lead[0][0].map((frame) => frame.transform)).toEqual([
+				'translateX(0px)',
+				'translateX(-412px)'
+			]);
+			expect(trail[0][0].map((frame) => frame.transform)).toEqual([
+				'translateX(0px)',
+				'translateX(-412px)'
+			]);
+			expect(lead[0][1].duration).toBe(coverMs);
+			expect(trail[0][1].duration).toBe(revealMs);
+			// A wave that drifts at a steady pace, so the edge flows.
+			expect(lead[0][1].easing).toBe('linear');
+			expect(trail[0][1].easing).toBe('linear');
+		});
+
+		it('moves nothing after another piece: every animation starts at once', async () => {
+			const { late } = await play();
+			callsOf(late.animate).forEach(([, options]) =>
+				expect(Number(options.delay ?? 0)).toBe(0)
+			);
+		});
+
+		it("is the Träger's primary colour everywhere, and no other shade is drawn", async () => {
+			const { body, leading, trailing, markup } = await play();
+			// The body and both waves are drawn in the token itself, so the
+			// sheet is one colour with no seam wherever they meet.
+			expect(body.style.background).toBe(primary);
+			[leading, trailing].forEach((edge) =>
+				expect(edge.querySelector('path')!.getAttribute('style')).toBe(
+					`fill:${primary}`
+				)
+			);
+			// A shade that is not derived from the primary would be a colour of
+			// its own once a Träger changes theirs.
+			expect(markup).not.toContain('--m3-primary-hover');
+			expect(markup).not.toContain('gradient');
+			expect(markup).not.toContain('opacity');
+			expect(markup.replaceAll(primary, '')).not.toMatch(
+				/#[0-9a-f]{3,8}/i
+			);
+		});
+
+		it('moves only transform, the property a browser animates on the graphics card', async () => {
+			const { late } = await play();
+			const properties = new Set(
+				callsOf(late.animate).flatMap(([keyframes]) =>
+					keyframes.flatMap((frame) => Object.keys(frame))
+				)
+			);
+			properties.delete('offset');
+			properties.delete('easing');
+			expect([...properties]).toEqual(['transform']);
+		});
 	});
 
+	/**
+	 * The overlay stops the pointer only. The room underneath must not be reachable
+	 * by keyboard or assistive technology while the screen is held red either,
+	 * or Tab and Enter could still press a control nobody can see.
+	 */
 	describe('the room underneath', () => {
 		const app = () => document.getElementById('app')!;
 		const mountApp = () => {
@@ -386,7 +489,6 @@ describe('playClosingAnimation', () => {
 			const gate = mountApp();
 			const swap = held();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -426,7 +528,6 @@ describe('playClosingAnimation', () => {
 			shutBefore.setAttribute('inert', '');
 			document.body.appendChild(shutBefore);
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
@@ -447,7 +548,6 @@ describe('playClosingAnimation', () => {
 			const late = installLateAnimate();
 			const gate = mountApp();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => false
 			});
@@ -469,7 +569,6 @@ describe('playClosingAnimation', () => {
 			const gate = mountApp();
 			let editor!: HTMLElement;
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => {
 					// The room goes, the next one arrives inside the shut page.
@@ -533,7 +632,6 @@ describe('playClosingAnimation', () => {
 				let editor!: HTMLElement;
 				let bold!: HTMLElement;
 				const pending = playClosingAnimation({
-					direction: 'horizontal',
 					focal: 'messageField',
 					onCovered: () => {
 						app().replaceChildren();
@@ -588,7 +686,6 @@ describe('playClosingAnimation', () => {
 				const gate = mountApp();
 				let editor!: HTMLElement;
 				const pending = playClosingAnimation({
-					direction: 'horizontal',
 					focal: 'messageField',
 					onCovered: () => {
 						app().replaceChildren();
@@ -639,7 +736,6 @@ describe('playClosingAnimation', () => {
 			field.appendChild(editor);
 			document.body.appendChild(field);
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
@@ -661,7 +757,6 @@ describe('playClosingAnimation', () => {
 			const gate = mountApp();
 			const other = document.createElement('button');
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => {
 					document.body.appendChild(other);
@@ -683,7 +778,6 @@ describe('playClosingAnimation', () => {
 		it('is left alone when nothing is animated, since nothing covers it', async () => {
 			mountApp();
 			await playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				reducedMotion: true,
 				onCovered: () => undefined
@@ -716,72 +810,77 @@ describe('playClosingAnimation', () => {
 				Object.defineProperty(window, 'innerHeight', saved.height);
 			};
 		};
-		const front = () =>
+		const piece = (selector: string) =>
 			document.querySelector<HTMLElement>(
-				'[data-closing-layer="slide-front"]'
+				`[data-closing-layer] ${selector}`
 			)!;
+		const shape = () => ({
+			bodyWidth: piece('[data-closing-body]').style.width,
+			bodyHeight: piece('[data-closing-body]').style.height,
+			leadingTop: piece('[data-closing-edge="leading"]').style.top,
+			trailingTop: piece('[data-closing-edge="trailing"]').style.top,
+			edgeWidth: piece('[data-closing-edge="leading"]').style.width
+		});
+		/* 1366 x 640: the wave is 1571 px long and 102 px deep (16% of the height),
+		   so the edges hang 204 px above and 204 - 2 px below the body. */
+		const FITTED = {
+			bodyWidth: '1366px',
+			bodyHeight: '640px',
+			leadingTop: '-204px',
+			trailingTop: '638px',
+			edgeWidth: '1916px'
+		} as const;
 		const layerCount = () =>
 			document.querySelectorAll('[data-closing-layer]').length;
 
-		it.each(CLOSING_DIRECTIONS)(
-			'%s: fits the pieces to the new size while the screen is held covered',
-			async (direction) => {
-				const late = installLateAnimate();
-				focalOnPage();
-				const swap = held();
-				const pending = playClosingAnimation({
-					direction,
-					focal: 'messageField',
-					onCovered: swap.onCovered
-				});
-				const before = {
-					width: front().style.width,
-					height: front().style.height
-				};
-				const count = layerCount();
+		it('fits the pieces to the new size while the screen is held covered', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const swap = held();
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			const before = shape();
+			const count = layerCount();
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(
+				document.querySelector(ROOT)!.getAttribute('data-closing-phase')
+			).toBe('covered');
+
+			const restore = resizeTo(1366, 640);
+			try {
+				const made = late.animate.mock.results.length;
+				window.dispatchEvent(new Event('resize'));
+				expect(shape()).toEqual(FITTED);
+				expect(shape()).not.toEqual(before);
+				expect(layerCount(), 'rebuilt, not added to').toBe(count);
+				const rebuilt = late.animate.mock.results.slice(made);
+				expect(rebuilt.length).toBeGreaterThan(0);
+				rebuilt.forEach((result) =>
+					expect(
+						(result.value as { finish: () => void }).finish,
+						'the new pieces start where the cover ended, not at its beginning'
+					).toHaveBeenCalled()
+				);
+
+				swap.release();
 				late.finishAll();
-				await vi.advanceTimersByTimeAsync(50);
-				expect(
-					document
-						.querySelector(ROOT)!
-						.getAttribute('data-closing-phase')
-				).toBe('covered');
-
-				const restore = resizeTo(1366, 640);
-				try {
-					const made = late.animate.mock.results.length;
-					window.dispatchEvent(new Event('resize'));
-					expect(front().style.width).toBe('1366px');
-					expect(front().style.height).toBe('640px');
-					expect(front().style.width).not.toBe(before.width);
-					expect(layerCount(), 'rebuilt, not added to').toBe(count);
-					const rebuilt = late.animate.mock.results.slice(made);
-					expect(rebuilt.length).toBeGreaterThan(0);
-					rebuilt.forEach((result) =>
-						expect(
-							(result.value as { finish: () => void }).finish,
-							'the new pieces start where the cover ended, not at its beginning'
-						).toHaveBeenCalled()
-					);
-
-					swap.release();
-					late.finishAll();
-					await vi.advanceTimersByTimeAsync(300);
-					late.finishAll();
-					await vi.advanceTimersByTimeAsync(300);
-					await pending;
-				} finally {
-					restore();
-				}
+				await vi.advanceTimersByTimeAsync(300);
+				late.finishAll();
+				await vi.advanceTimersByTimeAsync(300);
+				await pending;
+			} finally {
+				restore();
 			}
-		);
+		});
 
 		it('fits them when the size changed while the cover was still closing', async () => {
 			const late = installLateAnimate();
 			focalOnPage();
 			const swap = held();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -789,12 +888,17 @@ describe('playClosingAnimation', () => {
 			try {
 				// Mid-cover nothing is rebuilt; it is checked once the screen is covered.
 				window.dispatchEvent(new Event('resize'));
-				expect(front().style.width).toBe('1024px');
+				expect(shape().bodyWidth).toBe('1024px');
 
 				late.finishAll();
 				await vi.advanceTimersByTimeAsync(50);
-				expect(front().style.width).toBe('900px');
-				expect(front().style.height).toBe('1200px');
+				expect(shape()).toEqual({
+					bodyWidth: '900px',
+					bodyHeight: '1200px',
+					leadingTop: '-290px',
+					trailingTop: '1198px',
+					edgeWidth: '1262px'
+				});
 
 				swap.release();
 				late.finishAll();
@@ -808,16 +912,37 @@ describe('playClosingAnimation', () => {
 		});
 
 		it.each([
-			['only the height', 1024, 1000],
-			['only the width', 800, 768]
+			[
+				'only the height',
+				1024,
+				1000,
+				{
+					bodyWidth: '1024px',
+					bodyHeight: '1000px',
+					leadingTop: '-320px',
+					trailingTop: '998px',
+					edgeWidth: '1436px'
+				}
+			],
+			[
+				'only the width',
+				800,
+				768,
+				{
+					bodyWidth: '800px',
+					bodyHeight: '768px',
+					leadingTop: '-246px',
+					trailingTop: '766px',
+					edgeWidth: '1122px'
+				}
+			]
 		])(
 			"fits them when %s changes (a phone's address bar, a window dragged narrower)",
-			async (_which, width, height) => {
+			async (_which, width, height, expected) => {
 				const late = installLateAnimate();
 				focalOnPage();
 				const swap = held();
 				const pending = playClosingAnimation({
-					direction: 'horizontal',
 					focal: 'messageField',
 					onCovered: swap.onCovered
 				});
@@ -827,8 +952,7 @@ describe('playClosingAnimation', () => {
 				const restore = resizeTo(width, height);
 				try {
 					window.dispatchEvent(new Event('resize'));
-					expect(front().style.width).toBe(`${width}px`);
-					expect(front().style.height).toBe(`${height}px`);
+					expect(shape()).toEqual(expected);
 
 					swap.release();
 					late.finishAll();
@@ -847,7 +971,6 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const swap = held();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -862,7 +985,7 @@ describe('playClosingAnimation', () => {
 			const restore = resizeTo(1366, 640);
 			try {
 				window.dispatchEvent(new Event('resize'));
-				expect(front().style.width).toBe('1024px');
+				expect(shape().bodyWidth).toBe('1024px');
 				late.finishAll();
 				await vi.advanceTimersByTimeAsync(300);
 				await pending;
@@ -876,7 +999,6 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const remove = vi.spyOn(window, 'removeEventListener');
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
@@ -890,7 +1012,6 @@ describe('playClosingAnimation', () => {
 	it('is removed by the cap even when it still blocks the pointer', async () => {
 		installAnimate('never');
 		const pending = playClosingAnimation({
-			direction: 'horizontal',
 			focal: 'messageField',
 			onCovered: () => undefined
 		});
@@ -914,7 +1035,6 @@ describe('playClosingAnimation', () => {
 		it('does not wait for a destination and gives the room back quickly', async () => {
 			installAnimate('at once');
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered
 			});
@@ -929,7 +1049,6 @@ describe('playClosingAnimation', () => {
 	it('still waits for the destination when the swap says nothing about it', async () => {
 		installAnimate('at once');
 		const pending = playClosingAnimation({
-			direction: 'horizontal',
 			focal: 'messageField',
 			onCovered: () => Promise.resolve()
 		});
@@ -949,7 +1068,6 @@ describe('playClosingAnimation', () => {
 		installAnimate('never');
 		const onCovered = vi.fn();
 		const pending = playClosingAnimation({
-			direction: 'horizontal',
 			focal: 'messageField',
 			onCovered
 		});
@@ -978,7 +1096,6 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const swap = held();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -1002,7 +1119,6 @@ describe('playClosingAnimation', () => {
 			const swap = held();
 			let settled = false;
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				reducedMotion: true,
 				onCovered: swap.onCovered
@@ -1021,7 +1137,6 @@ describe('playClosingAnimation', () => {
 			installAnimate('at once');
 			const onCovered = vi.fn(() => new Promise<void>(() => undefined));
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered
 			});
@@ -1041,7 +1156,6 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const swap = held();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -1063,7 +1177,6 @@ describe('playClosingAnimation', () => {
 			focalOnPage();
 			const onCovered = vi.fn();
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered
 			});
@@ -1090,7 +1203,6 @@ describe('playClosingAnimation', () => {
 				(callback) => waiting.push(callback)
 			);
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: () => undefined
 			});
@@ -1113,7 +1225,6 @@ describe('playClosingAnimation', () => {
 			const swap = held();
 			const frames = vi.spyOn(window, 'requestAnimationFrame');
 			const pending = playClosingAnimation({
-				direction: 'horizontal',
 				focal: 'messageField',
 				onCovered: swap.onCovered
 			});
@@ -1142,7 +1253,6 @@ describe('playClosingAnimation', () => {
 			process.on('unhandledRejection', hear);
 			try {
 				const pending = playClosingAnimation({
-					direction: 'horizontal',
 					focal: 'messageField',
 					onCovered: () => Promise.reject(new Error('too late'))
 				});
@@ -1166,7 +1276,6 @@ describe('playClosingAnimation', () => {
 				installAnimate('at once');
 				const swap = held();
 				const outcome = playClosingAnimation({
-					direction: 'horizontal',
 					focal: 'messageField',
 					reducedMotion,
 					onCovered: swap.onCovered
