@@ -549,6 +549,16 @@
 			"headline": "Vous avez supprimé le chat avec succès."
 		}
 	},
+	"historyRequest": {
+		"card": {
+			"title": "Demande de relire cette conversation",
+			"intro": "La personne de cette conversation s'est connectée sur un nouvel appareil et ne peut pas lire les messages précédents. Elle a écrit :",
+			"approve": "Débloquer la conversation",
+			"decline": "Refuser",
+			"failed": "Les clés n'ont pas pu être envoyées. Veuillez réessayer.",
+			"origin": "Demandé par {{user}} sur un nouvel appareil ({{device}}), {{time}}. Cet appareil n'est pas encore vérifié : ne débloquez que si vous attendez cette demande."
+		}
+	},
 	"e2ee": {
 		"attachment": {
 			"decryption_error": "Erreur lors du décryptage",

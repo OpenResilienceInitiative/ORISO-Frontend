@@ -532,6 +532,16 @@
 			"headline": "You have deleted the chat successfully."
 		}
 	},
+	"historyRequest": {
+		"card": {
+			"title": "Request to read this conversation again",
+			"intro": "The person in this conversation signed in on a new device and cannot read the earlier messages. They wrote:",
+			"approve": "Release conversation",
+			"decline": "Decline",
+			"origin": "Asked by {{user}} on a new device ({{device}}), {{time}}. This device is not verified yet, so release only if you expect this request.",
+			"failed": "The keys could not be sent. Please try again."
+		}
+	},
 	"e2ee": {
 		"attachment": {
 			"decryption_error": "Error while decrypting",
