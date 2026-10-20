@@ -1,9 +1,4 @@
 {
-	"groupCardParticipants": {
-		"loading": "Teilnehmende werden geladen …",
-		"unavailable": "Teilnehmende konnten nicht geladen werden.",
-		"empty": "Keine Teilnehmenden."
-	},
 	"contactSheet": {
 		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
 		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
@@ -659,7 +654,6 @@
 			"markRead": "Als gelesen markieren",
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
-				"authors": "Personen in dieser Vorschau",
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffne den Chat, um mitzulesen."
 			}
 		},
