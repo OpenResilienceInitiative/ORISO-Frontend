@@ -1,3 +1,4 @@
+import { getSessionMenuAgency } from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
@@ -90,6 +91,7 @@ import {
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
+import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
@@ -138,6 +140,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
 	const supervisionPanel = useSupervisionPanel();
+	// Practice: no calls, no booking (they would start real network traffic).
+	const isPracticing = usePracticeActive();
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
@@ -412,6 +416,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//list item icons only shown on outside
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
+	const menuAgency = getSessionMenuAgency(activeSession);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
@@ -477,8 +482,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// One gate for every caller: the side room's controls ask the same
 	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
-	const { audio: isAudioCallsEnabled, video: isVideoCallsEnabled } =
-		resolveCallFeatureGates(currentTenantSettings, chatType);
+	const callGates = resolveCallFeatureGates(currentTenantSettings, chatType);
+	const isAudioCallsEnabled = callGates.audio && !isPracticing;
+	const isVideoCallsEnabled = callGates.video && !isPracticing;
 
 	const hasVideoCallFeatures = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
@@ -537,6 +543,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			{!activeSession.isEnquiry &&
 				appointmentFeatureEnabled &&
+				!isPracticing &&
 				!activeSession.isGroup && (
 					<div
 						className="sessionMenu__icon sessionMenu__icon--booking"
@@ -609,9 +616,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 						>
 							<ChatMenuDropdownHeader
-								subtitle={translate(
-									'groupChat.info.settings.subtitle'
-								)}
+								subtitle={
+									activeSession.isGroup && menuAgency?.name
+										? translate(
+												'groupChat.info.settings.agencyLine',
+												{ name: menuAgency.name }
+											)
+										: translate(
+												'groupChat.info.settings.subtitle'
+											)
+								}
 								title={translate(
 									'groupChat.info.settings.headline'
 								)}
@@ -1011,13 +1025,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									handleLeaveGroupChat={handleLeaveGroupChat}
 									handleStopGroupChat={handleStopGroupChat}
 									bannedUsers={props.bannedUsers}
+									isJoinGroupChatView={
+										props.isJoinGroupChatView
+									}
 								/>
 							)}
 
 							<div className="legalInformationLinks--menu">
 								<LegalLinks
 									legalLinks={legalLinks}
-									params={{ aid: activeSession?.agency?.id }}
+									params={{ aid: menuAgency?.id }}
 								>
 									{(label, url, rawLabel) => {
 										const kind = getLegalLinkKind(
@@ -1097,7 +1114,8 @@ const SessionMenuFlyoutGroup = ({
 	editGroupChatSettingsLink,
 	handleLeaveGroupChat,
 	handleStopGroupChat,
-	bannedUsers
+	bannedUsers,
+	isJoinGroupChatView
 }: {
 	groupChatInfoLink: string;
 	onOpenInfo: () => void;
@@ -1105,6 +1123,7 @@ const SessionMenuFlyoutGroup = ({
 	handleStopGroupChat: MouseEventHandler;
 	handleLeaveGroupChat: MouseEventHandler;
 	bannedUsers: string[];
+	isJoinGroupChatView?: boolean;
 }) => {
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
@@ -1112,9 +1131,15 @@ const SessionMenuFlyoutGroup = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
+	// Leave/stop only mean something in a running group the user has joined;
+	// the waiting room and the join view show this menu on phones too (#1499).
+	const isRunning =
+		Boolean(activeSession.item.active) && !isJoinGroupChatView;
+
 	return (
 		<>
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
 				moderators.length > 1 && (
 					<div
@@ -1135,9 +1160,9 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
+			{/* Askers who have not joined get the schedule-only Chat-Info. */}
 			{(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
-				(activeSession.item.subscribed &&
-					!bannedUsers?.includes(userData.userName))) && (
+				!bannedUsers?.includes(userData.userName)) && (
 				<Link
 					to={groupChatInfoLink}
 					onClick={onOpenInfo}
@@ -1149,7 +1174,8 @@ const SessionMenuFlyoutGroup = ({
 					/>
 				</Link>
 			)}
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 				canModerateGroupChat(activeSession, userData) && (
 					<div

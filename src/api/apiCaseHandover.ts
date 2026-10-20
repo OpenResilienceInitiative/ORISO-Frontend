@@ -1,16 +1,30 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { ListItemsResponseInterface } from '../globalState/interfaces';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 export type CaseHandoverStatusValue =
 	| 'NOT_REQUESTED'
 	| 'PENDING'
 	| 'PENDING_CLIENT_CONSENT'
+	| 'PENDING_RECIPIENT_ACCEPTANCE'
+	| 'RECIPIENT_DECLINED'
 	| 'GRANTED_PENDING_CLIENT_OPTOUT'
 	| 'GRANTED'
 	| 'DENIED'
 	| 'CLIENT_CONSENT_DECLINED'
+	| 'RECLAIMED'
 	| (string & {});
+
+/** Pending requests retain their decision controls and feed acknowledgement. */
+export const isPendingCaseHandoverStatus = (status: CaseHandoverStatusValue) =>
+	status === 'PENDING' ||
+	status === 'PENDING_CLIENT_CONSENT' ||
+	status === 'GRANTED_PENDING_CLIENT_OPTOUT';
 
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 
@@ -28,6 +42,13 @@ export interface CaseHandoverStatus {
 	sessionId: number;
 	status: CaseHandoverStatusValue;
 	canViewContent: boolean;
+	direction?: 'PULL' | 'PUSH';
+	initiatorConsultantId?: string;
+	recipientConsultantId?: string;
+	recipientDecisionAt?: string;
+	expectedOwnershipRevision?: number;
+	ownershipRevision?: number;
+	operationId?: string;
 	reasonCode?: string;
 	reasonLabel?: string;
 	clientConsent?: CaseHandoverConsentValue;
@@ -36,13 +57,36 @@ export interface CaseHandoverStatus {
 	auditOutcome?: string;
 	createdAt?: string;
 	resolvedAt?: string;
+	/** The caller is the counsellor a takeover moved this case away from, and may take it back. */
+	canReclaim?: boolean;
+	/** CO_ACCESS ("advice needed") is read-only; the case stays with its owner. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | (string & {});
+	/** Naive UTC date-time; set for a granted CO_ACCESS. */
+	expiresAt?: string;
+	/** The viewer holds an open CO_ACCESS they may extend (#200). */
+	canExtend?: boolean;
 }
 
 export interface CaseHandoverBatchResult {
 	sessionId: number;
+	operationId: string;
 	success: boolean;
 	status?: CaseHandoverStatus;
 	error?: string;
+}
+
+export interface CaseHandoverOperation {
+	sessionId: number;
+	expectedOwnershipRevision: number;
+	operationId: string;
+}
+
+export interface CaseHandoverOfferInput {
+	targetConsultantId: string;
+	reasonCode: string;
+	explanation?: string;
+	expectedOwnershipRevision: number;
+	operationId: string;
 }
 
 export const apiGetCaseHandoverReasons = async (): Promise<
@@ -93,25 +137,119 @@ export const apiGetCaseHandoverStatus = async (
 export const apiRequestCaseHandoverAccess = async (
 	sessionId: number,
 	reasonCode: string,
-	explanation: string
+	explanation: string,
+	expectedOwnershipRevision: number,
+	operationId: string
 ): Promise<CaseHandoverStatus> =>
 	fetchData({
 		url: `${endpoints.sessionBase}/${sessionId}/case-handover`,
 		method: FETCH_METHODS.POST,
-		bodyData: JSON.stringify({ reasonCode, explanation }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		bodyData: JSON.stringify({
+			reasonCode,
+			explanation,
+			expectedOwnershipRevision,
+			operationId
+		}),
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
+	});
+
+export const apiReclaimCaseHandover = async (
+	sessionId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/reclaim`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
 	});
 
 export const apiRequestCaseHandoverBatchAccess = async (
-	sessionIds: number[],
+	operations: CaseHandoverOperation[],
 	reasonCode: string,
 	explanation: string
 ): Promise<CaseHandoverBatchResult[]> =>
 	fetchData({
 		url: endpoints.caseHandoverBatch,
 		method: FETCH_METHODS.POST,
-		bodyData: JSON.stringify({ sessionIds, reasonCode, explanation }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		bodyData: JSON.stringify({ reasonCode, explanation, operations }),
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
+	});
+
+export const apiCreateCaseHandoverOffer = async (
+	sessionId: number,
+	input: CaseHandoverOfferInput
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/offers`,
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify(input),
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
+	});
+
+/**
+ * A colleague this session may actually be offered to. The server applies the
+ * same predicates `createOffer` enforces — same tenant, present, inside the
+ * session's department (agency AND an overlapping topic), neither the current
+ * owner nor a previous one — so the picker cannot show a name the offer would
+ * reject with a 403 (FE #1262).
+ */
+export interface CaseHandoverRecipient {
+	consultantId: string;
+	displayName?: string;
+}
+
+export const apiGetCaseHandoverRecipients = async (
+	sessionId: number
+): Promise<CaseHandoverRecipient[]> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/recipients`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN]
+	});
+
+export const apiGetCaseHandoverRequestStatus = async (
+	sessionId: number,
+	requestId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/${requestId}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN, FETCH_ERRORS.NO_MATCH]
+	});
+
+export const apiDecideCaseHandoverRecipient = async (
+	sessionId: number,
+	requestId: number,
+	approved: boolean
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/${requestId}/recipient-decision`,
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify({ approved }),
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
 	});
 
 export const apiDecideCaseHandoverClientConsent = async (
@@ -123,5 +261,52 @@ export const apiDecideCaseHandoverClientConsent = async (
 		url: `${endpoints.sessionBase}/${sessionId}/case-handover/${requestId}/client-consent`,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ approved }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN
+		]
+	});
+
+/** #200: adds the granted duration once to the colleague's co-access. */
+export const apiExtendCaseHandoverCoAccess = async (
+	sessionId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/extend`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT,
+			FETCH_ERRORS.FORBIDDEN
+		]
+	});
+
+export interface CaseHandoverConsentPreference {
+	sessionId: number;
+	alwaysAskBeforeAdditionalAccess: boolean;
+}
+
+export const apiGetCaseHandoverConsentPreference = (
+	sessionId: number
+): Promise<CaseHandoverConsentPreference> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN]
+	});
+
+export const apiSaveCaseHandoverConsentPreference = (
+	sessionId: number,
+	alwaysAskBeforeAdditionalAccess: boolean
+): Promise<CaseHandoverConsentPreference> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ alwaysAskBeforeAdditionalAccess }),
+		responseHandling: [
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_SUCCESS.CONTENT
+		]
 	});

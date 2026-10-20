@@ -39,13 +39,12 @@ import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
+import { loadAuthenticatedApp } from './appChunks';
 
 const Login = lazyWithReload(() =>
 	import('../login/Login').then((m) => ({ default: m.Login }))
 );
-const AuthenticatedApp = lazyWithReload(() =>
-	import('./AuthenticatedApp').then((m) => ({ default: m.AuthenticatedApp }))
-);
+const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 const InviteLink = lazyWithReload(() =>
 	import('../invite/InviteLink').then((m) => ({
 		default: m.InviteLink
@@ -138,8 +137,6 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 	const settings = useAppConfig();
 
 	const [startWebsocket, setStartWebsocket] = useState<boolean>(false);
-	const [disconnectWebsocket, setDisconnectWebsocket] =
-		useState<boolean>(false);
 	const [failedPreCondition, setFailedPreCondition] =
 		useState(preConditionsMet());
 
@@ -155,11 +152,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<CallProvider>
 					<MatrixClientProvider>
 						<TenantThemingLoader />
-						{startWebsocket && (
-							<WebsocketHandler
-								disconnect={disconnectWebsocket}
-							/>
-						)}
+						{startWebsocket && <WebsocketHandler />}
 						<Suspense fallback={<Loading />}>
 							<Routes>
 								{settings.urls.landingpage !== '/' && (
@@ -254,7 +247,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 												setStartWebsocket(true)
 											}
 											onLogout={() =>
-												setDisconnectWebsocket(true)
+												setStartWebsocket(false)
 											}
 										/>
 									}

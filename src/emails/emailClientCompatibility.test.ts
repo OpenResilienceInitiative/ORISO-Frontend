@@ -81,7 +81,10 @@ describe('e-mail client compatibility', () => {
 		it('gives every image an alt text and a size', () => {
 			for (const img of html.match(/<img[^>]*>/g) ?? []) {
 				expect(img, `alt missing: ${img}`).toMatch(/\salt="/);
-				expect(img, `width missing: ${img}`).toMatch(/\swidth="/);
+				// Without intrinsic dimensions, width:auto preserves the logo shape.
+				expect(img, `proportional width missing: ${img}`).toMatch(
+					/\swidth="|width:auto/
+				);
 				expect(img, `height missing: ${img}`).toMatch(/\sheight="/);
 			}
 		});
@@ -162,7 +165,8 @@ describe('header logo lockup', () => {
 		const img = header.match(/<img [^>]*>/)?.[0] ?? '';
 		expect(img).toContain('src="/logo512.png"');
 		expect(img).toContain(' alt=""');
-		expect(img).toContain('width="36" height="36"');
+		expect(img).toContain('height="48"');
+		expect(img).toContain('width:auto;height:48px;');
 		expect(img).toContain('border:0');
 		expect(header).toContain('>Online-Beratung</td>');
 	});

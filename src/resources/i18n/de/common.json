@@ -787,7 +787,8 @@
 					"title": "Link kopiert"
 				},
 				"text": "Einladungs-Link kopieren",
-				"title": "Einladungs-Link in Zwischenablage kopieren"
+				"title": "Einladungs-Link in Zwischenablage kopieren",
+				"unavailable": "Der Einladungslink ist für diese Gruppe noch nicht verfügbar."
 			}
 		},
 		"create": {
@@ -955,6 +956,7 @@
 		},
 		"loadError": {
 			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"info": "Die Chat-Info konnte nicht geladen werden.",
 			"retry": "Erneut versuchen",
 			"topics": "Die Themen konnten nicht geladen werden."
 		},
@@ -972,6 +974,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Beratungsstelle",
+				"agencyLine": "Beratungsstelle: {{name}}",
 				"createDate": "Erstellungsdatum",
 				"creator": "Ersteller",
 				"duration": "Dauer",
@@ -1211,7 +1214,9 @@
 			"openGroup": "Gesprächskreis öffnen",
 			"declinedHeadline": "Diesmal hat es nicht geklappt.",
 			"declinedBody": "Die Moderation hat Ihre Anfrage nicht angenommen. Bei Fragen wenden Sie sich an die Person, die Ihnen den Link geschickt hat.",
-			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link."
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link.",
+			"admittingHeadline": "Ihre Anfrage ist angenommen.",
+			"admittingBody": "Der Gruppenzugang wird noch eingerichtet. Lassen Sie diese Seite dafür offen."
 		},
 		"accessUnavailable": {
 			"headline": "Dieser Gesprächskreis lässt sich gerade nicht öffnen.",
@@ -1249,7 +1254,9 @@
 				"coModeratorOwnerOnly": "Co-Moderation vergibt nur die Leitung des Gesprächskreises.",
 				"coModeratorSameTenant": "Co-Moderation ist Fachkräften des eigenen Trägers vorbehalten.",
 				"privacy": "Bis Sie entscheiden, sieht {{name}} nichts aus diesem Gesprächskreis."
-			}
+			},
+			"admissionQueued": "Die Zulassung von {{name}} ist bestätigt. Der Gruppenzugang muss noch bestätigt werden.",
+			"coModerationQueued": "Die Co-Moderation von {{name}} ist bestätigt. Der Gruppenzugang muss noch bestätigt werden."
 		},
 		"joinHandover": {
 			"badge": "Gesprächskreis",
@@ -1266,6 +1273,7 @@
 		"consent": {
 			"headline": "Bevor Sie schreiben",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimmen Sie der Datenschutzerklärung dieser Beratungsstelle zu, bevor Sie in der Gruppe schreiben.",
 			"reject": "Ablehnen",
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
@@ -1729,6 +1737,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"setupIncomplete": "Ihr Konto ist noch nicht vollständig eingerichtet. Bitte nutzen Sie den Link aus Ihrer Einladungs-E-Mail oder setzen Sie Ihr Passwort über „Passwort vergessen?“ zurück, um die Einrichtung abzuschließen.",
 				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
@@ -1740,7 +1749,15 @@
 					"text": "Benutzername oder Passwort sind nicht korrekt. Bitte versuchen Sie es erneut."
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
-				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warten Sie etwa eine Sekunde und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warten Sie etwa {{seconds}} Sekunden und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warten Sie etwa eine Minute und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warten Sie etwa {{minutes}} Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitHour": "Zu viele Versuche. Bitte warten Sie etwa eine Stunde und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitHours": "Zu viele Versuche. Bitte warten Sie etwa {{hours}} Stunden und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitDay": "Zu viele Versuche. Bitte warten Sie etwa einen Tag und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitDays": "Zu viele Versuche. Bitte warten Sie etwa {{days}} Tage und versuchen Sie es dann erneut."
 			}
 		},
 		"mobile": {
@@ -1935,6 +1952,27 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
+			"state": {
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"description": {
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			},
+			"startedBy": "Angerufen von {{name}}."
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
@@ -2160,6 +2198,10 @@
 				"title": "Fallübergabe abgelehnt",
 				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
 			},
+			"caseHandoverOfferReceived": {
+				"title": "Angebot zur Fallübergabe",
+				"text": "Eine Kolleg:in möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen."
+			},
 			"callStarted": {
 				"title": "Anruf läuft",
 				"text": "Ein Anruf läuft gerade. Treten Sie bei, um teilzunehmen."
@@ -2245,6 +2287,9 @@
 			"title": "Benachrichtigungen",
 			"subtitle": "Aktuelle Ereignisse und Updates aus Ihren Chats.",
 			"markAllRead": "Alle als gelesen markieren",
+			"markReadFailed": "Die Benachrichtigung konnte nicht als gelesen markiert werden. Bitte erneut versuchen.",
+			"markAllReadFailed": "Benachrichtigungen konnten nicht als gelesen markiert werden. Bitte erneut versuchen.",
+			"clearFailed": "Aktivität konnte nicht gelöscht werden. Bitte erneut versuchen.",
 			"clearAll": "Alle löschen",
 			"empty": "Noch keine Benachrichtigungen.",
 			"emptyDetail": "Wählen Sie eine Benachrichtigung aus, um Details zu sehen.",
@@ -2322,6 +2367,25 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Anmeldung & Konto",
+				"description": "Verwalten Sie Ihr Passwort und den Schutz Ihrer Anmeldung."
+			},
+			"recovery": {
+				"title": "Wiederherstellung alter Nachrichten",
+				"description": "Bewahren Sie Ihren Ersatzschlüssel sicher auf, damit Sie alte Nachrichten auf einem neuen Gerät wieder öffnen können."
+			},
+			"privacy": {
+				"title": "Privatsphäre",
+				"description": "Verwalten Sie Ihre persönlichen Angaben und Ihr Konto."
+			},
+			"displayNameDescription": "Unter diesem Namen sehen Ratsuchende Sie in der Beratung."
+		},
+		"avatar": {
+			"label": "Ihr Bild",
+			"default": "Standard"
+		},
 		"appLanguage": {
 			"info": "Stellen Sie hier die Sprache der Anwendung ein.",
 			"title": "Sprache"
@@ -2497,6 +2561,10 @@
 					"sessionExpired": "Ihre Anmeldung ist abgelaufen. Melden Sie sich neu an und schalten Sie den Live-Chat danach wieder ein.",
 					"leaseLost": "Der Server führt Sie nicht mehr als verfügbar. Schalten Sie den Live-Chat wieder ein, um erreichbar zu sein.",
 					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalten Sie den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				},
+				"dpaRestricted": {
+					"title": "Ratsuchende können gerade keinen Live-Chat mit Ihnen beginnen",
+					"text": "Ihr Träger hat die aktuelle Auftragsverarbeitungsvereinbarung noch nicht bestätigt. Bis dahin können neue Ratsuchende weder einen Live-Chat noch eine Anfrage beginnen. Bereits begonnene Beratungen laufen weiter."
 				}
 			},
 			"masterKey": {
@@ -2719,6 +2787,10 @@
 					"appointment": {
 						"title": "Termine",
 						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					},
+					"consentRequest": {
+						"title": "Anfragen zu Einsicht und Übergabe",
+						"description": "Erhalten Sie eine E-Mail, wenn Ihre Zustimmung zu einer Einsichtnahme oder Übergabe angefragt wird."
 					}
 				},
 				"consultant": {
@@ -2875,13 +2947,13 @@
 			"loading": "Wird geladen …",
 			"unavailable": "Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.",
 			"setup": {
-				"busy": "Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.",
+				"busy": "Ihr Ersatzschlüssel wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.",
 				"error": "Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
 				"explainer": "Richten Sie einmalig einen Ersatzschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.",
 				"cta": "Ersatzschlüssel einrichten"
 			},
 			"showKey": {
-				"silentExplainer": "Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
+				"silentExplainer": "Ihr Ersatzschlüssel wurde beim Anmelden automatisch eingerichtet. Speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
 				"explainer": "Das ist Ihr Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.",
 				"copy": "Schlüssel kopieren",
 				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert.",
@@ -2889,13 +2961,14 @@
 				"done": "Fertig"
 			},
 			"status": {
-				"ok": "✓ Schlüsselsicherung ist aktiv. Ihr Verlauf bleibt auf neuen Geräten lesbar."
+				"notSetUp": "Ihr Ersatzschlüssel ist noch nicht eingerichtet.",
+				"ok": "✓ Ihr Ersatzschlüssel ist eingerichtet. Ihr Verlauf bleibt auf neuen Geräten lesbar."
 			},
 			"changeKey": {
 				"cta": "Ersatzschlüssel ändern"
 			},
 			"outOfSync": {
-				"warning": "Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Ersatzschlüssel ein, damit Ihr Verlauf hier lesbar wird."
+				"warning": "Auf diesem Gerät fehlt noch Ihr Ersatzschlüssel. Geben Sie ihn ein, damit Ihr Verlauf hier lesbar wird."
 			},
 			"recover": {
 				"inputLabel": "Ersatzschlüssel",
@@ -2940,6 +3013,35 @@
 				"headline": "Ihr persönlicher QR-Code",
 				"info": "Wenn Sie Ihren QR-Code mit jemandem teilen, kann diese Person ihn mit der Handykamera scannen, um mit Ihnen direkt Kontakt aufzunehmen. Alternativ können Sie den Code auch herunterladen."
 			}
+		}
+	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (Übung)",
+			"colleague": "Alex (Übung)",
+			"supervisor": "Robin (Übung)"
+		},
+		"asker": {
+			"firstMessage": "Guten Tag, ich habe eine allgemeine Frage zu Ihrem Angebot. Wie läuft eine Beratung bei Ihnen ab, und wie schnell bekomme ich eine Antwort? Vielen Dank.",
+			"reply": "Vielen Dank für Ihre Antwort. Das hilft mir weiter. Ich melde mich, wenn ich noch Fragen habe."
+		},
+		"colleague": {
+			"teamMessage": "Ich bin heute im Termin und schaffe die Antwort nicht mehr. Kannst du die Anfrage übernehmen?"
+		},
+		"supervisor": {
+			"reply": "Das klingt gut so. Frag ruhig nach, was die Person genau wissen möchte. Ich lese mit und melde mich, wenn mir etwas auffällt."
+		},
+		"erstantwort": {
+			"greeting": "Ihre Anfrage ist bei uns eingegangen. Eine Beraterin oder ein Berater meldet sich bei Ihnen."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Guten Tag, danke für Ihre Nachricht. Eine Beratung läuft hier schriftlich und vertraulich ab."
+		},
+		"names": {
+			"agency": "Übungsstelle",
+			"topic": "Übung",
+			"teamRoom": "Team-Besprechung (Übung)",
+			"supervisionRoom": "Supervision (Übung)"
 		}
 	},
 	"registration": {
@@ -3262,6 +3364,7 @@
 			"temporary": {
 				"join": "Beitreten",
 				"joinGroup": "Der Gruppe beitreten",
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registrieren Sie sich mit einem Konto oder fragen Sie nach einem neuen Link.",
 				"toggleOff": "Konto anlegen",
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
@@ -3465,6 +3568,13 @@
 		"accountCreated": {
 			"login": "Ihr Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melden Sie sich mit Ihrem Benutzernamen und Ihrem Passwort an.",
 			"retry": "Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "Die Einladung konnte gerade nicht geladen werden.",
+				"body": "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihr Einladungslink bleibt gültig."
+			},
+			"loading": "Die Einladung wird geladen …"
 		}
 	},
 	"releaseNote": {
@@ -3478,12 +3588,40 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Fallübergabe",
+			"pending": "Eine Kolleg:in möchte diese Beratung an Sie übergeben.",
+			"accept": "Annehmen",
+			"decline": "Ablehnen",
+			"awaitingClientConsent": "Sie haben angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
+			"declined": "Sie haben diese Übergabe abgelehnt.",
+			"denied": "Diese Übergabe wurde abgelehnt.",
+			"clientConsentDeclined": "Die ratsuchende Person hat diese Übergabe abgelehnt.",
+			"noContent": "Diese Anfrage erlaubt Ihnen nicht, das Gespräch zu lesen.",
+			"forbidden": "Sie dürfen diese Übergabeanfrage nicht aufrufen.",
+			"notFound": "Diese Übergabeanfrage besteht nicht mehr.",
+			"generic": "Die Übergabeanfrage konnte nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"open": "Beratung übergeben",
+			"loadForbidden": "Sie dürfen die berechtigten Kolleg:innen nicht laden.",
+			"loadError": "Das Übergabeformular konnte nicht geladen werden.",
+			"submitError": "Die Übergabeanfrage konnte nicht gesendet werden.",
+			"conflict": "Für diese Beratung gibt es bereits ein offenes Übergabeangebot, oder sie hat sich geändert. Prüfen Sie den aktuellen Stand, bevor Sie ein neues Angebot senden.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "Warten auf die ausgewählte Kolleg:in.",
+				"PENDING_CLIENT_CONSENT": "Die Kolleg:in hat angenommen. Warten auf die Zustimmung der ratsuchenden Person.",
+				"GRANTED": "Die Übergabe wurde abgeschlossen.",
+				"RECIPIENT_DECLINED": "Die ausgewählte Kolleg:in hat abgelehnt.",
+				"DENIED": "Die Übergabe wurde abgelehnt.",
+				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt."
+			}
+		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
 		"batch": {
 			"cancel": "Auswahl schließen",
 			"confirm": "Auswahl anfragen",
 			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
-			"result": "{{successful}} Anfrage(n) gesendet, {{failed}} fehlgeschlagen.",
+			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
 			"selectCase": "Fall auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
@@ -3498,10 +3636,30 @@
 			"decline": "Zugriff verweigern",
 			"optOut": {
 				"title": "Datenschutzhinweis zur Fallübergabe",
-				"prompt": "Bitte lesen Sie die Informationen und treffen Sie anschließend Ihre Entscheidung.",
+				"prompt": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
-				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
-				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
+				"revocationCopy": "Der Schalter gilt für diese Anfrage. Sie können widersprechen; eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"switchLabel": "Zugriff für diese Anfrage erlauben"
+			},
+			"info": {
+				"more": "Mehr erfahren",
+				"title": "Einsichtnahme in Ihre Beratung",
+				"noticeTitle": "Unterstützung für Ihre Beratung",
+				"noticeCopy": "Eine weitere Fachkraft Ihrer Beratungsstelle erhält für diese Anfrage Einsicht. Eine vorherige Einwilligung wird bei dieser Einstellung nicht erfragt.",
+				"needTitle": "Wann hilfreich",
+				"needCopy": "Eine weitere Fachkraft kann kurz unterstützen, etwa für einige Stunden. Bei Urlaub oder Krankheit kann jemand aus Ihrer Beratungsstelle übernehmen.",
+				"choiceTitle": "Ihre Einwilligung",
+				"OPT_IN": "Für diese Anfrage ist Ihre Zustimmung nötig. Ohne sie erhält die anfragende Fachkraft keinen Zugriff. Ihre Entscheidung gilt nur für diese Anfrage.",
+				"OPT_OUT": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"NONE": "Für diese Anfrage wird keine Entscheidung erfragt. Die Nachricht informiert Sie über die Einsichtnahme ohne vorherige Einwilligung.",
+				"accessTitle": "Geschützter Zugriff",
+				"accessCopy": "Nur die zuständige Stelle und die konkret berechtigte Fachkraft erhalten Einsicht. Außenstehende und der Plattformbetreiber erhalten keinen Zugang.",
+				"notificationsCopy": "Wenn Ihre Zustimmung gebraucht wird, empfehlen wir E-Mail- oder Browser-Benachrichtigungen. So erfahren Sie rechtzeitig von einer Anfrage und können reagieren.",
+				"notificationsAction": "Benachrichtigungen einrichten",
+				"granted": "Der Zugriff wurde bestätigt.",
+				"closed": "Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.",
+				"takeoverContinues": "Ihr Widerspruch wurde gespeichert. Die bereits abgeschlossene Übernahme bleibt bestehen.",
+				"description": "Für fachliche Rücksprache und Vertretung in Ihrer Beratungsstelle."
 			}
 		},
 		"denied": {
@@ -3582,7 +3740,12 @@
 			},
 			"back": "Zurück",
 			"next": "Weiter",
-			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird.",
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während Ihrer Abwesenheit übernommen. Sie können ihn jetzt zurücknehmen.",
+				"cta": "Fall zurücknehmen",
+				"unavailable": "Dieser Fall kann nicht mehr zurückgenommen werden."
+			}
 		},
 		"accepted": {
 			"title": "Ihre Anfrage wurde von einer Berater:in angenommen.",
@@ -3600,7 +3763,62 @@
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"extend": "Zugriff verlängern"
+		},
+		"standingPreference": {
+			"label": "Vor zusätzlichem Zugriff immer fragen",
+			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
+			"saving": "Wird gespeichert …",
+			"saved": "Einstellung gespeichert.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
+			"loading": "Einstellung wird geladen …"
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Supervision anfragen",
+			"change": "Supervisor:in wechseln",
+			"handover": "Beratung übergeben"
+		},
+		"description": {
+			"add": "Holen Sie eine erfahrene Kolleg:in in diesen Fall.",
+			"change": "Ersetzen Sie die aktuelle Supervision.",
+			"handover": "Bieten Sie diese Beratung einer anderen berechtigten Kolleg:in an."
+		},
+		"currentHeading": "Aktuelle Supervision",
+		"noneYet": "Es ist noch keine Supervision eingetragen.",
+		"personLabel": {
+			"add": "Supervisor:in auswählen",
+			"change": "Neue Supervisor:in auswählen",
+			"handover": "Kolleg:in auswählen"
+		},
+		"reasonLabel": {
+			"add": "Grund für die Supervision",
+			"change": "Grund für den Wechsel",
+			"handover": "Grund für die Übergabe"
+		},
+		"reasonPlaceholder": "Beschreiben Sie kurz den Grund.",
+		"reasonError": "Bitte wählen Sie einen Grund aus.",
+		"reasonEmptyOption": "Grund auswählen …",
+		"explanation": {
+			"add": "Eine Supervisor:in unterstützt Sie in einem getrennten Teambereich.",
+			"change": "Die neue Supervision ersetzt die bisherige.",
+			"handover": "Zuerst entscheidet die ausgewählte Kolleg:in. Falls die Richtlinie es verlangt, wird danach die ratsuchende Person gefragt. Bis alle nötigen Entscheidungen vorliegen, bleiben Sie zuständig."
+		},
+		"handoverPending": "Die Anfrage geht zuerst an die ausgewählte Kolleg:in. Sie wird erst nach allen erforderlichen Entscheidungen wirksam.",
+		"confirm": {
+			"add": "Supervision anfragen",
+			"change": "Wechsel anfragen",
+			"handover": "Übergabe anbieten"
+		},
+		"cancel": "Abbrechen",
+		"close": "Schließen",
+		"emptyOption": "Bitte auswählen …"
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -4034,6 +4252,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Ihre Anfrage kann noch nicht gesendet werden",
+			"text": "Der verschlüsselte Chat für diese Beratungsstelle ist noch nicht eingerichtet. Ihr Text bleibt in diesem Feld erhalten – bitte versuchen Sie es später erneut oder wenden Sie sich direkt an die Beratungsstelle."
+		},
 		"error": {
 			"headline": "Beim Senden der Nachricht ist ein Fehler aufgetreten",
 			"text": "Es ist ein Problem aufgetreten, bitte versuchen Sie es erneut"
@@ -4534,6 +4756,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",
@@ -4661,9 +4898,13 @@
 				"on": "An"
 			},
 			"subtitle": "Kurze Rundgänge zeigen Ihnen, wo Sie was finden.",
-			"title": "Rundgänge automatisch starten"
+			"title": "Einführung automatisch starten"
 		},
-		"title": "Rundgang"
+		"title": "Rundgang",
+		"introduction": {
+			"title": "Einführung",
+			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		}
 	},
 	"banner": {
 		"ie": {
@@ -5095,8 +5336,17 @@
 			"emailHint": "Was Sie hier besprechen, steht nie in dieser E-Mail.",
 			"browser": "Geben Sie mir hier ein Signal",
 			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
-			"both": "Beides, und Passwort jetzt selbst festlegen",
-			"bothHint": "Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen."
+			"enableBrowser": "Browser aktivieren",
+			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
+			"active": "Aktiviert: {{channel}}",
+			"bothSetup": "Beides einrichten",
+			"bothSetupHint": "E-Mail und zusätzlich ein Signal auf diesem Gerät.",
+			"browserUnsupported": "Dieser Browser unterstützt keine Browser-Benachrichtigungen.",
+			"browserSilenced": "Browser-Benachrichtigungen sind in Ihren Benachrichtigungseinstellungen stummgeschaltet.",
+			"channelBoth": "E-Mail und Browser auf diesem Gerät",
+			"channelEmail": "E-Mail",
+			"channelBrowser": "Browser auf diesem Gerät"
 		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {
@@ -5157,7 +5407,12 @@
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
 		},
-		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
+		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar.",
+		"faq": {
+			"title": "Häufige Fragen",
+			"modalityNote": "Wie läuft die Beratung ab?",
+			"dataProtection": "Was passiert mit meinen Daten?"
+		}
 	},
 	"dpaSign": {
 		"print": "Drucken / als PDF speichern",
@@ -5197,11 +5452,11 @@
 				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
 				"recoveryTitle": "Schön, dass Sie wieder da sind",
-				"recoveryCopy": "Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.",
+				"recoveryCopy": "Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf ist sicher verschlüsselt. Mit Ihrem Ersatzschlüssel machen Sie ihn hier wieder lesbar.",
 				"recoveryInstruction": "Geben Sie Ihren Ersatzschlüssel ein, um Ihre Nachrichten hier weiterzulesen.",
 				"keyLabel": "Ersatzschlüssel",
 				"later": "Später",
-				"openVault": "Tresor öffnen",
+				"openVault": "Verlauf wiederherstellen",
 				"restoring": "Wird wiederhergestellt …"
 			},
 			"snackbar": {
@@ -5210,8 +5465,8 @@
 		},
 		"saveReminder": {
 			"title": "Ersatzschlüssel zusätzlich sichern",
-			"pending": "Ihre Anfrage wurde gesendet. Die Schlüsselsicherung wird noch eingerichtet.",
-			"unavailable": "Ihre Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit.",
+			"pending": "Ihre Anfrage wurde gesendet. Die Wiederherstellung mit Ihrem Passwort wird noch eingerichtet.",
+			"unavailable": "Ihre Anfrage wurde gesendet. Die Wiederherstellung mit Ihrem Passwort ist noch nicht bereit.",
 			"show": "Schlüssel anzeigen",
 			"later": "Später",
 			"confirm": "Ich habe den Schlüssel sicher gespeichert",
@@ -5219,17 +5474,18 @@
 			"busy": "Die Anfrage wurde erfolgreich gesendet. Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet."
 		},
 		"passwordRecovery": {
-			"ready": "Wiederherstellung mit dem Login-Passwort ist eingerichtet. Ein zusätzlich gespeicherter Schlüssel bleibt ebenfalls gültig.",
-			"needs-password": "Die Wiederherstellung mit dem Login-Passwort wurde in dieser Sitzung noch nicht bestätigt. Melden Sie sich erneut an oder richten Sie sie mit Ihrem vorhandenen Ersatzschlüssel ein.",
+			"ready": "Die Wiederherstellung mit Ihrem Passwort ist eingerichtet. Ein gespeicherter Ersatzschlüssel bleibt ebenfalls gültig.",
+			"needs-password": "Die Wiederherstellung mit Ihrem Passwort wurde in dieser Sitzung noch nicht bestätigt. Melden Sie sich erneut an oder richten Sie sie mit Ihrem vorhandenen Ersatzschlüssel ein.",
 			"needs-recovery-key": "Ihr bisheriger Verlauf benötigt auf diesem Gerät Ihren Ersatzschlüssel.",
-			"retryable-failure": "Die Schlüsselsicherung konnte nicht abgeschlossen werden. Sie können Ihre Anfrage trotzdem schreiben und die Sicherung in den Sicherheitseinstellungen erneut prüfen.",
+			"needs-sign-in": "Ihr bisheriger Verlauf öffnet sich auf diesem Gerät, sobald Sie sich erneut mit Ihrem Passwort anmelden.",
+			"retryable-failure": "Die Wiederherstellung mit Ihrem Passwort konnte nicht eingerichtet werden. Sie können Ihre Anfrage trotzdem schreiben und die Einrichtung in den Sicherheitseinstellungen erneut prüfen.",
 			"settings": "Sicherheitseinstellungen",
 			"reauthenticate": "Abmelden und erneut anmelden",
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfen Sie das alte Passwort und stellen Sie gegebenenfalls zuerst Ihren Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfen Sie Passwort und gegebenenfalls Einmalcode und versuchen Sie es erneut.",
-			"enrollmentExplanation": "Schützen Sie Ihren vorhandenen Ersatzschlüssel zusätzlich mit Ihrem aktuellen Login-Passwort. Ihr gespeicherter Schlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
-			"loginPassword": "Aktuelles Login-Passwort",
-			"repeatPassword": "Login-Passwort wiederholen",
+			"enrollmentExplanation": "Schützen Sie Ihren vorhandenen Ersatzschlüssel zusätzlich mit Ihrem aktuellen Passwort. Ihr gespeicherter Ersatzschlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
+			"loginPassword": "Aktuelles Passwort",
+			"repeatPassword": "Passwort wiederholen",
 			"otp": "Einmalcode",
 			"enroll": "Passwort bestätigen und Wiederherstellung einrichten",
 			"device-ready": "Dieses Gerät kann die vorhandenen Schlüssel verwenden. Die Passwort-Wiederherstellung wird bei der nächsten Passwort-Anmeldung geprüft.",
@@ -5237,7 +5493,7 @@
 			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
 			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
-			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert.",
+			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Ihr Passwort wurde nicht geändert.",
 			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt."
 		}
 	},
@@ -5300,6 +5556,66 @@
 				"archive": {
 					"title": "Archiv",
 					"intro": "Abgeschlossene Beratungen verschieben Sie wie bisher ins Archiv — es liegt jetzt in diesem Tab."
+				}
+			}
+		},
+		"practiceAccept": {
+			"title": "Übung: Anfrage annehmen",
+			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"navEnquiries": {
+					"title": "Anfragen öffnen",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen finden Sie hier unter „Anfragen“."
+				},
+				"openEnquiry": {
+					"title": "Anfrage öffnen",
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
+				},
+				"openTeam": {
+					"title": "Teambesprechung öffnen",
+					"intro": "Bei Ihnen ist die Teambesprechung aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Teambesprechung öffnen“."
+				},
+				"teamReply": {
+					"title": "Im Team antworten",
+					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird die Teambesprechung geschlossen."
+				},
+				"accept": {
+					"title": "Anfrage annehmen",
+					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für Ihr Team nicht mehr in der Liste."
+				},
+				"firstAnswer": {
+					"title": "Erstantwort und erste Nachricht",
+					"intro": "Die Anfrage gehört jetzt Ihnen. Im Chat sehen Sie die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
+				},
+				"reply": {
+					"title": "Erste Antwort schreiben",
+					"intro": "Schreiben Sie der ratsuchenden Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Gut gemacht: Sie haben eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Übung: Supervision hinzufügen",
+			"summary": "Üben Sie im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"addSupervisor": {
+					"title": "Supervisor:in hinzufügen",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, wählen Sie die Supervisor:in aus, nennen Sie kurz den Grund und bestätigen Sie."
+				},
+				"supervisorReply": {
+					"title": "Antwort der Supervision",
+					"intro": "Ihre Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten sehen nur Sie beide — die ratsuchende Person sieht sie nicht."
+				},
+				"standingAssignment": {
+					"title": "Feste Zuordnung",
+					"intro": "Hat Ihre Administration Ihnen eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür müssen Sie nichts tun."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
 				}
 			}
 		}
@@ -5548,6 +5864,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "Gesprächsnotizen",
+			"privacy": "Privat. Nur für Sie und nur für die Dauer des Gesprächs.",
+			"type": "Art der Notiz",
+			"text": "Notiz",
+			"add": "Notiz hinzufügen",
+			"remove": "Notiz entfernen",
+			"copy": "Alles kopieren",
+			"copied": "Kopiert",
+			"empty": "Noch nichts notiert.",
+			"collapse": "Notizen einklappen",
+			"expand": "Notizen ausklappen",
+			"open": "Gesprächsnotizen",
+			"types": {
+				"frage": "Frage",
+				"anmerkung": "Anmerkung",
+				"aufgabe": "Aufgabe"
+			}
 		}
 	},
 	"form": {
@@ -5611,11 +5946,44 @@
 			"less": "Weniger anzeigen"
 		}
 	},
+	"practice": {
+		"banner": {
+			"title": "Übungsmodus",
+			"progress": "Schritt {{current}} von {{total}}",
+			"note": "Übungsfall, keine echten Daten",
+			"end": "Übung beenden",
+			"restart": "Neu starten",
+			"moveHandle": "Hinweis verschieben (Pfeiltasten)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Eine Anfrage annehmen und eine erste Antwort schreiben.",
+				"supervision": "Eine Supervisor:in auswählen und einer Beratung hinzufügen."
+			},
+			"title": "Übungsbereich",
+			"subtitle": "Üben Sie Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was Sie hier eingeben, wird nicht gespeichert.",
+			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",
+			"badge": "Übung",
+			"phoneHint": "Bitte üben Sie am Computer.",
+			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung.",
+			"action": {
+				"start": "Übung starten",
+				"restart": "Noch einmal üben"
+			}
+		},
+		"error": {
+			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {
 				"title": "Neue Beratung derzeit gesperrt",
 				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"restrictedGroupJoin": {
+				"title": "Beitritt zur Gruppe derzeit nicht möglich",
+				"text": "Der Beitritt zu dieser Gruppe ist derzeit nicht möglich, weil die Beratungsorganisation die aktuelle Auftragsverarbeitungsvereinbarung (AVV) noch bestätigen muss. Bitte wenden Sie sich an Ihre Beratungsstelle."
 			},
 			"unavailable": {
 				"title": "Beratung derzeit nicht prüfbar",

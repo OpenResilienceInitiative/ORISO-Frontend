@@ -265,6 +265,8 @@ export const NotificationsCenter = () => {
 		hasUnreadNotifications,
 		markNotificationAsRead: markServerNotificationAsRead,
 		markAllNotificationsAsRead,
+		isMarkingAllRead = false,
+		isClearingFeed = false,
 		refreshNotificationFeed,
 		loadOlderNotifications,
 		hasOlderNotifications,
@@ -1088,6 +1090,7 @@ export const NotificationsCenter = () => {
 							</button>
 							<MarkAllReadButton
 								hasUnread={hasUnreadActivity}
+								busy={isMarkingAllRead || isClearingFeed}
 								onClick={markAllNotificationsAsRead}
 								label={translate(
 									'notifications.center.markAllRead'
@@ -1370,6 +1373,8 @@ export const NotificationsCenter = () => {
 						{translate('notifications.center.markRead')}
 					</MenuItem>
 					<MenuItem
+						disabled={isMarkingAllRead || isClearingFeed}
+						aria-busy={isMarkingAllRead || isClearingFeed}
 						onClick={() => {
 							markAllNotificationsAsRead();
 							setCardMenuAnchor(null);

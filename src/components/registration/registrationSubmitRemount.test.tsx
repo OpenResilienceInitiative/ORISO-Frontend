@@ -18,6 +18,7 @@ import {
 	TenantContext
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { clearRegistrationSubmitting } from './registrationSubmission';
 import { readAccountCreatedLogin } from './accountCreatedLogin';
 
@@ -26,32 +27,46 @@ import { readAccountCreatedLogin } from './accountCreatedLogin';
  * test settles it, which is the state under test. Hoisted with the `vi.mock`
  * calls below, which run before this file's own imports are evaluated.
  */
-const { pendingRegistration, redirectToApp, redirectToLogin, settle } =
-	vi.hoisted(() => {
-		const settle: {
-			resolve?: () => void;
-			reject?: (error: Error) => void;
-		} = {};
-		return {
-			settle,
-			redirectToApp: vi.fn(),
-			redirectToLogin: vi.fn(),
-			pendingRegistration: vi.fn(
-				(..._args: unknown[]) =>
-					new Promise<void>((resolve, reject) => {
-						settle.resolve = resolve;
-						settle.reject = reject;
-					})
-			)
-		};
-	});
+const {
+	accountExists,
+	pendingRegistration,
+	redirectToApp,
+	redirectToLogin,
+	settle
+} = vi.hoisted(() => {
+	const settle: {
+		resolve?: () => void;
+		reject?: (error: Error) => void;
+	} = {};
+	return {
+		settle,
+		accountExists: vi.fn(async (..._args: unknown[]) => false),
+		redirectToApp: vi.fn(),
+		redirectToLogin: vi.fn(),
+		pendingRegistration: vi.fn(
+			(..._args: unknown[]) =>
+				new Promise<void>((resolve, reject) => {
+					settle.resolve = resolve;
+					settle.reject = reject;
+				})
+		)
+	};
+});
 
 /** Lottie touches a canvas 2d context at module load; jsdom has none. */
 vi.mock('lottie-react', () => ({ default: () => null }));
 
 vi.mock('../../components/stageLayout/StageLayout', () => ({
-	StageLayout: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="stage-layout">{children}</div>
+	StageLayout: ({
+		children,
+		showLoginLink
+	}: {
+		children: React.ReactNode;
+		showLoginLink?: boolean;
+	}) => (
+		<div data-testid="stage-layout" data-show-login={String(showLoginLink)}>
+			{children}
+		</div>
 	)
 }));
 
@@ -68,6 +83,8 @@ vi.mock('../../api', async (importOriginal) => {
 		...actual,
 		apiPostRegistration: (...args: unknown[]) =>
 			pendingRegistration(...args),
+		accountExistsAfterTimeout: (...args: unknown[]) =>
+			accountExists(...args),
 		apiGetAskerSessionList: vi.fn(async () => ({ sessions: [] }))
 	};
 });
@@ -116,8 +133,8 @@ const registrationData = {
 	password: 'Sicher!Genug-2026'
 };
 
-const renderAccountStep = () =>
-	render(
+const renderAccountStep = (urlParams?: Record<string, unknown>) => {
+	const screen = (
 		<AppConfigContext.Provider value={{} as any}>
 			<GlobalComponentContext.Provider
 				value={{ Stage: () => <div /> } as any}
@@ -158,6 +175,16 @@ const renderAccountStep = () =>
 			</GlobalComponentContext.Provider>
 		</AppConfigContext.Provider>
 	);
+	return render(
+		urlParams ? (
+			<UrlParamsContext.Provider value={urlParams as any}>
+				{screen}
+			</UrlParamsContext.Provider>
+		) : (
+			screen
+		)
+	);
+};
 
 const registerButton = () =>
 	document.querySelector('[data-cy="button-register"]') as HTMLElement;
@@ -168,6 +195,7 @@ const form = () => document.querySelector('[data-cy="registration-form"]');
 beforeEach(() => {
 	clearRegistrationSubmitting();
 	pendingRegistration.mockClear();
+	accountExists.mockClear();
 	redirectToApp.mockClear();
 	redirectToLogin.mockClear();
 	settle.reject = undefined;
@@ -317,10 +345,57 @@ describe('registration — a submit that is already in flight', () => {
 		).toEqual({ username: 'blaue-wolke' });
 	});
 
+	it('sends the person to the login when the sign-up timed out but the account exists', async () => {
+		/* A centre with many counsellors makes sign-up slower than the browser
+		   waits, and the server still creates the account after the browser
+		   gave up (Dev, 9 Oct 2026: 52 s). The form would come back with
+		   "User-ID already taken" for a person who already has an account. */
+		accountExists.mockResolvedValueOnce(true);
+		renderAccountStep();
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		await act(async () => {
+			settle.reject?.(new Error('TIMEOUT'));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		await waitFor(() => expect(redirectToLogin).toHaveBeenCalledTimes(1));
+		expect(accountExists).toHaveBeenCalledWith(
+			expect.objectContaining({ message: 'TIMEOUT' }),
+			'blaue-wolke'
+		);
+		expect(
+			form(),
+			'the account exists — the form must not come back'
+		).toBeNull();
+		expect(readAccountCreatedLogin()).toEqual({ username: 'blaue-wolke' });
+	});
+
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {
 		renderAccountStep();
 
 		await waitFor(() => expect(form()).toBeTruthy());
 		expect(handover()).toBeNull();
+	});
+});
+
+describe('registration — the preselected topic while the account is created', () => {
+	const preselected = () => document.querySelector('[data-cy="preselected"]');
+
+	it('is shown with the form and gone once the handover takes over', async () => {
+		renderAccountStep({ topic: { id: 1, name: 'Schulden' } });
+		expect(preselected(), 'shown while the person fills the form').not.toBe(
+			null
+		);
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		expect(
+			preselected(),
+			'the handover is not interrupted by the topic box'
+		).toBeNull();
 	});
 });

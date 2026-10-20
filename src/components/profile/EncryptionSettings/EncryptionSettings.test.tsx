@@ -56,9 +56,9 @@ vi.mock('react-i18next', () => ({
 			'profile.encryption.recover.inputLabel': 'Ersatzschlüssel',
 			'profile.encryption.recover.cta': 'Verlauf wiederherstellen',
 			'profile.encryption.showKey.silentExplainer':
-				'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel.',
+				'Ihr Ersatzschlüssel wurde beim Anmelden automatisch eingerichtet.',
 			'profile.encryption.setup.busy':
-				'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund.'
+				'Ihr Ersatzschlüssel wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund.'
 		};
 		return {
 			t: (key: string) => catalogue[key] ?? key
@@ -105,6 +105,38 @@ const UNAVAILABLE_TEXT =
 
 describe('EncryptionSettingsPanel', () => {
 	afterEach(cleanup);
+
+	it('keeps typed recovery input when its surrounding group rerenders', () => {
+		const client = {} as MatrixClient;
+		const { rerender } = render(
+			<EncryptionSettingsPanel
+				clientOverride={client}
+				initialStatusOverride={outOfSync}
+				showHeading={false}
+			/>
+		);
+		const input = screen.getByRole('textbox', { name: 'Ersatzschlüssel' });
+		fireEvent.change(input, {
+			target: { value: 'unfinished recovery key' }
+		});
+		rerender(
+			<EncryptionSettingsPanel
+				clientOverride={client}
+				initialStatusOverride={outOfSync}
+				showHeading={false}
+			/>
+		);
+		expect(
+			(
+				screen.getByRole('textbox', {
+					name: 'Ersatzschlüssel'
+				}) as HTMLInputElement
+			).value
+		).toBe('unfinished recovery key');
+		expect(
+			screen.queryByRole('heading', { name: 'profile.encryption.title' })
+		).toBeNull();
+	});
 
 	it('uses the shared M3 checkbox for recovery-key confirmation', async () => {
 		render(

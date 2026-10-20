@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -195,6 +196,46 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
+	it('passes the counselling centre’s backdrop, when it set one', async () => {
+		setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).get(
+				'orisoAtmosphere'
+			)
+		).toBe('nebel');
+	});
+
+	it('leaves the backdrop off the URL entirely when no centre set one', async () => {
+		// An empty parameter is not the same as no parameter: the call falls
+		// back to the handoff's default only when it is told nothing at all.
+		setAppConfig({} as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).has(
+				'orisoAtmosphere'
+			)
+		).toBe(false);
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });
@@ -312,7 +353,11 @@ describe('useElementCallWidget', () => {
 		});
 		const api = widgetApiMocks.apiInstances[0];
 
+		// Events fed before capability negotiation are dropped, so callers
+		// wait for this before sending what the widget must see.
+		expect(result.current.ready).toBe(false);
 		act(() => api.emit('ready', new CustomEvent('ready')));
+		expect(result.current.ready).toBe(true);
 		// Must match the `theme=dark` pin in the widget URL — a ready-time
 		// update to any other scheme would flip the call after launch.
 		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
@@ -503,6 +548,67 @@ describe('useElementCallWidget', () => {
 		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
 	});
 
+	it('feeds the widget an identity it may read but not send', async () => {
+		/*
+		 * The live wire of the whole transport.
+		 *
+		 * Identity moved out of room state — which Matrix does not encrypt —
+		 * into an encrypted timeline event. The feed below filtered by the
+		 * set of types the widget may SEND, so with the transport changed and
+		 * this line left alone the event would have been dropped here: every
+		 * test green, the capability granted, and every face in the call
+		 * showing initials. It is now the RECEIVE set, which is wider by
+		 * exactly this event.
+		 */
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+
+		const identityRaw = {
+			type: 'org.oriso.call.identity',
+			content: {
+				kind: 'animal',
+				file: 'fox.svg',
+				bg: '#165E83',
+				ink: '#ffffff'
+			}
+		};
+		// It arrives sealed, as it must: that is the point of the move.
+		let type = 'm.room.encrypted';
+		const listeners = new Set<(event: unknown, error?: Error) => void>();
+		const identityEvent = {
+			getRoomId: () => CALL_ROOM,
+			getType: () => type,
+			getWireType: () => 'm.room.encrypted',
+			getEffectiveEvent: () => identityRaw,
+			on: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.add(listener);
+			},
+			off: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.delete(listener);
+			}
+		};
+
+		act(() => {
+			client.emitTest('Room.timeline', identityEvent, {}, false);
+		});
+		// Nothing is fed while it is still ciphertext.
+		expect(api.feedEvent).not.toHaveBeenCalled();
+
+		act(() => {
+			type = 'org.oriso.call.identity';
+			listeners.forEach((listener) => listener(identityEvent));
+		});
+		expect(api.feedEvent).toHaveBeenCalledWith(identityRaw, CALL_ROOM);
+		expect(api.feedEvent).toHaveBeenCalledTimes(1);
+	});
+
 	it('reports, and does not silently swallow, a call event that never decrypts', async () => {
 		vi.useFakeTimers();
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -597,7 +703,7 @@ describe('useElementCallWidget', () => {
 		// Element Call hanging up on its own side unmounts the iframe, which
 		// calls the ref callback with null. Stopping the widget channel alone
 		// would leave the iframe document — and its capture — alive.
-		act(() => result.current.attachIframe(null));
+		await act(async () => result.current.attachIframe(null));
 		expect(iframe.src).toBe('about:blank');
 
 		// And the same must hold when the surface simply unmounts.
@@ -606,6 +712,120 @@ describe('useElementCallWidget', () => {
 		act(() => result.current.attachIframe(second));
 		unmount();
 		expect(second.src).toBe('about:blank');
+	});
+
+	it('preserves a mounted iframe across React ref callback replacement', async () => {
+		const client = createClient();
+		const firstClose = vi.fn();
+		const nextClose = vi.fn();
+		function Host({
+			onClose,
+			frameKey = 0
+		}: {
+			onClose: () => void;
+			frameKey?: number;
+		}) {
+			const widget = useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true,
+				onClose
+			});
+			return (
+				<>
+					{widget.url && (
+						<iframe
+							key={frameKey}
+							title="Call lifecycle"
+							src={widget.url}
+							ref={widget.attachIframe}
+						/>
+					)}
+					<output>{widget.error?.message}</output>
+				</>
+			);
+		}
+		const view = render(<Host onClose={firstClose} />);
+		await waitFor(() =>
+			expect(view.getByTitle('Call lifecycle')).toBeTruthy()
+		);
+		const iframe = view.getByTitle('Call lifecycle') as HTMLIFrameElement;
+		const source = iframe.src;
+		view.rerender(<Host onClose={nextClose} />);
+		await act(async () => {});
+		expect(iframe.src).toBe(source);
+		expect(view.container.querySelector('output')?.textContent).toBe('');
+		const closeRequest = {
+			action: 'io.element.close',
+			requestId: 'rerender-close',
+			widgetId: 'widget',
+			data: {}
+		};
+		const closeEvent = new CustomEvent('io.element.close', {
+			cancelable: true,
+			detail: closeRequest
+		});
+		const api = widgetApiMocks.apiInstances.at(-1)!;
+		act(() => api.emit('action:io.element.close', closeEvent));
+		expect(nextClose).toHaveBeenCalledTimes(1);
+		expect(firstClose).not.toHaveBeenCalled();
+		expect(api.transport.reply).toHaveBeenCalledWith(closeRequest, {});
+		view.rerender(<Host onClose={nextClose} frameKey={1} />);
+		await act(async () => {});
+		const replacement = view.getByTitle(
+			'Call lifecycle'
+		) as HTMLIFrameElement;
+		expect(replacement).not.toBe(iframe);
+		expect(iframe.src).toBe('about:blank');
+		expect(replacement.src).toBe(source);
+		expect(view.container.querySelector('output')?.textContent).toBe('');
+		view.unmount();
+		await act(async () => {});
+		expect(replacement.src).toBe('about:blank');
+	});
+
+	it('keeps a live call running through the client refresh that blanks its URL', async () => {
+		/*
+		 * A token refresh hands this hook a new `client`, and the preparation
+		 * effect answers by setting `url` to null while it rebuilds. React
+		 * sees the ref callback's identity change, detaches with null and
+		 * re-attaches the SAME node — and the re-attachment happens while
+		 * `url` is still null.
+		 *
+		 * The re-attachment used to return before claiming the node, so the
+		 * microtask that decides whether an iframe has really gone found
+		 * nothing attached and navigated a RUNNING call to `about:blank`. The
+		 * rebuilt URL is byte-identical for the same account, so nothing
+		 * navigated it back.
+		 */
+		const client = createClient();
+		const { result, rerender } = renderHook(
+			({ c }: { c: ReturnType<typeof createClient> }) =>
+				useElementCallWidget(c, { roomId: CALL_ROOM, isVideo: true }),
+			{ initialProps: { c: client } }
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const source = result.current.url!;
+
+		const iframe = document.createElement('iframe');
+		iframe.src = source;
+		act(() => result.current.attachIframe(iframe));
+		const detach = result.current.attachIframe;
+
+		// The refresh: same account, new client object.
+		rerender({ c: createClient() });
+		expect(result.current.url).toBeNull();
+
+		// What React does in that one commit.
+		act(() => detach(null));
+		act(() => result.current.attachIframe(iframe));
+		await act(async () => {});
+
+		expect(iframe.src).toBe(source);
+
+		// And the rebuilt URL still finds a live iframe to talk to.
+		await waitFor(() => expect(result.current.url).toBe(source));
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(source);
 	});
 
 	it('keeps a live call running when the same iframe is re-attached', async () => {

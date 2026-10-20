@@ -64,6 +64,8 @@ interface RegistrationContextInterface {
 	hasConsultantError?: boolean;
 	hasAgencyError?: boolean;
 	hasTopicError?: boolean;
+	hasRegistrationDataError?: boolean;
+	retryRegistrationData?: () => void;
 }
 
 export const registrationSessionStorageKey = 'registrationData';
@@ -91,6 +93,15 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	const [registrationConsultingType, setRegistrationConsultingType] =
 		useState<ConsultingTypeInterface | null>(null);
 	const previousAgencyIdRef = useRef<number | undefined>(undefined);
+	const [consultingTypeFailed, setConsultingTypeFailed] =
+		useState<boolean>(false);
+	const [inviteTopicFailed, setInviteTopicFailed] = useState<boolean>(false);
+	const [loadAttempt, setLoadAttempt] = useState<number>(0);
+	const retryRegistrationData = useCallback(() => {
+		setConsultingTypeFailed(false);
+		setInviteTopicFailed(false);
+		setLoadAttempt((attempt) => attempt + 1);
+	}, []);
 
 	const preselectedTopicId = getUrlParameter('tid');
 	const preselectedAgencyId = getUrlParameter('aid');
@@ -156,21 +167,27 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 
 		if (!consultingTypeId) {
 			setRegistrationConsultingType(null);
+			setConsultingTypeFailed(false);
 			return;
 		}
 
 		let cancelled = false;
 
-		apiGetConsultingType({ consultingTypeId }).then((consultingType) => {
-			if (!cancelled) {
-				setRegistrationConsultingType(consultingType);
-			}
-		});
+		// An invite link waits on this value; a silent failure left it blank.
+		apiGetConsultingType({ consultingTypeId })
+			.then((consultingType) => {
+				if (cancelled) return;
+				setRegistrationConsultingType(consultingType ?? null);
+				setConsultingTypeFailed(!consultingType);
+			})
+			.catch(() => {
+				if (!cancelled) setConsultingTypeFailed(true);
+			});
 
 		return () => {
 			cancelled = true;
 		};
-	}, [registrationData?.agency?.consultingType]);
+	}, [registrationData?.agency?.consultingType, loadAttempt]);
 
 	useEffect(() => {
 		setAvailableSteps(
@@ -466,11 +483,15 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 
 		apiGetTopicById(topicId)
 			.then((mainTopic) => {
-				if (!cancelled && mainTopic) {
+				if (cancelled) return;
+				if (mainTopic) {
 					updateRegistrationData({ mainTopic });
 				}
+				setInviteTopicFailed(!mainTopic);
 			})
-			.catch(() => undefined);
+			.catch(() => {
+				if (!cancelled) setInviteTopicFailed(true);
+			});
 
 		return () => {
 			cancelled = true;
@@ -479,7 +500,8 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		inviteGroupChatId,
 		preselectedAgency,
 		registrationData?.mainTopic?.id,
-		updateRegistrationData
+		updateRegistrationData,
+		loadAttempt
 	]);
 
 	const context = useMemo(
@@ -492,9 +514,14 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			availableSteps,
 			hasConsultantError,
 			hasAgencyError,
-			hasTopicError
+			hasTopicError,
+			hasRegistrationDataError: consultingTypeFailed || inviteTopicFailed,
+			retryRegistrationData
 		}),
 		[
+			consultingTypeFailed,
+			inviteTopicFailed,
+			retryRegistrationData,
 			availableSteps,
 			disabledNextButton,
 			hasAgencyError,

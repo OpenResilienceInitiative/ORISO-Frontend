@@ -259,15 +259,20 @@ export const CircleSettingsView = ({
 				// refresh that did not return the Series has no link to share,
 				// so that case also leaves as before.
 				holdAfterSuccess: ({ seriesId, inviteToken }) => {
-					if (isEditMode || seriesId == null) {
+					const link =
+						!isEditMode && seriesId != null
+							? currentHostGroupChatInviteLink(
+									seriesId,
+									selectedAgency,
+									inviteToken
+								)
+							: null;
+					// No token, no working link (UserService#1248): leave as before.
+					if (!link) {
 						return false;
 					}
 					setCreated({
-						link: currentHostGroupChatInviteLink(
-							seriesId,
-							selectedAgency,
-							inviteToken
-						),
+						link,
 						details: {
 							topic: topic.trim(),
 							startDate: seriesFields.startDate,

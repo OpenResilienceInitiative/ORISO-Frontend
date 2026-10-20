@@ -13,6 +13,7 @@ import {
 	restoreAudienceSelection,
 	shouldShowAudienceSelector,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceOption
 } from './audienceOptions';
@@ -571,4 +572,19 @@ describe('unmatchedMemberKind', () => {
 		expect(unmatchedMemberKind(true, 'error')).toBe('person');
 		expect(unmatchedMemberKind(false, 'ready')).toBe('person');
 	});
+});
+
+describe('audienceSelectionStorageKeyFor', () => {
+	it('keys the saved selection by the session id', () => {
+		expect(audienceSelectionStorageKeyFor(4711)).toBe(
+			'oriso.audienceSelection.4711'
+		);
+	});
+
+	it.each([undefined, 0, -1, -2])(
+		'stores nothing for the session id %s (none, or a practice case)',
+		(sessionId) => {
+			expect(audienceSelectionStorageKeyFor(sessionId)).toBe('');
+		}
+	);
 });

@@ -19,6 +19,7 @@
  * away because Element Call acquires its own.
  */
 import { stopMediaStreamTracks } from '../../utils/callMediaStreamCleanup';
+import { isPracticeMode } from '../../practice';
 
 export interface StartRoomCallOptions {
 	/** Matrix room the call belongs to (client room, group room or side room). */
@@ -76,6 +77,10 @@ export const startRoomCall = async ({
 	confirm = (message: string) => window.confirm(message),
 	getCallManager = lazyCallManager
 }: StartRoomCallOptions): Promise<void> => {
+	// Practice has no calls; the buttons are hidden, this is the backstop.
+	if (isPracticeMode()) {
+		return;
+	}
 	try {
 		if (!roomId) {
 			notify('Cannot start call: No Matrix room found for this session');

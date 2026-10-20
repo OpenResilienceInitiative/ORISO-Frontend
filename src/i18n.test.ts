@@ -41,6 +41,14 @@ const driftBudgets = {
 
 const locales = { en, fr, ru, ti, tr } as const;
 const fullCatalogues = { de, en, fr, ru, ti, tr } as const;
+
+it.each(Object.entries({ de, 'de@informal': deInformal, ...locales }))(
+	'%s explains the supervision practice window-width requirement',
+	(_locale, catalogue) => {
+		expect(catalogue.practice.cards.windowHint).toEqual(expect.any(String));
+		expect(catalogue.practice.cards.windowHint.trim()).not.toBe('');
+	}
+);
 const passwordRecoveryStatuses = [
 	'pending',
 	'device-ready',

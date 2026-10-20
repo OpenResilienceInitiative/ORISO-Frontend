@@ -94,10 +94,43 @@ const desktop1440 = { viewport: { value: 'desktop1440' } };
 const desktop1280 = { viewport: { value: 'desktop1280' } };
 const phone390 = { viewport: { value: 'phone390' } };
 
+const noGlobalAvatarChooser = async (canvasElement: HTMLElement) => {
+	await expect(
+		canvasElement.querySelector(
+			'.profile__header [data-testid="profile-avatar-choice"]'
+		)
+	).toBeNull();
+	await expect(canvasElement.querySelector('.avatarPicker--row')).toBeNull();
+};
+
+const noSettingsAvatarChooser = async (canvasElement: HTMLElement) => {
+	await noGlobalAvatarChooser(canvasElement);
+	await expect(
+		canvasElement.querySelector('[data-testid="profile-avatar-choice"]')
+	).toBeNull();
+};
+
+const avatarInGeneralCard = async (
+	canvasElement: HTMLElement,
+	title: string
+) => {
+	await noGlobalAvatarChooser(canvasElement);
+	const editor = await within(canvasElement).findByTestId(
+		'profile-avatar-choice'
+	);
+	const card = editor.closest<HTMLElement>('[data-testid="profile-card"]');
+	await expect(card).not.toBeNull();
+	if (!card) throw new Error('Avatar editor must use its existing data card');
+	await expect(
+		within(card).getByRole('heading', { name: title })
+	).toBeVisible();
+};
+
 export const AskerDesktop1440: Story = {
 	decorators: [withStage(asker)],
 	globals: desktop1440,
 	play: async ({ canvasElement }) => {
+		await noSettingsAvatarChooser(canvasElement);
 		const cards =
 			await within(canvasElement).findAllByTestId('profile-card');
 		await expect(cards.length).toBeGreaterThanOrEqual(4);
@@ -106,7 +139,8 @@ export const AskerDesktop1440: Story = {
 
 export const ConsultantDesktop1440: Story = {
 	decorators: [withStage(consultant)],
-	globals: desktop1440
+	globals: desktop1440,
+	play: ({ canvasElement }) => noSettingsAvatarChooser(canvasElement)
 };
 
 export const ConsultantDesktop1280: Story = {
@@ -120,20 +154,24 @@ export const AskerMobile390Security: Story = {
 	globals: phone390,
 	parameters: {
 		router: { initialPath: '/profile/einstellungen/sicherheit' }
-	}
+	},
+	play: ({ canvasElement }) => noSettingsAvatarChooser(canvasElement)
 };
 
 /** #1540: the other tabs share the card layout. */
 export const ConsultantGeneral1440: Story = {
 	decorators: [withStage(consultant)],
 	globals: desktop1440,
-	parameters: { router: { initialPath: '/profile/allgemeines' } }
+	parameters: { router: { initialPath: '/profile/allgemeines' } },
+	play: ({ canvasElement }) =>
+		avatarInGeneralCard(canvasElement, 'Kontaktdaten')
 };
 
 export const AskerGeneral1440: Story = {
 	decorators: [withStage(asker)],
 	globals: desktop1440,
-	parameters: { router: { initialPath: '/profile/allgemeines' } }
+	parameters: { router: { initialPath: '/profile/allgemeines' } },
+	play: ({ canvasElement }) => avatarInGeneralCard(canvasElement, 'Über mich')
 };
 
 export const ConsultantActivities1440: Story = {

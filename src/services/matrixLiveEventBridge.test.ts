@@ -78,6 +78,9 @@ const createFakeMatrixClient = (userId = MY_USER_ID) => {
 		removeAllListeners: (event: string) => {
 			listeners.delete(event);
 		},
+		removeListener: (event: string, listener: Listener) => {
+			listeners.get(event)?.delete(listener);
+		},
 		getUserId: () => userId,
 		listenerCount: (event: string) => listeners.get(event)?.size || 0,
 		emit: (event: string, ...args: any[]) => {
@@ -538,7 +541,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			false
 		);
 		expect(endCallIfMatching).toHaveBeenCalledTimes(1);
-		expect(endCallIfMatching).toHaveBeenCalledWith('c');
+		expect(endCallIfMatching).toHaveBeenCalledWith('c', room.roomId);
 		expect(endCall).not.toHaveBeenCalled();
 	});
 });

@@ -89,12 +89,14 @@ export function MessageContextShell({
 	children,
 	compact = false,
 	activeSession = mockActiveSession1on1(),
-	userData = mockUserData()
+	userData = mockUserData(),
+	avatarMembers = []
 }: {
 	children: React.ReactNode;
 	compact?: boolean;
 	activeSession?: ExtendedSessionInterface;
 	userData?: UserDataInterface;
+	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
 }) {
 	return (
 		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
@@ -110,6 +112,7 @@ export function MessageContextShell({
 						<ActiveSessionContext.Provider
 							value={{
 								activeSession,
+								avatarMembers,
 								reloadActiveSession: () => {},
 								readActiveSession: () => {}
 							}}

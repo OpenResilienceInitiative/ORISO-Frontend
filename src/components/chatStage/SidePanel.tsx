@@ -32,6 +32,8 @@ export interface SidePanelProps {
 	'label': string;
 	'className'?: string;
 	'data-cy'?: string;
+	/** Semantic product-tour anchor, rendered as `data-tour-target`. */
+	'data-tour-target'?: string;
 }
 
 export const SidePanel = ({
@@ -44,7 +46,8 @@ export const SidePanel = ({
 	variant = 'inside',
 	label,
 	className,
-	'data-cy': dataCy = 'side-panel'
+	'data-cy': dataCy = 'side-panel',
+	'data-tour-target': tourTarget
 }: SidePanelProps) => {
 	const rootRef = useRef<HTMLElement | null>(null);
 	const timelineRef = useRef<HTMLDivElement | null>(null);
@@ -98,6 +101,7 @@ export const SidePanel = ({
 			className={classes}
 			aria-label={label}
 			data-cy={dataCy}
+			data-tour-target={tourTarget}
 			tabIndex={-1}
 		>
 			{header}

@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
+import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { NotificationSettingsPanel } from './NotificationSettings';
 import { EmailNotification } from './EmailNotifications';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import type { AppConfigInterface } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
+
+vi.mock('./SecurityPrivacySettings', () => ({
+	SecurityPrivacySettings: () => null
+}));
 
 vi.mock('../../globalState', () => ({
 	hasUserAuthority: () => true,
@@ -70,4 +75,20 @@ describe('Profile settings notification access', () => {
 			}
 		}
 	);
+});
+
+it('retains the security route with one full-width stable composer', () => {
+	const groups = profileRoutesSettings(['de'], {} as AppConfigInterface);
+	const security = groups.find(
+		(group) => isTabGroup(group) && group.url === '/sicherheit'
+	);
+	expect(isTabGroup(security) && security.elements).toEqual([
+		{
+			component: SecurityPrivacySettings,
+			boxed: false,
+			fullWidth: true,
+			order: 1
+		}
+	]);
+	expect(groups.every(isTabGroup)).toBe(true);
 });

@@ -775,7 +775,8 @@
 					"title": "Link copied"
 				},
 				"text": "Copy invitation link",
-				"title": "Copy invitation link to clipboard"
+				"title": "Copy invitation link to clipboard",
+				"unavailable": "The invitation link for this group is not available yet."
 			}
 		},
 		"create": {
@@ -943,6 +944,7 @@
 		},
 		"loadError": {
 			"consultants": "The colleagues could not be loaded.",
+			"info": "The chat info could not be loaded.",
 			"retry": "Try again",
 			"topics": "The topics could not be loaded."
 		},
@@ -958,6 +960,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Agency",
+				"agencyLine": "Agency: {{name}}",
 				"createDate": "Creation date",
 				"creator": "Creator",
 				"duration": "Duration",
@@ -1193,7 +1196,9 @@
 			"openGroup": "Open group",
 			"declinedHeadline": "It did not work out this time.",
 			"declinedBody": "The moderators did not accept your request. If you have questions, contact the person who sent you the link.",
-			"linkInvalid": "This invite link is no longer valid. Please ask the moderators for a new link."
+			"linkInvalid": "This invite link is no longer valid. Please ask the moderators for a new link.",
+			"admittingHeadline": "Your request is approved.",
+			"admittingBody": "Group access is still being completed. Keep this page open."
 		},
 		"accessUnavailable": {
 			"headline": "This group cannot be opened right now.",
@@ -1231,7 +1236,9 @@
 				"coModeratorOwnerOnly": "Only the group lead can grant co-moderation.",
 				"coModeratorSameTenant": "Co-moderation is reserved for professionals of your own organisation.",
 				"privacy": "Until you decide, {{name}} sees nothing of this group."
-			}
+			},
+			"admissionQueued": "{{name}}'s admission is approved. Group access still needs to be confirmed.",
+			"coModerationQueued": "{{name}}'s co-moderation is approved. Group access still needs to be confirmed."
 		},
 		"joinHandover": {
 			"badge": "Group",
@@ -1248,6 +1255,7 @@
 		"consent": {
 			"headline": "Before you write",
 			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group.",
+			"descriptionNamed": "This group is run by {{agency}}. Please agree to its privacy policy before you write in the group.",
 			"reject": "Decline",
 			"accept": "Agree",
 			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
@@ -1714,6 +1722,7 @@
 					}
 				},
 				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
+				"setupIncomplete": "Your account is not fully set up yet. Please use the link in your invitation email, or reset your password via “Forgot password?” to finish the setup.",
 				"unavailable": "Signing in is not possible right now. Please try again in a few minutes.",
 				"email": {
 					"otp": {
@@ -1725,7 +1734,15 @@
 					"text": "Username or password are not correct. Please try again."
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here.",
-				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again.",
+				"tooManyRequestsWaitSecond": "Too many attempts. Please wait about a second and try again.",
+				"tooManyRequestsWaitSeconds": "Too many attempts. Please wait about {{seconds}} seconds and try again.",
+				"tooManyRequestsWaitMinute": "Too many attempts. Please wait about a minute and try again.",
+				"tooManyRequestsWaitMinutes": "Too many attempts. Please wait about {{minutes}} minutes and try again.",
+				"tooManyRequestsWaitHour": "Too many attempts. Please wait about an hour and try again.",
+				"tooManyRequestsWaitHours": "Too many attempts. Please wait about {{hours}} hours and try again.",
+				"tooManyRequestsWaitDay": "Too many attempts. Please wait about a day and try again.",
+				"tooManyRequestsWaitDays": "Too many attempts. Please wait about {{days}} days and try again."
 			}
 		},
 		"mobile": {
@@ -1920,6 +1937,27 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			},
+			"state": {
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"description": {
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			},
+			"startedBy": "Called by {{name}}."
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
@@ -2136,6 +2174,10 @@
 				"title": "Case handover declined",
 				"text": "Client consent was declined. Content visibility remains locked."
 			},
+			"caseHandoverOfferReceived": {
+				"title": "Case handover offer",
+				"text": "A colleague wants to hand this consultation over to you. Review the request before opening the conversation."
+			},
 			"callStarted": {
 				"title": "Call ongoing",
 				"text": "A call is ongoing. Join to participate."
@@ -2221,6 +2263,9 @@
 			"title": "Notifications",
 			"subtitle": "Recent activities and updates from your chats.",
 			"markAllRead": "Mark all as read",
+			"markReadFailed": "The notification could not be marked as read. Please try again.",
+			"markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+			"clearFailed": "Activity could not be cleared. Please try again.",
 			"clearAll": "Clear all",
 			"empty": "No notifications yet.",
 			"emptyDetail": "Select a notification to see the details.",
@@ -2298,6 +2343,25 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Sign-in & account",
+				"description": "Manage your password and keep your sign-in secure."
+			},
+			"recovery": {
+				"title": "Recovering old messages",
+				"description": "Keep your recovery key safe so you can open old messages on a new device."
+			},
+			"privacy": {
+				"title": "Privacy",
+				"description": "Manage your personal information and your account."
+			},
+			"displayNameDescription": "People seeking advice see this name during counselling."
+		},
+		"avatar": {
+			"label": "Your picture",
+			"default": "Default"
+		},
 		"appLanguage": {
 			"info": "Set the language of the application here.",
 			"title": "Language"
@@ -2472,6 +2536,10 @@
 					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
 					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
 					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
+				},
+				"dpaRestricted": {
+					"title": "Advice seekers cannot start a live chat with you",
+					"text": "Your provider has not confirmed the current data processing agreement. Until it does, new advice seekers cannot start a live chat or an enquiry. Counselling that has already begun continues."
 				}
 			},
 			"masterKey": {
@@ -2681,6 +2749,10 @@
 					"appointment": {
 						"title": "Appointments",
 						"description": "An appointment was confirmed, moved or cancelled — and the reminder before it."
+					},
+					"consentRequest": {
+						"title": "Access and handover requests",
+						"description": "Receive an email when your consent to access or handover is requested."
 					}
 				},
 				"consultant": {
@@ -2837,13 +2909,13 @@
 			"loading": "Loading …",
 			"unavailable": "Encryption settings are unavailable right now. Please reload the page.",
 			"setup": {
-				"busy": "Your vault is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
+				"busy": "Your recovery key is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
 				"error": "Setup failed. Please try again.",
 				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
 				"cta": "Set up recovery key"
 			},
 			"showKey": {
-				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
+				"silentExplainer": "Your recovery key was set up automatically when you signed in. Save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
 				"confirmLabel": "I have saved the key securely.",
@@ -2851,13 +2923,14 @@
 				"done": "Done"
 			},
 			"status": {
-				"ok": "✓ Key backup is active. Your history stays readable on new devices."
+				"notSetUp": "Your recovery key is not set up yet.",
+				"ok": "✓ Your recovery key is set up. Your history stays readable on new devices."
 			},
 			"changeKey": {
 				"cta": "Change recovery key"
 			},
 			"outOfSync": {
-				"warning": "Key backup is not set up on this device. Enter your recovery key so your history becomes readable here."
+				"warning": "Your recovery key is still missing on this device. Enter it so your history becomes readable here."
 			},
 			"recover": {
 				"inputLabel": "Recovery key",
@@ -2902,6 +2975,35 @@
 				"headline": "Your personal QR code",
 				"info": "If you share your QR code with someone, they can scan it with their phone camera to contact you directly. Alternatively, you can download the code."
 			}
+		}
+	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (practice)",
+			"colleague": "Alex (practice)",
+			"supervisor": "Robin (practice)"
+		},
+		"asker": {
+			"firstMessage": "Hello, I have a general question about your service. How does counselling work with you, and how quickly can I expect an answer? Thank you.",
+			"reply": "Thank you for your reply. That helps me. I’ll get in touch if I have any more questions."
+		},
+		"colleague": {
+			"teamMessage": "I’m in an appointment today and won’t be able to reply in time. Could you take over the request?"
+		},
+		"supervisor": {
+			"reply": "That sounds good to me. Do ask what exactly the person wants to know. I’m reading along and will get in touch if anything stands out."
+		},
+		"erstantwort": {
+			"greeting": "Your request has reached us. A counsellor will get back to you."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Hello, thank you for your message. Counselling here is written and confidential."
+		},
+		"names": {
+			"agency": "Practice agency",
+			"topic": "Practice",
+			"teamRoom": "Team discussion (practice)",
+			"supervisionRoom": "Supervision (practice)"
 		}
 	},
 	"registration": {
@@ -3290,6 +3392,7 @@
 			"temporary": {
 				"join": "Join",
 				"joinGroup": "Join the group",
+				"incompleteLink": "This invite link is incomplete, so joining without an account is not available. Please register with an account or ask for a new link.",
 				"toggleOff": "Create an account",
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",
@@ -3411,6 +3514,13 @@
 		"accountCreated": {
 			"login": "Your account has been created, but signing you in automatically did not work. Please log in with your username and password.",
 			"retry": "Your access has been created, but signing you in did not work. Please try again."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "The invitation could not be loaded right now.",
+				"body": "Please check your connection and try again. Your invitation link stays valid."
+			},
+			"loading": "Loading the invitation …"
 		}
 	},
 	"releaseNote": {
@@ -3424,12 +3534,40 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Case handover",
+			"pending": "A colleague wants to hand this consultation over to you.",
+			"accept": "Accept",
+			"decline": "Decline",
+			"awaitingClientConsent": "You accepted. Access stays locked until the client has consented.",
+			"declined": "You declined this handover.",
+			"denied": "This handover was denied.",
+			"clientConsentDeclined": "The client declined this handover.",
+			"noContent": "This request does not give you permission to view the conversation.",
+			"forbidden": "You are not authorised to view this handover request.",
+			"notFound": "This handover request no longer exists.",
+			"generic": "The handover request could not be loaded.",
+			"retry": "Try again",
+			"open": "Hand over consultation",
+			"loadForbidden": "You are not authorised to load eligible colleagues.",
+			"loadError": "The handover form could not be loaded.",
+			"submitError": "The handover request could not be sent.",
+			"conflict": "This consultation already has an open handover offer, or it has changed. Check the current state before sending a new offer.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "Waiting for the selected colleague.",
+				"PENDING_CLIENT_CONSENT": "The colleague accepted. Waiting for client consent.",
+				"GRANTED": "The handover has been completed.",
+				"RECIPIENT_DECLINED": "The selected colleague declined.",
+				"DENIED": "The handover was denied.",
+				"CLIENT_CONSENT_DECLINED": "The client declined the handover."
+			}
+		},
 		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
 		"batch": {
 			"cancel": "Close selection",
 			"confirm": "Request selected",
 			"required": "Select at least one case, one reason, and an explanation.",
-			"result": "{{successful}} request(s) sent, {{failed}} failed.",
+			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
 			"selectCase": "Select case",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
@@ -3444,10 +3582,30 @@
 			"decline": "Decline access",
 			"optOut": {
 				"title": "Privacy notice for case handover",
-				"prompt": "Please read the information and then make your decision.",
+				"prompt": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
 				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
-				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
-				"switchLabel": "I consent to data processing for this case handover"
+				"revocationCopy": "The switch applies to this request. You can object; this does not undo a takeover that has already been completed.",
+				"switchLabel": "Allow access for this request"
+			},
+			"info": {
+				"more": "Learn more",
+				"title": "Access to your counselling conversation",
+				"noticeTitle": "Support for your consultation",
+				"noticeCopy": "Another professional at your counselling centre receives access for this request. This policy does not ask for prior consent.",
+				"needTitle": "When useful",
+				"needCopy": "Another professional can help for a few hours. During holidays or illness, someone from your counselling service can take over.",
+				"choiceTitle": "Your consent",
+				"OPT_IN": "This request needs your consent. Without it, the requesting professional has no access. Your decision applies only to this request.",
+				"OPT_OUT": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
+				"NONE": "No decision is requested for this request. This message informs you about access without prior consent.",
+				"accessTitle": "Protected access",
+				"accessCopy": "Only the responsible service and the specifically authorised professional get access. Outsiders and the platform operator do not.",
+				"notificationsCopy": "When your approval is needed, we recommend email or browser notifications so you can respond to a request in time.",
+				"notificationsAction": "Set up notifications",
+				"granted": "Access has been confirmed.",
+				"closed": "This request is complete. No further decision is pending.",
+				"takeoverContinues": "Your objection was recorded. The completed takeover remains in place.",
+				"description": "For professional consultation and cover within your counselling service."
 			}
 		},
 		"denied": {
@@ -3528,7 +3686,12 @@
 			},
 			"back": "Back",
 			"next": "Next",
-			"consentPending": "Client consent is required before access is activated."
+			"consentPending": "Client consent is required before access is activated.",
+			"reclaim": {
+				"copy": "A colleague took over this case while you were away. You can take it back now.",
+				"cta": "Take the case back",
+				"unavailable": "This case can no longer be taken back."
+			}
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",
@@ -3546,7 +3709,62 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"readOnly": {
+			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
+			"extend": "Extend access"
+		},
+		"standingPreference": {
+			"label": "Always ask before additional access",
+			"description": "Applies to future requests in this conversation. Current requests and access already granted remain unchanged.",
+			"baselineDescription": "When off, your counselling agency’s settings apply. Any consent required by the agency is still required.",
+			"saving": "Saving …",
+			"saved": "Setting saved.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"loading": "Loading setting …"
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Request supervision",
+			"change": "Change supervisor",
+			"handover": "Hand over consultation"
+		},
+		"description": {
+			"add": "Invite an experienced colleague to this case.",
+			"change": "Replace the current supervisor.",
+			"handover": "Offer this consultation to another eligible colleague."
+		},
+		"currentHeading": "Current supervision",
+		"noneYet": "No supervisor has been assigned.",
+		"personLabel": {
+			"add": "Select supervisor",
+			"change": "Select new supervisor",
+			"handover": "Select colleague"
+		},
+		"reasonLabel": {
+			"add": "Reason for supervision",
+			"change": "Reason for change",
+			"handover": "Reason for handover"
+		},
+		"reasonPlaceholder": "Briefly describe the reason.",
+		"reasonError": "Select a reason.",
+		"reasonEmptyOption": "Select reason …",
+		"explanation": {
+			"add": "A supervisor can support you in a separate team space.",
+			"change": "The new supervisor replaces the previous one.",
+			"handover": "The selected colleague decides first. If policy requires it, the client is asked afterwards. Until all required decisions are complete, you remain responsible."
+		},
+		"handoverPending": "The request is sent to the selected colleague first. It takes effect only after every required decision.",
+		"confirm": {
+			"add": "Request supervision",
+			"change": "Request change",
+			"handover": "Send handover offer"
+		},
+		"cancel": "Cancel",
+		"close": "Close",
+		"emptyOption": "Please select …"
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -3983,6 +4201,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Your request cannot be sent yet",
+			"text": "The encrypted chat for this counselling centre has not been set up yet. Your text stays in this field – please try again later or contact the counselling centre directly."
+		},
 		"error": {
 			"headline": "An error occurred while sending the message",
 			"text": "A problem has occurred, please try again"
@@ -4482,6 +4704,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",
@@ -4609,9 +4846,13 @@
 				"on": "On"
 			},
 			"subtitle": "Short tours show you where to find things.",
-			"title": "Start tours automatically"
+			"title": "Start the introduction automatically"
 		},
-		"title": "Tour"
+		"title": "Tour",
+		"introduction": {
+			"title": "Introduction",
+			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		}
 	},
 	"anonymousChat": {
 		"headline": "Anonymous Consultation",
@@ -5020,8 +5261,17 @@
 			"emailHint": "What you discuss here never appears in that email.",
 			"browser": "Give me a signal here",
 			"browserHint": "No address needed — but it only works on this device.",
-			"both": "Both, and let me set a password now",
-			"bothHint": "Recommended. That way you can get back in if you forget something."
+			"enableBrowser": "Enable browser notifications",
+			"browserDenied": "Browser notifications are not enabled. Please check your browser permission.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"active": "Enabled: {{channel}}",
+			"bothSetup": "Set up both",
+			"bothSetupHint": "Email and an additional signal on this device.",
+			"browserUnsupported": "This browser does not support browser notifications.",
+			"browserSilenced": "Browser notifications are silenced in your notification settings.",
+			"channelBoth": "Email and browser on this device",
+			"channelEmail": "Email",
+			"channelBrowser": "Browser on this device"
 		},
 		"subtitle": "Your first steps",
 		"greeting": {
@@ -5082,7 +5332,12 @@
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
 		},
-		"unavailableInRoom": "First response – not available in this room."
+		"unavailableInRoom": "First response – not available in this room.",
+		"faq": {
+			"title": "Frequently asked questions",
+			"modalityNote": "How does counselling work?",
+			"dataProtection": "What happens to my data?"
+		}
 	},
 	"dpaSign": {
 		"print": "Print / save as PDF",
@@ -5122,11 +5377,11 @@
 				"invalidKey": "This recovery key is invalid. Please check your entry.",
 				"error": "Recovery failed. Please try again.",
 				"recoveryTitle": "Welcome back",
-				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely encrypted. Your recovery key makes it readable here again.",
 				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
 				"keyLabel": "Recovery key",
 				"later": "Later",
-				"openVault": "Open vault",
+				"openVault": "Restore history",
 				"restoring": "Restoring…"
 			},
 			"snackbar": {
@@ -5135,8 +5390,8 @@
 		},
 		"saveReminder": {
 			"title": "Save an additional recovery key",
-			"pending": "Your enquiry was sent. Key backup is still being set up.",
-			"unavailable": "Your enquiry was sent. The additional key backup is not ready yet.",
+			"pending": "Your enquiry was sent. Recovery with your password is still being set up.",
+			"unavailable": "Your enquiry was sent. Recovery with your password is not ready yet.",
 			"show": "Show key",
 			"later": "Later",
 			"confirm": "I have stored the key safely",
@@ -5144,17 +5399,18 @@
 			"busy": "Your enquiry was sent successfully. Recovery is currently being processed in another tab or in the background."
 		},
 		"passwordRecovery": {
-			"ready": "Recovery using your login password is set up. An additional saved recovery key remains valid.",
-			"needs-password": "Password recovery has not been verified in this session. Sign in again or set it up with your existing recovery key.",
+			"ready": "Recovery with your password is set up. A saved recovery key also stays valid.",
+			"needs-password": "Recovery with your password has not been confirmed in this session. Sign in again or set it up with your existing recovery key.",
 			"needs-recovery-key": "Your previous history needs your recovery key on this device.",
-			"retryable-failure": "Key backup could not be completed. You can still write your enquiry and check backup again in security settings.",
+			"needs-sign-in": "Your previous history opens on this device as soon as you sign in again with your password.",
+			"retryable-failure": "Recovery with your password could not be set up. You can still write your enquiry and check the setup again in security settings.",
 			"settings": "Security settings",
 			"reauthenticate": "Sign out and sign in again",
 			"passwordChangeFailed": "The password could not be changed safely. Check the old password and, if needed, restore your history with the recovery key first. After a connection loss the password may already have changed.",
 			"enrollmentFailed": "Setup could not be completed. Check your password and one-time code if required, then try again.",
-			"enrollmentExplanation": "Protect your existing recovery key with your current login password. Your saved key remains valid. A stolen encrypted backup can be opened using the password without a second factor.",
-			"loginPassword": "Current login password",
-			"repeatPassword": "Repeat login password",
+			"enrollmentExplanation": "Protect your existing recovery key with your current password as well. Your saved recovery key remains valid. A stolen encrypted backup can be opened using the password without a second factor.",
+			"loginPassword": "Current password",
+			"repeatPassword": "Repeat password",
 			"otp": "One-time code",
 			"enroll": "Confirm password and set up recovery",
 			"device-ready": "This device can use its existing keys. Password recovery will be verified at the next password login.",
@@ -5162,7 +5418,7 @@
 			"idle": "Recovery status has not been checked yet.",
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
-			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed.",
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your password has not changed.",
 			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
 		}
 	},
@@ -5225,6 +5481,66 @@
 				"archive": {
 					"title": "Archive",
 					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
+				}
+			}
+		},
+		"practiceAccept": {
+			"title": "Practice: Accept a request",
+			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
+			"step": {
+				"navEnquiries": {
+					"title": "Open the requests",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. You will find new requests here under “Requests”."
+				},
+				"openEnquiry": {
+					"title": "Open the request",
+					"intro": "A practice request is waiting in the list. Click it to open it."
+				},
+				"openTeam": {
+					"title": "Open the team discussion",
+					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+				},
+				"teamReply": {
+					"title": "Reply in the team",
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+				},
+				"accept": {
+					"title": "Accept the request",
+					"intro": "Click “Accept request”: the request moves to “My consultations” and disappears from your team’s list."
+				},
+				"firstAnswer": {
+					"title": "First response and first message",
+					"intro": "The request is now yours. In the chat you can see the automatic first response and the advice seeker’s first message."
+				},
+				"reply": {
+					"title": "Write your first reply",
+					"intro": "Write the advice seeker a short reply and send it. It stays in the practice and is not saved anywhere."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "Well done: you accepted a request and replied to it. Use the button below to end the practice."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Practice: Add a supervisor",
+			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
+			"step": {
+				"addSupervisor": {
+					"title": "Add a supervisor",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor, give a short reason and confirm."
+				},
+				"supervisorReply": {
+					"title": "The supervisor’s reply",
+					"intro": "Your supervisor has replied in the side chat. Only the two of you can see these messages — the advice seeker cannot."
+				},
+				"standingAssignment": {
+					"title": "Fixed assignment",
+					"intro": "If your administrator has assigned a fixed supervisor to you, they are added automatically when you accept a request. You do not need to do anything."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
 				}
 			}
 		}
@@ -5473,6 +5789,25 @@
 			"callFailed": "Call failed: {{message}}",
 			"startFailed": "Failed to start call: {{message}}",
 			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
+		},
+		"notes": {
+			"title": "Call notes",
+			"privacy": "Private. Only for you, and only for as long as the call lasts.",
+			"type": "Kind of note",
+			"text": "Note",
+			"add": "Add note",
+			"remove": "Remove note",
+			"copy": "Copy all",
+			"copied": "Copied",
+			"empty": "Nothing noted yet.",
+			"collapse": "Collapse notes",
+			"expand": "Expand notes",
+			"open": "Call notes",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remark",
+				"aufgabe": "Task"
+			}
 		}
 	},
 	"form": {
@@ -5536,11 +5871,44 @@
 			"less": "Show less"
 		}
 	},
+	"practice": {
+		"banner": {
+			"title": "Practice mode",
+			"progress": "Step {{current}} of {{total}}",
+			"note": "Practice case, no real data",
+			"end": "End practice",
+			"restart": "Restart",
+			"moveHandle": "Move banner (arrow keys)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Accept an enquiry and write a first reply.",
+				"supervision": "Choose a supervisor and add them to a counselling session."
+			},
+			"title": "Practice area",
+			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",
+			"empty": "There are currently no practice flows available for you.",
+			"badge": "Practice",
+			"phoneHint": "Please practise on a computer.",
+			"windowHint": "Please widen your browser window for this exercise.",
+			"action": {
+				"start": "Start practice",
+				"restart": "Practise again"
+			}
+		},
+		"error": {
+			"start": "The practice could not be started. Please try again."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {
 				"title": "New counselling is currently restricted",
 				"text": "The counselling organisation must confirm the current data processing agreement. Contact your counselling centre. Counselling that has already begun can continue."
+			},
+			"restrictedGroupJoin": {
+				"title": "Joining this group is currently not possible",
+				"text": "Joining this group is currently not possible because the counselling organisation still has to confirm the current data processing agreement. Please contact your counselling centre."
 			},
 			"unavailable": {
 				"title": "Counselling availability cannot be checked",

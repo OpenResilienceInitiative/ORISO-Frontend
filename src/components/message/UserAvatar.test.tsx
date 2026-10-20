@@ -103,3 +103,58 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 		expect(avatar.getAttribute('aria-hidden')).toBe('true');
 	});
 });
+
+describe('UserAvatar with a profile choice (#1240)', () => {
+	afterEach(cleanup);
+
+	it('names the avatar after its person while the session caption remains separate', () => {
+		render(
+			<UserAvatar
+				username="lisa"
+				displayName="Support session"
+				avatarDisplayName="Lisa Simpson"
+				userId="@lisa:x"
+				choice={{ kind: 'initials' }}
+			/>
+		);
+		expect(
+			screen.getByRole('img', { name: 'Lisa Simpson' }).textContent
+		).toBe('LS');
+		expect(
+			screen.queryByRole('img', { name: 'Support session' })
+		).toBeNull();
+	});
+
+	it('puts a counsellor motif on primary', () => {
+		render(
+			<UserAvatar
+				username="c"
+				displayName="C"
+				userId="@c:x"
+				choice={{ file: 'fox.svg', kind: 'motif' }}
+			/>
+		);
+		expect(animalBackground(screen.getByTestId('user-avatar'))).toBe(
+			'var(--m3-primary)'
+		);
+	});
+
+	it('keeps the advice seeker colours and only swaps the animal', () => {
+		const { unmount } = render(
+			<UserAvatar username="a" displayName="A" userId="@a:x" />
+		);
+		const derived = animalBackground(screen.getByTestId('user-avatar'));
+		unmount();
+		render(
+			<UserAvatar
+				username="a"
+				displayName="A"
+				userId="@a:x"
+				choice={{ file: 'fox.svg', kind: 'animal' }}
+			/>
+		);
+		expect(animalBackground(screen.getByTestId('user-avatar'))).toBe(
+			derived
+		);
+	});
+});

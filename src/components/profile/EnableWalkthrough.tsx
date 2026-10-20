@@ -12,12 +12,14 @@ import {
 import { apiPatchConsultantData } from '../../api';
 
 /**
- * The counsellor's own auto-start switch for product tours (#1526). Off only
- * stops tours from starting on their own; the tour list next to it still
- * starts every tour by hand. One switch governs all tours, so the texts are
- * plural and the hint follows the state.
+ * The counsellor's personal introduction auto-start preference (#1526).
+ * Manual learning actions remain available while it is off.
  */
-export const EnableWalkthrough = () => {
+export const EnableWalkthrough = ({
+	embedded = false
+}: {
+	embedded?: boolean;
+}) => {
 	const { t: translate } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { addNotification } = useContext(NotificationsContext);
@@ -53,15 +55,26 @@ export const EnableWalkthrough = () => {
 	}, [addNotification, isWalkThroughEnabled, reloadUserData, translate]);
 
 	return (
-		<div className="twoFactorAuth" data-testid="enable-walkthrough">
-			<div className="profile__content__title">
-				<Headline text={title} semanticLevel="5" />
+		<div
+			className={embedded ? 'helpTours__preference' : 'twoFactorAuth'}
+			data-testid="enable-walkthrough"
+		>
+			{embedded ? (
 				<Text
-					text={translate('walkthrough.switch.subtitle')}
+					text={title}
 					type="standard"
-					className="tertiary"
+					className="helpTours__preferenceTitle"
 				/>
-			</div>
+			) : (
+				<div className="profile__content__title">
+					<Headline text={title} semanticLevel="5" />
+					<Text
+						text={translate('walkthrough.switch.subtitle')}
+						type="standard"
+						className="tertiary"
+					/>
+				</div>
+			)}
 			<div className="twoFactorAuth__switch">
 				<Switch
 					onChange={handleChange}

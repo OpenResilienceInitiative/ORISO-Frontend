@@ -7,11 +7,13 @@ import {
 	TProvidedLegalLink
 } from '../../globalState/provider/LegalLinksProvider';
 import { AgencySpecificContext, UserDataContext } from '../../globalState';
-import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
-import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { useGroupJoinHandoverCopy } from './groupJoinHandoverCopy';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import { EntryRoomLoading } from './entryRoom/GroupEntryRoom';
 import { GroupConsentGate } from './consent/GroupConsentGate';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import { JoinGroupChatView } from './JoinGroupChatView';
@@ -78,7 +80,9 @@ const StageProviders = ({ children }: { children: React.ReactNode }) => (
 		<AgencySpecificContext.Provider
 			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
 		>
-			<Box sx={{ minHeight: '100vh' }}>{children}</Box>
+			<GlobalComponentContext.Provider value={{ Stage }}>
+				<Box sx={{ minHeight: '100vh' }}>{children}</Box>
+			</GlobalComponentContext.Provider>
 		</AgencySpecificContext.Provider>
 	</LegalLinksContext.Provider>
 );
@@ -87,38 +91,34 @@ const StageProviders = ({ children }: { children: React.ReactNode }) => (
    2 — while joining
    --------------------------------------------------------------------------- */
 
+/* Both render what `Registration` shows from the click on: the waiting
+   room with its own frame (#1219). "Before" is the counselling copy the group
+   join used to show by mistake; "after" is the group's own. */
 const JoiningBefore = () => (
 	<StageProviders>
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
-			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} />}
-			mobileHero="bar"
-		>
-			<RegistrationHandover
-				ready={false}
-				forcedState="preparing"
-				variant="inline"
-				onEnter={() => undefined}
-			/>
-		</StageLayout>
+		<RegistrationHandover
+			ready={false}
+			forcedState="preparing"
+			onEnter={() => undefined}
+		/>
 	</StageProviders>
 );
 
+const JoiningAfterScreen = () => {
+	const copy = useGroupJoinHandoverCopy();
+	return (
+		<RegistrationHandover
+			ready={false}
+			forcedState="preparing"
+			onEnter={() => undefined}
+			copy={copy}
+		/>
+	);
+};
+
 const JoiningAfter = () => (
 	<StageProviders>
-		<GroupInviteEntry
-			stage={<Stage hasAnimation={false} />}
-			gcid="20"
-			aid="19"
-			temporary={true}
-			onToggleTemporary={() => undefined}
-			onChange={() => undefined}
-			onJoin={() => undefined}
-			joinDisabled={true}
-			busy={true}
-		/>
+		<JoiningAfterScreen />
 	</StageProviders>
 );
 
@@ -127,12 +127,14 @@ const expectGroupWords = async (canvasElement: HTMLElement) => {
 	await expect(await canvas.findByText('Bitte nur mit Alias')).toBeVisible();
 	await expect(canvas.queryByText('Antwort in 2 Arbeitstagen')).toBeNull();
 	await expect(canvas.queryByText('Anfrage schreiben')).toBeNull();
+	await expectWaitingRoomLayout(canvasElement);
 };
 
 export const JoiningBefore1440: Story = {
 	name: '2 · Joining — before (counselling words) · 1440',
 	globals: desktop1440Globals,
-	render: () => <JoiningBefore />
+	render: () => <JoiningBefore />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement)
 };
 
 export const JoiningAfter1440: Story = {
@@ -145,7 +147,8 @@ export const JoiningAfter1440: Story = {
 export const JoiningBefore390: Story = {
 	name: '2 · Joining — before (counselling words) · 390',
 	globals: phone390Globals,
-	render: () => <JoiningBefore />
+	render: () => <JoiningBefore />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement)
 };
 
 export const JoiningAfter390: Story = {
@@ -255,10 +258,10 @@ export const PrivacyGate390: Story = {
 
 const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 
-const WaitingRoom = () => (
+const WaitingRoom = ({ showTopic = true }: { showTopic?: boolean }) => (
 	<StageProviders>
 		<GroupWaitingRoom
-			topicName="Trauerbegleitung"
+			topicName={showTopic ? 'Trauerbegleitung' : undefined}
 			agencyName="Caritas Berlin, Selbsthilfegruppe Trauer"
 			agencyId={null}
 			plannedStart={new Date(NOW + 3 * 24 * 3600e3 + 5 * 3600e3)}
@@ -276,6 +279,50 @@ export const WaitingRoom1440: Story = {
 	name: '1b · Client waiting room — legal links in the stage · 1440',
 	globals: desktop1440Globals,
 	render: () => <WaitingRoom />
+};
+
+/* Before the privacy statement is agreed to, `GroupEntryRoom` hands the
+   waiting room no topic: it is left out, not greyed (#1499). */
+export const WaitingRoomBeforeConsentNoTopic1440: Story = {
+	name: '1b · Client waiting room — topic hidden before consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <WaitingRoom showTopic={false} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findAllByText(/Caritas Berlin/);
+		await expect(canvas.queryAllByText('Trauerbegleitung')).toHaveLength(0);
+	}
+};
+
+export const WaitingRoomAfterConsentShowsTopic1440: Story = {
+	name: '1b · Client waiting room — topic shown after consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <WaitingRoom />,
+	play: async ({ canvasElement }) => {
+		const topics =
+			await within(canvasElement).findAllByText('Trauerbegleitung');
+		await expect(topics.length).toBeGreaterThan(0);
+	}
+};
+
+/* While the group loads, the room already stands with its bar and a gate
+   that waits without a fill: nothing grows in once the data is there. */
+export const EntryRoomLoading1440: Story = {
+	name: '1b · Client entry room — loading · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<StageProviders>
+			<EntryRoomLoading />
+		</StageProviders>
+	),
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		const gate =
+			canvasElement.ownerDocument.querySelector<HTMLButtonElement>(
+				'[data-cy="group-entry-loading-gate"]'
+			);
+		await expect(gate?.disabled).toBe(true);
+	}
 };
 
 export const WaitingRoomLegalMenu390: Story = {

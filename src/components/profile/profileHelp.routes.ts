@@ -1,5 +1,8 @@
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
-import { AppSettingsInterface } from '../../globalState/interfaces';
+import {
+	AppConfigInterface,
+	AppSettingsInterface
+} from '../../globalState/interfaces';
 import {
 	COLUMN_LEFT,
 	COLUMN_RIGHT,
@@ -7,9 +10,8 @@ import {
 	TabGroups
 } from '../../utils/tabsHelper';
 import { Help } from '../help/Help';
-import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { Documentation } from './Documentation';
-import { EnableWalkthrough } from './EnableWalkthrough';
+import { HelpToursSection } from './HelpToursSection';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
@@ -19,8 +21,20 @@ const showsTours = (settings: AppSettingsInterface, userData): boolean =>
 	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 
 export const profileRoutesHelp = (
-	settings: AppSettingsInterface
+	settings: AppSettingsInterface & Pick<AppConfigInterface, 'releaseToggles'>
 ): (TabGroups | SingleComponentType)[] => [
+	{
+		title: 'profile.routes.help.tours',
+		url: '/rundgaenge',
+		elements: [
+			{
+				component: HelpToursSection,
+				icon: ExploreOutlinedIcon,
+				column: COLUMN_LEFT,
+				condition: (userData) => showsTours(settings, userData)
+			}
+		]
+	},
 	{
 		title: 'profile.routes.help.videoCall',
 		url: '/videoCall',
@@ -28,7 +42,7 @@ export const profileRoutesHelp = (
 			{
 				component: Help,
 				icon: VideocamOutlinedIcon,
-				column: COLUMN_LEFT,
+				column: COLUMN_RIGHT,
 				condition: () => !settings?.documentationEnabled
 			}
 		]
@@ -41,26 +55,8 @@ export const profileRoutesHelp = (
 			{
 				component: Documentation,
 				icon: MenuBookOutlinedIcon,
-				column: COLUMN_LEFT,
+				column: COLUMN_RIGHT,
 				condition: () => !!settings?.documentationEnabled
-			}
-		]
-	},
-	{
-		title: 'profile.routes.help.tours',
-		url: '/rundgaenge',
-		elements: [
-			{
-				component: EnableWalkthrough,
-				icon: ExploreOutlinedIcon,
-				column: COLUMN_RIGHT,
-				condition: (userData) => showsTours(settings, userData)
-			},
-			{
-				component: TourOverviewSection,
-				icon: ExploreOutlinedIcon,
-				column: COLUMN_RIGHT,
-				condition: (userData) => showsTours(settings, userData)
 			}
 		]
 	}

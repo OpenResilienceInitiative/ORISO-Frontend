@@ -1,14 +1,14 @@
 Votre code à usage unique
 =========================
 
-Saisissez ce code dans la fenêtre de connexion.
+Saisissez ce code dans {{platformName}}.
 
 Code: {{otpCode}}
 
-Aller à la connexion:
+Ouvrir {{platformName}}:
 {{loginUrl}}
 
-Si vous ne vouliez pas vous connecter, changez votre mot de passe.
+Si vous n’avez pas demandé ce code, vous pouvez ignorer cet e-mail.
 
 ----------------------------------------------------------------
 Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce code à personne.
@@ -22,4 +22,4 @@ Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce c
 Protection des données: {{privacyUrl}}
 Mentions légales: {{imprintUrl}}
 
-Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.
+Cet e-mail contient un code de sécurité et ne peut pas être désactivé. Merci de ne pas y répondre.

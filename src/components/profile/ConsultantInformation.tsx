@@ -16,12 +16,12 @@ import { copyTextToClipboard } from '../../utils/clipboardHelpers';
 import { Tooltip } from '../tooltip/Tooltip';
 import { GenerateQrCode } from '../generateQrCode/GenerateQrCode';
 import { PenIcon } from '../../resources/img/icons';
-import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { EditableData } from '../editableData/EditableData';
-import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutConsultantData } from '../../api/apiPutConsultantData';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 
 const PUBLIC_SLUG_PATTERN = /^[a-z]+(-[a-z]+)*$/;
 
@@ -29,59 +29,11 @@ export const ConsultantInformation = () => {
 	const { t: translate } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { addNotification } = useContext(NotificationsContext);
-	const [isEditEnabled, setIsEditEnabled] = useState(false);
-	const [editedDisplayName, setEditedDisplayName] = useState('');
-	const [initialDisplayName, setInitialDisplayName] = useState('');
 	const [isSlugEditEnabled, setIsSlugEditEnabled] = useState(false);
 	const [editedPublicSlug, setEditedPublicSlug] = useState('');
 	const [isSlugSaveDisabled, setIsSlugSaveDisabled] = useState(true);
 	const [isSlugRequestInProgress, setIsSlugRequestInProgress] =
 		useState(false);
-
-	const cancelEditButton: ButtonItem = {
-		label: translate('profile.data.edit.button.cancel'),
-		type: BUTTON_TYPES.LINK
-	};
-
-	const saveEditButton: ButtonItem = {
-		disabled: !editedDisplayName?.trim(),
-		label: translate('profile.data.edit.button.save'),
-		type: BUTTON_TYPES.LINK
-	};
-
-	const handleValidDisplayName = useCallback((displayName) => {
-		setEditedDisplayName(displayName);
-	}, []);
-
-	const handleCancelEditButton = () => {
-		const displayName = userData.displayName || userData.userName || '';
-		setInitialDisplayName(displayName);
-		setEditedDisplayName(displayName);
-		setIsEditEnabled(false);
-	};
-
-	const handleSaveEditButton = () => {
-		apiPatchUserData({ displayName: editedDisplayName })
-			.then(() => {
-				reloadUserData().catch((error) => {
-					/* console.log(error); */
-				});
-				setInitialDisplayName(editedDisplayName);
-			})
-			.catch((error) => {
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: translate('profile.notifications.error.title'),
-					text: translate('profile.notifications.error.description'),
-					closeable: true,
-					timeout: 60000
-				});
-				// console.error('Error while patching consultant', error);
-			})
-			.finally(() => {
-				setIsEditEnabled(false);
-			});
-	};
 
 	const handleValidPublicSlug = useCallback((publicSlug) => {
 		setEditedPublicSlug(publicSlug?.toLowerCase() ?? '');
@@ -139,16 +91,6 @@ export const ConsultantInformation = () => {
 	};
 
 	useEffect(() => {
-		if (isEditEnabled) {
-			return;
-		}
-
-		const displayName = userData.displayName || userData.userName || '';
-		setInitialDisplayName(displayName);
-		setEditedDisplayName(displayName);
-	}, [isEditEnabled, userData.displayName, userData.userName]);
-
-	useEffect(() => {
 		// While the slug is being edited, background userData refreshes must
 		// not overwrite the user's unsaved typing.
 		if (isSlugEditEnabled) {
@@ -176,13 +118,6 @@ export const ConsultantInformation = () => {
 		userData.publicSlug
 	]);
 
-	const isDisplayNameFeatureEnabled = hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	)
-		? true
-		: userData?.isDisplayNameEditable;
-
 	const publicSlugStatusText =
 		userData.publicSlugStatus === 'PENDING' && userData.pendingPublicSlug
 			? translate('profile.data.publicSlug.status.pending', {
@@ -205,20 +140,6 @@ export const ConsultantInformation = () => {
 						text={translate('profile.data.title.information')}
 						semanticLevel="5"
 					/>
-					{isDisplayNameFeatureEnabled && !isEditEnabled && (
-						<button
-							type="button"
-							className="button-as-link tertiary"
-							onClick={() => {
-								setIsEditEnabled(true);
-							}}
-							aria-label={translate(
-								'profile.data.edit.button.edit'
-							)}
-						>
-							<PenIcon />
-						</button>
-					)}
 				</div>
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 					<PersonalRegistrationLink
@@ -235,26 +156,8 @@ export const ConsultantInformation = () => {
 					type="standard"
 					className="tertiary"
 				/>
+				<ProfileAvatarChoice />
 			</div>
-			<EditableData
-				label={translate('profile.data.displayName')}
-				type="text"
-				initialValue={initialDisplayName}
-				isDisabled={!isDisplayNameFeatureEnabled || !isEditEnabled}
-				onValueIsValid={handleValidDisplayName}
-			/>
-			{isDisplayNameFeatureEnabled && isEditEnabled && (
-				<div className="editableData__buttonSet editableData__buttonSet--edit">
-					<Button
-						item={cancelEditButton}
-						buttonHandle={handleCancelEditButton}
-					/>
-					<Button
-						item={saveEditButton}
-						buttonHandle={handleSaveEditButton}
-					/>
-				</div>
-			)}
 			{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 				<div className="mt--2">
 					<div className="flex flex--fd-row flex--jc-sb">
@@ -302,12 +205,20 @@ export const ConsultantInformation = () => {
 					{isSlugEditEnabled && (
 						<div className="editableData__buttonSet editableData__buttonSet--edit">
 							<Button
-								item={cancelEditButton}
+								item={{
+									label: translate(
+										'profile.data.edit.button.cancel'
+									),
+									type: BUTTON_TYPES.LINK
+								}}
 								buttonHandle={handleCancelSlugEditButton}
 							/>
 							<Button
 								item={{
-									...saveEditButton,
+									label: translate(
+										'profile.data.edit.button.save'
+									),
+									type: BUTTON_TYPES.LINK,
 									disabled: isSlugSaveDisabled
 								}}
 								buttonHandle={handleSaveSlugEditButton}

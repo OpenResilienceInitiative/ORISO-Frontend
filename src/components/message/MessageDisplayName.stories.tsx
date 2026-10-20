@@ -1,5 +1,6 @@
+import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 
 import { MessageDisplayName } from './MessageDisplayName';
 import {
@@ -258,4 +259,56 @@ export const ConsultantLongAgencyMobile: Story = {
 		}
 	},
 	globals: phone375Globals
+};
+
+/**
+ * The name and the counselling centre inside the REAL `messageItem__header`
+ * flex row. The stories above render them in the bare shell, where they stack
+ * by accident; in the app the row put them side by side (name column squeezed
+ * to three lines, centre beside it). Figma 783-19818: name first, centre and
+ * house icon underneath.
+ */
+export const CounsellorNameAboveCentreInRealHeader: Story = {
+	name: 'Counsellor — name above centre inside the real header row',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		displayName: 'maggie simpson at trail ist',
+		subtitle: '13055 Advice center Lichteberg'
+	},
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'Regression for the side-by-side name and centre seen on Dev at 390px. The centre must sit under the name, left-aligned with it, with the house icon in front.'
+			}
+		}
+	},
+	globals: phone390Globals,
+	render: (args) => (
+		<div className="messageItem messageItem--left">
+			<div className="messageItem__header">
+				<MessageDisplayName {...args} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const name = await waitFor(() => {
+			const el = canvasElement.querySelector('.messageItem__username');
+			expect(el).not.toBeNull();
+			return el as HTMLElement;
+		});
+		const centre = canvasElement.querySelector(
+			'.messageItem__usernameSubtitle'
+		) as HTMLElement;
+		const nameBox = name.getBoundingClientRect();
+		const centreBox = centre.getBoundingClientRect();
+		await expect(centreBox.top).toBeGreaterThanOrEqual(nameBox.bottom - 1);
+		await expect(
+			Math.abs(centreBox.left - nameBox.left)
+		).toBeLessThanOrEqual(1);
+		await expect(
+			centre.querySelector('[data-testid="agency-icon"]')
+		).not.toBeNull();
+	}
 };

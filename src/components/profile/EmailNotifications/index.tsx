@@ -26,7 +26,7 @@ import {
 /**
  * E-mail notification settings, as ADR-019 specifies them.
  *
- * Two lists rather than one filtered by role — three switches for an advice
+ * Two lists rather than one filtered by role — four switches for an advice
  * seeker, eight for a counsellor. See `notificationMatrix.ts` for why that
  * distinction is the point rather than an implementation detail.
  */

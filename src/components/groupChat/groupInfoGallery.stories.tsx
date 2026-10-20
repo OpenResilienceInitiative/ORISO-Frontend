@@ -1,3 +1,4 @@
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
@@ -29,13 +30,14 @@ import {
  * registration set.
  */
 const meta: Meta = {
-	title: 'Group chat/Self-help info',
+	id: 'group-chat-self-help-info',
+	title: 'Entry flows/Self-help groups/Group information',
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
 				component:
-					'Die Info-Galerie der Selbsthilfegruppe: drei Karten zum Scrollen — Format und Begleitung, Termine, Anonymität — mit „Zurück zum Countdown“. Abnahmefläche neben `Group chat/Self-help entry room`.'
+					'Die Info-Galerie der Selbsthilfegruppe: drei Karten zum Scrollen — Format und Begleitung, Termine, Anonymität — mit „Zurück zum Countdown“. Abnahmefläche neben `Entry flows/Self-help groups/Entry room`.'
 			}
 		}
 	}
@@ -121,6 +123,13 @@ export const InfoGalleryDesktop: StoryObj = {
 	name: '1 — Info-Galerie, Desktop',
 	globals: desktop1440Globals,
 	render: () => <Screen />,
+	play: async ({ canvasElement }) => {
+		// A part on its own, not a whole room: only the card size applies.
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+	},
 	parameters: {
 		docs: {
 			description: {
