@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AgencySpecificContext, LocaleContext } from '../../globalState';
@@ -142,5 +148,38 @@ describe('StageLayout footer legal links', () => {
 			agencyId: 7,
 			topicId: 20
 		});
+	});
+});
+
+describe('StageLayout login link', () => {
+	const layout = (showLoginLink: boolean) => (
+		<MemoryRouter>
+			<LocaleContext.Provider value={{ selectableLocales: [] } as any}>
+				<AgencySpecificContext.Provider
+					value={{ specificAgency: null } as any}
+				>
+					<StageLayout
+						stage={<div>stage</div>}
+						showLoginLink={showLoginLink}
+					>
+						<div>content</div>
+					</StageLayout>
+				</AgencySpecificContext.Provider>
+			</LocaleContext.Provider>
+		</MemoryRouter>
+	);
+	const toLogin = () => document.querySelector('.stageLayout__toLogin');
+
+	it('slides out when it stops applying and is removed once it has left', async () => {
+		const { rerender } = render(layout(true));
+		expect(toLogin()?.getAttribute('data-presence')).toBe('present');
+
+		rerender(layout(false));
+		expect(
+			toLogin()?.getAttribute('data-presence'),
+			'it is still there while it leaves'
+		).toBe('leaving');
+
+		await waitFor(() => expect(toLogin()).toBeNull());
 	});
 });

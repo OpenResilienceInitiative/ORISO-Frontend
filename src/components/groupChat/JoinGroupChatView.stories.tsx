@@ -180,13 +180,32 @@ const matrixClientService = {
 	getClient: () => storyMatrixClient
 } as any;
 
+// Counsellor viewer who may open the room: the moderator keeps the in-app
+// waiting view with "Start chat" instead of the shared waiting room (#1499).
+const storyModeratorData = {
+	...storyUserData,
+	userId: 'consultant-storybook',
+	userName: 'consultant-storybook',
+	displayName: 'Consultant Storybook',
+	grantedAuthorities: [
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		AUTHORITIES.CREATE_NEW_CHAT
+	],
+	userRoles: ['CONSULTANT']
+} as any;
+
 const StoryProviders = ({
 	session,
 	children,
-	columnWidth
+	columnWidth,
+	userData = storyUserData,
+	fullHeight = false
 }: {
 	session: ExtendedSessionInterface;
 	children: React.ReactNode;
+	userData?: any;
+	/** Give the column the window's height, as the chat panel has in the app. */
+	fullHeight?: boolean;
 	/** Pins the chat column to the width it really has next to the lists. */
 	columnWidth?: number;
 }) => (
@@ -195,14 +214,26 @@ const StoryProviders = ({
 			...(columnWidth
 				? { width: columnWidth }
 				: { maxWidth: 920, margin: '0 auto' }),
+			...(fullHeight
+				? { height: '100vh', display: 'flex', flexDirection: 'column' }
+				: {}),
 			background: '#fcf9f9'
 		}}
 	>
+		{fullHeight && (
+			// The app's session.styles.scss makes the panel a flex column of the
+			// window's height; this story does not load it.
+			<style>
+				{
+					'.session.joinChat{flex:1;display:flex;flex-direction:column;min-height:0}'
+				}
+			</style>
+		)}
 		<UserDataContext.Provider
 			value={{
-				userData: storyUserData,
+				userData,
 				setUserData: () => {},
-				reloadUserData: async () => storyUserData
+				reloadUserData: async () => userData
 			}}
 		>
 			<SessionTypeContext.Provider
@@ -327,6 +358,19 @@ export const WaitingOverdue: Story = {
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
 	}
+};
+
+/** The counsellor who opens the room, ~2 days before the start. */
+export const ModeratorWaitingFuture: Story = {
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(2 * 86400 + 3 * 3600 + 21 * 60 + 50)}
+			userData={storyModeratorData}
+			fullHeight
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	)
 };
 
 /**

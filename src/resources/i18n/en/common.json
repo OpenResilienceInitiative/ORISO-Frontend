@@ -1734,7 +1734,15 @@
 					"text": "Username or password are not correct. Please try again."
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here.",
-				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again.",
+				"tooManyRequestsWaitSecond": "Too many attempts. Please wait about a second and try again.",
+				"tooManyRequestsWaitSeconds": "Too many attempts. Please wait about {{seconds}} seconds and try again.",
+				"tooManyRequestsWaitMinute": "Too many attempts. Please wait about a minute and try again.",
+				"tooManyRequestsWaitMinutes": "Too many attempts. Please wait about {{minutes}} minutes and try again.",
+				"tooManyRequestsWaitHour": "Too many attempts. Please wait about an hour and try again.",
+				"tooManyRequestsWaitHours": "Too many attempts. Please wait about {{hours}} hours and try again.",
+				"tooManyRequestsWaitDay": "Too many attempts. Please wait about a day and try again.",
+				"tooManyRequestsWaitDays": "Too many attempts. Please wait about {{days}} days and try again."
 			}
 		},
 		"mobile": {
@@ -1929,6 +1937,27 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			},
+			"state": {
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"description": {
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			},
+			"startedBy": "Called by {{name}}."
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
@@ -4687,6 +4716,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",
@@ -5751,6 +5795,25 @@
 			"callFailed": "Call failed: {{message}}",
 			"startFailed": "Failed to start call: {{message}}",
 			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
+		},
+		"notes": {
+			"title": "Call notes",
+			"privacy": "Private. Only for you, and only for as long as the call lasts.",
+			"type": "Kind of note",
+			"text": "Note",
+			"add": "Add note",
+			"remove": "Remove note",
+			"copy": "Copy all",
+			"copied": "Copied",
+			"empty": "Nothing noted yet.",
+			"collapse": "Collapse notes",
+			"expand": "Expand notes",
+			"open": "Call notes",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remark",
+				"aufgabe": "Task"
+			}
 		}
 	},
 	"form": {
