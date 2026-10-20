@@ -385,11 +385,31 @@ export const useCaseHandoverSearch = ({
 		]
 	);
 
-	const reset = useCallback(() => {
-		abortPersonLoads();
-		setPickedPeople([]);
-		setPinned({});
-	}, [abortPersonLoads]);
+	/**
+	 * The search's X. Batch mode keeps found cases, but an explicit reset
+	 * drops the unselected ones, so only the cases selected for the batch
+	 * stay next to the normal list.
+	 */
+	const reset = useCallback(
+		(keepSessionIds: number[] = []) => {
+			abortPersonLoads();
+			const keep = new Set(keepSessionIds.map(String));
+			setTextResult((prev) => ({
+				archived: prev.archived,
+				cases: mergeListItems(
+					prev.cases,
+					...Object.values(pinned)
+				).filter(
+					(item) =>
+						item.session?.id !== undefined &&
+						keep.has(String(item.session.id))
+				)
+			}));
+			setPickedPeople([]);
+			setPinned({});
+		},
+		[abortPersonLoads, pinned]
+	);
 
 	const candidateSessions = useMemo(
 		() => mergeListItems(textCandidates, ...Object.values(pinned)),

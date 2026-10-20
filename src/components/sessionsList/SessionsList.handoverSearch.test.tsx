@@ -1963,6 +1963,40 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		);
 	});
 
+	it('X in batch mode keeps only the selected case next to the normal list', async () => {
+		const view = await ready(renderList());
+		await listPattysSpringfieldCases(view);
+		await startBatchModeOn(view, 'Client eleven');
+		await waitFor(() =>
+			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+		);
+		fireEvent.click(caseCheckbox(view, 'Client eleven'));
+		await waitFor(() =>
+			expect(bulkBar().textContent).toContain(
+				'caseHandover.bulkBar.selected:1'
+			)
+		);
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'sessionList.toolbar.search.close'
+			})
+		);
+
+		await waitFor(() =>
+			expect(listText(view)).not.toContain('Client twelve')
+		);
+		const text = listText(view);
+		expect(text).toContain('Own client');
+		expect(text).toContain('Client eleven');
+		expect(text).not.toContain('Client thirteen');
+		expect(text).not.toContain('Client fourteen');
+		expect(listItems(view)).toHaveLength(2);
+		expect(bulkBar().textContent).toContain(
+			'caseHandover.bulkBar.selected:1'
+		);
+	});
+
 	it('keeps Tab and Shift+Tab inside the open wizard', async () => {
 		// jsdom has no layout; tabbable treats elements without client rects
 		// as hidden, so give every element one for this keyboard test.

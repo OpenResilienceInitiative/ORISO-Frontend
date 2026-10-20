@@ -1641,7 +1641,7 @@ export const SessionsList = ({
 		(everything: boolean) => {
 			if (everything) {
 				setSessionToolbarSearch('');
-				resetPickedPeople();
+				resetPickedPeople(caseHandoverSelectedIds);
 			}
 			setSessionToolbarSelectedTopic(null);
 			setSessionToolbarSelectedAgency(null);
@@ -1657,7 +1657,13 @@ export const SessionsList = ({
 				);
 			}
 		},
-		[location.pathname, location.search, navigate, resetPickedPeople]
+		[
+			caseHandoverSelectedIds,
+			location.pathname,
+			location.search,
+			navigate,
+			resetPickedPeople
+		]
 	);
 	const resetToolbarSearch = useCallback(
 		() => clearToolbarFilters(true),
