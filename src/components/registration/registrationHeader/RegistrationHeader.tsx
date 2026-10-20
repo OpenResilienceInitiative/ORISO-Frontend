@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Collapse, Typography } from '@mui/material';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded';
@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { IconStepper } from '../../stepper/molecules/IconStepper';
 import { CompactStepRow } from '../../stepper/molecules/CompactStepRow';
 import { stepperColors } from '../../stepper/stepperDesign';
+import { transitionMotion } from '../../transition/transitionMotion';
+import { useReducedMotion } from '../../transition/useReducedMotion';
 import {
 	RegistrationSelectionChip,
 	RegistrationSelectionChips
@@ -80,6 +82,17 @@ export interface RegistrationHeaderProps {
 	 * the browser viewport, not the frame a story is rendered into.
 	 */
 	layout?: 'auto' | 'compact' | 'stepper';
+	/**
+	 * Every step is done (the account is being created): the stepper shows the
+	 * finished state instead of an active step.
+	 */
+	completed?: boolean;
+	/**
+	 * Fold the header away. The band stays mounted — it is the same element
+	 * before and after — and only its height gives way, so what sits below
+	 * moves up instead of jumping.
+	 */
+	collapsed?: boolean;
 }
 
 /**
@@ -101,9 +114,12 @@ export const RegistrationHeader = ({
 	onStepClick,
 	chips = [],
 	fullBleed = true,
-	layout = 'auto'
+	layout = 'auto',
+	completed = false,
+	collapsed = false
 }: RegistrationHeaderProps) => {
 	const { t } = useTranslation();
+	const reducedMotion = useReducedMotion();
 
 	const visibleSteps = useMemo(() => {
 		if (!visibleStepNames?.length) {
@@ -174,90 +190,108 @@ export const RegistrationHeader = ({
 				// paints with, so the two read as one surface. This is the point of
 				// #1167 and #1174 never meant to touch it — the translucent
 				// rgba/backdrop-filter pair it still carried is the old value.
-				backgroundColor: 'var(--m3-background, #fff)',
-				// One rule, default outline tone. The previous header stacked a
-				// border plus a margin band below it, which read as two lines
-				// with dead space between them.
-				borderBottom: `1px solid ${stepperColors.outline}`,
-				pt:
-					layout === 'compact'
-						? 0
-						: layout === 'stepper'
-							? 1.5
-							: { xs: 0, sm: 1.5 },
-				pb:
-					layout === 'compact'
-						? 0
-						: layout === 'stepper'
-							? 1.5
-							: { xs: 0, sm: 1.5 }
-				// No bottom margin: the gap to the step content belongs to the
-				// page, not to the header. Carrying it here is what produced
-				// the dead band under the desktop stepper. The step body sets
-				// it (`pt` on the content column, #1179); a second one here
-				// simply added to that.
+				backgroundColor: 'var(--m3-background, #fff)'
 			}}
 		>
-			{/* Mobile: compact row + chips */}
-			<Box
-				sx={{
-					display: compactDisplay,
-					width: '100%',
-					maxWidth: '780px',
-					mx: 'auto'
-				}}
+			<Collapse
+				in={!collapsed}
+				timeout={reducedMotion ? 0 : transitionMotion.stepMs}
 			>
-				<CompactStepRow
-					current={currentIndex + 1}
-					total={steps.length}
-					label={steps[currentIndex]?.label ?? ''}
-				/>
-				{chips.length > 0 && (
-					<Box
-						sx={{
-							borderTop: `1px solid ${stepperColors.surfaceContainer}`
-						}}
-					>
-						<RegistrationSelectionChips
-							chips={chips}
-							placement="header"
-							selectedPrefix=""
-							emptyLabel=""
-						/>
-					</Box>
-				)}
-			</Box>
-
-			{/* Desktop: the icon stepper */}
-			<Box
-				sx={{
-					display: stepperDisplay,
-					width: '100%',
-					maxWidth: '780px',
-					mx: 'auto'
-				}}
-			>
-				<Typography
+				<Box
 					sx={{
-						fontSize: 12,
-						fontWeight: 700,
-						letterSpacing: 1.2,
-						textTransform: 'uppercase',
-						color: stepperColors.onSurfaceVariant,
-						mb: 0.75
+						// One rule, default outline tone. The previous header
+						// stacked a border plus a margin band below it, which
+						// read as two lines with dead space between them.
+						// The band's own padding and rule sit inside the fold so
+						// a collapsed header leaves nothing behind.
+						borderBottom: `1px solid ${stepperColors.outline}`,
+						// No bottom margin: the gap to the step content belongs
+						// to the page, not to the header (#1179).
+						pt:
+							layout === 'compact'
+								? 0
+								: layout === 'stepper'
+									? 1.5
+									: { xs: 0, sm: 1.5 },
+						pb:
+							layout === 'compact'
+								? 0
+								: layout === 'stepper'
+									? 1.5
+									: { xs: 0, sm: 1.5 }
 					}}
 				>
-					{t('registration.headline')}
-				</Typography>
-				<IconStepper
-					steps={steps}
-					currentStepName={currentStepName}
-					clickableStepNames={clickableStepNames}
-					onStepClick={onStepClick}
-					ariaLabel={t('registration.headline')}
-					stateLabel={(state) => t(`registration.stepState.${state}`)}
-				/>
-			</Box>
+					{/* Mobile: compact row + chips */}
+					<Box
+						sx={{
+							display: compactDisplay,
+							width: '100%',
+							maxWidth: '780px',
+							mx: 'auto'
+						}}
+					>
+						<CompactStepRow
+							current={
+								completed ? steps.length : currentIndex + 1
+							}
+							total={steps.length}
+							label={
+								steps[
+									completed ? steps.length - 1 : currentIndex
+								]?.label ?? ''
+							}
+						/>
+						{chips.length > 0 && (
+							<Box
+								sx={{
+									borderTop: `1px solid ${stepperColors.surfaceContainer}`
+								}}
+							>
+								<RegistrationSelectionChips
+									chips={chips}
+									placement="header"
+									selectedPrefix=""
+									emptyLabel=""
+								/>
+							</Box>
+						)}
+					</Box>
+
+					{/* Desktop: the icon stepper */}
+					<Box
+						sx={{
+							display: stepperDisplay,
+							width: '100%',
+							maxWidth: '780px',
+							mx: 'auto'
+						}}
+					>
+						<Typography
+							sx={{
+								fontSize: 12,
+								fontWeight: 700,
+								letterSpacing: 1.2,
+								textTransform: 'uppercase',
+								color: stepperColors.onSurfaceVariant,
+								mb: 0.75
+							}}
+						>
+							{t('registration.headline')}
+						</Typography>
+						<IconStepper
+							steps={steps}
+							currentStepName={currentStepName}
+							clickableStepNames={clickableStepNames}
+							onStepClick={onStepClick}
+							completed={completed}
+							ariaLabel={t('registration.headline')}
+							stateLabel={(state) =>
+								t(`registration.stepState.${state}`)
+							}
+						/>
+					</Box>
+				</Box>
+			</Collapse>
 		</Box>
 	);
 };
