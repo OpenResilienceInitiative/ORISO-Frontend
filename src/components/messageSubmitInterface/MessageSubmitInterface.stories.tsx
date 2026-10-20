@@ -626,6 +626,52 @@ export const GroupChat: Story = {
 	)
 };
 
+/** Production caller: both split segments must return focus after Escape. */
+export const RecipientMenuKeyboard: Story = {
+	...GroupChat,
+	name: 'Recipient menu — Escape restores keyboard focus',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'.textarea__audienceSelector .splitButton > button'
+				)
+			).toHaveLength(2)
+		);
+		const triggers = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__audienceSelector .splitButton > button'
+			)
+		);
+		for (const trigger of triggers) {
+			trigger.focus();
+			await userEvent.keyboard('{Enter}');
+			await waitFor(() =>
+				expect(trigger.getAttribute('aria-expanded')).toBe('true')
+			);
+			const dialog = await canvas.findByRole('dialog');
+			const popupButton =
+				dialog.querySelector<HTMLButtonElement>('button')!;
+			popupButton.focus();
+			await expect(document.activeElement).toBe(popupButton);
+			await userEvent.keyboard('{Escape}');
+			await waitFor(() =>
+				expect(trigger.getAttribute('aria-expanded')).toBe('false')
+			);
+			await expect(canvas.queryByRole('dialog')).toBeNull();
+			await expect(document.activeElement).toBe(trigger);
+		}
+		const closedEscape = new KeyboardEvent('keydown', {
+			key: 'Escape',
+			bubbles: true,
+			cancelable: true
+		});
+		document.dispatchEvent(closedEscape);
+		await expect(closedEscape.defaultPrevented).toBe(false);
+	}
+};
+
 export const Supervisor: Story = {
 	name: 'Supervisor aside',
 	render: () => (
