@@ -391,7 +391,13 @@ const LiveChatEntryRoomContent = ({
 			await apiPutSessionData(id, {
 				displayName: chosen.userId
 			});
-			await apiPatchUserData({ displayName: chosen.userId });
+			/* The redeem creates the account without a language, so the server
+			   stores German; keep the one the guest is reading, or the app
+			   switches to German when it boots after the gate. */
+			await apiPatchUserData({
+				displayName: chosen.userId,
+				preferredLanguage: locale
+			});
 			rememberConfirmedEntryName(id, chosen.userId);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
@@ -402,7 +408,7 @@ const LiveChatEntryRoomContent = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, names, selectedIndex, sessionId, invite]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, names, selectedIndex, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
 	   that needs no account. An answered zero needs a second look, because the

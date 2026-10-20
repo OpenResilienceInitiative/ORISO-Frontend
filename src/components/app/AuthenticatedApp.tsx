@@ -128,14 +128,16 @@ export const AuthenticatedApp = ({
 	// Freshly-registered askers keep the waiting room they saw before the
 	// document load, while the bootstrap below runs (one-shot flag set just
 	// before the post-registration redirect).
-	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
-		const flagged =
-			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
-		if (flagged) {
-			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
-		}
-		return flagged;
-	});
+	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(
+		() => sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true'
+	);
+	// Clear the one-shot flag only once a render is committed. React can throw
+	// away the first render after the reload and run it again; clearing it
+	// during render left the repeat without the flag, so the waiting room never
+	// showed and its gate (and the closing wave) never opened.
+	useEffect(() => {
+		sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
+	}, []);
 	/* Someone who registered through a group link sees the group's words in
 	   the same waiting room, and its button opens the group's entry room
 	   instead of an enquiry. It used to get no waiting room at all here —

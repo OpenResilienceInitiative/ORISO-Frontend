@@ -89,7 +89,11 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 				displayName: chosen
 			})
 		);
-		expect(apiPatchUserData).toHaveBeenCalledWith({ displayName: chosen });
+		// The redeemed account keeps the guest's language (no LocaleContext here → 'de').
+		expect(apiPatchUserData).toHaveBeenCalledWith({
+			displayName: chosen,
+			preferredLanguage: 'de'
+		});
 	});
 
 	/* Frank, 2026-09-10: „wichtig ist, dass wir die User IDs nutzen". The door
