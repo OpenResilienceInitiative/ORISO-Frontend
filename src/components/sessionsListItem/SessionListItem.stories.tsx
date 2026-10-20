@@ -394,6 +394,17 @@ const seedMatrixRoom = (
 		membership: 'join'
 	}));
 	const rooms = new Map<string, ReturnType<typeof makeRoom>>();
+	const messages = new Map<string, ReturnType<typeof previewEvent>[]>();
+	function previewEvent(body: string) {
+		const content = { msgtype: 'm.text', body };
+		return {
+			getType: () => 'm.room.message',
+			getContent: () => content,
+			getClearContent: () => content,
+			getSender: () => '@group-person-0:matrix.example.org',
+			getTs: () => 1_773_736_500_000
+		};
+	}
 	const listeners = new Map<string, Set<(...args: any[]) => void>>();
 	let finish: () => void = () => {};
 	const hydration = delayed
@@ -412,6 +423,8 @@ const seedMatrixRoom = (
 			getUnreadNotificationCount: () => unreadCount
 		};
 	}
+	const removeListener = (name: string, listener: (...args: any[]) => void) =>
+		listeners.get(name)?.delete(listener);
 	const client = {
 		getRoom: (roomId: string) => {
 			if (!rooms.has(roomId)) rooms.set(roomId, makeRoom(roomId));
@@ -422,15 +435,18 @@ const seedMatrixRoom = (
 			if (!listeners.has(name)) listeners.set(name, new Set());
 			listeners.get(name)!.add(listener);
 		},
-		off: (name: string, listener: (...args: any[]) => void) =>
-			listeners.get(name)?.delete(listener)
+		off: removeListener,
+		removeListener
 	};
 	setMatrixClientServiceRef({
 		getClient: () => client,
-		getRoom: client.getRoom
+		getRoom: client.getRoom,
+		getRoomMessages: (roomId: string) => messages.get(roomId) || []
 	} as any);
 	return {
 		finish,
+		setMessage: (roomId: string, body: string) =>
+			messages.set(roomId, [previewEvent(body)]),
 		setCount: (next: number) => {
 			members = Array.from({ length: next }, (_, index) => ({
 				userId: `@group-person-${index}:matrix.example.org`,
@@ -1524,14 +1540,18 @@ export const StackedListWithSelection: Story = {
 export const GroupChatRow: Story = {
 	name: 'Gruppe — Beratungsstelle (Team-Symbol)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5501:matrix.example.org',
+			'Willkommen in der Teamrunde'
+		);
 		return (
 			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5501,
 						name: 'New Redeploy',
-						conversationType: 'AGENCY_COUNSELLING'
+						conversationType: 'AGENCY_COUNSELLING',
+						lastMessage: 'Willkommen in der Teamrunde'
 					})}
 				/>
 			</div>
@@ -1540,9 +1560,9 @@ export const GroupChatRow: Story = {
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
 		await expectGroupRow(row, 'New Redeploy');
-		// Own chat without a message yet.
+		// The production preview reads the seeded decrypted Matrix event.
 		await expect(part(row, '.sessionsListItem__subject').textContent).toBe(
-			'Sie haben den Chat erstellt.'
+			'Willkommen in der Teamrunde'
 		);
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--team')
@@ -1676,7 +1696,10 @@ export const InteractiveMenuAndLongContent: Story = {
 export const InternalCounsellorChat: Story = {
 	name: 'Gruppe — Interna (Figma 98-20465)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5503:matrix.example.org',
+			'Das ist schon komisch mit dieser Anfrage.'
+		);
 		return (
 			<div style={listShell}>
 				<RuntimeCard
@@ -1761,7 +1784,10 @@ export const LiveChat: Story = {
 export const GuidedSelfHelpGroup: Story = {
 	name: 'Gruppe — Gesprächskreis (Figma 115-28318)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5504:matrix.example.org',
+			'Das soll aber einzigartig'
+		);
 		return (
 			<div style={listShell}>
 				<RuntimeCard
@@ -2035,6 +2061,11 @@ export const GroupNoParticipants: Story = {
 				)
 			).not.toBeNull()
 		);
+		// A real Matrix room with no decrypted preview retains the existing fallback.
+		await expect(
+			canvasElement.querySelector('.sessionsListItem__subject')
+				?.textContent
+		).toBe('Nachricht verschlüsselt');
 	}
 };
 export const GroupMembershipUnavailable: Story = {
