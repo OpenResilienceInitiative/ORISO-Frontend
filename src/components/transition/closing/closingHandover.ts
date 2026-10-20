@@ -1,6 +1,6 @@
 import { transitionMotion } from '../transitionMotion';
 import { CLOSING_FOCAL_SELECTOR, ClosingFocal } from './closingFocal';
-import { CLOSING_VARIANTS, ClosingVariant } from './closingVariants';
+import { CLOSING_DIRECTIONS, ClosingDirection } from './closingDirection';
 
 /**
  * A waiting room that replaces the whole page (the live-chat room) takes its
@@ -19,7 +19,7 @@ export interface ClosingHandoverColors {
 }
 
 export interface ClosingHandover {
-	variant: ClosingVariant;
+	direction: ClosingDirection;
 	focal: ClosingFocal;
 	/**
 	 * The new document starts before the tenant's palette has arrived, so the
@@ -57,9 +57,9 @@ const parse = (raw: string, now: number): ClosingHandover | null => {
 	if (value === null) {
 		return null;
 	}
-	const { variant, focal, colors, at } = value;
+	const { direction, focal, colors, at } = value;
 	if (
-		!CLOSING_VARIANTS.includes(variant as ClosingVariant) ||
+		!CLOSING_DIRECTIONS.includes(direction as ClosingDirection) ||
 		!Object.keys(CLOSING_FOCAL_SELECTOR).includes(focal as string) ||
 		typeof at !== 'number' ||
 		!(Math.abs(now - at) <= transitionMotion.closing.capMs)
@@ -68,7 +68,7 @@ const parse = (raw: string, now: number): ClosingHandover | null => {
 	}
 	const readable = readColors(colors);
 	return {
-		variant: variant as ClosingVariant,
+		direction: direction as ClosingDirection,
 		focal: focal as ClosingFocal,
 		...(readable && { colors: readable }),
 		at

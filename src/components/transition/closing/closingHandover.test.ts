@@ -13,7 +13,7 @@ const NOW = 1_800_000_000_000;
 const handover = (
 	overrides: Partial<ClosingHandover> = {}
 ): ClosingHandover => ({
-	variant: 'curtain',
+	direction: 'horizontal',
 	focal: 'messageField',
 	at: NOW,
 	...overrides
@@ -68,16 +68,24 @@ describe('closing handover note', () => {
 		['null', 'null'],
 		['not an object', '"curtain"'],
 		[
-			'an unknown design',
-			JSON.stringify(handover({ variant: 'spin' as never }))
+			'an unknown direction',
+			JSON.stringify(handover({ direction: 'diagonal' as never }))
 		],
 		[
 			'an unknown destination',
 			JSON.stringify(handover({ focal: 'sky' as never }))
 		],
 		[
-			'the circle zoom, which was taken out',
-			JSON.stringify(handover({ variant: 'circleZoom' as never }))
+			'no direction',
+			JSON.stringify({ ...handover(), direction: undefined })
+		],
+		[
+			'the old format, which named a design and no direction',
+			JSON.stringify({
+				...handover(),
+				direction: undefined,
+				variant: 'slideReveal'
+			})
 		],
 		['no time', JSON.stringify({ ...handover(), at: undefined })],
 		[

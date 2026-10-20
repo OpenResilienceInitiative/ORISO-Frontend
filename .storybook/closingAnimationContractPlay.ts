@@ -1,4 +1,5 @@
 import { expect, userEvent, waitFor } from 'storybook/test';
+import { FIELD_FOCUS_AFTER_WIDTH } from '../src/components/transition/closing/closingFocal';
 import { transitionMotion } from '../src/components/transition/transitionMotion';
 
 /**
@@ -40,7 +41,8 @@ interface ClosingSnapshot {
 	rootPointerEvents: string;
 	/** Whether the story's own page is shut for keyboard and screen readers. */
 	pageInert: boolean | null;
-	variant: string;
+	animation: string;
+	direction: string;
 	at: number;
 	running: number;
 	layers: LayerSnapshot[];
@@ -126,7 +128,8 @@ const snapshotOf = (
 		phase: root.dataset.closingPhase ?? '',
 		rootPointerEvents: win.getComputedStyle(root).pointerEvents,
 		pageInert: pageHostOf(doc, root)?.hasAttribute('inert') ?? null,
-		variant: root.dataset.closingAnimation ?? '',
+		animation: root.dataset.closingAnimation ?? '',
+		direction: root.dataset.closingDirection ?? '',
 		at: performance.now(),
 		running: root
 			.getAnimations({ subtree: true })
@@ -143,10 +146,14 @@ const snapshotOf = (
 	};
 };
 
-/** Where each layer's left edge stood on one frame, in the order the layers sit in the page. */
+/**
+ * How far along the sweep each layer's leading edge stood on one frame, in the
+ * order the layers sit in the page: the left edge going right, the top edge
+ * going up (so a larger number is always further along).
+ */
 interface SweepSample {
 	phase: string;
-	lefts: number[];
+	edges: number[];
 }
 
 export interface ClosingRecording {
@@ -182,13 +189,17 @@ export const recordClosing = (
 	const sample = () => {
 		const root = doc.querySelector<HTMLElement>(ROOT);
 		if (root) {
+			const vertical = root.dataset.closingDirection === 'vertical';
 			recording.samples.push({
 				phase: root.dataset.closingPhase ?? '',
-				lefts: [
+				edges: [
 					...root.querySelectorAll<HTMLElement>(
 						'[data-closing-layer]'
 					)
-				].map((layer) => layer.getBoundingClientRect().left)
+				].map((layer) => {
+					const rect = layer.getBoundingClientRect();
+					return vertical ? -rect.top : rect.left;
+				})
 			});
 		}
 		frame = win.requestAnimationFrame(sample);
@@ -263,8 +274,8 @@ export const expectWaitingRoomTemplate = (canvasElement: HTMLElement) =>
 	);
 
 export interface ClosingContractOptions {
-	/** Which design the tenant chose for this width. */
-	variant: 'curtain' | 'slideReveal';
+	/** Which way the slide reveal sweeps on this width. */
+	direction: 'horizontal' | 'vertical';
 	focal?: ContractFocal;
 	/** The gate button, found fresh each time (the room is swapped away). */
 	gate: () => HTMLElement | null;
@@ -328,7 +339,8 @@ export const verifyClosingAnimation = async (
 			expect(recording.snapshots.length).toBeGreaterThan(0)
 		);
 		const started = recording.snapshots[0];
-		expect(started.variant).toBe(options.variant);
+		expect(started.animation).toBe('slide-reveal');
+		expect(started.direction).toBe(options.direction);
 		expect(started.layers.length).toBeGreaterThan(0);
 		expect(
 			started.running,
@@ -343,7 +355,7 @@ export const verifyClosingAnimation = async (
 		});
 
 		// It covers before it reveals: at the moment the room is swapped, the
-		// whole screen (or, for the curtain, the surface plus the stage) is red.
+		// whole screen is red.
 		const covered = phaseOf(recording, 'covered');
 		expect(covers(covered, covered.viewport)).toBe(true);
 
@@ -383,24 +395,21 @@ export const verifyClosingAnimation = async (
 			'the reveal takes long enough to see'
 		).toBeGreaterThanOrEqual(300);
 
-		if (options.variant === 'slideReveal') {
-			// The red swipes away as one piece, and a second red layer behind it
-			// travels along a beat later: two edges, one trailing the other.
-			const sweep = recording.samples.filter(
-				(s) => s.phase === 'reveal' && s.lefts.length === 2
-			);
-			expect(sweep.length, 'the sweep was watched').toBeGreaterThan(3);
-			// The layer behind sits first in the page.
-			const lead = sweep.map((s) => s.lefts[1] - s.lefts[0]);
-			expect(
-				Math.max(...lead),
-				'the second layer trails the first'
-			).toBeGreaterThanOrEqual(8);
-			expect(
-				Math.min(...lead),
-				'and never leads it'
-			).toBeGreaterThanOrEqual(-1);
-		}
+		// The red swipes away as one piece, and a second red layer behind it
+		// travels along a beat later: two edges, one trailing the other.
+		const sweep = recording.samples.filter(
+			(s) => s.phase === 'reveal' && s.edges.length === 2
+		);
+		expect(sweep.length, 'the sweep was watched').toBeGreaterThan(3);
+		// The layer behind sits first in the page.
+		const lead = sweep.map((s) => s.edges[1] - s.edges[0]);
+		expect(
+			Math.max(...lead),
+			'the second layer trails the first'
+		).toBeGreaterThanOrEqual(8);
+		expect(Math.min(...lead), 'and never leads it').toBeGreaterThanOrEqual(
+			-1
+		);
 		if (swaps) {
 			expect(
 				ended.focal,
@@ -493,7 +502,8 @@ export const verifyClosingSkipped = async (
 };
 
 export interface ClosingHandoverContractOptions {
-	variant: 'curtain' | 'slideReveal';
+	/** Which way the slide reveal sweeps on this width. */
+	direction: 'horizontal' | 'vertical';
 	/** The button that starts the animation in the old document (outside the frame). */
 	press: () => HTMLElement | null;
 	/** The frame the old document lives in; it is navigated to the new one. */
@@ -565,7 +575,8 @@ export const verifyClosingHandover = async (
 			expect(recording!.snapshots.length).toBeGreaterThan(0)
 		);
 		const first = recording!.snapshots[0];
-		expect(first.variant).toBe(options.variant);
+		expect(first.animation).toBe('slide-reveal');
+		expect(first.direction).toBe(options.direction);
 		expect(first.phase).toBe('covered');
 		expect(first.running, 'the cover is not played a second time').toBe(0);
 		expect(first.layers.length).toBeGreaterThan(0);
@@ -654,11 +665,14 @@ export const verifyClosingHandover = async (
 			);
 			expect(hit && field!.contains(hit)).toBe(true);
 			// The keyboard arrives in the message field: it was shut out while
-			// the page was inert, so the animation hands it over.
+			// the page was inert, so the animation hands it over. Not on a
+			// narrow screen, where a focused field opens the soft keyboard.
 			expect(
 				field!.contains(next!.activeElement),
-				'the message field has the keyboard'
-			).toBe(true);
+				next!.defaultView!.innerWidth > FIELD_FOCUS_AFTER_WIDTH
+					? 'the message field has the keyboard'
+					: 'a narrow screen gets no focused field'
+			).toBe(next!.defaultView!.innerWidth > FIELD_FOCUS_AFTER_WIDTH);
 		}
 		expect(
 			frame.contentWindow?.sessionStorage.getItem(

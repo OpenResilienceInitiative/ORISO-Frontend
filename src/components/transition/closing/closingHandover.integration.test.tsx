@@ -4,8 +4,6 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
-import { TenantContext } from '../../../globalState/provider/TenantProvider';
-import { TenantDataInterface } from '../../../globalState/interfaces';
 import { transitionMotion } from '../transitionMotion';
 import { CLOSING_HANDOVER_KEY } from './closingHandover';
 import { resumeClosingAnimation } from './playClosingAnimation';
@@ -26,15 +24,6 @@ const installAnimate = () => {
 		animate;
 };
 
-const tenant = {
-	id: 1,
-	name: 'Handover story',
-	theming: {
-		closingAnimationDesktop: 'CURTAIN',
-		closingAnimationMobile: 'SLIDE_REVEAL'
-	}
-} as unknown as TenantDataInterface;
-
 const gate = () =>
 	document.querySelector<HTMLButtonElement>(
 		'[data-cy="handover-gate-button"]'
@@ -54,8 +43,8 @@ const viewportIs = (desktop: boolean) => {
  * ORISO-Frontend#1737, both halves through the real gate button. The live-chat
  * room saves the consent and then replaces the whole page, so its `onEnter`
  * never settles. The cover must survive that: the old document leaves a note
- * when it goes, and the next document plays the reveal in the design the
- * tenant chose for the screen the person pressed on.
+ * when it goes, and the next document plays the reveal in the direction that
+ * belongs to the screen the person pressed on.
  */
 describe('a waiting room that replaces the page', () => {
 	beforeEach(() => {
@@ -83,20 +72,12 @@ describe('a waiting room that replaces the page', () => {
 
 	const pressAndReplaceThePage = async () => {
 		render(
-			<TenantContext.Provider
-				value={{
-					tenant,
-					setTenant: () => undefined,
-					updateTenantSettings: () => undefined
-				}}
-			>
-				<HandoverGateButton
-					state="ready"
-					closing="messageField"
-					// The page is being replaced: this never settles.
-					onEnter={() => new Promise<void>(() => undefined)}
-				/>
-			</TenantContext.Provider>
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				// The page is being replaced: this never settles.
+				onEnter={() => new Promise<void>(() => undefined)}
+			/>
 		);
 		fireEvent.click(gate());
 		await act(async () => {
@@ -109,11 +90,11 @@ describe('a waiting room that replaces the page', () => {
 	};
 
 	it.each([
-		['a wide screen', true, 'curtain'],
-		['a phone', false, 'slideReveal']
+		['a wide screen', true, 'horizontal'],
+		['a phone', false, 'vertical']
 	] as const)(
-		'hands the design for %s to the next document, which covers its page with it',
-		async (_name, desktop, variant) => {
+		'hands the direction for %s to the next document, which covers its page with it',
+		async (_name, desktop, direction) => {
 			viewportIs(desktop);
 			await pressAndReplaceThePage();
 
@@ -121,7 +102,7 @@ describe('a waiting room that replaces the page', () => {
 				window.sessionStorage.getItem(CLOSING_HANDOVER_KEY) ?? 'null'
 			);
 			expect(note).toMatchObject({
-				variant,
+				direction,
 				focal: 'messageField'
 			});
 
@@ -130,7 +111,10 @@ describe('a waiting room that replaces the page', () => {
 			void resumeClosingAnimation();
 			const resumed = document.querySelector(ROOT);
 			expect(resumed?.getAttribute('data-closing-animation')).toBe(
-				variant
+				'slide-reveal'
+			);
+			expect(resumed?.getAttribute('data-closing-direction')).toBe(
+				direction
 			);
 			expect(resumed?.getAttribute('data-closing-phase')).toBe('covered');
 

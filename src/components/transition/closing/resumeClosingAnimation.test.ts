@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { transitionMotion } from '../transitionMotion';
 import { resumeClosingAnimation } from './playClosingAnimation';
-import { CLOSING_VARIANTS, ClosingVariant } from './closingVariants';
+import { CLOSING_DIRECTIONS, ClosingDirection } from './closingDirection';
 import {
 	CLOSING_HANDOVER_KEY,
 	ClosingHandover,
@@ -69,7 +69,7 @@ const field = (name: 'message-field' | 'call' = 'message-field') => {
 
 const leaveNote = (overrides: Partial<ClosingHandover> = {}) =>
 	leaveClosingHandover(window, {
-		variant: 'curtain',
+		direction: 'horizontal',
 		focal: 'messageField',
 		at: Date.now(),
 		...overrides
@@ -111,17 +111,20 @@ describe('resumeClosingAnimation', () => {
 		expect(play.calls).toHaveLength(0);
 	});
 
-	it.each(CLOSING_VARIANTS)(
-		'%s: covers the screen before anything else, in the design the old document chose',
-		(variant) => {
+	it.each(CLOSING_DIRECTIONS)(
+		'%s: covers the screen before anything else, in the direction the old document chose',
+		(direction) => {
 			const play = installAnimate();
-			leaveNote({ variant });
+			leaveNote({ direction });
 
 			void resumeClosingAnimation();
 
 			// Synchronously: nothing may be painted between the page load and the cover.
 			expect(root()?.getAttribute('data-closing-animation')).toBe(
-				variant
+				'slide-reveal'
+			);
+			expect(root()?.getAttribute('data-closing-direction')).toBe(
+				direction
 			);
 			expect(phase()).toBe('covered');
 			expect(
@@ -147,18 +150,41 @@ describe('resumeClosingAnimation', () => {
 		expect(window.sessionStorage.getItem(CLOSING_HANDOVER_KEY)).toBeNull();
 	});
 
-	it("covers every design in the tenant's colours", () => {
+	it.each([
+		['horizontal', 'translateX(100%)'],
+		['vertical', 'translateY(-100%)']
+	] as const)(
+		'%s: reveals along the axis the old document swept on',
+		async (direction, end) => {
+			const play = installAnimate();
+			leaveNote({ direction });
+			field();
+			const pending = resumeClosingAnimation();
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+
+			const sheets = play
+				.reveal()
+				.filter((call) => call.layer?.startsWith('slide-'));
+			expect(sheets).toHaveLength(2);
+			sheets.forEach((call) =>
+				expect(call.keyframes.at(-1)?.transform).toBe(end)
+			);
+		}
+	);
+
+	it("covers both directions in the tenant's colours", () => {
 		const normalised = (colour: string) => {
 			const probe = document.createElement('div');
 			probe.style.backgroundColor = colour;
 			return probe.style.backgroundColor;
 		};
 		const palette = [normalised('#0050a0'), normalised('#00305f')];
-		for (const variant of ['curtain', 'slideReveal'] as const) {
+		for (const direction of CLOSING_DIRECTIONS) {
 			installAnimate();
 			document.body.innerHTML = '';
 			leaveNote({
-				variant,
+				direction,
 				colors: { primary: '#0050a0', primaryDark: '#00305f' }
 			});
 			void resumeClosingAnimation();
@@ -169,26 +195,11 @@ describe('resumeClosingAnimation', () => {
 			layers.forEach((layer) =>
 				expect(
 					palette,
-					`${variant}: ${layer.dataset.closingLayer}`
+					`${direction}: ${layer.dataset.closingLayer}`
 				).toContain(layer.style.backgroundColor)
 			);
 			root()!.remove();
 		}
-	});
-
-	it("shades the edge of the curtain's halves in the tenant's deeper colour", () => {
-		installAnimate();
-		leaveNote({
-			variant: 'curtain',
-			colors: { primary: '#0050a0', primaryDark: '#00305f' }
-		});
-
-		void resumeClosingAnimation();
-
-		const panel = root()!.querySelector<HTMLElement>(
-			'[data-closing-layer="curtain-left"]'
-		)!;
-		expect(panel.style.boxShadow).toContain('#00305f');
 	});
 
 	it('waits for the app, reveals onto the message field and leaves nothing behind', async () => {
@@ -322,7 +333,7 @@ describe('resumeClosingAnimation', () => {
 	it('takes the pointer while it covers, so no blind tap reaches the app starting underneath, and lets it through from the reveal on', async () => {
 		// The reveal never reports back, so the phases can be looked at one by one.
 		installAnimate('never');
-		leaveNote({ variant: 'curtain' });
+		leaveNote({ direction: 'horizontal' });
 		const pending = resumeClosingAnimation();
 
 		expect(phase()).toBe('covered');
@@ -595,7 +606,7 @@ describe('resumeClosingAnimation', () => {
 
 		it('fits the pieces to the new size while the app starts underneath', async () => {
 			const play = installAnimate();
-			leaveNote({ variant: 'slideReveal' });
+			leaveNote({ direction: 'vertical' });
 			const pending = resumeClosingAnimation();
 			expect(phase()).toBe('covered');
 			const before = front().style.width;
@@ -626,7 +637,7 @@ describe('resumeClosingAnimation', () => {
 
 		it('leaves the pieces alone once the reveal has started', async () => {
 			installAnimate('never');
-			leaveNote({ variant: 'slideReveal' });
+			leaveNote({ direction: 'vertical' });
 			field();
 			const pending = resumeClosingAnimation();
 			await vi.advanceTimersByTimeAsync(100);
@@ -684,11 +695,11 @@ describe('resumeClosingAnimation', () => {
 			).toBeNull();
 		});
 
-		it.each<ClosingVariant>(['curtain', 'slideReveal'])(
+		it.each<ClosingDirection>(['horizontal', 'vertical'])(
 			'%s: draws nothing for a person who asked for less motion, and throws the note away',
-			async (variant) => {
+			async (direction) => {
 				const play = installAnimate();
-				leaveNote({ variant });
+				leaveNote({ direction });
 
 				const result = await resumeClosingAnimation({
 					reducedMotion: true
