@@ -272,6 +272,9 @@ export const sessionSearchText = (
 		topicNameOf(raw, extended),
 		raw.user?.username,
 		raw.user?.displayName,
+		// The client names as the picker shows them (never `enc.`).
+		readable(raw.user?.username),
+		readable(raw.user?.displayName),
 		// Usernames, internal and legal names are staff-only: an advice
 		// seeker searches the counsellor name she is shown, nothing else.
 		...(internalNames

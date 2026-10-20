@@ -555,3 +555,25 @@ describe('advice seekers search only what they see (privacy)', () => {
 		expect(textAxisQuery('hidden', [consultant!])).toBe('hidden');
 	});
 });
+
+describe('encoded client names in the session list (FE#1725)', () => {
+	const encoded = 'enc.MFTWK3TDPFPWCZDNNFXDC...'; // agency_admin1
+
+	it('finds a session by the decoded client name the picker shows', () => {
+		const item = {
+			...sessionWithBoth(),
+			user: { username: encoded, displayName: encoded }
+		} as unknown as ListItemInterface;
+		const asker = build([item]).find((entry) => entry.role === 'asker');
+
+		expect(asker?.name).toBe('agency_admin1');
+		expect(
+			sessionMatchesSearchText(item, undefined, 'agency_admin1', {
+				internalNames: true
+			})
+		).toBe(true);
+		expect(sessionMatchesSearchText(item, undefined, 'agency_admin1')).toBe(
+			true
+		);
+	});
+});
