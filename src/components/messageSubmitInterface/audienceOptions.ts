@@ -12,6 +12,7 @@
  */
 
 import { isPracticeId } from '../../practice/practiceIds';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 
 /** Sentinel option value meaning "everyone in this conversation". */
 export const AUDIENCE_ALL = '__all__';
@@ -48,6 +49,18 @@ export interface AudienceOption {
 }
 
 /**
+ * A group's roster can arrive one member at a time. Keep "everyone" available
+ * throughout, so reconciliation never narrows that choice during hydration.
+ * The selector may still stay hidden when there is only one human counterpart.
+ */
+export const buildAudienceOptions = (
+	recipients: AudienceOption[],
+	allOption: AudienceOption,
+	isGroup = false
+): AudienceOption[] =>
+	isGroup || recipients.length > 1 ? [allOption, ...recipients] : recipients;
+
+/**
  * The selection to use when nothing valid was restored: "all" when the
  * conversation offers it, otherwise the first concrete recipient.
  */
@@ -65,12 +78,14 @@ export const defaultAudienceSelection = (
  *
  * Returns `null` — rather than a default — whenever there is nothing usable,
  * so the caller can tell "the user had no saved choice" apart from "the user
- * deliberately chose everyone". Values whose participant has since left the
- * conversation are dropped instead of invalidating the whole selection.
+ * deliberately chose everyone". By default unavailable participants are
+ * dropped. Groups retain restrictions until the user changes them: a partial
+ * roster cannot prove a participant left, and never permits broader delivery.
  */
 export const restoreAudienceSelection = (
 	rawSaved: string | null | undefined,
-	options: AudienceOption[]
+	options: AudienceOption[],
+	retainRestrictions = false
 ): string[] | null => {
 	if (!rawSaved) {
 		return null;
@@ -87,7 +102,9 @@ export const restoreAudienceSelection = (
 	const available = new Set(options.map((option) => option.value));
 	const valid = parsed.filter(
 		(value): value is string =>
-			typeof value === 'string' && available.has(value)
+			typeof value === 'string' &&
+			!!value.trim() &&
+			(retainRestrictions || available.has(value))
 	);
 	return valid.length > 0 ? valid : null;
 };
@@ -244,7 +261,13 @@ export const createAudienceCollector = (
 		label: string
 	): boolean => {
 		const compact = `${rawValue || ''}`.trim();
-		if (!compact || isSelf(compact) || has(compact)) {
+		if (
+			!compact ||
+			isSystemMatrixUser(compact) ||
+			/^@?agency-\d+-service(?::|$)/.test(compact) ||
+			isSelf(compact) ||
+			has(compact)
+		) {
 			return false;
 		}
 		labelByValue.set(compact, label);
@@ -324,8 +347,17 @@ export const classifyAudienceKind = (
  */
 export const reconcileAudienceSelection = (
 	currentValues: string[],
-	options: AudienceOption[]
+	options: AudienceOption[],
+	retainRestrictions = false
 ): string[] => {
+	// A missing group member may just not have loaded yet. Dropping a stored
+	// restriction would silently broaden delivery; only an explicit choice may.
+	if (
+		retainRestrictions &&
+		currentValues.some((value) => value !== AUDIENCE_ALL)
+	) {
+		return currentValues;
+	}
 	const available = new Set(options.map((option) => option.value));
 	const stillAvailable = currentValues.filter((value) =>
 		available.has(value)
@@ -335,6 +367,17 @@ export const reconcileAudienceSelection = (
 	}
 	return defaultAudienceSelection(options);
 };
+
+/** An unavailable recipient is a reason to ask, never permission to broadcast. */
+export const hasUnresolvedAudienceSelection = (
+	values: string[],
+	options: AudienceOption[]
+): boolean =>
+	values.some(
+		(value) =>
+			value !== AUDIENCE_ALL &&
+			!options.some((option) => option.value === value)
+	);
 
 /**
  * Whether the "Send to" control is shown at all.

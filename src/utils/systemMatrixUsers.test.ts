@@ -14,6 +14,29 @@ describe('LEGACY_MATRIX_HOMESERVER_SUFFIX', () => {
 });
 
 describe('isSystemMatrixUser', () => {
+	it.each([
+		'group-chat-system',
+		'group-chat-system-40',
+		'group-chat-system-default',
+		'@group-chat-system:predev.oriso.org',
+		'@group-chat-system-40:predev.oriso.org',
+		'@group-chat-system-default:dev.oriso.org'
+	])('filters the technical group owner %s', (identity) => {
+		expect(isSystemMatrixUser(identity)).toBe(true);
+	});
+
+	it.each([
+		'group-chat-systematic',
+		'@group-chat-systematic:dev.oriso.org',
+		'@bart:group-chat-system-40.example.org',
+		'bart-group-chat-system-40'
+	])(
+		'does not mistake a human or homeserver for a technical owner: %s',
+		(identity) => {
+			expect(isSystemMatrixUser(identity)).toBe(false);
+		}
+	);
+
 	it('filters the app system-notice sender', () => {
 		expect(isSystemMatrixUser('@system:matrix.example.org')).toBe(true);
 		expect(isSystemMatrixUser('@system-broadcast:matrix.example.org')).toBe(

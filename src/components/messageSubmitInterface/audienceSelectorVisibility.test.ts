@@ -5,6 +5,23 @@ import {
 } from './audienceSelectorVisibility';
 
 describe('shouldShowAudienceSelector', () => {
+	it.each([0, 1])(
+		'keeps a restricted group actionable while only %s human targets are loaded',
+		(targetCount) => {
+			const selection = {
+				chatType: 'group' as const,
+				isClientUser: false,
+				targetCount,
+				hasAllOption: true,
+				selectedValues: ['@homer:example.org']
+			};
+			expect(shouldShowAudienceSelector(selection)).toBe(true);
+			expect(getExplicitAudienceValues(selection)).toEqual([
+				'@homer:example.org'
+			]);
+		}
+	);
+
 	it('never renders the legacy recipient selector in one-to-one chats', () => {
 		expect(
 			shouldShowAudienceSelector({
