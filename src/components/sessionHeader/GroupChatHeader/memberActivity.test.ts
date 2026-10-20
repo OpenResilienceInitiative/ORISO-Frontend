@@ -115,11 +115,11 @@ describe('computeVisibleAvatarCount (Job 2: overlap with +N fallback)', () => {
 	});
 
 	it('collapses the tail into the chip as the width shrinks', () => {
-		// 4 avatars + chip need avatarSize + 3*step + chipWidth - overlap.
-		const fourPlusChip = avatarSize + 3 * step + chipWidth - overlap;
+		// 4 avatars + chip need avatarSize + 3*step + chipWidth.
+		const fourPlusChip = avatarSize + 3 * step + chipWidth;
 		expect(computeVisibleAvatarCount(27, fourPlusChip)).toBe(4);
 		expect(computeVisibleAvatarCount(27, fourPlusChip - 1)).toBe(3);
-		const onePlusChip = avatarSize + chipWidth - overlap;
+		const onePlusChip = avatarSize + chipWidth;
 		expect(computeVisibleAvatarCount(27, onePlusChip)).toBe(1);
 		// Only the chip fits → 0 avatars, chip shows the full count.
 		expect(computeVisibleAvatarCount(27, onePlusChip - 1)).toBe(0);

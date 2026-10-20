@@ -138,15 +138,14 @@ export const OverflowPlusN: Story = {
 			'[data-cy="participant-overflow"]'
 		)!;
 		await expect(chip.textContent).toBe('+2');
-		// The chip is part of the flow: one 28 px step after the last avatar
-		// and fully inside the stack's own box (nothing after the stack can
-		// be painted over).
+		// The chip must start beyond the last full avatar, so an overlapping
+		// avatar never paints over the leading "+" (including phone density).
 		const last = avatars[3].getBoundingClientRect();
 		const chipRect = chip.getBoundingClientRect();
 		const stack = canvasElement
 			.querySelector('[data-cy="participant-stack"]')!
 			.getBoundingClientRect();
-		await expect(Math.round(chipRect.left - last.left)).toBe(STACK_STEP);
+		await expect(chipRect.left).toBeGreaterThanOrEqual(last.right - 0.5);
 		await expect(chipRect.right).toBeLessThanOrEqual(stack.right + 0.5);
 		await expect(getComputedStyle(chip).position).not.toBe('absolute');
 	}
@@ -170,5 +169,49 @@ export const Size32: Story = {
 			stackStepFor(32)
 		);
 		await expect(stackStepFor(32)).toBe(20);
+	}
+};
+
+/** The card's 32px avatars and compact phone chip must not obscure "+25". */
+export const Overflow32Phone: Story = {
+	name: '32px phone overflow — complete +25 stays clear of avatars',
+	globals: { viewport: { value: 'phone390' } },
+	args: {
+		participants: Array.from({ length: 27 }, (_, index) => ({
+			userId: `@person-${index}:oriso.invalid`,
+			displayName: `Person ${index + 1}`
+		})),
+		size: 32,
+		maxVisible: 2
+	},
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		);
+		const chip = canvasElement.querySelector(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip).toHaveTextContent('+25');
+		await expect(chip.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			avatars[avatars.length - 1].getBoundingClientRect().right - 0.5
+		);
+	}
+};
+
+export const Overflow40Phone: Story = {
+	name: '40px phone overflow — complete +5 stays clear of avatars',
+	globals: { viewport: { value: 'phone390' } },
+	args: { ...OverflowPlusN.args, maxVisible: 1 },
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector(
+			'[data-cy="participant-avatar"]'
+		)!;
+		const chip = canvasElement.querySelector(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip).toHaveTextContent('+5');
+		await expect(chip.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			avatar.getBoundingClientRect().right - 0.5
+		);
 	}
 };

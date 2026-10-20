@@ -105,7 +105,7 @@ const stackWidth = (
 		visible === 0
 			? 0
 			: m.avatarSize + (visible - 1) * (m.avatarSize - m.overlap);
-	const chip = withChip ? m.chipWidth - (visible > 0 ? m.overlap : 0) : 0;
+	const chip = withChip ? m.chipWidth : 0;
 	return avatars + chip;
 };
 

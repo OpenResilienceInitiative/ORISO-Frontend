@@ -106,11 +106,16 @@
 		white-space: nowrap;
 	}
 
-	// The chip stays in the flow: its item is as wide as the chip, so it
-	// starts one step (28 px) after the last avatar and reserves its own
-	// width (no overlap with the title that follows the stack).
+	// Reserve the chip's own width and clear the previous avatar's overhang.
+	// Applying the gap only to adjacent items keeps chip-only stacks flush.
 	&__item--overflow {
 		width: auto;
+	}
+
+	&__item + &__item--overflow {
+		margin-left: calc(
+			var(--participant-size, 40px) - var(--participant-step, 28px)
+		);
 	}
 
 	&--overflow {

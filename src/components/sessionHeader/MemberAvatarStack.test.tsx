@@ -139,8 +139,7 @@ describe('MemberAvatarStack (#1193 Job 2)', () => {
 
 		it('subtracts the reserved sibling width', () => {
 			const { avatarSize, overlap, chipWidth } = AVATAR_STACK_METRICS;
-			const twoPlusChip =
-				avatarSize + (avatarSize - overlap) + chipWidth - overlap;
+			const twoPlusChip = avatarSize + (avatarSize - overlap) + chipWidth;
 			renderMeasured(twoPlusChip + 200, 200);
 			expect(screen.getAllByTestId('user-avatar')).toHaveLength(2);
 			expect(screen.getByText('+25')).toBeTruthy();
