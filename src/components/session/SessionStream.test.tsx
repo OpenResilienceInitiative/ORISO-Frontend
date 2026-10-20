@@ -168,8 +168,9 @@ vi.mock(
 // the contexts and helpers SessionStream consumes.
 vi.mock('../../globalState', async () => {
 	const ReactModule = await import('react');
-	const { UserDataContext } =
-		await import('../../globalState/context/UserDataContext');
+	const { UserDataContext } = await import(
+		'../../globalState/context/UserDataContext'
+	);
 	return {
 		AUTHORITIES: {
 			ASKER_DEFAULT: 'AUTHORIZATION_USER_DEFAULT',
@@ -720,7 +721,20 @@ describe('SessionStream Matrix room lifecycle', () => {
 					notificationFeed: [consentNotification()]
 				});
 				await clickApprove();
+				await waitFor(() =>
+					expect(
+						apiDecideCaseHandoverClientConsent
+					).toHaveBeenCalledTimes(1)
+				);
+				const approve = () =>
+					screen.getByRole('button', {
+						name: 'caseHandover.consent.approve'
+					}) as HTMLButtonElement;
+				await waitFor(() => expect(approve().disabled).toBe(false));
 				expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+				expect(mocks.refreshNotificationFeed).not.toHaveBeenCalled();
+				expect(screen.queryByRole('alert')).toBeNull();
+				expect(approve()).toBeTruthy();
 			}
 		);
 
