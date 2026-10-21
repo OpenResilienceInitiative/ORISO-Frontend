@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { registerHooks } from 'node:module';
-import { existsSync } from 'node:fs';
+import { register } from 'node:module';
 import {
 	AccountOperationIntent,
 	AccountOperationSlot,
@@ -16,7 +15,7 @@ globalThis.__accountIntentFetch = (request) => {
 	requests.push(request);
 	return Promise.resolve({});
 };
-registerHooks({
+const fixtureHooks = {
 	resolve(specifier, context, nextResolve) {
 		if (context.parentURL?.endsWith('/src/api/fetchData.ts'))
 			return nextResolve(specifier, context);
@@ -44,7 +43,20 @@ registerHooks({
 			};
 		return nextLoad(url, context);
 	}
-});
+};
+// Node 22's async loader runs fixture resolution separately; emitted modules
+// still execute in the test process and use its isolated transport stubs.
+register(
+	`data:text/javascript,${encodeURIComponent(
+		[
+			"import { existsSync } from 'node:fs';",
+			`const fetchStub = ${JSON.stringify(fetchStub)};`,
+			`const hooks = {${fixtureHooks.resolve.toString()},${fixtureHooks.load.toString()}};`,
+			'export const resolve = hooks.resolve; export const load = hooks.load;'
+		].join('\n')
+	)}`,
+	import.meta.url
+);
 
 test('an unknown exact retry keeps its ID and captured payload', () => {
 	const slot = new AccountOperationSlot();

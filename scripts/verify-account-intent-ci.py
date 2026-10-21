@@ -157,6 +157,12 @@ def main():
         assert all((root / name).is_file() for name in targeted), "missing required affected React test source"
         records.append(run("react-account-paths", ["node", "node_modules/vitest/vitest.mjs", "run", "--project", "unit", "--maxWorkers=2", *targeted, "--reporter=junit", "--outputFile=" + str(evidence / "react-account-paths.xml")], 420, evidence / "react-account-paths.xml", expected_files=targeted))
     if phase == "project":
+        protocol_report = evidence / "node-contract.xml"
+        protocol = run("node-contract", ["node", "--max-old-space-size=256", "--experimental-strip-types", "--test", "--experimental-test-isolation=none", "--test-concurrency=1", "--test-reporter=junit", "--test-reporter-destination=" + str(protocol_report), "scripts/account-operation-auth-retry.node-test.mjs", "scripts/account-operation-intents.node-test.mjs"], 60, protocol_report)
+        protocol["expectedTestCount"] = 24 if kind == "frontend" else 29
+        records.append(protocol)
+        if kind == "frontend":
+            records.append(run("script-tests", ["npm", "run", "test:scripts"], 120))
         unit_command = ["npm", "run", "test:unit" if kind == "frontend" else "test", "--", *([] if kind == "frontend" else ["--maxWorkers=2"]), "--reporter=junit", "--outputFile=" + str(evidence / "unit.xml")]
         records.append(run("unit", unit_command, 1800, evidence / "unit.xml"))
         commands = ([("lint-scripts", ["npm", "run", "lint:scripts"]), ("lint-style", ["npm", "run", "lint:style"])] if kind == "frontend" else [("lint-js", ["node", "node_modules/eslint/bin/eslint.js", ".", "--max-warnings=0"]), ("lint-css", ["npm", "run", "lint:css"]), ("lint-formatting", ["npm", "run", "lint:formatting"])])
@@ -177,6 +183,8 @@ def main():
     for record in ordinary:
         if record["label"] == "ci-helper-self-test":
             passes = passes and junit_green(record.get("selfTests", {}))
+        if "expectedTestCount" in record:
+            passes = passes and record.get("junit", {}).get("tests") == record["expectedTestCount"]
         if "junit" in record:
             report = record["junit"]
             passes = passes and junit_green(report, record.get("expectedTestFiles", ()), allow_skipped=record["label"] == "unit")

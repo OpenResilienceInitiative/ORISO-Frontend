@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { registerHooks } from 'node:module';
+import { register } from 'node:module';
 import { AccountOperationIntent } from '../src/utils/accountOperationIntent.ts';
 
 const stubs = {
@@ -14,7 +14,7 @@ const stubs = {
 	'../utils/requestCollector': `export class RequestLog { finish() {} }`,
 	'./counsellingDpaFailure': `export const getCounsellingDpaFailure=()=>undefined;`
 };
-registerHooks({
+const fixtureHooks = {
 	resolve(specifier, context, nextResolve) {
 		if (
 			context.parentURL?.endsWith('/src/api/fetchData.ts') &&
@@ -37,7 +37,20 @@ registerHooks({
 			};
 		return nextLoad(url, context);
 	}
-});
+};
+// Node 22's async loader runs fixture resolution separately; emitted modules
+// still execute in the test process and use its isolated transport stubs.
+register(
+	`data:text/javascript,${encodeURIComponent(
+		[
+			"import { existsSync } from 'node:fs';",
+			`const stubs = ${JSON.stringify(stubs)};`,
+			`const hooks = {${fixtureHooks.resolve.toString()},${fixtureHooks.load.toString()}};`,
+			'export const resolve = hooks.resolve; export const load = hooks.load;'
+		].join('\n')
+	)}`,
+	import.meta.url
+);
 
 test('actual public-auth recovery retains account ID and exact body on its anonymous retry', async () => {
 	const { fetchData, FETCH_ERRORS } = await import('../src/api/fetchData.ts');

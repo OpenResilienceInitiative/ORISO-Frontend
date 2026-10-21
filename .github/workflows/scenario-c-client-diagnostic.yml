@@ -70,7 +70,7 @@ jobs:
         name: public Admin target ${{ matrix.phase }} verification
         env:
             ACCOUNT_INTENT_TARGET_REPOSITORY: OpenResilienceInitiative/ORISO-Admin
-            ACCOUNT_INTENT_TARGET_SHA: 6efbeb5763375e05edfb4ec741d4d42a19795ce5
+            ACCOUNT_INTENT_TARGET_SHA: 054aee97d49f32bff04269e428e70447c6af57bc
         runs-on: ubuntu-24.04
         timeout-minutes: 70
         strategy:
@@ -81,7 +81,7 @@ jobs:
             - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
               with:
                   repository: OpenResilienceInitiative/ORISO-Admin
-                  ref: 6efbeb5763375e05edfb4ec741d4d42a19795ce5
+                  ref: 054aee97d49f32bff04269e428e70447c6af57bc
                   persist-credentials: false
             - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
               with:
@@ -119,7 +119,7 @@ jobs:
               if: always()
               uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
               with:
-                  name: public-admin-target-${{ matrix.phase }}-6efbeb5763375e05edfb4ec741d4d42a19795ce5-host-${{ github.sha }}
+                  name: public-admin-target-${{ matrix.phase }}-054aee97d49f32bff04269e428e70447c6af57bc-host-${{ github.sha }}
                   path: ${{ runner.temp }}/account-intent-evidence-${{ matrix.phase }}
                   if-no-files-found: error
                   retention-days: 14
