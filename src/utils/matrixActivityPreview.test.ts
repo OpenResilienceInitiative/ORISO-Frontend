@@ -30,6 +30,8 @@ describe('buildMatrixActivityTextPreview', () => {
 		audio: 'Audio message',
 		video: 'Video',
 		notice: 'Notice',
+		userLeftChat: 'User has left the chat',
+		systemNotification: 'System notification',
 		unsupported: 'Unsupported message',
 		pending: 'Waiting for decryption',
 		roomUnavailable: 'Conversation unavailable on this device',
@@ -93,6 +95,68 @@ describe('buildMatrixActivityTextPreview', () => {
 				labels
 			)
 		).toBe('Lisa: Notice');
+	});
+
+	const systemNoticeEvent = (payload: Record<string, unknown>) =>
+		new MatrixEvent({
+			type: 'm.room.message',
+			content: {
+				msgtype: 'm.text',
+				body: `[SYSTEM_NOTIFICATION]${JSON.stringify(payload)}`
+			}
+		});
+
+	it('shows the chat wording for USER_LEFT_CHAT, not its JSON or a sender', () => {
+		const preview = buildMatrixActivityTextPreview(
+			{
+				status: 'resolved',
+				event: systemNoticeEvent({
+					type: 'USER_LEFT_CHAT',
+					username: 'enc.abc'
+				})
+			},
+			'User',
+			'New message',
+			labels
+		);
+
+		expect(preview).toBe('User has left the chat');
+		expect(preview).not.toContain('{');
+	});
+
+	it('labels a system notice without text of its own instead of showing its JSON', () => {
+		expect(
+			buildMatrixActivityTextPreview(
+				{
+					status: 'resolved',
+					event: systemNoticeEvent({
+						type: 'CASE_HANDOVER_GRANTED',
+						username: 'Counsellor'
+					})
+				},
+				'Counsellor',
+				'New message',
+				labels
+			)
+		).toBe('System notification');
+	});
+
+	it('keeps the text of a system notice that has one, without a sender', () => {
+		expect(
+			buildMatrixActivityTextPreview(
+				{
+					status: 'resolved',
+					event: systemNoticeEvent({
+						type: 'INQUIRY_ACCEPTED',
+						title: 'Accepted',
+						description: 'The request was accepted.'
+					})
+				},
+				'Counsellor',
+				'New message',
+				labels
+			)
+		).toBe('The request was accepted.');
 	});
 	it('renders the sender and normalized plain-text body of the resolved event', () => {
 		const event = {

@@ -1,7 +1,11 @@
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
-import { toMessagePreviewText } from './messagePreviewText';
+import {
+	getSystemNotificationPreview,
+	toMessagePreviewText
+} from './messagePreviewText';
 import { parseErstantwortPayload } from '../components/erstantwort/erstantwortPayload';
+import { parseMessagePrefixes } from '../components/message/messageConstants';
 
 const normalizePreviewText = (value: string): string =>
 	value.replace(/\s+/g, ' ').trim();
@@ -12,6 +16,8 @@ export type MatrixActivityPreviewLabels = {
 	audio: string;
 	video: string;
 	notice: string;
+	userLeftChat: string;
+	systemNotification: string;
 	unsupported: string;
 	pending: string;
 	roomUnavailable: string;
@@ -102,10 +108,21 @@ export const buildMatrixActivityTextPreview = (
 				: labels?.unsupported || fallbackText;
 		return withSender(senderName, preview);
 	}
+	const systemNotice = getSystemNotificationPreview(rawBody);
+	if (systemNotice) {
+		return (
+			(systemNotice === 'user_left_chat'
+				? labels?.userLeftChat
+				: labels?.systemNotification) || fallbackText
+		);
+	}
 	const body = toMessagePreviewText(rawBody);
 	if (!body) {
 		return fallbackText;
 	}
 
-	return withSender(senderName, body);
+	// The chat draws a system notice without its sender, so the preview does too.
+	return parseMessagePrefixes(rawBody).isSystemNotification
+		? body
+		: withSender(senderName, body);
 };

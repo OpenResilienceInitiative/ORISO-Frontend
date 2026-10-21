@@ -1,5 +1,8 @@
 import { stripReplyFallback } from '../../utils/messageRelations';
-import { toMessagePreviewText } from '../../utils/messagePreviewText';
+import {
+	getSystemNotificationPreview,
+	toMessagePreviewText
+} from '../../utils/messagePreviewText';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import {
@@ -15,7 +18,9 @@ export type MatrixRoomPreviewKind =
 	| 'video'
 	| 'file'
 	| 'encrypted'
-	| 'first_response';
+	| 'first_response'
+	| 'user_left_chat'
+	| 'system_notification';
 
 /**
  * B2 / T24 (Frank: preview prefix): the secondary channel the newest message
@@ -61,12 +66,33 @@ export const formatVoiceDuration = (durationMs: number): string => {
 };
 
 /**
+ * The words for a preview without text of its own. A system notice reads as
+ * the chat words it (MessageItemComponent); the rest use their list label.
+ */
+export const toPreviewKindText = (
+	kind: MatrixRoomPreviewKind,
+	translate: (key: string, fallback?: string) => string,
+	isConsultant: boolean
+): string => {
+	if (kind === 'user_left_chat') {
+		return isConsultant
+			? translate('message.userLeftChat')
+			: translate('message.consultantLeftChat');
+	}
+	if (kind === 'system_notification') {
+		return translate('message.systemNotificationTitle');
+	}
+	return translate(`sessionList.preview.${kind}`, kind);
+};
+
+/**
  * The list card's preview line: thread and voice use the chat's glyphs, since a word prefix
  * crowds the line; voice reads as glyph plus length, other channels keep their word prefix.
  */
 export const toListPreviewLine = (
 	preview: MatrixRoomPreview | null,
-	translate: (key: string, fallback?: string) => string
+	translate: (key: string, fallback?: string) => string,
+	isConsultant = false
 ): ListPreviewLine => {
 	if (!preview || preview.kind === 'encrypted') {
 		return {
@@ -88,7 +114,7 @@ export const toListPreviewLine = (
 	} else if (preview.kind === 'text') {
 		text = preview.text || '';
 	} else {
-		text = translate(`sessionList.preview.${preview.kind}`, preview.kind);
+		text = toPreviewKindText(preview.kind, translate, isConsultant);
 	}
 	if (preview.channel === 'supervision') {
 		text = `${translate('sessionList.preview.channel.supervision')} ${text}`;
@@ -202,6 +228,10 @@ const toKindPreview = (
 		case 'm.emote': {
 			if (isErstantwortMessage(body)) {
 				return { kind: 'first_response', text: null };
+			}
+			const systemNotice = getSystemNotificationPreview(body);
+			if (systemNotice) {
+				return { kind: systemNotice, text: null };
 			}
 			const text = toMessagePreviewText(stripReplyFallback(body));
 			return text ? { kind: 'text', text } : null;

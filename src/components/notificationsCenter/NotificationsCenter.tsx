@@ -508,6 +508,14 @@ export const NotificationsCenter = () => {
 			audio: translate('notifications.center.preview.audio'),
 			video: translate('notifications.center.preview.video'),
 			notice: translate('notifications.center.preview.notice'),
+			// System notices read as the chat words them (MessageItemComponent).
+			userLeftChat: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+				? translate('message.userLeftChat')
+				: translate('message.consultantLeftChat'),
+			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
@@ -517,7 +525,7 @@ export const NotificationsCenter = () => {
 				'notifications.center.preview.eventUnavailable'
 			)
 		}),
-		[translate]
+		[translate, userData]
 	);
 	const candidatePreviewSources = useMemo(
 		() =>
