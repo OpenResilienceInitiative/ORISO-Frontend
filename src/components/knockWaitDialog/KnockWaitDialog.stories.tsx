@@ -2,10 +2,15 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { useMediaQuery } from '@mui/material';
 import {
 	desktop1440Globals,
+	MessageStoryShell,
 	phone390Globals
 } from '../message/messageStoryShell';
+import { CallTimelineMessage } from '../message/CallTimelineMessage';
+import '../message/message.styles.scss';
+import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { KnockWaitDialog, KnockWaitDialogProps } from './KnockWaitDialog';
 import {
 	initialKnockWaitPhase,
@@ -532,6 +537,105 @@ export const GroupDeclined: Story = {
 		await expect(args.onKnockAgain).toHaveBeenCalledTimes(1);
 		// Knocking again does not ask for consent a second time.
 		await expectVisible(await p.findByTestId('knock-wait-status'));
+	}
+};
+
+/* ---------- From the call message ---------- */
+
+/** A running video call the counsellor started, as the room records it. */
+const runningCall: CallLifecycleMessage = {
+	callId: 'call-knock',
+	roomRef: '!conversation:example',
+	callRoomId: '!media:example',
+	state: 'running',
+	callType: 'video',
+	actorUserId: '@berger:example',
+	participants: [{ userId: '@berger:example', displayName: 'Frau Berger' }],
+	present: [{ userId: '@berger:example', displayName: 'Frau Berger' }]
+};
+
+/**
+ * The way in: the existing call message in the chat, unchanged. Its join
+ * action opens the dialog instead of the call; the knock counts as sent
+ * (`'joined'`), so the card shows no error. Composed here only.
+ */
+const FromCallMessage = ({ onCancel, ...props }: DemoProps) => {
+	const phone = useMediaQuery('(max-width: 599.95px)');
+	const [knocking, setKnocking] = useState(false);
+	return (
+		<div style={{ display: 'flex', justifyContent: 'center' }}>
+			<div style={{ width: '100%', maxWidth: 900 }}>
+				<MessageStoryShell compact={phone}>
+					<CallTimelineMessage
+						call={runningCall}
+						onJoin={() => {
+							setKnocking(true);
+							return Promise.resolve('joined' as const);
+						}}
+					/>
+				</MessageStoryShell>
+			</div>
+			{knocking && (
+				<KnockWaitDemo
+					{...props}
+					onCancel={() => {
+						onCancel();
+						setKnocking(false);
+					}}
+				/>
+			)}
+		</div>
+	);
+};
+
+const joinButton = (canvasElement: HTMLElement) =>
+	page(canvasElement).findByRole('button', { name: /Beitreten|Join call/ });
+
+/** Before the click: the chat with the running call and its join action. */
+export const FromTheCallMessage: Story = {
+	name: 'From the call message · chat before the click',
+	globals: desktop1440Globals,
+	args: { ...call },
+	render: (args) => <FromCallMessage {...args} />,
+	play: async ({ canvasElement }) => {
+		await expectVisible(joinButton(canvasElement));
+		await expect(
+			page(canvasElement).queryByTestId('knock-wait-dialog')
+		).toBeNull();
+	}
+};
+
+export const FromTheCallMessageOpen: Story = {
+	name: 'From the call message · click opens the dialog, cancel closes it',
+	globals: desktop1440Globals,
+	args: { ...call },
+	render: (args) => <FromCallMessage {...args} />,
+	play: async ({ canvasElement, args }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await joinButton(canvasElement));
+		await expectVisible(
+			await p.findByRole('heading', {
+				name: 'Kurz warten, bis Sie hereingelassen werden'
+			})
+		);
+		await expectVisible(p.getByTestId('knock-wait-status'));
+		await userEvent.click(p.getByTestId('knock-wait-cancel'));
+		await expect(args.onCancel).toHaveBeenCalledTimes(1);
+		await expectClosed(canvasElement);
+		// The message stays, ready for another knock.
+		await expectVisible(joinButton(canvasElement));
+	}
+};
+
+export const FromTheCallMessagePhone: Story = {
+	name: 'From the call message · phone 390',
+	globals: phone390Globals,
+	args: { ...call },
+	render: (args) => <FromCallMessage {...args} />,
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await joinButton(canvasElement));
+		await expectBottomSheet(canvasElement);
+		await expectFitsViewport(canvasElement);
 	}
 };
 
