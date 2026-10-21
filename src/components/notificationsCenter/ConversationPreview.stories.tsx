@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConversationPreview } from './ConversationPreview';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MessageContextShell } from '../message/messageStoryShell';
@@ -201,4 +201,138 @@ export const RoomNotSynced: Story = {
 		}
 	],
 	args: { roomId: '!missing:oriso' }
+};
+
+/* #929: a room with more history than the first page. The fake client holds
+   the newest 50 events; one server page adds 6 older ones, then history ends. */
+const seedLongRoom = () => {
+	writeCalls.length = 0;
+	const timeline: any[] = Array.from({ length: 50 }, (_, index) =>
+		fakeEvent(
+			`$new${index}`,
+			index % 2 ? '@marge:oriso' : '@lisa:oriso',
+			`Neuere Nachricht ${index + 1}`,
+			300 - index * 5
+		)
+	);
+	let token: string | null = 'older-page';
+	const room = {
+		roomId: '!long:oriso',
+		timeline,
+		getMember: (senderId: string) => ({
+			name: NAMES[senderId] || senderId
+		}),
+		getLiveTimeline: () => ({
+			getPaginationToken: () => token,
+			getEvents: () => timeline
+		})
+	};
+	setMatrixClientServiceRef({
+		getClient: () => ({
+			getUserId: () => '@marge:oriso',
+			getRoom: () => room,
+			on: () => undefined,
+			off: () => undefined,
+			removeListener: () => undefined,
+			// Reading older history is the only call paging makes.
+			scrollback: () =>
+				new Promise((resolve) => {
+					setTimeout(() => {
+						timeline.unshift(
+							...Array.from({ length: 6 }, (_, index) =>
+								fakeEvent(
+									`$old${index}`,
+									'@lisa:oriso',
+									`Ältere Nachricht ${index + 1}`,
+									600 - index * 5
+								)
+							)
+						);
+						token = null;
+						resolve(room);
+					}, 400);
+				}),
+			sendReadReceipt: recordWrite('sendReadReceipt'),
+			sendReceipt: recordWrite('sendReceipt'),
+			setRoomReadMarkers: recordWrite('setRoomReadMarkers'),
+			sendEvent: recordWrite('sendEvent')
+		}),
+		waitUntilReady: () => Promise.resolve(),
+		getRoomMessages: (_roomId: string, limit: number) =>
+			timeline.slice(-limit)
+	} as any);
+};
+
+export const OlderMessages: Story = {
+	decorators: [
+		(StoryComponent) => {
+			seedLongRoom();
+			return (
+				<div style={{ height: 480, width: 412, display: 'flex' }}>
+					<StoryComponent />
+				</div>
+			);
+		}
+	],
+	args: { roomId: '!long:oriso' },
+	parameters: {
+		docs: {
+			description: {
+				story: '#929: the newest 50 messages render first. "Load older messages" fetches one bounded page through the chat\'s own paging, prepends it without moving the visible rows, and is replaced by "Start of the conversation" when no history remains. Nothing marks the room read.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findByText('Neuere Nachricht 50');
+		await expect(canvas.queryByText('Ältere Nachricht 1')).toBeNull();
+		const list = canvasElement.querySelector<HTMLElement>(
+			'.conversationPreview'
+		);
+		const button = canvasElement.querySelector<HTMLButtonElement>(
+			'.conversationPreview__loadOlder'
+		);
+		await expect(button).not.toBeNull();
+		// Reader scrolls to the top; what they see must stay in place. (The
+		// first row itself may lose its header once an older row from the
+		// same sender sits above it, so measure a row a little further down.)
+		list!.scrollTop = 0;
+		const watchedRow = canvasElement.querySelector<HTMLElement>(
+			'[data-message-id="$new5"]'
+		);
+		const before = watchedRow!.getBoundingClientRect().top;
+		await userEvent.click(button!);
+		await waitFor(() =>
+			expect(
+				canvasElement
+					.querySelector('.conversationPreview__loadOlder')
+					?.getAttribute('aria-busy')
+			).toBe('true')
+		);
+		await canvas.findByText('Ältere Nachricht 1');
+		const ids = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>('[data-message-id]')
+		).map((row) => row.dataset.messageId);
+		await expect(ids.slice(0, 7)).toEqual([
+			'$old0',
+			'$old1',
+			'$old2',
+			'$old3',
+			'$old4',
+			'$old5',
+			'$new0'
+		]);
+		await expect(ids).toHaveLength(56);
+		const after = canvasElement
+			.querySelector<HTMLElement>('[data-message-id="$new5"]')!
+			.getBoundingClientRect().top;
+		await expect(Math.abs(after - before)).toBeLessThan(2);
+		await expect(
+			canvasElement.querySelector('.conversationPreview__historyStart')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelector('.conversationPreview__loadOlder')
+		).toBeNull();
+		await expect(writeCalls).toEqual([]);
+	}
 };

@@ -2338,7 +2338,12 @@
 				"unsupported": "Nicht unterstützte Nachricht",
 				"pending": "Wird entschlüsselt",
 				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
-				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
+				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar",
+				"loadOlder": "Ältere Nachrichten laden",
+				"loadingOlder": "Ältere Nachrichten werden geladen …",
+				"loadOlderFailed": "Ältere Nachrichten konnten nicht geladen werden.",
+				"retryLoadOlder": "Erneut versuchen",
+				"historyStart": "Beginn des Gesprächs"
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",

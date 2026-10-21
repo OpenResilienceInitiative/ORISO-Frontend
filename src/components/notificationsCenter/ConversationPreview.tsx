@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -31,9 +32,12 @@ import { MessageTimeline } from '../session/MessageTimeline';
 import { buildRoomTimeline } from '../session/roomTimeline';
 import { buildReplyQuotePreview } from '../session/replyQuote';
 import { CHAT_TYPE_SINGLE_CHAT } from '../session/sessionHelpers';
+import {
+	usePreviewHistoryPaging,
+	type PreviewHistoryStatus
+} from './usePreviewHistoryPaging';
 import './conversationPreview.styles';
 
-const PREVIEW_MESSAGE_LIMIT = 50;
 const EMPTY_TIMELINE: PreviewTimeline = { messages: [], reactionEvents: [] };
 
 /* The preview never decrypts with legacy room keys and never reports
@@ -45,6 +49,62 @@ const PREVIEW_E2EE_PARAMS = {
 	subscriptionKeyLost: false
 } as any;
 const ignore = () => undefined;
+
+/** One row per event id, even where a page overlaps the cached window. */
+const uniqueEvents = (events: any[]) => {
+	const seen = new Set<string>();
+	return events.filter((event) => {
+		const id = event?.getId?.();
+		if (!id) return true;
+		if (seen.has(id)) return false;
+		seen.add(id);
+		return true;
+	});
+};
+
+/** #929: the explicit control at the top of the preview. */
+const PreviewHistoryControl = ({
+	status,
+	onLoadOlder,
+	translate
+}: {
+	status: PreviewHistoryStatus;
+	onLoadOlder: () => void;
+	translate: (key: string) => string;
+}) => {
+	if (status === 'end') {
+		return (
+			<p className="conversationPreview__historyStart">
+				{translate('notifications.center.preview.historyStart')}
+			</p>
+		);
+	}
+	const loading = status === 'loading';
+	return (
+		<div className="conversationPreview__history">
+			{status === 'error' && (
+				<p className="conversationPreview__historyError" role="alert">
+					{translate('notifications.center.preview.loadOlderFailed')}
+				</p>
+			)}
+			<button
+				type="button"
+				className="conversationPreview__loadOlder"
+				onClick={onLoadOlder}
+				disabled={loading}
+				aria-busy={loading}
+			>
+				{translate(
+					loading
+						? 'notifications.center.preview.loadingOlder'
+						: status === 'error'
+							? 'notifications.center.preview.retryLoadOlder'
+							: 'notifications.center.preview.loadOlder'
+				)}
+			</button>
+		</div>
+	);
+};
 
 interface PreviewTimeline {
 	messages: MessageItem[];
@@ -97,6 +157,19 @@ export const ConversationPreview = ({
 	translateRef.current = translate;
 	const ownUserId =
 		getMatrixClientService()?.getClient?.()?.getUserId?.() || '';
+	// #929: scroll geometry captured right before an older page is shown.
+	const prependAnchor = useRef<{ top: number; height: number } | null>(null);
+	const lastMessageId = useRef<string | undefined>(undefined);
+	const captureScroll = useCallback(() => {
+		const list = listRef.current;
+		prependAnchor.current = list
+			? { top: list.scrollTop, height: list.scrollHeight }
+			: null;
+	}, []);
+	const { limit, status, loadOlder, refreshStatus } = usePreviewHistoryPaging(
+		roomId,
+		captureScroll
+	);
 
 	const loadMessages = useCallback(() => {
 		const room = roomId ? chatTransportService.getMatrixRoom(roomId) : null;
@@ -106,9 +179,8 @@ export const ConversationPreview = ({
 			return;
 		}
 		setRoomAvailable(true);
-		const events = chatTransportService.getMatrixRoomMessages(
-			roomId,
-			PREVIEW_MESSAGE_LIMIT
+		const events = uniqueEvents(
+			chatTransportService.getMatrixRoomMessages(roomId, limit)
 		);
 		setTimeline({
 			messages: buildRoomTimeline(
@@ -119,7 +191,8 @@ export const ConversationPreview = ({
 			),
 			reactionEvents: extractReactionEvents(events)
 		});
-	}, [roomId]);
+		refreshStatus();
+	}, [roomId, limit, refreshStatus]);
 
 	useEffect(() => {
 		loadMessages();
@@ -195,12 +268,33 @@ export const ConversationPreview = ({
 		[ownUserId]
 	);
 
-	useEffect(() => {
+	// Open at the newest message and follow new ones; when an older page is
+	// prepended, keep the rows the reader is looking at in place (#929).
+	useLayoutEffect(() => {
 		const list = listRef.current;
-		if (list) {
+		const anchor = prependAnchor.current;
+		const newestId = visibleMessages[visibleMessages.length - 1]?._id;
+		const appended = newestId !== lastMessageId.current;
+		lastMessageId.current = newestId;
+		if (!list) return;
+		if (anchor && !appended) {
+			prependAnchor.current = null;
+			list.scrollTop = anchor.top + (list.scrollHeight - anchor.height);
+			return;
+		}
+		if (appended) {
+			prependAnchor.current = null;
 			list.scrollTop = list.scrollHeight;
 		}
-	}, [visibleMessages.length]);
+	}, [visibleMessages]);
+
+	const historyControl = (
+		<PreviewHistoryControl
+			status={status}
+			onLoadOlder={() => void loadOlder()}
+			translate={translate}
+		/>
+	);
 
 	if (!roomId || !roomAvailable || !activeSession) {
 		return (
@@ -218,6 +312,8 @@ export const ConversationPreview = ({
 				<p className="conversationPreview__notice">
 					{translate('notifications.center.preview.empty')}
 				</p>
+				{/* A thread root can sit further back than the cached window. */}
+				{status !== 'end' && historyControl}
 			</div>
 		);
 	}
@@ -229,6 +325,7 @@ export const ConversationPreview = ({
 				ref={listRef}
 				data-testid="conversation-preview"
 			>
+				{historyControl}
 				<MessageTimeline
 					messages={visibleMessages}
 					renderMode={threadRootId ? 'thread' : 'main'}
