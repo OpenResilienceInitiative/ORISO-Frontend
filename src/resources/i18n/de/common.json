@@ -1998,7 +1998,7 @@
 			},
 			"description": {
 				"running": "Der Anruf läuft seit {{start}}.",
-				"ended": "Der Anruf begann um {{start}}.",
+				"ended": "Der Anruf begann am {{start}}.",
 				"missed": "Der Anruf wurde nicht angenommen."
 			},
 			"participants": {

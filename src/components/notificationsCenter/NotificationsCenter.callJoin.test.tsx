@@ -1,13 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import {
-	act,
-	cleanup,
-	fireEvent,
-	render,
-	screen,
-	waitFor
-} from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { Context as ResponsiveContext } from 'react-responsive';
@@ -78,7 +72,9 @@ const client = {
 	}
 };
 
+let user: ReturnType<typeof userEvent.setup>;
 beforeEach(async () => {
+	user = userEvent.setup();
 	callManager.endCall(false);
 	vi.clearAllMocks();
 	mediaJoined = false;
@@ -160,7 +156,7 @@ const renderCenter = async (
 
 it('joins the existing call from the desktop Activity action after fresh authorization', async () => {
 	await renderCenter();
-	fireEvent.click(
+	await user.click(
 		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 	);
 	await waitFor(() =>
@@ -183,7 +179,7 @@ it('joins the existing call from the desktop Activity action after fresh authori
 
 it('joins the existing call from a mobile Activity card without navigating away', async () => {
 	await renderCenter(390);
-	fireEvent.click(
+	await user.click(
 		screen.getByRole('button', { name: /Call ongoing A call is ongoing/ })
 	);
 	await waitFor(() =>
@@ -204,10 +200,10 @@ it.each(['callId', 'roomRef', 'callRoomId', 'callType'])(
 			...callItem,
 			params: { ...callItem.params, [field]: undefined }
 		});
-		fireEvent.click(
+		await user.click(
 			screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 		);
-		await act(async () => {});
+		await waitFor(() => expect(markRead).toHaveBeenCalledWith('call-1'));
 		expect(apiCallState).not.toHaveBeenCalled();
 		expect(joinRoom).not.toHaveBeenCalled();
 		expect(createRoom).not.toHaveBeenCalled();
@@ -234,15 +230,24 @@ it.each(['ended', 'missed', 'denied', 'unavailable', 'identity-mismatch'])(
 				callId: 'other-call'
 			});
 		await renderCenter();
-		fireEvent.click(
+		await user.click(
 			screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 		);
 		await waitFor(() => expect(apiCallState).toHaveBeenCalled());
-		await act(async () => {});
+		await act(() =>
+			Promise.allSettled(
+				vi
+					.mocked(apiCallState)
+					.mock.results.map((result) => result.value)
+			)
+		);
 		expect(joinRoom).not.toHaveBeenCalled();
 		expect(callManager.getCurrentCall()).toBeNull();
+		// A call that is over opens its conversation; anything else stays put.
 		expect(screen.getByLabelText('Current route').textContent).toBe(
-			'/notifications'
+			state === 'ended' || state === 'missed'
+				? '/sessions/consultant/sessionView/session/42'
+				: '/notifications'
 		);
 	}
 );
@@ -259,8 +264,8 @@ it('does not join through a replacement account after a deferred state confirmat
 		name: 'Open chat',
 		exact: true
 	})[0];
-	fireEvent.click(action);
-	fireEvent.click(action);
+	await user.click(action);
+	await user.click(action);
 	await waitFor(() => expect(apiCallState).toHaveBeenCalledTimes(1));
 	const replacementJoin = vi.fn();
 	setMatrixClientServiceRef({
@@ -289,7 +294,7 @@ it('preserves the audio call type and session call mode instead of creating a vi
 			sessionId: 73
 		}
 	});
-	fireEvent.click(
+	await user.click(
 		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 	);
 	await waitFor(() =>
@@ -312,7 +317,7 @@ it.each(['request.new', 'inquiry.accepted', 'draft.created'])(
 			params: {},
 			actionPath: path
 		});
-		fireEvent.click(
+		await user.click(
 			screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 		);
 		expect(screen.getByLabelText('Current route').textContent).toBe(path);
@@ -329,7 +334,7 @@ it('joins as a group call when the call belongs to a group conversation, not by 
 		{ ...callItem, params: { ...callItem.params, seriesId: undefined } },
 		[{ chat: { matrixRoomId: call.roomRef } }]
 	);
-	fireEvent.click(
+	await user.click(
 		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 	);
 	await waitFor(() => expect(join).toHaveBeenCalled());
@@ -339,10 +344,13 @@ it('joins as a group call when the call belongs to a group conversation, not by 
 
 it('joins a one-to-one call as non-group even when the card carries a series id', async () => {
 	const join = vi.spyOn(callManager, 'joinExistingCall');
+	// A one-to-one conversation has no group chat entry for this room; an
+	// unrelated group conversation proves the room id is compared.
 	await renderCenter(1400, callItem, [
-		{ session: { matrixRoomId: call.roomRef } }
+		{ session: { id: 73, groupId: null, matrixRoomId: call.roomRef } },
+		{ chat: { id: 9, matrixRoomId: '!other-group:example' } }
 	]);
-	fireEvent.click(
+	await user.click(
 		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 	);
 	await waitFor(() => expect(join).toHaveBeenCalled());
@@ -357,7 +365,7 @@ it.each(['busy', 'unavailable'] as const)(
 			.spyOn(callManager, 'joinExistingCall')
 			.mockResolvedValue(outcome);
 		await renderCenter();
-		fireEvent.click(
+		await user.click(
 			screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
 		);
 		await waitFor(() =>
@@ -373,3 +381,20 @@ it.each(['busy', 'unavailable'] as const)(
 		join.mockRestore();
 	}
 );
+
+it('opens the conversation instead of an error when the call already ended', async () => {
+	const join = vi
+		.spyOn(callManager, 'joinExistingCall')
+		.mockResolvedValue('ended');
+	await renderCenter(1400, { ...callItem, sourceSessionId: '73' });
+	await user.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	await waitFor(() =>
+		expect(screen.getByLabelText('Current route').textContent).toMatch(
+			/\/sessionView\/.*73$/
+		)
+	);
+	expect(addNotification).not.toHaveBeenCalled();
+	join.mockRestore();
+});

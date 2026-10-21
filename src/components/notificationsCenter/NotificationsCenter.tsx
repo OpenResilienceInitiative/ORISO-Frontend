@@ -26,6 +26,7 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import {
+	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
 	resolveStatusPageAction,
 	toInterpolationValues
@@ -941,7 +942,9 @@ export const NotificationsCenter = () => {
 		);
 	// An ended call opens its conversation, never a guessed default list.
 	const openConversation = (item: NotificationFeedItem) => {
-		const path = getNotificationActionPath(item);
+		const path = toNonEmbeddedPath(
+			resolveEndedCallConversationPath(item, getDefaultSessionsPath())
+		);
 		if (path) navigate(path);
 	};
 	const joinCall = (item: NotificationFeedItem) =>

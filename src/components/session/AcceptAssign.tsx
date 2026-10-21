@@ -354,8 +354,11 @@ export const AcceptAssign = ({
 		3000
 	);
 
+	// Only an open enquiry can be taken over meanwhile; a rejected case has
+	// nothing left to watch for.
+	const watchesEnquiry = activeSession.isEnquiry;
 	useEffect(() => {
-		if (!isWatcherRunning && !overlayItem) {
+		if (!isWatcherRunning && !overlayItem && watchesEnquiry) {
 			startWatcher();
 		}
 
@@ -368,7 +371,13 @@ export const AcceptAssign = ({
 				abortController.current = null;
 			}
 		};
-	}, [isWatcherRunning, overlayItem, startWatcher, stopWatcher]);
+	}, [
+		isWatcherRunning,
+		overlayItem,
+		watchesEnquiry,
+		startWatcher,
+		stopWatcher
+	]);
 
 	const handleButtonClick = (sessionId: any) => {
 		if (
@@ -446,46 +455,48 @@ export const AcceptAssign = ({
 
 	return (
 		<>
-			<div
-				className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
-			>
-				{activeSession.isEnquiry && (
-					<Button
-						item={buttonItem}
-						disabled={
-							isRequestInProgress || showRejectionConfirmation
-						}
-						buttonHandle={() =>
-							handleButtonClick(activeSession.item.id)
-						}
-						// The button itself, not the wrapper: the team action beside
-						// it must not count as a click on "accept" for a tour.
-						tourTarget="enquiry-accept-button"
-					/>
-				)}
-				{secondaryAction}
-				{canReject && (
-					<Button
-						item={{
-							label: 'enquiry.rejection.action',
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						disabled={
-							isRequestInProgress || showRejectionConfirmation
-						}
-						buttonHandle={() => {
-							openedFor.current = {
-								context: contextKey,
-								auth: authIdentity(),
-								epoch: operationEpoch.current
-							};
-							setRejectionError('');
-							setRejectionRetryable(true);
-							setShowRejectionConfirmation(true);
-						}}
-					/>
-				)}
-			</div>
+			{(activeSession.isEnquiry || secondaryAction || canReject) && (
+				<div
+					className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
+				>
+					{activeSession.isEnquiry && (
+						<Button
+							item={buttonItem}
+							disabled={
+								isRequestInProgress || showRejectionConfirmation
+							}
+							buttonHandle={() =>
+								handleButtonClick(activeSession.item.id)
+							}
+							// The button itself, not the wrapper: the team action beside
+							// it must not count as a click on "accept" for a tour.
+							tourTarget="enquiry-accept-button"
+						/>
+					)}
+					{secondaryAction}
+					{canReject && (
+						<Button
+							item={{
+								label: 'enquiry.rejection.action',
+								type: BUTTON_TYPES.SECONDARY
+							}}
+							disabled={
+								isRequestInProgress || showRejectionConfirmation
+							}
+							buttonHandle={() => {
+								openedFor.current = {
+									context: contextKey,
+									auth: authIdentity(),
+									epoch: operationEpoch.current
+								};
+								setRejectionError('');
+								setRejectionRetryable(true);
+								setShowRejectionConfirmation(true);
+							}}
+						/>
+					)}
+				</div>
+			)}
 			{showRejectionConfirmation && (
 				<M3Dialog
 					title={translate('enquiry.rejection.confirmTitle')}
