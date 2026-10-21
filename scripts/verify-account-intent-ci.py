@@ -100,7 +100,9 @@ def run(label, command, timeout=1800, report=None, env_extra=None):
 
 before = source_manifest()
 (evidence / "source-before.json").write_text(json.dumps(before, indent=2) + "\n")
-assert before["commit"] == os.environ["GITHUB_SHA"], "checkout is not the dispatched immutable commit"
+expected_commit = os.environ.get("ACCOUNT_INTENT_TARGET_SHA", os.environ["GITHUB_SHA"])
+assert re.fullmatch(r"[0-9a-f]{40}", expected_commit), "target must be an exact immutable commit"
+assert before["commit"] == expected_commit, "checkout is not the dispatched immutable target commit"
 records = []
 
 if kind == "frontend" and phase == "react":
@@ -132,6 +134,10 @@ if phase == "project":
 after = source_manifest()
 (evidence / "source-after.json").write_text(json.dumps(after, indent=2) + "\n")
 summary = {"repositoryKind": kind, "phase": phase, "commit": before["commit"], "nodeVersion": subprocess.check_output(["node", "--version"], text=True).strip(),
+           "hostRepository": os.environ["GITHUB_REPOSITORY"], "hostCommit": os.environ["GITHUB_SHA"],
+           "targetRepository": os.environ.get("ACCOUNT_INTENT_TARGET_REPOSITORY", os.environ["GITHUB_REPOSITORY"]),
+           "targetCommit": expected_commit, "npmVersion": subprocess.check_output(["npm", "--version"], text=True).strip(),
+           "lockSha256": hashlib.sha256((root / "package-lock.json").read_bytes()).hexdigest(),
            "sourceUnchanged": before == after, "records": records, "notVerified": ["browser", "real native/backend effect", "current-human authorization"]}
 (evidence / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 ordinary = [r for r in records if r["label"] != "consultant-counterfactual"]
