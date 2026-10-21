@@ -770,3 +770,388 @@ describe('public after-pool error accounting', () => {
 		expect(f.read().inventoryComplete).toBe(false);
 	});
 });
+
+describe('matching public terminal snapshots for delayed ready events', () => {
+	const setup = (
+		id = 'native-case',
+		name = 'literal native pass',
+		file = 'src/test/verificationReporter.test.ts',
+		recordResult = true,
+		recordedState: string | undefined = 'passed'
+	) => {
+		const directory = mkdtempSync(
+			path.join(tmpdir(), 'terminal-native-snapshot-')
+		);
+		directories.push(directory);
+		const reporter = new VerificationReporter({ directory });
+		const lifecycle = initialize(reporter);
+		const snapshots: object[] = [];
+		const module = {
+			moduleId: path.resolve(file),
+			project: { name: 'unit' },
+			children: { allTests: () => snapshots }
+		};
+		const test = {
+			id,
+			module,
+			fullName: name,
+			options: { mode: 'run' },
+			result: () => ({ state: recordedState }),
+			diagnostic: () => ({ retryCount: 0 })
+		};
+		snapshots.push(test);
+		reporter.onTestRunStart([module]);
+		reporter.onTestModuleCollected(module);
+		if (recordResult) reporter.onTestCaseResult(test);
+		const read = () =>
+			JSON.parse(
+				readFileSync(path.join(directory, 'inventory.json'), 'utf8')
+			);
+		return {
+			directory,
+			reporter,
+			lifecycle,
+			module,
+			test,
+			snapshots,
+			read
+		};
+	};
+	const observed = [
+		{
+			id: '-1125501980_6_0',
+			name: 'AccountData — the help-seeker is told which wording binds > names the language that actually binds, not a fixed one',
+			file: 'src/components/registration/accountData/AccountData.consentGating.test.tsx'
+		},
+		{
+			id: '-1125501980_6_3',
+			name: 'AccountData — the help-seeker is told which wording binds > says nothing when the wording is the authored one',
+			file: 'src/components/registration/accountData/AccountData.consentGating.test.tsx'
+		},
+		{
+			id: '-1125501980_8_0',
+			name: 'AccountData — a versioned acceptance is still tied to the wording shown > drops the tick when the same version is shown in another language',
+			file: 'src/components/registration/accountData/AccountData.consentGating.test.tsx'
+		},
+		{
+			id: '-1013758531_0_12',
+			name: 'LiveChatEntryRoom — who is live, before anything is created > shows closed again when the door confirms it after "Ich warte"',
+			file: 'src/components/anonymousChat/entryRoom/LiveChatEntryRoom.precheck.test.tsx'
+		}
+	];
+	it.each(observed)(
+		'resolves actual observed case $id only from its matching public module snapshot',
+		async ({ id, name, file }) => {
+			const f = setup(id, name, file);
+			f.reporter.onTestCaseReady(f.test);
+			f.reporter.onTestModuleEnd(f.module);
+			f.reporter.onTestRunEnd([f.module], [], 'passed');
+			await f.lifecycle.close();
+			expect(f.read()).toMatchObject({
+				state: 'passed',
+				inventoryComplete: true,
+				passed: 1,
+				failed: 0,
+				expectedTests: 1,
+				skipped: 0,
+				todo: 0,
+				retries: 0,
+				running: [],
+				unfinished: [],
+				unresolvedEventAnomalies: []
+			});
+			expect(f.read().eventAnomalies).toHaveLength(1);
+			expect(f.read().reconciledTerminalEvents).toContainEqual(
+				expect.objectContaining({
+					id,
+					name,
+					file: path.resolve(file),
+					project: 'unit',
+					state: 'passed',
+					evidence:
+						'matching public module snapshot for delayed ready'
+				})
+			);
+			const raw = readFileSync(
+				path.join(f.directory, 'events.jsonl'),
+				'utf8'
+			)
+				.trim()
+				.split('\n')
+				.map(JSON.parse);
+			expect(
+				raw.map(({ event, id: eventId }) => ({ event, id: eventId }))
+			).toEqual([
+				{ event: 'result', id },
+				{ event: 'ready', id }
+			]);
+			const cases = readFileSync(
+				path.join(f.directory, 'cases.jsonl'),
+				'utf8'
+			)
+				.trim()
+				.split('\n')
+				.map(JSON.parse);
+			expect(cases).toHaveLength(1);
+			expect(cases[0]).toMatchObject({
+				name,
+				file: path.resolve(file),
+				state: 'passed',
+				retries: 0
+			});
+		}
+	);
+	it.each([
+		'public case id',
+		'public full name',
+		'public module path',
+		'public project',
+		'ready full name',
+		'ready module path',
+		'ready project',
+		'conflicting final state',
+		'pending state',
+		'unknown state',
+		'missing public child',
+		'duplicate ready',
+		'ready after public module end'
+	])('keeps %s unresolved despite a module-end callback', async (fault) => {
+		const f = setup();
+		let ready = f.test;
+		let snapshot = f.test;
+		if (fault === 'public case id')
+			snapshot = { ...snapshot, id: 'another-native-id' };
+		if (fault === 'public full name')
+			snapshot = { ...snapshot, fullName: 'another test' };
+		if (fault === 'public module path')
+			snapshot = {
+				...snapshot,
+				module: {
+					...f.module,
+					moduleId: path.resolve(
+						'src/test/storybookTenantPublicFixture.test.ts'
+					)
+				}
+			};
+		if (fault === 'public project')
+			snapshot = {
+				...snapshot,
+				module: { ...f.module, project: { name: 'storybook' } }
+			};
+		if (fault === 'ready full name')
+			ready = { ...ready, fullName: 'another test' };
+		if (fault === 'ready module path')
+			ready = {
+				...ready,
+				module: {
+					...f.module,
+					moduleId: path.resolve(
+						'src/test/storybookTenantPublicFixture.test.ts'
+					)
+				}
+			};
+		if (fault === 'ready project')
+			ready = {
+				...ready,
+				module: { ...f.module, project: { name: 'storybook' } }
+			};
+		if (fault === 'conflicting final state')
+			snapshot = { ...snapshot, result: () => ({ state: 'failed' }) };
+		if (fault === 'pending state')
+			snapshot = { ...snapshot, result: () => ({ state: 'pending' }) };
+		if (fault === 'unknown state')
+			snapshot = { ...snapshot, result: () => ({ state: undefined }) };
+		f.snapshots.splice(
+			0,
+			1,
+			...(fault === 'missing public child' ? [] : [snapshot])
+		);
+		if (fault === 'ready after public module end')
+			f.reporter.onTestModuleEnd(f.module);
+		f.reporter.onTestCaseReady(ready);
+		if (fault === 'duplicate ready') f.reporter.onTestCaseReady(ready);
+		if (fault !== 'ready after public module end')
+			f.reporter.onTestModuleEnd(f.module);
+		f.reporter.onTestRunEnd([f.module], [], 'passed');
+		await f.lifecycle.close();
+		expect(f.read()).toMatchObject({
+			state: 'failed',
+			inventoryComplete: false,
+			passed: 1,
+			failed: 0
+		});
+		expect(f.read().unresolvedEventAnomalies).toHaveLength(
+			fault === 'duplicate ready' ? 2 : 1
+		);
+		expect(f.read().reconciledTerminalEvents).toEqual([]);
+		expect(process.exitCode).toBe(1);
+	});
+	it.each(['incomplete', 'interrupted'])(
+		'retains %s failure even with a matching terminal child',
+		async (kind) => {
+			const f = setup();
+			f.reporter.onTestCaseReady(f.test);
+			if (kind !== 'incomplete') f.reporter.onTestModuleEnd(f.module);
+			f.reporter.onTestRunEnd(
+				[f.module],
+				[],
+				kind === 'interrupted' ? 'interrupted' : 'passed'
+			);
+			await f.lifecycle.close();
+			expect(f.read()).toMatchObject({
+				state: 'failed',
+				inventoryComplete: false,
+				passed: 1,
+				failed: 0
+			});
+			if (kind === 'incomplete') {
+				expect(f.read().unresolvedEventAnomalies).toHaveLength(1);
+				expect(f.read().reconciledTerminalEvents).toEqual([]);
+			}
+			expect(process.exitCode).toBe(1);
+		}
+	);
+	it.each(['failed', 'skipped'])(
+		'does not resolve a matching recorded non-PASS state %s',
+		async (state) => {
+			const f = setup(
+				'non-pass-case',
+				'literal non-pass case',
+				'src/test/verificationReporter.test.ts',
+				true,
+				state
+			);
+			f.reporter.onTestCaseReady(f.test);
+			f.reporter.onTestModuleEnd(f.module);
+			f.reporter.onTestRunEnd(
+				[f.module],
+				[],
+				state === 'failed' ? 'failed' : 'passed'
+			);
+			await f.lifecycle.close();
+			expect(f.read()).toMatchObject({
+				state: 'failed',
+				inventoryComplete: false,
+				passed: 0,
+				failed: state === 'failed' ? 1 : 0,
+				skipped: state === 'skipped' ? 1 : 0
+			});
+			expect(f.read().unresolvedEventAnomalies).toHaveLength(1);
+			expect(f.read().reconciledTerminalEvents).toEqual([]);
+			expect(process.exitCode).toBe(1);
+		}
+	);
+	it.each(['pending', undefined])(
+		'does not clear an ordinary running record with public state %s',
+		async (state) => {
+			const f = setup(
+				'pending-native-case',
+				'unfinished public case',
+				'src/test/verificationReporter.test.ts',
+				false
+			);
+			const pending = { ...f.test, result: () => ({ state }) };
+			f.snapshots.splice(0, 1, pending);
+			f.reporter.onTestCaseReady(pending);
+			f.reporter.onTestModuleEnd(f.module);
+			f.reporter.onTestRunEnd([f.module], [], 'interrupted');
+			await f.lifecycle.close();
+			expect(f.read().unfinished).toContainEqual(
+				expect.objectContaining({
+					id: pending.id,
+					name: pending.fullName
+				})
+			);
+			expect(f.read().inventoryComplete).toBe(false);
+			expect(process.exitCode).toBe(1);
+		}
+	);
+});
+
+describe('recorded identity at a delayed ready callback', () => {
+	it('cannot rehabilitate a conflicting shared ID after a later PASS overwrites the completed map', async () => {
+		const directory = mkdtempSync(
+			path.join(tmpdir(), 'native-id-conflict-')
+		);
+		directories.push(directory);
+		const reporter = new VerificationReporter({ directory });
+		const lifecycle = initialize(reporter);
+		const children: object[] = [];
+		const module = {
+			moduleId: path.resolve('src/test/verificationReporter.test.ts'),
+			project: { name: 'unit' },
+			children: { allTests: () => children }
+		};
+		const first = {
+			id: 'conflicting-native-id',
+			module,
+			fullName: 'public child A',
+			options: { mode: 'run' },
+			result: () => ({ state: 'passed' }),
+			diagnostic: () => ({ retryCount: 0 })
+		};
+		const second = { ...first, fullName: 'public child B' };
+		children.push(first, second);
+		reporter.onTestRunStart([module]);
+		reporter.onTestModuleCollected(module);
+		reporter.onTestCaseReady(first);
+		reporter.onTestCaseResult(first);
+		reporter.onTestCaseReady(second);
+		reporter.onTestCaseResult(second);
+		reporter.onTestModuleEnd(module);
+		reporter.onTestRunEnd([module], [], 'passed');
+		await lifecycle.close();
+		const read = JSON.parse(
+			readFileSync(path.join(directory, 'inventory.json'), 'utf8')
+		);
+		expect(read).toMatchObject({
+			state: 'failed',
+			nativeRunReason: 'passed',
+			inventoryComplete: false,
+			expectedTests: 2,
+			passed: 2,
+			failed: 0,
+			skipped: 0,
+			todo: 0,
+			retries: 0
+		});
+		expect(read.eventAnomalies).toHaveLength(1);
+		expect(read.unresolvedEventAnomalies).toHaveLength(1);
+		expect(read.reconciledTerminalEvents).toEqual([]);
+		expect(read.eventAnomalies[0]).toMatchObject({
+			id: first.id,
+			name: second.fullName,
+			completedAtReady: {
+				id: first.id,
+				name: first.fullName,
+				project: 'unit',
+				file: module.moduleId,
+				state: 'passed'
+			}
+		});
+		const cases = readFileSync(path.join(directory, 'cases.jsonl'), 'utf8')
+			.trim()
+			.split('\n')
+			.map(JSON.parse);
+		expect(cases.map(({ name, state }) => ({ name, state }))).toEqual([
+			{ name: first.fullName, state: 'passed' },
+			{ name: second.fullName, state: 'passed' }
+		]);
+		const events = readFileSync(
+			path.join(directory, 'events.jsonl'),
+			'utf8'
+		)
+			.trim()
+			.split('\n')
+			.map(JSON.parse);
+		expect(
+			events.map(({ event, name, id }) => ({ event, name, id }))
+		).toEqual([
+			{ event: 'ready', name: first.fullName, id: first.id },
+			{ event: 'result', name: first.fullName, id: first.id },
+			{ event: 'ready', name: second.fullName, id: first.id },
+			{ event: 'result', name: second.fullName, id: first.id }
+		]);
+		expect(process.exitCode).toBe(1);
+	});
+});

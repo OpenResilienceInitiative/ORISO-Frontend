@@ -35,6 +35,7 @@ export default class VerificationReporter {
 		};
 		this.running = new Map();
 		this.completed = new Map();
+		this.readyCounts = new Map();
 		this.eventAnomalies = [];
 		this.reconciled = [];
 		this.counts = {
@@ -104,6 +105,7 @@ export default class VerificationReporter {
 					),
 					inventoryComplete: this.isInventoryComplete(),
 					eventAnomalies: this.eventAnomalies,
+					unresolvedEventAnomalies: this.unresolvedEventAnomalies(),
 					reconciledTerminalEvents: this.reconciled,
 					unhandledErrors: this.unhandledErrors || []
 				},
@@ -123,8 +125,9 @@ export default class VerificationReporter {
 			this.afterPool.errors.length === 0 &&
 			this.assignmentPlan.valid &&
 			['passed', 'failed'].includes(this.state) &&
+			['passed', 'failed'].includes(this.nativeRunReason) &&
 			!(this.unhandledErrors || []).length &&
-			this.eventAnomalies.length === 0 &&
+			this.unresolvedEventAnomalies().length === 0 &&
 			this.modulePlanErrors.length === 0 &&
 			this.assignedSpecifications.every(
 				(spec) =>
@@ -160,7 +163,7 @@ export default class VerificationReporter {
 			if (
 				errors.length ||
 				(this.unhandledErrors || []).length ||
-				this.eventAnomalies.length ||
+				this.unresolvedEventAnomalies().length ||
 				this.modulePlanErrors.length
 			)
 				this.failProcess();
@@ -194,7 +197,7 @@ export default class VerificationReporter {
 				!this.nativeRunStarted &&
 				!errors.length &&
 				!(this.unhandledErrors || []).length &&
-				!this.eventAnomalies.length &&
+				!this.unresolvedEventAnomalies().length &&
 				!this.modulePlanErrors.length
 			)
 				return;
@@ -347,20 +350,51 @@ export default class VerificationReporter {
 			})}\n`
 		);
 	}
+	testIdentity(test) {
+		return {
+			id: test.id,
+			file: test.module.moduleId,
+			project: this.specification(test.module).project,
+			name: test.fullName
+		};
+	}
+	sameTest(left, right) {
+		return (
+			left &&
+			left.id === right.id &&
+			left.file === right.file &&
+			left.project === right.project &&
+			left.name === right.name
+		);
+	}
+	unresolvedEventAnomalies() {
+		return this.eventAnomalies.filter(
+			(anomaly, index) =>
+				!this.reconciled.some(
+					(record) =>
+						record.anomalyIndex === index &&
+						record.phase === 'public-module-end' &&
+						record.state === 'passed' &&
+						this.sameTest(record, anomaly)
+				)
+		);
+	}
 	onTestCaseReady(test) {
 		this.event('ready', test);
+		const readyIdentity = JSON.stringify(this.testIdentity(test));
+		this.readyCounts.set(
+			readyIdentity,
+			(this.readyCounts.get(readyIdentity) || 0) + 1
+		);
 		if (this.completed.has(test.id)) {
 			this.eventAnomalies.push({
 				event: 'ready-after-result',
-				id: test.id,
-				file: test.module.moduleId,
-				name: test.fullName
+				...this.testIdentity(test),
+				completedAtReady: { ...this.completed.get(test.id) }
 			});
 		} else {
 			this.running.set(test.id, {
-				id: test.id,
-				file: test.module.moduleId,
-				name: test.fullName,
+				...this.testIdentity(test),
 				startedAt: new Date().toISOString()
 			});
 		}
@@ -376,8 +410,7 @@ export default class VerificationReporter {
 		if (browser) this.browsers.set(JSON.stringify(browser), browser);
 		this.event('result', test, { state: result.state });
 		this.completed.set(test.id, {
-			file: test.module.moduleId,
-			name: test.fullName,
+			...this.testIdentity(test),
 			state: result.state
 		});
 		const state =
@@ -405,23 +438,70 @@ export default class VerificationReporter {
 		);
 		this.save();
 	}
-	reconcile(module) {
+	reconcile(module, publicModuleEnd = false) {
+		const moduleIdentity = this.identity(module);
+		if (
+			!this.modules.has(moduleIdentity) ||
+			!this.assignedSpecifications.some(
+				(spec) => this.identity(spec) === moduleIdentity
+			)
+		)
+			return;
 		for (const test of module.children.allTests()) {
-			const state = test.result().state;
-			if (state !== 'pending' && this.running.has(test.id)) {
+			const state = test.result()?.state;
+			const snapshot = this.testIdentity(test);
+			if (
+				this.identity(test.module) !== moduleIdentity ||
+				!['passed', 'failed', 'skipped'].includes(state)
+			)
+				continue;
+			const running = this.running.get(test.id);
+			if (this.sameTest(running, snapshot)) {
 				this.reconciled.push({
-					id: test.id,
-					file: module.moduleId,
-					name: test.fullName,
+					...snapshot,
 					state,
 					evidence: 'terminal module test result'
 				});
 				this.running.delete(test.id);
 			}
+			// A run-end aggregate is not the public module-end proof. Keep all raw
+			// anomalies; only an exact recorded PASS can be resolved here.
+			const recorded = this.completed.get(test.id);
+			if (
+				!publicModuleEnd ||
+				state !== 'passed' ||
+				recorded?.state !== 'passed' ||
+				!this.sameTest(recorded, snapshot) ||
+				this.readyCounts.get(JSON.stringify(snapshot)) !== 1
+			)
+				continue;
+			this.eventAnomalies.forEach((anomaly, anomalyIndex) => {
+				if (
+					!this.sameTest(anomaly, snapshot) ||
+					anomaly.completedAtReady?.state !== 'passed' ||
+					!this.sameTest(anomaly.completedAtReady, anomaly) ||
+					!this.sameTest(anomaly.completedAtReady, snapshot) ||
+					this.reconciled.some(
+						(item) => item.anomalyIndex === anomalyIndex
+					)
+				)
+					return;
+				this.reconciled.push({
+					...snapshot,
+					state,
+					anomalyIndex,
+					evidence:
+						'matching public module snapshot for delayed ready',
+					phase: 'public-module-end',
+					recordedResult: { ...recorded },
+					completedAtReady: { ...anomaly.completedAtReady },
+					publicModuleSnapshot: { ...snapshot, state }
+				});
+			});
 		}
 	}
 	onTestModuleEnd(module) {
-		this.reconcile(module);
+		this.reconcile(module, true);
 		const identity = this.identity(module);
 		if (this.completedModules.has(identity)) {
 			this.modulePlanErrors.push({
