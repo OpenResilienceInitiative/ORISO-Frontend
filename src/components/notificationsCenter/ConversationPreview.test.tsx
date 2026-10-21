@@ -1,52 +1,78 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ConversationPreview } from './ConversationPreview';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
 
 const transport = vi.hoisted(() => ({
 	getMatrixRoom: vi.fn(),
 	getMatrixRoomMessages: vi.fn(),
-	onMatrixTimeline: vi.fn(() => () => undefined)
+	onMatrixTimeline: vi.fn(() => () => undefined),
+	// Read paths the message rows use to resolve member names (as in the chat).
+	resolveSession: (session: any) => ({ matrixRoomId: session?.rid }),
+	loadMatrixRoomMembers: vi.fn(async () => []),
+	onMatrixRoomMembers: vi.fn(() => () => undefined),
+	// Write paths the real chat uses. The preview must never touch them.
+	markRoomAsRead: vi.fn(async () => undefined),
+	sendReaction: vi.fn(async () => undefined),
+	redactEvent: vi.fn(async () => undefined)
 }));
+const activeView = vi.hoisted(() => vi.fn(async () => undefined));
 
 // The real chatTransportService imports matrix-js-sdk (heavyweight, hangs the
-// jsdom worker) — the preview only needs these three calls. vi.mock calls are
-// hoisted above the imports by vitest, so mocking after them is safe.
+// jsdom worker). vi.mock calls are hoisted above the imports by vitest.
 vi.mock('../../services/chatTransportService', () => ({
 	chatTransportService: transport
 }));
-
+// The chat's "is reading" registration (#847 root cause).
+vi.mock('../../api/apiPatchNotificationActiveView', () => ({
+	apiPatchNotificationActiveView: activeView
+}));
+// lottie-web asks for a 2d canvas context at import time.
+vi.mock('lottie-react', () => ({ default: () => null }));
+vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) => key,
+		t: (key: string, fallback?: unknown) =>
+			typeof fallback === 'string' ? fallback : key,
 		i18n: { language: 'de' }
-	})
+	}),
+	Trans: ({ children }: { children?: React.ReactNode }) => <>{children}</>
 }));
+
+HTMLCanvasElement.prototype.getContext = (() => ({
+	fillRect: () => {},
+	getImageData: () => ({ data: new Uint8ClampedArray(4) }),
+	putImageData: () => {},
+	measureText: () => ({ width: 0 }),
+	fillText: () => {}
+})) as unknown as HTMLCanvasElement['getContext'];
+
+const OWN = '@consultant:matrix.example';
+const LISA = '@lisa:matrix.example';
 
 const matrixEvent = (overrides: {
 	id: string;
 	sender: string;
 	body?: string;
+	type?: string;
 	content?: Record<string, unknown>;
 	ts?: number;
-}) => ({
-	getType: () => 'm.room.message',
-	getClearContent: () =>
-		overrides.content ?? {
-			msgtype: 'm.text',
-			body: overrides.body ?? ''
-		},
-	getContent: () =>
-		overrides.content ?? {
-			msgtype: 'm.text',
-			body: overrides.body ?? ''
-		},
-	getSender: () => overrides.sender,
-	getTs: () => overrides.ts ?? 1754040000000,
-	getId: () => overrides.id
-});
+}) => {
+	const content = overrides.content ?? {
+		msgtype: 'm.text',
+		body: overrides.body ?? ''
+	};
+	return {
+		getType: () => overrides.type ?? 'm.room.message',
+		getClearContent: () => content,
+		getContent: () => content,
+		getSender: () => overrides.sender,
+		getTs: () => overrides.ts ?? 1754040000000,
+		getId: () => overrides.id
+	};
+};
 
 const room = {
 	roomId: '!room:matrix.example',
@@ -55,140 +81,203 @@ const room = {
 	})
 };
 
+const matrixClient = {
+	getUserId: () => OWN,
+	sendReadReceipt: vi.fn(),
+	setRoomReadMarkers: vi.fn(),
+	sendReceipt: vi.fn()
+};
+
 const arrange = (events: any[], roomExists = true) => {
 	transport.getMatrixRoom.mockReturnValue(roomExists ? room : null);
 	transport.getMatrixRoomMessages.mockReturnValue(events);
-	setMatrixClientServiceRef({
-		getClient: () => ({ getUserId: () => '@consultant:matrix.example' })
-	} as any);
+	setMatrixClientServiceRef({ getClient: () => matrixClient } as any);
 };
 
+let ConversationPreview: typeof import('./ConversationPreview').ConversationPreview;
+let MessageContextShell: typeof import('../message/messageStoryShell').MessageContextShell;
+
+beforeAll(async () => {
+	// MessageItemComponent is a big module graph; load it once.
+	({ ConversationPreview } = await import('./ConversationPreview'));
+	({ MessageContextShell } = await import('../message/messageStoryShell'));
+}, 60000);
+
+const renderPreview = (props: { roomId: string; threadRootId?: string }) =>
+	render(
+		<MessageContextShell>
+			<ConversationPreview {...props} />
+		</MessageContextShell>
+	);
+
 afterEach(() => {
+	cleanup();
 	vi.clearAllMocks();
 	setMatrixClientServiceRef(null);
 });
 
-describe('ConversationPreview (#847)', () => {
-	it('renders the room timeline from the local Matrix client', () => {
+describe('ConversationPreview (#420): the real chat rows, read-only', () => {
+	it('renders the room through the chat message rows', () => {
 		arrange([
 			matrixEvent({
 				id: '$1',
-				sender: '@lisa:matrix.example',
+				sender: LISA,
 				body: 'Hallo, ich brauche Hilfe.'
 			}),
-			matrixEvent({
-				id: '$2',
-				sender: '@consultant:matrix.example',
-				body: 'Gern — erzählen Sie.'
-			})
+			matrixEvent({ id: '$2', sender: OWN, body: 'Gern, erzählen Sie.' })
 		]);
 
-		render(<ConversationPreview roomId="!room:matrix.example" />);
+		const { container } = renderPreview({
+			roomId: '!room:matrix.example'
+		});
 
+		expect(container.querySelectorAll('.messageItem')).toHaveLength(2);
 		expect(screen.getByText('Hallo, ich brauche Hilfe.')).toBeTruthy();
-		expect(screen.getByText('Gern — erzählen Sie.')).toBeTruthy();
-		expect(screen.getByText('lisa')).toBeTruthy();
-	});
-
-	it('marks own messages so the bubble aligns right', () => {
-		arrange([
-			matrixEvent({
-				id: '$2',
-				sender: '@consultant:matrix.example',
-				body: 'Meine Antwort'
-			})
-		]);
-
-		const { container } = render(
-			<ConversationPreview roomId="!room:matrix.example" />
-		);
-
+		// Own message sits on the right, exactly like in the chat.
 		expect(
-			container.querySelector('.conversationPreview__message--own')
-		).toBeTruthy();
+			container
+				.querySelector('[data-message-id="$2"]')
+				?.classList.contains('messageItem--right')
+		).toBe(true);
 	});
 
-	it('strips markup instead of injecting formatted_body HTML', () => {
-		arrange([
-			matrixEvent({
-				id: '$3',
-				sender: '@lisa:matrix.example',
-				content: {
-					msgtype: 'm.text',
-					body: 'bold',
-					formatted_body: '<b>bold</b><img src=x onerror=alert(1)>'
-				}
-			})
-		]);
-
-		const { container } = render(
-			<ConversationPreview roomId="!room:matrix.example" />
+	it('renders formatting and alignment as the chat does, never the [[align]] marker', () => {
+		const markup = composerHtmlToTransportMarkup(
+			'<p style="text-align: center;"><strong>Zentriert</strong></p>'
 		);
+		expect(markup).toContain('[[align:center]]');
+		arrange([matrixEvent({ id: '$a', sender: LISA, body: markup })]);
 
-		expect(container.querySelector('img')).toBeNull();
-		expect(container.querySelector('b')).toBeNull();
-		expect(screen.getByText('bold')).toBeTruthy();
+		const { container } = renderPreview({
+			roomId: '!room:matrix.example'
+		});
+
+		const aligned = container.querySelector('.messageItem__align--center');
+		expect(aligned?.textContent).toContain('Zentriert');
+		expect(aligned?.querySelector('strong')).toBeTruthy();
+		expect(container.textContent).not.toContain('[[align');
 	});
 
-	it('decodes HTML entities instead of rendering the escape sequences', () => {
+	it('shows reactions and thread entries, but none of them can act', () => {
 		arrange([
+			matrixEvent({ id: '$root', sender: LISA, body: 'Frage' }),
 			matrixEvent({
-				id: '$e',
-				sender: '@lisa:matrix.example',
+				id: '$t1',
+				sender: OWN,
 				content: {
-					msgtype: 'm.text',
-					body: 'Tom & Jerry <3',
-					formatted_body: 'Tom &amp; Jerry &lt;3'
+					'msgtype': 'm.text',
+					'body': 'Antwort im Thread',
+					'm.relates_to': { rel_type: 'm.thread', event_id: '$root' }
+				}
+			}),
+			matrixEvent({
+				id: '$r1',
+				sender: OWN,
+				type: 'm.reaction',
+				content: {
+					'm.relates_to': {
+						rel_type: 'm.annotation',
+						event_id: '$root',
+						key: '👍'
+					}
 				}
 			})
 		]);
 
-		render(<ConversationPreview roomId="!room:matrix.example" />);
+		const { container } = renderPreview({
+			roomId: '!room:matrix.example'
+		});
 
-		expect(screen.getByText('Tom & Jerry <3')).toBeTruthy();
-		expect(screen.queryByText(/&amp;/)).toBeNull();
+		const pill = container.querySelector('.messageItem__reactionPill');
+		expect(pill?.textContent).toContain('👍');
+		expect(pill?.tagName).not.toBe('BUTTON');
+		const threadEntry = container.querySelector('[data-cy="thread-entry"]');
+		expect(threadEntry?.textContent).toContain('Antwort im Thread');
+		expect(threadEntry?.tagName).not.toBe('BUTTON');
 	});
 
-	it('renders only messages of the given thread when threadRootId is set', () => {
+	it('renders no composer and no message actions', () => {
+		arrange([
+			matrixEvent({ id: '$1', sender: LISA, body: 'Hallo' }),
+			matrixEvent({ id: '$2', sender: OWN, body: 'Antwort' })
+		]);
+
+		const { container } = renderPreview({
+			roomId: '!room:matrix.example'
+		});
+
+		expect(container.querySelector('textarea')).toBeNull();
+		expect(container.querySelector('[contenteditable="true"]')).toBeNull();
+		expect(container.querySelector('.messageItem__kebabButton')).toBeNull();
+		expect(screen.queryByLabelText('message.menu.open')).toBeNull();
+		// Not even a context-menu / long-press path to the action menu.
+		const bubble = container.querySelector('.messageItem__message');
+		bubble?.dispatchEvent(
+			new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+		);
+		expect(
+			container.ownerDocument.querySelector('[role="menu"]')
+		).toBeNull();
+	});
+
+	it('never registers an active view, sends a receipt or marks anything read', () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		arrange([
+			matrixEvent({ id: '$1', sender: LISA, body: 'Hi' }),
+			matrixEvent({ id: '$2', sender: OWN, body: 'Hallo' })
+		]);
+
+		renderPreview({ roomId: '!room:matrix.example' });
+
+		// It does listen to the client's live timeline …
+		expect(transport.onMatrixTimeline).toHaveBeenCalledWith(
+			'!room:matrix.example',
+			expect.any(Function)
+		);
+		// … and writes nothing at all.
+		expect(activeView).not.toHaveBeenCalled();
+		expect(transport.markRoomAsRead).not.toHaveBeenCalled();
+		expect(transport.sendReaction).not.toHaveBeenCalled();
+		expect(matrixClient.sendReadReceipt).not.toHaveBeenCalled();
+		expect(matrixClient.setRoomReadMarkers).not.toHaveBeenCalled();
+		expect(matrixClient.sendReceipt).not.toHaveBeenCalled();
+		expect(fetchSpy).not.toHaveBeenCalled();
+		fetchSpy.mockRestore();
+	});
+
+	it('shows the thread root and its replies when a thread is selected', () => {
 		const threadReply = (id: string, body: string, root: string) =>
 			matrixEvent({
 				id,
-				sender: '@lisa:matrix.example',
+				sender: LISA,
 				content: {
 					'msgtype': 'm.text',
 					'body': body,
-					'm.relates_to': {
-						rel_type: 'm.thread',
-						event_id: root
-					}
+					'm.relates_to': { rel_type: 'm.thread', event_id: root }
 				}
 			});
 		arrange([
-			matrixEvent({
-				id: '$root',
-				sender: '@lisa:matrix.example',
-				body: 'Main timeline message'
-			}),
+			matrixEvent({ id: '$root', sender: LISA, body: 'Thread-Anfang' }),
+			matrixEvent({ id: '$main', sender: LISA, body: 'Anderes Thema' }),
 			threadReply('$t1', 'Reply in our thread', '$root'),
 			threadReply('$t2', 'Reply in another thread', '$other')
 		]);
 
-		render(
-			<ConversationPreview
-				roomId="!room:matrix.example"
-				threadRootId="$root"
-			/>
-		);
+		renderPreview({
+			roomId: '!room:matrix.example',
+			threadRootId: '$root'
+		});
 
+		expect(screen.getByText('Thread-Anfang')).toBeTruthy();
 		expect(screen.getByText('Reply in our thread')).toBeTruthy();
 		expect(screen.queryByText('Reply in another thread')).toBeNull();
-		expect(screen.queryByText('Main timeline message')).toBeNull();
+		expect(screen.queryByText('Anderes Thema')).toBeNull();
 	});
 
 	it('shows the unavailable notice when the room is not in the client store', () => {
 		arrange([], false);
 
-		render(<ConversationPreview roomId="!missing:matrix.example" />);
+		renderPreview({ roomId: '!missing:matrix.example' });
 
 		expect(
 			screen.getByText('notifications.center.preview.unavailable')
@@ -198,34 +287,10 @@ describe('ConversationPreview (#847)', () => {
 	it('shows the empty state for a room without messages', () => {
 		arrange([]);
 
-		render(<ConversationPreview roomId="!room:matrix.example" />);
+		renderPreview({ roomId: '!room:matrix.example' });
 
 		expect(
 			screen.getByText('notifications.center.preview.empty')
 		).toBeTruthy();
-	});
-
-	it('subscribes to the room timeline but never issues a network call', () => {
-		// #847 core guarantee: the old iframe booted a session view that
-		// PATCHed /event-notifications/active-view and made the backend drop
-		// message.new for the previewed room. The preview reads the synced
-		// client store only.
-		const fetchSpy = vi.spyOn(global, 'fetch' as any);
-		arrange([
-			matrixEvent({
-				id: '$1',
-				sender: '@lisa:matrix.example',
-				body: 'Hi'
-			})
-		]);
-
-		render(<ConversationPreview roomId="!room:matrix.example" />);
-
-		expect(transport.onMatrixTimeline).toHaveBeenCalledWith(
-			'!room:matrix.example',
-			expect.any(Function)
-		);
-		expect(fetchSpy).not.toHaveBeenCalled();
-		fetchSpy.mockRestore();
 	});
 });

@@ -1240,6 +1240,11 @@ $message-avatar-overlap: -19px;
 		justify-content: end;
 	}
 
+	// #420: read-only preview wrapper around cards with their own controls.
+	&__readOnlyGuard {
+		display: contents;
+	}
+
 	&__threadButton {
 		contain: inline-size;
 		width: 100%;

@@ -395,6 +395,12 @@ interface MessageItemComponentProps extends MessageItem {
 	) => void;
 	handleDecryptionSuccess: (id: string) => void;
 	e2eeParams: e2eeParams & { subscriptionKeyLost: boolean };
+	/**
+	 * #420: the Activity Timeline preview shows the real row, but nothing in
+	 * it may write — no action menu, no reacting, no joining a call, no
+	 * consent or notification setup. Reading stays (text, links, files).
+	 */
+	readOnly?: boolean;
 }
 
 export const MessageItemComponent = ({
@@ -438,7 +444,8 @@ export const MessageItemComponent = ({
 	onReact,
 	onUnreact,
 	sendFailed,
-	encryptionBroke
+	encryptionBroke,
+	readOnly = false
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, avatarMembers = [] } =
@@ -1930,6 +1937,44 @@ export const MessageItemComponent = ({
 		</span>
 	) : null;
 
+	const threadEntryClassName = clsx(
+		'messageItem__threadButton',
+		isMyMessage && 'messageItem__threadButton--right'
+	);
+	const threadEntryContent = threadSummary ? (
+		<>
+			<ThreadEntryIcon
+				className="messageItem__threadButtonIcon"
+				aria-hidden="true"
+			/>
+			<span className="messageItem__threadButtonMain">
+				{translate('message.thread.replies', {
+					count: threadSummary.replyCount
+				})}
+			</span>
+			{threadSummary.lastReplyText && (
+				<span
+					className="messageItem__threadButtonMeta"
+					data-cy="thread-entry-preview"
+				>
+					{threadSummary.lastReplyText}
+				</span>
+			)}
+		</>
+	) : null;
+
+	// #420: in the read-only preview, embedded cards with their own controls
+	// (standing access, notification setup) look the same but cannot act.
+	// `display: contents` keeps the chat layout untouched.
+	const readOnlyGuard = (node: React.ReactNode) =>
+		readOnly ? (
+			<div className="messageItem__readOnlyGuard" inert>
+				{node}
+			</div>
+		) : (
+			node
+		);
+
 	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
 	// sharing one rail with the timestamp. Adding happens via the action menu.
 	const reactionChips =
@@ -1940,31 +1985,48 @@ export const MessageItemComponent = ({
 					isMyMessage && 'messageItem__reactions--right'
 				)}
 			>
-				{reactions.map((reaction) => (
-					<button
-						key={reaction.key}
-						type="button"
-						className={clsx(
-							'messageItem__reactionPill',
-							reaction.ownEventId &&
-								'messageItem__reactionPill--mine'
-						)}
-						onClick={() =>
-							reaction.ownEventId
-								? onUnreact?.(reaction.ownEventId)
-								: onReact?.(reaction.key)
-						}
-						aria-label={translate('message.reaction.count', {
-							key: reaction.key,
-							count: reaction.count
-						})}
-					>
-						<span aria-hidden>{reaction.key}</span>
-						<span className="messageItem__reactionPillCount">
-							{reaction.count}
+				{reactions.map((reaction) => {
+					const pillClassName = clsx(
+						'messageItem__reactionPill',
+						reaction.ownEventId && 'messageItem__reactionPill--mine'
+					);
+					const pillLabel = translate('message.reaction.count', {
+						key: reaction.key,
+						count: reaction.count
+					});
+					const pillContent = (
+						<>
+							<span aria-hidden>{reaction.key}</span>
+							<span className="messageItem__reactionPillCount">
+								{reaction.count}
+							</span>
+						</>
+					);
+					return readOnly ? (
+						<span
+							key={reaction.key}
+							className={pillClassName}
+							role="img"
+							aria-label={pillLabel}
+						>
+							{pillContent}
 						</span>
-					</button>
-				))}
+					) : (
+						<button
+							key={reaction.key}
+							type="button"
+							className={pillClassName}
+							onClick={() =>
+								reaction.ownEventId
+									? onUnreact?.(reaction.ownEventId)
+									: onReact?.(reaction.key)
+							}
+							aria-label={pillLabel}
+						>
+							{pillContent}
+						</button>
+					);
+				})}
 			</div>
 		) : null;
 
@@ -2170,16 +2232,21 @@ export const MessageItemComponent = ({
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
 							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
-							onPointerDown={handleBubblePointerDown}
-							onPointerMove={handleBubblePointerMove}
-							onPointerUp={cancelLongPress}
-							onPointerLeave={cancelLongPress}
-							onPointerCancel={cancelLongPress}
-							onContextMenu={handleBubbleContextMenu}
+							{...(readOnly
+								? {}
+								: {
+										onPointerDown: handleBubblePointerDown,
+										onPointerMove: handleBubblePointerMove,
+										onPointerUp: cancelLongPress,
+										onPointerLeave: cancelLongPress,
+										onPointerCancel: cancelLongPress,
+										onContextMenu: handleBubbleContextMenu
+									})}
 						>
 							{isSystemNotification &&
 								(isCaseHandoverGrantedEvent ||
-									isInquiryAcceptedEvent) && (
+									isInquiryAcceptedEvent) &&
+								readOnlyGuard(
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
@@ -2197,8 +2264,9 @@ export const MessageItemComponent = ({
 													activeSession.item.id
 												}
 												onSetupNotifications={
-													grantNotificationPolicy.emailAllowed ||
-													grantNotificationPolicy.browserAllowed
+													!readOnly &&
+													(grantNotificationPolicy.emailAllowed ||
+														grantNotificationPolicy.browserAllowed)
 														? () =>
 																setShowGrantNotifications(
 																	true
@@ -2222,8 +2290,9 @@ export const MessageItemComponent = ({
 													activeSession.item.id
 												}
 												onSetupNotifications={
-													grantNotificationPolicy.emailAllowed ||
-													grantNotificationPolicy.browserAllowed
+													!readOnly &&
+													(grantNotificationPolicy.emailAllowed ||
+														grantNotificationPolicy.browserAllowed)
 														? () =>
 																setShowGrantNotifications(
 																	true
@@ -2622,6 +2691,7 @@ export const MessageItemComponent = ({
 					call={callLifecycle}
 					loadState={apiCallState}
 					onJoin={
+						readOnly ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
@@ -2664,6 +2734,9 @@ export const MessageItemComponent = ({
 			<div
 				className="messageItem messageItem--erstantwort"
 				data-message-id={_id}
+				// #420: same cards, but their buttons (e-mail, name, notification
+				// setup) write — the preview shows them without letting them act.
+				inert={readOnly || undefined}
 			>
 				{getMessageDate()}
 				<ErstantwortMessage
@@ -2803,20 +2876,24 @@ export const MessageItemComponent = ({
 										size={AVATAR_SIZES.message}
 									/>
 								</div>
-								<button
-									type="button"
-									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate('message.menu.open')}
-									onClick={(event) =>
-										toggleActionMenu(event, 'left')
-									}
-								>
-									{isActionMenuOpen ? (
-										<ActiveKebabIcon />
-									) : (
-										<StackVerticalIcon className="messageItem__kebabIconDefault" />
-									)}
-								</button>
+								{!readOnly && (
+									<button
+										type="button"
+										className="messageItem__kebabButton messageItem__kebabButton--left"
+										aria-label={translate(
+											'message.menu.open'
+										)}
+										onClick={(event) =>
+											toggleActionMenu(event, 'left')
+										}
+									>
+										{isActionMenuOpen ? (
+											<ActiveKebabIcon />
+										) : (
+											<StackVerticalIcon className="messageItem__kebabIconDefault" />
+										)}
+									</button>
+								)}
 							</div>
 							{showVisibleAudience && (
 								<button
@@ -2853,20 +2930,24 @@ export const MessageItemComponent = ({
 					isSystemNotification && (
 						<CarimatAvatar
 							menu={
-								<button
-									type="button"
-									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate('message.menu.open')}
-									onClick={(event) =>
-										toggleActionMenu(event, 'left')
-									}
-								>
-									{isActionMenuOpen ? (
-										<ActiveKebabIcon />
-									) : (
-										<StackVerticalIcon className="messageItem__kebabIconDefault" />
-									)}
-								</button>
+								!readOnly && (
+									<button
+										type="button"
+										className="messageItem__kebabButton messageItem__kebabButton--left"
+										aria-label={translate(
+											'message.menu.open'
+										)}
+										onClick={(event) =>
+											toggleActionMenu(event, 'left')
+										}
+									>
+										{isActionMenuOpen ? (
+											<ActiveKebabIcon />
+										) : (
+											<StackVerticalIcon className="messageItem__kebabIconDefault" />
+										)}
+									</button>
+								)
 							}
 						/>
 					)}
@@ -2903,20 +2984,24 @@ export const MessageItemComponent = ({
 								</button>
 							)}
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
-								<button
-									type="button"
-									className="messageItem__kebabButton messageItem__kebabButton--right"
-									aria-label={translate('message.menu.open')}
-									onClick={(event) =>
-										toggleActionMenu(event, 'right')
-									}
-								>
-									{isActionMenuOpen ? (
-										<ActiveKebabIcon />
-									) : (
-										<StackVerticalIcon className="messageItem__kebabIconDefault" />
-									)}
-								</button>
+								{!readOnly && (
+									<button
+										type="button"
+										className="messageItem__kebabButton messageItem__kebabButton--right"
+										aria-label={translate(
+											'message.menu.open'
+										)}
+										onClick={(event) =>
+											toggleActionMenu(event, 'right')
+										}
+									>
+										{isActionMenuOpen ? (
+											<ActiveKebabIcon />
+										) : (
+											<StackVerticalIcon className="messageItem__kebabIconDefault" />
+										)}
+									</button>
+								)}
 								<div className="messageItem__avatar">
 									<MessageAvatar
 										isGroup={!!activeSession?.isGroup}
@@ -2982,16 +3067,23 @@ export const MessageItemComponent = ({
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&
-						onOpenThread &&
+						(onOpenThread || readOnly) &&
 						threadSummary &&
-						threadSummary.replyCount > 0 && (
+						threadSummary.replyCount > 0 &&
+						(readOnly ? (
+							// #420: the preview shows that a thread exists,
+							// without opening it.
+							<div
+								className={threadEntryClassName}
+								data-cy="thread-entry"
+								title={threadSummary.lastReplyText}
+							>
+								{threadEntryContent}
+							</div>
+						) : (
 							<button
 								type="button"
-								className={clsx(
-									'messageItem__threadButton',
-									isMyMessage &&
-										'messageItem__threadButton--right'
-								)}
+								className={threadEntryClassName}
 								data-cy="thread-entry"
 								aria-label={[
 									translate('message.thread.open'),
@@ -3009,25 +3101,9 @@ export const MessageItemComponent = ({
 									onOpenThread?.(event.currentTarget);
 								}}
 							>
-								<ThreadEntryIcon
-									className="messageItem__threadButtonIcon"
-									aria-hidden="true"
-								/>
-								<span className="messageItem__threadButtonMain">
-									{translate('message.thread.replies', {
-										count: threadSummary.replyCount
-									})}
-								</span>
-								{threadSummary.lastReplyText && (
-									<span
-										className="messageItem__threadButtonMeta"
-										data-cy="thread-entry-preview"
-									>
-										{threadSummary.lastReplyText}
-									</span>
-								)}
+								{threadEntryContent}
 							</button>
-						)}
+						))}
 				</div>
 			</div>
 			{/* Mounted only while a menu is open: one per message would subscribe the whole timeline. */}
