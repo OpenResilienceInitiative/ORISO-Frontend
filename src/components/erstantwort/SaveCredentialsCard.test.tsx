@@ -134,10 +134,11 @@ describe('SaveCredentialsCard', () => {
 		);
 	});
 
-	it('keeps the login name but drops the password shortcut in the read-only preview (#420)', () => {
+	it('keeps the login name but drops every action in the read-only preview (#420)', () => {
 		renderCard({ readOnly: true });
 
 		expect(screen.getByDisplayValue('katze_mika_1234')).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /kopieren/i })).toBeNull();
 		expect(
 			screen.queryByRole('button', { name: 'Passwort jetzt setzen' })
 		).toBeNull();

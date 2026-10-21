@@ -40,7 +40,7 @@ import './SaveCredentialsCard.styles.scss';
 export interface SaveCredentialsCardProps {
 	/** The immutable Anmeldename (`userName`), never the display name. */
 	userName: string;
-	/** #420 preview: the login name stays readable; no way out of the preview. */
+	/** #420 preview: the login name stays readable; no copy, no way out of the preview. */
 	readOnly?: boolean;
 }
 
@@ -107,13 +107,15 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 					readOnly
 					value={userName}
 				/>
-				<button
-					type="button"
-					className="saveCredentialsCard__copy"
-					onClick={copy}
-				>
-					{t('erstantwort.saveCredentials.copy')}
-				</button>
+				{!readOnly && (
+					<button
+						type="button"
+						className="saveCredentialsCard__copy"
+						onClick={copy}
+					>
+						{t('erstantwort.saveCredentials.copy')}
+					</button>
+				)}
 			</div>
 
 			<p
