@@ -210,6 +210,8 @@ export const TipTapComposer = forwardRef<
 		ref
 	) => {
 		const { t } = useTranslation();
+		const editorAccessibleName =
+			placeholder.trim() || t('message.submit.editorLabel');
 		const isSyncingFromValue = useRef(false);
 		/* The editor's own recent states, as it reported them. `value` comes back
 		   from the parent a render later — under load, several keystrokes later.
@@ -285,6 +287,11 @@ export const TipTapComposer = forwardRef<
 			content: value || '',
 			editable: !readOnly,
 			editorProps: {
+				attributes: {
+					'role': 'textbox',
+					'aria-multiline': 'true',
+					'aria-label': editorAccessibleName
+				},
 				handleTextInput: (view, from, to, text) => {
 					const availableLength = getAvailableInputLength(
 						view,
