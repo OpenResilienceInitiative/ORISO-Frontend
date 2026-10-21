@@ -6088,5 +6088,39 @@
 				"inviteText": "La confirmation du contrat ne peut pas être vérifiée pour le moment. Veuillez réessayer."
 			}
 		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Patientez un instant, vous allez être admis",
+			"descriptionCall": "D'ici là, personne ne vous voit ni ne vous entend. Vous pouvez déjà régler votre micro et votre caméra ici.",
+			"descriptionGroup": "Dès que vous serez admis, vous pourrez écrire dans le groupe.",
+			"statusCall": "Vous avez frappé – votre conseiller voit que vous attendez.",
+			"statusGroup": "Vous avez frappé – l'animation du groupe voit que vous attendez.",
+			"openUntil": "Le chat de groupe est ouvert jusqu'à {{time}}.",
+			"cancel": "Ne plus attendre"
+		},
+		"admitted": {
+			"title": "Vous avez été admis",
+			"statusCall": "Connexion à l'appel …",
+			"statusGroup": "Ouverture du chat de groupe …"
+		},
+		"declined": {
+			"title": "Pas pour le moment",
+			"descriptionCall": "Votre conseiller ne peut pas vous admettre pour le moment. Réessayez plus tard ou envoyez un message.",
+			"descriptionGroup": "L'animation du groupe ne peut pas vous admettre pour le moment. Réessayez plus tard."
+		},
+		"cancelled": {
+			"title": "Vous n'attendez plus",
+			"descriptionCall": "Vous pouvez frapper à nouveau tant que l'appel est en cours.",
+			"descriptionGroup": "Vous pouvez frapper à nouveau tant que le chat de groupe est ouvert."
+		},
+		"knockAgain": "Frapper à nouveau",
+		"devices": {
+			"camera": "Caméra",
+			"microphone": "Micro",
+			"micOn": "Activer le micro",
+			"micOff": "Couper le micro",
+			"micMeter": "Volume de votre micro"
+		}
 	}
 }

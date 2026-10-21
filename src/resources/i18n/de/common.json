@@ -6078,5 +6078,39 @@
 				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuchen Sie es erneut."
 			}
 		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Kurz warten, bis Sie hereingelassen werden",
+			"descriptionCall": "Bis dahin sieht und hört Sie niemand. Mikrofon und Kamera können Sie hier schon einstellen.",
+			"descriptionGroup": "Sobald Sie hereingelassen werden, können Sie in der Gruppe mitschreiben.",
+			"statusCall": "Angeklopft – Ihre Beratung sieht, dass Sie warten.",
+			"statusGroup": "Angeklopft – die Gruppenleitung sieht, dass Sie warten.",
+			"openUntil": "Der Gruppenchat ist bis {{time}} Uhr geöffnet.",
+			"cancel": "Nicht mehr warten"
+		},
+		"admitted": {
+			"title": "Sie wurden hereingelassen",
+			"statusCall": "Das Gespräch wird verbunden …",
+			"statusGroup": "Der Gruppenchat wird geöffnet …"
+		},
+		"declined": {
+			"title": "Gerade geht es nicht",
+			"descriptionCall": "Ihre Beratung kann Sie im Moment nicht hereinlassen. Versuchen Sie es später noch einmal oder schreiben Sie eine Nachricht.",
+			"descriptionGroup": "Die Gruppenleitung kann Sie im Moment nicht hereinlassen. Versuchen Sie es später noch einmal."
+		},
+		"cancelled": {
+			"title": "Sie warten nicht mehr",
+			"descriptionCall": "Sie können wieder anklopfen, solange das Gespräch läuft.",
+			"descriptionGroup": "Sie können wieder anklopfen, solange der Gruppenchat geöffnet ist."
+		},
+		"knockAgain": "Erneut anklopfen",
+		"devices": {
+			"camera": "Kamera",
+			"microphone": "Mikrofon",
+			"micOn": "Mikrofon an",
+			"micOff": "Mikrofon aus",
+			"micMeter": "Lautstärke Ihres Mikrofons"
+		}
 	}
 }

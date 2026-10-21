@@ -6003,5 +6003,39 @@
 				"inviteText": "The contract confirmation could not be checked right now. Please try again."
 			}
 		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Please wait until you are let in",
+			"descriptionCall": "Until then, nobody can see or hear you. You can already set up your microphone and camera here.",
+			"descriptionGroup": "As soon as you are let in, you can write in the group.",
+			"statusCall": "Knocked – your counsellor can see that you are waiting.",
+			"statusGroup": "Knocked – the group lead can see that you are waiting.",
+			"openUntil": "The group chat is open until {{time}}.",
+			"cancel": "Stop waiting"
+		},
+		"admitted": {
+			"title": "You have been let in",
+			"statusCall": "Connecting the call …",
+			"statusGroup": "Opening the group chat …"
+		},
+		"declined": {
+			"title": "Not right now",
+			"descriptionCall": "Your counsellor cannot let you in at the moment. Try again later or send a message.",
+			"descriptionGroup": "The group lead cannot let you in at the moment. Try again later."
+		},
+		"cancelled": {
+			"title": "You stopped waiting",
+			"descriptionCall": "You can knock again while the call is running.",
+			"descriptionGroup": "You can knock again while the group chat is open."
+		},
+		"knockAgain": "Knock again",
+		"devices": {
+			"camera": "Camera",
+			"microphone": "Microphone",
+			"micOn": "Unmute microphone",
+			"micOff": "Mute microphone",
+			"micMeter": "Your microphone volume"
+		}
 	}
 }

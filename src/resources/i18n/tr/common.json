@@ -6088,5 +6088,39 @@
 				"inviteText": "Sözleşme onayı şu anda doğrulanamadı. Lütfen tekrar deneyin."
 			}
 		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "İçeri alınana kadar lütfen biraz bekleyin",
+			"descriptionCall": "O zamana kadar kimse sizi görmez ve duymaz. Mikrofonunuzu ve kameranızı burada ayarlayabilirsiniz.",
+			"descriptionGroup": "İçeri alındığınızda grupta yazabilirsiniz.",
+			"statusCall": "Kapıyı çaldınız – danışmanınız beklediğinizi görüyor.",
+			"statusGroup": "Kapıyı çaldınız – grup yöneticisi beklediğinizi görüyor.",
+			"openUntil": "Grup sohbeti şu saate kadar açık: {{time}}.",
+			"cancel": "Beklemeyi bırak"
+		},
+		"admitted": {
+			"title": "İçeri alındınız",
+			"statusCall": "Görüşmeye bağlanılıyor …",
+			"statusGroup": "Grup sohbeti açılıyor …"
+		},
+		"declined": {
+			"title": "Şu anda olmuyor",
+			"descriptionCall": "Danışmanınız sizi şu anda içeri alamıyor. Daha sonra tekrar deneyin veya bir mesaj yazın.",
+			"descriptionGroup": "Grup yöneticisi sizi şu anda içeri alamıyor. Daha sonra tekrar deneyin."
+		},
+		"cancelled": {
+			"title": "Artık beklemiyorsunuz",
+			"descriptionCall": "Görüşme sürdüğü sürece tekrar kapıyı çalabilirsiniz.",
+			"descriptionGroup": "Grup sohbeti açık olduğu sürece tekrar kapıyı çalabilirsiniz."
+		},
+		"knockAgain": "Tekrar kapıyı çal",
+		"devices": {
+			"camera": "Kamera",
+			"microphone": "Mikrofon",
+			"micOn": "Mikrofonu aç",
+			"micOff": "Mikrofonu kapat",
+			"micMeter": "Mikrofonunuzun ses düzeyi"
+		}
 	}
 }
