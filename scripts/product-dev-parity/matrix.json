@@ -1,0 +1,755 @@
+{
+  "status": "PREPARED_NOT_EXECUTED",
+  "scenarios": [
+    {
+      "id": "root-default",
+      "base": "",
+      "packageProxy": false,
+      "requests": [
+        {
+          "id": "cors-transformed-source-get",
+          "axis": "cors",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-transformed-source-options",
+          "axis": "cors",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-public-get",
+          "axis": "cors",
+          "legacyPath": "/parity-large.txt",
+          "candidatePath": "/parity-large.txt",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-public-options",
+          "axis": "cors",
+          "legacyPath": "/parity-large.txt",
+          "candidatePath": "/parity-large.txt",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-settings-get",
+          "axis": "cors",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-settings-options",
+          "axis": "cors",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-api-get",
+          "axis": "cors",
+          "legacyPath": "/service/parity?x=1",
+          "candidatePath": "/service/parity?x=1",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-api-options",
+          "axis": "cors",
+          "legacyPath": "/service/parity?x=1",
+          "candidatePath": "/service/parity?x=1",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "compression-public-identity",
+          "axis": "compression",
+          "legacyPath": "/parity-large.txt",
+          "candidatePath": "/parity-large.txt",
+          "method": "GET",
+          "encoding": "identity",
+          "accept": "text/plain"
+        },
+        {
+          "id": "compression-public-gzip",
+          "axis": "compression",
+          "legacyPath": "/parity-large.txt",
+          "candidatePath": "/parity-large.txt",
+          "method": "GET",
+          "encoding": "gzip",
+          "accept": "text/plain"
+        },
+        {
+          "id": "compression-html-identity",
+          "axis": "compression",
+          "legacyPath": "/beratung-hilfe.html",
+          "candidatePath": "/beratung-hilfe.html",
+          "method": "GET",
+          "encoding": "identity",
+          "accept": "text/html"
+        },
+        {
+          "id": "compression-html-gzip",
+          "axis": "compression",
+          "legacyPath": "/beratung-hilfe.html",
+          "candidatePath": "/beratung-hilfe.html",
+          "method": "GET",
+          "encoding": "gzip",
+          "accept": "text/html"
+        },
+        {
+          "id": "host-localhost-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-localhost-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-ip-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-ip-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-allowed-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-allowed-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-foreign-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-foreign-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "redirect-1",
+          "axis": "redirect",
+          "legacyPath": "/",
+          "candidatePath": "/",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-2",
+          "axis": "redirect",
+          "legacyPath": "/outside?q=1",
+          "candidatePath": "/outside?q=1",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-3",
+          "axis": "redirect",
+          "legacyPath": "/outside/?q=1",
+          "candidatePath": "/outside/?q=1",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-4",
+          "axis": "redirect",
+          "legacyPath": "/brand",
+          "candidatePath": "/brand",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-5",
+          "axis": "redirect",
+          "legacyPath": "/brand/",
+          "candidatePath": "/brand/",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-6",
+          "axis": "redirect",
+          "legacyPath": "/brand/beratung-hilfe.html",
+          "candidatePath": "/brand/beratung-hilfe.html",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-7",
+          "axis": "redirect",
+          "legacyPath": "/brand/dotted.path?q=1",
+          "candidatePath": "/brand/dotted.path?q=1",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "worker-base-js",
+          "axis": "service-worker",
+          "legacyPath": "/service-worker.js",
+          "candidatePath": "/service-worker.js",
+          "method": "GET",
+          "accept": "application/javascript"
+        },
+        {
+          "id": "worker-base-any",
+          "axis": "service-worker",
+          "legacyPath": "/service-worker.js",
+          "candidatePath": "/service-worker.js",
+          "method": "GET",
+          "accept": "*/*"
+        },
+        {
+          "id": "worker-other-js",
+          "axis": "service-worker",
+          "legacyPath": "/brand/service-worker.js",
+          "candidatePath": "/brand/service-worker.js",
+          "method": "GET",
+          "accept": "application/javascript"
+        },
+        {
+          "id": "worker-query-js",
+          "axis": "service-worker",
+          "legacyPath": "/service-worker.js?v=1",
+          "candidatePath": "/service-worker.js?v=1",
+          "method": "GET",
+          "accept": "application/javascript"
+        },
+        {
+          "id": "worker-query-any",
+          "axis": "service-worker",
+          "legacyPath": "/service-worker.js?v=1",
+          "candidatePath": "/service-worker.js?v=1",
+          "method": "GET",
+          "accept": "*/*"
+        }
+      ]
+    },
+    {
+      "id": "root-package-proxy",
+      "base": "",
+      "packageProxy": true,
+      "requests": [
+        {
+          "id": "host-localhost-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-localhost-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-ip-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-ip-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-allowed-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-allowed-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-foreign-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-foreign-source",
+          "axis": "host",
+          "legacyPath": "/static/js/app.bundle.js",
+          "candidatePath": "/src/initApp.js",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "package-proxy-json",
+          "axis": "package-proxy",
+          "legacyPath": "/unclaimed/proxy-probe?x=1",
+          "candidatePath": "/unclaimed/proxy-probe?x=1",
+          "method": "GET",
+          "accept": "application/json",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "package-proxy-html",
+          "axis": "package-proxy",
+          "legacyPath": "/unclaimed/proxy-probe?x=1",
+          "candidatePath": "/unclaimed/proxy-probe?x=1",
+          "method": "GET",
+          "accept": "text/html",
+          "origin": "https://origin.parity.invalid"
+        }
+      ]
+    },
+    {
+      "id": "brand-default",
+      "base": "/brand",
+      "packageProxy": false,
+      "requests": [
+        {
+          "id": "cors-transformed-source-get",
+          "axis": "cors",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-transformed-source-options",
+          "axis": "cors",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-public-get",
+          "axis": "cors",
+          "legacyPath": "/brand/parity-large.txt",
+          "candidatePath": "/brand/parity-large.txt",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-public-options",
+          "axis": "cors",
+          "legacyPath": "/brand/parity-large.txt",
+          "candidatePath": "/brand/parity-large.txt",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-settings-get",
+          "axis": "cors",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-settings-options",
+          "axis": "cors",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-api-get",
+          "axis": "cors",
+          "legacyPath": "/service/parity?x=1",
+          "candidatePath": "/service/parity?x=1",
+          "method": "GET",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "cors-api-options",
+          "axis": "cors",
+          "legacyPath": "/service/parity?x=1",
+          "candidatePath": "/service/parity?x=1",
+          "method": "OPTIONS",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "compression-public-identity",
+          "axis": "compression",
+          "legacyPath": "/brand/parity-large.txt",
+          "candidatePath": "/brand/parity-large.txt",
+          "method": "GET",
+          "encoding": "identity",
+          "accept": "text/plain"
+        },
+        {
+          "id": "compression-public-gzip",
+          "axis": "compression",
+          "legacyPath": "/brand/parity-large.txt",
+          "candidatePath": "/brand/parity-large.txt",
+          "method": "GET",
+          "encoding": "gzip",
+          "accept": "text/plain"
+        },
+        {
+          "id": "compression-html-identity",
+          "axis": "compression",
+          "legacyPath": "/brand/beratung-hilfe.html",
+          "candidatePath": "/brand/beratung-hilfe.html",
+          "method": "GET",
+          "encoding": "identity",
+          "accept": "text/html"
+        },
+        {
+          "id": "compression-html-gzip",
+          "axis": "compression",
+          "legacyPath": "/brand/beratung-hilfe.html",
+          "candidatePath": "/brand/beratung-hilfe.html",
+          "method": "GET",
+          "encoding": "gzip",
+          "accept": "text/html"
+        },
+        {
+          "id": "host-localhost-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-localhost-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-ip-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-ip-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-allowed-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-allowed-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-foreign-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-foreign-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "redirect-1",
+          "axis": "redirect",
+          "legacyPath": "/",
+          "candidatePath": "/",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-2",
+          "axis": "redirect",
+          "legacyPath": "/outside?q=1",
+          "candidatePath": "/outside?q=1",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-3",
+          "axis": "redirect",
+          "legacyPath": "/outside/?q=1",
+          "candidatePath": "/outside/?q=1",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-4",
+          "axis": "redirect",
+          "legacyPath": "/brand",
+          "candidatePath": "/brand",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-5",
+          "axis": "redirect",
+          "legacyPath": "/brand/",
+          "candidatePath": "/brand/",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-6",
+          "axis": "redirect",
+          "legacyPath": "/brand/beratung-hilfe.html",
+          "candidatePath": "/brand/beratung-hilfe.html",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "redirect-7",
+          "axis": "redirect",
+          "legacyPath": "/brand/dotted.path?q=1",
+          "candidatePath": "/brand/dotted.path?q=1",
+          "method": "GET",
+          "accept": "text/html"
+        },
+        {
+          "id": "worker-base-js",
+          "axis": "service-worker",
+          "legacyPath": "/brand/service-worker.js",
+          "candidatePath": "/brand/service-worker.js",
+          "method": "GET",
+          "accept": "application/javascript"
+        },
+        {
+          "id": "worker-base-any",
+          "axis": "service-worker",
+          "legacyPath": "/brand/service-worker.js",
+          "candidatePath": "/brand/service-worker.js",
+          "method": "GET",
+          "accept": "*/*"
+        },
+        {
+          "id": "worker-other-js",
+          "axis": "service-worker",
+          "legacyPath": "/service-worker.js",
+          "candidatePath": "/service-worker.js",
+          "method": "GET",
+          "accept": "application/javascript"
+        },
+        {
+          "id": "worker-query-js",
+          "axis": "service-worker",
+          "legacyPath": "/brand/service-worker.js?v=1",
+          "candidatePath": "/brand/service-worker.js?v=1",
+          "method": "GET",
+          "accept": "application/javascript"
+        },
+        {
+          "id": "worker-query-any",
+          "axis": "service-worker",
+          "legacyPath": "/brand/service-worker.js?v=1",
+          "candidatePath": "/brand/service-worker.js?v=1",
+          "method": "GET",
+          "accept": "*/*"
+        }
+      ]
+    },
+    {
+      "id": "brand-package-proxy",
+      "base": "/brand",
+      "packageProxy": true,
+      "requests": [
+        {
+          "id": "host-localhost-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-localhost-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "localhost",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-ip-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-ip-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "127.0.0.1",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-allowed-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-allowed-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "parity.allowed.test",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "host-foreign-settings",
+          "axis": "host",
+          "legacyPath": "/p/api/settings",
+          "candidatePath": "/p/api/settings",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "owned-settings"
+        },
+        {
+          "id": "host-foreign-source",
+          "axis": "host",
+          "legacyPath": "/brand/static/js/app.bundle.js",
+          "candidatePath": "/brand/src/initApp.js",
+          "method": "GET",
+          "host": "foreign.parity.invalid",
+          "routeClass": "transformed-source"
+        },
+        {
+          "id": "package-proxy-json",
+          "axis": "package-proxy",
+          "legacyPath": "/brand/unclaimed/proxy-probe?x=1",
+          "candidatePath": "/brand/unclaimed/proxy-probe?x=1",
+          "method": "GET",
+          "accept": "application/json",
+          "origin": "https://origin.parity.invalid"
+        },
+        {
+          "id": "package-proxy-html",
+          "axis": "package-proxy",
+          "legacyPath": "/brand/unclaimed/proxy-probe?x=1",
+          "candidatePath": "/brand/unclaimed/proxy-probe?x=1",
+          "method": "GET",
+          "accept": "text/html",
+          "origin": "https://origin.parity.invalid"
+        }
+      ]
+    }
+  ],
+  "scenarioCount": 4,
+  "nativeLegCount": 8,
+  "pairedRequestCases": 84,
+  "expectedHTTPResponses": 168,
+  "browserRuns": 0,
+  "policy": "All observed legacy/candidate differences preserved before any production patch. No broad baseline assertion."
+}

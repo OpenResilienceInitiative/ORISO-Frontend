@@ -14,6 +14,7 @@ on:
       - "scripts/start-vite.mjs"
       - "scripts/build-vite.mjs"
       - "scripts/vite-product-*.mjs"
+      - "scripts/product-dev-parity/**"
       - "playwright.product.config.ts"
       - "playwright/product-vite/**"
       - "src/pages/**"
@@ -33,6 +34,7 @@ on:
       - "scripts/start-vite.mjs"
       - "scripts/build-vite.mjs"
       - "scripts/vite-product-*.mjs"
+      - "scripts/product-dev-parity/**"
       - "playwright.product.config.ts"
       - "playwright/product-vite/**"
       - "src/pages/**"
@@ -188,6 +190,17 @@ jobs:
           for (const event of exited) { assert.equal(event.code, 0); assert.equal(event.signal, null); }
           console.log(JSON.stringify({stats: report.stats, tests: tests.map(item => ({id:item.id,title:item.title})), fixtureExits: exited}));
           NODE
+
+      - name: Compare all 84 legacy and Vite middleware contracts once
+        id: full84
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        timeout-minutes: 16
+        run: |
+          set +e
+          timeout --signal=TERM --kill-after=30s 900s python3 scripts/product-dev-parity/run.py --output "$PRODUCT_CONTRACT_ARTIFACTS/full-84" > "$PRODUCT_CONTRACT_ARTIFACTS/full-84.log" 2>&1
+          code=$?
+          printf '{"code":%d}\n' "$code" > "$PRODUCT_CONTRACT_ARTIFACTS/full-84-exit.json"
+          exit "$code"
 
       - name: Preserve raw contract evidence
         if: always()
