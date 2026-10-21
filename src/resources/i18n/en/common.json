@@ -2191,7 +2191,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "New counsellor took over your case",
-				"text": "The authorised case handover was logged."
+				"text": "The authorised case handover was logged.",
+				"coAccess": {
+					"title": "Temporary access granted",
+					"text": "A counsellor may read this case for a limited time. Responsibility stays with the current counsellor."
+				},
+				"generic": {
+					"title": "Access to the case granted",
+					"text": "The authorised access was logged. You can see the current state in the conversation."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Case handover declined",
@@ -2199,7 +2207,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
-				"text": "A colleague wants to hand this consultation over to you. Review the request before opening the conversation."
+				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
+				"coAccess": {
+					"title": "Temporary access offer",
+					"text": "{{fromConsultantName}} offers you temporary access to this consultation. The current counsellor stays responsible."
+				}
 			},
 			"callStarted": {
 				"title": "Call ongoing",
@@ -3674,7 +3686,8 @@
 			"retired": "Not specified"
 		},
 		"history": {
-			"unknownConsultant": "A former counsellor"
+			"unknownConsultant": "A former counsellor",
+			"unknownColleague": "A colleague"
 		},
 		"submit": "Request access",
 		"submitSending": "Sending",
