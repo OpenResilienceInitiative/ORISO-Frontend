@@ -58,12 +58,58 @@ const checked = () =>
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.mocked(apiPatchUserData).mockReset().mockResolvedValue(undefined);
 	sessionStorage.clear();
 	localStorage.clear();
 });
 afterEach(cleanup);
 
 describe('the live chat door offers a choice of names (#1341)', () => {
+	it('retains the native locale identity and exact submitted pseudonym after an unknown reply', async () => {
+		vi.mocked(apiPatchUserData)
+			.mockRejectedValueOnce(new TypeError('reply lost'))
+			.mockResolvedValueOnce(undefined);
+		render(<LiveChatEntryRoom sessionId={7} />);
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(1));
+		await waitFor(() =>
+			expect(
+				screen.getByTestId('registration-footer-primary')
+			).not.toBeDisabled()
+		);
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
+		expect(vi.mocked(apiPatchUserData).mock.calls[1]).toEqual(
+			vi.mocked(apiPatchUserData).mock.calls[0]
+		);
+	});
+
+	it('uses a fresh native locale intent after choosing another pseudonym and returning to the first', async () => {
+		vi.mocked(apiPatchUserData).mockRejectedValue(
+			new TypeError('reply lost')
+		);
+		render(<LiveChatEntryRoom sessionId={7} />);
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(1));
+		await waitFor(() =>
+			expect(
+				screen.getByTestId('registration-footer-primary')
+			).not.toBeDisabled()
+		);
+		const radios = screen.getAllByRole('radio');
+		fireEvent.click(radios[1]);
+		fireEvent.click(radios[0]);
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
+		const [first, second] = vi.mocked(apiPatchUserData).mock.calls;
+		expect(second[0]).toEqual(first[0]);
+		expect(
+			second[1].id,
+			'account-intent-anonymous-edit-away-back'
+		).not.toBe(first[1].id);
+		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
+	});
+
 	it('shows four names with the first one already taken', () => {
 		render(<LiveChatEntryRoom sessionId={7} />);
 
@@ -91,10 +137,13 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 			})
 		);
 		// The redeemed account keeps the guest's language (no LocaleContext here → 'de').
-		expect(apiPatchUserData).toHaveBeenCalledWith({
-			displayName: chosen,
-			preferredLanguage: 'de'
-		});
+		expect(apiPatchUserData).toHaveBeenCalledWith(
+			{
+				displayName: chosen,
+				preferredLanguage: 'de'
+			},
+			expect.objectContaining({ id: expect.any(String) })
+		);
 	});
 
 	/* The account keeps the language on screen, as the ISO code the server
@@ -114,7 +163,8 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 
 		await waitFor(() =>
 			expect(apiPatchUserData).toHaveBeenCalledWith(
-				expect.objectContaining({ preferredLanguage: stored })
+				expect.objectContaining({ preferredLanguage: stored }),
+				expect.objectContaining({ id: expect.any(String) })
 			)
 		);
 	});

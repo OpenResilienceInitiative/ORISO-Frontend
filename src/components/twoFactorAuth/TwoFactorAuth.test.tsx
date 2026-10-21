@@ -6,6 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../globalState';
 import { TwoFactorAuth } from './TwoFactorAuth';
 
+const { deleteTwoFactorAuth } = vi.hoisted(() => ({
+	deleteTwoFactorAuth: vi.fn()
+}));
+vi.mock('../../api', () => ({ apiDeleteTwoFactorAuth: deleteTwoFactorAuth }));
+
 const setupDialogMock = vi.fn();
 const backupDialogMock = vi.fn();
 const locationState = vi.hoisted(() => ({
@@ -60,6 +65,7 @@ vi.mock('../profile/EncryptionSettings/BackupKeyAfterTwoFactorDialog', () => ({
 
 describe('TwoFactorAuth', () => {
 	beforeEach(() => {
+		deleteTwoFactorAuth.mockReset();
 		setupDialogMock.mockClear();
 		backupDialogMock.mockClear();
 		locationState.current = { openTwoFactor: true };
@@ -206,6 +212,50 @@ describe('TwoFactorAuth', () => {
 
 		expect(backupDialogMock).toHaveBeenLastCalledWith(
 			expect.objectContaining({ open: false })
+		);
+	});
+
+	it('keeps an unknown teardown retry and starts a fresh teardown after successful re-enrollment', async () => {
+		deleteTwoFactorAuth
+			.mockRejectedValueOnce(new TypeError('reply lost'))
+			.mockRejectedValueOnce(new TypeError('reply still lost'))
+			.mockResolvedValueOnce(undefined);
+		const value = {
+			userData: {
+				email: 'test@example.test',
+				twoFactorAuth: { isActive: true, type: 'APP' }
+			},
+			reloadUserData: vi.fn().mockResolvedValue(undefined)
+		} as React.ContextType<typeof UserDataContext>;
+		render(
+			<UserDataContext.Provider value={value}>
+				<TwoFactorAuth />
+			</UserDataContext.Provider>
+		);
+		const props = () =>
+			setupDialogMock.mock.calls.at(-1)[0] as {
+				onDisable: () => Promise<void>;
+				onSetupComplete: () => Promise<void>;
+			};
+		await act(async () => {
+			await expect(props().onDisable()).rejects.toThrow('reply lost');
+		});
+		await act(async () => {
+			await expect(props().onDisable()).rejects.toThrow(
+				'reply still lost'
+			);
+		});
+		expect(deleteTwoFactorAuth.mock.calls[1]).toEqual(
+			deleteTwoFactorAuth.mock.calls[0]
+		);
+		await act(async () => {
+			await props().onSetupComplete();
+		});
+		await act(async () => {
+			await props().onDisable();
+		});
+		expect(deleteTwoFactorAuth.mock.calls[2][0].id).not.toBe(
+			deleteTwoFactorAuth.mock.calls[0][0].id
 		);
 	});
 });
