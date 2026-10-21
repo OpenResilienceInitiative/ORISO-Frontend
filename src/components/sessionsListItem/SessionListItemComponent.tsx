@@ -105,7 +105,8 @@ import {
 	getPreviewLastMessageType,
 	getRoomPreviewsByChannel,
 	TimedRoomPreview,
-	toListPreviewLine
+	toListPreviewLine,
+	toPreviewKindText
 } from './matrixRoomPreview';
 import { SessionCardBody } from './SessionCardBody/SessionCardBody';
 import {
@@ -324,15 +325,25 @@ export const SessionListItemComponent = ({
 		[visibleSupervisionPreviewEvents]
 	);
 
+	const isConsultantViewer = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	const matrixPreviewLine = useMemo(
 		() =>
 			isMatrixBackedSession
 				? toListPreviewLine(
 						matrixSessionPreview,
-						translate as (key: string, fallback?: string) => string
+						translate as (key: string, fallback?: string) => string,
+						isConsultantViewer
 					)
 				: null,
-		[isMatrixBackedSession, matrixSessionPreview, translate]
+		[
+			isMatrixBackedSession,
+			matrixSessionPreview,
+			translate,
+			isConsultantViewer
+		]
 	);
 
 	useEffect(() => {
@@ -979,9 +990,10 @@ export const SessionListItemComponent = ({
 			}
 			return preview.kind === 'text'
 				? preview.text || undefined
-				: translate(
-						`sessionList.preview.${preview.kind}`,
-						preview.kind
+				: toPreviewKindText(
+						preview.kind,
+						translate as (key: string, fallback?: string) => string,
+						isConsultantViewer
 					);
 		};
 		const previewWhen = (preview: TimedRoomPreview | null) =>
