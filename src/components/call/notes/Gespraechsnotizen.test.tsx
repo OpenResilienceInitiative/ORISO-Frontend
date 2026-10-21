@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

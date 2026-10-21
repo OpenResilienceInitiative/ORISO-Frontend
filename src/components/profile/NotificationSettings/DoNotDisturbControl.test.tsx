@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Global DND control — presentational contract: shows the options and reports
  * the chosen one; renders the active-until state when DND is set.

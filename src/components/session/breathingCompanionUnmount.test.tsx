@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * The breathing companion's host contract (`BreathingCompanion.tsx`) says:
  * "When counselling starts, UNMOUNT the component." The live chat entry room

@@ -2,7 +2,7 @@
  * WP-06 Slice 6a — unit coverage for the cross-device notification settings
  * (model + store transport against a mock Matrix client).
  *
- * @vitest-environment jsdom
+ * @vitest-environment oriso-jsdom
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vite-plus/test';

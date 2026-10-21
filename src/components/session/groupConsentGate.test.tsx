@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * ADR-022 gate 2 in a self-help group (#1499): a client whose agreement to the
  * group's Beratungsstelle privacy statement is not recorded sees the gate

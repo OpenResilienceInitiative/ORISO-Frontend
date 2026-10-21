@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { useTimelineDrafts } from './useTimelineDrafts';

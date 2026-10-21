@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 /**
  * The handle's keyboard contract, tested where `userEvent` is reliable.

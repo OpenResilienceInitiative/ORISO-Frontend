@@ -3,7 +3,7 @@
  * auto-read pass (spec §6.1), the badge operands and the pending-read /
  * request-ordering rules (spec §6.3).
  *
- * @vitest-environment jsdom
+ * @vitest-environment oriso-jsdom
  */
 
 import React, { useContext } from 'react';

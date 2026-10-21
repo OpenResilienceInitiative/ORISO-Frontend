@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { useContext } from 'react';
 import i18n from 'i18next';
 import de from '../../resources/i18n/de/common.json';

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { AUTHORITIES } from '../../globalState';
 import { isTabGroup, solveGroupConditions } from '../../utils/tabsHelper';

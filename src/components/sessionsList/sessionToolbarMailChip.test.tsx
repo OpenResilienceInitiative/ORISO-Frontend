@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Regression guard for #985 — the modality formerly labelled "Nähe" is called
  * "Mail" everywhere. "Nähe" was too obscure for practitioners, and it appeared

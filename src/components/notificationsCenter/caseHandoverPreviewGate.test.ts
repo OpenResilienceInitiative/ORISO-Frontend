@@ -1,4 +1,4 @@
-// @vitest-environment jsdom — the module reaches the api layer, which reads
+// @vitest-environment oriso-jsdom — the module reaches the api layer, which reads
 // `window` while resolving the API base URL at import time.
 import { describe, expect, it } from 'vite-plus/test';
 import { requiresCaseHandoverCheck } from './caseHandoverPreviewGate';

@@ -226,7 +226,8 @@
 		"prettier": "^3.2.4",
 		"@vitest/browser": "5.0.5",
 		"eslint-plugin-storybook": "10.6.3",
-		"axe-core": "4.7.0"
+		"axe-core": "4.7.0",
+		"vitest-environment-oriso-jsdom": "file:scripts/vitest-environment-oriso-jsdom"
 	},
 	"scripts": {
 		"start": "node proxy/server.js",

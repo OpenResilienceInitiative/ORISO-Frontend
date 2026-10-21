@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { beforeEach, expect, it, vi } from 'vite-plus/test';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 import { apiGetInviteLinkContext } from './apiGetInviteLinkContext';

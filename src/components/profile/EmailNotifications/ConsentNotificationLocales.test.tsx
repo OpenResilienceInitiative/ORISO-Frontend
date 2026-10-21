@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { readFileSync } from 'node:fs';
 import { cleanup, render, screen } from '@testing-library/react';

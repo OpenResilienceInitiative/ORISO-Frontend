@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';

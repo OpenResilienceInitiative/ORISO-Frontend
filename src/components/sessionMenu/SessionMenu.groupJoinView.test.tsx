@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1499: on a phone the waiting room and the join view show the session menu.
  * A counsellor who has not joined the running group yet must not be offered

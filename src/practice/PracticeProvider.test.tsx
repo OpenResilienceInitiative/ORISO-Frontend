@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { StrictMode, useEffect } from 'react';
 import {
 	act,

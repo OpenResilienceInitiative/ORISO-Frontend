@@ -1,4 +1,5 @@
 import { a11yVerification } from './a11yVerification';
+import { createTenantPublicStoryFetch } from './tenantPublicFixture';
 // Force MUI styled-engine init before any @mui/* prebundles run.
 // Without this, Vite can crash the preview with "styled_default is not a function".
 import '@mui/material/styles/styled';
@@ -11,7 +12,7 @@ import type { Preview } from '@storybook/react-vite';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useGlobals } from 'storybook/preview-api';
-import { I18nextProvider } from 'react-i18next';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 import { themes } from 'storybook/theming';
 import theme, { createAppTheme } from '../src/resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
@@ -645,6 +646,20 @@ function MuiStoryShell({
 }) {
 	// Like the app's AppThemeProvider: MUI reads the --m3-* values when the
 	// theme is created, so a story palette (orisoSeed) needs a fresh theme.
+	// Follow the translation provider's actual language, including direct
+	// language changes in ordinary story controls, rather than a fixed label.
+	const { i18n: storyI18n } = useTranslation();
+	const locale =
+		storyI18n.resolvedLanguage || storyI18n.language || FALLBACK_LNG;
+	useEffect(() => {
+		const previous = document.documentElement.getAttribute('lang');
+		document.documentElement.lang = locale;
+		return () => {
+			if (previous === null)
+				document.documentElement.removeAttribute('lang');
+			else document.documentElement.lang = previous;
+		};
+	}, [locale]);
 	const [muiTheme, setMuiTheme] = useState(() => theme);
 	useEffect(() => {
 		const refresh = () => setMuiTheme(createAppTheme());
@@ -655,11 +670,13 @@ function MuiStoryShell({
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
 				value={{
-					locale: 'de',
+					locale,
 					locales: ['de', 'en'],
 					selectableLocales: ['de', 'en'],
-					setLocale: () => {},
-					initLocale: 'de'
+					setLocale: (language) => {
+						void storyI18n.changeLanguage(language);
+					},
+					initLocale: FALLBACK_LNG
 				}}
 			>
 				<TenantContext.Provider
@@ -818,6 +835,13 @@ init(config.i18n, null);
 
 const preview: Preview = {
 	async beforeEach(context) {
+		// Snapshot this story's declared permissions; the verification owner below
+		// restores the previous fetch after async cleanup, including failed stories.
+		const tenantFetch = createTenantPublicStoryFetch(
+			globalThis.fetch,
+			window.location.origin,
+			context.parameters.tenantSettings
+		);
 		if (import.meta.env.MODE === 'test') a11yVerification.begin(context);
 		const language = i18n.language;
 		const finish = beginStoryVerification(
@@ -834,6 +858,7 @@ const preview: Preview = {
 					})
 			}
 		);
+		globalThis.fetch = tenantFetch;
 		return () => finish.complete();
 	},
 	parameters: {

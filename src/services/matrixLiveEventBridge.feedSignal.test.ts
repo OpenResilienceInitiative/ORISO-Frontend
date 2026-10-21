@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * P2 feed-update signal: the bridge must recognise the content-free
  * `org.oriso.feed.updated` signal UserService sends through Matrix and surface

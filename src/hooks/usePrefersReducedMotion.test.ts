@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { usePrefersReducedMotion } from './usePrefersReducedMotion';

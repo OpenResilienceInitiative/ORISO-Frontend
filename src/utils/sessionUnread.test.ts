@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — client-side unread derivation.
  *

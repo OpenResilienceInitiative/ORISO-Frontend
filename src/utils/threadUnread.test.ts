@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Thread-panel-UX (#435) — per-thread unread state.
  *

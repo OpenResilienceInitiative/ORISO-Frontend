@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Auth-free theme demo route (decided 2026-06-11, replaces the removed
  * admin replicas — Frontend#144): renders the REAL app's session list

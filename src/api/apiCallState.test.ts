@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { expect, it, vi } from 'vite-plus/test';
 import { apiCallState } from './apiCallState';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';

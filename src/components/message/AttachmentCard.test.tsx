@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #994 — one card definition for every attachment state. These tests pin the
  * things that made the old card look unfinished: inline styles, a link that

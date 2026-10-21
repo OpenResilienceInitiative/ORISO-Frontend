@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetTenantTheming } from './apiGetTenantTheming';
 import { setValueInCookie } from '../components/sessionCookie/accessSessionCookie';

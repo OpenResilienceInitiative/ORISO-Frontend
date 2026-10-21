@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — reactivity for the client-side unread derivation.
  *

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
 	forgetHandoverDepartment,

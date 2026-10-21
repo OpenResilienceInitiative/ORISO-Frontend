@@ -1,5 +1,6 @@
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { inspect } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { BaseSequencer } from 'vite-plus/test/node';
 import {
@@ -50,6 +51,8 @@ export default class VerificationReporter {
 			declaredNeedsData: 0
 		};
 		this.state = 'running';
+		this.nativeRunStarted = false;
+		this.afterPool = { status: 'pending' };
 	}
 	ensureProvenance() {
 		if (this.manifestWritten) return;
@@ -79,6 +82,9 @@ export default class VerificationReporter {
 					provenance: this.provenance,
 					browsers: [...this.browsers.values()],
 					state: this.state,
+					nativeRunReason: this.nativeRunReason ?? null,
+					nativeRunEndErrors: this.nativeRunEndErrors ?? [],
+					afterPool: this.afterPool,
 					...this.counts,
 					executed: this.counts.passed + this.counts.failed,
 					running:
@@ -96,24 +102,7 @@ export default class VerificationReporter {
 							!this.modules.has(this.identity(spec)) ||
 							!this.completedModules.has(this.identity(spec))
 					),
-					inventoryComplete:
-						this.assignmentPlan.valid &&
-						['passed', 'failed'].includes(this.state) &&
-						!(this.unhandledErrors || []).length &&
-						this.modulePlanErrors.length === 0 &&
-						this.assignedSpecifications.every(
-							(spec) =>
-								this.modules.has(this.identity(spec)) &&
-								this.completedModules.has(this.identity(spec))
-						) &&
-						this.running.size === 0 &&
-						this.counts.completedFiles ===
-							this.counts.expectedFiles &&
-						this.counts.expectedTests ===
-							this.counts.passed +
-								this.counts.failed +
-								this.counts.skipped +
-								this.counts.todo,
+					inventoryComplete: this.isInventoryComplete(),
 					eventAnomalies: this.eventAnomalies,
 					reconciledTerminalEvents: this.reconciled,
 					unhandledErrors: this.unhandledErrors || []
@@ -123,8 +112,102 @@ export default class VerificationReporter {
 			)
 		);
 	}
+	failProcess() {
+		// Preserve an earlier nonzero failure; never reset native exit to success.
+		if (process.exitCode == null || Number(process.exitCode) === 0)
+			process.exitCode = 1;
+	}
+	isInventoryComplete() {
+		return (
+			this.afterPool.status === 'checked' &&
+			this.afterPool.errors.length === 0 &&
+			this.assignmentPlan.valid &&
+			['passed', 'failed'].includes(this.state) &&
+			!(this.unhandledErrors || []).length &&
+			this.eventAnomalies.length === 0 &&
+			this.modulePlanErrors.length === 0 &&
+			this.assignedSpecifications.every(
+				(spec) =>
+					this.modules.has(this.identity(spec)) &&
+					this.completedModules.has(this.identity(spec))
+			) &&
+			this.running.size === 0 &&
+			this.counts.completedFiles === this.counts.expectedFiles &&
+			this.counts.expectedTests ===
+				this.counts.passed +
+					this.counts.failed +
+					this.counts.skipped +
+					this.counts.todo
+		);
+	}
 	onInit(context) {
 		this.context = context;
+		if (
+			typeof context?.onClose !== 'function' ||
+			typeof context?.state?.getUnhandledErrors !== 'function'
+		) {
+			this.failProcess();
+			throw new Error('Public native close/error accounting unavailable');
+		}
+		context.onClose(async () => this.finalizeAfterPool());
+	}
+	finalizeAfterPool() {
+		try {
+			const errors = this.context.state.getUnhandledErrors();
+			if (!Array.isArray(errors))
+				throw new Error('Public native error snapshot is not an array');
+			// Set failure before inspection or IO; supplied errors stay separate.
+			if (
+				errors.length ||
+				(this.unhandledErrors || []).length ||
+				this.eventAnomalies.length ||
+				this.modulePlanErrors.length
+			)
+				this.failProcess();
+			this.afterPool = {
+				status: 'checked',
+				phase: 'after-pool-before-remaining-project-close-and-final-checks',
+				errors: [...errors],
+				nativeRunEndErrorsInspect: inspect(
+					this.nativeRunEndErrors ?? [],
+					{
+						depth: null,
+						maxArrayLength: null,
+						maxStringLength: null,
+						customInspect: false,
+						getters: false
+					}
+				),
+				errorsInspect: inspect(errors, {
+					depth: null,
+					maxArrayLength: null,
+					maxStringLength: null,
+					customInspect: false,
+					getters: false
+				}),
+				// Native error context is retained verbatim; no invented testcase blame.
+				inventedCaseAttribution: null,
+				exitCodeSnapshotIsFinal: false
+			};
+			// Public initialization/collection without a run must not fabricate a run.
+			if (
+				!this.nativeRunStarted &&
+				!errors.length &&
+				!(this.unhandledErrors || []).length &&
+				!this.eventAnomalies.length &&
+				!this.modulePlanErrors.length
+			)
+				return;
+			if (this.state !== 'passed' || !this.isInventoryComplete()) {
+				this.failProcess();
+				this.state = 'failed';
+			}
+			this.save();
+		} catch (error) {
+			// A missing final artifact is a failure even if native cases all passed.
+			this.failProcess();
+			throw error;
+		}
 	}
 	specification(spec) {
 		return {
@@ -177,6 +260,8 @@ export default class VerificationReporter {
 		this.save();
 	}
 	onTestRunStart(specifications) {
+		this.nativeRunStarted = true;
+		this.afterPool = { status: 'pending' };
 		this.inputs = specifications
 			.map((spec) => spec.moduleId)
 			.filter(Boolean);
@@ -362,6 +447,8 @@ export default class VerificationReporter {
 	onTestRunEnd(modules, errors, reason) {
 		modules.forEach((module) => this.reconcile(module));
 		this.state = reason;
+		this.nativeRunReason = reason;
+		this.nativeRunEndErrors = [...errors];
 		this.unhandledErrors = errors.map((error) => error.message);
 		this.save();
 	}

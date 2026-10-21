@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /** ORISO-Helm#368 — a missing runtime URL stops the app with a named error. */
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';

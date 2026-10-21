@@ -1,7 +1,12 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
+import '@testing-library/jest-dom/vitest';
 import * as React from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import deCommon from '../../resources/i18n/de/common.json';
+import enCommon from '../../resources/i18n/en/common.json';
 import {
 	afterEach,
 	beforeEach,
@@ -86,7 +91,8 @@ describe('NavigationBar — product-tour anchor (FE#1622)', () => {
 
 // The real badge remains inside NavigationBar and its existing provider fixture.
 const unreadContext = (
-	count: number
+	count: number,
+	hiddenUnread = 0
 ): NonNullable<React.ContextType<typeof NotificationsContext>> => ({
 	notifications: [],
 	notificationFeed: [],
@@ -96,7 +102,7 @@ const unreadContext = (
 	hasUnreadNotifications: count > 0,
 	timelineDisplayFilter: DEFAULT_DISPLAY_FILTER,
 	visibleUnreadCount: count,
-	hiddenUnreadInLoadedPages: 0,
+	hiddenUnreadInLoadedPages: hiddenUnread,
 	setNotifications: () => {},
 	hasNotification: () => false,
 	addNotification: () => {},
@@ -115,12 +121,14 @@ const unreadContext = (
 
 const unreadNavigation = (
 	count: number,
-	{ figma = false, strict = false } = {}
+	{ figma = false, strict = false, hiddenUnread = 0 } = {}
 ) => {
 	const navigation = (
 		<MemoryRouter initialEntries={['/notifications']}>
 			<NavigationStoryProviders role="consultant">
-				<NotificationsContext.Provider value={unreadContext(count)}>
+				<NotificationsContext.Provider
+					value={unreadContext(count, hiddenUnread)}
+				>
 					<NavigationBar
 						routerConfig={{
 							navigation: [
@@ -239,4 +247,87 @@ describe('NavigationBar unread badge timer ownership', () => {
 		act(() => vi.advanceTimersByTime(1));
 		expect(vi.getTimerCount()).toBe(0);
 	});
+});
+
+describe('NavigationBar unread badge semantic ownership', () => {
+	// These assertions exercise names/focus with RTL's real async act queue.
+	// The separate timer-ownership suite above checks the component timers.
+	afterEach(cleanup);
+
+	it.each([
+		{ language: 'de', figma: false },
+		{ language: 'de', figma: true },
+		{ language: 'en', figma: false },
+		{ language: 'en', figma: true }
+	])(
+		'keeps exact count and hidden hint on the $language navigation owner (figma=$figma)',
+		async ({ language, figma }) => {
+			const i18n = createInstance();
+			await i18n.init({
+				lng: language,
+				fallbackLng: 'de',
+				initImmediate: false,
+				resources: {
+					de: { translation: deCommon },
+					en: { translation: enCommon }
+				}
+			});
+			const labels =
+				language === 'de'
+					? {
+							route: 'Benachrichtigungen',
+							one: '1 neue Nachricht',
+							many: '120 neue Nachrichten',
+							hint: 'bis zu 2 ausgeblendet'
+						}
+					: {
+							route: 'Notifications',
+							one: '1 new message',
+							many: '120 new messages',
+							hint: 'up to 2 hidden'
+						};
+			const tree = (count: number) => (
+				<I18nextProvider i18n={i18n}>
+					{unreadNavigation(count, { figma, hiddenUnread: 2 })}
+				</I18nextProvider>
+			);
+			const view = render(tree(0));
+			await act(async () => {});
+			const owner = () =>
+				view.getByRole('tab', { name: new RegExp(labels.route) });
+			expect(owner()).toHaveAccessibleName(labels.route);
+			expect(owner()).toHaveAttribute('href', '/notifications');
+			expect(owner()).toHaveAttribute('tabindex', '0');
+			expect(
+				view.container.querySelector('.navigation__item__count')
+			).toBeNull();
+			view.rerender(tree(1));
+			expect(owner()).toHaveAccessibleName(
+				`${labels.route}, ${labels.one}, ${labels.hint}`
+			);
+			const badge = view.container.querySelector(
+				'.navigation__item__count'
+			);
+			expect(badge).toHaveTextContent('1');
+			expect(badge).toHaveAttribute('title', labels.hint);
+			expect(badge).toHaveAttribute('aria-hidden', 'true');
+			expect(badge).not.toHaveAttribute('aria-label');
+			expect(badge).not.toHaveAttribute('role');
+			expect(badge).not.toHaveAttribute('tabindex');
+			owner().focus();
+			expect(owner()).toHaveFocus();
+			view.rerender(tree(120));
+			expect(owner()).toHaveAccessibleName(
+				`${labels.route}, ${labels.many}, ${labels.hint}`
+			);
+			expect(
+				view.container.querySelector('.navigation__item__count')
+			).toHaveTextContent('99+');
+			view.rerender(tree(0));
+			expect(owner()).toHaveAccessibleName(labels.route);
+			expect(
+				view.container.querySelector('.navigation__item__count')
+			).toBeNull();
+		}
+	);
 });

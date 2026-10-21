@@ -1,5 +1,5 @@
 import { apiDecideCaseHandoverClientConsent } from '../../api/apiCaseHandover';
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,

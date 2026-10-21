@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { captureStorybookAnimationCleanup } from '../../.storybook/storybookAnimationCleanup';
 import { createVerificationRecorder } from '../../.storybook/verificationIntegrity';

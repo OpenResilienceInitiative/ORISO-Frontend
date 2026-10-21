@@ -2,7 +2,7 @@
  * #1377 slice 2 — display-filter store against a fake Matrix client
  * (spec §7 rules 1–5 and the version rule).
  *
- * @vitest-environment jsdom
+ * @vitest-environment oriso-jsdom
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';

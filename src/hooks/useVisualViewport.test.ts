@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1248 — the maximised composer has to size itself to the part of the screen
  * the user can actually see, which on iOS Safari is not the layout viewport.

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import '@testing-library/jest-dom/vitest';
 import * as React from 'react';
 import { act, cleanup, render, screen, within } from '@testing-library/react';

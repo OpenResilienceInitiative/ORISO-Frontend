@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { createFakeRestBackend } from './FakeRestBackend';

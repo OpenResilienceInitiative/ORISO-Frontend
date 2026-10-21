@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Runtime palette application (THB-05): stored seeds → engine →
  * `--m3-*` custom properties at :root, with safe fallbacks.

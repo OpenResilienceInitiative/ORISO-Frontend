@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — overview "unread only" data source.
  *

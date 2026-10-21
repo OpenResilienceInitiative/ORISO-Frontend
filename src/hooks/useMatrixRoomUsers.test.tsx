@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { PropsWithChildren } from 'react';
 import { cleanup, renderHook, waitFor, act } from '@testing-library/react';
 import {

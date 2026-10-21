@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #994 — the four attachment states (plain, encrypted, awaiting media check,
  * blocked) used to build their own markup with their own inline styles, so

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /** Real Joyride and tooltip: keyboard actions must reach the app controls. */
 import React from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';

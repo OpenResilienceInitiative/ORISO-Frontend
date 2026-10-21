@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it } from 'vite-plus/test';
 import type { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
 import { groupAppointmentRedirect } from './groupAppointmentRedirect';

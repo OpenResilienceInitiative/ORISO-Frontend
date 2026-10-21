@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Encrypted-media scanning (epic ORISO-Admin#366 phase 2, issue #1072).
  *

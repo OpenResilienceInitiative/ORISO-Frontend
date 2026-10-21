@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #576 — sidebar placement preference for the global notification-status
  * button, incl. the restricted-storage path (#586 review: the in-tab state

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';

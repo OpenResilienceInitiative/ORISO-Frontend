@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import { createLinesEffect } from './variants/lines';
 import { createConnectedDotsEffect } from './variants/connectedDots';

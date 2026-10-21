@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #576 — permission gating for OS notifications: no popup without browser
  * permission + user opt-in, and the Safari-safe requestPermission wrapper.

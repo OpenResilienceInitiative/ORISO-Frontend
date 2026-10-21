@@ -403,8 +403,13 @@ export const NavigationBar = ({
 									: '';
 								// The Link's aria-label is its whole accessible
 								// name, so the count has to be part of it.
+								const unreadTitle = showUnreadNav
+									? unreadNavTitle(item.to)
+									: undefined;
 								const linkLabel = showUnreadNav
-									? `${label}, ${unreadLabel}`
+									? [label, unreadLabel, unreadTitle]
+											.filter(Boolean)
+											.join(', ')
 									: label;
 								// Desktop rail may hyphenate/wrap; mobile bottom bar
 								// must stay single-line to avoid overlapping neighbors.
@@ -531,11 +536,8 @@ export const NavigationBar = ({
 													<NavigationUnreadIndicator
 														animate={animateNavIcon}
 														count={unreadCount}
-														label={unreadLabel}
 														variant="figma"
-														title={unreadNavTitle(
-															item.to
-														)}
+														title={unreadTitle}
 													/>
 												)}
 											</div>
@@ -557,9 +559,8 @@ export const NavigationBar = ({
 											<NavigationUnreadIndicator
 												animate={animateNavIcon}
 												count={unreadCount}
-												label={unreadLabel}
 												variant="default"
-												title={unreadNavTitle(item.to)}
+												title={unreadTitle}
 											/>
 										)}
 									</Link>
@@ -878,14 +879,11 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
-	label,
 	variant = 'default',
 	title
 }: {
 	animate: boolean;
 	count: number;
-	/** Localised "{{count}} new messages" (also part of the link's name). */
-	label: string;
 	variant?: 'default' | 'figma';
 	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
 	title?: string;
@@ -912,7 +910,7 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={title ? `${label}, ${title}` : label}
+			aria-hidden="true"
 			title={title}
 		>
 			{isFigma ? (

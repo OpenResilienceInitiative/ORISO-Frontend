@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * FE#513 — the "+" add affordance must never render as a dead decorative
  * element: it is either an interactive button or a real disabled button with

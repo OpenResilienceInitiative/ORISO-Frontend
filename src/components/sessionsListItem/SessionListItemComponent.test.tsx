@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1189 — reachability tests for the "Chat settings" entry in the group-chat
  * list-row menu. These tests MUST fail if the <SessionListItemMenu> is removed

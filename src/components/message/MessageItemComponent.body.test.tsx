@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1253 — the message body must exist on the first paint, and a body that is
  * not known yet must not be dressed as a finished message.

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * The REAL practice tours walk through the REAL app shell pieces
  * (tour host, banner, navigation bar, practice surface + sandbox, session

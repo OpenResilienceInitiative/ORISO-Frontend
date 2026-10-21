@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 // The api layer reads `window` at module load, so this cannot run under node.
 import {
 	afterEach,

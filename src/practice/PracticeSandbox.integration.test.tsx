@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * The REAL wired containers (SessionsZone → SessionsList,
  * SessionView → SessionStream → SessionItemComponent → AcceptAssign, the

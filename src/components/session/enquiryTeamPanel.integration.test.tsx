@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Public enquiry UI boundary: real session, timeline, side panel and composer.
  * Only network APIs, the Matrix SDK client and browser rendering are substituted.

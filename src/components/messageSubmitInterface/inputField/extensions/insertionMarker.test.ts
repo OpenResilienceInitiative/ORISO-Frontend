@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #996 — recording a voice message types nothing, so without this dot the
  * user cannot see where in a half-written message the recording will land.

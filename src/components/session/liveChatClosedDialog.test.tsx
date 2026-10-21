@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1270 — the legacy "Live-Chat ist zurzeit leider geschlossen" dialog in
  * `SessionItemComponent`.

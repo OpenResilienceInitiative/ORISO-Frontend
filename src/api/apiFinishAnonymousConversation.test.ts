@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { beforeEach, expect, it, vi } from 'vite-plus/test';
 import { fetchData } from './fetchData';
 import { apiFinishAnonymousConversation } from './apiFinishAnonymousConversation';

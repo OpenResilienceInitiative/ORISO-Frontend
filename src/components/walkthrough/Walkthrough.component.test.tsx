@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';

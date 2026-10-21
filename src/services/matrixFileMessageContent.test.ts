@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { buildMatrixFileMessageContent } from './matrixClientService';

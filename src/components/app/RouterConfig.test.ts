@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

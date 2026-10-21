@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MatrixEvent } from 'matrix-js-sdk';
 import { createFakeMatrixService } from './FakeMatrixService';

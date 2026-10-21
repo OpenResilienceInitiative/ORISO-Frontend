@@ -16,6 +16,7 @@ import { CALL_TOKEN_MAP } from '../../utils/theme/callTheme';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { useLocaleData } from '../../globalState';
 import { AppliedTokenInspector } from './AppliedTokenInspectorView';
 import {
 	inspectAppliedTokens,
@@ -320,9 +321,13 @@ function AppliedReference({
 	scheme: OrisoSchemeName;
 }) {
 	const { t } = useTranslation();
+	const { locale } = useLocaleData();
 	const target = React.useRef<HTMLDivElement>(null);
 	// Object identity invalidates A→B→A snapshots as well as simple A→B changes.
-	const context = React.useMemo(() => ({ seed, scheme }), [seed, scheme]);
+	const context = React.useMemo(
+		() => ({ seed, scheme, locale }),
+		[seed, scheme, locale]
+	);
 	const [snapshot, setSnapshot] = React.useState<{
 		context: typeof context;
 		rows: AppliedTokenInspection[];
@@ -343,7 +348,8 @@ function AppliedReference({
 			JSON.stringify({
 				seed,
 				scheme,
-				locale: i18n.language,
+				locale: i18n.resolvedLanguage || i18n.language,
+				providerLocale: locale,
 				viewport: [window.innerWidth, window.innerHeight],
 				rows
 			})
@@ -351,7 +357,11 @@ function AppliedReference({
 	};
 	const Reference = systemMeta.component;
 	return (
-		<div className="appliedTokenInspector__referencePage">
+		<div
+			className="appliedTokenInspector__referencePage"
+			lang={locale}
+			data-applied-token-locale={locale}
+		>
 			<p>
 				<code>{seed}</code> · {scheme}
 			</p>
@@ -422,14 +432,14 @@ export const Applied: StoryObj = {
 					.getByRole('rowheader', { name: 'system.info.fill [0]' })
 					.closest('tr')
 			);
-		const match = () =>
+		const waitForAppliedMatch = () =>
 			waitFor(() =>
 				expect(
 					row().getByText(key('status.match'), { exact: true })
 				).toBeVisible()
 			);
 		await userEvent.click(refresh());
-		await match();
+		await waitForAppliedMatch();
 		const baseline = getComputedStyle(node).fill;
 		expect(row().getAllByText(baseline)).toHaveLength(3);
 		const beforeStyle = node.getAttribute('style');
@@ -462,7 +472,7 @@ export const Applied: StoryObj = {
 			if (beforeStyle === null) node.removeAttribute('style');
 			else node.setAttribute('style', beforeStyle);
 			await userEvent.click(refresh());
-			await match();
+			await waitForAppliedMatch();
 		}
 		const previousLanguage = i18n.language;
 		const previousViewport = [window.innerWidth, window.innerHeight];
@@ -486,13 +496,53 @@ export const Applied: StoryObj = {
 				});
 				for (const language of ['de', 'en']) {
 					await i18n.changeLanguage(language);
+					const labels =
+						language === 'de'
+							? {
+									title: 'Angewendete Design-Tokens',
+									refresh: 'Prüfung aktualisieren',
+									caption: 'Gemessene Design-Tokens',
+									match: 'Übereinstimmung'
+								}
+							: {
+									title: 'Applied design tokens',
+									refresh: 'Refresh inspection',
+									caption: 'Applied token measurements',
+									match: 'Match'
+								};
+					await waitFor(() => {
+						expect(i18n.resolvedLanguage || i18n.language).toBe(
+							language
+						);
+						expect(document.documentElement.lang).toBe(language);
+						expect(
+							canvasElement.querySelector(
+								'[data-applied-token-locale]'
+							)
+						).toHaveAttribute(
+							'data-applied-token-locale',
+							language
+						);
+						expect(
+							canvas.getByRole('heading', { name: labels.title })
+						).toBeVisible();
+						expect(
+							canvas.getByRole('button', { name: labels.refresh })
+						).toBeVisible();
+					});
 					await waitFor(() =>
 						expect(
 							canvas.getByRole('heading', { name: key('title') })
 						).toBeVisible()
 					);
 					await userEvent.click(refresh());
-					await match();
+					await waitForAppliedMatch();
+					expect(
+						row().getByText(labels.match, { exact: true })
+					).toBeVisible();
+					expect(
+						canvas.getByRole('table', { name: labels.caption })
+					).toBeVisible();
 					const table = canvas.getByRole('table', {
 						name: key('caption')
 					});
@@ -526,6 +576,13 @@ export const Applied: StoryObj = {
 			}
 		} finally {
 			await i18n.changeLanguage(previousLanguage);
+			await waitFor(() => {
+				const restored = i18n.resolvedLanguage || i18n.language;
+				expect(document.documentElement.lang).toBe(restored);
+				expect(
+					canvasElement.querySelector('[data-applied-token-locale]')
+				).toHaveAttribute('data-applied-token-locale', restored);
+			});
 			if (browser)
 				await browser.page.viewport(
 					previousViewport[0],

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it } from 'vite-plus/test';
 import * as draftStore from './draftStore';
 import { hasDraftContent } from './draftStore';

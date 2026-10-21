@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, renderHook } from '@testing-library/react';
 import {
 	afterEach,

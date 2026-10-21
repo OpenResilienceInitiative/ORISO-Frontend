@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 import {

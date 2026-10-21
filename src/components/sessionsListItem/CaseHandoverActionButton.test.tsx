@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1158 — the case-handover menu must escape `.sessionsListItem__content`,
  * which is `overflow: hidden` to keep the 24px card corners clipped.

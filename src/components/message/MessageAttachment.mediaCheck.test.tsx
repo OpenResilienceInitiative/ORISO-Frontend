@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * WP-4 media check states (epic ORISO-Admin#366): images from anonymous
  * live-chat guests are not loaded until the counsellor reveals them, blocked

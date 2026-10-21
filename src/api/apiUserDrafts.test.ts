@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { apiDeleteUserDraft, apiUpsertUserDraft } from './apiUserDrafts';
 import { fetchData } from './fetchData';

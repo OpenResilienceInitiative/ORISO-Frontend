@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import { renderHook, cleanup } from '@testing-library/react';
 import {

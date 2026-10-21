@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, it, expect } from 'vite-plus/test';
 import { buildAppointmentIcs } from './appointmentIcs';
 

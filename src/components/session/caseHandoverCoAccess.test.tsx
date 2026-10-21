@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #200: an "advice needed" handover grants CO_ACCESS — the colleague may read
  * the case but must never write into the advice seeker's room. The composer

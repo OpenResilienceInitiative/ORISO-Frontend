@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { describe, expect, it } from 'vite-plus/test';
 import { getPlatform, getPrimaryModifier } from './platform';
 import { normalizeBinding } from './binding';

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Search menu behaviour in the toolbar (#1195 JOB7).
  *

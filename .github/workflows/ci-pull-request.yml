@@ -95,6 +95,9 @@ jobs:
             - name: Test the Storybook test runner
               run: npm run test:scripts
 
+            - name: Verify native unit teardown errors and healthy controls
+              run: node scripts/verify-native-unit-errors.mjs
+
             - name: Verify Storybook gate controls
               run: npm run test:verification-controls
 

@@ -1,5 +1,5 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import {
 	afterEach,
 	beforeEach,

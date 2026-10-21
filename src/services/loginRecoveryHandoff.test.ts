@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 
 // Stands in for IndexedDB. Held by the test file, so it outlives the module

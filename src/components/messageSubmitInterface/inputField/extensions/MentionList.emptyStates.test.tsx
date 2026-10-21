@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #993 — an empty @-mention popup used to render nothing at all, so "nobody
  * matches" and "the directory never loaded" were the same silent blank. These

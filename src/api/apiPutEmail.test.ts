@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { apiPutEmail } from './apiPutEmail';
 import { FETCH_ERRORS } from './fetchData';
