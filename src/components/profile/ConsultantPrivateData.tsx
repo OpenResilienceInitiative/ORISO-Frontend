@@ -63,6 +63,7 @@ export const ConsultantPrivateData = () => {
 	}, [email]);
 
 	const handleCancelEditButton = () => {
+		accountActions.edited('email', endpoints.email);
 		setIsEditDisabled(true);
 	};
 

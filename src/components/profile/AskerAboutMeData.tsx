@@ -167,6 +167,7 @@ export const AskerAboutMeData = () => {
 	);
 
 	const handleCancelEditButton = () => {
+		accountActions.edited('email', endpoints.email);
 		setIsEmailDisabled(true);
 		setEmailLabel(translate('profile.data.email'));
 	};
