@@ -102,7 +102,8 @@ const Location = () => (
 const renderCenter = async (
 	width = 1400,
 	item = callItem,
-	sessions: unknown[] = []
+	sessions: unknown[] = [],
+	ready = true
 ) => {
 	const i18n = i18next.createInstance();
 	await i18n.init({
@@ -128,7 +129,7 @@ const renderCenter = async (
 						}
 					>
 						<SessionsDataContext.Provider
-							value={{ sessions } as never}
+							value={{ sessions, ready } as never}
 						>
 							<NotificationsContext.Provider
 								value={
@@ -194,7 +195,7 @@ it('joins the existing call from a mobile Activity card without navigating away'
 });
 
 it.each(['callId', 'roomRef', 'callRoomId', 'callType'])(
-	'keeps a call card with missing %s inert instead of guessing or navigating to the root',
+	'opens the conversation of a call card with missing %s instead of guessing a call or navigating to the root',
 	async (field) => {
 		await renderCenter(1400, {
 			...callItem,
@@ -208,7 +209,7 @@ it.each(['callId', 'roomRef', 'callRoomId', 'callType'])(
 		expect(joinRoom).not.toHaveBeenCalled();
 		expect(createRoom).not.toHaveBeenCalled();
 		expect(screen.getByLabelText('Current route').textContent).toBe(
-			'/notifications'
+			'/sessions/consultant/sessionView/session/42'
 		);
 	}
 );
@@ -422,4 +423,41 @@ it('says the call is over when an ended call has no conversation to open', async
 		'/notifications'
 	);
 	join.mockRestore();
+});
+
+it('opens the conversation instead of joining while the session list is still loading', async () => {
+	const join = vi.spyOn(callManager, 'joinExistingCall');
+	await renderCenter(1400, { ...callItem, sourceSessionId: '73' }, [], false);
+	await user.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	await waitFor(() =>
+		expect(screen.getByLabelText('Current route').textContent).toMatch(
+			/\/sessionView\/.*73$/
+		)
+	);
+	expect(join).not.toHaveBeenCalled();
+	join.mockRestore();
+});
+
+it('tells the user when an incomplete call card has no conversation to open', async () => {
+	await renderCenter(1400, {
+		...callItem,
+		params: {
+			...callItem.params,
+			callRoomId: undefined,
+			seriesId: undefined
+		}
+	});
+	await user.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	await waitFor(() =>
+		expect(addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ text: en.videoCall.timeline.joinFailed })
+		)
+	);
+	expect(screen.getByLabelText('Current route').textContent).toBe(
+		'/notifications'
+	);
 });

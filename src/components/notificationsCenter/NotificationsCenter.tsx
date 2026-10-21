@@ -255,11 +255,16 @@ const parseNumericId = (value?: string | null): number | null => {
 
 type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
 
-/** Call cards join their existing authorized binding; incomplete cards never navigate. */
+/**
+ * Call cards join their existing authorized binding. A card that cannot join
+ * here (incomplete, or group topology not loaded yet) opens its conversation.
+ */
 const joinNotificationCall = (
 	item: NotificationFeedItem,
+	topologyReady: boolean,
 	isGroup: (roomRef: string) => boolean,
-	onOutcome: (outcome: JoinOutcome) => void
+	onOutcome: (outcome: JoinOutcome) => void,
+	onCannotJoin: () => void
 ): boolean => {
 	const params = item.params || {};
 	if (
@@ -275,9 +280,13 @@ const joinNotificationCall = (
 		!params.roomRef.trim() ||
 		typeof params.callRoomId !== 'string' ||
 		!params.callRoomId.trim() ||
-		(params.callType !== 'audio' && params.callType !== 'video')
-	)
+		(params.callType !== 'audio' && params.callType !== 'video') ||
+		// An empty session list would store a group call as one-to-one.
+		!topologyReady
+	) {
+		onCannotJoin();
 		return true;
+	}
 	// The feed carries no call topology: the conversation the call belongs to decides.
 	callManager
 		.joinExistingCall(
@@ -941,8 +950,11 @@ export const NotificationsCenter = () => {
 				(listItem) => listItem.chat?.matrixRoomId === roomRef
 			)
 		);
-	// An ended call opens its conversation, never a guessed default list.
-	const openConversation = (item: NotificationFeedItem) => {
+	// A call card opens its conversation, never a guessed default list.
+	const openConversation = (
+		item: NotificationFeedItem,
+		fallbackText = translate('videoCall.timeline.endedElsewhere')
+	) => {
 		const path = toNonEmbeddedPath(
 			resolveEndedCallConversationPath(item, getDefaultSessionsPath())
 		);
@@ -953,27 +965,37 @@ export const NotificationsCenter = () => {
 		addNotification({
 			notificationType: NOTIFICATION_TYPE_INFO,
 			title: translate('notification.info'),
-			text: translate('videoCall.timeline.endedElsewhere'),
+			text: fallbackText,
 			closeable: true,
 			timeout: 10000
 		});
 	};
 	const joinCall = (item: NotificationFeedItem) =>
-		joinNotificationCall(item, isGroupCallRoom, (outcome) => {
-			if (outcome === 'joined') return;
-			if (outcome === 'ended') {
-				openConversation(item);
-				return;
-			}
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate('notification.error'),
-				text: translate('videoCall.timeline.joinFailed'),
-				closeable: true,
-				announce: 'alert',
-				timeout: 10000
-			});
-		});
+		joinNotificationCall(
+			item,
+			Boolean(sessionsContext?.ready),
+			isGroupCallRoom,
+			(outcome) => {
+				if (outcome === 'joined') return;
+				if (outcome === 'ended') {
+					openConversation(item);
+					return;
+				}
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: translate('notification.error'),
+					text: translate('videoCall.timeline.joinFailed'),
+					closeable: true,
+					announce: 'alert',
+					timeout: 10000
+				});
+			},
+			() =>
+				openConversation(
+					item,
+					translate('videoCall.timeline.joinFailed')
+				)
+		);
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
