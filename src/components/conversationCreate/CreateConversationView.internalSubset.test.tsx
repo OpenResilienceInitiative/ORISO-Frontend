@@ -92,7 +92,10 @@ vi.mock(
 	'../../resources/img/illustrations/conversation/internal-team.png',
 	() => ({ default: 'internal-team.png' })
 );
-vi.mock('../../resources/img/topics', () => ({
+// Stub only the image lookups; keep every other export real, so a new one
+// (getTopicCardArtwork arrived with #1814) does not throw on first render.
+vi.mock('../../resources/img/topics', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../resources/img/topics')>()),
 	getTopicCardImage: () => 'topic.png',
 	hasTopicCardImage: () => false,
 	topicSlug: (value: string) => value
