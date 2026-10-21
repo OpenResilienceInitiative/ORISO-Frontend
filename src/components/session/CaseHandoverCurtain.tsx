@@ -2,8 +2,8 @@ import * as React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-	apiGetCaseHandoverReasons,
 	apiGetCaseHandoverStatus,
+	apiReclaimCaseHandover,
 	apiRequestCaseHandoverAccess,
 	CaseHandoverReason,
 	CaseHandoverStatus
@@ -23,6 +23,8 @@ import { ScrollableSectionHeader } from '../scrollableSection/ScrollableSectionH
 import { ScrollableSectionBody } from '../scrollableSection/ScrollableSectionBody';
 import { ScrollableSectionFooter } from '../scrollableSection/ScrollableSectionFooter';
 import { SideScrollerFooter } from '../sideScrollerFooter/SideScrollerFooter';
+import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { SessionTopic } from '../sessionHeader/SessionTopic';
 import {
 	activateCaseHandoverActor,
@@ -66,12 +68,20 @@ export interface CaseHandoverCurtainViewProps {
 	explanation: string;
 	isSubmitting?: boolean;
 	error?: string;
+	/** Reasons finished loading and none came back (FE#1725 US26). */
+	reasonsUnavailable?: boolean;
+	/** Loading the reasons failed; offers `onRetryReasons`. */
+	reasonsLoadFailed?: boolean;
+	onRetryReasons?: () => void;
 	onStart: () => void;
 	onBack: () => void;
 	onNext: () => void;
 	onReasonSelect: (code: string) => void;
 	onExplanationChange: (value: string) => void;
 	onSubmit: () => void;
+	/** The viewer is the counsellor a takeover moved this case away from. */
+	canReclaim?: boolean;
+	onReclaim?: () => void;
 }
 
 /** Presentational curtain (stories render this directly). */
@@ -83,18 +93,27 @@ export const CaseHandoverCurtainView = ({
 	explanation,
 	isSubmitting = false,
 	error,
+	reasonsUnavailable = false,
+	reasonsLoadFailed = false,
+	onRetryReasons,
 	onStart,
 	onBack,
 	onNext,
 	onReasonSelect,
 	onExplanationChange,
-	onSubmit
+	onSubmit,
+	canReclaim = false,
+	onReclaim
 }: CaseHandoverCurtainViewProps) => {
 	const { t: translate } = useTranslation();
 	const selectedReason = useMemo(
 		() => reasons.find((reason) => reason.code === reasonCode),
 		[reasons, reasonCode]
 	);
+	// No reasons: say so instead of offering a Next that can never enable.
+	const reasonsFailed = step === 'reason' && reasonsLoadFailed;
+	const noReasons =
+		step === 'reason' && (reasonsUnavailable || reasonsLoadFailed);
 
 	return (
 		<div className="caseHandoverCurtain" data-cy="case-handover-curtain">
@@ -133,27 +152,60 @@ export const CaseHandoverCurtainView = ({
 											)}
 										</h3>
 									</div>
-									<p className="caseHandoverCurtain__copy">
-										{translate(
-											'caseHandover.curtain.intro.copy'
-										)}
-									</p>
-									<div className="caseHandoverCurtain__introActions">
-										<button
-											type="button"
-											className="caseHandoverCurtain__stepByStep"
-											onClick={onStart}
-											data-cy="case-handover-curtain-start"
-										>
-											<TutorialIcon
-												className="caseHandoverCurtain__stepByStepIcon"
-												aria-hidden
-											/>
-											{translate(
-												'caseHandover.curtain.intro.cta'
+									{canReclaim ? (
+										<>
+											<p className="caseHandoverCurtain__copy">
+												{translate(
+													'caseHandover.curtain.reclaim.copy'
+												)}
+											</p>
+											{error && (
+												<p
+													className="caseHandoverCurtain__error"
+													role="alert"
+												>
+													{error}
+												</p>
 											)}
-										</button>
-									</div>
+											<div className="caseHandoverCurtain__introActions">
+												<button
+													type="button"
+													className="caseHandoverCurtain__stepByStep"
+													onClick={onReclaim}
+													disabled={isSubmitting}
+													data-cy="case-handover-curtain-reclaim"
+												>
+													{translate(
+														'caseHandover.curtain.reclaim.cta'
+													)}
+												</button>
+											</div>
+										</>
+									) : (
+										<>
+											<p className="caseHandoverCurtain__copy">
+												{translate(
+													'caseHandover.curtain.intro.copy'
+												)}
+											</p>
+											<div className="caseHandoverCurtain__introActions">
+												<button
+													type="button"
+													className="caseHandoverCurtain__stepByStep"
+													onClick={onStart}
+													data-cy="case-handover-curtain-start"
+												>
+													<TutorialIcon
+														className="caseHandoverCurtain__stepByStepIcon"
+														aria-hidden
+													/>
+													{translate(
+														'caseHandover.curtain.intro.cta'
+													)}
+												</button>
+											</div>
+										</>
+									)}
 								</>
 							)}
 
@@ -183,6 +235,46 @@ export const CaseHandoverCurtainView = ({
 													'caseHandover.curtain.describe.subtitle'
 												)}
 									</p>
+									{reasonsFailed && (
+										<div
+											className="caseHandoverCurtain__loadFailed"
+											role="alert"
+											data-cy="case-handover-curtain-reasons-failed"
+										>
+											<p className="caseHandoverCurtain__empty">
+												{translate(
+													'caseHandover.curtain.reason.loadFailed'
+												)}
+											</p>
+											{onRetryReasons && (
+												<ButtonGroup
+													variant="outline"
+													items={[
+														{
+															label: translate(
+																'caseHandover.curtain.reason.retry'
+															),
+															onClick:
+																onRetryReasons,
+															testingAttribute:
+																'case-handover-curtain-reasons-retry'
+														}
+													]}
+												/>
+											)}
+										</div>
+									)}
+									{noReasons && !reasonsFailed && (
+										<p
+											className="caseHandoverCurtain__empty"
+											role="status"
+											data-cy="case-handover-curtain-no-reasons"
+										>
+											{translate(
+												'caseHandover.curtain.reason.empty'
+											)}
+										</p>
+									)}
 									<CaseHandoverReasonList
 										reasons={reasons}
 										reasonCode={reasonCode}
@@ -257,35 +349,40 @@ export const CaseHandoverCurtainView = ({
 						</div>
 					</ScrollableSectionBody>
 					<ScrollableSectionFooter>
-						{(step === 'reason' || step === 'describe') && (
-							<SideScrollerFooter
-								variant="wizard"
-								back={{
-									label: translate(
-										'caseHandover.curtain.back'
-									),
-									onClick: onBack,
-									disabled: step === 'reason',
-									dataCy: 'case-handover-curtain-back'
-								}}
-								next={{
-									label:
-										step === 'reason'
-											? translate(
-													'caseHandover.curtain.next'
-												)
-											: translate('caseHandover.submit'),
-									onClick:
-										step === 'reason' ? onNext : onSubmit,
-									disabled:
-										step === 'reason'
-											? !selectedReason
-											: !explanation.trim() ||
-												isSubmitting,
-									dataCy: 'case-handover-curtain-next'
-								}}
-							/>
-						)}
+						{(step === 'reason' || step === 'describe') &&
+							!noReasons && (
+								<SideScrollerFooter
+									variant="wizard"
+									back={{
+										label: translate(
+											'caseHandover.curtain.back'
+										),
+										onClick: onBack,
+										disabled: step === 'reason',
+										dataCy: 'case-handover-curtain-back'
+									}}
+									next={{
+										label:
+											step === 'reason'
+												? translate(
+														'caseHandover.curtain.next'
+													)
+												: translate(
+														'caseHandover.submit'
+													),
+										onClick:
+											step === 'reason'
+												? onNext
+												: onSubmit,
+										disabled:
+											step === 'reason'
+												? !selectedReason
+												: !explanation.trim() ||
+													isSubmitting,
+										dataCy: 'case-handover-curtain-next'
+									}}
+								/>
+							)}
 					</ScrollableSectionFooter>
 				</ScrollableSection>
 			</div>
@@ -311,7 +408,13 @@ export const CaseHandoverCurtain = ({
 }: CaseHandoverCurtainProps) => {
 	const { t: translate } = useTranslation();
 	const [step, setStep] = useState<CaseHandoverCurtainStep>('intro');
-	const [reasons, setReasons] = useState<CaseHandoverReason[]>([]);
+	const {
+		reasons,
+		loaded: reasonsLoaded,
+		unavailable: reasonsUnavailable,
+		failed: reasonsLoadFailed,
+		retry: retryReasons
+	} = useCaseHandoverReasons();
 	const [reasonCode, setReasonCode] = useState('');
 	const [explanation, setExplanation] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -341,21 +444,21 @@ export const CaseHandoverCurtain = ({
 		setIsSubmitting(false);
 	}, [actorId, sessionId]);
 
+	// A retained reason that is no longer offered is dropped.
 	useEffect(() => {
-		apiGetCaseHandoverReasons()
-			.then((items) => {
-				setReasons(items || []);
-				setReasonCode((current) =>
-					items?.some((item) => item.code === current) ? current : ''
-				);
-			})
-			.catch(() => {
-				setReasons([]);
-				setError(translate('caseHandover.error.failed'));
-			});
-	}, [translate]);
+		if (!reasonsLoaded) return;
+		setReasonCode((current) =>
+			reasons.some((item) => item.code === current) ? current : ''
+		);
+	}, [reasons, reasonsLoaded]);
+
+	const canReclaim = status?.canReclaim === true;
 
 	const derivedStep: CaseHandoverCurtainStep = useMemo(() => {
+		// An own request from before the reclaim action existed must not hide it.
+		if (canReclaim) {
+			return 'intro';
+		}
 		if (status?.status === 'PENDING_CLIENT_CONSENT') {
 			return 'consentPending';
 		}
@@ -366,7 +469,24 @@ export const CaseHandoverCurtain = ({
 			return 'denied';
 		}
 		return step;
-	}, [status?.status, step]);
+	}, [canReclaim, status?.status, step]);
+
+	const handleReclaim = () => {
+		setIsSubmitting(true);
+		setError('');
+		apiReclaimCaseHandover(sessionId)
+			.then(onStatusChange)
+			.catch((reclaimError) => {
+				setError(
+					reclaimError?.message === FETCH_ERRORS.CONFLICT
+						? translate('caseHandover.curtain.reclaim.unavailable')
+						: reclaimError?.message === FETCH_ERRORS.FORBIDDEN
+							? translate('caseHandover.error.forbidden')
+							: translate('caseHandover.error.failed')
+				);
+			})
+			.finally(() => setIsSubmitting(false));
+	};
 
 	const handleSubmit = () => {
 		if (!reasonCode || !explanation.trim() || isSubmitting) {
@@ -459,12 +579,17 @@ export const CaseHandoverCurtain = ({
 			explanation={explanation}
 			isSubmitting={isSubmitting}
 			error={error}
+			reasonsUnavailable={reasonsUnavailable}
+			reasonsLoadFailed={reasonsLoadFailed}
+			onRetryReasons={retryReasons}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
 			onNext={() => setStep('describe')}
 			onReasonSelect={setReasonCode}
 			onExplanationChange={setExplanation}
 			onSubmit={handleSubmit}
+			canReclaim={canReclaim}
+			onReclaim={handleReclaim}
 		/>
 	);
 };

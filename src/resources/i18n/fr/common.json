@@ -1124,15 +1124,37 @@
 			"addPerson": "Ajouter une personne",
 			"createLabel": "Créer un échange interne",
 			"deselectPerson": "Retirer {{name}}",
+			"error": {
+				"recipientsRequired": "Veuillez sélectionner au moins un collègue.",
+				"recipientUnknown": "Au moins un collègue sélectionné ne peut pas encore être ajouté, car il n'a pas encore de compte de chat. Retirez-le ou réessayez plus tard.",
+				"outOfScope": "Au moins une personne sélectionnée ne peut pas être choisie : elle se trouve en dehors du périmètre autorisé par votre organisation pour les échanges internes, ou est introuvable. Rien n'a été créé.",
+				"membershipFailed": "L'espace n'a pas pu être configuré avec toutes les personnes sélectionnées. Rien n'a été créé. Veuillez réessayer.",
+				"encryptionRequired": "Les échanges internes avec des personnes sélectionnées ne sont possibles qu'avec chiffrement, et le chiffrement est actuellement indisponible. Rien n'a été créé.",
+				"disabled": "Les échanges internes avec des personnes sélectionnées ne sont pas disponibles pour vous : ils ne sont pas activés, il vous manque l'autorisation, ou cette installation ne les prend pas encore en charge. Veuillez contacter votre administration.",
+				"unknown": "L'espace n'a pas pu être créé. Veuillez réessayer.",
+				"busy": "Cet espace est en cours de création. Veuillez patienter un instant, puis réessayer.",
+				"notAvailable": "Les échanges internes avec des personnes sélectionnées ne sont pas encore disponibles sur cette installation. Rien n'a été créé. Veuillez contacter le support."
+			},
 			"nameLabel": "Nom de l'échange interne",
+			"noColleagues": "Aucun collègue à sélectionner",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
+			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
 			"removePerson": "Retirer {{name}}",
+			"reusedNotice": {
+				"title": "Espace existant ouvert",
+				"text": "Un espace avec exactement ces personnes existait déjà. Il a été ouvert, aucun nouvel espace n'a été créé."
+			},
+			"scope": {
+				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
 			"supportText": "Concertez-vous au sein de votre service de consultation. Que ce soit à deux ou en équipe, par audio, par vidéo, dans le chat ou tout à la fois, selon vos besoins.",
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
+			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
 			"vacatedHint": "ne fait plus partie du service de consultation"
 		},
 		"circle": {
@@ -1739,7 +1761,15 @@
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
 				},
 				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici.",
-				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer."
+				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer.",
+				"tooManyRequestsWaitSecond": "Trop de tentatives. Veuillez patienter environ une seconde, puis réessayer.",
+				"tooManyRequestsWaitSeconds": "Trop de tentatives. Veuillez patienter environ {{seconds}} secondes, puis réessayer.",
+				"tooManyRequestsWaitMinute": "Trop de tentatives. Veuillez patienter environ une minute, puis réessayer.",
+				"tooManyRequestsWaitMinutes": "Trop de tentatives. Veuillez patienter environ {{minutes}} minutes, puis réessayer.",
+				"tooManyRequestsWaitHour": "Trop de tentatives. Veuillez patienter environ une heure, puis réessayer.",
+				"tooManyRequestsWaitHours": "Trop de tentatives. Veuillez patienter environ {{hours}} heures, puis réessayer.",
+				"tooManyRequestsWaitDay": "Trop de tentatives. Veuillez patienter environ une journée, puis réessayer.",
+				"tooManyRequestsWaitDays": "Trop de tentatives. Veuillez patienter environ {{days}} jours, puis réessayer."
 			}
 		},
 		"mobile": {
@@ -1868,7 +1898,8 @@
 				"mention": "Mentionner une personne",
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
-					"tooltip": "Enregistrer un message vocal"
+					"tooltip": "Enregistrer un message vocal",
+					"disabledWhileEditing": "Les messages vocaux ne sont pas disponibles pendant la modification d'un message"
 				},
 				"imageUrlPrompt": "URL de l'image",
 				"urlPrompt": "URL"
@@ -1952,7 +1983,8 @@
 			"participants": {
 				"current": "Dans l’appel",
 				"attended": "A participé"
-			}
+			},
+			"startedBy": "Appel lancé par {{name}}."
 		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
@@ -2542,6 +2574,10 @@
 					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
 					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
 					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
+				},
+				"dpaRestricted": {
+					"title": "Les personnes qui cherchent conseil ne peuvent pas démarrer de chat en direct avec vous",
+					"text": "Votre organisme n’a pas encore confirmé l’accord actuel de traitement des données. D’ici là, les nouvelles personnes ne peuvent démarrer ni chat en direct ni demande. Les consultations déjà commencées continuent."
 				}
 			},
 			"masterKey": {
@@ -2934,6 +2970,7 @@
 				"cta": "Configurer la clé de récupération"
 			},
 			"showKey": {
+				"headline": "Enregistrez votre clé de secours",
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
@@ -3714,7 +3751,10 @@
 			},
 			"reason": {
 				"title": "Veuillez choisir un motif",
-				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande."
+				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande.",
+				"empty": "Aucun motif de transfert de dossier n'est configuré pour votre centre de conseil. Veuillez contacter votre administration.",
+				"loadFailed": "Les motifs de transfert de dossier n’ont pas pu être chargés.",
+				"retry": "Réessayer"
 			},
 			"describe": {
 				"title": "Veuillez décrire le motif",
@@ -3722,7 +3762,12 @@
 			},
 			"back": "Retour",
 			"next": "Continuer",
-			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé."
+			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé.",
+			"reclaim": {
+				"copy": "Un·e collègue a repris ce dossier pendant votre absence. Vous pouvez le reprendre maintenant.",
+				"cta": "Reprendre le dossier",
+				"unavailable": "Ce dossier ne peut plus être repris."
+			}
 		},
 		"accepted": {
 			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
@@ -3743,16 +3788,24 @@
 		},
 		"readOnly": {
 			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
-			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages."
+			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
+			"extend": "Prolonger l'accès"
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
-			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
+			"description": "S’applique uniquement aux futures demandes dans cette conversation au sein de votre service de conseil. Les demandes en cours et les accès déjà accordés restent inchangés.",
 			"baselineDescription": "Si cette option est désactivée, les paramètres de votre service de conseil s’appliquent. Tout consentement requis par ce service reste nécessaire.",
 			"saving": "Enregistrement …",
 			"saved": "Paramètre enregistré.",
 			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
 			"loading": "Chargement du paramètre …"
+		},
+		"bulkBar": {
+			"label": "Sélection des dossiers",
+			"selected": "{{count}} sélectionné(s)",
+			"continue": "Continuer",
+			"cancel": "Annuler",
+			"emptyHint": "Sélectionnez au moins un dossier."
 		}
 	},
 	"supervisorDialog": {
@@ -4164,6 +4217,10 @@
 				"clear": "Effacer la recherche",
 				"removeSelectedPerson": "Retirer {{name}}",
 				"emptyPeople": "Aucune personne correspondante trouvée.",
+				"peopleLoading": "Chargement des collègues …",
+				"peopleLoadError": "Impossible de charger les collègues. Veuillez réessayer plus tard.",
+				"handoverPeopleHint": "Seuls les collègues dont vous pouvez reprendre les dossiers via « Demander l'accès » apparaissent ici. Cela dépend de votre département et de vos thèmes.",
+				"handoverPeopleCapped": "Il existe plus de dossiers que ceux chargés – veuillez affiner la recherche.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
 				"tabs": {
@@ -4176,7 +4233,15 @@
 				"role": {
 					"asker": "Personne en quête de conseil",
 					"consultant": "Conseiller·ère"
-				}
+				},
+				"internalName": "Nom interne",
+				"publicName": "Nom public",
+				"agencyGroup": "Service de consultation",
+				"topicGroup": "Sujet",
+				"agencyFallback": "Service de consultation {{id}}",
+				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
+				"removeFilters": "Supprimer les filtres",
+				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche"
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"
@@ -4804,6 +4869,7 @@
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
 	},
@@ -4987,6 +5053,7 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
+			"laterNotice": "Personne n'est en ligne pour le moment. Dès que quelqu'un le sera, le chat continuera ici.",
 			"title": "Le Live-Chat est malheureusement fermé pour le moment",
 			"topicLabel": "Thème demandé : {{topic}}",
 			"weekdays": {
@@ -5305,6 +5372,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Notification : {{state}}",
+			"change": "modifier",
+			"changeLabel": "Modifier la notification",
+			"dismiss": "Masquer la configuration",
+			"none": "non configurée",
+			"email": "e-mail activé",
+			"browser": "signal sur cet appareil activé",
+			"both": "e-mail et signal activés"
+		},
 		"subtitle": "Vos premières étapes",
 		"greeting": {
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
@@ -5362,7 +5439,14 @@
 		"displayName": {
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
-			"action": "Changer de nom"
+			"action": "Changer de nom",
+			"overlay": {
+				"headline": "Votre nom affiché",
+				"copy": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
+				"reroll": "Tirer un nouveau nom",
+				"save": "Utiliser ce nom",
+				"saveFailed": "L'enregistrement a échoué. Veuillez réessayer."
+			}
 		},
 		"notificationChoice": {
 			"both": "Les deux, et je définis un mot de passe maintenant",
@@ -5421,6 +5505,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Imprimer / enregistrer en PDF",
+		"confirmedBy": "Confirmé par",
+		"confirmedAt": "Confirmé le (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "Vous pouvez enregistrer en PDF dans la fenêtre d’impression. Désactivez les en-têtes et pieds de page pour ne pas imprimer l’adresse du lien.",
+		"printUnavailable": "Votre confirmation a été enregistrée. La vue d’impression n’est pas disponible car les informations de confirmation sont incomplètes.",
 		"title": "Vérifier et confirmer les documents contractuels",
 		"subtitle": "Veuillez lire les documents contractuels dans leur intégralité, puis confirmez les informations concernant la personne signataire.",
 		"signerName": "Nom complet",
@@ -5738,6 +5828,7 @@
 			"status": {
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
+				"nobodyLive": "Personne n'est en ligne pour le moment",
 				"accepted": "Une conseillère a pris votre conversation",
 				"closed": "Fermé pour le moment",
 				"checking": "Qui est en ligne ?",
@@ -5754,6 +5845,8 @@
 			"waiting": {
 				"headline": "C'est bientôt à vous.",
 				"aheadUnknown": "Nous cherchons une conseillère disponible pour vous.",
+				"nobodyLiveHeadline": "Aucune conseillère n'est en ligne pour le moment.",
+				"nobodyLive": "Nous gardons un œil dessus et vous mettons en relation dès que quelqu'un est disponible.",
 				"aheadNone": "Vous êtes la prochaine personne.",
 				"aheadOne": "Une personne devant vous",
 				"aheadMany": "{{count}} personnes devant vous",
@@ -5785,7 +5878,8 @@
 			"steps": {
 				"wait": {
 					"title": "Vous attendez qu'une personne soit libre",
-					"text": "Les conseillères sont actuellement dans d'autres conversations."
+					"text": "Les conseillères sont actuellement dans d'autres conversations.",
+					"textNobodyLive": "Dès qu'une conseillère est en ligne, c'est à vous."
 				},
 				"consent": {
 					"title": "Puis vous acceptez une seule fois",
@@ -5864,6 +5958,25 @@
 			"callFailed": "L'appel a échoué : {{message}}",
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		},
+		"notes": {
+			"title": "Notes d’entretien",
+			"privacy": "Privé. Seulement pour vous, et seulement pendant l’entretien.",
+			"type": "Type de note",
+			"text": "Note",
+			"add": "Ajouter une note",
+			"remove": "Supprimer la note",
+			"copy": "Tout copier",
+			"copied": "Copié",
+			"empty": "Rien de noté pour l’instant.",
+			"collapse": "Replier les notes",
+			"expand": "Déplier les notes",
+			"open": "Notes d’entretien",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remarque",
+				"aufgabe": "Tâche"
+			}
 		}
 	},
 	"form": {

@@ -49,6 +49,21 @@ export interface CallData {
 	 */
 	elementCallRoomId?: string;
 	/**
+	 * Whether THIS client has already written this call's card as finished.
+	 *
+	 * Set when leaving closes an unattended group call. It is the difference
+	 * between the two reasons a retained `left` call may have no tracker: we
+	 * finalised it ourselves (so its card is terminal and reopening it under
+	 * the same id would publish nothing), or we never tracked it at all
+	 * because somebody else started it — an incoming call, whose card belongs
+	 * to the caller and whose room others may still be in.
+	 *
+	 * The first must start fresh; the second must be rejoined. Asking the
+	 * tracker "do you know this call" cannot tell them apart, which is how
+	 * the first version of this gate broke rejoining an incoming group call.
+	 */
+	lifecycleFinalised?: boolean;
+	/**
 	 * Optional: original signalling/session room where `m.call.invite` was sent.
 	 * For 1:1 calls this is identical to `roomId`.
 	 */
@@ -66,6 +81,18 @@ class CallManager {
 		roomId: string;
 		isVideo: boolean;
 		forceIsGroup?: boolean;
+		/**
+		 * The account that asked for this call.
+		 *
+		 * Startup spans awaits, and `teardownLocalSession` nulls the Matrix
+		 * registry WITHOUT clearing `pendingStart`, so identity alone said
+		 * "still ours" after a sign-out. If another account was installed
+		 * before the await returned, the invitation and the lifecycle card
+		 * were published by that account for a room the previous one created
+		 * — on a shared browser where both counsellors belong to the session
+		 * room, the second could publish the first one's pending call.
+		 */
+		startedBy?: string;
 	} | null = null;
 	private listeners: Set<CallStateChangeListener> = new Set();
 
@@ -126,20 +153,50 @@ class CallManager {
 				: 'busy';
 		}
 		if (this.pendingStart || this.pendingJoin) return 'busy';
-		const client = getMatrixClientService()?.getClient?.();
+		let client = getMatrixClientService()?.getClient?.();
 		if (
 			!client ||
 			client.getRoom(call.roomRef)?.getMyMembership() !== 'join'
 		)
 			return 'unavailable';
+		const ownUserId = client.getUserId?.() ?? undefined;
+		/*
+		 * The client this ACCOUNT is signed in with right now, or null.
+		 *
+		 * A token refresh builds a new client for the same account, and the
+		 * joins below straddle two awaits. Comparing objects failed the Join
+		 * action for an ordinary refresh — the call was still valid, the
+		 * person was still themselves, and the button said no. Same shape as
+		 * the lifecycle tracker's guard, including its fallback: a client
+		 * that cannot say who it is leaves object identity as the only
+		 * signal there is.
+		 */
+		const liveClient = (): MatrixClient | null => {
+			const now = getMatrixClientService()?.getClient?.();
+			if (!now) return null;
+			if (ownUserId === undefined) return now === client ? now : null;
+			return (now.getUserId?.() ?? undefined) === ownUserId ? now : null;
+		};
 		const join = {};
 		this.pendingJoin = join;
+		/*
+		 * Whether THIS attempt put us in the call room, and whether it got
+		 * all the way to a call. Every refusal after the join has to give the
+		 * membership back: the checks below include losing access to the
+		 * SOURCE room, and a person who is no longer in the counselling
+		 * session must not be left holding a seat in its call room, where the
+		 * encrypted timeline and the RTC state keep arriving.
+		 */
+		let joinedHere = false;
+		let joined = false;
 		try {
 			const { apiCallState } = await import('../api/apiCallState');
 			const confirmed = await apiCallState(call);
+			const afterLookup = liveClient();
+			if (!afterLookup) return 'unavailable';
+			client = afterLookup;
 			if (
 				this.pendingJoin !== join ||
-				getMatrixClientService()?.getClient?.() !== client ||
 				client.getRoom(call.roomRef)?.getMyMembership() !== 'join' ||
 				!confirmed ||
 				confirmed.callId !== call.callId ||
@@ -150,13 +207,64 @@ class CallManager {
 				return 'unavailable';
 			if (confirmed.state !== 'running') return 'ended';
 			let room = client.getRoom(call.callRoomId);
-			if (room?.getMyMembership() !== 'join')
+			if (room?.getMyMembership() !== 'join') {
 				room = await client.joinRoom(call.callRoomId);
-			if (
-				this.pendingJoin !== join ||
-				getMatrixClientService()?.getClient?.() !== client
-			)
-				return 'unavailable';
+				joinedHere = true;
+			}
+			const afterJoin = liveClient();
+			if (!afterJoin) return 'unavailable';
+			/*
+			 * The client that joined and the client that will be used have
+			 * to be the same one.
+			 *
+			 * A refresh landing inside `joinRoom` leaves the membership on
+			 * the server — that part is the account's, not the object's — but
+			 * the replacement has its own room cache, and it has not synced
+			 * the room this join just entered. Adopting it without
+			 * re-resolving had the encryption assertion below ask the new
+			 * cache about a room it has never heard of, which reads exactly
+			 * like an unencrypted room and refused a join that had in fact
+			 * succeeded; and it then handed the RTC lookup the OLD client's
+			 * `room` object, which is the half of this that an earlier round
+			 * caught.
+			 *
+			 * So the room is resolved again on the adopted client, and joined
+			 * again if its cache does not have it. The server treats a join
+			 * of a room one is already in as a no-op and returns it, so this
+			 * costs a round trip and nothing else.
+			 *
+			 * `joinedHere` is deliberately not set here: it records whether
+			 * THIS attempt took a seat the person did not already have, and
+			 * re-confirming an existing membership takes nothing.
+			 */
+			if (afterJoin !== client) {
+				client = afterJoin;
+				room = client.getRoom(call.callRoomId);
+				if (room?.getMyMembership() !== 'join') {
+					room = await client.joinRoom(call.callRoomId);
+					/*
+					 * And the second join has to be asked the same question.
+					 *
+					 * This await is one more window, and the checks that
+					 * follow cannot see through it: `pendingJoin` is cleared
+					 * by starting or receiving a call, not by signing in as
+					 * somebody else, and the source-room membership below is
+					 * asked of the client captured HERE — account A's — which
+					 * still answers `join` long after the browser has moved
+					 * on to account B. The call would then be installed from
+					 * A's cached membership and RTC state and opened by the
+					 * widget on B's live client: B carried into A's call,
+					 * wherever both accounts can reach the source room.
+					 *
+					 * One adoption is enough, and a second swap inside one
+					 * attempt is not worth chasing: the person can press Join
+					 * again, and the seat this attempt may have taken is
+					 * given back by the cleanup like any other refusal.
+					 */
+					if (liveClient() !== client) return 'unavailable';
+				}
+			}
+			if (this.pendingJoin !== join) return 'unavailable';
 			// Membership may have changed while the server processed the room join.
 			if (client.getRoom(call.roomRef)?.getMyMembership() !== 'join')
 				return 'unavailable';
@@ -179,11 +287,44 @@ class CallManager {
 				state: 'connecting'
 			};
 			this.notifyListeners();
+			joined = true;
 			return 'joined';
 		} catch {
 			return 'unavailable';
 		} finally {
 			if (this.pendingJoin === join) this.pendingJoin = null;
+			// Best effort, and deliberately not awaited: the answer this
+			// method gives must not wait on tidying up after a refusal.
+			if (joinedHere && !joined)
+				void this.leaveCallRoomAfterRefusedJoin(
+					client,
+					call.callRoomId
+				);
+		}
+	}
+
+	/**
+	 * Give back a call-room membership this attempt took and then refused.
+	 *
+	 * Not `discardElementCallRoom`: that one is for a room this client
+	 * created and never told anybody about. This is somebody else's room,
+	 * which other people are in — so it leaves, and forgets so the room does
+	 * not sit in this account's list, and touches nothing else.
+	 */
+	private async leaveCallRoomAfterRefusedJoin(
+		client: MatrixClient | undefined,
+		roomId: string
+	): Promise<void> {
+		if (!client || !roomId) return;
+		try {
+			await client.leave(roomId);
+		} catch {
+			// The server may be gone, or the membership may already be lost.
+		}
+		try {
+			await client.forget(roomId);
+		} catch {
+			// Forgetting is tidiness, not correctness.
 		}
 	}
 
@@ -201,7 +342,10 @@ class CallManager {
 		if (
 			this.pendingStart?.roomId === roomId &&
 			this.pendingStart.isVideo === isVideo &&
-			this.pendingStart.forceIsGroup === forceIsGroup
+			this.pendingStart.forceIsGroup === forceIsGroup &&
+			// A pending start belonging to a DIFFERENT account must not
+			// swallow this one's click; it can no longer publish anything.
+			this.pendingStart.startedBy === this.currentAccount()
 		) {
 			return;
 		}
@@ -219,7 +363,42 @@ class CallManager {
 			this.currentCall.state === 'left' &&
 			forceIsGroup === true &&
 			(this.currentCall.signalRoomId || this.currentCall.roomId) ===
-				roomId
+				roomId &&
+			/*
+			 * ...and we have not already closed its card.
+			 *
+			 * Reuse exists for the call OTHERS are still in: creating another
+			 * dedicated room would strand them. It must not apply to a call
+			 * nobody ever joined, because `leaveCall` has already written that
+			 * one as `missed` — reusing the id then reopened a call with a
+			 * TERMINAL card, no tracker and no fresh invitation, and once the
+			 * original invite expired nothing could bring anybody in. A
+			 * counsellor retrying an unanswered call got a surface that could
+			 * never ring.
+			 *
+			 * This is the other half of moving `finishIfUnattended` onto the
+			 * leave path: before that the card stayed `running`, so reuse
+			 * happened to work. The reuse branch predates this epic; the
+			 * interaction is new, and therefore ours.
+			 *
+			 * The first version asked the tracker whether it still knew the
+			 * call, and that was wrong: an INCOMING group call was never
+			 * tracked here at all — its card belongs to the caller — so the
+			 * gate refused the very rejoin the branch exists for. The full
+			 * suite caught it.
+			 *
+			 * Two gates, because neither answers for the other. The flag
+			 * records whether WE closed this card, which is the only thing
+			 * that can be known about a call nobody ever joined. Live
+			 * MatrixRTC membership answers the question the branch is really
+			 * asking — is anybody still in there — and catches the case the
+			 * flag cannot see: somebody joined, so `finishIfUnattended`
+			 * declined to finish and left no flag, and then THEY left and the
+			 * tracker ended the card. Reuse would reopen a terminal call into
+			 * an empty room, with no invitation and nothing to ring.
+			 */
+			!this.currentCall.lifecycleFinalised &&
+			this.retainedCallMayStillBeLive(this.currentCall)
 		) {
 			// Reopen the existing MatrixRTC room. Creating another dedicated room
 			// here would strand the participants who stayed in the active call.
@@ -299,12 +478,29 @@ class CallManager {
 		}
 
 		const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-		const start = { callId, roomId, isVideo, forceIsGroup };
+		const start = {
+			callId,
+			roomId,
+			isVideo,
+			forceIsGroup,
+			startedBy: this.currentAccount()
+		};
 		this.pendingStart = start;
 
 		// Run the heavy work asynchronously so callers don't have to `await`
 		// but we can still create a dedicated Element Call room before
 		// notifying listeners.
+		/*
+		 * Hoisted out of the block below so the failure path can reach it.
+		 *
+		 * Everything between creating the room and the invitation landing can
+		 * throw — the lifecycle root write, the invitation itself — and the
+		 * catch then finished the card and cleared the surface while leaving
+		 * the room behind: joined, carrying the plaintext call/source binding
+		 * and the membership-reader invitation, one more for every retry.
+		 */
+		let created: { roomId: string; createdBy: MatrixClient } | undefined;
+
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
@@ -312,13 +508,34 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// a standalone Element Call deployment, where each call lives in its
 			// own Matrix room with appropriate power levels.
-			elementCallRoomId = await this.createElementCallRoom(
-				roomId,
-				callId
-			);
+			created = await this.createElementCallRoom(roomId, callId);
+			elementCallRoomId = created.roomId;
 			// Room creation may finish after cancellation or a different call.
 			// Only the request that still owns startup can publish its invite.
-			if (this.pendingStart !== start) return;
+			if (!this.stillOwnsStart(start)) {
+				/*
+				 * ...and it takes its room with it.
+				 *
+				 * The room exists by now, with the membership-reader account
+				 * invited and the call/source binding written into it.
+				 * Returning without cleaning up left one behind for every
+				 * superseded start — a persistent room naming a counselling
+				 * session, never joined by anybody, never found again. A
+				 * second start in another room, or a cancellation during
+				 * creation, is enough to make one.
+				 *
+				 * Best effort: leave so the room is not ours any more, then
+				 * forget it so it leaves this account's room list. Neither can
+				 * be waited on by anything, and a failure here must not break
+				 * the newer call that superseded this one, so both are
+				 * swallowed.
+				 */
+				void this.discardElementCallRoom(
+					created.roomId,
+					created.createdBy
+				);
+				return;
+			}
 
 			this.currentCall = {
 				callId,
@@ -349,8 +566,25 @@ class CallManager {
 			// the other participant sees the incoming call notification.
 			const outgoingCall = this.currentCall;
 			await callLifecycleTracker.begin(outgoingCall);
-			if (this.pendingStart !== start) {
+			if (!this.stillOwnsStart(start)) {
 				callLifecycleTracker.finish(outgoingCall.callId);
+				/*
+				 * ...and this room goes too.
+				 *
+				 * The lifecycle root write is another await, and a
+				 * cancellation or a second start can land inside it. Nothing
+				 * has been published that anybody could act on — the
+				 * invitation is still two lines below — so the room is as
+				 * strandable as the one the check before this discards, and
+				 * leaving it behind leaves the same thing behind: a joined
+				 * room naming a counselling session, with the call/source
+				 * binding and the membership reader in it.
+				 */
+				if (created)
+					void this.discardElementCallRoom(
+						created.roomId,
+						created.createdBy
+					);
 				return;
 			}
 			await this.sendGroupCallInvite(
@@ -360,11 +594,35 @@ class CallManager {
 				this.currentCall.roomId,
 				isGroup
 			);
-			if (this.pendingStart !== start) {
-				// The invite can reach the server after local cancellation. Send
-				// its matching hangup after acknowledgement, never for a newer call.
-				if (!outgoingCall.isGroup)
+			if (!this.stillOwnsStart(start)) {
+				if (outgoingCall.isGroup) {
+					/*
+					 * The room's call, not ours to end.
+					 *
+					 * The invitation reached the server, so somebody may have
+					 * answered it in the time the acknowledgement took — and
+					 * the hangup is already skipped for a group so the people
+					 * who joined can carry on. Finishing the card
+					 * unconditionally undid that from the other side: it
+					 * wrote a terminal card and dropped the tracker while the
+					 * MatrixRTC call was still live, so the Join button went
+					 * away from a call that was running.
+					 *
+					 * `finishIfUnattended` asks the only question that
+					 * separates the two: did anybody ever join. A card nobody
+					 * answered is still closed, which is what this check was
+					 * added for.
+					 */
+					callLifecycleTracker.finishIfUnattended(
+						outgoingCall.callId
+					);
+				} else {
+					// The invite can reach the server after local cancellation.
+					// Send its matching hangup after acknowledgement, never for
+					// a newer call.
 					this.sendElementCallHangup(outgoingCall);
+					callLifecycleTracker.finish(outgoingCall.callId);
+				}
 				return;
 			}
 
@@ -372,18 +630,129 @@ class CallManager {
 		})()
 			.catch((err: any) => {
 				callLifecycleTracker.finish(start.callId);
+				/*
+				 * Two different questions here, and `stillOwnsStart` answers
+				 * only one of them.
+				 *
+				 * A NEWER start owns the surface, so leave it alone — that is
+				 * what this guard has always been for.
+				 *
+				 * A changed ACCOUNT is not that. The surface still belongs to
+				 * this request, and it is now the previous account's dead call
+				 * sitting on screen; it has to be cleared. Using
+				 * `stillOwnsStart` here returned before the teardown and left
+				 * it there, which a pre-existing test caught by name — "does
+				 * not send an old invitation through a replacement account".
+				 * `stillOwnsStart` is for "may I still publish", not for
+				 * "should I clean up after myself".
+				 *
+				 * What the new account does not get is an alert about the old
+				 * one's failure.
+				 */
+				/*
+				 * The room goes with the failure, whoever owns the surface
+				 * now. Nothing was published that anybody could act on: a
+				 * failed invite write means nobody was told about this room,
+				 * and if the write did land despite rejecting, the caller is
+				 * not in the call either — the invitation is already broken,
+				 * and a persistent orphan is the worse of the two.
+				 */
+				if (created) {
+					void this.discardElementCallRoom(
+						created.roomId,
+						created.createdBy
+					);
+				}
 				if (this.pendingStart !== start) return;
-				// console.error("❌ Error while starting call:", err);
-				alert(
-					i18n.t('calls.error.startFailed', {
-						message: (err as Error).message
-					})
-				);
+				const sameAccount = this.currentAccount() === start.startedBy;
+				if (sameAccount) {
+					// console.error("❌ Error while starting call:", err);
+					alert(
+						i18n.t('calls.error.startFailed', {
+							message: (err as Error).message
+						})
+					);
+				}
 				this.endCall(false);
 			})
 			.finally(() => {
 				if (this.pendingStart === start) this.pendingStart = null;
 			});
+	}
+
+	/**
+	 * Whether a call we left might still have somebody in it.
+	 *
+	 * "Might": a client that cannot answer — no room, no `matrixRTC`, an
+	 * older SDK, a test double — gets a yes. Refusing reuse on a shrug would
+	 * strand the participants who stayed, which is the failure this branch
+	 * exists to prevent; an empty room is only reopened when the client
+	 * states, positively, that the session is empty.
+	 */
+	private retainedCallMayStillBeLive(call: CallData): boolean {
+		const client = getMatrixClientService()?.getClient?.();
+		const room = client?.getRoom?.(call.roomId);
+		if (!room || !client?.matrixRTC?.getRoomSession) return true;
+		try {
+			return client.matrixRTC.getRoomSession(room).memberships.length > 0;
+		} catch {
+			return true;
+		}
+	}
+
+	/** Whoever is signed in right now, or `undefined` after a sign-out. */
+	private currentAccount(): string | undefined {
+		return (
+			getMatrixClientService()?.getClient?.()?.getUserId?.() ?? undefined
+		);
+	}
+
+	/**
+	 * Whether this startup request may still publish.
+	 *
+	 * Two conditions, and the second is the one identity alone missed: the
+	 * request must still be the current one AND the account must still be the
+	 * one that asked for it. A replacement client for the SAME account is a
+	 * token refresh and keeps going, which matches how `callLifecycleTracker`
+	 * follows the account rather than the client object.
+	 */
+	private stillOwnsStart(
+		start: NonNullable<CallManager['pendingStart']>
+	): boolean {
+		return (
+			this.pendingStart === start &&
+			this.currentAccount() === start.startedBy
+		);
+	}
+
+	/**
+	 * Drop a dedicated call room this client created and then did not use.
+	 *
+	 * Only for a room that was never published in an invitation: leaving a
+	 * room somebody may have been invited into would tear down their call.
+	 *
+	 * The CREATING client is passed in rather than resolved from the
+	 * registry. One of the two callers runs precisely because the account
+	 * changed while `createRoom` was in flight, and by then the registry
+	 * holds the replacement account — which is not joined to this room, so
+	 * its `leave` and `forget` do nothing and the orphan stays on the
+	 * account that made it.
+	 */
+	private async discardElementCallRoom(
+		roomId: string,
+		client: MatrixClient | undefined
+	): Promise<void> {
+		if (!roomId || !client) return;
+		try {
+			await client.leave(roomId);
+		} catch {
+			// The room may never have been joined, or the server may be gone.
+		}
+		try {
+			await client.forget(roomId);
+		} catch {
+			// Forgetting is tidiness, not correctness.
+		}
 	}
 
 	/**
@@ -394,7 +763,7 @@ class CallManager {
 	private async createElementCallRoom(
 		sourceRoomId: string,
 		callId: string
-	): Promise<string> {
+	): Promise<{ roomId: string; createdBy: MatrixClient }> {
 		const matrixClientService = getMatrixClientService();
 		const client = matrixClientService?.getClient?.();
 
@@ -480,19 +849,54 @@ class CallManager {
 					'm.room.encryption': 100,
 					'm.room.name': 100,
 					'm.room.message': 0,
-					'm.room.encrypted': 50,
+					/*
+					 * Every participant may send an encrypted event.
+					 *
+					 * In an encrypted room the power-level check sees the
+					 * OUTER type, `m.room.encrypted`, whatever is sealed
+					 * inside it. At level 50 only the person who created the
+					 * call could send one, so the identity record — which
+					 * each client sends about itself, and which is a timeline
+					 * event precisely so that the room's encryption covers
+					 * it — was refused for everybody else and they all
+					 * appeared as initials.
+					 *
+					 * The room is restricted to members of the counselling
+					 * session and has no chat surface, so this grants them
+					 * nothing they do not already have in the session room.
+					 */
+					'm.room.encrypted': 0,
 					'm.sticker': 50,
 					// IMPORTANT: allow everyone to send group call membership
 					// events so Element Call can join from any participant.
 					'org.matrix.msc3401.call.member': 0
-				},
-				users: {
-					[client.getUserId()!]: 100
 				}
+				/*
+				 * The creator is deliberately NOT named here.
+				 *
+				 * `power_level_content_override` updates the default power
+				 * level content key by key, and the default already gives the
+				 * room's creator 100 — so omitting `users` leaves them in
+				 * charge, which was measured on room versions 10, 11 and 12.
+				 *
+				 * Naming them is not merely redundant: from room version 12
+				 * the creator holds power implicitly and must NOT appear in
+				 * `content.users`. Synapse rejects the whole `createRoom`
+				 * call — `M_UNKNOWN`, "Creator user ... must not appear in
+				 * content.users" — and room version 12 is the default on a
+				 * current Synapse, so with the entry present the call room
+				 * could not be created at all and every group call fell back
+				 * into the counselling session room. The fallback below did
+				 * not help: it retried with the same power levels.
+				 *
+				 * `scripts/verifyCallRoomMatrixRules.mjs` holds all of this
+				 * against a real homeserver.
+				 */
 			}
 		};
 
 		let result: { room_id: string };
+		let joinRuleRejected = false;
 		try {
 			result = await client.createRoom({
 				...baseOptions,
@@ -510,26 +914,47 @@ class CallManager {
 				err
 			);
 			result = await client.createRoom(baseOptions as any);
-			await this.inviteSessionMembers(
-				client,
-				sourceRoomId,
-				result.room_id
-			);
+			joinRuleRejected = true;
 		}
 
-		const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
-		if (
-			!membershipReaderUserId ||
-			!membershipReaderUserId.startsWith('@') ||
-			!membershipReaderUserId.includes(':')
-		) {
-			throw new Error(
-				'MatrixRTC membership reader user is not configured'
-			);
-		}
-		await client.invite(result.room_id, membershipReaderUserId);
+		/*
+		 * Everything past creation takes the room with it when it fails.
+		 *
+		 * `inviteSessionMembers` throws if any invite failed, the membership
+		 * reader may be unconfigured, and its invite can reject. In each case
+		 * this method threw before returning the id — so the caller's
+		 * `elementCallRoomId` stayed undefined and its own cleanup could not
+		 * run. Every retry then left another JOINED room behind, carrying the
+		 * plaintext call/source binding and a name that reads "Group call for
+		 * <session room>". The caller's cleanup only covers a start that was
+		 * superseded; this covers one that failed.
+		 */
+		try {
+			if (joinRuleRejected) {
+				await this.inviteSessionMembers(
+					client,
+					sourceRoomId,
+					result.room_id
+				);
+			}
 
-		return result.room_id;
+			const membershipReaderUserId = getMatrixRtcMembershipReaderUserId();
+			if (
+				!membershipReaderUserId ||
+				!membershipReaderUserId.startsWith('@') ||
+				!membershipReaderUserId.includes(':')
+			) {
+				throw new Error(
+					'MatrixRTC membership reader user is not configured'
+				);
+			}
+			await client.invite(result.room_id, membershipReaderUserId);
+		} catch (err) {
+			await this.discardElementCallRoom(result.room_id, client);
+			throw err;
+		}
+
+		return { roomId: result.room_id, createdBy: client };
 	}
 
 	/**
@@ -830,6 +1255,10 @@ class CallManager {
 		// used to make every other participant tear down the same active call.
 		// One-to-one Element Call still needs the remote hangup notification.
 		if (!call.isGroup) callLifecycleTracker.finish(call.callId);
+		// A group call outlives the person who started it — but only once
+		// somebody has actually arrived. Leaving one nobody ever joined ends
+		// it, rather than leaving a card that says "running" for good.
+		else callLifecycleTracker.finishIfUnattended(call.callId);
 		if (notifyRemote && call.usesElementCall && !call.isGroup) {
 			this.sendElementCallHangup(call);
 		}
@@ -858,7 +1287,28 @@ class CallManager {
 	 */
 	public leaveCall(): void {
 		if (this.currentCall?.usesElementCall && this.currentCall.isGroup) {
-			this.currentCall = { ...this.currentCall, state: 'left' };
+			/*
+			 * This — not `endCall` — is the group leave path.
+			 *
+			 * `GroupCallWidget.closeCallSurface` calls `leaveCall`, and this
+			 * branch returns before `endCall` is ever reached, so the
+			 * unattended-call fix sitting there did nothing for the case it
+			 * was written for: a group call nobody joined, left by the person
+			 * who started it, kept a "running" card for good with a Join
+			 * button that could only answer `unavailable`. A call somebody IS
+			 * in is untouched, because it belongs to the room rather than to
+			 * whoever invited everybody.
+			 */
+			const finalised = callLifecycleTracker.finishIfUnattended(
+				this.currentCall.callId
+			);
+			this.currentCall = {
+				...this.currentCall,
+				state: 'left',
+				// Only when it actually wrote the ending. `finishIfUnattended`
+				// leaves an attended call alone, and that one may be rejoined.
+				...(finalised ? { lifecycleFinalised: true } : {})
+			};
 			releaseAllCallWarmupStreams();
 			this.notifyListeners();
 			return;

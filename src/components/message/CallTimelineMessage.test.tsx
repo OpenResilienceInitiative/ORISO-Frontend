@@ -11,15 +11,22 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 
+/** The interface language, switchable per test. */
+const ui = vi.hoisted(() => ({ language: '' }));
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, values?: { start?: string }) =>
-			values?.start ? `${key}: ${values.start}` : key
+			values?.start ? `${key}: ${values.start}` : key,
+		i18n: ui
 	})
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	ui.language = '';
+});
 
 it('renders the actual running call through the shared card with named participant avatars', () => {
 	const call: CallLifecycleMessage = {
@@ -183,3 +190,235 @@ it('does not describe an invitation timestamp as the call start', () => {
 		2
 	);
 });
+
+it('says who is in the call now, not who has ever been', () => {
+	// The whole reason `present` exists. Sam joined, said something and left;
+	// an attendance roll would still offer them as company.
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [
+			{ userId: '@alex:example', displayName: 'Alex Test' },
+			{ userId: '@sam:example', displayName: 'Sam Test' }
+		],
+		present: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} onJoin={async () => 'joined'} />);
+
+	// The label is rendered as "<label> · <count>", so the group's own
+	// accessible name is the stable thing to read.
+	expect(
+		screen.getByRole('group', {
+			name: 'message.callLifecycle.participants.current'
+		})
+	).toBeTruthy();
+	expect(screen.queryByLabelText('Sam Test')).toBeNull();
+	expect(screen.getByLabelText('Alex Test')).toBeTruthy();
+});
+
+it('shows an empty room as empty rather than as everyone who passed through', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'running',
+		participants: [{ userId: '@sam:example', displayName: 'Sam Test' }],
+		present: []
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByLabelText('Sam Test')).toBeNull();
+});
+
+it('falls back to attendance on a card written before presence existed', () => {
+	// Cards already in rooms carry no `present`. They must stay readable, and
+	// for them the old cumulative list is the only answer there is.
+	const call: CallLifecycleMessage = {
+		callId: 'old-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'running',
+		participants: [{ userId: '@sam:example', displayName: 'Sam Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.getByLabelText('Sam Test')).toBeTruthy();
+	expect(
+		screen.getByRole('group', {
+			name: 'message.callLifecycle.participants.attended'
+		})
+	).toBeTruthy();
+});
+
+it('shows attendance once the call has ended, presence being meaningless then', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'ended-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'ended',
+		startedAt: new Date('2026-10-16T10:00:00Z').toISOString(),
+		endedAt: new Date('2026-10-16T10:05:00Z').toISOString(),
+		durationSeconds: 300,
+		participants: [
+			{ userId: '@alex:example', displayName: 'Alex Test' },
+			{ userId: '@sam:example', displayName: 'Sam Test' }
+		],
+		present: []
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(
+		screen.getByRole('group', {
+			name: 'message.callLifecycle.participants.attended'
+		})
+	).toBeTruthy();
+	expect(screen.getByLabelText('Alex Test')).toBeTruthy();
+	expect(screen.getByLabelText('Sam Test')).toBeTruthy();
+});
+
+it('says who started the call, by the name the room knows them under', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		actorUserId: '@alex:example',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }],
+		present: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.getByText(/message\.callLifecycle\.startedBy/)).toBeTruthy();
+});
+
+it('says nothing about who started it when it has no name for them', () => {
+	// A raw Matrix id on a card is worse than silence, and on a counselling
+	// platform it is the identifier the pseudonym exists to keep out of sight.
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		actorUserId: '@nobody-we-know:example',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByText(/startedBy/)).toBeNull();
+	expect(screen.queryByText(/@nobody-we-know/)).toBeNull();
+});
+
+it('says nothing when the only name it has for them is their id', () => {
+	/*
+	 * The commoner case than an actor missing from the lists, and the one the
+	 * existing test above did not reach: both producers fall back to
+	 * `displayName: userId` when the room has no display name yet, so the
+	 * entry IS there and its name is the identifier the pseudonym exists to
+	 * keep out of sight.
+	 */
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		actorUserId: '@alex:example',
+		participants: [
+			{ userId: '@alex:example', displayName: '@alex:example' }
+		],
+		present: [{ userId: '@alex:example', displayName: '@alex:example' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByText(/startedBy/)).toBeNull();
+	expect(screen.queryByText(/@alex:example/)).toBeNull();
+});
+
+it('keeps the id out of the avatars a screen reader reads', () => {
+	/*
+	 * The worse half of the actor-label case, and the one its test could not
+	 * see because it only checked visible text.
+	 *
+	 * The participant mapping handed the id to `UserAvatar` as both the
+	 * display name and the username, and `formatMessagePersonName` turns
+	 * `@alex:example` into an accessible name of `alex` — so the identifier
+	 * the visible card had just been taught to hide was still being read out.
+	 * The avatar keeps `userId`, because its colour and letters are derived
+	 * from it and that reveals nothing; what goes is the claim that the id is
+	 * a name.
+	 */
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [
+			{ userId: '@alex:example', displayName: '@alex:example' }
+		],
+		present: [{ userId: '@alex:example', displayName: '@alex:example' }]
+	};
+	const { container } = render(<CallTimelineMessage call={call} />);
+
+	const spoken = [...container.querySelectorAll('*')]
+		.map((node) => node.getAttribute('aria-label') ?? '')
+		.join(' ');
+	expect(spoken).not.toMatch(/alex/i);
+	expect(container.textContent ?? '').not.toMatch(/alex/i);
+});
+
+const STARTED_AT = '2026-10-16T08:00:00.000Z';
+const formatIn = (locale?: string) =>
+	new Intl.DateTimeFormat(locale, {
+		dateStyle: 'medium',
+		timeStyle: 'short'
+	}).format(new Date(STARTED_AT));
+const literal = (text: string) =>
+	new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+it.each([
+	['de', 'de'],
+	['de@informal', 'de'],
+	['en-GB', 'en-GB']
+])(
+	'formats the start time in the interface language, not the browser one (%s)',
+	(language, tag) => {
+		/*
+		 * `Intl.DateTimeFormat(undefined, …)` takes the BROWSER locale, so a
+		 * German interface in an English browser read "Gestartet am Oct 16,
+		 * 2026, 10:00 AM". `de@informal` is our own variant rather than a
+		 * BCP 47 tag and `Intl` throws on it, so the suffix has to come off
+		 * before `Intl` sees it; that is why it is in the table.
+		 *
+		 * The expected text is built with `Intl` rather than written out,
+		 * because what is under test is WHICH locale the component asks for,
+		 * not how ICU renders it — and spelling a date out here would pin the
+		 * test to one time zone and one ICU version.
+		 */
+		ui.language = language;
+		const call: CallLifecycleMessage = {
+			callId: 'started-call',
+			roomRef: '!source:example',
+			callRoomId: '!media:example',
+			callType: 'video',
+			state: 'ended',
+			participants: [],
+			startedAt: STARTED_AT,
+			durationSeconds: 60
+		};
+		render(<CallTimelineMessage call={call} />);
+
+		expect(screen.getByText(literal(formatIn(tag)))).toBeDefined();
+		// And not the browser's own idea of it, which is what the bug showed.
+		if (formatIn(undefined) !== formatIn(tag))
+			expect(screen.queryByText(literal(formatIn(undefined)))).toBeNull();
+	}
+);

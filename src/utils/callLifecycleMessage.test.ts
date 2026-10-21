@@ -109,6 +109,31 @@ describe('durable call lifecycle contract', () => {
 		payload.duration_seconds = -1;
 		expect(parseCallLifecycleMessage(wire)).toBeNull();
 	});
+	it('carries the group mode across the wire, and rejects a non-boolean one', () => {
+		/*
+		 * It decides whether leaving ends the call for everybody else, so it
+		 * has to survive the round trip and must never arrive as something
+		 * truthy that is not a boolean. Absent is fine — cards written before
+		 * this field exist, and a reader without it falls back.
+		 */
+		const grouped = buildCallLifecycleContent({ ...call, isGroup: true });
+		expect(parseCallLifecycleMessage(grouped)?.isGroup).toBe(true);
+
+		const solo = buildCallLifecycleContent({ ...call, isGroup: false });
+		expect(parseCallLifecycleMessage(solo)?.isGroup).toBe(false);
+
+		expect(
+			parseCallLifecycleMessage(buildCallLifecycleContent(call))
+		).not.toBeNull();
+		expect(
+			parseCallLifecycleMessage(buildCallLifecycleContent(call))?.isGroup
+		).toBeUndefined();
+
+		const payload = grouped['org.oriso.call'] as Record<string, unknown>;
+		payload.is_group = 'yes';
+		expect(parseCallLifecycleMessage(grouped)).toBeNull();
+	});
+
 	it('keeps the first durable identity through three revisions', () => {
 		const items = [
 			{ _id: '$first', ts: 100, callLifecycle: call },

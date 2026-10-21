@@ -324,7 +324,22 @@
 			"nameLabel": "Name Interna",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"scope": {
+				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
+			},
+			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
+			"error": {
+				"recipientsRequired": "Bitte wähle mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entferne die Person oder versuche es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den deine Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuche es erneut.",
+				"disabled": "Interna mit ausgewählten Personen sind für dich nicht verfügbar: Sie sind nicht freigeschaltet, dir fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wende dich an deine Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warte einen Moment und versuche es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wende dich an den Support."
+			}
 		},
 		"circle": {
 			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
@@ -792,6 +807,10 @@
 					"sessionExpired": "Deine Anmeldung ist abgelaufen. Melde Dich neu an und schalte den Live-Chat danach wieder ein.",
 					"leaseLost": "Der Server führt Dich nicht mehr als verfügbar. Schalte den Live-Chat wieder ein, um erreichbar zu sein.",
 					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalte den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				},
+				"dpaRestricted": {
+					"title": "Ratsuchende können gerade keinen Live-Chat mit Dir beginnen",
+					"text": "Dein Träger hat die aktuelle Auftragsverarbeitungsvereinbarung noch nicht bestätigt. Bis dahin können neue Ratsuchende weder einen Live-Chat noch eine Anfrage beginnen. Bereits begonnene Beratungen laufen weiter."
 				}
 			},
 			"masterKey": {
@@ -1526,6 +1545,9 @@
 				"close": "Suche schließen",
 				"clear": "Suche leeren",
 				"emptyPeople": "Keine passenden Personen gefunden.",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuche es später erneut.",
+				"handoverPeopleHint": "Hier siehst du nur Kolleg:innen, deren Fälle du über „Zugriff anfragen“ übernehmen kannst. Das hängt von deiner Abteilung und deinen Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenze die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
@@ -1533,7 +1555,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -2254,7 +2277,15 @@
 		},
 		"warning": {
 			"failed": {
-				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warte etwa eine Sekunde und versuch es dann erneut.",
+				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warte etwa {{seconds}} Sekunden und versuch es dann erneut.",
+				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warte etwa eine Minute und versuch es dann erneut.",
+				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warte etwa {{minutes}} Minuten und versuch es dann erneut.",
+				"tooManyRequestsWaitHour": "Zu viele Versuche. Bitte warte etwa eine Stunde und versuch es dann erneut.",
+				"tooManyRequestsWaitHours": "Zu viele Versuche. Bitte warte etwa {{hours}} Stunden und versuch es dann erneut.",
+				"tooManyRequestsWaitDay": "Zu viele Versuche. Bitte warte etwa einen Tag und versuch es dann erneut.",
+				"tooManyRequestsWaitDays": "Zu viele Versuche. Bitte warte etwa {{days}} Tage und versuch es dann erneut."
 			}
 		}
 	},
@@ -2316,7 +2347,12 @@
 		"displayName": {
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
-			"action": "Namen ändern"
+			"action": "Namen ändern",
+			"overlay": {
+				"headline": "Dein angezeigter Name",
+				"copy": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+				"saveFailed": "Speichern fehlgeschlagen. Bitte versuch es erneut."
+			}
 		},
 		"notificationChoice": {
 			"email": "Schreib mir eine E-Mail",
@@ -2342,6 +2378,14 @@
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"curtain": {
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			},
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
+			}
 		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
@@ -2373,7 +2417,11 @@
 		},
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
-			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb deiner Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert."
+		},
+		"bulkBar": {
+			"emptyHint": "Wähle mindestens einen Fall aus."
 		}
 	},
 	"supervisorDialog": {
@@ -2582,6 +2630,7 @@
 			},
 			"waiting": {
 				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden dich, sobald jemand verfügbar ist.",
 				"aheadNone": "Du bist als Nächstes dran.",
 				"aheadOne": "Eine Person vor dir",
 				"aheadMany": "{{count}} Personen vor dir",
@@ -2599,7 +2648,8 @@
 			},
 			"steps": {
 				"wait": {
-					"title": "Du wartest, bis jemand frei ist"
+					"title": "Du wartest, bis jemand frei ist",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für dich los."
 				},
 				"consent": {
 					"title": "Dann stimmst du einmal zu",

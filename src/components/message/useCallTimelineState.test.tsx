@@ -118,6 +118,142 @@ describe('useCallTimelineState', () => {
 		expect(loadState).toHaveBeenCalledTimes(1);
 	});
 
+	it('takes a newer terminal revision over an accepted terminal answer', async () => {
+		/*
+		 * `hasAcceptedTerminal` stops the reads, so an accepted `ended`
+		 * answer used to win for good — a membership edit arriving after it
+		 * froze the attendee list until the card unmounted. The timeline's own
+		 * terminal revision is newer and is the authority on who was there.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn().mockResolvedValue({
+			...initial,
+			state: 'ended',
+			durationSeconds: 42
+		});
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(result.current.state).toBe('ended');
+		expect(result.current.participants).toEqual([]);
+
+		const fuller = runningCall({
+			state: 'ended',
+			durationSeconds: 42,
+			participants: [{ userId: '@late:example', displayName: 'Late' }]
+		});
+		rerender({ call: fuller });
+		expect(result.current.participants).toEqual(fuller.participants);
+	});
+
+	it('still refuses to reopen a terminal answer from a running timeline', async () => {
+		// The one thing "a terminal answer always wins" was right about.
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn().mockResolvedValue({
+			...initial,
+			state: 'ended',
+			durationSeconds: 42
+		});
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(result.current.state).toBe('ended');
+
+		rerender({
+			call: runningCall({
+				present: [{ userId: '@late:example', displayName: 'Late' }]
+			})
+		});
+		expect(result.current.state).toBe('ended');
+	});
+
+	it('prefers a newer running revision over an accepted running answer', async () => {
+		/*
+		 * A membership edit leaves both revisions `running`, so comparing
+		 * only `state` kept the accepted answer winning while `participants`
+		 * and `present` had already changed — the card showed departed or
+		 * missing attendees although the live revision was right there in its
+		 * props. Attendance-only edits do not change `callKey` either, so
+		 * nothing re-read it until the next fifteen-second poll.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn().mockResolvedValue(initial);
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(result.current.participants).toEqual([]);
+
+		const joined = runningCall({
+			participants: [{ userId: '@late:example', displayName: 'Late' }],
+			present: [{ userId: '@late:example', displayName: 'Late' }]
+		});
+		rerender({ call: joined });
+		expect(result.current.participants).toEqual(joined.participants);
+		expect(result.current.present).toEqual(joined.present);
+	});
+
+	it('discards a response built from a revision the timeline has left behind', async () => {
+		/*
+		 * `apiCallState` answers by spreading the revision it was asked
+		 * about, because the server sends authoritative timings and state but
+		 * not always the names. So if a membership edit lands while the read
+		 * is in flight, the answer carries the OLD attendance — and a
+		 * terminal answer would stop the retries that could ever correct it,
+		 * leaving the card permanently showing fewer attendees than the
+		 * timeline already knows about.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const joined = runningCall({
+			participants: [{ userId: '@late:example', displayName: 'Late' }]
+		});
+		let release: (value: CallLifecycleMessage) => void = () => undefined;
+		const loadState = vi
+			.fn()
+			.mockImplementationOnce(
+				() =>
+					new Promise<CallLifecycleMessage>((resolve) => {
+						release = resolve;
+					})
+			)
+			.mockResolvedValue({
+				...joined,
+				state: 'ended',
+				durationSeconds: 42
+			});
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+
+		// Somebody joins while the first read is still out.
+		rerender({ call: joined });
+		await act(async () => {
+			release({ ...initial, state: 'ended', durationSeconds: 42 });
+		});
+
+		// That answer described the call before they joined, so it is not kept
+		// and the card is not treated as finished.
+		expect(result.current.participants).toEqual(joined.participants);
+
+		// The retry asks about what the card says now, and that answer stands.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(20000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(2);
+		expect(result.current.state).toBe('ended');
+		expect(result.current.participants).toEqual(joined.participants);
+	});
+
 	it('retries wrong-identity and disallowed-state responses before accepting completion', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall({ state: 'missed' });
@@ -175,6 +311,61 @@ describe('useCallTimelineState', () => {
 		expect(result.current).toBe(newCall);
 		expect(loadState).toHaveBeenCalledTimes(2);
 		expect(loadState).toHaveBeenLastCalledWith(newCall);
+	});
+
+	it('does not ask again when the same card is merely rebuilt', async () => {
+		/*
+		 * The session rebuilds every message object on every
+		 * `fetchSessionMessages()` — per incoming message, per reaction, per
+		 * decryption burst, plus a 60-second fallback. Keying the effect on
+		 * the prop object meant one immediate read per card per rebuild: ten
+		 * call cards in a conversation sent ten requests for every chat
+		 * message that arrived.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn(() => Promise.resolve(null));
+		const { rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(loadState).toHaveBeenCalledTimes(1);
+
+		for (let i = 0; i < 5; i += 1) {
+			rerender({ call: { ...initial, participants: [] } });
+			await act(async () => {});
+		}
+
+		expect(loadState).toHaveBeenCalledTimes(1);
+		// And the fifteen-second schedule is still the only thing asking.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(2);
+	});
+
+	it('stops asking about a finished card the server knows nothing about', async () => {
+		/*
+		 * A null answer for a terminal card is as much as there is to learn:
+		 * a card written before the backend held a record, or one whose
+		 * record is gone. It used to reschedule every fifteen seconds for as
+		 * long as the card stayed on screen.
+		 */
+		vi.useFakeTimers();
+		const loadState = vi.fn(() => Promise.resolve(null));
+		renderHook(() =>
+			useCallTimelineState(
+				runningCall({ state: 'ended', durationSeconds: 42 }),
+				loadState
+			)
+		);
+		await act(async () => {});
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(120000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(1);
 	});
 
 	it('cancels retries and ignores a pending response after unmount', async () => {

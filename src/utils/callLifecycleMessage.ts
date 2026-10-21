@@ -17,7 +17,55 @@ export interface CallLifecycleMessage {
 	callRoomId: string;
 	state: 'running' | 'ended' | 'missed';
 	callType: 'audio' | 'video';
+	/**
+	 * Everybody who was in this call at some point. Cumulative: nobody is
+	 * ever removed, which is what makes it the right thing for an ended
+	 * card to show and the wrong thing for a running one.
+	 */
 	participants: CallLifecycleParticipant[];
+	/**
+	 * Who is in the call RIGHT NOW. Replaced on every membership change, so
+	 * somebody who leaves disappears from it.
+	 *
+	 * This is the field "ich sehe, dass die anderen drin sind" needs, and it
+	 * is deliberately separate from `participants` rather than a correction
+	 * to it. Both are true and they answer different questions: an ended
+	 * card wants the history, a running one wants the room. Collapsing them
+	 * into one list loses whichever answer the other state needed.
+	 *
+	 * Optional, because a card written before this existed does not carry it,
+	 * and because an ended call has no present.
+	 */
+	present?: CallLifecycleParticipant[];
+	/**
+	 * Who started the call.
+	 *
+	 * The one field from #1361 that carries information nothing else does:
+	 * `participants` says who was there and `present` who is there, but
+	 * neither says who picked up the phone. Optional, because cards written
+	 * before this exist and because a call reconstructed from the backend may
+	 * not know.
+	 *
+	 * #1361's `participant_count` is deliberately NOT here. It duplicates
+	 * `participants.length`, and a count that can disagree with the list it
+	 * counts is worse than no count.
+	 */
+	actorUserId?: string;
+	/**
+	 * Whether this call is a group call, as the side that STARTED it decided.
+	 *
+	 * Carried rather than re-derived, because the two derivations disagree
+	 * exactly where it matters. `startSupervisionCall` counts the side room's
+	 * participants; the rejoin path had only the client-facing session's
+	 * `isGroup`, which is false for a supervision call inside a 1:1 session.
+	 * A call rejoined as non-group is ended for everybody when one person
+	 * leaves — `endCall` publishes a remote hangup and finalises the
+	 * lifecycle — while the other supervisors are still in it.
+	 *
+	 * Optional, because cards written before this exist. A reader without it
+	 * falls back to what it used to do.
+	 */
+	isGroup?: boolean;
 	invitedAt?: string;
 	startedAt?: string;
 	endedAt?: string;
@@ -53,23 +101,41 @@ export function parseCallLifecycleMessage(
 		return null;
 	const payload = content['org.oriso.call'];
 	if (!isRecord(payload)) return null;
-	const { call_id, room_ref, call_room_id, state, call_type, participants } =
-		payload;
+	const {
+		call_id,
+		room_ref,
+		call_room_id,
+		state,
+		call_type,
+		participants,
+		present,
+		actor_user_id: actorUserId,
+		is_group: isGroup
+	} = payload;
 	if (!isString(call_id) || !isString(room_ref) || !isString(call_room_id))
 		return null;
 	if (state !== 'running' && state !== 'ended' && state !== 'missed')
 		return null;
 	if (call_type !== 'audio' && call_type !== 'video') return null;
-	if (
-		!Array.isArray(participants) ||
-		participants.some(
+	const isParticipantList = (value: unknown) =>
+		Array.isArray(value) &&
+		value.every(
 			(participant) =>
-				!isRecord(participant) ||
-				!isString(participant.userId) ||
-				!isString(participant.displayName)
-		)
-	)
-		return null;
+				isRecord(participant) &&
+				isString(participant.userId) &&
+				isString(participant.displayName)
+		);
+	if (!isParticipantList(participants)) return null;
+	// Absent is fine — a card written before `present` existed, or an ended
+	// call. Present but malformed is not: it would reach a card as a list of
+	// people who are not there.
+	if (present !== undefined && !isParticipantList(present)) return null;
+	// Absent is fine; present but not a user id is not. It reaches a card as
+	// a name, and a card is a thing people read and believe.
+	if (actorUserId !== undefined && !isString(actorUserId)) return null;
+	// Absent is fine; present but not a boolean is not. It decides whether
+	// leaving ends the call for everybody else.
+	if (isGroup !== undefined && typeof isGroup !== 'boolean') return null;
 	if (
 		![payload.invited_at, payload.started_at, payload.ended_at].every(
 			validTimestamp
@@ -90,10 +156,26 @@ export function parseCallLifecycleMessage(
 		callRoomId: call_room_id,
 		state,
 		callType: call_type,
-		participants: participants.map((participant) => ({
-			userId: participant.userId,
-			displayName: participant.displayName
-		})),
+		participants: (participants as CallLifecycleParticipant[]).map(
+			(participant) => ({
+				userId: participant.userId,
+				displayName: participant.displayName
+			})
+		),
+		...(present === undefined
+			? {}
+			: {
+					present: (present as CallLifecycleParticipant[]).map(
+						(participant) => ({
+							userId: participant.userId,
+							displayName: participant.displayName
+						})
+					)
+				}),
+		...(actorUserId === undefined
+			? {}
+			: { actorUserId: actorUserId as string }),
+		...(isGroup === undefined ? {} : { isGroup: isGroup as boolean }),
 		invitedAt: payload.invited_at as string | undefined,
 		startedAt: payload.started_at as string | undefined,
 		endedAt: payload.ended_at as string | undefined,
@@ -115,6 +197,9 @@ export function buildCallLifecycleContent(
 			state: message.state,
 			call_type: message.callType,
 			participants: message.participants,
+			present: message.present,
+			actor_user_id: message.actorUserId,
+			is_group: message.isGroup,
 			invited_at: message.invitedAt,
 			started_at: message.startedAt,
 			ended_at: message.endedAt,

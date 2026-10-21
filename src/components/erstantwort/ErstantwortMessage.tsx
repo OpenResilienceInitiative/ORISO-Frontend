@@ -9,8 +9,9 @@ import {
 } from '../../hooks/useOpenTwoFactorSettings';
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
+import { ErstantwortDisplayNameOverlay } from './ErstantwortDisplayNameOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
-import { NotificationSetup } from './NotificationSetup';
+import { NotificationSetupCollapse } from './NotificationSetupMessage';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { notificationChannelPolicy } from './notificationChannelPolicy';
 import { useNotificationChannels } from './useNotificationChannels';
@@ -37,6 +38,8 @@ import { ErstantwortTrigger } from './erstantwortCatalogue';
 export interface ErstantwortMessageProps {
 	/** The raw, already decrypted message body of the FIRST_RESPONSE event. */
 	rawMessage?: string | null;
+	/** Chat message id; lets an X on the notification setup survive a reload. */
+	messageId?: string;
 	/** Used only when no event exists — the client-side triggers of #825. */
 	trigger?: ErstantwortTrigger;
 	conversationType?: string | null;
@@ -54,6 +57,7 @@ export interface ErstantwortMessageProps {
 
 export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	rawMessage,
+	messageId,
 	trigger,
 	conversationType,
 	deadlineDays,
@@ -61,7 +65,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	skipAnimation,
 	onFirstReveal
 }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
@@ -82,7 +86,14 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const offerNotificationSetup =
 		(emailAllowed || channels.browserAllowed) &&
 		(notificationSetupStarted || !hasReachableChannel);
+	// A persisted message keeps its place in the history after a channel is
+	// reachable: the slot then starts as the one-line summary with "ändern"
+	// instead of vanishing. No invitation is offered again (offerNotificationSetup
+	// still decides that); a tenant without any channel has nothing to show.
+	const showSetupSlot = emailAllowed || channels.browserAllowed;
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
+	const [isDisplayNameOverlayOpen, setIsDisplayNameOverlayOpen] =
+		useState(false);
 
 	const state: ErstantwortLiveState = useMemo(
 		() => ({
@@ -160,14 +171,10 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					setIsEmailOverlayOpen(true);
 					break;
 				case 'ENABLE_2FA':
-					openTwoFactorSettings();
+					openTwoFactorSettings({ showBackupKey: true });
 					break;
 				case 'SET_DISPLAY_NAME':
-					/* The display-name setting takes effect at assignment time
-					   and lives in the profile. Whether free entry is offered at
-					   all is governed by ORISO-Admin#602 switch 1; until that
-					   ships, the profile's own rules apply unchanged. */
-					navigate('/profile');
+					setIsDisplayNameOverlayOpen(true);
 					break;
 				case 'SAVE_CREDENTIALS':
 					/* Handled inline by SaveCredentialsCard — there is no dialog
@@ -200,10 +207,9 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
 					emailNotification:
-						persistedInvitation &&
-						!hasChoice &&
-						offerNotificationSetup ? (
-							<NotificationSetup
+						persistedInvitation && !hasChoice && showSetupSlot ? (
+							<NotificationSetupCollapse
+								messageId={messageId}
 								isEmailEnabled={emailAllowed}
 								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
@@ -211,8 +217,9 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 								}
 							/>
 						) : undefined,
-					notificationChoice: offerNotificationSetup ? (
-						<NotificationSetup
+					notificationChoice: showSetupSlot ? (
+						<NotificationSetupCollapse
+							messageId={messageId}
 							isEmailEnabled={emailAllowed}
 							isBrowserEnabled={channels.browserAllowed}
 							onStart={() => setNotificationSetupStarted(true)}
@@ -228,6 +235,16 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			{isEmailOverlayOpen && (
 				<ErstantwortEmailOverlay
 					onClose={() => setIsEmailOverlayOpen(false)}
+					onSaved={reloadUserData}
+				/>
+			)}
+			{isDisplayNameOverlayOpen && (
+				<ErstantwortDisplayNameOverlay
+					currentName={
+						userData?.displayName || userData?.userName || ''
+					}
+					locale={i18n.language || 'de'}
+					onClose={() => setIsDisplayNameOverlayOpen(false)}
 					onSaved={reloadUserData}
 				/>
 			)}

@@ -105,6 +105,48 @@ describe('the durable call action in an actual message row', () => {
 		}
 	);
 
+	it('rejoins a group call recorded in a 1:1 session as a group call', async () => {
+		/*
+		 * A supervision call lives in a side room of an ordinary 1:1 client
+		 * session, and `startSupervisionCall` makes it a group call from the
+		 * side room's own participant count. The rejoin path had only
+		 * `activeSession.isGroup`, which describes the CLIENT session and is
+		 * false here — so the call was rejoined as one-to-one, and leaving it
+		 * takes `endCall`, which publishes a remote hangup and finalises the
+		 * lifecycle while the other supervisors are still in it.
+		 *
+		 * The side that started the call writes what it is; this reads that.
+		 */
+		const activeSession = mockActiveSession1on1();
+		const callLifecycle = {
+			callId: 'call-supervision',
+			roomRef: activeSession.rid,
+			callRoomId: '!media-sv:oriso.invalid',
+			callType: 'video' as const,
+			state: 'running' as const,
+			participants: [],
+			isGroup: true
+		};
+
+		render(
+			<MessageContextShell activeSession={activeSession}>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						rid: activeSession.rid,
+						callLifecycle
+					})}
+				/>
+			</MessageContextShell>
+		);
+
+		fireEvent.click(screen.getByRole('button'));
+
+		expect(callManagerSpies.joinExistingCall).toHaveBeenCalledWith(
+			expect.objectContaining({ callId: 'call-supervision' }),
+			true
+		);
+	});
+
 	it.each([
 		['a banned user', true, false] as const,
 		['an archived session', false, true] as const

@@ -22,6 +22,21 @@ interface CallWrites {
 	callType: CallLifecycleMessage['callType'];
 }
 
+/**
+ * No client may write this card right now — and that may pass.
+ *
+ * Distinct from any other failure because it is the one the caller should
+ * wait out rather than give up on: a replacement client that has not finished
+ * `initRustCrypto` is seconds away from being able to write, and a card that
+ * is dropped meanwhile is dropped for good.
+ */
+export class TimelineClientUnavailableError extends Error {
+	constructor() {
+		super('Matrix client unavailable for call timeline');
+		this.name = 'TimelineClientUnavailableError';
+	}
+}
+
 /** Serializes encrypted room-message updates; Matrix sendMessage owns encryption. */
 export class CallTimelineMessageService {
 	private readonly calls = new Map<string, CallWrites>();
@@ -63,8 +78,7 @@ export class CallTimelineMessageService {
 		const write = async () => {
 			if (state.lastContent === signature) return;
 			const client = this.client();
-			if (!client)
-				throw new Error('Matrix client unavailable for call timeline');
+			if (!client) throw new TimelineClientUnavailableError();
 			let transactionId = state.transactions.get(signature);
 			if (!transactionId) {
 				transactionId = `call-timeline-${crypto.randomUUID()}`;
@@ -79,6 +93,25 @@ export class CallTimelineMessageService {
 				throw new Error('Call timeline write returned no event ID');
 			state.rootEventId ??= response.event_id;
 			state.lastContent = signature;
+			/*
+			 * The transaction ID has done its job; keeping it makes the next
+			 * identical revision disappear.
+			 *
+			 * It exists so that RETRYING a failed write cannot create a
+			 * second call card — the same ID means the server either stores
+			 * the event once or tells us it already did. But the map kept
+			 * every signature forever, and a signature comes back: A and B
+			 * present, B leaves, B rejoins. `lastContent` is the two-person
+			 * state's predecessor by then, so the dedupe check lets the
+			 * revision through — and it goes out under the ID that revision
+			 * already used. Matrix treats a repeated transaction ID from the
+			 * same access token as idempotent, returns the earlier event ID
+			 * and stores nothing, so the card went on showing A alone while
+			 * this client recorded the write as done.
+			 *
+			 * A failed write keeps its ID, which is the case the ID is for.
+			 */
+			state.transactions.delete(signature);
 		};
 		const next = state.queue.then(write, write);
 		state.queue = next.catch(() => undefined);
