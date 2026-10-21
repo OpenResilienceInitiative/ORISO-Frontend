@@ -232,3 +232,112 @@ describe('composer scenario-owned single draft fixture', () => {
 		dispose();
 	});
 });
+
+describe('Native DPA explicitly empty draft index', () => {
+	const indexScope = 'scope:__draft-index__|thread:main';
+	const indexUrl = () => readUrl(indexScope);
+	it('installs the declared Native DPA empty index before child layout reads without changing group draft absence', async () => {
+		const { ComposerStoryDecorator, buildMockGroupSession } = await import(
+			'./composerStoryDecorator'
+		);
+		const reads: Promise<Response>[] = [];
+		const Child = () => {
+			React.useLayoutEffect(() => {
+				reads.push(fetch(new Request(indexUrl())));
+				reads.push(fetch(readUrl('scope:9001|thread:main')));
+			}, []);
+			return null;
+		};
+		const view = render(
+			<ComposerStoryDecorator
+				activeSession={buildMockGroupSession()}
+				emptyDraftIndex
+			>
+				<Child />
+			</ComposerStoryDecorator>
+		);
+		expect(reads).toHaveLength(2);
+		for (const response of await Promise.all(reads)) {
+			expect(response.status).toBe(204);
+			await expect(response.text()).resolves.toBe('');
+		}
+		view.unmount();
+		expect(globalThis.fetch).toBe(delegate);
+		expect(delegate).not.toHaveBeenCalled();
+	});
+	it('keeps the index opt-in scoped to its lifetime across Native A, ordinary B and Native A again', async () => {
+		const fixture = await import('./composerStoryDecorator');
+		const disposeA = fixture.installComposerSingleDraftFixture({
+			emptyDraftIndex: true
+		});
+		const heldA = globalThis.fetch;
+		expect((await fetch(indexUrl())).status).toBe(204);
+		disposeA();
+		const finish = beginStoryVerification();
+		const disposeB = fixture.installComposerSingleDraftFixture();
+		const heldB = globalThis.fetch;
+		disposeA();
+		expect(globalThis.fetch).toBe(heldB);
+		await expect(fetch(indexUrl())).rejects.toThrow(
+			'Unexpected product API request: GET'
+		);
+		await expect(heldA(indexUrl())).rejects.toThrow(
+			'Unexpected product API request: GET'
+		);
+		await expect(finish.complete()).rejects.toThrow(
+			'unexpected-request: GET'
+		);
+		disposeB();
+		const disposeAgain = fixture.installComposerSingleDraftFixture({
+			emptyDraftIndex: true
+		});
+		expect((await fetch(indexUrl())).status).toBe(204);
+		disposeAgain();
+		expect(globalThis.fetch).toBe(delegate);
+	});
+	const rejectedIndexReads = [
+		[
+			'wrong origin',
+			readUrl(indexScope).replace(
+				'api.storybook.test',
+				'foreign.storybook.test'
+			),
+			'GET'
+		],
+		[
+			'plural path',
+			`https://api.storybook.test/service/users/drafts?scopeKey=${encodeURIComponent(indexScope)}`,
+			'GET'
+		],
+		['unowned stage scope', readUrl('scope:4711|thread:main'), 'GET'],
+		['missing query', endpoint, 'GET'],
+		['extra query', `${readUrl(indexScope)}&other=1`, 'GET'],
+		[
+			'duplicate query',
+			`${readUrl(indexScope)}&scopeKey=${encodeURIComponent(indexScope)}`,
+			'GET'
+		],
+		['fragment', `${readUrl(indexScope)}#other`, 'GET'],
+		['write', readUrl(indexScope), 'POST']
+	];
+	it.each(rejectedIndexReads)(
+		'delegates %s even when the empty index is declared',
+		async (_name, url, method) => {
+			const fixture = await import('./composerStoryDecorator');
+			const finish = beginStoryVerification();
+			const dispose = fixture.installComposerSingleDraftFixture({
+				emptyDraftIndex: true
+			});
+			const input = new Request(url, { method });
+			const init = { signal: new AbortController().signal };
+			await expect(fetch(input, init)).rejects.toThrow(
+				`Unexpected product API request: ${method} ${url}`
+			);
+			expect(delegate).toHaveBeenCalledExactlyOnceWith(input, init);
+			await expect(finish.complete()).rejects.toThrow(
+				`unexpected-request: ${method} ${url}`
+			);
+			dispose();
+		}
+	);
+});

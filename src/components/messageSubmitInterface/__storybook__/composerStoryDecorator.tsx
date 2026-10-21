@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useInsertionEffect } from 'react';
+import { REMOTE_DRAFT_INDEX_SCOPE } from '../../../services/draftStore';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -240,7 +241,8 @@ const composerEmptyDraftScopes = new Set([
 
 const ownsComposerSingleDraftRead = (
 	input: RequestInfo | URL,
-	init?: RequestInit
+	init: RequestInit | undefined,
+	emptyDraftIndex: boolean
 ) => {
 	const method =
 		init?.method ?? (input instanceof Request ? input.method : 'GET');
@@ -256,19 +258,23 @@ const ownsComposerSingleDraftRead = (
 		url.pathname === '/service/users/drafts/single' &&
 		url.hash === '' &&
 		[...url.searchParams].length === 1 &&
-		composerEmptyDraftScopes.has(url.searchParams.get('scopeKey') ?? '')
+		(composerEmptyDraftScopes.has(url.searchParams.get('scopeKey') ?? '') ||
+			(emptyDraftIndex &&
+				url.searchParams.get('scopeKey') === REMOTE_DRAFT_INDEX_SCOPE))
 	);
 };
 
 /** Exact no-content read fixture; list reads and all writes keep their owners. */
-export const installComposerSingleDraftFixture = () => {
+export const installComposerSingleDraftFixture = ({
+	emptyDraftIndex = false
+}: { emptyDraftIndex?: boolean } = {}) => {
 	const delegate = globalThis.fetch;
 	let active = true;
 	const ownedFetch: typeof fetch = function (this: unknown, input, init) {
 		if (
 			active &&
 			globalThis.fetch === ownedFetch &&
-			ownsComposerSingleDraftRead(input, init)
+			ownsComposerSingleDraftRead(input, init, emptyDraftIndex)
 		) {
 			return Promise.resolve(new Response(null, { status: 204 }));
 		}
@@ -363,6 +369,7 @@ export function ComposerStoryDecorator({
 	activeSession,
 	roomMembers,
 	userData,
+	emptyDraftIndex = false,
 	children
 }: {
 	activeSession?: any;
@@ -370,18 +377,22 @@ export function ComposerStoryDecorator({
 	/** Override the signed-in user; defaults to the consultant. Asker-only
 	 *  chrome such as the absence banner needs an asker here. */
 	userData?: any;
+	/** Native DPA send scenarios explicitly declare an absent remote index row. */
+	emptyDraftIndex?: boolean;
 	children: React.ReactNode;
 }) {
 	// Insertion effects are paired with committed mounts, including nested
 	// StrictMode, and run before the child's layout-effect API reads.
 	useInsertionEffect(() => {
 		const restoreComposer = installComposerFetchMocks();
-		const restoreDrafts = installComposerSingleDraftFixture();
+		const restoreDrafts = installComposerSingleDraftFixture({
+			emptyDraftIndex
+		});
 		return () => {
 			restoreDrafts();
 			restoreComposer();
 		};
-	}, []);
+	}, [emptyDraftIndex]);
 
 	return (
 		<MatrixClientContext.Provider
