@@ -119,10 +119,12 @@ if kind == "frontend" and phase == "react":
         records.append(record)
     finally:
         probe.unlink()
-    targeted = ["src/components/anonymousChat/entryRoom/LiveChatAccess.test.tsx", "src/components/twoFactorAuth/TwoFactorAuth.test.tsx", "src/components/erstantwort/ErstantwortEmailOverlay.test.tsx", "src/components/profile/AskerAboutMeData.test.tsx", "src/components/profile/DisplayNameSettings.test.tsx", "src/components/passwordReset/PasswordReset.test.tsx", "src/components/twoFactorAuth/TwoFactorSetupDialog.test.tsx", "src/components/localeSwitch/LocaleSwitch.test.tsx"]
+    targeted = ["src/components/profile/ProfileAvatarChoice.test.tsx", "src/components/profile/EmailNotifications/EmailNotifications.appointments.test.tsx", "src/components/anonymousChat/entryRoom/LiveChatAccess.test.tsx", "src/components/twoFactorAuth/TwoFactorAuth.test.tsx", "src/components/erstantwort/ErstantwortEmailOverlay.test.tsx", "src/components/profile/AskerAboutMeData.test.tsx", "src/components/profile/DisplayNameSettings.test.tsx", "src/components/passwordReset/PasswordReset.test.tsx", "src/components/twoFactorAuth/TwoFactorSetupDialog.test.tsx", "src/components/localeSwitch/LocaleSwitch.test.tsx"]
+    assert all((root / name).is_file() for name in targeted), "missing required affected React test source"
     records.append(run("react-account-paths", ["node", "node_modules/vitest/vitest.mjs", "run", "--project", "unit", "--maxWorkers=2", "--minWorkers=1", *targeted, "--reporter=junit", "--outputFile=" + str(evidence / "react-account-paths.xml")], 420, evidence / "react-account-paths.xml"))
 elif kind == "admin" and phase == "react":
     targeted = ["src/components/TwoFactorSetup/TwoFactorSetup.test.tsx", "src/pages/users/Edit/index.test.tsx", "src/pages/users/TenantAdminEdit/index.test.tsx"]
+    assert all((root / name).is_file() for name in targeted), "missing required affected React test source"
     records.append(run("react-account-paths", ["node", "node_modules/vitest/vitest.mjs", "run", "--project", "unit", "--maxWorkers=2", *targeted, "--reporter=junit", "--outputFile=" + str(evidence / "react-account-paths.xml")], 420, evidence / "react-account-paths.xml"))
 if phase == "project":
     unit_command = ["npm", "run", "test:unit" if kind == "frontend" else "test", "--", *([] if kind == "frontend" else ["--maxWorkers=2"]), "--reporter=junit", "--outputFile=" + str(evidence / "unit.xml")]

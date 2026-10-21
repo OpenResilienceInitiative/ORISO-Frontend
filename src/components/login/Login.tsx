@@ -1,5 +1,4 @@
 import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
-import { endpoints } from '../../resources/scripts/endpoints';
 import '../../polyfill';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -400,6 +399,7 @@ export const Login = () => {
 				}
 			}),
 		[
+			accountActions,
 			reloadUserData,
 			appointmentSeriesId,
 			locale,

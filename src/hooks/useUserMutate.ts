@@ -24,12 +24,15 @@ export const useUserMutate = ({ onError, onSuccess }: UserMutateOptions) => {
 
 			const basePromise = data.email
 				? actions.run('email', endpoints.email, data.email, apiPutEmail)
-				: actions.run(
-						'profile',
-						endpoints.userData,
-						data,
-						apiPatchUserData
-					);
+				: data.preferredLanguage !== undefined &&
+					  data.preferredLanguage !== null
+					? actions.run(
+							'profile',
+							endpoints.userData,
+							data,
+							apiPatchUserData
+						)
+					: apiPatchUserData(data);
 			basePromise
 				.then(setResponseData)
 				.then(onSuccess)

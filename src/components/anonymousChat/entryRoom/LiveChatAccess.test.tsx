@@ -74,8 +74,10 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(1));
 		await waitFor(() =>
 			expect(
-				screen.getByTestId('registration-footer-primary')
-			).not.toBeDisabled()
+				screen
+					.getByTestId('registration-footer-primary')
+					.hasAttribute('disabled')
+			).toBe(false)
 		);
 		fireEvent.click(screen.getByTestId('registration-footer-primary'));
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
@@ -93,8 +95,10 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(1));
 		await waitFor(() =>
 			expect(
-				screen.getByTestId('registration-footer-primary')
-			).not.toBeDisabled()
+				screen
+					.getByTestId('registration-footer-primary')
+					.hasAttribute('disabled')
+			).toBe(false)
 		);
 		const radios = screen.getAllByRole('radio');
 		fireEvent.click(radios[1]);
