@@ -73,6 +73,12 @@
 		font-size: 14px;
 		line-height: 20px;
 	}
+
+	/* Admitted has no button: the footer then holds only the live region, and
+	   its empty action row must not add space under the status line. */
+	.m3Dialog__actions:empty {
+		display: none;
+	}
 }
 
 /* Phone: an M3 bottom sheet. The chat stays visible above it, so the person

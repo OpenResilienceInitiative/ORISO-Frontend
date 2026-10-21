@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { useMediaQuery } from '@mui/material';
@@ -14,6 +14,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { KnockWaitDialog, KnockWaitDialogProps } from './KnockWaitDialog';
 import {
 	initialKnockWaitPhase,
+	KnockWaitEvent,
 	KnockWaitPhase,
 	useKnockWaitPhase
 } from './knockWaitPhase';
@@ -59,9 +60,14 @@ type DemoProps = Omit<KnockWaitDialogProps, 'phase' | 'media'> & {
 	cameraAvailable?: boolean;
 	initialCameraOn?: boolean;
 	micLevel?: number;
+	/** The host's answer, a moment after the dialog opens. */
+	hostAnswer?: Extract<KnockWaitEvent, 'admitted' | 'declined'>;
 	onToggleMic?: () => void;
 	onSelectDevice?: (kind: CallDeviceKind, id: string) => void;
 };
+
+/** Long enough for a play function to read the waiting state first. */
+const HOST_ANSWER_MS = 1500;
 
 /**
  * The dialog with its phase machine and fixture devices, as the chat would
@@ -74,16 +80,23 @@ const KnockWaitDemo = ({
 	cameraAvailable = true,
 	initialCameraOn = true,
 	micLevel = 0.45,
+	hostAnswer,
 	onToggleMic,
 	onSelectDevice,
 	onAcceptConsent,
 	onCancel,
+	onClose,
 	onKnockAgain,
 	...props
 }: DemoProps) => {
 	const { phase, dispatch } = useKnockWaitPhase(
 		initialPhase ?? initialKnockWaitPhase(props.variant, consentRequired)
 	);
+	useEffect(() => {
+		if (!hostAnswer) return;
+		const timer = setTimeout(() => dispatch(hostAnswer), HOST_ANSWER_MS);
+		return () => clearTimeout(timer);
+	}, [hostAnswer, dispatch]);
 	const [open, setOpen] = useState(true);
 	const [micOn, setMicOn] = useState(true);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
@@ -122,6 +135,10 @@ const KnockWaitDemo = ({
 			open={open}
 			onCancel={() => {
 				onCancel();
+				setOpen(false);
+			}}
+			onClose={() => {
+				onClose();
 				setOpen(false);
 			}}
 			onKnockAgain={() => {
@@ -388,6 +405,49 @@ export const CallDeclinedClose: Story = {
 			await page(canvasElement).findByTestId('knock-wait-close')
 		);
 		await expect(args.onClose).toHaveBeenCalledTimes(1);
+		await expectClosed(canvasElement);
+	}
+};
+
+/** The live region: one node for the dialog's whole life. */
+const liveRegion = (canvasElement: HTMLElement) =>
+	page(canvasElement).findByRole('status');
+
+export const CallWaitingThenAdmitted: Story = {
+	name: 'Call · waiting, then let in (announced)',
+	globals: desktop1440Globals,
+	args: { ...call, hostAnswer: 'admitted' },
+	play: async ({ canvasElement }) => {
+		const live = await liveRegion(canvasElement);
+		await expect(live).toHaveTextContent(
+			'Ihre Beratung sieht, dass Sie warten'
+		);
+		await waitFor(
+			() => expect(live).toHaveTextContent('Das Gespräch wird verbunden'),
+			{ timeout: HOST_ANSWER_MS * 3 }
+		);
+		// The same node, still in the page: a screen reader hears the change.
+		await expect(page(canvasElement).getByRole('status')).toBe(live);
+	}
+};
+
+export const CallWaitingThenDeclined: Story = {
+	name: 'Call · waiting, then declined (announced)',
+	globals: desktop1440Globals,
+	args: { ...call, hostAnswer: 'declined' },
+	play: async ({ canvasElement }) => {
+		const live = await liveRegion(canvasElement);
+		await expect(live).toHaveTextContent(
+			'Ihre Beratung sieht, dass Sie warten'
+		);
+		await waitFor(
+			() =>
+				expect(live).toHaveTextContent(
+					'Ihre Beratung kann Sie im Moment nicht hereinlassen'
+				),
+			{ timeout: HOST_ANSWER_MS * 3 }
+		);
+		await expect(page(canvasElement).getByRole('status')).toBe(live);
 	}
 };
 
@@ -407,6 +467,29 @@ export const GroupConsent: Story = {
 		);
 		await expect(p.getByTestId('knock-wait-consent-accept')).toBeEnabled();
 		await expect(p.queryByTestId('knock-wait-status')).toBeNull();
+	}
+};
+
+/** A consent step whose caller cannot record the agreement yet. */
+export const GroupConsentWithoutHandler: Story = {
+	name: 'Group · consent without a save handler',
+	globals: desktop1440Globals,
+	args: { ...group },
+	render: ({ onCancel, onClose, onKnockAgain }) => (
+		<KnockWaitDialog
+			variant="group"
+			phase="consent"
+			consentSentence={sentence}
+			agencyName={group.agencyName}
+			onCancel={onCancel}
+			onClose={onClose}
+			onKnockAgain={onKnockAgain}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(
+			await page(canvasElement).findByTestId('knock-wait-consent-accept')
+		).toBeDisabled();
 	}
 };
 
@@ -530,8 +613,11 @@ export const GroupDeclined: Story = {
 	args: { ...group, initialPhase: 'declined' },
 	play: async ({ canvasElement, args }) => {
 		const p = page(canvasElement);
+		// The visible description; the live region says the same once.
 		await expectVisible(
-			await p.findByText(/Die Gruppenleitung kann Sie im Moment nicht/)
+			await p.findByText(/Die Gruppenleitung kann Sie im Moment nicht/, {
+				selector: '.m3Dialog__description'
+			})
 		);
 		await userEvent.click(p.getByTestId('knock-wait-again'));
 		await expect(args.onKnockAgain).toHaveBeenCalledTimes(1);
@@ -559,7 +645,7 @@ const runningCall: CallLifecycleMessage = {
  * action opens the dialog instead of the call; the knock counts as sent
  * (`'joined'`), so the card shows no error. Composed here only.
  */
-const FromCallMessage = ({ onCancel, ...props }: DemoProps) => {
+const FromCallMessage = ({ onCancel, onClose, ...props }: DemoProps) => {
 	const phone = useMediaQuery('(max-width: 599.95px)');
 	const [knocking, setKnocking] = useState(false);
 	return (
@@ -580,6 +666,10 @@ const FromCallMessage = ({ onCancel, ...props }: DemoProps) => {
 					{...props}
 					onCancel={() => {
 						onCancel();
+						setKnocking(false);
+					}}
+					onClose={() => {
+						onClose();
 						setKnocking(false);
 					}}
 				/>
@@ -627,6 +717,23 @@ export const FromTheCallMessageOpen: Story = {
 	}
 };
 
+export const FromTheCallMessageDeclinedReopen: Story = {
+	name: 'From the call message · declined, close, knock again from the message',
+	globals: desktop1440Globals,
+	args: { ...call, initialPhase: 'declined' },
+	render: (args) => <FromCallMessage {...args} />,
+	play: async ({ canvasElement, args }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await joinButton(canvasElement));
+		await userEvent.click(await p.findByTestId('knock-wait-close'));
+		await expect(args.onClose).toHaveBeenCalledTimes(1);
+		await expectClosed(canvasElement);
+		// The message opens the dialog again.
+		await userEvent.click(await joinButton(canvasElement));
+		await expectVisible(dialog(canvasElement));
+	}
+};
+
 export const FromTheCallMessagePhone: Story = {
 	name: 'From the call message · phone 390',
 	globals: phone390Globals,
@@ -641,19 +748,30 @@ export const FromTheCallMessagePhone: Story = {
 
 /* ---------- Live devices ---------- */
 
-const Live = (props: DemoProps) => {
+type LiveProps = DemoProps & {
+	/** Stands in for `navigator.mediaDevices` in the test run. */
+	mediaDevices?: MediaDevices;
+};
+
+/**
+ * Holds the camera and microphone. Rendered only while the dialog is open,
+ * so leaving it unmounts the hook and its cleanup stops the tracks.
+ */
+const LiveDialog = ({
+	mediaDevices,
+	onClosed,
+	...props
+}: LiveProps & { onClosed: () => void }) => {
 	const [controls, setControls] = useState({
 		micOn: true,
 		cameraOn: true,
 		selection: {} as CallDeviceSelection
 	});
-	const live = useLiveCallDevices('video', controls);
+	const live = useLiveCallDevices('video', controls, mediaDevices);
 	const { phase, dispatch } = useKnockWaitPhase('waiting');
-	const [open, setOpen] = useState(true);
 	return (
 		<KnockWaitDialog
 			{...props}
-			open={open}
 			phase={phase}
 			media={{
 				modality: 'video',
@@ -676,24 +794,88 @@ const Live = (props: DemoProps) => {
 						selection: { ...c.selection, [kind]: id }
 					}))
 			}}
-			onCancel={() => setOpen(false)}
+			onCancel={onClosed}
+			onClose={onClosed}
 			onKnockAgain={() => dispatch('knockAgain')}
 		/>
 	);
 };
 
+const Live = (props: LiveProps) => {
+	const [open, setOpen] = useState(true);
+	return open ? (
+		<LiveDialog {...props} onClosed={() => setOpen(false)} />
+	) : null;
+};
+
 /**
  * Real camera and microphone. In the headless test run nobody answers the
- * permission prompt; the dialog still waits, with the camera off.
+ * permission prompt; the dialog still waits, with the camera off. Not on the
+ * docs page, so opening the docs does not ask for camera and microphone.
  */
 export const LiveDevices: Story = {
 	name: 'Live devices · call (asks for camera and mic)',
+	tags: ['!autodocs'],
 	globals: desktop1440Globals,
 	args: { variant: 'call' },
 	render: (args) => <Live {...args} />,
 	play: async ({ canvasElement }) => {
 		await expectVisible(
 			await page(canvasElement).findByTestId('knock-wait-status')
+		);
+	}
+};
+
+/** Real tracks without a permission prompt: a canvas and a silent tone. */
+const fakeMediaDevices = () => {
+	const tracks: MediaStreamTrack[] = [];
+	const contexts: AudioContext[] = [];
+	const mediaDevices = {
+		getUserMedia: async () => {
+			const context = new AudioContext();
+			contexts.push(context);
+			const canvas = document.createElement('canvas');
+			const stream = new MediaStream([
+				...context.createMediaStreamDestination().stream.getTracks(),
+				...canvas.captureStream().getTracks()
+			]);
+			tracks.push(...stream.getTracks());
+			return stream;
+		},
+		enumerateDevices: async () => [],
+		addEventListener: () => undefined,
+		removeEventListener: () => undefined
+	} as unknown as MediaDevices;
+	return { mediaDevices, tracks, contexts };
+};
+
+let fakeDevices: ReturnType<typeof fakeMediaDevices> | undefined;
+
+export const LiveDevicesReleased: Story = {
+	name: 'Live devices · stop waiting releases camera and mic',
+	tags: ['!autodocs'],
+	globals: desktop1440Globals,
+	args: { variant: 'call' },
+	beforeEach: () => {
+		fakeDevices = fakeMediaDevices();
+		return () => {
+			fakeDevices?.contexts.forEach((context) => void context.close());
+			fakeDevices = undefined;
+		};
+	},
+	render: (args) => (
+		<Live {...args} mediaDevices={fakeDevices?.mediaDevices} />
+	),
+	play: async ({ canvasElement }) => {
+		const tracks = fakeDevices!.tracks;
+		await waitFor(() => expect(tracks).toHaveLength(2));
+		await expect(tracks.every((t) => t.readyState === 'live')).toBe(true);
+		await userEvent.click(
+			await page(canvasElement).findByTestId('knock-wait-cancel')
+		);
+		await expectClosed(canvasElement);
+		await waitFor(() =>
+			expect(tracks.map((t) => t.readyState)).toEqual(['ended', 'ended'])
 		);
 	}
 };

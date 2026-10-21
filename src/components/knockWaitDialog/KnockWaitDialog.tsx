@@ -147,6 +147,8 @@ export const KnockWaitDialog = ({
 	let title: ReactNode;
 	let description: ReactNode;
 	let body: ReactNode = null;
+	/* What the live region says: the knock's state and the host's answer. */
+	let announcement = '';
 	let actions: M3DialogAction[] = [];
 
 	switch (phase) {
@@ -187,7 +189,7 @@ export const KnockWaitDialog = ({
 					label: t('groupChat.consent.accept'),
 					onClick: acceptConsent,
 					primary: true,
-					disabled: busy || !consentSentence,
+					disabled: busy || !consentSentence || !onAcceptConsent,
 					testId: 'knock-wait-consent-accept'
 				}
 			];
@@ -198,15 +200,14 @@ export const KnockWaitDialog = ({
 				t('knockWait.waiting.descriptionCall'),
 				t('knockWait.waiting.descriptionGroup')
 			);
+			announcement = of(
+				t('knockWait.waiting.statusCall'),
+				t('knockWait.waiting.statusGroup')
+			);
 			body = (
 				<>
 					{isCall && media && <KnockWaitMediaControls {...media} />}
-					<Status
-						text={of(
-							t('knockWait.waiting.statusCall'),
-							t('knockWait.waiting.statusGroup')
-						)}
-					/>
+					<Status text={announcement} />
 					{!isCall && openUntil && (
 						<p className="knockWaitDialog__quiet">
 							{t('knockWait.waiting.openUntil', {
@@ -226,18 +227,15 @@ export const KnockWaitDialog = ({
 			break;
 		case 'admitted':
 			title = t('knockWait.admitted.title');
-			body = (
-				<Status
-					text={of(
-						t('knockWait.admitted.statusCall'),
-						t('knockWait.admitted.statusGroup')
-					)}
-				/>
+			announcement = of(
+				t('knockWait.admitted.statusCall'),
+				t('knockWait.admitted.statusGroup')
 			);
+			body = <Status text={announcement} />;
 			break;
 		case 'declined':
 			title = t('knockWait.declined.title');
-			description = of(
+			description = announcement = of(
 				t('knockWait.declined.descriptionCall'),
 				t('knockWait.declined.descriptionGroup')
 			);
@@ -256,6 +254,20 @@ export const KnockWaitDialog = ({
 			title={title}
 			description={description}
 			actions={actions}
+			footerContent={
+				/* One live region for the dialog's whole life, so a screen
+				   reader hears every change, the host's answer included. It sits
+				   in the footer, which every phase renders, not in the body:
+				   an empty body would still be a tab stop. */
+				<p
+					className="sr-only"
+					role="status"
+					aria-live="polite"
+					data-testid="knock-wait-live"
+				>
+					{announcement}
+				</p>
+			}
 			showDivider={false}
 			className={
 				asSheet
@@ -269,11 +281,11 @@ export const KnockWaitDialog = ({
 	);
 };
 
-/** A quiet live line: what is happening right now. */
+/** The visible line of what is happening; the live region announces it. */
 const Status = ({ text }: { text: string }) => (
 	<p
 		className="knockWaitDialog__status"
-		role="status"
+		aria-hidden="true"
 		data-testid="knock-wait-status"
 	>
 		<CircularProgress size={16} thickness={5} color="inherit" aria-hidden />
