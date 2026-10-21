@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ReactComponent as ChevronDownIcon } from '../../resources/img/icons/keyboard_arrow_down.svg';
 import { ReactComponent as ChevronUpIcon } from '../../resources/img/icons/keyboard_arrow_up.svg';
+import { M3Checkbox } from '../M3Checkbox';
 import './splitButton.styles.scss';
 
 /**
@@ -17,6 +18,17 @@ import './splitButton.styles.scss';
  */
 
 export type SplitButtonVariant = 'outlined' | 'tonal' | 'primary' | 'elevated';
+
+/** Main segment as a shared M3 checkbox (case selection, FE#1725). */
+export interface SplitButtonSelection {
+	checked: boolean;
+	onChange: (checked: boolean) => void;
+	/** Visible label, also the checkbox's accessible name. */
+	label: string;
+	/** id of an element that says which item this checkbox selects. */
+	describedBy?: string;
+	dataCy?: string;
+}
 
 export interface SplitButtonProps {
 	/** Main segment content — the action label or the chosen value. */
@@ -51,10 +63,23 @@ export interface SplitButtonProps {
 	incrementLabel?: string;
 	id?: string;
 	className?: string;
-	/** `small` = 32px control for dense rows (#1377 sound picker). */
-	size?: 'medium' | 'small';
+	/**
+	 * `small` = 32px control for dense rows (#1377 sound picker);
+	 * `compact` = 40px, the M3 small split button (case-handover card).
+	 */
+	size?: 'medium' | 'small' | 'compact';
 	/** Accessible name of the main segment when the visible label is not enough. */
 	mainLabel?: string;
+	/** Renders the main segment as a checkbox instead of a button. */
+	selection?: SplitButtonSelection;
+	/** Popup type the chevron advertises; `menu` for role="menu" popups. */
+	menuPopup?: 'listbox' | 'menu';
+	/** id of the open popup (`aria-controls` on the chevron). */
+	menuId?: string;
+	/** Ref to the chevron, e.g. to anchor a portalled menu. */
+	trailingRef?: React.Ref<HTMLButtonElement>;
+	mainDataCy?: string;
+	trailingDataCy?: string;
 	/** Id of text that describes the main segment (read after its name). */
 	describedBy?: string;
 }
@@ -81,6 +106,12 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			className,
 			size = 'medium',
 			mainLabel,
+			selection,
+			menuPopup = 'listbox',
+			menuId,
+			trailingRef,
+			mainDataCy,
+			trailingDataCy,
 			describedBy
 		},
 		ref
@@ -91,6 +122,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			'splitButton',
 			`splitButton--${variant}`,
 			size === 'small' && 'splitButton--small',
+			size === 'compact' && 'splitButton--compact',
 			fullWidth && 'splitButton--fullWidth',
 			disabled && 'splitButton--disabled',
 			open && !disabled && 'splitButton--open',
@@ -101,25 +133,45 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 
 		return (
 			<div className={classes} ref={ref} id={id}>
-				<button
-					type="button"
-					className="splitButton__segment splitButton__main"
-					disabled={disabled || mainDisabled}
-					onClick={onClick}
-					aria-label={mainLabel}
-					aria-describedby={describedBy}
-					aria-expanded={hasMenu && mainOpensMenu ? open : undefined}
-					aria-haspopup={
-						hasMenu && mainOpensMenu ? 'listbox' : undefined
-					}
-				>
-					{icon && (
-						<span className="splitButton__icon" aria-hidden>
-							{icon}
-						</span>
-					)}
-					<span className="splitButton__label">{label}</span>
-				</button>
+				{selection ? (
+					<div className="splitButton__segment splitButton__main splitButton__main--selection">
+						<M3Checkbox
+							checked={selection.checked}
+							onChange={selection.onChange}
+							label={selection.label}
+							describedBy={selection.describedBy}
+							disabled={disabled || mainDisabled}
+							dataCy={selection.dataCy}
+							tone={
+								variant === 'primary' ? 'onPrimary' : 'inherit'
+							}
+							fill
+						/>
+					</div>
+				) : (
+					<button
+						type="button"
+						className="splitButton__segment splitButton__main"
+						disabled={disabled || mainDisabled}
+						onClick={onClick}
+						aria-label={mainLabel}
+						aria-describedby={describedBy}
+						aria-expanded={
+							hasMenu && mainOpensMenu ? open : undefined
+						}
+						aria-haspopup={
+							hasMenu && mainOpensMenu ? menuPopup : undefined
+						}
+						data-cy={mainDataCy}
+					>
+						{icon && (
+							<span className="splitButton__icon" aria-hidden>
+								{icon}
+							</span>
+						)}
+						<span className="splitButton__label">{label}</span>
+					</button>
+				)}
 				{isStepper && (
 					<>
 						<button
@@ -151,12 +203,15 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 				{!isStepper && hasMenu && (
 					<button
 						type="button"
+						ref={trailingRef}
 						className="splitButton__segment splitButton__trailing"
 						disabled={disabled}
 						onClick={onToggleMenu}
 						aria-label={menuLabel}
 						aria-expanded={open}
-						aria-haspopup="listbox"
+						aria-haspopup={menuPopup}
+						aria-controls={open ? menuId : undefined}
+						data-cy={trailingDataCy}
 					>
 						<ChevronDownIcon
 							className="splitButton__chevron"

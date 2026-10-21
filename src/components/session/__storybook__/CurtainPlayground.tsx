@@ -44,6 +44,10 @@ type PlaygroundProps = {
 	initialExplanation?: string;
 	error?: string;
 	topicLabel?: string;
+	/** Simulates an empty reason list from the server (FE#1725 US26). */
+	noReasons?: boolean;
+	/** Simulates a failed reasons request; Retry then loads them. */
+	reasonsFail?: boolean;
 	canReclaim?: boolean;
 };
 
@@ -54,8 +58,11 @@ export function CurtainPlayground({
 	initialExplanation = '',
 	error,
 	topicLabel = 'Schwangerschaftsberatung',
+	noReasons = false,
+	reasonsFail = false,
 	canReclaim = false
 }: PlaygroundProps) {
+	const [failed, setFailed] = useState(reasonsFail);
 	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
 	const [reasonCode, setReasonCode] = useState(initialReasonCode);
 	const [explanation, setExplanation] = useState(initialExplanation);
@@ -64,7 +71,10 @@ export function CurtainPlayground({
 		<CaseHandoverCurtainView
 			step={step}
 			topicLabel={topicLabel}
-			reasons={reasons}
+			reasons={noReasons || failed ? [] : reasons}
+			reasonsUnavailable={noReasons}
+			reasonsLoadFailed={failed}
+			onRetryReasons={() => setFailed(false)}
 			reasonCode={reasonCode}
 			explanation={explanation}
 			error={error}

@@ -3735,7 +3735,10 @@
 			},
 			"reason": {
 				"title": "በጃኹም ምኽንያት ምረጹ",
-				"subtitle": "ቅድሚ ምቕጻልኩም፡ ንሕቶኹም ምኽንያት ክትመርጹ ኣለኩም።"
+				"subtitle": "ቅድሚ ምቕጻልኩም፡ ንሕቶኹም ምኽንያት ክትመርጹ ኣለኩም።",
+				"empty": "ንማእከል ምኽርኹም ምኽንያታት ምትሕልላፍ ጉዳይ ኣይተዳለዉን። በጃኹም ምምሕዳርኩም ተወከሱ።",
+				"loadFailed": "ምኽንያታት ምትሕልላፍ ጉዳይ ክጽዓኑ ኣይከኣሉን።",
+				"retry": "እንደገና ፈትን"
 			},
 			"describe": {
 				"title": "በጃኹም ነቲ ምኽንያት ግለጽዎ",
@@ -3780,6 +3783,13 @@
 			"saved": "ቅጥዒ ተዓቂቡ።",
 			"saveFailed": "እቲ ቅጥዒ ክረጋገጽ ኣይተኻእለን። በጃኹም እንደገና ፈትኑ።",
 			"loading": "ቅጥዒ ይጽዓን ኣሎ …"
+		},
+		"bulkBar": {
+			"label": "ምርጫ ጉዳያት",
+			"selected": "{{count}} ተመሪጹ",
+			"continue": "ቀጽል",
+			"cancel": "ሰርዝ",
+			"emptyHint": "እንተወሓደ ሓደ ጉዳይ ምረጹ።"
 		}
 	},
 	"supervisorDialog": {
@@ -4191,6 +4201,10 @@
 				"clear": "ምድላይ ኣጽሪ",
 				"removeSelectedPerson": "{{name}} ኣውጽእ",
 				"emptyPeople": "ዝሰማምዑ ሰባት ኣይተረኽቡን።",
+				"peopleLoading": "መሳርሕቲ ይጽዓኑ ኣለው …",
+				"peopleLoadError": "መሳርሕቲ ክጽዓኑ ኣይከኣሉን። በጃኹም ጸኒሕኩም እንደገና ፈትኑ።",
+				"handoverPeopleHint": "ኣብዚ ብ «ተበጻሕነት ሕተት» ጉዳያቶም ክትወስዱ እትኽእሉ መሳርሕቲ ጥራይ ይርኣዩ። እዚ ኣብ ክፍልኹምን ኣርእስትኹምን ይምርኮስ።",
+				"handoverPeopleCapped": "ካብቲ ዝተጸዓነ ንላዕሊ ተወሳኺ ጉዳያት ኣለዉ – በጃኹም ጸቢብ ዝበለ ናይ መርመራ ቃል ተጠቐሙ።",
 				"emptyTypes": "ዓይነታት ቻት ኣይርከቡን።",
 				"emptyTopics": "ንማእከላት ምኽርኹም ዝኸውን ኣርእስቲ ኣይተረኽበን።",
 				"tabs": {
@@ -4203,7 +4217,15 @@
 				"role": {
 					"asker": "ምኽሪ ዝደሊ",
 					"consultant": "ኣማኻሪ"
-				}
+				},
+				"internalName": "ውሽጣዊ ስም",
+				"publicName": "ህዝባዊ ስም",
+				"agencyGroup": "ማእከል ምኽሪ",
+				"topicGroup": "ኣርእስቲ",
+				"agencyFallback": "ማእከል ምኽሪ {{id}}",
+				"filteredOutAll": "ምድላይኩምን መጻረዪታትኩምን ንኹሉ ምኽርታት ይሓብእዎ ኣለዉ።",
+				"removeFilters": "መጻረዪታት ኣልግስ",
+				"removeFiltersKeepSearch": "መጻረዪታት ኣልግስ፣ ምድላይ ሓዝ"
 			},
 			"menu": {
 				"ariaLabel": "ዝርዝር ኣማራጺታት"

@@ -3755,7 +3755,10 @@
 			},
 			"reason": {
 				"title": "Bitte wähle einen Grund",
-				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen."
+				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen.",
+				"empty": "Für Ihre Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wenden Sie sich an Ihre Administration.",
+				"loadFailed": "Die Gründe für eine Fallübergabe konnten nicht geladen werden.",
+				"retry": "Erneut versuchen"
 			},
 			"describe": {
 				"title": "Bitte beschreibe den Grund",
@@ -3800,6 +3803,13 @@
 			"saved": "Einstellung gespeichert.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
 			"loading": "Einstellung wird geladen …"
+		},
+		"bulkBar": {
+			"label": "Fallauswahl",
+			"selected": "{{count}} ausgewählt",
+			"continue": "Weiter",
+			"cancel": "Abbrechen",
+			"emptyHint": "Wählen Sie mindestens einen Fall aus."
 		}
 	},
 	"supervisorDialog": {
@@ -4216,6 +4226,10 @@
 				"clear": "Suche leeren",
 				"removeSelectedPerson": "{{name}} entfernen",
 				"emptyPeople": "Keine passenden Personen gefunden.",
+				"peopleLoading": "Kolleg:innen werden geladen …",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+				"handoverPeopleHint": "Hier sehen Sie nur Kolleg:innen, deren Fälle Sie über „Zugriff anfragen“ übernehmen können. Das hängt von Ihrer Abteilung und Ihren Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenzen Sie die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
@@ -4228,7 +4242,15 @@
 				"role": {
 					"asker": "Ratsuchende:r",
 					"consultant": "Berater:in"
-				}
+				},
+				"internalName": "Interner Name",
+				"publicName": "Öffentlicher Name",
+				"agencyGroup": "Beratungsstelle",
+				"topicGroup": "Thema",
+				"agencyFallback": "Beratungsstelle {{id}}",
+				"filteredOutAll": "Ihre Suche und Filter blenden alle Beratungen aus.",
+				"removeFilters": "Filter entfernen",
+				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten"
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"

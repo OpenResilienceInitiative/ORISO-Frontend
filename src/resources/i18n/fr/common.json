@@ -3735,7 +3735,10 @@
 			},
 			"reason": {
 				"title": "Veuillez choisir un motif",
-				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande."
+				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande.",
+				"empty": "Aucun motif de transfert de dossier n'est configuré pour votre centre de conseil. Veuillez contacter votre administration.",
+				"loadFailed": "Les motifs de transfert de dossier n’ont pas pu être chargés.",
+				"retry": "Réessayer"
 			},
 			"describe": {
 				"title": "Veuillez décrire le motif",
@@ -3780,6 +3783,13 @@
 			"saved": "Paramètre enregistré.",
 			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
 			"loading": "Chargement du paramètre …"
+		},
+		"bulkBar": {
+			"label": "Sélection des dossiers",
+			"selected": "{{count}} sélectionné(s)",
+			"continue": "Continuer",
+			"cancel": "Annuler",
+			"emptyHint": "Sélectionnez au moins un dossier."
 		}
 	},
 	"supervisorDialog": {
@@ -4191,6 +4201,10 @@
 				"clear": "Effacer la recherche",
 				"removeSelectedPerson": "Retirer {{name}}",
 				"emptyPeople": "Aucune personne correspondante trouvée.",
+				"peopleLoading": "Chargement des collègues …",
+				"peopleLoadError": "Impossible de charger les collègues. Veuillez réessayer plus tard.",
+				"handoverPeopleHint": "Seuls les collègues dont vous pouvez reprendre les dossiers via « Demander l'accès » apparaissent ici. Cela dépend de votre département et de vos thèmes.",
+				"handoverPeopleCapped": "Il existe plus de dossiers que ceux chargés – veuillez affiner la recherche.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
 				"tabs": {
@@ -4203,7 +4217,15 @@
 				"role": {
 					"asker": "Personne en quête de conseil",
 					"consultant": "Conseiller·ère"
-				}
+				},
+				"internalName": "Nom interne",
+				"publicName": "Nom public",
+				"agencyGroup": "Service de consultation",
+				"topicGroup": "Sujet",
+				"agencyFallback": "Service de consultation {{id}}",
+				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
+				"removeFilters": "Supprimer les filtres",
+				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche"
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"
