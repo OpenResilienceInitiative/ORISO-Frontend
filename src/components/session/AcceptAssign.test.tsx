@@ -26,7 +26,12 @@ vi.mock('../../globalState', async () => {
 	const { createContext } = await import('react');
 	return {
 		ActiveSessionContext: createContext(null),
-		buildExtendedSession: vi.fn()
+		buildExtendedSession: vi.fn(),
+		// Rejection authority is out of scope here: no counsellor authority.
+		UserDataContext: createContext({ userData: {} }),
+		SessionTypeContext: createContext({ path: '' }),
+		hasUserAuthority: () => false,
+		AUTHORITIES: { CONSULTANT_DEFAULT: 'AUTHORIZATION_CONSULTANT_DEFAULT' }
 	};
 });
 vi.mock('./session.styles', () => ({}));
@@ -35,6 +40,7 @@ vi.mock('../../resources/img/illustrations/x.svg', () => ({
 }));
 vi.mock('../../api', () => ({
 	apiEnquiryAcceptance: vi.fn(),
+	apiRejectEnquiry: vi.fn(),
 	FETCH_ERRORS: {
 		ABORT: 'ABORT',
 		CATCH_ALL: 'CATCH_ALL',

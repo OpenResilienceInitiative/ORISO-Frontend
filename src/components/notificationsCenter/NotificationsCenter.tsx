@@ -65,6 +65,7 @@ import {
 } from '../displayFilter/kindOptions';
 import {
 	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR,
 	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
@@ -250,8 +251,14 @@ const parseNumericId = (value?: string | null): number | null => {
 	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
+type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
+
 /** Call cards join their existing authorized binding; incomplete cards never navigate. */
-const joinNotificationCall = (item: NotificationFeedItem): boolean => {
+const joinNotificationCall = (
+	item: NotificationFeedItem,
+	isGroup: (roomRef: string) => boolean,
+	onOutcome: (outcome: JoinOutcome) => void
+): boolean => {
 	const params = item.params || {};
 	if (
 		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
@@ -269,17 +276,20 @@ const joinNotificationCall = (item: NotificationFeedItem): boolean => {
 		(params.callType !== 'audio' && params.callType !== 'video')
 	)
 		return true;
-	void callManager.joinExistingCall(
-		{
-			callId: params.callId,
-			roomRef: params.roomRef,
-			callRoomId: params.callRoomId,
-			callType: params.callType,
-			state: 'running',
-			participants: []
-		},
-		params.seriesId != null
-	);
+	// The feed carries no call topology: the conversation the call belongs to decides.
+	callManager
+		.joinExistingCall(
+			{
+				callId: params.callId,
+				roomRef: params.roomRef,
+				callRoomId: params.callRoomId,
+				callType: params.callType,
+				state: 'running',
+				participants: []
+			},
+			isGroup(params.roomRef)
+		)
+		.then(onOutcome, () => onOutcome('unavailable'));
 	return true;
 };
 
@@ -306,7 +316,8 @@ export const NotificationsCenter = () => {
 		loadOlderNotifications,
 		hasOlderNotifications,
 		isLoadingOlderNotifications,
-		olderNotificationsError
+		olderNotificationsError,
+		addNotification
 	} = useContext(NotificationsContext);
 	// #1535: unsent drafts join the list here only, not the provider feed.
 	const timelineDrafts = useTimelineDrafts();
@@ -922,6 +933,34 @@ export const NotificationsCenter = () => {
 		[canShowChatPreview, selectedNotification]
 	);
 
+	const isGroupCallRoom = (roomRef: string) =>
+		Boolean(
+			sessions?.some(
+				(listItem) => listItem.chat?.matrixRoomId === roomRef
+			)
+		);
+	// An ended call opens its conversation, never a guessed default list.
+	const openConversation = (item: NotificationFeedItem) => {
+		const path = getNotificationActionPath(item);
+		if (path) navigate(path);
+	};
+	const joinCall = (item: NotificationFeedItem) =>
+		joinNotificationCall(item, isGroupCallRoom, (outcome) => {
+			if (outcome === 'joined') return;
+			if (outcome === 'ended') {
+				openConversation(item);
+				return;
+			}
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: translate('notification.error'),
+				text: translate('videoCall.timeline.joinFailed'),
+				closeable: true,
+				announce: 'alert',
+				timeout: 10000
+			});
+		});
+
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
 		const statusPage = resolveStatusPageAction(item);
@@ -932,7 +971,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
-			if (joinNotificationCall(item)) return;
+			if (joinCall(item)) return;
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
 				navigate(directPath);
@@ -962,7 +1001,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
-		if (joinNotificationCall(selectedNotification)) return;
+		if (joinCall(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
 			navigate(directPath);

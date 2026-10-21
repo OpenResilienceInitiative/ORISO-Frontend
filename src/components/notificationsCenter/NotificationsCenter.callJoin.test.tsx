@@ -60,6 +60,7 @@ const joinRoom = vi.fn();
 const sendEvent = vi.fn();
 const createRoom = vi.fn();
 const markRead = vi.fn();
+const addNotification = vi.fn();
 const sourceRoom = { getMyMembership: () => 'join' };
 const mediaRoom = {
 	getMyMembership: () => 'join',
@@ -102,7 +103,11 @@ afterEach(() => {
 const Location = () => (
 	<output aria-label="Current route">{useLocation().pathname}</output>
 );
-const renderCenter = async (width = 1400, item = callItem) => {
+const renderCenter = async (
+	width = 1400,
+	item = callItem,
+	sessions: unknown[] = []
+) => {
 	const i18n = i18next.createInstance();
 	await i18n.init({
 		lng: 'en',
@@ -127,13 +132,14 @@ const renderCenter = async (width = 1400, item = callItem) => {
 						}
 					>
 						<SessionsDataContext.Provider
-							value={{ sessions: [] } as never}
+							value={{ sessions } as never}
 						>
 							<NotificationsContext.Provider
 								value={
 									{
 										notificationFeed: [item],
 										markNotificationAsRead: markRead,
+										addNotification,
 										refreshNotificationFeed: vi.fn(),
 										markAllNotificationsAsRead: vi.fn(),
 										loadOlderNotifications: vi.fn(),
@@ -313,5 +319,57 @@ it.each(['request.new', 'inquiry.accepted', 'draft.created'])(
 		expect(markRead).toHaveBeenCalledWith('call-1');
 		expect(apiCallState).not.toHaveBeenCalled();
 		expect(joinRoom).not.toHaveBeenCalled();
+	}
+);
+
+it('joins as a group call when the call belongs to a group conversation, not by series', async () => {
+	const join = vi.spyOn(callManager, 'joinExistingCall');
+	await renderCenter(
+		1400,
+		{ ...callItem, params: { ...callItem.params, seriesId: undefined } },
+		[{ chat: { matrixRoomId: call.roomRef } }]
+	);
+	fireEvent.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	await waitFor(() => expect(join).toHaveBeenCalled());
+	expect(join.mock.calls[0][1]).toBe(true);
+	join.mockRestore();
+});
+
+it('joins a one-to-one call as non-group even when the card carries a series id', async () => {
+	const join = vi.spyOn(callManager, 'joinExistingCall');
+	await renderCenter(1400, callItem, [
+		{ session: { matrixRoomId: call.roomRef } }
+	]);
+	fireEvent.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	await waitFor(() => expect(join).toHaveBeenCalled());
+	expect(join.mock.calls[0][1]).toBe(false);
+	join.mockRestore();
+});
+
+it.each(['busy', 'unavailable'] as const)(
+	'tells the user when joining from Activity is %s',
+	async (outcome) => {
+		const join = vi
+			.spyOn(callManager, 'joinExistingCall')
+			.mockResolvedValue(outcome);
+		await renderCenter();
+		fireEvent.click(
+			screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+		);
+		await waitFor(() =>
+			expect(addNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					text: en.videoCall.timeline.joinFailed
+				})
+			)
+		);
+		expect(screen.getByLabelText('Current route').textContent).toBe(
+			'/notifications'
+		);
+		join.mockRestore();
 	}
 );

@@ -88,6 +88,8 @@ export const AcceptAssign = ({
 		useState(false);
 	const [rejectionError, setRejectionError] = useState('');
 	const [rejectionRetryable, setRejectionRetryable] = useState(true);
+	// A retryable failure may have saved status 5 already: keep the retry reachable.
+	const [rejectionIncomplete, setRejectionIncomplete] = useState(false);
 	const isPractice = usePracticeActive();
 	const requestPending = useRef(false);
 	const mounted = useRef(true);
@@ -117,7 +119,11 @@ export const AcceptAssign = ({
 		userData.agencies?.some(
 			(agency) => agency.id === activeSession.item.agencyId
 		);
-	const canReject = hasRejectionAuthority && activeSession.isNonEmptyEnquiry;
+	const canReject =
+		hasRejectionAuthority &&
+		(activeSession.isNonEmptyEnquiry ||
+			(rejectionIncomplete &&
+				Number(activeSession.item.status) === STATUS_REJECTED));
 	const canConfirmRejection =
 		hasRejectionAuthority &&
 		rejectionRetryable &&
@@ -128,6 +134,7 @@ export const AcceptAssign = ({
 		setShowRejectionConfirmation(false);
 		setRejectionError('');
 		setRejectionRetryable(true);
+		setRejectionIncomplete(false);
 		setIsRequestInProgress(false);
 	}, []);
 	useEffect(() => {
@@ -182,6 +189,7 @@ export const AcceptAssign = ({
 		try {
 			await apiRejectEnquiry(activeSession.item.id);
 			if (!rejectionContextIsCurrent(context)) return;
+			setRejectionIncomplete(false);
 			refreshRejectedCase();
 			setShowRejectionConfirmation(false);
 			navigate(`${listPath}${getSessionListTab()}`);
@@ -194,6 +202,7 @@ export const AcceptAssign = ({
 				errorCode !== FETCH_ERRORS.FORBIDDEN &&
 				errorCode !== FETCH_ERRORS.NO_MATCH;
 			setRejectionRetryable(retryable);
+			setRejectionIncomplete(retryable);
 			setRejectionError(
 				translate(
 					!retryable

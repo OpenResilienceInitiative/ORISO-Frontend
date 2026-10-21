@@ -343,8 +343,8 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 			sourceSessionId
 		});
 		apiGetEventNotifications.mockResolvedValue({
-			items: [denied(1, 4711)],
-			unreadCount: 1
+			items: [denied(1, 4711), denied(3, 4713), denied(4, 4714)],
+			unreadCount: 3
 		});
 		const signals = vi.fn();
 		messageEventEmitter.on(signals);
@@ -356,35 +356,43 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 				</NotificationsProvider>
 			);
 			await waitFor(() =>
-				expect(screen.getByTestId('ids').textContent).toBe('1')
+				expect(screen.getByTestId('ids').textContent).toBe('1,3,4')
 			);
 			expect(screen.getByTestId('denied-banner-count').textContent).toBe(
 				'0'
 			);
+			// Old denials in the first feed refresh the lists once, not once each.
+			expect(signals).toHaveBeenCalledTimes(1);
 			expect(signals).toHaveBeenCalledWith({
-				changedSessionId: 4711,
 				refreshEnquiryList: true,
 				refreshSessionList: true,
 				source: 'notification-feed'
 			});
-			expect(signals).toHaveBeenCalledTimes(1);
 			apiGetEventNotifications.mockResolvedValue({
-				items: [denied(2, 4712), denied(1, 4711)],
-				unreadCount: 2
+				items: [
+					denied(2, 4712),
+					denied(1, 4711),
+					denied(3, 4713),
+					denied(4, 4714)
+				],
+				unreadCount: 4
 			});
 			fireEvent.click(screen.getByText('refresh'));
-			await waitFor(() => expect(signals).toHaveBeenCalledTimes(2));
-			expect(signals).toHaveBeenLastCalledWith({
-				changedSessionId: 4712,
+			await waitFor(() => expect(signals).toHaveBeenCalledTimes(3));
+			expect(signals).toHaveBeenCalledWith({
 				refreshEnquiryList: true,
 				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			expect(signals).toHaveBeenLastCalledWith({
+				changedSessionId: 4712,
 				source: 'notification-feed'
 			});
 			fireEvent.click(screen.getByText('refresh'));
 			await waitFor(() =>
 				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
 			);
-			expect(signals).toHaveBeenCalledTimes(2);
+			expect(signals).toHaveBeenCalledTimes(3);
 		} finally {
 			messageEventEmitter.off(signals);
 		}

@@ -888,6 +888,21 @@ it.each([FETCH_ERRORS.CATCH_ALL])(
 	},
 	20000
 );
+it('keeps the retry reachable after an incomplete rejection dialog is dismissed', async () => {
+	boundary.rejectEnquiry.mockRejectedValueOnce(
+		new Error(FETCH_ERRORS.CATCH_ALL)
+	);
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { reloadedStatus: 5 });
+	await confirmRejection();
+	await screen.findByRole('alert');
+	fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+	await confirmRejection();
+	await waitFor(() =>
+		expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(2)
+	);
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+}, 20000);
 it('does not offer retry after a conflicting rejection by another counsellor', async () => {
 	boundary.rejectEnquiry.mockRejectedValueOnce(
 		new Error(FETCH_ERRORS.CONFLICT)
