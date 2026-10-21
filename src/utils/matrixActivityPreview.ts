@@ -1,3 +1,4 @@
+import type { MatrixEvent } from 'matrix-js-sdk';
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
 import {
@@ -19,6 +20,7 @@ export type MatrixActivityPreviewLabels = {
 	userLeftChat: string;
 	systemNotification: string;
 	unsupported: string;
+	undecryptable: string;
 	pending: string;
 	roomUnavailable: string;
 	eventUnavailable: string;
@@ -32,12 +34,19 @@ export type MatrixActivityPreviewKind =
 	| 'video'
 	| 'notice'
 	| 'unsupported'
+	| 'undecryptable'
 	| 'unknown';
+
+/** The SDK swaps an event it cannot decrypt for `m.bad.encrypted` content. */
+const isUndecryptable = (event: MatrixEvent): boolean =>
+	event.isDecryptionFailure?.() === true ||
+	event.getContent?.()?.msgtype === 'm.bad.encrypted';
 
 export const getMatrixActivityPreviewKind = (
 	resolution: MatrixActivityEventResolution
 ): MatrixActivityPreviewKind => {
 	if (resolution.status !== 'resolved') return 'unknown';
+	if (isUndecryptable(resolution.event)) return 'undecryptable';
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =
 		typeof content.msgtype === 'string' ? content.msgtype : null;
@@ -80,6 +89,9 @@ export const buildMatrixActivityTextPreview = (
 		return fallbackByStatus[resolution.status] || fallbackText;
 	}
 
+	if (isUndecryptable(resolution.event)) {
+		return withSender(senderName, labels?.undecryptable || fallbackText);
+	}
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =
 		typeof content.msgtype === 'string' ? content.msgtype : null;

@@ -33,6 +33,7 @@ describe('buildMatrixActivityTextPreview', () => {
 		userLeftChat: 'User has left the chat',
 		systemNotification: 'System notification',
 		unsupported: 'Unsupported message',
+		undecryptable: 'Message encrypted',
 		pending: 'Waiting for decryption',
 		roomUnavailable: 'Conversation unavailable on this device',
 		eventUnavailable: 'Message unavailable in local history'
@@ -247,6 +248,45 @@ describe('buildMatrixActivityTextPreview', () => {
 			getMatrixActivityPreviewKind({ status: 'resolved', event } as any)
 		).toBe(kind);
 	});
+
+	it.each([
+		[
+			'm.bad.encrypted content',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({
+					msgtype: 'm.bad.encrypted',
+					body: '** Unable to decrypt: DecryptionError **'
+				})
+			}
+		],
+		[
+			'isDecryptionFailure()',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({}),
+				isDecryptionFailure: () => true
+			}
+		]
+	])(
+		'names a message this device cannot decrypt as the chat does (%s)',
+		(_case, event) => {
+			const preview = buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Lisa',
+				'New message',
+				labels
+			);
+			expect(preview).toBe('Lisa: Message encrypted');
+			expect(preview).not.toContain('Unable to decrypt');
+			expect(
+				getMatrixActivityPreviewKind({
+					status: 'resolved',
+					event
+				} as any)
+			).toBe('undecryptable');
+		}
+	);
 
 	it('falls back safely for an unsupported Matrix message type', () => {
 		const event = {

@@ -517,6 +517,8 @@ export const NotificationsCenter = () => {
 				: translate('message.consultantLeftChat'),
 			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
+			// The chat's own wording for a message this device cannot decrypt.
+			undecryptable: translate('e2ee.message.encryption.text'),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'
