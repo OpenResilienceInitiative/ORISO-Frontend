@@ -79,8 +79,7 @@ test('permits only canonical public keys and paired process definitions', () => 
 
 test('preserves dotenv priority, expansion and shell precedence', () => {
 	const directory = fixture({
-		'.env.production.local':
-			'REACT_APP_PRIORITY=production-local\nREACT_APP_SHELL=dotenv-value\nREACT_APP_EXPANDED=${REACT_APP_SHELL}/expanded\n',
+		'.env.production.local': `REACT_APP_PRIORITY=production-local\nREACT_APP_SHELL=dotenv-value\nREACT_APP_EXPANDED=\${REACT_APP_SHELL}/expanded\n`,
 		'.env.local': 'REACT_APP_PRIORITY=local\nREACT_APP_LOCAL=local-only\n',
 		'.env.production':
 			'REACT_APP_PRIORITY=production\nREACT_APP_MODE=production-only\n',
@@ -173,17 +172,14 @@ test('preserves default sourcemap and asset inline controls and explicit overrid
 	);
 });
 
-test('keeps current Webpack build/dev and Express start defaults', () => {
+test('uses normal Vite build/dev while retaining Express production start', () => {
 	const { scripts } = JSON.parse(
 		readFileSync(path.join(root, 'package.json'), 'utf8')
 	);
-	assert.equal(scripts.build, 'node scripts/build.js');
-	assert.equal(scripts.dev, 'node scripts/start.js');
+	assert.equal(scripts.build, 'node scripts/build-vite.mjs');
+	assert.equal(scripts.dev, 'node scripts/start-vite.mjs');
 	assert.equal(scripts.start, 'node proxy/server.js');
-	assert.equal(
-		scripts.postbuild,
-		'bash scripts/validate-hardcoded-hosts.sh build'
-	);
+	assert.equal(Object.hasOwn(scripts, 'postbuild'), false);
 });
 
 test('matches canonical client environment policy for every non-commit key', () => {

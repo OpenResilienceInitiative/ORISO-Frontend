@@ -233,11 +233,10 @@
 	},
 	"scripts": {
 		"start": "node proxy/server.js",
-		"dev": "node scripts/start.js",
+		"dev": "node scripts/start-vite.mjs",
 		"dev:vite": "node scripts/start-vite.mjs",
 		"dev:server": "nodemon",
-		"build": "node scripts/build.js",
-		"postbuild": "bash scripts/validate-hardcoded-hosts.sh build",
+		"build": "node scripts/build-vite.mjs",
 		"build:vite": "node scripts/build-vite.mjs",
 		"test": "cross-env NODE_ENV=development FAST_REFRESH=false BROWSER=none REACT_APP_API_URL=http://127.0.0.1:9001 HTTPS=0 PORT=9001 WDS_SOCKET_PORT=9001 concurrently --kill-others --success first \"npm run dev\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"test:unit": "cross-env NODE_OPTIONS=--max-old-space-size=6144 vp test run --project unit --maxWorkers=2",
