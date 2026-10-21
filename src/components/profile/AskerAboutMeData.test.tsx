@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -133,5 +134,43 @@ describe('AskerAboutMeData', () => {
 		const [first, retry] = apiPutEmailMock.mock.calls;
 		expect(first[1].id).toEqual(expect.any(String));
 		expect(retry).toEqual(first);
+	});
+	it('starts a fresh email intent after explicit Cancel and re-entering the cancelled value', async () => {
+		apiPutEmailMock.mockRejectedValue(new TypeError('reply lost'));
+		render(<AskerAboutMeData />);
+		fireEvent.click(screen.getByRole('button', { name: 'edit email' }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'enter valid email' })
+		);
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'profile.data.edit.button.save'
+				})
+			);
+		});
+		await waitFor(() => expect(apiPutEmailMock).toHaveBeenCalledTimes(1));
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'profile.data.edit.button.cancel'
+			})
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'edit email' }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'enter valid email' })
+		);
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'profile.data.edit.button.save'
+				})
+			);
+		});
+		await waitFor(() => expect(apiPutEmailMock).toHaveBeenCalledTimes(2));
+		const [first, next] = apiPutEmailMock.mock.calls;
+		expect(next[0]).toBe(first[0]);
+		expect(next[1].id, 'account-intent-asker-cancel-reopen').not.toBe(
+			first[1].id
+		);
 	});
 });
