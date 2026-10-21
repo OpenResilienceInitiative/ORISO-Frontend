@@ -217,14 +217,16 @@ describe('TipTapComposer persistent accessible name', () => {
 		{ language: 'en', placeholder: '', label: 'Write message' },
 		{ language: 'de', placeholder: ' \t\n ', label: 'Nachricht schreiben' }
 	])(
-		'uses the dedicated $language fallback for a blank placeholder',
+		'uses the canonical translated $language fallback for a blank placeholder',
 		async ({ language, placeholder, label }) => {
 			const view = await renderAccessibleComposer(
 				{ placeholder },
 				language
 			);
 			// A missing resource key cannot satisfy a name expectation accidentally.
-			expect(view.i18n.t('message.submit.editorLabel')).toBe(label);
+			expect(
+				view.i18n.t('enquiry.write.input.placeholder.groupChat')
+			).toBe(label);
 			const textbox = await screen.findByRole('textbox', { name: label });
 			expect(nativeEditor(textbox).view.dom).toBe(textbox);
 		}

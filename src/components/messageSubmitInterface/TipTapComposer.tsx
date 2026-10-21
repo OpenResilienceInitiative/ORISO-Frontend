@@ -211,7 +211,8 @@ export const TipTapComposer = forwardRef<
 	) => {
 		const { t } = useTranslation();
 		const editorAccessibleName =
-			placeholder.trim() || t('message.submit.editorLabel');
+			placeholder.trim() ||
+			t('enquiry.write.input.placeholder.groupChat');
 		const isSyncingFromValue = useRef(false);
 		/* The editor's own recent states, as it reported them. `value` comes back
 		   from the parent a render later — under load, several keystrokes later.

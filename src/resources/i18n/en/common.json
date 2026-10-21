@@ -1827,7 +1827,6 @@
 				"overLimit": "Message is over the character limit.",
 				"warning": "Message is approaching the character limit."
 			},
-			"editorLabel": "Write message",
 			"loadError": "The chat input could not be loaded. Please try again.",
 			"retry": "Try again",
 			"toolbar": {

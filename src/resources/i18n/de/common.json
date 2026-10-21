@@ -1842,7 +1842,6 @@
 				"overLimit": "Die Nachricht überschreitet das Zeichenlimit.",
 				"warning": "Die Nachricht nähert sich dem Zeichenlimit."
 			},
-			"editorLabel": "Nachricht schreiben",
 			"loadError": "Der Chat-Eingabebereich konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
 			"retry": "Erneut versuchen",
 			"toolbar": {
