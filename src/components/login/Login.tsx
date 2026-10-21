@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import '../../polyfill';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -106,6 +108,7 @@ const registrationSheetButtonSx = {
 type LoginFieldLabelState = typeof VALIDITY_INVALID | null;
 
 export const Login = () => {
+	const accountActions = useAccountOperationActions();
 	type LoginMethod = 'password' | 'magicLink';
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
@@ -349,9 +352,16 @@ export const Login = () => {
 				}
 
 				if (Object.keys(patchedUserData).length > 0) {
-					await apiPatchUserData(patchedUserData).catch((error) => {
-						/* console.log(error); */
-					});
+					await accountActions
+						.run(
+							'locale',
+							endpoints.userData,
+							patchedUserData,
+							apiPatchUserData
+						)
+						.catch((error) => {
+							/* console.log(error); */
+						});
 					await reloadUserData().catch((error) => {
 						/* console.log(error); */
 					});

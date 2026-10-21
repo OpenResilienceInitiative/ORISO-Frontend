@@ -28,7 +28,7 @@ export const SetEmailModal = ({ onClose }) => {
 		useState<InputFieldLabelState>();
 	const { addNotification } = useContext(NotificationsContext);
 
-	const { loading, mutate } = useUserMutate({
+	const { loading, mutate, onAccountEdit } = useUserMutate({
 		onSuccess: onClose,
 		onError: (error: Error | Response) => {
 			if (error instanceof Response && error.status === 409) {
@@ -92,12 +92,13 @@ export const SetEmailModal = ({ onClose }) => {
 
 	const handleEmailChange = useCallback(
 		(event) => {
+			onAccountEdit();
 			const validityData = validateEmail(event.target.value);
 			setEmailLabelState(validityData.validity);
 			setEmailLabel(validityData.label);
 			setEmail(event.target.value);
 		},
-		[validateEmail]
+		[onAccountEdit, validateEmail]
 	);
 
 	const handleOverlayAction = useCallback(

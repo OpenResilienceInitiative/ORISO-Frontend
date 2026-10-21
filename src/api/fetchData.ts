@@ -128,7 +128,24 @@ export const fetchData = ({
 	recoverOnPublicAuthRoute = true,
 	isStaleAuthRetry = false
 }: FetchDataProps): Promise<any> =>
-	new Promise((resolve, reject) => {
+	new Promise((resolve, rejectResponse) => {
+		let receivedStatus: number | undefined;
+		const reject = (error?: unknown) => {
+			// Keep existing error names/messages. Only an observed HTTP reply
+			// supplies status; transport failures must remain unknown.
+			if (
+				error instanceof Error &&
+				receivedStatus !== undefined &&
+				!('status' in error) &&
+				Object.isExtensible(error)
+			) {
+				Object.defineProperty(error, 'status', {
+					value: receivedStatus,
+					configurable: true
+				});
+			}
+			rejectResponse(error);
+		};
 		const reqLog = new RequestLog(url, method, timeout);
 
 		const accessToken = getValueFromCookie('keycloak');
@@ -215,6 +232,7 @@ export const fetchData = ({
 
 		fetch(req)
 			.then((response) => {
+				receivedStatus = response.status;
 				reqLog.finish(response.status);
 				if (response.status === 200 || response.status === 201) {
 					const data =

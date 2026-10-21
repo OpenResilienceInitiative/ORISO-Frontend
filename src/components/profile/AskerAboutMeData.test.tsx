@@ -130,5 +130,8 @@ describe('AskerAboutMeData', () => {
 		fireEvent.click(saveButton);
 
 		await waitFor(() => expect(apiPutEmailMock).toHaveBeenCalledTimes(2));
+		const [first, retry] = apiPutEmailMock.mock.calls;
+		expect(first[1].id).toEqual(expect.any(String));
+		expect(retry).toEqual(first);
 	});
 });

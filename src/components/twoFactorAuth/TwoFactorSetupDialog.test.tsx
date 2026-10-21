@@ -336,10 +336,13 @@ describe('TwoFactorSetupDialog', () => {
 		clickButton('twoFactorAuth.setupDialog.action.confirm');
 
 		await waitFor(() =>
-			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledWith({
-				otp: '123456',
-				secret: '12345678901234567890123456789012'
-			})
+			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledWith(
+				{
+					otp: '123456',
+					secret: '12345678901234567890123456789012'
+				},
+				expect.objectContaining({ id: expect.any(String) })
+			)
 		);
 		expect(apiPatchTwoFactorAuthEncourageMock).toHaveBeenCalledWith(false);
 		expect(onSetupComplete).toHaveBeenCalledTimes(1);
@@ -453,7 +456,8 @@ describe('TwoFactorSetupDialog', () => {
 
 		await waitFor(() =>
 			expect(apiPutTwoFactorAuthEmailMock).toHaveBeenCalledWith(
-				'maxmuster@email.de'
+				'maxmuster@email.de',
+				expect.objectContaining({ id: expect.any(String) })
 			)
 		);
 		// The connect step only renders after apiPutTwoFactorAuthEmail resolves
@@ -483,7 +487,8 @@ describe('TwoFactorSetupDialog', () => {
 
 		await waitFor(() =>
 			expect(apiPostTwoFactorAuthEmailWithCodeMock).toHaveBeenCalledWith(
-				'654321'
+				'654321',
+				expect.objectContaining({ id: expect.any(String) })
 			)
 		);
 		expect(onSetupComplete).toHaveBeenCalledTimes(1);

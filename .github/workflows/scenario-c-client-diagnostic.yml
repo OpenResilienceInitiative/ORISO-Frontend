@@ -1,0 +1,67 @@
+name: Scenario C client diagnostic
+
+on:
+    push:
+        branches:
+            - codex/367-c-client-intents-frontend-20261021
+
+permissions:
+    contents: read
+
+concurrency:
+    group: client-diagnostic-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    application-gate:
+        name: frontend ${{ matrix.phase }} source verification
+        runs-on: ubuntu-24.04
+        timeout-minutes: 70
+        strategy:
+            fail-fast: false
+            matrix:
+                phase: [react, project]
+        steps:
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+              with:
+                  ref: ${{ github.sha }}
+            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+              with:
+                  node-version: '22.12.0'
+                  cache: npm
+            - name: Install exact locked dependencies without lifecycle scripts
+              shell: bash
+              run: |
+                  set +e
+                  npm ci --ignore-scripts --legacy-peer-deps > "$RUNNER_TEMP/account-intents-npm-ci.raw.log" 2>&1
+                  task_install_rc=$?
+                  python3 - "$task_install_rc" "${{ matrix.phase }}" <<'PY'
+                  import hashlib, json, os, re, sys
+                  from pathlib import Path
+                  raw = Path(os.environ['RUNNER_TEMP']) / 'account-intents-npm-ci.raw.log'
+                  destination = Path(os.environ['RUNNER_TEMP']) / ('account-intent-evidence-' + sys.argv[2])
+                  destination.mkdir(parents=True, exist_ok=True)
+                  text = raw.read_text(errors='replace')
+                  clean = re.sub(r'(?i)Bearer\s+[A-Za-z0-9._~+/=-]+', 'Bearer [REDACTED]', text)
+                  clean = re.sub(r'(https?://)[^/@\s]+@', r'\1[REDACTED]@', clean)
+                  clean = re.sub(r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b', '[REDACTED JWT]', clean)
+                  (destination / 'install.log').write_text(clean)
+                  receipt = {'commit': os.environ['GITHUB_SHA'], 'exitCode': int(sys.argv[1]), 'lockSha256': hashlib.sha256(Path('package-lock.json').read_bytes()).hexdigest()}
+                  (destination / 'install.json').write_text(json.dumps(receipt, indent=2) + '\n')
+                  raw.unlink()
+                  if int(sys.argv[1]): print('\n'.join(clean.splitlines()[-30:]))
+                  PY
+                  exit "$task_install_rc"
+            - name: Verify the immutable checkout and actual application gates
+              env:
+                  CI: 'true'
+                  NODE_OPTIONS: --max-old-space-size=6144
+              run: python3 scripts/verify-account-intent-ci.py frontend ${{ matrix.phase }}
+            - name: Save sanitized source-bound evidence
+              if: always()
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              with:
+                  name: account-intents-${{ matrix.phase }}-${{ github.sha }}
+                  path: ${{ runner.temp }}/account-intent-evidence-${{ matrix.phase }}
+                  if-no-files-found: error
+                  retention-days: 14

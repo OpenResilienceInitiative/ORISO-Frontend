@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import './localeSwitch.styles';
 import { ReactComponent as LanguageIconOutline } from '../../resources/img/icons/language_outline.svg';
@@ -57,6 +59,7 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	const { locale, setLocale, selectableLocales } = useContext(LocaleContext);
 
 	const requestInProgress = useRef(false);
+	const accountActions = useAccountOperationActions();
 	// The locale whose PATCH failed. userData keeps the old preferredLanguage
 	// when the request fails, so the guard below stays true; without this the
 	// effect would re-send forever. Cleared when the user picks another one.
@@ -72,10 +75,18 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 			return;
 		}
 
+		// The existing initial sync is a finite registry-owned action. Dropdown
+		// edits prepare their intent first; rerenders never create another one.
 		requestInProgress.current = true;
-		apiPatchUserData({
-			preferredLanguage: locale
-		})
+		accountActions
+			.run(
+				'locale',
+				endpoints.userData,
+				{
+					preferredLanguage: locale
+				},
+				apiPatchUserData
+			)
 			.then(() => {
 				rejectedLocale.current = null;
 				return userDataContext.reloadUserData();
@@ -88,7 +99,7 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 			.finally(() => {
 				requestInProgress.current = false;
 			});
-	}, [locale, updateUserData, userDataContext]);
+	}, [accountActions, locale, updateUserData, userDataContext]);
 
 	if (selectableLocales.length <= 1) {
 		return null;
@@ -96,6 +107,11 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 
 	const languageSelectDropdown: SelectDropdownItem = {
 		handleDropdownSelect: ({ value }) => {
+			if (value !== locale)
+				accountActions.edited('locale', endpoints.userData);
+			accountActions.prepare('locale', endpoints.userData, {
+				preferredLanguage: value
+			});
 			// If we wait to be set in LocaleSwitch sometimes we've an problem of reloading the requests
 			// because we're always looking by "locale" from the context but the locale is changed before
 			// we save the cookie so to fix this we set the cookie before the locale switch

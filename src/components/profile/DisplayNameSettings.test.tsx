@@ -82,9 +82,12 @@ describe('Moved display-name editor', () => {
 			})
 		);
 		await waitFor(() =>
-			expect(apiPatchUserData).toHaveBeenCalledWith({
-				displayName: 'Mara Neu'
-			})
+			expect(apiPatchUserData).toHaveBeenCalledWith(
+				{
+					displayName: 'Mara Neu'
+				},
+				expect.objectContaining({ id: expect.any(String) })
+			)
 		);
 		await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 	});

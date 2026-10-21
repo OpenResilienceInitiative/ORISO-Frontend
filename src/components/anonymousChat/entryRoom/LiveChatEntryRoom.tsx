@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../../hooks/useAccountOperationActions';
+import { endpoints } from '../../../resources/scripts/endpoints';
 import * as React from 'react';
 import {
 	useCallback,
@@ -183,6 +185,7 @@ const LiveChatEntryRoomContent = ({
 	topicSlug
 }: LiveChatEntryRoomProps) => {
 	const { t } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const navigate = useNavigate();
 	const localeContext = useContext(LocaleContext);
 	const locale = localeContext?.locale ?? 'de';
@@ -402,10 +405,15 @@ const LiveChatEntryRoomContent = ({
 			   stores German; keep the one the guest is reading, or the app
 			   switches to German when it boots after the gate. The server only
 			   takes ISO codes: 'de@informal' would fail the whole PATCH. */
-			await apiPatchUserData({
-				displayName: chosen.userId,
-				preferredLanguage: normalizePreferredLanguage(locale)
-			});
+			await accountActions.run(
+				'locale',
+				endpoints.userData,
+				{
+					displayName: chosen.userId,
+					preferredLanguage: normalizePreferredLanguage(locale)
+				},
+				apiPatchUserData
+			);
 			rememberConfirmedEntryName(id, chosen.userId);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
@@ -416,7 +424,7 @@ const LiveChatEntryRoomContent = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, names, selectedIndex, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [accountActions, busy, names, selectedIndex, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
 	   that needs no account. An answered zero needs a second look, because the

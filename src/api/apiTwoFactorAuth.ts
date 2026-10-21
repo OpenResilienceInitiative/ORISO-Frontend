@@ -1,27 +1,51 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	AccountOperationIntent,
+	accountOperationHeaders
+} from '../utils/accountOperationIntent';
 
-export const apiPutTwoFactorAuthApp = async (body: {
-	secret: string;
-	otp: string;
-}): Promise<any> => {
+export const apiPutTwoFactorAuthApp = async (
+	body: {
+		secret: string;
+		otp: string;
+	},
+	operationIntent?: AccountOperationIntent
+): Promise<any> => {
 	const url = endpoints.twoFactorAuthApp;
+	const bodyData = JSON.stringify(body);
 
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.PUT,
-		bodyData: JSON.stringify(body),
+		bodyData,
+		headersData: accountOperationHeaders(
+			operationIntent,
+			FETCH_METHODS.PUT,
+			url,
+			bodyData
+		),
 		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.CONFLICT]
 	});
 };
 
-export const apiPutTwoFactorAuthEmail = async (email: string): Promise<any> => {
+export const apiPutTwoFactorAuthEmail = async (
+	email: string,
+	operationIntent?: AccountOperationIntent
+): Promise<any> => {
 	const url = endpoints.twoFactorAuthEmail;
+	const bodyData = JSON.stringify({ email });
 
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.PUT,
-		bodyData: JSON.stringify({ email }),
+		bodyData,
+		headersData: accountOperationHeaders(
+			operationIntent,
+			FETCH_METHODS.PUT,
+			url,
+			bodyData
+		),
 		responseHandling: [
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.CONFLICT,
@@ -44,13 +68,19 @@ export const apiPatchTwoFactorAuthEncourage = async (
 };
 
 export const apiPostTwoFactorAuthEmailWithCode = async (
-	code: string
+	code: string,
+	operationIntent?: AccountOperationIntent
 ): Promise<any> => {
 	const url = endpoints.twoFactorAuthEmail + '/validate/' + code;
 
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.POST,
+		headersData: accountOperationHeaders(
+			operationIntent,
+			FETCH_METHODS.POST,
+			url
+		),
 		responseHandling: [
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.PRECONDITION_FAILED,
@@ -59,11 +89,18 @@ export const apiPostTwoFactorAuthEmailWithCode = async (
 	});
 };
 
-export const apiDeleteTwoFactorAuth = async (): Promise<any> => {
+export const apiDeleteTwoFactorAuth = async (
+	operationIntent?: AccountOperationIntent
+): Promise<any> => {
 	const url = endpoints.twoFactorAuth;
 
 	return fetchData({
 		url: url,
-		method: FETCH_METHODS.DELETE
+		method: FETCH_METHODS.DELETE,
+		headersData: accountOperationHeaders(
+			operationIntent,
+			FETCH_METHODS.DELETE,
+			url
+		)
 	});
 };

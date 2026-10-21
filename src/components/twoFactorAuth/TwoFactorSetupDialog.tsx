@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import {
 	useCallback,
@@ -180,6 +182,7 @@ interface StepperProps {
 
 const FlowStepper = ({ activeStep, selectedMethod }: StepperProps) => {
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const steps = getSetupSteps(activeStep, selectedMethod);
 	const activeIndex = getStepIndex(activeStep, selectedMethod);
 
@@ -403,7 +406,12 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			setHelperKey('');
 
 			try {
-				await apiPutTwoFactorAuthEmail(email);
+				await accountActions.run(
+					'2fa-email-send',
+					endpoints.twoFactorAuthEmail,
+					email,
+					apiPutTwoFactorAuthEmail
+				);
 				setHelperKey('twoFactorAuth.setupDialog.email.connect.sent');
 				if (nextStep) {
 					setStep(nextStep);
@@ -417,7 +425,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				setIsRequestInProgress(false);
 			}
 		},
-		[email, setFetchError]
+		[accountActions, email, setFetchError]
 	);
 
 	const activateApp = useCallback(async () => {
@@ -430,7 +438,12 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		setErrorKey('');
 
 		try {
-			await apiPutTwoFactorAuthApp({ secret, otp });
+			await accountActions.run(
+				'2fa-app',
+				endpoints.twoFactorAuthApp,
+				{ secret, otp },
+				apiPutTwoFactorAuthApp
+			);
 			await finishSetup('app-success');
 		} catch (error) {
 			onSetupAborted?.();
@@ -441,7 +454,14 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		} finally {
 			setIsRequestInProgress(false);
 		}
-	}, [finishSetup, onSetupAborted, otp, secret, setFetchError]);
+	}, [
+		accountActions,
+		finishSetup,
+		onSetupAborted,
+		otp,
+		secret,
+		setFetchError
+	]);
 
 	const activateEmail = useCallback(async () => {
 		if (!isOtpValid(otp)) {
@@ -453,7 +473,12 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		setErrorKey('');
 
 		try {
-			await apiPostTwoFactorAuthEmailWithCode(otp);
+			await accountActions.run(
+				'2fa-email-validate',
+				endpoints.twoFactorAuthEmail + '/validate',
+				otp,
+				apiPostTwoFactorAuthEmailWithCode
+			);
 			await finishSetup('email-success');
 		} catch (error) {
 			onSetupAborted?.();
@@ -464,7 +489,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		} finally {
 			setIsRequestInProgress(false);
 		}
-	}, [finishSetup, onSetupAborted, otp, setFetchError]);
+	}, [accountActions, finishSetup, onSetupAborted, otp, setFetchError]);
 
 	const handlePrimaryAction = useCallback(() => {
 		const nextStep = getNextSetupStep(
@@ -509,11 +534,17 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	}, [onDisable]);
 
 	const handleOtpChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		accountActions.edited('2fa-app', endpoints.twoFactorAuthApp);
+		accountActions.edited(
+			'2fa-email-validate',
+			endpoints.twoFactorAuthEmail + '/validate'
+		);
 		setOtp(normalizeOtp(event.target.value));
 		setErrorKey('');
 	};
 
 	const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		accountActions.edited('2fa-email-send', endpoints.twoFactorAuthEmail);
 		setEmail(event.target.value.trim());
 		setErrorKey('');
 	};

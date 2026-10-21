@@ -120,7 +120,10 @@ describe('ErstantwortEmailOverlay', () => {
 			saveButton().click();
 		});
 
-		expect(apiPutEmail).toHaveBeenCalledWith('jemand@example.test');
+		expect(apiPutEmail).toHaveBeenCalledWith(
+			'jemand@example.test',
+			expect.objectContaining({ id: expect.any(String) })
+		);
 		expect(onSaved).toHaveBeenCalled();
 		expect(
 			screen.getByText(
@@ -198,6 +201,26 @@ describe('ErstantwortEmailOverlay', () => {
 			).length
 		).toBeGreaterThan(0);
 		expect(saveButton().hasAttribute('disabled')).toBe(false);
+	});
+
+	it('retains one intent for an exact retry after an unknown save result', async () => {
+		apiPutEmail
+			.mockRejectedValueOnce(new TypeError('reply lost'))
+			.mockResolvedValueOnce(undefined);
+		const onSaved = vi.fn();
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={onSaved} />);
+		type('jemand@example.test');
+		await act(async () => {
+			saveButton().click();
+		});
+		await act(async () => {
+			saveButton().click();
+		});
+		expect(apiPutEmail).toHaveBeenCalledTimes(2);
+		const [first, retry] = apiPutEmail.mock.calls;
+		expect(first[1].id).toEqual(expect.any(String));
+		expect(retry).toEqual(first);
+		expect(onSaved).toHaveBeenCalledOnce();
 	});
 
 	it('closes on the close button', () => {

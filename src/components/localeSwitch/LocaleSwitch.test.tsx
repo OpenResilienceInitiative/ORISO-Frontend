@@ -81,6 +81,9 @@ describe('LocaleSwitch preferredLanguage sync', () => {
 		renderSwitch(reloadUserData);
 
 		await waitFor(() => expect(reloadUserData).toHaveBeenCalledTimes(1));
-		expect(patchUserData).toHaveBeenCalledWith({ preferredLanguage: 'en' });
+		expect(patchUserData).toHaveBeenCalledWith(
+			{ preferredLanguage: 'en' },
+			expect.objectContaining({ id: expect.any(String) })
+		);
 	});
 });

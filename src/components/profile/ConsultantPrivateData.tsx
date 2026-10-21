@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import { UserDataContext } from '../../globalState';
@@ -21,6 +23,7 @@ import { useOpenTwoFactorSettings } from '../../hooks/useOpenTwoFactorSettings';
 export const ConsultantPrivateData = () => {
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const [isEditDisabled, setIsEditDisabled] = useState<boolean>(true);
 	const [isSaveDisabled, setIsSaveDisabled] = useState<boolean>(true);
@@ -75,7 +78,8 @@ export const ConsultantPrivateData = () => {
 		}
 		if (!isRequestInProgress) {
 			setIsRequestInProgress(true);
-			apiPutEmail(email)
+			accountActions
+				.run('email', endpoints.email, email, apiPutEmail)
 				.then(reloadUserData)
 				.then(() => {
 					setIsRequestInProgress(false);
@@ -92,9 +96,11 @@ export const ConsultantPrivateData = () => {
 		}
 	};
 
-	const handleEmailChange = (email) => {
+	const handleEmailChange = (nextEmail) => {
+		if (nextEmail !== email)
+			accountActions.edited('email', endpoints.email);
 		setEmailLabel(translate('profile.data.email'));
-		setEmail(email);
+		setEmail(nextEmail);
 		setIsEmailNotAvailable(false);
 	};
 
@@ -146,9 +152,16 @@ export const ConsultantPrivateData = () => {
 				if (isTwoFactorBinding) {
 					openTwoFactorSettings({ isEditMode: true });
 				} else {
-					apiDeleteTwoFactorAuth().then(() => {
-						setOverlayActive(false);
-					});
+					accountActions
+						.run(
+							'2fa-delete',
+							endpoints.twoFactorAuth,
+							null,
+							(_, intent) => apiDeleteTwoFactorAuth(intent)
+						)
+						.then(() => {
+							setOverlayActive(false);
+						});
 				}
 				break;
 		}

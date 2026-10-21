@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import {
@@ -21,6 +23,7 @@ import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 
 export const AskerAboutMeData = () => {
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 
 	const { userData, reloadUserData } = useContext(UserDataContext);
 
@@ -179,7 +182,8 @@ export const AskerAboutMeData = () => {
 			setOverlay(overlay2faEmailEdit);
 		} else if (!isRequestInProgress) {
 			setIsRequestInProgress(true);
-			apiPutEmail(email)
+			accountActions
+				.run('email', endpoints.email, email, apiPutEmail)
 				.then(reloadUserData)
 				.then(() => {
 					setIsEmailDisabled(true);
@@ -195,9 +199,11 @@ export const AskerAboutMeData = () => {
 		}
 	};
 
-	const handleEmailChange = (email) => {
+	const handleEmailChange = (nextEmail) => {
+		if (nextEmail !== email)
+			accountActions.edited('email', endpoints.email);
 		setEmailLabel(translate('profile.data.email'));
-		setEmail(email);
+		setEmail(nextEmail);
 		setIsEmailNotAvailable(false);
 	};
 
@@ -208,7 +214,10 @@ export const AskerAboutMeData = () => {
 	const handleDeleteEmail = useCallback(() => {
 		if (!isRequestInProgress) {
 			setIsRequestInProgress(true);
-			apiDeleteEmail()
+			accountActions
+				.run('email-delete', endpoints.email, null, (_, intent) =>
+					apiDeleteEmail(intent)
+				)
 				.then((response) => {
 					setIsRequestInProgress(false);
 					reloadUserData().catch((error) => {
@@ -221,7 +230,13 @@ export const AskerAboutMeData = () => {
 					setOverlay(overlayError);
 				});
 		}
-	}, [overlaySuccess, overlayError, isRequestInProgress, reloadUserData]);
+	}, [
+		accountActions,
+		overlaySuccess,
+		overlayError,
+		isRequestInProgress,
+		reloadUserData
+	]);
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		switch (buttonFunction) {
@@ -231,12 +246,19 @@ export const AskerAboutMeData = () => {
 					setOverlay(null);
 				};
 				if (isEmail2faActive) {
-					apiDeleteTwoFactorAuth().then(() => {
-						handleConfirm();
-						reloadUserData().catch((error) => {
-							/* console.log(error); */
+					accountActions
+						.run(
+							'2fa-delete',
+							endpoints.twoFactorAuth,
+							null,
+							(_, intent) => apiDeleteTwoFactorAuth(intent)
+						)
+						.then(() => {
+							handleConfirm();
+							reloadUserData().catch((error) => {
+								/* console.log(error); */
+							});
 						});
-					});
 				} else {
 					handleConfirm();
 				}
@@ -247,9 +269,16 @@ export const AskerAboutMeData = () => {
 				break;
 			case OVERLAY_FUNCTIONS.DELETE_EMAIL:
 				if (isEmail2faActive) {
-					apiDeleteTwoFactorAuth().then(() => {
-						handleDeleteEmail();
-					});
+					accountActions
+						.run(
+							'2fa-delete',
+							endpoints.twoFactorAuth,
+							null,
+							(_, intent) => apiDeleteTwoFactorAuth(intent)
+						)
+						.then(() => {
+							handleDeleteEmail();
+						});
 				} else {
 					handleDeleteEmail();
 				}

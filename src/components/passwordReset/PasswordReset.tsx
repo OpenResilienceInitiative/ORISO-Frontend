@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import { Link } from 'react-router-dom';
 import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
 import {
@@ -148,6 +150,7 @@ export const PasswordReset = ({
 	variant = 'profile'
 }: PasswordResetProps) => {
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const { featureAppointmentsEnabled } = getTenantSettings();
 	const { userData } = useContext(UserDataContext);
 	const isConsultant = hasUserAuthority(
@@ -251,18 +254,21 @@ export const PasswordReset = ({
 	};
 
 	const handleInputOldChange = (event) => {
+		accountActions.edited('password', endpoints.passwordReset);
 		setOldPasswordErrorMessage('');
 		setOldPassword(event.target.value);
 		validateNewPassword(newPassword, event.target.value);
 	};
 
 	const handleInputNewChange = (event) => {
+		accountActions.edited('password', endpoints.passwordReset);
 		validateNewPassword(event.target.value);
 		validateConfirmPassword(confirmPassword, event.target.value);
 		setNewPassword(event.target.value);
 	};
 
 	const handleInputConfirmChange = (event) => {
+		accountActions.edited('password', endpoints.passwordReset);
 		validateConfirmPassword(event.target.value, newPassword);
 		setConfirmPassword(event.target.value);
 	};
@@ -331,14 +337,26 @@ export const PasswordReset = ({
 			setRepairRequired(false);
 			setOldPasswordErrorMessage('');
 
-			(async () => {
-				const policy = getChatRecoveryPolicy(
-					userData,
-					hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData)
-				);
-				if (policy.mode === 'RECOVERY_KEY')
-					return apiUpdatePassword(oldPassword, newPassword);
-				/* The account-setup gate's own step. `passwordChangeRequired`
+			accountActions
+				.run(
+					'password',
+					endpoints.passwordReset,
+					{ oldPassword, newPassword },
+					async ({ oldPassword, newPassword }, operationIntent) => {
+						const policy = getChatRecoveryPolicy(
+							userData,
+							hasUserAuthority(
+								AUTHORITIES.ANONYMOUS_DEFAULT,
+								userData
+							)
+						);
+						if (policy.mode === 'RECOVERY_KEY')
+							return apiUpdatePassword(
+								oldPassword,
+								newPassword,
+								operationIntent
+							);
+						/* The account-setup gate's own step. `passwordChangeRequired`
 				   is set exactly once — when an administrator provisions the
 				   account — so this is the account's FIRST password change:
 				   the old password is the administrator's, nothing of the
@@ -346,47 +364,63 @@ export const PasswordReset = ({
 				   key-backup material of theirs to rotate. The gate offers no
 				   way on but logging out, so this step must not be able to
 				   dead-end (#1481). */
-				const firstChange =
-					resolveAccountSetupStep(userData) ===
-					ACCOUNT_SETUP_STEPS.PASSWORD;
-				const client = await getReadyRecoveryClient();
-				const id = client?.getUserId();
-				if (!client || !id) {
-					/* Nothing was ever sealed, so a plain update loses
+						const firstChange =
+							resolveAccountSetupStep(userData) ===
+							ACCOUNT_SETUP_STEPS.PASSWORD;
+						const client = await getReadyRecoveryClient();
+						const id = client?.getUserId();
+						if (!client || !id) {
+							/* Nothing was ever sealed, so a plain update loses
 					   nothing. For an established account it would: the
 					   envelope would stay sealed under the old password and
 					   the counsellor's history would need a recovery key they
 					   may never have saved. Refuse, and say so. */
-					if (firstChange)
-						return apiUpdatePassword(oldPassword, newPassword);
-					throw new ChatRecoveryUnavailableError();
-				}
-				try {
-					await withRecoverySetupLock(id, () =>
-						changePasswordWithRecovery(
-							client,
-							oldPassword,
-							newPassword,
-							() => apiUpdatePassword(oldPassword, newPassword),
-							(error) =>
-								error instanceof Error &&
-								error.message === FETCH_ERRORS.BAD_REQUEST
-						)
-					);
-				} catch (error) {
-					/* No envelope exists at all — thrown before the password
+							if (firstChange)
+								return apiUpdatePassword(
+									oldPassword,
+									newPassword,
+									operationIntent
+								);
+							throw new ChatRecoveryUnavailableError();
+						}
+						try {
+							await withRecoverySetupLock(id, () =>
+								changePasswordWithRecovery(
+									client,
+									oldPassword,
+									newPassword,
+									() =>
+										apiUpdatePassword(
+											oldPassword,
+											newPassword,
+											operationIntent
+										),
+									(error) =>
+										error instanceof Error &&
+										error.message ===
+											FETCH_ERRORS.BAD_REQUEST
+								)
+							);
+						} catch (error) {
+							/* No envelope exists at all — thrown before the password
 					   API is ever called, so there is no double change to
 					   fear. Outside the gate this points at the security
 					   settings; behind it those are unreachable, and there is
 					   still nothing to rotate. */
-					if (
-						firstChange &&
-						error instanceof PasswordRecoveryRepairRequiredError
-					)
-						return apiUpdatePassword(oldPassword, newPassword);
-					throw error;
-				}
-			})()
+							if (
+								firstChange &&
+								error instanceof
+									PasswordRecoveryRepairRequiredError
+							)
+								return apiUpdatePassword(
+									oldPassword,
+									newPassword,
+									operationIntent
+								);
+							throw error;
+						}
+					}
+				)
 				.then(async () => {
 					// Must complete BEFORE logout clears the auth cookies —
 					// otherwise the appointments-password update races the
