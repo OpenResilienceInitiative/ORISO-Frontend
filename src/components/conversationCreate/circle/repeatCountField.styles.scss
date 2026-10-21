@@ -1,0 +1,28 @@
+/* Two lines in the 56px row: the count on top, the interval as its unit. */
+.repeatCountField .splitButton__main {
+	padding-block: 8px;
+}
+
+.repeatCountField__value {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+}
+
+.repeatCountField__count,
+.repeatCountField__interval {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.repeatCountField__count {
+	line-height: 20px;
+}
+
+.repeatCountField__interval {
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.5px;
+	line-height: 16px;
+}

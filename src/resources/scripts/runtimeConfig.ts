@@ -7,6 +7,10 @@
  *      different environments without rebuilding).
  *   2. Build-time `process.env.*` (Create React App inlines these at build).
  *
+ * Nothing is inferred from the page hostname. The keys in
+ * REQUIRED_RUNTIME_CONFIG must be set explicitly; `initApp` shows a
+ * configuration error instead of starting the app when one is missing.
+ *
  * Each getter accepts multiple key aliases because the deployment and the code
  * historically used different names (e.g. `REACT_APP_ELEMENT_CALL_URL` vs
  * `REACT_APP_ELEMENT_CALL_BASE_URL`).
@@ -31,32 +35,6 @@ const getCypressConfig = (): RuntimeConfig => {
 	return typeof cypressEnv === 'function'
 		? (cypressEnv() as RuntimeConfig) || {}
 		: {};
-};
-
-/**
- * When the container runtime config is incomplete (e.g. production config.js
- * only has REACT_APP_API_URL), derive sibling service URLs from the app host.
- * `app.oriso.org` -> `api.oriso.org`, `matrix.oriso.org`, `call.oriso.org`, etc.
- */
-const inferFromAppHostname = (): RuntimeConfig => {
-	if (typeof window === 'undefined') {
-		return {};
-	}
-	const host = window.location.hostname;
-	const match = host.match(/^(?:app|www)\.(.+)$/);
-	if (!match) {
-		return {};
-	}
-	const base = match[1];
-	return {
-		REACT_APP_API_URL: `https://api.${base}`,
-		REACT_APP_MATRIX_HOMESERVER_URL: `https://matrix.${base}`,
-		REACT_APP_MATRIX_URL: `https://matrix.${base}`,
-		REACT_APP_ELEMENT_CALL_BASE_URL: `https://call.${base}`,
-		REACT_APP_ELEMENT_CALL_URL: `https://call.${base}`,
-		REACT_APP_LIVEKIT_WS_URL: `wss://livekit.${base}`,
-		REACT_APP_LIVEKIT_URL: `wss://livekit.${base}`
-	};
 };
 
 const firstNonEmpty = (
@@ -87,11 +65,9 @@ const pickValue = (...keys: string[]): string | undefined => {
 	if (buildValue) {
 		return buildValue;
 	}
-	const cypressValue = firstNonEmpty(getCypressConfig(), keys);
-	if (cypressValue) {
-		return cypressValue;
-	}
-	return firstNonEmpty(inferFromAppHostname(), keys);
+	// No further fallback: a service host is never guessed from the page
+	// host (ORISO-Helm#368). A missing key surfaces via getRuntimeConfigProblems.
+	return firstNonEmpty(getCypressConfig(), keys);
 };
 
 const stripTrailingSlashes = (value: string): string =>
@@ -338,6 +314,8 @@ export const getElementUrl = (): string =>
 		)
 	);
 
+// Same-origin on purpose, not a guess: the app serves /impressum and
+// /datenschutz itself (routePathNames). Documented exception, ORISO-Helm#368.
 export const getOrganizationHomeUrl = (): string =>
 	pickValue('REACT_APP_ORGANIZATION_HOME_URL') ||
 	(typeof window !== 'undefined' ? window.location.origin : '');
@@ -359,3 +337,68 @@ export const getUseHttps = (): boolean => {
 	const value = pickValue('REACT_APP_USE_HTTPS', 'VITE_USE_HTTPS');
 	return value !== 'false';
 };
+
+/**
+ * Keys the app cannot run without. Each entry lists the primary key first,
+ * then accepted aliases. Helm renders all of them (frontend-configmap).
+ */
+const REQUIRED_RUNTIME_CONFIG: ReadonlyArray<{
+	keys: readonly string[];
+	/** Returns the normalised URL; absent for non-URL keys. */
+	readUrl?: () => string;
+}> = [
+	{
+		keys: ['REACT_APP_API_URL', 'VITE_API_URL'],
+		readUrl: getRuntimeApiBaseUrl
+	},
+	{
+		keys: [
+			'REACT_APP_MATRIX_HOMESERVER_URL',
+			'VITE_MATRIX_HOMESERVER_URL',
+			'REACT_APP_MATRIX_URL'
+		],
+		readUrl: getMatrixHomeserverUrl
+	},
+	{
+		keys: ['REACT_APP_ELEMENT_CALL_BASE_URL', 'REACT_APP_ELEMENT_CALL_URL'],
+		readUrl: getElementCallBaseUrl
+	},
+	{
+		keys: ['REACT_APP_LIVEKIT_WS_URL', 'REACT_APP_LIVEKIT_URL'],
+		readUrl: getLiveKitWsUrl
+	},
+	{
+		keys: ['REACT_APP_KEYCLOAK_REALM', 'VITE_KEYCLOAK_REALM']
+	}
+];
+
+const isUsableUrl = (value: string): boolean => {
+	try {
+		return Boolean(new URL(value).hostname);
+	} catch {
+		return false;
+	}
+};
+
+export interface RuntimeConfigProblem {
+	key: string;
+	problem: 'missing' | 'invalid';
+}
+
+/**
+ * Required keys that are missing or unusable, named by their primary key.
+ * Empty when the runtime config is complete.
+ */
+export const getRuntimeConfigProblems = (): RuntimeConfigProblem[] =>
+	REQUIRED_RUNTIME_CONFIG.flatMap<RuntimeConfigProblem>(
+		({ keys, readUrl }) => {
+			const [key] = keys;
+			if (!pickValue(...keys)) {
+				return [{ key, problem: 'missing' }];
+			}
+			if (readUrl && !isUsableUrl(readUrl())) {
+				return [{ key, problem: 'invalid' }];
+			}
+			return [];
+		}
+	);

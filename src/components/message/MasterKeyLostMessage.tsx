@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import './e2eeActivatedMessage.styles';
 import { Overlay } from '../overlay/Overlay';
 import { subscriptionKeyLostOverlayItem } from '../session/subscriptionKeyLostHelper';
-import { Button, BUTTON_TYPES } from '../button/Button';
-import { ICON_INFO, SystemMessage } from './SystemMessage';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import { useTranslation } from 'react-i18next';
 
 interface MasterKeyLostMessageProps {
 	subscriptionKeyLost: boolean;
 }
 
+/** A persistent history notice, using the maintained inline snackbar surface. */
 export const MasterKeyLostMessage: React.FC<MasterKeyLostMessageProps> = ({
 	subscriptionKeyLost
 }) => {
@@ -17,30 +16,25 @@ export const MasterKeyLostMessage: React.FC<MasterKeyLostMessageProps> = ({
 	const [overlayActive, setOverlayActive] = useState(false);
 
 	return (
-		<SystemMessage
-			icon={ICON_INFO}
-			subject={
-				<>
-					{translate(
-						`e2ee.subscriptionKeyLost.message.${
-							subscriptionKeyLost ? 'primary' : 'secondary'
-						}`
-					)}{' '}
-					{!subscriptionKeyLost && (
-						<Button
-							buttonHandle={() => setOverlayActive(true)}
-							item={{
-								type: BUTTON_TYPES.LINK_INLINE,
+		<>
+			<M3Snackbar
+				placement="inline"
+				role="status"
+				message={translate(
+					`e2ee.subscriptionKeyLost.message.${subscriptionKeyLost ? 'primary' : 'secondary'}`
+				)}
+				action={
+					subscriptionKeyLost
+						? undefined
+						: {
 								label: translate(
 									'e2ee.subscriptionKeyLost.message.more'
-								)
-							}}
-							isLink={true}
-						/>
-					)}
-				</>
-			}
-		>
+								),
+								onClick: () => setOverlayActive(true)
+							}
+				}
+				actionOnOwnLine={!subscriptionKeyLost}
+			/>
 			{overlayActive && (
 				<Overlay
 					item={subscriptionKeyLostOverlayItem}
@@ -48,6 +42,6 @@ export const MasterKeyLostMessage: React.FC<MasterKeyLostMessageProps> = ({
 					handleOverlayClose={() => setOverlayActive(false)}
 				/>
 			)}
-		</SystemMessage>
+		</>
 	);
 };

@@ -23,6 +23,19 @@ vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api')>()),
 	apiGetConsultantSessionList: getList
 }));
+// Unmocked, these hit the network and settle after jsdom teardown
+// (CI: unhandled "window is not defined" from requestCollector).
+vi.mock('../../api/apiUserDrafts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../api/apiUserDrafts')>()),
+	apiGetUserDrafts: () =>
+		Promise.resolve({ items: [], page: 0, perPage: 200 })
+}));
+vi.mock('../../api/apiSetLiveChatAvailability', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../api/apiSetLiveChatAvailability')
+	>()),
+	apiGetLiveChatAvailability: () => Promise.resolve(false)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../globalState', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../globalState')>()),
@@ -40,7 +53,10 @@ vi.mock('../displayFilter', async (importOriginal) => ({
 }));
 afterEach(() => cleanup());
 
-function renderEnquiries(dispatch = vi.fn()) {
+function renderEnquiries(
+	dispatch = vi.fn(),
+	type = SESSION_LIST_TYPES.ENQUIRY
+) {
 	return render(
 		<MemoryRouter initialEntries={['/sessions/consultant/sessionPreview']}>
 			<UserDataContext.Provider
@@ -54,7 +70,7 @@ function renderEnquiries(dispatch = vi.fn()) {
 				<SessionTypeContext.Provider
 					value={
 						{
-							type: SESSION_LIST_TYPES.ENQUIRY,
+							type,
 							path: '/sessions/consultant/sessionPreview'
 						} as any
 					}
@@ -172,3 +188,73 @@ it.each([
 		expect(view.container.querySelector('.skeleton')).toBeNull();
 	}
 );
+
+it('reconciles on reconnect and coalesces repeated wake-ups without aborting the refresh', async () => {
+	getList.mockReset();
+	getList.mockResolvedValue({ sessions: [], total: 0 });
+	const view = renderEnquiries();
+	await waitFor(() =>
+		expect(view.container.querySelector('.skeleton')).toBeNull()
+	);
+	let finish!: (value: { sessions: []; total: number }) => void;
+	getList.mockReturnValueOnce(
+		new Promise((resolve) => {
+			finish = resolve;
+		})
+	);
+	fireEvent(window, new Event('online'));
+	await waitFor(() => expect(getList).toHaveBeenCalledTimes(2));
+	const signal = getList.mock.calls[1][0].signal;
+	fireEvent(window, new Event('focus'));
+	fireEvent(document, new Event('visibilitychange'));
+	expect(getList).toHaveBeenCalledTimes(2);
+	expect(signal.aborted).toBe(false);
+	await act(async () => finish({ sessions: [], total: 0 }));
+	await waitFor(() => expect(getList).toHaveBeenCalledTimes(3));
+});
+
+it('does not restore a finished conversation when an older live refresh resolves after the feed refresh', async () => {
+	getList.mockReset();
+	getList.mockResolvedValue({ sessions: [], total: 0 });
+	const dispatch = vi.fn();
+	const view = renderEnquiries(dispatch, SESSION_LIST_TYPES.MY_SESSION);
+	await waitFor(() =>
+		expect(view.container.querySelector('.skeleton')).toBeNull()
+	);
+	let older!: (value: unknown) => void;
+	let newer!: (value: unknown) => void;
+	getList.mockReturnValueOnce(
+		new Promise((resolve) => {
+			older = resolve;
+		})
+	);
+	getList.mockReturnValueOnce(
+		new Promise((resolve) => {
+			newer = resolve;
+		})
+	);
+	const initialRequests = getList.mock.calls.length;
+	act(() => messageEventEmitter.emit({ roomId: '!finished:oriso' }));
+	act(() =>
+		messageEventEmitter.emit({
+			refreshSessionList: true,
+			source: 'notification-feed'
+		})
+	);
+	await waitFor(() =>
+		expect(getList).toHaveBeenCalledTimes(initialRequests + 2)
+	);
+	dispatch.mockClear();
+	await act(async () => newer({ sessions: [], total: 0 }));
+	expect(dispatch).toHaveBeenCalledTimes(1);
+	await act(async () =>
+		older({
+			sessions: [
+				{ session: { id: 99, matrixRoomId: '!finished:oriso' } }
+			],
+			total: 1
+		})
+	);
+	expect(dispatch).toHaveBeenCalledTimes(1);
+	expect(dispatch.mock.calls[0][0].sessions).toEqual([]);
+});

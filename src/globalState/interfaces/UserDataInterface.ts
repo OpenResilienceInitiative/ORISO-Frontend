@@ -23,6 +23,20 @@ export interface UserDataInterface {
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
+	/**
+	 * Consultant preference "Live Chat über Menü Leiste aktivieren": show the
+	 * Live Chat availability toggle in the navigation (desktop and mobile).
+	 * Optional: UserService builds before this field never send it — the
+	 * frontend then falls back to the old browser-only value.
+	 */
+	liveChatViaSidebar?: boolean;
+	/** Counsellors (#1046): ICON shows the motif in `avatarId`; otherwise the default avatar. */
+	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	/**
+	 * The avatar picked in the profile (#1240), as the lower-case file stem
+	 * (`magpie`): a counsellor motif, or an advice seeker's animal.
+	 */
+	avatarId?: string | null;
 	publicSlug?: string;
 	pendingPublicSlug?: string;
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';

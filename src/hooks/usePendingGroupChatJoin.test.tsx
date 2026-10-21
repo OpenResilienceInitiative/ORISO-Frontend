@@ -4,10 +4,18 @@ import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // `vi.mock` is hoisted above this import, so the hook still gets the doubles.
 import { usePendingGroupChatJoin } from './usePendingGroupChatJoin';
+import {
+	forgetGroupInviteToken,
+	groupInviteTokenFor
+} from '../components/groupChat/groupInviteTokenMemory';
 
 const joinGroupChat = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
 const tenant = vi.hoisted(() => ({ ready: true }));
+
+// Button's existing overlay imports need the browser animation boundary in jsdom.
+vi.mock('lottie-web', () => ({ default: {} }));
+vi.mock('lottie-react', () => ({ default: () => null }));
 
 vi.mock('./useJoinGroupChat', () => ({
 	useJoinGroupChat: () => ({ joinGroupChat, tenantReady: tenant.ready })
@@ -18,14 +26,30 @@ vi.mock('../components/groupChat/entryRoom/GroupEntryRoom', () => ({
 }));
 
 const CONSULTANT = 'AUTHORIZATION_CONSULTANT_DEFAULT';
+const ASKER = 'AUTHORIZATION_USER_DEFAULT';
 
 const settled = {
+	grantedAuthorities: [ASKER],
+	passwordChangeRequired: false,
+	twoFactorAuth: { isRequired: false, isActive: false }
+} as any;
+
+const owesPassword = { ...settled, passwordChangeRequired: true };
+
+const settledCounsellor = {
 	grantedAuthorities: [CONSULTANT],
 	passwordChangeRequired: false,
 	twoFactorAuth: { isRequired: true, isActive: true }
 } as any;
 
-const owesPassword = { ...settled, passwordChangeRequired: true };
+const counsellorOwesPassword = {
+	...settledCounsellor,
+	passwordChangeRequired: true
+};
+const counsellorOwesSecondFactor = {
+	...settledCounsellor,
+	twoFactorAuth: { isRequired: true, isActive: false }
+};
 
 const withDeepLink = (gcid = 'gc-synthetic') => {
 	window.history.replaceState({}, '', `/?gcid=${gcid}`);
@@ -52,6 +76,20 @@ describe('usePendingGroupChatJoin', () => {
 		);
 		await waitFor(() =>
 			expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+				replace: true
+			})
+		);
+	});
+
+	it('opens the entry room of the group number, not of the whole invite id (#1237)', async () => {
+		withDeepLink('19.Ab3_x-Yz');
+		renderHook(() => usePendingGroupChatJoin(settled));
+
+		await waitFor(() =>
+			expect(joinGroupChat).toHaveBeenCalledWith('19.Ab3_x-Yz')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith('/group/19', {
 				replace: true
 			})
 		);
@@ -114,5 +152,170 @@ describe('usePendingGroupChatJoin', () => {
 				replace: true
 			})
 		);
+	});
+
+	/* The waiting room after "Registrieren" opens its gate only once the
+	   assignment has settled, or the click lands before the entry room. */
+	it('reports the assignment as settled only after it has landed', async () => {
+		let finish: (assigned: boolean) => void = () => undefined;
+		joinGroupChat.mockReturnValue(
+			new Promise<boolean>((resolve) => (finish = resolve))
+		);
+
+		const { result } = renderHook(() => usePendingGroupChatJoin(settled));
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalled());
+		expect(result.current).toBe(false);
+
+		finish(true);
+		await waitFor(() => expect(result.current).toBe(true));
+		expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+			replace: true
+		});
+	});
+
+	/* The profile can change while the assignment runs. Its answer is then
+	   discarded, so the link must be joined again rather than dropped, or the
+	   waiting room never opens its gate. */
+	it('joins again when the profile changes while the assignment runs', async () => {
+		let finishStale: (assigned: boolean) => void = () => undefined;
+		joinGroupChat.mockReturnValueOnce(
+			new Promise<boolean>((resolve) => (finishStale = resolve))
+		);
+
+		const { result, rerender } = renderHook(
+			({ userData }) => usePendingGroupChatJoin(userData),
+			{ initialProps: { userData: settled } }
+		);
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalledTimes(1));
+
+		rerender({ userData: { ...settled, userId: 'reloaded' } });
+		finishStale(true);
+
+		await waitFor(() => expect(joinGroupChat).toHaveBeenCalledTimes(2));
+		await waitFor(() => expect(result.current).toBe(true));
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+			replace: true
+		});
+	});
+
+	it('has nothing to wait for without a group link', () => {
+		window.history.replaceState({}, '', '/');
+		const { result } = renderHook(() => usePendingGroupChatJoin(settled));
+		expect(result.current).toBe(true);
+	});
+
+	it('reports a refused assignment as settled too', async () => {
+		joinGroupChat.mockRejectedValue(new Error('CONFLICT'));
+		const { result } = renderHook(() => usePendingGroupChatJoin(settled));
+		await waitFor(() => expect(result.current).toBe(true));
+	});
+
+	/**
+	 * #1499: a counsellor, the group's own moderator included, landed in the
+	 * client's entry room — the assignment is a client action (404 for her)
+	 * and both branches opened `/groups/<id>/entry`. Her room is the group in
+	 * her own session view.
+	 */
+	describe('for a counsellor', () => {
+		it('opens the group in the counsellor session view without assigning', async () => {
+			withDeepLink('42');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+			expect(joinGroupChat).not.toHaveBeenCalled();
+			expect(navigate).toHaveBeenCalledTimes(1);
+		});
+
+		it.each([
+			['owes a new password', counsellorOwesPassword],
+			[
+				'still has to set up the second factor',
+				counsellorOwesSecondFactor
+			],
+			['has no profile yet', undefined]
+		])(
+			'leaves the account-setup gate in front while she %s',
+			(_label, userData) => {
+				withDeepLink('42');
+
+				renderHook(() => usePendingGroupChatJoin(userData));
+
+				expect(navigate).not.toHaveBeenCalled();
+				expect(joinGroupChat).not.toHaveBeenCalled();
+			}
+		);
+
+		it('still opens the group once her setup settles', async () => {
+			withDeepLink('42');
+			const { rerender } = renderHook(
+				({ userData }) => usePendingGroupChatJoin(userData),
+				{ initialProps: { userData: counsellorOwesPassword as any } }
+			);
+			expect(navigate).not.toHaveBeenCalled();
+
+			rerender({ userData: settledCounsellor });
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+		});
+
+		/* #1534 + #1554: the invite id became "<number>.<token>"; her route is
+		   the number. Without parsing, the link left her on the start page. */
+		it('opens the group of an invite id that carries the token', async () => {
+			withDeepLink('42.tok_EN-9');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+			expect(joinGroupChat).not.toHaveBeenCalled();
+		});
+
+		/* Knock to join (#1499 item 14) needs the link's token; she carries
+		   it from the login redirect into her session view. */
+		it('keeps the token of the invite id for a knock', async () => {
+			forgetGroupInviteToken(42);
+			withDeepLink('42.tok_EN-9');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() => expect(navigate).toHaveBeenCalled());
+			expect(groupInviteTokenFor(42)).toBe('tok_EN-9');
+		});
+
+		it('keeps no token for a link without one', async () => {
+			forgetGroupInviteToken(42);
+			withDeepLink('42');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() => expect(navigate).toHaveBeenCalled());
+			expect(groupInviteTokenFor(42)).toBeUndefined();
+		});
+
+		// The id comes from the address bar; only a chat id becomes a route.
+		it('ignores a link whose group id is not a number', () => {
+			withDeepLink('..%2Fadmin');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			expect(navigate).not.toHaveBeenCalled();
+			expect(joinGroupChat).not.toHaveBeenCalled();
+		});
 	});
 });

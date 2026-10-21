@@ -24,6 +24,7 @@ import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
 import { registrationMotion } from '../registration/registrationDesign/registrationDesign';
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
+import { SlideOutPresence } from '../transition/SlideOutPresence';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
 import {
 	getBuildCommit,
@@ -37,9 +38,17 @@ interface StageLayoutProps {
 	children: ReactNode;
 	stage: ReactNode;
 	showLegalLinks?: boolean;
+	/**
+	 * The department (agency × topic) whose documents the footer legal links
+	 * open. Absent on public pages, where the platform note applies because no
+	 * counselling centre is known; set once one is (ADR-022 gate 2).
+	 */
+	legalDepartment?: { agencyId: number; topicId: number } | null;
 	showLoginLink?: boolean;
 	showRegistrationLink?: boolean;
 	loginParams?: string;
+	/** Router state for the login link (the invite entry marks a chosen login). */
+	loginState?: unknown;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
 	/** Mobile head presentation — `bar` is the slim 8a brand row. */
@@ -52,6 +61,8 @@ interface StageLayoutProps {
 	 * caller places it in the column.
 	 */
 	headerStart?: ReactNode;
+	/** Control before the language switch; rendered per tone, CSS shows one. */
+	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => ReactNode;
 }
 
 export const StageLayout = ({
@@ -59,13 +70,16 @@ export const StageLayout = ({
 	children,
 	stage,
 	showLegalLinks,
+	legalDepartment,
 	showLoginLink,
 	showRegistrationLink,
 	loginParams,
+	loginState,
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
-	headerStart
+	headerStart,
+	renderHeaderAction
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -92,13 +106,18 @@ export const StageLayout = ({
 		<div className={clsx('stageLayout', className)}>
 			<StageMobileHero
 				variant={mobileHero}
+				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
-					showLoginLink && (
+					<SlideOutPresence
+						present={showLoginLink}
+						sx={{ display: 'inline-flex' }}
+					>
 						<IconButton
 							{...(loginRoute && routerContext
 								? {
 										component: RouterLink,
-										to: loginRoute
+										to: loginRoute,
+										state: loginState
 									}
 								: { href: loginRoute || loginUrl })}
 							color="inherit"
@@ -107,7 +126,7 @@ export const StageLayout = ({
 						>
 							<LoginDoorIcon color="inherit" />
 						</IconButton>
-					)
+					</SlideOutPresence>
 				}
 			/>
 
@@ -165,71 +184,75 @@ export const StageLayout = ({
 							{headerStart}
 						</Box>
 					)}
+					{renderHeaderAction && (
+						<Box
+							className="stageLayout__headerAction"
+							sx={{ display: { xs: 'none', lg: 'block' } }}
+						>
+							{renderHeaderAction('surface')}
+						</Box>
+					)}
 					{selectableLocales.length > 1 && (
 						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
 							<LocaleSwitchPill />
 						</Box>
 					)}
-					{showLoginLink && (
-						<Box
-							className="stageLayout__toLogin"
-							sx={{ display: { xs: 'none', lg: 'block' } }}
-						>
-							<MuiButton
-								className="stageLayout__toLogin__button"
-								{...(loginRoute && routerContext
-									? {
-											component: RouterLink,
-											to: loginRoute
-										}
-									: {
-											component: 'a',
-											href: loginRoute || loginUrl
-										})}
-								variant="outlined"
-								startIcon={<LoginDoorIcon />}
-								sx={{
-									'minHeight': '48px',
-									'minWidth': '148px',
-									'borderRadius': '999px',
-									'px': 2.75,
-									'py': 1,
-									'fontSize': '16px',
-									'fontWeight': 700,
-									'lineHeight': 1.2,
-									'textTransform': 'none',
-									'color': 'var(--m3-on-surface, #1b1b1c)',
-									'borderColor':
-										'var(--m3-outline-variant, #c4c7c8)',
-									'backgroundColor':
-										'rgba(255, 255, 255, 0.92)',
-									'&:hover': {
-										color: 'var(--m3-on-secondary, #ffffff)',
-										borderColor:
-											'var(--m3-secondary, #4c555f)',
-										backgroundColor:
-											'var(--m3-secondary, #4c555f)'
-									},
-									'&&:active, &&:active:hover': {
-										'color':
-											'var(--m3-on-primary, #ffffff)',
-										'WebkitTextFillColor':
-											'var(--m3-on-primary, #ffffff)',
-										'borderColor':
-											'var(--m3-primary, #a4262e)',
-										'backgroundColor':
-											'var(--m3-primary, #a4262e)',
-										'& .MuiButton-startIcon, & .MuiButton-endIcon':
-											{
-												color: 'var(--m3-on-primary, #ffffff)'
-											}
+					<SlideOutPresence
+						present={showLoginLink}
+						className="stageLayout__toLogin"
+						sx={{ display: { xs: 'none', lg: 'block' } }}
+					>
+						<MuiButton
+							className="stageLayout__toLogin__button"
+							{...(loginRoute && routerContext
+								? {
+										component: RouterLink,
+										to: loginRoute,
+										state: loginState
 									}
-								}}
-							>
-								{translate('registration.login.label')}
-							</MuiButton>
-						</Box>
-					)}
+								: {
+										component: 'a',
+										href: loginRoute || loginUrl
+									})}
+							variant="outlined"
+							startIcon={<LoginDoorIcon />}
+							sx={{
+								'minHeight': '48px',
+								'minWidth': '148px',
+								'borderRadius': '999px',
+								'px': 2.75,
+								'py': 1,
+								'fontSize': '16px',
+								'fontWeight': 700,
+								'lineHeight': 1.2,
+								'textTransform': 'none',
+								'color': 'var(--m3-on-surface, #1b1b1c)',
+								'borderColor':
+									'var(--m3-outline-variant, #c4c7c8)',
+								'backgroundColor': 'rgba(255, 255, 255, 0.92)',
+								'&:hover': {
+									color: 'var(--m3-on-secondary, #ffffff)',
+									borderColor: 'var(--m3-secondary, #4c555f)',
+									backgroundColor:
+										'var(--m3-secondary, #4c555f)'
+								},
+								'&&:active, &&:active:hover': {
+									'color': 'var(--m3-on-primary, #ffffff)',
+									'WebkitTextFillColor':
+										'var(--m3-on-primary, #ffffff)',
+									'borderColor': 'var(--m3-primary, #a4262e)',
+									'backgroundColor':
+										'var(--m3-primary, #a4262e)',
+									'& .MuiButton-startIcon, & .MuiButton-endIcon':
+										{
+											color: 'var(--m3-on-primary, #ffffff)'
+										}
+								}
+							}}
+						>
+							{translate('registration.login.label')}
+						</MuiButton>
+					</SlideOutPresence>
 
 					{showRegistrationLink && (
 						<Box
@@ -313,6 +336,15 @@ export const StageLayout = ({
 											rawLabel={rawLabel}
 											url={url}
 											textClassName="stageLayout__legalLinksItem"
+											{...(legalDepartment
+												? {
+														scope: 'agency' as const,
+														agencyId:
+															legalDepartment.agencyId,
+														topicId:
+															legalDepartment.topicId
+													}
+												: {})}
 										/>
 									)}
 								</LegalLinks>

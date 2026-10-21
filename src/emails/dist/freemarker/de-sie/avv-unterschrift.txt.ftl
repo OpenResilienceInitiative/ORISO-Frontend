@@ -1,27 +1,27 @@
-Der AVV liegt zur Unterschrift bereit
-=====================================
+Die Vertragsunterlagen liegen zur Bestätigung bereit
+====================================================
 
-Für ${tenantName!''} wurde ein Auftragsverarbeitungsvertrag erstellt.
+Für ${tenantName!''} wurden Vertragsunterlagen erstellt.
 
-Bitte prüfen Sie den Vertrag und zeichnen Sie ihn digital.
+Bitte prüfen Sie die Unterlagen und bestätigen Sie sie digital.
 
 Träger: ${tenantName!''}
 Bereitgestellt am: ${dpaProvidedAt!''}
-Zu unterschreiben bis: ${dpaExpiresAt!''}
+Zu bestätigen bis: ${dpaExpiresAt!''}
 
 Vertrag öffnen:
 ${dpaUrl!''}
 
-Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.
+Ohne die Bestätigung der Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.
 
 ----------------------------------------------------------------
-Diese E-Mail gehört zum Vertragsverhältnis zwischen ${orgName!''} und ${tenantName!''}.
+Diese E-Mail gehört zum Vertragsverhältnis zwischen ${orgName!''} und ${tenantNameDative!''}.
 
 ${orgName!''}
 ${orgAddress!''}
 ${contactLine!''}
 
-${platformName!''} ist ein Angebot von ${orgName!''}.
+${offeringName!''} ist ein Angebot von ${operatorName!''}.
 
 Datenschutz: ${privacyUrl!''}
 Impressum: ${imprintUrl!''}

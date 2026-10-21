@@ -5,7 +5,9 @@ import { Loading } from '../app/Loading';
 import {
 	SessionTypeContext,
 	UserDataContext,
-	ActiveSessionProvider
+	ActiveSessionProvider,
+	AUTHORITIES,
+	hasUserAuthority
 } from '../../globalState';
 import {
 	desktopView,
@@ -25,8 +27,78 @@ import { useSetAtom } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 import { rememberLastOpenSession } from '../../utils/lastOpenSession';
+import { useGroupChatAccess } from '../groupChat/useGroupChatAccess';
+import { GroupChatNotMember } from '../groupChat/GroupChatNotMember';
+import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
+import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
+import { useSessionAvatarMembers } from '../../hooks/useSessionAvatarMembers';
+import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
+
+const positiveInteger = (value: string | null | undefined): number | null => {
+	if (!value || !/^\d+$/.test(value)) return null;
+	const parsed = Number(value);
+	return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+};
 
 export const SessionView = () => {
+	const { groupId, sessionId } = useParams<{
+		groupId: string;
+		sessionId: string;
+	}>();
+	const navigate = useNavigate();
+	const { pathname, search } = useLocation();
+	const sessionType = useContext(SessionTypeContext);
+	const { userData } = useContext(UserDataContext);
+	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	const { fromL } = useResponsive();
+
+	useEffect(() => {
+		if (!fromL) {
+			mobileDetailView();
+			return () => {
+				mobileListView();
+			};
+		}
+		desktopView();
+	}, [fromL]);
+
+	const parsedSessionId = positiveInteger(sessionId);
+	const requestId = positiveInteger(
+		new URLSearchParams(search).get('caseHandoverRequestId')
+	);
+	const isStableConsultantSessionRoute =
+		!groupId &&
+		parsedSessionId !== null &&
+		requestId !== null &&
+		pathname.includes('/sessions/consultant/sessionView/session/');
+
+	if (isStableConsultantSessionRoute) {
+		return (
+			<CaseHandoverOfferGate
+				actorId={userData.userId}
+				sessionId={parsedSessionId}
+				requestId={requestId}
+				onClose={() =>
+					navigate(
+						(sessionType?.path ||
+							'/sessions/consultant/sessionView') +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: '')
+					)
+				}
+			>
+				<SessionViewBody />
+			</CaseHandoverOfferGate>
+		);
+	}
+
+	return <SessionViewBody />;
+};
+
+const SessionViewBody = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
@@ -48,29 +120,69 @@ export const SessionView = () => {
 		read: readActiveSession
 	} = useSession(
 		groupIdFromParam,
-		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
+		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
+		undefined,
+		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+			(userData?.userRoles || []).includes('USER')) &&
+			!(
+				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+				(userData?.userRoles || []).includes('CONSULTANT')
+			)
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
+	// #1499: a counsellor can reach a group she is not part of through its
+	// invite link; the server refuses her the group, the room list does not.
+	const { access: groupAccess, retry: retryGroupAccess } = useGroupChatAccess(
+		{
+			chatId: activeSession?.item?.id,
+			isGroup: Boolean(activeSession?.isGroup),
+			subscribed: activeSession?.item?.subscribed,
+			isConsultant: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+		}
+	);
+	// Only the open conversation requests members; list-row providers stay passive.
+	const avatarMembers = useSessionAvatarMembers(
+		activeSession?.isGroup && groupAccess === 'member'
+			? activeSession.item.id
+			: undefined,
+		userData?.userId
+	);
+
+	// …and may knock on a self-help group (never a team chat); once a
+	// moderator lets her in, the group is asked again.
+	const inviteToken = activeSession?.item?.id
+		? groupInviteTokenFor(activeSession.item.id)
+		: undefined;
+	const joinRequest = useOwnJoinRequest(
+		knockableGroupId(activeSession, groupAccess, inviteToken),
+		inviteToken,
+		httpJoinRequestTransport,
+		{
+			onOpenGroup: () => {
+				reloadActiveSession?.();
+				retryGroupAccess();
+			}
+		}
+	);
+
 	// #1193 Job 3: remember the session the counsellor is looking at so the next
 	// sign-in resumes it. The helper only accepts consultant session routes.
 	useEffect(() => {
-		if (activeSessionReady && activeSession) {
+		if (activeSessionReady && activeSession && groupAccess === 'member') {
 			rememberLastOpenSession(userData?.userId, pathname);
 		}
-	}, [activeSessionReady, activeSession, pathname, userData?.userId]);
-
-	const { fromL } = useResponsive();
-	useEffect(() => {
-		if (!fromL) {
-			mobileDetailView();
-			return () => {
-				mobileListView();
-			};
-		}
-		desktopView();
-	}, [fromL]);
+	}, [
+		activeSessionReady,
+		activeSession,
+		groupAccess,
+		pathname,
+		userData?.userId
+	]);
 
 	const checkMutedUserForThisSession = useCallback(() => {
 		setForceBannedOverlay(false);
@@ -155,8 +267,28 @@ export const SessionView = () => {
 		};
 	}, [activeSession?.item?.agencyId, setAgencyLogo]);
 
-	if (loading || !activeSession) {
+	if (loading || !activeSession || groupAccess === 'checking') {
 		return <Loading />;
+	}
+
+	if (groupAccess === 'notMember' || groupAccess === 'unavailable') {
+		return (
+			<GroupChatNotMember
+				joinRequest={joinRequest}
+				onRetry={
+					groupAccess === 'unavailable' ? retryGroupAccess : undefined
+				}
+				onBack={() =>
+					navigate(
+						listPath +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: ''),
+						{ replace: true }
+					)
+				}
+			/>
+		);
 	}
 
 	if (
@@ -184,6 +316,7 @@ export const SessionView = () => {
 		<ActiveSessionProvider
 			activeSession={activeSession}
 			readActiveSession={readActiveSession}
+			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
 		>
 			<SessionStream

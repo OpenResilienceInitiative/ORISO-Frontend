@@ -132,14 +132,19 @@ export function LocaleProvider(props) {
 		settings.useTenantService
 	]);
 
+	const languagesReady =
+		initialized &&
+		(!settings.useTenantService ||
+			(!isLoading && appliedLanguages === activeLanguagesKey));
+
 	const selectableLocales = useMemo(() => {
-		return initialized
+		return languagesReady
 			? locales.filter((lng) => lng.indexOf('@informal') < 0)
 			: [];
-	}, [initialized, locales]);
+	}, [languagesReady, locales]);
 
 	useEffect(() => {
-		if (!initialized) {
+		if (!languagesReady) {
 			return;
 		}
 
@@ -158,26 +163,21 @@ export function LocaleProvider(props) {
 			document.documentElement.lang = locale;
 			setValueInCookie('lang', locale);
 		}
-	}, [locale, informal, locales, initialized]);
+	}, [locale, informal, locales, languagesReady]);
 
 	const handleOnSetLocale = React.useCallback(
 		(lng) => {
-			if (locales?.includes?.(lng)) {
+			if (languagesReady && locales?.includes?.(lng)) {
 				setLocale(lng);
 			}
 		},
-		[locales]
+		[languagesReady, locales]
 	);
 
-	// `initialized` alone survives a tenant switch: the effect above bails out
-	// early while the new tenant is loading, so it never flips back to false.
-	// Without this, a counsellor would keep seeing the previous Träger's
-	// language list for the duration of the switch.
-	if (
-		!initialized ||
-		(settings.useTenantService &&
-			(isLoading || appliedLanguages !== activeLanguagesKey))
-	) {
+	// Only the initial load blocks mounting. During sign-in the router and
+	// in-flight registration callback must survive tenant resolution (#1475).
+	// Withhold stale language choices instead of unmounting the whole app.
+	if (!initialized) {
 		return null;
 	}
 
@@ -187,7 +187,7 @@ export function LocaleProvider(props) {
 				locale,
 				initLocale,
 				setLocale: handleOnSetLocale,
-				locales,
+				locales: languagesReady ? locales : [],
 				selectableLocales
 			}}
 		>

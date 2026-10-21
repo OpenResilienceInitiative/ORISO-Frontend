@@ -51,7 +51,7 @@ describe('Notifications center', () => {
 					messages: [
 						{
 							event_id: 'event-1',
-							sender: '@asker:oriso.org',
+							sender: '@asker:example.org',
 							origin_server_ts: 1782302400000,
 							content: {
 								msgtype: 'm.text',

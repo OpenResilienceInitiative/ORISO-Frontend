@@ -35,7 +35,8 @@ export const LegalContentRenderer = ({
 	className,
 	language
 }: LegalContentRendererProps) => {
-	const { t, i18n } = useTranslation();
+	const { t: ambientT, i18n } = useTranslation();
+	const t = language ? i18n.getFixedT(language) : ambientT;
 	const [showOriginal, setShowOriginal] = useState(false);
 
 	const uiLang = normalizeLegalLang(language ?? i18n?.language);
@@ -65,10 +66,7 @@ export const LegalContentRenderer = ({
 		<div className={clsx('legalContentRenderer', className)}>
 			{showsFallbackLanguage && (
 				<p className="legalContentRenderer__notice" role="note">
-					{t(
-						'legal.notice.fallbackLanguage',
-						'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
-					)}
+					{t('legal.notice.fallbackLanguage')}
 				</p>
 			)}
 			{displayed.isMachineTranslated && (
@@ -76,34 +74,25 @@ export const LegalContentRenderer = ({
 					className="legalContentRenderer__notice legalContentRenderer__notice--machineTranslated"
 					role="note"
 				>
-					{t(
-						'legal.notice.machineTranslated',
-						'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.'
-					)}{' '}
+					{t('legal.notice.machineTranslated')}{' '}
 					<button
 						type="button"
 						className="legalContentRenderer__noticeAction"
 						onClick={() => setShowOriginal(true)}
 					>
-						{t('legal.notice.showOriginal', 'Original anzeigen')}
+						{t('legal.notice.showOriginal')}
 					</button>
 				</p>
 			)}
 			{showOriginal && (
 				<p className="legalContentRenderer__notice" role="note">
-					{t(
-						'legal.notice.showingOriginal',
-						'Sie sehen die Originalfassung.'
-					)}{' '}
+					{t('legal.notice.showingOriginal')}{' '}
 					<button
 						type="button"
 						className="legalContentRenderer__noticeAction"
 						onClick={() => setShowOriginal(false)}
 					>
-						{t(
-							'legal.notice.showTranslation',
-							'Übersetzung anzeigen'
-						)}
+						{t('legal.notice.showTranslation')}
 					</button>
 				</p>
 			)}

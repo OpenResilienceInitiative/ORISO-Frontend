@@ -242,7 +242,7 @@ const LegalFullTextLink = ({
  * login screen instead of reaching the document.
  *
  * `routePathNames.termsAndConditions` is deliberately NOT here, however much it
- * looks like it belongs: its route is commented out in `initApp.tsx`, so
+ * looks like it belongs: its route is commented out in `startApp.tsx`, so
  * `/nutzungsbedingungen` is an unknown path and would hit exactly that
  * catch-all. Add it back here in the same change that re-enables the route,
  * never before — `routePathNames` records intent, the router records reality.

@@ -10,6 +10,7 @@ import { removeAllCookies } from '../components/sessionCookie/accessSessionCooki
 import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
+import { getCounsellingDpaFailure } from './counsellingDpaFailure';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
 const isLocalDevelopment = nodeEnv === 'development';
@@ -28,6 +29,7 @@ export const FETCH_ERRORS = {
 	BAD_REQUEST: 'BAD_REQUEST',
 	CATCH_ALL: 'CATCH_ALL',
 	CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE',
+	COUNSELLING_DPA_RESPONSE: 'COUNSELLING_DPA_RESPONSE',
 	CONFLICT: 'CONFLICT',
 	CONFLICT_WITH_RESPONSE: 'CONFLICT_WITH_RESPONSE',
 	EMPTY: 'EMPTY',
@@ -46,7 +48,9 @@ export const X_REASON = {
 	EMAIL_NOT_AVAILABLE: 'EMAIL_NOT_AVAILABLE',
 	USERNAME_NOT_AVAILABLE: 'USERNAME_NOT_AVAILABLE',
 	USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC:
-		'USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC'
+		'USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC',
+	/** 409 on a case-handover decision: the case owner changed after the request was created. */
+	CASE_OWNER_CHANGED: 'CASE_OWNER_CHANGED'
 };
 
 export const FETCH_SUCCESS = {
@@ -230,6 +234,13 @@ export const fetchData = ({
 					} else {
 						resolve({});
 					}
+				} else if (
+					responseHandling?.includes(
+						FETCH_ERRORS.COUNSELLING_DPA_RESPONSE
+					) &&
+					getCounsellingDpaFailure(response)
+				) {
+					reject(response);
 				} else if (responseHandling) {
 					if (
 						response.status === 400 &&

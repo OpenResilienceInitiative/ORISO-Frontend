@@ -1,3 +1,4 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import * as React from 'react';
 import {
 	useCallback,
@@ -230,10 +231,23 @@ export const AcceptAssign = ({
 			})
 			.catch((error) => {
 				setIsRequestInProgress(false);
-				if (error.message === FETCH_ERRORS.CONFLICT) {
+				const failure = getCounsellingDpaFailure(error);
+				if (failure) {
+					setOverlayItem({
+						...enquiryTakenByOtherConsultantOverlayItem,
+						headline: translate(`${failure.key}.title`),
+						copy: translate(`${failure.key}.text`)
+					});
+				} else if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {
-					// console.log(error);
+					// Never leave the counsellor on a silently failed accept (#1799).
+					console.error('Accepting the enquiry failed', error);
+					setOverlayItem({
+						...enquiryTakenByOtherConsultantOverlayItem,
+						headline: translate('error.statusCodes.500.headline'),
+						copy: 'error.statusCodes.500.description'
+					});
 				}
 			});
 	};
@@ -267,6 +281,9 @@ export const AcceptAssign = ({
 					buttonHandle={() =>
 						handleButtonClick(activeSession.item.id)
 					}
+					// The button itself, not the wrapper: the team action beside
+					// it must not count as a click on "accept" for a tour.
+					tourTarget="enquiry-accept-button"
 				/>
 				{secondaryAction}
 			</div>

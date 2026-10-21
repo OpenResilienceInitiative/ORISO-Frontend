@@ -79,7 +79,7 @@ const meta: Meta<EmbedArgs> = {
 		baseUrl: getElementCallBaseUrl(),
 		// The app pins dark; light is here to check the mapping's other half.
 		theme: 'dark',
-		room: '#storybook-preview:oriso.org'
+		room: '#storybook-preview:example.org'
 	},
 	render: (args) => <Embed {...args} />
 };

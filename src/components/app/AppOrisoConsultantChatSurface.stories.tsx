@@ -107,7 +107,7 @@ const mockActiveSession = {
 		id: 0,
 		agencyId: undefined,
 		askerMatrixUserId: 'alice',
-		matrixRoomId: '!storybook:oriso.org',
+		matrixRoomId: '!storybook:example.org',
 		postcode: 10115,
 		registrationType: REGISTRATION_TYPE_REGISTERED,
 		status: STATUS_ACTIVE,

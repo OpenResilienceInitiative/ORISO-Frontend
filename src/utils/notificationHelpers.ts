@@ -1,10 +1,10 @@
+import { notificationChannelPolicy } from '../components/erstantwort/notificationChannelPolicy';
+import { getTenantSettings } from './tenantSettingsHelper';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './appConfig';
 import { isNotificationSuppressed } from './notificationSettings/model';
-import {
-	BannerMode,
-	soundSettingForEvent
-} from './notificationSettings/notificationConfig';
+import { BannerMode } from './notificationSettings/notificationConfig';
+import { resolveEventChannelContract } from './notificationSettings/occasionChannelContract';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
 
@@ -29,7 +29,14 @@ export const PERMISSION_GRANTED = 'granted';
 export const PERMISSION_DEFAULT = 'default';
 
 export const isSupported = () => {
-	return 'Notification' in window && Notification.requestPermission;
+	// Route conditions call this outside a browser too (unit tests, and any
+	// non-DOM render path), where touching `window` throws instead of
+	// answering "not supported".
+	return (
+		typeof window !== 'undefined' &&
+		'Notification' in window &&
+		Notification.requestPermission
+	);
 };
 
 export const hasPermissions = (permission: NotificationPermission) => {
@@ -72,6 +79,17 @@ export const requestPermissions = () => {
 };
 
 /**
+ * Asks for the OS permission AND records the opt-in; the permission alone
+ * never lets `sendNotification` through (#1551).
+ */
+export const optInToBrowserNotifications = (): Promise<void> =>
+	requestNotificationPermissionSafe().then((permission) => {
+		if (permission === PERMISSION_GRANTED) {
+			saveBrowserNotificationsSettings({ enabled: true });
+		}
+	});
+
+/**
  * Which notification panel the user can actually reach (#1211).
  *
  * The `enableNewNotifications` release toggle routes exactly one of the two
@@ -97,13 +115,22 @@ const LEGACY_TYPE_BY_FAMILY: Partial<
 
 export const sendNotification = (
 	title: string,
-	opts?: NotificationOptions & ExtraNotificationOptions
+	opts?: NotificationOptions & ExtraNotificationOptions,
+	/** Internal feed metadata; never copied to the OS notification options. */
+	recipientRole?: string | null,
+	conversationType?: string | null
 ): void => {
 	// If permissions not granted just ignore the notification because we only asking consultants
 	if (!isSupported() || !hasPermissions(PERMISSION_GRANTED)) {
 		return;
 	}
 
+	if (
+		(recipientRole === 'user' || recipientRole === 'asker') &&
+		!notificationChannelPolicy(getTenantSettings(), conversationType)
+			.browserAllowed
+	)
+		return;
 	const options = opts || {};
 
 	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,
@@ -149,12 +176,12 @@ export const sendNotification = (
 	// outside the tabs).
 	let bannerMode: BannerMode = 'temporary';
 	if (family !== 'system') {
-		const kindConfig = soundSettingForEvent(
-			settings.notificationConfig,
-			family,
-			options.eventType || '',
-			options.mentioned === true
-		);
+		const { area, kind } = resolveEventChannelContract(
+			options.eventType,
+			recipientRole,
+			{ family, mentioned: options.mentioned }
+		).browser;
+		const kindConfig = settings.notificationConfig[area][kind];
 		if (kindConfig.banner === 'off') {
 			return;
 		}

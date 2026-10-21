@@ -5,8 +5,35 @@ import {
 	LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
 	LEGACY_LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
 	persistLiveChatAvailabilityPreference,
-	readLiveChatAvailabilityPreference
+	readLastLiveChatHeartbeatAcknowledged,
+	readLiveChatAvailabilityPreference,
+	recordLiveChatHeartbeatAcknowledged
 } from './liveChatAvailabilityStorage';
+
+// #1485 review: a slow, older renewal answering last must not move the
+// shared lease backwards.
+describe('shared lease acknowledgement', () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	it('never moves the lease back when an older renewal answers last', () => {
+		recordLiveChatHeartbeatAcknowledged(2_000);
+		recordLiveChatHeartbeatAcknowledged(1_000);
+
+		expect(readLastLiveChatHeartbeatAcknowledged().sentAt).toBe(2_000);
+	});
+
+	it('keeps the latest answer time', () => {
+		const before = Date.now();
+		recordLiveChatHeartbeatAcknowledged(2_000);
+		recordLiveChatHeartbeatAcknowledged(1_000);
+
+		expect(
+			readLastLiveChatHeartbeatAcknowledged().ackedAt
+		).toBeGreaterThanOrEqual(before);
+	});
+});
 
 describe('live-chat availability storage keys', () => {
 	beforeEach(() => {

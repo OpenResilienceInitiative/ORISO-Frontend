@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import { ReactComponent as CheckIcon } from '../../../resources/img/icons/check.svg';
 import { ReactComponent as CloseIcon } from '../../../resources/img/icons/close.svg';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import { MenuPortal, useAnchoredMenuLayout } from '../anchoredMenu';
 import { resolveListboxKey } from '../listboxKeyboard';
 
@@ -33,6 +34,14 @@ interface PersonSelectMenuProps {
 	toggleLabel: (label: string, selected: boolean) => string;
 	/** Spelt-out state for people who have left the agency. */
 	vacatedHint: string;
+	/**
+	 * Empty state (#1499): with nobody to pick, the menu still opens and says
+	 * so in a disabled line instead of showing an empty frame.
+	 */
+	emptyLabel?: string;
+	/** Optional help entry shown under the empty line; opens an explanation. */
+	helpLabel?: string;
+	onHelp?: () => void;
 }
 
 const PREFERRED_MENU_HEIGHT = 420;
@@ -44,13 +53,18 @@ export const PersonSelectMenu = ({
 	onClose,
 	labelledBy,
 	toggleLabel,
-	vacatedHint
+	vacatedHint,
+	emptyLabel,
+	helpLabel,
+	onHelp
 }: PersonSelectMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
+	const isEmpty = options.length === 0;
+	const showHelp = isEmpty && Boolean(helpLabel && onHelp);
 	const { direction, style } = useAnchoredMenuLayout(
 		anchorRef,
 		PREFERRED_MENU_HEIGHT,
-		options.length
+		isEmpty ? 1 + (showHelp ? 1 : 0) : options.length
 	);
 
 	useEffect(() => {
@@ -80,9 +94,14 @@ export const PersonSelectMenu = ({
 		);
 
 	// Move focus into the popup on open so the option list is operable by
-	// keyboard (WCAG listbox contract).
+	// keyboard (WCAG listbox contract). The help command is not an option.
 	useEffect(() => {
-		optionButtons()[0]?.focus();
+		const firstOption = optionButtons()[0];
+		if (firstOption) {
+			firstOption.focus();
+			return;
+		}
+		menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -119,47 +138,83 @@ export const PersonSelectMenu = ({
 				ref={menuRef}
 				className={`personSelectMenu personSelectMenu--${direction}`}
 				style={style}
-				role="listbox"
-				aria-multiselectable
-				aria-labelledby={labelledBy}
 				onKeyDown={handleKeyDown}
 			>
-				{options.map((option) => {
-					const stateClass = option.vacated
-						? 'personSelectMenu__row--vacated'
-						: option.selected
-							? 'personSelectMenu__row--selected'
-							: '';
-					return (
-						<button
-							type="button"
-							key={option.id}
+				<div
+					role="listbox"
+					aria-multiselectable
+					aria-labelledby={labelledBy}
+				>
+					{isEmpty && emptyLabel && (
+						<div
 							role="option"
-							aria-selected={option.selected}
-							className={`personSelectMenu__row ${stateClass}`}
-							onClick={() => onToggle(option.id)}
-							aria-label={toggleLabel(
-								option.label,
-								option.selected
-							)}
+							aria-selected={false}
+							aria-disabled
+							className="personSelectMenu__row personSelectMenu__row--empty"
 						>
 							<span className="personSelectMenu__name">
-								{option.label}
-								{option.vacated && (
-									<span className="personSelectMenu__vacatedHint">
-										{vacatedHint}
-									</span>
+								{emptyLabel}
+							</span>
+						</div>
+					)}
+					{options.map((option) => {
+						const stateClass = option.vacated
+							? 'personSelectMenu__row--vacated'
+							: option.selected
+								? 'personSelectMenu__row--selected'
+								: '';
+						return (
+							<button
+								type="button"
+								key={option.id}
+								role="option"
+								aria-selected={option.selected}
+								className={`personSelectMenu__row ${stateClass}`}
+								onClick={() => onToggle(option.id)}
+								aria-label={toggleLabel(
+									option.label,
+									option.selected
 								)}
-							</span>
-							<span
-								className="personSelectMenu__toggle"
-								aria-hidden
 							>
-								{option.vacated ? <CloseIcon /> : <CheckIcon />}
-							</span>
-						</button>
-					);
-				})}
+								<span className="personSelectMenu__name">
+									{option.label}
+									{option.vacated && (
+										<span className="personSelectMenu__vacatedHint">
+											{vacatedHint}
+										</span>
+									)}
+								</span>
+								<span
+									className="personSelectMenu__toggle"
+									aria-hidden
+								>
+									{option.vacated ? (
+										<CloseIcon />
+									) : (
+										<CheckIcon />
+									)}
+								</span>
+							</button>
+						);
+					})}
+				</div>
+				{showHelp && (
+					<button
+						type="button"
+						className="personSelectMenu__row personSelectMenu__row--help"
+						onClick={() => {
+							onClose();
+							onHelp?.();
+						}}
+					>
+						<span className="personSelectMenu__name">
+							{helpLabel}
+						</span>
+						<span className="personSelectMenu__toggle" aria-hidden>
+							<HelpOutlineOutlinedIcon />
+						</span>
+					</button>
+				)}
 			</div>
 		</MenuPortal>
 	);

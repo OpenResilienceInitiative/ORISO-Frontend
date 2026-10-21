@@ -29,6 +29,32 @@
 - Preserve Matrix/chat/draft privacy boundaries. Do not move plaintext previews or draft contents into server-visible state.
 - UI changes need accessible focus/keyboard behavior and should not rely on color alone.
 
+## Waiting rooms: one frame, one bar, one gate
+
+Every screen where a person waits to get in — after "Registrieren", group
+invitation, self-help group, live chat, call entry — is built from the same
+three parts. Do not write a fourth.
+
+- **Frame:** `WaitingRoomFrame` (`src/components/waitingRoom/`). No
+  hand-written `StageLayout` and no direct `Stage` import in a waiting room.
+- **Bar:** `RegistrationFooter`. No own fixed bar, no own spacer.
+- **Layout:** `WaitingRoomTemplate` (`src/components/waitingRoom/`), taken
+  from the live-chat room: headline, status line, the middle (cards, or a
+  waiting component such as the self-help countdown), a quiet row, the bar.
+  Consent slides into the bar via `WaitingRoomConsentPanel` (waving hand,
+  checkbox bound to the words, decline X). Proportions come from the live
+  chat; do not re-lay a room by hand.
+- **Button:** `HandoverGateButton`. Its fill shows real progress only — for
+  the registration handover that is `handoverProgress` milestones. Never a
+  timer, never a fixed value.
+- **Proof:** every waiting-room story runs `expectWaitingRoomLayout`
+  (`waitingRoomLayoutContract.ts`). If it fails, fix the layout, not the
+  contract. Change the contract only with the product owner's approval and
+  say so in the PR.
+- **After "Registrieren"** the person sees one screen on both sides of the
+  document load (#1219). Keep the load — it is how browsers offer to save the
+  password (#1208) — and keep both sides identical instead.
+
 ## Validation
 
 - Prefer red-green TDD for behavior changes: add or update the smallest test that would fail without the fix, then implement.
@@ -88,3 +114,64 @@ delivery rules"). Summary:
 - **Never claim a job is done on evidence you did not produce.** If a job needs a
   live environment you cannot reach, say so plainly in the PR and the issue, and
   leave a runnable verification script for a human instead of a completion tick.
+
+## Writing issues and pull requests
+
+Binding for every AI agent. These rules govern _where_ text goes and _whose_
+text may be changed. They do not relax the delivery rules above.
+
+- **Machine detail belongs in fenced code blocks, and gets redacted first.**
+  Scanner output, dependency trees, stack traces, failing job logs, resolved
+  versions, config excerpts: put them inside a fenced block. Strip credentials,
+  tokens, connection strings, personal data and anything else sensitive before
+  pasting — a fenced block controls formatting, not disclosure. A human skimming
+  the ticket must be able to skip the block and still understand the point.
+  Prose outside the block stays short and in plain language.
+- **Write findings into the description, not into another comment.** A comment
+  is for a decision or a question that needs a person. Analysis, cause, status
+  and evidence belong in the issue or pull request description, where the next
+  reader finds them without scrolling a thread. Prefer updating the description
+  over adding a third, fourth, fifth comment.
+  The visual-proof rule above is the one exception: screenshots go in the pull
+  request body _and_ as an issue comment, because that is where reviewers look
+  for them.
+- **Lead with the business or end-user effect.** Before any technical detail,
+  two or three plain sentences: what does not work for whom, and what that
+  costs. Write it so a non-engineer stakeholder can act on it. English, short.
+- **You may edit descriptions — but not everyone's.**
+
+    | Description author                                  | May an agent rewrite it?                                                        |
+    | --------------------------------------------------- | ------------------------------------------------------------------------------- |
+    | `Storypapst`, `kiodreambau`                         | Yes — rewrite, restructure, correct, extend                                     |
+    | `BjoernLudwig`, `HelenaSKloeckner`, any other human | No — leave their wording untouched; append a clearly separated section below it |
+
+- **Adding an analysis to someone's bug report** — the ticket says "X is
+  broken" and you found out why:
+    1. Keep the original report as written.
+    2. Add the plain-language cause, two or three sentences.
+    3. Put the technical evidence under it, in a code block.
+    4. Link the pull request, run or ticket that proves it.
+       If the description was corrected rather than extended, say so in one line
+       so the change is not silent.
+- **Link the ticket you found.** If an issue already covers the problem,
+  reference it rather than restating it, and add your findings there.
+- **Duplicates: decide, never leave both drifting.** Name in the description
+  which ticket survives. A ticket that came back from Caritas — raised by
+  `BjoernLudwig` or `HelenaSKloeckner` — is the one that stays open. Close the
+  agent-created duplicate against it and link the survivor.
+
+## Agent skills
+
+For Matt Pocock engineering workflows, apply the **Parent Router First** rules above. In a multi-repo workspace, load `../AGENTS.md` first, then resolve `~/.config/agent-routing/paths.env` (if it exists) and follow `${PROJECT_ORISO_ROOT}/AGENTS.md`. In a standalone clone, skip `../AGENTS.md` and `paths.env` and use the local adapters below directly. Reuse shared installed skills; load these adapters on demand.
+
+### Issue tracker
+
+GitHub Issues in `OpenResilienceInitiative/ORISO-Frontend`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Reuse existing labels; leave unmapped roles unchanged. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context; shared knowledge stays in the project Core. See `docs/agents/domain.md`.

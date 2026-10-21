@@ -64,7 +64,7 @@ export type {
 export type { SessionSearchPersonResult } from './sessionSearchPeople';
 
 interface SessionsListToolbarProps {
-	translate: (key: string) => string;
+	translate: (key: string, options?: Record<string, unknown>) => string;
 	searchValue: string;
 	onSearchChange: (value: string) => void;
 	searchPeopleResults?: SessionSearchPersonOption[];
@@ -200,7 +200,6 @@ const OtherFilterIcon = ({ className }: SessionToolbarFilterIconProps) => (
 type FilterChipConfig = {
 	id: SessionToolbarChipFilter;
 	labelKey: string;
-	fallback: string;
 	Icon: React.ComponentType<SessionToolbarFilterIconProps>;
 	dataCy: string;
 };
@@ -209,56 +208,48 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 	{
 		id: 'unread',
 		labelKey: 'sessionList.toolbar.chips.unread',
-		fallback: 'Unread',
 		Icon: UnreadFilterIcon,
 		dataCy: 'sessions-list-chip-unread'
 	},
 	{
 		id: 'drafts',
 		labelKey: 'sessionList.toolbar.chips.drafts',
-		fallback: 'Drafts',
 		Icon: DraftFilterIcon,
 		dataCy: 'sessions-list-chip-drafts'
 	},
 	{
 		id: 'nearby',
 		labelKey: 'sessionList.toolbar.chips.nearby',
-		fallback: 'Mail',
 		Icon: MailFilterIcon,
 		dataCy: 'sessions-list-chip-nearby'
 	},
 	{
 		id: 'liveChat',
 		labelKey: 'sessionList.toolbar.chips.liveChat',
-		fallback: 'Live Chat',
 		Icon: LiveChatFilterIcon,
 		dataCy: 'sessions-list-chip-live-chat'
 	},
 	{
 		id: 'internalGroup',
 		labelKey: 'sessionList.toolbar.chips.internalGroup',
-		fallback: 'Internal group chat',
 		Icon: InternalGroupFilterIcon,
 		dataCy: 'sessions-list-chip-internal-group'
 	},
 	{
 		id: 'supervision',
 		labelKey: 'sessionList.toolbar.chips.supervision',
-		fallback: 'Supervision',
 		Icon: SupervisionFilterIcon,
 		dataCy: 'sessions-list-chip-supervision'
 	},
 	{
 		id: 'groups',
 		labelKey: 'sessionList.toolbar.chips.groups',
-		fallback: 'Conversation circle',
 		Icon: GroupFilterIcon,
 		dataCy: 'sessions-list-chip-groups'
 	},
 	{
 		id: 'other',
 		labelKey: 'sessionList.toolbar.chips.other',
-		fallback: 'More',
 		Icon: OtherFilterIcon,
 		dataCy: 'sessions-list-chip-other'
 	}
@@ -384,13 +375,6 @@ export const SessionsListToolbar = ({
 		() => filterSearchPeople(searchPeopleResults, searchValue),
 		[searchPeopleResults, searchValue]
 	);
-	const tr = React.useCallback(
-		(key: string, fallback: string) => {
-			const translated = translate(key);
-			return translated && translated !== key ? translated : fallback;
-		},
-		[translate]
-	);
 	const selectedPeople = React.useMemo(
 		() =>
 			selectedPersonIds
@@ -488,7 +472,7 @@ export const SessionsListToolbar = ({
 		return orderChipKinds(
 			listed.map((chip) => ({
 				...chip,
-				label: chip.fallback,
+				label: translate(chip.labelKey),
 				unreadCount:
 					chip.id === 'drafts' ? 0 : (chipCounts[chip.id] ?? 0)
 			})),
@@ -503,7 +487,8 @@ export const SessionsListToolbar = ({
 		showInternalGroupChip,
 		showLiveChatChip,
 		showOtherChip,
-		showSupervisionChip
+		showSupervisionChip,
+		translate
 	]);
 	const archiveInsertIndex = Math.max(
 		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),
@@ -520,7 +505,7 @@ export const SessionsListToolbar = ({
 			deactivatedKindChips[chip.id as DisplayFilterKindChip]
 		);
 		const count = chipCounts[chip.id];
-		const label = tr(chip.labelKey, chip.fallback);
+		const label = translate(chip.labelKey);
 		const named =
 			count && count > 0
 				? `${label} (${count > 99 ? '99+' : count})`
@@ -563,13 +548,11 @@ export const SessionsListToolbar = ({
 							className="sessionsListToolbar__iconButton"
 							aria-label={
 								showSearchDropdown
-									? tr(
-											'sessionList.toolbar.search.close',
-											'Close search'
+									? translate(
+											'sessionList.toolbar.search.close'
 										)
-									: tr(
-											'sessionList.toolbar.search.toggle',
-											'Open or close search results'
+									: translate(
+											'sessionList.toolbar.search.toggle'
 										)
 							}
 							onClick={() => setIsSearchViewOpen((prev) => !prev)}
@@ -613,9 +596,9 @@ export const SessionsListToolbar = ({
 												searchInputRef.current?.focus()
 											);
 										}}
-										aria-label={tr(
+										aria-label={translate(
 											'sessionList.toolbar.search.removeSelectedPerson',
-											`Remove ${person.name}`
+											{ name: person.name }
 										)}
 									>
 										<span className="sessionsListToolbar__searchInlinePillText">
@@ -661,9 +644,8 @@ export const SessionsListToolbar = ({
 							type="button"
 							className="sessionsListToolbar__searchConfirmButton"
 							onClick={confirmSearch}
-							aria-label={tr(
-								'sessionList.toolbar.search.confirm',
-								'Confirm selection'
+							aria-label={translate(
+								'sessionList.toolbar.search.confirm'
 							)}
 							data-cy="sessions-list-search-confirm"
 						>
@@ -680,9 +662,8 @@ export const SessionsListToolbar = ({
 								onSelectedTypeIdChange?.(null);
 								setIsSearchViewOpen(false);
 							}}
-							aria-label={tr(
-								'sessionList.toolbar.search.clear',
-								'Clear search'
+							aria-label={translate(
+								'sessionList.toolbar.search.clear'
 							)}
 						>
 							<IconClose />
@@ -699,37 +680,29 @@ export const SessionsListToolbar = ({
 				{showSearchDropdown && (
 					<SessionSearchPanel
 						labels={{
-							refineHint: tr(
-								'sessionList.toolbar.search.refineHint',
-								'Refine your search further using filters'
+							refineHint: translate(
+								'sessionList.toolbar.search.refineHint'
 							),
-							tabPeople: tr(
-								'sessionList.toolbar.search.tabs.people',
-								'People'
+							tabPeople: translate(
+								'sessionList.toolbar.search.tabs.people'
 							),
-							tabType: tr(
-								'sessionList.toolbar.search.tabs.type',
-								'By type'
+							tabType: translate(
+								'sessionList.toolbar.search.tabs.type'
 							),
-							tabCentre: tr(
-								'sessionList.toolbar.search.tabs.centre',
-								'Counseling center'
+							tabCentre: translate(
+								'sessionList.toolbar.search.tabs.centre'
 							),
-							tabArchiveOnly: tr(
-								'sessionList.toolbar.search.tabs.archiveOnly',
-								'Archive only'
+							tabArchiveOnly: translate(
+								'sessionList.toolbar.search.tabs.archiveOnly'
 							),
-							emptyPeople: tr(
-								'sessionList.toolbar.search.emptyPeople',
-								'No matching people found.'
+							emptyPeople: translate(
+								'sessionList.toolbar.search.emptyPeople'
 							),
-							emptyTypes: tr(
-								'sessionList.toolbar.search.emptyTypes',
-								'No chat types available.'
+							emptyTypes: translate(
+								'sessionList.toolbar.search.emptyTypes'
 							),
-							emptyTopics: tr(
-								'sessionList.toolbar.search.emptyTopics',
-								'No topics found for your counseling centers.'
+							emptyTopics: translate(
+								'sessionList.toolbar.search.emptyTopics'
 							)
 						}}
 						activeTab={searchTab}
@@ -774,7 +747,7 @@ export const SessionsListToolbar = ({
 			</div>
 
 			<FilterChipRow
-				label={tr('sessionList.toolbar.chips.group', 'Filter')}
+				label={translate('sessionList.toolbar.chips.group')}
 				className={clsx(chipView === 'text' && 'filterChipRow--dense')}
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
 				scrollDataCy="sessions-list-chips"
@@ -803,7 +776,7 @@ export const SessionsListToolbar = ({
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
 						)}
 						<span className="sessionsListToolbar__chipLabel">
-							{tr('sessionList.toolbar.chips.create', 'Create')}
+							{translate('sessionList.toolbar.chips.create')}
 						</span>
 					</Link>
 				)}
@@ -835,10 +808,7 @@ export const SessionsListToolbar = ({
 								!archiveTabActive && chipView === 'icons'
 							}
 						>
-							{tr(
-								'sessionList.toolbar.chips.archive',
-								'Archived'
-							)}
+							{translate('sessionList.toolbar.chips.archive')}
 						</span>
 					</Link>
 				)}

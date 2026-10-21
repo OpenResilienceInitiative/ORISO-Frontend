@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DefaultActionBar } from './DefaultActionBar';
 
@@ -18,7 +25,19 @@ const baseProps = {
 	onAttachmentClick: vi.fn(),
 	isExpanded: false,
 	onExpandToggle: vi.fn(),
-	translate: ((_key: string, fallback?: string) => fallback ?? _key) as any
+	translate: ((key: string) => {
+		const catalogue: Record<string, string> = {
+			'message.submit.toolbar.voiceRecording.label': 'Voice recording',
+			'message.submit.toolbar.voiceRecording.tooltip':
+				'Record voice message',
+			'message.submit.toolbar.attachment': 'Add attachment',
+			'message.submit.toolbar.emoji': 'Emoji panel',
+			'message.submit.toolbar.mention': 'Mention',
+			'message.mobileNav.back': 'Navigate up',
+			'message.mobileNav.scrollToBottom': 'Scroll to bottom'
+		};
+		return catalogue[key] ?? key;
+	}) as any
 };
 
 describe('DefaultActionBar', () => {
@@ -60,6 +79,76 @@ describe('DefaultActionBar', () => {
 				.getByRole('button', { name: 'Voice recording' })
 				.getAttribute('title')
 		).toBe('Record voice message');
+	});
+
+	it('keeps the mic visible but unavailable, focusable and explained when a reason is given', () => {
+		const onMicClick = vi.fn();
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				onMicClick={onMicClick}
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		expect(mic.getAttribute('aria-disabled')).toBe('true');
+		expect((mic as HTMLButtonElement).disabled).toBe(false);
+		expect(
+			document.getElementById(mic.getAttribute('aria-describedby')!)
+				?.textContent
+		).toBe('Not while editing');
+		mic.focus();
+		expect(document.activeElement).toBe(mic);
+		fireEvent.click(mic);
+		expect(onMicClick).not.toHaveBeenCalled();
+	});
+
+	it('shows the unavailable reason visibly when the mic gets keyboard focus, and hides it on blur', async () => {
+		const user = userEvent.setup();
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		expect(screen.queryByRole('tooltip')).toBeNull();
+		for (let i = 0; i < 10 && document.activeElement !== mic; i++) {
+			await user.tab();
+		}
+		expect(document.activeElement).toBe(mic);
+		expect((await screen.findByRole('tooltip')).textContent).toBe(
+			'Not while editing'
+		);
+		await user.tab();
+		await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+	});
+
+	it('shows the unavailable reason on a touch tap', async () => {
+		render(
+			<DefaultActionBar
+				{...baseProps}
+				showMic
+				micUnavailableReason="Not while editing"
+			/>
+		);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		fireEvent.touchStart(mic);
+		expect((await screen.findByRole('tooltip')).textContent).toBe(
+			'Not while editing'
+		);
+	});
+
+	it('keeps the default mic free of a custom tooltip', async () => {
+		const user = userEvent.setup();
+		render(<DefaultActionBar {...baseProps} showMic />);
+		const mic = screen.getByRole('button', { name: 'Voice recording' });
+		for (let i = 0; i < 10 && document.activeElement !== mic; i++) {
+			await user.tab();
+		}
+		expect(screen.queryByRole('tooltip')).toBeNull();
 	});
 
 	it('puts every compact control on the larger default action bar', () => {

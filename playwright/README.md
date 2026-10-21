@@ -5,15 +5,15 @@
 Run the demo baseline check against a deployed app URL:
 
 ```sh
-PLAYWRIGHT_BASE_URL=https://app.oriso.org npm run test:smoke:baseline
+PLAYWRIGHT_BASE_URL=https://app.example.org npm run test:smoke:baseline
 ```
 
 The check derives the API origin from the app origin by replacing `app.` with
 `api.`. Override it for non-standard environments:
 
 ```sh
-PLAYWRIGHT_BASE_URL=https://app.oriso.org \
-PLAYWRIGHT_API_BASE_URL=https://api.oriso.org \
+PLAYWRIGHT_BASE_URL=https://app.example.org \
+PLAYWRIGHT_API_BASE_URL=https://api.example.org \
 npm run test:smoke:baseline
 ```
 

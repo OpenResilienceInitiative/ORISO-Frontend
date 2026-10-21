@@ -2,10 +2,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiGetLiveChatAvailability,
+	apiGetNewCounsellingAllowed,
 	apiHeartbeatLiveChatAvailability,
 	apiSetLiveChatAvailability
 } from './apiSetLiveChatAvailability';
-import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 import { endpoints } from '../resources/scripts/endpoints';
 
 vi.mock('./fetchData', async () => {
@@ -15,6 +21,33 @@ vi.mock('./fetchData', async () => {
 
 afterEach(() => {
 	vi.clearAllMocks();
+});
+
+describe('provider agreement flag on the availability read (#1704)', () => {
+	it('passes the server flag through', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({
+			available: true,
+			newCounsellingAllowed: false
+		});
+
+		await expect(apiGetNewCounsellingAllowed()).resolves.toBe(false);
+		expect(fetchData).toHaveBeenCalledWith({
+			url: endpoints.consultantLiveChatAvailability,
+			method: FETCH_METHODS.GET
+		});
+	});
+
+	it('reads unknown when the server does not send the flag', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ available: true });
+
+		await expect(apiGetNewCounsellingAllowed()).resolves.toBeNull();
+	});
+
+	it('reads unknown instead of failing when the request fails', async () => {
+		vi.mocked(fetchData).mockRejectedValueOnce(new Error('offline'));
+
+		await expect(apiGetNewCounsellingAllowed()).resolves.toBeNull();
+	});
 });
 
 describe('live-chat availability API', () => {
@@ -38,6 +71,17 @@ describe('live-chat availability API', () => {
 		);
 	});
 
+	it('lets the caller abort a heartbeat', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ available: true });
+		const controller = new AbortController();
+
+		await apiHeartbeatLiveChatAvailability(controller.signal);
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({ signal: controller.signal })
+		);
+	});
+
 	it('uses the refresh-only heartbeat endpoint', async () => {
 		vi.mocked(fetchData).mockResolvedValueOnce({ available: false });
 
@@ -45,7 +89,10 @@ describe('live-chat availability API', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 			method: FETCH_METHODS.POST,
-			responseHandling: [FETCH_SUCCESS.CONTENT]
+			responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN],
+			// #1485 review: a hung beat has to fail well inside the 15 s
+			// unknown-lease window, not after fetchData's 30 s default.
+			timeout: 5_000
 		});
 	});
 });

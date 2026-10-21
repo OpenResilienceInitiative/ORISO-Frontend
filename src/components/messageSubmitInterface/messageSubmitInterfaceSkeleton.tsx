@@ -37,7 +37,7 @@ export const MessageSubmitInterfaceSkeleton = ({
 					justifyContent: 'center'
 				}}
 			>
-				<Loading />
+				<Loading compact />
 			</div>
 			<form className={'textarea'}>
 				<div className={'textarea__wrapper'}>

@@ -8,23 +8,31 @@ import { AskerAboutMeData } from './AskerAboutMeData';
 import { ConsultantStatistics } from './ConsultantStatistics';
 import { AbsenceFormular } from './AbsenceFormular';
 import { LiveChatAvailability } from './LiveChatAvailability';
-import { EnableWalkthrough } from './EnableWalkthrough';
-import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { COLUMN_LEFT, COLUMN_RIGHT, TabsType } from '../../utils/tabsHelper';
 import { isDesktop } from 'react-device-detect';
 import { OverviewBookings } from './OverviewMobile/Bookings';
 import { OverviewSessions } from './OverviewMobile/Sessions';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { profileRoutesHelp } from './profileHelp.routes';
-import { NotificationSettingsPanel } from './NotificationSettings';
 import {
 	TenantDataInterface,
 	AppConfigInterface
 } from '../../globalState/interfaces';
-import { EmailNotification } from './EmailNotifications';
-import { BrowserNotification } from './BrowserNotifications';
-import { browserNotificationsSettings } from '../../utils/notificationHelpers';
+import {
+	browserNotificationsSettings,
+	isSupported as isBrowserNotificationSupported
+} from '../../utils/notificationHelpers';
 import { AdditionalEnquiry } from './AdditionalEnquiry/AdditionalEnquiry';
+import AccessAlarmOutlinedIcon from '@mui/icons-material/AccessAlarmOutlined';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
+import HomeWorkOutlinedIcon from '@mui/icons-material/HomeWorkOutlined';
+import InsertChartOutlinedIcon from '@mui/icons-material/InsertChartOutlined';
+import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import { ReactComponent as LiveConversationIcon } from '../../resources/img/icons/live_conv_type.svg';
 
 const shouldShowOverview = (useOverviewPage: boolean, userData) =>
 	useOverviewPage &&
@@ -41,11 +49,12 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.general.title',
 			url: '/allgemeines',
+			layout: 'cards',
 			elements: [
 				{
 					condition: (userData) =>
 						shouldShowOverview(settings.useOverviewPage, userData),
-					title: 'Overview',
+					title: 'navigation.overview',
 					url: '/overview',
 					elements: [
 						{
@@ -55,7 +64,8 @@ const profileRoutes = (
 									userData
 								),
 							boxed: false,
-							component: OverviewSessions
+							component: OverviewSessions,
+							icon: ForumOutlinedIcon
 						},
 						{
 							condition: (userData) =>
@@ -64,6 +74,7 @@ const profileRoutes = (
 									userData
 								),
 							component: OverviewBookings,
+							icon: EventOutlinedIcon,
 							boxed: false
 						}
 					]
@@ -79,6 +90,7 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantInformation,
+							icon: PersonOutlineIcon,
 							column: COLUMN_LEFT
 						},
 						{
@@ -88,6 +100,7 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantSpokenLanguages,
+							icon: LanguageOutlinedIcon,
 							column: COLUMN_RIGHT
 						},
 						{
@@ -97,25 +110,8 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantAgencies,
+							icon: HomeWorkOutlinedIcon,
 							column: COLUMN_LEFT
-						},
-						{
-							condition: (userData) =>
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								) && settings.enableWalkthrough,
-							component: EnableWalkthrough,
-							column: COLUMN_RIGHT
-						},
-						{
-							condition: (userData) =>
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								) && settings.enableWalkthrough,
-							component: TourOverviewSection,
-							column: COLUMN_RIGHT
 						},
 						{
 							condition: (userData) =>
@@ -135,6 +131,7 @@ const profileRoutes = (
 									userData
 								),
 							component: AdditionalEnquiry,
+							icon: AddCircleOutlineIcon,
 							order: 3,
 							column: COLUMN_RIGHT
 						}
@@ -151,9 +148,8 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantPrivateData,
-							column: settings.enableWalkthrough
-								? COLUMN_LEFT
-								: COLUMN_RIGHT
+							icon: VisibilityOffOutlinedIcon,
+							column: COLUMN_RIGHT
 						},
 						{
 							condition: (userData) =>
@@ -162,6 +158,7 @@ const profileRoutes = (
 									userData
 								),
 							component: AskerAboutMeData,
+							icon: PersonOutlineIcon,
 							order: 1,
 							column: COLUMN_LEFT
 						}
@@ -172,6 +169,7 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.activities.title',
 			url: '/aktivitaeten',
+			layout: 'cards',
 			condition: (userData) =>
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
 			elements: [
@@ -181,6 +179,7 @@ const profileRoutes = (
 					elements: [
 						{
 							component: ConsultantStatistics,
+							icon: InsertChartOutlinedIcon,
 							condition: () =>
 								tenant === null ||
 								!!tenant?.settings?.featureStatisticsEnabled,
@@ -199,6 +198,7 @@ const profileRoutes = (
 									userData
 								),
 							component: LiveChatAvailability,
+							icon: LiveConversationIcon,
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled
@@ -208,6 +208,7 @@ const profileRoutes = (
 						},
 						{
 							component: AbsenceFormular,
+							icon: AccessAlarmOutlinedIcon,
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled
@@ -220,63 +221,21 @@ const profileRoutes = (
 			]
 		},
 		{
-			title: 'profile.routes.notifications.title',
-			url: '/notifications',
-			condition: () => false,
-			notificationBubble:
-				isFirstVisit && !browserNotificationsSettings().visited,
-			elements: [
-				{
-					title: 'profile.routes.notifications.title',
-					url: '/email',
-					elements: [
-						{
-							component: EmailNotification,
-							column: COLUMN_LEFT
-						}
-					]
-				},
-				{
-					title: 'profile.browserNotifications.title',
-					notificationBubble:
-						isFirstVisit && !browserNotificationsSettings().visited,
-					url: '/browser',
-					elements: [
-						// Legacy per-browser panel (localStorage) while the new
-						// notification system is toggled off …
-						{
-							component: BrowserNotification,
-							column: COLUMN_RIGHT,
-							condition: (userData) =>
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								) &&
-								!settings?.releaseToggles
-									?.enableNewNotifications
-						},
-						// … and the WP-06 Slice 6b cross-device panel (Matrix
-						// account data) once it is on. Available to every role:
-						// askers get notified about handover consent & messages.
-						{
-							component: NotificationSettingsPanel,
-							column: COLUMN_RIGHT,
-							condition: () =>
-								!!settings?.releaseToggles
-									?.enableNewNotifications
-						}
-					]
-				}
-			]
-		},
-		{
 			title: 'profile.routes.settings.title',
 			url: '/einstellungen',
+			layout: 'cards',
+			// First-visit hint to the browser pop-up switch (#1551).
+			notificationBubble:
+				isFirstVisit &&
+				!settings?.releaseToggles?.enableNewNotifications &&
+				!!isBrowserNotificationSupported() &&
+				!browserNotificationsSettings().visited,
 			elements: profileRoutesSettings(selectableLocales, settings)
 		},
 		{
 			title: 'profile.routes.help.title',
 			url: '/hilfe',
+			layout: 'cards',
 			elements: profileRoutesHelp(settings)
 		}
 	] as TabsType;

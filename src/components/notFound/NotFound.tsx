@@ -36,18 +36,26 @@ const NotFound = () => {
 								viewBox="0 0 189.929 189.929"
 								xmlSpace="preserve"
 							>
-								<path d="M70.343,70.343c-30.554,30.553-44.806,72.7-39.102,115.635l-29.738,3.951C-5.442,137.659,11.917,86.34,49.129,49.13
-        C86.34,11.918,137.664-5.445,189.928,1.502l-3.95,29.738C143.041,25.54,100.895,39.789,70.343,70.343z" />
+								<path
+									d="M70.343,70.343c-30.554,30.553-44.806,72.7-39.102,115.635l-29.738,3.951C-5.442,137.659,11.917,86.34,49.129,49.13
+        C86.34,11.918,137.664-5.445,189.928,1.502l-3.95,29.738C143.041,25.54,100.895,39.789,70.343,70.343z"
+								/>
 							</svg>
 						</div>
 						<div className="display_div">
 							<div className="screen_out">
 								<div className="screen_out1">
 									<div className="screen">
-										<span className="notfound_text"> NOT FOUND</span>
+										<span className="notfound_text">
+											{' '}
+											{translate('error.notFound')}
+										</span>
 									</div>
 									<div className="screenM">
-										<span className="notfound_text"> NOT FOUND</span>
+										<span className="notfound_text">
+											{' '}
+											{translate('error.notFound')}
+										</span>
 									</div>
 								</div>
 							</div>
@@ -142,8 +150,11 @@ const StyledWrapper = styled.div`
 		border-radius: 45%;
 		transform: rotate(140deg);
 		border: 4px solid transparent;
-		box-shadow: inset 0px 16px #a85103, inset 0px 16px 1px 1px #a85103;
-		-moz-box-shadow: inset 0px 16px #a85103,
+		box-shadow:
+			inset 0px 16px #a85103,
+			inset 0px 16px 1px 1px #a85103;
+		-moz-box-shadow:
+			inset 0px 16px #a85103,
 			inset 0px 16px 1px 1px #a85103;
 	}
 	.antenna::after {
@@ -264,11 +275,9 @@ const StyledWrapper = styled.div`
 		width: 17em;
 		height: 9em;
 		border-radius: 15px;
-		background: repeating-radial-gradient(
-				#d36604 0 0.0001%,
-				#00000070 0 0.0002%
-			)
-			50% 0/2500px 2500px,
+		background:
+			repeating-radial-gradient(#d36604 0 0.0001%, #00000070 0 0.0002%)
+				50% 0/2500px 2500px,
 			repeating-conic-gradient(#d36604 0 0.0001%, #00000070 0 0.0002%) 60%
 				60%/2500px 2500px;
 		background-blend-mode: difference;
@@ -308,10 +317,11 @@ const StyledWrapper = styled.div`
 		height: 7.85em;
 		font-family: Montserrat;
 		border: 2px solid #1d0e01;
-		background: repeating-radial-gradient(#000 0 0.0001%, #ffffff 0 0.0002%)
-				50% 0/2500px 2500px,
-			repeating-conic-gradient(#000 0 0.0001%, #ffffff 0 0.0002%) 60% 60%/2500px
-				2500px;
+		background:
+			repeating-radial-gradient(#000 0 0.0001%, #ffffff 0 0.0002%) 50%
+				0/2500px 2500px,
+			repeating-conic-gradient(#000 0 0.0001%, #ffffff 0 0.0002%) 60%
+				60%/2500px 2500px;
 		background-blend-mode: difference;
 		animation: b 0.2s infinite alternate;
 		border-radius: 10px;
@@ -410,7 +420,9 @@ const StyledWrapper = styled.div`
 
 	@keyframes b {
 		100% {
-			background-position: 50% 0, 60% 50%;
+			background-position:
+				50% 0,
+				60% 50%;
 		}
 	}
 
@@ -456,7 +468,9 @@ const StyledWrapper = styled.div`
 		border-radius: 50%;
 		background-color: #7f5934;
 		border: 2px solid black;
-		box-shadow: inset 2px 2px 1px #b49577, -2px 0px #513721,
+		box-shadow:
+			inset 2px 2px 1px #b49577,
+			-2px 0px #513721,
 			-2px 0px 0px 1px black;
 	}
 	.b1::before {
@@ -497,7 +511,9 @@ const StyledWrapper = styled.div`
 		border-radius: 50%;
 		background-color: #7f5934;
 		border: 2px solid black;
-		box-shadow: inset 2px 2px 1px #b49577, -2px 0px #513721,
+		box-shadow:
+			inset 2px 2px 1px #b49577,
+			-2px 0px #513721,
 			-2px 0px 0px 1px black;
 	}
 	.b2::before {

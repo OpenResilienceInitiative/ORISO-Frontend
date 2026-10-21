@@ -1,0 +1,19 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+{{assuranceBlock}}
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} ist ein Angebot von {{operatorName}}.
+
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+
+{{footerNote}}

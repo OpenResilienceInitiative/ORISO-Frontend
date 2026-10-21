@@ -54,13 +54,29 @@ describe('unencrypted media routing', () => {
 		);
 	});
 
-	it('keeps the previous path where none is deployed', async () => {
+	/**
+	 * Authenticated media (#1487): without a scanner there is no URL a browser
+	 * can use on its own, so the formatter carries the `mxc://` URI and leaves
+	 * the fetch (with the Matrix token) to the component that has a client.
+	 * It must not mint a `/_matrix/media/...` path here — that endpoint answers
+	 * 404 for anything uploaded after Synapse's authenticated-media flip.
+	 */
+	it('carries the mxc URI where no scanner is deployed', async () => {
 		getMediaScannerUrl.mockReturnValue('');
 
 		const message = await format();
 
-		expect(message.attachments[0].downloadUrl).toBe(
-			'/_matrix/media/r0/download/hs/media-1'
+		expect(message.attachments[0].mxcUrl).toBe('mxc://hs/media-1');
+		expect(message.attachments[0].downloadUrl).toBe('');
+	});
+
+	it('never mints a legacy media path', async () => {
+		getMediaScannerUrl.mockReturnValue('');
+
+		const message = await format();
+
+		expect(JSON.stringify(message.attachments[0])).not.toContain(
+			'/_matrix/media/'
 		);
 	});
 });

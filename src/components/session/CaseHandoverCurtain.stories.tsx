@@ -1,91 +1,13 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import {
-	CaseHandoverCurtainStep,
-	CaseHandoverCurtainView
-} from './CaseHandoverCurtain';
-import type { CaseHandoverReason } from '../../api/apiCaseHandover';
+import { CurtainPlayground } from './__storybook__/CurtainPlayground';
 import {
 	CASE_HANDOVER_WIZARD_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
 import './caseHandoverCurtain.styles.scss';
-
-const reasons: CaseHandoverReason[] = [
-	{
-		code: 'COUNSELLOR_ASKED_FOR_ADVICE',
-		label: 'Counsellor asked for advice',
-		clientConsentRequired: true
-	},
-	{
-		code: 'COUNSELLOR_ON_HOLIDAY',
-		label: 'Counsellor is on holiday',
-		clientConsentRequired: false
-	},
-	{
-		code: 'OTHER_EMERGENCY',
-		label: 'Other emergency',
-		clientConsentRequired: false
-	},
-	{
-		code: 'COUNSELLOR_IS_ILL',
-		label: 'Counsellor is ill',
-		clientConsentRequired: false
-	},
-	{
-		code: 'COUNSELLOR_LEFT',
-		label: "Counsellor doesn't work here anymore",
-		clientConsentRequired: false
-	}
-];
-
-const shell: React.CSSProperties = {
-	backgroundColor: '#eae7e8',
-	padding: 16,
-	height: '100vh',
-	boxSizing: 'border-box'
-};
-
-type PlaygroundProps = {
-	initialStep?: CaseHandoverCurtainStep;
-	initialReasonCode?: string;
-	initialExplanation?: string;
-	error?: string;
-	topicLabel?: string;
-};
-
-function CurtainPlayground({
-	initialStep = 'intro',
-	initialReasonCode = '',
-	initialExplanation = '',
-	error,
-	topicLabel = 'Schwangerschaftsberatung'
-}: PlaygroundProps) {
-	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
-	const [reasonCode, setReasonCode] = useState(initialReasonCode);
-	const [explanation, setExplanation] = useState(initialExplanation);
-
-	return (
-		<div style={shell}>
-			<CaseHandoverCurtainView
-				step={step}
-				topicLabel={topicLabel}
-				reasons={reasons}
-				reasonCode={reasonCode}
-				explanation={explanation}
-				error={error}
-				onStart={() => setStep('reason')}
-				onBack={() => setStep('reason')}
-				onNext={() => setStep('describe')}
-				onReasonSelect={setReasonCode}
-				onExplanationChange={setExplanation}
-				onSubmit={() => setStep('pending')}
-			/>
-		</div>
-	);
-}
 
 const meta: Meta = {
 	title: 'Organisms/CaseHandover/CaseHandoverCurtain',
@@ -126,7 +48,7 @@ export const SelectReasonWithSelection: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="reason"
-			initialReasonCode="OTHER_EMERGENCY"
+			initialReasonCode="PLANNED_ABSENCE"
 		/>
 	)
 };
@@ -135,7 +57,7 @@ export const ConsentReasonSelected: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="reason"
-			initialReasonCode="COUNSELLOR_ASKED_FOR_ADVICE"
+			initialReasonCode="ADVICE_REQUESTED"
 		/>
 	)
 };
@@ -144,8 +66,8 @@ export const DescribeReason: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="describe"
-			initialReasonCode="OTHER_EMERGENCY"
-			initialExplanation="My colleague's kids are ill, so I decided it is better if I take care of this client."
+			initialReasonCode="PLANNED_ABSENCE"
+			initialExplanation="My colleague is away this week, so I will take care of this client."
 		/>
 	)
 };
@@ -166,7 +88,7 @@ export const ErrorState: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="describe"
-			initialReasonCode="OTHER_EMERGENCY"
+			initialReasonCode="PLANNED_ABSENCE"
 			error="Something went wrong. Please try again."
 		/>
 	)
@@ -183,14 +105,14 @@ export const WizardWalkthrough: Story = {
 			})
 		);
 		const reason = await canvas.findByRole('radio', {
-			name: /Other emergency/
+			name: /Planned absence|Geplant abwesend/
 		});
 		await userEvent.click(reason);
 		await expect(reason).toHaveAttribute('aria-checked', 'true');
 		const next = canvas.getByRole('button', { name: /Next|Weiter/i });
 		await userEvent.click(next);
 		const textarea = await canvas.findByRole('textbox');
-		await userEvent.type(textarea, 'Covering for a sick colleague.');
+		await userEvent.type(textarea, 'Covering while my colleague is away.');
 		await userEvent.click(
 			canvas.getByRole('button', {
 				name: /Request access|Zugriff anfragen/i
@@ -200,4 +122,29 @@ export const WizardWalkthrough: Story = {
 			await canvas.findByText(/awaiting approval|warten auf freigabe/i)
 		).toBeVisible();
 	}
+};
+
+/** ADR-002 reclaim: the counsellor a takeover moved the case away from is back. */
+export const ReclaimAvailable: Story = {
+	render: () => <CurtainPlayground canReclaim />
+};
+
+function ReclaimConflictPlayground() {
+	const { t: translate } = useTranslation();
+	return (
+		<CurtainPlayground
+			canReclaim
+			error={translate('caseHandover.curtain.reclaim.unavailable')}
+		/>
+	);
+}
+
+/** 409: a permanent reason, or the cover counsellor no longer owns the case. */
+export const ReclaimConflict: Story = {
+	render: () => <ReclaimConflictPlayground />
+};
+
+/** No reclaim offered: the normal "request access" intro, unchanged. */
+export const IntroWithoutReclaim: Story = {
+	render: () => <CurtainPlayground canReclaim={false} />
 };

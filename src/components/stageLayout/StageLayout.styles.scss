@@ -100,6 +100,18 @@
 		}
 	}
 
+	// Waiting rooms: from the stage breakpoint up the stage carries the legal
+	// links (scoped to the room's department), so the footer would print them
+	// a second time — over the stage on a short room, below the fold and
+	// adding a scrollbar on a tall one (#1219). Only the links go: the build
+	// identity is portalled into this footer and has no other place.
+	&--waitingRoom .stageLayout__footer:not(.stageLayout__footer--withIdentity),
+	&--waitingRoom .stageLayout__legalLinks {
+		@include breakpoint($fromXLarge) {
+			display: none;
+		}
+	}
+
 	&--registration {
 		font-family: 'Inter Variable', Arial, sans-serif;
 
@@ -395,6 +407,10 @@
 		justify-content: space-between;
 		min-height: 100%;
 
+		// min-height disables `min-height: auto`; shrinking lets the sticky
+		// header inside scroll away on long steps.
+		flex-shrink: 0;
+
 		/*
 		 * From the stage breakpoint up, the content column is only 60vw wide
 		 * but this wrapper still spans the whole width — so it lies on top of
@@ -414,7 +430,9 @@
 		@media screen and (width <= #{$fromXLarge - 1px}) {
 			position: relative;
 			z-index: 2;
-			flex: 1;
+
+			// Never shrink below the content (see `flex-shrink` above).
+			flex: 1 0 auto;
 			margin-top: -28px;
 			border-radius: 28px 28px 0 0;
 			background: var(--m3-surface-container-lowest, $white);
@@ -436,8 +454,9 @@
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
-		flex-basis: $header-height;
-		height: $header-height;
+
+		// Height comes from StageLayout's sx (72px); the step band pins below it.
+		flex: 0 0 auto;
 		width: 100%;
 		padding: 0 $grid-base-three;
 
@@ -549,7 +568,10 @@
 			}
 
 			&:hover {
-				color: var(--m3-primary-hover, $hover-primary);
+				color: var(
+					--oriso-primary-text-hover,
+					var(--m3-primary-hover, $hover-primary)
+				);
 			}
 		}
 
@@ -566,7 +588,10 @@
 	&__legalLinksItem {
 		color: var(--m3-on-surface-variant, $tertiary);
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 		}
 	}
 

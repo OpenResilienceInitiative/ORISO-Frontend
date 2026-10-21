@@ -5,6 +5,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import { Headline } from '../../../components/headline/Headline';
 import { Text } from '../../../components/text/Text';
 import { OrisoSelect } from '../../../components/form/OrisoSelect';
@@ -48,14 +49,14 @@ const useShortcutLabels = () => {
 	const { t } = useTranslation();
 	return useMemo(
 		() => ({
-			ctrl: t('shortcuts.keys.ctrl', { defaultValue: 'Ctrl' }),
-			cmd: t('shortcuts.keys.cmd', { defaultValue: 'Cmd' }),
-			alt: t('shortcuts.keys.alt', { defaultValue: 'Alt' }),
-			option: t('shortcuts.keys.option', { defaultValue: 'Option' }),
-			shift: t('shortcuts.keys.shift', { defaultValue: 'Shift' }),
-			enter: t('shortcuts.keys.enter', { defaultValue: 'Enter' }),
-			escape: t('shortcuts.keys.escape', { defaultValue: 'Esc' }),
-			arrowUp: t('shortcuts.keys.arrowUp', { defaultValue: '↑' })
+			ctrl: t('shortcuts.keys.ctrl'),
+			cmd: t('shortcuts.keys.cmd'),
+			alt: t('shortcuts.keys.alt'),
+			option: t('shortcuts.keys.option'),
+			shift: t('shortcuts.keys.shift'),
+			enter: t('shortcuts.keys.enter'),
+			escape: t('shortcuts.keys.escape'),
+			arrowUp: t('shortcuts.keys.arrowUp')
 		}),
 		[t]
 	);
@@ -250,15 +251,18 @@ export const KeyboardShortcutsSettings = () => {
 						{translate('shortcuts.lockedNewline')}
 					</span>
 				)}
-				{def.canDisable && (
-					<button
-						type="button"
-						className="keyboardShortcutsSettings__reset"
-						onClick={() => handleResetAction(def.id)}
-					>
-						{translate('shortcuts.resetAction')}
-					</button>
-				)}
+				{def.canDisable &&
+					!bindingsEqual(current, def.defaultBinding, platform) && (
+						<button
+							type="button"
+							className="keyboardShortcutsSettings__reset"
+							onClick={() => handleResetAction(def.id)}
+							aria-label={translate('shortcuts.resetAction')}
+							title={translate('shortcuts.resetAction')}
+						>
+							<UndoRoundedIcon aria-hidden="true" />
+						</button>
+					)}
 			</div>
 		);
 	};

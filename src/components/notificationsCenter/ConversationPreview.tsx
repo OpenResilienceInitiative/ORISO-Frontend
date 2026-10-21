@@ -124,10 +124,7 @@ export const ConversationPreview = ({
 		return (
 			<div className="conversationPreview conversationPreview--empty">
 				<p className="conversationPreview__notice">
-					{translate(
-						'notifications.center.preview.unavailable',
-						'The conversation preview is not available yet — open the chat to read it.'
-					)}
+					{translate('notifications.center.preview.unavailable')}
 				</p>
 			</div>
 		);
@@ -137,10 +134,7 @@ export const ConversationPreview = ({
 		return (
 			<div className="conversationPreview conversationPreview--empty">
 				<p className="conversationPreview__notice">
-					{translate(
-						'notifications.center.preview.empty',
-						'No messages in this conversation yet.'
-					)}
+					{translate('notifications.center.preview.empty')}
 				</p>
 			</div>
 		);

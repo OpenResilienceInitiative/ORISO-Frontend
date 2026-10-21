@@ -7,7 +7,7 @@
  */
 
 /** Naive server timestamps (no zone suffix) are UTC — normalise to `Z`. */
-const normalizeServerTimestamp = (createdAt: string): string =>
+export const normalizeServerTimestamp = (createdAt: string): string =>
 	createdAt &&
 	/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(createdAt) &&
 	!/Z|[+-]\d{2}:\d{2}$/.test(createdAt)

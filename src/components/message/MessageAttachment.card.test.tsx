@@ -21,6 +21,16 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../resources/scripts/endpoints', () => ({
 	apiUrl: 'https://api.test'
 }));
+// Authenticated media (#1487): homeserver media is fetched with the Matrix
+// token and handed on as an object URL. These tests are about the card, not
+// about the fetch, so the resolved URL is stubbed; the fetch itself is pinned
+// in matrixAuthenticatedMedia.test.ts and
+// MessageAttachment.authenticatedMedia.test.tsx.
+vi.mock('../../utils/matrixAuthenticatedMedia', () => ({
+	fetchAuthenticatedMatrixMedia: vi.fn(),
+	useAuthenticatedMatrixMediaUrl: (mxcUrl?: string | null) =>
+		mxcUrl ? `blob:${mxcUrl.replace('mxc://hs/', '')}` : null
+}));
 vi.mock('../../globalState', () => {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const react = require('react');
@@ -34,14 +44,16 @@ vi.mock('../../globalState', () => {
 
 const pdfAttachment = {
 	title: 'report.pdf',
-	downloadUrl: '/_matrix/media/r0/download/hs/media-1',
+	downloadUrl: '',
+	mxcUrl: 'mxc://hs/media-1',
 	type: 'file',
 	size: 1200
 } as never;
 
 const imageAttachment = {
 	title: 'photo.png',
-	downloadUrl: '/_matrix/media/r0/download/hs/media-2',
+	downloadUrl: '',
+	mxcUrl: 'mxc://hs/media-2',
 	type: 'image',
 	size: 12,
 	width: 120,

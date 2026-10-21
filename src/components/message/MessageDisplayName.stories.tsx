@@ -1,4 +1,6 @@
+import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, waitFor, within } from 'storybook/test';
 
 import { MessageDisplayName } from './MessageDisplayName';
 import {
@@ -73,13 +75,67 @@ export const AdviceSeekerUsernameFallback: Story = {
 	}
 };
 
-export const Consultant: Story = {
-	name: 'Counsellor — first + last name',
+/**
+ * The case the identity leak used to get wrong (#1486).
+ *
+ * The counsellor has both a published display name and a real name on file.
+ * ADR-002 §2 says the published identity is the display name — the bubble used
+ * to check `firstName`/`lastName` first and name the counsellor to the advice
+ * seeker instead. The header must read "sanftes Alpaka Kim", never "Karina P".
+ */
+export const ConsultantDisplayNameWinsOverRealName: Story = {
+	name: 'Counsellor — display name wins over real name',
 	args: {
 		type: 'consultant',
+		isUser: false,
 		username: 'karina.p@oriso.invalid',
+		displayName: 'sanftes Alpaka Kim',
+		firstName: 'Karina',
+		lastName: 'P',
+		subtitle: '54222 Caritas Mainz'
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Display name and real name are both available. The published display name wins; the real name must not appear. See #1486.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByText('sanftes Alpaka Kim')
+		).toBeInTheDocument();
+		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+	}
+};
+
+/**
+ * No published display name: the header falls back to the identity anchor —
+ * the User-ID the chat header and the session list already show — and still
+ * not to the real name (#1486).
+ */
+export const ConsultantWithoutDisplayName: Story = {
+	name: 'Counsellor — no display name (identity anchor, never the real name)',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		username: 'karina.p@oriso.invalid',
+		displayName: undefined,
 		firstName: 'Karina',
 		lastName: 'P'
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'With the display name cleared the counsellor is shown under their User-ID, the same name the chat header and the session list resolve. The real name stays out of the thread. See #1486.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+		await expect(canvasElement.textContent).toContain('karina p');
 	}
 };
 
@@ -203,4 +259,56 @@ export const ConsultantLongAgencyMobile: Story = {
 		}
 	},
 	globals: phone375Globals
+};
+
+/**
+ * The name and the counselling centre inside the REAL `messageItem__header`
+ * flex row. The stories above render them in the bare shell, where they stack
+ * by accident; in the app the row put them side by side (name column squeezed
+ * to three lines, centre beside it). Figma 783-19818: name first, centre and
+ * house icon underneath.
+ */
+export const CounsellorNameAboveCentreInRealHeader: Story = {
+	name: 'Counsellor — name above centre inside the real header row',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		displayName: 'maggie simpson at trail ist',
+		subtitle: '13055 Advice center Lichteberg'
+	},
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'Regression for the side-by-side name and centre seen on Dev at 390px. The centre must sit under the name, left-aligned with it, with the house icon in front.'
+			}
+		}
+	},
+	globals: phone390Globals,
+	render: (args) => (
+		<div className="messageItem messageItem--left">
+			<div className="messageItem__header">
+				<MessageDisplayName {...args} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const name = await waitFor(() => {
+			const el = canvasElement.querySelector('.messageItem__username');
+			expect(el).not.toBeNull();
+			return el as HTMLElement;
+		});
+		const centre = canvasElement.querySelector(
+			'.messageItem__usernameSubtitle'
+		) as HTMLElement;
+		const nameBox = name.getBoundingClientRect();
+		const centreBox = centre.getBoundingClientRect();
+		await expect(centreBox.top).toBeGreaterThanOrEqual(nameBox.bottom - 1);
+		await expect(
+			Math.abs(centreBox.left - nameBox.left)
+		).toBeLessThanOrEqual(1);
+		await expect(
+			centre.querySelector('[data-testid="agency-icon"]')
+		).not.toBeNull();
+	}
 };

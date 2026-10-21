@@ -34,7 +34,10 @@ const createClientService = () => {
 			listeners.add(listener);
 			return () => listeners.delete(listener);
 		},
-		sync: (state: string) => listeners.forEach((l) => l(state))
+		sync: (state: string) => listeners.forEach((l) => l(state)),
+		holdTokenRefreshDuring: vi.fn(<T,>(operation: () => Promise<T>) =>
+			operation()
+		)
 	};
 };
 
@@ -71,6 +74,17 @@ describe('useAuthenticatedChatRecovery', () => {
 		service.sync('PREPARED');
 
 		expect(startAuthenticatedChatRecovery).toHaveBeenCalledOnce();
+	});
+
+	it('runs recovery inside the service’s token-refresh hold', async () => {
+		const service = createClientService();
+
+		renderHook(() => useAuthenticatedChatRecovery(service as any, settled));
+		service.sync('PREPARED');
+		const hold = startAuthenticatedChatRecovery.mock.calls[0][4];
+		await hold(async () => 'ran');
+
+		expect(service.holdTokenRefreshDuring).toHaveBeenCalledOnce();
 	});
 
 	it('drops the handed-off password for an anonymous session', () => {

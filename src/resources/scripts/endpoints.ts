@@ -16,6 +16,8 @@ const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
 const keycloakOrigin = getKeycloakOrigin(apiUrl);
 
 export const endpoints = {
+	accountInactivityActivity:
+		userServiceOrigin + '/service/users/account-inactivity/activity',
 	accountInvite: (token: string) =>
 		userServiceOrigin +
 		`/service/users/account-invites/${encodeURIComponent(token)}`,
@@ -90,6 +92,9 @@ export const endpoints = {
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
+	contactSheetEmail: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/contact-sheet-email`,
 	// logstash intake was retired; client crash reports now go to UserService's
 	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
 	error: userServiceOrigin + '/service/error-reports',
@@ -112,6 +117,7 @@ export const endpoints = {
 	passwordResetConfirm:
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
+	matrixCallState: userServiceOrigin + '/service/matrix/calls/state',
 	matrixSyncRegister: (sessionId: number) =>
 		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {

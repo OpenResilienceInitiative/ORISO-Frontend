@@ -91,7 +91,7 @@ $inputSpacing: 32px;
 	 * row, the action pinned to the right edge as a filled icon button.
 	 */
 	&__languageBar {
-		align-items: flex-start;
+		align-items: center;
 		display: flex;
 		gap: $grid-base;
 		justify-content: space-between;
@@ -113,6 +113,14 @@ $inputSpacing: 32px;
 		height: 48px;
 		justify-content: center;
 		padding: 0;
+
+		/*
+		 * #1499: without its own positioning context the 40x32 surface below
+		 * resolved against the nearest positioned ancestor outside the scroll
+		 * area, so it floated over the welcome field and moved on scroll. The
+		 * button owns it now and centres it in the 48px hit area.
+		 */
+		position: relative;
 		width: 48px;
 
 		&::before {
@@ -120,7 +128,9 @@ $inputSpacing: 32px;
 			border-radius: 8px;
 			content: '';
 			height: 32px;
+			left: 4px;
 			position: absolute;
+			top: 8px;
 			width: 40px;
 		}
 

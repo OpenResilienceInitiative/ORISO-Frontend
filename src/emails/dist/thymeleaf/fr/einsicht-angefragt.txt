@@ -1,0 +1,23 @@
+Une demande concernant votre accompagnement
+===========================================
+
+Un autre professionnel de votre service de conseil demande votre consentement pour consulter temporairement votre conversation.
+
+Examinez la demande dans l’espace protégé. La personne qui vous accompagne actuellement reste responsable de votre suivi.
+
+Examiner la demande:
+[[${requestUrl}]]
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${platformName}]] est un service proposé par [[${orgName}]].
+
+Protection des données: [[${privacyUrl}]]
+Mentions légales: [[${imprintUrl}]]
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

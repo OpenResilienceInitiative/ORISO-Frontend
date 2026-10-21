@@ -5,10 +5,9 @@ import IconButton from '@mui/material/IconButton';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { translateWithFallback } from '../../../utils/translationFallback';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
-import { twoDigits } from './waitingClockDigits';
+import { FACE_MAX, faceDigitCount, faceDigits } from './waitingClockDigits';
 import './waitingAreaCountdown.styles';
 
 /** ORISO design palette for the waiting box, resolved through the M3 tokens. */
@@ -16,6 +15,11 @@ const RED = 'var(--m3-primary-container, #cc1e1c)';
 const DARK = 'var(--m3-secondary, #374151)';
 const MUTED = 'var(--m3-on-surface-variant, #444748)';
 const INK = 'var(--m3-on-surface, #1a1c1e)';
+/**
+ * The pale brand tint the overdue clock faces carry — kept in step with
+ * `$clock-face-tint-top` in waitingAreaCountdown.styles.scss (#1499).
+ */
+const TINT = 'var(--m3-primary-fixed, #ffdad5)';
 const PINK = 'var(--m3-primary-fixed-dim, #ffb4aa)';
 
 /** Discomfort grows one emoji per waiting minute (design: emojiStepSec 60). */
@@ -87,7 +91,6 @@ const clockGeometry = (size: number, tight: boolean, compact = false) => {
 		: Math.max(10, Math.min(13, Math.round(size * 0.27)));
 	const labelH = labelFont + (compact ? 2 : 8);
 	const digitW = size * 4 + cellGap * 3;
-	const groupW = 2 * digitW + digitGap;
 	const groupH = size * 6 + cellGap * 5 + labelH;
 	return {
 		cellGap,
@@ -96,39 +99,171 @@ const clockGeometry = (size: number, tight: boolean, compact = false) => {
 		labelFont,
 		labelH,
 		digitW,
-		groupW,
 		groupH
 	};
 };
 
-/** Width the overdue "+" and the flex gaps around it take from the two groups. */
+type ClockGeometry = ReturnType<typeof clockGeometry>;
+
+/**
+ * Width of one number group. It is not a constant of the geometry: a group
+ * showing 140 minutes is three digit cells wide, one showing 7 is two (#1499).
+ * Everything that reserves room for a group has to ask for its digit count,
+ * otherwise the budget and the rendered row disagree — which is exactly how
+ * the seconds group ended up on a second row.
+ */
+export const groupWidth = (geometry: ClockGeometry, digits: number) =>
+	digits * geometry.digitW + (digits - 1) * geometry.digitGap;
+
+/**
+ * The column the overdue "+" occupies, pinned in `waitingAreaCountdown.styles`
+ * as a hard `width` on `.waitingClock__plus`.
+ *
+ * It used to be a guess at how wide the glyph renders, and the guess was wrong
+ * in both directions: the 34 px phone "+" measures 22 px (#1499 round 1, fixed
+ * for 390) and the 64 px desktop one measures 41.8 px against a 28 px budget.
+ * At 1440 that put the row at 809.8 px inside an 800 px column, the seconds
+ * group wrapped and painted over the caption below the fixed-height flip card.
+ * Pinning the box instead of measuring the glyph makes the two agree by
+ * construction, in any font.
+ */
+export const PLUS_BOX = { compact: 24, wide: 44 };
+const PLUS_GAP = { compact: 10, wide: 28 };
+
+/** Width the "+" and the flex gaps around it take from the number groups. */
 const overdueSignWidth = (compact: boolean) =>
-	compact ? 20 + 2 * 10 : 28 + 2 * 28;
+	compact
+		? PLUS_BOX.compact + 2 * PLUS_GAP.compact
+		: PLUS_BOX.wide + 2 * PLUS_GAP.wide;
+
+/** What the layout has to fit into: how the clock is drawn and what it shows. */
+export interface ClockShape {
+	/** The counting-up state: "+", minutes, seconds on one row. */
+	overdue: boolean;
+	/** One continuous lattice instead of a little air between the groups. */
+	tight: boolean;
+	/** Phone geometry (below `$fromMedium`). */
+	compact: boolean;
+	/** Digit count of each rendered group, left to right. */
+	digits: number[];
+}
+
+/**
+ * The width the clock really occupies at mini-clock diameter `size`.
+ *
+ * Single source of truth: `fitClockSize` searches with it, and the layout
+ * tests assert against it. The wrap in #1499 was exactly the gap between a
+ * budget that lived here and the pixels the browser actually laid out.
+ */
+export const clockRowWidth = (
+	size: number,
+	{ overdue, tight, compact, digits }: ClockShape
+) => {
+	const g = clockGeometry(size, tight, compact);
+	return overdue
+		? digits.reduce((sum, n) => sum + groupWidth(g, n), 0) +
+				overdueSignWidth(compact)
+		: // The future 2x2 grid sizes both of its columns by the widest group,
+			// because `grid-template-columns: repeat(2, auto)` does the same.
+			2 * groupWidth(g, Math.max(...digits)) + g.groupGap;
+};
+
+/** The height the clock occupies at mini-clock diameter `size`. */
+export const clockRowHeight = (size: number, shape: ClockShape) => {
+	const g = clockGeometry(size, shape.tight, shape.compact);
+	return shape.overdue ? g.groupH : 2 * g.groupH + g.groupGap;
+};
 
 /**
  * The largest mini-clock that still lets the whole clock fit the given box.
  * Walks down from the maximum; the first size that fits wins. Width alone
  * decides when no height is given.
  */
-const fitClockSize = (
+export const fitClockSize = (
 	width: number,
 	height: number | undefined,
-	overdue: boolean,
-	tight: boolean,
-	compact: boolean
+	shape: ClockShape,
+	// A fixed clockSize searches down from itself, not from the fit maximum.
+	maxSize: number = FIT_MAX_SIZE
 ) => {
-	for (let size = FIT_MAX_SIZE; size >= FIT_MIN_SIZE; size--) {
-		const g = clockGeometry(size, tight, compact);
-		const w = overdue
-			? 2 * g.groupW + overdueSignWidth(compact)
-			: 2 * g.groupW + g.groupGap;
-		const h = overdue ? g.groupH : 2 * g.groupH + g.groupGap;
-		if (w <= width && (height === undefined || h <= height)) {
+	for (let size = maxSize; size >= FIT_MIN_SIZE; size--) {
+		if (
+			clockRowWidth(size, shape) <= width &&
+			(height === undefined || clockRowHeight(size, shape) <= height)
+		) {
 			return size;
 		}
 	}
 	return FIT_MIN_SIZE;
 };
+
+/**
+ * "Animation abschalten" — the waiting room's motion switch. Exported so a
+ * screen that hides the built-in one (`hideMotionToggle`) can place the same
+ * control elsewhere, e.g. in its footer next to the main action (#1499).
+ */
+export const WaitingAreaMotionToggle = ({
+	label,
+	checked,
+	disabled = false,
+	onChange
+}: {
+	label: string;
+	checked: boolean;
+	disabled?: boolean;
+	onChange: (checked: boolean) => void;
+}) => (
+	<label
+		style={{
+			display: 'flex',
+			alignItems: 'center',
+			gap: 10,
+			fontSize: 12,
+			color: MUTED,
+			cursor: disabled ? 'default' : 'pointer',
+			opacity: disabled ? 0.6 : 1
+		}}
+	>
+		{label}
+		<button
+			type="button"
+			role="switch"
+			aria-checked={checked}
+			aria-label={label}
+			disabled={disabled}
+			onClick={() => onChange(!checked)}
+			style={{
+				width: 46,
+				height: 26,
+				borderRadius: 13,
+				border: checked
+					? `2px solid ${RED}`
+					: '2px solid var(--m3-outline, #747878)',
+				background: checked
+					? RED
+					: 'var(--m3-surface-container-high, #eae7e8)',
+				position: 'relative',
+				cursor: disabled ? 'default' : 'pointer',
+				padding: 0,
+				transition: 'all .25s',
+				flexShrink: 0
+			}}
+		>
+			<span
+				style={{
+					position: 'absolute',
+					top: checked ? 1 : 3,
+					left: checked ? 21 : 3,
+					width: checked ? 20 : 16,
+					height: checked ? 20 : 16,
+					borderRadius: '50%',
+					background: checked ? '#fff' : MUTED,
+					transition: 'all .25s'
+				}}
+			/>
+		</button>
+	</label>
+);
 
 export interface WaitingAreaCountdownProps {
 	/** When the group chat is scheduled to start. */
@@ -197,6 +332,12 @@ export interface WaitingAreaCountdownProps {
 	 * set, the parent owns the switch so siblings (rules) can pause too (#1293).
 	 */
 	animationOff?: boolean;
+	/**
+	 * Who is waiting. `moderator` is the counsellor who opens the room: she
+	 * gets her own headline and subline instead of the participants' "we'll be
+	 * with you in a moment" (#1499). Default `participant`.
+	 */
+	audience?: 'participant' | 'moderator';
 	onAnimationOffChange?: (off: boolean) => void;
 	/**
 	 * Vertical gap between headline, clock and the rest, in px. Default 26.
@@ -243,6 +384,7 @@ export const WaitingAreaCountdown = ({
 	labelsOutside = false,
 	hideMotionToggle = false,
 	animationOff: animationOffProp,
+	audience = 'participant',
 	onAnimationOffChange,
 	gap = 26,
 	nowMs,
@@ -250,12 +392,12 @@ export const WaitingAreaCountdown = ({
 }: WaitingAreaCountdownProps) => {
 	const { t: translate } = useTranslation();
 	const tr = React.useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(
-				translate,
-				`groupChat.join.waitingArea.countdown.${key}`,
-				fallback,
-				options
+		(key: string, options?: Record<string, unknown>) =>
+			String(
+				translate(
+					`groupChat.join.waitingArea.countdown.${key}`,
+					options
+				)
 			),
 		[translate]
 	);
@@ -290,10 +432,13 @@ export const WaitingAreaCountdown = ({
 	const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(
 		null
 	);
-	// Measured for `clockSize="fit"` — and on a phone also for a fixed
-	// `clockSize`, where it is only ever used to clamp the given number down to
-	// what the column can hold. A hard-coded 30 px mini-clock is 522 px of
-	// digits, which no 375 pt screen has.
+	// Measured for `clockSize="fit"`, and for a fixed `clockSize` too, where it
+	// only ever clamps the given number down to what the column can hold. A
+	// hard-coded 30 px mini-clock is 522 px of digits, which no 375 pt screen
+	// has — and 678 px once the minutes group needs a third digit, which the
+	// counsellor's 768 px waiting box does not have either (#1499). The clamp
+	// used to be a phone-only rule; a fixed number is never right for every
+	// content, not just for every screen.
 	React.useEffect(() => {
 		if (!rootRef.current) {
 			return undefined;
@@ -318,30 +463,6 @@ export const WaitingAreaCountdown = ({
 	const remaining = (plannedStart.getTime() - tick) / 1000;
 	const isOverdue = remaining <= 0;
 	const tight = spacing === 'tight';
-	const size =
-		clockSize === 'fit'
-			? measuredWidth === null
-				? CLOCK_SIZE
-				: fitClockSize(
-						measuredWidth,
-						fitHeight,
-						isOverdue,
-						tight,
-						compact
-					)
-			: compact && measuredWidth !== null
-				? Math.min(
-						clockSize,
-						fitClockSize(
-							measuredWidth,
-							undefined,
-							isOverdue,
-							tight,
-							compact
-						)
-					)
-				: clockSize;
-	const geo = clockGeometry(size, tight, compact);
 	const rem = Math.max(0, remaining);
 	const d = Math.floor(rem / 86400);
 	const h = Math.floor(rem / 3600) % 24;
@@ -351,6 +472,28 @@ export const WaitingAreaCountdown = ({
 	// Total elapsed minutes — an hour-late chat must read 60+, never wrap to 0.
 	const oM = Math.floor(elapsed / 60);
 	const oS = Math.floor(elapsed) % 60;
+	/* The numbers come before the size, not after it: how wide the clock is
+	   depends on how many digit cells the values need, and only the values
+	   know that. Hours, minutes and seconds are always two — days and overdue
+	   minutes are the two that can reach three (#1499). */
+	const faceWidths = isOverdue
+		? [faceDigitCount(oM), faceDigitCount(oS)]
+		: [faceDigitCount(d), 2];
+	const shape: ClockShape = {
+		overdue: isOverdue,
+		tight,
+		compact,
+		digits: faceWidths
+	};
+	const size =
+		clockSize === 'fit'
+			? measuredWidth === null
+				? CLOCK_SIZE
+				: fitClockSize(measuredWidth, fitHeight, shape)
+			: measuredWidth !== null
+				? fitClockSize(measuredWidth, undefined, shape, clockSize)
+				: clockSize;
+	const geo = clockGeometry(size, tight, compact);
 	const overdueEmoji =
 		OVERDUE_EMOJIS[
 			Math.min(
@@ -367,21 +510,26 @@ export const WaitingAreaCountdown = ({
 			return undefined;
 		}
 		const t = window.setInterval(() => {
-			setPop((current) =>
-				current
-					? null
-					: {
-							group: Math.random() < 0.5 ? 'om' : 'os',
-							digit: Math.floor(Math.random() * 2),
-							cell: Math.floor(Math.random() * 24),
-							emoji: overdueEmoji
-						}
-			);
+			setPop((current) => {
+				if (current) {
+					return null;
+				}
+				const group = Math.random() < 0.5 ? 'om' : 'os';
+				// Three-digit groups have a third cell to pop in, too.
+				const cells = group === 'om' ? faceWidths[0] : faceWidths[1];
+				return {
+					group,
+					digit: Math.floor(Math.random() * cells),
+					cell: Math.floor(Math.random() * 24),
+					emoji: overdueEmoji
+				};
+			});
 		}, POP_INTERVAL_MS);
 		return () => window.clearInterval(t);
-	}, [isOverdue, motionless, overdueEmoji]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOverdue, motionless, overdueEmoji, faceWidths[0], faceWidths[1]]);
 
-	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
+	const greetingLabel = tr('greetingLabel');
 
 	/**
 	 * The back of the card, page by page: the greeting first, then one page per
@@ -404,11 +552,7 @@ export const WaitingAreaCountdown = ({
 			list.push({
 				key: `rule-${index}`,
 				greeting: false,
-				label: tr(
-					'netiquetteLabel',
-					`Netiquette · Regel ${index + 1}`,
-					{ no: index + 1 }
-				),
+				label: tr('netiquetteLabel', { no: index + 1 }),
 				text: rule
 			})
 		);
@@ -426,91 +570,50 @@ export const WaitingAreaCountdown = ({
 	const closeCard = () => setCardOpen(false);
 	const flipped = cardOpen && canFlip;
 
-	const toggleLabel = tr('toggleLabel', 'Animation abschalten');
+	const toggleLabel = tr('toggleLabel');
 	const toggle = (
-		<label
-			style={{
-				display: 'flex',
-				alignItems: 'center',
-				gap: 10,
-				fontSize: 12,
-				color: MUTED,
-				cursor: forcedMotionless ? 'default' : 'pointer',
-				opacity: forcedMotionless ? 0.6 : 1
-			}}
-		>
-			{toggleLabel}
-			<button
-				type="button"
-				role="switch"
-				aria-checked={motionless}
-				aria-label={toggleLabel}
-				disabled={forcedMotionless}
-				onClick={() => setAnimOff(!animOff)}
-				style={{
-					width: 46,
-					height: 26,
-					borderRadius: 13,
-					border: motionless
-						? `2px solid ${RED}`
-						: '2px solid var(--m3-outline, #747878)',
-					background: motionless
-						? RED
-						: 'var(--m3-surface-container-high, #eae7e8)',
-					position: 'relative',
-					cursor: forcedMotionless ? 'default' : 'pointer',
-					padding: 0,
-					transition: 'all .25s',
-					flexShrink: 0
-				}}
-			>
-				<span
-					style={{
-						position: 'absolute',
-						top: motionless ? 1 : 3,
-						left: motionless ? 21 : 3,
-						width: motionless ? 20 : 16,
-						height: motionless ? 20 : 16,
-						borderRadius: '50%',
-						background: motionless ? '#fff' : MUTED,
-						transition: 'all .25s'
-					}}
-				/>
-			</button>
-		</label>
+		<WaitingAreaMotionToggle
+			label={toggleLabel}
+			checked={motionless}
+			disabled={forcedMotionless}
+			onChange={setAnimOff}
+		/>
 	);
 
 	const eta =
 		d > 0
 			? d === 1
-				? tr('etaDay', 'in einem Tag')
-				: tr('etaDays', `in ${d} Tagen`, { count: d })
+				? tr('etaDay')
+				: tr('etaDays', { count: d })
 			: h > 0
 				? h === 1
-					? tr('etaHour', 'in einer Stunde')
-					: tr('etaHours', `in ${h} Stunden`, { count: h })
+					? tr('etaHour')
+					: tr('etaHours', { count: h })
 				: m > 0
 					? m === 1
-						? tr('etaMinute', 'in einer Minute')
-						: tr('etaMinutes', `in ${m} Minuten`, { count: m })
-					: tr('etaSoon', 'gleich');
-	const headline = isOverdue
-		? tr('overdueHeadline', 'Wir sind gleich für dich da.')
-		: tr('headline', `Dein Gruppen-Chat beginnt ${eta}.`, { eta });
+						? tr('etaMinute')
+						: tr('etaMinutes', { count: m })
+					: tr('etaSoon');
+	const moderator = audience === 'moderator';
+	const headline = moderator
+		? isOverdue
+			? tr('moderatorOverdueHeadline')
+			: tr('moderatorHeadline', {
+					eta
+				})
+		: isOverdue
+			? tr('overdueHeadline')
+			: tr('headline', { eta });
 	// Frank, 2026-09-07: "statt zu sagen hey dieser Bindestrich ist quasi,
 	// kannst auch ein Komma machen" — and nobody clicks "a number" any more,
 	// there is one card now. Short enough to hold one line at 375 px.
-	const subtitle = isOverdue
-		? tr(
-				'overdueSubtitle',
-				'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
-			)
-		: canFlip
-			? tr(
-					'subtitleCard',
-					'Uhr antippen, dahinter Begrüßung und Netiquette.'
-				)
-			: '';
+	const subtitle = moderator
+		? tr('moderatorSubtitle')
+		: isOverdue
+			? tr('overdueSubtitle')
+			: canFlip
+				? tr('subtitleCard')
+				: '';
 	// The still view keeps the clock's footprint, so the row under it and the
 	// bar never move when someone flips the switch (Frank, 2026-09-04: "er
 	// sollte auf jeden Fall nicht springen").
@@ -523,7 +626,7 @@ export const WaitingAreaCountdown = ({
 				{
 					unit: {
 						key: 'om',
-						label: tr('unitMinutes', 'Minuten'),
+						label: tr('unitMinutes'),
 						value: oM
 					},
 					tint: true
@@ -531,32 +634,32 @@ export const WaitingAreaCountdown = ({
 				{
 					unit: {
 						key: 'os',
-						label: tr('unitSeconds', 'Sekunden'),
+						label: tr('unitSeconds'),
 						value: oS
 					},
 					tint: true
 				}
 			]
 		: [
-				{ unit: { key: 'd', label: tr('unitDays', 'Tage'), value: d } },
+				{ unit: { key: 'd', label: tr('unitDays'), value: d } },
 				{
 					unit: {
 						key: 'h',
-						label: tr('unitHours', 'Stunden'),
+						label: tr('unitHours'),
 						value: h
 					}
 				},
 				{
 					unit: {
 						key: 'm',
-						label: tr('unitMinutes', 'Minuten'),
+						label: tr('unitMinutes'),
 						value: m
 					}
 				},
 				{
 					unit: {
 						key: 's',
-						label: tr('unitSeconds', 'Sekunden'),
+						label: tr('unitSeconds'),
 						value: s
 					}
 				}
@@ -565,16 +668,8 @@ export const WaitingAreaCountdown = ({
 	// "unit: value" phrasing stays grammatical for every count in every locale
 	// (no plural agreement needed).
 	const timerAria = isOverdue
-		? tr(
-				'timerAriaOverdue',
-				`Seit dem geplanten Beginn — Minuten: ${oM}, Sekunden: ${oS}`,
-				{ minutes: oM, seconds: oS }
-			)
-		: tr(
-				'timerAriaFuture',
-				`Bis zum Beginn — Tage: ${d}, Stunden: ${h}, Minuten: ${m}, Sekunden: ${s}`,
-				{ days: d, hours: h, minutes: m, seconds: s }
-			);
+		? tr('timerAriaOverdue', { minutes: oM, seconds: oS })
+		: tr('timerAriaFuture', { days: d, hours: h, minutes: m, seconds: s });
 
 	const plusSign = (
 		<div aria-hidden="true" className="waitingClock__plus">
@@ -584,12 +679,18 @@ export const WaitingAreaCountdown = ({
 
 	const overdueCaption = isOverdue && (
 		<div
+			// The clock must never be drawn over this line; the class is how
+			// the layout stories find it in any language (#1499).
+			className="waitingClock__overdueCaption"
 			style={{
 				alignSelf: 'center',
 				display: 'flex',
 				alignItems: 'center',
 				gap: 10,
-				background: '#fdeded',
+				// The same pale brand tint the overdue mini-clocks carry, so
+				// the note belongs to the clock in every Träger theme instead
+				// of staying Caritas pink under a blue one (#1499).
+				background: TINT,
 				borderRadius: 16,
 				padding: '10px 18px',
 				fontSize: 13,
@@ -599,7 +700,7 @@ export const WaitingAreaCountdown = ({
 			<span aria-hidden="true" style={{ fontSize: 20 }}>
 				{overdueEmoji}
 			</span>
-			{tr('overdueCaption', 'Das Warten wird langsam etwas unangenehm …')}
+			{tr('overdueCaption')}
 		</div>
 	);
 
@@ -634,15 +735,38 @@ export const WaitingAreaCountdown = ({
 			<div
 				key={unit.key}
 				style={{
-					width: geo.groupW,
+					width: groupWidth(geo, faceDigitCount(unit.value)),
 					height: geo.groupH,
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					justifyContent: 'center'
+					justifyContent: 'center',
+					// The fit already reserved this width; letting the flex row
+					// shrink it would squash the lattice instead (#1499).
+					flexShrink: 0,
+					position: 'relative'
 				}}
 			>
 				{options.labelAbove && label}
+				{unit.value > FACE_MAX && (
+					// Three cells stop at 999; the "+" says the face is a lower bound.
+					<span
+						aria-hidden="true"
+						className="waitingClock__faceOverflow"
+						style={{
+							position: 'absolute',
+							top: 0,
+							right: 0,
+							transform: 'translateX(100%)',
+							fontSize: geo.labelFont * 1.4,
+							fontWeight: 700,
+							lineHeight: 1,
+							color: RED
+						}}
+					>
+						+
+					</span>
+				)}
 				<ClockDigits
 					value={unit.value}
 					size={size}
@@ -687,7 +811,7 @@ export const WaitingAreaCountdown = ({
 		</div>
 	);
 
-	const backToClock = tr('cardBack', 'Zurück zur Uhr');
+	const backToClock = tr('cardBack');
 	// The back is as wide as the clock it replaces, so its type grows with the
 	// clock: 15 px on a phone, up to 19 px on a desktop block.
 	/* The card is as wide as the clock it replaces, so on a 1440 desktop it is
@@ -749,7 +873,7 @@ export const WaitingAreaCountdown = ({
 				<div className="waitingClock__backNav">
 					<IconButton
 						size="small"
-						aria-label={tr('cardPrev', 'Vorherige Seite')}
+						aria-label={tr('cardPrev')}
 						disabled={page === 0}
 						tabIndex={flipped ? 0 : -1}
 						onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -758,14 +882,14 @@ export const WaitingAreaCountdown = ({
 						<ChevronLeftRoundedIcon />
 					</IconButton>
 					<span className="waitingClock__backPage">
-						{tr('cardPage', `${page + 1} von ${pageCount}`, {
+						{tr('cardPage', {
 							current: page + 1,
 							total: pageCount
 						})}
 					</span>
 					<IconButton
 						size="small"
-						aria-label={tr('cardNext', 'Nächste Seite')}
+						aria-label={tr('cardNext')}
 						disabled={page >= pageCount - 1}
 						tabIndex={flipped ? 0 : -1}
 						onClick={() =>
@@ -813,10 +937,7 @@ export const WaitingAreaCountdown = ({
 						role="button"
 						tabIndex={flipped ? -1 : 0}
 						aria-pressed={flipped}
-						aria-label={tr(
-							'cardOpenAria',
-							'Uhr umdrehen, Begrüßung und Netiquette lesen'
-						)}
+						aria-label={tr('cardOpenAria')}
 						onClick={openCard}
 						onKeyDown={(event) => {
 							if (event.key === 'Enter' || event.key === ' ') {
@@ -857,7 +978,17 @@ export const WaitingAreaCountdown = ({
 			}`}
 		>
 			<span className="waitingClock__stillValue">
-				{twoDigits(unit.value).join('')}
+				{faceDigits(unit.value).join('')}
+				{unit.value > FACE_MAX && (
+					// Same lower-bound cue as the moving face; the timer label has the value.
+					<span
+						aria-hidden="true"
+						className="waitingClock__faceOverflow"
+						style={{ color: RED }}
+					>
+						+
+					</span>
+				)}
 			</span>
 			<span className="waitingClock__stillLabel">{unit.label}</span>
 		</div>
@@ -982,10 +1113,7 @@ export const WaitingAreaCountdown = ({
 									onClick={openCard}
 									className="waitingClock__stillOpen"
 								>
-									{tr(
-										'cardOpenAria',
-										'Begrüßung und Netiquette anzeigen'
-									)}
+									{tr('cardOpenAria')}
 								</Button>
 							)}
 						</div>

@@ -115,6 +115,47 @@ assignIfPresent(
 	'REACT_APP_PLATFORM_VERSION'
 );
 
+// ORISO-Helm#368: the app never guesses a service URL, so a missing one must
+// stop the container here, naming the variable, instead of shipping a
+// config.js that only fails in the browser.
+const REQUIRED = [
+	{ key: 'REACT_APP_API_URL', url: true },
+	{ key: 'REACT_APP_MATRIX_HOMESERVER_URL', url: true },
+	{ key: 'REACT_APP_ELEMENT_CALL_BASE_URL', url: true },
+	{ key: 'REACT_APP_LIVEKIT_WS_URL', url: true },
+	{ key: 'REACT_APP_KEYCLOAK_REALM', url: false }
+];
+
+const isAbsoluteUrl = (value) => {
+	try {
+		const parsed = new URL(value);
+		return /^(https?|wss?):$/.test(parsed.protocol) && Boolean(parsed.hostname);
+	} catch {
+		return false;
+	}
+};
+
+const problems = REQUIRED.flatMap(({ key, url }) => {
+	const value = String(config[key] ?? '').trim();
+	if (!value) {
+		return [`${key} is not set (or empty)`];
+	}
+	if (url && !isAbsoluteUrl(value)) {
+		return [`${key} is not an absolute URL: ${JSON.stringify(value)}`];
+	}
+	return [];
+});
+
+if (problems.length > 0) {
+	for (const problem of problems) {
+		console.error(`[docker-entrypoint] ${problem}`);
+	}
+	console.error(
+		'[docker-entrypoint] Refusing to start: set the variables above (Helm frontend-configmap).'
+	);
+	process.exit(1);
+}
+
 const target = process.env.RUNTIME_CONFIG_FILE;
 fs.mkdirSync(path.dirname(target), { recursive: true });
 fs.writeFileSync(

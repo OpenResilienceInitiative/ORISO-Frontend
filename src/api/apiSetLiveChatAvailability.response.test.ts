@@ -31,6 +31,29 @@ describe('live-chat heartbeat response parsing', () => {
 		expect(response.json).toHaveBeenCalledOnce();
 	});
 
+	// #1485: a refused heartbeat must be distinguishable from a server hiccup,
+	// otherwise the caller cannot tell "the server stopped counting you" from
+	// "try again in a moment".
+	it('rejects a refused heartbeat as FORBIDDEN, not as a generic failure', async () => {
+		vi.stubGlobal(
+			'Request',
+			class {
+				constructor(
+					public url: string,
+					public init?: RequestInit
+				) {}
+			}
+		);
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({ status: 403 } as Response)
+		);
+
+		await expect(apiHeartbeatLiveChatAvailability()).rejects.toThrow(
+			FETCH_ERRORS.FORBIDDEN
+		);
+	});
+
 	it('rejects an availability write failure for inline recovery', async () => {
 		vi.stubGlobal(
 			'Request',

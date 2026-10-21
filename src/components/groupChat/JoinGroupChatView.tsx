@@ -6,8 +6,10 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
+	NotificationsContext,
 	ActiveSessionContext
 } from '../../globalState';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
@@ -18,7 +20,8 @@ import {
 	GROUP_CHAT_API
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
-import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { logout } from '../logout/logout';
 import { Navigate } from 'react-router-dom';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
@@ -32,31 +35,61 @@ import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { WaitingAreaRules } from './WaitingAreaRules';
-import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
+import {
+	WaitingAreaCountdown,
+	WaitingAreaMotionToggle
+} from './waitingClock/WaitingAreaCountdown';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
-import { translateWithFallback } from '../../utils/translationFallback';
+import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import {
+	getGroupUpcomingDates,
+	getGroupWaitingRoomTopic
+} from './entryRoom/groupWaitingRoomData';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
 	bannedUsers?: string[];
 }
 
+/**
+ * The moderator's clock, sized like the shared waiting room's (Frank,
+ * 2026-10-19: the counter must look like the one behind the link): the content
+ * column's own height minus what sits around the clock in it — the column's
+ * padding, the headline and subline above, the rules line below.
+ */
+const MODERATOR_CLOCK_RESERVE = 180;
+const moderatorClockHeight = (contentHeight: number) =>
+	Math.max(160, contentHeight - MODERATOR_CLOCK_RESERVE);
+
+const useModeratorClockHeight = (content: HTMLElement | null) => {
+	const [height, setHeight] = useState(320);
+	useEffect(() => {
+		if (!content) return;
+		const measure = () =>
+			setHeight(moderatorClockHeight(content.clientHeight));
+		measure();
+		const RO = globalThis.ResizeObserver;
+		if (!RO) return;
+		const observer = new RO(measure);
+		observer.observe(content);
+		return () => observer.disconnect();
+	}, [content]);
+	return height;
+};
+
 export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
 	bannedUsers = []
 }: JoinGroupChatViewProps) => {
 	const { t: translate } = useTranslation(['common', 'consultingTypes']);
-	const tr = useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(translate, key, fallback, options),
-		[translate]
-	);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const notifications = useContext(NotificationsContext);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
@@ -232,7 +265,14 @@ export const JoinGroupChatView = ({
 				: GROUP_CHAT_API.JOIN;
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
-			.catch(() => {
+			.catch((error) => {
+				const notice = getCounsellingDpaNotification(error, translate, {
+					groupJoin: groupChatApiCall === GROUP_CHAT_API.JOIN
+				});
+				if (notice && notifications) {
+					notifications.addNotification(notice);
+					return;
+				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
 			})
@@ -273,10 +313,76 @@ export const JoinGroupChatView = ({
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
+	const prefersReducedMotion = usePrefersReducedMotion();
+	const [content, setContent] = useState<HTMLDivElement | null>(null);
+	const clockHeight = useModeratorClockHeight(content);
+	// The counsellor who opens the room gets her own waiting text (#1499).
+	const canStartChat =
+		hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&
+		!activeSession.item.active;
+	// Calendar action and motion switch sit in the footer next to the main
+	// button, not above and below the clock: every row stacked around the
+	// clock is height the LED clock cannot have (#1499, Frank: the effect only
+	// works when the clock is big — make room before shrinking it).
+	const showCalendar =
+		showCountdown && !!plannedStart && plannedStart.getTime() > Date.now();
 
 	if (redirectToSessionsList) {
 		mobileListView();
 		return <Navigate to={listPath + getSessionListTab()} replace />;
+	}
+
+	const overlays = (
+		<>
+			{requestOverlayVisible && (
+				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
+			)}
+
+			{overlayActive && (
+				<Overlay
+					item={overlayItem}
+					handleOverlay={handleOverlayAction}
+					handleOverlayClose={handleOverlayClose}
+				/>
+			)}
+		</>
+	);
+
+	/* An advice seeker waits in the same room as behind the group's link —
+	   clock, "Mehr erfahren", calendar and "Beitreten" in the bar — only
+	   inside the chat card instead of on the stage (#1219; Frank,
+	   2026-10-16: the room in the app must look like the one behind the
+	   link). The moderator keeps the view below: hers starts the chat. */
+	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+		const item = activeSession.item;
+		return (
+			<div className="session joinChat joinChat--room">
+				<SessionHeaderComponent
+					isJoinGroupChatView={true}
+					bannedUsers={bannedUsers}
+				/>
+				<GroupWaitingRoom
+					embedded
+					topicName={getGroupWaitingRoomTopic(
+						item,
+						userData.dataPrivacyConfirmation
+					)}
+					agencyName={item.assignedAgencies?.[0]?.name}
+					agencyId={item.assignedAgencies?.[0]?.id}
+					plannedStart={plannedStart}
+					upcomingDates={getGroupUpcomingDates(item)}
+					durationMinutes={item.duration}
+					eventId={item.id}
+					welcomeText={authorContent.hintMessage || undefined}
+					rules={groupChatRules}
+					active={Boolean(item.active)}
+					joinBlocked={bannedUsers.includes(userData.userName)}
+					onJoin={handleButtonClick}
+					joinBusy={isRequestInProgress}
+				/>
+				{overlays}
+			</div>
+		);
 	}
 
 	return (
@@ -285,7 +391,10 @@ export const JoinGroupChatView = ({
 				isJoinGroupChatView={true}
 				bannedUsers={bannedUsers}
 			/>
-			<div className="joinChat__content session__content">
+			<div
+				className="joinChat__content session__content"
+				ref={setContent}
+			>
 				{/* The scheduled-chat countdown carries its own headline
 				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
 				    above it just repeats the frame. Only show the standalone
@@ -310,15 +419,15 @@ export const JoinGroupChatView = ({
 							rules={groupChatRules}
 							animationOff={animationOff}
 							onAnimationOffChange={setAnimationOff}
-							calendarSlot={
-								<GroupChatCalendarMenu
-									start={plannedStart}
-									durationMinutes={
-										activeSession.item.duration
-									}
-									eventId={activeSession.item.id}
-								/>
+							audience={
+								canStartChat ? 'moderator' : 'participant'
 							}
+							hideMotionToggle
+							clockSize="fit"
+							fitHeight={clockHeight}
+							spacing="tight"
+							labelsOutside
+							gap={8}
 						/>
 					</div>
 				)}
@@ -326,9 +435,8 @@ export const JoinGroupChatView = ({
 					<WaitingAreaRules
 						rules={groupChatRules}
 						animationOff={animationOff}
-						ariaLabel={tr(
-							'groupChat.join.waitingArea.rulesLabel',
-							'Chat rules'
+						ariaLabel={translate(
+							'groupChat.join.waitingArea.rulesLabel'
 						)}
 					/>
 				)}
@@ -348,24 +456,56 @@ export const JoinGroupChatView = ({
 							)}
 						</p>
 					)}
-				<Button
-					item={buttonItem}
-					buttonHandle={handleButtonClick}
-					disabled={isButtonDisabled}
-				/>
+				<div className="joinChat__actions">
+					{showCalendar && (
+						<div className="joinChat__actionsStart">
+							<GroupChatCalendarMenu
+								start={plannedStart}
+								durationMinutes={activeSession.item.duration}
+								eventId={activeSession.item.id}
+							/>
+						</div>
+					)}
+					<div className="joinChat__actionsMain">
+						{/* The same gate as every waiting room (#1219): brand
+						    colour while it waits instead of a greyed-out
+						    button, and a sweep while the join request runs. */}
+						<HandoverGateButton
+							state={
+								isRequestInProgress
+									? 'entering'
+									: isButtonDisabled
+										? 'preparing'
+										: 'ready'
+							}
+							progress={
+								isButtonDisabled && !isRequestInProgress
+									? 0
+									: undefined
+							}
+							indeterminate={isRequestInProgress}
+							label={buttonItem.label}
+							status=""
+							onEnter={handleButtonClick}
+							testingAttribute="group-join-button"
+						/>
+					</div>
+					{showCountdown && plannedStart && (
+						<div className="joinChat__actionsEnd">
+							<WaitingAreaMotionToggle
+								label={translate(
+									'groupChat.join.waitingArea.countdown.toggleLabel'
+								)}
+								checked={animationOff || prefersReducedMotion}
+								disabled={prefersReducedMotion}
+								onChange={setAnimationOff}
+							/>
+						</div>
+					)}
+				</div>
 			</div>
 
-			{requestOverlayVisible && (
-				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
-			)}
-
-			{overlayActive && (
-				<Overlay
-					item={overlayItem}
-					handleOverlay={handleOverlayAction}
-					handleOverlayClose={handleOverlayClose}
-				/>
-			)}
+			{overlays}
 		</div>
 	);
 };

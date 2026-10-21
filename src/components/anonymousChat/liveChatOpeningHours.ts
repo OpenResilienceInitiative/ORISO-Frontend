@@ -1,7 +1,7 @@
 /**
  * Regular Live-Chat opening hours shown in the "no availability" modal
- * dropdown. `dayKey` is used to look up a translated weekday label while the
- * German name is the fallback. Times are static schedule data.
+ * dropdown. `dayKey` looks up `anonymousChat.noAvailability.weekdays.*`.
+ * Times are static schedule data.
  */
 export const LIVE_CHAT_OPENING_HOURS: Array<{
 	dayKey: string;

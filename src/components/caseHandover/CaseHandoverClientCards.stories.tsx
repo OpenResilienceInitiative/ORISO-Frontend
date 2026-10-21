@@ -1,10 +1,14 @@
+import { CaseHandoverConversation } from './CaseHandoverConversation';
+import { StandingAccessPreferenceStoryFixture } from './standingAccessPreferenceStoryFixture';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import { mockUserData } from '../message/MessageItemComponent.mocks';
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import {
 	CaseHandoverAcceptedCard,
-	CaseHandoverConsentCard,
+	CaseHandoverConsentCard as BareConsentCard,
 	CaseHandoverSystemMessageCard
 } from './CaseHandoverClientCards';
 import { MessageSendFailed } from '../message/MessageSendFailed';
@@ -41,8 +45,51 @@ const Stream = ({
 	compact?: boolean;
 }) => <MessageStoryShell compact={compact}>{children}</MessageStoryShell>;
 
+/** Standalone stories use the same saved future preference host as the real chat. */
+const CaseHandoverConsentCard = (
+	props: React.ComponentProps<typeof BareConsentCard>
+) => {
+	const { t } = useTranslation();
+	const account = React.useMemo(
+		() =>
+			mockUserData({
+				userId: 'asker-case-story',
+				email: 'review@example.invalid',
+				emailNotifications: {
+					emailNotificationsEnabled: true,
+					settings: {
+						newChatMessageNotificationEnabled: true,
+						reassignmentNotificationEnabled: true
+					}
+				}
+			}),
+		[]
+	);
+	return (
+		<UserDataContext.Provider
+			value={{
+				userData: account,
+				setUserData: () => {},
+				reloadUserData: async () => account
+			}}
+		>
+			<StandingAccessPreferenceStoryFixture sessionId={42}>
+				<CaseHandoverConversation
+					{...props}
+					sessionId={42}
+					conversationType="AGENCY_COUNSELLING"
+					error={
+						props.error ? t('caseHandover.error.failed') : undefined
+					}
+				/>
+			</StandingAccessPreferenceStoryFixture>
+		</UserDataContext.Provider>
+	);
+};
+
 const meta: Meta = {
-	title: 'Organisms/CaseHandover/ClientCards',
+	id: 'organisms-casehandover-clientcards',
+	title: 'Chat/System messages/Consent',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
@@ -125,6 +172,7 @@ export const InquiryAcceptedTablet: Story = {
 };
 
 export const InquiryAcceptedMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Inquiry accepted — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -156,10 +204,10 @@ export const PendingClientConsent: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const avatar = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__avatar--bot'
+			'.carimatMessageFrame__avatar'
 		);
 		const icon = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__botAvatarIcon'
+			'.carimatMessageFrame__avatarIcon'
 		);
 		const glyph = icon?.querySelector<SVGElement>('svg');
 
@@ -171,14 +219,16 @@ export const PendingClientConsent: Story = {
 		expect(avatarStyle.width).toBe('60px');
 		expect(avatarStyle.height).toBe('60px');
 		expect(avatarStyle.borderTopWidth).toBe('6px');
-		expect(avatarStyle.borderTopColor).toBe('rgb(255, 255, 255)');
+		expect(avatarStyle.borderTopColor).toBe('rgba(0, 0, 0, 0)');
+		expect(avatarStyle.backgroundClip).toBe('border-box');
+		expect(avatarStyle.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
 		expect(getComputedStyle(icon!).width).toBe('32px');
 		expect(getComputedStyle(icon!).height).toBe('36px');
 		expect(getComputedStyle(glyph!).width).toBe('32px');
 		expect(getComputedStyle(glyph!).height).toBe('36px');
 
 		const bubble = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__message--systemNotification'
+			'.carimatMessageFrame__bubble'
 		);
 		const sender = canvas.getByText('Carimat');
 		const actions = canvas.getByRole('group', {
@@ -195,7 +245,7 @@ export const PendingClientConsent: Story = {
 		// on "Pending client consent — desktop". Wait until the 100%
 		// keyframe (`forwards`) has settled.
 		const messageItem = canvasElement.querySelector<HTMLElement>(
-			'.messageItem--caseHandoverNotice'
+			'.carimatMessageFrame'
 		);
 		await waitFor(() => {
 			const style = getComputedStyle(messageItem!);
@@ -206,16 +256,18 @@ export const PendingClientConsent: Story = {
 		});
 
 		// Figma 9596:35524: the 60px avatar/header layer sits above the chat
-		// container. The bubble starts 40px into the rail and 44px below the
+		// container. The bubble starts 40px into the rail and 48px below the
 		// avatar origin, so its square top-left corner is visibly tucked under
 		// the avatar instead of beginning beneath the complete sender block.
+		const railBounds = messageItem!.getBoundingClientRect();
 		const avatarBounds = avatar!.getBoundingClientRect();
 		const bubbleBounds = bubble!.getBoundingClientRect();
 		const senderBounds = sender.getBoundingClientRect();
-		expect(Math.round(bubbleBounds.left - avatarBounds.left)).toBe(40);
-		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(44);
+		expect(Math.round(bubbleBounds.left - railBounds.left)).toBe(40);
+		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(48);
 		expect(
-			Math.abs(senderBounds.left - avatarBounds.left - 64)
+			// 40px content origin + 28px header inset = 68px (60px avatar + 8px clearance).
+			Math.abs(senderBounds.left - railBounds.left - 68)
 		).toBeLessThanOrEqual(1);
 		expect(bubbleBounds.left).toBeLessThan(avatarBounds.right);
 		expect(bubbleBounds.top).toBeLessThan(avatarBounds.bottom);
@@ -253,6 +305,7 @@ export const PendingClientConsent: Story = {
 };
 
 export const PendingClientConsentMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Pending client consent — phone 390',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
@@ -267,7 +320,7 @@ export const PendingClientConsentMobile: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const bubble = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__message--systemNotification'
+			'.carimatMessageFrame__bubble'
 		);
 		const actions = canvas.getByRole('group', {
 			name: 'A counsellor requested access to this conversation'
@@ -309,7 +362,7 @@ export const PendingClientConsentGerman: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const bubble = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__message--systemNotification'
+			'.carimatMessageFrame__bubble'
 		);
 		const actions = canvas.getByRole('group', {
 			name: 'Eine Beratungskraft bittet um Zugriff auf diese Unterhaltung'
@@ -329,6 +382,7 @@ export const PendingClientConsentGerman: Story = {
 };
 
 export const PendingClientConsentGermanMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Ausstehende Zustimmung — Telefon 390 (Deutsch)',
 	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
@@ -367,7 +421,7 @@ export const ActiveClientOptOut: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const control = canvas.getByRole('switch', {
-			name: 'I consent to data processing for this case handover'
+			name: 'Allow access for this request'
 		});
 		const track = control.nextElementSibling as HTMLElement;
 		const target = track.firstElementChild as HTMLElement;
@@ -401,7 +455,7 @@ export const ActiveClientOptOutToggle: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const control = canvas.getByRole('switch', {
-			name: 'I consent to data processing for this case handover'
+			name: 'Allow access for this request'
 		});
 		const label = control.closest('label') as HTMLElement;
 
@@ -419,6 +473,7 @@ export const ActiveClientOptOutToggle: Story = {
 };
 
 export const ActiveClientOptOutMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Active access — client opt-out — phone 390',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
@@ -447,6 +502,7 @@ export const ActiveClientOptOutGerman: Story = {
 };
 
 export const ActiveClientOptOutGermanMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Aktiver Zugriff — Opt-out — Telefon 390 (Deutsch)',
 	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
@@ -478,6 +534,119 @@ export const PendingClientConsentFailed: Story = {
 			/>
 		</Stream>
 	)
+};
+
+/**
+ * The asker approves in the chat: the same message turns from the decision
+ * prompt into the confirmed outcome — no approve/decline controls and no stale
+ * "could not be sent" error are left behind (ORISO-Frontend#1705).
+ */
+const ApprovalFlow = () => {
+	const [status, setStatus] = React.useState<string | undefined>();
+	return (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => setStatus('GRANTED')}
+				onDecline={() => setStatus('CLIENT_CONSENT_DECLINED')}
+				timestamp="12:54"
+			/>
+		</Stream>
+	);
+};
+
+export const PendingToApprovedMobile: Story = {
+	tags: ['device-regression'],
+	name: 'Pending client consent → approved — phone 390',
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => <ApprovalFlow />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Approve access' })
+		);
+		await waitFor(() =>
+			expect(canvas.getByRole('status')).toHaveTextContent(
+				'Access has been confirmed.'
+			)
+		);
+		expect(canvas.queryByRole('button', { name: 'Approve access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('button', { name: 'Decline access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('alert')).toBe(null);
+	}
+};
+
+export const PendingToApprovedGermanMobile: Story = {
+	tags: ['device-regression'],
+	name: 'Ausstehende Zustimmung → freigegeben — Telefon 390 (Deutsch)',
+	globals: { ...phone390Globals, locale: 'de' },
+	render: () => <ApprovalFlow />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Zugriff freigeben' })
+		);
+		await waitFor(() =>
+			expect(canvas.getByRole('status')).toHaveTextContent(
+				'Der Zugriff wurde bestätigt.'
+			)
+		);
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff freigeben' })
+		).toBe(null);
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+		).toBe(null);
+	}
+};
+
+/**
+ * The takeover changed the case owner before the asker answered, so the
+ * decision is refused with 409. The message settles on the closed outcome
+ * instead of keeping the approve/decline controls next to a failure
+ * (ORISO-Frontend#1705).
+ */
+const OwnerChangedFlow = () => {
+	const [status, setStatus] = React.useState<string | undefined>();
+	return (
+		<Stream compact>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => setStatus('OWNER_CHANGED')}
+				onDecline={() => setStatus('OWNER_CHANGED')}
+				timestamp="12:54"
+			/>
+		</Stream>
+	);
+};
+
+export const SettledAfterOwnerChange: Story = {
+	tags: ['device-regression'],
+	name: 'Settled after the case owner changed — phone 390',
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => <OwnerChangedFlow />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Approve access' })
+		);
+		await waitFor(() =>
+			expect(canvas.getByRole('status')).toHaveTextContent(
+				'This request is complete. No further decision is pending.'
+			)
+		);
+		expect(canvas.queryByRole('button', { name: 'Approve access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('button', { name: 'Decline access' })).toBe(
+			null
+		);
+		expect(canvas.queryByRole('alert')).toBe(null);
+	}
 };
 
 export const PendingClientConsentSubmitting: Story = {
@@ -535,6 +704,7 @@ export const NewCounsellorTookOverTablet: Story = {
 };
 
 export const NewCounsellorTookOverMobile: Story = {
+	tags: ['device-regression'],
 	name: 'New counsellor took over — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -569,6 +739,7 @@ export const ImportantNotification: Story = {
 };
 
 export const ImportantNotificationMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Important notification — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -598,6 +769,7 @@ export const SendingMessageFailed: Story = {
 };
 
 export const SendingMessageFailedMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Sending message failed — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -606,4 +778,117 @@ export const SendingMessageFailedMobile: Story = {
 			<TookOverNotice />
 		</Stream>
 	)
+};
+
+export const Informational: Story = {
+	name: 'Information only — no consent control',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="NONE"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		expect(canvas.queryByRole('switch')).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		expect(
+			within(dialog).queryByRole('switch', {
+				name: 'Zugriff für diese Anfrage erlauben'
+			})
+		).toBeNull();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+	}
+};
+
+export const OptionalConsentDialog: Story = {
+	name: 'Consent — optional M3 overview',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		await waitFor(() =>
+			expect(within(dialog).getByText('Wann hilfreich')).toBeVisible()
+		);
+		expect(within(dialog).getByText('Ihre Einwilligung')).toBeVisible();
+		expect(within(dialog).getByText('Geschützter Zugriff')).toBeVisible();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Mehr erfahren' })
+			).toHaveFocus()
+		);
+	}
+};
+
+const resolvedConsent = (status: string): Story => ({
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByRole('status')).toBeVisible());
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff erlauben' })
+		).toBeNull();
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+		).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		expect(
+			within(dialog).queryByRole('switch', {
+				name: 'Zugriff für diese Anfrage erlauben'
+			})
+		).toBeNull();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+	}
+});
+
+export const ConsentSaved: Story = {
+	...resolvedConsent('GRANTED'),
+	name: 'Consent — server-confirmed approval'
+};
+
+export const ConsentDenied: Story = {
+	...resolvedConsent('DENIED'),
+	name: 'Consent — server-confirmed refusal'
+};
+
+export const ConsentExpired: Story = {
+	...resolvedConsent('EXPIRED'),
+	name: 'Consent — expired request'
 };

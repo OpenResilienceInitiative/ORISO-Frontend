@@ -28,6 +28,8 @@ vi.mock('react-i18next', async () => {
 		})
 	};
 });
+const logout = vi.hoisted(() => vi.fn());
+vi.mock('../logout/logout', () => ({ logout }));
 vi.mock('../modal/OrisoDialog', () => ({
 	OrisoDialog: ({ children }: { children: React.ReactNode }) => (
 		<div role="dialog">{children}</div>
@@ -54,7 +56,9 @@ it('never opens a restore modal before enquiry, including an out-of-sync device'
 		</MemoryRouter>
 	);
 	expect(screen.queryByRole('dialog')).toBeNull();
-	fireEvent.click(screen.getByRole('button', { name: 'Tresor öffnen' }));
+	fireEvent.click(
+		screen.getByRole('button', { name: 'Verlauf wiederherstellen' })
+	);
 	expect(screen.getByRole('dialog')).toBeTruthy();
 });
 it.each(['pending', 'device-ready', 'ready'] as const)(
@@ -77,3 +81,30 @@ it.each(['pending', 'device-ready', 'ready'] as const)(
 		expect(screen.queryByRole('button')).toBeNull();
 	}
 );
+
+// #1741: the account unlocks with its password; the key dialog would be a dead end.
+it('offers a fresh sign-in, not the recovery-key dialog, when the password unlocks the history', () => {
+	setRecoveryRuntimeStatus(userId, 'needs-sign-in');
+	render(
+		<MemoryRouter>
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService: service,
+					setMatrixClientService: vi.fn()
+				}}
+			>
+				<KeyBackupRecoveryPrompt />
+			</MatrixClientContext.Provider>
+		</MemoryRouter>
+	);
+	expect(screen.getByText(/erneut mit Ihrem Passwort an/)).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: 'Verlauf wiederherstellen' })
+	).toBeNull();
+	expect(screen.queryByRole('link')).toBeNull();
+	fireEvent.click(
+		screen.getByRole('button', { name: 'Abmelden und erneut anmelden' })
+	);
+	expect(logout).toHaveBeenCalledOnce();
+	expect(screen.queryByRole('dialog')).toBeNull();
+});

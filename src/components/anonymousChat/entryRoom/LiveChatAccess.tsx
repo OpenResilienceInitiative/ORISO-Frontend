@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../../pseudonym/avatarSizes';
 import * as React from 'react';
 import { Box, Typography } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -188,7 +189,7 @@ export const LiveChatAccess = ({
 							>
 								<AnimalAvatar
 									avatar={name.identity.avatar}
-									size={64}
+									size={AVATAR_SIZES.phone}
 								/>
 								<Typography
 									component="span"

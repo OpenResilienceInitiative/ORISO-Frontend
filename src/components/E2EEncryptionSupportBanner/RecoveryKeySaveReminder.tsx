@@ -1,17 +1,17 @@
 import './E2EEncryptionSupportBanner.styles.scss';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
-import { useState, useSyncExternalStore } from 'react';
+import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UserDataContext } from '../../globalState';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	clearPendingRecoveryKey,
-	getPendingRecoveryKey
+	usePendingRecoveryKey
 } from '../../services/pendingRecoveryKeyStore';
 import {
 	dismissRecoveryReminder,
 	isActionableRecoveryStatus,
-	subscribeRecoveryState,
 	useRecoveryReminder,
 	useRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
@@ -23,16 +23,19 @@ export const RecoveryKeySaveReminder = () => {
 	const userId = matrixClientService?.getClient()?.getUserId() ?? '';
 	const eligible = useRecoveryReminder(userId);
 	const status = useRecoveryRuntimeStatus(userId);
-	const key = useSyncExternalStore(
-		subscribeRecoveryState,
-		() => (userId ? getPendingRecoveryKey(userId) : null),
-		() => null
-	);
+	const passwordMode =
+		useContext(UserDataContext)?.userData?.chatRecoveryMode ===
+		'LOGIN_PASSWORD';
+	const key = usePendingRecoveryKey(userId);
 	const [shownFor, setShownFor] = useState<string | null>(null);
 	const [hiddenFor, setHiddenFor] = useState<string | null>(null);
 	const showKey = shownFor === userId;
+	// The login password already guards the key; Sicherheit still offers it.
+	const protectedByPassword =
+		passwordMode && (status === 'ready' || status === 'device-ready');
 	if (
 		!eligible ||
+		protectedByPassword ||
 		(!key && hiddenFor === userId) ||
 		(!key && isActionableRecoveryStatus(status)) ||
 		(!key && (status === 'ready' || status === 'device-ready'))

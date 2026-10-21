@@ -174,6 +174,7 @@ const CreateConversationFlow = ({
 				topic: draft.topic,
 				startDate: draft.seriesFields.startDate,
 				startTime: draft.seriesFields.startTime,
+				timezone: draft.timezone,
 				duration: draft.seriesFields.duration,
 				repeatCount: draft.seriesFields.repeatCount,
 				interval: draft.seriesFields.interval,

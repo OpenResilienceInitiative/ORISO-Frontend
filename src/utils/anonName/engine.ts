@@ -18,7 +18,7 @@ import { LANGUAGE_DATA, type NickLang } from './data';
 // reaches a WCAG contrast ratio ≥ 4.5 against it (see pickIconColor); muddy
 // mid-tones where neither is crisp were deliberately excluded. One random pick
 // per generation; the animal is recoloured to contrast the background.
-const AVATAR_COLORS = [
+export const AVATAR_COLORS = [
 	// --- Light (pairs with a near-black animal) ---
 	'#FCE7E6', // JP Sakura
 	'#F6BFBC', // JP Toki
@@ -264,7 +264,7 @@ export function generateAvatar(lang = 'de'): Avatar {
 	return avatarFor(pick(pick(dataFor(lang).groups).animals).svg);
 }
 
-const ALL_ANIMAL_FILES = [
+export const ALL_ANIMAL_FILES = [
 	...new Set(
 		Object.values(LANGUAGE_DATA)
 			.flatMap((lang) => lang.groups)
@@ -290,7 +290,9 @@ export function generateAvatarForUser(userId: string): Avatar {
 	// (a shifted hash slice so it doesn't track the bg index).
 	const candidates = iconCandidates(bg);
 	const iconColor =
-		candidates[Math.floor(absHash / AVATAR_COLORS.length) % candidates.length];
+		candidates[
+			Math.floor(absHash / AVATAR_COLORS.length) % candidates.length
+		];
 	const animalFile =
 		ALL_ANIMAL_FILES[absHash % ALL_ANIMAL_FILES.length] ??
 		ALL_ANIMAL_FILES[0];

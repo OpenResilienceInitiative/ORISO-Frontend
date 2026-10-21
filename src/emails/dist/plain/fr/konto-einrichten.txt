@@ -1,0 +1,27 @@
+Votre compte existe déjà
+========================
+
+Un compte a déjà été créé pour vous sur {{platformName}}.
+
+Utilisez ce lien pour choisir votre propre mot de passe. Connectez-vous ensuite comme d’habitude ; les contrôles de sécurité requis restent en vigueur.
+
+Lien valable jusqu’au: {{inviteExpiresAt}}
+
+Choisir le mot de passe:
+{{setupUrl}}
+
+Si vous n’attendiez pas cette configuration, n’utilisez pas ce lien et contactez votre administration.
+
+----------------------------------------------------------------
+Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce lien à personne.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} est un service proposé par {{operatorName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.

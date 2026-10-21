@@ -1,0 +1,27 @@
+Ihr Konto ist bereits angelegt
+==============================
+
+Für Sie wurde bereits ein Konto auf [[${platformName}]] angelegt.
+
+Legen Sie über diesen Link Ihr eigenes Passwort fest. Melden Sie sich anschließend wie gewohnt an; die erforderlichen Sicherheitsprüfungen bleiben bestehen.
+
+Link gültig bis: [[${inviteExpiresAt}]]
+
+Passwort festlegen:
+[[${setupUrl}]]
+
+Wenn Sie diese Einrichtung nicht erwartet haben, verwenden Sie den Link nicht und wenden Sie sich an Ihre Administration.
+
+----------------------------------------------------------------
+Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Geben Sie diesen Link an niemanden weiter.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${offeringName}]] ist ein Angebot von [[${operatorName}]].
+
+Datenschutz: [[${privacyUrl}]]
+Impressum: [[${imprintUrl}]]
+
+Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.

@@ -331,12 +331,16 @@ describe('resolveMenuShortcut with two side rooms', () => {
 
 	it('⇧T opens the team room, ⇧S still the supervision one', () => {
 		expect(
-			resolveMenuShortcut({ key: 'T', code: 'KeyT', shiftKey: true }, rows)
-				?.id
+			resolveMenuShortcut(
+				{ key: 'T', code: 'KeyT', shiftKey: true },
+				rows
+			)?.id
 		).toBe('team');
 		expect(
-			resolveMenuShortcut({ key: 'S', code: 'KeyS', shiftKey: true }, rows)
-				?.id
+			resolveMenuShortcut(
+				{ key: 'S', code: 'KeyS', shiftKey: true },
+				rows
+			)?.id
 		).toBe('supervision');
 	});
 
@@ -344,8 +348,10 @@ describe('resolveMenuShortcut with two side rooms', () => {
 		// German/Dvorak layouts put another character on that key; `code` is
 		// the letter the user pressed.
 		expect(
-			resolveMenuShortcut({ key: 'ت', code: 'KeyT', shiftKey: true }, rows)
-				?.id
+			resolveMenuShortcut(
+				{ key: 'ت', code: 'KeyT', shiftKey: true },
+				rows
+			)?.id
 		).toBe('team');
 	});
 
@@ -367,7 +373,10 @@ describe('resolveMenuShortcut with two side rooms', () => {
 
 	it('still requires shift, and refuses the other modifiers', () => {
 		expect(
-			resolveMenuShortcut({ key: 't', code: 'KeyT', shiftKey: false }, rows)
+			resolveMenuShortcut(
+				{ key: 't', code: 'KeyT', shiftKey: false },
+				rows
+			)
 		).toBeNull();
 		expect(
 			resolveMenuShortcut(

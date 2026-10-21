@@ -5,12 +5,18 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const TRANSLATIONS: Record<string, string> = {
+	'form.calendar.nextMonth': 'Next month',
+	'form.calendar.previousMonth': 'Previous month'
+};
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, fallback?: string | Record<string, unknown>) =>
-			typeof fallback === 'string'
+			TRANSLATIONS[key] ??
+			(typeof fallback === 'string'
 				? fallback
-				: ((fallback?.defaultValue as string) ?? key)
+				: ((fallback?.defaultValue as string) ?? key))
 	})
 }));
 

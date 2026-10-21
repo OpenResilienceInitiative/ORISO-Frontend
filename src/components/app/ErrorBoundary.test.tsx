@@ -34,7 +34,7 @@ const Throws = ({ error }: { error: Error }) => {
 
 const chunkError = () => {
 	const error = new Error(
-		'Loading chunk 265 failed.\n(error: https://dev.oriso.org/static/js/265.858f3919.chunk.js)'
+		'Loading chunk 265 failed.\n(error: https://dev.example.org/static/js/265.858f3919.chunk.js)'
 	);
 	error.name = 'ChunkLoadError';
 	return error;

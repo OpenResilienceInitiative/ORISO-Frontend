@@ -4,10 +4,22 @@ import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
 } from './erstantwortPayload';
+import { ERSTANTWORT_CATALOGUE } from './erstantwortCatalogue';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 
-/** Minimal `t` stand-in: returns the defaultValue, so the catalogue fallback wins. */
-const translate = (_key: string, defaultValue?: string) => defaultValue ?? '';
+/** Resolve catalogue keys the same way production `t(key)` does — never a second arg. */
+const catalogueByKey = new Map<string, string>();
+for (const entry of ERSTANTWORT_CATALOGUE) {
+	catalogueByKey.set(entry.bodyKey, entry.defaultBody);
+	if (entry.headlineKey && entry.defaultHeadline) {
+		catalogueByKey.set(entry.headlineKey, entry.defaultHeadline);
+	}
+	if (entry.action) {
+		catalogueByKey.set(entry.action.labelKey, entry.action.defaultLabel);
+	}
+}
+
+const translate = (key: string) => catalogueByKey.get(key) ?? '';
 
 const event = (bausteine: unknown[]) =>
 	`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({

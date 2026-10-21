@@ -134,10 +134,7 @@ export const PasswordRuleChips = ({ password }: { password: string }) => {
 			ref={containerRef}
 			role="list"
 			tabIndex={0}
-			aria-label={t(
-				'registration.account.password.criteriaLabel',
-				'Passwort-Anforderungen'
-			)}
+			aria-label={t('registration.account.password.criteriaLabel')}
 			sx={{
 				'position': 'relative',
 				'display': 'flex',
@@ -171,11 +168,8 @@ export const PasswordRuleChips = ({ password }: { password: string }) => {
 					role="listitem"
 					aria-label={`${t(rule.info)}: ${
 						rule.met
-							? t(
-									'registration.password.criteria.fulfilled',
-									'fulfilled'
-								)
-							: t('registration.password.criteria.open', 'open')
+							? t('registration.password.criteria.fulfilled')
+							: t('registration.password.criteria.open')
 					}`}
 					sx={{
 						flex: '0 0 auto',

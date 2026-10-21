@@ -4,9 +4,21 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'erstantwort.saveCredentials.userNameLabel': 'Anmeldename',
+			'erstantwort.saveCredentials.copy': 'Kopieren',
+			'erstantwort.saveCredentials.copied': 'Anmeldename kopiert.',
+			'erstantwort.saveCredentials.copyFailed':
+				'Kopieren hat nicht geklappt. Bitte markieren Sie den Anmeldenamen und kopieren Sie ihn von Hand.',
+			'erstantwort.saveCredentials.sharedDevice':
+				'Wenn andere dieses Gerät mitbenutzen, speichern Sie den Anmeldenamen besser nicht hier, sondern notieren Sie ihn an einem sicheren Ort.',
+			'erstantwort.saveCredentials.setPassword': 'Passwort jetzt setzen'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 const navigate = vi.fn();

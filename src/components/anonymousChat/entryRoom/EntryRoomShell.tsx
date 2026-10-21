@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { useContext } from 'react';
 import { Box, Typography } from '@mui/material';
-import { StageLayout } from '../../stageLayout/StageLayout';
-import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 
 export interface EntryRoomShellProps {
@@ -11,6 +9,8 @@ export interface EntryRoomShellProps {
 	/** Line 2 — what is happening right now, or who has taken the conversation. */
 	statusLine: string;
 	showLoginLink?: boolean;
+	/** The accepting centre's department, once known — the footer legal links open its documents. */
+	department?: { agencyId: number; topicId: number } | null;
 	children: React.ReactNode;
 }
 
@@ -29,9 +29,9 @@ export const EntryRoomShell = ({
 	kicker,
 	statusLine,
 	showLoginLink = false,
+	department,
 	children
 }: EntryRoomShellProps) => {
-	const { Stage } = useContext(GlobalComponentContext);
 	const heading = (
 		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
 			<Typography
@@ -62,29 +62,34 @@ export const EntryRoomShell = ({
 		</Box>
 	);
 	return (
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
+		<WaitingRoomFrame
+			legalDepartment={department}
 			showLoginLink={showLoginLink}
-			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} isReady={true} />}
-			mobileHero="bar"
 			headerStart={heading}
 		>
 			<Box
 				data-cy="entry-room"
 				sx={{
-					width: '100%',
-					minWidth: 0,
-					minHeight: {
+					'width': '100%',
+					'minWidth': 0,
+					'minHeight': {
 						xs: 'calc(100vh - 96px)',
 						lg: 'calc(100vh - 128px)'
 					},
-					display: 'flex',
-					flexDirection: 'column',
-					px: { xs: 2.5, sm: 5 },
-					pt: { xs: 3, sm: 4 },
-					pb: '104px'
+					'display': 'flex',
+					'flexDirection': 'column',
+					/* A view slides in from beyond the column's edge; clip, so
+					   the page never gains a scrollbar for it. `hidden` first for
+					   browsers without `clip` (IE 11 is still in browserslist);
+					   `clip` where supported, because unlike `hidden` it does not
+					   turn the column into a scroll container. */
+					'overflowX': 'hidden',
+					'@supports (overflow-x: clip)': { overflowX: 'clip' },
+					'px': { xs: 2.5, sm: 5 },
+					'pt': { xs: 3, sm: 4 },
+					/* RegistrationFooter reserves its measured height, including
+					   the consent panel, rather than a fixed guessed clearance. */
+					'pb': 2
 				}}
 			>
 				<Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3 }}>
@@ -92,6 +97,6 @@ export const EntryRoomShell = ({
 				</Box>
 				{children}
 			</Box>
-		</StageLayout>
+		</WaitingRoomFrame>
 	);
 };

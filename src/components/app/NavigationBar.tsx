@@ -55,6 +55,11 @@ import {
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
 import { resolveLiveChatRailTarget } from './liveChatRailTarget';
+import {
+	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
+	useLiveChatAvailabilityLossNotice
+} from './useLiveChatAvailabilityLossNotice';
+import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -114,7 +119,8 @@ export const NavigationBar = ({
 		{
 			loading: liveChatLoading,
 			pending: liveChatPending,
-			error: liveChatError
+			error: liveChatError,
+			lostReason: liveChatLostReason
 		}
 	] = useLiveChatAvailable();
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
@@ -126,6 +132,10 @@ export const NavigationBar = ({
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
+	// #1485: the one heartbeat owner is also the one that says why it stopped.
+	useLiveChatAvailabilityLossNotice(liveChatLostReason);
+	// #1704: live, but the provider's agreement turns advice seekers away.
+	useLiveChatDpaRestrictionNotice(isConsultant && liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -164,13 +174,13 @@ export const NavigationBar = ({
 
 	const figmaConsultantNav = true;
 	/**
-	 * Live Chat rail toggle:
-	 * - Desktop: only when the consultant opted into "control from the menu
-	 *   bar" in My Profile (Frank / viaSidebar preference).
-	 * - Mobile/tablet: always for consultants so Live Chat stays reachable in
-	 *   the scrollable bottom bar without hunting through Profile.
+	 * Live Chat rail toggle: only when the consultant opted into "Live Chat
+	 * über Menü Leiste aktivieren" in My Profile (profile preference
+	 * `liveChatViaSidebar`). Same rule on every breakpoint — the earlier
+	 * "always on mobile" exception was dropped by the product owner; without
+	 * the preference, availability is switched in My Profile.
 	 */
-	const showLiveChatNav = isConsultant && (liveChatViaSidebar || !fromL);
+	const showLiveChatNav = isConsultant && liveChatViaSidebar;
 	const languageMenuPlacement = fromL
 		? MENUPLACEMENT_RIGHT
 		: MENUPLACEMENT_TOP;
@@ -220,6 +230,14 @@ export const NavigationBar = ({
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
 	}, [isFirstVisit]);
+	// A timer left running past unmount sets state on a torn-down tree.
+	useEffect(
+		() => () => {
+			clearTimeout(animateNavIconTimeoutRef.current);
+			animateNavIconTimeoutRef.current = null;
+		},
+		[]
+	);
 
 	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
 	// server total minus hidden unread rows on loaded pages, an upper bound);
@@ -472,6 +490,12 @@ export const NavigationBar = ({
 										)}
 										to={item.to}
 										aria-label={linkLabel}
+										data-tour-target={
+											item.to ===
+											'/sessions/consultant/sessionPreview'
+												? 'nav-enquiries'
+												: undefined
+										}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -617,11 +641,17 @@ export const NavigationBar = ({
 							aria-busy={liveChatPending}
 							disabled={liveChatLoading || liveChatPending}
 							title={
-								liveChatError
+								liveChatLostReason
 									? translate(
-											'error.statusCodes.500.description'
+											LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[
+												liveChatLostReason
+											]
 										)
-									: undefined
+									: liveChatError
+										? translate(
+												'error.statusCodes.500.description'
+											)
+										: undefined
 							}
 							onClick={handleLiveChatToggle}
 						>

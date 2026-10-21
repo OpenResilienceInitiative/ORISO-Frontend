@@ -5,7 +5,7 @@
 Two tests were added to `src/utils/notificationHelpers.test.ts` describing what
 the user-visible behaviour should be. Against the unfixed gate they failed:
 
-```
+```text
 × honours an opt-in that came from the settings store
   → expected [] to have a length of 1 but got +0
 × lets the settings store turn notifications back off
@@ -51,7 +51,7 @@ Worth its own ticket; `dev` is red on them today.
 
 ## Live state captured from a signed-in consultant session
 
-Read out of a real session (consultant "Bruno Banks", local dev against
+Read out of a real session (consultant test account, local dev against
 `dev.oriso.org`) before the fix:
 
 ```json

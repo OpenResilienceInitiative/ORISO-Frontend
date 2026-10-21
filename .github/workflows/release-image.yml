@@ -65,6 +65,13 @@ jobs:
         with:
           node_version: '22'
 
+      # The Storybook image copies this output instead of rebuilding Storybook
+      # inside Docker (see the header of Dockerfile.storybook), so the release
+      # has to produce it exactly as ci-storybook-main.yml does. Without this
+      # step the image build fails on `COPY storybook-static`.
+      - name: Build Storybook static output
+        run: npm run build-storybook
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 

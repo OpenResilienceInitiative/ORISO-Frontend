@@ -9,7 +9,10 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
+import {
+	ConsultantSessionStage,
+	MOUNT_SETTLE_MS
+} from './__storybook__/ConsultantSessionStage';
 import { PANEL_WIDTH_STORAGE_KEY, STAGE_LAYOUT } from './stageLayout';
 import { BOTTOM_TOLERANCE_PX } from '../messageSubmitInterface/timelineFollow';
 import {
@@ -511,35 +514,30 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
  * channel tag carry the pink accent, the supervision composer's field
  * border too; a thread header stays neutral.
  */
-/**
- * T49: the side room's system notice is the Carimat organism — the exact
- * class skeleton `ErstantwortSequence` draws for the main chat's "Carimat /
- * Ihre ersten Schritte" message. One selector per structural part, plus the
- * two absences that distinguish it from the generic system chrome.
- */
+/** T49: supervision uses the canonical assistant presentation, with the
+ * recorded supervision topic separate from the configurable assistant sender.
+ * The notice remains first in the timeline and has no generic system chrome. */
 const CARIMAT_ORGANISM_PARTS = [
-	'.erstantwort',
-	'.messageItem.pseudonymCard.erstantwort__row',
-	'.pseudonymCard__wrap',
-	'.pseudonymCard__avatarCol > .pseudonymCard__avatarFrame > .pseudonymCard__avatarIcon > svg',
-	'.pseudonymCard__contentCol.erstantwort__content',
-	'.pseudonymCard__header > .pseudonymCard__headerName',
-	'.pseudonymCard__header > .pseudonymCard__headerSubtitle',
-	'.pseudonymCard__bubble.erstantwort__bubble > .pseudonymCard__bubbleText'
+	'.carimatMessageFrame.erstantwort',
+	'.carimatMessageFrame__row',
+	'.carimatMessageFrame__avatarColumn > .carimatMessageFrame__avatar > .carimatMessageFrame__avatarIcon > svg',
+	'.carimatMessageFrame__content',
+	'.carimatMessageFrame__header > .carimatMessageFrame__name',
+	'.carimatMessageFrame__header > .carimatMessageFrame__subtitle',
+	'.carimatMessageFrame__bubble.erstantwort__bubble > p',
+	'.carimatMessageFrame__bubble > .carimatMessageFrame__topic'
 ];
 const expectCarimatOrganism = async (
 	item: HTMLElement,
-	{ name, subtitle }: { name: string; subtitle: string }
+	{ topic, subtitle }: { topic: string; subtitle: string }
 ) => {
 	for (const part of CARIMAT_ORGANISM_PARTS) {
 		await expect(item.querySelector(part), part).not.toBeNull();
 	}
-	await expect(
-		item.querySelector('.pseudonymCard__headerName')!.textContent
-	).toBe(name);
-	await expect(
-		item.querySelector('.pseudonymCard__headerSubtitle')!.textContent
-	).toBe(subtitle);
+	const message = within(item);
+	await expect(message.getByText('Carimat', { exact: true })).toBeVisible();
+	await expect(message.getByText(topic, { exact: true })).toBeVisible();
+	await expect(message.getByText(subtitle, { exact: true })).toBeVisible();
 	await expect(item.querySelector('.messageItem__kebabButton')).toBeNull();
 	await expect(
 		item.querySelector('.messageItem__message--systemNotification')
@@ -995,14 +993,15 @@ export const SupervisionSystemNoticeAtTheTop: Story = {
 		);
 		// First item of the supervision timeline. T49 (Frank, 06.09.): it is
 		// the SAME organism as the main chat's Carimat message ("Carimat /
-		// Ihre ersten Schritte", `ErstantwortSequence` → `pseudonymCard`):
-		// robot in the ringed avatar frame, name + subtitle kicker, bubble —
+		// Ihre ersten Schritte", `ErstantwortSequence` → `CarimatMessageFrame`):
+		// robot in the ringed avatar frame, assistant name + subtitle kicker,
+		// recorded supervision topic inside the bubble —
 		// and, like Carimat, no kebab and none of the generic
 		// system-notification chrome.
 		const firstItem = timeline.querySelector<HTMLElement>('.messageItem')!;
 		await expect(firstItem.contains(notice)).toBe(true);
 		await expectCarimatOrganism(firstItem, {
-			name: 'Supervision',
+			topic: 'Supervision',
 			subtitle: 'Systembenachrichtigung'
 		});
 		// Wording matches the UI: the plus sits next to the mail glyph.
@@ -1677,8 +1676,26 @@ export const PanelOpensAfterMountComposersSettleEqual: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
-		// Let the 240 ms framed→flush transition run out before measuring.
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		// #1613: measure once the re-frame has run out. It is not one 240 ms
+		// transition: the mid-flight lock (138) animates in first, and the
+		// settle re-measure animates on to 106 — on a slow runner that took
+		// longer than a fixed pause. Wait for both shells to be compact and
+		// no longer animating; a height that stays wrong still fails below.
+		await waitFor(
+			() => {
+				for (const shell of canvasElement.querySelectorAll<HTMLElement>(
+					'.textarea__wrapper-send-message'
+				)) {
+					expect(
+						shell.classList.contains(
+							'textarea__wrapper-send-message--compact'
+						)
+					).toBe(true);
+					expect(shell.getAnimations()).toHaveLength(0);
+				}
+			},
+			{ timeout: 5_000 }
+		);
 		await expectCompactComposers(canvasElement);
 	}
 };
@@ -1884,12 +1901,13 @@ const expectPhoneHeaderRules = async (
 			'.sessionMenu__icon--mobile'
 		)!;
 		await userEvent.click(kebab);
+		// The flyout is portalled to <body>, outside the canvas.
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).not.toBeNull()
 		);
-		const flyout = canvasElement.querySelector<HTMLElement>(
+		const flyout = document.querySelector<HTMLElement>(
 			'.sessionMenu__content--open'
 		)!;
 		const videoRow = flyout.querySelector<HTMLElement>(
@@ -1918,7 +1936,7 @@ const expectPhoneHeaderRules = async (
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).toBeNull()
 		);
 	}
@@ -2650,13 +2668,13 @@ export const MainChatAtTheDragFloor320: Story = {
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector(
+				document.querySelector(
 					'[data-cy="session-menu-start-video-call"]'
 				)
 			).not.toBeNull()
 		);
 		await expect(
-			canvasElement.querySelector('[data-cy="session-menu-start-call"]')
+			document.querySelector('[data-cy="session-menu-start-call"]')
 		).not.toBeNull();
 		await userEvent.click(kebab);
 		// The title column is no longer squeezed to 20 px: it keeps enough
@@ -2991,17 +3009,19 @@ export const NewMessagesFollowWhileWatching: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		const timeline = mainTimeline(canvasElement);
 		for (const body of ARRIVALS) {
 			await userEvent.click(deliverNext(canvasElement));
 			await canvas.findByText(body);
+			// The stage lands a frame after each arrival; delivering sooner
+			// measures the timeline mid-landing and reads "scrolled up".
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
 		}
-		const timeline = mainTimeline(canvasElement);
-		await waitFor(() =>
-			expect(
-				timeline.scrollHeight -
-					(timeline.scrollTop + timeline.clientHeight)
-			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
-		);
 		// Nothing waits below the fold, so the arrow stays the quiet one.
 		await expect(scrollArrow(canvasElement).className).not.toContain(
 			'composerToolbar__button--scrollToNewest--unread'
@@ -3025,6 +3045,9 @@ const waitForAutomaticCursor = async (canvasElement: HTMLElement) => {
 		expect(card.hasAttribute('data-auto-focused')).toBe(true);
 		expect(card.contains(document.activeElement)).toBe(true);
 	});
+	// The stage scrolls to the end once more after mount; landing after an
+	// arrival, that scroll moves a view the story expects to stay put.
+	await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 	const timeline = mainTimeline(canvasElement);
 	await waitFor(() =>
 		expect(
@@ -3136,6 +3159,9 @@ export const NewMessagesLightTheArrowWhileWriting: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
+		// See waitForAutomaticCursor: the stage's second mount scroll must
+		// not land after the arrival this story expects the view to ignore.
+		await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 		const editor = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .tiptap'
 		)!;

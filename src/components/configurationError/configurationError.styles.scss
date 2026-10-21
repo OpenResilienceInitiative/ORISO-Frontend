@@ -1,0 +1,56 @@
+.configurationError {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: 16px;
+	box-sizing: border-box;
+	background: var(--m3-surface, #fdfbff);
+	color: var(--m3-on-surface, #1b1b1f);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		sans-serif;
+
+	&__card {
+		max-width: 560px;
+		width: 100%;
+		padding: 24px;
+		border-radius: 16px;
+		background: var(--m3-surface-container, #f0edf1);
+	}
+
+	&__headline {
+		margin: 0 0 12px;
+		font-size: 24px;
+		line-height: 32px;
+		color: var(--m3-error, #ba1a1a);
+	}
+
+	&__text {
+		margin: 0 0 8px;
+		font-size: 16px;
+		line-height: 24px;
+	}
+
+	&__list {
+		margin: 16px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__item {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 12px;
+		padding: 8px 0;
+		border-top: 1px solid var(--m3-outline-variant, #c6c5d0);
+		overflow-wrap: anywhere;
+	}
+
+	&__problem {
+		color: var(--m3-on-surface-variant, #45464f);
+	}
+}

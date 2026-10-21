@@ -78,10 +78,7 @@ export const LegalPageWrapper = ({
 							className="legalPageWrapper__placeholderNotice"
 							role="note"
 						>
-							{t(
-								'legal.notice.placeholder',
-								'Hinweis: Dieser Text ist ein Platzhalter und noch nicht rechtsverbindlich gepflegt.'
-							)}
+							{t('legal.notice.placeholder')}
 						</p>
 					) : (
 						<LegalContentRenderer content={effectiveContent} />

@@ -391,6 +391,39 @@ describe('OrisoWidgetDriver', () => {
 			).toEqual(['$3', '$4']);
 		});
 
+		it('reads an identity it may not send', async () => {
+			/*
+			 * The asymmetry that keeps the design's first rule intact.
+			 *
+			 * Identity moved out of room state (which Matrix does not
+			 * encrypt) and into the encrypted timeline, so the widget has to
+			 * be able to READ a timeline event of this type to draw anybody.
+			 * Before the split, both directions of room events were checked
+			 * against one set, so allowing the read would have allowed the
+			 * widget to write somebody else's identity — the one thing the
+			 * call must never decide.
+			 */
+			const IDENTITY = 'org.oriso.call.identity';
+			const d = new OrisoWidgetDriver(
+				clientWithTimeline([
+					eventStub(IDENTITY, '$1', {
+						kind: 'animal',
+						file: 'fox.svg',
+						bg: '#165E83',
+						ink: '#ffffff'
+					})
+				]),
+				CALL_ROOM
+			);
+
+			const out = await d.readRoomEvents(IDENTITY, undefined, 10);
+			expect(out).toHaveLength(1);
+
+			await expect(
+				d.sendEvent(IDENTITY, { kind: 'animal' })
+			).rejects.toThrow(/may not send/);
+		});
+
 		it('returns only what follows `since`', async () => {
 			const d = new OrisoWidgetDriver(
 				clientWithTimeline([
@@ -444,5 +477,156 @@ describe('OrisoWidgetDriver', () => {
 				driver.readRoomState(CALL_ROOM, 'm.room.member', undefined)
 			).resolves.toEqual([]);
 		});
+	});
+});
+
+describe('downloadFile (MSC4039)', () => {
+	const AVATAR = 'mxc://oriso.example/member-avatar';
+	const ROOM_AVATAR = 'mxc://oriso.example/room-avatar';
+	const FOREIGN = 'mxc://oriso.example/someones-private-attachment';
+
+	const roomWith = (memberAvatars: (string | undefined)[]) => ({
+		getMxcAvatarUrl: () => ROOM_AVATAR,
+		getLiveTimeline: () => ({
+			getState: () => ({
+				getStateEvents: (type: string) =>
+					type === 'm.room.member'
+						? memberAvatars.map((avatar_url) => ({
+								getContent: () => ({ avatar_url })
+							}))
+						: []
+			})
+		})
+	});
+
+	const clientWithRoom = (
+		memberAvatars: (string | undefined)[],
+		overrides: Partial<MatrixClient> = {}
+	) =>
+		createClient({
+			getRoom: vi
+				.fn()
+				.mockImplementation((roomId: string) =>
+					roomId === CALL_ROOM ? roomWith(memberAvatars) : null
+				),
+			getAccessToken: vi.fn().mockReturnValue('host-token'),
+			mxcUrlToHttp: vi
+				.fn()
+				.mockReturnValue(
+					'https://hs.example/_matrix/client/v1/media/download/oriso.example/member-avatar'
+				),
+			...overrides
+		} as unknown as Partial<MatrixClient>);
+
+	const okFetch = (blob: Blob) =>
+		vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			blob: async () => blob
+		});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('fetches a member avatar with the host token against the authenticated endpoint', async () => {
+		const blob = new Blob([new Uint8Array([1, 2, 3])]);
+		const fetchSpy = okFetch(blob);
+		vi.stubGlobal('fetch', fetchSpy);
+		const client = clientWithRoom([AVATAR]);
+		const driver = new OrisoWidgetDriver(client, CALL_ROOM);
+
+		await expect(driver.downloadFile(AVATAR)).resolves.toEqual({
+			file: blob
+		});
+
+		// useAuthentication (last arg) must be true and allowDirectLinks false.
+		expect(client.mxcUrlToHttp).toHaveBeenCalledWith(
+			AVATAR,
+			undefined,
+			undefined,
+			undefined,
+			false,
+			true,
+			true
+		);
+		expect(fetchSpy).toHaveBeenCalledWith(expect.any(String), {
+			headers: { Authorization: 'Bearer host-token' }
+		});
+	});
+
+	it('allows the room avatar', async () => {
+		const blob = new Blob([]);
+		vi.stubGlobal('fetch', okFetch(blob));
+		const driver = new OrisoWidgetDriver(clientWithRoom([]), CALL_ROOM);
+		await expect(driver.downloadFile(ROOM_AVATAR)).resolves.toEqual({
+			file: blob
+		});
+	});
+
+	it('refuses media that is not an avatar of the call room', async () => {
+		const fetchSpy = okFetch(new Blob([]));
+		vi.stubGlobal('fetch', fetchSpy);
+		const driver = new OrisoWidgetDriver(
+			clientWithRoom([AVATAR]),
+			CALL_ROOM
+		);
+
+		await expect(driver.downloadFile(FOREIGN)).rejects.toThrow(
+			/only download avatars of its own call room/
+		);
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it('refuses a non-mxc URI so the host cannot be used as a fetch proxy', async () => {
+		const fetchSpy = okFetch(new Blob([]));
+		vi.stubGlobal('fetch', fetchSpy);
+		const driver = new OrisoWidgetDriver(
+			clientWithRoom([AVATAR]),
+			CALL_ROOM
+		);
+
+		await expect(
+			driver.downloadFile('https://evil.example/pixel.png')
+		).rejects.toThrow(/only download mxc:\/\/ media/);
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it('refuses when the host has no access token rather than falling back', async () => {
+		const fetchSpy = okFetch(new Blob([]));
+		vi.stubGlobal('fetch', fetchSpy);
+		const driver = new OrisoWidgetDriver(
+			clientWithRoom([AVATAR], {
+				getAccessToken: vi.fn().mockReturnValue(null)
+			} as unknown as Partial<MatrixClient>),
+			CALL_ROOM
+		);
+
+		await expect(driver.downloadFile(AVATAR)).rejects.toThrow(
+			/no access token/
+		);
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it('surfaces a failed media request instead of returning an empty file', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({ ok: false, status: 404 })
+		);
+		const driver = new OrisoWidgetDriver(
+			clientWithRoom([AVATAR]),
+			CALL_ROOM
+		);
+		await expect(driver.downloadFile(AVATAR)).rejects.toThrow(/404/);
+	});
+
+	it('does not implement uploadFile', async () => {
+		const driver = new OrisoWidgetDriver(
+			clientWithRoom([AVATAR]),
+			CALL_ROOM
+		);
+		expect(() => driver.uploadFile(new Blob([]))).toThrow(
+			/not implemented/
+		);
 	});
 });

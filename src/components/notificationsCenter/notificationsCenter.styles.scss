@@ -96,7 +96,7 @@
 			border: 1px solid var(--m3-outline, #747778);
 			border-radius: 999px;
 			background: transparent;
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font: inherit;
 			font-weight: 600;
 			cursor: pointer;
@@ -329,7 +329,7 @@
 		}
 
 		.notificationsCenter__cardTime--footer {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font-weight: 600;
 		}
 
@@ -519,6 +519,9 @@
 		color: var(--m3-on-primary, #ffffff);
 		font-size: 16px;
 		font-weight: 600;
+
+		// #876: the status-page action is a link; it must look like the button.
+		text-decoration: none;
 		cursor: pointer;
 		transition: background-color 140ms ease;
 
@@ -529,6 +532,7 @@
 
 		&:hover {
 			background: var(--m3-primary-hover, #7e0008);
+			color: var(--m3-on-primary, #ffffff);
 		}
 
 		&:focus-visible {

@@ -1,0 +1,5 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:190:5 › reason shortcut hints show the bare digits that select reasons
+  1 passed (2.2s)

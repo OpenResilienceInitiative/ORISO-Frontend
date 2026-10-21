@@ -48,6 +48,11 @@ export interface DefaultActionBarProps {
 	onOpenTools: () => void;
 	/** Mic is hidden entirely when voice messages are disabled for this chat. */
 	showMic: boolean;
+	/**
+	 * Why the mic cannot be used right now (e.g. while editing a message).
+	 * The mic then stays visible, greyed out and focusable, and explains itself.
+	 */
+	micUnavailableReason?: string;
 	isRecording: boolean;
 	onMicClick: () => void;
 	isEmojiOpen: boolean;
@@ -76,6 +81,7 @@ export const DefaultActionBar = ({
 	unreadCount = 0,
 	onOpenTools,
 	showMic,
+	micUnavailableReason,
 	isRecording,
 	onMicClick,
 	isEmojiOpen,
@@ -87,10 +93,7 @@ export const DefaultActionBar = ({
 	onExpandToggle,
 	translate
 }: DefaultActionBarProps) => {
-	const scrollLabel = translate(
-		'message.mobileNav.scrollToBottom',
-		'Scroll to bottom'
-	);
+	const scrollLabel = translate('message.mobileNav.scrollToBottom');
 	const unread = Math.max(0, Math.round(unreadCount));
 	// Review v6 (T22): the bar scrolls sideways — fade the hidden edge and
 	// let a mouse wheel travel along it.
@@ -104,7 +107,7 @@ export const DefaultActionBar = ({
 		>
 			{showBack && (
 				<ToolbarButton
-					label={translate('message.mobileNav.back', 'Navigate up')}
+					label={translate('message.mobileNav.back')}
 					onClick={onBack}
 					className="composerToolbar__button--back"
 					data-cy="composer-back"
@@ -130,10 +133,7 @@ export const DefaultActionBar = ({
 				)}
 			</ToolbarButton>
 			<ToolbarButton
-				label={translate(
-					'message.submit.toolbar.openTools',
-					'Back to full editor tools'
-				)}
+				label={translate('message.submit.toolbar.openTools')}
 				onClick={onOpenTools}
 			>
 				<TextFormatIcon />
@@ -141,13 +141,12 @@ export const DefaultActionBar = ({
 			{showMic && (
 				<ToolbarButton
 					label={translate(
-						'message.submit.toolbar.voiceRecording.label',
-						'Voice recording'
+						'message.submit.toolbar.voiceRecording.label'
 					)}
 					title={translate(
-						'message.submit.toolbar.voiceRecording.tooltip',
-						'Record voice message'
+						'message.submit.toolbar.voiceRecording.tooltip'
 					)}
+					unavailableReason={micUnavailableReason}
 					onClick={onMicClick}
 					selected={isRecording}
 				>
@@ -155,7 +154,7 @@ export const DefaultActionBar = ({
 				</ToolbarButton>
 			)}
 			<ToolbarButton
-				label={translate('message.submit.toolbar.emoji', 'Emoji panel')}
+				label={translate('message.submit.toolbar.emoji')}
 				onClick={onEmojiClick}
 				selected={isEmojiOpen}
 				expanded={isEmojiOpen}
@@ -164,17 +163,14 @@ export const DefaultActionBar = ({
 				<AddReactionOutlinedIcon fontSize="inherit" />
 			</ToolbarButton>
 			<ToolbarButton
-				label={translate('message.submit.toolbar.mention', 'Mention')}
+				label={translate('message.submit.toolbar.mention')}
 				onClick={onMentionClick}
 			>
 				<AlternateEmailIcon fontSize="inherit" />
 			</ToolbarButton>
 			{showAttachment && (
 				<ToolbarButton
-					label={translate(
-						'message.submit.toolbar.attachment',
-						'Add attachment'
-					)}
+					label={translate('message.submit.toolbar.attachment')}
 					onClick={onAttachmentClick}
 				>
 					<AddIcon fontSize="inherit" />
@@ -184,8 +180,7 @@ export const DefaultActionBar = ({
 				label={translate(
 					isExpanded
 						? 'message.submit.toolbar.minimize'
-						: 'message.submit.toolbar.maximize',
-					isExpanded ? 'Minimize editor' : 'Maximize editor'
+						: 'message.submit.toolbar.maximize'
 				)}
 				onClick={onExpandToggle}
 			>

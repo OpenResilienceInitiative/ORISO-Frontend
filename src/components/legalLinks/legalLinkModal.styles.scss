@@ -34,7 +34,7 @@
 	}
 
 	a {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		text-decoration: underline;
 	}
 }
@@ -60,7 +60,7 @@
 	}
 
 	a {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		font-weight: 600;
 	}
 }

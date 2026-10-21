@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ComposerToolbar } from './ComposerToolbar';
 import de from '../../../resources/i18n/de/common.json';
+import en from '../../../resources/i18n/en/common.json';
 
 afterEach(() => cleanup());
 
@@ -21,16 +22,15 @@ const lookup = (bundle: unknown, key: string): string | undefined => {
 	return typeof value === 'string' ? value : undefined;
 };
 
-const fallbackTranslate = (key: string, fallback?: string) => fallback ?? key;
-const germanTranslate = (key: string, fallback?: string) =>
-	lookup(de, key) ?? fallback ?? key;
+const fallbackTranslate = (key: string) => lookup(en, key) ?? key;
+const germanTranslate = (key: string) => lookup(de, key) ?? key;
 
 const renderToolbar = ({
 	translate = fallbackTranslate,
 	onAction = vi.fn(),
 	isActionSelected = () => false
 }: {
-	translate?: (key: string, fallback?: string) => string;
+	translate?: (key: string) => string;
 	onAction?: (action: string) => void;
 	isActionSelected?: (action: string) => boolean;
 } = {}) => {
@@ -125,12 +125,12 @@ describe('ComposerToolbar text-style menu (#995)', () => {
 	it('has a German string for every toolbar key the component asks for', () => {
 		const missing: string[] = [];
 		renderToolbar({
-			translate: (key, fallback) => {
+			translate: (key) => {
 				const translated = lookup(de, key);
 				if (translated === undefined) {
 					missing.push(key);
 				}
-				return translated ?? fallback ?? key;
+				return translated ?? key;
 			}
 		});
 		openTextStyleMenu('Textstil');

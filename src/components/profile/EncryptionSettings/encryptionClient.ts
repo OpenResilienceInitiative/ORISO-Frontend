@@ -4,7 +4,8 @@ import type { MatrixClientService } from '../../../services/matrixClientService'
 type ReadyMatrixClientService = Pick<
 	MatrixClientService,
 	'getReadyClient' | 'getStaleDeviceRecoveryVersion'
->;
+> &
+	Partial<Pick<MatrixClientService, 'holdTokenRefreshDuring'>>;
 
 export type EncryptionClientReadinessStage =
 	| 'initial-readiness'
@@ -38,7 +39,7 @@ export const resolveReadyEncryptionClient = async (
  * client; ordinary setup failures keep their original error and are never
  * repeated blindly.
  */
-export const executeWithReadyEncryptionClient = async <T>(
+const executeOnReadyClient = async <T>(
 	clientOverride: MatrixClient | null | undefined,
 	service: ReadyMatrixClientService | null,
 	action: (client: MatrixClient) => Promise<T>
@@ -83,3 +84,18 @@ export const executeWithReadyEncryptionClient = async <T>(
 		return action(recoveredClient);
 	}
 };
+
+/**
+ * Crypto actions run with token refresh held: a refresh would replace the client mid-operation and
+ * rotate the password. The client is resolved inside the hold, after any refresh in flight.
+ */
+export const executeWithReadyEncryptionClient = <T>(
+	clientOverride: MatrixClient | null | undefined,
+	service: ReadyMatrixClientService | null,
+	action: (client: MatrixClient) => Promise<T>
+): Promise<T | null> =>
+	service?.holdTokenRefreshDuring
+		? service.holdTokenRefreshDuring(() =>
+				executeOnReadyClient(clientOverride, service, action)
+			)
+		: executeOnReadyClient(clientOverride, service, action);

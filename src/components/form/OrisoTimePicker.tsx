@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs, { Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import {
@@ -318,13 +319,17 @@ export const OrisoTimePicker = ({
 	error,
 	disabled,
 	fullWidth = true,
-	dialogTitle = 'Select time',
-	cancelLabel = 'Cancel',
-	okLabel = 'OK',
+	dialogTitle,
+	cancelLabel,
+	okLabel,
 	placeholder,
 	id,
 	renderTrigger
 }: OrisoTimePickerProps) => {
+	const { t } = useTranslation();
+	const resolvedTitle = dialogTitle ?? t('form.timePicker.dialogTitle');
+	const resolvedCancel = cancelLabel ?? t('form.timePicker.cancel');
+	const resolvedOk = okLabel ?? t('form.timePicker.ok');
 	const displayFormat = ampm ? 'hh:mm A' : 'HH:mm';
 	const parseFormats = ampm
 		? ['hh:mm A', 'h:mm A', 'HH:mm', 'H:mm']
@@ -449,7 +454,7 @@ export const OrisoTimePicker = ({
 						endAdornment: (
 							<InputAdornment position="end">
 								<IconButton
-									aria-label="Open time picker"
+									aria-label={t('form.timePicker.open')}
 									edge="end"
 									disabled={disabled}
 									onClick={openDialog}
@@ -476,7 +481,7 @@ export const OrisoTimePicker = ({
 						...orisoPickerTypography.labelMedium
 					}}
 				>
-					{dialogTitle}
+					{resolvedTitle}
 				</Typography>
 				<Box
 					sx={{
@@ -492,7 +497,9 @@ export const OrisoTimePicker = ({
 							<>
 								<ButtonBase
 									onClick={() => setSelecting('hour')}
-									aria-label="Select hours"
+									aria-label={t(
+										'form.timePicker.selectHours'
+									)}
 									className={
 										selecting === 'hour'
 											? 'orisoTimeField--active'
@@ -514,7 +521,9 @@ export const OrisoTimePicker = ({
 								</Typography>
 								<ButtonBase
 									onClick={() => setSelecting('minute')}
-									aria-label="Select minutes"
+									aria-label={t(
+										'form.timePicker.selectMinutes'
+									)}
 									className={
 										selecting === 'minute'
 											? 'orisoTimeField--active'
@@ -537,7 +546,7 @@ export const OrisoTimePicker = ({
 										handleHourInput(event.target.value)
 									}
 									inputProps={{
-										'aria-label': 'Hour',
+										'aria-label': t('form.timePicker.hour'),
 										'inputMode': 'numeric'
 									}}
 									sx={timeInputSx}
@@ -558,7 +567,9 @@ export const OrisoTimePicker = ({
 										handleMinuteInput(event.target.value)
 									}
 									inputProps={{
-										'aria-label': 'Minute',
+										'aria-label': t(
+											'form.timePicker.minute'
+										),
 										'inputMode': 'numeric'
 									}}
 									sx={timeInputSx}
@@ -590,7 +601,7 @@ export const OrisoTimePicker = ({
 									borderBottom: `1px solid ${orisoDateTimeColors.outlineVariant}`
 								}}
 							>
-								AM
+								{t('form.timePicker.am')}
 							</ButtonBase>
 							<ButtonBase
 								onClick={() => setMeridiem('PM')}
@@ -601,7 +612,7 @@ export const OrisoTimePicker = ({
 								}
 								sx={meridiemButtonSx}
 							>
-								PM
+								{t('form.timePicker.pm')}
 							</ButtonBase>
 						</Box>
 					)}
@@ -627,8 +638,8 @@ export const OrisoTimePicker = ({
 					<IconButton
 						aria-label={
 							mode === 'dial'
-								? 'Switch to text input'
-								: 'Switch to dial'
+								? t('form.timePicker.switchToText')
+								: t('form.timePicker.switchToDial')
 						}
 						onClick={() =>
 							setMode(mode === 'dial' ? 'input' : 'dial')
@@ -646,10 +657,10 @@ export const OrisoTimePicker = ({
 					</IconButton>
 					<Box sx={{ flex: 1 }} />
 					<Button onClick={() => setOpen(false)} sx={actionButtonSx}>
-						{cancelLabel}
+						{resolvedCancel}
 					</Button>
 					<Button onClick={handleOk} sx={actionButtonSx}>
-						{okLabel}
+						{resolvedOk}
 					</Button>
 				</Box>
 			</Dialog>

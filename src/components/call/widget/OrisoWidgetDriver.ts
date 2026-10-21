@@ -44,6 +44,7 @@ import {
 import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 
 import {
+	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
 	ALLOWED_ROOM_EVENT_TYPES,
 	ALLOWED_SEND_STATE_EVENT_TYPES,
@@ -344,7 +345,7 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		since?: string
 	): Promise<IRoomEvent[]> {
 		const targetRoom = this.assertRoom(roomIds?.[0] ?? null);
-		if (!ALLOWED_ROOM_EVENT_TYPES.has(eventType)) return [];
+		if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(eventType)) return [];
 		return this.readRoomTimeline(
 			targetRoom,
 			eventType,
@@ -364,7 +365,9 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		since: string | undefined
 	): Promise<IRoomEvent[]> {
 		const targetRoom = this.assertRoom(roomId);
-		if (!ALLOWED_ROOM_EVENT_TYPES.has(eventType)) return [];
+		// Reads use the wider set: the widget may read an identity it may not
+		// send. Sends above keep `ALLOWED_ROOM_EVENT_TYPES`.
+		if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(eventType)) return [];
 		const room = this.client.getRoom(targetRoom);
 		if (!room) return [];
 
@@ -428,6 +431,97 @@ export class OrisoWidgetDriver extends WidgetDriver {
 					);
 
 		return (Array.isArray(events) ? events : []).map(toWidgetEvent);
+	}
+
+	/**
+	 * True when `mxcUri` is an avatar that this call room legitimately shows:
+	 * the room's own avatar, or the avatar of one of its members.
+	 *
+	 * This is the whole reason we can afford to answer media requests at all.
+	 * Media on a homeserver is not room-scoped — anyone holding an `mxc://` URI
+	 * that the *host* user may read can fetch it, including attachments from
+	 * unrelated conversations. A general `downloadFile` would therefore turn the
+	 * call iframe into a read primitive for every file the counsellor can see.
+	 * Confining it to the avatars already rendered in this call keeps the widget
+	 * to data it can observe anyway through the `m.room.member` state it is
+	 * granted.
+	 */
+	private isCallRoomAvatar(mxcUri: string): boolean {
+		const room = this.client.getRoom(this.roomId);
+		if (!room) return false;
+
+		if (room.getMxcAvatarUrl() === mxcUri) return true;
+
+		const currentState = room
+			.getLiveTimeline()
+			.getState(EventTimeline.FORWARDS);
+		if (!currentState) return false;
+
+		return currentState
+			.getStateEvents('m.room.member')
+			.some((event) => event.getContent()?.avatar_url === mxcUri);
+	}
+
+	/**
+	 * MSC4039 `org.matrix.msc4039.download_file`.
+	 *
+	 * The widget has no Matrix login of its own — `createRoomWidgetClient` is
+	 * given no access token — so once the homeserver enforces authenticated
+	 * media it cannot fetch a participant avatar itself. There is no widget API
+	 * action for a *thumbnail* (MSC4039's request carries only `content_uri`),
+	 * so this returns the original file and the widget scales it down.
+	 *
+	 * We fetch with the host's own credentials against
+	 * `/_matrix/client/v1/media/download`. The token never crosses the iframe
+	 * boundary, and the legacy unauthenticated endpoint is never used.
+	 */
+	public async downloadFile(
+		contentUri: string
+	): Promise<{ file: XMLHttpRequestBodyInit }> {
+		if (
+			typeof contentUri !== 'string' ||
+			!contentUri.startsWith('mxc://')
+		) {
+			throw new Error('Call widget may only download mxc:// media');
+		}
+		if (!this.isCallRoomAvatar(contentUri)) {
+			throw new Error(
+				'Call widget may only download avatars of its own call room'
+			);
+		}
+
+		const token = this.client.getAccessToken();
+		if (!token) {
+			throw new Error('Host client has no access token for media');
+		}
+
+		// No width/height: this resolves to the authenticated *download*
+		// endpoint, which is what MSC4039 specifies. `allowDirectLinks` stays
+		// false so a non-mxc src can never be fetched verbatim, and
+		// `useAuthentication` is what selects /_matrix/client/v1/media over the
+		// legacy unauthenticated /_matrix/media/v3 route.
+		const url = this.client.mxcUrlToHttp(
+			contentUri,
+			undefined,
+			undefined,
+			undefined,
+			false, // allowDirectLinks
+			true, // allowRedirects
+			true // useAuthentication
+		);
+		if (!url) {
+			throw new Error(`Could not resolve media URL for ${contentUri}`);
+		}
+
+		const response = await fetch(url, {
+			headers: { Authorization: `Bearer ${token}` }
+		});
+		if (!response.ok) {
+			throw new Error(
+				`Authenticated media download failed with ${response.status}`
+			);
+		}
+		return { file: await response.blob() };
 	}
 
 	/**

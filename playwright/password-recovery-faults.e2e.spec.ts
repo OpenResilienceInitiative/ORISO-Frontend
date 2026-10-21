@@ -446,7 +446,11 @@ test('backup fails after successful enquiry and status stays truthful', async ({
 		mark('Real enquiry201 acknowledged; releasing backup503');
 		release();
 		await expect.poll(() => failed).toBeGreaterThan(0);
-		const recoveryNotice = page.locator('.encryption-recovery-notice');
+		// The recovery prompt is an M3 snackbar; the key-save reminder stays in
+		// the page flow. Exactly one of the two may be visible.
+		const recoveryNotice = page.locator(
+			'.encryption-recovery-notice, [data-testid="key-backup-recovery-action"]'
+		);
 		await expect(recoveryNotice).toHaveCount(1);
 		await expect(recoveryNotice).toContainText(
 			'Ihre Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit.'

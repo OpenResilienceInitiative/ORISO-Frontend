@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
+import {
 	ActiveSessionContext,
 	AUTHORITIES,
 	buildExtendedSession,
@@ -32,8 +36,15 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { config } from '../../resources/scripts/config';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone375Globals,
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -119,6 +130,17 @@ const storyUserData = {
 	}
 } as any;
 
+// FE#1115: the request stage is seen by the advice seeker; with no `consultant`
+// yet, the header shows the search indicator instead of an avatar.
+const storyAskerUserData = {
+	...storyUserData,
+	userId: 'asker-4401',
+	userName: 'ruhiges-yak-kim@example.invalid',
+	displayName: 'Ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+} as any;
+
 /* ------------------------------------------------------------------ *
  * Matrix client mock (GroupChatHeader reads members from the client)
  * ------------------------------------------------------------------ */
@@ -189,7 +211,15 @@ const buildSingleSession = (
 		''
 	);
 
-const buildGroupSession = (): ExtendedSessionInterface =>
+const buildGroupSession = ({
+	active = true,
+	assignedAgencies = [],
+	subscribed = true
+}: {
+	active?: boolean;
+	assignedAgencies?: { id: number; name: string }[];
+	subscribed?: boolean;
+} = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
 		{
 			consultant: {
@@ -202,8 +232,8 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 			},
 			language: 'de',
 			chat: {
-				active: true,
-				assignedAgencies: [],
+				active,
+				assignedAgencies,
 				attachment: null,
 				consultingType: 1,
 				duration: 60,
@@ -218,7 +248,7 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 				repetitive: false,
 				startDate: '2026-03-18',
 				startTime: '10:00',
-				subscribed: true,
+				subscribed,
 				topic: 'Team Austausch',
 				createdAt: '2026-03-18T06:15:00.000Z'
 			} as unknown as GroupChatItemInterface
@@ -326,11 +356,13 @@ const StoryProviders = ({
 	session,
 	members = [],
 	lastActivity,
+	userData = storyUserData,
 	children
 }: {
 	session: ExtendedSessionInterface;
 	members?: MockMember[];
 	lastActivity?: Record<string, number>;
+	userData?: typeof storyUserData;
 	children: React.ReactNode;
 }) => {
 	React.useLayoutEffect(() => installHeaderFetchMocks(), []);
@@ -343,9 +375,9 @@ const StoryProviders = ({
 		<div style={headerShell}>
 			<UserDataContext.Provider
 				value={{
-					userData: storyUserData,
+					userData,
 					setUserData: () => {},
-					reloadUserData: async () => storyUserData
+					reloadUserData: async () => userData
 				}}
 			>
 				<SessionTypeContext.Provider
@@ -427,16 +459,29 @@ const StoryProviders = ({
 
 const noopRef = { current: false };
 
-const renderGroupHeader = (preset: {
-	session: ExtendedSessionInterface;
-	members?: MockMember[];
-}) => (
-	<StoryProviders session={preset.session} members={preset.members}>
-		<GroupChatHeader
-			hasUserInitiatedStopOrLeaveRequest={noopRef}
-			isJoinGroupChatView={false}
-			bannedUsers={[]}
-		/>
+const renderGroupHeader = (
+	preset: {
+		session: ExtendedSessionInterface;
+		members?: MockMember[];
+	},
+	hideTopic = false,
+	userData = storyUserData,
+	bannedUsers: string[] = []
+) => (
+	<StoryProviders
+		session={preset.session}
+		members={preset.members}
+		userData={userData}
+	>
+		{/* The app's own legal links; Storybook's global provider has none. */}
+		<LegalLinksProvider legalLinks={config.legalLinks}>
+			<GroupChatHeader
+				hasUserInitiatedStopOrLeaveRequest={noopRef}
+				isJoinGroupChatView={false}
+				bannedUsers={bannedUsers}
+				hideTopic={hideTopic}
+			/>
+		</LegalLinksProvider>
 	</StoryProviders>
 );
 
@@ -445,6 +490,7 @@ const renderSessionHeader = (
 		session: ExtendedSessionInterface;
 		members?: MockMember[];
 		lastActivity?: Record<string, number>;
+		userData?: typeof storyUserData;
 	},
 	showAddButton?: boolean
 ) => (
@@ -452,6 +498,7 @@ const renderSessionHeader = (
 		session={preset.session}
 		members={preset.members}
 		lastActivity={preset.lastActivity}
+		userData={preset.userData}
 	>
 		<SessionHeaderComponent
 			bannedUsers={[]}
@@ -493,6 +540,65 @@ export const mockActiveConversationManyParticipants = () => ({
 		{ userId: '@ali:matrix.storybook.test', name: 'Ali R.' },
 		{ userId: '@jo:matrix.storybook.test', name: 'Jo L.' }
 	]
+});
+
+/** `consultant` is deliberately absent: the capsule's magnet searches and the stack stays away. */
+const buildSearchingSession = (
+	status: typeof STATUS_ENQUIRY | typeof STATUS_EMPTY = STATUS_ENQUIRY
+): ExtendedSessionInterface =>
+	buildExtendedSession(
+		{
+			user: {
+				username: 'ruhiges-yak-kim@example.invalid',
+				displayName: 'Ruhiges Yak Kim',
+				sessionData: {}
+			},
+			language: 'de',
+			session: {
+				id: 4401,
+				agencyId: 101,
+				askerMatrixUserId: ASKER_MATRIX_ID,
+				attachment: null,
+				consultingType: 1,
+				matrixRoomId: 'sb-single-room-4401',
+				e2eLastMessage: null,
+				lastMessage: 'Anfrage gesendet',
+				messageDate: 1773822900,
+				createDate: '2026-03-18T06:15:00.000Z',
+				messagesRead: true,
+				postcode: 12345,
+				registrationType: REGISTRATION_TYPE_REGISTERED,
+				status,
+				videoCallMessageDTO: null,
+				topic: {
+					id: 1,
+					name: 'Familienberatung',
+					description: ''
+				}
+			} as unknown as SessionItemInterface
+		} as ListItemInterface,
+		''
+	);
+
+// 10. Request stage seen by the advice seeker — the search indicator.
+export const mockRequestStageSearching = () => ({
+	session: buildSearchingSession(),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 10b. The asker's own empty enquiry: no counsellor, but nothing is searched for (#1418).
+export const mockAskerEmptyEnquiry = () => ({
+	session: buildSearchingSession(STATUS_EMPTY),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 11. A counsellor accepted: the real avatar takes the indicator's place.
+export const mockRequestStageAccepted = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: roomParticipants,
+	userData: storyAskerUserData
 });
 
 // Asserts the "+" add pill is present and rendered to the LEFT of the type
@@ -611,6 +717,36 @@ export const GroupChatLarge: Story = {
 };
 
 /**
+ * Group chat while the privacy gate is open (#1499, Frank's decision): the
+ * group's topic is left out of the header, not dimmed, until the client has
+ * agreed. The avatars stay.
+ */
+export const GroupChatBeforeConsentHidesTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.sessionInfo__memberStack')
+			).toBeTruthy();
+		});
+		expect(canvasElement.querySelector('h3')).toBeNull();
+		expect(within(canvasElement).queryByText('Team Austausch')).toBeNull();
+	}
+};
+
+/** After consent the header shows the group's topic as it always did. */
+export const GroupChatAfterConsentShowsTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				within(canvasElement).getByText('Team Austausch')
+			).toBeVisible();
+		});
+	}
+};
+
+/**
  * Active 1-on-1 conversation (nearby / vicinity, AGENCY_COUNSELLING).
  * Expected (Figma): house icon + add button + the contact's avatar (animal,
  * FE#1193 Job 4) — no Matrix members yet, so the stack falls back to the contact.
@@ -629,6 +765,45 @@ export const ActiveConversation: Story = {
 			expect(canvasElement.textContent).not.toContain('•••');
 		});
 	}
+};
+
+/* The topic tag under the title is small text on a tinted fill: it must reach
+   4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
+const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+				.length
+		).toBeGreaterThan(0)
+	);
+	// The topic is the shared <TopicTag> (global --oriso-topic-tag-* tokens).
+	await expect(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		).length
+	).toBeGreaterThan(0);
+	for (const tag of Array.from(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		)
+	)) {
+		await expect(
+			wcagContrast(getComputedStyle(tag).color, effectiveBackground(tag))
+		).toBeGreaterThanOrEqual(4.5);
+	}
+};
+
+export const TopicTagLegible: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1',
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
+export const TopicTagLegibleLightBrandColour: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1 with a light Träger colour',
+	parameters: { orisoSeed: '#b4ddee' },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
 };
 
 /**
@@ -824,4 +999,377 @@ export const WaitingRoom: Story = {
  */
 export const Inquiry: Story = {
 	render: () => renderSessionHeader(mockInquiry())
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1115 — request stage: "searching for a counsellor"
+ * ------------------------------------------------------------------ */
+
+/** FE#1115: exactly one magnet, inside the capsule, whose beam fades only outside it. */
+const expectMagnetSearchesFromInsideTheCapsule = async (
+	canvasElement: HTMLElement
+) => {
+	const magnet = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.consultantSearchLoader'
+		);
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	const capsule = canvasElement.querySelector<HTMLElement>(
+		'.chatroomMainInteractionIcon'
+	)!;
+
+	// 1. One magnet, and it is inside the capsule.
+	await expect(
+		canvasElement.querySelectorAll('.consultantSearchLoader')
+	).toHaveLength(1);
+	await expect(capsule.contains(magnet)).toBe(true);
+	await expect(
+		canvasElement.querySelector(
+			'.chatroomMainInteractionIcon__typeGenerated'
+		)
+	).toBeNull();
+	await expect(
+		capsule.classList.contains('chatroomMainInteractionIcon--searching')
+	).toBe(true);
+
+	// 2. Nothing clips the beam, from the magnet up to the header itself.
+	let ancestor: HTMLElement | null = magnet;
+	while (ancestor && !ancestor.classList.contains('sessionInfo')) {
+		await expect(getComputedStyle(ancestor).overflow).toBe('visible');
+		ancestor = ancestor.parentElement;
+	}
+
+	// 3. Opaque when crossing the capsule's edge, spent well outside it. The pulse is
+	//    one-shot, so start it here and step frozen animations through it.
+	const sweep = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__sweep'
+	)!;
+	const beam = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__beam'
+	)!;
+	magnet.classList.add('consultantSearchLoader--pulsing');
+	sweep.getAnimations().forEach((animation) => animation.pause());
+	const capsuleBox = capsule.getBoundingClientRect();
+	const flight = Number(
+		beam.getAnimations()[0]!.effect!.getTiming().duration
+	);
+	const at = (fraction: number) => {
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight * fraction;
+		});
+		return {
+			box: beam.getBoundingClientRect(),
+			opacity: Number.parseFloat(getComputedStyle(beam).opacity)
+		};
+	};
+	const crossing = at(0.6);
+	await expect(crossing.box.right).toBeGreaterThan(capsuleBox.right);
+	await expect(crossing.opacity).toBeGreaterThan(0.8);
+	const spent = at(1);
+	await expect(spent.box.right).toBeGreaterThan(crossing.box.right);
+	await expect(spent.opacity).toBeLessThan(0.1);
+
+	// 4. Between pulses the magnet is still: no permanent spin in the header.
+	magnet.classList.remove('consultantSearchLoader--pulsing');
+	await expect(getComputedStyle(beam).animationName).toBe('none');
+	await expect(getComputedStyle(sweep).animationName).toBe('none');
+
+	return { magnet, capsule, capsuleBox };
+};
+
+/** The advice seeker's request stage at 1440 px: one magnet, beam fading outside the capsule. */
+export const RequestStageSearching: Story = {
+	name: 'Request stage — searching for a counsellor (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+		// The glyph is decoration; screen readers get the state as text.
+		await expect(
+			within(canvasElement).getByRole('status')
+		).toHaveTextContent('Wir suchen eine Beratung für Sie.');
+	}
+};
+
+/** The same stage on a tablet (834 px). */
+export const RequestStageSearchingTablet: Story = {
+	name: 'Request stage — searching, tablet 834 px (FE#1115)',
+	globals: tablet834Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** The same stage on the phone (390 px), where no row clip may cut the beam. */
+export const RequestStageSearchingPhone: Story = {
+	name: 'Request stage — searching, phone 390 px (FE#1115)',
+	globals: phone390Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** Only an enquiry is searched for (#1418): an empty one keeps its waiting clock and avatar stack. */
+export const RequestStageEmptyEnquiry: Story = {
+	name: 'Request stage — own empty enquiry: no magnet, stack stays (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockAskerEmptyEnquiry()),
+	play: async ({ canvasElement }) => {
+		const capsule = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.chatroomMainInteractionIcon'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--waiting')
+		).toBe(true);
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--searching')
+		).toBe(false);
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader')
+		).toBeNull();
+		await expect(
+			within(canvasElement).queryByText(/Wir suchen eine Beratung/)
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-participants"]'
+			)
+		).toBeTruthy();
+	}
+};
+
+/** Once a counsellor accepts, the search stops and the participant stack returns. */
+export const RequestStageAccepted: Story = {
+	name: 'Request stage — counsellor accepted (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageAccepted()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).toBeTruthy();
+		});
+		// The still enquiry glyph may stay; only the searching state must go.
+		await expect(
+			canvasElement.querySelector(
+				'.chatroomMainInteractionIcon--searching'
+			)
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader--animated')
+		).toBeNull();
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Group header ⋮ menu (#1760): one menu for every role, no text button
+ * ------------------------------------------------------------------ */
+
+const groupMenuAgency = [{ id: 101, name: 'Beratungsstelle Mitte' }];
+const storyAskerData = {
+	...storyUserData,
+	userId: 'asker-group-1',
+	userName: 'ruhiges-yak-kim',
+	displayName: 'ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+};
+const groupMenuPreset = (active = true, subscribed = true) => ({
+	session: buildGroupSession({
+		active,
+		assignedAgencies: groupMenuAgency,
+		subscribed
+	}),
+	members: makeMembers(4)
+});
+const desktop1366Globals = { viewport: { value: 'desktop1366' } };
+const desktop1920Globals = { viewport: { value: 'desktop1920' } };
+
+/** Opens the visible ⋮ trigger and returns the menu panel. */
+const openGroupMenu = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(
+		canvas.queryByRole('link', { name: 'Informationen & Einstellungen' })
+	).toBeNull();
+	const trigger = canvas
+		.getAllByRole('button', { name: 'Weitere Funktionen' })
+		.find((button) => button.getClientRects().length > 0);
+	await expect(trigger).toBeDefined();
+	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	trigger!.focus();
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(trigger).toHaveAttribute('aria-expanded', 'true')
+	);
+	const menu = document.getElementById('flyout')!;
+	await waitFor(() => expect(menu).toBeVisible());
+	return { menu: within(menu), trigger: trigger! };
+};
+
+const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(menu.getByRole('button', { name: /Impressum/ })).toBeVisible();
+};
+
+export const GroupMenuClosed1366: Story = {
+	name: 'Group menu · closed, no text button (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.queryByRole('link', {
+				name: 'Informationen & Einstellungen'
+			})
+		).toBeNull();
+		const trigger = canvas
+			.getAllByRole('button', { name: 'Weitere Funktionen' })
+			.find((button) => button.getClientRects().length > 0);
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	}
+};
+
+export const GroupMenuCounsellor1366: Story = {
+	name: 'Group menu · counsellor, running (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const { menu, trigger } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.getByText('Chat beenden')).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(trigger).toHaveAttribute('aria-expanded', 'false')
+		);
+	}
+};
+
+/** Before the start the owner also edits the settings; "end chat" is not offered. */
+export const GroupMenuCounsellorWaitingRoom1920: Story = {
+	name: 'Group menu · counsellor, waiting room (1920)',
+	globals: desktop1920Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+/** An advice seeker gets agency, Chat-Info and legal texts, no moderator actions. */
+export const GroupMenuAsker1366: Story = {
+	name: 'Group menu · advice seeker (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+		await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+	}
+};
+
+export const GroupMenuAsker390: Story = {
+	name: 'Group menu · advice seeker (390)',
+	globals: phone390Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+export const GroupMenuCounsellor375: Story = {
+	name: 'Group menu · counsellor, waiting room (375)',
+	globals: phone375Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+	}
+};
+
+/** Not joined yet: the schedule entry is offered; the dialog leaves out the members. */
+const expectScheduleEntryForGuest: Story['play'] = async ({
+	canvasElement
+}) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expectSharedEntries(menu);
+	await expect(menu.queryByText('Chat beenden')).toBeNull();
+	await expect(menu.queryByText('Chat verlassen')).toBeNull();
+	await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+};
+
+export const GroupMenuAskerNotJoined1366: Story = {
+	name: 'Group menu · advice seeker, not joined yet (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+export const GroupMenuAskerNotJoined390: Story = {
+	name: 'Group menu · advice seeker, not joined yet (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+/** A banned advice seeker keeps agency and legal texts but gets no Chat-Info. */
+const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(
+		menu.queryByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeNull();
+};
+
+export const GroupMenuAskerBanned1366: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
+};
+
+export const GroupMenuAskerBanned390: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
 };

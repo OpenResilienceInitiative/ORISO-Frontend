@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Component, ReactNode } from 'react';
+import i18n from 'i18next';
 import { apiPostError, ERROR_LEVEL_ERROR } from '../../api/apiPostError';
 import { Button, BUTTON_TYPES } from '../button/Button';
 
@@ -60,15 +61,12 @@ export class MessageSubmitErrorBoundary extends Component<
 		if (this.state.hasError) {
 			return (
 				<div className="messageSubmit__wrapper messageSubmit__wrapper--error">
-					<p>
-						Der Chat-Eingabebereich konnte nicht geladen werden.
-						Bitte versuchen Sie es erneut.
-					</p>
+					<p>{i18n.t('message.submit.loadError')}</p>
 					<Button
 						buttonHandle={this.handleRetry}
 						item={{
 							type: BUTTON_TYPES.PRIMARY,
-							label: 'Erneut versuchen'
+							label: i18n.t('message.submit.retry')
 						}}
 					/>
 				</div>

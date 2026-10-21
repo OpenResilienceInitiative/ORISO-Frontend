@@ -27,12 +27,15 @@ export interface StageProps {
 	className?: string;
 	hasAnimation?: boolean;
 	isReady?: boolean;
+	/** Waiting rooms: the legal links open this department's documents. */
+	legalDepartment?: { agencyId: number; topicId: number } | null;
 }
 
 export const Stage = ({
 	className,
 	hasAnimation,
-	isReady = true
+	isReady = true,
+	legalDepartment
 }: StageProps) => {
 	const { t: translate } = useTranslation();
 
@@ -223,7 +226,11 @@ export const Stage = ({
 						text={translate('app.claim')}
 					/>
 				</div>
-				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
+				{hasAnimation && !isReady ? (
+					<div aria-hidden="true">
+						<Spinner className="stage__spinner" />
+					</div>
+				) : null}
 				{/* The centre of the panel belongs to the lamp-map composition.
 				    The tenant/association mark that used to sit here was removed
 				    on the owner's decision (2026-08-19): it doubled branding that
@@ -250,6 +257,13 @@ export const Stage = ({
 								rawLabel={rawLabel}
 								url={url}
 								textClassName="stage__legalLinksItem"
+								{...(legalDepartment
+									? {
+											scope: 'agency' as const,
+											agencyId: legalDepartment.agencyId,
+											topicId: legalDepartment.topicId
+										}
+									: {})}
 							/>
 						)}
 					</LegalLinks>

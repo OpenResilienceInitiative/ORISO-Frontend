@@ -122,3 +122,76 @@ describe('isAllowedWidgetCapability', () => {
 		}
 	});
 });
+
+describe('MSC4039 media', () => {
+	it('grants download_file so the widget can render avatars', () => {
+		expect(allowed('org.matrix.msc4039.download_file')).toBe(true);
+	});
+
+	it('denies upload_file: a call widget never writes media', () => {
+		expect(allowed('org.matrix.msc4039.upload_file')).toBe(false);
+	});
+
+	it('denies get_media_config, which we never granted', () => {
+		expect(allowed('org.matrix.msc4039.get_media_config')).toBe(false);
+	});
+});
+
+describe('the ORISO identity record', () => {
+	const IDENTITY = 'org.oriso.call.identity';
+
+	it('lets the widget read who everybody is, as a timeline event', () => {
+		// A timeline event, because room state is not encrypted: an identity
+		// in state is a record the homeserver can read.
+		expect(allowed(`org.matrix.msc2762.receive.event:${IDENTITY}`)).toBe(
+			true
+		);
+	});
+
+	it('does not let the widget send one, not even its own', () => {
+		/*
+		 * The whole rule is that the call is told identities and never
+		 * decides one. The send and receive sets differ by exactly this
+		 * event; before the transport moved, both room-event directions were
+		 * checked against a single set, so granting the read would have
+		 * granted the write with it.
+		 */
+		expect(allowed(`org.matrix.msc2762.send.event:${IDENTITY}`)).toBe(
+			false
+		);
+	});
+
+	it('no longer grants it as room state, in either direction', () => {
+		for (const prefix of [
+			'org.matrix.msc2762.receive.state_event',
+			'org.matrix.msc2762.send.state_event'
+		]) {
+			for (const stateKey of ['', '@a:hs', '#@a:hs']) {
+				expect(allowed(`${prefix}:${IDENTITY}${stateKey}`)).toBe(false);
+			}
+		}
+	});
+
+	it('still grants the events the call actually sends', () => {
+		// The split must not have narrowed the send set by accident.
+		for (const type of [
+			'io.element.call.encryption_keys',
+			'org.matrix.msc4075.rtc.notification',
+			'm.reaction',
+			'io.element.call.reaction'
+		]) {
+			expect(allowed(`org.matrix.msc2762.send.event:${type}`)).toBe(true);
+			expect(allowed(`org.matrix.msc2762.receive.event:${type}`)).toBe(
+				true
+			);
+		}
+	});
+
+	it('still denies an event type nobody granted, both ways', () => {
+		for (const direction of ['send', 'receive']) {
+			expect(
+				allowed(`org.matrix.msc2762.${direction}.event:m.room.message`)
+			).toBe(false);
+		}
+	});
+});

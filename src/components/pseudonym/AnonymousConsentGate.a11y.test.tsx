@@ -4,9 +4,20 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'anonymousConsent.headline': 'Herzlich Willkommen',
+			'anonymousConsent.description':
+				'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.',
+			'anonymousChat.consent.reject': 'Ich stimme nicht zu',
+			'anonymousChat.consent.accept': 'Ich bin einverstanden',
+			'anonymousChat.consent.mustAcceptToContinue':
+				'Um fortzufahren müssen Sie unseren Datenschutzbestimmungen zustimmen.'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 vi.mock('../../resources/img/icons/privacy-shield.svg', () => ({

@@ -72,7 +72,7 @@
 		}
 
 		&:focus + label {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 
 		&[disabled] {
@@ -109,7 +109,7 @@
 			border: 3px solid var(--m3-primary, #a5000a) !important;
 
 			+ label {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 		}
 

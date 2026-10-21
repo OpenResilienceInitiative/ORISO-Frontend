@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
-import { Link, generatePath } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
 	AUTHORITIES,
 	SessionTypeContext,
@@ -10,7 +10,7 @@ import {
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
 import { mobileListView } from '../../app/navigationHandler';
-import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
+import { BackIcon } from '../../../resources/img/icons';
 import { useTranslation } from 'react-i18next';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
@@ -25,10 +25,10 @@ import {
 } from './memberActivity';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
+import { callMediaErrorMessage } from '../../../utils/callMediaErrorMessage';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
-import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
 import { getModality, Modality } from '../../session/getModality';
 import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
 
@@ -40,12 +40,19 @@ interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	isJoinGroupChatView: boolean;
 	bannedUsers: string[];
+	/**
+	 * Leave the group's topic out of the header. Set while the group's
+	 * privacy gate is open: nothing about the group's topic is shown to
+	 * someone who has not yet agreed (#1499). Hidden, not dimmed.
+	 */
+	hideTopic?: boolean;
 }
 
 export const GroupChatHeader = ({
 	hasUserInitiatedStopOrLeaveRequest,
 	isJoinGroupChatView,
-	bannedUsers
+	bannedUsers,
+	hideTopic = false
 }: GroupChatHeaderProps) => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -179,9 +186,7 @@ export const GroupChatHeader = ({
 
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
-				alert(
-					'Cannot start call: No Matrix room found for this session'
-				);
+				alert(t('calls.error.noRoom'));
 				return;
 			}
 
@@ -192,11 +197,7 @@ export const GroupChatHeader = ({
 					'http://',
 					'https://'
 				);
-				if (
-					window.confirm(
-						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
-					)
-				) {
+				if (window.confirm(t('calls.error.httpsRequired'))) {
 					window.location.href = httpsUrl;
 				}
 				return;
@@ -219,20 +220,7 @@ export const GroupChatHeader = ({
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 
-				let errorMsg = 'Cannot access camera/microphone. ';
-				if (mediaError.name === 'NotAllowedError') {
-					errorMsg +=
-						'Please grant permissions in your browser settings.';
-				} else if (mediaError.name === 'NotFoundError') {
-					errorMsg += 'No camera/microphone found on this device.';
-				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg +=
-						'Your browser does not support this feature. Please use HTTPS.';
-				} else {
-					errorMsg += mediaError.message || 'Unknown error.';
-				}
-
-				alert(errorMsg);
+				alert(callMediaErrorMessage(mediaError));
 				return;
 			}
 
@@ -247,7 +235,12 @@ export const GroupChatHeader = ({
 		} catch (error) {
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
 			alert(
-				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+				t('calls.error.callFailed', {
+					message:
+						error instanceof Error
+							? error.message
+							: t('calls.error.unknown')
+				})
 			);
 		}
 		// console.log("═══════════════════════════════════════════════");
@@ -298,14 +291,6 @@ export const GroupChatHeader = ({
 		featureVideoCallsGroupChatsEnabled !== false;
 
 	const isActive = activeSession.item.active;
-	const getSessionListTab = () =>
-		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
-	const baseUrl = `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
-	const groupChatInfoLink = generatePath(baseUrl, {
-		groupId: activeSession.item.matrixRoomId,
-		id: String(activeSession.item.id),
-		subRoute: 'groupChatInfo'
-	});
 	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
 	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
 	const visibleMembers = useMemo(
@@ -361,11 +346,13 @@ export const GroupChatHeader = ({
 								}
 							/>
 						</div>
-						<h3>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</h3>
+						{!hideTopic && (
+							<h3 data-cy="group-header-topic">
+								{typeof activeSession.item.topic === 'string'
+									? activeSession.item.topic
+									: activeSession.item.topic?.name || ''}
+							</h3>
+						)}
 					</div>
 					{/* Matrix room participants */}
 					{isLoadingMembers ? (
@@ -396,18 +383,6 @@ export const GroupChatHeader = ({
 					) : null}
 				</div>
 
-				{(!isActive || isJoinGroupChatView) && isConsultant && (
-					<Link
-						to={groupChatInfoLink}
-						className="sessionMenu__item--desktop sessionMenu__button"
-					>
-						<span className="sessionMenu__icon">
-							<GroupChatInfoIcon />
-							{t('chatFlyout.groupChatInfo')}
-						</span>
-					</Link>
-				)}
-
 				{isActive &&
 					!isJoinGroupChatView &&
 					(isAudioCallsEnabled || isVideoCallsEnabled) &&
@@ -436,19 +411,15 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{shouldShowGroupChatMenu({
-					isActive,
-					isJoinGroupChatView
-				}) && (
-					<SessionMenu
-						hasUserInitiatedStopOrLeaveRequest={
-							hasUserInitiatedStopOrLeaveRequest
-						}
-						isAskerInfoAvailable={false}
-						isJoinGroupChatView={isJoinGroupChatView}
-						bannedUsers={bannedUsers}
-					/>
-				)}
+				{/* Chat-Info, legal links and moderator actions for every role. */}
+				<SessionMenu
+					hasUserInitiatedStopOrLeaveRequest={
+						hasUserInitiatedStopOrLeaveRequest
+					}
+					isAskerInfoAvailable={false}
+					isJoinGroupChatView={isJoinGroupChatView}
+					bannedUsers={bannedUsers}
+				/>
 			</div>
 		</div>
 	);
