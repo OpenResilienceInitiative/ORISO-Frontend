@@ -6070,5 +6070,39 @@
 				"inviteText": "ምርግጋጽ እቲ ውዕል ንግዚኡ ክምርመር ኣይከኣለን። በጃኹም ዳግማይ ፈትኑ።"
 			}
 		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "መወከሲ ኣካል",
+			"title": "ተግባራዊ ዝኾኑ ናይ ንድፊ ቶከናት",
+			"declaredExplanation": "ዝርዝር ምንጪ ነቲ ዝተገልጸ ምትእስሳር ይገልጽ። እቶም ዋጋታት ካብቲ መወከሲ ኣካል ይዕቀኑ።",
+			"refresh": "ምርመራ ኣሐድስ",
+			"empty": "ገና መለክዒታት የለዉን።",
+			"unavailable": "ኣይርከብን",
+			"scroll": "መለክዒታት ቶከናት ኣንሸራትት",
+			"caption": "መለክዒታት ተግባራዊ ቶከናት",
+			"target": "ዕላማ",
+			"token": "ቶከን / ባህሪ",
+			"expected": "ዝተጸበየ (ሞተር)",
+			"calculated": "ዝተሓስበ (ዝተወርሰ ቶከን)",
+			"applied": "ዝተተግበረ (ኣካል)",
+			"result": "ውጽኢት",
+			"source": "ዝተገልጸ ምንጪ",
+			"status": {
+				"match": "ይሰማማዕ",
+				"mismatch": "ኣይሰማማዕን",
+				"missing": "ይጎድል",
+				"unresolved": "ኣይተፈትሐን"
+			},
+			"issues": {
+				"missing-element": "እቲ ዝድለ ኣካል ኣይተረኽበን።",
+				"missing-expected": "ናጻ ዝተጸበየ ዋጋ ኣይርከብን።",
+				"missing-token": "እቲ ዝተወርሰ ቶከን ይጎድል ወይ ቅቡል ኣይኮነን።",
+				"unresolved-token": "ዋጋ እቲ ዝተወርሰ ቶከን ክውሰን ኣይከኣለን።",
+				"missing-applied": "እቲ ዝተተግበረ ዋጋ ይጎድል።",
+				"calculated-mismatch": "እቲ ዝተወርሰ ቶከን ካብ ዋጋ ሞተር ይፍለ።",
+				"applied-mismatch": "እቲ ዝተተግበረ ዋጋ ካብ ዋጋ ሞተር ይፍለ።"
+			}
+		}
 	}
 }

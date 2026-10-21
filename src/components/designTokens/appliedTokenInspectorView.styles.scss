@@ -1,8 +1,8 @@
 .appliedTokenInspector {
 	min-width: 0;
 	max-width: 100%;
-	color: var(--m3-on-surface);
-	background: var(--m3-surface);
+	color: var(--m3-on-surface, #1a1c1e);
+	background: var(--m3-surface, #fcf9f9);
 	font-family: var(--font-family-sans-serif);
 
 	&__referencePage {
@@ -16,7 +16,7 @@
 		margin-block: 1rem;
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary-outline);
+			outline: 2px solid var(--m3-primary-outline, #930008);
 			outline-offset: 2px;
 		}
 	}
@@ -37,7 +37,7 @@
 
 	th,
 	td {
-		border-bottom: 1px solid var(--m3-outline-variant);
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
 	}
 
 	th {
