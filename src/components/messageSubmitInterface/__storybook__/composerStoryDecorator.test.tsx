@@ -341,3 +341,215 @@ describe('Native DPA explicitly empty draft index', () => {
 		}
 	);
 });
+
+// Expected scope identities come from the retained ordinary CI requests, not
+// from the implementation's future declaration: an omitted or mistyped scope
+// must fail the real provider-stack test.
+describe('chat-stage explicitly empty single drafts', () => {
+	const stageScopes = [
+		'scope:!sonnenblume-4711:oriso.invalid|thread:main',
+		'scope:4711|thread:main',
+		'scope:!supervision-4711:oriso.invalid|thread:main',
+		'scope:!sonnenblume-4711:oriso.invalid|thread:$m3',
+		'scope:4711|thread:$m3',
+		'scope:!sonnenblume-4711:oriso.invalid|thread:$thread-2',
+		'scope:4711|thread:$thread-2',
+		'scope:!team-4711:oriso.invalid|thread:main'
+	] as const;
+
+	it('declares all eight observed reads before a real ChatStageProviders child layout effect', async () => {
+		const { ChatStageProviders } = await import(
+			'../../chatStage/__storybook__/ChatStageProviders'
+		);
+		const reads: Promise<Response>[] = [];
+		const Child = () => {
+			React.useLayoutEffect(() => {
+				for (const scope of stageScopes)
+					reads.push(fetch(readUrl(scope)));
+			}, []);
+			return null;
+		};
+		const view = render(
+			<ChatStageProviders>
+				<Child />
+			</ChatStageProviders>
+		);
+		expect(reads).toHaveLength(8);
+		const responses = await Promise.all(reads);
+		for (const response of responses) {
+			expect(response.status).toBe(204);
+			await expect(response.text()).resolves.toBe('');
+		}
+		expect(delegate).not.toHaveBeenCalled();
+		view.unmount();
+		expect(globalThis.fetch).toBe(delegate);
+	});
+
+	it('keeps the default three scopes and rejects every stage scope without explicit opt-in', async () => {
+		const finish = beginStoryVerification();
+		const dispose = await install();
+		for (const scope of [
+			'scope:360|thread:main',
+			'scope:361|thread:main',
+			'scope:9001|thread:main'
+		]) {
+			expect((await fetch(readUrl(scope))).status).toBe(204);
+		}
+		for (const scope of stageScopes) {
+			await expect(fetch(readUrl(scope))).rejects.toThrow(
+				'Unexpected product API request: GET'
+			);
+		}
+		expect(delegate).toHaveBeenCalledTimes(8);
+		await expect(finish.complete()).rejects.toThrow(
+			'unexpected-request: GET'
+		);
+		dispose();
+	});
+
+	const rejectedStageReads = [
+		[
+			'wrong origin',
+			readUrl(stageScopes[0]).replace(
+				'api.storybook.test',
+				'foreign.storybook.test'
+			),
+			'GET'
+		],
+		[
+			'plural path',
+			`https://api.storybook.test/service/users/drafts?scopeKey=${encodeURIComponent(stageScopes[0])}`,
+			'GET'
+		],
+		[
+			'foreign scope',
+			readUrl('scope:!foreign:oriso.invalid|thread:main'),
+			'GET'
+		],
+		['missing query', endpoint, 'GET'],
+		['extra query', `${readUrl(stageScopes[0])}&other=1`, 'GET'],
+		[
+			'duplicate query',
+			`${readUrl(stageScopes[0])}&scopeKey=${encodeURIComponent(stageScopes[0])}`,
+			'GET'
+		],
+		['fragment', `${readUrl(stageScopes[0])}#other`, 'GET'],
+		['write', readUrl(stageScopes[0]), 'POST']
+	];
+	it.each(rejectedStageReads)(
+		'preserves strict rejection for %s with stage opt-in',
+		async (_name, url, method) => {
+			const fixture = await import('./composerStoryDecorator');
+			const finish = beginStoryVerification();
+			const dispose = fixture.installComposerSingleDraftFixture({
+				emptyDraftScopes: stageScopes
+			});
+			const input = new Request(url, { method });
+			const init = { signal: new AbortController().signal };
+			await expect(fetch(input, init)).rejects.toThrow(
+				`Unexpected product API request: ${method} ${url}`
+			);
+			expect(delegate).toHaveBeenCalledExactlyOnceWith(input, init);
+			await expect(finish.complete()).rejects.toThrow(
+				`unexpected-request: ${method} ${url}`
+			);
+			dispose();
+		}
+	);
+
+	it('snapshots caller scopes and retires held A through ordinary B and stage A again', async () => {
+		const fixture = await import('./composerStoryDecorator');
+		const declared = [...stageScopes];
+		const disposeA = fixture.installComposerSingleDraftFixture({
+			emptyDraftScopes: declared
+		});
+		declared.splice(0);
+		const heldA = globalThis.fetch;
+		expect((await fetch(readUrl(stageScopes[0]))).status).toBe(204);
+		disposeA();
+		const finish = beginStoryVerification();
+		const disposeB = fixture.installComposerSingleDraftFixture();
+		const heldB = globalThis.fetch;
+		disposeA();
+		expect(globalThis.fetch).toBe(heldB);
+		await expect(fetch(readUrl(stageScopes[0]))).rejects.toThrow(
+			'Unexpected product API request: GET'
+		);
+		await expect(heldA(readUrl(stageScopes[0]))).rejects.toThrow(
+			'Unexpected product API request: GET'
+		);
+		await expect(finish.complete()).rejects.toThrow(
+			'unexpected-request: GET'
+		);
+		disposeB();
+		const disposeAgain = fixture.installComposerSingleDraftFixture({
+			emptyDraftScopes: stageScopes
+		});
+		expect((await fetch(readUrl(stageScopes[7]))).status).toBe(204);
+		disposeAgain();
+		disposeAgain();
+		expect(globalThis.fetch).toBe(delegate);
+	});
+
+	it('keeps stage declarations stable through StrictMode rerender and preserves a later foreign fetch owner', async () => {
+		const { ComposerStoryDecorator } = await import(
+			'./composerStoryDecorator'
+		);
+		const reads: Promise<Response>[] = [];
+		const Child = ({ scope }: { scope: string }) => {
+			React.useLayoutEffect(() => {
+				reads.push(fetch(readUrl(scope)));
+			}, [scope]);
+			return null;
+		};
+		const scene = (scope: string) => (
+			<React.StrictMode>
+				<ComposerStoryDecorator emptyDraftScopes={stageScopes}>
+					<Child scope={scope} />
+				</ComposerStoryDecorator>
+			</React.StrictMode>
+		);
+		const view = render(scene(stageScopes[0]));
+		view.rerender(scene(stageScopes[7]));
+		expect(reads.length).toBeGreaterThanOrEqual(3);
+		for (const response of await Promise.all(reads))
+			expect(response.status).toBe(204);
+		expect(delegate).not.toHaveBeenCalled();
+		const foreign = vi.fn<typeof fetch>();
+		globalThis.fetch = foreign;
+		view.unmount();
+		expect(globalThis.fetch).toBe(foreign);
+	});
+});
+
+describe('composer empty draft scope malformed queries', () => {
+	it.each([
+		['missing scopeKey', `${endpoint}?other=1`],
+		['empty scopeKey', `${endpoint}?scopeKey=`]
+	])(
+		'delegates %s despite an explicitly declared empty scope',
+		async (_name, url) => {
+			const fixture = await import('./composerStoryDecorator');
+			const finish = beginStoryVerification();
+			const dispose = fixture.installComposerSingleDraftFixture({
+				emptyDraftScopes: ['']
+			});
+			const input = new Request(url);
+			const init = {
+				method: 'GET',
+				signal: new AbortController().signal
+			};
+			try {
+				await expect(fetch(input, init)).rejects.toThrow(
+					`Unexpected product API request: GET ${url}`
+				);
+				expect(delegate).toHaveBeenCalledExactlyOnceWith(input, init);
+				await expect(finish.complete()).rejects.toThrow(
+					`unexpected-request: GET ${url}`
+				);
+			} finally {
+				dispose();
+			}
+		}
+	);
+});

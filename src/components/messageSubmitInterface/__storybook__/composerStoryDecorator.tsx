@@ -239,10 +239,13 @@ const composerEmptyDraftScopes = new Set([
 	'scope:9001|thread:main'
 ]);
 
+const noAdditionalEmptyDraftScopes: readonly string[] = [];
+
 const ownsComposerSingleDraftRead = (
 	input: RequestInfo | URL,
 	init: RequestInit | undefined,
-	emptyDraftIndex: boolean
+	emptyDraftIndex: boolean,
+	emptyDraftScopes: ReadonlySet<string>
 ) => {
 	const method =
 		init?.method ?? (input instanceof Request ? input.method : 'GET');
@@ -253,28 +256,42 @@ const ownsComposerSingleDraftRead = (
 	} catch {
 		return false;
 	}
+	const scopeKey = url.searchParams.get('scopeKey');
 	return (
 		url.origin === 'https://api.storybook.test' &&
 		url.pathname === '/service/users/drafts/single' &&
 		url.hash === '' &&
 		[...url.searchParams].length === 1 &&
-		(composerEmptyDraftScopes.has(url.searchParams.get('scopeKey') ?? '') ||
-			(emptyDraftIndex &&
-				url.searchParams.get('scopeKey') === REMOTE_DRAFT_INDEX_SCOPE))
+		scopeKey !== null &&
+		scopeKey !== '' &&
+		(composerEmptyDraftScopes.has(scopeKey) ||
+			(scopeKey === REMOTE_DRAFT_INDEX_SCOPE
+				? emptyDraftIndex
+				: emptyDraftScopes.has(scopeKey)))
 	);
 };
 
 /** Exact no-content read fixture; list reads and all writes keep their owners. */
 export const installComposerSingleDraftFixture = ({
-	emptyDraftIndex = false
-}: { emptyDraftIndex?: boolean } = {}) => {
+	emptyDraftIndex = false,
+	emptyDraftScopes = noAdditionalEmptyDraftScopes
+}: {
+	emptyDraftIndex?: boolean;
+	emptyDraftScopes?: readonly string[];
+} = {}) => {
+	const ownedEmptyDraftScopes = new Set(emptyDraftScopes);
 	const delegate = globalThis.fetch;
 	let active = true;
 	const ownedFetch: typeof fetch = function (this: unknown, input, init) {
 		if (
 			active &&
 			globalThis.fetch === ownedFetch &&
-			ownsComposerSingleDraftRead(input, init, emptyDraftIndex)
+			ownsComposerSingleDraftRead(
+				input,
+				init,
+				emptyDraftIndex,
+				ownedEmptyDraftScopes
+			)
 		) {
 			return Promise.resolve(new Response(null, { status: 204 }));
 		}
@@ -370,6 +387,7 @@ export function ComposerStoryDecorator({
 	roomMembers,
 	userData,
 	emptyDraftIndex = false,
+	emptyDraftScopes = noAdditionalEmptyDraftScopes,
 	children
 }: {
 	activeSession?: any;
@@ -379,6 +397,8 @@ export function ComposerStoryDecorator({
 	userData?: any;
 	/** Native DPA send scenarios explicitly declare an absent remote index row. */
 	emptyDraftIndex?: boolean;
+	/** Exact absent single-draft rows owned by the enclosing story scenario. */
+	emptyDraftScopes?: readonly string[];
 	children: React.ReactNode;
 }) {
 	// Insertion effects are paired with committed mounts, including nested
@@ -386,13 +406,14 @@ export function ComposerStoryDecorator({
 	useInsertionEffect(() => {
 		const restoreComposer = installComposerFetchMocks();
 		const restoreDrafts = installComposerSingleDraftFixture({
-			emptyDraftIndex
+			emptyDraftIndex,
+			emptyDraftScopes
 		});
 		return () => {
 			restoreDrafts();
 			restoreComposer();
 		};
-	}, [emptyDraftIndex]);
+	}, [emptyDraftIndex, emptyDraftScopes]);
 
 	return (
 		<MatrixClientContext.Provider
