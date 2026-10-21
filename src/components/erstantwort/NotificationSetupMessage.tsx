@@ -132,6 +132,17 @@ export const NotificationSetupCollapse = ({
 		focusSetupNext.current = !toSummary && focusInside;
 	};
 
+	// A choice that changed nothing (the channel was already on) still ends
+	// the setup the person opened: the account does not move, so remember it.
+	const [choiceDone, setChoiceDone] = useState(false);
+	useEffect(() => {
+		if (choiceDone && opened && done && !bothPending) {
+			noteFocus(true);
+			setOpened(false);
+		}
+		if (choiceDone && (!opened || done)) setChoiceDone(false);
+	}, [choiceDone, opened, done, bothPending]);
+
 	const seenActive = useRef(active);
 	useEffect(() => {
 		const changed = seenActive.current !== active;
@@ -287,6 +298,7 @@ export const NotificationSetupCollapse = ({
 					isEmailEnabled={isEmailEnabled}
 					isBrowserEnabled={isBrowserEnabled}
 					onStart={onStart}
+					onDone={() => setChoiceDone(true)}
 				/>
 			</div>
 		</div>

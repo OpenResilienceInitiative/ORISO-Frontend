@@ -259,6 +259,17 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		).toBeTruthy();
 	});
 
+	it('collapses when the channel that is already on is chosen again (#1767 review)', async () => {
+		mount(emailOn, { startOpen: true });
+
+		fireEvent.click(screen.getByRole('button', { name: EMAIL_CHOICE }));
+
+		await waitFor(() =>
+			expect(screen.getByRole('button', { name: CHANGE })).toBeTruthy()
+		);
+		expect(patch).not.toHaveBeenCalled();
+	});
+
 	it('waits for the browser step of "both" before it collapses', async () => {
 		mount(noChannel);
 
