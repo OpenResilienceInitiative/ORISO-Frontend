@@ -101,7 +101,11 @@ export async function createProductConfig(options = {}) {
 		define: environment.define,
 		plugins: [
 			productHtmlPlugin(environment),
-			react(),
+			react(
+				environment.raw.FAST_REFRESH === false
+					? { exclude: /./ }
+					: undefined
+			),
 			svgr({
 				svgrOptions: {
 					svgo: false,
