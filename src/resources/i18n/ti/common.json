@@ -1728,7 +1728,15 @@
 					"text": "ስም ተጠቃሚ ወይ ምልክት ቃል ጌጋ እዩ። በጃኹም ደጊምኩም ፈትኑ።"
 				},
 				"consultantBlocked": "ናይ ኣማኸርቲ ኣካውንታት ኣብዚ ክኣትዉ ኣይክእሉን።",
-				"tooManyRequests": "ብዙሓት ፈተነታት። በጃኹም ውሑዳት ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።"
+				"tooManyRequests": "ብዙሓት ፈተነታት። በጃኹም ውሑዳት ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitSecond": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ሰከንድ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitSeconds": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{seconds}} ሰከንድ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitMinute": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ደቒቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitMinutes": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{minutes}} ደቓይቕ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitHour": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ ሰዓት ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitHours": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{hours}} ሰዓታት ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitDay": "ብዙሓት ፈተነታት። በጃኹም ኣስታት ሓደ መዓልቲ ተጸቢኹም እንደገና ፈትኑ።",
+				"tooManyRequestsWaitDays": "ብዙሓት ፈተነታት። በጃኹም ኣስታት {{days}} መዓልትታት ተጸቢኹም እንደገና ፈትኑ።"
 			}
 		},
 		"mobile": {
@@ -1857,7 +1865,8 @@
 				"mention": "ሰብ ጥቐስ",
 				"voiceRecording": {
 					"label": "ናይ ድምጺ ቅዳሕ",
-					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ"
+					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ",
+					"disabledWhileEditing": "መልእኽቲ ኣብ እትኣርመሉ እዋን ናይ ድምጺ መልእኽቲ ክጥቀመሉ ኣይከኣልን"
 				},
 				"imageUrlPrompt": "Bild-URL",
 				"urlPrompt": "URL"
@@ -1923,6 +1932,27 @@
 		"visibleOnlyTo": "ዝርእይዎ ጥራይ፦",
 		"showLess": "ኣነስ ኣርእይ",
 		"showMore": "ብዝሓት ኣርእይ",
+		"callLifecycle": {
+			"type": {
+				"audio": "ናይ ድምጺ ጻውዒት",
+				"video": "ናይ ቪድዮ ጻውዒት"
+			},
+			"state": {
+				"running": "ይካየድ ኣሎ",
+				"ended": "ተወዲኡ",
+				"missed": "ዘይተመለሰ"
+			},
+			"description": {
+				"running": "እቲ ጻውዒት ካብ {{start}} ይካየድ ኣሎ።",
+				"ended": "እቲ ጻውዒት ኣብ {{start}} ጀሚሩ።",
+				"missed": "እቲ ጻውዒት ኣይተመለሰን።"
+			},
+			"participants": {
+				"current": "ኣብ ጻውዒት",
+				"attended": "ተሳቲፎም"
+			},
+			"startedBy": "ብ{{name}} ተጸዊዑ።"
+		},
 		"systemNotification": "መፍለጢ ሲስተም",
 		"systemNotificationTitle": "መፍለጢ ሲስተም",
 		"userLeftChat": "እቲ ተጠቃሚ ካብቲ ቻት ወጺኡ",
@@ -2511,6 +2541,10 @@
 					"sessionExpired": "ምእታውኩም ግዜኡ ሓሊፉ። ደጊምኩም እተዉ፡ ድሕሪኡ ቀጥታ ዝርርብ ደጊምኩም ኣንቅሑ።",
 					"leaseLost": "እቲ ሰርቨር ድሕሪ ሕጂ ከም ዘለኹም ኣይፈልጠኩምን። ክትርከቡ ቀጥታ ዝርርብ ደጊምኩም ኣንቅሑ።",
 					"connectionLost": "ምትእስሳር ምስ ሰርቨር ልዕሊ ክልተ ደቒቕ ተቋሪጹ። ምትእስሳር ምስ ተመለሰ ቀጥታ ዝርርብ ደጊምኩም ኣንቅሑ።"
+				},
+				"dpaRestricted": {
+					"title": "ሓድሽ ምኽሪ ንግዚኡ ተዓጽዩ",
+					"text": "ትካል ምኽሪ ነቲ ህሉው ውዕል ምስራሕ ዳታ ከረጋግጾ ኣለዎ። ዝተጀመሩ ምኽርታት ይቕጽሉ።"
 				}
 			},
 			"masterKey": {
@@ -3687,7 +3721,12 @@
 			},
 			"back": "ተመለስ",
 			"next": "ቀጽል",
-			"consentPending": "ተበጻሕነት ቅድሚ ምንቃሑ ፍቓድ እቲ ተገልጋሊ የድሊ።"
+			"consentPending": "ተበጻሕነት ቅድሚ ምንቃሑ ፍቓድ እቲ ተገልጋሊ የድሊ።",
+			"reclaim": {
+				"copy": "ኣብ እዋን ዘይምህላውኩም ሓደ መሳርሕትኹም ነዚ ጉዳይ ተረኪቡ። ሕጂ ክትመልስዎ ትኽእሉ።",
+				"cta": "ነቲ ጉዳይ መልሱ",
+				"unavailable": "እዚ ጉዳይ ድሕሪ ሕጂ ክምለስ ኣይክእልን እዩ።"
+			}
 		},
 		"accepted": {
 			"title": "ሕቶኹም ብሓደ ኣማኻሪ ተቐቢሉ ኣሎ።",
@@ -3708,11 +3747,12 @@
 		},
 		"readOnly": {
 			"notice": "ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
-			"noticeUntil": "ክሳብ {{until}} ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።"
+			"noticeUntil": "ክሳብ {{until}} ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
+			"extend": "ፍቓድ ኣናውሕ"
 		},
 		"standingPreference": {
 			"label": "ቅድሚ ተወሳኺ መእተዊ ምሃብ ኩሉ ግዜ ሕተቱ",
-			"description": "ኣብዚ ዝርርብ ንዝመጹ ሕቶታት ይምልከት። ናይ ሕጂ ሕቶታትን ኣቐዲሙ ዝተዋህበ መእተውን ኣይቅየርን።",
+			"description": "ኣብዚ ዝርርብ፣ ኣብ መማኸሪ ማእከልኩም ጥራይ፣ ንዝመጹ ሕቶታት ይምልከት። ናይ ሕጂ ሕቶታትን ኣቐዲሙ ዝተዋህበ መእተውን ኣይቅየርን።",
 			"baselineDescription": "እንተ ተዓጽዩ፣ ቅጥዕታት ናይ መማኸሪ ማእከልኩም ይሰርሑ። እቲ ማእከል ዝጠልቦ ፍቓድ ኣሁን እውን የድሊ።",
 			"saving": "ይዕቀብ ኣሎ …",
 			"saved": "ቅጥዒ ተዓቂቡ።",
@@ -3752,7 +3792,11 @@
 			"handover": "መጀመርታ እቲ ዝተመርጸ መሳርሕቲ ይውስን። ፖሊሲ እንተደልዩ ድሕሪኡ ዓሚል ይሕተት።"
 		},
 		"handoverPending": "እቲ ሕቶ መጀመርታ ናብ ዝተመርጸ መሳርሕቲ ይለኣኽ።",
-		"confirm": { "add": "ሕተት", "change": "ለውጢ ሕተት", "handover": "ሓሳብ ለኣኽ" },
+		"confirm": {
+			"add": "ሕተት",
+			"change": "ለውጢ ሕተት",
+			"handover": "ሓሳብ ለኣኽ"
+		},
 		"cancel": "ሰርዝ",
 		"close": "ዕጸው",
 		"emptyOption": "በጃኹም ምረጹ…"
@@ -4696,6 +4740,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "ናብ ጻውዒት ተጸንበር",
+			"joinFailed": "ሕጂ ምጽንባር ኣይተኻእለን። ካልእ ጻውዒት እንተሎ ዛዝሙ እሞ ደጊምኩም ፈትኑ።",
+			"video": {
+				"running": "ቪድዮ ጻውዒት ይካየድ ኣሎ",
+				"ended": "ቪድዮ ጻውዒት ተዛዚሙ",
+				"missed": "ዘይተመለሰ ቪድዮ ጻውዒት"
+			},
+			"audio": {
+				"running": "ናይ ድምጺ ጻውዒት ይካየድ ኣሎ",
+				"ended": "ናይ ድምጺ ጻውዒት ተዛዚሙ",
+				"missed": "ዘይተመለሰ ናይ ድምጺ ጻውዒት"
+			},
+			"duration": "ንውሓት ግዜ፦ {{duration}}"
+		},
 		"button": {
 			"answerCall": "ቪድዮ ጻውዒት ተቐበል",
 			"answerVideoCall": "ቪድዮ ጻውዒት ተቐበል",
@@ -4750,6 +4809,7 @@
 				"headline": "ናይ ድምጺ ቅዳሕ ኣይርከብን",
 				"message": "በጃኹም ንማይክሮፎን ፍቓድ ሃቡ እሞ ደጊምኩም ፈትኑ።"
 			},
+			"discard": "ናይ ድምጺ መልእኽቲ ኣወግድ",
 			"preview": "ናይ ድምጺ መልእኽቲ"
 		}
 	},
@@ -4933,6 +4993,7 @@
 			"responseTime": "መልሲ ኣብ ውሽጢ 2 ናይ ስራሕ መዓልትታት",
 			"back": "ናብቲ ዝሓለፈ ገጽ ተመለስ",
 			"later": "ደሓር ተመለሱ",
+			"laterNotice": "ሕጂ ዝርከብ ሰብ የልቦን። ሓደ ሰብ ምስ መጸ፡ እቲ ቻት ኣብዚ ይቕጽል።",
 			"title": "ሕማቕ ኣጋጣሚ ኮይኑ ላይቭ ቻት ኣብዚ እዋን ተዓጽዩ ኣሎ",
 			"topicLabel": "ዝተሓተት ርእሰ ጉዳይ: {{topic}}",
 			"weekdays": {
@@ -5377,6 +5438,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "ሕተም / ከም PDF ኣቐምጥ",
+		"confirmedBy": "ዘረጋገጸ ሰብ",
+		"confirmedAt": "ዝተረጋገጸሉ ዕለት (Europe/Berlin)",
+		"organisation": "ትካል",
+		"printHint": "ኣብ መስኮት ሕትመት ከም PDF ክትዕቅቡ ትኽእሉ። ኣድራሻ ሊንክ ከይሕተም፣ ናይ ላዕሊን ታሕቲን ጽሑፍ ኣጥፍኡ።",
+		"printUnavailable": "መረጋገጺኹም ተዓቂቡ ኣሎ። ሓበሬታ መረጋገጺ ምሉእ ስለ ዘይኮነ፣ መልክዕ ሕትመት ኣይርከብን።",
 		"title": "ሰነዳት ውዕል መርምር እሞ ኣረጋግጽ",
 		"subtitle": "በጃኹም ነቶም ሰነዳት ውዕል ብምሉኦም ኣንብቡ እሞ ብድሕሪኡ ናይታ እትፍርም ሰብ ሓበሬታ ኣረጋግጹ።",
 		"signerName": "ምሉእ ስም",
@@ -5694,6 +5761,7 @@
 			"status": {
 				"access": "ናይዚ ዝርርብ መእተዊኹም",
 				"waiting": "መጸበዪ ክፍሊ — ነጻ ኣማኻሪ ይድለ ኣሎ",
+				"nobodyLive": "ሕጂ ኦንላይን ዘሎ ሰብ የለን",
 				"accepted": "ሓደ ኣማኻሪ ዝርርብኩም ተቐቢሉ",
 				"closed": "ሕጂ ዕጹው እዩ",
 				"checking": "ሕጂ መን ኦንላይን ኣሎ?",
@@ -5710,6 +5778,8 @@
 			"waiting": {
 				"headline": "ቀሪቡ እዩ።",
 				"aheadUnknown": "ንዓኹም ነጻ ኣማኻሪ ንደሊ ኣለና።",
+				"nobodyLiveHeadline": "ሕጂ ኦንላይን ዘሎ ኣማኻሪ የለን።",
+				"nobodyLive": "ንሕና ንከታተሎ ኣለና፣ ሓደ ሰብ ምስ ዝርከብ ድማ የራኽበኩም ኢና።",
 				"aheadNone": "ቀጻሊ ንስኹም ኢኹም።",
 				"aheadOne": "ሓደ ሰብ ቅድሜኹም",
 				"aheadMany": "{{count}} ሰባት ቅድሜኹም",
@@ -5741,7 +5811,8 @@
 			"steps": {
 				"wait": {
 					"title": "ሓደ ሰብ ክሳብ ዝነጽሕ ትጽበዩ",
-					"text": "ኣማኸርቲ ሕጂ ኣብ ካልኦት ዝርርባት ኣለዉ።"
+					"text": "ኣማኸርቲ ሕጂ ኣብ ካልኦት ዝርርባት ኣለዉ።",
+					"textNobodyLive": "ሓደ ኣማኻሪ ኦንላይን ምስ ኮነ ክንጅምር ኢና።"
 				},
 				"consent": {
 					"title": "ድሕሪኡ ሓንሳብ ትሰማምዑ",
@@ -5820,6 +5891,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "መዝገብ ዝርርብ",
+			"privacy": "ብሕታዊ። ንዓኻ ጥራይ፣ ከምኡ’ውን ክሳብ እቲ ዝርርብ ዝጸንሕ ጥራይ።",
+			"type": "ዓይነት መዝገብ",
+			"text": "መዝገብ",
+			"add": "መዝገብ ወስኽ",
+			"remove": "መዝገብ ኣውጽእ",
+			"copy": "ኩሉ ቅዳሕ",
+			"copied": "ተቐድሐ",
+			"empty": "ክሳብ ሕጂ ዝተመዝገበ የለን።",
+			"collapse": "መዛግብቲ ዕጸው",
+			"expand": "መዛግብቲ ክፈት",
+			"open": "መዝገብ ዝርርብ",
+			"types": {
+				"frage": "ሕቶ",
+				"anmerkung": "መብርሂ",
+				"aufgabe": "ዕዮ"
+			}
 		}
 	},
 	"form": {

@@ -9,11 +9,7 @@ import {
 	useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	apiGetCaseHandoverConsentPreference,
-	apiSaveCaseHandoverConsentPreference,
-	type CaseHandoverConsentPreference
-} from '../../api/apiCaseHandover';
+import { useStandingAccessPreference } from './useStandingAccessPreference';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { SurveillanceConsentIcon } from '../../resources/img/icons';
 import { StandingAccessPreference } from './StandingAccessPreference';
@@ -52,27 +48,28 @@ export const StandingAccessSettings = ({
 		policy.browserAllowed
 	);
 	const [open, setOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(false);
-	const [preference, setPreference] =
-		useState<CaseHandoverConsentPreference | null>(null);
+	const {
+		loading,
+		saving,
+		error,
+		preference,
+		load,
+		save,
+		invalidate,
+		didStrengthen
+	} = useStandingAccessPreference(sessionId);
 	const [recommendation, setRecommendation] = useState(false);
 	const [setupStarted, setSetupStarted] = useState(false);
 	const triggerId = useId();
 	const opener = useRef<HTMLElement | null>(null);
 	const generation = useRef(0);
 	const requestSequence = useRef(0);
-	const strengthened = useRef(false);
 	useLayoutEffect(() => {
 		generation.current += 1;
 		opener.current = null;
 		setOpen(false);
-		setLoading(false);
-		strengthened.current = false;
-		setPreference(null);
 		setRecommendation(false);
 		setSetupStarted(false);
-		setError(false);
 		return () => {
 			generation.current += 1;
 		};
@@ -94,63 +91,9 @@ export const StandingAccessSettings = ({
 				node.focus();
 		});
 	}, [open]);
-	const checked = (value: CaseHandoverConsentPreference) => {
-		if (
-			value?.sessionId !== sessionId ||
-			typeof value.alwaysAskBeforeAdditionalAccess !== 'boolean'
-		) {
-			throw new Error('Preference response does not match conversation');
-		}
-		return value;
-	};
-	const load = async () => {
-		const operation = generation.current;
-		const request = ++requestSequence.current;
-		const isCurrent = () =>
-			operation === generation.current &&
-			request === requestSequence.current;
-		setLoading(true);
-		setError(false);
-		try {
-			const value = checked(
-				await apiGetCaseHandoverConsentPreference(sessionId)
-			);
-			if (isCurrent()) setPreference(value);
-		} catch {
-			if (isCurrent()) {
-				setPreference(null);
-				setError(true);
-			}
-		} finally {
-			if (isCurrent()) setLoading(false);
-		}
-	};
-	const save = async (alwaysAsk: boolean): Promise<boolean> => {
-		const operation = generation.current;
-		const request = ++requestSequence.current;
-		const previouslyEnabled =
-			preference?.alwaysAskBeforeAdditionalAccess === true;
-		checked(
-			await apiSaveCaseHandoverConsentPreference(sessionId, alwaysAsk)
-		);
-		const saved = checked(
-			await apiGetCaseHandoverConsentPreference(sessionId)
-		);
-		if (
-			operation !== generation.current ||
-			request !== requestSequence.current ||
-			saved.alwaysAskBeforeAdditionalAccess !== alwaysAsk
-		) {
-			throw new Error('Preference was not confirmed');
-		}
-		strengthened.current = alwaysAsk && !previouslyEnabled;
-		setPreference(saved);
-		if (!alwaysAsk) setRecommendation(false);
-		return saved.alwaysAskBeforeAdditionalAccess;
-	};
 	const closeSettings = () => {
+		invalidate();
 		requestSequence.current += 1;
-		setLoading(false);
 		setOpen(false);
 	};
 	const preferenceContent = (
@@ -160,7 +103,7 @@ export const StandingAccessSettings = ({
 					{t('caseHandover.standingPreference.loading')}
 				</p>
 			)}
-			{error && (
+			{error && !preference && (
 				<div role="alert">
 					<p>{t('caseHandover.error.failed')}</p>
 					<button type="button" onClick={() => void load()}>
@@ -172,13 +115,16 @@ export const StandingAccessSettings = ({
 				<StandingAccessPreference
 					conversationId={sessionId}
 					alwaysAsk={preference.alwaysAskBeforeAdditionalAccess}
+					disabled={saving}
 					onSave={save}
-					onSaved={() => {
+					onSaved={(alwaysAsk) => {
+						if (!alwaysAsk && !setupStarted)
+							setRecommendation(false);
 						closeSettings();
 						// Voluntary recommendation only after the user strengthens the future gate.
 						// A browser channel alone does not suppress this specific email suggestion.
 						if (
-							strengthened.current &&
+							didStrengthen() &&
 							policy.emailAllowed &&
 							!consentEmailActive
 						)
@@ -189,6 +135,7 @@ export const StandingAccessSettings = ({
 		</>
 	);
 	const openSettings = () => {
+		requestSequence.current += 1;
 		opener.current = document.getElementById(triggerId);
 		setOpen(true);
 		void load();

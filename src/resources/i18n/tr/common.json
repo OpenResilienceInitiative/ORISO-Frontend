@@ -1728,7 +1728,15 @@
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
 				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
-				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSecond": "Çok fazla deneme. Lütfen yaklaşık bir saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSeconds": "Çok fazla deneme. Lütfen yaklaşık {{seconds}} saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinute": "Çok fazla deneme. Lütfen yaklaşık bir dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinutes": "Çok fazla deneme. Lütfen yaklaşık {{minutes}} dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHour": "Çok fazla deneme. Lütfen yaklaşık bir saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHours": "Çok fazla deneme. Lütfen yaklaşık {{hours}} saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDay": "Çok fazla deneme. Lütfen yaklaşık bir gün bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDays": "Çok fazla deneme. Lütfen yaklaşık {{days}} gün bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -1857,7 +1865,8 @@
 				"mention": "Kişiden bahset",
 				"voiceRecording": {
 					"label": "Sesli kayıt",
-					"tooltip": "Sesli mesaj kaydet"
+					"tooltip": "Sesli mesaj kaydet",
+					"disabledWhileEditing": "Mesaj düzenlenirken sesli mesajlar kullanılamaz"
 				},
 				"imageUrlPrompt": "Görsel URL’si",
 				"urlPrompt": "URL"
@@ -1923,6 +1932,27 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
+			"state": {
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"description": {
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			},
+			"startedBy": "{{name}} tarafından arandı."
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
@@ -2511,6 +2541,10 @@
 					"sessionExpired": "Oturumunuzun süresi doldu. Yeniden giriş yapın, ardından canlı sohbeti tekrar açın.",
 					"leaseLost": "Sunucu sizi artık uygun olarak göstermiyor. Ulaşılabilir olmak için canlı sohbeti yeniden açın.",
 					"connectionLost": "Sunucuyla bağlantı iki dakikadan uzun süre kesildi. Bağlantı yeniden kurulunca canlı sohbeti tekrar açın."
+				},
+				"dpaRestricted": {
+					"title": "Danışanlar sizinle canlı sohbet başlatamıyor",
+					"text": "Kuruluşunuz güncel veri işleme sözleşmesini henüz onaylamadı. Onaylanana kadar yeni danışanlar canlı sohbet veya talep başlatamaz. Başlamış danışmanlıklar devam eder."
 				}
 			},
 			"masterKey": {
@@ -3687,7 +3721,12 @@
 			},
 			"back": "Geri",
 			"next": "İleri",
-			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir."
+			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir.",
+			"reclaim": {
+				"copy": "Siz yokken bir meslektaşınız bu vakayı devraldı. Vakayı şimdi geri alabilirsiniz.",
+				"cta": "Vakayı geri al",
+				"unavailable": "Bu vaka artık geri alınamaz."
+			}
 		},
 		"accepted": {
 			"title": "Talebiniz bir danışman tarafından kabul edildi.",
@@ -3708,11 +3747,12 @@
 		},
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz."
+			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
+			"extend": "Erişimi uzat"
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
-			"description": "Bu görüşmedeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
+			"description": "Yalnızca bu görüşmede, kendi danışmanlık merkeziniz içindeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
 			"baselineDescription": "Kapalıyken danışmanlık merkezinizin ayarları geçerlidir. Merkezin gerekli gördüğü onay yine gereklidir.",
 			"saving": "Kaydediliyor …",
 			"saved": "Ayar kaydedildi.",
@@ -4700,6 +4740,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",
@@ -4754,6 +4809,7 @@
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
+			"discard": "Sesli mesajı sil",
 			"preview": "Sesli mesaj"
 		}
 	},
@@ -4937,6 +4993,7 @@
 			"responseTime": "2 iş günü içinde yanıt",
 			"back": "Önceki sayfaya dön",
 			"later": "Daha sonra tekrar gelin",
+			"laterNotice": "Şu anda canlı olan kimse yok. Biri geldiği anda sohbet burada devam eder.",
 			"title": "Canlı sohbet şu anda maalesef kapalı",
 			"topicLabel": "Talep edilen konu: {{topic}}",
 			"weekdays": {
@@ -5381,6 +5438,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Yazdır / PDF olarak kaydet",
+		"confirmedBy": "Onaylayan",
+		"confirmedAt": "Onay tarihi (Europe/Berlin)",
+		"organisation": "Kuruluş",
+		"printHint": "Yazdırma penceresinde PDF olarak kaydedebilirsiniz. Bağlantı adresinin yazdırılmaması için üst ve alt bilgileri kapatın.",
+		"printUnavailable": "Onayınız kaydedildi. Onay bilgileri eksik olduğu için yazdırma görünümü kullanılamıyor.",
 		"title": "Sözleşme belgelerini incele ve onayla",
 		"subtitle": "Lütfen sözleşme belgelerini tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
 		"signerName": "Ad soyad",
@@ -5698,6 +5761,7 @@
 			"status": {
 				"access": "Bu görüşme için erişiminiz",
 				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
+				"nobodyLive": "Şu anda çevrimiçi kimse yok",
 				"accepted": "Bir danışman görüşmenizi kabul etti",
 				"closed": "Şu anda kapalı",
 				"checking": "Şu anda kim çevrimiçi?",
@@ -5714,6 +5778,8 @@
 			"waiting": {
 				"headline": "Az kaldı.",
 				"aheadUnknown": "Sizin için müsait bir danışman arıyoruz.",
+				"nobodyLiveHeadline": "Şu anda çevrimiçi danışman yok.",
+				"nobodyLive": "Bunu takip ediyoruz ve biri müsait olur olmaz sizi bağlayacağız.",
 				"aheadNone": "Sıradaki sizsiniz.",
 				"aheadOne": "Önünüzde bir kişi",
 				"aheadMany": "Önünüzde {{count}} kişi",
@@ -5745,7 +5811,8 @@
 			"steps": {
 				"wait": {
 					"title": "Biri müsait olana kadar beklersiniz",
-					"text": "Danışmanlar şu anda başka görüşmelerde."
+					"text": "Danışmanlar şu anda başka görüşmelerde.",
+					"textNobodyLive": "Bir danışman çevrimiçi olur olmaz görüşmeniz başlar."
 				},
 				"consent": {
 					"title": "Sonra bir kez onaylarsınız",
@@ -5824,6 +5891,25 @@
 			"callFailed": "Çağrı başarısız: {{message}}",
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		},
+		"notes": {
+			"title": "Görüşme notları",
+			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
+			"type": "Not türü",
+			"text": "Not",
+			"add": "Not ekle",
+			"remove": "Notu kaldır",
+			"copy": "Tümünü kopyala",
+			"copied": "Kopyalandı",
+			"empty": "Henüz bir not yok.",
+			"collapse": "Notları daralt",
+			"expand": "Notları genişlet",
+			"open": "Görüşme notları",
+			"types": {
+				"frage": "Soru",
+				"anmerkung": "Açıklama",
+				"aufgabe": "Görev"
+			}
 		}
 	},
 	"form": {

@@ -25,6 +25,7 @@ vi.mock('../../hooks/useResponsive', () => ({
 
 vi.mock('../../api/apiSetLiveChatAvailability', () => ({
 	apiGetLiveChatAvailability: vi.fn(() => Promise.resolve(false)),
+	apiGetNewCounsellingAllowed: vi.fn(() => Promise.resolve(null)),
 	apiHeartbeatLiveChatAvailability: vi.fn(() => Promise.resolve(true)),
 	apiSetLiveChatAvailability: vi.fn(() => Promise.resolve())
 }));

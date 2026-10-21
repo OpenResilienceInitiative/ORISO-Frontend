@@ -103,3 +103,12 @@ _shots/
 !docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/**
 !docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/
 !docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/**
+!docs/agent-tasks/2026-10-16_call-v2-epic/
+!docs/agent-tasks/2026-10-16_call-v2-epic/**
+
+# Portable engineering-skill adapters; shared rules remain routed.
+!docs/agents/
+docs/agents/*
+!docs/agents/issue-tracker.md
+!docs/agents/domain.md
+!docs/agents/triage-labels.md

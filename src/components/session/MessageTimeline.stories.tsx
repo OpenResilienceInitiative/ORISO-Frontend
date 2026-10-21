@@ -14,7 +14,7 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { MessageTimeline } from './MessageTimeline';
 import { buildSupervisionTimeline } from './sessionHelpers';
 import type { MessageItem } from '../message/MessageItemComponent';
@@ -385,7 +385,7 @@ export const DayDividers: Story = {
 
 /**
  * T49: a system notice in a side room is the SAME Carimat organism the main
- * chat uses (`pseudonymCard`: ringed avatar, name + "Systembenachrichtigung"
+ * chat uses (`CarimatMessageFrame`: ringed avatar, assistant sender + qualifier
  * kicker, no kebab) — never the generic system-notification chrome. The
  * timeline gets it from the app's own builder, so the two cannot drift.
  */
@@ -408,22 +408,31 @@ export const WithSystemNotice: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.messageItem.pseudonymCard')
+				canvasElement.querySelector('.carimatMessageFrame.erstantwort')
 			).not.toBeNull()
 		);
 		const first = rowsOf(canvasElement)[0];
 		// The notice is the first row of the room …
 		await expect(
-			first.querySelector('.messageItem.pseudonymCard')
+			first.querySelector('.carimatMessageFrame.erstantwort')
 		).not.toBeNull();
 		await expect(first.textContent).toContain('Supervision durch');
-		// … as the Carimat organism, not the generic system chrome, and
-		// without a kebab (nothing to act on).
+		// Assistant sender is separate from the immutable supervision topic.
+		const message = within(first);
 		await expect(
-			first.querySelector(
-				'.messageItem.pseudonymCard .pseudonymCard__headerName'
-			)?.textContent
-		).toBe('Supervision');
+			message.getByText('Carimat', { exact: true })
+		).toBeInTheDocument();
+		await expect(
+			message.getByText('Supervision', { exact: true })
+		).toBeInTheDocument();
+		for (const part of [
+			'.carimatMessageFrame__row',
+			'.carimatMessageFrame__avatar',
+			'.carimatMessageFrame__header',
+			'.carimatMessageFrame__bubble'
+		]) {
+			await expect(first.querySelector(part), part).not.toBeNull();
+		}
 		await expect(
 			canvasElement.querySelector(
 				'.messageItem__message--systemNotification'

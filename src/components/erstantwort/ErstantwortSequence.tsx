@@ -1,11 +1,12 @@
-import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
-import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import {
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
 import { bausteinById } from './erstantwortCatalogue';
@@ -165,11 +166,13 @@ const BausteinContent = ({
 const CombinedMessage = ({
 	items,
 	slots,
-	onAction
+	onAction,
+	topic
 }: {
 	items: ResolvedBaustein[];
 	slots?: Record<string, React.ReactNode>;
 	onAction?: (kind: ErstantwortActionKind) => void;
+	topic?: React.ReactNode;
 }) => {
 	const { t } = useTranslation();
 	const isQuestion = (item: ResolvedBaustein) =>
@@ -188,7 +191,10 @@ const CombinedMessage = ({
 	);
 
 	return (
-		<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--message">
+		<CarimatMessageBubble
+			topic={topic}
+			className="erstantwort__bubble erstantwort__bubble--message"
+		>
 			{lead.map((item) => (
 				<React.Fragment key={item.id}>{content(item)}</React.Fragment>
 			))}
@@ -244,7 +250,7 @@ const CombinedMessage = ({
 					{content(item)}
 				</div>
 			))}
-		</div>
+		</CarimatMessageBubble>
 	);
 };
 
@@ -260,7 +266,6 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	slots
 }) => {
 	const { t } = useTranslation();
-	const assistant = useAssistantIdentity();
 	const bubbles = useMemo(
 		() => toBubbles(bausteine, compactFaq),
 		[bausteine, compactFaq]
@@ -318,66 +323,46 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	if (!total) return null;
 
 	return (
-		<CarimatMessageContainer
+		<CarimatMessageFrame
 			className="erstantwort"
+			subtitle={subtitle ?? t('erstantwort.subtitle')}
 			aria-live="polite"
 			data-testid="erstantwort-sequence"
 		>
-			<div className="messageItem pseudonymCard erstantwort__row">
-				<div className="messageItem__messageWrap pseudonymCard__wrap">
-					<div className="pseudonymCard__avatarCol">
-						<div className="pseudonymCard__avatarFrame">
-							<div className="pseudonymCard__avatarIcon">
-								<CarimatRobotIcon />
-							</div>
-						</div>
-					</div>
-
-					<div className="pseudonymCard__contentCol erstantwort__content">
-						<div className="pseudonymCard__header">
-							<span className="pseudonymCard__headerName">
-								{name ?? assistant.name}
-							</span>
-							<span className="pseudonymCard__headerSubtitle">
-								{subtitle ?? t('erstantwort.subtitle')}
-							</span>
-						</div>
-
-						{visible.map((bubble) =>
-							bubble.combined ? (
-								<CombinedMessage
-									key={bubble.key}
-									items={bubble.items}
-									slots={slots}
-									onAction={onAction}
-								/>
-							) : (
-								<div
-									key={bubble.key}
-									className="pseudonymCard__bubble erstantwort__bubble"
-								>
-									{bubble.items[0].headline && (
-										<h4 className="erstantwort__headline">
-											{bubble.items[0].headline}
-										</h4>
-									)}
-									<BausteinContent
-										baustein={bubble.items[0]}
-										slots={slots}
-										onAction={onAction}
-									/>
-								</div>
-							)
+			{visible.map((bubble, index) =>
+				bubble.combined ? (
+					<CombinedMessage
+						key={bubble.key}
+						items={bubble.items}
+						slots={slots}
+						onAction={onAction}
+						topic={index === 0 ? name : undefined}
+					/>
+				) : (
+					<CarimatMessageBubble
+						key={bubble.key}
+						topic={index === 0 ? name : undefined}
+						className="erstantwort__bubble"
+					>
+						{bubble.items[0].headline && (
+							<h4 className="erstantwort__headline">
+								{bubble.items[0].headline}
+							</h4>
 						)}
+						<BausteinContent
+							baustein={bubble.items[0]}
+							slots={slots}
+							onAction={onAction}
+						/>
+					</CarimatMessageBubble>
+				)
+			)}
 
-						{isTyping && (
-							<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--typing">
-								<TypingDots />
-							</div>
-						)}
-					</div>
-				</div>
-			</div>
-		</CarimatMessageContainer>
+			{isTyping && (
+				<CarimatMessageBubble className="erstantwort__bubble erstantwort__bubble--typing">
+					<TypingDots />
+				</CarimatMessageBubble>
+			)}
+		</CarimatMessageFrame>
 	);
 };
