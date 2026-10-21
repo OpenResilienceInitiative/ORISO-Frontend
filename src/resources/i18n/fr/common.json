@@ -4991,6 +4991,7 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
+			"laterNotice": "Personne n'est en ligne pour le moment. Dès que quelqu'un le sera, le chat continuera ici.",
 			"title": "Le Live-Chat est malheureusement fermé pour le moment",
 			"topicLabel": "Thème demandé : {{topic}}",
 			"weekdays": {
@@ -5748,6 +5749,7 @@
 			"status": {
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
+				"nobodyLive": "Personne n'est en ligne pour le moment",
 				"accepted": "Une conseillère a pris votre conversation",
 				"closed": "Fermé pour le moment",
 				"checking": "Qui est en ligne ?",
@@ -5764,6 +5766,8 @@
 			"waiting": {
 				"headline": "C'est bientôt à vous.",
 				"aheadUnknown": "Nous cherchons une conseillère disponible pour vous.",
+				"nobodyLiveHeadline": "Aucune conseillère n'est en ligne pour le moment.",
+				"nobodyLive": "Nous gardons un œil dessus et vous mettons en relation dès que quelqu'un est disponible.",
 				"aheadNone": "Vous êtes la prochaine personne.",
 				"aheadOne": "Une personne devant vous",
 				"aheadMany": "{{count}} personnes devant vous",
@@ -5795,7 +5799,8 @@
 			"steps": {
 				"wait": {
 					"title": "Vous attendez qu'une personne soit libre",
-					"text": "Les conseillères sont actuellement dans d'autres conversations."
+					"text": "Les conseillères sont actuellement dans d'autres conversations.",
+					"textNobodyLive": "Dès qu'une conseillère est en ligne, c'est à vous."
 				},
 				"consent": {
 					"title": "Puis vous acceptez une seule fois",

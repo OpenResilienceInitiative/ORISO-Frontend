@@ -5013,6 +5013,7 @@
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
 			"later": "Später wiederkommen",
+			"laterNotice": "Im Moment ist niemand live. Sobald jemand da ist, geht es hier weiter.",
 			"title": "Live-Chat ist zurzeit leider geschlossen",
 			"topicLabel": "Angefragtes Thema: {{topic}}",
 			"weekdays": {
@@ -5738,6 +5739,7 @@
 			"status": {
 				"access": "Ihr Zugang für dieses Gespräch",
 				"waiting": "Warteraum — freie Beraterin wird gesucht",
+				"nobodyLive": "Gerade ist niemand live",
 				"accepted": "Eine Beraterin hat Ihr Gespräch angenommen",
 				"closed": "Gerade geschlossen",
 				"checking": "Wer ist gerade live?",
@@ -5754,6 +5756,8 @@
 			"waiting": {
 				"headline": "Gleich geht es los.",
 				"aheadUnknown": "Wir suchen eine freie Beraterin für Sie.",
+				"nobodyLiveHeadline": "Gerade ist keine Beraterin live.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden Sie, sobald jemand verfügbar ist.",
 				"aheadNone": "Sie sind die Nächste.",
 				"aheadOne": "Eine Person vor Ihnen",
 				"aheadMany": "{{count}} Personen vor Ihnen",
@@ -5785,7 +5789,8 @@
 			"steps": {
 				"wait": {
 					"title": "Sie warten, bis jemand frei ist",
-					"text": "Die Beraterinnen sind gerade in anderen Gesprächen."
+					"text": "Die Beraterinnen sind gerade in anderen Gesprächen.",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für Sie los."
 				},
 				"consent": {
 					"title": "Dann stimmen Sie einmal zu",

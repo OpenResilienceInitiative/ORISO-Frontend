@@ -4921,6 +4921,7 @@
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
 			"later": "Come back later",
+			"laterNotice": "Nobody is live right now. As soon as someone is, the chat continues here.",
 			"title": "Live chat is currently closed",
 			"topicLabel": "Requested topic: {{topic}}",
 			"weekdays": {
@@ -5663,6 +5664,7 @@
 			"status": {
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
+				"nobodyLive": "No counsellor is live right now",
 				"accepted": "A counsellor has taken your conversation",
 				"closed": "Closed right now",
 				"checking": "Who is live right now?",
@@ -5679,6 +5681,8 @@
 			"waiting": {
 				"headline": "Nearly there.",
 				"aheadUnknown": "We are looking for a free counsellor for you.",
+				"nobodyLiveHeadline": "No counsellor is live right now.",
+				"nobodyLive": "We keep watching and will connect you as soon as someone is available.",
 				"aheadNone": "You are next.",
 				"aheadOne": "One person ahead of you",
 				"aheadMany": "{{count}} people ahead of you",
@@ -5710,7 +5714,8 @@
 			"steps": {
 				"wait": {
 					"title": "You wait until someone is free",
-					"text": "The counsellors are in other conversations right now."
+					"text": "The counsellors are in other conversations right now.",
+					"textNobodyLive": "As soon as a counsellor is online, you are up."
 				},
 				"consent": {
 					"title": "Then you agree once",
