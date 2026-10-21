@@ -29,6 +29,7 @@ import { generatePseudonym } from '../../../utils/pseudonymGenerator';
 import type { Pseudonym } from '../../../utils/anonName/engine';
 import { buildInviteSessionAppUrl } from '../../invite/inviteLinkHelpers';
 import { translateWithFallback } from '../../../utils/translationFallback';
+import { normalizePreferredLanguage } from '../../../utils/normalizePreferredLanguage';
 import { EntryRoomShell } from './EntryRoomShell';
 import { LiveChatAccess } from './LiveChatAccess';
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
@@ -393,10 +394,11 @@ const LiveChatEntryRoomContent = ({
 			});
 			/* The redeem creates the account without a language, so the server
 			   stores German; keep the one the guest is reading, or the app
-			   switches to German when it boots after the gate. */
+			   switches to German when it boots after the gate. The server only
+			   takes ISO codes: 'de@informal' would fail the whole PATCH. */
 			await apiPatchUserData({
 				displayName: chosen.userId,
-				preferredLanguage: locale
+				preferredLanguage: normalizePreferredLanguage(locale)
 			});
 			rememberConfirmedEntryName(id, chosen.userId);
 			if (!cancelled.current) setStage('waiting');
