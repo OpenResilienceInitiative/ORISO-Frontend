@@ -14,6 +14,7 @@ import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { extractReactionEvents } from '../../utils/matrixTimelineEventFormatter';
 import {
 	aggregateReactions,
+	getReactionTarget,
 	type ReactionEvent
 } from '../../utils/messageRelations';
 import {
@@ -249,10 +250,29 @@ export const ConversationPreview = ({
 		return map;
 	}, [messages]);
 
+	const reactionsByTarget = useMemo(() => {
+		const map = new Map<string, ReactionEvent[]>();
+		reactionEvents.forEach((reaction) => {
+			const target = getReactionTarget(reaction.content);
+			if (!target) return;
+			const group = map.get(target.eventId);
+			if (group) {
+				group.push(reaction);
+			} else {
+				map.set(target.eventId, [reaction]);
+			}
+		});
+		return map;
+	}, [reactionEvents]);
+
 	const reactionsFor = useCallback(
 		(messageId: string) =>
-			aggregateReactions(reactionEvents, messageId, ownUserId),
-		[reactionEvents, ownUserId]
+			aggregateReactions(
+				reactionsByTarget.get(messageId) ?? [],
+				messageId,
+				ownUserId
+			),
+		[reactionsByTarget, ownUserId]
 	);
 	const resolveReplyQuote = useCallback(
 		(replyToEventId?: string | null) => {
