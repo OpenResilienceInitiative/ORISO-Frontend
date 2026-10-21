@@ -16,7 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {

@@ -234,7 +234,7 @@ import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
 import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
@@ -4012,7 +4012,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							fullWidth
 							variant="outlined"
 							onClick={() => setLiveChatClosedDismissed(true)}
-							startIcon={<CloseIcon />}
+							startIcon={
+								<CloseIcon width={20} height={20} aria-hidden />
+							}
 							sx={{
 								borderRadius: '8px',
 								borderColor: '#FFE2DE',
