@@ -92,7 +92,8 @@ export const ConsultantPrivateData = () => {
 						setIsEmailNotAvailable(true);
 						setIsRequestInProgress(false);
 					}
-				});
+				})
+				.finally(() => setIsRequestInProgress(false));
 		}
 	};
 

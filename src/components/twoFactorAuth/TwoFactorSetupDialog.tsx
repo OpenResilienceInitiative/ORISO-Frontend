@@ -182,7 +182,6 @@ interface StepperProps {
 
 const FlowStepper = ({ activeStep, selectedMethod }: StepperProps) => {
 	const { t: translate } = useTranslation();
-	const accountActions = useAccountOperationActions();
 	const steps = getSetupSteps(activeStep, selectedMethod);
 	const activeIndex = getStepIndex(activeStep, selectedMethod);
 
@@ -249,6 +248,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	showAccountProgress = false
 }) => {
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const { overlays, addOverlay, removeOverlay } = useContext(ModalContext);
 	const modalId = useRef(
 		`two-factor-setup-${Date.now()}-${Math.random().toString(16).slice(2)}`

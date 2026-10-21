@@ -2,7 +2,14 @@
 /** #1595 — a failed preferredLanguage PATCH must not be retried forever. */
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { LocaleSwitch } from './LocaleSwitch';
 import { UserDataContext, LocaleContext } from '../../globalState';
 
@@ -27,7 +34,18 @@ vi.mock('../select/SelectDropdown', () => ({
 }));
 
 vi.mock('../select/LanguageSelectDropdown', () => ({
-	LanguageSelectDropdown: () => null
+	LanguageSelectDropdown: ({ handleDropdownSelect }) => (
+		<div>
+			{['de', 'fr'].map((value) => (
+				<button
+					key={value}
+					onClick={() => handleDropdownSelect({ value })}
+				>
+					{value}
+				</button>
+			))}
+		</div>
+	)
 }));
 
 // One selectable locale makes the component render null, so the dropdown and
@@ -85,5 +103,88 @@ describe('LocaleSwitch preferredLanguage sync', () => {
 			{ preferredLanguage: 'en' },
 			expect.objectContaining({ id: expect.any(String) })
 		);
+	});
+});
+
+const LocaleHarness = ({
+	initialLocale = 'en',
+	preferredLanguage = 'en',
+	revision = 0
+}) => {
+	const [locale, setLocale] = React.useState(initialLocale);
+	return (
+		<UserDataContext.Provider
+			value={
+				{
+					userData: { preferredLanguage },
+					reloadUserData: vi.fn().mockResolvedValue(undefined),
+					revision
+				} as any
+			}
+		>
+			<LocaleContext.Provider
+				value={
+					{
+						locale,
+						setLocale,
+						selectableLocales: ['en', 'de', 'fr']
+					} as any
+				}
+			>
+				<LocaleSwitch updateUserData />
+			</LocaleContext.Provider>
+		</UserDataContext.Provider>
+	);
+};
+
+describe('LocaleSwitch account action ownership', () => {
+	afterEach(() => {
+		cleanup();
+		patchUserData.mockReset();
+	});
+
+	it('keeps one initial-sync intent through pending rerenders and an unknown reply without a loop', async () => {
+		let rejectReply: (error: Error) => void;
+		patchUserData.mockImplementation(
+			() =>
+				new Promise((_, reject) => {
+					rejectReply = reject;
+				})
+		);
+		const view = render(<LocaleHarness initialLocale="de" revision={0} />);
+		await waitFor(() => expect(patchUserData).toHaveBeenCalledTimes(1));
+		const initial = patchUserData.mock.calls[0];
+		expect(initial[1].id).toEqual(expect.any(String));
+		view.rerender(<LocaleHarness initialLocale="de" revision={1} />);
+		expect(patchUserData).toHaveBeenCalledTimes(1);
+		await act(async () => {
+			rejectReply(new TypeError('reply lost'));
+		});
+		view.rerender(<LocaleHarness initialLocale="de" revision={2} />);
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(patchUserData).toHaveBeenCalledTimes(1);
+		expect(patchUserData.mock.calls[0]).toEqual(initial);
+	});
+
+	it('allocates fresh intents for actual de to fr to de selections after unknown replies', async () => {
+		patchUserData.mockRejectedValue(new TypeError('reply lost'));
+		render(<LocaleHarness />);
+		for (const [index, locale] of ['de', 'fr', 'de'].entries()) {
+			await act(async () => {
+				fireEvent.click(screen.getByRole('button', { name: locale }));
+			});
+			await waitFor(() =>
+				expect(patchUserData).toHaveBeenCalledTimes(index + 1)
+			);
+		}
+		expect(patchUserData.mock.calls.map(([body]) => body)).toEqual([
+			{ preferredLanguage: 'de' },
+			{ preferredLanguage: 'fr' },
+			{ preferredLanguage: 'de' }
+		]);
+		const ids = patchUserData.mock.calls.map(([, intent]) => intent.id);
+		expect(new Set(ids).size).toBe(3);
 	});
 });
