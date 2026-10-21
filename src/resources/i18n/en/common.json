@@ -4562,6 +4562,7 @@
 				}
 			},
 			"error": {
+				"outcomeUnknown": "We could not confirm the result. The change may have been saved. Check the current setting before changing these details.",
 				"appSetup": "App authentication could not be set up. Please try again.",
 				"disable": "Two-factor authentication could not be disabled.",
 				"emailSend": "The email code could not be sent. Please try again.",

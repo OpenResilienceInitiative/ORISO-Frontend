@@ -4614,6 +4614,7 @@
 				}
 			},
 			"error": {
+				"outcomeUnknown": "Das Ergebnis konnte nicht bestätigt werden. Die Änderung wurde möglicherweise gespeichert. Prüfen Sie die aktuelle Einstellung, bevor Sie diese Angaben ändern.",
 				"appSetup": "Die App-Authentifizierung konnte nicht eingerichtet werden. Bitte versuchen Sie es erneut.",
 				"disable": "Die Zwei-Faktor-Authentifizierung konnte nicht deaktiviert werden.",
 				"emailSend": "Der E-Mail-Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",

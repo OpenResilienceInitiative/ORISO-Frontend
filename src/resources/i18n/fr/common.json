@@ -4597,6 +4597,7 @@
 				}
 			},
 			"error": {
+				"outcomeUnknown": "Nous n’avons pas pu confirmer le résultat. La modification a peut-être été enregistrée. Vérifiez le réglage actuel avant de modifier ces informations.",
 				"appSetup": "L'authentification par application n'a pas pu être configurée. Veuillez réessayer.",
 				"disable": "L'authentification à deux facteurs n'a pas pu être désactivée.",
 				"emailSend": "Le code par e-mail n'a pas pu être envoyé. Veuillez réessayer.",

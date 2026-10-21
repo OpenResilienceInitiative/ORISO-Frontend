@@ -4597,6 +4597,7 @@
 				}
 			},
 			"error": {
+				"outcomeUnknown": "Sonucu doğrulayamadık. Değişiklik kaydedilmiş olabilir. Bu bilgileri değiştirmeden önce mevcut ayarı kontrol edin.",
 				"appSetup": "Uygulama ile kimlik doğrulama kurulamadı. Lütfen tekrar deneyin.",
 				"disable": "İki faktörlü kimlik doğrulama devre dışı bırakılamadı.",
 				"emailSend": "E-posta kodu gönderilemedi. Lütfen tekrar deneyin.",

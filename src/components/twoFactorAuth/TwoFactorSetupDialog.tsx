@@ -338,6 +338,11 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			setErrorKey('twoFactorAuth.setupDialog.error.roleDisabled');
 		} else if (error.message === FETCH_ERRORS.TOO_MANY_REQUESTS) {
 			setErrorKey('twoFactorAuth.setupDialog.error.tooManyRequests');
+		} else if (
+			error.message === FETCH_ERRORS.TIMEOUT ||
+			error instanceof TypeError
+		) {
+			setErrorKey('twoFactorAuth.setupDialog.error.outcomeUnknown');
 		} else {
 			setErrorKey(fallbackKey);
 		}
