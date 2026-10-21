@@ -2205,7 +2205,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "ሓድሽ ኣማኻሪ ነቲ ጉዳይ ተረኪብዎ",
-				"text": "እቲ ፍቓድ ዘለዎ ናይ ጉዳይ ምትሕልላፍ ተመዝጊቡ።"
+				"text": "እቲ ፍቓድ ዘለዎ ናይ ጉዳይ ምትሕልላፍ ተመዝጊቡ።",
+				"coAccess": {
+					"title": "ግዝያዊ ተበጻሕነት ተዋሂቡ",
+					"text": "ሓደ ኣማኻሪ ነዚ ጉዳይ ንውሱን ግዜ ከንብቦ ይኽእል። ሓላፍነት ምስቲ ሕጂ ዘሎ ኣማኻሪ ይተርፍ።"
+				},
+				"generic": {
+					"title": "ናብቲ ጉዳይ ተበጻሕነት ተዋሂቡ",
+					"text": "እቲ ፍቓድ ዘለዎ ተበጻሕነት ተመዝጊቡ። ሕጂ ዘሎ ኩነታት ኣብቲ ዝርርብ ክትርእዩ ትኽእሉ።"
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "ናይ ጉዳይ ምትሕልላፍ ተነጺጉ",
@@ -2213,7 +2221,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "ናይ ጉዳይ ምትሕልላፍ ሓሳብ",
-				"text": "መሳርሕትኹም ነዚ ምኽሪ ክህበኩም ይደሊ ኣሎ። ነቲ ዝርርብ ቅድሚ ምኽፋትኩም ነቲ ሕቶ ርኣይዎ።"
+				"text": "{{fromConsultantName}} ነዚ ምኽሪ ናባኹም ከሕልፎ ይደሊ ኣሎ። ነቲ ዝርርብ ቅድሚ ምኽፋትኩም ነቲ ሕቶ ርኣይዎ።",
+				"coAccess": {
+					"title": "ናይ ግዝያዊ ተበጻሕነት ሓሳብ",
+					"text": "{{fromConsultantName}} ናብዚ ምኽሪ ግዝያዊ ተበጻሕነት የቕርበልኩም ኣሎ። ሓላፍነት ምስቲ ሕጂ ዘሎ ኣማኻሪ ይተርፍ።"
+				}
 			},
 			"callStarted": {
 				"title": "ጻውዒት ይካየድ ኣሎ",
@@ -2328,7 +2340,12 @@
 				"unsupported": "ዘይድገፍ መልእኽቲ",
 				"pending": "ምፍታሕ ምስጢር ይጽበ",
 				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
-				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን",
+				"loadOlder": "ዝቐደሙ መልእኽትታት ኣምጽእ",
+				"loadingOlder": "ዝቐደሙ መልእኽትታት ይመጹ ኣለዉ …",
+				"loadOlderFailed": "ዝቐደሙ መልእኽትታት ክመጹ ኣይከኣሉን።",
+				"retryLoadOlder": "እንደገና ፈትን",
+				"historyStart": "መጀመርታ ዝርርብ"
 			},
 			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
@@ -3723,7 +3740,8 @@
 			"retired": "ዘይተገልጸ"
 		},
 		"history": {
-			"unknownConsultant": "ናይ ቀደም ኣማኻሪ"
+			"unknownConsultant": "ናይ ቀደም ኣማኻሪ",
+			"unknownColleague": "መሳርሕቲ"
 		},
 		"submit": "ተበጻሕነት ሕተት",
 		"submitSending": "ይለኣኽ ኣሎ",

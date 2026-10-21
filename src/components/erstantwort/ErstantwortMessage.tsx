@@ -53,6 +53,11 @@ export interface ErstantwortMessageProps {
 	/** Re-renders of history skip the stagger; a fresh event plays it. */
 	skipAnimation?: boolean;
 	onFirstReveal?: () => void;
+	/**
+	 * #420 preview: the text renders as in the chat, but nothing writes —
+	 * no action buttons, no notification setup, no password shortcut.
+	 */
+	readOnly?: boolean;
 }
 
 export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
@@ -63,7 +68,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	deadlineDays,
 	isAskerEmailEnabled,
 	skipAnimation,
-	onFirstReveal
+	onFirstReveal,
+	readOnly = false
 }) => {
 	const { t, i18n } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
@@ -202,12 +208,15 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				bausteine={bausteine}
 				compactFaq={conversationType !== 'LIVE_CHAT'}
 				skipAnimation={skipAnimation}
-				onAction={handleAction}
+				onAction={readOnly ? undefined : handleAction}
 				onFirstReveal={onFirstReveal}
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
 					emailNotification:
-						persistedInvitation && !hasChoice && showSetupSlot ? (
+						!readOnly &&
+						persistedInvitation &&
+						!hasChoice &&
+						showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
 								isEmailEnabled={emailAllowed}
@@ -217,17 +226,21 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 								}
 							/>
 						) : undefined,
-					notificationChoice: showSetupSlot ? (
-						<NotificationSetupCollapse
-							messageId={messageId}
-							isEmailEnabled={emailAllowed}
-							isBrowserEnabled={channels.browserAllowed}
-							onStart={() => setNotificationSetupStarted(true)}
-						/>
-					) : undefined,
+					notificationChoice:
+						!readOnly && showSetupSlot ? (
+							<NotificationSetupCollapse
+								messageId={messageId}
+								isEmailEnabled={emailAllowed}
+								isBrowserEnabled={channels.browserAllowed}
+								onStart={() =>
+									setNotificationSetupStarted(true)
+								}
+							/>
+						) : undefined,
 					saveCredentials: (
 						<SaveCredentialsCard
 							userName={userData?.userName ?? ''}
+							readOnly={readOnly}
 						/>
 					)
 				}}

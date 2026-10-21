@@ -32,11 +32,8 @@ import {
 	X_REASON
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
-import {
-	prepareMessages,
-	SESSION_LIST_TAB,
-	SESSION_LIST_TYPES
-} from './sessionHelpers';
+import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
+import { buildRoomTimeline } from './roomTimeline';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -58,15 +55,7 @@ import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
 } from '../../services/chatTransportService';
-import {
-	formatMatrixTimelineEvent,
-	extractReactionEvents
-} from '../../utils/matrixTimelineEventFormatter';
-import { applyMessageEdits } from '../../utils/messageRelations';
-import {
-	applyCallLifecycleEdits,
-	collapseCallLifecycleMessages
-} from '../../utils/callLifecycleMessage';
+import { extractReactionEvents } from '../../utils/matrixTimelineEventFormatter';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import {
 	isCaseHandoverAccessControlled,
@@ -517,46 +506,6 @@ export const SessionStream = ({
 					);
 				};
 
-				/*
-				 * Every item carries the id of the room it came from.
-				 *
-				 * This used to be opt-in, and the main timeline did not opt
-				 * in — which silently cost us every call card. WP-B2 added
-				 * the stamp so the client timeline could reject side-room
-				 * items (`excludeSideRoomMessages`), and only the side rooms
-				 * asked for it; then `MessageItemComponent` started asking
-				 * `callLifecycle.roomRef === rid` to keep a supervision call
-				 * card out of the client timeline, and for the main timeline
-				 * that compared a room id against `undefined`. Always false,
-				 * so a call in the conversation rendered as an ordinary
-				 * message rather than as a card. Its own tests passed
-				 * because they pass `rid` by hand.
-				 *
-				 * A flag that one caller in three has to remember is the
-				 * shape of that bug, so there is no flag: `MessageItem`
-				 * declares `rid` as required, and now it always is.
-				 */
-				const formatRoomMessages = (
-					events: any[],
-					roomId?: string | null
-				) => {
-					const matrixRoom = roomId
-						? chatTransportService.getMatrixRoom(roomId)
-						: null;
-					return events
-						.map((event: any) =>
-							formatMatrixTimelineEvent(
-								event,
-								matrixRoom,
-								encryptedFallbackText
-							)
-						)
-						.filter(Boolean)
-						.map((item: any) =>
-							roomId ? { ...item, rid: roomId } : item
-						);
-				};
-
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
 				// ADR-008 / WP-B2: the supervision side room is loaded for
 				// members but kept as its own timeline (SupervisionPanel).
@@ -581,34 +530,19 @@ export const SessionStream = ({
 						}
 					});
 				}
-				/*
-				 * One pipeline, for every room.
-				 *
-				 * A call card is a series of REVISIONS: the lifecycle writes
-				 * an edit per membership change and a terminal one at the
-				 * end. `applyCallLifecycleEdits` folds those onto the
-				 * original and `collapseCallLifecycleMessages` keeps one card
-				 * per call — and the side rooms ran neither. They had only
-				 * `applyMessageEdits`, which DROPS every `m.replace` without
-				 * folding it, so a call started in a supervision or team room
-				 * sat at whatever it was first written as: no live presence,
-				 * no ending, and a Join button for a call that had finished,
-				 * unless the authenticated backend read happened to answer.
-				 * Calls can be started in those rooms — see
-				 * `startSupervisionCall` — so they need the same treatment.
-				 */
+				// One pipeline for every room, shared with the Activity
+				// Timeline preview (#420) — see `buildRoomTimeline`.
 				const prepareRoomMessages = (
 					events: any[],
 					roomId?: string | null
 				): any[] =>
-					prepareMessages(
-						collapseCallLifecycleMessages(
-							applyMessageEdits(
-								applyCallLifecycleEdits(
-									formatRoomMessages(events, roomId)
-								)
-							)
-						)
+					buildRoomTimeline(
+						events,
+						roomId,
+						roomId
+							? chatTransportService.getMatrixRoom(roomId)
+							: null,
+						encryptedFallbackText
 					);
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.

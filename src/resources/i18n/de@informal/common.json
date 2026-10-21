@@ -709,6 +709,17 @@
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
 				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
+			},
+			"caseHandoverGranted": {
+				"generic": {
+					"text": "Die berechtigte Freigabe wurde protokolliert. Den aktuellen Stand siehst du im Gespräch."
+				}
+			},
+			"caseHandoverOfferReceived": {
+				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"coAccess": {
+					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
+				}
 			}
 		}
 	},

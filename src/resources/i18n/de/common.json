@@ -2226,7 +2226,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "Neue Beratungsperson hat den Fall übernommen",
-				"text": "Die berechtigte Fallübergabe wurde protokolliert."
+				"text": "Die berechtigte Fallübergabe wurde protokolliert.",
+				"coAccess": {
+					"title": "Vorübergehender Zugriff freigegeben",
+					"text": "Eine Beratungsperson darf diesen Fall vorübergehend lesen. Die Verantwortung bleibt bei der bisherigen Beratungsperson."
+				},
+				"generic": {
+					"title": "Zugriff auf den Fall freigegeben",
+					"text": "Die berechtigte Freigabe wurde protokolliert. Den aktuellen Stand sehen Sie im Gespräch."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Fallübergabe abgelehnt",
@@ -2234,7 +2242,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
-				"text": "Eine Kolleg:in möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen."
+				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
+				"coAccess": {
+					"title": "Angebot für vorübergehenden Zugriff",
+					"text": "{{fromConsultantName}} bietet Ihnen vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
+				}
 			},
 			"callStarted": {
 				"title": "Anruf läuft",
@@ -2349,7 +2361,12 @@
 				"unsupported": "Nicht unterstützte Nachricht",
 				"pending": "Wird entschlüsselt",
 				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
-				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
+				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar",
+				"loadOlder": "Ältere Nachrichten laden",
+				"loadingOlder": "Ältere Nachrichten werden geladen …",
+				"loadOlderFailed": "Ältere Nachrichten konnten nicht geladen werden.",
+				"retryLoadOlder": "Erneut versuchen",
+				"historyStart": "Beginn des Gesprächs"
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",
@@ -3743,7 +3760,8 @@
 			"retired": "Nicht näher angegeben"
 		},
 		"history": {
-			"unknownConsultant": "Eine frühere Berater:in"
+			"unknownConsultant": "Eine frühere Berater:in",
+			"unknownColleague": "Eine Kolleg:in"
 		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",

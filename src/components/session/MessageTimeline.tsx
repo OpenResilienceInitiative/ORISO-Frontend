@@ -62,6 +62,8 @@ export interface MessageTimelineProps {
 	reactionsFor?: (messageId: string) => AggregatedReaction[];
 	onReact?: (messageId: string, key: string) => void;
 	onUnreact?: (reactionEventId: string) => void;
+	/** #420: Activity Timeline preview — the real rows, nothing that writes. */
+	readOnly?: boolean;
 }
 
 const never = () => false;
@@ -95,7 +97,8 @@ export const MessageTimeline = ({
 	onDeleteDirect,
 	reactionsFor,
 	onReact,
-	onUnreact
+	onUnreact,
+	readOnly = false
 }: MessageTimelineProps) => {
 	const supplementIndex =
 		supplementTime === undefined
@@ -163,6 +166,7 @@ export const MessageTimeline = ({
 							}
 							onUnreact={onUnreact}
 							encryptionBroke={broke}
+							readOnly={readOnly}
 						/>
 						{broke &&
 							(showDecryptionCardFor

@@ -2205,7 +2205,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "Une nouvelle personne consultante a repris le dossier",
-				"text": "Le transfert de dossier autorisé a été consigné."
+				"text": "Le transfert de dossier autorisé a été consigné.",
+				"coAccess": {
+					"title": "Accès temporaire accordé",
+					"text": "Une personne consultante peut lire ce dossier pendant une durée limitée. La responsabilité reste à la personne consultante actuelle."
+				},
+				"generic": {
+					"title": "Accès au dossier accordé",
+					"text": "L’accès autorisé a été consigné. Vous trouverez l’état actuel dans la conversation."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Transfert de dossier refusé",
@@ -2213,7 +2221,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Proposition de transfert",
-				"text": "Un collègue souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation."
+				"text": "{{fromConsultantName}} souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation.",
+				"coAccess": {
+					"title": "Proposition d’accès temporaire",
+					"text": "{{fromConsultantName}} vous propose un accès temporaire à cette consultation. La personne consultante actuelle reste responsable."
+				}
 			},
 			"callStarted": {
 				"title": "Appel en cours",
@@ -2328,7 +2340,12 @@
 				"unsupported": "Message non pris en charge",
 				"pending": "Déchiffrement en cours",
 				"roomUnavailable": "Conversation indisponible sur cet appareil",
-				"eventUnavailable": "Message indisponible dans l’historique local"
+				"eventUnavailable": "Message indisponible dans l’historique local",
+				"loadOlder": "Charger les messages plus anciens",
+				"loadingOlder": "Chargement des messages plus anciens …",
+				"loadOlderFailed": "Les messages plus anciens n’ont pas pu être chargés.",
+				"retryLoadOlder": "Réessayer",
+				"historyStart": "Début de la conversation"
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",
@@ -3723,7 +3740,8 @@
 			"retired": "Non précisé"
 		},
 		"history": {
-			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller"
+			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller",
+			"unknownColleague": "Un collègue"
 		},
 		"submit": "Demander l'accès",
 		"submitSending": "Envoi en cours",
