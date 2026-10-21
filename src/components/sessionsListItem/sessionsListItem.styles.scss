@@ -14,7 +14,13 @@ $session-light-border: #fff;
 // #597: selected ring uses M3 primary (was #ffb4aa / 1px)
 $session-selected-border: var(--m3-primary, #a5000a);
 $session-active-border: var(--m3-primary-container, #cc1e1c);
-$session-focus-ring: var(--m3-primary-fixed, #ffdad5);
+
+// --oriso-session-focus-ring is only set by the high-contrast candidates (#1134);
+// everywhere else the halo is still the own-bubble tint.
+$session-focus-ring: var(
+	--oriso-session-focus-ring,
+	var(--m3-primary-fixed, #ffdad5)
+);
 $session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
 $session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
 $session-postcode-color: var(--m3-primary-container, #cc1e1c);
