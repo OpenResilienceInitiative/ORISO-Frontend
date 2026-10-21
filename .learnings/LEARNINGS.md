@@ -11,6 +11,16 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-10-08 — #1213 approved legal hierarchy reconciliation
+
+- Context: #1213 legal hierarchy and profile modal integration.
+- Lesson: Preserve the shared dialog hierarchy: own Beratungsstelle text first, then Träger text, otherwise the existing missing-text notice and configured address when available. Keep profile modal agency/topic snapshots isolated and reuse the existing raw-label legal-link provider without agency URL parameters.
+
+## 2026-09-01 — do not un-ignore agent-task folders unless asked
+
+- Context: #1213 (`docs/agent-tasks/` already ignored via `docs/agent-tasks/*`)
+- Lesson: Leave new task folders gitignored. Do not add a `.gitignore` negation for the current task unless the user explicitly wants those docs in the PR.
+
 ## 2026-08-31 — positional t() second args hide leftover English
 
 - Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
