@@ -7,10 +7,12 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import { FETCH_ERRORS, X_REASON } from './fetchData';
 import {
 	apiCreateCaseHandoverOffer,
 	apiDecideCaseHandoverClientConsent,
 	apiDecideCaseHandoverRecipient,
+	apiGetCaseHandoverRequestStatus,
 	apiRequestCaseHandoverAccess,
 	apiRequestCaseHandoverBatchAccess,
 	CaseHandoverStatus
@@ -127,6 +129,56 @@ describe('case handover JSON responses through real fetchData', () => {
 			await expect(mutation.call()).rejects.toThrow('FORBIDDEN');
 		});
 	}
+	it('client consent decision hands the 409 response to the caller so its X-Reason can tell an owner change from a lock conflict (#1705)', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(
+				new Response(null, {
+					status: 409,
+					headers: { 'X-Reason': 'CASE_OWNER_CHANGED' }
+				})
+			)
+		);
+		const rejection = await apiDecideCaseHandoverClientConsent(
+			41,
+			501,
+			true
+		).catch((error) => error);
+		expect(rejection).toBeInstanceOf(Response);
+		expect(rejection.status).toBe(409);
+		expect(rejection.headers.get(FETCH_ERRORS.X_REASON)).toBe(
+			X_REASON.CASE_OWNER_CHANGED
+		);
+	});
+	it('reads one request through the per-request path an advice seeker may call (#1705)', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(JSON.stringify(granted), { status: 200 })
+			);
+		vi.stubGlobal('fetch', fetchMock);
+		await expect(apiGetCaseHandoverRequestStatus(41, 501)).resolves.toEqual(
+			granted
+		);
+		expect((fetchMock.mock.calls[0][0] as TestRequest).url).toBe(
+			'https://api.test/service/users/sessions/41/case-handover/501'
+		);
+	});
+	it.each([
+		[403, 'FORBIDDEN'],
+		[404, 'NO_MATCH']
+	])(
+		'a refused per-request read (%s) rejects as %s',
+		async (status, name) => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn().mockResolvedValue(new Response(null, { status }))
+			);
+			await expect(
+				apiGetCaseHandoverRequestStatus(41, 501)
+			).rejects.toThrow(name);
+		}
+	);
 	it('returns parsed per-case results for a batch', async () => {
 		const results = [
 			{

@@ -2600,6 +2600,7 @@
 			},
 			"waiting": {
 				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden dich, sobald jemand verfügbar ist.",
 				"aheadNone": "Du bist als Nächstes dran.",
 				"aheadOne": "Eine Person vor dir",
 				"aheadMany": "{{count}} Personen vor dir",
@@ -2617,7 +2618,8 @@
 			},
 			"steps": {
 				"wait": {
-					"title": "Du wartest, bis jemand frei ist"
+					"title": "Du wartest, bis jemand frei ist",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für dich los."
 				},
 				"consent": {
 					"title": "Dann stimmst du einmal zu",

@@ -45,7 +45,9 @@ vi.mock('../../emptyState/SearchEmptyStateAnimation', () => ({
 vi.mock('../../../globalState', async () => {
 	const ReactModule = await import('react');
 	return {
-		RegistrationContext: ReactModule.createContext({})
+		RegistrationContext: ReactModule.createContext({}),
+		// Read by useAppConfig() in AgencyLanguages (tenant setting).
+		AppConfigContext: ReactModule.createContext(null)
 	};
 });
 
