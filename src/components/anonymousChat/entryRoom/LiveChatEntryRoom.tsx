@@ -688,8 +688,16 @@ const LiveChatEntryRoomContent = ({
 						selectedIndex={selectedIndex}
 						busy={busy}
 						failed={continueFailed}
-						onSelect={setSelectedIndex}
+						onSelect={(index) => {
+							if (index !== selectedIndex)
+								accountActions.edited(
+									'locale',
+									endpoints.userData
+								);
+							setSelectedIndex(index);
+						}}
 						onReroll={() => {
+							accountActions.edited('locale', endpoints.userData);
 							/* A new set, and the first of it taken: the way on
 						   must never need a second click. */
 							setNames(rollGuestNames(locale));
