@@ -4821,6 +4821,7 @@
 		"timeline": {
 			"join": "Aramaya katıl",
 			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"endedElsewhere": "Bu arama zaten sona erdi.",
 			"video": {
 				"running": "Görüntülü arama sürüyor",
 				"ended": "Görüntülü arama sona erdi",

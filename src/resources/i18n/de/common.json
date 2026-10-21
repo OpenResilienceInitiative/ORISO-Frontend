@@ -4838,6 +4838,7 @@
 		"timeline": {
 			"join": "Beitreten",
 			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"endedElsewhere": "Dieser Anruf ist bereits beendet.",
 			"video": {
 				"running": "Videoanruf läuft",
 				"ended": "Videoanruf beendet",

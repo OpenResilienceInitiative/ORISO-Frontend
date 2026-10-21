@@ -4786,6 +4786,7 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",
 				"ended": "Video call ended",

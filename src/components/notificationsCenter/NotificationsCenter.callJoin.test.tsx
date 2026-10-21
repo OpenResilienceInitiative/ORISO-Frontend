@@ -398,3 +398,28 @@ it('opens the conversation instead of an error when the call already ended', asy
 	expect(addNotification).not.toHaveBeenCalled();
 	join.mockRestore();
 });
+
+it('says the call is over when an ended call has no conversation to open', async () => {
+	const join = vi
+		.spyOn(callManager, 'joinExistingCall')
+		.mockResolvedValue('ended');
+	await renderCenter(1400, {
+		...callItem,
+		params: { ...callItem.params, seriesId: undefined }
+	});
+	await user.click(
+		screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+	);
+	await waitFor(() =>
+		expect(addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({
+				notificationType: 'info',
+				text: en.videoCall.timeline.endedElsewhere
+			})
+		)
+	);
+	expect(screen.getByLabelText('Current route').textContent).toBe(
+		'/notifications'
+	);
+	join.mockRestore();
+});

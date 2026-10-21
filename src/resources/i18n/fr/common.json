@@ -4821,6 +4821,7 @@
 		"timeline": {
 			"join": "Rejoindre l’appel",
 			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"endedElsewhere": "Cet appel est déjà terminé.",
 			"video": {
 				"running": "Appel vidéo en cours",
 				"ended": "Appel vidéo terminé",

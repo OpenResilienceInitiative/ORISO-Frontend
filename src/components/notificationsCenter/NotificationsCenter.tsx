@@ -67,6 +67,7 @@ import {
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_ERROR,
+	NOTIFICATION_TYPE_INFO,
 	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
@@ -945,7 +946,17 @@ export const NotificationsCenter = () => {
 		const path = toNonEmbeddedPath(
 			resolveEndedCallConversationPath(item, getDefaultSessionsPath())
 		);
-		if (path) navigate(path);
+		if (path) {
+			navigate(path);
+			return;
+		}
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_INFO,
+			title: translate('notification.info'),
+			text: translate('videoCall.timeline.endedElsewhere'),
+			closeable: true,
+			timeout: 10000
+		});
 	};
 	const joinCall = (item: NotificationFeedItem) =>
 		joinNotificationCall(item, isGroupCallRoom, (outcome) => {
