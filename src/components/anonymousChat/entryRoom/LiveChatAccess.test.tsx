@@ -18,6 +18,7 @@ import {
 	readConfirmedEntryName
 } from './entryRoomIdentity';
 import { LiveChatEntryRoom } from './LiveChatEntryRoom';
+import { LocaleContext } from '../../../globalState';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -89,7 +90,33 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 				displayName: chosen
 			})
 		);
-		expect(apiPatchUserData).toHaveBeenCalledWith({ displayName: chosen });
+		// The redeemed account keeps the guest's language (no LocaleContext here → 'de').
+		expect(apiPatchUserData).toHaveBeenCalledWith({
+			displayName: chosen,
+			preferredLanguage: 'de'
+		});
+	});
+
+	/* The account keeps the language on screen, as the ISO code the server
+	   accepts: 'de@informal' failed the PATCH and kept the guest at the door. */
+	it.each([
+		['en', 'en'],
+		['de@informal', 'de']
+	])("stores the reader's language %s as %s", async (locale, stored) => {
+		render(
+			<LocaleContext.Provider
+				value={{ locale } as React.ContextType<typeof LocaleContext>}
+			>
+				<LiveChatEntryRoom sessionId={7} />
+			</LocaleContext.Provider>
+		);
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+
+		await waitFor(() =>
+			expect(apiPatchUserData).toHaveBeenCalledWith(
+				expect.objectContaining({ preferredLanguage: stored })
+			)
+		);
 	});
 
 	/* Frank, 2026-09-10: „wichtig ist, dass wir die User IDs nutzen". The door
