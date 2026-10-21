@@ -461,3 +461,21 @@ it('tells the user when an incomplete call card has no conversation to open', as
 		'/notifications'
 	);
 });
+
+it('ignores a second click on a call that is still joining instead of reporting it busy', async () => {
+	let finish: (outcome: 'joined') => void = () => undefined;
+	const join = vi
+		.spyOn(callManager, 'joinExistingCall')
+		.mockImplementation(() => new Promise((resolve) => (finish = resolve)));
+	await renderCenter();
+	const open = () =>
+		user.click(
+			screen.getAllByRole('button', { name: 'Open chat', exact: true })[0]
+		);
+	await open();
+	await open();
+	expect(join).toHaveBeenCalledTimes(1);
+	await act(async () => finish('joined'));
+	expect(addNotification).not.toHaveBeenCalled();
+	join.mockRestore();
+});

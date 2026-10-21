@@ -264,7 +264,8 @@ const joinNotificationCall = (
 	topologyReady: boolean,
 	isGroup: (roomRef: string) => boolean,
 	onOutcome: (outcome: JoinOutcome) => void,
-	onCannotJoin: () => void
+	onCannotJoin: () => void,
+	onStart: (callId: string) => void
 ): boolean => {
 	const params = item.params || {};
 	if (
@@ -287,6 +288,7 @@ const joinNotificationCall = (
 		onCannotJoin();
 		return true;
 	}
+	onStart(params.callId);
 	// The feed carries no call topology: the conversation the call belongs to decides.
 	callManager
 		.joinExistingCall(
@@ -970,12 +972,18 @@ export const NotificationsCenter = () => {
 			timeout: 10000
 		});
 	};
-	const joinCall = (item: NotificationFeedItem) =>
-		joinNotificationCall(
+	// A second click on a call that is still joining is not a busy line.
+	const joiningCallId = useRef<string | null>(null);
+	const joinCall = (item: NotificationFeedItem) => {
+		const callId = item.params?.callId;
+		if (callId && joiningCallId.current === callId) return true;
+		return joinNotificationCall(
 			item,
 			Boolean(sessionsContext?.ready),
 			isGroupCallRoom,
 			(outcome) => {
+				if (joiningCallId.current === callId)
+					joiningCallId.current = null;
 				if (outcome === 'joined') return;
 				if (outcome === 'ended') {
 					openConversation(item);
@@ -994,8 +1002,12 @@ export const NotificationsCenter = () => {
 				openConversation(
 					item,
 					translate('videoCall.timeline.joinFailed')
-				)
+				),
+			(startedCallId) => {
+				joiningCallId.current = startedCallId;
+			}
 		);
+	};
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
