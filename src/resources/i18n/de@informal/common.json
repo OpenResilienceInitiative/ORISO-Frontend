@@ -324,7 +324,22 @@
 			"nameLabel": "Name Interna",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"scope": {
+				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
+			},
+			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
+			"error": {
+				"recipientsRequired": "Bitte wähle mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entferne die Person oder versuche es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den deine Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuche es erneut.",
+				"disabled": "Interna mit ausgewählten Personen sind für dich nicht verfügbar: Sie sind nicht freigeschaltet, dir fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wende dich an deine Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warte einen Moment und versuche es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wende dich an den Support."
+			}
 		},
 		"circle": {
 			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
@@ -1530,6 +1545,9 @@
 				"close": "Suche schließen",
 				"clear": "Suche leeren",
 				"emptyPeople": "Keine passenden Personen gefunden.",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuche es später erneut.",
+				"handoverPeopleHint": "Hier siehst du nur Kolleg:innen, deren Fälle du über „Zugriff anfragen“ übernehmen kannst. Das hängt von deiner Abteilung und deinen Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenze die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
@@ -1537,7 +1555,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -2328,7 +2347,12 @@
 		"displayName": {
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
-			"action": "Namen ändern"
+			"action": "Namen ändern",
+			"overlay": {
+				"headline": "Dein angezeigter Name",
+				"copy": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+				"saveFailed": "Speichern fehlgeschlagen. Bitte versuch es erneut."
+			}
 		},
 		"notificationChoice": {
 			"email": "Schreib mir eine E-Mail",
@@ -2358,6 +2382,9 @@
 		"curtain": {
 			"reclaim": {
 				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			},
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
 			}
 		},
 		"readOnly": {
@@ -2392,6 +2419,9 @@
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
 			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb deiner Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert."
+		},
+		"bulkBar": {
+			"emptyHint": "Wähle mindestens einen Fall aus."
 		}
 	},
 	"supervisorDialog": {

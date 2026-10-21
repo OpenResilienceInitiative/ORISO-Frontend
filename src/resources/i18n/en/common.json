@@ -880,15 +880,37 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
+			"error": {
+				"recipientsRequired": "Please select at least one colleague.",
+				"recipientUnknown": "At least one selected colleague cannot be added yet because they have no chat account. Remove them or try again later.",
+				"outOfScope": "At least one selected person cannot be picked: they are outside the range your organisation allows for internal chats, or cannot be found. Nothing was created.",
+				"membershipFailed": "The room could not be set up with all selected people. Nothing was created. Please try again.",
+				"encryptionRequired": "Internal chats with selected people are only available encrypted, and encryption is currently unavailable. Nothing was created.",
+				"disabled": "Internal chats with selected people are not available to you: they are not enabled, you lack the permission, or this installation does not support them yet. Please contact your administration.",
+				"unknown": "The room could not be created. Please try again.",
+				"busy": "This room is being created right now. Please wait a moment and try again.",
+				"notAvailable": "Internal chats with selected people are not available on this installation yet. Nothing was created. Please contact support."
+			},
 			"nameLabel": "Internal name",
+			"noColleagues": "No colleagues to choose from",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
+			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
 			"removePerson": "Remove {{name}}",
+			"reusedNotice": {
+				"title": "Existing room opened",
+				"text": "A room with exactly these people already existed. It was opened and no new one was created."
+			},
+			"scope": {
+				"AGENCY": "You can pick colleagues from your counselling centre.",
+				"TENANT": "You can pick colleagues from your organisation."
+			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
 			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
 			"title": "Internal discussion",
 			"togglePersonList": "Open or close the person list",
+			"tooMany": "You can select up to {{max}} people.",
 			"vacatedHint": "no longer at this counselling centre"
 		},
 		"circle": {
@@ -2916,6 +2938,7 @@
 				"cta": "Set up recovery key"
 			},
 			"showKey": {
+				"headline": "Save your backup key",
 				"silentExplainer": "Your recovery key was set up automatically when you signed in. Save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
@@ -3679,7 +3702,10 @@
 			},
 			"reason": {
 				"title": "Please select a reason",
-				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry",
+				"empty": "No case handover reasons are set up for your counseling center. Please contact your administrator.",
+				"loadFailed": "The reasons for a case handover could not be loaded.",
+				"retry": "Try again"
 			},
 			"describe": {
 				"title": "Please describe the reason",
@@ -3724,6 +3750,13 @@
 			"saved": "Setting saved.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"loading": "Loading setting …"
+		},
+		"bulkBar": {
+			"label": "Case selection",
+			"selected": "{{count}} selected",
+			"continue": "Continue",
+			"cancel": "Cancel",
+			"emptyHint": "Select at least one case."
 		}
 	},
 	"supervisorDialog": {
@@ -4143,6 +4176,10 @@
 				"clear": "Clear search",
 				"removeSelectedPerson": "Remove {{name}}",
 				"emptyPeople": "No matching people found.",
+				"peopleLoading": "Loading colleagues …",
+				"peopleLoadError": "The colleagues could not be loaded. Please try again later.",
+				"handoverPeopleHint": "Only colleagues whose cases you can take over via “Request access” are shown here. This depends on your department and topics.",
+				"handoverPeopleCapped": "More cases exist than could be loaded – please refine the search.",
 				"emptyTypes": "No chat types available.",
 				"emptyTopics": "No topics found for your counseling centers.",
 				"tabs": {
@@ -4155,7 +4192,15 @@
 				"role": {
 					"asker": "Advice seeker",
 					"consultant": "Counsellor"
-				}
+				},
+				"internalName": "Internal name",
+				"publicName": "Public name",
+				"agencyGroup": "Counseling center",
+				"topicGroup": "Topic",
+				"agencyFallback": "Counseling center {{id}}",
+				"filteredOutAll": "Your search and filters hide every consultation.",
+				"removeFilters": "Remove filters",
+				"removeFiltersKeepSearch": "Remove filters, keep search"
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -5276,6 +5321,16 @@
 			"channelEmail": "Email",
 			"channelBrowser": "Browser on this device"
 		},
+		"notificationSummary": {
+			"label": "Notifications: {{state}}",
+			"change": "change",
+			"changeLabel": "Change notifications",
+			"dismiss": "Hide setup",
+			"none": "not set up",
+			"email": "email on",
+			"browser": "signal active on this device",
+			"both": "email and signal on"
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."
@@ -5333,7 +5388,14 @@
 		"displayName": {
 			"headline": "Your displayed name",
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
-			"action": "Change my name"
+			"action": "Change my name",
+			"overlay": {
+				"headline": "Your displayed name",
+				"copy": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
+				"reroll": "Roll a new name",
+				"save": "Use this name",
+				"saveFailed": "Saving failed. Please try again."
+			}
 		},
 		"unavailableInRoom": "First response – not available in this room.",
 		"faq": {

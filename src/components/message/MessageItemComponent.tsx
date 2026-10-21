@@ -1,5 +1,5 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
-import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
@@ -2668,6 +2668,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
+					messageId={_id}
 					conversationType={erstantwortModality}
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
@@ -2748,24 +2749,13 @@ export const MessageItemComponent = ({
 			{showGrantNotifications &&
 				(grantNotificationPolicy.emailAllowed ||
 					grantNotificationPolicy.browserAllowed) && (
-					<ErstantwortSequence
-						skipAnimation
+					<NotificationSetupMessage
+						startOpen
 						subtitle={translate('profile.notifications.title')}
-						bausteine={[
-							{ id: 'grantNotifications', headline: '', body: '' }
-						]}
-						slots={{
-							grantNotifications: (
-								<NotificationSetup
-									isEmailEnabled={
-										grantNotificationPolicy.emailAllowed
-									}
-									isBrowserEnabled={
-										grantNotificationPolicy.browserAllowed
-									}
-								/>
-							)
-						}}
+						isEmailEnabled={grantNotificationPolicy.emailAllowed}
+						isBrowserEnabled={
+							grantNotificationPolicy.browserAllowed
+						}
 					/>
 				)}
 		</>

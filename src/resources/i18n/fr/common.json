@@ -1113,15 +1113,37 @@
 			"addPerson": "Ajouter une personne",
 			"createLabel": "Créer un échange interne",
 			"deselectPerson": "Retirer {{name}}",
+			"error": {
+				"recipientsRequired": "Veuillez sélectionner au moins un collègue.",
+				"recipientUnknown": "Au moins un collègue sélectionné ne peut pas encore être ajouté, car il n'a pas encore de compte de chat. Retirez-le ou réessayez plus tard.",
+				"outOfScope": "Au moins une personne sélectionnée ne peut pas être choisie : elle se trouve en dehors du périmètre autorisé par votre organisation pour les échanges internes, ou est introuvable. Rien n'a été créé.",
+				"membershipFailed": "L'espace n'a pas pu être configuré avec toutes les personnes sélectionnées. Rien n'a été créé. Veuillez réessayer.",
+				"encryptionRequired": "Les échanges internes avec des personnes sélectionnées ne sont possibles qu'avec chiffrement, et le chiffrement est actuellement indisponible. Rien n'a été créé.",
+				"disabled": "Les échanges internes avec des personnes sélectionnées ne sont pas disponibles pour vous : ils ne sont pas activés, il vous manque l'autorisation, ou cette installation ne les prend pas encore en charge. Veuillez contacter votre administration.",
+				"unknown": "L'espace n'a pas pu être créé. Veuillez réessayer.",
+				"busy": "Cet espace est en cours de création. Veuillez patienter un instant, puis réessayer.",
+				"notAvailable": "Les échanges internes avec des personnes sélectionnées ne sont pas encore disponibles sur cette installation. Rien n'a été créé. Veuillez contacter le support."
+			},
 			"nameLabel": "Nom de l'échange interne",
+			"noColleagues": "Aucun collègue à sélectionner",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
+			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
 			"removePerson": "Retirer {{name}}",
+			"reusedNotice": {
+				"title": "Espace existant ouvert",
+				"text": "Un espace avec exactement ces personnes existait déjà. Il a été ouvert, aucun nouvel espace n'a été créé."
+			},
+			"scope": {
+				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
 			"supportText": "Concertez-vous au sein de votre service de consultation. Que ce soit à deux ou en équipe, par audio, par vidéo, dans le chat ou tout à la fois, selon vos besoins.",
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
+			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
 			"vacatedHint": "ne fait plus partie du service de consultation"
 		},
 		"circle": {
@@ -2933,6 +2955,7 @@
 				"cta": "Configurer la clé de récupération"
 			},
 			"showKey": {
+				"headline": "Enregistrez votre clé de secours",
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
@@ -3713,7 +3736,10 @@
 			},
 			"reason": {
 				"title": "Veuillez choisir un motif",
-				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande."
+				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande.",
+				"empty": "Aucun motif de transfert de dossier n'est configuré pour votre centre de conseil. Veuillez contacter votre administration.",
+				"loadFailed": "Les motifs de transfert de dossier n’ont pas pu être chargés.",
+				"retry": "Réessayer"
 			},
 			"describe": {
 				"title": "Veuillez décrire le motif",
@@ -3758,6 +3784,13 @@
 			"saved": "Paramètre enregistré.",
 			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
 			"loading": "Chargement du paramètre …"
+		},
+		"bulkBar": {
+			"label": "Sélection des dossiers",
+			"selected": "{{count}} sélectionné(s)",
+			"continue": "Continuer",
+			"cancel": "Annuler",
+			"emptyHint": "Sélectionnez au moins un dossier."
 		}
 	},
 	"supervisorDialog": {
@@ -4169,6 +4202,10 @@
 				"clear": "Effacer la recherche",
 				"removeSelectedPerson": "Retirer {{name}}",
 				"emptyPeople": "Aucune personne correspondante trouvée.",
+				"peopleLoading": "Chargement des collègues …",
+				"peopleLoadError": "Impossible de charger les collègues. Veuillez réessayer plus tard.",
+				"handoverPeopleHint": "Seuls les collègues dont vous pouvez reprendre les dossiers via « Demander l'accès » apparaissent ici. Cela dépend de votre département et de vos thèmes.",
+				"handoverPeopleCapped": "Il existe plus de dossiers que ceux chargés – veuillez affiner la recherche.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
 				"tabs": {
@@ -4181,7 +4218,15 @@
 				"role": {
 					"asker": "Personne en quête de conseil",
 					"consultant": "Conseiller·ère"
-				}
+				},
+				"internalName": "Nom interne",
+				"publicName": "Nom public",
+				"agencyGroup": "Service de consultation",
+				"topicGroup": "Sujet",
+				"agencyFallback": "Service de consultation {{id}}",
+				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
+				"removeFilters": "Supprimer les filtres",
+				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche"
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"
@@ -5312,6 +5357,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Notification : {{state}}",
+			"change": "modifier",
+			"changeLabel": "Modifier la notification",
+			"dismiss": "Masquer la configuration",
+			"none": "non configurée",
+			"email": "e-mail activé",
+			"browser": "signal sur cet appareil activé",
+			"both": "e-mail et signal activés"
+		},
 		"subtitle": "Vos premières étapes",
 		"greeting": {
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
@@ -5369,7 +5424,14 @@
 		"displayName": {
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
-			"action": "Changer de nom"
+			"action": "Changer de nom",
+			"overlay": {
+				"headline": "Votre nom affiché",
+				"copy": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
+				"reroll": "Tirer un nouveau nom",
+				"save": "Utiliser ce nom",
+				"saveFailed": "L'enregistrement a échoué. Veuillez réessayer."
+			}
 		},
 		"notificationChoice": {
 			"both": "Les deux, et je définis un mot de passe maintenant",

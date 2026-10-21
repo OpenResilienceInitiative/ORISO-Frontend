@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
-import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { NotificationSetupCollapse } from '../erstantwort/NotificationSetupMessage';
 
 /** The caller keys this continuation by session, so transient setup never moves
  * into another conversation. Account/device settings remain their existing stores. */
@@ -150,7 +150,9 @@ export const CaseHandoverConversation = ({
 												'caseHandover.consent.info.notificationsAction'
 											)}
 										</h3>
-										<NotificationSetup
+										<NotificationSetupCollapse
+											startOpen
+											requireConsentEmail={recommendation}
 											onStart={() =>
 												setSetupStarted(true)
 											}

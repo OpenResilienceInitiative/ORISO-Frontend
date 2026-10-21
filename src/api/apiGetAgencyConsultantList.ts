@@ -8,6 +8,8 @@ export interface Consultant {
 	displayName: string;
 	username: string;
 	isSupervisor?: boolean;
+	/** The counselling centres of this consultant, when the endpoint delivers them. */
+	agencies?: { id: number; name?: string }[];
 }
 
 /**

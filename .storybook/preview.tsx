@@ -933,6 +933,11 @@ const preview: Preview = {
 					styles: { width: '844px', height: '390px' },
 					type: 'mobile'
 				},
+				tablet820: {
+					name: 'Tablet 820 (iPad Air portrait, 820x1180)',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
+				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },

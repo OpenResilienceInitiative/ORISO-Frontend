@@ -177,6 +177,8 @@ export const phone375Globals = { viewport: { value: 'phone375' } };
 export const phone390LandscapeGlobals = {
 	viewport: { value: 'phone390Landscape' }
 };
+/** Tablet portrait, 820px wide (iPad Air). */
+export const tablet820Globals = { viewport: { value: 'tablet820' } };
 /** Tablet portrait — still the narrow (<900px) message layout. */
 export const tablet834Globals = { viewport: { value: 'tablet834' } };
 /** Desktop evidence viewport required by the ORISO Storybook gate. */
