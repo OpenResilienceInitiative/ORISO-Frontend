@@ -1865,7 +1865,8 @@
 				"mention": "Mentionner une personne",
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
-					"tooltip": "Enregistrer un message vocal"
+					"tooltip": "Enregistrer un message vocal",
+					"disabledWhileEditing": "Les messages vocaux ne sont pas disponibles pendant la modification d'un message"
 				},
 				"imageUrlPrompt": "URL de l'image",
 				"urlPrompt": "URL"
@@ -4808,6 +4809,7 @@
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
 	},
