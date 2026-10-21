@@ -242,8 +242,21 @@ test(
 		assert.equal(first.status, 200);
 		assert.equal((await first.json()).data.hello, 'controlled translation');
 		const target = path.join(storage, 'weblate/ui.en.json');
-		for (let i = 0; !existsSync(target) && i < 100; i++)
+		// The shared route writes asynchronously: creation precedes complete JSON.
+		// Keep the same bound, then check the exact data and real cached response.
+		for (let i = 0; i < 100; i++) {
+			try {
+				JSON.parse(readFileSync(target, 'utf8'));
+				break;
+			} catch (error) {
+				if (
+					(error.code !== 'ENOENT' && !(error instanceof SyntaxError)) ||
+					i === 99
+				)
+					throw error;
+			}
 			await new Promise((r) => setTimeout(r, 10));
+		}
 		assert.equal(
 			JSON.parse(readFileSync(target, 'utf8')).data.hello,
 			'controlled translation'
