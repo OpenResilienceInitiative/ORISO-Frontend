@@ -5998,5 +5998,39 @@
 				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuchen Sie es erneut."
 			}
 		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Referenzkomponente",
+			"title": "Angewendete Design-Tokens",
+			"declaredExplanation": "Die Quelldetails beschreiben die deklarierte Zuordnung. Die Werte werden an der Referenzkomponente gemessen.",
+			"refresh": "Prüfung aktualisieren",
+			"empty": "Noch keine Messwerte.",
+			"unavailable": "Nicht verfügbar",
+			"scroll": "Token-Messwerte horizontal durchsehen",
+			"caption": "Gemessene Design-Tokens",
+			"target": "Ziel",
+			"token": "Token / Eigenschaft",
+			"expected": "Erwartet (Engine)",
+			"calculated": "Berechnet (geerbtes Token)",
+			"applied": "Angewendet (Komponente)",
+			"result": "Ergebnis",
+			"source": "Deklarierte Quelle",
+			"status": {
+				"match": "Übereinstimmung",
+				"mismatch": "Abweichung",
+				"missing": "Fehlend",
+				"unresolved": "Ungeklärt"
+			},
+			"issues": {
+				"missing-element": "Das Zielelement wurde nicht gefunden.",
+				"missing-expected": "Es ist kein unabhängiger Erwartungswert verfügbar.",
+				"missing-token": "Das geerbte Token fehlt oder ist ungültig.",
+				"unresolved-token": "Das geerbte Token konnte nicht aufgelöst werden.",
+				"missing-applied": "Der angewendete Wert fehlt.",
+				"calculated-mismatch": "Das geerbte Token weicht von der Engine ab.",
+				"applied-mismatch": "Der angewendete Wert weicht von der Engine ab."
+			}
+		}
 	}
 }
