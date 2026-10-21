@@ -156,21 +156,26 @@ export const fetchData = ({
 					}
 				: null;
 
-		// Retried exactly once, anonymously, and with recovery disabled so a
-		// second 401 cannot loop.
+		// A frozen account action keeps its original authentication context.
+		// Explicitly public account calls start with skipAuth; they keep their key.
+		const hasFrozenIntent = Object.keys(headersData ?? {}).some(
+			(header) => header.toLowerCase() === 'idempotency-key'
+		);
 		const retryWithoutAuth = () =>
-			fetchData({
-				url,
-				method,
-				headersData,
-				bodyData,
-				skipAuth: true,
-				responseHandling,
-				timeout,
-				signal,
-				recoverOnPublicAuthRoute: false,
-				isStaleAuthRetry: true
-			});
+			hasFrozenIntent
+				? Promise.reject(new Error(FETCH_ERRORS.UNAUTHORIZED))
+				: fetchData({
+						url,
+						method,
+						headersData,
+						bodyData,
+						skipAuth: true,
+						responseHandling,
+						timeout,
+						signal,
+						recoverOnPublicAuthRoute: false,
+						isStaleAuthRetry: true
+					});
 
 		const csrfToken = generateCsrfToken();
 

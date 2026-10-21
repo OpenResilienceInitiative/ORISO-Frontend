@@ -52,7 +52,7 @@ register(
 	import.meta.url
 );
 
-test('actual public-auth recovery retains account ID and exact body on its anonymous retry', async () => {
+test('an authenticated frozen account request cannot retry anonymously on a public page', async () => {
 	const { fetchData, FETCH_ERRORS } = await import('../src/api/fetchData.ts');
 	const url = 'https://unit.oriso.invalid/users/email';
 	const body = JSON.stringify('a@example.test');
@@ -69,23 +69,23 @@ test('actual public-auth recovery retains account ID and exact body on its anony
 		});
 	};
 	try {
-		await fetchData({
-			url,
-			method: 'PUT',
-			bodyData: body,
-			timeout: 1,
-			responseHandling: [FETCH_ERRORS.BAD_REQUEST],
-			headersData: intent.headersFor('PUT', url, body)
-		});
-		assert.equal(requests.length, 2);
+		await assert.rejects(
+			fetchData({
+				url,
+				method: 'PUT',
+				bodyData: body,
+				timeout: 1,
+				responseHandling: [FETCH_ERRORS.BAD_REQUEST],
+				headersData: intent.headersFor('PUT', url, body)
+			}),
+			(error) => error.message === FETCH_ERRORS.UNAUTHORIZED
+		);
+		assert.equal(requests.length, 1);
 		assert.equal(requests[0].headers['idempotency-key'], intent.id);
-		assert.equal(requests[1].headers['idempotency-key'], intent.id);
-		assert.equal(requests[0].body, requests[1].body);
 		assert.equal(
 			requests[0].headers.authorization,
 			'Bearer stale-test-token'
 		);
-		assert.equal(requests[1].headers.authorization, undefined);
 	} finally {
 		globalThis.fetch = previousFetch;
 	}
@@ -110,6 +110,38 @@ test('actual HTTP refusal keeps the existing Error message and carries response 
 				return true;
 			}
 		);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test('an explicitly anonymous public account request keeps its frozen key without a bearer', async () => {
+	const { fetchData } = await import('../src/api/fetchData.ts');
+	const previousFetch = globalThis.fetch;
+	const url = 'https://unit.oriso.invalid/account-invites/token/accept';
+	const body = JSON.stringify({ password: 'synthetic-password' });
+	const intent = new AccountOperationIntent();
+	const requests = [];
+	globalThis.fetch = async (request) => {
+		requests.push({
+			headers: Object.fromEntries(request.headers),
+			body: await request.text()
+		});
+		return new Response(null, { status: 204 });
+	};
+	try {
+		await fetchData({
+			url,
+			method: 'POST',
+			bodyData: body,
+			skipAuth: true,
+			timeout: 1,
+			headersData: intent.headersFor('POST', url, body)
+		});
+		assert.equal(requests.length, 1);
+		assert.equal(requests[0].headers.authorization, undefined);
+		assert.equal(requests[0].headers['idempotency-key'], intent.id);
+		assert.equal(requests[0].body, body);
 	} finally {
 		globalThis.fetch = previousFetch;
 	}
