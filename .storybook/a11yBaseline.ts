@@ -353,6 +353,14 @@ export const createA11yBaselineGate = ({
 				throw new Error(
 					'Accessibility audit missing, malformed, failed, or unexpected engine version'
 				);
+			if (result.incomplete.length)
+				throw new Error(
+					`Accessibility audit incomplete in ${run.context.id}: ${result.incomplete
+						.map(
+							(rule) => `${rule.id} (${rule.nodes.length} nodes)`
+						)
+						.join(', ')}`
+				);
 			let expectedStatus = 'passed';
 			if (result.violations.length)
 				expectedStatus = run.entry ? 'warning' : 'failed';
