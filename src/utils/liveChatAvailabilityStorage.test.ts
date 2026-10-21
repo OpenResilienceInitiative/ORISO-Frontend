@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
 	LIVE_CHAT_AVAILABILITY_CHANGE_EVENT,
 	LIVE_CHAT_AVAILABILITY_STORAGE_KEY,

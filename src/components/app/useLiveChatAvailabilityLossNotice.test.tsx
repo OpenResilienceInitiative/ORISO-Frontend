@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { useState } from 'react';
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { useLiveChatAvailabilityLossNotice } from './useLiveChatAvailabilityLossNotice';
 import de from '../../resources/i18n/de/common.json';

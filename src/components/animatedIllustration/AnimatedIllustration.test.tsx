@@ -4,7 +4,7 @@ import * as React from 'react';
 import { render } from '@testing-library/react';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	ANIMATION_LOOPS,
 	ANIMATION_SPEED,

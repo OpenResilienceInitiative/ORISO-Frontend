@@ -2,7 +2,14 @@
 import * as React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { NavigationBar } from './NavigationBar';
 import { NavigationStoryProviders } from './navigationStoryHelpers';
 import { apiGetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';

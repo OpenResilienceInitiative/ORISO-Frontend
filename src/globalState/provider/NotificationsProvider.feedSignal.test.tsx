@@ -14,7 +14,14 @@
 
 import React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { NotificationsProvider } from './NotificationsProvider';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { bindFeedUpdateSignal } from '../../services/feedUpdateSignalBridge';

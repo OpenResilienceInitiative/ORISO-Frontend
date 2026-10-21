@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { RequestLog } from './requestCollector';
 
 const logged = (url: string) => new RequestLog(url, 'PUT').url;

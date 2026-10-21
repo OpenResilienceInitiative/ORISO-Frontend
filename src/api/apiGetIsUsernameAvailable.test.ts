@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetIsUsernameAvailable } from './apiGetIsUsernameAvailable';
 import { fetchData, FETCH_ERRORS } from './fetchData';
 

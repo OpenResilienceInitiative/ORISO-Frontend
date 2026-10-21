@@ -9,7 +9,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 vi.mock('lottie-web', () => ({ default: {} }));
 const apiPatchUserData = vi.fn(() => Promise.resolve());

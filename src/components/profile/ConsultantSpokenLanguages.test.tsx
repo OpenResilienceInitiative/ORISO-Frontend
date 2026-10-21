@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { ConsultantSpokenLanguages } from './ConsultantSpokenLanguages';

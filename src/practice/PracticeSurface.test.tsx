@@ -8,7 +8,14 @@ import {
 	type NavigateFunction
 } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { UserDataContext } from '../globalState/context/UserDataContext';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { usePracticeSandbox } from './PracticeSandbox';

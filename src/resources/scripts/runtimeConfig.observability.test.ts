@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const loadConfig = async (config: Record<string, string | undefined>) => {
 	(window as any).__ORISO_RUNTIME_CONFIG__ = config;

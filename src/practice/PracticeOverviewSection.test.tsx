@@ -9,7 +9,7 @@ import {
 } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
 import { Context as ResponsiveContext } from 'react-responsive';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	AppConfigContext,
 	AUTHORITIES,

@@ -3,7 +3,7 @@ import * as React from 'react';
 import i18next from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import { render, screen } from '@testing-library/react';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 import enCommon from '../../resources/i18n/en/common.json';
 import { Input } from './input';
 

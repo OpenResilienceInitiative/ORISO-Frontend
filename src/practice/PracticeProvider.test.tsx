@@ -8,7 +8,14 @@ import {
 	renderHook,
 	screen
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { endpoints } from '../resources/scripts/endpoints';
 import { PracticeBlockedRequestError } from './networkGuard';
 import { exitPracticeMode, isPracticeMode } from './practiceMode';

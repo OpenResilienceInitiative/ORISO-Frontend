@@ -1,6 +1,6 @@
 // @vitest-environment jsdom — the module reaches the api layer, which reads
 // `window` while resolving the API base URL at import time.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { requiresCaseHandoverCheck } from './caseHandoverPreviewGate';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces';
 

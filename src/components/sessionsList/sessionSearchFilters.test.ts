@@ -10,7 +10,7 @@
  * of a session must keep that session visible.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import { sessionMatchesAgencies } from './sessionSearchPeople';
 import { sessionMatchesToolbar } from './sessionToolbarFilters';

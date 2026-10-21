@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { act, render, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { TWO_FACTOR_NAG_DISMISSED_KEY, TwoFactorNag } from './TwoFactorNag';

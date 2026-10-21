@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { GroupChatJoinRequest } from './joinRequestModel';
 
 /* Keys come back with their values, so a test can see WHAT was said without

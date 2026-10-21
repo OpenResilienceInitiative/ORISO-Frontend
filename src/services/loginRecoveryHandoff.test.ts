@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 
 // Stands in for IndexedDB. Held by the test file, so it outlives the module
 // reloads below exactly as a browser's IndexedDB outlives a document load.

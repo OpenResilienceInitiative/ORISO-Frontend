@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 // The German fallbacks are what a fresh tenant sees, so the test asserts them
 // rather than a catalogue lookup: `t` hands back the key, `translateWithFallback`

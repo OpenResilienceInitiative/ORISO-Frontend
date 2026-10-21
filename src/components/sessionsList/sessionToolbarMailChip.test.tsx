@@ -13,7 +13,7 @@
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import { EnquiryFilterChips } from './EnquiryFilterChips';
 import deCommon from '../../resources/i18n/de/common.json';

@@ -1,11 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import fallbackCard from './fallback-card.png';
 import schuldenCard from './t-05-schulden.png';
-import {
-	getTopicCardImage,
-	hasTopicCardImage,
-	topicSlug
-} from './index';
+import { getTopicCardImage, hasTopicCardImage, topicSlug } from './index';
 
 describe('topicSlug', () => {
 	it('lowercases and replaces German umlauts with their ASCII equivalents', () => {

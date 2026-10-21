@@ -9,7 +9,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AgencySpecificContext, LocaleContext } from '../../globalState';
 import { StageLayout } from './StageLayout';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
@@ -35,6 +35,14 @@ vi.mock('../registration/infoDrawer/InfoDrawer', () => ({
 }));
 
 vi.mock('lottie-react', () => ({ default: () => null }));
+
+const opened = vi.hoisted(() => ({ props: null as any }));
+vi.mock('../legalLinks/LegalLinkModal', () => ({
+	LegalLinkModal: (props: any) => {
+		opened.props = props;
+		return <div role="dialog" />;
+	}
+}));
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -78,14 +86,6 @@ describe('StageLayout registration invitation continuity', () => {
 });
 
 describe('StageLayout footer legal links', () => {
-	const opened = vi.hoisted(() => ({ props: null as any }));
-	vi.mock('../legalLinks/LegalLinkModal', () => ({
-		LegalLinkModal: (props: any) => {
-			opened.props = props;
-			return <div role="dialog" />;
-		}
-	}));
-
 	const renderFooter = (
 		legalDepartment?: { agencyId: number; topicId: number } | null
 	) =>

@@ -4,7 +4,7 @@
  * the user can actually see, which on iOS Safari is not the layout viewport.
  */
 import { renderHook, act } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { useVisualViewport } from './useVisualViewport';
 
 type Listener = () => void;

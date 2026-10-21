@@ -2,7 +2,7 @@
 import React from 'react';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import type { TourDefinition } from '../components/productTour/types';
 import {
 	practiceTourProgressAtom,

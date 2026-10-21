@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getPlatform, getPrimaryModifier } from './platform';
 import { normalizeBinding } from './binding';
 import { matchesShortcut, type MatchableKeyboardEvent } from './match';

@@ -5,7 +5,7 @@
  *
  * Traces: UAT-D, UAT-E, UAT-I (Tests #18–#22 in THB — Test Logic).
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { computeOrisoPalette } from './orisoScheme';
 import {
 	ACTIVE_SCHEMES,

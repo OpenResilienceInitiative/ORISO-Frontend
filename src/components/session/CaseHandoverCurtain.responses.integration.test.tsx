@@ -7,7 +7,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { resetCaseHandoverOperationStoreForTests } from '../caseHandover/caseHandoverOperationStore';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';

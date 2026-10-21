@@ -4,7 +4,7 @@
  * button, incl. the restricted-storage path (#586 review: the in-tab state
  * must survive failed localStorage writes via the CustomEvent detail).
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { act, renderHook } from '@testing-library/react';
 import {
 	isNotifStatusViaSidebar,

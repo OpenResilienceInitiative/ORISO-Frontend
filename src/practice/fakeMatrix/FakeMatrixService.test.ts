@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MatrixEvent } from 'matrix-js-sdk';
 import { createFakeMatrixService } from './FakeMatrixService';
 import { createPracticeScenario } from '../fixtures/practiceScenario';

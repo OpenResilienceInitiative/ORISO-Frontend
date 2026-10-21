@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { cleanup, render, screen } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext, NotificationsContext } from '../../../globalState';
 import { NotificationSwitchRow } from './NotificationSwitchRow';
 import { ADVICE_SEEKER_SWITCHES } from './notificationMatrix';

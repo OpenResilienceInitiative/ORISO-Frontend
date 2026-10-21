@@ -5,7 +5,14 @@
  * "apply to other lists" action (spec §4).
  */
 import * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	act,
 	cleanup,

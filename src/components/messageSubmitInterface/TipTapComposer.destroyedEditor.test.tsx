@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { createRef } from 'react';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const mocks = vi.hoisted(() => {
 	const commands = {

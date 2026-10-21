@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import { createLinesEffect } from './variants/lines';
 import { createConnectedDotsEffect } from './variants/connectedDots';
 import { loadStageEffect } from './loadStageEffect';

@@ -4,7 +4,7 @@
  * (Termine disabled), per-kind sound dropdown + send-by-email, tab switching.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	cleanup,
 	configure,

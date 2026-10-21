@@ -131,6 +131,17 @@ test('caps Storybook workers and allows several disconnect retries', () => {
 	);
 });
 
+test('uses the supported worker cap without the removed minWorkers option', () => {
+	assert.deepEqual(
+		storybookVitestArgs.filter((arg) => arg.startsWith('--maxWorkers')),
+		['--maxWorkers=2']
+	);
+	assert.equal(
+		storybookVitestArgs.some((arg) => arg.startsWith('--minWorkers')),
+		false
+	);
+});
+
 test('splits the suite into sequential shards so one browser session never drives the whole queue', () => {
 	// Every full-suite attempt in ORISO-Frontend#1316 run 34016457101 died at
 	// ~95-107 of 175 files; a shard keeps each orchestrator tab well below that.

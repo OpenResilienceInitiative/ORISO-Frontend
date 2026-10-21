@@ -4,7 +4,7 @@
  * which is `overflow: hidden` to keep the 24px card corners clipped.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
 	CaseHandoverActionButton,

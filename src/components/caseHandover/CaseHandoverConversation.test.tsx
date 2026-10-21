@@ -10,7 +10,7 @@ import {
 	waitFor,
 	within
 } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { TenantContext } from '../../globalState/provider/TenantProvider';
 import type { TenantDataInterface } from '../../globalState/interfaces/TenantDataInterface';

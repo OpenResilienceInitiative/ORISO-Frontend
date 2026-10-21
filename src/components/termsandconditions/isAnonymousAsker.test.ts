@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { AUTHORITIES } from '../../globalState/helpers/stateHelpers';
 import { UserDataInterface } from '../../globalState/interfaces';
 import { isAnonymousAsker } from './isAnonymousAsker';

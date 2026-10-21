@@ -8,7 +8,7 @@
  * "mirror" pattern already used by notificationSettings/store.ts.
  */
 
-import { beforeEach, describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vite-plus/test';
 import {
 	getThreadLastReadTs,
 	markThreadRead,

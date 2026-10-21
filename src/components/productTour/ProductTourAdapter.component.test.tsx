@@ -14,7 +14,7 @@ import {
 	useLocation,
 	useNavigate
 } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ProductTourAdapter } from './ProductTourAdapter';
 import { emitTourEvent } from './tourEvents';
 import type { TourDefinition, TourEvent } from './types';

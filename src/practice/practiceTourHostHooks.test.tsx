@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { getTourHostHooks } from '../components/productTour/tourHostHooks';
 import { appSnackbarStack } from '../components/m3Snackbar/snackbarStack';
 import {

@@ -2,7 +2,14 @@
 import * as React from 'react';
 import { StrictMode, useContext } from 'react';
 import { act, cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { PracticeSandbox, usePracticeSandbox } from './PracticeSandbox';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { endpoints } from '../resources/scripts/endpoints';

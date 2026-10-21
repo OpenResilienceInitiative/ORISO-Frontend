@@ -7,7 +7,7 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 

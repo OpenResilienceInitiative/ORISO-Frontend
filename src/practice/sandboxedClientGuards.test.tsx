@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { PracticeSandbox } from './PracticeSandbox';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { useNotificationSettings } from '../hooks/useNotificationSettings';

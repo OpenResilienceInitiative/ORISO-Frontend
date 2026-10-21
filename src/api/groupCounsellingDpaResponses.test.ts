@@ -1,5 +1,12 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiCreateGroupChat, apiUpdateGroupChat } from './apiGroupChatSettings';
 import { apiPutGroupChat, GROUP_CHAT_API } from './apiPutGroupChat';
 import { FETCH_ERRORS } from './fetchData';

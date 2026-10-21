@@ -10,7 +10,14 @@
  * event type is accepted too, so a future room-based sender needs no frontend
  * change.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { createRequire } from 'module';
 import {
 	FEED_UPDATE_BRIDGE_EVENT,

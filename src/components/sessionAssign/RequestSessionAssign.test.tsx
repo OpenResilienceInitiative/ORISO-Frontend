@@ -7,7 +7,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { RequestSessionAssign } from './RequestSessionAssign';
 import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
 import {

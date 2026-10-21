@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, expect, it } from 'vitest';
-import { vi } from 'vitest';
+import { afterEach, expect, it } from 'vite-plus/test';
+import { vi } from 'vite-plus/test';
 import { LiveChatChecking } from './LiveChatChecking';
 
 vi.mock('../../orbitalTrails/OrbitalTrails', () => ({

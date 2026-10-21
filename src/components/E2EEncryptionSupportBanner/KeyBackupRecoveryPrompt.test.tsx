@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import {

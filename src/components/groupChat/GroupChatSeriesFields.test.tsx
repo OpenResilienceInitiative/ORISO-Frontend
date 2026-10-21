@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { GroupChatSeriesFields } from './GroupChatSeriesFields';
 
 const translations: Record<string, string> = {

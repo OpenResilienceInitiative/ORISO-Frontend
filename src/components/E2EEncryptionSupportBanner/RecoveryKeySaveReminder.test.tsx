@@ -8,7 +8,7 @@ import {
 	screen
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
 import { RecoveryKeySaveReminder } from './RecoveryKeySaveReminder';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';

@@ -638,14 +638,14 @@ export const AddASupervisor: Story = {
 			'2: Read the supervisor reply in the side thread',
 			async () => {
 				await expectStep(2, 4);
-				const panel = await target('supervision-panel');
-				await waitFor(
-					() =>
-						expect(panel.textContent).toContain(
-							'Das klingt gut so.'
-						),
-					SLOW
-				);
+				await target('supervision-panel');
+				await waitFor(async () => {
+					await expect(
+						document.querySelector(
+							'[data-tour-target="supervision-panel"]'
+						)?.textContent
+					).toContain('Das klingt gut so.');
+				}, SLOW);
 				await expect(
 					document.querySelector('.chatStage__mainPane')?.textContent
 				).not.toContain('Das klingt gut so.');

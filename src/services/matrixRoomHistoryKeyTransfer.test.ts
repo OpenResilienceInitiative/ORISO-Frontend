@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ClientEvent } from 'matrix-js-sdk';
 import {
 	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,

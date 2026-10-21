@@ -3,7 +3,7 @@ import * as React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import de from '../../resources/i18n/de/common.json';
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 // jsdom has no canvas. The unrelated third-party animation boundary is not

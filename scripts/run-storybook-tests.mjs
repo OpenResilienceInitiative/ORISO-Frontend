@@ -23,8 +23,7 @@ export const storybookVitestArgs = [
 	// tabs and makes the disconnect flake more likely. Two workers matched the
 	// last stable local run (#1127) without funneling all ~170 files through one
 	// tab (which --maxWorkers=1 provokes).
-	'--maxWorkers=2',
-	'--minWorkers=1'
+	'--maxWorkers=2'
 ];
 
 /**

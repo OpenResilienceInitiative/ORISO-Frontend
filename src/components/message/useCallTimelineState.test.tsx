@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { useCallTimelineState } from './useCallTimelineState';
 

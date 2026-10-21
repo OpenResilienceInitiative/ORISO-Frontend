@@ -1,5 +1,12 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetEventNotifications } from './apiEventNotifications';
 import { redirectToErrorPage } from '../components/error/errorHandling';
 import { logout } from '../components/logout/logout';

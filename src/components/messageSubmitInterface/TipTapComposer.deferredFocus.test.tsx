@@ -2,7 +2,14 @@
 import * as React from 'react';
 import { createRef } from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 
 // TipTap's focus command lands in a requestAnimationFrame, not in the call.

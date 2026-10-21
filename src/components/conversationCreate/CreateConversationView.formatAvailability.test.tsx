@@ -9,7 +9,14 @@ import {
 	within
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { useSession } from '../../hooks/useSession';
 import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';

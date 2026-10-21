@@ -16,6 +16,9 @@ const settingsMain = path
 
 const config: StorybookConfig = {
 	stories: [
+		...(process.env.ORISO_VERIFICATION_CONTROLS === 'true'
+			? ['../.superpowers/verification-controls/*.stories.tsx']
+			: []),
 		// Expose every migrated component story to Storybook MCP. The MCP only sees
 		// stories included here, so keep real product surfaces (registration,
 		// session list, composer-adjacent pieces) in the catalog instead of only

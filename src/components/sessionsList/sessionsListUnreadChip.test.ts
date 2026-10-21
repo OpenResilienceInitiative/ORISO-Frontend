@@ -7,7 +7,7 @@
  * to `true`, so the chip could never match anything.
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { sessionMatchesToolbar } from './sessionToolbarFilters';
 

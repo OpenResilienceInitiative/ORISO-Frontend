@@ -11,7 +11,14 @@ import {
 import { createStore, Provider } from 'jotai';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { Context as ResponsiveContext } from 'react-responsive';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	AppConfigContext,
 	AUTHORITIES,

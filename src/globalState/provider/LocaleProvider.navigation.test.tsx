@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { LocaleProvider } from './LocaleProvider';
 import { TenantProvider } from './TenantProvider';

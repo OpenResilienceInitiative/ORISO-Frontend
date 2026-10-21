@@ -5,7 +5,7 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
 	DISPLAY_FILTERS_VERSION,

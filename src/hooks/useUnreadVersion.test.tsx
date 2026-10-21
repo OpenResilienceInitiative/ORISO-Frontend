@@ -9,7 +9,7 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { RoomEvent } from 'matrix-js-sdk';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import { useUnreadVersion } from './useUnreadVersion';
 

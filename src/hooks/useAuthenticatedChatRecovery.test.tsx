@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 
 import { cleanup, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 // `vi.mock` is hoisted above this import, so the hook still gets the doubles.
 import { useAuthenticatedChatRecovery } from './useAuthenticatedChatRecovery';
 

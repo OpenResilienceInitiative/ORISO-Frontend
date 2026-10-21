@@ -7,7 +7,7 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { StandingAccessPreference } from './StandingAccessPreference';
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })

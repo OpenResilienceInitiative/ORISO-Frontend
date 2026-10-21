@@ -11,7 +11,14 @@ import {
 } from '@testing-library/react';
 import { Provider as JotaiProvider } from 'jotai';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetCaseHandoverRequestStatus } from '../../api/apiCaseHandover';
 import { SessionTypeContext, UserDataContext } from '../../globalState';
 import { useSession } from '../../hooks/useSession';
