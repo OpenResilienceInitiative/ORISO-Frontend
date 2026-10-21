@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -23,10 +24,12 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
+	apiGetCaseHandoverRequestStatus,
 	apiDecideCaseHandoverClientConsent,
 	apiGetSessionSupervisors,
 	CaseHandoverStatus,
-	FETCH_ERRORS
+	FETCH_ERRORS,
+	X_REASON
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import {
@@ -265,6 +268,33 @@ export const SessionStream = ({
 				pendingCaseHandoverConsent?.actionPath
 			),
 		[pendingCaseHandoverConsent?.actionPath]
+	);
+
+	// A late decision or fallback belongs only to the committed card that started it.
+	// Layout effects run synchronously at commit; a suspended render must not invalidate
+	// a decision on the still-visible card.
+	const consentScopeKey = JSON.stringify([
+		activeSession.item?.id,
+		pendingCaseHandoverConsent?.id,
+		pendingCaseHandoverRequestId,
+		userData.userId
+	]);
+	const consentScope = useRef({ key: consentScopeKey, generation: 0 });
+	useLayoutEffect(() => {
+		if (consentScope.current.key !== consentScopeKey) {
+			consentScope.current = {
+				key: consentScopeKey,
+				generation: consentScope.current.generation + 1
+			};
+		}
+		setCaseHandoverConsentSubmitting(false);
+		setCaseHandoverConsentError('');
+	}, [consentScopeKey]);
+	useLayoutEffect(
+		() => () => {
+			consentScope.current.generation += 1;
+		},
+		[]
 	);
 
 	const { setConsultantList } = useContext(ConsultantListContext);
@@ -1377,6 +1407,94 @@ export const SessionStream = ({
 	const caseHandoverTopic = useTopic(caseHandoverTopicId);
 	const caseHandoverTopicLabel = caseHandoverTopic?.name;
 
+	/**
+	 * Replaces the pending consent card with a server-confirmed outcome. A
+	 * still-pending status keeps the decision controls and the notification
+	 * unread; any other status ends the request for the asker, and marking its
+	 * notification read keeps the card from resurfacing on the next reload.
+	 */
+	const settleCaseHandoverConsent = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus
+	) => {
+		setConfirmedConsent({ notification, status });
+		if (isPendingCaseHandoverStatus(status.status)) return;
+		notificationsContext?.markNotificationAsRead(notification.id);
+		setResolvedCaseHandoverNotificationId(notification.id);
+		notificationsContext?.refreshNotificationFeed();
+	};
+
+	/**
+	 * A status answers this card when it names this session and does not name
+	 * another request. `requestId` is optional on CaseHandoverStatus and the
+	 * per-request URL already scopes the answer, so an absent id is accepted;
+	 * only a non-null id that differs is a mismatch.
+	 */
+	const isStatusOfConsentRequest = (
+		status: CaseHandoverStatus | undefined,
+		sessionId: number,
+		requestId: number
+	): status is CaseHandoverStatus =>
+		!!status?.status &&
+		status.sessionId === sessionId &&
+		(status.requestId == null || status.requestId === requestId);
+
+	/**
+	 * The server state of exactly this consent request, read through the
+	 * per-request endpoint an advice seeker is allowed to call (the session-level
+	 * status is consultant-only and answers 403). A status that names another
+	 * session or request is no answer for this card.
+	 */
+	const readCaseHandoverRequestStatus = (
+		sessionId: number,
+		requestId: number
+	) =>
+		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
+			if (!isStatusOfConsentRequest(status, sessionId, requestId)) {
+				throw new Error('Status does not belong to this request');
+			}
+			return status;
+		});
+
+	// A card whose request was closed elsewhere (takeover, decline on another
+	// device, expiry) stays visible until its unread notification is answered.
+	// Ask the server once per card on load so it settles without a click.
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		if (
+			!pendingCaseHandoverConsent ||
+			pendingCaseHandoverRequestId === null ||
+			sessionId === undefined
+		) {
+			return;
+		}
+		const notification = pendingCaseHandoverConsent;
+		const generation = consentScope.current.generation;
+		let cancelled = false;
+		readCaseHandoverRequestStatus(sessionId, pendingCaseHandoverRequestId)
+			.then((status) => {
+				if (
+					!cancelled &&
+					consentScope.current.generation === generation &&
+					!isPendingCaseHandoverStatus(status.status)
+				) {
+					settleCaseHandoverConsent(notification, status);
+				}
+			})
+			// Not readable or offline: the card keeps its controls, a later
+			// decision reports the real outcome.
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		activeSession.item?.id,
+		pendingCaseHandoverConsent?.id,
+		pendingCaseHandoverRequestId,
+		consentScopeKey
+	]);
+
 	if (caseHandoverCurtainNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
@@ -1407,43 +1525,73 @@ export const SessionStream = ({
 			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
 			return;
 		}
+		const notification = pendingCaseHandoverConsent;
+		const requestId = pendingCaseHandoverRequestId;
+		const sessionId = activeSession.item.id;
+		const generation = consentScope.current.generation;
+		const current = () => consentScope.current.generation === generation;
 		setCaseHandoverConsentSubmitting(true);
 		setCaseHandoverConsentError('');
-		apiDecideCaseHandoverClientConsent(
-			activeSession.item.id,
-			pendingCaseHandoverRequestId,
-			approved
-		)
+		apiDecideCaseHandoverClientConsent(sessionId, requestId, approved)
 			.then((confirmedStatus) => {
+				if (!current()) return;
 				if (
-					confirmedStatus?.status &&
-					confirmedStatus.sessionId === activeSession.item.id &&
-					confirmedStatus.requestId === pendingCaseHandoverRequestId
+					!isStatusOfConsentRequest(
+						confirmedStatus,
+						sessionId,
+						requestId
+					)
 				) {
-					setConfirmedConsent({
-						notification: pendingCaseHandoverConsent,
-						status: confirmedStatus
-					});
-				} else {
 					throw new Error(
 						'Consent response does not match the request'
 					);
 				}
-				if (isPendingCaseHandoverStatus(confirmedStatus.status)) return;
-				notificationsContext?.markNotificationAsRead(
-					pendingCaseHandoverConsent.id
+				settleCaseHandoverConsent(notification, confirmedStatus);
+			})
+			// The decision can be refused or already applied on the server. Never
+			// leave the stale approve/decline card behind with a "could not be
+			// sent" error (ORISO-Frontend#1705):
+			// - 409 with X-Reason CASE_OWNER_CHANGED: the case owner changed after
+			//   the request was created, so it can no longer be decided and is
+			//   settled for the asker (any other 409, e.g. a lock conflict, says
+			//   nothing about the request);
+			// - anything else: read this request's own status and only report a
+			//   failure while it is really still open.
+			.catch((error: Error | Response) => {
+				if (!current()) return;
+				if (
+					(error as Response)?.headers?.get(FETCH_ERRORS.X_REASON) ===
+					X_REASON.CASE_OWNER_CHANGED
+				) {
+					settleCaseHandoverConsent(notification, {
+						sessionId,
+						requestId,
+						status: 'OWNER_CHANGED',
+						canViewContent: false,
+						clientConsentRequired: true
+					});
+					return;
+				}
+				return readCaseHandoverRequestStatus(sessionId, requestId).then(
+					(currentStatus) => {
+						if (!current()) return;
+						if (isPendingCaseHandoverStatus(currentStatus.status)) {
+							throw new Error('Consent request is still open');
+						}
+						settleCaseHandoverConsent(notification, currentStatus);
+					}
 				);
-				setResolvedCaseHandoverNotificationId(
-					pendingCaseHandoverConsent.id
-				);
-				notificationsContext?.refreshNotificationFeed();
 			})
 			.catch(() => {
-				setCaseHandoverConsentError(
-					translate('caseHandover.error.failed')
-				);
+				if (current()) {
+					setCaseHandoverConsentError(
+						translate('caseHandover.error.failed')
+					);
+				}
 			})
-			.finally(() => setCaseHandoverConsentSubmitting(false));
+			.finally(() => {
+				if (current()) setCaseHandoverConsentSubmitting(false);
+			});
 	};
 
 	if (caseHandoverCurtainNeeded && !caseHandoverStatus?.canViewContent) {
