@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
@@ -42,7 +42,10 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
+import { StandingAccessPreferenceStoryFixture } from '../caseHandover/standingAccessPreferenceStoryFixture';
 import './message.styles.scss';
+import englishCatalogue from '../../resources/i18n/en/common.json';
+import frenchCatalogue from '../../resources/i18n/fr/common.json';
 
 /** The shape of a consultant-list entry the bubble reads names from. */
 type ConsultantListEntry = {
@@ -513,6 +516,54 @@ export const NormalMessage: Story = {
 	}
 };
 
+export const EndedCall: Story = {
+	name: 'Ended call with durable attendance',
+	parameters: NormalMessage.parameters,
+	args: {
+		...NormalMessage.args,
+		rid: '!conversation:example',
+		callLifecycle: {
+			callId: 'call-story',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			state: 'ended',
+			callType: 'video',
+			startedAt: '2026-09-11T09:00:00Z',
+			endedAt: '2026-09-11T09:02:05Z',
+			durationSeconds: 125,
+			participants: [
+				{ userId: '@alex:example', displayName: 'Alex Test' },
+				{ userId: '@sam:example', displayName: 'Sam Test' }
+			]
+		}
+	},
+	play: async ({ canvas, canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		await expect(
+			canvas.getByText(/Videoanruf beendet|Video call ended/)
+		).toBeVisible();
+		const attendance = within(
+			canvas.getByRole('group', { name: /Teilgenommen|Attended/ })
+		);
+		await expect(
+			attendance.getByRole('img', { name: 'Alex Test' })
+		).toBeVisible();
+		await expect(
+			attendance.getByRole('img', { name: 'Sam Test' })
+		).toBeVisible();
+		await expect(attendance.getAllByRole('img')).toHaveLength(2);
+		await expect(
+			attendance.getByText(/(?:Teilgenommen|Attended) · 2/)
+		).toBeVisible();
+		await expect(canvas.getByText(/02:05/)).toBeVisible();
+		await expect(
+			canvasElement.querySelector(
+				'.messageItem__message:not(.messageItem__message--systemNotification)'
+			)
+		).toBeNull();
+	}
+};
+
 export const SystemNotification: Story = {
 	name: 'System notification',
 	parameters: {
@@ -532,11 +583,9 @@ export const SystemNotification: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const avatar = canvasElement.querySelector<HTMLElement>(
-				'.messageItem__avatar--bot'
+				'.carimatMessageFrame__avatar'
 			)!;
-			const title = canvasElement.querySelector<HTMLElement>(
-				'.messageItem__sendFailedTitle'
-			)!;
+			const title = within(canvasElement).getByText('Carimat');
 			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
 				avatar.getBoundingClientRect().right + 8
 			);
@@ -563,6 +612,7 @@ export const CaseHandoverGranted: Story = {
 	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByText('Carimat')).toBeVisible());
 		// Rendered inside the collapsed details panel.
 		await expect(
 			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
@@ -1502,7 +1552,7 @@ export const ThreadEntryTablet: Story = {
  * side room's timeline. Its `[SYSTEM_NOTIFICATION]` payload carries
  * `type: 'SUPERVISION_NOTICE'`, and that type is what makes
  * `MessageItemComponent` return the **Carimat organism** (`ErstantwortSequence`
- * → `pseudonymCard`) instead of the generic system-notification chrome.
+ * → `CarimatMessageFrame`) instead of the generic system-notification chrome.
  *
  * That was the promise in T49, and until now it could only be seen two levels
  * up — in `Components/Session/SidePanel` "first visit, empty side room" and in
@@ -1573,19 +1623,23 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	expect(
 		notice.querySelector('[data-testid="erstantwort-sequence"]')
 	).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame__avatar')).not.toBeNull();
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
+		notice.querySelector<HTMLElement>('.carimatMessageFrame__name')
 			?.textContent
-	).toBe(SUPERVISION_NOTICE_TITLE);
+	).toBe('Carimat');
+	await waitFor(() =>
+		expect(within(notice).getByText(SUPERVISION_NOTICE_TITLE)).toBeVisible()
+	);
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
+		notice.querySelector<HTMLElement>('.carimatMessageFrame__subtitle')
 			?.textContent
 	).toMatch(/^(Systembenachrichtigung|System Notification)$/);
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__bubbleText')
-			?.textContent
+		notice.querySelector<HTMLElement>(
+			'.carimatMessageFrame__bubble .erstantwort__body'
+		)?.textContent
 	).toBe(SUPERVISION_NOTICE_TEXT);
 
 	// No generic system-notification chrome: no kebab, no notification bubble
@@ -1608,12 +1662,12 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 
 /** Header labels must clear the entire avatar frame, including its backdrop. */
 const expectReadableCarimatHeader = async (notice: HTMLElement) => {
-	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 	const avatar = notice.querySelector<HTMLElement>(
-		'.pseudonymCard__avatarFrame'
+		'.carimatMessageFrame__avatar'
 	)!;
 	const labels = notice.querySelectorAll<HTMLElement>(
-		'.pseudonymCard__headerName, .pseudonymCard__headerSubtitle'
+		'.carimatMessageFrame__name, .carimatMessageFrame__subtitle'
 	);
 	const originalWidth = card.style.width;
 	const originalMaxWidth = card.style.maxWidth;
@@ -1649,7 +1703,7 @@ export const SupervisionNotice: Story = {
 		userData: mockUserData(),
 		docs: {
 			description: {
-				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `pseudonymCard`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
+				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `CarimatMessageFrame`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
 			}
 		}
 	},
@@ -1712,7 +1766,7 @@ export const SupervisionNoticeAboveMessage: Story = {
 		await expectCarimatNoticeStructure(canvasElement);
 
 		const rows = canvasElement.querySelectorAll(
-			'.messageItem:not(.pseudonymCard)'
+			'.messageItem[data-message-id]'
 		);
 		expect(rows.length).toBe(2);
 		expect(rows[0].classList).toContain('messageItem--supervisionNotice');
@@ -1753,7 +1807,7 @@ export const SupervisionNoticeEmptyRoom: Story = {
 		// No history, so no day pill — and no crash on the empty date.
 		expect(notice.querySelector('.messageDateDivider')).toBeNull();
 		expect(
-			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+			canvasElement.querySelectorAll('.messageItem[data-message-id]')
 				.length
 		).toBe(1);
 	}
@@ -1780,7 +1834,7 @@ export const SupervisionNoticeMobile390: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
-		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 		const shell = notice.parentElement!;
 		await waitFor(() => {
 			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
@@ -2064,6 +2118,15 @@ export const InternalGroupColleagueName: Story = {
 
 export const InformationalGrantedForAsker: Story = {
 	name: 'Persisted handover — passive informational grant',
+	decorators: [
+		(Story) => (
+			<StandingAccessPreferenceStoryFixture
+				sessionId={mockActiveSession1on1().item.id}
+			>
+				<Story />
+			</StandingAccessPreferenceStoryFixture>
+		)
+	],
 	globals: { ...desktop1440Globals, locale: 'de' },
 	parameters: {
 		activeSession: mockActiveSession1on1(),
@@ -2105,7 +2168,7 @@ export const InformationalGrantedForAsker: Story = {
 			'.messageItem__message--systemNotification'
 		)!;
 		const header = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__systemNotificationHeaderText'
+			'.carimatMessageFrame__header'
 		)!;
 		const more = canvas.getByRole('button', {
 			name: /Mehr erfahren|Learn more/
@@ -2133,14 +2196,22 @@ export const InformationalGrantedForAsker: Story = {
 			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
 				copy.getBoundingClientRect().height +
 					more.getBoundingClientRect().height +
-					32
+					bubble
+						.querySelector<HTMLElement>(
+							'.carimatMessageFrame__topic'
+						)!
+						.getBoundingClientRect().height +
+					bubble
+						.querySelector<HTMLElement>('.messageItem__timeRail')!
+						.getBoundingClientRect().height +
+					44
 			);
 		});
 		await userEvent.click(
 			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
 		);
 		const dialog = within(await within(document.body).findByRole('dialog'));
-		await expect(dialog.queryByRole('switch')).toBeNull();
+		await expect(await dialog.findByRole('switch')).not.toBeChecked();
 	}
 };
 export const InformationalGrantedForAskerMobile: Story = {
@@ -2169,7 +2240,9 @@ export const InformationalGrantedForAskerRussianMobile: Story = {
 		await waitFor(() => expect(more).toBeTruthy());
 		await userEvent.click(more!);
 		const dialog = await within(document.body).findByRole('dialog');
-		await expect(within(dialog).queryByRole('switch')).toBeNull();
+		await expect(
+			await within(dialog).findByRole('switch')
+		).not.toBeChecked();
 		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
 			dialog.clientWidth + 1
 		);
@@ -2235,4 +2308,189 @@ export const InformationalGrantedNotificationContinuationTablet: Story = {
 	...InformationalGrantedNotificationContinuation,
 	name: 'Persisted notification continuation — tablet 834',
 	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const GrantedPreferenceSaveAndReadBack: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted grant — scoped preference save and readback',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const more = await canvas.findByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await expect(
+			more.closest('.messageItem__message--systemNotification')
+		).toBeTruthy();
+		await expect(
+			canvasElement.querySelectorAll(
+				'.messageItem__message--systemNotification'
+			)
+		).toHaveLength(1);
+		await userEvent.click(more);
+		const page = within(document.body);
+		const control = await page.findByRole('switch');
+		await expect(control).not.toBeChecked();
+		await userEvent.click(control);
+		await waitFor(() =>
+			expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+		);
+		await userEvent.click(more);
+		await expect(await page.findByRole('switch')).toBeChecked();
+	}
+};
+export const GrantedPreferenceSaveAndReadBackMobile: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...GrantedPreferenceSaveAndReadBack.parameters,
+		...mobileParameters
+	}
+};
+export const GrantedPreferenceSaveAndReadBackTablet: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const InitialAcceptanceWithScopedPreference: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Initial acceptance — persisted scoped settings notice',
+	args: {
+		...GrantedPreferenceSaveAndReadBack.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'INQUIRY_ACCEPTED',
+				title: 'Anfrage angenommen',
+				description:
+					'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.',
+				username: 'freundliches Alpaka Mika',
+				acceptance: {
+					sessionId: mockActiveSession1on1().item.id,
+					acceptedAt: '2026-10-09T10:20:00Z'
+				}
+			})
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceMobile: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...InitialAcceptanceWithScopedPreference.parameters,
+		...mobileParameters
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Static entry states: capture these before any save or notification continuation.
+export const InitialAcceptanceDefault: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	name: 'Initial acceptance — default chat notice',
+	play: undefined
+};
+export const InitialAcceptanceDefaultMobile: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...InitialAcceptanceDefault.parameters, ...mobileParameters }
+};
+export const InitialAcceptanceDefaultTablet: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const GrantedPreferenceDefault: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Persisted handover — default chat notice',
+	play: undefined
+};
+export const GrantedPreferenceDefaultMobile: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...GrantedPreferenceDefault.parameters, ...mobileParameters }
+};
+export const GrantedPreferenceDefaultTablet: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const CoAccessPreferenceDefault: Story = {
+	...GrantedPreferenceDefault,
+	name: 'Persisted co-access — support notice, no takeover claim',
+	args: {
+		...GrantedPreferenceDefault.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'CASE_HANDOVER_GRANTED',
+				description:
+					'Eine weitere Fachkraft hat Zugriff auf diese Beratung erhalten.',
+				handover: {
+					requestId: 42,
+					clientConsent: 'NONE',
+					accessType: 'CO_ACCESS'
+				}
+			})
+	}
+};
+export const CoAccessPreferenceDefaultMobile: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...CoAccessPreferenceDefault.parameters, ...mobileParameters }
+};
+export const CoAccessPreferenceDefaultTablet: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Locale-only variants retain the same production rendering and scoped HTTP fixture.
+const localizedAcceptance = (copy: { title: string; text: string }) => ({
+	...InitialAcceptanceDefault.args,
+	message:
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			...JSON.parse(
+				(InitialAcceptanceDefault.args!.message as string).replace(
+					'[SYSTEM_NOTIFICATION]',
+					''
+				)
+			),
+			title: copy.title,
+			description: copy.text
+		})
+});
+export const InitialAcceptanceDefaultEnglish: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' },
+	args: localizedAcceptance(
+		englishCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const InitialAcceptanceDefaultLongestTranslation: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' },
+	args: localizedAcceptance(
+		frenchCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const GrantedPreferenceDefaultEnglish: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const GrantedPreferenceDefaultLongestTranslation: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+export const CoAccessPreferenceDefaultEnglish: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const CoAccessPreferenceDefaultLongestTranslation: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+
+export const GrantedPreferenceDefaultRussianLabelStress: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'ru' }
 };

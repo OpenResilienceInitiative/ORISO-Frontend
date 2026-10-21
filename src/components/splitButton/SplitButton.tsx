@@ -55,6 +55,8 @@ export interface SplitButtonProps {
 	size?: 'medium' | 'small';
 	/** Accessible name of the main segment when the visible label is not enough. */
 	mainLabel?: string;
+	/** Id of text that describes the main segment (read after its name). */
+	describedBy?: string;
 }
 
 export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
@@ -78,7 +80,8 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			id,
 			className,
 			size = 'medium',
-			mainLabel
+			mainLabel,
+			describedBy
 		},
 		ref
 	) => {
@@ -104,6 +107,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 					disabled={disabled || mainDisabled}
 					onClick={onClick}
 					aria-label={mainLabel}
+					aria-describedby={describedBy}
 					aria-expanded={hasMenu && mainOpensMenu ? open : undefined}
 					aria-haspopup={
 						hasMenu && mainOpensMenu ? 'listbox' : undefined

@@ -12,7 +12,14 @@ import {
 
 export interface HandoverGateButtonProps {
 	state: HandoverGateState;
-	onEnter: () => void;
+	onEnter?: React.MouseEventHandler<HTMLButtonElement>;
+	/** Registration completion stays owned by its containing form. */
+	type?: 'button' | 'submit';
+	disabled?: boolean;
+	title?: string;
+	testId?: string;
+	/** Preserve the completion consumer's existing E2E target. */
+	testingAttribute?: string;
 	/** Already translated. Default: the registration's "Anfrage schreiben". */
 	label?: string;
 	/** Already translated status line. Default: the state's own line. */
@@ -48,21 +55,32 @@ export const HandoverGateButton = ({
 	status,
 	progress,
 	indeterminate = false,
-	icon
+	icon,
+	type = 'button',
+	disabled = false,
+	title,
+	testId,
+	testingAttribute = 'handover-gate-button'
 }: HandoverGateButtonProps) => {
 	const { t } = useTranslation();
-	const open = GATE_IS_OPEN[state];
+	const open = GATE_IS_OPEN[state] && !disabled;
+	const statusLabel = status ?? t(GATE_STATUS_KEY[state]);
 
 	return (
 		<ButtonBase
 			onClick={open ? onEnter : undefined}
+			type={type}
 			disabled={!open}
-			data-cy="handover-gate-button"
+			aria-busy={state === 'entering'}
+			title={title ?? label}
+			data-testid={testId}
+			data-cy={testingAttribute}
 			data-cy-state={state}
 			sx={{
 				'position': 'relative',
 				'width': '100%',
-				'height': 60,
+				'minHeight': 60,
+				'py': 1,
 				'borderRadius': '30px',
 				'overflow': 'hidden',
 				'bgcolor': registrationMd3.primary,
@@ -74,6 +92,10 @@ export const HandoverGateButton = ({
 				'pl': 3,
 				'pr': 1,
 				'textAlign': 'left',
+				'&:focus-visible': {
+					outline: `3px solid ${registrationMd3.focusLayer}`,
+					outlineOffset: 2
+				},
 				// Disabled here means "not yet", not "unavailable": the button
 				// keeps its brand colour and stays legible, it just does not
 				// respond. Greying it out would read as an error.
@@ -148,29 +170,29 @@ export const HandoverGateButton = ({
 						fontSize: 17,
 						fontWeight: 700,
 						lineHeight: '22px',
-						whiteSpace: 'nowrap',
-						overflow: 'hidden',
-						textOverflow: 'ellipsis'
+						whiteSpace: 'normal',
+						overflowWrap: 'anywhere'
 					}}
 				>
 					{label ?? t('registration.handover.cta')}
 				</Typography>
-				<Typography
-					component="span"
-					role="status"
-					aria-live="polite"
-					sx={{
-						color: 'inherit',
-						fontSize: 12,
-						lineHeight: '16px',
-						opacity: 0.92,
-						whiteSpace: 'nowrap',
-						overflow: 'hidden',
-						textOverflow: 'ellipsis'
-					}}
-				>
-					{status ?? t(GATE_STATUS_KEY[state])}
-				</Typography>
+				{statusLabel && (
+					<Typography
+						component="span"
+						role="status"
+						aria-live="polite"
+						sx={{
+							color: 'inherit',
+							fontSize: 12,
+							lineHeight: '16px',
+							opacity: 0.92,
+							whiteSpace: 'normal',
+							overflowWrap: 'anywhere'
+						}}
+					>
+						{statusLabel}
+					</Typography>
+				)}
 			</Box>
 			<Box
 				component="span"

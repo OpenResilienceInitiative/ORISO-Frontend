@@ -8,11 +8,12 @@ import i18n from 'i18next';
 import { ThemeProvider } from '@mui/material';
 import type { Preview } from '@storybook/react-vite';
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGlobals } from 'storybook/preview-api';
 import { I18nextProvider } from 'react-i18next';
 import { themes } from 'storybook/theming';
-import theme from '../src/resources/scripts/theme';
+import theme, { createAppTheme } from '../src/resources/scripts/theme';
+import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
 import { config } from '../src/resources/scripts/config';
 import { LegalLinksProvider } from '../src/globalState/provider/LegalLinksProvider';
 import { init, FALLBACK_LNG } from '../src/i18n';
@@ -35,6 +36,8 @@ import {
 	shouldMockStorybookRealtimeUrl,
 	StorybookWebSocketMock
 } from './storybookRealtimeMocks';
+import { entryFormDemoGlobalTypes } from './consentCompletionStoryPlay';
+import { WithEntryFormDemo } from './withEntryFormDemo';
 import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
@@ -635,6 +638,14 @@ function MuiStoryShell({
 	Story: React.ComponentType;
 	needsLiveData: boolean;
 }) {
+	// Like the app's AppThemeProvider: MUI reads the --m3-* values when the
+	// theme is created, so a story palette (orisoSeed) needs a fresh theme.
+	const [muiTheme, setMuiTheme] = useState(() => theme);
+	useEffect(() => {
+		const refresh = () => setMuiTheme(createAppTheme());
+		window.addEventListener(THEME_APPLIED_EVENT, refresh);
+		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
+	}, []);
 	return (
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
@@ -736,7 +747,7 @@ function MuiStoryShell({
 												}
 											}}
 										>
-											<ThemeProvider theme={theme}>
+											<ThemeProvider theme={muiTheme}>
 												<LegalLinksProvider
 													legalLinks={[]}
 												>
@@ -799,6 +810,22 @@ init(config.i18n, null);
 
 const preview: Preview = {
 	parameters: {
+		options: {
+			storySort: {
+				order: [
+					'Entry flows',
+					[
+						'Overview',
+						'Postcode counselling',
+						'Live chat',
+						'Self-help groups',
+						'Temporary guests',
+						'Existing account'
+					],
+					'*'
+				]
+			}
+		},
 		i18n,
 		a11y: {
 			options: {
@@ -851,6 +878,11 @@ const preview: Preview = {
 					styles: { width: '844px', height: '390px' },
 					type: 'mobile'
 				},
+				tablet820: {
+					name: 'Tablet 820 (iPad Air portrait, 820x1180)',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
+				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },
@@ -861,9 +893,19 @@ const preview: Preview = {
 					styles: { width: '1280px', height: '800px' },
 					type: 'desktop'
 				},
+				desktop1366: {
+					name: 'Desktop 1366 (common laptop)',
+					styles: { width: '1366px', height: '768px' },
+					type: 'desktop'
+				},
 				desktop1440: {
 					name: 'Desktop 1440',
 					styles: { width: '1440px', height: '900px' },
+					type: 'desktop'
+				},
+				desktop1920: {
+					name: 'Desktop 1920 (full HD)',
+					styles: { width: '1920px', height: '1080px' },
 					type: 'desktop'
 				}
 			}
@@ -886,19 +928,20 @@ const preview: Preview = {
 			]
 		}
 	},
-	globalTypes: orisoSchemeGlobalType,
+	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
-		scheme: 'light'
+		scheme: 'light',
+		entryFormDemo: 'manual'
 	},
 	tags: ['autodocs'],
-	// The scheme decorator runs outermost so its custom properties are in
-	// place before any component reads them.
-	decorators: [withMuiTheme, withOrisoScheme]
+	// The scheme decorator installs custom properties before the story
+	// components read them.
+	decorators: [withMuiTheme, withOrisoScheme, WithEntryFormDemo]
 };
 
 export default preview;

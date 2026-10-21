@@ -39,7 +39,10 @@ vi.mock('../../globalState', async () => {
 		'../../globalState/context/UserDataContext'
 	);
 	const tenant = {
-		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] }
+		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] },
+		// These tests pick colleagues from the Träger's directory; the scope
+		// itself is covered in CreateConversationView.internalSubset.test.tsx.
+		internalGroupChat: { recipientScope: { value: 'TENANT' } }
 	};
 	return {
 		UserDataContext,

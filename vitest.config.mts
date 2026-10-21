@@ -121,7 +121,13 @@ export default defineConfig({
 				}
 			},
 			{
-				plugins: [storybookTest({ configDir: '.storybook' })],
+				plugins: [
+					storybookTest({
+						configDir: '.storybook',
+						// Automated tests deliberately exercise the opt-in demo path.
+						initialGlobals: { entryFormDemo: 'automatic' }
+					})
+				],
 				// Pre-bundle the docs blocks. Otherwise Vite only discovers them
 				// when the first .mdx / autodocs page is imported — mid-run —
 				// re-optimizes, and every module request already in flight 404s
@@ -132,7 +138,10 @@ export default defineConfig({
 					include: [
 						'@storybook/addon-docs > @storybook/react-dom-shim',
 						// Loaded by the Help/Profile route; discover before stories run.
-						'@mui/icons-material/AnimationOutlined'
+						'@mui/icons-material/AnimationOutlined',
+						// Waiting-room stories otherwise discover this mid-shard and
+						// reload React modules while other stories are rendering.
+						'@mui/icons-material/WavingHandOutlined'
 					]
 				},
 				test: {

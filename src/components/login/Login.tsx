@@ -66,6 +66,7 @@ import { apiRequestMagicLinkLogin } from '../../api/apiRequestMagicLinkLogin';
 import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { translateWithFallback } from '../../utils/translationFallback';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
@@ -500,13 +501,26 @@ export const Login = () => {
 					(resolution.outcome === 'unavailable' ||
 						resolution.outcome === 'rate_limited');
 				if (!isShownAtResendLink) {
-					setShowLoginError(translate(resolution.messageKey));
-					// Only a credential problem marks the fields; an outage
-					// or a rate limit is not the user's input being wrong,
-					// and must not leave a stale mark behind.
+					// A refusal that named its wait says so, in the languages
+					// that have that sentence; the others keep the untimed one.
+					setShowLoginError(
+						resolution.preciseMessage
+							? translateWithFallback(
+									translate,
+									resolution.preciseMessage.key,
+									translate(resolution.messageKey) as string,
+									resolution.preciseMessage.values
+								)
+							: translate(resolution.messageKey)
+					);
+					// Only a credential problem marks the fields; an outage,
+					// a rate limit or an unfinished account setup is not the
+					// user's input being wrong, and must not leave a stale
+					// mark behind.
 					setLabelState(
 						resolution.outcome === 'unavailable' ||
-							resolution.outcome === 'rate_limited'
+							resolution.outcome === 'rate_limited' ||
+							resolution.outcome === 'setup_incomplete'
 							? null
 							: VALIDITY_INVALID
 					);

@@ -138,7 +138,52 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 });
 
 describe('the live chat waiting-room availability (#1400)', () => {
-	it('ignores older zero responses after a newer available response', async () => {
+	/* `fetchData` allows 30 s per request against a 4 s interval. If polls were
+	   allowed to overlap, answers could land out of order and two zeros that were
+	   never consecutive would close the room (#1270). So a tick that finds the
+	   previous request still open is skipped. */
+	it('does not start another poll while the previous one is unanswered', async () => {
+		vi.useFakeTimers();
+		type Details = Awaited<
+			ReturnType<typeof apiGetAnonymousEnquiryDetails>
+		>;
+		const responses: Array<(details: Details) => void> = [];
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockImplementation(
+			() => new Promise((resolve) => responses.push(resolve))
+		);
+		try {
+			render(<LiveChatEntryRoom sessionId={7} />);
+			await act(async () => {
+				fireEvent.click(
+					screen.getByTestId('registration-footer-primary')
+				);
+			});
+			expect(responses).toHaveLength(1);
+
+			await act(async () => {
+				vi.advanceTimersByTime(12000);
+			});
+			/* Three intervals went by with the first request still open. */
+			expect(responses).toHaveLength(1);
+
+			await act(async () => {
+				responses[0]({ numAvailableConsultants: 0, status: 'NEW' });
+			});
+			/* One zero is not closed; the next tick polls again. */
+			expect(
+				screen.queryByText('Der Live-Chat ist gerade geschlossen.')
+			).toBeNull();
+			await act(async () => {
+				vi.advanceTimersByTime(4000);
+			});
+			expect(responses).toHaveLength(2);
+		} finally {
+			cleanup();
+			vi.useRealTimers();
+		}
+	});
+
+	it('does not close the room on zeros that were not consecutive, however the answers arrive', async () => {
 		vi.useFakeTimers();
 		type Details = Awaited<
 			ReturnType<typeof apiGetAnonymousEnquiryDetails>
@@ -157,18 +202,32 @@ describe('the live chat waiting-room availability (#1400)', () => {
 			await act(async () => {
 				vi.advanceTimersByTime(8000);
 			});
-			expect(responses).toHaveLength(3);
+			/* The worst case: the oldest and the newest request say nobody, the
+			   one in between says somebody. Whatever requests exist, answer them
+			   in that order. */
+			const last = responses.length - 1;
 			await act(async () => {
-				responses[2]({ numAvailableConsultants: 1, status: 'NEW' });
+				responses[0]({ numAvailableConsultants: 0, status: 'NEW' });
 			});
-			for (const resolve of responses.slice(0, 2)) {
+			if (last > 0) {
 				await act(async () => {
-					resolve({ numAvailableConsultants: 0, status: 'NEW' });
+					responses[last]({
+						numAvailableConsultants: 0,
+						status: 'NEW'
+					});
 				});
-				expect(
-					screen.queryByText('Der Live-Chat ist gerade geschlossen.')
-				).toBeNull();
 			}
+			for (let i = 1; i < last; i += 1) {
+				await act(async () => {
+					responses[i]({
+						numAvailableConsultants: 1,
+						status: 'NEW'
+					});
+				});
+			}
+			expect(
+				screen.queryByText('Der Live-Chat ist gerade geschlossen.')
+			).toBeNull();
 		} finally {
 			cleanup();
 			vi.useRealTimers();
@@ -287,7 +346,10 @@ describe('resuming a confirmed live-chat identity (#1404)', () => {
 			vi.clearAllMocks();
 			render(<LiveChatEntryRoom sessionId={17} />);
 			await waitFor(() =>
-				expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(17)
+				expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(
+					17,
+					expect.any(AbortSignal)
+				)
 			);
 			expect(screen.queryAllByRole('radio')).toHaveLength(0);
 			expect(apiPutSessionData).not.toHaveBeenCalled();

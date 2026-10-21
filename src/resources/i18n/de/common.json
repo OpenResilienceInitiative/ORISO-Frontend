@@ -892,15 +892,37 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
+			"error": {
+				"recipientsRequired": "Bitte wählen Sie mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entfernen Sie die Person oder versuchen Sie es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den Ihre Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuchen Sie es erneut.",
+				"encryptionRequired": "Interna mit ausgewählten Personen gibt es nur verschlüsselt, und die Verschlüsselung ist derzeit nicht verfügbar. Es wurde nichts erstellt.",
+				"disabled": "Interna mit ausgewählten Personen sind für Sie nicht verfügbar: Sie sind nicht freigeschaltet, Ihnen fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wenden Sie sich an Ihre Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warten Sie einen Moment und versuchen Sie es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wenden Sie sich an den Support."
+			},
 			"nameLabel": "Name Interna",
+			"noColleagues": "Keine Kolleg:innen zur Auswahl",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
+			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",
 			"removePerson": "{{name}} entfernen",
+			"reusedNotice": {
+				"title": "Bestehender Raum geöffnet",
+				"text": "Mit genau diesen Personen gab es schon einen Raum. Er wurde geöffnet, es wurde kein neuer erstellt."
+			},
+			"scope": {
+				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen."
+			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
 			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
 			"title": "Interna besprechen",
 			"togglePersonList": "Personenliste öffnen oder schließen",
+			"tooMany": "Sie können bis zu {{max}} Personen auswählen.",
 			"vacatedHint": "nicht mehr in der Beratungsstelle"
 		},
 		"circle": {
@@ -956,6 +978,7 @@
 		},
 		"loadError": {
 			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"info": "Die Chat-Info konnte nicht geladen werden.",
 			"retry": "Erneut versuchen",
 			"topics": "Die Themen konnten nicht geladen werden."
 		},
@@ -973,6 +996,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Beratungsstelle",
+				"agencyLine": "Beratungsstelle: {{name}}",
 				"createDate": "Erstellungsdatum",
 				"creator": "Ersteller",
 				"duration": "Dauer",
@@ -1212,7 +1236,9 @@
 			"openGroup": "Gesprächskreis öffnen",
 			"declinedHeadline": "Diesmal hat es nicht geklappt.",
 			"declinedBody": "Die Moderation hat Ihre Anfrage nicht angenommen. Bei Fragen wenden Sie sich an die Person, die Ihnen den Link geschickt hat.",
-			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link."
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link.",
+			"admittingHeadline": "Ihre Anfrage ist angenommen.",
+			"admittingBody": "Der Gruppenzugang wird noch eingerichtet. Lassen Sie diese Seite dafür offen."
 		},
 		"accessUnavailable": {
 			"headline": "Dieser Gesprächskreis lässt sich gerade nicht öffnen.",
@@ -1250,7 +1276,9 @@
 				"coModeratorOwnerOnly": "Co-Moderation vergibt nur die Leitung des Gesprächskreises.",
 				"coModeratorSameTenant": "Co-Moderation ist Fachkräften des eigenen Trägers vorbehalten.",
 				"privacy": "Bis Sie entscheiden, sieht {{name}} nichts aus diesem Gesprächskreis."
-			}
+			},
+			"admissionQueued": "Die Zulassung von {{name}} ist bestätigt. Der Gruppenzugang muss noch bestätigt werden.",
+			"coModerationQueued": "Die Co-Moderation von {{name}} ist bestätigt. Der Gruppenzugang muss noch bestätigt werden."
 		},
 		"joinHandover": {
 			"badge": "Gesprächskreis",
@@ -1267,6 +1295,7 @@
 		"consent": {
 			"headline": "Bevor Sie schreiben",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimmen Sie der Datenschutzerklärung dieser Beratungsstelle zu, bevor Sie in der Gruppe schreiben.",
 			"reject": "Ablehnen",
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
@@ -1730,6 +1759,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"setupIncomplete": "Ihr Konto ist noch nicht vollständig eingerichtet. Bitte nutzen Sie den Link aus Ihrer Einladungs-E-Mail oder setzen Sie Ihr Passwort über „Passwort vergessen?“ zurück, um die Einrichtung abzuschließen.",
 				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
@@ -1741,7 +1771,15 @@
 					"text": "Benutzername oder Passwort sind nicht korrekt. Bitte versuchen Sie es erneut."
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
-				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warten Sie etwa eine Sekunde und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warten Sie etwa {{seconds}} Sekunden und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warten Sie etwa eine Minute und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warten Sie etwa {{minutes}} Minuten und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitHour": "Zu viele Versuche. Bitte warten Sie etwa eine Stunde und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitHours": "Zu viele Versuche. Bitte warten Sie etwa {{hours}} Stunden und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitDay": "Zu viele Versuche. Bitte warten Sie etwa einen Tag und versuchen Sie es dann erneut.",
+				"tooManyRequestsWaitDays": "Zu viele Versuche. Bitte warten Sie etwa {{days}} Tage und versuchen Sie es dann erneut."
 			}
 		},
 		"mobile": {
@@ -1870,7 +1908,8 @@
 				"mention": "Person erwähnen",
 				"voiceRecording": {
 					"label": "Sprachaufnahme",
-					"tooltip": "Sprachnachricht aufnehmen"
+					"tooltip": "Sprachnachricht aufnehmen",
+					"disabledWhileEditing": "Sprachnachrichten sind beim Bearbeiten nicht möglich"
 				},
 				"imageUrlPrompt": "Bild-URL",
 				"urlPrompt": "URL"
@@ -1936,6 +1975,27 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
+			"state": {
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"description": {
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			},
+			"startedBy": "Angerufen von {{name}}."
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
@@ -2160,6 +2220,10 @@
 			"caseHandoverConsentDeclined": {
 				"title": "Fallübergabe abgelehnt",
 				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
+			},
+			"caseHandoverOfferReceived": {
+				"title": "Angebot zur Fallübergabe",
+				"text": "Eine Kolleg:in möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen."
 			},
 			"callStarted": {
 				"title": "Anruf läuft",
@@ -2520,6 +2584,10 @@
 					"sessionExpired": "Ihre Anmeldung ist abgelaufen. Melden Sie sich neu an und schalten Sie den Live-Chat danach wieder ein.",
 					"leaseLost": "Der Server führt Sie nicht mehr als verfügbar. Schalten Sie den Live-Chat wieder ein, um erreichbar zu sein.",
 					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalten Sie den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				},
+				"dpaRestricted": {
+					"title": "Ratsuchende können gerade keinen Live-Chat mit Ihnen beginnen",
+					"text": "Ihr Träger hat die aktuelle Auftragsverarbeitungsvereinbarung noch nicht bestätigt. Bis dahin können neue Ratsuchende weder einen Live-Chat noch eine Anfrage beginnen. Bereits begonnene Beratungen laufen weiter."
 				}
 			},
 			"masterKey": {
@@ -3320,6 +3388,7 @@
 			"temporary": {
 				"join": "Beitreten",
 				"joinGroup": "Der Gruppe beitreten",
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registrieren Sie sich mit einem Konto oder fragen Sie nach einem neuen Link.",
 				"toggleOff": "Konto anlegen",
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
@@ -3543,12 +3612,40 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Fallübergabe",
+			"pending": "Eine Kolleg:in möchte diese Beratung an Sie übergeben.",
+			"accept": "Annehmen",
+			"decline": "Ablehnen",
+			"awaitingClientConsent": "Sie haben angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
+			"declined": "Sie haben diese Übergabe abgelehnt.",
+			"denied": "Diese Übergabe wurde abgelehnt.",
+			"clientConsentDeclined": "Die ratsuchende Person hat diese Übergabe abgelehnt.",
+			"noContent": "Diese Anfrage erlaubt Ihnen nicht, das Gespräch zu lesen.",
+			"forbidden": "Sie dürfen diese Übergabeanfrage nicht aufrufen.",
+			"notFound": "Diese Übergabeanfrage besteht nicht mehr.",
+			"generic": "Die Übergabeanfrage konnte nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"open": "Beratung übergeben",
+			"loadForbidden": "Sie dürfen die berechtigten Kolleg:innen nicht laden.",
+			"loadError": "Das Übergabeformular konnte nicht geladen werden.",
+			"submitError": "Die Übergabeanfrage konnte nicht gesendet werden.",
+			"conflict": "Für diese Beratung gibt es bereits ein offenes Übergabeangebot, oder sie hat sich geändert. Prüfen Sie den aktuellen Stand, bevor Sie ein neues Angebot senden.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "Warten auf die ausgewählte Kolleg:in.",
+				"PENDING_CLIENT_CONSENT": "Die Kolleg:in hat angenommen. Warten auf die Zustimmung der ratsuchenden Person.",
+				"GRANTED": "Die Übergabe wurde abgeschlossen.",
+				"RECIPIENT_DECLINED": "Die ausgewählte Kolleg:in hat abgelehnt.",
+				"DENIED": "Die Übergabe wurde abgelehnt.",
+				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt."
+			}
+		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
 		"batch": {
 			"cancel": "Auswahl schließen",
 			"confirm": "Auswahl anfragen",
 			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
-			"result": "{{successful}} Anfrage(n) gesendet, {{failed}} fehlgeschlagen.",
+			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
 			"selectCase": "Fall auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
@@ -3667,7 +3764,12 @@
 			},
 			"back": "Zurück",
 			"next": "Weiter",
-			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird.",
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während Ihrer Abwesenheit übernommen. Sie können ihn jetzt zurücknehmen.",
+				"cta": "Fall zurücknehmen",
+				"unavailable": "Dieser Fall kann nicht mehr zurückgenommen werden."
+			}
 		},
 		"accepted": {
 			"title": "Ihre Anfrage wurde von einer Berater:in angenommen.",
@@ -3686,15 +3788,61 @@
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
 		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"extend": "Zugriff verlängern"
+		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
-			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb Ihrer Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saving": "Wird gespeichert …",
 			"saved": "Einstellung gespeichert.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
 			"loading": "Einstellung wird geladen …"
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Supervision anfragen",
+			"change": "Supervisor:in wechseln",
+			"handover": "Beratung übergeben"
+		},
+		"description": {
+			"add": "Holen Sie eine erfahrene Kolleg:in in diesen Fall.",
+			"change": "Ersetzen Sie die aktuelle Supervision.",
+			"handover": "Bieten Sie diese Beratung einer anderen berechtigten Kolleg:in an."
+		},
+		"currentHeading": "Aktuelle Supervision",
+		"noneYet": "Es ist noch keine Supervision eingetragen.",
+		"personLabel": {
+			"add": "Supervisor:in auswählen",
+			"change": "Neue Supervisor:in auswählen",
+			"handover": "Kolleg:in auswählen"
+		},
+		"reasonLabel": {
+			"add": "Grund für die Supervision",
+			"change": "Grund für den Wechsel",
+			"handover": "Grund für die Übergabe"
+		},
+		"reasonPlaceholder": "Beschreiben Sie kurz den Grund.",
+		"reasonError": "Bitte wählen Sie einen Grund aus.",
+		"reasonEmptyOption": "Grund auswählen …",
+		"explanation": {
+			"add": "Eine Supervisor:in unterstützt Sie in einem getrennten Teambereich.",
+			"change": "Die neue Supervision ersetzt die bisherige.",
+			"handover": "Zuerst entscheidet die ausgewählte Kolleg:in. Falls die Richtlinie es verlangt, wird danach die ratsuchende Person gefragt. Bis alle nötigen Entscheidungen vorliegen, bleiben Sie zuständig."
+		},
+		"handoverPending": "Die Anfrage geht zuerst an die ausgewählte Kolleg:in. Sie wird erst nach allen erforderlichen Entscheidungen wirksam.",
+		"confirm": {
+			"add": "Supervision anfragen",
+			"change": "Wechsel anfragen",
+			"handover": "Übergabe anbieten"
+		},
+		"cancel": "Abbrechen",
+		"close": "Schließen",
+		"emptyOption": "Bitte auswählen …"
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -4632,6 +4780,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",
@@ -4686,6 +4849,7 @@
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
 			},
+			"discard": "Sprachnachricht verwerfen",
 			"preview": "Sprachnachricht"
 		}
 	},
@@ -4874,6 +5038,7 @@
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
 			"later": "Später wiederkommen",
+			"laterNotice": "Im Moment ist niemand live. Sobald jemand da ist, geht es hier weiter.",
 			"title": "Live-Chat ist zurzeit leider geschlossen",
 			"topicLabel": "Angefragtes Thema: {{topic}}",
 			"weekdays": {
@@ -5209,6 +5374,16 @@
 			"channelEmail": "E-Mail",
 			"channelBrowser": "Browser auf diesem Gerät"
 		},
+		"notificationSummary": {
+			"label": "Benachrichtigung: {{state}}",
+			"change": "ändern",
+			"changeLabel": "Benachrichtigung ändern",
+			"dismiss": "Einrichtung ausblenden",
+			"none": "nicht eingerichtet",
+			"email": "E-Mail aktiv",
+			"browser": "Signal auf diesem Gerät aktiv",
+			"both": "E-Mail und Signal aktiv"
+		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
@@ -5283,6 +5458,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Drucken / als PDF speichern",
+		"confirmedBy": "Bestätigt von",
+		"confirmedAt": "Bestätigt am (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "Im Druckdialog können Sie als PDF speichern. Schalten Sie Kopf- und Fußzeilen aus, damit die Linkadresse nicht mitgedruckt wird.",
+		"printUnavailable": "Ihre Bestätigung wurde gespeichert. Die Druckansicht ist nicht verfügbar, weil die Bestätigungsdaten unvollständig sind.",
 		"title": "Vertragsunterlagen prüfen und bestätigen",
 		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.",
 		"signerName": "Vollständiger Name",
@@ -5339,6 +5520,7 @@
 			"ready": "Die Wiederherstellung mit Ihrem Passwort ist eingerichtet. Ein gespeicherter Ersatzschlüssel bleibt ebenfalls gültig.",
 			"needs-password": "Die Wiederherstellung mit Ihrem Passwort wurde in dieser Sitzung noch nicht bestätigt. Melden Sie sich erneut an oder richten Sie sie mit Ihrem vorhandenen Ersatzschlüssel ein.",
 			"needs-recovery-key": "Ihr bisheriger Verlauf benötigt auf diesem Gerät Ihren Ersatzschlüssel.",
+			"needs-sign-in": "Ihr bisheriger Verlauf öffnet sich auf diesem Gerät, sobald Sie sich erneut mit Ihrem Passwort anmelden.",
 			"retryable-failure": "Die Wiederherstellung mit Ihrem Passwort konnte nicht eingerichtet werden. Sie können Ihre Anfrage trotzdem schreiben und die Einrichtung in den Sicherheitseinstellungen erneut prüfen.",
 			"settings": "Sicherheitseinstellungen",
 			"reauthenticate": "Abmelden und erneut anmelden",
@@ -5599,6 +5781,7 @@
 			"status": {
 				"access": "Ihr Zugang für dieses Gespräch",
 				"waiting": "Warteraum — freie Beraterin wird gesucht",
+				"nobodyLive": "Gerade ist niemand live",
 				"accepted": "Eine Beraterin hat Ihr Gespräch angenommen",
 				"closed": "Gerade geschlossen",
 				"checking": "Wer ist gerade live?",
@@ -5615,6 +5798,8 @@
 			"waiting": {
 				"headline": "Gleich geht es los.",
 				"aheadUnknown": "Wir suchen eine freie Beraterin für Sie.",
+				"nobodyLiveHeadline": "Gerade ist keine Beraterin live.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden Sie, sobald jemand verfügbar ist.",
 				"aheadNone": "Sie sind die Nächste.",
 				"aheadOne": "Eine Person vor Ihnen",
 				"aheadMany": "{{count}} Personen vor Ihnen",
@@ -5646,7 +5831,8 @@
 			"steps": {
 				"wait": {
 					"title": "Sie warten, bis jemand frei ist",
-					"text": "Die Beraterinnen sind gerade in anderen Gesprächen."
+					"text": "Die Beraterinnen sind gerade in anderen Gesprächen.",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für Sie los."
 				},
 				"consent": {
 					"title": "Dann stimmen Sie einmal zu",
@@ -5725,6 +5911,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "Gesprächsnotizen",
+			"privacy": "Privat. Nur für Sie und nur für die Dauer des Gesprächs.",
+			"type": "Art der Notiz",
+			"text": "Notiz",
+			"add": "Notiz hinzufügen",
+			"remove": "Notiz entfernen",
+			"copy": "Alles kopieren",
+			"copied": "Kopiert",
+			"empty": "Noch nichts notiert.",
+			"collapse": "Notizen einklappen",
+			"expand": "Notizen ausklappen",
+			"open": "Gesprächsnotizen",
+			"types": {
+				"frage": "Frage",
+				"anmerkung": "Anmerkung",
+				"aufgabe": "Aufgabe"
+			}
 		}
 	},
 	"form": {
@@ -5822,6 +6027,10 @@
 			"restricted": {
 				"title": "Neue Beratung derzeit gesperrt",
 				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"restrictedGroupJoin": {
+				"title": "Beitritt zur Gruppe derzeit nicht möglich",
+				"text": "Der Beitritt zu dieser Gruppe ist derzeit nicht möglich, weil die Beratungsorganisation die aktuelle Auftragsverarbeitungsvereinbarung (AVV) noch bestätigen muss. Bitte wenden Sie sich an Ihre Beratungsstelle."
 			},
 			"unavailable": {
 				"title": "Beratung derzeit nicht prüfbar",

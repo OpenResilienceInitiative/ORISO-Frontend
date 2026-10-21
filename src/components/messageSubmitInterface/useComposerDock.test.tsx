@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { useComposerDock } from './useComposerDock';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const Probe = () => {
 	const ref = useRef<HTMLDivElement>(null);
@@ -67,3 +68,49 @@ it('defers resize-driven layout writes to the next frame and cancels pending wor
 	view.unmount();
 	expect(frames.size).toBe(0);
 });
+
+it.each([8, 10])(
+	'reserves the visible composer using the theme spacing unit %s and releases it when the chat closes',
+	(spacing) => {
+		vi.stubGlobal(
+			'ResizeObserver',
+			class {
+				observe() {}
+				unobserve() {}
+				disconnect() {}
+			}
+		);
+		vi.spyOn(
+			HTMLElement.prototype,
+			'getBoundingClientRect'
+		).mockReturnValue({
+			x: 16,
+			y: 500,
+			top: 500,
+			bottom: 700,
+			left: 16,
+			right: 374,
+			width: 358,
+			height: 200,
+			toJSON: () => ({})
+		});
+		vi.stubGlobal('innerHeight', 844);
+		const view = render(
+			<ThemeProvider theme={createTheme({ spacing })}>
+				<Probe />
+			</ThemeProvider>
+		);
+		// 344 px occupied below the dock's top plus two theme spacing units.
+		expect(
+			document.documentElement.style.getPropertyValue(
+				'--oriso-composer-bottom-clearance'
+			)
+		).toBe(`${344 + spacing * 2}px`);
+		view.unmount();
+		expect(
+			document.documentElement.style.getPropertyValue(
+				'--oriso-composer-bottom-clearance'
+			)
+		).toBe('');
+	}
+);

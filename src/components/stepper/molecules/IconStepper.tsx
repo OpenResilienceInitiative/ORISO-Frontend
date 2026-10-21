@@ -20,6 +20,8 @@ export interface IconStepperProps {
 	/** Steps the user may jump back to. Everything else is inert. */
 	clickableStepNames?: string[];
 	onStepClick?: (stepName: string) => void;
+	/** Every step is behind the user: all done, none active. */
+	completed?: boolean;
 	/** Ring around the active dot — off in dialogs, where vertical space is tight. */
 	emphasizeActive?: boolean;
 	/** Accessible name for the surrounding navigation landmark. */
@@ -45,6 +47,7 @@ export const IconStepper = ({
 	size = 'md',
 	clickableStepNames = [],
 	onStepClick,
+	completed = false,
 	emphasizeActive = true,
 	ariaLabel,
 	stateLabel
@@ -55,9 +58,12 @@ export const IconStepper = ({
 		[clickableStepNames]
 	);
 	const currentIndex = useMemo(() => {
+		if (completed) {
+			return steps.length;
+		}
 		const index = steps.findIndex(({ name }) => name === currentStepName);
 		return index >= 0 ? index : 0;
-	}, [currentStepName, steps]);
+	}, [completed, currentStepName, steps]);
 
 	useEffect(() => {
 		// TopicSelection and StepDot already respect this; the auto-scroll
@@ -101,7 +107,12 @@ export const IconStepper = ({
 				return (
 					<React.Fragment key={name}>
 						<Box
-							ref={state === 'active' ? activeRef : undefined}
+							ref={
+								state === 'active' ||
+								(completed && index === steps.length - 1)
+									? activeRef
+									: undefined
+							}
 							aria-current={
 								state === 'active' ? 'step' : undefined
 							}
