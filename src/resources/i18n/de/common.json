@@ -5373,6 +5373,16 @@
 			"channelEmail": "E-Mail",
 			"channelBrowser": "Browser auf diesem Gerät"
 		},
+		"notificationSummary": {
+			"label": "Benachrichtigung: {{state}}",
+			"change": "ändern",
+			"changeLabel": "Benachrichtigung ändern",
+			"dismiss": "Einrichtung ausblenden",
+			"none": "nicht eingerichtet",
+			"email": "E-Mail aktiv",
+			"browser": "Signal auf diesem Gerät aktiv",
+			"both": "E-Mail und Signal aktiv"
+		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."

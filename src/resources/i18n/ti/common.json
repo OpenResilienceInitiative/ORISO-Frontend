@@ -5334,6 +5334,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "ሓበሬታ: {{state}}",
+			"change": "ቀይር",
+			"changeLabel": "ሓበሬታ ቀይር",
+			"dismiss": "ምድላው ሕባእ",
+			"none": "ኣይተዳለወን",
+			"email": "ኢመይል ተኸፊቱ",
+			"browser": "ኣብዚ መሳርሒ ምልክት ተኸፊቱ",
+			"both": "ኢመይልን ምልክትን ተኸፊቱ"
+		},
 		"subtitle": "ናይ መጀመርታ ስጉምትታትኩም",
 		"greeting": {
 			"body": "ብምርኻብኩም ጽቡቕ። መልእኽትኹም በጺሑና ኣሎ።"
