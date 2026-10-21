@@ -1,8 +1,15 @@
 // @vitest-environment node
-import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import {
+	cpSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { BaseSequencer } from 'vite-plus/test/node';
 import VerificationReporter from '../../scripts/verification-reporter.mjs';
 
 const directories: string[] = [];
@@ -22,8 +29,9 @@ describe('durable verification inventory', () => {
 		);
 		directories.push(directory);
 		const reporter = new VerificationReporter({ directory });
+		reporter.onInit({ config: {} });
 		const module = {
-			moduleId: 'example.test.ts',
+			moduleId: path.resolve('src/test/verificationReporter.test.ts'),
 			children: { allTests: () => [1, 2, 3] }
 		};
 		const test = (
@@ -39,7 +47,9 @@ describe('durable verification inventory', () => {
 			result: () => ({ state }),
 			diagnostic: () => ({ retryCount: retries, duration: 5 })
 		});
-		reporter.onTestRunStart([{}]);
+		reporter.onTestRunStart([
+			{ moduleId: path.resolve('src/test/verificationReporter.test.ts') }
+		]);
 		reporter.onTestModuleCollected(module);
 		reporter.onTestCaseResult(test('passed', 'passed', 'run', 1));
 		expect(
@@ -86,9 +96,10 @@ describe('durable verification inventory', () => {
 		);
 		directories.push(directory);
 		const reporter = new VerificationReporter({ directory });
+		reporter.onInit({ config: {} });
 		const cases: object[] = [];
 		const module = {
-			moduleId: 'story.stories.tsx',
+			moduleId: path.resolve('src/test/verificationReporter.test.ts'),
 			children: { allTests: () => cases }
 		};
 		const test = {
@@ -103,7 +114,9 @@ describe('durable verification inventory', () => {
 			diagnostic: () => ({ retryCount: 0, duration: 204.4 })
 		};
 		cases.push(test);
-		reporter.onTestRunStart([{}]);
+		reporter.onTestRunStart([
+			{ moduleId: path.resolve('src/test/verificationReporter.test.ts') }
+		]);
 		reporter.onTestModuleCollected(module);
 		reporter.onTestCaseResult(test);
 		reporter.onTestCaseReady(test);
@@ -124,7 +137,10 @@ describe('durable verification inventory', () => {
 		);
 		directories.push(directory);
 		const reporter = new VerificationReporter({ directory });
-		reporter.onTestRunStart([{}]);
+		reporter.onInit({ config: {} });
+		reporter.onTestRunStart([
+			{ moduleId: path.resolve('src/test/verificationReporter.test.ts') }
+		]);
 		reporter.onTestCaseReady({
 			id: 'unfinished',
 			module: { moduleId: 'unfinished.test.ts' },
@@ -144,9 +160,10 @@ describe('durable verification inventory', () => {
 		);
 		directories.push(directory);
 		const reporter = new VerificationReporter({ directory });
+		reporter.onInit({ config: {} });
 		const tests: object[] = [];
 		const module = {
-			moduleId: 'browser.stories.tsx',
+			moduleId: path.resolve('src/test/verificationReporter.test.ts'),
 			children: { allTests: () => tests },
 			project: { name: 'storybook' }
 		};
@@ -173,7 +190,12 @@ describe('durable verification inventory', () => {
 			})
 		};
 		tests.push(test);
-		reporter.onTestRunStart([{ project: { name: 'storybook' } }]);
+		reporter.onTestRunStart([
+			{
+				moduleId: path.resolve('src/test/verificationReporter.test.ts'),
+				project: { name: 'storybook' }
+			}
+		]);
 		reporter.onTestModuleCollected(module);
 		reporter.onTestCaseReady(test);
 		const readInventory = () =>
@@ -264,6 +286,7 @@ describe('durable verification inventory', () => {
 		const interrupted = new VerificationReporter({
 			directory: interruptedDirectory
 		});
+		interrupted.onInit({ config: {} });
 		interrupted.onTestRunStart([]);
 		interrupted.onTestRunEnd([], [], 'interrupted');
 		const interruptedInventory = JSON.parse(
@@ -296,6 +319,7 @@ describe('durable verification inventory', () => {
 			'0000000000000000000000000000000000000000'
 		);
 		const reporter = new VerificationReporter({ directory });
+		reporter.onInit({ config: {} });
 		expect(() => reporter.onTestRunStart([])).toThrow(
 			'does not match checked-out HEAD'
 		);
@@ -306,6 +330,7 @@ describe('durable verification inventory', () => {
 		);
 		directories.push(directory);
 		const reporter = new VerificationReporter({ directory });
+		reporter.onInit({ config: {} });
 		const test = {
 			id: 'needs-data',
 			module: { moduleId: 'declared.stories.tsx' },
@@ -334,6 +359,200 @@ describe('durable verification inventory', () => {
 		).toMatchObject({
 			state: 'failed',
 			integrity: { classification: 'declared-needs-data' }
+		});
+	});
+});
+
+describe('authoritative native shard inventory', () => {
+	const setup = (sharded = true, custom?: typeof BaseSequencer) => {
+		const directory = mkdtempSync(path.join(tmpdir(), 'native-plan-'));
+		directories.push(directory);
+		const specifications = ['a', 'b', 'c', 'd'].map((name) => {
+			const moduleId = path.join(directory, `${name}.test.ts`);
+			writeFileSync(moduleId, '// declared reporter fixture\n');
+			return { moduleId, project: { name: 'unit' } };
+		});
+		const context = {
+			config: {
+				root: directory,
+				shard: sharded ? { index: 1, count: 2 } : undefined,
+				sequence: { sequencer: custom ?? BaseSequencer }
+			}
+		};
+		const reporter = new VerificationReporter({
+			directory: path.join(directory, 'report')
+		});
+		reporter.onInit(context);
+		const read = () =>
+			JSON.parse(
+				readFileSync(
+					path.join(directory, 'report/inventory.json'),
+					'utf8'
+				)
+			);
+		const plan = () =>
+			readFileSync(
+				path.join(directory, 'report/assignment-plan.json'),
+				'utf8'
+			);
+		return { directory, specifications, context, reporter, read, plan };
+	};
+	const complete = (
+		reporter: VerificationReporter,
+		specification: { moduleId: string; project: { name: string } }
+	) => {
+		const tests: object[] = [];
+		const module = {
+			...specification,
+			children: { allTests: () => tests }
+		};
+		const test = {
+			id: `${specification.project.name}:${specification.moduleId}`,
+			module,
+			fullName: 'assigned case',
+			options: { mode: 'run' },
+			result: () => ({ state: 'passed' }),
+			diagnostic: () => ({ retryCount: 0 })
+		};
+		tests.push(test);
+		reporter.onTestModuleCollected(module);
+		reporter.onTestCaseResult(test);
+		reporter.onTestModuleEnd(module);
+		return module;
+	};
+	it('preserves global discovery and immutable native assigned identities before any collection', async () => {
+		const fixture = setup();
+		const assigned = await new BaseSequencer(
+			fixture.context as never
+		).shard(fixture.specifications as never);
+		await fixture.reporter.onTestRunStart(fixture.specifications);
+		const initialPlan = fixture.plan();
+		expect(JSON.parse(initialPlan)).toMatchObject({
+			global: fixture.specifications.map(({ moduleId, project }) => ({
+				moduleId,
+				project: project.name
+			})),
+			assigned: assigned.map(({ moduleId, project }) => ({
+				moduleId,
+				project: project.name
+			}))
+		});
+		const modules = assigned.map((spec) =>
+			complete(fixture.reporter, spec as never)
+		);
+		fixture.reporter.onTestRunEnd(modules, [], 'passed');
+		expect(fixture.read()).toMatchObject({
+			discoveredFiles: fixture.specifications.length,
+			expectedFiles: assigned.length,
+			inventoryComplete: true,
+			missingAssignedModules: []
+		});
+		expect(fixture.plan()).toBe(initialPlan);
+	});
+	it('keeps a missing assigned module incomplete even when another global module is not assigned', async () => {
+		const f = setup();
+		const assigned = await new BaseSequencer(f.context as never).shard(
+			f.specifications as never
+		);
+		await f.reporter.onTestRunStart(f.specifications);
+		const module = complete(f.reporter, assigned[0] as never);
+		f.reporter.onTestRunEnd([module], [], 'passed');
+		expect(f.read()).toMatchObject({
+			expectedFiles: assigned.length,
+			inventoryComplete: false
+		});
+		expect(f.read().missingAssignedModules).toEqual([
+			{ project: 'unit', moduleId: assigned[1].moduleId }
+		]);
+	});
+	it('cannot replace a missing assigned module with duplicate or foreign completion events', async () => {
+		const f = setup();
+		const assigned = await new BaseSequencer(f.context as never).shard(
+			f.specifications as never
+		);
+		await f.reporter.onTestRunStart(f.specifications);
+		const own = complete(f.reporter, assigned[0] as never);
+		const otherProject = {
+			...assigned[1],
+			project: { name: 'foreign-project' }
+		};
+		const foreign = complete(f.reporter, otherProject as never);
+		f.reporter.onTestModuleEnd(own);
+		f.reporter.onTestModuleEnd(foreign);
+		f.reporter.onTestRunEnd([own, foreign], [], 'passed');
+		expect(f.read().inventoryComplete).toBe(false);
+		expect(f.read().missingAssignedModules).toContainEqual({
+			project: 'unit',
+			moduleId: assigned[1].moduleId
+		});
+	});
+	it.each(['worker error', 'interrupted'])(
+		'does not claim completeness after %s even with every module ended',
+		async (failure) => {
+			const f = setup(false);
+			await f.reporter.onTestRunStart(f.specifications);
+			const modules = f.specifications.map((spec) =>
+				complete(f.reporter, spec)
+			);
+			f.reporter.onTestRunEnd(
+				modules,
+				failure === 'worker error'
+					? [{ message: 'worker crashed' }]
+					: [],
+				failure === 'interrupted' ? 'interrupted' : 'failed'
+			);
+			expect(f.read().inventoryComplete).toBe(false);
+		}
+	);
+	const customSequencer = (shard = vi.fn()) =>
+		class extends BaseSequencer {
+			shard = shard;
+		};
+	it('fails closed for a custom shard sequencer without invoking it twice or changing assignment', async () => {
+		const shard = vi.fn();
+		const f = setup(true, customSequencer(shard));
+		await f.reporter.onTestRunStart(f.specifications);
+		const modules = f.specifications.map((spec) =>
+			complete(f.reporter, spec)
+		);
+		f.reporter.onTestRunEnd(modules, [], 'passed');
+		expect(shard).not.toHaveBeenCalled();
+		expect(f.read()).toMatchObject({
+			inventoryComplete: false,
+			assignmentPlan: { valid: false }
+		});
+	});
+	it('leaves custom sorting without sharding on the exact global assigned plan', async () => {
+		const f = setup(false, customSequencer());
+		await f.reporter.onTestRunStart(f.specifications);
+		const modules = f.specifications.map((spec) =>
+			complete(f.reporter, spec)
+		);
+		f.reporter.onTestRunEnd(modules, [], 'failed');
+		expect(f.read()).toMatchObject({
+			expectedFiles: f.specifications.length,
+			inventoryComplete: true
+		});
+	});
+	it('requires the public onInit context instead of assuming an unknown run is unsharded', async () => {
+		const f = setup(false);
+		const reporter = new VerificationReporter({
+			directory: path.join(f.directory, 'without-init')
+		});
+		await reporter.onTestRunStart(f.specifications);
+		const modules = f.specifications.map((spec) =>
+			complete(reporter, spec)
+		);
+		reporter.onTestRunEnd(modules, [], 'passed');
+		const report = JSON.parse(
+			readFileSync(
+				path.join(f.directory, 'without-init/inventory.json'),
+				'utf8'
+			)
+		);
+		expect(report).toMatchObject({
+			inventoryComplete: false,
+			assignmentPlan: { valid: false }
 		});
 	});
 });
