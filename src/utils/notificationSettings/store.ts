@@ -287,15 +287,40 @@ class NotificationSettingsStore {
 			markLegacyMigrationDone();
 		}
 		this.setState({ settings });
-		if (this.client) {
-			void writeAccountData(
-				this.client,
-				NOTIFICATION_SETTINGS_EVENT_TYPE,
-				settings
-			).then((persisted) => {
-				if (persisted) markLegacyMigrationDone();
-			});
+		this.persistSettings();
+	}
+
+	private settingsWriteInFlight = false;
+	private settingsWriteDirty = false;
+
+	/**
+	 * Writes the latest settings to account data. Writes never overlap: a
+	 * change made while one is running is written afterwards from the then
+	 * current state, so an older snapshot cannot finish last and win.
+	 */
+	private persistSettings(): void {
+		const client = this.client;
+		if (!client) return;
+		if (this.settingsWriteInFlight) {
+			this.settingsWriteDirty = true;
+			return;
 		}
+		this.settingsWriteInFlight = true;
+		void writeAccountData(
+			client,
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			this.state.settings
+		)
+			.then((persisted) => {
+				if (persisted) markLegacyMigrationDone();
+			})
+			.finally(() => {
+				this.settingsWriteInFlight = false;
+				if (this.settingsWriteDirty) {
+					this.settingsWriteDirty = false;
+					this.persistSettings();
+				}
+			});
 	}
 
 	/** Silence/unsilence THIS device only (account-wide settings untouched). */

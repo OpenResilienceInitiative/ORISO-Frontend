@@ -5343,7 +5343,9 @@
 			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
 			"action": "E-posta adresi ekle",
 			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin.",
-			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin."
+			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin.",
+			"dialogDescription": "Şifrenizi daha sonra sıfırlayabilmek ve yanıt geldiğinde haberdar olmak için bir e-posta adresi bırakın. Danışmanlığın içeriği bu e-postada asla yer almaz.",
+			"dialogTitle": "Erişiminizi güvence altına alın"
 		},
 		"accountProtection": {
 			"headline": "Erişiminiz, ek olarak korunur",
@@ -5385,7 +5387,18 @@
 			"channelBrowser": "Bu cihazdaki tarayıcı",
 			"channelEmail": "E-posta",
 			"enableBrowser": "Tarayıcı bildirimlerini etkinleştir",
-			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin."
+			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"browserBlockedHelp": "Bu site için tarayıcı bildirimleri engellendi. Adres çubuğundaki kilit simgesine tıklayın, site ayarlarını açın, Bildirimler'i İzin ver olarak ayarlayın veya Sıfırla'yı seçin, ardından tekrar deneyin.",
+			"optionActive": "Etkin",
+			"emailSavedNext": "E-posta adresiniz kaydedildi. Bir adım kaldı: tarayıcınızda bildirimlere izin verin.",
+			"dialog": {
+				"description": "Duyacağınız sesi seçin, ardından tarayıcınızda bildirimlere izin verin.",
+				"noTone": "Ses yok",
+				"stayInBrowser": "Bu, ORISO bu cihazda bu tarayıcıda açık kaldığı sürece çalışır.",
+				"title": "Tarayıcı bildirimlerini aç",
+				"tone": "Ses {{number}}",
+				"toneLabel": "Bildirim sesi"
+			}
 		},
 		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor.",
 		"faq": {

@@ -358,17 +358,20 @@ const shortcut: Story['play'] = async ({ canvasElement, globals }) => {
 		choice.getByRole('button', { name: /Beides einrichten/ })
 	);
 	await userEvent.click(
-		await page.findByRole('button', { name: 'Schließen' })
+		(await page.findAllByRole('button', { name: 'Schließen' })).pop()!
 	);
 	expect(page.queryByRole('textbox')).toBeNull();
 	expect(choice.queryByRole('status')).toBeNull();
 	await userEvent.click(
 		choice.getByRole('button', { name: /Beides einrichten/ })
 	);
-	await userEvent.type(await page.findByRole('textbox'), 'asker@example.org');
+	await userEvent.type(
+		await page.findByRole('textbox', { name: /E-Mail/ }),
+		'asker@example.org'
+	);
 	await userEvent.click(page.getByRole('button', { name: 'Speichern' }));
 	await userEvent.click(
-		await choice.findByRole('button', { name: 'Browser aktivieren' })
+		await page.findByRole('button', { name: 'Browser aktivieren' })
 	);
 	await waitFor(() =>
 		expect(
@@ -421,14 +424,14 @@ const regular: Story['play'] = async ({ canvasElement, parameters }) => {
 	await userEvent.click(choice);
 	if (channel !== 'BROWSER') {
 		await userEvent.type(
-			await page.findByRole('textbox'),
+			await page.findByRole('textbox', { name: /E-Mail/ }),
 			'asker@example.org'
 		);
 		await userEvent.click(page.getByRole('button', { name: 'Speichern' }));
 	}
-	if (channel === 'BOTH')
+	if (channel !== 'EMAIL')
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Browser aktivieren' })
+			await page.findByRole('button', { name: 'Browser aktivieren' })
 		);
 	await waitFor(() => expect(choice).toHaveAttribute('aria-pressed', 'true'));
 	await userEvent.click(

@@ -2304,6 +2304,7 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
+			"dialogDescription": "Hinterlege eine E-Mail-Adresse, damit du dein Passwort später zurücksetzen kannst und von Antworten erfährst. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal.",
 			"notAllowed": "Für Dein Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktiere unseren Support."
 		},
@@ -2334,7 +2335,13 @@
 			"email": "Schreib mir eine E-Mail",
 			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
 			"browser": "Gib mir hier ein Signal",
+			"browserHint": "Ohne Adresse – funktioniert aber nur auf diesem Gerät.",
+			"dialog": {
+				"description": "Wähle den Ton, den du hören wirst, und erlaube dann Benachrichtigungen in deinem Browser."
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfe die Berechtigung in deinem Browser.",
+			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicke in der Adressleiste auf das Schloss-Symbol, öffne die Website-Einstellungen, stelle Benachrichtigungen auf Zulassen oder wähle Zurücksetzen, und versuche es dann erneut.",
+			"emailSavedNext": "Deine E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlaube Benachrichtigungen in deinem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
 			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
 		}

@@ -228,7 +228,14 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			{isEmailOverlayOpen && (
 				<ErstantwortEmailOverlay
 					onClose={() => setIsEmailOverlayOpen(false)}
-					onSaved={reloadUserData}
+					onSaved={() => {
+						// The address is saved: close first, a failed reload
+						// must not leave a Save button that can send it again.
+						setIsEmailOverlayOpen(false);
+						void Promise.resolve(reloadUserData()).catch(
+							() => undefined
+						);
+					}}
 				/>
 			)}
 		</>
