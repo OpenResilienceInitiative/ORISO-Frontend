@@ -880,15 +880,37 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
+			"error": {
+				"recipientsRequired": "Please select at least one colleague.",
+				"recipientUnknown": "At least one selected colleague cannot be added yet because they have no chat account. Remove them or try again later.",
+				"outOfScope": "At least one selected person cannot be picked: they are outside the range your organisation allows for internal chats, or cannot be found. Nothing was created.",
+				"membershipFailed": "The room could not be set up with all selected people. Nothing was created. Please try again.",
+				"encryptionRequired": "Internal chats with selected people are only available encrypted, and encryption is currently unavailable. Nothing was created.",
+				"disabled": "Internal chats with selected people are not available to you: they are not enabled, you lack the permission, or this installation does not support them yet. Please contact your administration.",
+				"unknown": "The room could not be created. Please try again.",
+				"busy": "This room is being created right now. Please wait a moment and try again.",
+				"notAvailable": "Internal chats with selected people are not available on this installation yet. Nothing was created. Please contact support."
+			},
 			"nameLabel": "Internal name",
+			"noColleagues": "No colleagues to choose from",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
+			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
 			"removePerson": "Remove {{name}}",
+			"reusedNotice": {
+				"title": "Existing room opened",
+				"text": "A room with exactly these people already existed. It was opened and no new one was created."
+			},
+			"scope": {
+				"AGENCY": "You can pick colleagues from your counselling centre.",
+				"TENANT": "You can pick colleagues from your organisation."
+			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
 			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
 			"title": "Internal discussion",
 			"togglePersonList": "Open or close the person list",
+			"tooMany": "You can select up to {{max}} people.",
 			"vacatedHint": "no longer at this counselling centre"
 		},
 		"circle": {
@@ -1871,7 +1893,8 @@
 				"mention": "Mention someone",
 				"voiceRecording": {
 					"label": "Voice recording",
-					"tooltip": "Record voice message"
+					"tooltip": "Record voice message",
+					"disabledWhileEditing": "Voice messages are not available while editing a message"
 				},
 				"imageUrlPrompt": "Image URL",
 				"urlPrompt": "URL"
@@ -4795,6 +4818,7 @@
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}
 	},
@@ -4943,6 +4967,7 @@
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
 			"later": "Come back later",
+			"laterNotice": "Nobody is live right now. As soon as someone is, the chat continues here.",
 			"title": "Live chat is currently closed",
 			"topicLabel": "Requested topic: {{topic}}",
 			"weekdays": {
@@ -5294,6 +5319,16 @@
 			"channelBoth": "Email and browser on this device",
 			"channelEmail": "Email",
 			"channelBrowser": "Browser on this device"
+		},
+		"notificationSummary": {
+			"label": "Notifications: {{state}}",
+			"change": "change",
+			"changeLabel": "Change notifications",
+			"dismiss": "Hide setup",
+			"none": "not set up",
+			"email": "email on",
+			"browser": "signal active on this device",
+			"both": "email and signal on"
 		},
 		"subtitle": "Your first steps",
 		"greeting": {
@@ -5685,6 +5720,7 @@
 			"status": {
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
+				"nobodyLive": "No counsellor is live right now",
 				"accepted": "A counsellor has taken your conversation",
 				"closed": "Closed right now",
 				"checking": "Who is live right now?",
@@ -5701,6 +5737,8 @@
 			"waiting": {
 				"headline": "Nearly there.",
 				"aheadUnknown": "We are looking for a free counsellor for you.",
+				"nobodyLiveHeadline": "No counsellor is live right now.",
+				"nobodyLive": "We keep watching and will connect you as soon as someone is available.",
 				"aheadNone": "You are next.",
 				"aheadOne": "One person ahead of you",
 				"aheadMany": "{{count}} people ahead of you",
@@ -5732,7 +5770,8 @@
 			"steps": {
 				"wait": {
 					"title": "You wait until someone is free",
-					"text": "The counsellors are in other conversations right now."
+					"text": "The counsellors are in other conversations right now.",
+					"textNobodyLive": "As soon as a counsellor is online, you are up."
 				},
 				"consent": {
 					"title": "Then you agree once",

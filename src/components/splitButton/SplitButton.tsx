@@ -80,6 +80,8 @@ export interface SplitButtonProps {
 	trailingRef?: React.Ref<HTMLButtonElement>;
 	mainDataCy?: string;
 	trailingDataCy?: string;
+	/** Id of text that describes the main segment (read after its name). */
+	describedBy?: string;
 }
 
 export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
@@ -109,7 +111,8 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			menuId,
 			trailingRef,
 			mainDataCy,
-			trailingDataCy
+			trailingDataCy,
+			describedBy
 		},
 		ref
 	) => {
@@ -152,6 +155,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 						disabled={disabled || mainDisabled}
 						onClick={onClick}
 						aria-label={mainLabel}
+						aria-describedby={describedBy}
 						aria-expanded={
 							hasMenu && mainOpensMenu ? open : undefined
 						}

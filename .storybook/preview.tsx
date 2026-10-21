@@ -879,7 +879,7 @@ const preview: Preview = {
 					type: 'mobile'
 				},
 				tablet820: {
-					name: 'Tablet 820 (iPad Air 2020 portrait)',
+					name: 'Tablet 820 (iPad Air portrait, 820x1180)',
 					styles: { width: '820px', height: '1180px' },
 					type: 'tablet'
 				},

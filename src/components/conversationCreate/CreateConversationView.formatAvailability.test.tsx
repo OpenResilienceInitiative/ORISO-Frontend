@@ -50,7 +50,10 @@ vi.mock('../../globalState', async () => {
 	const tenant = {
 		get settings() {
 			return tenantState.settings;
-		}
+		},
+		// These tests pick colleagues from the Träger's directory; the scope
+		// itself is covered in CreateConversationView.internalSubset.test.tsx.
+		internalGroupChat: { recipientScope: { value: 'TENANT' } }
 	};
 	return {
 		UserDataContext,

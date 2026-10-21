@@ -1113,15 +1113,37 @@
 			"addPerson": "Kişi ekle",
 			"createLabel": "Dahili sohbet oluştur",
 			"deselectPerson": "{{name}} kişisini kaldır",
+			"error": {
+				"recipientsRequired": "Lütfen en az bir meslektaş seçin.",
+				"recipientUnknown": "Seçilen en az bir meslektaş henüz eklenemiyor, çünkü henüz bir sohbet hesabı yok. Onu çıkarın veya daha sonra tekrar deneyin.",
+				"outOfScope": "Seçilen kişilerden en az biri seçilemez: kuruluşunuzun dahili sohbetler için izin verdiği kapsamın dışında veya bulunamıyor. Hiçbir şey oluşturulmadı.",
+				"membershipFailed": "Oda, seçilen tüm kişilerle kurulamadı. Hiçbir şey oluşturulmadı. Lütfen tekrar deneyin.",
+				"encryptionRequired": "Seçilen kişilerle dahili sohbetler yalnızca şifreli olarak mümkündür ve şifreleme şu anda kullanılamıyor. Hiçbir şey oluşturulmadı.",
+				"disabled": "Seçilen kişilerle dahili sohbetler sizin için kullanılamıyor: etkinleştirilmemiş, yetkiniz yok veya bu kurulum henüz desteklemiyor. Lütfen yöneticinizle iletişime geçin.",
+				"unknown": "Oda oluşturulamadı. Lütfen tekrar deneyin.",
+				"busy": "Bu oda şu anda oluşturuluyor. Lütfen biraz bekleyin ve tekrar deneyin.",
+				"notAvailable": "Seçilen kişilerle dahili sohbetler bu kurulumda henüz kullanılamıyor. Hiçbir şey oluşturulmadı. Lütfen destek ekibiyle iletişime geçin."
+			},
 			"nameLabel": "Dahili sohbetin adı",
+			"noColleagues": "Seçilebilecek meslektaş yok",
 			"personCount_one": "{{count}} kişi eklendi",
 			"personCount_other": "{{count}} kişi eklendi",
+			"privateRoomHint": "Yalnızca seçilen kişiler için ayrı, şifreli bir oda oluşturulur.",
 			"removePerson": "{{name}} kişisini kaldır",
+			"reusedNotice": {
+				"title": "Mevcut oda açıldı",
+				"text": "Tam olarak bu kişilerle zaten bir oda vardı. O oda açıldı, yeni oda oluşturulmadı."
+			},
+			"scope": {
+				"AGENCY": "Danışma merkezinizdeki meslektaşlarınızı seçebilirsiniz.",
+				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz."
+			},
 			"selectPerson": "{{name}} kişisini seç",
 			"subtitle": "meslektaşlarınızla",
 			"supportText": "Danışma merkeziniz içinde birbirinizle uyum sağlayın. İster tek tek ister ekip olarak; sesli, görüntülü, sohbet üzerinden ya da ihtiyaca göre hepsiyle.",
 			"title": "Dahili görüşme",
 			"togglePersonList": "Kişi listesini aç veya kapat",
+			"tooMany": "En fazla {{max}} kişi seçebilirsiniz.",
 			"vacatedHint": "artık bu danışma merkezinde değil"
 		},
 		"circle": {
@@ -1865,7 +1887,8 @@
 				"mention": "Kişiden bahset",
 				"voiceRecording": {
 					"label": "Sesli kayıt",
-					"tooltip": "Sesli mesaj kaydet"
+					"tooltip": "Sesli mesaj kaydet",
+					"disabledWhileEditing": "Mesaj düzenlenirken sesli mesajlar kullanılamaz"
 				},
 				"imageUrlPrompt": "Görsel URL’si",
 				"urlPrompt": "URL"
@@ -4830,6 +4853,7 @@
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
+			"discard": "Sesli mesajı sil",
 			"preview": "Sesli mesaj"
 		}
 	},
@@ -5013,6 +5037,7 @@
 			"responseTime": "2 iş günü içinde yanıt",
 			"back": "Önceki sayfaya dön",
 			"later": "Daha sonra tekrar gelin",
+			"laterNotice": "Şu anda canlı olan kimse yok. Biri geldiği anda sohbet burada devam eder.",
 			"title": "Canlı sohbet şu anda maalesef kapalı",
 			"topicLabel": "Talep edilen konu: {{topic}}",
 			"weekdays": {
@@ -5331,6 +5356,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Bildirim: {{state}}",
+			"change": "değiştir",
+			"changeLabel": "Bildirimi değiştir",
+			"dismiss": "Kurulumu gizle",
+			"none": "kurulmadı",
+			"email": "e-posta açık",
+			"browser": "bu cihazda sinyal açık",
+			"both": "e-posta ve sinyal açık"
+		},
 		"subtitle": "İlk adımlarınız",
 		"greeting": {
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
@@ -5770,6 +5805,7 @@
 			"status": {
 				"access": "Bu görüşme için erişiminiz",
 				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
+				"nobodyLive": "Şu anda çevrimiçi kimse yok",
 				"accepted": "Bir danışman görüşmenizi kabul etti",
 				"closed": "Şu anda kapalı",
 				"checking": "Şu anda kim çevrimiçi?",
@@ -5786,6 +5822,8 @@
 			"waiting": {
 				"headline": "Az kaldı.",
 				"aheadUnknown": "Sizin için müsait bir danışman arıyoruz.",
+				"nobodyLiveHeadline": "Şu anda çevrimiçi danışman yok.",
+				"nobodyLive": "Bunu takip ediyoruz ve biri müsait olur olmaz sizi bağlayacağız.",
 				"aheadNone": "Sıradaki sizsiniz.",
 				"aheadOne": "Önünüzde bir kişi",
 				"aheadMany": "Önünüzde {{count}} kişi",
@@ -5817,7 +5855,8 @@
 			"steps": {
 				"wait": {
 					"title": "Biri müsait olana kadar beklersiniz",
-					"text": "Danışmanlar şu anda başka görüşmelerde."
+					"text": "Danışmanlar şu anda başka görüşmelerde.",
+					"textNobodyLive": "Bir danışman çevrimiçi olur olmaz görüşmeniz başlar."
 				},
 				"consent": {
 					"title": "Sonra bir kez onaylarsınız",
