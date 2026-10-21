@@ -1240,11 +1240,6 @@ $message-avatar-overlap: -19px;
 		justify-content: end;
 	}
 
-	// #420: read-only preview wrapper around cards with their own controls.
-	&__readOnlyGuard {
-		display: contents;
-	}
-
 	&__threadButton {
 		contain: inline-size;
 		width: 100%;
@@ -1283,6 +1278,16 @@ $message-avatar-overlap: -19px;
 	&__threadButton--right {
 		border-radius: 12px 12px 0 12px;
 		align-self: flex-end;
+	}
+
+	// #420: read-only preview — the thread entry is an indicator, not a button.
+	&__threadButton--static {
+		cursor: default;
+
+		&:hover {
+			background: var(--m3-surface-container-lowest, #fff);
+			color: var(--m3-secondary, #4c555f);
+		}
 	}
 
 	&__threadButtonIcon {

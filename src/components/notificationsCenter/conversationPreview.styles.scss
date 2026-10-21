@@ -24,10 +24,4 @@
 		text-align: center;
 		max-width: 420px;
 	}
-
-	// #420: the rows are the chat's own (`MessageItemComponent`, readOnly).
-	// The thread entry is an indicator here, not a button.
-	.messageItem__threadButton {
-		cursor: default;
-	}
 }

@@ -194,6 +194,10 @@ describe('ConversationPreview (#420): the real chat rows, read-only', () => {
 		const threadEntry = container.querySelector('[data-cy="thread-entry"]');
 		expect(threadEntry?.textContent).toContain('Antwort im Thread');
 		expect(threadEntry?.tagName).not.toBe('BUTTON');
+		// Shared static modifier: no pointer cursor, no hover highlight.
+		expect(
+			threadEntry?.classList.contains('messageItem__threadButton--static')
+		).toBe(true);
 	});
 
 	it('renders no composer and no message actions', () => {

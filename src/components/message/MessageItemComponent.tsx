@@ -1963,18 +1963,6 @@ export const MessageItemComponent = ({
 		</>
 	) : null;
 
-	// #420: in the read-only preview, embedded cards with their own controls
-	// (standing access, notification setup) look the same but cannot act.
-	// `display: contents` keeps the chat layout untouched.
-	const readOnlyGuard = (node: React.ReactNode) =>
-		readOnly ? (
-			<div className="messageItem__readOnlyGuard" inert>
-				{node}
-			</div>
-		) : (
-			node
-		);
-
 	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
 	// sharing one rail with the timestamp. Adding happens via the action menu.
 	const reactionChips =
@@ -2245,8 +2233,7 @@ export const MessageItemComponent = ({
 						>
 							{isSystemNotification &&
 								(isCaseHandoverGrantedEvent ||
-									isInquiryAcceptedEvent) &&
-								readOnlyGuard(
+									isInquiryAcceptedEvent) && (
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
@@ -2263,6 +2250,7 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
+												readOnly={readOnly}
 												onSetupNotifications={
 													!readOnly &&
 													(grantNotificationPolicy.emailAllowed ||
@@ -2289,6 +2277,7 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
+												readOnly={readOnly}
 												onSetupNotifications={
 													!readOnly &&
 													(grantNotificationPolicy.emailAllowed ||
@@ -2734,12 +2723,10 @@ export const MessageItemComponent = ({
 			<div
 				className="messageItem messageItem--erstantwort"
 				data-message-id={_id}
-				// #420: same cards, but their buttons (e-mail, name, notification
-				// setup) write — the preview shows them without letting them act.
-				inert={readOnly || undefined}
 			>
 				{getMessageDate()}
 				<ErstantwortMessage
+					readOnly={readOnly}
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
@@ -3074,7 +3061,10 @@ export const MessageItemComponent = ({
 							// #420: the preview shows that a thread exists,
 							// without opening it.
 							<div
-								className={threadEntryClassName}
+								className={clsx(
+									threadEntryClassName,
+									'messageItem__threadButton--static'
+								)}
 								data-cy="thread-entry"
 								title={threadSummary.lastReplyText}
 							>
