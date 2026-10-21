@@ -2317,7 +2317,12 @@
 				"unsupported": "Message non pris en charge",
 				"pending": "Déchiffrement en cours",
 				"roomUnavailable": "Conversation indisponible sur cet appareil",
-				"eventUnavailable": "Message indisponible dans l’historique local"
+				"eventUnavailable": "Message indisponible dans l’historique local",
+				"loadOlder": "Charger les messages plus anciens",
+				"loadingOlder": "Chargement des messages plus anciens …",
+				"loadOlderFailed": "Les messages plus anciens n’ont pas pu être chargés.",
+				"retryLoadOlder": "Réessayer",
+				"historyStart": "Début de la conversation"
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",

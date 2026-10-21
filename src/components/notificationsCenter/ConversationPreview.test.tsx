@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
@@ -8,6 +15,12 @@ import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/compose
 const transport = vi.hoisted(() => ({
 	getMatrixRoom: vi.fn(),
 	getMatrixRoomMessages: vi.fn(),
+	// #929: the history the client holds, and the chat's own paging call.
+	getMatrixRoomHistoryState: vi.fn(() => ({
+		cachedCount: 0,
+		hasMoreOnServer: false
+	})),
+	loadEarlierMatrixRoomMessages: vi.fn(async () => false),
 	onMatrixTimeline: vi.fn(() => () => undefined),
 	// Read paths the message rows use to resolve member names (as in the chat).
 	resolveSession: (session: any) => ({ matrixRoomId: session?.rid }),
@@ -88,11 +101,29 @@ const matrixClient = {
 	sendReceipt: vi.fn()
 };
 
-const arrange = (events: any[], roomExists = true) => {
+/** `events` is the room's live timeline, oldest first, like the SDK's. */
+const arrange = (events: any[], roomExists = true, hasMoreOnServer = false) => {
 	transport.getMatrixRoom.mockReturnValue(roomExists ? room : null);
-	transport.getMatrixRoomMessages.mockReturnValue(events);
+	transport.getMatrixRoomMessages.mockImplementation(
+		(_roomId: string, limit: number) => events.slice(-limit)
+	);
+	const server = { hasMore: hasMoreOnServer };
+	transport.getMatrixRoomHistoryState.mockImplementation(() => ({
+		cachedCount: events.length,
+		hasMoreOnServer: server.hasMore
+	}));
 	setMatrixClientServiceRef({ getClient: () => matrixClient } as any);
+	return server;
 };
+
+const textEvents = (prefix: string, count: number, sender = LISA) =>
+	Array.from({ length: count }, (_, index) =>
+		matrixEvent({
+			id: `$${prefix}${index}`,
+			sender,
+			body: `${prefix} message ${index}`
+		})
+	);
 
 let ConversationPreview: typeof import('./ConversationPreview').ConversationPreview;
 let MessageContextShell: typeof import('../message/messageStoryShell').MessageContextShell;
@@ -296,5 +327,249 @@ describe('ConversationPreview (#420): the real chat rows, read-only', () => {
 		expect(
 			screen.getByText('notifications.center.preview.empty')
 		).toBeTruthy();
+	});
+});
+
+describe('ConversationPreview (#929): loading older messages on request', () => {
+	const ROOM = '!room:matrix.example';
+	const LOAD = 'notifications.center.preview.loadOlder';
+	const START = 'notifications.center.preview.historyStart';
+
+	it('says the conversation starts here when the client has no older history', () => {
+		arrange(textEvents('new', 3));
+
+		renderPreview({ roomId: ROOM });
+
+		expect(screen.getByText(START)).toBeTruthy();
+		expect(screen.queryByRole('button', { name: LOAD })).toBeNull();
+	});
+
+	it('loads one older page through the chat paging call and prepends it in order', async () => {
+		const timeline = textEvents('new', 50);
+		const server = arrange(timeline, true, true);
+		transport.loadEarlierMatrixRoomMessages.mockImplementation(async () => {
+			// The SDK prepends the older page to the same live timeline.
+			timeline.unshift(...textEvents('old', 3));
+			server.hasMore = false;
+			return false;
+		});
+
+		const { container } = renderPreview({ roomId: ROOM });
+		expect(screen.queryByText('old message 0')).toBeNull();
+
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+
+		await screen.findByText('old message 0');
+		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
+			1
+		);
+		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledWith(
+			ROOM
+		);
+		const ids = Array.from(
+			container.querySelectorAll<HTMLElement>('[data-message-id]')
+		).map((row) => row.dataset.messageId);
+		expect(ids.slice(0, 4)).toEqual(['$old0', '$old1', '$old2', '$new0']);
+		expect(ids).toHaveLength(53);
+		// End of history: the control is replaced by a plain notice.
+		expect(screen.getByText(START)).toBeTruthy();
+		expect(screen.queryByRole('button', { name: LOAD })).toBeNull();
+	});
+
+	it('shows older messages the client already holds without a network page', async () => {
+		arrange(textEvents('msg', 60));
+
+		renderPreview({ roomId: ROOM });
+		expect(screen.queryByText('msg message 0')).toBeNull();
+
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+
+		await screen.findByText('msg message 0');
+		expect(transport.loadEarlierMatrixRoomMessages).not.toHaveBeenCalled();
+		expect(screen.getByText(START)).toBeTruthy();
+	});
+
+	it('shows each event once across the cache and page boundary', async () => {
+		const timeline = textEvents('new', 50);
+		const server = arrange(timeline, true, true);
+		transport.loadEarlierMatrixRoomMessages.mockImplementation(async () => {
+			// A page that overlaps the cached window must not double rows.
+			timeline.unshift(...textEvents('old', 2), timeline[0]);
+			server.hasMore = false;
+			return false;
+		});
+
+		const { container } = renderPreview({ roomId: ROOM });
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await screen.findByText('old message 0');
+
+		expect(
+			container.querySelectorAll('[data-message-id="$new0"]')
+		).toHaveLength(1);
+		expect(container.querySelectorAll('[data-message-id]')).toHaveLength(
+			52
+		);
+	});
+
+	it('shows a busy, disabled control while a page loads', async () => {
+		let finish: (hasMore: boolean) => void = () => undefined;
+		const timeline = textEvents('new', 50);
+		arrange(timeline, true, true);
+		transport.loadEarlierMatrixRoomMessages.mockImplementation(
+			() =>
+				new Promise<boolean>((resolve) => {
+					finish = resolve;
+				})
+		);
+
+		renderPreview({ roomId: ROOM });
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+
+		const busy = await screen.findByRole('button', {
+			name: 'notifications.center.preview.loadingOlder'
+		});
+		expect(busy.hasAttribute('disabled')).toBe(true);
+		expect(busy.getAttribute('aria-busy')).toBe('true');
+		// A second click while busy starts no second request.
+		fireEvent.click(busy);
+		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
+			1
+		);
+
+		await act(async () => finish(true));
+		expect(await screen.findByRole('button', { name: LOAD })).toBeTruthy();
+	});
+
+	it('reports a failed page and retries on request', async () => {
+		const timeline = textEvents('new', 50);
+		const server = arrange(timeline, true, true);
+		transport.loadEarlierMatrixRoomMessages
+			.mockRejectedValueOnce(new Error('network'))
+			.mockImplementationOnce(async () => {
+				timeline.unshift(...textEvents('old', 1));
+				server.hasMore = false;
+				return false;
+			});
+
+		renderPreview({ roomId: ROOM });
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toContain(
+			'notifications.center.preview.loadOlderFailed'
+		);
+		// Messages already shown stay visible.
+		expect(screen.getByText('new message 49')).toBeTruthy();
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'notifications.center.preview.retryLoadOlder'
+			})
+		);
+
+		await screen.findByText('old message 0');
+		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
+			2
+		);
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('never marks the room read, sends a receipt or registers a view while paging', async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		const timeline = textEvents('new', 50);
+		const server = arrange(timeline, true, true);
+		transport.loadEarlierMatrixRoomMessages.mockImplementation(async () => {
+			timeline.unshift(...textEvents('old', 2));
+			server.hasMore = true;
+			return true;
+		});
+
+		renderPreview({ roomId: ROOM });
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await screen.findByText('old message 0');
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await waitFor(() =>
+			expect(
+				transport.loadEarlierMatrixRoomMessages
+			).toHaveBeenCalledTimes(2)
+		);
+
+		expect(activeView).not.toHaveBeenCalled();
+		expect(transport.markRoomAsRead).not.toHaveBeenCalled();
+		expect(matrixClient.sendReadReceipt).not.toHaveBeenCalled();
+		expect(matrixClient.setRoomReadMarkers).not.toHaveBeenCalled();
+		expect(matrixClient.sendReceipt).not.toHaveBeenCalled();
+		expect(fetchSpy).not.toHaveBeenCalled();
+		fetchSpy.mockRestore();
+	});
+
+	it('keeps the visible messages in place when older ones are prepended', async () => {
+		// jsdom has no layout: give every row 100px so heights are measurable.
+		const height = Object.getOwnPropertyDescriptor(
+			HTMLElement.prototype,
+			'scrollHeight'
+		);
+		Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+			configurable: true,
+			get(this: HTMLElement) {
+				return this.querySelectorAll('[data-message-id]').length * 100;
+			}
+		});
+		try {
+			const timeline = textEvents('new', 50);
+			const server = arrange(timeline, true, true);
+			transport.loadEarlierMatrixRoomMessages.mockImplementation(
+				async () => {
+					timeline.unshift(...textEvents('old', 4));
+					server.hasMore = true;
+					return true;
+				}
+			);
+
+			renderPreview({ roomId: ROOM });
+			const list = screen.getByTestId('conversation-preview');
+			// Opened at the newest message; the reader then scrolls up a bit.
+			expect(list.scrollTop).toBe(5000);
+			list.scrollTop = 1200;
+
+			fireEvent.click(screen.getByRole('button', { name: LOAD }));
+			await screen.findByText('old message 0');
+
+			// 4 rows × 100px were added above: the same rows stay in view.
+			expect(list.scrollTop).toBe(1600);
+		} finally {
+			if (height) {
+				Object.defineProperty(
+					HTMLElement.prototype,
+					'scrollHeight',
+					height
+				);
+			}
+		}
+	});
+
+	it('offers older history for a thread whose rows are not cached yet', async () => {
+		const timeline = textEvents('new', 50);
+		const server = arrange(timeline, true, true);
+		transport.loadEarlierMatrixRoomMessages.mockImplementation(async () => {
+			timeline.unshift(
+				matrixEvent({
+					id: '$root',
+					sender: LISA,
+					body: 'Thread-Anfang'
+				})
+			);
+			server.hasMore = false;
+			return false;
+		});
+
+		renderPreview({ roomId: ROOM, threadRootId: '$root' });
+		expect(
+			screen.getByText('notifications.center.preview.empty')
+		).toBeTruthy();
+
+		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+
+		await screen.findByText('Thread-Anfang');
 	});
 });
