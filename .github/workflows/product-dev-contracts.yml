@@ -1,0 +1,205 @@
+name: Product dev contracts
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - ".github/workflows/product-dev-contracts.yml"
+      - "package.json"
+      - "package-lock.json"
+      - ".npmrc"
+      - "tsconfig.json"
+      - "config/**"
+      - "proxy/**"
+      - "scripts/start-vite.mjs"
+      - "scripts/build-vite.mjs"
+      - "scripts/vite-product-*.mjs"
+      - "playwright.product.config.ts"
+      - "playwright/product-vite/**"
+      - "src/pages/**"
+      - "src/extensions/pages/**"
+      - "src/react-dom-shim.ts"
+      - "public/**"
+      - "vite.product.config.mts"
+  pull_request:
+    paths:
+      - ".github/workflows/product-dev-contracts.yml"
+      - "package.json"
+      - "package-lock.json"
+      - ".npmrc"
+      - "tsconfig.json"
+      - "config/**"
+      - "proxy/**"
+      - "scripts/start-vite.mjs"
+      - "scripts/build-vite.mjs"
+      - "scripts/vite-product-*.mjs"
+      - "playwright.product.config.ts"
+      - "playwright/product-vite/**"
+      - "src/pages/**"
+      - "src/extensions/pages/**"
+      - "src/react-dom-shim.ts"
+      - "public/**"
+      - "vite.product.config.mts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-dev-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  product-dev-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      TZ: Europe/Berlin
+    steps:
+      - name: Initialize bounded artifact paths
+        env:
+          ARTIFACT_ROOT: ${{ runner.temp }}/product-dev-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          mkdir -p "$ARTIFACT_ROOT"
+          printf 'PRODUCT_CONTRACT_ARTIFACTS=%s\n' "$ARTIFACT_ROOT" >> "$GITHUB_ENV"
+          printf '%s\n' "$GITHUB_SHA" > "$ARTIFACT_ROOT/event-sha.txt"
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+          cache: npm
+
+      - name: Clean install without lifecycle scripts
+        id: install
+        timeout-minutes: 6
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 300s npm ci --ignore-scripts --legacy-peer-deps 2>&1 | tee "$PRODUCT_CONTRACT_ARTIFACTS/install.log"
+
+      - name: Install the Chrome channel using the effective test CLI
+        id: chrome
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 240s node node_modules/@playwright/test/cli.js install --with-deps chrome 2>&1 | tee "$PRODUCT_CONTRACT_ARTIFACTS/chrome-install.log"
+          { git rev-parse HEAD; node --version; npm --version; node node_modules/@playwright/test/cli.js --version; google-chrome --version; } > "$PRODUCT_CONTRACT_ARTIFACTS/runtime.txt"
+
+      - name: Run all 17 real server contracts once
+        id: server
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        timeout-minutes: 4
+        run: |
+          export PRODUCT_DEV_EVENTS_FILE="$PRODUCT_CONTRACT_ARTIFACTS/server-events.jsonl"
+          export PRODUCT_DEV_ARTIFACT_ROOT="$PRODUCT_CONTRACT_ARTIFACTS/server-fixtures"
+          set +e
+          timeout --signal=TERM --kill-after=10s 180s node --test --test-concurrency=1 --test-reporter=junit scripts/vite-product-dev.test.mjs > "$PRODUCT_CONTRACT_ARTIFACTS/server.xml" 2> "$PRODUCT_CONTRACT_ARTIFACTS/server.stderr"
+          code=$?
+          printf '{"code":%d}\n' "$code" > "$PRODUCT_CONTRACT_ARTIFACTS/server-exit.json"
+          exit "$code"
+
+      - name: Require actual 17-case completion with no skip or failure
+        if: ${{ always() && steps.server.outcome != 'skipped' }}
+        run: |
+          python3 - <<'PYCODE'
+          import json, os, pathlib, xml.etree.ElementTree as ET
+          root = pathlib.Path(os.environ['PRODUCT_CONTRACT_ARTIFACTS'])
+          assert json.loads((root / 'server-exit.json').read_text())['code'] == 0
+          cases = ET.parse(root / 'server.xml').getroot().findall('.//testcase')
+          assert len(cases) == 17, f'Expected17 actual cases, got{len(cases)}'
+          assert all(not any(c.find(tag) is not None for tag in ['failure', 'error', 'skipped']) for c in cases)
+          print(json.dumps({'executed': len(cases), 'caseNames': [c.attrib.get('name') for c in cases]}))
+          PYCODE
+
+      - name: Run unchanged two-case browser contract once
+        id: browser
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.chrome.outcome == 'success' }}
+        timeout-minutes: 5
+        env:
+          DEBUG: pw:browser
+        run: |
+          export PRODUCT_BROWSER_OUTPUT="$PRODUCT_CONTRACT_ARTIFACTS/browser-output"
+          export PRODUCT_DEV_ARTIFACT_ROOT="$PRODUCT_CONTRACT_ARTIFACTS/browser-fixtures"
+          export PRODUCT_DEV_EVENTS_FILE="$PRODUCT_CONTRACT_ARTIFACTS/browser-events.jsonl"
+          set +e
+          timeout --signal=TERM --kill-after=10s 240s node node_modules/@playwright/test/cli.js test --config playwright.product.config.ts --reporter=json > "$PRODUCT_CONTRACT_ARTIFACTS/browser.json" 2> "$PRODUCT_CONTRACT_ARTIFACTS/browser.stderr"
+          code=$?
+          printf '{"code":%d}\n' "$code" > "$PRODUCT_CONTRACT_ARTIFACTS/browser-exit.json"
+          exit "$code"
+
+      - name: Require actual two passes and both fixture close receipts
+        if: ${{ always() && steps.browser.outcome != 'skipped' }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const assert = require('node:assert/strict');
+          const root = process.env.PRODUCT_CONTRACT_ARTIFACTS;
+          const read = name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+          assert.equal(read('browser-exit.json').code, 0);
+          const report = read('browser.json');
+          const tests = [];
+          function collect(suites) {
+            for (const suite of suites) {
+              for (const spec of suite.specs || []) for (const test of spec.tests) tests.push({id: spec.id, title: spec.title, file: spec.file, test});
+              collect(suite.suites || []);
+            }
+          }
+          collect(report.suites);
+          assert.equal(tests.length, 2);
+          assert.equal(new Set(tests.map(item => item.id)).size, 2);
+          assert.deepEqual(tests.map(item => item.title).sort(), [
+            'updates an editable React module over real HMR without losing state or reloading',
+            'disables React state-preserving refresh while keeping CSS HMR on the same page'
+          ].sort());
+          assert.deepEqual(report.errors, []);
+          assert.equal(report.config.workers, 1);
+          assert.equal(report.config.projects.length, 1);
+          assert.equal(report.config.projects[0].retries, 0);
+          assert.equal(report.config.projects[0].timeout, 90000);
+          const expectedFile = path.resolve('playwright/product-vite/dev-contract.spec.ts');
+          assert.equal(path.resolve(report.config.projects[0].testDir), path.dirname(expectedFile));
+          assert.equal(path.resolve(report.config.projects[0].outputDir), path.join(root, 'browser-output'));
+          for (const item of tests) assert.equal(path.resolve(report.config.rootDir, item.file), expectedFile);
+          assert.equal(report.config.version, JSON.parse(fs.readFileSync('node_modules/@playwright/test/package.json', 'utf8')).version);
+          for (const {test} of tests) {
+            assert.equal(test.status, 'expected');
+            assert.equal(test.expectedStatus, 'passed');
+            assert.equal(test.results.length, 1);
+            assert.equal(test.results[0].status, 'passed');
+            assert.equal(test.results[0].retry, 0);
+            assert.deepEqual(test.results[0].errors, []);
+          }
+          assert.equal(report.stats.expected, 2);
+          for (const key of ['skipped', 'unexpected', 'flaky']) assert.equal(report.stats[key], 0);
+          const events = fs.readFileSync(path.join(root, 'browser-events.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+          assert.equal(events.length, 4);
+          const spawned = events.filter(event => event.event === 'spawn');
+          const exited = events.filter(event => event.event === 'exit');
+          assert.equal(spawned.length, 2);
+          assert.equal(exited.length, 2);
+          assert.equal(new Set(spawned.map(event => event.pid)).size, 2);
+          assert(spawned.every(event => Number.isInteger(event.pid) && event.pid > 0));
+          assert.deepEqual(exited.map(event => event.pid).sort(), spawned.map(event => event.pid).sort());
+          for (const event of exited) { assert.equal(event.code, 0); assert.equal(event.signal, null); }
+          console.log(JSON.stringify({stats: report.stats, tests: tests.map(item => ({id:item.id,title:item.title})), fixtureExits: exited}));
+          NODE
+
+      - name: Preserve raw contract evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: product-dev-contracts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.PRODUCT_CONTRACT_ARTIFACTS }}/
+            !${{ env.PRODUCT_CONTRACT_ARTIFACTS }}/**/node_modules/**
+            !${{ env.PRODUCT_CONTRACT_ARTIFACTS }}/**/*.key
+            !${{ env.PRODUCT_CONTRACT_ARTIFACTS }}/**/*.pem
+            !${{ env.PRODUCT_CONTRACT_ARTIFACTS }}/**/*.crt
+          if-no-files-found: warn
+          include-hidden-files: false
+          retention-days: 7
