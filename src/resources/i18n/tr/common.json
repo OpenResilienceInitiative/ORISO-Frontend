@@ -2329,7 +2329,12 @@
 				"unsupported": "Desteklenmeyen mesaj",
 				"pending": "Şifre çözme bekleniyor",
 				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
-				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor",
+				"loadOlder": "Daha eski mesajları yükle",
+				"loadingOlder": "Daha eski mesajlar yükleniyor …",
+				"loadOlderFailed": "Daha eski mesajlar yüklenemedi.",
+				"retryLoadOlder": "Tekrar dene",
+				"historyStart": "Sohbetin başlangıcı"
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",

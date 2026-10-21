@@ -2329,7 +2329,12 @@
 				"unsupported": "ዘይድገፍ መልእኽቲ",
 				"pending": "ምፍታሕ ምስጢር ይጽበ",
 				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
-				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን",
+				"loadOlder": "ዝቐደሙ መልእኽትታት ኣምጽእ",
+				"loadingOlder": "ዝቐደሙ መልእኽትታት ይመጹ ኣለዉ …",
+				"loadOlderFailed": "ዝቐደሙ መልእኽትታት ክመጹ ኣይከኣሉን።",
+				"retryLoadOlder": "እንደገና ፈትን",
+				"historyStart": "መጀመርታ ዝርርብ"
 			},
 			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",

@@ -2326,7 +2326,12 @@
 				"unsupported": "Unsupported message",
 				"pending": "Waiting for decryption",
 				"roomUnavailable": "Conversation unavailable on this device",
-				"eventUnavailable": "Message unavailable in local history"
+				"eventUnavailable": "Message unavailable in local history",
+				"loadOlder": "Load older messages",
+				"loadingOlder": "Loading older messages …",
+				"loadOlderFailed": "Older messages could not be loaded.",
+				"retryLoadOlder": "Try again",
+				"historyStart": "Start of the conversation"
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",

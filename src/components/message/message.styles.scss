@@ -1280,6 +1280,16 @@ $message-avatar-overlap: -19px;
 		align-self: flex-end;
 	}
 
+	// #420: read-only preview — the thread entry is an indicator, not a button.
+	&__threadButton--static {
+		cursor: default;
+
+		&:hover {
+			background: var(--m3-surface-container-lowest, #fff);
+			color: var(--m3-secondary, #4c555f);
+		}
+	}
+
 	&__threadButtonIcon {
 		flex: 0 0 auto;
 		width: 16px;
