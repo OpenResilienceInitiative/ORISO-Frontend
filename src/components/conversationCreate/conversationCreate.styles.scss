@@ -222,7 +222,7 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__media {
-		height: 188px;
+		aspect-ratio: 16 / 9;
 		overflow: hidden;
 		position: relative;
 		width: 100%;
@@ -963,8 +963,9 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__thumb {
+		aspect-ratio: 16 / 9;
 		flex-shrink: 0;
-		height: 72px;
+		height: auto;
 		object-fit: cover;
 		width: 84px;
 	}
