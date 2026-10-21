@@ -1,4 +1,5 @@
 import { assertAppLocaleCoverage } from './appLocaleCoverage';
+import { writeEmailMetadata } from './writeEmailMetadata';
 /**
  * Emits the MailService (Thymeleaf) template set from the design system.
  *
@@ -34,11 +35,7 @@ import {
 } from '../index';
 import { EmailDataRow } from '../kit/emailAtoms';
 import { toEmailDialectHtml } from '../kit/emailDialect';
-import {
-	EmailContent,
-	renderEmailHtml,
-	renderEmailText
-} from '../kit/emailTemplate';
+import { EmailContent, renderEmailHtml } from '../kit/emailTemplate';
 import { emailDefaultBrand } from '../kit/emailTokens';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -89,27 +86,27 @@ const TEMPLATES: MailServiceTemplate[] = [
 		id: 'neue-anfrage',
 		model: ['name', 'plz', 'beratungsstelle', 'url'],
 		panel: [
-			{ label: 'Beratungsstelle', value: '${beratungsstelle}' },
-			{ label: 'Postleitzahl', value: '${plz}' }
+			{ label: 'Beratungsstelle', value: `\${beratungsstelle}` },
+			{ label: 'Postleitzahl', value: `\${plz}` }
 		],
-		cta: '${url}'
+		cta: `\${url}`
 	},
 	{
 		file: 'direct-enquiry-notification-consultant',
 		id: 'direkte-anfrage',
 		model: ['name', 'plz', 'url'],
-		panel: [{ label: 'Postleitzahl', value: '${plz}' }],
-		cta: '${url}'
+		panel: [{ label: 'Postleitzahl', value: `\${plz}` }],
+		cta: `\${url}`
 	},
 	{
 		file: 'assign-enquiry-notification',
 		id: 'anfrage-zugewiesen',
 		model: ['name_recipient', 'name_sender', 'name_user', 'url'],
 		panel: [
-			{ label: 'Ratsuchende Person', value: '${name_user}' },
-			{ label: 'Zugewiesen von', value: '${name_sender}' }
+			{ label: 'Ratsuchende Person', value: `\${name_user}` },
+			{ label: 'Zugewiesen von', value: `\${name_sender}` }
 		],
-		cta: '${url}'
+		cta: `\${url}`
 	},
 	{
 		file: 'daily-enquiry-notification',
@@ -122,10 +119,10 @@ const TEMPLATES: MailServiceTemplate[] = [
 			'url'
 		],
 		panel: [
-			{ label: 'Offene Anfragen', value: '${enquiries}' },
-			{ label: 'Beratungsstelle', value: '${agency_name}' }
+			{ label: 'Offene Anfragen', value: `\${enquiries}` },
+			{ label: 'Beratungsstelle', value: `\${agency_name}` }
 		],
-		cta: '${url}'
+		cta: `\${url}`
 	},
 	{
 		file: 'reassign-request-notification',
@@ -133,8 +130,8 @@ const TEMPLATES: MailServiceTemplate[] = [
 		// Neutral requester copy comes directly from the designed source.
 		// The legacy recipient-name field is deliberately unused.
 		model: ['name_recipient', 'url', 'unsubscribe_url'],
-		links: { unsubscribeUrl: '${unsubscribe_url}' },
-		cta: '${url}'
+		links: { unsubscribeUrl: `\${unsubscribe_url}` },
+		cta: `\${url}`
 	},
 	{
 		file: 'reassign-confirmation-notification',
@@ -145,20 +142,20 @@ const TEMPLATES: MailServiceTemplate[] = [
 			'url',
 			'unsubscribe_url'
 		],
-		links: { unsubscribeUrl: '${unsubscribe_url}' },
+		links: { unsubscribeUrl: `\${unsubscribe_url}` },
 		// Incoming-counsellor copy comes directly from the designed source.
-		cta: '${url}'
+		cta: `\${url}`
 	},
 	{
 		file: 'free-text',
 		id: 'mitteilung',
 		model: ['subject', 'text', 'url'],
-		headline: '${subject}',
-		body: '${text}',
+		headline: `\${subject}`,
+		body: `\${text}`,
 		// Existing automatic senders supply the interior headline and plain body.
 		// The designed title and preview stay neutral; MailService sets the
 		// actual MIME Subject from its separate template description.
-		cta: '${url}'
+		cta: `\${url}`
 	}
 ];
 
@@ -277,21 +274,21 @@ const adapt = (
 
 /** Brand values upstream can supply, and what to fall back to when it cannot. */
 const BRAND: Record<string, string> = {
-	platformName: '${tenant_name}',
-	orgName: '${tenant_name}',
+	platformName: `\${tenant_name}`,
+	orgName: `\${tenant_name}`,
 	orgAddress: '',
 	contactLine: '',
 	logoUrl: '',
 	primaryColor: '#a5000a',
 	accentColor: '#cc1e1c',
-	privacyUrl: '${tenant_urldatenschutz}',
-	imprintUrl: '${tenant_urlimpressum}',
-	settingsUrl: '${url}',
-	unsubscribeUrl: '${url}',
-	appUrl: '${url}',
-	requestUrl: '${url}',
-	messageUrl: '${url}',
-	loginUrl: '${url}'
+	privacyUrl: `\${tenant_urldatenschutz}`,
+	imprintUrl: `\${tenant_urlimpressum}`,
+	settingsUrl: `\${url}`,
+	unsubscribeUrl: `\${url}`,
+	appUrl: `\${url}`,
+	requestUrl: `\${url}`,
+	messageUrl: `\${url}`,
+	loginUrl: `\${url}`
 };
 
 /**
@@ -379,7 +376,7 @@ const run = async () => {
 		);
 	}
 
-	await writeFile(
+	await writeEmailMetadata(
 		path.join(outDir, 'README.md'),
 		`# MailService template set
 
@@ -418,8 +415,7 @@ above. They are left untouched by the override.
 \`name\` / \`name_recipient\` reach every template and are deliberately unused: no
 mail in the design system opens with a salutation. Adding one is a copy
 decision, not a technical gap.
-`,
-		'utf8'
+`
 	);
 
 	// eslint-disable-next-line no-console

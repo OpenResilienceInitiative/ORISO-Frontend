@@ -14,6 +14,7 @@
 
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { assertAppLocaleCoverage } from './appLocaleCoverage';
+import { writeEmailMetadata } from './writeEmailMetadata';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -170,7 +171,7 @@ const run = async () => {
 	// The consuming services need the subject and the preview line, and neither
 	// belongs in the HTML file: a subject is a mail header, not a document. One
 	// JSON at the root beats parsing <title> out of 21 templates.
-	await writeFile(
+	await writeEmailMetadata(
 		path.join(outDir, 'catalogue.json'),
 		`${JSON.stringify(
 			{
@@ -217,14 +218,12 @@ const run = async () => {
 			},
 			null,
 			2
-		)}\n`,
-		'utf8'
+		)}\n`
 	);
 
-	await writeFile(
+	await writeEmailMetadata(
 		path.join(outDir, 'README.md'),
-		readme(placeholders),
-		'utf8'
+		readme(placeholders)
 	);
 	// eslint-disable-next-line no-console
 	console.log(
