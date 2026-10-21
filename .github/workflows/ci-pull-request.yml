@@ -136,7 +136,9 @@ jobs:
                   node node_modules/playwright/cli.js install --with-deps chrome
 
             - name: Verify complete Matrix chat history through the actual chat
-              run: npm run test:chat-history
+              env:
+                  DEBUG: vite:deps*,pw:webserver
+              run: npm run test:chat-history -- --trace=retain-on-failure
 
             - name: Verify enquiry and team discussion through the actual app
               run: npm run test:enquiry-team
