@@ -25,8 +25,10 @@ import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
-import { getTopicCardImage } from '../../resources/img/topics';
+import {
+	getTopicCardArtwork,
+	INTERNAL_CHAT_ARTWORK
+} from '../../resources/img/topics';
 import {
 	apiGetTenantConsultantList,
 	Consultant
@@ -695,7 +697,7 @@ const CreateConversationFlow = ({
 								subtitle={translate(
 									'groupChat.internal.subtitle'
 								)}
-								image={internalTeamImage}
+								image={INTERNAL_CHAT_ARTWORK}
 								onSelect={() => setStep('internal')}
 							/>
 						)}
@@ -706,7 +708,7 @@ const CreateConversationFlow = ({
 								subtitle={translate(
 									'groupChat.circle.subtitle'
 								)}
-								image={getTopicCardImage(null)}
+								image={getTopicCardArtwork(null)}
 								onSelect={() => setStep('circle')}
 							/>
 						)}
