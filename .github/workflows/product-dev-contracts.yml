@@ -58,6 +58,7 @@ jobs:
     env:
       CI: 'true'
       TZ: Europe/Berlin
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Initialize bounded artifact paths
         env:
@@ -82,6 +83,11 @@ jobs:
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 300s npm ci --ignore-scripts --legacy-peer-deps 2>&1 | tee "$PRODUCT_CONTRACT_ARTIFACTS/install.log"
+
+      - name: Check semantic contract negative controls
+        id: conformance_controls
+        run: |
+          timeout --signal=TERM --kill-after=10s 15s python3 scripts/product-dev-parity/test_conformance.py > "$PRODUCT_CONTRACT_ARTIFACTS/conformance-controls.log" 2>&1
 
       - name: Install the Chrome channel using the effective test CLI
         id: chrome
@@ -191,9 +197,9 @@ jobs:
           console.log(JSON.stringify({stats: report.stats, tests: tests.map(item => ({id:item.id,title:item.title})), fixtureExits: exited}));
           NODE
 
-      - name: Compare all 84 legacy and Vite middleware contracts once
+      - name: Observe all 84 pairs and require middleware contract conformance
         id: full84
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.conformance_controls.outcome == 'success' }}
         timeout-minutes: 16
         run: |
           set +e

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Retained84 real-server comparison; portable CI paths, strict raw results, no retry."""
+"""Retained84 observation/conformance; raw comparison stays a separate diagnostic."""
 from pathlib import Path
 import argparse, datetime, hashlib, json, os, shutil, signal, socket, subprocess, time
+from conformance import evaluate
 
 B = Path(__file__).resolve().parent
 REPO = B.parents[1]
@@ -304,8 +305,23 @@ def main():
                 guard()
                 assert cache_metadata() == before_cache, 'Canonical dependency cache changed'
         result = compare(execution, scenarios, fixture)
-        state.update(stage='observed-differences' if result['unequalPairs'] or result['controlFailures'] else 'bounded-middleware-equality', terminal=True, endedAtUTC=NOW())
-        return 1 if result['unequalPairs'] or result['controlFailures'] else 0
+        raw_failed = bool(result['unequalPairs'] or result['controlFailures'])
+        raw_diagnostic = dict(status='FAIL' if raw_failed else 'PASS',
+            diagnosticExitCode=1 if raw_failed else 0,
+            exitKind='computed raw-comparison diagnostic; not a separate native process',
+            pairedCases=result['pairedCases'], observedResponses=result['observedResponses'],
+            unequalPairs=result['unequalPairs'], controlFailures=result['controlFailures'],
+            comparisonSHA256=SHA(execution / 'comparison.json'))
+        write(execution / 'raw-comparison-diagnostic.json', raw_diagnostic)
+        conformance = evaluate(execution, scenarios, fixture, result, REPO)
+        write(execution / 'contract-conformance.json', conformance)
+        accepted = conformance['observationsComplete'] and conformance['status'] == 'PASS'
+        state.update(stage='bounded-middleware-conformance' if accepted else 'observed-contract-failures',
+            rawComparison=raw_diagnostic['status'], contractConformance=conformance['status'],
+            terminal=True, endedAtUTC=NOW())
+        print(json.dumps(dict(rawComparison=raw_diagnostic, contractConformance=conformance['status'],
+            observationsComplete=conformance['observationsComplete'], noProductionApproval=True)), flush=True)
+        return 0 if accepted else 1
     except BaseException as error:
         state.update(stage='infrastructure-failed-no-retry', terminal=True, failure=repr(error), endedAtUTC=NOW())
         if active:
