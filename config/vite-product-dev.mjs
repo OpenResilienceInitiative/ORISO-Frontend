@@ -12,6 +12,7 @@ import {
 	createProductConfig
 } from './vite-product-config.mjs';
 import { productPages, renderProductPage } from './vite-product-html.mjs';
+import { createDevelopmentMiddleware } from './vite-product-dev-middleware.mjs';
 
 const require = createRequire(import.meta.url);
 export async function createProductDevServer(options = {}) {
@@ -44,12 +45,19 @@ export async function createProductDevServer(options = {}) {
 	}
 	const app = express();
 	app.disable('x-powered-by');
+	const middleware = createDevelopmentMiddleware(environment, {
+		host,
+		allowedHost: options.allowedHost
+	});
+	app.use(middleware.checkHost);
 	const server = tls ? https.createServer(tls, app) : http.createServer(app);
+	server.on('upgrade', middleware.checkUpgrade);
 	let vite;
 	let closing;
 	const close = () => {
 		if (!closing)
 			closing = (async () => {
+				middleware.closeUpgrades();
 				const results = await Promise.allSettled([
 					vite?.close(),
 					new Promise((resolve, reject) => {
@@ -88,6 +96,8 @@ export async function createProductDevServer(options = {}) {
 				https: tls || undefined,
 				middlewareMode: { server },
 				ws,
+				allowedHosts: middleware.viteAllowedHosts,
+				cors: false,
 				open: false,
 				strictPort: true
 			}
@@ -97,11 +107,18 @@ export async function createProductDevServer(options = {}) {
 			environment.paths.storagePath
 		);
 		for (const { method, middleware, path: route } of routes) {
-			if (method) router[method.toLowerCase()](route, middleware);
+			if (method)
+				router.use(route, (req, res, next) => {
+					if (req.method !== method) return next();
+					return middleware(req, res, next);
+				});
 			else if (route) router.use(route, middleware);
 			else router.use(middleware);
 		}
 		app.use(router);
+		// Custom routes retain their original header/compression/method ownership.
+		app.use(middleware.compression);
+		app.use(middleware.headers);
 		const base = new URL(
 			environment.paths.publicUrlOrPath,
 			'http://local.invalid'
@@ -139,13 +156,36 @@ export async function createProductDevServer(options = {}) {
 				res.status(500).type('text').send(error.message);
 			}
 		};
-		app.get(
-			productPages.map((name) => base + '/' + name),
-			(req, res) => html(req, res, path.basename(req.path))
-		);
-		app.use(vite.middlewares);
+		const servePage = (req, res, next) => {
+			if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+			const page = productPages.find(
+				(name) => req.path === base + '/' + name
+			);
+			return page ? html(req, res, page) : next();
+		};
+		const publicFiles = express.static(environment.paths.appPublic);
+		app.use(servePage);
 		app.use((req, res, next) => {
-			if (req.method !== 'GET') return next();
+			// Vite's static server also serves OPTIONS as files. Retain the
+			// downstream package-proxy and fallback preflight ownership.
+			if (req.method === 'OPTIONS') return next();
+			const url = req.url;
+			const originalUrl = req.originalUrl;
+			vite.middlewares(req, res, (error) => {
+				// Vite strips its base while looking for modules. The remaining legacy
+				// chain must receive the incoming URL, then apply its own history rewrite.
+				req.url = url;
+				req.originalUrl = originalUrl;
+				next(error);
+			});
+		});
+		if (middleware.packageProxy) app.use(middleware.packageProxy);
+		app.use(base || '/', publicFiles);
+		app.use((req, res, next) => {
+			if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+			// Retain the Product hard-404 asset contract. Only the service-worker
+			// filename follows the observed history -> redirect -> no-op lifecycle.
+			if (req.path.endsWith('/service-worker.js')) return next();
 			if (
 				req.path.startsWith(base + '/static/') ||
 				/\.(?:js|mjs|css|map|wasm|png|jpe?g|svg|ico|woff2?|ttf|txt)$/i.test(
@@ -157,8 +197,29 @@ export async function createProductDevServer(options = {}) {
 					.set('Cache-Control', 'no-store')
 					.type('text')
 					.send('Not found');
-			return html(req, res, 'beratung-hilfe.html');
+			return next();
 		});
+		app.use(middleware.history);
+		app.use(servePage);
+		app.use(base || '/', publicFiles);
+		app.use((req, res, next) => {
+			if (req.method !== 'OPTIONS') return next();
+			return res.status(204).set('Content-Length', '0').end();
+		});
+		app.use((req, res, next) => {
+			// Unhandled methods retain the Product 404 contract after custom
+			// routes/package.proxy, rather than becoming navigation redirects.
+			if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+			return middleware.redirect(req, res, next);
+		});
+		app.use(middleware.worker);
+		app.use((_req, res) =>
+			res
+				.status(404)
+				.set('Cache-Control', 'no-store')
+				.type('text')
+				.send('Not found')
+		);
 		await new Promise((resolve, reject) => {
 			server.once('error', reject);
 			server.listen(port, host, () => {
