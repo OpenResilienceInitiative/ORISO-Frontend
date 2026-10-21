@@ -152,6 +152,7 @@ export const CaseHandoverConversation = ({
 										</h3>
 										<NotificationSetupCollapse
 											startOpen
+											requireConsentEmail={recommendation}
 											onStart={() =>
 												setSetupStarted(true)
 											}
