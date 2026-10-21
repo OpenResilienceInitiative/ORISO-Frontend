@@ -75,6 +75,29 @@ const parseHandoverGrantMetadata = (
 		: null;
 };
 
+/** Who ended a chat, as USER_LEFT_CHAT carries it (ORISO-Frontend#1838). */
+export type ChatEndedBy = 'CONSULTANT' | 'ADVICE_SEEKER';
+
+const toChatEndedBy = (value: unknown): ChatEndedBy | null =>
+	value === 'CONSULTANT' || value === 'ADVICE_SEEKER' ? value : null;
+
+/**
+ * The words for "the chat ended", seen from the viewer's side. Older events
+ * do not say who ended them: the counsellor keeps the historical "User has
+ * left the chat", the advice seeker reads the neutral line.
+ */
+export const chatEndedTextKey = (
+	endedBy: ChatEndedBy | null,
+	viewerIsConsultant: boolean
+): string => {
+	if (endedBy === (viewerIsConsultant ? 'CONSULTANT' : 'ADVICE_SEEKER')) {
+		return 'message.youEndedChat';
+	}
+	if (endedBy === 'ADVICE_SEEKER') return 'message.userLeftChat';
+	if (endedBy === 'CONSULTANT') return 'message.consultantLeftChat';
+	return viewerIsConsultant ? 'message.userLeftChat' : 'message.chatEnded';
+};
+
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
 		return {
@@ -85,6 +108,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription: '',
 			systemNotificationType: null as string | null,
 			systemNotificationUsername: '',
+			systemNotificationEndedBy: null as ChatEndedBy | null,
 			systemNotificationReasonLabel: '',
 			systemNotificationExplanation: '',
 			systemNotificationAcceptance:
@@ -102,6 +126,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationDescription = '';
 	let systemNotificationType: string | null = null;
 	let systemNotificationUsername = '';
+	let systemNotificationEndedBy: ChatEndedBy | null = null;
 	let systemNotificationReasonLabel = '';
 	let systemNotificationExplanation = '';
 	let systemNotificationAcceptance: InquiryAcceptanceMetadata | null = null;
@@ -167,6 +192,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				description?: string;
 				type?: string;
 				username?: string;
+				endedBy?: string;
 				reasonLabel?: string;
 				explanation?: string;
 				handover?: unknown;
@@ -174,6 +200,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			};
 			systemNotificationType = parsed?.type?.trim() || null;
 			systemNotificationUsername = parsed?.username?.trim() || '';
+			systemNotificationEndedBy = toChatEndedBy(parsed?.endedBy);
 			systemNotificationTitle = parsed?.title?.trim() || '';
 			systemNotificationDescription = parsed?.description?.trim() || '';
 			systemNotificationReasonLabel = parsed?.reasonLabel?.trim() || '';
@@ -213,6 +240,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationDescription,
 		systemNotificationType,
 		systemNotificationUsername,
+		systemNotificationEndedBy,
 		systemNotificationReasonLabel,
 		systemNotificationExplanation,
 		systemNotificationHandoverGrant,

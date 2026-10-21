@@ -1979,6 +1979,8 @@
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
+		"youEndedChat": "Sohbeti sonlandırdınız",
+		"chatEnded": "Sohbet sona erdi",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",

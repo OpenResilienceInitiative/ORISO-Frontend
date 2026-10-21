@@ -1980,6 +1980,8 @@
 		"systemNotificationTitle": "Системное уведомление",
 		"userLeftChat": "Пользователь покинул чат",
 		"consultantLeftChat": "Консультант покинул чат",
+		"youEndedChat": "Вы завершили чат",
+		"chatEnded": "Чат завершён",
 		"anonymousUser": "Пользователь",
 		"supervisionEnabledTitle": "Супервизия включена!",
 		"supervisionEnabledDescription": "{{name}} добавлен(а) в этот чат в качестве консультанта-супервизора.",

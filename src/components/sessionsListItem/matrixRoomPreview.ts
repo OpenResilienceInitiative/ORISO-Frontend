@@ -4,7 +4,11 @@ import {
 	toMessagePreviewText
 } from '../../utils/messagePreviewText';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
-import { parseMessagePrefixes } from '../message/messageConstants';
+import {
+	type ChatEndedBy,
+	chatEndedTextKey,
+	parseMessagePrefixes
+} from '../message/messageConstants';
 import {
 	isVoiceMessageFileName,
 	voiceDurationMsFromFileName
@@ -41,6 +45,8 @@ export interface MatrixRoomPreview {
 	 * client did not record it.
 	 */
 	durationMs?: number;
+	/** USER_LEFT_CHAT only: who ended the chat, when the event says so. */
+	endedBy?: ChatEndedBy | null;
 }
 
 /** A glyph that stands in for a word on the list card's preview line. */
@@ -72,12 +78,11 @@ export const formatVoiceDuration = (durationMs: number): string => {
 export const toPreviewKindText = (
 	kind: MatrixRoomPreviewKind,
 	translate: (key: string, fallback?: string) => string,
-	isConsultant: boolean
+	isConsultant: boolean,
+	endedBy: ChatEndedBy | null = null
 ): string => {
 	if (kind === 'user_left_chat') {
-		return isConsultant
-			? translate('message.userLeftChat')
-			: translate('message.consultantLeftChat');
+		return translate(chatEndedTextKey(endedBy, isConsultant));
 	}
 	if (kind === 'system_notification') {
 		return translate('message.systemNotificationTitle');
@@ -114,7 +119,12 @@ export const toListPreviewLine = (
 	} else if (preview.kind === 'text') {
 		text = preview.text || '';
 	} else {
-		text = toPreviewKindText(preview.kind, translate, isConsultant);
+		text = toPreviewKindText(
+			preview.kind,
+			translate,
+			isConsultant,
+			preview.endedBy
+		);
 	}
 	if (preview.channel === 'supervision') {
 		text = `${translate('sessionList.preview.channel.supervision')} ${text}`;
@@ -230,6 +240,13 @@ const toKindPreview = (
 				return { kind: 'first_response', text: null };
 			}
 			const systemNotice = getSystemNotificationPreview(body);
+			if (systemNotice === 'user_left_chat') {
+				const endedBy =
+					parseMessagePrefixes(body).systemNotificationEndedBy;
+				return endedBy
+					? { kind: systemNotice, text: null, endedBy }
+					: { kind: systemNotice, text: null };
+			}
 			if (systemNotice) {
 				return { kind: systemNotice, text: null };
 			}

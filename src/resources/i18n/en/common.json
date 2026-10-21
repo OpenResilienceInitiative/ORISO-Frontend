@@ -1985,6 +1985,8 @@
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
 		"consultantLeftChat": "Consultant has left the chat",
+		"youEndedChat": "You ended the chat",
+		"chatEnded": "The chat has ended",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
