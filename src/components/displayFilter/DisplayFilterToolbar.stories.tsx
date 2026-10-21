@@ -182,6 +182,9 @@ export const TriggerControlsDialog: Story = {
 		).not.toBeNull();
 		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
+		await waitFor(() =>
+			expect(body.queryByRole('dialog')).not.toBeInTheDocument()
+		);
 	}
 };
 

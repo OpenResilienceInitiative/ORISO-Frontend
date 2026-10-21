@@ -1,0 +1,234 @@
+// @vitest-environment jsdom
+import * as React from 'react';
+import { cleanup, render } from '@testing-library/react';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
+import {
+	beginStoryVerification,
+	finishStoryVerification,
+	recordUnexpectedRequest
+} from '../../../../.storybook/verification';
+
+const endpoint = 'https://api.storybook.test/service/users/drafts/single';
+const readUrl = (scope = 'scope:360|thread:main') =>
+	`${endpoint}?scopeKey=${encodeURIComponent(scope)}`;
+let originalFetch: typeof fetch;
+let delegate: ReturnType<typeof vi.fn<typeof fetch>>;
+const install = async () => {
+	const fixture = await import('./composerStoryDecorator');
+	return fixture.installComposerSingleDraftFixture();
+};
+beforeEach(() => {
+	originalFetch = globalThis.fetch;
+	delegate = vi.fn(async (input, init) =>
+		recordUnexpectedRequest(new Request(input, init))
+	);
+	globalThis.fetch = delegate;
+});
+afterEach(async () => {
+	cleanup();
+	try {
+		await finishStoryVerification();
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+describe('composer scenario-owned single draft fixture', () => {
+	it.each(['string', 'URL', 'Request'])(
+		'answers the exact empty GET for %s input',
+		async (kind) => {
+			const dispose = await install();
+			const input =
+				kind === 'Request'
+					? new Request(readUrl())
+					: kind === 'URL'
+						? new URL(readUrl())
+						: readUrl();
+			const response = await fetch(input);
+			expect(response.status).toBe(204);
+			await expect(response.text()).resolves.toBe('');
+			expect(delegate).not.toHaveBeenCalled();
+			dispose();
+		}
+	);
+	it('declares only the three observed empty composer scope keys', async () => {
+		const dispose = await install();
+		for (const scope of [
+			'scope:360|thread:main',
+			'scope:361|thread:main',
+			'scope:9001|thread:main'
+		]) {
+			expect((await fetch(readUrl(scope))).status).toBe(204);
+		}
+		expect(delegate).not.toHaveBeenCalled();
+		dispose();
+	});
+	it('installs before a real child layout-effect read and retains the actual 360 to 361 session switch', async () => {
+		const { ComposerStoryDecorator, buildMockActiveSession } = await import(
+			'./composerStoryDecorator'
+		);
+		const reads: Promise<Response>[] = [];
+		const Child = ({ scope }: { scope: string }) => {
+			React.useLayoutEffect(() => {
+				reads.push(fetch(readUrl(scope)));
+			}, [scope]);
+			return null;
+		};
+		const scene = (id: number) => (
+			<ComposerStoryDecorator
+				activeSession={buildMockActiveSession({}, { id })}
+			>
+				<Child scope={`scope:${id}|thread:main`} />
+			</ComposerStoryDecorator>
+		);
+		const view = render(scene(360));
+		expect(reads).toHaveLength(1);
+		expect((await reads[0]).status).toBe(204);
+		view.rerender(scene(361));
+		expect(reads).toHaveLength(2);
+		expect((await reads[1]).status).toBe(204);
+		view.unmount();
+		expect(globalThis.fetch).toBe(delegate);
+		expect(delegate).not.toHaveBeenCalled();
+
+		// Match the real image story: discarded StrictMode renders, verification
+		// restoration before unmount, then another composer in the same module.
+		const strictPhase = beginStoryVerification();
+		const strict = render(
+			<div>
+				<React.StrictMode>{scene(360)}</React.StrictMode>
+			</div>
+		);
+		const strictReads = reads.slice(2);
+		expect(strictReads.length).toBeGreaterThan(0);
+		for (const response of await Promise.all(strictReads))
+			expect(response.status).toBe(204);
+		await strictPhase.complete();
+		strict.unmount();
+		expect(globalThis.fetch).toBe(delegate);
+		const nextPhase = beginStoryVerification();
+		const next = render(scene(361));
+		try {
+			const response = await fetch(
+				'https://api.storybook.test/service/users/consultants?agencyId=101'
+			);
+			const { storybookAgencyConsultants } = await import(
+				'./composerStoryDecorator'
+			);
+			await expect(response.json()).resolves.toEqual(
+				storybookAgencyConsultants
+			);
+		} finally {
+			next.unmount();
+			await nextPhase.complete();
+		}
+	});
+	it('restores its captured fetch exactly once', async () => {
+		const dispose = await install();
+		dispose();
+		expect(globalThis.fetch).toBe(delegate);
+		dispose();
+		expect(globalThis.fetch).toBe(delegate);
+	});
+	it('late A disposal cannot replace B and a held A cannot answer after disposal', async () => {
+		const finish = beginStoryVerification();
+		const disposeA = await install();
+		const heldA = globalThis.fetch;
+		disposeA();
+		const disposeB = await install();
+		const heldB = globalThis.fetch;
+		disposeA();
+		expect(globalThis.fetch).toBe(heldB);
+		expect((await fetch(readUrl('scope:361|thread:main'))).status).toBe(
+			204
+		);
+		await expect(heldA(readUrl())).rejects.toThrow(
+			'Unexpected product API request: GET'
+		);
+		await expect(finish.complete()).rejects.toThrow(
+			'unexpected-request: GET'
+		);
+		disposeB();
+	});
+	it('does not overwrite a newer foreign fetch wrapper on disposal', async () => {
+		const dispose = await install();
+		const foreign = vi.fn<typeof fetch>();
+		globalThis.fetch = foreign;
+		dispose();
+		dispose();
+		expect(globalThis.fetch).toBe(foreign);
+		// The actual decorator's outer composer wrapper must also respect ownership.
+		globalThis.fetch = delegate;
+		const { ComposerStoryDecorator } = await import(
+			'./composerStoryDecorator'
+		);
+		const view = render(
+			<ComposerStoryDecorator>
+				<span />
+			</ComposerStoryDecorator>
+		);
+		globalThis.fetch = foreign;
+		view.unmount();
+		expect(globalThis.fetch).toBe(foreign);
+	});
+
+	const rejected = [
+		[
+			'wrong origin',
+			readUrl().replace('api.storybook.test', 'foreign.storybook.test'),
+			'GET'
+		],
+		[
+			'plural list path',
+			'https://api.storybook.test/service/users/drafts?page=0&perPage=200',
+			'GET'
+		],
+		['unowned scope', readUrl('scope:4711|thread:main'), 'GET'],
+		['missing query', endpoint, 'GET'],
+		['extra query', `${readUrl()}&other=1`, 'GET'],
+		[
+			'duplicate query',
+			`${readUrl()}&scopeKey=scope%3A360%7Cthread%3Amain`,
+			'GET'
+		],
+		['fragment', `${readUrl()}#other`, 'GET'],
+		['write', readUrl(), 'PATCH']
+	];
+	it.each(rejected)(
+		'delegates %s unchanged to the actual strict request guard',
+		async (_name, url, method) => {
+			const finish = beginStoryVerification();
+			const dispose = await install();
+			const input = new Request(url);
+			const init = { method, signal: new AbortController().signal };
+			await expect(fetch(input, init)).rejects.toThrow(
+				`Unexpected product API request: ${method} ${url}`
+			);
+			expect(delegate).toHaveBeenCalledExactlyOnceWith(input, init);
+			await expect(finish.complete()).rejects.toThrow(
+				`unexpected-request: ${method} ${url}`
+			);
+			dispose();
+		}
+	);
+	it('reads Request.method and permits an explicit GET override without swallowing a write', async () => {
+		const finish = beginStoryVerification();
+		const dispose = await install();
+		const request = new Request(readUrl(), { method: 'POST' });
+		await expect(fetch(request)).rejects.toThrow(
+			'Unexpected product API request: POST'
+		);
+		expect((await fetch(request, { method: 'GET' })).status).toBe(204);
+		await expect(finish.complete()).rejects.toThrow(
+			'unexpected-request: POST'
+		);
+		dispose();
+	});
+});

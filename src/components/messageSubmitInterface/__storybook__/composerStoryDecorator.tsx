@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useInsertionEffect } from 'react';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -230,8 +230,61 @@ const requestUrl = (input: RequestInfo | URL): string => {
 	return input.url;
 };
 
+// These three empty scenarios belong to MessageSubmitInterface.stories:
+// default 360, its explicit session switch 361, and group chat 9001.
+const composerEmptyDraftScopes = new Set([
+	'scope:360|thread:main',
+	'scope:361|thread:main',
+	'scope:9001|thread:main'
+]);
+
+const ownsComposerSingleDraftRead = (
+	input: RequestInfo | URL,
+	init?: RequestInit
+) => {
+	const method =
+		init?.method ?? (input instanceof Request ? input.method : 'GET');
+	if (method.toUpperCase() !== 'GET') return false;
+	let url: URL;
+	try {
+		url = new URL(input instanceof Request ? input.url : String(input));
+	} catch {
+		return false;
+	}
+	return (
+		url.origin === 'https://api.storybook.test' &&
+		url.pathname === '/service/users/drafts/single' &&
+		url.hash === '' &&
+		[...url.searchParams].length === 1 &&
+		composerEmptyDraftScopes.has(url.searchParams.get('scopeKey') ?? '')
+	);
+};
+
+/** Exact no-content read fixture; list reads and all writes keep their owners. */
+export const installComposerSingleDraftFixture = () => {
+	const delegate = globalThis.fetch;
+	let active = true;
+	const ownedFetch: typeof fetch = function (this: unknown, input, init) {
+		if (
+			active &&
+			globalThis.fetch === ownedFetch &&
+			ownsComposerSingleDraftRead(input, init)
+		) {
+			return Promise.resolve(new Response(null, { status: 204 }));
+		}
+		return delegate.call(this, input, init);
+	};
+	globalThis.fetch = ownedFetch;
+	return () => {
+		if (!active) return;
+		active = false;
+		if (globalThis.fetch === ownedFetch) globalThis.fetch = delegate;
+	};
+};
+
 let composerFetchMockDepth = 0;
 let composerOriginalFetch: typeof globalThis.fetch | null = null;
+let composerOwnedFetch: typeof globalThis.fetch | null = null;
 
 /**
  * Layered on top of the global storybook fetch mock: specific composer
@@ -240,11 +293,17 @@ let composerOriginalFetch: typeof globalThis.fetch | null = null;
 const installComposerFetchMocks = () => {
 	composerFetchMockDepth += 1;
 
+	let released = false;
 	const restore = () => {
+		if (released) return;
+		released = true;
 		composerFetchMockDepth = Math.max(0, composerFetchMockDepth - 1);
 		if (composerFetchMockDepth === 0 && composerOriginalFetch) {
-			globalThis.fetch = composerOriginalFetch;
+			if (globalThis.fetch === composerOwnedFetch) {
+				globalThis.fetch = composerOriginalFetch;
+			}
 			composerOriginalFetch = null;
+			composerOwnedFetch = null;
 		}
 	};
 
@@ -252,16 +311,19 @@ const installComposerFetchMocks = () => {
 		return restore;
 	}
 
-	const previousFetch = globalThis.fetch.bind(globalThis);
+	const previousFetch = globalThis.fetch;
 	composerOriginalFetch = previousFetch;
 
-	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+	const ownedFetch: typeof fetch = async (
+		input: RequestInfo | URL,
+		init?: RequestInit
+	) => {
 		let pathname = '';
 		try {
 			pathname = new URL(requestUrl(input), window.location.origin)
 				.pathname;
 		} catch {
-			return previousFetch(input, init);
+			return previousFetch.call(globalThis, input, init);
 		}
 
 		if (pathname.endsWith('/service/users/consultants')) {
@@ -289,9 +351,11 @@ const installComposerFetchMocks = () => {
 				: jsonResponse({});
 		}
 
-		return previousFetch(input, init);
+		return previousFetch.call(globalThis, input, init);
 	};
 
+	composerOwnedFetch = ownedFetch;
+	globalThis.fetch = ownedFetch;
 	return restore;
 };
 
@@ -308,12 +372,16 @@ export function ComposerStoryDecorator({
 	userData?: any;
 	children: React.ReactNode;
 }) {
-	// Install during render (useState initializer), not in an effect: the
-	// composer fires its consultant/supervisor fetches from child effects,
-	// which run BEFORE this parent's effects — an effect-installed mock would
-	// always be one render too late and the @-mention directory stayed empty.
-	const [restoreFetchMocks] = useState(() => installComposerFetchMocks());
-	useEffect(() => restoreFetchMocks, [restoreFetchMocks]);
+	// Insertion effects are paired with committed mounts, including nested
+	// StrictMode, and run before the child's layout-effect API reads.
+	useInsertionEffect(() => {
+		const restoreComposer = installComposerFetchMocks();
+		const restoreDrafts = installComposerSingleDraftFixture();
+		return () => {
+			restoreDrafts();
+			restoreComposer();
+		};
+	}, []);
 
 	return (
 		<MatrixClientContext.Provider
