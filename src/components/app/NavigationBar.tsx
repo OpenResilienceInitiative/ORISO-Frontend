@@ -894,9 +894,10 @@ const NavigationUnreadIndicator = ({
 
 	useEffect(() => {
 		// After first render wait for initial animation
-		setTimeout(() => {
+		const timeout = setTimeout(() => {
 			setVisible(true);
 		}, 1000);
+		return () => clearTimeout(timeout);
 	}, []);
 
 	const display = count > 99 ? '99+' : String(count);
