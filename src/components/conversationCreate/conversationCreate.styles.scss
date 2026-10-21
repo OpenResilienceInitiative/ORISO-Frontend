@@ -476,6 +476,27 @@ body.conversationCreate--active .navigation__wrapper {
 		margin: 0;
 	}
 
+	/* Who can be picked and what happens on create (#1772). */
+	&__hint {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+	}
+
+	/* A refusal of the dedicated room stays on the card with its reason. */
+	&__error {
+		background: var(--m3-error-container, #ffdad6);
+		border-radius: 12px;
+		color: var(--m3-on-error-container, #410002);
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+		padding: 12px 16px;
+	}
+
 	&__actions {
 		align-items: flex-start;
 		display: flex;

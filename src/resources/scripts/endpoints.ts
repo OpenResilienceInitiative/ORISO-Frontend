@@ -99,6 +99,8 @@ export const endpoints = {
 	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
 	error: userServiceOrigin + '/service/error-reports',
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
+	internalSubsetChat:
+		userServiceOrigin + '/service/users/chat/internal-subset',
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	keycloakAccessToken:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),

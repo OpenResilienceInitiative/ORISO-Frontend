@@ -892,15 +892,37 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
+			"error": {
+				"recipientsRequired": "Bitte wählen Sie mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entfernen Sie die Person oder versuchen Sie es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den Ihre Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuchen Sie es erneut.",
+				"encryptionRequired": "Interna mit ausgewählten Personen gibt es nur verschlüsselt, und die Verschlüsselung ist derzeit nicht verfügbar. Es wurde nichts erstellt.",
+				"disabled": "Interna mit ausgewählten Personen sind für Sie nicht verfügbar: Sie sind nicht freigeschaltet, Ihnen fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wenden Sie sich an Ihre Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warten Sie einen Moment und versuchen Sie es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wenden Sie sich an den Support."
+			},
 			"nameLabel": "Name Interna",
+			"noColleagues": "Keine Kolleg:innen zur Auswahl",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
+			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",
 			"removePerson": "{{name}} entfernen",
+			"reusedNotice": {
+				"title": "Bestehender Raum geöffnet",
+				"text": "Mit genau diesen Personen gab es schon einen Raum. Er wurde geöffnet, es wurde kein neuer erstellt."
+			},
+			"scope": {
+				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen."
+			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
 			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
 			"title": "Interna besprechen",
 			"togglePersonList": "Personenliste öffnen oder schließen",
+			"tooMany": "Sie können bis zu {{max}} Personen auswählen.",
 			"vacatedHint": "nicht mehr in der Beratungsstelle"
 		},
 		"circle": {
