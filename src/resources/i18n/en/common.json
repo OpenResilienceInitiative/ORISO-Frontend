@@ -6024,11 +6024,6 @@
 			"descriptionCall": "Your counsellor cannot let you in at the moment. Try again later or send a message.",
 			"descriptionGroup": "The group lead cannot let you in at the moment. Try again later."
 		},
-		"cancelled": {
-			"title": "You stopped waiting",
-			"descriptionCall": "You can knock again while the call is running.",
-			"descriptionGroup": "You can knock again while the group chat is open."
-		},
 		"knockAgain": "Knock again",
 		"devices": {
 			"camera": "Camera",

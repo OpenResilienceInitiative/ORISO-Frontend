@@ -10,14 +10,11 @@ import { useCallback, useState } from 'react';
  * - `waiting`: the knock is out; the host decides.
  * - `admitted`: let in; the caller joins and closes the dialog.
  * - `declined`: the host said no for now.
- * - `cancelled`: the person stopped waiting.
+ *
+ * "Nicht mehr warten" has no phase: it withdraws the knock and the caller
+ * closes the dialog (Frank, 2026-10-21).
  */
-export type KnockWaitPhase =
-	| 'consent'
-	| 'waiting'
-	| 'admitted'
-	| 'declined'
-	| 'cancelled';
+export type KnockWaitPhase = 'consent' | 'waiting' | 'admitted' | 'declined';
 
 /** `call`: a running call in the chat. `group`: the time-limited group chat. */
 export type KnockWaitVariant = 'call' | 'group';
@@ -26,7 +23,6 @@ export type KnockWaitEvent =
 	| 'consentAccepted'
 	| 'admitted'
 	| 'declined'
-	| 'cancel'
 	| 'knockAgain';
 
 /** Consent is asked in the group variant only, and only when missing. */
@@ -37,9 +33,9 @@ export const initialKnockWaitPhase = (
 	variant === 'group' && consentRequired ? 'consent' : 'waiting';
 
 /**
- * The only transitions there are. Anything else keeps the phase: a host who
- * admits someone who already stopped waiting must not pull them in, and a
- * second click on "Erneut anklopfen" must not knock twice.
+ * The only transitions there are. Anything else keeps the phase: a late
+ * answer never skips the consent, and a second click on "Erneut anklopfen"
+ * must not knock twice.
  */
 export const nextKnockWaitPhase = (
 	phase: KnockWaitPhase,
@@ -51,10 +47,8 @@ export const nextKnockWaitPhase = (
 		case 'waiting':
 			if (event === 'admitted') return 'admitted';
 			if (event === 'declined') return 'declined';
-			if (event === 'cancel') return 'cancelled';
 			return phase;
 		case 'declined':
-		case 'cancelled':
 			return event === 'knockAgain' ? 'waiting' : phase;
 		case 'admitted':
 			return phase;

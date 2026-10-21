@@ -79,6 +79,7 @@ const KnockWaitDemo = ({
 	const { phase, dispatch } = useKnockWaitPhase(
 		initialPhase ?? initialKnockWaitPhase(props.variant, consentRequired)
 	);
+	const [open, setOpen] = useState(true);
 	const [micOn, setMicOn] = useState(true);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [selection, setSelection] = useState<CallDeviceSelection>({});
@@ -113,9 +114,10 @@ const KnockWaitDemo = ({
 					dispatch('consentAccepted')
 				)
 			}
+			open={open}
 			onCancel={() => {
 				onCancel();
-				dispatch('cancel');
+				setOpen(false);
 			}}
 			onKnockAgain={() => {
 				onKnockAgain();
@@ -188,6 +190,14 @@ const expectVisible = async (element: HTMLElement | Promise<HTMLElement>) => {
 	const el = await element;
 	await waitFor(() => expect(el).toBeVisible());
 };
+
+/** Gone: no dialog left in the page, no "cancelled" screen. */
+const expectClosed = (canvasElement: HTMLElement) =>
+	waitFor(() =>
+		expect(
+			page(canvasElement).queryByTestId('knock-wait-dialog')
+		).toBeNull()
+	);
 
 /** Fits the viewport: no sideways scroll, nothing cut at the edges. */
 const expectFitsViewport = async (canvasElement: HTMLElement) => {
@@ -306,24 +316,20 @@ export const CallChooseMicrophone: Story = {
 };
 
 export const CallStopWaiting: Story = {
-	name: 'Call · stop waiting, then knock again',
+	name: 'Call · stop waiting closes the dialog',
 	globals: desktop1440Globals,
 	args: { ...call },
 	play: async ({ canvasElement, args }) => {
 		const p = page(canvasElement);
 		await userEvent.click(await p.findByTestId('knock-wait-cancel'));
 		await expect(args.onCancel).toHaveBeenCalledTimes(1);
-		await expectVisible(
-			await p.findByRole('heading', { name: 'Sie warten nicht mehr' })
-		);
-		await userEvent.click(p.getByTestId('knock-wait-again'));
-		await expect(args.onKnockAgain).toHaveBeenCalledTimes(1);
-		await expectVisible(await p.findByTestId('knock-wait-status'));
+		await expectClosed(canvasElement);
+		await expect(args.onKnockAgain).not.toHaveBeenCalled();
 	}
 };
 
 export const CallEscapeStopsWaiting: Story = {
-	name: 'Call · Escape stops waiting, never hides it',
+	name: 'Call · Escape stops waiting and closes',
 	globals: desktop1440Globals,
 	args: { ...call },
 	play: async ({ canvasElement, args }) => {
@@ -331,11 +337,7 @@ export const CallEscapeStopsWaiting: Story = {
 		await userEvent.keyboard('{Escape}');
 		await expect(args.onCancel).toHaveBeenCalledTimes(1);
 		await expect(args.onClose).not.toHaveBeenCalled();
-		await expectVisible(
-			await page(canvasElement).findByRole('heading', {
-				name: 'Sie warten nicht mehr'
-			})
-		);
+		await expectClosed(canvasElement);
 	}
 };
 
@@ -381,19 +383,6 @@ export const CallDeclinedClose: Story = {
 			await page(canvasElement).findByTestId('knock-wait-close')
 		);
 		await expect(args.onClose).toHaveBeenCalledTimes(1);
-	}
-};
-
-export const CallCancelled: Story = {
-	name: 'Call · cancelled by the person',
-	globals: desktop1440Globals,
-	args: { ...call, initialPhase: 'cancelled' },
-	play: async ({ canvasElement }) => {
-		await expectVisible(
-			await page(canvasElement).findByText(
-				'Sie können wieder anklopfen, solange das Gespräch läuft.'
-			)
-		);
 	}
 };
 
@@ -496,6 +485,19 @@ export const GroupWaiting: Story = {
 	}
 };
 
+export const GroupStopWaiting: Story = {
+	name: 'Group · stop waiting closes the dialog',
+	globals: desktop1440Globals,
+	args: { ...group },
+	play: async ({ canvasElement, args }) => {
+		await userEvent.click(
+			await page(canvasElement).findByTestId('knock-wait-cancel')
+		);
+		await expect(args.onCancel).toHaveBeenCalledTimes(1);
+		await expectClosed(canvasElement);
+	}
+};
+
 export const GroupWaitingPhone: Story = {
 	name: 'Group · waiting · phone 390',
 	globals: phone390Globals,
@@ -533,19 +535,6 @@ export const GroupDeclined: Story = {
 	}
 };
 
-export const GroupCancelled: Story = {
-	name: 'Group · cancelled by the person',
-	globals: desktop1440Globals,
-	args: { ...group, initialPhase: 'cancelled' },
-	play: async ({ canvasElement }) => {
-		await expectVisible(
-			await page(canvasElement).findByText(
-				'Sie können wieder anklopfen, solange der Gruppenchat geöffnet ist.'
-			)
-		);
-	}
-};
-
 /* ---------- Live devices ---------- */
 
 const Live = (props: DemoProps) => {
@@ -556,9 +545,11 @@ const Live = (props: DemoProps) => {
 	});
 	const live = useLiveCallDevices('video', controls);
 	const { phase, dispatch } = useKnockWaitPhase('waiting');
+	const [open, setOpen] = useState(true);
 	return (
 		<KnockWaitDialog
 			{...props}
+			open={open}
 			phase={phase}
 			media={{
 				modality: 'video',
@@ -581,7 +572,7 @@ const Live = (props: DemoProps) => {
 						selection: { ...c.selection, [kind]: id }
 					}))
 			}}
-			onCancel={() => dispatch('cancel')}
+			onCancel={() => setOpen(false)}
 			onKnockAgain={() => dispatch('knockAgain')}
 		/>
 	);

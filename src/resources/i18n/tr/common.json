@@ -6109,11 +6109,6 @@
 			"descriptionCall": "Danışmanınız sizi şu anda içeri alamıyor. Daha sonra tekrar deneyin veya bir mesaj yazın.",
 			"descriptionGroup": "Grup yöneticisi sizi şu anda içeri alamıyor. Daha sonra tekrar deneyin."
 		},
-		"cancelled": {
-			"title": "Artık beklemiyorsunuz",
-			"descriptionCall": "Görüşme sürdüğü sürece tekrar kapıyı çalabilirsiniz.",
-			"descriptionGroup": "Grup sohbeti açık olduğu sürece tekrar kapıyı çalabilirsiniz."
-		},
 		"knockAgain": "Tekrar kapıyı çal",
 		"devices": {
 			"camera": "Kamera",

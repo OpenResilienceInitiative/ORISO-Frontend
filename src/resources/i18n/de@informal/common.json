@@ -2734,11 +2734,6 @@
 			"descriptionCall": "Deine Beratung kann dich im Moment nicht reinlassen. Versuch es später noch einmal oder schreib eine Nachricht.",
 			"descriptionGroup": "Die Gruppenleitung kann dich im Moment nicht reinlassen. Versuch es später noch einmal."
 		},
-		"cancelled": {
-			"title": "Du wartest nicht mehr",
-			"descriptionCall": "Du kannst wieder anklopfen, solange das Gespräch läuft.",
-			"descriptionGroup": "Du kannst wieder anklopfen, solange der Gruppenchat geöffnet ist."
-		},
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}

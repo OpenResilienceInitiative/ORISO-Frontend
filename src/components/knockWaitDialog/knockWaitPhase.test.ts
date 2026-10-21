@@ -13,7 +13,6 @@ const EVENTS: KnockWaitEvent[] = [
 	'consentAccepted',
 	'admitted',
 	'declined',
-	'cancel',
 	'knockAgain'
 ];
 
@@ -31,15 +30,13 @@ describe('nextKnockWaitPhase', () => {
 		['consent', 'consentAccepted', 'waiting'],
 		['waiting', 'admitted', 'admitted'],
 		['waiting', 'declined', 'declined'],
-		['waiting', 'cancel', 'cancelled'],
-		['declined', 'knockAgain', 'waiting'],
-		['cancelled', 'knockAgain', 'waiting']
+		['declined', 'knockAgain', 'waiting']
 	])('%s + %s → %s', (phase, event, next) => {
 		expect(nextKnockWaitPhase(phase, event)).toBe(next);
 	});
 
-	it('never lets a person in who stopped waiting', () => {
-		expect(nextKnockWaitPhase('cancelled', 'admitted')).toBe('cancelled');
+	it('does not let a declined person in without a new knock', () => {
+		expect(nextKnockWaitPhase('declined', 'admitted')).toBe('declined');
 	});
 
 	it('never skips the consent', () => {

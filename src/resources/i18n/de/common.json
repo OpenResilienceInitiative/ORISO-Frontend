@@ -6099,11 +6099,6 @@
 			"descriptionCall": "Ihre Beratung kann Sie im Moment nicht hereinlassen. Versuchen Sie es später noch einmal oder schreiben Sie eine Nachricht.",
 			"descriptionGroup": "Die Gruppenleitung kann Sie im Moment nicht hereinlassen. Versuchen Sie es später noch einmal."
 		},
-		"cancelled": {
-			"title": "Sie warten nicht mehr",
-			"descriptionCall": "Sie können wieder anklopfen, solange das Gespräch läuft.",
-			"descriptionGroup": "Sie können wieder anklopfen, solange der Gruppenchat geöffnet ist."
-		},
 		"knockAgain": "Erneut anklopfen",
 		"devices": {
 			"camera": "Kamera",

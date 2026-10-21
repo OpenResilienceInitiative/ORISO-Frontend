@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { CircularProgress, useMediaQuery } from '@mui/material';
 import MicRoundedIcon from '@mui/icons-material/MicRounded';
 import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
-import DoorFrontRoundedIcon from '@mui/icons-material/DoorFrontRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import EventBusyRoundedIcon from '@mui/icons-material/EventBusyRounded';
 import { M3Dialog, M3DialogAction } from '../m3Dialog/M3Dialog';
@@ -62,7 +61,10 @@ export interface KnockWaitDialogProps {
 	 * rejected promise keeps the consent step and says it was not saved.
 	 */
 	onAcceptConsent?: () => Promise<void> | void;
-	/** "Nicht mehr warten" (and Escape while waiting). */
+	/**
+	 * "Nicht mehr warten" (and Escape while waiting): withdraws the knock;
+	 * the caller closes the dialog. There is no "cancelled" screen.
+	 */
 	onCancel: () => void;
 	onKnockAgain: () => void;
 	onClose: () => void;
@@ -76,8 +78,7 @@ export interface KnockWaitDialogProps {
 const HERO: Partial<Record<KnockWaitPhase, ReactNode>> = {
 	consent: <GdprIcon />,
 	admitted: <CheckCircleRoundedIcon />,
-	declined: <EventBusyRoundedIcon />,
-	cancelled: <DoorFrontRoundedIcon />
+	declined: <EventBusyRoundedIcon />
 };
 
 /**
@@ -239,14 +240,6 @@ export const KnockWaitDialog = ({
 			description = of(
 				t('knockWait.declined.descriptionCall'),
 				t('knockWait.declined.descriptionGroup')
-			);
-			actions = [close, knockAgain];
-			break;
-		case 'cancelled':
-			title = t('knockWait.cancelled.title');
-			description = of(
-				t('knockWait.cancelled.descriptionCall'),
-				t('knockWait.cancelled.descriptionGroup')
 			);
 			actions = [close, knockAgain];
 			break;
