@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
+		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
+		"empty": "ተሳተፍቲ የለዉን።"
+	},
 	"menuEffects": {
 		"title": "ኣቀራርባ ምናሌ",
 		"label": "መጋረጃን ቀሊል ምንቅስቓስ ምናሌን",
@@ -2321,6 +2326,7 @@
 			"showPreview": "ቅድመ-ርእይቶ ቻት ኣርእይ",
 			"showDetails": "ዝርዝር ኣርእይ",
 			"preview": {
+				"authors": "ኣብዚ ቅድመ ምርኢት ዘለዉ ሰባት",
 				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
 				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።",
 				"image": "ምስሊ",

@@ -138,9 +138,7 @@ describe('an organic shape for the call arrangements', () => {
 	it('still ties the shadow to the outline when nothing says otherwise', () => {
 		// Backwards compatible on purpose: every existing caller passes only
 		// `outline`, and none of them should change.
-		const withRing = render(
-			<AnimalAvatar avatar={avatar()} size={100} />
-		);
+		const withRing = render(<AnimalAvatar avatar={avatar()} size={100} />);
 		expect(
 			(withRing.container.firstChild as HTMLElement).style.boxShadow
 		).not.toBe('none');

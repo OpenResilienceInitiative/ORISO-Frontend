@@ -37,9 +37,22 @@ import {
 	usePreviewHistoryPaging,
 	type PreviewHistoryStatus
 } from './usePreviewHistoryPaging';
+import {
+	HEADER_STACK_PROPS,
+	ParticipantAvatarStack
+} from '../message/ParticipantAvatarStack';
+import type { StackParticipant } from '../message/participantStack';
+import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
+import { resolveRoomHeaderDensity } from '../sessionHeader/roomHeaderDensity';
+import useMeasure from 'react-use-measure';
+import { ResizeObserver } from '@juggle/resize-observer';
 import './conversationPreview.styles';
 
-const EMPTY_TIMELINE: PreviewTimeline = { messages: [], reactionEvents: [] };
+const EMPTY_TIMELINE: PreviewTimeline = {
+	messages: [],
+	reactionEvents: [],
+	activityByEvent: new Map()
+};
 
 /* The preview never decrypts with legacy room keys and never reports
    decryption errors: it shows what the app's Matrix client already holds. */
@@ -110,6 +123,7 @@ const PreviewHistoryControl = ({
 interface PreviewTimeline {
 	messages: MessageItem[];
 	reactionEvents: ReactionEvent[];
+	activityByEvent: Map<string, number>;
 }
 
 /** A room the session list has not loaded yet still renders its rows. */
@@ -150,6 +164,10 @@ export const ConversationPreview = ({
 	const sessionsContext = useContext(SessionsDataContext);
 	const [timeline, setTimeline] = useState<PreviewTimeline>(EMPTY_TIMELINE);
 	const [roomAvailable, setRoomAvailable] = useState<boolean>(false);
+	const [previewRef, previewBounds] = useMeasure({
+		polyfill: ResizeObserver
+	});
+	const density = resolveRoomHeaderDensity({ width: previewBounds.width });
 	const listRef = useRef<HTMLDivElement | null>(null);
 	// Deliberately a ref: loadMessages must stay identity-stable across
 	// renders (its identity drives the subscription effect), and translate's
@@ -190,7 +208,10 @@ export const ConversationPreview = ({
 				room,
 				translateRef.current('e2ee.message.encryption.text')
 			),
-			reactionEvents: extractReactionEvents(events)
+			reactionEvents: extractReactionEvents(events),
+			activityByEvent: new Map(
+				events.map((event) => [event.getId?.(), event.getTs?.() ?? 0])
+			)
 		});
 		refreshStatus();
 	}, [roomId, limit, refreshStatus]);
@@ -308,6 +329,28 @@ export const ConversationPreview = ({
 		}
 	}, [visibleMessages]);
 
+	// The preview knows visible messages, not the session's privacy allow-list.
+	// Derive authors from that exact slice; joined room members can include
+	// silent agency counsellors and must never be exposed here (ADR-002).
+	const participants = useMemo<StackParticipant[]>(() => {
+		const authors = new Map<string, StackParticipant>();
+		visibleMessages.forEach((message) => {
+			if (!message.userId || isTechnicalMatrixUser(message.userId))
+				return;
+			const previous = authors.get(message.userId);
+			const lastActivity = timeline.activityByEvent.get(message._id) ?? 0;
+			if (!previous || lastActivity > (previous.lastActivity ?? 0)) {
+				authors.set(message.userId, {
+					userId: message.userId,
+					username: message.userId,
+					displayName: message.displayName,
+					lastActivity
+				});
+			}
+		});
+		return [...authors.values()];
+	}, [visibleMessages, timeline.activityByEvent]);
+
 	const historyControl = (
 		<PreviewHistoryControl
 			status={status}
@@ -340,34 +383,48 @@ export const ConversationPreview = ({
 
 	return (
 		<ActiveSessionContext.Provider value={sessionContextValue}>
-			<div
-				className="conversationPreview"
-				ref={listRef}
-				data-testid="conversation-preview"
-			>
-				{historyControl}
-				<MessageTimeline
-					messages={visibleMessages}
-					renderMode={threadRootId ? 'thread' : 'main'}
-					threadRootId={threadRootId}
-					forceShow={Boolean(threadRootId)}
-					keyPrefix="preview-"
-					clientName={
-						getContact(activeSession)?.username ||
-						translate('sessionList.user.consultantUnknown')
-					}
-					askerMatrixUserIdFor={() =>
-						activeSession.item?.askerMatrixUserId
-					}
-					isMyMessage={isMyMessage}
-					handleDecryptionErrors={ignore}
-					handleDecryptionSuccess={ignore}
-					e2eeParams={PREVIEW_E2EE_PARAMS}
-					threadSummaryFor={(id) => threadSummaries.get(id)}
-					resolveReplyQuote={resolveReplyQuote}
-					reactionsFor={reactionsFor}
-					readOnly
-				/>
+			<div className="conversationPreview" ref={previewRef}>
+				{participants.length > 0 && (
+					<div className="conversationPreview__header">
+						<ParticipantAvatarStack
+							{...HEADER_STACK_PROPS}
+							participants={participants}
+							maxVisible={density.stackMaxVisible}
+						/>
+						<span className="conversationPreview__participantLabel">
+							{translate('notifications.center.preview.authors')}
+						</span>
+					</div>
+				)}
+				<div
+					className="conversationPreview__messages"
+					ref={listRef}
+					data-testid="conversation-preview"
+				>
+					{historyControl}
+					<MessageTimeline
+						messages={visibleMessages}
+						renderMode={threadRootId ? 'thread' : 'main'}
+						threadRootId={threadRootId}
+						forceShow={Boolean(threadRootId)}
+						keyPrefix="preview-"
+						clientName={
+							getContact(activeSession)?.username ||
+							translate('sessionList.user.consultantUnknown')
+						}
+						askerMatrixUserIdFor={() =>
+							activeSession.item?.askerMatrixUserId
+						}
+						isMyMessage={isMyMessage}
+						handleDecryptionErrors={ignore}
+						handleDecryptionSuccess={ignore}
+						e2eeParams={PREVIEW_E2EE_PARAMS}
+						threadSummaryFor={(id) => threadSummaries.get(id)}
+						resolveReplyQuote={resolveReplyQuote}
+						reactionsFor={reactionsFor}
+						readOnly
+					/>
+				</div>
 			</div>
 		</ActiveSessionContext.Provider>
 	);

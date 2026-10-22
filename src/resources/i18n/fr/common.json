@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Chargement des participants …",
+		"unavailable": "Les participants n’ont pas pu être chargés.",
+		"empty": "Aucun participant."
+	},
 	"menuEffects": {
 		"title": "Affichage des menus",
 		"label": "Voile et animations douces",
@@ -2321,6 +2326,7 @@
 			"showPreview": "Afficher l'aperçu de la conversation",
 			"showDetails": "Afficher les détails",
 			"preview": {
+				"authors": "Personnes dans cet aperçu",
 				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
 				"empty": "Pas encore de messages dans cette conversation.",
 				"image": "Image jointe",
