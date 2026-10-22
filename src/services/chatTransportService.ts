@@ -37,10 +37,13 @@ export interface ResolvedChatTransportSession {
 }
 
 export interface SendTextMessageOptions {
-	roomIdOrSessionId: string | number;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	roomIdOrSessionId?: string | number;
 	message: string;
-	sendMailNotification: boolean;
-	isEncrypted: boolean;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	sendMailNotification?: boolean;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	isEncrypted?: boolean;
 	sessionId?: number;
 	matrixRoomId?: string;
 	threadRootId?: string | null;
@@ -619,23 +622,25 @@ class ChatTransportService {
 	 * Safe no-op when the Matrix client or room is not available —
 	 * there is no legacy fallback transport.
 	 */
-	public async markRoomAsRead(matrixRoomId: string): Promise<void> {
+	public async markRoomAsRead(matrixRoomId: string): Promise<boolean> {
 		const matrixClient = getMatrixClientService()?.getClient?.();
 		if (!matrixClient || !matrixRoomId) {
-			return;
+			return false;
 		}
 
 		const room = matrixClient.getRoom?.(matrixRoomId);
 		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
 		const latestEvent = events[events.length - 1];
 		if (!latestEvent) {
-			return;
+			return false;
 		}
 
 		try {
 			await (matrixClient as any).sendReadReceipt(latestEvent);
+			return true;
 		} catch {
 			// keep UI responsive; the receipt is retried on the next read
+			return false;
 		}
 	}
 }

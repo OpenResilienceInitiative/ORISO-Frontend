@@ -2363,7 +2363,17 @@
 				"loadingOlder": "Ältere Nachrichten werden geladen …",
 				"loadOlderFailed": "Ältere Nachrichten konnten nicht geladen werden.",
 				"retryLoadOlder": "Erneut versuchen",
-				"historyStart": "Beginn des Gesprächs"
+				"historyStart": "Beginn des Gesprächs",
+				"markRead": "Als gelesen markieren",
+				"send": "Senden",
+				"inputLabel": "Antwort schreiben",
+				"editLabel": "Nachricht bearbeiten",
+				"saveEdit": "Speichern",
+				"cancelEdit": "Abbrechen",
+				"openToReply": "Zum Antworten die Unterhaltung öffnen",
+				"coAccess": "Nur lesen: Sie haben Mitzugriff auf diesen Fall.",
+				"groupPending": "Nur lesen, bis Ihr Beitritt bestätigt ist.",
+				"sendFailed": "Senden fehlgeschlagen. Ihr Text bleibt erhalten."
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",

@@ -10,6 +10,7 @@ import {
 	getValueFromCookie,
 	removeAllCookies
 } from '../sessionCookie/accessSessionCookie';
+import { clearPreviewDrafts } from '../notificationsCenter/previewDraftStore';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../../utils/appConfig';
@@ -182,6 +183,8 @@ export const teardownLocalSession = (): void => {
 	// #1377 "Ton": the session → kind map is user-scoped; the next user must
 	// not inherit mute/tone decisions from the previous one.
 	sessionKindRegistry.reset();
+	// #1824: unsent Timeline-preview text is user-scoped too.
+	clearPreviewDrafts();
 	// #1485: the live-chat preference, the shared lease acknowledgement and
 	// the loss record are session-bound; an auth or bootstrap failure that
 	// tears down without logout() must not hand them to the next counsellor.

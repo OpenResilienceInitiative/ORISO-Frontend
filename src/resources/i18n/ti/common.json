@@ -2342,7 +2342,17 @@
 				"loadingOlder": "ዝቐደሙ መልእኽትታት ይመጹ ኣለዉ …",
 				"loadOlderFailed": "ዝቐደሙ መልእኽትታት ክመጹ ኣይከኣሉን።",
 				"retryLoadOlder": "እንደገና ፈትን",
-				"historyStart": "መጀመርታ ዝርርብ"
+				"historyStart": "መጀመርታ ዝርርብ",
+				"markRead": "ዘተ ከም ዝተነበበ ምልካዕ",
+				"send": "ስደድ",
+				"inputLabel": "መልሲ ጽሓፍ",
+				"editLabel": "መልእኽቲ ኣርምም",
+				"saveEdit": "ሓልው",
+				"cancelEdit": "ተው",
+				"openToReply": "ንምምላስ ዘተ ክፈት",
+				"coAccess": "ንምንባብ ጥራይ፡ ናብዚ ጉዳይ ሓባራዊ ኣተኳእታ ኣለኩም።",
+				"groupPending": "እቲ ምስታፍካ ክሳብ ዝጸድቕ ንምንባብ ጥራይ።",
+				"sendFailed": "ምስዳድ ኣይተሳኽዐን። ጽሑፍካ ይተርፍ።"
 			},
 			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",

@@ -11,6 +11,10 @@ import {
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
+import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
+import type { PreviewCapabilities } from './previewCapabilities';
+import { clearPreviewDrafts } from './previewDraftStore';
 
 const transport = vi.hoisted(() => ({
 	getMatrixRoom: vi.fn(),
@@ -27,9 +31,15 @@ const transport = vi.hoisted(() => ({
 	loadMatrixRoomMembers: vi.fn(async () => []),
 	onMatrixRoomMembers: vi.fn(() => () => undefined),
 	// Write paths the real chat uses. The preview must never touch them.
-	markRoomAsRead: vi.fn(async () => undefined),
+	markRoomAsRead: vi.fn(async () => true),
 	sendReaction: vi.fn(async () => undefined),
-	redactEvent: vi.fn(async () => undefined)
+	redactEvent: vi.fn(async () => undefined),
+	// #1824: the writable preview's paths (the chat's own transport calls).
+	sendTextMessage: vi.fn(async () => ({ success: true })),
+	editTextMessage: vi.fn(async () => ({ success: true })),
+	redactMessage: vi.fn(async () => ({ success: true })),
+	removeReaction: vi.fn(async () => ({ success: true })),
+	sendTyping: vi.fn(async () => undefined)
 }));
 const activeView = vi.hoisted(() => vi.fn(async () => undefined));
 
@@ -41,6 +51,10 @@ vi.mock('../../services/chatTransportService', () => ({
 // The chat's "is reading" registration (#847 root cause).
 vi.mock('../../api/apiPatchNotificationActiveView', () => ({
 	apiPatchNotificationActiveView: activeView
+}));
+// jsdom has no layout, so focus-trap finds no tabbable node in an overlay.
+vi.mock('focus-trap-react', () => ({
+	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 // lottie-web asks for a 2d canvas context at import time.
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -135,7 +149,9 @@ beforeAll(async () => {
 	({ MessageContextShell } = await import('../message/messageStoryShell'));
 }, 180000);
 
-const renderPreview = (props: { roomId: string; threadRootId?: string }) =>
+const renderPreview = (
+	props: React.ComponentProps<typeof ConversationPreview>
+) =>
 	render(
 		<MessageContextShell>
 			<ConversationPreview {...props} />
@@ -144,6 +160,7 @@ const renderPreview = (props: { roomId: string; threadRootId?: string }) =>
 
 afterEach(() => {
 	cleanup();
+	clearPreviewDrafts();
 	vi.clearAllMocks();
 	setMatrixClientServiceRef(null);
 });
@@ -720,5 +737,322 @@ describe('ConversationPreview: approved author header', () => {
 				.map((a) => a.getAttribute('data-user-id'))
 				.sort()
 		).toEqual([OWN, LISA].sort());
+	});
+});
+
+describe('ConversationPreview (#1824): writable through the chat rows', () => {
+	const ROOM = '!room:matrix.example';
+	const WRITABLE: PreviewCapabilities = {
+		composer: true,
+		react: true,
+		manageOwn: true,
+		readOnlyReason: null
+	};
+	const READ_ONLY: PreviewCapabilities = {
+		composer: false,
+		react: false,
+		manageOwn: false,
+		readOnlyReason: 'archived'
+	};
+	const t = (key: string) => `notifications.center.preview.${key}`;
+	const conversation = () =>
+		arrange([
+			matrixEvent({ id: '$theirs', sender: LISA, body: 'Von Lisa' }),
+			matrixEvent({ id: '$mine', sender: OWN, body: 'Von mir' })
+		]);
+	const open = (
+		props: Partial<React.ComponentProps<typeof ConversationPreview>> = {}
+	) => {
+		const onConversationRead = vi.fn();
+		const view = renderPreview({
+			roomId: ROOM,
+			sessionId: 13,
+			capabilities: WRITABLE,
+			senderDisplayName: 'Marge',
+			onConversationRead,
+			...props
+		});
+		return { ...view, onConversationRead };
+	};
+	const input = () =>
+		screen.getByRole('textbox', {
+			name: t('inputLabel')
+		}) as HTMLTextAreaElement;
+	const type = (value: string) =>
+		fireEvent.change(input(), { target: { value } });
+	const send = () =>
+		fireEvent.click(screen.getByRole('button', { name: t('send') }));
+	const openMenuOf = (container: HTMLElement, id: string) => {
+		const row = container.querySelector(
+			`[data-message-id="${id}"]`
+		) as HTMLElement;
+		const kebab = row.querySelector(
+			'.messageItem__kebabButton'
+		) as HTMLElement;
+		fireEvent.click(kebab);
+	};
+	const menuItem = (label: string) =>
+		screen.getByRole('menuitem', { name: label });
+
+	it('replies with the chat metadata, then reads the conversation — never an active view', async () => {
+		conversation();
+		const { onConversationRead } = open();
+		type('Guten Tag');
+		send();
+		await waitFor(() =>
+			expect(transport.sendTextMessage).toHaveBeenCalledWith({
+				matrixRoomId: ROOM,
+				sessionId: 13,
+				message: 'Guten Tag',
+				threadRootId: null,
+				replyToEventId: null,
+				senderDisplayName: 'Marge'
+			})
+		);
+		await waitFor(() =>
+			expect(onConversationRead).toHaveBeenCalledTimes(1)
+		);
+		expect(transport.markRoomAsRead).toHaveBeenCalledWith(ROOM);
+		expect(activeView).not.toHaveBeenCalled();
+		expect(input().value).toBe('');
+	});
+
+	it('opening alone writes nothing and reads nothing', () => {
+		conversation();
+		open();
+		expect(transport.markRoomAsRead).not.toHaveBeenCalled();
+		expect(transport.sendTyping).not.toHaveBeenCalled();
+		expect(activeView).not.toHaveBeenCalled();
+	});
+
+	it('marks read only via the explicit button, and only when a receipt went out', async () => {
+		conversation();
+		transport.markRoomAsRead.mockResolvedValueOnce(false);
+		const { onConversationRead } = open();
+		const button = screen.getByRole('button', { name: t('markRead') });
+		fireEvent.click(button);
+		await waitFor(() =>
+			expect(transport.markRoomAsRead).toHaveBeenCalledTimes(1)
+		);
+		expect(onConversationRead).not.toHaveBeenCalled();
+		fireEvent.click(button);
+		await waitFor(() =>
+			expect(onConversationRead).toHaveBeenCalledTimes(1)
+		);
+	});
+
+	it('keeps the draft and shows an error when sending fails', async () => {
+		conversation();
+		transport.sendTextMessage.mockRejectedValueOnce(new Error('403'));
+		const { onConversationRead } = open();
+		type('wichtig');
+		send();
+		expect((await screen.findByRole('alert')).textContent).toContain(
+			t('sendFailed')
+		);
+		expect(input().value).toBe('wichtig');
+		expect(onConversationRead).not.toHaveBeenCalled();
+	});
+
+	it('offers reply, edit and delete on own messages — nothing that leaves the Timeline', () => {
+		conversation();
+		const { container } = open();
+		openMenuOf(container, '$mine');
+		expect(menuItem('message.menu.replyDirect')).toBeTruthy();
+		expect(menuItem('message.menu.edit')).toBeTruthy();
+		expect(
+			screen.queryByRole('menuitem', { name: 'message.menu.forward' })
+		).toBeNull();
+		expect(
+			screen.queryByRole('menuitem', { name: 'message.menu.markText' })
+		).toBeNull();
+		expect(
+			screen.queryByRole('menuitem', { name: 'message.menu.replyThread' })
+		).toBeNull();
+	});
+
+	it('replies to a message with the chat reply relation', async () => {
+		conversation();
+		const { container } = open();
+		openMenuOf(container, '$theirs');
+		fireEvent.click(menuItem('message.menu.replyDirect'));
+		expect(
+			screen.getByText('Von Lisa', {
+				selector: '.conversationPreview__context *'
+			})
+		).toBeTruthy();
+		type('Darauf');
+		send();
+		await waitFor(() =>
+			expect(transport.sendTextMessage).toHaveBeenCalledWith(
+				expect.objectContaining({
+					replyToEventId: '$theirs',
+					message: 'Darauf'
+				})
+			)
+		);
+	});
+
+	it('edits an own message in the composer (m.replace)', async () => {
+		conversation();
+		const { container, onConversationRead } = open();
+		openMenuOf(container, '$mine');
+		fireEvent.click(menuItem('message.menu.edit'));
+		expect(input().value).toBe('Von mir');
+		type('Korrigiert');
+		fireEvent.click(screen.getByRole('button', { name: t('saveEdit') }));
+		await waitFor(() =>
+			expect(transport.editTextMessage).toHaveBeenCalledWith({
+				matrixRoomId: ROOM,
+				targetEventId: '$mine',
+				message: 'Korrigiert'
+			})
+		);
+		expect(transport.sendTextMessage).not.toHaveBeenCalled();
+		await waitFor(() =>
+			expect(onConversationRead).toHaveBeenCalledTimes(1)
+		);
+	});
+
+	it('deletes through the chat confirmation when the tenant allows it', async () => {
+		conversation();
+		// The app's overlay root, where the chat's delete confirmation mounts.
+		const overlayRoot = document.createElement('div');
+		overlayRoot.id = 'overlay';
+		document.body.appendChild(overlayRoot);
+		const { container } = render(
+			<ModalProvider>
+				<MessageContextShell>
+					<ServerSettingsContext.Provider
+						value={
+							{
+								settings: [],
+								settingsReady: true,
+								getSetting: () => ({ value: true })
+							} as any
+						}
+					>
+						<ConversationPreview
+							roomId={ROOM}
+							capabilities={WRITABLE}
+						/>
+					</ServerSettingsContext.Provider>
+				</MessageContextShell>
+			</ModalProvider>
+		);
+		openMenuOf(container, '$mine');
+		fireEvent.click(menuItem('message.menu.delete'));
+		expect(transport.redactMessage).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'message.delete.overlay.confirm'
+			})
+		);
+		await waitFor(() =>
+			expect(transport.redactMessage).toHaveBeenCalledWith({
+				matrixRoomId: ROOM,
+				targetEventId: '$mine'
+			})
+		);
+		overlayRoot.remove();
+	});
+
+	it('reacts through the chat reaction pill', async () => {
+		arrange([
+			matrixEvent({ id: '$theirs', sender: LISA, body: 'Von Lisa' }),
+			matrixEvent({
+				id: '$r1',
+				sender: LISA,
+				type: 'm.reaction',
+				content: {
+					'm.relates_to': {
+						rel_type: 'm.annotation',
+						event_id: '$theirs',
+						key: '👍'
+					}
+				}
+			})
+		]);
+		const { container, onConversationRead } = open();
+		const pill = container.querySelector(
+			'.messageItem__reactionPill'
+		) as HTMLElement;
+		expect(pill.tagName).toBe('BUTTON');
+		fireEvent.click(pill);
+		await waitFor(() =>
+			expect(transport.sendReaction).toHaveBeenCalledWith({
+				matrixRoomId: ROOM,
+				targetEventId: '$theirs',
+				key: '👍'
+			})
+		);
+		await waitFor(() =>
+			expect(onConversationRead).toHaveBeenCalledTimes(1)
+		);
+	});
+
+	it('a supervisor reacts but gets no composer and no message menu', () => {
+		conversation();
+		const { container } = open({
+			capabilities: {
+				...READ_ONLY,
+				react: true,
+				readOnlyReason: 'supervisor'
+			}
+		});
+		expect(screen.queryByRole('textbox')).toBeNull();
+		expect(container.querySelector('.messageItem__kebabButton')).toBeNull();
+	});
+
+	it('read only: the link instead of an input, no menu, no mark-read', () => {
+		conversation();
+		const { container } = open({
+			capabilities: READ_ONLY,
+			openConversationHref: '/sessions/consultant/sessionView/x/13'
+		});
+		expect(screen.queryByRole('textbox')).toBeNull();
+		expect(container.querySelector('.messageItem__kebabButton')).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: t('markRead') })
+		).toBeNull();
+		expect(
+			screen
+				.getByRole('link', { name: t('openToReply') })
+				.getAttribute('href')
+		).toBe('/sessions/consultant/sessionView/x/13');
+	});
+
+	it('explains co-access and a pending group', () => {
+		conversation();
+		open({ capabilities: { ...READ_ONLY, readOnlyReason: 'coAccess' } });
+		expect(screen.getByText(t('coAccess'))).toBeTruthy();
+		cleanup();
+		conversation();
+		open({ capabilities: { ...READ_ONLY, readOnlyReason: 'notJoined' } });
+		expect(screen.getByText(t('groupPending'))).toBeTruthy();
+	});
+
+	it('keeps a draft per conversation', () => {
+		conversation();
+		const { rerender } = open();
+		type('halb geschrieben');
+		const preview = (roomId: string) => (
+			<MessageContextShell>
+				<ConversationPreview roomId={roomId} capabilities={WRITABLE} />
+			</MessageContextShell>
+		);
+		rerender(preview('!other:matrix.example'));
+		expect(input().value).toBe('');
+		rerender(preview(ROOM));
+		expect(input().value).toBe('halb geschrieben');
+	});
+
+	it('ends the typing indicator when the preview closes', () => {
+		conversation();
+		const { unmount } = open();
+		type('tippe');
+		expect(transport.sendTyping).toHaveBeenLastCalledWith(ROOM, true);
+		unmount();
+		expect(transport.sendTyping).toHaveBeenLastCalledWith(ROOM, false);
 	});
 });

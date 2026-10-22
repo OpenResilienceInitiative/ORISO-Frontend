@@ -309,6 +309,14 @@ interface MessageItemComponentProps extends MessageItem {
 	 * consent or notification setup. Reading stays (text, links, files).
 	 */
 	readOnly?: boolean;
+	/**
+	 * #1824: the row is shown outside its conversation (the Activity Timeline
+	 * preview). Message actions stay available where their handlers are wired
+	 * (reply, edit, delete, react), but nothing that leaves the Timeline is
+	 * offered: no joining a call, no consent or notification setup, no
+	 * Erstantwort actions, and no menu entries without a handler here.
+	 */
+	embedded?: boolean;
 }
 
 export const MessageItemComponent = ({
@@ -353,9 +361,11 @@ export const MessageItemComponent = ({
 	onUnreact,
 	sendFailed,
 	encryptionBroke,
-	readOnly = false
+	readOnly = false,
+	embedded = false
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
+	const blocksLeavingActions = readOnly || embedded;
 	const { activeSession, avatarMembers = [] } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -1363,11 +1373,15 @@ export const MessageItemComponent = ({
 						}
 					]
 				: []),
-			{
-				key: 'reply-thread',
-				label: translate('message.menu.replyThread'),
-				icon: <MenuReplyThreadIcon />
-			},
+			...(!embedded || onOpenThread
+				? [
+						{
+							key: 'reply-thread',
+							label: translate('message.menu.replyThread'),
+							icon: <MenuReplyThreadIcon />
+						}
+					]
+				: []),
 			// Editing (m.replace, #435): own messages only, where a handler
 			// is wired (main timeline; not the thread panel).
 			...(onEditDirect
@@ -1379,16 +1393,21 @@ export const MessageItemComponent = ({
 						}
 					]
 				: []),
-			{
-				key: 'mark-text',
-				label: translate('message.menu.markText'),
-				icon: <MenuMarkTextIcon />
-			},
-			{
-				key: 'forward',
-				label: translate('message.menu.forward'),
-				icon: <MenuForwardIcon />
-			},
+			// #1824: no handlers outside the conversation.
+			...(embedded
+				? []
+				: [
+						{
+							key: 'mark-text',
+							label: translate('message.menu.markText'),
+							icon: <MenuMarkTextIcon />
+						},
+						{
+							key: 'forward',
+							label: translate('message.menu.forward'),
+							icon: <MenuForwardIcon />
+						}
+					]),
 			// Delete (#827): Matrix redact handler + allow-deleting + not archived.
 			...(canDeleteMessage
 				? [
@@ -1400,8 +1419,19 @@ export const MessageItemComponent = ({
 					]
 				: [])
 		],
-		[translate, onReplyDirect, onEditDirect, canDeleteMessage]
+		[
+			translate,
+			onReplyDirect,
+			onEditDirect,
+			canDeleteMessage,
+			embedded,
+			onOpenThread
+		]
 	);
+
+	// #1824: a row without menu entries (e.g. a supervisor in the Timeline
+	// preview, who may only react) shows no menu button and no long-press.
+	const hasMenuActions = !readOnly && actionMenuItems.length > 0;
 
 	const handleActionMenuItemClick = useCallback(
 		(actionKey: string) => {
@@ -2138,7 +2168,7 @@ export const MessageItemComponent = ({
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
 							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
-							{...(readOnly
+							{...(!hasMenuActions
 								? {}
 								: {
 										onPointerDown: handleBubblePointerDown,
@@ -2168,9 +2198,9 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
-												readOnly={readOnly}
+												readOnly={blocksLeavingActions}
 												onSetupNotifications={
-													!readOnly &&
+													!blocksLeavingActions &&
 													(grantNotificationPolicy.emailAllowed ||
 														grantNotificationPolicy.browserAllowed)
 														? () =>
@@ -2195,9 +2225,9 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
-												readOnly={readOnly}
+												readOnly={blocksLeavingActions}
 												onSetupNotifications={
-													!readOnly &&
+													!blocksLeavingActions &&
 													(grantNotificationPolicy.emailAllowed ||
 														grantNotificationPolicy.browserAllowed)
 														? () =>
@@ -2598,7 +2628,7 @@ export const MessageItemComponent = ({
 					call={callLifecycle}
 					loadState={apiCallState}
 					onJoin={
-						readOnly ||
+						blocksLeavingActions ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
@@ -2644,7 +2674,7 @@ export const MessageItemComponent = ({
 			>
 				{getMessageDate()}
 				<ErstantwortMessage
-					readOnly={readOnly}
+					readOnly={blocksLeavingActions}
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
@@ -2781,7 +2811,7 @@ export const MessageItemComponent = ({
 										size={AVATAR_SIZES.message}
 									/>
 								</div>
-								{!readOnly && (
+								{hasMenuActions && (
 									<button
 										type="button"
 										className="messageItem__kebabButton messageItem__kebabButton--left"
@@ -2835,7 +2865,7 @@ export const MessageItemComponent = ({
 					isSystemNotification && (
 						<CarimatAvatar
 							menu={
-								!readOnly && (
+								hasMenuActions && (
 									<button
 										type="button"
 										className="messageItem__kebabButton messageItem__kebabButton--left"
@@ -2889,7 +2919,7 @@ export const MessageItemComponent = ({
 								</button>
 							)}
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
-								{!readOnly && (
+								{hasMenuActions && (
 									<button
 										type="button"
 										className="messageItem__kebabButton messageItem__kebabButton--right"

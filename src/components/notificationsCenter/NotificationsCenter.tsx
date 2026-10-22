@@ -1,7 +1,3 @@
-import {
-	parseChannel,
-	rewriteLegacyChannelPath
-} from '../../utils/channelRoute';
 import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
@@ -90,6 +86,8 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { resolvePreviewChannel } from './previewChannel';
+import { useConversationPreviewState } from './useConversationPreviewState';
 import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
@@ -141,13 +139,17 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 
 const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
-	if (resolveThreadRootId(item)) return 'message';
+	if (resolvePreviewChannel(item).threadRootId) return 'message';
 	return 'system';
 };
 
 // WP-06 Activity Timeline (Slice 0a): category is registry-driven for known
 // event types; unknown / local-only types keep the legacy heuristic so nothing
 // regresses while the backend is incremental.
+// #1824: stable identity — the preview hook's D1 effect depends on it.
+const isMessageItem = (item: any): boolean =>
+	resolveItemCategory(item) === 'message';
+
 const resolveItemCategory = (item: any): 'system' | 'message' =>
 	isKnownEventType(item?.eventType)
 		? getEventDescriptor(item.eventType).category
@@ -199,18 +201,6 @@ const resolveSessionId = (item: any): string | null => {
 const searchFromPath = (path?: string | null): string => {
 	const query = String(path || '').split('?')[1];
 	return query ? `?${query}` : '';
-};
-
-// B2 / T24: the thread lives in `?channel=thread:<root>`; a server path that
-// still carries the legacy `threadRootId` is rewritten first.
-const resolveThreadRootId = (item: any): string | null => {
-	const path = rewriteLegacyChannelPath(item?.actionPath as string | null);
-	const search = searchFromPath(path);
-	if (!search) {
-		return null;
-	}
-	const { channel } = parseChannel(search);
-	return channel?.kind === 'thread' ? channel.rootId : null;
 };
 
 // #847: Matrix room for the embedded preview — params.roomRef when the
@@ -849,10 +839,6 @@ export const NotificationsCenter = () => {
 			);
 	const canOpenSelected =
 		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
-	const selectedThreadRootId = useMemo(
-		() => resolveThreadRootId(selectedNotification),
-		[selectedNotification]
-	);
 	const selectedCaseHandoverRequestId = useMemo(
 		() => resolveCaseHandoverRequestId(selectedNotification),
 		[selectedNotification]
@@ -1010,6 +996,19 @@ export const NotificationsCenter = () => {
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
 	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
+	// #1824: what the person may do in the previewed room, and D1.
+	const preview = useConversationPreviewState({
+		showPreview: showEmbeddedChat,
+		selectedNotification,
+		selectedRoomId,
+		sessions,
+		userData,
+		unreadOnly,
+		feed: notificationFeed,
+		resolveRoomId,
+		isMessageEvent: isMessageItem,
+		markNotificationAsRead
+	});
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1429,7 +1428,21 @@ export const NotificationsCenter = () => {
 					) : showEmbeddedChat ? (
 						<ConversationPreview
 							roomId={selectedRoomId}
-							threadRootId={selectedThreadRootId}
+							threadRootId={preview.threadRootId}
+							sessionId={selectedSessionNumericId}
+							capabilities={preview.capabilities}
+							senderDisplayName={preview.senderDisplayName}
+							onConversationRead={() =>
+								selectedNotification &&
+								markNotificationAsRead(selectedNotification.id)
+							}
+							openConversationHref={
+								selectedNotification
+									? getNotificationActionPath(
+											selectedNotification
+										)
+									: null
+							}
 						/>
 					) : (
 						<div className="notificationsCenter__detailBody">

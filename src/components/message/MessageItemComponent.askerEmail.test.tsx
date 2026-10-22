@@ -104,7 +104,8 @@ const renderErstantwortMessage = (
 		agency,
 		timelineMessages,
 		ownEvent = false,
-		readOnly = false
+		readOnly = false,
+		embedded = false
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
@@ -114,6 +115,7 @@ const renderErstantwortMessage = (
 		timelineMessages?: MessageItem[];
 		ownEvent?: boolean;
 		readOnly?: boolean;
+		embedded?: boolean;
 	}
 ) =>
 	render(
@@ -177,6 +179,7 @@ const renderErstantwortMessage = (
 										handleDecryptionSuccess={() => {}}
 										e2eeParams={mockE2eeParams() as any}
 										readOnly={readOnly}
+										embedded={embedded}
 									/>
 								)}
 							</ActiveSessionContext.Provider>
@@ -785,6 +788,19 @@ describe('read-only preview keeps the cards readable, without their controls', (
 		expect(node.closest('[inert]')).toBeNull();
 		expect(node.closest('[aria-hidden="true"]')).toBeNull();
 	};
+
+	it('embedded in the Activity Timeline (#1824): text without actions or notification setup, even when writable', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			embedded: true
+		});
+		expectReadable(GREETING_BAUSTEIN_BODY);
+		expect(
+			screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+		).toBeNull();
+		expect(
+			result.container.querySelector('.notificationChoiceHost')
+		).toBeNull();
+	});
 
 	it('shows the Erstantwort text, but no action or notification-setup buttons', () => {
 		const result = renderErstantwortMessage(tenantWith(true), {

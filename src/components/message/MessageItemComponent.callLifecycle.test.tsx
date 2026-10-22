@@ -182,4 +182,29 @@ describe('the durable call action in an actual message row', () => {
 		expect(callManagerSpies.joinExistingCall).not.toHaveBeenCalled();
 		expect(callManagerSpies.startCall).not.toHaveBeenCalled();
 	});
+
+	it('offers no call join in the embedded Activity Timeline preview (#1824)', () => {
+		const activeSession = mockActiveSession1on1();
+		render(
+			<MessageContextShell activeSession={activeSession}>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						rid: activeSession.rid,
+						callLifecycle: {
+							callId: 'embedded-call',
+							roomRef: activeSession.rid,
+							callRoomId: '!embedded-media:oriso.invalid',
+							callType: 'video',
+							state: 'running',
+							participants: []
+						}
+					})}
+					embedded
+				/>
+			</MessageContextShell>
+		);
+
+		expect(screen.queryByRole('button')).toBeNull();
+		expect(callManagerSpies.joinExistingCall).not.toHaveBeenCalled();
+	});
 });

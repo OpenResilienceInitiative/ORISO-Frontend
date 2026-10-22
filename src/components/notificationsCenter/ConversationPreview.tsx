@@ -31,7 +31,10 @@ import {
 import type { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from '../session/MessageTimeline';
 import { buildRoomTimeline } from '../session/roomTimeline';
-import { buildReplyQuotePreview } from '../session/replyQuote';
+import {
+	buildReplyQuoteContext,
+	buildReplyQuotePreview
+} from '../session/replyQuote';
 import { CHAT_TYPE_SINGLE_CHAT } from '../session/sessionHelpers';
 import {
 	usePreviewHistoryPaging,
@@ -46,6 +49,12 @@ import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
 import { resolveRoomHeaderDensity } from '../sessionHeader/roomHeaderDensity';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
+import type { PreviewCapabilities } from './previewCapabilities';
+import {
+	PreviewComposer,
+	type PreviewComposerContext
+} from './PreviewComposer';
+import { usePreviewActions } from './usePreviewActions';
 import './conversationPreview.styles';
 
 const EMPTY_TIMELINE: PreviewTimeline = {
@@ -135,19 +144,23 @@ const fallbackSession = (roomId: string): ExtendedSessionInterface =>
 	}) as ExtendedSessionInterface;
 
 /**
- * #420 / #847: read-only conversation preview for the Activity Timeline
+ * #420 / #847 / #1824: the conversation preview in the Activity Timeline
  * detail pane.
  *
  * Renders the room through the chat's own pipeline (`buildRoomTimeline`) and
  * rows (`MessageTimeline` → `MessageItemComponent`), so bubbles, formatting
  * (incl. `[[align:…]]`), avatars, reactions, replies and thread entries look
- * exactly as in the chat. `readOnly` removes everything that writes.
+ * exactly as in the chat. Without `capabilities` it is read-only (#420);
+ * with them (#1824) it offers exactly what the room allows, through the
+ * chat's own row actions, plus a composer — and still nothing that leaves
+ * the Timeline (`embedded`).
  *
  * Events come from the app's OWN Matrix client (already synced and
  * decrypting — ADR-AT-01: previews are hydrated client-side). This component
- * NEVER registers an active view, sends no read receipts and marks nothing
- * read: opening the real chat does all three, and the server then stops
- * sending exactly the timeline entries this view exists to show. So it
+ * NEVER registers an active view: opening the real chat does, and the server
+ * then stops sending exactly the timeline entries this view exists to show.
+ * It sends a read receipt only when the person acts (write, react, edit,
+ * delete) or presses "Mark conversation as read" — never on opening. So it
  * provides its own `ActiveSessionContext` WITHOUT `readActiveSession`, and
  * uses `ActiveSessionContext.Provider` directly rather than
  * `ActiveSessionProvider`, which would publish itself as the call manager's
@@ -155,10 +168,21 @@ const fallbackSession = (roomId: string): ExtendedSessionInterface =>
  */
 export const ConversationPreview = ({
 	roomId,
-	threadRootId
+	threadRootId,
+	sessionId,
+	capabilities,
+	senderDisplayName,
+	onConversationRead,
+	openConversationHref
 }: {
 	roomId: string | null;
 	threadRootId?: string | null;
+	sessionId?: number | null;
+	capabilities?: PreviewCapabilities;
+	senderDisplayName?: string | null;
+	/** The conversation was read through the preview (a receipt went out). */
+	onConversationRead?: () => void;
+	openConversationHref?: string | null;
 }) => {
 	const { t: translate } = useTranslation();
 	const sessionsContext = useContext(SessionsDataContext);
@@ -185,6 +209,53 @@ export const ConversationPreview = ({
 			? { top: list.scrollTop, height: list.scrollHeight }
 			: null;
 	}, []);
+	const actions = usePreviewActions({
+		roomId,
+		threadRootId,
+		sessionId,
+		senderDisplayName,
+		onConversationRead
+	});
+	const [composerContext, setComposerContext] =
+		useState<PreviewComposerContext>(null);
+	const cancelComposerContext = useCallback(
+		() => setComposerContext(null),
+		[]
+	);
+	// A reply or edit never survives a conversation switch (as in the chat).
+	useEffect(() => setComposerContext(null), [roomId, threadRootId]);
+	const handleReplyDirect = useCallback(
+		(message: MessageItem) =>
+			setComposerContext({
+				kind: 'reply',
+				...buildReplyQuoteContext(message)
+			}),
+		[]
+	);
+	const handleEditDirect = useCallback(
+		(message: MessageItem) =>
+			setComposerContext({
+				kind: 'edit',
+				eventId: message._id,
+				// Transport markup, not composer HTML: the textarea round-trips
+				// it unchanged, so an edit keeps the message's formatting.
+				text: message.message || ''
+			}),
+		[]
+	);
+	const { remove, react, unreact } = actions;
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) => void remove(message._id),
+		[remove]
+	);
+	const handleReact = useCallback(
+		(messageId: string, key: string) => void react(messageId, key),
+		[react]
+	);
+	const handleUnreact = useCallback(
+		(reactionEventId: string) => void unreact(reactionEventId),
+		[unreact]
+	);
 	const { limit, status, loadOlder, refreshStatus } = usePreviewHistoryPaging(
 		roomId,
 		captureScroll
@@ -381,6 +452,14 @@ export const ConversationPreview = ({
 		);
 	}
 
+	const canAct = Boolean(
+		capabilities &&
+			(capabilities.composer ||
+				capabilities.react ||
+				capabilities.manageOwn)
+	);
+	const readOnlyReason = capabilities?.readOnlyReason;
+
 	return (
 		<ActiveSessionContext.Provider value={sessionContextValue}>
 			<div className="conversationPreview" ref={previewRef}>
@@ -422,9 +501,72 @@ export const ConversationPreview = ({
 						threadSummaryFor={(id) => threadSummaries.get(id)}
 						resolveReplyQuote={resolveReplyQuote}
 						reactionsFor={reactionsFor}
-						readOnly
+						readOnly={!canAct}
+						embedded
+						onReplyDirect={
+							capabilities?.composer
+								? handleReplyDirect
+								: undefined
+						}
+						onEditDirect={
+							capabilities?.manageOwn
+								? handleEditDirect
+								: undefined
+						}
+						onDeleteDirect={
+							capabilities?.manageOwn
+								? handleDeleteDirect
+								: undefined
+						}
+						onReact={capabilities?.react ? handleReact : undefined}
+						onUnreact={
+							capabilities?.react ? handleUnreact : undefined
+						}
 					/>
 				</div>
+				{capabilities?.composer && (
+					<div className="conversationPreview__actionsBar">
+						<button
+							type="button"
+							className="conversationPreview__button"
+							disabled={actions.busy}
+							onClick={() => void actions.markConversationRead()}
+						>
+							{translate('notifications.center.preview.markRead')}
+						</button>
+					</div>
+				)}
+				{capabilities &&
+					(capabilities.composer ? (
+						<PreviewComposer
+							roomId={roomId}
+							threadRootId={threadRootId}
+							context={composerContext}
+							busy={actions.busy}
+							failed={actions.failed}
+							onCancelContext={cancelComposerContext}
+							onSend={actions.send}
+							onEdit={actions.edit}
+						/>
+					) : (
+						<p className="conversationPreview__notice conversationPreview__notice--footer">
+							{readOnlyReason === 'coAccess' &&
+								translate(
+									'notifications.center.preview.coAccess'
+								)}
+							{readOnlyReason === 'notJoined' &&
+								translate(
+									'notifications.center.preview.groupPending'
+								)}{' '}
+							{openConversationHref && (
+								<a href={openConversationHref}>
+									{translate(
+										'notifications.center.preview.openToReply'
+									)}
+								</a>
+							)}
+						</p>
+					))}
 			</div>
 		</ActiveSessionContext.Provider>
 	);

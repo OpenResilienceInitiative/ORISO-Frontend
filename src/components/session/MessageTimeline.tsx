@@ -64,6 +64,8 @@ export interface MessageTimelineProps {
 	onUnreact?: (reactionEventId: string) => void;
 	/** #420: Activity Timeline preview — the real rows, nothing that writes. */
 	readOnly?: boolean;
+	/** #1824: rows rendered outside the conversation (see MessageItemComponent). */
+	embedded?: boolean;
 }
 
 const never = () => false;
@@ -98,7 +100,8 @@ export const MessageTimeline = ({
 	reactionsFor,
 	onReact,
 	onUnreact,
-	readOnly = false
+	readOnly = false,
+	embedded = false
 }: MessageTimelineProps) => {
 	const supplementIndex =
 		supplementTime === undefined
@@ -167,6 +170,7 @@ export const MessageTimeline = ({
 							onUnreact={onUnreact}
 							encryptionBroke={broke}
 							readOnly={readOnly}
+							embedded={embedded}
 						/>
 						{broke &&
 							(showDecryptionCardFor

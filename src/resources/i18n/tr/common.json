@@ -2342,7 +2342,17 @@
 				"loadingOlder": "Daha eski mesajlar yükleniyor …",
 				"loadOlderFailed": "Daha eski mesajlar yüklenemedi.",
 				"retryLoadOlder": "Tekrar dene",
-				"historyStart": "Sohbetin başlangıcı"
+				"historyStart": "Sohbetin başlangıcı",
+				"markRead": "Görüşmeyi okundu olarak işaretle",
+				"send": "Gönder",
+				"inputLabel": "Yanıt yaz",
+				"editLabel": "Mesajı düzenle",
+				"saveEdit": "Kaydet",
+				"cancelEdit": "İptal",
+				"openToReply": "Yanıtlamak için görüşmeyi açın",
+				"coAccess": "Salt okunur: bu vakaya ortak erişiminiz var.",
+				"groupPending": "Katılımınız onaylanana kadar salt okunur.",
+				"sendFailed": "Gönderilemedi. Metniniz korundu."
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",

@@ -2342,7 +2342,17 @@
 				"loadingOlder": "Chargement des messages plus anciens …",
 				"loadOlderFailed": "Les messages plus anciens n’ont pas pu être chargés.",
 				"retryLoadOlder": "Réessayer",
-				"historyStart": "Début de la conversation"
+				"historyStart": "Début de la conversation",
+				"markRead": "Marquer la conversation comme lue",
+				"send": "Envoyer",
+				"inputLabel": "Écrire une réponse",
+				"editLabel": "Modifier le message",
+				"saveEdit": "Enregistrer",
+				"cancelEdit": "Annuler",
+				"openToReply": "Ouvrez la conversation pour répondre",
+				"coAccess": "Lecture seule : vous avez un accès partagé à ce dossier.",
+				"groupPending": "Lecture seule jusqu’à la confirmation de votre adhésion.",
+				"sendFailed": "Échec de l’envoi. Votre texte est conservé."
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",

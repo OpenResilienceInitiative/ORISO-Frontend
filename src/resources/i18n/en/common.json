@@ -2339,7 +2339,17 @@
 				"loadingOlder": "Loading older messages …",
 				"loadOlderFailed": "Older messages could not be loaded.",
 				"retryLoadOlder": "Try again",
-				"historyStart": "Start of the conversation"
+				"historyStart": "Start of the conversation",
+				"markRead": "Mark conversation as read",
+				"send": "Send",
+				"inputLabel": "Write a reply",
+				"editLabel": "Edit message",
+				"saveEdit": "Save",
+				"cancelEdit": "Cancel",
+				"openToReply": "Open the conversation to reply",
+				"coAccess": "Read only: you have co-access to this case.",
+				"groupPending": "Read only until your join is confirmed.",
+				"sendFailed": "Sending failed. Your text is kept."
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",
