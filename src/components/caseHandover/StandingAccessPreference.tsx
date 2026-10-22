@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../Switch';
 import './caseHandoverClientCards.styles.scss';
@@ -38,7 +38,7 @@ export const StandingAccessPreference = ({
 		};
 		// Scope changes abandon only this UI continuation, not the server operation.
 	}, [conversationId]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (!saving.current) setConfirmed(alwaysAsk);
 	}, [conversationId, alwaysAsk]);
 	const save = async (requested: boolean) => {

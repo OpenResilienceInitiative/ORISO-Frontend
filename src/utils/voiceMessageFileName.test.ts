@@ -18,6 +18,22 @@ describe('voice message file name', () => {
 		expect(isVoiceMessageFileName('voice-message-1-ms900.ogg')).toBe(true);
 	});
 
+	it('recognises the .m4a and .mp4 names an iOS Safari take gets', () => {
+		expect(
+			isVoiceMessageFileName('voice-message-1758600000000-s7-ms7100.m4a')
+		).toBe(true);
+		expect(
+			isVoiceMessageFileName('voice-message-1758600000000-s7-ms7100.mp4')
+		).toBe(true);
+		expect(isVoiceMessageFileName('holiday.m4a')).toBe(false);
+		expect(
+			voiceDurationMsFromFileName('voice-message-1-s7-ms7100.m4a')
+		).toBe(7_000);
+		expect(voiceDurationMsFromFileName('voice-message-1-ms900.mp4')).toBe(
+			900
+		);
+	});
+
 	it('prefers the whole seconds the sender showed', () => {
 		expect(
 			voiceDurationMsFromFileName('voice-message-1-s42-ms42300.webm')

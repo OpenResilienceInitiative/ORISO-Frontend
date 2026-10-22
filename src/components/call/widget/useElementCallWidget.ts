@@ -24,8 +24,8 @@ import {
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
 import {
+	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
-	ALLOWED_ROOM_EVENT_TYPES,
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
@@ -47,6 +47,12 @@ export interface ElementCallWidgetOptions {
 export interface ElementCallWidget {
 	/** `null` until every precondition is met; render nothing before then. */
 	url: string | null;
+	/**
+	 * True once the widget has negotiated its capabilities. Events fed before
+	 * that are dropped by `ClientWidgetApi.feedEvent`, so anything the widget
+	 * must see from before — this person's own identity — is sent again then.
+	 */
+	ready: boolean;
 	/** Ref callback for the iframe. Pass `null` on unmount to tear down. */
 	attachIframe: (iframe: HTMLIFrameElement | null) => void;
 	/** Requests a clean MatrixRTC leave through the widget protocol. */
@@ -103,6 +109,7 @@ export const useElementCallWidget = (
 ): ElementCallWidget => {
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
+	const [ready, setReady] = useState(false);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
 	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -116,6 +123,7 @@ export const useElementCallWidget = (
 	useEffect(() => {
 		let cancelled = false;
 		setUrl(null);
+		setReady(false);
 		setError(null);
 
 		if (!client || !roomId) return undefined;
@@ -161,6 +169,12 @@ export const useElementCallWidget = (
 					baseUrl,
 					confineToRoom: 'true',
 					header: 'none',
+					// Ask for the ORISO design explicitly. The call must not
+					// infer it from `parentUrl`: that is the generic widget
+					// parameter every embedded Element Call carries, so a plain
+					// Element Web embedding of the same build would otherwise
+					// get our grove, our backdrop and our animals.
+					orisoDesign: 'true',
 					// The call UI is deliberately dark even though the app
 					// around it is light; app-wide dark is a separate decision
 					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element
@@ -175,6 +189,12 @@ export const useElementCallWidget = (
 					...(appConfig?.releaseToggles?.enableCallMediaE2EE === false
 						? {}
 						: { perParticipantE2EE: 'true' }),
+					// The counselling centre's backdrop, if it set one. Left off
+					// the URL entirely when it did not, so the call falls back
+					// to the handoff's default rather than to an empty string.
+					...(appConfig?.calls?.atmosphere
+						? { orisoAtmosphere: appConfig.calls.atmosphere }
+						: {}),
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString()}`;
@@ -235,7 +255,26 @@ export const useElementCallWidget = (
 				messageGuardRef.current = null;
 			}
 
-			if (!iframe || !client || !roomId || !url) return;
+			if (!iframe) return;
+			/*
+			 * The node is still ours even when no channel can be opened for it
+			 * yet, and recording that here is what keeps a live call alive.
+			 *
+			 * A token refresh gives this hook a new `client`, and the effect
+			 * above answers by setting `url` to null for the moment it takes to
+			 * rebuild it. That changes this callback's identity, so React
+			 * detaches with null and re-attaches the SAME node — and the
+			 * re-attachment used to return below without claiming the node.
+			 * The microtask above then found nothing attached, concluded the
+			 * iframe had gone, and navigated a running call to `about:blank`.
+			 * The rebuilt URL is byte-identical for the same account, so
+			 * nothing ever navigated it back; what followed was an origin
+			 * mismatch and a closed call surface, from an ordinary refresh the
+			 * user cannot see or avoid.
+			 */
+			attachedIframeRef.current = iframe;
+
+			if (!client || !roomId || !url) return;
 
 			const userId = client.getUserId();
 			if (!userId) return;
@@ -286,12 +325,16 @@ export const useElementCallWidget = (
 			});
 
 			driverRef.current = driver;
+			// Already recorded above; repeated here so the channel setup
+			// reads as a whole.
 			attachedIframeRef.current = iframe;
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
+			setReady(false);
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
+				if (apiRef.current === api) setReady(true);
 				// Re-assert the same scheme the URL pins (`theme=dark` above):
 				// the ready-time update guards against Element Call defaulting
 				// differently, and must never contradict the URL parameter.
@@ -369,7 +412,10 @@ export const useElementCallWidget = (
 		};
 		const feedAllowedRoomEvent = (event: MatrixEvent) => {
 			if (event.getRoomId() !== roomId) return;
-			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
+			// The RECEIVE set: this is the path that carries an identity into
+			// the call, and identity is readable by the widget but not
+			// writable by it, so the two sets differ by exactly that event.
+			if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedEvent(event.getEffectiveEvent() as never, roomId)
 				.catch(() => {
@@ -502,5 +548,5 @@ export const useElementCallWidget = (
 		[]
 	);
 
-	return { url, attachIframe, hangup, error };
+	return { url, ready, attachIframe, hangup, error };
 };

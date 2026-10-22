@@ -898,6 +898,7 @@
 		},
 		"loadError": {
 			"consultants": "Meslektaşlar yüklenemedi.",
+			"info": "Sohbet bilgileri yüklenemedi.",
 			"retry": "Tekrar deneyin",
 			"topics": "Konular yüklenemedi."
 		},
@@ -915,6 +916,7 @@
 			"headline": "Sohbet bilgileri",
 			"settings": {
 				"agency": "Danışma Merkezi",
+				"agencyLine": "Danışma Merkezi: {{name}}",
 				"createDate": "Oluşturulma tarihi",
 				"creator": "Yaratıcı",
 				"duration": "Süre",
@@ -1116,15 +1118,37 @@
 			"addPerson": "Kişi ekle",
 			"createLabel": "Dahili sohbet oluştur",
 			"deselectPerson": "{{name}} kişisini kaldır",
+			"error": {
+				"recipientsRequired": "Lütfen en az bir meslektaş seçin.",
+				"recipientUnknown": "Seçilen en az bir meslektaş henüz eklenemiyor, çünkü henüz bir sohbet hesabı yok. Onu çıkarın veya daha sonra tekrar deneyin.",
+				"outOfScope": "Seçilen kişilerden en az biri seçilemez: kuruluşunuzun dahili sohbetler için izin verdiği kapsamın dışında veya bulunamıyor. Hiçbir şey oluşturulmadı.",
+				"membershipFailed": "Oda, seçilen tüm kişilerle kurulamadı. Hiçbir şey oluşturulmadı. Lütfen tekrar deneyin.",
+				"encryptionRequired": "Seçilen kişilerle dahili sohbetler yalnızca şifreli olarak mümkündür ve şifreleme şu anda kullanılamıyor. Hiçbir şey oluşturulmadı.",
+				"disabled": "Seçilen kişilerle dahili sohbetler sizin için kullanılamıyor: etkinleştirilmemiş, yetkiniz yok veya bu kurulum henüz desteklemiyor. Lütfen yöneticinizle iletişime geçin.",
+				"unknown": "Oda oluşturulamadı. Lütfen tekrar deneyin.",
+				"busy": "Bu oda şu anda oluşturuluyor. Lütfen biraz bekleyin ve tekrar deneyin.",
+				"notAvailable": "Seçilen kişilerle dahili sohbetler bu kurulumda henüz kullanılamıyor. Hiçbir şey oluşturulmadı. Lütfen destek ekibiyle iletişime geçin."
+			},
 			"nameLabel": "Dahili sohbetin adı",
+			"noColleagues": "Seçilebilecek meslektaş yok",
 			"personCount_one": "{{count}} kişi eklendi",
 			"personCount_other": "{{count}} kişi eklendi",
+			"privateRoomHint": "Yalnızca seçilen kişiler için ayrı, şifreli bir oda oluşturulur.",
 			"removePerson": "{{name}} kişisini kaldır",
+			"reusedNotice": {
+				"title": "Mevcut oda açıldı",
+				"text": "Tam olarak bu kişilerle zaten bir oda vardı. O oda açıldı, yeni oda oluşturulmadı."
+			},
+			"scope": {
+				"AGENCY": "Danışma merkezinizdeki meslektaşlarınızı seçebilirsiniz.",
+				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz."
+			},
 			"selectPerson": "{{name}} kişisini seç",
 			"subtitle": "meslektaşlarınızla",
 			"supportText": "Danışma merkeziniz içinde birbirinizle uyum sağlayın. İster tek tek ister ekip olarak; sesli, görüntülü, sohbet üzerinden ya da ihtiyaca göre hepsiyle.",
 			"title": "Dahili görüşme",
 			"togglePersonList": "Kişi listesini aç veya kapat",
+			"tooMany": "En fazla {{max}} kişi seçebilirsiniz.",
 			"vacatedHint": "artık bu danışma merkezinde değil"
 		},
 		"circle": {
@@ -1281,6 +1305,7 @@
 		"consent": {
 			"headline": "Yazmadan önce",
 			"description": "Bu grup bir danışma merkezi tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin.",
+			"descriptionNamed": "Bu grup {{agency}} tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin.",
 			"reject": "Reddet",
 			"accept": "Kabul ediyorum",
 			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz.",
@@ -1730,7 +1755,15 @@
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
 				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
-				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSecond": "Çok fazla deneme. Lütfen yaklaşık bir saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitSeconds": "Çok fazla deneme. Lütfen yaklaşık {{seconds}} saniye bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinute": "Çok fazla deneme. Lütfen yaklaşık bir dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitMinutes": "Çok fazla deneme. Lütfen yaklaşık {{minutes}} dakika bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHour": "Çok fazla deneme. Lütfen yaklaşık bir saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitHours": "Çok fazla deneme. Lütfen yaklaşık {{hours}} saat bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDay": "Çok fazla deneme. Lütfen yaklaşık bir gün bekleyip tekrar deneyin.",
+				"tooManyRequestsWaitDays": "Çok fazla deneme. Lütfen yaklaşık {{days}} gün bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -1859,7 +1892,8 @@
 				"mention": "Kişiden bahset",
 				"voiceRecording": {
 					"label": "Sesli kayıt",
-					"tooltip": "Sesli mesaj kaydet"
+					"tooltip": "Sesli mesaj kaydet",
+					"disabledWhileEditing": "Mesaj düzenlenirken sesli mesajlar kullanılamaz"
 				},
 				"imageUrlPrompt": "Görsel URL’si",
 				"urlPrompt": "URL"
@@ -1925,10 +1959,33 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
+			"state": {
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"description": {
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			},
+			"startedBy": "{{name}} tarafından arandı."
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
+		"youEndedChat": "Sohbeti sonlandırdınız",
+		"chatEnded": "Sohbet sona erdi",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
@@ -2144,7 +2201,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "Yeni danışman vakayı devraldı",
-				"text": "Yetkili vaka devri kayda geçirildi."
+				"text": "Yetkili vaka devri kayda geçirildi.",
+				"coAccess": {
+					"title": "Geçici erişim verildi",
+					"text": "Bir danışman bu vakayı sınırlı bir süre okuyabilir. Sorumluluk mevcut danışmanda kalır."
+				},
+				"generic": {
+					"title": "Vakaya erişim verildi",
+					"text": "Yetkili erişim kayda geçirildi. Güncel durumu görüşmede görebilirsiniz."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Vaka devri reddedildi",
@@ -2152,7 +2217,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
-				"text": "Bir meslektaşınız bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin."
+				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
+				"coAccess": {
+					"title": "Geçici erişim teklifi",
+					"text": "{{fromConsultantName}} size bu danışmanlığa geçici erişim teklif ediyor. Sorumluluk mevcut danışmanda kalır."
+				}
 			},
 			"callStarted": {
 				"title": "Arama devam ediyor",
@@ -2268,7 +2337,12 @@
 				"unsupported": "Desteklenmeyen mesaj",
 				"pending": "Şifre çözme bekleniyor",
 				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
-				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor",
+				"loadOlder": "Daha eski mesajları yükle",
+				"loadingOlder": "Daha eski mesajlar yükleniyor …",
+				"loadOlderFailed": "Daha eski mesajlar yüklenemedi.",
+				"retryLoadOlder": "Tekrar dene",
+				"historyStart": "Sohbetin başlangıcı"
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",
@@ -2514,6 +2588,10 @@
 					"sessionExpired": "Oturumunuzun süresi doldu. Yeniden giriş yapın, ardından canlı sohbeti tekrar açın.",
 					"leaseLost": "Sunucu sizi artık uygun olarak göstermiyor. Ulaşılabilir olmak için canlı sohbeti yeniden açın.",
 					"connectionLost": "Sunucuyla bağlantı iki dakikadan uzun süre kesildi. Bağlantı yeniden kurulunca canlı sohbeti tekrar açın."
+				},
+				"dpaRestricted": {
+					"title": "Danışanlar sizinle canlı sohbet başlatamıyor",
+					"text": "Kuruluşunuz güncel veri işleme sözleşmesini henüz onaylamadı. Onaylanana kadar yeni danışanlar canlı sohbet veya talep başlatamaz. Başlamış danışmanlıklar devam eder."
 				}
 			},
 			"masterKey": {
@@ -2902,6 +2980,7 @@
 				"cta": "Kurtarma anahtarı oluştur"
 			},
 			"showKey": {
+				"headline": "Yedek anahtarınızı kaydedin",
 				"silentExplainer": "Kasanız giriş yaparken otomatik olarak kuruldu. Bu, sizin kurtarma anahtarınız — anahtarı şimdi güvenli bir yere kaydedin, örneğin bir parola yöneticisine. Bundan sonra anahtarı bir daha göstermeyeceğiz.",
 				"explainer": "Bu, sizin kurtarma anahtarınız. Yalnızca bu bir kez gösterilir. Anahtarı şimdi güvenli bir yere kaydedin.",
 				"copy": "Anahtarı kopyala",
@@ -3654,7 +3733,8 @@
 			"retired": "Belirtilmemiş"
 		},
 		"history": {
-			"unknownConsultant": "Önceki danışman"
+			"unknownConsultant": "Önceki danışman",
+			"unknownColleague": "Bir meslektaşınız"
 		},
 		"submit": "Erişim talep et",
 		"submitSending": "Gönderiliyor",
@@ -3682,7 +3762,10 @@
 			},
 			"reason": {
 				"title": "Lütfen bir neden seçin",
-				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz."
+				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz.",
+				"empty": "Danışma merkeziniz için vaka devri nedeni tanımlanmamış. Lütfen yöneticinize başvurun.",
+				"loadFailed": "Vaka devri nedenleri yüklenemedi.",
+				"retry": "Tekrar dene"
 			},
 			"describe": {
 				"title": "Lütfen nedeni açıklayın",
@@ -3690,7 +3773,12 @@
 			},
 			"back": "Geri",
 			"next": "İleri",
-			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir."
+			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir.",
+			"reclaim": {
+				"copy": "Siz yokken bir meslektaşınız bu vakayı devraldı. Vakayı şimdi geri alabilirsiniz.",
+				"cta": "Vakayı geri al",
+				"unavailable": "Bu vaka artık geri alınamaz."
+			}
 		},
 		"accepted": {
 			"title": "Talebiniz bir danışman tarafından kabul edildi.",
@@ -3711,16 +3799,24 @@
 		},
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz."
+			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
+			"extend": "Erişimi uzat"
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
-			"description": "Bu görüşmedeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
+			"description": "Yalnızca bu görüşmede, kendi danışmanlık merkeziniz içindeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
 			"baselineDescription": "Kapalıyken danışmanlık merkezinizin ayarları geçerlidir. Merkezin gerekli gördüğü onay yine gereklidir.",
 			"saving": "Kaydediliyor …",
 			"saved": "Ayar kaydedildi.",
 			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
 			"loading": "Ayar yükleniyor …"
+		},
+		"bulkBar": {
+			"label": "Vaka seçimi",
+			"selected": "{{count}} tanesi seçildi",
+			"continue": "Devam",
+			"cancel": "İptal",
+			"emptyHint": "En az bir vaka seçin."
 		}
 	},
 	"supervisorDialog": {
@@ -4132,6 +4228,10 @@
 				"clear": "Aramayı temizle",
 				"removeSelectedPerson": "{{name}} kişisini kaldır",
 				"emptyPeople": "Eşleşen kişi bulunamadı.",
+				"peopleLoading": "Meslektaşlar yükleniyor …",
+				"peopleLoadError": "Meslektaşlar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+				"handoverPeopleHint": "Burada yalnızca vakalarını «Erişim talep et» ile devralabileceğiniz meslektaşlar gösterilir. Bu, bölümünüze ve konularınıza bağlıdır.",
+				"handoverPeopleCapped": "Yüklenebilenden daha fazla vaka var – lütfen aramayı daraltın.",
 				"emptyTypes": "Kullanılabilir sohbet türü yok.",
 				"emptyTopics": "Danışma merkezleriniz için konu bulunamadı.",
 				"tabs": {
@@ -4144,7 +4244,15 @@
 				"role": {
 					"asker": "Danışan",
 					"consultant": "Danışman"
-				}
+				},
+				"internalName": "Dahili ad",
+				"publicName": "Herkese açık ad",
+				"agencyGroup": "Danışma merkezi",
+				"topicGroup": "Konu",
+				"agencyFallback": "Danışma merkezi {{id}}",
+				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
+				"removeFilters": "Filtreleri kaldır",
+				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru"
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"
@@ -4703,6 +4811,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",
@@ -4757,6 +4880,7 @@
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
+			"discard": "Sesli mesajı sil",
 			"preview": "Sesli mesaj"
 		}
 	},
@@ -4940,6 +5064,7 @@
 			"responseTime": "2 iş günü içinde yanıt",
 			"back": "Önceki sayfaya dön",
 			"later": "Daha sonra tekrar gelin",
+			"laterNotice": "Şu anda canlı olan kimse yok. Biri geldiği anda sohbet burada devam eder.",
 			"title": "Canlı sohbet şu anda maalesef kapalı",
 			"topicLabel": "Talep edilen konu: {{topic}}",
 			"weekdays": {
@@ -5258,6 +5383,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Bildirim: {{state}}",
+			"change": "değiştir",
+			"changeLabel": "Bildirimi değiştir",
+			"dismiss": "Kurulumu gizle",
+			"none": "kurulmadı",
+			"email": "e-posta açık",
+			"browser": "bu cihazda sinyal açık",
+			"both": "e-posta ve sinyal açık"
+		},
 		"subtitle": "İlk adımlarınız",
 		"greeting": {
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
@@ -5315,7 +5450,14 @@
 		"displayName": {
 			"headline": "Görünen adınız",
 			"body": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
-			"action": "Adımı değiştir"
+			"action": "Adımı değiştir",
+			"overlay": {
+				"headline": "Görünen adınız",
+				"copy": "Görüşmede rastgele oluşturulmuş bir adla görünürsünüz. İstediğiniz zaman yeniden atabilirsiniz.",
+				"reroll": "Yeni bir ad at",
+				"save": "Bu adı kullan",
+				"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin."
+			}
 		},
 		"notificationChoice": {
 			"both": "İkisi de, ve şimdi kendim bir şifre belirleyeyim",
@@ -5374,6 +5516,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Yazdır / PDF olarak kaydet",
+		"confirmedBy": "Onaylayan",
+		"confirmedAt": "Onay tarihi (Europe/Berlin)",
+		"organisation": "Kuruluş",
+		"printHint": "Yazdırma penceresinde PDF olarak kaydedebilirsiniz. Bağlantı adresinin yazdırılmaması için üst ve alt bilgileri kapatın.",
+		"printUnavailable": "Onayınız kaydedildi. Onay bilgileri eksik olduğu için yazdırma görünümü kullanılamıyor.",
 		"title": "Sözleşme belgelerini incele ve onayla",
 		"subtitle": "Lütfen sözleşme belgelerini tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
 		"signerName": "Ad soyad",
@@ -5691,6 +5839,7 @@
 			"status": {
 				"access": "Bu görüşme için erişiminiz",
 				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
+				"nobodyLive": "Şu anda çevrimiçi kimse yok",
 				"accepted": "Bir danışman görüşmenizi kabul etti",
 				"closed": "Şu anda kapalı",
 				"checking": "Şu anda kim çevrimiçi?",
@@ -5707,6 +5856,8 @@
 			"waiting": {
 				"headline": "Az kaldı.",
 				"aheadUnknown": "Sizin için müsait bir danışman arıyoruz.",
+				"nobodyLiveHeadline": "Şu anda çevrimiçi danışman yok.",
+				"nobodyLive": "Bunu takip ediyoruz ve biri müsait olur olmaz sizi bağlayacağız.",
 				"aheadNone": "Sıradaki sizsiniz.",
 				"aheadOne": "Önünüzde bir kişi",
 				"aheadMany": "Önünüzde {{count}} kişi",
@@ -5738,7 +5889,8 @@
 			"steps": {
 				"wait": {
 					"title": "Biri müsait olana kadar beklersiniz",
-					"text": "Danışmanlar şu anda başka görüşmelerde."
+					"text": "Danışmanlar şu anda başka görüşmelerde.",
+					"textNobodyLive": "Bir danışman çevrimiçi olur olmaz görüşmeniz başlar."
 				},
 				"consent": {
 					"title": "Sonra bir kez onaylarsınız",
@@ -5817,6 +5969,25 @@
 			"callFailed": "Çağrı başarısız: {{message}}",
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		},
+		"notes": {
+			"title": "Görüşme notları",
+			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
+			"type": "Not türü",
+			"text": "Not",
+			"add": "Not ekle",
+			"remove": "Notu kaldır",
+			"copy": "Tümünü kopyala",
+			"copied": "Kopyalandı",
+			"empty": "Henüz bir not yok.",
+			"collapse": "Notları daralt",
+			"expand": "Notları genişlet",
+			"open": "Görüşme notları",
+			"types": {
+				"frage": "Soru",
+				"anmerkung": "Açıklama",
+				"aufgabe": "Görev"
+			}
 		}
 	},
 	"form": {

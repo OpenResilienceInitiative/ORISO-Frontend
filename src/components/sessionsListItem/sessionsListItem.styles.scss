@@ -14,7 +14,13 @@ $session-light-border: #fff;
 // #597: selected ring uses M3 primary (was #ffb4aa / 1px)
 $session-selected-border: var(--m3-primary, #a5000a);
 $session-active-border: var(--m3-primary-container, #cc1e1c);
-$session-focus-ring: var(--m3-primary-fixed, #ffdad5);
+
+// --oriso-session-focus-ring is only set by the high-contrast candidates (#1134);
+// everywhere else the halo is still the own-bubble tint.
+$session-focus-ring: var(
+	--oriso-session-focus-ring,
+	var(--m3-primary-fixed, #ffdad5)
+);
 $session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
 $session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
 $session-postcode-color: var(--m3-primary-container, #cc1e1c);
@@ -1006,138 +1012,74 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		margin-left: $grid-base;
 	}
 
-	// Case-handover split button — M3 "split button" (Figma node 115-27170):
-	// two segments separated by a 2px gap, outer corners 20px, inner corners
-	// 4px. The per-state background colour is set once on the container as a
-	// CSS custom property and inherited by both segments.
+	// Case-handover split button (FE#1725): the `SplitButton` atom at its
+	// 40px compact size carries the outlined / filled-primary variants. Only
+	// the read-only status pills are themed here. The open card is marked by
+	// the card itself (`--active`), never by this button.
 	&__handoverAction {
 		position: relative;
 		display: inline-flex;
-		align-items: stretch;
-		gap: 2px;
 		margin: 8px 16px 8px 8px;
-		background: transparent;
-		color: var(--m3-on-primary, #ffffff);
 		flex-shrink: 0;
+		max-width: calc(100% - 24px);
 
-		--handover-segment-bg: var(--m3-secondary, #4b515a);
-		--handover-segment-fg: var(--m3-on-primary, #ffffff);
-
-		&--active,
-		&--selected {
-			--handover-segment-bg: var(--m3-primary, #a5000a);
-			--handover-segment-fg: var(--m3-on-primary, #ffffff);
+		.splitButton {
+			max-width: 100%;
+			min-width: 0;
 		}
 
-		&--status {
-			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
-			--handover-segment-fg: var(--m3-on-surface-variant, #5c6167);
+		// Narrow cards (320 px): the main segment gives way first, its label
+		// truncates, so the chevron is never pushed under the Mail mark.
+		.splitButton__main {
+			flex: 0 1 auto;
+			min-width: 40px;
 		}
 
-		&--denied {
-			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
-			--handover-segment-fg: var(--m3-primary, #a5000a);
+		.splitButton__label,
+		.m3Checkbox__label {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
-		&--disabled {
-			--handover-segment-bg: var(--m3-surface-variant, #e7e8ea);
-			--handover-segment-fg: var(--m3-outline, #9ca1a6);
-		}
-	}
-
-	&__handoverActionPrimary {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		min-height: 40px;
-		min-width: 116px;
-		padding: 0 12px 0 16px;
-		border: 0;
-		border-radius: 20px 4px 4px 20px;
-		background: var(--handover-segment-bg);
-		color: var(--handover-segment-fg);
-		font-family: $font-family-sans-serif;
-		font-size: 13px;
-		font-weight: 700;
-		line-height: 1;
-		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
-		transition: filter 120ms ease;
-
-		&:disabled {
-			cursor: default;
+		.m3Checkbox--fill {
+			min-width: 0;
 		}
 
-		// Pressed feedback: a gentle darken of the segment colour (M3 state
-		// layer) — never a hard black overlay/ring.
-		&:active:not(:disabled) {
-			filter: brightness(0.94);
-		}
-
-		// Focus ring uses the segment foreground so it reads white on the red
-		// button and dark on the muted/status button — never a black circle.
-		&:focus-visible {
-			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
-			outline-offset: -2px;
-		}
-	}
-
-	&__handoverActionLabel {
-		white-space: nowrap;
-	}
-
-	&__handoverActionToggle {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 48px;
-		border: 0;
-		border-radius: 4px 20px 20px 4px;
-		background: var(--handover-segment-bg);
-		color: var(--handover-segment-fg);
-		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
-		transition: filter 120ms ease;
-
-		&:disabled {
-			cursor: default;
-		}
-
-		&:active:not(:disabled) {
-			filter: brightness(0.94);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
-			outline-offset: -2px;
-		}
-	}
-
-	&__handoverActionCheckbox {
-		width: 15px;
-		height: 15px;
-		border: 2px solid currentcolor;
-		border-radius: 3px;
-		background: transparent;
-		flex-shrink: 0;
-		position: relative;
-
-		&--selected {
-			background: var(--m3-surface, #ffffff);
-			border-color: var(--m3-on-primary, #ffffff);
-
-			&::after {
-				content: '';
+		// 320 px phone: no room for a readable label beside Mail, so the main
+		// segment shows only its glyph or checkbox; the name stays for AT.
+		@container session-card (max-width: 340px) {
+			.splitButton__label,
+			.m3Checkbox__label {
 				position: absolute;
-				left: 3px;
-				top: 0;
-				width: 4px;
-				height: 7px;
-				border: solid var(--m3-primary, #a5000a);
-				border-width: 0 2px 2px 0;
-				transform: rotate(45deg);
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+				clip-path: inset(50%);
+				white-space: nowrap;
 			}
+
+			.splitButton__main {
+				padding: 0 12px;
+			}
+
+			.splitButton__main.splitButton__main--selection {
+				padding: 0;
+			}
+		}
+
+		&--status .splitButton__main,
+		&--status .splitButton__main:disabled {
+			background: var(--m3-surface-variant, #e0e2e5);
+			border-color: transparent;
+			color: var(--m3-on-surface-variant, #444748);
+			cursor: default;
+			opacity: 1;
+		}
+
+		&--denied .splitButton__main,
+		&--denied .splitButton__main:disabled {
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 

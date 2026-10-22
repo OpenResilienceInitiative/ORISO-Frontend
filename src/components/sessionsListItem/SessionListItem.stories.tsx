@@ -586,9 +586,7 @@ export const SupervisedByMe: Story = {
 				badge!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();
 			expect(
-				canvasElement.querySelector(
-					'.sessionsListItem__handoverActionPrimary'
-				)
+				canvasElement.querySelector('[data-cy="case-handover-action"]')
 			).toBeNull();
 		});
 	}
