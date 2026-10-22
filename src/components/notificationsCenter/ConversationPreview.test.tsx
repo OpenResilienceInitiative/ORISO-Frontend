@@ -363,7 +363,9 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		const { container } = renderPreview({ roomId: ROOM });
 		expect(screen.queryByText('old message 0')).toBeNull();
 
-		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		});
 
 		await screen.findByText('old message 0');
 		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
@@ -406,7 +408,9 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		});
 
 		const { container } = renderPreview({ roomId: ROOM });
-		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		});
 		await screen.findByText('old message 0');
 
 		expect(
@@ -467,11 +471,13 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		// Messages already shown stay visible.
 		expect(screen.getByText('new message 49')).toBeTruthy();
 
-		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'notifications.center.preview.retryLoadOlder'
-			})
-		);
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'notifications.center.preview.retryLoadOlder'
+				})
+			);
+		});
 
 		await screen.findByText('old message 0');
 		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
