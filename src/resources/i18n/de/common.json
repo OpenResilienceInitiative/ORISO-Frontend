@@ -3811,8 +3811,9 @@
 			"badge": "System-Benachrichtigung",
 			"selectedReason": "Ausgewählter Grund: {{reason}}",
 			"explanation": "Erläuterung: {{explanation}}",
-			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
-			"noActionNeeded": "Du musst nichts weiter tun",
+			"tookOverTitle": "Neue Berater:in hat Ihren Fall übernommen",
+			"tookOverBody": "{{advisor}} führt Ihre Beratung ab jetzt weiter.",
+			"noActionNeeded": "Sie müssen nichts weiter tun",
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."

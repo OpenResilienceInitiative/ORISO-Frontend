@@ -3758,6 +3758,7 @@
 			"selectedReason": "Selected reason: {{reason}}",
 			"explanation": "Explanation: {{explanation}}",
 			"tookOverTitle": "New counsellor took over your case",
+			"tookOverBody": "{{advisor}} will continue your counselling from now on.",
 			"noActionNeeded": "You don't need to take any action",
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",

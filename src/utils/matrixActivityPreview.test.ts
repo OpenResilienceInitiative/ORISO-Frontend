@@ -172,17 +172,52 @@ describe('buildMatrixActivityTextPreview', () => {
 				{
 					status: 'resolved',
 					event: systemNoticeEvent({
-						type: 'INQUIRY_ACCEPTED',
-						title: 'Accepted',
-						description: 'The request was accepted.'
+						type: 'CASE_HANDOVER_GRANTED',
+						title: 'Granted',
+						description: 'A new counsellor took over.'
 					})
 				},
 				'Counsellor',
 				'New message',
 				labels
 			)
-		).toBe('The request was accepted.');
+		).toBe('A new counsellor took over.');
 	});
+
+	it.each([
+		[
+			{
+				type: 'INQUIRY_ACCEPTED',
+				description: 'Die Anfrage wurde angenommen.'
+			},
+			'The request was accepted.'
+		],
+		[
+			{
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Counsellor',
+				description: 'Counsellor führt deine Beratung ab jetzt weiter.'
+			},
+			'New counsellor took over your case'
+		]
+	])(
+		'words %j in the viewer language, not its stored text (#1844)',
+		(payload, text) => {
+			expect(
+				buildMatrixActivityTextPreview(
+					{ status: 'resolved', event: systemNoticeEvent(payload) },
+					'Counsellor',
+					'New message',
+					{
+						...labels,
+						inquiryAccepted: 'The request was accepted.',
+						caseHandoverTakenOver:
+							'New counsellor took over your case'
+					}
+				)
+			).toBe(text);
+		}
+	);
 	it('renders the sender and normalized plain-text body of the resolved event', () => {
 		const event = {
 			getType: () => 'm.room.message',

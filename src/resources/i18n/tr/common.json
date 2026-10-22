@@ -3792,6 +3792,7 @@
 			"selectedReason": "Seçilen neden: {{reason}}",
 			"explanation": "Açıklama: {{explanation}}",
 			"tookOverTitle": "Yeni danışman vakanızı devraldı",
+			"tookOverBody": "Danışmanlığınıza bundan sonra {{advisor}} devam edecek.",
 			"noActionNeeded": "Başka bir şey yapmanıza gerek yok",
 			"importantTitle": "Önemli bildirim",
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",
