@@ -11,7 +11,11 @@ import {
 } from './sessionToolbarFilters';
 import { buildExtendedSession } from '../../globalState/helpers/stateHelpers';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone390Globals,
+	tablet820Globals
+} from '../message/messageStoryShell';
 import {
 	APP_ORISO_CHAT_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
@@ -38,38 +42,56 @@ type ToolbarDemoProps = {
 	createGroupChatActive?: boolean;
 	initialSearch?: string;
 	initialSelectedPersonIds?: string[];
+	/** Case handover: the hint why a colleague may be missing (FE#1152). */
+	showHandoverHint?: boolean;
 };
 
-const searchPeopleResults: SessionSearchPersonResult[] = [
+const searchPeopleResultsBase: SessionSearchPersonResult[] = [
 	{
 		id: 'sanftes-alpaka-kala',
 		name: 'Sanftes Alpaka Kala',
 		subtitle: 'Suchtprobleme',
 		role: 'asker',
-		avatarSeed: 'sanftes-alpaka-kala'
+		avatarSeed: 'sanftes-alpaka-kala',
+		sessionKeys: [],
+		searchText: ''
 	},
 	{
 		id: 'ratsuchender-r3',
 		name: 'Ratsuchender R3',
 		subtitle: '1-1 Beratung',
 		role: 'asker',
-		avatarSeed: 'ratsuchender-r3'
+		avatarSeed: 'ratsuchender-r3',
+		sessionKeys: [],
+		searchText: ''
 	},
 	{
 		id: 'ruhiges-yak-kim',
 		name: 'ruhiges Yak Kim',
 		subtitle: 'Familienberatung',
 		role: 'asker',
-		avatarSeed: 'ruhiges-yak-kim'
+		avatarSeed: 'ruhiges-yak-kim',
+		sessionKeys: [],
+		searchText: ''
 	},
 	{
 		id: 'traeger-admins-caritas',
 		name: 'Träger Admins Caritas',
 		subtitle: 'Team Intern',
 		role: 'consultant',
-		avatarSeed: 'traeger-admins-caritas'
+		avatarSeed: 'traeger-admins-caritas',
+		sessionKeys: [],
+		searchText: ''
 	}
 ];
+
+// Same haystack shape the list builds: name + role/agency line.
+const searchPeopleResults = searchPeopleResultsBase.map((person) => ({
+	...person,
+	agencyId: 77,
+	agencyName: 'Beratungsstelle Mainz',
+	searchText: `${person.name} ${person.subtitle}`.toLowerCase()
+}));
 
 function SessionsListToolbarPlayground({
 	showConsultantActions = true,
@@ -78,7 +100,8 @@ function SessionsListToolbarPlayground({
 	archiveTabActive = false,
 	createGroupChatActive = false,
 	initialSearch = '',
-	initialSelectedPersonIds = []
+	initialSelectedPersonIds = [],
+	showHandoverHint = false
 }: ToolbarDemoProps) {
 	const { t } = useTranslation();
 	const [search, setSearch] = useState(initialSearch);
@@ -90,6 +113,9 @@ function SessionsListToolbarPlayground({
 	const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 	const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
 	const [archiveOnly, setArchiveOnly] = useState(false);
+	const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(
+		null
+	);
 
 	return (
 		<div style={shell}>
@@ -97,9 +123,37 @@ function SessionsListToolbarPlayground({
 				translate={t}
 				searchValue={search}
 				onSearchChange={setSearch}
-				searchPeopleResults={searchPeopleResults}
+				searchAgencyResults={[
+					{ id: '77', label: 'Beratungsstelle Mainz' },
+					{ id: '42', label: 'Beratungsstelle Berlin' }
+				]}
+				selectedAgencyId={selectedAgencyId}
+				onSelectedAgencyIdChange={setSelectedAgencyId}
+				searchPeopleResults={
+					showHandoverHint
+						? searchPeopleResults.map((person) => ({
+								...person,
+								eligible: person.role === 'consultant'
+							}))
+						: searchPeopleResults
+				}
+				searchPeopleEligibleOnlyWhenBlank={showHandoverHint}
+				searchPeopleStatus="ready"
+				searchPeopleHint={
+					showHandoverHint
+						? t('sessionList.toolbar.search.handoverPeopleHint')
+						: undefined
+				}
 				selectedPersonIds={selectedPersonIds}
 				onSelectedPersonIdsChange={setSelectedPersonIds}
+				onSearchReset={() => {
+					setSearch('');
+					setSelectedPersonIds([]);
+					setSelectedTopicId(null);
+					setSelectedTypeId(null);
+					setSelectedAgencyId(null);
+					setArchiveOnly(false);
+				}}
 				searchTopicResults={[
 					{
 						id: 'schulden',
@@ -218,6 +272,105 @@ export const SearchPanelOpen: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('searchbox'));
+	}
+};
+
+/**
+ * FE#1152 — opening the search lists only the eligible colleagues, no
+ * clients, and says why a colleague may be missing. Typing brings the
+ * other people back.
+ */
+const expectHandoverHintOnOpen = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const searchbox = canvas.getByRole('searchbox');
+	await userEvent.click(searchbox);
+	await expect(searchbox).toHaveValue('');
+	await expect(
+		await canvas.findByTestId('session-search-people-hint')
+	).toBeVisible();
+	await expect(
+		await canvas.findByRole('checkbox', { name: /Träger Admins Caritas/ })
+	).toBeVisible();
+	await expect(canvas.getAllByRole('checkbox')).toHaveLength(1);
+	await userEvent.type(searchbox, 'Alpaka');
+	await expect(
+		await canvas.findByRole('checkbox', { name: /Sanftes Alpaka Kala/ })
+	).toBeVisible();
+};
+
+export const SearchOpensWithHandoverHint: Story = {
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
+};
+
+export const SearchOpensWithHandoverHintMobile390: Story = {
+	name: 'Search opens with handover hint, phone 390',
+	globals: phone390Globals,
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
+};
+
+export const SearchOpensWithHandoverHintTablet820: Story = {
+	name: 'Search opens with handover hint, tablet 820',
+	globals: tablet820Globals,
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
+};
+
+export const SearchOpensWithHandoverHintDesktop1440: Story = {
+	name: 'Search opens with handover hint, desktop 1440',
+	globals: desktop1440Globals,
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
+};
+
+/** FE#1725 — picking a person keeps the typed text and the panel open. */
+export const SearchKeepsTextWhenPickingPerson: Story = {
+	render: () => <SessionsListToolbarPlayground initialSearch="Ratsuch" />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const searchbox = canvas.getByRole('searchbox');
+		await userEvent.click(searchbox);
+		await userEvent.click(
+			await canvas.findByRole('checkbox', { name: /Ratsuchender R3/ })
+		);
+		await expect(searchbox).toHaveValue('Ratsuch');
+		await expect(
+			canvas.getByRole('checkbox', { name: /Ratsuchender R3/ })
+		).toHaveAttribute('aria-checked', 'true');
+	}
+};
+
+/** FE#1725 — the X clears text, people, centre and archive-only. */
+export const SearchXResetsEverything: Story = {
+	render: () => (
+		<SessionsListToolbarPlayground
+			initialSearch="Ratsuch"
+			initialSelectedPersonIds={['ratsuchender-r3']}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const searchbox = canvas.getByRole('searchbox');
+		await userEvent.click(searchbox);
+		await userEvent.click(
+			canvas.getByRole('tab', { name: /Beratungsstelle|Counsel/ })
+		);
+		const [centre] = canvas.getAllByRole('radio');
+		await userEvent.click(centre);
+		await expect(centre).toHaveAttribute('aria-checked', 'true');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Suche schließen|Close search/ })
+		);
+		await expect(searchbox).toHaveValue('');
+		await userEvent.click(searchbox);
+		await userEvent.click(
+			canvas.getByRole('tab', { name: /Beratungsstelle|Counsel/ })
+		);
+		await expect(canvas.getAllByRole('radio')[0]).toHaveAttribute(
+			'aria-checked',
+			'false'
+		);
 	}
 };
 

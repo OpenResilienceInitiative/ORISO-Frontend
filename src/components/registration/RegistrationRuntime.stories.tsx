@@ -235,3 +235,98 @@ export const HeaderSearchSelectsTopic: Story = {
 		);
 	}
 };
+
+/**
+ * ORISO-Frontend#1736 (Frank, 2026-10-15: the middle part moves in, the
+ * stepper travels, nothing reloads). The real routed registration: choosing a
+ * topic and pressing "Weiter" slides the next step in from the right while the
+ * stage, the header and the stepper stay the very same elements; going back
+ * through the stepper slides the step in from the left.
+ */
+export const NextStepSlidesInAndTheFrameStays: Story = {
+	globals: desktop1440Globals,
+	render: () => (
+		<div style={{ height: '100vh' }}>
+			<RegistrationRuntimeStory />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const body = within(doc.body);
+		const currentStep = () =>
+			doc
+				.querySelector('[data-cy="registration-form"]')
+				?.getAttribute('data-cy-step');
+		const slidingFrom = () =>
+			doc
+				.querySelector('[data-cy="step-transition"]')
+				?.getAttribute('data-slide-from');
+		const isSliding = (name: string) =>
+			(
+				doc
+					.querySelector('[data-cy="step-transition"]')
+					?.getAnimations() ?? []
+			).some(
+				(animation) =>
+					(animation as CSSAnimation).animationName === name
+			);
+
+		const header = await waitFor(() => {
+			const row = doc.querySelector<HTMLElement>('.stageLayout__header');
+			expect(row).not.toBeNull();
+			return within(row!);
+		});
+		await userEvent.click(
+			await header.findByRole('button', { name: 'Thema suchen' })
+		);
+		await userEvent.type(await header.findByRole('combobox'), 'schulden');
+		await userEvent.click(
+			await body.findByRole('option', { name: /Schulden/ })
+		);
+		await waitFor(() =>
+			expect(body.getByRole('button', { name: /Weiter/ })).toBeEnabled()
+		);
+
+		const firstStep = currentStep();
+		const frame = {
+			stage: doc.querySelector('.stageLayout__stage'),
+			header: doc.querySelector('[data-cy="registration-header"]'),
+			stepper: doc.querySelector('[data-cy="icon-stepper"]')
+		};
+		expect(frame.stage).not.toBeNull();
+		expect(frame.header).not.toBeNull();
+		expect(frame.stepper).not.toBeNull();
+
+		await userEvent.click(body.getByRole('button', { name: /Weiter/ }));
+
+		await waitFor(() => expect(currentStep()).not.toBe(firstStep));
+		expect(slidingFrom()).toBe('right');
+		await waitFor(() => expect(isSliding('slideInFromRight')).toBe(true));
+		// The frame did not reload: the same elements, moved on.
+		expect(doc.querySelector('.stageLayout__stage')).toBe(frame.stage);
+		expect(doc.querySelector('[data-cy="registration-header"]')).toBe(
+			frame.header
+		);
+		expect(doc.querySelector('[data-cy="icon-stepper"]')).toBe(
+			frame.stepper
+		);
+		// The line to the step we came from is now solid.
+		expect(
+			doc.querySelector('[data-cy="step-connector"][data-done="true"]')
+		).not.toBeNull();
+		expect(
+			doc.querySelector('[aria-current="step"]')?.getAttribute('data-cy')
+		).not.toBe(`icon-stepper-step-${firstStep}`);
+
+		// Back through the stepper: the step slides in from the other side.
+		await userEvent.click(
+			doc.querySelector(`[data-cy="icon-stepper-step-${firstStep}"]`)!
+		);
+		await waitFor(() => expect(currentStep()).toBe(firstStep));
+		expect(slidingFrom()).toBe('left');
+		expect(doc.querySelector('.stageLayout__stage')).toBe(frame.stage);
+		expect(doc.querySelector('[data-cy="registration-header"]')).toBe(
+			frame.header
+		);
+	}
+};

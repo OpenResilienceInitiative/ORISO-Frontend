@@ -21,7 +21,18 @@ import {
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
-import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
+import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
+import { canCloseHandover } from './registrationLoader/handoverClose';
+import {
+	forgetHandoverDepartment,
+	readHandoverGroupJoin
+} from './registrationLoader/handoverDepartment';
+import {
+	markHandoverMilestone,
+	resetHandoverProgress
+} from './registrationLoader/handoverProgress';
+import { loadEntryScreens } from './appChunks';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import {
 	handleTokenRefresh,
@@ -36,6 +47,7 @@ import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRe
 import { usePendingGroupChatJoin } from '../../hooks/usePendingGroupChatJoin';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { useOneShotSessionFlag } from '../../hooks/useOneShotSessionFlag';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
@@ -50,6 +62,7 @@ import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData'
 import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { useAccountInactivityActivity } from '../../hooks/useAccountInactivityActivity';
 import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	clearAuthSession,
@@ -76,11 +89,12 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	useAccountInactivityActivity();
 	// #1377: the display-filter store follows the published client (and
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
 	useAuthenticatedChatRecovery(matrixClientService, userData);
-	usePendingGroupChatJoin(userData);
+	const groupJoinSettled = usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
@@ -112,21 +126,23 @@ export const AuthenticatedApp = ({
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
-	// Freshly-registered askers get a welcome loading animation bridging the
-	// bootstrap below (one-shot flag set just before the post-registration redirect).
-	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
-		const flagged =
-			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
-		if (flagged) {
-			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
-		}
-		/* Someone who registered through a group link is not about to
-		   write an enquiry — the group's entry room is their handover. */
-		const cameForAGroup = Boolean(
-			new URLSearchParams(window.location.search).get('gcid')
-		);
-		return flagged && !cameForAGroup;
-	});
+	// Freshly-registered askers keep the waiting room they saw before the
+	// document load, while the bootstrap below runs (one-shot flag set just
+	// before the post-registration redirect, cleared after the first commit).
+	const postRegFlagged = useOneShotSessionFlag(POST_REGISTRATION_LOADER_KEY);
+	const [showPostRegLoader, setShowPostRegLoader] =
+		useState<boolean>(postRegFlagged);
+	/* Someone who registered through a group link sees the group's words in
+	   the same waiting room, and its button opens the group's entry room
+	   instead of an enquiry. It used to get no waiting room at all here —
+	   a spinner page, then the group (#1219). The URL keeps `gcid` even when
+	   `Registration` did not accept the link, so its decision wins. */
+	const [postRegForGroup] = useState(
+		() =>
+			readHandoverGroupJoin() ??
+			Boolean(new URLSearchParams(window.location.search).get('gcid'))
+	);
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
@@ -148,6 +164,15 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		if (!userDataRequested) {
 			setUserDataRequested(true);
+			/* Only for the waiting room: the click on its button must land in
+			   a screen that is already loaded, so "ready" waits for these too.
+			   Started now, in parallel with everything below. */
+			const entryScreens = showPostRegLoader
+				? loadEntryScreens(postRegForGroup).then(
+						() => markHandoverMilestone('screens'),
+						() => markHandoverMilestone('screens')
+					)
+				: Promise.resolve();
 
 			handleTokenRefresh(false)
 				.then(() => {
@@ -172,6 +197,7 @@ export const AuthenticatedApp = ({
 							if (userProfileData.preferredLanguage) {
 								setLocale(userProfileData.preferredLanguage);
 							}
+							markHandoverMilestone('profile');
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
@@ -211,6 +237,7 @@ export const AuthenticatedApp = ({
 											setMatrixClientService(
 												matrixClientService
 											);
+											markHandoverMilestone('chat');
 											(window as any).callContext =
 												callContext;
 
@@ -249,6 +276,7 @@ export const AuthenticatedApp = ({
 											matrixLiveEventBridge.initialize(
 												matrixClient
 											);
+											markHandoverMilestone('liveEvents');
 										}
 									})(),
 									15_000,
@@ -263,6 +291,11 @@ export const AuthenticatedApp = ({
 								);
 							}
 
+							/* Without chat (no homeserver, or a failed bootstrap)
+							   these steps are over, not pending. */
+							markHandoverMilestone('chat');
+							markHandoverMilestone('liveEvents');
+							await entryScreens;
 							setAppReady(true);
 						})
 						.catch((error) => {
@@ -330,19 +363,32 @@ export const AuthenticatedApp = ({
 	}, []);
 
 	useEffect(() => {
-		if (handoverEntered && appReady) {
+		if (
+			canCloseHandover({
+				entered: handoverEntered,
+				appReady,
+				groupJoinSettled
+			})
+		) {
 			setShowPostRegLoader(false);
+			resetHandoverProgress();
+			forgetHandoverDepartment();
 		}
-	}, [handoverEntered, appReady]);
+	}, [handoverEntered, appReady, groupJoinSettled]);
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
 	// usual branches on error (loading=false, appReady=false → redirect to login).
 	if (showPostRegLoader && (loading || appReady)) {
+		/* The same frame and the same fill `Registration` showed before the
+		   document load, so the person sees one waiting room (#1219). */
 		return (
-			<RegistrationHandover
-				ready={appReady}
+			<PostRegistrationHandover
+				/* After a group link the gate also waits for the assignment,
+				   so the click lands in the group's entry room. */
+				ready={appReady && groupJoinSettled}
 				onEnter={handlePostRegLoaderFinish}
+				copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
 			/>
 		);
 	}

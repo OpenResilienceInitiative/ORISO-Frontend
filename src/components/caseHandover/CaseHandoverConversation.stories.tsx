@@ -54,6 +54,7 @@ function Journey({
 	regular?: boolean;
 	hostWidth?: number;
 }) {
+	const futurePreference = React.useRef(false);
 	const saved = React.useRef(
 		mockUserData({ userId: MOCK_ASKER_MATRIX_ID, email: undefined })
 	);
@@ -110,6 +111,23 @@ function Journey({
 			const matches = (endpoint: string) =>
 				new URL(url, window.location.origin).pathname ===
 				new URL(endpoint, window.location.origin).pathname;
+			if (url.endsWith('/sessions/42/case-handover/consent-preference')) {
+				if (method === 'PUT')
+					futurePreference.current = JSON.parse(
+						String(body)
+					).alwaysAskBeforeAdditionalAccess;
+				return new Response(
+					JSON.stringify({
+						sessionId: 42,
+						alwaysAskBeforeAdditionalAccess:
+							futurePreference.current
+					}),
+					{
+						status: 200,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
+			}
 			if (matches(endpoints.email) && method === 'PUT') {
 				saved.current = {
 					...saved.current,
@@ -193,6 +211,7 @@ function Journey({
 									/>
 								) : (
 									<CaseHandoverConversation
+										sessionId={42}
 										mode="OPT_IN"
 										consentGranted={consent}
 										onApprove={() => setConsent(true)}
@@ -282,10 +301,10 @@ const shortcut: Story['play'] = async ({ canvasElement, globals }) => {
 			})
 		).toHaveLength(1);
 		const consentBubble = canvasElement.querySelector(
-			'.caseHandoverInlineConsent .messageItem__message--systemNotification'
+			'.caseHandoverInlineConsent .carimatMessageFrame__bubble'
 		)!;
 		const notificationBubble = message.querySelector(
-			'.erstantwort__bubble'
+			'.carimatMessageFrame__bubble'
 		)!;
 		const consentBounds = consentBubble.getBoundingClientRect();
 		const notificationBounds = notificationBubble.getBoundingClientRect();
@@ -319,10 +338,10 @@ const shortcut: Story['play'] = async ({ canvasElement, globals }) => {
 		expect(parseFloat(focusStyle.outlineWidth)).toBeGreaterThanOrEqual(2);
 		expect(parseFloat(focusStyle.outlineOffset)).toBeLessThanOrEqual(-2);
 		const consentHeader = canvasElement.querySelector(
-			'.caseHandoverInlineConsent .messageItem__sendFailedTitle'
+			'.caseHandoverInlineConsent .carimatMessageFrame__name'
 		)!;
 		const notificationHeader = message.querySelector(
-			'.pseudonymCard__headerName'
+			'.carimatMessageFrame__name'
 		)!;
 		expect(
 			Math.abs(
@@ -351,11 +370,15 @@ const shortcut: Story['play'] = async ({ canvasElement, globals }) => {
 	await userEvent.click(
 		await choice.findByRole('button', { name: 'Browser aktivieren' })
 	);
+	// Both steps are done: the opened setup folds into its one-line summary.
 	await waitFor(() =>
 		expect(
-			choice.getByRole('button', { name: /Beides einrichten/ })
-		).toHaveAttribute('aria-pressed', 'true')
+			choice.getByText('Benachrichtigung: E-Mail und Signal aktiv')
+		).toBeVisible()
 	);
+	expect(
+		choice.queryByRole('button', { name: /Beides einrichten/ })
+	).toBeNull();
 	await userEvent.click(
 		canvas.getByRole('button', { name: 'Fixture: reload conversation' })
 	);
@@ -386,7 +409,7 @@ const regular: Story['play'] = async ({ canvasElement, parameters }) => {
 		{ name: label },
 		{ timeout: 10_000 }
 	);
-	expect(faq.tagName).toBe('SUMMARY');
+	expect(faq.closest('summary')).not.toBeNull();
 	expect(
 		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy();

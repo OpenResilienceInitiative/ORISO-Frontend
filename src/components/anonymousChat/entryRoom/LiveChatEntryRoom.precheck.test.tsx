@@ -128,7 +128,10 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(chosen).toContain(
 			vi.mocked(apiPutSessionData).mock.calls[0][1].displayName
 		);
-		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(42);
+		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(
+			42,
+			expect.any(AbortSignal)
+		);
 	});
 
 	/* The last positive sample can be seconds old. Right before an account and

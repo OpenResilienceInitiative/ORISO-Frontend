@@ -96,7 +96,7 @@
 			border: 1px solid var(--m3-outline, #747778);
 			border-radius: 999px;
 			background: transparent;
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font: inherit;
 			font-weight: 600;
 			cursor: pointer;
@@ -329,7 +329,7 @@
 		}
 
 		.notificationsCenter__cardTime--footer {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font-weight: 600;
 		}
 
@@ -528,6 +528,13 @@
 		svg {
 			width: 18px;
 			height: 18px;
+			fill: currentcolor;
+		}
+
+		// `open-in-new-tab.svg` ships a black 0.9 fill; follow the label colour.
+		svg path {
+			fill: currentcolor;
+			fill-opacity: 1;
 		}
 
 		&:hover {

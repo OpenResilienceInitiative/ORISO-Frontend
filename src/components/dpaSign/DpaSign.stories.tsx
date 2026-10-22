@@ -1,3 +1,4 @@
+import { expect, userEvent, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom';
@@ -64,7 +65,15 @@ const withStubbedApi = (Story: React.ComponentType) => {
 		if (url.includes('/public/dpa/confirm/')) {
 			const body =
 				(init?.method ?? 'GET').toUpperCase() === 'POST'
-					? { status: 'SIGNED' }
+					? {
+							status: 'SIGNED',
+							dpaVersion: PREVIEW.dpaVersion,
+							signerName: 'Marge Simpson',
+							signerPosition: 'Geschäftsführerin',
+							signerOrganisation:
+								'Vertretung laut Handelsregister',
+							signedAt: '2026-10-06T10:30:00'
+						}
 					: PREVIEW;
 			return new Response(JSON.stringify(body), {
 				status: 200,
@@ -112,5 +121,31 @@ export const Mobile: Story = {
 	parameters: {
 		...meta.parameters,
 		viewport: { defaultViewport: 'mobile1' }
+	}
+};
+
+/** Confirmed receipt: deterministic server date and signer details, safe demo identity. */
+export const Confirmed: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const name = await canvas.findByLabelText('Vollständiger Name *');
+		await userEvent.type(name, 'Marge Simpson');
+		await userEvent.type(
+			canvas.getByLabelText('Position *'),
+			'Geschäftsführerin'
+		);
+		await userEvent.type(
+			canvas.getByLabelText('E-Mail *'),
+			'marge.simpson@example.test'
+		);
+		await userEvent.click(canvas.getByRole('checkbox'));
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Bestätigung absenden' })
+		);
+		await expect(
+			await canvas.findByRole('button', {
+				name: 'Drucken / als PDF speichern'
+			})
+		).toBeEnabled();
 	}
 };

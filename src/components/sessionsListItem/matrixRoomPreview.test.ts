@@ -171,6 +171,36 @@ describe('getLatestMatrixRoomPreview', () => {
 		).toEqual({ kind: 'first_response', text: null });
 	});
 
+	it.each([
+		[{ type: 'USER_LEFT_CHAT', username: 'enc.abc' }, 'user_left_chat'],
+		[
+			{ type: 'CASE_HANDOVER_GRANTED', username: 'Counsellor' },
+			'system_notification'
+		]
+	])(
+		'shows a system notice kind instead of its raw JSON: %j',
+		(payload, kind) => {
+			const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify(payload)}`;
+			expect(
+				getLatestMatrixRoomPreview([
+					event('m.room.message', { msgtype: 'm.text', body }, 5)
+				])
+			).toEqual({ kind, text: null });
+		}
+	);
+
+	it('keeps the text of a system notice that has one', () => {
+		const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description: 'A new counsellor took over.'
+		})}`;
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body }, 5)
+			])
+		).toEqual({ kind: 'text', text: 'A new counsellor took over.' });
+	});
+
 	it('uses an Element-style semantic preview for voice messages', () => {
 		expect(
 			getLatestMatrixRoomPreview([
@@ -337,8 +367,62 @@ describe('preview line of the list card: glyphs, not words', () => {
 			'e2ee.message.encryption.text': 'Verschlüsselte Nachricht',
 			'sessionList.preview.image': 'Bild',
 			'sessionList.preview.audio': 'Audionachricht',
-			'sessionList.preview.channel.supervision': 'Supervision:'
+			'sessionList.preview.channel.supervision': 'Supervision:',
+			'message.userLeftChat': 'User has left the chat',
+			'message.consultantLeftChat': 'Consultant has left the chat',
+			'message.youEndedChat': 'You ended the chat',
+			'message.chatEnded': 'The chat has ended',
+			'message.systemNotificationTitle': 'System notification'
 		})[key] ?? `?${key}`;
+
+	it.each([
+		// [endedBy, viewer is counsellor, line] — #1838
+		['ADVICE_SEEKER', true, 'User has left the chat'],
+		['ADVICE_SEEKER', false, 'You ended the chat'],
+		['CONSULTANT', true, 'You ended the chat'],
+		['CONSULTANT', false, 'Consultant has left the chat'],
+		[null, true, 'User has left the chat'],
+		[null, false, 'The chat has ended']
+	] as const)(
+		'words the end of a chat by who ended it: %s, counsellor viewer %s',
+		(endedBy, isConsultant, text) => {
+			const left = {
+				kind: 'user_left_chat',
+				text: null,
+				endedBy
+			} as const;
+			expect(toListPreviewLine(left, translate, isConsultant)).toEqual({
+				glyphs: [],
+				text
+			});
+		}
+	);
+
+	it('reads who ended the chat from the USER_LEFT_CHAT event', () => {
+		const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'USER_LEFT_CHAT',
+			username: 'enc.abc',
+			endedBy: 'ADVICE_SEEKER'
+		})}`;
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body }, 5)
+			])
+		).toEqual({
+			kind: 'user_left_chat',
+			text: null,
+			endedBy: 'ADVICE_SEEKER'
+		});
+	});
+
+	it('words a system notice without text as the chat does', () => {
+		expect(
+			toListPreviewLine(
+				{ kind: 'system_notification', text: null },
+				translate
+			)
+		).toEqual({ glyphs: [], text: 'System notification' });
+	});
 
 	it('shows a thread reply as the thread glyph and the bare text', () => {
 		expect(

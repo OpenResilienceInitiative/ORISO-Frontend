@@ -1,9 +1,11 @@
 import * as React from 'react';
-import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
+import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetAskerSessionList,
@@ -25,6 +27,10 @@ import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
+import {
+	getGroupUpcomingDates,
+	getGroupWaitingRoomTopic
+} from './groupWaitingRoomData';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import {
@@ -75,19 +81,63 @@ export const GroupEntryRoom = () => {
 	return <ClientGroupEntryRoom />;
 };
 
-const EntryRoomLoading = () => (
-	<Box
-		sx={{
-			minHeight: '100vh',
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'center'
-		}}
-		data-cy="group-entry-loading"
-	>
-		<Loading layout="page" />
-	</Box>
-);
+/* The frame stands while the group loads, so the waiting room after
+   "Registrieren" turns into the group's room by its column alone — no
+   full-page spinner in between (#1219). */
+export const EntryRoomLoading = () => {
+	const { t } = useTranslation();
+	return (
+		<WaitingRoomFrame>
+			{/* One column, like every room: the stage's rules for its direct
+			    children would otherwise size the bar as well. */}
+			<Box
+				sx={{
+					width: '100%',
+					minWidth: 0,
+					maxWidth: '100%',
+					flexGrow: 1,
+					minHeight: {
+						xs: 'calc(100vh - 96px)',
+						lg: 'calc(100vh - 128px)'
+					},
+					display: 'flex',
+					flexDirection: 'column'
+				}}
+				data-cy="group-entry-loading"
+			>
+				<Box
+					sx={{
+						flex: 1,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center'
+					}}
+				>
+					<Loading />
+				</Box>
+				{/* The room's bar and gate are there from the first frame, so
+				    the room does not grow a footer once the group has loaded.
+				    Nothing here is measurable, so the gate waits without a
+				    fill. */}
+				<RegistrationFooter>
+					<Box sx={{ width: '100%' }}>
+						<HandoverGateButton
+							state="preparing"
+							indeterminate
+							label={translateWithFallback(
+								t,
+								'groupChat.entry.join',
+								'Beitreten'
+							)}
+							status=""
+							testingAttribute="group-entry-loading-gate"
+						/>
+					</Box>
+				</RegistrationFooter>
+			</Box>
+		</WaitingRoomFrame>
+	);
+};
 
 const ClientGroupEntryRoom = () => {
 	const { chatId: chatIdParam } = useParams<{ chatId: string }>();
@@ -136,34 +186,7 @@ const ClientGroupEntryRoom = () => {
 		groupChatRulesTranslations: item?.groupChatRulesTranslations
 	});
 
-	/**
-	 * The next dates of a repeating group, for the explainer behind "Mehr
-	 * erfahren" — looked up, never booked (Frank, 2026-09-07). Derived from
-	 * the start and the interval the chat carries; a one-off group has only
-	 * its own date, and a group without a date has none.
-	 */
-	const upcomingDates = useMemo(() => {
-		const start = item ? getGroupChatPlannedStart(item) : null;
-		if (!start) {
-			return undefined;
-		}
-		/* Calendar arithmetic, not fixed milliseconds: a month is not 30 days
-		   (a 31 January start would have shown 2 March), and a day is not
-		   always 24 hours — across the DST change the fixed step moved the
-		   meeting by an hour. */
-		const unit: 'week' | 'day' | 'month' | null =
-			item?.chatInterval === 'WEEKLY'
-				? 'week'
-				: item?.chatInterval === 'DAILY'
-					? 'day'
-					: item?.chatInterval === 'MONTHLY'
-						? 'month'
-						: null;
-		if (!unit) {
-			return [start];
-		}
-		return [0, 1, 2].map((step) => dayjs(start).add(step, unit).toDate());
-	}, [item]);
+	const upcomingDates = useMemo(() => getGroupUpcomingDates(item), [item]);
 
 	const plannedStart = useMemo(
 		() => (item ? getGroupChatPlannedStart(item) : null),
@@ -193,7 +216,9 @@ const ClientGroupEntryRoom = () => {
 				);
 			})
 			.catch((error) => {
-				const notice = getCounsellingDpaNotification(error, t);
+				const notice = getCounsellingDpaNotification(error, t, {
+					groupJoin: true
+				});
 				if (notice && notifications)
 					notifications.addNotification(notice);
 				else setJoinFailed(true);
@@ -228,17 +253,10 @@ const ClientGroupEntryRoom = () => {
 		);
 	}
 
-	/* #1499: the group's topic stays out of the waiting room until the
-	   client's agreement to the group's privacy statement is on record. */
-	const privacyAcceptanceRecorded = Boolean(
-		userData?.dataPrivacyConfirmation &&
-			String(userData.dataPrivacyConfirmation).trim() !== ''
+	const topicName = getGroupWaitingRoomTopic(
+		item,
+		userData?.dataPrivacyConfirmation
 	);
-	const topicName = privacyAcceptanceRecorded
-		? typeof item.topic === 'string'
-			? item.topic
-			: item.topic?.name
-		: undefined;
 	const agencyName = item.assignedAgencies?.[0]?.name;
 
 	return (

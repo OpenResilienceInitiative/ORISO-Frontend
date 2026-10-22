@@ -14,11 +14,14 @@ $session-light-border: #fff;
 // #597: selected ring uses M3 primary (was #ffb4aa / 1px)
 $session-selected-border: var(--m3-primary, #a5000a);
 $session-active-border: var(--m3-primary-container, #cc1e1c);
-$session-focus-ring: var(--m3-primary-fixed, #ffdad5);
-$session-topic-chip-bg: var(--m3-primary-fixed-dim, #ffb4aa);
-$session-topic-chip-color: var(--m3-on-primary-fixed, #410001);
+
+// --oriso-session-focus-ring is only set by the high-contrast candidates (#1134);
+// everywhere else the halo is still the own-bubble tint.
+$session-focus-ring: var(
+	--oriso-session-focus-ring,
+	var(--m3-primary-fixed, #ffdad5)
+);
 $session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
-$session-chip-hover-color: var(--m3-on-primary, #ffffff);
 $session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
 $session-postcode-color: var(--m3-primary-container, #cc1e1c);
 $case-handover-action: var(--m3-primary, $primary);
@@ -103,8 +106,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// Make tags red when card is active
 		.sessionsListItem__topic {
-			background-color: $session-active-border !important;
-			color: var(--m3-on-primary, #ffffff) !important;
+			@include topic-tag-colors-emphasis;
 		}
 
 		.sessionsListItem__menuIcon {
@@ -132,14 +134,20 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// Mail keeps the primary colour when active: it is the modality's colour, not a highlight.
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
-			color: var(--m3-primary, $primary) !important;
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			) !important;
 		}
 
 		.sessionsListItem__consultingTypeIcon--nearbyIcon {
 			// The mask already paints it; the black-to-red filter the other
 			// modalities use would double up on it.
 			filter: none;
-			background-color: var(--m3-primary, $primary);
+			background-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			);
 		}
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
@@ -152,10 +160,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&--read {
 		.sessionsListItem__content {
 			background-color: $session-card-bg;
-		}
-
-		.sessionsListItem__topic {
-			background-color: $session-topic-chip-bg;
 		}
 
 		.sessionsListItem__username {
@@ -208,8 +212,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		.sessionsListItem__topic {
-			background-color: $session-active-border !important;
-			color: var(--m3-on-primary, #ffffff) !important;
+			@include topic-tag-colors-emphasis;
 		}
 	}
 
@@ -272,8 +275,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
 		.sessionsListItem__content:hover {
 		.sessionsListItem__topic {
-			background-color: $session-chip-hover-bg;
-			color: $session-chip-hover-color;
+			@include topic-tag-colors-emphasis;
 		}
 
 		.sessionsListItem__postcode {
@@ -304,7 +306,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		display: flex;
 
 		gap: 12px;
-		color: var(--m3-primary, $secondary);
+		color: var(--oriso-primary-text, var(--m3-primary, $secondary));
 		min-width: 0;
 
 		&:first-child {
@@ -563,7 +565,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -580,7 +582,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -695,29 +697,19 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		padding: 2px 12px;
 	}
 
+	// Shape, type and colours come from <TopicTag> (topicTag.styles.scss);
+	// this only places it in the card.
 	&__topic {
-		border-radius: 12px;
-		padding: 2px 12px;
 		text-align: left;
-		color: $session-topic-chip-color;
-		background-color: $session-topic-chip-bg;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 		align-self: flex-start;
-		min-width: 0;
-		max-width: 100%;
 		flex: 0 1 auto;
-		font-size: 12px;
-		line-height: 16px;
-		font-weight: 500;
-		letter-spacing: 0.5px;
+
+		@include topic-tag-colors;
 
 		@media screen and (width <= 899px) {
 			// Give tag text slightly more room on compact screens.
 			padding-left: 6px;
 			padding-right: 6px;
-			font-size: 12px;
 		}
 	}
 
@@ -803,64 +795,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		text-overflow: ellipsis;
 	}
 
-	&__stackedAvatars {
-		position: relative;
-		width: 48px; // Wider to accommodate 3 overlapping 32px circles
-		height: 32px;
-		display: flex;
+	&__participants {
+		display: inline-flex;
 		align-items: center;
-		justify-content: flex-start;
-	}
-
-	&__avatarWrapper {
-		position: absolute;
-		border-radius: 50%;
-		border: 2px solid $white;
-		overflow: hidden;
-
-		&:nth-child(1) {
-			right: 16px; // Reversed order - right to left
-			top: 0;
-			z-index: 1;
-		}
-
-		&:nth-child(2) {
-			right: 6px; // Reversed order - right to left
-			top: 0;
-			z-index: 2;
-		}
-
-		&:nth-child(3) {
-			right: 0; // Reversed order - right to left
-			top: 0;
-			z-index: 3;
-		}
-
-		&--plus {
-			background-color: var(--m3-primary-container, #cc1e1c);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: var(--m3-on-primary-container, #ffe2de);
-			font-weight: $font-weight-bold;
-			font-size: 12px;
-		}
-
-		// Ensure the avatar fills the wrapper
-		> * {
-			display: block;
-		}
-	}
-
-	&__plusAvatar {
-		width: 32px;
-		height: 32px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 12px;
-		font-weight: $font-weight-bold;
-		color: $white;
+		flex-shrink: 0;
 	}
 
 	&__username {
@@ -1020,7 +958,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 24px !important;
 			flex-shrink: 0;
 			display: block;
-			background-color: var(--m3-primary, $primary);
+			background-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			);
 			mask-image: var(--nearby-icon-url);
 			mask-size: contain;
 			mask-position: center;
@@ -1035,7 +976,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
 			font-weight: 600;
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			line-height: 20px;
 			letter-spacing: 0;
 		}
@@ -1071,138 +1012,74 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		margin-left: $grid-base;
 	}
 
-	// Case-handover split button — M3 "split button" (Figma node 115-27170):
-	// two segments separated by a 2px gap, outer corners 20px, inner corners
-	// 4px. The per-state background colour is set once on the container as a
-	// CSS custom property and inherited by both segments.
+	// Case-handover split button (FE#1725): the `SplitButton` atom at its
+	// 40px compact size carries the outlined / filled-primary variants. Only
+	// the read-only status pills are themed here. The open card is marked by
+	// the card itself (`--active`), never by this button.
 	&__handoverAction {
 		position: relative;
 		display: inline-flex;
-		align-items: stretch;
-		gap: 2px;
 		margin: 8px 16px 8px 8px;
-		background: transparent;
-		color: var(--m3-on-primary, #ffffff);
 		flex-shrink: 0;
+		max-width: calc(100% - 24px);
 
-		--handover-segment-bg: var(--m3-secondary, #4b515a);
-		--handover-segment-fg: var(--m3-on-primary, #ffffff);
-
-		&--active,
-		&--selected {
-			--handover-segment-bg: var(--m3-primary, #a5000a);
-			--handover-segment-fg: var(--m3-on-primary, #ffffff);
+		.splitButton {
+			max-width: 100%;
+			min-width: 0;
 		}
 
-		&--status {
-			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
-			--handover-segment-fg: var(--m3-on-surface-variant, #5c6167);
+		// Narrow cards (320 px): the main segment gives way first, its label
+		// truncates, so the chevron is never pushed under the Mail mark.
+		.splitButton__main {
+			flex: 0 1 auto;
+			min-width: 40px;
 		}
 
-		&--denied {
-			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
-			--handover-segment-fg: var(--m3-primary, #a5000a);
+		.splitButton__label,
+		.m3Checkbox__label {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
-		&--disabled {
-			--handover-segment-bg: var(--m3-surface-variant, #e7e8ea);
-			--handover-segment-fg: var(--m3-outline, #9ca1a6);
-		}
-	}
-
-	&__handoverActionPrimary {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		min-height: 40px;
-		min-width: 116px;
-		padding: 0 12px 0 16px;
-		border: 0;
-		border-radius: 20px 4px 4px 20px;
-		background: var(--handover-segment-bg);
-		color: var(--handover-segment-fg);
-		font-family: $font-family-sans-serif;
-		font-size: 13px;
-		font-weight: 700;
-		line-height: 1;
-		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
-		transition: filter 120ms ease;
-
-		&:disabled {
-			cursor: default;
+		.m3Checkbox--fill {
+			min-width: 0;
 		}
 
-		// Pressed feedback: a gentle darken of the segment colour (M3 state
-		// layer) — never a hard black overlay/ring.
-		&:active:not(:disabled) {
-			filter: brightness(0.94);
-		}
-
-		// Focus ring uses the segment foreground so it reads white on the red
-		// button and dark on the muted/status button — never a black circle.
-		&:focus-visible {
-			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
-			outline-offset: -2px;
-		}
-	}
-
-	&__handoverActionLabel {
-		white-space: nowrap;
-	}
-
-	&__handoverActionToggle {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 48px;
-		border: 0;
-		border-radius: 4px 20px 20px 4px;
-		background: var(--handover-segment-bg);
-		color: var(--handover-segment-fg);
-		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
-		transition: filter 120ms ease;
-
-		&:disabled {
-			cursor: default;
-		}
-
-		&:active:not(:disabled) {
-			filter: brightness(0.94);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
-			outline-offset: -2px;
-		}
-	}
-
-	&__handoverActionCheckbox {
-		width: 15px;
-		height: 15px;
-		border: 2px solid currentcolor;
-		border-radius: 3px;
-		background: transparent;
-		flex-shrink: 0;
-		position: relative;
-
-		&--selected {
-			background: var(--m3-surface, #ffffff);
-			border-color: var(--m3-on-primary, #ffffff);
-
-			&::after {
-				content: '';
+		// 320 px phone: no room for a readable label beside Mail, so the main
+		// segment shows only its glyph or checkbox; the name stays for AT.
+		@container session-card (max-width: 340px) {
+			.splitButton__label,
+			.m3Checkbox__label {
 				position: absolute;
-				left: 3px;
-				top: 0;
-				width: 4px;
-				height: 7px;
-				border: solid var(--m3-primary, #a5000a);
-				border-width: 0 2px 2px 0;
-				transform: rotate(45deg);
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+				clip-path: inset(50%);
+				white-space: nowrap;
 			}
+
+			.splitButton__main {
+				padding: 0 12px;
+			}
+
+			.splitButton__main.splitButton__main--selection {
+				padding: 0;
+			}
+		}
+
+		&--status .splitButton__main,
+		&--status .splitButton__main:disabled {
+			background: var(--m3-surface-variant, #e0e2e5);
+			border-color: transparent;
+			color: var(--m3-on-surface-variant, #444748);
+			cursor: default;
+			opacity: 1;
+		}
+
+		&--denied .splitButton__main,
+		&--denied .splitButton__main:disabled {
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 
