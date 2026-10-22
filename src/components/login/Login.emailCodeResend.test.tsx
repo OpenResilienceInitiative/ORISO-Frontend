@@ -158,6 +158,33 @@ afterEach(() => {
 });
 
 describe('Magic-link login preserves the required second factor', () => {
+	it('does not install a late magic-link session after leaving the login page', async () => {
+		let complete!: (
+			value: Awaited<ReturnType<typeof apiConsumeMagicLinkLogin>>
+		) => void;
+		vi.mocked(apiConsumeMagicLinkLogin).mockReturnValueOnce(
+			new Promise((resolve) => {
+				complete = resolve;
+			})
+		);
+		const install = vi
+			.spyOn(loginAuth, 'setTokens')
+			.mockImplementation(() => {});
+		const view = renderLogin('/login?magicToken=magic-fixture');
+		await flush();
+		view.unmount();
+		await act(async () =>
+			complete({
+				access_token: 'fixture-late-access',
+				expires_in: 300,
+				refresh_token: 'fixture-late-refresh',
+				refresh_expires_in: 600
+			})
+		);
+		await flush();
+		expect(install).not.toHaveBeenCalled();
+	});
+
 	it('ignores a late magic-link session after the person chooses another login', async () => {
 		let complete!: (
 			value: Awaited<ReturnType<typeof apiConsumeMagicLinkLogin>>

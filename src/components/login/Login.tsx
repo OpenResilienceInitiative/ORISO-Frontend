@@ -170,6 +170,12 @@ export const Login = () => {
 	// write its message or field marks over newer input.
 	const loginAttemptRef = useRef(0);
 	const existingSessionLookupRef = useRef(0);
+	useEffect(
+		() => () => {
+			loginAttemptRef.current += 1;
+		},
+		[]
+	);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
 	const [isSecurityExplainerOpen, setIsSecurityExplainerOpen] =
