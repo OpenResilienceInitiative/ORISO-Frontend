@@ -79,6 +79,8 @@ describe('useConversationActions (#1824 S1)', () => {
 			result.current.handleReact('$m1', '👍');
 		});
 		expect(onWrite).toHaveBeenCalledTimes(1);
+		// The room the write happened in, even if the view moved on since.
+		expect(onWrite).toHaveBeenCalledWith(ROOM);
 	});
 
 	it('builds the reply and edit context the composer expects', () => {

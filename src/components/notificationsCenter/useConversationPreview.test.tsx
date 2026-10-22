@@ -15,6 +15,7 @@ const fakes = vi.hoisted(() => ({
 	useSession: vi.fn(),
 	apiGetSessionSupervisors: vi.fn(),
 	apiGetCaseHandoverStatus: vi.fn(),
+	apiGetGroupChatInfo: vi.fn(),
 	useTeamDiscussionChannel: vi.fn(),
 	membership: 'join',
 	transport: {
@@ -33,6 +34,9 @@ vi.mock('../../api/apiGetSessionSupervisors', () => ({
 }));
 vi.mock('../../api/apiCaseHandover', () => ({
 	apiGetCaseHandoverStatus: fakes.apiGetCaseHandoverStatus
+}));
+vi.mock('../../api/apiGetGroupChatInfo', () => ({
+	apiGetGroupChatInfo: fakes.apiGetGroupChatInfo
 }));
 vi.mock('../../hooks/useTeamDiscussionChannel', () => ({
 	useTeamDiscussionChannel: fakes.useTeamDiscussionChannel
@@ -93,6 +97,7 @@ beforeEach(() => {
 	}));
 	fakes.useSession.mockReturnValue({ session: session(), ready: true });
 	fakes.apiGetSessionSupervisors.mockResolvedValue([]);
+	fakes.apiGetGroupChatInfo.mockResolvedValue({ bannedUsers: [] });
 	fakes.useTeamDiscussionChannel.mockReturnValue({
 		discussion: null,
 		resolved: true
@@ -135,7 +140,9 @@ describe('useConversationPreview (#1824)', () => {
 		expect(result.current?.composerTarget).toEqual({
 			targetRoomId: SIDE,
 			accent: 'supervision',
-			feedbackMailIntent: true
+			feedbackMailIntent: true,
+			isSupervisor: false,
+			supervisionRoomId: SIDE
 		});
 	});
 
@@ -151,7 +158,9 @@ describe('useConversationPreview (#1824)', () => {
 			})
 		);
 		await waitFor(() => expect(result.current?.roomKind).toBe('team'));
-		expect(result.current?.capabilities.composer).toBe(true);
+		await waitFor(() =>
+			expect(result.current?.capabilities.composer).toBe(true)
+		);
 		expect(result.current?.composerTarget).toEqual({
 			targetRoomId: TEAM,
 			targetChannelKind: 'team',
@@ -209,10 +218,122 @@ describe('useConversationPreview (#1824)', () => {
 		expect(result.current?.senderDisplayName).toBe('fuchs42');
 	});
 
+	it('a supervisor writes into the side room as the chat does (aside semantics)', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({ consultant: { id: 'owner' } }),
+			ready: true
+		});
+		fakes.apiGetSessionSupervisors.mockResolvedValue([
+			{ supervisorConsultantId: 'me', matrixRoomId: SIDE }
+		]);
+		const { result } = render(
+			row({ params: { roomRef: SIDE, sourceSessionId: 13 } })
+		);
+		await waitFor(() =>
+			expect(result.current?.capabilities.composer).toBe(true)
+		);
+		expect(result.current?.composerTarget).toMatchObject({
+			isSupervisor: true,
+			supervisionRoomId: SIDE
+		});
+		// A supervisor already reads the case: no handover status is asked.
+		expect(fakes.apiGetCaseHandoverStatus).not.toHaveBeenCalled();
+	});
+
+	it('stays read only while the supervisors are still loading', async () => {
+		let resolveSupervisors: (value: unknown) => void = () => undefined;
+		fakes.apiGetSessionSupervisors.mockReturnValue(
+			new Promise((resolve) => {
+				resolveSupervisors = resolve;
+			})
+		);
+		const { result } = render(row());
+		await waitFor(() =>
+			expect(result.current?.capabilities.readOnlyReason).toBe(
+				'sessionUnknown'
+			)
+		);
+		resolveSupervisors([]);
+		await waitFor(() =>
+			expect(result.current?.capabilities.composer).toBe(true)
+		);
+	});
+
+	it('anonymous asker: blocked while the chat’s waiting gate is up', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({
+				consultant: { id: 'counsellor' },
+				item: {
+					registrationType: 'ANONYMOUS',
+					conversationType: 'LIVE_CHAT'
+				}
+			}),
+			ready: true
+		});
+		sessionStorage.setItem('anonymous-pseudonym-13', '1');
+		const { result } = render(row(), asker);
+		await waitFor(() =>
+			expect(result.current?.capabilities.readOnlyReason).toBe(
+				'consentGate'
+			)
+		);
+		sessionStorage.setItem('anonymous-waiting-dismissed-13', '1');
+		const reopened = render(row(), asker);
+		await waitFor(() =>
+			expect(reopened.result.current?.capabilities.composer).toBe(true)
+		);
+		// The chat's transport for an anonymous asker, as in the chat.
+		expect(reopened.result.current?.composerTarget).toEqual({
+			isAnonymousLiveChat: true
+		});
+		sessionStorage.clear();
+	});
+
+	it('group: the chat’s join view blocks a banned member', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({
+				isGroup: true,
+				isSession: false,
+				item: { active: true, subscribed: true }
+			}),
+			ready: true
+		});
+		fakes.apiGetGroupChatInfo.mockResolvedValue({
+			bannedUsers: ['fuchs42']
+		});
+		const { result } = render(row(), asker);
+		await waitFor(() =>
+			expect(result.current?.capabilities.readOnlyReason).toBe(
+				'notJoined'
+			)
+		);
+	});
+
+	it('group: a stopped group is read only', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({
+				isGroup: true,
+				isSession: false,
+				item: { active: false, subscribed: true }
+			}),
+			ready: true
+		});
+		const { result } = render(row(), asker);
+		await waitFor(() =>
+			expect(result.current?.capabilities.readOnlyReason).toBe(
+				'notJoined'
+			)
+		);
+	});
+
 	it('a group whose knock is still pending is read only', async () => {
 		fakes.membership = 'knock';
 		fakes.useSession.mockReturnValue({
-			session: session({ isGroup: true, isSession: false }),
+			session: session({
+				isGroup: true,
+				isSession: false,
+				item: { active: true, subscribed: true }
+			}),
 			ready: true
 		});
 		const { result } = render(row(), asker);

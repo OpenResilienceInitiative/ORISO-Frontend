@@ -162,7 +162,9 @@ const READ_ONLY_TEXT: Partial<Record<string, string>> = {
 	supervisor: 'notifications.center.preview.supervisorNoComposer',
 	notJoined: 'notifications.center.preview.notJoined',
 	teamClosed: 'notifications.center.preview.teamClosed',
-	curtained: 'notifications.center.preview.curtained'
+	curtained: 'notifications.center.preview.curtained',
+	enquiry: 'notifications.center.preview.enquiryOpenToAccept',
+	consentGate: 'notifications.center.preview.consentOpenToContinue'
 };
 
 /**
@@ -201,8 +203,9 @@ export const ConversationPreview = ({
 	access?: ConversationPreviewAccess;
 	/** The conversation's own route: where its drafts resume. */
 	conversationPath?: string | null;
-	/** The conversation was read through the preview (a receipt went out). */
-	onConversationRead?: () => void;
+	/** The conversation in `roomId` was read through the preview (a receipt
+	 * went out) — the room the write happened in, even if the view moved on. */
+	onConversationRead?: (roomId: string) => void;
 	onOpenConversation?: () => void;
 }) => {
 	const { t: translate } = useTranslation();
@@ -253,23 +256,31 @@ export const ConversationPreview = ({
 		setActionFailed(false);
 		setMarkedRead(false);
 	}, [roomId, shownThreadRootId]);
-	const markConversationRead = useCallback(async () => {
-		if (!roomId) {
-			return;
+	// The room on screen now; a late write must not touch another one.
+	const shownRoomRef = useRef(roomId);
+	shownRoomRef.current = roomId;
+	const markConversationRead = useCallback(async (readRoomId: string) => {
+		if (await chatTransportService.markRoomAsRead(readRoomId)) {
+			if (shownRoomRef.current === readRoomId) {
+				setMarkedRead(true);
+			}
+			onConversationReadRef.current?.(readRoomId);
 		}
-		if (await chatTransportService.markRoomAsRead(roomId)) {
-			setMarkedRead(true);
-			onConversationReadRef.current?.();
-		}
-	}, [roomId]);
+	}, []);
 	const conversationActions = useConversationActions({
 		roomId,
 		resetKey: `${roomId}|${shownThreadRootId}`,
-		onWrite: () => {
-			setActionFailed(false);
-			void markConversationRead();
+		onWrite: (writtenRoomId) => {
+			if (shownRoomRef.current === writtenRoomId) {
+				setActionFailed(false);
+			}
+			void markConversationRead(writtenRoomId);
 		},
-		onWriteFailed: () => setActionFailed(true)
+		onWriteFailed: (writtenRoomId) => {
+			if (shownRoomRef.current === writtenRoomId) {
+				setActionFailed(true);
+			}
+		}
 	});
 	const typing = useMatrixTyping(capabilities?.composer ? roomId : null);
 
@@ -557,7 +568,7 @@ export const ConversationPreview = ({
 										type="button"
 										className="conversationPreview__button"
 										onClick={() =>
-											void markConversationRead()
+											void markConversationRead(roomId)
 										}
 									>
 										{translate(
@@ -645,9 +656,11 @@ export const ConversationPreview = ({
 									: 'notifications.center.preview.composerPlaceholder'
 							)}
 							isTyping={typing}
+							// Bound to this render's room: the composer is keyed by
+							// room, so a send finishing after a switch reads its own.
 							handleMessageSendSuccess={() => {
 								setActionFailed(false);
-								void markConversationRead();
+								void markConversationRead(roomId);
 							}}
 							onSendError={() => setActionFailed(true)}
 							threadRootId={shownThreadRootId}

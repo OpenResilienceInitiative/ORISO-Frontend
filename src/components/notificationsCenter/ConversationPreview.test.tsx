@@ -1139,4 +1139,63 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 		open({ access: { capabilities: readOnly(reason) } });
 		expect(screen.getByText(t(key))).toBeTruthy();
 	});
+
+	it('a write that settles after switching rooms reads its own room, not the new one', async () => {
+		conversation([
+			matrixEvent({
+				id: '$r1',
+				sender: LISA,
+				type: 'm.reaction',
+				content: {
+					'm.relates_to': {
+						rel_type: 'm.annotation',
+						event_id: '$theirs',
+						key: '👍'
+					}
+				}
+			})
+		]);
+		let settle: (value: unknown) => void = () => undefined;
+		transport.sendReaction.mockReturnValueOnce(
+			new Promise((resolve) => {
+				settle = resolve;
+			}) as any
+		);
+		const onConversationRead = vi.fn();
+		const preview = (roomId: string) => (
+			<MessageContextShell>
+				<ConversationPreview
+					roomId={roomId}
+					access={{ capabilities: capabilities() }}
+					onConversationRead={onConversationRead}
+				/>
+			</MessageContextShell>
+		);
+		const { container, rerender } = render(preview(ROOM));
+		fireEvent.click(
+			container.querySelector('.messageItem__reactionPill') as HTMLElement
+		);
+		rerender(preview('!other:matrix.example'));
+		await act(async () => settle({ success: true }));
+		expect(transport.markRoomAsRead).toHaveBeenCalledTimes(1);
+		expect(transport.markRoomAsRead).toHaveBeenCalledWith(ROOM);
+		expect(onConversationRead).toHaveBeenCalledWith(ROOM);
+		expect(screen.queryByRole('status')).toBeNull();
+	});
+
+	it('a send reads the room it was written in', async () => {
+		conversation();
+		const { onConversationRead } = open();
+		await act(async () => composer.props.handleMessageSendSuccess());
+		expect(onConversationRead).toHaveBeenCalledWith(ROOM);
+	});
+
+	it.each([
+		['enquiry', 'enquiryOpenToAccept'],
+		['consentGate', 'consentOpenToContinue']
+	] as const)('%s: explains why', (reason, key) => {
+		conversation();
+		open({ access: { capabilities: readOnly(reason) } });
+		expect(screen.getByText(t(key))).toBeTruthy();
+	});
 });

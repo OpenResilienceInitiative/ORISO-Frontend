@@ -12,9 +12,10 @@ type EditContext = ReturnType<typeof buildEditContext>;
  * chat (`SessionItemComponent`) and the Activity Timeline preview, so both
  * offer exactly the same actions with the same transport calls.
  *
- * `onWrite` / `onWriteFailed` report a settled react, un-react or delete;
- * the chat ignores them, the preview uses them as its read moment and to
- * show a failure. A reply or edit context never survives a change of
+ * `onWrite` / `onWriteFailed` report a settled react, un-react or delete,
+ * with the room it happened in (the view may have moved on by then); the
+ * chat ignores them, the preview uses them as its read moment and to show a
+ * failure. A reply or edit context never survives a change of
  * `resetKey` (the conversation).
  */
 export const useConversationActions = ({
@@ -25,8 +26,8 @@ export const useConversationActions = ({
 }: {
 	roomId: string | null | undefined;
 	resetKey?: unknown;
-	onWrite?: () => void;
-	onWriteFailed?: () => void;
+	onWrite?: (roomId: string) => void;
+	onWriteFailed?: (roomId: string) => void;
 }) => {
 	// Refs: callers pass inline callbacks, the handlers must stay stable.
 	const onWriteRef = useRef(onWrite);
@@ -34,12 +35,15 @@ export const useConversationActions = ({
 	const onWriteFailedRef = useRef(onWriteFailed);
 	onWriteFailedRef.current = onWriteFailed;
 
-	const write = useCallback((request: Promise<unknown>) => {
-		request.then(
-			() => onWriteRef.current?.(),
-			() => onWriteFailedRef.current?.()
-		);
-	}, []);
+	const write = useCallback(
+		(request: Promise<unknown>, writtenRoomId: string) => {
+			request.then(
+				() => onWriteRef.current?.(writtenRoomId),
+				() => onWriteFailedRef.current?.(writtenRoomId)
+			);
+		},
+		[]
+	);
 
 	const handleReact = useCallback(
 		(messageId: string, key: string) => {
@@ -51,7 +55,8 @@ export const useConversationActions = ({
 					matrixRoomId: roomId,
 					targetEventId: messageId,
 					key
-				})
+				}),
+				roomId
 			);
 		},
 		[roomId, write]
@@ -66,7 +71,8 @@ export const useConversationActions = ({
 				chatTransportService.removeReaction({
 					matrixRoomId: roomId,
 					reactionEventId
-				})
+				}),
+				roomId
 			);
 		},
 		[roomId, write]
@@ -81,7 +87,8 @@ export const useConversationActions = ({
 				chatTransportService.redactMessage({
 					matrixRoomId: roomId,
 					targetEventId: message._id
-				})
+				}),
+				roomId
 			);
 		},
 		[roomId, write]

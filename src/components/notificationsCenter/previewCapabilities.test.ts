@@ -32,6 +32,9 @@ const counsellor = (
 	isAnonymousChat: false,
 	teamDiscussionOpen: false,
 	threadsEnabled: true,
+	stillLoading: false,
+	anonymousGateBlocked: false,
+	groupJoinBlocked: false,
 	...overrides
 });
 
@@ -299,6 +302,73 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 				...NOTHING,
 				readOnlyReason: 'sessionUnknown'
 			});
+		});
+	});
+
+	describe('review round 2 (#1824)', () => {
+		it('anonymous live chat: blocked while the chat’s pseudonym/waiting gate is up', () => {
+			expect(
+				resolve(
+					asker({ isAnonymousChat: true, anonymousGateBlocked: true })
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'consentGate' });
+		});
+
+		it('group: the chat’s join view (stopped, not subscribed, banned) blocks too', () => {
+			expect(
+				resolve(
+					asker({
+						session: session({ isGroup: true, isSession: false }),
+						groupJoinBlocked: true
+					})
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+		});
+
+		it('a main room that the event calls a side channel fails closed', () => {
+			for (const channelKind of ['supervision', 'team'] as const) {
+				expect(resolve(counsellor({ channelKind }))).toMatchObject({
+					...NOTHING,
+					readOnlyReason: 'sessionUnknown'
+				});
+			}
+		});
+
+		it('nothing while facts are still loading (supervisors, group info)', () => {
+			expect(resolve(counsellor({ stillLoading: true }))).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'sessionUnknown'
+			});
+		});
+
+		it('team room of an archived session: read only', () => {
+			expect(
+				resolve(
+					counsellor({
+						roomKind: 'team',
+						teamDiscussionOpen: true,
+						session: session({ isArchive: true })
+					})
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'archived' });
+		});
+
+		it('co-access applies in every room of the case', () => {
+			expect(
+				resolve(
+					counsellor({
+						roomKind: 'team',
+						teamDiscussionOpen: true,
+						caseHandover: { canViewContent: true, coAccess: true }
+					})
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'coAccess' });
+		});
+
+		it('the content stays hidden until the handover status is known', () => {
+			expect(
+				resolve(counsellor({ caseHandover: 'loading' })).contentHidden
+			).toBe(true);
 		});
 	});
 });

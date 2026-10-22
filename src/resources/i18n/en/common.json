@@ -2350,7 +2350,9 @@
 				"supervisorNoComposer": "As supervisor you can react here, but not write.",
 				"teamClosed": "The team discussion is closed.",
 				"curtained": "This case is not visible to you right now.",
-				"backToConversation": "Back to the conversation"
+				"backToConversation": "Back to the conversation",
+				"enquiryOpenToAccept": "This enquiry has not been accepted yet. Open the conversation to accept it.",
+				"consentOpenToContinue": "Please confirm how to continue in the chat first. Open the conversation to do so."
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",

@@ -18,7 +18,9 @@ const KEYS = [
 	'teamClosed',
 	'curtained',
 	'backToConversation',
-	'sendFailed'
+	'sendFailed',
+	'enquiryOpenToAccept',
+	'consentOpenToContinue'
 ];
 
 /** Keys of the first #1824 draft that nothing renders any more. */

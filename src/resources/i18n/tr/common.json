@@ -2353,7 +2353,9 @@
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
 				"teamClosed": "Ekip görüşmesi kapandı.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
-				"backToConversation": "Görüşmeye dön"
+				"backToConversation": "Görüşmeye dön",
+				"enquiryOpenToAccept": "Bu talep henüz kabul edilmedi. Kabul etmek için görüşmeyi açın.",
+				"consentOpenToContinue": "Lütfen önce sohbette nasıl devam edileceğini onaylayın. Bunun için görüşmeyi açın."
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",

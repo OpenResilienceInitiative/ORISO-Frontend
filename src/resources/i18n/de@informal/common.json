@@ -675,7 +675,9 @@
 				"archivedOpenToReply": "Diese Unterhaltung ist archiviert. Öffne die Unterhaltung, um zu antworten.",
 				"notJoined": "Nur lesen, bis dein Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervision kannst du hier reagieren, aber nicht schreiben.",
-				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar."
+				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar.",
+				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffne die Unterhaltung, um sie anzunehmen.",
+				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung."
 			}
 		},
 		"events": {

@@ -66,6 +66,14 @@ export interface PreviewPolicyInput {
 	teamDiscussionOpen: boolean;
 	/** The tenant allows threads for this kind of chat. */
 	threadsEnabled: boolean;
+	/** A fact the decision needs is still loading (supervisors, group info). */
+	stillLoading: boolean;
+	/** The chat's anonymous gates (consent, pseudonym, waiting room) are up
+	 * (`shouldBlockAnonymousInquiryChat`). */
+	anonymousGateBlocked: boolean;
+	/** The chat shows its join view instead of a composer: group stopped,
+	 * not subscribed or the viewer banned (`shouldShowGroupChatJoinView`). */
+	groupJoinBlocked: boolean;
 }
 
 const readOnly = (
@@ -106,13 +114,23 @@ export const resolvePreviewCapabilities = ({
 	privacyAcceptanceRecorded,
 	isAnonymousChat,
 	teamDiscussionOpen,
-	threadsEnabled
+	threadsEnabled,
+	stillLoading,
+	anonymousGateBlocked,
+	groupJoinBlocked
 }: PreviewPolicyInput): PreviewCapabilities => {
+	// #924: nothing of the case shows until its handover status is known.
+	if (caseHandover === 'loading') {
+		return readOnly('sessionUnknown', { contentHidden: true });
+	}
 	if (
 		!session?.item ||
 		!roomKind ||
 		viewer.isConsultant === undefined ||
-		caseHandover === 'loading'
+		stillLoading ||
+		// The event names a side channel, but the room is the main room.
+		(roomKind === 'main' &&
+			(channelKind === 'supervision' || channelKind === 'team'))
 	) {
 		return readOnly('sessionUnknown');
 	}
@@ -129,6 +147,9 @@ export const resolvePreviewCapabilities = ({
 	if (roomKind === 'team') {
 		if (!viewer.isConsultant) {
 			return readOnly('sessionUnknown');
+		}
+		if (session.isArchive) {
+			return readOnly('archived');
 		}
 		return teamDiscussionOpen ? writable({}) : readOnly('teamClosed');
 	}
@@ -152,7 +173,7 @@ export const resolvePreviewCapabilities = ({
 	if (isSupervisorOfSession) {
 		return readOnly('supervisor', { react: true });
 	}
-	if (session.isGroup && !roomJoined) {
+	if (session.isGroup && (!roomJoined || groupJoinBlocked)) {
 		return readOnly('notJoined');
 	}
 	// The chat's consent gates (group privacy statement, anonymous asker) rest
@@ -160,8 +181,8 @@ export const resolvePreviewCapabilities = ({
 	// was passed.
 	if (
 		!viewer.isConsultant &&
-		(session.isGroup || isAnonymousChat) &&
-		!privacyAcceptanceRecorded
+		(((session.isGroup || isAnonymousChat) && !privacyAcceptanceRecorded) ||
+			(isAnonymousChat && anonymousGateBlocked))
 	) {
 		return readOnly('consentGate');
 	}

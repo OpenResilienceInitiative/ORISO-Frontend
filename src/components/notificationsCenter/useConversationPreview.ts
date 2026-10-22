@@ -3,6 +3,7 @@ import {
 	apiGetCaseHandoverStatus,
 	type CaseHandoverStatus
 } from '../../api/apiCaseHandover';
+import { apiGetGroupChatInfo } from '../../api/apiGetGroupChatInfo';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import {
@@ -13,7 +14,11 @@ import type { NotificationFeedItem } from '../../globalState/provider/Notificati
 import { useSession } from '../../hooks/useSession';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import { chatTransportService } from '../../services/chatTransportService';
+import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
+import { shouldBlockAnonymousInquiryChat } from '../session/anonymousConsentInvariant';
+import { readAnonymousGateState } from '../session/anonymousGateStorage';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCoAccess
@@ -32,6 +37,11 @@ import {
 /** Where the preview's composer sends, as the chat's side panels do. */
 export type PreviewComposerTarget = {
 	targetRoomId?: string;
+	/** An anonymous asker past the waiting room sends as the chat does. */
+	isAnonymousLiveChat?: boolean;
+	/** The side room: who writes and where asides go, as in the chat. */
+	isSupervisor?: boolean;
+	supervisionRoomId?: string;
 	targetChannelKind?: 'team';
 	teamDiscussion?: boolean;
 	feedbackMailIntent?: boolean;
@@ -128,11 +138,16 @@ export const useConversationPreview = (
 	// same request (ADR-008).
 	const counselling =
 		Boolean(isConsultant) && Boolean(session) && !session?.isGroup;
+	const supervisionLookup =
+		counselling && tenant.featureSupervisionEnabled !== false;
 	const supervisors = useSessionLookup(
-		counselling ? sessionId : undefined,
-		counselling && tenant.featureSupervisionEnabled !== false
-			? apiGetSessionSupervisors
-			: null
+		supervisionLookup ? sessionId : undefined,
+		supervisionLookup ? apiGetSessionSupervisors : null
+	);
+	// The chat decides on the join view with the group's banned users.
+	const groupInfo = useSessionLookup(
+		session?.isGroup ? sessionId : undefined,
+		session?.isGroup ? apiGetGroupChatInfo : null
 	);
 	const sideRoomId = supervisors?.value?.find?.(
 		(s) => s.matrixRoomId
@@ -169,9 +184,12 @@ export const useConversationPreview = (
 					: null;
 
 	// The chat's own rule for when a case-handover status decides access.
+	// In every room of the case; an active supervisor already reads it
+	// (the chat's `hasSupervisionAccess`).
 	const handoverControlled =
-		roomKind === 'main' &&
+		(roomKind === 'main' || roomKind === 'team') &&
 		Boolean(session) &&
+		!supervisesThis &&
 		isCaseHandoverAccessControlled({
 			activeSession: session as any,
 			userData,
@@ -236,6 +254,35 @@ export const useConversationPreview = (
 				? tenant.featureThreadsAnonymousChatsEnabled !== false
 				: tenant.featureThreadsOneOnOneEnabled !== false);
 
+	const isAsker = isConsultant === false;
+	const gates = readAnonymousGateState(sessionId);
+	const anonymousAsker = isAnonymousChat && isAsker;
+	const anonymousGateBlocked = shouldBlockAnonymousInquiryChat({
+		isAnonymousAskerExperience: anonymousAsker,
+		sessionStatus: session?.item?.status,
+		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation,
+		consentAcceptedInSession: gates.consentAccepted,
+		requiresPseudonymConfirmation:
+			anonymousAsker && !gates.pseudonymConfirmed,
+		isInAnonymousWaitingQueuePhase:
+			anonymousAsker &&
+			gates.pseudonymConfirmed &&
+			!gates.waitingGateDismissed
+	});
+	const bannedUsers: string[] = (
+		(groupInfo?.value as { bannedUsers?: string[] } | null)?.bannedUsers ||
+		[]
+	).map(decodeUsername);
+	const groupJoinBlocked = shouldShowGroupChatJoinView({
+		isGroup: Boolean(session?.isGroup),
+		active: (session?.item as any)?.active,
+		subscribed: (session?.item as any)?.subscribed,
+		isBanned: bannedUsers.includes(userData?.userName)
+	});
+	const stillLoading =
+		(supervisionLookup && !supervisors) ||
+		(Boolean(session?.isGroup) && !groupInfo);
+
 	const capabilities = resolvePreviewCapabilities({
 		session,
 		roomKind,
@@ -249,7 +296,10 @@ export const useConversationPreview = (
 		),
 		isAnonymousChat,
 		teamDiscussionOpen: discussion?.status === 'OPEN',
-		threadsEnabled
+		threadsEnabled,
+		stillLoading,
+		anonymousGateBlocked,
+		groupJoinBlocked
 	});
 
 	return {
@@ -263,7 +313,9 @@ export const useConversationPreview = (
 				? {
 						targetRoomId: roomId,
 						accent: 'supervision',
-						feedbackMailIntent: true
+						feedbackMailIntent: true,
+						isSupervisor: supervisesThis,
+						supervisionRoomId: roomId
 					}
 				: roomKind === 'team'
 					? {
@@ -272,7 +324,9 @@ export const useConversationPreview = (
 							teamDiscussion: true,
 							accent: 'team'
 						}
-					: {},
+					: anonymousAsker
+						? { isAnonymousLiveChat: gates.waitingGateDismissed }
+						: {},
 		caseHandoverStatus:
 			handover?.value && typeof handover.value === 'object'
 				? (handover.value as CaseHandoverStatus)

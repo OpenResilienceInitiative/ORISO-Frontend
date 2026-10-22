@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	latestActivityInRoom,
+	selectActivityEventsReadWithConversation,
 	selectActivityEventsSeenWhileReading
 } from './seenWhileReading';
 
@@ -92,5 +93,37 @@ describe('D1: activity events seen while reading (#1824)', () => {
 				unreadOnly: false
 			})
 		).toEqual(['t']);
+	});
+
+	describe('read with the conversation (D2)', () => {
+		const feed = [
+			event('a', '2026-10-22T09:00:00Z'),
+			event('b', '2026-10-22T09:30:00Z'),
+			event('other', '2026-10-22T09:30:00Z', {
+				params: { roomRef: '!r2:x' }
+			})
+		];
+
+		it('reading a conversation reads all its message events', () => {
+			expect(
+				selectActivityEventsReadWithConversation({
+					feed,
+					roomId: ROOM,
+					selectedId: 'a',
+					unreadOnly: false
+				})
+			).toEqual(['a', 'b']);
+		});
+
+		it('under "unread only" the selected card stays, so the selection does not jump (#845)', () => {
+			expect(
+				selectActivityEventsReadWithConversation({
+					feed,
+					roomId: ROOM,
+					selectedId: 'a',
+					unreadOnly: true
+				})
+			).toEqual(['b']);
+		});
 	});
 });

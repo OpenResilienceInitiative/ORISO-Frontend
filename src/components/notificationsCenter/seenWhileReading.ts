@@ -77,3 +77,29 @@ export const selectActivityEventsSeenWhileReading = ({
 				)
 				.map((row) => row.id)
 		: [];
+
+/**
+ * #1824 (D2): reading a conversation from the preview reads its message
+ * events in the Timeline. Under "unread only" the selected card stays: it
+ * would otherwise leave the list and move the selection (#845).
+ */
+export const selectActivityEventsReadWithConversation = ({
+	feed,
+	roomId,
+	selectedId,
+	unreadOnly
+}: {
+	feed: ReadonlyArray<FeedRow>;
+	roomId: string;
+	selectedId: string | null;
+	unreadOnly: boolean;
+}): string[] =>
+	feed
+		.filter(
+			(row) =>
+				!row.readAt &&
+				isMessageActivityEvent(row) &&
+				activityEventRoomId(row) === roomId &&
+				!(unreadOnly && row.id === selectedId)
+		)
+		.map((row) => row.id);

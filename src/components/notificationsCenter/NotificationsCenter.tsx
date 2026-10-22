@@ -86,7 +86,7 @@ import type {
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
 import { activityEventCategory, activityEventRoomId } from './activityEvent';
-import { selectActivityEventsSeenWhileReading } from './seenWhileReading';
+import { selectActivityEventsReadWithConversation } from './seenWhileReading';
 import { useConversationPreview } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
 import { chatEndedTextKey } from '../message/messageConstants';
@@ -976,22 +976,28 @@ export const NotificationsCenter = () => {
 	useSeenWhileReading({
 		roomId: preview?.roomId ?? null,
 		threadRootId: preview?.threadRootId,
-		enabled: Boolean(preview) && preview?.roomKind !== null,
+		enabled: Boolean(preview),
 		feed: notificationFeed,
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
-	// Reading the conversation reads its message events in the Timeline —
-	// by room, so a card switched to while a send was running stays unread.
+	// D2: reading the conversation reads its message events in the Timeline —
+	// by the room the write happened in, so a card switched to while a send
+	// was running stays unread.
 	const handlePreviewConversationRead = useCallback(
 		(roomId: string) =>
-			selectActivityEventsSeenWhileReading({
+			selectActivityEventsReadWithConversation({
 				feed: notificationFeed,
-				visibleRoomId: roomId,
-				since: new Date(0).toISOString(),
-				unreadOnly: false
+				roomId,
+				selectedId: selectedNotification?.id ?? null,
+				unreadOnly
 			}).forEach(markNotificationAsRead),
-		[notificationFeed, markNotificationAsRead]
+		[
+			notificationFeed,
+			markNotificationAsRead,
+			selectedNotification?.id,
+			unreadOnly
+		]
 	);
 
 	if (notificationFeed.length === 0) {
@@ -1421,10 +1427,7 @@ export const NotificationsCenter = () => {
 										)
 									: null
 							}
-							onConversationRead={() =>
-								preview &&
-								handlePreviewConversationRead(preview.roomId)
-							}
+							onConversationRead={handlePreviewConversationRead}
 							onOpenConversation={handleOpenAction}
 						/>
 					) : (
