@@ -20,6 +20,7 @@ import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { FETCH_ERRORS, FetchErrorWithOptions } from '../../api';
 import { autoLogin } from '../registration/autoLogin';
 import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
+import * as loginAuth from '../auth/auth';
 import { setAppConfig } from '../../utils/appConfig';
 import { Login } from './Login';
 
@@ -157,6 +158,36 @@ afterEach(() => {
 });
 
 describe('Magic-link login preserves the required second factor', () => {
+	it('ignores a late magic-link session after the person chooses another login', async () => {
+		let complete!: (
+			value: Awaited<ReturnType<typeof apiConsumeMagicLinkLogin>>
+		) => void;
+		vi.mocked(apiConsumeMagicLinkLogin).mockReturnValueOnce(
+			new Promise((resolve) => {
+				complete = resolve;
+			})
+		);
+		const install = vi
+			.spyOn(loginAuth, 'setTokens')
+			.mockImplementation(() => {});
+		const view = renderLogin('/login?magicToken=magic-fixture');
+		await flush();
+		fireEvent.change(view.container.querySelector('#username')!, {
+			target: { value: 'another@example.org' }
+		});
+		await act(async () =>
+			complete({
+				access_token: 'fixture-late-access',
+				expires_in: 300,
+				refresh_token: 'fixture-late-refresh',
+				refresh_expires_in: 600
+			})
+		);
+		await flush();
+		expect(install).not.toHaveBeenCalled();
+		expect(autoLogin).not.toHaveBeenCalled();
+	});
+
 	it('shows the app code step and retries the same link with the entered code', async () => {
 		const appChallenge = new FetchErrorWithOptions(
 			FETCH_ERRORS.BAD_REQUEST,

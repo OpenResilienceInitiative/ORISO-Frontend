@@ -128,6 +128,9 @@ export const Login = () => {
 		inviteAgencyId
 	);
 	const magicToken = useSearchParam<string>('magicToken');
+	const [activeMagicToken, setActiveMagicToken] = useState<string | null>(
+		null
+	);
 	const isFirstVisit = useIsFirstVisit();
 
 	const loginButton: ButtonItem = {
@@ -211,13 +214,14 @@ export const Login = () => {
 		setLabelState(null);
 		if (
 			(!isOtpRequired && username && password) ||
-			(isOtpRequired && username && password && otp)
+			(isOtpRequired && username && password && otp) ||
+			(isOtpRequired && activeMagicToken && /^[0-9]{6}$/.test(otp))
 		) {
 			setIsButtonDisabled(false);
 		} else {
 			setIsButtonDisabled(true);
 		}
-	}, [username, password, otp, isOtpRequired]);
+	}, [username, password, otp, isOtpRequired, activeMagicToken]);
 
 	useEffect(() => {
 		setOtp('');
@@ -242,13 +246,25 @@ export const Login = () => {
 		limitReached?: boolean;
 	}>({ id: 0 });
 
+	const cancelMagicLinkAttempt = () => {
+		if (activeMagicToken) {
+			setActiveMagicToken(null);
+			setIsOtpRequired(false);
+			setOtp('');
+			setIsRequestInProgress(false);
+			loginAttemptRef.current += 1;
+		}
+	};
+
 	const handleUsernameChange = (event) => {
+		cancelMagicLinkAttempt();
 		setUsername(event.target.value);
 		setShowMagicLinkError('');
 		setMagicLinkSentToUsername('');
 	};
 
 	const handlePasswordChange = (event) => {
+		cancelMagicLinkAttempt();
 		setPassword(event.target.value);
 	};
 
@@ -411,17 +427,197 @@ export const Login = () => {
 		]
 	);
 
-	useEffect(() => {
-		if (!magicToken || isMagicTokenLoginAttempted) {
-			return;
-		}
+	/**
+	 * `resendCode` is the "send new code" link: the same grant without a code.
+	 * Its outage and rate-limit messages appear at the link, not in the form.
+	 */
+	const tryLogin = useCallback(
+		(
+			otp?: string,
+			purpose: 'submit' | 'resendCode' = 'submit',
+			linkToken: string | null = activeMagicToken
+		): Promise<LoginErrorResolution | null> => {
+			existingSessionLookupRef.current += 1;
+			setIsRequestInProgress(true);
+			loginAttemptRef.current += 1;
+			const attempt = loginAttemptRef.current;
+			const isLatestAttempt = () => attempt === loginAttemptRef.current;
+			const handleAutoLoginFailure = (
+				error: unknown
+			): LoginErrorResolution | null => {
+				if (!isLatestAttempt()) {
+					return null;
+				}
+				// autoLogin itself refuses a consultant token while the consultant
+				// block is on: that has its own message and is not a login failure.
+				if (
+					(error as Error | null)?.message ===
+					CONSULTANT_LOGIN_BLOCKED_ERROR
+				) {
+					showConsultantLoginBlockedError();
+					return null;
+				}
 
+				const resolution = resolveLoginError(
+					error as Parameters<typeof resolveLoginError>[0],
+					Boolean(otp)
+				);
+
+				// Only terminal failures count; the OTP challenge is the normal
+				// second step of a login whose password was accepted.
+				if (resolution.kind === 'message') {
+					recordLoginFailure({
+						outcome: resolution.outcome,
+						transport: describeLoginTransport(
+							error as Parameters<
+								typeof describeLoginTransport
+							>[0]
+						),
+						// The resend-mail path retries without a code while the OTP
+						// step is active; the stage is the step, not the payload.
+						stage: isOtpRequired || otp ? 'otp' : 'password'
+					});
+					const isShownAtResendLink =
+						purpose === 'resendCode' &&
+						(resolution.outcome === 'unavailable' ||
+							resolution.outcome === 'rate_limited');
+					if (!isShownAtResendLink) {
+						// A refusal that named its wait says so, in the languages
+						// that have that sentence; the others keep the untimed one.
+						setShowLoginError(
+							resolution.preciseMessage
+								? translateWithFallback(
+										translate,
+										resolution.preciseMessage.key,
+										translate(
+											resolution.messageKey
+										) as string,
+										resolution.preciseMessage.values
+									)
+								: translate(resolution.messageKey)
+						);
+						// Only a credential problem marks the fields; an outage,
+						// a rate limit or an unfinished account setup is not the
+						// user's input being wrong, and must not leave a stale
+						// mark behind.
+						setLabelState(
+							resolution.outcome === 'unavailable' ||
+								resolution.outcome === 'rate_limited' ||
+								resolution.outcome === 'setup_incomplete'
+								? null
+								: VALIDITY_INVALID
+						);
+					}
+				} else if (resolution.kind === 'otpRequired') {
+					setTwoFactorType(resolution.otpType);
+					setIsOtpRequired(true);
+					if (resolution.codeLimitReached) {
+						recordLoginFailure({
+							outcome: 'rate_limited',
+							transport: describeLoginTransport(
+								error as Parameters<
+									typeof describeLoginTransport
+								>[0]
+							),
+							stage: isOtpRequired || otp ? 'otp' : 'password'
+						});
+					}
+					if (purpose === 'submit') {
+						setEmailCodeChallenge((previous) => ({
+							id: previous.id + 1,
+							resendAvailableInSeconds:
+								resolution.resendAvailableInSeconds,
+							limitReached: resolution.codeLimitReached
+						}));
+					}
+				}
+				return resolution;
+			};
+
+			const authenticate = linkToken
+				? (otp
+						? apiConsumeMagicLinkLogin(linkToken, otp)
+						: apiConsumeMagicLinkLogin(linkToken)
+					).then((tokenResponse) => {
+						if (!isLatestAttempt()) return;
+						if (
+							appConfig.blockConsultantAppLogin &&
+							isConsultantAccessToken(tokenResponse.access_token)
+						) {
+							clearAuthSession();
+							throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+						}
+						setTokens(
+							tokenResponse.access_token,
+							tokenResponse.expires_in,
+							tokenResponse.refresh_token,
+							tokenResponse.refresh_expires_in
+						);
+					})
+				: autoLogin({
+						username,
+						password,
+						tenantData: tenant,
+						...(otp ? { otp } : {})
+					});
+			return (
+				authenticate
+					// Two rejection paths on purpose: only `autoLogin` failures are
+					// login failures. `postLogin` reports its own problems (e.g. the
+					// consultant-blocked message) before it throws, and those must
+					// neither be overwritten nor counted.
+					.then(
+						() =>
+							!isLatestAttempt()
+								? null
+								: postLogin()
+										.catch((error: unknown) => {
+											// The consultant block shows its own message before it
+											// throws; anything else (e.g. the user-data reload
+											// failing after a successful token) would otherwise
+											// leave the form silent. Not a login failure, so it is
+											// not counted.
+											if (
+												isLatestAttempt() &&
+												(error as Error | null)
+													?.message !==
+													CONSULTANT_LOGIN_BLOCKED_ERROR
+											) {
+												setShowLoginError(
+													translate(
+														LOGIN_ERROR_KEYS.UNAVAILABLE
+													)
+												);
+											}
+										})
+										.then(() => null),
+						handleAutoLoginFailure
+					)
+					.finally(() => {
+						if (isLatestAttempt()) {
+							setIsRequestInProgress(false);
+						}
+					})
+			);
+		},
+		[
+			activeMagicToken,
+			username,
+			password,
+			tenant,
+			postLogin,
+			isOtpRequired,
+			translate,
+			showConsultantLoginBlockedError
+		]
+	);
+
+	useEffect(() => {
+		if (!magicToken || isMagicTokenLoginAttempted) return;
 		setIsMagicTokenLoginAttempted(true);
-		existingSessionLookupRef.current += 1;
-		setIsRequestInProgress(true);
+		setActiveMagicToken(magicToken);
 		setShowLoginError('');
 		setShowMagicLinkError('');
-
 		const currentUrl = new URL(window.location.href);
 		currentUrl.searchParams.delete('magicToken');
 		window.history.replaceState(
@@ -429,184 +625,13 @@ export const Login = () => {
 			document.title,
 			currentUrl.pathname + currentUrl.search + currentUrl.hash
 		);
-
-		apiConsumeMagicLinkLogin(magicToken)
-			.then((tokenResponse) => {
-				if (
-					appConfig.blockConsultantAppLogin &&
-					isConsultantAccessToken(tokenResponse.access_token)
-				) {
-					clearAuthSession();
-					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
-				}
-
-				setTokens(
-					tokenResponse.access_token,
-					tokenResponse.expires_in,
-					tokenResponse.refresh_token,
-					tokenResponse.refresh_expires_in
-				);
-				// Magic-token login is complete once tokens are set.
-				// Continue directly into authenticated app bootstrap.
-				return postLogin();
-			})
-			.catch((error) => {
-				setShowLoginError(
-					translate('login.warning.failed.unauthorized.text')
-				);
-			})
-			.finally(() => {
-				setIsRequestInProgress(false);
-			});
-	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
-
-	/**
-	 * `resendCode` is the "send new code" link: the same grant without a code.
-	 * Its outage and rate-limit messages appear at the link, not in the form.
-	 */
-	const tryLogin = (
-		otp?: string,
-		purpose: 'submit' | 'resendCode' = 'submit'
-	): Promise<LoginErrorResolution | null> => {
-		existingSessionLookupRef.current += 1;
-		setIsRequestInProgress(true);
-		loginAttemptRef.current += 1;
-		const attempt = loginAttemptRef.current;
-		const isLatestAttempt = () => attempt === loginAttemptRef.current;
-		const handleAutoLoginFailure = (
-			error: unknown
-		): LoginErrorResolution | null => {
-			if (!isLatestAttempt()) {
-				return null;
-			}
-			// autoLogin itself refuses a consultant token while the consultant
-			// block is on: that has its own message and is not a login failure.
-			if (
-				(error as Error | null)?.message ===
-				CONSULTANT_LOGIN_BLOCKED_ERROR
-			) {
-				showConsultantLoginBlockedError();
-				return null;
-			}
-
-			const resolution = resolveLoginError(
-				error as Parameters<typeof resolveLoginError>[0],
-				Boolean(otp)
-			);
-
-			// Only terminal failures count; the OTP challenge is the normal
-			// second step of a login whose password was accepted.
-			if (resolution.kind === 'message') {
-				recordLoginFailure({
-					outcome: resolution.outcome,
-					transport: describeLoginTransport(
-						error as Parameters<typeof describeLoginTransport>[0]
-					),
-					// The resend-mail path retries without a code while the OTP
-					// step is active; the stage is the step, not the payload.
-					stage: isOtpRequired || otp ? 'otp' : 'password'
-				});
-				const isShownAtResendLink =
-					purpose === 'resendCode' &&
-					(resolution.outcome === 'unavailable' ||
-						resolution.outcome === 'rate_limited');
-				if (!isShownAtResendLink) {
-					// A refusal that named its wait says so, in the languages
-					// that have that sentence; the others keep the untimed one.
-					setShowLoginError(
-						resolution.preciseMessage
-							? translateWithFallback(
-									translate,
-									resolution.preciseMessage.key,
-									translate(resolution.messageKey) as string,
-									resolution.preciseMessage.values
-								)
-							: translate(resolution.messageKey)
-					);
-					// Only a credential problem marks the fields; an outage,
-					// a rate limit or an unfinished account setup is not the
-					// user's input being wrong, and must not leave a stale
-					// mark behind.
-					setLabelState(
-						resolution.outcome === 'unavailable' ||
-							resolution.outcome === 'rate_limited' ||
-							resolution.outcome === 'setup_incomplete'
-							? null
-							: VALIDITY_INVALID
-					);
-				}
-			} else if (resolution.kind === 'otpRequired') {
-				setTwoFactorType(resolution.otpType);
-				setIsOtpRequired(true);
-				if (resolution.codeLimitReached) {
-					recordLoginFailure({
-						outcome: 'rate_limited',
-						transport: describeLoginTransport(
-							error as Parameters<
-								typeof describeLoginTransport
-							>[0]
-						),
-						stage: isOtpRequired || otp ? 'otp' : 'password'
-					});
-				}
-				if (purpose === 'submit') {
-					setEmailCodeChallenge((previous) => ({
-						id: previous.id + 1,
-						resendAvailableInSeconds:
-							resolution.resendAvailableInSeconds,
-						limitReached: resolution.codeLimitReached
-					}));
-				}
-			}
-			return resolution;
-		};
-
-		return (
-			autoLogin({
-				username: username,
-				password: password,
-				tenantData: tenant,
-				...(otp ? { otp } : {})
-			})
-				// Two rejection paths on purpose: only `autoLogin` failures are
-				// login failures. `postLogin` reports its own problems (e.g. the
-				// consultant-blocked message) before it throws, and those must
-				// neither be overwritten nor counted.
-				.then(
-					() =>
-						postLogin()
-							.catch((error: unknown) => {
-								// The consultant block shows its own message before it
-								// throws; anything else (e.g. the user-data reload
-								// failing after a successful token) would otherwise
-								// leave the form silent. Not a login failure, so it is
-								// not counted.
-								if (
-									isLatestAttempt() &&
-									(error as Error | null)?.message !==
-										CONSULTANT_LOGIN_BLOCKED_ERROR
-								) {
-									setShowLoginError(
-										translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
-									);
-								}
-							})
-							.then(() => null),
-					handleAutoLoginFailure
-				)
-				.finally(() => {
-					if (isLatestAttempt()) {
-						setIsRequestInProgress(false);
-					}
-				})
-		);
-	};
+		void tryLogin(undefined, 'submit', magicToken);
+	}, [magicToken, isMagicTokenLoginAttempted, tryLogin]);
 
 	const handleLogin = () => {
 		if (
 			isRequestInProgress ||
-			!username ||
-			!password ||
+			(!activeMagicToken && (!username || !password)) ||
 			(isOtpRequired && !otp)
 		) {
 			return;
