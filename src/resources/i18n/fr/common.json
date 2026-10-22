@@ -1979,6 +1979,8 @@
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
 		"consultantLeftChat": "La personne consultante a quitté le chat",
+		"youEndedChat": "Vous avez mis fin au chat",
+		"chatEnded": "Le chat est terminé",
 		"anonymousUser": "Utilisateur",
 		"supervisionEnabledTitle": "Supervision activée !",
 		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",

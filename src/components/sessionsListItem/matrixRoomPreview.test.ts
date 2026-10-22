@@ -370,19 +370,52 @@ describe('preview line of the list card: glyphs, not words', () => {
 			'sessionList.preview.channel.supervision': 'Supervision:',
 			'message.userLeftChat': 'User has left the chat',
 			'message.consultantLeftChat': 'Consultant has left the chat',
+			'message.youEndedChat': 'You ended the chat',
+			'message.chatEnded': 'The chat has ended',
 			'message.systemNotificationTitle': 'System notification'
 		})[key] ?? `?${key}`;
 
-	it('words a system notice as the chat does, per viewer role', () => {
-		const left = { kind: 'user_left_chat', text: null } as const;
-		expect(toListPreviewLine(left, translate, true)).toEqual({
-			glyphs: [],
-			text: 'User has left the chat'
+	it.each([
+		// [endedBy, viewer is counsellor, line] — #1838
+		['ADVICE_SEEKER', true, 'User has left the chat'],
+		['ADVICE_SEEKER', false, 'You ended the chat'],
+		['CONSULTANT', true, 'You ended the chat'],
+		['CONSULTANT', false, 'Consultant has left the chat'],
+		[null, true, 'User has left the chat'],
+		[null, false, 'The chat has ended']
+	] as const)(
+		'words the end of a chat by who ended it: %s, counsellor viewer %s',
+		(endedBy, isConsultant, text) => {
+			const left = {
+				kind: 'user_left_chat',
+				text: null,
+				endedBy
+			} as const;
+			expect(toListPreviewLine(left, translate, isConsultant)).toEqual({
+				glyphs: [],
+				text
+			});
+		}
+	);
+
+	it('reads who ended the chat from the USER_LEFT_CHAT event', () => {
+		const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'USER_LEFT_CHAT',
+			username: 'enc.abc',
+			endedBy: 'ADVICE_SEEKER'
+		})}`;
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body }, 5)
+			])
+		).toEqual({
+			kind: 'user_left_chat',
+			text: null,
+			endedBy: 'ADVICE_SEEKER'
 		});
-		expect(toListPreviewLine(left, translate, false)).toEqual({
-			glyphs: [],
-			text: 'Consultant has left the chat'
-		});
+	});
+
+	it('words a system notice without text as the chat does', () => {
 		expect(
 			toListPreviewLine(
 				{ kind: 'system_notification', text: null },

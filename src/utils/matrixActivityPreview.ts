@@ -5,7 +5,10 @@ import {
 	toMessagePreviewText
 } from './messagePreviewText';
 import { parseErstantwortPayload } from '../components/erstantwort/erstantwortPayload';
-import { parseMessagePrefixes } from '../components/message/messageConstants';
+import {
+	type ChatEndedBy,
+	parseMessagePrefixes
+} from '../components/message/messageConstants';
 
 const normalizePreviewText = (value: string): string =>
 	value.replace(/\s+/g, ' ').trim();
@@ -17,6 +20,8 @@ export type MatrixActivityPreviewLabels = {
 	video: string;
 	notice: string;
 	userLeftChat: string;
+	/** USER_LEFT_CHAT worded by who ended it (#1838); else `userLeftChat`. */
+	chatEndedText?: (endedBy: ChatEndedBy | null) => string;
 	systemNotification: string;
 	unsupported: string;
 	pending: string;
@@ -112,7 +117,9 @@ export const buildMatrixActivityTextPreview = (
 	if (systemNotice) {
 		return (
 			(systemNotice === 'user_left_chat'
-				? labels?.userLeftChat
+				? labels?.chatEndedText?.(
+						parseMessagePrefixes(rawBody).systemNotificationEndedBy
+					) || labels?.userLeftChat
 				: labels?.systemNotification) || fallbackText
 		);
 	}

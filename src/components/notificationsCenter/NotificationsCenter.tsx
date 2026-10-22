@@ -90,6 +90,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
@@ -515,6 +516,16 @@ export const NotificationsCenter = () => {
 			)
 				? translate('message.userLeftChat')
 				: translate('message.consultantLeftChat'),
+			chatEndedText: (endedBy) =>
+				translate(
+					chatEndedTextKey(
+						endedBy,
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						)
+					)
+				),
 			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
 			pending: translate('notifications.center.preview.pending'),

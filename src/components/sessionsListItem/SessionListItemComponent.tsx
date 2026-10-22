@@ -993,7 +993,8 @@ export const SessionListItemComponent = ({
 				: toPreviewKindText(
 						preview.kind,
 						translate as (key: string, fallback?: string) => string,
-						isConsultantViewer
+						isConsultantViewer,
+						preview.endedBy
 					);
 		};
 		const previewWhen = (preview: TimedRoomPreview | null) =>

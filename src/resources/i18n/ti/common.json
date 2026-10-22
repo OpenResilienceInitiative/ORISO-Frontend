@@ -1979,6 +1979,8 @@
 		"systemNotificationTitle": "መፍለጢ ሲስተም",
 		"userLeftChat": "እቲ ተጠቃሚ ካብቲ ቻት ወጺኡ",
 		"consultantLeftChat": "እቲ ኣማኻሪ ካብቲ ቻት ወጺኡ",
+		"youEndedChat": "ነቲ ቻት ኣብቂዕኩሞ",
+		"chatEnded": "እቲ ቻት ተዛዚሙ",
 		"anonymousUser": "ተጠቃሚ",
 		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
 		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",

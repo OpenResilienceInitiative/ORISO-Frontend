@@ -106,6 +106,30 @@ describe('buildMatrixActivityTextPreview', () => {
 			}
 		});
 
+	it('words USER_LEFT_CHAT by who ended the chat (#1838)', () => {
+		const event = {
+			getType: () => 'm.room.message',
+			getContent: () => ({
+				msgtype: 'm.text',
+				body: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+					type: 'USER_LEFT_CHAT',
+					username: 'trout_milan_8303',
+					endedBy: 'CONSULTANT'
+				})}`
+			})
+		};
+		const chatEndedText = (endedBy: string | null) =>
+			endedBy === 'CONSULTANT' ? 'You ended the chat' : 'other';
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Spider',
+				'New message',
+				{ ...labels, chatEndedText }
+			)
+		).toBe('You ended the chat');
+	});
+
 	it('shows the chat wording for USER_LEFT_CHAT, not its JSON or a sender', () => {
 		const preview = buildMatrixActivityTextPreview(
 			{
