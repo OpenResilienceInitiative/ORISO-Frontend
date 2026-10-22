@@ -68,6 +68,10 @@ describe('the record that crosses into the call', () => {
 			Object.keys(ON_THE_WIRE.animal).sort()
 		);
 		expect(identity.kind).toBe('animal');
+		// The value, not only the key. Comparing `Object.keys` pins the shape
+		// and lets any pseudonym through, which is the half of the contract
+		// the fork actually puts on a tile.
+		expect(identity.name).toBe(ON_THE_WIRE.animal.name);
 		expect(identity.file).toMatch(/^[a-z0-9][a-z0-9_-]*\.svg$/i);
 		expect(identity.bg).toMatch(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i);
 		expect(identity.ink).toMatch(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -137,6 +141,29 @@ describe('the record that crosses into the call', () => {
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
 		expect(identity.name).toBe('Beratung Nord');
+	});
+
+	/*
+	 * And the case that can actually fail.
+	 *
+	 * The test above passes whatever the legal name does, because a display
+	 * name wins ahead of it either way — so it pins nothing. `IdentitySource`
+	 * allows `firstName` and `lastName` with no display name at all, which is
+	 * the shape a counsellor record takes before their public name is set,
+	 * and that is where `resolvePreferredName` would reach the legal name if
+	 * this ever passed it four arguments instead of two.
+	 */
+	it('says nothing at all rather than a counsellor´s legal name', () => {
+		const identity = ownCallIdentity({
+			userId: '@berater:oriso.test',
+			userData: { firstName: 'Susanne', lastName: 'Pfeiffer' },
+			isConsultant: true,
+			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
+		});
+		expect('name' in identity).toBe(false);
+		// The letters are a different exposure and stay: two initials on a
+		// coloured circle are what the chat shows this counsellor too.
+		expect(identity.initials).toBe('SP');
 	});
 
 	/*
