@@ -62,10 +62,8 @@ export interface MessageTimelineProps {
 	reactionsFor?: (messageId: string) => AggregatedReaction[];
 	onReact?: (messageId: string, key: string) => void;
 	onUnreact?: (reactionEventId: string) => void;
-	/** #420: Activity Timeline preview — the real rows, nothing that writes. */
-	readOnly?: boolean;
-	/** #1824: rows rendered outside the conversation (see MessageItemComponent). */
-	embedded?: boolean;
+	/** #420 / #1824: rows in the Activity Timeline preview (see MessageItemComponent). */
+	previewMode?: MessageItemProps['previewMode'];
 }
 
 const never = () => false;
@@ -100,8 +98,7 @@ export const MessageTimeline = ({
 	reactionsFor,
 	onReact,
 	onUnreact,
-	readOnly = false,
-	embedded = false
+	previewMode
 }: MessageTimelineProps) => {
 	const supplementIndex =
 		supplementTime === undefined
@@ -169,8 +166,7 @@ export const MessageTimeline = ({
 							}
 							onUnreact={onUnreact}
 							encryptionBroke={broke}
-							readOnly={readOnly}
-							embedded={embedded}
+							previewMode={previewMode}
 						/>
 						{broke &&
 							(showDecryptionCardFor

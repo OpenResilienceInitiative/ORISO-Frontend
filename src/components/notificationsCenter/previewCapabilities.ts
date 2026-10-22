@@ -1,27 +1,30 @@
 import { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
-import { isActiveSupervisorOf } from '../sessionsListItem/supervisionListState';
-import { requiresCaseHandoverCheck } from './caseHandoverPreviewGate';
 
 /**
- * #1824: what a person may do from the Activity Timeline conversation preview.
+ * #1824: what a person may do from the Activity Timeline conversation preview,
+ * one rule per row of the issue's table and the same facts the chat decides
+ * on. Pure, so every row is a unit test.
  *
- * Pure policy over facts the Timeline already has. It fails closed: a fact it
- * cannot establish answers read-only, because a preview that wrongly writes is
- * worse than one that sends the person to the conversation. Anything that
- * would leave the Timeline (re-opening an archived conversation, calls,
- * consent) is never offered.
+ * It fails closed: a fact it cannot establish answers read-only, because a
+ * preview that wrongly writes is worse than one that sends the person to the
+ * conversation. Anything that would leave the Timeline (re-opening an
+ * archived conversation, calls, consent) is never offered.
  */
 export type PreviewChannelKind = 'thread' | 'supervision' | 'team';
 
+/** Which of the session's rooms the preview shows. */
+export type PreviewRoomKind = 'main' | 'supervision' | 'team';
+
 export type PreviewReadOnlyReason =
 	| 'sessionUnknown'
-	| 'internalRoom'
+	| 'curtained'
+	| 'coAccess'
 	| 'archived'
 	| 'enquiry'
 	| 'supervisor'
-	| 'coAccess'
 	| 'notJoined'
-	| 'consentGate';
+	| 'consentGate'
+	| 'teamClosed';
 
 export interface PreviewCapabilities {
 	composer: boolean;
@@ -29,77 +32,125 @@ export interface PreviewCapabilities {
 	/** Edit and delete own messages (the row still applies the tenant's
 	 * Message_AllowDeleting setting and asks before deleting). */
 	manageOwn: boolean;
+	/** Open a thread from a main-room message and answer there. */
+	threadReply: boolean;
 	readOnlyReason: PreviewReadOnlyReason | null;
+	/** The case-handover curtain: the conversation must not be shown. */
+	contentHidden: boolean;
 }
 
+/** `notRequired` for one's own case, a group or an enquiry (#924). */
+export type PreviewCaseHandover =
+	| 'notRequired'
+	| 'loading'
+	| { canViewContent: boolean; coAccess: boolean };
+
 export interface PreviewPolicyInput {
+	/** The counselling session the room belongs to. */
 	session: ExtendedSessionInterface | null | undefined;
-	/** The room the preview shows; the session must own it. */
-	roomId: string;
-	userId: string | undefined;
+	/** null: the room is none of the session's rooms. */
+	roomKind: PreviewRoomKind | null;
+	/** Only `thread` matters here; side rooms come as `roomKind`. */
 	channelKind: PreviewChannelKind | null;
-	/** Own Matrix membership of the room is `join`. */
+	/** `isConsultant` is undefined while the user data has not loaded. */
+	viewer: { userId: string | undefined; isConsultant: boolean | undefined };
+	isSupervisorOfSession: boolean;
+	caseHandover: PreviewCaseHandover;
+	/** Own Matrix membership of the shown room is `join`. */
 	roomJoined: boolean;
-	/** `undefined` while the user data has not loaded. */
-	viewerIsAdviceSeeker: boolean | undefined;
-	/** `dataPrivacyConfirmation` is on record (the chat's consent gates). */
+	/** `dataPrivacyConfirmation` on record (the chat's consent gates). */
 	privacyAcceptanceRecorded: boolean;
 	/** Live-chat modality (the chat's anonymous experience). */
-	isAnonymousChat?: boolean;
+	isAnonymousChat: boolean;
+	/** The session's team discussion is `OPEN`. */
+	teamDiscussionOpen: boolean;
+	/** The tenant allows threads for this kind of chat. */
+	threadsEnabled: boolean;
 }
 
 const readOnly = (
 	readOnlyReason: PreviewReadOnlyReason,
-	react = false
+	{ react = false, contentHidden = false } = {}
 ): PreviewCapabilities => ({
 	composer: false,
 	react,
 	manageOwn: false,
-	readOnlyReason
+	threadReply: false,
+	readOnlyReason,
+	contentHidden
+});
+
+const writable = ({
+	manageOwn = true,
+	threadReply = false
+}: {
+	manageOwn?: boolean;
+	threadReply?: boolean;
+}): PreviewCapabilities => ({
+	composer: true,
+	react: true,
+	manageOwn,
+	threadReply,
+	readOnlyReason: null,
+	contentHidden: false
 });
 
 export const resolvePreviewCapabilities = ({
 	session,
-	roomId,
-	userId,
+	roomKind,
 	channelKind,
+	viewer,
+	isSupervisorOfSession,
+	caseHandover,
 	roomJoined,
-	viewerIsAdviceSeeker,
 	privacyAcceptanceRecorded,
-	isAnonymousChat = false
+	isAnonymousChat,
+	teamDiscussionOpen,
+	threadsEnabled
 }: PreviewPolicyInput): PreviewCapabilities => {
-	const sessionRoomId = session?.rid || session?.item?.matrixRoomId;
-	// Session ids and group ids are separate id spaces: a lookup by id alone
-	// can return another conversation, so the room must match.
 	if (
 		!session?.item ||
-		sessionRoomId !== roomId ||
-		viewerIsAdviceSeeker === undefined
+		!roomKind ||
+		viewer.isConsultant === undefined ||
+		caseHandover === 'loading'
 	) {
 		return readOnly('sessionUnknown');
 	}
-	// D5: the supervision side room and the internal counsellor chat stay
-	// read-only until slice S6 has proven which Timeline entries they produce.
-	if (channelKind === 'supervision' || channelKind === 'team') {
-		return readOnly('internalRoom');
+	if (caseHandover !== 'notRequired') {
+		if (!caseHandover.canViewContent) {
+			return readOnly('curtained', { contentHidden: true });
+		}
+		if (caseHandover.coAccess) {
+			return readOnly('coAccess');
+		}
 	}
+
+	// The internal rooms belong to counsellors only (ADR-008 / ADR-016).
+	if (roomKind === 'team') {
+		if (!viewer.isConsultant) {
+			return readOnly('sessionUnknown');
+		}
+		return teamDiscussionOpen ? writable({}) : readOnly('teamClosed');
+	}
+	if (roomKind === 'supervision') {
+		if (!viewer.isConsultant) {
+			return readOnly('sessionUnknown');
+		}
+		if (session.isArchive) {
+			return readOnly('archived');
+		}
+		return roomJoined ? writable({}) : readOnly('notJoined');
+	}
+
 	if (session.isArchive) {
 		return readOnly('archived');
 	}
 	if (session.isEnquiry) {
 		return readOnly('enquiry');
 	}
-	// The chat lets a supervisor react but never write.
-	if (isActiveSupervisorOf(session, userId)) {
-		return readOnly('supervisor', true);
-	}
-	// A consultant who does not own the case reads it through co-access.
-	if (
-		!viewerIsAdviceSeeker &&
-		!session.isGroup &&
-		requiresCaseHandoverCheck(session, userId)
-	) {
-		return readOnly('coAccess');
+	// The chat gives a supervisor no composer, but lets them react.
+	if (isSupervisorOfSession) {
+		return readOnly('supervisor', { react: true });
 	}
 	if (session.isGroup && !roomJoined) {
 		return readOnly('notJoined');
@@ -108,17 +159,17 @@ export const resolvePreviewCapabilities = ({
 	// on the recorded agreement; without it the Timeline cannot know the gate
 	// was passed.
 	if (
-		viewerIsAdviceSeeker &&
+		!viewer.isConsultant &&
 		(session.isGroup || isAnonymousChat) &&
 		!privacyAcceptanceRecorded
 	) {
 		return readOnly('consentGate');
 	}
-
-	return {
-		composer: true,
-		react: true,
-		manageOwn: channelKind !== 'thread' && !isAnonymousChat,
-		readOnlyReason: null
-	};
+	if (channelKind === 'thread') {
+		return writable({ manageOwn: false });
+	}
+	return writable({
+		manageOwn: !isAnonymousChat,
+		threadReply: threadsEnabled && !isAnonymousChat
+	});
 };

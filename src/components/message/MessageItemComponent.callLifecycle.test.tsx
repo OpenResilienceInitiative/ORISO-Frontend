@@ -199,7 +199,7 @@ describe('the durable call action in an actual message row', () => {
 							participants: []
 						}
 					})}
-					embedded
+					previewMode="interactive"
 				/>
 			</MessageContextShell>
 		);

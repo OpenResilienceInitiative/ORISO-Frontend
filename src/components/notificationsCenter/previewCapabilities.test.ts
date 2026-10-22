@@ -1,197 +1,304 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { resolvePreviewCapabilities } from './previewCapabilities';
+import {
+	type PreviewPolicyInput,
+	resolvePreviewCapabilities
+} from './previewCapabilities';
 
-const ROOM = '!room:matrix.example';
+const ROOM = '!room:x';
 
-const session = (overrides: Record<string, any> = {}): any => ({
-	rid: ROOM,
-	item: { id: 13, status: 2, matrixRoomId: ROOM, ...overrides.item },
-	consultant: { id: 'me' },
-	isSession: true,
-	...overrides,
-	// keep the merged item above
-	...(overrides.item
-		? { item: { id: 13, status: 2, matrixRoomId: ROOM, ...overrides.item } }
-		: {})
+const session = (overrides: Record<string, any> = {}): any => {
+	const { item, ...rest } = overrides;
+	return {
+		rid: ROOM,
+		consultant: { id: 'me' },
+		isSession: true,
+		...rest,
+		item: { id: 13, status: 2, matrixRoomId: ROOM, ...item }
+	};
+};
+
+const counsellor = (
+	overrides: Partial<PreviewPolicyInput> = {}
+): PreviewPolicyInput => ({
+	session: session(),
+	roomKind: 'main',
+	channelKind: null,
+	viewer: { userId: 'me', isConsultant: true },
+	isSupervisorOfSession: false,
+	caseHandover: 'notRequired',
+	roomJoined: true,
+	privacyAcceptanceRecorded: true,
+	isAnonymousChat: false,
+	teamDiscussionOpen: false,
+	threadsEnabled: true,
+	...overrides
 });
 
-const resolve = (overrides: Record<string, any> = {}) =>
-	resolvePreviewCapabilities({
-		session: session(),
-		roomId: ROOM,
-		userId: 'me',
-		channelKind: null,
-		roomJoined: true,
-		viewerIsAdviceSeeker: false,
-		privacyAcceptanceRecorded: true,
+const asker = (overrides: Partial<PreviewPolicyInput> = {}) =>
+	counsellor({
+		session: session({ consultant: { id: 'counsellor' } }),
+		viewer: { userId: 'asker', isConsultant: false },
 		...overrides
 	});
 
-const READ_ONLY = {
+const NOTHING = {
 	composer: false,
 	react: false,
-	manageOwn: false
+	manageOwn: false,
+	threadReply: false
 };
 
-describe('resolvePreviewCapabilities (#1824)', () => {
-	it('own one-to-one session: composer, react, edit/delete own', () => {
-		expect(resolve()).toEqual({
+const resolve = resolvePreviewCapabilities;
+
+describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
+	it('one-to-one session, counsellor: reply, react, edit/delete own, thread reply', () => {
+		expect(resolve(counsellor())).toEqual({
 			composer: true,
 			react: true,
 			manageOwn: true,
-			readOnlyReason: null
+			threadReply: true,
+			readOnlyReason: null,
+			contentHidden: false
 		});
 	});
 
-	describe('fails closed', () => {
-		it('without a session', () => {
-			expect(resolve({ session: null })).toMatchObject({
-				...READ_ONLY,
-				readOnlyReason: 'sessionUnknown'
-			});
+	it('one-to-one session, advice seeker: the same', () => {
+		expect(resolve(asker())).toMatchObject({
+			composer: true,
+			react: true,
+			manageOwn: true,
+			threadReply: true
 		});
+	});
 
-		it('when the session belongs to another room (id collision)', () => {
-			const other = session({
-				rid: '!other:matrix.example',
-				item: { matrixRoomId: '!other:matrix.example' }
-			});
-			expect(resolve({ session: other })).toMatchObject({
-				...READ_ONLY,
-				readOnlyReason: 'sessionUnknown'
-			});
-		});
-
-		it('while the user data has not loaded', () => {
-			expect(resolve({ viewerIsAdviceSeeker: undefined })).toMatchObject({
-				...READ_ONLY,
-				readOnlyReason: 'sessionUnknown'
-			});
-		});
-
-		it.each(['supervision', 'team'] as const)(
-			'for the internal %s room until S6 (D5)',
-			(channelKind) => {
-				expect(resolve({ channelKind })).toMatchObject({
-					...READ_ONLY,
-					readOnlyReason: 'internalRoom'
-				});
-			}
+	it('thread reply follows the tenant thread setting', () => {
+		expect(resolve(counsellor({ threadsEnabled: false })).threadReply).toBe(
+			false
 		);
 	});
 
 	it('archived: read only, never re-opened', () => {
 		expect(
-			resolve({
-				session: session({ isArchive: true })
-			})
-		).toMatchObject({ ...READ_ONLY, readOnlyReason: 'archived' });
+			resolve(counsellor({ session: session({ isArchive: true }) }))
+		).toMatchObject({ ...NOTHING, readOnlyReason: 'archived' });
 	});
 
-	it('enquiry: read only', () => {
+	it('enquiry not yet accepted: read only', () => {
 		expect(
-			resolve({ session: session({ isEnquiry: true }) })
-		).toMatchObject({ ...READ_ONLY, readOnlyReason: 'enquiry' });
+			resolve(counsellor({ session: session({ isEnquiry: true }) }))
+		).toMatchObject({ ...NOTHING, readOnlyReason: 'enquiry' });
 	});
 
-	it('a consultant who does not own the case is read only', () => {
-		expect(
-			resolve({ session: session({ consultant: { id: 'other' } }) })
-		).toMatchObject({ ...READ_ONLY, readOnlyReason: 'coAccess' });
-	});
+	describe('group / self-help group', () => {
+		const group = () => session({ isGroup: true, isSession: false });
 
-	it('an active supervisor can react but not write', () => {
-		const supervised = session({
-			consultant: { id: 'other' },
-			item: {
-				supervision: {
-					supervisorConsultantIds: ['me']
-				}
-			}
+		it('member: reply, react, edit/delete own, thread reply', () => {
+			expect(resolve(asker({ session: group() }))).toMatchObject({
+				composer: true,
+				manageOwn: true,
+				threadReply: true
+			});
 		});
-		const result = resolve({ session: supervised });
-		expect(result).toMatchObject({
+
+		it('knock pending or not synced: read only with a notice', () => {
+			expect(
+				resolve(asker({ session: group(), roomJoined: false }))
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+		});
+
+		it('asker without recorded consent: the chat’s consent gate', () => {
+			expect(
+				resolve(
+					asker({
+						session: group(),
+						privacyAcceptanceRecorded: false
+					})
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'consentGate' });
+		});
+	});
+
+	describe('supervision side room', () => {
+		it('reply, react, edit/delete own — no thread', () => {
+			expect(resolve(counsellor({ roomKind: 'supervision' }))).toEqual({
+				composer: true,
+				react: true,
+				manageOwn: true,
+				threadReply: false,
+				readOnlyReason: null,
+				contentHidden: false
+			});
+		});
+
+		it('also for the supervisor', () => {
+			expect(
+				resolve(
+					counsellor({
+						roomKind: 'supervision',
+						session: session({ consultant: { id: 'owner' } }),
+						isSupervisorOfSession: true
+					})
+				).composer
+			).toBe(true);
+		});
+
+		it('never for an advice seeker', () => {
+			expect(resolve(asker({ roomKind: 'supervision' }))).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'sessionUnknown'
+			});
+		});
+
+		it('read only while not joined', () => {
+			expect(
+				resolve(
+					counsellor({ roomKind: 'supervision', roomJoined: false })
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+		});
+	});
+
+	it('supervisor in the main room: react only, no composer', () => {
+		expect(
+			resolve(
+				counsellor({
+					session: session({ consultant: { id: 'owner' } }),
+					isSupervisorOfSession: true
+				})
+			)
+		).toMatchObject({
 			composer: false,
 			react: true,
 			manageOwn: false,
+			threadReply: false,
 			readOnlyReason: 'supervisor'
 		});
 	});
 
-	it('an advice seeker can write in their own conversation', () => {
-		expect(
-			resolve({
-				userId: 'asker',
-				viewerIsAdviceSeeker: true,
-				session: session({ consultant: { id: 'counsellor' } })
-			})
-		).toMatchObject({ composer: true, readOnlyReason: null });
-	});
-
-	describe('group', () => {
-		const group = () => session({ isGroup: true, isSession: false });
-
-		it('writable for a joined consultant', () => {
-			expect(resolve({ session: group() }).composer).toBe(true);
+	describe('team discussion', () => {
+		it('while OPEN: reply, react, edit/delete own', () => {
+			expect(
+				resolve(
+					counsellor({ roomKind: 'team', teamDiscussionOpen: true })
+				)
+			).toMatchObject({
+				composer: true,
+				react: true,
+				manageOwn: true,
+				threadReply: false
+			});
 		});
 
-		it('read only until joined', () => {
+		it('also in an enquiry (the team talks before anyone accepts it)', () => {
 			expect(
-				resolve({ session: group(), roomJoined: false })
-			).toMatchObject({ ...READ_ONLY, readOnlyReason: 'notJoined' });
+				resolve(
+					counsellor({
+						roomKind: 'team',
+						teamDiscussionOpen: true,
+						session: session({ isEnquiry: true })
+					})
+				).composer
+			).toBe(true);
 		});
 
-		it('an asker without recorded privacy consent is blocked (consent gate)', () => {
-			expect(
-				resolve({
-					session: group(),
-					viewerIsAdviceSeeker: true,
-					privacyAcceptanceRecorded: false
-				})
-			).toMatchObject({ ...READ_ONLY, readOnlyReason: 'consentGate' });
+		it('closed: read only', () => {
+			expect(resolve(counsellor({ roomKind: 'team' }))).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'teamClosed'
+			});
 		});
 	});
 
 	describe('anonymous live chat', () => {
-		const anonymous = () =>
-			session({
-				consultant: { id: 'counsellor' },
-				item: { isLive: true }
-			});
-
-		it('can reply and react but not edit or delete', () => {
-			const result = resolve({
-				session: anonymous(),
-				userId: 'asker',
-				viewerIsAdviceSeeker: true,
-				isAnonymousChat: true
-			});
-			expect(result).toMatchObject({
+		it('reply and react, no edit/delete, no thread', () => {
+			expect(resolve(asker({ isAnonymousChat: true }))).toMatchObject({
 				composer: true,
 				react: true,
-				manageOwn: false
+				manageOwn: false,
+				threadReply: false
 			});
 		});
 
-		it('is blocked for an asker who has not given privacy consent', () => {
+		it('blocked while the asker’s consent is not on record', () => {
 			expect(
-				resolve({
-					session: anonymous(),
-					userId: 'asker',
-					viewerIsAdviceSeeker: true,
-					isAnonymousChat: true,
-					privacyAcceptanceRecorded: false
-				})
-			).toMatchObject({ ...READ_ONLY, readOnlyReason: 'consentGate' });
+				resolve(
+					asker({
+						isAnonymousChat: true,
+						privacyAcceptanceRecorded: false
+					})
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'consentGate' });
 		});
 	});
 
-	it('a thread keeps reply and react but not edit or delete', () => {
-		expect(resolve({ channelKind: 'thread' })).toMatchObject({
+	it('thread: thread reply and react, nothing else', () => {
+		expect(resolve(counsellor({ channelKind: 'thread' }))).toMatchObject({
 			composer: true,
 			react: true,
-			manageOwn: false
+			manageOwn: false,
+			threadReply: false
+		});
+	});
+
+	describe('case handover', () => {
+		it('co-access: nothing, with the co-access notice', () => {
+			expect(
+				resolve(
+					counsellor({
+						session: session({ consultant: { id: 'owner' } }),
+						caseHandover: { canViewContent: true, coAccess: true }
+					})
+				)
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'coAccess' });
+		});
+
+		it('curtained: the content stays hidden', () => {
+			expect(
+				resolve(
+					counsellor({
+						session: session({ consultant: { id: 'owner' } }),
+						caseHandover: { canViewContent: false, coAccess: false }
+					})
+				)
+			).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'curtained',
+				contentHidden: true
+			});
+		});
+
+		it('a colleague the chat lets write may write here too', () => {
+			expect(
+				resolve(
+					counsellor({
+						session: session({ consultant: { id: 'owner' } }),
+						caseHandover: { canViewContent: true, coAccess: false }
+					})
+				).composer
+			).toBe(true);
+		});
+
+		it('read only while the status is still loading', () => {
+			expect(
+				resolve(counsellor({ caseHandover: 'loading' }))
+			).toMatchObject({ ...NOTHING, readOnlyReason: 'sessionUnknown' });
+		});
+	});
+
+	describe('fails closed', () => {
+		it.each([
+			['no session', { session: null }],
+			['a room that is none of the session’s rooms', { roomKind: null }],
+			[
+				'user data not loaded',
+				{ viewer: { userId: undefined, isConsultant: undefined } }
+			]
+		] as const)('%s', (_, overrides) => {
+			expect(resolve(counsellor(overrides as any))).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'sessionUnknown'
+			});
 		});
 	});
 });

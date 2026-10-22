@@ -304,19 +304,17 @@ interface MessageItemComponentProps extends MessageItem {
 	handleDecryptionSuccess: (id: string) => void;
 	e2eeParams: e2eeParams & { subscriptionKeyLost: boolean };
 	/**
-	 * #420: the Activity Timeline preview shows the real row, but nothing in
-	 * it may write — no action menu, no reacting, no joining a call, no
-	 * consent or notification setup. Reading stays (text, links, files).
+	 * The row is shown in the Activity Timeline preview, outside its
+	 * conversation (#420 / #1824). Undefined in the chat.
+	 * - `read`: nothing in the row may write — no action menu, no reacting,
+	 *   no joining a call, no consent or notification setup. Reading stays.
+	 * - `interactive`: the message actions whose handlers are wired (reply,
+	 *   edit, delete, react, open thread) work as in the chat, but nothing
+	 *   that leaves the Timeline is offered — no call join, no consent or
+	 *   notification setup, no Erstantwort actions, no menu entry without a
+	 *   handler here.
 	 */
-	readOnly?: boolean;
-	/**
-	 * #1824: the row is shown outside its conversation (the Activity Timeline
-	 * preview). Message actions stay available where their handlers are wired
-	 * (reply, edit, delete, react), but nothing that leaves the Timeline is
-	 * offered: no joining a call, no consent or notification setup, no
-	 * Erstantwort actions, and no menu entries without a handler here.
-	 */
-	embedded?: boolean;
+	previewMode?: 'read' | 'interactive';
 }
 
 export const MessageItemComponent = ({
@@ -361,11 +359,13 @@ export const MessageItemComponent = ({
 	onUnreact,
 	sendFailed,
 	encryptionBroke,
-	readOnly = false,
-	embedded = false
+	previewMode
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const blocksLeavingActions = readOnly || embedded;
+	const inPreview = previewMode !== undefined;
+	const readOnly = previewMode === 'read';
+	// Nothing in the preview may lead out of the Timeline (#1824).
+	const blocksLeavingActions = inPreview;
 	const { activeSession, avatarMembers = [] } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -1373,7 +1373,7 @@ export const MessageItemComponent = ({
 						}
 					]
 				: []),
-			...(!embedded || onOpenThread
+			...(!inPreview || onOpenThread
 				? [
 						{
 							key: 'reply-thread',
@@ -1394,7 +1394,7 @@ export const MessageItemComponent = ({
 					]
 				: []),
 			// #1824: no handlers outside the conversation.
-			...(embedded
+			...(inPreview
 				? []
 				: [
 						{
@@ -1424,14 +1424,16 @@ export const MessageItemComponent = ({
 			onReplyDirect,
 			onEditDirect,
 			canDeleteMessage,
-			embedded,
+			inPreview,
 			onOpenThread
 		]
 	);
 
-	// #1824: a row without menu entries (e.g. a supervisor in the Timeline
-	// preview, who may only react) shows no menu button and no long-press.
-	const hasMenuActions = !readOnly && actionMenuItems.length > 0;
+	// #1824: the menu also carries the quick reactions, so a row whose only
+	// action is reacting (a supervisor in the preview) still gets it; a row
+	// with nothing to do shows no menu button and no long-press.
+	const hasMenuActions =
+		!readOnly && (actionMenuItems.length > 0 || Boolean(onReact));
 
 	const handleActionMenuItemClick = useCallback(
 		(actionKey: string) => {
@@ -3002,10 +3004,10 @@ export const MessageItemComponent = ({
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&
-						(onOpenThread || readOnly) &&
+						(onOpenThread || inPreview) &&
 						threadSummary &&
 						threadSummary.replyCount > 0 &&
-						(readOnly ? (
+						(!onOpenThread || readOnly ? (
 							// #420: the preview shows that a thread exists,
 							// without opening it.
 							<div

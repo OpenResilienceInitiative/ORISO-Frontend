@@ -1,47 +1,96 @@
 import { describe, expect, it } from 'vitest';
-import { selectActivityEventsSeenWhileReading } from './seenWhileReading';
+import {
+	latestActivityInRoom,
+	selectActivityEventsSeenWhileReading
+} from './seenWhileReading';
 
-const event = (id: string, room: string, extra: Record<string, unknown> = {}) =>
-	({ id, roomRef: room, readAt: null, ...extra }) as any;
-const roomOf = (item: any) => item.roomRef;
-const isMessage = (item: any) => item.kind !== 'system';
+const ROOM = '!r1:x';
 
-const select = (
-	feed: any[],
-	room: string | null,
-	known: string[] = [],
-	unreadOnly = false
-) =>
+const event = (
+	id: string,
+	createdAt: string,
+	extra: Record<string, unknown> = {}
+): any => ({
+	id,
+	eventType: 'message.new',
+	category: 'message',
+	createdAt,
+	readAt: null,
+	params: { roomRef: ROOM },
+	...extra
+});
+
+const select = (feed: any[], since: string | null, unreadOnly = false) =>
 	selectActivityEventsSeenWhileReading({
 		feed,
-		visibleRoomId: room,
-		knownIds: new Set(known),
-		resolveRoomId: roomOf,
-		isMessageEvent: isMessage,
+		visibleRoomId: ROOM,
+		since,
 		unreadOnly
 	});
 
-describe('selectActivityEventsSeenWhileReading (#1824 D1)', () => {
-	it('selects only NEW unread message events of the visible room', () => {
+describe('D1: activity events seen while reading (#1824)', () => {
+	const opened = '2026-10-22T10:00:00Z';
+
+	it('selects unread message events of the visible room that arrived after opening', () => {
 		const feed = [
-			event('old', '!r1'),
-			event('a', '!r1'),
-			event('b', '!r2'),
-			event('c', '!r1', { readAt: '2026-10-21T10:00:00Z' }),
-			event('d', '!r1', { kind: 'system' })
+			event('new', '2026-10-22T10:01:00Z'),
+			event('before', '2026-10-22T09:59:00Z'),
+			event('same', opened),
+			event('read', '2026-10-22T10:02:00Z', { readAt: opened }),
+			event('otherRoom', '2026-10-22T10:02:00Z', {
+				params: { roomRef: '!r2:x' }
+			}),
+			event('system', '2026-10-22T10:02:00Z', {
+				eventType: 'supervisor.added',
+				category: 'system'
+			})
 		];
-		expect(select(feed, '!r1', ['old'])).toEqual(['a']);
+		expect(select(feed, opened)).toEqual(['new']);
 	});
 
-	it('does not touch events that were already there when the preview opened', () => {
-		expect(select([event('old', '!r1')], '!r1', ['old'])).toEqual([]);
+	it('never marks older events loaded later (paging)', () => {
+		expect(
+			select([event('older', '2026-10-01T08:00:00Z')], opened)
+		).toEqual([]);
 	});
 
-	it('selects nothing without a visible room', () => {
-		expect(select([event('a', '!r1')], null)).toEqual([]);
+	it('marks nothing without a baseline or under "unread only" (#845)', () => {
+		const feed = [event('new', '2026-10-22T10:01:00Z')];
+		expect(select(feed, null)).toEqual([]);
+		expect(select(feed, opened, true)).toEqual([]);
 	});
 
-	it('selects nothing while "unread only" is on (#845 cascade)', () => {
-		expect(select([event('a', '!r1')], '!r1', [], true)).toEqual([]);
+	it('the baseline is the newest event of the room when the preview opens', () => {
+		expect(
+			latestActivityInRoom(
+				[
+					event('a', '2026-10-22T09:00:00Z'),
+					event('b', '2026-10-22T09:30:00Z'),
+					event('c', '2026-10-22T11:00:00Z', {
+						params: { roomRef: '!r2:x' }
+					})
+				],
+				ROOM
+			)
+		).toBe('2026-10-22T09:30:00Z');
+		// An empty room starts the clock at the epoch: anything new counts.
+		expect(latestActivityInRoom([], ROOM)).toBe(new Date(0).toISOString());
+	});
+
+	it('while a thread is shown, only events of that thread count', () => {
+		const inThread = event('t', '2026-10-22T10:01:00Z', {
+			eventType: 'thread.reply.new',
+			actionPath: '/sessions/user/view/!r1:x/13?channel=thread:$root'
+		});
+		const mainRoom = event('m', '2026-10-22T10:01:00Z');
+		expect(
+			selectActivityEventsSeenWhileReading({
+				feed: [inThread, mainRoom],
+				visibleRoomId: ROOM,
+				threadRootId: '$root',
+				since: opened,
+				unreadOnly: false
+			})
+		).toEqual(['t']);
 	});
 });
