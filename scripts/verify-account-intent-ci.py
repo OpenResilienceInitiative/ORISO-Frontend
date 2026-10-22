@@ -102,6 +102,7 @@ def run(label, command, timeout=1800, report=None, env_extra=None, expected_file
 
 FRONTEND_REACT_FILES = ['src/components/profile/ConsultantPrivateData.intent.test.tsx', 'src/components/profile/ProfileAvatarChoice.test.tsx', 'src/components/profile/EmailNotifications/EmailNotifications.appointments.test.tsx', 'src/components/anonymousChat/entryRoom/LiveChatAccess.test.tsx', 'src/components/twoFactorAuth/TwoFactorAuth.test.tsx', 'src/components/erstantwort/ErstantwortEmailOverlay.test.tsx', 'src/components/profile/AskerAboutMeData.test.tsx', 'src/components/profile/DisplayNameSettings.test.tsx', 'src/components/passwordReset/PasswordReset.test.tsx', 'src/components/twoFactorAuth/TwoFactorSetupDialog.test.tsx', 'src/components/localeSwitch/LocaleSwitch.test.tsx']
 ADMIN_REACT_FILES = ['src/components/TwoFactorSetup/ProfileTwoFactorSetup.intent.test.tsx', 'src/pages/Profile/accountOperationForms.test.tsx', 'src/hooks/accountOperationActions.react.test.tsx', 'src/components/CardEditable/CardEditable.test.tsx', 'src/components/TwoFactorSetup/TwoFactorSetup.test.tsx', 'src/pages/users/Edit/index.test.tsx', 'src/pages/users/TenantAdminEdit/index.test.tsx']
+FRONTEND_REACT_FILES += ['src/components/login/Login.emailCodeResend.test.tsx']
 
 def require_target_commit(actual, expected):
     assert re.fullmatch(r"[0-9a-f]{40}", expected), "target must be an exact immutable commit"
