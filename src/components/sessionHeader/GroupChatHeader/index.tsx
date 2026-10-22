@@ -358,33 +358,11 @@ export const GroupChatHeader = ({
 							</h3>
 						)}
 					</div>
-					{/* Matrix room participants */}
-					{isLoadingMembers ? (
+					{isLoadingMembers && (
 						<div className="sessionInfo__participants sessionInfo__participants--loading">
 							<div className="sessionInfo__participants__skeleton"></div>
 						</div>
-					) : visibleMembers.length > 0 ? (
-						<div className="sessionInfo__participants">
-							{visibleMembers.map((member, index) => {
-								// Extract username from userId (format: @username:domain)
-								// Always use username from userId, ignore member.name to ensure consistency
-								const userId = member.userId || '';
-								const username =
-									userId.split(':')[0]?.replace('@', '') ||
-									userId;
-								return (
-									<span
-										key={member.userId || index}
-										className="sessionInfo__participant"
-									>
-										{decodeUsername(username)}
-										{index < visibleMembers.length - 1 &&
-											', '}
-									</span>
-								);
-							})}
-						</div>
-					) : null}
+					)}
 				</div>
 
 				{(!isActive || isJoinGroupChatView) && isConsultant && (

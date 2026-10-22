@@ -3,7 +3,7 @@
  *
  * It carries nine of the approved decisions of 04.–06.09.: T1 (the room's
  * own avatar stack), T3 (same paddings as the session header, so both
- * hairlines end on the same y), T4/T14 (40 px avatars, 28 px step), T19
+ * hairlines end on the same y), current Avatar Group (48 px avatars, 24 px step), T19
  * (chevron marks the channel word as a menu button), T26 (the word sits
  * under the hairline where the main chat shows its topic tag), T41 (the
  * supervision header is tinted, a thread header is not), T43 (no 4 px void

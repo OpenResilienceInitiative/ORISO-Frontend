@@ -1,7 +1,7 @@
 import { isTechnicalMatrixUser } from '../../../utils/systemMatrixUsers';
 import {
-	STACK_AVATAR_SIZE,
-	STACK_OVERLAP,
+	HEADER_STACK_AVATAR_SIZE,
+	HEADER_STACK_OVERLAP,
 	STACK_MAX_VISIBLE
 } from '../../message/participantStack';
 /**
@@ -90,8 +90,8 @@ export interface AvatarStackMetrics {
 }
 
 export const AVATAR_STACK_METRICS: AvatarStackMetrics = {
-	avatarSize: STACK_AVATAR_SIZE,
-	overlap: STACK_OVERLAP,
+	avatarSize: HEADER_STACK_AVATAR_SIZE,
+	overlap: HEADER_STACK_OVERLAP,
 	chipWidth: 64,
 	maxVisible: STACK_MAX_VISIBLE
 };

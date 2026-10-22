@@ -152,8 +152,7 @@ export const OverflowPlusN: Story = {
 };
 
 /**
- * 32 px library variant (Figma master 7608:40689 draws 32 px avatars at a
- * 20 px step — the same 12 px overlap as the 40 px header group).
+ * Preserve the existing 32 px card geometry independently of the header.
  */
 export const Size32: Story = {
 	name: '32 px variant — same 12 px overlap',
@@ -169,6 +168,40 @@ export const Size32: Story = {
 			stackStepFor(32)
 		);
 		await expect(stackStepFor(32)).toBe(20);
+	}
+};
+
+/** Current Figma Avatar Group (7608:40689): 48px circles, 24px overlap. */
+export const Header48: Story = {
+	args: { ...ThreeParticipants.args, size: 48, overlap: 24 },
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const first = avatars[0].getBoundingClientRect();
+		const second = avatars[1].getBoundingClientRect();
+		await expect(Math.round(first.width)).toBe(48);
+		await expect(Math.round(first.right - second.left)).toBe(24);
+		const secondItem = avatars[1].parentElement!;
+		await userEvent.hover(avatars[1]);
+		await waitFor(() =>
+			expect(Number(getComputedStyle(secondItem).zIndex)).toBeGreaterThan(
+				Number(getComputedStyle(avatars[0].parentElement!).zIndex)
+			)
+		);
+		// The full face is painted above the preceding coin without shifting it.
+		await expect(
+			avatars[1].contains(
+				document.elementFromPoint(second.left + 4, second.top + 24)
+			)
+		).toBe(true);
+		await expect(avatars[1].getBoundingClientRect().left).toBe(second.left);
+		await userEvent.unhover(avatars[1]);
+		await waitFor(() =>
+			expect(Number(getComputedStyle(secondItem).zIndex)).toBeLessThan(
+				Number(getComputedStyle(avatars[0].parentElement!).zIndex)
+			)
+		);
 	}
 };
 
@@ -213,5 +246,51 @@ export const Overflow40Phone: Story = {
 		await expect(chip.getBoundingClientRect().left).toBeGreaterThanOrEqual(
 			avatar.getBoundingClientRect().right - 0.5
 		);
+	}
+};
+
+/** Hover-only users can dismiss a name without first focusing the avatar. */
+export const HoverEscape: Story = {
+	args: ThreeParticipants.args,
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		)!;
+		const tip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-tooltip"]'
+		)!;
+		await userEvent.hover(avatar);
+		await waitFor(() => expect(tip).toBeVisible());
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(tip).not.toBeVisible());
+		await expect(tip).toHaveAttribute('aria-hidden', 'true');
+		await userEvent.unhover(avatar);
+		await userEvent.hover(avatar);
+		await waitFor(() => expect(tip).toBeVisible());
+		await userEvent.unhover(avatar);
+	}
+};
+
+/** A tooltip remains available while either its avatar is hovered or focused. */
+export const MixedHoverAndFocus: Story = {
+	args: ThreeParticipants.args,
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const tips = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-tooltip"]'
+		);
+		avatars[0].focus();
+		await userEvent.hover(avatars[1]);
+		await waitFor(() => expect(tips[1]).toBeVisible());
+		await userEvent.unhover(avatars[1]);
+		await waitFor(() => expect(tips[0]).toBeVisible());
+		await userEvent.hover(avatars[0]);
+		avatars[0].blur();
+		await waitFor(() => expect(tips[0]).toBeVisible());
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(tips[0]).not.toBeVisible());
+		await userEvent.unhover(avatars[0]);
 	}
 };

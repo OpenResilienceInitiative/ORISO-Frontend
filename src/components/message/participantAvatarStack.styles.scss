@@ -1,9 +1,6 @@
-// Participant avatar stack — Figma "Avatar Group" (Room Header All,
-// 1320:38281): 40 px circles, 28 px step (12 px overlap, measured with
-// get_metadata), first participant on top. Tokens are the room header's
-// (`surface-container-lowest` ring, `primary-fixed` chip). The component
-// sets `--participant-size` / `--participant-step`; the defaults here are
-// the Figma header values.
+// Shared avatar stack. Default geometry is retained for existing consumers;
+// current headers supply 48px circles and a 24px step from HEADER_STACK_PROPS.
+// The white ring and count use the shared M3 tokens.
 
 .participantStack {
 	position: relative;
@@ -65,23 +62,22 @@
 		line-height: 16px;
 		letter-spacing: 0.5px;
 		white-space: nowrap;
-		pointer-events: none;
+		pointer-events: auto;
 		visibility: hidden;
 		opacity: 0;
 		transition: opacity 120ms ease;
+
+		// Keep the tooltip hovered while crossing the gap from its avatar.
+		&::before {
+			position: absolute;
+			inset: -6px 0 100%;
+			content: '';
+		}
 	}
 
-	&__item:hover &__tip,
-	&__item:focus-within &__tip,
 	&__item[data-open='true'] &__tip {
 		visibility: visible;
 		opacity: 1;
-	}
-
-	// Escape dismisses a keyboard-open tooltip without moving focus.
-	&__item[data-open='false']:focus-within &__tip {
-		visibility: hidden;
-		opacity: 0;
 	}
 
 	// "+N" — same shape as `.sessionInfo__memberCount` (Figma #430).

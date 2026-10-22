@@ -34,7 +34,10 @@ import { ReactComponent as ChevronIcon } from '../../resources/img/icons/keyboar
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
-import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	HEADER_STACK_PROPS,
+	ParticipantAvatarStack
+} from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
 import { ChannelMenu } from './ChannelMenu';
 import {
@@ -278,6 +281,7 @@ export const PanelHeader = ({
 				)}
 				{participants.length > 0 && (
 					<ParticipantAvatarStack
+						{...HEADER_STACK_PROPS}
 						participants={participants}
 						className="panelHeader__participants"
 						data-cy="panel-header-participants"

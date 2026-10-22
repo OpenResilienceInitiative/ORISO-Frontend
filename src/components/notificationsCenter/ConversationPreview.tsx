@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { chatTransportService } from '../../services/chatTransportService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
-import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	HEADER_STACK_PROPS,
+	ParticipantAvatarStack
+} from '../message/ParticipantAvatarStack';
 import type { StackParticipant } from '../message/participantStack';
 import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
 import { resolveRoomHeaderDensity } from '../sessionHeader/roomHeaderDensity';
@@ -177,6 +180,7 @@ export const ConversationPreview = ({
 			{participants.length > 0 && (
 				<div className="conversationPreview__header">
 					<ParticipantAvatarStack
+						{...HEADER_STACK_PROPS}
 						participants={participants}
 						maxVisible={density.stackMaxVisible}
 					/>

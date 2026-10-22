@@ -104,7 +104,7 @@ describe('ConversationPreview (#847)', () => {
 		).toEqual(['@consultant:matrix.example', '@lisa:matrix.example']);
 		expect(
 			container.querySelector('.participantStack')?.getAttribute('style')
-		).toContain('--participant-size: 40px');
+		).toContain('--participant-size: 48px');
 	});
 
 	it('updates preview authors on timeline events without exposing technical members', () => {

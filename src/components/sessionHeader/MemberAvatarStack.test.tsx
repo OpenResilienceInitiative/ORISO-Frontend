@@ -36,16 +36,16 @@ const members = (count: number): StackMember[] =>
 describe('MemberAvatarStack (#1193 Job 2)', () => {
 	afterEach(cleanup);
 
-	it('uses the canonical 40px avatars and 12px overlap', () => {
+	it('uses the current header group: 48px avatars and 24px overlap', () => {
 		render(<MemberAvatarStack members={members(2)} />);
 		expect(
 			screen
 				.getAllByTestId('user-avatar')
 				.map((avatar) => avatar.getAttribute('data-size'))
-		).toEqual(['40', '40']);
+		).toEqual(['48', '48']);
 		expect(
 			document.querySelector('.participantStack')?.getAttribute('style')
-		).toContain('--participant-step: 28px');
+		).toContain('--participant-step: 24px');
 	});
 
 	it('deduplicates members before counting overflow', () => {

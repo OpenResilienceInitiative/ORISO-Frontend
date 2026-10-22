@@ -108,7 +108,7 @@ export const FilledConversation: Story = {
 			'[data-cy="participant-avatar"]'
 		)) {
 			await expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
-				40
+				48
 			);
 		}
 		await expect(

@@ -203,6 +203,10 @@ $room-header-gap-top: 2px;
 	}
 
 	&__username {
+		// Align the 48px avatar bottom with the 44px menu outline while
+		// preserving the header row and shifting its title with the avatars.
+		position: relative;
+		top: -2px;
 		cursor: pointer;
 
 		// T4: the participant tooltips hang below the row; the h3 clips

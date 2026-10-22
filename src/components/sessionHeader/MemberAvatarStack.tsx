@@ -64,6 +64,7 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 			participants={[...members]}
 			maxVisible={visibleCount}
 			size={metrics.avatarSize}
+			overlap={metrics.overlap}
 			className="sessionInfo__participants"
 			data-cy="group-header-participants"
 		/>
