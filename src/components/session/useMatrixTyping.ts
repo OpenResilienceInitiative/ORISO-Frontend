@@ -27,10 +27,16 @@ export const useMatrixTyping = (roomId: string | null | undefined) => {
 		}
 	};
 
+	// Typing is a courtesy: a client that cannot announce it (not ready yet)
+	// must never break the view, whether it rejects or throws.
 	const send = (targetRoomId: string, typing: boolean) => {
-		void chatTransportService
-			.sendTyping(targetRoomId, typing)
-			?.catch?.(() => undefined);
+		try {
+			void chatTransportService
+				.sendTyping(targetRoomId, typing)
+				?.catch?.(() => undefined);
+		} catch {
+			// nothing to do
+		}
 	};
 
 	const endTyping = useCallback(() => {

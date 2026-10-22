@@ -646,40 +646,50 @@ export const ConversationPreview = ({
 					</p>
 				)}
 				{capabilities?.composer ? (
-					<SessionTypeProvider type={SESSION_LIST_TYPES.MY_SESSION}>
-						<MessageSubmitInterfaceComponent
-							key={`${roomId}|${shownThreadRootId ?? 'main'}`}
-							className="conversationPreview__composer"
-							placeholder={translate(
-								shownThreadRootId
-									? 'message.thread.placeholder'
-									: 'notifications.center.preview.composerPlaceholder'
-							)}
-							isTyping={typing}
-							// Bound to this render's room: the composer is keyed by
-							// room, so a send finishing after a switch reads its own.
-							handleMessageSendSuccess={() => {
-								setActionFailed(false);
-								void markConversationRead(roomId);
-							}}
-							onSendError={() => setActionFailed(true)}
-							threadRootId={shownThreadRootId}
-							replyTo={conversationActions.replyTo}
-							onCancelReply={
-								conversationActions.handleCancelReply
-							}
-							editingMessage={conversationActions.editingMessage}
-							onCancelEdit={conversationActions.handleCancelEdit}
-							messages={messages}
-							isOwnMessage={isMyMessage}
-							hideSupervisorAudience
-							autoFocusEditor={false}
-							compactHeight
-							draftActionPath={conversationPath}
-							allowDearchive={false}
-							{...access?.composerTarget}
-						/>
-					</SessionTypeProvider>
+					// The composer's styles live under `.session` (the chat's
+					// card); the host borrows that scope without the card.
+					<div className="session conversationPreview__composerHost">
+						<SessionTypeProvider
+							type={SESSION_LIST_TYPES.MY_SESSION}
+						>
+							<MessageSubmitInterfaceComponent
+								key={`${roomId}|${shownThreadRootId ?? 'main'}`}
+								className="conversationPreview__composer"
+								placeholder={translate(
+									shownThreadRootId
+										? 'message.thread.placeholder'
+										: 'notifications.center.preview.composerPlaceholder'
+								)}
+								isTyping={typing}
+								// Bound to this render's room: the composer is keyed by
+								// room, so a send finishing after a switch reads its own.
+								handleMessageSendSuccess={() => {
+									setActionFailed(false);
+									void markConversationRead(roomId);
+								}}
+								onSendError={() => setActionFailed(true)}
+								threadRootId={shownThreadRootId}
+								replyTo={conversationActions.replyTo}
+								onCancelReply={
+									conversationActions.handleCancelReply
+								}
+								editingMessage={
+									conversationActions.editingMessage
+								}
+								onCancelEdit={
+									conversationActions.handleCancelEdit
+								}
+								messages={messages}
+								isOwnMessage={isMyMessage}
+								hideSupervisorAudience
+								autoFocusEditor={false}
+								compactHeight
+								draftActionPath={conversationPath}
+								allowDearchive={false}
+								{...access?.composerTarget}
+							/>
+						</SessionTypeProvider>
+					</div>
 				) : (
 					capabilities && (
 						<div className="conversationPreview__notice conversationPreview__notice--footer">

@@ -13,6 +13,7 @@
 
 	&__header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 12px;
 		flex: 0 0 auto;
@@ -110,6 +111,11 @@
 	&__button {
 		min-height: 32px;
 		padding: 0 12px;
+		white-space: nowrap;
+	}
+
+	&__headerActions {
+		margin-left: auto;
 	}
 
 	&__actionsBar {
@@ -178,5 +184,35 @@
 		flex: 0 0 auto;
 		max-width: none;
 		padding-top: 8px;
+	}
+
+	// #1824: the chat's composer, in a `.session` scope without the card —
+	// no margin, border or clipping, and docked in the flow, not absolutely.
+	.session.conversationPreview__composerHost {
+		flex: 0 0 auto;
+		min-height: auto;
+		margin-block: 0;
+		padding-top: 8px;
+		border: 0;
+		border-radius: 0;
+		overflow: visible;
+		background: transparent;
+
+		// Phone: edge to edge like the chat's composer, so the toolbar fits.
+		margin-inline: -16px;
+
+		@include breakpoint($fromMedium) {
+			margin-inline: 0;
+		}
+
+		&:focus-within {
+			border: 0;
+		}
+
+		.messageSubmit__wrapper {
+			position: relative;
+			bottom: auto;
+			z-index: auto;
+		}
 	}
 }

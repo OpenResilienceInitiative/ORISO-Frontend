@@ -572,7 +572,7 @@ export const InteractiveReply: Story = {
 		// The header offers the explicit read moment.
 		await expect(
 			within(canvasElement).getByRole('button', {
-				name: /gelesen|read/i
+				name: /als gelesen markieren|mark conversation as read/i
 			})
 		).toBeInTheDocument();
 	}
@@ -707,7 +707,7 @@ export const CoAccessReadOnly: Story = {
 		).toBeNull();
 		await expect(
 			within(canvasElement).queryByRole('button', {
-				name: /gelesen|read/i
+				name: /als gelesen markieren|mark conversation as read/i
 			})
 		).toBeNull();
 	}

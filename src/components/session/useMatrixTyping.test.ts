@@ -81,4 +81,14 @@ describe('useMatrixTyping (#1824, D3: the chat typing rule, shared)', () => {
 		act(() => result.current(false));
 		expect(transport.sendTyping).not.toHaveBeenCalled();
 	});
+
+	it('never breaks the view when the client cannot announce typing', () => {
+		transport.sendTyping.mockImplementation(() => {
+			throw new TypeError('sendTyping is not a function');
+		});
+		const { result, unmount } = renderHook(() => useMatrixTyping(ROOM));
+		expect(() => act(() => result.current(false))).not.toThrow();
+		expect(() => unmount()).not.toThrow();
+		transport.sendTyping.mockImplementation(async () => undefined);
+	});
 });
