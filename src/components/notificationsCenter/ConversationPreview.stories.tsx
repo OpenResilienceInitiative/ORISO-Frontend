@@ -5,6 +5,7 @@ import { ConversationPreview } from './ConversationPreview';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MessageContextShell } from '../message/messageStoryShell';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
+import type { PreviewCapabilities } from './previewCapabilities';
 
 const minutesAgo = (minutes: number) => Date.now() - minutes * 60 * 1000;
 
@@ -432,5 +433,138 @@ export const ManyVisibleAuthorsPhone: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="participant-overflow"]')
 		).toHaveTextContent('+5');
+	}
+};
+
+/* #1824: the writable preview. The same chat rows, now with the message menu,
+   live reactions and a composer — still without anything that leaves the
+   Timeline, and without writing anything merely by opening. */
+const WRITABLE: PreviewCapabilities = {
+	composer: true,
+	react: true,
+	manageOwn: true,
+	readOnlyReason: null
+};
+
+const writableConversation =
+	(width: number | string): NonNullable<Story['decorators']>[number] =>
+	(StoryComponent) => {
+		seedRegistry([
+			fakeEvent(
+				'$1',
+				'@lisa:oriso',
+				'Hallo, ich weiß gerade nicht weiter. Kann ich mit jemandem sprechen?',
+				48
+			),
+			fakeEvent(
+				'$2',
+				'@marge:oriso',
+				'Natürlich — schön, dass Sie sich melden. Erzählen Sie in Ruhe.',
+				44
+			),
+			fakeEvent(
+				'$3',
+				'@lisa:oriso',
+				'',
+				40,
+				{
+					'm.relates_to': {
+						rel_type: 'm.annotation',
+						event_id: '$2',
+						key: '❤️'
+					}
+				},
+				'm.reaction'
+			),
+			fakeEvent('$4', '@lisa:oriso', 'Danke, das tut gut.', 12)
+		]);
+		return (
+			<div style={{ height: 560, width, display: 'flex' }}>
+				<StoryComponent />
+			</div>
+		);
+	};
+
+const expectNothingWrittenOnOpen = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await waitFor(() =>
+		expect(
+			canvas.getByRole('textbox', {
+				name: /notifications\.center\.preview\.inputLabel|Antwort|reply/i
+			})
+		).toBeInTheDocument()
+	);
+	// Opening alone: no receipt, no read marker, no event.
+	await expect(writeCalls).toEqual([]);
+};
+
+export const Writable: Story = {
+	decorators: [writableConversation(640)],
+	args: { roomId: '!preview:oriso', capabilities: WRITABLE },
+	play: async ({ canvasElement }) => {
+		await expectNothingWrittenOnOpen(canvasElement);
+	}
+};
+
+export const WritablePhone: Story = {
+	decorators: [writableConversation('100%')],
+	globals: { viewport: { value: 'phone390' } },
+	args: { roomId: '!preview:oriso', capabilities: WRITABLE },
+	play: async ({ canvasElement }) => {
+		await expectNothingWrittenOnOpen(canvasElement);
+		// The composer fits the phone width: nothing is cut off.
+		const composer = canvasElement.querySelector(
+			'.conversationPreview__composer'
+		) as HTMLElement;
+		await expect(composer.scrollWidth).toBeLessThanOrEqual(
+			composer.clientWidth + 1
+		);
+	}
+};
+
+export const ReadOnlyArchived: Story = {
+	decorators: [writableConversation(640)],
+	args: {
+		roomId: '!preview:oriso',
+		capabilities: {
+			composer: false,
+			react: false,
+			manageOwn: false,
+			readOnlyReason: 'archived'
+		},
+		openConversationHref: '/sessions/consultant/sessionView'
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull()
+		);
+		await expect(canvasElement.querySelector('textarea')).toBeNull();
+		await expect(
+			canvasElement.querySelector('.messageItem__kebabButton')
+		).toBeNull();
+	}
+};
+
+export const SupervisorReactOnly: Story = {
+	decorators: [writableConversation(640)],
+	args: {
+		roomId: '!preview:oriso',
+		capabilities: {
+			composer: false,
+			react: true,
+			manageOwn: false,
+			readOnlyReason: 'supervisor'
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('button.messageItem__reactionPill')
+			).not.toBeNull()
+		);
+		await expect(canvasElement.querySelector('textarea')).toBeNull();
+		await expect(
+			canvasElement.querySelector('.messageItem__kebabButton')
+		).toBeNull();
 	}
 };
