@@ -199,7 +199,13 @@ describe('Magic-link login preserves the required second factor', () => {
 				}
 			}
 		);
-		vi.mocked(apiConsumeMagicLinkLogin).mockRejectedValue(appChallenge);
+		vi.mocked(apiConsumeMagicLinkLogin)
+			.mockRejectedValueOnce(appChallenge)
+			.mockRejectedValueOnce(
+				new FetchErrorWithOptions(FETCH_ERRORS.BAD_REQUEST, {
+					data: { error: 'invalid_grant' }
+				})
+			);
 		const view = renderLogin('/login?magicToken=magic-fixture');
 		await flush();
 		expect(apiConsumeMagicLinkLogin).toHaveBeenCalledWith('magic-fixture');
@@ -219,6 +225,9 @@ describe('Magic-link login preserves the required second factor', () => {
 			'123456'
 		);
 		expect(autoLogin).not.toHaveBeenCalled();
+		expect(
+			view.container.querySelector('.loginForm__otp--active')
+		).not.toBeNull();
 		expect(
 			screen.getByText('login.warning.failed.unauthorized.otp')
 		).toBeTruthy();
