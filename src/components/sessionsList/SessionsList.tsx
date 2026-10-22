@@ -72,6 +72,8 @@ import {
 	DisplayFilterKindChip
 } from './SessionsListToolbar';
 import {
+	countUnreadSupervisedSessions,
+	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
 	normalizeSessionToolbarChip,
@@ -2208,19 +2210,24 @@ export const SessionsList = ({
 					);
 		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
 			unread: countUnreadSessions(unreadSource.map((p) => p.raw)),
-			drafts: visibleUserDrafts.length
+			drafts: visibleUserDrafts.length,
+			supervision: countUnreadSupervisedSessions(
+				unreadSource,
+				userData?.userId
+			)
 		};
 		Object.entries(unreadByKind).forEach(([kind, count]) => {
 			const chip = SESSION_KIND_CHIP[kind];
-			if (chip) {
+			if (chip && chip !== 'supervision') {
 				counts[chip] = (counts[chip] ?? 0) + count;
 			}
 		});
 		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
-		kindsUnderOther(listDisplayFilter, displayFilterKinds).forEach(
-			(kind) => {
-				counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
-			}
+		counts.other = countUnreadOtherSessions(
+			kindsUnderOther(listDisplayFilter, displayFilterKinds),
+			unreadByKind,
+			unreadSource,
+			userData?.userId
 		);
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2231,6 +2238,7 @@ export const SessionsList = ({
 		sessionToolbarPairs,
 		type,
 		unreadByKind,
+		userData?.userId,
 		visibleUserDrafts.length,
 		unreadVersion
 	]);
