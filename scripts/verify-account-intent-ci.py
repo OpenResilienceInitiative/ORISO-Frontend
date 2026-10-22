@@ -160,7 +160,7 @@ def main():
     if phase == "project":
         protocol_report = evidence / "node-contract.xml"
         protocol = run("node-contract", ["node", "--max-old-space-size=256", "--experimental-strip-types", "--test", "--experimental-test-isolation=none", "--test-concurrency=1", "--test-reporter=junit", "--test-reporter-destination=" + str(protocol_report), "scripts/account-operation-auth-retry.node-test.mjs", "scripts/account-operation-intents.node-test.mjs"], 60, protocol_report)
-        protocol["expectedTestCount"] = 25 if kind == "frontend" else 29
+        protocol["expectedTestCount"] = 33 if kind == "frontend" else 29
         records.append(protocol)
         if kind == "frontend":
             records.append(run("script-tests", ["npm", "run", "test:scripts"], 120))

@@ -10,6 +10,7 @@ import { removeAllCookies } from '../components/sessionCookie/accessSessionCooki
 import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
+import { recordAccountOperationResponse } from '../utils/accountOperationIntent';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
@@ -130,7 +131,10 @@ export const fetchData = ({
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, rejectResponse) => {
 		let receivedStatus: number | undefined;
+		let receivedResponse: Response | undefined;
 		const reject = (error?: unknown) => {
+			if (receivedResponse)
+				recordAccountOperationResponse(error, receivedResponse);
 			// Keep existing error names/messages. Only an observed HTTP reply
 			// supplies status; transport failures must remain unknown.
 			if (
@@ -238,6 +242,7 @@ export const fetchData = ({
 		fetch(req)
 			.then((response) => {
 				receivedStatus = response.status;
+				receivedResponse = response;
 				reqLog.finish(response.status);
 				if (response.status === 200 || response.status === 201) {
 					const data =
