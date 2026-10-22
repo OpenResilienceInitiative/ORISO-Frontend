@@ -51,6 +51,8 @@ export interface SplitButtonProps {
 	/** Whether the attached menu is open — flips the chevron, drives aria. */
 	open?: boolean;
 	menuLabel?: string;
+	/** The caller owns the popup and declares its actual semantic role. */
+	menuRole?: 'listbox' | 'dialog' | 'menu';
 	/**
 	 * Whether the main segment opens the same menu. When it triggers something
 	 * else it must not advertise a popup it does not control (WCAG 4.1.2).
@@ -97,6 +99,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			onToggleMenu,
 			open = false,
 			menuLabel,
+			menuRole,
 			mainOpensMenu = true,
 			onDecrement,
 			onIncrement,
@@ -160,7 +163,9 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 							hasMenu && mainOpensMenu ? open : undefined
 						}
 						aria-haspopup={
-							hasMenu && mainOpensMenu ? menuPopup : undefined
+							hasMenu && mainOpensMenu
+								? (menuRole ?? menuPopup)
+								: undefined
 						}
 						data-cy={mainDataCy}
 					>
@@ -172,6 +177,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 						<span className="splitButton__label">{label}</span>
 					</button>
 				)}
+
 				{isStepper && (
 					<>
 						<button
@@ -209,7 +215,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 						onClick={onToggleMenu}
 						aria-label={menuLabel}
 						aria-expanded={open}
-						aria-haspopup={menuPopup}
+						aria-haspopup={menuRole ?? menuPopup}
 						aria-controls={open ? menuId : undefined}
 						data-cy={trailingDataCy}
 					>

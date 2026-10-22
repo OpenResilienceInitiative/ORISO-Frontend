@@ -1,11 +1,11 @@
 import * as React from 'react';
-import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import PhoneDisabledRoundedIcon from '@mui/icons-material/PhoneDisabledRounded';
-import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
-import VideocamOffRoundedIcon from '@mui/icons-material/VideocamOffRounded';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { ChatSystemMessageCard } from './ChatSystemMessageCard';
 import { UserAvatar } from './UserAvatar';
+import { ReactComponent as CallOnIcon } from '../../resources/img/icons/call-on.svg';
+import { ReactComponent as CameraOnIcon } from '../../resources/img/icons/camera-on.svg';
+import { ReactComponent as CameraOffIcon } from '../../resources/img/icons/camera-off.svg';
 
 export type CallTimelineState = 'running' | 'ended' | 'missed';
 export type CallTimelineType = 'audio' | 'video';
@@ -59,14 +59,35 @@ export const CallTimelineSystemMessage = ({
 	onAction
 }: CallTimelineSystemMessageProps) => {
 	const running = state === 'running';
-	const CallIcon =
-		callType === 'audio'
-			? running
-				? CallRoundedIcon
-				: PhoneDisabledRoundedIcon
-			: running
-				? VideocamRoundedIcon
-				: VideocamOffRoundedIcon;
+	// Library glyphs sized to the old 20px MUI glyph boxes. No library icon
+	// for "phone disabled" yet, so that one stays MUI (#1822).
+	const callIcon =
+		callType === 'audio' ? (
+			running ? (
+				<CallOnIcon
+					width={15}
+					height={15}
+					aria-hidden
+					data-testid="callTimelineIcon-audio"
+				/>
+			) : (
+				<PhoneDisabledRoundedIcon fontSize="small" aria-hidden />
+			)
+		) : running ? (
+			<CameraOnIcon
+				width={15}
+				height={10}
+				aria-hidden
+				data-testid="callTimelineIcon-video"
+			/>
+		) : (
+			<CameraOffIcon
+				width={16}
+				height={13}
+				aria-hidden
+				data-testid="callTimelineIcon-videoOff"
+			/>
+		);
 
 	return (
 		<ChatSystemMessageCard title={headline} subtitle={statusLabel}>
@@ -80,21 +101,23 @@ export const CallTimelineSystemMessage = ({
 				<Stack direction="row" spacing={1.5} alignItems="center">
 					<Box
 						sx={{
-							width: 40,
-							height: 40,
-							borderRadius: '50%',
-							display: 'grid',
-							placeItems: 'center',
-							flex: '0 0 auto',
-							backgroundColor: running
+							'width': 40,
+							'height': 40,
+							'borderRadius': '50%',
+							'display': 'grid',
+							'placeItems': 'center',
+							'flex': '0 0 auto',
+							'backgroundColor': running
 								? colors.primaryContainer
 								: colors.surfaceContainer,
-							color: running
+							'color': running
 								? colors.onPrimaryContainer
-								: colors.onSurfaceVariant
+								: colors.onSurfaceVariant,
+							// Library SVGs ship white fills; the theme decides.
+							'& svg path': { fill: 'currentColor' }
 						}}
 					>
-						<CallIcon fontSize="small" aria-hidden />
+						{callIcon}
 					</Box>
 					<Typography
 						variant="body1"

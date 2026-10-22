@@ -15,23 +15,8 @@ const SPLIT_FIGMA_URL =
 const BEHAVIOUR_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=7086-40457';
 
-/**
- * Two things these stories pin down, both of which were wrong in the shipped
- * build (OpenResilienceInitiative/ORISO-Frontend#894):
- *
- * 1. **Colour carries the meaning.** Neutral grey while everyone in the
- *    conversation receives the message, accent while the audience is narrowed.
- *    The grey treatment previously existed only as CSS on class names no
- *    component rendered, so the chip was accent-coloured even for "Alle" —
- *    inverting the one signal the control exists to give.
- * 2. **The icon follows the recipient's role**, which is decided when the
- *    options are built. It used to be guessed by searching the rendered label
- *    for "moderator"/"supervisor"/"berater", so a generated pseudonym could
- *    pick the wrong symbol.
- *
- * The control itself is only rendered once more than two people can message
- * each other, and never for advice seekers — see `audienceOptions.test.ts`.
- */
+/** The production composer adapter uses the shared small SplitButton (#1806).
+ * Audience role icons and selection are independent of its standard states. */
 const meta = {
 	title: 'Components/Composer/RecipientSplitButton',
 	component: RecipientSplitButton,
@@ -51,8 +36,8 @@ const meta = {
 				component:
 					'M3 split button (Figma 1168:23016) for picking message recipients. Leading shows ' +
 					'the recipient and their role symbol; the trailing arrow opens the recipient menu. ' +
-					'`variant="all"` is the neutral state, `variant="targeted"` says the audience is ' +
-					'narrowed. Touch targets are 32px tall; the trailing half is 48×32.'
+					'The shared small atom is outlined at rest, tonal for chosen recipients, and elevated while open. ' +
+					'Controls are 32px tall; the trailing segment is 28px wide.'
 			}
 		}
 	}
@@ -173,4 +158,32 @@ export const MobileTargeted: StoryObj = {
 		/>
 	),
 	globals: phone375Globals
+};
+
+export const MenuOpen: StoryObj = {
+	name: 'Open menu — standard elevated state',
+	render: () => (
+		<RecipientSplitButton
+			label="3 Personen"
+			icon={<GroupIcon />}
+			isOpen
+			variant="targeted"
+			onToggle={() => {}}
+			chevronLabel="Open send-to menu"
+		/>
+	)
+};
+export const Disabled: StoryObj = {
+	name: 'Unavailable — shared disabled state',
+	render: () => (
+		<RecipientSplitButton
+			label="Alle"
+			icon={<GroupIcon />}
+			isOpen={false}
+			disabled
+			variant="all"
+			onToggle={() => {}}
+			chevronLabel="Open send-to menu"
+		/>
+	)
 };

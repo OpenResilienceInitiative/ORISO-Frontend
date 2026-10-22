@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Loading participants …",
+		"unavailable": "Participants could not be loaded.",
+		"empty": "No participants."
+	},
 	"menuEffects": {
 		"title": "Menu appearance",
 		"label": "Backdrop and gentle menu animations",
@@ -1985,6 +1990,8 @@
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
 		"consultantLeftChat": "Consultant has left the chat",
+		"youEndedChat": "You ended the chat",
+		"chatEnded": "The chat has ended",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
@@ -2316,6 +2323,7 @@
 			"markRead": "Mark as read",
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
+				"authors": "People in this preview",
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
 				"empty": "No messages in this conversation yet.",
 				"image": "Image",
@@ -2326,7 +2334,12 @@
 				"unsupported": "Unsupported message",
 				"pending": "Waiting for decryption",
 				"roomUnavailable": "Conversation unavailable on this device",
-				"eventUnavailable": "Message unavailable in local history"
+				"eventUnavailable": "Message unavailable in local history",
+				"loadOlder": "Load older messages",
+				"loadingOlder": "Loading older messages …",
+				"loadOlderFailed": "Older messages could not be loaded.",
+				"retryLoadOlder": "Try again",
+				"historyStart": "Start of the conversation"
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",

@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Teilnehmende werden geladen …",
+		"unavailable": "Teilnehmende konnten nicht geladen werden.",
+		"empty": "Keine Teilnehmenden."
+	},
 	"menuEffects": {
 		"title": "Menüdarstellung",
 		"label": "Schleier und sanfte Menüanimationen",
@@ -2000,6 +2005,8 @@
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
 		"consultantLeftChat": "Berater:in hat den Chat verlassen",
+		"youEndedChat": "Sie haben den Chat beendet",
+		"chatEnded": "Der Chat wurde beendet",
 		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
@@ -2340,6 +2347,7 @@
 			"markRead": "Als gelesen markieren",
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
+				"authors": "Personen in dieser Vorschau",
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
 				"empty": "Noch keine Nachrichten in diesem Gespräch.",
 				"image": "Bild",
@@ -2350,7 +2358,12 @@
 				"unsupported": "Nicht unterstützte Nachricht",
 				"pending": "Wird entschlüsselt",
 				"roomUnavailable": "Gespräch auf diesem Gerät nicht verfügbar",
-				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar"
+				"eventUnavailable": "Nachricht im lokalen Verlauf nicht verfügbar",
+				"loadOlder": "Ältere Nachrichten laden",
+				"loadingOlder": "Ältere Nachrichten werden geladen …",
+				"loadOlderFailed": "Ältere Nachrichten konnten nicht geladen werden.",
+				"retryLoadOlder": "Erneut versuchen",
+				"historyStart": "Beginn des Gesprächs"
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",

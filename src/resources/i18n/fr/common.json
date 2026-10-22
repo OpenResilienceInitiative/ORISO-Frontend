@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Chargement des participants …",
+		"unavailable": "Les participants n’ont pas pu être chargés.",
+		"empty": "Aucun participant."
+	},
 	"menuEffects": {
 		"title": "Affichage des menus",
 		"label": "Voile et animations douces",
@@ -1979,6 +1984,8 @@
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
 		"consultantLeftChat": "La personne consultante a quitté le chat",
+		"youEndedChat": "Vous avez mis fin au chat",
+		"chatEnded": "Le chat est terminé",
 		"anonymousUser": "Utilisateur",
 		"supervisionEnabledTitle": "Supervision activée !",
 		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",
@@ -2319,6 +2326,7 @@
 			"showPreview": "Afficher l'aperçu de la conversation",
 			"showDetails": "Afficher les détails",
 			"preview": {
+				"authors": "Personnes dans cet aperçu",
 				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
 				"empty": "Pas encore de messages dans cette conversation.",
 				"image": "Image jointe",
@@ -2329,7 +2337,12 @@
 				"unsupported": "Message non pris en charge",
 				"pending": "Déchiffrement en cours",
 				"roomUnavailable": "Conversation indisponible sur cet appareil",
-				"eventUnavailable": "Message indisponible dans l’historique local"
+				"eventUnavailable": "Message indisponible dans l’historique local",
+				"loadOlder": "Charger les messages plus anciens",
+				"loadingOlder": "Chargement des messages plus anciens …",
+				"loadOlderFailed": "Les messages plus anciens n’ont pas pu être chargés.",
+				"retryLoadOlder": "Réessayer",
+				"historyStart": "Début de la conversation"
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",

@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Katılımcılar yükleniyor …",
+		"unavailable": "Katılımcılar yüklenemedi.",
+		"empty": "Katılımcı yok."
+	},
 	"menuEffects": {
 		"title": "Menü görünümü",
 		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
@@ -1979,6 +1984,8 @@
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
+		"youEndedChat": "Sohbeti sonlandırdınız",
+		"chatEnded": "Sohbet sona erdi",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
@@ -2319,6 +2326,7 @@
 			"showPreview": "Sohbet önizlemesini göster",
 			"showDetails": "Detayları göster",
 			"preview": {
+				"authors": "Bu önizlemedeki kişiler",
 				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
 				"empty": "Bu sohbette henüz mesaj yok.",
 				"image": "Görsel",
@@ -2329,7 +2337,12 @@
 				"unsupported": "Desteklenmeyen mesaj",
 				"pending": "Şifre çözme bekleniyor",
 				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
-				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor",
+				"loadOlder": "Daha eski mesajları yükle",
+				"loadingOlder": "Daha eski mesajlar yükleniyor …",
+				"loadOlderFailed": "Daha eski mesajlar yüklenemedi.",
+				"retryLoadOlder": "Tekrar dene",
+				"historyStart": "Sohbetin başlangıcı"
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",

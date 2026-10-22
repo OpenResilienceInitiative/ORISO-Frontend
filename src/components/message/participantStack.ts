@@ -34,6 +34,14 @@ export interface ParticipantStack {
 	overflow: number;
 }
 
+/** Legacy/default presentation, retained for existing consumers. */
+export const STACK_AVATAR_SIZE = 40;
+export const STACK_OVERLAP = 12;
+
+/** Current Avatar Group master (7608:40689), verified 2026-10-22. */
+export const HEADER_STACK_AVATAR_SIZE = 48;
+export const HEADER_STACK_OVERLAP = 24;
+
 /** Figma #430: a room header shows at most four avatars before "+N". */
 export const STACK_MAX_VISIBLE = 4;
 /**

@@ -78,7 +78,15 @@ import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
+import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
+import { ReactComponent as PenIcon } from '../../resources/img/icons/pen.svg';
+import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
+import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons-two-google.svg';
+import { ReactComponent as PersonCircleIcon } from '../../resources/img/icons/person-circle.svg';
+import { ReactComponent as ShieldPersonIcon } from '../../resources/img/icons/timeline-shield-person.svg';
+import { ReactComponent as KeyboardArrowUpIcon } from '../../resources/img/icons/keyboard_arrow_up.svg';
 import {
+	chatEndedTextKey,
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
@@ -86,6 +94,7 @@ import {
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
@@ -153,34 +162,11 @@ export const initialDecryptedBody = (
 	message?: string
 ): string | null | undefined => (isE2eeEnabled && message ? null : message);
 
+// Open state (Figma 666:25242): the library kebab on a primary-container pill.
 const ActiveKebabIcon = () => (
-	<svg
-		className="messageItem__kebabIconActive"
-		width="28"
-		height="32"
-		viewBox="0 0 28 32"
-		fill="none"
-		aria-hidden
-	>
-		<g clipPath="url(#active-kebab-clip)">
-			<rect width="28" height="32" rx="14" fill="#CC1E1C" />
-			<rect width="28" height="32" fill="white" fillOpacity="0.08" />
-			<path
-				d="M28 12.4545V32H-6C-6 19.8497 4.43011 10 17.2963 10C21.1552 10 24.795 10.8861 28 12.4545Z"
-				fill="white"
-				fillOpacity="0.1"
-			/>
-			<path
-				d="M13.9997 22.6666C13.5413 22.6666 13.149 22.5034 12.8226 22.177C12.4962 21.8506 12.333 21.4583 12.333 20.9999C12.333 20.5416 12.4962 20.1492 12.8226 19.8228C13.149 19.4964 13.5413 19.3333 13.9997 19.3333C14.458 19.3333 14.8504 19.4964 15.1768 19.8228C15.5031 20.1492 15.6663 20.5416 15.6663 20.9999C15.6663 21.4583 15.5031 21.8506 15.1768 22.177C14.8504 22.5034 14.458 22.6666 13.9997 22.6666ZM13.9997 17.6666C13.5413 17.6666 13.149 17.5034 12.8226 17.177C12.4962 16.8506 12.333 16.4583 12.333 15.9999C12.333 15.5416 12.4962 15.1492 12.8226 14.8228C13.149 14.4964 13.5413 14.3333 13.9997 14.3333C14.458 14.3333 14.8504 14.4964 15.1768 14.8228C15.5031 15.1492 15.6663 15.5416 15.6663 15.9999C15.6663 16.4583 15.5031 16.8506 15.1768 17.177C14.8504 17.5034 14.458 17.6666 13.9997 17.6666ZM13.9997 12.6666C13.5413 12.6666 13.149 12.5034 12.8226 12.177C12.4962 11.8506 12.333 11.4583 12.333 10.9999C12.333 10.5416 12.4962 10.1492 12.8226 9.82284C13.149 9.49645 13.5413 9.33325 13.9997 9.33325C14.458 9.33325 14.8504 9.49645 15.1768 9.82284C15.5031 10.1492 15.6663 10.5416 15.6663 10.9999C15.6663 11.4583 15.5031 11.8506 15.1768 12.177C14.8504 12.5034 14.458 12.6666 13.9997 12.6666Z"
-				fill="white"
-			/>
-		</g>
-		<defs>
-			<clipPath id="active-kebab-clip">
-				<rect width="28" height="32" rx="14" fill="white" />
-			</clipPath>
-		</defs>
-	</svg>
+	<span className="messageItem__kebabIconActive" aria-hidden>
+		<StackVerticalIcon />
+	</span>
 );
 
 const MenuReplyDirectIcon = () => (
@@ -191,14 +177,7 @@ const MenuReplyDirectIcon = () => (
 		/>
 	</svg>
 );
-const MenuReplyThreadIcon = () => (
-	<svg width="20" height="18" viewBox="0 0 20 18" fill="none" aria-hidden>
-		<path
-			d="M13 18V15H9V5H7V8H0V0H7V3H13V0H20V8H13V5H11V13H13V10H20V18H13ZM15 6H18V2H15V6ZM15 16H18V12H15V16ZM2 6H5V2H2V6Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
+const MenuReplyThreadIcon = () => <ThreadEntryIcon aria-hidden />;
 const MenuMarkTextIcon = () => (
 	<svg width="20" height="22" viewBox="0 0 20 22" fill="none" aria-hidden>
 		<path
@@ -207,55 +186,13 @@ const MenuMarkTextIcon = () => (
 		/>
 	</svg>
 );
-const MenuForwardIcon = () => (
-	<svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden>
-		<path
-			d="M14 12L12.575 10.6L17.175 6L12.575 1.4L14 0L20 6L14 12ZM0 14V10C0 8.61667 0.483333 7.44167 1.45 6.475C2.43333 5.49167 3.61667 5 5 5H11.175L7.575 1.4L9 0L15 6L9 12L7.575 10.6L11.175 7H5C4.16667 7 3.45833 7.29167 2.875 7.875C2.29167 8.45833 2 9.16667 2 10V14H0Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
-const MenuEditIcon = () => (
-	<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-		<path
-			d="M0 18V14.25L13.2 1.05C13.4 0.85 13.6208 0.7 13.8625 0.6C14.1042 0.5 14.3583 0.45 14.625 0.45C14.8917 0.45 15.15 0.5 15.4 0.6C15.65 0.7 15.8667 0.85 16.05 1.05L17.425 2.45C17.625 2.63333 17.7708 2.85 17.8625 3.1C17.9542 3.35 18 3.6 18 3.85C18 4.11667 17.9542 4.37083 17.8625 4.6125C17.7708 4.85417 17.625 5.07083 17.425 5.2625L4.25 18H0ZM2 16H3.4L11.2 8.2L10.525 7.5L9.8 6.8L2 14.6V16Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
-const MenuDeleteIcon = () => (
-	<svg width="16" height="18" viewBox="0 0 16 18" fill="none" aria-hidden>
-		<path
-			d="M3 18C2.45 18 1.97917 17.8042 1.5875 17.4125C1.19583 17.0208 1 16.55 1 16V3H0V1H5V0H11V1H16V3H15V16C15 16.55 14.8042 17.0208 14.4125 17.4125C14.0208 17.8042 13.55 18 13 18H3ZM13 3H3V16H13V3ZM5 14H7V5H5V14ZM9 14H11V5H9V14Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
+const MenuForwardIcon = () => <ArrowForwardIcon aria-hidden />;
+const MenuEditIcon = () => <PenIcon aria-hidden />;
+const MenuDeleteIcon = () => <TrashIcon aria-hidden />;
 
-const VisibilityPeopleIcon = () => (
-	<svg width="22" height="16" viewBox="0 0 22 16" fill="none" aria-hidden>
-		<path
-			d="M0 16V13.2C0 12.6333 0.145833 12.1125 0.4375 11.6375C0.729167 11.1625 1.11667 10.8 1.6 10.55C2.63333 10.0333 3.68333 9.64583 4.75 9.3875C5.81667 9.12917 6.9 9 8 9C9.1 9 10.1833 9.12917 11.25 9.3875C12.3167 9.64583 13.3667 10.0333 14.4 10.55C14.8833 10.8 15.2708 11.1625 15.5625 11.6375C15.8542 12.1125 16 12.6333 16 13.2V16H0ZM18 16V13C18 12.2667 17.7958 11.5625 17.3875 10.8875C16.9792 10.2125 16.4 9.63333 15.65 9.15C16.5 9.25 17.3 9.42083 18.05 9.6625C18.8 9.90417 19.5 10.2 20.15 10.55C20.75 10.8833 21.2083 11.2542 21.525 11.6625C21.8417 12.0708 22 12.5167 22 13V16H18ZM8 8C6.9 8 5.95833 7.60833 5.175 6.825C4.39167 6.04167 4 5.1 4 4C4 2.9 4.39167 1.95833 5.175 1.175C5.95833 0.391667 6.9 0 8 0C9.1 0 10.0417 0.391667 10.825 1.175C11.6083 1.95833 12 2.9 12 4C12 5.1 11.6083 6.04167 10.825 6.825C10.0417 7.60833 9.1 8 8 8ZM18 4C18 5.1 17.6083 6.04167 16.825 6.825C16.0417 7.60833 15.1 8 14 8C13.8167 8 13.5833 7.97917 13.3 7.9375C13.0167 7.89583 12.7833 7.85 12.6 7.8C13.05 7.26667 13.3958 6.675 13.6375 6.025C13.8792 5.375 14 4.7 14 4C14 3.3 13.8792 2.625 13.6375 1.975C13.3958 1.325 13.05 0.733333 12.6 0.2C12.8333 0.116667 13.0667 0.0625 13.3 0.0375C13.5333 0.0125 13.7667 0 14 0C15.1 0 16.0417 0.391667 16.825 1.175C17.6083 1.95833 18 2.9 18 4Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
+const VisibilityPeopleIcon = () => <PersonsIcon aria-hidden />;
 
-const VisibilityClientIcon = () => (
-	<svg
-		width="14"
-		height="14"
-		viewBox="0 0 14 14"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path
-			d="M2.56667 10.0667C3.13333 9.63333 3.76667 9.29167 4.46667 9.04167C5.16667 8.79167 5.9 8.66667 6.66667 8.66667C7.43333 8.66667 8.16667 8.79167 8.86667 9.04167C9.56667 9.29167 10.2 9.63333 10.7667 10.0667C11.1556 9.61111 11.4583 9.09445 11.675 8.51667C11.8917 7.93889 12 7.32222 12 6.66667C12 5.18889 11.4806 3.93056 10.4417 2.89167C9.40278 1.85278 8.14444 1.33333 6.66667 1.33333C5.18889 1.33333 3.93056 1.85278 2.89167 2.89167C1.85278 3.93056 1.33333 5.18889 1.33333 6.66667C1.33333 7.32222 1.44167 7.93889 1.65833 8.51667C1.875 9.09445 2.17778 9.61111 2.56667 10.0667ZM6.66667 7.33333C6.01111 7.33333 5.45833 7.10833 5.00833 6.65833C4.55833 6.20833 4.33333 5.65556 4.33333 5C4.33333 4.34444 4.55833 3.79167 5.00833 3.34167C5.45833 2.89167 6.01111 2.66667 6.66667 2.66667C7.32222 2.66667 7.875 2.89167 8.325 3.34167C8.775 3.79167 9 4.34444 9 5C9 5.65556 8.775 6.20833 8.325 6.65833C7.875 7.10833 7.32222 7.33333 6.66667 7.33333ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45556 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45556 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45556 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45556 13.1583 7.58889 13.3333 6.66667 13.3333Z"
-			fill="white"
-		/>
-	</svg>
-);
+const VisibilityClientIcon = () => <PersonCircleIcon aria-hidden />;
 
 const VisibilityCounsellorIcon = () => (
 	<svg
@@ -273,39 +210,10 @@ const VisibilityCounsellorIcon = () => (
 	</svg>
 );
 
-const VisibilityModeratorIcon = () => (
-	<svg
-		width="11"
-		height="14"
-		viewBox="0 0 11 14"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path
-			d="M3.675 6.65833C3.225 6.20833 3 5.65556 3 5C3 4.34444 3.225 3.79167 3.675 3.34167C4.125 2.89167 4.67778 2.66667 5.33333 2.66667C5.98889 2.66667 6.54167 2.89167 6.99167 3.34167C7.44167 3.79167 7.66667 4.34444 7.66667 5C7.66667 5.65556 7.44167 6.20833 6.99167 6.65833C6.54167 7.10833 5.98889 7.33333 5.33333 7.33333C4.67778 7.33333 4.125 7.10833 3.675 6.65833ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 6.66667 1.41667 7.25 1.58333 7.81667C1.75 8.38333 1.97778 8.91667 2.26667 9.41667C2.73333 9.18333 3.22222 9 3.73333 8.86667C4.24444 8.73333 4.77778 8.66667 5.33333 8.66667C5.88889 8.66667 6.42222 8.73333 6.93333 8.86667C7.44445 9 7.93333 9.18333 8.4 9.41667C8.68889 8.91667 8.91667 8.38333 9.08333 7.81667C9.25 7.25 9.33333 6.66667 9.33333 6.06667V2.91667L5.33333 1.41667Z"
-			fill="white"
-		/>
-	</svg>
-);
+const VisibilityModeratorIcon = () => <ShieldPersonIcon aria-hidden />;
 
 const ChevronIcon = ({ className }: { className?: string }) => (
-	<svg
-		width="10"
-		height="6"
-		viewBox="0 0 10 6"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		className={className}
-	>
-		<path
-			d="M0.800781 4.80005L4.80078 0.800049L8.80078 4.80005"
-			stroke="#4C555F"
-			strokeWidth="1.6"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-	</svg>
+	<KeyboardArrowUpIcon className={className} aria-hidden />
 );
 
 export interface VideoCallMessageDTO {
@@ -395,6 +303,12 @@ interface MessageItemComponentProps extends MessageItem {
 	) => void;
 	handleDecryptionSuccess: (id: string) => void;
 	e2eeParams: e2eeParams & { subscriptionKeyLost: boolean };
+	/**
+	 * #420: the Activity Timeline preview shows the real row, but nothing in
+	 * it may write — no action menu, no reacting, no joining a call, no
+	 * consent or notification setup. Reading stays (text, links, files).
+	 */
+	readOnly?: boolean;
 }
 
 export const MessageItemComponent = ({
@@ -438,7 +352,8 @@ export const MessageItemComponent = ({
 	onReact,
 	onUnreact,
 	sendFailed,
-	encryptionBroke
+	encryptionBroke,
+	readOnly = false
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, avatarMembers = [] } =
@@ -1292,12 +1207,12 @@ export const MessageItemComponent = ({
 	const isSupervisionNoticeEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_SUPERVISION_NOTICE;
-	const userLeftChatEventText = hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	)
-		? translate('message.userLeftChat')
-		: translate('message.consultantLeftChat');
+	const userLeftChatEventText = translate(
+		chatEndedTextKey(
+			parsedMessage.systemNotificationEndedBy,
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		)
+	);
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
@@ -1821,10 +1736,20 @@ export const MessageItemComponent = ({
 	 * the bubble, the chat header and the session list have in common, so the
 	 * bubble now uses exactly those and passes no name parts at all.
 	 */
+	// #1839: a live-chat guest's own messages carry the pseudonym the list and
+	// the header show, not their encoded Matrix name.
+	const liveChatGuestName =
+		!isMyMessage &&
+		isLiveChatModality &&
+		!!askerMatrixUserId &&
+		userId === askerMatrixUserId
+			? resolveAnonymousChatDisplayName(activeSession?.user)
+			: null;
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
 			? consultantMatch?.consultantDisplayName ||
+				liveChatGuestName ||
 				roomUser?.displayName ||
 				displayName
 			: displayName;
@@ -1930,6 +1855,32 @@ export const MessageItemComponent = ({
 		</span>
 	) : null;
 
+	const threadEntryClassName = clsx(
+		'messageItem__threadButton',
+		isMyMessage && 'messageItem__threadButton--right'
+	);
+	const threadEntryContent = threadSummary ? (
+		<>
+			<ThreadEntryIcon
+				className="messageItem__threadButtonIcon"
+				aria-hidden="true"
+			/>
+			<span className="messageItem__threadButtonMain">
+				{translate('message.thread.replies', {
+					count: threadSummary.replyCount
+				})}
+			</span>
+			{threadSummary.lastReplyText && (
+				<span
+					className="messageItem__threadButtonMeta"
+					data-cy="thread-entry-preview"
+				>
+					{threadSummary.lastReplyText}
+				</span>
+			)}
+		</>
+	) : null;
+
 	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
 	// sharing one rail with the timestamp. Adding happens via the action menu.
 	const reactionChips =
@@ -1940,31 +1891,48 @@ export const MessageItemComponent = ({
 					isMyMessage && 'messageItem__reactions--right'
 				)}
 			>
-				{reactions.map((reaction) => (
-					<button
-						key={reaction.key}
-						type="button"
-						className={clsx(
-							'messageItem__reactionPill',
-							reaction.ownEventId &&
-								'messageItem__reactionPill--mine'
-						)}
-						onClick={() =>
-							reaction.ownEventId
-								? onUnreact?.(reaction.ownEventId)
-								: onReact?.(reaction.key)
-						}
-						aria-label={translate('message.reaction.count', {
-							key: reaction.key,
-							count: reaction.count
-						})}
-					>
-						<span aria-hidden>{reaction.key}</span>
-						<span className="messageItem__reactionPillCount">
-							{reaction.count}
+				{reactions.map((reaction) => {
+					const pillClassName = clsx(
+						'messageItem__reactionPill',
+						reaction.ownEventId && 'messageItem__reactionPill--mine'
+					);
+					const pillLabel = translate('message.reaction.count', {
+						key: reaction.key,
+						count: reaction.count
+					});
+					const pillContent = (
+						<>
+							<span aria-hidden>{reaction.key}</span>
+							<span className="messageItem__reactionPillCount">
+								{reaction.count}
+							</span>
+						</>
+					);
+					return readOnly ? (
+						<span
+							key={reaction.key}
+							className={pillClassName}
+							role="img"
+							aria-label={pillLabel}
+						>
+							{pillContent}
 						</span>
-					</button>
-				))}
+					) : (
+						<button
+							key={reaction.key}
+							type="button"
+							className={pillClassName}
+							onClick={() =>
+								reaction.ownEventId
+									? onUnreact?.(reaction.ownEventId)
+									: onReact?.(reaction.key)
+							}
+							aria-label={pillLabel}
+						>
+							{pillContent}
+						</button>
+					);
+				})}
 			</div>
 		) : null;
 
@@ -2170,12 +2138,16 @@ export const MessageItemComponent = ({
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
 							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
-							onPointerDown={handleBubblePointerDown}
-							onPointerMove={handleBubblePointerMove}
-							onPointerUp={cancelLongPress}
-							onPointerLeave={cancelLongPress}
-							onPointerCancel={cancelLongPress}
-							onContextMenu={handleBubbleContextMenu}
+							{...(readOnly
+								? {}
+								: {
+										onPointerDown: handleBubblePointerDown,
+										onPointerMove: handleBubblePointerMove,
+										onPointerUp: cancelLongPress,
+										onPointerLeave: cancelLongPress,
+										onPointerCancel: cancelLongPress,
+										onContextMenu: handleBubbleContextMenu
+									})}
 						>
 							{isSystemNotification &&
 								(isCaseHandoverGrantedEvent ||
@@ -2196,9 +2168,11 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
+												readOnly={readOnly}
 												onSetupNotifications={
-													grantNotificationPolicy.emailAllowed ||
-													grantNotificationPolicy.browserAllowed
+													!readOnly &&
+													(grantNotificationPolicy.emailAllowed ||
+														grantNotificationPolicy.browserAllowed)
 														? () =>
 																setShowGrantNotifications(
 																	true
@@ -2221,9 +2195,11 @@ export const MessageItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
+												readOnly={readOnly}
 												onSetupNotifications={
-													grantNotificationPolicy.emailAllowed ||
-													grantNotificationPolicy.browserAllowed
+													!readOnly &&
+													(grantNotificationPolicy.emailAllowed ||
+														grantNotificationPolicy.browserAllowed)
 														? () =>
 																setShowGrantNotifications(
 																	true
@@ -2622,6 +2598,7 @@ export const MessageItemComponent = ({
 					call={callLifecycle}
 					loadState={apiCallState}
 					onJoin={
+						readOnly ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
@@ -2667,6 +2644,7 @@ export const MessageItemComponent = ({
 			>
 				{getMessageDate()}
 				<ErstantwortMessage
+					readOnly={readOnly}
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
@@ -2803,20 +2781,24 @@ export const MessageItemComponent = ({
 										size={AVATAR_SIZES.message}
 									/>
 								</div>
-								<button
-									type="button"
-									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate('message.menu.open')}
-									onClick={(event) =>
-										toggleActionMenu(event, 'left')
-									}
-								>
-									{isActionMenuOpen ? (
-										<ActiveKebabIcon />
-									) : (
-										<StackVerticalIcon className="messageItem__kebabIconDefault" />
-									)}
-								</button>
+								{!readOnly && (
+									<button
+										type="button"
+										className="messageItem__kebabButton messageItem__kebabButton--left"
+										aria-label={translate(
+											'message.menu.open'
+										)}
+										onClick={(event) =>
+											toggleActionMenu(event, 'left')
+										}
+									>
+										{isActionMenuOpen ? (
+											<ActiveKebabIcon />
+										) : (
+											<StackVerticalIcon className="messageItem__kebabIconDefault" />
+										)}
+									</button>
+								)}
 							</div>
 							{showVisibleAudience && (
 								<button
@@ -2853,20 +2835,24 @@ export const MessageItemComponent = ({
 					isSystemNotification && (
 						<CarimatAvatar
 							menu={
-								<button
-									type="button"
-									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate('message.menu.open')}
-									onClick={(event) =>
-										toggleActionMenu(event, 'left')
-									}
-								>
-									{isActionMenuOpen ? (
-										<ActiveKebabIcon />
-									) : (
-										<StackVerticalIcon className="messageItem__kebabIconDefault" />
-									)}
-								</button>
+								!readOnly && (
+									<button
+										type="button"
+										className="messageItem__kebabButton messageItem__kebabButton--left"
+										aria-label={translate(
+											'message.menu.open'
+										)}
+										onClick={(event) =>
+											toggleActionMenu(event, 'left')
+										}
+									>
+										{isActionMenuOpen ? (
+											<ActiveKebabIcon />
+										) : (
+											<StackVerticalIcon className="messageItem__kebabIconDefault" />
+										)}
+									</button>
+								)
 							}
 						/>
 					)}
@@ -2903,20 +2889,24 @@ export const MessageItemComponent = ({
 								</button>
 							)}
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
-								<button
-									type="button"
-									className="messageItem__kebabButton messageItem__kebabButton--right"
-									aria-label={translate('message.menu.open')}
-									onClick={(event) =>
-										toggleActionMenu(event, 'right')
-									}
-								>
-									{isActionMenuOpen ? (
-										<ActiveKebabIcon />
-									) : (
-										<StackVerticalIcon className="messageItem__kebabIconDefault" />
-									)}
-								</button>
+								{!readOnly && (
+									<button
+										type="button"
+										className="messageItem__kebabButton messageItem__kebabButton--right"
+										aria-label={translate(
+											'message.menu.open'
+										)}
+										onClick={(event) =>
+											toggleActionMenu(event, 'right')
+										}
+									>
+										{isActionMenuOpen ? (
+											<ActiveKebabIcon />
+										) : (
+											<StackVerticalIcon className="messageItem__kebabIconDefault" />
+										)}
+									</button>
+								)}
 								<div className="messageItem__avatar">
 									<MessageAvatar
 										isGroup={!!activeSession?.isGroup}
@@ -2982,16 +2972,26 @@ export const MessageItemComponent = ({
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&
-						onOpenThread &&
+						(onOpenThread || readOnly) &&
 						threadSummary &&
-						threadSummary.replyCount > 0 && (
+						threadSummary.replyCount > 0 &&
+						(readOnly ? (
+							// #420: the preview shows that a thread exists,
+							// without opening it.
+							<div
+								className={clsx(
+									threadEntryClassName,
+									'messageItem__threadButton--static'
+								)}
+								data-cy="thread-entry"
+								title={threadSummary.lastReplyText}
+							>
+								{threadEntryContent}
+							</div>
+						) : (
 							<button
 								type="button"
-								className={clsx(
-									'messageItem__threadButton',
-									isMyMessage &&
-										'messageItem__threadButton--right'
-								)}
+								className={threadEntryClassName}
 								data-cy="thread-entry"
 								aria-label={[
 									translate('message.thread.open'),
@@ -3009,25 +3009,9 @@ export const MessageItemComponent = ({
 									onOpenThread?.(event.currentTarget);
 								}}
 							>
-								<ThreadEntryIcon
-									className="messageItem__threadButtonIcon"
-									aria-hidden="true"
-								/>
-								<span className="messageItem__threadButtonMain">
-									{translate('message.thread.replies', {
-										count: threadSummary.replyCount
-									})}
-								</span>
-								{threadSummary.lastReplyText && (
-									<span
-										className="messageItem__threadButtonMeta"
-										data-cy="thread-entry-preview"
-									>
-										{threadSummary.lastReplyText}
-									</span>
-								)}
+								{threadEntryContent}
 							</button>
-						)}
+						))}
 				</div>
 			</div>
 			{/* Mounted only while a menu is open: one per message would subscribe the whole timeline. */}

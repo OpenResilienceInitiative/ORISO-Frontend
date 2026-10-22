@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
+		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
+		"empty": "ተሳተፍቲ የለዉን።"
+	},
 	"menuEffects": {
 		"title": "ኣቀራርባ ምናሌ",
 		"label": "መጋረጃን ቀሊል ምንቅስቓስ ምናሌን",
@@ -1979,6 +1984,8 @@
 		"systemNotificationTitle": "መፍለጢ ሲስተም",
 		"userLeftChat": "እቲ ተጠቃሚ ካብቲ ቻት ወጺኡ",
 		"consultantLeftChat": "እቲ ኣማኻሪ ካብቲ ቻት ወጺኡ",
+		"youEndedChat": "ነቲ ቻት ኣብቂዕኩሞ",
+		"chatEnded": "እቲ ቻት ተዛዚሙ",
 		"anonymousUser": "ተጠቃሚ",
 		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
 		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",
@@ -2319,6 +2326,7 @@
 			"showPreview": "ቅድመ-ርእይቶ ቻት ኣርእይ",
 			"showDetails": "ዝርዝር ኣርእይ",
 			"preview": {
+				"authors": "ኣብዚ ቅድመ ምርኢት ዘለዉ ሰባት",
 				"unavailable": "ቅድመ-ርእይቶ ቻት ገና ኣይተዳለወን — ንምንባብ ቻት ክፈት።",
 				"empty": "ኣብዚ ዝርርብ ገና መልእኽቲ የለን።",
 				"image": "ምስሊ",
@@ -2329,7 +2337,12 @@
 				"unsupported": "ዘይድገፍ መልእኽቲ",
 				"pending": "ምፍታሕ ምስጢር ይጽበ",
 				"roomUnavailable": "ዝርርብ ኣብዚ መሳርሒ ኣይርከብን",
-				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን"
+				"eventUnavailable": "መልእኽቲ ኣብ ናይ ከባቢ ታሪኽ ኣይርከብን",
+				"loadOlder": "ዝቐደሙ መልእኽትታት ኣምጽእ",
+				"loadingOlder": "ዝቐደሙ መልእኽትታት ይመጹ ኣለዉ …",
+				"loadOlderFailed": "ዝቐደሙ መልእኽትታት ክመጹ ኣይከኣሉን።",
+				"retryLoadOlder": "እንደገና ፈትን",
+				"historyStart": "መጀመርታ ዝርርብ"
 			},
 			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",

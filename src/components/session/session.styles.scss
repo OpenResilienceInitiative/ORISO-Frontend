@@ -288,6 +288,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		animation: session-input-reveal 360ms ease;
 	}
 
+	// The maximised composer is fixed to the visual viewport. Even an
+	// identity transform on this reveal wrapper makes it the containing
+	// block instead, placing the editor outside that viewport.
+	&__gameInputFadeTarget:has(.messageSubmit__wrapper--expanded) {
+		transform: none;
+		animation: none;
+		transition-property: opacity;
+	}
+
 	/* The breathing companion lives inline in the white session content
 	   column (product decision "das Game im weißen Teil, nicht mehr als
 	   Popup") — no fixed backdrop, no modal. It replaces the robot cards
