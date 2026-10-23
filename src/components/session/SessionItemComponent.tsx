@@ -244,11 +244,8 @@ import {
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
-const MessageSubmitInterfaceComponent = lazyWithReload(() =>
-	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
-		(m) => ({ default: m.MessageSubmitInterfaceComponent })
-	)
-);
+import { loadMessageComposer } from '../app/appChunks';
+const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
@@ -1376,23 +1373,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousEnquiryPhaseSession
 	]);
 
-	const preloadMessageComposer = useCallback(() => {
-		void import(
-			'../messageSubmitInterface/messageSubmitInterfaceComponent'
-		);
-	}, []);
-
 	useEffect(() => {
 		if (
 			shouldShowPseudonymGate &&
 			pseudonymConfirmed &&
 			consultantAccepted
 		) {
-			preloadMessageComposer();
+			void loadMessageComposer();
 		}
 	}, [
 		consultantAccepted,
-		preloadMessageComposer,
 		pseudonymConfirmed,
 		shouldShowPseudonymGate
 	]);
