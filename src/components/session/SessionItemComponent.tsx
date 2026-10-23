@@ -169,11 +169,7 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
-import {
-	buildEditContext,
-	buildReplyQuoteContext,
-	buildReplyQuotePreview
-} from './replyQuote';
+import { buildReplyQuotePreview } from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
 import {
 	apiGetSessionSupervisors,
@@ -238,6 +234,8 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
+import { useConversationActions } from './useConversationActions';
+import { anonymousGateKeys } from './anonymousGateStorage';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 import {
@@ -350,7 +348,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			return (
 				sessionStorage.getItem(
-					`anonymous-inquiry-consent-${activeSession.item.id}`
+					anonymousGateKeys(activeSession.item.id).consent
 				) === '1'
 			);
 		} catch {
@@ -361,7 +359,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			return (
 				sessionStorage.getItem(
-					`anonymous-pseudonym-${activeSession.item.id}`
+					anonymousGateKeys(activeSession.item.id).pseudonym
 				) === '1'
 			);
 		} catch {
@@ -419,7 +417,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			try {
 				return (
 					sessionStorage.getItem(
-						`anonymous-waiting-dismissed-${activeSession.item.id}`
+						anonymousGateKeys(activeSession.item.id)
+							.waitingDismissed
 					) === '1'
 				);
 			} catch {
@@ -431,7 +430,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(value: boolean) => {
 			setWaitingGateDismissedState(value);
 			try {
-				const key = `anonymous-waiting-dismissed-${activeSession.item.id}`;
+				const key = anonymousGateKeys(
+					activeSession.item.id
+				).waitingDismissed;
 				if (value) {
 					sessionStorage.setItem(key, '1');
 				} else {
@@ -501,7 +502,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		dataPrivacyConfirmation: userData?.dataPrivacyConfirmation
 	});
 	const anonymousInquiryConsentStorageKey = useMemo(
-		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
+		() => anonymousGateKeys(activeSession.item.id).consent,
 		[activeSession.item.id]
 	);
 	const robotSequenceStorageKey = useMemo(
@@ -509,7 +510,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[activeSession.item.id]
 	);
 	const pseudonymStorageKey = useMemo(
-		() => `anonymous-pseudonym-${activeSession.item.id}`,
+		() => anonymousGateKeys(activeSession.item.id).pseudonym,
 		[activeSession.item.id]
 	);
 	const requiresPseudonymConfirmation =
@@ -776,35 +777,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			),
 		[reactionEvents, ownMatrixUserId]
 	);
-	const handleReact = useCallback(
-		(messageId: string, key: string) => {
-			if (!resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendReaction({
-					matrixRoomId: resolvedMatrixRoomId,
-					targetEventId: messageId,
-					key
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId]
-	);
-	const handleUnreact = useCallback(
-		(reactionEventId: string) => {
-			if (!resolvedMatrixRoomId) {
-				return;
-			}
-			chatTransportService
-				.removeReaction({
-					matrixRoomId: resolvedMatrixRoomId,
-					reactionEventId
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId]
-	);
+	// #1824 S1: the room's message actions, shared with the Activity Timeline
+	// preview. A reply or edit context never survives a conversation switch.
+	const {
+		handleReact,
+		handleUnreact,
+		handleDeleteDirect,
+		replyTo,
+		handleReplyDirect,
+		handleCancelReply,
+		editingMessage,
+		handleEditDirect,
+		handleCancelEdit
+	} = useConversationActions({
+		roomId: resolvedMatrixRoomId,
+		resetKey: activeSession?.rid
+	});
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 	const loadEarlierMessages = useChatHistoryPagination(
@@ -2885,52 +2873,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			(messages || []).find((candidate) => candidate._id === id) || null,
 		[messages]
 	);
-
-	// Relations foundation (#435): direct-reply context for the composer.
-	const [replyTo, setReplyTo] = useState<{
-		eventId: string;
-		author: string;
-		text: string;
-	} | null>(null);
-
-	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo(buildReplyQuoteContext(message));
-	}, []);
-
-	const handleCancelReply = useCallback(() => setReplyTo(null), []);
-
-	// Editing (m.replace, #435): edit-in-progress context for the composer.
-	const [editingMessage, setEditingMessage] = useState<{
-		eventId: string;
-		text: string;
-	} | null>(null);
-
-	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage(buildEditContext(message));
-	}, []);
-
-	const handleDeleteDirect = useCallback(
-		(message: MessageItem) => {
-			if (!resolvedMatrixRoomId || !message?._id) {
-				return;
-			}
-			chatTransportService
-				.redactMessage({
-					matrixRoomId: resolvedMatrixRoomId,
-					targetEventId: message._id
-				})
-				.catch(() => undefined);
-		},
-		[resolvedMatrixRoomId]
-	);
-
-	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
-
-	// A reply or edit context never survives a conversation switch.
-	useEffect(() => {
-		setReplyTo(null);
-		setEditingMessage(null);
-	}, [activeSession?.rid]);
 
 	// Resolve the quote of a replied-to message from the loaded timeline; a
 	// reply whose target is outside the loaded window degrades to a generic

@@ -1,7 +1,3 @@
-import {
-	parseChannel,
-	rewriteLegacyChannelPath
-} from '../../utils/channelRoute';
 import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
@@ -22,8 +18,7 @@ import { Menu, MenuItem } from '@mui/material';
 import {
 	getEventDescriptor,
 	getEventIcon,
-	renderEventStrings,
-	isKnownEventType
+	renderEventStrings
 } from './eventDescriptors';
 import {
 	resolveNotificationActionPath,
@@ -90,6 +85,10 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { activityEventCategory, activityEventRoomId } from './activityEvent';
+import { selectActivityEventsReadWithConversation } from './seenWhileReading';
+import { useConversationPreview } from './useConversationPreview';
+import { useSeenWhileReading } from './useSeenWhileReading';
 import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
@@ -139,19 +138,9 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 // hardcoded English strings ('now', 'Xm ago') with locale-aware formatting in
 // `timelineTime.ts`, which is imported above.
 
-const getNotificationCategory = (item: any): 'system' | 'message' => {
-	if (item?.category === 'message') return 'message';
-	if (resolveThreadRootId(item)) return 'message';
-	return 'system';
-};
-
-// WP-06 Activity Timeline (Slice 0a): category is registry-driven for known
-// event types; unknown / local-only types keep the legacy heuristic so nothing
-// regresses while the backend is incremental.
-const resolveItemCategory = (item: any): 'system' | 'message' =>
-	isKnownEventType(item?.eventType)
-		? getEventDescriptor(item.eventType).category
-		: getNotificationCategory(item);
+// WP-06 / #1824: category, room and conversation of an activity event are
+// derived once, in activityEvent.ts.
+const resolveItemCategory = (item: any) => activityEventCategory(item);
 
 // WP-06: render an item's visible strings from its event descriptor's i18n
 // templates (ADR-AT-01 — the server record is text-free), falling back to the
@@ -201,35 +190,7 @@ const searchFromPath = (path?: string | null): string => {
 	return query ? `?${query}` : '';
 };
 
-// B2 / T24: the thread lives in `?channel=thread:<root>`; a server path that
-// still carries the legacy `threadRootId` is rewritten first.
-const resolveThreadRootId = (item: any): string | null => {
-	const path = rewriteLegacyChannelPath(item?.actionPath as string | null);
-	const search = searchFromPath(path);
-	if (!search) {
-		return null;
-	}
-	const { channel } = parseChannel(search);
-	return channel?.kind === 'thread' ? channel.rootId : null;
-};
-
-// #847: Matrix room for the embedded preview — params.roomRef when the
-// backend sent it (#846), else the room segment of the stored actionPath
-// (/sessions/<role>/<list>/<roomId>/<sessionId>).
-const resolveRoomId = (item: any): string | null => {
-	if (item?.params?.roomRef) {
-		return String(item.params.roomRef);
-	}
-	const path = item?.actionPath;
-	if (!path) {
-		return null;
-	}
-	const segments = String(path).split('?')[0].split('/').filter(Boolean);
-	const roomSegment = segments.find(
-		(segment) => segment.startsWith('!') || segment.startsWith('%21')
-	);
-	return roomSegment ? decodeURIComponent(roomSegment) : null;
-};
+const resolveRoomId = (item: any) => activityEventRoomId(item);
 
 const resolveCaseHandoverRequestId = (item: any): string | null => {
 	const path = item?.actionPath;
@@ -855,10 +816,6 @@ export const NotificationsCenter = () => {
 			);
 	const canOpenSelected =
 		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
-	const selectedThreadRootId = useMemo(
-		() => resolveThreadRootId(selectedNotification),
-		[selectedNotification]
-	);
 	const selectedCaseHandoverRequestId = useMemo(
 		() => resolveCaseHandoverRequestId(selectedNotification),
 		[selectedNotification]
@@ -1016,6 +973,38 @@ export const NotificationsCenter = () => {
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
 	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
+	// #1824: the conversation behind the selected event — its room, what the
+	// person may do there (useConversationPreview) — and D1.
+	const preview = useConversationPreview(
+		showEmbeddedChat ? selectedNotification : null,
+		{ visible: showEmbeddedChat }
+	);
+	useSeenWhileReading({
+		roomId: preview?.roomId ?? null,
+		threadRootId: preview?.threadRootId,
+		enabled: Boolean(preview),
+		feed: notificationFeed,
+		unreadOnly,
+		markRead: markNotificationAsRead
+	});
+	// D2: reading the conversation reads its message events in the Timeline —
+	// by the room the write happened in, so a card switched to while a send
+	// was running stays unread.
+	const handlePreviewConversationRead = useCallback(
+		(roomId: string) =>
+			selectActivityEventsReadWithConversation({
+				feed: notificationFeed,
+				roomId,
+				selectedId: selectedNotification?.id ?? null,
+				unreadOnly
+			}).forEach(markNotificationAsRead),
+		[
+			notificationFeed,
+			markNotificationAsRead,
+			selectedNotification?.id,
+			unreadOnly
+		]
+	);
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1434,8 +1423,18 @@ export const NotificationsCenter = () => {
 						</div>
 					) : showEmbeddedChat ? (
 						<ConversationPreview
-							roomId={selectedRoomId}
-							threadRootId={selectedThreadRootId}
+							roomId={preview?.roomId ?? selectedRoomId}
+							threadRootId={preview?.threadRootId}
+							access={preview ?? undefined}
+							conversationPath={
+								selectedNotification
+									? getNotificationActionPath(
+											selectedNotification
+										)
+									: null
+							}
+							onConversationRead={handlePreviewConversationRead}
+							onOpenConversation={handleOpenAction}
 						/>
 					) : (
 						<div className="notificationsCenter__detailBody">

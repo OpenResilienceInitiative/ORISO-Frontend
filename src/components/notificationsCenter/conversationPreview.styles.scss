@@ -13,6 +13,7 @@
 
 	&__header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 12px;
 		flex: 0 0 auto;
@@ -59,7 +60,9 @@
 		padding-bottom: 12px;
 	}
 
-	&__loadOlder {
+	// #1824: the writable preview's buttons share the same pill.
+	&__loadOlder,
+	&__button {
 		min-height: 40px;
 		max-width: 100%;
 		padding: 0 16px;
@@ -102,5 +105,114 @@
 
 	&__historyError {
 		color: var(--m3-error, #cc0000);
+	}
+
+	// #1824: writable preview — mark-read bar, composer, reply/edit context.
+	&__button {
+		min-height: 32px;
+		padding: 0 12px;
+		white-space: nowrap;
+	}
+
+	&__headerActions {
+		margin-left: auto;
+	}
+
+	&__actionsBar {
+		display: flex;
+		justify-content: flex-end;
+		flex: 0 0 auto;
+		padding-top: 8px;
+	}
+
+	&__composer {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 8px;
+		flex: 0 0 auto;
+		padding-top: 8px;
+	}
+
+	&__input {
+		flex: 1 1 160px;
+		min-width: 0;
+		box-sizing: border-box;
+		padding: 8px 12px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 12px;
+		font: inherit;
+		font-size: 14px;
+		resize: none;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__context {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex: 1 0 100%;
+		min-width: 0;
+		font-size: 14px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__contextLabel {
+		font-weight: 500;
+	}
+
+	&__contextText {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__error {
+		flex: 1 0 100%;
+		margin: 0;
+		font-size: 12px;
+		color: var(--m3-error, #cc0000);
+	}
+
+	&__notice--footer {
+		flex: 0 0 auto;
+		max-width: none;
+		padding-top: 8px;
+	}
+
+	// #1824: the chat's composer, in a `.session` scope without the card —
+	// no margin, border or clipping, and docked in the flow, not absolutely.
+	.session.conversationPreview__composerHost {
+		flex: 0 0 auto;
+		min-height: auto;
+		margin-block: 0;
+		padding-top: 8px;
+		border: 0;
+		border-radius: 0;
+		overflow: visible;
+		background: transparent;
+
+		// Phone: edge to edge like the chat's composer, so the toolbar fits.
+		margin-inline: -16px;
+
+		@include breakpoint($fromMedium) {
+			margin-inline: 0;
+		}
+
+		&:focus-within {
+			border: 0;
+		}
+
+		.messageSubmit__wrapper {
+			position: relative;
+			bottom: auto;
+			z-index: auto;
+		}
 	}
 }
