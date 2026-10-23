@@ -3795,6 +3795,7 @@
 			"selectedReason": "Выбранная причина: {{reason}}",
 			"explanation": "Пояснение: {{explanation}}",
 			"tookOverTitle": "Новый консультант взял ваш случай",
+			"tookOverBody": "Теперь вашу консультацию продолжит {{advisor}}.",
 			"noActionNeeded": "Вам ничего делать не нужно",
 			"importantTitle": "Важное сообщение",
 			"supervisionTitle": "Супервизия включена!",

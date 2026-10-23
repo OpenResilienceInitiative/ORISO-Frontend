@@ -3792,6 +3792,7 @@
 			"selectedReason": "Motif choisi : {{reason}}",
 			"explanation": "Explication : {{explanation}}",
 			"tookOverTitle": "Une nouvelle personne consultante a repris votre dossier",
+			"tookOverBody": "{{advisor}} poursuivra désormais votre accompagnement.",
 			"noActionNeeded": "Vous n'avez rien d'autre à faire",
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",

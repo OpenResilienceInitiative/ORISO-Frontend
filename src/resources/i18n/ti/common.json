@@ -3792,6 +3792,7 @@
 			"selectedReason": "ዝተመርጸ ምኽንያት፦ {{reason}}",
 			"explanation": "መብርሂ፦ {{explanation}}",
 			"tookOverTitle": "ሓድሽ ኣማኻሪ ነቲ ጉዳይኩም ተረኪብዎ",
+			"tookOverBody": "ካብ ሕጂ ንደሓር {{advisor}} ምኽርኹም ይቕጽል።",
 			"noActionNeeded": "ተወሳኺ ክትገብሩዎ ዘለኩም የለን",
 			"importantTitle": "ኣገዳሲ መልእኽቲ",
 			"supervisionTitle": "ምክትታል ተነቓቒሑ!",

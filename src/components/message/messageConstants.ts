@@ -248,3 +248,16 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		visibleToUserIds
 	};
 };
+
+/**
+ * A takeover notice's stored text is frozen in the session's language and
+ * register, so with the new counsellor's name the client words it itself
+ * (#1844). Co-access keeps its stored text: it carries the granted duration.
+ */
+export const isClientWordedTakeover = (
+	parsed: ReturnType<typeof parseMessagePrefixes>
+): boolean =>
+	parsed.systemNotificationType ===
+		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED &&
+	parsed.systemNotificationHandoverGrant?.accessType !== 'CO_ACCESS' &&
+	Boolean(parsed.systemNotificationUsername);

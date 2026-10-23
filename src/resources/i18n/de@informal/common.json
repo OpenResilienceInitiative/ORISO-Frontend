@@ -2375,6 +2375,11 @@
 		}
 	},
 	"caseHandover": {
+		"systemMessage": {
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"tookOverBody": "{{advisor}} führt deine Beratung ab jetzt weiter.",
+			"noActionNeeded": "Du musst nichts weiter tun"
+		},
 		"offer": {
 			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
 			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
