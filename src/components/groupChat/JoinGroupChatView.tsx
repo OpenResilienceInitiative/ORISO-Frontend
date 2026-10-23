@@ -248,14 +248,17 @@ export const JoinGroupChatView = ({
 		setOverlayActive(false);
 	};
 
-	const handleButtonClick = () => {
+	/* The request is handed back: the embedded waiting room's closing animation
+	   keeps the screen covered until it has settled and the session has been
+	   reloaded; `false` says the person stays (ORISO-Frontend#1737). */
+	const handleButtonClick = (): Promise<unknown> | false => {
 		if (bannedUsers.includes(userData.userName)) {
 			setOverlayItem(bannedUserOverlay);
 			setOverlayActive(true);
-			return;
+			return false;
 		}
 		if (isRequestInProgress) {
-			return;
+			return false;
 		}
 		setIsRequestInProgress(true);
 		const groupChatApiCall =
@@ -263,7 +266,7 @@ export const JoinGroupChatView = ({
 			!activeSession.item.active
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
-		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
+		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
 				const notice = getCounsellingDpaNotification(error, translate, {
@@ -271,10 +274,11 @@ export const JoinGroupChatView = ({
 				});
 				if (notice && notifications) {
 					notifications.addNotification(notice);
-					return;
+					return false;
 				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
+				return false;
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);
@@ -487,6 +491,7 @@ export const JoinGroupChatView = ({
 							label={buttonItem.label}
 							status=""
 							onEnter={handleButtonClick}
+							closing="messageField"
 							testingAttribute="group-join-button"
 						/>
 					</div>

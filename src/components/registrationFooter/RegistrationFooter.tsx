@@ -8,12 +8,23 @@ import {
 } from '../registration/registrationDesign/registrationDesign';
 import { useKeyboardInset } from '../../utils/useKeyboardInset';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
+import { ClosingFocal } from '../transition/closing/closingFocal';
+import { ClosingSwapResult } from '../transition/closing/playClosingAnimation';
 import { useRegistrationCompletionContent } from '../registration/consentCompletion/RegistrationCompletionContext';
 
 export interface RegistrationFooterAction {
 	/** Already translated. This component never calls `t`. */
 	label: string;
-	onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+	/**
+	 * With `closing`, a promise it returns keeps the screen covered until it
+	 * settles (the group room saves the consent, then joins).
+	 */
+	onClick?: (event: React.MouseEvent<HTMLElement>) => ClosingSwapResult;
+	/**
+	 * Asked before the closing animation starts; `false` keeps the person where
+	 * they are. Only meaningful together with `closing`.
+	 */
+	beforeEnter?: () => boolean;
 	disabled?: boolean;
 	busy?: boolean;
 	status?: string;
@@ -34,6 +45,12 @@ export interface RegistrationFooterAction {
 	 * on (Frank, 2026-09-05: "make here just a round x button").
 	 */
 	round?: boolean;
+	/**
+	 * Where the person arrives after this action. Declared only by the way on
+	 * that leaves the room for a chat or a call; the platform's closing
+	 * animation then plays on the way (ORISO-Frontend#1737).
+	 */
+	closing?: ClosingFocal;
 }
 
 export interface RegistrationFooterProps {
@@ -257,6 +274,8 @@ export const RegistrationFooter = ({
 											: 'ready'
 								}
 								onEnter={primary.onClick}
+								closing={primary.closing}
+								beforeEnter={primary.beforeEnter}
 								label={primary.label}
 								status={primary.status ?? ''}
 								indeterminate={primary.busy}
