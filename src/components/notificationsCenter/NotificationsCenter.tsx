@@ -526,6 +526,12 @@ export const NotificationsCenter = () => {
 						)
 					)
 				),
+			inquiryAccepted: translate(
+				'notifications.events.inquiryAccepted.text'
+			),
+			caseHandoverTakenOver: translate(
+				'caseHandover.systemMessage.tookOverTitle'
+			),
 			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
 			// The chat's own wording for a message this device cannot decrypt.

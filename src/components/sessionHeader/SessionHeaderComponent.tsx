@@ -1289,7 +1289,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
 					activeSession.item.status
 				) &&
-				activeSession.item.agencyId && (
+				activeSession.item.agencyId > 0 && (
 					<ContactSheetRequest
 						key={activeSession.item.id}
 						sessionId={activeSession.item.id}

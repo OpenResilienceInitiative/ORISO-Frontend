@@ -174,8 +174,35 @@ describe('getLatestMatrixRoomPreview', () => {
 	it.each([
 		[{ type: 'USER_LEFT_CHAT', username: 'enc.abc' }, 'user_left_chat'],
 		[
-			{ type: 'CASE_HANDOVER_GRANTED', username: 'Counsellor' },
+			{
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Counsellor',
+				handover: {
+					requestId: 7,
+					clientConsent: 'OPT_IN',
+					accessType: 'CO_ACCESS'
+				}
+			},
 			'system_notification'
+		],
+		// #1844: the stored text is frozen in the session's language, so the
+		// list words these two itself.
+		[
+			{
+				type: 'INQUIRY_ACCEPTED',
+				description:
+					'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.'
+			},
+			'inquiry_accepted'
+		],
+		[
+			{
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Counsellor',
+				description:
+					'Während der Abwesenheit übernimmt Counsellor deine Beratung.'
+			},
+			'case_handover_taken_over'
 		]
 	])(
 		'shows a system notice kind instead of its raw JSON: %j',
@@ -372,7 +399,11 @@ describe('preview line of the list card: glyphs, not words', () => {
 			'message.consultantLeftChat': 'Consultant has left the chat',
 			'message.youEndedChat': 'You ended the chat',
 			'message.chatEnded': 'The chat has ended',
-			'message.systemNotificationTitle': 'System notification'
+			'message.systemNotificationTitle': 'System notification',
+			'notifications.events.inquiryAccepted.text':
+				'The request was accepted. You can start the conversation.',
+			'caseHandover.systemMessage.tookOverTitle':
+				'New counsellor took over your case'
 		})[key] ?? `?${key}`;
 
 	it.each([
@@ -423,6 +454,22 @@ describe('preview line of the list card: glyphs, not words', () => {
 			)
 		).toEqual({ glyphs: [], text: 'System notification' });
 	});
+
+	it.each([
+		[
+			'inquiry_accepted',
+			'The request was accepted. You can start the conversation.'
+		],
+		['case_handover_taken_over', 'New counsellor took over your case']
+	] as const)(
+		'words a %s notice in the viewer language (#1844)',
+		(kind, text) => {
+			expect(toListPreviewLine({ kind, text: null }, translate)).toEqual({
+				glyphs: [],
+				text
+			});
+		}
+	);
 
 	it('shows a thread reply as the thread glyph and the bare text', () => {
 		expect(
