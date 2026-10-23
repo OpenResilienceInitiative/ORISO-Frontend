@@ -1,10 +1,5 @@
 import { endpoints } from '../../src/resources/scripts/endpoints';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 
 const TWO_FACTOR_SECRET = '12345678901234567890123456789012';
 const TWO_FACTOR_QR_CODE = 'iVBORw0KGgo=';
@@ -61,18 +56,6 @@ const prepareInactiveTwoFactorConsultant = (showNag: boolean) => {
 };
 
 describe('two-factor setup dialog', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
-	beforeEach(() => {
-		mockWebSocket();
-	});
-
 	it('opens from profile security settings and completes email setup', () => {
 		prepareInactiveTwoFactorConsultant(false);
 

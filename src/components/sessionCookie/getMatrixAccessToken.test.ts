@@ -142,12 +142,17 @@ describe('clearPersistedMatrixDeviceId', () => {
 });
 
 describe('getMatrixAccessToken', () => {
-	it('skips the API call when local live websocket bootstrap is disabled', async () => {
+	it('bootstraps Matrix despite a retired LiveService switch in an old environment', async () => {
 		vi.stubEnv('REACT_APP_DISABLE_LIVE_WEBSOCKET', '1');
-
-		await expect(getMatrixAccessToken()).rejects.toThrow('MATRIX_DISABLED');
-
-		expect(fetchData).not.toHaveBeenCalled();
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
+			userId: '@user:matrix.example.test'
+		});
+		await expect(getMatrixAccessToken()).resolves.toEqual(
+			expect.objectContaining({ accessToken: 'matrix-token' })
+		);
+		expect(fetchData).toHaveBeenCalledOnce();
 	});
 
 	it('reuses unexpired device credentials without another backend bootstrap', async () => {

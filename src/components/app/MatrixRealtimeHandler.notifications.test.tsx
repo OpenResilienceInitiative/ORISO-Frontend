@@ -4,7 +4,7 @@ import React from 'react';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WebsocketHandler } from './WebsocketHandler';
+import { MatrixRealtimeHandler } from './MatrixRealtimeHandler';
 import { AppConfigContext, NotificationsProvider } from '../../globalState';
 import { setAppConfig } from '../../utils/appConfig';
 import { saveBrowserNotificationsSettings } from '../../utils/notificationHelpers';
@@ -74,7 +74,7 @@ const renderHandler = () =>
 	render(
 		<AppConfigContext.Provider value={appConfig}>
 			<NotificationsProvider>
-				<WebsocketHandler />
+				<MatrixRealtimeHandler />
 			</NotificationsProvider>
 		</AppConfigContext.Provider>
 	);
@@ -111,7 +111,7 @@ afterEach(() => {
 	setAppConfig(null);
 });
 
-describe('WebsocketHandler → new message notification', () => {
+describe('MatrixRealtimeHandler → new message notification', () => {
 	it('releases the authenticated subscription and installs only one on the next mount', () => {
 		const first = renderHandler();
 		expect(bridge.listenerCount('directMessage')).toBe(1);
@@ -318,7 +318,7 @@ describe('active timeline refresh contract', () => {
 			};
 			messageEventEmitter.on(onMessage);
 			try {
-				render(<WebsocketHandler />);
+				render(<MatrixRealtimeHandler />);
 				act(() =>
 					bridge.emit('directMessage', {
 						roomId: '!incoming:oriso',

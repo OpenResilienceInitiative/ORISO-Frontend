@@ -1,6 +1,6 @@
 /**
  * Global event emitter for new message events.
- * Allows WebsocketHandler to notify SessionStream about new messages.
+ * Fans decrypted Matrix metadata out to views that refresh session data.
  */
 
 type MessageEventData = {
