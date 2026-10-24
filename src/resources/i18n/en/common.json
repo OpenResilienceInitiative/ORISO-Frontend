@@ -643,6 +643,17 @@
 				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
+		},
+		"rejection": {
+			"action": "Decline request",
+			"confirmTitle": "Decline this request?",
+			"description": "The request will be declined. The advice seeker can still read the existing conversation.",
+			"confirm": "Decline request",
+			"error": "The decline could not yet be fully confirmed. The decision may already be saved. Please try again.",
+			"conflict": "The request has changed or is no longer available. Please reload the current view.",
+			"closed": "This request was declined.",
+			"inProgress": "Completing the decline…",
+			"cancel": "Cancel"
 		}
 	},
 	"error": {
@@ -2315,8 +2326,8 @@
 				"text": "The online appointment was cancelled."
 			},
 			"requestDenied": {
-				"title": "Request denied",
-				"text": "The client request was denied."
+				"title": "Request declined",
+				"text": "This request was declined."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client joined waiting room",
@@ -2897,6 +2908,10 @@
 					"feedback": {
 						"title": "Professional exchange",
 						"description": "A reply is waiting for you in the protected professional exchange."
+					},
+					"internalChat": {
+						"title": "Internal messages",
+						"description": "A new message in an internal chat with other counsellors."
 					}
 				},
 				"shared": {
@@ -4850,6 +4865,7 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",
 				"ended": "Video call ended",

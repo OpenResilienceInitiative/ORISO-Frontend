@@ -1,4 +1,13 @@
 declare namespace UserService {
+	namespace Parameters {
+		export type InviteId = number; // int64
+	}
+	export interface PathParameters {
+		InviteId?: Parameters.InviteId /* int64 */;
+	}
+	namespace Responses {
+		export interface AccountInviteConflict {}
+	}
 	namespace Schemas {
 		export interface AbsenceDTO {
 			/**
@@ -12,6 +21,118 @@ declare namespace UserService {
 			 */
 			message?: string;
 		}
+		export interface AccountInvite {
+			id?: number; // int64
+			targetRole?: AccountInviteTargetRole;
+			/**
+			 * Server-derived purpose; absent in older clients means an ordinary invite.
+			 */
+			onboardingPurpose?: 'INVITE' | 'EXISTING_ACCOUNT_SETUP';
+			tenantId?: number; // int64
+			recipientEmail?: string;
+			firstName?: string;
+			lastName?: string;
+			agencyId?: number; // int64
+			departmentId?: number; // int64
+			tenantIdAllocationMode?: /* AUTO/MANUAL reserve a new ID; EXISTING names a unit that exists (nothing is reserved). */ IdAllocationMode;
+			agencyIdAllocationMode?: /* AUTO/MANUAL reserve a new ID; EXISTING names a unit that exists (nothing is reserved). */ IdAllocationMode;
+			/**
+			 * AGENCY_ADMIN invites only; null for every other role.
+			 */
+			alsoCounsellor?: boolean;
+			/**
+			 * Set while inviteStatus is WAITING_FOR_UNIT; the Admin shows "Beratungsstelle noch nicht angelegt".
+			 */
+			waitingForUnit?: 'AGENCY' | 'TENANT';
+			/**
+			 * A waiting invite whose unit has no pending admin invite any more; derived on read.
+			 */
+			queueProblem?: 'NO_UNIT_ADMIN';
+			provisioningStatus?: string;
+			/**
+			 * Fixed admin-only setup recovery code; absent from the public token response.
+			 */
+			setupRecoveryReason?: string;
+			provisionedUserId?: string;
+			inviteStatus?: AccountInviteStatus;
+			emailVerificationStatus?: string;
+			emailDeliveryStatus?: string;
+			twoFactorStatus?: string;
+			accessGateStatus?: string;
+			expiresAt?: string; // date-time
+			acceptedAt?: string; // date-time
+			revokedAt?: string; // date-time
+			supersededAt?: string; // date-time
+			twoFactorWaivedBy?: string;
+			twoFactorWaivedAt?: string; // date-time
+			twoFactorWaiverReason?: string;
+			createDate?: string; // date-time
+			/**
+			 * Only in the answer that sent the mail.
+			 */
+			rawToken?: string;
+			/**
+			 * Only in the answer that sent the mail.
+			 */
+			acceptUrl?: string;
+			dpaForwardedAt?: string; // date-time
+			dpaForwardCount?: number;
+			dpaSignedAt?: string; // date-time
+			topicPermission?: /* How far a counsellor may extend their own topics (ORISO-Admin#1026). NONE = only the assigned department, SELECT_EXISTING = pick among the agency's departments, CREATE = add further topics of the Traeger (today's behaviour). On an update, null leaves the stored value untouched. */ TopicPermissionDTO;
+			/**
+			 * Public accept endpoint only.
+			 */
+			phase?: string;
+			progressPhase?: /* The Admin's status tiles, derived in one place (InviteProgress). PREPARED = draft or waiting (Vorbereitet); INVITED = mail sent, link valid (Eingeladen); ACCOUNT_CREATED = a gate is open (Konto angelegt); DONE = all gates passed (Fertig); NEEDS_ACTION = bounced, expired, provisioning failed or no admin for its new unit (Braucht Aktion); CLOSED = revoked or replaced, no tile. */ AccountInviteProgressPhase;
+			/**
+			 * When the new unit this invite needed was created, set once: the release of a WAITING_FOR_UNIT invite, or for a Träger admin founding a new Träger its creation.
+			 */
+			unitCreatedAt?: string; // date-time
+			/**
+			 * When the latest invite mail was sent.
+			 */
+			sentAt?: string; // date-time
+			/**
+			 * When the account was created (same moment as acceptedAt).
+			 */
+			accountCreatedAt?: string; // date-time
+			/**
+			 * When 2FA was activated or waived (acceptedAt when not required); null until then.
+			 */
+			twoFactorDoneAt?: string; // date-time
+			/**
+			 * Accepted invites only; the roles the account holds now, also ones added later.
+			 */
+			accountRoles?: AccountInviteTargetRole[] | null;
+			/**
+			 * When the last gate passed (2FA activated or waived; for TENANT_ADMIN also the DPA signature). Null while a gate is open, and for 2FA activations before this field.
+			 */
+			completedAt?: string; // date-time
+		}
+		/**
+		 * The Admin's status tiles, derived in one place (InviteProgress). PREPARED = draft or waiting (Vorbereitet); INVITED = mail sent, link valid (Eingeladen); ACCOUNT_CREATED = a gate is open (Konto angelegt); DONE = all gates passed (Fertig); NEEDS_ACTION = bounced, expired, provisioning failed or no admin for its new unit (Braucht Aktion); CLOSED = revoked or replaced, no tile.
+		 */
+		export type AccountInviteProgressPhase =
+			| 'PREPARED'
+			| 'INVITED'
+			| 'ACCOUNT_CREATED'
+			| 'DONE'
+			| 'NEEDS_ACTION'
+			| 'CLOSED';
+		export type AccountInviteStatus =
+			| 'WAITING_FOR_UNIT'
+			| 'DRAFT'
+			| 'EMAIL_SENT'
+			| 'ACCEPTED'
+			| 'EXPIRED'
+			| 'REVOKED'
+			| 'SUPERSEDED';
+		export type AccountInviteTargetRole =
+			| 'TENANT_ADMIN'
+			| 'AGENCY_ADMIN'
+			| 'COUNSELLOR'
+			| 'ADVICE_SEEKER'
+			| 'PLATFORM_ADMIN';
 		export interface AdditionalInformationDTO {
 			name?: string;
 			value?: string;
@@ -22,6 +143,10 @@ declare namespace UserService {
 			total?: number;
 		}
 		export interface AdminDTO {
+			/**
+			 * Login enabled in the identity provider. Null means unknown, not disabled. Read-only best-effort metadata; missing identity data, provider outages or exhausted page lookup budgets leave the status unknown without removing rows.
+			 */
+			active?: boolean | null;
 			/**
 			 * example:
 			 * 0f2cca9c-9303-4791-a0a5-a1ce16f1524f
@@ -75,6 +200,31 @@ declare namespace UserService {
 			delete?: HalLink;
 			agencies?: HalLink;
 			addAgency?: HalLink;
+		}
+		export interface AdminListPreferencesDTO {
+			/**
+			 * Saved sort per list tab, keyed by tab name.
+			 */
+			sorts: {
+				[
+					name: string
+				]: /* One saved list sort. field is FIRSTNAME, LASTNAME, EMAIL or UPDATE_DATE; the tenant-admins and platform-admins tabs also accept TENANT_ID. order is ASC or DESC. */ AdminListSortDTO;
+			};
+		}
+		/**
+		 * One saved list sort. field is FIRSTNAME, LASTNAME, EMAIL or UPDATE_DATE; the tenant-admins and platform-admins tabs also accept TENANT_ID. order is ASC or DESC.
+		 */
+		export interface AdminListSortDTO {
+			/**
+			 * example:
+			 * LASTNAME
+			 */
+			field: string;
+			/**
+			 * example:
+			 * ASC
+			 */
+			order: string;
 		}
 		export interface AdminResponseDTO {
 			_embedded?: AdminDTO;
@@ -305,6 +455,18 @@ declare namespace UserService {
 			permissionsPageEnabled?: boolean;
 			allowedPermissionToggles?: AgencyAdminAllowedPermissionToggles;
 			enforcedPermissionToggles?: AgencyAdminAllowedPermissionToggles;
+		}
+		/**
+		 * One department (Fachbereich = agency x topic), mirrored from AgencyService.
+		 */
+		export interface AgencyAdminDepartmentDTO {
+			/**
+			 * example:
+			 * 7
+			 */
+			topicId?: number; // int64
+			hasPublishedDpp?: boolean;
+			hasPublishedImprint?: boolean;
 		}
 		export interface AgencyAdminFullResponseDTO {
 			_embedded?: /* UserService compatibility view. This provider-owned response remains stable even when the AgencyService client model evolves independently. */ AgencyAdminResponseDTO;
@@ -639,6 +801,7 @@ declare namespace UserService {
 			 */
 			startDate: string; // date
 			/**
+			 * Wall-clock start time in `timezone`; stored as a UTC instant.
 			 * example:
 			 * 12:05
 			 */
@@ -741,7 +904,30 @@ declare namespace UserService {
 			_links: AgencyLinks;
 			total?: number;
 		}
+		/**
+		 * Topics a consultant offers at one counselling centre (Fachbereich = centre x topic).
+		 */
+		export interface ConsultantAgencyTopicsDTO {
+			/**
+			 * example:
+			 * 5
+			 */
+			agencyId?: number; // int64
+			/**
+			 * example:
+			 * [
+			 *   3,
+			 *   7
+			 * ]
+			 */
+			topicIds?: number /* int64 */[];
+		}
 		export interface ConsultantDTO {
+			/**
+			 * Login enabled in the identity provider. Null means unknown, not disabled. Read-only best-effort metadata; missing identity data, provider outages or exhausted page lookup budgets leave the status unknown without removing rows.
+			 */
+			active?: boolean | null;
+			topicPermission?: /* How far a counsellor may extend their own topics (ORISO-Admin#1026). NONE = only the assigned department, SELECT_EXISTING = pick among the agency's departments, CREATE = add further topics of the Traeger (today's behaviour). On an update, null leaves the stored value untouched. */ TopicPermissionDTO;
 			/**
 			 * example:
 			 * 0f2cca9c-9303-4791-a0a5-a1ce16f1524f
@@ -853,6 +1039,16 @@ declare namespace UserService {
 			 */
 			pendingPublicSlug?: string;
 			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+			/**
+			 * Counsellor avatar choice (#1046); absent when the counsellor made no choice.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE';
+			/**
+			 * Id of the chosen counsellor motif; only set together with avatarKind = ICON.
+			 * example:
+			 * motif-24
+			 */
+			avatarId?: string;
 			roleInOrg?: string;
 			vacated?: boolean;
 			adminRights?: boolean;
@@ -861,6 +1057,10 @@ declare namespace UserService {
 			 */
 			topics?: ConsultantTopicDTO[];
 			/**
+			 * Topics of the consultant per counselling centre (#1264). An entry without agencyId holds legacy assignments that apply to every centre of the consultant.
+			 */
+			topicsByAgency?: /* Topics a consultant offers at one counselling centre (Fachbereich = centre x topic). */ ConsultantAgencyTopicsDTO[];
+			/**
 			 * true if this consultant also holds an admin identity on the same account
 			 */
 			hasOtherIdentity?: boolean;
@@ -868,6 +1068,10 @@ declare namespace UserService {
 			 * which admin identities this consultant additionally holds
 			 */
 			otherIdentityTypes?: ('TENANT_ADMIN' | 'AGENCY_ADMIN')[];
+			/**
+			 * Whether this consultant owns a chat (Matrix) identity. MISSING means the account exists in the identity provider and the database but chat provisioning did not complete, so the counsellor cannot start or join any counselling room. Repair it with POST /useradmin/consultants/{consultantId}/chat-identity. Absent on responses from older deployments; treat absent as unknown, not as PROVISIONED.
+			 */
+			chatIdentityStatus?: 'PROVISIONED' | 'MISSING';
 		}
 		export interface ConsultantFilter {
 			username?: string;
@@ -1069,6 +1273,40 @@ declare namespace UserService {
 			| 'LIVE_CHAT'
 			| 'INTERNAL_GROUP'
 			| 'SELF_HELP';
+		export interface CreateAccountInviteRequest {
+			targetRole: AccountInviteTargetRole;
+			/**
+			 * Required for MANUAL and EXISTING; a Träger-bound caller gets their own when omitted.
+			 */
+			tenantId?: number; // int64
+			recipientEmail: string;
+			firstName?: string;
+			lastName?: string;
+			agencyId?: number; // int64
+			/**
+			 * The counsellor's topic; defaults to the agency's only topic.
+			 */
+			departmentId?: number; // int64
+			/**
+			 * For a waiting invite the clock starts at the release, not at creation.
+			 */
+			expiresInDays?: number; // int64
+			/**
+			 * Set = create and send in one step; a waiting invite keeps it for its release.
+			 */
+			templateId?: number; // int64
+			/**
+			 * Ignored; the accept link is server configuration.
+			 */
+			acceptBaseUrl?: string;
+			tenantIdAllocationMode?: /* AUTO/MANUAL reserve a new ID; EXISTING names a unit that exists (nothing is reserved). */ IdAllocationMode;
+			agencyIdAllocationMode?: /* AUTO/MANUAL reserve a new ID; EXISTING names a unit that exists (nothing is reserved). */ IdAllocationMode;
+			/**
+			 * AGENCY_ADMIN only (400 otherwise); omitted = true.
+			 */
+			alsoCounsellor?: boolean;
+			topicPermission?: /* NONE, SELECT_EXISTING or CREATE (case-insensitive); the CSV import may send true (= CREATE) or false (= NONE). Omitted on create (e.g. a CSV row without that column) = SELECT_EXISTING, whatever the agency default says; an explicit value always wins; agency admins always get CREATE. */ TopicPermissionInput;
+		}
 		export interface CreateAdminAgencyRelationDTO {
 			/**
 			 * example:
@@ -1234,6 +1472,16 @@ declare namespace UserService {
 			 * Internal remarks about the consultant. Only readable and writable for tenant-level admins (tenant admin / platform admin); ignored for other callers.
 			 */
 			adminRemarks?: string;
+			/**
+			 * Counsellor avatar choice (#1046): ICON = one of the platform's monochrome counsellor motifs (then avatarId carries the motif id), INITIALS = the generated initials tile, PICTURE = an own uploaded picture. The upload itself is a separate ticket (#1048/#1049) and is not served by this service yet. Omitted means no choice; the initials fallback is rendered.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE';
+			/**
+			 * Id of the chosen counsellor motif. Only meaningful together with avatarKind = ICON; it is dropped for every other kind, and an ICON without a motif id is stored as INITIALS — a half choice is never persisted.
+			 * example:
+			 * motif-24
+			 */
+			avatarId?: string;
 		}
 		export interface CreateEnquiryMessageResponseDTO {
 			sessionId?: number; // int64
@@ -1401,6 +1649,11 @@ declare namespace UserService {
 			dpp: DepartmentLegalContentDTO;
 			imprint: DepartmentLegalContentDTO;
 		}
+		export interface DpaPolicyErrorDTO {
+			reason:
+				| 'DPA_NEW_COUNSELLING_NOT_ALLOWED'
+				| 'DPA_POLICY_UNAVAILABLE';
+		}
 		export interface EmailDTO {
 			/**
 			 * example:
@@ -1510,6 +1763,51 @@ declare namespace UserService {
 			 */
 			departments?: AgencyDepartmentDTO[];
 		}
+		export interface GroupChatJoinRequestAdmitDTO {
+			role?: 'PARTICIPANT' | 'CO_MODERATOR';
+		}
+		/**
+		 * Moderator view of a pending join request.
+		 */
+		export interface GroupChatJoinRequestDTO {
+			id: number; // int64
+			seriesId: number; // int64
+			groupTitle?: string;
+			status: GroupChatJoinRequestStatus;
+			requestedAt: string; // date-time
+			decidedAt?: string | null; // date-time
+			via: 'INVITE_LINK';
+			/**
+			 * The caller's own role in this Series. Only an OWNER may admit as CO_MODERATOR.
+			 */
+			viewerRole: 'OWNER' | 'CO_MODERATOR';
+			requester: GroupChatJoinRequesterDTO;
+		}
+		export type GroupChatJoinRequestStatus =
+			| 'PENDING'
+			| 'ADMITTING'
+			| 'ADMITTED'
+			| 'DECLINED'
+			| 'CANCELLED';
+		/**
+		 * Requester view of a join request. Deliberately carries no group data.
+		 */
+		export interface GroupChatJoinRequestStatusDTO {
+			id: number; // int64
+			status: GroupChatJoinRequestStatus;
+			requestedAt: string; // date-time
+			decidedAt?: string | null; // date-time
+		}
+		export interface GroupChatJoinRequesterDTO {
+			consultantId: string;
+			displayName?: string | null;
+			firstName?: string | null;
+			lastName?: string | null;
+			agencyName?: string | null;
+			tenantName?: string | null;
+			sameAgency: boolean;
+			sameTenant: boolean;
+		}
 		export interface GroupChatParticipantDTO {
 			avatarKind?: string | null;
 			avatarId?: string | null;
@@ -1551,6 +1849,16 @@ declare namespace UserService {
 			 * Mustermann
 			 */
 			lastName?: string;
+			/**
+			 * The counsellor's chosen avatar (#1046/#1047), so the advice seeker sees the same avatar in the chat that the counsellor picked. Absent when no choice was made and the initials fallback is rendered.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE';
+			/**
+			 * Id of the chosen counsellor motif; only set together with avatarKind = ICON.
+			 * example:
+			 * motif-24
+			 */
+			avatarId?: string;
 		}
 		export interface GroupSessionListResponseDTO {
 			sessions?: GroupSessionResponseDTO[];
@@ -1563,12 +1871,57 @@ declare namespace UserService {
 			agency?: AgencyDTO;
 			latestMessage?: Date;
 		}
+		export interface GuestIdentitySuggestion {
+			username: string; // ^[a-z0-9_]{3,30}$
+			displayName: string;
+			/**
+			 * Existing bundled animal SVG filename, never an external URL
+			 */
+			avatarKey: string;
+		}
+		export interface GuestIdentitySuggestionRequest {
+			locale: string;
+			count: 1 | 4;
+			exclude: [
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?,
+				string?
+			];
+		}
+		export interface GuestInvitationContext {
+			tenantId: number; // int64
+			agencyId?: number | null; // int64
+			consultingTypeId: number; // int32
+			topicId?: number | null; // int64
+			chatType: string;
+		}
 		export interface HalLink {
 			href: string;
 			method?: 'GET' | 'POST' | 'DELETE' | 'PUT';
 			templated?: boolean;
 		}
 		export interface HttpStatus {}
+		/**
+		 * AUTO/MANUAL reserve a new ID; EXISTING names a unit that exists (nothing is reserved).
+		 */
+		export type IdAllocationMode = 'AUTO' | 'MANUAL' | 'EXISTING';
 		/**
 		 * example:
 		 * true
@@ -1917,6 +2270,12 @@ declare namespace UserService {
 			 */
 			assignmentNotificationEnabled?: boolean;
 			/**
+			 * Counsellor: a new ordinary internal-group message. Independent of advice-seeker messages and protected professional feedback. Omitted legacy values mean enabled; an omitted PATCH preserves the saved choice.
+			 * example:
+			 * true
+			 */
+			internalChatNotificationEnabled?: boolean;
+			/**
 			 * Counsellor: a reply arrived in the protected professional exchange.
 			 * example:
 			 * true
@@ -1941,6 +2300,27 @@ declare namespace UserService {
 			otp: string; // password
 		}
 		export type OtpType = 'EMAIL' | 'APP';
+		export interface PagedAccountInvites {
+			content?: AccountInvite[];
+			totalElements?: number; // int64
+			totalPages?: number;
+			page?: number;
+			size?: number;
+			/**
+			 * Invites per progress phase over all pages of the tab and the caller's scope; ignores the status and progress_phase filters.
+			 */
+			phaseCounts?: {
+				[name: string]: number; // int64
+			};
+			/**
+			 * Per progress phase, what its count is made of: the invite status, or for NEEDS_ACTION why it is stuck (DELIVERY_FAILED, LINK_EXPIRED, PROVISIONING_FAILED, NO_UNIT_ADMIN, EXPIRED).
+			 */
+			phaseDetailCounts?: {
+				[name: string]: {
+					[name: string]: number; // int64
+				};
+			};
+		}
 		export interface PaginationLinks {
 			self: HalLink;
 			next?: HalLink;
@@ -1993,7 +2373,7 @@ declare namespace UserService {
 			magicLinkLoginEnabled?: boolean;
 			displayName?: string;
 			/**
-			 * indicates should the walkt hrough be enabled
+			 * Consultants only: switches product tours on or off (Profile > Help). Defaults to false.
 			 * example:
 			 * true
 			 */
@@ -2016,7 +2396,23 @@ declare namespace UserService {
 			 * mark consultant as (not) available for one-on-one chats, no effect on others
 			 */
 			available?: boolean;
+			/**
+			 * consultants only: control live-chat availability from the navigation rail instead of My Profile; stored on the profile, no effect on others
+			 * example:
+			 * true
+			 */
+			liveChatViaSidebar?: boolean;
 			emailNotifications?: EmailNotificationsDTO;
+			/**
+			 * Consultants only (#1240): ICON shows the motif in avatarId, INITIALS drops the motif and brings back the default avatar. Omitted with a non-empty avatarId means ICON.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS';
+			/**
+			 * The chosen avatar (#1240): the counsellor motif id for consultants, the animal id for advice seekers, both the lower-case file stem such as "magpie". An empty string clears the choice; omitted leaves it unchanged.
+			 * example:
+			 * magpie
+			 */
+			avatarId?: string; // ^([a-z0-9-]{1,40})?$
 		}
 		export interface PostcodeRangeDTO {
 			/**
@@ -2075,6 +2471,99 @@ declare namespace UserService {
 			next?: HalLink;
 			previous?: HalLink;
 			search?: HalLink;
+		}
+		export interface SelfAssignment {
+			role?: 'COUNSELLOR';
+			agencyId?: number; // int64
+			userId?: string;
+			consultantIdentityCreated?: boolean;
+		}
+		export interface SelfAssignmentRequest {
+			role: 'COUNSELLOR';
+			agencyId: number; // int64
+			/**
+			 * Omitted = the agency's only topic; required when it offers several.
+			 */
+			topicIds?: number /* int64 */[];
+		}
+		export interface SendAccountInviteRequest {
+			templateId?: number; // int64
+			/**
+			 * Ignored; the accept link is server configuration.
+			 */
+			acceptBaseUrl?: string;
+		}
+		export interface ServiceNoticeConfirmRequest {
+			/**
+			 * The recipients count shown by the dry run
+			 */
+			expectedRecipients: number;
+		}
+		export interface ServiceNoticeConfirmed {
+			campaignKey: string;
+			status: 'CONFIRMED';
+			recipients: number;
+			mailQueued: number;
+			alreadyConfirmed: boolean;
+		}
+		export interface ServiceNoticeDraftInput {
+			maintenanceDate: string; // date
+			/**
+			 * Same-day local time in whole minutes
+			 * example:
+			 * 14:00:00
+			 */
+			maintenanceStart: string;
+			/**
+			 * Same-day local time in whole minutes
+			 * example:
+			 * 15:00:00
+			 */
+			maintenanceEnd: string;
+			/**
+			 * Explicit public HTTPS status page
+			 */
+			statusUrl: string; // uri
+		}
+		export interface ServiceNoticeDraftPreview {
+			campaignKey: string;
+			variant: 'de-sie' | 'de-du' | 'en' | 'fr' | 'ru' | 'ti' | 'tr';
+			subject: string;
+			preheader: string;
+			html: string;
+			text: string;
+		}
+		export interface ServiceNoticeDraftView {
+			campaignKey: string;
+			status: string;
+			maintenanceDate: string; // date
+			maintenanceStart: string;
+			maintenanceEnd: string;
+			statusUrl: string; // uri
+		}
+		export interface ServiceNoticeDryRun {
+			campaignKey: string;
+			audience: 'AGENCY_ADMINS';
+			/**
+			 * Everyone who would get the in-app entry
+			 */
+			recipients: number;
+			/**
+			 * Recipients who would also get the mail
+			 */
+			mail: number;
+			/**
+			 * In-app only because their service-notice switch is off
+			 */
+			feedOnlyPreferenceOff: number;
+			/**
+			 * In-app only because no real address is stored
+			 */
+			feedOnlyNoAddress: number;
+			/**
+			 * In-app only because no sender tenant is known
+			 */
+			feedOnlyNoSenderTenant: number;
 		}
 		export interface SessionAdminDTO {
 			/**
@@ -2205,6 +2694,16 @@ declare namespace UserService {
 			 * Bin nicht da
 			 */
 			absenceMessage?: string;
+			/**
+			 * The counsellor's chosen avatar (#1046/#1047), so the advice seeker sees the same avatar in the chat that the counsellor picked. Absent when no choice was made and the initials fallback is rendered.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE';
+			/**
+			 * Id of the chosen counsellor motif; only set together with avatarKind = ICON.
+			 * example:
+			 * motif-24
+			 */
+			avatarId?: string;
 		}
 		export interface SessionDTO {
 			/**
@@ -2477,6 +2976,18 @@ declare namespace UserService {
 			 * false
 			 */
 			featureGroupChatV2Enabled?: boolean;
+			/**
+			 * Internal group chats (counsellors only). Unset falls back to featureGroupChatV2Enabled. On the public agency response this is the effective value: Traeger AND Beratungsstelle; a Traeger 'off' always wins (ADR-013).
+			 * example:
+			 * true
+			 */
+			featureInternalGroupChatEnabled?: boolean;
+			/**
+			 * Conversation circles / self-help groups (include advice seekers). Unset falls back to featureGroupChatV2Enabled. On the public agency response this is the effective value: Traeger AND Beratungsstelle; a Traeger 'off' always wins (ADR-013).
+			 * example:
+			 * true
+			 */
+			featureSelfHelpGroupsEnabled?: boolean;
 			/**
 			 * example:
 			 * false
@@ -2791,6 +3302,16 @@ declare namespace UserService {
 			 */
 			status?: string;
 		}
+		/**
+		 * How far a counsellor may extend their own topics (ORISO-Admin#1026). NONE = only the assigned department, SELECT_EXISTING = pick among the agency's departments, CREATE = add further topics of the Traeger (today's behaviour). On an update, null leaves the stored value untouched.
+		 */
+		export type TopicPermissionDTO = 'NONE' | 'SELECT_EXISTING' | 'CREATE';
+		/**
+		 * NONE, SELECT_EXISTING or CREATE (case-insensitive); the CSV import may send true (= CREATE) or false (= NONE). Omitted on create (e.g. a CSV row without that column) = SELECT_EXISTING, whatever the agency default says; an explicit value always wins; agency admins always get CREATE.
+		 */
+		export type TopicPermissionInput =
+			/* NONE, SELECT_EXISTING or CREATE (case-insensitive); the CSV import may send true (= CREATE) or false (= NONE). Omitted on create (e.g. a CSV row without that column) = SELECT_EXISTING, whatever the agency default says; an explicit value always wins; agency admins always get CREATE. */ /* How far a counsellor may extend their own topics (ORISO-Admin#1026). NONE = only the assigned department, SELECT_EXISTING = pick among the agency's departments, CREATE = add further topics of the Traeger (today's behaviour). On an update, null leaves the stored value untouched. */
+			TopicPermissionDTO | boolean;
 		export interface TransferOwnershipRequest {
 			consultantId: string;
 		}
@@ -2814,6 +3335,12 @@ declare namespace UserService {
 			 * true
 			 */
 			isToEncourage?: boolean;
+			/**
+			 * indicates that the account may not be used until a second factor is active. Set for counsellors whose login was provisioned by an administrator, who chooses the initial password and hands it over.
+			 * example:
+			 * true
+			 */
+			isRequired?: boolean;
 		}
 		export interface UpdateAdminConsultantDTO {
 			/**
@@ -2846,6 +3373,9 @@ declare namespace UserService {
 			 * I am absent until...
 			 */
 			absenceMessage?: string;
+			/**
+			 * Replaces the counsellor's spoken languages when non-empty. Omitted, null or an empty list leave the stored languages untouched (an omitted field arrives as an empty list, so the two cannot be told apart).
+			 */
 			languages?: string[];
 			/**
 			 * Flag that indicates has the user accepted new terms and conditions text
@@ -2877,7 +3407,7 @@ declare namespace UserService {
 			 */
 			AssignedSupervisorId;
 			/**
-			 * replaces the full set of topics assigned to the consultant
+			 * Replaces the full set of topics assigned to the consultant; each topic is stored for every assigned counselling centre that offers it. Ignored when topicsByAgency is non-empty. Omitted or null keeps the stored topics; an empty list is rejected while the consultant still has topics.
 			 * example:
 			 * [
 			 *   3,
@@ -2885,7 +3415,11 @@ declare namespace UserService {
 			 *   12
 			 * ]
 			 */
-			topicIds?: number /* int64 */[];
+			topicIds?: number /* int64 */[] | null;
+			/**
+			 * Optional. Replaces the full set of topics per counselling centre (#1264). Each agency must be assigned to the consultant and must offer every topic listed for it. Wins over topicIds when non-empty; an empty list counts as not sent (clear with topicIds: []).
+			 */
+			topicsByAgency?: /* Topics a consultant offers at one counselling centre (Fachbereich = centre x topic). */ ConsultantAgencyTopicsDTO[];
 			/**
 			 * Optional public slug. Admin edits go live immediately; empty clears it.
 			 * example:
@@ -2928,6 +3462,17 @@ declare namespace UserService {
 			 * Internal remarks about the consultant. Only readable and writable for tenant-level admins (tenant admin / platform admin); ignored for other callers. Null leaves the stored value untouched; an empty string clears it.
 			 */
 			adminRemarks?: string;
+			/**
+			 * Counsellor avatar choice (#1046). Null leaves the stored choice untouched. Unlike the free-text personal-info fields this is a typed enum, so it carries no empty-string clear: send INITIALS to drop an icon choice.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE';
+			/**
+			 * Id of the chosen counsellor motif, only meaningful with avatarKind = ICON. Null leaves the stored value untouched; an empty string clears it — which also demotes a stored ICON choice to INITIALS, because a half choice is never persisted.
+			 * example:
+			 * motif-24
+			 */
+			avatarId?: string;
+			topicPermission?: /* How far a counsellor may extend their own topics (ORISO-Admin#1026). NONE = only the assigned department, SELECT_EXISTING = pick among the agency's departments, CREATE = add further topics of the Traeger (today's behaviour). On an update, null leaves the stored value untouched. */ TopicPermissionDTO;
 		}
 		export interface UpdateAgencyAdminDTO {
 			/**
@@ -3074,6 +3619,7 @@ declare namespace UserService {
 			 */
 			publicSlug?: string;
 			/**
+			 * Replaces the spoken languages when non-empty. Omitted, null or an empty list leave the stored languages untouched.
 			 * example:
 			 * de, en
 			 */
@@ -3139,11 +3685,13 @@ declare namespace UserService {
 			 */
 			topic: string;
 			/**
+			 * Date of the current occurrence, as wall-clock time in `timezone`.
 			 * example:
 			 * 2019-10-23T00:00:00.000Z
 			 */
 			startDate: string; // date
 			/**
+			 * Start of the current occurrence, as wall-clock time in `timezone` (not UTC).
 			 * example:
 			 * 12:05
 			 */
@@ -3230,6 +3778,10 @@ declare namespace UserService {
 			subscribed?: boolean;
 			moderators?: string[];
 			participants?: GroupChatParticipantDTO[];
+			/**
+			 * Secret part of the invite link (send it as inviteToken to /users/chat/{id}/assign). Only present for counsellors who may see the group.
+			 */
+			inviteToken?: string;
 			startDateWithTime?: string; // date-time
 			/**
 			 * example:
@@ -3319,6 +3871,12 @@ declare namespace UserService {
 			 */
 			consultantId?: string;
 			/**
+			 * "Join without an account" from a self-help group invite link. The browser holds the only login, so the account is deleted once no login can still be alive (`user.temporary.deleteWorkflow.maxAge`, default 24 hours). Default false.
+			 * example:
+			 * false
+			 */
+			temporary?: boolean;
+			/**
 			 * example:
 			 * 15
 			 */
@@ -3342,8 +3900,20 @@ declare namespace UserService {
 			 */
 			gender?: string;
 			preferredLanguage?: /* ISO 639-1 code */ LanguageCode;
+			/**
+			 * Self-help group the person joins through its invite link. When set, the registration assigns that group and opens no counselling enquiry. It must be a self-help group of `agencyId`, it needs `groupChatInviteToken`, and it cannot be combined with `consultantId`.
+			 * example:
+			 * 19
+			 */
+			groupChatId?: number; // int64
+			/**
+			 * The secret part of that group's invite link. Required with `groupChatId`; a missing or wrong token answers 403 before any account is created, the same check as joining by invite link.
+			 */
+			groupChatInviteToken?: string;
 		}
 		export interface UserDataResponseDTO {
+			chatRecoveryMode?: 'RECOVERY_KEY' | 'LOGIN_PASSWORD';
+			chatRecoveryPolicyRevision?: number; // int64
 			/**
 			 * example:
 			 * ajsd89-sdf9-sadk-as8j-asdf8jo
@@ -3372,6 +3942,16 @@ declare namespace UserService {
 			 */
 			pendingPublicSlug?: string;
 			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+			/**
+			 * Counsellor avatar choice (#1046); absent when the counsellor made no choice and the initials fallback is rendered.
+			 */
+			avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE';
+			/**
+			 * Consultants: id of the chosen counsellor motif, only set together with avatarKind = ICON. Advice seekers (#1240): id of the chosen animal; absent when the default derived from the user id applies.
+			 * example:
+			 * motif-24
+			 */
+			avatarId?: string;
 			/**
 			 * example:
 			 * Max
@@ -3424,6 +4004,12 @@ declare namespace UserService {
 			userRoles?: string[];
 			grantedAuthorities?: string[];
 			twoFactorAuth?: TwoFactorAuthDTO;
+			/**
+			 * indicates that the account still carries the password its administrator chose and may not be used until the user has replaced it.
+			 * example:
+			 * true
+			 */
+			passwordChangeRequired?: boolean;
 			consultingTypes?: ConsultingTypeMap;
 			/**
 			 * Is true if consultant has at least one consulting type containing anonymous conversations active
@@ -3444,11 +4030,17 @@ declare namespace UserService {
 			 */
 			isE2EEncryptionEnabled?: boolean;
 			/**
-			 * Is true if the walk through is enabled for the user
+			 * Consultants only: product tours are switched on. Defaults to false; not set for other users.
 			 * example:
 			 * true
 			 */
 			isWalkThroughEnabled?: boolean;
+			/**
+			 * Consultants only: live-chat availability is controlled from the navigation rail instead of My Profile. Defaults to false; not set for other users.
+			 * example:
+			 * false
+			 */
+			liveChatViaSidebar?: boolean;
 			emailToggles?: EmailToggle[];
 			/**
 			 * example:
@@ -3540,6 +4132,26 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace AdmitChatSeriesJoinRequest {
+		namespace Parameters {
+			export type RequestId = number; // int64
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+			requestId: Parameters.RequestId /* int64 */;
+		}
+		export type RequestBody =
+			UserService.Schemas.GroupChatJoinRequestAdmitDTO;
+		namespace Responses {
+			export interface $204 {}
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
+			export interface $409 {}
+		}
+	}
 	namespace ArchiveSession {
 		namespace Parameters {
 			export type SessionId = number; // int64
@@ -3559,18 +4171,24 @@ declare namespace Paths {
 	}
 	namespace AssignChat {
 		namespace Parameters {
+			export type InviteToken = string;
 			export type MatrixRoomId = string;
 		}
 		export interface PathParameters {
 			matrixRoomId: Parameters.MatrixRoomId;
 		}
+		export interface QueryParameters {
+			inviteToken?: Parameters.InviteToken;
+		}
 		namespace Responses {
 			export interface $200 {}
 			export interface $400 {}
 			export interface $401 {}
-			export interface $403 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
 			export interface $404 {}
+			export interface $409 {}
 			export interface $500 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
 		}
 	}
 	namespace AssignSession {
@@ -3610,6 +4228,20 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace CancelOwnChatSeriesJoinRequest {
+		namespace Parameters {
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		namespace Responses {
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $409 {}
+		}
+	}
 	namespace ChangeChatSeriesParticipantRole {
 		namespace Parameters {
 			export type ConsultantId = string;
@@ -3626,14 +4258,71 @@ declare namespace Paths {
 			export interface $403 {}
 		}
 	}
+	namespace CheckEnquiryPermission {
+		namespace Parameters {
+			export type SessionId = number; // int64
+		}
+		export interface PathParameters {
+			sessionId: Parameters.SessionId /* int64 */;
+		}
+		namespace Responses {
+			export interface $204 {}
+			export interface $400 {}
+			export interface $401 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
+			export interface $409 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
+		}
+	}
+	namespace ConfirmServiceNoticeDraft {
+		namespace Parameters {
+			export type CampaignKey = string; // ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$
+		}
+		export interface PathParameters {
+			campaignKey: Parameters.CampaignKey /* ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$ */;
+		}
+		export type RequestBody =
+			UserService.Schemas.ServiceNoticeConfirmRequest;
+		namespace Responses {
+			export type $200 = UserService.Schemas.ServiceNoticeConfirmed;
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
+			export interface $409 {}
+		}
+	}
+	namespace CreateChatSeriesJoinRequest {
+		namespace Parameters {
+			export type InviteToken = string;
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		export interface QueryParameters {
+			inviteToken?: Parameters.InviteToken;
+		}
+		namespace Responses {
+			export type $200 =
+				/* Requester view of a join request. Deliberately carries no group data. */ UserService.Schemas.GroupChatJoinRequestStatusDTO;
+			export type $201 =
+				/* Requester view of a join request. Deliberately carries no group data. */ UserService.Schemas.GroupChatJoinRequestStatusDTO;
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $409 {}
+		}
+	}
 	namespace CreateChatV1 {
 		export type RequestBody = UserService.Schemas.ChatDTO;
 		namespace Responses {
 			export type $201 = UserService.Schemas.CreateChatResponseDTO;
 			export interface $400 {}
-			export interface $403 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
 			export interface $409 {}
 			export interface $500 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
 		}
 	}
 	namespace CreateChatV2 {
@@ -3641,9 +4330,10 @@ declare namespace Paths {
 		namespace Responses {
 			export type $201 = UserService.Schemas.CreateChatResponseDTO;
 			export interface $400 {}
-			export interface $403 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
 			export interface $409 {}
 			export interface $500 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
 		}
 	}
 	namespace CreateEnquiryMessage {
@@ -3700,6 +4390,24 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace DeclineChatSeriesJoinRequest {
+		namespace Parameters {
+			export type RequestId = number; // int64
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+			requestId: Parameters.RequestId /* int64 */;
+		}
+		namespace Responses {
+			export interface $204 {}
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
+			export interface $409 {}
+		}
+	}
 	namespace DeleteEmailAddress {
 		namespace Responses {
 			export interface $200 {}
@@ -3723,6 +4431,20 @@ declare namespace Paths {
 			export interface $403 {}
 			export interface $404 {}
 			export interface $500 {}
+		}
+	}
+	namespace DryRunServiceNoticeDraft {
+		namespace Parameters {
+			export type CampaignKey = string; // ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$
+		}
+		export interface PathParameters {
+			campaignKey: Parameters.CampaignKey /* ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$ */;
+		}
+		namespace Responses {
+			export type $200 = UserService.Schemas.ServiceNoticeDryRun;
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
 		}
 	}
 	namespace FetchSessionForConsultant {
@@ -3757,6 +4479,7 @@ declare namespace Paths {
 			export interface $412 {}
 			export interface $429 {}
 			export interface $500 {}
+			export interface $503 {}
 		}
 	}
 	namespace GetChat {
@@ -3873,6 +4596,19 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace GetGuestInvitationContext {
+		namespace Parameters {
+			export type Token = string;
+		}
+		export interface PathParameters {
+			token: Parameters.Token;
+		}
+		namespace Responses {
+			export type $200 = UserService.Schemas.GuestInvitationContext;
+			export interface $400 {}
+			export interface $404 {}
+		}
+	}
 	namespace GetLanguages {
 		namespace Parameters {
 			export type AgencyId = number; // int64
@@ -3886,6 +4622,44 @@ declare namespace Paths {
 			export interface $403 {}
 			export interface $404 {}
 			export interface $500 {}
+		}
+	}
+	namespace GetOwnChatSeriesJoinRequest {
+		namespace Parameters {
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		namespace Responses {
+			export type $200 =
+				/* Requester view of a join request. Deliberately carries no group data. */ UserService.Schemas.GroupChatJoinRequestStatusDTO;
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
+		}
+	}
+	namespace GetPendingChatSeriesJoinRequests {
+		namespace Responses {
+			export type $200 =
+				/* Moderator view of a pending join request. */ UserService.Schemas.GroupChatJoinRequestDTO[];
+			export interface $401 {}
+			export interface $403 {}
+		}
+	}
+	namespace GetServiceNoticeDraft {
+		namespace Parameters {
+			export type CampaignKey = string; // ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$
+		}
+		export interface PathParameters {
+			campaignKey: Parameters.CampaignKey /* ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$ */;
+		}
+		namespace Responses {
+			export type $200 = UserService.Schemas.ServiceNoticeDraftView;
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
 		}
 	}
 	namespace GetSessionForId {
@@ -4031,10 +4805,11 @@ declare namespace Paths {
 			export interface $200 {}
 			export interface $400 {}
 			export interface $401 {}
-			export interface $403 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
 			export interface $404 {}
 			export interface $409 {}
 			export interface $500 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
 		}
 	}
 	namespace LeaveChat {
@@ -4078,6 +4853,32 @@ declare namespace Paths {
 			export interface $401 {}
 			export interface $403 {}
 			export interface $500 {}
+		}
+	}
+	namespace PreviewServiceNoticeDraft {
+		namespace Parameters {
+			export type CampaignKey = string; // ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$
+			export type Variant =
+				| 'de-sie'
+				| 'de-du'
+				| 'en'
+				| 'fr'
+				| 'ru'
+				| 'ti'
+				| 'tr';
+		}
+		export interface PathParameters {
+			campaignKey: Parameters.CampaignKey /* ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$ */;
+		}
+		export interface QueryParameters {
+			variant: Parameters.Variant;
+		}
+		namespace Responses {
+			export type $200 = UserService.Schemas.ServiceNoticeDraftPreview;
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
 		}
 	}
 	namespace RecordSessionConsent {
@@ -4163,8 +4964,25 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace SaveServiceNoticeDraft {
+		namespace Parameters {
+			export type CampaignKey = string; // ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$
+		}
+		export interface PathParameters {
+			campaignKey: Parameters.CampaignKey /* ^[A-Za-z0-9][A-Za-z0-9-]{0,79}$ */;
+		}
+		export type RequestBody = UserService.Schemas.ServiceNoticeDraftInput;
+		namespace Responses {
+			export type $200 = UserService.Schemas.ServiceNoticeDraftView;
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $409 {}
+		}
+	}
 	namespace SearchConsultants {
 		namespace Parameters {
+			export type AgencyId = number /* int64 */[];
 			export type Field =
 				| 'FIRSTNAME'
 				| 'LASTNAME'
@@ -4174,6 +4992,7 @@ declare namespace Paths {
 			export type Page = number;
 			export type PerPage = number;
 			export type Query = string;
+			export type TenantId = number; // int64
 		}
 		export interface QueryParameters {
 			query: Parameters.Query;
@@ -4181,12 +5000,32 @@ declare namespace Paths {
 			perPage?: Parameters.PerPage;
 			field?: Parameters.Field /* ^(FIRSTNAME|LASTNAME|EMAIL|UPDATE_DATE)$ */;
 			order?: Parameters.Order /* ^(ASC|DESC)$ */;
+			tenantId?: Parameters.TenantId /* int64 */;
+			agencyId?: Parameters.AgencyId;
 		}
 		namespace Responses {
 			export type $200 = UserService.Schemas.ConsultantSearchResultDTO;
 			export interface $400 {}
 			export interface $401 {}
 			export interface $500 {}
+		}
+	}
+	namespace SendContactSheetEmail {
+		namespace Parameters {
+			export type SessionId = number; // int64
+		}
+		export interface PathParameters {
+			sessionId: Parameters.SessionId /* int64 */;
+		}
+		namespace Responses {
+			export interface $204 {}
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $404 {}
+			export interface $409 {}
+			export interface $500 {}
+			export interface $502 {}
 		}
 	}
 	namespace SendLiveEvent {
@@ -4241,9 +5080,10 @@ declare namespace Paths {
 			export interface $200 {}
 			export interface $400 {}
 			export interface $401 {}
-			export interface $403 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
 			export interface $409 {}
 			export interface $500 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
 		}
 	}
 	namespace StartTwoFactorAuthByEmailSetup {
@@ -4272,6 +5112,21 @@ declare namespace Paths {
 			export interface $403 {}
 			export interface $409 {}
 			export interface $500 {}
+		}
+	}
+	namespace SuggestGuestIdentities {
+		export type RequestBody =
+			UserService.Schemas.GuestIdentitySuggestionRequest;
+		namespace Responses {
+			export type $200 = [
+				UserService.Schemas.GuestIdentitySuggestion?,
+				UserService.Schemas.GuestIdentitySuggestion?,
+				UserService.Schemas.GuestIdentitySuggestion?,
+				UserService.Schemas.GuestIdentitySuggestion?
+			];
+			export interface $400 {}
+			export interface $429 {}
+			export interface $503 {}
 		}
 	}
 	namespace TransferChatSeriesOwnership {
@@ -4309,9 +5164,10 @@ declare namespace Paths {
 		namespace Responses {
 			export type $200 = UserService.Schemas.UpdateChatResponseDTO;
 			export interface $400 {}
-			export interface $403 {}
+			export type $403 = UserService.Schemas.DpaPolicyErrorDTO;
 			export interface $409 {}
 			export interface $500 {}
+			export type $502 = UserService.Schemas.DpaPolicyErrorDTO;
 		}
 	}
 	namespace UpdateConsultantData {
@@ -4363,6 +5219,7 @@ declare namespace Paths {
 			export interface $400 {}
 			export interface $401 {}
 			export interface $403 {}
+			export interface $409 {}
 			export interface $500 {}
 		}
 	}

@@ -660,6 +660,17 @@
 				"copy": "Mesajınızı aldık.",
 				"headline": "Mesajınız için teşekkür ederiz!"
 			}
+		},
+		"rejection": {
+			"action": "Talebi reddet",
+			"confirmTitle": "Bu talep reddedilsin mi?",
+			"description": "Talep reddedilecektir. Danışan mevcut konuşmayı okumaya devam edebilir.",
+			"confirm": "Talebi reddet",
+			"error": "Reddetme işlemi henüz tamamen doğrulanamadı. Karar zaten kaydedilmiş olabilir. Lütfen tekrar deneyin.",
+			"conflict": "Talep değişti veya artık kullanılamıyor. Lütfen mevcut görünümü yeniden yükleyin.",
+			"closed": "Bu talep reddedildi.",
+			"inProgress": "Reddetme işlemi tamamlanıyor…",
+			"cancel": "İptal"
 		}
 	},
 	"error": {
@@ -2319,7 +2330,7 @@
 			},
 			"requestDenied": {
 				"title": "Talep reddedildi",
-				"text": "Danışan talebi reddedildi."
+				"text": "Bu talep reddedildi."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Bekleme odasında bir danışan var",
@@ -2883,6 +2894,10 @@
 					"feedback": {
 						"title": "Mesleki paylaşım",
 						"description": "Korumalı mesleki paylaşımda sizin için bir geri bildirim var."
+					},
+					"internalChat": {
+						"title": "Dahili mesajlar",
+						"description": "Diğer danışmanlarla yapılan dahili sohbette yeni bir mesaj."
 					}
 				},
 				"shared": {
@@ -4885,6 +4900,7 @@
 		"timeline": {
 			"join": "Aramaya katıl",
 			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"endedElsewhere": "Bu arama zaten sona erdi.",
 			"video": {
 				"running": "Görüntülü arama sürüyor",
 				"ended": "Görüntülü arama sona erdi",

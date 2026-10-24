@@ -25,6 +25,7 @@ import {
 	UserDataContext
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
+import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 
 const SESSION_ID = 4711;
 const ROOM_ID = '!live-chat:matrix.example.org';
@@ -202,16 +203,14 @@ const buildActiveSession = (status: number) =>
 		}
 	}) as any;
 
-const renderSession = (status: number) =>
+const renderSession = (status: number, userData = askerUserData, path = '/') =>
 	render(
-		<MemoryRouter>
+		<MemoryRouter initialEntries={[path]}>
 			<NotificationsContext.Provider
 				value={{ addEventNotification: vi.fn() } as any}
 			>
 				<UserDataContext.Provider
-					value={
-						{ userData: askerUserData, setUserData: vi.fn() } as any
-					}
+					value={{ userData, setUserData: vi.fn() } as any}
 				>
 					<SessionTypeContext.Provider
 						value={{ type: SESSION_LIST_TYPES.MY_SESSION } as any}
@@ -324,5 +323,145 @@ describe('SessionItemComponent — breathing companion lifetime', () => {
 		});
 
 		expect(screen.queryByTestId('breathing-companion')).toBeNull();
+	});
+});
+
+describe('SessionItemComponent — notification active-view lifecycle', () => {
+	const consultantUserData = {
+		userId: 'consultant-1',
+		userName: 'counsellor',
+		grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'],
+		userRoles: ['CONSULTANT']
+	} as any;
+	const conversationPath = `/sessions/consultant/sessionView/${ROOM_ID}/${SESSION_ID}`;
+	let visibility: DocumentVisibilityState;
+	let focused: boolean;
+	beforeEach(() => {
+		vi.useFakeTimers();
+		visibility = 'hidden';
+		focused = true;
+		vi.spyOn(document, 'hasFocus').mockImplementation(() => focused);
+		vi.spyOn(document, 'visibilityState', 'get').mockImplementation(
+			() => visibility
+		);
+		vi.mocked(apiPatchNotificationActiveView).mockClear();
+	});
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+	});
+
+	it('does not suppress incoming notifications in a visible but unfocused Live Chat', async () => {
+		visibility = 'visible';
+		focused = false;
+		renderSession(2, consultantUserData, conversationPath);
+		await act(async () => vi.advanceTimersByTime(10000));
+		expect(
+			vi
+				.mocked(apiPatchNotificationActiveView)
+				.mock.calls.some(([request]) => request.active)
+		).toBe(false);
+	});
+
+	it('releases suppression on blur and resumes it on focus without mounting the chat again', async () => {
+		visibility = 'visible';
+		renderSession(2, consultantUserData, conversationPath);
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: true
+		});
+		focused = false;
+		act(() => window.dispatchEvent(new Event('blur')));
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: false
+		});
+		vi.mocked(apiPatchNotificationActiveView).mockClear();
+		await act(async () => vi.advanceTimersByTime(10000));
+		expect(
+			vi
+				.mocked(apiPatchNotificationActiveView)
+				.mock.calls.some(([request]) => request.active)
+		).toBe(false);
+		focused = true;
+		act(() => window.dispatchEvent(new Event('focus')));
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: true
+		});
+	});
+
+	it('releases suppression when the tab becomes hidden and resumes only when visible and focused', () => {
+		visibility = 'visible';
+		renderSession(2, consultantUserData, conversationPath);
+		visibility = 'hidden';
+		act(() => document.dispatchEvent(new Event('visibilitychange')));
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: false
+		});
+		visibility = 'visible';
+		focused = false;
+		act(() => document.dispatchEvent(new Event('visibilitychange')));
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: false
+		});
+		focused = true;
+		act(() => window.dispatchEvent(new Event('focus')));
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: true
+		});
+	});
+
+	it('keeps the embedded activity preview inactive when focus and visibility change', async () => {
+		visibility = 'visible';
+		renderSession(
+			2,
+			consultantUserData,
+			`${conversationPath}?embeddedNotifications=1`
+		);
+		act(() => window.dispatchEvent(new Event('focus')));
+		act(() => document.dispatchEvent(new Event('visibilitychange')));
+		await act(async () => vi.advanceTimersByTime(10000));
+		expect(apiPatchNotificationActiveView).not.toHaveBeenCalled();
+	});
+
+	it('releases suppression on unmount and ignores later focus, visibility and heartbeat callbacks', async () => {
+		visibility = 'visible';
+		const { unmount } = renderSession(
+			2,
+			consultantUserData,
+			conversationPath
+		);
+		unmount();
+		expect(apiPatchNotificationActiveView).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			threadRootId: null,
+			active: false
+		});
+		vi.mocked(apiPatchNotificationActiveView).mockClear();
+		act(() => window.dispatchEvent(new Event('focus')));
+		act(() => document.dispatchEvent(new Event('visibilitychange')));
+		await act(async () => vi.advanceTimersByTime(10000));
+		expect(apiPatchNotificationActiveView).not.toHaveBeenCalled();
+	});
+
+	it('does not suppress incoming notifications while the mounted Live Chat is hidden', async () => {
+		renderSession(2, consultantUserData, conversationPath);
+		await act(async () => vi.advanceTimersByTime(10000));
+		expect(
+			vi
+				.mocked(apiPatchNotificationActiveView)
+				.mock.calls.some(([request]) => request.active)
+		).toBe(false);
 	});
 });
