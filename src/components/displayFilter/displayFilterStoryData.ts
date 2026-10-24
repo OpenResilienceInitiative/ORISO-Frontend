@@ -8,6 +8,7 @@ import { ReactComponent as AppointmentIcon } from '../../resources/img/icons/dis
 import { ReactComponent as OtherIcon } from '../../resources/img/icons/display-filter-other.svg';
 import { DisplayFilterKindOption, OTHER_KIND_ID } from './displayFilterTypes';
 import { DisplayFilterDialogLabels } from './DisplayFilterDialog';
+import { SESSION_KIND_ICONS } from './kindOptions';
 
 /**
  * Story fixtures (#1377 slice 1): the seven Timeline families plus the
@@ -83,3 +84,38 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	deactivatedHint:
 		'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.'
 };
+
+/**
+ * Gespräche kinds as the consultant list renders them on Dev (2026-10-15):
+ * icons, the pill-only rows with a dash under "Ton", the live-chat modes and
+ * the Termine placeholder. The phone stories need the real names — a short
+ * fixture without icons hid the one-letter-per-line wrap.
+ */
+export const SESSION_KINDS: DisplayFilterKindOption[] = [
+	{ id: 'create', label: 'Chat erstellen', pillOnly: true },
+	{ id: 'unread', label: 'Ungelesen', pillOnly: true },
+	{ id: 'drafts', label: 'Entwürfe', pillOnly: true },
+	{ id: 'oneToOne', label: 'Mail-Beratung' },
+	{ id: 'liveChat', label: 'Live-Chat', modes: true },
+	{ id: 'internalGroup', label: 'Interner Gruppenchat' },
+	{ id: 'circle', label: 'Gesprächskreis' },
+	{ id: 'supervision', label: 'Supervision' },
+	{ id: 'archive', label: 'Archiviert', pillOnly: true },
+	{ id: 'appointments', label: 'Termine', placeholder: true },
+	{ id: OTHER_KIND_ID, label: 'Sonstiges' }
+].map((kind) => ({
+	...kind,
+	icon: SESSION_KIND_ICONS[kind.id],
+	unreadCount: 0
+}));
+
+/** Anfragen kinds as rendered on Dev (2026-10-15). */
+export const REQUEST_KINDS: DisplayFilterKindOption[] = [
+	{ id: 'nearby', label: 'Mail' },
+	{ id: 'liveChat', label: 'Live-Chat', modes: true },
+	{ id: OTHER_KIND_ID, label: 'Sonstiges' }
+].map((kind) => ({
+	...kind,
+	icon: SESSION_KIND_ICONS[kind.id],
+	unreadCount: 0
+}));
