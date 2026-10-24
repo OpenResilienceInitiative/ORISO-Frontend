@@ -83,6 +83,12 @@ export interface RegistrationFooterProps {
 	 * card, instead of being fixed to the window (#1219).
 	 */
 	contained?: boolean;
+	/**
+	 * Give `children` their own row above the primary, the way a written
+	 * secondary gets one — for a room whose quiet actions are more than one
+	 * button (the self-help group's calendar row, #1689).
+	 */
+	stacked?: boolean;
 }
 
 /**
@@ -115,7 +121,8 @@ export const RegistrationFooter = ({
 	children,
 	animateIn = false,
 	consent,
-	contained = false
+	contained = false,
+	stacked = false
 }: RegistrationFooterProps) => {
 	/* The bar rides above the software keyboard instead of disappearing behind
 	   it — see `useKeyboardInset`. Written as an inline style rather than into
@@ -123,7 +130,8 @@ export const RegistrationFooter = ({
 	   animates, and a new emotion class per frame is a stylesheet insert per
 	   frame. */
 	const keyboardInset = useKeyboardInset();
-	const stackedActions = Boolean(primary && secondary && !secondary.round);
+	const stackedActions =
+		stacked || Boolean(primary && secondary && !secondary.round);
 	const completion = useRegistrationCompletionContent();
 	const footerRef = React.useRef<HTMLDivElement>(null);
 	const [footerHeight, setFooterHeight] = React.useState(96);

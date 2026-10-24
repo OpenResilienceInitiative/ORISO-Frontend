@@ -726,12 +726,13 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar",
 			"copyGoogle": "Copy Google Calendar link",
 			"copyOutlook": "Copy Outlook Calendar link",
 			"linkCopied": "Calendar link copied.",
 			"copyError": "The calendar link could not be copied. Please try again.",
-			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates.",
+			"addThis": "Add this date to your calendar",
+			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -1013,7 +1014,6 @@
 				"back": "Back to the countdown",
 				"headline": "How the group works",
 				"subline": "Three things that help before your first time.",
-				"appointments": "Add the dates to your calendar",
 				"steps": {
 					"formats": {
 						"title": "How the group meets",
@@ -1030,8 +1030,7 @@
 						"text": "The link area regularly holds fresh meetings and takes you straight to the next date.",
 						"alt": "New date cards appear one after another; a clear link symbol leads the curious person to the next group meeting."
 					}
-				},
-				"upcoming": "Next dates"
+				}
 			},
 			"status": {
 				"active": "Running now",
@@ -1056,7 +1055,7 @@
 					"etaSoon": "any moment now",
 					"flipAria": "{{label}}: {{value}}. Flip to read.",
 					"flipHint": "click to flip",
-					"greetingLabel": "A welcome from your counsellor",
+					"greetingLabel": "A welcome from the moderator",
 					"headline": "Your group chat starts {{eta}}.",
 					"moderatorHeadline": "The group session starts {{eta}}.",
 					"moderatorOverdueHeadline": "The group is waiting.",
@@ -1064,8 +1063,8 @@
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
-					"overdueHeadline": "We'll be with you in a moment.",
-					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
+					"overdueHeadline": "The group starts in a moment.",
+					"overdueSubtitle": "The moderator is about to open the group — please hang on a little longer.",
 					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
 					"subtitleCard": "Tap the clock, greeting and netiquette behind it.",
 					"subtitleStill": "The greeting and the netiquette are below the numbers.",
@@ -1184,7 +1183,49 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown",
-			"legalMenu": "Legal"
+			"legalMenu": "Legal",
+			"dates": {
+				"headline": "The next meetings",
+				"subline": "Tap a date to add it to your calendar.",
+				"none": "No further dates are planned at the moment.",
+				"add": "Add",
+				"addLabel": "Add {{date}} to your calendar",
+				"next": "Next",
+				"seriesTitle": "All at once",
+				"seriesSub": "add as a series",
+				"seriesLong": "Add all as a series",
+				"repeat": {
+					"DAILY": "The group meets every day at the same time.",
+					"WEEKLY": "The group meets every week at the same time.",
+					"BIWEEKLY": "The group meets every two weeks at the same time.",
+					"MONTHLY": "The group meets every month at the same time.",
+					"QUARTERLY": "The group meets every quarter at the same time.",
+					"YEARLY": "The group meets every year at the same time."
+				}
+			},
+			"addDate": "Add to calendar",
+			"allDates": "All dates",
+			"nextDates": "Next dates",
+			"joinFrom": "from {{time}}",
+			"rhythm": {
+				"DAILY": "every day",
+				"WEEKLY": "every week",
+				"BIWEEKLY": "every two weeks",
+				"MONTHLY": "every month",
+				"QUARTERLY": "every quarter",
+				"YEARLY": "every year"
+			},
+			"running": {
+				"since": "Running for",
+				"status": "Running now",
+				"statusModerated": "Running now · moderator is here",
+				"headline": "The group started {{ago}}.",
+				"subline": "You can join at any time – nobody has to say anything."
+			},
+			"rules": {
+				"headline": "How we treat each other",
+				"subline": "Read it once – then you are in."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Circle created",

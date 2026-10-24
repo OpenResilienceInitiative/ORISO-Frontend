@@ -673,6 +673,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		overflow-y: hidden;
 	}
 
+	/* The group's consent sits where the composer would be (#1689): no
+	   composer reserve, the gate's bar at the card's bottom edge. */
+	&__content--groupConsentGate {
+		display: flex;
+		flex-direction: column;
+		padding: 0 !important;
+		overflow-y: auto;
+	}
+
 	@media screen and (width <= 899px) {
 		&__robotIncomingMessage {
 			width: calc(100% - 10px);

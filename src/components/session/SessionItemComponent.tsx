@@ -3201,6 +3201,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'session__content--gameFocus',
 						shouldShowConsentGate &&
 							'session__content--consentGate',
+						shouldShowGroupConsentGate &&
+							'session__content--groupConsentGate',
 						shouldShowPseudonymGate &&
 							'session__content--pseudonymGate'
 					)}
@@ -3219,6 +3221,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<GroupConsentGate
 							agencyId={
 								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							agencyName={
+								activeSession.item?.assignedAgencies?.[0]?.name
 							}
 							onAccepted={() => {
 								setGroupConsentAccepted(true);

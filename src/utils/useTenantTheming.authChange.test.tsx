@@ -247,3 +247,73 @@ describe('useTenantTheming – tenant of the signed-in user', () => {
 		);
 	});
 });
+
+/**
+ * #1689: a shared link names its Beratungsstelle (`?aid=`). A visitor who is
+ * not signed in sees that Träger; signing in hands over to the own tenant.
+ */
+describe('useTenantTheming – the Träger behind a shared link', () => {
+	beforeEach(() => {
+		cleanup();
+		mocks.apiGetTenantTheming.mockReset();
+		document.cookie = 'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		window.localStorage.clear();
+		window.history.replaceState(null, '', '/login?gcid=7&aid=19');
+	});
+
+	it("asks for the link's agency before sign-in, not after", async () => {
+		mocks.apiGetTenantTheming
+			.mockResolvedValueOnce(SUBDOMAIN_TENANT)
+			.mockResolvedValueOnce(USER_TENANT);
+
+		renderApp();
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalledWith(19)
+		);
+
+		act(() => {
+			setValueInCookie('keycloak', tokenForTenant(14));
+		});
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenLastCalledWith(null)
+		);
+		window.history.replaceState(null, '', '/');
+	});
+
+	// Review of #1782: switching links is a switch of Träger like a sign-in.
+	// If the new one cannot be resolved, the previous link's Träger must not
+	// stay in the context.
+	it("drops the previous link's Träger when the next one fails", async () => {
+		mocks.apiGetTenantTheming
+			.mockResolvedValueOnce(SUBDOMAIN_TENANT)
+			.mockRejectedValueOnce(new Error('tenant service unavailable'));
+
+		const view = renderApp();
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe(
+				'caritas-berlin|true'
+			)
+		);
+
+		window.history.replaceState(null, '', '/login?gcid=8&aid=20');
+		view.rerender(
+			<AppConfigContext.Provider
+				value={{ useTenantService: true } as AppConfigInterface}
+			>
+				<TenantProvider>
+					<Probe />
+				</TenantProvider>
+			</AppConfigContext.Provider>
+		);
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenLastCalledWith(20)
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe('unresolved')
+		);
+		window.history.replaceState(null, '', '/');
+	});
+});

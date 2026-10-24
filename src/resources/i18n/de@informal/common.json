@@ -265,11 +265,9 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
-					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
 					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
-					"overdueHeadline": "Wir sind gleich für dich da.",
-					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
 				}
 			},
@@ -378,7 +376,16 @@
 		"entry": {
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"dates": {
+				"subline": "Tipp auf einen Termin, um ihn einzutragen."
+			},
+			"running": {
+				"subline": "Du kannst jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"subline": "Einmal kurz lesen – dann bist du dabei."
+			}
 		},
 		"info": {
 			"gallery": {

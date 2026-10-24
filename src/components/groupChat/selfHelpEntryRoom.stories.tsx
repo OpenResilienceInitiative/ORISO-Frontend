@@ -2,10 +2,7 @@ import * as React from 'react';
 import { accountConsentPlay } from '../../../.storybook/consentCompletionStoryPlay';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
-import { AccountData } from '../registration/accountData/AccountData';
 import { clearAccountDataDraft } from '../registration/accountData/accountDataDraft';
-import { RegistrationCompletionProvider } from '../registration/consentCompletion/RegistrationCompletionContext';
-import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
 import {
 	LegalLinksContext,
@@ -15,7 +12,7 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { StageLayout } from '../stageLayout/StageLayout';
+import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
@@ -28,7 +25,7 @@ import {
 	expectCaptionClear,
 	expectOverdueClockOnOneRow
 } from './waitingClock/waitingClockStoryChecks';
-import { expect, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import {
 	effectiveBackground,
 	wcagContrast
@@ -85,6 +82,8 @@ const WELCOME =
 const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 const IN_THREE_DAYS = new Date(NOW + 3 * 24 * 3600e3 + 5 * 3600e3 + 12 * 60e3);
 const OVERDUE = new Date(NOW - 7 * 60e3);
+/* The group runs for 12:47 when the late one arrives (Frank, 2026-10-19). */
+const RUNNING = new Date(NOW - (12 * 60 + 47) * 1000);
 /* Bug A in #1499: a group two hours and twenty minutes past its start. Any
    group created on Dev reaches this within minutes because UserService stores
    the start two hours early, so this is the state a client most often sees. */
@@ -163,57 +162,28 @@ const GroupEntry = ({
 					setDisabledNextButton
 				}}
 			>
-				<RegistrationCompletionProvider>
-					<Box sx={{ minHeight: '100vh' }}>
-						<AgencySpecificContext.Provider
-							value={{
-								specificAgency: null,
-								setSpecificAgency: () => undefined
-							}}
-						>
-							<StageLayout
-								className="stageLayout--registration"
-								showLegalLinks={true}
-								showLoginLink={true}
-								showRegistrationLink={false}
-								stage={<Stage hasAnimation={false} />}
-								mobileHero="bar"
-							>
-								<Box
-									sx={{
-										width: '100%',
-										minWidth: 0,
-										maxWidth: '100%',
-										px: { xs: 2.5, sm: 5 },
-										pt: { xs: 3, sm: 4 },
-										pb: { xs: '128px', sm: '136px' }
-									}}
-								>
-									<AccountData
-										onChange={() => undefined}
-										entry="link"
-										temporary={temporary}
-									/>
-									<RegistrationFooter
-										secondary={{
-											label: temporary
-												? 'Konto anlegen'
-												: 'Ohne Konto beitreten',
-											onClick: () =>
-												setTemporary((v) => !v)
-										}}
-										primary={{
-											label: temporary
-												? 'Der Gruppe beitreten'
-												: 'Registrieren',
-											disabled: disabledNextButton
-										}}
-									/>
-								</Box>
-							</StageLayout>
-						</AgencySpecificContext.Provider>
-					</Box>
-				</RegistrationCompletionProvider>
+				<Box sx={{ minHeight: '100vh' }}>
+					<AgencySpecificContext.Provider
+						value={{
+							specificAgency: null,
+							setSpecificAgency: () => undefined
+						}}
+					>
+						{/* The real entry, not a copy of it (#1689). */}
+						<GroupInviteEntry
+							stage={<Stage hasAnimation={false} />}
+							gcid="15"
+							aid={String(agency.id)}
+							temporary={temporary}
+							onToggleTemporary={() => setTemporary((v) => !v)}
+							onChange={() => undefined}
+							onJoin={() => undefined}
+							joinDisabled={disabledNextButton}
+							busy={false}
+							agencyName={agency.name}
+						/>
+					</AgencySpecificContext.Provider>
+				</Box>
 			</RegistrationContext.Provider>
 		</LegalLinksContext.Provider>
 	);
@@ -273,7 +243,19 @@ export const EntryScreenWithAccountMobile: StoryObj = {
    assignment. Here it gets fixtures instead of the chat; nothing else differs.
    --------------------------------------------------------------------------- */
 
-const Room = ({ start = IN_THREE_DAYS }: { start?: Date }) => (
+/** A weekly group: this date and the next two. */
+const weekly = (start: Date) =>
+	[0, 7, 14].map((days) => new Date(start.getTime() + days * 86400e3));
+
+/* `active` is the moderator having opened the group, not the clock: a
+   start that has passed still waits for her (#1787). */
+const Room = ({
+	start = IN_THREE_DAYS,
+	active = false
+}: {
+	start?: Date;
+	active?: boolean;
+}) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
 			value={{
@@ -289,9 +271,15 @@ const Room = ({ start = IN_THREE_DAYS }: { start?: Date }) => (
 				eventId={15}
 				welcomeText={WELCOME}
 				rules={RULES}
-				active={start.getTime() <= NOW}
+				active={active}
 				onJoin={() => undefined}
 				nowMs={NOW}
+				upcomingDates={weekly(start)}
+				series={{
+					repeat: 'WEEKLY',
+					count: 8,
+					timeZone: 'Europe/Berlin'
+				}}
 				showLoginLink
 			/>
 		</AgencySpecificContext.Provider>
@@ -314,16 +302,76 @@ export const WaitingArea: StoryObj = {
 
 export const WaitingAreaOverdue: StoryObj = {
 	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
-	name: '2 — Läuft schon',
+	name: '2 — Termin vorbei, Moderation fehlt noch',
 	render: () => <Room start={OVERDUE} />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Der Termin ist vorbei: „Beitreten" im Fuß ist jetzt frei, sonst ändert sich an der Leiste nichts.'
+				story: 'Der Termin ist vorbei, die Moderation hat die Gruppe noch nicht geöffnet: die Uhr zählt hoch, „Die Gruppe beginnt gleich.", „Beitreten" bleibt gesperrt.'
 			}
 		}
 	}
+};
+
+/**
+ * #1787, Frank 2026-10-19: the moderator has opened the group. No red
+ * overdue clock — a grey one counts up how long the group has been on, so
+ * whoever comes late sees they can still join.
+ */
+export const WaitingAreaOpen: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const running = canvasElement.querySelector(
+			'[data-cy="group-running"]'
+		) as HTMLElement;
+		await expect(running).toBeVisible();
+		await expect(running).toHaveTextContent('Läuft gerade');
+		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
+		await expect(
+			canvas.queryByText('Die Gruppe beginnt gleich.')
+		).toBeNull();
+		await expect(canvas.getByTestId('group-entry-join')).toBeEnabled();
+		// #1785: a date that runs is not one for the calendar; the next ones are.
+		await expect(canvas.queryByTestId('group-entry-calendar')).toBeNull();
+		await expect(canvas.getByTestId('group-entry-dates')).toHaveTextContent(
+			'Nächste Termine'
+		);
+		// The rules still move, so the switch to stop them stays.
+		await expect(
+			canvas.getByRole('switch', { name: 'Animation abschalten' })
+		).toBeInTheDocument();
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '2c — Gruppe läuft · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room start={RUNNING} active />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Die Moderation hat die Gruppe geöffnet: grünes „Läuft gerade", eine graue Uhr zählt hoch, wie lange die Gruppe schon läuft, darunter die Regeln in einer ruhigen Pille. In der Leiste „Nächste Termine" neben „Beitreten". Nichts ist rot (Frank, 19.10.).'
+			}
+		}
+	}
+};
+
+export const WaitingAreaOpenMobile: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
+		const dates = canvas.getByTestId('group-entry-dates');
+		const join = canvas.getByTestId('group-entry-join');
+		// Its own row above "Beitreten", the full width.
+		await expect(dates.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			join.getBoundingClientRect().top
+		);
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '3c — Gruppe läuft, mobil',
+	globals: phone390Globals,
+	render: () => <Room start={RUNNING} active />,
+	parameters: { layout: 'fullscreen' }
 };
 
 /**
@@ -340,6 +388,12 @@ export const WaitingAreaConsent: StoryObj = {
 				'checkbox'
 			)
 		).toBeInTheDocument();
+		// The rules once, numbered and grey, while the bar asks.
+		const intro = canvasElement.querySelector(
+			'[data-cy="group-rules-intro"]'
+		) as HTMLElement;
+		await expect(intro.querySelectorAll('li')).toHaveLength(RULES.length);
+		await expect(intro).toHaveTextContent('Läuft seit 12:47');
 		await expect(
 			canvasElement.ownerDocument.querySelector(
 				'[data-cy="consent-completion"]'
@@ -347,16 +401,37 @@ export const WaitingAreaConsent: StoryObj = {
 		).not.toBeNull();
 		await expectWaitingRoomLayout(canvasElement);
 	},
-	name: '2b — Beitreten: Einwilligung',
-	render: () => <Room start={OVERDUE} />,
+	name: '2b — Beitreten: Regeln und Einwilligung · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room start={RUNNING} active />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: '„Beitreten" öffnet die Einwilligung des Live-Chats in der Leiste: winkende Hand, Kästchen, rundes X. Erst mit Haken geht es in die Gruppe; die Zustimmung wird dabei gespeichert.'
+				story: '„Beitreten" zeigt einmal die Regeln der Gruppe — nummeriert, grau, alle auf einmal, nichts bewegt sich (Frank, 19.10.: „ohne dass die eben rot sind") — und öffnet die Einwilligung des Live-Chats in der Leiste: winkende Hand, Kästchen, rundes X. Erst mit Haken geht es in die Gruppe; die Zustimmung wird dabei gespeichert.'
 			}
 		}
 	}
+};
+
+export const WaitingAreaConsentMobile: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		(await canvas.findByTestId('group-entry-join')).click();
+		const intro = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'[data-cy="group-rules-intro"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		await expect(intro.querySelectorAll('li')).toHaveLength(RULES.length);
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '3d — Beitreten: Regeln und Einwilligung, mobil',
+	globals: phone390Globals,
+	render: () => <Room start={RUNNING} active />,
+	parameters: { layout: 'fullscreen' }
 };
 
 /**
@@ -403,6 +478,147 @@ export const WaitingAreaOverdue3DigitsMobile: StoryObj = {
 	}
 };
 
+/** Where the calendar row sits: one line above "Beitreten". */
+const calendarRow = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const add = await canvas.findByTestId('group-entry-calendar');
+	const dates = canvas.getByTestId('group-entry-dates');
+	const join = canvas.getByTestId('group-entry-join');
+	const bar = canvasElement.ownerDocument.querySelector(
+		'[data-cy="registration-footer"]'
+	) as HTMLElement;
+	await expect(bar.contains(add)).toBe(true);
+	await expect(bar.contains(dates)).toBe(true);
+	await waitFor(() =>
+		expect(add.getBoundingClientRect().width).toBeGreaterThan(0)
+	);
+	const a = add.getBoundingClientRect();
+	const d = dates.getBoundingClientRect();
+	// Side by side, both above "Beitreten".
+	await expect(Math.abs(a.top - d.top)).toBeLessThanOrEqual(1);
+	await expect(a.right).toBeLessThanOrEqual(d.left);
+	await expect(a.bottom).toBeLessThanOrEqual(
+		join.getBoundingClientRect().top
+	);
+	return { add, dates };
+};
+
+/**
+ * Frank, 2026-10-19 ("auf dem Desktop … ein bisschen schwach"): the calendar
+ * is a split pill beside "Beitreten" in the bar's one row, the date and the
+ * rhythm stand under the headline, and the shut "Beitreten" says when it
+ * opens.
+ */
+export const WaitingAreaCalendarSplit: StoryObj = {
+	name: '1c — Kalender neben „Beitreten": geteilte Pille · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const add = await canvas.findByTestId('group-entry-calendar');
+		const dates = canvas.getByTestId('group-entry-dates');
+		const join = canvas.getByTestId('group-entry-join');
+		await waitFor(() =>
+			expect(add.getBoundingClientRect().width).toBeGreaterThan(0)
+		);
+		await expect(add).toHaveTextContent('Termin eintragen');
+		await expect(dates).toHaveTextContent('Alle Termine');
+		// One row: pill left, "Beitreten" right, centred on one line.
+		const a = add.getBoundingClientRect();
+		const d = dates.getBoundingClientRect();
+		const j = join.getBoundingClientRect();
+		await expect(a.right).toBeLessThanOrEqual(d.left);
+		await expect(d.right).toBeLessThanOrEqual(j.left);
+		await expect(
+			Math.abs(a.top + a.height / 2 - (j.top + j.height / 2))
+		).toBeLessThanOrEqual(2);
+		await expect(add.scrollWidth).toBeLessThanOrEqual(add.clientWidth);
+		await expect(join).toHaveTextContent(/ab .*\d{2}:\d{2}/);
+		await expect(
+			canvasElement.querySelector('[data-cy="group-entry-rhythm"]')
+		).toHaveTextContent('jede Woche');
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'In der Leiste eine Zeile: links die geteilte Pille „Termin eintragen | Alle Termine →", rechts „Beitreten" mit „ab Do., 18:00". Unter der Überschrift Datum, Uhrzeit und Rhythmus. Sobald die Gruppe läuft, bleibt nur „Nächste Termine" (2c).'
+			}
+		}
+	}
+};
+
+/** The dates view: the middle changes, "Beitreten" stays. */
+export const WaitingAreaDates: StoryObj = {
+	name: '1d — Die nächsten Treffen · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		(await canvas.findByTestId('group-entry-dates')).click();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-cy="group-upcoming-date"]'
+				)
+			).toHaveLength(3)
+		);
+		// The panel slides in from the right; judge it once it has arrived.
+		await waitFor(() =>
+			expect(canvas.getByText('Die nächsten Treffen')).toBeVisible()
+		);
+		await expect(canvas.getByTestId('group-upcoming-series')).toBeVisible();
+		await expect(
+			canvasElement.querySelector('[data-next="true"]')
+		).toHaveTextContent('Nächster');
+		await expect(canvas.getByTestId('group-dates-back')).toBeVisible();
+		await expect(
+			canvas.getAllByTestId('group-upcoming-date-add')
+		).toHaveLength(3);
+		await expect(canvas.getByTestId('group-entry-join')).toBeVisible();
+		// The list has its own buttons; the bar does not repeat them.
+		await expect(canvas.queryByTestId('group-entry-dates')).toBeNull();
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: '„Alle Termine" ersetzt die Uhr wie „Mehr erfahren": oben „Zurück zum Countdown", dann die Treffen als Kacheln wie die Öffnungszeiten des Live-Chats — der nächste markiert, jeder mit „Eintragen" — und eine Kachel „Alle auf einmal" für die ganze Serie (Google und .ics; Outlooks Weblink kennt keine Serie). Unten bleibt „Beitreten".'
+			}
+		}
+	}
+};
+
+export const WaitingAreaDatesMobile: StoryObj = {
+	name: '3b — Kalender-Zeile und Termine, mobil',
+	globals: phone375Globals,
+	render: () => <Room />,
+	play: async ({ canvasElement }) => {
+		const { add, dates } = await calendarRow(canvasElement);
+		await expect(add).toHaveTextContent('Eintragen');
+		await expect(dates).toHaveTextContent('Alle Termine');
+		// Assist pills: a finger's 44 px, not the bar's 56.
+		await expect(Math.round(add.getBoundingClientRect().height)).toBe(44);
+		dates.click();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-cy="group-upcoming-date"]'
+				)
+			).toHaveLength(3)
+		);
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Auf dem Handy zwei ruhige Pillen nebeneinander über „Beitreten": „Eintragen" und „Alle Termine →". „Beitreten" behält die ganze Breite und sagt, ab wann es offen ist. Die Termine als Zeilen mit Datumsmarke.'
+			}
+		}
+	}
+};
+
 export const WaitingAreaMobile: StoryObj = {
 	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: '3 — Wartebereich, mobil',
@@ -431,12 +647,15 @@ export const WaitingAreaLightBrandColour: StoryObj = {
 	parameters: { layout: 'fullscreen', orisoSeed: '#b4ddee' },
 	play: async ({ canvasElement }) => {
 		const calendar = within(canvasElement).getByRole('button', {
-			name: /Zum Kalender hinzufügen/
+			name: /zum Kalender hinzufügen/i
+		});
+		const dates = within(canvasElement).getByRole('button', {
+			name: /Alle Termine/
 		});
 		const more = within(canvasElement).getByRole('button', {
 			name: /Mehr erfahren/
 		});
-		for (const button of [calendar, more]) {
+		for (const button of [calendar, dates, more]) {
 			await expect(
 				wcagContrast(
 					getComputedStyle(button).color,

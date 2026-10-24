@@ -28,6 +28,7 @@ import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
 import {
+	getGroupSeries,
 	getGroupUpcomingDates,
 	getGroupWaitingRoomTopic
 } from './groupWaitingRoomData';
@@ -187,6 +188,7 @@ const ClientGroupEntryRoom = () => {
 	});
 
 	const upcomingDates = useMemo(() => getGroupUpcomingDates(item), [item]);
+	const series = useMemo(() => getGroupSeries(item), [item]);
 
 	const plannedStart = useMemo(
 		() => (item ? getGroupChatPlannedStart(item) : null),
@@ -271,6 +273,7 @@ const ClientGroupEntryRoom = () => {
 				agencyId={item.assignedAgencies?.[0]?.id}
 				plannedStart={plannedStart}
 				upcomingDates={upcomingDates}
+				series={series}
 				durationMinutes={item.duration}
 				eventId={item.id}
 				welcomeText={authorContent.hintMessage || undefined}

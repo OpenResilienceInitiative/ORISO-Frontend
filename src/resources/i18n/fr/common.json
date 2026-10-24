@@ -743,12 +743,13 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda",
 			"copyGoogle": "Copier le lien Google Agenda",
 			"copyOutlook": "Copier le lien du calendrier Outlook",
 			"linkCopied": "Lien du calendrier copié.",
 			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
-			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique.",
+			"addThis": "Ajouter cette date au calendrier",
+			"shareHintSeries": "Liens pour votre site : toutes les dates en série, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -942,7 +943,6 @@
 				"back": "Retour au compte à rebours",
 				"headline": "Comment fonctionne le groupe",
 				"subline": "Trois choses utiles avant la première fois.",
-				"appointments": "Ajouter les dates au calendrier",
 				"steps": {
 					"formats": {
 						"title": "Comment le groupe se réunit",
@@ -959,8 +959,7 @@
 						"text": "L’espace des liens propose régulièrement de nouvelles rencontres et vous mène directement à la prochaine date.",
 						"alt": "De nouvelles cartes de rendez-vous apparaissent l’une après l’autre ; un symbole de lien clair mène la personne curieuse à la prochaine rencontre du groupe."
 					}
-				},
-				"upcoming": "Prochaines dates"
+				}
 			},
 			"status": {
 				"active": "En cours",
@@ -985,7 +984,7 @@
 					"etaSoon": "dans un instant",
 					"flipAria": "{{label}} : {{value}}. Retourner pour lire.",
 					"flipHint": "cliquer pour retourner",
-					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
+					"greetingLabel": "Mot de bienvenue de la modération",
 					"headline": "Votre chat de groupe commence {{eta}}.",
 					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
 					"moderatorOverdueHeadline": "Le groupe vous attend.",
@@ -993,8 +992,8 @@
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
-					"overdueHeadline": "Nous serons avec vous dans un instant.",
-					"overdueSubtitle": "Votre conseiller·ère va ouvrir la salle — merci de patienter encore un peu.",
+					"overdueHeadline": "Le groupe commence dans un instant.",
+					"overdueSubtitle": "La modération va ouvrir le groupe — merci de patienter encore un peu.",
 					"subtitle": "Cliquez sur un chiffre — le mot de bienvenue et la nétiquette vous attendent derrière.",
 					"subtitleCard": "Touchez l’horloge, bienvenue et nétiquette au dos.",
 					"subtitleStill": "Le mot de bienvenue et la nétiquette figurent sous les chiffres.",
@@ -1207,7 +1206,49 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours",
-			"legalMenu": "Mentions légales"
+			"legalMenu": "Mentions légales",
+			"dates": {
+				"headline": "Les prochaines rencontres",
+				"subline": "Touchez une date pour l’ajouter à votre calendrier.",
+				"none": "Aucune autre date n’est prévue pour le moment.",
+				"add": "Ajouter",
+				"addLabel": "Ajouter {{date}} au calendrier",
+				"next": "Prochaine",
+				"seriesTitle": "Toutes à la fois",
+				"seriesSub": "ajouter en série",
+				"seriesLong": "Tout ajouter en série",
+				"repeat": {
+					"DAILY": "Le groupe se réunit chaque jour à la même heure.",
+					"WEEKLY": "Le groupe se réunit chaque semaine à la même heure.",
+					"BIWEEKLY": "Le groupe se réunit toutes les deux semaines à la même heure.",
+					"MONTHLY": "Le groupe se réunit chaque mois à la même heure.",
+					"QUARTERLY": "Le groupe se réunit tous les trimestres à la même heure.",
+					"YEARLY": "Le groupe se réunit tous les ans à la même heure."
+				}
+			},
+			"addDate": "Ajouter au calendrier",
+			"allDates": "Toutes les dates",
+			"nextDates": "Prochaines dates",
+			"joinFrom": "à partir de {{time}}",
+			"rhythm": {
+				"DAILY": "chaque jour",
+				"WEEKLY": "chaque semaine",
+				"BIWEEKLY": "toutes les deux semaines",
+				"MONTHLY": "chaque mois",
+				"QUARTERLY": "tous les trimestres",
+				"YEARLY": "tous les ans"
+			},
+			"running": {
+				"since": "En cours depuis",
+				"status": "En cours",
+				"statusModerated": "En cours · la modération est là",
+				"headline": "Le groupe a commencé {{ago}}.",
+				"subline": "Vous pouvez rejoindre à tout moment – personne n’est obligé de parler."
+			},
+			"rules": {
+				"headline": "Comment nous nous comportons les uns envers les autres",
+				"subline": "Lisez-les une fois – et vous êtes des nôtres."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",

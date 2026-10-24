@@ -738,12 +738,13 @@
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
 			"titleLabel": "Neutraler Kalendertitel",
-			"addShort": "Kalender",
 			"copyGoogle": "Google-Kalenderlink kopieren",
 			"copyOutlook": "Outlook-Kalenderlink kopieren",
 			"linkCopied": "Kalenderlink kopiert.",
 			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
-			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung.",
+			"addThis": "Diesen Termin zum Kalender hinzufügen",
+			"shareHintSeries": "Kalenderlinks für Ihre Webseite: alle Termine als Serie, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -1027,7 +1028,6 @@
 				"back": "Zurück zum Countdown",
 				"headline": "So funktioniert die Gruppe",
 				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
-				"appointments": "Termine in den Kalender",
 				"steps": {
 					"formats": {
 						"title": "So findet die Gruppe statt",
@@ -1044,8 +1044,7 @@
 						"text": "Im Link-Bereich finden Sie regelmäßig frische Treffen und gelangen direkt zum nächsten Termin.",
 						"alt": "Neue Terminkarten erscheinen nacheinander; ein klares Linksymbol führt die neugierige Person zum nächsten Gruppentreffen."
 					}
-				},
-				"upcoming": "Nächste Termine"
+				}
 			},
 			"status": {
 				"active": "Läuft gerade",
@@ -1070,7 +1069,7 @@
 					"etaSoon": "gleich",
 					"flipAria": "{{label}}: {{value}}. Umdrehen zum Lesen.",
 					"flipHint": "klicken zum Umdrehen",
-					"greetingLabel": "Begrüßung Ihrer Beratung",
+					"greetingLabel": "Begrüßung der Moderation",
 					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
 					"moderatorHeadline": "Der Gesprächskreis beginnt {{eta}}.",
 					"moderatorOverdueHeadline": "Die Gruppe wartet.",
@@ -1078,8 +1077,8 @@
 					"netiquetteLabel": "Netiquette · Regel {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",
-					"overdueHeadline": "Wir sind gleich für Sie da.",
-					"overdueSubtitle": "Ihre Beratung öffnet den Raum gleich — bitte haben Sie noch einen Moment Geduld.",
+					"overdueHeadline": "Die Gruppe beginnt gleich.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte haben Sie noch einen Moment Geduld.",
 					"subtitle": "Klicken Sie auf eine Zahl — dahinter warten Begrüßung und Netiquette.",
 					"subtitleCard": "Uhr antippen, dahinter Begrüßung und Netiquette.",
 					"subtitleStill": "Begrüßung und Netiquette stehen unter den Zahlen.",
@@ -1202,7 +1201,49 @@
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
 			"backToCountdown": "Zurück zum Countdown",
-			"legalMenu": "Rechtliches"
+			"legalMenu": "Rechtliches",
+			"dates": {
+				"headline": "Die nächsten Treffen",
+				"subline": "Tippen Sie auf einen Termin, um ihn einzutragen.",
+				"none": "Zurzeit sind keine weiteren Termine geplant.",
+				"add": "Eintragen",
+				"addLabel": "{{date}} zum Kalender hinzufügen",
+				"next": "Nächster",
+				"seriesTitle": "Alle auf einmal",
+				"seriesSub": "als Serie eintragen",
+				"seriesLong": "Alle als Serie eintragen",
+				"repeat": {
+					"DAILY": "Die Gruppe trifft sich jeden Tag zur selben Zeit.",
+					"WEEKLY": "Die Gruppe trifft sich jede Woche zur selben Zeit.",
+					"BIWEEKLY": "Die Gruppe trifft sich alle zwei Wochen zur selben Zeit.",
+					"MONTHLY": "Die Gruppe trifft sich jeden Monat zur selben Zeit.",
+					"QUARTERLY": "Die Gruppe trifft sich jedes Quartal zur selben Zeit.",
+					"YEARLY": "Die Gruppe trifft sich jedes Jahr zur selben Zeit."
+				}
+			},
+			"addDate": "Termin eintragen",
+			"allDates": "Alle Termine",
+			"nextDates": "Nächste Termine",
+			"joinFrom": "ab {{time}}",
+			"rhythm": {
+				"DAILY": "jeden Tag",
+				"WEEKLY": "jede Woche",
+				"BIWEEKLY": "alle zwei Wochen",
+				"MONTHLY": "jeden Monat",
+				"QUARTERLY": "jedes Quartal",
+				"YEARLY": "jedes Jahr"
+			},
+			"running": {
+				"since": "Läuft seit",
+				"status": "Läuft gerade",
+				"statusModerated": "Läuft gerade · Moderation ist da",
+				"headline": "Die Gruppe hat {{ago}} begonnen.",
+				"subline": "Sie können jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"headline": "So gehen wir miteinander um",
+				"subline": "Einmal kurz lesen – dann sind Sie dabei."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
