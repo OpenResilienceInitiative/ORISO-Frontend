@@ -1,4 +1,4 @@
-import { vi } from 'vite-plus/test';
+import { vi } from 'vitest';
 
 /**
  * A waiting room's button fetches the screen behind it when it is pressed
