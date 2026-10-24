@@ -137,7 +137,7 @@
 		"@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
 		"@storybook/addon-a11y": "^10.5.7",
 		"@storybook/addon-docs": "^10.5.7",
-		"@storybook/addon-vitest": "^10.5.7",
+		"@storybook/addon-vitest": "^10.6.2",
 		"@storybook/react": "^10.5.7",
 		"@svgr/webpack": "^8.0.1",
 		"@takuma-ru/auto-story-generator": "^0.4.0",
