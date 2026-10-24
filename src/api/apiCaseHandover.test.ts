@@ -4,6 +4,7 @@ import {
 	apiDecideCaseHandoverRecipient,
 	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverRequestStatus,
+	apiReclaimCaseHandover,
 	apiRequestCaseHandoverAccess,
 	apiRequestCaseHandoverBatchAccess
 } from './apiCaseHandover';
@@ -41,6 +42,19 @@ describe('apiCaseHandover mutation contracts', () => {
 			url: 'https://api.test/service/users/sessions/41/case-handover/recipients',
 			method: 'GET',
 			responseHandling: ['FORBIDDEN']
+		});
+	});
+
+	it('takes a case back and reads the returned status (US #200)', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ status: 'RECLAIMED' });
+
+		await expect(apiReclaimCaseHandover(41)).resolves.toEqual({
+			status: 'RECLAIMED'
+		});
+		expect(fetchData).toHaveBeenCalledWith({
+			url: 'https://api.test/service/users/sessions/41/case-handover/reclaim',
+			method: 'POST',
+			responseHandling: ['CONTENT', 'FORBIDDEN', 'CONFLICT']
 		});
 	});
 

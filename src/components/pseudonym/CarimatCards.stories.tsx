@@ -18,8 +18,8 @@ import './PseudonymCard.styles.scss';
  * **Filed under Chat on purpose.** A Carimat bubble is a *kind of chat message*,
  * a sibling of the system notices, not a separate widget family. Its avatar
  * therefore has to obey the same circle geometry as `MessageAvatar`
- * (`size = 32`) — which today it does **not**: `PseudonymCard.styles.scss:34-40`
- * gives it a bespoke 54×54 frame in a 64px column. Tracked in
+ * (the shared 60px frame) through the canonical assistant presentation. Legacy: `PseudonymCard.styles.scss:34-40`
+ * gives it a bespoke 54×54 frame in a 64px column. Previously tracked in
  * OpenResilienceInitiative/ORISO-Frontend#892.
  *
  * Carimat is a **rendering identity, not a Matrix account** (ADR-018 §3) —
@@ -34,7 +34,8 @@ import './PseudonymCard.styles.scss';
  * the locale in the toolbar changes the subtitle but never the name.
  */
 const meta = {
-	title: 'Components/Chat/CarimatMessage',
+	id: 'components-chat-carimatmessage',
+	title: 'Chat/System messages/Assistant onboarding',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'padded',

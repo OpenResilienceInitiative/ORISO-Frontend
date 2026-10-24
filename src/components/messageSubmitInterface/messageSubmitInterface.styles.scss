@@ -62,6 +62,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// width 863 inside the 895 dock. 17px = the 16px inset of
 		// `.textarea__inputWrapper` plus the card's 1px border.
 		--composer-edge-inset: 17px;
+		--composer-phone-rest-height: 100px;
+		--composer-audience-control-height: 32px;
 
 		// The editor's box, derived once so the docked bars never restate it.
 		--composer-inner-width: calc(
@@ -157,6 +159,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&-send-message {
+				--composer-expanded-height: min(
+					calc(var(--composer-visible-height, 100dvh) * 0.78),
+					760px
+				);
+
 				display: block;
 				width: 100%;
 
@@ -306,10 +313,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					) !important;
 					margin-top: 0;
 					max-width: none;
-					height: min(
-						calc(var(--composer-visible-height, 100dvh) * 0.78),
-						760px
-					);
+					height: var(--composer-expanded-height);
 					max-height: calc(
 						var(--composer-visible-height, 100dvh) - 96px
 					);
@@ -332,8 +336,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 						// T10: one line by default (`composerResize.ts`
 						// MIN_HEIGHT_MOBILE = 100); `--composer-height` grows it.
-						min-height: var(--composer-height, 100px);
-						height: var(--composer-height, 100px);
+						min-height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
+						height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
 					}
 
 					&::before {
@@ -345,8 +355,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: var(--composer-height, 100px);
-						height: var(--composer-height, 100px);
+						min-height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
+						height: var(
+							--composer-height,
+							var(--composer-phone-rest-height)
+						);
 					}
 				}
 			}
@@ -1039,17 +1055,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			right: 30px;
 			bottom: 30px;
 			top: auto;
-			height: 32px;
+			height: var(--composer-audience-control-height);
 			max-width: 230px;
 			z-index: 999990;
 			display: inline-flex;
 			align-items: center;
 			gap: 2px;
 			touch-action: manipulation;
-
-			@media screen and (width <= 899px) {
-				bottom: 45px;
-			}
 		}
 
 		&__wrapper-send-message--expanded .textarea__audienceSelector {
@@ -1057,14 +1069,65 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			right: 62px;
 		}
 
-		/*
-		 * The chip's own geometry and colour live with the component that
-		 * renders it, `recipientSplitButton.styles.scss`. Rules for
-		 * `__audienceSelectorMain`, `__audienceSelectorChevron` and the
-		 * `--all` / `--target` colour pair used to sit here, but no component
-		 * has rendered those class names since the split button replaced the
-		 * hand-rolled chip — which is why "Alle" never turned grey (#894).
-		 */
+		// Narrow composers reserve an intrinsic footer for recipients. It is a
+		// separate grid row from the toolbar, attachments and editable field;
+		// increasing a bottom offset alone only moves the collision elsewhere.
+		@media screen and (width <= 899px) {
+			&__wrapper-send-message:has(.textarea__audienceSelector) {
+				--composer-audience-row-height: calc(
+					var(--composer-audience-control-height) + 2 * #{$grid-base}
+				);
+
+				display: grid;
+				grid-template-columns: minmax(0, 1fr);
+				grid-template-rows:
+					minmax(var(--composer-phone-rest-height), 1fr)
+					auto;
+
+				min-height: calc(
+					var(--composer-phone-rest-height) +
+						var(--composer-audience-row-height)
+				);
+
+				&:not(.textarea__wrapper-send-message--expanded) {
+					// --composer-height already includes measured chrome from auto-grow.
+					// Never add the footer to that value a second time.
+					height: max(
+						var(--composer-height, 0px),
+						calc(
+							var(--composer-phone-rest-height) +
+								var(--composer-audience-row-height)
+						)
+					);
+				}
+
+				> .textarea__inputWrapper {
+					grid-row: 1;
+					position: relative;
+					inset: auto;
+					height: auto;
+				}
+
+				> .textarea__audienceSelector {
+					grid-row: 2;
+					justify-self: end;
+					position: relative;
+					inset: auto;
+					margin: $grid-base $grid-base-two;
+					max-width: min(230px, calc(100% - 2 * #{$grid-base-two}));
+				}
+
+				&.textarea__wrapper-send-message--expanded {
+					// Keep the existing overlay height even when the ready-state
+					// narrow rule would otherwise restore the one-line height.
+					height: var(--composer-expanded-height);
+
+					> .textarea__inputWrapper {
+						margin: $grid-base-two $grid-base-two 0;
+					}
+				}
+			}
+		}
 
 		&__audienceSelectorMenu {
 			position: absolute;
@@ -1678,6 +1741,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			z-index: 5;
 		}
 
+		// #1142: the voice review is taller than the editor strip on a phone,
+		// so it hangs from the top edge instead of being centred and clipped.
+		&__attachmentMode--voice {
+			align-items: flex-start;
+			padding-top: 4px;
+		}
+
 		&__attachmentModeCard {
 			width: 100%;
 			max-width: 620px;
@@ -1759,53 +1829,41 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
+		// #1142: the review of a recorded voice note lives inside the
+		// attachment card; this is its discard control.
 		&__voicePreview {
-			position: absolute;
-			top: 4px;
-			left: $grid-base;
-			right: $grid-base;
-			display: grid;
-			grid-template-columns: 1fr auto;
-			grid-template-rows: auto auto;
-			gap: 4px 10px;
-			background: #f8fafc;
-			border: 1px solid #e2e8f0;
-			border-radius: 10px;
-			padding: 6px 10px;
-
-			&__meta {
-				grid-column: 1 / 2;
+			// #1142: a real button, so the reviewed take can be discarded
+			// from the keyboard and with a comfortable touch target.
+			&__discard {
 				display: inline-flex;
 				align-items: center;
-				gap: 8px;
-				font-size: 12px;
-				color: $text-low-emphasis;
+				justify-content: center;
+				width: 40px;
+				height: 40px;
+				padding: 0;
+				border: none;
+				border-radius: 50%;
+				background: transparent;
+				color: var(--m3-on-surface-variant, $tertiary);
+				cursor: pointer;
 
 				svg {
-					width: 16px;
-					height: 16px;
+					width: 14px;
+					height: 14px;
 
 					* {
-						fill: var(--m3-on-surface-variant, $tertiary);
+						fill: currentColor;
 					}
 				}
-			}
 
-			&__duration {
-				font-weight: 700;
-			}
+				&:hover {
+					background: var(--m3-surface-container-high, #f0eded);
+				}
 
-			&__audio {
-				grid-column: 1 / 2;
-				width: 100%;
-				height: 28px;
-			}
-
-			.messageItem__attachmentSelected__remove,
-			.textarea__attachmentSelected__remove {
-				grid-column: 2 / 3;
-				grid-row: 1 / 3;
-				align-self: center;
+				&:focus-visible {
+					outline: 2px solid var(--m3-primary, #a5000a);
+					outline-offset: 2px;
+				}
 			}
 		}
 

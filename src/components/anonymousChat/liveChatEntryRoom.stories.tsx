@@ -7,10 +7,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { generatePseudonym } from '../../utils/pseudonymGenerator';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../globalState';
-import {
-	LegalLinksContext,
-	TProvidedLegalLink
-} from '../../globalState/provider/LegalLinksProvider';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { Stage } from '../stage/stage';
 import { EntryRoomShell } from './entryRoom/EntryRoomShell';
 import { LiveChatAccess } from './entryRoom/LiveChatAccess';
@@ -24,8 +21,11 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import {
 	desktop1440Globals,
 	phone375Globals,
+	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
+import { storyLegalLinks as legalLinks } from '../waitingRoom/storyLegalLinks';
 
 /**
  * The **live chat** entry room — the real views (`entryRoom/`), which the
@@ -47,18 +47,6 @@ const meta: Meta = {
 };
 export default meta;
 
-const legalLinks: TProvidedLegalLink[] = [
-	{
-		label: 'login.legal.infoText.dataprotection',
-		registration: true,
-		getUrl: () => 'https://oriso.example/datenschutz'
-	} as TProvidedLegalLink,
-	{
-		label: 'login.legal.infoText.impressum',
-		registration: true,
-		getUrl: () => 'https://oriso.example/impressum'
-	} as TProvidedLegalLink
-];
 /* The same sentence the room builds, read from the catalogue instead of a
    German literal — a story opened in English has to read English, because
    this is the text the guest consents to. */
@@ -141,11 +129,13 @@ const Waiting = ({
 	accepted = false,
 	companionStart = false,
 	ahead = 3,
+	nobodyLive = false,
 	consentHtml: consentHtmlOverride
 }: {
 	accepted?: boolean;
 	companionStart?: boolean;
 	ahead?: number;
+	nobodyLive?: boolean;
 	consentHtml?: string;
 }) => {
 	const defaultConsentHtml = useConsentHtml();
@@ -155,12 +145,15 @@ const Waiting = ({
 			statusKey={
 				accepted
 					? 'liveChat.entry.status.accepted'
-					: 'liveChat.entry.status.waiting'
+					: nobodyLive
+						? 'liveChat.entry.status.nobodyLive'
+						: 'liveChat.entry.status.waiting'
 			}
 		>
 			<LiveChatWaitingRoom
 				ahead={ahead}
 				accepted={accepted}
+				nobodyLive={nobodyLive}
 				consentHtml={consentHtml}
 				companionStart={companionStart}
 				onAccept={() => undefined}
@@ -303,14 +296,50 @@ export const StepWaiting: StoryObj = {
 	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
 	parameters: full(
 		'Eine Seite, drei Stellen ändern sich. Die Punkte sind die Schlange, der Knopf der Ladebalken (drehende Uhr statt Pfeil), die drei Karten das Karussell der Registrierung mit Franks Bildern. In der App: Poll auf `/service/conversations/anonymous/{id}` alle 4 s.'
 	)
 };
 export const StepWaitingMobile: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: 'B — Warteraum, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting />,
+	parameters: { layout: 'fullscreen' }
+};
+/* #1270 — "Ich warte" with a session: nobody is live, and the room says so. */
+export const StepWaitingNobodyLive: StoryObj = {
+	globals: desktop1440Globals,
+	name: 'B — Warteraum: niemand live',
+	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
+	parameters: full(
+		'Nach „Ich warte" mit Sitzung: dieselbe Warteschlange, aber die Seite sagt ehrlich, dass gerade niemand live ist und dass wir dranbleiben. Gesteuert vom selben bestätigten Signal wie die Geschlossen-Seite (zwei Polls mit 0); sobald `numAvailableConsultants > 0`, springt der Raum von selbst auf „Gleich geht es los." zurück.'
+	)
+};
+export const StepWaitingNobodyLiveEnglish: StoryObj = {
+	globals: { ...desktop1440Globals, locale: 'en' },
+	name: 'B — Warteraum: niemand live (EN)',
+	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
+	parameters: full('The same state in English.')
+};
+export const StepWaitingNobodyLiveMobile: StoryObj = {
+	name: 'B — Warteraum: niemand live, mobil (390)',
+	globals: phone390Globals,
+	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
+	parameters: { layout: 'fullscreen' }
+};
+export const StepWaitingNobodyLiveMobileEnglish: StoryObj = {
+	name: 'B — Warteraum: niemand live, mobil (390, EN)',
+	globals: { ...phone390Globals, locale: 'en' },
+	render: () => <Waiting nobodyLive />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	parameters: { layout: 'fullscreen' }
 };
 export const StepCompanion: StoryObj = {
@@ -361,7 +390,10 @@ export const StepAccepted: StoryObj = {
 	name: 'B — Warteraum: Beraterin ist da',
 	globals: desktop1440Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
 	)
@@ -427,14 +459,20 @@ export const StepAcceptedMobile: StoryObj = {
 	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: { layout: 'fullscreen' }
 };
 export const StepAcceptedTablet: StoryObj = {
 	name: 'B — Beraterin ist da, Tablet',
 	globals: tablet834Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: { layout: 'fullscreen' }
 };
 export const StepClosed: StoryObj = {

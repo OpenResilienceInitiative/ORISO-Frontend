@@ -11,4 +11,14 @@ describe('formatDpaDate', () => {
 			'07:55'
 		);
 	});
+
+	it('shows a UTC confirmation across midnight in English Berlin time', () => {
+		expect(formatDpaDate('2026-08-02T22:15:00', 'en')).toBe(
+			'3 August 2026 at 00:15'
+		);
+	});
+
+	it('preserves the original value when a display timestamp is invalid', () => {
+		expect(formatDpaDate('invalid-date', 'de')).toBe('invalid-date');
+	});
 });

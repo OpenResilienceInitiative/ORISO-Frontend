@@ -7,8 +7,10 @@ import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-c
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
-import { getTopicCardImage } from '../../resources/img/topics';
+import {
+	getTopicCardArtwork,
+	INTERNAL_CHAT_ARTWORK
+} from '../../resources/img/topics';
 import { GroupChatAuthorContentFields } from '../groupChat/GroupChatAuthorContentFields';
 import { GroupChatAuthorContentDraft } from '../groupChat/groupChatAuthorContent';
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
@@ -235,14 +237,14 @@ const FormatPicker = ({
 								icon={<InternalIcon />}
 								title={t('groupChat.internal.title')}
 								subtitle={t('groupChat.internal.subtitle')}
-								image={internalTeamImage}
+								image={INTERNAL_CHAT_ARTWORK}
 								onSelect={() => undefined}
 							/>
 							<CompactFormatRow
 								icon={<CircleIcon />}
 								title={t('groupChat.circle.title')}
 								subtitle={t('groupChat.circle.subtitle')}
-								image={getTopicCardImage(null)}
+								image={getTopicCardArtwork(null)}
 								onSelect={() => undefined}
 							/>
 						</div>

@@ -2,6 +2,7 @@ import { trackStagePointer } from '../pointer';
 import { StageEffect, StageEffectContext } from '../types';
 import { isInsideBorder, projectGermanBorder } from './germanBorder';
 import { CARRIER_COVERAGE, CITIES } from './coverage';
+import { createStageTint } from '../../stageTint';
 
 /** Spacing of the dot grid in CSS px. */
 const GRID = 16;
@@ -67,6 +68,7 @@ export const createConnectedDotsEffect = ({
 	ctx.scale(dpr, dpr);
 
 	const tracker = trackStagePointer(host);
+	const tint = createStageTint(host);
 	const random = seededRandom();
 	const { outline, project, aspect } = projectGermanBorder();
 
@@ -201,10 +203,10 @@ export const createConnectedDotsEffect = ({
 	const spriteCtx = sprite.getContext('2d');
 	if (spriteCtx) {
 		const gradient = spriteCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
-		gradient.addColorStop(0, 'rgba(255,237,235,0.95)');
-		gradient.addColorStop(0.18, 'rgba(255,218,213,0.5)');
-		gradient.addColorStop(0.5, 'rgba(255,180,168,0.15)');
-		gradient.addColorStop(1, 'rgba(255,180,168,0)');
+		gradient.addColorStop(0, tint(255, 237, 235, 0.95));
+		gradient.addColorStop(0.18, tint(255, 218, 213, 0.5));
+		gradient.addColorStop(0.5, tint(255, 180, 168, 0.15));
+		gradient.addColorStop(1, tint(255, 180, 168, 0));
 		spriteCtx.fillStyle = gradient;
 		spriteCtx.fillRect(0, 0, 64, 64);
 	}
@@ -263,7 +265,7 @@ export const createConnectedDotsEffect = ({
 			to.x,
 			to.y
 		);
-		ctx.strokeStyle = `rgba(226,152,142,${alpha.toFixed(3)})`;
+		ctx.strokeStyle = tint(226, 152, 142, alpha);
 		ctx.lineWidth = 0.8 + 0.7 * extent;
 		ctx.stroke();
 	};
@@ -330,7 +332,7 @@ export const createConnectedDotsEffect = ({
 				: litFraction;
 			dim += (targetDim - dim) * Math.min(1, dt * 1.6);
 			if (dim > 0.01) {
-				ctx.fillStyle = `rgba(52,2,7,${(0.62 * dim).toFixed(3)})`;
+				ctx.fillStyle = tint(52, 2, 7, 0.62 * dim);
 				ctx.fillRect(0, 0, width, height);
 			}
 
@@ -451,19 +453,34 @@ export const createConnectedDotsEffect = ({
 					0,
 					Math.PI * 2
 				);
-				ctx.fillStyle = `rgba(${Math.round(158 * shade)},${Math.round(4 * shade)},${Math.round(16 * shade)},${(0.66 + 0.2 * (1 - nearHero)).toFixed(2)})`;
+				ctx.fillStyle = tint(
+					158 * shade,
+					4 * shade,
+					16 * shade,
+					0.66 + 0.2 * (1 - nearHero)
+				);
 				ctx.fill();
 
 				if (nearHero > 0.02) {
 					ctx.beginPath();
 					ctx.arc(dot.x, dot.y, 1.2 + 0.5 * nearHero, 0, Math.PI * 2);
-					ctx.fillStyle = `rgba(255,214,206,${(0.4 * nearHero * intensity).toFixed(3)})`;
+					ctx.fillStyle = tint(
+						255,
+						214,
+						206,
+						0.4 * nearHero * intensity
+					);
 					ctx.fill();
 				}
 				if (pulse > 0.02) {
 					ctx.beginPath();
 					ctx.arc(dot.x, dot.y, 0.8 + 0.9 * pulse, 0, Math.PI * 2);
-					ctx.fillStyle = `rgba(255,240,238,${(0.92 * pulse * intensity).toFixed(3)})`;
+					ctx.fillStyle = tint(
+						255,
+						240,
+						238,
+						0.92 * pulse * intensity
+					);
 					ctx.fill();
 				}
 			}
@@ -472,7 +489,7 @@ export const createConnectedDotsEffect = ({
 			held.forEach((point) => {
 				ctx.beginPath();
 				ctx.arc(point.x, point.y, 3.2, 0, Math.PI * 2);
-				ctx.fillStyle = `rgba(255,232,226,${(0.65 * intensity).toFixed(2)})`;
+				ctx.fillStyle = tint(255, 232, 226, 0.65 * intensity);
 				ctx.fill();
 			});
 
@@ -484,11 +501,8 @@ export const createConnectedDotsEffect = ({
 				hero.y,
 				HERO_RADIUS
 			);
-			halo.addColorStop(
-				0,
-				`rgba(255,236,228,${(0.15 * intensity).toFixed(3)})`
-			);
-			halo.addColorStop(1, 'rgba(255,236,228,0)');
+			halo.addColorStop(0, tint(255, 236, 228, 0.15 * intensity));
+			halo.addColorStop(1, tint(255, 236, 228, 0));
 			ctx.fillStyle = halo;
 			ctx.fillRect(
 				hero.x - HERO_RADIUS,

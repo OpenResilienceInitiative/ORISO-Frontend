@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
@@ -516,6 +516,54 @@ export const NormalMessage: Story = {
 	}
 };
 
+export const EndedCall: Story = {
+	name: 'Ended call with durable attendance',
+	parameters: NormalMessage.parameters,
+	args: {
+		...NormalMessage.args,
+		rid: '!conversation:example',
+		callLifecycle: {
+			callId: 'call-story',
+			roomRef: '!conversation:example',
+			callRoomId: '!media:example',
+			state: 'ended',
+			callType: 'video',
+			startedAt: '2026-09-11T09:00:00Z',
+			endedAt: '2026-09-11T09:02:05Z',
+			durationSeconds: 125,
+			participants: [
+				{ userId: '@alex:example', displayName: 'Alex Test' },
+				{ userId: '@sam:example', displayName: 'Sam Test' }
+			]
+		}
+	},
+	play: async ({ canvas, canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		await expect(
+			canvas.getByText(/Videoanruf beendet|Video call ended/)
+		).toBeVisible();
+		const attendance = within(
+			canvas.getByRole('group', { name: /Teilgenommen|Attended/ })
+		);
+		await expect(
+			attendance.getByRole('img', { name: 'Alex Test' })
+		).toBeVisible();
+		await expect(
+			attendance.getByRole('img', { name: 'Sam Test' })
+		).toBeVisible();
+		await expect(attendance.getAllByRole('img')).toHaveLength(2);
+		await expect(
+			attendance.getByText(/(?:Teilgenommen|Attended) · 2/)
+		).toBeVisible();
+		await expect(canvas.getByText(/02:05/)).toBeVisible();
+		await expect(
+			canvasElement.querySelector(
+				'.messageItem__message:not(.messageItem__message--systemNotification)'
+			)
+		).toBeNull();
+	}
+};
+
 export const SystemNotification: Story = {
 	name: 'System notification',
 	parameters: {
@@ -535,11 +583,9 @@ export const SystemNotification: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const avatar = canvasElement.querySelector<HTMLElement>(
-				'.messageItem__avatar--bot'
+				'.carimatMessageFrame__avatar'
 			)!;
-			const title = canvasElement.querySelector<HTMLElement>(
-				'.messageItem__sendFailedTitle'
-			)!;
+			const title = within(canvasElement).getByText('Carimat');
 			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
 				avatar.getBoundingClientRect().right + 8
 			);
@@ -566,6 +612,7 @@ export const CaseHandoverGranted: Story = {
 	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByText('Carimat')).toBeVisible());
 		// Rendered inside the collapsed details panel.
 		await expect(
 			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
@@ -1170,19 +1217,21 @@ export const KebabActiveState: Story = {
 		await waitFor(() => {
 			const active = canvasElement.querySelector(
 				'.messageItem__kebabIconActive'
-			) as SVGElement;
+			) as HTMLElement;
 			expect(active).toBeTruthy();
 
 			const rect = active.getBoundingClientRect();
 			expect(Math.round(rect.width)).toBe(28);
 			expect(Math.round(rect.height)).toBe(32);
 
-			// The dots must stay white — this is the exact bit the blanket
-			// `path { fill: #17191c }` used to clobber.
-			const dots = active.querySelectorAll('path[fill="white"]');
-			expect(dots.length).toBeGreaterThan(0);
+			// The dots must take the pill's on-colour — this is the exact bit
+			// the blanket `path { fill: #17191c }` used to clobber.
+			const dots = active.querySelectorAll('circle');
+			expect(dots.length).toBe(3);
+			const onColour = getComputedStyle(active).color;
 			dots.forEach((dot) => {
-				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+				expect(getComputedStyle(dot).fill).toBe(onColour);
+				expect(getComputedStyle(dot).fill).not.toBe('rgb(23, 25, 28)');
 			});
 		});
 
@@ -1239,17 +1288,19 @@ export const KebabActiveStateOutgoing: Story = {
 		await waitFor(() => {
 			const active = canvasElement.querySelector(
 				'.messageItem__kebabIconActive'
-			) as SVGElement;
+			) as HTMLElement;
 			expect(active).toBeTruthy();
 
 			const rect = active.getBoundingClientRect();
 			expect(Math.round(rect.width)).toBe(28);
 			expect(Math.round(rect.height)).toBe(32);
 
-			const dots = active.querySelectorAll('path[fill="white"]');
-			expect(dots.length).toBeGreaterThan(0);
+			const dots = active.querySelectorAll('circle');
+			expect(dots.length).toBe(3);
+			const onColour = getComputedStyle(active).color;
 			dots.forEach((dot) => {
-				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+				expect(getComputedStyle(dot).fill).toBe(onColour);
+				expect(getComputedStyle(dot).fill).not.toBe('rgb(23, 25, 28)');
 			});
 		});
 
@@ -1505,7 +1556,7 @@ export const ThreadEntryTablet: Story = {
  * side room's timeline. Its `[SYSTEM_NOTIFICATION]` payload carries
  * `type: 'SUPERVISION_NOTICE'`, and that type is what makes
  * `MessageItemComponent` return the **Carimat organism** (`ErstantwortSequence`
- * → `pseudonymCard`) instead of the generic system-notification chrome.
+ * → `CarimatMessageFrame`) instead of the generic system-notification chrome.
  *
  * That was the promise in T49, and until now it could only be seen two levels
  * up — in `Components/Session/SidePanel` "first visit, empty side room" and in
@@ -1576,19 +1627,23 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	expect(
 		notice.querySelector('[data-testid="erstantwort-sequence"]')
 	).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame__avatar')).not.toBeNull();
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
+		notice.querySelector<HTMLElement>('.carimatMessageFrame__name')
 			?.textContent
-	).toBe(SUPERVISION_NOTICE_TITLE);
+	).toBe('Carimat');
+	await waitFor(() =>
+		expect(within(notice).getByText(SUPERVISION_NOTICE_TITLE)).toBeVisible()
+	);
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
+		notice.querySelector<HTMLElement>('.carimatMessageFrame__subtitle')
 			?.textContent
 	).toMatch(/^(Systembenachrichtigung|System Notification)$/);
 	expect(
-		notice.querySelector<HTMLElement>('.pseudonymCard__bubbleText')
-			?.textContent
+		notice.querySelector<HTMLElement>(
+			'.carimatMessageFrame__bubble .erstantwort__body'
+		)?.textContent
 	).toBe(SUPERVISION_NOTICE_TEXT);
 
 	// No generic system-notification chrome: no kebab, no notification bubble
@@ -1611,12 +1666,12 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 
 /** Header labels must clear the entire avatar frame, including its backdrop. */
 const expectReadableCarimatHeader = async (notice: HTMLElement) => {
-	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 	const avatar = notice.querySelector<HTMLElement>(
-		'.pseudonymCard__avatarFrame'
+		'.carimatMessageFrame__avatar'
 	)!;
 	const labels = notice.querySelectorAll<HTMLElement>(
-		'.pseudonymCard__headerName, .pseudonymCard__headerSubtitle'
+		'.carimatMessageFrame__name, .carimatMessageFrame__subtitle'
 	);
 	const originalWidth = card.style.width;
 	const originalMaxWidth = card.style.maxWidth;
@@ -1652,7 +1707,7 @@ export const SupervisionNotice: Story = {
 		userData: mockUserData(),
 		docs: {
 			description: {
-				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `pseudonymCard`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
+				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `CarimatMessageFrame`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
 			}
 		}
 	},
@@ -1715,7 +1770,7 @@ export const SupervisionNoticeAboveMessage: Story = {
 		await expectCarimatNoticeStructure(canvasElement);
 
 		const rows = canvasElement.querySelectorAll(
-			'.messageItem:not(.pseudonymCard)'
+			'.messageItem[data-message-id]'
 		);
 		expect(rows.length).toBe(2);
 		expect(rows[0].classList).toContain('messageItem--supervisionNotice');
@@ -1756,7 +1811,7 @@ export const SupervisionNoticeEmptyRoom: Story = {
 		// No history, so no day pill — and no crash on the empty date.
 		expect(notice.querySelector('.messageDateDivider')).toBeNull();
 		expect(
-			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+			canvasElement.querySelectorAll('.messageItem[data-message-id]')
 				.length
 		).toBe(1);
 	}
@@ -1783,7 +1838,7 @@ export const SupervisionNoticeMobile390: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
-		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 		const shell = notice.parentElement!;
 		await waitFor(() => {
 			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
@@ -2117,7 +2172,7 @@ export const InformationalGrantedForAsker: Story = {
 			'.messageItem__message--systemNotification'
 		)!;
 		const header = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__systemNotificationHeaderText'
+			'.carimatMessageFrame__header'
 		)!;
 		const more = canvas.getByRole('button', {
 			name: /Mehr erfahren|Learn more/
@@ -2145,7 +2200,15 @@ export const InformationalGrantedForAsker: Story = {
 			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
 				copy.getBoundingClientRect().height +
 					more.getBoundingClientRect().height +
-					32
+					bubble
+						.querySelector<HTMLElement>(
+							'.carimatMessageFrame__topic'
+						)!
+						.getBoundingClientRect().height +
+					bubble
+						.querySelector<HTMLElement>('.messageItem__timeRail')!
+						.getBoundingClientRect().height +
+					44
 			);
 		});
 		await userEvent.click(

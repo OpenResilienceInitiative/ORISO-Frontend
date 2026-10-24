@@ -103,7 +103,8 @@ const renderErstantwortMessage = (
 		session = {},
 		agency,
 		timelineMessages,
-		ownEvent = false
+		ownEvent = false,
+		readOnly = false
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
@@ -112,6 +113,7 @@ const renderErstantwortMessage = (
 		agency?: Record<string, unknown>;
 		timelineMessages?: MessageItem[];
 		ownEvent?: boolean;
+		readOnly?: boolean;
 	}
 ) =>
 	render(
@@ -174,6 +176,7 @@ const renderErstantwortMessage = (
 										handleDecryptionErrors={() => {}}
 										handleDecryptionSuccess={() => {}}
 										e2eeParams={mockE2eeParams() as any}
+										readOnly={readOnly}
 									/>
 								)}
 							</ActiveSessionContext.Provider>
@@ -238,7 +241,7 @@ it('offers the regular channels after the frozen FAQ without an optional popup',
 	const choice = screen.getByRole('button', {
 		name: /notificationChoice.both/
 	});
-	expect(faq.tagName).toBe('SUMMARY');
+	expect(faq.closest('summary')).not.toBeNull();
 	expect(
 		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy();
@@ -627,70 +630,83 @@ describe('initial acceptance is its own persisted chat event', () => {
 });
 
 it('keeps initial acceptance in the real chronological message rail on remount, with one notice and no invented first-response action', () => {
-	const message = (id: string, time: number, body: string) =>
-		({
-			...mockMessageItemComponentProps({
-				message: body,
-				messageTime: String(time),
-				t: null
-			}),
-			_id: id
-		}) as MessageItem;
-	const timelineMessages = [
-		message('enquiry', 1, 'Original enquiry'),
-		message(
-			'acceptance',
-			2,
-			'[SYSTEM_NOTIFICATION]' +
-				JSON.stringify({
-					type: 'INQUIRY_ACCEPTED',
-					acceptance: {
-						sessionId: 73,
-						acceptedAt: '2026-10-09T10:20:00Z'
-					},
-					description: 'Accepted in the timeline'
-				})
-		),
-		message('answer', 3, 'The later answer')
-	];
-	const setup = () =>
-		renderErstantwortMessage(tenantWith(true), {
-			timelineMessages,
-			session: { id: 73, status: 2 },
-			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] }
-		});
-	let result = setup();
-	const check = () => {
-		const rows = [...result.container.querySelectorAll('.messageItem')];
-		expect(rows.map((row) => row.textContent)).toEqual([
-			expect.stringContaining('Original enquiry'),
-			expect.stringContaining(
-				'notifications.events.inquiryAccepted.text'
+	const diagnostics = vi.spyOn(console, 'error');
+	try {
+		const message = (id: string, time: number, body: string) =>
+			({
+				...mockMessageItemComponentProps({
+					message: body,
+					messageTime: String(time),
+					t: null
+				}),
+				_id: id
+			}) as MessageItem;
+		const timelineMessages = [
+			message('enquiry', 1, 'Original enquiry'),
+			message(
+				'acceptance',
+				2,
+				'[SYSTEM_NOTIFICATION]' +
+					JSON.stringify({
+						type: 'INQUIRY_ACCEPTED',
+						acceptance: {
+							sessionId: 73,
+							acceptedAt: '2026-10-09T10:20:00Z'
+						},
+						description: 'Accepted in the timeline'
+					})
 			),
-			expect.stringContaining('The later answer')
-		]);
+			message('answer', 3, 'The later answer')
+		];
+		const setup = () =>
+			renderErstantwortMessage(tenantWith(true), {
+				timelineMessages,
+				session: { id: 73, status: 2 },
+				account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] }
+			});
+		let result = setup();
+		const check = () => {
+			const rows = [...result.container.querySelectorAll('.messageItem')];
+			expect(rows.map((row) => row.textContent)).toEqual([
+				expect.stringContaining('Original enquiry'),
+				expect.stringContaining(
+					'notifications.events.inquiryAccepted.text'
+				),
+				expect.stringContaining('The later answer')
+			]);
+			expect(
+				screen.getAllByRole('button', {
+					name: 'caseHandover.consent.info.more'
+				})
+			).toHaveLength(1);
+			expect(
+				result.container.querySelectorAll(
+					'.messageItem__message--systemNotification'
+				)
+			).toHaveLength(1);
+		};
+		check();
+		result.unmount();
+		result = setup();
+		check();
 		expect(
-			screen.getAllByRole('button', {
-				name: 'caseHandover.consent.info.more'
-			})
-		).toHaveLength(1);
+			result.container.querySelector('[topicicon], [topic], [variant]')
+		).toBeNull();
 		expect(
-			result.container.querySelectorAll(
-				'.messageItem__message--systemNotification'
+			diagnostics.mock.calls.some((args) =>
+				args.map(String).join(' ').includes('topicIcon')
 			)
-		).toHaveLength(1);
-	};
-	check();
-	result.unmount();
-	result = setup();
-	check();
+		).toBe(false);
+	} finally {
+		diagnostics.mockRestore();
+	}
 });
 
 it.each([
 	['CO_ACCESS', 'caseHandover.consent.info.noticeTitle'],
 	['TAKEOVER', 'caseHandover.systemMessage.tookOverTitle']
 ])(
-	'names the immutable %s grant correctly in the real message header',
+	'names the immutable %s grant correctly in its recorded access topic',
 	(accessType, expectedTitle) => {
 		const result = renderErstantwortMessage(tenantWith(true), {
 			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
@@ -707,14 +723,15 @@ it.each([
 					}
 				})
 		});
-		const header = result.container.querySelector(
-			'.messageItem__systemNotificationHeaderText'
-		);
-		expect(header?.textContent).toContain(expectedTitle);
+		const message = within(result.container);
+		expect(message.getByText(expectedTitle)).toBeTruthy();
+		expect(
+			message.getByText('The recorded access was granted.')
+		).toBeTruthy();
 		if (accessType === 'CO_ACCESS')
-			expect(header?.textContent).not.toContain(
-				'caseHandover.systemMessage.tookOverTitle'
-			);
+			expect(
+				message.queryByText('caseHandover.systemMessage.tookOverTitle')
+			).toBeNull();
 	}
 );
 
@@ -756,5 +773,152 @@ describe('a takeover notice is a system message for its sender too (#1188)', () 
 		});
 
 		expect(container.querySelector('.messageItem--right')).toBeTruthy();
+	});
+});
+
+describe('stored notice text frozen in the session language (#1844)', () => {
+	const notice = (payload: Record<string, unknown>) =>
+		'[SYSTEM_NOTIFICATION]' + JSON.stringify(payload);
+	const accepted = notice({
+		type: 'INQUIRY_ACCEPTED',
+		description:
+			'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.',
+		acceptance: { sessionId: 73, acceptedAt: '2026-10-09T10:20:00Z' }
+	});
+	const takeover = notice({
+		type: 'CASE_HANDOVER_GRANTED',
+		username: 'Maggie',
+		description: 'Während der Abwesenheit übernimmt Maggie deine Beratung.',
+		handover: {
+			requestId: 7,
+			clientConsent: 'NONE',
+			accessType: 'TAKEOVER'
+		}
+	});
+
+	it('words the acceptance in the counsellor language too', () => {
+		renderErstantwortMessage(tenantWith(true), {
+			raw: accepted,
+			session: { id: 73, status: 2 },
+			account: { grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT] }
+		});
+		expect(
+			screen.getByText('notifications.events.inquiryAccepted.text')
+		).toBeTruthy();
+		expect(screen.queryByText(/Die Anfrage wurde angenommen/)).toBeNull();
+	});
+
+	it.each([AUTHORITIES.ASKER_DEFAULT, AUTHORITIES.CONSULTANT_DEFAULT])(
+		'words the takeover body in the viewer language for %s',
+		(authority) => {
+			renderErstantwortMessage(tenantWith(true), {
+				raw: takeover,
+				session: { id: 73, status: 2 },
+				account: { grantedAuthorities: [authority] }
+			});
+			expect(
+				screen.getByText('caseHandover.systemMessage.tookOverBody')
+			).toBeTruthy();
+			expect(screen.queryByText(/Während der Abwesenheit/)).toBeNull();
+		}
+	);
+
+	it('keeps the stored co-access text, which names the granted duration', () => {
+		renderErstantwortMessage(tenantWith(true), {
+			raw: notice({
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Maggie',
+				description: 'Maggie can read this session for 4 hours.',
+				handover: {
+					requestId: 7,
+					clientConsent: 'OPT_IN',
+					accessType: 'CO_ACCESS'
+				}
+			}),
+			session: { id: 73, status: 2 },
+			account: { grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT] }
+		});
+		expect(
+			screen.getByText('Maggie can read this session for 4 hours.')
+		).toBeTruthy();
+	});
+});
+
+/* #420: the Activity Timeline preview renders these rows read-only. Their text
+   must stay in the accessibility tree (no `inert` around it); only the write
+   controls go. */
+describe('read-only preview keeps the cards readable, without their controls', () => {
+	const expectReadable = (text: string) => {
+		const node = screen.getByText(text);
+		expect(node.closest('[inert]')).toBeNull();
+		expect(node.closest('[aria-hidden="true"]')).toBeNull();
+	};
+
+	it('shows the Erstantwort text, but no action or notification-setup buttons', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			readOnly: true
+		});
+		expectReadable(GREETING_BAUSTEIN_BODY);
+		expectReadable(EMAIL_BAUSTEIN_BODY);
+		expectReadable('Wer liest meine Nachricht?');
+		expect(
+			screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+		).toBeNull();
+		expect(
+			result.container.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		expect(result.container.querySelector('[inert]')).toBeNull();
+	});
+
+	it('shows the case-handover notice text, but no settings button', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			readOnly: true,
+			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+			session: { id: 73, status: 2 },
+			raw:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'CASE_HANDOVER_GRANTED',
+					description: 'Access has been granted.',
+					handover: {
+						requestId: 42,
+						clientConsent: 'OPT_IN',
+						accessType: 'TAKEOVER'
+					}
+				})
+		});
+		expectReadable('Access has been granted.');
+		expect(
+			screen.queryByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		).toBeNull();
+		expect(result.container.querySelector('[inert]')).toBeNull();
+	});
+
+	it('shows the acceptance notice text, but no settings button', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			readOnly: true,
+			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+			session: { id: 73, status: 2 },
+			raw:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'INQUIRY_ACCEPTED',
+					username: 'public-counsellor',
+					description: 'Your enquiry was accepted.',
+					acceptance: {
+						sessionId: 73,
+						acceptedAt: '2026-10-09T10:20:00Z'
+					}
+				})
+		});
+		expectReadable('notifications.events.inquiryAccepted.text');
+		expect(
+			screen.queryByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		).toBeNull();
+		expect(result.container.querySelector('[inert]')).toBeNull();
 	});
 });

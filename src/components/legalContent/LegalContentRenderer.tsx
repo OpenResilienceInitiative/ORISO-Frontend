@@ -35,7 +35,8 @@ export const LegalContentRenderer = ({
 	className,
 	language
 }: LegalContentRendererProps) => {
-	const { t, i18n } = useTranslation();
+	const { t: ambientT, i18n } = useTranslation();
+	const t = language ? i18n.getFixedT(language) : ambientT;
 	const [showOriginal, setShowOriginal] = useState(false);
 
 	const uiLang = normalizeLegalLang(language ?? i18n?.language);

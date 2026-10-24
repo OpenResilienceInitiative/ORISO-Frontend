@@ -241,7 +241,13 @@ export const AcceptAssign = ({
 				} else if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {
-					// console.log(error);
+					// Never leave the counsellor on a silently failed accept (#1799).
+					console.error('Accepting the enquiry failed', error);
+					setOverlayItem({
+						...enquiryTakenByOtherConsultantOverlayItem,
+						headline: translate('error.statusCodes.500.headline'),
+						copy: 'error.statusCodes.500.description'
+					});
 				}
 			});
 	};

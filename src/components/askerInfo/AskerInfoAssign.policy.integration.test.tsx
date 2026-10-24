@@ -13,6 +13,7 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
 import { endpoints } from '../../resources/scripts/endpoints';
+import english from '../../resources/i18n/en/common.json';
 import { AskerInfoAssign } from './AskerInfoAssign';
 
 // Replace only the external animation library and HTTP server; the form,
@@ -20,9 +21,10 @@ import { AskerInfoAssign } from './AskerInfoAssign';
 vi.mock('lottie-react', () => ({ default: () => null }));
 
 const translations = createInstance().use(initReactI18next);
+// #1844: a Träger-stored label in German; the English UI must not show it.
 const selectedReason = {
 	code: 'UNPLANNED_ABSENCE',
-	label: 'Unplanned absence',
+	label: 'Ausfall',
 	clientConsentRequired: false,
 	accessAllowed: true
 };
@@ -59,7 +61,13 @@ beforeEach(async () => {
 	await translations.init({
 		lng: 'en',
 		fallbackLng: 'en',
-		resources: { en: { translation: {} } }
+		resources: {
+			en: {
+				translation: {
+					caseHandover: { reason: english.caseHandover.reason }
+				}
+			}
+		}
 	});
 });
 afterEach(() => {
@@ -94,7 +102,7 @@ describe('owner handover form with the real API and dialog', () => {
 					},
 					{
 						code: 'PLANNED_ABSENCE',
-						label: 'Planned absence',
+						label: 'Freistellung',
 						clientConsentRequired: false
 					}
 				]);
