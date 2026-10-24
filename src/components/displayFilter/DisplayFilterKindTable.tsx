@@ -1,5 +1,7 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import { Tooltip } from '@mui/material';
+import { useResponsive } from '../../hooks/useResponsive';
 import { M3Checkbox } from '../M3Checkbox';
 import {
 	DisplayFilterKindOption,
@@ -11,7 +13,7 @@ import {
 	resolveKindSetting,
 	setKindSetting
 } from './displayFilterTypes';
-import { KindOptionPicker } from './KindOptionPicker';
+import { KindOption, KindOptionPicker } from './KindOptionPicker';
 import { NOTIFICATION_TONE_IDS } from '../../utils/notificationSettings/model';
 import type { SoundId } from '../../utils/notificationSettings/model';
 import { previewNotificationSound } from '../../utils/notificationSettings/soundPlayback';
@@ -21,6 +23,8 @@ import './displayFilter.styles.scss';
 
 /** Tones offered per kind (Frank 2026-09-16: 15 entries were too many). */
 const KIND_TONE_MENU_SIZE = 6;
+
+const AREA_DEFAULT = '__default';
 
 /** The strings of the kind table, already translated. */
 export interface DisplayFilterKindTableLabels {
@@ -50,7 +54,82 @@ export interface DisplayFilterKindTableLabels {
 	deactivatedHint: string;
 	/** Row hint of an announced, not yet wired kind. */
 	placeholderHint: string;
+	/** Visible title of the first column ("Art"). */
+	kindColumn: string;
+	/** Browser menu: caption over the tones, the silent pop-up and its line. */
+	soundWithTone: string;
+	soundSilent: string;
+	soundSilentDescription: string;
+	/** "E-Mail" column, its picker names and the unavailable cell. */
+	emailColumn: string;
+	emailKind: (kindLabel: string) => string;
+	emailMenu: (kindLabel: string) => string;
+	emailUnavailableReason: string;
+	/** "nicht verfügbar" — the unavailable cell of the Browser and E-Mail columns. */
+	channelUnavailable: string;
 }
+
+/**
+ * The E-Mail column (FE#1377 redesign): each kind reads and writes a stored
+ * e-mail preference of the profile, or has none (`null` → "nicht verfügbar").
+ */
+export interface DisplayFilterEmailColumn {
+	cell: (kindId: string) => { checked: boolean } | null;
+	onChange: (kindId: string, next: boolean) => void;
+	/** Replaces the unavailable cell's reason, e.g. no e-mail address yet. */
+	unavailableReason?: string;
+}
+
+/**
+ * The E-Mail menu's options, in one place: today the stored settings are
+ * on/off only. Delivery modes (e.g. "only when unread after 5 minutes") get
+ * their entries here once a stored setting can express them.
+ */
+export const emailOptions = (labels: {
+	pillOn: string;
+	pillOff: string;
+}): KindOption[] => [
+	{ id: 'on', label: labels.pillOn },
+	{ id: 'off', label: labels.pillOff }
+];
+
+/**
+ * The Browser menu's options: the area default and the tones (pop-up with a
+ * sound), then — after a divider — the pop-up without sound (`'none'`). A
+ * per-kind "no pop-up at all" is not offered: the banner is not gated per
+ * kind, so no stored setting could hold it.
+ */
+export const browserOptions = (
+	labels: Pick<
+		DisplayFilterKindTableLabels,
+		| 'soundDefault'
+		| 'soundRing'
+		| 'soundTone'
+		| 'soundMuted'
+		| 'soundSilent'
+		| 'soundSilentDescription'
+	>,
+	storedTone: string | undefined
+): KindOption[] => [
+	{ id: AREA_DEFAULT, label: labels.soundDefault },
+	{ id: 'ring', label: labels.soundRing },
+	// Frank 2026-09-16: a shorter menu — the first six tones, plus
+	// whatever is already stored.
+	...NOTIFICATION_TONE_IDS.map((id, index) => ({
+		id,
+		label: labels.soundTone(index + 1)
+	})).filter(
+		(option, index) =>
+			index < KIND_TONE_MENU_SIZE || option.id === storedTone
+	),
+	{
+		id: 'none',
+		label: labels.soundSilent,
+		description: labels.soundSilentDescription,
+		selectedLabel: labels.soundMuted,
+		dividerBefore: true
+	}
+];
 
 export interface DisplayFilterKindTableProps {
 	kinds: ReadonlyArray<DisplayFilterKindOption>;
@@ -64,9 +143,16 @@ export interface DisplayFilterKindTableProps {
 	dataCyPrefix?: string;
 	/** Which per-kind columns to render; default: show + pill (Zeitstrahl). */
 	columns?: { show: boolean; sound: boolean };
+	/** Adds the E-Mail column; omitted, the table has none. */
+	email?: DisplayFilterEmailColumn;
+	/** Set while no pop-up can show: Browser cells are unavailable, with this reason. */
+	browserUnavailableReason?: string;
+	/**
+	 * `quick`: the filter-only buttons (Ungelesen, Entwürfe, …) — a name and
+	 * the "Im Filter" picker, nothing else.
+	 */
+	variant?: 'kinds' | 'quick';
 }
-
-const AREA_DEFAULT = '__default';
 
 /**
  * The column title repeated inside each cell. Hidden on desktop, where the
@@ -81,12 +167,58 @@ const CellLabel = ({ children }: { children: string }) => (
 );
 
 /**
- * One row per kind (#1377 spec §3, reshaped 2026-09-16 with Frank): the
- * Zeitstrahl offers **In der Liste** + **Anzeigen**; Gespräche and Anfragen
- * offer **Ton** + **Anzeigen**. Both Ton and Anzeigen are small split-button
- * pickers of one width (An/Aus; live chat Dynamisch/Fest/Aus; tones). Archiv
- * is pill-only, Termine a greyed placeholder, Sonstiges explains itself in a
- * tooltip. No divider lines — the rows breathe instead.
+ * "nicht verfügbar" and its reason. Phone: the reason is visible secondary
+ * text, no focus stop. Desktop: the compact pill, the reason visually
+ * hidden but reachable — a focus stop with a tooltip on hover, focus and
+ * tap. Either way screen readers read the reason once, from the cell's own
+ * text: the tooltip adds no label or description.
+ */
+const UnavailableCell = ({
+	label,
+	reason,
+	dataCy
+}: {
+	label: string;
+	reason: string;
+	dataCy: string;
+}) => {
+	const { fromM } = useResponsive();
+	const cell = (
+		<span
+			className="displayFilterDialog__unavailable"
+			data-cy={dataCy}
+			tabIndex={fromM ? 0 : undefined}
+			// Override what Tooltip would add: the reason is already text.
+			aria-describedby={undefined}
+			title={undefined}
+		>
+			<span className="displayFilterDialog__unavailableLabel">
+				{label}
+				<span className="sr-only">.</span>
+			</span>{' '}
+			<span className="displayFilterDialog__unavailableReason">
+				{reason}
+			</span>
+		</span>
+	);
+	return fromM ? (
+		<Tooltip title={reason} describeChild enterTouchDelay={0}>
+			{cell}
+		</Tooltip>
+	) : (
+		cell
+	);
+};
+
+/**
+ * One row per kind (#1377 spec §3; redesign 2026-10-15 with Frank). Columns
+ * in this order, each only where the area has it: **In der Liste** (rows of
+ * the kind appear, Zeitstrahl), **Im Filter** (a filter button above the
+ * list), **Browser** (pop-up on this device, with a tone or silent;
+ * Gespräche/Anfragen) and **E-Mail** (the profile's stored e-mail notice).
+ * Every choice is the same small split-button picker. Archiv-like kinds
+ * with only a filter button use the `quick` variant. Sonstiges explains
+ * itself in a tooltip, Termine is a greyed placeholder.
  */
 export const DisplayFilterKindTable = ({
 	kinds,
@@ -96,223 +228,247 @@ export const DisplayFilterKindTable = ({
 	labels,
 	idPrefix,
 	dataCyPrefix = 'display-filter',
-	columns = { show: true, sound: false }
-}: DisplayFilterKindTableProps) => (
-	<table className="displayFilterDialog__table">
-		<thead>
-			<tr>
-				<th scope="col" className="displayFilterDialog__kindHead">
-					<span className="sr-only">{labels.title}</span>
-				</th>
-				{columns.show && (
-					<th scope="col" className="displayFilterDialog__colHead">
-						{labels.showColumn}
+	columns = { show: true, sound: false },
+	email,
+	browserUnavailableReason,
+	variant = 'kinds'
+}: DisplayFilterKindTableProps) => {
+	const quick = variant === 'quick';
+	const showColumn = columns.show && !quick;
+	const soundColumn = columns.sound && !quick;
+	const emailColumn = Boolean(email) && !quick;
+	return (
+		<table
+			className={clsx(
+				'displayFilterDialog__table',
+				quick && 'displayFilterDialog__table--quick'
+			)}
+		>
+			<thead className={clsx(quick && 'sr-only')}>
+				<tr>
+					<th scope="col" className="displayFilterDialog__kindHead">
+						{labels.kindColumn}
 					</th>
-				)}
-				{columns.sound && (
+					{showColumn && (
+						<th
+							scope="col"
+							className="displayFilterDialog__colHead"
+						>
+							{labels.showColumn}
+						</th>
+					)}
 					<th
 						scope="col"
 						className="displayFilterDialog__colHead displayFilterDialog__colHead--picker"
 					>
-						{labels.soundColumn}
+						{labels.pillColumn}
 					</th>
-				)}
-				<th
-					scope="col"
-					className="displayFilterDialog__colHead displayFilterDialog__colHead--picker"
-				>
-					{labels.pillColumn}
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			{kinds
-				// A show-only kind gates a panel: without the show column it has
-				// no control left, so the row is omitted (Gespräche/Anfragen).
-				.filter((kind) => columns.show || !kind.showOnly)
-				.map((kind) => {
-					const setting = resolveKindSetting(value, kind.id);
-					const isOther = kind.id === OTHER_KIND_ID;
-					// Träger switched the format off, rows still exist: keep the
-					// kind visible and its controls locked so nothing vanishes
-					// silently; the hint explains and the chip's click does too.
-					const deactivated = kind.availability === 'deactivated';
-					const placeholder = Boolean(kind.placeholder);
-					const locked = readOnly || deactivated || placeholder;
-					const hint = deactivated
-						? labels.deactivatedHint
-						: placeholder
-							? labels.placeholderHint
-							: null;
-					// Sonstiges keeps its explanation for assistive tech (sr-only,
-					// linked from the locked checkbox) and as a tooltip; visually
-					// the row stays one line (Frank 2026-09-16: compact).
-					const hintId = hint
-						? `${idPrefix}-${kind.id}-hint`
-						: isOther
-							? `${idPrefix}-other-fixed`
-							: undefined;
-					const Icon = kind.icon;
-					const tone = kindSoundOverride(value, kind.id);
-					const muted = isKindMuted(value, kind.id);
-					const pillValue = !setting.pill
-						? 'off'
-						: kind.modes
-							? kindPillMode(value, kind.id)
-							: 'on';
-					return (
-						<tr
-							key={kind.id}
-							className={clsx(
-								'displayFilterDialog__row',
-								!setting.show &&
-									'displayFilterDialog__row--hidden',
-								deactivated &&
-									'displayFilterDialog__row--deactivated',
-								placeholder &&
-									'displayFilterDialog__row--placeholder'
-							)}
-							data-cy={`${dataCyPrefix}-row-${kind.id}`}
+					{soundColumn && (
+						<th
+							scope="col"
+							className="displayFilterDialog__colHead displayFilterDialog__colHead--picker displayFilterDialog__colHead--sound"
 						>
-							<th
-								scope="row"
-								className="displayFilterDialog__kind"
-							>
-								{Icon && (
-									<Icon
-										className="displayFilterDialog__kindIcon"
-										aria-hidden="true"
-									/>
+							{labels.soundColumn}
+						</th>
+					)}
+					{emailColumn && (
+						<th
+							scope="col"
+							className="displayFilterDialog__colHead displayFilterDialog__colHead--picker"
+						>
+							{labels.emailColumn}
+						</th>
+					)}
+				</tr>
+			</thead>
+			<tbody>
+				{kinds
+					// A show-only kind gates a panel: without the show column it
+					// has no control left, so the row is omitted (Gespräche/Anfragen).
+					.filter((kind) => showColumn || !kind.showOnly)
+					.map((kind) => {
+						const setting = resolveKindSetting(value, kind.id);
+						const isOther = kind.id === OTHER_KIND_ID;
+						// Träger switched the format off, rows still exist: keep
+						// the kind visible and its controls locked so nothing
+						// vanishes silently; the hint explains, the chip too.
+						const deactivated = kind.availability === 'deactivated';
+						const placeholder = Boolean(kind.placeholder);
+						const locked = readOnly || deactivated || placeholder;
+						const hint = deactivated
+							? labels.deactivatedHint
+							: placeholder
+								? labels.placeholderHint
+								: null;
+						// Sonstiges keeps its explanation for assistive tech
+						// (sr-only, linked from the locked checkbox) and as a
+						// tooltip; visually the row stays one line.
+						const hintId = hint
+							? `${idPrefix}-${kind.id}-hint`
+							: isOther
+								? `${idPrefix}-other-fixed`
+								: undefined;
+						const Icon = kind.icon;
+						const tone = kindSoundOverride(value, kind.id);
+						const muted = isKindMuted(value, kind.id);
+						const pillValue = !setting.pill
+							? 'off'
+							: kind.modes
+								? kindPillMode(value, kind.id)
+								: 'on';
+						const emailCell = emailColumn
+							? email!.cell(kind.id)
+							: null;
+						return (
+							<tr
+								key={kind.id}
+								className={clsx(
+									'displayFilterDialog__row',
+									!setting.show &&
+										'displayFilterDialog__row--hidden',
+									deactivated &&
+										'displayFilterDialog__row--deactivated',
+									placeholder &&
+										'displayFilterDialog__row--placeholder'
 								)}
-								<span className="displayFilterDialog__kindText">
-									<span
-										title={
-											isOther
-												? labels.otherFixed
-												: undefined
-										}
-									>
-										{kind.label}
-									</span>
-									{hint && (
-										<span
-											className="displayFilterDialog__kindHint"
-											id={hintId}
-										>
-											{hint}
-										</span>
-									)}
-									{isOther && (
-										<span className="sr-only" id={hintId}>
-											{labels.otherFixed}
-										</span>
-									)}
-								</span>
-							</th>
-							{columns.show && (
-								<td className="displayFilterDialog__cell">
-									<CellLabel>{labels.showColumn}</CellLabel>
-									<M3Checkbox
-										checked={setting.show}
-										indeterminate={Boolean(
-											setting.show && kind.partial
-										)}
-										disabled={locked || isOther}
-										describedBy={hintId}
-										hideLabel
-										label={labels.showKind(kind.label)}
-										dataCy={`${dataCyPrefix}-show-${kind.id}`}
-										onChange={(checked) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													show: checked
-												})
-											)
-										}
-									/>
-								</td>
-							)}
-							{columns.sound && (
-								<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
-									<CellLabel>{labels.soundColumn}</CellLabel>
-									{kind.pillOnly || kind.showOnly ? (
-										<span
-											className="displayFilterDialog__noPill"
+								data-cy={`${dataCyPrefix}-row-${kind.id}`}
+							>
+								<th
+									scope="row"
+									className="displayFilterDialog__kind"
+								>
+									{Icon && (
+										<Icon
+											className="displayFilterDialog__kindIcon"
 											aria-hidden="true"
+										/>
+									)}
+									<span className="displayFilterDialog__kindText">
+										<span
+											className="displayFilterDialog__kindName"
+											title={
+												isOther
+													? labels.otherFixed
+													: undefined
+											}
 										>
-											–
+											{kind.label}
 										</span>
+										{hint && (
+											<span
+												className="displayFilterDialog__kindHint"
+												id={hintId}
+											>
+												{hint}
+											</span>
+										)}
+										{isOther && (
+											<span
+												className="sr-only"
+												id={hintId}
+											>
+												{labels.otherFixed}
+											</span>
+										)}
+									</span>
+								</th>
+								{showColumn && (
+									<td className="displayFilterDialog__cell">
+										<CellLabel>
+											{labels.showColumn}
+										</CellLabel>
+										<M3Checkbox
+											checked={setting.show}
+											indeterminate={Boolean(
+												setting.show && kind.partial
+											)}
+											disabled={locked || isOther}
+											describedBy={hintId}
+											hideLabel
+											label={labels.showKind(kind.label)}
+											dataCy={`${dataCyPrefix}-show-${kind.id}`}
+											onChange={(checked) =>
+												onChange(
+													setKindSetting(
+														value,
+														kind.id,
+														{ show: checked }
+													)
+												)
+											}
+										/>
+									</td>
+								)}
+								<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
+									<CellLabel>{labels.pillColumn}</CellLabel>
+									{kind.showOnly ? (
+										<>
+											<span
+												className="displayFilterDialog__noPill"
+												aria-hidden="true"
+											>
+												–
+											</span>
+											<span className="sr-only">
+												{labels.pillNotApplicable}
+											</span>
+										</>
 									) : (
 										<KindOptionPicker
-											options={[
-												{
-													id: AREA_DEFAULT,
-													label: labels.soundDefault
-												},
-												{
-													id: 'ring',
-													label: labels.soundRing
-												},
-												// Frank 2026-09-16: a shorter menu — the first
-												// six tones, plus whatever is already stored.
-												...NOTIFICATION_TONE_IDS.map(
-													(id, index) => ({
-														id,
-														label: labels.soundTone(
-															index + 1
-														)
-													})
-												).filter(
-													(option, index) =>
-														index <
-															KIND_TONE_MENU_SIZE ||
-														option.id === tone
-												),
-												{
-													id: 'none',
-													label: labels.soundMuted
-												}
-											]}
-											selected={tone ?? AREA_DEFAULT}
-											icon={
-												muted ? (
-													<MutedIcon />
-												) : (
-													<PlayIcon />
-												)
+											options={
+												kind.modes
+													? [
+															{
+																id: 'dynamic',
+																label: labels.liveChatDynamic
+															},
+															{
+																id: 'session',
+																label: labels.liveChatSession
+															},
+															{
+																id: 'fixed',
+																label: labels.liveChatFixed
+															},
+															{
+																id: 'off',
+																label: labels.pillOff
+															}
+														]
+													: [
+															{
+																id: 'on',
+																label: labels.pillOn
+															},
+															{
+																id: 'off',
+																label: labels.pillOff
+															}
+														]
 											}
-											mainLabel={labels.soundKind(
+											selected={pillValue}
+											mainLabel={labels.pillKind(
 												kind.label
 											)}
-											menuLabel={labels.soundMenu(
+											menuLabel={labels.pillMenu(
 												kind.label
 											)}
-											disabled={locked}
+											disabled={locked || !setting.show}
 											className="displayFilterDialog__picker"
-											dataCy={`${dataCyPrefix}-sound-${kind.id}`}
-											mainDisabled={muted}
-											onMain={() =>
-												previewNotificationSound(
-													// "Standard" inherits the area
-													// sound, which this table cannot
-													// resolve: preview the built-in
-													// notification sound instead.
-													(tone ??
-														'chime') as SoundId,
-													0.8
-												)
-											}
+											dataCy={`${dataCyPrefix}-pill-${kind.id}`}
 											onSelect={(id) =>
 												onChange(
 													setKindSetting(
 														value,
 														kind.id,
 														{
-															sound:
+															pill: id !== 'off',
+															pillMode:
 																id ===
-																AREA_DEFAULT
-																	? undefined
-																	: (id as SoundId)
+																	'session' ||
+																id === 'fixed'
+																	? id
+																	: 'dynamic'
 														}
 													)
 												)
@@ -320,78 +476,136 @@ export const DisplayFilterKindTable = ({
 										/>
 									)}
 								</td>
-							)}
-							<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
-								<CellLabel>{labels.pillColumn}</CellLabel>
-								{kind.showOnly ? (
-									<>
-										<span
-											className="displayFilterDialog__noPill"
-											aria-hidden="true"
-										>
-											–
-										</span>
-										<span className="sr-only">
-											{labels.pillNotApplicable}
-										</span>
-									</>
-								) : (
-									<KindOptionPicker
-										options={
-											kind.modes
-												? [
-														{
-															id: 'dynamic',
-															label: labels.liveChatDynamic
-														},
-														{
-															id: 'session',
-															label: labels.liveChatSession
-														},
-														{
-															id: 'fixed',
-															label: labels.liveChatFixed
-														},
-														{
-															id: 'off',
-															label: labels.pillOff
-														}
-													]
-												: [
-														{
-															id: 'on',
-															label: labels.pillOn
-														},
-														{
-															id: 'off',
-															label: labels.pillOff
-														}
-													]
-										}
-										selected={pillValue}
-										mainLabel={labels.pillKind(kind.label)}
-										menuLabel={labels.pillMenu(kind.label)}
-										disabled={locked || !setting.show}
-										className="displayFilterDialog__picker"
-										dataCy={`${dataCyPrefix}-pill-${kind.id}`}
-										onSelect={(id) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													pill: id !== 'off',
-													pillMode:
-														id === 'session' ||
-														id === 'fixed'
-															? id
-															: 'dynamic'
-												})
-											)
-										}
-									/>
+								{soundColumn && (
+									<td className="displayFilterDialog__cell displayFilterDialog__cell--picker displayFilterDialog__cell--sound">
+										<CellLabel>
+											{labels.soundColumn}
+										</CellLabel>
+										{kind.pillOnly || kind.showOnly ? (
+											<span
+												className="displayFilterDialog__noPill"
+												aria-hidden="true"
+											>
+												–
+											</span>
+										) : browserUnavailableReason ? (
+											// Same unavailable cell as E-Mail:
+											// no pop-up can show, so no choice.
+											<UnavailableCell
+												label={
+													labels.channelUnavailable
+												}
+												reason={
+													browserUnavailableReason
+												}
+												dataCy={`${dataCyPrefix}-sound-${kind.id}-unavailable`}
+											/>
+										) : (
+											<KindOptionPicker
+												options={browserOptions(
+													labels,
+													tone
+												)}
+												groupLabel={
+													labels.soundWithTone
+												}
+												selected={tone ?? AREA_DEFAULT}
+												icon={
+													muted ? (
+														<MutedIcon />
+													) : (
+														<PlayIcon />
+													)
+												}
+												mainLabel={labels.soundKind(
+													kind.label
+												)}
+												menuLabel={labels.soundMenu(
+													kind.label
+												)}
+												disabled={locked}
+												className="displayFilterDialog__picker displayFilterDialog__picker--sound"
+												dataCy={`${dataCyPrefix}-sound-${kind.id}`}
+												mainDisabled={muted}
+												onMain={() =>
+													previewNotificationSound(
+														// "Standard" inherits the area
+														// sound, which this table
+														// cannot resolve: preview the
+														// built-in sound instead.
+														(tone ??
+															'chime') as SoundId,
+														0.8
+													)
+												}
+												onSelect={(id) =>
+													onChange(
+														setKindSetting(
+															value,
+															kind.id,
+															{
+																sound:
+																	id ===
+																	AREA_DEFAULT
+																		? undefined
+																		: (id as SoundId)
+															}
+														)
+													)
+												}
+											/>
+										)}
+									</td>
 								)}
-							</td>
-						</tr>
-					);
-				})}
-		</tbody>
-	</table>
-);
+								{emailColumn && (
+									<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
+										<CellLabel>
+											{labels.emailColumn}
+										</CellLabel>
+										{emailCell ? (
+											<KindOptionPicker
+												options={emailOptions(labels)}
+												selected={
+													emailCell.checked
+														? 'on'
+														: 'off'
+												}
+												mainLabel={labels.emailKind(
+													kind.label
+												)}
+												menuLabel={labels.emailMenu(
+													kind.label
+												)}
+												// Only read-only locks it: the cell is a
+												// profile setting, live on placeholder kinds.
+												disabled={readOnly}
+												className="displayFilterDialog__picker"
+												dataCy={`${dataCyPrefix}-email-${kind.id}`}
+												onSelect={(id) =>
+													email!.onChange(
+														kind.id,
+														id === 'on'
+													)
+												}
+											/>
+										) : (
+											<UnavailableCell
+												label={
+													labels.channelUnavailable
+												}
+												reason={
+													email?.unavailableReason ??
+													labels.emailUnavailableReason
+												}
+												dataCy={`${dataCyPrefix}-email-${kind.id}-unavailable`}
+											/>
+										)}
+									</td>
+								)}
+							</tr>
+						);
+					})}
+			</tbody>
+		</table>
+	);
+};

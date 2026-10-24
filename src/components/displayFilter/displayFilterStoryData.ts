@@ -41,28 +41,28 @@ export const TIMELINE_KINDS: DisplayFilterKindOption[] = [
 export const STORY_LABELS: DisplayFilterDialogLabels = {
 	title: 'Ansicht · Zeitstrahl',
 	description:
-		'Welche Arten diese Liste zeigt, welche eine Pille bekommen und wie sie klingen.',
+		'Legen Sie für jede Art fest, ob sie in der Liste erscheint, einen Filter-Knopf bekommt und ob Sie eine E-Mail erhalten.',
 	showColumn: 'In der Liste',
-	pillColumn: 'Anzeigen',
+	pillColumn: 'Im Filter',
 	showKind: (kind) => `In der Liste: ${kind}`,
-	soundColumn: 'Ton',
+	soundColumn: 'Browser',
 	soundKind: (kind) => `Ton anhören: ${kind}`,
-	soundMenu: (kind) => `Ton wählen: ${kind}`,
+	soundMenu: (kind) => `Browser-Benachrichtigung: ${kind}`,
 	soundDefault: 'Standard',
 	soundRing: 'Klingelton',
 	soundTone: (number) => `Ton ${number}`,
 	soundMuted: 'Stumm',
-	pillMenu: (kind) => `Anzeige wählen: ${kind}`,
+	pillMenu: (kind) => `Im Filter wählen: ${kind}`,
 	pillOn: 'An',
 	pillOff: 'Aus',
 	liveChatDynamic: 'Dynamisch',
 	liveChatSession: 'Bei Sitzung',
 	liveChatFixed: 'Fest',
 	placeholderHint: 'Kommt bald.',
-	pillKind: (kind) => `Pille: ${kind}`,
+	pillKind: (kind) => `Im Filter: ${kind}`,
 	otherFixed:
 		'Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.',
-	pillNotApplicable: 'Keine Pille für diese Art',
+	pillNotApplicable: 'Kein Filter-Knopf für diese Art',
 	autoRead: 'Ausgeblendetes sofort als gelesen markieren',
 	autoReadDescription:
 		'Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.',
@@ -80,9 +80,47 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	viewText: 'Text',
 	autoSort: 'Ungelesenes nach links sortieren',
 	autoSortDescription:
-		'Pillen mit ungelesenen Einträgen rücken an den Anfang der Reihe.',
+		'Knöpfe mit ungelesenen Einträgen rücken an den Anfang.',
 	deactivatedHint:
-		'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.'
+		'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.',
+	kindColumn: 'Art',
+	legendShow: 'Einträge dieser Art erscheinen in der Liste',
+	legendPill:
+		'Knopf über der Liste, mit dem Sie die Liste auf diese Art einschränken',
+	legendSound: 'Pop-up auf diesem Gerät, mit Ton oder stumm',
+	legendEmail: 'Hinweis ins Postfach, ohne Inhalt der Nachricht',
+	kindsHeading: 'Ereignisarten',
+	quickHeading: 'Weitere Filter-Knöpfe',
+	quickNote:
+		'Diese Knöpfe filtern die Liste oder öffnen eine Aktion. Sie lösen keine Benachrichtigung aus.',
+	presentationHeading: 'Darstellung der Filter-Knöpfe',
+	soundWithTone: 'Pop-up mit Ton',
+	soundSilent: 'Pop-up ohne Ton',
+	soundSilentDescription: 'Nur das Fenster, kein Ton',
+	emailColumn: 'E-Mail',
+	emailKind: (kind) => `E-Mail: ${kind}`,
+	emailMenu: (kind) => `E-Mail wählen: ${kind}`,
+	channelUnavailable: 'nicht verfügbar',
+	emailUnavailableReason:
+		'Für diese Art gibt es noch keine E-Mail-Benachrichtigung'
+};
+
+/** Labels of the Gespräche dialog (title, intro, heading of its kinds). */
+export const SESSION_STORY_LABELS: DisplayFilterDialogLabels = {
+	...STORY_LABELS,
+	title: 'Ansicht · Gespräche',
+	description:
+		'Legen Sie für jede Gesprächsart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Nachrichten benachrichtigt werden.',
+	kindsHeading: 'Gesprächsarten'
+};
+
+/** Labels of the Anfragen dialog. */
+export const REQUEST_STORY_LABELS: DisplayFilterDialogLabels = {
+	...STORY_LABELS,
+	title: 'Ansicht · Anfragen',
+	description:
+		'Legen Sie für jede Anfrageart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Anfragen benachrichtigt werden.',
+	kindsHeading: 'Anfragearten'
 };
 
 /**

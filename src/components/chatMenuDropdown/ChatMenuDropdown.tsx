@@ -69,10 +69,20 @@ export const ChatMenuDropdownHeader = ({
 );
 
 export const ChatMenuDropdownDivider = ({
-	className
+	className,
+	as: Component = 'div',
+	role
 }: {
 	className?: string;
-}) => <div className={clsx('chatMenuDropdown__divider', className)} />;
+	/** `li` inside a list-based menu (MUI `Menu`), `div` elsewhere. */
+	as?: React.ElementType;
+	role?: string;
+}) => (
+	<Component
+		className={clsx('chatMenuDropdown__divider', className)}
+		role={role}
+	/>
+);
 
 export const ChatMenuDropdownSection = ({
 	children

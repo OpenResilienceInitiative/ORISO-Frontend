@@ -21,6 +21,7 @@ import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsAc
 import AnimationOutlinedIcon from '@mui/icons-material/AnimationOutlined';
 import { BrowserNotification } from './BrowserNotifications';
 import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
+import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -43,15 +44,13 @@ export const profileRoutesSettings = (
 		url: '/email',
 		elements: [
 			{
-				condition: () =>
-					!!settings?.releaseToggles?.enableNewNotifications,
+				condition: () => usesNewNotifications(settings),
 				component: EmailNotification,
 				column: COLUMN_LEFT,
 				order: 1
 			},
 			{
-				condition: () =>
-					!!settings?.releaseToggles?.enableNewNotifications,
+				condition: () => usesNewNotifications(settings),
 				component: NotificationSettingsPanel,
 				column: COLUMN_RIGHT,
 				order: 1
@@ -61,7 +60,7 @@ export const profileRoutesSettings = (
 					hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
 						userData
-					) && !settings?.releaseToggles?.enableNewNotifications,
+					) && !usesNewNotifications(settings),
 				component: ConsultantNotifications,
 				icon: NotificationsOutlinedIcon,
 				column: COLUMN_RIGHT,
@@ -71,7 +70,7 @@ export const profileRoutesSettings = (
 			// this screen once enableNewNotifications is on (#1551).
 			{
 				condition: () =>
-					!settings?.releaseToggles?.enableNewNotifications &&
+					!usesNewNotifications(settings) &&
 					!!isBrowserNotificationSupported(),
 				component: BrowserNotification,
 				icon: NotificationsActiveOutlinedIcon,

@@ -51,6 +51,7 @@ import {
 	orderChipKinds,
 	resolveChipPresentation,
 	kindsUnderOther,
+	useDisplayFilterEmailColumn,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -296,6 +297,7 @@ export const NotificationsCenter = () => {
 		resetSection: resetTimelineOverride
 	} = useDisplayFilter('timeline');
 	const displayFilterLabels = useDisplayFilterLabels('timeline');
+	const displayFilterEmail = useDisplayFilterEmailColumn('timeline');
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	// The feed is reduced ONCE; chips and list both read `visibleFeed` so a
 	// hidden kind leaves both in the same render (AC2).
@@ -1135,6 +1137,7 @@ export const NotificationsCenter = () => {
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
+					email={displayFilterEmail}
 					value={timelineFilter}
 					canReset={timelineOverride !== null}
 					readOnly={displayFilterReadOnly || !canEditDisplayFilter}

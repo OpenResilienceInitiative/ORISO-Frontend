@@ -13,6 +13,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotificationsContext, UserDataContext } from '../../../globalState';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { EmailNotification } from './index';
+import { resetEmailSettingSession } from './emailSetting';
+
+// The e-mail write state is module-wide: no case inherits another's.
+afterEach(() => resetEmailSettingSession());
 
 vi.mock('../../../api/apiPatchUserData', () => ({ apiPatchUserData: vi.fn() }));
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -127,17 +131,16 @@ describe('counsellor self-help appointment preference', () => {
 		).toBe(true);
 	});
 
-	it('saves the existing flag, preserves other settings and reads it after reload', async () => {
+	// Only the changed key goes out: UserService merges settings per key.
+	it('saves only the existing flag, and reads it after reload', async () => {
 		const view = renderSettings();
 		fireEvent.click(appointmentSwitch());
 		await waitFor(() => expect(reload).toHaveBeenCalledOnce());
 		expect(apiPatchUserData).toHaveBeenCalledWith({
 			emailNotifications: {
-				...initialNotifications(),
-				settings: {
-					...initialNotifications().settings,
-					appointmentNotificationEnabled: false
-				}
+				emailNotificationsEnabled:
+					initialNotifications().emailNotificationsEnabled,
+				settings: { appointmentNotificationEnabled: false }
 			}
 		});
 		view.unmount();
@@ -189,11 +192,9 @@ describe('asker consent request mail preference', () => {
 			await waitFor(() => expect(reload).toHaveBeenCalledOnce());
 			expect(apiPatchUserData).toHaveBeenCalledWith({
 				emailNotifications: {
-					...initialNotifications(),
-					settings: {
-						...initialNotifications().settings,
-						reassignmentNotificationEnabled: false
-					}
+					emailNotificationsEnabled:
+						initialNotifications().emailNotificationsEnabled,
+					settings: { reassignmentNotificationEnabled: false }
 				}
 			});
 			view.unmount();
