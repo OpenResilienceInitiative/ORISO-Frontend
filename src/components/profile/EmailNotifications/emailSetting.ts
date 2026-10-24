@@ -20,7 +20,7 @@ import type { NotificationSource } from './notificationMatrix';
  */
 export type EmailSettingSource =
 	| NotificationSource
-	| { kind: 'path'; name: string };
+	| { kind: 'path'; name: string; fallback?: boolean };
 
 const pathOf = (
 	source: Exclude<EmailSettingSource, { kind: 'emailToggle' }>
@@ -38,7 +38,11 @@ export const readEmailSetting = (
 	source.kind === 'emailToggle'
 		? (userData?.emailToggles?.find((toggle) => toggle.name === source.type)
 				?.state ?? false)
-		: Boolean(get(userData?.emailNotifications, pathOf(source), false));
+		: Boolean(
+				// null is "never stored", like undefined: the source's default.
+				get(userData?.emailNotifications, pathOf(source)) ??
+					(source.kind === 'path' && source.fallback)
+			);
 
 /** `userData` with `next` stored for `source`: the confirmed state after a save. */
 const withEmailSetting = (

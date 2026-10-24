@@ -660,6 +660,17 @@
 				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
+		},
+		"rejection": {
+			"action": "Refuser la demande",
+			"confirmTitle": "Refuser cette demande ?",
+			"description": "La demande sera refusée. La personne qui demande conseil pourra toujours lire la conversation existante.",
+			"confirm": "Refuser la demande",
+			"error": "Le refus n’a pas encore pu être entièrement confirmé. La décision est peut-être déjà enregistrée. Veuillez réessayer.",
+			"conflict": "La demande a changé ou n’est plus disponible. Veuillez recharger la vue actuelle.",
+			"closed": "Cette demande a été refusée.",
+			"inProgress": "Finalisation du refus…",
+			"cancel": "Annuler"
 		}
 	},
 	"error": {
@@ -2319,7 +2330,7 @@
 			},
 			"requestDenied": {
 				"title": "Demande refusée",
-				"text": "La demande du·de la client·e a été refusée."
+				"text": "Cette demande a été refusée."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client·e dans la salle d'attente",
@@ -2883,6 +2894,10 @@
 					"feedback": {
 						"title": "Échange professionnel",
 						"description": "Une réponse vous attend dans l'échange professionnel protégé."
+					},
+					"internalChat": {
+						"title": "Messages internes",
+						"description": "Un nouveau message dans une discussion interne avec les autres conseillers."
 					}
 				},
 				"shared": {
@@ -4885,6 +4900,7 @@
 		"timeline": {
 			"join": "Rejoindre l’appel",
 			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"endedElsewhere": "Cet appel est déjà terminé.",
 			"video": {
 				"running": "Appel vidéo en cours",
 				"ended": "Appel vidéo terminé",
