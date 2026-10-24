@@ -39,11 +39,9 @@ export const readEmailSetting = (
 		? (userData?.emailToggles?.find((toggle) => toggle.name === source.type)
 				?.state ?? false)
 		: Boolean(
-				get(
-					userData?.emailNotifications,
-					pathOf(source),
-					source.kind === 'path' ? (source.fallback ?? false) : false
-				)
+				// null is "never stored", like undefined: the source's default.
+				get(userData?.emailNotifications, pathOf(source)) ??
+					(source.kind === 'path' && source.fallback)
 			);
 
 /** `userData` with `next` stored for `source`: the confirmed state after a save. */

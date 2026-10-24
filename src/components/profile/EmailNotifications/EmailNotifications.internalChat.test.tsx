@@ -53,11 +53,9 @@ describe('ordinary internal-chat mail preference', () => {
 		await waitFor(() => expect(reload).toHaveBeenCalledOnce());
 		expect(apiPatchUserData).toHaveBeenCalledWith({
 			emailNotifications: {
-				...initialNotifications(),
-				settings: {
-					...initialNotifications().settings,
-					internalChatNotificationEnabled: false
-				}
+				emailNotificationsEnabled:
+					initialNotifications().emailNotificationsEnabled,
+				settings: { internalChatNotificationEnabled: false }
 			}
 		});
 		view.unmount();
