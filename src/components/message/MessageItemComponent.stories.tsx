@@ -1217,19 +1217,21 @@ export const KebabActiveState: Story = {
 		await waitFor(() => {
 			const active = canvasElement.querySelector(
 				'.messageItem__kebabIconActive'
-			) as SVGElement;
+			) as HTMLElement;
 			expect(active).toBeTruthy();
 
 			const rect = active.getBoundingClientRect();
 			expect(Math.round(rect.width)).toBe(28);
 			expect(Math.round(rect.height)).toBe(32);
 
-			// The dots must stay white — this is the exact bit the blanket
-			// `path { fill: #17191c }` used to clobber.
-			const dots = active.querySelectorAll('path[fill="white"]');
-			expect(dots.length).toBeGreaterThan(0);
+			// The dots must take the pill's on-colour — this is the exact bit
+			// the blanket `path { fill: #17191c }` used to clobber.
+			const dots = active.querySelectorAll('circle');
+			expect(dots.length).toBe(3);
+			const onColour = getComputedStyle(active).color;
 			dots.forEach((dot) => {
-				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+				expect(getComputedStyle(dot).fill).toBe(onColour);
+				expect(getComputedStyle(dot).fill).not.toBe('rgb(23, 25, 28)');
 			});
 		});
 
@@ -1286,17 +1288,19 @@ export const KebabActiveStateOutgoing: Story = {
 		await waitFor(() => {
 			const active = canvasElement.querySelector(
 				'.messageItem__kebabIconActive'
-			) as SVGElement;
+			) as HTMLElement;
 			expect(active).toBeTruthy();
 
 			const rect = active.getBoundingClientRect();
 			expect(Math.round(rect.width)).toBe(28);
 			expect(Math.round(rect.height)).toBe(32);
 
-			const dots = active.querySelectorAll('path[fill="white"]');
-			expect(dots.length).toBeGreaterThan(0);
+			const dots = active.querySelectorAll('circle');
+			expect(dots.length).toBe(3);
+			const onColour = getComputedStyle(active).color;
 			dots.forEach((dot) => {
-				expect(getComputedStyle(dot).fill).toBe('rgb(255, 255, 255)');
+				expect(getComputedStyle(dot).fill).toBe(onColour);
+				expect(getComputedStyle(dot).fill).not.toBe('rgb(23, 25, 28)');
 			});
 		});
 

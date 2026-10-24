@@ -170,6 +170,20 @@ describe('sendNotification permission gate', () => {
 		expect(constructed[0].title).toBe('Hallo');
 	});
 
+	// The app owns the tone (soundPlayback.ts plays it focused or not, also
+	// for "Pop-up ohne Ton" = no tone): the OS must never add its own.
+	it('creates every OS pop-up silent, even when a caller asks for sound', () => {
+		stubNotification('granted');
+		saveBrowserNotificationsSettings({ enabled: true });
+		sendNotification('Hallo', { showAlways: true });
+		sendNotification('Hallo', { showAlways: true, silent: false });
+		expect(constructed).toHaveLength(2);
+		expect(constructed.map((entry) => entry.options.silent)).toEqual([
+			true,
+			true
+		]);
+	});
+
 	/*
 	 * #1211. The cross-device panel (release toggle `enableNewNotifications`)
 	 * writes the settings store; the legacy per-browser panel writes

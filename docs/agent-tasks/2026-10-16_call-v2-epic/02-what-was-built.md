@@ -601,13 +601,13 @@ nothing to look at, which is the state the bug was in.
 
 ### The other five
 
-| Finding | Verdict |
-| --- | --- |
-| Identities are not re-read after decryption | Half right, fixed anyway. In the embedded build the host decrypts *before* feeding the widget, so the clear type is what arrives — but that is an invariant of the other repository, and the standalone build with the flag has its own client where the sequence is exactly as reported. `useOrisoIdentities` now also listens for `MatrixEventEvent.Decrypted`, as `ReactionsReader` does. |
+| Finding                                           | Verdict                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identities are not re-read after decryption       | Half right, fixed anyway. In the embedded build the host decrypts _before_ feeding the widget, so the clear type is what arrives — but that is an invariant of the other repository, and the standalone build with the flag has its own client where the sequence is exactly as reported. `useOrisoIdentities` now also listens for `MatrixEventEvent.Decrypted`, as `ReactionsReader` does.                                  |
 | Grove tiles intercept each other's pointer events | Right. The grove has no `clip-path` to put on the root — its shape is a border radius on the face — and `--hover-space-margin: 0` means forms are packed until they abut, overlapping by up to ~12%. The root is no longer a hit target and its children are, so the pointer lands on the form; handlers stay on the root because events still bubble. The Einzelgespräch keeps its clip, which already was not hit-testable. |
-| The spotlight's form is an ellipse | Right, and mine. `.face` fills its tile, which the grove wants; with no shape the radius falls back to `50%`, so a 300×200 spotlight drew a 300×200 oval with the camera stretched into it. Fixed in `OrisoFace` rather than in `SpotlightTile`: "a form with no shape is a circle" is the invariant. |
-| `move` closes over a stale `offer` | Right, and taken further. `offer` arrived as a fresh array literal each render, so `views` changed identity every render and the `useCallback` was memoising over something it could not see change — adding `offer` to the list would have made the memo a no-op while still looking like one. Both ends are memoised now and the `eslint-disable` is gone rather than extended. |
-| A superseded timeline revision can be stored | Right. `apiCallState` answers by spreading the revision it was asked about, so a membership edit landing mid-request leaves the answer carrying the old attendance — and a terminal answer then stops the retries that could correct it. Now compared **by value**, not by object identity: identity changes on every message fetch, and comparing it would have restored the request storm `callKey` exists to prevent. |
+| The spotlight's form is an ellipse                | Right, and mine. `.face` fills its tile, which the grove wants; with no shape the radius falls back to `50%`, so a 300×200 spotlight drew a 300×200 oval with the camera stretched into it. Fixed in `OrisoFace` rather than in `SpotlightTile`: "a form with no shape is a circle" is the invariant.                                                                                                                         |
+| `move` closes over a stale `offer`                | Right, and taken further. `offer` arrived as a fresh array literal each render, so `views` changed identity every render and the `useCallback` was memoising over something it could not see change — adding `offer` to the list would have made the memo a no-op while still looking like one. Both ends are memoised now and the `eslint-disable` is gone rather than extended.                                             |
+| A superseded timeline revision can be stored      | Right. `apiCallState` answers by spreading the revision it was asked about, so a membership edit landing mid-request leaves the answer carrying the old attendance — and a terminal answer then stops the retries that could correct it. Now compared **by value**, not by object identity: identity changes on every message fetch, and comparing it would have restored the request storm `callKey` exists to prevent.      |
 
 Every one of the five has a test that was confirmed to fail against the code as
 it stood before the fix.
@@ -624,7 +624,7 @@ handed the transparent square corners straight back to the pointer. The root
 was non-hit-testable and the overlay on top of it was not. `.fg` now stays off
 and its children are listed individually: the form, the name capsule, the
 status glyphs (they carry tooltips, which need hover) and the options button —
-all of which sit *inside* the form in this design, because
+all of which sit _inside_ the form in this design, because
 `--media-view-fg-inset` insets the chrome by the corner rather than by the
 rectangle's padding.
 
@@ -741,7 +741,7 @@ at one window size.
 
 **The spotlight was landscape on a portrait phone.** The point of routing the
 design through the view model is that the grove, the fields and the
-Einzelgespräch are *ORISO's* and hold at every size. The spotlight is
+Einzelgespräch are _ORISO's_ and hold at every size. The spotlight is
 upstream's, one of the three the rail offers, so it still has to respect the
 window: `spotlight-landscape` reserves a 180px rail and 60px of padding, which
 on a 390px phone leaves about 150px for the person being spotlit.
@@ -757,10 +757,10 @@ escape any more, and `.inRoom` hides horizontal overflow. It is
 does not squash what is being shared.
 
 **The Einzelgespräch chrome, on the third attempt.** Translating `.fg` was not
-enough: it spans 84% of the *whole* box, so moving it carries a left-aligned
+enough: it spans 84% of the _whole_ box, so moving it carries a left-aligned
 capsule and a right-aligned button the same distance — the left tile's button
 went from about 92% to about 67%, still past the 50% seam, still clipped away.
-The chrome is now *sized* to the half. The bounds follow exactly from `focusX`,
+The chrome is now _sized_ to the half. The bounds follow exactly from `focusX`,
 which the layout sets to the middle of the half it gave the tile
 (`share / 2` and `share + (1 - share) / 2`), so the seam is at `2 * focusX` or
 `2 * focusX - 1` and the 8% inset comes off the half's own width.
@@ -772,7 +772,7 @@ one of the three failures was invisible to jsdom and to the screenshot harness.
 listened for now — but the test still failed, because **the newest record was
 not winning**: `readIdentities` read each event as it walked and stored only
 valid ones, so a redacted latest record (empty content, rejected) left the
-*previous* valid record standing. Somebody who withdrew their animal kept it.
+_previous_ valid record standing. Somebody who withdrew their animal kept it.
 It collects the newest content per sender first and reads only that: the newest
 thing a person said about themselves wins, including when it is nothing.
 
@@ -804,14 +804,14 @@ and coming back is.
 a membership edit arriving afterwards never reached the card. The selection is
 now three ordered rules, each of which is a bug that was fixed: the stored
 answer stands while the timeline agrees (by value, over the whole revision); a
-newer *terminal* timeline revision wins; and a still-running timeline never
+newer _terminal_ timeline revision wins; and a still-running timeline never
 reopens a terminal answer — the only part of "a terminal answer always wins"
 that was right.
 
 **Overlapping publishes could duplicate.** `lastSent` is written when the send
 resolves, so a second publish starting while the first is out would send again.
 An in-flight promise per room is reused for an identical non-forced publish; a
-*forced* one still sends, because that is the re-announce for a newcomer.
+_forced_ one still sends, because that is the re-announce for a newcomer.
 
 **And a test that asserted a call rather than an outcome.** Here the chain was
 already closed by two tests — `callLifecycleTracker.test.ts` pins what
@@ -876,11 +876,11 @@ the marker at all.
 
 Both halves are tested, and the split matters:
 
-  * The harness test asserts the marker — and was confirmed to fail without it.
-  * A stylesheet test asserts the rule, because the marker alone does nothing
-    and jsdom can see neither. It also pins that the collapsed rail is never
-    moved and never hidden: `display: none` at a breakpoint was the original
-    bug, and it left the consultant's only notepad with nothing to open.
+- The harness test asserts the marker — and was confirmed to fail without it.
+- A stylesheet test asserts the rule, because the marker alone does nothing
+  and jsdom can see neither. It also pins that the collapsed rail is never
+  moved and never hidden: `display: none` at a breakpoint was the original
+  bug, and it left the consultant's only notepad with nothing to open.
 
 That is now the third defect in this epic whose whole mechanism lived in CSS
 this repository does not execute, and all three were found by a reviewer reading
@@ -913,16 +913,16 @@ thing it is meant to light up, and a clipped halo is the lesser loss there.
 
 Two details worth keeping:
 
-  * **The room is computed from the halo's own numbers.** The three layers'
-    geometry is named now rather than written into the template literal, and
-    `HALO_ROOM_PX` is derived from those names. A test reads the reach back out
-    of the string `haloFor` returns and asserts the constant covers it, so
-    widening the glow cannot quietly outgrow the room again.
-  * **One function, because two places need the number.** The face is sized to
-    it and the chrome layer is inset to it. Computed twice they drift, and the
-    drift is a name capsule floating off the form it names — which is the
-    §17/§18 defect over again. The old `Math.min(targetWidth, targetHeight)`
-    appeared in both files; now neither file has it.
+- **The room is computed from the halo's own numbers.** The three layers'
+  geometry is named now rather than written into the template literal, and
+  `HALO_ROOM_PX` is derived from those names. A test reads the reach back out
+  of the string `haloFor` returns and asserts the constant covers it, so
+  widening the glow cannot quietly outgrow the room again.
+- **One function, because two places need the number.** The face is sized to
+  it and the chrome layer is inset to it. Computed twice they drift, and the
+  drift is a name capsule floating off the form it names — which is the
+  §17/§18 defect over again. The old `Math.min(targetWidth, targetHeight)`
+  appeared in both files; now neither file has it.
 
 The lift follows the form too, since it interpolates on size: it is judged
 against the side actually drawn, not against the tile.
@@ -943,7 +943,7 @@ into stand-in letters until each client happened to announce itself again.
 
 My own comment on the `TimelineReset` listener had the reasoning **backwards**:
 it called that case "identities that are no longer in it". They are no longer in
-the *window*. Nobody withdrew anything.
+the _window_. Nobody withdrew anything.
 
 `readIdentities(room, known)` now reads the new chunk **on top of** what is
 known rather than instead of it. The removal that stays is the one that is
@@ -952,7 +952,7 @@ and it is now an explicit `delete` rather than a skipped assignment, because
 with the known identities seeded, skipping would have left the withdrawn record
 standing and reintroduced the bug §15 fixed. Two tests, and they are different
 in kind: the reset test fails against the old reader, and the
-withdrawal-after-reset test guards the *fix* from undoing the earlier one.
+withdrawal-after-reset test guards the _fix_ from undoing the earlier one.
 
 ### Reopening the same call was a no-op
 
@@ -963,7 +963,7 @@ and `lastSent` made the publish on reopening a no-op.
 Everybody already in the call still holds the returner's first event, so the gap
 is invisible to them. Somebody who joined while the returner was away does not:
 `history_visibility` is `joined`, so they cannot read it from the room's
-history, and the re-announce does not help — an arrival makes the *others*
+history, and the re-announce does not help — an arrival makes the _others_
 resend their own identities, not the returner's. The newcomer went on seeing the
 returner as initials.
 
@@ -973,8 +973,8 @@ two attempts, and the first one is worth recording: I took a changed
 keeps its instance nonce in a `useRef` and the component stays mounted across a
 leave, so a reopened surface gets a **byte-identical** URL. What actually
 happens is `A -> null -> A`, because `shouldPrepareWidget` is false while the
-state is `left`. So the comparison is against the previous value *including
-null*, recorded before the effect's guard.
+state is `left`. So the comparison is against the previous value _including
+null_, recorded before the effect's guard.
 
 The test for it drives that real sequence rather than remounting, and that
 matters: a remount runs the cleanup, which clears `lastSent`, so a
@@ -990,11 +990,11 @@ not by my reading it.
 down. Every guard in the tracker then compared against an object the service had
 thrown away:
 
-* the MatrixRTC membership listener hung off the dead client and never fired
+- the MatrixRTC membership listener hung off the dead client and never fired
   again, so attendance stopped updating;
-* the mismatch cleanup that was supposed to catch this lived *inside* that
+- the mismatch cleanup that was supposed to catch this lived _inside_ that
   listener, so it was never reached either;
-* and on leaving, the terminal write found `isCurrentClient()` false and its
+- and on leaving, the terminal write found `isCurrentClient()` false and its
   retry chain stopped on the same check.
 
 The durable card therefore stayed `running` for good — after something the user
@@ -1022,14 +1022,14 @@ which is the part worth recording.
 ### The carry-over leaked across rooms
 
 §20's fix seeds a room's read with what is already known, because absence from
-the live timeline is not withdrawal. That is right *within one room* — and
+the live timeline is not withdrawal. That is right _within one room_ — and
 `RoomPage` is a wildcard route, so SPA navigation can replace `room` without
 remounting the hook. Somebody present in both rooms kept the animal they had in
 the room just left, indefinitely, precisely because absence is no longer
 treated as withdrawal. The fix for one bug created another an hour later.
 
 `useOrisoIdentities` tracks which room the map in state describes and starts
-from nothing when that changes. The carry-over flag is a *parameter* of the
+from nothing when that changes. The carry-over flag is a _parameter_ of the
 update rather than a captured mutable: written inside the state updater, an
 updater React may call twice would seed the second call from the room just
 left.
@@ -1056,21 +1056,21 @@ interaction is ours.
 
 ### And four more
 
-* **Orphan call rooms.** The startup-ownership check runs only *after*
+- **Orphan call rooms.** The startup-ownership check runs only _after_
   `createElementCallRoom` has created the room and invited the membership-reader
   account, so every superseded start left a persistent room naming a counselling
   session, never joined and never found again. It is left and forgotten now,
   best effort, and only on the path where no invitation was ever published.
-* **The identity capability now follows the opt-in.** A plain Element Web
+- **The identity capability now follows the opt-in.** A plain Element Web
   embedding of this fork renders upstream's rectangles, so it has no use for
   identity records; it asked for them anyway. Nothing would be delivered in
   practice, since only the ORISO host publishes them — but that is an argument
   about what happens to be in the room, not about what the iframe may see. The
   parameter is required rather than defaulted, and the compiler duly found the
   one call site.
-* **A test helper leaked its viewport** when `waitFor` rejected. Restored in a
+- **A test helper leaked its viewport** when `waitFor` rejected. Restored in a
   `finally`.
-* **Step 11 of the reviewer plan said "one account"** and then asked somebody
+- **Step 11 of the reviewer plan said "one account"** and then asked somebody
   else to join. Split: the lifecycle half needs one, the attendance half two.
 
 And one finding **declined**, with reasons on the thread: suppressing ORISO
@@ -1093,15 +1093,15 @@ the round before being wrong.**
 finalised, by asking `callLifecycleTracker.isTracking(callId)`. That question
 cannot tell apart the two reasons a retained `left` call has no tracker:
 
-* **we** started it and already wrote its card as `missed` — reopening it under
+- **we** started it and already wrote its card as `missed` — reopening it under
   the same id publishes nothing, so a fresh start is right;
-* we never tracked it at all because **somebody else** started it. An incoming
+- we never tracked it at all because **somebody else** started it. An incoming
   group call's card belongs to the caller, and its room may well still have
   people in it.
 
 The gate refused both, so it broke the one case the branch exists for. A
-pre-existing test said so in its name — *rejoins that same group-call room
-instead of creating a new call* — and it failed. Not a test I wrote; the suite
+pre-existing test said so in its name — _rejoins that same group-call room
+instead of creating a new call_ — and it failed. Not a test I wrote; the suite
 earned its keep.
 
 The call now carries `lifecycleFinalised`, set only when `leaveCall` actually
@@ -1113,7 +1113,7 @@ this card" separates the two cases; "do we still know this call" does not.
 `teardownLocalSession` nulls the Matrix registry but does **not** clear
 `pendingStart`, so the ownership check I added still read "this start is
 current" after a sign-out. If another account was installed before the await
-returned, `callLifecycleTracker.begin` and `sendGroupCallInvite` ran on *that*
+returned, `callLifecycleTracker.begin` and `sendGroupCallInvite` ran on _that_
 account for a room the previous one created — on a shared browser where both
 counsellors belong to the session room, the second could publish the first
 one's pending call. In a counselling product that is a confidentiality fault,
@@ -1132,7 +1132,7 @@ reads the current truth where it is used.
 
 ### And the cleanup I added only covered one of two paths
 
-Inside `createElementCallRoom`, three things can throw *after* `createRoom`
+Inside `createElementCallRoom`, three things can throw _after_ `createRoom`
 succeeded: `inviteSessionMembers` (which throws if any invite failed), the
 membership-reader configuration check, and that invite itself. Each threw
 before the room id was returned, so the caller's `elementCallRoomId` stayed
@@ -1141,7 +1141,7 @@ room carrying the plaintext call/source binding and a name that reads `Group
 call for <session room>`.
 
 Post-creation provisioning is now wrapped: discard, then rethrow. The caller's
-cleanup covers a start that was *superseded*; this covers one that *failed*.
+cleanup covers a start that was _superseded_; this covers one that _failed_.
 
 Also fixed: inserting that helper had orphaned `createElementCallRoom`'s doc
 comment — the same comment-displacement mistake as §17's, caught this time by
@@ -1150,15 +1150,15 @@ reading the file rather than by a reviewer.
 ### And the account check went one place too far
 
 The first version used `stillOwnsStart` in the startup `catch` as well, and a
-pre-existing test caught that too, by name: *does not send an old invitation
-through a replacement account after root acknowledgement*. After an account
+pre-existing test caught that too, by name: _does not send an old invitation
+through a replacement account after root acknowledgement_. After an account
 change the error path returned **before** `endCall`, so the previous account's
 dead call stayed on screen.
 
 Two different questions live in that `catch`, and the check answers only one:
 
-* a **newer start** owns the surface → leave it alone;
-* a changed **account** → the surface is still this request's, and it is now a
+- a **newer start** owns the surface → leave it alone;
+- a changed **account** → the surface is still this request's, and it is now a
   dead call belonging to an account that is gone. It must be cleared. What the
   new account does not get is an alert about the old one's failure.
 
@@ -1168,8 +1168,8 @@ myself". That distinction is now written where the check is used.
 ### What these two rounds cost, stated plainly
 
 Two commits in a row needed a follow-up, and **one of them went red in CI**:
-`ad8c2deebb` broke *rejoins that same group-call room instead of creating a new
-call*. Both breakages were invisible to the tests written for the fix and
+`ad8c2deebb` broke _rejoins that same group-call room instead of creating a new
+call_. Both breakages were invisible to the tests written for the fix and
 visible to the pre-existing suite — the targeted test proves the new behaviour,
 the old suite protects the behaviour already paid for.
 
@@ -1182,15 +1182,15 @@ nothing; it is what the remaining work does.
 
 **Gates, on the pushed heads.**
 
-| | fork `ddf443a0` | host `81b3881f3` |
-|---|---|---|
-| types | clean in `src/` | `tsc` clean |
-| eslint | clean, `--max-warnings 0` | clean, `--max-warnings 0` |
-| stylelint | n/a | clean |
-| prettier | no drift from this branch | n/a (not in the gate) |
-| knip | clean | n/a |
-| build | ✓ | ✓ |
-| unit tests | 648 passed, 19 failed | 13014 passed, 0 failed |
+|            | fork `ddf443a0`           | host `81b3881f3`          |
+| ---------- | ------------------------- | ------------------------- |
+| types      | clean in `src/`           | `tsc` clean               |
+| eslint     | clean, `--max-warnings 0` | clean, `--max-warnings 0` |
+| stylelint  | n/a                       | clean                     |
+| prettier   | no drift from this branch | n/a (not in the gate)     |
+| knip       | clean                     | n/a                       |
+| build      | ✓                         | ✓                         |
+| unit tests | 648 passed, 19 failed     | 13014 passed, 0 failed    |
 
 The fork's 19 failures are **pre-existing**: nine files, identical on pristine
 `main`, none of them under `src/oriso`, `src/grid` or `src/tile`. They were
@@ -1198,16 +1198,16 @@ measured on `main` rather than assumed.
 
 **Also re-verified on this state, not inherited from an earlier round:**
 
-* `scripts/verifyCallRoomMatrixRules.mjs` against a real Synapse — all 17
+- `scripts/verifyCallRoomMatrixRules.mjs` against a real Synapse — all 17
   checks held, including that a participant at level 0 may send
   `m.room.encrypted`, that they may not write another user's state key, that a
   newcomer cannot read an identity sent before they joined (which is why
   everybody re-announces), and that a call room's state holds no identity
   record at all.
-* All ten harness plates re-shot in Chromium, every handoff measurement
+- All ten harness plates re-shot in Chromium, every handoff measurement
   holding: the fields' artwork at 0.558–0.562 of the form against the handoff's
   0.560, the Einzelgespräch halves at 0.256 against 0.256.
-* Every review thread on both pull requests — 40 and 40 — carries a reply.
+- Every review thread on both pull requests — 40 and 40 — carries a reply.
 
 **What cannot be verified from this container, and is therefore not claimed.**
 
@@ -1235,23 +1235,23 @@ as the boundary. But there is Go 1.24.7, there is cargo 1.94.1, and
 reachable (GitHub release downloads are not, which is what made this look
 closed). So the stack was built rather than pulled:
 
-* **LiveKit 1.13.10**, built from the module cache — `go install` trips over
+- **LiveKit 1.13.10**, built from the module cache — `go install` trips over
   the repository's `replace` directives, so the module zip was extracted and
   built in tree.
-* **lk-jwt-service 0.9.0**, which is Rust, not Go, and builds with
+- **lk-jwt-service 0.9.0**, which is Rust, not Go, and builds with
   `cargo build --release` in about three minutes.
-* **Synapse**, already here from §20's Matrix-rules work. It needed one change:
+- **Synapse**, already here from §20's Matrix-rules work. It needed one change:
   MatrixRTC wants delayed events, and in Synapse 1.163 those are switched on by
   `max_event_delay_duration`, not by an `msc4140_enabled` flag.
 
 Two things then had to be true that are not obvious:
 
-* `lk-jwt-service` verifies an OpenID token against `https://<server
-  name>:8448`, so a plain-HTTP Synapse needs a TLS terminator on the
+- `lk-jwt-service` verifies an OpenID token against `https://<server
+name>:8448`, so a plain-HTTP Synapse needs a TLS terminator on the
   federation port and a hosts entry — and the service has to run **without**
   this container's `HTTPS_PROXY` in its environment, or reqwest sends the
   local connection through the agent proxy and it is reset.
-* A call room needs `org.matrix.msc3401.call.member: 0` in its power levels.
+- A call room needs `org.matrix.msc3401.call.member: 0` in its power levels.
   Without it every participant but the room's creator is refused when
   MatrixRTC writes their membership, and the call dies with "Connection lost"
   — which is live confirmation that the host's room provisioning

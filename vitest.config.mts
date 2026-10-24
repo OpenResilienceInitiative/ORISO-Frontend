@@ -127,7 +127,10 @@ export default defineConfig({
 					// Element.scrollIntoView) so TipTap's focus/scroll path doesn't throw
 					// an async unhandled error that flakes the composer emoji test in CI.
 					// Guarded internally, so it is a no-op under the node environment.
-					setupFiles: ['./src/test/jsdomPolyfills.ts'],
+					setupFiles: [
+						'./src/test/jsdomPolyfills.ts',
+						'./src/test/noChunkWarming.ts'
+					],
 					// The app's runtimeConfig reads REACT_APP_* vars at module load and
 					// throws if the Keycloak realm is missing. Vite only auto-loads VITE_*
 					// vars, so provide the minimum here to let component/router tests that

@@ -295,7 +295,9 @@ export const GroupCallWidget: React.FC = () => {
 				source,
 				{
 					force:
-						previousUrl !== widget.url || clientChanged || becameReady
+						previousUrl !== widget.url ||
+						clientChanged ||
+						becameReady
 				}
 			);
 			if (sent !== null || cancelled) return;

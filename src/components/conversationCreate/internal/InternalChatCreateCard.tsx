@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as InternalIcon } from '../../../resources/img/icons/internal-conversation.svg';
-import internalTeamImage from '../../../resources/img/illustrations/conversation/internal-team.png';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import {
@@ -10,6 +9,8 @@ import {
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
+import { ArtworkImage } from '../ArtworkImage';
+import { INTERNAL_CHAT_ARTWORK } from '../../../resources/img/topics';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { PersonChipGrid } from './PersonChipGrid';
 import { PersonOption, PersonSelectMenu } from './PersonSelectMenu';
@@ -157,13 +158,9 @@ export const InternalChatCreateCard = ({
 			subtitle={translate('groupChat.internal.subtitle')}
 			avatar={<InternalIcon />}
 			media={
-				<img
-					className="formatCard__mediaImage"
-					src={internalTeamImage}
+				<ArtworkImage
+					artwork={INTERNAL_CHAT_ARTWORK}
 					alt={translate('groupChat.internal.title')}
-					width={360}
-					height={188}
-					loading="lazy"
 				/>
 			}
 			mediaDimmed={selectedCount > 0}

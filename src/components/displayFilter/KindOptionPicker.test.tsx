@@ -33,7 +33,9 @@ describe('KindOptionPicker (#1377 small split button with menu)', () => {
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Ton wählen: Mail' })
 		);
-		fireEvent.click(screen.getByRole('menuitem', { name: 'Kein Ton' }));
+		fireEvent.click(
+			screen.getByRole('menuitemradio', { name: 'Kein Ton' })
+		);
 		expect(onSelect).toHaveBeenCalledWith('none');
 	});
 });

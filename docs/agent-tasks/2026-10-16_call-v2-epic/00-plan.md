@@ -24,17 +24,17 @@ Everything below follows from those three.
 The in-call tree is `src/room/InCallView.tsx`. It renders a `Grid`
 (`src/grid/Grid.tsx`) with a `Tile` component and a `CallLayout`.
 
-| Concern | Where | Note |
-| --- | --- | --- |
-| Tile face (avatar, video, name, hand) | `src/tile/MediaView.tsx` | **Shared by both tile kinds.** The single best seam. |
-| Tile renderer swap | `Tile` useMemo in `InCallView.tsx` (~583–625) | Passed as `Tile` to `Grid`, so it covers *every* layout. |
-| Layouts | `src/grid/{GridLayout,OneOnOneLayout,SpotlightLandscape,SpotlightPortrait,SpotlightExpanded}.tsx` | Each exports a `make…Layout` returning `CallLayout`. |
-| Layout registry | `layouts` map in `InCallView.tsx` (~628–641) | |
-| Layout selection | `layoutMedia$` in `src/state/CallViewModel/CallViewModel.ts` (~1068–1130) | A `switch (windowMode)`. |
-| User's layout choice | `src/state/CallViewModel/LayoutSwitch.ts`, `GridMode = "grid" \| "spotlight"` | **Binary.** Three ORISO views do not fit without widening this. |
-| Controls | `src/button/Button.tsx` wrappers + the `buttons` array in `InCallView.tsx` (~709–770) | |
-| Theme | Compound tokens; `src/oriso-theme.css` | **Generated** by ORISO-Frontend's `scripts/generate-call-theme.ts`. Hand edits are reverted by a drift test. |
-| Boundary guard | `src/matryoshkaBoundary.test.ts` | Asserts `GroupCallView`/`InCallView` use only standard Widget API actions. **The redesign must stay inside that.** |
+| Concern                               | Where                                                                                             | Note                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Tile face (avatar, video, name, hand) | `src/tile/MediaView.tsx`                                                                          | **Shared by both tile kinds.** The single best seam.                                                               |
+| Tile renderer swap                    | `Tile` useMemo in `InCallView.tsx` (~583–625)                                                     | Passed as `Tile` to `Grid`, so it covers _every_ layout.                                                           |
+| Layouts                               | `src/grid/{GridLayout,OneOnOneLayout,SpotlightLandscape,SpotlightPortrait,SpotlightExpanded}.tsx` | Each exports a `make…Layout` returning `CallLayout`.                                                               |
+| Layout registry                       | `layouts` map in `InCallView.tsx` (~628–641)                                                      |                                                                                                                    |
+| Layout selection                      | `layoutMedia$` in `src/state/CallViewModel/CallViewModel.ts` (~1068–1130)                         | A `switch (windowMode)`.                                                                                           |
+| User's layout choice                  | `src/state/CallViewModel/LayoutSwitch.ts`, `GridMode = "grid" \| "spotlight"`                     | **Binary.** Three ORISO views do not fit without widening this.                                                    |
+| Controls                              | `src/button/Button.tsx` wrappers + the `buttons` array in `InCallView.tsx` (~709–770)             |                                                                                                                    |
+| Theme                                 | Compound tokens; `src/oriso-theme.css`                                                            | **Generated** by ORISO-Frontend's `scripts/generate-call-theme.ts`. Hand edits are reverted by a drift test.       |
+| Boundary guard                        | `src/matryoshkaBoundary.test.ts`                                                                  | Asserts `GroupCallView`/`InCallView` use only standard Widget API actions. **The redesign must stay inside that.** |
 
 ### 1.2 ORISO-Frontend
 
@@ -91,15 +91,15 @@ exactly the "you define it in the call" mistake we were told to avoid.
 
 **Three candidate transports** (this is the one architectural decision left):
 
-| | How | Cost | Risk |
-| --- | --- | --- | --- |
-| **A** | Each client publishes its own identity in its **MatrixRTC membership** (`org.matrix.msc3401.call.member`) | Small. The widget already *sends* that state event for its own key and already *receives* it for everyone. No new capability. | Membership event grows; needs a schema agreed with the backend/other clients. |
-| **B** | Pass a **roster** over the widget API from ORISO | Medium | `matryoshkaBoundary.test.ts` forbids non-standard actions; would need a sanctioned channel. |
-| **C** | ORISO publishes the animal as the **Matrix member avatar** | Small on the fork side | Loses `bg`/`iconColor` as data, loses recolouring, and the SVG becomes a bitmap. Breaks the design. |
+|       | How                                                                                                       | Cost                                                                                                                          | Risk                                                                                                |
+| ----- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **A** | Each client publishes its own identity in its **MatrixRTC membership** (`org.matrix.msc3401.call.member`) | Small. The widget already _sends_ that state event for its own key and already _receives_ it for everyone. No new capability. | Membership event grows; needs a schema agreed with the backend/other clients.                       |
+| **B** | Pass a **roster** over the widget API from ORISO                                                          | Medium                                                                                                                        | `matryoshkaBoundary.test.ts` forbids non-standard actions; would need a sanctioned channel.         |
+| **C** | ORISO publishes the animal as the **Matrix member avatar**                                                | Small on the fork side                                                                                                        | Loses `bg`/`iconColor` as data, loses recolouring, and the SVG becomes a bitmap. Breaks the design. |
 
 **Recommendation: A.** Identity travels with the membership, each client
 publishes only its own, and the fork reads what it is given rather than
-deriving anything. `generateAvatarForUser` stays as the *fallback* for a
+deriving anything. `generateAvatarForUser` stays as the _fallback_ for a
 member that published nothing, never as the primary source.
 
 ---
@@ -110,7 +110,7 @@ member that published nothing, never as the primary source.
 
 **0.1 — open.** Verify the backend emits `VIDEOCALL` alias messages. If not,
 the timeline entry is dead code and the join path needs a different
-trigger. *Blocked here: ORISO-UserService returns 403 for this session.*
+trigger. _Blocked here: ORISO-UserService returns 403 for this session._
 
 **0.2 — VERIFIED, and it is worse than suspected.** The fork's ORISO
 override of the speaking indicator is dead, for two independent reasons:
@@ -146,34 +146,34 @@ generator.
 
 ### Phase 1 — Consolidate the prior call work (ORISO-Frontend)
 
-*Sequencing from the PR assessment — see `01-pr-assessment.md`.*
+_Sequencing from the PR assessment — see `01-pr-assessment.md`._
 In scope: #1361 (closed, 131 files), #1395, #1394, #1390, all under #780.
 
 ### Phase 2 — Move the design into the fork
 
 2.1 Port the pure engine first: `engine/layout.ts` (packShapes,
-    organicSpots, splitCells, seeded), `stages/felder.ts`,
-    `stages/einzelgespraech.ts`, `halo.ts`, `avatarLift.ts`. No React, no
-    DOM — these port verbatim with their tests.
+organicSpots, splitCells, seeded), `stages/felder.ts`,
+`stages/einzelgespraech.ts`, `halo.ts`, `avatarLift.ts`. No React, no
+DOM — these port verbatim with their tests.
 2.2 Port `pond.js` and the `Atmosphere` wrapper. Already verbatim; it moves
-    as-is, with its loop-rule tests.
+as-is, with its loop-rule tests.
 2.3 Replace the tile face: `MediaView` renders the ORISO shape — animal (or
-    **video, cropped to the same shape**) with the name capsule, the lift
-    and the speaking halo.
+**video, cropped to the same shape**) with the name capsule, the lift
+and the speaking halo.
 2.4 Add three `CallLayout` modules — Hain, Felder, Einzelgespräch — beside
-    the existing ones, register them in the `layouts` map, and select them
-    in `layoutMedia$`.
+the existing ones, register them in the `layouts` map, and select them
+in `layoutMedia$`.
 2.5 Widen `GridMode` beyond binary and replace `LayoutToggle` with the
-    ORISO `ViewSwitcher` (44px rail, 36px buttons, the measured numbers).
+ORISO `ViewSwitcher` (44px rail, 36px buttons, the measured numbers).
 2.6 Port the Gesprächsnotizen panel, docked, with its privacy test intact.
 
 ### Phase 3 — Identity transport
 
 3.1 Agree the membership schema (decision in §2).
 3.2 Publish from ORISO, read in the fork, fall back to
-    `generateAvatarForUser` only when nothing was published.
+`generateAvatarForUser` only when nothing was published.
 3.3 Test: two participants, one counsellor with a chosen motif, one
-    anonymous seeker — both must look exactly as they do in the chat.
+anonymous seeker — both must look exactly as they do in the chat.
 
 ### Phase 4 — Delete the duplicates
 

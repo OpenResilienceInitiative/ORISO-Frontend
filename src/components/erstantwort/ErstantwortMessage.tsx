@@ -2,7 +2,11 @@ import * as React from 'react';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { UserDataContext } from '../../globalState';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext
+} from '../../globalState';
 import {
 	TWO_FACTOR_SETTINGS_PATH,
 	useOpenTwoFactorSettings
@@ -53,6 +57,11 @@ export interface ErstantwortMessageProps {
 	/** Re-renders of history skip the stagger; a fresh event plays it. */
 	skipAnimation?: boolean;
 	onFirstReveal?: () => void;
+	/**
+	 * #420 preview: the text renders as in the chat, but nothing writes —
+	 * no action buttons, no notification setup, no password shortcut.
+	 */
+	readOnly?: boolean;
 }
 
 export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
@@ -63,7 +72,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	deadlineDays,
 	isAskerEmailEnabled,
 	skipAnimation,
-	onFirstReveal
+	onFirstReveal,
+	readOnly = false
 }) => {
 	const { t, i18n } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
@@ -194,6 +204,13 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		[navigate, openTwoFactorSettings]
 	);
 
+	/* The calls to action address the advice seeker. A counsellor reads the
+	   same record but must not get its buttons: "Protect my access" would run
+	   the advice seeker's 2FA flow on the counsellor's own account (#1844). */
+	const offersActions =
+		!readOnly &&
+		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+
 	if (!bausteine.length) return null;
 
 	return (
@@ -202,12 +219,15 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				bausteine={bausteine}
 				compactFaq={conversationType !== 'LIVE_CHAT'}
 				skipAnimation={skipAnimation}
-				onAction={handleAction}
+				onAction={offersActions ? handleAction : undefined}
 				onFirstReveal={onFirstReveal}
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
 					emailNotification:
-						persistedInvitation && !hasChoice && showSetupSlot ? (
+						!readOnly &&
+						persistedInvitation &&
+						!hasChoice &&
+						showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
 								isEmailEnabled={emailAllowed}
@@ -217,17 +237,21 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 								}
 							/>
 						) : undefined,
-					notificationChoice: showSetupSlot ? (
-						<NotificationSetupCollapse
-							messageId={messageId}
-							isEmailEnabled={emailAllowed}
-							isBrowserEnabled={channels.browserAllowed}
-							onStart={() => setNotificationSetupStarted(true)}
-						/>
-					) : undefined,
+					notificationChoice:
+						!readOnly && showSetupSlot ? (
+							<NotificationSetupCollapse
+								messageId={messageId}
+								isEmailEnabled={emailAllowed}
+								isBrowserEnabled={channels.browserAllowed}
+								onStart={() =>
+									setNotificationSetupStarted(true)
+								}
+							/>
+						) : undefined,
 					saveCredentials: (
 						<SaveCredentialsCard
 							userName={userData?.userName ?? ''}
+							readOnly={readOnly}
 						/>
 					)
 				}}

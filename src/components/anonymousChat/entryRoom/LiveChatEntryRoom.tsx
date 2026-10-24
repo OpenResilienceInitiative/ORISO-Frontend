@@ -29,6 +29,7 @@ import { generatePseudonym } from '../../../utils/pseudonymGenerator';
 import type { Pseudonym } from '../../../utils/anonName/engine';
 import { buildInviteSessionAppUrl } from '../../invite/inviteLinkHelpers';
 import { translateWithFallback } from '../../../utils/translationFallback';
+import { normalizePreferredLanguage } from '../../../utils/normalizePreferredLanguage';
 import { EntryRoomShell } from './EntryRoomShell';
 import { LiveChatAccess } from './LiveChatAccess';
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
@@ -397,7 +398,14 @@ const LiveChatEntryRoomContent = ({
 			await apiPutSessionData(id, {
 				displayName: chosen.userId
 			});
-			await apiPatchUserData({ displayName: chosen.userId });
+			/* The redeem creates the account without a language, so the server
+			   stores German; keep the one the guest is reading, or the app
+			   switches to German when it boots after the gate. The server only
+			   takes ISO codes: 'de@informal' would fail the whole PATCH. */
+			await apiPatchUserData({
+				displayName: chosen.userId,
+				preferredLanguage: normalizePreferredLanguage(locale)
+			});
 			rememberConfirmedEntryName(id, chosen.userId);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
@@ -408,7 +416,7 @@ const LiveChatEntryRoomContent = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, names, selectedIndex, sessionId, invite]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, names, selectedIndex, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
 	   that needs no account. An answered zero needs a second look, because the
@@ -554,8 +562,8 @@ const LiveChatEntryRoomContent = ({
 	   component, then the hand-over — a full load, as the redeem did before,
 	   so the app boots with the tokens the redeem set. */
 	const handleAccept = useCallback(async () => {
-		if (sessionId === null) return;
-		if (busy) return;
+		if (sessionId === null) return false;
+		if (busy) return false;
 		setBusy(true);
 		try {
 			await apiPatchUserData({
@@ -584,8 +592,13 @@ const LiveChatEntryRoomContent = ({
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
+			/* The page is being replaced: the closing animation keeps its
+			   cover on until it is, instead of opening onto this room again. */
+			return new Promise<void>(() => undefined);
 		} catch {
 			if (!cancelled.current) setBusy(false);
+			// The person stays: the closing animation need not wait for a chat.
+			return false;
 		}
 	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -710,9 +723,7 @@ const LiveChatEntryRoomContent = ({
 						department={department}
 						busy={busy}
 						leaveFailed={leaveFailed}
-						onAccept={() => {
-							void handleAccept();
-						}}
+						onAccept={() => handleAccept()}
 						onLeave={handleLeave}
 						onMailCounselling={goToMail}
 					/>

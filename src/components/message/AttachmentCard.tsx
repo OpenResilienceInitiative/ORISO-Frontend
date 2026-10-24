@@ -1,7 +1,7 @@
 import * as React from 'react';
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
-import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
+import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
 import './attachmentCard.styles.scss';
 
 /**
@@ -66,9 +66,9 @@ export const AttachmentCard = ({
 	const trailingIcon = blocked ? (
 		<BlockRoundedIcon aria-hidden="true" focusable="false" />
 	) : action.kind === 'download' ? (
-		<DownloadRoundedIcon aria-hidden="true" focusable="false" />
+		<DownloadIcon aria-hidden="true" focusable="false" />
 	) : action.kind === 'unlock' ? (
-		<LockRoundedIcon aria-hidden="true" focusable="false" />
+		<LockIcon aria-hidden="true" focusable="false" />
 	) : null;
 
 	const body = (

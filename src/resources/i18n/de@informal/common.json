@@ -265,11 +265,9 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
-					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
 					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
-					"overdueHeadline": "Wir sind gleich für dich da.",
-					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
 				}
 			},
@@ -378,7 +376,16 @@
 		"entry": {
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"dates": {
+				"subline": "Tipp auf einen Termin, um ihn einzutragen."
+			},
+			"running": {
+				"subline": "Du kannst jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"subline": "Einmal kurz lesen – dann bist du dabei."
+			}
 		},
 		"info": {
 			"gallery": {
@@ -641,6 +648,10 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"browserOff": "Pop-ups sind in deinem Profil ausgeschaltet",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in deinem Profil ausgeschaltet"
+		},
 		"enquiry": {
 			"new": "Du hast eine neue Live-Chat Anfrage!"
 		},
@@ -709,6 +720,17 @@
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
 				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
+			},
+			"caseHandoverGranted": {
+				"generic": {
+					"text": "Die berechtigte Freigabe wurde protokolliert. Den aktuellen Stand siehst du im Gespräch."
+				}
+			},
+			"caseHandoverOfferReceived": {
+				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"coAccess": {
+					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
+				}
 			}
 		}
 	},
@@ -2364,6 +2386,11 @@
 		}
 	},
 	"caseHandover": {
+		"systemMessage": {
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"tookOverBody": "{{advisor}} führt deine Beratung ab jetzt weiter.",
+			"noActionNeeded": "Du musst nichts weiter tun"
+		},
 		"offer": {
 			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
 			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",

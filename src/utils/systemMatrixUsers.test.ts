@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vite-plus/test';
 import {
 	LEGACY_MATRIX_HOMESERVER_SUFFIX,
-	isSystemMatrixUser
+	isSystemMatrixUser,
+	isTechnicalMatrixUser
 } from './systemMatrixUsers';
 
 describe('LEGACY_MATRIX_HOMESERVER_SUFFIX', () => {
@@ -46,6 +47,43 @@ describe('isSystemMatrixUser', () => {
 		// keeping it out of this helper keeps callers free to combine checks
 		// rather than baking every domain rule in here.
 		expect(isSystemMatrixUser('@agency-7-service:matrix.example.org')).toBe(
+			false
+		);
+	});
+});
+
+describe('isTechnicalMatrixUser', () => {
+	it.each([
+		'@system:matrix.example',
+		'@system-broadcast:matrix.example',
+		'@notification:caritas.local',
+		'@group-chat-system-40:matrix.example',
+		'@agency-12-service:matrix.example'
+	])(
+		'excludes reserved technical identity %s from people lists',
+		(userId) => {
+			expect(isTechnicalMatrixUser(userId)).toBe(true);
+		}
+	);
+
+	it.each([
+		null,
+		undefined,
+		'',
+		'@bart:matrix.example',
+		'@my-group-chat-system-40:matrix.example',
+		'@group-chat-system-40-person:matrix.example',
+		'@agency-12-service-user:matrix.example',
+		'@agency-help-service:matrix.example'
+	])('preserves human identities and empty values: %s', (userId) => {
+		expect(isTechnicalMatrixUser(userId)).toBe(false);
+	});
+
+	it('does not change the legacy system predicate for service accounts', () => {
+		expect(isSystemMatrixUser('@group-chat-system-40:matrix.example')).toBe(
+			false
+		);
+		expect(isSystemMatrixUser('@agency-12-service:matrix.example')).toBe(
 			false
 		);
 	});

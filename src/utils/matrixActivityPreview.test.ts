@@ -30,7 +30,10 @@ describe('buildMatrixActivityTextPreview', () => {
 		audio: 'Audio message',
 		video: 'Video',
 		notice: 'Notice',
+		userLeftChat: 'User has left the chat',
+		systemNotification: 'System notification',
 		unsupported: 'Unsupported message',
+		undecryptable: 'Message encrypted',
 		pending: 'Waiting for decryption',
 		roomUnavailable: 'Conversation unavailable on this device',
 		eventUnavailable: 'Message unavailable in local history'
@@ -94,6 +97,127 @@ describe('buildMatrixActivityTextPreview', () => {
 			)
 		).toBe('Lisa: Notice');
 	});
+
+	const systemNoticeEvent = (payload: Record<string, unknown>) =>
+		new MatrixEvent({
+			type: 'm.room.message',
+			content: {
+				msgtype: 'm.text',
+				body: `[SYSTEM_NOTIFICATION]${JSON.stringify(payload)}`
+			}
+		});
+
+	it('words USER_LEFT_CHAT by who ended the chat (#1838)', () => {
+		const event = {
+			getType: () => 'm.room.message',
+			getContent: () => ({
+				msgtype: 'm.text',
+				body: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+					type: 'USER_LEFT_CHAT',
+					username: 'trout_milan_8303',
+					endedBy: 'CONSULTANT'
+				})}`
+			})
+		};
+		const chatEndedText = (endedBy: string | null) =>
+			endedBy === 'CONSULTANT' ? 'You ended the chat' : 'other';
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Spider',
+				'New message',
+				{ ...labels, chatEndedText }
+			)
+		).toBe('You ended the chat');
+	});
+
+	it('shows the chat wording for USER_LEFT_CHAT, not its JSON or a sender', () => {
+		const preview = buildMatrixActivityTextPreview(
+			{
+				status: 'resolved',
+				event: systemNoticeEvent({
+					type: 'USER_LEFT_CHAT',
+					username: 'enc.abc'
+				})
+			},
+			'User',
+			'New message',
+			labels
+		);
+
+		expect(preview).toBe('User has left the chat');
+		expect(preview).not.toContain('{');
+	});
+
+	it('labels a system notice without text of its own instead of showing its JSON', () => {
+		expect(
+			buildMatrixActivityTextPreview(
+				{
+					status: 'resolved',
+					event: systemNoticeEvent({
+						type: 'CASE_HANDOVER_GRANTED',
+						username: 'Counsellor'
+					})
+				},
+				'Counsellor',
+				'New message',
+				labels
+			)
+		).toBe('System notification');
+	});
+
+	it('keeps the text of a system notice that has one, without a sender', () => {
+		expect(
+			buildMatrixActivityTextPreview(
+				{
+					status: 'resolved',
+					event: systemNoticeEvent({
+						type: 'CASE_HANDOVER_GRANTED',
+						title: 'Granted',
+						description: 'A new counsellor took over.'
+					})
+				},
+				'Counsellor',
+				'New message',
+				labels
+			)
+		).toBe('A new counsellor took over.');
+	});
+
+	it.each([
+		[
+			{
+				type: 'INQUIRY_ACCEPTED',
+				description: 'Die Anfrage wurde angenommen.'
+			},
+			'The request was accepted.'
+		],
+		[
+			{
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Counsellor',
+				description: 'Counsellor führt deine Beratung ab jetzt weiter.'
+			},
+			'New counsellor took over your case'
+		]
+	])(
+		'words %j in the viewer language, not its stored text (#1844)',
+		(payload, text) => {
+			expect(
+				buildMatrixActivityTextPreview(
+					{ status: 'resolved', event: systemNoticeEvent(payload) },
+					'Counsellor',
+					'New message',
+					{
+						...labels,
+						inquiryAccepted: 'The request was accepted.',
+						caseHandoverTakenOver:
+							'New counsellor took over your case'
+					}
+				)
+			).toBe(text);
+		}
+	);
 	it('renders the sender and normalized plain-text body of the resolved event', () => {
 		const event = {
 			getType: () => 'm.room.message',
@@ -183,6 +307,45 @@ describe('buildMatrixActivityTextPreview', () => {
 			getMatrixActivityPreviewKind({ status: 'resolved', event } as any)
 		).toBe(kind);
 	});
+
+	it.each([
+		[
+			'm.bad.encrypted content',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({
+					msgtype: 'm.bad.encrypted',
+					body: '** Unable to decrypt: DecryptionError **'
+				})
+			}
+		],
+		[
+			'isDecryptionFailure()',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({}),
+				isDecryptionFailure: () => true
+			}
+		]
+	])(
+		'names a message this device cannot decrypt as the chat does (%s)',
+		(_case, event) => {
+			const preview = buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Lisa',
+				'New message',
+				labels
+			);
+			expect(preview).toBe('Lisa: Message encrypted');
+			expect(preview).not.toContain('Unable to decrypt');
+			expect(
+				getMatrixActivityPreviewKind({
+					status: 'resolved',
+					event
+				} as any)
+			).toBe('undecryptable');
+		}
+	);
 
 	it('falls back safely for an unsupported Matrix message type', () => {
 		const event = {

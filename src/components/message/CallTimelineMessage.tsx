@@ -37,7 +37,9 @@ export const CallTimelineMessage = ({
 	};
 	// Live presence only means anything while the call is running.
 	const live = call.state === 'running' ? call.present : undefined;
-	const shown = live ?? call.participants;
+	// Nobody answered a missed call: its only participant is the caller, who
+	// is named in the description, so it lists nobody as "Attended" (#780).
+	const shown = call.state === 'missed' ? [] : (live ?? call.participants);
 
 	/*
 	 * Who started it, by the name the room already knows them under.

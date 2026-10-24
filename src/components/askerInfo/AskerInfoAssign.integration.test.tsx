@@ -74,7 +74,11 @@ const fillRealDialog = async () => {
 			name: 'supervisorDialog.reasonLabel.handover'
 		})
 	);
-	fireEvent.click(await screen.findByRole('option', { name: 'Emergency' }));
+	fireEvent.click(
+		await screen.findByRole('option', {
+			name: 'caseHandover.reason.PLANNED_ABSENCE'
+		})
+	);
 };
 
 describe('AskerInfoAssign with the real SupervisorDialog', () => {
@@ -94,8 +98,8 @@ describe('AskerInfoAssign with the real SupervisorDialog', () => {
 		});
 		vi.mocked(apiGetCaseHandoverReasons).mockResolvedValue([
 			{
-				code: 'OTHER_EMERGENCY',
-				label: 'Emergency',
+				code: 'PLANNED_ABSENCE',
+				label: 'Freistellung',
 				clientConsentRequired: false
 			}
 		]);
@@ -127,7 +131,9 @@ describe('AskerInfoAssign with the real SupervisorDialog', () => {
 		await screen.findByText('caseHandover.offer.submitError');
 
 		expect(within(dialog).getByText('New Owner')).toBeTruthy();
-		expect(within(dialog).getByText('Emergency')).toBeTruthy();
+		expect(
+			within(dialog).getByText('caseHandover.reason.PLANNED_ABSENCE')
+		).toBeTruthy();
 		fireEvent.click(
 			within(dialog).getByTestId('supervisor-dialog-confirm')
 		);
@@ -178,7 +184,9 @@ describe('AskerInfoAssign with the real SupervisorDialog', () => {
 		);
 
 		expect(within(dialog).getByText('New Owner')).toBeTruthy();
-		expect(within(dialog).getByText('Emergency')).toBeTruthy();
+		expect(
+			within(dialog).getByText('caseHandover.reason.PLANNED_ABSENCE')
+		).toBeTruthy();
 		fireEvent.click(
 			within(dialog).getByTestId('supervisor-dialog-confirm')
 		);

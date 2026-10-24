@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Katılımcılar yükleniyor …",
+		"unavailable": "Katılımcılar yüklenemedi.",
+		"empty": "Katılımcı yok."
+	},
 	"menuEffects": {
 		"title": "Menü görünümü",
 		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
@@ -738,12 +743,13 @@
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
 			"titleLabel": "Nötr takvim başlığı",
-			"addShort": "Takvim",
 			"copyGoogle": "Google Takvim bağlantısını kopyala",
 			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
 			"linkCopied": "Takvim bağlantısı kopyalandı.",
 			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
-			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez."
+			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez.",
+			"addThis": "Bu randevuyu takvime ekle",
+			"shareHintSeries": "Web siteniz için takvim bağlantıları: tüm randevular seri olarak; davet bağlantısı veya otomatik güncelleme içermez."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",
@@ -937,7 +943,6 @@
 				"back": "Geri sayıma dön",
 				"headline": "Grup nasıl işler",
 				"subline": "İlk kezden önce yardımcı olacak üç şey.",
-				"appointments": "Tarihleri takvime ekle",
 				"steps": {
 					"formats": {
 						"title": "Grup nasıl bir araya gelir",
@@ -954,8 +959,7 @@
 						"text": "Bağlantı alanında düzenli olarak yeni buluşmalar bulur ve doğrudan bir sonraki randevuya gidersiniz.",
 						"alt": "Yeni randevu kartları arka arkaya beliriyor; net bir bağlantı simgesi meraklı kişiyi bir sonraki grup buluşmasına götürüyor."
 					}
-				},
-				"upcoming": "Sonraki randevular"
+				}
 			},
 			"status": {
 				"active": "Şu anda sürüyor",
@@ -980,7 +984,7 @@
 					"etaSoon": "birazdan",
 					"flipAria": "{{label}}: {{value}}. Okumak için çevirin.",
 					"flipHint": "çevirmek için tıklayın",
-					"greetingLabel": "Danışmanınızdan karşılama mesajı",
+					"greetingLabel": "Moderatörden karşılama mesajı",
 					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
 					"moderatorHeadline": "Grup görüşmesi {{eta}} başlıyor.",
 					"moderatorOverdueHeadline": "Grup bekliyor.",
@@ -988,8 +992,8 @@
 					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
 					"netiquetteTitle": "Sohbet kuralları",
 					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
-					"overdueHeadline": "Birazdan sizinleyiz.",
-					"overdueSubtitle": "Danışmanınız odayı birazdan açacak — lütfen biraz daha bekleyin.",
+					"overdueHeadline": "Grup birazdan başlıyor.",
+					"overdueSubtitle": "Moderatör grubu birazdan açacak — lütfen biraz daha bekleyin.",
 					"subtitle": "Bir sayıya tıklayın — arkasında karşılama mesajı ve sohbet kuralları sizi bekliyor.",
 					"subtitleCard": "Saate dokunun, arkasında karşılama ve kurallar.",
 					"subtitleStill": "Karşılama mesajı ve sohbet kuralları sayıların altında.",
@@ -1202,7 +1206,49 @@
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
 			"backToCountdown": "Geri sayıma dön",
-			"legalMenu": "Yasal bilgiler"
+			"legalMenu": "Yasal bilgiler",
+			"dates": {
+				"headline": "Sonraki buluşmalar",
+				"subline": "Takviminize eklemek için bir randevuya dokunun.",
+				"none": "Şu anda başka randevu planlanmadı.",
+				"add": "Ekle",
+				"addLabel": "{{date}} takvime ekle",
+				"next": "Sıradaki",
+				"seriesTitle": "Hepsi birden",
+				"seriesSub": "seri olarak ekle",
+				"seriesLong": "Hepsini seri olarak ekle",
+				"repeat": {
+					"DAILY": "Grup her gün aynı saatte buluşur.",
+					"WEEKLY": "Grup her hafta aynı saatte buluşur.",
+					"BIWEEKLY": "Grup iki haftada bir aynı saatte buluşur.",
+					"MONTHLY": "Grup her ay aynı saatte buluşur.",
+					"QUARTERLY": "Grup üç ayda bir aynı saatte buluşur.",
+					"YEARLY": "Grup her yıl aynı saatte buluşur."
+				}
+			},
+			"addDate": "Takvime ekle",
+			"allDates": "Tüm randevular",
+			"nextDates": "Sonraki randevular",
+			"joinFrom": "{{time}} itibarıyla",
+			"rhythm": {
+				"DAILY": "her gün",
+				"WEEKLY": "her hafta",
+				"BIWEEKLY": "iki haftada bir",
+				"MONTHLY": "her ay",
+				"QUARTERLY": "üç ayda bir",
+				"YEARLY": "her yıl"
+			},
+			"running": {
+				"since": "Devam süresi",
+				"status": "Şu anda devam ediyor",
+				"statusModerated": "Şu anda devam ediyor · moderatör burada",
+				"headline": "Grup {{ago}} başladı.",
+				"subline": "İstediğiniz zaman katılabilirsiniz – kimsenin bir şey söylemesi gerekmez."
+			},
+			"rules": {
+				"headline": "Birbirimize nasıl davranırız",
+				"subline": "Bir kez okuyun – sonra siz de aramızdasınız."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1979,6 +2025,8 @@
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
+		"youEndedChat": "Sohbeti sonlandırdınız",
+		"chatEnded": "Sohbet sona erdi",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
@@ -2064,21 +2112,21 @@
 			"title": "Görünüm filtresi",
 			"description": "Bu listede hangi türlerin görüneceği, hangilerinin etiket alacağı ve nasıl ses vereceği.",
 			"showColumn": "Göster",
-			"pillColumn": "Etiket",
-			"soundColumn": "Ses",
+			"pillColumn": "Filtrede",
+			"soundColumn": "Tarayıcı",
 			"soundKind": "Sesi dinle: {{kind}}",
-			"soundMenu": "Ses seç: {{kind}}",
+			"soundMenu": "Tarayıcı bildirimi: {{kind}}",
 			"soundDefault": "Varsayılan",
-			"pillMenu": "Görünüm seç: {{kind}}",
+			"pillMenu": "Filtre seç: {{kind}}",
 			"liveChatDynamic": "Dinamik",
 			"liveChatFixed": "Sabit",
 			"pillOff": "Kapalı",
 			"pillOn": "Açık",
 			"placeholderHint": "Yakında.",
 			"showKind": "Göster: {{kind}}",
-			"pillKind": "Etiket: {{kind}}",
+			"pillKind": "Filtrede: {{kind}}",
 			"otherFixed": "„Diğer“ her zaman gösterilir, böylece hiçbir şey fark edilmeden kaybolmaz.",
-			"pillNotApplicable": "Bu tür için etiket yok",
+			"pillNotApplicable": "Bu tür için filtre düğmesi yok",
 			"autoRead": "Gizlenenleri hemen okundu olarak işaretle",
 			"autoReadDescription": "Yalnızca bu liste için geçerlidir. Sohbetlere okundu bilgisi gönderilmez.",
 			"autoReadSessions": "Gizlenen sohbetleri okunmamış sayma",
@@ -2095,7 +2143,7 @@
 			"viewLabels": "Simge + metin",
 			"viewText": "Metin",
 			"autoSort": "Okunmamışları sola al",
-			"autoSortDescription": "Okunmamış öğesi olan filtreler satırın başına taşınır.",
+			"autoSortDescription": "Okunmamış öğesi olan düğmeler başa taşınır.",
 			"deactivatedHint": "Kurumunuz tarafından kapatıldı. Mevcut görüşmeler arşivlenene kadar görünür kalır.",
 			"deactivatedChip": "{{kind}} (kurumunuz tarafından kapatıldı)",
 			"deactivatedNotice": "{{kind}} kurumunuz için kapatıldı. Mevcut görüşmeler arşivlenene kadar görünür kalır; yenisi oluşturulamaz.",
@@ -2115,7 +2163,36 @@
 				"sessions": "Görüşmeler",
 				"requests": "Talepler"
 			},
-			"liveChatSession": "Açıkken"
+			"liveChatSession": "Açıkken",
+			"kindColumn": "Tür",
+			"legendShow": "Bu türdeki öğeler listede görünür",
+			"legendPill": "Listeyi bu türle sınırlayan, listenin üstündeki düğme",
+			"legendSound": "Bu cihazda açılır pencere, sesli veya sessiz",
+			"legendEmail": "Gelen kutusuna bildirim, mesaj içeriği olmadan",
+			"quickHeading": "Diğer filtre düğmeleri",
+			"quickNote": "Bu düğmeler listeyi filtreler veya bir işlem açar. Bildirim göndermez.",
+			"presentationHeading": "Filtre düğmelerinin görünümü",
+			"soundWithTone": "Sesli açılır pencere",
+			"soundSilent": "Sessiz açılır pencere",
+			"soundSilentDescription": "Yalnızca pencere, ses yok",
+			"emailColumn": "E-posta",
+			"emailKind": "E-posta: {{kind}}",
+			"emailMenu": "E-posta seç: {{kind}}",
+			"channelUnavailable": "mevcut değil",
+			"emailUnavailableReason": "Bu tür için henüz e-posta bildirimi yok",
+			"emailMasterOff": "E-posta bildirimleri profilinizde kapalı",
+			"browserOff": "Açılır bildirimler profilinizde kapalı",
+			"descriptions": {
+				"sessions": "Her görüşme türü için filtre düğmesi alıp almayacağını ve yeni mesajlardan nasıl haberdar olacağınızı belirleyin.",
+				"requests": "Her talep türü için filtre düğmesi alıp almayacağını ve yeni taleplerden nasıl haberdar olacağınızı belirleyin.",
+				"timeline": "Her tür için listede görünüp görünmeyeceğini, filtre düğmesi alıp almayacağını ve e-posta alıp almayacağınızı belirleyin.",
+				"timelineWithoutEmail": "Her tür için listede görünüp görünmeyeceğini ve filtre düğmesi alıp almayacağını belirleyin."
+			},
+			"kindsHeadings": {
+				"sessions": "Görüşme türleri",
+				"requests": "Talep türleri",
+				"timeline": "Olay türleri"
+			}
 		},
 		"families": {
 			"all": "Tümü",
@@ -2194,7 +2271,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "Yeni danışman vakayı devraldı",
-				"text": "Yetkili vaka devri kayda geçirildi."
+				"text": "Yetkili vaka devri kayda geçirildi.",
+				"coAccess": {
+					"title": "Geçici erişim verildi",
+					"text": "Bir danışman bu vakayı sınırlı bir süre okuyabilir. Sorumluluk mevcut danışmanda kalır."
+				},
+				"generic": {
+					"title": "Vakaya erişim verildi",
+					"text": "Yetkili erişim kayda geçirildi. Güncel durumu görüşmede görebilirsiniz."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Vaka devri reddedildi",
@@ -2202,7 +2287,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
-				"text": "Bir meslektaşınız bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin."
+				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
+				"coAccess": {
+					"title": "Geçici erişim teklifi",
+					"text": "{{fromConsultantName}} size bu danışmanlığa geçici erişim teklif ediyor. Sorumluluk mevcut danışmanda kalır."
+				}
 			},
 			"callStarted": {
 				"title": "Arama devam ediyor",
@@ -2307,6 +2396,7 @@
 			"showPreview": "Sohbet önizlemesini göster",
 			"showDetails": "Detayları göster",
 			"preview": {
+				"authors": "Bu önizlemedeki kişiler",
 				"unavailable": "Sohbet önizlemesi henüz mevcut değil — okumak için sohbeti açın.",
 				"empty": "Bu sohbette henüz mesaj yok.",
 				"image": "Görsel",
@@ -2317,7 +2407,12 @@
 				"unsupported": "Desteklenmeyen mesaj",
 				"pending": "Şifre çözme bekleniyor",
 				"roomUnavailable": "Konuşma bu cihazda kullanılamıyor",
-				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor"
+				"eventUnavailable": "Mesaj yerel geçmişte kullanılamıyor",
+				"loadOlder": "Daha eski mesajları yükle",
+				"loadingOlder": "Daha eski mesajlar yükleniyor …",
+				"loadOlderFailed": "Daha eski mesajlar yüklenemedi.",
+				"retryLoadOlder": "Tekrar dene",
+				"historyStart": "Sohbetin başlangıcı"
 			},
 			"loadOlder": "Eski etkinlikleri yükle",
 			"loadingOlder": "Eski etkinlikler yükleniyor…",
@@ -3708,7 +3803,8 @@
 			"retired": "Belirtilmemiş"
 		},
 		"history": {
-			"unknownConsultant": "Önceki danışman"
+			"unknownConsultant": "Önceki danışman",
+			"unknownColleague": "Bir meslektaşınız"
 		},
 		"submit": "Erişim talep et",
 		"submitSending": "Gönderiliyor",
@@ -3766,6 +3862,7 @@
 			"selectedReason": "Seçilen neden: {{reason}}",
 			"explanation": "Açıklama: {{explanation}}",
 			"tookOverTitle": "Yeni danışman vakanızı devraldı",
+			"tookOverBody": "Danışmanlığınıza bundan sonra {{advisor}} devam edecek.",
 			"noActionNeeded": "Başka bir şey yapmanıza gerek yok",
 			"importantTitle": "Önemli bildirim",
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",

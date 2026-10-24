@@ -42,6 +42,8 @@ const ONE_LANGUAGE_FALLBACKS = [
 	/'Begrüßung deiner Beratung'/,
 	/'Animation abschalten'/,
 	/'Wir sind gleich für dich da\.'/,
+	/'Begrüßung der Moderation'/,
+	/'Die Gruppe beginnt gleich\.'/,
 	/'Chat rules'/,
 	/'Load older activity'/,
 	/'Open chat'/,

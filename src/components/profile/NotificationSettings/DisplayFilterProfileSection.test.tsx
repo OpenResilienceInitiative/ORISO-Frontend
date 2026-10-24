@@ -32,6 +32,7 @@ import { AUTHORITIES } from '../../../globalState/helpers/stateHelpers';
 import { apiGetAgenciesByIds } from '../../../api/apiGetAgenciesByIds';
 import { resetCounsellorAgencyFormatsForTests } from '../../../hooks/useCounsellorAgencyFormats';
 
+vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, opts?: Record<string, unknown>) =>

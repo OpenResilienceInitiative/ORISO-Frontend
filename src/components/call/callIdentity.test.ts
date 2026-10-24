@@ -77,7 +77,8 @@ describe('what the call is told', () => {
 			kind: 'initials',
 			bg: '#a5000a',
 			ink: '#ffffff',
-			initials: 'SP'
+			initials: 'SP',
+			name: 'Susanne Pfeiffer'
 		});
 	});
 

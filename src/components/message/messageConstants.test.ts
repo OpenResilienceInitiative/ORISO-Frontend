@@ -1,5 +1,44 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { parseMessagePrefixes, buildVisibleToPrefix } from './messageConstants';
+import {
+	parseMessagePrefixes,
+	buildVisibleToPrefix,
+	chatEndedTextKey,
+	SYSTEM_NOTIFICATION_PREFIX
+} from './messageConstants';
+
+describe('USER_LEFT_CHAT: who ended the chat (#1838)', () => {
+	const leftChat = (extra: Record<string, unknown>) =>
+		`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'USER_LEFT_CHAT',
+			username: 'trout_milan_8303',
+			...extra
+		})}`;
+
+	it.each([
+		[{ endedBy: 'CONSULTANT' }, 'CONSULTANT'],
+		[{ endedBy: 'ADVICE_SEEKER' }, 'ADVICE_SEEKER'],
+		[{}, null],
+		[{ endedBy: 'SOMEONE_ELSE' }, null]
+	])('reads endedBy from %j', (extra, endedBy) => {
+		expect(
+			parseMessagePrefixes(leftChat(extra)).systemNotificationEndedBy
+		).toBe(endedBy);
+	});
+
+	it.each([
+		['ADVICE_SEEKER', true, 'message.userLeftChat'],
+		['ADVICE_SEEKER', false, 'message.youEndedChat'],
+		['CONSULTANT', true, 'message.youEndedChat'],
+		['CONSULTANT', false, 'message.consultantLeftChat'],
+		[null, true, 'message.userLeftChat'],
+		[null, false, 'message.chatEnded']
+	] as const)(
+		'ended by %s, counsellor viewer %s -> %s',
+		(endedBy, viewerIsConsultant, key) => {
+			expect(chatEndedTextKey(endedBy, viewerIsConsultant)).toBe(key);
+		}
+	);
+});
 
 /**
  * ADR-017 hard cut: `[THREAD:…]` no longer carries thread identity. These

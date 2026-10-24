@@ -641,6 +641,24 @@ const expectTitleClearOfActions = async (canvasElement: HTMLElement) => {
 	return { titleRect, actionsRect };
 };
 
+const expectHeaderBottomAlignment = async (canvasElement: HTMLElement) => {
+	await document.fonts.ready;
+	const row = canvasElement.querySelector('.sessionInfo__headerWrapper')!;
+	const avatar = canvasElement.querySelector(
+		'[data-cy="participant-avatar"]'
+	)!;
+	const menu = canvasElement.querySelector('#iconH')!;
+	const lineY = row.getBoundingClientRect().bottom - 1;
+	const avatarGap = lineY - avatar.getBoundingClientRect().bottom;
+	const menuGap = lineY - menu.getBoundingClientRect().bottom;
+	await expect(
+		Math.abs(avatarGap - menuGap),
+		`avatar gap ${avatarGap}px; outlined menu gap ${menuGap}px`
+	).toBeLessThan(0.5);
+	await expect(Math.round(avatar.getBoundingClientRect().height)).toBe(48);
+	await expect(Math.round(menu.getBoundingClientRect().height)).toBe(44);
+};
+
 /* ------------------------------------------------------------------ *
  * Meta + stories
  * ------------------------------------------------------------------ */
@@ -683,11 +701,61 @@ type Story = StoryObj<typeof meta>;
 /**
  * Group chat with ≤4 members.
  * Expected (Figma #430): every member avatar is shown (no cap), no overflow badge.
- * TODO: keep verifying against Figma until Fix 1 (GroupChatHeader member logic)
- * is merged — the ≤4 branch now renders all avatars instead of the old 3-cap.
+ * Uses the canonical 48px stack shared with the 1:1 and side-panel headers.
  */
 export const GroupChatSmall: Story = {
-	render: () => renderGroupHeader(mockGroupSessionSmall())
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		for (const avatar of canvasElement.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		)) {
+			await expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+				48
+			);
+			await expect(
+				Math.round(avatar.getBoundingClientRect().height)
+			).toBe(48);
+		}
+		await expect(
+			canvasElement.querySelector('.sessionInfo__participant')
+		).toBeNull();
+		await expectHeaderBottomAlignment(canvasElement);
+	}
+};
+
+/** Names appear only on hover/focus; the hovered coin paints above its peers. */
+export const GroupChatHover: Story = {
+	name: 'Group header — hovered avatar comes to the front',
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const avatar = avatars[1];
+		const box = avatar.getBoundingClientRect();
+		await userEvent.hover(avatar);
+		const tip = avatar.parentElement!.querySelector('[role="tooltip"]')!;
+		await waitFor(() => expect(tip).toBeVisible());
+		await expect(tip).toHaveTextContent(avatar.getAttribute('aria-label')!);
+		await expect(
+			avatar.contains(
+				document.elementFromPoint(box.left + 4, box.top + 24)
+			)
+		).toBe(true);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__participant')
+		).toBeNull();
+	}
 };
 
 /**
@@ -700,18 +768,24 @@ export const GroupChatLarge: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const badge = canvasElement.querySelector(
-				'.sessionInfo__memberCount'
+				'[data-cy="participant-overflow"]'
 			);
 			expect(badge).toBeTruthy();
 			expect(
-				canvasElement.querySelector('.sessionInfo__memberCountNumber')
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
 					?.textContent
 			).toContain('+23');
-			// Four stacked avatars, the remaining 23 collapse into the chip.
+			// Current 48px header avatars, the remaining 23 collapse into the chip.
 			expect(
-				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
 					.length
 			).toBe(4);
+			for (const avatar of canvasElement.querySelectorAll(
+				'[data-cy="participant-avatar"]'
+			))
+				expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+					48
+				);
 		});
 	}
 };
@@ -828,14 +902,14 @@ export const ActiveConversationParticipants: Story = {
 		await expect(avatars![0].getAttribute('data-user-id')).toBe(
 			'@bettina.b:matrix.storybook.test'
 		);
-		// T14/T17 — measured in Figma 1320:38281 (get_metadata): 40 px
-		// avatars, 28 px step, the group starts 8 px inside the type pill
+		// Current Avatar Group master 7608:40689: 48 px avatars,
+		// 24 px step; the group still starts 8 px inside the type pill
 		// and the title text follows 6 px after the group.
 		const first = avatars![0].getBoundingClientRect();
 		const second = avatars![1].getBoundingClientRect();
-		await expect(Math.round(first.width)).toBe(40);
-		await expect(Math.round(first.height)).toBe(40);
-		await expect(Math.round(second.left - first.left)).toBe(28);
+		await expect(Math.round(first.width)).toBe(48);
+		await expect(Math.round(first.height)).toBe(48);
+		await expect(Math.round(second.left - first.left)).toBe(24);
 		const pill = canvasElement
 			.querySelector('.chatroomMainInteractionIcon')!
 			.getBoundingClientRect();
@@ -872,8 +946,7 @@ export const ActiveConversationParticipants: Story = {
 			.querySelector('.sessionInfo__username')!
 			.getBoundingClientRect();
 		await expect(tipRect.top).toBeGreaterThan(rowRect.bottom - 1);
-		// No clipping ancestor cuts it off (the tooltip is pointer-events:
-		// none, so elementFromPoint cannot be used here).
+		// No clipping ancestor cuts off the hoverable tooltip.
 		let ancestor = tip.parentElement;
 		while (ancestor && ancestor !== canvasElement) {
 			if (getComputedStyle(ancestor).overflow !== 'visible') {
@@ -895,6 +968,7 @@ export const ActiveConversationParticipants: Story = {
 			)
 		).toBe(65);
 		await expectTitleClearOfActions(canvasElement);
+		await expectHeaderBottomAlignment(canvasElement);
 	}
 };
 

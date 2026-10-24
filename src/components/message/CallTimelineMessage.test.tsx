@@ -422,3 +422,21 @@ it.each([
 			expect(screen.queryByText(literal(formatIn(undefined)))).toBeNull();
 	}
 );
+
+// #780: the walkthrough's missed card said "Attended · 1" about the caller.
+it('lists nobody as attended on a missed call and still names the caller', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'missed-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'missed',
+		actorUserId: '@alex:example',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByText(/participants\.attended/)).toBeNull();
+	expect(screen.queryAllByTestId('user-avatar')).toHaveLength(0);
+	expect(screen.getByText(/message\.callLifecycle\.startedBy/)).toBeTruthy();
+});

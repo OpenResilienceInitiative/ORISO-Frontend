@@ -234,7 +234,7 @@ import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
 import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
@@ -244,11 +244,8 @@ import {
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
-const MessageSubmitInterfaceComponent = lazyWithReload(() =>
-	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
-		(m) => ({ default: m.MessageSubmitInterfaceComponent })
-	)
-);
+import { loadMessageComposer } from '../app/appChunks';
+const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
@@ -1376,23 +1373,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousEnquiryPhaseSession
 	]);
 
-	const preloadMessageComposer = useCallback(() => {
-		void import(
-			'../messageSubmitInterface/messageSubmitInterfaceComponent'
-		);
-	}, []);
-
 	useEffect(() => {
 		if (
 			shouldShowPseudonymGate &&
 			pseudonymConfirmed &&
 			consultantAccepted
 		) {
-			preloadMessageComposer();
+			void loadMessageComposer();
 		}
 	}, [
 		consultantAccepted,
-		preloadMessageComposer,
 		pseudonymConfirmed,
 		shouldShowPseudonymGate
 	]);
@@ -3211,6 +3201,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'session__content--gameFocus',
 						shouldShowConsentGate &&
 							'session__content--consentGate',
+						shouldShowGroupConsentGate &&
+							'session__content--groupConsentGate',
 						shouldShowPseudonymGate &&
 							'session__content--pseudonymGate'
 					)}
@@ -3229,6 +3221,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<GroupConsentGate
 							agencyId={
 								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							agencyName={
+								activeSession.item?.assignedAgencies?.[0]?.name
 							}
 							onAccepted={() => {
 								setGroupConsentAccepted(true);
@@ -4012,7 +4007,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							fullWidth
 							variant="outlined"
 							onClick={() => setLiveChatClosedDismissed(true)}
-							startIcon={<CloseIcon />}
+							startIcon={
+								<CloseIcon width={20} height={20} aria-hidden />
+							}
 							sx={{
 								borderRadius: '8px',
 								borderColor: '#FFE2DE',

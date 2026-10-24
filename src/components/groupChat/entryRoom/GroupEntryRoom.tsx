@@ -28,6 +28,7 @@ import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
 import {
+	getGroupSeries,
 	getGroupUpcomingDates,
 	getGroupWaitingRoomTopic
 } from './groupWaitingRoomData';
@@ -187,6 +188,7 @@ const ClientGroupEntryRoom = () => {
 	});
 
 	const upcomingDates = useMemo(() => getGroupUpcomingDates(item), [item]);
+	const series = useMemo(() => getGroupSeries(item), [item]);
 
 	const plannedStart = useMemo(
 		() => (item ? getGroupChatPlannedStart(item) : null),
@@ -195,11 +197,13 @@ const ClientGroupEntryRoom = () => {
 
 	const handleJoin = useCallback(() => {
 		if (!item?.id || joinBusy) {
-			return;
+			return false;
 		}
 		setJoinBusy(true);
 		setJoinFailed(false);
-		apiPutGroupChat(item.id, GROUP_CHAT_API.JOIN)
+		// Returned so the closing animation keeps the screen covered until the
+		// request has settled and the chat has opened.
+		return apiPutGroupChat(item.id, GROUP_CHAT_API.JOIN)
 			.then(() => {
 				navigate(
 					getSessionNavigationPath({
@@ -223,6 +227,8 @@ const ClientGroupEntryRoom = () => {
 					notifications.addNotification(notice);
 				else setJoinFailed(true);
 				setJoinBusy(false);
+				// The person stays: the closing animation need not wait for a chat.
+				return false;
 			});
 	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
 
@@ -267,6 +273,7 @@ const ClientGroupEntryRoom = () => {
 				agencyId={item.assignedAgencies?.[0]?.id}
 				plannedStart={plannedStart}
 				upcomingDates={upcomingDates}
+				series={series}
 				durationMinutes={item.duration}
 				eventId={item.id}
 				welcomeText={authorContent.hintMessage || undefined}
