@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Loading participants …",
+		"unavailable": "Participants could not be loaded.",
+		"empty": "No participants."
+	},
 	"menuEffects": {
 		"title": "Menu appearance",
 		"label": "Backdrop and gentle menu animations",
@@ -881,15 +886,37 @@
 			"addPerson": "Add person",
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
+			"error": {
+				"recipientsRequired": "Please select at least one colleague.",
+				"recipientUnknown": "At least one selected colleague cannot be added yet because they have no chat account. Remove them or try again later.",
+				"outOfScope": "At least one selected person cannot be picked: they are outside the range your organisation allows for internal chats, or cannot be found. Nothing was created.",
+				"membershipFailed": "The room could not be set up with all selected people. Nothing was created. Please try again.",
+				"encryptionRequired": "Internal chats with selected people are only available encrypted, and encryption is currently unavailable. Nothing was created.",
+				"disabled": "Internal chats with selected people are not available to you: they are not enabled, you lack the permission, or this installation does not support them yet. Please contact your administration.",
+				"unknown": "The room could not be created. Please try again.",
+				"busy": "This room is being created right now. Please wait a moment and try again.",
+				"notAvailable": "Internal chats with selected people are not available on this installation yet. Nothing was created. Please contact support."
+			},
 			"nameLabel": "Internal name",
+			"noColleagues": "No colleagues to choose from",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
+			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
 			"removePerson": "Remove {{name}}",
+			"reusedNotice": {
+				"title": "Existing room opened",
+				"text": "A room with exactly these people already existed. It was opened and no new one was created."
+			},
+			"scope": {
+				"AGENCY": "You can pick colleagues from your counselling centre.",
+				"TENANT": "You can pick colleagues from your organisation."
+			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
 			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
 			"title": "Internal discussion",
 			"togglePersonList": "Open or close the person list",
+			"tooMany": "You can select up to {{max}} people.",
 			"vacatedHint": "no longer at this counselling centre"
 		},
 		"circle": {
@@ -1775,7 +1802,15 @@
 					"text": "Username or password are not correct. Please try again."
 				},
 				"consultantBlocked": "Consultant accounts cannot sign in here.",
-				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again.",
+				"tooManyRequestsWaitSecond": "Too many attempts. Please wait about a second and try again.",
+				"tooManyRequestsWaitSeconds": "Too many attempts. Please wait about {{seconds}} seconds and try again.",
+				"tooManyRequestsWaitMinute": "Too many attempts. Please wait about a minute and try again.",
+				"tooManyRequestsWaitMinutes": "Too many attempts. Please wait about {{minutes}} minutes and try again.",
+				"tooManyRequestsWaitHour": "Too many attempts. Please wait about an hour and try again.",
+				"tooManyRequestsWaitHours": "Too many attempts. Please wait about {{hours}} hours and try again.",
+				"tooManyRequestsWaitDay": "Too many attempts. Please wait about a day and try again.",
+				"tooManyRequestsWaitDays": "Too many attempts. Please wait about {{days}} days and try again."
 			}
 		},
 		"mobile": {
@@ -1904,7 +1939,8 @@
 				"mention": "Mention someone",
 				"voiceRecording": {
 					"label": "Voice recording",
-					"tooltip": "Record voice message"
+					"tooltip": "Record voice message",
+					"disabledWhileEditing": "Voice messages are not available while editing a message"
 				},
 				"imageUrlPrompt": "Image URL",
 				"urlPrompt": "URL"
@@ -1970,10 +2006,33 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			},
+			"state": {
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"description": {
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			},
+			"startedBy": "Called by {{name}}."
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
 		"consultantLeftChat": "Consultant has left the chat",
+		"youEndedChat": "You ended the chat",
+		"chatEnded": "The chat has ended",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
@@ -2180,7 +2239,15 @@
 			},
 			"caseHandoverGranted": {
 				"title": "New counsellor took over your case",
-				"text": "The authorised case handover was logged."
+				"text": "The authorised case handover was logged.",
+				"coAccess": {
+					"title": "Temporary access granted",
+					"text": "A counsellor may read this case for a limited time. Responsibility stays with the current counsellor."
+				},
+				"generic": {
+					"title": "Access to the case granted",
+					"text": "The authorised access was logged. You can see the current state in the conversation."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Case handover declined",
@@ -2188,7 +2255,11 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
-				"text": "A colleague wants to hand this consultation over to you. Review the request before opening the conversation."
+				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
+				"coAccess": {
+					"title": "Temporary access offer",
+					"text": "{{fromConsultantName}} offers you temporary access to this consultation. The current counsellor stays responsible."
+				}
 			},
 			"callStarted": {
 				"title": "Call ongoing",
@@ -2293,6 +2364,7 @@
 			"markRead": "Mark as read",
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
+				"authors": "People in this preview",
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
 				"empty": "No messages in this conversation yet.",
 				"image": "Image",
@@ -2303,7 +2375,12 @@
 				"unsupported": "Unsupported message",
 				"pending": "Waiting for decryption",
 				"roomUnavailable": "Conversation unavailable on this device",
-				"eventUnavailable": "Message unavailable in local history"
+				"eventUnavailable": "Message unavailable in local history",
+				"loadOlder": "Load older messages",
+				"loadingOlder": "Loading older messages …",
+				"loadOlderFailed": "Older messages could not be loaded.",
+				"retryLoadOlder": "Try again",
+				"historyStart": "Start of the conversation"
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",
@@ -2548,6 +2625,10 @@
 					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
 					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
 					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
+				},
+				"dpaRestricted": {
+					"title": "Advice seekers cannot start a live chat with you",
+					"text": "Your provider has not confirmed the current data processing agreement. Until it does, new advice seekers cannot start a live chat or an enquiry. Counselling that has already begun continues."
 				}
 			},
 			"masterKey": {
@@ -2923,6 +3004,7 @@
 				"cta": "Set up recovery key"
 			},
 			"showKey": {
+				"headline": "Save your backup key",
 				"silentExplainer": "Your recovery key was set up automatically when you signed in. Save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
@@ -3658,7 +3740,8 @@
 			"retired": "Not specified"
 		},
 		"history": {
-			"unknownConsultant": "A former counsellor"
+			"unknownConsultant": "A former counsellor",
+			"unknownColleague": "A colleague"
 		},
 		"submit": "Request access",
 		"submitSending": "Sending",
@@ -3686,7 +3769,10 @@
 			},
 			"reason": {
 				"title": "Please select a reason",
-				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry",
+				"empty": "No case handover reasons are set up for your counseling center. Please contact your administrator.",
+				"loadFailed": "The reasons for a case handover could not be loaded.",
+				"retry": "Try again"
 			},
 			"describe": {
 				"title": "Please describe the reason",
@@ -3694,7 +3780,12 @@
 			},
 			"back": "Back",
 			"next": "Next",
-			"consentPending": "Client consent is required before access is activated."
+			"consentPending": "Client consent is required before access is activated.",
+			"reclaim": {
+				"copy": "A colleague took over this case while you were away. You can take it back now.",
+				"cta": "Take the case back",
+				"unavailable": "This case can no longer be taken back."
+			}
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",
@@ -3708,6 +3799,7 @@
 			"selectedReason": "Selected reason: {{reason}}",
 			"explanation": "Explanation: {{explanation}}",
 			"tookOverTitle": "New counsellor took over your case",
+			"tookOverBody": "{{advisor}} will continue your counselling from now on.",
 			"noActionNeeded": "You don't need to take any action",
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
@@ -3715,16 +3807,24 @@
 		},
 		"readOnly": {
 			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
-			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages."
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
+			"extend": "Extend access"
 		},
 		"standingPreference": {
 			"label": "Always ask before additional access",
-			"description": "Applies to future requests in this conversation. Current requests and access already granted remain unchanged.",
+			"description": "Applies only to future requests in this conversation within your counselling centre. Current requests and access already granted remain unchanged.",
 			"baselineDescription": "When off, your counselling agency’s settings apply. Any consent required by the agency is still required.",
 			"saving": "Saving …",
 			"saved": "Setting saved.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"loading": "Loading setting …"
+		},
+		"bulkBar": {
+			"label": "Case selection",
+			"selected": "{{count}} selected",
+			"continue": "Continue",
+			"cancel": "Cancel",
+			"emptyHint": "Select at least one case."
 		}
 	},
 	"supervisorDialog": {
@@ -4144,6 +4244,10 @@
 				"clear": "Clear search",
 				"removeSelectedPerson": "Remove {{name}}",
 				"emptyPeople": "No matching people found.",
+				"peopleLoading": "Loading colleagues …",
+				"peopleLoadError": "The colleagues could not be loaded. Please try again later.",
+				"handoverPeopleHint": "Only colleagues whose cases you can take over via “Request access” are shown here. This depends on your department and topics.",
+				"handoverPeopleCapped": "More cases exist than could be loaded – please refine the search.",
 				"emptyTypes": "No chat types available.",
 				"emptyTopics": "No topics found for your counseling centers.",
 				"tabs": {
@@ -4156,7 +4260,15 @@
 				"role": {
 					"asker": "Advice seeker",
 					"consultant": "Counsellor"
-				}
+				},
+				"internalName": "Internal name",
+				"publicName": "Public name",
+				"agencyGroup": "Counseling center",
+				"topicGroup": "Topic",
+				"agencyFallback": "Counseling center {{id}}",
+				"filteredOutAll": "Your search and filters hide every consultation.",
+				"removeFilters": "Remove filters",
+				"removeFiltersKeepSearch": "Remove filters, keep search"
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -4706,6 +4818,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",
@@ -4760,6 +4887,7 @@
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}
 	},
@@ -4908,6 +5036,7 @@
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
 			"later": "Come back later",
+			"laterNotice": "Nobody is live right now. As soon as someone is, the chat continues here.",
 			"title": "Live chat is currently closed",
 			"topicLabel": "Requested topic: {{topic}}",
 			"weekdays": {
@@ -5260,6 +5389,16 @@
 			"channelEmail": "Email",
 			"channelBrowser": "Browser on this device"
 		},
+		"notificationSummary": {
+			"label": "Notifications: {{state}}",
+			"change": "change",
+			"changeLabel": "Change notifications",
+			"dismiss": "Hide setup",
+			"none": "not set up",
+			"email": "email on",
+			"browser": "signal active on this device",
+			"both": "email and signal on"
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."
@@ -5317,7 +5456,14 @@
 		"displayName": {
 			"headline": "Your displayed name",
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
-			"action": "Change my name"
+			"action": "Change my name",
+			"overlay": {
+				"headline": "Your displayed name",
+				"copy": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
+				"reroll": "Roll a new name",
+				"save": "Use this name",
+				"saveFailed": "Saving failed. Please try again."
+			}
 		},
 		"unavailableInRoom": "First response – not available in this room.",
 		"faq": {
@@ -5327,6 +5473,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Print / save as PDF",
+		"confirmedBy": "Confirmed by",
+		"confirmedAt": "Confirmed on (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "You can save as PDF in the print dialog. Turn off headers and footers to keep the link address out of the printed document.",
+		"printUnavailable": "Your confirmation was saved. The print view is unavailable because the confirmation details are incomplete.",
 		"title": "Review and confirm contract documents",
 		"subtitle": "Please read the contract documents in full, provide your details, and then confirm.",
 		"signerName": "Full name",
@@ -5644,6 +5796,7 @@
 			"status": {
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
+				"nobodyLive": "No counsellor is live right now",
 				"accepted": "A counsellor has taken your conversation",
 				"closed": "Closed right now",
 				"checking": "Who is live right now?",
@@ -5660,6 +5813,8 @@
 			"waiting": {
 				"headline": "Nearly there.",
 				"aheadUnknown": "We are looking for a free counsellor for you.",
+				"nobodyLiveHeadline": "No counsellor is live right now.",
+				"nobodyLive": "We keep watching and will connect you as soon as someone is available.",
 				"aheadNone": "You are next.",
 				"aheadOne": "One person ahead of you",
 				"aheadMany": "{{count}} people ahead of you",
@@ -5691,7 +5846,8 @@
 			"steps": {
 				"wait": {
 					"title": "You wait until someone is free",
-					"text": "The counsellors are in other conversations right now."
+					"text": "The counsellors are in other conversations right now.",
+					"textNobodyLive": "As soon as a counsellor is online, you are up."
 				},
 				"consent": {
 					"title": "Then you agree once",
@@ -5770,6 +5926,25 @@
 			"callFailed": "Call failed: {{message}}",
 			"startFailed": "Failed to start call: {{message}}",
 			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
+		},
+		"notes": {
+			"title": "Call notes",
+			"privacy": "Private. Only for you, and only for as long as the call lasts.",
+			"type": "Kind of note",
+			"text": "Note",
+			"add": "Add note",
+			"remove": "Remove note",
+			"copy": "Copy all",
+			"copied": "Copied",
+			"empty": "Nothing noted yet.",
+			"collapse": "Collapse notes",
+			"expand": "Expand notes",
+			"open": "Call notes",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remark",
+				"aufgabe": "Task"
+			}
 		}
 	},
 	"form": {

@@ -2,15 +2,22 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { DisplayFilterDialog } from './DisplayFilterDialog';
+import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
 	setKindSetting
 } from './displayFilterTypes';
-import { STORY_LABELS, TIMELINE_KINDS } from './displayFilterStoryData';
+import {
+	REQUEST_KINDS,
+	SESSION_KINDS,
+	STORY_LABELS,
+	TIMELINE_KINDS
+} from './displayFilterStoryData';
 import { ORISO_M3_FIGMA_URL } from '../storybookDesignLinks';
 import {
+	desktop1440Globals,
+	phone320Globals,
 	phone390Globals,
 	phone390LandscapeGlobals
 } from '../message/messageStoryShell';
@@ -255,5 +262,173 @@ export const SessionsWithSoundColumn: Story = {
 		await expect(
 			canvas.getByRole('button', { name: 'Ton wählen: Live-Chat' })
 		).toBeTruthy();
+	}
+};
+
+/**
+ * Phone layout (2026-10-15): the three-column table squeezed the kind names
+ * to one letter per line and pushed "Anzeigen" past the right edge on Dev.
+ * Below the phone breakpoint every kind is a block — icon and full name on
+ * one line, its pickers underneath, each with its own small column label.
+ * Measured through bounding boxes, so a regression shows as a number.
+ */
+const expectPhoneLayout = async (
+	canvasElement: HTMLElement,
+	width: number,
+	columnLabels: string[]
+) => {
+	const doc = canvasElement.ownerDocument;
+	await waitFor(() =>
+		expect(
+			doc.querySelectorAll('.displayFilterDialog__row').length
+		).toBeGreaterThan(0)
+	);
+	// The viewport must really be the phone, or nothing below is proven.
+	await expect(doc.defaultView!.innerWidth).toBe(width);
+	const surface = doc
+		.querySelector('.displayFilterDialog .m3Dialog__surface')!
+		.getBoundingClientRect();
+	// Full screen on a phone: the sheet is the viewport, no side band.
+	await expect(Math.round(surface.left)).toBe(0);
+	await expect(Math.round(surface.right)).toBe(width);
+	const body = doc.querySelector(
+		'.displayFilterDialog .m3Dialog__body'
+	) as HTMLElement;
+	// Nothing scrolls sideways.
+	await expect(body.scrollWidth).toBeLessThanOrEqual(body.clientWidth);
+	const bodyBox = body.getBoundingClientRect();
+	const rows = Array.from(
+		doc.querySelectorAll<HTMLElement>('.displayFilterDialog__row')
+	);
+	for (const row of rows) {
+		const name = row.querySelector(
+			'.displayFilterDialog__kindText > span'
+		) as HTMLElement;
+		const lineHeight = parseFloat(getComputedStyle(name).lineHeight);
+		// Full name on one line.
+		await expect(name.getBoundingClientRect().height).toBeLessThan(
+			lineHeight * 1.5
+		);
+		const controls = Array.from(
+			row.querySelectorAll<HTMLElement>(
+				'.splitButton, .displayFilterDialog__cell input'
+			)
+		);
+		for (const control of controls) {
+			const box = control.getBoundingClientRect();
+			await expect(box.left).toBeGreaterThanOrEqual(bodyBox.left);
+			await expect(box.right).toBeLessThanOrEqual(bodyBox.right);
+		}
+		// Picker labels ("Standard", "Dynamisch") are not cut off.
+		for (const label of Array.from(
+			row.querySelectorAll<HTMLElement>('.splitButton__label')
+		)) {
+			await expect(label.scrollWidth).toBeLessThanOrEqual(
+				label.clientWidth
+			);
+		}
+		// The shared header row no longer lines up: each control carries
+		// its own visible column label.
+		// `waitFor`: the dialog fades in (opacity 0 on the first frame).
+		for (const columnLabel of columnLabels) {
+			await waitFor(() =>
+				expect(within(row).getByText(columnLabel)).toBeVisible()
+			);
+		}
+	}
+};
+
+const sessionsArgs = {
+	fullScreen: true,
+	kinds: SESSION_KINDS,
+	columns: SESSION_COLUMNS,
+	showAutoRead: true,
+	labels: { ...STORY_LABELS, title: 'Ansicht · Gespräche' }
+};
+
+const requestsArgs = {
+	fullScreen: true,
+	kinds: REQUEST_KINDS,
+	columns: SESSION_COLUMNS,
+	showAutoRead: false,
+	labels: { ...STORY_LABELS, title: 'Ansicht · Anfragen' }
+};
+
+/** Gespräche on a 390px phone (Ton + Anzeigen). */
+export const Phone390: Story = {
+	globals: phone390Globals,
+	args: sessionsArgs,
+	render: (args) => <Controlled {...args} />,
+	play: ({ canvasElement }) =>
+		expectPhoneLayout(canvasElement, 390, ['Ton', 'Anzeigen'])
+};
+
+/** Gespräche on the smallest supported phone. */
+export const Phone320: Story = {
+	globals: phone320Globals,
+	args: sessionsArgs,
+	render: (args) => <Controlled {...args} />,
+	play: ({ canvasElement }) =>
+		expectPhoneLayout(canvasElement, 320, ['Ton', 'Anzeigen'])
+};
+
+/** Anfragen on a 390px phone. */
+export const PhoneRequests390: Story = {
+	globals: phone390Globals,
+	args: requestsArgs,
+	render: (args) => <Controlled {...args} />,
+	play: ({ canvasElement }) =>
+		expectPhoneLayout(canvasElement, 390, ['Ton', 'Anzeigen'])
+};
+
+/** Anfragen on the smallest supported phone. */
+export const PhoneRequests320: Story = {
+	globals: phone320Globals,
+	args: requestsArgs,
+	render: (args) => <Controlled {...args} />,
+	play: ({ canvasElement }) =>
+		expectPhoneLayout(canvasElement, 320, ['Ton', 'Anzeigen'])
+};
+
+/** Zeitstrahl on a 390px phone (In der Liste + Anzeigen). */
+export const PhoneTimeline390: Story = {
+	globals: phone390Globals,
+	args: { fullScreen: true },
+	render: (args) => <Controlled {...args} />,
+	play: ({ canvasElement }) =>
+		expectPhoneLayout(canvasElement, 390, ['In der Liste', 'Anzeigen'])
+};
+
+/** Zeitstrahl on the smallest supported phone. */
+export const PhoneTimeline320: Story = {
+	globals: phone320Globals,
+	args: { fullScreen: true },
+	render: (args) => <Controlled {...args} />,
+	play: ({ canvasElement }) =>
+		expectPhoneLayout(canvasElement, 320, ['In der Liste', 'Anzeigen'])
+};
+
+/** Gespräche on desktop: the table layout is unchanged above the phone breakpoint. */
+export const SessionsDesktop: Story = {
+	globals: desktop1440Globals,
+	args: { ...sessionsArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		await waitFor(() =>
+			expect(
+				doc.querySelectorAll('.displayFilterDialog__row').length
+			).toBeGreaterThan(0)
+		);
+		// The shared header row labels the columns; the per-cell labels stay hidden.
+		const header = within(doc.body).getByRole('columnheader', {
+			name: 'Ton'
+		});
+		await expect(header.getBoundingClientRect().height).toBeGreaterThan(0);
+		for (const label of Array.from(
+			doc.querySelectorAll<HTMLElement>('.displayFilterDialog__cellLabel')
+		)) {
+			await expect(getComputedStyle(label).display).toBe('none');
+		}
 	}
 };

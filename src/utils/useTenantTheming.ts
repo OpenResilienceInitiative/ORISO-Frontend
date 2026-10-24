@@ -150,7 +150,12 @@ const useTenantTheming = () => {
 				   group link's assignment never fired on a single-domain
 				   stand (#974, #1216). App config wins where both speak. */
 				tenantContext?.setTenant({
-					settings: { ...(tenant?.settings ?? {}), ...settings }
+					settings: { ...(tenant?.settings ?? {}), ...settings },
+					// The recipient scope of internal chats (#1772) is not a
+					// feature flag but still only the tenant service knows it.
+					...(tenant?.internalGroupChat && {
+						internalGroupChat: tenant.internalGroupChat
+					})
 				} as any);
 			} else {
 				// ToDo: See VIC-428 + VIC-427

@@ -1,0 +1,164 @@
+@import '../../resources/styles/settings';
+
+.carimatMessageFrame {
+	margin-bottom: 20px;
+
+	.carimatMessageFrame__row {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--carimat-avatar-gap, 4px);
+		max-width: none;
+		width: 100%;
+		min-width: 0;
+	}
+
+	.carimatMessageFrame__avatarColumn {
+		width: 60px;
+		flex: 0 0 60px;
+		position: relative;
+		left: var(--carimat-avatar-ring-offset, -6px);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.carimatMessageFrame__avatar {
+		width: 60px;
+		height: 60px;
+		min-width: 60px;
+		min-height: 60px;
+
+		/* The ring is surface backdrop, not an outline stroke. Background paints
+		   beneath this transparent sizing border without misusing a surface role. */
+		border: 6px solid transparent;
+		border-radius: 50%;
+		background: var(--m3-surface, #ffffff);
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		z-index: 2;
+	}
+
+	.carimatMessageFrame__avatarIcon {
+		width: 32px;
+		height: 36px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--m3-on-surface, #1b1b1c);
+
+		svg,
+		img {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+		}
+	}
+
+	.carimatMessageFrame__content {
+		flex: 1;
+		min-width: 0;
+		max-width: none;
+		margin-left: calc(-1 * var(--carimat-avatar-overlap, 24px));
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 4px;
+		padding-top: 6px;
+	}
+
+	.carimatMessageFrame__header {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding-left: var(--carimat-header-inset, 28px);
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
+	}
+
+	.carimatMessageFrame__name {
+		font-family: $font-family-sans-serif;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	.carimatMessageFrame__subtitle {
+		font-family: $font-family-sans-serif;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	.carimatMessageFrame__topic {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-family: $font-family-sans-serif;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	.carimatMessageFrame__topicIcon {
+		flex: 0 0 24px;
+		width: 24px;
+		height: 24px;
+
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	.carimatMessageFrame__bubble {
+		width: 100%;
+		min-width: 0;
+		max-width: none;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+		font-family: $font-family-sans-serif;
+		font-size: 15px;
+		line-height: 1.5;
+		margin: 0;
+		border: 0;
+		padding: 20px 22px;
+		border-radius: 14px;
+		background: var(--m3-surface-container, #eeeeee);
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
+	}
+
+	.carimatMessageFrame__bubble--notice {
+		padding: 12px 16px;
+	}
+
+	.carimatMessageFrame__bubble .pseudonymCard__bubbleText {
+		font: inherit;
+		margin: 0;
+	}
+
+	.carimatMessageFrame__bubble .button__link {
+		min-height: 44px;
+		align-self: flex-start;
+	}
+
+	.carimatMessageFrame__bubble > p {
+		margin: 0;
+	}
+
+	.carimatMessageFrame__header + .carimatMessageFrame__bubble,
+	.messageItem__header + .carimatMessageFrame__bubble,
+	.carimatMessageFrame__header + .botReveal .carimatMessageFrame__bubble {
+		border-top-left-radius: 4px;
+	}
+}

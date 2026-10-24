@@ -56,6 +56,32 @@ interface JoinGroupChatViewProps {
 	bannedUsers?: string[];
 }
 
+/**
+ * The moderator's clock, sized like the shared waiting room's (Frank,
+ * 2026-10-19: the counter must look like the one behind the link): the content
+ * column's own height minus what sits around the clock in it — the column's
+ * padding, the headline and subline above, the rules line below.
+ */
+const MODERATOR_CLOCK_RESERVE = 180;
+const moderatorClockHeight = (contentHeight: number) =>
+	Math.max(160, contentHeight - MODERATOR_CLOCK_RESERVE);
+
+const useModeratorClockHeight = (content: HTMLElement | null) => {
+	const [height, setHeight] = useState(320);
+	useEffect(() => {
+		if (!content) return;
+		const measure = () =>
+			setHeight(moderatorClockHeight(content.clientHeight));
+		measure();
+		const RO = globalThis.ResizeObserver;
+		if (!RO) return;
+		const observer = new RO(measure);
+		observer.observe(content);
+		return () => observer.disconnect();
+	}, [content]);
+	return height;
+};
+
 export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
 	bannedUsers = []
@@ -223,14 +249,17 @@ export const JoinGroupChatView = ({
 		setOverlayActive(false);
 	};
 
-	const handleButtonClick = () => {
+	/* The request is handed back: the embedded waiting room's closing animation
+	   keeps the screen covered until it has settled and the session has been
+	   reloaded; `false` says the person stays (ORISO-Frontend#1737). */
+	const handleButtonClick = (): Promise<unknown> | false => {
 		if (bannedUsers.includes(userData.userName)) {
 			setOverlayItem(bannedUserOverlay);
 			setOverlayActive(true);
-			return;
+			return false;
 		}
 		if (isRequestInProgress) {
-			return;
+			return false;
 		}
 		setIsRequestInProgress(true);
 		const groupChatApiCall =
@@ -238,7 +267,7 @@ export const JoinGroupChatView = ({
 			!activeSession.item.active
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
-		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
+		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
 				const notice = getCounsellingDpaNotification(error, translate, {
@@ -246,10 +275,11 @@ export const JoinGroupChatView = ({
 				});
 				if (notice && notifications) {
 					notifications.addNotification(notice);
-					return;
+					return false;
 				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
+				return false;
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);
@@ -289,6 +319,8 @@ export const JoinGroupChatView = ({
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
 	const prefersReducedMotion = usePrefersReducedMotion();
+	const [content, setContent] = useState<HTMLDivElement | null>(null);
+	const clockHeight = useModeratorClockHeight(content);
 	// The counsellor who opens the room gets her own waiting text (#1499).
 	const canStartChat =
 		hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&
@@ -376,7 +408,10 @@ export const JoinGroupChatView = ({
 				isJoinGroupChatView={true}
 				bannedUsers={bannedUsers}
 			/>
-			<div className="joinChat__content session__content">
+			<div
+				className="joinChat__content session__content"
+				ref={setContent}
+			>
 				{/* The scheduled-chat countdown carries its own headline
 				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
 				    above it just repeats the frame. Only show the standalone
@@ -405,6 +440,11 @@ export const JoinGroupChatView = ({
 								canStartChat ? 'moderator' : 'participant'
 							}
 							hideMotionToggle
+							clockSize="fit"
+							fitHeight={clockHeight}
+							spacing="tight"
+							labelsOutside
+							gap={8}
 						/>
 					</div>
 				)}
@@ -464,6 +504,7 @@ export const JoinGroupChatView = ({
 							label={buttonItem.label}
 							status=""
 							onEnter={handleButtonClick}
+							closing="messageField"
 							testingAttribute="group-join-button"
 						/>
 					</div>

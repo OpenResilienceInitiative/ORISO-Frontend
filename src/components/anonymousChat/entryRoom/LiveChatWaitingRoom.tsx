@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Box, ButtonBase } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import {
 	HandoverCarousel,
 	HandoverStep
@@ -25,6 +26,12 @@ export interface LiveChatWaitingRoomProps {
 	ahead: number | null;
 	/** A counsellor has taken the conversation. */
 	accepted: boolean;
+	/**
+	 * Nobody is live right now (confirmed by the entry room) and the person
+	 * chose to wait. The room says so and that it keeps watching, instead of
+	 * promising that it starts soon (#1270). Ignored once `accepted`.
+	 */
+	nobodyLive?: boolean;
 	/** Who took it — shown once known, otherwise omitted. */
 	counsellorLine?: string;
 	/**
@@ -38,7 +45,11 @@ export interface LiveChatWaitingRoomProps {
 	 * platform's (ADR-022: no Beratungsstelle is assigned yet).
 	 */
 	department?: { agencyId: number; topicId: number } | null;
-	onAccept: () => void;
+	/**
+	 * Start the chat. A promise it returns keeps the closing animation's cover
+	 * on until the page is replaced (or the start failed).
+	 */
+	onAccept: () => ClosingSwapResult;
 	/** The way out: finish the enquiry and delete the access. */
 	onLeave: () => Promise<void> | void;
 	/** Written alternative — the registration. */
@@ -108,6 +119,7 @@ const TurningClock = () => (
 export const LiveChatWaitingRoom = ({
 	ahead,
 	accepted,
+	nobodyLive = false,
 	counsellorLine,
 	consentHtml,
 	department,
@@ -133,17 +145,26 @@ export const LiveChatWaitingRoom = ({
 	const [leaving, setLeaving] = useState(false);
 	const [companion, setCompanion] = useState(companionStart);
 	const consent = useWaitingRoomConsent({ consentHtml, department });
+	/* The one way in: the gate button asks for consent, plays the closing
+	   animation and then starts the chat. The dialog's "start chat" presses
+	   this very button, so it cannot walk around either. */
+	const gateRef = useRef<HTMLButtonElement>(null);
 	const handleStart = () => consent.guard(onAccept);
 	/* The contract: when counselling starts, unmount. Accepted wins over
 	   whatever the person was doing — the breathing companion included. */
 	const companionOpen = companion && !accepted;
 	const total = Math.max(5, ahead ?? 0);
 
+	const showNobodyLive = nobodyLive && !accepted;
 	const cards: HandoverStep[] = CARD_KEYS.map((key) => ({
 		key: `live-${key}`,
 		artwork: liveChatArtwork[key],
 		titleKey: `liveChat.entry.steps.${key}.title`,
-		textKey: `liveChat.entry.steps.${key}.text`,
+		/* "…in anderen Gesprächen" would contradict the notice above. */
+		textKey:
+			key === 'wait' && showNobodyLive
+				? 'liveChat.entry.steps.wait.textNobodyLive'
+				: `liveChat.entry.steps.${key}.text`,
 		titleFallback: {
 			wait: 'Sie warten, bis jemand frei ist',
 			consent: 'Dann stimmen Sie einmal zu',
@@ -158,8 +179,12 @@ export const LiveChatWaitingRoom = ({
 		}[key]
 	}));
 
-	const aheadLine =
-		ahead === null
+	const aheadLine = showNobodyLive
+		? tr(
+				'nobodyLive',
+				'Wir behalten das im Blick und verbinden Sie, sobald jemand verfügbar ist.'
+			)
+		: ahead === null
 			? tr('aheadUnknown', 'Wir suchen eine freie Beraterin für Sie.')
 			: ahead === 0
 				? tr('aheadNone', 'Sie sind die Nächste.')
@@ -172,7 +197,14 @@ export const LiveChatWaitingRoom = ({
 	return (
 		<>
 			<WaitingRoomTemplate
-				headline={tr('headline', 'Gleich geht es los.')}
+				headline={
+					showNobodyLive
+						? tr(
+								'nobodyLiveHeadline',
+								'Gerade ist keine Beraterin live.'
+							)
+						: tr('headline', 'Gleich geht es los.')
+				}
 				statusLeading={
 					!accepted && ahead !== null ? (
 						<QueueDots ahead={ahead} total={total} />
@@ -265,7 +297,12 @@ export const LiveChatWaitingRoom = ({
 							<Box sx={{ flex: 1, minWidth: 0 }}>
 								<HandoverGateButton
 									state={busy ? 'entering' : 'ready'}
-									onEnter={handleStart}
+									buttonRef={gateRef}
+									/* Consent is asked before the closing animation
+									   starts, so the screen never closes on a "no". */
+									beforeEnter={consent.check}
+									onEnter={() => onAccept()}
+									closing="messageField"
 									label={tr('start', 'Gespräch beginnen')}
 									status={tr(
 										'startStatus',
@@ -334,7 +371,11 @@ export const LiveChatWaitingRoom = ({
 					   from inside the dialog is still starting, and consent
 					   that can be walked around is not a consent gate. */
 					setLeaving(false);
-					handleStart();
+					if (gateRef.current) {
+						gateRef.current.click();
+					} else {
+						handleStart();
+					}
 				}}
 				onDeleteAccess={() => {
 					void onLeave();

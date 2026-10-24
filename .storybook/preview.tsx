@@ -863,6 +863,11 @@ const preview: Preview = {
 		 */
 		viewport: {
 			options: {
+				phone320: {
+					name: 'Phone 320 (smallest supported)',
+					styles: { width: '320px', height: '640px' },
+					type: 'mobile'
+				},
 				phone375: {
 					name: 'Phone 375 (iPhone SE / 8)',
 					styles: { width: '375px', height: '812px' },
@@ -877,6 +882,11 @@ const preview: Preview = {
 					name: 'Phone 390 landscape (844×390)',
 					styles: { width: '844px', height: '390px' },
 					type: 'mobile'
+				},
+				tablet820: {
+					name: 'Tablet 820 (iPad Air portrait, 820x1180)',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
 				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',

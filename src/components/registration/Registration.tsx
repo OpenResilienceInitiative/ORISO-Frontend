@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import { StepTransition } from '../transition/StepTransition';
 import {
 	HandoverDepartment,
 	rememberHandoverDepartment,
@@ -31,7 +32,7 @@ import {
 	markHandoverMilestone,
 	resetHandoverProgress
 } from '../app/registrationLoader/handoverProgress';
-import { warmAppChunks } from '../app/appChunks';
+import { warmAppChunks, warmWhenIdle } from '../app/appChunks';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import {
 	RegistrationContext,
@@ -399,15 +400,10 @@ export const Registration = () => {
 	   person types, so the waiting room after the document load is not held
 	   up by downloads (#1219). Idle time only: the form comes first. */
 	const onLastStep = inviteEntry === 'entry' || !nextStepUrl;
-	useEffect(() => {
-		if (!onLastStep) return undefined;
-		if (typeof window.requestIdleCallback === 'function') {
-			const handle = window.requestIdleCallback(warmAppChunks);
-			return () => window.cancelIdleCallback(handle);
-		}
-		const timer = window.setTimeout(warmAppChunks, 1000);
-		return () => window.clearTimeout(timer);
-	}, [onLastStep]);
+	useEffect(
+		() => (onLastStep ? warmWhenIdle(warmAppChunks) : undefined),
+		[onLastStep]
+	);
 
 	const mergedRegistrationData = useMemo(
 		() => ({
@@ -871,6 +867,7 @@ export const Registration = () => {
 				onEnter={() => undefined}
 				department={handoverDepartment}
 				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
+				closing={joinsTheGroup ? null : undefined}
 			/>
 		);
 	}
@@ -946,6 +943,23 @@ export const Registration = () => {
 							maxWidth: '100%'
 						}}
 					>
+						{activeStep && (
+							<>
+								<PreselectionBox hasDrawer={false} />
+								<RegistrationHeader
+									currentStepName={step}
+									visibleStepNames={availableSteps.map(
+										({ name }) => name
+									)}
+									clickableStepNames={
+										clickableStepperStepNames
+									}
+									onStepClick={onStepperClick}
+									chips={headerChips}
+									fullBleed
+								/>
+							</>
+						)}
 						{activeStep ? (
 							<>
 								<Helmet>
@@ -991,22 +1005,6 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<PreselectionBox
-												hasDrawer={false}
-											/>
-											<RegistrationHeader
-												currentStepName={step}
-												visibleStepNames={availableSteps.map(
-													({ name }) => name
-												)}
-												clickableStepNames={
-													clickableStepperStepNames
-												}
-												onStepClick={onStepperClick}
-												chips={headerChips}
-												fullBleed
-											/>
-
 											<Box
 												sx={{
 													'flex': 1,
@@ -1033,21 +1031,30 @@ export const Registration = () => {
 													const StepComponent =
 														activeStep.component;
 													return (
-														<StepComponent
-															key={`${activeStep.name}-${clearSelectionVersion}`}
-															onChange={
-																setStepData
+														<StepTransition
+															viewKey={
+																activeStep.name
 															}
-															onNextClick={
-																onNextClick
+															order={
+																currStepIndex
 															}
-															nextStepUrl={
-																nextStepUrl
-															}
-															temporary={
-																temporaryJoin
-															}
-														/>
+														>
+															<StepComponent
+																key={`${activeStep.name}-${clearSelectionVersion}`}
+																onChange={
+																	setStepData
+																}
+																onNextClick={
+																	onNextClick
+																}
+																nextStepUrl={
+																	nextStepUrl
+																}
+																temporary={
+																	temporaryJoin
+																}
+															/>
+														</StepTransition>
 													);
 												})()}
 											</Box>

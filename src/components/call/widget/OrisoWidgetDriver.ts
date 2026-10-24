@@ -44,6 +44,7 @@ import {
 import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 
 import {
+	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
 	ALLOWED_ROOM_EVENT_TYPES,
 	ALLOWED_SEND_STATE_EVENT_TYPES,
@@ -344,7 +345,7 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		since?: string
 	): Promise<IRoomEvent[]> {
 		const targetRoom = this.assertRoom(roomIds?.[0] ?? null);
-		if (!ALLOWED_ROOM_EVENT_TYPES.has(eventType)) return [];
+		if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(eventType)) return [];
 		return this.readRoomTimeline(
 			targetRoom,
 			eventType,
@@ -364,7 +365,9 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		since: string | undefined
 	): Promise<IRoomEvent[]> {
 		const targetRoom = this.assertRoom(roomId);
-		if (!ALLOWED_ROOM_EVENT_TYPES.has(eventType)) return [];
+		// Reads use the wider set: the widget may read an identity it may not
+		// send. Sends above keep `ALLOWED_ROOM_EVENT_TYPES`.
+		if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(eventType)) return [];
 		const room = this.client.getRoom(targetRoom);
 		if (!room) return [];
 
