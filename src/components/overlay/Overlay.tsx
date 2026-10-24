@@ -10,9 +10,13 @@ import clsx from 'clsx';
 import FocusTrap from 'focus-trap-react';
 import './overlay.styles';
 import { useTranslation } from 'react-i18next';
-import { ModalContext } from '../../globalState';
+import { ModalContext } from '../../globalState/context/ModalContext';
 import { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
+import {
+	shouldActivateOverlayFocusTrap,
+	useForeignMuiModalOpen
+} from './useForeignMuiModalOpen';
 
 export const OVERLAY_FUNCTIONS = {
 	CLOSE: 'CLOSE',
@@ -112,6 +116,7 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 			? { ...props.item, ...props.handleOverlay }
 			: props.items[activeStep]
 	);
+	const foreignModalOpen = useForeignMuiModalOpen();
 
 	useEffect(() => {
 		setActiveOverlay(
@@ -180,10 +185,13 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	return (
 		<FocusTrap
 			focusTrapOptions={{ allowOutsideClick: true }}
-			active={
-				props.forceActiveFocusTrap ||
-				activeOverlay.buttonSet?.length > 0
-			}
+			active={shouldActivateOverlayFocusTrap(
+				Boolean(
+					props.forceActiveFocusTrap ||
+						activeOverlay.buttonSet?.length > 0
+				),
+				foreignModalOpen
+			)}
 		>
 			<div
 				className={clsx(
