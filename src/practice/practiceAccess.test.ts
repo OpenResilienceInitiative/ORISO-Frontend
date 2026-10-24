@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { AUTHORITIES } from '../globalState/helpers/stateHelpers';
 import { canUsePractice } from './practiceAccess';
 

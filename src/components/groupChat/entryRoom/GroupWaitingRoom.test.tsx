@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -9,7 +9,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { GroupChatSeries } from '../groupChatSeries';
 
 vi.mock('lottie-web', () => ({ default: {} }));

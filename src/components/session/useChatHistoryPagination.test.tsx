@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, renderHook, cleanup } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 
 afterEach(cleanup);

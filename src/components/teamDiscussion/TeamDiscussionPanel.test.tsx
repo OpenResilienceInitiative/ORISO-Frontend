@@ -1,10 +1,10 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * FE#514 / ADR-016 — presentational contract of the Team-Besprechung panel:
  * permanent team-only marker, hard-close read-only state, composer gating.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TeamDiscussionPanelView } from './TeamDiscussionPanelView';
 import type { TeamDiscussionMessage } from './teamDiscussionHelpers';

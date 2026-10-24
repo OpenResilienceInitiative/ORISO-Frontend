@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	ADVICE_SEEKER_SWITCHES,
 	ALWAYS_SENT_KEYS,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolvePanelCallActions } from './panelCallActionsState';
 import { HEADER_COMPACT_WIDTH } from '../sessionHeader/roomHeaderDensity';
 

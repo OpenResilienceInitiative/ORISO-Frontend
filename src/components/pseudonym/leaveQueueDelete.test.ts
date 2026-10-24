@@ -1,6 +1,13 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 // The api layer reads `window` at module load, so this cannot run under node.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { performLeaveQueueDelete } from './leaveQueueDelete';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';

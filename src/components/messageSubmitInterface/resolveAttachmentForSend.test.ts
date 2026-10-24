@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 
 const fakeFile = (name: string, type = '') => ({ name, type }) as File;

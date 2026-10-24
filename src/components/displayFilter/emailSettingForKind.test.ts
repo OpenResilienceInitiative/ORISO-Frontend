@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { emailSettingForKind } from './emailSettingForKind';
 
 /** The stored field or e-mail toggle behind a kind's E-Mail cell, or null. */

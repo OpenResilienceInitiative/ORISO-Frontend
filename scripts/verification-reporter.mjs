@@ -1,0 +1,535 @@
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { inspect } from 'node:util';
+import { randomUUID } from 'node:crypto';
+import { BaseSequencer } from 'vite-plus/test/node';
+import {
+	createRunProvenance,
+	suppliedBrowser
+} from './verification-provenance.mjs';
+
+// Append completed cases immediately. If a worker stalls or CI cancels the job,
+// the artifact still distinguishes executed tests from queued/unfinished work.
+export default class VerificationReporter {
+	constructor(options = {}) {
+		this.runId = randomUUID();
+		this.provenance = { path: 'provenance.json', runId: this.runId };
+		this.projects = [];
+		this.inputs = [];
+		this.browsers = new Map();
+		this.directory =
+			options.directory ||
+			path.resolve(
+				process.env.VERIFICATION_ARTIFACTS_DIR ||
+					'verification-artifacts',
+				`run-${process.pid}-${this.runId}`
+			);
+		this.modules = new Map();
+		this.completedModules = new Set();
+		this.modulePlanErrors = [];
+		this.assignedSpecifications = [];
+		this.assignmentPlan = {
+			path: 'assignment-plan.json',
+			valid: false,
+			error: 'Run plan not received'
+		};
+		this.running = new Map();
+		this.completed = new Map();
+		this.readyCounts = new Map();
+		this.eventAnomalies = [];
+		this.reconciled = [];
+		this.counts = {
+			discoveredFiles: 0,
+			expectedFiles: 0,
+			collectedFiles: 0,
+			completedFiles: 0,
+			expectedTests: 0,
+			passed: 0,
+			failed: 0,
+			skipped: 0,
+			todo: 0,
+			retries: 0,
+			declaredNeedsData: 0
+		};
+		this.state = 'running';
+		this.nativeRunStarted = false;
+		this.afterPool = { status: 'pending' };
+	}
+	ensureProvenance() {
+		if (this.manifestWritten) return;
+		mkdirSync(this.directory, { recursive: true });
+		writeFileSync(
+			path.join(this.directory, this.provenance.path),
+			JSON.stringify(
+				createRunProvenance({
+					runId: this.runId,
+					projects: this.projects,
+					inputs: this.inputs
+				}),
+				null,
+				2
+			),
+			{ flag: 'wx' }
+		);
+		this.manifestWritten = true;
+	}
+	save() {
+		this.ensureProvenance();
+		writeFileSync(
+			path.join(this.directory, 'inventory.json'),
+			JSON.stringify(
+				{
+					schemaVersion: 2,
+					provenance: this.provenance,
+					browsers: [...this.browsers.values()],
+					state: this.state,
+					nativeRunReason: this.nativeRunReason ?? null,
+					nativeRunEndErrors: this.nativeRunEndErrors ?? [],
+					afterPool: this.afterPool,
+					...this.counts,
+					executed: this.counts.passed + this.counts.failed,
+					running:
+						this.state === 'running'
+							? [...this.running.values()]
+							: [],
+					unfinished:
+						this.state === 'running'
+							? []
+							: [...this.running.values()],
+					assignmentPlan: this.assignmentPlan,
+					modulePlanErrors: this.modulePlanErrors,
+					missingAssignedModules: this.assignedSpecifications.filter(
+						(spec) =>
+							!this.modules.has(this.identity(spec)) ||
+							!this.completedModules.has(this.identity(spec))
+					),
+					inventoryComplete: this.isInventoryComplete(),
+					eventAnomalies: this.eventAnomalies,
+					unresolvedEventAnomalies: this.unresolvedEventAnomalies(),
+					reconciledTerminalEvents: this.reconciled,
+					unhandledErrors: this.unhandledErrors || []
+				},
+				null,
+				2
+			)
+		);
+	}
+	failProcess() {
+		// Preserve an earlier nonzero failure; never reset native exit to success.
+		if (process.exitCode == null || Number(process.exitCode) === 0)
+			process.exitCode = 1;
+	}
+	isInventoryComplete() {
+		return (
+			this.afterPool.status === 'checked' &&
+			this.afterPool.errors.length === 0 &&
+			this.assignmentPlan.valid &&
+			['passed', 'failed'].includes(this.state) &&
+			['passed', 'failed'].includes(this.nativeRunReason) &&
+			!(this.unhandledErrors || []).length &&
+			this.unresolvedEventAnomalies().length === 0 &&
+			this.modulePlanErrors.length === 0 &&
+			this.assignedSpecifications.every(
+				(spec) =>
+					this.modules.has(this.identity(spec)) &&
+					this.completedModules.has(this.identity(spec))
+			) &&
+			this.running.size === 0 &&
+			this.counts.completedFiles === this.counts.expectedFiles &&
+			this.counts.expectedTests ===
+				this.counts.passed +
+					this.counts.failed +
+					this.counts.skipped +
+					this.counts.todo
+		);
+	}
+	onInit(context) {
+		this.context = context;
+		if (
+			typeof context?.onClose !== 'function' ||
+			typeof context?.state?.getUnhandledErrors !== 'function'
+		) {
+			this.failProcess();
+			throw new Error('Public native close/error accounting unavailable');
+		}
+		context.onClose(async () => this.finalizeAfterPool());
+	}
+	finalizeAfterPool() {
+		try {
+			const errors = this.context.state.getUnhandledErrors();
+			if (!Array.isArray(errors))
+				throw new Error('Public native error snapshot is not an array');
+			// Set failure before inspection or IO; supplied errors stay separate.
+			if (
+				errors.length ||
+				(this.unhandledErrors || []).length ||
+				this.unresolvedEventAnomalies().length ||
+				this.modulePlanErrors.length
+			)
+				this.failProcess();
+			this.afterPool = {
+				status: 'checked',
+				phase: 'after-pool-before-remaining-project-close-and-final-checks',
+				errors: [...errors],
+				nativeRunEndErrorsInspect: inspect(
+					this.nativeRunEndErrors ?? [],
+					{
+						depth: null,
+						maxArrayLength: null,
+						maxStringLength: null,
+						customInspect: false,
+						getters: false
+					}
+				),
+				errorsInspect: inspect(errors, {
+					depth: null,
+					maxArrayLength: null,
+					maxStringLength: null,
+					customInspect: false,
+					getters: false
+				}),
+				// Native error context is retained verbatim; no invented testcase blame.
+				inventedCaseAttribution: null,
+				exitCodeSnapshotIsFinal: false
+			};
+			// Public initialization/collection without a run must not fabricate a run.
+			if (
+				!this.nativeRunStarted &&
+				!errors.length &&
+				!(this.unhandledErrors || []).length &&
+				!this.unresolvedEventAnomalies().length &&
+				!this.modulePlanErrors.length
+			)
+				return;
+			if (this.state !== 'passed' || !this.isInventoryComplete()) {
+				this.failProcess();
+				this.state = 'failed';
+			}
+			this.save();
+		} catch (error) {
+			// A missing final artifact is a failure even if native cases all passed.
+			this.failProcess();
+			throw error;
+		}
+	}
+	specification(spec) {
+		return {
+			project: spec.project?.name ?? spec.project?.config?.name ?? '',
+			moduleId: spec.moduleId
+		};
+	}
+	identity(spec) {
+		const value =
+			typeof spec.project === 'string' ? spec : this.specification(spec);
+		return JSON.stringify([value.project, value.moduleId]);
+	}
+	publishAssignment(global, assigned, kind, error) {
+		const discovered = global.map((spec) => this.specification(spec));
+		const selection = assigned.map((spec) => this.specification(spec));
+		const keys = new Set(discovered.map((spec) => this.identity(spec)));
+		if (
+			discovered.some((spec) => !spec.moduleId) ||
+			keys.size !== discovered.length ||
+			selection.some((spec) => !keys.has(this.identity(spec))) ||
+			new Set(selection.map((spec) => this.identity(spec))).size !==
+				selection.length
+		) {
+			error = 'Invalid or duplicate native specification identities';
+		}
+		this.assignedSpecifications = selection;
+		this.assignmentPlan = {
+			path: 'assignment-plan.json',
+			kind,
+			shard: this.context?.config?.shard ?? null,
+			valid: !error,
+			...(error ? { error } : {})
+		};
+		this.counts.expectedFiles = error ? null : selection.length;
+		mkdirSync(this.directory, { recursive: true });
+		writeFileSync(
+			path.join(this.directory, this.assignmentPlan.path),
+			JSON.stringify(
+				{
+					schemaVersion: 1,
+					...this.assignmentPlan,
+					global: discovered,
+					assigned: selection
+				},
+				null,
+				2
+			),
+			{ flag: 'wx' }
+		);
+		this.save();
+	}
+	onTestRunStart(specifications) {
+		this.nativeRunStarted = true;
+		this.afterPool = { status: 'pending' };
+		this.inputs = specifications
+			.map((spec) => spec.moduleId)
+			.filter(Boolean);
+		this.projects = [
+			...new Set(
+				specifications
+					.map(
+						(spec) =>
+							spec.project?.name ?? spec.project?.config?.name
+					)
+					.filter(Boolean)
+			)
+		].sort();
+		this.counts.discoveredFiles = specifications.length;
+		if (!this.context?.config) {
+			this.publishAssignment(
+				specifications,
+				[],
+				'unavailable',
+				'Public native onInit context not received'
+			);
+			return;
+		}
+		if (!this.context.config.shard) {
+			this.publishAssignment(
+				specifications,
+				specifications,
+				'unsharded-global'
+			);
+			return;
+		}
+		if (this.context.config.sequence?.sequencer !== BaseSequencer) {
+			this.publishAssignment(
+				specifications,
+				[],
+				'unavailable',
+				'Unsupported custom shard sequencer'
+			);
+			return;
+		}
+		// Pinned public native implementation, not a second copy of the split algorithm.
+		// BaseSequencer.shard is pure; never invoke an unknown/stateful custom sequencer twice.
+		return new BaseSequencer(this.context)
+			.shard([...specifications])
+			.then((assigned) => {
+				this.publishAssignment(
+					specifications,
+					assigned,
+					'vitest-base-sequencer'
+				);
+			});
+	}
+	onTestModuleCollected(module) {
+		const identity = this.identity(module);
+		if (
+			!this.assignedSpecifications.some(
+				(spec) => this.identity(spec) === identity
+			)
+		) {
+			this.modulePlanErrors.push({
+				event: 'unassigned-collection',
+				...this.specification(module)
+			});
+		}
+		if (!this.modules.has(identity)) {
+			this.modules.set(identity, true);
+			this.counts.collectedFiles += 1;
+			this.counts.expectedTests += [...module.children.allTests()].length;
+		}
+		this.save();
+	}
+	event(event, test, extra = {}) {
+		this.ensureProvenance();
+		appendFileSync(
+			path.join(this.directory, 'events.jsonl'),
+			`${JSON.stringify({
+				provenance: this.provenance,
+				event,
+				id: test.id,
+				file: test.module.moduleId,
+				name: test.fullName,
+				...extra
+			})}\n`
+		);
+	}
+	testIdentity(test) {
+		return {
+			id: test.id,
+			file: test.module.moduleId,
+			project: this.specification(test.module).project,
+			name: test.fullName
+		};
+	}
+	sameTest(left, right) {
+		return (
+			left &&
+			left.id === right.id &&
+			left.file === right.file &&
+			left.project === right.project &&
+			left.name === right.name
+		);
+	}
+	unresolvedEventAnomalies() {
+		return this.eventAnomalies.filter(
+			(anomaly, index) =>
+				!this.reconciled.some(
+					(record) =>
+						record.anomalyIndex === index &&
+						record.phase === 'public-module-end' &&
+						record.state === 'passed' &&
+						this.sameTest(record, anomaly)
+				)
+		);
+	}
+	onTestCaseReady(test) {
+		this.event('ready', test);
+		const readyIdentity = JSON.stringify(this.testIdentity(test));
+		this.readyCounts.set(
+			readyIdentity,
+			(this.readyCounts.get(readyIdentity) || 0) + 1
+		);
+		if (this.completed.has(test.id)) {
+			this.eventAnomalies.push({
+				event: 'ready-after-result',
+				...this.testIdentity(test),
+				completedAtReady: { ...this.completed.get(test.id) }
+			});
+		} else {
+			this.running.set(test.id, {
+				...this.testIdentity(test),
+				startedAt: new Date().toISOString()
+			});
+		}
+		this.save();
+	}
+	onTestCaseResult(test) {
+		const result = test.result();
+		const diagnostic = test.diagnostic();
+		const integrity = test.meta?.().verificationIntegrity;
+		if (integrity?.classification === 'declared-needs-data')
+			this.counts.declaredNeedsData += 1;
+		const browser = suppliedBrowser(test.meta?.());
+		if (browser) this.browsers.set(JSON.stringify(browser), browser);
+		this.event('result', test, { state: result.state });
+		this.completed.set(test.id, {
+			...this.testIdentity(test),
+			state: result.state
+		});
+		const state =
+			result.state === 'skipped' && test.options.mode === 'todo'
+				? 'todo'
+				: result.state;
+		if (state in this.counts) this.counts[state] += 1;
+		this.counts.retries += diagnostic?.retryCount || 0;
+		this.running.delete(test.id);
+		mkdirSync(this.directory, { recursive: true });
+		appendFileSync(
+			path.join(this.directory, 'cases.jsonl'),
+			`${JSON.stringify({
+				provenance: this.provenance,
+				browser,
+				file: test.module.moduleId,
+				name: test.fullName,
+				state,
+				durationMs: diagnostic?.duration,
+				retries: diagnostic?.retryCount || 0,
+				errors: result.errors?.map((error) => error.message),
+				a11y: test.meta?.().verificationA11y,
+				integrity
+			})}\n`
+		);
+		this.save();
+	}
+	reconcile(module, publicModuleEnd = false) {
+		const moduleIdentity = this.identity(module);
+		if (
+			!this.modules.has(moduleIdentity) ||
+			!this.assignedSpecifications.some(
+				(spec) => this.identity(spec) === moduleIdentity
+			)
+		)
+			return;
+		for (const test of module.children.allTests()) {
+			const state = test.result()?.state;
+			const snapshot = this.testIdentity(test);
+			if (
+				this.identity(test.module) !== moduleIdentity ||
+				!['passed', 'failed', 'skipped'].includes(state)
+			)
+				continue;
+			const running = this.running.get(test.id);
+			if (this.sameTest(running, snapshot)) {
+				this.reconciled.push({
+					...snapshot,
+					state,
+					evidence: 'terminal module test result'
+				});
+				this.running.delete(test.id);
+			}
+			// A run-end aggregate is not the public module-end proof. Keep all raw
+			// anomalies; only an exact recorded PASS can be resolved here.
+			const recorded = this.completed.get(test.id);
+			if (
+				!publicModuleEnd ||
+				state !== 'passed' ||
+				recorded?.state !== 'passed' ||
+				!this.sameTest(recorded, snapshot) ||
+				this.readyCounts.get(JSON.stringify(snapshot)) !== 1
+			)
+				continue;
+			this.eventAnomalies.forEach((anomaly, anomalyIndex) => {
+				if (
+					!this.sameTest(anomaly, snapshot) ||
+					anomaly.completedAtReady?.state !== 'passed' ||
+					!this.sameTest(anomaly.completedAtReady, anomaly) ||
+					!this.sameTest(anomaly.completedAtReady, snapshot) ||
+					this.reconciled.some(
+						(item) => item.anomalyIndex === anomalyIndex
+					)
+				)
+					return;
+				this.reconciled.push({
+					...snapshot,
+					state,
+					anomalyIndex,
+					evidence:
+						'matching public module snapshot for delayed ready',
+					phase: 'public-module-end',
+					recordedResult: { ...recorded },
+					completedAtReady: { ...anomaly.completedAtReady },
+					publicModuleSnapshot: { ...snapshot, state }
+				});
+			});
+		}
+	}
+	onTestModuleEnd(module) {
+		this.reconcile(module, true);
+		const identity = this.identity(module);
+		if (this.completedModules.has(identity)) {
+			this.modulePlanErrors.push({
+				event: 'duplicate-completion',
+				...this.specification(module)
+			});
+		} else {
+			this.completedModules.add(identity);
+			this.counts.completedFiles += 1;
+		}
+		if (
+			!this.assignedSpecifications.some(
+				(spec) => this.identity(spec) === identity
+			)
+		) {
+			this.modulePlanErrors.push({
+				event: 'unassigned-completion',
+				...this.specification(module)
+			});
+		}
+		this.save();
+	}
+	onTestRunEnd(modules, errors, reason) {
+		modules.forEach((module) => this.reconcile(module));
+		this.state = reason;
+		this.nativeRunReason = reason;
+		this.nativeRunEndErrors = [...errors];
+		this.unhandledErrors = errors.map((error) => error.message);
+		this.save();
+	}
+}

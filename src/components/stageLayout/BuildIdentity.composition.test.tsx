@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { render, cleanup, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, it, expect, vi } from 'vite-plus/test';
 import {
 	AgencySpecificContext,
 	LocaleContext,

@@ -12,7 +12,7 @@
  * the wire, including the spelling of `ink` rather than `iconColor` and of
  * `file` rather than `avatarId`.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	CALL_IDENTITY_EVENT_TYPE,

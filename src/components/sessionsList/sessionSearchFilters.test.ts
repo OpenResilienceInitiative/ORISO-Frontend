@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Search-menu filter axes (#1195, FE#1725).
  *
@@ -7,7 +7,7 @@
  * is a single choice, because a handover never crosses centres.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import { sessionMatchesAgency } from './sessionSearchPeople';
 import { sessionMatchesToolbar } from './sessionToolbarFilters';

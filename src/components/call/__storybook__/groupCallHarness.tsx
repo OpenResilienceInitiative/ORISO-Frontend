@@ -3,7 +3,7 @@
  * Do not import from production app code.
  */
 import * as React from 'react';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { callManager } from '../../../services/CallManager';

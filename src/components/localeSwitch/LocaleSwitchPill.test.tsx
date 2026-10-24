@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /** #1844 — a language picked in the login-screen switcher counts as a choice. */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { LocaleSwitchPill } from './LocaleSwitchPill';
 import { LocaleContext } from '../../globalState';

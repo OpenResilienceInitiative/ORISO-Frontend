@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Case-handover search, seam 1 of FE#1725: the counsellor session list
  * rendered as a whole, HTTP stubbed (sessions, case-handover candidates,
@@ -15,7 +15,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	E2EEContext,
 	SessionsDataContext,

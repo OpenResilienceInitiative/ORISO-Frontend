@@ -3,8 +3,8 @@ import {
 	consumeLoginRecoveryPassword,
 	stageLoginRecoveryPassword
 } from '../../services/loginRecoveryHandoff';
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	autoLogin,
 	buildAppRedirectPath,

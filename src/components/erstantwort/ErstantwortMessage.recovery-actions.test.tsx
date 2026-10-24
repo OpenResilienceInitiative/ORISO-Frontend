@@ -1,11 +1,11 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import german from '../../resources/i18n/de/common.json';
 import { MemoryRouter } from 'react-router-dom';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { ErstantwortMessage } from './ErstantwortMessage';
 

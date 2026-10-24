@@ -18,7 +18,7 @@
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import deCommon from '../../resources/i18n/de/common.json';
 import enCommon from '../../resources/i18n/en/common.json';
 

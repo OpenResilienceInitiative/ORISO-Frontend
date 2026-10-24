@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import {
 	apiGetCaseHandoverConsentPreference,
 	apiSaveCaseHandoverConsentPreference

@@ -4,41 +4,31 @@
 // config at import time.
 import './testPreviewBootstrap';
 
-import { afterEach, beforeAll, beforeEach } from 'vitest';
-import { setProjectAnnotations } from '@storybook/react-vite';
-import * as a11yAnnotations from '@storybook/addon-a11y/preview';
+// addon-vitest installs renderer, preview and accessibility annotations automatically.
+// Keep only this required bootstrap; a manual override can silently drop addon hooks.
 
-// Reuse the exact preview the Storybook UI renders with (M3 scheme decorator,
-// i18n, router, realtime mocks) so a component test can never pass against a
-// different environment than the one a human reviews in the browser.
-import * as previewAnnotations from './preview';
+import { afterEach } from 'vite-plus/test';
+import { finishStoryVerification } from './verification';
+import { a11yVerification } from './a11yVerification';
 
-// Explicit annotations disable addon-vitest's automatic provisioning. Include
-// axe's hooks so a11y.test: 'error' also fails the headless component tests.
-const annotations = setProjectAnnotations([
-	a11yAnnotations,
-	previewAnnotations
-]);
-
-beforeAll(annotations.beforeAll);
-
-// Storybook pauses animations before its accessibility afterEach hook. When
-// axe throws, runStory skips that pause's cleanup. Remove only the exact new
-// Storybook pause stylesheet so a failed audit cannot freeze the next story.
-const storybookPauseStyle =
-	'*, *:before, *:after { animation-delay: 0s !important; animation-direction: reverse !important; animation-play-state: paused !important; transition: none !important; }';
-let stylesBeforeTest = new Set<HTMLStyleElement>();
-beforeEach(() => {
-	stylesBeforeTest = new Set(document.head.querySelectorAll('style'));
-});
-afterEach(() => {
-	document.head.querySelectorAll('style').forEach((style) => {
-		if (
-			!stylesBeforeTest.has(style) &&
-			style.textContent?.replace(/\s+/g, ' ').trim() ===
-				storybookPauseStyle
-		) {
-			style.remove();
-		}
-	});
+// Storybook's returned cleanup runs before the next story. Assert and restore
+// in the current test so failures and transient fallbacks keep their identity.
+afterEach(async ({ task }) => {
+	const errors: unknown[] = [];
+	try {
+		a11yVerification.finish((evidence) =>
+			Object.assign(task.meta, { verificationA11y: evidence })
+		);
+	} catch (error) {
+		errors.push(error);
+	}
+	try {
+		await finishStoryVerification((evidence) =>
+			Object.assign(task.meta, { verificationIntegrity: evidence })
+		);
+	} catch (error) {
+		errors.push(error);
+	}
+	if (errors.length)
+		throw new AggregateError(errors, errors.map(String).join('\n'));
 });

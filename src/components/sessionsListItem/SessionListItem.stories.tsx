@@ -1,4 +1,5 @@
 import * as React from 'react';
+import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
@@ -1934,6 +1935,94 @@ export const AskerEmptyEnquiryRow: Story = {
 		).not.toHaveClass('consultantSearchLoaderHost');
 	}
 };
+
+/** Selected real group label on its actual surface, using the ordinary provider. */
+const selectedSelfHelpContrast = (
+	scheme: 'light' | 'dark' | 'inverted'
+): Story => ({
+	...GuidedSelfHelpGroup,
+	name: `Selected self-help label — ${scheme}`,
+	globals: { scheme },
+	parameters: {
+		...GuidedSelfHelpGroup.parameters,
+		router: {
+			initialPath: '/sessions/consultant/sessionView/session/5504'
+		}
+	},
+	play: async (context) => {
+		// Keep the real text/icon/group semantics from the original story.
+		await GuidedSelfHelpGroup.play?.(context);
+		const [row] = await settledRows(context.canvasElement);
+		await expect(row.classList.contains('sessionsListItem--active')).toBe(
+			true
+		);
+		const label = part(
+			row,
+			'.sessionsListItem__consultingTypeIcon--selfHelpLabel'
+		);
+		await expect(label).toBeVisible();
+		const expected = computeOrisoPalette(
+			{ primary: '#A5000A' },
+			scheme
+		).tokens;
+		const { page } = await import('@vitest/browser/context');
+		const originalViewport = [window.innerWidth, window.innerHeight];
+		const viewports =
+			scheme === 'light'
+				? [
+						[390, 844],
+						[820, 1180],
+						[1440, 900]
+					]
+				: [originalViewport];
+		try {
+			for (const [width, height] of viewports) {
+				await page.viewport(width, height);
+				await waitFor(() => {
+					expect(window.innerWidth).toBe(width);
+					expect(window.innerHeight).toBe(height);
+				});
+				const actualStyle = getComputedStyle(label);
+				console.info(
+					'shared-svg-contrast-visual',
+					JSON.stringify({
+						case: 'selected-self-help',
+						width: window.innerWidth,
+						height: window.innerHeight,
+						resolvedLanguage: i18n.resolvedLanguage,
+						language: i18n.language,
+						documentLanguage: document.documentElement.lang,
+						scheme,
+						foreground: actualStyle.color,
+						background: getComputedStyle(
+							part(row, '.sessionsListItem__content')
+						).backgroundColor,
+						path: `selected-self-help-${scheme}-${width}x${height}.png`
+					})
+				);
+				await page.screenshot({
+					path: `../../../test-results/shared-svg-contrast/selected-self-help-${scheme}-${width}x${height}.png`
+				});
+			}
+		} finally {
+			await page.viewport(originalViewport[0], originalViewport[1]);
+		}
+		await waitFor(() =>
+			expect(getComputedStyle(label).color).toBe(
+				rgb(expected['--m3-on-surface-variant'])
+			)
+		);
+		// No rule/context exclusion: the ordinary complete-story raw axe audit
+		// still runs, including any independent non-owned findings.
+	}
+});
+
+export const SelectedSelfHelpContrastLight: Story =
+	selectedSelfHelpContrast('light');
+export const SelectedSelfHelpContrastDark: Story =
+	selectedSelfHelpContrast('dark');
+export const SelectedSelfHelpContrastInverted: Story =
+	selectedSelfHelpContrast('inverted');
 
 /** These use the production card, membership hydration and shared stack. */
 export const GroupOneParticipant: Story = {

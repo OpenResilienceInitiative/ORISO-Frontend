@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { useDisplayFilterBrowserMuted } from './useDisplayFilterBrowserUnavailable';
 
 const isSuppressed = vi.fn();

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Public enquiry UI boundary: real session, timeline, side panel and composer.
  * Only network APIs, the Matrix SDK client and browser rendering are substituted.
@@ -14,7 +14,7 @@ import {
 	act
 } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { Context as ResponsiveContext } from 'react-responsive';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { createInstance } from 'i18next';

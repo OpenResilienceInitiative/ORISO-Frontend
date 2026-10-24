@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 /* Each screen's module is replaced by a stub that writes its name down when it
    is loaded, so a test sees exactly which chunks a call asked the browser for.

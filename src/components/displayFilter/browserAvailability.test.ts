@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { DEFAULT_NOTIFICATION_SETTINGS } from '../../utils/notificationSettings/model';
 import { browserPopupsOff } from './browserAvailability';
 

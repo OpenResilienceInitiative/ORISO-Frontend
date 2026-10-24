@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';

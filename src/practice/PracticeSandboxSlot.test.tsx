@@ -1,8 +1,15 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { UserDataContext } from '../globalState/context/UserDataContext';
 import { endpoints } from '../resources/scripts/endpoints';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';

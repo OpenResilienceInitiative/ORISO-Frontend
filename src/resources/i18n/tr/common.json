@@ -6183,5 +6183,39 @@
 				"inviteText": "Sözleşme onayı şu anda doğrulanamadı. Lütfen tekrar deneyin."
 			}
 		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Referans bileşen",
+			"title": "Uygulanan tasarım belirteçleri",
+			"declaredExplanation": "Kaynak ayrıntıları, tanımlanan eşlemeyi açıklar. Değerler referans bileşen üzerinde ölçülür.",
+			"refresh": "İncelemeyi yenile",
+			"empty": "Henüz ölçüm yok.",
+			"unavailable": "Kullanılamıyor",
+			"scroll": "Belirteç ölçümlerini kaydır",
+			"caption": "Uygulanan belirteç ölçümleri",
+			"target": "Hedef",
+			"token": "Belirteç / özellik",
+			"expected": "Beklenen (motor)",
+			"calculated": "Hesaplanan (devralınan belirteç)",
+			"applied": "Uygulanan (bileşen)",
+			"result": "Sonuç",
+			"source": "Tanımlanan kaynak",
+			"status": {
+				"match": "Eşleşiyor",
+				"mismatch": "Eşleşmiyor",
+				"missing": "Eksik",
+				"unresolved": "Çözümlenemedi"
+			},
+			"issues": {
+				"missing-element": "Hedef öğe bulunamadı.",
+				"missing-expected": "Bağımsız bir beklenen değer mevcut değil.",
+				"missing-token": "Devralınan belirteç eksik veya geçersiz.",
+				"unresolved-token": "Devralınan belirteç çözümlenemedi.",
+				"missing-applied": "Uygulanan değer eksik.",
+				"calculated-mismatch": "Devralınan belirteç motorun değerinden farklı.",
+				"applied-mismatch": "Uygulanan değer motorun değerinden farklı."
+			}
+		}
 	}
 }

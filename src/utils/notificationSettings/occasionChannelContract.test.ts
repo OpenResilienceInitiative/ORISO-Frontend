@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { EMAIL_IDS } from '../../emails/content/emailCatalogue';
 import { isKnownEventType } from '../../components/notificationsCenter/eventDescriptors/registry';
 import { occasionChannelContract } from './occasionChannelContract';

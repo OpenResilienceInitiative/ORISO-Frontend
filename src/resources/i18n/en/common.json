@@ -6098,5 +6098,39 @@
 				"inviteText": "The contract confirmation could not be checked right now. Please try again."
 			}
 		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Reference component",
+			"title": "Applied design tokens",
+			"declaredExplanation": "Source details describe the declared mapping. Values are measured from the reference component.",
+			"refresh": "Refresh inspection",
+			"empty": "No measurements yet.",
+			"unavailable": "Unavailable",
+			"scroll": "Scroll token measurements",
+			"caption": "Applied token measurements",
+			"target": "Target",
+			"token": "Token / property",
+			"expected": "Expected (engine)",
+			"calculated": "Calculated (inherited token)",
+			"applied": "Applied (component)",
+			"result": "Result",
+			"source": "Declared source",
+			"status": {
+				"match": "Match",
+				"mismatch": "Mismatch",
+				"missing": "Missing",
+				"unresolved": "Unresolved"
+			},
+			"issues": {
+				"missing-element": "Target element was not found.",
+				"missing-expected": "No independent expected value is available.",
+				"missing-token": "The inherited token is missing or invalid.",
+				"unresolved-token": "The inherited token could not be resolved.",
+				"missing-applied": "The applied value is missing.",
+				"calculated-mismatch": "Inherited token differs from the engine.",
+				"applied-mismatch": "Applied value differs from the engine."
+			}
+		}
 	}
 }

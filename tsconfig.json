@@ -31,7 +31,8 @@
 		"src/**/*.test.tsx",
 		"src/**/*.spec.ts",
 		"src/**/*.spec.tsx",
-		"src/extensions/cypress/**/*.cy.ts"
+		"src/extensions/cypress/**/*.cy.ts",
+		"src/components/call/__storybook__/groupCallHarness.tsx"
 	],
 	"ts-node": {
 		"compilerOptions": {

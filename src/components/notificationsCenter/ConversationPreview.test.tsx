@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
 

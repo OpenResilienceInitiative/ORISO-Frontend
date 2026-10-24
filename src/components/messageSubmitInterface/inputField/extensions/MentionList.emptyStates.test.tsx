@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #993 — an empty @-mention popup used to render nothing at all, so "nobody
  * matches" and "the directory never loaded" were the same silent blank. These
@@ -6,7 +6,7 @@
  */
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MentionList } from './MentionList';
 import type { MentionCandidate } from './mentionFiltering';

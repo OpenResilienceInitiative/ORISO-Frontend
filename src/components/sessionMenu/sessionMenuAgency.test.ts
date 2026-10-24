@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getSessionMenuAgency } from './sessionMenuAgency';
 
 const groupAgency = { id: 101, name: 'Beratungsstelle Mitte' };

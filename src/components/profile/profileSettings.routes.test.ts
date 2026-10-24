@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { NotificationSettingsPanel } from './NotificationSettings';

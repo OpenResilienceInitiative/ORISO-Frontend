@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1499: on a phone the waiting room and the join view show the session menu.
  * A counsellor who has not joined the running group yet must not be offered
@@ -7,7 +7,14 @@
 import * as React from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,

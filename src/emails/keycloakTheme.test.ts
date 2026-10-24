@@ -4,7 +4,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	APP_BASE_URL_ENV,
 	KEYCLOAK_LINK_PATHS,

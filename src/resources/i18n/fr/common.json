@@ -6183,5 +6183,39 @@
 				"inviteText": "La confirmation du contrat ne peut pas être vérifiée pour le moment. Veuillez réessayer."
 			}
 		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Composant de référence",
+			"title": "Jetons de conception appliqués",
+			"declaredExplanation": "Les détails de la source décrivent la correspondance déclarée. Les valeurs sont mesurées sur le composant de référence.",
+			"refresh": "Actualiser la vérification",
+			"empty": "Aucune mesure pour le moment.",
+			"unavailable": "Indisponible",
+			"scroll": "Faire défiler les mesures des jetons",
+			"caption": "Mesures des jetons appliqués",
+			"target": "Cible",
+			"token": "Jeton / propriété",
+			"expected": "Attendu (moteur)",
+			"calculated": "Calculé (jeton hérité)",
+			"applied": "Appliqué (composant)",
+			"result": "Résultat",
+			"source": "Source déclarée",
+			"status": {
+				"match": "Concordance",
+				"mismatch": "Écart",
+				"missing": "Manquant",
+				"unresolved": "Non résolu"
+			},
+			"issues": {
+				"missing-element": "L’élément cible est introuvable.",
+				"missing-expected": "Aucune valeur attendue indépendante n’est disponible.",
+				"missing-token": "Le jeton hérité est manquant ou invalide.",
+				"unresolved-token": "Le jeton hérité n’a pas pu être résolu.",
+				"missing-applied": "La valeur appliquée est manquante.",
+				"calculated-mismatch": "Le jeton hérité diffère de celui du moteur.",
+				"applied-mismatch": "La valeur appliquée diffère de celle du moteur."
+			}
+		}
 	}
 }

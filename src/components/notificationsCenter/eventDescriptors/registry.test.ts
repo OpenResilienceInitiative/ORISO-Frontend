@@ -12,7 +12,7 @@
  * `cypress/e2e/eventDescriptors.cy.ts` logic spec.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	EVENT_DESCRIPTORS,
 	KNOWN_EVENT_TYPES,

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import profileRoutes from './profile.routes';
 import { BrowserNotification } from './BrowserNotifications';
 import { NOTIFICATION_SETTINGS_PATH } from './notificationSettingsPath';

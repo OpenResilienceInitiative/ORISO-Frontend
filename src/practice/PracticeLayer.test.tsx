@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { useEffect } from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { getTourHostHooks } from '../components/productTour/tourHostHooks';
 import { PracticeLayer } from './PracticeLayer';
 import {

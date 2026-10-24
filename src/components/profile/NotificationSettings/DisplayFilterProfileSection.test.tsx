@@ -1,11 +1,18 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1377 slice 6 — Profile › Display filters: edits the per-section DEFAULTS
  * (never a list override), the per-event-type list, and the limited
  * "apply to other lists" action (spec §4).
  */
 import * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	act,
 	cleanup,
