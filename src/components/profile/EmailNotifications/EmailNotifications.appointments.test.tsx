@@ -35,17 +35,16 @@ describe('counsellor self-help appointment preference', () => {
 		).toBe(true);
 	});
 
-	it('saves the existing flag, preserves other settings and reads it after reload', async () => {
+	// Only the changed key goes out: UserService merges settings per key.
+	it('saves only the existing flag, and reads it after reload', async () => {
 		const view = renderSettings();
 		fireEvent.click(appointmentSwitch());
 		await waitFor(() => expect(reload).toHaveBeenCalledOnce());
 		expect(apiPatchUserData).toHaveBeenCalledWith({
 			emailNotifications: {
-				...initialNotifications(),
-				settings: {
-					...initialNotifications().settings,
-					appointmentNotificationEnabled: false
-				}
+				emailNotificationsEnabled:
+					initialNotifications().emailNotificationsEnabled,
+				settings: { appointmentNotificationEnabled: false }
 			}
 		});
 		view.unmount();
@@ -97,11 +96,9 @@ describe('asker consent request mail preference', () => {
 			await waitFor(() => expect(reload).toHaveBeenCalledOnce());
 			expect(apiPatchUserData).toHaveBeenCalledWith({
 				emailNotifications: {
-					...initialNotifications(),
-					settings: {
-						...initialNotifications().settings,
-						reassignmentNotificationEnabled: false
-					}
+					emailNotificationsEnabled:
+						initialNotifications().emailNotificationsEnabled,
+					settings: { reassignmentNotificationEnabled: false }
 				}
 			});
 			view.unmount();

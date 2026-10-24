@@ -64,7 +64,12 @@ export const Missed: Story = {
 		call: {
 			...meta.args.call,
 			state: 'missed',
-			participants: [],
+			// As a real missed call is written: the caller is its only
+			// participant (#780 walkthrough: the card said "Attended · 1").
+			actorUserId: '@alex:example',
+			participants: [
+				{ userId: '@alex:example', displayName: 'Alex Test' }
+			],
 			durationSeconds: undefined
 		}
 	},
@@ -77,6 +82,8 @@ export const Missed: Story = {
 			).toBeVisible()
 		);
 		await expect(canvas.queryByText(/02:05/)).toBeNull();
+		await expect(canvas.queryByText(/Teilgenommen|Attended/)).toBeNull();
+		await expect(canvas.getByText(/Alex Test/)).toBeVisible();
 	}
 };
 export const AudioMissed: Story = {

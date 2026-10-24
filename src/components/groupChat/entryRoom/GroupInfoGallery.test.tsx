@@ -101,19 +101,12 @@ describe('GroupInfoGallery', () => {
 		expect(onBack).toHaveBeenCalledTimes(1);
 	});
 
-	it('offers the calendar action only when the caller can handle it', () => {
+	it('shows only the cards — the dates have their own view (#1689)', () => {
 		stubReducedMotion(true);
-		const { rerender } = render(<GroupInfoGallery onBack={vi.fn()} />);
-		expect(screen.queryByTestId('group-info-appointments')).toBeNull();
-
-		const onOpenAppointments = vi.fn();
-		rerender(
-			<GroupInfoGallery
-				onBack={vi.fn()}
-				onOpenAppointments={onOpenAppointments}
-			/>
-		);
-		fireEvent.click(screen.getByTestId('group-info-appointments'));
-		expect(onOpenAppointments).toHaveBeenCalledTimes(1);
+		const { container } = render(<GroupInfoGallery onBack={vi.fn()} />);
+		expect(
+			container.querySelector('[data-cy="group-info-upcoming"]')
+		).toBeNull();
+		expect(screen.queryByText('Nächste Termine')).toBeNull();
 	});
 });

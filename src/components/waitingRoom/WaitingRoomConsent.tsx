@@ -51,6 +51,13 @@ export const useWaitingRoomConsent = ({
 	const [missing, setMissing] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const accepted = acceptedBinding !== null && acceptedBinding === binding;
+	const check = () => {
+		if (!accepted) {
+			setMissing(true);
+			inputRef.current?.focus();
+		}
+		return accepted;
+	};
 
 	return {
 		accepted,
@@ -71,13 +78,15 @@ export const useWaitingRoomConsent = ({
 		 * error state.
 		 */
 		guard: (onAgreed: () => void) => {
-			if (!accepted) {
-				setMissing(true);
-				inputRef.current?.focus();
-				return;
+			if (check()) {
+				onAgreed();
 			}
-			onAgreed();
 		},
+		/**
+		 * The same question without an action behind it, for a button that asks
+		 * before anything starts (the closing animation must not close on a "no").
+		 */
+		check,
 		label: (
 			<Typography
 				component="div"

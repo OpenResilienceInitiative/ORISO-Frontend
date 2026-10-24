@@ -863,6 +863,11 @@ const preview: Preview = {
 		 */
 		viewport: {
 			options: {
+				phone320: {
+					name: 'Phone 320 (smallest supported)',
+					styles: { width: '320px', height: '640px' },
+					type: 'mobile'
+				},
 				phone375: {
 					name: 'Phone 375 (iPhone SE / 8)',
 					styles: { width: '375px', height: '812px' },

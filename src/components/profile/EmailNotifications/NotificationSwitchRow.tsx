@@ -1,9 +1,7 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { NotificationsContext, UserDataContext } from '../../../globalState';
-import { apiPatchUserData } from '../../../api/apiPatchUserData';
+import { useEffect } from 'react';
 import { Switch } from '../../Switch';
+import { useEmailSettings } from './emailSetting';
 import { EmailToggle } from './EmailToggle';
 import { NotificationSwitch } from './notificationMatrix';
 
@@ -65,64 +63,30 @@ export const NotificationSwitchRow = ({
 };
 
 /**
- * A switch backed by `emailToggles` rather than by the settings blob.
- *
- * The patch has to send the whole list back — the endpoint replaces it — so
- * this maps over the existing toggles and flips the one it owns, leaving the
- * others exactly as they were.
+ * A switch backed by `emailToggles` rather than by the settings blob. Saved
+ * through the shared write path (`emailSetting.ts`), which sends the whole
+ * list back with only this toggle flipped.
  */
 const EmailTypeToggle = ({
 	type,
 	titleKey,
 	descriptionKey
 }: {
-	type: string;
+	type: UserService.Schemas.EmailType;
 	titleKey: string;
 	descriptionKey?: string;
 }) => {
-	const { t } = useTranslation();
-	const { userData, reloadUserData } = useContext(UserDataContext);
-	const { addNotification } = useContext(NotificationsContext);
-	const current =
-		userData?.emailToggles?.find((toggle) => toggle.name === type)?.state ??
-		false;
-	const [checked, setChecked] = useState(current);
-
-	useEffect(() => {
-		setChecked(current);
-	}, [current]);
-
-	const onChange = useCallback(
-		(next: boolean) => {
-			setChecked(next);
-			const emailToggles = [...(userData?.emailToggles ?? [])].map(
-				(toggle) =>
-					toggle.name === type ? { ...toggle, state: next } : toggle
-			);
-			apiPatchUserData({ emailToggles })
-				.then(reloadUserData)
-				.catch(() => {
-					// Put the switch back where it was: leaving it in the new
-					// position would tell the user a lie about what is stored.
-					setChecked(!next);
-					addNotification({
-						title: t('profile.notifications.toggleError.title'),
-						text: t(
-							'profile.notifications.toggleError.description'
-						),
-						notificationType: 'error'
-					});
-				});
-		},
-		[addNotification, reloadUserData, t, type, userData?.emailToggles]
-	);
+	// Shows what is stored once saving settles: a failed save puts the
+	// switch back instead of telling the user a lie.
+	const { read, change } = useEmailSettings();
+	const source = { kind: 'emailToggle', type } as const;
 
 	return (
 		<Switch
 			titleKey={titleKey}
 			descriptionKey={descriptionKey}
-			onChange={onChange}
-			checked={checked}
+			onChange={(next) => change(source, next)}
+			checked={read(source)}
 		/>
 	);
 };

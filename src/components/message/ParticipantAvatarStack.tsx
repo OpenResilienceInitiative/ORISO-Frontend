@@ -10,62 +10,77 @@
  * (ORISO-Frontend#1193). Order and overflow come from `participantStack.ts`.
  */
 import * as React from 'react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { MessageAvatar } from './MessageAvatar';
 import {
 	resolveParticipantStack,
 	STACK_MAX_VISIBLE,
+	STACK_AVATAR_SIZE,
+	STACK_OVERLAP,
+	HEADER_STACK_AVATAR_SIZE,
+	HEADER_STACK_OVERLAP,
 	type StackParticipant
 } from './participantStack';
 import './participantAvatarStack.styles.scss';
 
 export interface ParticipantAvatarStackProps {
 	'participants': StackParticipant[];
-	/**
-	 * Avatar diameter (Figma room header: 40). The visible step is always
-	 * `size − STACK_OVERLAP`, so the 32 px library variant steps 20 px.
-	 */
+	/** Avatar diameter. Existing card consumers retain their explicit size. */
 	'size'?: number;
+	/** Overlap between avatars; header and card geometry are independent. */
+	'overlap'?: number;
 	'maxVisible'?: number;
 	'className'?: string;
 	'data-cy'?: string;
 }
 
-/**
- * Measured in Figma (T14/T17, `get_metadata` on 1320:38281 → Room Header
- * All → Avatar Group): avatars 40 × 40 at x = 0/28/56/84/112 → 12 px overlap;
- * the library master (7608:40689) draws 32 px avatars at 0/20/40/… — the
- * same 12 px overlap. The group starts 8 px inside the type pill
- * (`x = 65.5` in a 73.5 px pill) and the title text follows 6 px after it.
- */
-export const STACK_AVATAR_SIZE = 40;
-export const STACK_OVERLAP = 12;
+/** Legacy 40px geometry remains the default; headers opt into HEADER_STACK_PROPS. */
+export { STACK_AVATAR_SIZE, STACK_OVERLAP } from './participantStack';
 export const STACK_PILL_OVERLAP = 8;
 export const STACK_TITLE_INSET = 6;
-/** Visible step per avatar for the room header (40 − 12). */
+/** Legacy/default step (40 − 12); current headers opt into HEADER_STACK_PROPS. */
 export const STACK_STEP = STACK_AVATAR_SIZE - STACK_OVERLAP;
-export const stackStepFor = (size: number) => Math.max(0, size - STACK_OVERLAP);
+export const stackStepFor = (size: number, overlap = STACK_OVERLAP) =>
+	Math.max(0, size - overlap);
+
+/** Current header geometry; never apply this preset to list cards. */
+export const HEADER_STACK_PROPS = {
+	size: HEADER_STACK_AVATAR_SIZE,
+	overlap: HEADER_STACK_OVERLAP
+} as const;
 
 export const ParticipantAvatarStack = ({
 	participants,
 	size = STACK_AVATAR_SIZE,
+	overlap = STACK_OVERLAP,
 	maxVisible = STACK_MAX_VISIBLE,
 	className,
 	'data-cy': dataCy = 'participant-stack'
 }: ParticipantAvatarStackProps) => {
 	const { t: translate } = useTranslation();
 	const tipIdBase = useId();
-	// Hover/focus state mirrored into the DOM so the tooltip works with
-	// synthetic pointer events (tests, assistive tech) as well as CSS :hover.
-	const [openIndex, setOpenIndex] = useState<number | null>(null);
+	// Track hover and focus independently; Escape dismisses either without moving focus.
+	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+	const [dismissed, setDismissed] = useState(false);
+	const activeIndex = hoveredIndex ?? focusedIndex;
+	const openIndex = dismissed ? null : activeIndex;
+	useEffect(() => {
+		if (openIndex === null) return;
+		const dismiss = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setDismissed(true);
+		};
+		document.addEventListener('keydown', dismiss);
+		return () => document.removeEventListener('keydown', dismiss);
+	}, [openIndex]);
 	const { visible, overflow } = resolveParticipantStack(
 		participants,
 		maxVisible
 	);
 
-	if (visible.length === 0) {
+	if (visible.length === 0 && overflow === 0) {
 		return null;
 	}
 
@@ -87,7 +102,7 @@ export const ParticipantAvatarStack = ({
 			style={
 				{
 					'--participant-size': `${size}px`,
-					'--participant-step': `${stackStepFor(size)}px`
+					'--participant-step': `${stackStepFor(size, overlap)}px`
 				} as React.CSSProperties
 			}
 			aria-label={translate('chatStage.participants.label', {
@@ -102,22 +117,28 @@ export const ParticipantAvatarStack = ({
 					<li
 						key={participant.userId}
 						className="participantStack__item"
-						style={{ zIndex: visible.length - index }}
+						style={{
+							zIndex:
+								activeIndex === index
+									? visible.length + 1
+									: visible.length - index
+						}}
 						data-open={openIndex === index ? 'true' : 'false'}
-						onMouseEnter={() => setOpenIndex(index)}
+						onMouseEnter={() => {
+							setHoveredIndex(index);
+							setDismissed(false);
+						}}
 						onMouseLeave={() =>
-							setOpenIndex((current) =>
+							setHoveredIndex((current) =>
 								current === index ? null : current
 							)
 						}
-						onFocus={() => setOpenIndex(index)}
-						onKeyDown={(event) => {
-							if (event.key === 'Escape') {
-								setOpenIndex(null);
-							}
+						onFocus={() => {
+							setFocusedIndex(index);
+							setDismissed(false);
 						}}
 						onBlur={() =>
-							setOpenIndex((current) =>
+							setFocusedIndex((current) =>
 								current === index ? null : current
 							)
 						}

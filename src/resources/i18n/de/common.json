@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Teilnehmende werden geladen …",
+		"unavailable": "Teilnehmende konnten nicht geladen werden.",
+		"empty": "Keine Teilnehmenden."
+	},
 	"menuEffects": {
 		"title": "Menüdarstellung",
 		"label": "Schleier und sanfte Menüanimationen",
@@ -744,12 +749,13 @@
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
 			"titleLabel": "Neutraler Kalendertitel",
-			"addShort": "Kalender",
 			"copyGoogle": "Google-Kalenderlink kopieren",
 			"copyOutlook": "Outlook-Kalenderlink kopieren",
 			"linkCopied": "Kalenderlink kopiert.",
 			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
-			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung.",
+			"addThis": "Diesen Termin zum Kalender hinzufügen",
+			"shareHintSeries": "Kalenderlinks für Ihre Webseite: alle Termine als Serie, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -1033,7 +1039,6 @@
 				"back": "Zurück zum Countdown",
 				"headline": "So funktioniert die Gruppe",
 				"subline": "Drei Dinge, die vor dem ersten Mal helfen.",
-				"appointments": "Termine in den Kalender",
 				"steps": {
 					"formats": {
 						"title": "So findet die Gruppe statt",
@@ -1050,8 +1055,7 @@
 						"text": "Im Link-Bereich finden Sie regelmäßig frische Treffen und gelangen direkt zum nächsten Termin.",
 						"alt": "Neue Terminkarten erscheinen nacheinander; ein klares Linksymbol führt die neugierige Person zum nächsten Gruppentreffen."
 					}
-				},
-				"upcoming": "Nächste Termine"
+				}
 			},
 			"status": {
 				"active": "Läuft gerade",
@@ -1076,7 +1080,7 @@
 					"etaSoon": "gleich",
 					"flipAria": "{{label}}: {{value}}. Umdrehen zum Lesen.",
 					"flipHint": "klicken zum Umdrehen",
-					"greetingLabel": "Begrüßung Ihrer Beratung",
+					"greetingLabel": "Begrüßung der Moderation",
 					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
 					"moderatorHeadline": "Der Gesprächskreis beginnt {{eta}}.",
 					"moderatorOverdueHeadline": "Die Gruppe wartet.",
@@ -1084,8 +1088,8 @@
 					"netiquetteLabel": "Netiquette · Regel {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",
-					"overdueHeadline": "Wir sind gleich für Sie da.",
-					"overdueSubtitle": "Ihre Beratung öffnet den Raum gleich — bitte haben Sie noch einen Moment Geduld.",
+					"overdueHeadline": "Die Gruppe beginnt gleich.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte haben Sie noch einen Moment Geduld.",
 					"subtitle": "Klicken Sie auf eine Zahl — dahinter warten Begrüßung und Netiquette.",
 					"subtitleCard": "Uhr antippen, dahinter Begrüßung und Netiquette.",
 					"subtitleStill": "Begrüßung und Netiquette stehen unter den Zahlen.",
@@ -1208,7 +1212,49 @@
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
 			"backToCountdown": "Zurück zum Countdown",
-			"legalMenu": "Rechtliches"
+			"legalMenu": "Rechtliches",
+			"dates": {
+				"headline": "Die nächsten Treffen",
+				"subline": "Tippen Sie auf einen Termin, um ihn einzutragen.",
+				"none": "Zurzeit sind keine weiteren Termine geplant.",
+				"add": "Eintragen",
+				"addLabel": "{{date}} zum Kalender hinzufügen",
+				"next": "Nächster",
+				"seriesTitle": "Alle auf einmal",
+				"seriesSub": "als Serie eintragen",
+				"seriesLong": "Alle als Serie eintragen",
+				"repeat": {
+					"DAILY": "Die Gruppe trifft sich jeden Tag zur selben Zeit.",
+					"WEEKLY": "Die Gruppe trifft sich jede Woche zur selben Zeit.",
+					"BIWEEKLY": "Die Gruppe trifft sich alle zwei Wochen zur selben Zeit.",
+					"MONTHLY": "Die Gruppe trifft sich jeden Monat zur selben Zeit.",
+					"QUARTERLY": "Die Gruppe trifft sich jedes Quartal zur selben Zeit.",
+					"YEARLY": "Die Gruppe trifft sich jedes Jahr zur selben Zeit."
+				}
+			},
+			"addDate": "Termin eintragen",
+			"allDates": "Alle Termine",
+			"nextDates": "Nächste Termine",
+			"joinFrom": "ab {{time}}",
+			"rhythm": {
+				"DAILY": "jeden Tag",
+				"WEEKLY": "jede Woche",
+				"BIWEEKLY": "alle zwei Wochen",
+				"MONTHLY": "jeden Monat",
+				"QUARTERLY": "jedes Quartal",
+				"YEARLY": "jedes Jahr"
+			},
+			"running": {
+				"since": "Läuft seit",
+				"status": "Läuft gerade",
+				"statusModerated": "Läuft gerade · Moderation ist da",
+				"headline": "Die Gruppe hat {{ago}} begonnen.",
+				"subline": "Sie können jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"headline": "So gehen wir miteinander um",
+				"subline": "Einmal kurz lesen – dann sind Sie dabei."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -2011,6 +2057,8 @@
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
 		"consultantLeftChat": "Berater:in hat den Chat verlassen",
+		"youEndedChat": "Sie haben den Chat beendet",
+		"chatEnded": "Der Chat wurde beendet",
 		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
@@ -2096,21 +2144,21 @@
 			"title": "Ansicht",
 			"description": "Welche Arten diese Liste zeigt, welche eine Pille bekommen und wie sie klingen.",
 			"showColumn": "In der Liste",
-			"pillColumn": "Anzeigen",
-			"soundColumn": "Ton",
+			"pillColumn": "Im Filter",
+			"soundColumn": "Browser",
 			"soundKind": "Ton anhören: {{kind}}",
-			"soundMenu": "Ton wählen: {{kind}}",
+			"soundMenu": "Browser-Benachrichtigung: {{kind}}",
 			"soundDefault": "Standard",
-			"pillMenu": "Anzeige wählen: {{kind}}",
+			"pillMenu": "Im Filter wählen: {{kind}}",
 			"liveChatDynamic": "Dynamisch",
 			"liveChatFixed": "Fest",
 			"pillOff": "Aus",
 			"pillOn": "An",
 			"placeholderHint": "Kommt bald.",
 			"showKind": "In der Liste: {{kind}}",
-			"pillKind": "Pille: {{kind}}",
+			"pillKind": "Im Filter: {{kind}}",
 			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
-			"pillNotApplicable": "Keine Pille für diese Art",
+			"pillNotApplicable": "Kein Filter-Knopf für diese Art",
 			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
 			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
 			"autoReadSessions": "Ausgeblendete Chats nicht als ungelesen zählen",
@@ -2127,7 +2175,7 @@
 			"viewLabels": "Icons + Text",
 			"viewText": "Text",
 			"autoSort": "Ungelesenes nach links sortieren",
-			"autoSortDescription": "Pillen mit ungelesenen Einträgen rücken an den Anfang der Reihe.",
+			"autoSortDescription": "Knöpfe mit ungelesenen Einträgen rücken an den Anfang.",
 			"deactivatedHint": "Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.",
 			"deactivatedChip": "{{kind}} (vom Träger abgeschaltet)",
 			"deactivatedNotice": "{{kind}} ist für Ihren Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind; neue können nicht angelegt werden.",
@@ -2147,7 +2195,36 @@
 				"sessions": "Gespräche",
 				"requests": "Anfragen"
 			},
-			"liveChatSession": "Bei Sitzung"
+			"liveChatSession": "Bei Sitzung",
+			"kindColumn": "Art",
+			"legendShow": "Einträge dieser Art erscheinen in der Liste",
+			"legendPill": "Knopf über der Liste, mit dem Sie die Liste auf diese Art einschränken",
+			"legendSound": "Pop-up auf diesem Gerät, mit Ton oder stumm",
+			"legendEmail": "Hinweis ins Postfach, ohne Inhalt der Nachricht",
+			"quickHeading": "Weitere Filter-Knöpfe",
+			"quickNote": "Diese Knöpfe filtern die Liste oder öffnen eine Aktion. Sie lösen keine Benachrichtigung aus.",
+			"presentationHeading": "Darstellung der Filter-Knöpfe",
+			"soundWithTone": "Pop-up mit Ton",
+			"soundSilent": "Pop-up ohne Ton",
+			"soundSilentDescription": "Nur das Fenster, kein Ton",
+			"emailColumn": "E-Mail",
+			"emailKind": "E-Mail: {{kind}}",
+			"emailMenu": "E-Mail wählen: {{kind}}",
+			"channelUnavailable": "nicht verfügbar",
+			"emailUnavailableReason": "Für diese Art gibt es noch keine E-Mail-Benachrichtigung",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in Ihrem Profil ausgeschaltet",
+			"browserOff": "Pop-ups sind in Ihrem Profil ausgeschaltet",
+			"descriptions": {
+				"sessions": "Legen Sie für jede Gesprächsart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Nachrichten benachrichtigt werden.",
+				"requests": "Legen Sie für jede Anfrageart fest, ob sie einen Filter-Knopf bekommt und wie Sie über neue Anfragen benachrichtigt werden.",
+				"timeline": "Legen Sie für jede Art fest, ob sie in der Liste erscheint, einen Filter-Knopf bekommt und ob Sie eine E-Mail erhalten.",
+				"timelineWithoutEmail": "Legen Sie für jede Art fest, ob sie in der Liste erscheint und einen Filter-Knopf bekommt."
+			},
+			"kindsHeadings": {
+				"sessions": "Gesprächsarten",
+				"requests": "Anfragearten",
+				"timeline": "Ereignisarten"
+			}
 		},
 		"families": {
 			"all": "Alle",
@@ -2351,6 +2428,7 @@
 			"markRead": "Als gelesen markieren",
 			"waitingSince": "Wartet seit {{time}} Uhr ({{date}})",
 			"preview": {
+				"authors": "Personen in dieser Vorschau",
 				"unavailable": "Die Chat-Vorschau ist noch nicht verfügbar — öffnen Sie den Chat, um mitzulesen.",
 				"empty": "Noch keine Nachrichten in diesem Gespräch.",
 				"image": "Bild",
@@ -3818,8 +3896,9 @@
 			"badge": "System-Benachrichtigung",
 			"selectedReason": "Ausgewählter Grund: {{reason}}",
 			"explanation": "Erläuterung: {{explanation}}",
-			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
-			"noActionNeeded": "Du musst nichts weiter tun",
+			"tookOverTitle": "Neue Berater:in hat Ihren Fall übernommen",
+			"tookOverBody": "{{advisor}} führt Ihre Beratung ab jetzt weiter.",
+			"noActionNeeded": "Sie müssen nichts weiter tun",
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."

@@ -2,7 +2,11 @@ import * as React from 'react';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { UserDataContext } from '../../globalState';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext
+} from '../../globalState';
 import {
 	TWO_FACTOR_SETTINGS_PATH,
 	useOpenTwoFactorSettings
@@ -200,6 +204,13 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		[navigate, openTwoFactorSettings]
 	);
 
+	/* The calls to action address the advice seeker. A counsellor reads the
+	   same record but must not get its buttons: "Protect my access" would run
+	   the advice seeker's 2FA flow on the counsellor's own account (#1844). */
+	const offersActions =
+		!readOnly &&
+		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+
 	if (!bausteine.length) return null;
 
 	return (
@@ -208,7 +219,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				bausteine={bausteine}
 				compactFaq={conversationType !== 'LIVE_CHAT'}
 				skipAnimation={skipAnimation}
-				onAction={readOnly ? undefined : handleAction}
+				onAction={offersActions ? handleAction : undefined}
 				onFirstReveal={onFirstReveal}
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,

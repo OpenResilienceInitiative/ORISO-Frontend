@@ -4,9 +4,7 @@ import { transitionMotion } from './transitionMotion';
 
 export type SlideFrom = 'right' | 'left' | 'below';
 type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type SlideFromProp =
-	| SlideFrom
-	| Partial<Record<Breakpoint, SlideFrom>>;
+export type SlideFromProp = SlideFrom | Partial<Record<Breakpoint, SlideFrom>>;
 
 const ANIMATION: Record<SlideFrom, string> = {
 	right: 'slideInFromRight',
@@ -18,15 +16,15 @@ const animationFor = (from: SlideFrom, ms: number) =>
 	`${ANIMATION[from]} ${ms}ms ${transitionMotion.easeIn} both`;
 
 export interface SlideInProps {
-	from: SlideFromProp;
+	'from': SlideFromProp;
 	/** How far it travels; a whole column is `100%`, a step inside it less. */
-	distance?: string;
-	durationMs?: number;
+	'distance'?: string;
+	'durationMs'?: number;
 	/** False renders the view in place, for the one that is simply there first. */
-	animate?: boolean;
-	sx?: SxProps<Theme>;
+	'animate'?: boolean;
+	'sx'?: SxProps<Theme>;
 	'data-cy'?: string;
-	children: React.ReactNode;
+	'children': React.ReactNode;
 }
 
 /**
@@ -77,7 +75,8 @@ export const SlideIn = ({
 					},
 					'@keyframes slideInFromLeft': {
 						from: {
-							transform: 'translateX(calc(var(--slide-distance) * -1))',
+							transform:
+								'translateX(calc(var(--slide-distance) * -1))',
 							opacity: 0
 						},
 						to: { transform: 'none', opacity: 1 }

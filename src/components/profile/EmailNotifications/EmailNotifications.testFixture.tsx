@@ -5,6 +5,7 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { NotificationsContext, UserDataContext } from '../../../globalState';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { EmailNotification } from './index';
+import { resetEmailSettingSession } from './emailSetting';
 
 export const initialNotifications = () => ({
 	emailNotificationsEnabled: true,
@@ -92,6 +93,8 @@ export const createEmailSettingsFixture = (occasion: string) => {
 
 	afterEach(() => {
 		cleanup();
+		// The e-mail write state is module-wide: no case inherits another's.
+		resetEmailSettingSession();
 		vi.restoreAllMocks();
 		if (originalScrollIntoView) {
 			Object.defineProperty(

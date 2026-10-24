@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Loading participants …",
+		"unavailable": "Participants could not be loaded.",
+		"empty": "No participants."
+	},
 	"menuEffects": {
 		"title": "Menu appearance",
 		"label": "Backdrop and gentle menu animations",
@@ -732,12 +737,13 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar",
 			"copyGoogle": "Copy Google Calendar link",
 			"copyOutlook": "Copy Outlook Calendar link",
 			"linkCopied": "Calendar link copied.",
 			"copyError": "The calendar link could not be copied. Please try again.",
-			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates.",
+			"addThis": "Add this date to your calendar",
+			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -1019,7 +1025,6 @@
 				"back": "Back to the countdown",
 				"headline": "How the group works",
 				"subline": "Three things that help before your first time.",
-				"appointments": "Add the dates to your calendar",
 				"steps": {
 					"formats": {
 						"title": "How the group meets",
@@ -1036,8 +1041,7 @@
 						"text": "The link area regularly holds fresh meetings and takes you straight to the next date.",
 						"alt": "New date cards appear one after another; a clear link symbol leads the curious person to the next group meeting."
 					}
-				},
-				"upcoming": "Next dates"
+				}
 			},
 			"status": {
 				"active": "Running now",
@@ -1062,7 +1066,7 @@
 					"etaSoon": "any moment now",
 					"flipAria": "{{label}}: {{value}}. Flip to read.",
 					"flipHint": "click to flip",
-					"greetingLabel": "A welcome from your counsellor",
+					"greetingLabel": "A welcome from the moderator",
 					"headline": "Your group chat starts {{eta}}.",
 					"moderatorHeadline": "The group session starts {{eta}}.",
 					"moderatorOverdueHeadline": "The group is waiting.",
@@ -1070,8 +1074,8 @@
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
-					"overdueHeadline": "We'll be with you in a moment.",
-					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
+					"overdueHeadline": "The group starts in a moment.",
+					"overdueSubtitle": "The moderator is about to open the group — please hang on a little longer.",
 					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
 					"subtitleCard": "Tap the clock, greeting and netiquette behind it.",
 					"subtitleStill": "The greeting and the netiquette are below the numbers.",
@@ -1190,7 +1194,49 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown",
-			"legalMenu": "Legal"
+			"legalMenu": "Legal",
+			"dates": {
+				"headline": "The next meetings",
+				"subline": "Tap a date to add it to your calendar.",
+				"none": "No further dates are planned at the moment.",
+				"add": "Add",
+				"addLabel": "Add {{date}} to your calendar",
+				"next": "Next",
+				"seriesTitle": "All at once",
+				"seriesSub": "add as a series",
+				"seriesLong": "Add all as a series",
+				"repeat": {
+					"DAILY": "The group meets every day at the same time.",
+					"WEEKLY": "The group meets every week at the same time.",
+					"BIWEEKLY": "The group meets every two weeks at the same time.",
+					"MONTHLY": "The group meets every month at the same time.",
+					"QUARTERLY": "The group meets every quarter at the same time.",
+					"YEARLY": "The group meets every year at the same time."
+				}
+			},
+			"addDate": "Add to calendar",
+			"allDates": "All dates",
+			"nextDates": "Next dates",
+			"joinFrom": "from {{time}}",
+			"rhythm": {
+				"DAILY": "every day",
+				"WEEKLY": "every week",
+				"BIWEEKLY": "every two weeks",
+				"MONTHLY": "every month",
+				"QUARTERLY": "every quarter",
+				"YEARLY": "every year"
+			},
+			"running": {
+				"since": "Running for",
+				"status": "Running now",
+				"statusModerated": "Running now · moderator is here",
+				"headline": "The group started {{ago}}.",
+				"subline": "You can join at any time – nobody has to say anything."
+			},
+			"rules": {
+				"headline": "How we treat each other",
+				"subline": "Read it once – then you are in."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1996,6 +2042,8 @@
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
 		"consultantLeftChat": "Consultant has left the chat",
+		"youEndedChat": "You ended the chat",
+		"chatEnded": "The chat has ended",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
@@ -2072,21 +2120,21 @@
 			"title": "View",
 			"description": "Which kinds this list shows, which get a chip and how they sound.",
 			"showColumn": "In the list",
-			"pillColumn": "Show",
-			"soundColumn": "Sound",
+			"pillColumn": "In filter",
+			"soundColumn": "Browser",
 			"soundKind": "Play tone: {{kind}}",
-			"soundMenu": "Choose tone: {{kind}}",
+			"soundMenu": "Browser notification: {{kind}}",
 			"soundDefault": "Default",
-			"pillMenu": "Choose display: {{kind}}",
+			"pillMenu": "Choose filter: {{kind}}",
 			"liveChatDynamic": "Dynamic",
 			"liveChatFixed": "Pinned",
 			"pillOff": "Off",
 			"pillOn": "On",
 			"placeholderHint": "Coming soon.",
 			"showKind": "In the list: {{kind}}",
-			"pillKind": "Pill: {{kind}}",
+			"pillKind": "In filter: {{kind}}",
 			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
-			"pillNotApplicable": "No pill for this kind",
+			"pillNotApplicable": "No filter button for this kind",
 			"autoRead": "Mark hidden items as read immediately",
 			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
 			"autoReadSessions": "Don't count hidden chats as unread",
@@ -2103,7 +2151,7 @@
 			"viewLabels": "Icons + text",
 			"viewText": "Text",
 			"autoSort": "Move unread to the left",
-			"autoSortDescription": "Chips with unread items move to the start of the row.",
+			"autoSortDescription": "Buttons with unread items move to the front.",
 			"deactivatedHint": "Switched off by your organisation. Existing conversations stay visible until they are archived.",
 			"deactivatedChip": "{{kind}} (switched off by your organisation)",
 			"deactivatedNotice": "{{kind}} is switched off for your organisation. Existing conversations stay visible until they are archived; new ones cannot be created.",
@@ -2123,7 +2171,36 @@
 				"sessions": "Conversations",
 				"requests": "Requests"
 			},
-			"liveChatSession": "While open"
+			"liveChatSession": "While open",
+			"kindColumn": "Kind",
+			"legendShow": "Items of this kind appear in the list",
+			"legendPill": "Button above the list that narrows it to this kind",
+			"legendSound": "Pop-up on this device, with a sound or silent",
+			"legendEmail": "Notice to your inbox, never the message content",
+			"quickHeading": "More filter buttons",
+			"quickNote": "These buttons filter the list or open an action. They never notify you.",
+			"presentationHeading": "How the filter buttons look",
+			"soundWithTone": "Pop-up with sound",
+			"soundSilent": "Pop-up without sound",
+			"soundSilentDescription": "Only the window, no sound",
+			"emailColumn": "E-mail",
+			"emailKind": "E-mail: {{kind}}",
+			"emailMenu": "Choose e-mail: {{kind}}",
+			"channelUnavailable": "not available",
+			"emailUnavailableReason": "There are no e-mail notifications for this kind yet",
+			"emailMasterOff": "E-mail notifications are switched off in your profile",
+			"browserOff": "Pop-ups are switched off in your profile",
+			"descriptions": {
+				"sessions": "Choose for each kind of conversation whether it gets a filter button and how you are notified about new messages.",
+				"requests": "Choose for each kind of request whether it gets a filter button and how you are notified about new requests.",
+				"timeline": "Choose for each kind whether it appears in the list, gets a filter button and whether you receive an e-mail.",
+				"timelineWithoutEmail": "Choose for each kind whether it appears in the list and gets a filter button."
+			},
+			"kindsHeadings": {
+				"sessions": "Kinds of conversation",
+				"requests": "Kinds of request",
+				"timeline": "Kinds of event"
+			}
 		},
 		"families": {
 			"all": "All",
@@ -2327,6 +2404,7 @@
 			"markRead": "Mark as read",
 			"waitingSince": "Waiting since {{time}} ({{date}})",
 			"preview": {
+				"authors": "People in this preview",
 				"unavailable": "The conversation preview is not available yet — open the chat to read it.",
 				"empty": "No messages in this conversation yet.",
 				"image": "Image",
@@ -3765,6 +3843,7 @@
 			"selectedReason": "Selected reason: {{reason}}",
 			"explanation": "Explanation: {{explanation}}",
 			"tookOverTitle": "New counsellor took over your case",
+			"tookOverBody": "{{advisor}} will continue your counselling from now on.",
 			"noActionNeeded": "You don't need to take any action",
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",

@@ -52,6 +52,7 @@ import {
 	orderChipKinds,
 	resolveChipPresentation,
 	kindsUnderOther,
+	useDisplayFilterEmailColumn,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -93,6 +94,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
@@ -354,6 +356,7 @@ export const NotificationsCenter = () => {
 		resetSection: resetTimelineOverride
 	} = useDisplayFilter('timeline');
 	const displayFilterLabels = useDisplayFilterLabels('timeline');
+	const displayFilterEmail = useDisplayFilterEmailColumn('timeline');
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	// The feed is reduced ONCE; chips and list both read `visibleFeed` so a
 	// hidden kind leaves both in the same render (AC2).
@@ -567,7 +570,33 @@ export const NotificationsCenter = () => {
 			audio: translate('notifications.center.preview.audio'),
 			video: translate('notifications.center.preview.video'),
 			notice: translate('notifications.center.preview.notice'),
+			// System notices read as the chat words them (MessageItemComponent).
+			userLeftChat: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+				? translate('message.userLeftChat')
+				: translate('message.consultantLeftChat'),
+			chatEndedText: (endedBy) =>
+				translate(
+					chatEndedTextKey(
+						endedBy,
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						)
+					)
+				),
+			inquiryAccepted: translate(
+				'notifications.events.inquiryAccepted.text'
+			),
+			caseHandoverTakenOver: translate(
+				'caseHandover.systemMessage.tookOverTitle'
+			),
+			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
+			// The chat's own wording for a message this device cannot decrypt.
+			undecryptable: translate('e2ee.message.encryption.text'),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'
@@ -576,7 +605,7 @@ export const NotificationsCenter = () => {
 				'notifications.center.preview.eventUnavailable'
 			)
 		}),
-		[translate]
+		[translate, userData]
 	);
 	const candidatePreviewSources = useMemo(
 		() =>
@@ -1232,6 +1261,7 @@ export const NotificationsCenter = () => {
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
+					email={displayFilterEmail}
 					value={timelineFilter}
 					canReset={timelineOverride !== null}
 					readOnly={displayFilterReadOnly || !canEditDisplayFilter}

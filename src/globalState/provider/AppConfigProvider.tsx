@@ -29,10 +29,6 @@ export const AppConfigProvider = ({
 	const [appConfig, setAppConfig] = useState<AppConfigInterface>();
 
 	useEffect(() => {
-		setAppConfigGlobal(appConfig);
-	}, [appConfig]);
-
-	useEffect(() => {
 		apiFrontendSettings()
 			.then((frontendSettings) => _.merge(config, frontendSettings))
 			.catch(() => config)
@@ -56,7 +52,12 @@ export const AppConfigProvider = ({
 							.catch(() => config)
 					: config
 			)
-			.then(setAppConfig);
+			.then((loaded) => {
+				// Plain-JS readers (notificationHelpers) must see the config
+				// before any child renders or runs effects with it.
+				setAppConfigGlobal(loaded);
+				setAppConfig(loaded);
+			});
 	}, [config]);
 
 	if (!appConfig) {

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
@@ -9,11 +10,19 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
+import { GroupUpcomingDates } from './GroupUpcomingDates';
+import { GroupCalendarActions } from './GroupCalendarActions';
+import { GroupHeading } from './GroupHeading';
+import { usePanelHistory } from './EntryRoomPanel';
+import { GroupRunningNow, useIntlLocale } from './GroupRunningNow';
+import { GroupRulesIntro } from './GroupRulesIntro';
+import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { GroupLegalMenu } from './GroupLegalMenu';
 import { useGroupConsent } from '../consent/useGroupConsent';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import {
 	useWaitingRoomConsent,
 	WaitingRoomConsentPanel
@@ -38,10 +47,19 @@ export interface GroupWaitingRoomProps {
 	rules: string[];
 	/** The moderator has opened the chat — joining is possible now. */
 	active: boolean;
-	onJoin: () => void;
+	/**
+	 * Join the group. The promise it returns keeps the closing animation's
+	 * cover on until the request has settled and the chat has opened.
+	 */
+	onJoin: () => ClosingSwapResult;
 	joinBusy?: boolean;
-	/** The group's next dates, soonest first — shown behind "Mehr erfahren". */
+	/** The group's next dates, soonest first — shown behind "Alle Termine". */
 	upcomingDates?: Date[];
+	/**
+	 * How the group repeats and how many dates are left from its start on:
+	 * the rhythm under the headline, the series export.
+	 */
+	series?: GroupChatSeries;
 	/** A fixed "now" for stories and tests; the app leaves it unset. */
 	nowMs?: number;
 	/** Where "Einloggen" in the header goes. Off for someone already in. */
@@ -53,6 +71,19 @@ export interface GroupWaitingRoomProps {
 	embedded?: boolean;
 	/** "Beitreten" stays shut although the room is open (a banned member). */
 	joinBlocked?: boolean;
+	/**
+	 * Who waits. `moderator` is the counsellor who opens the group: the clock
+	 * speaks to her, and the bar is live before the group is open (#1689).
+	 * Whether consent is asked is `askConsent`'s business.
+	 */
+	audience?: 'participant' | 'moderator';
+	/** The bar's main label when it is not "Beitreten". */
+	primaryLabel?: string;
+	/**
+	 * Ask the group's consent on "Beitreten". Off for staff: they agreed to
+	 * the documents with their contract, not here.
+	 */
+	askConsent?: boolean;
 }
 
 /**
@@ -79,10 +110,14 @@ export const GroupWaitingRoom = ({
 	onJoin,
 	joinBusy = false,
 	upcomingDates,
+	series,
 	nowMs,
 	showLoginLink = false,
 	embedded = false,
-	joinBlocked = false
+	joinBlocked = false,
+	audience = 'participant',
+	primaryLabel,
+	askConsent = true
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -91,13 +126,53 @@ export const GroupWaitingRoom = ({
 		[t]
 	);
 	const [motionOff, setMotionOff] = useState(false);
-	const [moreOpen, setMoreOpen] = useState(false);
+	const [view, setView] = useState<'room' | 'more' | 'dates'>('room');
+	const now = useNow(plannedStart, nowMs);
 	const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(
 		null
 	);
-	const stageClockHeight = useClockHeight();
+	/* A date that has begun is not one to put in a calendar any more
+	   (#1785); the dates after it still are. */
+	const started =
+		active || (plannedStart !== null && now >= plannedStart.getTime());
+	// An opened group runs its planned date even before the clock says so.
+	const runningMs = started ? plannedStart?.getTime() : undefined;
+	const datesAhead = (
+		upcomingDates ?? (plannedStart ? [plannedStart] : [])
+	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
+	/* The series from the first date still ahead: the dates left behind,
+	   the running one among them, no longer count. */
+	const seriesAhead = series && {
+		...series,
+		count:
+			series.count -
+			((upcomingDates?.length ?? datesAhead.length) - datesAhead.length)
+	};
+	const canAddThis = Boolean(plannedStart) && !started;
+	const hasMoreDates = datesAhead.length > (canAddThis ? 1 : 0);
+	/* The room's own width, not the window's: in the chat card a desktop
+	   window can leave a 370 px column (#1499). */
+	const [room, setRoom] = useState<HTMLElement | null>(null);
+	const roomWidth = useWidth(room);
+	const phone = useMediaQuery('(max-width:599px)');
+	const inlineCalendar =
+		roomWidth === null ? !phone : roomWidth >= INLINE_MIN_WIDTH;
+	/* The dates view has its own buttons per date; the bar would repeat
+	   them. */
+	const calendarInBar = view !== 'dates' && (canAddThis || hasMoreDates);
+	/* What the clock gives up: the rhythm line under the headline, and on
+	   the stage the calendar row when it stands above "Beitreten" — the
+	   bar is fixed, so its extra height is not the column's to see. */
+	const showRhythm = Boolean(plannedStart) && !active;
+	const rhythmReserve = showRhythm ? RHYTHM_HEIGHT : 0;
+	const stageClockHeight = useClockHeight(
+		rhythmReserve + (calendarInBar && !inlineCalendar ? STACKED_ROW : 0)
+	);
 	const [column, setColumn] = useState<HTMLElement | null>(null);
-	const cardClockHeight = useCardClockHeight(embedded ? column : null);
+	const cardClockHeight = useCardClockHeight(
+		embedded ? column : null,
+		rhythmReserve
+	);
 	const clockHeight = embedded ? cardClockHeight : stageClockHeight;
 	/* Gate 2 of ADR-022 is asked here, on "Beitreten", like the live chat
 	   asks when the counsellor is there (Frank, 2026-10-16). */
@@ -113,289 +188,347 @@ export const GroupWaitingRoom = ({
 	// `saving` only disables the button after the next render; two quick
 	// presses before it would record and join twice.
 	const inFlight = useRef(false);
-	const joinAfterConsent = () =>
-		consent.guard(() => {
-			if (!groupConsent.readable || inFlight.current) return;
-			inFlight.current = true;
-			setSaving(true);
-			setSaveFailed(false);
-			groupConsent
-				.record()
-				.then(() => onJoin())
-				.catch(() => setSaveFailed(true))
-				.finally(() => {
-					inFlight.current = false;
-					setSaving(false);
-				});
-		});
-	const phone = useMediaQuery('(max-width:599px)');
+	const joinAfterConsent = () => {
+		if (!groupConsent.readable || inFlight.current) return false;
+		inFlight.current = true;
+		setSaving(true);
+		setSaveFailed(false);
+		return groupConsent
+			.record()
+			.then(() => onJoin())
+			.catch(() => {
+				setSaveFailed(true);
+				return false;
+			})
+			.finally(() => {
+				inFlight.current = false;
+				setSaving(false);
+			});
+	};
+	const locale = useIntlLocale();
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
-	/*
-	 * Topic and agency are two lines, never one joined sentence: both come
-	 * from the API and an em dash glued between them reads as part of the
-	 * agency's name the moment one of the two is missing or already carries
-	 * punctuation (Frank, 2026-09-07: "diese Bindestriche musst du dann hart
-	 * reincoden … da werden ja Daten dynamisch geladen").
-	 *
-	 * The line height is the tight one: at 11 and 14 px the inherited 24 px
-	 * leading spends 48 px on two short lines, which is the "so viel Space
-	 * für Überschriften" Frank saw on the phone.
-	 */
+	// Same heading as the invitation's account step (#1689).
 	const groupHeading = (
-		<Box
-			sx={{
-				textAlign: embedded ? 'center' : { xs: 'center', lg: 'left' }
-			}}
-		>
-			{topicName && (
-				<Typography
-					sx={{
-						fontSize: 11,
-						lineHeight: 1.35,
-						fontWeight: 600,
-						letterSpacing: '.12em',
-						textTransform: 'uppercase',
-						color: registrationMd3.onSurfaceVariant
-					}}
-				>
-					{topicName}
-				</Typography>
-			)}
-			{agencyName && (
-				<Typography
-					sx={{
-						fontSize: 14,
-						lineHeight: 1.35,
-						fontWeight: 600,
-						color: registrationMd3.onSurface
-					}}
-				>
-					{agencyName}
-				</Typography>
-			)}
-		</Box>
+		<GroupHeading
+			topicName={topicName}
+			agencyName={agencyName}
+			textAlign={embedded ? 'center' : { xs: 'center', lg: 'left' }}
+		/>
 	);
 
-	const joinLabel = tr('join', 'Beitreten');
-	const calendarLabel = t(
-		'groupChat.calendar.add',
-		'Zum Kalender hinzufügen'
-	);
-	const openCalendar = (event: React.MouseEvent<HTMLElement>) =>
-		setCalendarAnchor(event.currentTarget);
+	const moderator = audience === 'moderator';
+	/* The clock is for waiting. Once the group runs it would count up a
+	   start that already happened, so the room says it has begun (#1787). */
+	const showClock = Boolean(plannedStart) && !active;
+	// The switch stops whatever moves: the clock, or the rules without it.
+	const showMotionSwitch = showClock || rules.length > 0;
+	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
+	const backToRoom = useCallback(() => setView('room'), []);
+	usePanelHistory(view !== 'room', backToRoom);
+	/* Back in the room, focus returns to the control that left it. */
+	const roomTrigger = useRef<string | null>(null);
+	const openView = (next: 'more' | 'dates', trigger: string) => {
+		if (view === 'room') roomTrigger.current = trigger;
+		setView(next);
+	};
+	useEffect(() => {
+		if (view !== 'room' || !roomTrigger.current || !room) return;
+		const trigger =
+			room.querySelector<HTMLElement>(
+				`[data-testid="${roomTrigger.current}"]`
+			) ??
+			room.querySelector<HTMLElement>('[data-testid="group-entry-join"]');
+		roomTrigger.current = null;
+		trigger?.focus({ preventScroll: true });
+	}, [view, room]);
+	/* A shut "Beitreten" says when it opens (Frank, 2026-10-19); a week or
+	   more ahead with the date, since a weekday alone is ambiguous. */
+	const opensAtTime =
+		plannedStart && !started && !moderator
+			? new Intl.DateTimeFormat(locale, {
+					weekday: 'short',
+					...(plannedStart.getTime() - now > 6 * 24 * 3600e3
+						? { day: '2-digit', month: '2-digit' }
+						: {}),
+					hour: '2-digit',
+					minute: '2-digit'
+				}).format(plannedStart)
+			: undefined;
+	const opensAt =
+		opensAtTime &&
+		translateWithFallback(
+			t,
+			'groupChat.entry.joinFrom',
+			`ab ${opensAtTime}`,
+			{
+				time: opensAtTime
+			}
+		);
 	const joinAction = {
 		label: joinLabel,
-		onClick: () => setAsking(true),
-		disabled: !active || joinBusy || joinBlocked,
+		onClick: askConsent ? () => setAsking(true) : onJoin,
+		disabled: (!active && !moderator) || joinBusy || joinBlocked,
+		status: opensAt,
 		testId: 'group-entry-join'
 	};
-	const calendarAction = plannedStart
-		? {
-				/* On a phone the long label would push "Beitreten" out of the
-				   bar; the full one stays in the tooltip. */
-				label: phone
-					? t('groupChat.calendar.addShort', 'Kalender')
-					: calendarLabel,
-				title: calendarLabel,
-				compact: phone,
-				onClick: openCalendar,
-				testId: 'group-entry-calendar'
+	const rhythm =
+		showRhythm && plannedStart ? (
+			<GroupRhythm
+				start={plannedStart}
+				durationMinutes={durationMinutes}
+				repeat={series?.repeat}
+				locale={locale}
+			/>
+		) : undefined;
+	/* On "Beitreten" in a running group the rules come up once, calm and
+	   all at once, while the bar asks for consent. */
+	const showRulesIntro = asking && active && askConsent && rules.length > 0;
+	const calendarRow = calendarInBar ? (
+		<GroupCalendarActions
+			inline={inlineCalendar}
+			onAddThis={
+				canAddThis
+					? (event) => setCalendarAnchor(event.currentTarget)
+					: undefined
 			}
-		: undefined;
-
-	const middle = moreOpen ? (
-		<GroupInfoGallery
-			onBack={() => setMoreOpen(false)}
-			upcomingDates={upcomingDates}
+			onMoreDates={
+				hasMoreDates
+					? () => openView('dates', 'group-entry-dates')
+					: undefined
+			}
 		/>
-	) : (
-		<>
+	) : null;
+
+	const middle =
+		view === 'more' ? (
+			<GroupInfoGallery onBack={backToRoom} />
+		) : view === 'dates' ? (
+			<GroupUpcomingDates
+				onBack={backToRoom}
+				dates={datesAhead}
+				durationMinutes={durationMinutes}
+				eventId={eventId}
+				series={seriesAhead}
+			/>
+		) : showRulesIntro ? (
 			<Box
 				sx={{
 					flex: 1,
 					display: 'flex',
 					flexDirection: 'column',
-					justifyContent: 'center',
-					gap: 0.75
+					justifyContent: 'center'
 				}}
 			>
+				<GroupRulesIntro
+					rules={rules}
+					since={plannedStart}
+					nowMs={nowMs}
+				/>
+			</Box>
+		) : (
+			<>
 				<Box
 					sx={{
-						display: embedded
-							? 'block'
-							: { xs: 'block', lg: 'none' }
+						flex: 1,
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'center',
+						gap: 0.75
 					}}
 				>
-					{groupHeading}
-				</Box>
-				{plannedStart ? (
-					/* The clock is a picture, not a text line: on a
+					<Box
+						sx={{
+							display: embedded
+								? 'block'
+								: { xs: 'block', lg: 'none' }
+						}}
+					>
+						{groupHeading}
+					</Box>
+					{showClock ? (
+						/* The clock is a picture, not a text line: on a
 			   phone it may use half of the column's inset,
 			   which is one mini-clock step of extra diameter
 			   (the width, not the height, is what limits it
 			   there). */
-					<Box
-						sx={{
-							mx: { xs: -1, sm: 0 },
-							minWidth: 0
-						}}
-					>
-						<WaitingAreaCountdown
-							plannedStart={plannedStart}
-							welcomeText={welcomeText}
-							rules={rules}
-							nowMs={nowMs}
-							clockSize="fit"
-							fitHeight={clockHeight}
-							spacing="tight"
-							labelsOutside
-							reducedMotion={motionOff}
-							hideMotionToggle
-							gap={8}
-						/>
-					</Box>
-				) : (
-					<Box sx={{ textAlign: 'center' }}>
-						<Typography
-							component="h1"
+						<Box
 							sx={{
-								fontSize: { xs: 22, sm: 26 },
-								fontWeight: 600,
-								color: registrationMd3.onSurface,
-								mb: 1
+								mx: { xs: -1, sm: 0 },
+								minWidth: 0
 							}}
 						>
-							{active
-								? tr('openHeadline', 'Die Gruppe hat begonnen.')
-								: tr(
-										'noTimeHeadline',
-										'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
-									)}
-						</Typography>
-						{welcomeText && (
+							<WaitingAreaCountdown
+								plannedStart={plannedStart}
+								welcomeText={welcomeText}
+								rules={rules}
+								nowMs={nowMs}
+								clockSize="fit"
+								fitHeight={clockHeight}
+								spacing="tight"
+								labelsOutside
+								audience={audience}
+								reducedMotion={motionOff}
+								hideMotionToggle
+								calendarSlot={rhythm}
+								gap={8}
+							/>
+						</Box>
+					) : active ? (
+						<GroupRunningNow
+							since={plannedStart}
+							nowMs={nowMs}
+							rules={rules}
+							motionOff={motionOff}
+							// Staff in a running group are the moderation.
+							moderator={moderator || !askConsent}
+						/>
+					) : (
+						<Box sx={{ textAlign: 'center' }}>
 							<Typography
+								component="h1"
 								sx={{
-									color: registrationMd3.onSurfaceVariant,
-									mb: 2
+									fontSize: { xs: 22, sm: 26 },
+									fontWeight: 600,
+									color: registrationMd3.onSurface,
+									mb: 1
 								}}
 							>
-								{welcomeText}
+								{moderator
+									? t(
+											'groupChat.join.waitingArea.countdown.moderatorSubtitle',
+											'Sie können den Chat starten, sobald Sie bereit sind.'
+										)
+									: tr(
+											'noTimeHeadline',
+											'Die Gruppe beginnt, sobald die Moderation sie öffnet.'
+										)}
 							</Typography>
-						)}
-						{rules.length > 0 && (
-							<WaitingAreaRules
-								rules={rules}
-								animationOff={motionOff}
-								ariaLabel={t(
-									'groupChat.join.waitingArea.rulesLabel',
-									'Chat rules'
-								)}
-							/>
-						)}
-					</Box>
-				)}
-			</Box>
-			{/* One block with the bar, not a stranded row: same inset
+							{welcomeText && (
+								<Typography
+									sx={{
+										color: registrationMd3.onSurfaceVariant,
+										mb: 2
+									}}
+								>
+									{welcomeText}
+								</Typography>
+							)}
+							{rules.length > 0 && (
+								<WaitingAreaRules
+									rules={rules}
+									animationOff={motionOff}
+									ariaLabel={t(
+										'groupChat.join.waitingArea.rulesLabel',
+										'Chat rules'
+									)}
+								/>
+							)}
+						</Box>
+					)}
+				</Box>
+				{/* One block with the bar, not a stranded row: same inset
 	    as the buttons (from the column above), 12 px of air to
 	    the hairline (from the column's bottom padding) and
 	    exactly the height of the larger of its two controls. */}
-			<Box
-				sx={{
-					mt: 'auto',
-					minHeight: 44,
-					display: 'flex',
-					/* Three controls do not fit one 343 px line,
+				<Box
+					sx={{
+						mt: 'auto',
+						minHeight: 44,
+						display: 'flex',
+						/* Three controls do not fit one 343 px line,
 					   and a switch without its sentence is a
 					   riddle. So the row wraps on a phone: the
 					   switch keeps its label, the two buttons
 					   drop underneath and stay flush with the
 					   bar's right edge. */
-					flexWrap: { xs: 'wrap', sm: 'nowrap' },
-					rowGap: 1,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					gap: 1.5
-				}}
-			>
-				{plannedStart ? (
-					<Box
-						component="label"
-						sx={{
-							display: 'flex',
-							alignItems: 'center',
-							minWidth: 0,
-							gap: 1,
-							cursor: 'pointer'
-						}}
-					>
-						<Switch
-							checked={motionOff}
-							onChange={(next) => setMotionOff(next)}
-							aria-label={tr('motionOff', 'Animation abschalten')}
-						/>
-						{/* The label is what gives when a translation
+						flexWrap: { xs: 'wrap', sm: 'nowrap' },
+						rowGap: 1,
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						gap: 1.5
+					}}
+				>
+					{showMotionSwitch ? (
+						<Box
+							component="label"
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								minWidth: 0,
+								gap: 1,
+								cursor: 'pointer'
+							}}
+						>
+							<Switch
+								checked={motionOff}
+								onChange={(next) => setMotionOff(next)}
+								aria-label={tr(
+									'motionOff',
+									'Animation abschalten'
+								)}
+							/>
+							{/* The label is what gives when a translation
 				    is longer than the German one — the button
 				    beside it must never be pushed past the
 				    edge the bar's buttons stop at. On a phone the
 				    row wraps instead of dropping this sentence —
 				    a naked switch says nothing (Frank drew the
 				    row with its label, 2026-09-05). */}
-						<Typography
-							sx={{
-								fontSize: 13,
-								minWidth: 0,
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-								color: registrationMd3.onSurfaceVariant
-							}}
-						>
-							{tr('motionOff', 'Animation abschalten')}
-						</Typography>
-					</Box>
-				) : (
-					<span />
-				)}
-				<Box
-					sx={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: 1,
-						minWidth: 0,
-						/* On the wrapped phone line the pair
+							<Typography
+								sx={{
+									fontSize: 13,
+									minWidth: 0,
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap',
+									color: registrationMd3.onSurfaceVariant
+								}}
+							>
+								{tr('motionOff', 'Animation abschalten')}
+							</Typography>
+						</Box>
+					) : (
+						<span />
+					)}
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: 1,
+							minWidth: 0,
+							/* On the wrapped phone line the pair
 						   takes the whole width, so its outer
 						   edges sit on the bar's edges again. */
-						width: { xs: '100%', sm: 'auto' },
-						justifyContent: {
-							xs: 'space-between',
-							sm: 'flex-end'
-						}
-					}}
-				>
-					<Button
-						variant="outlined"
-						size="small"
-						endIcon={<ArrowForwardRoundedIcon />}
-						sx={moreButtonSx}
-						onClick={() => setMoreOpen(true)}
-						data-testid="group-entry-more"
+							width: { xs: '100%', sm: 'auto' },
+							justifyContent: {
+								xs: 'space-between',
+								sm: 'flex-end'
+							}
+						}}
 					>
-						{tr('more', 'Mehr erfahren')}
-					</Button>
+						<Button
+							variant="outlined"
+							size="small"
+							endIcon={<ArrowForwardRoundedIcon />}
+							sx={moreButtonSx}
+							onClick={() => openView('more', 'group-entry-more')}
+							data-testid="group-entry-more"
+						>
+							{tr('more', 'Mehr erfahren')}
+						</Button>
+					</Box>
 				</Box>
-			</Box>
-		</>
-	);
+			</>
+		);
 
-	/* Calendar beside a visible but shut "Beitreten", at
+	/* Calendar above a visible but shut "Beitreten", at
 	    every width: the waiting room says what happens next,
 	    and hiding the way in said nothing (Frank's Figma of
 	    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
-	    gesperrt"). The phone keeps both by shortening the
-	    calendar label, not by dropping a button. */
+	    gesperrt"). */
 	const bar =
-		asking && active ? (
+		asking && active && askConsent ? (
 			<WaitingRoomBar
 				contained={embedded}
 				consent={
@@ -439,6 +572,11 @@ export const GroupWaitingRoom = ({
 				primary={{
 					...joinAction,
 					onClick: joinAfterConsent,
+					/* Consent is asked before the closing animation starts, so
+					   the screen never closes on a "no"; joining ends in the
+					   group chat's message field. */
+					beforeEnter: consent.check,
+					closing: 'messageField' as const,
 					disabled:
 						joinBusy ||
 						saving ||
@@ -449,11 +587,13 @@ export const GroupWaitingRoom = ({
 		) : (
 			<WaitingRoomBar
 				contained={embedded}
-				secondary={calendarAction}
+				stacked={Boolean(calendarRow) && !inlineCalendar}
 				primary={joinAction}
-			/>
+			>
+				{calendarRow}
+			</WaitingRoomBar>
 		);
-	const popover = plannedStart && (
+	const popover = canAddThis && plannedStart && (
 		<GroupChatCalendarPopover
 			id={menuId}
 			anchorEl={calendarAnchor}
@@ -473,6 +613,7 @@ export const GroupWaitingRoom = ({
 					display: 'flex',
 					flexDirection: 'column'
 				}}
+				ref={setRoom}
 				data-cy="group-entry-room"
 				data-embedded="true"
 			>
@@ -531,6 +672,7 @@ export const GroupWaitingRoom = ({
 				}
 			>
 				<Box
+					ref={setRoom}
 					sx={{
 						'width': '100%',
 						'minWidth': 0,
@@ -607,6 +749,105 @@ export const GroupWaitingRoom = ({
 const barInsetSx = { px: { xs: 2, sm: 3, lg: 4 } } as const;
 
 /**
+ * From this room width the calendar pill stands beside "Beitreten" in one
+ * row: the split pill is ~330 px, "Beitreten" keeps ~200, plus the bar's
+ * inset. Below it the pills get their own row above.
+ */
+const INLINE_MIN_WIDTH = 640;
+
+const RHYTHM: Record<GroupChatRepeat, string> = {
+	DAILY: 'jeden Tag',
+	WEEKLY: 'jede Woche',
+	BIWEEKLY: 'alle zwei Wochen',
+	MONTHLY: 'jeden Monat',
+	QUARTERLY: 'jedes Quartal',
+	YEARLY: 'jedes Jahr'
+};
+
+/** The calendar row above "Beitreten" on a phone: 44 px pills, 16 px gap. */
+const STACKED_ROW = 60;
+
+/** The rhythm line under the headline: 36 px chip plus 10 px of air. */
+const RHYTHM_HEIGHT = 46;
+
+/**
+ * "Do., 10.09. · 18:00 – 19:30 · jede Woche" — when the group meets, in one
+ * line under the headline, so the date is readable without the clock.
+ */
+const GroupRhythm = ({
+	start,
+	durationMinutes,
+	repeat,
+	locale
+}: {
+	start: Date;
+	durationMinutes: number;
+	repeat?: GroupChatRepeat;
+	locale: string;
+}) => {
+	const { t } = useTranslation();
+	const day = new Intl.DateTimeFormat(locale, {
+		weekday: 'short',
+		day: '2-digit',
+		month: '2-digit'
+	}).format(start);
+	const time = new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+	const end = new Date(start.getTime() + durationMinutes * 60e3);
+	const parts = [
+		day,
+		`${time.format(start)} – ${time.format(end)}`,
+		repeat
+			? translateWithFallback(
+					t,
+					`groupChat.entry.rhythm.${repeat}`,
+					RHYTHM[repeat]
+				)
+			: null
+	].filter(Boolean);
+	return (
+		<Box
+			data-cy="group-entry-rhythm"
+			sx={{
+				'display': 'inline-flex',
+				'alignItems': 'center',
+				'gap': 1,
+				'minHeight': 36,
+				'px': 1.75,
+				'borderRadius': '18px',
+				'bgcolor': registrationMd3.selectedLayer,
+				'color': registrationMd3.primaryDark,
+				'fontSize': 13,
+				'fontWeight': 600,
+				'& svg': { fontSize: 18 }
+			}}
+		>
+			<CalendarMonthRoundedIcon aria-hidden />
+			<span>{parts.join(' · ')}</span>
+		</Box>
+	);
+};
+
+/** An element's width, renewed when it changes; `null` before it is measured. */
+const useWidth = (element: HTMLElement | null) => {
+	const [width, setWidth] = useState<number | null>(null);
+	React.useLayoutEffect(() => {
+		if (!element) return;
+		const measure = () =>
+			setWidth(element.getBoundingClientRect().width || null);
+		measure();
+		const RO = globalThis.ResizeObserver;
+		if (!RO) return;
+		const observer = new RO(measure);
+		observer.observe(element);
+		return () => observer.disconnect();
+	}, [element]);
+	return width;
+};
+
+/**
  * "Mehr erfahren" is the quiet way into the greeting and the rules, so it is
  * the small control in this row, not a second primary (Frank, 2026-09-07: "das
  * Mehr erfahren ist viel zu groß"). The theme's outlined button pads itself to
@@ -672,16 +913,42 @@ const moreButtonSx = {
  * Exported as a plain function so the numbers above can be asserted without a
  * browser; the hook is only the window listener around it.
  */
-export const entryRoomClockHeight = (width: number, height: number) => {
+export const entryRoomClockHeight = (
+	width: number,
+	height: number,
+	extra = 0
+) => {
 	const split = width >= 1200;
 	const above = split ? 96 : 66 + 36 + 6;
 	const headline = split ? 78 : 108;
 	const bar = (width >= 520 ? 96 : 81) + 12;
-	const reserved = above + 8 + headline + 8 + 8 + 44 + bar;
+	const reserved = above + 8 + headline + extra + 8 + 8 + 44 + bar;
 	return Math.max(160, height - reserved);
 };
 
-const useClockHeight = () => {
+/**
+ * "Now" for deciding whether the date has begun: the fixed `nowMs` of a
+ * story, or the real time, renewed once when the start passes so the room
+ * drops "Diesen Termin" without a reload.
+ */
+const useNow = (plannedStart: Date | null, nowMs?: number) => {
+	const [realNow, setRealNow] = useState(() => Date.now());
+	const startMs = plannedStart?.getTime();
+	useEffect(() => {
+		if (nowMs !== undefined || startMs === undefined) return;
+		const wait = startMs - Date.now();
+		if (wait <= 0) return;
+		// setTimeout overflows past ~24.8 days and would fire at once.
+		const timer = setTimeout(
+			() => setRealNow(Date.now()),
+			Math.min(wait + 50, 2 ** 31 - 1)
+		);
+		return () => clearTimeout(timer);
+	}, [nowMs, startMs, realNow]);
+	return nowMs ?? realNow;
+};
+
+const useClockHeight = (extra: number) => {
 	/* The visual viewport is the part the person can actually see: a mobile
 	   URL bar sliding in or a keyboard opening shrinks it without a `window`
 	   resize, and the clock would keep a size that pushes the switch row and
@@ -689,18 +956,21 @@ const useClockHeight = () => {
 	const measure = () =>
 		entryRoomClockHeight(
 			window.visualViewport?.width ?? window.innerWidth,
-			window.visualViewport?.height ?? window.innerHeight
+			window.visualViewport?.height ?? window.innerHeight,
+			extra
 		);
 	const [height, setHeight] = useState(measure);
 	useEffect(() => {
 		const onResize = () => setHeight(measure());
+		onResize();
 		window.addEventListener('resize', onResize);
 		window.visualViewport?.addEventListener('resize', onResize);
 		return () => {
 			window.removeEventListener('resize', onResize);
 			window.visualViewport?.removeEventListener('resize', onResize);
 		};
-	}, []);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- `measure` only closes over `extra`
+	}, [extra]);
 	return height;
 };
 
@@ -709,25 +979,38 @@ const useClockHeight = () => {
  * the clock (topic and agency, headline, switch row and the column's padding),
  * the same bands `entryRoomClockHeight` subtracts from the window.
  */
-export const cardClockHeight = (columnHeight: number, columnWidth: number) =>
+export const cardClockHeight = (
+	columnHeight: number,
+	columnWidth: number,
+	extra = 0
+) =>
 	Math.max(
 		160,
 		columnHeight -
-			(16 + 42 + (columnWidth >= 600 ? 78 : 108) + 8 + 8 + 44 + 12)
+			(16 +
+				42 +
+				(columnWidth >= 600 ? 78 : 108) +
+				extra +
+				8 +
+				8 +
+				44 +
+				12)
 	);
 
-const useCardClockHeight = (column: HTMLElement | null) => {
+const useCardClockHeight = (column: HTMLElement | null, extra: number) => {
 	const [height, setHeight] = useState(320);
 	useEffect(() => {
 		if (!column) return;
 		const measure = () =>
-			setHeight(cardClockHeight(column.clientHeight, column.clientWidth));
+			setHeight(
+				cardClockHeight(column.clientHeight, column.clientWidth, extra)
+			);
 		measure();
 		const RO = globalThis.ResizeObserver;
 		if (!RO) return;
 		const observer = new RO(measure);
 		observer.observe(column);
 		return () => observer.disconnect();
-	}, [column]);
+	}, [column, extra]);
 	return height;
 };

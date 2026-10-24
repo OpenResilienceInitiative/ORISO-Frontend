@@ -80,19 +80,20 @@ const userData = {
 	}
 };
 
-const renderMessage = () =>
+const renderMessage = (viewer: object = userData, rawMessage?: string) =>
 	render(
 		<I18nextProvider i18n={i18n}>
 			<MemoryRouter>
 				<UserDataContext.Provider
 					value={
 						{
-							userData,
+							userData: viewer,
 							reloadUserData: vi.fn()
 						} as React.ContextType<typeof UserDataContext>
 					}
 				>
 					<ErstantwortMessage
+						rawMessage={rawMessage}
 						trigger="AFTER_FIRST_MESSAGE"
 						skipAnimation
 					/>
@@ -131,6 +132,32 @@ describe('ErstantwortMessage email action', () => {
 		expect(openTwoFactorSettings).toHaveBeenCalledWith({
 			showBackupKey: true
 		});
+	});
+
+	it('offers a counsellor no button from the advice seeker record (#1844)', () => {
+		const body =
+			'Sie können Ihren Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.';
+		renderMessage(
+			{
+				...userData,
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			},
+			`[SYSTEM_NOTIFICATION]${JSON.stringify({
+				type: 'FIRST_RESPONSE',
+				version: 1,
+				bausteine: [
+					{
+						id: 'accountProtection',
+						body,
+						action: { kind: 'ENABLE_2FA', label: 'Zugang schützen' }
+					}
+				]
+			})}`
+		);
+
+		// The record stays as the advice seeker read it; only the call to action goes.
+		expect(screen.getByText(body)).toBeTruthy();
+		expect(screen.queryByRole('button')).toBeNull();
 	});
 
 	it('opens the display-name overlay when Namen ändern is pressed', () => {

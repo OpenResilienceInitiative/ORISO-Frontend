@@ -562,8 +562,8 @@ const LiveChatEntryRoomContent = ({
 	   component, then the hand-over — a full load, as the redeem did before,
 	   so the app boots with the tokens the redeem set. */
 	const handleAccept = useCallback(async () => {
-		if (sessionId === null) return;
-		if (busy) return;
+		if (sessionId === null) return false;
+		if (busy) return false;
 		setBusy(true);
 		try {
 			await apiPatchUserData({
@@ -592,8 +592,13 @@ const LiveChatEntryRoomContent = ({
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
+			/* The page is being replaced: the closing animation keeps its
+			   cover on until it is, instead of opening onto this room again. */
+			return new Promise<void>(() => undefined);
 		} catch {
 			if (!cancelled.current) setBusy(false);
+			// The person stays: the closing animation need not wait for a chat.
+			return false;
 		}
 	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -718,9 +723,7 @@ const LiveChatEntryRoomContent = ({
 						department={department}
 						busy={busy}
 						leaveFailed={leaveFailed}
-						onAccept={() => {
-							void handleAccept();
-						}}
+						onAccept={() => handleAccept()}
 						onLeave={handleLeave}
 						onMailCounselling={goToMail}
 					/>

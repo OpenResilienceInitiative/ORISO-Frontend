@@ -8,6 +8,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext, NotificationsContext } from '../../../globalState';
 import { NotificationSwitchRow } from './NotificationSwitchRow';
 import { ADVICE_SEEKER_SWITCHES } from './notificationMatrix';
+import { resetEmailSettingSession } from './emailSetting';
+
+// The e-mail write state is module-wide: no case inherits another's.
+afterEach(() => resetEmailSettingSession());
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../../api/apiPatchUserData', () => ({ apiPatchUserData: vi.fn() }));

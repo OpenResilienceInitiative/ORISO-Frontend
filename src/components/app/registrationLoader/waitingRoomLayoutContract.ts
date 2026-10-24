@@ -102,7 +102,16 @@ const checkGate = (doc: Document, footer: HTMLElement): string | null => {
 	if (!gate) return 'no gate button inside the bar';
 	// Paddings and at most one round exit (56px) beside it.
 	const button = gate.getBoundingClientRect();
-	if (button.width < bar.width - 140) {
+	/* A room may stand one quiet control beside the gate in the same row —
+	   the self-help group's calendar pill (Frank, 2026-10-19). It marks
+	   itself; the gate keeps everything else. */
+	const side = footer.querySelector<HTMLElement>('[data-bar-side]');
+	const sideRect = side?.getBoundingClientRect();
+	const beside =
+		sideRect && Math.abs(sideRect.top - button.top) < button.height
+			? sideRect.width + 16
+			: 0;
+	if (button.width < bar.width - 140 - beside) {
 		return `gate button is ${button.width}px in a ${bar.width}px bar`;
 	}
 	if (!gate.hasAttribute('disabled') && !reachable(doc, gate)) {

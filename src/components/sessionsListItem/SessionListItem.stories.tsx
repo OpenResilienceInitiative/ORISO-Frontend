@@ -181,7 +181,7 @@ const runtimeGroupChat = ({
 		repetitive,
 		active: false,
 		consultingType: 1,
-		matrixRoomId: `storybook-group-${id}`,
+		matrixRoomId: `!storybook-group-${id}:matrix.example.org`,
 		lastMessage,
 		messageDate: 1773736500,
 		messagesRead: true,
@@ -382,13 +382,84 @@ type Story = StoryObj<typeof meta>;
  * the DTO's hard-coded `messagesRead`. Seed the registry so the runtime
  * stories pin both visual states.
  */
-const seedMatrixRoom = (unreadCount: number) => {
-	setMatrixClientServiceRef({
-		getClient: () => null,
-		getRoom: () => ({
+const seedMatrixRoom = (
+	unreadCount: number,
+	count = 3,
+	delayed = false,
+	failed = false
+) => {
+	let members = Array.from({ length: count }, (_, index) => ({
+		userId: `@group-person-${index}:matrix.example.org`,
+		name: `Teilnehmende ${index + 1}`,
+		membership: 'join'
+	}));
+	const rooms = new Map<string, ReturnType<typeof makeRoom>>();
+	const messages = new Map<string, ReturnType<typeof previewEvent>[]>();
+	function previewEvent(body: string) {
+		const content = { msgtype: 'm.text', body };
+		return {
+			getType: () => 'm.room.message',
+			getContent: () => content,
+			getClearContent: () => content,
+			getSender: () => '@group-person-0:matrix.example.org',
+			getTs: () => 1_773_736_500_000
+		};
+	}
+	const listeners = new Map<string, Set<(...args: any[]) => void>>();
+	let finish: () => void = () => {};
+	const hydration = delayed
+		? new Promise<boolean>((resolve) => {
+				finish = () => resolve(true);
+			})
+		: Promise.resolve(true);
+	function makeRoom(roomId: string) {
+		return {
+			roomId,
+			loadMembersIfNeeded: () =>
+				failed
+					? Promise.reject(new Error('Membership unavailable'))
+					: hydration,
+			getJoinedMembers: () => members,
 			getUnreadNotificationCount: () => unreadCount
-		})
+		};
+	}
+	const removeListener = (name: string, listener: (...args: any[]) => void) =>
+		listeners.get(name)?.delete(listener);
+	const client = {
+		getRoom: (roomId: string) => {
+			if (!rooms.has(roomId)) rooms.set(roomId, makeRoom(roomId));
+			return rooms.get(roomId);
+		},
+		getUserId: () => '@consultant-storybook:matrix.example.org',
+		on: (name: string, listener: (...args: any[]) => void) => {
+			if (!listeners.has(name)) listeners.set(name, new Set());
+			listeners.get(name)!.add(listener);
+		},
+		off: removeListener,
+		removeListener
+	};
+	setMatrixClientServiceRef({
+		getClient: () => client,
+		getRoom: client.getRoom,
+		getRoomMessages: (roomId: string) => messages.get(roomId) || []
 	} as any);
+	return {
+		finish,
+		setMessage: (roomId: string, body: string) =>
+			messages.set(roomId, [previewEvent(body)]),
+		setCount: (next: number) => {
+			members = Array.from({ length: next }, (_, index) => ({
+				userId: `@group-person-${index}:matrix.example.org`,
+				name: `Teilnehmende ${index + 1}`,
+				membership: 'join'
+			}));
+			rooms.forEach((room) =>
+				listeners
+					.get('RoomState.members')
+					?.forEach((listener) => listener({}, room))
+			);
+		}
+	};
 };
 
 export const RuntimeComponent: Story = {
@@ -1284,23 +1355,25 @@ const part = (row: HTMLElement, selector: string) => {
 	return element!;
 };
 
-/** Group rows: the "no topic" chip, two placeholder avatars and a "+1" circle. */
-const expectGroupRow = async (row: HTMLElement, name: string) => {
+/** Real group members: the first two people and the hidden-member count. */
+const expectGroupRow = async (row: HTMLElement, name: string, count = 3) => {
 	await expect(row.classList.contains('sessionsListItem--groupChat')).toBe(
 		true
 	);
 	await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
 		'kein Thema gewählt'
 	);
-	const stack = part(row, '.sessionsListItem__stackedAvatars');
-	await expect(
-		stack.querySelectorAll(
-			'.sessionsListItem__avatarWrapper:not(.sessionsListItem__avatarWrapper--plus)'
-		)
-	).toHaveLength(2);
-	await expect(part(stack, '.sessionsListItem__plusAvatar').textContent).toBe(
-		'+1'
+	await waitFor(() =>
+		expect(
+			row.querySelectorAll('[data-cy="participant-avatar"]')
+		).toHaveLength(Math.min(count, 2))
 	);
+	const overflow = row.querySelector('[data-cy="participant-overflow"]');
+	if (count > 2) await expect(overflow?.textContent).toBe(`+${count - 2}`);
+	else await expect(overflow).toBeNull();
+	await expect(
+		row.querySelector('[data-user-id^="placeholder-"]')
+	).toBeNull();
 	await expect(part(row, '.sessionsListItem__username').textContent).toBe(
 		name
 	);
@@ -1465,14 +1538,18 @@ export const StackedListWithSelection: Story = {
 export const GroupChatRow: Story = {
 	name: 'Gruppe — Beratungsstelle (Team-Symbol)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5501:matrix.example.org',
+			'Willkommen in der Teamrunde'
+		);
 		return (
 			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5501,
 						name: 'New Redeploy',
-						conversationType: 'AGENCY_COUNSELLING'
+						conversationType: 'AGENCY_COUNSELLING',
+						lastMessage: 'Willkommen in der Teamrunde'
 					})}
 				/>
 			</div>
@@ -1481,9 +1558,9 @@ export const GroupChatRow: Story = {
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
 		await expectGroupRow(row, 'New Redeploy');
-		// Own chat without a message yet.
+		// The production preview reads the seeded decrypted Matrix event.
 		await expect(part(row, '.sessionsListItem__subject').textContent).toBe(
-			'Sie haben den Chat erstellt.'
+			'Willkommen in der Teamrunde'
 		);
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--team')
@@ -1617,7 +1694,10 @@ export const InteractiveMenuAndLongContent: Story = {
 export const InternalCounsellorChat: Story = {
 	name: 'Gruppe — Interna (Figma 98-20465)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5503:matrix.example.org',
+			'Das ist schon komisch mit dieser Anfrage.'
+		);
 		return (
 			<div style={listShell}>
 				<RuntimeCard
@@ -1702,7 +1782,10 @@ export const LiveChat: Story = {
 export const GuidedSelfHelpGroup: Story = {
 	name: 'Gruppe — Gesprächskreis (Figma 115-28318)',
 	render: () => {
-		seedMatrixRoom(2);
+		seedMatrixRoom(2).setMessage(
+			'!storybook-group-5504:matrix.example.org',
+			'Das soll aber einzigartig'
+		);
 		return (
 			<div style={listShell}>
 				<RuntimeCard
@@ -1849,5 +1932,175 @@ export const AskerEmptyEnquiryRow: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionsListItem__content')
 		).not.toHaveClass('consultantSearchLoaderHost');
+	}
+};
+
+/** These use the production card, membership hydration and shared stack. */
+export const GroupOneParticipant: Story = {
+	name: 'Gruppe — 1 reale Person',
+	render: () => {
+		seedMatrixRoom(0, 1);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({ id: 5901, name: 'Eine Person' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Eine Person', 1);
+	}
+};
+export const GroupTwoParticipants: Story = {
+	name: 'Gruppe — 2 reale Personen, kein Zähler',
+	render: () => {
+		seedMatrixRoom(0, 2);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({ id: 5902, name: 'Zwei Personen' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Zwei Personen', 2);
+	}
+};
+export const GroupManyParticipants: Story = {
+	name: 'Gruppe — 27 reale Personen, +25',
+	render: () => {
+		seedMatrixRoom(0, 27);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5927,
+						name: 'Große Gesprächsrunde mit langem Namen'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Große Gesprächsrunde mit langem Namen', 27);
+	}
+};
+const GroupHydrationDemo = () => {
+	const [fixture] = React.useState(() => seedMatrixRoom(0, 3, true));
+	return (
+		<>
+			<button onClick={fixture.finish}>Mitglieder laden</button>
+			<button onClick={() => fixture.setCount(2)}>
+				Person verlässt Gruppe
+			</button>
+			<button onClick={() => fixture.setCount(4)}>
+				Person tritt Gruppe bei
+			</button>
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5903,
+						name: 'Mitglieder live'
+					})}
+				/>
+			</div>
+		</>
+	);
+};
+export const GroupLoadingAndLiveMembership: Story = {
+	name: 'Gruppe — verzögertes Laden, Person verlässt Gruppe',
+	render: () => <GroupHydrationDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const [row] = await settledRows(canvasElement);
+		await expect(
+			row.querySelector('[data-cy="group-card-members-loading"]')
+		).not.toBeNull();
+		await expect(
+			row.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mitglieder laden' })
+		);
+		await expectGroupRow(row, 'Mitglieder live');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Person verlässt Gruppe' })
+		);
+		await expectGroupRow(row, 'Mitglieder live', 2);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Person tritt Gruppe bei' })
+		);
+		await expectGroupRow(row, 'Mitglieder live', 4);
+	}
+};
+
+export const GroupNoParticipants: Story = {
+	name: 'Gruppe — keine Teilnehmenden, fertig geladen',
+	render: () => {
+		seedMatrixRoom(0, 0);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({ id: 5900, name: 'Leere Gruppe' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'[data-cy="group-card-members-empty"]'
+				)
+			).not.toBeNull()
+		);
+		// A real Matrix room with no decrypted preview retains the existing fallback.
+		await expect(
+			canvasElement.querySelector('.sessionsListItem__subject')
+				?.textContent
+		).toBe('Nachricht verschlüsselt');
+	}
+};
+export const GroupMembershipUnavailable: Story = {
+	name: 'Gruppe — Teilnehmende nicht verfügbar',
+	render: () => {
+		seedMatrixRoom(0, 0, false, true);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5999,
+						name: 'Offline-Gruppe'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement
+					.querySelector('[role="status"]')
+					?.getAttribute('aria-label')
+			).toBe('Teilnehmende konnten nicht geladen werden.')
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
+	}
+};
+export const GroupSelectedWithRealParticipants: Story = {
+	...GroupTwoParticipants,
+	name: 'Gruppe — ausgewählt, 2 reale Personen',
+	parameters: {
+		router: {
+			initialPath:
+				'/sessions/consultant/sessionView/!storybook-group-5902:matrix.example.org/5902'
+		}
 	}
 };
