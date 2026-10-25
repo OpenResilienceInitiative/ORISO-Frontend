@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { AppConfigContext } from '../globalState/provider/AppConfigProvider';
 import { AppConfigInterface } from '../globalState/interfaces';
 import { TenantContext } from '../globalState/provider/TenantProvider';

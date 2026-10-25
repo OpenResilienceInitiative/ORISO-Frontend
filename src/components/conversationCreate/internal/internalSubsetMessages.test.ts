@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { describe, expect, it } from 'vite-plus/test';
 import de from '../../../resources/i18n/de/common.json';
 import en from '../../../resources/i18n/en/common.json';
 import fr from '../../../resources/i18n/fr/common.json';

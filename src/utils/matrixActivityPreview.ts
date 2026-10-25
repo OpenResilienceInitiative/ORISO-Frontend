@@ -1,3 +1,4 @@
+import type { MatrixEvent } from 'matrix-js-sdk';
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
 import {
@@ -5,7 +6,10 @@ import {
 	toMessagePreviewText
 } from './messagePreviewText';
 import { parseErstantwortPayload } from '../components/erstantwort/erstantwortPayload';
-import { parseMessagePrefixes } from '../components/message/messageConstants';
+import {
+	type ChatEndedBy,
+	parseMessagePrefixes
+} from '../components/message/messageConstants';
 
 const normalizePreviewText = (value: string): string =>
 	value.replace(/\s+/g, ' ').trim();
@@ -17,8 +21,14 @@ export type MatrixActivityPreviewLabels = {
 	video: string;
 	notice: string;
 	userLeftChat: string;
+	/** USER_LEFT_CHAT worded by who ended it (#1838); else `userLeftChat`. */
+	chatEndedText?: (endedBy: ChatEndedBy | null) => string;
+	/** Notices whose stored text is frozen in the session's language (#1844). */
+	inquiryAccepted?: string;
+	caseHandoverTakenOver?: string;
 	systemNotification: string;
 	unsupported: string;
+	undecryptable: string;
 	pending: string;
 	roomUnavailable: string;
 	eventUnavailable: string;
@@ -32,12 +42,19 @@ export type MatrixActivityPreviewKind =
 	| 'video'
 	| 'notice'
 	| 'unsupported'
+	| 'undecryptable'
 	| 'unknown';
+
+/** The SDK swaps an event it cannot decrypt for `m.bad.encrypted` content. */
+const isUndecryptable = (event: MatrixEvent): boolean =>
+	event.isDecryptionFailure?.() === true ||
+	event.getContent?.()?.msgtype === 'm.bad.encrypted';
 
 export const getMatrixActivityPreviewKind = (
 	resolution: MatrixActivityEventResolution
 ): MatrixActivityPreviewKind => {
 	if (resolution.status !== 'resolved') return 'unknown';
+	if (isUndecryptable(resolution.event)) return 'undecryptable';
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =
 		typeof content.msgtype === 'string' ? content.msgtype : null;
@@ -80,6 +97,9 @@ export const buildMatrixActivityTextPreview = (
 		return fallbackByStatus[resolution.status] || fallbackText;
 	}
 
+	if (isUndecryptable(resolution.event)) {
+		return withSender(senderName, labels?.undecryptable || fallbackText);
+	}
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =
 		typeof content.msgtype === 'string' ? content.msgtype : null;
@@ -112,8 +132,14 @@ export const buildMatrixActivityTextPreview = (
 	if (systemNotice) {
 		return (
 			(systemNotice === 'user_left_chat'
-				? labels?.userLeftChat
-				: labels?.systemNotification) || fallbackText
+				? labels?.chatEndedText?.(
+						parseMessagePrefixes(rawBody).systemNotificationEndedBy
+					) || labels?.userLeftChat
+				: (systemNotice === 'inquiry_accepted' &&
+						labels?.inquiryAccepted) ||
+					(systemNotice === 'case_handover_taken_over' &&
+						labels?.caseHandoverTakenOver) ||
+					labels?.systemNotification) || fallbackText
 		);
 	}
 	const body = toMessagePreviewText(rawBody);

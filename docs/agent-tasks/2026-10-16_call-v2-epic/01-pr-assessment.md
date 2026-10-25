@@ -12,7 +12,7 @@ test counts are the authors' claims unless stated otherwise.
 
 **Neither PR shows who is in the call right now.**
 
-Both build the attendance list as a *cumulative union* — a Map that is only
+Both build the attendance list as a _cumulative union_ — a Map that is only
 ever added to — so a person who joins and leaves stays in the list forever.
 #1395 went further and **removed** the "In the call" label from running
 cards; its own test asserts the `participants.current` string is gone. Every
@@ -25,7 +25,7 @@ neither PR has.
 Call v2 needs both, explicitly separated:
 
 - **present now** — derived from `session.memberships` at refresh time, and
-  *removed* on leave;
+  _removed_ on leave;
 - **attended** — the cumulative history, which is what the ended card shows.
 
 `callLifecycleTracker.ts` in #1395 already subscribes to `MembershipsChanged`
@@ -37,12 +37,12 @@ of #1395, not a rewrite.
 
 ## Merge order
 
-| # | PR | Why here |
-| --- | --- | --- |
-| 1 | **#1394** — Storybook Matrix harness | Isolated, test-only, no runtime edits. Clean merge. It repairs the harness the other call stories need, so it goes first. |
-| 2 | **#1390** — appointment payload + timezones | Isolated, clean merge, `Appointment.tsx` untouched on dev since its base. |
-| 3 | **#1395** — lifecycle runtime + durable timeline | Clean merge today. **Blocked on backend #1153** (`/service/matrix/calls/state`). Re-run `merge-tree` at merge time: dev has moved 562 commits since its base. |
-| 4 | *(new branch)* — the #1361 remainder | Fresh from dev. See below. |
+| #   | PR                                               | Why here                                                                                                                                                      |
+| --- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **#1394** — Storybook Matrix harness             | Isolated, test-only, no runtime edits. Clean merge. It repairs the harness the other call stories need, so it goes first.                                     |
+| 2   | **#1390** — appointment payload + timezones      | Isolated, clean merge, `Appointment.tsx` untouched on dev since its base.                                                                                     |
+| 3   | **#1395** — lifecycle runtime + durable timeline | Clean merge today. **Blocked on backend #1153** (`/service/matrix/calls/state`). Re-run `merge-tree` at merge time: dev has moved 562 commits since its base. |
+| 4   | _(new branch)_ — the #1361 remainder             | Fresh from dev. See below.                                                                                                                                    |
 
 ## #1361 — do not merge the branch
 
@@ -86,8 +86,8 @@ parser silently drops `scheduled` events. **They must not both be merged.**
 
 #1395 fetches `/service/matrix/calls/state` and, when the backend returns
 `participantMatrixIds`, replaces the participant list with those IDs.
-Whether that endpoint exists, and whether its list means *current* or
-*cumulative*, could not be determined — the ORISO-UserService repository
+Whether that endpoint exists, and whether its list means _current_ or
+_cumulative_, could not be determined — the ORISO-UserService repository
 returns 403 for this session. **This must be answered before #1395 is
 merged**, because it decides whether the backend or the client owns
 presence.

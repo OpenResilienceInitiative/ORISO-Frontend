@@ -92,6 +92,9 @@ export interface EventActionParams {
 	threadRootId?: string | null;
 	/** Whether the recipient was @-mentioned (drives the mention sound slot, #576). */
 	mentioned?: boolean | null;
+	/** Immutable call identity supplied by the authenticated lifecycle producer. */
+	callId?: string | null;
+	callType?: 'audio' | 'video' | null;
 	/** Live-call room id for `join` targets (Slice 5). */
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */

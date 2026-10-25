@@ -2,7 +2,7 @@
  * FE#514 — pure logic of the Team-Besprechung panel (ADR-016 scope rules +
  * timeline mapping).
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	isTeamDiscussionAvailable,
 	mapTimelineToDiscussionMessages,

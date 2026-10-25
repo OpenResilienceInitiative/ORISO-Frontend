@@ -5,7 +5,7 @@
  * Traces: UAT-A (part), UAT-F (Tests #7, #8 in THB — Test Logic).
  */
 import { Hct, argbFromHex } from '@material/material-color-utilities';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { computeOrisoPalette } from './orisoScheme';
 
 const PRIMARY = '#A5000A';

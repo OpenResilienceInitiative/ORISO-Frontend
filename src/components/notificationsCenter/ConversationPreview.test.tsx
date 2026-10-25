@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
 
@@ -130,9 +130,10 @@ let MessageContextShell: typeof import('../message/messageStoryShell').MessageCo
 
 beforeAll(async () => {
 	// MessageItemComponent is a big module graph; load it once.
+	// Allow cold transforms on a busy development machine; assertions keep their normal timeouts.
 	({ ConversationPreview } = await import('./ConversationPreview'));
 	({ MessageContextShell } = await import('../message/messageStoryShell'));
-}, 60000);
+}, 180000);
 
 const renderPreview = (props: { roomId: string; threadRootId?: string }) =>
 	render(
@@ -276,7 +277,12 @@ describe('ConversationPreview (#420): the real chat rows, read-only', () => {
 		expect(matrixClient.sendReadReceipt).not.toHaveBeenCalled();
 		expect(matrixClient.setRoomReadMarkers).not.toHaveBeenCalled();
 		expect(matrixClient.sendReceipt).not.toHaveBeenCalled();
-		expect(fetchSpy).not.toHaveBeenCalled();
+		expect(
+			fetchSpy.mock.calls.every(
+				([url, options]) =>
+					String(url).startsWith('/static/anon-animals/') && !options
+			)
+		).toBe(true);
 		fetchSpy.mockRestore();
 	});
 
@@ -357,7 +363,9 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		const { container } = renderPreview({ roomId: ROOM });
 		expect(screen.queryByText('old message 0')).toBeNull();
 
-		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		});
 
 		await screen.findByText('old message 0');
 		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
@@ -400,7 +408,9 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		});
 
 		const { container } = renderPreview({ roomId: ROOM });
-		fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', { name: LOAD }));
+		});
 		await screen.findByText('old message 0');
 
 		expect(
@@ -461,11 +471,13 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		// Messages already shown stay visible.
 		expect(screen.getByText('new message 49')).toBeTruthy();
 
-		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'notifications.center.preview.retryLoadOlder'
-			})
-		);
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'notifications.center.preview.retryLoadOlder'
+				})
+			);
+		});
 
 		await screen.findByText('old message 0');
 		expect(transport.loadEarlierMatrixRoomMessages).toHaveBeenCalledTimes(
@@ -499,7 +511,12 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		expect(matrixClient.sendReadReceipt).not.toHaveBeenCalled();
 		expect(matrixClient.setRoomReadMarkers).not.toHaveBeenCalled();
 		expect(matrixClient.sendReceipt).not.toHaveBeenCalled();
-		expect(fetchSpy).not.toHaveBeenCalled();
+		expect(
+			fetchSpy.mock.calls.every(
+				([url, options]) =>
+					String(url).startsWith('/static/anon-animals/') && !options
+			)
+		).toBe(true);
 		fetchSpy.mockRestore();
 	});
 
@@ -571,5 +588,137 @@ describe('ConversationPreview (#929): loading older messages on request', () => 
 		fireEvent.click(screen.getByRole('button', { name: LOAD }));
 
 		await screen.findByText('Thread-Anfang');
+	});
+});
+
+describe('ConversationPreview: approved author header', () => {
+	it('shows canonical header avatars only for visible message authors, latest first', () => {
+		arrange([
+			matrixEvent({
+				id: '$1',
+				sender: '@lisa:matrix.example',
+				body: 'Older',
+				ts: 1
+			}),
+			matrixEvent({
+				id: '$2',
+				sender: '@consultant:matrix.example',
+				body: 'Latest',
+				ts: 2
+			}),
+			matrixEvent({
+				id: '$3',
+				sender: '@lisa:matrix.example',
+				body: 'Again',
+				ts: 1
+			})
+		]);
+		const { container } = renderPreview({ roomId: '!room:matrix.example' });
+		const avatars = container.querySelectorAll(
+			'.conversationPreview__header [data-cy="participant-avatar"]'
+		);
+		expect(
+			Array.from(avatars).map((avatar) =>
+				avatar.getAttribute('data-user-id')
+			)
+		).toEqual(['@consultant:matrix.example', '@lisa:matrix.example']);
+		expect(
+			container.querySelector('.participantStack')?.getAttribute('style')
+		).toContain('--participant-size: 48px');
+	});
+
+	it('updates preview authors on timeline events without exposing technical members', () => {
+		arrange([
+			matrixEvent({
+				id: '$1',
+				sender: '@lisa:matrix.example',
+				body: 'First',
+				ts: 1
+			})
+		]);
+		const { container } = renderPreview({ roomId: '!room:matrix.example' });
+		transport.getMatrixRoomMessages.mockReturnValue([
+			matrixEvent({
+				id: '$2',
+				sender: '@consultant:matrix.example',
+				body: 'New',
+				ts: 2
+			})
+		]);
+		act(() => (transport.onMatrixTimeline.mock.calls[0] as any)[1]());
+		expect(
+			container
+				.querySelector(
+					'.conversationPreview__header [data-cy="participant-avatar"]'
+				)
+				?.getAttribute('data-user-id')
+		).toBe('@consultant:matrix.example');
+		expect(
+			container.querySelector('[data-user-id="@silent:matrix.example"]')
+		).toBeNull();
+	});
+	it('excludes system, group-chat and agency service senders from the preview header', () => {
+		arrange([
+			matrixEvent({
+				id: '$human',
+				sender: '@lisa:matrix.example',
+				body: 'Visible person'
+			}),
+			matrixEvent({
+				id: '$system',
+				sender: '@system:matrix.example',
+				body: 'Notice'
+			}),
+			matrixEvent({
+				id: '$group-system',
+				sender: '@group-chat-system-40:matrix.example',
+				body: 'Group notice'
+			}),
+			matrixEvent({
+				id: '$agency',
+				sender: '@agency-12-service:matrix.example',
+				body: 'Agency notice'
+			})
+		]);
+		const { container } = renderPreview({ roomId: '!room:matrix.example' });
+		expect(
+			Array.from(
+				container.querySelectorAll(
+					'.conversationPreview__header [data-cy="participant-avatar"]'
+				)
+			).map((avatar) => avatar.getAttribute('data-user-id'))
+		).toEqual(['@lisa:matrix.example']);
+	});
+	it('limits thread-header identities to that thread and excludes unrelated authors', () => {
+		arrange([
+			matrixEvent({
+				id: '$other',
+				sender: '@unrelated:matrix.example',
+				body: 'Other discussion'
+			}),
+			matrixEvent({ id: '$root', sender: LISA, body: 'Root' }),
+			matrixEvent({
+				id: '$reply',
+				sender: OWN,
+				content: {
+					'msgtype': 'm.text',
+					'body': 'Reply',
+					'm.relates_to': { rel_type: 'm.thread', event_id: '$root' }
+				}
+			})
+		]);
+		const { container } = renderPreview({
+			roomId: '!room:matrix.example',
+			threadRootId: '$root'
+		});
+		expect(
+			Array.from(
+				container.querySelectorAll(
+					'.conversationPreview__header [data-user-id]'
+				)
+			)
+				.map((a) => a.getAttribute('data-user-id'))
+				.sort()
+		).toEqual([OWN, LISA].sort());
 	});
 });

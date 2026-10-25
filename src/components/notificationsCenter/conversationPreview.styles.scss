@@ -6,10 +6,35 @@
 	flex-direction: column;
 	width: 100%;
 	height: 100%;
-	overflow-y: auto;
+	min-height: 0;
 	padding: 16px;
 	box-sizing: border-box;
 	text-align: left;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex: 0 0 auto;
+		padding-bottom: 12px;
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+	}
+
+	&__participantLabel {
+		min-width: 0;
+		font-size: 14px;
+		color: var(--m3-on-surface-variant, #444748);
+		overflow-wrap: anywhere;
+	}
+
+	&__messages {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		min-height: 0;
+		overflow-y: auto;
+		flex: 1;
+	}
 
 	&--empty {
 		align-items: center;

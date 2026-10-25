@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { AVATAR_LIFT, LIFT_MAX_AT, liftFor } from './avatarLift';
 

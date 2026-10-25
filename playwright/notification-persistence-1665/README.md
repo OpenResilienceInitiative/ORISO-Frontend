@@ -7,8 +7,8 @@ Two task-owned Vite processes use the existing Storybook viteFinal configuration
 Run from the repository root with the installed Node22 runtime on PATH, in separate terminals:
 
 ```sh
-FIXTURE_PORT=9017 node node_modules/vite/bin/vite.js --config playwright/notification-persistence-1665/vite.config.mts
-FIXTURE_PORT=9018 FIXTURE_BASELINE=1 node node_modules/vite/bin/vite.js --config playwright/notification-persistence-1665/vite.config.mts
+FIXTURE_PORT=9017 npm exec --no -- vp dev --config playwright/notification-persistence-1665/vite.config.mts
+FIXTURE_PORT=9018 FIXTURE_BASELINE=1 npm exec --no -- vp dev --config playwright/notification-persistence-1665/vite.config.mts
 node playwright/notification-persistence-1665/verify.mjs
 ```
 

@@ -11,63 +11,63 @@ name: Frontend Branch Validation
 # which is the only reason this workflow exists.
 
 on:
-  push:
-    branches-ignore:
-      - main
-      - dev
-      - pre-dev
+    push:
+        branches-ignore:
+            - main
+            - dev
+            - pre-dev
 
 # Only the newest push on a branch is worth validating. Without this, a series
 # of quick pushes leaves every superseded run occupying a runner to completion.
 concurrency:
-  group: frontend-branch-${{ github.ref }}
-  cancel-in-progress: true
+    group: frontend-branch-${{ github.ref }}
+    cancel-in-progress: true
 
 permissions:
-  contents: read
-  pull-requests: read # the gate asks whether a PR already covers this commit
+    contents: read
+    pull-requests: read # the gate asks whether a PR already covers this commit
 
 jobs:
-  gate:
-    name: check whether a pull request already validates this commit
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      run: ${{ steps.check.outputs.run }}
+    gate:
+        name: check whether a pull request already validates this commit
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        outputs:
+            run: ${{ steps.check.outputs.run }}
 
-    steps:
-      - name: Look for an open pull request on this commit
-        id: check
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # `commits/{sha}/pulls` answers for the exact commit, so a branch that
-          # is pushed but not yet proposed still builds.
-          open_prs="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
-              --jq '[.[] | select(.state == "open")] | length')"
-          if [ "${open_prs}" -gt 0 ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipped: ${open_prs} open pull request(s) already validate this commit."
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
+        steps:
+            - name: Look for an open pull request on this commit
+              id: check
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  # `commits/{sha}/pulls` answers for the exact commit, so a branch that
+                  # is pushed but not yet proposed still builds.
+                  open_prs="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+                      --jq '[.[] | select(.state == "open")] | length')"
+                  if [ "${open_prs}" -gt 0 ]; then
+                    echo "run=false" >> "$GITHUB_OUTPUT"
+                    echo "::notice::Skipped: ${open_prs} open pull request(s) already validate this commit."
+                  else
+                    echo "run=true" >> "$GITHUB_OUTPUT"
+                  fi
 
-  validate:
-    needs: gate
-    if: needs.gate.outputs.run == 'true'
-    name: lint, type-check, build and test frontend
-    runs-on: ubuntu-latest
-    # Success median is ~8 min. Without a cap, a hung vitest process runs into
-    # GitHub's 6 h job limit and reports no test result at all.
-    timeout-minutes: 20
+    validate:
+        needs: gate
+        if: needs.gate.outputs.run == 'true'
+        name: lint, type-check, build and test frontend
+        runs-on: ubuntu-latest
+        # Success median is ~8 min. Without a cap, a hung vitest process runs into
+        # GitHub's 6 h job limit and reports no test result at all.
+        timeout-minutes: 20
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
 
-      # Runs lint, type-check, unit tests and the app build.
-      - name: Run frontend validation and build
-        uses: ./.github/actions/node-build
-        with:
-          node_version: '22'
+            # Runs lint, type-check, unit tests and the app build.
+            - name: Run frontend validation and build
+              uses: ./.github/actions/node-build
+              with:
+                  node_version: '22.23.3'

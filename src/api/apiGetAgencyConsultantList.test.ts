@@ -3,7 +3,7 @@
  * composer. A 403 therefore looked exactly like "this agency has no other
  * consultants". The throwing variant exists so a caller can tell them apart.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 vi.mock('../resources/scripts/endpoints', () => ({
 	endpoints: {

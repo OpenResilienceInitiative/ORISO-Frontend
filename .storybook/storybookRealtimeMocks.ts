@@ -1,3 +1,44 @@
+const activeMocks = new Set<{ close(): void }>();
+export const trackStorybookRealtimeMock = <T extends { close(): void }>(
+	mock: T
+): T => {
+	activeMocks.add(mock);
+	return mock;
+};
+export const closeStorybookRealtimeMocks = () => {
+	const owned = [...activeMocks];
+	const errors: unknown[] = [];
+	owned.forEach((mock) => {
+		try {
+			mock.close();
+			activeMocks.delete(mock);
+		} catch (error) {
+			errors.push(error);
+		}
+	});
+	if (errors.length)
+		throw new AggregateError(errors, errors.map(String).join('\n'));
+};
+
+// Language restoration is independent of socket handlers and retains both errors.
+export const cleanupStorybookState = async (
+	restoreLanguage: () => unknown | Promise<unknown>
+) => {
+	const errors: unknown[] = [];
+	try {
+		closeStorybookRealtimeMocks();
+	} catch (error) {
+		errors.push(error);
+	}
+	try {
+		await restoreLanguage();
+	} catch (error) {
+		errors.push(error);
+	}
+	if (errors.length)
+		throw new AggregateError(errors, errors.map(String).join('\n'));
+};
+
 const storybookServiceHosts = new Set([
 	'api.storybook.test',
 	'auth.storybook.test',
@@ -47,6 +88,7 @@ export class StorybookWebSocketMock extends EventTarget {
 	constructor(url: string | URL) {
 		super();
 		this.url = String(url);
+		trackStorybookRealtimeMock(this);
 		globalThis.setTimeout(() => {
 			if (this.readyState !== StorybookWebSocketMock.CONNECTING) {
 				return;
@@ -59,6 +101,7 @@ export class StorybookWebSocketMock extends EventTarget {
 	}
 
 	close() {
+		activeMocks.delete(this);
 		if (this.readyState === StorybookWebSocketMock.CLOSED) {
 			return;
 		}

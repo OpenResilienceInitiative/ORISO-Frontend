@@ -3,12 +3,19 @@
  * auto-read pass (spec §6.1), the badge operands and the pending-read /
  * request-ordering rules (spec §6.3).
  *
- * @vitest-environment jsdom
+ * @vitest-environment oriso-jsdom
  */
 
 import React, { useContext } from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	AUTO_READ_DEBOUNCE_MS,
 	NotificationsContext,

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -7,7 +7,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { TopicSelection } from './TopicSelection';
 import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';

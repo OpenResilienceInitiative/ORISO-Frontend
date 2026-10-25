@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import de from '../../../resources/i18n/de/common.json';
 import deInformal from '../../../resources/i18n/de@informal/common.json';
 import {
@@ -110,7 +110,7 @@ describe('WaitingAreaCountdown', () => {
 		fireEvent.click(cardButton());
 
 		expect(isShown(screen.getByText(WELCOME))).toBe(true);
-		expect(screen.getByText('Begrüßung deiner Beratung')).toBeTruthy();
+		expect(screen.getByText('Begrüßung der Moderation')).toBeTruthy();
 		// Page 1 of greeting + two rules.
 		expect(screen.getByText('1 von 3')).toBeTruthy();
 	});
@@ -201,7 +201,7 @@ describe('WaitingAreaCountdown', () => {
 	it('renders the overdue state counting up with minutes and seconds', () => {
 		renderCountdown(-252); // 4m 12s late
 
-		expect(screen.getByText('Wir sind gleich für dich da.')).toBeTruthy();
+		expect(screen.getByText('Die Gruppe beginnt gleich.')).toBeTruthy();
 		expect(
 			screen.getByText('Das Warten wird langsam etwas unangenehm …')
 		).toBeTruthy();
@@ -296,7 +296,7 @@ describe('WaitingAreaCountdown', () => {
 
 		expect(screen.getByText('Netiquette · Regel 1')).toBeTruthy();
 		expect(isShown(screen.getByText(RULES[0]))).toBe(true);
-		expect(screen.queryByText('Begrüßung deiner Beratung')).toBeNull();
+		expect(screen.queryByText('Begrüßung der Moderation')).toBeNull();
 		expect(screen.getByText('1 von 2')).toBeTruthy();
 	});
 

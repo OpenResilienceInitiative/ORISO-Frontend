@@ -19,3 +19,10 @@ export type {
 export { SESSION_COLUMNS, TIMELINE_COLUMNS } from './DisplayFilterDialog';
 export { useDisplayFilterLabels } from './useDisplayFilterLabels';
 export type { DisplayFilterSection } from './useDisplayFilterLabels';
+export { useDisplayFilterEmailColumn } from './useDisplayFilterEmailColumn';
+export {
+	useDisplayFilterBrowserMuted,
+	useDisplayFilterBrowserUnavailable
+} from './useDisplayFilterBrowserUnavailable';
+export { emailSettingForKind } from './emailSettingForKind';
+export type { DisplayFilterEmailColumn } from './DisplayFilterKindTable';

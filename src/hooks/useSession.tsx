@@ -269,8 +269,8 @@ export const useSession = (
 	}, [loadSession]);
 
 	// Promise callbacks may supply a value; public reload always means an explicit reload.
-	const reload = useCallback(() => {
-		void loadSession();
-	}, [loadSession]);
+	// The load is handed back so a caller can wait for it (the closing animation
+	// of the embedded group join keeps the screen covered until it is done).
+	const reload = useCallback(() => loadSession(), [loadSession]);
 	return { session, ready, reload, read: readSession };
 };

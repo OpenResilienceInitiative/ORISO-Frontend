@@ -1,5 +1,19 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from 'vite-plus/test/browser-playwright';
+
+// Control-only entries cannot affect ordinary runs or the published catalog.
+const controls = process.env.ORISO_VERIFICATION_CONTROLS === 'true';
+const controlDefines = {
+	'import.meta.env.ORISO_A11Y_CONTROL_PHASE': JSON.stringify(
+		controls ? (process.env.ORISO_A11Y_CONTROL_PHASE ?? null) : null
+	),
+	'import.meta.env.ORISO_A11Y_CONTROL_BASELINES': JSON.stringify(
+		controls
+			? JSON.parse(process.env.ORISO_A11Y_BASELINE_JSON || '[]')
+			: null
+	)
+};
 
 /**
  * The webpack build turns `*.svg` into a module with a `ReactComponent` named
@@ -43,8 +57,8 @@ export default defineConfig({
 	plugins: [svgStub],
 	ssr: {
 		// Same reason as `test.server.deps.inline` below, but at the Vite
-		// level so `vite-node` (which runs scripts/generate-call-theme.ts)
-		// transforms the package instead of handing it to node's ESM loader.
+		// level so the public Vite SSR script loader transforms the package
+		// instead of handing it to Node's ESM loader.
 		noExternal: ['@material/material-color-utilities']
 	},
 	resolve: {
@@ -65,6 +79,17 @@ export default defineConfig({
 		]
 	},
 	test: {
+		// Vitest v4 compatibility: preserve mock call history.
+		// Remove after tests no longer rely on calls from setup or earlier tests.
+		// https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+		// https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+		clearMocks: false,
+		// Vitest v4 compatibility: keep separate Vite servers for inline projects.
+		// Remove when plugins and config hooks can run once for shared projects.
+		// https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+		// https://vitest.dev/guide/migration/#inline-projects-share-the-vite-server-by-default
+		sharedViteServer: false,
+		reporters: ['default', './scripts/verification-reporter.mjs'],
 		coverage: {
 			provider: 'v8',
 			// `text` for the terminal, `html` for humans, `json-summary` for the
@@ -102,7 +127,10 @@ export default defineConfig({
 					// Element.scrollIntoView) so TipTap's focus/scroll path doesn't throw
 					// an async unhandled error that flakes the composer emoji test in CI.
 					// Guarded internally, so it is a no-op under the node environment.
-					setupFiles: ['./src/test/jsdomPolyfills.ts'],
+					setupFiles: [
+						'./src/test/jsdomPolyfills.ts',
+						'./src/test/noChunkWarming.ts'
+					],
 					// The app's runtimeConfig reads REACT_APP_* vars at module load and
 					// throws if the Keycloak realm is missing. Vite only auto-loads VITE_*
 					// vars, so provide the minimum here to let component/router tests that
@@ -121,6 +149,8 @@ export default defineConfig({
 				}
 			},
 			{
+				extends: false,
+				define: controlDefines,
 				plugins: [
 					storybookTest({
 						configDir: '.storybook',
@@ -145,11 +175,29 @@ export default defineConfig({
 					]
 				},
 				test: {
+					// Vitest v4 compatibility: preserve mock call history.
+					// Remove after tests no longer rely on calls from setup or earlier tests.
+					// https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+					// https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+					clearMocks: false,
 					name: 'storybook',
 					browser: {
+						locators: {
+							// Vitest v4 compatibility: keep partial, case-insensitive locator matching.
+							// Remove after updating locators for full, case-sensitive matches.
+							// https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+							// https://vitest.dev/guide/migration/#locators-are-strict-by-default
+							exact: false
+						},
 						enabled: true,
 						headless: true,
-						provider: 'playwright',
+						provider: playwright({
+							launchOptions: { channel: 'chrome' },
+							contextOptions: {
+								locale: 'de-DE',
+								timezoneId: 'Europe/Berlin'
+							}
+						}),
 						// Vitest's browser mode defaults to a 414x896 phone
 						// viewport. `useResponsive().untilL` then reports mobile
 						// for every story, so desktop-only affordances (the group
@@ -158,44 +206,9 @@ export default defineConfig({
 						// desktop-first; a story that wants a phone declares it
 						// via `parameters.viewport`.
 						viewport: { width: 1280, height: 800 },
-						instances: [
-							{
-								browser: 'chromium',
-								// Real Google Chrome, not Playwright's bundled
-								// `chrome-headless-shell`. Under the headless shell
-								// the orchestrator page — one long-lived tab that
-								// drives all ~170 story files through iframes —
-								// loses its WebSocket partway through roughly one
-								// run in ten. Vitest then rejects the in-flight
-								// `createTesters` RPC with "Browser connection was
-								// closed while running tests", empties the queue and
-								// aborts, so the job goes red with zero failed
-								// assertions and the tail of the queue (the smallest
-								// stories, which the sequencer runs last) silently
-								// never executes. Upstream traced it to detached
-								// iframes accumulating in the shell's frame graph
-								// and could not fix it in JS; switching the channel
-								// is their confirmed workaround.
-								// See vitest-dev/vitest#7981 and PR #10300.
-								launch: {
-									channel: 'chrome'
-								},
-								context: {
-									// i18next-browser-languagedetector picks the
-									// language from navigator. Headless Chromium
-									// reports en-US, so without this a play
-									// function asserting German copy would pass in
-									// a reviewer's browser and fail in CI. Pin it
-									// so the suite tests the product's primary
-									// language, not the machine it runs on.
-									locale: 'de-DE',
-									// Same argument for dates: a story rendering a
-									// timestamp must not change meaning between a
-									// CI runner in UTC and a laptop in CET.
-									timezoneId: 'Europe/Berlin'
-								}
-							}
-						]
+						// Real Google Chrome and German locale/timezone are configured
+						// on the provider above; retain the disconnect workaround.
+						instances: [{ browser: 'chromium' }]
 					},
 					setupFiles: ['./.storybook/vitest.setup.ts']
 				}

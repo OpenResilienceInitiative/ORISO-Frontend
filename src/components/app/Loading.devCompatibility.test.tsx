@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { Loading } from './Loading';
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: () => 'Bitte warten …' })

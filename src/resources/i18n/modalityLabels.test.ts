@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import deCommon from './de/common.json';
 import deInformalCommon from './de@informal/common.json';
 import enCommon from './en/common.json';

@@ -21,7 +21,7 @@ import { chatTransportService } from '../../../services/chatTransportService';
 import {
 	ActivityMap,
 	getLastActivityByUserId,
-	sortMembersByActivity
+	getVisibleGroupMembers
 } from './memberActivity';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
@@ -30,7 +30,6 @@ import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
-import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -294,13 +293,7 @@ export const GroupChatHeader = ({
 	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
 	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
 	const visibleMembers = useMemo(
-		() =>
-			sortMembersByActivity(
-				matrixMembers.filter(
-					(member) => !isSystemMatrixUser(member.userId)
-				),
-				memberActivity
-			),
+		() => getVisibleGroupMembers(matrixMembers, memberActivity),
 		[matrixMembers, memberActivity]
 	);
 	const stackMembers: StackMember[] = useMemo(
@@ -339,11 +332,6 @@ export const GroupChatHeader = ({
 								members={stackMembers}
 								measureRef={titleRowRef}
 								reservedWidth={TITLE_ROW_RESERVED_WIDTH}
-								countLabel={(hidden) =>
-									`+${t('message.audience.multiCount', {
-										count: hidden
-									})}`
-								}
 							/>
 						</div>
 						{!hideTopic && (
@@ -354,33 +342,11 @@ export const GroupChatHeader = ({
 							</h3>
 						)}
 					</div>
-					{/* Matrix room participants */}
-					{isLoadingMembers ? (
+					{isLoadingMembers && (
 						<div className="sessionInfo__participants sessionInfo__participants--loading">
 							<div className="sessionInfo__participants__skeleton"></div>
 						</div>
-					) : visibleMembers.length > 0 ? (
-						<div className="sessionInfo__participants">
-							{visibleMembers.map((member, index) => {
-								// Extract username from userId (format: @username:domain)
-								// Always use username from userId, ignore member.name to ensure consistency
-								const userId = member.userId || '';
-								const username =
-									userId.split(':')[0]?.replace('@', '') ||
-									userId;
-								return (
-									<span
-										key={member.userId || index}
-										className="sessionInfo__participant"
-									>
-										{decodeUsername(username)}
-										{index < visibleMembers.length - 1 &&
-											', '}
-									</span>
-								);
-							})}
-						</div>
-					) : null}
+					)}
 				</div>
 
 				{isActive &&

@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import { render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { EmptyStateAnimation } from './EmptyStateAnimation';
 import { EmptyState } from './EmptyState';
 

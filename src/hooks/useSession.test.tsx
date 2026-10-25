@@ -1,6 +1,13 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	apiGetSessionRoomBySessionId,
 	apiGetSessionRoomsByRoomIds
@@ -451,6 +458,47 @@ describe('pending registered enquiry reconciliation', () => {
 		});
 		expect(result.current.session).toBeNull();
 		expect(result.current.ready).toBe(true);
+	});
+	it('hands the reload back, so a caller can wait until the session has been reloaded', async () => {
+		let release: (value: unknown) => void = () => undefined;
+		vi.mocked(apiGetSessionRoomsByRoomIds)
+			.mockResolvedValueOnce({
+				sessions: [
+					{ session: { id: 7, status: 1, matrixRoomId: '!room:hs' } }
+				]
+			} as any)
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						release = resolve;
+					}) as never
+			);
+		const { result } = renderHook(() => useSession('!room:hs', 7));
+		await act(async () => {});
+		expect(result.current.session.item.id).toBe(7);
+
+		let handed: unknown;
+		await act(async () => {
+			handed = result.current.reload();
+		});
+		expect(handed, 'the load itself, not nothing').toBeInstanceOf(Promise);
+		let settled = false;
+		void (handed as Promise<void>).then(() => {
+			settled = true;
+		});
+		await act(async () => {});
+		expect(settled, 'not before the sessions have come back').toBe(false);
+
+		await act(async () => {
+			release({
+				sessions: [
+					{ session: { id: 7, status: 2, matrixRoomId: '!room:hs' } }
+				]
+			});
+			await handed;
+		});
+		expect(settled).toBe(true);
+		expect(result.current.session.item.id).toBe(7);
 	});
 	it('reconciles a matching accepted-session feed signal without waiting for polling', async () => {
 		vi.mocked(apiGetSessionRoomBySessionId)

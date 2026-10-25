@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { TopicMedia } from './TopicMedia';
 import { CompactFormatRow } from './CompactFormatRow';
 import { InternalChatCreateCard } from './internal/InternalChatCreateCard';

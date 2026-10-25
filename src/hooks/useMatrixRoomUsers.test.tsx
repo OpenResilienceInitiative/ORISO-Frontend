@@ -1,7 +1,14 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { PropsWithChildren } from 'react';
 import { cleanup, renderHook, waitFor, act } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { ActiveSessionContext } from '../globalState';
 import { useMatrixRoomUsers } from './useMatrixRoomUsers';
 

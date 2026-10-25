@@ -86,6 +86,8 @@ import { ReactComponent as PersonCircleIcon } from '../../resources/img/icons/pe
 import { ReactComponent as ShieldPersonIcon } from '../../resources/img/icons/timeline-shield-person.svg';
 import { ReactComponent as KeyboardArrowUpIcon } from '../../resources/img/icons/keyboard_arrow_up.svg';
 import {
+	chatEndedTextKey,
+	isClientWordedTakeover,
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
@@ -93,6 +95,7 @@ import {
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
@@ -1205,12 +1208,12 @@ export const MessageItemComponent = ({
 	const isSupervisionNoticeEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_SUPERVISION_NOTICE;
-	const userLeftChatEventText = hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	)
-		? translate('message.userLeftChat')
-		: translate('message.consultantLeftChat');
+	const userLeftChatEventText = translate(
+		chatEndedTextKey(
+			parsedMessage.systemNotificationEndedBy,
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		)
+	);
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
@@ -1231,13 +1234,19 @@ export const MessageItemComponent = ({
 				explanation: systemNotificationExplanation
 			}
 		);
-	const systemNotificationRawDescription =
-		parsedMessage.systemNotificationDescription;
 	/* The stored description is frozen in the server's language; the header is
-	   translated here, so the body must be too or the bubble mixes languages. */
+	   translated here, so the body must be too or the bubble mixes languages.
+	   That holds for the counsellor's view as well (#1844). */
 	const acceptedDescription = translate(
 		'notifications.events.inquiryAccepted.text'
 	);
+	const systemNotificationBody = isInquiryAcceptedEvent
+		? acceptedDescription
+		: isClientWordedTakeover(parsedMessage)
+			? translate('caseHandover.systemMessage.tookOverBody', {
+					advisor: parsedMessage.systemNotificationUsername
+				})
+			: parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -1734,10 +1743,20 @@ export const MessageItemComponent = ({
 	 * the bubble, the chat header and the session list have in common, so the
 	 * bubble now uses exactly those and passes no name parts at all.
 	 */
+	// #1839: a live-chat guest's own messages carry the pseudonym the list and
+	// the header show, not their encoded Matrix name.
+	const liveChatGuestName =
+		!isMyMessage &&
+		isLiveChatModality &&
+		!!askerMatrixUserId &&
+		userId === askerMatrixUserId
+			? resolveAnonymousChatDisplayName(activeSession?.user)
+			: null;
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
 			? consultantMatch?.consultantDisplayName ||
+				liveChatGuestName ||
 				roomUser?.displayName ||
 				displayName
 			: displayName;
@@ -2178,7 +2197,7 @@ export const MessageItemComponent = ({
 												}
 												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
 												description={
-													systemNotificationRawDescription
+													systemNotificationBody
 												}
 												sessionId={
 													activeSession.item.id
@@ -2196,11 +2215,9 @@ export const MessageItemComponent = ({
 												}
 											/>
 										) : (
-											systemNotificationRawDescription && (
+											systemNotificationBody && (
 												<p className="messageItem__systemNotificationDescription">
-													{
-														systemNotificationRawDescription
-													}
+													{systemNotificationBody}
 												</p>
 											)
 										)}

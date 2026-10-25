@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE,

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	CALL_IDENTITY_EVENT_TYPE,
@@ -77,7 +77,8 @@ describe('what the call is told', () => {
 			kind: 'initials',
 			bg: '#a5000a',
 			ink: '#ffffff',
-			initials: 'SP'
+			initials: 'SP',
+			name: 'Susanne Pfeiffer'
 		});
 	});
 

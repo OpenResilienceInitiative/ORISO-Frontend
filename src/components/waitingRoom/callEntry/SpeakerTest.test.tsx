@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -8,7 +8,7 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { playTestTone, SpeakerTest, SpeakerTestState } from './SpeakerTest';
 
 /* Just enough Web Audio to record the order of calls. */

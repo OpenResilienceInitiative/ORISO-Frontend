@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { EMAIL_CONTENT, EMAIL_LOCALES, EMAIL_LOCALE_LANG } from './index';
 import { emailDefaultBrand } from './kit/emailTokens';
 import { renderEmailHtml } from './kit/emailTemplate';

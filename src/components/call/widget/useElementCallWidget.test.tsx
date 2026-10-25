@@ -1,10 +1,17 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import React from 'react';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { useElementCallWidget } from './useElementCallWidget';
 import { setAppConfig } from '../../../utils/appConfig';

@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { beforeEach, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, expect, it, vi } from 'vite-plus/test';
 
 /**
  * The chain LOGIN_PASSWORD recovery depends on: the sign-in stages the password, the app picks it

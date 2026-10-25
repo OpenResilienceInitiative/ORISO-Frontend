@@ -15,6 +15,7 @@ import '../session/session.styles.scss';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import {
 	phone390Globals,
+	desktop1440Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
 
@@ -44,6 +45,7 @@ function ComposerShell({
 	roomMembers,
 	userData,
 	shellHeight,
+	productionSessionFade = false,
 	...composerProps
 }: {
 	activeSession?: any;
@@ -55,7 +57,24 @@ function ComposerShell({
 	 * as tall as a real one (852 px at a 900 px window).
 	 */
 	shellHeight?: number;
+	/** Match SessionItemComponent's real transformed reveal ancestor. */
+	productionSessionFade?: boolean;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
+	const composer = (
+		<ComposerStoryDecorator
+			activeSession={activeSession}
+			roomMembers={roomMembers}
+			userData={userData}
+		>
+			<MessageSubmitInterfaceComponent
+				placeholder="Nachricht an Klient:in schreiben"
+				onSendButton={() => {}}
+				isTyping={() => {}}
+				language="de"
+				{...composerProps}
+			/>
+		</ComposerStoryDecorator>
+	);
 	return (
 		<div
 			className="session"
@@ -67,19 +86,13 @@ function ComposerShell({
 					: shellStyle
 			}
 		>
-			<ComposerStoryDecorator
-				activeSession={activeSession}
-				roomMembers={roomMembers}
-				userData={userData}
-			>
-				<MessageSubmitInterfaceComponent
-					placeholder="Nachricht an Klient:in schreiben"
-					onSendButton={() => {}}
-					isTyping={() => {}}
-					language="de"
-					{...composerProps}
-				/>
-			</ComposerStoryDecorator>
+			{productionSessionFade ? (
+				<div className="session__gameInputFadeTarget session__gameInputFadeTarget--reveal">
+					{composer}
+				</div>
+			) : (
+				composer
+			)}
 		</div>
 	);
 }
@@ -193,6 +206,33 @@ export const ConsultantAbsent: Story = {
 export const Default: Story = {
 	name: 'Default (empty)',
 	render: () => <ComposerShell />
+};
+
+/**
+ * Where the closing animation of every waiting room ends (ORISO-Frontend#1737).
+ * The rooms find it by this mark alone, so the composer has to keep carrying it
+ * around the field a person types in.
+ */
+export const MarksTheClosingFocal: Story = {
+	name: 'Marks where the closing animation ends',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const focal = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[data-closing-focal="message-field"]'
+			);
+			if (!node || !node.getBoundingClientRect().width) {
+				throw new Error('composer focal not on screen yet');
+			}
+			return node;
+		});
+		await expect(
+			focal.querySelector('[contenteditable="true"]')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelectorAll('[data-closing-focal]')
+		).toHaveLength(1);
+	}
 };
 
 /** Desktop chat card contract: the composer card rests on the session's inner edge. */
@@ -673,6 +713,52 @@ export const GroupChat: Story = {
 	)
 };
 
+/** Production caller: both split segments must return focus after Escape. */
+export const RecipientMenuKeyboard: Story = {
+	...GroupChat,
+	name: 'Recipient menu — Escape restores keyboard focus',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'.textarea__audienceSelector .splitButton > button'
+				)
+			).toHaveLength(2)
+		);
+		const triggers = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__audienceSelector .splitButton > button'
+			)
+		);
+		for (const trigger of triggers) {
+			trigger.focus();
+			await userEvent.keyboard('{Enter}');
+			await waitFor(() =>
+				expect(trigger.getAttribute('aria-expanded')).toBe('true')
+			);
+			const dialog = await canvas.findByRole('dialog');
+			const popupButton =
+				dialog.querySelector<HTMLButtonElement>('button')!;
+			popupButton.focus();
+			await expect(document.activeElement).toBe(popupButton);
+			await userEvent.keyboard('{Escape}');
+			await waitFor(() =>
+				expect(trigger.getAttribute('aria-expanded')).toBe('false')
+			);
+			await expect(canvas.queryByRole('dialog')).toBeNull();
+			await expect(document.activeElement).toBe(trigger);
+		}
+		const closedEscape = new KeyboardEvent('keydown', {
+			key: 'Escape',
+			bubbles: true,
+			cancelable: true
+		});
+		document.dispatchEvent(closedEscape);
+		await expect(closedEscape.defaultPrevented).toBe(false);
+	}
+};
+
 export const Supervisor: Story = {
 	name: 'Supervisor aside',
 	render: () => (
@@ -982,6 +1068,265 @@ export const RepeatedMaximiseToggle: Story = {
 		// The toggle survives all ten cycles.
 		await expect(toggle()).toBeTruthy();
 	}
+};
+
+const LONG_RECIPIENT = 'P. BouvierMitSehrLangemNachnamen';
+const recipientLayoutMembers = [
+	...storybookGroupRoomMembers,
+	{
+		userId: '@andrea:beratung.local',
+		name: 'Patty BouvierMitSehrLangemNachnamen'
+	}
+];
+const RecipientLayoutScenario = ({
+	productionSessionFade = true
+}: {
+	productionSessionFade?: boolean;
+}) => (
+	<ComposerShell
+		productionSessionFade={productionSessionFade}
+		activeSession={buildMockGroupSession()}
+		roomMembers={recipientLayoutMembers}
+		autoFocusEditor={false}
+	/>
+);
+const overlaps = (a: DOMRect, b: DOMRect) =>
+	Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 &&
+	Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5;
+
+async function expectRecipientClearOfComposer(
+	canvasElement: HTMLElement,
+	reserveEditor: boolean
+) {
+	await document.fonts.ready;
+	await waitFor(() => {
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		expect(
+			card
+				.getAnimations()
+				.some((animation) => animation.playState === 'running')
+		).toBe(false);
+		const fade = card.closest<HTMLElement>('.session__gameInputFadeTarget');
+		if (fade)
+			expect(
+				fade
+					.getAnimations()
+					.some((animation) => animation.playState === 'running')
+			).toBe(false);
+		const selector = canvasElement.querySelector<HTMLElement>(
+			'.textarea__audienceSelector'
+		)!;
+		const chip = selector
+			.querySelector<HTMLElement>('.splitButton')!
+			.getBoundingClientRect();
+		expect(Math.round(chip.height)).toBe(32);
+		const cardBox = card.getBoundingClientRect();
+		expect(chip.left).toBeGreaterThanOrEqual(cardBox.left - 0.5);
+		expect(chip.right).toBeLessThanOrEqual(cardBox.right + 0.5);
+		expect(chip.bottom).toBeLessThanOrEqual(cardBox.bottom + 0.5);
+		const controls = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.textarea__figmaToolbar button, .textarea__attachmentSelect button'
+			)
+		);
+		for (const control of controls) {
+			const box = control.getBoundingClientRect();
+			if (box.width && box.height)
+				expect(
+					overlaps(chip, box),
+					`recipient overlaps ${control.getAttribute('aria-label')}`
+				).toBe(false);
+		}
+		const editor =
+			canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+		const text = editor.querySelector<HTMLElement>('p')!;
+		expect(editor.getBoundingClientRect().height).toBeGreaterThan(0);
+		expect(
+			overlaps(
+				chip,
+				(reserveEditor ? editor : text).getBoundingClientRect()
+			),
+			'recipient overlaps editable text'
+		).toBe(false);
+	});
+}
+
+async function recipientLayoutJourney(
+	canvasElement: HTMLElement,
+	reserveEditor: boolean
+) {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton'
+			)
+		).not.toBeNull()
+	);
+	const canvas = within(canvasElement);
+	const toggle = () =>
+		canvasElement.querySelector<HTMLButtonElement>(
+			'.textarea__audienceSelector .splitButton__trailing'
+		)!;
+	// Explicitly choose All so per-chat memory from another scenario cannot
+	// substitute a previously narrowed audience for this geometry check.
+	await userEvent.click(toggle());
+	const allDialog = await canvas.findByRole('dialog');
+	await userEvent.click(
+		allDialog.querySelector<HTMLButtonElement>(
+			'.textarea__audienceSelectorMenuSelectAll'
+		)!
+	);
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton__label'
+			)?.textContent
+		).toBe('Alle')
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	await userEvent.click(toggle());
+	const dialog = await canvas.findByRole('dialog');
+	for (const button of Array.from(
+		dialog.querySelectorAll<HTMLButtonElement>(
+			'.textarea__audienceSelectorSectionChevron'
+		)
+	)) {
+		if (button.getAttribute('aria-expanded') === 'false')
+			await userEvent.click(button);
+	}
+	await userEvent.click(
+		within(dialog).getByRole('button', {
+			name: LONG_RECIPIENT
+		})
+	);
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__audienceSelector .splitButton__label'
+			)?.textContent
+		).toBe(LONG_RECIPIENT)
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	const editor = canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+	await userEvent.click(editor);
+	await userEvent.keyboard('Eine Nachricht an die Gruppe.');
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	const expand =
+		canvasElement.querySelector<HTMLButtonElement>(
+			'.textarea__figmaToolbar button[aria-label="Maximieren"]'
+		) ||
+		Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__figmaToolbar button'
+			)
+		).find((button) =>
+			/maxim|expand|vergröß/i.test(
+				button.getAttribute('aria-label') || ''
+			)
+		);
+	expect(expand).toBeTruthy();
+	await userEvent.click(expand!);
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector(
+				'.textarea__wrapper-send-message--expanded'
+			)
+		).not.toBeNull()
+	);
+	await expectRecipientClearOfComposer(canvasElement, reserveEditor);
+	await expect(
+		canvasElement
+			.querySelector('.textarea__wrapper-send-message--expanded')!
+			.getBoundingClientRect().height
+	).toBeGreaterThan(window.innerHeight * 0.5);
+	const viewport = window.visualViewport;
+	const viewTop = viewport?.offsetTop || 0;
+	const viewLeft = viewport?.offsetLeft || 0;
+	const viewBottom = viewTop + (viewport?.height || window.innerHeight);
+	const viewRight = viewLeft + (viewport?.width || window.innerWidth);
+	await waitFor(() => {
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message--expanded'
+		)!;
+		const cardBox = card.getBoundingClientRect();
+		const recipient = canvasElement
+			.querySelector<HTMLElement>('.textarea__audienceSelector')!
+			.getBoundingClientRect();
+		expect(
+			cardBox.top,
+			'expanded composer must remain below the viewport top'
+		).toBeGreaterThanOrEqual(viewTop - 0.5);
+		expect(
+			cardBox.bottom,
+			'expanded composer must remain above the viewport bottom'
+		).toBeLessThanOrEqual(viewBottom + 0.5);
+		expect(cardBox.left).toBeGreaterThanOrEqual(viewLeft - 0.5);
+		expect(cardBox.right).toBeLessThanOrEqual(viewRight + 0.5);
+		expect(
+			recipient.bottom,
+			'recipient must remain reachable inside the visible viewport'
+		).toBeLessThanOrEqual(viewBottom + 0.5);
+	});
+	const fade = canvasElement.querySelector<HTMLElement>(
+		'.session__gameInputFadeTarget'
+	);
+	if (fade) {
+		await expect(getComputedStyle(fade).transform).toBe('none');
+		const collapse = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.textarea__figmaToolbar button'
+			)
+		).find((button) =>
+			/minim|verkleiner/i.test(button.getAttribute('aria-label') || '')
+		);
+		expect(collapse).toBeTruthy();
+		await userEvent.click(collapse!);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.textarea__wrapper-send-message--expanded'
+				)
+			).toBeNull()
+		);
+		await expect(getComputedStyle(fade).transform).not.toBe('none');
+	}
+}
+
+export const RecipientLayoutPhone: Story = {
+	name: 'Recipient layout — 390px All, long target and expanded',
+	globals: phone390Globals,
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, true)
+};
+export const RecipientLayoutTablet: Story = {
+	name: 'Recipient layout — 820px All, long target and expanded',
+	parameters: {
+		viewport: {
+			options: {
+				recipientTablet820: {
+					name: 'Recipient tablet 820',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
+				}
+			}
+		}
+	},
+	globals: { viewport: { value: 'recipientTablet820' } },
+	render: () => <RecipientLayoutScenario />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, true)
+};
+export const RecipientLayoutDesktop: Story = {
+	name: 'Recipient layout — desktop retains the shared control',
+	globals: desktop1440Globals,
+	render: () => <RecipientLayoutScenario productionSessionFade={false} />,
+	play: async ({ canvasElement }) =>
+		recipientLayoutJourney(canvasElement, false)
 };
 
 /**

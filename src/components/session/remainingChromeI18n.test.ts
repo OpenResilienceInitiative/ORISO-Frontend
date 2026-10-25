@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * Post-leftovers rescan: session chrome, waiting countdown, notifications,
@@ -42,6 +42,8 @@ const ONE_LANGUAGE_FALLBACKS = [
 	/'Begrüßung deiner Beratung'/,
 	/'Animation abschalten'/,
 	/'Wir sind gleich für dich da\.'/,
+	/'Begrüßung der Moderation'/,
+	/'Die Gruppe beginnt gleich\.'/,
 	/'Chat rules'/,
 	/'Load older activity'/,
 	/'Open chat'/,

@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ModalContext } from '../../globalState/context/ModalContext';
 import type { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { TwoFactorSetupDialog } from './TwoFactorSetupDialog';

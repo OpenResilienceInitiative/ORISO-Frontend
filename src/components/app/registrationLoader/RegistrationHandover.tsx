@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { HandoverCarousel, HandoverStep } from './HandoverCarousel';
 import { HandoverGateButton } from './HandoverGateButton';
+import { ClosingFocal } from '../../transition/closing/closingFocal';
 import { GATE_STATUS_KEY, HandoverGateState } from './handoverGate';
 import { useHandoverProgress } from './handoverProgress';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
@@ -24,6 +25,15 @@ export interface RegistrationHandoverProps {
 	 * links open its documents instead of the platform's (ADR-022).
 	 */
 	department?: { agencyId: number; topicId: number } | null;
+	/**
+	 * Where the person ends up. The platform's closing animation plays on the
+	 * way and ends on this focal point (ORISO-Frontend#1737). A standard
+	 * counselling chat is the default; a video call says `call`. `null` plays
+	 * no closing animation: after a group link the next screen is the group's
+	 * entry room, another waiting room with no message field to end on (its own
+	 * "join" gate carries the animation into the chat).
+	 */
+	closing?: ClosingFocal | null;
 	/** Force a gate state instead of deriving it from `ready`. */
 	forcedState?: HandoverGateState;
 	/**
@@ -71,6 +81,7 @@ export const RegistrationHandover = ({
 	onEnter,
 	forcedState,
 	progress,
+	closing = 'messageField',
 	copy,
 	department
 }: RegistrationHandoverProps) => {
@@ -99,6 +110,12 @@ export const RegistrationHandover = ({
 	   gate button stops waiting. `forcedState` is a test seam, so it decides
 	   here too. */
 	const handoverDone = state === 'ready' || state === 'entering';
+
+	/* The gate that opened itself (the escape hatch) is pressed while the app is
+	   still loading: the room is only given up once it is ready, so there is no
+	   message field to close onto. The press is remembered and the room closes
+	   when the app is ready, without the animation it could not finish. */
+	const slowGate = state === 'slow';
 
 	const handleEnter = useCallback(() => {
 		if (enteredRef.current) {
@@ -165,6 +182,11 @@ export const RegistrationHandover = ({
 							<HandoverGateButton
 								state={state}
 								onEnter={handleEnter}
+								closing={
+									slowGate
+										? undefined
+										: (closing ?? undefined)
+								}
 								label={copy?.cta}
 								/* The room's status line above already says
 								   (and announces) this state; a second live

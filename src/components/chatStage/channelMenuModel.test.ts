@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	buildChannelMenu,
 	CHANNEL_MENU_PREVIEW_MAX,

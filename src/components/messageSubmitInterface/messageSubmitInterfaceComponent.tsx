@@ -44,6 +44,7 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
+import { useAudienceMenuDismissal } from './inputField/useAudienceMenuDismissal';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
@@ -2967,26 +2968,14 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, [audienceSelectionStorageKey, selectedAudienceValues]);
 
+	useAudienceMenuDismissal(
+		isAudienceMenuOpen,
+		audienceMenuRef,
+		setIsAudienceMenuOpen
+	);
 	useEffect(() => {
 		if (!isAudienceMenuOpen) {
 			setAudienceOverlayBounds(null);
-			return;
-		}
-		const handleOutsideClick = (event: MouseEvent) => {
-			const target = event.target as Node | null;
-			if (!target) {
-				return;
-			}
-			if (!audienceMenuRef.current?.contains(target)) {
-				setIsAudienceMenuOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleOutsideClick);
-		return () =>
-			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isAudienceMenuOpen]);
-	useEffect(() => {
-		if (!isAudienceMenuOpen) {
 			return;
 		}
 		const updateAudienceOverlayBounds = () => {
@@ -4590,6 +4579,9 @@ export const MessageSubmitInterfaceComponent = ({
 										'textarea__input--editing'
 								)}
 								ref={textareaInputRef}
+								// Where the closing animation of a waiting room ends
+								// (ORISO-Frontend#1737).
+								data-closing-focal="message-field"
 								onKeyUp={(e) => {
 									resizeTextarea();
 									// Auto-scroll on Enter key or any key press

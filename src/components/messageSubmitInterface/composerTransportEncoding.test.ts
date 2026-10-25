@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import sanitizeHtml from 'sanitize-html';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
 import { sanitizeHtmlDefaultOptions } from './richtextHelpers';

@@ -8,7 +8,7 @@
  * extraction. No display-name matching happens anywhere in this module.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	extractMentionedUserIds,
 	buildMentionsContent,

@@ -13,7 +13,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { computeOrisoPalette } from './orisoScheme';
 import {
 	collectConsumedM3Tokens,

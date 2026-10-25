@@ -6,7 +6,7 @@
  * The legacy `threadRootId` / `threadMessageId` pair is a hard cut: it is
  * mapped once on entry and never written again.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
 	buildSessionChannelPath,
 	channelFromId,

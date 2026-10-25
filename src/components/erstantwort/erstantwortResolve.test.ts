@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolveErstantwortBausteine } from './erstantwortResolve';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,

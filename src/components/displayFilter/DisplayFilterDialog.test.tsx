@@ -1,9 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { DisplayFilterDialog } from './DisplayFilterDialog';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
+import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
 	EMPTY_DISPLAY_FILTER,
@@ -11,6 +18,10 @@ import {
 } from './displayFilterTypes';
 import { STORY_LABELS } from './displayFilterStoryData';
 
+const viewport = vi.hoisted(() => ({ fromM: false }));
+vi.mock('../../hooks/useResponsive', () => ({
+	useResponsive: () => ({ fromM: viewport.fromM })
+}));
 vi.mock('../../utils/notificationSettings/soundPlayback', () => ({
 	previewNotificationSound: vi.fn(),
 	soundAssetFor: () => null
@@ -40,6 +51,7 @@ const Harness = ({
 	showAutoRead?: boolean;
 	onReset?: () => void;
 	canReset?: boolean;
+	email?: React.ComponentProps<typeof DisplayFilterDialog>['email'];
 }) => {
 	const [value, setValue] = useState(initial);
 	return (
@@ -54,6 +66,7 @@ const Harness = ({
 			labels={STORY_LABELS}
 			readOnly={rest.readOnly}
 			showAutoRead={rest.showAutoRead}
+			email={rest.email}
 			onChange={(next) => {
 				setValue(next);
 				onValue(next);
@@ -72,7 +85,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			name: 'In der Liste: Entwürfe'
 		}) as HTMLInputElement;
 		const pillDrafts = screen.getByRole('button', {
-			name: 'Pille: Entwürfe'
+			name: 'Im Filter: Entwürfe'
 		}) as HTMLButtonElement;
 		expect(pillDrafts.disabled).toBe(false);
 		expect(pillDrafts.textContent).toContain('An');
@@ -157,7 +170,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			screen.getByRole('checkbox', { name: 'In der Liste: Zukunft' })
 		).not.toBeNull();
 		expect(
-			screen.queryByRole('checkbox', { name: 'Pille: Zukunft' })
+			screen.queryByRole('checkbox', { name: 'Im Filter: Zukunft' })
 		).toBeNull();
 		// The empty Pill cell is explained to screen readers, not left blank.
 		expect(screen.getByText(STORY_LABELS.pillNotApplicable)).not.toBeNull();
@@ -202,9 +215,33 @@ describe('DisplayFilterDialog (#1377)', () => {
 
 	it('inerts everything in read-only mode', () => {
 		const onReset = vi.fn();
+		const email = {
+			cell: (kindId: string) =>
+				kindId === 'messages' ? { checked: true } : null,
+			onChange: vi.fn()
+		};
 		render(
-			<Harness onValue={() => undefined} readOnly onReset={onReset} />
+			<Harness
+				onValue={() => undefined}
+				readOnly
+				onReset={onReset}
+				email={email}
+			/>
 		);
+		// The e-mail cell writes the profile: locked like every other control.
+		const emailPicker = screen.getByRole('button', {
+			name: STORY_LABELS.emailKind('Nachrichten')
+		}) as HTMLButtonElement;
+		expect(emailPicker.disabled).toBe(true);
+		expect(
+			(
+				screen.getByRole('button', {
+					name: STORY_LABELS.emailMenu('Nachrichten')
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+		fireEvent.click(emailPicker);
+		expect(email.onChange).not.toHaveBeenCalled();
 		expect(screen.getByRole('status').textContent).toContain(
 			'neueren App-Version'
 		);
@@ -265,7 +302,7 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 			name: 'In der Liste: Gesprächskreis'
 		}) as HTMLInputElement;
 		const pill = screen.getByRole('button', {
-			name: 'Pille: Gesprächskreis'
+			name: 'Im Filter: Gesprächskreis'
 		}) as HTMLButtonElement;
 		expect(show.disabled).toBe(true);
 		expect(show.checked).toBe(true);
@@ -311,18 +348,36 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 				.textContent
 		).toContain('Standard');
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Ton wählen: Mail' })
+			screen.getByRole('button', {
+				name: 'Browser-Benachrichtigung: Mail'
+			})
 		);
-		fireEvent.click(screen.getByRole('menuitem', { name: 'Ton 3' }));
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Ton 3' }));
 		let next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
 		expect(next.kinds.oneToOne?.sound).toBe('ton-3');
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Ton wählen: Mail' })
+			screen.getByRole('button', {
+				name: 'Browser-Benachrichtigung: Mail'
+			})
 		);
-		fireEvent.click(screen.getByRole('menuitem', { name: 'Stumm' }));
+		// Redesign 2026-10-15: tones first, a divider, then the silent pop-up
+		// (the stored mute) with its support line. No per-kind "Aus": the
+		// banner is not gated per kind, nothing could store it.
+		const menu = screen.getByRole('menu');
+		expect(within(menu).getByRole('separator')).toBeTruthy();
+		expect(
+			within(menu).queryByRole('menuitemradio', { name: /^Aus/ })
+		).toBeNull();
+		const silent = within(menu).getByRole('menuitemradio', {
+			name: /^Pop-up ohne Ton/
+		});
+		expect(silent.textContent).toContain('Nur das Fenster, kein Ton');
+		fireEvent.click(silent);
 		next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
 		expect(next.kinds.oneToOne?.sound).toBe('none');
-		expect(screen.getByRole('columnheader', { name: 'Ton' })).toBeTruthy();
+		expect(
+			screen.getByRole('columnheader', { name: 'Browser' })
+		).toBeTruthy();
 	});
 
 	it('turns a show-only kind into a plain switch in the sound-column mode', () => {
@@ -400,12 +455,13 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 			/>
 		);
 		expect(
-			screen.getByRole('button', { name: 'Pille: Live-Chat' }).textContent
+			screen.getByRole('button', { name: 'Im Filter: Live-Chat' })
+				.textContent
 		).toContain('Dynamisch');
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Anzeige wählen: Live-Chat' })
+			screen.getByRole('button', { name: 'Im Filter wählen: Live-Chat' })
 		);
-		fireEvent.click(screen.getByRole('menuitem', { name: 'Fest' }));
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Fest' }));
 		const next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
 		expect(next.kinds.liveChat).toEqual({
 			show: true,
@@ -414,15 +470,17 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		});
 		// the third mode: chip while any live chat is open (Frank 2026-09-16)
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Anzeige wählen: Live-Chat' })
+			screen.getByRole('button', { name: 'Im Filter wählen: Live-Chat' })
 		);
-		fireEvent.click(screen.getByRole('menuitem', { name: 'Bei Sitzung' }));
+		fireEvent.click(
+			screen.getByRole('menuitemradio', { name: 'Bei Sitzung' })
+		);
 		expect(
 			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).kinds
 				.liveChat
 		).toEqual({ show: true, pill: true, pillMode: 'session' });
 		expect(
-			screen.getByRole('button', { name: 'Pille: Archiviert' })
+			screen.getByRole('button', { name: 'Im Filter: Archiviert' })
 		).toBeTruthy();
 		expect(
 			screen.queryByRole('button', { name: 'Ton anhören: Archiviert' })
@@ -430,10 +488,154 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		expect(
 			(
 				screen.getByRole('button', {
-					name: 'Pille: Termine'
+					name: 'Im Filter: Termine'
 				}) as HTMLButtonElement
 			).disabled
 		).toBe(true);
 		expect(screen.getByText('Kommt bald.')).toBeTruthy();
+	});
+});
+
+describe('DisplayFilterDialog Browser column gate (Codex review on #1752)', () => {
+	afterEach(cleanup);
+
+	it('shows "nicht verfügbar" with the reason instead of a pop-up picker while pop-ups are off', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onOpenProfile={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={SESSION_COLUMNS}
+				browserUnavailableReason="Pop-ups sind aus"
+			/>
+		);
+		expect(
+			screen.queryByRole('button', {
+				name: STORY_LABELS.soundMenu('Nachrichten')
+			})
+		).toBeNull();
+		const row = screen.getByRole('row', { name: /Nachrichten/ });
+		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
+		expect(
+			within(row)
+				.getByText('Pop-ups sind aus')
+				.closest('.displayFilterDialog__unavailable')
+				?.querySelector('[tabindex], button, input')
+		).toBeNull();
+	});
+	// Touch and sighted keyboard users get no tooltip: the reason is cell
+	// text, read once, and the cell stays no focus stop.
+	const expectVisibleReason = (cell: HTMLElement, reason: string) => {
+		const text = within(cell).getByText(reason);
+		for (
+			let node: HTMLElement | null = text;
+			node && node !== cell.parentElement;
+			node = node.parentElement
+		) {
+			expect(node.classList.contains('sr-only')).toBe(false);
+			expect(node.getAttribute('aria-hidden')).not.toBe('true');
+		}
+		expect(cell.textContent?.split(reason)).toHaveLength(2);
+		expect(
+			cell.textContent?.split(STORY_LABELS.channelUnavailable)
+		).toHaveLength(2);
+		expect(cell.hasAttribute('tabindex')).toBe(false);
+		expect(cell.querySelector('[tabindex], button, input')).toBeNull();
+	};
+	const renderUnavailable = () =>
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onOpenProfile={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={SESSION_COLUMNS}
+				browserUnavailableReason="Pop-ups sind aus"
+				email={{
+					cell: () => null,
+					onChange: () => undefined,
+					unavailableReason: 'Keine E-Mail-Adresse'
+				}}
+			/>
+		);
+	const unavailableCells = () =>
+		Array.from(
+			screen
+				.getByRole('row', { name: /Nachrichten/ })
+				.querySelectorAll<HTMLElement>(
+					'.displayFilterDialog__unavailable'
+				)
+		);
+	it('phone: shows the reason of an unavailable Browser and E-Mail cell as visible text', () => {
+		viewport.fromM = false;
+		renderUnavailable();
+		const [browser, email] = unavailableCells();
+		expectVisibleReason(browser, 'Pop-ups sind aus');
+		expectVisibleReason(email, 'Keine E-Mail-Adresse');
+	});
+	it('desktop: keeps the cell compact and shows the reason on keyboard focus, read once', async () => {
+		viewport.fromM = true;
+		try {
+			renderUnavailable();
+			const [browser, email] = unavailableCells();
+			for (const [cell, reason] of [
+				[browser, 'Pop-ups sind aus'],
+				[email, 'Keine E-Mail-Adresse']
+			] as const) {
+				expect(cell.getAttribute('tabindex')).toBe('0');
+				// The reason stays the cell's own text, so no description
+				// or label repeats it.
+				expect(cell.textContent?.split(reason)).toHaveLength(2);
+				// Keyboard focus (MUI opens on focus-visible only).
+				fireEvent.keyDown(document.body, { key: 'Tab' });
+				cell.focus();
+				await waitFor(() =>
+					expect(screen.getByRole('tooltip').textContent).toBe(reason)
+				);
+				expect(cell.hasAttribute('aria-describedby')).toBe(false);
+				expect(cell.hasAttribute('aria-label')).toBe(false);
+				expect(cell.hasAttribute('title')).toBe(false);
+				cell.blur();
+				await waitFor(() =>
+					expect(screen.queryByRole('tooltip')).toBeNull()
+				);
+			}
+		} finally {
+			viewport.fromM = false;
+		}
+	});
+	it('shows the muted notice while the Browser cells stay editable', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				onOpenProfile={() => undefined}
+				onChange={() => undefined}
+				kinds={KINDS}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={SESSION_COLUMNS}
+				browserMutedNotice="Gerade stummgeschaltet"
+			/>
+		);
+		expect(
+			screen
+				.getAllByRole('status')
+				.some((node) => node.textContent === 'Gerade stummgeschaltet')
+		).toBe(true);
+		const picker = screen.getByRole('button', {
+			name: STORY_LABELS.soundMenu('Nachrichten')
+		}) as HTMLButtonElement;
+		expect(picker.disabled).toBe(false);
 	});
 });
