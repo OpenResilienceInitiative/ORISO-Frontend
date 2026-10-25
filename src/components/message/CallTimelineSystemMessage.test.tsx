@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
 
@@ -31,7 +31,7 @@ describe('CallTimelineSystemMessage', () => {
 		expect(
 			view.container.querySelector('[data-cy="chat-system-message"]')
 		).toBeTruthy();
-		expect(screen.getByTestId('VideocamRoundedIcon')).toBeTruthy();
+		expect(screen.getByTestId('callTimelineIcon-video')).toBeTruthy();
 		fireEvent.click(screen.getByRole('button', { name: 'Join' }));
 		expect(onJoin).toHaveBeenCalledTimes(1);
 	});
@@ -106,7 +106,7 @@ describe('CallTimelineSystemMessage', () => {
 			/>
 		);
 
-		expect(screen.getByTestId('VideocamOffRoundedIcon')).toBeTruthy();
+		expect(screen.getByTestId('callTimelineIcon-videoOff')).toBeTruthy();
 		expect(screen.getByText('Duration: 02:05')).toBeTruthy();
 		expect(screen.queryByRole('button')).toBeNull();
 	});

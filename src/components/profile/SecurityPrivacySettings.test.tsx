@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { createContext, useState } from 'react';
 import {
@@ -8,7 +8,7 @@ import {
 	screen,
 	within
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 

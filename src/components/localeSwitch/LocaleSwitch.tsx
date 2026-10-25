@@ -4,6 +4,7 @@ import { ReactComponent as LanguageIconOutline } from '../../resources/img/icons
 import { useTranslation } from 'react-i18next';
 import { useContext, useEffect, useRef } from 'react';
 import { UserDataContext, LocaleContext } from '../../globalState';
+import { markLocaleChosen } from '../../globalState/provider/LocaleProvider';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import {
 	MENUPLACEMENT,
@@ -100,6 +101,7 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 			// because we're always looking by "locale" from the context but the locale is changed before
 			// we save the cookie so to fix this we set the cookie before the locale switch
 			setValueInCookie('lang', value);
+			markLocaleChosen(value);
 			setLocale(value);
 		},
 		id: 'languageSelect',

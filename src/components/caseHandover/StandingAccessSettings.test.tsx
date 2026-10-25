@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { mockUserData } from '../message/MessageItemComponent.mocks';
 import { StandingAccessSettings } from './StandingAccessSettings';
@@ -225,6 +225,12 @@ it('preserves a started channel setup after email readback becomes active so BOT
 	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
 		preference(true)
 	);
+	// No channel yet: a message whose account already reaches the person
+	// through the browser starts as its one-line summary (ORISO-Frontend#1700).
+	channels.mockReturnValue({
+		consentEmailActive: false,
+		browserActive: false
+	});
 	const view = render(<StandingAccessSettings sessionId={1} />);
 	open();
 	fireEvent.click(await screen.findByRole('switch'));
@@ -236,9 +242,93 @@ it('preserves a started channel setup after email readback becomes active so BOT
 		browserActive: false
 	});
 	view.rerender(<StandingAccessSettings sessionId={1} />);
+	// The e-mail is on, so the card is a one-line summary now; the setup stays
+	// mounted (hidden) so a BOTH flow can go on (waiting for its browser step
+	// is covered with the real setup in NotificationSetupMessage.test).
+	expect(screen.getByText('Notification setup')).toBeTruthy();
+});
+it('keeps the e-mail suggestion in full while only another channel reaches the person (ORISO-Frontend#1767 review)', async () => {
+	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
+		preference(true)
+	);
+	// Default mock: browser channel active, consent e-mail not. The suggestion
+	// is about the consent e-mail, so the browser alone does not finish it.
+	render(<StandingAccessSettings sessionId={1} />);
+	open();
+	fireEvent.click(await screen.findByRole('switch'));
+
+	expect(
+		await screen.findByRole('button', { name: 'Notification setup' })
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeNull();
+});
+it('keeps the e-mail suggestion in full while regular message e-mails are on but consent e-mails are not', async () => {
+	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
+		preference(true)
+	);
+	channels.mockReturnValue({
+		emailActive: true,
+		consentEmailActive: false,
+		browserActive: false
+	});
+	render(<StandingAccessSettings sessionId={1} />);
+	open();
+	fireEvent.click(await screen.findByRole('switch'));
+
+	expect(
+		await screen.findByRole('button', { name: 'Notification setup' })
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeNull();
+});
+it('draws the e-mail suggestion as a one-line summary once the consent e-mail is on, and can be closed', async () => {
+	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
+		preference(true)
+	);
+	channels.mockReturnValue({
+		emailActive: false,
+		consentEmailActive: false,
+		browserActive: false
+	});
+	const view = render(<StandingAccessSettings sessionId={1} />);
+	open();
+	fireEvent.click(await screen.findByRole('switch'));
+	fireEvent.click(
+		await screen.findByRole('button', { name: 'Notification setup' })
+	);
+	channels.mockReturnValue({
+		emailActive: true,
+		consentEmailActive: true,
+		browserActive: false
+	});
+	view.rerender(<StandingAccessSettings sessionId={1} />);
+
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	);
 	expect(
 		screen.getByRole('button', { name: 'Notification setup' })
 	).toBeTruthy();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.dismiss'
+		})
+	);
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+	view.unmount();
 });
 it('suppresses an unstarted recommendation if the allowed email channel is configured elsewhere', async () => {
 	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(

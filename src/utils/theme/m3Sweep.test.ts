@@ -9,7 +9,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 // CJS module; vite interops module.exports as the default export.
 import sweep from '../../../scripts/theme-migration/sweep.js';
 import { computeOrisoPalette } from './orisoScheme';

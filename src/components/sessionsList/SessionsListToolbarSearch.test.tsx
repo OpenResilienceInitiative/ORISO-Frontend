@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Search menu behaviour in the toolbar (#1195 JOB7).
  *
@@ -12,7 +12,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionsListToolbar } from './SessionsListToolbar';
 
 afterEach(cleanup);
@@ -121,5 +121,57 @@ describe('SessionsListToolbar search menu — selecting people (JOB7)', () => {
 		expect(
 			screen.getByTestId('session-search-results-scroll')
 		).toBeTruthy();
+	});
+});
+
+describe('SessionsListToolbar search menu — centre names (FE#1725)', () => {
+	it('keeps the chosen centre name when another person of it has no centre name', () => {
+		render(
+			<MemoryRouter>
+				<SessionsListToolbar
+					translate={(key) => key}
+					searchValue="nobody matches this"
+					onSearchChange={vi.fn()}
+					activeChip={null}
+					onChipToggle={vi.fn()}
+					showConsultantActions
+					showCreateGroupChatAction={false}
+					showSupervisionChip={false}
+					showGroupChip
+					showInternalGroupChip
+					createGroupChatPath="/sessions/create"
+					archiveTabPath="/sessions/archive"
+					archiveTabActive={false}
+					createGroupChatActive={false}
+					searchPeopleResults={[
+						{
+							id: 'consultant:ann:9',
+							name: 'Ann',
+							subtitle: 'Berater:in | Shelbyville',
+							role: 'consultant' as const,
+							avatarSeed: 'ann',
+							agencyId: 9,
+							agencyName: 'Shelbyville'
+						},
+						{
+							id: 'consultant:bob:9',
+							name: 'Bob',
+							subtitle: 'Berater:in',
+							role: 'consultant' as const,
+							avatarSeed: 'bob',
+							agencyId: 9
+						}
+					]}
+					selectedPersonIds={[]}
+					onSelectedPersonIdsChange={vi.fn()}
+					selectedAgencyId="9"
+					onSelectedAgencyIdChange={vi.fn()}
+				/>
+			</MemoryRouter>
+		);
+		fireEvent.focus(screen.getByRole('searchbox'));
+		fireEvent.click(screen.getByRole('tab', { name: /tabs\.centre/ }));
+
+		expect(screen.getByRole('radio', { name: 'Shelbyville' })).toBeTruthy();
 	});
 });

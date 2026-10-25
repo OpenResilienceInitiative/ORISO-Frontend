@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 // vi.mock factories are hoisted above imports, so referenced variables must
 // be prefixed with "mock" (Vitest's hoisting convention) -- see

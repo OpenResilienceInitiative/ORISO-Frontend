@@ -36,6 +36,7 @@ import {
 } from '../../utils/avatarChoice';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 import { counsellorInitials } from '../../utils/counsellorAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 
 /** The timeline event that carries it. Mirrored in the fork. */
 export const CALL_IDENTITY_EVENT_TYPE = 'org.oriso.call.identity';
@@ -51,6 +52,28 @@ export interface CallIdentity {
 	ink: string;
 	/** One or two letters, for the initials kind. */
 	initials?: string;
+	/**
+	 * What this person is CALLED, by the name the chat already uses.
+	 *
+	 * Inherited for the same reason the animal is, and for a reason of its
+	 * own: the call has no other source for a name. Element Call reads
+	 * `RoomMember.name`, matrix-js-sdk answers that with the user id for a
+	 * profile that has none, and an ORISO account has none — the pseudonym
+	 * lives in the userservice and is never written to the homeserver. So
+	 * every tile in the live walkthrough of 22 October was labelled
+	 * `@cyrus:oriso.org`.
+	 *
+	 * Writing it to the Matrix profile instead would have been the smaller
+	 * change and the wrong one: a profile display name is server-visible and
+	 * federates, so it would publish the pseudonym permanently in order to
+	 * close the leak temporarily. This event is already encrypted and already
+	 * carries exactly this kind of fact.
+	 *
+	 * Composed by `formatMessagePersonName` with NO legal name supplied —
+	 * ADR-002 §2 and `resolveIncomingConsultantNameForAsker`: a counsellor's
+	 * real name is staff data, and the advice seeker is in this call.
+	 */
+	name?: string;
 }
 
 export interface BrandPair {
@@ -106,6 +129,30 @@ export function ownCallIdentity({
 	// stylesheet that has not loaded — would travel as the empty string and
 	// be rejected at the other end. Falling back to the derived palette keeps
 	// the person visible in their own colour instead of invisible in none.
+	/*
+	 * The published name, and only the published name.
+	 *
+	 * Two arguments rather than four, deliberately: `formatMessagePersonName`
+	 * falls back to the legal name when it is given one and has nothing
+	 * else, and this record is read by everybody in the call. The chat's own
+	 * asker-facing surfaces withhold it the same way.
+	 *
+	 * Empty when there is nothing to say, and then the field is left off the
+	 * event rather than sent blank — the fork treats absent as "we were not
+	 * told" and falls back to what it has.
+	 */
+	/*
+	 * Spread, so an unknown name is ABSENT rather than present and empty.
+	 * The fork reads "absent" as "we were not told" and keeps what it has;
+	 * a key whose value is `undefined` also fails the shape the contract
+	 * test pins, which is the check that would have caught it.
+	 */
+	const name = formatMessagePersonName(
+		userData.displayName,
+		userData.userName
+	);
+	const named: { name?: string } = name ? { name } : {};
+
 	const derived = generateAvatarForUser(userId);
 	const branded: BrandPair = {
 		primary: HEX.test(brand.primary.trim())
@@ -121,7 +168,8 @@ export function ownCallIdentity({
 			kind: 'motif',
 			file: choice.file,
 			bg: branded.primary,
-			ink: branded.onPrimary
+			ink: branded.onPrimary,
+			...named
 		};
 
 	if (choice?.kind === 'initials')
@@ -134,14 +182,16 @@ export function ownCallIdentity({
 				firstName: userData.firstName,
 				lastName: userData.lastName,
 				username: userData.userName
-			})
+			}),
+			...named
 		};
 
 	return {
 		kind: 'animal',
 		file: choice?.kind === 'animal' ? choice.file : derived.file,
 		bg: derived.bg,
-		ink: derived.iconColor
+		ink: derived.iconColor,
+		...named
 	};
 }
 
@@ -156,6 +206,9 @@ export function sameCallIdentity(
 		a.file === b.file &&
 		a.bg === b.bg &&
 		a.ink === b.ink &&
-		a.initials === b.initials
+		a.initials === b.initials &&
+		// Without this a renamed person kept the old tag for the rest of the
+		// call: the publisher skips an identity it considers unchanged.
+		a.name === b.name
 	);
 }

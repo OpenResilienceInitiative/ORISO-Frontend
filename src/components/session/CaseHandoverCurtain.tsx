@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-	apiGetCaseHandoverReasons,
 	apiGetCaseHandoverStatus,
 	apiReclaimCaseHandover,
 	apiRequestCaseHandoverAccess,
@@ -18,12 +17,15 @@ import {
 } from './caseHandoverHelpers';
 import { ReactComponent as CaseHandoverIcon } from '../../resources/img/icons/case-handover/case-handover-wizard.svg';
 import { ReactComponent as TutorialIcon } from '../../resources/img/icons/case-handover/tutorial.svg';
+import { ReactComponent as EyeClosedIcon } from '../../resources/img/icons/eye-closed.svg';
 import './caseHandoverCurtain.styles';
 import { ScrollableSection } from '../scrollableSection/ScrollableSection';
 import { ScrollableSectionHeader } from '../scrollableSection/ScrollableSectionHeader';
 import { ScrollableSectionBody } from '../scrollableSection/ScrollableSectionBody';
 import { ScrollableSectionFooter } from '../scrollableSection/ScrollableSectionFooter';
 import { SideScrollerFooter } from '../sideScrollerFooter/SideScrollerFooter';
+import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { SessionTopic } from '../sessionHeader/SessionTopic';
 import {
 	activateCaseHandoverActor,
@@ -51,12 +53,7 @@ export type CaseHandoverCurtainStep =
 	| 'denied';
 
 const IconEyeOff = () => (
-	<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M15.775 12.975L14.325 11.525C14.475 10.7417 14.25 10.0083 13.65 9.325C13.05 8.64167 12.275 8.375 11.325 8.525L9.875 7.075C10.2083 6.925 10.5458 6.8125 10.8875 6.7375C11.2292 6.6625 11.6 6.625 12 6.625C13.25 6.625 14.3125 7.0625 15.1875 7.9375C16.0625 8.8125 16.5 9.875 16.5 11.125C16.5 11.525 16.4625 11.8958 16.3875 12.2375C16.3125 12.5792 16.1083 12.825 15.775 12.975ZM19.3 16.45L17.85 15.05C18.4833 14.5667 19.046 14.0375 19.538 13.4625C20.0293 12.8875 20.4417 12.2417 20.775 11.525C19.9417 9.84167 18.7460 8.50417 17.188 7.5125C15.6293 6.52083 13.9 6.025 12 6.025C11.5167 6.025 11.0417 6.05833 10.575 6.125C10.1083 6.19167 9.65 6.29167 9.2 6.425L7.65 4.875C8.34167 4.59167 9.05 4.38333 9.775 4.25C10.5 4.11667 11.2417 4.05 12 4.05C14.4833 4.05 16.7043 4.7375 18.663 6.1125C20.621 7.4875 22.0417 9.29167 22.925 11.525C22.5417 12.5083 22.0377 13.4167 21.413 14.25C20.7877 15.0833 20.0833 15.8167 19.3 16.45ZM19.8 22.6L15.6 18.45C15.0167 18.6333 14.4293 18.7708 13.838 18.8625C13.246 18.9542 12.6333 19 12 19C9.51667 19 7.29567 18.3125 5.337 16.9375C3.379 15.5625 1.95833 13.7583 1.075 11.525C1.425 10.6417 1.86667 9.82083 2.4 9.0625C2.93333 8.30417 3.54167 7.625 4.225 7.025L1.4 4.2L2.8 2.8L21.2 21.2L19.8 22.6ZM5.625 8.425C5.14167 8.85833 4.696 9.33333 4.288 9.85C3.87933 10.3667 3.54167 10.925 3.275 11.525C4.10833 13.2083 5.304 14.5458 6.862 15.5375C8.42067 16.5292 10.15 17.025 12 17.025C12.3167 17.025 12.6293 17.0042 12.938 16.9625C13.246 16.9208 13.5583 16.875 13.875 16.825L12.975 15.875C12.8083 15.925 12.6458 15.9625 12.4875 15.9875C12.3292 16.0125 12.1667 16.025 12 16.025C10.75 16.025 9.6875 15.5875 8.8125 14.7125C7.9375 13.8375 7.5 12.775 7.5 11.525C7.5 11.3583 7.51267 11.1958 7.538 11.0375C7.56267 10.8792 7.6 10.7167 7.65 10.55L5.625 8.425Z"
-			fill="currentColor"
-		/>
-	</svg>
+	<EyeClosedIcon width={22} height={22} fill="currentColor" aria-hidden />
 );
 
 export interface CaseHandoverCurtainViewProps {
@@ -67,6 +64,11 @@ export interface CaseHandoverCurtainViewProps {
 	explanation: string;
 	isSubmitting?: boolean;
 	error?: string;
+	/** Reasons finished loading and none came back (FE#1725 US26). */
+	reasonsUnavailable?: boolean;
+	/** Loading the reasons failed; offers `onRetryReasons`. */
+	reasonsLoadFailed?: boolean;
+	onRetryReasons?: () => void;
 	onStart: () => void;
 	onBack: () => void;
 	onNext: () => void;
@@ -87,6 +89,9 @@ export const CaseHandoverCurtainView = ({
 	explanation,
 	isSubmitting = false,
 	error,
+	reasonsUnavailable = false,
+	reasonsLoadFailed = false,
+	onRetryReasons,
 	onStart,
 	onBack,
 	onNext,
@@ -101,6 +106,10 @@ export const CaseHandoverCurtainView = ({
 		() => reasons.find((reason) => reason.code === reasonCode),
 		[reasons, reasonCode]
 	);
+	// No reasons: say so instead of offering a Next that can never enable.
+	const reasonsFailed = step === 'reason' && reasonsLoadFailed;
+	const noReasons =
+		step === 'reason' && (reasonsUnavailable || reasonsLoadFailed);
 
 	return (
 		<div className="caseHandoverCurtain" data-cy="case-handover-curtain">
@@ -222,6 +231,46 @@ export const CaseHandoverCurtainView = ({
 													'caseHandover.curtain.describe.subtitle'
 												)}
 									</p>
+									{reasonsFailed && (
+										<div
+											className="caseHandoverCurtain__loadFailed"
+											role="alert"
+											data-cy="case-handover-curtain-reasons-failed"
+										>
+											<p className="caseHandoverCurtain__empty">
+												{translate(
+													'caseHandover.curtain.reason.loadFailed'
+												)}
+											</p>
+											{onRetryReasons && (
+												<ButtonGroup
+													variant="outline"
+													items={[
+														{
+															label: translate(
+																'caseHandover.curtain.reason.retry'
+															),
+															onClick:
+																onRetryReasons,
+															testingAttribute:
+																'case-handover-curtain-reasons-retry'
+														}
+													]}
+												/>
+											)}
+										</div>
+									)}
+									{noReasons && !reasonsFailed && (
+										<p
+											className="caseHandoverCurtain__empty"
+											role="status"
+											data-cy="case-handover-curtain-no-reasons"
+										>
+											{translate(
+												'caseHandover.curtain.reason.empty'
+											)}
+										</p>
+									)}
 									<CaseHandoverReasonList
 										reasons={reasons}
 										reasonCode={reasonCode}
@@ -296,35 +345,40 @@ export const CaseHandoverCurtainView = ({
 						</div>
 					</ScrollableSectionBody>
 					<ScrollableSectionFooter>
-						{(step === 'reason' || step === 'describe') && (
-							<SideScrollerFooter
-								variant="wizard"
-								back={{
-									label: translate(
-										'caseHandover.curtain.back'
-									),
-									onClick: onBack,
-									disabled: step === 'reason',
-									dataCy: 'case-handover-curtain-back'
-								}}
-								next={{
-									label:
-										step === 'reason'
-											? translate(
-													'caseHandover.curtain.next'
-												)
-											: translate('caseHandover.submit'),
-									onClick:
-										step === 'reason' ? onNext : onSubmit,
-									disabled:
-										step === 'reason'
-											? !selectedReason
-											: !explanation.trim() ||
-												isSubmitting,
-									dataCy: 'case-handover-curtain-next'
-								}}
-							/>
-						)}
+						{(step === 'reason' || step === 'describe') &&
+							!noReasons && (
+								<SideScrollerFooter
+									variant="wizard"
+									back={{
+										label: translate(
+											'caseHandover.curtain.back'
+										),
+										onClick: onBack,
+										disabled: step === 'reason',
+										dataCy: 'case-handover-curtain-back'
+									}}
+									next={{
+										label:
+											step === 'reason'
+												? translate(
+														'caseHandover.curtain.next'
+													)
+												: translate(
+														'caseHandover.submit'
+													),
+										onClick:
+											step === 'reason'
+												? onNext
+												: onSubmit,
+										disabled:
+											step === 'reason'
+												? !selectedReason
+												: !explanation.trim() ||
+													isSubmitting,
+										dataCy: 'case-handover-curtain-next'
+									}}
+								/>
+							)}
 					</ScrollableSectionFooter>
 				</ScrollableSection>
 			</div>
@@ -350,7 +404,13 @@ export const CaseHandoverCurtain = ({
 }: CaseHandoverCurtainProps) => {
 	const { t: translate } = useTranslation();
 	const [step, setStep] = useState<CaseHandoverCurtainStep>('intro');
-	const [reasons, setReasons] = useState<CaseHandoverReason[]>([]);
+	const {
+		reasons,
+		loaded: reasonsLoaded,
+		unavailable: reasonsUnavailable,
+		failed: reasonsLoadFailed,
+		retry: retryReasons
+	} = useCaseHandoverReasons();
 	const [reasonCode, setReasonCode] = useState('');
 	const [explanation, setExplanation] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -380,19 +440,13 @@ export const CaseHandoverCurtain = ({
 		setIsSubmitting(false);
 	}, [actorId, sessionId]);
 
+	// A retained reason that is no longer offered is dropped.
 	useEffect(() => {
-		apiGetCaseHandoverReasons()
-			.then((items) => {
-				setReasons(items || []);
-				setReasonCode((current) =>
-					items?.some((item) => item.code === current) ? current : ''
-				);
-			})
-			.catch(() => {
-				setReasons([]);
-				setError(translate('caseHandover.error.failed'));
-			});
-	}, [translate]);
+		if (!reasonsLoaded) return;
+		setReasonCode((current) =>
+			reasons.some((item) => item.code === current) ? current : ''
+		);
+	}, [reasons, reasonsLoaded]);
 
 	const canReclaim = status?.canReclaim === true;
 
@@ -521,6 +575,9 @@ export const CaseHandoverCurtain = ({
 			explanation={explanation}
 			isSubmitting={isSubmitting}
 			error={error}
+			reasonsUnavailable={reasonsUnavailable}
+			reasonsLoadFailed={reasonsLoadFailed}
+			onRetryReasons={retryReasons}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
 			onNext={() => setStep('describe')}

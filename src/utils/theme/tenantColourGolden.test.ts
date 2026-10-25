@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Golden fixture for tenant seed colours (ORISO-UserService#1252, ADR-026
  * amendment 2026-10-02).
@@ -21,7 +21,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { applyTenantPalette } from './applyTenantTheme';
 
 const FIXTURE = path.join(

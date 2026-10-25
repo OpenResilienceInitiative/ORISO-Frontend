@@ -1,57 +1,57 @@
 name: Storybook Build and Publish
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-      - pre-dev
+    push:
+        branches:
+            - main
+            - dev
+            - pre-dev
 
 env:
-  REGISTRY: ghcr.io
-  ORG: openresilienceinitiative
+    REGISTRY: ghcr.io
+    ORG: openresilienceinitiative
 
 # A publishing run must finish: cancelling one halfway is worse
 # than paying for it.
 concurrency:
-  group: frontend-storybook-main-${{ github.ref }}
-  cancel-in-progress: false
+    group: frontend-storybook-main-${{ github.ref }}
+    cancel-in-progress: false
 
 jobs:
-  publish:
-    name: lint, type-check, build and publish Storybook image
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    publish:
+        name: lint, type-check, build and publish Storybook image
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
 
-    permissions:
-      contents: read
-      packages: write
+        permissions:
+            contents: read
+            packages: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
 
-      # Kept on the publish path even though "Frontend Build and Publish" runs
-      # the same checks on the same commit. The two workflows are independent,
-      # so a red frontend run cannot stop this one, and nothing here would
-      # otherwise prevent publishing a Storybook image built from code that
-      # fails lint or unit tests. On the PR path the equivalent step is dropped:
-      # there "Frontend PR Validation" reports as its own visible check on the
-      # same commit, so the reviewer sees the failure before anything merges.
-      - name: Run frontend validation and build
-        uses: ./.github/actions/node-build
-        with:
-          node_version: '22'
+            # Kept on the publish path even though "Frontend Build and Publish" runs
+            # the same checks on the same commit. The two workflows are independent,
+            # so a red frontend run cannot stop this one, and nothing here would
+            # otherwise prevent publishing a Storybook image built from code that
+            # fails lint or unit tests. On the PR path the equivalent step is dropped:
+            # there "Frontend PR Validation" reports as its own visible check on the
+            # same commit, so the reviewer sees the failure before anything merges.
+            - name: Run frontend validation and build
+              uses: ./.github/actions/node-build
+              with:
+                  node_version: '22.23.3'
 
-      # The image copies this output instead of rebuilding Storybook inside
-      # Docker; see the header of Dockerfile.storybook.
-      - name: Build Storybook static output
-        run: npm run build-storybook
+            # The image copies this output instead of rebuilding Storybook inside
+            # Docker; see the header of Dockerfile.storybook.
+            - name: Build Storybook static output
+              run: npm run build-storybook
 
-      - name: Publish Storybook Docker image
-        uses: ./.github/actions/docker-build-push
-        with:
-          push_to_ghcr: true
-          image_name: oriso-storybook
-          dockerfile: Dockerfile.storybook
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+            - name: Publish Storybook Docker image
+              uses: ./.github/actions/docker-build-push
+              with:
+                  push_to_ghcr: true
+                  image_name: oriso-storybook
+                  dockerfile: Dockerfile.storybook
+                  github_token: ${{ secrets.GITHUB_TOKEN }}

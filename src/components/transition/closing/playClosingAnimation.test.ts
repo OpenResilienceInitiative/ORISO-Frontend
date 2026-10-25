@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { orisoInputColors } from '../../form/orisoInputDesign';
 import { transitionMotion } from '../transitionMotion';
 import { playClosingAnimation } from './playClosingAnimation';

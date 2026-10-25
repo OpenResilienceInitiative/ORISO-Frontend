@@ -2,7 +2,7 @@
  * Relations foundation (#435) — timeline formatter reply coverage.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	buildCallLifecycleContent,
 	type CallLifecycleMessage

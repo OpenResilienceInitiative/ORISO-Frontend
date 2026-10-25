@@ -3,250 +3,250 @@ name: Frontend Release Image
 run-name: Publish frontend release image from ${{ github.ref_name }}
 
 on:
-  push:
-    branches:
-      - "release/frontend-*"
+    push:
+        branches:
+            - 'release/frontend-*'
 
 env:
-  REGISTRY: ghcr.io
-  ORG: openresilienceinitiative
-  IMAGE_NAME: oriso-frontend
-  STORYBOOK_IMAGE_NAME: oriso-storybook
+    REGISTRY: ghcr.io
+    ORG: openresilienceinitiative
+    IMAGE_NAME: oriso-frontend
+    STORYBOOK_IMAGE_NAME: oriso-storybook
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
-  artifact-metadata: write
-  packages: write
+    contents: write
+    id-token: write
+    attestations: write
+    artifact-metadata: write
+    packages: write
 
 jobs:
-  release:
-    name: validate, build, tag and publish release image
-    if: ${{ github.event.deleted == false }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    release:
+        name: validate, build, tag and publish release image
+        if: ${{ github.event.deleted == false }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
 
-    steps:
-      - name: Checkout release branch
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
+        steps:
+            - name: Checkout release branch
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
 
-      - name: Extract and validate release version
-        shell: bash
-        run: |
-          set -euo pipefail
+            - name: Extract and validate release version
+              shell: bash
+              run: |
+                  set -euo pipefail
 
-          BRANCH="${GITHUB_REF_NAME}"
-          VERSION="${BRANCH#release/frontend-}"
+                  BRANCH="${GITHUB_REF_NAME}"
+                  VERSION="${BRANCH#release/frontend-}"
 
-          if [[ "$BRANCH" == "$VERSION" ]]; then
-            echo "Invalid release branch. Expected release/frontend-X.Y.Z"
-            exit 1
-          fi
+                  if [[ "$BRANCH" == "$VERSION" ]]; then
+                    echo "Invalid release branch. Expected release/frontend-X.Y.Z"
+                    exit 1
+                  fi
 
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Version must use MAJOR.MINOR.PATCH format, for example 2.0.1"
-            exit 1
-          fi
+                  if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "Version must use MAJOR.MINOR.PATCH format, for example 2.0.1"
+                    exit 1
+                  fi
 
-          if git ls-remote --tags origin "refs/tags/v${VERSION}" | grep -q "refs/tags/v${VERSION}"; then
-            echo "Tag v${VERSION} already exists. Choose a new version or delete the incorrect tag first."
-            exit 1
-          fi
+                  if git ls-remote --tags origin "refs/tags/v${VERSION}" | grep -q "refs/tags/v${VERSION}"; then
+                    echo "Tag v${VERSION} already exists. Choose a new version or delete the incorrect tag first."
+                    exit 1
+                  fi
 
-          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-          echo "IMAGE=${REGISTRY}/${ORG}/${IMAGE_NAME}:${VERSION}" >> "$GITHUB_ENV"
-          echo "STORYBOOK_IMAGE=${REGISTRY}/${ORG}/${STORYBOOK_IMAGE_NAME}:${VERSION}" >> "$GITHUB_ENV"
+                  echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+                  echo "IMAGE=${REGISTRY}/${ORG}/${IMAGE_NAME}:${VERSION}" >> "$GITHUB_ENV"
+                  echo "STORYBOOK_IMAGE=${REGISTRY}/${ORG}/${STORYBOOK_IMAGE_NAME}:${VERSION}" >> "$GITHUB_ENV"
 
-      - name: Run frontend validation and build
-        uses: ./.github/actions/node-build
-        with:
-          node_version: '22'
+            - name: Run frontend validation and build
+              uses: ./.github/actions/node-build
+              with:
+                  node_version: '22.23.3'
 
-      # The Storybook image copies this output instead of rebuilding Storybook
-      # inside Docker (see the header of Dockerfile.storybook), so the release
-      # has to produce it exactly as ci-storybook-main.yml does. Without this
-      # step the image build fails on `COPY storybook-static`.
-      - name: Build Storybook static output
-        run: npm run build-storybook
+            # The Storybook image copies this output instead of rebuilding Storybook
+            # inside Docker (see the header of Dockerfile.storybook), so the release
+            # has to produce it exactly as ci-storybook-main.yml does. Without this
+            # step the image build fails on `COPY storybook-static`.
+            - name: Build Storybook static output
+              run: npm run build-storybook
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v4
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v4
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
 
-      # Scan before publishing. A scan that runs after `push: true` cannot keep
-      # a vulnerable image out of the registry — the release tag is already
-      # pullable and deployable by the time the run turns red
-      # (OpenResilienceInitiative/ORISO-Docs#88). `load: true` supports a single
-      # platform only, so the scanned images are amd64; that is what Trivy
-      # picked out of the multi-platform index before anyway. The publish builds
-      # below reuse these layers from the buildx builder's local cache, so only
-      # the arm64 halves are new work.
-      #
-      # Both images are scanned before either is pushed: a release publishes two
-      # images plus a git tag and a GitHub release, and a finding in the second
-      # image must not leave the first one published.
-      - name: Build amd64 frontend image locally for scanning
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64
-          push: false
-          load: true
-          # The docker exporter cannot carry attestations, and a throwaway scan
-          # image has no use for them.
-          provenance: false
-          sbom: false
-          tags: ${{ env.IMAGE_NAME }}:ci-scan
-          labels: |
-            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
-            org.opencontainers.image.version=${{ env.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha
+            # Scan before publishing. A scan that runs after `push: true` cannot keep
+            # a vulnerable image out of the registry — the release tag is already
+            # pullable and deployable by the time the run turns red
+            # (OpenResilienceInitiative/ORISO-Docs#88). `load: true` supports a single
+            # platform only, so the scanned images are amd64; that is what Trivy
+            # picked out of the multi-platform index before anyway. The publish builds
+            # below reuse these layers from the buildx builder's local cache, so only
+            # the arm64 halves are new work.
+            #
+            # Both images are scanned before either is pushed: a release publishes two
+            # images plus a git tag and a GitHub release, and a finding in the second
+            # image must not leave the first one published.
+            - name: Build amd64 frontend image locally for scanning
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: Dockerfile
+                  platforms: linux/amd64
+                  push: false
+                  load: true
+                  # The docker exporter cannot carry attestations, and a throwaway scan
+                  # image has no use for them.
+                  provenance: false
+                  sbom: false
+                  tags: ${{ env.IMAGE_NAME }}:ci-scan
+                  labels: |
+                      org.opencontainers.image.title=${{ env.IMAGE_NAME }}
+                      org.opencontainers.image.version=${{ env.VERSION }}
+                      org.opencontainers.image.revision=${{ github.sha }}
+                  cache-from: type=gha
 
-      - name: Build amd64 Storybook image locally for scanning
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: Dockerfile.storybook
-          platforms: linux/amd64
-          push: false
-          load: true
-          # The docker exporter cannot carry attestations, and a throwaway scan
-          # image has no use for them.
-          provenance: false
-          sbom: false
-          tags: ${{ env.STORYBOOK_IMAGE_NAME }}:ci-scan
-          labels: |
-            org.opencontainers.image.title=${{ env.STORYBOOK_IMAGE_NAME }}
-            org.opencontainers.image.version=${{ env.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha
+            - name: Build amd64 Storybook image locally for scanning
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: Dockerfile.storybook
+                  platforms: linux/amd64
+                  push: false
+                  load: true
+                  # The docker exporter cannot carry attestations, and a throwaway scan
+                  # image has no use for them.
+                  provenance: false
+                  sbom: false
+                  tags: ${{ env.STORYBOOK_IMAGE_NAME }}:ci-scan
+                  labels: |
+                      org.opencontainers.image.title=${{ env.STORYBOOK_IMAGE_NAME }}
+                      org.opencontainers.image.version=${{ env.VERSION }}
+                      org.opencontainers.image.revision=${{ github.sha }}
+                  cache-from: type=gha
 
-      - name: Reject fixable frontend image vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}:ci-scan
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
+            - name: Reject fixable frontend image vulnerabilities
+              uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              with:
+                  image-ref: ${{ env.IMAGE_NAME }}:ci-scan
+                  format: table
+                  exit-code: '1'
+                  ignore-unfixed: true
+                  vuln-type: os,library
+                  severity: CRITICAL,HIGH
 
-      - name: Reject fixable Storybook image vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.STORYBOOK_IMAGE_NAME }}:ci-scan
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
+            - name: Reject fixable Storybook image vulnerabilities
+              uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              with:
+                  image-ref: ${{ env.STORYBOOK_IMAGE_NAME }}:ci-scan
+                  format: table
+                  exit-code: '1'
+                  ignore-unfixed: true
+                  vuln-type: os,library
+                  severity: CRITICAL,HIGH
 
-      - name: Publish versioned frontend Docker image
-        id: frontend_image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          provenance: mode=max
-          sbom: true
-          tags: ${{ env.IMAGE }}
-          labels: |
-            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
-            org.opencontainers.image.version=${{ env.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            - name: Publish versioned frontend Docker image
+              id: frontend_image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: Dockerfile
+                  platforms: linux/amd64,linux/arm64
+                  push: true
+                  provenance: mode=max
+                  sbom: true
+                  tags: ${{ env.IMAGE }}
+                  labels: |
+                      org.opencontainers.image.title=${{ env.IMAGE_NAME }}
+                      org.opencontainers.image.version=${{ env.VERSION }}
+                      org.opencontainers.image.revision=${{ github.sha }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-      - name: Publish versioned Storybook Docker image
-        id: storybook_image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: Dockerfile.storybook
-          platforms: linux/amd64,linux/arm64
-          push: true
-          provenance: mode=max
-          sbom: true
-          tags: ${{ env.STORYBOOK_IMAGE }}
-          labels: |
-            org.opencontainers.image.title=${{ env.STORYBOOK_IMAGE_NAME }}
-            org.opencontainers.image.version=${{ env.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            - name: Publish versioned Storybook Docker image
+              id: storybook_image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: Dockerfile.storybook
+                  platforms: linux/amd64,linux/arm64
+                  push: true
+                  provenance: mode=max
+                  sbom: true
+                  tags: ${{ env.STORYBOOK_IMAGE }}
+                  labels: |
+                      org.opencontainers.image.title=${{ env.STORYBOOK_IMAGE_NAME }}
+                      org.opencontainers.image.version=${{ env.VERSION }}
+                      org.opencontainers.image.revision=${{ github.sha }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-      - name: Sign and publish frontend image provenance
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.frontend_image.outputs.digest }}
-          push-to-registry: true
+            - name: Sign and publish frontend image provenance
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
+              with:
+                  subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}
+                  subject-digest: ${{ steps.frontend_image.outputs.digest }}
+                  push-to-registry: true
 
-      - name: Sign and publish Storybook image provenance
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.STORYBOOK_IMAGE_NAME }}
-          subject-digest: ${{ steps.storybook_image.outputs.digest }}
-          push-to-registry: true
+            - name: Sign and publish Storybook image provenance
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
+              with:
+                  subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.STORYBOOK_IMAGE_NAME }}
+                  subject-digest: ${{ steps.storybook_image.outputs.digest }}
+                  push-to-registry: true
 
-      - name: Create and push release tag
-        shell: bash
-        run: |
-          set -euo pipefail
+            - name: Create and push release tag
+              shell: bash
+              run: |
+                  set -euo pipefail
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${VERSION}" -m "Release frontend v${VERSION}"
-          git push origin "v${VERSION}"
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git tag -a "v${VERSION}" -m "Release frontend v${VERSION}"
+                  git push origin "v${VERSION}"
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.VERSION }}
-          name: Frontend v${{ env.VERSION }}
-          generate_release_notes: true
-          body: |
-            ## Release Artifact
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: v${{ env.VERSION }}
+                  name: Frontend v${{ env.VERSION }}
+                  generate_release_notes: true
+                  body: |
+                      ## Release Artifact
 
-            Docker images:
-            `${{ env.IMAGE }}` (digest `${{ steps.frontend_image.outputs.digest }}`)
-            `${{ env.STORYBOOK_IMAGE }}` (digest `${{ steps.storybook_image.outputs.digest }}`)
+                      Docker images:
+                      `${{ env.IMAGE }}` (digest `${{ steps.frontend_image.outputs.digest }}`)
+                      `${{ env.STORYBOOK_IMAGE }}` (digest `${{ steps.storybook_image.outputs.digest }}`)
 
-            Source branch:
-            `${{ github.ref_name }}`
+                      Source branch:
+                      `${{ github.ref_name }}`
 
-            Source commit:
-            `${{ github.sha }}`
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                      Source commit:
+                      `${{ github.sha }}`
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Release summary
-        shell: bash
-        run: |
-          {
-            echo "### Frontend release image"
-            echo ""
-            echo "- Git tag: \`v${VERSION}\`"
-            echo "- Image: \`${IMAGE}\`"
-            echo "- Image digest: \`${REGISTRY}/${ORG}/${IMAGE_NAME}@${{ steps.frontend_image.outputs.digest }}\`"
-            echo "- Storybook image: \`${STORYBOOK_IMAGE}\`"
-            echo "- Storybook digest: \`${REGISTRY}/${ORG}/${STORYBOOK_IMAGE_NAME}@${{ steps.storybook_image.outputs.digest }}\`"
-            echo "- Source branch: \`${GITHUB_REF_NAME}\`"
-            echo "- GitHub Release: \`Frontend v${VERSION}\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+            - name: Release summary
+              shell: bash
+              run: |
+                  {
+                    echo "### Frontend release image"
+                    echo ""
+                    echo "- Git tag: \`v${VERSION}\`"
+                    echo "- Image: \`${IMAGE}\`"
+                    echo "- Image digest: \`${REGISTRY}/${ORG}/${IMAGE_NAME}@${{ steps.frontend_image.outputs.digest }}\`"
+                    echo "- Storybook image: \`${STORYBOOK_IMAGE}\`"
+                    echo "- Storybook digest: \`${REGISTRY}/${ORG}/${STORYBOOK_IMAGE_NAME}@${{ steps.storybook_image.outputs.digest }}\`"
+                    echo "- Source branch: \`${GITHUB_REF_NAME}\`"
+                    echo "- GitHub Release: \`Frontend v${VERSION}\`"
+                  } >> "$GITHUB_STEP_SUMMARY"

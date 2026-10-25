@@ -10,6 +10,7 @@ export * from './apiAddSessionSupervisor';
 export * from './apiRemoveSessionSupervisor';
 export * from './apiCaseHandover';
 export * from './apiEnquiryAcceptance';
+export * from './apiRejectEnquiry';
 export * from './apiGetAgenciesByTenant';
 export * from './apiGetAgencyConsultantList';
 export * from './apiGetAgencyId';

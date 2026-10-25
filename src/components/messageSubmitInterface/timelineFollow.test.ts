@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
 	AUTO_FOCUS_ATTRIBUTE,
 	BOTTOM_TOLERANCE_PX,

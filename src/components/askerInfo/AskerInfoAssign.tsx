@@ -33,6 +33,7 @@ import {
 	SupervisorDialogPerson
 } from '../supervisorDialog/SupervisorDialog';
 import { useCaseHandoverResolutionEvents } from '../caseHandover/useCaseHandoverResolutionEvents';
+import { caseHandoverReasonOptionLabel } from '../caseHandover/caseHandoverReasons';
 import {
 	activateCaseHandoverActor,
 	clearCaseHandoverOperation,
@@ -403,7 +404,10 @@ export const AskerInfoAssign = ({
 						.filter(isOfferableReason)
 						.map((reason) => ({
 							code: reason.code,
-							label: reason.label
+							label: caseHandoverReasonOptionLabel(
+								translate,
+								reason
+							)
 						}))}
 					selectedId={selectedId}
 					reason={reasonCode}

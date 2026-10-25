@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createScriptFromI18n } from './createScriptFromI18n';
 import {
 	createPracticeTestI18n,

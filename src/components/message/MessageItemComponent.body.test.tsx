@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1253 — the message body must exist on the first paint, and a body that is
  * not known yet must not be dressed as a finished message.
@@ -9,7 +9,7 @@
  */
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { initialDecryptedBody } from './MessageItemComponent';
 
 // lottie-web asks for a 2d canvas context at import time, which jsdom does not

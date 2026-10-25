@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -8,7 +8,7 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 /* The advice seeker's waiting room inside the app hands its join request back
    to the room, so the closing animation keeps the screen covered until the

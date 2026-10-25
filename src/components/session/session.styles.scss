@@ -288,6 +288,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		animation: session-input-reveal 360ms ease;
 	}
 
+	// The maximised composer is fixed to the visual viewport. Even an
+	// identity transform on this reveal wrapper makes it the containing
+	// block instead, placing the editor outside that viewport.
+	&__gameInputFadeTarget:has(.messageSubmit__wrapper--expanded) {
+		transform: none;
+		animation: none;
+		transition-property: opacity;
+	}
+
 	/* The breathing companion lives inline in the white session content
 	   column (product decision "das Game im weißen Teil, nicht mehr als
 	   Popup") — no fixed backdrop, no modal. It replaces the robot cards
@@ -628,6 +637,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__anonymousEnquiryClosedNote,
+	&__nobodyLiveNote,
 	&__readOnlyNote {
 		padding: 16px 24px;
 		text-align: center;
@@ -661,6 +671,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		justify-content: center;
 		padding: 0 !important;
 		overflow-y: hidden;
+	}
+
+	/* The group's consent sits where the composer would be (#1689): no
+	   composer reserve, the gate's bar at the card's bottom edge. */
+	&__content--groupConsentGate {
+		display: flex;
+		flex-direction: column;
+		padding: 0 !important;
+		overflow-y: auto;
 	}
 
 	@media screen and (width <= 899px) {

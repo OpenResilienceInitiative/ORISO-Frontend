@@ -149,13 +149,17 @@ import {
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
-	STATUS_ENQUIRY
+	STATUS_ENQUIRY,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './session.styles';
 import { focusSessionChromeOnPointerDown } from './focusSessionChrome';
 import { useDebouncedCallback } from 'use-debounce';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
+import {
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
@@ -199,6 +203,11 @@ import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
 import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import {
+	createSingleFlightPoll,
+	isNobodyLiveConfirmed,
+	nextUnavailablePollCount
+} from '../anonymousChat/entryRoom/liveChatAvailability';
 import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
@@ -226,7 +235,7 @@ import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
 import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
@@ -386,6 +395,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		number | null
 	>(null);
 	/**
+	 * Consecutive answered zeros of that poll. The endpoint reports its own
+	 * failed availability lookup as zero, so the dialog needs the same
+	 * confirmation the entry room uses (`isNobodyLiveConfirmed`, #1270).
+	 */
+	const [consecutiveUnavailablePolls, setConsecutiveUnavailablePolls] =
+		useState(0);
+	/**
 	 * Set when the asker manually dismisses the no-availability modal while
 	 * the count is still 0, so the poll doesn't immediately reopen it. Reset
 	 * automatically as soon as a consultant becomes available again.
@@ -469,6 +485,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousChat && isAskerUser && !isConsultantUser;
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
+	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
 			String(userData.dataPrivacyConfirmation).trim() !== ''
@@ -523,8 +540,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isInAnonymousWaitingQueuePhase &&
 		!consultantAccepted &&
 		!enquiryClosed &&
-		numAvailableConsultants === 0 &&
+		isNobodyLiveConfirmed(
+			numAvailableConsultants,
+			consecutiveUnavailablePolls
+		) &&
 		!liveChatClosedDismissed;
+	/**
+	 * "Come back later" only dismisses the dialog; the asker stays in the
+	 * queue, so say — without blocking anything — that nobody is live right
+	 * now. Gone as soon as somebody is (the dismissal resets then).
+	 */
+	const showNobodyLiveNote =
+		isInAnonymousWaitingQueuePhase &&
+		!consultantAccepted &&
+		!enquiryClosed &&
+		isNobodyLiveConfirmed(
+			numAvailableConsultants,
+			consecutiveUnavailablePolls
+		) &&
+		liveChatClosedDismissed;
 	const robotIncomingUsername = useMemo(() => {
 		const resolvedCandidates = [
 			contact?.displayName,
@@ -746,7 +780,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const handleReact = useCallback(
 		(messageId: string, key: string) => {
-			if (!resolvedMatrixRoomId) {
+			if (isRejectedSession || !resolvedMatrixRoomId) {
 				return;
 			}
 			chatTransportService
@@ -757,11 +791,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId]
+		[resolvedMatrixRoomId, isRejectedSession]
 	);
 	const handleUnreact = useCallback(
 		(reactionEventId: string) => {
-			if (!resolvedMatrixRoomId) {
+			if (isRejectedSession || !resolvedMatrixRoomId) {
 				return;
 			}
 			chatTransportService
@@ -771,7 +805,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId]
+		[resolvedMatrixRoomId, isRejectedSession]
 	);
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -1049,6 +1083,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		const canWrite =
+			!isRejectedSession &&
 			!isCoAccessViewer &&
 			(type !== SESSION_LIST_TYPES.ENQUIRY ||
 				(isAnonymousAskerExperience && waitingGateDismissed));
@@ -1056,6 +1091,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		isCoAccessViewer,
 		type,
+		isRejectedSession,
 		isAnonymousAskerExperience,
 		waitingGateDismissed,
 		userData,
@@ -1200,11 +1236,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
 		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
+		/* A request may outlive the 4 s interval and overlapping answers can
+		   land out of order, so only one poll is in flight: the zeros below
+		   are counted in the order they were asked (#1270). A hung request is
+		   aborted after 15 s and the next tick goes out normally. */
+		const pollOnce = createSingleFlightPoll();
 
-		const refresh = () => {
-			apiGetAnonymousEnquiryDetails(sessionId)
+		const fetchPoll = (signal: AbortSignal) => {
+			return apiGetAnonymousEnquiryDetails(sessionId, signal)
 				.then((details) => {
-					if (cancelled) return;
+					/* A poll given up on after 15 s is stale: keep the last
+					   known state. */
+					if (cancelled || signal.aborted) return;
 					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
 					   Consultants can never see or accept it — stop polling
 					   and show the closed notice instead of queue position
@@ -1220,10 +1263,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
-					setNumAvailableConsultants(
+					const polledAvailable =
 						typeof details?.numAvailableConsultants === 'number'
 							? details.numAvailableConsultants
-							: null
+							: null;
+					setNumAvailableConsultants(polledAvailable);
+					setConsecutiveUnavailablePolls((previous) =>
+						nextUnavailablePollCount(previous, polledAvailable)
 					);
 					/* Only IN_PROGRESS means a consultant is handling this
 					   enquiry. DONE/IN_ARCHIVE must NOT flip the bar — a
@@ -1246,6 +1292,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/* swallow — UI falls back to "Wird verbunden …" */
 				});
 		};
+		const refresh = () => pollOnce(fetchPoll);
 
 		refresh();
 		/* Poll every 4s so acceptance feels real-time without reload. */
@@ -1986,6 +2033,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const handleRetryFailedSend = useCallback(
 		(failedSendId: string) => {
+			if (isRejectedSession) return;
 			setRetryRequest((current) => {
 				if (current) {
 					return current;
@@ -2010,7 +2058,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: null;
 			});
 		},
-		[failedSends]
+		[failedSends, isRejectedSession]
 	);
 	const handleRetrySettled = useCallback(
 		(requestId: string, sessionIdentity: string) => {
@@ -2868,7 +2916,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const handleDeleteDirect = useCallback(
 		(message: MessageItem) => {
-			if (!resolvedMatrixRoomId || !message?._id) {
+			if (isRejectedSession || !resolvedMatrixRoomId || !message?._id) {
 				return;
 			}
 			chatTransportService
@@ -2878,7 +2926,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId]
+		[resolvedMatrixRoomId, isRejectedSession]
 	);
 
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
@@ -2948,29 +2996,37 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 
 		let disposed = false;
-		const markActive = () => {
+		const updateActiveView = () => {
 			// clearInterval cannot cancel a callback that is already queued. The
 			// guard prevents that stale heartbeat from racing after cleanup and
 			// re-enabling suppression while the user is on Notifications.
 			if (disposed) {
 				return;
 			}
+			const active =
+				document.visibilityState === 'visible' && document.hasFocus();
 			apiPatchNotificationActiveView({
 				roomId,
-				threadRootId: activeThreadRootId,
-				active: true
+				threadRootId: active ? activeThreadRootId : null,
+				active
 			}).catch(() => undefined);
 		};
 
-		markActive();
+		updateActiveView();
+		document.addEventListener('visibilitychange', updateActiveView);
+		window.addEventListener('focus', updateActiveView);
+		window.addEventListener('blur', updateActiveView);
 
 		const heartbeat = window.setInterval(() => {
-			markActive();
+			updateActiveView();
 		}, 10000);
 
 		return () => {
 			disposed = true;
 			window.clearInterval(heartbeat);
+			document.removeEventListener('visibilitychange', updateActiveView);
+			window.removeEventListener('focus', updateActiveView);
+			window.removeEventListener('blur', updateActiveView);
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: null,
@@ -3158,6 +3214,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'session__content--gameFocus',
 						shouldShowConsentGate &&
 							'session__content--consentGate',
+						shouldShowGroupConsentGate &&
+							'session__content--groupConsentGate',
 						shouldShowPseudonymGate &&
 							'session__content--pseudonymGate'
 					)}
@@ -3176,6 +3234,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<GroupConsentGate
 							agencyId={
 								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							agencyName={
+								activeSession.item?.assignedAgencies?.[0]?.name
 							}
 							onAccepted={() => {
 								setGroupConsentAccepted(true);
@@ -3231,97 +3292,62 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className={'message-holder'}>
 							{shouldShowRobotMessages &&
 								!showWaitingMiniGame &&
-								visibleRobotCards.map((card, index) => (
-									<div className="messageItem" key={card._id}>
-										<div className="messageItem__messageWrap">
-											{index === 0 && (
-												<div
-													className="messageItem__systemAvatar"
-													aria-hidden="true"
-												>
-													<NotificationBellIcon className="messageItem__systemAvatarIcon" />
-												</div>
-											)}
-											{index !== 0 && (
-												<div
-													className="session__robotIncomingAvatarSpacer"
-													aria-hidden="true"
-												/>
-											)}
-											<div className="messageItem__content">
-												{index === 0 && (
-													<div className="messageItem__header">
-														<div className="messageItem__username messageItem__username--system">
-															{translate(
-																'message.systemNotification'
-															)}
-														</div>
-														<span className="messageItem__headerTime">
-															5:00
-														</span>
-													</div>
-												)}
-												<div className="messageItem__message messageItem__message--systemNotification">
-													{index === 0 && (
-														<div className="messageItem__systemNotificationTag">
-															{translate(
-																'message.systemNotification'
-															)}
-														</div>
-													)}
-													<div className="messageItem__systemNotificationTitle">
-														{card.title}
-													</div>
-													{card.playLabel ? (
-														<div className="session__robotSystemActionRow">
-															<div className="messageItem__systemNotificationDescription">
-																{
-																	card.description
-																}
-															</div>
-															<button
-																type="button"
-																className="session__robotSystemInlinePlayButton"
-																onClick={(
-																	event
-																) => {
-																	event.preventDefault();
-																	event.stopPropagation();
-																	setShowWaitingMiniGame(
-																		true
-																	);
-																}}
-															>
-																{card.playLabel}
-															</button>
-														</div>
-													) : (
+								visibleRobotCards.length > 0 && (
+									<CarimatMessageFrame
+										subtitle={translate(
+											'message.systemNotification'
+										)}
+									>
+										{visibleRobotCards.map((card) => (
+											<CarimatMessageBubble
+												key={card._id}
+												topic={card.title}
+											>
+												{card.playLabel ? (
+													<div className="session__robotSystemActionRow">
 														<div className="messageItem__systemNotificationDescription">
 															{card.description}
 														</div>
-													)}
-													{card.cta && (
 														<button
 															type="button"
-															className="session__robotSystemRegistrationLink"
+															className="session__robotSystemInlinePlayButton"
 															onClick={(
 																event
 															) => {
 																event.preventDefault();
 																event.stopPropagation();
-																navigate(
-																	'/registration'
+																setShowWaitingMiniGame(
+																	true
 																);
 															}}
 														>
-															{card.cta}
+															{card.playLabel}
 														</button>
-													)}
-												</div>
-											</div>
-										</div>
-									</div>
-								))}
+													</div>
+												) : (
+													<div className="messageItem__systemNotificationDescription">
+														{card.description}
+													</div>
+												)}
+												{card.cta && (
+													<button
+														type="button"
+														className="session__robotSystemRegistrationLink"
+														onClick={(event) => {
+															event.preventDefault();
+															event.stopPropagation();
+															navigate(
+																'/registration'
+															);
+														}}
+													>
+														{card.cta}
+													</button>
+												)}
+											</CarimatMessageBubble>
+										))}
+									</CarimatMessageFrame>
+								)}
 							{shouldShowRobotTypingIndicator && (
 								<div className="messageItem session__robotTypingIndicator">
 									<div className="messageItem__messageWrap">
@@ -3411,20 +3437,28 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}
 									resolveReplyQuote={resolveReplyQuote}
 									onReplyDirect={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleReplyDirect
 									}
-									onEditDirect={handleEditDirect}
-									onDeleteDirect={handleDeleteDirect}
+									onEditDirect={
+										isRejectedSession
+											? undefined
+											: handleEditDirect
+									}
+									onDeleteDirect={
+										isRejectedSession
+											? undefined
+											: handleDeleteDirect
+									}
 									reactionsFor={getReactionsFor}
 									onReact={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleReact
 									}
 									onUnreact={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleUnreact
 									}
@@ -3480,11 +3514,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											retryRequest?.failedSendId ===
 											failed.id
 										}
-										retryDisabled={Boolean(
-											retryRequest &&
-												retryRequest.failedSendId !==
-													failed.id
-										)}
+										retryDisabled={
+											isRejectedSession ||
+											Boolean(
+												retryRequest &&
+													retryRequest.failedSendId !==
+														failed.id
+											)
+										}
 									/>
 								))}
 							{shouldShowInlineTypingIndicator && (
@@ -3522,8 +3559,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					)}
 				</div>
 
+				{isRejectedSession && (
+					<div className="messageItem" role="status">
+						{translate('enquiry.rejection.closed')}
+					</div>
+				)}
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isEnquiry &&
+					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
 						<AcceptAssign
@@ -3580,6 +3622,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					!enquiryClosed &&
 					!consultantAccepted && (
 						<div className="session__pseudonymActionBarSlot">
+							{showNobodyLiveNote && (
+								<div
+									className="session__nobodyLiveNote"
+									role="status"
+								>
+									{translate(
+										'anonymousChat.noAvailability.laterNotice'
+									)}
+								</div>
+							)}
 							<WaitingQueueActionBar
 								queuePosition={queuePeopleAhead}
 								onOpenCalmCompanion={handleOpenCalmCompanion}
@@ -3641,120 +3693,129 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						onStatusChange={props.onCaseHandoverStatusChange}
 					/>
 				)}
-
-				{canRenderClientComposer({
-					canWriteMessage,
-					isSupervisor: isSupervisorView,
-					shouldBlockAnonymousInquiryChat: blocksConversation
-				}) && (
-					<div
-						className={clsx(
-							'session__gameInputFadeTarget',
-							areRobotMessagesComplete &&
-								'session__gameInputFadeTarget--reveal',
-							!areRobotMessagesComplete &&
-								'session__gameInputFadeTarget--hidden'
-						)}
-					>
-						{areRobotMessagesComplete && (
-							<Suspense
-								fallback={
-									<MessageSubmitInterfaceSkeleton
-										placeholder={getPlaceholder()}
-										className={clsx(
-											'session__submit-interface'
-										)}
-									/>
-								}
-							>
-								<MessageSubmitErrorBoundary
-									onRetry={() =>
-										setComposerRemountKey((key) => key + 1)
+				{!isRejectedSession &&
+					canRenderClientComposer({
+						canWriteMessage,
+						isSupervisor: isSupervisorView,
+						shouldBlockAnonymousInquiryChat: blocksConversation
+					}) && (
+						<div
+							className={clsx(
+								'session__gameInputFadeTarget',
+								areRobotMessagesComplete &&
+									'session__gameInputFadeTarget--reveal',
+								!areRobotMessagesComplete &&
+									'session__gameInputFadeTarget--hidden'
+							)}
+						>
+							{areRobotMessagesComplete && (
+								<Suspense
+									fallback={
+										<MessageSubmitInterfaceSkeleton
+											placeholder={getPlaceholder()}
+											className={clsx(
+												'session__submit-interface'
+											)}
+										/>
 									}
 								>
-									<MessageSubmitInterfaceComponent
-										key={composerRemountKey}
-										isAnonymousLiveChat={
-											isAnonymousAskerExperience &&
-											waitingGateDismissed
+									<MessageSubmitErrorBoundary
+										onRetry={() =>
+											setComposerRemountKey(
+												(key) => key + 1
+											)
 										}
-										isTyping={props.isTyping}
-										className={clsx(
-											'session__submit-interface',
-											!isScrolledToBottom &&
-												'session__submit-interface--scrolled-up'
-										)}
-										placeholder={getPlaceholder()}
-										typingUsers={props.typingUsers}
-										preselectedFile={draggedFile}
-										handleMessageSendSuccess={
-											handleMessageSendSuccess
-										}
-										onSendError={handleComposerSendError}
-										retryRequest={
-											retryRequest &&
-											failedSendBelongsTo(retryRequest, {
-												kind: 'main'
-											})
-												? retryRequest
-												: null
-										}
-										onRetrySettled={
-											handleComposerRetrySettled
-										}
-										isSupervisor={isSupervisor}
-										supervisionRoomId={supervisionRoomId}
-										hideSupervisorAudience={
-											hasSupervisionSideRoom
-										}
-										replyTo={replyTo}
-										onCancelReply={handleCancelReply}
-										editingMessage={editingMessage}
-										onCancelEdit={handleCancelEdit}
-										mobileUnreadCount={newMessages}
-										mobileIsScrolledToBottom={
-											isScrolledToBottom
-										}
-										flushCorner={
-											desktopPanelOpen
-												? 'bottom-left'
-												: undefined
-										}
-										onMobileNavigateBack={
-											handleMobileNavigateToList
-										}
-										onMobileNavigateDown={
-											handleMobileNavigateStepDownClick
-										}
-										onMobileNavigateBottom={
-											handleScrollToBottomButtonClick
-										}
-										messages={messages}
-										onCloseThread={handleCloseThread}
-										isOwnMessage={isMyMessageMatrix}
-									/>
-								</MessageSubmitErrorBoundary>
-							</Suspense>
-						)}
-						{areRobotMessagesComplete &&
-							// Practice: no attachments; an upload would leave the page.
-							!isPracticing &&
-							hasMediaUploadFeature(
-								tenantData?.settings,
-								chatType
-							) && (
-								<DragAndDropArea
-									onFileDragged={onFileDragged}
-									isDragging={isDragging}
-									canDrop={isDragOverDropArea}
-									onDragLeave={onDragLeave}
-									styleOverride={{
-										top: headerBounds.height + 'px'
-									}}
-								/>
+									>
+										<MessageSubmitInterfaceComponent
+											key={composerRemountKey}
+											isAnonymousLiveChat={
+												isAnonymousAskerExperience &&
+												waitingGateDismissed
+											}
+											isTyping={props.isTyping}
+											className={clsx(
+												'session__submit-interface',
+												!isScrolledToBottom &&
+													'session__submit-interface--scrolled-up'
+											)}
+											placeholder={getPlaceholder()}
+											typingUsers={props.typingUsers}
+											preselectedFile={draggedFile}
+											handleMessageSendSuccess={
+												handleMessageSendSuccess
+											}
+											onSendError={
+												handleComposerSendError
+											}
+											retryRequest={
+												retryRequest &&
+												failedSendBelongsTo(
+													retryRequest,
+													{
+														kind: 'main'
+													}
+												)
+													? retryRequest
+													: null
+											}
+											onRetrySettled={
+												handleComposerRetrySettled
+											}
+											isSupervisor={isSupervisor}
+											supervisionRoomId={
+												supervisionRoomId
+											}
+											hideSupervisorAudience={
+												hasSupervisionSideRoom
+											}
+											replyTo={replyTo}
+											onCancelReply={handleCancelReply}
+											editingMessage={editingMessage}
+											onCancelEdit={handleCancelEdit}
+											mobileUnreadCount={newMessages}
+											mobileIsScrolledToBottom={
+												isScrolledToBottom
+											}
+											flushCorner={
+												desktopPanelOpen
+													? 'bottom-left'
+													: undefined
+											}
+											onMobileNavigateBack={
+												handleMobileNavigateToList
+											}
+											onMobileNavigateDown={
+												handleMobileNavigateStepDownClick
+											}
+											onMobileNavigateBottom={
+												handleScrollToBottomButtonClick
+											}
+											messages={messages}
+											onCloseThread={handleCloseThread}
+											isOwnMessage={isMyMessageMatrix}
+										/>
+									</MessageSubmitErrorBoundary>
+								</Suspense>
 							)}
-					</div>
-				)}
+							{areRobotMessagesComplete &&
+								// Practice: no attachments; an upload would leave the page.
+								!isPracticing &&
+								hasMediaUploadFeature(
+									tenantData?.settings,
+									chatType
+								) && (
+									<DragAndDropArea
+										onFileDragged={onFileDragged}
+										isDragging={isDragging}
+										canDrop={isDragOverDropArea}
+										onDragLeave={onDragLeave}
+										styleOverride={{
+											top: headerBounds.height + 'px'
+										}}
+									/>
+								)}
+						</div>
+					)}
 
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
@@ -3777,7 +3838,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			<Dialog
 				open={liveChatClosedModalOpen}
-				onClose={() => setLiveChatClosedDismissed(true)}
+				aria-labelledby="live-chat-closed-title"
+				aria-describedby="live-chat-closed-subtitle"
+				/* No `onClose`: a click beside the dialog or Esc must not walk
+				   the asker past "nobody is live" (#1270). Only its own buttons
+				   ("back", "come back later") and availability returning close it. */
 				fullWidth
 				maxWidth={false}
 				PaperProps={{
@@ -3815,6 +3880,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}}
 						/>
 						<MuiTypography
+							id="live-chat-closed-title"
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
@@ -3822,7 +3888,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</MuiTypography>
 					</MuiBox>
 
-					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
+					<MuiTypography
+						id="live-chat-closed-subtitle"
+						variant="body1"
+						sx={{ mb: '16px' }}
+					>
 						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
@@ -3975,7 +4045,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							fullWidth
 							variant="outlined"
 							onClick={() => setLiveChatClosedDismissed(true)}
-							startIcon={<CloseIcon />}
+							startIcon={
+								<CloseIcon width={20} height={20} aria-hidden />
+							}
 							sx={{
 								borderRadius: '8px',
 								borderColor: '#FFE2DE',
@@ -4069,9 +4141,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
-							onReact={isCoAccessViewer ? undefined : handleReact}
+							onReact={
+								isRejectedSession || isCoAccessViewer
+									? undefined
+									: handleReact
+							}
 							onUnreact={
-								isCoAccessViewer ? undefined : handleUnreact
+								isRejectedSession || isCoAccessViewer
+									? undefined
+									: handleUnreact
 							}
 						/>
 						{failedSends
@@ -4113,16 +4191,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
+									retryDisabled={
+										isRejectedSession ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
 								/>
 							))}
 					</>
 				}
 				composer={
+					!isRejectedSession &&
 					!isCoAccessViewer && (
 						<MessageSubmitInterfaceComponent
 							isTyping={props.isTyping}
@@ -4375,14 +4457,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
 							title={
-								props.teamDiscussionStatus === 'OPEN'
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
 									? teamText(
 											'chatStage.panel.team.empty.title'
 										)
 									: teamChannelTitle
 							}
 							text={
-								props.teamDiscussionStatus === 'OPEN'
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
 									? teamText(
 											'chatStage.panel.team.empty.text'
 										)
@@ -4450,6 +4534,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										retryRequest?.failedSendId === failed.id
 									}
 									retryDisabled={
+										isRejectedSession ||
 										props.teamDiscussionStatus !== 'OPEN' ||
 										Boolean(
 											retryRequest &&
@@ -4462,7 +4547,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					props.teamDiscussionStatus === 'OPEN' ? (
+					props.teamDiscussionStatus === 'OPEN' &&
+					!isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
 							isTyping={(isCleared: boolean) =>
 								props.isTypingInRoom?.(isCleared, teamRoomId)

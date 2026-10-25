@@ -1,14 +1,33 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { MemberAvatarStack, StackMember } from './MemberAvatarStack';
 import { AVATAR_STACK_METRICS } from './GroupChatHeader/memberActivity';
 
-vi.mock('../message/UserAvatar', () => ({
-	UserAvatar: ({ userId }: { userId: string }) => (
-		<span data-testid="user-avatar" data-user-id={userId} />
+vi.mock('../message/MessageAvatar', () => ({
+	MessageAvatar: ({ userId, size }: { userId: string; size: number }) => (
+		<span
+			data-testid="user-avatar"
+			data-user-id={userId}
+			data-size={size}
+		/>
 	)
+}));
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (_key: string, options: any) =>
+			options?.defaultValue
+				?.replace('{{count}}', options.count)
+				.replace('{{names}}', options.names) || _key
+	})
 }));
 vi.mock('../../resources/img/icons/persons-two.svg', () => ({
 	ReactComponent: () => <svg data-testid="people-icon" />
@@ -24,18 +43,53 @@ const members = (count: number): StackMember[] =>
 describe('MemberAvatarStack (#1193 Job 2)', () => {
 	afterEach(cleanup);
 
+	it('uses the current header group: 48px avatars and 24px overlap', () => {
+		render(<MemberAvatarStack members={members(2)} />);
+		expect(
+			screen
+				.getAllByTestId('user-avatar')
+				.map((avatar) => avatar.getAttribute('data-size'))
+		).toEqual(['48', '48']);
+		expect(
+			document.querySelector('.participantStack')?.getAttribute('style')
+		).toContain('--participant-step: 24px');
+	});
+
+	it('deduplicates members before counting overflow', () => {
+		render(<MemberAvatarStack members={[...members(4), ...members(4)]} />);
+		expect(screen.getAllByTestId('user-avatar')).toHaveLength(4);
+		expect(
+			document.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
+	});
+
+	it.each([0, 1, 2, 4])(
+		'renders %i eligible members without inventing overflow',
+		(count) => {
+			render(<MemberAvatarStack members={members(count)} />);
+			expect(screen.queryAllByTestId('user-avatar')).toHaveLength(count);
+			expect(
+				document.querySelector('[data-cy="participant-overflow"]')
+			).toBeNull();
+		}
+	);
+
 	it('renders every member when there are at most four', () => {
 		render(<MemberAvatarStack members={members(3)} />);
 		expect(screen.getAllByTestId('user-avatar')).toHaveLength(3);
-		expect(screen.queryByTestId('member-avatar-overflow')).toBeNull();
+		expect(
+			document.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
 	});
 
 	it('shows four avatars and "+23" for 27 members (report example)', () => {
 		render(<MemberAvatarStack members={members(27)} />);
 		expect(screen.getAllByTestId('user-avatar')).toHaveLength(4);
-		const chip = screen.getByTestId('member-avatar-overflow');
+		const chip = document.querySelector(
+			'[data-cy="participant-overflow"]'
+		)!;
 		expect(within(chip).getByText('+23')).toBeTruthy();
-		expect(within(chip).getByTestId('people-icon')).toBeTruthy();
+		expect(chip.getAttribute('aria-label')).toContain('23');
 	});
 
 	it('keeps the caller order: the first member is rendered first', () => {
@@ -77,7 +131,6 @@ describe('MemberAvatarStack (#1193 Job 2)', () => {
 					members={members(27)}
 					measureRef={ref}
 					reservedWidth={reservedWidth}
-					countLabel={(n) => `${n} more participants`}
 				/>
 			);
 		};
@@ -86,15 +139,14 @@ describe('MemberAvatarStack (#1193 Job 2)', () => {
 			renderMeasured(AVATAR_STACK_METRICS.chipWidth);
 			expect(screen.queryAllByTestId('user-avatar')).toHaveLength(0);
 			expect(screen.getByText('+27')).toBeTruthy();
-			expect(
-				screen.getByRole('img', { name: '27 more participants' })
-			).toBe(screen.getByTestId('member-avatar-overflow'));
+			expect(screen.getByLabelText('27 weitere Teilnehmende')).toBe(
+				document.querySelector('[data-cy="participant-overflow"]')!
+			);
 		});
 
 		it('subtracts the reserved sibling width', () => {
 			const { avatarSize, overlap, chipWidth } = AVATAR_STACK_METRICS;
-			const twoPlusChip =
-				avatarSize + (avatarSize - overlap) + chipWidth - overlap;
+			const twoPlusChip = avatarSize + (avatarSize - overlap) + chipWidth;
 			renderMeasured(twoPlusChip + 200, 200);
 			expect(screen.getAllByTestId('user-avatar')).toHaveLength(2);
 			expect(screen.getByText('+25')).toBeTruthy();

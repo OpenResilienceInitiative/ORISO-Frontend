@@ -1,3 +1,5 @@
+import { a11yVerification } from './a11yVerification';
+import { createTenantPublicStoryFetch } from './tenantPublicFixture';
 // Force MUI styled-engine init before any @mui/* prebundles run.
 // Without this, Vite can crash the preview with "styled_default is not a function".
 import '@mui/material/styles/styled';
@@ -10,7 +12,7 @@ import type { Preview } from '@storybook/react-vite';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useGlobals } from 'storybook/preview-api';
-import { I18nextProvider } from 'react-i18next';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 import { themes } from 'storybook/theming';
 import theme, { createAppTheme } from '../src/resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
@@ -22,7 +24,6 @@ import { Loading } from '../src/components/app/Loading';
 import { Suspense } from 'react';
 import {
 	AppConfigContext,
-	AppConfigProvider,
 	RegistrationContext,
 	UserDataContext,
 	TenantContext,
@@ -34,11 +35,25 @@ import {
 import { Buffer } from 'buffer';
 import {
 	shouldMockStorybookRealtimeUrl,
-	StorybookWebSocketMock
+	StorybookWebSocketMock,
+	trackStorybookRealtimeMock,
+	cleanupStorybookState
 } from './storybookRealtimeMocks';
 import { entryFormDemoGlobalTypes } from './consentCompletionStoryPlay';
 import { WithEntryFormDemo } from './withEntryFormDemo';
 import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
+import {
+	beginStoryVerification,
+	recordUnexpectedRequest
+} from './verification';
+
+import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
+import { AgencySpecificContext } from '../src/globalState/provider/AgencySpecificProvider';
+import type {
+	AgencyDataInterface,
+	ConsultingTypeInterface,
+	TopicsDataInterface
+} from '../src/globalState/interfaces';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
 // which the app's webpack provided but Vite does not. Polyfill it globally.
@@ -59,18 +74,9 @@ const mockUserData = {
 		qrCode: ''
 	}
 } as any;
-import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
-import { AgencySpecificContext } from '../src/globalState/provider/AgencySpecificProvider';
-import type {
-	AgencyDataInterface,
-	ConsultingTypeInterface,
-	TopicsDataInterface
-} from '../src/globalState/interfaces';
 
-// Catch components that throw because they need live app data (session, overlays,
-// notification feed, …) that Storybook can't mock. Instead of a red crash, show a
-// clean "needs live data" panel. The data-sb-needs-data marker lets the automated
-// verification classify these as 'needs-data' rather than as failures.
+// Preserve the visible live-data panel. Ordinary verification retains this
+// fallback as failure evidence, including transient panels replaced before cleanup.
 class StoryErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
 	{ failed: boolean }
@@ -483,7 +489,7 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 	}
 
 	if (isStorybookServiceUrl(url) || isStorybookLocalApiUrl(url)) {
-		return storybookJsonResponse({});
+		return recordUnexpectedRequest(new Request(url, { method }));
 	}
 
 	return null;
@@ -567,7 +573,7 @@ const installStorybookRealtimeMocks = () => {
 					});
 				}
 			});
-			return target;
+			return trackStorybookRealtimeMock(target);
 		} as any;
 		StorybookEventSource.CONNECTING = OriginalEventSource.CONNECTING;
 		StorybookEventSource.OPEN = OriginalEventSource.OPEN;
@@ -640,6 +646,20 @@ function MuiStoryShell({
 }) {
 	// Like the app's AppThemeProvider: MUI reads the --m3-* values when the
 	// theme is created, so a story palette (orisoSeed) needs a fresh theme.
+	// Follow the translation provider's actual language, including direct
+	// language changes in ordinary story controls, rather than a fixed label.
+	const { i18n: storyI18n } = useTranslation();
+	const locale =
+		storyI18n.resolvedLanguage || storyI18n.language || FALLBACK_LNG;
+	useEffect(() => {
+		const previous = document.documentElement.getAttribute('lang');
+		document.documentElement.lang = locale;
+		return () => {
+			if (previous === null)
+				document.documentElement.removeAttribute('lang');
+			else document.documentElement.lang = previous;
+		};
+	}, [locale]);
 	const [muiTheme, setMuiTheme] = useState(() => theme);
 	useEffect(() => {
 		const refresh = () => setMuiTheme(createAppTheme());
@@ -650,11 +670,13 @@ function MuiStoryShell({
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
 				value={{
-					locale: 'de',
+					locale,
 					locales: ['de', 'en'],
 					selectableLocales: ['de', 'en'],
-					setLocale: () => {},
-					initLocale: 'de'
+					setLocale: (language) => {
+						void storyI18n.changeLanguage(language);
+					},
+					initLocale: FALLBACK_LNG
 				}}
 			>
 				<TenantContext.Provider
@@ -779,7 +801,10 @@ function MuiStoryShell({
 	);
 }
 
-export const withMuiTheme = (Story: React.ComponentType, context: any) => {
+export const withMuiTheme = function WithMuiTheme(
+	Story: React.ComponentType,
+	context: any
+) {
 	const [{ locale }] = useGlobals();
 	useEffect(() => {
 		if (locale && typeof locale === 'string') {
@@ -809,6 +834,33 @@ export const withMuiTheme = (Story: React.ComponentType, context: any) => {
 init(config.i18n, null);
 
 const preview: Preview = {
+	async beforeEach(context) {
+		// Snapshot this story's declared permissions; the verification owner below
+		// restores the previous fetch after async cleanup, including failed stories.
+		const tenantFetch = createTenantPublicStoryFetch(
+			globalThis.fetch,
+			window.location.origin,
+			context.parameters.tenantSettings
+		);
+		if (import.meta.env.MODE === 'test') a11yVerification.begin(context);
+		const language = i18n.language;
+		const finish = beginStoryVerification(
+			context.parameters.verification?.expectedErrors,
+			{
+				id: context.id,
+				declaredNeedsData:
+					context.tags?.includes('needs-data') ||
+					context.parameters.needsLiveData === true,
+				cleanup: () =>
+					cleanupStorybookState(async () => {
+						if (language && i18n.language !== language)
+							await i18n.changeLanguage(language);
+					})
+			}
+		);
+		globalThis.fetch = tenantFetch;
+		return () => finish.complete();
+	},
 	parameters: {
 		options: {
 			storySort: {
@@ -862,7 +914,15 @@ const preview: Preview = {
 		 * fire at the wrong breakpoint. See ORISO-Frontend#849.
 		 */
 		viewport: {
+			// addon-vitest sizes the rendered iframe from Storybook parameters,
+			// overriding browser.viewport. Keep native story-specific overrides.
+			defaultViewport: 'desktop1280',
 			options: {
+				phone320: {
+					name: 'Phone 320 (smallest supported)',
+					styles: { width: '320px', height: '640px' },
+					type: 'mobile'
+				},
 				phone375: {
 					name: 'Phone 375 (iPhone SE / 8)',
 					styles: { width: '375px', height: '812px' },
@@ -877,6 +937,11 @@ const preview: Preview = {
 					name: 'Phone 390 landscape (844×390)',
 					styles: { width: '844px', height: '390px' },
 					type: 'mobile'
+				},
+				tablet820: {
+					name: 'Tablet 820 (iPad Air portrait, 820x1180)',
+					styles: { width: '820px', height: '1180px' },
+					type: 'tablet'
 				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',

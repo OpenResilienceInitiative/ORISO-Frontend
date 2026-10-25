@@ -7,11 +7,15 @@
  * separate roles and must be listed as such.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	buildSearchPeopleResults,
 	filterSearchPeople,
+	lookupTermsOf,
+	roleOfSearchWord,
+	sessionMatchesSearchText,
+	textAxisQuery,
 	SessionSearchPeopleLabels
 } from './sessionSearchPeople';
 
@@ -64,13 +68,28 @@ describe('buildSearchPeopleResults — role separation (JOB5)', () => {
 		expect(consultant.subtitle).toContain('Berater:in');
 	});
 
-	it('keeps the session id recoverable from the row id', () => {
+	it('keys each row by role, person and agency (FE#1725)', () => {
 		const results = build([sessionWithBoth()]);
 
 		expect(results.map((entry) => entry.id)).toEqual([
-			'14055:asker',
-			'14055:consultant'
+			'asker:iene_lou_7575:77',
+			'consultant:c-1:77'
 		]);
+	});
+
+	it('shows a counsellor with several cases once, holding all of them', () => {
+		const second = {
+			...sessionWithBoth(),
+			user: { username: 'other_client' },
+			session: { id: 14056, agencyId: 77, postcode: '10001' }
+		} as unknown as ListItemInterface;
+
+		const counsellors = build([sessionWithBoth(), second]).filter(
+			(entry) => entry.role === 'consultant'
+		);
+
+		expect(counsellors).toHaveLength(1);
+		expect(counsellors[0].sessionKeys).toEqual(['14055', '14056']);
 	});
 
 	it('falls back to the unknown label when a present person has no name', () => {
@@ -174,6 +193,17 @@ describe('filterSearchPeople — query narrowing', () => {
 		expect(filterSearchPeople(roster, '')).toHaveLength(2);
 	});
 
+	it('lists only the eligible colleagues for a blank query when asked to, all of them once text is typed (FE#1152)', () => {
+		const eligible = { ...roster[1], eligible: true };
+		const people = [roster[0], eligible];
+		const only = { eligibleOnlyWhenBlank: true };
+
+		expect(filterSearchPeople(people, '', only)).toEqual([eligible]);
+		expect(filterSearchPeople(people, '   ', only)).toEqual([eligible]);
+		expect(filterSearchPeople(people, 'iene', only)).toEqual([roster[0]]);
+		expect(filterSearchPeople([roster[0]], '', only)).toEqual([]);
+	});
+
 	it('narrows to matches when a query is typed', () => {
 		expect(filterSearchPeople(roster, 'ingrid')).toEqual([roster[1]]);
 	});
@@ -186,5 +216,364 @@ describe('filterSearchPeople — query narrowing', () => {
 		// The signature takes no selection: the bug was that selection state
 		// was allowed to remove rows, making a second pick impossible.
 		expect(filterSearchPeople).toHaveLength(2);
+	});
+});
+
+describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () => {
+	const encoded = 'enc.MFTWK3TDPFPWCZDNNFXDC...'; // agency_admin1
+
+	it('never shows an encoded username, using the internal name instead', () => {
+		const [person] = buildSearchPeopleResults([], labels, {
+			eligibleCases: [
+				{
+					agency: { id: 2, name: 'Lichtenberg' },
+					consultant: {
+						consultantId: 'c-9',
+						username: encoded,
+						displayName: encoded,
+						firstName: 'agency',
+						lastName: 'admin1'
+					},
+					session: { id: 3, agencyId: 2 }
+				} as unknown as ListItemInterface
+			],
+			internalNames: true
+		});
+
+		expect(person.name).toBe('agency admin1');
+		expect(person.lookupQuery).toBe(encoded);
+	});
+
+	it('shows the decoded username when no other name exists', () => {
+		const [person] = buildSearchPeopleResults([], labels, {
+			eligibleCases: [
+				{
+					consultant: { consultantId: 'c-9', username: encoded },
+					session: { id: 3, agencyId: 2 }
+				} as unknown as ListItemInterface
+			]
+		});
+
+		expect(person.name).toBe('agency_admin1');
+	});
+
+	it('prefers the internal name over a public name that is only the username', () => {
+		const item = {
+			...sessionWithBoth(),
+			consultant: {
+				consultantId: 'c-2',
+				username: 'patty.bouvier_at_trail.ist',
+				displayName: 'patty.bouvier_at_trail.ist',
+				internalName: 'Patty Bouvier'
+			}
+		} as unknown as ListItemInterface;
+
+		const consultant = buildSearchPeopleResults(
+			[{ raw: item, extended: {} as any }],
+			labels,
+			{ internalNames: true }
+		).find((entry) => entry.role === 'consultant');
+
+		expect(consultant?.name).toBe('Patty Bouvier');
+	});
+
+	it('gives an advice seeker only the public name, never the internal or legal one', () => {
+		const item = {
+			...sessionWithBoth(),
+			consultant: {
+				consultantId: 'c-2',
+				username: 'patty',
+				displayName: 'Patty B.',
+				firstName: 'Patricia',
+				lastName: 'Bouvier',
+				internalName: 'Patricia Bouvier'
+			}
+		} as unknown as ListItemInterface;
+
+		const consultant = build([item]).find(
+			(entry) => entry.role === 'consultant'
+		);
+
+		expect(consultant?.name).toBe('Patty B.');
+		expect(consultant?.internalName).toBeUndefined();
+		expect(consultant?.searchText).not.toContain('bouvier');
+		expect(sessionMatchesSearchText(item, undefined, 'Bouvier')).toBe(
+			false
+		);
+		expect(
+			sessionMatchesSearchText(item, undefined, 'Bouvier', {
+				internalNames: true
+			})
+		).toBe(true);
+	});
+});
+
+describe('buildSearchPeopleResults — eligible colleagues (FE#1152)', () => {
+	const eligibleCase = (clientName: string, sessionId: number) =>
+		({
+			...sessionWithBoth(),
+			user: { username: clientName },
+			session: { id: sessionId, agencyId: 77, postcode: '30232' }
+		}) as unknown as ListItemInterface;
+
+	it('lists only the counsellor of an eligible case, once, never its client', () => {
+		const people = buildSearchPeopleResults([], labels, {
+			eligibleCases: [
+				eligibleCase('client_a', 1),
+				eligibleCase('client_b', 2)
+			]
+		});
+
+		expect(people.map((entry) => entry.id)).toEqual(['consultant:c-1:77']);
+		expect(people[0].searchText).not.toContain('client_a');
+	});
+
+	it('finds the colleague by the postcode of her eligible cases', () => {
+		const [person] = buildSearchPeopleResults([], labels, {
+			eligibleCases: [eligibleCase('client_a', 1)]
+		});
+
+		expect(filterSearchPeople([person], '30232')).toEqual([person]);
+	});
+
+	it('marks the colleagues of eligible cases, not the own list nor the signed-in counsellor', () => {
+		const own = sessionWithBoth();
+		const mine = {
+			...sessionWithBoth(),
+			consultant: { consultantId: 'me-1', username: 'me' }
+		} as unknown as ListItemInterface;
+		const people = buildSearchPeopleResults(
+			[
+				{ raw: own, extended: {} as any },
+				{ raw: mine, extended: {} as any }
+			],
+			labels,
+			{
+				currentUser: { id: 'me-1', name: 'Me' },
+				eligibleCases: [
+					{
+						...eligibleCase('client_a', 1),
+						consultant: {
+							consultantId: 'c-2',
+							username: 'lisa',
+							displayName: 'Lisa S.'
+						}
+					} as unknown as ListItemInterface,
+					mine
+				]
+			}
+		);
+
+		expect(
+			people.filter((entry) => entry.eligible).map((entry) => entry.id)
+		).toEqual(['consultant:c-2:77']);
+	});
+
+	it('keeps a colleague eligible when she is also in the own list', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			labels,
+			{ eligibleCases: [eligibleCase('client_a', 1)] }
+		);
+
+		expect(
+			people.find((entry) => entry.id === 'consultant:c-1:77')?.eligible
+		).toBe(true);
+	});
+
+	it('merges the colleague with the same person from the own list', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			labels,
+			{ eligibleCases: [eligibleCase('client_a', 1)] }
+		);
+
+		const colleague = people.filter(
+			(entry) => entry.id === 'consultant:c-1:77'
+		);
+		expect(colleague).toHaveLength(1);
+		// The own-list case enriches her row: picking her lists it too.
+		expect(colleague[0].sessionKeys).toContain('14055');
+	});
+
+	it('adds no counsellor who is only in the own list (e.g. supervised)', () => {
+		const supervised = {
+			...sessionWithBoth(),
+			consultant: { consultantId: 'c-3', username: 'ned' },
+			session: { id: 20, agencyId: 77 }
+		} as unknown as ListItemInterface;
+		const people = buildSearchPeopleResults(
+			[{ raw: supervised, extended: {} as any }],
+			labels,
+			{ eligibleCases: [eligibleCase('client_a', 1)] }
+		);
+
+		expect(people.map((entry) => entry.id)).not.toContain(
+			'consultant:c-3:77'
+		);
+		// Her client stays findable.
+		expect(people.some((entry) => entry.role === 'asker')).toBe(true);
+	});
+
+	it('never lists the signed-in counsellor, even with own eligible-looking cases', () => {
+		const mine = {
+			...sessionWithBoth(),
+			consultant: { consultantId: 'me-1', username: 'me' }
+		} as unknown as ListItemInterface;
+		const people = buildSearchPeopleResults(
+			[{ raw: mine, extended: {} as any }],
+			labels,
+			{ currentUser: { id: 'me-1', name: 'Me' }, eligibleCases: [mine] }
+		);
+
+		expect(
+			people.filter((entry) => entry.role === 'consultant')
+		).toHaveLength(0);
+	});
+
+	it('lists no counsellor at all while nothing is eligible', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			labels,
+			{ eligibleCases: [] }
+		);
+
+		expect(people.map((entry) => entry.role)).toEqual(['asker']);
+	});
+});
+
+describe('buildSearchPeopleResults — client lookup (FE#1725)', () => {
+	it('looks a client up by her username when her display name differs', () => {
+		const item = {
+			...sessionWithBoth(),
+			user: { username: 'iene_lou_7575', displayName: 'Iene L.' }
+		} as unknown as ListItemInterface;
+
+		const asker = build([item]).find((entry) => entry.role === 'asker');
+
+		expect(asker?.name).toBe('Iene L.');
+		expect(lookupTermsOf(asker!)).toEqual(['iene_lou_7575']);
+	});
+});
+
+describe('role words in the shown language (FE#1725)', () => {
+	const fr = {
+		consultant: 'Conseiller·ère',
+		asker: 'Personne en quête de conseil'
+	};
+	const tr = { consultant: 'Danışman', asker: 'Danışan' };
+
+	it('recognises the role labels the People tab shows', () => {
+		expect(roleOfSearchWord('Conseiller·ère', fr)).toBe('consultant');
+		expect(roleOfSearchWord('personne en quête de conseil', fr)).toBe(
+			'asker'
+		);
+		expect(roleOfSearchWord('Danışan', tr)).toBe('asker');
+		expect(roleOfSearchWord('Danışan')).toBeNull();
+	});
+
+	it('keeps the cases with that role in the list', () => {
+		expect(
+			sessionMatchesSearchText(
+				sessionWithBoth(),
+				undefined,
+				'Conseiller·ère',
+				{ roleLabels: fr }
+			)
+		).toBe(true);
+	});
+
+	it('stops narrowing by the role label once a person is picked', () => {
+		expect(
+			textAxisQuery('Danışman', [{ name: 'Ingrid Koschmider' }], tr)
+		).toBe('');
+		expect(
+			textAxisQuery('Danışman 30232', [{ name: 'Ingrid Koschmider' }], tr)
+		).toBe('30232');
+	});
+
+	it('lists the people of that role in the People tab', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			{ ...labels, ...tr }
+		);
+
+		expect(
+			filterSearchPeople(people, 'Danışan', { roleLabels: tr }).map(
+				(entry) => entry.role
+			)
+		).toEqual(['asker']);
+	});
+});
+
+describe('advice seekers search only what they see (privacy)', () => {
+	const withHandle = (displayName?: string) =>
+		({
+			...sessionWithBoth(),
+			consultant: {
+				consultantId: 'c-7',
+				username: 'ms.hiddenhandle',
+				...(displayName ? { displayName } : {})
+			}
+		}) as unknown as ListItemInterface;
+
+	it('does not match a hidden counsellor username for an advice seeker', () => {
+		expect(
+			sessionMatchesSearchText(
+				withHandle('Patty B.'),
+				undefined,
+				'hidden'
+			)
+		).toBe(false);
+		expect(
+			sessionMatchesSearchText(withHandle('Patty B.'), undefined, 'Patty')
+		).toBe(true);
+	});
+
+	it('matches the username when it is the name shown, and always for staff', () => {
+		expect(
+			sessionMatchesSearchText(withHandle(), undefined, 'hiddenhandle')
+		).toBe(true);
+		expect(
+			sessionMatchesSearchText(
+				withHandle('Patty B.'),
+				undefined,
+				'hidden',
+				{
+					internalNames: true
+				}
+			)
+		).toBe(true);
+	});
+
+	it('gives an advice seeker no hidden username as lookup term', () => {
+		const consultant = build([withHandle('Patty B.')]).find(
+			(entry) => entry.role === 'consultant'
+		);
+
+		expect(lookupTermsOf(consultant!)).toEqual(['Patty B.']);
+		expect(textAxisQuery('hidden', [consultant!])).toBe('hidden');
+	});
+});
+
+describe('encoded client names in the session list (FE#1725)', () => {
+	const encoded = 'enc.MFTWK3TDPFPWCZDNNFXDC...'; // agency_admin1
+
+	it('finds a session by the decoded client name the picker shows', () => {
+		const item = {
+			...sessionWithBoth(),
+			user: { username: encoded, displayName: encoded }
+		} as unknown as ListItemInterface;
+		const asker = build([item]).find((entry) => entry.role === 'asker');
+
+		expect(asker?.name).toBe('agency_admin1');
+		expect(
+			sessionMatchesSearchText(item, undefined, 'agency_admin1', {
+				internalNames: true
+			})
+		).toBe(true);
+		expect(sessionMatchesSearchText(item, undefined, 'agency_admin1')).toBe(
+			true
+		);
 	});
 });

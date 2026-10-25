@@ -1,10 +1,10 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Global DND control — presentational contract: shows the options and reports
  * the chosen one; renders the active-until state when DND is set.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { DoNotDisturbControlView } from './DoNotDisturbControl';
 

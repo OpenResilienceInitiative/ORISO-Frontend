@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	EVENT_PARAM_KEYS,
 	parseEventActionParams,
@@ -148,6 +148,9 @@ describe('shared params contract (#846)', () => {
 				'conversationType',
 				'clientConsent',
 				'caseHandoverRequestId',
+				'requesterName',
+				'initiatorName',
+				'accessType',
 				'threadRootId',
 				'mentioned',
 				'seriesId',

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Auth-free theme demo route (decided 2026-06-11, replaces the removed
  * admin replicas — Frontend#144): renders the REAL app's session list
@@ -9,7 +9,14 @@
  */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { ThemeDemo } from './ThemeDemo';
 
 vi.mock('react-i18next', () => ({

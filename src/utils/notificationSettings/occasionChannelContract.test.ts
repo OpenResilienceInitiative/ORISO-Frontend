@@ -1,9 +1,29 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { EMAIL_IDS } from '../../emails/content/emailCatalogue';
 import { isKnownEventType } from '../../components/notificationsCenter/eventDescriptors/registry';
 import { occasionChannelContract } from './occasionChannelContract';
 
 describe('occasion channel contract', () => {
+	it('gives ordinary internal mail its own counsellor preference without inventing browser push', () => {
+		expect(occasionChannelContract('interne-nachricht').roles).toEqual([
+			'consultant'
+		]);
+		expect(
+			occasionChannelContract('interne-nachricht', 'consultant')
+		).toEqual({
+			emailPreference: {
+				kind: 'switch',
+				source: {
+					kind: 'settings',
+					field: 'internalChatNotificationEnabled'
+				}
+			},
+			browser: { kind: 'unmapped' }
+		});
+		expect(
+			occasionChannelContract('interne-nachricht', 'asker')
+		).toBeUndefined();
+	});
 	it('covers every mail occasion without assuming that a sender exists', () => {
 		for (const id of EMAIL_IDS) {
 			expect(

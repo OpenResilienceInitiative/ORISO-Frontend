@@ -13,6 +13,17 @@ import {
 	computeOrisoPalette
 } from '../../utils/theme/orisoScheme';
 import { CALL_TOKEN_MAP } from '../../utils/theme/callTheme';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import i18n from 'i18next';
+import { useTranslation } from 'react-i18next';
+import { useLocaleData } from '../../globalState';
+import { AppliedTokenInspector } from './AppliedTokenInspectorView';
+import {
+	inspectAppliedTokens,
+	type AppliedTokenInspection
+} from './appliedTokenInspector';
+import systemMeta, { WithInfoIcon } from '../message/SystemMessage.stories';
+import { MessageStoryShell } from '../message/messageStoryShell';
 
 const SEED = '#A5000A';
 const SCHEMES: OrisoSchemeName[] = ['light', 'dark', 'inverted'];
@@ -287,4 +298,296 @@ export const CallMapping: StoryObj = {
 			<MappingTable />
 		</Page>
 	)
+};
+
+const appliedMapping = {
+	id: 'system.info.fill',
+	selector: '.systemMessage__icon path',
+	property: 'fill',
+	token: '--m3-secondary',
+	kind: 'colour' as const,
+	source: {
+		path: 'src/components/message/message.styles.scss',
+		rule: '.systemMessage__icon *',
+		declaration: 'fill: var(--m3-secondary, $form-primary)'
+	}
+};
+
+function AppliedReference({
+	seed,
+	scheme
+}: {
+	seed: string;
+	scheme: OrisoSchemeName;
+}) {
+	const { t } = useTranslation();
+	const { locale } = useLocaleData();
+	const target = React.useRef<HTMLDivElement>(null);
+	// Object identity invalidates A→B→A snapshots as well as simple A→B changes.
+	const context = React.useMemo(
+		() => ({ seed, scheme, locale }),
+		[seed, scheme, locale]
+	);
+	const [snapshot, setSnapshot] = React.useState<{
+		context: typeof context;
+		rows: AppliedTokenInspection[];
+	} | null>(null);
+	const refresh = () => {
+		if (!target.current)
+			throw new Error('The applied-token reference is not mounted');
+		const rows = inspectAppliedTokens({
+			root: target.current,
+			seeds: { primary: seed },
+			scheme,
+			mappings: [appliedMapping]
+		});
+		setSnapshot({ context, rows });
+		// eslint-disable-next-line no-console
+		console.info(
+			'[visible-applied-token-observation]',
+			JSON.stringify({
+				seed,
+				scheme,
+				locale: i18n.resolvedLanguage || i18n.language,
+				providerLocale: locale,
+				viewport: [window.innerWidth, window.innerHeight],
+				rows
+			})
+		);
+	};
+	const Reference = systemMeta.component;
+	return (
+		<div
+			className="appliedTokenInspector__referencePage"
+			lang={locale}
+			data-applied-token-locale={locale}
+		>
+			<p>
+				<code>{seed}</code> · {scheme}
+			</p>
+			<div
+				ref={target}
+				data-applied-token-reference
+				role="region"
+				aria-label={t('designTokens.applied.reference')}
+			>
+				<MessageStoryShell>
+					<Reference {...systemMeta.args} {...WithInfoIcon.args} />
+				</MessageStoryShell>
+			</div>
+			<AppliedTokenInspector
+				rows={snapshot?.context === context ? snapshot.rows : []}
+				onRefresh={refresh}
+			/>
+		</div>
+	);
+}
+
+export const Applied: StoryObj = {
+	name: 'Applied component tokens',
+	render: (_args, context) => {
+		const scheme = context.globals.scheme;
+		return (
+			<AppliedReference
+				seed={context.parameters.orisoSeed ?? SEED}
+				scheme={
+					scheme === 'dark' || scheme === 'inverted'
+						? scheme
+						: 'light'
+				}
+			/>
+		);
+	},
+	play: async ({ canvasElement, globals, parameters }) => {
+		const canvas = within(canvasElement);
+		const reference = canvasElement.querySelector<HTMLElement>(
+			'[data-applied-token-reference]'
+		);
+		const node = reference?.querySelector<SVGPathElement>(
+			appliedMapping.selector
+		);
+		if (!node)
+			throw new Error('The real SystemMessage reference path is missing');
+		const scheme =
+			globals.scheme === 'dark' || globals.scheme === 'inverted'
+				? globals.scheme
+				: 'light';
+		const expectedRaw = computeOrisoPalette(
+			{ primary: parameters.orisoSeed ?? SEED },
+			scheme
+		).tokens[appliedMapping.token];
+		await waitFor(() =>
+			expect(
+				getComputedStyle(node)
+					.getPropertyValue(appliedMapping.token)
+					.trim()
+			).toBe(expectedRaw)
+		);
+		const key = (name: string) => i18n.t(`designTokens.applied.${name}`);
+		const refresh = () =>
+			canvas.getByRole('button', { name: key('refresh') });
+		const row = () =>
+			within(
+				canvas
+					.getByRole('rowheader', { name: 'system.info.fill [0]' })
+					.closest('tr')
+			);
+		const waitForAppliedMatch = () =>
+			waitFor(() =>
+				expect(
+					row().getByText(key('status.match'), { exact: true })
+				).toBeVisible()
+			);
+		await userEvent.click(refresh());
+		await waitForAppliedMatch();
+		const baseline = getComputedStyle(node).fill;
+		expect(row().getAllByText(baseline)).toHaveLength(3);
+		const beforeStyle = node.getAttribute('style');
+		try {
+			node.style.setProperty('fill', '#010203', 'important');
+			refresh().focus();
+			await userEvent.tab();
+			expect(
+				canvas.getByRole('region', { name: key('scroll') })
+			).toHaveFocus();
+			await userEvent.tab({ shift: true });
+			expect(refresh()).toHaveFocus();
+			await userEvent.keyboard('{Enter}');
+			await waitFor(() =>
+				expect(
+					row().getByText(key('status.mismatch'), { exact: true })
+				).toBeVisible()
+			);
+			expect(row().getAllByText(baseline)).toHaveLength(2);
+			expect(
+				row().getByText(getComputedStyle(node).fill)
+			).toHaveTextContent('rgb(1, 2, 3)');
+			if (import.meta.env.MODE === 'test') {
+				const { page } = await import('@vitest/browser/context');
+				await page.screenshot({
+					path: `../../../test-results/applied-token-ui-${window.innerWidth}-mismatch.png`
+				});
+			}
+		} finally {
+			if (beforeStyle === null) node.removeAttribute('style');
+			else node.setAttribute('style', beforeStyle);
+			await userEvent.click(refresh());
+			await waitForAppliedMatch();
+		}
+		const previousLanguage = i18n.language;
+		const previousViewport = [window.innerWidth, window.innerHeight];
+		const browser =
+			import.meta.env.MODE === 'test'
+				? await import('@vitest/browser/context')
+				: null;
+		const viewports = browser
+			? [
+					[1440, 900],
+					[320, 568],
+					[412, 915]
+				]
+			: [previousViewport];
+		try {
+			for (const [width, height] of viewports) {
+				if (browser) await browser.page.viewport(width, height);
+				await waitFor(() => {
+					expect(window.innerWidth).toBe(width);
+					expect(window.innerHeight).toBe(height);
+				});
+				for (const language of ['de', 'en']) {
+					await i18n.changeLanguage(language);
+					const labels =
+						language === 'de'
+							? {
+									title: 'Angewendete Design-Tokens',
+									refresh: 'Prüfung aktualisieren',
+									caption: 'Gemessene Design-Tokens',
+									match: 'Übereinstimmung'
+								}
+							: {
+									title: 'Applied design tokens',
+									refresh: 'Refresh inspection',
+									caption: 'Applied token measurements',
+									match: 'Match'
+								};
+					await waitFor(() => {
+						expect(i18n.resolvedLanguage || i18n.language).toBe(
+							language
+						);
+						expect(document.documentElement.lang).toBe(language);
+						expect(
+							canvasElement.querySelector(
+								'[data-applied-token-locale]'
+							)
+						).toHaveAttribute(
+							'data-applied-token-locale',
+							language
+						);
+						expect(
+							canvas.getByRole('heading', { name: labels.title })
+						).toBeVisible();
+						expect(
+							canvas.getByRole('button', { name: labels.refresh })
+						).toBeVisible();
+					});
+					await waitFor(() =>
+						expect(
+							canvas.getByRole('heading', { name: key('title') })
+						).toBeVisible()
+					);
+					await userEvent.click(refresh());
+					await waitForAppliedMatch();
+					expect(
+						row().getByText(labels.match, { exact: true })
+					).toBeVisible();
+					expect(
+						canvas.getByRole('table', { name: labels.caption })
+					).toBeVisible();
+					const table = canvas.getByRole('table', {
+						name: key('caption')
+					});
+					expect(table).toBeVisible();
+					expect(
+						canvasElement.getBoundingClientRect().width
+					).toBeLessThanOrEqual(window.innerWidth);
+					const scroll = canvas.getByRole('region', {
+						name: key('scroll')
+					});
+					expect(
+						scroll.getBoundingClientRect().width
+					).toBeLessThanOrEqual(width);
+					if (browser && width <= 412) {
+						scroll.scrollTo({ left: 0, behavior: 'instant' });
+						scroll.focus();
+						expect(scroll).toHaveFocus();
+						await browser.userEvent.keyboard('{ArrowRight}');
+						await waitFor(() =>
+							expect(scroll.scrollLeft).toBeGreaterThan(0)
+						);
+						scroll.scrollTo({ left: 0, behavior: 'instant' });
+						await waitFor(() => expect(scroll.scrollLeft).toBe(0));
+					}
+					if (browser) {
+						await browser.page.screenshot({
+							path: `../../../test-results/applied-token-ui-${window.innerWidth}-${language}.png`
+						});
+					}
+				}
+			}
+		} finally {
+			await i18n.changeLanguage(previousLanguage);
+			await waitFor(() => {
+				const restored = i18n.resolvedLanguage || i18n.language;
+				expect(document.documentElement.lang).toBe(restored);
+				expect(
+					canvasElement.querySelector('[data-applied-token-locale]')
+				).toHaveAttribute('data-applied-token-locale', restored);
+			});
+			if (browser)
+				await browser.page.viewport(
+					previousViewport[0],
+					previousViewport[1]
+				);
+		}
+	}
 };

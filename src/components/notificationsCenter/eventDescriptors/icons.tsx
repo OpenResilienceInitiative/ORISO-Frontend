@@ -14,7 +14,7 @@ import { ReactComponent as RequestAcceptedIcon } from '../../../resources/img/ic
 import { ReactComponent as MessageIcon } from '../../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as ThreadReplyIcon } from '../../../resources/img/icons/corner-up-left.svg';
 import { ReactComponent as DraftIcon } from '../../../resources/img/icons/pen-paper.svg';
-import { ReactComponent as HandoverIcon } from '../../../resources/img/icons/persons-two.svg';
+import { ReactComponent as HandoverIcon } from '../../../resources/img/icons/case-handover/case-handover.svg';
 import { ReactComponent as HandoverDeniedIcon } from '../../../resources/img/icons/timeline-case-denied.svg';
 import { ReactComponent as CallStartedIcon } from '../../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as CallEndedIcon } from '../../../resources/img/icons/call.svg';

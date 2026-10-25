@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const TRANSLATIONS: Record<string, string> = {
 	'login.legal.infoText.dataprotection': 'Datenschutzerklärung',
@@ -45,7 +45,9 @@ vi.mock('../../emptyState/SearchEmptyStateAnimation', () => ({
 vi.mock('../../../globalState', async () => {
 	const ReactModule = await import('react');
 	return {
-		RegistrationContext: ReactModule.createContext({})
+		RegistrationContext: ReactModule.createContext({}),
+		// Read by useAppConfig() in AgencyLanguages (tenant setting).
+		AppConfigContext: ReactModule.createContext(null)
 	};
 });
 

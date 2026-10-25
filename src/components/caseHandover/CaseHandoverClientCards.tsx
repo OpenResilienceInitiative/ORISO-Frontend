@@ -1,3 +1,4 @@
+import { ReactComponent as CaseHandoverTopicIcon } from '../../resources/img/icons/case-handover/case-handover.svg';
 import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import {
 	SurveillanceConsentIcon,
@@ -14,9 +15,11 @@ import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/s
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
 import { ReactComponent as CheckIcon } from '../../resources/img/icons/check.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
-import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
-import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import {
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import '../message/message.styles.scss';
@@ -162,6 +165,10 @@ interface CaseHandoverSystemMessageCardProps {
 	timestamp?: string;
 	/** Opens the message action menu; the kebab is decorative without it. */
 	onOpenMenu?: () => void;
+	topic?: React.ReactNode;
+	topicIcon?: React.ReactNode;
+	className?: string;
+	testingAttribute?: string;
 }
 
 /**
@@ -176,90 +183,66 @@ export const CaseHandoverSystemMessageCard = ({
 	reasonLabel,
 	explanation,
 	timestamp,
-	onOpenMenu
+	onOpenMenu,
+	topic,
+	topicIcon,
+	className,
+	testingAttribute
 }: CaseHandoverSystemMessageCardProps) => {
 	const { t: translate } = useTranslation();
-
 	return (
-		<div
-			className="messageItem messageItem--caseHandoverNotice"
+		<CarimatMessageFrame
+			authorName={title}
+			subtitle={subtitle}
+			className={className}
+			data-testid={testingAttribute}
 			data-cy="case-handover-system-message"
+			menu={
+				onOpenMenu ? (
+					<button
+						type="button"
+						className="messageItem__kebabButton messageItem__kebabButton--left"
+						aria-label={translate('message.menu.open')}
+						onClick={onOpenMenu}
+					>
+						<StackVerticalIcon aria-hidden />
+					</button>
+				) : undefined
+			}
 		>
-			<div className="messageItem__messageWrap messageItem__messageWrap--left">
-				<div className="messageItem__sideColumn messageItem__sideColumn--left">
-					<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-						<div className="messageItem__avatar messageItem__avatar--bot">
-							<span
-								className="messageItem__botAvatarIcon"
-								aria-hidden
-							>
-								<CarimatRobotIcon />
-							</span>
-						</div>
-						{onOpenMenu ? (
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label={translate('message.menu.open')}
-								onClick={onOpenMenu}
-							>
-								<StackVerticalIcon className="messageItem__kebabIconDefault" />
-							</button>
-						) : (
-							<span
-								className="messageItem__kebabButton messageItem__kebabButton--left messageItem__kebabButton--static"
-								aria-hidden
-							>
-								<StackVerticalIcon className="messageItem__kebabIconDefault" />
-							</span>
-						)}
-					</div>
-				</div>
-				<div className="messageItem__content">
-					<div className="messageItem__header">
-						<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
-							<div className="messageItem__sendFailedTitle">
-								{title}
-							</div>
-							{subtitle && (
-								<div className="messageItem__sendFailedSubtitle">
-									{subtitle}
-								</div>
-							)}
-						</div>
-					</div>
-					<div className="messageItem__message messageItem__message--systemNotification">
-						<CaseHandoverSystemMessageBody
-							reasonLabel={reasonLabel}
-							explanation={explanation}
-						>
-							{children}
-						</CaseHandoverSystemMessageBody>
-						{/* No time rail without a time — a lone delivery tick in an
-						    empty rail reads as a broken message. */}
-						{timestamp && (
-							<div className="messageItem__timeRail">
-								<span className="messageItem__messageTime">
-									{timestamp}
-									<span
-										className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
-										role="img"
-										aria-label={translate(
-											'message.deliveryStatus.sent'
-										)}
-									>
-										<DeliverySentIcon
-											aria-hidden
-											focusable="false"
-										/>
-									</span>
+			<CarimatMessageBubble
+				topic={topic}
+				topicIcon={topicIcon}
+				footer={
+					timestamp ? (
+						<div className="messageItem__timeRail">
+							<span className="messageItem__messageTime">
+								{timestamp}
+								<span
+									className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
+									role="img"
+									aria-label={translate(
+										'message.deliveryStatus.sent'
+									)}
+								>
+									<DeliverySentIcon
+										aria-hidden
+										focusable="false"
+									/>
 								</span>
-							</div>
-						)}
-					</div>
-				</div>
-			</div>
-		</div>
+							</span>
+						</div>
+					) : undefined
+				}
+			>
+				<CaseHandoverSystemMessageBody
+					reasonLabel={reasonLabel}
+					explanation={explanation}
+				>
+					{children}
+				</CaseHandoverSystemMessageBody>
+			</CarimatMessageBubble>
+		</CarimatMessageFrame>
 	);
 };
 
@@ -270,6 +253,8 @@ interface CaseHandoverConsentCardProps {
 	status?: string;
 	auditOutcome?: string;
 	onSetupNotifications?: () => void;
+	futurePreference?: React.ReactNode;
+	futurePreferenceInDialog?: React.ReactNode;
 	isSubmitting?: boolean;
 	error?: string;
 	onApprove: () => void;
@@ -301,6 +286,8 @@ export const CaseHandoverConsentCard = ({
 	consentGranted,
 	status,
 	auditOutcome,
+	futurePreference,
+	futurePreferenceInDialog,
 	onSetupNotifications
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
@@ -343,22 +330,22 @@ export const CaseHandoverConsentCard = ({
 
 	const assistant = useAssistantIdentity();
 	return (
-		<CarimatMessageContainer
-			className={clsx(
-				'caseHandoverInlineConsent',
-				!isOptOut && 'caseHandoverInlineConsent--choice'
-			)}
-			data-testid="case-handover-inline-consent"
-		>
+		<>
 			<CaseHandoverSystemMessageCard
+				topic={messageTitle}
+				topicIcon={
+					<CaseHandoverTopicIcon aria-hidden focusable="false" />
+				}
+				className={clsx(
+					'caseHandoverInlineConsent',
+					!isOptOut && 'caseHandoverInlineConsent--choice'
+				)}
+				testingAttribute="case-handover-inline-consent"
 				title={assistant.name}
 				subtitle={translate('caseHandover.consent.senderRole')}
 				timestamp={timestamp}
 			>
 				<div className="caseHandoverMessage__intro">
-					<p className="caseHandoverMessage__introTitle">
-						{messageTitle}
-					</p>
 					<p className="caseHandoverMessage__introCopy">
 						{messageCopy}
 					</p>
@@ -438,6 +425,7 @@ export const CaseHandoverConsentCard = ({
 						/>
 					</>
 				)}
+				{futurePreference}
 				<button
 					type="button"
 					className="caseHandoverMessage__more"
@@ -458,31 +446,10 @@ export const CaseHandoverConsentCard = ({
 				onClose={() => setInfoOpen(false)}
 				onSetupNotifications={onSetupNotifications}
 			>
-				{!isInformational && !isResolved && (
-					<div className="caseHandoverConsentInfo__switchRow">
-						<span>
-							{translate(
-								'caseHandover.consent.optOut.switchLabel'
-							)}
-						</span>
-						<Switch
-							className="caseHandoverConsentInfo__switch"
-							checked={
-								isOptOut
-									? isConsentGranted
-									: (consentGranted ?? false)
-							}
-							disabled={isSubmitting}
-							aria-label={translate(
-								'caseHandover.consent.optOut.switchLabel'
-							)}
-							onChange={handleConsentChange}
-						/>
-					</div>
-				)}
+				{futurePreferenceInDialog}
 				{error && <p role="alert">{error}</p>}
 			</CaseHandoverInfoDialog>
-		</CarimatMessageContainer>
+		</>
 	);
 };
 

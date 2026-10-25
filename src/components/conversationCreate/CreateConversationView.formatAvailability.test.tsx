@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -9,7 +9,14 @@ import {
 	within
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { useSession } from '../../hooks/useSession';
 import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
@@ -50,7 +57,10 @@ vi.mock('../../globalState', async () => {
 	const tenant = {
 		get settings() {
 			return tenantState.settings;
-		}
+		},
+		// These tests pick colleagues from the Träger's directory; the scope
+		// itself is covered in CreateConversationView.internalSubset.test.tsx.
+		internalGroupChat: { recipientScope: { value: 'TENANT' } }
 	};
 	return {
 		UserDataContext,
@@ -154,17 +164,6 @@ vi.mock('../../resources/img/icons/reload.svg', () => ({
 vi.mock('../../resources/img/icons/language_outline.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
-}));
-vi.mock(
-	'../../resources/img/illustrations/conversation/internal-team.png',
-	() => ({
-		default: 'internal-team.png'
-	})
-);
-vi.mock('../../resources/img/topics', () => ({
-	getTopicCardImage: () => 'topic.png',
-	hasTopicCardImage: () => false,
-	topicSlug: (value: string) => value
 }));
 vi.mock('../../resources/img/icons/keyboard_arrow_up.svg', () => ({
 	ReactComponent: () => null,

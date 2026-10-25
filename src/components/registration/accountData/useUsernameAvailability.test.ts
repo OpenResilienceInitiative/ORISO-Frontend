@@ -1,6 +1,13 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	USERNAME_AVAILABILITY_DEBOUNCE_MS,
 	useUsernameAvailability

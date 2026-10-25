@@ -265,11 +265,9 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
-					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
 					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
-					"overdueHeadline": "Wir sind gleich für dich da.",
-					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
 				}
 			},
@@ -324,7 +322,22 @@
 			"nameLabel": "Name Interna",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"scope": {
+				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
+			},
+			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
+			"error": {
+				"recipientsRequired": "Bitte wähle mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entferne die Person oder versuche es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den deine Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuche es erneut.",
+				"disabled": "Interna mit ausgewählten Personen sind für dich nicht verfügbar: Sie sind nicht freigeschaltet, dir fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wende dich an deine Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warte einen Moment und versuche es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wende dich an den Support."
+			}
 		},
 		"circle": {
 			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
@@ -363,7 +376,16 @@
 		"entry": {
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"dates": {
+				"subline": "Tipp auf einen Termin, um ihn einzutragen."
+			},
+			"running": {
+				"subline": "Du kannst jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"subline": "Einmal kurz lesen – dann bist du dabei."
+			}
 		},
 		"info": {
 			"gallery": {
@@ -626,6 +648,10 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"browserOff": "Pop-ups sind in deinem Profil ausgeschaltet",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in deinem Profil ausgeschaltet"
+		},
 		"enquiry": {
 			"new": "Du hast eine neue Live-Chat Anfrage!"
 		},
@@ -694,6 +720,17 @@
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
 				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
+			},
+			"caseHandoverGranted": {
+				"generic": {
+					"text": "Die berechtigte Freigabe wurde protokolliert. Den aktuellen Stand siehst du im Gespräch."
+				}
+			},
+			"caseHandoverOfferReceived": {
+				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"coAccess": {
+					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
+				}
 			}
 		}
 	},
@@ -1530,6 +1567,9 @@
 				"close": "Suche schließen",
 				"clear": "Suche leeren",
 				"emptyPeople": "Keine passenden Personen gefunden.",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuche es später erneut.",
+				"handoverPeopleHint": "Hier siehst du nur Kolleg:innen, deren Fälle du über „Zugriff anfragen“ übernehmen kannst. Das hängt von deiner Abteilung und deinen Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenze die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
@@ -1537,7 +1577,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -2328,7 +2369,12 @@
 		"displayName": {
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
-			"action": "Namen ändern"
+			"action": "Namen ändern",
+			"overlay": {
+				"headline": "Dein angezeigter Name",
+				"copy": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+				"saveFailed": "Speichern fehlgeschlagen. Bitte versuch es erneut."
+			}
 		},
 		"notificationChoice": {
 			"email": "Schreib mir eine E-Mail",
@@ -2340,6 +2386,11 @@
 		}
 	},
 	"caseHandover": {
+		"systemMessage": {
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"tookOverBody": "{{advisor}} führt deine Beratung ab jetzt weiter.",
+			"noActionNeeded": "Du musst nichts weiter tun"
+		},
 		"offer": {
 			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
 			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
@@ -2358,6 +2409,9 @@
 		"curtain": {
 			"reclaim": {
 				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			},
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
 			}
 		},
 		"readOnly": {
@@ -2390,7 +2444,11 @@
 		},
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
-			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb deiner Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert."
+		},
+		"bulkBar": {
+			"emptyHint": "Wähle mindestens einen Fall aus."
 		}
 	},
 	"supervisorDialog": {
@@ -2599,6 +2657,7 @@
 			},
 			"waiting": {
 				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden dich, sobald jemand verfügbar ist.",
 				"aheadNone": "Du bist als Nächstes dran.",
 				"aheadOne": "Eine Person vor dir",
 				"aheadMany": "{{count}} Personen vor dir",
@@ -2616,7 +2675,8 @@
 			},
 			"steps": {
 				"wait": {
-					"title": "Du wartest, bis jemand frei ist"
+					"title": "Du wartest, bis jemand frei ist",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für dich los."
 				},
 				"consent": {
 					"title": "Dann stimmst du einmal zu",

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -7,7 +7,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { GroupConsentGate } from './GroupConsentGate';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -65,10 +72,12 @@ describe('GroupConsentGate', () => {
 			)
 		).toBeTruthy();
 		expect(apiGetConsentText).toHaveBeenCalledWith(19, 17);
-		expect(screen.getByRole('dialog').textContent).toContain('Gruppe');
-		expect(screen.getByRole('dialog').textContent).not.toContain(
-			'beratende Person einen Chat'
+		expect(screen.getByTestId('group-consent-gate').textContent).toContain(
+			'Gruppe'
 		);
+		expect(
+			screen.getByTestId('group-consent-gate').textContent
+		).not.toContain('beratende Person einen Chat');
 	});
 
 	it('records the agreement on the account, then lets the client in', async () => {
@@ -78,6 +87,7 @@ describe('GroupConsentGate', () => {
 			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
 		);
 
+		fireEvent.click(screen.getByRole('checkbox'));
 		fireEvent.click(screen.getByRole('button', { name: 'Einverstanden' }));
 
 		await waitFor(() => expect(onAccepted).toHaveBeenCalled());
@@ -97,11 +107,12 @@ describe('GroupConsentGate', () => {
 			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
 		);
 
+		fireEvent.click(screen.getByRole('checkbox'));
 		fireEvent.click(screen.getByRole('button', { name: 'Einverstanden' }));
 
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalled());
 		expect(onAccepted).not.toHaveBeenCalled();
-		expect(screen.getByRole('dialog')).toBeTruthy();
+		expect(screen.getByTestId('group-consent-gate')).toBeTruthy();
 		// The client is told it did not work and can try again.
 		expect((await screen.findByRole('alert')).textContent).toContain(
 			'nicht gespeichert'
@@ -143,10 +154,42 @@ describe('GroupConsentGate', () => {
 		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);
 
 		await waitFor(() =>
-			expect(screen.getByRole('dialog').textContent).toContain(
-				'zur Kenntnis genommen'
-			)
+			expect(
+				screen.getByTestId('group-consent-gate').textContent
+			).toContain('zur Kenntnis genommen')
 		);
 		expect(apiGetConsentText).not.toHaveBeenCalled();
+	});
+
+	/* Since #1689 the gate is the waiting room's consent panel: a real
+	   checkbox bound to the sentence, the button explaining why it waits. */
+	it('asks for the tick before it records anything', async () => {
+		const onAccepted = vi.fn();
+		render(<GroupConsentGate agencyId={19} onAccepted={onAccepted} />);
+		await screen.findByText(
+			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Einverstanden' }));
+
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+		expect(onAccepted).not.toHaveBeenCalled();
+		expect(screen.getByTestId('group-consent-gate').textContent).toContain(
+			'Ohne Ihre Zustimmung'
+		);
+	});
+
+	it('drops the decline note once the person ticks the box', async () => {
+		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);
+		await screen.findByText(
+			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
+		);
+		const gate = screen.getByTestId('group-consent-gate');
+
+		fireEvent.click(screen.getByRole('button', { name: 'Ablehnen' }));
+		expect(gate.textContent).toContain('Ohne Ihre Zustimmung');
+
+		fireEvent.click(screen.getByRole('checkbox'));
+		expect(gate.textContent).not.toContain('Ohne Ihre Zustimmung');
 	});
 });
