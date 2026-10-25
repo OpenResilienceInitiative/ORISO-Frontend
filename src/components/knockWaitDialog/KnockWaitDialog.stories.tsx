@@ -213,6 +213,58 @@ const expectVisible = async (element: HTMLElement | Promise<HTMLElement>) => {
 	await waitFor(() => expect(el).toBeVisible());
 };
 
+/**
+ * The open fade has finished. Opened by a click, the dialog is still
+ * see-through when the play ends, and the audit would read the chat behind it.
+ */
+const expectSettled = async (canvasElement: HTMLElement) => {
+	const container = (await dialog(canvasElement)).closest(
+		'.MuiDialog-container'
+	)!;
+	await waitFor(() => expect(getComputedStyle(container).opacity).toBe('1'));
+};
+
+/**
+ * With the camera on, the name chip sits on the picture: a live video, or the
+ * stand-in gradient without one. axe cannot compute contrast over a picture
+ * and reports it as incomplete. As in the product-tour stories, scope only
+ * `color-contrast` away from that text; every other rule still runs on it,
+ * and the camera-off story keeps the check, where the tile is a flat colour.
+ */
+const textOnThePicture = {
+	a11y: {
+		config: {
+			rules: [
+				{
+					id: 'color-contrast',
+					selector: '*:not([data-testid="video-check"] p)'
+				}
+			]
+		}
+	}
+};
+
+/**
+ * Phone, opened from the chat: the heading wraps, and axe 4.7 compares the
+ * whole element stack per text line, including the chat behind the opaque
+ * sheet. The two lines sit over different chat elements, so it gives up
+ * ("partially overlaps"). The same heading on the same sheet is audited in
+ * "Call · waiting (video) · phone 390", where nothing sits behind it.
+ */
+const textOnThePictureAndSheetHeading = {
+	a11y: {
+		config: {
+			rules: [
+				{
+					id: 'color-contrast',
+					selector:
+						'*:not([data-testid="video-check"] p):not(.m3Dialog__title)'
+				}
+			]
+		}
+	}
+};
+
 /** Gone: no dialog left in the page, no "cancelled" screen. */
 const expectClosed = (canvasElement: HTMLElement) =>
 	waitFor(() =>
@@ -247,6 +299,7 @@ const expectBottomSheet = async (canvasElement: HTMLElement) => {
 export const CallWaiting: Story = {
 	name: 'Call · waiting (video)',
 	globals: desktop1440Globals,
+	parameters: textOnThePicture,
 	args: { ...call },
 	play: async ({ canvasElement, args }) => {
 		const p = page(canvasElement);
@@ -275,6 +328,7 @@ export const CallWaiting: Story = {
 export const CallWaitingPhone: Story = {
 	name: 'Call · waiting (video) · phone 390',
 	globals: phone390Globals,
+	parameters: textOnThePicture,
 	args: { ...call },
 	play: async ({ canvasElement }) => {
 		await expectVisible(
@@ -318,6 +372,7 @@ export const CallWaitingAudio: Story = {
 export const CallChooseMicrophone: Story = {
 	name: 'Call · choose another microphone',
 	globals: desktop1440Globals,
+	parameters: textOnThePicture,
 	args: { ...call },
 	play: async ({ canvasElement, args }) => {
 		const p = page(canvasElement);
@@ -650,7 +705,13 @@ const FromCallMessage = ({ onCancel, onClose, ...props }: DemoProps) => {
 	const [knocking, setKnocking] = useState(false);
 	return (
 		<div style={{ display: 'flex', justifyContent: 'center' }}>
-			<div style={{ width: '100%', maxWidth: 900 }}>
+			{/* While the dialog is open the chat is out of reach. MUI hides it
+			    with aria-hidden and traps focus, which axe cannot verify;
+			    `inert` states it, as SlideOutPresence does. */}
+			<div
+				style={{ width: '100%', maxWidth: 900 }}
+				inert={knocking || undefined}
+			>
 				<MessageStoryShell compact={phone}>
 					<CallTimelineMessage
 						call={runningCall}
@@ -688,7 +749,7 @@ export const FromTheCallMessage: Story = {
 	args: { ...call },
 	render: (args) => <FromCallMessage {...args} />,
 	play: async ({ canvasElement }) => {
-		await expectVisible(joinButton(canvasElement));
+		await expectVisible(await joinButton(canvasElement));
 		await expect(
 			page(canvasElement).queryByTestId('knock-wait-dialog')
 		).toBeNull();
@@ -713,7 +774,7 @@ export const FromTheCallMessageOpen: Story = {
 		await expect(args.onCancel).toHaveBeenCalledTimes(1);
 		await expectClosed(canvasElement);
 		// The message stays, ready for another knock.
-		await expectVisible(joinButton(canvasElement));
+		await expectVisible(await joinButton(canvasElement));
 	}
 };
 
@@ -730,17 +791,20 @@ export const FromTheCallMessageDeclinedReopen: Story = {
 		await expectClosed(canvasElement);
 		// The message opens the dialog again.
 		await userEvent.click(await joinButton(canvasElement));
-		await expectVisible(dialog(canvasElement));
+		await expectVisible(await dialog(canvasElement));
+		await expectSettled(canvasElement);
 	}
 };
 
 export const FromTheCallMessagePhone: Story = {
 	name: 'From the call message · phone 390',
 	globals: phone390Globals,
+	parameters: textOnThePictureAndSheetHeading,
 	args: { ...call },
 	render: (args) => <FromCallMessage {...args} />,
 	play: async ({ canvasElement }) => {
 		await userEvent.click(await joinButton(canvasElement));
+		await expectSettled(canvasElement);
 		await expectBottomSheet(canvasElement);
 		await expectFitsViewport(canvasElement);
 	}
@@ -817,6 +881,7 @@ export const LiveDevices: Story = {
 	name: 'Live devices · call (asks for camera and mic)',
 	tags: ['!autodocs'],
 	globals: desktop1440Globals,
+	parameters: textOnThePicture,
 	args: { variant: 'call' },
 	render: (args) => <Live {...args} />,
 	play: async ({ canvasElement }) => {
