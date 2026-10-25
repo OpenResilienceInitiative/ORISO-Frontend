@@ -25,6 +25,8 @@ describe('resolveFocalPoint', () => {
 		vi.useFakeTimers({ toFake: ['Date', 'requestAnimationFrame'] });
 	});
 	afterEach(() => {
+		// A spy on the faked requestAnimationFrame must not outlive its clock.
+		vi.restoreAllMocks();
 		vi.useRealTimers();
 		document.body.innerHTML = '';
 	});
