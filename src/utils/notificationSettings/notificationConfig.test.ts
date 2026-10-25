@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
 	areaForFamily,
 	NEVER_NOTIFY_FAMILIES,
+	NOTIFICATION_AREAS,
 	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DISABLED_AREAS,
@@ -12,9 +13,21 @@ import {
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
-	it('defaults: sounds off, email on for new/standard and off for mention', () => {
+	it('defaults: short tone for event kinds that need attention (#1211)', () => {
+		for (const area of NOTIFICATION_AREAS) {
+			const a = DEFAULT_NOTIFICATION_CONFIG[area];
+			expect(a.new.sound).toBe('ton-2');
+			expect(a.mention.sound).toBe('ton-2');
+			expect(a.handover.sound).toBe('ton-2');
+			expect(a.appointment.sound).toBe('ton-2');
+			// low priority stays silent, calls keep ringing
+			expect(a.standard.sound).toBe('none');
+			expect(a.call.sound).toBe('ring');
+		}
+	});
+
+	it('defaults: email on for new/standard and off for mention', () => {
 		const r = DEFAULT_NOTIFICATION_CONFIG.requests;
-		expect(r.new.sound).toBe('none');
 		expect(r.new.email).toBe(true);
 		expect(r.standard.email).toBe(true);
 		expect(r.mention.email).toBe(false);
@@ -45,9 +58,16 @@ describe('notificationConfig', () => {
 		expect(parsed.conversations.mention.banner).toBe('persistent');
 	});
 
+	it('parse keeps an explicit stored "none" over the new default', () => {
+		const parsed = parseNotificationConfig({
+			requests: { new: { sound: 'none' } }
+		});
+		expect(parsed.requests.new.sound).toBe('none');
+	});
+
 	it('parse tolerates garbage', () => {
 		const parsed = parseNotificationConfig({ requests: { new: 42 } });
-		expect(parsed.requests.new.sound).toBe('none');
+		expect(parsed.requests.new.sound).toBe('ton-2');
 		expect(parsed.requests.new.email).toBe(true);
 	});
 
@@ -64,7 +84,7 @@ describe('notificationConfig', () => {
 			DEFAULT_NOTIFICATION_CONFIG.requests.new.email
 		);
 		// original untouched
-		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('none');
+		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('ton-2');
 	});
 
 	it('setKindField toggles email independently per area', () => {
