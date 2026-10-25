@@ -1317,6 +1317,50 @@ describe('playClosingAnimation', () => {
 			);
 		});
 
+		it('gives the restored page back immediately after Back, before the cap', async () => {
+			installAnimate('at once');
+			const app = document.createElement('main');
+			const button = document.createElement('button');
+			app.appendChild(button);
+			document.body.appendChild(app);
+			button.focus();
+			const removed = vi.spyOn(window, 'removeEventListener');
+			const added = vi.spyOn(window, 'addEventListener');
+			let ended = false;
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			}).then(() => {
+				ended = true;
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			button.blur(); // Browsers drop focus while the app is inert.
+			expect(app.hasAttribute('inert')).toBe(true);
+			leave();
+
+			window.dispatchEvent(
+				new PageTransitionEvent('pageshow', { persisted: false })
+			);
+			await vi.advanceTimersByTimeAsync(0);
+			expect(ended).toBe(false);
+			expect(document.querySelector(ROOT)).not.toBeNull();
+
+			window.dispatchEvent(
+				new PageTransitionEvent('pageshow', { persisted: true })
+			);
+			await vi.advanceTimersByTimeAsync(0);
+			expect(ended).toBe(true);
+			expect(document.querySelector(ROOT)).toBeNull();
+			expect(app.hasAttribute('inert')).toBe(false);
+			expect(document.activeElement).toBe(button);
+			const listener = added.mock.calls.find(
+				([type]) => type === 'pageshow'
+			)?.[1];
+			expect(listener).toBeDefined();
+			expect(removed).toHaveBeenCalledWith('pageshow', listener);
+			await pending;
+		});
+
 		it('leaves a note for the next document, with where it ends', async () => {
 			installAnimate('at once');
 			void playClosingAnimation({

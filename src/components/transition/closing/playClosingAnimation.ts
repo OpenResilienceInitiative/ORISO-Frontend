@@ -523,15 +523,24 @@ export const playClosingAnimation = async (
 	};
 
 	let capTimer: number | undefined;
+	let endNow: () => void = () => undefined;
 	const cap = new Promise<void>((resolve) => {
+		endNow = resolve;
 		capTimer = win.setTimeout(resolve, closing.capMs);
 	});
+	// Back restores this document with its cover and inert page still intact.
+	// Release both immediately instead of waiting for the paused cap timer.
+	const onPageShow = (event: PageTransitionEvent) => {
+		if (event.persisted) endNow();
+	};
+	win.addEventListener('pageshow', onPageShow);
 	win.addEventListener('resize', stage.onResize);
 	try {
 		await Promise.race([sequence(), cap]);
 	} finally {
 		win.removeEventListener('resize', stage.onResize);
 		win.clearTimeout(capTimer);
+		win.removeEventListener('pageshow', onPageShow);
 		win.removeEventListener('pagehide', handOver);
 		over = true;
 		root.remove();
