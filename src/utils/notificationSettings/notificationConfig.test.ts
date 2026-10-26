@@ -77,9 +77,9 @@ describe('notificationConfig', () => {
 			'requests',
 			'new',
 			'sound',
-			'ton-2'
+			'ton-5'
 		);
-		expect(next.requests.new.sound).toBe('ton-2');
+		expect(next.requests.new.sound).toBe('ton-5');
 		expect(next.requests.new.email).toBe(
 			DEFAULT_NOTIFICATION_CONFIG.requests.new.email
 		);
