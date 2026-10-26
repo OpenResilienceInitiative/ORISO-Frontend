@@ -6025,6 +6025,7 @@
 		"group": {
 			"incomingTitle": "Gelen çağrı",
 			"incomingDescription": "Biri arıyor…",
+			"incomingFrom": "{{name}} arıyor…",
 			"close": "Çağrıyı kapat",
 			"autoFit": "Otomatik sığdır",
 			"autoFitAria": "Çağrı penceresini sığdır",

@@ -40,6 +40,9 @@ import {
 	republishCallIdentity
 } from './publishCallIdentity';
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
+import { UserAvatar } from '../message/UserAvatar';
+import { type IncomingCaller, incomingCallerOf } from './incomingCaller';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -101,6 +104,9 @@ export const GroupCallWidget: React.FC = () => {
 	const userData = useContext(UserDataContext)?.userData;
 	const ownAvatarUserId = useOwnAvatarUserId();
 	const [callData, setCallData] = useState<CallData | null>(null);
+	const [incomingCaller, setIncomingCaller] = useState<IncomingCaller | null>(
+		null
+	);
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
@@ -624,6 +630,30 @@ export const GroupCallWidget: React.FC = () => {
 		widget.url
 	]);
 
+	/*
+	 * Who is ringing, looked up in the conversation the call belongs to, so
+	 * the popup shows the caller's name and avatar from the session list
+	 * instead of a fixed "G" (#780). Unknown callers keep the generic line.
+	 */
+	const ringingIncoming =
+		!!callData?.isIncoming && callData.state === 'ringing';
+	const ringingRoomId = callData?.signalRoomId || callData?.roomId;
+	const callerUserId = callData?.callerUserId;
+	useEffect(() => {
+		setIncomingCaller(null);
+		if (!ringingIncoming || !ringingRoomId) return;
+		const controller = new AbortController();
+		apiGetSessionRoomsByRoomIds([ringingRoomId], controller.signal)
+			.then(({ sessions }) => {
+				if (!controller.signal.aborted)
+					setIncomingCaller(
+						incomingCallerOf(sessions?.[0], callerUserId)
+					);
+			})
+			.catch(() => undefined);
+		return () => controller.abort();
+	}, [ringingIncoming, ringingRoomId, callerUserId]);
+
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
 		callManager.answerCall();
@@ -898,9 +928,22 @@ export const GroupCallWidget: React.FC = () => {
 							×
 						</button>
 						<div className="incoming-call-content">
-							<div className="call-avatar-large">G</div>
+							{incomingCaller && (
+								<div className="incoming-call-avatar">
+									<UserAvatar
+										{...incomingCaller.avatar}
+										size={80}
+									/>
+								</div>
+							)}
 							<h2>{t('calls.group.incomingTitle')}</h2>
-							<p>{t('calls.group.incomingDescription')}</p>
+							<p>
+								{incomingCaller
+									? t('calls.group.incomingFrom', {
+											name: incomingCaller.name
+										})
+									: t('calls.group.incomingDescription')}
+							</p>
 							<div className="incoming-call-actions">
 								<button
 									className="btn-answer"
@@ -1083,7 +1126,6 @@ export const GroupCallWidget: React.FC = () => {
 							×
 						</button>
 						<div className="connecting-content">
-							<div className="call-avatar-large">G</div>
 							<h2>{t('calls.group.connecting')}</h2>
 							<p>{t('calls.group.settingUp')}</p>
 						</div>

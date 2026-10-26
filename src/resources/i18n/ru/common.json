@@ -6033,6 +6033,7 @@
 		"group": {
 			"incomingTitle": "Входящий вызов",
 			"incomingDescription": "Вам звонят…",
+			"incomingFrom": "{{name}} звонит…",
 			"close": "Закрыть вызов",
 			"autoFit": "Автоподгонка",
 			"autoFitAria": "Подгнать окно вызова",
