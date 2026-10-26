@@ -42,7 +42,7 @@ import {
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { UserAvatar } from '../message/UserAvatar';
-import { type IncomingCaller, incomingCallerOf } from './incomingCaller';
+import { type CallParty, callPartyOf } from './callParty';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -104,7 +104,7 @@ export const GroupCallWidget: React.FC = () => {
 	const userData = useContext(UserDataContext)?.userData;
 	const ownAvatarUserId = useOwnAvatarUserId();
 	const [callData, setCallData] = useState<CallData | null>(null);
-	const [incomingCaller, setIncomingCaller] = useState<IncomingCaller | null>(
+	const [incomingCaller, setIncomingCaller] = useState<CallParty | null>(
 		null
 	);
 	const [callState, setCallState] = useState<string | null>(null);
@@ -646,9 +646,7 @@ export const GroupCallWidget: React.FC = () => {
 		apiGetSessionRoomsByRoomIds([ringingRoomId], controller.signal)
 			.then(({ sessions }) => {
 				if (!controller.signal.aborted)
-					setIncomingCaller(
-						incomingCallerOf(sessions?.[0], callerUserId)
-					);
+					setIncomingCaller(callPartyOf(sessions?.[0], callerUserId));
 			})
 			.catch(() => undefined);
 		return () => controller.abort();

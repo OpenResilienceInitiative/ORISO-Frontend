@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ListItemInterface } from '../../globalState/interfaces';
-import { incomingCallerOf } from './incomingCaller';
+import { callPartyOf } from './callParty';
 
 const conversation = {
 	session: {
@@ -22,12 +22,9 @@ const conversation = {
 } as unknown as ListItemInterface;
 
 // #780: the incoming-call popup said "G" and "Someone is calling…".
-describe('incomingCallerOf', () => {
+describe('callPartyOf', () => {
 	it('names a calling counsellor by the public display name, never the login or the legal name', () => {
-		const caller = incomingCallerOf(
-			conversation,
-			'@bart_getme_2fa:example'
-		);
+		const caller = callPartyOf(conversation, '@bart_getme_2fa:example');
 
 		expect(caller?.name).toBe('Bart Simpson');
 		expect(caller?.avatar).toMatchObject({
@@ -38,7 +35,7 @@ describe('incomingCallerOf', () => {
 	});
 
 	it('names a calling advice seeker by the User-ID the chat header shows', () => {
-		const caller = incomingCallerOf(
+		const caller = callPartyOf(
 			conversation,
 			'@dragonfly_kendall_4108:example'
 		);
@@ -48,10 +45,8 @@ describe('incomingCallerOf', () => {
 	});
 
 	it('names nobody who is not a party of the conversation', () => {
-		expect(incomingCallerOf(conversation, '@colleague:example')).toBeNull();
-		expect(incomingCallerOf(conversation, undefined)).toBeNull();
-		expect(
-			incomingCallerOf(undefined, '@bart_getme_2fa:example')
-		).toBeNull();
+		expect(callPartyOf(conversation, '@colleague:example')).toBeNull();
+		expect(callPartyOf(conversation, undefined)).toBeNull();
+		expect(callPartyOf(undefined, '@bart_getme_2fa:example')).toBeNull();
 	});
 });
