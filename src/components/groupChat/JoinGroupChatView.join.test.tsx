@@ -131,6 +131,7 @@ vi.mock('../../resources/img/illustrations/x.svg', () => ({
 	ReactComponent: () => null
 }));
 vi.mock('./entryRoom/groupWaitingRoomData', () => ({
+	getGroupSeries: () => undefined,
 	getGroupUpcomingDates: () => [],
 	getGroupWaitingRoomTopic: () => 'topic',
 	getGroupSeries: () => undefined
