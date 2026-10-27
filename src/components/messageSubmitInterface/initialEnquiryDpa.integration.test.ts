@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { sendEncryptedInitialEnquiry } from './messageEncryptionMode';
 import { apiSendEnquiry } from '../../api/apiSendEnquiry';
 

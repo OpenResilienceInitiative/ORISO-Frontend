@@ -23,6 +23,9 @@ export type MatrixActivityPreviewLabels = {
 	userLeftChat: string;
 	/** USER_LEFT_CHAT worded by who ended it (#1838); else `userLeftChat`. */
 	chatEndedText?: (endedBy: ChatEndedBy | null) => string;
+	/** Notices whose stored text is frozen in the session's language (#1844). */
+	inquiryAccepted?: string;
+	caseHandoverTakenOver?: string;
 	systemNotification: string;
 	unsupported: string;
 	undecryptable: string;
@@ -132,7 +135,11 @@ export const buildMatrixActivityTextPreview = (
 				? labels?.chatEndedText?.(
 						parseMessagePrefixes(rawBody).systemNotificationEndedBy
 					) || labels?.userLeftChat
-				: labels?.systemNotification) || fallbackText
+				: (systemNotice === 'inquiry_accepted' &&
+						labels?.inquiryAccepted) ||
+					(systemNotice === 'case_handover_taken_over' &&
+						labels?.caseHandoverTakenOver) ||
+					labels?.systemNotification) || fallbackText
 		);
 	}
 	const body = toMessagePreviewText(rawBody);

@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 
@@ -91,6 +91,13 @@ describe('LiveChatWaitingRoom — the consent gate (#1341)', () => {
 		fireEvent.click(consentBox());
 
 		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('has the person arrive on the message field of the chat', () => {
+		renderAccepted();
+		expect(startButton().getAttribute('data-cy-closing')).toBe(
+			'messageField'
+		);
 	});
 
 	it('starts the chat once the box is ticked', () => {

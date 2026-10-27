@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolvePreviewChannel } from './previewChannel';
 
 const resolve = (actionPath: string | null, eventType = 'message.new') =>

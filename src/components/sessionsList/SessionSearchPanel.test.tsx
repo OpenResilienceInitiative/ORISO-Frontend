@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Search refinement panel (#1195).
  *
@@ -10,7 +10,14 @@
 
 import React from 'react';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	SessionSearchPanel,
 	SessionSearchPanelLabels,

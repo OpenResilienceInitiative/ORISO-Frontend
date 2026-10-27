@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { AUTHORITIES } from '../../globalState/helpers/stateHelpers';
 // vi.mock calls below are hoisted above these imports by vitest.

@@ -208,6 +208,33 @@ export const Default: Story = {
 	render: () => <ComposerShell />
 };
 
+/**
+ * Where the closing animation of every waiting room ends (ORISO-Frontend#1737).
+ * The rooms find it by this mark alone, so the composer has to keep carrying it
+ * around the field a person types in.
+ */
+export const MarksTheClosingFocal: Story = {
+	name: 'Marks where the closing animation ends',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const focal = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[data-closing-focal="message-field"]'
+			);
+			if (!node || !node.getBoundingClientRect().width) {
+				throw new Error('composer focal not on screen yet');
+			}
+			return node;
+		});
+		await expect(
+			focal.querySelector('[contenteditable="true"]')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelectorAll('[data-closing-focal]')
+		).toHaveLength(1);
+	}
+};
+
 /** Desktop chat card contract: the composer card rests on the session's inner edge. */
 export const DesktopBottomAnchored: Story = {
 	name: 'Desktop — composer anchored to session bottom',

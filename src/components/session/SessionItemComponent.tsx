@@ -149,7 +149,8 @@ import {
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
-	STATUS_ENQUIRY
+	STATUS_ENQUIRY,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './session.styles';
@@ -242,11 +243,8 @@ import {
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
-const MessageSubmitInterfaceComponent = lazyWithReload(() =>
-	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
-		(m) => ({ default: m.MessageSubmitInterfaceComponent })
-	)
-);
+import { loadMessageComposer } from '../app/appChunks';
+const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
@@ -488,6 +486,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousChat && isAskerUser && !isConsultantUser;
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
+	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
 			String(userData.dataPrivacyConfirmation).trim() !== ''
@@ -782,6 +781,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	// #1824 S1: the room's message actions, shared with the Activity Timeline
 	// preview. A reply or edit context never survives a conversation switch.
+	// A rejected session takes no reactions or deletions: without a room the
+	// actions do nothing.
 	const {
 		handleReact,
 		handleUnreact,
@@ -793,7 +794,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		handleEditDirect,
 		handleCancelEdit
 	} = useConversationActions({
-		roomId: resolvedMatrixRoomId,
+		roomId: isRejectedSession ? null : resolvedMatrixRoomId,
 		resetKey: activeSession?.rid
 	});
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
@@ -1072,6 +1073,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		const canWrite =
+			!isRejectedSession &&
 			!isCoAccessViewer &&
 			(type !== SESSION_LIST_TYPES.ENQUIRY ||
 				(isAnonymousAskerExperience && waitingGateDismissed));
@@ -1079,6 +1081,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		isCoAccessViewer,
 		type,
+		isRejectedSession,
 		isAnonymousAskerExperience,
 		waitingGateDismissed,
 		userData,
@@ -1364,26 +1367,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousEnquiryPhaseSession
 	]);
 
-	const preloadMessageComposer = useCallback(() => {
-		void import(
-			'../messageSubmitInterface/messageSubmitInterfaceComponent'
-		);
-	}, []);
-
 	useEffect(() => {
 		if (
 			shouldShowPseudonymGate &&
 			pseudonymConfirmed &&
 			consultantAccepted
 		) {
-			preloadMessageComposer();
+			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		preloadMessageComposer,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -2027,6 +2019,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const handleRetryFailedSend = useCallback(
 		(failedSendId: string) => {
+			if (isRejectedSession) return;
 			setRetryRequest((current) => {
 				if (current) {
 					return current;
@@ -2051,7 +2044,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: null;
 			});
 		},
-		[failedSends]
+		[failedSends, isRejectedSession]
 	);
 	const handleRetrySettled = useCallback(
 		(requestId: string, sessionIdentity: string) => {
@@ -2943,29 +2936,37 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 
 		let disposed = false;
-		const markActive = () => {
+		const updateActiveView = () => {
 			// clearInterval cannot cancel a callback that is already queued. The
 			// guard prevents that stale heartbeat from racing after cleanup and
 			// re-enabling suppression while the user is on Notifications.
 			if (disposed) {
 				return;
 			}
+			const active =
+				document.visibilityState === 'visible' && document.hasFocus();
 			apiPatchNotificationActiveView({
 				roomId,
-				threadRootId: activeThreadRootId,
-				active: true
+				threadRootId: active ? activeThreadRootId : null,
+				active
 			}).catch(() => undefined);
 		};
 
-		markActive();
+		updateActiveView();
+		document.addEventListener('visibilitychange', updateActiveView);
+		window.addEventListener('focus', updateActiveView);
+		window.addEventListener('blur', updateActiveView);
 
 		const heartbeat = window.setInterval(() => {
-			markActive();
+			updateActiveView();
 		}, 10000);
 
 		return () => {
 			disposed = true;
 			window.clearInterval(heartbeat);
+			document.removeEventListener('visibilitychange', updateActiveView);
+			window.removeEventListener('focus', updateActiveView);
+			window.removeEventListener('blur', updateActiveView);
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: null,
@@ -3153,6 +3154,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'session__content--gameFocus',
 						shouldShowConsentGate &&
 							'session__content--consentGate',
+						shouldShowGroupConsentGate &&
+							'session__content--groupConsentGate',
 						shouldShowPseudonymGate &&
 							'session__content--pseudonymGate'
 					)}
@@ -3171,6 +3174,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<GroupConsentGate
 							agencyId={
 								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							agencyName={
+								activeSession.item?.assignedAgencies?.[0]?.name
 							}
 							onAccepted={() => {
 								setGroupConsentAccepted(true);
@@ -3371,20 +3377,28 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}
 									resolveReplyQuote={resolveReplyQuote}
 									onReplyDirect={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleReplyDirect
 									}
-									onEditDirect={handleEditDirect}
-									onDeleteDirect={handleDeleteDirect}
+									onEditDirect={
+										isRejectedSession
+											? undefined
+											: handleEditDirect
+									}
+									onDeleteDirect={
+										isRejectedSession
+											? undefined
+											: handleDeleteDirect
+									}
 									reactionsFor={getReactionsFor}
 									onReact={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleReact
 									}
 									onUnreact={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleUnreact
 									}
@@ -3440,11 +3454,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											retryRequest?.failedSendId ===
 											failed.id
 										}
-										retryDisabled={Boolean(
-											retryRequest &&
-												retryRequest.failedSendId !==
-													failed.id
-										)}
+										retryDisabled={
+											isRejectedSession ||
+											Boolean(
+												retryRequest &&
+													retryRequest.failedSendId !==
+														failed.id
+											)
+										}
 									/>
 								))}
 							{shouldShowInlineTypingIndicator && (
@@ -3482,8 +3499,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					)}
 				</div>
 
+				{isRejectedSession && (
+					<div className="messageItem" role="status">
+						{translate('enquiry.rejection.closed')}
+					</div>
+				)}
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isEnquiry &&
+					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
 						<AcceptAssign
@@ -3611,120 +3633,129 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						onStatusChange={props.onCaseHandoverStatusChange}
 					/>
 				)}
-
-				{canRenderClientComposer({
-					canWriteMessage,
-					isSupervisor: isSupervisorView,
-					shouldBlockAnonymousInquiryChat: blocksConversation
-				}) && (
-					<div
-						className={clsx(
-							'session__gameInputFadeTarget',
-							areRobotMessagesComplete &&
-								'session__gameInputFadeTarget--reveal',
-							!areRobotMessagesComplete &&
-								'session__gameInputFadeTarget--hidden'
-						)}
-					>
-						{areRobotMessagesComplete && (
-							<Suspense
-								fallback={
-									<MessageSubmitInterfaceSkeleton
-										placeholder={getPlaceholder()}
-										className={clsx(
-											'session__submit-interface'
-										)}
-									/>
-								}
-							>
-								<MessageSubmitErrorBoundary
-									onRetry={() =>
-										setComposerRemountKey((key) => key + 1)
+				{!isRejectedSession &&
+					canRenderClientComposer({
+						canWriteMessage,
+						isSupervisor: isSupervisorView,
+						shouldBlockAnonymousInquiryChat: blocksConversation
+					}) && (
+						<div
+							className={clsx(
+								'session__gameInputFadeTarget',
+								areRobotMessagesComplete &&
+									'session__gameInputFadeTarget--reveal',
+								!areRobotMessagesComplete &&
+									'session__gameInputFadeTarget--hidden'
+							)}
+						>
+							{areRobotMessagesComplete && (
+								<Suspense
+									fallback={
+										<MessageSubmitInterfaceSkeleton
+											placeholder={getPlaceholder()}
+											className={clsx(
+												'session__submit-interface'
+											)}
+										/>
 									}
 								>
-									<MessageSubmitInterfaceComponent
-										key={composerRemountKey}
-										isAnonymousLiveChat={
-											isAnonymousAskerExperience &&
-											waitingGateDismissed
+									<MessageSubmitErrorBoundary
+										onRetry={() =>
+											setComposerRemountKey(
+												(key) => key + 1
+											)
 										}
-										isTyping={props.isTyping}
-										className={clsx(
-											'session__submit-interface',
-											!isScrolledToBottom &&
-												'session__submit-interface--scrolled-up'
-										)}
-										placeholder={getPlaceholder()}
-										typingUsers={props.typingUsers}
-										preselectedFile={draggedFile}
-										handleMessageSendSuccess={
-											handleMessageSendSuccess
-										}
-										onSendError={handleComposerSendError}
-										retryRequest={
-											retryRequest &&
-											failedSendBelongsTo(retryRequest, {
-												kind: 'main'
-											})
-												? retryRequest
-												: null
-										}
-										onRetrySettled={
-											handleComposerRetrySettled
-										}
-										isSupervisor={isSupervisor}
-										supervisionRoomId={supervisionRoomId}
-										hideSupervisorAudience={
-											hasSupervisionSideRoom
-										}
-										replyTo={replyTo}
-										onCancelReply={handleCancelReply}
-										editingMessage={editingMessage}
-										onCancelEdit={handleCancelEdit}
-										mobileUnreadCount={newMessages}
-										mobileIsScrolledToBottom={
-											isScrolledToBottom
-										}
-										flushCorner={
-											desktopPanelOpen
-												? 'bottom-left'
-												: undefined
-										}
-										onMobileNavigateBack={
-											handleMobileNavigateToList
-										}
-										onMobileNavigateDown={
-											handleMobileNavigateStepDownClick
-										}
-										onMobileNavigateBottom={
-											handleScrollToBottomButtonClick
-										}
-										messages={messages}
-										onCloseThread={handleCloseThread}
-										isOwnMessage={isMyMessageMatrix}
-									/>
-								</MessageSubmitErrorBoundary>
-							</Suspense>
-						)}
-						{areRobotMessagesComplete &&
-							// Practice: no attachments; an upload would leave the page.
-							!isPracticing &&
-							hasMediaUploadFeature(
-								tenantData?.settings,
-								chatType
-							) && (
-								<DragAndDropArea
-									onFileDragged={onFileDragged}
-									isDragging={isDragging}
-									canDrop={isDragOverDropArea}
-									onDragLeave={onDragLeave}
-									styleOverride={{
-										top: headerBounds.height + 'px'
-									}}
-								/>
+									>
+										<MessageSubmitInterfaceComponent
+											key={composerRemountKey}
+											isAnonymousLiveChat={
+												isAnonymousAskerExperience &&
+												waitingGateDismissed
+											}
+											isTyping={props.isTyping}
+											className={clsx(
+												'session__submit-interface',
+												!isScrolledToBottom &&
+													'session__submit-interface--scrolled-up'
+											)}
+											placeholder={getPlaceholder()}
+											typingUsers={props.typingUsers}
+											preselectedFile={draggedFile}
+											handleMessageSendSuccess={
+												handleMessageSendSuccess
+											}
+											onSendError={
+												handleComposerSendError
+											}
+											retryRequest={
+												retryRequest &&
+												failedSendBelongsTo(
+													retryRequest,
+													{
+														kind: 'main'
+													}
+												)
+													? retryRequest
+													: null
+											}
+											onRetrySettled={
+												handleComposerRetrySettled
+											}
+											isSupervisor={isSupervisor}
+											supervisionRoomId={
+												supervisionRoomId
+											}
+											hideSupervisorAudience={
+												hasSupervisionSideRoom
+											}
+											replyTo={replyTo}
+											onCancelReply={handleCancelReply}
+											editingMessage={editingMessage}
+											onCancelEdit={handleCancelEdit}
+											mobileUnreadCount={newMessages}
+											mobileIsScrolledToBottom={
+												isScrolledToBottom
+											}
+											flushCorner={
+												desktopPanelOpen
+													? 'bottom-left'
+													: undefined
+											}
+											onMobileNavigateBack={
+												handleMobileNavigateToList
+											}
+											onMobileNavigateDown={
+												handleMobileNavigateStepDownClick
+											}
+											onMobileNavigateBottom={
+												handleScrollToBottomButtonClick
+											}
+											messages={messages}
+											onCloseThread={handleCloseThread}
+											isOwnMessage={isMyMessageMatrix}
+										/>
+									</MessageSubmitErrorBoundary>
+								</Suspense>
 							)}
-					</div>
-				)}
+							{areRobotMessagesComplete &&
+								// Practice: no attachments; an upload would leave the page.
+								!isPracticing &&
+								hasMediaUploadFeature(
+									tenantData?.settings,
+									chatType
+								) && (
+									<DragAndDropArea
+										onFileDragged={onFileDragged}
+										isDragging={isDragging}
+										canDrop={isDragOverDropArea}
+										onDragLeave={onDragLeave}
+										styleOverride={{
+											top: headerBounds.height + 'px'
+										}}
+									/>
+								)}
+						</div>
+					)}
 
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
@@ -4050,9 +4081,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
-							onReact={isCoAccessViewer ? undefined : handleReact}
+							onReact={
+								isRejectedSession || isCoAccessViewer
+									? undefined
+									: handleReact
+							}
 							onUnreact={
-								isCoAccessViewer ? undefined : handleUnreact
+								isRejectedSession || isCoAccessViewer
+									? undefined
+									: handleUnreact
 							}
 						/>
 						{failedSends
@@ -4094,16 +4131,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
+									retryDisabled={
+										isRejectedSession ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
 								/>
 							))}
 					</>
 				}
 				composer={
+					!isRejectedSession &&
 					!isCoAccessViewer && (
 						<MessageSubmitInterfaceComponent
 							isTyping={props.isTyping}
@@ -4356,14 +4397,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
 							title={
-								props.teamDiscussionStatus === 'OPEN'
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
 									? teamText(
 											'chatStage.panel.team.empty.title'
 										)
 									: teamChannelTitle
 							}
 							text={
-								props.teamDiscussionStatus === 'OPEN'
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
 									? teamText(
 											'chatStage.panel.team.empty.text'
 										)
@@ -4431,6 +4474,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										retryRequest?.failedSendId === failed.id
 									}
 									retryDisabled={
+										isRejectedSession ||
 										props.teamDiscussionStatus !== 'OPEN' ||
 										Boolean(
 											retryRequest &&
@@ -4443,7 +4487,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					props.teamDiscussionStatus === 'OPEN' ? (
+					props.teamDiscussionStatus === 'OPEN' &&
+					!isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
 							isTyping={(isCleared: boolean) =>
 								props.isTypingInRoom?.(isCleared, teamRoomId)

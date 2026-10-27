@@ -2,7 +2,7 @@
  * #1377 slice 3 — Zeitstrahl helpers (spec §5.1 kinds, §6.3 badge formula).
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { DEFAULT_DISPLAY_FILTER, DisplayFilter } from './model';
 import {
 	applyTimelineFilter,

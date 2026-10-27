@@ -1,5 +1,5 @@
 import { createInstance } from 'i18next';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import de from './de/common.json';
 import informal from './de@informal/common.json';
 import en from './en/common.json';

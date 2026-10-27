@@ -6,6 +6,8 @@ import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
 import { WaitingRoomBar } from '../WaitingRoomBar';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
+import { ClosingFocal } from '../../transition/closing/closingFocal';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
 import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
 import { getUsernameFeedback } from '../../registration/accountData/usernameFeedback';
@@ -86,7 +88,18 @@ export interface CallEntryRoomProps {
 		  };
 	/** Starts with the consent sheet open, as after a click on "Beitreten". */
 	initialConsentOpen?: boolean;
-	onJoin?: () => void;
+	/**
+	 * Runs once the screen is covered (the platform's closing animation plays
+	 * on the way, ORISO-Frontend#1737). `false`, or a promise of it, says the
+	 * join failed and the person stays.
+	 */
+	onJoin?: () => ClosingSwapResult;
+	/**
+	 * Where the person arrives: the call's main area, which the room that
+	 * swaps in marks with `data-closing-focal="call"`. `null` plays no closing
+	 * animation.
+	 */
+	closing?: ClosingFocal | null;
 	onBlockerAction?: () => void;
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
@@ -126,6 +139,7 @@ export const CallEntryRoom = ({
 	consent: consentOption,
 	initialConsentOpen = false,
 	onJoin,
+	closing = 'call',
 	onBlockerAction,
 	playTone,
 	checkUsername
@@ -218,15 +232,17 @@ export const CallEntryRoom = ({
 		.join(', ');
 
 	/* "Beitreten" first opens the consent; with the sheet open it joins once
-	   the box is ticked (the live chat's flow). */
-	const handleJoin = () => {
+	   the box is ticked (the live chat's flow). Asked before anything starts,
+	   so the screen never closes on a "no". */
+	const mayJoin = () => {
 		if (!askConsent) {
-			onJoin?.();
-		} else if (!consentOpen) {
-			setConsentOpen(true);
-		} else {
-			consent.guard(() => onJoin?.());
+			return true;
 		}
+		if (!consentOpen) {
+			setConsentOpen(true);
+			return false;
+		}
+		return consent.check();
 	};
 
 	const kicker = topic
@@ -416,7 +432,9 @@ export const CallEntryRoom = ({
 								? undefined
 								: (doneCount / conditions.length) * 100
 						}
-						onEnter={handleJoin}
+						beforeEnter={mayJoin}
+						onEnter={() => onJoin?.()}
+						closing={closing ?? undefined}
 						label={copy.join[modality]}
 						status={
 							joining

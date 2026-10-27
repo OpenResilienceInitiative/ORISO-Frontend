@@ -54,7 +54,7 @@ const installHttpBoundary = (status: ReviewArgs['failureStatus']) => {
 		const request = new Request(input, init);
 		const url = new URL(request.url);
 		if (request.method === 'GET') {
-			if (url.pathname === '/service/agencies/topics') {
+			if (url.pathname === '/service/topic/public') {
 				return Response.json([
 					{ id: 7, name: 'Social counselling' },
 					{ id: 9, name: 'Family counselling' }

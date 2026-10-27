@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Hct, argbFromHex } from '@material/material-color-utilities';
 import { computeOrisoPalette } from './orisoScheme';
 import {

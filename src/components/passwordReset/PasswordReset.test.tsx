@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { MemoryRouter } from 'react-router-dom';
 import * as React from 'react';
 import {
@@ -8,7 +8,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { PasswordReset } from './PasswordReset';
 const state = vi.hoisted(() => ({
 	userData: {

@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';

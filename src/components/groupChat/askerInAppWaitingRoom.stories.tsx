@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { JoinGroupChatView } from './JoinGroupChatView';
 import {
 	buildGroupStageListItem,
@@ -164,6 +164,17 @@ export const Open1440: Story = {
 	play: async ({ canvasElement }) => {
 		await expectCardRoom(canvasElement);
 		await waitFor(() => expect(joinButton(canvasElement)).toBeEnabled());
+		/* #1787, Frank 2026-10-19: a running group says so — calm, grey,
+		   never the red overdue clock. */
+		await expect(
+			within(canvasElement).getByText(/Die Gruppe hat .*begonnen\./)
+		).toBeVisible();
+		await expect(
+			canvasElement.querySelector('[data-cy="group-running"]')
+		).toHaveTextContent('Läuft gerade');
+		await expect(
+			within(canvasElement).queryByText('Die Gruppe beginnt gleich.')
+		).toBeNull();
 	}
 };
 

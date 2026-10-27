@@ -389,6 +389,9 @@ export const AuthenticatedApp = ({
 				ready={appReady && groupJoinSettled}
 				onEnter={handlePostRegLoaderFinish}
 				copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
+				/* The group's entry room is another waiting room: no message
+				   field to close onto, its own gate does that. */
+				closing={postRegForGroup ? null : undefined}
 			/>
 		);
 	}

@@ -7,6 +7,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { LocaleContext } from '../../globalState';
+import { markLocaleChosen } from '../../globalState/provider/LocaleProvider';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import './localeSwitchPill.styles';
 
@@ -100,6 +101,7 @@ export const LocaleSwitchPill = ({
 			// triggered by the re-render already read it. Same order as in
 			// LocaleSwitch.
 			setValueInCookie('lang', value);
+			markLocaleChosen(value);
 			setLocale(value);
 			setIsOpen(false);
 		},

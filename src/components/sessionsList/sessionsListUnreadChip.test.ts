@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — the "unread" toolbar chip.
  *
@@ -7,7 +7,7 @@
  * to `true`, so the chip could never match anything.
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { sessionMatchesToolbar } from './sessionToolbarFilters';
 

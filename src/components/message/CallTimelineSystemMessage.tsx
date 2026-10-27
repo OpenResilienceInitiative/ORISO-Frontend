@@ -3,6 +3,7 @@ import PhoneDisabledRoundedIcon from '@mui/icons-material/PhoneDisabledRounded';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { ChatSystemMessageCard } from './ChatSystemMessageCard';
 import { UserAvatar } from './UserAvatar';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 import { ReactComponent as CallOnIcon } from '../../resources/img/icons/call-on.svg';
 import { ReactComponent as CameraOnIcon } from '../../resources/img/icons/camera-on.svg';
 import { ReactComponent as CameraOffIcon } from '../../resources/img/icons/camera-off.svg';
@@ -14,6 +15,8 @@ export interface CallTimelineParticipant {
 	userId: string;
 	username: string;
 	displayName: string;
+	avatarDisplayName?: string;
+	choice?: AvatarChoice | null;
 }
 
 export interface CallTimelineSystemMessageProps {
