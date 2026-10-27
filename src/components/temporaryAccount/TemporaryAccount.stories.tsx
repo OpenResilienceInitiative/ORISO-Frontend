@@ -270,20 +270,29 @@ export const KeepMessagesPhone: Story = {
 	)
 };
 
-export const KeepMessagesEscapeDecidesNothing: Story = {
-	name: '"Keep my messages?" — Escape cancels, never decides',
-	render: (args) => (
+/** The parent closes the dialog on cancel, as the app will. */
+const EscapeDialogStory = (args: DialogStoryArgs) => {
+	const [open, setOpen] = React.useState(true);
+	return (
 		<KeepMessagesDialog
+			open={open}
 			sheet={false}
 			onConfirm={args.onConfirm}
-			onCancel={args.onCancel}
+			onCancel={() => {
+				args.onCancel();
+				setOpen(false);
+			}}
 		/>
-	),
+	);
+};
+
+export const KeepMessagesEscapeDecidesNothing: Story = {
+	name: '"Keep my messages?" — Escape cancels, never decides',
+	render: (args) => <EscapeDialogStory {...args} />,
 	play: async ({ args }) => {
 		const { onConfirm, onCancel } = args;
-		const dialog = await within(document.body).findByTestId(
-			'keep-messages-dialog'
-		);
+		const body = within(document.body);
+		const dialog = await body.findByTestId('keep-messages-dialog');
 		await userEvent.click(
 			within(dialog).getByRole('radio', {
 				name: /^Temporär/
@@ -292,5 +301,8 @@ export const KeepMessagesEscapeDecidesNothing: Story = {
 		await userEvent.keyboard('{Escape}');
 		await expect(onCancel).toHaveBeenCalled();
 		await expect(onConfirm).not.toHaveBeenCalled();
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
 	}
 };

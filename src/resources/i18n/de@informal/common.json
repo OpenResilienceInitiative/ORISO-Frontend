@@ -2755,28 +2755,16 @@
 		}
 	},
 	"temporaryAccount": {
-		"marker": {
-			"label": "Temporär",
-			"title": "Wird mit dem Gastkonto gelöscht"
-		},
-		"deletedGuest": "Gast (gelöscht)",
-		"chip": {
-			"guest": "Gastkonto"
-		},
 		"keepDialog": {
 			"title": "Sollen deine Nachrichten bleiben?",
 			"description": "Dein Gastkonto wird nach dem Gespräch gelöscht. Was soll mit deinen Nachrichten passieren?",
 			"keep": {
-				"label": "Auch nach dem Löschen behalten",
 				"hint": "Deine Nachrichten bleiben, wenn dein Konto gelöscht wird."
 			},
 			"delete": {
-				"label": "Temporär",
 				"hint": "Deine Nachrichten werden mit deinem Konto gelöscht."
 			},
-			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
-			"confirm": "Weiter",
-			"cancel": "Abbrechen"
+			"note": "Deine Antwort gilt für dieses ganze Gespräch."
 		}
 	}
 }

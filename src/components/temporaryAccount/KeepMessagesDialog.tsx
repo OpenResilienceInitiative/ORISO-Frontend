@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { useMediaQuery } from '@mui/material';
@@ -35,6 +35,10 @@ export const KeepMessagesDialog = ({
 	const phone = useMediaQuery('(max-width: 599.95px)');
 	const asSheet = sheet ?? phone;
 	const [choice, setChoice] = useState<MessageRetention>();
+	// A cancelled choice must not come back preselected.
+	useEffect(() => {
+		if (!open) setChoice(undefined);
+	}, [open]);
 	const name = useId();
 	return (
 		<M3Dialog
