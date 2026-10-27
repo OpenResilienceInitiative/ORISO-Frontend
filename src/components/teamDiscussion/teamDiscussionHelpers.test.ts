@@ -1,29 +1,8 @@
 /**
- * FE#514 — pure logic of the Team-Besprechung panel (ADR-016 scope rules +
- * timeline mapping).
+ * FE#514 — ADR-016 scope rule for the team discussion channel.
  */
 import { describe, expect, it } from 'vite-plus/test';
-import {
-	isTeamDiscussionAvailable,
-	mapTimelineToDiscussionMessages,
-	matrixLocalpart,
-	TimelineEventLike
-} from './teamDiscussionHelpers';
-
-const event = (
-	id: string,
-	sender: string,
-	body: string,
-	ts: number,
-	type = 'm.room.message',
-	msgtype = 'm.text'
-): TimelineEventLike => ({
-	getId: () => id,
-	getType: () => type,
-	getSender: () => sender,
-	getTs: () => ts,
-	getContent: () => ({ msgtype, body })
-});
+import { isTeamDiscussionAvailable } from './teamDiscussionHelpers';
 
 describe('isTeamDiscussionAvailable', () => {
 	const base = {
@@ -74,62 +53,5 @@ describe('isTeamDiscussionAvailable', () => {
 		expect(isTeamDiscussionAvailable({ ...base, isEnquiry: false })).toBe(
 			false
 		);
-	});
-});
-
-describe('mapTimelineToDiscussionMessages', () => {
-	it('maps text messages chronologically and marks own messages', () => {
-		const messages = mapTimelineToDiscussionMessages(
-			[
-				event('$2', '@kim:oriso', 'second', 200),
-				event('$1', '@me:oriso', 'first', 100)
-			],
-			'@me:oriso'
-		);
-
-		expect(messages.map((m) => m.body)).toEqual(['first', 'second']);
-		expect(messages[0].isOwn).toBe(true);
-		expect(messages[1].isOwn).toBe(false);
-		expect(messages[1].senderDisplayName).toBe('kim');
-	});
-
-	it('skips non-message and non-text events and deduplicates by id', () => {
-		const messages = mapTimelineToDiscussionMessages(
-			[
-				event('$1', '@kim:oriso', 'hello', 100),
-				event('$1', '@kim:oriso', 'hello', 100),
-				event('$3', '@kim:oriso', '', 300),
-				event('$4', '@kim:oriso', 'x', 400, 'm.room.member'),
-				event(
-					'$5',
-					'@kim:oriso',
-					'img',
-					500,
-					'm.room.message',
-					'm.image'
-				)
-			],
-			null
-		);
-
-		expect(messages).toHaveLength(1);
-		expect(messages[0].id).toBe('$1');
-	});
-
-	it('uses a display-name resolver when provided', () => {
-		const messages = mapTimelineToDiscussionMessages(
-			[event('$1', '@kim:oriso', 'hello', 100)],
-			null,
-			() => 'Kim Gerlander'
-		);
-
-		expect(messages[0].senderDisplayName).toBe('Kim Gerlander');
-	});
-});
-
-describe('matrixLocalpart', () => {
-	it('strips sigil and server name', () => {
-		expect(matrixLocalpart('@kim:oriso.example')).toBe('kim');
-		expect(matrixLocalpart('kim')).toBe('kim');
 	});
 });

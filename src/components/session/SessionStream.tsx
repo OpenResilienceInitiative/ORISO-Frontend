@@ -134,7 +134,7 @@ export const SessionStream = ({
 		channelParam === 'team' || teamDiscussionParam === '1';
 
 	// Migrate legacy notification links to the canonical channel route. The
-	// old standalone TeamDiscussionPanel no longer owns a second timeline.
+	// team room opens as the side-panel channel, like supervision.
 	useEffect(() => {
 		if (teamDiscussionParam !== '1') return;
 		const params = new URLSearchParams(location.search);
