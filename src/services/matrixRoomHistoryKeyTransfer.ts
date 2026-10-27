@@ -111,6 +111,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		// Tell open cards that these requests are gone, so none stays on screen.
 		const dropped = Array.from(this.pendingApprovals.values());
 		this.pendingApprovals.clear();
+		this.scheduleExpiry();
 		this.approvalsInFlight.clear();
 		this.lastReasonRequestAt.clear();
 		dropped.forEach((request) => this.announceResolved(request, 'dropped'));
@@ -174,8 +175,27 @@ export class MatrixRoomHistoryKeyTransfer {
 		const request = this.pendingApprovals.get(requestId);
 		// A release that is already sending cannot be taken back.
 		if (!request || this.approvalsInFlight.has(requestId)) return;
-		this.pendingApprovals.delete(requestId);
+		// A card left open past its deadline is dropped, not declined.
+		this.expirePendingApprovals();
+		if (!this.pendingApprovals.delete(requestId)) return;
 		this.announceResolved(request, 'declined');
+	}
+
+	private expiryTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** Wakes up at the earliest deadline, so a mounted card goes away by itself. */
+	private scheduleExpiry(): void {
+		if (this.expiryTimer) clearTimeout(this.expiryTimer);
+		this.expiryTimer = null;
+		const deadlines = Array.from(this.pendingApprovals.values()).map(
+			(request) => request.receivedAt + PENDING_APPROVAL_TTL_MS
+		);
+		if (deadlines.length === 0) return;
+		const delay = Math.max(0, Math.min(...deadlines) - Date.now()) + 1000;
+		this.expiryTimer = setTimeout(() => {
+			this.expiryTimer = null;
+			this.expirePendingApprovals();
+		}, delay);
 	}
 
 	/** Requests nobody decided on for a day are dropped, so the queue cannot stay full. */
@@ -188,6 +208,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				queueMicrotask(() => this.announceResolved(request, 'dropped'));
 			}
 		}
+		this.scheduleExpiry();
 	}
 
 	private announceResolved(
@@ -443,6 +464,7 @@ export class MatrixRoomHistoryKeyTransfer {
 						return;
 					}
 					this.pendingApprovals.set(pending.requestId, pending);
+					this.scheduleExpiry();
 					window.dispatchEvent(
 						new CustomEvent(MATRIX_HISTORY_REQUEST_PENDING_EVENT, {
 							detail: {

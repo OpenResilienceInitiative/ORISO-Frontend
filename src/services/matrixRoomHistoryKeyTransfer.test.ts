@@ -754,6 +754,37 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			}
 		});
 
+		it('removes a card by itself when its deadline passes', async () => {
+			vi.useFakeTimers({
+				toFake: ['Date', 'setTimeout', 'clearTimeout']
+			});
+			try {
+				const { harness, service } = setup();
+				const resolved = vi.fn();
+				window.addEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				await vi.advanceTimersByTimeAsync(25 * 60 * 60 * 1000);
+				expect(resolved).toHaveBeenCalledTimes(1);
+				expect(
+					(resolved.mock.calls[0][0] as CustomEvent).detail.outcome
+				).toBe('dropped');
+				window.removeEventListener(
+					MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+					resolved
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it('refuses an approval after the request expired', async () => {
 			vi.useFakeTimers({ toFake: ['Date'] });
 			try {
