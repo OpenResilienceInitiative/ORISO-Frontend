@@ -1,10 +1,17 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /** Real Joyride and tooltip: keyboard actions must reach the app controls. */
 import React from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { ProductTourAdapter } from './ProductTourAdapter';
 import { ProductTourTooltip } from './ProductTourTooltip';
 import { emitTourEvent } from './tourEvents';

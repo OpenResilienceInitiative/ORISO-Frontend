@@ -1,15 +1,20 @@
 import * as React from 'react';
+import { expect, waitFor } from 'storybook/test';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
-import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
-import { getTopicCardImage } from '../../resources/img/topics';
+import {
+	ARTWORK_CATALOGUE,
+	getTopicCardArtwork,
+	INTERNAL_CHAT_ARTWORK
+} from '../../resources/img/topics';
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { RuleChipsEditor } from '../groupChat/RuleChipsEditor';
 import { SplitButton } from '../splitButton/SplitButton';
 import { FormatCard } from './FormatCard';
 import { TopicMedia } from './TopicMedia';
+import { ArtworkImage } from './ArtworkImage';
 import { CompactFormatRow } from './CompactFormatRow';
 import { PersonChipGrid } from './internal/PersonChipGrid';
 import { PersonOption, PersonSelectMenu } from './internal/PersonSelectMenu';
@@ -58,13 +63,7 @@ export const StackedCard: Story = {
 			title="Interna besprechen"
 			subtitle="mit Ihren Kolleg:innen"
 			avatar={<InternalIcon />}
-			media={
-				<img
-					className="formatCard__mediaImage"
-					src={internalTeamImage}
-					alt=""
-				/>
-			}
+			media={<ArtworkImage artwork={INTERNAL_CHAT_ARTWORK} alt="" />}
 		>
 			<p style={{ margin: 0 }}>
 				Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab.
@@ -80,13 +79,7 @@ const StackedCardWithChipsDemo = () => {
 			title="Interna besprechen"
 			subtitle="mit Ihren Kolleg:innen"
 			avatar={<InternalIcon />}
-			media={
-				<img
-					className="formatCard__mediaImage"
-					src={internalTeamImage}
-					alt=""
-				/>
-			}
+			media={<ArtworkImage artwork={INTERNAL_CHAT_ARTWORK} alt="" />}
 			mediaDimmed={entries.length > 0}
 			mediaOverlay={
 				<PersonChipGrid
@@ -116,22 +109,107 @@ export const TopicArtwork: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'The Gesprächskreis artwork follows the chosen topic; topics without their own image fall back to the generic counselling-circle illustration.'
+				story: 'All 32 approved motifs: 25 topic variants for 20 subjects, five category illustrations and two format defaults. Agency topics carry no category; repeated subjects use their first supplied variant. Unknown and unselected topics use the self-help default.'
 			}
 		}
 	},
 	render: () => (
-		<div style={{ display: 'flex', gap: 24 }}>
-			<figure style={{ margin: 0 }}>
-				<TopicMedia topic="Schulden" alt="Schulden" />
-				<figcaption>topic: Schulden</figcaption>
-			</figure>
-			<figure style={{ margin: 0 }}>
-				<TopicMedia topic="Trauerberatung" alt="Fallback" />
-				<figcaption>unknown topic → fallback</figcaption>
-			</figure>
-		</div>
-	)
+		<>
+			<div
+				style={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+					gap: 24,
+					width: 'min(1100px, calc(100vw - 48px))'
+				}}
+			>
+				{Object.values(ARTWORK_CATALOGUE).map((artwork) => (
+					<figure key={artwork.id} style={{ margin: 0 }}>
+						<div style={{ aspectRatio: '16 / 9' }}>
+							<ArtworkImage
+								artwork={artwork}
+								alt={artwork.label}
+								sizes="(max-width: 600px) calc(100vw - 48px), 360px"
+							/>
+						</div>
+						<figcaption>
+							{artwork.id}: {artwork.label}
+						</figcaption>
+					</figure>
+				))}
+			</div>
+			<div
+				style={{
+					display: 'flex',
+					flexWrap: 'wrap',
+					gap: 24,
+					marginTop: 24,
+					width: 'min(1100px, calc(100vw - 48px))'
+				}}
+			>
+				{[null, 'Noch unbekanntes Thema'].map((topic) => (
+					<FormatCard
+						key={topic || 'unselected'}
+						title={topic || 'Kein Thema ausgewählt'}
+						subtitle="Selbsthilfegruppe als Standard"
+						avatar={<CircleIcon />}
+						media={
+							<TopicMedia topic={topic} alt="Selbsthilfegruppe" />
+						}
+					>
+						<p style={{ margin: 0 }}>
+							Standardbild für ein noch nicht ausgewähltes oder
+							unbekanntes Thema.
+						</p>
+					</FormatCard>
+				))}
+				<FormatCard
+					title="Migration"
+					subtitle="Ausgewähltes Thema"
+					avatar={<CircleIcon />}
+					media={<TopicMedia topic="Migration" alt="Migration" />}
+				>
+					<p style={{ margin: 0 }}>
+						Das Bild folgt dem ausgewählten Thema.
+					</p>
+				</FormatCard>
+			</div>
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		await document.fonts.ready;
+		const images = canvasElement.querySelectorAll('img');
+		expect(images).toHaveLength(35);
+		for (const image of images) {
+			image.scrollIntoView({ block: 'center' });
+			await waitFor(() => {
+				expect(image.complete).toBe(true);
+				expect(image.naturalWidth).toBeGreaterThan(0);
+			});
+			// Width descriptors density-correct natural dimensions to whole CSS
+			// pixels, so an exact 16:9 asset can round by one pixel here.
+			expect(
+				Math.abs(image.naturalHeight - (image.naturalWidth * 9) / 16)
+			).toBeLessThanOrEqual(1);
+			const bounds = image.getBoundingClientRect();
+			expect(bounds.width / bounds.height).toBeCloseTo(16 / 9, 2);
+			expect(image.srcset).toContain('640w');
+			expect(image.srcset).toContain('1280w');
+		}
+		for (const frame of canvasElement.querySelectorAll(
+			'.formatCard__media'
+		)) {
+			const bounds = frame.getBoundingClientRect();
+			const image = frame.querySelector('img')!;
+			const imageBounds = image.getBoundingClientRect();
+			expect(bounds.width / bounds.height).toBeCloseTo(16 / 9, 2);
+			expect(Math.abs(imageBounds.width - bounds.width)).toBeLessThan(1);
+			expect(Math.abs(imageBounds.height - bounds.height)).toBeLessThan(
+				1
+			);
+		}
+		canvasElement.scrollIntoView({ block: 'start' });
+	}
 };
 
 const PersonMenuDemo = () => {
@@ -189,13 +267,7 @@ const CardMenuOverlayDemo = () => {
 			title="Interna besprechen"
 			subtitle="mit Ihren Kolleg:innen"
 			avatar={<InternalIcon />}
-			media={
-				<img
-					className="formatCard__mediaImage"
-					src={internalTeamImage}
-					alt=""
-				/>
-			}
+			media={<ArtworkImage artwork={INTERNAL_CHAT_ARTWORK} alt="" />}
 		>
 			<p style={{ margin: 0 }}>
 				Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab.
@@ -260,14 +332,14 @@ export const CompactRowsMobile: Story = {
 				icon={<InternalIcon />}
 				title="Interna besprechen"
 				subtitle="mit ihren Kollegen"
-				image={internalTeamImage}
+				image={INTERNAL_CHAT_ARTWORK}
 				onSelect={() => undefined}
 			/>
 			<CompactFormatRow
 				icon={<CircleIcon />}
 				title="Gesprächskreis"
 				subtitle="moderierte Selbsthilfegruppen"
-				image={getTopicCardImage(null)}
+				image={getTopicCardArtwork(null)}
 				onSelect={() => undefined}
 			/>
 		</div>

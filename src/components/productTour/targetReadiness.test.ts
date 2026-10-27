@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { waitForTarget } from './targetReadiness';
 
 afterEach(() => {

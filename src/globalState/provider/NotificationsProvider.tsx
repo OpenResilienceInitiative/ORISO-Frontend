@@ -603,18 +603,22 @@ export function NotificationsProvider(props) {
 				const stateEvents = items.filter(
 					(item) =>
 						item.eventType === 'request.new' ||
+						item.eventType === 'request.denied' ||
 						item.eventType === 'inquiry.accepted' ||
 						item.eventType === 'waiting_room.client.joined' ||
 						item.eventType === 'conversation.finished'
 				);
 				const observed = observedReconciliationIdsRef.current;
+				const initialReconciliation = observed === null;
 				// Lists may have loaded before a finish appeared in the first feed.
 				// Announcement history is seeded separately, so this stays silent.
 				const newEvents =
 					observed === null
 						? stateEvents.filter(
 								(item) =>
-									item.eventType === 'conversation.finished'
+									item.eventType ===
+										'conversation.finished' ||
+									item.eventType === 'request.denied'
 							)
 						: stateEvents.filter((item) => !observed.has(item.id));
 				observedReconciliationIdsRef.current ??= new Set();
@@ -633,9 +637,12 @@ export function NotificationsProvider(props) {
 						source: 'notification-feed'
 					});
 				}
+				// One list refresh per batch: a first feed can hold up to 50 old denials.
 				if (
 					newEvents.some(
-						(item) => item.eventType === 'conversation.finished'
+						(item) =>
+							item.eventType === 'conversation.finished' ||
+							item.eventType === 'request.denied'
 					)
 				) {
 					messageEventEmitter.emit({
@@ -646,7 +653,9 @@ export function NotificationsProvider(props) {
 				}
 				for (const item of newEvents) {
 					if (
-						item.eventType !== 'inquiry.accepted' ||
+						(item.eventType !== 'inquiry.accepted' &&
+							(item.eventType !== 'request.denied' ||
+								initialReconciliation)) ||
 						item.sourceSessionId == null
 					)
 						continue;

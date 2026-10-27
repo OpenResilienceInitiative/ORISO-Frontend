@@ -18,11 +18,14 @@ import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 export const NotificationSetup = ({
 	isEmailEnabled = true,
 	isBrowserEnabled = true,
-	onStart
+	onStart,
+	onDone
 }: {
 	isEmailEnabled?: boolean;
 	isBrowserEnabled?: boolean;
 	onStart?: () => void;
+	/** A choice went through without an error: also when it changed nothing. */
+	onDone?: () => void;
 }) => {
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
@@ -112,8 +115,10 @@ export const NotificationSetup = ({
 				setAwaitingBrowser(false);
 				if (Notification.permission !== 'granted') {
 					setError(t('erstantwort.notificationChoice.browserDenied'));
+					return;
 				}
 			}
+			if (current()) onDone?.();
 		} catch {
 			if (!current()) return;
 			setError(t('erstantwort.notificationChoice.saveFailed'));

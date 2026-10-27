@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — client-side unread derivation.
  *
@@ -8,7 +8,7 @@
  * the "unread" chip filter and the chip counter.
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import {
 	countUnreadSessions,

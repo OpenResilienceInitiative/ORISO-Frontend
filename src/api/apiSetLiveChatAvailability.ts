@@ -33,6 +33,22 @@ export const apiGetLiveChatAvailability = (): Promise<boolean> =>
 	);
 
 /**
+ * Whether the provider's data processing agreement still allows new
+ * counselling (#1704). `null` when the server cannot tell; never rejects.
+ */
+export const apiGetNewCounsellingAllowed = (): Promise<boolean | null> =>
+	fetchData({
+		url: endpoints.consultantLiveChatAvailability,
+		method: FETCH_METHODS.GET
+	})
+		.then((response: { newCounsellingAllowed?: boolean }) =>
+			typeof response?.newCounsellingAllowed === 'boolean'
+				? response.newCounsellingAllowed
+				: null
+		)
+		.catch(() => null);
+
+/**
  * A heartbeat that has not answered by then counts as failed (`TIMEOUT`), so
  * the client can retry, or give up, well inside the 120 s lease (#1485).
  */

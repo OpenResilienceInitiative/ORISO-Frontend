@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { constants } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
 const BROWSER_DISCONNECT_SIGNATURE =
@@ -7,11 +8,14 @@ const MAX_CAPTURED_OUTPUT = 500_000;
 /** Full-suite re-runs after a disconnect-only abort (initial attempt + retries). */
 export const MAX_BROWSER_DISCONNECT_RETRIES = 4;
 const RETRY_COOLDOWN_MS = 2_000;
-const TEST_FAILURE_SIGNATURES = [
-	/(?:^|\n)\s*FAIL\s+/m,
-	/\bTest Files\s+\d+\s+failed\b/i,
+const ASSERTION_FAILURE_SIGNATURES = [
 	/\bTests\s+[1-9]\d*\s+failed\b/i,
 	/\bAssertionError\b/
+];
+const IMPORT_CRASH_SIGNATURES = [
+	/Failed to import test file/i,
+	/Failed to fetch dynamically imported module/i,
+	/Vitest failed to find the runner/i
 ];
 
 export const storybookVitestArgs = [
@@ -23,8 +27,7 @@ export const storybookVitestArgs = [
 	// tabs and makes the disconnect flake more likely. Two workers matched the
 	// last stable local run (#1127) without funneling all ~170 files through one
 	// tab (which --maxWorkers=1 provokes).
-	'--maxWorkers=2',
-	'--minWorkers=1'
+	'--maxWorkers=2'
 ];
 
 /**
@@ -55,10 +58,87 @@ export const storybookShardArgs = (index, count) =>
 
 const stripAnsi = (output) => output.replace(/\u001b\[[0-9;]*m/g, '');
 
-const hasTestFailure = (output) =>
-	TEST_FAILURE_SIGNATURES.some((signature) =>
+const hasAssertionFailure = (output) =>
+	ASSERTION_FAILURE_SIGNATURES.some((signature) =>
 		signature.test(stripAnsi(output))
 	);
+
+/** Classify each failed suite before its output can leave the rolling buffer. */
+export const createSuiteFailureTracker = () => {
+	const pendingLines = new Map();
+	let activeSuite = null;
+	let genuineFailure = false;
+	let importFailures = 0;
+	let reportedFailedSuites = 0;
+
+	const finishSuite = () => {
+		if (activeSuite !== null) {
+			if (activeSuite.importCrash) {
+				importFailures += 1;
+			} else {
+				genuineFailure = true;
+			}
+			activeSuite = null;
+		}
+	};
+	const inspectLine = (line) => {
+		const plain = stripAnsi(line);
+		if (/^\s*FAIL\s+/.test(plain)) {
+			finishSuite();
+			activeSuite = { importCrash: false };
+		}
+		if (activeSuite !== null && looksLikeImportCrash(plain)) {
+			activeSuite.importCrash = true;
+		}
+		const summary = plain.match(/\bTest Files\s+(\d+)\s+failed\b/i);
+		if (summary) {
+			reportedFailedSuites = Math.max(
+				reportedFailedSuites,
+				Number(summary[1])
+			);
+		}
+	};
+	return {
+		append(chunk, stream = 'stdout') {
+			// Separate incomplete stdout/stderr lines so interleaving cannot
+			// splice a suite header or import signature into an unrelated line.
+			const lines = `${pendingLines.get(stream) ?? ''}${chunk}`.split(
+				'\n'
+			);
+			pendingLines.set(stream, lines.pop());
+			for (const line of lines) {
+				inspectLine(line);
+			}
+		},
+		finish() {
+			for (const line of pendingLines.values()) {
+				inspectLine(line);
+			}
+			pendingLines.clear();
+			finishSuite();
+			// An import crash cannot explain any additional failed suite whose
+			// block was absent from the captured tail or otherwise unclassified.
+			return genuineFailure || reportedFailedSuites > importFailures;
+		}
+	};
+};
+
+const hasUnexplainedSuiteFail = (output) => {
+	const tracker = createSuiteFailureTracker();
+	tracker.append(output);
+	return tracker.finish();
+};
+
+/**
+ * Chrome dying mid-collect shows up as FAIL on whichever story was importing
+ * `.storybook/vitest.setup.ts`, plus "Failed to fetch dynamically imported
+ * module". That is infrastructure, not a broken Card/story. The
+ * `url.pathToFileURL` lines are the same Vite noise every run prints.
+ */
+export const looksLikeImportCrash = (output) => {
+	const plain = stripAnsi(output);
+	return IMPORT_CRASH_SIGNATURES.some((signature) => signature.test(plain));
+};
 
 /**
  * Chrome sometimes drops the orchestrator WebSocket after hundreds of green
@@ -82,13 +162,10 @@ export const looksLikeBrowserDisconnect = (output) => {
 /*
  * `outputTruncated` deliberately does NOT gate the retry.
  *
- * It used to, on the reasoning that a truncated log "can have removed an
- * earlier failure". It cannot: `failureDetected` is latched in `forwardOutput`
- * against the rolling window (retained tail + the arriving chunk) on every
- * `data` event, so every FAIL / `Tests n failed` / AssertionError line is
- * scanned at the moment it streams — truncation only ever discards text that
- * has already been examined. A chunk is far smaller than MAX_CAPTURED_OUTPUT,
- * so the retained tail also heals signatures that straddle a chunk boundary.
+ * Assertion failures are latched as chunks arrive. Failed suite blocks are
+ * classified independently by a streaming tracker, which retains their outcome
+ * even after the rolling output drops the original text. Only import-crash
+ * blocks may retry; a genuine or unclassified failed suite stops the retry.
  *
  * Gating on it made the retry unreachable in CI: the Storybook run emits
  * thousands of "Module … has been externalized for browser compatibility"
@@ -114,24 +191,33 @@ export const shouldRetryStorybookRun = (
 ) =>
 	code !== 0 &&
 	!failureDetected &&
-	looksLikeBrowserDisconnect(capturedOutput) &&
-	!hasTestFailure(capturedOutput);
+	!hasAssertionFailure(capturedOutput) &&
+	!hasUnexplainedSuiteFail(capturedOutput) &&
+	(looksLikeBrowserDisconnect(capturedOutput) ||
+		looksLikeImportCrash(capturedOutput));
 
 const sleep = (ms) =>
 	new Promise((resolve) => {
 		setTimeout(resolve, ms);
 	});
 
-const runStorybookTests = (args = storybookVitestArgs) =>
+export const runStorybookTests = (
+	args = storybookVitestArgs,
+	{ stdout = process.stdout, stderr = process.stderr } = {}
+) =>
 	new Promise((resolve) => {
 		let capturedOutput = '';
 		let failureDetected = false;
 		let outputTruncated = false;
+		const suiteFailures = createSuiteFailureTracker();
 		let exitCode = 1;
 		let stdoutDone = false;
 		let stderrDone = false;
 		let closed = false;
 		let settled = false;
+		let childSignal = null;
+		let cancelledSignal = null;
+		let spawnError = null;
 		const child = spawn(process.execPath, args, {
 			env: {
 				...process.env,
@@ -140,48 +226,68 @@ const runStorybookTests = (args = storybookVitestArgs) =>
 			stdio: ['inherit', 'pipe', 'pipe']
 		});
 
+		const forwardSignal = (signal) => {
+			cancelledSignal ??= signal;
+			child.kill(signal);
+		};
+		const onInterrupt = () => forwardSignal('SIGINT');
+		const onTerminate = () => forwardSignal('SIGTERM');
+		process.once('SIGINT', onInterrupt);
+		process.once('SIGTERM', onTerminate);
+
 		const settle = () => {
 			if (settled || !closed || !stdoutDone || !stderrDone) {
 				return;
 			}
 			settled = true;
+			process.removeListener('SIGINT', onInterrupt);
+			process.removeListener('SIGTERM', onTerminate);
+			failureDetected ||= suiteFailures.finish();
 			resolve({
 				code: exitCode,
 				capturedOutput,
 				failureDetected,
-				outputTruncated
+				outputTruncated,
+				signal: cancelledSignal || childSignal,
+				spawnError
 			});
 		};
 
-		const forwardOutput = (stream, destination, onEnd) => {
+		const forwardOutput = (stream, destination, streamName, onEnd) => {
 			stream.on('data', (chunk) => {
 				destination.write(chunk);
+				suiteFailures.append(chunk, streamName);
 				const combinedOutput = `${capturedOutput}${chunk}`;
-				failureDetected ||= hasTestFailure(combinedOutput);
+				failureDetected ||= hasAssertionFailure(combinedOutput);
 				outputTruncated ||= combinedOutput.length > MAX_CAPTURED_OUTPUT;
 				capturedOutput = combinedOutput.slice(-MAX_CAPTURED_OUTPUT);
 			});
 			stream.on('end', onEnd);
 		};
 
-		forwardOutput(child.stdout, process.stdout, () => {
+		forwardOutput(child.stdout, stdout, 'stdout', () => {
 			stdoutDone = true;
 			settle();
 		});
-		forwardOutput(child.stderr, process.stderr, () => {
+		forwardOutput(child.stderr, stderr, 'stderr', () => {
 			stderrDone = true;
 			settle();
 		});
 		child.on('error', (error) => {
 			console.error(error);
+			spawnError = error.message;
 			exitCode = 1;
 			closed = true;
 			stdoutDone = true;
 			stderrDone = true;
 			settle();
 		});
-		child.on('close', (code) => {
-			exitCode = code ?? 1;
+		child.on('close', (code, signal) => {
+			childSignal = signal;
+			const terminationSignal = cancelledSignal || signal;
+			exitCode = terminationSignal
+				? 128 + constants.signals[terminationSignal]
+				: (code ?? 1);
 			closed = true;
 			settle();
 		});
@@ -195,13 +301,15 @@ const runShardWithRetries = async (index, count) => {
 
 	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
 		if (
+			lastRun.signal ||
+			lastRun.spawnError ||
 			!shouldRetryStorybookRun(
 				lastRun.code,
 				lastRun.capturedOutput,
 				lastRun
 			)
 		) {
-			return lastRun.code ?? 1;
+			return lastRun;
 		}
 
 		attempt += 1;
@@ -215,23 +323,32 @@ const runShardWithRetries = async (index, count) => {
 		lastRun = await runStorybookTests(args);
 	}
 
-	return lastRun.code ?? 0;
+	return lastRun;
 };
 
 const main = async () => {
 	const shardCount = resolveShardCount();
+	let firstFailure = 0;
 	for (let index = 1; index <= shardCount; index += 1) {
 		if (shardCount > 1) {
 			console.log(
 				`Storybook component tests: shard ${index}/${shardCount}`
 			);
 		}
-		const code = await runShardWithRetries(index, shardCount);
-		if (code !== 0) {
-			return code;
+		const run = await runShardWithRetries(index, shardCount);
+		const code = run.code ?? 1;
+		// Signals, spawn/setup failures and exhausted infrastructure aborts do
+		// not become ordinary test failures or launch more owned browsers.
+		if (
+			run.signal ||
+			run.spawnError ||
+			(code !== 0 && !run.failureDetected)
+		) {
+			return firstFailure || code;
 		}
+		if (code !== 0 && firstFailure === 0) firstFailure = code;
 	}
-	return 0;
+	return firstFailure;
 };
 
 if (

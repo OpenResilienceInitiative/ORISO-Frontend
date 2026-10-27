@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { render, cleanup, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, it, expect, vi } from 'vite-plus/test';
 import {
 	AgencySpecificContext,
 	LocaleContext,
@@ -223,7 +223,9 @@ it.each(['ready', 'missing', 'failed'] as const)(
 				container.querySelector('[data-cy="group-entry-loading"]')
 			).not.toBeNull()
 		);
-		assertSingleIdentity('authenticated');
+		// Loading already stands in the waiting-room frame (#1219), so the
+		// stage owns the identity from the first frame on.
+		assertSingleIdentity('stage');
 		if (state === 'failed') rejectList(new Error('offline'));
 		else
 			resolveList({
@@ -257,7 +259,7 @@ it('places the single nested waiting identity in the stage footer outside its ac
 					plannedStart={new Date('2026-09-17T12:00:00Z')}
 					eventId={42}
 					rules={[]}
-					active
+					active={false}
 					onJoin={() => {}}
 					nowMs={0}
 				/>

@@ -22,6 +22,7 @@
 	border-radius: 0;
 	background: var(--m3-surface, #ffffff);
 	box-shadow: 0 2px 10px rgba(45, 34, 33, 0.08);
+
 	// Only the body scrolls; the protection header and navigation footer stay visible.
 	overflow: hidden;
 
@@ -150,4 +151,20 @@
 	margin: 8px 0 0;
 	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	font-weight: 600;
+}
+
+// FE#1725 US26: no reasons configured — explain instead of a dead Next.
+.caseHandoverCurtain__empty {
+	margin: 8px 0 0;
+	padding: 12px 16px;
+	border-radius: 12px;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.caseHandoverCurtain__loadFailed {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
 }

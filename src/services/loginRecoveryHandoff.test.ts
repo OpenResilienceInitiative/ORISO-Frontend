@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 
 // Stands in for IndexedDB. Held by the test file, so it outlives the module
 // reloads below exactly as a browser's IndexedDB outlives a document load.
@@ -237,4 +237,35 @@ it('drops only its own key when a tab clears', async () => {
 	expect(await handoff.consumeLoginRecoveryPassword('@b:test')).toBe(
 		'synthetic-b'
 	);
+});
+
+// #1741: a failed first unlock must not use up the only chance within the 120 s.
+it('can hand a password back for one more attempt, but never past its original expiry', async () => {
+	vi.useFakeTimers();
+	await handoff.stageLoginRecoveryPassword('@a:test', 'synthetic');
+	const first = await handoff.consumeLoginRecoveryHandoff('@a:test');
+	expect(first?.password).toBe('synthetic');
+	await handoff.restageLoginRecoveryPassword(
+		'@a:test',
+		first!.password,
+		first!.expiresAt
+	);
+	await documentLoad();
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBe(
+		'synthetic'
+	);
+
+	await handoff.restageLoginRecoveryPassword(
+		'@a:test',
+		'synthetic',
+		first!.expiresAt
+	);
+	vi.setSystemTime(first!.expiresAt + 1);
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
+	await handoff.restageLoginRecoveryPassword(
+		'@a:test',
+		'synthetic',
+		first!.expiresAt
+	);
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
 });

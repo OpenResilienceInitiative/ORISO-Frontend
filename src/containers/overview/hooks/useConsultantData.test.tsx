@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Unread axis (#1147) — overview "unread only" data source.
  *
@@ -7,7 +7,14 @@
  */
 
 import { renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetConsultantSessionList } from '../../../api';
 import { setMatrixClientServiceRef } from '../../../services/matrixClientRegistry';
 import { useConsultantData } from './useConsultantData';

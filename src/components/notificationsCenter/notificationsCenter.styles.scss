@@ -528,6 +528,13 @@
 		svg {
 			width: 18px;
 			height: 18px;
+			fill: currentcolor;
+		}
+
+		// `open-in-new-tab.svg` ships a black 0.9 fill; follow the label colour.
+		svg path {
+			fill: currentcolor;
+			fill-opacity: 1;
 		}
 
 		&:hover {

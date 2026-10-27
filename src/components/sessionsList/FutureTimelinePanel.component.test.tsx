@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import {
 	act,
@@ -7,7 +7,7 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	apiGetChatOccurrences,
 	apiSkipChatOccurrence

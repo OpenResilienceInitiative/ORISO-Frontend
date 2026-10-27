@@ -30,9 +30,20 @@ export const counsellorInitials = ({
 				? named
 				: [(username ?? '').trim()].filter(Boolean);
 
-	return source
+	/*
+	 * Capped AFTER the upper-casing, because some letters grow in it.
+	 * `ﬃ` upper-cases to `FFI` and `ß` to `SS`, so two picked letters could
+	 * leave three or four characters in a field that promises one or two —
+	 * drawn over the edge of the avatar here, and sent out of contract to the
+	 * call, whose `readIdentity` has to trim it back.
+	 */
+	return [
+		...source
+			.slice(0, 2)
+			.map((word) => [...word][0] ?? '')
+			.join('')
+			.toLocaleUpperCase()
+	]
 		.slice(0, 2)
-		.map((word) => [...word][0] ?? '')
-		.join('')
-		.toLocaleUpperCase();
+		.join('');
 };
