@@ -181,17 +181,6 @@ it('keeps frozen FAQ and invitation words when the saved channel suppresses its 
 	expect(screen.queryByRole('button', { name: 'Add email' })).toBeNull();
 });
 
-it('draws the whole first answer as one block, without staging the bubbles one by one', () => {
-	// Frank, 2026-10-14: the staged reveal (typing dots, 1.4 s per bubble) is far
-	// too slow. With no animation prop at all, everything is on screen at once.
-	vi.useFakeTimers();
-	setup(false, undefined, undefined, undefined, undefined, false);
-	expect(
-		screen.getByRole('button', { name: /notificationChoice.email / })
-	).toBeTruthy();
-	vi.useRealTimers();
-});
-
 it('keeps the setup collapsed after a reload once the person closed it with the X (ORISO-Frontend#1700)', () => {
 	const first = setup(
 		false,
@@ -262,6 +251,45 @@ const firstResponse = (...ids: string[]) =>
 				: { id, headline: `Headline ${id}`, body: `Body ${id}` }
 		)
 	});
+
+it('draws a persisted first answer as one block on first render and after a remount', () => {
+	// Frank, 2026-10-14: the staged reveal (typing dots, 1.4 s per bubble) is far
+	// too slow. No animation prop: every bubble is on screen at once.
+	vi.useFakeTimers();
+	try {
+		const raw = firstResponse('whoReadsAlong', 'emailNotification');
+		const first = setup(
+			false,
+			undefined,
+			undefined,
+			raw,
+			'$first-answer',
+			false
+		);
+		expect(screen.getByText('Body whoReadsAlong')).toBeTruthy();
+		expect(screen.getByText('You can add an email address.')).toBeTruthy();
+		expect(
+			first.container.querySelector('.erstantwort__bubble--typing')
+		).toBeNull();
+		first.unmount();
+
+		// The same persisted message, rendered again after a reload.
+		const second = setup(
+			false,
+			undefined,
+			undefined,
+			raw,
+			'$first-answer',
+			false
+		);
+		expect(screen.getByText('Body whoReadsAlong')).toBeTruthy();
+		expect(
+			second.container.querySelector('.erstantwort__bubble--typing')
+		).toBeNull();
+	} finally {
+		vi.useRealTimers();
+	}
+});
 
 it('keeps the one-line summary and "change" on the persisted invitation once a channel is reachable (ORISO-Frontend#1767 review)', () => {
 	setup(
