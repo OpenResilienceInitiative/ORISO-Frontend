@@ -411,36 +411,45 @@ export const OrisoCalendar = ({
 								);
 								const isToday = day.isSame(today, 'day');
 
+								// A grid row holds cells, not buttons; the cell
+								// takes no box, so the day stays the grid item (#1338).
 								return (
-									<ButtonBase
+									<Box
 										key={day.format('YYYY-MM-DD')}
-										focusRipple
-										autoFocus={Boolean(
-											autoFocus && isSelected
-										)}
-										disabled={isDayDisabled(
-											day,
-											minDate,
-											maxDate
-										)}
-										onClick={() => handleSelectDay(day)}
-										aria-label={day.format('D MMMM YYYY')}
-										aria-pressed={isSelected}
-										className={
-											(isSelected
-												? 'orisoCalendarDay--selected '
-												: '') +
-											(isToday && !isSelected
-												? 'orisoCalendarDay--today '
-												: '') +
-											(!isCurrentMonth && !isSelected
-												? 'orisoCalendarDay--outside'
-												: '')
-										}
-										sx={dayCellSx}
+										role="gridcell"
+										sx={{ display: 'contents' }}
 									>
-										{day.date()}
-									</ButtonBase>
+										<ButtonBase
+											focusRipple
+											autoFocus={Boolean(
+												autoFocus && isSelected
+											)}
+											disabled={isDayDisabled(
+												day,
+												minDate,
+												maxDate
+											)}
+											onClick={() => handleSelectDay(day)}
+											aria-label={day.format(
+												'D MMMM YYYY'
+											)}
+											aria-pressed={isSelected}
+											className={
+												(isSelected
+													? 'orisoCalendarDay--selected '
+													: '') +
+												(isToday && !isSelected
+													? 'orisoCalendarDay--today '
+													: '') +
+												(!isCurrentMonth && !isSelected
+													? 'orisoCalendarDay--outside'
+													: '')
+											}
+											sx={dayCellSx}
+										>
+											{day.date()}
+										</ButtonBase>
+									</Box>
 								);
 							})}
 						</Box>

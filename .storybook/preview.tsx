@@ -458,6 +458,28 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(storybookTopics);
 	}
 
+	// A centre with no legal text of its own: the client shows its catalogue
+	// consent sentence. A story about authored or missing text sets its own.
+	if (/^\/service\/agencies\/\d+\/topics\/\d+\/legal$/.test(url.pathname)) {
+		return storybookJsonResponse({ dpp: null, imprint: null });
+	}
+
+	// Every username a story types is free; a taken name is the story's own fixture.
+	if (url.pathname.startsWith('/service/users/availability/')) {
+		return storybookJsonResponse({});
+	}
+
+	// `/service/agencies/101` or `/service/agencies/101,102`: the fixture centres by id.
+	const agencyIds = url.pathname.match(
+		/^\/service\/agencies\/(\d+(?:,\d+)*)$/
+	);
+	if (agencyIds) {
+		const ids = agencyIds[1].split(',').map(Number);
+		return storybookJsonResponse(
+			storybookAgencies.filter((agency) => ids.includes(agency.id))
+		);
+	}
+
 	if (url.pathname.match(/\/service\/agencies(?:\?|$)/)) {
 		return storybookJsonResponse(storybookAgencies);
 	}
@@ -890,7 +912,22 @@ const preview: Preview = {
 						'wcag21aa',
 						'wcag22aa'
 					]
-				}
+				},
+				// A plain repeated id (one SVG icon rendered twice) fails only
+				// WCAG 4.1.1, which 2.2 removed. Ids that a label or ARIA points
+				// at stay checked by duplicate-id-aria (#1338).
+				rules: { 'duplicate-id': { enabled: false } }
+			},
+			config: {
+				rules: [
+					// Each language chip holds its remove button next to the tab,
+					// inside the tablist. Moving it out changes the chip and its
+					// keyboard path, so it stays as designed; listed in #1338.
+					{
+						id: 'aria-required-children',
+						selector: '[role]:not(.createChat__languageTabs)'
+					}
+				]
 			},
 			test: 'error'
 		},

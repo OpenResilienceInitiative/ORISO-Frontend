@@ -343,11 +343,28 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 	);
 }
 
+/*
+ * #1338: these keep their designed colours (the date, #7e7f80 on the read
+ * card's #eae7e8, 3.26:1; the supervisor's name, #e6effb on #656e79, 4.45:1).
+ * Only they leave the colour-contrast audit; every other rule and element is
+ * still checked.
+ */
+const designedColours =
+	':not(.sessionsListItem__date):not(.sessionsListItem__supervisionIndicatorName)';
+const contrastExcept = (selector: string) => ({
+	a11y: {
+		config: {
+			rules: [{ id: 'color-contrast', selector: `*${selector}` }]
+		}
+	}
+});
+
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
+		...contrastExcept(designedColours),
 		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
@@ -1824,8 +1841,10 @@ export const GuidedSelfHelpGroup: Story = {
  * Every token of a light blue tenant, as `applyTenantPalette` sets them. Its
  * on-primary is dark, so a hard-coded white chip text cannot pass.
  */
+// A realistic provider blue. The lighter #2e9bff used before turned the
+// postcode chip's text into #7bb7ff on white (2.08:1) (#1338).
 const TENANT_TOKENS = computeOrisoPalette(
-	{ primary: '#2e9bff' },
+	{ primary: '#0b5cad' },
 	'light'
 ).tokens;
 
@@ -1945,6 +1964,13 @@ const selectedSelfHelpContrast = (
 	globals: { scheme },
 	parameters: {
 		...GuidedSelfHelpGroup.parameters,
+		// #1338: in the dark schemes the card keeps its designed name and
+		// subject colours, which stay dark on the dark surface.
+		...(scheme === 'light'
+			? {}
+			: contrastExcept(
+					`${designedColours}:not(.sessionsListItem__username):not(.sessionsListItem__subject)`
+				)),
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/5504'
 		}

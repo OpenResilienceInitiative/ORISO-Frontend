@@ -375,7 +375,11 @@ const StageList = () => {
 					chipCounts={{ groups: 1 }}
 				/>
 				<div className="sessionsList__scrollArea">
-					<div className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar">
+					<div
+						className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
+						role="list"
+						aria-label="Conversations"
+					>
 						<SessionListItemComponent
 							defaultLanguage="de"
 							handleKeyDownLisItemContent={() => {}}

@@ -1028,6 +1028,8 @@ function SessionListPanel({
 							ref={listScrollRef}
 							className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
 							style={styles.listScroll}
+							role="list"
+							aria-label="Conversations"
 						>
 							{runtimeSessions.map((session, index) => (
 								<RealSessionListItem
