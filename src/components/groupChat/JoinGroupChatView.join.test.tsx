@@ -133,7 +133,8 @@ vi.mock('../../resources/img/illustrations/x.svg', () => ({
 vi.mock('./entryRoom/groupWaitingRoomData', () => ({
 	getGroupSeries: () => undefined,
 	getGroupUpcomingDates: () => [],
-	getGroupWaitingRoomTopic: () => 'topic'
+	getGroupWaitingRoomTopic: () => 'topic',
+	getGroupSeries: () => undefined
 }));
 
 /* What the room's onJoin hands back, as the closing animation sees it. */

@@ -20,7 +20,8 @@ export const useSession = (
 	reconcilePendingEnquiry = false
 ): {
 	session: ExtendedSessionInterface;
-	reload: () => void;
+	/** Settles when the explicit session reload has finished. */
+	reload: () => Promise<void> | undefined;
 	read: () => void;
 	ready: boolean;
 } => {

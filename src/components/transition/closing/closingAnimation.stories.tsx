@@ -16,10 +16,15 @@ import {
 import {
 	expectWaitingRoomTemplate,
 	verifyClosingAnimation,
+	verifyClosingHandover,
 	verifyClosingSkipped
 } from '../../../../.storybook/closingAnimationContractPlay';
 import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
 import { ClosingFocal } from './closingFocal';
+import {
+	playClosingAnimation,
+	resumeClosingAnimation
+} from './playClosingAnimation';
 
 /**
  * The closing animation is one platform module with one design, the wave
@@ -302,4 +307,136 @@ export const WaveRevealReducedMotion = reducedMotionStory(
 export const WaveRevealReducedMotionPhone = reducedMotionStory(
 	'phone',
 	'Reduced motion — wave reveal is skipped on a phone'
+);
+
+/**
+ * A waiting room that replaces the whole page (the live-chat room): the
+ * animation starts in one document and the browser really navigates to the
+ * next. The old document sits in a frame, so the page is replaced for real
+ * (`pagehide`, a new `Document`, `sessionStorage` shared by both) without
+ * taking Storybook with it. The harness stands in for the one thing the app
+ * does on its own: calling `resumeClosingAnimation` from its first module.
+ */
+const OLD_DOCUMENT_COLOUR = 'rgb(0, 80, 160)';
+
+const OLD_DOCUMENT = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Warteraum</title><style>:root{--m3-primary:#0050a0}html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{padding:24px}</style></head><body><main>Warteraum (altes Dokument)</main></body></html>`;
+
+/* The new document has no palette: only a cover that was handed over is blue. */
+const newDocument = (showsField: boolean) =>
+	`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Ihr Gespräch</title><style>html,body{margin:0;height:100%;background:#fcf9f9;color:#1b1b1c;font:16px system-ui,sans-serif}main{box-sizing:border-box;height:calc(100% - 96px);margin:48px clamp(16px,8vw,120px);padding:24px;background:#fff;border:1px solid #d9d9d9;border-radius:12px}</style></head><body><main class="stageLayout__content">Ihr Gespräch (neues Dokument)</main>${
+		showsField
+			? '<div data-closing-focal="message-field" style="position:absolute;left:clamp(16px,8vw,120px);bottom:48px;width:520px;max-width:calc(100% - 2 * clamp(16px,8vw,120px));height:64px;box-sizing:border-box;border:1px solid #747878;border-radius:8px"><textarea aria-label="Nachricht" style="width:100%;height:100%;box-sizing:border-box;padding:0 12px;border:0;outline:0;background:transparent;resize:none;font:inherit"></textarea></div>'
+			: ''
+	}</body></html>`;
+
+const HandoverRoom = ({ showsField }: { showsField: boolean }) => {
+	const frame = React.useRef<HTMLIFrameElement>(null);
+	const press = () => {
+		const iframe = frame.current;
+		const oldDocument = iframe?.contentDocument;
+		const oldWindow = iframe?.contentWindow;
+		if (!iframe || !oldDocument || !oldWindow) {
+			return;
+		}
+		const url = URL.createObjectURL(
+			new Blob([newDocument(showsField)], { type: 'text/html' })
+		);
+		void playClosingAnimation({
+			document: oldDocument,
+			focal: 'messageField',
+			// The room replaces the page: this never settles.
+			onCovered: () =>
+				new Promise<void>(() => {
+					iframe.addEventListener(
+						'load',
+						() => {
+							URL.revokeObjectURL(url);
+							const next = iframe.contentDocument;
+							if (!next) {
+								return;
+							}
+							iframe.dispatchEvent(
+								new CustomEvent('handover-boot', {
+									bubbles: true,
+									detail: { document: next }
+								})
+							);
+							void resumeClosingAnimation({ document: next });
+						},
+						{ once: true }
+					);
+					oldWindow.location.href = url;
+				})
+		});
+	};
+	return (
+		<Box sx={{ p: 2, display: 'grid', gap: 2 }}>
+			<button type="button" data-testid="handover-press" onClick={press}>
+				Gespräch beginnen
+			</button>
+			<Box
+				component="iframe"
+				ref={frame}
+				title="Warteraum, danach Gespräch"
+				srcDoc={OLD_DOCUMENT}
+				sx={{
+					width: '100%',
+					height: 640,
+					border: '1px solid #747878',
+					borderRadius: 2
+				}}
+			/>
+		</Box>
+	);
+};
+
+const handoverStory = (
+	width: keyof typeof WIDTH,
+	name: string,
+	showsField = true
+): Story => ({
+	name,
+	globals: WIDTH[width].globals,
+	render: () => <HandoverRoom showsField={showsField} />,
+	play: async ({ canvasElement }) => {
+		await verifyClosingHandover(canvasElement, {
+			press: () =>
+				canvasElement.querySelector<HTMLElement>(
+					'[data-testid="handover-press"]'
+				),
+			frame: () => canvasElement.querySelector('iframe'),
+			colour: OLD_DOCUMENT_COLOUR,
+			destinationShowsFocal: showsField
+		});
+	}
+});
+
+/* Press the button yourself. No assertions; the stories below carry them. */
+const tryHandOver = (width: keyof typeof WIDTH, name: string): Story => ({
+	name,
+	globals: WIDTH[width].globals,
+	render: () => <HandoverRoom showsField />
+});
+
+export const TryHandOverWaveReveal = tryHandOver(
+	'desktop',
+	'Try it — the page is replaced'
+);
+export const TryHandOverWaveRevealPhone = tryHandOver(
+	'phone',
+	'Try it — the page is replaced, phone'
+);
+
+export const WaveRevealHandsOverToTheNextDocument = handoverStory(
+	'desktop',
+	'Wave reveal — the cover carries over into the next document'
+);
+export const WaveRevealHandsOverToTheNextDocumentPhone = handoverStory(
+	'phone',
+	'Wave reveal — the cover carries over into the next document, phone'
+);
+export const HandOverGivesThePageBackWithoutAField = handoverStory(
+	'desktop',
+	'Hand-over — the page is given back when the field never shows',
+	false
 );

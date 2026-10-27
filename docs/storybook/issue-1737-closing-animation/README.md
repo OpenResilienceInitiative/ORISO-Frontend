@@ -25,3 +25,32 @@ What these images prove: the geometry and the colour of the design at those inst
 What they cannot show: timing, easing and smoothness. Those are covered by the Storybook
 contract (`src/components/transition/closing/closingAnimation.stories.tsx`) and the unit
 tests.
+
+## The cover carried into the next document (live chat)
+
+The live-chat room starts the chat by replacing the whole page, so the colour
+used to vanish with the old page and the chat appeared without a reveal. The old
+document now leaves a short note as it goes, and the next document covers its page
+with the same sheet before anything else is on it, then opens it onto the message
+field, upward like everywhere else. Frames from the Storybook stories
+`Try it — the page is replaced` and `Try it — the page is replaced, phone`: the old
+page sits in a frame that the browser really navigates to a new document. The new
+document has no palette of its own; the blue is the old page's palette, handed over
+(the note carries the Träger's primary colour and the place the reveal ends on, and
+nothing else).
+
+- `09` — **before**: the new document after the page was replaced, with no note
+  left. What a person got until now: the chat, no cover, no reveal. (The new
+  document is a stub with a white content card and a message field.)
+- `10` — **after, first frame of the new document**: the finished cover, in the
+  tenant's colour, before the reveal starts (`desktop` on 1440 px, `phone` on 390 px).
+- `11` — **after, 300 ms into the reveal**, in the new document (same two widths).
+  The sheet leaves at the top with its wave, and the room comes up from the bottom.
+- `12` — **after**: the new document once the reveal is over, nothing left on the page
+  (desktop). It is the same screen as `09` on purpose: what changes is the way there
+  (`10` and `11`), not where the person ends up.
+
+Re-shot on 2026-10-20 after #1766 made the wave reveal the only design, always upward.
+Taken in Chrome from Storybook with the Web Animations of the reveal frozen at
+those instants (`10` holds the cover by keeping the field away for a moment). They show shapes, not timing; the contract stories
+`Wave reveal — the cover carries over into the next document` (desktop and phone) and the unit tests cover that.

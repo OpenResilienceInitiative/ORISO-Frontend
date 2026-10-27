@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { orisoInputColors } from '../../form/orisoInputDesign';
 import { transitionMotion } from '../transitionMotion';
 import { playClosingAnimation } from './playClosingAnimation';
+import { CLOSING_HANDOVER_KEY } from './closingHandover';
 
 const ROOT = '[data-closing-animation]';
 const primary = orisoInputColors.primary;
@@ -90,6 +91,7 @@ describe('playClosingAnimation', () => {
 		vi.useRealTimers();
 		removeAnimate();
 		document.body.innerHTML = '';
+		window.sessionStorage.clear();
 	});
 
 	it('skips the animation for reduced motion and swaps the room at once', async () => {
@@ -1293,5 +1295,259 @@ describe('playClosingAnimation', () => {
 				expect(document.querySelector(ROOT)).toBeNull();
 			}
 		);
+	});
+
+	/**
+	 * A room that replaces the whole page (the live-chat room) never sees the
+	 * reveal in its own document. The cover is handed to the next document, which
+	 * plays the reveal (`resumeClosingAnimation`).
+	 */
+	describe('when the page is replaced under the cover', () => {
+		const note = () => {
+			const raw = window.sessionStorage.getItem(CLOSING_HANDOVER_KEY);
+			return raw ? JSON.parse(raw) : null;
+		};
+		const never = () => new Promise<void>(() => undefined);
+		const leave = () => window.dispatchEvent(new Event('pagehide'));
+		// Let every animation of the test run into the cap, so none leaves its
+		// listener on the window for the next test.
+		afterEach(async () => {
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 100
+			);
+		});
+
+		it('gives the restored page back immediately after Back, before the cap', async () => {
+			installAnimate('at once');
+			const app = document.createElement('main');
+			const button = document.createElement('button');
+			app.appendChild(button);
+			document.body.appendChild(app);
+			button.focus();
+			const removed = vi.spyOn(window, 'removeEventListener');
+			const added = vi.spyOn(window, 'addEventListener');
+			let ended = false;
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			}).then(() => {
+				ended = true;
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			button.blur(); // Browsers drop focus while the app is inert.
+			expect(app.hasAttribute('inert')).toBe(true);
+			leave();
+
+			window.dispatchEvent(
+				new PageTransitionEvent('pageshow', { persisted: false })
+			);
+			await vi.advanceTimersByTimeAsync(0);
+			expect(ended).toBe(false);
+			expect(document.querySelector(ROOT)).not.toBeNull();
+
+			window.dispatchEvent(
+				new PageTransitionEvent('pageshow', { persisted: true })
+			);
+			await vi.advanceTimersByTimeAsync(0);
+			expect(ended).toBe(true);
+			expect(document.querySelector(ROOT)).toBeNull();
+			expect(app.hasAttribute('inert')).toBe(false);
+			expect(document.activeElement).toBe(button);
+			const listener = added.mock.calls.find(
+				([type]) => type === 'pageshow'
+			)?.[1];
+			expect(listener).toBeDefined();
+			expect(removed).toHaveBeenCalledWith('pageshow', listener);
+			await pending;
+		});
+
+		it('leaves a note for the next document, with where it ends', async () => {
+			installAnimate('at once');
+			void playClosingAnimation({
+				focal: 'call',
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			expect(
+				document.querySelector(ROOT)?.getAttribute('data-closing-phase')
+			).toBe('covered');
+
+			leave();
+
+			expect(note()).toEqual({
+				focal: 'call',
+				at: Date.now()
+			});
+		});
+
+		it("carries the tenant's colour, which the next document does not have yet", async () => {
+			installAnimate('at once');
+			const root = document.documentElement;
+			root.style.setProperty('--m3-primary', '#0050a0');
+			try {
+				void playClosingAnimation({
+					focal: 'messageField',
+					onCovered: never
+				});
+				await vi.advanceTimersByTimeAsync(200);
+
+				leave();
+
+				expect(note().colors).toEqual({ primary: '#0050a0' });
+			} finally {
+				root.style.removeProperty('--m3-primary');
+			}
+		});
+
+		it('carries no colour when the tenant has none: the platform colour applies on the other side', async () => {
+			installAnimate('at once');
+			void playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(200);
+
+			leave();
+
+			expect(note()).not.toBeNull();
+			expect(note()).not.toHaveProperty('colors');
+		});
+
+		it('leaves no note when the page goes before the screen is covered', async () => {
+			installAnimate('never');
+			void playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(200);
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
+
+		it('leaves no note once the reveal has begun: the room has arrived', async () => {
+			// The cover finishes, the reveal never does.
+			(Element.prototype as unknown as { animate: unknown }).animate =
+				vi.fn(function (this: HTMLElement) {
+					const revealing =
+						this.closest<HTMLElement>(ROOT)?.dataset
+							.closingPhase === 'reveal';
+					return {
+						finished: revealing
+							? new Promise<void>(() => undefined)
+							: Promise.resolve(),
+						finish: vi.fn()
+					};
+				});
+			(
+				document.documentElement as unknown as { animate: unknown }
+			).animate = Element.prototype.animate;
+			focalOnPage();
+			void playClosingAnimation({
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			expect(
+				document.querySelector(ROOT)?.getAttribute('data-closing-phase')
+			).toBe('reveal');
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
+
+		it('leaves no note once the cap has taken the layers away', async () => {
+			installAnimate('at once');
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 50
+			);
+			await pending;
+			expect(document.querySelector(ROOT)).toBeNull();
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
+
+		it('stops listening for the page to go once the animation is over', async () => {
+			installAnimate('at once');
+			focalOnPage();
+			const added = vi.spyOn(window, 'addEventListener');
+			const removed = vi.spyOn(window, 'removeEventListener');
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+
+			const listener = added.mock.calls.find(
+				([type]) => type === 'pagehide'
+			)?.[1];
+			expect(listener, 'it listened while it played').toBeDefined();
+			expect(removed).toHaveBeenCalledWith('pagehide', listener);
+		});
+
+		it('leaves no note when something else took the layers off the page', async () => {
+			installAnimate('at once');
+			void playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			document.querySelector(ROOT)?.remove();
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
+
+		it('leaves no note once the animation is over', async () => {
+			installAnimate('at once');
+			focalOnPage();
+			const pending = playClosingAnimation({
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			await vi.advanceTimersByTimeAsync(200);
+			await pending;
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
+
+		it('leaves no note when nothing was drawn (reduced motion)', async () => {
+			installAnimate('at once');
+			void playClosingAnimation({
+				focal: 'messageField',
+				reducedMotion: true,
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(200);
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
+
+		it('leaves no note in a browser that cannot animate', async () => {
+			removeAnimate();
+			void playClosingAnimation({
+				focal: 'messageField',
+				onCovered: never
+			});
+			await vi.advanceTimersByTimeAsync(200);
+
+			leave();
+
+			expect(note()).toBeNull();
+		});
 	});
 });
