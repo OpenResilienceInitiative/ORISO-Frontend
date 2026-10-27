@@ -590,12 +590,20 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				requester_device_id: 'ASKER1',
 				...(reason === undefined ? {} : { reason })
 			});
+		// The requesting device never counts as cross-signed; only the
+		// approving device's status varies, so one cannot mask the other.
+		const verificationFor =
+			(approvingDeviceCrossSigned: boolean) =>
+			async (_userId: string, deviceId: string) => ({
+				isVerified: () => false,
+				crossSigningVerified:
+					deviceId === 'ASKER1' ? false : approvingDeviceCrossSigned
+			});
 		const setup = () => {
 			const harness = buildHarness();
-			harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
-				isVerified: () => false,
-				crossSigningVerified: true
-			});
+			harness.crypto.getDeviceVerificationStatus.mockImplementation(
+				verificationFor(true)
+			);
 			applyDeviceIsolationMode(harness.client as any, true);
 			const service = new MatrixRoomHistoryKeyTransfer();
 			service.initialize(harness.client as any);
@@ -794,10 +802,9 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			await vi.waitFor(() =>
 				expect(service.getPendingApprovals()).toHaveLength(1)
 			);
-			harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
-				isVerified: () => false,
-				crossSigningVerified: false
-			});
+			harness.crypto.getDeviceVerificationStatus.mockImplementation(
+				verificationFor(false)
+			);
 			await expect(service.getReleaseBlock()).resolves.toBe(
 				'needs-cross-signing'
 			);
@@ -808,6 +815,25 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				harness.client.encryptAndSendToDevice
 			).not.toHaveBeenCalled();
 			expect(service.getPendingApprovals()).toHaveLength(1);
+		});
+
+		it('sends nothing when the requester leaves during the export', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.crypto.exportRoomKeys.mockImplementationOnce(async () => {
+				harness.memberships.set(PEER, member(PEER, 'leave'));
+				return [{ room_id: ROOM_ID }];
+			});
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+			expect(service.getPendingApprovals()).toEqual([]);
 		});
 
 		it('refuses an approval after the request expired', async () => {
