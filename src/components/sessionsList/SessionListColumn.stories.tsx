@@ -157,11 +157,7 @@ function ColumnShell({ children }: { children: React.ReactNode }) {
 function CardScroll({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="sessionsList__scrollArea">
-			<div
-				className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
-				role="list"
-				aria-label="Conversations"
-			>
+			<div className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar">
 				{children}
 			</div>
 		</div>

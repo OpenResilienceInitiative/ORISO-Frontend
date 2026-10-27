@@ -775,6 +775,12 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 }
 
+// The list item around a draft row only names it for assistive technology;
+// the row keeps its own box (#1338).
+.sessionsListDraftItem__listItem {
+	display: contents;
+}
+
 .sessionsListDraftItem {
 	width: calc(100% - 24px);
 	min-height: 76px;

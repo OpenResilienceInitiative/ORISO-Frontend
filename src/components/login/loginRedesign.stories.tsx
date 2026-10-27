@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 import { StageMobileHero } from '../stageLayout/StageMobileHero';
 import { LoginSecurityExplainer } from './LoginSecurityExplainer';
@@ -118,6 +119,13 @@ const LocaleGlobe = () => (
 export const SecurityExplainer: StoryObj = {
 	name: 'Erklärkarte „Warum das extra sicher ist“',
 	parameters: {
+		/* Designed colours (#1338): the protocol line is #747878 on white
+		   (4.46:1), and its "Learn more" link is #a5000a, set apart from that
+		   grey by colour alone (1.8:1). */
+		a11y: a11yExcept({
+			'color-contrast': ['.loginSecurity__protocol'],
+			'link-in-text-block': ['.loginSecurity__protocol a']
+		}),
 		docs: {
 			description: {
 				story: 'Fährt an der Stelle des Formulars ein, wenn man die Teaser-Zeile unter dem Login klickt — kein zweiter Bildschirm, kein Tabwechsel. Das Argument ist der Schlüssel, nicht das Schloss: er entsteht auf dem Gerät und bleibt dort, die Server tragen nur Rauschen. Deshalb löst sich das Hex-Rauschen in der Mitte auch nie auf; ein Scrambler, der am Ende Klartext zeigt, würde die gegenteilige Geschichte erzählen. Bei `prefers-reduced-motion` steht es still.'

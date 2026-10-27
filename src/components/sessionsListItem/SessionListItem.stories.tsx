@@ -1,5 +1,6 @@
 import * as React from 'react';
 import i18n from '../../i18n';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
@@ -349,22 +350,17 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
  * Only they leave the colour-contrast audit; every other rule and element is
  * still checked.
  */
-const designedColours =
-	':not(.sessionsListItem__date):not(.sessionsListItem__supervisionIndicatorName)';
-const contrastExcept = (selector: string) => ({
-	a11y: {
-		config: {
-			rules: [{ id: 'color-contrast', selector: `*${selector}` }]
-		}
-	}
-});
+const designedColours = [
+	'.sessionsListItem__date',
+	'.sessionsListItem__supervisionIndicatorName'
+];
 
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
-		...contrastExcept(designedColours),
+		a11y: a11yExcept({ 'color-contrast': designedColours }),
 		backgrounds: { default: 'gray' },
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
@@ -1968,9 +1964,15 @@ const selectedSelfHelpContrast = (
 		// subject colours, which stay dark on the dark surface.
 		...(scheme === 'light'
 			? {}
-			: contrastExcept(
-					`${designedColours}:not(.sessionsListItem__username):not(.sessionsListItem__subject)`
-				)),
+			: {
+					a11y: a11yExcept({
+						'color-contrast': [
+							...designedColours,
+							'.sessionsListItem__username',
+							'.sessionsListItem__subject'
+						]
+					})
+				}),
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/5504'
 		}

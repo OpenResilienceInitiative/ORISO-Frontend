@@ -203,26 +203,28 @@ const DraftMetadataListItem = ({
 	onOpen: (draft: IUserDraftItem) => void;
 	translate: (key: string) => string;
 }) => (
-	<button
-		type="button"
-		className="sessionsListDraftItem"
-		data-cy="sessions-list-draft-item"
-		onClick={() => onOpen(draft)}
-		disabled={!draft.actionPath}
-	>
-		<span className="sessionsListDraftItem__tag">
-			{translate('sessionList.toolbar.chips.drafts')}
-		</span>
-		<span className="sessionsListDraftItem__title">
-			{draft.title || translate('drafts.center.untitledChat')}
-		</span>
-		<span className="sessionsListDraftItem__meta">
-			{formatDraftTime(draft.updatedAt)}
-		</span>
-		<span className="sessionsListDraftItem__hint">
-			{translate('sessionList.toolbar.draftMetadataOnly')}
-		</span>
-	</button>
+	<div role="listitem" className="sessionsListDraftItem__listItem">
+		<button
+			type="button"
+			className="sessionsListDraftItem"
+			data-cy="sessions-list-draft-item"
+			onClick={() => onOpen(draft)}
+			disabled={!draft.actionPath}
+		>
+			<span className="sessionsListDraftItem__tag">
+				{translate('sessionList.toolbar.chips.drafts')}
+			</span>
+			<span className="sessionsListDraftItem__title">
+				{draft.title || translate('drafts.center.untitledChat')}
+			</span>
+			<span className="sessionsListDraftItem__meta">
+				{formatDraftTime(draft.updatedAt)}
+			</span>
+			<span className="sessionsListDraftItem__hint">
+				{translate('sessionList.toolbar.draftMetadataOnly')}
+			</span>
+		</button>
+	</div>
 );
 
 interface SessionsListProps {
@@ -2805,7 +2807,10 @@ export const SessionsList = ({
 					{isLoading && <SessionsListSkeleton />}
 
 					{isReloadButtonVisible && (
-						<div className="sessionsList__reloadWrapper">
+						<div
+							className="sessionsList__reloadWrapper"
+							role="listitem"
+						>
 							<Button
 								item={{
 									label: translate(

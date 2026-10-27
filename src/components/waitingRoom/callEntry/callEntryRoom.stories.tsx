@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import { Box } from '@mui/material';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../../stage/stage';
@@ -41,16 +42,9 @@ const meta: Meta<typeof CallEntryRoom> = {
 		// animal colour (e.g. #8b7c6c, 4.04:1) and over the camera picture. Only
 		// that text leaves the colour-contrast audit; every other rule and
 		// element is still checked.
-		a11y: {
-			config: {
-				rules: [
-					{
-						id: 'color-contrast',
-						selector: '*:not([data-testid="video-check"] p)'
-					}
-				]
-			}
-		}
+		a11y: a11yExcept({
+			'color-contrast': ['[data-testid="video-check"] p']
+		})
 	},
 	decorators: [
 		(Story) => (

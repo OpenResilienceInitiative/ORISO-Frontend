@@ -1059,10 +1059,11 @@ const TopicSelect = ({
 					disableRipple
 					edge="end"
 					// Decorative: the row is the radio. A focusable input inside it
-					// is a second, nested control (#1338); a click on the icon now
-					// reaches the row's own handler instead.
+					// is a second, nested control (#1338). A disabled input swallows
+					// clicks, so the icon lets them through to the row's handler.
 					inputProps={{ 'aria-hidden': true, 'disabled': true }}
 					sx={{
+						pointerEvents: 'none',
 						mt: 0.5,
 						alignSelf: 'flex-start',
 						color: registrationMd3.outline

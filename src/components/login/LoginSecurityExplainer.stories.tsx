@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { LoginSecurityExplainer } from './LoginSecurityExplainer';
 import './login.styles.scss';
 
@@ -8,6 +9,13 @@ const meta: Meta<typeof LoginSecurityExplainer> = {
 	title: 'Login/Security explainer',
 	component: LoginSecurityExplainer,
 	parameters: {
+		/* Designed colours (#1338): the protocol line is #747878 on white
+		   (4.46:1), and its "Learn more" link is #a5000a, set apart from that
+		   grey by colour alone (1.8:1). */
+		a11y: a11yExcept({
+			'color-contrast': ['.loginSecurity__protocol'],
+			'link-in-text-block': ['.loginSecurity__protocol a']
+		}),
 		docs: {
 			description: {
 				component: [

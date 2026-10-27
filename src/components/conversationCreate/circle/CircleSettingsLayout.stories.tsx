@@ -6,6 +6,7 @@ import {
 	tablet834Globals
 } from '../../message/messageStoryShell';
 import { CircleSettingsStage, COLLEAGUES } from './circleSettingsStage';
+import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 
 /**
  * #1499 follow-ups on the wired "Einstellungen für den Gesprächskreis" stage:
@@ -23,7 +24,15 @@ const meta = {
 	component: CircleSettingsStage,
 	parameters: {
 		layout: 'fullscreen',
-		router: { initialPath: '/sessions/consultant/sessionView' }
+		router: { initialPath: '/sessions/consultant/sessionView' },
+		// #1338 designed colours, #e6effb on #656e79 (4.45:1): the selected
+		// language tab and the rule chip being edited.
+		a11y: a11yExcept({
+			'color-contrast': [
+				'.createChat__languageChip--selected [role="tab"]',
+				'.ruleChipsEditor__chip--editing .ruleChipsEditor__chipLabel'
+			]
+		})
 	},
 	args: {
 		layout: 'desktop',

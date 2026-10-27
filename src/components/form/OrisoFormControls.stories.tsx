@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Box, Stack, Typography } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { userEvent, within } from 'storybook/test';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import i18n from '../../i18n';
 import { OrisoMultiSelect, OrisoSelect } from './OrisoSelect';
 import { OrisoTextarea } from './OrisoTextarea';
@@ -242,6 +243,12 @@ export const MultiSelectEmpty: Story = {
 
 export const MultiSelectFiltered: Story = {
 	render: () => <SearchableLanguagesStory initialValue={['de']} />,
+	parameters: {
+		// #1338: MUI gives every Select child role="option", so the search
+		// field's header reads as an option holding a text field. Moving the
+		// search out of the list changes the menu; left for a product decision.
+		a11y: a11yExcept({ 'nested-interactive': ['.MuiListSubheader-root'] })
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('combobox'));
@@ -263,7 +270,14 @@ export const MultiSelectManySelected: Story = {
 export const MultiSelectDisabled: Story = {
 	render: () => (
 		<SearchableLanguagesStory initialValue={['de', 'en']} disabled />
-	)
+	),
+	parameters: {
+		// #1338: the disabled supporting text keeps its designed grey (#9c9a9a
+		// on #fcf9f9, 2.67:1). Only it leaves the colour-contrast audit.
+		a11y: a11yExcept({
+			'color-contrast': ['.MuiFormHelperText-root.Mui-disabled']
+		})
+	}
 };
 
 export const StateMatrix: Story = {

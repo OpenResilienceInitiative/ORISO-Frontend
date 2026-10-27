@@ -1,3 +1,4 @@
+import { a11yExcept } from './a11yExceptions';
 import { a11yVerification } from './a11yVerification';
 import { createTenantPublicStoryFetch } from './tenantPublicFixture';
 // Force MUI styled-engine init before any @mui/* prebundles run.
@@ -918,17 +919,7 @@ const preview: Preview = {
 				// at stay checked by duplicate-id-aria (#1338).
 				rules: { 'duplicate-id': { enabled: false } }
 			},
-			config: {
-				rules: [
-					// Each language chip holds its remove button next to the tab,
-					// inside the tablist. Moving it out changes the chip and its
-					// keyboard path, so it stays as designed; listed in #1338.
-					{
-						id: 'aria-required-children',
-						selector: '[role]:not(.createChat__languageTabs)'
-					}
-				]
-			},
+			...a11yExcept(),
 			test: 'error'
 		},
 		controls: {

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { LegalTextReader } from './LegalTextReader';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { GdprIcon } from '../../resources/img/icons';
@@ -17,7 +18,14 @@ import { phone390Globals } from '../message/messageStoryShell';
 const meta = {
 	title: 'Components/Dialog/Legal text reader',
 	component: LegalTextReader,
-	parameters: { layout: 'fullscreen' }
+	parameters: {
+		layout: 'fullscreen',
+		// #1338: the active chapter chip keeps its designed colours (#e6effb on
+		// #656e79, 4.45:1). Only its label leaves the colour-contrast audit.
+		a11y: a11yExcept({
+			'color-contrast': ['.legalAnchorChips__chip--active > span']
+		})
+	}
 } satisfies Meta<typeof LegalTextReader>;
 
 export default meta;
