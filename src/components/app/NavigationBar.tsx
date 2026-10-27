@@ -359,7 +359,7 @@ export const NavigationBar = ({
 				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
 			)}
 		>
-			<div className="navigation__itemContainer" role="tablist">
+			<div className="navigation__itemContainer">
 				<NavGroup className="navigation__item__top">
 					{sessions &&
 						routerConfig.navigation
@@ -518,7 +518,6 @@ export const NavigationBar = ({
 											ref_menu.current[index] = el;
 										}}
 										tabIndex={index === 0 ? 0 : -1}
-										role="tab"
 									>
 										{useFigmaSlot ? (
 											<div
@@ -691,7 +690,6 @@ export const NavigationBar = ({
 								figmaConsultantNav &&
 									'navigation__item--nav-language'
 							)}
-							role="tab"
 							tabIndex={-1}
 							ref={(el) => {
 								ref_local.current = el;
@@ -789,7 +787,7 @@ export const NavigationBar = ({
 							'navigation__item',
 							figmaConsultantNav && 'navigation__item--nav-logout'
 						)}
-						role="tab"
+						role="button"
 						tabIndex={-1}
 						ref={(el) => {
 							ref_logout.current = el;

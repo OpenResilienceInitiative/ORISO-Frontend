@@ -2701,13 +2701,12 @@ export const SessionsList = ({
 						'sessionRailList': isRail
 					})}
 					ref={listRef}
-					role={isRail ? 'tablist' : undefined}
+					// Rail pills are tabs; full cards hold their own buttons (menu,
+					// mail, call), which a tab may not contain, so they are list
+					// items (#1338).
+					role={isRail ? 'tablist' : 'list'}
 					aria-orientation={isRail ? 'vertical' : undefined}
-					aria-label={
-						isRail
-							? translate('sessionList.view.headline')
-							: undefined
-					}
+					aria-label={translate('sessionList.view.headline')}
 					onScroll={handleListScroll}
 				>
 					{(!isLoading || finalSessionsList.length > 0) &&

@@ -1370,6 +1370,12 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: #e1dedf;
 	}
 
+	// The tablist only groups the tabs for assistive technology; they keep
+	// sharing the row with the archive toggle.
+	&__searchModalTabList {
+		display: contents;
+	}
+
 	&__searchModalTab {
 		border: none;
 		background: transparent;
