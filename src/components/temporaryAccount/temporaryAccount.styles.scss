@@ -8,8 +8,8 @@
 	margin-top: 6px;
 	padding: 2px 8px;
 	border-radius: 9999px;
-	background: var(--m3-secondary);
-	color: var(--m3-on-secondary);
+	background: var(--m3-secondary, $secondary);
+	color: var(--m3-on-secondary, $white);
 	font-size: $font-size-secondary;
 	line-height: 16px;
 	white-space: nowrap;
@@ -33,23 +33,23 @@
 		align-items: flex-start;
 		gap: 12px;
 		padding: 12px 16px;
-		border: 1px solid var(--m3-outline-variant);
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
 		border-radius: 12px;
 		cursor: pointer;
 
 		input {
 			margin-top: 3px;
-			accent-color: var(--m3-primary);
+			accent-color: var(--m3-primary, $primary);
 			flex-shrink: 0;
 		}
 
 		&:focus-within {
-			outline: 2px solid var(--m3-primary);
+			outline: 2px solid var(--m3-primary, $primary);
 			outline-offset: 2px;
 		}
 
 		&--selected {
-			border-color: var(--m3-primary);
+			border-color: var(--m3-primary, $primary);
 		}
 	}
 
@@ -61,13 +61,13 @@
 
 	.keepMessagesDialog__choiceLabel {
 		font-weight: 600;
-		color: var(--m3-on-surface);
+		color: var(--m3-on-surface, #1b1b1c);
 	}
 
 	.keepMessagesDialog__choiceHint,
 	.keepMessagesDialog__note {
 		font-size: $font-size-secondary;
-		color: var(--m3-on-surface-variant);
+		color: var(--m3-on-surface-variant, $tertiary);
 	}
 
 	.keepMessagesDialog__note {
