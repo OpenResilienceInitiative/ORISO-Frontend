@@ -6240,25 +6240,25 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Temporär",
+			"label": "Temporär bis zum Löschen",
 			"title": "Wird mit dem Gastkonto gelöscht"
 		},
 		"deletedGuest": "Gast (gelöscht)",
 		"chip": {
 			"guest": "Gastkonto",
-			"keep": "Nachrichten bleiben",
-			"delete": "Nachrichten temporär"
+			"keep": "Nachrichten bleiben nach dem Löschen",
+			"delete": "Nachrichten temporär bis zum Löschen"
 		},
 		"keepDialog": {
 			"title": "Sollen Ihre Nachrichten bleiben?",
-			"description": "Sie nutzen ein Gastkonto, das nach dem Gespräch gelöscht wird. Entscheiden Sie einmal für dieses Gespräch, was mit Ihren Nachrichten passiert.",
+			"description": "Ihr Gastkonto wird nach dem Gespräch gelöscht. Was soll mit Ihren Nachrichten passieren?",
 			"keep": {
-				"label": "Nachrichten behalten",
-				"hint": "Die Beratungsstelle kann sie weiter lesen, auch wenn Ihr Konto gelöscht ist."
+				"label": "Auch nach dem Löschen behalten",
+				"hint": "Ihre Nachrichten bleiben, wenn Ihr Konto gelöscht wird."
 			},
 			"delete": {
-				"label": "Mit dem Konto löschen",
-				"hint": "Ihre Nachrichten verschwinden zusammen mit Ihrem Gastkonto."
+				"label": "Temporär bis zum Löschen",
+				"hint": "Ihre Nachrichten werden mit Ihrem Konto gelöscht."
 			},
 			"note": "Ihre Antwort gilt für dieses ganze Gespräch.",
 			"confirm": "Weiter",

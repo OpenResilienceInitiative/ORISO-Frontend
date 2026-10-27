@@ -1,29 +1,28 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded';
+import { ReactComponent as TemporaryClockIcon } from '../../resources/img/icons/temporary-clock.svg';
 import './temporaryAccount.styles.scss';
 
 /**
- * #1869: next to the bubble time of a message that is deleted together with
- * its temporary account. Icon plus word, never colour alone.
+ * #1869: own row under the bubble time of a message that is deleted together
+ * with its temporary account. Secondary pill with a filled clock and a word,
+ * never colour alone.
  */
 export const TemporaryMessageMarker = () => {
 	const { t } = useTranslation();
 	return (
-		<span
+		// A div: the bubble forces every inner span to `display: inline`.
+		<div
 			className="temporaryMessageMarker"
 			title={t('temporaryAccount.marker.title')}
 			data-testid="temporary-message-marker"
 		>
-			<HourglassEmptyRoundedIcon
+			<TemporaryClockIcon
 				className="temporaryMessageMarker__icon"
 				aria-hidden
 				focusable="false"
 			/>
 			{t('temporaryAccount.marker.label')}
-			<span className="sr-only">
-				{`, ${t('temporaryAccount.marker.title')}`}
-			</span>
-		</span>
+		</div>
 	);
 };

@@ -6165,25 +6165,25 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Temporary",
+			"label": "Temporary until deletion",
 			"title": "Deleted together with the guest account"
 		},
 		"deletedGuest": "Guest (deleted)",
 		"chip": {
 			"guest": "Guest account",
-			"keep": "Messages are kept",
-			"delete": "Messages are temporary"
+			"keep": "Messages stay after deletion",
+			"delete": "Messages temporary until deletion"
 		},
 		"keepDialog": {
 			"title": "Should your messages stay?",
-			"description": "You are using a guest account that is deleted after the conversation. Decide once for this conversation what happens to your messages.",
+			"description": "Your guest account is deleted after the conversation. What should happen to your messages?",
 			"keep": {
-				"label": "Keep my messages",
-				"hint": "The counselling centre can still read them after your account is deleted."
+				"label": "Keep them after deletion",
+				"hint": "Your messages stay when your account is deleted."
 			},
 			"delete": {
-				"label": "Delete them with my account",
-				"hint": "Your messages disappear together with your guest account."
+				"label": "Temporary until deletion",
+				"hint": "Your messages are deleted with your account."
 			},
 			"note": "Your answer applies to this whole conversation.",
 			"confirm": "Continue",

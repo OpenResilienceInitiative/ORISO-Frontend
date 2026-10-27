@@ -6250,25 +6250,25 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Temporaire",
+			"label": "Temporaire jusqu’à la suppression",
 			"title": "Supprimé avec le compte invité"
 		},
 		"deletedGuest": "Invité (supprimé)",
 		"chip": {
 			"guest": "Compte invité",
-			"keep": "Messages conservés",
-			"delete": "Messages temporaires"
+			"keep": "Messages conservés après la suppression",
+			"delete": "Messages temporaires jusqu’à la suppression"
 		},
 		"keepDialog": {
 			"title": "Vos messages doivent-ils rester ?",
-			"description": "Vous utilisez un compte invité qui sera supprimé après l’entretien. Décidez une fois pour cet entretien ce qu’il advient de vos messages.",
+			"description": "Votre compte invité sera supprimé après l’entretien. Que doit-il advenir de vos messages ?",
 			"keep": {
-				"label": "Conserver mes messages",
-				"hint": "Le centre de conseil peut encore les lire après la suppression de votre compte."
+				"label": "Les conserver après la suppression",
+				"hint": "Vos messages restent lorsque votre compte est supprimé."
 			},
 			"delete": {
-				"label": "Les supprimer avec mon compte",
-				"hint": "Vos messages disparaissent avec votre compte invité."
+				"label": "Temporaires jusqu’à la suppression",
+				"hint": "Vos messages sont supprimés avec votre compte."
 			},
 			"note": "Votre réponse vaut pour tout cet entretien.",
 			"confirm": "Continuer",

@@ -6250,25 +6250,25 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Geçici",
+			"label": "Silinene kadar geçici",
 			"title": "Misafir hesabıyla birlikte silinir"
 		},
 		"deletedGuest": "Misafir (silindi)",
 		"chip": {
 			"guest": "Misafir hesabı",
-			"keep": "Mesajlar saklanır",
-			"delete": "Mesajlar geçici"
+			"keep": "Mesajlar silindikten sonra kalır",
+			"delete": "Mesajlar silinene kadar geçici"
 		},
 		"keepDialog": {
 			"title": "Mesajlarınız kalsın mı?",
-			"description": "Görüşmeden sonra silinecek bir misafir hesabı kullanıyorsunuz. Bu görüşme için mesajlarınıza ne olacağına bir kez karar verin.",
+			"description": "Misafir hesabınız görüşmeden sonra silinir. Mesajlarınıza ne olsun?",
 			"keep": {
-				"label": "Mesajlarımı sakla",
-				"hint": "Danışma merkezi, hesabınız silindikten sonra da onları okuyabilir."
+				"label": "Silindikten sonra da sakla",
+				"hint": "Hesabınız silindiğinde mesajlarınız kalır."
 			},
 			"delete": {
-				"label": "Hesabımla birlikte sil",
-				"hint": "Mesajlarınız misafir hesabınızla birlikte kaybolur."
+				"label": "Silinene kadar geçici",
+				"hint": "Mesajlarınız hesabınızla birlikte silinir."
 			},
 			"note": "Cevabınız bu görüşmenin tamamı için geçerlidir.",
 			"confirm": "Devam",

@@ -14,7 +14,7 @@ import {
 	phone390Globals
 } from '../message/messageStoryShell';
 import '../message/message.styles.scss';
-import { GuestRetentionChip } from './GuestRetentionChip';
+import { GuestRetentionDivider } from './GuestRetentionDivider';
 import { KeepMessagesDialog } from './KeepMessagesDialog';
 import { MessageRetention } from './messageRetention';
 
@@ -75,30 +75,6 @@ const counsellorMessage = (id: string, message: string, time: string) =>
 		clientName: GUEST
 	});
 
-/** Stand-in for the conversation header: name plus the retention chip. */
-const HeaderStandIn = ({
-	name,
-	retention
-}: {
-	name: string;
-	retention?: MessageRetention;
-}) => (
-	<div
-		style={{
-			display: 'flex',
-			alignItems: 'center',
-			flexWrap: 'wrap',
-			gap: 8,
-			paddingBottom: 12,
-			marginBottom: 12,
-			borderBottom: '1px solid var(--m3-outline-variant, #c4c7c5)'
-		}}
-	>
-		<strong>{name}</strong>
-		{retention && <GuestRetentionChip retention={retention} />}
-	</div>
-);
-
 const Timeline = ({
 	compact,
 	retention
@@ -109,7 +85,7 @@ const Timeline = ({
 	const temporary = retention === 'delete';
 	return (
 		<MessageContextShell compact={compact}>
-			<HeaderStandIn name={GUEST} retention={retention} />
+			<GuestRetentionDivider retention={retention} />
 			<MessageItemComponent
 				{...guestMessage(
 					'g1',
@@ -138,7 +114,7 @@ const Timeline = ({
 };
 
 export const TemporaryMessage: Story = {
-	name: 'Temporary message — label next to the time',
+	name: 'Temporary message — own row under the time',
 	render: () => (
 		<MessageContextShell>
 			<MessageItemComponent
@@ -155,7 +131,7 @@ export const TemporaryMessage: Story = {
 		const marker = await within(canvasElement).findByTestId(
 			'temporary-message-marker'
 		);
-		await expect(marker).toHaveTextContent('Temporär');
+		await expect(marker).toHaveTextContent('Temporär bis zum Löschen');
 		await expect(marker).toHaveAttribute(
 			'title',
 			'Wird mit dem Gastkonto gelöscht'
@@ -175,8 +151,8 @@ export const TimelineTemporary: Story = {
 			).toHaveLength(2)
 		);
 		await expect(
-			canvas.getByTestId('guest-retention-chip')
-		).toHaveTextContent('Nachrichten temporär');
+			canvas.getByTestId('guest-retention-divider')
+		).toHaveTextContent('Gastkonto · Nachrichten temporär bis zum Löschen');
 	}
 };
 
@@ -195,8 +171,8 @@ export const TimelineKept: Story = {
 			canvas.queryByTestId('temporary-message-marker')
 		).toBeNull();
 		await expect(
-			canvas.getByTestId('guest-retention-chip')
-		).toHaveTextContent('Nachrichten bleiben');
+			canvas.getByTestId('guest-retention-divider')
+		).toHaveTextContent('Gastkonto · Nachrichten bleiben nach dem Löschen');
 	}
 };
 
@@ -205,7 +181,7 @@ const DeletedGuestTimeline = () => {
 	const deleted = t('temporaryAccount.deletedGuest');
 	return (
 		<MessageContextShell>
-			<HeaderStandIn name={deleted} retention="keep" />
+			<GuestRetentionDivider retention="keep" />
 			<MessageItemComponent
 				{...guestMessage(
 					'g1',
@@ -242,12 +218,12 @@ export const GuestDeletedMessagesKept: Story = {
 	}
 };
 
-export const RetentionChips: Story = {
-	name: 'Header chip — both outcomes',
+export const RetentionDividers: Story = {
+	name: 'Timeline divider — both outcomes',
 	render: () => (
-		<div style={{ display: 'flex', gap: 12, padding: 24 }}>
-			<GuestRetentionChip retention="delete" />
-			<GuestRetentionChip retention="keep" />
+		<div style={{ maxWidth: 600, padding: 24 }}>
+			<GuestRetentionDivider retention="delete" />
+			<GuestRetentionDivider retention="keep" />
 		</div>
 	)
 };
@@ -270,7 +246,9 @@ export const KeepMessagesDesktop: Story = {
 		// Nothing is preselected: the person has to choose.
 		await expect(confirm).toBeDisabled();
 		await userEvent.click(
-			within(dialog).getByRole('radio', { name: /Nachrichten behalten/ })
+			within(dialog).getByRole('radio', {
+				name: /Auch nach dem Löschen behalten/
+			})
 		);
 		await expect(confirm).toBeEnabled();
 		await userEvent.click(confirm);
@@ -305,7 +283,9 @@ export const KeepMessagesEscapeDecidesNothing: Story = {
 			'keep-messages-dialog'
 		);
 		await userEvent.click(
-			within(dialog).getByRole('radio', { name: /Mit dem Konto löschen/ })
+			within(dialog).getByRole('radio', {
+				name: /Temporär bis zum Löschen/
+			})
 		);
 		await userEvent.keyboard('{Escape}');
 		await expect(onCancel).toHaveBeenCalled();

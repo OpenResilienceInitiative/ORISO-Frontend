@@ -1863,7 +1863,6 @@ export const MessageItemComponent = ({
 					{translate('message.edit.marker')}
 				</span>
 			)}
-			{isTemporary && <TemporaryMessageMarker />}
 		</span>
 	) : null;
 
@@ -2501,6 +2500,8 @@ export const MessageItemComponent = ({
 							 * like every other bubble in the stream.
 							 */}
 							{timeRailInBubble}
+							{/* #1869: own row under the time, never in the time line. */}
+							{isTemporary && <TemporaryMessageMarker />}
 						</MessageBubble>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">

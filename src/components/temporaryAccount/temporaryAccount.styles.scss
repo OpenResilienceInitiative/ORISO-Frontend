@@ -2,38 +2,22 @@
 
 .temporaryMessageMarker {
 	display: inline-flex;
+	align-self: flex-start;
 	align-items: center;
-	gap: 2px;
-	margin-left: 6px;
+	gap: 6px;
+	margin-top: 6px;
+	padding: 2px 8px;
+	border-radius: 9999px;
+	background: var(--m3-secondary-fixed, #dde3ed);
+	color: var(--m3-on-secondary-fixed, #121c26);
 	font-size: $font-size-secondary;
-	color: var(--m3-on-surface-variant, $tertiary);
+	line-height: 16px;
 	white-space: nowrap;
 
 	&__icon {
-		width: 14px;
-		height: 14px;
-	}
-}
-
-.guestRetentionChip {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	padding: 2px 10px 2px 6px;
-	border-radius: 8px;
-	border: 1px solid var(--m3-outline-variant);
-	font-size: $font-size-secondary;
-	line-height: 20px;
-	color: var(--m3-on-surface-variant);
-	white-space: nowrap;
-
-	&__icon {
-		width: 16px;
-		height: 16px;
-	}
-
-	&--keep .guestRetentionChip__icon {
-		color: var(--m3-primary);
+		width: 12px;
+		height: 12px;
+		flex-shrink: 0;
 	}
 }
 
