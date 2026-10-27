@@ -364,7 +364,9 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		expect(screen.queryByRole('button', { name: CHANGE })).toBeNull();
 
 		// A plain e-mail choice afterwards is no longer part of "both".
-		fireEvent.click(screen.getByRole('button', { name: EMAIL_CHOICE }));
+		fireEvent.click(
+			await screen.findByRole('button', { name: EMAIL_CHOICE })
+		);
 
 		await waitFor(() =>
 			expect(screen.getByRole('button', { name: CHANGE })).toBeTruthy()
