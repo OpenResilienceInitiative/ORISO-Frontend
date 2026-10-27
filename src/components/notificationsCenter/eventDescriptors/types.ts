@@ -92,6 +92,9 @@ export interface EventActionParams {
 	threadRootId?: string | null;
 	/** Whether the recipient was @-mentioned (drives the mention sound slot, #576). */
 	mentioned?: boolean | null;
+	/** Immutable call identity supplied by the authenticated lifecycle producer. */
+	callId?: string | null;
+	callType?: 'audio' | 'video' | null;
 	/** Live-call room id for `join` targets (Slice 5). */
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */
@@ -109,6 +112,12 @@ export interface EventActionParams {
 	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
 	/** Exact scoped Case Handover request opened by a recipient offer. */
 	caseHandoverRequestId?: string | number | null;
+	/** Counsellor who receives access (PULL requester or PUSH recipient). */
+	requesterName?: string | null;
+	/** Counsellor who started a PUSH offer. */
+	initiatorName?: string | null;
+	/** Frozen server handover semantics; never inferred from a reason label. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | null;
 	/** Agency the enquiry belongs to (request events). */
 	agencyId?: string | number | null;
 	/** Main topic of the enquiry (request events). */

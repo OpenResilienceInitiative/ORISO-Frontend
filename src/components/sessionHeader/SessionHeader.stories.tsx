@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
+import {
 	ActiveSessionContext,
 	AUTHORITIES,
 	buildExtendedSession,
@@ -32,9 +36,12 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { config } from '../../resources/scripts/config';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
 import {
 	desktop1440Globals,
+	phone375Globals,
 	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
@@ -204,7 +211,15 @@ const buildSingleSession = (
 		''
 	);
 
-const buildGroupSession = (): ExtendedSessionInterface =>
+const buildGroupSession = ({
+	active = true,
+	assignedAgencies = [],
+	subscribed = true
+}: {
+	active?: boolean;
+	assignedAgencies?: { id: number; name: string }[];
+	subscribed?: boolean;
+} = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
 		{
 			consultant: {
@@ -217,8 +232,8 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 			},
 			language: 'de',
 			chat: {
-				active: true,
-				assignedAgencies: [],
+				active,
+				assignedAgencies,
 				attachment: null,
 				consultingType: 1,
 				duration: 60,
@@ -233,7 +248,7 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 				repetitive: false,
 				startDate: '2026-03-18',
 				startTime: '10:00',
-				subscribed: true,
+				subscribed,
 				topic: 'Team Austausch',
 				createdAt: '2026-03-18T06:15:00.000Z'
 			} as unknown as GroupChatItemInterface
@@ -449,15 +464,24 @@ const renderGroupHeader = (
 		session: ExtendedSessionInterface;
 		members?: MockMember[];
 	},
-	hideTopic = false
+	hideTopic = false,
+	userData = storyUserData,
+	bannedUsers: string[] = []
 ) => (
-	<StoryProviders session={preset.session} members={preset.members}>
-		<GroupChatHeader
-			hasUserInitiatedStopOrLeaveRequest={noopRef}
-			isJoinGroupChatView={false}
-			bannedUsers={[]}
-			hideTopic={hideTopic}
-		/>
+	<StoryProviders
+		session={preset.session}
+		members={preset.members}
+		userData={userData}
+	>
+		{/* The app's own legal links; Storybook's global provider has none. */}
+		<LegalLinksProvider legalLinks={config.legalLinks}>
+			<GroupChatHeader
+				hasUserInitiatedStopOrLeaveRequest={noopRef}
+				isJoinGroupChatView={false}
+				bannedUsers={bannedUsers}
+				hideTopic={hideTopic}
+			/>
+		</LegalLinksProvider>
 	</StoryProviders>
 );
 
@@ -617,6 +641,24 @@ const expectTitleClearOfActions = async (canvasElement: HTMLElement) => {
 	return { titleRect, actionsRect };
 };
 
+const expectHeaderBottomAlignment = async (canvasElement: HTMLElement) => {
+	await document.fonts.ready;
+	const row = canvasElement.querySelector('.sessionInfo__headerWrapper')!;
+	const avatar = canvasElement.querySelector(
+		'[data-cy="participant-avatar"]'
+	)!;
+	const menu = canvasElement.querySelector('#iconH')!;
+	const lineY = row.getBoundingClientRect().bottom - 1;
+	const avatarGap = lineY - avatar.getBoundingClientRect().bottom;
+	const menuGap = lineY - menu.getBoundingClientRect().bottom;
+	await expect(
+		Math.abs(avatarGap - menuGap),
+		`avatar gap ${avatarGap}px; outlined menu gap ${menuGap}px`
+	).toBeLessThan(0.5);
+	await expect(Math.round(avatar.getBoundingClientRect().height)).toBe(48);
+	await expect(Math.round(menu.getBoundingClientRect().height)).toBe(44);
+};
+
 /* ------------------------------------------------------------------ *
  * Meta + stories
  * ------------------------------------------------------------------ */
@@ -659,11 +701,61 @@ type Story = StoryObj<typeof meta>;
 /**
  * Group chat with ≤4 members.
  * Expected (Figma #430): every member avatar is shown (no cap), no overflow badge.
- * TODO: keep verifying against Figma until Fix 1 (GroupChatHeader member logic)
- * is merged — the ≤4 branch now renders all avatars instead of the old 3-cap.
+ * Uses the canonical 48px stack shared with the 1:1 and side-panel headers.
  */
 export const GroupChatSmall: Story = {
-	render: () => renderGroupHeader(mockGroupSessionSmall())
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		for (const avatar of canvasElement.querySelectorAll(
+			'[data-cy="participant-avatar"]'
+		)) {
+			await expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+				48
+			);
+			await expect(
+				Math.round(avatar.getBoundingClientRect().height)
+			).toBe(48);
+		}
+		await expect(
+			canvasElement.querySelector('.sessionInfo__participant')
+		).toBeNull();
+		await expectHeaderBottomAlignment(canvasElement);
+	}
+};
+
+/** Names appear only on hover/focus; the hovered coin paints above its peers. */
+export const GroupChatHover: Story = {
+	name: 'Group header — hovered avatar comes to the front',
+	render: () => renderGroupHeader(mockGroupSessionSmall()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4)
+		);
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		const avatar = avatars[1];
+		const box = avatar.getBoundingClientRect();
+		await userEvent.hover(avatar);
+		const tip = avatar.parentElement!.querySelector('[role="tooltip"]')!;
+		await waitFor(() => expect(tip).toBeVisible());
+		await expect(tip).toHaveTextContent(avatar.getAttribute('aria-label')!);
+		await expect(
+			avatar.contains(
+				document.elementFromPoint(box.left + 4, box.top + 24)
+			)
+		).toBe(true);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__participant')
+		).toBeNull();
+	}
 };
 
 /**
@@ -676,18 +768,24 @@ export const GroupChatLarge: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const badge = canvasElement.querySelector(
-				'.sessionInfo__memberCount'
+				'[data-cy="participant-overflow"]'
 			);
 			expect(badge).toBeTruthy();
 			expect(
-				canvasElement.querySelector('.sessionInfo__memberCountNumber')
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
 					?.textContent
 			).toContain('+23');
-			// Four stacked avatars, the remaining 23 collapse into the chip.
+			// Current 48px header avatars, the remaining 23 collapse into the chip.
 			expect(
-				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
 					.length
 			).toBe(4);
+			for (const avatar of canvasElement.querySelectorAll(
+				'[data-cy="participant-avatar"]'
+			))
+				expect(Math.round(avatar.getBoundingClientRect().width)).toBe(
+					48
+				);
 		});
 	}
 };
@@ -743,6 +841,45 @@ export const ActiveConversation: Story = {
 	}
 };
 
+/* The topic tag under the title is small text on a tinted fill: it must reach
+   4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
+const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+				.length
+		).toBeGreaterThan(0)
+	);
+	// The topic is the shared <TopicTag> (global --oriso-topic-tag-* tokens).
+	await expect(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		).length
+	).toBeGreaterThan(0);
+	for (const tag of Array.from(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		)
+	)) {
+		await expect(
+			wcagContrast(getComputedStyle(tag).color, effectiveBackground(tag))
+		).toBeGreaterThanOrEqual(4.5);
+	}
+};
+
+export const TopicTagLegible: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1',
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
+export const TopicTagLegibleLightBrandColour: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1 with a light Träger colour',
+	parameters: { orisoSeed: '#b4ddee' },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
 /**
  * T4 / Figma 1320:38281: the room's participants as the avatar row —
  * animal for the advice seeker, monograms for the counsellors, 28 px step,
@@ -765,14 +902,14 @@ export const ActiveConversationParticipants: Story = {
 		await expect(avatars![0].getAttribute('data-user-id')).toBe(
 			'@bettina.b:matrix.storybook.test'
 		);
-		// T14/T17 — measured in Figma 1320:38281 (get_metadata): 40 px
-		// avatars, 28 px step, the group starts 8 px inside the type pill
+		// Current Avatar Group master 7608:40689: 48 px avatars,
+		// 24 px step; the group still starts 8 px inside the type pill
 		// and the title text follows 6 px after the group.
 		const first = avatars![0].getBoundingClientRect();
 		const second = avatars![1].getBoundingClientRect();
-		await expect(Math.round(first.width)).toBe(40);
-		await expect(Math.round(first.height)).toBe(40);
-		await expect(Math.round(second.left - first.left)).toBe(28);
+		await expect(Math.round(first.width)).toBe(48);
+		await expect(Math.round(first.height)).toBe(48);
+		await expect(Math.round(second.left - first.left)).toBe(24);
 		const pill = canvasElement
 			.querySelector('.chatroomMainInteractionIcon')!
 			.getBoundingClientRect();
@@ -809,8 +946,7 @@ export const ActiveConversationParticipants: Story = {
 			.querySelector('.sessionInfo__username')!
 			.getBoundingClientRect();
 		await expect(tipRect.top).toBeGreaterThan(rowRect.bottom - 1);
-		// No clipping ancestor cuts it off (the tooltip is pointer-events:
-		// none, so elementFromPoint cannot be used here).
+		// No clipping ancestor cuts off the hoverable tooltip.
 		let ancestor = tip.parentElement;
 		while (ancestor && ancestor !== canvasElement) {
 			if (getComputedStyle(ancestor).overflow !== 'visible') {
@@ -832,6 +968,7 @@ export const ActiveConversationParticipants: Story = {
 			)
 		).toBe(65);
 		await expectTitleClearOfActions(canvasElement);
+		await expectHeaderBottomAlignment(canvasElement);
 	}
 };
 
@@ -1105,4 +1242,208 @@ export const RequestStageAccepted: Story = {
 			canvasElement.querySelector('.consultantSearchLoader--animated')
 		).toBeNull();
 	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Group header ⋮ menu (#1760): one menu for every role, no text button
+ * ------------------------------------------------------------------ */
+
+const groupMenuAgency = [{ id: 101, name: 'Beratungsstelle Mitte' }];
+const storyAskerData = {
+	...storyUserData,
+	userId: 'asker-group-1',
+	userName: 'ruhiges-yak-kim',
+	displayName: 'ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+};
+const groupMenuPreset = (active = true, subscribed = true) => ({
+	session: buildGroupSession({
+		active,
+		assignedAgencies: groupMenuAgency,
+		subscribed
+	}),
+	members: makeMembers(4)
+});
+const desktop1366Globals = { viewport: { value: 'desktop1366' } };
+const desktop1920Globals = { viewport: { value: 'desktop1920' } };
+
+/** Opens the visible ⋮ trigger and returns the menu panel. */
+const openGroupMenu = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(
+		canvas.queryByRole('link', { name: 'Informationen & Einstellungen' })
+	).toBeNull();
+	const trigger = canvas
+		.getAllByRole('button', { name: 'Weitere Funktionen' })
+		.find((button) => button.getClientRects().length > 0);
+	await expect(trigger).toBeDefined();
+	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	trigger!.focus();
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(trigger).toHaveAttribute('aria-expanded', 'true')
+	);
+	const menu = document.getElementById('flyout')!;
+	await waitFor(() => expect(menu).toBeVisible());
+	return { menu: within(menu), trigger: trigger! };
+};
+
+const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(menu.getByRole('button', { name: /Impressum/ })).toBeVisible();
+};
+
+export const GroupMenuClosed1366: Story = {
+	name: 'Group menu · closed, no text button (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.queryByRole('link', {
+				name: 'Informationen & Einstellungen'
+			})
+		).toBeNull();
+		const trigger = canvas
+			.getAllByRole('button', { name: 'Weitere Funktionen' })
+			.find((button) => button.getClientRects().length > 0);
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	}
+};
+
+export const GroupMenuCounsellor1366: Story = {
+	name: 'Group menu · counsellor, running (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const { menu, trigger } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.getByText('Chat beenden')).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(trigger).toHaveAttribute('aria-expanded', 'false')
+		);
+	}
+};
+
+/** Before the start the owner also edits the settings; "end chat" is not offered. */
+export const GroupMenuCounsellorWaitingRoom1920: Story = {
+	name: 'Group menu · counsellor, waiting room (1920)',
+	globals: desktop1920Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+/** An advice seeker gets agency, Chat-Info and legal texts, no moderator actions. */
+export const GroupMenuAsker1366: Story = {
+	name: 'Group menu · advice seeker (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+		await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+	}
+};
+
+export const GroupMenuAsker390: Story = {
+	name: 'Group menu · advice seeker (390)',
+	globals: phone390Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+export const GroupMenuCounsellor375: Story = {
+	name: 'Group menu · counsellor, waiting room (375)',
+	globals: phone375Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+	}
+};
+
+/** Not joined yet: the schedule entry is offered; the dialog leaves out the members. */
+const expectScheduleEntryForGuest: Story['play'] = async ({
+	canvasElement
+}) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expectSharedEntries(menu);
+	await expect(menu.queryByText('Chat beenden')).toBeNull();
+	await expect(menu.queryByText('Chat verlassen')).toBeNull();
+	await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+};
+
+export const GroupMenuAskerNotJoined1366: Story = {
+	name: 'Group menu · advice seeker, not joined yet (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+export const GroupMenuAskerNotJoined390: Story = {
+	name: 'Group menu · advice seeker, not joined yet (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+/** A banned advice seeker keeps agency and legal texts but gets no Chat-Info. */
+const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(
+		menu.queryByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeNull();
+};
+
+export const GroupMenuAskerBanned1366: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
+};
+
+export const GroupMenuAskerBanned390: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
 };

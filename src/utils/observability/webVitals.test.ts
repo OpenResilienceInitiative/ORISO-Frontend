@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 // vi.mock factories are hoisted above imports, so referenced variables must
 // be prefixed with "mock" (Vitest's hoisting convention) -- see

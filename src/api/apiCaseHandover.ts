@@ -17,13 +17,30 @@ export type CaseHandoverStatusValue =
 	| 'GRANTED'
 	| 'DENIED'
 	| 'CLIENT_CONSENT_DECLINED'
+	| 'RECLAIMED'
+	| 'EXPIRED'
+	/**
+	 * Client-side only, never sent by the server: the decision was refused
+	 * with 409 because the case owner changed after the request was created.
+	 */
+	| 'OWNER_CHANGED'
 	| (string & {});
+
+/** Statuses that end a request; anything else (incl. unknown) stays open. */
+const CLOSED_CASE_HANDOVER_STATUSES: readonly string[] = [
+	'NOT_REQUESTED',
+	'RECIPIENT_DECLINED',
+	'GRANTED',
+	'DENIED',
+	'CLIENT_CONSENT_DECLINED',
+	'RECLAIMED',
+	'EXPIRED',
+	'OWNER_CHANGED'
+];
 
 /** Pending requests retain their decision controls and feed acknowledgement. */
 export const isPendingCaseHandoverStatus = (status: CaseHandoverStatusValue) =>
-	status === 'PENDING' ||
-	status === 'PENDING_CLIENT_CONSENT' ||
-	status === 'GRANTED_PENDING_CLIENT_OPTOUT';
+	!CLOSED_CASE_HANDOVER_STATUSES.includes(status);
 
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 
@@ -56,10 +73,14 @@ export interface CaseHandoverStatus {
 	auditOutcome?: string;
 	createdAt?: string;
 	resolvedAt?: string;
+	/** The caller is the counsellor a takeover moved this case away from, and may take it back. */
+	canReclaim?: boolean;
 	/** CO_ACCESS ("advice needed") is read-only; the case stays with its owner. */
 	accessType?: 'CO_ACCESS' | 'TAKEOVER' | (string & {});
 	/** Naive UTC date-time; set for a granted CO_ACCESS. */
 	expiresAt?: string;
+	/** The viewer holds an open CO_ACCESS they may extend (#200). */
+	canExtend?: boolean;
 }
 
 export interface CaseHandoverBatchResult {
@@ -148,6 +169,19 @@ export const apiRequestCaseHandoverAccess = async (
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
+	});
+
+export const apiReclaimCaseHandover = async (
+	sessionId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/reclaim`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.FORBIDDEN,
 			FETCH_ERRORS.CONFLICT
 		]
@@ -246,6 +280,23 @@ export const apiDecideCaseHandoverClientConsent = async (
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			// 409 is rejected with the response: its X-Reason says whether the
+			// case owner changed (CASE_OWNER_CHANGED) or it was a plain conflict.
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE
+		]
+	});
+
+/** #200: adds the granted duration once to the colleague's co-access. */
+export const apiExtendCaseHandoverCoAccess = async (
+	sessionId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/extend`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT,
 			FETCH_ERRORS.FORBIDDEN
 		]
 	});

@@ -16,7 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
@@ -26,6 +26,7 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import {
+	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
 	resolveStatusPageAction,
 	toInterpolationValues
@@ -51,6 +52,7 @@ import {
 	orderChipKinds,
 	resolveChipPresentation,
 	kindsUnderOther,
+	useDisplayFilterEmailColumn,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -65,6 +67,8 @@ import {
 } from '../displayFilter/kindOptions';
 import {
 	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR,
+	NOTIFICATION_TYPE_INFO,
 	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
@@ -90,6 +94,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
@@ -98,6 +103,8 @@ import {
 	toNonEmbeddedPath
 } from './timelineDrafts';
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import { callManager } from '../../services/CallManager';
+import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
 	formatAbsoluteTime,
 	formatClockParts,
@@ -248,6 +255,59 @@ const parseNumericId = (value?: string | null): number | null => {
 	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
+type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
+
+/**
+ * Call cards join their existing authorized binding. A card that cannot join
+ * here (incomplete, or group topology not loaded yet) opens its conversation.
+ */
+const joinNotificationCall = (
+	item: NotificationFeedItem,
+	topologyReady: boolean,
+	isGroup: (roomRef: string) => boolean,
+	onOutcome: (outcome: JoinOutcome) => void,
+	onCannotJoin: () => void,
+	onStart: (callId: string) => void
+): boolean => {
+	const params = item.params || {};
+	if (
+		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
+		'join'
+	) {
+		return false;
+	}
+	if (
+		typeof params.callId !== 'string' ||
+		!params.callId.trim() ||
+		typeof params.roomRef !== 'string' ||
+		!params.roomRef.trim() ||
+		typeof params.callRoomId !== 'string' ||
+		!params.callRoomId.trim() ||
+		(params.callType !== 'audio' && params.callType !== 'video') ||
+		// An empty session list would store a group call as one-to-one.
+		!topologyReady
+	) {
+		onCannotJoin();
+		return true;
+	}
+	onStart(params.callId);
+	// The feed carries no call topology: the conversation the call belongs to decides.
+	callManager
+		.joinExistingCall(
+			{
+				callId: params.callId,
+				roomRef: params.roomRef,
+				callRoomId: params.callRoomId,
+				callType: params.callType,
+				state: 'running',
+				participants: []
+			},
+			isGroup(params.roomRef)
+		)
+		.then(onOutcome, () => onOutcome('unavailable'));
+	return true;
+};
+
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -271,7 +331,8 @@ export const NotificationsCenter = () => {
 		loadOlderNotifications,
 		hasOlderNotifications,
 		isLoadingOlderNotifications,
-		olderNotificationsError
+		olderNotificationsError,
+		addNotification
 	} = useContext(NotificationsContext);
 	// #1535: unsent drafts join the list here only, not the provider feed.
 	const timelineDrafts = useTimelineDrafts();
@@ -295,6 +356,7 @@ export const NotificationsCenter = () => {
 		resetSection: resetTimelineOverride
 	} = useDisplayFilter('timeline');
 	const displayFilterLabels = useDisplayFilterLabels('timeline');
+	const displayFilterEmail = useDisplayFilterEmailColumn('timeline');
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	// The feed is reduced ONCE; chips and list both read `visibleFeed` so a
 	// hidden kind leaves both in the same render (AC2).
@@ -508,7 +570,33 @@ export const NotificationsCenter = () => {
 			audio: translate('notifications.center.preview.audio'),
 			video: translate('notifications.center.preview.video'),
 			notice: translate('notifications.center.preview.notice'),
+			// System notices read as the chat words them (MessageItemComponent).
+			userLeftChat: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+				? translate('message.userLeftChat')
+				: translate('message.consultantLeftChat'),
+			chatEndedText: (endedBy) =>
+				translate(
+					chatEndedTextKey(
+						endedBy,
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						)
+					)
+				),
+			inquiryAccepted: translate(
+				'notifications.events.inquiryAccepted.text'
+			),
+			caseHandoverTakenOver: translate(
+				'caseHandover.systemMessage.tookOverTitle'
+			),
+			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
+			// The chat's own wording for a message this device cannot decrypt.
+			undecryptable: translate('e2ee.message.encryption.text'),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'
@@ -517,7 +605,7 @@ export const NotificationsCenter = () => {
 				'notifications.center.preview.eventUnavailable'
 			)
 		}),
-		[translate]
+		[translate, userData]
 	);
 	const candidatePreviewSources = useMemo(
 		() =>
@@ -887,6 +975,69 @@ export const NotificationsCenter = () => {
 		[canShowChatPreview, selectedNotification]
 	);
 
+	const isGroupCallRoom = (roomRef: string) =>
+		Boolean(
+			sessions?.some(
+				(listItem) => listItem.chat?.matrixRoomId === roomRef
+			)
+		);
+	// A call card opens its conversation, never a guessed default list.
+	const openConversation = (
+		item: NotificationFeedItem,
+		fallbackText = translate('videoCall.timeline.endedElsewhere')
+	) => {
+		const path = toNonEmbeddedPath(
+			resolveEndedCallConversationPath(item, getDefaultSessionsPath())
+		);
+		if (path) {
+			navigate(path);
+			return;
+		}
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_INFO,
+			title: translate('notification.info'),
+			text: fallbackText,
+			closeable: true,
+			timeout: 10000
+		});
+	};
+	// A second click on a call that is still joining is not a busy line.
+	const joiningCallId = useRef<string | null>(null);
+	const joinCall = (item: NotificationFeedItem) => {
+		const callId = item.params?.callId;
+		if (callId && joiningCallId.current === callId) return true;
+		return joinNotificationCall(
+			item,
+			Boolean(sessionsContext?.ready),
+			isGroupCallRoom,
+			(outcome) => {
+				if (joiningCallId.current === callId)
+					joiningCallId.current = null;
+				if (outcome === 'joined') return;
+				if (outcome === 'ended') {
+					openConversation(item);
+					return;
+				}
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: translate('notification.error'),
+					text: translate('videoCall.timeline.joinFailed'),
+					closeable: true,
+					announce: 'alert',
+					timeout: 10000
+				});
+			},
+			() =>
+				openConversation(
+					item,
+					translate('videoCall.timeline.joinFailed')
+				),
+			(startedCallId) => {
+				joiningCallId.current = startedCallId;
+			}
+		);
+	};
+
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
 		const statusPage = resolveStatusPageAction(item);
@@ -897,6 +1048,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
+			if (joinCall(item)) return;
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
 				navigate(directPath);
@@ -926,6 +1078,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
+		if (joinCall(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
 			navigate(directPath);
@@ -1108,6 +1261,7 @@ export const NotificationsCenter = () => {
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
+					email={displayFilterEmail}
 					value={timelineFilter}
 					canReset={timelineOverride !== null}
 					readOnly={displayFilterReadOnly || !canEditDisplayFilter}

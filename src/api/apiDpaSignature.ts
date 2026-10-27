@@ -21,6 +21,7 @@ export interface DpaSignatureRequest {
 export interface DpaSignatureResponse {
 	tenantId?: number;
 	versionId?: number;
+	dpaVersion?: string;
 	status?: string;
 	signerName?: string;
 	signerPosition?: string;

@@ -25,8 +25,6 @@ const members = (count: number): StackMember[] =>
 		displayName: `Participant ${i + 1}`
 	}));
 
-const countLabel = (hidden: number) => `+${hidden} Personen`;
-
 /** Header title row with a fixed width so the stack has a known budget. */
 const TitleRow = ({ width, count }: { width: number; count: number }) => {
 	const rowRef = useRef<HTMLDivElement>(null);
@@ -43,7 +41,6 @@ const TitleRow = ({ width, count }: { width: number; count: number }) => {
 						members={members(count)}
 						measureRef={rowRef}
 						reservedWidth={76 + 12 * 2 + 140}
-						countLabel={countLabel}
 					/>
 				</div>
 				<h3 style={{ margin: 0 }}>Gruppenchat</h3>

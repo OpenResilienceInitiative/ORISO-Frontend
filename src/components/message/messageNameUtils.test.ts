@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { encodeUsername } from '../../utils/encryptionHelpers';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	formatAgencyLine,
 	formatAgencyLineWithI18n,
@@ -354,5 +355,22 @@ describe('display name over real name (#1486)', () => {
 				counsellor.lastName
 			)
 		).toBe(headerAndListName);
+	});
+
+	// #1839: a live-chat guest's Matrix name is encoded; "enc mfxg63s7gezte"
+	// must never reach the bubble.
+	it('decodes an encoded Matrix name instead of humanising it', () => {
+		const encoded = encodeUsername('anon_132');
+		expect(formatMessagePersonName(encoded)).toBe('anon_132');
+		expect(formatMessagePersonName(`@${encoded}:dev.oriso.org`)).toBe(
+			'anon_132'
+		);
+		expect(formatMessagePersonName(undefined, encoded)).toBe('anon_132');
+	});
+
+	it('humanises a decoded technical name like any other', () => {
+		expect(
+			formatMessagePersonName(encodeUsername('trout_milan_8303'))
+		).toBe('trout milan');
 	});
 });

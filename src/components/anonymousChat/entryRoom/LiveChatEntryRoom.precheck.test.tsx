@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -7,7 +7,14 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetConsultantAvailability } from '../../../api/apiGetConsultantAvailability';
 import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
@@ -128,7 +135,10 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(chosen).toContain(
 			vi.mocked(apiPutSessionData).mock.calls[0][1].displayName
 		);
-		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(42);
+		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(
+			42,
+			expect.any(AbortSignal)
+		);
 	});
 
 	/* The last positive sample can be seconds old. Right before an account and
