@@ -25,8 +25,10 @@ import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
-import { getTopicCardImage } from '../../resources/img/topics';
+import {
+	getTopicCardArtwork,
+	INTERNAL_CHAT_ARTWORK
+} from '../../resources/img/topics';
 import {
 	apiGetTenantConsultantList,
 	Consultant
@@ -38,8 +40,6 @@ import {
 import {
 	buildGroupChatEditDraft,
 	buildOneOffDuplicateFields,
-	getValidDateFormatForSelectedDate,
-	getValidTimeFormatForSelectedTime,
 	GroupChatEditSource
 } from '../groupChat/createChatHelpers';
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
@@ -73,7 +73,10 @@ import {
 	CircleSettingsView,
 	CircleSettingsPrefill
 } from './circle/CircleSettingsView';
-import { useCreateChatSubmit } from './useCreateChatSubmit';
+import { useInternalSubsetChatSubmit } from './useInternalSubsetChatSubmit';
+import { resolveRecipientScope } from './internal/recipientScope';
+import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
+import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
 import './conversationCreate.styles.scss';
 
 /**
@@ -106,8 +109,9 @@ const CreateConversationFlow = ({
 		userData: { agencies = [] }
 	} = useContext(UserDataContext);
 	const { fromL } = useResponsive();
-	const { submit, isSubmitting, hasError, clearError } =
-		useCreateChatSubmit();
+	const { submit, isSubmitting, errorReason, clearError } =
+		useInternalSubsetChatSubmit();
+	const recipientScope = resolveRecipientScope(tenantData);
 
 	// Edit mode is driven by the route params: the create route has none, the
 	// edit route (RouterConfig) carries /:groupId/:sessionId/editGroupChat.
@@ -254,9 +258,15 @@ const CreateConversationFlow = ({
 		name: '',
 		selectedIds: []
 	});
+	// Co-moderator candidates of the Gesprächskreis: the Träger's directory.
 	const [availableConsultants, setAvailableConsultants] = useState<
 		Consultant[]
 	>([]);
+	// The colleagues the Interna picker may offer, narrowed to the recipient
+	// scope (#1772).
+	const [internalColleagues, setInternalColleagues] = useState<Consultant[]>(
+		[]
+	);
 	const [consultantsLoadFailed, setConsultantsLoadFailed] = useState(false);
 
 	// Once the edited series has loaded, preselect its agency so the settings
@@ -343,26 +353,23 @@ const CreateConversationFlow = ({
 		});
 	}, [isEditMode, offeringAgencyIds]);
 
-	// People for the internal card: agency colleagues without the current
-	// user, deduplicated by consultantId.
-	const loadConsultants = useCallback(() => {
+	// Co-moderator candidates for the Gesprächskreis: the Träger's other active
+	// consultants without the current user, deduplicated by consultantId.
+	useEffect(() => {
 		if (
+			step !== 'circle' ||
 			selectedAgency === null ||
-			(!availability.internal && !availability.circle)
+			!availability.circle
 		) {
 			setAvailableConsultants([]);
-			setConsultantsLoadFailed(false);
 			return;
 		}
-		setConsultantsLoadFailed(false);
 		apiGetTenantConsultantList()
 			.then((consultants) => {
 				const currentUserId = userData?.userId;
 				const unique = consultants.reduce((acc, consultant) => {
-					if (consultant.consultantId === currentUserId) {
-						return acc;
-					}
 					if (
+						consultant.consultantId === currentUserId ||
 						acc.some(
 							(existing) =>
 								existing.consultantId ===
@@ -375,15 +382,52 @@ const CreateConversationFlow = ({
 				}, [] as Consultant[]);
 				setAvailableConsultants(unique);
 			})
+			.catch(() => setAvailableConsultants([]));
+	}, [availability.circle, selectedAgency, step, userData?.userId]);
+
+	// People for the internal card: only colleagues inside the recipient scope
+	// of the Träger (#1772), without the current user. Every load gets a
+	// number; an answer that is not for the latest load (another centre was
+	// chosen meanwhile, the view went away) is dropped, and the previous list
+	// is cleared when a load starts so it can never be picked from.
+	const colleaguesLoadRef = useRef(0);
+	const invalidateColleaguesLoad = useCallback(() => {
+		colleaguesLoadRef.current += 1;
+	}, []);
+	const loadInternalColleagues = useCallback(() => {
+		const load = ++colleaguesLoadRef.current;
+		setInternalColleagues([]);
+		setConsultantsLoadFailed(false);
+		if (selectedAgency === null || !availability.internal) {
+			return;
+		}
+		const isCurrent = () => colleaguesLoadRef.current === load;
+		loadInternalChatColleagues({
+			scope: recipientScope,
+			agencyId: selectedAgency,
+			currentUserId: userData?.userId
+		})
+			.then((colleagues) => {
+				if (isCurrent()) {
+					setInternalColleagues(colleagues);
+				}
+			})
 			.catch(() => {
-				setAvailableConsultants([]);
-				setConsultantsLoadFailed(true);
+				if (isCurrent()) {
+					setConsultantsLoadFailed(true);
+				}
 			});
-	}, [availability.circle, availability.internal, selectedAgency, userData]);
+	}, [
+		availability.internal,
+		recipientScope,
+		selectedAgency,
+		userData?.userId
+	]);
 
 	useEffect(() => {
-		loadConsultants();
-	}, [loadConsultants]);
+		loadInternalColleagues();
+		return invalidateColleaguesLoad;
+	}, [invalidateColleaguesLoad, loadInternalColleagues]);
 
 	const loadTopics = useCallback(() => {
 		if (!availability.circle) {
@@ -417,13 +461,18 @@ const CreateConversationFlow = ({
 		[agencies, agencyIdsOffering, editPrefill?.agencyId, isEditMode]
 	);
 
+	const toPeople = (consultants: Consultant[]) =>
+		consultants.map((consultant) => ({
+			id: consultant.consultantId,
+			label: `${consultant.firstName} ${consultant.lastName}`.trim()
+		}));
 	const people = useMemo(
-		() =>
-			availableConsultants.map((consultant) => ({
-				id: consultant.consultantId,
-				label: `${consultant.firstName} ${consultant.lastName}`.trim()
-			})),
+		() => toPeople(availableConsultants),
 		[availableConsultants]
+	);
+	const internalPeople = useMemo(
+		() => toPeople(internalColleagues),
+		[internalColleagues]
 	);
 
 	// Only the topics this counselling centre offers (see agencyTopics).
@@ -451,27 +500,24 @@ const CreateConversationFlow = ({
 		if (selectedAgency === null) {
 			return;
 		}
-		// No repeatCount here: sending one would make getModality classify
-		// the chat as SELF_HELP (ADR-006 fallback heuristic).
+		// The selection is the recipient list: no moderators, groups or
+		// "everyone" are added, and a refusal never falls back to a broader
+		// room. The UserService creates (or reuses) a members-only room.
 		submit({
-			topic: internalDraft.name.trim(),
-			startDate: getValidDateFormatForSelectedDate(new Date()),
-			startTime: getValidTimeFormatForSelectedTime(new Date()),
-			duration: 60,
+			selectedIds: internalDraft.selectedIds,
 			agencyId: selectedAgency,
-			hintMessage: '',
-			repetitive: false,
-			consultantIds: internalDraft.selectedIds,
-			featureGroupChatV2Enabled: true
+			name: internalDraft.name
 		});
 	};
 
 	// Switching agency must drop the previously picked colleagues: they belong
 	// to the old agency and would otherwise leak across agencies into the new
-	// internal chat (the consultant list reloads for the new agency).
+	// internal chat (the consultant list reloads for the new agency). A refusal
+	// belongs to the previous centre's request and goes with it.
 	const handleInternalAgencyChange = (value: string) => {
 		setSelectedAgency(parseInt(value));
 		setInternalDraft((draft) => ({ ...draft, selectedIds: [] }));
+		clearError();
 	};
 
 	const openCircleSettings = () => {
@@ -498,16 +544,29 @@ const CreateConversationFlow = ({
 			{consultantsLoadFailed && (
 				<p role="alert" className="conversationCreate__error">
 					{translate('groupChat.loadError.consultants')}
-					<button type="button" onClick={loadConsultants}>
+					<button type="button" onClick={loadInternalColleagues}>
 						{translate('groupChat.loadError.retry')}
 					</button>
 				</p>
 			)}
 			<InternalChatCreateCard
-				people={people}
+				people={internalPeople}
 				draft={internalDraft}
-				onDraftChange={setInternalDraft}
+				onDraftChange={(draft) => {
+					// A refusal stays while the name is typed (a screen reader
+					// may still be reading it); it goes with a new selection.
+					if (draft.selectedIds !== internalDraft.selectedIds) {
+						clearError();
+					}
+					setInternalDraft(draft);
+				}}
 				onCreate={handleInternalCreate}
+				scope={recipientScope}
+				errorMessage={
+					errorReason
+						? translate(internalSubsetErrorKey(errorReason))
+						: undefined
+				}
 				isSubmitting={isSubmitting}
 				agencyOptions={agencyOptionsFor('internal')}
 				selectedAgency={selectedAgency?.toString()}
@@ -638,7 +697,7 @@ const CreateConversationFlow = ({
 								subtitle={translate(
 									'groupChat.internal.subtitle'
 								)}
-								image={internalTeamImage}
+								image={INTERNAL_CHAT_ARTWORK}
 								onSelect={() => setStep('internal')}
 							/>
 						)}
@@ -649,7 +708,7 @@ const CreateConversationFlow = ({
 								subtitle={translate(
 									'groupChat.circle.subtitle'
 								)}
-								image={getTopicCardImage(null)}
+								image={getTopicCardArtwork(null)}
 								onSelect={() => setStep('circle')}
 							/>
 						)}
@@ -666,14 +725,6 @@ const CreateConversationFlow = ({
 				menuLabel={translate('groupChat.format.panelMenu')}
 				menuDisabled
 			/>
-			{hasError && step !== 'circle' && (
-				<p role="alert" className="conversationCreate__error">
-					{translate('groupChat.createError.overlay.headline')}
-					<button type="button" onClick={clearError}>
-						{translate('groupChat.createError.overlay.buttonLabel')}
-					</button>
-				</p>
-			)}
 			{step === 'circle' ? (
 				isEditMode && !editPrefill ? (
 					// Never render the settings form before the series has

@@ -8,14 +8,10 @@ import { RegistrationSelectionChip } from './selectionChips/RegistrationSelectio
 import { ZipcodeInput } from './zipcodeInput/ZipcodeInput';
 import { TopicSelection } from './topicSelection/TopicSelection';
 import { WhyLocalDisclosure } from './zipcodeInput/WhyLocalDisclosure';
-import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { HandoverGateState } from '../app/registrationLoader/handoverGate';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
 import { phone375Globals } from '../message/messageStoryShell';
-import { StageLayout } from '../stageLayout/StageLayout';
-import { Stage } from '../stage/stage';
-import { AgencySpecificContext } from '../../globalState';
 import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
 import { config } from '../../resources/scripts/config';
 
@@ -371,133 +367,6 @@ export const HandoverGateStates: StoryObj = {
 	}
 };
 
-export const HandoverMobile: StoryObj = {
-	globals: phone375Globals,
-	name: '8c — Geschafft (mobil)',
-	render: () => (
-		<Box
-			sx={{
-				width: 375,
-				height: 784,
-				position: 'relative',
-				overflow: 'hidden',
-				border: '1px solid rgba(0,0,0,.14)',
-				borderRadius: 2
-			}}
-		>
-			<RegistrationHandover
-				ready={false}
-				onEnter={() => undefined}
-				forcedState="preparing"
-			/>
-		</Box>
-	),
-	parameters: {
-		layout: 'centered',
-		docs: {
-			description: {
-				story: 'Ladephase: Text steht sofort, der Button ist zu. Die Karten sind horizontal wischbar.'
-			}
-		}
-	}
-};
-
-export const HandoverMobileReady: StoryObj = {
-	name: '8c — Geschafft (bereit)',
-	render: () => (
-		<Box
-			sx={{
-				width: 375,
-				height: 784,
-				position: 'relative',
-				overflow: 'hidden',
-				border: '1px solid rgba(0,0,0,.14)',
-				borderRadius: 2
-			}}
-		>
-			<RegistrationHandover ready onEnter={() => undefined} />
-		</Box>
-	),
-	parameters: { layout: 'centered' }
-};
-
-export const HandoverDesktop: StoryObj = {
-	name: '8d — Geschafft (Desktop)',
-	render: () => (
-		<Box
-			sx={{
-				width: 1120,
-				height: 760,
-				position: 'relative',
-				overflow: 'hidden',
-				border: '1px solid rgba(0,0,0,.14)',
-				borderRadius: 2
-			}}
-		>
-			<RegistrationHandover ready onEnter={() => undefined} />
-		</Box>
-	),
-	parameters: { layout: 'centered' }
-};
-
-/* The two stories above frame the handover in a bare box. Standing alone it
-   looks right — which is exactly why nobody noticed that the live screen is
-   mounted outside the split stage: `AuthenticatedApp` returns it without any
-   `StageLayout`, so the red brand panel, the partner logos and the legal links
-   die with the registration page at the hard reload.
-
-   These two put it where it belongs, so the mount point can be judged in
-   Storybook instead of on Pre-Dev. See ORISO-Frontend#1219. */
-const HandoverInStage = ({ ready }: { ready: boolean }) => (
-	/* `#storybook-root` is not full height, so `StageLayout`'s `min-height: 100%`
-	   would resolve against a shorter box and leave a dead strip under the
-	   footer that the real app does not have. This wrapper gives it the
-	   viewport the app root provides. */
-	<Box sx={{ minHeight: '100vh' }}>
-		<AgencySpecificContext.Provider
-			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
-		>
-			<StageLayout
-				className="stageLayout--registration"
-				showLegalLinks={true}
-				showLoginLink={true}
-				stage={<Stage hasAnimation={false} />}
-				showRegistrationInfoDrawer={true}
-				mobileHero="bar"
-			>
-				<RegistrationHandover
-					ready={ready}
-					forcedState={ready ? undefined : 'preparing'}
-					variant="inline"
-					onEnter={() => undefined}
-				/>
-			</StageLayout>
-		</AgencySpecificContext.Provider>
-	</Box>
-);
-
-export const HandoverInStagePreparing: StoryObj = {
-	name: '8e — Warteraum in der Bühne (lädt)',
-	render: () => <HandoverInStage ready={false} />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Phase 1: der Warteraum steht in der rechten Spalte, die rote Bühne bleibt daneben stehen. Der Knopf ist zu — hinter ihm ist noch keine App.'
-			}
-		}
-	}
-};
-
-export const HandoverInStageReady: StoryObj = {
-	name: '8e — Warteraum in der Bühne (bereit)',
-	render: () => <HandoverInStage ready />,
-	parameters: {
-		layout: 'fullscreen',
-		docs: {
-			description: {
-				story: 'Alles geladen: der Knopf heißt „Anfrage schreiben" und ist klickbar. Die Bühne steht unverändert daneben — derselbe Rahmen wie im Formular davor.'
-			}
-		}
-	}
-};
+/* The waiting room after "Registrieren" lives in
+   `app/registrationLoader/waitingRoom.stories.tsx` — always inside the real
+   stage. The bare-box versions that stood here hid the mount-point bug (#1219). */

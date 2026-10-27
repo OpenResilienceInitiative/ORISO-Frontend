@@ -321,14 +321,9 @@ const expectCompactComposers = async (canvasElement: HTMLElement) => {
 };
 
 /**
- * T39: the header row starts at the card's top padding — Figma
- * 1320:38281: "Room Header All" at y = 16 inside the card, "Room Header
- * Content" (the 40 px avatar row) 6 px below it, nothing extra. Measured
- * from the card's inner edge (its 1 px border excluded): row = +16,
- * avatars = +22 in Figma — main chat and side panel alike.
- * T43 (Frank, round 7): the row's top padding is 2 instead of 6 — Frank
- * deviates from Figma by 4 px; avatars = +18, the 6 px below the row (to
- * the hairline) stay, so both hairlines still end on the same y (T3).
+ * Keep the header rows at the card's 16px inset. The approved 48px
+ * avatars are centered in the existing row; the main left block additionally
+ * moves up 2px so its bottom matches the outlined menu above the divider.
  */
 const expectHeaderRowsAtCardTop = async (canvasElement: HTMLElement) => {
 	const card = canvasElement.querySelector<HTMLElement>('.chatStage__card')!;
@@ -349,16 +344,16 @@ const expectHeaderRowsAtCardTop = async (canvasElement: HTMLElement) => {
 	await expect(
 		Math.round(mainRow.getBoundingClientRect().top - cardInnerTop)
 	).toBe(16);
-	// T43 (round 7): 16 + 2 — Frank deviates from Figma (16 + 6) by 4 px.
+	// Approved header geometry: larger avatars, unchanged row, left block up 2px.
 	await expect(
 		Math.round(mainStack.getBoundingClientRect().top - cardInnerTop)
-	).toBe(18);
+	).toBe(12);
 	await expect(
 		Math.round(panelRow.getBoundingClientRect().top - cardInnerTop)
 	).toBe(16);
 	await expect(
 		Math.round(panelStack.getBoundingClientRect().top - cardInnerTop)
-	).toBe(18);
+	).toBe(14);
 	// Nothing sits between the card edge and the header: the header is
 	// the pane's first box and starts on the card's inner edge.
 	const mainHeader = canvasElement.querySelector<HTMLElement>(
@@ -514,35 +509,30 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
  * channel tag carry the pink accent, the supervision composer's field
  * border too; a thread header stays neutral.
  */
-/**
- * T49: the side room's system notice is the Carimat organism — the exact
- * class skeleton `ErstantwortSequence` draws for the main chat's "Carimat /
- * Ihre ersten Schritte" message. One selector per structural part, plus the
- * two absences that distinguish it from the generic system chrome.
- */
+/** T49: supervision uses the canonical assistant presentation, with the
+ * recorded supervision topic separate from the configurable assistant sender.
+ * The notice remains first in the timeline and has no generic system chrome. */
 const CARIMAT_ORGANISM_PARTS = [
-	'.erstantwort',
-	'.messageItem.pseudonymCard.erstantwort__row',
-	'.pseudonymCard__wrap',
-	'.pseudonymCard__avatarCol > .pseudonymCard__avatarFrame > .pseudonymCard__avatarIcon > svg',
-	'.pseudonymCard__contentCol.erstantwort__content',
-	'.pseudonymCard__header > .pseudonymCard__headerName',
-	'.pseudonymCard__header > .pseudonymCard__headerSubtitle',
-	'.pseudonymCard__bubble.erstantwort__bubble > .pseudonymCard__bubbleText'
+	'.carimatMessageFrame.erstantwort',
+	'.carimatMessageFrame__row',
+	'.carimatMessageFrame__avatarColumn > .carimatMessageFrame__avatar > .carimatMessageFrame__avatarIcon > svg',
+	'.carimatMessageFrame__content',
+	'.carimatMessageFrame__header > .carimatMessageFrame__name',
+	'.carimatMessageFrame__header > .carimatMessageFrame__subtitle',
+	'.carimatMessageFrame__bubble.erstantwort__bubble > p',
+	'.carimatMessageFrame__bubble > .carimatMessageFrame__topic'
 ];
 const expectCarimatOrganism = async (
 	item: HTMLElement,
-	{ name, subtitle }: { name: string; subtitle: string }
+	{ topic, subtitle }: { topic: string; subtitle: string }
 ) => {
 	for (const part of CARIMAT_ORGANISM_PARTS) {
 		await expect(item.querySelector(part), part).not.toBeNull();
 	}
-	await expect(
-		item.querySelector('.pseudonymCard__headerName')!.textContent
-	).toBe(name);
-	await expect(
-		item.querySelector('.pseudonymCard__headerSubtitle')!.textContent
-	).toBe(subtitle);
+	const message = within(item);
+	await expect(message.getByText('Carimat', { exact: true })).toBeVisible();
+	await expect(message.getByText(topic, { exact: true })).toBeVisible();
+	await expect(message.getByText(subtitle, { exact: true })).toBeVisible();
 	await expect(item.querySelector('.messageItem__kebabButton')).toBeNull();
 	await expect(
 		item.querySelector('.messageItem__message--systemNotification')
@@ -998,14 +988,15 @@ export const SupervisionSystemNoticeAtTheTop: Story = {
 		);
 		// First item of the supervision timeline. T49 (Frank, 06.09.): it is
 		// the SAME organism as the main chat's Carimat message ("Carimat /
-		// Ihre ersten Schritte", `ErstantwortSequence` → `pseudonymCard`):
-		// robot in the ringed avatar frame, name + subtitle kicker, bubble —
+		// Ihre ersten Schritte", `ErstantwortSequence` → `CarimatMessageFrame`):
+		// robot in the ringed avatar frame, assistant name + subtitle kicker,
+		// recorded supervision topic inside the bubble —
 		// and, like Carimat, no kebab and none of the generic
 		// system-notification chrome.
 		const firstItem = timeline.querySelector<HTMLElement>('.messageItem')!;
 		await expect(firstItem.contains(notice)).toBe(true);
 		await expectCarimatOrganism(firstItem, {
-			name: 'Supervision',
+			topic: 'Supervision',
 			subtitle: 'Systembenachrichtigung'
 		});
 		// Wording matches the UI: the plus sits next to the mail glyph.
@@ -2681,14 +2672,14 @@ export const MainChatAtTheDragFloor320: Story = {
 			document.querySelector('[data-cy="session-menu-start-call"]')
 		).not.toBeNull();
 		await userEvent.click(kebab);
-		// The title column is no longer squeezed to 20 px: it keeps enough
-		// of the row for the name to read (measured 98 px at 320).
+		// With the approved 48px header avatars the title measures 74px
+		// at the 320px drag floor. It still truncates without overlapping controls.
 		const title = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .sessionInfo__username h3'
 		)!.parentElement!;
 		await expect(
 			Math.round(title.getBoundingClientRect().width)
-		).toBeGreaterThanOrEqual(90);
+		).toBeGreaterThanOrEqual(72);
 		await expectNarrowPaneSurvives(canvasElement, 'main');
 	}
 };

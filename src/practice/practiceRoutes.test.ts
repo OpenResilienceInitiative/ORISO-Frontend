@@ -1,5 +1,5 @@
 import { matchPath } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	PRACTICE_ENQUIRIES_ROUTE,
 	practiceAcceptedSessionRoute,

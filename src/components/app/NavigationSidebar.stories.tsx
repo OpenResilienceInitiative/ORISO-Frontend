@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
+import i18n from '../../i18n';
 import { NavigationBar } from './NavigationBar';
 import { RouterConfigConsultant, RouterConfigUser } from './RouterConfig';
 import { config } from '../../resources/scripts/config';
@@ -180,6 +181,23 @@ export const RuntimeConsultantRail: Story = {
 		await expect(activeSessionsLink).toHaveClass(
 			'navigation__item--active'
 		);
+		// The original CI case renders the first-visit profile badge. Its
+		// navigation owner, not a nameless span, must announce the count.
+		await waitFor(() => {
+			const badge = canvasElement.querySelector(
+				'.navigation__item__count'
+			);
+			expect(badge).not.toBeNull();
+			expect(badge).toHaveTextContent('1');
+			expect(badge).toHaveAttribute('aria-hidden', 'true');
+			expect(badge).not.toHaveAttribute('aria-label');
+			const owner = badge?.closest('a');
+			expect(owner).toHaveAttribute('href', '/profile');
+			expect(owner).toHaveAttribute('role', 'tab');
+			expect(owner).toHaveAccessibleName(
+				`${i18n.t('navigation.myProfile')}, ${i18n.t('sessionList.rail.unreadCount', { count: 1 })}`
+			);
+		});
 
 		const logoutAction = canvasElement.querySelector(
 			'.navigation__item--nav-logout'

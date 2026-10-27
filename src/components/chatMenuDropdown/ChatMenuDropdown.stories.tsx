@@ -1,6 +1,7 @@
 import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import * as React from 'react';
+import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
@@ -231,5 +232,79 @@ export const CompactDisabled: Story = {
 				name: 'Nachricht löschen'
 			})
 		).toBeDisabled();
+	}
+};
+
+/** Real repeated SVG instances: automatic ordinary axe must see the actual asset. */
+export const RepeatedDeleteActions: Story = {
+	name: 'Repeated delete actions',
+	args: { density: 'compact' },
+	render: (args) => (
+		<ChatMenuDropdown {...args} role="menu" ariaLabel="Nachrichtenaktionen">
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<TrashIcon />}
+				title="Erste Nachricht löschen"
+			/>
+			<ChatMenuDropdownItem
+				role="menuitem"
+				icon={<TrashIcon />}
+				title="Zweite Nachricht löschen"
+			/>
+		</ChatMenuDropdown>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		for (const name of [
+			'Erste Nachricht löschen',
+			'Zweite Nachricht löschen'
+		]) {
+			const item = canvas.getByRole('menuitem', { name });
+			await expect(item).toBeVisible();
+			const icon = item.querySelector('svg');
+			await expect(icon).not.toBeNull();
+			await expect(icon?.getAttribute('viewBox')).toBe('0 0 72 72');
+			await expect(icon?.querySelectorAll('path').length).toBeGreaterThan(
+				0
+			);
+			await expect(icon?.getBoundingClientRect().width).toBeGreaterThan(
+				0
+			);
+		}
+		const { page } = await import('@vitest/browser/context');
+		const originalViewport = [window.innerWidth, window.innerHeight];
+		try {
+			for (const [width, height] of [
+				[390, 844],
+				[820, 1180],
+				[1440, 900]
+			]) {
+				await page.viewport(width, height);
+				await waitFor(() => {
+					expect(window.innerWidth).toBe(width);
+					expect(window.innerHeight).toBe(height);
+				});
+				console.info(
+					'shared-svg-contrast-visual',
+					JSON.stringify({
+						case: 'repeated-delete-actions',
+						width: window.innerWidth,
+						height: window.innerHeight,
+						resolvedLanguage: i18n.resolvedLanguage,
+						language: i18n.language,
+						documentLanguage: document.documentElement.lang,
+						scheme: 'light',
+						path: `repeated-delete-actions-${width}x${height}.png`
+					})
+				);
+				await page.screenshot({
+					path: `../../../test-results/shared-svg-contrast/repeated-delete-actions-${width}x${height}.png`
+				});
+			}
+		} finally {
+			await page.viewport(originalViewport[0], originalViewport[1]);
+		}
+		// No DOM-ID normalizer or duplicate-ID fake checker: the unchanged
+		// Storybook addon runs the genuine axe4.7 audit over both instances.
 	}
 };

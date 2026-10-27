@@ -184,7 +184,16 @@ const expectEntryScreen = async (canvasElement: HTMLElement) => {
 		page(canvasElement).getByText(
 			'Diese Sitzung endet, wenn Sie den Browser schließen.'
 		)
-	).toBeVisible();
+	).toBeVisible(); /* The step names the group it joins, as the waiting room does (#1689). */
+	const headings = Array.from(
+		canvasElement.ownerDocument.querySelectorAll<HTMLElement>(
+			'[data-cy="group-heading"]'
+		)
+	).filter((el) => el.getClientRects().length > 0);
+	await expect(headings).toHaveLength(1);
+	await expect(headings[0]).toHaveTextContent(
+		'Caritas Berlin, Selbsthilfegruppe Trauer'
+	);
 };
 
 /** 0a — the newcomer follows the link and lands on the entry, not the login. */

@@ -12,7 +12,7 @@
 	&__noticeAction {
 		background: none;
 		border: 0;
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		cursor: pointer;
 		font-size: inherit;
 		font-weight: $font-weight-bold;

@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
 	buildInitialAuthorContent,
 	getGeneralRules,

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { digitCells, twoDigits } from './waitingClockDigits';
+import { digitCells, faceDigits } from './waitingClockDigits';
 import './waitingAreaCountdown.styles';
 
 const MAGNET_RADIUS_PX = 80;
@@ -7,7 +7,7 @@ const MAGNET_THROTTLE_MS = 70;
 
 /** One cell of the grid temporarily replaced by a popping emoji (overdue fun). */
 export interface ClockDigitsPop {
-	/** Which of the two digits (0 = tens, 1 = ones). */
+	/** Which digit, left to right (0 = the leading one). */
 	digit: number;
 	/** Cell index 0–23 inside that digit's 4×6 grid. */
 	cell: number;
@@ -15,7 +15,7 @@ export interface ClockDigitsPop {
 }
 
 export interface ClockDigitsProps {
-	/** 0–99, rendered as two "clock made of clocks" digits. */
+	/** 0–999, rendered as two "clock made of clocks" digits, three from 100 up. */
 	value: number;
 	/** Diameter of one mini-clock in px. */
 	size?: number;
@@ -85,7 +85,7 @@ export const ClockDigits = ({
 					fontVariantNumeric: 'tabular-nums'
 				}}
 			>
-				{twoDigits(value).join('')}
+				{faceDigits(value).join('')}
 			</div>
 		);
 	}
@@ -191,7 +191,12 @@ export const ClockDigits = ({
 				display: 'flex',
 				flexWrap: 'wrap',
 				gap,
-				width: digitW
+				width: digitW,
+				// The 4x6 lattice only exists because the row is exactly four
+				// cells wide. A flex parent that squeezed this box would reflow
+				// it to three columns and the digit would stop being a digit,
+				// so it never shrinks (#1499).
+				flexShrink: 0
 			}}
 		>
 			{digitCells(d).map((cell, i) =>
@@ -221,9 +226,9 @@ export const ClockDigits = ({
 					: undefined
 			}
 			onMouseLeave={magnet ? () => setCursor(null) : undefined}
-			style={{ display: 'flex', gap: digitGap }}
+			style={{ display: 'flex', gap: digitGap, flexShrink: 0 }}
 		>
-			{twoDigits(value).map((d, i) => renderDigit(`d${i}`, i, d))}
+			{faceDigits(value).map((d, i) => renderDigit(`d${i}`, i, d))}
 		</div>
 	);
 };

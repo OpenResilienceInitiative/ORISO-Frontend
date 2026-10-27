@@ -22,13 +22,10 @@ import { useTranslation } from 'react-i18next';
 import { CheckAnimation } from '../../animatedIllustration/AnimatedIllustration';
 import { ReactComponent as XIcon } from '../../../resources/img/illustrations/x.svg';
 import { AdditionalAgencySelection } from '../AdditionalEnquiry/AdditionalAgencySelection';
-import {
-	apiGetTenantAgenciesTopics,
-	apiPostAdditionalEnquiry,
-	FETCH_ERRORS,
-	TenantAgenciesTopicsInterface,
-	X_REASON
-} from '../../../api';
+import { apiPostAdditionalEnquiry, FETCH_ERRORS, X_REASON } from '../../../api';
+import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
+import { TopicsDataInterface } from '../../../globalState/interfaces';
+import { getRegistrationTopicDisplay } from '../../registration/registrationDesign/registrationDesign';
 
 export interface NewRequestDialogProps {
 	open: boolean;
@@ -54,7 +51,10 @@ export const NewRequestDialog = ({
 	prefilledPostcode,
 	knownAgencyIds
 }: NewRequestDialogProps) => {
-	const { t: translate } = useTranslation(['common', 'consultingTypes']);
+	const { t: translate, i18n } = useTranslation([
+		'common',
+		'consultingTypes'
+	]);
 	const navigate = useNavigate();
 
 	const { reloadUserData } = useContext(UserDataContext);
@@ -70,9 +70,7 @@ export const NewRequestDialog = ({
 	const [dpaFailure, setDpaFailure] =
 		useState<ReturnType<typeof getCounsellingDpaFailure>>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-	const [tenantAgenciesTopics, setTenantAgenciesTopics] = useState<
-		TenantAgenciesTopicsInterface[]
-	>([]);
+	const [topics, setTopics] = useState<TopicsDataInterface[]>([]);
 	const [currentSelectOption, setCurrentSelectOption] = useState(
 		preselectedTopicId != null ? preselectedTopicId.toString() : ''
 	);
@@ -122,9 +120,13 @@ export const NewRequestDialog = ({
 		if (!open) {
 			return;
 		}
-		apiGetTenantAgenciesTopics()
+		// The same topic list the registration offers (ORISO-Frontend#1655). The
+		// agency-topics endpoint lists only topics of centres that are online,
+		// so a Träger with one online centre offered one topic; whether a centre
+		// serves the topic at the postcode is answered in the next step.
+		apiGetTopicsData()
 			.then((response) => {
-				setTenantAgenciesTopics(response);
+				setTopics(response);
 				// keep the pre-dev behaviour: a single available topic is
 				// selected right away (unless a preselection was passed in)
 				if (preselectedTopicId == null && response.length === 1) {
@@ -134,7 +136,7 @@ export const NewRequestDialog = ({
 				}
 			})
 			.catch(() => {
-				setTenantAgenciesTopics([]);
+				setTopics([]);
 			});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
@@ -152,12 +154,13 @@ export const NewRequestDialog = ({
 		setCurrentSelectOption(topicId);
 	};
 
-	const topicOptions: OrisoSelectOption[] = tenantAgenciesTopics.map(
-		(option) => ({
-			value: option.id.toString(),
-			label: option.name
-		})
-	);
+	// Named as in the registration, in the reader's language.
+	const topicOptions: OrisoSelectOption[] = topics
+		.map((topic) => ({
+			value: topic.id.toString(),
+			label: getRegistrationTopicDisplay(topic, i18n?.language).title
+		}))
+		.sort((a, b) => a.label.localeCompare(b.label));
 
 	const handleRegistration = () => {
 		if (isRequestInProgress || !isAllRequiredDataSet()) {
@@ -240,84 +243,97 @@ export const NewRequestDialog = ({
 		}
 	};
 
+	// The success and error overlay is portalled below the MUI dialog (z-index
+	// 55 against 1300), so the dialog steps aside while it shows: otherwise the
+	// advice seeker never sees "registered" or its buttons (ORISO-Frontend#1655).
+	const showOverlay = overlayActive && !dpaFailure;
+
 	return (
-		<Dialog
-			open={open}
-			onClose={onClose}
-			fullWidth
-			maxWidth="sm"
-			aria-labelledby="new-request-dialog-title"
-		>
-			<DialogTitle id="new-request-dialog-title">
-				{translate('profile.data.register.dialog.title')}
-				<IconButton
-					aria-label={translate('profile.data.register.dialog.close')}
-					onClick={onClose}
-					sx={{ position: 'absolute', right: 8, top: 8 }}
-				>
-					<CloseRoundedIcon />
-				</IconButton>
-			</DialogTitle>
-			<DialogContent>
-				<OrisoSelect
-					id="topicSelect"
-					label={translate(
-						'profile.data.register.consultingTypeSelect.label'
-					)}
-					options={topicOptions}
-					value={currentSelectOption}
-					onChange={handleConsultingTypeSelect}
-				/>
-				{selectedTopicId !== null && (
-					<AdditionalAgencySelection
-						selectedTopicId={selectedTopicId}
-						initialPostcode={prefilledPostcode}
-						knownAgencyIds={knownAgencyIds}
-						onAgencyChange={(agency) => setSelectedAgency(agency)}
-						onPostcodeChange={(postcode) =>
-							setSelectedPostcode(postcode)
-						}
-					/>
-				)}
-				<Button
-					item={buttonSetRegistration}
-					buttonHandle={handleRegistration}
-					disabled={isButtonDisabled}
-				/>
-				{overlayActive && dpaFailure && (
-					<Dialog
-						open
-						onClose={() =>
-							handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE)
-						}
-						aria-labelledby="new-request-dpa-heading"
-						aria-describedby="new-request-dpa-text"
+		<>
+			<Dialog
+				open={open && !showOverlay}
+				onClose={onClose}
+				fullWidth
+				maxWidth="sm"
+				aria-labelledby="new-request-dialog-title"
+			>
+				<DialogTitle id="new-request-dialog-title">
+					{translate('profile.data.register.dialog.title')}
+					<IconButton
+						aria-label={translate(
+							'profile.data.register.dialog.close'
+						)}
+						onClick={onClose}
+						sx={{ position: 'absolute', right: 8, top: 8 }}
 					>
-						<DialogTitle id="new-request-dpa-heading">
-							{overlayItem.headline}
-						</DialogTitle>
-						<DialogContent>
-							<DialogContentText id="new-request-dpa-text">
-								{overlayItem.copy}
-							</DialogContentText>
-						</DialogContent>
-						<DialogActions>
-							<Button
-								item={overlayItem.buttonSet[0]}
-								buttonHandle={() =>
-									handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE)
-								}
-							/>
-						</DialogActions>
-					</Dialog>
-				)}
-				{overlayActive && !dpaFailure && (
-					<Overlay
-						item={overlayItem}
-						handleOverlay={handleOverlayAction}
+						<CloseRoundedIcon />
+					</IconButton>
+				</DialogTitle>
+				<DialogContent>
+					<OrisoSelect
+						id="topicSelect"
+						label={translate(
+							'profile.data.register.consultingTypeSelect.label'
+						)}
+						options={topicOptions}
+						value={currentSelectOption}
+						onChange={handleConsultingTypeSelect}
 					/>
-				)}
-			</DialogContent>
-		</Dialog>
+					{selectedTopicId !== null && (
+						<AdditionalAgencySelection
+							selectedTopicId={selectedTopicId}
+							initialPostcode={prefilledPostcode}
+							knownAgencyIds={knownAgencyIds}
+							onAgencyChange={(agency) =>
+								setSelectedAgency(agency)
+							}
+							onPostcodeChange={(postcode) =>
+								setSelectedPostcode(postcode)
+							}
+						/>
+					)}
+					<Button
+						item={buttonSetRegistration}
+						buttonHandle={handleRegistration}
+						disabled={isButtonDisabled}
+					/>
+					{overlayActive && dpaFailure && (
+						<Dialog
+							open
+							onClose={() =>
+								handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE)
+							}
+							aria-labelledby="new-request-dpa-heading"
+							aria-describedby="new-request-dpa-text"
+						>
+							<DialogTitle id="new-request-dpa-heading">
+								{overlayItem.headline}
+							</DialogTitle>
+							<DialogContent>
+								<DialogContentText id="new-request-dpa-text">
+									{overlayItem.copy}
+								</DialogContentText>
+							</DialogContent>
+							<DialogActions>
+								<Button
+									item={overlayItem.buttonSet[0]}
+									buttonHandle={() =>
+										handleOverlayAction(
+											OVERLAY_FUNCTIONS.CLOSE
+										)
+									}
+								/>
+							</DialogActions>
+						</Dialog>
+					)}
+				</DialogContent>
+			</Dialog>
+			{open && showOverlay && (
+				<Overlay
+					item={overlayItem}
+					handleOverlay={handleOverlayAction}
+				/>
+			)}
+		</>
 	);
 };

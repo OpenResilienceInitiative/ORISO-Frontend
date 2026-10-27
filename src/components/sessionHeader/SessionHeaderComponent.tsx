@@ -43,7 +43,8 @@ import {
 } from '../../globalState/interfaces';
 import {
 	STATUS_ENQUIRY,
-	STATUS_ACTIVE
+	STATUS_ACTIVE,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	getViewPathForType,
@@ -68,7 +69,10 @@ import {
 	resolveAnonymousChatDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	HEADER_STACK_PROPS,
+	ParticipantAvatarStack
+} from '../message/ParticipantAvatarStack';
 import { type StackParticipant } from '../message/participantStack';
 import {
 	bumpLastActivity,
@@ -212,6 +216,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
+		Number(activeSession.item.status) !== STATUS_REJECTED &&
 		(isAnonymousChat
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);
@@ -1133,6 +1138,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								/>
 								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
+										{...HEADER_STACK_PROPS}
 										participants={headerParticipants}
 										/* Phone (< 900 px): one avatar + a
 										   compact "+N" — the title keeps the
@@ -1285,7 +1291,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
 					activeSession.item.status
 				) &&
-				activeSession.item.agencyId && (
+				activeSession.item.agencyId > 0 && (
 					<ContactSheetRequest
 						key={activeSession.item.id}
 						sessionId={activeSession.item.id}

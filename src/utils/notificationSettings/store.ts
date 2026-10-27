@@ -141,6 +141,9 @@ class NotificationSettingsStore {
 	private accountDataHandler = (event: MatrixEvent): void => {
 		const type = event.getType();
 		if (type === NOTIFICATION_SETTINGS_EVENT_TYPE) {
+			// A newer change of ours is queued; the echo of an earlier
+			// write must not roll it back before the flush.
+			if (this.settingsWriteDirty) return;
 			this.setState({
 				settings: parseNotificationSettings(event.getContent()),
 				source: 'account'
@@ -195,13 +198,7 @@ class NotificationSettingsStore {
 			const reconciled = this.reconcileLegacyOptIn(stored);
 			this.setState({ settings: reconciled, source: 'account' });
 			if (reconciled !== stored) {
-				void writeAccountData(
-					client,
-					NOTIFICATION_SETTINGS_EVENT_TYPE,
-					reconciled
-				).then((persisted) => {
-					if (persisted) markLegacyMigrationDone();
-				});
+				this.persistSettings();
 			} else {
 				// Existing account data already represents this browser's choice.
 				markLegacyMigrationDone();
@@ -215,13 +212,7 @@ class NotificationSettingsStore {
 				: this.state.settings;
 			this.setState({ settings: seeded, source: 'account' });
 			// A rejected write must leave the legacy choice eligible for retry.
-			void writeAccountData(
-				client,
-				NOTIFICATION_SETTINGS_EVENT_TYPE,
-				seeded
-			).then((persisted) => {
-				if (persisted) markLegacyMigrationDone();
-			});
+			this.persistSettings();
 		}
 
 		const deviceType = this.deviceEventType();
@@ -276,6 +267,10 @@ class NotificationSettingsStore {
 			);
 			this.client = null;
 		}
+		// A write still running for the old client must not block the next one.
+		this.settingsWriteGeneration += 1;
+		this.settingsWriteInFlight = false;
+		this.settingsWriteDirty = false;
 	}
 
 	/** Merge-update the account-wide settings (optimistic, then persist). */
@@ -292,6 +287,7 @@ class NotificationSettingsStore {
 
 	private settingsWriteInFlight = false;
 	private settingsWriteDirty = false;
+	private settingsWriteGeneration = 0;
 
 	/**
 	 * Writes the latest settings to account data. Writes never overlap: a
@@ -306,6 +302,7 @@ class NotificationSettingsStore {
 			return;
 		}
 		this.settingsWriteInFlight = true;
+		const generation = this.settingsWriteGeneration;
 		void writeAccountData(
 			client,
 			NOTIFICATION_SETTINGS_EVENT_TYPE,
@@ -315,6 +312,7 @@ class NotificationSettingsStore {
 				if (persisted) markLegacyMigrationDone();
 			})
 			.finally(() => {
+				if (generation !== this.settingsWriteGeneration) return;
 				this.settingsWriteInFlight = false;
 				if (this.settingsWriteDirty) {
 					this.settingsWriteDirty = false;

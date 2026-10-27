@@ -28,11 +28,14 @@ import {
 export const NotificationSetup = ({
 	isEmailEnabled = true,
 	isBrowserEnabled = true,
-	onStart
+	onStart,
+	onDone
 }: {
 	isEmailEnabled?: boolean;
 	isBrowserEnabled?: boolean;
 	onStart?: () => void;
+	/** A choice went through without an error: also when it changed nothing. */
+	onDone?: () => void;
 }) => {
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
@@ -138,8 +141,10 @@ export const NotificationSetup = ({
 								: 'erstantwort.notificationChoice.browserDenied'
 						)
 					);
+					return false;
 				}
 			}
+			if (current()) onDone?.();
 		} catch {
 			if (!current()) return false;
 			setError(t('erstantwort.notificationChoice.saveFailed'));
@@ -213,7 +218,10 @@ export const NotificationSetup = ({
 				)
 					rememberTone(tone);
 			})
-			.finally(() => setBrowserDialogOpen(false));
+			.finally(() => {
+				if (continuation.current === operation)
+					setBrowserDialogOpen(false);
+			});
 	};
 
 	if (!isEmailEnabled && !isBrowserEnabled) return null;

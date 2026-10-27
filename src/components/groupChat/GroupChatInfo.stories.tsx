@@ -1,11 +1,14 @@
 import * as React from 'react';
+import i18n from 'i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Route, Routes } from 'react-router-dom';
 import { TenantContext } from '../../globalState';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import type { ListItemInterface } from '../../globalState/interfaces';
 import { chatTransportService } from '../../services/chatTransportService';
 import { GroupChatInfo } from './GroupChatInfo';
+import { GroupChatHeader } from '../sessionHeader/GroupChatHeader';
 import {
 	buildGroupStageListItem,
 	GROUP_STAGE_CHAT_ID,
@@ -16,6 +19,7 @@ import {
 } from './groupChatStageStoryShell';
 import {
 	desktop1440Globals,
+	phone375Globals,
 	phone390Globals
 } from '../message/messageStoryShell';
 
@@ -64,7 +68,13 @@ const MEMBERS = [
  * Installs the mocks during render, before any child effect asks for data,
  * and restores fetch and the Matrix service when the story unmounts.
  */
-const useBackendMocks = (listItem: ListItemInterface) => {
+type ChatInfoResponse = 'ok' | 'fail' | 'hang';
+
+const useBackendMocks = (
+	listItem: ListItemInterface,
+	bannedUsers: string[] = [],
+	chatInfo: ChatInfoResponse = 'ok'
+) => {
 	const installed = React.useRef<(() => void) | null>(null);
 	if (!installed.current) {
 		const originalFetch = globalThis.fetch;
@@ -86,11 +96,20 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
+			if (url.includes('/service/users/chat/') && chatInfo === 'hang') {
+				return new Promise<Response>(() => undefined);
+			}
+			if (url.includes('/service/users/chat/') && chatInfo === 'fail') {
+				return new Response('{}', { status: 500 });
+			}
 			if (url.includes('/service/users/chat/')) {
-				return new Response(JSON.stringify({ active: false }), {
-					status: 200,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({ active: false, bannedUsers }),
+					{
+						status: 200,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 			return originalFetch(input, init);
 		};
@@ -110,20 +129,47 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 	);
 };
 
+/** Legacy overlays portal into a body-level `#overlay`, as in app.html. */
+const BodyOverlayHost = () => {
+	React.useEffect(() => {
+		const host = document.createElement('div');
+		host.id = 'overlay';
+		document.body.appendChild(host);
+		return () => host.remove();
+	}, []);
+	return null;
+};
+
 const WiredChatInfo = ({
 	layout,
 	inviteToken,
-	asAsker = false
+	asAsker = false,
+	dialog = false,
+	joined = true,
+	banned = false,
+	chatInfo = 'ok'
 }: {
 	layout: 'desktop' | 'mobile';
 	inviteToken?: string | null;
 	asAsker?: boolean;
+	dialog?: boolean;
+	/** False: the viewer has not joined the group yet. */
+	joined?: boolean;
+	/** True: the viewer is on the group's ban list. */
+	banned?: boolean;
+	/** How the ban-list request answers. */
+	chatInfo?: ChatInfoResponse;
 }) => {
-	const listItem = React.useMemo(
-		() => buildListItem(inviteToken),
-		[inviteToken]
+	const listItem = React.useMemo(() => {
+		const item = buildListItem(inviteToken);
+		(item.chat as any).subscribed = joined;
+		return item;
+	}, [inviteToken, joined]);
+	useBackendMocks(
+		listItem,
+		banned ? [groupStageAsker.userName] : [],
+		chatInfo
 	);
-	useBackendMocks(listItem);
 	return (
 		<TenantContext.Provider
 			value={
@@ -144,13 +190,26 @@ const WiredChatInfo = ({
 				<Routes>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
-						element={<GroupChatInfo />}
+						element={
+							dialog ? (
+								<ModalProvider>
+									<p>Chat</p>
+									<GroupChatInfo dialog />
+									<BodyOverlayHost />
+								</ModalProvider>
+							) : (
+								<GroupChatInfo />
+							)
+						}
 					/>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/editGroupChat"
 						element={<p>Einstellungen für den Gesprächskreis</p>}
 					/>
-					<Route path="*" element={<p>Chat</p>} />
+					<Route
+						path="*"
+						element={<p data-testid="chat-route">Chat</p>}
+					/>
 				</Routes>
 			</GroupChatStage>
 		</TenantContext.Provider>
@@ -274,5 +333,370 @@ export const WiredAsAsker: Story = {
 				name: 'Optionen für sanftes Alpaka Mika'
 			})
 		).toBeNull();
+	}
+};
+
+const desktop1366Globals = { viewport: { value: 'desktop1366' } };
+const desktop1920Globals = { viewport: { value: 'desktop1920' } };
+
+/** The header's "Information & settings" opens on top (#1760); ✕ returns to the chat. */
+const closesWithTheCrossButton: Story['play'] = async () => {
+	const page = within(document.body);
+	const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+	await within(dialog).findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+	// Wait out the dialog's fade-in.
+	await waitFor(() =>
+		expect(
+			within(dialog).getByRole('heading', {
+				name: i18n.t('groupChat.info.headline')
+			})
+		).toBeVisible()
+	);
+	const close = within(dialog).getByRole('button', {
+		name: i18n.t('app.close')
+	});
+	await expect(close).toBeVisible();
+	await userEvent.click(close);
+	await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
+	await expect(page.getByText('Chat')).toBeVisible();
+};
+
+export const Dialog1366: Story = {
+	name: 'Dialog · 1366 opens on top, ✕ closes',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: closesWithTheCrossButton
+};
+
+export const Dialog1920: Story = {
+	name: 'Dialog · 1920 Escape closes',
+	globals: desktop1920Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: async () => {
+		const page = within(document.body);
+		const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+		await within(dialog).findByText(
+			'ruhiges Yak Kim',
+			{},
+			{ timeout: 5000 }
+		);
+		await waitFor(() =>
+			expect(
+				within(dialog).getByRole('button', {
+					name: i18n.t('app.close')
+				})
+			).toBeVisible()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
+	}
+};
+
+export const Dialog390: Story = {
+	name: 'Dialog · 390 full screen, ✕ closes',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog />,
+	play: closesWithTheCrossButton
+};
+
+export const Dialog375: Story = {
+	name: 'Dialog · 375 full screen, ✕ closes',
+	globals: phone375Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog />,
+	play: closesWithTheCrossButton
+};
+
+/** The QR code is a legacy overlay: the dialog steps aside and comes back. */
+export const DialogQrCode: Story = {
+	name: 'Dialog · QR code shows above, dialog returns unchanged',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: async () => {
+		const page = within(document.body);
+		const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+		await within(dialog).findByText(
+			'ruhiges Yak Kim',
+			{},
+			{ timeout: 5000 }
+		);
+		// The Chat-Info must survive the overlay: same node, same scroll.
+		const content = within(dialog).getByTestId('group-chat-info-m3');
+		const body = dialog.querySelector<HTMLElement>('.m3Dialog__body')!;
+		body.scrollTop = 80;
+		const scrolled = body.scrollTop;
+		// Otherwise the equality check below would prove nothing.
+		await expect(scrolled).toBeGreaterThan(0);
+		await userEvent.click(
+			within(dialog).getByRole('button', {
+				name: i18n.t('qrCode.link.text')
+			})
+		);
+		await waitFor(() =>
+			expect(
+				page.getByAltText(i18n.t('qrCode.overlay.image.alt'))
+			).toBeVisible()
+		);
+		await waitFor(() =>
+			expect(page.getByTestId('group-chat-info-dialog')).not.toBeVisible()
+		);
+		// The legacy overlay's ✕ is an SVG with a label, not a button.
+		const overlay = within(document.getElementById('overlay')!);
+		await userEvent.click(overlay.getByLabelText(i18n.t('app.close')));
+		await waitFor(() =>
+			expect(page.getByTestId('group-chat-info-dialog')).toBeVisible()
+		);
+		await expect(content.isConnected).toBe(true);
+		await expect(
+			within(document.body).getByTestId('group-chat-info-m3')
+		).toBe(content);
+		await expect(body.scrollTop).toBe(scrolled);
+	}
+};
+
+/** Opens on top and waits until the dialog has faded in (and its content, if asked). */
+const findOpenDialog = async ({ content = true } = {}) => {
+	const page = within(document.body);
+	const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+	await waitFor(() =>
+		expect(
+			within(dialog).getByRole('heading', {
+				name: i18n.t('groupChat.info.headline')
+			})
+		).toBeVisible()
+	);
+	if (content) {
+		// Advice seekers wait for the ban check first.
+		await within(dialog).findByTestId(
+			'group-chat-info-m3',
+			{},
+			{ timeout: 5000 }
+		);
+	}
+	return within(dialog);
+};
+
+/** Not joined yet (#1760): date, start, duration, repetition and agency; no topic before consent, no members, no invite ways. */
+const showsScheduleOnly: Story['play'] = async () => {
+	const dialog = await findOpenDialog();
+	for (const key of [
+		'groupChat.info.settings.startDate',
+		'groupChat.info.settings.startTime',
+		'groupChat.info.settings.duration',
+		'groupChat.info.settings.repetition.label',
+		'groupChat.info.settings.agency'
+	]) {
+		await expect(dialog.getByText(i18n.t(key))).toBeVisible();
+	}
+	await expect(dialog.getByText('Beratungsstelle Mitte')).toBeVisible();
+	// No privacy consent on record in this fixture: no topic, as in the waiting room.
+	await expect(
+		dialog.queryByText(i18n.t('groupChat.info.settings.topic'))
+	).toBeNull();
+	await expect(
+		dialog.queryByText(i18n.t('groupChat.info.subscribers.headline'))
+	).toBeNull();
+	for (const member of MEMBERS) {
+		await expect(dialog.queryByText(member.name)).toBeNull();
+	}
+	await expect(
+		dialog.queryByRole('button', { name: i18n.t('qrCode.link.text') })
+	).toBeNull();
+	await expect(
+		dialog.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+	).toBeNull();
+	await expect(
+		dialog.queryByRole('button', { name: /Bearbeiten/ })
+	).toBeNull();
+};
+
+export const DialogAskerNotJoined1366: Story = {
+	name: 'Dialog · advice seeker not joined: schedule only (1366)',
+	globals: desktop1366Globals,
+	render: () => (
+		<WiredChatInfo layout="desktop" dialog asAsker joined={false} />
+	),
+	play: showsScheduleOnly
+};
+
+export const DialogAskerNotJoined390: Story = {
+	name: 'Dialog · advice seeker not joined: schedule only (390)',
+	globals: phone390Globals,
+	render: () => (
+		<WiredChatInfo layout="mobile" dialog asAsker joined={false} />
+	),
+	play: showsScheduleOnly
+};
+
+/** A member sees the schedule and the member list, still no invite ways. */
+const showsFullInfoForMember: Story['play'] = async () => {
+	const dialog = await findOpenDialog();
+	await dialog.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+	await expect(
+		dialog.getByText(i18n.t('groupChat.info.subscribers.headline'))
+	).toBeVisible();
+	await expect(
+		dialog.getByText(i18n.t('groupChat.info.settings.startDate'))
+	).toBeVisible();
+	await expect(dialog.getByText('Beratungsstelle Mitte')).toBeVisible();
+	await expect(
+		dialog.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+	).toBeNull();
+};
+
+export const DialogAskerJoined1366: Story = {
+	name: 'Dialog · advice seeker joined: full info (1366)',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog asAsker />,
+	play: showsFullInfoForMember
+};
+
+export const DialogAskerJoined390: Story = {
+	name: 'Dialog · advice seeker joined: full info (390)',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog asAsker />,
+	play: showsFullInfoForMember
+};
+
+/** A banned advice seeker who opens the Chat-Info URL lands back in the chat. */
+export const DialogAskerBannedByUrl: Story = {
+	name: 'Dialog · banned advice seeker by URL: back to the chat',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog asAsker banned />,
+	play: async ({ canvas }) => {
+		// The redirect leaves the Chat-Info route for the chat route.
+		await canvas.findByTestId('chat-route', {}, { timeout: 5000 });
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		await expect(
+			within(document.body).queryByText(
+				i18n.t('groupChat.info.settings.startDate')
+			)
+		).toBeNull();
+	}
+};
+
+const CHAT_PATH = `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}`;
+const noStopRequest = { current: false };
+
+/** The real header ⋮ menu above the chat, with the Chat-Info dialog route. */
+const WiredChatWithMenu = () => {
+	const listItem = React.useMemo(() => buildListItem(), []);
+	useBackendMocks(listItem);
+	return (
+		<TenantContext.Provider
+			value={
+				{
+					tenant: {
+						id: 1,
+						settings: { featureGroupChatV2Enabled: true }
+					},
+					setTenant: () => undefined
+				} as any
+			}
+		>
+			<GroupChatStage listItem={listItem} layout="desktop">
+				<ModalProvider>
+					<GroupChatHeader
+						hasUserInitiatedStopOrLeaveRequest={noStopRequest}
+						isJoinGroupChatView={false}
+						bannedUsers={[]}
+					/>
+					<Routes>
+						<Route
+							path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
+							element={<GroupChatInfo dialog />}
+						/>
+						<Route
+							path="*"
+							element={<p data-testid="chat-route">Chat</p>}
+						/>
+					</Routes>
+					<BodyOverlayHost />
+				</ModalProvider>
+			</GroupChatStage>
+		</TenantContext.Provider>
+	);
+};
+
+/** Opened from the real ⋮ entry: focus moves into the dialog and back to ⋮. */
+export const DialogFocusFromMenu: Story = {
+	name: 'Dialog · opened from the ⋮ menu, focus returns to ⋮',
+	globals: desktop1366Globals,
+	parameters: { router: { initialPath: CHAT_PATH } },
+	render: () => <WiredChatWithMenu />,
+	play: async ({ canvasElement }) => {
+		const page = within(document.body);
+		await within(canvasElement).findByTestId(
+			'chat-route',
+			{},
+			{ timeout: 5000 }
+		);
+		const trigger = within(canvasElement)
+			.getAllByRole('button', { name: 'Weitere Funktionen' })
+			.find((button) => button.getClientRects().length > 0)!;
+		trigger.focus();
+		await userEvent.keyboard('{Enter}');
+		const menu = within(document.getElementById('flyout')!);
+		const entry = await menu.findByRole('link', {
+			name: /Informationen & Einstellungen/
+		});
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
+		const dialog = await findOpenDialog();
+		const surface = page.getByTestId('group-chat-info-dialog');
+		// MUI focuses the modal container; the next Tab lands on the sheet.
+		const modal = surface.closest<HTMLElement>('.MuiDialog-root')!;
+		await waitFor(() =>
+			expect(modal.contains(document.activeElement)).toBe(true)
+		);
+		await userEvent.tab();
+		await expect(surface.contains(document.activeElement)).toBe(true);
+		await userEvent.click(
+			dialog.getByRole('button', { name: i18n.t('app.close') })
+		);
+		await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(trigger));
+	}
+};
+
+/** The ban check is still running: a loading state, no Chat-Info content. */
+export const DialogAskerBanCheckPending: Story = {
+	name: 'Dialog · advice seeker, ban check running: loading only',
+	globals: desktop1366Globals,
+	render: () => (
+		<WiredChatInfo layout="desktop" dialog asAsker chatInfo="hang" />
+	),
+	play: async () => {
+		const dialog = await findOpenDialog({ content: false });
+		await waitFor(() =>
+			expect(document.querySelector('.loadingIndicator')).not.toBeNull()
+		);
+		await expect(
+			dialog.queryByText(i18n.t('groupChat.info.settings.startDate'))
+		).toBeNull();
+		await expect(dialog.queryByText('ruhiges Yak Kim')).toBeNull();
+	}
+};
+
+/** The ban check failed: the Chat-Info stays closed until a retry succeeds. */
+export const DialogAskerBanCheckFailed: Story = {
+	name: 'Dialog · advice seeker, ban check failed: error, no Chat-Info',
+	globals: desktop1366Globals,
+	render: () => (
+		<WiredChatInfo layout="desktop" dialog asAsker chatInfo="fail" />
+	),
+	play: async () => {
+		const dialog = await findOpenDialog({ content: false });
+		await expect(
+			await dialog.findByRole('alert', {}, { timeout: 5000 })
+		).toHaveTextContent(i18n.t('groupChat.loadError.info'));
+		await expect(
+			dialog.getByRole('button', {
+				name: i18n.t('groupChat.loadError.retry')
+			})
+		).toBeVisible();
+		await expect(
+			dialog.queryByText(i18n.t('groupChat.info.settings.startDate'))
+		).toBeNull();
+		await expect(dialog.queryByText('ruhiges Yak Kim')).toBeNull();
 	}
 };

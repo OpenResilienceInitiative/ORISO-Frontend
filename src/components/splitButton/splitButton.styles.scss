@@ -60,6 +60,7 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 	}
 
 	&__main {
+		min-width: 0;
 		border-radius: 28px 4px 4px 28px;
 		font-size: 16px;
 		font-weight: 500;
@@ -226,5 +227,53 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 	.splitButton__chevron {
 		width: 16px;
 		height: 16px;
+	}
+}
+
+/*
+ * Compact (FE#1725): 40px M3 small split button for the case-handover card.
+ * 20/4 silhouette, label-large 14/500.
+ */
+.splitButton--compact {
+	.splitButton__segment {
+		height: 40px;
+	}
+
+	.splitButton__main {
+		border-radius: 20px 4px 4px 20px;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.1px;
+		padding: 0 12px 0 16px;
+		gap: 8px;
+	}
+
+	.splitButton__trailing {
+		border-radius: 4px 20px 20px 4px;
+		width: 48px;
+	}
+
+	.splitButton__icon svg,
+	.splitButton__chevron {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+/*
+ * Selection main segment (FE#1725): the shared M3 checkbox fills the
+ * segment (`fill`), so the whole segment toggles it; its 40px target stands
+ * in for the left padding. Colours come from the checkbox's own `tone`.
+ * Two classes outrank the compact padding without `!important`.
+ */
+.splitButton__main.splitButton__main--selection {
+	padding: 0 16px 0 0;
+
+	// Focus ring around the whole segment, like a button segment.
+	&:has(:focus-visible) {
+		outline: 3px solid $sb-primary;
+		outline-offset: 2px;
+		z-index: 1;
 	}
 }
