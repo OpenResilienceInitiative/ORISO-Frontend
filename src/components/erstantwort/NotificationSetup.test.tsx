@@ -349,6 +349,34 @@ it('explains a blocked browser permission up front, without asking the browser a
 	).toBeTruthy();
 	expect(request).not.toHaveBeenCalled();
 });
+it.each([
+	['the window regains focus', () => window.dispatchEvent(new Event('focus'))],
+	[
+		'the tab becomes visible again',
+		() => document.dispatchEvent(new Event('visibilitychange'))
+	]
+])('re-reads a lifted browser block when %s', async (_name, trigger) => {
+	Object.defineProperty(Notification, 'permission', {
+		value: 'denied',
+		configurable: true
+	});
+	setup();
+	expect(
+		screen.getByText('erstantwort.notificationChoice.browserBlockedHelp')
+	).toBeTruthy();
+	// The person lifts the block in the browser settings and comes back.
+	Object.defineProperty(Notification, 'permission', {
+		value: 'default',
+		configurable: true
+	});
+	act(() => trigger());
+	await waitFor(() =>
+		expect(
+			screen.queryByText('erstantwort.notificationChoice.browserBlockedHelp')
+		).toBeNull()
+	);
+});
+
 it('swaps the generic denial for the unblock instructions when the browser stays blocked', async () => {
 	Object.defineProperty(Notification, 'permission', {
 		value: 'denied',
