@@ -6,6 +6,11 @@ show the active chat above full-width navigation on narrow screens. Preserve
 existing story IDs and link the canonical consultant, advice-seeker, mobile and
 short-rail variants.
 
+Catalogue the existing required password/second-factor gate under
+`Components/Dialog/Account setup`, retain its stable links and link the separate
+post-registration credentials message from Docs. Reuse the actual frontend
+component; do not present the required setup gate as the optional popup.
+
 The complete icon/legacy inventory is a report, not a glyph redesign. The
 user clarified a separate optional post-registration password-setup dialog.
 That system-message/toggle/popup integration remains open, with a concrete

@@ -43,3 +43,27 @@ full Storybook-suite claim is made. Independent Docs rendering preserved normal
 German, English and Russian menu labels rendered; focused logout was partially
 clipped until the horizontal strip was scrolled. That existing production
 accessibility issue remains visible and was not changed by this story cleanup.
+
+## Password catalogue follow-up
+
+The existing frontend gate is catalogued under `Components/Dialog/Account setup`.
+All nine story IDs and its Docs ID retain the `organisms-accountsetupgate--`
+prefix. Index readback confirms ten entries and zero retired
+`Organisms/RequestPasswordReset` entries. The optional credentials-message link
+uses its explicit stable ID `components-chat-erstantwort--save-credentials`.
+
+The complete AccountSetupGate browser file was run against the original metadata
+and the candidate. Both have nine failures, with the same incomplete accessibility
+audits (`aria-hidden-focus`, `color-contrast`, `aria-allowed-attr`) and unmocked
+two-factor PUT requests. No audit or fixture policy was weakened. The actual
+component and all play functions are unchanged; this low-impact reclassification
+does not require a new behavioral test. Existing empty-form rendering confirms
+three password fields and a disabled save action.
+
+Follow-up repository checks rerun on Node24.15.0:838unit files/14,523tests pass
+(1file/8tests skipped), script/style lint, app build and Storybook typecheck pass.
+The application build and deployment-host guard pass with existing warnings.
+Local browser readback at1440x900,820x1180 and390x844 confirms the new catalogue
+title, three real password fields, disabled empty-form save and stable IDs.
+These are local-only results; deployed Storybook keeps its previous category
+until human merge and deployment. No password-setting behavior is changed.

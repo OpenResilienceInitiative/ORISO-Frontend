@@ -32,3 +32,19 @@
   story IDs and linked canonical variants present.
 
 Full icon and unused-story inventory is in `icon-and-legacy-audit.md`.
+
+### Follow-up — find the existing password module in the component library
+
+- The user approved the interactive proposal but asked to reuse the existing
+  frontend module and retire the old Storybook reference.
+- Hosted Dev confirms the existing AccountSetupGate renders PasswordReset's
+  dialog variant with current/new/repeat password and a required second-factor
+  step. The optional SaveCredentialsCard currently opens security settings.
+- Move the real gate into `Components/Dialog/Account setup`, preserving all
+  `organisms-accountsetupgate--*` IDs and nine existing examples. Its Docs link
+  the canonical optional credentials-message story and explain their different
+  runtime contracts. No authentication behavior changes.
+- The optional two-field popup remains unmatched after source/local/history
+  archaeology. This reclassification does not claim that integration is done.
+- All nine gate stories fail the same accessibility/fixture gates both before
+  and after this metadata change. Keep those failures visible.

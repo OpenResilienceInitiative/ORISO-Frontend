@@ -67,7 +67,9 @@ const saveButton = (host: HTMLElement) =>
 	});
 
 const meta = {
-	title: 'Organisms/AccountSetupGate',
+	title: 'Components/Dialog/Account setup',
+	// Preserve existing links and pinned verification IDs while moving the catalog entry.
+	id: 'organisms-accountsetupgate',
 	component: AccountSetupGate,
 	tags: ['autodocs'],
 	args: { onLogout: fn() },
@@ -76,7 +78,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'What an administrator-provisioned account sees instead of the app: first its own password, then a second factor. Both steps are the same dialog, and neither can be dismissed — logging out is the only other way on.'
+					'Existing frontend account-setup dialog: first an administrator-provisioned account chooses its own password, then sets up a second factor. The password step reuses PasswordReset in its dialog variant, including current password, new password and confirmation. Both steps are required; logging out is the other available action.\n\nThe optional post-registration access prompt is documented separately under [Chat / System messages / First response and FAQ / Save credentials](./?path=/story/components-chat-erstantwort--save-credentials). Its existing button currently opens security settings; this required setup gate must not be used as a reference for a dismissible two-field password prompt.'
 			}
 		}
 	}
