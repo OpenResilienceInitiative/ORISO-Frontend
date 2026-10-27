@@ -80,7 +80,6 @@ import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 import { HistoryAskCard } from '../historyRequest/HistoryAskCard';
 import { useRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
 import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprovals';
-import { useHistoryRequests } from '../historyRequest/useHistoryRequests';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
@@ -348,9 +347,6 @@ export const SessionStream = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const hasHistoryRequests =
-		useHistoryRequests(resolvedChatSession.matrixRoomId).requests.length >
-			0 && isConsultant;
 	const recoveryStatus = useRecoveryRuntimeStatus(
 		matrixClientService?.getClient()?.getUserId() ?? ''
 	);
@@ -1637,7 +1633,7 @@ export const SessionStream = ({
 					</>
 				}
 				mainTimelineSupplementTime={
-					displayedConsent && !hasHistoryRequests
+					displayedConsent
 						? new Date(displayedConsent.createdAt).getTime()
 						: undefined
 				}

@@ -184,7 +184,8 @@ export class MatrixRoomHistoryKeyTransfer {
 		for (const [id, request] of this.pendingApprovals) {
 			if (request.receivedAt < limit && !this.approvalsInFlight.has(id)) {
 				this.pendingApprovals.delete(id);
-				this.announceResolved(request, 'dropped');
+				// Reads happen during render: announce after it, not inside it.
+				queueMicrotask(() => this.announceResolved(request, 'dropped'));
 			}
 		}
 	}
