@@ -11,7 +11,6 @@ import ErrorIcon from '@mui/icons-material/Error';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { OrisoTextField } from './OrisoTextField';
 import { orisoInputColors } from './orisoInputDesign';
 
@@ -21,11 +20,6 @@ const meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'centered',
-		// #1338: the disabled supporting text keeps its designed grey (#9c9a9a
-		// on #fcf9f9, 2.67:1). Only it leaves the colour-contrast audit.
-		a11y: a11yExcept({
-			'color-contrast': ['.MuiFormHelperText-root.Mui-disabled']
-		}),
 		docs: {
 			description: {
 				component:

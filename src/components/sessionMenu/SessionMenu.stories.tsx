@@ -12,7 +12,6 @@ import {
 } from '../chatStage/__storybook__/chatStageFixtures';
 import { phone390Globals } from '../message/messageStoryShell';
 import { SupervisionPanelContext } from '../supervisionPanel/SupervisionPanelContext';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import './sessionMenu.styles.scss';
 
 const hasUserInitiatedStopOrLeaveRequest = {
@@ -157,14 +156,6 @@ const openTheKebab = async (canvasElement: HTMLElement) => {
 	return document.querySelector<HTMLElement>('.sessionMenu__content--open')!;
 };
 
-// #1338 designed disabled colour, #747878 on white (4.46:1): the greyed-out
-// "Rat einholen" (ask a colleague for advice) row.
-const disabledAdviceRow = a11yExcept({
-	'color-contrast': [
-		'[data-cy="session-menu-request-advice"] .chatMenuDropdown__itemTitle--disabled'
-	]
-});
-
 const withGroupStage = (Story: React.ComponentType) => (
 	<ChatStageProviders activeSession={{ ...stageSession(), isGroup: true }}>
 		{stageFrame(Story)}
@@ -192,8 +183,7 @@ export const CallsInTheHeader: Story = {
 	name: 'Calls in the header row (desktop, D8 off)',
 	tags: ['autodocs', '!needs-data'],
 	parameters: {
-		router: { initialPath: stageRoute },
-		a11y: disabledAdviceRow
+		router: { initialPath: stageRoute }
 	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
@@ -235,8 +225,7 @@ export const CallsInTheKebabMenu: Story = {
 	tags: ['autodocs', '!needs-data'],
 	globals: phone390Globals,
 	parameters: {
-		router: { initialPath: stageRoute },
-		a11y: disabledAdviceRow
+		router: { initialPath: stageRoute }
 	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
@@ -344,8 +333,7 @@ export const SupervisionUsesCatalogIcon: Story = {
 	name: 'Supervision — catalog icon',
 	tags: ['autodocs', '!needs-data'],
 	parameters: {
-		router: { initialPath: stageRoute },
-		a11y: disabledAdviceRow
+		router: { initialPath: stageRoute }
 	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,

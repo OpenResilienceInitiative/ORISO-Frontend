@@ -1,5 +1,4 @@
 import { Meta, StoryObj } from '@storybook/react';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { ProgressBar } from './ProgressBar';
 
 const meta = {
@@ -44,12 +43,6 @@ export const WithPercent: Story = {
 		max: 100,
 		current: 75,
 		showPercent: true
-	},
-	parameters: {
-		// #1338: the percentage keeps its designed body colour over the bar
-		// (#100001 on the red tenant's #a5000a, 2.54:1). Only it leaves the
-		// colour-contrast audit.
-		a11y: a11yExcept({ 'color-contrast': ['.progressbar__percent'] })
 	}
 };
 

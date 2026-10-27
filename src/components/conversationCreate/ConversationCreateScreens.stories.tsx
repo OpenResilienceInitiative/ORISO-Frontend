@@ -27,7 +27,6 @@ import {
 	InternalChatCreateCard,
 	InternalChatDraft
 } from './internal/InternalChatCreateCard';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import './conversationCreate.styles.scss';
 import '../groupChat/createChat.styles.scss';
 
@@ -47,14 +46,6 @@ const meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
-		// #1338 designed colours, #e6effb on #656e79 (4.45:1): the selected
-		// language tab and the rule chip being edited.
-		a11y: a11yExcept({
-			'color-contrast': [
-				'.createChat__languageChip--selected [role="tab"]',
-				'.ruleChipsEditor__chip--editing .ruleChipsEditor__chipLabel'
-			]
-		}),
 		docs: {
 			description: {
 				component:

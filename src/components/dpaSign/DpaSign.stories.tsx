@@ -2,7 +2,6 @@ import { expect, userEvent, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { DpaSign } from './DpaSign';
 
 /**
@@ -101,11 +100,6 @@ const meta = {
 	component: DpaSign,
 	parameters: {
 		layout: 'fullscreen',
-		// #1338: the active chapter chip keeps its designed colours (#e6effb on
-		// #656e79, 4.45:1). Only its label leaves the colour-contrast audit.
-		a11y: a11yExcept({
-			'color-contrast': ['.legalAnchorChips__chip--active > span']
-		}),
 		router: { initialPath: '/dpa-sign/story-token' }
 	},
 	decorators: [withStubbedApi],

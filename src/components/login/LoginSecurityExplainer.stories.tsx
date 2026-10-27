@@ -9,11 +9,9 @@ const meta: Meta<typeof LoginSecurityExplainer> = {
 	title: 'Login/Security explainer',
 	component: LoginSecurityExplainer,
 	parameters: {
-		/* Designed colours (#1338): the protocol line is #747878 on white
-		   (4.46:1), and its "Learn more" link is #a5000a, set apart from that
-		   grey by colour alone (1.8:1). */
+		/* Designed colour (#1338): the "Learn more" link is #a5000a, set apart
+		   from the grey protocol line by colour alone (1.8:1). */
 		a11y: a11yExcept({
-			'color-contrast': ['.loginSecurity__protocol'],
 			'link-in-text-block': ['.loginSecurity__protocol a']
 		}),
 		docs: {

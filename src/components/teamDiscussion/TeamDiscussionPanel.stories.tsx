@@ -10,7 +10,6 @@ import {
 	TeamDiscussionPanelViewProps
 } from './TeamDiscussionPanel';
 import { TeamDiscussionMessage } from './teamDiscussionHelpers';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import './teamDiscussion.styles.scss';
 
 const messages: TeamDiscussionMessage[] = [
@@ -72,21 +71,7 @@ const Interactive = (props: Partial<TeamDiscussionPanelViewProps>) => {
 
 const meta: Meta<typeof TeamDiscussionPanelView> = {
 	title: 'Components/Session/TeamDiscussionPanel',
-	component: TeamDiscussionPanelView,
-	parameters: {
-		// #1338: these keep their designed colours: the post count (#e6effb on
-		// #656e79, 4.45:1) and the own post on the tenant's primary container
-		// (#1b1b1c on #cc1e1c, 3.08:1; the time #444748, 1.68:1). Only they
-		// leave the colour-contrast audit.
-		a11y: a11yExcept({
-			'color-contrast': [
-				'.teamDiscussion__count',
-				'.teamDiscussion__message--own > .teamDiscussion__messageSender',
-				'.teamDiscussion__message--own > .teamDiscussion__messageBody',
-				'.teamDiscussion__message--own > .teamDiscussion__messageTime'
-			]
-		})
-	}
+	component: TeamDiscussionPanelView
 };
 
 export default meta;

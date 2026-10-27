@@ -5,7 +5,6 @@ import {
 	phone390Globals
 } from '../../message/messageStoryShell';
 import { CircleSettingsStage, COLLEAGUES } from './circleSettingsStage';
-import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 
 /**
  * #1499 items 3 and 4 on the wired stage: the real `CircleSettingsView`
@@ -25,15 +24,7 @@ const meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
-		router: { initialPath: '/sessions/consultant/sessionView' },
-		// #1338 designed colours, #e6effb on #656e79 (4.45:1): the selected
-		// language tab and the rule chip being edited.
-		a11y: a11yExcept({
-			'color-contrast': [
-				'.createChat__languageChip--selected [role="tab"]',
-				'.ruleChipsEditor__chip--editing .ruleChipsEditor__chipLabel'
-			]
-		})
+		router: { initialPath: '/sessions/consultant/sessionView' }
 	},
 	args: {
 		layout: 'desktop',

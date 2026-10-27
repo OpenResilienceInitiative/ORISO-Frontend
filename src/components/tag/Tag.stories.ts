@@ -1,5 +1,4 @@
 import { Meta, StoryObj } from '@storybook/react';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { Tag } from './Tag';
 
 const meta = {
@@ -37,11 +36,6 @@ export const Red: Story = {
 	args: {
 		text: 'Error',
 		color: 'red'
-	},
-	parameters: {
-		// #1338: the red tag keeps its designed colours (white on #ff0000,
-		// 3.99:1). Only it leaves the colour-contrast audit.
-		a11y: a11yExcept({ 'color-contrast': ['.tag--red'] })
 	}
 };
 

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { NotificationsContext } from '../../globalState';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import {
@@ -50,12 +49,7 @@ const meta = {
 	title: 'Video call/Incoming call',
 	component: IncomingVideoCall,
 	args: call,
-	parameters: {
-		layout: 'fullscreen',
-		// #1338: the caller's initials keep their designed colours (#a9a5a9 on
-		// #524b52, 3.47:1). Only they leave the colour-contrast audit.
-		a11y: a11yExcept({ 'color-contrast': ['.incomingVideoCall__user'] })
-	},
+	parameters: { layout: 'fullscreen' },
 	decorators: [
 		(Story) => (
 			<NotificationsContext.Provider

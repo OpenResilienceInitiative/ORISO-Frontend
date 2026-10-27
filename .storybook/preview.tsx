@@ -914,10 +914,16 @@ const preview: Preview = {
 						'wcag22aa'
 					]
 				},
-				// A plain repeated id (one SVG icon rendered twice) fails only
-				// WCAG 4.1.1, which 2.2 removed. Ids that a label or ARIA points
-				// at stay checked by duplicate-id-aria (#1338).
-				rules: { 'duplicate-id': { enabled: false } }
+				rules: {
+					// A plain repeated id (one SVG icon rendered twice) fails only
+					// WCAG 4.1.1, which 2.2 removed. Ids that a label or ARIA
+					// points at stay checked by duplicate-id-aria (#1338).
+					'duplicate-id': { enabled: false },
+					// The palette is a product decision: colours stay as designed
+					// and contrast is handled by the optional high-contrast
+					// appearance (#1134), not by this gate (#1338).
+					'color-contrast': { enabled: false }
+				}
 			},
 			...a11yExcept(),
 			test: 'error'

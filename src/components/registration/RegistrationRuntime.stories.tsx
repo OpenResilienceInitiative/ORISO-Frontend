@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Registration } from './Registration';
 import { AgencySpecificContext, RegistrationProvider } from '../../globalState';
@@ -100,14 +99,6 @@ const meta = {
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'light' },
-		// #1338: the footer hint keeps its designed grey (#747878 on white,
-		// 4.46:1). Only that text leaves the colour-contrast audit; every other
-		// rule and element is still checked.
-		a11y: a11yExcept({
-			'color-contrast': [
-				'[data-cy="registration-footer-empty-selection"]'
-			]
-		}),
 		router: {
 			initialPath: '/registration/topic-selection'
 		},

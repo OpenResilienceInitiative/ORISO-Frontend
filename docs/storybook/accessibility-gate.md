@@ -18,7 +18,13 @@ violations remain failures; do not switch the global policy to `todo` or `off`
 to obtain a green run. axe `incomplete` results (it could not measure, e.g.
 text over the stage gradient and lamp-map canvas, or rows clipped by a scroll
 area) do not fail a story: they stay in the test evidence and in the Storybook
-accessibility panel for a manual check (#1338). The runner stops at the first failing shard. To inventory
+accessibility panel for a manual check (#1338). Two rules are off for every
+story: `color-contrast` (the palette is a product decision; contrast is handled
+by the optional high-contrast appearance, #1134) and plain `duplicate-id`
+(WCAG 4.1.1, removed in 2.2; `duplicate-id-aria` still runs). Elements kept as
+designed for other rules are listed, with the reason, in
+`.storybook/a11yExceptions.ts`; a story adds its own through `a11yExcept`.
+The runner stops at the first failing shard. To inventory
 all failures during triage, run each of its four shards explicitly:
 
 ```sh

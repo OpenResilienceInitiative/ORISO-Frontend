@@ -7,7 +7,7 @@
  * own `a11y.config.rules` would silently drop these. A story adds its own
  * exceptions through `a11yExcept`, which always carries the shared ones:
  *
- *   parameters: { a11y: a11yExcept({ 'color-contrast': ['.chip__date'] }) }
+ *   parameters: { a11y: a11yExcept({ 'target-size': ['.chip__remove'] }) }
  */
 const designed: Record<string, string[]> = {
 	// Each language chip holds its remove button next to the tab, inside the

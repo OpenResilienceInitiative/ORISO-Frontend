@@ -270,14 +270,7 @@ export const MultiSelectManySelected: Story = {
 export const MultiSelectDisabled: Story = {
 	render: () => (
 		<SearchableLanguagesStory initialValue={['de', 'en']} disabled />
-	),
-	parameters: {
-		// #1338: the disabled supporting text keeps its designed grey (#9c9a9a
-		// on #fcf9f9, 2.67:1). Only it leaves the colour-contrast audit.
-		a11y: a11yExcept({
-			'color-contrast': ['.MuiFormHelperText-root.Mui-disabled']
-		})
-	}
+	)
 };
 
 export const StateMatrix: Story = {

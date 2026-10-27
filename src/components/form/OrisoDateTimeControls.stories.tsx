@@ -2,7 +2,6 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import dayjs, { Dayjs } from 'dayjs';
 import { Box, Stack, Typography } from '@mui/material';
-import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { OrisoCalendar } from './OrisoCalendar';
 import { OrisoDatePicker } from './OrisoDatePicker';
 import { OrisoTimePicker } from './OrisoTimePicker';
@@ -202,12 +201,5 @@ export const TimePicker24h: Story = {
 };
 
 export const StateMatrix: Story = {
-	render: () => <StateMatrixStory />,
-	parameters: {
-		// #1338: the disabled supporting text keeps its designed grey (#9c9a9a
-		// on #fcf9f9, 2.67:1). Only it leaves the colour-contrast audit.
-		a11y: a11yExcept({
-			'color-contrast': ['.MuiFormHelperText-root.Mui-disabled']
-		})
-	}
+	render: () => <StateMatrixStory />
 };
