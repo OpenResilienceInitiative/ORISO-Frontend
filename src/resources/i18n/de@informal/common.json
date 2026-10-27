@@ -2753,5 +2753,15 @@
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
+	},
+	"directLink": {
+		"card": {
+			"headline": "Ein Link direkt zu dir",
+			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf."
+		},
+		"share": {
+			"title": "Dein Direktlink ist bereit",
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+		}
 	}
 }

@@ -6237,5 +6237,41 @@
 			"micOff": "Mikrofon aus",
 			"micMeter": "Lautstärke Ihres Mikrofons"
 		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Direktlink",
+			"subtitle": "Für Ratsuchende",
+			"headline": "Ein Link direkt zu Ihnen",
+			"text": "Wer den Link öffnet, landet ohne Umweg bei Ihnen – im Chat, im Audio- oder im Videoanruf.",
+			"topicLabel": "Thema wählen",
+			"mediumLabel": "Art des Kontakts",
+			"temporary": "Temporäres Konto",
+			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
+			"create": "Link erstellen"
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Audioanruf",
+			"video": "Videoanruf"
+		},
+		"temporary": "Temporär",
+		"copy": "Link kopieren",
+		"share": {
+			"title": "Ihr Direktlink ist bereit",
+			"description": "Teilen Sie Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit Ihnen.",
+			"copied": "Kopiert",
+			"share": "Teilen",
+			"qrAlt": "QR-Code zum Direktlink",
+			"done": "Fertig",
+			"linkLabel": "Direktlink"
+		},
+		"list": {
+			"title": "Meine Direktlinks",
+			"create": "Neuer Direktlink",
+			"empty": "Aktuell gibt es keine Direktlinks",
+			"qr": "QR-Code zeigen",
+			"active": "{{name}} aktiv"
+		}
 	}
 }

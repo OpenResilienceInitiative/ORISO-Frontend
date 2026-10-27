@@ -6162,5 +6162,41 @@
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
 		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Direct link",
+			"subtitle": "For people seeking advice",
+			"headline": "A link straight to you",
+			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
+			"topicLabel": "Choose topic",
+			"mediumLabel": "Kind of contact",
+			"temporary": "Temporary account",
+			"temporaryHint": "The account is deleted after the conversation.",
+			"create": "Create link"
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Audio call",
+			"video": "Video call"
+		},
+		"temporary": "Temporary",
+		"copy": "Copy link",
+		"share": {
+			"title": "Your direct link is ready",
+			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"copied": "Copied",
+			"share": "Share",
+			"qrAlt": "QR code for the direct link",
+			"done": "Done",
+			"linkLabel": "Direct link"
+		},
+		"list": {
+			"title": "My direct links",
+			"create": "New direct link",
+			"empty": "There are no direct links yet",
+			"qr": "Show QR code",
+			"active": "{{name}} active"
+		}
 	}
 }

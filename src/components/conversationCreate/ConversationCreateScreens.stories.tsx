@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { expect } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,11 @@ import {
 	InternalChatCreateCard,
 	InternalChatDraft
 } from './internal/InternalChatCreateCard';
+import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
+import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import { MyDirectLinks } from './directLink/MyDirectLinks';
+import { DirectLink } from './directLink/directLink';
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import './conversationCreate.styles.scss';
 import '../groupChat/createChat.styles.scss';
 
@@ -203,67 +208,237 @@ const InternaCard = ({ preset }: { preset: 'empty' | 'filled' }) => {
 	);
 };
 
+type PickerStep = 'picker' | 'directLink' | 'links';
+
+/** #1795: what the backend will hand back; story-only. */
+const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
+	id: `link-${index}`,
+	name: draft.topic,
+	topic: draft.topic,
+	medium: draft.medium,
+	temporary: draft.temporary,
+	active: true,
+	url: `https://app.oriso.org/l/${['k7m2qx', 'p4tz9a', 'w3nd8r'][index % 3]}`
+});
+
+/**
+ * Clickable: pick "Direktlink", choose topic and medium, create. The share
+ * dialog opens; "Fertig" leads to the clock entry "Meine Direktlinks",
+ * whose round button leads back here.
+ */
 const FormatPicker = ({
 	compact,
-	menuOpen = false
+	menuOpen = false,
+	initialLinks = []
 }: {
 	compact: boolean;
 	menuOpen?: boolean;
+	initialLinks?: DirectLink[];
 }) => {
 	const { t } = useTranslation();
+	const [step, setStep] = useState<PickerStep>('picker');
+	const [links, setLinks] = useState<DirectLink[]>(initialLinks);
+	const [shared, setShared] = useState<DirectLink>();
+
+	const create = (draft: DirectLinkDraft) => {
+		const link = toDirectLink(draft, links.length);
+		setLinks((current) => [link, ...current]);
+		setShared(link);
+	};
+
+	const directLinkCard = <DirectLinkCard topics={TOPICS} onCreate={create} />;
+
 	return (
 		<div className="conversationCreate">
-			<PanelHeader
-				title={t('groupChat.format.panelTitle')}
-				menuLabel={t('groupChat.format.panelMenu')}
-			/>
-			<div
-				className={`conversationCreate__picker${
-					compact ? ' conversationCreate__picker--compact' : ''
-				}`}
-			>
-				<ScreenIntro
-					title={t('groupChat.format.title')}
-					subtitle={t('groupChat.format.subtitle')}
+			{step !== 'links' && (
+				<PanelHeader
+					title={t('groupChat.format.panelTitle')}
+					menuLabel={t('groupChat.format.panelMenu')}
 				/>
+			)}
+			{step === 'links' ? (
+				<div style={{ padding: compact ? 0 : 24 }}>
+					<MyDirectLinks
+						links={links}
+						onCreate={() => setStep('picker')}
+						onToggle={(id, active) =>
+							setLinks((current) =>
+								current.map((link) =>
+									link.id === id ? { ...link, active } : link
+								)
+							)
+						}
+						onShowQr={setShared}
+						onCopy={() => undefined}
+					/>
+				</div>
+			) : step === 'directLink' ? (
+				<div className="conversationCreate__single conversationCreate__single--compact">
+					{directLinkCard}
+				</div>
+			) : (
 				<div
-					className={`conversationCreate__selection${
-						compact ? ' conversationCreate__selection--rows' : ''
+					className={`conversationCreate__picker${
+						compact ? ' conversationCreate__picker--compact' : ''
 					}`}
 				>
-					{compact ? (
-						<div className="conversationCreate__rows">
-							<CompactFormatRow
-								icon={<InternalIcon />}
-								title={t('groupChat.internal.title')}
-								subtitle={t('groupChat.internal.subtitle')}
-								image={INTERNAL_CHAT_ARTWORK}
-								onSelect={() => undefined}
-							/>
-							<CompactFormatRow
-								icon={<CircleIcon />}
-								title={t('groupChat.circle.title')}
-								subtitle={t('groupChat.circle.subtitle')}
-								image={getTopicCardArtwork(null)}
-								onSelect={() => undefined}
-							/>
-						</div>
-					) : (
-						<div className="conversationCreate__cards">
-							<CircleCard menuOpen={menuOpen} />
-							<InternaCard preset="empty" />
-						</div>
-					)}
+					<ScreenIntro
+						title={t('groupChat.format.title')}
+						subtitle={t('groupChat.format.subtitle')}
+					/>
+					<div
+						className={`conversationCreate__selection${
+							compact
+								? ' conversationCreate__selection--rows'
+								: ''
+						}`}
+					>
+						{compact ? (
+							<div className="conversationCreate__rows">
+								<CompactFormatRow
+									icon={<InternalIcon />}
+									title={t('groupChat.internal.title')}
+									subtitle={t('groupChat.internal.subtitle')}
+									image={INTERNAL_CHAT_ARTWORK}
+									onSelect={() => undefined}
+								/>
+								<CompactFormatRow
+									icon={<CircleIcon />}
+									title={t('groupChat.circle.title')}
+									subtitle={t('groupChat.circle.subtitle')}
+									image={getTopicCardArtwork(null)}
+									onSelect={() => undefined}
+								/>
+								<CompactFormatRow
+									icon={<LinkOutlinedIcon />}
+									title={t('directLink.card.title')}
+									subtitle={t('directLink.card.subtitle')}
+									image={getTopicCardArtwork(null)}
+									onSelect={() => setStep('directLink')}
+								/>
+							</div>
+						) : (
+							<div className="conversationCreate__cards">
+								<CircleCard menuOpen={menuOpen} />
+								<InternaCard preset="empty" />
+								{directLinkCard}
+							</div>
+						)}
+					</div>
 				</div>
-			</div>
-			{compact && (
+			)}
+			{compact && step !== 'links' && (
 				<BackPill
 					label={t('groupChat.format.back')}
-					onClick={() => undefined}
+					onClick={() => setStep('picker')}
+				/>
+			)}
+			{shared && (
+				<DirectLinkShareDialog
+					open
+					link={shared}
+					fullScreen={compact}
+					onCopy={() => undefined}
+					onClose={() => {
+						setShared(undefined);
+						setStep('links');
+					}}
 				/>
 			)}
 		</div>
 	);
+};
+
+const MyDirectLinksStory = ({ initial }: { initial: DirectLink[] }) => {
+	const [links, setLinks] = useState(initial);
+	const [shared, setShared] = useState<DirectLink>();
+	return (
+		<>
+			<MyDirectLinks
+				links={links}
+				onCreate={() => undefined}
+				onToggle={(id, active) =>
+					setLinks((current) =>
+						current.map((link) =>
+							link.id === id ? { ...link, active } : link
+						)
+					)
+				}
+				onShowQr={setShared}
+				onCopy={() => undefined}
+			/>
+			{shared && (
+				<DirectLinkShareDialog
+					open
+					link={shared}
+					onCopy={() => undefined}
+					onClose={() => setShared(undefined)}
+				/>
+			)}
+		</>
+	);
+};
+
+const SAMPLE_LINKS: DirectLink[] = [
+	{
+		id: 'a',
+		name: 'Flyer Schule',
+		topic: 'Schulden',
+		medium: 'VIDEO',
+		temporary: true,
+		active: true,
+		url: 'https://app.oriso.org/l/k7m2qx'
+	},
+	{
+		id: 'b',
+		name: 'Website Beratungsstelle',
+		topic: 'Sozialberatung',
+		medium: 'CHAT',
+		temporary: false,
+		active: true,
+		url: 'https://app.oriso.org/l/p4tz9a'
+	},
+	{
+		id: 'c',
+		name: 'Telefonsprechstunde',
+		topic: 'Kinder und Jugendliche',
+		medium: 'AUDIO',
+		temporary: true,
+		active: false,
+		url: 'https://app.oriso.org/l/w3nd8r'
+	}
+];
+
+/** Creates a video link end to end and lands in "Meine Direktlinks". */
+const createVideoLink = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const body = within(document.body);
+	const heading = await canvas.findByRole('heading', { name: 'Direktlink' });
+	const card = within(heading.closest('section') as HTMLElement);
+	// The split button carries the label on both of its halves.
+	await userEvent.click(
+		card.getAllByRole('button', { name: 'Thema wählen' })[0]
+	);
+	await userEvent.click(
+		await body.findByRole('option', { name: 'Schulden' })
+	);
+	await userEvent.click(card.getByRole('radio', { name: /Videoanruf/ }));
+	// Calls default to a temporary account.
+	await expect(
+		card.getByRole('switch', { name: 'Temporäres Konto' })
+	).toBeChecked();
+	await userEvent.click(card.getByRole('button', { name: 'Link erstellen' }));
+	const dialog = await body.findByTestId('direct-link-share-dialog');
+	await expect(
+		await within(dialog).findByAltText('QR-Code zum Direktlink')
+	).toBeInTheDocument();
+	await userEvent.click(
+		within(dialog).getByRole('button', { name: 'Fertig' })
+	);
+	const list = await canvas.findByRole('region', {
+		name: 'Meine Direktlinks'
+	});
+	await expect(within(list).getAllByRole('listitem')).toHaveLength(1);
 };
 
 export const FormatPickerDesktop: Story = {
@@ -295,6 +470,65 @@ export const FormatPickerMobile: Story = {
 			<FormatPicker compact />
 		</MobileShell>
 	)
+};
+
+export const DirectLinkFlowDesktop: Story = {
+	name: 'Direct link — create, share, my links (desktop)',
+	parameters: {
+		docs: {
+			description: {
+				story: '#1795, clickable. Choose a topic and a medium, create the link, share it, then land in the clock entry "Meine Direktlinks". The temporary-account switch follows the medium (chat off, calls on) and can be changed.'
+			}
+		}
+	},
+	render: () => (
+		<DesktopShell>
+			<FormatPicker compact={false} />
+		</DesktopShell>
+	),
+	play: async ({ canvasElement }) => createVideoLink(canvasElement)
+};
+
+export const DirectLinkFlowMobile: Story = {
+	name: 'Direct link — create, share, my links (phone 390)',
+	render: () => (
+		<MobileShell>
+			<FormatPicker compact />
+		</MobileShell>
+	),
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: /Direktlink/
+			})
+		);
+		await createVideoLink(canvasElement);
+	}
+};
+
+export const MyDirectLinksFilled: Story = {
+	name: 'Direct link — "Meine Direktlinks" with links',
+	render: () => (
+		<DesktopShell>
+			<div style={{ padding: 24 }}>
+				<MyDirectLinksStory initial={SAMPLE_LINKS} />
+			</div>
+		</DesktopShell>
+	)
+};
+
+export const MyDirectLinksEmpty: Story = {
+	name: 'Direct link — "Meine Direktlinks" empty',
+	render: () => (
+		<MobileShell>
+			<MyDirectLinksStory initial={[]} />
+		</MobileShell>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(
+			within(canvasElement).getByText('Aktuell gibt es keine Direktlinks')
+		).toBeVisible();
+	}
 };
 
 export const InternaCardStates: Story = {
