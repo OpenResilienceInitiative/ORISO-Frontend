@@ -16,7 +16,8 @@ const Card = ({ legacyHidden = false }: { legacyHidden?: boolean }) => (
 		// Restores the old `overflow: hidden` rule, to show the defect.
 		style={{
 			height: 320,
-			width: 480,
+			width: '100%',
+			maxWidth: 480,
 			...(legacyHidden ? { overflow: 'hidden' } : {})
 		}}
 	>
@@ -41,36 +42,46 @@ const Card = ({ legacyHidden = false }: { legacyHidden?: boolean }) => (
 const meta: Meta<typeof Card> = {
 	title: 'Components/Chat/Session card scroll lock',
 	component: Card,
-	parameters: { layout: 'centered' }
+	parameters: { layout: 'fullscreen' }
 };
 export default meta;
 type Story = StoryObj<typeof Card>;
 
+const focusKeepsCardStill: NonNullable<Story['play']> = async ({
+	canvasElement
+}) => {
+	const canvas = within(canvasElement);
+	const card = canvas.getByTestId('session-card');
+	await userEvent.tab();
+	expect(
+		canvas.getByRole('button', { name: /notification choice/i })
+	).toHaveFocus();
+	expect(card.scrollTop).toBe(0);
+	card.scrollTop = 100;
+	expect(card.scrollTop).toBe(0);
+	// The composer stays docked at the bottom edge of the card.
+	await userEvent.tab();
+	const composer = canvas.getByTestId('composer-button');
+	expect(composer).toHaveFocus();
+	const border = parseFloat(getComputedStyle(card).borderBottomWidth);
+	const wrapper = composer.closest('.messageSubmit__wrapper')!;
+	expect(
+		Math.abs(
+			card.getBoundingClientRect().bottom -
+				wrapper.getBoundingClientRect().bottom -
+				border
+		)
+	).toBeLessThanOrEqual(1);
+};
+
 export const FocusDoesNotScrollTheCard: Story = {
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		const card = canvas.getByTestId('session-card');
-		await userEvent.tab();
-		expect(
-			canvas.getByRole('button', { name: /notification choice/i })
-		).toHaveFocus();
-		expect(card.scrollTop).toBe(0);
-		card.scrollTop = 100;
-		expect(card.scrollTop).toBe(0);
-		// The composer stays docked at the bottom edge of the card.
-		await userEvent.tab();
-		const composer = canvas.getByTestId('composer-button');
-		expect(composer).toHaveFocus();
-		const border = parseFloat(getComputedStyle(card).borderBottomWidth);
-		const wrapper = composer.closest('.messageSubmit__wrapper')!;
-		expect(
-			Math.abs(
-				card.getBoundingClientRect().bottom -
-					wrapper.getBoundingClientRect().bottom -
-					border
-			)
-		).toBeLessThanOrEqual(1);
-	}
+	play: focusKeepsCardStill
+};
+
+/** Phone width, the case from #1726: the card fills the narrow screen. */
+export const FocusDoesNotScrollTheCardPhone390: Story = {
+	globals: { viewport: { value: 'phone390' } },
+	play: focusKeepsCardStill
 };
 
 /** The defect before the fix: `overflow: hidden` lets focus scroll the card. */
