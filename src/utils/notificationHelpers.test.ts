@@ -1,9 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #576 — permission gating for OS notifications: no popup without browser
  * permission + user opt-in, and the Safari-safe requestPermission wrapper.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	browserNotificationsSettings,
 	optInToBrowserNotifications,
@@ -161,6 +168,20 @@ describe('sendNotification permission gate', () => {
 		sendNotification('Hallo', { showAlways: true });
 		expect(constructed).toHaveLength(1);
 		expect(constructed[0].title).toBe('Hallo');
+	});
+
+	// The app owns the tone (soundPlayback.ts plays it focused or not, also
+	// for "Pop-up ohne Ton" = no tone): the OS must never add its own.
+	it('creates every OS pop-up silent, even when a caller asks for sound', () => {
+		stubNotification('granted');
+		saveBrowserNotificationsSettings({ enabled: true });
+		sendNotification('Hallo', { showAlways: true });
+		sendNotification('Hallo', { showAlways: true, silent: false });
+		expect(constructed).toHaveLength(2);
+		expect(constructed.map((entry) => entry.options.silent)).toEqual([
+			true,
+			true
+		]);
 	});
 
 	/*

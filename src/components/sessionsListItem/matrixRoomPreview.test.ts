@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import {
 	filterVisibleMatrixPreviewEvents,
@@ -171,6 +171,63 @@ describe('getLatestMatrixRoomPreview', () => {
 		).toEqual({ kind: 'first_response', text: null });
 	});
 
+	it.each([
+		[{ type: 'USER_LEFT_CHAT', username: 'enc.abc' }, 'user_left_chat'],
+		[
+			{
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Counsellor',
+				handover: {
+					requestId: 7,
+					clientConsent: 'OPT_IN',
+					accessType: 'CO_ACCESS'
+				}
+			},
+			'system_notification'
+		],
+		// #1844: the stored text is frozen in the session's language, so the
+		// list words these two itself.
+		[
+			{
+				type: 'INQUIRY_ACCEPTED',
+				description:
+					'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.'
+			},
+			'inquiry_accepted'
+		],
+		[
+			{
+				type: 'CASE_HANDOVER_GRANTED',
+				username: 'Counsellor',
+				description:
+					'Während der Abwesenheit übernimmt Counsellor deine Beratung.'
+			},
+			'case_handover_taken_over'
+		]
+	])(
+		'shows a system notice kind instead of its raw JSON: %j',
+		(payload, kind) => {
+			const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify(payload)}`;
+			expect(
+				getLatestMatrixRoomPreview([
+					event('m.room.message', { msgtype: 'm.text', body }, 5)
+				])
+			).toEqual({ kind, text: null });
+		}
+	);
+
+	it('keeps the text of a system notice that has one', () => {
+		const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description: 'A new counsellor took over.'
+		})}`;
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body }, 5)
+			])
+		).toEqual({ kind: 'text', text: 'A new counsellor took over.' });
+	});
+
 	it('uses an Element-style semantic preview for voice messages', () => {
 		expect(
 			getLatestMatrixRoomPreview([
@@ -337,8 +394,82 @@ describe('preview line of the list card: glyphs, not words', () => {
 			'e2ee.message.encryption.text': 'Verschlüsselte Nachricht',
 			'sessionList.preview.image': 'Bild',
 			'sessionList.preview.audio': 'Audionachricht',
-			'sessionList.preview.channel.supervision': 'Supervision:'
+			'sessionList.preview.channel.supervision': 'Supervision:',
+			'message.userLeftChat': 'User has left the chat',
+			'message.consultantLeftChat': 'Consultant has left the chat',
+			'message.youEndedChat': 'You ended the chat',
+			'message.chatEnded': 'The chat has ended',
+			'message.systemNotificationTitle': 'System notification',
+			'notifications.events.inquiryAccepted.text':
+				'The request was accepted. You can start the conversation.',
+			'caseHandover.systemMessage.tookOverTitle':
+				'New counsellor took over your case'
 		})[key] ?? `?${key}`;
+
+	it.each([
+		// [endedBy, viewer is counsellor, line] — #1838
+		['ADVICE_SEEKER', true, 'User has left the chat'],
+		['ADVICE_SEEKER', false, 'You ended the chat'],
+		['CONSULTANT', true, 'You ended the chat'],
+		['CONSULTANT', false, 'Consultant has left the chat'],
+		[null, true, 'User has left the chat'],
+		[null, false, 'The chat has ended']
+	] as const)(
+		'words the end of a chat by who ended it: %s, counsellor viewer %s',
+		(endedBy, isConsultant, text) => {
+			const left = {
+				kind: 'user_left_chat',
+				text: null,
+				endedBy
+			} as const;
+			expect(toListPreviewLine(left, translate, isConsultant)).toEqual({
+				glyphs: [],
+				text
+			});
+		}
+	);
+
+	it('reads who ended the chat from the USER_LEFT_CHAT event', () => {
+		const body = `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+			type: 'USER_LEFT_CHAT',
+			username: 'enc.abc',
+			endedBy: 'ADVICE_SEEKER'
+		})}`;
+		expect(
+			getLatestMatrixRoomPreview([
+				event('m.room.message', { msgtype: 'm.text', body }, 5)
+			])
+		).toEqual({
+			kind: 'user_left_chat',
+			text: null,
+			endedBy: 'ADVICE_SEEKER'
+		});
+	});
+
+	it('words a system notice without text as the chat does', () => {
+		expect(
+			toListPreviewLine(
+				{ kind: 'system_notification', text: null },
+				translate
+			)
+		).toEqual({ glyphs: [], text: 'System notification' });
+	});
+
+	it.each([
+		[
+			'inquiry_accepted',
+			'The request was accepted. You can start the conversation.'
+		],
+		['case_handover_taken_over', 'New counsellor took over your case']
+	] as const)(
+		'words a %s notice in the viewer language (#1844)',
+		(kind, text) => {
+			expect(toListPreviewLine({ kind, text: null }, translate)).toEqual({
+				glyphs: [],
+				text
+			});
+		}
+	);
 
 	it('shows a thread reply as the thread glyph and the bare text', () => {
 		expect(

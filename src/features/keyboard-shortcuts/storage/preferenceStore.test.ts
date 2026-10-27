@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
 	KEYBOARD_SHORTCUTS_STORAGE_KEY,
 	clearShortcutPreferences,

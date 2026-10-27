@@ -12,6 +12,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 import {
 	buildCallThemeCss,
 	CALL_THEME_ARTEFACT_PATH
@@ -27,7 +28,11 @@ const DEFAULT_SEED = '#A5000A';
  * package.) The location itself is shared with the drift test via
  * CALL_THEME_ARTEFACT_PATH.
  */
-const DEFAULT_OUT = path.join(__dirname, '..', CALL_THEME_ARTEFACT_PATH);
+const DEFAULT_OUT = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'..',
+	CALL_THEME_ARTEFACT_PATH
+);
 
 const argValue = (flag: string): string | undefined => {
 	const i = process.argv.indexOf(flag);

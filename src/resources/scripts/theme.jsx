@@ -9,6 +9,14 @@ const getCssVarValue = (name, fallback = '#000000') => {
 	return value || fallback;
 };
 
+// Text/icons drawn IN the brand colour on light surfaces: the engine's
+// legible tone, since a light Träger seed as text reads at ~1.2:1 (#1499).
+const getBrandTextColor = () =>
+	getCssVarValue(
+		'--oriso-primary-text',
+		getCssVarValue('--m3-primary', '#dc2626')
+	);
+
 // A custom theme for this app. A factory because the --m3-* custom
 // properties change at runtime when a tenant palette is injected
 // (THB-05) — the MUI theme must be re-created from the new values.
@@ -117,14 +125,17 @@ const createAppTheme = () =>
 		components: {
 			MuiLink: {
 				styleOverrides: {
-					root: {
+					root: ({ ownerState }) => ({
+						...(ownerState.color === 'primary' && {
+							color: getBrandTextColor()
+						}),
 						'&:hover': {
 							color: getCssVarValue(
 								'--m3-primary-hover',
 								'#b91c1c'
 							)
 						}
-					}
+					})
 				}
 			},
 			MuiIconButton: {
@@ -164,11 +175,12 @@ const createAppTheme = () =>
 						'backgroundColor': 'primary.main',
 						'textTransform': 'none',
 						'outline': 'none',
-						'color': getCssVarValue('--white', '#ffffff'),
+						// White on a light Träger colour is unreadable.
+						'color': getCssVarValue('--m3-on-primary', '#ffffff'),
 						'boxShadow': 'none',
 						'&:hover': {
 							boxShadow: 'none',
-							color: getCssVarValue('--white'),
+							color: getCssVarValue('--m3-on-primary', '#ffffff'),
 							backgroundColor: getCssVarValue(
 								'--m3-primary-hover',
 								'#b91c1c'
@@ -197,8 +209,14 @@ const createAppTheme = () =>
 								'--m3-primary-hover',
 								'#b91c1c'
 							),
-							color: getCssVarValue('--white')
+							color: getCssVarValue('--m3-on-primary', '#ffffff')
 						}
+					},
+					textPrimary: {
+						color: getBrandTextColor()
+					},
+					outlinedPrimary: {
+						color: getBrandTextColor()
 					}
 				}
 			},

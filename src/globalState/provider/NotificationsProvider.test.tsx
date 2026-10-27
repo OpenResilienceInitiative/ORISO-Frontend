@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { useContext } from 'react';
 import i18n from 'i18next';
 import de from '../../resources/i18n/de/common.json';
@@ -12,7 +12,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	NotificationsContext,
 	NotificationsProvider
@@ -326,6 +333,73 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 			await new Promise((resolve) => setTimeout(resolve, 500));
 			expect(signals).toHaveBeenCalledTimes(1);
 			expect(apiGetEventNotifications).toHaveBeenCalledTimes(3);
+		} finally {
+			messageEventEmitter.off(signals);
+		}
+	});
+
+	it('reconciles denied enquiry history on initial load and a new denial once without replaying notification banners', async () => {
+		const AnnouncementCount = () => (
+			<output data-testid="denied-banner-count">
+				{useContext(NotificationsContext)!.notifications.length}
+			</output>
+		);
+		const denied = (id: number, sourceSessionId: number) => ({
+			...feedItem(id, '2026-10-08T12:00:00Z'),
+			eventType: 'request.denied',
+			sourceSessionId
+		});
+		apiGetEventNotifications.mockResolvedValue({
+			items: [denied(1, 4711), denied(3, 4713), denied(4, 4714)],
+			unreadCount: 3
+		});
+		const signals = vi.fn();
+		messageEventEmitter.on(signals);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+					<AnnouncementCount />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1,3,4')
+			);
+			expect(screen.getByTestId('denied-banner-count').textContent).toBe(
+				'0'
+			);
+			// Old denials in the first feed refresh the lists once, not once each.
+			expect(signals).toHaveBeenCalledTimes(1);
+			expect(signals).toHaveBeenCalledWith({
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					denied(2, 4712),
+					denied(1, 4711),
+					denied(3, 4713),
+					denied(4, 4714)
+				],
+				unreadCount: 4
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() => expect(signals).toHaveBeenCalledTimes(3));
+			expect(signals).toHaveBeenCalledWith({
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			expect(signals).toHaveBeenLastCalledWith({
+				changedSessionId: 4712,
+				source: 'notification-feed'
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			expect(signals).toHaveBeenCalledTimes(3);
 		} finally {
 			messageEventEmitter.off(signals);
 		}

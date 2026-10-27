@@ -40,7 +40,7 @@ const textActionSx = {
 	fontSize: 14,
 	lineHeight: '20px',
 	fontWeight: 500,
-	color: 'var(--m3-primary)'
+	color: 'var(--oriso-primary-text, var(--m3-primary))'
 } as const;
 
 const initialsOf = (name: string) =>

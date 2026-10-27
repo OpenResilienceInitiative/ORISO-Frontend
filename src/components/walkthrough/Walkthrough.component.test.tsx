@@ -1,9 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
 import { Context as ResponsiveContext } from 'react-responsive';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiPatchConsultantData } from '../../api';
 import { AUTHORITIES, TenantContext, UserDataContext } from '../../globalState';
 import { frontendTours } from '../productTour/tourDefinitions';

@@ -3,7 +3,12 @@
  * Strips ORISO protocol prefixes, [[align:]] / [[hl:]] tokens, and HTML tags.
  */
 
-import { parseMessagePrefixes } from '../components/message/messageConstants';
+import {
+	isClientWordedTakeover,
+	parseMessagePrefixes,
+	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
+	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+} from '../components/message/messageConstants';
 
 const decodeNumericEntity = (
 	match: string,
@@ -94,4 +99,34 @@ export const toMessagePreviewText = (rawMessage?: string | null): string => {
 	const plain = htmlToPlainText(withoutTokens);
 
 	return plain.replace(/\s+/g, ' ').trim();
+};
+
+/**
+ * A system notification without text of its own — the advice seeker leaving
+ * (USER_LEFT_CHAT), a handover notice sent without a template — would preview
+ * as its raw JSON payload. Names the label a preview shows instead, or null
+ * when the message has readable text. Callers check the Erstantwort
+ * (FIRST_RESPONSE) first.
+ */
+export const getSystemNotificationPreview = (
+	rawMessage?: string | null
+):
+	| 'user_left_chat'
+	| 'inquiry_accepted'
+	| 'case_handover_taken_over'
+	| 'system_notification'
+	| null => {
+	const parsed = parseMessagePrefixes(rawMessage);
+	if (!parsed.isSystemNotification) return null;
+	// The chat always draws this one as a fixed line (MessageItemComponent).
+	if (parsed.systemNotificationType === SYSTEM_NOTIFICATION_USER_LEFT_CHAT)
+		return 'user_left_chat';
+	// Their stored text is frozen in the session's language (#1844).
+	if (parsed.systemNotificationType === SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED)
+		return 'inquiry_accepted';
+	if (isClientWordedTakeover(parsed)) return 'case_handover_taken_over';
+	return parsed.systemNotificationTitle ||
+		parsed.systemNotificationDescription
+		? null
+		: 'system_notification';
 };

@@ -68,7 +68,7 @@ function NativeJoinFeedback({
 				justifyContent: 'flex-end'
 			}}
 		>
-			<ComposerStoryDecorator activeSession={session}>
+			<ComposerStoryDecorator activeSession={session} emptyDraftIndex>
 				<MatrixClientContext.Provider
 					value={{
 						matrixClientService: transport,

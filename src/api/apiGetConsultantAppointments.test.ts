@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BookingsStatus } from '../utils/consultant';
 import { fetchData } from './fetchData';
 import { apiGetConsultantAppointments } from './apiGetConsultantAppointments';

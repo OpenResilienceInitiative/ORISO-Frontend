@@ -1,0 +1,63 @@
+.dpaSignedContract {
+	display: none;
+}
+
+@media print {
+	@page {
+		size: A4;
+		margin: 18mm;
+	}
+
+	body.dpaSignedContractReady {
+		background: white;
+		height: auto;
+		margin: 0;
+		overflow: visible;
+
+		> :not(.dpaSignedContract) {
+			display: none !important;
+		}
+	}
+
+	.dpaSignedContract {
+		display: block;
+		color: black;
+		background: white;
+		font-size: 11pt;
+		line-height: 1.5;
+		overflow-wrap: anywhere;
+
+		h1,
+		h2,
+		h3,
+		h4,
+		dt {
+			break-after: avoid;
+		}
+
+		p,
+		li {
+			break-inside: avoid;
+			orphans: 3;
+			widows: 3;
+		}
+
+		img,
+		table {
+			max-width: 100%;
+		}
+
+		button {
+			display: none;
+		}
+
+		dd {
+			margin: 0 0 0.75em;
+		}
+
+		&__confirmation {
+			break-inside: avoid;
+			margin-top: 2em;
+		}
+	}
+}

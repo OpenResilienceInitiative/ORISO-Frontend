@@ -1,0 +1,123 @@
+import React from 'react';
+import { expect, within, waitFor } from 'storybook/test';
+import { useTheme } from '@mui/material/styles';
+import i18n from 'i18next';
+import iconUrl, { ReactComponent as Illustration } from '../../src/resources/img/illustrations/not-found.svg';
+
+export default { title: 'VerificationControls/Temporary', parameters: { a11y: { test: 'error' } } };
+export const Healthy = {
+    render: () => <><p>Accessible provider control</p><Illustration role="img" aria-label="Real illustration" /></>,
+    play: async ({ canvasElement, reporting }) => {
+        const svg = within(canvasElement).getByRole('img', { name: 'Real illustration' });
+        await expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+        await expect(iconUrl).not.toBe('test-file-stub');
+        await expect(navigator.language).toBe('de-DE');
+        await expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('Europe/Berlin');
+        await expect([window.innerWidth, window.innerHeight]).toEqual([1280, 800]);
+        reporting.addReport({ type: 'verification-context', version: 1, status: 'passed', result: {
+            browser: navigator.userAgent, locale: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            viewport: [window.innerWidth, window.innerHeight], realSvgPaths: svg.querySelectorAll('path').length,
+        } });
+    },
+};
+export const UnnamedButton = { render: () => <button /> };
+
+export const NativePhoneViewport = {
+    globals: { viewport: { value: 'phone375' } },
+    render: () => <p>Native phone viewport</p>,
+    play: async () => { await expect([window.innerWidth, window.innerHeight]).toEqual([375, 812]); },
+};
+export const LegacyPhoneViewport = {
+    parameters: { viewport: { defaultViewport: 'phone390' } },
+    render: () => <p>Legacy phone viewport</p>,
+    play: async () => { await expect([window.innerWidth, window.innerHeight]).toEqual([390, 844]); },
+};
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
+export const ConsoleError = {
+    render: () => <p>Console failure control</p>,
+    play: async () => { console.error('controlled-console-error'); },
+};
+export const UncaughtException = {
+    render: () => <p>Window error control</p>,
+    play: async () => { setTimeout(() => { throw new Error('controlled-window-error'); }, 0); await settle(); },
+};
+export const UnhandledRejection = {
+    render: () => <p>Promise rejection control</p>,
+    play: async () => { void Promise.reject(new Error('controlled-unhandled-rejection')); await settle(); },
+};
+export const UnexpectedRequest = {
+    render: () => <p>Caught unexpected request control</p>,
+    play: async () => { await fetch('https://api.storybook.test/service/verification-unconfigured').catch(() => undefined); },
+};
+export const Fallback = { render: () => <div data-story-fallback="true">Controlled fallback</div> };
+const CrashingComponent = () => { throw new Error('controlled-boundary-error'); };
+export const RealBoundaryFallback = { render: () => <CrashingComponent /> };
+export const ExactExpectedError = {
+    parameters: { verification: { expectedErrors: [{ kind: 'console-error', message: 'controlled-expected-error', count: 1 }] } },
+    render: () => <p>Exact expected error</p>,
+    play: async () => { console.error('controlled-expected-error'); },
+};
+export const MissingExpectedError = {
+    parameters: { verification: { expectedErrors: [{ kind: 'console-error', message: 'controlled-expected-error', count: 1 }] } },
+    render: () => <p>Missing expected error must fail</p>,
+};
+export const ExtraExpectedError = {
+    parameters: { verification: { expectedErrors: [{ kind: 'console-error', message: 'controlled-expected-error', count: 1 }] } },
+    render: () => <p>Duplicate expected error must fail</p>,
+    play: async () => { console.error('controlled-expected-error'); console.error('controlled-expected-error'); },
+};
+
+// Prepared single-audit bridge controls. The separate proof wrapper supplies
+// task-only entries for known IDs; ordinary runs have no source approvals.
+export const LowContrast = { render: () => <p style={{ color: '#eeeeee', background: '#ffffff' }}>Low contrast control</p> };
+export const MissingAlt = { render: () => <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E" /> };
+const baselineParagraph = () => <><style>{`.baseline-contrast { color: #aaa; background: white; }`}</style><p id="baseline-contrast" className="baseline-contrast">Unchanged baseline DOM</p></>;
+export const KnownBaseline = { render: baselineParagraph };
+export const KnownAddedNode = { render: () => <>{baselineParagraph()}{import.meta.env.ORISO_A11Y_CONTROL_PHASE === 'verify' && <button />}</> };
+export const KnownWorseStyle = { render: () => <><style>{`.baseline-contrast { opacity: ${import.meta.env.ORISO_A11Y_CONTROL_PHASE === 'verify' ? '0.4' : '1'} !important; }`}</style>{baselineParagraph()}</> };
+export const KnownOperationalError = { render: baselineParagraph, play: () => { if (import.meta.env.ORISO_A11Y_CONTROL_PHASE === 'verify') console.error('approved story independent console failure'); } };
+export const MissingAudit = { render: () => <p>Missing audit control</p>, play: ({ parameters }) => { parameters.a11y.disable = true; } };
+export const AuditError = { render: () => <p>Audit error control</p>, play: ({ parameters }) => { parameters.a11y.element = 'body'; } };
+export const DuplicateAudit = { render: () => <p>Duplicate report control</p>, play: ({ reporting }) => { reporting.addReport({ type: 'a11y', version: 1, result: { error: 'controlled duplicate audit' }, status: 'failed' }); } };
+export const StrictAddonViolation = { render: () => <button data-strict-addon-control="" /> };
+
+export const DeclaredNeedsData = { parameters: { needsLiveData: true }, render: () => <p>This must not be accepted as rendered product evidence</p> };
+const ThemeValue = () => { const theme = useTheme(); return <p data-mui-primary={theme.palette.primary.main}>Actual MUI theme</p>; };
+export const MuiTheme = {
+    parameters: { orisoSeed: '#007A7A' },
+    render: () => <ThemeValue />,
+    play: async ({ canvasElement }) => {
+        await waitFor(() => expect(within(canvasElement).getByText('Actual MUI theme').getAttribute('data-mui-primary')).toBe(getComputedStyle(document.documentElement).getPropertyValue('--m3-primary').trim()));
+    },
+};
+let priorSocket;
+const assertCleanState = () => {
+    expect(localStorage.getItem('verification-dirty')).toBeNull();
+    expect(sessionStorage.getItem('verification-dirty')).toBeNull();
+    expect(document.documentElement.hasAttribute('data-verification-dirty')).toBe(false);
+    expect(document.body.hasAttribute('data-verification-dirty')).toBe(false);
+    expect(i18n.language).toBe('de');
+    if (priorSocket) expect(priorSocket.readyState).toBe(WebSocket.CLOSED);
+};
+export const StateWriter = {
+    render: () => <p>State cleanup writer</p>,
+    play: async () => {
+        assertCleanState();
+        localStorage.setItem('verification-dirty', 'local'); sessionStorage.setItem('verification-dirty', 'session');
+        document.documentElement.setAttribute('data-verification-dirty', 'true'); document.body.setAttribute('data-verification-dirty', 'true');
+        priorSocket = new WebSocket('wss://matrix.storybook.test/service/verification-socket');
+        await settle(); expect(priorSocket.readyState).toBe(WebSocket.OPEN);
+        await i18n.changeLanguage('en'); expect(i18n.language).toBe('en');
+        window.fetch = async () => new Response('dirty-fetch');
+    },
+};
+export const StateReader = {
+    render: () => <p>State cleanup reader</p>,
+    play: async () => {
+        assertCleanState();
+        const response = await fetch('https://api.storybook.test/service/users/data');
+        expect((await response.json()).userId).toBe('sb-user');
+    },
+};

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { readLastChannel, writeLastChannel } from '../utils/channelRoute';
 import { PRACTICE_ENQUIRY_SESSION_ID } from './practiceIds';
 

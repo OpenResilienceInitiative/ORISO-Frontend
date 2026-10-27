@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { collectSupportedLanguages } from './i18nSupportedLanguages';
 
 const collect = (
