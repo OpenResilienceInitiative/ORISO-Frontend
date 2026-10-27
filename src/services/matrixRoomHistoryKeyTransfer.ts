@@ -177,8 +177,22 @@ export class MatrixRoomHistoryKeyTransfer {
 				request.roomId,
 				request.requesterUserId,
 				request.requesterDeviceId,
-				request.requestId
+				request.requestId,
+				// The person may have left while the keys were being exported.
+				() =>
+					room?.getMember(request.requesterUserId)?.membership ===
+					'join'
 			);
+			if (!sent && this.pendingApprovals.get(requestId) === request) {
+				if (
+					room?.getMember(request.requesterUserId)?.membership !==
+					'join'
+				) {
+					emitDiagnostic('approval-membership-rejected');
+					this.pendingApprovals.delete(requestId);
+					this.announceResolved(request, 'dropped');
+				}
+			}
 			// A failed send keeps the request, so the person can try again.
 			if (sent && this.pendingApprovals.get(requestId) === request) {
 				this.pendingApprovals.delete(requestId);
@@ -530,7 +544,8 @@ export class MatrixRoomHistoryKeyTransfer {
 		roomId: string,
 		userId: string,
 		deviceId: string,
-		requestId: string
+		requestId: string,
+		stillAllowed?: () => boolean
 	): Promise<boolean> {
 		const crypto = client.getCrypto();
 		// The request was checked against this client; a replaced client
@@ -540,6 +555,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			(key) => key.room_id === roomId
 		);
 		if (this.client !== client) return false;
+		if (stillAllowed && !stillAllowed()) return false;
 		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
 			emitDiagnostic('request-key-count-rejected', {
 				keyCount: keys.length
