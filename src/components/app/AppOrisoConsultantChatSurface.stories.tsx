@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import SupervisedUserCircleRoundedIcon from '@mui/icons-material/SupervisedUserCircleRounded';
@@ -42,15 +43,11 @@ import type {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
-import { NavigationBar } from './NavigationBar';
-import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
 import { MenuVerticalIcon } from '../../resources/img/icons';
-import {
-	NavigationStoryProviders,
-	storybookSettings as navigationStorybookSettings
-} from './navigationStoryHelpers';
+import { NavigationStoryShell } from './NavigationStoryShell';
+import './consultantChatStory.styles.scss';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
@@ -855,30 +852,12 @@ class ComposerBoundary extends React.Component<
 }
 
 function RuntimeSidebar() {
-	const routerConfig = useMemo(() => {
-		return RouterConfigConsultant({
-			...config,
-			...navigationStorybookSettings
-		});
-	}, []);
-
 	return (
-		<div className="appOrisoRuntimeRail" style={styles.navigationRail}>
-			<style>
-				{`
-					.appOrisoRuntimeRail .navigation__wrapper {
-						width: 85px;
-						height: 100%;
-					}
-				`}
-			</style>
-			<NavigationStoryProviders role="consultant">
-				<NavigationBar
-					routerConfig={routerConfig}
-					onLogout={() => {}}
-				/>
-			</NavigationStoryProviders>
-		</div>
+		<NavigationStoryShell
+			role="consultant"
+			className="appOrisoRuntimeRail"
+			onLogout={() => {}}
+		/>
 	);
 }
 
@@ -1308,10 +1287,12 @@ function AppOrisoConsultantChatSurface() {
 
 	return (
 		<div
-			style={{
-				...styles.viewport,
-				gridTemplateColumns: `85px ${listWidth}px 24px minmax(0, 1fr)`
-			}}
+			className="appOrisoConsultantChatStory"
+			style={
+				{
+					'--storybook-session-list-width': `${listWidth}px`
+				} as React.CSSProperties
+			}
 		>
 			<RuntimeSidebar />
 			<SessionListPanel width={listWidth} onResize={setListWidth} />
@@ -1359,7 +1340,16 @@ const meta = {
 					'chat panel `.session` active border on chrome focus (not composer selected), ' +
 					'session menu trigger shape on `aria-expanded`, and composer/send styles from ' +
 					'`messageSubmitInterface` / `sendButton`. The runtime shell mounts Routing/SessionsZone ' +
-					'with deterministic fixtures so product-code drift stays visible.'
+					'with deterministic fixtures so product-code drift stays visible. ' +
+					'Below 900px the active chat sits above the full-width production mobile menu. ' +
+					'Canonical menu variants: ' +
+					'[All menu variants](?path=/docs/components-layout-navigationsidebar--docs), ' +
+					'[Consultant desktop](?path=/story/components-layout-navigationsidebar--runtime-consultant-rail), ' +
+					'[Consultant short rail](?path=/story/components-layout-navigationsidebar--runtime-consultant-rail-short), ' +
+					'[Asker desktop](?path=/story/components-layout-navigationsidebar--runtime-asker-rail), ' +
+					'[Consultant mobile](?path=/story/components-layout-navigationsidebar--runtime-consultant-mobile-375-shell), ' +
+					'[Asker mobile](?path=/story/components-layout-navigationsidebar--runtime-asker-mobile). ' +
+					'For the session list use [Session list column](?path=/story/components-session-list-session-list-column--toolbar-create-chat-and-cards).'
 			}
 		}
 	}
@@ -1369,7 +1359,42 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ConsultantChat: Story = {
-	render: () => <AppOrisoConsultantChatSurface />
+	render: () => <AppOrisoConsultantChatSurface />,
+	play: async ({ canvasElement }) => {
+		const rail = canvasElement.querySelector('.appOrisoRuntimeRail');
+		const navigation = rail?.querySelector('.navigation__wrapper');
+		const routes = rail?.querySelectorAll('.navigation__item__top a');
+		await expect(rail).not.toBeNull();
+		await expect(navigation).not.toBeNull();
+		await expect(routes?.length).toBeGreaterThan(1);
+		const first = routes![0].getBoundingClientRect();
+		const second = routes![1].getBoundingClientRect();
+		const bounds = navigation!.getBoundingClientRect();
+		if (window.innerWidth >= 900) {
+			await expect(second.top).toBeGreaterThan(first.top);
+			await expect(Math.abs(second.left - first.left)).toBeLessThan(1);
+			await expect(first.right).toBeLessThanOrEqual(bounds.right + 1);
+		} else {
+			await expect(second.left).toBeGreaterThan(first.left);
+			await expect(Math.abs(second.top - first.top)).toBeLessThan(1);
+			await expect(bounds.width).toBeGreaterThanOrEqual(
+				canvasElement.getBoundingClientRect().width - 1
+			);
+			await expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+			const chat = canvasElement.querySelector(
+				'.appOrisoConsultantChatStory > .session'
+			);
+			await expect(chat).toBeVisible();
+			await expect(
+				chat!.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(bounds.top);
+		}
+	}
+};
+
+export const ConsultantChatOnPhone: Story = {
+	...ConsultantChat,
+	globals: { viewport: { value: 'phone375', isRotated: false } }
 };
 
 export const RuntimeRoutingShell: Story = {
@@ -1385,23 +1410,6 @@ export const RuntimeRoutingShell: Story = {
 };
 
 const styles = {
-	viewport: {
-		display: 'grid',
-		height: 860,
-		minHeight: 720,
-		background: '#EAE7E8',
-		color: '#1D1B20',
-		fontFamily:
-			'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-		overflow: 'hidden'
-	} satisfies React.CSSProperties,
-	navigationRail: {
-		width: 85,
-		height: '100%',
-		minHeight: 0,
-		background: '#EAE7E8',
-		overflow: 'hidden'
-	} satisfies React.CSSProperties,
 	sidebar: {
 		display: 'flex',
 		flexDirection: 'column',
@@ -1485,7 +1493,7 @@ const styles = {
 		margin: '16px 8px 16px 0',
 		minWidth: 0,
 		minHeight: 0,
-		height: '100%'
+		height: 'auto'
 	} satisfies React.CSSProperties,
 	chatHeader: {
 		display: 'flex',
