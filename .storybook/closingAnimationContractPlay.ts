@@ -1,4 +1,5 @@
 import { expect, userEvent, waitFor } from 'storybook/test';
+import { FIELD_FOCUS_AFTER_WIDTH } from '../src/components/transition/closing/closingFocal';
 import { transitionMotion } from '../src/components/transition/transitionMotion';
 
 /**
@@ -35,6 +36,11 @@ interface LayerSnapshot {
 	pointerEvents: string;
 	/** The curves a wave is drawn with (0 for the sheet): a wave is not a straight cut. */
 	curves: number;
+	/**
+	 * The colour a person sees on it, as the browser computes it: the body's
+	 * background or a wave's fill. Empty for the sheet, which is not painted.
+	 */
+	colour: string;
 }
 
 interface ClosingSnapshot {
@@ -43,8 +49,6 @@ interface ClosingSnapshot {
 	/** Whether the story's own page is shut for keyboard and screen readers. */
 	pageInert: boolean | null;
 	animation: string;
-	/** Set only by a build that still chose a direction; there is one now. */
-	direction: string;
 	at: number;
 	/** Where the sheet's top edge stood, and where the trailing wave's left edge. */
 	sheetTop: number;
@@ -133,7 +137,12 @@ const snapshotOf = (
 			curves: (
 				layer.querySelector('path')?.getAttribute('d')?.match(/C/g) ??
 				[]
-			).length
+			).length,
+			colour: layer.hasAttribute('data-closing-body')
+				? win.getComputedStyle(layer).backgroundColor
+				: layer.dataset.closingEdge
+					? win.getComputedStyle(layer.querySelector('path')!).fill
+					: ''
 		})
 	);
 	const surfaceEl = doc.querySelector('.stageLayout__content');
@@ -143,7 +152,6 @@ const snapshotOf = (
 		rootPointerEvents: win.getComputedStyle(root).pointerEvents,
 		pageInert: pageHostOf(doc, root)?.hasAttribute('inert') ?? null,
 		animation: root.dataset.closingAnimation ?? '',
-		direction: root.dataset.closingDirection ?? '',
 		at: performance.now(),
 		sheetTop:
 			root.querySelector('[data-closing-layer]')?.getBoundingClientRect()
@@ -230,18 +238,22 @@ export const recordClosing = (
 	frame = win.requestAnimationFrame(sample);
 	const take = (root: HTMLElement) =>
 		recording.snapshots.push(snapshotOf(doc, root, focal));
+	// The page may be a frame's document: its elements are not instances of
+	// this realm's HTMLElement.
+	const isRoot = (node: Node): node is HTMLElement =>
+		node instanceof win.HTMLElement && node.matches(ROOT);
 	const observer = new MutationObserver((records) => {
 		for (const record of records) {
 			if (record.type === 'attributes') {
 				take(record.target as HTMLElement);
 			}
 			record.addedNodes.forEach((node) => {
-				if (node instanceof HTMLElement && node.matches(ROOT)) {
+				if (isRoot(node)) {
 					take(node);
 				}
 			});
 			record.removedNodes.forEach((node) => {
-				if (node instanceof HTMLElement && node.matches(ROOT)) {
+				if (isRoot(node)) {
 					recording.removedAt = performance.now();
 				}
 			});
@@ -365,10 +377,6 @@ export const verifyClosingAnimation = async (
 		);
 		const started = recording.snapshots[0];
 		expect(started.animation).toBe('wave-reveal');
-		expect(
-			started.direction,
-			'one direction: there is nothing to choose'
-		).toBe('');
 		expect(
 			started.layers.map((layer) => layer.name),
 			'one sheet: a body and its two waves'
@@ -548,5 +556,187 @@ export const verifyClosingSkipped = async (
 		expect(doc.querySelector(ROOT)).toBeNull();
 	} finally {
 		recording.stop();
+	}
+};
+
+export interface ClosingHandoverContractOptions {
+	/** The button that starts the animation in the old document (outside the frame). */
+	press: () => HTMLElement | null;
+	/** The frame the old document lives in; it is navigated to the new one. */
+	frame: () => HTMLIFrameElement | null;
+	/**
+	 * The tenant's colour as the old document's palette computes it. The new
+	 * document has no palette of its own, so a cover in this colour can only
+	 * have been handed over.
+	 */
+	colour: string;
+	/** False: the new document never shows the focal element. */
+	destinationShowsFocal: boolean;
+}
+
+/**
+ * A waiting room that replaces the whole page (the live-chat room): the closing
+ * animation starts in the old document, the browser really navigates, and the
+ * new document must (1) show the finished cover in its very first frame, in
+ * the colours of the old one, (2) reveal onto the message field, and (3) leave
+ * nothing on the page, also when the destination never shows its field.
+ *
+ * The harness announces the new document with a `handover-boot` event on the
+ * frame, just before the app's first module would run, so the recording is
+ * already watching when the cover appears.
+ */
+export const verifyClosingHandover = async (
+	canvasElement: HTMLElement,
+	options: ClosingHandoverContractOptions
+) => {
+	const focal: ContractFocal = 'messageField';
+	const frame = await waitFor(() => {
+		const found = options.frame();
+		expect(found?.contentDocument?.readyState).toBe('complete');
+		return found!;
+	});
+	const oldDocument = frame.contentDocument!;
+	expect(oldDocument.querySelector(ROOT)).toBeNull();
+
+	let next: Document | undefined;
+	let recording: ClosingRecording | undefined;
+	canvasElement.addEventListener(
+		'handover-boot',
+		(event) => {
+			next = (event as CustomEvent<{ document: Document }>).detail
+				.document;
+			recording = recordClosing(next, focal);
+		},
+		{ once: true }
+	);
+
+	const press = await waitFor(() => {
+		const found = options.press();
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	try {
+		await userEvent.click(press);
+
+		// The browser really navigated: a different document, not the old one repainted.
+		await waitFor(() => expect(next).toBeDefined(), {
+			timeout: transitionMotion.closing.capMs
+		});
+		expect(next).not.toBe(oldDocument);
+		expect(next!.URL.startsWith('blob:')).toBe(true);
+
+		// The first thing the new document shows is the finished cover: nothing
+		// is painted between the old page and the cover, and it is not played again.
+		await waitFor(() =>
+			expect(recording!.snapshots.length).toBeGreaterThan(0)
+		);
+		const first = recording!.snapshots[0];
+		expect(first.animation).toBe('wave-reveal');
+		expect(first.phase).toBe('covered');
+		expect(first.running, 'the cover is not played a second time').toBe(0);
+		expect(first.layers.length).toBeGreaterThan(0);
+		expect(covers(first, first.viewport)).toBe(true);
+
+		// In the colour of the old document, which this one has no palette for:
+		// the body and both waves, and nothing else is painted.
+		const painted = first.layers.filter((layer) => layer.colour !== '');
+		expect(painted.map((layer) => layer.name).sort()).toEqual([
+			'body',
+			'edge:leading',
+			'edge:trailing'
+		]);
+		for (const layer of painted) {
+			expect(
+				layer.colour,
+				`layer "${layer.name}" is painted in the tenant's colour`
+			).toBe(options.colour);
+		}
+
+		await waitFor(() => expect(recording!.removedAt).not.toBeNull(), {
+			timeout: transitionMotion.closing.capMs + 2000
+		});
+		const startedAt = first.at;
+
+		// While it covers, the root takes the pointer so no blind tap reaches the
+		// app starting underneath, and the page behind it is inert so no key
+		// does either; from the reveal on both let the person through. No
+		// layer ever takes a pointer.
+		for (const snapshot of recording!.snapshots) {
+			const blocking =
+				snapshot.phase === 'cover' || snapshot.phase === 'covered';
+			expect(
+				snapshot.rootPointerEvents,
+				`the root in its "${snapshot.phase}" phase`
+			).toBe(blocking ? 'auto' : 'none');
+			expect(
+				snapshot.pageInert,
+				`the page of the new document in the "${snapshot.phase}" phase`
+			).toBe(blocking);
+			for (const layer of snapshot.layers) {
+				expect(layer.pointerEvents).toBe('none');
+			}
+		}
+
+		// It reveals, then ends on the message field.
+		const revealing = phaseOf(recording!, 'reveal');
+		expect(revealing.running).toBeGreaterThan(0);
+		const ended = phaseOf(recording!, 'revealed');
+		expect(
+			ended.at - revealing.at,
+			'the reveal takes long enough to see'
+		).toBeGreaterThanOrEqual(300);
+
+		if (options.destinationShowsFocal) {
+			expect(ended.focal).not.toBeNull();
+			const focalBox = ended.focal!;
+			for (const layer of ended.layers) {
+				expect(
+					layer.visible && intersect(layer.visible, focalBox),
+					`layer "${layer.name}" no longer covers the message field`
+				).toBeFalsy();
+			}
+		} else {
+			// Nothing to end on: it settles for a point near the bottom, and still gives the page back.
+			expect(ended.focal).toBeNull();
+		}
+
+		// Never longer than the cap, and nothing is left on the page.
+		expect(recording!.removedAt! - startedAt).toBeLessThan(
+			transitionMotion.closing.capMs
+		);
+		expect(next!.querySelector(ROOT)).toBeNull();
+		// The page is open again for the keyboard, on every path.
+		expect(
+			[...next!.body.children].filter((element) =>
+				element.hasAttribute('inert')
+			),
+			'nothing on the new page is left inert'
+		).toEqual([]);
+		if (options.destinationShowsFocal) {
+			const focalBox = ended.focal!;
+			const field = next!.querySelector<HTMLElement>(FOCAL[focal]);
+			const hit = next!.elementFromPoint(
+				(focalBox.left + focalBox.right) / 2,
+				(focalBox.top + focalBox.bottom) / 2
+			);
+			expect(hit && field!.contains(hit)).toBe(true);
+			// The keyboard arrives in the message field: it was shut out while
+			// the page was inert, so the animation hands it over. Not on a
+			// narrow screen, where a focused field opens the soft keyboard.
+			expect(
+				field!.contains(next!.activeElement),
+				next!.defaultView!.innerWidth > FIELD_FOCUS_AFTER_WIDTH
+					? 'the message field has the keyboard'
+					: 'a narrow screen gets no focused field'
+			).toBe(next!.defaultView!.innerWidth > FIELD_FOCUS_AFTER_WIDTH);
+		}
+		expect(
+			frame.contentWindow?.sessionStorage.getItem(
+				'oriso.closingHandover.v1'
+			),
+			'the note is used up'
+		).toBeNull();
+	} finally {
+		recording?.stop();
 	}
 };
