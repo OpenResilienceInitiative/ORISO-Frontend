@@ -270,7 +270,13 @@ export const GroupStageProviders = ({
 				>
 					<TopicsContext.Provider
 						value={{
-							topics: [groupTopic],
+							// The waiting area looks its rules up by the group's
+							// consulting type id; without that entry it reports
+							// "No topic found" (#1338).
+							topics: [
+								groupTopic,
+								{ ...groupTopic, id: GROUP_CONSULTING_TYPE_ID }
+							],
 							refreshTopics: () => {}
 						}}
 					>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
@@ -105,7 +105,9 @@ const mockActiveSession = {
 	isSession: true,
 	item: {
 		id: 0,
-		agencyId: undefined,
+		// #1338: a counsellor session belongs to a centre; without one the
+		// composer reports its @-mention directory as unavailable.
+		agencyId: 101,
 		askerMatrixUserId: 'alice',
 		matrixRoomId: '!storybook:example.org',
 		postcode: 10115,
@@ -1328,7 +1330,9 @@ function AppOrisoRoutingFetchMockDecorator({
 }: {
 	children: React.ReactNode;
 }) {
-	useEffect(() => installAppOrisoRoutingFetchMocks(), []);
+	// A layout effect, so the mocks are in place before the list's first
+	// passive-effect fetch (drafts) (#1338).
+	useLayoutEffect(() => installAppOrisoRoutingFetchMocks(), []);
 	return <>{children}</>;
 }
 
@@ -1371,7 +1375,34 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ConsultantChat: Story = {
-	render: () => <AppOrisoConsultantChatSurface />
+	render: () => <AppOrisoConsultantChatSurface />,
+	// #1338: the composer loads the centre's counsellors for @-mentions.
+	beforeEach: () => {
+		const realFetch = window.fetch;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = new URL(
+				String(
+					typeof input === 'string' || input instanceof URL
+						? input
+						: input.url
+				),
+				window.location.href
+			);
+			if (url.pathname === '/service/users/consultants') {
+				return new Response('[]', {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				});
+			}
+			return realFetch(input, init);
+		}) as typeof window.fetch;
+		return () => {
+			window.fetch = realFetch;
+		};
+	}
 };
 
 export const RuntimeRoutingShell: Story = {

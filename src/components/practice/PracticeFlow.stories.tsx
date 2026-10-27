@@ -315,6 +315,22 @@ const target = (name: string) =>
 		return element!;
 	}, SLOW);
 
+/*
+ * #1338: the tour (react-joyride and its floating-ui positioning) re-measures
+ * inside ResizeObserver callbacks, and Chrome reports the harmless "loop
+ * completed with undelivered notifications", once or twice per run. For this
+ * file's stories the callbacks run on the next frame instead, as the browser
+ * would deliver them anyway, so the notice never fires.
+ */
+const NativeResizeObserver = window.ResizeObserver;
+window.ResizeObserver = class extends NativeResizeObserver {
+	constructor(callback: ResizeObserverCallback) {
+		super((entries, observer) =>
+			requestAnimationFrame(() => callback(entries, observer))
+		);
+	}
+};
+
 const meta = {
 	title: 'Organisms/PracticeFlow',
 	component: PracticeFlowStage,

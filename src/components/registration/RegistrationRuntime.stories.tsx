@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { actWarnings, suspendedInAct } from './storyActWarnings';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Registration } from './Registration';
 import { AgencySpecificContext, RegistrationProvider } from '../../globalState';
@@ -126,27 +127,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/*
- * #1338: the header topic search opens the topic's accordion and moves focus
- * through MUI buttons while Storybook's userEvent holds the act environment.
- * React 19 runs those transition and ripple updates outside act's queue and
- * warns, a test-harness artefact, not an app error. The story verification
- * fails on any console error, so these stories name exactly the warnings
- * they produce; any other or any extra console error still fails them.
- */
-const ACT_WARNING =
-	"An update to %s inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act";
-const headerSearchActWarnings = Object.entries({
+// #1338: the header topic search moves focus through MUI buttons; see
+// storyActWarnings for why these exact warnings are declared.
+const headerSearchActWarnings = actWarnings({
 	'ForwardRef(ButtonBase)': 9,
 	'TransitionGroup': 6,
 	'Transition': 1,
 	'TopicSelection': 1,
 	'RegistrationProvider': 1
-}).map(([component, count]) => ({
-	kind: 'console-error' as const,
-	message: `${ACT_WARNING} ${component}`,
-	count
-}));
+});
 
 export const TopicSelectionRoute: Story = {
 	// One viewport tall like the app root, so `.stageLayout` is the scroller.
@@ -220,15 +209,7 @@ export const LongTopicListKeepsStepHeader: Story = {
 export const HeaderSearchSelectsTopic: Story = {
 	parameters: {
 		verification: {
-			expectedErrors: [
-				...headerSearchActWarnings,
-				{
-					kind: 'console-error',
-					message:
-						'A component suspended inside an `act` scope, but the `act` call was not awaited. When testing React components that depend on asynchronous data, you must await the result:\n\nawait act(() => ...)',
-					count: 1
-				}
-			]
+			expectedErrors: [...headerSearchActWarnings, suspendedInAct(1)]
 		}
 	},
 	globals: desktop1440Globals,
