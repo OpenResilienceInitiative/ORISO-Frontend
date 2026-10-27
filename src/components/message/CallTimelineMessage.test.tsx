@@ -10,14 +10,22 @@ import {
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import {
+	ActiveSessionContext,
+	type ExtendedSessionInterface
+} from '../../globalState';
 
 /** The interface language, switchable per test. */
 const ui = vi.hoisted(() => ({ language: '' }));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, values?: { start?: string }) =>
-			values?.start ? `${key}: ${values.start}` : key,
+		t: (key: string, values?: { start?: string; name?: string }) =>
+			values?.start
+				? `${key}: ${values.start}`
+				: values?.name
+					? `${key}: ${values.name}`
+					: key,
 		i18n: ui
 	})
 }));
@@ -439,4 +447,47 @@ it('lists nobody as attended on a missed call and still names the caller', () =>
 	expect(screen.queryByText(/participants\.attended/)).toBeNull();
 	expect(screen.queryAllByTestId('user-avatar')).toHaveLength(0);
 	expect(screen.getByText(/message\.callLifecycle\.startedBy/)).toBeTruthy();
+});
+
+it('names both parties by the names the session list uses, not the login in their Matrix profile (#780)', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'ended-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'ended',
+		actorUserId: '@bart_getme_2fa:example',
+		participants: [
+			{
+				userId: '@bart_getme_2fa:example',
+				displayName: 'bart_getme_2fa'
+			},
+			{
+				userId: '@dragonfly_kendall_4108:example',
+				displayName: 'dragonfly_kendall_4108'
+			}
+		]
+	};
+	const activeSession = {
+		item: {
+			askerMatrixUserId: '@dragonfly_kendall_4108:example',
+			consultantMatrixUserId: '@bart_getme_2fa:example'
+		},
+		consultant: { username: 'bart_getme_2fa', displayName: 'Bart Simpson' },
+		user: { username: 'dragonfly_kendall_4108', sessionData: {} }
+	} as unknown as ExtendedSessionInterface;
+	render(
+		<ActiveSessionContext.Provider value={{ activeSession }}>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+
+	expect(screen.getByText(/startedBy: Bart Simpson/)).toBeTruthy();
+	expect(screen.queryByText(/bart_getme_2fa/)).toBeNull();
+	const avatarNames = screen
+		.getAllByRole('img')
+		.map((avatar) => avatar.getAttribute('aria-label'));
+	expect(avatarNames).toHaveLength(2);
+	expect(avatarNames).toContain('Bart Simpson');
+	expect(avatarNames.join(' ')).not.toMatch(/bart_getme/i);
 });

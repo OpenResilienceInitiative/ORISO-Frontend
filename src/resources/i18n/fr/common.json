@@ -6025,6 +6025,7 @@
 		"group": {
 			"incomingTitle": "Appel entrant",
 			"incomingDescription": "Quelqu'un vous appelle…",
+			"incomingFrom": "{{name}} vous appelle…",
 			"close": "Fermer l'appel",
 			"autoFit": "Ajuster automatiquement",
 			"autoFitAria": "Ajuster la fenêtre d'appel",

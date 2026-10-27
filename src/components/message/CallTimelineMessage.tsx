@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { ActiveSessionContext } from '../../globalState';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { callPartyOf } from '../call/callParty';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
 import { useCallTimelineState } from './useCallTimelineState';
 
@@ -61,12 +63,30 @@ export const CallTimelineMessage = ({
 	 * it was present as its own display name, which is the commoner case: a
 	 * member whose profile has not synced yet.
 	 */
+	/*
+	 * The two parties of the conversation by the names the session list uses
+	 * (#780). The room's names come from Matrix profiles, which on our
+	 * accounts hold the login name, so "Called by bart_getme_2fa" — the one
+	 * identifier the public display name exists to keep off screen.
+	 */
+	const activeSession = React.useContext(ActiveSessionContext)?.activeSession;
+	const partyOf = (userId: string | undefined) =>
+		callPartyOf(
+			activeSession && {
+				session: activeSession.item,
+				consultant: activeSession.consultant,
+				user: activeSession.user
+			},
+			userId
+		);
 	const named = call.actorUserId
 		? [...call.participants, ...(call.present ?? [])].find(
 				(participant) => participant.userId === call.actorUserId
 			)?.displayName
 		: undefined;
-	const actorName = named === call.actorUserId ? undefined : named;
+	const actorName =
+		partyOf(call.actorUserId)?.name ??
+		(named === call.actorUserId ? undefined : named);
 	/*
 	 * The date in the language the interface is in, not the browser's.
 	 *
@@ -154,6 +174,8 @@ export const CallTimelineMessage = ({
 			 * is the claim that the id is a NAME.
 			 */
 			participants={shown.map((participant) => {
+				const party = partyOf(participant.userId);
+				if (party) return { ...participant, ...party.avatar };
 				const named =
 					participant.displayName === participant.userId
 						? undefined
