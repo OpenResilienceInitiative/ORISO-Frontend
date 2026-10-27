@@ -126,6 +126,27 @@ export class MatrixRoomHistoryKeyTransfer {
 	}
 
 	/**
+	 * Why this device may not release keys right now, or null when it may:
+	 * releasing needs the device itself to be cross-signed.
+	 */
+	public async getReleaseBlock(): Promise<'needs-cross-signing' | null> {
+		const client = this.client;
+		const userId = client?.getUserId();
+		const deviceId = client?.getDeviceId();
+		const crypto = client?.getCrypto();
+		if (!crypto || !userId || !deviceId) return 'needs-cross-signing';
+		try {
+			const status = await crypto.getDeviceVerificationStatus(
+				userId,
+				deviceId
+			);
+			return status?.crossSigningVerified ? null : 'needs-cross-signing';
+		} catch {
+			return 'needs-cross-signing';
+		}
+	}
+
+	/**
 	 * A person has read the reason and agrees: send that one room's keys to
 	 * that one device. The device stays unverified; the approval is the check.
 	 */
@@ -137,6 +158,9 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		this.approvalsInFlight.add(requestId);
 		try {
+			// Only a cross-signed device of this person may hand out keys.
+			if ((await this.getReleaseBlock()) || this.client !== client)
+				return false;
 			const room = client.getRoom(request.roomId);
 			await (room as any)?.loadMembersIfNeeded?.();
 			if (this.client !== client) return false;

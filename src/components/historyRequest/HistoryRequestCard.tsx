@@ -19,6 +19,8 @@ export interface HistoryRequestCardProps {
 	receivedAt?: number;
 	busy?: boolean;
 	failed?: boolean;
+	/** This device is not cross-signed, so it may not release keys. */
+	blocked?: boolean;
 	onApprove: () => void;
 	onDecline: () => void;
 }
@@ -35,6 +37,7 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 	receivedAt,
 	busy = false,
 	failed = false,
+	blocked = false,
 	onApprove,
 	onDecline
 }) => {
@@ -68,7 +71,11 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 			</blockquote>
 			{failed && (
 				<p role="alert" className="historyRequestCard__failed">
-					{t('historyRequest.card.failed')}
+					{t(
+						blocked
+							? 'historyRequest.card.needsCrossSigning'
+							: 'historyRequest.card.failed'
+					)}
 				</p>
 			)}
 			<div className="historyRequestCard__actions">

@@ -544,7 +544,8 @@
 			"approve": "Release conversation",
 			"decline": "Decline",
 			"origin": "Asked by {{user}} on a new device ({{device}}), {{time}}. This device is not verified yet, so release only if you expect this request.",
-			"failed": "The keys could not be sent. Please try again."
+			"failed": "The keys could not be sent. Please try again.",
+			"needsCrossSigning": "This device is not verified yet, so it cannot release keys. Verify this device first, then try again."
 		}
 	},
 	"e2ee": {

@@ -38,7 +38,8 @@ const buildHarness = () => {
 	const crypto = {
 		setDeviceIsolationMode: vi.fn(),
 		getDeviceVerificationStatus: vi.fn().mockResolvedValue({
-			isVerified: () => true
+			isVerified: () => true,
+			crossSigningVerified: true
 		}),
 		getUserDeviceInfo: vi
 			.fn()
@@ -226,7 +227,8 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 	it('rejects an unverified requester device when invisible crypto is enabled', async () => {
 		const harness = buildHarness();
 		harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
-			isVerified: () => false
+			isVerified: () => false,
+			crossSigningVerified: true
 		});
 		applyDeviceIsolationMode(harness.client as any, true);
 		const service = new MatrixRoomHistoryKeyTransfer();
@@ -591,7 +593,8 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		const setup = () => {
 			const harness = buildHarness();
 			harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
-				isVerified: () => false
+				isVerified: () => false,
+				crossSigningVerified: true
 			});
 			applyDeviceIsolationMode(harness.client as any, true);
 			const service = new MatrixRoomHistoryKeyTransfer();
@@ -783,6 +786,28 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			} finally {
 				vi.useRealTimers();
 			}
+		});
+
+		it('keeps the request when this device is not cross-signed', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
+				isVerified: () => false,
+				crossSigningVerified: false
+			});
+			await expect(service.getReleaseBlock()).resolves.toBe(
+				'needs-cross-signing'
+			);
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+			expect(service.getPendingApprovals()).toHaveLength(1);
 		});
 
 		it('refuses an approval after the request expired', async () => {

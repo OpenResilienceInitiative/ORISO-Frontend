@@ -19,6 +19,7 @@ const { service, pending } = vi.hoisted(() => {
 				pending.list.filter((item) => !roomId || item.roomId === roomId)
 			),
 			approveRequest: vi.fn(),
+			getReleaseBlock: vi.fn(),
 			declineRequest: vi.fn()
 		}
 	};
@@ -53,6 +54,8 @@ beforeEach(() => {
 	pending.list = [];
 	service.approveRequest.mockReset();
 	service.declineRequest.mockReset();
+	service.getReleaseBlock.mockReset();
+	service.getReleaseBlock.mockResolvedValue(null);
 });
 afterEach(cleanup);
 
@@ -116,6 +119,21 @@ describe('HistoryRequestApprovals', () => {
 
 		await screen.findByRole('alert');
 		expect(screen.getByText('about school')).toBeTruthy();
+	});
+
+	it('explains a missing cross-signing instead of a failed send', async () => {
+		pending.list = [request('one')];
+		service.approveRequest.mockResolvedValue(false);
+		service.getReleaseBlock.mockResolvedValue('needs-cross-signing');
+		render(<HistoryRequestApprovals roomId="!a:m" />);
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'historyRequest.card.approve' })
+		);
+
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'historyRequest.card.needsCrossSigning'
+		);
 	});
 
 	it('keeps the failure of one card when another is released', async () => {
