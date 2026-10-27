@@ -561,6 +561,7 @@
 			"approve": "Görüşmeyi aç",
 			"decline": "Reddet",
 			"failed": "Anahtarlar gönderilemedi. Lütfen tekrar deneyin.",
+			"needsCrossSigning": "Bu cihaz henüz doğrulanmadı, bu yüzden anahtarları paylaşamaz. Önce bu cihazı doğrulayın, sonra tekrar deneyin.",
 			"origin": "{{user}} yeni bir cihazdan ({{device}}), {{time}} istedi. Bu cihaz henüz doğrulanmadı: yalnızca bu isteği bekliyorsanız açın."
 		},
 		"ask": {

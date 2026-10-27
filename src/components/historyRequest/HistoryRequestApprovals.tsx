@@ -7,7 +7,11 @@ import { useHistoryRequests } from './useHistoryRequests';
 export const HistoryRequestApprovals: React.FC<{ roomId?: string | null }> = ({
 	roomId
 }) => {
-	const { requests, approve, decline } = useHistoryRequests(roomId);
+	const { requests, approve, decline, releaseBlock } =
+		useHistoryRequests(roomId);
+	const [blockedIds, setBlockedIds] = useState<ReadonlySet<string>>(
+		new Set()
+	);
 	const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
 	const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(new Set());
 	const mark = (id: string, on: boolean) =>
@@ -30,6 +34,7 @@ export const HistoryRequestApprovals: React.FC<{ roomId?: string | null }> = ({
 					receivedAt={request.receivedAt}
 					busy={busyIds.has(request.requestId)}
 					failed={failedIds.has(request.requestId)}
+					blocked={blockedIds.has(request.requestId)}
 					onDecline={() => decline(request.requestId)}
 					onApprove={() => {
 						setBusyIds((ids) =>
@@ -38,7 +43,20 @@ export const HistoryRequestApprovals: React.FC<{ roomId?: string | null }> = ({
 						mark(request.requestId, false);
 						void approve(request.requestId)
 							.then((sent) => {
-								if (!sent) mark(request.requestId, true);
+								if (sent) return undefined;
+								// Tell a missing cross-signing from a failed send.
+								return releaseBlock()
+									.catch(() => null)
+									.then((block) => {
+										setBlockedIds((ids) => {
+											const next = new Set(ids);
+											if (block)
+												next.add(request.requestId);
+											else next.delete(request.requestId);
+											return next;
+										});
+										mark(request.requestId, true);
+									});
 							})
 							.catch(() => mark(request.requestId, true))
 							.finally(() =>

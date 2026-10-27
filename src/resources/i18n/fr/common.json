@@ -561,6 +561,7 @@
 			"approve": "Débloquer la conversation",
 			"decline": "Refuser",
 			"failed": "Les clés n'ont pas pu être envoyées. Veuillez réessayer.",
+			"needsCrossSigning": "Cet appareil n'est pas encore vérifié et ne peut donc pas libérer de clés. Vérifiez d'abord cet appareil, puis réessayez.",
 			"origin": "Demandé par {{user}} sur un nouvel appareil ({{device}}), {{time}}. Cet appareil n'est pas encore vérifié : ne débloquez que si vous attendez cette demande."
 		},
 		"ask": {

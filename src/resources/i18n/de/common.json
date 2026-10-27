@@ -571,7 +571,8 @@
 			"approve": "Gespräch freigeben",
 			"decline": "Ablehnen",
 			"origin": "Angefragt von {{user}} auf einem neuen Gerät ({{device}}), {{time}}. Das Gerät ist noch nicht verifiziert – geben Sie nur frei, wenn Sie diese Anfrage erwarten.",
-			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuchen Sie es noch einmal."
+			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuchen Sie es noch einmal.",
+			"needsCrossSigning": "Dieses Gerät ist noch nicht verifiziert und kann deshalb keine Schlüssel freigeben. Bitte verifizieren Sie dieses Gerät zuerst und versuchen Sie es dann erneut."
 		}
 	},
 	"e2ee": {

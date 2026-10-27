@@ -40,6 +40,7 @@ export const useHistoryRequests = (roomId?: string | null) => {
 
 	return {
 		requests,
+		releaseBlock: () => matrixRoomHistoryKeyTransfer.getReleaseBlock(),
 		approve: (requestId: string) =>
 			matrixRoomHistoryKeyTransfer.approveRequest(requestId),
 		decline: (requestId: string) =>
