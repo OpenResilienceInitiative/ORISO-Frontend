@@ -78,7 +78,6 @@ import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprovals';
-import { useHistoryRequests } from '../historyRequest/useHistoryRequests';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
@@ -346,9 +345,6 @@ export const SessionStream = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const hasHistoryRequests =
-		useHistoryRequests(resolvedChatSession.matrixRoomId).requests.length >
-			0 && isConsultant;
 	const clearMatrixTypingTimeout = useCallback(() => {
 		if (matrixTypingTimeoutRef.current) {
 			window.clearTimeout(matrixTypingTimeoutRef.current);
@@ -1626,7 +1622,7 @@ export const SessionStream = ({
 					</>
 				}
 				mainTimelineSupplementTime={
-					displayedConsent && !hasHistoryRequests
+					displayedConsent
 						? new Date(displayedConsent.createdAt).getTime()
 						: undefined
 				}
