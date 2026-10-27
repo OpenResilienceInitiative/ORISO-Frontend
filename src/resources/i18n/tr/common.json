@@ -6247,5 +6247,32 @@
 			"micOff": "Mikrofonu kapat",
 			"micMeter": "Mikrofonunuzun ses düzeyi"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Geçici",
+			"title": "Misafir hesabıyla birlikte silinir"
+		},
+		"deletedGuest": "Misafir (silindi)",
+		"chip": {
+			"guest": "Misafir hesabı",
+			"keep": "Mesajlar saklanır",
+			"delete": "Mesajlar geçici"
+		},
+		"keepDialog": {
+			"title": "Mesajlarınız kalsın mı?",
+			"description": "Görüşmeden sonra silinecek bir misafir hesabı kullanıyorsunuz. Bu görüşme için mesajlarınıza ne olacağına bir kez karar verin.",
+			"keep": {
+				"label": "Mesajlarımı sakla",
+				"hint": "Danışma merkezi, hesabınız silindikten sonra da onları okuyabilir."
+			},
+			"delete": {
+				"label": "Hesabımla birlikte sil",
+				"hint": "Mesajlarınız misafir hesabınızla birlikte kaybolur."
+			},
+			"note": "Cevabınız bu görüşmenin tamamı için geçerlidir.",
+			"confirm": "Devam",
+			"cancel": "İptal"
+		}
 	}
 }

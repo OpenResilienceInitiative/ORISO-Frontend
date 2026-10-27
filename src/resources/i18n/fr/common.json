@@ -6247,5 +6247,32 @@
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporaire",
+			"title": "Supprimé avec le compte invité"
+		},
+		"deletedGuest": "Invité (supprimé)",
+		"chip": {
+			"guest": "Compte invité",
+			"keep": "Messages conservés",
+			"delete": "Messages temporaires"
+		},
+		"keepDialog": {
+			"title": "Vos messages doivent-ils rester ?",
+			"description": "Vous utilisez un compte invité qui sera supprimé après l’entretien. Décidez une fois pour cet entretien ce qu’il advient de vos messages.",
+			"keep": {
+				"label": "Conserver mes messages",
+				"hint": "Le centre de conseil peut encore les lire après la suppression de votre compte."
+			},
+			"delete": {
+				"label": "Les supprimer avec mon compte",
+				"hint": "Vos messages disparaissent avec votre compte invité."
+			},
+			"note": "Votre réponse vaut pour tout cet entretien.",
+			"confirm": "Continuer",
+			"cancel": "Annuler"
+		}
 	}
 }

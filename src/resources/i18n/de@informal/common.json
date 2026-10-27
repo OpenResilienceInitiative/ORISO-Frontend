@@ -2753,5 +2753,32 @@
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporär",
+			"title": "Wird mit dem Gastkonto gelöscht"
+		},
+		"deletedGuest": "Gast (gelöscht)",
+		"chip": {
+			"guest": "Gastkonto",
+			"keep": "Nachrichten bleiben",
+			"delete": "Nachrichten temporär"
+		},
+		"keepDialog": {
+			"title": "Sollen deine Nachrichten bleiben?",
+			"description": "Du nutzt ein Gastkonto, das nach dem Gespräch gelöscht wird. Entscheide einmal für dieses Gespräch, was mit deinen Nachrichten passiert.",
+			"keep": {
+				"label": "Nachrichten behalten",
+				"hint": "Die Beratungsstelle kann sie weiter lesen, auch wenn dein Konto gelöscht ist."
+			},
+			"delete": {
+				"label": "Mit dem Konto löschen",
+				"hint": "Deine Nachrichten verschwinden zusammen mit deinem Gastkonto."
+			},
+			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
+			"confirm": "Weiter",
+			"cancel": "Abbrechen"
+		}
 	}
 }

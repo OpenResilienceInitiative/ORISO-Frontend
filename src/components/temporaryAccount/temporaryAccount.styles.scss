@@ -1,0 +1,106 @@
+/* #1869: temporary-account messages. Roles only, no hand-picked colours. */
+
+.temporaryMessageMarker {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: 6px;
+	font-size: $font-size-secondary;
+	color: var(--m3-on-surface-variant, $tertiary);
+	white-space: nowrap;
+
+	&__icon {
+		width: 14px;
+		height: 14px;
+	}
+}
+
+.guestRetentionChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 10px 2px 6px;
+	border-radius: 8px;
+	border: 1px solid var(--m3-outline-variant);
+	font-size: $font-size-secondary;
+	line-height: 20px;
+	color: var(--m3-on-surface-variant);
+	white-space: nowrap;
+
+	&__icon {
+		width: 16px;
+		height: 16px;
+	}
+
+	&--keep .guestRetentionChip__icon {
+		color: var(--m3-primary);
+	}
+}
+
+.m3Dialog.keepMessagesDialog {
+	.keepMessagesDialog__choices {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.keepMessagesDialog__choice {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		padding: 12px 16px;
+		border: 1px solid var(--m3-outline-variant);
+		border-radius: 12px;
+		cursor: pointer;
+
+		input {
+			margin-top: 3px;
+			accent-color: var(--m3-primary);
+			flex-shrink: 0;
+		}
+
+		&:focus-within {
+			outline: 2px solid var(--m3-primary);
+			outline-offset: 2px;
+		}
+
+		&--selected {
+			border-color: var(--m3-primary);
+		}
+	}
+
+	.keepMessagesDialog__choiceText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.keepMessagesDialog__choiceLabel {
+		font-weight: 600;
+		color: var(--m3-on-surface);
+	}
+
+	.keepMessagesDialog__choiceHint,
+	.keepMessagesDialog__note {
+		font-size: $font-size-secondary;
+		color: var(--m3-on-surface-variant);
+	}
+
+	.keepMessagesDialog__note {
+		margin: 12px 0 0;
+	}
+}
+
+/* Phone: bottom sheet, same anatomy as the knock wait dialog (#1834). */
+.m3Dialog.keepMessagesDialog--sheet {
+	.MuiDialog-container {
+		align-items: flex-end;
+	}
+
+	.m3Dialog__surface {
+		max-height: calc(100% - 48px);
+		margin: 0;
+		border-radius: 28px 28px 0 0;
+		padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+	}
+}
