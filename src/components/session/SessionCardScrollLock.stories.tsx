@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, within } from 'storybook/test';
 import './session.styles.scss';
+import '../enquiry/enquiry.styles';
 
 /**
  * Regression for ORISO-Frontend#1726: focusing a control that sits below the
@@ -9,34 +10,52 @@ import './session.styles.scss';
  * header, timeline and composer would shift up and leave a blank strip below
  * the composer. The card uses the real `.session` stylesheet.
  */
-const Card = ({ legacyHidden = false }: { legacyHidden?: boolean }) => (
-	<div
-		className="session"
-		data-testid="session-card"
-		// Restores the old `overflow: hidden` rule, to show the defect.
-		style={{
-			height: 320,
-			width: '100%',
-			maxWidth: 480,
-			...(legacyHidden ? { overflow: 'hidden' } : {})
-		}}
-	>
-		<div className="session__content" style={{ overflow: 'auto' }}>
-			Timeline
-		</div>
-		{/* A control that lies beyond the bottom edge of the card. */}
-		<button
-			type="button"
-			style={{ position: 'absolute', top: 400, left: 16 }}
+const hideEnquiryDecoration = `.enquiry__wrapper::after { display: none; }`;
+
+const Card = ({
+	legacyHidden = false,
+	host = 'session'
+}: {
+	legacyHidden?: boolean;
+	/** The first-message card (`.enquiry__wrapper`) shares the rule. */
+	host?: 'session' | 'enquiry';
+}) => (
+	<>
+		{host === 'enquiry' && <style>{hideEnquiryDecoration}</style>}
+		<div
+			className={host === 'enquiry' ? 'enquiry__wrapper' : 'session'}
+			data-testid="session-card"
+			// Restores the old `overflow: hidden` rule, to show the defect.
+			style={{
+				// The enquiry card paints a decorative circle that makes the
+				// contrast of its text undecidable for axe; the layout under test
+				// is unaffected by a plain background.
+				...(host === 'enquiry'
+					? { background: '#fff', isolation: 'isolate' }
+					: {}),
+				height: 320,
+				width: '100%',
+				maxWidth: 480,
+				...(legacyHidden ? { overflow: 'hidden' } : {})
+			}}
 		>
-			Notification choice below the card
-		</button>
-		<div className="messageSubmit__wrapper">
-			<button type="button" data-testid="composer-button">
-				Composer
+			<div className="session__content" style={{ overflow: 'auto' }}>
+				Timeline
+			</div>
+			{/* A control that lies beyond the bottom edge of the card. */}
+			<button
+				type="button"
+				style={{ position: 'absolute', top: 400, left: 16 }}
+			>
+				Notification choice below the card
 			</button>
+			<div className="messageSubmit__wrapper">
+				<button type="button" data-testid="composer-button">
+					Composer
+				</button>
+			</div>
 		</div>
-	</div>
+	</>
 );
 
 const meta: Meta<typeof Card> = {
@@ -75,6 +94,12 @@ const focusKeepsCardStill: NonNullable<Story['play']> = async ({
 };
 
 export const FocusDoesNotScrollTheCard: Story = {
+	play: focusKeepsCardStill
+};
+
+/** The enquiry card is covered by the same `overflow: clip` rule. */
+export const EnquiryCardFocusDoesNotScroll: Story = {
+	args: { host: 'enquiry' },
 	play: focusKeepsCardStill
 };
 
