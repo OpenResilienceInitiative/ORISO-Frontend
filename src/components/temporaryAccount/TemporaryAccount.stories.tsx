@@ -22,6 +22,8 @@ import { MessageRetention } from './messageRetention';
  * #1869 — Storybook design only, nothing is wired into the app yet.
  * The platform setting (ORISO-Admin#1241) decides per temporary account:
  * always temporary, the guest decides, or always kept.
+ * Marker and divider are the counsellor's view only. The guest gets the
+ * normal asker chat, unchanged; only the keep-messages dialog is theirs.
  */
 /** Only the dialog stories use these; the others ignore args. */
 type DialogStoryArgs = {
@@ -114,7 +116,7 @@ const Timeline = ({
 };
 
 export const TemporaryMessage: Story = {
-	name: 'Temporary message — own row under the time',
+	name: 'Counsellor view — temporary message, own row under the time',
 	render: () => (
 		<MessageContextShell>
 			<MessageItemComponent
@@ -140,7 +142,7 @@ export const TemporaryMessage: Story = {
 };
 
 export const TimelineTemporary: Story = {
-	name: 'Timeline — guest messages are temporary',
+	name: 'Counsellor view — guest messages are temporary',
 	render: () => <Timeline retention="delete" />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -157,13 +159,13 @@ export const TimelineTemporary: Story = {
 };
 
 export const TimelineTemporaryPhone: Story = {
-	name: 'Timeline — temporary, phone 390',
+	name: 'Counsellor view — temporary, phone 390',
 	globals: phone390Globals,
 	render: () => <Timeline compact retention="delete" />
 };
 
 export const TimelineKept: Story = {
-	name: 'Timeline — guest chose to keep the messages',
+	name: 'Counsellor view — guest chose to keep the messages',
 	render: () => <Timeline retention="keep" />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -206,7 +208,7 @@ const DeletedGuestTimeline = () => {
 };
 
 export const GuestDeletedMessagesKept: Story = {
-	name: 'After deletion — kept messages show "Gast (gelöscht)"',
+	name: 'Counsellor view — after deletion, "Gast (gelöscht)"',
 	render: () => <DeletedGuestTimeline />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -219,7 +221,7 @@ export const GuestDeletedMessagesKept: Story = {
 };
 
 export const RetentionDividers: Story = {
-	name: 'Timeline divider — both outcomes',
+	name: 'Counsellor view — divider, both outcomes',
 	render: () => (
 		<div style={{ maxWidth: 600, padding: 24 }}>
 			<GuestRetentionDivider retention="delete" />
