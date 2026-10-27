@@ -6240,14 +6240,12 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Temporär bis zum Löschen",
+			"label": "Temporär",
 			"title": "Wird mit dem Gastkonto gelöscht"
 		},
 		"deletedGuest": "Gast (gelöscht)",
 		"chip": {
-			"guest": "Gastkonto",
-			"keep": "Nachrichten bleiben nach dem Löschen",
-			"delete": "Nachrichten temporär bis zum Löschen"
+			"guest": "Gastkonto"
 		},
 		"keepDialog": {
 			"title": "Sollen Ihre Nachrichten bleiben?",
@@ -6257,7 +6255,7 @@
 				"hint": "Ihre Nachrichten bleiben, wenn Ihr Konto gelöscht wird."
 			},
 			"delete": {
-				"label": "Temporär bis zum Löschen",
+				"label": "Temporär",
 				"hint": "Ihre Nachrichten werden mit Ihrem Konto gelöscht."
 			},
 			"note": "Ihre Antwort gilt für dieses ganze Gespräch.",

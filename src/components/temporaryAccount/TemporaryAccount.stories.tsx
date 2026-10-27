@@ -133,7 +133,7 @@ export const TemporaryMessage: Story = {
 		const marker = await within(canvasElement).findByTestId(
 			'temporary-message-marker'
 		);
-		await expect(marker).toHaveTextContent('Temporär bis zum Löschen');
+		await expect(marker).toHaveTextContent('Temporär');
 		await expect(marker).toHaveAttribute(
 			'title',
 			'Wird mit dem Gastkonto gelöscht'
@@ -154,7 +154,7 @@ export const TimelineTemporary: Story = {
 		);
 		await expect(
 			canvas.getByTestId('guest-retention-divider')
-		).toHaveTextContent('Gastkonto · Nachrichten temporär bis zum Löschen');
+		).toHaveTextContent('Gastkonto · Temporär');
 	}
 };
 
@@ -174,7 +174,7 @@ export const TimelineKept: Story = {
 		).toBeNull();
 		await expect(
 			canvas.getByTestId('guest-retention-divider')
-		).toHaveTextContent('Gastkonto · Nachrichten bleiben nach dem Löschen');
+		).toHaveTextContent(/^Gastkonto$/);
 	}
 };
 
@@ -286,7 +286,7 @@ export const KeepMessagesEscapeDecidesNothing: Story = {
 		);
 		await userEvent.click(
 			within(dialog).getByRole('radio', {
-				name: /Temporär bis zum Löschen/
+				name: /^Temporär/
 			})
 		);
 		await userEvent.keyboard('{Escape}');

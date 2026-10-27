@@ -6165,14 +6165,12 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Temporary until deletion",
+			"label": "Temporary",
 			"title": "Deleted together with the guest account"
 		},
 		"deletedGuest": "Guest (deleted)",
 		"chip": {
-			"guest": "Guest account",
-			"keep": "Messages stay after deletion",
-			"delete": "Messages temporary until deletion"
+			"guest": "Guest account"
 		},
 		"keepDialog": {
 			"title": "Should your messages stay?",
@@ -6182,7 +6180,7 @@
 				"hint": "Your messages stay when your account is deleted."
 			},
 			"delete": {
-				"label": "Temporary until deletion",
+				"label": "Temporary",
 				"hint": "Your messages are deleted with your account."
 			},
 			"note": "Your answer applies to this whole conversation.",

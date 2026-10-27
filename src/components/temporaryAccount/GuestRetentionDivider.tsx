@@ -10,9 +10,8 @@ export interface GuestRetentionDividerProps {
 }
 
 /**
- * #1869: a status line in the timeline (same divider as the date), so both
- * counsellor and guest see what happens to the guest's messages. No extra
- * header element.
+ * #1869: a status line in the timeline (same divider as the date). Says
+ * "Temporär" only when the messages go with the account. No extra header.
  */
 export const GuestRetentionDivider = ({
 	retention
@@ -23,9 +22,11 @@ export const GuestRetentionDivider = ({
 			<MessageDateDivider
 				tone="secondary"
 				icon={<TemporaryClockIcon focusable="false" />}
-				label={`${t('temporaryAccount.chip.guest')} · ${t(
-					`temporaryAccount.chip.${retention}`
-				)}`}
+				label={
+					retention === 'delete'
+						? `${t('temporaryAccount.chip.guest')} · ${t('temporaryAccount.marker.label')}`
+						: t('temporaryAccount.chip.guest')
+				}
 			/>
 		</div>
 	);

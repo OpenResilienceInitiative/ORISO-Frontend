@@ -6250,14 +6250,12 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Silinene kadar geçici",
+			"label": "Geçici",
 			"title": "Misafir hesabıyla birlikte silinir"
 		},
 		"deletedGuest": "Misafir (silindi)",
 		"chip": {
-			"guest": "Misafir hesabı",
-			"keep": "Mesajlar silindikten sonra kalır",
-			"delete": "Mesajlar silinene kadar geçici"
+			"guest": "Misafir hesabı"
 		},
 		"keepDialog": {
 			"title": "Mesajlarınız kalsın mı?",
@@ -6267,7 +6265,7 @@
 				"hint": "Hesabınız silindiğinde mesajlarınız kalır."
 			},
 			"delete": {
-				"label": "Silinene kadar geçici",
+				"label": "Geçici",
 				"hint": "Mesajlarınız hesabınızla birlikte silinir."
 			},
 			"note": "Cevabınız bu görüşmenin tamamı için geçerlidir.",

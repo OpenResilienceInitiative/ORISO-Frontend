@@ -6250,14 +6250,12 @@
 	},
 	"temporaryAccount": {
 		"marker": {
-			"label": "Temporaire jusqu’à la suppression",
+			"label": "Temporaire",
 			"title": "Supprimé avec le compte invité"
 		},
 		"deletedGuest": "Invité (supprimé)",
 		"chip": {
-			"guest": "Compte invité",
-			"keep": "Messages conservés après la suppression",
-			"delete": "Messages temporaires jusqu’à la suppression"
+			"guest": "Compte invité"
 		},
 		"keepDialog": {
 			"title": "Vos messages doivent-ils rester ?",
@@ -6267,7 +6265,7 @@
 				"hint": "Vos messages restent lorsque votre compte est supprimé."
 			},
 			"delete": {
-				"label": "Temporaires jusqu’à la suppression",
+				"label": "Temporaire",
 				"hint": "Vos messages sont supprimés avec votre compte."
 			},
 			"note": "Votre réponse vaut pour tout cet entretien.",
