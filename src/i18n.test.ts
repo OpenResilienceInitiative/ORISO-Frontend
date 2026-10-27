@@ -30,13 +30,13 @@ import {
 
 // fr, ru, ti and tr were backfilled to full coverage in #1154, so their budget
 // is zero: a new German key now has to be translated in the same change that
-// introduces it. English still trails by 63 keys. Tigrinya trails by the 7
-// history-request card keys: safety copy waits for a native review (Weblate).
+// introduces it. English still trails by 63 keys. Tigrinya trails by the 18
+// history-request keys: that copy waits for a native review (Weblate).
 const driftBudgets = {
 	en: { extraInLocale: 5, missingInLocale: 63 },
 	fr: { extraInLocale: 5, missingInLocale: 0 },
 	ru: { extraInLocale: 5, missingInLocale: 0 },
-	ti: { extraInLocale: 5, missingInLocale: 7 },
+	ti: { extraInLocale: 5, missingInLocale: 18 },
 	tr: { extraInLocale: 5, missingInLocale: 0 }
 } as const;
 

@@ -116,6 +116,22 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
 	});
 
+	it('lets a request with a reason follow the automatic one at once', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(await service.requestKeys(ROOM_ID)).toBe(true);
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+		// A second click on the same dialog is still held back.
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
+	});
+
 	it('still requests from valid devices when another device has no Olm session', async () => {
 		const harness = buildHarness();
 		harness.crypto.getUserDeviceInfo.mockResolvedValue(
