@@ -6025,6 +6025,7 @@
 		"group": {
 			"incomingTitle": "Appel entrant",
 			"incomingDescription": "Quelqu'un vous appelle…",
+			"incomingFrom": "{{name}} vous appelle…",
 			"close": "Fermer l'appel",
 			"autoFit": "Ajuster automatiquement",
 			"autoFitAria": "Ajuster la fenêtre d'appel",
@@ -6216,6 +6217,35 @@
 				"calculated-mismatch": "Le jeton hérité diffère de celui du moteur.",
 				"applied-mismatch": "La valeur appliquée diffère de celle du moteur."
 			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Patientez un instant, vous allez être admis",
+			"descriptionCall": "D'ici là, personne ne vous voit ni ne vous entend. Vous pouvez déjà régler votre micro et votre caméra ici.",
+			"descriptionGroup": "Dès que vous serez admis, vous pourrez écrire dans le groupe.",
+			"statusCall": "Vous avez frappé – votre conseiller voit que vous attendez.",
+			"statusGroup": "Vous avez frappé – l'animation du groupe voit que vous attendez.",
+			"openUntil": "Le chat de groupe est ouvert jusqu'à {{time}}.",
+			"cancel": "Ne plus attendre"
+		},
+		"admitted": {
+			"title": "Vous avez été admis",
+			"statusCall": "Connexion à l'appel …",
+			"statusGroup": "Ouverture du chat de groupe …"
+		},
+		"declined": {
+			"title": "Pas pour le moment",
+			"descriptionCall": "Votre conseiller ne peut pas vous admettre pour le moment. Réessayez plus tard ou envoyez un message.",
+			"descriptionGroup": "L'animation du groupe ne peut pas vous admettre pour le moment. Réessayez plus tard."
+		},
+		"knockAgain": "Frapper à nouveau",
+		"devices": {
+			"camera": "Caméra",
+			"microphone": "Micro",
+			"micOn": "Activer le micro",
+			"micOff": "Couper le micro",
+			"micMeter": "Volume de votre micro"
 		}
 	}
 }

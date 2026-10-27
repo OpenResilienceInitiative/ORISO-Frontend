@@ -6025,6 +6025,7 @@
 		"group": {
 			"incomingTitle": "Eingehender Anruf",
 			"incomingDescription": "Jemand ruft an…",
+			"incomingFrom": "{{name}} ruft an…",
 			"close": "Anruf schließen",
 			"autoFit": "Automatisch anpassen",
 			"autoFitAria": "Anruffenster automatisch anpassen",
@@ -6216,6 +6217,35 @@
 				"calculated-mismatch": "እቲ ዝተወርሰ ቶከን ካብ ዋጋ ሞተር ይፍለ።",
 				"applied-mismatch": "እቲ ዝተተግበረ ዋጋ ካብ ዋጋ ሞተር ይፍለ።"
 			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "ክሳብ ናብ ውሽጢ ዝእተዉ ቁሩብ ተጸበዩ",
+			"descriptionCall": "ክሳብ እቲ እዋን ዝኾነ ሰብ ኣይርእየኩምን ኣይሰምዓኩምን። ማይክሮፎንን ካሜራን ኣብዚ ከተዳልዉ ትኽእሉ ኢኹም።",
+			"descriptionGroup": "ምስ ኣተኹም ኣብ ጉጅለ ክትጽሕፉ ትኽእሉ ኢኹም።",
+			"statusCall": "ኳሕኳሕ ኢልኩም – ኣማኻሪኹም ከም እትጽበዩ ይርኢ እዩ።",
+			"statusGroup": "ኳሕኳሕ ኢልኩም – መራሒ ጉጅለ ከም እትጽበዩ ይርኢ እዩ።",
+			"openUntil": "እቲ ናይ ጉጅለ ቻት ክሳብ {{time}} ክፉት እዩ።",
+			"cancel": "ምጽባይ ኣቋርጽ"
+		},
+		"admitted": {
+			"title": "ክትኣትዉ ተፈቒዱልኩም",
+			"statusCall": "ምስ እቲ ጻውዒት ይራኸብ ኣሎ …",
+			"statusGroup": "ናይ ጉጅለ ቻት ይኽፈት ኣሎ …"
+		},
+		"declined": {
+			"title": "ሕጂ ኣይከኣልን",
+			"descriptionCall": "ኣማኻሪኹም ሕጂ ከእትወኩም ኣይክእልን። ደሓር እንደገና ፈትኑ ወይ መልእኽቲ ጸሓፉ።",
+			"descriptionGroup": "መራሒ ጉጅለ ሕጂ ከእትወኩም ኣይክእልን። ደሓር እንደገና ፈትኑ።"
+		},
+		"knockAgain": "እንደገና ኳሕኳሕ በል",
+		"devices": {
+			"camera": "ካሜራ",
+			"microphone": "ማይክሮፎን",
+			"micOn": "ማይክሮፎን ክፈት",
+			"micOff": "ማይክሮፎን ዕጸው",
+			"micMeter": "ድምጺ ማይክሮፎንኩም"
 		}
 	}
 }

@@ -6015,6 +6015,7 @@
 		"group": {
 			"incomingTitle": "Eingehender Anruf",
 			"incomingDescription": "Jemand ruft an…",
+			"incomingFrom": "{{name}} ruft an…",
 			"close": "Anruf schließen",
 			"autoFit": "Automatisch anpassen",
 			"autoFitAria": "Anruffenster automatisch anpassen",
@@ -6206,6 +6207,35 @@
 				"calculated-mismatch": "Das geerbte Token weicht von der Engine ab.",
 				"applied-mismatch": "Der angewendete Wert weicht von der Engine ab."
 			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Kurz warten, bis Sie hereingelassen werden",
+			"descriptionCall": "Bis dahin sieht und hört Sie niemand. Mikrofon und Kamera können Sie hier schon einstellen.",
+			"descriptionGroup": "Sobald Sie hereingelassen werden, können Sie in der Gruppe mitschreiben.",
+			"statusCall": "Angeklopft – Ihre Beratung sieht, dass Sie warten.",
+			"statusGroup": "Angeklopft – die Gruppenleitung sieht, dass Sie warten.",
+			"openUntil": "Der Gruppenchat ist bis {{time}} Uhr geöffnet.",
+			"cancel": "Nicht mehr warten"
+		},
+		"admitted": {
+			"title": "Sie wurden hereingelassen",
+			"statusCall": "Das Gespräch wird verbunden …",
+			"statusGroup": "Der Gruppenchat wird geöffnet …"
+		},
+		"declined": {
+			"title": "Gerade geht es nicht",
+			"descriptionCall": "Ihre Beratung kann Sie im Moment nicht hereinlassen. Versuchen Sie es später noch einmal oder schreiben Sie eine Nachricht.",
+			"descriptionGroup": "Die Gruppenleitung kann Sie im Moment nicht hereinlassen. Versuchen Sie es später noch einmal."
+		},
+		"knockAgain": "Erneut anklopfen",
+		"devices": {
+			"camera": "Kamera",
+			"microphone": "Mikrofon",
+			"micOn": "Mikrofon an",
+			"micOff": "Mikrofon aus",
+			"micMeter": "Lautstärke Ihres Mikrofons"
 		}
 	}
 }
