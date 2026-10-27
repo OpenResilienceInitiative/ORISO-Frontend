@@ -12,6 +12,7 @@ export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
 const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
 const REQUEST_THROTTLE_MS = 30_000;
+const REASONED_REQUEST_THROTTLE_MS = 5_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
 const MAX_PENDING_APPROVALS = 20;
 const MAX_PENDING_PER_ROOM = 5;
@@ -80,6 +81,7 @@ const isNonEmptyString = (value: unknown): value is string =>
 export class MatrixRoomHistoryKeyTransfer {
 	private client: MatrixClient | null = null;
 	private readonly lastRequestAt = new Map<string, number>();
+	private readonly lastReasonedRequestAt = new Map<string, number>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
 	private readonly lastReasonRequestAt = new Map<string, number>();
@@ -285,7 +287,17 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 
 		const now = Date.now();
-		if (now - (this.lastRequestAt.get(roomId) || 0) < REQUEST_THROTTLE_MS) {
+		const reasoned = !!normalizeReason(options.reason);
+		// A request with a written reason replaces the automatic one that
+		// ran when the unreadable events were found; it only waits for the
+		// short window that stops double sends.
+		const throttleMs = reasoned
+			? REASONED_REQUEST_THROTTLE_MS
+			: REQUEST_THROTTLE_MS;
+		const lastAt = reasoned
+			? this.lastReasonedRequestAt.get(roomId) || 0
+			: this.lastRequestAt.get(roomId) || 0;
+		if (now - lastAt < throttleMs) {
 			emitDiagnostic('request-throttled');
 			return false;
 		}
@@ -318,6 +330,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				? globalThis.crypto.randomUUID()
 				: `${deviceId}-${now}`;
 		this.lastRequestAt.set(roomId, now);
+		if (reasoned) this.lastReasonedRequestAt.set(roomId, now);
 		const reason = normalizeReason(options.reason);
 		const requestContent = {
 			room_id: roomId,

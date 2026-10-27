@@ -85,7 +85,8 @@ const mocks = vi.hoisted(() => {
 				};
 			}
 		} as any,
-		requestHistoryKeys: vi.fn(() => Promise.resolve(true))
+		requestHistoryKeys: vi.fn(() => Promise.resolve(true)),
+		recoveryStatus: 'ok' as string
 	};
 });
 
@@ -230,6 +231,17 @@ vi.mock('./SessionItemComponent', () => ({
 	}
 }));
 
+vi.mock('../../services/recoveryReminderState', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../services/recoveryReminderState')
+	>()),
+	useRecoveryRuntimeStatus: () => mocks.recoveryStatus
+}));
+vi.mock('../historyRequest/HistoryAskCard', () => ({
+	HistoryAskCard: (props: { roomId: string; unreadable?: boolean }) => (
+		<div data-testid="history-ask-card" data-room={props.roomId} />
+	)
+}));
 vi.mock('./CaseHandoverGate', () => ({
 	CaseHandoverGate: () => <div data-testid="case-handover-gate" />
 }));
@@ -416,6 +428,39 @@ const emitLifecycle = (change: any) => {
 	});
 };
 
+describe('SessionStream history request card', () => {
+	beforeEach(() => {
+		mocks.recoveryStatus = 'needs-recovery-key';
+	});
+	afterEach(cleanup);
+
+	it('shows the ask card to an advice seeker in a one-to-one chat', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen.getByTestId('history-ask-card').getAttribute('data-room')
+		).toBe(ROOM_ID);
+	});
+
+	it('hides it in a group chat, where the reason would reach every member', () => {
+		renderSessionStream({ isGroup: true });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it from a counsellor, who cannot approve their own request', () => {
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData as any
+		});
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it while the recovery key is not missing', () => {
+		mocks.recoveryStatus = 'ok';
+		renderSessionStream({ isGroup: false });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+});
+
 describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
@@ -450,6 +495,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		mocks.timelineListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
+		mocks.recoveryStatus = 'ok';
 		mocks.suspendedSessionId = null;
 		mocks.suspendedRender = null;
 		mocks.suspendedRenders = 0;

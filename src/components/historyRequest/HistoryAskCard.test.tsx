@@ -67,17 +67,55 @@ describe('HistoryAskCard', () => {
 		);
 	});
 
-	it('says so when the keys arrive for this room', async () => {
+	it('says so once the conversation is readable again', () => {
+		const { rerender } = render(
+			<HistoryAskCard
+				roomId="!r"
+				send={vi.fn()}
+				initialState="waiting"
+				unreadable
+			/>
+		);
+		expect(screen.getByText('historyRequest.ask.waiting')).toBeTruthy();
+		rerender(
+			<HistoryAskCard
+				roomId="!r"
+				send={vi.fn()}
+				initialState="waiting"
+				unreadable={false}
+			/>
+		);
+		expect(screen.getByText('historyRequest.ask.done')).toBeTruthy();
+	});
+
+	it('keeps waiting while some events stay unreadable', () => {
 		render(
-			<HistoryAskCard roomId="!r" send={vi.fn()} initialState="waiting" />
+			<HistoryAskCard
+				roomId="!r"
+				send={vi.fn()}
+				initialState="waiting"
+				unreadable
+			/>
 		);
 		window.dispatchEvent(
 			new CustomEvent('oriso:matrix-history-keys-imported', {
 				detail: { roomId: '!r', imported: 3 }
 			})
 		);
-		await waitFor(() =>
-			expect(screen.getByText('historyRequest.ask.done')).toBeTruthy()
+		expect(screen.queryByText('historyRequest.ask.done')).toBeNull();
+	});
+
+	it('offers a new request while waiting, since a decline is not reported back', () => {
+		render(
+			<HistoryAskCard roomId="!r" send={vi.fn()} initialState="waiting" />
 		);
+		expect(screen.getByTestId('history-ask-open')).toBeTruthy();
+	});
+
+	it('shows nothing when there is nothing to ask for', () => {
+		const { container } = render(
+			<HistoryAskCard roomId="!r" send={vi.fn()} unreadable={false} />
+		);
+		expect(container.textContent).toBe('');
 	});
 });

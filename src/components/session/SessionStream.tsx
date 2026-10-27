@@ -162,6 +162,10 @@ export const SessionStream = ({
 	// instance got removeAllListeners(), so every effect holding room
 	// listeners depends on this generation to re-attach to the new client.
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
+	// The room whose main timeline holds events this device cannot read.
+	const [unreadableRoomId, setUnreadableRoomId] = useState<string | null>(
+		null
+	);
 	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
 	// WP-B2 (ADR-008): the supervision side room is its own timeline. It is
@@ -526,6 +530,12 @@ export const SessionStream = ({
 					: [];
 				// The Teamberatung room, same treatment (FE#514 / ADR-016).
 				const teamEvents = teamRoomId ? loadRoomEvents(teamRoomId) : [];
+				setUnreadableRoomId(
+					resolvedMatrixRoomId &&
+						(clientEvents as any[]).some(isUndecryptedRoomEvent)
+						? resolvedMatrixRoomId
+						: null
+				);
 				if (mayRequestHistoryKeys) {
 					[
 						[resolvedMatrixRoomId, clientEvents],
@@ -1620,9 +1630,20 @@ export const SessionStream = ({
 								/>
 							)}
 						{recoveryStatus === 'needs-recovery-key' &&
+							hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+							!activeSession.isGroup &&
+							mayRequestHistoryKeys &&
 							!!resolvedChatSession.matrixRoomId && (
 								<HistoryAskCard
+									key={resolvedChatSession.matrixRoomId}
 									roomId={resolvedChatSession.matrixRoomId}
+									unreadable={
+										unreadableRoomId ===
+										resolvedChatSession.matrixRoomId
+									}
 								/>
 							)}
 						{isConsultant && (
