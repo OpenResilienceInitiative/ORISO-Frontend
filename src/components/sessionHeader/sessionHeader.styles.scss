@@ -203,6 +203,10 @@ $room-header-gap-top: 2px;
 	}
 
 	&__username {
+		// Align the 48px avatar bottom with the 44px menu outline while
+		// preserving the header row and shifting its title with the avatars.
+		position: relative;
+		top: -2px;
 		cursor: pointer;
 
 		// T4: the participant tooltips hang below the row; the h3 clips
@@ -623,7 +627,7 @@ $room-header-gap-top: 2px;
 
 	// T14: the participant stack overlaps the type pill by 8 px (Figma
 	// 1320:38281) and paints above it (`.participantStack` is z-indexed).
-	&__memberStack--single &__participants {
+	&__memberStack &__participants {
 		margin-left: -$stack-pill-overlap;
 	}
 

@@ -11,7 +11,8 @@
 		".storybook/**/*.ts",
 		".storybook/**/*.tsx",
 		"src/**/*.stories.ts",
-		"src/**/*.stories.tsx"
+		"src/**/*.stories.tsx",
+		"src/components/call/__storybook__/groupCallHarness.tsx"
 	],
 	"exclude": ["node_modules"]
 }

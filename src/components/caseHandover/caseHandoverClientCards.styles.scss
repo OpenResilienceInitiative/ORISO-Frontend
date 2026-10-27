@@ -182,26 +182,8 @@
 }
 
 /* Outer left margin of the message block against the stream edge: 16px. */
-.caseHandoverInlineConsent {
-	display: flex;
-	justify-content: flex-start;
-	padding: 16px 0 0;
-}
-
-.caseHandoverInlineConsent {
-	.messageItem,
-	.messageItem__messageWrap,
-	.messageItem__content {
-		width: 100%;
-		min-width: 0;
-	}
-
-	.messageItem__message--systemNotification {
-		width: 100%;
-		min-width: 0;
-		max-width: 100%;
-		container: case-handover-consent / inline-size;
-	}
+.caseHandoverInlineConsent .carimatMessageFrame__bubble {
+	container: case-handover-consent / inline-size;
 }
 
 /* Figma 9596-35524: on a narrow message both answers are neutral outline

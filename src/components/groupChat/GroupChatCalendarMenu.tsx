@@ -24,13 +24,16 @@ import icsIcon from '../../resources/img/icons/download.svg';
 import { useTranslation } from 'react-i18next';
 import {
 	buildNeutralGroupChatCalendar,
-	downloadNeutralGroupChatIcs
+	downloadNeutralGroupChatIcs,
+	type GroupChatSeries
 } from './groupChatCalendar';
 
 interface GroupChatCalendarMenuProps {
 	start: Date;
 	durationMinutes: number;
 	eventId: string | number;
+	/** The dates left of the series from `start` on, instead of this one. */
+	series?: GroupChatSeries;
 }
 
 interface GroupChatCalendarPopoverProps extends GroupChatCalendarMenuProps {
@@ -44,6 +47,7 @@ export const GroupChatCalendarPopover = ({
 	start,
 	durationMinutes,
 	eventId,
+	series,
 	anchorEl: anchor,
 	onClose: closeMenu,
 	triggerId,
@@ -103,9 +107,10 @@ export const GroupChatCalendarPopover = ({
 				durationMinutes,
 				title,
 				defaultTitle,
-				eventId
+				eventId,
+				series
 			}),
-		[defaultTitle, durationMinutes, eventId, start, title]
+		[defaultTitle, durationMinutes, eventId, series, start, title]
 	);
 
 	return (
@@ -165,7 +170,11 @@ export const GroupChatCalendarPopover = ({
 				<ChatMenuDropdownDivider />
 				<Box sx={{ px: 1, pb: 1 }}>
 					<Typography variant="body2" color="text.secondary">
-						{translate('groupChat.calendar.shareHint')}
+						{translate(
+							series
+								? 'groupChat.calendar.shareHintSeries'
+								: 'groupChat.calendar.shareHint'
+						)}
 					</Typography>
 				</Box>
 				{(
@@ -183,44 +192,62 @@ export const GroupChatCalendarPopover = ({
 							'copyOutlook'
 						]
 					] as const
-				).map(([provider, icon, url, copyLabel]) => (
-					<Box
-						key={provider}
-						sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-					>
-						<ChatMenuDropdownItem
-							as="a"
-							href={url}
-							target="_blank"
-							rel="noreferrer"
-							onClick={closeMenu}
-							icon={
-								<img src={icon} alt="" width={20} height={20} />
-							}
-							title={translate(`groupChat.calendar.${provider}`)}
-						/>
-						<Tooltip
-							title={translate(`groupChat.calendar.${copyLabel}`)}
+				)
+					// A series has no Outlook web link (see the builder).
+					.flatMap(([provider, icon, url, copyLabel]) =>
+						url ? [[provider, icon, url, copyLabel] as const] : []
+					)
+					.map(([provider, icon, url, copyLabel]) => (
+						<Box
+							key={provider}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: 0.5
+							}}
 						>
-							<span>
-								<IconButton
-									aria-label={translate(
-										`groupChat.calendar.${copyLabel}`
-									)}
-									disabled={copyState === 'pending'}
-									onClick={() => void copyLink(url)}
-									sx={{
-										'width': 44,
-										'height': 44,
-										'& svg': { width: 20, height: 20 }
-									}}
-								>
-									<CopyIcon />
-								</IconButton>
-							</span>
-						</Tooltip>
-					</Box>
-				))}
+							<ChatMenuDropdownItem
+								as="a"
+								href={url}
+								target="_blank"
+								rel="noreferrer"
+								onClick={closeMenu}
+								icon={
+									<img
+										src={icon}
+										alt=""
+										width={20}
+										height={20}
+									/>
+								}
+								title={translate(
+									`groupChat.calendar.${provider}`
+								)}
+							/>
+							<Tooltip
+								title={translate(
+									`groupChat.calendar.${copyLabel}`
+								)}
+							>
+								<span>
+									<IconButton
+										aria-label={translate(
+											`groupChat.calendar.${copyLabel}`
+										)}
+										disabled={copyState === 'pending'}
+										onClick={() => void copyLink(url)}
+										sx={{
+											'width': 44,
+											'height': 44,
+											'& svg': { width: 20, height: 20 }
+										}}
+									>
+										<CopyIcon />
+									</IconButton>
+								</span>
+							</Tooltip>
+						</Box>
+					))}
 				{(copyState === 'success' || copyState === 'error') && (
 					<Box sx={{ px: 1, py: 1 }}>
 						<Alert

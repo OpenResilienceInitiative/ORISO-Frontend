@@ -118,6 +118,10 @@ export interface GroupChatInfoM3Props {
 	onEdit?: () => void;
 	onBack?: () => void;
 	backLabel?: string;
+	/** Inside a dialog: the dialog owns title, close and scrolling. */
+	embedded?: boolean;
+	/** Not a member yet: the schedule only, no member list. */
+	hideParticipants?: boolean;
 }
 
 const SETTING_ICONS: Record<GroupChatInfoSettingKey, React.ElementType> = {
@@ -239,7 +243,9 @@ export const GroupChatInfoM3 = ({
 	settings,
 	onEdit,
 	onBack,
-	backLabel
+	backLabel,
+	embedded = false,
+	hideParticipants = false
 }: GroupChatInfoM3Props) => {
 	const { t: translate } = useTranslation();
 	const baseId = useId().replace(/:/g, '');
@@ -253,59 +259,68 @@ export const GroupChatInfoM3 = ({
 	return (
 		<Box
 			component="section"
-			aria-labelledby={ids.title}
+			// Embedded, the dialog's own title names the region.
+			aria-labelledby={embedded ? undefined : ids.title}
 			data-testid="group-chat-info-m3"
 			sx={{
 				display: 'flex',
 				flexDirection: 'column',
 				flex: 1,
 				minHeight: 0,
-				height: '100%',
-				bgcolor: 'var(--m3-surface-container-lowest)',
+				height: embedded ? 'auto' : '100%',
+				bgcolor: embedded
+					? 'transparent'
+					: 'var(--m3-surface-container-lowest)',
 				color: onSurface,
 				containerType: 'inline-size'
 			}}
 		>
-			{/* M3 small top app bar */}
-			<Box
-				sx={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: 0.5,
-					minHeight: 64,
-					px: 1,
-					borderBottom: '1px solid var(--m3-outline-variant)',
-					flex: '0 0 auto'
-				}}
-			>
-				{onBack && (
-					<IconButton
-						onClick={onBack}
-						aria-label={backLabel ?? translate('app.back')}
-						sx={{ color: onSurfaceVariant }}
-					>
-						<ArrowBackRoundedIcon />
-					</IconButton>
-				)}
-				<Box sx={{ minWidth: 0, pl: onBack ? 0.5 : 1.5 }}>
-					<Typography
-						id={ids.title}
-						component="h2"
-						sx={{ ...type.titleLarge, color: onSurface, m: 0 }}
-					>
-						{translate('groupChat.info.headline')}
-					</Typography>
+			{/* M3 small top app bar; the dialog brings its own. */}
+			{!embedded && (
+				<Box
+					sx={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: 0.5,
+						minHeight: 64,
+						px: 1,
+						borderBottom: '1px solid var(--m3-outline-variant)',
+						flex: '0 0 auto'
+					}}
+				>
+					{onBack && (
+						<IconButton
+							onClick={onBack}
+							aria-label={backLabel ?? translate('app.back')}
+							sx={{ color: onSurfaceVariant }}
+						>
+							<ArrowBackRoundedIcon />
+						</IconButton>
+					)}
+					<Box sx={{ minWidth: 0, pl: onBack ? 0.5 : 1.5 }}>
+						<Typography
+							id={ids.title}
+							component="h2"
+							sx={{ ...type.titleLarge, color: onSurface, m: 0 }}
+						>
+							{translate('groupChat.info.headline')}
+						</Typography>
+					</Box>
 				</Box>
-			</Box>
+			)}
 
 			<Box
-				sx={{
-					flex: 1,
-					minHeight: 0,
-					overflowY: 'auto',
-					px: { xs: 2, lg: 3 },
-					py: 3
-				}}
+				sx={
+					embedded
+						? { pt: 1 }
+						: {
+								flex: 1,
+								minHeight: 0,
+								overflowY: 'auto',
+								px: { xs: 2, lg: 3 },
+								py: 3
+							}
+				}
 			>
 				<Box sx={{ maxWidth: 960, mx: 'auto' }}>
 					{/* Hero: who this room is and when it meets */}
@@ -417,160 +432,172 @@ export const GroupChatInfoM3 = ({
 					>
 						<Box sx={{ display: 'grid', gap: 2, minWidth: 0 }}>
 							{/* Participants */}
-							<Box
-								component="section"
-								aria-labelledby={ids.participants}
-								sx={sectionCardSx}
-							>
-								<SectionHeading
-									id={ids.participants}
-									trailing={
-										<Typography
-											component="span"
-											sx={{
-												...type.labelMedium,
-												color: onSurfaceVariant
-											}}
-										>
-											{participants.length}
-										</Typography>
-									}
+							{!hideParticipants && (
+								<Box
+									component="section"
+									aria-labelledby={ids.participants}
+									sx={sectionCardSx}
 								>
-									{translate(
-										'groupChat.info.subscribers.headline'
-									)}
-								</SectionHeading>
-								{(onShowQrCode || onCopyInviteLink) && (
-									<Box
-										sx={{
-											display: 'flex',
-											flexWrap: 'wrap',
-											gap: 1,
-											px: 2,
-											pb: 1
-										}}
-									>
-										{onShowQrCode && (
-											<Button
-												variant="outlined"
-												startIcon={
-													<QrCode2RoundedIcon />
-												}
-												onClick={onShowQrCode}
-												disabled={inviteLinkUnavailable}
-												sx={outlinedActionSx}
-											>
-												{translate('qrCode.link.text')}
-											</Button>
-										)}
-										{onCopyInviteLink && (
-											<Button
-												variant="outlined"
-												startIcon={
-													<ContentCopyRoundedIcon />
-												}
-												onClick={onCopyInviteLink}
-												disabled={inviteLinkUnavailable}
-												sx={outlinedActionSx}
-											>
-												{translate(
-													'groupChat.copy.link.text'
-												)}
-											</Button>
-										)}
-										{inviteLinkUnavailable && (
+									<SectionHeading
+										id={ids.participants}
+										trailing={
 											<Typography
+												component="span"
 												sx={{
-													...type.bodyMedium,
-													color: onSurfaceVariant,
-													flexBasis: '100%'
+													...type.labelMedium,
+													color: onSurfaceVariant
 												}}
 											>
-												{translate(
-													'groupChat.copy.link.unavailable'
-												)}
+												{participants.length}
 											</Typography>
-										)}
-									</Box>
-								)}
-								{participants.length === 0 ? (
-									<Typography
-										sx={{
-											...type.bodyMedium,
-											color: onSurfaceVariant,
-											px: 2,
-											py: 1.5
-										}}
+										}
 									>
 										{translate(
-											'groupChat.info.subscribers.empty'
+											'groupChat.info.subscribers.headline'
 										)}
-									</Typography>
-								) : (
-									<List disablePadding>
-										{participants.map((participant) => (
-											<ListItem
-												key={participant.id}
-												sx={listItemSx}
-												secondaryAction={
-													canModerate &&
-													!participant.isModerator &&
-													!participant.statusLabel ? (
-														<IconButton
-															edge="end"
-															aria-label={participantMenuLabel(
+									</SectionHeading>
+									{(onShowQrCode || onCopyInviteLink) && (
+										<Box
+											sx={{
+												display: 'flex',
+												flexWrap: 'wrap',
+												gap: 1,
+												px: 2,
+												pb: 1
+											}}
+										>
+											{onShowQrCode && (
+												<Button
+													variant="outlined"
+													startIcon={
+														<QrCode2RoundedIcon />
+													}
+													onClick={onShowQrCode}
+													disabled={
+														inviteLinkUnavailable
+													}
+													sx={outlinedActionSx}
+												>
+													{translate(
+														'qrCode.link.text'
+													)}
+												</Button>
+											)}
+											{onCopyInviteLink && (
+												<Button
+													variant="outlined"
+													startIcon={
+														<ContentCopyRoundedIcon />
+													}
+													onClick={onCopyInviteLink}
+													disabled={
+														inviteLinkUnavailable
+													}
+													sx={outlinedActionSx}
+												>
+													{translate(
+														'groupChat.copy.link.text'
+													)}
+												</Button>
+											)}
+											{inviteLinkUnavailable && (
+												<Typography
+													sx={{
+														...type.bodyMedium,
+														color: onSurfaceVariant,
+														flexBasis: '100%'
+													}}
+												>
+													{translate(
+														'groupChat.copy.link.unavailable'
+													)}
+												</Typography>
+											)}
+										</Box>
+									)}
+									{participants.length === 0 ? (
+										<Typography
+											sx={{
+												...type.bodyMedium,
+												color: onSurfaceVariant,
+												px: 2,
+												py: 1.5
+											}}
+										>
+											{translate(
+												'groupChat.info.subscribers.empty'
+											)}
+										</Typography>
+									) : (
+										<List disablePadding>
+											{participants.map((participant) => (
+												<ListItem
+													key={participant.id}
+													sx={listItemSx}
+													secondaryAction={
+														canModerate &&
+														!participant.isModerator &&
+														!participant.statusLabel ? (
+															<IconButton
+																edge="end"
+																aria-label={participantMenuLabel(
+																	participant.name
+																)}
+																onClick={(
+																	event
+																) =>
+																	onParticipantMenu?.(
+																		participant,
+																		event.currentTarget
+																	)
+																}
+																sx={{
+																	color: onSurfaceVariant
+																}}
+															>
+																<MoreVertRoundedIcon />
+															</IconButton>
+														) : undefined
+													}
+												>
+													<ListItemAvatar>
+														<Avatar
+															sx={avatarSx}
+															aria-hidden="true"
+														>
+															{initialsOf(
 																participant.name
 															)}
-															onClick={(event) =>
-																onParticipantMenu?.(
-																	participant,
-																	event.currentTarget
-																)
-															}
-															sx={{
-																color: onSurfaceVariant
-															}}
-														>
-															<MoreVertRoundedIcon />
-														</IconButton>
-													) : undefined
-												}
-											>
-												<ListItemAvatar>
-													<Avatar
-														sx={avatarSx}
-														aria-hidden="true"
-													>
-														{initialsOf(
+														</Avatar>
+													</ListItemAvatar>
+													<ListItemText
+														primary={
 															participant.name
-														)}
-													</Avatar>
-												</ListItemAvatar>
-												<ListItemText
-													primary={participant.name}
-													secondary={
-														participant.statusLabel
-													}
-													secondaryTypographyProps={{
-														sx: {
-															...type.labelMedium,
-															color: 'var(--m3-error)'
 														}
-													}}
-													primaryTypographyProps={{
-														sx: {
-															...type.bodyLarge,
-															color: onSurface,
-															overflowWrap:
-																'anywhere'
+														secondary={
+															participant.statusLabel
 														}
-													}}
-												/>
-											</ListItem>
-										))}
-									</List>
-								)}
-							</Box>
+														secondaryTypographyProps={{
+															sx: {
+																...type.labelMedium,
+																color: 'var(--m3-error)'
+															}
+														}}
+														primaryTypographyProps={{
+															sx: {
+																...type.bodyLarge,
+																color: onSurface,
+																overflowWrap:
+																	'anywhere'
+															}
+														}}
+													/>
+												</ListItem>
+											))}
+										</List>
+									)}
+								</Box>
+							)}
 
 							{/* Team roles */}
 							{(teamRolesSlot ?? teamRoles.length > 0) && (

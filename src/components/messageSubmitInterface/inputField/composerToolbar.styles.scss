@@ -109,6 +109,15 @@
 			min-width: 0;
 			padding: 0 10px;
 		}
+
+		// Unavailable but explained (aria-disabled keeps it focusable).
+		&--unavailable,
+		&--unavailable:hover {
+			opacity: 0.38;
+			cursor: not-allowed;
+			color: var(--m3-secondary, #4c555f);
+			background: transparent;
+		}
 	}
 
 	// Compact action bar (#1141): every icon uses the larger hit area,
@@ -135,6 +144,12 @@
 			&:hover {
 				color: var(--m3-primary-container, #cc1e1c);
 				background: var(--m3-primary-fixed, #ffdad5);
+			}
+
+			// An unavailable control must not light up like an active one.
+			&.composerToolbar__button--unavailable:hover {
+				color: var(--m3-secondary, #4c555f);
+				background: transparent;
 			}
 		}
 

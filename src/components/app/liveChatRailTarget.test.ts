@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolveLiveChatRailTarget } from './liveChatRailTarget';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 

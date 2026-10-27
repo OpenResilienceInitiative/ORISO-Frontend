@@ -59,6 +59,7 @@ import {
 	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
 	useLiveChatAvailabilityLossNotice
 } from './useLiveChatAvailabilityLossNotice';
+import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -133,6 +134,8 @@ export const NavigationBar = ({
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	// #1485: the one heartbeat owner is also the one that says why it stopped.
 	useLiveChatAvailabilityLossNotice(liveChatLostReason);
+	// #1704: live, but the provider's agreement turns advice seekers away.
+	useLiveChatDpaRestrictionNotice(isConsultant && liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -227,6 +230,14 @@ export const NavigationBar = ({
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
 	}, [isFirstVisit]);
+	// A timer left running past unmount sets state on a torn-down tree.
+	useEffect(
+		() => () => {
+			clearTimeout(animateNavIconTimeoutRef.current);
+			animateNavIconTimeoutRef.current = null;
+		},
+		[]
+	);
 
 	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
 	// server total minus hidden unread rows on loaded pages, an upper bound);
@@ -392,8 +403,13 @@ export const NavigationBar = ({
 									: '';
 								// The Link's aria-label is its whole accessible
 								// name, so the count has to be part of it.
+								const unreadTitle = showUnreadNav
+									? unreadNavTitle(item.to)
+									: undefined;
 								const linkLabel = showUnreadNav
-									? `${label}, ${unreadLabel}`
+									? [label, unreadLabel, unreadTitle]
+											.filter(Boolean)
+											.join(', ')
 									: label;
 								// Desktop rail may hyphenate/wrap; mobile bottom bar
 								// must stay single-line to avoid overlapping neighbors.
@@ -520,11 +536,8 @@ export const NavigationBar = ({
 													<NavigationUnreadIndicator
 														animate={animateNavIcon}
 														count={unreadCount}
-														label={unreadLabel}
 														variant="figma"
-														title={unreadNavTitle(
-															item.to
-														)}
+														title={unreadTitle}
 													/>
 												)}
 											</div>
@@ -546,9 +559,8 @@ export const NavigationBar = ({
 											<NavigationUnreadIndicator
 												animate={animateNavIcon}
 												count={unreadCount}
-												label={unreadLabel}
 												variant="default"
-												title={unreadNavTitle(item.to)}
+												title={unreadTitle}
 											/>
 										)}
 									</Link>
@@ -867,14 +879,11 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
-	label,
 	variant = 'default',
 	title
 }: {
 	animate: boolean;
 	count: number;
-	/** Localised "{{count}} new messages" (also part of the link's name). */
-	label: string;
 	variant?: 'default' | 'figma';
 	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
 	title?: string;
@@ -883,9 +892,10 @@ const NavigationUnreadIndicator = ({
 
 	useEffect(() => {
 		// After first render wait for initial animation
-		setTimeout(() => {
+		const timeout = setTimeout(() => {
 			setVisible(true);
 		}, 1000);
+		return () => clearTimeout(timeout);
 	}, []);
 
 	const display = count > 99 ? '99+' : String(count);
@@ -900,7 +910,7 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={title ? `${label}, ${title}` : label}
+			aria-hidden="true"
 			title={title}
 		>
 			{isFigma ? (
