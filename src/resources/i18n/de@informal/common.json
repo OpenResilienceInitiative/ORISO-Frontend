@@ -645,13 +645,7 @@
 		"error": "Fehler",
 		"info": "Information",
 		"success": "Erfolg",
-		"warning": "Warnung",
-		"liveChatMessage": {
-			"title": "Neue Nachricht im Live-Chat",
-			"from": "Von {{name}}",
-			"several": "{{count}} neue Nachrichten",
-			"open": "Chat öffnen"
-		}
+		"warning": "Warnung"
 	},
 	"notifications": {
 		"displayFilter": {
@@ -942,7 +936,6 @@
 				"kind": {
 					"new": "Neue Anfrage",
 					"standard": "Standard-Benachrichtigung",
-					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
 					"handover": "Übergabe",
 					"call": "Eingehender Anruf",
