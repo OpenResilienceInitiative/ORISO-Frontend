@@ -3562,11 +3562,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						{translate('enquiry.rejection.closed')}
 					</div>
 				)}
-				{isEnquiryTakenByColleague(
-					type,
-					activeSession,
-					userData?.userId
-				) && <EnquiryTakenNotice />}
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
 					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
@@ -4636,6 +4631,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	return (
 		<SupervisionPanelContext.Provider value={supervisionPanelContextValue}>
 			{isPhoneLayout && sidePanel ? sidePanel : cardWithPanel}
+			{/* Outside the phone switch: a full-screen panel hides the card. */}
+			{isEnquiryTakenByColleague(
+				type,
+				activeSession,
+				userData?.userId
+			) && <EnquiryTakenNotice />}
 		</SupervisionPanelContext.Provider>
 	);
 };

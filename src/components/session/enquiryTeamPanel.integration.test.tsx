@@ -298,6 +298,7 @@ function openEnquiry(
 		assigned?: boolean;
 		/** Owner the reload reports once the case has left the enquiry state. */
 		reloadedConsultant?: string;
+		width?: number;
 	} = {}
 ) {
 	const status = options.status ?? 1;
@@ -373,7 +374,7 @@ function openEnquiry(
 		);
 	}
 	const providers: [React.Context<any>, any][] = [
-		[ResponsiveContext, { width: 1440 }],
+		[ResponsiveContext, { width: options.width ?? 1440 }],
 		[
 			UserDataContext,
 			{
@@ -745,6 +746,33 @@ it('tells the counsellor when an enquiry link opens a case a colleague already t
 	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy());
 });
 
+it('tells the counsellor on a phone even when the team panel fills the screen', async () => {
+	// Phone width: the side panel replaces the case card.
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		status: 2,
+		assigned: true,
+		teamChannel: true,
+		width: 390
+	});
+	await waitFor(
+		() => expect(view.container.querySelector('.sidePanel')).not.toBeNull(),
+		{ timeout: 15000 }
+	);
+	expect(view.container.querySelector('.chatStage__card')).toBeNull();
+	expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'session.anonymous.takenByOtherConsultant.button.label'
+		})
+	);
+	await waitFor(() =>
+		expect(view.getByTestId('route').textContent).toBe(
+			'/sessions/consultant/sessionPreview'
+		)
+	);
+}, 20000);
+
 it('stays silent when the counsellor accepted the enquiry themself', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
 		reloadedConsultant: 'consultant'
@@ -757,9 +785,15 @@ it('stays silent when the counsellor accepted the enquiry themself', async () =>
 	boundary.sessionRoom.mockResolvedValue({
 		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
 	});
-	await waitFor(() => expect(boundary.reload).toHaveBeenCalled(), {
-		timeout: 10000
-	});
+	await waitFor(
+		() =>
+			expect(
+				screen.queryByRole('button', {
+					name: 'enquiry.acceptButton.known'
+				})
+			).toBeNull(),
+		{ timeout: 10000 }
+	);
 	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
 	expect(view.getByTestId('route').textContent).toMatch(
 		/^\/sessions\/consultant\/sessionPreview\/4711/
