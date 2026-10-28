@@ -40,6 +40,7 @@ const EXPECTED_ROW: Record<
 		asker: 'conversations/standard'
 	},
 	'message.new+liveChat': { consultant: 'conversations/liveChat' },
+	'message.new+mentioned': { consultant: 'conversations/mention' },
 	'thread.reply.new': {
 		consultant: 'conversations/standard',
 		asker: 'conversations/standard'
@@ -121,6 +122,7 @@ const EXPECTED_ROW: Record<
 
 /** Event types UserService origin/dev does NOT write (checked 2026-10-28). */
 const NOT_EMITTED = [
+	'message.new+mentioned',
 	'handover.requested',
 	'handover.partial',
 	'handover.all_confirmed',
@@ -133,21 +135,18 @@ const NOT_EMITTED = [
 	'draft.created'
 ];
 
-/** Cases with an in-app pop-up card: live chat, new enquiry, mention, handover. */
+/**
+ * Cases with an in-app pop-up card (Frank, 28 Oct): live chat, new enquiry,
+ * mention, and only the handover events a counsellor must act on. Handover
+ * status steps and the consent request (addressed to the advice seeker) get none.
+ */
 const POPUP_CASES = [
 	'request.new',
 	'waiting_room.client.joined',
 	'message.new+liveChat',
+	'message.new+mentioned',
 	'team.discussion.new+mentioned',
-	'case.handover.consent.requested',
-	'case.handover.granted',
-	'case.handover.consent.declined',
-	'case.handover.offer.received',
-	'handover.requested',
-	'handover.partial',
-	'handover.all_confirmed',
-	'handover.auto_confirmed',
-	'handover.denied'
+	'case.handover.offer.received'
 ];
 
 const caseId = (c: { eventType: string; variant?: string }) =>
@@ -188,7 +187,7 @@ describe('event matrix: event × role → row', () => {
 		).toEqual([...NOT_EMITTED].sort());
 	});
 
-	it('gives exactly live chat, new enquiry, mention and handover a pop-up', () => {
+	it('gives a pop-up to live chat, new enquiry, mention and the handover offer only', () => {
 		expect(
 			EVENT_CASES.filter((c) => c.popupFor?.length)
 				.map(caseId)
@@ -237,7 +236,7 @@ const EXPECTED_POPUP_ROWS: Record<NotificationRole, Row[]> = {
 		'conversations/mention',
 		'conversations/handover'
 	],
-	asker: ['conversations/handover']
+	asker: []
 };
 
 describe('row capability: what can fire per dialog row', () => {

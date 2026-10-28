@@ -37,7 +37,7 @@ export interface EventCase {
 	recipients: ReadonlyArray<NotificationRole>;
 	/** UserService (origin/dev, 2026-10-28) writes this event type. */
 	emitted: boolean;
-	/** Roles for which an in-app pop-up card exists. */
+	/** Roles for which an in-app pop-up card exists (live chat, new enquiry, mention, handover offer). */
 	popupFor?: ReadonlyArray<NotificationRole>;
 	/** Where the producer lives, or why there is none. */
 	source: string;
@@ -94,6 +94,16 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: `${ES}.createMessageNotificationFromRoom`
 	},
 	{
+		// Pop-up exists, but no producer sets params.mentioned on ordinary
+		// messages yet (UserService sets it only for team discussions).
+		eventType: 'message.new',
+		variant: 'mentioned',
+		recipients: CONSULTANT,
+		emitted: false,
+		popupFor: CONSULTANT,
+		source: 'no producer (params.mentioned is never set on message.new)'
+	},
+	{
 		eventType: 'thread.reply.new',
 		recipients: BOTH,
 		emitted: true,
@@ -129,23 +139,22 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 	// Handover
 	{
 		eventType: 'case.handover.consent.requested',
+		// The producer addresses the advice seeker; the handover pop-up is
+		// counsellor-only (Frank, 28 Oct), so this one never earns a card.
 		recipients: ASKER,
 		emitted: true,
-		popupFor: ASKER,
 		source: `${CH}.notifyPendingConsent`
 	},
 	{
 		eventType: 'case.handover.granted',
 		recipients: BOTH,
 		emitted: true,
-		popupFor: BOTH,
 		source: `${CH}.notifyGranted`
 	},
 	{
 		eventType: 'case.handover.consent.declined',
 		recipients: CONSULTANT,
 		emitted: true,
-		popupFor: CONSULTANT,
 		source: `${CH}.notifyConsentDeclined`
 	},
 	{
@@ -166,7 +175,6 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 			eventType,
 			recipients: CONSULTANT,
 			emitted: false,
-			popupFor: CONSULTANT,
 			source: NONE
 		})
 	),
