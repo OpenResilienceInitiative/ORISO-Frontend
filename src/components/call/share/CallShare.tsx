@@ -23,6 +23,8 @@ export interface CallShareProps {
 	layout: 'desktop' | 'phone';
 	defaultOpen?: boolean;
 	initialSettings?: CallShareSettings;
+	/** Controlled: what the link really has (server state); wins over local state. */
+	settings?: CallShareSettings;
 	onSettingsChange?: (settings: CallShareSettings) => void;
 	onCopy?: (link: string) => void | Promise<void>;
 	/** Omitted: the browser's own `navigator.share`, if any. `null`: hidden. */
@@ -42,6 +44,7 @@ export const CallShare = ({
 	layout,
 	defaultOpen = false,
 	initialSettings,
+	settings: controlled,
 	onSettingsChange,
 	onCopy,
 	webShare,
@@ -61,7 +64,7 @@ export const CallShare = ({
 		setStored(initialSettings ?? defaultCallShareSettings());
 	}
 	const settings = effectiveCallShareSettings(
-		stored,
+		controlled ?? stored,
 		temporaryAccountAllowed
 	);
 	const [share] = useState<WebShare | null>(() =>
