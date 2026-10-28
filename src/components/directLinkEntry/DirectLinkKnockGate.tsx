@@ -17,7 +17,10 @@ import {
 	PendingKnock,
 	readPendingKnock
 } from './directLinkEntryFlow';
-import { rememberAdmittedCall, takeAdmittedJoin } from './callMessageKnock';
+import {
+	rememberAdmittedConversation,
+	takeAdmittedJoin
+} from './callMessageKnock';
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
 
 /** How long the app may take to join the conversation's Matrix room. */
@@ -196,12 +199,12 @@ export const DirectLinkKnockGate = ({
 			onDone={() => setKnock(null)}
 			onAdmitted={(admitted) => {
 				setKnock(null);
+				/* Let in once: later calls here join without a knock. */
+				rememberAdmittedConversation(admitted.sessionId);
 				if (admitted.joinExisting) {
 					/* Join the call that is already running; never start a
 					   second one. After a reload the card's next tap joins. */
-					const join = takeAdmittedJoin(admitted.sessionId);
-					if (join) join();
-					else rememberAdmittedCall(admitted.sessionId);
+					takeAdmittedJoin(admitted.sessionId)?.();
 					return;
 				}
 				void startCall(admitted).catch(() => undefined);

@@ -2,7 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	joinOrKnock,
-	rememberAdmittedCall,
+	rememberAdmittedConversation,
+	wasAdmittedTo,
 	takeAdmittedJoin
 } from './callMessageKnock';
 import {
@@ -83,17 +84,33 @@ describe('joinOrKnock (FE#1893)', () => {
 		expect(join).toHaveBeenCalledOnce();
 	});
 
-	it('does not knock twice after a reload during the admission', async () => {
+	it('lets in once: later calls join without a knock', async () => {
 		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
-		rememberAdmittedCall(9);
+		rememberAdmittedConversation(9);
 		const join = vi.fn().mockResolvedValue('joined');
 		const start = vi.fn();
 		await joinOrKnock(9, join, { start });
+		await joinOrKnock(9, join, { start });
+		// Never asks the link again: that would open a new pending knock.
 		expect(start).not.toHaveBeenCalled();
-		expect(join).toHaveBeenCalledOnce();
-		// Used once: the next call knocks again.
-		start.mockResolvedValue(conversation('PENDING'));
+		expect(join).toHaveBeenCalledTimes(2);
+		expect(readPendingKnock()).toBeNull();
+	});
+
+	it('remembers an admission the server already reports', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		const join = vi.fn().mockResolvedValue('joined');
+		const start = vi.fn().mockResolvedValue(conversation('ADMITTED'));
+		await joinOrKnock(9, join, { start });
+		expect(wasAdmittedTo(9)).toBe(true);
 		await joinOrKnock(9, join, { start });
 		expect(start).toHaveBeenCalledOnce();
+	});
+
+	it('keeps the admission per conversation', () => {
+		rememberAdmittedConversation(9);
+		expect(wasAdmittedTo(9)).toBe(true);
+		expect(wasAdmittedTo(10)).toBe(false);
+		expect(wasAdmittedTo(undefined)).toBe(false);
 	});
 });

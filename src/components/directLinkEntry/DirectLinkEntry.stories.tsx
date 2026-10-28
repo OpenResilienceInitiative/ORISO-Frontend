@@ -14,7 +14,12 @@ import {
 } from '../message/messageStoryShell';
 import { CallTimelineMessage } from '../message/CallTimelineMessage';
 import '../message/message.styles.scss';
-import { joinOrKnock } from './callMessageKnock';
+import {
+	DIRECT_LINK_ADMITTED_KEY,
+	joinOrKnock,
+	rememberAdmittedConversation,
+	wasAdmittedTo
+} from './callMessageKnock';
 import { DirectLinkCallEntry } from './DirectLinkCallEntry';
 import { DirectLinkKnock, DirectLinkKnockGate } from './DirectLinkKnockGate';
 import {
@@ -315,6 +320,7 @@ export const KnockFromCallMessage: Story = {
 		joinRunningCall.mockClear();
 		startNewCall.mockClear();
 		forgetPendingKnock();
+		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
 		rememberDirectLinkSession(4711, { token: 'tok7', medium: 'VIDEO' });
 		return installDirectLinkMockApi({
 			knockAnswers: ['PENDING', 'PENDING', 'ADMITTED']
@@ -374,5 +380,59 @@ export const KnockFromCallMessage: Story = {
 			timeout: 4000
 		});
 		await expect(startNewCall).not.toHaveBeenCalled();
+		// Let in once: the next call in this conversation joins directly.
+		await expect(wasAdmittedTo(4711)).toBe(true);
+	}
+};
+
+const RunningCallCard = () => (
+	<CallTimelineMessage
+		call={{
+			callId: 'call-direct-2',
+			roomRef: '!direct:oriso.org',
+			callRoomId: '!media2:oriso.org',
+			state: 'running',
+			callType: 'video',
+			participants: [
+				{ userId: '@berater:oriso.org', displayName: 'Frau Berger' }
+			]
+		}}
+		onJoin={() => joinOrKnock(4711, joinRunningCall)}
+	/>
+);
+
+export const CallMessageAfterAdmission: Story = {
+	name: "6 · Let in before: a later call's card joins without knocking",
+	globals: phone390Globals,
+	parameters: { router: { initialPath: '/sessions/user/view/4711' } },
+	decorators: [(Story) => withMessageShell(Story, { parameters: {} })],
+	beforeEach: () => {
+		joinRunningCall.mockClear();
+		forgetPendingKnock();
+		rememberDirectLinkSession(4711, { token: 'tok7', medium: 'VIDEO' });
+		rememberAdmittedConversation(4711);
+		const restore = installDirectLinkMockApi();
+		return () => {
+			restore();
+			localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
+		};
+	},
+	render: () => (
+		<>
+			<RunningCallCard />
+			<DirectLinkKnockGate deps={{ mediaDevices: scriptedDevices() }} />
+		</>
+	),
+	play: async ({ canvasElement, canvas }) => {
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /Beitreten|Join call/ })
+		);
+		await waitFor(() => expect(joinRunningCall).toHaveBeenCalledOnce());
+		await expect(directLinkMock().requests).toHaveLength(0);
+		await expect(
+			dialog(canvasElement).queryByText(
+				'Kurz warten, bis Sie hereingelassen werden'
+			)
+		).toBeNull();
 	}
 };
