@@ -37,13 +37,15 @@ const setUpRecovery = vi.hoisted(() =>
 );
 const getEncryptionStatus = vi.hoisted(() => vi.fn());
 const enrollAfterRecovery = vi.hoisted(() => vi.fn());
+const hasEvidence = vi.hoisted(() => vi.fn(async () => true));
 vi.mock(
 	'../../../services/matrixPasswordRecoveryService',
 	async (importOriginal) => ({
 		...(await importOriginal<
 			typeof import('../../../services/matrixPasswordRecoveryService')
 		>()),
-		enrollPasswordRecoveryAfterKeyRecovery: enrollAfterRecovery
+		enrollPasswordRecoveryAfterKeyRecovery: enrollAfterRecovery,
+		hasPasswordRecoveryEvidence: hasEvidence
 	})
 );
 vi.mock('../../../services/reauthenticateRecovery', () => ({
@@ -461,3 +463,111 @@ it.each(['busy', 'work-limit'])(
 		).toBeNull();
 	}
 );
+
+/**
+ * #1917: recovery works on this device, but nothing is sealed under the
+ * password (set up with the recovery key only, or a password change whose
+ * follow-up step was skipped). The panel used to show a status and a logout
+ * button only — enrolment needed a freshly generated key. It must say what is
+ * missing and take the recovery key the person already holds.
+ */
+describe('password recovery without any envelope', () => {
+	const userId = '@no-envelope:test';
+	const client = { getUserId: () => userId } as MatrixClient;
+	const renderPanel = () =>
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							chatRecoveryMode: 'LOGIN_PASSWORD',
+							chatRecoveryPolicyRevision: 3
+						}
+					} as any
+				}
+			>
+				<EncryptionSettingsPanel clientOverride={client} />
+			</UserDataContext.Provider>
+		);
+
+	beforeEach(() => {
+		enrollAfterRecovery.mockReset();
+		hasEvidence.mockReset();
+		hasEvidence.mockResolvedValue(false);
+		getEncryptionStatus.mockResolvedValue(healthy);
+	});
+	afterEach(() => hasEvidence.mockResolvedValue(true));
+
+	it.each(['needs-recovery-key', 'device-ready', 'needs-password'] as const)(
+		'says it is not set up and offers enrolment with the existing key (%s)',
+		async (status) => {
+			setRecoveryRuntimeStatus(userId, status);
+			renderPanel();
+
+			expect(
+				await screen.findByText(
+					'encryption.passwordRecovery.notEnrolled'
+				)
+			).toBeTruthy();
+			expect(
+				screen.getByRole('textbox', { name: 'Ersatzschlüssel' })
+			).toBeTruthy();
+			expect(
+				screen.getByLabelText(
+					'encryption.passwordRecovery.loginPassword'
+				)
+			).toBeTruthy();
+		}
+	);
+
+	it('seals the typed recovery key under the current password', async () => {
+		setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+		renderPanel();
+		const key = await screen.findByRole('textbox', {
+			name: 'Ersatzschlüssel'
+		});
+		const submit = screen.getByRole('button', {
+			name: 'encryption.passwordRecovery.enroll'
+		}) as HTMLButtonElement;
+		const password = screen.getByLabelText(
+			'encryption.passwordRecovery.loginPassword'
+		);
+		fireEvent.change(password, { target: { value: 'synthetic-password' } });
+		fireEvent.change(
+			screen.getByLabelText('encryption.passwordRecovery.repeatPassword'),
+			{ target: { value: 'synthetic-password' } }
+		);
+		expect(submit.disabled).toBe(true);
+		fireEvent.change(key, { target: { value: ' EsTc typed key ' } });
+		expect(submit.disabled).toBe(false);
+
+		fireEvent.submit(password.closest('form')!);
+
+		await waitFor(() =>
+			expect(enrollAfterRecovery).toHaveBeenCalledWith(
+				client,
+				'synthetic-password',
+				'EsTc typed key',
+				3
+			)
+		);
+		expect(
+			await screen.findByText('encryption.passwordRecovery.ready')
+		).toBeTruthy();
+	});
+
+	it('keeps the existing behaviour when an envelope exists', async () => {
+		hasEvidence.mockResolvedValue(true);
+		setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+		renderPanel();
+
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.needs-recovery-key'
+			)
+		).toBeTruthy();
+		expect(
+			screen.queryByLabelText('encryption.passwordRecovery.loginPassword')
+		).toBeNull();
+	});
+});

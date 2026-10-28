@@ -5679,7 +5679,15 @@
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
 			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
 			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Ihr Passwort wurde nicht geändert.",
-			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt."
+			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Ihr Passwort entsperrt Ihren Gesprächsverlauf auf einem neuen Gerät noch nicht. Geben Sie einmal Ihren Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Ihr Passwort wurde geändert.",
+				"explanation": "Damit Ihr neues Passwort Ihre Chats auf neuen Geräten entsperrt, geben Sie einmal Ihren Ersatzschlüssel ein.",
+				"submit": "Mit neuem Passwort schützen",
+				"later": "Später",
+				"laterHint": "Ohne diesen Schritt entsperrt Ihr neues Passwort Ihren Verlauf auf neuen Geräten nicht. Sie können ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			}
 		}
 	},
 	"accountInvite": {

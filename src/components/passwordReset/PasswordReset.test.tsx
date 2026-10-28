@@ -27,6 +27,9 @@ const state = vi.hoisted(() => ({
 	update: vi.fn(),
 	change: vi.fn(),
 	hasEvidence: vi.fn(async () => true),
+	completeRecovery: vi.fn(async () => true),
+	loadParked: vi.fn(async (): Promise<string | null> => null),
+	seal: vi.fn(async (..._args: unknown[]) => undefined),
 	RepairRequiredError: class extends Error {},
 	RepairBlockedError: class extends Error {},
 	WorkLimitError: class extends Error {},
@@ -50,6 +53,7 @@ vi.mock('../../api', () => ({
 vi.mock('../../services/matrixPasswordRecoveryService', () => ({
 	changePasswordWithRecovery: state.change,
 	hasPasswordRecoveryEvidence: state.hasEvidence,
+	hasCompleteKeyRecovery: state.completeRecovery,
 	PasswordRecoveryRepairRequiredError: state.RepairRequiredError,
 	PasswordRecoveryRepairBlockedError: state.RepairBlockedError,
 	PasswordRecoveryWorkLimitError: state.WorkLimitError
@@ -58,6 +62,24 @@ vi.mock('../../services/matrixClientRegistry', () => ({
 	getMatrixClientService: () => state.clientService
 }));
 vi.mock('../logout/logout', () => ({ logout: state.logout }));
+vi.mock('../../services/pendingRecoveryKeyStore', async (importOriginal) => ({
+	...((await importOriginal()) as Record<string, unknown>),
+	loadPendingRecoveryKey: state.loadParked
+}));
+vi.mock('../../services/passwordRecoveryEnrollment', () => ({
+	sealRecoveryKeyUnderPassword: state.seal,
+	passwordRecoveryEnrollmentErrorKey: () =>
+		'encryption.passwordRecovery.enrollmentFailed'
+}));
+vi.mock('../profile/EncryptionSettings/RecoveryKeyField', () => ({
+	RecoveryKeyField: ({ value, onChange }: any) => (
+		<input
+			aria-label="recovery-key"
+			value={value}
+			onChange={(event) => onChange(event.target.value)}
+		/>
+	)
+}));
 vi.mock('../../utils/tenantSettingsHelper', () => ({
 	getTenantSettings: () => ({})
 }));
@@ -88,9 +110,16 @@ vi.mock('../inputField/InputField', () => ({
 }));
 vi.mock('../button/Button', () => ({
 	BUTTON_TYPES: {},
-	Button: ({ buttonHandle, disabled }: any) => (
+	// The password form's submit is "save-password"; any other button (the
+	// follow-up step's) is named by its label.
+	Button: ({ buttonHandle, disabled, item }: any) => (
 		<button disabled={disabled} onClick={buttonHandle}>
-			save-password
+			{[
+				'profile.functions.security.button',
+				'profile.functions.password.reset.submitAndContinue'
+			].includes(item?.label)
+				? 'save-password'
+				: item?.label}
 		</button>
 	)
 }));
@@ -101,6 +130,9 @@ vi.mock('../overlay/Overlay', () => ({
 beforeEach(() => {
 	vi.clearAllMocks();
 	state.hasEvidence.mockResolvedValue(true);
+	state.completeRecovery.mockResolvedValue(true);
+	state.loadParked.mockResolvedValue(null);
+	state.seal.mockResolvedValue(undefined);
 	localStorage.clear();
 	state.userData.chatRecoveryMode = 'LOGIN_PASSWORD';
 	state.userData.passwordChangeRequired = false;
@@ -166,15 +198,122 @@ it('keeps legacy password changes on the existing path', async () => {
  * old password, so changing it loses nothing: same reasoning as the
  * account-setup gate's first change.
  */
-it('changes the password when no password envelope exists that it would have to rotate', async () => {
-	state.change.mockRejectedValue(new state.RepairRequiredError());
-	state.hasEvidence.mockResolvedValue(false);
-	state.update.mockResolvedValue(undefined);
+describe('when recovery exists but no password envelope', () => {
+	beforeEach(() => {
+		state.change.mockRejectedValue(new state.RepairRequiredError());
+		state.hasEvidence.mockResolvedValue(false);
+		state.update.mockResolvedValue(undefined);
+	});
 
-	submit();
+	/**
+	 * The change itself loses nothing — but the new password must come to
+	 * unlock the history on a new device (#1917), so the flow does not end
+	 * there: it asks for the recovery key once and seals it under the NEW
+	 * password.
+	 */
+	it('changes the password, then seals the typed recovery key under the new password', async () => {
+		submit();
 
-	await waitFor(() => expect(state.logout).toHaveBeenCalled());
-	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.afterChange.explanation'
+			)
+		).toBeTruthy();
+		expect(state.update).toHaveBeenCalledWith(
+			'old-synthetic',
+			'new-synthetic'
+		);
+		expect(state.logout).not.toHaveBeenCalled();
+
+		fireEvent.change(screen.getByLabelText('recovery-key'), {
+			target: { value: '  EsTc synthetic key  ' }
+		});
+		fireEvent.click(
+			screen.getByText('encryption.passwordRecovery.afterChange.submit')
+		);
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.seal).toHaveBeenCalledWith(
+			expect.anything(),
+			'@synthetic:test',
+			'new-synthetic',
+			'EsTc synthetic key',
+			1
+		);
+	});
+
+	it('seals a recovery key parked on this device without asking for it', async () => {
+		state.loadParked.mockResolvedValue('EsTc parked key');
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.seal).toHaveBeenCalledWith(
+			expect.anything(),
+			'@synthetic:test',
+			'new-synthetic',
+			'EsTc parked key',
+			1
+		);
+		expect(
+			screen.queryByText(
+				'encryption.passwordRecovery.afterChange.explanation'
+			)
+		).toBeNull();
+	});
+
+	it('asks for the key when the parked one cannot be sealed', async () => {
+		state.loadParked.mockResolvedValue('EsTc stale key');
+		state.seal.mockRejectedValueOnce(new Error('wrong key'));
+
+		submit();
+
+		expect(await screen.findByLabelText('recovery-key')).toBeTruthy();
+		expect(state.logout).not.toHaveBeenCalled();
+	});
+
+	it('keeps the step open and says why when sealing fails', async () => {
+		state.seal.mockRejectedValue(new Error('invalid key'));
+		submit();
+		fireEvent.change(await screen.findByLabelText('recovery-key'), {
+			target: { value: 'EsTc wrong key' }
+		});
+		fireEvent.click(
+			screen.getByText('encryption.passwordRecovery.afterChange.submit')
+		);
+
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.enrollmentFailed'
+			)
+		).toBeTruthy();
+		expect(state.logout).not.toHaveBeenCalled();
+	});
+
+	it('lets the person skip, and then finishes without sealing anything', async () => {
+		submit();
+		fireEvent.click(
+			await screen.findByText(
+				'encryption.passwordRecovery.afterChange.later'
+			)
+		);
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.seal).not.toHaveBeenCalled();
+	});
+
+	it('does not ask for a key when no complete key recovery exists to seal', async () => {
+		state.completeRecovery.mockResolvedValue(false);
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.update).toHaveBeenCalledWith(
+			'old-synthetic',
+			'new-synthetic'
+		);
+		expect(state.seal).not.toHaveBeenCalled();
+	});
 });
 
 it('keeps the change blocked when evidence cannot be read', async () => {

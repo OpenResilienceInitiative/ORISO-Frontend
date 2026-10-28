@@ -235,6 +235,21 @@ export const hasPasswordRecoveryEvidence = async (
 		(await candidateIds(client)).length > 0
 	);
 };
+/**
+ * Secret storage and the server key backup both exist, so a recovery key the
+ * person still holds can be sealed under a password. Without them there is
+ * no key to ask for; the next password sign-in sets recovery up instead.
+ */
+export const hasCompleteKeyRecovery = async (
+	client: MatrixClient
+): Promise<boolean> => {
+	try {
+		await fingerprint(client);
+		return true;
+	} catch {
+		return false;
+	}
+};
 const writePasswordEnvelope = async (
 	client: MatrixClient,
 	password: string,

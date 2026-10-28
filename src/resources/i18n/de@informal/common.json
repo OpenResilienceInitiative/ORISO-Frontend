@@ -2508,7 +2508,13 @@
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
 			"enrollmentExplanation": "Schütze deinen vorhandenen Ersatzschlüssel zusätzlich mit deinem aktuellen Passwort. Dein gespeicherter Ersatzschlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
-			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Dein Passwort entsperrt deinen Gesprächsverlauf auf einem neuen Gerät noch nicht. Gib einmal deinen Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Dein Passwort wurde geändert.",
+				"explanation": "Damit dein neues Passwort deine Chats auf neuen Geräten entsperrt, gib einmal deinen Ersatzschlüssel ein.",
+				"laterHint": "Ohne diesen Schritt entsperrt dein neues Passwort deinen Verlauf auf neuen Geräten nicht. Du kannst ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			}
 		}
 	},
 	"accountInvite": {

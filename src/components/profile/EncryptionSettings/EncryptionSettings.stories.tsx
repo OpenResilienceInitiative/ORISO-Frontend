@@ -198,3 +198,50 @@ export const PasswordRecoveryDeviceReady: Story = {
 		);
 	}
 };
+
+/**
+ * #1917: recovery works on this device but no password envelope exists (set up
+ * with the recovery key only, or the follow-up after a password change was
+ * skipped). The panel says so and takes the recovery key the person already
+ * holds, instead of only offering a fresh one.
+ */
+export const PasswordRecoveryNotEnrolled: Story = {
+	args: {
+		clientOverride: Object.assign(buildFakeClient(), {
+			http: {
+				// No envelope, metadata or candidates on the server.
+				authedRequest: async (_method: string, path: string) => {
+					if (path === '/sync')
+						return {
+							next_batch: 'story',
+							account_data: { events: [] }
+						};
+					throw Object.assign(new Error('not found'), {
+						errcode: 'M_NOT_FOUND'
+					});
+				}
+			}
+		})
+	},
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(
+			'@encryption-story:example.test',
+			'needs-recovery-key'
+		);
+		return () =>
+			setRecoveryRuntimeStatus('@encryption-story:example.test', 'idle');
+	},
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				/^Passwort-Wiederherstellung nicht eingerichtet/
+			)
+		).toBeVisible();
+		await expect(
+			canvas.getByRole('textbox', { name: 'Ersatzschlüssel' })
+		).toBeVisible();
+		await expect(canvas.getByLabelText('Aktuelles Passwort')).toBeVisible();
+	}
+};

@@ -11,6 +11,8 @@ import { encodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
 import {
 	enrollPasswordRecovery,
 	enrollPasswordRecoveryAfterKeyRecovery,
+	hasCompleteKeyRecovery,
+	hasPasswordRecoveryEvidence,
 	PasswordRecoveryRepairBlockedError,
 	PasswordRecoveryRepairRequiredError,
 	PasswordRecoveryWorkLimitError,
@@ -775,6 +777,46 @@ it('does not return a key when teardown occurs during asynchronous key validatio
 			clearSecretStorageKeys(first);
 			checked!(true);
 			expect(await callback).toBeNull();
+		}
+	);
+});
+
+/**
+ * #1917: recovery set up with the recovery key only — no password envelope.
+ * The password change goes through unrotated; the follow-up step must then
+ * leave the NEW password, and only it, able to unlock the history.
+ */
+describe('sealing an existing recovery key after a change without envelope', () => {
+	it('lets only the new password unlock the history once the key is sealed', async () => {
+		await expect(
+			changePasswordWithRecovery(first, 'old', 'new', vi.fn())
+		).rejects.toBeInstanceOf(PasswordRecoveryRepairRequiredError);
+		expect(await hasPasswordRecoveryEvidence(first)).toBe(false);
+		expect(await hasCompleteKeyRecovery(first)).toBe(true);
+
+		await enrollPasswordRecoveryAfterKeyRecovery(first, 'new', rootCode, 2);
+
+		expect(await hasPasswordRecoveryEvidence(first)).toBe(true);
+		expect(
+			(await recoverWithLoginPassword(device(server), 'new')).kind
+		).toBe('ready');
+		expect(
+			(await recoverWithLoginPassword(device(server), 'old')).kind
+		).not.toBe('ready');
+	});
+
+	it.each(['root', 'backup'])(
+		'reports no complete key recovery without a %s',
+		async (missing) => {
+			if (missing === 'root')
+				server.data.delete('m.secret_storage.default_key');
+			else {
+				first.getCrypto().getKeyBackupInfo.mockResolvedValue(null);
+				first.getCrypto().checkKeyBackupAndEnable = vi.fn(
+					async () => null
+				);
+			}
+			expect(await hasCompleteKeyRecovery(first)).toBe(false);
 		}
 	);
 });
