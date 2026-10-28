@@ -36,7 +36,13 @@ const TitleRow = ({ width, count }: { width: number; count: number }) => {
 				style={{ width, border: '1px dashed #c4c7c8', padding: 4 }}
 			>
 				<div className="sessionInfo__memberStack">
-					<ChatroomMainInteractionIcon type="internal" showAddIcon />
+					{/* #1338: named as in the group header. */}
+					<ChatroomMainInteractionIcon
+						type="internal"
+						showAddIcon
+						addLabel="Supervisor hinzufügen – hier nicht verfügbar"
+						addTooltip={false}
+					/>
 					<MemberAvatarStack
 						members={members(count)}
 						measureRef={rowRef}
