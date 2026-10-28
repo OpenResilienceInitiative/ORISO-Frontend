@@ -417,6 +417,8 @@ export const computeOrisoPalette = (
 		'--m3-on-tertiary': tertiary.onRole,
 		'--m3-tertiary-container': tertiary.container,
 		'--m3-on-tertiary-container': tertiary.onContainer,
+		// Figma timeline selected-card body, fixed across schemes.
+		'--m3-on-tertiary-fixed': hex(slate.tone(10)),
 
 		'--m3-error': signal.error,
 		'--m3-on-error': signal.onError,

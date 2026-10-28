@@ -11,8 +11,8 @@ import * as React from 'react';
 // (Design System-M3_ORISO) where available; app icons otherwise.
 import { ReactComponent as RequestNewIcon } from '../../../resources/img/icons/timeline-request-client.svg';
 import { ReactComponent as RequestAcceptedIcon } from '../../../resources/img/icons/timeline-case-accepted.svg';
-import { ReactComponent as MessageIcon } from '../../../resources/img/icons/speech-bubble.svg';
-import { ReactComponent as ThreadReplyIcon } from '../../../resources/img/icons/corner-up-left.svg';
+import { ReactComponent as MessageIcon } from '../../../resources/img/icons/messages_outline.svg';
+import { ReactComponent as ThreadReplyIcon } from '../../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as DraftIcon } from '../../../resources/img/icons/pen-paper.svg';
 import { ReactComponent as HandoverIcon } from '../../../resources/img/icons/case-handover/case-handover.svg';
 import { ReactComponent as HandoverDeniedIcon } from '../../../resources/img/icons/timeline-case-denied.svg';
@@ -32,7 +32,7 @@ import { ReactComponent as AppointmentIcon } from '../../../resources/img/icons/
 // the existing `fill: currentcolor` card rules.
 import { ReactComponent as CallInvitedIcon } from '../../../resources/img/icons/timeline-calendar-add-on.svg';
 import { ReactComponent as AppointmentCancelledIcon } from '../../../resources/img/icons/timeline-event-busy.svg';
-import { ReactComponent as AppointmentScheduledIcon } from '../../../resources/img/icons/timeline-pin-drop.svg';
+import { ReactComponent as AppointmentScheduledIcon } from '../../../resources/img/icons/calendar-check.svg';
 import { ReactComponent as AppointmentBriefingIcon } from '../../../resources/img/icons/timeline-schedule.svg';
 import { ReactComponent as WaitingRoomIcon } from '../../../resources/img/icons/timeline-hourglass-top.svg';
 import { ReactComponent as TeamDiscussionIcon } from '../../../resources/img/icons/speech-bubble-team.svg';
