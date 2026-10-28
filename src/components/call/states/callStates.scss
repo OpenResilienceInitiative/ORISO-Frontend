@@ -12,7 +12,8 @@
 	 */
 	--call-surface-z: 1250;
 	--call-hangup: var(--m3-error-container, #de0077);
-	--call-answer: var(--m3-success, #0a882f);
+	/* Black, not green: the call stays in its own monochrome (Frank, 28 Oct). */
+	--call-answer: #000;
 	--call-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 	/* The phone dock sits above the bottom navigation, not on it. */
 	--call-dock-bottom-offset: 12px;
@@ -22,7 +23,7 @@
 	 * other (or over the app) as invisible panes. The card and the dock are
 	 * fixed to the viewport and carry the z-index themselves.
 	 */
-	font-family: Inter, var(--m3-body-font-family, sans-serif);
+	font-family: $font-family-sans-serif;
 
 	@media (max-width: 599px) {
 		--call-dock-bottom-offset: calc(
@@ -46,7 +47,7 @@
 .call-surface-layer .call-fab {
 	width: 56px;
 	height: 56px;
-	border-radius: 16px;
+	border-radius: 50%;
 	color: #fff;
 	transition:
 		filter var(--call-motion),
@@ -80,9 +81,8 @@
 	}
 
 	&--small {
-		width: 48px;
+		width: 40px;
 		height: 40px;
-		border-radius: 12px;
 
 		svg {
 			width: 20px;
@@ -262,9 +262,42 @@
 		padding: 10px 14px;
 		border-radius: 12px;
 		background: var(--m3-surface-container, #f0edee);
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		text-align: left;
 		font-size: 13px;
 		line-height: 18px;
 		color: var(--m3-on-surface-variant, #444748);
+
+		p {
+			margin: 0;
+		}
+	}
+
+	/* Whom answering ends the call for: their avatar(s), struck through. */
+	&__ending {
+		position: relative;
+		display: inline-flex;
+		flex-shrink: 0;
+		opacity: 0.85;
+
+		> * + * {
+			margin-left: -10px;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			left: -3px;
+			right: -3px;
+			top: 50%;
+			height: 3px;
+			border-radius: 2px;
+			background: var(--call-hangup);
+			box-shadow: 0 0 0 2px var(--m3-surface-container, #f0edee);
+			transform: rotate(-35deg);
+		}
 	}
 
 	&__actions {
@@ -313,12 +346,13 @@
 	z-index: var(--call-surface-z);
 	right: 24px;
 	bottom: calc(var(--call-dock-bottom-offset) + 12px);
-	width: 360px;
+	width: 392px;
 	box-sizing: border-box;
 	height: 64px;
 	padding: 0 12px 0 12px;
 	border-radius: 32px;
-	background: var(--m3-surface-container-high, #eae7e8);
+	/* White, like the call's own menu (plate 1c). */
+	background: var(--m3-surface-container-lowest, #fff);
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
 		0 1px 3px rgba(0, 0, 0, 0.3);
@@ -432,6 +466,55 @@
 		&__who {
 			gap: 8px;
 		}
+
+		/* The way back moves into the menu, where it is always listed too. */
+		.call-surface-layer &__expand {
+			display: none;
+		}
+	}
+}
+
+/* MUI portals the menu outside the layer; it is styled as the call menu (1c). */
+.call-dock-menu-popper {
+	z-index: 1251; /* just above the dock, still below dialogs */
+}
+
+.MuiPaper-root.call-dock-menu {
+	min-width: 248px;
+	border-radius: 28px;
+	background: var(--m3-surface, #fcf9f9);
+	box-shadow:
+		inset 0 0 0 2px var(--m3-primary, #a5000a),
+		0 4px 8px 3px rgba(0, 0, 0, 0.15),
+		0 1px 3px rgba(0, 0, 0, 0.3);
+	font-family: $font-family-sans-serif;
+
+	.MuiList-root {
+		padding: 8px 0;
+	}
+
+	.MuiMenuItem-root {
+		min-height: 48px;
+		padding: 0 20px;
+		gap: 16px;
+		justify-content: space-between;
+		font-size: 15px;
+		color: var(--m3-on-surface, #1a1c1e);
+
+		&:hover,
+		&.Mui-focusVisible {
+			background: var(--m3-hover-layer, #f9eff0);
+		}
+	}
+
+	svg {
+		width: 20px;
+		height: 20px;
+		flex-shrink: 0;
+	}
+
+	svg path {
+		fill: var(--m3-on-surface-variant, #444748);
 	}
 }
 

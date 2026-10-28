@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import type { CallParty } from '../callParty';
 import { avatarFileOfId } from '../../../utils/avatarChoice';
 import { ALL_ANIMAL_FILES } from '../../../utils/anonName/engine';
@@ -45,6 +45,7 @@ const seeker: CallParty = {
 const SampleAppPage: React.FC = () => (
 	<div
 		aria-hidden="true"
+		className="sample-app-page"
 		style={{
 			// Its own stacking context, as the app shell has one.
 			position: 'relative',
@@ -117,7 +118,24 @@ const SampleAppPage: React.FC = () => (
 
 const meta = {
 	title: 'Components/Call/Call states',
-	parameters: { layout: 'fullscreen' },
+	parameters: {
+		layout: 'fullscreen',
+		/*
+		 * The page behind is a stand-in, not the product: where a card or the
+		 * menu covers it, axe cannot see its background and gives up. Only
+		 * `color-contrast` skips it; the call surfaces are audited in full.
+		 */
+		a11y: {
+			config: {
+				rules: [
+					{
+						id: 'color-contrast',
+						selector: '*:not(.sample-app-page *)'
+					}
+				]
+			}
+		}
+	},
 	decorators: [
 		(Story) => (
 			<>
@@ -236,7 +254,7 @@ export const IncomingWhileInCall: Story = {
 			<IncomingCallCard
 				caller={counsellor}
 				isVideo={false}
-				ongoingCallWith={seeker.name}
+				ongoingCall={{ name: seeker.name, avatars: [seeker.avatar] }}
 				onAnswer={fn()}
 				onDecline={fn()}
 			/>
@@ -256,7 +274,8 @@ const busyNoteOverThePage = {
 			rules: [
 				{
 					id: 'color-contrast',
-					selector: '*:not(.incoming-call-card__busy)'
+					selector:
+						'*:not(.sample-app-page *):not(.incoming-call-card__busy p)'
 				}
 			]
 		}
@@ -273,19 +292,64 @@ export const IncomingWhileInCallPhone320: Story = {
 	parameters: busyNoteOverThePage
 };
 
+/** Two more group members, by the same identity rules. */
+const groupMember = (id: string, animal: string): CallParty['avatar'] => ({
+	userId: `@${id}:matrix.storybook.test`,
+	username: id,
+	displayName: id,
+	choice: {
+		kind: 'animal',
+		file: avatarFileOfId(animal) ?? ALL_ANIMAL_FILES[1]
+	}
+});
+
+/** The same, with a group call running: the group's stack is struck through. */
+export const IncomingWhileInGroupCall: Story = {
+	render: () => (
+		<IncomingCallCard
+			caller={counsellor}
+			isVideo
+			ongoingCall={{
+				name: 'Suchtberatung · Gruppe',
+				avatars: [
+					seeker.avatar,
+					groupMember('igel118', 'hedgehog'),
+					groupMember('eule7', 'owl')
+				]
+			}}
+			onAnswer={fn()}
+			onDecline={fn()}
+		/>
+	)
+};
+export const IncomingWhileInGroupCallPhone412: Story = {
+	...IncomingWhileInGroupCall,
+	globals: PHONE_412,
+	parameters: busyNoteOverThePage
+};
+export const IncomingWhileInGroupCallPhone320: Story = {
+	...IncomingWhileInGroupCall,
+	globals: PHONE_320,
+	parameters: busyNoteOverThePage
+};
+
 /* ── Minimized ────────────────────────────────────────────────────────── */
 
 const MinimizedHarness: React.FC<{ isSpeaking?: boolean }> = ({
 	isSpeaking
 }) => {
 	const [isMuted, setIsMuted] = React.useState(false);
+	const [isCameraOff, setIsCameraOff] = React.useState(false);
 	return (
 		<MinimizedCallDock
 			party={seeker}
 			elapsedSeconds={724}
 			isMuted={isMuted}
+			isVideo
+			isCameraOff={isCameraOff}
 			isSpeaking={isSpeaking}
 			onToggleMute={() => setIsMuted((muted) => !muted)}
+			onToggleCamera={() => setIsCameraOff((off) => !off)}
 			onHangUp={fn()}
 			onExpand={fn()}
 		/>
@@ -307,6 +371,34 @@ export const MinimizedCallPhone412: Story = {
 };
 export const MinimizedCallPhone320: Story = {
 	...MinimizedCall,
+	globals: PHONE_320
+};
+
+/** The ⋮ menu: what the host can still steer from outside the call. */
+export const MinimizedMenuOpen: Story = {
+	render: () => <MinimizedHarness />,
+	play: async () => {
+		const body = within(document.body);
+		const more = await body.findByRole('button', {
+			name: /weitere optionen|more options/i
+		});
+		await userEvent.click(more);
+		await waitFor(() =>
+			expect(document.querySelector('.call-dock-menu')).toBeTruthy()
+		);
+		expect(
+			body.getByRole('menuitem', {
+				name: /video ausschalten|turn off video/i
+			})
+		).toBeTruthy();
+	}
+};
+export const MinimizedMenuOpenPhone412: Story = {
+	...MinimizedMenuOpen,
+	globals: PHONE_412
+};
+export const MinimizedMenuOpenPhone320: Story = {
+	...MinimizedMenuOpen,
 	globals: PHONE_320
 };
 

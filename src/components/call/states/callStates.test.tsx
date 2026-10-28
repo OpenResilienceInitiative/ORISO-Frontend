@@ -82,7 +82,10 @@ describe('call states (FE#1904)', () => {
 			<IncomingCallCard
 				caller={party}
 				isVideo={false}
-				ongoingCallWith="Frau Keller"
+				ongoingCall={{
+					name: 'Frau Keller',
+					avatars: [{ ...party.avatar, userId: '@keller:test' }]
+				}}
 				onAnswer={vi.fn()}
 				onDecline={vi.fn()}
 			/>
@@ -116,5 +119,46 @@ describe('call states (FE#1904)', () => {
 		).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'End call' })).toBeTruthy();
 		expect(screen.getByText('12:04')).toBeTruthy();
+	});
+
+	it('offers the camera in its menu for a video call', async () => {
+		const onToggleCamera = vi.fn();
+		renderIn(
+			<MinimizedCallDock
+				party={party}
+				elapsedSeconds={5}
+				isMuted={false}
+				isVideo
+				onToggleMute={vi.fn()}
+				onToggleCamera={onToggleCamera}
+				onHangUp={vi.fn()}
+				onExpand={vi.fn()}
+			/>
+		);
+		screen.getByRole('button', { name: 'More options' }).click();
+		(
+			await screen.findByRole('menuitem', { name: 'Turn off video' })
+		).click();
+		expect(onToggleCamera).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves the camera out of the menu for an audio call', async () => {
+		renderIn(
+			<MinimizedCallDock
+				party={party}
+				elapsedSeconds={5}
+				isMuted={false}
+				onToggleMute={vi.fn()}
+				onHangUp={vi.fn()}
+				onExpand={vi.fn()}
+			/>
+		);
+		screen.getByRole('button', { name: 'More options' }).click();
+		expect(
+			await screen.findByRole('menuitem', {
+				name: 'Back to the full call'
+			})
+		).toBeTruthy();
+		expect(screen.queryByRole('menuitem', { name: /video/i })).toBeNull();
 	});
 });

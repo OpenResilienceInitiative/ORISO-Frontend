@@ -12,15 +12,22 @@ import PersonIcon from '@mui/icons-material/Person';
 import { CallSurfaceLayer } from './CallSurfaceLayer';
 import './callStates.scss';
 
+export interface OngoingCall {
+	/** The other person's name, or the group's. */
+	name: string;
+	/** One avatar for a one-to-one call, several (stacked) for a group. */
+	avatars: CallParty['avatar'][];
+}
+
 export interface IncomingCallCardProps {
 	/** From `callPartyOf`; `null` when the caller is not a party we can name. */
 	caller: CallParty | null;
 	isVideo: boolean;
 	/**
-	 * Who the call already running is with. Answering ends it, and the card
-	 * says so before anybody presses anything.
+	 * The call already running. Answering ends it, and the card says so — and
+	 * shows whom it ends for, struck through — before anybody presses anything.
 	 */
-	ongoingCallWith?: string | null;
+	ongoingCall?: OngoingCall | null;
 	onAnswer: () => void;
 	onDecline: () => void;
 }
@@ -36,7 +43,7 @@ export interface IncomingCallCardProps {
 export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 	caller,
 	isVideo,
-	ongoingCallWith,
+	ongoingCall,
 	onAnswer,
 	onDecline
 }) => {
@@ -51,7 +58,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 				className="incoming-call-card"
 				role="alertdialog"
 				aria-labelledby={titleId}
-				data-busy={ongoingCallWith ? 'true' : undefined}
+				data-busy={ongoingCall ? 'true' : undefined}
 			>
 				<div className="incoming-call-card__ring" aria-hidden="true">
 					<span className="incoming-call-card__pulse" />
@@ -78,12 +85,26 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 					<span>{t('calls.states.encrypted')}</span>
 				</p>
 
-				{ongoingCallWith && (
-					<p className="incoming-call-card__busy">
-						{t('calls.states.endsCurrent', {
-							name: ongoingCallWith
-						})}
-					</p>
+				{ongoingCall && (
+					<div className="incoming-call-card__busy">
+						<span
+							className="incoming-call-card__ending"
+							aria-hidden="true"
+						>
+							{ongoingCall.avatars.slice(0, 3).map((avatar) => (
+								<UserAvatar
+									key={avatar.userId}
+									{...avatar}
+									size={32}
+								/>
+							))}
+						</span>
+						<p>
+							{t('calls.states.endsCurrent', {
+								name: ongoingCall.name
+							})}
+						</p>
+					</div>
 				)}
 
 				<div className="incoming-call-card__actions">
@@ -104,7 +125,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 							className="call-fab call-fab--answer"
 							onClick={onAnswer}
 							aria-label={
-								ongoingCallWith
+								ongoingCall
 									? t('calls.states.answerAndEnd')
 									: t('calls.answer')
 							}
@@ -116,7 +137,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 							)}
 						</ButtonBase>
 						<span className="call-action__label" aria-hidden="true">
-							{ongoingCallWith
+							{ongoingCall
 								? t('calls.states.answerAndEnd')
 								: t('calls.answer')}
 						</span>
