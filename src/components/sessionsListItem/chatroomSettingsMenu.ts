@@ -32,6 +32,8 @@ export interface ChatroomSettingsMenuInput {
 	isGroupChatActive: boolean;
 	/** A materialized Matrix room exists, so the settings route is reachable. */
 	hasMatrixRoom: boolean;
+	/** The caller has joined the group (`session.item.subscribed`). */
+	isGroupChatSubscribed: boolean;
 }
 
 export interface ChatroomSettingsMenuVisibility {
@@ -40,6 +42,7 @@ export interface ChatroomSettingsMenuVisibility {
 	showDelete: boolean;
 	showRequestHelp: boolean;
 	showChatSettings: boolean;
+	showLeaveGroup: boolean;
 }
 
 export const getChatroomSettingsMenuVisibility = ({
@@ -56,7 +59,8 @@ export const getChatroomSettingsMenuVisibility = ({
 	hasExistingTeamDiscussion,
 	isGroupChatOwner,
 	isGroupChatActive,
-	hasMatrixRoom
+	hasMatrixRoom,
+	isGroupChatSubscribed
 }: ChatroomSettingsMenuInput): ChatroomSettingsMenuVisibility => {
 	// Mirrors the header menu's gates in SessionMenu.tsx so both entry points
 	// stay in lockstep. A supervisor only observes a colleague's session, so it
@@ -99,12 +103,18 @@ export const getChatroomSettingsMenuVisibility = ({
 		!isGroupChatActive &&
 		hasMatrixRoom;
 
+	// #1923: counsellors keep leaving from the chat header, where the
+	// moderator count is known and a sole moderator cannot leave.
+	const showLeaveGroup =
+		isAsker && isGroup && isGroupChatActive && isGroupChatSubscribed;
+
 	return {
 		showArchive: isOwnEditableSession && !isArchiveTab,
 		showDearchive: isOwnEditableSession && isArchiveTab,
 		showDelete,
 		showRequestHelp,
-		showChatSettings
+		showChatSettings,
+		showLeaveGroup
 	};
 };
 
