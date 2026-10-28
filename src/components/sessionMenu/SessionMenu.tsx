@@ -22,6 +22,7 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
+import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
@@ -142,6 +143,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const supervisionPanel = useSupervisionPanel();
 	// Practice: no calls, no booking (they would start real network traffic).
 	const isPracticing = usePracticeActive();
+	const isRejectedCase =
+		Number(activeSession.item?.status) === STATUS_REJECTED;
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
@@ -201,6 +204,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		Boolean(activeSession.consultant?.id) &&
 		String(activeSession.consultant.id) === String(userData.userId);
 	const showRequestAdvice =
+		!isRejectedCase &&
 		isSessionOwner &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
@@ -487,12 +491,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const isVideoCallsEnabled = callGates.video && !isPracticing;
 
 	const hasVideoCallFeatures = () =>
+		!isRejectedCase &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 		(activeSession.isSession || activeSession.isGroup) && // 🎯 Enable for both 1-on-1 AND group chats
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
 		consultingType.isVideoCallAllowed;
 
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
+		if (isRejectedCase) return;
 		// The trigger lives in `call/startRoomCall.ts` because the side room needs
 		// the same steps against a different Matrix room. One implementation
 		// serves both callers.
@@ -541,7 +547,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					</div>
 				)}
 
-			{!activeSession.isEnquiry &&
+			{!isRejectedCase &&
+				!activeSession.isEnquiry &&
 				appointmentFeatureEnabled &&
 				!isPracticing &&
 				!activeSession.isGroup && (
@@ -904,6 +911,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								userData
 							) &&
 								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								!isRejectedCase &&
 								activeSession.isSession &&
 								!props.isSupervisor && (
 									<>
@@ -973,6 +981,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								userData
 							) &&
 								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								!isRejectedCase &&
 								activeSession.isSession &&
 								!props.isSupervisor && (
 									<DeleteSession

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test';
 import { encodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
 import {
 	getEncryptionStatus,

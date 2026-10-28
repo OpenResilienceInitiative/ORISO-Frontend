@@ -8,6 +8,7 @@ import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter'
 import type { RegistrationData } from '../../../globalState';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
 import { RegistrationCompletionProvider } from '../consentCompletion/RegistrationCompletionContext';
+import { GroupHeading } from '../../groupChat/entryRoom/GroupHeading';
 
 /**
  * The newcomer entry of a self-help group link, as designed in Storybook
@@ -24,7 +25,8 @@ export const GroupInviteEntry = ({
 	onChange,
 	onJoin,
 	joinDisabled,
-	busy
+	busy,
+	agencyName
 }: {
 	stage: ReactElement;
 	gcid: string;
@@ -35,8 +37,13 @@ export const GroupInviteEntry = ({
 	onJoin: () => void;
 	joinDisabled: boolean;
 	busy: boolean;
+	/** The agency the link names; the waiting room shows the same (#1689). */
+	agencyName?: string;
 }) => {
 	const { t } = useTranslation();
+	/* Only the agency: the topic stays hidden until the privacy agreement
+	   is recorded, as in the waiting room (#1499). */
+	const heading = <GroupHeading agencyName={agencyName} textAlign="left" />;
 
 	return (
 		<RegistrationCompletionProvider>
@@ -49,6 +56,7 @@ export const GroupInviteEntry = ({
 				loginState={INVITE_LOGIN_STATE}
 				stage={stage}
 				mobileHero="bar"
+				headerStart={heading}
 			>
 				{/* Once `busy`, `Registration` swaps this whole screen for the
 				    shared waiting room (`WaitingRoomFrame`, #1219). */}
@@ -63,6 +71,16 @@ export const GroupInviteEntry = ({
 						pb: 2
 					}}
 				>
+					{agencyName && (
+						<Box
+							sx={{
+								display: { xs: 'block', lg: 'none' },
+								mb: 1.5
+							}}
+						>
+							{heading}
+						</Box>
+					)}
 					<AccountData
 						onChange={onChange}
 						entry="link"

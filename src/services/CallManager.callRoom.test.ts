@@ -5,7 +5,14 @@
  * session room, so its join rule is the only thing standing between a call and
  * anyone who has seen its room id.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { callManager } from './CallManager';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';

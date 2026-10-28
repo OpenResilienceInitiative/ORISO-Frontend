@@ -12,7 +12,7 @@
  * the wire, including the spelling of `ink` rather than `iconColor` and of
  * `file` rather than `avatarId`.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	CALL_IDENTITY_EVENT_TYPE,
@@ -29,13 +29,26 @@ const EVENT_TYPE = 'org.oriso.call.identity';
  * everybody turns into initials.
  */
 const ON_THE_WIRE = {
-	animal: { kind: 'animal', file: 'fox.svg', bg: '#165E83', ink: '#ffffff' },
-	motif: { kind: 'motif', file: 'owl.svg', bg: '#a5000a', ink: '#ffffff' },
+	animal: {
+		kind: 'animal',
+		file: 'fox.svg',
+		bg: '#165E83',
+		ink: '#ffffff',
+		name: 'ruhiger Fuchs 432'
+	},
+	motif: {
+		kind: 'motif',
+		file: 'owl.svg',
+		bg: '#a5000a',
+		ink: '#ffffff',
+		name: 'Beratung Nord'
+	},
 	initials: {
 		kind: 'initials',
 		bg: '#a5000a',
 		ink: '#ffffff',
-		initials: 'SP'
+		initials: 'SP',
+		name: 'Susanne Pfeiffer'
 	}
 } as const;
 
@@ -47,7 +60,7 @@ describe('the record that crosses into the call', () => {
 	it('produces exactly the animal shape the fork accepts', () => {
 		const identity = ownCallIdentity({
 			userId: '@anon:oriso.test',
-			userData: {},
+			userData: { displayName: 'ruhiger Fuchs 432' },
 			isConsultant: false,
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
@@ -55,6 +68,10 @@ describe('the record that crosses into the call', () => {
 			Object.keys(ON_THE_WIRE.animal).sort()
 		);
 		expect(identity.kind).toBe('animal');
+		// The value, not only the key. Comparing `Object.keys` pins the shape
+		// and lets any pseudonym through, which is the half of the contract
+		// the fork actually puts on a tile.
+		expect(identity.name).toBe(ON_THE_WIRE.animal.name);
 		expect(identity.file).toMatch(/^[a-z0-9][a-z0-9_-]*\.svg$/i);
 		expect(identity.bg).toMatch(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i);
 		expect(identity.ink).toMatch(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -63,7 +80,11 @@ describe('the record that crosses into the call', () => {
 	it('produces exactly the motif shape the fork accepts', () => {
 		const identity = ownCallIdentity({
 			userId: '@berater:oriso.test',
-			userData: { avatarKind: 'ICON', avatarId: 'owl' },
+			userData: {
+				avatarKind: 'ICON',
+				avatarId: 'owl',
+				displayName: 'Beratung Nord'
+			},
 			isConsultant: true,
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
@@ -78,6 +99,86 @@ describe('the record that crosses into the call', () => {
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
 		expect(identity).toEqual(ON_THE_WIRE.initials);
+	});
+
+	/*
+	 * The name is the field the fork is strictest about, and for a reason
+	 * that only shows up across the two repositories: it REFUSES a name that
+	 * is a bare Matrix id, because that is the value it exists to replace.
+	 * A host that let one through would publish a record the call silently
+	 * downgrades — everybody back to `@someone:oriso.org` — with both suites
+	 * green. So the shape is pinned from this side too.
+	 */
+	it('never publishes a name the fork would refuse', () => {
+		const identity = ownCallIdentity({
+			userId: '@anon:oriso.test',
+			userData: { userName: '@anon:oriso.test' },
+			isConsultant: false,
+			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
+		});
+		// Stated as the value, not only as the absence of a pattern: an
+		// assertion that `undefined` is not a Matrix id passes for a host
+		// that publishes no name at all, which is the state this replaces.
+		expect(identity.name).toBe('anon');
+		expect(identity.name).not.toMatch(/^@[^:\s]+:[^\s]+$/);
+	});
+
+	/*
+	 * ADR-002 §2: the published identity is the public display name. A
+	 * counsellor's legal name is staff data, and the advice seeker is in
+	 * this call — so the record that reaches them must not carry it, even
+	 * when the user data this is built from does.
+	 */
+	it('never puts a counsellor´s legal name on the wire', () => {
+		const identity = ownCallIdentity({
+			userId: '@berater:oriso.test',
+			userData: {
+				displayName: 'Beratung Nord',
+				firstName: 'Susanne',
+				lastName: 'Pfeiffer'
+			},
+			isConsultant: true,
+			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
+		});
+		expect(identity.name).toBe('Beratung Nord');
+	});
+
+	/*
+	 * And the case that can actually fail.
+	 *
+	 * The test above passes whatever the legal name does, because a display
+	 * name wins ahead of it either way — so it pins nothing. `IdentitySource`
+	 * allows `firstName` and `lastName` with no display name at all, which is
+	 * the shape a counsellor record takes before their public name is set,
+	 * and that is where `resolvePreferredName` would reach the legal name if
+	 * this ever passed it four arguments instead of two.
+	 */
+	it('says nothing at all rather than a counsellor´s legal name', () => {
+		const identity = ownCallIdentity({
+			userId: '@berater:oriso.test',
+			userData: { firstName: 'Susanne', lastName: 'Pfeiffer' },
+			isConsultant: true,
+			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
+		});
+		expect('name' in identity).toBe(false);
+		// The letters are a different exposure and stay: two initials on a
+		// coloured circle are what the chat shows this counsellor too.
+		expect(identity.initials).toBe('SP');
+	});
+
+	/*
+	 * Absent, not empty. The fork reads a missing `name` as "we were not
+	 * told" and keeps the display name it has; an empty string would be a
+	 * name of nothing, and a key present with `undefined` is neither.
+	 */
+	it('leaves the field off entirely when there is no name', () => {
+		const identity = ownCallIdentity({
+			userId: '@anon:oriso.test',
+			userData: {},
+			isConsultant: false,
+			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
+		});
+		expect('name' in identity).toBe(false);
 	});
 
 	it('never spells a colour the way the rest of the app does', () => {

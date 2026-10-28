@@ -1,7 +1,14 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 const ids = ['anruf-erinnerung', 'anruf-einladung', 'anruf-verpasst'];
 const tones = ['de-sie', 'de-du', 'en', 'fr', 'ru', 'ti', 'tr'];

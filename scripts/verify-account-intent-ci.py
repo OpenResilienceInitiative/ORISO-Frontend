@@ -141,7 +141,7 @@ def main():
         assert not probe.exists(), "probe path is already owned by source"
         probe.write_text((root / "scripts/fixtures/consultant-email-unknown-retry.red.tsx.txt").read_text())
         try:
-            record = run("consultant-counterfactual", ["node", "node_modules/vitest/vitest.mjs", "run", "--project", "unit", "--maxWorkers=1", "--minWorkers=1", str(probe.relative_to(root)), "--reporter=junit", "--outputFile=" + str(evidence / "consultant-counterfactual.xml")], 180, evidence / "consultant-counterfactual.xml")
+            record = run("consultant-counterfactual", ["node", "node_modules/vite-plus/bin/vp", "test", "run", "--project", "unit", "--maxWorkers=1", str(probe.relative_to(root)), "--reporter=junit", "--outputFile=" + str(evidence / "consultant-counterfactual.xml")], 180, evidence / "consultant-counterfactual.xml")
             junit = record.get("junit", {})
             failures = junit.get("failedCases", [])
             marker = "account-intent-unknown-retry-second-dispatch"
@@ -152,7 +152,7 @@ def main():
             probe.unlink()
         targeted = FRONTEND_REACT_FILES
         assert all((root / name).is_file() for name in targeted), "missing required affected React test source"
-        records.append(run("react-account-paths", ["node", "node_modules/vitest/vitest.mjs", "run", "--project", "unit", "--maxWorkers=2", "--minWorkers=1", *targeted, "--reporter=junit", "--outputFile=" + str(evidence / "react-account-paths.xml")], 420, evidence / "react-account-paths.xml", expected_files=targeted))
+        records.append(run("react-account-paths", ["node", "node_modules/vite-plus/bin/vp", "test", "run", "--project", "unit", "--maxWorkers=2", *targeted, "--reporter=junit", "--outputFile=" + str(evidence / "react-account-paths.xml")], 420, evidence / "react-account-paths.xml", expected_files=targeted))
     elif kind == "admin" and phase == "react":
         targeted = ADMIN_REACT_FILES
         assert all((root / name).is_file() for name in targeted), "missing required affected React test source"

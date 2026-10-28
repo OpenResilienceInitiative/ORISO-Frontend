@@ -3,7 +3,14 @@ import {
 	SimpleObservable,
 	type IOpenIDUpdate
 } from 'matrix-widget-api';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import type { MatrixClient } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';

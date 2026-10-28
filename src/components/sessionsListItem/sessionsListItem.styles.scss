@@ -152,7 +152,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
 		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
-			color: #da5248 !important;
+			color: var(--m3-on-surface-variant, #444748) !important;
 		}
 	}
 

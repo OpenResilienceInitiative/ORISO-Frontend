@@ -87,6 +87,7 @@ import { ReactComponent as ShieldPersonIcon } from '../../resources/img/icons/ti
 import { ReactComponent as KeyboardArrowUpIcon } from '../../resources/img/icons/keyboard_arrow_up.svg';
 import {
 	chatEndedTextKey,
+	isClientWordedTakeover,
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
@@ -1233,13 +1234,19 @@ export const MessageItemComponent = ({
 				explanation: systemNotificationExplanation
 			}
 		);
-	const systemNotificationRawDescription =
-		parsedMessage.systemNotificationDescription;
 	/* The stored description is frozen in the server's language; the header is
-	   translated here, so the body must be too or the bubble mixes languages. */
+	   translated here, so the body must be too or the bubble mixes languages.
+	   That holds for the counsellor's view as well (#1844). */
 	const acceptedDescription = translate(
 		'notifications.events.inquiryAccepted.text'
 	);
+	const systemNotificationBody = isInquiryAcceptedEvent
+		? acceptedDescription
+		: isClientWordedTakeover(parsedMessage)
+			? translate('caseHandover.systemMessage.tookOverBody', {
+					advisor: parsedMessage.systemNotificationUsername
+				})
+			: parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -2190,7 +2197,7 @@ export const MessageItemComponent = ({
 												}
 												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
 												description={
-													systemNotificationRawDescription
+													systemNotificationBody
 												}
 												sessionId={
 													activeSession.item.id
@@ -2208,11 +2215,9 @@ export const MessageItemComponent = ({
 												}
 											/>
 										) : (
-											systemNotificationRawDescription && (
+											systemNotificationBody && (
 												<p className="messageItem__systemNotificationDescription">
-													{
-														systemNotificationRawDescription
-													}
+													{systemNotificationBody}
 												</p>
 											)
 										)}

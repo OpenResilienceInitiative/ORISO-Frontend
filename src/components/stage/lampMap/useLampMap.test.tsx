@@ -1,9 +1,9 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import { useRef } from 'react';
 import { render, cleanup, act } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { LAMP_MAP_MIN_WIDTH, useLampMap } from './useLampMap';
 import { THEME_APPLIED_EVENT } from '../../../utils/theme/applyTenantTheme';
 

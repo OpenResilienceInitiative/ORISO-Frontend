@@ -24,6 +24,8 @@ export type MatrixRoomPreviewKind =
 	| 'encrypted'
 	| 'first_response'
 	| 'user_left_chat'
+	| 'inquiry_accepted'
+	| 'case_handover_taken_over'
 	| 'system_notification';
 
 /**
@@ -86,6 +88,12 @@ export const toPreviewKindText = (
 	}
 	if (kind === 'system_notification') {
 		return translate('message.systemNotificationTitle');
+	}
+	if (kind === 'inquiry_accepted') {
+		return translate('notifications.events.inquiryAccepted.text');
+	}
+	if (kind === 'case_handover_taken_over') {
+		return translate('caseHandover.systemMessage.tookOverTitle');
 	}
 	return translate(`sessionList.preview.${kind}`, kind);
 };

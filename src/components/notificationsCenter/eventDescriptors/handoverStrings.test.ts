@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import de from '../../../resources/i18n/de/common.json';
 import deInformal from '../../../resources/i18n/de@informal/common.json';

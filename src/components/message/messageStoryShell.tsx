@@ -173,6 +173,8 @@ export const withMessageContexts = (
 export const mobileParameters = { compactShell: true };
 export const phone390Globals = { viewport: { value: 'phone390' } };
 export const phone375Globals = { viewport: { value: 'phone375' } };
+/** Smallest phone width the product supports. */
+export const phone320Globals = { viewport: { value: 'phone320' } };
 /** Short viewport (landscape phone / software keyboard): height <= 420px. */
 export const phone390LandscapeGlobals = {
 	viewport: { value: 'phone390Landscape' }

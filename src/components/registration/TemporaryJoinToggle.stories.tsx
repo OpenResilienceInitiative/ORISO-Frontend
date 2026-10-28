@@ -63,7 +63,7 @@ const expectDisabledWithHint = async (
 	await expect(hint).toBeVisible();
 	// The hint is the button's description for assistive technology.
 	await expect(button.getAttribute('aria-describedby')).toBe(hint.id);
-	await userEvent.click(button).catch(() => undefined);
+	await userEvent.click(button);
 	await expect(onClick).not.toHaveBeenCalled();
 };
 

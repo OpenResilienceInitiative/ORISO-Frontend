@@ -112,6 +112,8 @@ docs/agents/*
 !docs/agents/issue-tracker.md
 !docs/agents/domain.md
 !docs/agents/triage-labels.md
+.vitest/
+verification-artifacts/
 
 # Understand Anything: generated graphs are published daily as release assets
 # (ORISO-Docs, tag ua-graph-latest) and fetched at runtime - never commit them.
