@@ -248,8 +248,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 
 	it.each([
 		['case.handover.offer.received'],
-		['handover.requested'],
-		['case.handover.granted']
+		['case.handover.consent.requested']
 	])('shows a handover card for %s', async (eventType) => {
 		withTones();
 		await deliver([

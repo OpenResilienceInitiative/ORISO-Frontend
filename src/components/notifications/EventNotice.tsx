@@ -23,11 +23,13 @@ export type NotificationTypeEventNotice = typeof NOTIFICATION_TYPE_EVENT_NOTICE;
 
 export type EventNoticeKind = 'mention' | 'handover';
 
-/** Handover events that tell a counsellor a case is coming to them. */
+/**
+ * Handover events that need the counsellor to act: a case offered to them,
+ * or their consent requested. Status steps stay in the feed (Frank, 28 Oct).
+ */
 const HANDOVER_NOTICE_EVENTS: ReadonlyArray<string> = [
-	'handover.requested',
 	'case.handover.offer.received',
-	'case.handover.granted'
+	'case.handover.consent.requested'
 ];
 
 export interface EventNoticeProps extends NotificationType {

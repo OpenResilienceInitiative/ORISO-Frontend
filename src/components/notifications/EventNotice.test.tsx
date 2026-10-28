@@ -168,10 +168,18 @@ describe('event pop-up rules', () => {
 	it.each([
 		[row('message.new', { mentioned: true }), 'mention'],
 		[row('case.handover.offer.received'), 'handover'],
-		[row('handover.requested'), 'handover'],
-		[row('case.handover.granted'), 'handover'],
+		[row('case.handover.consent.requested'), 'handover'],
 		// No role on the row: the counsellor link decides.
-		[row('handover.requested', { recipientRole: null }), 'handover'],
+		[
+			row('case.handover.offer.received', { recipientRole: null }),
+			'handover'
+		],
+		// Status steps of a handover stay in the feed, without a card.
+		[row('handover.requested'), null],
+		[row('case.handover.granted'), null],
+		[row('handover.all_confirmed'), null],
+		[row('handover.auto_confirmed'), null],
+		[row('case.handover.consent.declined'), null],
 		[row('message.new', { mentioned: false }), null],
 		[row('message.new'), null],
 		[
@@ -187,7 +195,7 @@ describe('event pop-up rules', () => {
 		[row('request.new'), null],
 		[
 			row(
-				'handover.requested',
+				'case.handover.offer.received',
 				{ recipientRole: null },
 				'/sessions/user/sessionView/!room42/42'
 			),
