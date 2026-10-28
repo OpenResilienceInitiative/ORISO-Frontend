@@ -1357,6 +1357,11 @@
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
 			"saveFailed": "Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Sie wurden aus dieser Gruppe entfernt."
+			}
 		}
 	},
 	"help": {

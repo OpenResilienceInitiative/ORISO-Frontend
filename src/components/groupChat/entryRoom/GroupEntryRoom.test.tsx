@@ -54,7 +54,8 @@ vi.mock('../../../api', () => ({
 		Promise.resolve({ active: false, id: 15, matrixRoomId: '!room:oriso' })
 	),
 	apiPutGroupChat: vi.fn(() => Promise.resolve()),
-	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' }
+	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' },
+	FETCH_ERRORS: { USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT' }
 }));
 vi.mock('../../../api/apiGetChatRoomById', () => ({
 	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
@@ -78,6 +79,7 @@ vi.mock('./GroupWaitingRoom', () => ({
 		topicName?: string;
 		agencyName?: string;
 		active: boolean;
+		joinBlocked?: boolean;
 		onJoin: () => unknown;
 	}) => (
 		<div data-testid="waiting-room">
@@ -87,7 +89,7 @@ vi.mock('./GroupWaitingRoom', () => ({
 				onClick={() => {
 					joinResult.value = props.onJoin();
 				}}
-				disabled={!props.active}
+				disabled={!props.active || props.joinBlocked}
 			>
 				join
 			</button>
@@ -243,6 +245,22 @@ describe('GroupEntryRoom', () => {
 
 		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
 		expect(navigate).not.toHaveBeenCalled();
+	});
+
+	// #1923: a banned asker got "an error occurred" and could press join again.
+	it('says the person was removed and blocks joining when the server refuses a banned member', async () => {
+		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(
+			new Error('USER_BANNED_FROM_CHAT')
+		);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+
+		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'groupChat.removed.overlay.headline'
+		);
+		expect(screen.getByText('join').hasAttribute('disabled')).toBe(true);
 	});
 
 	it('says so when the chat is gone', async () => {
