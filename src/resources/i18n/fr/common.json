@@ -2115,6 +2115,20 @@
 		"info": "Information",
 		"success": "Succès",
 		"warning": "Avertissement",
+		"eventNotice": {
+			"mention": {
+				"title": "Nouvelle mention",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la conversation"
+			},
+			"handover": {
+				"title": "Nouveau transfert de dossier",
+				"from": "De {{name}}",
+				"several": "{{count}} avis de transfert de dossier",
+				"open": "Voir le dossier"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Nouveau message dans le chat en direct",
 			"from": "De {{name}}",

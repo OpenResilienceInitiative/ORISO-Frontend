@@ -2112,6 +2112,20 @@
 		"info": "Info",
 		"success": "Success",
 		"warning": "Warning",
+		"eventNotice": {
+			"mention": {
+				"title": "New mention",
+				"from": "From {{name}}",
+				"several": "{{count}} new mentions",
+				"open": "Open conversation"
+			},
+			"handover": {
+				"title": "New case handover",
+				"from": "From {{name}}",
+				"several": "{{count}} case handover notices",
+				"open": "View case"
+			}
+		},
 		"liveChatMessage": {
 			"title": "New live chat message",
 			"from": "From {{name}}",

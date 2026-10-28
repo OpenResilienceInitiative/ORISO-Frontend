@@ -2115,6 +2115,20 @@
 		"info": "ሓበሬታ",
 		"success": "ዓወት",
 		"warning": "መጠንቀቕታ",
+		"eventNotice": {
+			"mention": {
+				"title": "ሓድሽ ጥቕሲ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} ሓደሽቲ ጥቕስታት",
+				"open": "ዝርርብ ክፈት"
+			},
+			"handover": {
+				"title": "ሓድሽ ምቕያር ጉዳይ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} መርኣያታት ምቕያር ጉዳይ",
+				"open": "ጉዳይ ርአይ"
+			}
+		},
 		"liveChatMessage": {
 			"title": "ሓድሽ መልእኽቲ ኣብ ቀጥታ ዕላል",
 			"from": "ካብ {{name}}",

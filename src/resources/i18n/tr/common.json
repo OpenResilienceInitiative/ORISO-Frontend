@@ -2115,6 +2115,20 @@
 		"info": "Bilgi",
 		"success": "Başarılı",
 		"warning": "Uyarı",
+		"eventNotice": {
+			"mention": {
+				"title": "Yeni anma",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} yeni anma",
+				"open": "Görüşmeyi aç"
+			},
+			"handover": {
+				"title": "Yeni vaka devri",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} vaka devri bildirimi",
+				"open": "Vakayı görüntüle"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Canlı sohbette yeni mesaj",
 			"from": "Gönderen: {{name}}",

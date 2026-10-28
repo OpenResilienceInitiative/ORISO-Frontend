@@ -2136,6 +2136,20 @@
 		"info": "Information",
 		"success": "Erfolg",
 		"warning": "Warnung",
+		"eventNotice": {
+			"mention": {
+				"title": "Neue Erwähnung",
+				"from": "Von {{name}}",
+				"several": "{{count}} neue Erwähnungen",
+				"open": "Beratung öffnen"
+			},
+			"handover": {
+				"title": "Neue Fallübergabe",
+				"from": "Von {{name}}",
+				"several": "{{count}} Hinweise zur Fallübergabe",
+				"open": "Fall ansehen"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Neue Nachricht im Live-Chat",
 			"from": "Von {{name}}",

@@ -6,6 +6,11 @@ import {
 	NOTIFICATION_TYPE_CALL
 } from '../incomingVideoCall/IncomingVideoCall';
 import {
+	EventNotice,
+	EventNoticeProps,
+	NOTIFICATION_TYPE_EVENT_NOTICE
+} from './EventNotice';
+import {
 	NewEnquiryNotice,
 	NewEnquiryNoticeProps,
 	NOTIFICATION_TYPE_NEW_ENQUIRY
@@ -58,6 +63,8 @@ export const Notification = ({ notification }: NotificationProps) => {
 					{...(notification as NewEnquiryNoticeProps)}
 				/>
 			);
+		case NOTIFICATION_TYPE_EVENT_NOTICE:
+			return <EventNotice {...(notification as EventNoticeProps)} />;
 		case NOTIFICATION_TYPE_INFO:
 		case NOTIFICATION_TYPE_WARNING:
 		case NOTIFICATION_TYPE_SUCCESS:

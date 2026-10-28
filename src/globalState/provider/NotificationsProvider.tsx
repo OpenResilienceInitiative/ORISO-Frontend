@@ -27,6 +27,15 @@ import {
 	upsertLiveChatMessageNotice
 } from '../../components/notifications/LiveChatMessageNotice';
 import {
+	eventNoticeActor,
+	eventNoticeId,
+	eventNoticeKindFor,
+	isEventNoticeTargetOpen,
+	NOTIFICATION_TYPE_EVENT_NOTICE,
+	NotificationTypeEventNotice,
+	upsertEventNotice
+} from '../../components/notifications/EventNotice';
+import {
 	isEnquiryListOpen,
 	isNewEnquiryForCounsellor,
 	NEW_ENQUIRY_NOTICE_ID,
@@ -102,6 +111,7 @@ export type NotificationTypes =
 	| NotificationTypeCall
 	| NotificationTypeLiveChatMessage
 	| NotificationTypeNewEnquiry
+	| NotificationTypeEventNotice
 	| NotificationTypeError
 	| NotificationTypeInfo
 	| NotificationTypeWarning
@@ -628,6 +638,55 @@ export function NotificationsProvider(props) {
 						upsertNewEnquiryNotice(list, {
 							id: NEW_ENQUIRY_NOTICE_ID,
 							notificationType: NOTIFICATION_TYPE_NEW_ENQUIRY,
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
+			// FE#779: a mention or a case handover to a counsellor also raises
+			// one in-app card per conversation — unless that conversation is on
+			// screen. Tone and OS banner below follow their rows as before.
+			const noticeKind = eventNoticeKindFor(event);
+			if (
+				noticeKind &&
+				!isEventNoticeTargetOpen(
+					event,
+					window.location.pathname,
+					document.visibilityState !== 'hidden'
+				)
+			) {
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{
+						family: descriptor.family,
+						mentioned,
+						conversationType: event.params?.conversationType
+					}
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					const sessionId = String(event.sourceSessionId);
+					setNotifications((list) =>
+						upsertEventNotice(list, {
+							id: eventNoticeId(noticeKind, sessionId),
+							notificationType: NOTIFICATION_TYPE_EVENT_NOTICE,
+							kind: noticeKind,
+							sessionId,
+							roomRef: event.params?.roomRef ?? null,
+							actorName: eventNoticeActor(noticeKind, event),
 							count: 1,
 							path: toNonEmbeddedPath(
 								resolveNotificationActionPath(
