@@ -227,6 +227,91 @@ describe('GroupCallWidget Storybook harness', () => {
 		}
 	});
 
+	const renderActiveCall = async () => {
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		const iframe = await waitFor(() => {
+			const found = view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement | null;
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		return { view, iframe };
+	};
+
+	const ringSecondCall = () =>
+		act(() =>
+			callManager.receiveCall(
+				'!second-call:matrix.storybook.test',
+				false,
+				'second-call',
+				'@second:matrix.storybook.test',
+				true,
+				'!second-session:matrix.storybook.test',
+				true
+			)
+		);
+
+	it('keeps the second call ringing when the call closes itself during the hangup', async () => {
+		/*
+		 * Element Call may answer the hangup with its own close, which closes
+		 * the surface and moves the waiting call up. The end button's own
+		 * teardown after the handshake must then leave that call alone.
+		 */
+		const { view } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			on: ReturnType<typeof vi.fn>;
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		api.transport.send.mockImplementation(async (action: string) => {
+			if (action !== 'im.vector.hangup') return {};
+			const close = api.on.mock.calls.find(
+				([name]) => name === 'action:io.element.close'
+			)?.[1] as (event: unknown) => void;
+			close({ detail: {}, preventDefault: () => undefined });
+			return {};
+		});
+
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: 'second-call',
+					state: 'ringing'
+				})
+			)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({ callId: 'second-call', state: 'ringing' })
+		);
+	});
+
+	it('takes keyboard focus back into the call when the dock expands', async () => {
+		const { view, iframe } = await renderActiveCall();
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+		fireEvent.click(
+			await view.findByRole('button', { name: 'Back to the full call' })
+		);
+
+		await waitFor(() => expect(document.activeElement).toBe(iframe));
+	});
+
 	it('waits for the call to say goodbye before destroying its document', async () => {
 		/*
 		 * `hangup()` is a widget action and the MatrixRTC leave happens INSIDE

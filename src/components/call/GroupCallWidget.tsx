@@ -685,6 +685,13 @@ export const GroupCallWidget: React.FC = () => {
 		: t('calls.title');
 	const dockParty = knownParty ?? { name: unnamedCall };
 
+	// Back from the dock, keyboard focus follows the user into the call.
+	const wasMinimized = useRef(false);
+	useEffect(() => {
+		if (wasMinimized.current && !isMinimized) iframeRef.current?.focus();
+		wasMinimized.current = isMinimized;
+	}, [isMinimized]);
+
 	/*
 	 * A second call must never ring unseen. Browser full screen puts the call
 	 * in the top layer, where no z-index reaches, so leave it while it rings.
@@ -755,6 +762,7 @@ export const GroupCallWidget: React.FC = () => {
 		 * blanks the iframe itself — doing it here as well was how the race
 		 * got in.
 		 */
+		const endingCallId = callData?.callId;
 		void (async () => {
 			try {
 				await Promise.race([
@@ -766,7 +774,10 @@ export const GroupCallWidget: React.FC = () => {
 			} catch {
 				/* local teardown still completes if the iframe already closed */
 			}
-			closeCallSurface();
+			// The call may have closed itself meanwhile and moved a waiting
+			// second call up; that one is not ours to end.
+			const current = callManager.getCurrentCall();
+			if (!current || current.callId === endingCallId) closeCallSurface();
 		})();
 	};
 
