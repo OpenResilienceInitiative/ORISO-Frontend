@@ -13,6 +13,9 @@ import {
 } from './callShareSettings';
 import './callShare.scss';
 
+/** Above `.group-call-widget` (10000): the surfaces are portalled to the body. */
+const CALL_SHARE_LAYER = 10001;
+
 export interface CallShareProps {
 	/** The guest link of this one call (backend later; #1794). */
 	link: string;
@@ -132,6 +135,7 @@ export const CallShare = ({
 						horizontal: 'center'
 					}}
 					slotProps={{ paper: { className: 'callShare__popover' } }}
+					sx={{ zIndex: CALL_SHARE_LAYER }}
 				>
 					{panel}
 				</Popover>
@@ -141,6 +145,7 @@ export const CallShare = ({
 					open={open}
 					onClose={close}
 					PaperProps={{ className: 'callShare__sheet' }}
+					sx={{ zIndex: CALL_SHARE_LAYER }}
 				>
 					<span className="callShare__handle" aria-hidden />
 					{panel}

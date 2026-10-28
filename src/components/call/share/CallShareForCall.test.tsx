@@ -171,3 +171,17 @@ it('asks again when the call could not be shared yet', async () => {
 		vi.useRealTimers();
 	}
 });
+
+/* GroupCallWidget sits at z-index 10000; MUI's default layers would open behind it. */
+it.each(['phone', 'desktop'] as const)(
+	'opens the %s surface above the call window',
+	async (layout) => {
+		render(
+			<CallShareForCall sourceRoomId="!r:x" callId="c1" layout={layout} />
+		);
+
+		const knock = await openPanel();
+		const root = knock.closest('.MuiModal-root') as HTMLElement;
+		expect(Number(getComputedStyle(root).zIndex)).toBeGreaterThan(10000);
+	}
+);
