@@ -353,7 +353,8 @@
 		"participants": {
 			"label": "Participants : {{names}}",
 			"more": "{{count}} autres participants",
-			"more_one": "1 autre personne"
+			"more_one": "1 autre personne",
+			"moreList": "Autres participants ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Changer de canal",

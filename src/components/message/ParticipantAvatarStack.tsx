@@ -246,7 +246,14 @@ const OverflowList = ({
 
 	useEffect(() => {
 		if (!open) return;
+		// Keyboard users land in the list; Escape there brings them back.
+		panelRef.current?.focus();
 		const close = () => setOpen(false);
+		// Scrolling the list itself must not close it (long lists scroll).
+		const closeOnScroll = (event: Event) => {
+			if (panelRef.current?.contains(event.target as Node)) return;
+			setOpen(false);
+		};
 		const onKey = (event: KeyboardEvent) => {
 			if (event.key !== 'Escape') return;
 			event.stopPropagation();
@@ -265,16 +272,22 @@ const OverflowList = ({
 		document.addEventListener('keydown', onKey);
 		document.addEventListener('mousedown', onPointer);
 		window.addEventListener('resize', close);
-		window.addEventListener('scroll', close, true);
+		window.addEventListener('scroll', closeOnScroll, true);
 		return () => {
 			document.removeEventListener('keydown', onKey);
 			document.removeEventListener('mousedown', onPointer);
 			window.removeEventListener('resize', close);
-			window.removeEventListener('scroll', close, true);
+			window.removeEventListener('scroll', closeOnScroll, true);
 		};
 	}, [open]);
 
 	const stop = (event: React.SyntheticEvent) => event.stopPropagation();
+	const onPanelKey = (event: React.KeyboardEvent) => {
+		event.stopPropagation();
+		if (event.key !== 'Escape') return;
+		setOpen(false);
+		buttonRef.current?.focus();
+	};
 	const toggle = (event: React.MouseEvent) => {
 		event.stopPropagation();
 		setAnchor(buttonRef.current?.getBoundingClientRect() ?? null);
@@ -282,7 +295,7 @@ const OverflowList = ({
 	};
 	const title = translate('chatStage.participants.moreList', {
 		count,
-		defaultValue: 'Weitere Teilnehmende ({{count}})'
+		defaultValue: 'Weitere Beteiligte ({{count}})'
 	});
 
 	return (
@@ -311,6 +324,7 @@ const OverflowList = ({
 						ref={panelRef}
 						id={panelId}
 						role="dialog"
+						tabIndex={-1}
 						aria-label={title}
 						className="participantStack__list"
 						data-cy="participant-overflow-list"
@@ -325,7 +339,7 @@ const OverflowList = ({
 							)
 						}}
 						onClick={stop}
-						onKeyDown={stop}
+						onKeyDown={onPanelKey}
 						onMouseDown={stop}
 					>
 						<p className="participantStack__listTitle">{title}</p>

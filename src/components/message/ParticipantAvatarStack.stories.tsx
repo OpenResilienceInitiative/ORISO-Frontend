@@ -316,6 +316,12 @@ export const OverflowBadgeOpensList: Story = {
 		).toEqual(['Bettina B.', 'Gast 1', 'Gast 2', 'Gast 3']);
 		// Opening it must not click through to the card around it.
 		await expect((window as any).__cardClicked).toBe(false);
+		// Keyboard users land in the list, and scrolling it keeps it open.
+		await waitFor(() => expect(document.activeElement).toBe(list));
+		list.dispatchEvent(new Event('scroll'));
+		await expect(
+			document.querySelector('[data-cy="participant-overflow-list"]')
+		).toBe(list);
 
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>

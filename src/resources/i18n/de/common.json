@@ -360,7 +360,8 @@
 		"participants": {
 			"label": "Beteiligte: {{names}}",
 			"more": "{{count}} weitere Beteiligte",
-			"more_one": "1 weitere Person"
+			"more_one": "1 weitere Person",
+			"moreList": "Weitere Beteiligte ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal wechseln",

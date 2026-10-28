@@ -12,8 +12,9 @@
 
 The conversation list only shows the past. Planned 1:1 appointments and self-help
 group occurrences (often 10+ per group) are invisible in it; the existing
-FutureTimelinePanel is a collapsible strip shown only when group series exist and the
-`futureTimeline` chip is on. Separately, the list renders every conversation as a
+FutureTimelinePanel is a collapsible strip shown only where the list toolbar is shown
+and group series exist; in the MY_SESSION list the `futureTimeline` display filter must
+also be on. Separately, the list renders every conversation as a
 standalone tile (24px gaps, doubled hairlines), which wastes space and hides which
 conversation is open once focus moves to the editor.
 
@@ -65,8 +66,10 @@ conversation is open once focus moves to the editor.
    Filters apply to both directions; the future exists only where future events do.
 8. Mapping in the prototype: group occurrences attach to their room
    (`ChatOccurrence.seriesId` → group session → `matrixRoomId`); bookings get a
-   `sessionId` field in the mocks. Entries without a mapping show only with no
-   active filter. Mocks use the real API format.
+   `sessionId` field in the mocks. That field is a prototype-only fixture extension:
+   `BookingEventsInterface` has no session or room reference today (see
+   Consequences). Entries without a mapping show only with no active filter. Apart
+   from that field the mocks use the real API format.
 9. Display settings live in Matrix account data next to the display filters
    (`org.oriso.display_filters`), section "Anzeige" (`/anzeige`), for askers and
    counsellors: scroll model, date on past items on/off, "show on upcoming
@@ -75,7 +78,9 @@ conversation is open once focus moves to the editor.
    variant (test phase only), date on the topic tag (a: segment on the tag, default;
    b: own row).
 10. The old future strip and the `futureTimeline` chip are removed only after the
-    prototype is accepted. The productive list stays unchanged until then.
+    prototype is accepted. Until then the timeline parts (handle, twin entries,
+    "Jetzt" marker, display settings) stay out of the productive list. The grouped
+    list (§1, §2) is not part of this gate and ships with its own PR.
 
 ## Card details decided on 2026-10-28 (grouped list review)
 
