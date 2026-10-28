@@ -125,21 +125,28 @@ export const LiveChatMessageNotice = (props: LiveChatMessageNoticeProps) => {
 		close();
 		if (props.path) navigate(props.path);
 	}, [close, navigate, props.path]);
-	// Opening the chat any other way (list, feed) also settles the pop-up.
+	// Opening the chat any other way (list, feed) also settles the pop-up, but
+	// only once it is really seen: a hidden tab keeps the card until it returns.
 	const { pathname } = useLocation();
 	useEffect(() => {
-		if (
-			isLiveChatOpen(
-				{
-					eventType: 'message.new',
-					sourceSessionId: props.sessionId,
-					params: { roomRef: props.roomRef }
-				},
-				pathname,
-				true
+		const settleIfSeen = () => {
+			if (
+				isLiveChatOpen(
+					{
+						eventType: 'message.new',
+						sourceSessionId: props.sessionId,
+						params: { roomRef: props.roomRef }
+					},
+					pathname,
+					document.visibilityState !== 'hidden'
+				)
 			)
-		)
-			close();
+				close();
+		};
+		settleIfSeen();
+		document.addEventListener('visibilitychange', settleIfSeen);
+		return () =>
+			document.removeEventListener('visibilitychange', settleIfSeen);
 	}, [close, pathname, props.roomRef, props.sessionId]);
 
 	return (

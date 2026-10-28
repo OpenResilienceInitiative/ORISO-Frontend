@@ -121,6 +121,26 @@ describe('LiveChatMessageNotice', () => {
 		);
 	});
 
+	it('keeps the card in a hidden tab with the chat route open until the tab is seen', () => {
+		let visibility: DocumentVisibilityState = 'hidden';
+		const spy = vi
+			.spyOn(document, 'visibilityState', 'get')
+			.mockImplementation(() => visibility);
+		const remove = renderNotice(
+			notice(),
+			'/sessions/consultant/sessionView/!room42/42'
+		);
+		expect(remove).not.toHaveBeenCalled();
+
+		visibility = 'visible';
+		fireEvent(document, new Event('visibilitychange'));
+		expect(remove).toHaveBeenCalledWith(
+			'live-chat-message:42',
+			NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE
+		);
+		spy.mockRestore();
+	});
+
 	it('offers no open button without a target', () => {
 		renderNotice(notice({ path: null }));
 		expect(screen.queryByTestId('live-chat-message-open')).toBeNull();
