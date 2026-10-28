@@ -77,6 +77,18 @@ conversation is open once focus moves to the editor.
 10. The old future strip and the `futureTimeline` chip are removed only after the
     prototype is accepted. The productive list stays unchanged until then.
 
+## Card details decided on 2026-10-28 (grouped list review)
+
+- Selecting a card parts its neighbours with a short ease (200 ms gap and corners,
+  160 ms colours); none under `prefers-reduced-motion`.
+- A card whose menu is open is rounded and drawn above its neighbours, so its
+  outline is never cut; the ⋮ button keeps a white ring (no pink halo).
+- Group cards fold the participants beyond `maxVisible` (2) into a red "+N" badge
+  on the last avatar (`overflowStyle="badge"`; no extra width). A click opens the
+  list of the folded people (primary-red frame) without selecting the card; from
+  100 on it reads "99+". Room headers keep the pill. The grey speech bubble
+  (`overflowStyle="bubble"`) stays available as an option.
+
 ## Process decisions
 
 - `dev` is the source of truth, never `pre-dev`. Conflict order: code on dev, then
