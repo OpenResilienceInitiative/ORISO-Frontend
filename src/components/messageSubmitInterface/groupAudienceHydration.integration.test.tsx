@@ -452,4 +452,37 @@ describe('stale stored recipients in a group session (#1805)', () => {
 		);
 		expect(send.mock.calls[0][0].message).not.toContain('VISIBLE_TO');
 	});
+
+	it('let a supervisor replace the stale recipient by picking a colleague', async () => {
+		const send = vi
+			.spyOn(chatTransportService, 'sendTextMessage')
+			.mockResolvedValue({ event_id: '$synthetic' });
+		storeStaleRecipient();
+		render(
+			<Composer
+				members={[system, homer, marge]}
+				isSupervisor
+				supervisionRoomId="!synthetic-side:example.org"
+			/>
+		);
+		await sendPrivateDraft();
+		await screen.findByRole('alert');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: i18n.t('message.audience.menuHeading')
+			})
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Homer' }));
+		await userEvent.setup().click(
+			screen.getByRole('button', {
+				name: i18n.t('enquiry.write.input.button.title')
+			})
+		);
+		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		expect(send.mock.calls[0][0].matrixRoomId).toBe(
+			'!synthetic-side:example.org'
+		);
+		expect(send.mock.calls[0][0].message).toContain(homer.userId);
+		expect(send.mock.calls[0][0].message).not.toContain('@lisa');
+	});
 });

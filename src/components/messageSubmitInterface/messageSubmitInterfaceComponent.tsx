@@ -3226,23 +3226,30 @@ export const MessageSubmitInterfaceComponent = ({
 		[]
 	);
 
-	const toggleAudienceSelection = useCallback((value: string) => {
-		setSelectedAudienceValues((previousValues) => {
-			if (value === AUDIENCE_ALL) {
-				return [AUDIENCE_ALL];
-			}
-			const withoutAll = previousValues.filter(
-				(entry) => entry !== AUDIENCE_ALL
-			);
-			if (withoutAll.includes(value)) {
-				const nextValues = withoutAll.filter(
-					(entry) => entry !== value
+	// A deliberate pick replaces restored recipients who are no longer in
+	// the room; keeping them would block every send (#1805).
+	const toggleAudienceSelection = useCallback(
+		(value: string) => {
+			setSelectedAudienceValues((previousValues) => {
+				if (value === AUDIENCE_ALL) {
+					return [AUDIENCE_ALL];
+				}
+				const withoutAll = previousValues.filter(
+					(entry) =>
+						entry !== AUDIENCE_ALL &&
+						audienceOptions.some((option) => option.value === entry)
 				);
-				return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
-			}
-			return [...withoutAll, value];
-		});
-	}, []);
+				if (withoutAll.includes(value)) {
+					const nextValues = withoutAll.filter(
+						(entry) => entry !== value
+					);
+					return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
+				}
+				return [...withoutAll, value];
+			});
+		},
+		[audienceOptions]
+	);
 	const toggleAudienceSectionExpanded = useCallback(
 		(sectionKey: 'clients' | 'counsellors' | 'moderators') => {
 			setExpandedAudienceSections((previousValue) => ({
@@ -3270,7 +3277,13 @@ export const MessageSubmitInterfaceComponent = ({
 					.map((entry) => entry.value);
 				const withoutAll = previousValues.includes(AUDIENCE_ALL)
 					? allVisibleValues
-					: previousValues.filter((value) => value !== AUDIENCE_ALL);
+					: previousValues.filter(
+							(value) =>
+								value !== AUDIENCE_ALL &&
+								audienceOptions.some(
+									(option) => option.value === value
+								)
+						);
 				const hasAllSelected = sectionValues.every((value) =>
 					withoutAll.includes(value)
 				);
@@ -3291,7 +3304,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return isEverythingSelected ? [AUDIENCE_ALL] : nextValues;
 			});
 		},
-		[audienceGroupedSections]
+		[audienceGroupedSections, audienceOptions]
 	);
 
 	const startVoiceRecording = useCallback(async () => {
