@@ -3,6 +3,7 @@ import {
 	activityEventCaseHandoverRequestId,
 	activityEventCategory,
 	activityEventConversation,
+	activityEventNamesCaseHandoverRequest,
 	activityEventRoomId,
 	activityEventRouteSessionId,
 	activityEventSessionId,
@@ -180,6 +181,14 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 		);
 	});
 
+	it('falls back to params when the row’s own session id is unusable', () => {
+		expect(
+			activityEventSessionId(
+				row({ sourceSessionId: '', params: { sourceSessionId: 8 } })
+			)
+		).toBe(8);
+	});
+
 	describe('route session (#1888: what the conversation route carries)', () => {
 		it('is the session when there is one', () => {
 			expect(
@@ -246,6 +255,20 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 			expect(
 				activityEventCaseHandoverRequestId(row(overrides))
 			).toBeNull();
+		});
+	});
+
+	describe('names a case-handover request', () => {
+		it.each([
+			[{ params: { caseHandoverRequestId: 5 } }, true],
+			[{ params: { caseHandoverRequestId: 'abc' } }, true],
+			[{ actionPath: '/x/13?caseHandoverRequestId=0' }, true],
+			[{ params: { caseHandoverRequestId: '' } }, false],
+			[{ actionPath: '/x/13' }, false]
+		])('%j → %s', (overrides, names) => {
+			expect(activityEventNamesCaseHandoverRequest(row(overrides))).toBe(
+				names
+			);
 		});
 	});
 

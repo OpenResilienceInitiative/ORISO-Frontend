@@ -97,7 +97,8 @@ const toPositiveId = (value: unknown): number | null => {
 export const activityEventSessionId = (
 	row: Pick<ActivityEventRow, 'sourceSessionId' | 'params'>
 ): number | null =>
-	toPositiveId(row?.sourceSessionId ?? row?.params?.sourceSessionId);
+	toPositiveId(row?.sourceSessionId) ??
+	toPositiveId(row?.params?.sourceSessionId);
 
 const pathQuery = (path?: string | null): URLSearchParams =>
 	new URLSearchParams(String(path || '').split('?')[1] || '');
@@ -122,18 +123,25 @@ export const activityEventRouteSessionId = (
 	return match?.[1] || null;
 };
 
+const sentRequestId = (row: ActivityEventRow): unknown => {
+	const sent = row?.params?.caseHandoverRequestId;
+	return sent != null && sent !== ''
+		? sent
+		: pathQuery(row?.actionPath).get('caseHandoverRequestId') || null;
+};
+
+/**
+ * Whether the event names a case-handover request at all, readable or not.
+ * An older producer names none; a garbled id is still somebody's request.
+ */
+export const activityEventNamesCaseHandoverRequest = (
+	row: ActivityEventRow
+): boolean => sentRequestId(row) !== null;
+
 /** The case-handover request: params first, else the stored path's query. */
 export const activityEventCaseHandoverRequestId = (
 	row: ActivityEventRow
-): number | null => {
-	const sent = row?.params?.caseHandoverRequestId;
-	if (sent != null && sent !== '') {
-		return toPositiveId(sent);
-	}
-	return toPositiveId(
-		pathQuery(row?.actionPath).get('caseHandoverRequestId')
-	);
-};
+): number | null => toPositiveId(sentRequestId(row));
 
 /**
  * WP-06: the visible strings from the event descriptor's i18n templates

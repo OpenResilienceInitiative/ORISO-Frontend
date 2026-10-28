@@ -96,13 +96,25 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 					return [];
 				}
 				const matrixEventId = item.params?.matrixEventId;
-				const numericSessionId = activityEventSessionId(item);
+				// By room first: a numeric id can also be a group chat's (#1888).
+				const eventSessionId = activityEventSessionId(item);
+				const session =
+					getExtendedSession(
+						item.params?.roomRef || undefined,
+						sessions || []
+					) ??
+					getExtendedSession(
+						eventSessionId === null
+							? undefined
+							: String(eventSessionId),
+						sessions || []
+					);
 				const sessionId =
-					numericSessionId === null ? null : String(numericSessionId);
-				const session = getExtendedSession(
-					sessionId || undefined,
-					sessions || []
-				);
+					eventSessionId !== null
+						? String(eventSessionId)
+						: session?.isSession && session.item?.id != null
+							? String(session.item.id)
+							: null;
 				const roomRef = item.params?.roomRef || session?.rid;
 				if (!matrixEventId || !roomRef) {
 					return [];

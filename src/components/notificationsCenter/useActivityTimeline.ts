@@ -47,8 +47,8 @@ export interface ActivityTimeline {
  *   cascade-read the feed one selection at a time.
  * - Display, Open and Next all anchor on the same card.
  * - A message card shows its conversation (preview-first, design feedback
- *   2026-07-12); closing it holds for that card only, and a feed refresh
- *   does not reopen it.
+ *   2026-07-12); closing it holds while that card stays selected, and a
+ *   feed refresh does not reopen it.
  */
 export const useActivityTimeline = ({
 	feed,
@@ -102,10 +102,16 @@ export const useActivityTimeline = ({
 
 	const select = useCallback((id: string) => setPickedId(id), []);
 
+	// Closing holds while the same card stays selected; selecting another
+	// card (or coming back) opens again. Reset during render, not in an
+	// effect, so the new card never paints closed.
 	const [conversation, setConversation] = useState({
 		forId: selectedId,
 		open: true
 	});
+	if (conversation.forId !== selectedId) {
+		setConversation({ forId: selectedId, open: true });
+	}
 	const conversationOpen =
 		conversation.forId === selectedId ? conversation.open : true;
 	const toggleConversation = useCallback(

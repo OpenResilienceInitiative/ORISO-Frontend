@@ -67,6 +67,17 @@ describe('useCaseHandoverResolutionEvents (#1888: reads the activity event model
 		).not.toHaveBeenCalled();
 	});
 
+	it('ignores an event whose request id is unreadable', () => {
+		expect(
+			watch([
+				event({
+					sourceSessionId: '13',
+					params: { caseHandoverRequestId: 'abc' }
+				})
+			])
+		).not.toHaveBeenCalled();
+	});
+
 	it('ignores other sessions and other event types', () => {
 		expect(
 			watch([

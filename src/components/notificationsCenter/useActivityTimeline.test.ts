@@ -141,6 +141,22 @@ describe('useActivityTimeline (#1888: the Timeline’s selection, in one place)'
 			expect(result.current.conversationShown).toBe(true);
 		});
 
+		it('reopens when the card is selected again after another one', () => {
+			const { result } = setup();
+			act(() => result.current.toggleConversation());
+			act(() => result.current.select('b'));
+			act(() => result.current.select('a'));
+			expect(result.current.selectedId).toBe('a');
+			expect(result.current.conversationShown).toBe(true);
+		});
+
+		it('stays closed when only the feed refreshes', () => {
+			const { result, rerender, initialProps } = setup();
+			act(() => result.current.toggleConversation());
+			rerender({ ...initialProps, feed: [...initialProps.feed] });
+			expect(result.current.conversationShown).toBe(false);
+		});
+
 		it('is never shown without a selected card', () => {
 			const { result } = setup({ isPhone: true });
 			expect(result.current.conversationShown).toBe(false);

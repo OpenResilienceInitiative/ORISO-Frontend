@@ -95,6 +95,36 @@ describe('useActivityPreviewHydration (#924 / #1888)', () => {
 		expect(result.current.sources).toEqual([]);
 	});
 
+	it('finds the session by room, so a group chat card hydrates without a session id', () => {
+		const groupChat: any = {
+			chat: { id: 77, groupId: '!g:x', matrixRoomId: '!g:x' }
+		};
+		const { result } = hydrate(
+			[
+				card({
+					sourceSessionId: undefined,
+					params: {
+						roomRef: '!g:x',
+						matrixEventId: '$e1',
+						seriesId: 77
+					}
+				})
+			],
+			[groupChat]
+		);
+		expect(result.current.sources).toHaveLength(1);
+		expect(api.apiGetCaseHandoverStatus).not.toHaveBeenCalled();
+	});
+
+	it('checks a colleague’s case found by room under its own session id', async () => {
+		const { result } = hydrate(
+			[card({ sourceSessionId: undefined })],
+			[sessionOwnedBy('colleague')]
+		);
+		await waitFor(() => expect(result.current.sources).toHaveLength(1));
+		expect(api.apiGetCaseHandoverStatus).toHaveBeenCalledWith(13);
+	});
+
 	it('ignores events that carry no message', () => {
 		const { result } = hydrate(
 			[
