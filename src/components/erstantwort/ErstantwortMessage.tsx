@@ -29,6 +29,7 @@ import {
 	resolveErstantwortBausteine
 } from './erstantwortResolve';
 import { ErstantwortTrigger } from './erstantwortCatalogue';
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 
 /**
  * The chat-side container for the Erstantwort (ADR-018, ORISO-Frontend#772).
@@ -47,6 +48,10 @@ export interface ErstantwortMessageProps {
 	/** Used only when no event exists — the client-side triggers of #825. */
 	trigger?: ErstantwortTrigger;
 	conversationType?: string | null;
+	/** Alias changes belong to this conversation, never the login account. */
+	sessionId?: number;
+	displayName?: string;
+	onDisplayNameSaved?: () => void;
 	deadlineDays?: number;
 	/**
 	 * ORISO-Admin#602 switch 2. Left `undefined` until that card ships, which
@@ -69,6 +74,9 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	messageId,
 	trigger,
 	conversationType,
+	sessionId,
+	displayName,
+	onDisplayNameSaved,
 	deadlineDays,
 	isAskerEmailEnabled,
 	skipAnimation,
@@ -184,7 +192,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					openTwoFactorSettings({ showBackupKey: true });
 					break;
 				case 'SET_DISPLAY_NAME':
-					setIsDisplayNameOverlayOpen(true);
+					if (sessionId !== undefined)
+						setIsDisplayNameOverlayOpen(true);
 					break;
 				case 'SAVE_CREDENTIALS':
 					/* Handled inline by SaveCredentialsCard — there is no dialog
@@ -201,7 +210,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					break;
 			}
 		},
-		[navigate, openTwoFactorSettings]
+		[navigate, openTwoFactorSettings, sessionId]
 	);
 
 	/* The calls to action address the advice seeker. A counsellor reads the
@@ -216,7 +225,12 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	return (
 		<>
 			<ErstantwortSequence
-				bausteine={bausteine}
+				bausteine={bausteine.map((item) =>
+					item.action?.kind === 'SET_DISPLAY_NAME' &&
+					sessionId === undefined
+						? { ...item, action: undefined }
+						: item
+				)}
 				compactFaq={conversationType !== 'LIVE_CHAT'}
 				skipAnimation={skipAnimation}
 				onAction={offersActions ? handleAction : undefined}
@@ -256,20 +270,21 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					)
 				}}
 			/>
-			{isEmailOverlayOpen && (
+			{isEmailOverlayOpen && emailAllowed && (
 				<ErstantwortEmailOverlay
 					onClose={() => setIsEmailOverlayOpen(false)}
 					onSaved={reloadUserData}
 				/>
 			)}
-			{isDisplayNameOverlayOpen && (
+			{isDisplayNameOverlayOpen && sessionId !== undefined && (
 				<ErstantwortDisplayNameOverlay
-					currentName={
-						userData?.displayName || userData?.userName || ''
-					}
+					key={sessionId}
+					sessionId={sessionId}
+					editable={isAskerDisplayNameTypingAllowed(tenant?.settings)}
+					currentName={displayName || userData?.userName || ''}
 					locale={i18n.language || 'de'}
 					onClose={() => setIsDisplayNameOverlayOpen(false)}
-					onSaved={reloadUserData}
+					onSaved={() => onDisplayNameSaved?.()}
 				/>
 			)}
 		</>

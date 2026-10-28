@@ -1,36 +1,58 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
-import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiPutSessionData } from '../../api/apiPutSessionData';
 import { regeneratePseudonym } from '../../utils/pseudonymGenerator';
 import type { Pseudonym } from '../../utils/pseudonymGenerator';
+import { AskerDisplayNameField } from '../pseudonym/AskerDisplayNameField';
 
 export interface ErstantwortDisplayNameOverlayProps {
+	sessionId: number;
 	currentName: string;
+	editable?: boolean;
 	locale: string;
 	onClose: () => void;
 	onSaved: () => void;
 }
 
 /**
- * In-chat re-roll for the advice-seeker display name (#1194 Job 3).
- * Catalogue copy is "neu würfeln" — not free-text (ORISO-Admin#602).
+ * Edit this session's alias, with generated alternatives always available.
+ * Admin#602 controls free entry; the login User-ID is never patched.
  */
 export const ErstantwortDisplayNameOverlay: React.FC<
 	ErstantwortDisplayNameOverlayProps
-> = ({ currentName, locale, onClose, onSaved }) => {
+> = ({
+	sessionId,
+	currentName,
+	locale,
+	editable = false,
+	onClose,
+	onSaved
+}) => {
 	const { t } = useTranslation();
+	const active = useRef(true);
+	useEffect(() => {
+		active.current = true;
+		return () => {
+			active.current = false;
+		};
+	}, []);
 	const [pseudonym, setPseudonym] = useState<Pseudonym | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 	const [errorText, setErrorText] = useState<string | null>(null);
 
-	const displayedName = pseudonym?.displayName ?? currentName;
+	const [customName, setCustomName] = useState<string | null>(null);
+	const displayedName =
+		editable && customName !== null
+			? customName
+			: (pseudonym?.displayName ?? currentName);
 
 	const reroll = () => {
 		if (isSaving) return;
 		setErrorText(null);
+		setCustomName(null);
 		setPseudonym(
 			regeneratePseudonym(
 				pseudonym ?? ({ displayName: currentName } as Pseudonym),
@@ -41,16 +63,19 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 
 	const save = () => {
 		if (isSaving) return;
-		const nameToSave = displayedName;
+		const nameToSave = displayedName.trim();
+		if (!nameToSave || nameToSave.length > 255) return;
 		setIsSaving(true);
 		setErrorText(null);
-		apiPatchUserData({ displayName: nameToSave })
+		apiPutSessionData(sessionId, { displayName: nameToSave })
 			.then(() => {
+				if (!active.current) return;
 				setIsSaving(false);
 				onSaved();
 				onClose();
 			})
 			.catch(() => {
+				if (!active.current) return;
 				setIsSaving(false);
 				setErrorText(
 					t(
@@ -64,7 +89,7 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 	const formItem: OverlayItem = {
 		buttonSet: [
 			{
-				disabled: isSaving,
+				disabled: isSaving || !displayedName.trim(),
 				label: t('erstantwort.displayName.overlay.save', 'Übernehmen'),
 				type: BUTTON_TYPES.PRIMARY
 			},
@@ -86,9 +111,12 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 			),
 		nestedComponent: (
 			<div>
-				<p>
-					<strong>{displayedName}</strong>
-				</p>
+				<AskerDisplayNameField
+					value={displayedName}
+					onChange={setCustomName}
+					editable={editable}
+					disabled={isSaving}
+				/>
 				<button type="button" disabled={isSaving} onClick={reroll}>
 					{t(
 						'erstantwort.displayName.overlay.reroll',

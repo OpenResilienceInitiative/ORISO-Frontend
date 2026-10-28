@@ -5849,7 +5849,7 @@
 			},
 			"access": {
 				"headline": "Your name for today.",
-				"subline": "Anonymous, no account. Pick a user ID — or roll new ones.",
+				"subline": "Anonymous, no account.",
 				"label": "Your user ID",
 				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
 				"reroll": "Roll again",

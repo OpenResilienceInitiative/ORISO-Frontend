@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AccountData } from './AccountData';
 import { clearDepartmentLegalCache } from '../../../api/apiGetDepartmentLegal';
@@ -9,6 +15,13 @@ import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import { RegistrationContext } from '../../../globalState/provider/RegistrationProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { TenantDataInterface } from '../../../globalState/interfaces';
+import {
+	clearAccountDataDraft,
+	getAccountDataDraft,
+	setAccountDataDraft
+} from './accountDataDraft';
+import { generatePseudonym } from '../../../utils/pseudonymGenerator';
+import * as pseudonyms from '../../../utils/pseudonymGenerator';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -40,7 +53,9 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 
 afterEach(() => {
 	cleanup();
+	clearAccountDataDraft();
 	clearDepartmentLegalCache();
+	vi.restoreAllMocks();
 	vi.clearAllMocks();
 });
 
@@ -58,7 +73,9 @@ const tenantWith = (
 const renderAccountData = (
 	tenant: TenantDataInterface,
 	registrationData: Record<string, unknown> = {},
-	temporary = false
+	temporary = false,
+	onChange = vi.fn(),
+	dataProtection: 'checkbox' | 'snackbar' = 'checkbox'
 ) =>
 	render(
 		<LegalLinksContext.Provider
@@ -89,7 +106,8 @@ const renderAccountData = (
 						value={{ tenant, setTenant: () => {} }}
 					>
 						<AccountData
-							onChange={() => {}}
+							onChange={onChange}
+							dataProtection={dataProtection}
 							temporary={temporary}
 						/>
 					</TenantContext.Provider>
@@ -99,6 +117,53 @@ const renderAccountData = (
 	);
 
 describe('AccountData — configurable email field', () => {
+	it('does not collect email or offer email 2FA when account collection is forbidden', () => {
+		renderAccountData(
+			tenantWith({
+				emailVisible: true,
+				emailRequired: true,
+				featureAskerEmailEnabled: false
+			})
+		);
+		expect(
+			screen.queryByLabelText('registration.account.email.label')
+		).toBeNull();
+		expect(
+			screen.queryByLabelText('registration.account.twoFactorAuth.label')
+		).toBeNull();
+	});
+
+	it('clears a restored email and permits completion despite restored required-email and 2FA settings', async () => {
+		setAccountDataDraft({
+			identity: generatePseudonym('de'),
+			username: 'policy-asker',
+			password: 'Sichere-Passphrase9!',
+			repeatPassword: 'Sichere-Passphrase9!',
+			acceptedConsentBinding: null,
+			email: 'restored@example.test',
+			twoFactorAuthEnabled: true
+		});
+		const onChange = vi.fn();
+		renderAccountData(
+			tenantWith({
+				emailVisible: true,
+				emailRequired: true,
+				featureAskerEmailEnabled: false
+			}),
+			{},
+			false,
+			onChange,
+			'snackbar'
+		);
+		await waitFor(() =>
+			expect(onChange).toHaveBeenCalledWith({
+				username: 'policy-asker',
+				password: 'Sichere-Passphrase9!',
+				email: undefined
+			})
+		);
+	});
+
 	it('does not render an email field when the tenant has it hidden', () => {
 		renderAccountData(tenantWith({ emailVisible: false }));
 
@@ -247,4 +312,22 @@ describe('AccountData — leaving the temporary join', () => {
 		expect(passwordFields.length).toBeGreaterThan(0);
 		passwordFields.forEach((field) => expect(field.value).toBe(''));
 	});
+});
+
+it('rolling the login suggestion preserves the independently chosen avatar (#1025)', () => {
+	renderAccountData(tenantWith({}));
+	const initial = getAccountDataDraft().identity;
+	vi.spyOn(pseudonyms, 'regeneratePseudonym').mockReturnValue({
+		...initial,
+		displayName: 'freundlicher Otter Kim',
+		animalLabel: 'Otter',
+		name: 'Kim',
+		avatar: { ...initial.avatar, bg: '#000000' }
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: /registration.account.suggest.username/
+		})
+	);
+	expect(getAccountDataDraft().identity.avatar).toEqual(initial.avatar);
 });

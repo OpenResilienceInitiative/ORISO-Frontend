@@ -4,10 +4,28 @@ import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import german from '../../resources/i18n/de/common.json';
 import { MemoryRouter } from 'react-router-dom';
-import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	act,
+	cleanup,
+	render,
+	screen,
+	fireEvent,
+	waitFor
+} from '@testing-library/react';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { UserDataContext } from '../../globalState';
 import { ErstantwortMessage } from './ErstantwortMessage';
+import { apiPutSessionData } from '../../api/apiPutSessionData';
+vi.mock('../../api/apiPutSessionData', () => ({
+	apiPutSessionData: vi.fn().mockResolvedValue(undefined)
+}));
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: {} }));
@@ -160,7 +178,7 @@ describe('ErstantwortMessage email action', () => {
 		expect(screen.queryByRole('button')).toBeNull();
 	});
 
-	it('opens the display-name overlay when Namen ändern is pressed', () => {
+	it('edits the actual session alias instead of issuing an ignored account patch', async () => {
 		render(
 			<I18nextProvider i18n={i18n}>
 				<MemoryRouter>
@@ -174,6 +192,8 @@ describe('ErstantwortMessage email action', () => {
 					>
 						<ErstantwortMessage
 							trigger="AFTER_ENQUIRY_DISPATCHED"
+							sessionId={51}
+							displayName="Sanftes Alpaka Kala"
 							skipAnimation
 						/>
 					</UserDataContext.Provider>
@@ -188,7 +208,19 @@ describe('ErstantwortMessage email action', () => {
 		expect(
 			screen.getByRole('button', { name: 'Namen neu würfeln' })
 		).toBeTruthy();
-		expect(screen.getByText('Sanftes Alpaka Kala')).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Übernehmen' })).toBeTruthy();
+		expect(
+			screen.getByRole<HTMLInputElement>('textbox', {
+				name: 'Anzeigename'
+			}).value
+		).toBe('Sanftes Alpaka Kala');
+		fireEvent.change(screen.getByRole('textbox', { name: 'Anzeigename' }), {
+			target: { value: 'Session only alias' }
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Übernehmen' }));
+		await waitFor(() =>
+			expect(apiPutSessionData).toHaveBeenCalledWith(51, {
+				displayName: 'Session only alias'
+			})
+		);
 	});
 });

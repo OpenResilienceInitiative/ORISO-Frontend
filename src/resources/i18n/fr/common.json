@@ -5934,7 +5934,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
-				"subline": "Anonyme, sans compte. Choisissez un identifiant — ou relancez les dés.",
+				"subline": "Anonyme, sans compte.",
 				"label": "Votre identifiant",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
