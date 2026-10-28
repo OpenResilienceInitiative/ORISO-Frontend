@@ -108,11 +108,47 @@ it('falls back to what the server has when overlapping changes both fail', async
 	}) as HTMLInputElement;
 	await userEvent.click(knock);
 	await userEvent.click(temporary);
-	failures.forEach((fail) => fail(new Error('CATCH_ALL')));
+	failures[0](new Error('CATCH_ALL'));
+	await vi.waitFor(() => expect(failures).toHaveLength(2));
+	failures[1](new Error('CATCH_ALL'));
 
 	await vi.waitFor(() => {
 		expect(knock.checked).toBe(true);
 		expect(temporary.checked).toBe(true);
+	});
+});
+
+/* Two PATCHes in flight could land out of order and leave the older one on the server. */
+it('sends one change at a time and skips changes a newer one replaced', async () => {
+	const answers: Array<
+		(saved: { knock: boolean; temporaryAccount: boolean }) => void
+	> = [];
+	vi.mocked(apiUpdateCallShareLink).mockImplementation(
+		() => new Promise((resolve) => answers.push(resolve))
+	);
+	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
+
+	const knock = (await openPanel()) as HTMLInputElement;
+	const temporary = screen.getByRole('switch', {
+		name: 'calls.share.temporaryAccount.label'
+	}) as HTMLInputElement;
+	await userEvent.click(knock);
+	await userEvent.click(temporary);
+	await userEvent.click(knock);
+	expect(apiUpdateCallShareLink).toHaveBeenCalledTimes(1);
+
+	answers[0]({ knock: false, temporaryAccount: true });
+	await vi.waitFor(() =>
+		expect(apiUpdateCallShareLink).toHaveBeenCalledTimes(2)
+	);
+	expect(apiUpdateCallShareLink).toHaveBeenLastCalledWith(7, {
+		knock: true,
+		temporaryAccount: false
+	});
+	answers[1]({ knock: true, temporaryAccount: false });
+	await vi.waitFor(() => {
+		expect(knock.checked).toBe(true);
+		expect(temporary.checked).toBe(false);
 	});
 });
 

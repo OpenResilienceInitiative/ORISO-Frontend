@@ -38,6 +38,7 @@ export const CallShareForCall = ({
 	const latest = useRef(0);
 	// What the server last confirmed: a failed change falls back to this.
 	const confirmed = useRef<CallShareSettings | null>(null);
+	const queue = useRef<Promise<void>>(Promise.resolve());
 
 	useEffect(() => {
 		let active = true;
@@ -67,17 +68,24 @@ export const CallShareForCall = ({
 
 	if (!link || !settings) return null;
 
+	// One PATCH at a time, so an older change can never land after a newer one.
+	// A change replaced before it was sent is skipped: the newer one carries both
+	// switches.
 	const change = (next: CallShareSettings) => {
 		const request = ++latest.current;
 		setSettings(next);
-		apiUpdateCallShareLink(link.id, next)
-			.then((saved) => {
-				confirmed.current = saved;
-				if (request === latest.current) setSettings(saved);
-			})
-			.catch(() => {
-				if (request === latest.current) setSettings(confirmed.current);
-			});
+		queue.current = queue.current.then(() => {
+			if (request !== latest.current) return;
+			return apiUpdateCallShareLink(link.id, next)
+				.then((saved) => {
+					confirmed.current = saved;
+					if (request === latest.current) setSettings(saved);
+				})
+				.catch(() => {
+					if (request === latest.current)
+						setSettings(confirmed.current);
+				});
+		});
 	};
 
 	return (
