@@ -8,6 +8,13 @@ import {
 import { CallShare, type CallShareProps } from './CallShare';
 import type { CallShareSettings } from './callShareSettings';
 
+/**
+ * Right after joining, the server may not see the counsellor in the call yet
+ * (404); ask again a few times before giving up on the button.
+ */
+export const SHARE_LINK_RETRY_MS = 3000;
+const SHARE_LINK_ATTEMPTS = 5;
+
 export interface CallShareForCallProps {
 	/** Room of the conversation behind the call (`CallData.signalRoomId`). */
 	sourceRoomId: string;
@@ -29,29 +36,48 @@ export const CallShareForCall = ({
 	const [settings, setSettings] = useState<CallShareSettings | null>(null);
 	// Only the latest change may set the switches; older answers are stale.
 	const latest = useRef(0);
+	// What the server last confirmed: a failed change falls back to this.
+	const confirmed = useRef<CallShareSettings | null>(null);
 
 	useEffect(() => {
 		let active = true;
+		let timer: ReturnType<typeof setTimeout> | undefined;
 		setLink(null);
-		apiCreateCallShareLink({ sourceRoomId, callId }).then((created) => {
-			if (!active) return;
-			setLink(created);
-			setSettings(created?.settings ?? null);
-		});
+		const ask = (attempt: number) =>
+			apiCreateCallShareLink({ sourceRoomId, callId }).then((created) => {
+				if (!active) return;
+				if (!created) {
+					if (attempt < SHARE_LINK_ATTEMPTS)
+						timer = setTimeout(
+							() => ask(attempt + 1),
+							SHARE_LINK_RETRY_MS
+						);
+					return;
+				}
+				confirmed.current = created.settings;
+				setLink(created);
+				setSettings(created.settings);
+			});
+		ask(1);
 		return () => {
 			active = false;
+			clearTimeout(timer);
 		};
 	}, [sourceRoomId, callId]);
 
 	if (!link || !settings) return null;
 
 	const change = (next: CallShareSettings) => {
-		const previous = settings;
 		const request = ++latest.current;
 		setSettings(next);
 		apiUpdateCallShareLink(link.id, next)
-			.then((saved) => request === latest.current && setSettings(saved))
-			.catch(() => request === latest.current && setSettings(previous));
+			.then((saved) => {
+				confirmed.current = saved;
+				if (request === latest.current) setSettings(saved);
+			})
+			.catch(() => {
+				if (request === latest.current) setSettings(confirmed.current);
+			});
 	};
 
 	return (

@@ -1,5 +1,10 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 import type { CallShareSettings } from '../components/call/share/callShareSettings';
 
 /** The share link of one running call (UserService#1487). */
@@ -51,7 +56,9 @@ export async function apiCreateCallShareLink(call: {
 				url: endpoints.matrixCallShareLinks,
 				method: FETCH_METHODS.POST,
 				bodyData: JSON.stringify(call),
+				// Without CONTENT a POST resolves with the raw Response.
 				responseHandling: [
+					FETCH_SUCCESS.CONTENT,
 					FETCH_ERRORS.FORBIDDEN,
 					FETCH_ERRORS.NO_MATCH,
 					FETCH_ERRORS.CATCH_ALL
@@ -73,7 +80,11 @@ export async function apiUpdateCallShareLink(
 			url: `${endpoints.matrixCallShareLinks}/${id}`,
 			method: FETCH_METHODS.PATCH,
 			bodyData: JSON.stringify(settings),
-			responseHandling: [FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.CATCH_ALL]
+			responseHandling: [
+				FETCH_SUCCESS.CONTENT,
+				FETCH_ERRORS.NO_MATCH,
+				FETCH_ERRORS.CATCH_ALL
+			]
 		})
 	);
 	if (!link) throw new Error(FETCH_ERRORS.CATCH_ALL);

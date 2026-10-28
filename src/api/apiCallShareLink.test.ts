@@ -1,6 +1,11 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, expect, it, vi } from 'vite-plus/test';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 import {
 	apiCreateCallShareLink,
 	apiUpdateCallShareLink
@@ -40,6 +45,8 @@ it('creates the link of this one call (or gets the existing one)', async () => {
 	const call = vi.mocked(fetchData).mock.calls[0][0];
 	expect(call.url).toMatch(/\/service\/matrix\/calls\/share-links$/);
 	expect(call.method).toBe(FETCH_METHODS.POST);
+	// Without CONTENT, fetchData hands back the raw Response for a POST.
+	expect(call.responseHandling).toContain(FETCH_SUCCESS.CONTENT);
 	expect(JSON.parse(call.bodyData as string)).toEqual({
 		sourceRoomId: '!room:x',
 		callId: 'c1'
@@ -75,6 +82,7 @@ it('changes the settings of the same link', async () => {
 	const call = vi.mocked(fetchData).mock.calls[0][0];
 	expect(call.url).toMatch(/\/service\/matrix\/calls\/share-links\/7$/);
 	expect(call.method).toBe(FETCH_METHODS.PATCH);
+	expect(call.responseHandling).toContain(FETCH_SUCCESS.CONTENT);
 	expect(JSON.parse(call.bodyData as string)).toEqual({
 		knock: false,
 		temporaryAccount: false

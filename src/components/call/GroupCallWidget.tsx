@@ -1051,9 +1051,11 @@ export const GroupCallWidget: React.FC = () => {
 						 * width rather than being covered.
 						 */}
 						{/* Host side, like the notes: no widget capability needed (#1794). */}
+						{/* Element Call never sets CallData.state to connected; a
+						    ready widget is the joined call. */}
 						{isConsultantUser &&
-							callData?.state === 'connected' &&
-							callData.signalRoomId && (
+							widget.ready &&
+							callData?.signalRoomId && (
 								<div className="element-call-share">
 									<CallShareForCall
 										sourceRoomId={callData.signalRoomId}

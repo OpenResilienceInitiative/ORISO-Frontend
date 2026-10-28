@@ -7,7 +7,7 @@ import {
 	apiCreateCallShareLink,
 	apiUpdateCallShareLink
 } from '../../../api/apiCallShareLink';
-import { CallShareForCall } from './CallShareForCall';
+import { CallShareForCall, SHARE_LINK_RETRY_MS } from './CallShareForCall';
 
 vi.mock('../../../api/apiCallShareLink', () => ({
 	apiCreateCallShareLink: vi.fn(),
@@ -93,4 +93,45 @@ it('puts the switch back when the change did not reach the server', async () => 
 	await userEvent.click(knock);
 
 	await vi.waitFor(() => expect(knock.checked).toBe(true));
+});
+
+it('falls back to what the server has when overlapping changes both fail', async () => {
+	const failures: Array<(error: Error) => void> = [];
+	vi.mocked(apiUpdateCallShareLink).mockImplementation(
+		() => new Promise((_, reject) => failures.push(reject))
+	);
+	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
+
+	const knock = (await openPanel()) as HTMLInputElement;
+	const temporary = screen.getByRole('switch', {
+		name: 'calls.share.temporaryAccount.label'
+	}) as HTMLInputElement;
+	await userEvent.click(knock);
+	await userEvent.click(temporary);
+	failures.forEach((fail) => fail(new Error('CATCH_ALL')));
+
+	await vi.waitFor(() => {
+		expect(knock.checked).toBe(true);
+		expect(temporary.checked).toBe(true);
+	});
+});
+
+it('asks again when the call could not be shared yet', async () => {
+	vi.useFakeTimers({ shouldAdvanceTime: true });
+	try {
+		vi.mocked(apiCreateCallShareLink)
+			.mockResolvedValueOnce(null)
+			.mockResolvedValueOnce(link);
+		render(
+			<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />
+		);
+		await vi.advanceTimersByTimeAsync(SHARE_LINK_RETRY_MS);
+
+		expect(
+			await screen.findByRole('button', { name: 'calls.share.open' })
+		).toBeTruthy();
+		expect(apiCreateCallShareLink).toHaveBeenCalledTimes(2);
+	} finally {
+		vi.useRealTimers();
+	}
 });
