@@ -24,6 +24,9 @@ vi.mock('../../api/apiFrontendSettings', () => ({
 vi.mock('../../api/apiServerSettings', () => ({
 	apiServerSettings: vi.fn(async () => serverSettings.current)
 }));
+/* Imported transitively; lottie-web's readiness timer would fire after this
+   file's jsdom is gone ("document is not defined"). */
+vi.mock('lottie-web', () => ({ default: {} }));
 
 const sessions = [
 	{
