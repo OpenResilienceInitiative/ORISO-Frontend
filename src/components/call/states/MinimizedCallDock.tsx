@@ -2,13 +2,14 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import ButtonBase from '@mui/material/ButtonBase';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
-import MenuList from '@mui/material/MenuList';
-import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
-import MenuItem from '@mui/material/MenuItem';
 import LockIcon from '@mui/icons-material/Lock';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { UserAvatar } from '../../message/UserAvatar';
+import {
+	ChatMenuDropdown,
+	ChatMenuDropdownItem
+} from '../../chatMenuDropdown/ChatMenuDropdown';
 import type { CallParty } from '../callParty';
 import { ReactComponent as MicOffIcon } from '../../../resources/img/icons/audio-off.svg';
 import { ReactComponent as HangUpIcon } from '../../../resources/img/icons/call.svg';
@@ -72,7 +73,31 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	);
 	const menuButtonRef = React.useRef<HTMLButtonElement>(null);
 	const dockRef = React.useRef<HTMLElement>(null);
+	const menuRef = React.useRef<HTMLDivElement | null>(null);
 	const closeMenu = () => setMenuAnchor(null);
+	// Popper mounts the menu after this render; focus its first item then.
+	const attachMenu = React.useCallback((node: HTMLDivElement | null) => {
+		menuRef.current = node;
+		node?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+	}, []);
+
+	const onMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		const items = Array.from(
+			menuRef.current?.querySelectorAll<HTMLElement>(
+				'[role="menuitem"]'
+			) ?? []
+		);
+		const at = items.indexOf(document.activeElement as HTMLElement);
+		if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+			event.preventDefault();
+			const step = event.key === 'ArrowDown' ? 1 : -1;
+			items[(at + step + items.length) % items.length]?.focus();
+		} else if (event.key === 'Escape' || event.key === 'Tab') {
+			event.preventDefault();
+			closeMenu();
+			menuButtonRef.current?.focus();
+		}
+	};
 
 	return (
 		<CallSurfaceLayer>
@@ -159,53 +184,49 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 					className="call-dock-menu-popper"
 				>
 					<ClickAwayListener onClickAway={closeMenu}>
-						<Paper className="call-dock-menu">
-							<MenuList
-								id={menuId}
-								autoFocusItem={!!menuAnchor}
-								onKeyDown={(event) => {
-									if (
-										event.key === 'Escape' ||
-										event.key === 'Tab'
-									) {
-										event.preventDefault();
-										closeMenu();
-										menuButtonRef.current?.focus();
-									}
-								}}
-							>
-								{isVideo && onToggleCamera && (
-									<MenuItem
-										onClick={() => {
-											closeMenu();
-											onToggleCamera();
-										}}
-									>
-										<span className="call-dock-menu__label">
-											{isCameraOff
-												? t('calls.turnOnVideo')
-												: t('calls.turnOffVideo')}
-										</span>
-										{isCameraOff ? (
+						{/* The app's shared menu atoms, as every other menu. */}
+						<ChatMenuDropdown
+							ref={attachMenu}
+							id={menuId}
+							role="menu"
+							density="compact"
+							ariaLabel={t('calls.moreOptions')}
+							className="call-dock-menu"
+							onKeyDown={onMenuKeyDown}
+						>
+							{isVideo && onToggleCamera && (
+								<ChatMenuDropdownItem
+									role="menuitem"
+									tabIndex={-1}
+									icon={
+										isCameraOff ? (
 											<CameraOnIcon aria-hidden="true" />
 										) : (
 											<CameraOffIcon aria-hidden="true" />
-										)}
-									</MenuItem>
-								)}
-								<MenuItem
+										)
+									}
+									title={
+										isCameraOff
+											? t('calls.turnOnVideo')
+											: t('calls.turnOffVideo')
+									}
 									onClick={() => {
 										closeMenu();
-										onExpand();
+										onToggleCamera();
 									}}
-								>
-									<span className="call-dock-menu__label">
-										{t('calls.states.backToCall')}
-									</span>
-									<MaximizeIcon aria-hidden="true" />
-								</MenuItem>
-							</MenuList>
-						</Paper>
+								/>
+							)}
+							<ChatMenuDropdownItem
+								role="menuitem"
+								tabIndex={-1}
+								icon={<MaximizeIcon aria-hidden="true" />}
+								title={t('calls.states.backToCall')}
+								onClick={() => {
+									closeMenu();
+									onExpand();
+								}}
+							/>
+						</ChatMenuDropdown>
 					</ClickAwayListener>
 				</Popper>
 				<ButtonBase

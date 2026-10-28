@@ -11,6 +11,12 @@
 	 * dialog must still be answerable while a call rings.
 	 */
 	--call-surface-z: 1250;
+	/*
+	 * A ringing call is the exception: it must never ring unseen behind the
+	 * full call (10000), the composer (999999) or a dialog (Frank, 28 Oct).
+	 * Close to the browser's maximum, so nothing in the app can cover it.
+	 */
+	--call-incoming-z: 2147483000;
 	--call-hangup: var(--m3-error-container, #de0077);
 	/* Black, not green: the call stays in its own monochrome (Frank, 28 Oct). */
 	--call-answer: #000;
@@ -162,7 +168,7 @@
 
 .incoming-call-card {
 	position: fixed;
-	z-index: var(--call-surface-z);
+	z-index: var(--call-incoming-z);
 	top: 24px;
 	right: 24px;
 	width: 360px;
@@ -484,50 +490,16 @@
 	}
 }
 
-/* MUI portals the menu outside the layer; it is styled as the call menu (1c). */
+/* MUI portals the menu outside the layer; it uses the shared menu atoms. */
 .call-dock-menu-popper {
 	z-index: 1251; /* just above the dock, still below dialogs */
 }
 
-.MuiPaper-root.call-dock-menu {
-	min-width: 304px;
-	border-radius: 28px;
-	background: var(--m3-surface, #fcf9f9);
-	box-shadow:
-		inset 0 0 0 2px var(--m3-primary, #a5000a),
-		0 14px 32px rgba(0, 0, 0, 0.2);
-	font-family: $font-family-sans-serif;
-
-	.MuiList-root {
-		padding: 4px 0;
-	}
-
-	.MuiMenuItem-root {
-		min-height: 52px;
-		padding: 0 20px;
-		align-items: center;
-		gap: 14px;
-		justify-content: space-between;
-		font-size: 17px;
-		line-height: 22px;
-		letter-spacing: -0.2px;
-		color: var(--m3-on-surface, #1a1c1e);
-
-		&:hover,
-		&.Mui-focusVisible {
-			background: var(--m3-hover-layer, #f9eff0);
-		}
-	}
-
-	svg {
-		width: 21px;
-		height: 21px;
-		flex-shrink: 0;
-	}
-
-	svg path {
-		fill: var(--m3-on-surface-variant, #444748);
-	}
+.chatMenuDropdown.call-dock-menu {
+	/* Wide enough for "Zurück zur großen Ansicht" on one line. */
+	width: max-content;
+	min-width: 240px;
+	max-width: calc(100vw - 24px);
 }
 
 /*

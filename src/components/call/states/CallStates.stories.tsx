@@ -13,7 +13,8 @@ import { MinimizedCallDock } from './MinimizedCallDock';
  * production keeps the old popup until Frank has approved this.
  *
  * Each state renders over a sample app page so the stacking can be judged:
- * the surface is portalled to `<body>`, above the shell, below dialogs.
+ * the surfaces are portalled to `<body>`. The dock sits above the shell and
+ * below dialogs; a ringing card sits above everything.
  */
 
 /** A counsellor as an advice seeker sees them: initials on primary. */
@@ -236,9 +237,8 @@ export const IncomingUnknownCallerPhone320: Story = {
 };
 
 /**
- * Proposal only: `CallManager.receiveCall` ignores a second call while one
- * runs, so nobody sees this today. It shows what the card would say if the
- * second call were let through.
+ * A second call rings as its own card (Frank, 28 Oct). Not live yet:
+ * `CallManager.receiveCall` still ignores a second call while one runs.
  */
 export const IncomingWhileInCall: Story = {
 	render: () => (
@@ -333,6 +333,67 @@ export const IncomingWhileInGroupCallPhone320: Story = {
 	parameters: busyNoteOverThePage
 };
 
+/** Stand-in for the full call view, at the widget's real z-index. */
+const FullCallStandIn: React.FC = () => (
+	<div
+		aria-hidden="true"
+		className="sample-app-page"
+		style={{
+			position: 'fixed',
+			inset: 0,
+			zIndex: 10000,
+			background: '#e9e7e8',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			font: '400 15px/20px Inter, sans-serif',
+			color: '#49454f'
+		}}
+	>
+		Laufender Anruf · Vollansicht (Platzhalter)
+	</div>
+);
+
+/** The second call rings over the full call view, not behind it. */
+export const IncomingOverFullCall: Story = {
+	render: () => (
+		<>
+			<FullCallStandIn />
+			<IncomingCallCard
+				caller={counsellor}
+				isVideo
+				ongoingCall={{ name: seeker.name, avatars: [seeker.avatar] }}
+				onAnswer={fn()}
+				onDecline={fn()}
+			/>
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		const card = await body.findByRole('alertdialog');
+		await waitFor(() =>
+			expect(card.getBoundingClientRect().width).toBeGreaterThan(0)
+		);
+		expect(Number(getComputedStyle(card).zIndex)).toBeGreaterThan(999999);
+		const box = card.getBoundingClientRect();
+		const top = canvasElement.ownerDocument.elementFromPoint(
+			box.left + box.width / 2,
+			box.top + 24
+		);
+		expect(card.contains(top)).toBe(true);
+	}
+};
+export const IncomingOverFullCallPhone412: Story = {
+	...IncomingOverFullCall,
+	globals: PHONE_412,
+	parameters: busyNoteOverThePage
+};
+export const IncomingOverFullCallPhone320: Story = {
+	...IncomingOverFullCall,
+	globals: PHONE_320,
+	parameters: busyNoteOverThePage
+};
+
 /* ── Minimized ────────────────────────────────────────────────────────── */
 
 const MinimizedHarness: React.FC<{ isSpeaking?: boolean }> = ({
@@ -386,11 +447,19 @@ export const MinimizedMenuOpen: Story = {
 		await waitFor(() =>
 			expect(document.querySelector('.call-dock-menu')).toBeTruthy()
 		);
+		const camera = body.getByRole('menuitem', {
+			name: /video ausschalten|turn off video/i
+		});
+		// Focus moves into the menu, and the arrows walk it round.
+		await waitFor(() => expect(camera).toHaveFocus());
+		await userEvent.keyboard('{ArrowDown}');
 		expect(
 			body.getByRole('menuitem', {
-				name: /video ausschalten|turn off video/i
+				name: /zurück zur großen ansicht|back to the full call/i
 			})
-		).toBeTruthy();
+		).toHaveFocus();
+		await userEvent.keyboard('{ArrowDown}');
+		expect(camera).toHaveFocus();
 	}
 };
 export const MinimizedMenuOpenPhone412: Story = {
