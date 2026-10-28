@@ -148,7 +148,8 @@
 		border-top-right-radius: 32px;
 	}
 
-	&__listRow:last-child:not(.notificationsCenter__listRow--active)
+	// Pagination controls may follow the last visible row.
+	&__listRow--last:not(.notificationsCenter__listRow--active)
 		.notificationsCenter__card {
 		border-bottom-left-radius: 32px;
 		border-bottom-right-radius: 32px;

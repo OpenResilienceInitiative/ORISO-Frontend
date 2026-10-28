@@ -30,3 +30,14 @@ Phone timeline captures retain existing horizontal clipping in the story fixture
 ## Boundaries
 
 This package does not implement the unmatched optional password popup, alter authentication, assign the placeholder to account deletion, or replace all filled icons. The current timeline layout, copy and routing remain the existing application behavior; this applies the approved colours to those real states rather than introducing static Figma sample events.
+
+
+## Group ending follow-up
+
+The user asked to preserve the contiguous grouping and round only the lower outside corners of its last visible row. The optional end-of-history label is removed. Existing load-more, loading and retry controls remain.
+
+The previous last-child selector did not match the final notification because a pagination sibling followed it. The last visible row now has an explicit boundary class derived from the filtered feed. Internal corners, active selection spacing and group-neighbour rules are unchanged.
+
+The browser regression failed with0px instead of32px before the fix. It now verifies straight internal corners, touching edges (0px gap), equal widths and32px lower outside corners, then filters and restores the feed. Two additional real-control stories verify the same edge with load-more and error/retry controls. All three focused stories pass. The broader current sweep has15PASS/2FAIL across17stories; the remaining duplicate-SVG/accessibility failures are not suppressed.
+
+The earlier chat screenshot was taken during selection transitions and misleadingly showed detached rows. Replacement captures wait until the story play finishes and finite animations settle, and assert the group geometry before taking the screenshot. Desktop/tablet/phone checks agree on0px internal corners,32px lower outside corners and0px gap. The existing phone clipping limitation remains informational.

@@ -1335,6 +1335,10 @@ export const NotificationsCenter = () => {
 										isAfterActive
 											? 'notificationsCenter__listRow--afterActive'
 											: ''
+									} ${
+										index === filteredFeed.length - 1
+											? 'notificationsCenter__listRow--last'
+											: ''
 									}`}
 								>
 									<button
@@ -1437,15 +1441,31 @@ export const NotificationsCenter = () => {
 							);
 						})
 					)}
-					{notificationFeed.length > 0 && (
-						<div className="notificationsCenter__pagination">
-							{olderNotificationsError ? (
-								<>
-									<span role="alert">
-										{translate(
-											'notifications.center.olderError'
-										)}
-									</span>
+					{notificationFeed.length > 0 &&
+						(hasOlderNotifications || olderNotificationsError) && (
+							<div className="notificationsCenter__pagination">
+								{olderNotificationsError ? (
+									<>
+										<span role="alert">
+											{translate(
+												'notifications.center.olderError'
+											)}
+										</span>
+										<button
+											type="button"
+											disabled={
+												isLoadingOlderNotifications
+											}
+											onClick={() =>
+												void loadOlderNotifications()
+											}
+										>
+											{translate(
+												'notifications.center.retryOlder'
+											)}
+										</button>
+									</>
+								) : hasOlderNotifications ? (
 									<button
 										type="button"
 										disabled={isLoadingOlderNotifications}
@@ -1454,33 +1474,14 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'notifications.center.retryOlder'
+											isLoadingOlderNotifications
+												? 'notifications.center.loadingOlder'
+												: 'notifications.center.loadOlder'
 										)}
 									</button>
-								</>
-							) : hasOlderNotifications ? (
-								<button
-									type="button"
-									disabled={isLoadingOlderNotifications}
-									onClick={() =>
-										void loadOlderNotifications()
-									}
-								>
-									{translate(
-										isLoadingOlderNotifications
-											? 'notifications.center.loadingOlder'
-											: 'notifications.center.loadOlder'
-									)}
-								</button>
-							) : (
-								<span role="status">
-									{translate(
-										'notifications.center.endOfHistory'
-									)}
-								</span>
-							)}
-						</div>
-					)}
+								) : null}
+							</div>
+						)}
 				</div>
 				<Menu
 					anchorEl={cardMenuAnchor}

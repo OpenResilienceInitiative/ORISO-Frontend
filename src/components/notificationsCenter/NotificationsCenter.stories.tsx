@@ -12,6 +12,7 @@ import {
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { installNotificationDraftFixture } from './notificationDraftFixture';
+import { expectTimelineGroupEnd } from '../../../.storybook/notificationsCenterGroupAssertions';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -234,7 +235,11 @@ const customisedDisplayFilters = withSectionOverride(
 );
 
 const withTimelineData =
-	(feed: NotificationFeedItem[], userData: any = consultantUserData) =>
+	(
+		feed: NotificationFeedItem[],
+		userData: any = consultantUserData,
+		notifications: Partial<ReturnType<typeof notificationsValue>> = {}
+	) =>
 	(Story: React.ComponentType) => (
 		<UserDataContext.Provider
 			value={{
@@ -243,7 +248,9 @@ const withTimelineData =
 				reloadUserData: async () => null as any
 			}}
 		>
-			<NotificationsContext.Provider value={notificationsValue(feed)}>
+			<NotificationsContext.Provider
+				value={{ ...notificationsValue(feed), ...notifications }}
+			>
 				<div style={{ height: '90vh', display: 'flex' }}>
 					<Story />
 				</div>
@@ -526,6 +533,19 @@ export const ApprovedEventIcons: Story = {
 				`[data-notification-id="approved-${id}"] .notificationsCenter__cardIcon svg`
 			);
 		await waitFor(() => expect(rowIcon('appointment')).toBeVisible());
+		const expectGroupEnd = () =>
+			expectTimelineGroupEnd(
+				canvasElement,
+				'approved-message',
+				'approved-appointment'
+			);
+		await expectGroupEnd();
+		expect(
+			within(canvasElement).queryByText(
+				/Ende des Aktivitätsverlaufs|End of activity history/
+			)
+		).not.toBeInTheDocument();
+
 		// The browser renders the actual assets; unit SVG stubs cannot prove shape or paint.
 		expect(
 			rowIcon('thread')?.querySelector('path')?.getAttribute('d')
@@ -688,6 +708,42 @@ export const ApprovedEventIcons: Story = {
 		);
 		// Leave the user-reported thread reply selected in the interactive preview.
 		await userEvent.click(threadCard);
+		const search = within(canvasElement).getByPlaceholderText(
+			/Aktivität durchsuchen|Search activity/
+		);
+		await userEvent.type(
+			search,
+			messageCard
+				.querySelector('.notificationsCenter__cardTitle')
+				?.textContent?.trim() || ''
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__listRow')
+			).toHaveLength(1)
+		);
+		const single = canvasElement.querySelector(
+			'.notificationsCenter__card'
+		);
+		if (!single) throw new Error('Filtered timeline card must render');
+		await waitFor(() =>
+			expect(
+				parseFloat(getComputedStyle(single).borderBottomLeftRadius)
+			).toBeGreaterThan(0)
+		);
+		await userEvent.clear(search);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__listRow')
+			).toHaveLength(3)
+		);
+		const restoredThread = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-thread"] .notificationsCenter__card'
+		);
+		if (!restoredThread)
+			throw new Error('Thread card must return after clearing search');
+		await userEvent.click(restoredThread);
+		await expectGroupEnd();
 	}
 };
 
@@ -952,5 +1008,62 @@ export const HandoverEventGlyphs: Story = {
 				);
 			});
 		}
+	}
+};
+
+const groupedPagingFeed = Array.from({ length: 10 }, (_, index) =>
+	feedItem({
+		id: `group-${index}`,
+		eventType: 'message.new',
+		createdAt: minutesAgo(index + 1)
+	})
+);
+const loadGroupedHistory = fn(async () => {});
+
+/** The real pagination controls follow the final row without breaking its rounded edge. */
+export const GroupWithMoreActivity: Story = {
+	decorators: [
+		withTimelineData(groupedPagingFeed, consultantUserData, {
+			hasOlderNotifications: true,
+			loadOlderNotifications: loadGroupedHistory
+		})
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	beforeEach: () => {
+		loadGroupedHistory.mockClear();
+	},
+	play: async ({ canvasElement }) => {
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: /Ältere Aktivitäten laden|Load older activity/
+			})
+		);
+		await expect(loadGroupedHistory).toHaveBeenCalledOnce();
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+	}
+};
+
+export const GroupWithHistoryError: Story = {
+	decorators: [
+		withTimelineData(groupedPagingFeed, consultantUserData, {
+			olderNotificationsError: true,
+			loadOlderNotifications: loadGroupedHistory
+		})
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	beforeEach: () => {
+		loadGroupedHistory.mockClear();
+	},
+	play: async ({ canvasElement }) => {
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+		expect(within(canvasElement).getByRole('alert')).toBeVisible();
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: /Erneut versuchen|Try again/
+			})
+		);
+		await expect(loadGroupedHistory).toHaveBeenCalledOnce();
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
 	}
 };
