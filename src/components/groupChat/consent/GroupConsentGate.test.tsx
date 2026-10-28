@@ -182,6 +182,24 @@ describe('GroupConsentGate', () => {
 		).toBe(true);
 	});
 
+	it('holds agreement until the names in the sentence are known', async () => {
+		apiGetPublicTopicName.mockImplementation(
+			() => new Promise(() => undefined)
+		);
+		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);
+		await screen.findByText(
+			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
+		);
+
+		expect(
+			(
+				screen.getByRole('button', {
+					name: 'Einverstanden'
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+	});
+
 	it('falls back to the platform sentence when the topic cannot be told', async () => {
 		apiGetAgencyById.mockResolvedValue({ id: 19, topicIds: [17, 18] });
 		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);

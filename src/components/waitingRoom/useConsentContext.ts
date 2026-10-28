@@ -8,10 +8,11 @@ const NONE: ConsentContext = {};
 /**
  * Names for `{{Beratungsstelle}}` and `{{Thema}}` in an entry room's consent
  * sentence; the public legal endpoint cannot resolve the topic itself.
+ * `pending` holds agreement so nobody ticks a sentence with names missing.
  */
 export const useConsentContext = (
 	department: { agencyId: number; topicId: number } | null
-): ConsentContext => {
+): { context: ConsentContext; pending: boolean } => {
 	const [answer, setAnswer] = useState<{
 		key: string;
 		context: ConsentContext;
@@ -40,5 +41,8 @@ export const useConsentContext = (
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [key]);
 
-	return answer && answer.key === key ? answer.context : NONE;
+	if (!key) return { context: NONE, pending: false };
+	return answer && answer.key === key
+		? { context: answer.context, pending: false }
+		: { context: NONE, pending: true };
 };

@@ -309,28 +309,31 @@ const LiveChatEntryRoomContent = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 
-	const consentContext = useConsentContext(department);
-	const consent = useMemo(
-		() =>
-			resolveEntryRoomConsent({
-				hasDepartment: department !== null,
-				department: departmentConsent,
-				platformHtml: platformConsentHtml,
-				missingPolicyHtml,
-				legalLinksHtml,
-				locale,
-				context: consentContext
-			}),
-		[
-			consentContext,
-			department,
-			departmentConsent,
+	const consentNames = useConsentContext(department);
+	const consent = useMemo(() => {
+		const resolved = resolveEntryRoomConsent({
+			hasDepartment: department !== null,
+			department: departmentConsent,
+			platformHtml: platformConsentHtml,
+			missingPolicyHtml,
 			legalLinksHtml,
 			locale,
-			missingPolicyHtml,
-			platformConsentHtml
-		]
-	);
+			context: consentNames.context
+		});
+		return {
+			...resolved,
+			readable: resolved.readable && !consentNames.pending
+		};
+	}, [
+		consentNames.context,
+		consentNames.pending,
+		department,
+		departmentConsent,
+		legalLinksHtml,
+		locale,
+		missingPolicyHtml,
+		platformConsentHtml
+	]);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
 	const mark = (name: string, value = '1') => {

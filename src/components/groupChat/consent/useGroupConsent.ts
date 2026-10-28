@@ -80,7 +80,7 @@ export const useGroupConsent = (agencyId?: number | null) => {
 
 	const { legalLinksHtml, platformHtml, missingPolicyHtml } =
 		useConsentSentences(agencyId);
-	const context = useConsentContext(department);
+	const names = useConsentContext(department);
 
 	const consent = resolveEntryRoomConsent({
 		hasDepartment: departmentState.status === 'loading' || !!department,
@@ -89,7 +89,7 @@ export const useGroupConsent = (agencyId?: number | null) => {
 		missingPolicyHtml,
 		legalLinksHtml,
 		locale: i18n?.language || 'de',
-		context
+		context: names.context
 	});
 
 	/**
@@ -118,5 +118,10 @@ export const useGroupConsent = (agencyId?: number | null) => {
 		[userDataContext]
 	);
 
-	return { ...consent, department, record };
+	return {
+		...consent,
+		readable: consent.readable && !names.pending,
+		department,
+		record
+	};
 };
