@@ -1,3 +1,7 @@
+import {
+	accountOperationOwner,
+	assertAccountOperationOwner
+} from '../utils/accountOperationOwner';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../utils/generateCsrfToken';
 import {
@@ -40,6 +44,7 @@ export const FETCH_ERRORS = {
 	NO_MATCH: 'NO_MATCH',
 	TIMEOUT: 'TIMEOUT',
 	UNAUTHORIZED: 'UNAUTHORIZED',
+	REQUEST_IDENTITY_CHANGED: 'REQUEST_IDENTITY_CHANGED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
 	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 	X_REASON: 'X-Reason'
@@ -153,6 +158,19 @@ export const fetchData = ({
 		const reqLog = new RequestLog(url, method, timeout);
 
 		const accessToken = getValueFromCookie('keycloak');
+		const manualAuthorization = new Headers({ ...headersData }).get(
+			'Authorization'
+		);
+		assertAccountOperationOwner(
+			headersData,
+			accountOperationOwner(accessToken),
+			skipAuth
+				? 'anonymous'
+				: accountOperationOwner(
+						manualAuthorization?.replace(/^Bearer /, '') ??
+							accessToken
+					)
+		);
 		const authorization =
 			!skipAuth && accessToken
 				? {

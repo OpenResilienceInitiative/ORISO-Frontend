@@ -1,13 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { register } from 'node:module';
-import {
-	AccountOperationIntent,
-	AccountOperationActions
-} from '../src/utils/accountOperationIntent.ts';
 
 const stubs = {
-	'../components/sessionCookie/accessSessionCookie': `export const getValueFromCookie=()=>'stale-test-token'; export const removeAllCookies=()=>{};`,
+	'../components/sessionCookie/accessSessionCookie': `export const getValueFromCookie=()=>globalThis.__accountAuthToken ?? 'stale-test-token'; export const removeAllCookies=()=>{};`,
 	'../utils/generateCsrfToken': `export const generateCsrfToken=()=>'csrf-test';`,
 	'../components/error/errorHandling': `export const getErrorCaseForStatus=()=>{throw new Error('unexpected redirect')}; export const redirectToErrorPage=()=>{throw new Error('unexpected redirect')};`,
 	'../components/auth/auth': `export const isPublicAuthRoute=()=>true;`,
@@ -58,6 +54,9 @@ register(
 		].join('\n')
 	)}`,
 	import.meta.url
+);
+const { AccountOperationIntent, AccountOperationActions } = await import(
+	'../src/utils/accountOperationIntent.ts'
 );
 
 test('an authenticated frozen account request cannot retry anonymously on a public page', async () => {
@@ -326,4 +325,92 @@ test('a previously verified refusal cannot acknowledge a different App attempt',
 	await assert.rejects(run());
 	await run();
 	assert.equal(ids[2], ids[0]);
+});
+
+const tokenFor = (subject, revision) =>
+	`header.${Buffer.from(JSON.stringify({ sub: subject, revision })).toString('base64url')}.signature`;
+
+for (const status of [400, 403, 412, 422]) {
+	test(`a first unsigned ${status} cannot retire an account attempt`, async () => {
+		await withObservedMutationResponse(
+			(_request, number) =>
+				new Response(null, { status: number === 1 ? status : 204 }),
+			async (run, requests) => {
+				await assert.rejects(run());
+				await run();
+				assert.equal(requests[1], requests[0]);
+			}
+		);
+	});
+}
+
+test('separate transport invocations refuse a captured action after an account switch', async () => {
+	const { fetchData } = await import('../src/api/fetchData.ts');
+	const previous = globalThis.fetch;
+	const intent = new AccountOperationIntent();
+	const url = 'https://unit.oriso.invalid/users/data';
+	let requests = 0;
+	globalThis.__accountAuthToken = tokenFor('first-person', 1);
+	globalThis.fetch = async () => {
+		requests++;
+		throw new TypeError('response lost');
+	};
+	const run = () =>
+		fetchData({
+			url,
+			method: 'PATCH',
+			bodyData: '{}',
+			timeout: 1,
+			headersData: intent.headersFor('PATCH', url, '{}')
+		});
+	try {
+		await assert.rejects(run(), /response lost/);
+		globalThis.__accountAuthToken = tokenFor('second-person', 1);
+		await assert.rejects(run(), /REQUEST_IDENTITY_CHANGED/);
+		assert.equal(
+			requests,
+			1,
+			'the original action body never reaches another account'
+		);
+		globalThis.__accountAuthToken = tokenFor('first-person', 2);
+		await assert.rejects(run(), /response lost/);
+		assert.equal(
+			requests,
+			2,
+			'same-person token renewal retains the original action'
+		);
+	} finally {
+		globalThis.fetch = previous;
+		delete globalThis.__accountAuthToken;
+	}
+});
+
+test('an anonymous captured action cannot become authenticated on a later invocation', async () => {
+	const { fetchData } = await import('../src/api/fetchData.ts');
+	const previous = globalThis.fetch;
+	const intent = new AccountOperationIntent();
+	const url = 'https://unit.oriso.invalid/users/data';
+	let requests = 0;
+	globalThis.__accountAuthToken = tokenFor('signed-in-person', 1);
+	globalThis.fetch = async () => {
+		requests++;
+		throw new TypeError('response lost');
+	};
+	const run = (skipAuth) =>
+		fetchData({
+			url,
+			method: 'PATCH',
+			bodyData: '{}',
+			skipAuth,
+			timeout: 1,
+			headersData: intent.headersFor('PATCH', url, '{}')
+		});
+	try {
+		await assert.rejects(run(true), /response lost/);
+		await assert.rejects(run(false), /REQUEST_IDENTITY_CHANGED/);
+		assert.equal(requests, 1);
+	} finally {
+		globalThis.fetch = previous;
+		delete globalThis.__accountAuthToken;
+	}
 });

@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { register } from 'node:module';
-import {
-	AccountOperationIntent,
-	AccountOperationSlot,
-	AccountOperationActions
-} from '../src/utils/accountOperationIntent.ts';
 
 const requests = [];
 const fetchStub = `export const FETCH_METHODS = {PUT:'PUT',PATCH:'PATCH',POST:'POST',DELETE:'DELETE'};
@@ -57,6 +52,11 @@ register(
 	)}`,
 	import.meta.url
 );
+const {
+	AccountOperationIntent,
+	AccountOperationSlot,
+	AccountOperationActions
+} = await import('../src/utils/accountOperationIntent.ts');
 
 test('an unknown exact retry keeps its ID and captured payload', () => {
 	const slot = new AccountOperationSlot();
@@ -291,7 +291,13 @@ test('confirmed terminal refusal ends only its own action; a new submission gets
 		seen.push(intent.id);
 		return seen.length === 1
 			? Promise.reject(
-					Object.assign(new Error('BAD_REQUEST'), { status: 400 })
+					new Response(null, {
+						status: 400,
+						headers: {
+							'X-ORISO-Mutation-Outcome': 'NO_EFFECT',
+							'X-ORISO-Mutation-Operation': intent.id
+						}
+					})
 				)
 			: Promise.resolve();
 	};
@@ -323,3 +329,48 @@ for (const error of [
 		assert.equal(seen[0], seen[1]);
 	});
 }
+
+test('mounted actions allocate fresh ownership for a new account and preserve captured retries', async () => {
+	const { assertAccountOperationOwner } = await import(
+		'../src/utils/accountOperationOwner.ts'
+	);
+	let owner = 'first-person';
+	const actions = new AccountOperationActions(() => owner);
+	const original = actions.prepare('save', '/users/data', {
+		displayName: 'Same'
+	});
+	assert.equal(
+		actions.prepare('save', '/users/data', original.payload).intent,
+		original.intent
+	);
+	const firstHeaders = original.intent.headersFor(
+		'PATCH',
+		'/users/data',
+		'{}'
+	);
+	owner = 'second-person';
+	const next = actions.prepare('save', '/users/data', original.payload);
+	assert.notEqual(next.intent.id, original.intent.id);
+	assert.throws(
+		() => assertAccountOperationOwner(firstHeaders, owner, owner),
+		/REQUEST_IDENTITY_CHANGED/
+	);
+	const childHeaders = original.intent
+		.subIntent('agency')
+		.headersFor('PUT', '/agency', '{}');
+	assert.throws(
+		() => assertAccountOperationOwner(childHeaders, owner, owner),
+		/REQUEST_IDENTITY_CHANGED/
+	);
+	assertAccountOperationOwner(
+		next.intent.headersFor('PATCH', '/users/data', '{}'),
+		owner,
+		owner
+	);
+	// An old acknowledgement cannot end the new person's action.
+	actions.prepare('save', '/users/data', original.payload);
+	assert.equal(
+		actions.prepare('save', '/users/data', original.payload).intent,
+		next.intent
+	);
+});

@@ -100,8 +100,8 @@ def run(label, command, timeout=1800, report=None, env_extra=None, expected_file
     print(label, "exit", code, "seconds", receipt["seconds"], json.dumps(quiet_counts), flush=True)
     return receipt
 
-FRONTEND_REACT_FILES = ['src/components/profile/ConsultantPrivateData.intent.test.tsx', 'src/components/profile/ProfileAvatarChoice.test.tsx', 'src/components/profile/EmailNotifications/EmailNotifications.appointments.test.tsx', 'src/components/anonymousChat/entryRoom/LiveChatAccess.test.tsx', 'src/components/twoFactorAuth/TwoFactorAuth.test.tsx', 'src/components/erstantwort/ErstantwortEmailOverlay.test.tsx', 'src/components/profile/AskerAboutMeData.test.tsx', 'src/components/profile/DisplayNameSettings.test.tsx', 'src/components/passwordReset/PasswordReset.test.tsx', 'src/components/twoFactorAuth/TwoFactorSetupDialog.test.tsx', 'src/components/localeSwitch/LocaleSwitch.test.tsx']
-ADMIN_REACT_FILES = ['src/components/TwoFactorSetup/ProfileTwoFactorSetup.intent.test.tsx', 'src/pages/Profile/accountOperationForms.test.tsx', 'src/hooks/accountOperationActions.react.test.tsx', 'src/components/CardEditable/CardEditable.test.tsx', 'src/components/TwoFactorSetup/TwoFactorSetup.test.tsx', 'src/pages/users/Edit/index.test.tsx', 'src/pages/users/TenantAdminEdit/index.test.tsx']
+FRONTEND_REACT_FILES = ['src/hooks/useAccountOperationActions.test.tsx', 'src/components/profile/ConsultantPrivateData.intent.test.tsx', 'src/components/profile/ProfileAvatarChoice.test.tsx', 'src/components/profile/EmailNotifications/EmailNotifications.appointments.test.tsx', 'src/components/anonymousChat/entryRoom/LiveChatAccess.test.tsx', 'src/components/twoFactorAuth/TwoFactorAuth.test.tsx', 'src/components/erstantwort/ErstantwortEmailOverlay.test.tsx', 'src/components/profile/AskerAboutMeData.test.tsx', 'src/components/profile/DisplayNameSettings.test.tsx', 'src/components/passwordReset/PasswordReset.test.tsx', 'src/components/twoFactorAuth/TwoFactorSetupDialog.test.tsx', 'src/components/localeSwitch/LocaleSwitch.test.tsx']
+ADMIN_REACT_FILES = ['src/hooks/useAccountOperationActions.test.tsx', 'src/components/TwoFactorSetup/ProfileTwoFactorSetup.intent.test.tsx', 'src/pages/Profile/accountOperationForms.test.tsx', 'src/hooks/accountOperationActions.react.test.tsx', 'src/components/CardEditable/CardEditable.test.tsx', 'src/components/TwoFactorSetup/TwoFactorSetup.test.tsx', 'src/pages/users/Edit/index.test.tsx', 'src/pages/users/TenantAdminEdit/index.test.tsx']
 FRONTEND_REACT_FILES += ['src/components/login/Login.emailCodeResend.test.tsx']
 
 def require_target_commit(actual, expected):
@@ -160,7 +160,7 @@ def main():
     if phase == "project":
         protocol_report = evidence / "node-contract.xml"
         protocol = run("node-contract", ["node", "--max-old-space-size=256", "--experimental-strip-types", "--test", "--experimental-test-isolation=none", "--test-concurrency=1", "--test-reporter=junit", "--test-reporter-destination=" + str(protocol_report), "scripts/account-operation-auth-retry.node-test.mjs", "scripts/account-operation-intents.node-test.mjs"], 60, protocol_report)
-        protocol["expectedTestCount"] = 33 if kind == "frontend" else 29
+        protocol["expectedTestCount"] = 40 if kind == "frontend" else 51
         records.append(protocol)
         if kind == "frontend":
             records.append(run("script-tests", ["npm", "run", "test:scripts"], 120))

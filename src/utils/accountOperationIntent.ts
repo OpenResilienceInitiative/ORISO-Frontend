@@ -1,3 +1,8 @@
+import {
+	inheritAccountOperationOwner,
+	registerAccountOperationHeaders,
+	ownAccountOperation
+} from './accountOperationOwner';
 // Request bindings contain passwords/codes on some paths. Keep them only in
 // memory, outside serializable intent objects; never write them to storage.
 const bindings = new WeakMap<AccountOperationIntent, string>();
@@ -79,7 +84,9 @@ export const isTerminalAccountOperationRefusal = (
 		uncertainErrors.delete(object);
 		return true;
 	}
-	if (intent && (outcome != null || operation != null)) return false;
+	// A remote account attempt needs a matching committed receipt. HTTP
+	// status alone cannot prove that an earlier native effect did not occur.
+	if (intent) return false;
 	if (object && uncertainErrors.has(object)) return false;
 	const verifiedOperation = object ? verifiedRefusals.get(object) : undefined;
 	if (
@@ -147,7 +154,10 @@ export class AccountOperationIntent {
 			);
 		}
 		bindings.set(this, binding);
-		return { 'Idempotency-Key': this.id };
+		return registerAccountOperationHeaders(
+			{ 'Idempotency-Key': this.id },
+			this
+		);
 	}
 
 	/** Separate effects of one save have separate, stable request IDs. */
@@ -159,7 +169,9 @@ export class AccountOperationIntent {
 		}
 		if (!subIntents.has(name))
 			subIntents.set(name, new AccountOperationIntent());
-		return subIntents.get(name)!;
+		const child = subIntents.get(name)!;
+		inheritAccountOperationOwner(this, child);
+		return child;
 	}
 }
 
@@ -221,6 +233,21 @@ export const accountOperationHeaders = (
 /** Owned by a mounted action/form, never by fetch or React Query retry. */
 export class AccountOperationActions {
 	private slots = new Map<string, AccountOperationSlot<unknown>>();
+	private owner?: string;
+
+	private readonly readOwner?: () => string;
+	constructor(readOwner?: () => string) {
+		this.readOwner = readOwner;
+	}
+
+	private currentOwner(): string | undefined {
+		const owner = this.readOwner?.();
+		if (owner !== this.owner) {
+			this.slots.clear();
+			this.owner = owner;
+		}
+		return owner;
+	}
 
 	edited(operation: string, target: string): void {
 		// An intentional edit supersedes the previous form action. Its already
@@ -229,6 +256,7 @@ export class AccountOperationActions {
 	}
 
 	private slotFor(operation: string, target: string) {
+		this.currentOwner();
 		const key = JSON.stringify([operation, target]);
 		let slot = this.slots.get(key);
 		if (!slot) {
@@ -245,7 +273,10 @@ export class AccountOperationActions {
 		materialize?: (payload: T) => T
 	): AccountOperationAttempt<T> {
 		const slot = this.slotFor(operation, target) as AccountOperationSlot<T>;
-		return slot.prepare(operation, target, payload, materialize);
+		const attempt = slot.prepare(operation, target, payload, materialize);
+		if (this.owner !== undefined)
+			ownAccountOperation(attempt.intent, this.owner);
+		return attempt;
 	}
 
 	async run<T, R>(
@@ -255,7 +286,7 @@ export class AccountOperationActions {
 		send: (payload: T, intent: AccountOperationIntent) => Promise<R>
 	): Promise<R> {
 		const slot = this.slotFor(operation, target);
-		const attempt = slot.prepare(operation, target, payload);
+		const attempt = this.prepare(operation, target, payload);
 		let result: R;
 		try {
 			result = await send(attempt.payload as T, attempt.intent);
