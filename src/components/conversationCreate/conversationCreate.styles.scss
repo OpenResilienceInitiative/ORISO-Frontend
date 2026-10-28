@@ -984,11 +984,13 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__thumb {
-		aspect-ratio: 16 / 9;
+		/* Fills the row's full height; cover crops into the artwork. */
+		align-self: stretch;
 		flex-shrink: 0;
 		height: auto;
+		min-height: 100%;
 		object-fit: cover;
-		width: 84px;
+		width: 104px;
 	}
 
 	&--selected {

@@ -6287,13 +6287,15 @@
 	"dashboard": {
 		"title": "ሓፈሻዊ ርእይቶኻ",
 		"stats": {
-			"enquiries": "ክፉታት ቀዳሞት ሕቶታት",
-			"sessions": "ምኽሪታተይ",
-			"circlesThisWeek": "ናይዚ ሰሙን ጉጅለታት ርእሰ-ሓገዝ"
+			"title": "ምኽሪ",
+			"period": "ዝሓለፉ 30 መዓልታት",
+			"assigned": "ሓደሽቲ",
+			"active": "ንጡፋት",
+			"archived": "ዝተዓቀቡ",
+			"sentMessages": "ዝተላእኩ መልእኽትታት"
 		},
 		"circles": {
 			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
-			"none": "ዝተመደበ ጉጅለ ርእሰ-ሓገዝ የለን",
 			"participants": "{{count}} ተሳተፍቲ",
 			"participants_one": "{{count}} ተሳታፊ"
 		}

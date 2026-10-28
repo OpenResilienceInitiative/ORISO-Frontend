@@ -6287,13 +6287,15 @@
 	"dashboard": {
 		"title": "Votre aperçu",
 		"stats": {
-			"enquiries": "Premières demandes ouvertes",
-			"sessions": "Mes consultations",
-			"circlesThisWeek": "Groupes d’entraide cette semaine"
+			"title": "Consultations",
+			"period": "30 derniers jours",
+			"assigned": "Nouvelles prises en charge",
+			"active": "Actives",
+			"archived": "Archivées",
+			"sentMessages": "Messages envoyés"
 		},
 		"circles": {
 			"title": "Prochains groupes d’entraide",
-			"none": "Aucun groupe d’entraide prévu",
 			"participants": "{{count}} participant·e·s",
 			"participants_one": "{{count}} participant·e"
 		}

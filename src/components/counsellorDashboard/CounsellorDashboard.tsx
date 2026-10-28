@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkMediumIcon } from '../conversationCreate/directLink/DirectLinkMediumIcon';
 import { MyDirectLinks } from '../conversationCreate/directLink/MyDirectLinks';
@@ -15,8 +17,17 @@ export interface DashboardCircle {
 	participants: number;
 }
 
+/** The counsellor's own figures from `apiGetConsultantStatistics` for the period. */
+export interface DashboardStats {
+	assignedSessions: number;
+	activeSessions: number;
+	sentMessages: number;
+	/** Not in the statistics service yet; the bar shows once it is. */
+	archivedSessions?: number;
+}
+
 export interface CounsellorDashboardProps {
-	stats: { enquiries: number; sessions: number; circlesThisWeek: number };
+	stats: DashboardStats;
 	links: DirectLink[];
 	/** At most three, soonest first. */
 	upcomingCircles: DashboardCircle[];
@@ -27,9 +38,9 @@ export interface CounsellorDashboardProps {
 }
 
 /**
- * #1795: what "Gespräche" shows while no conversation is selected. With no
- * direct link and no upcoming circle it stays the turning-cup empty state;
- * as soon as the counsellor has one, it becomes this overview.
+ * #1795: what "Gespräche" shows while no conversation is selected — tiles on
+ * the grey app background, no empty white conversation room. With no direct
+ * link and no upcoming circle it stays the turning-cup empty state.
  */
 export const CounsellorDashboard = ({
 	stats,
@@ -52,52 +63,95 @@ export const CounsellorDashboard = ({
 		);
 	}
 
-	const tiles = [
-		{ key: 'enquiries', value: stats.enquiries },
-		{ key: 'sessions', value: stats.sessions },
-		{ key: 'circlesThisWeek', value: stats.circlesThisWeek }
-	] as const;
+	const { archivedSessions } = stats;
+	const sessionFigures = [
+		{ key: 'assigned', value: stats.assignedSessions },
+		{ key: 'active', value: stats.activeSessions },
+		...(archivedSessions === undefined
+			? []
+			: [{ key: 'archived', value: archivedSessions }])
+	];
+	const total = stats.activeSessions + (archivedSessions ?? 0);
 
 	return (
 		<div className="counsellorDashboard" data-testid="counsellor-dashboard">
 			<h2 className="counsellorDashboard__title">
 				{t('dashboard.title')}
 			</h2>
-			<ul className="counsellorDashboard__stats">
-				{tiles.map(({ key, value }) => (
-					<li key={key} className="counsellorDashboard__stat">
-						<span className="counsellorDashboard__statValue">
-							{value}
-						</span>
-						<span className="counsellorDashboard__statLabel">
-							{t(`dashboard.stats.${key}`)}
-						</span>
-					</li>
-				))}
-			</ul>
-			<div className="counsellorDashboard__cards">
-				<MyDirectLinks
-					links={links}
-					onCreate={onCreateLink}
-					onToggle={onToggleLink}
-					onShowQr={onShowQr}
-					onCopy={onCopy}
-				/>
+			<div className="counsellorDashboard__top">
 				<section
-					className="counsellorDashboard__card"
-					aria-labelledby="dashboardCirclesTitle"
+					className="counsellorDashboard__tile counsellorDashboard__tile--sessions"
+					aria-labelledby="dashboardSessionsTitle"
 				>
-					<h3
-						id="dashboardCirclesTitle"
-						className="counsellorDashboard__cardTitle"
+					<header className="counsellorDashboard__tileHeader">
+						<span className="counsellorDashboard__tileIcon">
+							<ForumOutlinedIcon aria-hidden />
+						</span>
+						<h3
+							id="dashboardSessionsTitle"
+							className="counsellorDashboard__tileTitle"
+						>
+							{t('dashboard.stats.title')}
+						</h3>
+						<span className="counsellorDashboard__period">
+							{t('dashboard.stats.period')}
+						</span>
+					</header>
+					<dl className="counsellorDashboard__figures">
+						{sessionFigures.map(({ key, value }) => (
+							<div
+								key={key}
+								className={`counsellorDashboard__figure counsellorDashboard__figure--${key}`}
+							>
+								<dt>{t(`dashboard.stats.${key}`)}</dt>
+								<dd>{value}</dd>
+							</div>
+						))}
+					</dl>
+					{archivedSessions !== undefined && total > 0 && (
+						<div className="counsellorDashboard__bar" aria-hidden>
+							<span
+								className="counsellorDashboard__barActive"
+								style={{
+									width: `${(stats.activeSessions / total) * 100}%`
+								}}
+							/>
+						</div>
+					)}
+				</section>
+				<section
+					className="counsellorDashboard__tile counsellorDashboard__tile--messages"
+					aria-labelledby="dashboardMessagesTitle"
+				>
+					<header className="counsellorDashboard__tileHeader">
+						<span className="counsellorDashboard__tileIcon">
+							<SendOutlinedIcon aria-hidden />
+						</span>
+						<h3
+							id="dashboardMessagesTitle"
+							className="counsellorDashboard__tileTitle"
+						>
+							{t('dashboard.stats.sentMessages')}
+						</h3>
+					</header>
+					<p className="counsellorDashboard__bigNumber">
+						{stats.sentMessages}
+					</p>
+					<span className="counsellorDashboard__period">
+						{t('dashboard.stats.period')}
+					</span>
+				</section>
+				{upcomingCircles.length > 0 && (
+					<section
+						className="counsellorDashboard__tile counsellorDashboard__tile--circles"
+						aria-labelledby="dashboardCirclesTitle"
 					>
-						{t('dashboard.circles.title')}
-					</h3>
-					{upcomingCircles.length === 0 ? (
-						<p className="counsellorDashboard__none">
-							{t('dashboard.circles.none')}
-						</p>
-					) : (
+						<h3
+							id="dashboardCirclesTitle"
+							className="counsellorDashboard__tileTitle"
+						>
+							{t('dashboard.circles.title')}
+						</h3>
 						<ul className="counsellorDashboard__circles">
 							{upcomingCircles.slice(0, 3).map((circle) => (
 								<li
@@ -126,9 +180,16 @@ export const CounsellorDashboard = ({
 								</li>
 							))}
 						</ul>
-					)}
-				</section>
+					</section>
+				)}
 			</div>
+			<MyDirectLinks
+				links={links}
+				onCreate={onCreateLink}
+				onToggle={onToggleLink}
+				onShowQr={onShowQr}
+				onCopy={onCopy}
+			/>
 		</div>
 	);
 };

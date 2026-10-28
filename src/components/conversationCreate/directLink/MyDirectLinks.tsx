@@ -6,9 +6,10 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import { ReactComponent as ClockIcon } from '../../../resources/img/icons/clock.svg';
-import { ReactComponent as EmptyIllustration } from '../../../resources/img/illustrations/termine-icon.svg';
+import { FORMAT_ARTWORK } from '../../../resources/img/formats';
 import { copyTextToClipboard } from '../../../utils/clipboardHelpers';
 import { Switch } from '../../Switch';
+import { ArtworkImage } from '../ArtworkImage';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
 import './directLink.styles.scss';
@@ -23,9 +24,8 @@ interface MyDirectLinksProps {
 }
 
 /**
- * #1795: the clock entry in the navigation. v1 lists the counsellor's direct
- * links with quick copy, QR and on/off; time windows come later. The empty
- * state follows the old "Terminübersicht".
+ * #1795: the counsellor's direct links as illustrated tiles with quick copy,
+ * QR and on/off. The last tile leads to "Create chat"; time windows come later.
  */
 export const MyDirectLinks = ({
 	links,
@@ -44,87 +44,106 @@ export const MyDirectLinks = ({
 				<h2 id="myDirectLinksTitle" className="myDirectLinks__title">
 					{t('directLink.list.title')}
 				</h2>
-				<button
-					type="button"
-					className="myDirectLinks__create"
-					aria-label={t('directLink.list.create')}
-					title={t('directLink.list.create')}
-					onClick={onCreate}
-				>
-					<AddIcon aria-hidden />
-				</button>
 			</header>
-			{links.length === 0 ? (
-				<div className="myDirectLinks__empty">
-					<EmptyIllustration aria-hidden />
-					<p>{t('directLink.list.empty')}</p>
-				</div>
-			) : (
-				<ul className="myDirectLinks__list">
-					{links.map((link) => (
-						<li
-							key={link.id}
-							className={`myDirectLinks__row${
-								link.active ? '' : ' myDirectLinks__row--off'
-							}`}
-						>
-							<span className="myDirectLinks__icon">
-								<DirectLinkMediumIcon medium={link.medium} />
-							</span>
-							<span className="myDirectLinks__text">
-								<span className="myDirectLinks__name">
-									{link.name}
-								</span>
-								<span className="myDirectLinks__meta">
-									{t(
-										`directLink.medium.${link.medium.toLowerCase()}`
-									)}{' '}
-									· {link.topic}
-									{link.temporary && (
-										<span className="directLinkChip">
-											{t('directLink.temporary')}
-										</span>
-									)}
-								</span>
-							</span>
-							<button
-								type="button"
-								className="myDirectLinks__iconButton"
-								aria-label={t('directLink.copy')}
-								title={t('directLink.copy')}
-								disabled={!link.active}
-								onClick={async () => {
-									await onCopy(link.url);
-									setCopiedId(link.id);
-								}}
-							>
-								{copiedId === link.id ? (
-									<CheckOutlinedIcon aria-hidden />
-								) : (
-									<ContentCopyOutlinedIcon aria-hidden />
-								)}
-							</button>
-							<button
-								type="button"
-								className="myDirectLinks__iconButton"
-								aria-label={t('directLink.list.qr')}
-								title={t('directLink.list.qr')}
-								disabled={!link.active}
-								onClick={() => onShowQr(link)}
-							>
-								<QrCode2OutlinedIcon aria-hidden />
-							</button>
-							<Switch
-								checked={link.active}
-								onChange={(active) => onToggle(link.id, active)}
-								aria-label={t('directLink.list.active', {
-									name: link.name
-								})}
+			<ul className="myDirectLinks__grid">
+				{links.map((link) => (
+					<li
+						key={link.id}
+						className={`directLinkTile${
+							link.active ? '' : ' directLinkTile--off'
+						}`}
+					>
+						<div className="directLinkTile__media">
+							<ArtworkImage
+								artwork={FORMAT_ARTWORK[link.medium]}
+								alt=""
+								aria-hidden
+								className="directLinkTile__image"
+								sizes="320px"
 							/>
-						</li>
-					))}
-				</ul>
-			)}
+							<span className="directLinkTile__badge">
+								<DirectLinkMediumIcon
+									medium={link.medium}
+									filled
+								/>
+								{t(
+									`directLink.medium.${link.medium.toLowerCase()}`
+								)}
+							</span>
+						</div>
+						<div className="directLinkTile__body">
+							<span className="directLinkTile__name">
+								{link.name}
+							</span>
+							<span className="directLinkTile__meta">
+								{link.topic}
+								{link.temporary && (
+									<span className="directLinkChip">
+										{t('directLink.temporary')}
+									</span>
+								)}
+							</span>
+							<div className="directLinkTile__actions">
+								<button
+									type="button"
+									className="myDirectLinks__iconButton"
+									aria-label={t('directLink.copy')}
+									title={t('directLink.copy')}
+									disabled={!link.active}
+									onClick={async () => {
+										await onCopy(link.url);
+										setCopiedId(link.id);
+									}}
+								>
+									{copiedId === link.id ? (
+										<CheckOutlinedIcon aria-hidden />
+									) : (
+										<ContentCopyOutlinedIcon aria-hidden />
+									)}
+								</button>
+								<button
+									type="button"
+									className="myDirectLinks__iconButton"
+									aria-label={t('directLink.list.qr')}
+									title={t('directLink.list.qr')}
+									disabled={!link.active}
+									onClick={() => onShowQr(link)}
+								>
+									<QrCode2OutlinedIcon aria-hidden />
+								</button>
+								<Switch
+									checked={link.active}
+									onChange={(active) =>
+										onToggle(link.id, active)
+									}
+									aria-label={t('directLink.list.active', {
+										name: link.name
+									})}
+								/>
+							</div>
+						</div>
+					</li>
+				))}
+				<li className="directLinkTile directLinkTile--add">
+					<button
+						type="button"
+						className="directLinkTile__addButton"
+						onClick={onCreate}
+					>
+						<span className="directLinkTile__addIcon">
+							<AddIcon aria-hidden />
+						</span>
+						<span className="directLinkTile__name">
+							{t('directLink.list.create')}
+						</span>
+						{links.length === 0 && (
+							<span className="directLinkTile__meta">
+								{t('directLink.list.empty')}
+							</span>
+						)}
+					</button>
+				</li>
+			</ul>
 		</section>
 	);
 };

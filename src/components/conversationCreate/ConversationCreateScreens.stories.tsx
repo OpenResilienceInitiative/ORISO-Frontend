@@ -31,10 +31,12 @@ import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
 import {
 	CounsellorDashboard,
-	DashboardCircle
+	DashboardCircle,
+	DashboardStats
 } from '../counsellorDashboard/CounsellorDashboard';
 import { DirectLink } from './directLink/directLink';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
+import { FORMAT_ARTWORK } from '../../resources/img/formats';
 import './conversationCreate.styles.scss';
 import '../groupChat/createChat.styles.scss';
 
@@ -213,7 +215,20 @@ const InternaCard = ({ preset }: { preset: 'empty' | 'filled' }) => {
 
 type PickerStep = 'picker' | 'directLink' | 'links';
 
-const DASHBOARD_STATS = { enquiries: 3, sessions: 18, circlesThisWeek: 2 };
+/** Sample figures; `archivedSessions` needs a field in the statistics service. */
+const DASHBOARD_STATS: DashboardStats = {
+	assignedSessions: 3,
+	activeSessions: 18,
+	sentMessages: 124,
+	archivedSessions: 7
+};
+
+/** A counsellor who has just started: few figures, one link, no circles. */
+const SPARSE_STATS: DashboardStats = {
+	assignedSessions: 1,
+	activeSessions: 2,
+	sentMessages: 9
+};
 
 const UPCOMING_CIRCLES: DashboardCircle[] = [
 	{
@@ -278,7 +293,11 @@ const FormatPicker = ({
 	const directLinkCard = <DirectLinkCard topics={TOPICS} onCreate={create} />;
 
 	return (
-		<div className="conversationCreate">
+		// The overview sits on the grey background, outside the white panel.
+		<div
+			className={step === 'links' ? undefined : 'conversationCreate'}
+			style={step === 'links' ? { height: '100vh' } : undefined}
+		>
 			{step !== 'links' && (
 				<PanelHeader
 					title={t('groupChat.format.panelTitle')}
@@ -342,7 +361,7 @@ const FormatPicker = ({
 									icon={<LinkOutlinedIcon />}
 									title={t('directLink.card.title')}
 									subtitle={t('directLink.card.subtitle')}
-									image={getTopicCardArtwork(null)}
+									image={FORMAT_ARTWORK.VIDEO}
 									onSelect={() => setStep('directLink')}
 								/>
 							</div>
@@ -398,17 +417,19 @@ const SessionCardShell = ({ children }: { children: React.ReactNode }) => (
 
 const DashboardStory = ({
 	initial,
-	circles
+	circles,
+	stats = DASHBOARD_STATS
 }: {
 	initial: DirectLink[];
 	circles: DashboardCircle[];
+	stats?: DashboardStats;
 }) => {
 	const [links, setLinks] = useState(initial);
 	const [shared, setShared] = useState<DirectLink>();
 	return (
-		<>
+		<div style={{ height: '100vh' }}>
 			<CounsellorDashboard
-				stats={DASHBOARD_STATS}
+				stats={stats}
 				links={links}
 				upcomingCircles={circles}
 				onCreateLink={() => undefined}
@@ -430,7 +451,7 @@ const DashboardStory = ({
 					onClose={() => setShared(undefined)}
 				/>
 			)}
-		</>
+		</div>
 	);
 };
 
@@ -493,7 +514,7 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 	const list = await canvas.findByRole('region', {
 		name: 'Meine Direktlinks'
 	});
-	await expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+	await expect(within(list).getAllByText('Schulden')[0]).toBeInTheDocument();
 };
 
 export const FormatPickerDesktop: Story = {
@@ -566,14 +587,30 @@ export const DashboardWithLinks: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'What "Gespräche" shows while no conversation is selected, once the counsellor has a direct link or an upcoming circle. Figures and circles are sample data.'
+				story: 'What "Gespräche" shows while no conversation is selected, once the counsellor has a direct link or an upcoming circle. Tiles on the grey app background, no empty conversation room. Figures come from the counsellor statistics service; "Archiviert" needs a new field there. Figures and circles are sample data.'
 			}
 		}
 	},
 	render: () => (
-		<SessionCardShell>
-			<DashboardStory initial={SAMPLE_LINKS} circles={UPCOMING_CIRCLES} />
-		</SessionCardShell>
+		<DashboardStory initial={SAMPLE_LINKS} circles={UPCOMING_CIRCLES} />
+	)
+};
+
+export const DashboardSparse: Story = {
+	name: 'Gespräche — overview, just started: one link',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Little has happened yet: two figures, one direct link, no circles (most counsellors run none). The dashed tile leads to "Create chat".'
+			}
+		}
+	},
+	render: () => (
+		<DashboardStory
+			initial={[SAMPLE_LINKS[0]]}
+			circles={[]}
+			stats={SPARSE_STATS}
+		/>
 	)
 };
 

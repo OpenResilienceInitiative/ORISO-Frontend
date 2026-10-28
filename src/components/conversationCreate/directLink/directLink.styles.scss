@@ -177,15 +177,14 @@
 }
 
 .myDirectLinks {
-	background: var(--m3-surface-container-lowest, #ffffff);
-	border-radius: 24px;
-	padding: 16px 24px 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 
 	&__header {
 		align-items: center;
 		display: flex;
 		gap: 12px;
-		margin-bottom: 8px;
 	}
 
 	&__headerIcon {
@@ -195,103 +194,20 @@
 	}
 
 	&__title {
-		color: var(--m3-on-surface, #1b1b1c);
-		flex: 1;
+		color: var(--m3-on-surface, #1a1c1e);
 		font-size: 22px;
 		font-weight: 400;
 		line-height: 28px;
 		margin: 0;
 	}
 
-	&__create {
-		align-items: center;
-		background: var(--m3-primary, #a5000a);
-		border: none;
-		border-radius: 50%;
-		color: var(--m3-on-primary, #ffffff);
-		cursor: pointer;
-		display: flex;
-		height: 48px;
-		justify-content: center;
-		width: 48px;
-	}
-
-	&__empty {
-		align-items: center;
-		color: var(--m3-on-surface-variant, #444748);
-		display: flex;
-		flex-direction: column;
+	&__grid {
+		display: grid;
 		gap: 16px;
-		padding: 48px 0;
-
-		svg {
-			height: 62px;
-			width: 86px;
-		}
-
-		p {
-			margin: 0;
-		}
-	}
-
-	&__list {
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 		list-style: none;
 		margin: 0;
 		padding: 0;
-	}
-
-	&__row {
-		align-items: center;
-		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
-		display: flex;
-		gap: 12px;
-		padding: 12px 0;
-
-		&:last-child {
-			border-bottom: none;
-		}
-	}
-
-	&__icon {
-		align-items: center;
-		background: var(--m3-secondary-container, #646d78);
-		border-radius: 50%;
-		color: var(--m3-on-secondary-container, #ffffff);
-		display: flex;
-		flex-shrink: 0;
-		height: 40px;
-		justify-content: center;
-		width: 40px;
-
-		svg {
-			height: 20px;
-			width: 20px;
-		}
-	}
-
-	&__text {
-		display: flex;
-		flex: 1;
-		flex-direction: column;
-		min-width: 0;
-	}
-
-	&__name {
-		color: var(--m3-on-surface, #1b1b1c);
-		font-size: 16px;
-		line-height: 24px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	&__meta {
-		align-items: center;
-		color: var(--m3-on-surface-variant, #444748);
-		display: flex;
-		flex-wrap: wrap;
-		font-size: 14px;
-		line-height: 20px;
 	}
 
 	&__iconButton {
@@ -308,13 +224,134 @@
 		width: 40px;
 
 		&:hover:not(:disabled) {
-			background: rgba(27, 27, 28, 0.08);
+			background: var(--m3-surface-container-high, #eae7e8);
 		}
 
 		&:disabled {
 			cursor: default;
 			opacity: 0.38;
 		}
+	}
+}
+
+/* One direct link: the medium's illustration on top, name and quick actions below. */
+.directLinkTile {
+	background: var(--m3-surface-container-lowest, #ffffff);
+	border-radius: 24px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	&__media {
+		aspect-ratio: 16 / 9;
+		position: relative;
+	}
+
+	&__image {
+		display: block;
+		height: 100%;
+		object-fit: cover;
+		width: 100%;
+	}
+
+	&--off &__image {
+		/* Image only: dimming the text would fail contrast. */
+		filter: grayscale(1);
+	}
+
+	&__badge {
+		align-items: center;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border-radius: 9999px;
+		color: var(--m3-on-surface, #1a1c1e);
+		display: flex;
+		font-size: 12px;
+		font-weight: 500;
+		gap: 4px;
+		left: 12px;
+		line-height: 16px;
+		padding: 4px 10px 4px 8px;
+		position: absolute;
+		top: 12px;
+		z-index: 1;
+
+		svg {
+			height: 16px;
+			width: 16px;
+		}
+	}
+
+	&__body {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 2px;
+		padding: 12px 8px 8px 16px;
+	}
+
+	&__name {
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		overflow-wrap: anywhere;
+	}
+
+	&__meta {
+		align-items: center;
+		color: var(--m3-on-surface-variant, #444748);
+		display: flex;
+		flex-wrap: wrap;
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__actions {
+		align-items: center;
+		display: flex;
+		gap: 4px;
+		margin-top: auto;
+		padding-top: 4px;
+
+		> :last-child {
+			margin-left: auto;
+		}
+	}
+
+	&--add {
+		background: transparent;
+		border: 2px dashed var(--m3-outline, #747878);
+	}
+
+	&__addButton {
+		align-items: center;
+		background: transparent;
+		border: none;
+		color: inherit;
+		cursor: pointer;
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 8px;
+		justify-content: center;
+		min-height: 200px;
+		padding: 24px;
+		text-align: center;
+
+		&:hover {
+			background: var(--m3-surface-container, #f0edee);
+		}
+	}
+
+	&__addIcon {
+		align-items: center;
+		background: var(--m3-primary, #a5000a);
+		border-radius: 50%;
+		color: var(--m3-on-primary, #ffffff);
+		display: flex;
+		height: 48px;
+		justify-content: center;
+		width: 48px;
 	}
 }
 

@@ -6287,13 +6287,15 @@
 	"dashboard": {
 		"title": "Genel bakışınız",
 		"stats": {
-			"enquiries": "Açık ilk talepler",
-			"sessions": "Danışmanlıklarım",
-			"circlesThisWeek": "Bu haftaki öz yardım grupları"
+			"title": "Danışmanlıklar",
+			"period": "Son 30 gün",
+			"assigned": "Yeni üstlenilen",
+			"active": "Aktif",
+			"archived": "Arşivlenen",
+			"sentMessages": "Gönderilen mesajlar"
 		},
 		"circles": {
 			"title": "Yaklaşan öz yardım grupları",
-			"none": "Planlanmış öz yardım grubu yok",
 			"participants": "{{count}} katılımcı",
 			"participants_one": "{{count}} katılımcı"
 		}

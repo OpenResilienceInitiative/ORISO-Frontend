@@ -6202,13 +6202,15 @@
 	"dashboard": {
 		"title": "Your overview",
 		"stats": {
-			"enquiries": "Open enquiries",
-			"sessions": "My counselling sessions",
-			"circlesThisWeek": "Self-help circles this week"
+			"title": "Counselling",
+			"period": "Last 30 days",
+			"assigned": "Newly taken on",
+			"active": "Active",
+			"archived": "Archived",
+			"sentMessages": "Messages sent"
 		},
 		"circles": {
 			"title": "Upcoming self-help circles",
-			"none": "No self-help circles planned",
 			"participants": "{{count}} participants",
 			"participants_one": "{{count}} participant"
 		}

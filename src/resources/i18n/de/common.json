@@ -6277,13 +6277,15 @@
 	"dashboard": {
 		"title": "Ihr Überblick",
 		"stats": {
-			"enquiries": "Offene Erstanfragen",
-			"sessions": "Meine Beratungen",
-			"circlesThisWeek": "Gesprächskreise diese Woche"
+			"title": "Beratungen",
+			"period": "Letzte 30 Tage",
+			"assigned": "Neu übernommen",
+			"active": "Aktiv",
+			"archived": "Archiviert",
+			"sentMessages": "Gesendete Nachrichten"
 		},
 		"circles": {
 			"title": "Nächste Gesprächskreise",
-			"none": "Keine Gesprächskreise geplant",
 			"participants": "{{count}} Teilnehmende",
 			"participants_one": "{{count}} Teilnehmende"
 		}

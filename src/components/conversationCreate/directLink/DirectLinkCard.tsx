@@ -8,7 +8,8 @@ import { SplitButton } from '../../splitButton/SplitButton';
 import { Switch } from '../../Switch';
 import { FormatCard } from '../FormatCard';
 import { RowMenu } from '../RowMenu';
-import { TopicMedia } from '../TopicMedia';
+import { ArtworkImage } from '../ArtworkImage';
+import { FORMAT_ARTWORK } from '../../../resources/img/formats';
 import {
 	defaultTemporary,
 	DIRECT_LINK_MEDIA,
@@ -72,7 +73,10 @@ export const DirectLinkCard = ({
 			subtitle={t('directLink.card.subtitle')}
 			avatar={<LinkOutlinedIcon />}
 			media={
-				<TopicMedia topic={topic} alt={t('directLink.card.title')} />
+				<ArtworkImage
+					artwork={FORMAT_ARTWORK[medium ?? 'VIDEO']}
+					alt={t('directLink.card.title')}
+				/>
 			}
 		>
 			<p className="conversationCreate__cardText">
