@@ -322,6 +322,39 @@ export const OverflowBadgeOpensList: Story = {
 		await expect(
 			document.querySelector('[data-cy="participant-overflow-list"]')
 		).toBe(list);
+		// Tab closes it and continues from the badge, not from the portal:
+		// Shift+Tab lands on the avatar right before the badge. Real browser
+		// keys: the simulated Tab cannot follow focus out of a removed node.
+		const browser = await import('@vitest/browser/context');
+		await browser.userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="participant-overflow-list"]')
+			).toBeNull()
+		);
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="participant-avatar"]'
+		);
+		await expect(document.activeElement).toBe(avatars[avatars.length - 1]);
+
+		// A scroll outside closes it and hands focus back to the badge.
+		await userEvent.click(chip);
+		const reopened = await waitFor(() => {
+			const el = document.querySelector<HTMLElement>(
+				'[data-cy="participant-overflow-list"]'
+			);
+			if (!el) throw new Error('list not open');
+			return el;
+		});
+		await waitFor(() => expect(document.activeElement).toBe(reopened));
+		window.dispatchEvent(new Event('scroll'));
+		await waitFor(() => expect(document.activeElement).toBe(chip));
+		await userEvent.click(chip);
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="participant-overflow-list"]')
+			).not.toBeNull()
+		);
 
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() =>

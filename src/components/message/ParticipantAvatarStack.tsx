@@ -248,11 +248,19 @@ const OverflowList = ({
 		if (!open) return;
 		// Keyboard users land in the list; Escape there brings them back.
 		panelRef.current?.focus();
-		const close = () => setOpen(false);
+		// Scroll and resize remove the focused list: hand focus back to the
+		// badge. An outside click keeps the focus it moved to.
+		const close = () => {
+			const hadFocus = panelRef.current?.contains(document.activeElement);
+			setOpen(false);
+			if (hadFocus) buttonRef.current?.focus();
+		};
 		// Scrolling the list itself must not close it (long lists scroll).
 		const closeOnScroll = (event: Event) => {
-			if (panelRef.current?.contains(event.target as Node)) return;
-			setOpen(false);
+			const target = event.target;
+			if (target instanceof Node && panelRef.current?.contains(target))
+				return;
+			close();
 		};
 		const onKey = (event: KeyboardEvent) => {
 			if (event.key !== 'Escape') return;
@@ -284,7 +292,9 @@ const OverflowList = ({
 	const stop = (event: React.SyntheticEvent) => event.stopPropagation();
 	const onPanelKey = (event: React.KeyboardEvent) => {
 		event.stopPropagation();
-		if (event.key !== 'Escape') return;
+		// Escape closes; Tab closes too and continues from the badge, since
+		// the portal sits at the end of the document.
+		if (event.key !== 'Escape' && event.key !== 'Tab') return;
 		setOpen(false);
 		buttonRef.current?.focus();
 	};
