@@ -326,6 +326,17 @@ describe('GroupCallWidget Storybook harness', () => {
 		expect(callManager.getCurrentCall()?.callId).not.toBe('second-call');
 	});
 
+	it('moves keyboard focus into the dock when the call is minimized', async () => {
+		const { view } = await renderActiveCall();
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+
+		const back = await view.findByRole('button', {
+			name: 'Back to the full call'
+		});
+		await waitFor(() => expect(document.activeElement).toBe(back));
+	});
+
 	it('takes keyboard focus back into the call when the dock expands', async () => {
 		const { view, iframe } = await renderActiveCall();
 

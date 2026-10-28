@@ -41,6 +41,8 @@ export interface MinimizedCallDockProps {
 	onToggleCamera?: () => void;
 	onHangUp: () => void;
 	onExpand: () => void;
+	/** Take keyboard focus when it appears, e.g. after minimizing the call. */
+	autoFocus?: boolean;
 }
 
 /** `m:ss`, or `h:mm:ss` past the hour, as the call card shows a duration. */
@@ -71,7 +73,8 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	onToggleMute,
 	onToggleCamera,
 	onHangUp,
-	onExpand
+	onExpand,
+	autoFocus = false
 }) => {
 	const { t } = useTranslation();
 	const duration = formatCallDuration(elapsedSeconds);
@@ -82,6 +85,20 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	const menuButtonRef = React.useRef<HTMLButtonElement>(null);
 	const dockRef = React.useRef<HTMLElement>(null);
 	const menuRef = React.useRef<HTMLDivElement | null>(null);
+	const expandRef = React.useRef<HTMLButtonElement>(null);
+
+	// Focus lands on the way back; where that sits in the menu, on ⋮.
+	React.useEffect(() => {
+		if (!autoFocus) return;
+		const expand = expandRef.current;
+		const target =
+			expand && getComputedStyle(expand).display !== 'none'
+				? expand
+				: menuButtonRef.current;
+		target?.focus();
+		// Only on mount: the dock appears, focus follows once.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 	// Back to ⋮ after an item, so a keyboard user keeps their place in the dock.
 	const closeMenu = (restoreFocus = false) => {
 		setMenuAnchor(null);
@@ -167,6 +184,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 				</ButtonBase>
 				<ButtonBase
 					className="call-icon-button minimized-call-dock__expand"
+					ref={expandRef}
 					onClick={onExpand}
 					aria-label={t('calls.states.backToCall')}
 				>

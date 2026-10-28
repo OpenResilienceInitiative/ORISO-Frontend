@@ -1055,6 +1055,7 @@ export const GroupCallWidget: React.FC = () => {
 					}
 					onHangUp={handleEndCall}
 					onExpand={() => setIsMinimized(false)}
+					autoFocus
 				/>
 			)}
 			<div
