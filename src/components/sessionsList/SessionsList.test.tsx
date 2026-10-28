@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -19,6 +20,8 @@ import {
 } from 'vite-plus/test';
 import {
 	AUTHORITIES,
+	ActiveSessionContext,
+	SessionsDataProvider,
 	SessionsDataContext,
 	SessionTypeContext,
 	TenantContext,
@@ -30,6 +33,7 @@ import {
 } from '../session/sessionHelpers';
 import { SessionListViewStateProvider } from './SessionListViewStateContext';
 import { SessionsList } from './SessionsList';
+import { apiGetConsultantSessionList, SESSION_COUNT } from '../../api';
 
 const batchState = vi.hoisted(() => ({
 	close: vi.fn(),
@@ -38,6 +42,12 @@ const batchState = vi.hoisted(() => ({
 	submit: vi.fn(),
 	submitting: false
 }));
+
+afterEach(() => {
+	batchState.outcome = null;
+	batchState.error = undefined;
+	batchState.submitting = false;
+});
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -124,22 +134,27 @@ vi.mock('../session/CaseHandoverCurtain', () => ({
 	)
 }));
 vi.mock('../sessionsListItem/SessionListItemComponent', () => ({
-	SessionListItemComponent: (props: any) => (
-		<div>
-			<div data-testid={`selected-${props.index}`}>
-				{String(props.caseHandoverSelected)}
+	SessionListItemComponent: (props: any) => {
+		const { activeSession } = React.useContext(ActiveSessionContext);
+		return (
+			<div data-testid={`case-${activeSession?.item?.id}`}>
+				<div data-testid={`selected-${props.index}`}>
+					{String(props.caseHandoverSelected)}
+				</div>
+				<button onClick={props.onCaseHandoverBatchStart}>
+					start-batch
+				</button>
+				<button
+					onClick={() => props.onCaseHandoverSelect(props.index + 1)}
+				>
+					select-{props.index + 1}
+				</button>
+				<button onClick={props.onCaseHandoverBatchConfirm}>
+					review-batch
+				</button>
 			</div>
-			<button onClick={props.onCaseHandoverBatchStart}>
-				start-batch
-			</button>
-			<button onClick={() => props.onCaseHandoverSelect(props.index + 1)}>
-				select-{props.index + 1}
-			</button>
-			<button onClick={props.onCaseHandoverBatchConfirm}>
-				review-batch
-			</button>
-		</div>
-	)
+		);
+	}
 }));
 
 const sessions = [1, 2].map((id) => ({
@@ -154,16 +169,34 @@ const sessions = [1, 2].map((id) => ({
 	user: { id: `u${id}` }
 })) as any;
 
+const TestSessionSource = ({
+	children,
+	fetched,
+	value
+}: React.PropsWithChildren<{
+	fetched: boolean;
+	value: React.ContextType<typeof SessionsDataContext>;
+}>) =>
+	fetched ? (
+		<SessionsDataProvider>{children}</SessionsDataProvider>
+	) : (
+		<SessionsDataContext.Provider value={value}>
+			{children}
+		</SessionsDataContext.Provider>
+	);
+
 const ListTree = ({
 	supervisedByMe,
 	consultant = false,
 	initialPath = '/sessions/consultant/sessionView',
-	ready = true
+	ready = true,
+	fetched = false
 }: {
 	supervisedByMe?: boolean;
 	consultant?: boolean;
 	initialPath?: string;
 	ready?: boolean;
+	fetched?: boolean;
 } = {}) => (
 	<MemoryRouter initialEntries={[initialPath]}>
 		<TenantContext.Provider value={{ tenant: { settings: {} } } as any}>
@@ -185,7 +218,8 @@ const ListTree = ({
 						path: '/sessions/consultant/sessionView'
 					}}
 				>
-					<SessionsDataContext.Provider
+					<TestSessionSource
+						fetched={fetched}
 						value={{
 							sessions: sessions.map((raw) => ({
 								...raw,
@@ -206,7 +240,7 @@ const ListTree = ({
 								sessionTypes={[SESSION_TYPE_SESSION] as any}
 							/>
 						</SessionListViewStateProvider>
-					</SessionsDataContext.Provider>
+					</TestSessionSource>
 				</SessionTypeContext.Provider>
 			</UserDataContext.Provider>
 		</TenantContext.Provider>
@@ -329,5 +363,121 @@ describe('Supervision filter availability (#1306)', () => {
 		expect(screen.getByTestId('active-chip').textContent).toBe(
 			'supervision'
 		);
+	});
+});
+
+describe('Supervision filter over fetched pages (#1306)', () => {
+	const getList = vi.mocked(apiGetConsultantSessionList);
+	const ordinary = (id: number) => ({
+		...sessions[0],
+		session: {
+			...sessions[0].session,
+			id,
+			matrixRoomId: `!paged-${id}:test`
+		},
+		user: { id: `u${id}` }
+	});
+	const page = (offset: number) =>
+		Array.from({ length: SESSION_COUNT }, (_, i) =>
+			ordinary(offset + i + 1)
+		);
+	beforeEach(() => {
+		getList.mockReset();
+		getList.mockResolvedValue({ sessions: [], total: 0 });
+		batchState.outcome = null;
+		batchState.error = undefined;
+		batchState.submitting = false;
+	});
+	afterEach(() => {
+		cleanup();
+		getList.mockResolvedValue({ sessions: [], total: 0 });
+	});
+	it('loads beyond two full ordinary pages without scrolling and retains the bookmarked filter until its assignment arrives', async () => {
+		const total = SESSION_COUNT * 2 + 1;
+		let finish!: (
+			value: Awaited<ReturnType<typeof apiGetConsultantSessionList>>
+		) => void;
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: page(SESSION_COUNT), total });
+		getList.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					finish = resolve;
+				})
+		);
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(3));
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		const supervised = ordinary(total);
+		supervised.session.supervision = {
+			supervisedByMe: true,
+			supervisorConsultantIds: ['c1']
+		};
+		await act(async () => finish({ sessions: [supervised], total }));
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(screen.queryByTestId('case-1')).toBeNull();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT,
+			SESSION_COUNT * 2
+		]);
+	});
+	it('clears an unavailable bookmark only after all pages are exhausted', async () => {
+		const total = SESSION_COUNT + 1;
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: [ordinary(total)], total });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		await waitFor(() => expect(getList).toHaveBeenCalledTimes(2));
+		await waitFor(() =>
+			expect(screen.getByTestId('active-chip').textContent).toBe('all')
+		);
+		expect(screen.getByTestId(`case-${total}`)).toBeTruthy();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT
+		]);
+	});
+	it('retains the bookmarked filter after a failed page and retries that offset', async () => {
+		const total = SESSION_COUNT + 1;
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockRejectedValueOnce(new Error('page unavailable'));
+		const supervised = ordinary(total);
+		supervised.session.supervision = { supervisedByMe: true };
+		getList.mockResolvedValueOnce({ sessions: [supervised], total });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		const retry = await screen.findByText('sessionList.reloadButton.label');
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		fireEvent.click(retry);
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT,
+			SESSION_COUNT
+		]);
 	});
 });

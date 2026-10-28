@@ -109,9 +109,8 @@ describe('countUnreadSupervisedSessions', () => {
 	});
 
 	it('does not count an unread row with no marker at all', () => {
-		// The chip FILTER still falls back to the old heuristic for old
-		// backends, but a number derived from a guess would tell the
-		// supervisor that something arrived when nothing did.
+		// Neither filtering nor counting infers supervision from ownership.
+		// A row without an explicit marker is not supervision.
 		unreadRooms.add('!c:hs');
 		expect(
 			countUnreadSupervisedSessions([pair('!c:hs', undefined)], ME)

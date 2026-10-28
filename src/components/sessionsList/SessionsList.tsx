@@ -280,6 +280,7 @@ export const SessionsList = ({
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
 	const [totalItems, setTotalItems] = useState(0);
+	const hasMoreSessionPages = totalItems > currentOffset + SESSION_COUNT;
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
@@ -2170,7 +2171,11 @@ export const SessionsList = ({
 		if (
 			sessionToolbarChip === 'supervision' &&
 			sessionsReady &&
-			!canSupervise
+			!canSupervise &&
+			(!hasMoreSessionPages || type !== SESSION_LIST_TYPES.MY_SESSION) &&
+			!isLoading &&
+			!isRequestInProgress &&
+			!isReloadButtonVisible
 		) {
 			handleToolbarChipToggle(sessionToolbarChip);
 			return;
@@ -2192,6 +2197,10 @@ export const SessionsList = ({
 		}
 	}, [
 		canSupervise,
+		hasMoreSessionPages,
+		isLoading,
+		isRequestInProgress,
+		isReloadButtonVisible,
 		sessionsReady,
 		displayFilterKinds,
 		handleToolbarChipToggle,
@@ -2272,30 +2281,48 @@ export const SessionsList = ({
 		visibleUserDrafts.length,
 		unreadVersion
 	]);
-	// A page can be entirely hidden (§5.2): keep paging until enough shows.
+	// Filters can hide a whole loaded page, leaving no scroll trigger.
 	useEffect(() => {
+		// Enquiries merge two feeds with their own paging contract. Keep their
+		// existing display-only paging; toolbar-aware paging belongs to Gespräche.
+		const ownConversations = type === SESSION_LIST_TYPES.MY_SESSION;
+		const toolbarHidesRows =
+			ownConversations &&
+			sessionToolbarFilteredPairs.length < displayVisiblePairs.length;
+		const needsSupervisionPage =
+			ownConversations &&
+			sessionToolbarChip === 'supervision' &&
+			!canSupervise;
+		const visibleRows = ownConversations
+			? sessionToolbarFilteredPairs.length
+			: displayVisiblePairs.length;
 		if (
 			!showMySessionToolbar ||
-			displayFilterHiddenCount === 0 ||
-			displayVisiblePairs.length >= MIN_VISIBLE_SESSION_ROWS ||
+			(displayFilterHiddenCount === 0 &&
+				!toolbarHidesRows &&
+				!needsSupervisionPage) ||
+			visibleRows >= MIN_VISIBLE_SESSION_ROWS ||
 			isLoading ||
 			isRequestInProgress ||
 			isReloadButtonVisible ||
-			totalItems <= currentOffset + SESSION_COUNT
+			!hasMoreSessionPages
 		) {
 			return;
 		}
 		loadMoreSessions();
 	}, [
-		currentOffset,
+		canSupervise,
 		displayFilterHiddenCount,
 		displayVisiblePairs.length,
+		hasMoreSessionPages,
 		isLoading,
 		isReloadButtonVisible,
 		isRequestInProgress,
 		loadMoreSessions,
+		sessionToolbarChip,
+		sessionToolbarFilteredPairs.length,
 		showMySessionToolbar,
-		totalItems
+		type
 	]);
 	useEffect(() => {
 		setSessionListViewState(type, {
