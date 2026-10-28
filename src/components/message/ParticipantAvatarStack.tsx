@@ -10,11 +10,13 @@
  * (ORISO-Frontend#1193). Order and overflow come from `participantStack.ts`.
  */
 import * as React from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { MessageAvatar } from './MessageAvatar';
 import {
+	formatOverflowCount,
 	resolveParticipantStack,
 	STACK_MAX_VISIBLE,
 	STACK_AVATAR_SIZE,
@@ -32,6 +34,12 @@ export interface ParticipantAvatarStackProps {
 	/** Overlap between avatars; header and card geometry are independent. */
 	'overlap'?: number;
 	'maxVisible'?: number;
+	/**
+	 * How the "+N" folds in. `pill` (default, headers) is a static chip;
+	 * `badge` sits on the last avatar and `bubble` is a grey speech bubble
+	 * beside the stack — both open the list of the folded people on click.
+	 */
+	'overflowStyle'?: 'pill' | 'badge' | 'bubble';
 	'className'?: string;
 	'data-cy'?: string;
 }
@@ -56,6 +64,7 @@ export const ParticipantAvatarStack = ({
 	size = STACK_AVATAR_SIZE,
 	overlap = STACK_OVERLAP,
 	maxVisible = STACK_MAX_VISIBLE,
+	overflowStyle = 'pill',
 	className,
 	'data-cy': dataCy = 'participant-stack'
 }: ParticipantAvatarStackProps) => {
@@ -75,7 +84,7 @@ export const ParticipantAvatarStack = ({
 		document.addEventListener('keydown', dismiss);
 		return () => document.removeEventListener('keydown', dismiss);
 	}, [openIndex]);
-	const { visible, overflow } = resolveParticipantStack(
+	const { visible, overflow, hidden } = resolveParticipantStack(
 		participants,
 		maxVisible
 	);
@@ -95,6 +104,9 @@ export const ParticipantAvatarStack = ({
 			className={[
 				'participantStack',
 				overflow > 0 && 'participantStack--overflow',
+				overflow > 0 &&
+					overflowStyle !== 'pill' &&
+					`participantStack--${overflowStyle}`,
 				className
 			]
 				.filter(Boolean)
@@ -183,16 +195,24 @@ export const ParticipantAvatarStack = ({
 			{overflow > 0 && (
 				<li
 					className="participantStack__item participantStack__item--overflow"
-					style={{ zIndex: 0 }}
+					style={{ zIndex: overflowStyle === 'badge' ? 2 : 0 }}
 				>
-					<span
-						className="participantStack__overflow"
-						title={overflowLabel}
-						aria-label={overflowLabel}
-						data-cy="participant-overflow"
-					>
-						+{overflow}
-					</span>
+					{overflowStyle === 'pill' ? (
+						<span
+							className="participantStack__overflow"
+							title={overflowLabel}
+							aria-label={overflowLabel}
+							data-cy="participant-overflow"
+						>
+							+{overflow}
+						</span>
+					) : (
+						<OverflowList
+							count={overflow}
+							label={overflowLabel}
+							hidden={hidden}
+						/>
+					)}
 				</li>
 			)}
 		</ul>
@@ -200,3 +220,140 @@ export const ParticipantAvatarStack = ({
 };
 
 export default ParticipantAvatarStack;
+
+/**
+ * The "+N" as a button: opens the folded people in a list under it. Rendered
+ * in a portal (the card clips its children) and cut off from the card's own
+ * click and key handling, so opening it never selects the conversation.
+ */
+const OverflowList = ({
+	count,
+	label,
+	hidden
+}: {
+	count: number;
+	label: string;
+	hidden: StackParticipant[];
+}) => {
+	const { t: translate } = useTranslation();
+	const [open, setOpen] = useState(false);
+	const [anchor, setAnchor] = useState<DOMRect | null>(null);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+	const panelRef = useRef<HTMLDivElement>(null);
+	const panelId = useId();
+
+	useEffect(() => {
+		if (!open) return;
+		const close = () => setOpen(false);
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return;
+			event.stopPropagation();
+			setOpen(false);
+			buttonRef.current?.focus();
+		};
+		const onPointer = (event: MouseEvent) => {
+			const target = event.target as Node;
+			if (
+				panelRef.current?.contains(target) ||
+				buttonRef.current?.contains(target)
+			)
+				return;
+			setOpen(false);
+		};
+		document.addEventListener('keydown', onKey);
+		document.addEventListener('mousedown', onPointer);
+		window.addEventListener('resize', close);
+		window.addEventListener('scroll', close, true);
+		return () => {
+			document.removeEventListener('keydown', onKey);
+			document.removeEventListener('mousedown', onPointer);
+			window.removeEventListener('resize', close);
+			window.removeEventListener('scroll', close, true);
+		};
+	}, [open]);
+
+	const stop = (event: React.SyntheticEvent) => event.stopPropagation();
+	const toggle = (event: React.MouseEvent) => {
+		event.stopPropagation();
+		setAnchor(buttonRef.current?.getBoundingClientRect() ?? null);
+		setOpen((value) => !value);
+	};
+	const title = translate('chatStage.participants.moreList', {
+		count,
+		defaultValue: 'Weitere Teilnehmende ({{count}})'
+	});
+
+	return (
+		<>
+			<button
+				ref={buttonRef}
+				type="button"
+				className="participantStack__overflow participantStack__overflow--button"
+				aria-label={label}
+				aria-haspopup="dialog"
+				aria-expanded={open}
+				aria-controls={open ? panelId : undefined}
+				data-cy="participant-overflow"
+				onClick={toggle}
+				onKeyDown={(event) => {
+					if (event.key === 'Enter' || event.key === ' ')
+						event.stopPropagation();
+				}}
+			>
+				{formatOverflowCount(count)}
+			</button>
+			{open &&
+				anchor &&
+				createPortal(
+					<div
+						ref={panelRef}
+						id={panelId}
+						role="dialog"
+						aria-label={title}
+						className="participantStack__list"
+						data-cy="participant-overflow-list"
+						style={{
+							top: anchor.bottom + 8,
+							left: Math.max(
+								8,
+								Math.min(
+									anchor.right - 240,
+									window.innerWidth - 248
+								)
+							)
+						}}
+						onClick={stop}
+						onKeyDown={stop}
+						onMouseDown={stop}
+					>
+						<p className="participantStack__listTitle">{title}</p>
+						<ul className="participantStack__listItems">
+							{hidden.map((participant) => (
+								<li
+									key={participant.userId}
+									className="participantStack__listItem"
+								>
+									<MessageAvatar
+										isGroup={!participant.isAsker}
+										isSystemNotification={false}
+										userId={participant.userId}
+										username={
+											participant.username ??
+											participant.displayName
+										}
+										displayName={participant.displayName}
+										firstName={participant.firstName}
+										lastName={participant.lastName}
+										choice={chosenAvatarOf(participant)}
+										size={32}
+									/>
+									<span>{participant.displayName}</span>
+								</li>
+							))}
+						</ul>
+					</div>,
+					document.body
+				)}
+		</>
+	);
+};

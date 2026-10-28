@@ -151,11 +151,24 @@ export const OverflowPlusN: Story = {
 	}
 };
 
+/** `total` participants: the three named ones, then generated names. */
+const crowd = (total: number): StackParticipant[] =>
+	[
+		client,
+		counsellor,
+		supervisor,
+		...Array.from({ length: Math.max(0, total - 3) }, (_, i) => ({
+			userId: `@gast${i}:oriso.invalid`,
+			displayName: `Gast ${i + 1}`
+		}))
+	].slice(0, total);
+
 /**
  * Design options for the "+N" chip on the conversation card (maxVisible 2),
- * shown at 40px and at the larger 48px group-chat size.
- * Local CSS only — nothing here changes the shared stack. Pick one and it
- * moves into `participantAvatarStack.styles.scss`.
+ * shown at 40px and at the larger 48px group-chat size. D (badge on the last
+ * avatar, chosen for the card) and E (grey speech bubble) are real
+ * `overflowStyle` values and open the list of the folded people; A–C are
+ * local CSS experiments that stay here.
  */
 const OVERFLOW_VARIANT_CSS = `
 .ovf { display:flex; align-items:center; gap:36px; padding:16px 0; }
@@ -166,80 +179,147 @@ const OVERFLOW_VARIANT_CSS = `
 /* C: outlined — quiet, no second pink blob next to the avatars */
 .ovf--outline .participantStack__overflow { padding:0; min-width:var(--participant-size); border-radius:50%;
   background:transparent; box-shadow:none; border:2px dashed var(--m3-primary-fixed-dim,#ffb4aa); font-size:15px; }
-/* D: badge on the last avatar — takes no extra width */
-.ovf--badge .participantStack { padding-right:0; }
-.ovf--badge .participantStack__item--overflow { position:absolute; top:auto; left:auto; right:-8px; bottom:-6px; margin:0 !important; width:auto; height:auto; z-index:2 !important; }
-.ovf--badge .participantStack__overflow { height:22px; min-width:22px; padding:0 6px; border-radius:11px; font-size:12px;
-  background:var(--m3-primary-container,#cc1e1c); color:#fff; }
-/* E: small satellite — half-size chip, vertically centred */
-.ovf--small .participantStack__overflow { height:28px; min-width:28px; padding:0 7px; border-radius:14px; font-size:13px;
-  background:#ece6e6; color:#3b3b3b; box-shadow:none; }
 `;
 
 export const OverflowChipVariants: Story = {
 	name: '"+N" chip — design options for the card',
 	render: () => {
-		const many = [
-			client,
-			counsellor,
-			supervisor,
-			{ userId: '@kim:oriso.invalid', displayName: 'Kim G.' },
-			{ userId: '@ali:oriso.invalid', displayName: 'Ali R.' },
-			{ userId: '@jo:oriso.invalid', displayName: 'Jo L.' },
-			{ userId: '@a:oriso.invalid', displayName: 'A B.' },
-			{ userId: '@b:oriso.invalid', displayName: 'B C.' },
-			{ userId: '@c:oriso.invalid', displayName: 'C D.' },
-			{ userId: '@d:oriso.invalid', displayName: 'D E.' },
-			{ userId: '@e:oriso.invalid', displayName: 'E F.' },
-			{ userId: '@f:oriso.invalid', displayName: 'F G.' },
-			{ userId: '@g:oriso.invalid', displayName: 'G H.' },
-			{ userId: '@h:oriso.invalid', displayName: 'H I.' }
-		];
-		const rows: [string, string, string][] = [
-			['ovf--now', 'A · Aktuell', 'rosa Pille, Text off-center'],
-			['ovf--round', 'B · Runder Chip', 'wie ein vierter Avatar'],
+		const rows: [string, string, string, 'pill' | 'badge' | 'bubble'][] = [
+			['ovf--now', 'A · Aktuell', 'rosa Pille, Text off-center', 'pill'],
+			['ovf--round', 'B · Runder Chip', 'wie ein vierter Avatar', 'pill'],
 			[
 				'ovf--outline',
 				'C · Gestrichelter Kreis',
-				'leise, „da ist noch mehr“'
+				'leise, „da ist noch mehr“',
+				'pill'
 			],
-			['ovf--badge', 'D · Badge am Avatar', 'braucht keine Breite'],
 			[
-				'ovf--small',
-				'E · Kleiner grauer Chip',
-				'tritt hinter die Avatare zurück'
+				'ovf--badge',
+				'D · Badge am Avatar (gewählt)',
+				'braucht keine Breite, klickbar',
+				'badge'
+			],
+			[
+				'ovf--bubble',
+				'E · Graue Sprechblase',
+				'klickbar, braucht etwas Breite',
+				'bubble'
 			]
 		];
 		return (
 			<div>
 				<style>{OVERFLOW_VARIANT_CSS}</style>
-				{rows.map(([cls, title, note]) => (
+				{rows.map(([cls, title, note, overflowStyle]) => (
 					<div key={cls} className={`ovf ${cls}`}>
 						<div className="ovf__label">
 							{title}
 							<small>{note}</small>
 						</div>
 						<ParticipantAvatarStack
-							participants={[client, counsellor, supervisor]}
+							participants={crowd(3)}
 							size={40}
 							maxVisible={2}
+							overflowStyle={overflowStyle}
 						/>
 						<ParticipantAvatarStack
-							participants={[client, counsellor, supervisor]}
+							participants={crowd(3)}
 							size={48}
 							overlap={24}
 							maxVisible={2}
+							overflowStyle={overflowStyle}
 						/>
 						<ParticipantAvatarStack
-							participants={many}
+							participants={crowd(14)}
 							size={48}
 							overlap={24}
 							maxVisible={2}
+							overflowStyle={overflowStyle}
 						/>
 					</div>
 				))}
 			</div>
 		);
+	}
+};
+
+/** Every count the chip can show: 1, 2, 12, 99 and 100+ ("99+"). */
+export const OverflowCounts: Story = {
+	name: '"+N" badge — counts from +1 to 99+',
+	render: () => (
+		<div style={{ display: 'flex', gap: 48, padding: 16 }}>
+			{[3, 4, 14, 101, 150].map((total) => (
+				<div key={total}>
+					<ParticipantAvatarStack
+						participants={crowd(total)}
+						size={48}
+						overlap={24}
+						maxVisible={2}
+						overflowStyle="badge"
+					/>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const chips = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="participant-overflow"]'
+			)
+		].map((chip) => chip.textContent);
+		await expect(chips).toEqual(['+1', '+2', '+12', '99+', '99+']);
+	}
+};
+
+/** Click the badge: the folded people open as a list, Escape closes it. */
+export const OverflowBadgeOpensList: Story = {
+	name: '"+N" badge — click opens the list of people',
+	render: () => (
+		<div
+			role="tab"
+			tabIndex={0}
+			aria-selected="false"
+			style={{ padding: 24, width: 260 }}
+			onClick={() => ((window as any).__cardClicked = true)}
+		>
+			<ParticipantAvatarStack
+				participants={crowd(6)}
+				size={48}
+				overlap={24}
+				maxVisible={2}
+				overflowStyle="badge"
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		(window as any).__cardClicked = false;
+		const chip = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="participant-overflow"]'
+		)!;
+		await expect(chip.getAttribute('aria-expanded')).toBe('false');
+		await userEvent.click(chip);
+
+		const list = await waitFor(() => {
+			const el = document.querySelector<HTMLElement>(
+				'[data-cy="participant-overflow-list"]'
+			);
+			if (!el) throw new Error('list not open');
+			return el;
+		});
+		await expect(chip.getAttribute('aria-expanded')).toBe('true');
+		// The four folded people, in stack order, named.
+		await expect(
+			[...list.querySelectorAll('li')].map((li) => li.textContent)
+		).toEqual(['Bettina B.', 'Gast 1', 'Gast 2', 'Gast 3']);
+		// Opening it must not click through to the card around it.
+		await expect((window as any).__cardClicked).toBe(false);
+
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="participant-overflow-list"]')
+			).toBeNull()
+		);
+		await expect(document.activeElement).toBe(chip);
 	}
 };
 
