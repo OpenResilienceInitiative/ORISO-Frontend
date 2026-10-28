@@ -193,7 +193,7 @@ export const RuntimeConsultantRail: Story = {
 			expect(badge).not.toHaveAttribute('aria-label');
 			const owner = badge?.closest('a');
 			expect(owner).toHaveAttribute('href', '/profile');
-			expect(owner).toHaveAttribute('role', 'tab');
+			expect(owner).not.toHaveAttribute('role');
 			expect(owner).toHaveAccessibleName(
 				`${i18n.t('navigation.myProfile')}, ${i18n.t('sessionList.rail.unreadCount', { count: 1 })}`
 			);
