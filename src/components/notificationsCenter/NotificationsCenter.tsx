@@ -63,25 +63,17 @@ import {
 	AUTHORITIES,
 	hasUserAuthority
 } from '../../globalState';
-import { getExtendedSession } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { ListSearchField } from '../listSearchField/ListSearchField';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
-import {
-	requiresCaseHandoverCheck,
-	useCaseHandoverPreviewGate
-} from './caseHandoverPreviewGate';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
 import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
 import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
-import type {
-	MatrixActivityPreviewKind,
-	MatrixActivityPreviewLabels
-} from '../../utils/matrixActivityPreview';
+import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
 import {
 	activityEventCaseHandoverRequestId,
@@ -93,9 +85,9 @@ import {
 import { selectActivityEventsReadWithConversation } from './seenWhileReading';
 import { useConversationPreview } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
-import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { useActivityTimeline } from './useActivityTimeline';
+import { useActivityPreviewHydration } from './useActivityPreviewHydration';
 import {
 	isTimelineDraftId,
 	mergeDraftsIntoFeed,
@@ -266,9 +258,12 @@ export const NotificationsCenter = () => {
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
-	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
-		Record<string, { text: string; kind: MatrixActivityPreviewKind }>
-	>({});
+	// #924: decrypted card previews, behind the case-handover gate.
+	const {
+		sources: messagePreviewSources,
+		onPreviewChange: handlePreviewChange,
+		visiblePreview
+	} = useActivityPreviewHydration(notificationFeed);
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
@@ -327,7 +322,7 @@ export const NotificationsCenter = () => {
 	// Preserve the first visible card when a live refresh prepends new events.
 	// Appending an older page naturally keeps the same anchor position.
 	//
-	// `hydratedMessagePreviews` belongs in the dependencies as much as the feed
+	// `visiblePreview` belongs in the dependencies as much as the feed
 	// does: a card above the viewport growing from one line to two on
 	// decryption shifts the list by exactly as much as a prepended event would.
 	useLayoutEffect(() => {
@@ -349,7 +344,7 @@ export const NotificationsCenter = () => {
 		}
 
 		captureListAnchor();
-	}, [captureListAnchor, notificationFeed, hydratedMessagePreviews]);
+	}, [captureListAnchor, notificationFeed, visiblePreview]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -451,199 +446,6 @@ export const NotificationsCenter = () => {
 				: current
 		);
 	}, [timelineFilter]);
-	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
-		() => ({
-			image: translate('notifications.center.preview.image'),
-			file: translate('notifications.center.preview.file'),
-			audio: translate('notifications.center.preview.audio'),
-			video: translate('notifications.center.preview.video'),
-			notice: translate('notifications.center.preview.notice'),
-			// System notices read as the chat words them (MessageItemComponent).
-			userLeftChat: hasUserAuthority(
-				AUTHORITIES.CONSULTANT_DEFAULT,
-				userData
-			)
-				? translate('message.userLeftChat')
-				: translate('message.consultantLeftChat'),
-			chatEndedText: (endedBy) =>
-				translate(
-					chatEndedTextKey(
-						endedBy,
-						hasUserAuthority(
-							AUTHORITIES.CONSULTANT_DEFAULT,
-							userData
-						)
-					)
-				),
-			inquiryAccepted: translate(
-				'notifications.events.inquiryAccepted.text'
-			),
-			caseHandoverTakenOver: translate(
-				'caseHandover.systemMessage.tookOverTitle'
-			),
-			systemNotification: translate('message.systemNotificationTitle'),
-			unsupported: translate('notifications.center.preview.unsupported'),
-			// The chat's own wording for a message this device cannot decrypt.
-			undecryptable: translate('e2ee.message.encryption.text'),
-			pending: translate('notifications.center.preview.pending'),
-			roomUnavailable: translate(
-				'notifications.center.preview.roomUnavailable'
-			),
-			eventUnavailable: translate(
-				'notifications.center.preview.eventUnavailable'
-			)
-		}),
-		[translate, userData]
-	);
-	const candidatePreviewSources = useMemo(
-		() =>
-			notificationFeed.flatMap((item) => {
-				if (
-					item.eventType !== 'message.new' &&
-					item.eventType !== 'thread.reply.new'
-				) {
-					return [];
-				}
-				const matrixEventId = item.params?.matrixEventId;
-				const numericSessionId = activityEventSessionId(item);
-				const sessionId =
-					numericSessionId === null ? null : String(numericSessionId);
-				const session = getExtendedSession(
-					sessionId || undefined,
-					sessions || []
-				);
-				const roomRef = item.params?.roomRef || session?.rid;
-				if (!matrixEventId || !roomRef) {
-					return [];
-				}
-				return [
-					{
-						activityEventId: item.id,
-						roomRef,
-						matrixEventId,
-						senderName: item.params?.senderName,
-						fallbackText: describeActivityEvent(
-							item,
-							translate,
-							i18n.language
-						).text,
-						labels: previewLabels,
-						sessionId,
-						needsCaseHandoverCheck: requiresCaseHandoverCheck(
-							session,
-							userData?.userId
-						)
-					}
-				];
-			}),
-		[
-			notificationFeed,
-			previewLabels,
-			sessions,
-			translate,
-			i18n.language,
-			userData?.userId
-		]
-	);
-	// Only sessions that could be curtained cost a status request; a group
-	// chat, an enquiry or one's own case previews without one.
-	const checkedSessionIds = useMemo(
-		() =>
-			Array.from(
-				new Set(
-					candidatePreviewSources
-						.filter(
-							(source) =>
-								source.needsCaseHandoverCheck &&
-								source.sessionId
-						)
-						.map((source) => source.sessionId as string)
-				)
-			).sort(),
-		[candidatePreviewSources]
-	);
-	const isCaseHandoverPreviewAllowed =
-		useCaseHandoverPreviewGate(checkedSessionIds);
-	const messagePreviewSources = useMemo(
-		() =>
-			candidatePreviewSources
-				.filter((source) => {
-					if (!source.needsCaseHandoverCheck) {
-						return true;
-					}
-					// A card whose session cannot even be named is one we have
-					// no way to clear, so it never hydrates.
-					return (
-						Boolean(source.sessionId) &&
-						isCaseHandoverPreviewAllowed(source.sessionId)
-					);
-				})
-				.map(
-					({
-						needsCaseHandoverCheck: _needsCheck,
-						sessionId: _sessionId,
-						...source
-					}) => source
-				),
-		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
-	);
-	// Previews are dropped again the moment their card stops being allowed —
-	// a session arriving late in SessionsDataContext can turn a hydrated card
-	// into a curtained one, and the decrypted text would otherwise survive in
-	// this map, still feeding the card body and the search index.
-	const allowedPreviewIds = useMemo(
-		() =>
-			new Set(
-				messagePreviewSources.map((source) => source.activityEventId)
-			),
-		[messagePreviewSources]
-	);
-	useEffect(() => {
-		setHydratedMessagePreviews((current) => {
-			const staleIds = Object.keys(current).filter(
-				(activityEventId) => !allowedPreviewIds.has(activityEventId)
-			);
-			if (staleIds.length === 0) {
-				return current;
-			}
-			const next = { ...current };
-			staleIds.forEach((activityEventId) => delete next[activityEventId]);
-			return next;
-		});
-	}, [allowedPreviewIds]);
-	/**
-	 * The only way a hydrated preview should ever be read.
-	 *
-	 * The purge above is state cleanup and lands one render late; in the render
-	 * where a card loses its allowance the decrypted text is still in the map.
-	 * Reading through this guard means a curtained card never shows it, not
-	 * even for a single paint.
-	 */
-	const visiblePreview = useCallback(
-		(activityEventId: string) =>
-			allowedPreviewIds.has(activityEventId)
-				? hydratedMessagePreviews[activityEventId]
-				: undefined,
-		[allowedPreviewIds, hydratedMessagePreviews]
-	);
-	const handlePreviewChange = useCallback(
-		(
-			activityEventId: string,
-			preview: string,
-			kind: MatrixActivityPreviewKind
-		) => {
-			setHydratedMessagePreviews((current) =>
-				current[activityEventId]?.text === preview &&
-				current[activityEventId]?.kind === kind
-					? current
-					: {
-							...current,
-							[activityEventId]: { text: preview, kind }
-						}
-			);
-		},
-		[]
-	);
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
