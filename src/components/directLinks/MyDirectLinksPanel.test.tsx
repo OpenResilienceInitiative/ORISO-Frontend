@@ -30,7 +30,8 @@ import { CREATE_CHAT_PATH, MyDirectLinksPage } from './MyDirectLinksPanel';
 const navigate = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => ({
 	...(await importOriginal<typeof import('react-router-dom')>()),
-	useNavigate: () => navigate
+	useNavigate: () => navigate,
+	useLocation: () => ({ pathname: '/direct-links' })
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -251,5 +252,47 @@ describe('My direct links (#1894)', () => {
 		);
 
 		expect(await screen.findByText('Flyer Schule')).toBeTruthy();
+	});
+});
+
+describe('My direct links when direct invitation is off (#1894)', () => {
+	it('leaves /direct-links for the counsellor start page', async () => {
+		const { TenantContext } = await import('../../globalState');
+		render(
+			<TenantContext.Provider
+				value={
+					{
+						tenant: {
+							id: 1,
+							settings: {
+								featureDirectInviteChatEnabled: false,
+								featureDirectInviteAudioEnabled: false,
+								featureDirectInviteVideoEnabled: false
+							}
+						},
+						setTenant: vi.fn(),
+						updateTenantSettings: vi.fn()
+					} as any
+				}
+			>
+				<UserDataContext.Provider
+					value={
+						{
+							userData: { agencies: [] },
+							setUserData: vi.fn()
+						} as any
+					}
+				>
+					<MyDirectLinksPage />
+				</UserDataContext.Provider>
+			</TenantContext.Provider>
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionPreview',
+				{ replace: true }
+			)
+		);
+		expect(screen.queryByTestId('my-direct-links-page')).toBeNull();
 	});
 });

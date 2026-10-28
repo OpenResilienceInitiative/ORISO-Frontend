@@ -1,4 +1,9 @@
-import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
+import {
+	MY_LINKS_SETTINGS_PATH,
+	SETTINGS_OVERVIEW_PATH,
+	useDirectLinksAllowed,
+	useDirectLinksRedirect
+} from '../directLinks/useDirectLinksAllowed';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
@@ -71,8 +76,16 @@ export const Profile = () => {
 	const ownAvatarUserId = useOwnAvatarUserId();
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	// #1894: Settings → "Meine Links" only while a medium is allowed.
-	const directLinksAllowed = useDirectLinksAllowed(
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	const isCounsellor = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
+	const directLinksAllowed = useDirectLinksAllowed(isCounsellor);
+	// A bookmarked "Meine Links" goes to the Settings overview instead.
+	useDirectLinksRedirect(
+		isCounsellor,
+		(pathname) => pathname.startsWith(MY_LINKS_SETTINGS_PATH),
+		SETTINGS_OVERVIEW_PATH
 	);
 
 	const visibleElements = (

@@ -2,6 +2,9 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, within } from 'storybook/test';
+import { Route, Routes } from 'react-router-dom';
+import { TenantContext, UserDataContext } from '../../globalState';
+import { MyDirectLinksPage } from './MyDirectLinksPanel';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
 import { DirectLinkEditDialog } from './DirectLinkEditDialog';
@@ -201,4 +204,58 @@ export const Phone: Story = {
 			</div>
 		)
 	]
+};
+
+const directInviteOff = {
+	featureDirectInviteChatEnabled: false,
+	featureDirectInviteAudioEnabled: false,
+	featureDirectInviteVideoEnabled: false
+};
+
+/**
+ * #1894 (Frank, 28 Oct): with chat, audio and video all off, a bookmarked
+ * /direct-links leaves for the counsellor start page. No list is loaded.
+ */
+export const DirectInvitationOff: Story = {
+	name: 'Direct invitation off: /direct-links goes to the start page',
+	parameters: { router: { initialPath: '/direct-links' } },
+	render: () => (
+		<TenantContext.Provider
+			value={
+				{
+					tenant: { id: 1, settings: directInviteOff },
+					setTenant: () => undefined,
+					updateTenantSettings: () => undefined
+				} as any
+			}
+		>
+			<UserDataContext.Provider
+				value={
+					{
+						userData: { agencies: [] },
+						setUserData: () => undefined,
+						reloadUserData: async () => ({ agencies: [] })
+					} as any
+				}
+			>
+				<Routes>
+					<Route
+						path="/direct-links"
+						element={<MyDirectLinksPage />}
+					/>
+					<Route
+						path="/sessions/consultant/sessionPreview"
+						element={<p>Startseite: Erstanfragen</p>}
+					/>
+				</Routes>
+			</UserDataContext.Provider>
+		</TenantContext.Provider>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText('Startseite: Erstanfragen')
+		).toBeTruthy();
+		await expect(canvas.queryByTestId('my-direct-links-page')).toBeNull();
+	}
 };

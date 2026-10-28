@@ -1,3 +1,7 @@
+import {
+	COUNSELLOR_START_PATH,
+	useDirectLinksRedirect
+} from './useDirectLinksAllowed';
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -105,12 +109,23 @@ export const MyDirectLinksPanel = () => {
 	);
 };
 
-/** Clock navigation entry (route /direct-links). */
-export const MyDirectLinksPage = () => (
-	<div className="myDirectLinksPage" data-testid="my-direct-links-page">
-		<MyDirectLinksPanel />
-	</div>
-);
+/**
+ * Clock navigation entry (route /direct-links). Opened by URL while no medium
+ * is allowed, it leaves for the counsellor start page once that is known.
+ */
+export const MyDirectLinksPage = () => {
+	const leaving = useDirectLinksRedirect(
+		true,
+		(pathname) => pathname.startsWith('/direct-links'),
+		COUNSELLOR_START_PATH
+	);
+	if (leaving) return null;
+	return (
+		<div className="myDirectLinksPage" data-testid="my-direct-links-page">
+			<MyDirectLinksPanel />
+		</div>
+	);
+};
 
 /** Settings → "Meine Links": the same list. */
 export const MyLinksSettings = () => (
