@@ -24,7 +24,7 @@ export const apiGetAgencyAdminContacts = async (
 	const contacts = await fetchData({
 		url: endpoints.agencyAdminContacts(agencyId),
 		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
 	});
 	return Array.isArray(contacts) ? contacts.filter(isContact) : [];
 };

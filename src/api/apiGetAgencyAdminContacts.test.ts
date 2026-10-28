@@ -11,7 +11,10 @@ const fetchDataMock = vi.fn();
 vi.mock('./fetchData', () => ({
 	fetchData: (...args: unknown[]) => fetchDataMock(...args),
 	FETCH_METHODS: { GET: 'GET' },
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' }
+	FETCH_ERRORS: {
+		CATCH_ALL: 'CATCH_ALL',
+		CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED'
+	}
 }));
 
 const importModule = async () => await import('./apiGetAgencyAdminContacts');
@@ -32,6 +35,18 @@ describe('apiGetAgencyAdminContacts', () => {
 			expect.objectContaining({
 				url: '/service/users/agencies/7/admin-contacts',
 				method: 'GET'
+			})
+		);
+	});
+
+	it('keeps the logout on 401 (does not swallow a revoked session)', async () => {
+		fetchDataMock.mockResolvedValue([]);
+		const { apiGetAgencyAdminContacts } = await importModule();
+
+		await apiGetAgencyAdminContacts(7);
+		expect(fetchDataMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				responseHandling: ['CATCH_ALL_EXCEPT_UNAUTHORIZED']
 			})
 		);
 	});
