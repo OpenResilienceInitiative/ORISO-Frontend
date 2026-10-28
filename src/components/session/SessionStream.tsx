@@ -40,6 +40,7 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { takeSelfLeave } from '../groupChat/selfLeaveGuard';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -1028,7 +1029,9 @@ export const SessionStream = ({
 			detachLifecycleListener =
 				chatTransportService.onMatrixRoomLifecycle(
 					matrixRoomId,
-					(change) => handleMatrixRoomLifecycle.current(change)
+					(change) =>
+						takeSelfLeave(matrixRoomId) ||
+						handleMatrixRoomLifecycle.current(change)
 				);
 			return Boolean(detachLifecycleListener);
 		};

@@ -252,6 +252,50 @@ describe('SessionListItemMenu', () => {
 			expect(onLeaveGroup).toHaveBeenCalledTimes(1);
 		});
 
+		it('does not let the leave click reach the card, which would open the group', () => {
+			const onCardClick = vi.fn();
+			render(
+				<div onClick={onCardClick}>
+					<MemoryRouter>
+						<SessionListItemMenu
+							flyoutOpen
+							onClose={noop}
+							menuIconRef={menuIconRef}
+							dropdownRef={dropdownRef}
+							dropdownId="test-menu"
+							dropdownLabel="Chat options"
+							translate={((key: string) => key) as never}
+							onMenuClick={noop}
+							onMenuKeyDown={noop}
+							onDropdownKeyDown={noop}
+							isAsker
+							visibility={{
+								...VISIBILITY_ALL_HIDDEN,
+								showLeaveGroup: true
+							}}
+							onChatSettings={noop}
+							onArchive={noop}
+							onDearchive={noop}
+							onDelete={noop}
+							onRequestHelp={noop}
+							onLeaveGroup={noop}
+							legalLinks={[]}
+							agencyId={undefined}
+							onLegalLinkClick={noop}
+						/>
+					</MemoryRouter>
+				</div>
+			);
+
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="session-list-menu-leave-group"]'
+				) as HTMLElement
+			);
+
+			expect(onCardClick).not.toHaveBeenCalled();
+		});
+
 		it('hides leave when showLeaveGroup is false', () => {
 			renderMenu({ flyoutOpen: true, isAsker: true });
 

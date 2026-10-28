@@ -102,6 +102,7 @@ import {
 	leaveGroupChatSuccessOverlayItem
 } from '../sessionMenu/sessionMenuHelpers';
 import { logout } from '../logout/logout';
+import { clearSelfLeave, markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
@@ -894,9 +895,14 @@ export const SessionListItemComponent = ({
 			setOverlayItem(null);
 			setIsRequestInProgress(false);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LEAVE_GROUP_CHAT) {
+			const roomId = activeSession.item.matrixRoomId;
+			if (roomId) markSelfLeave(roomId);
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.LEAVE)
 				.then(() => setOverlayItem(leaveGroupChatSuccessOverlayItem))
-				.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+				.catch(() => {
+					if (roomId) clearSelfLeave(roomId);
+					setOverlayItem(groupChatErrorOverlayItem);
+				})
 				.finally(() => setIsRequestInProgress(false));
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			// Removing the card unmounts this overlay, so it is the last step.

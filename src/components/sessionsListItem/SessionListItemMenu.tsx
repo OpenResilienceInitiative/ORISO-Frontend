@@ -136,7 +136,11 @@ export const SessionListItemMenu = ({
 									{visibility.showLeaveGroup &&
 										onLeaveGroup && (
 											<button
-												onClick={onLeaveGroup}
+												onClick={(event) => {
+													// The menu is portalled, but React still bubbles to the card.
+													event.stopPropagation();
+													onLeaveGroup();
+												}}
 												className="sessionsListItem__dropdownOption"
 												type="button"
 												data-cy="session-list-menu-leave-group"
