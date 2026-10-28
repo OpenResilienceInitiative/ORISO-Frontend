@@ -183,6 +183,7 @@ const OVERFLOW_VARIANT_CSS = `
 
 export const OverflowChipVariants: Story = {
 	name: '"+N" chip — design options for the card',
+	args: { participants: crowd(3) },
 	render: () => {
 		const rows: [string, string, string, 'pill' | 'badge' | 'bubble'][] = [
 			['ovf--now', 'A · Aktuell', 'rosa Pille, Text off-center', 'pill'],
@@ -245,6 +246,7 @@ export const OverflowChipVariants: Story = {
 /** Every count the chip can show: 1, 2, 12, 99 and 100+ ("99+"). */
 export const OverflowCounts: Story = {
 	name: '"+N" badge — counts from +1 to 99+',
+	args: { participants: crowd(3) },
 	render: () => (
 		<div style={{ display: 'flex', gap: 48, padding: 16 }}>
 			{[3, 4, 14, 101, 150].map((total) => (
@@ -273,6 +275,7 @@ export const OverflowCounts: Story = {
 /** Click the badge: the folded people open as a list, Escape closes it. */
 export const OverflowBadgeOpensList: Story = {
 	name: '"+N" badge — click opens the list of people',
+	args: { participants: crowd(3) },
 	render: () => (
 		<div
 			role="tab"
