@@ -1,0 +1,266 @@
+// Chat-history timeline prototype (ADR-021, PR 2). Storybook only.
+
+.tlp {
+	position: relative;
+	width: 424px;
+	padding: 12px;
+	border-radius: 24px;
+	background: var(--m3-surface-container, #f4eeee);
+	font-family: Inter, system-ui, sans-serif;
+
+	&__chips {
+		display: flex;
+		gap: 8px;
+		padding-bottom: 12px;
+	}
+
+	&__chip {
+		height: 32px;
+		padding: 0 14px;
+		border: 1px solid var(--m3-outline-variant, #d9c1be);
+		border-radius: 8px;
+		background: transparent;
+		color: var(--m3-on-surface, #1e1e1e);
+		font: inherit;
+		font-size: 14px;
+		cursor: pointer;
+
+		&--on {
+			border-color: transparent;
+			background: #ffdad5;
+		}
+	}
+
+	// The future opens upwards of "Jetzt"; the handle sits on its bottom edge.
+	&__boundary {
+		position: relative;
+	}
+
+	&__future {
+		overflow: hidden;
+		transition: height 220ms cubic-bezier(0.2, 0, 0, 1);
+
+		&[data-dragging='true'] {
+			transition: none;
+		}
+	}
+
+	// Newest entry at the bottom: the next appointment sits right above "Jetzt".
+	&__futureInner {
+		display: flex;
+		flex-direction: column-reverse;
+		gap: 8px;
+		height: 100%;
+		overflow-y: auto;
+		padding-bottom: 12px;
+	}
+
+	&__handleHost {
+		position: relative;
+		height: 0;
+	}
+
+	&__empty {
+		margin: auto;
+		color: var(--m3-on-surface-variant, #534341);
+		font-size: 14px;
+	}
+
+	&__scroll {
+		overflow-y: auto;
+
+		&--single {
+			overscroll-behavior: contain;
+		}
+	}
+
+	// --- cards ---
+
+	&__tag {
+		display: inline-flex;
+		align-self: flex-start;
+		padding: 2px 10px;
+		border-radius: 12px;
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--oriso-primary-text-on-fixed, #a5000a);
+		font-size: 12px;
+		font-weight: 600;
+	}
+
+	&__card {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		min-height: 104px;
+		box-sizing: border-box;
+		padding: 14px 16px;
+		border-bottom: 1px solid #fff;
+		background: #eae7e8;
+		cursor: pointer;
+
+		&--first {
+			border-top-left-radius: 24px;
+			border-top-right-radius: 24px;
+		}
+
+		&--last {
+			border-bottom: 0;
+			border-bottom-left-radius: 24px;
+			border-bottom-right-radius: 24px;
+		}
+
+		&--calm {
+			box-shadow: inset 0 0 0 1px var(--m3-primary-fixed-dim, #ffb4aa);
+		}
+
+		&--full {
+			background: #f6f3f3;
+			box-shadow: inset 0 0 0 2px var(--m3-primary-container, #cc1e1c);
+		}
+	}
+
+	&__cardTitle {
+		color: #4a4f5a;
+		font-size: 18px;
+	}
+
+	&__cardPreview {
+		overflow: hidden;
+		color: #1e1e1e;
+		font-size: 13px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	// The twin: the dev card look with a thin black outline, no message preview.
+	&__entry {
+		display: flex;
+		flex: 0 0 auto;
+		flex-direction: column;
+		justify-content: space-between;
+		gap: 8px;
+		height: 116px;
+		box-sizing: border-box;
+		padding: 14px 16px;
+		border: 1px solid #000;
+		border-radius: 24px;
+		background: #eae7e8;
+		cursor: pointer;
+
+		&--calm {
+			border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		}
+
+		&--full {
+			border: 2px solid var(--m3-primary-container, #cc1e1c);
+			background: #f6f3f3;
+		}
+	}
+
+	&__entryHead {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 6px;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	&__entryTitle {
+		color: #4a4f5a;
+		font-size: 18px;
+	}
+
+	&__entryAction {
+		display: flex;
+	}
+
+	// --- "Jetzt" ---
+
+	&__now {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 24px;
+		margin: 6px 0;
+		pointer-events: none;
+
+		&--line {
+			background: linear-gradient(
+					var(--m3-outline, #857370),
+					var(--m3-outline, #857370)
+				)
+				center / 100% 1px no-repeat;
+
+			.tlp__nowLabel {
+				position: relative;
+				padding: 2px 12px;
+				border-radius: 12px;
+				background: var(--m3-primary-container, #cc1e1c);
+				color: #fff;
+			}
+		}
+
+		&--handle {
+			margin-top: -18px;
+
+			.tlp__nowLabel {
+				padding: 2px 12px;
+				border-radius: 12px;
+				background: var(--m3-secondary-container, #646d78);
+				color: #fff;
+			}
+		}
+
+		&--band {
+			padding: 4px 12px;
+			border-radius: 12px;
+			background: var(--m3-primary-fixed, #ffdad5);
+			color: var(--oriso-primary-text-on-fixed, #a5000a);
+		}
+	}
+
+	&__nowLabel {
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+
+	&__pill {
+		position: absolute;
+		left: 50%;
+		z-index: 5;
+		height: 36px;
+		padding: 0 16px;
+		border: 0;
+		border-radius: 18px;
+		background: var(--m3-primary-container, #cc1e1c);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+		color: #fff;
+		font: inherit;
+		font-size: 13px;
+		font-weight: 600;
+		cursor: pointer;
+		transform: translateX(-50%);
+
+		&--above {
+			top: 56px;
+		}
+
+		&--below {
+			bottom: 20px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__future {
+			transition: none;
+		}
+	}
+}
