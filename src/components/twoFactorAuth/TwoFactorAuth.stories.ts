@@ -1,11 +1,17 @@
+import { createElement } from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import { TwoFactorAuth } from './TwoFactorAuth';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 
 const meta = {
 	title: 'Organisms/TwoFactorAuth',
 	component: TwoFactorAuth,
-	tags: ['autodocs', 'needs-data'],
+	tags: ['autodocs'],
+	// The setup dialog it holds registers with the modal stack, as in the app (#1338).
+	decorators: [
+		(Story) => createElement(ModalProvider, null, createElement(Story))
+	],
 	parameters: {
 		design: {
 			type: 'figma',

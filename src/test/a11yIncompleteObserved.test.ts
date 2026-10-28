@@ -48,9 +48,11 @@ const violationReport = () => {
 	return raw;
 };
 
-describe('observed incomplete accessibility audits fail closed', () => {
+// #1338: axe's `incomplete` (could not measure) is recorded, not failed;
+// violations still fail.
+describe('observed incomplete accessibility audits are recorded, not failed', () => {
 	it.each(['full', 'aria-allowed-attr', 'color-contrast'])(
-		'rejects actual zero-violation SidePanel evidence (%s), retaining data and restoring isolation',
+		'accepts actual zero-violation SidePanel evidence (%s), retaining data and restoring isolation',
 		(rule) => {
 			const raw = incompleteReport();
 			if (rule !== 'full')
@@ -66,12 +68,7 @@ describe('observed incomplete accessibility audits fail closed', () => {
 			const evidence: unknown[] = [];
 			bridge.begin(ctx);
 			ctx.reporting.reports.push(raw);
-			const summary = raw.result.incomplete
-				.map((item) => `${item.id} (${item.nodes.length} nodes)`)
-				.join(', ');
-			expect(() => bridge.finish(record(evidence))).toThrow(
-				`Accessibility audit incomplete in ${ctx.id}: ${summary}`
-			);
+			expect(() => bridge.finish(record(evidence))).not.toThrow();
 			expect(evidence).toHaveLength(1);
 			expect(evidence[0]).toMatchObject({
 				storyId: ctx.id,
@@ -103,7 +100,7 @@ describe('observed incomplete accessibility audits fail closed', () => {
 		}
 	);
 
-	it('does not let an exact unit-only violation approval authorize incomplete checks', () => {
+	it('lets an exact unit-only violation approval pass while incomplete checks ride along', () => {
 		const raw = incompleteReport();
 		raw.result.violations = structuredClone(
 			observed.cases.violation.report.result.violations
@@ -132,9 +129,7 @@ describe('observed incomplete accessibility audits fail closed', () => {
 		expect(ctx.parameters.a11y.test).toBe('todo');
 		ctx.reporting.reports.push(raw);
 		const evidence: unknown[] = [];
-		expect(() => bridge.finish(record(evidence))).toThrow(
-			'Accessibility audit incomplete'
-		);
+		expect(() => bridge.finish(record(evidence))).not.toThrow();
 		expect(evidence[0]).toMatchObject({
 			auditCount: 1,
 			reports: [
@@ -149,14 +144,16 @@ describe('observed incomplete accessibility audits fail closed', () => {
 		expect(ctx.parameters).toBe(original);
 	});
 
-	it('rejects genuine shaped incomplete evidence before status acceptance', () => {
+	it('still rejects a report status that does not match, incomplete checks or not', () => {
 		const ctx = context();
 		const bridge = gate();
 		const raw = incompleteReport();
 		raw.status = 'warning';
 		bridge.begin(ctx);
 		ctx.reporting.reports.push(raw);
-		expect(() => bridge.finish()).toThrow('Accessibility audit incomplete');
+		expect(() => bridge.finish()).toThrow(
+			'Accessibility audit mode/report status does not match'
+		);
 	});
 
 	it('accepts the genuinely completed clean Desktop audit', () => {
@@ -190,7 +187,7 @@ describe('observed incomplete accessibility audits fail closed', () => {
 		);
 	});
 
-	it('retains one genuine audit plus its native strict companion when incomplete also fails', () => {
+	it('retains one genuine audit plus its native strict companion and fails on its violations', () => {
 		const native = observed.cases.violation;
 		// Failed-native retention compacted only passes/inapplicable; restore
 		// those summary arrays to [] for this explicitly unit-only shape replay.
@@ -228,7 +225,7 @@ describe('observed incomplete accessibility audits fail closed', () => {
 		});
 		const evidence: unknown[] = [];
 		expect(() => bridge.finish(record(evidence))).toThrow(
-			'Accessibility audit incomplete'
+			'Unapproved accessibility violation'
 		);
 		expect(evidence[0]).toMatchObject({
 			auditCount: 1,
