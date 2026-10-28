@@ -42,6 +42,32 @@ export interface ElementCallWidgetOptions {
 	onClose?: () => void;
 	/** Keeps the floating host surface visible when Element Call requests it. */
 	onAlwaysOnScreenChange?: (alwaysOnScreen: boolean) => void;
+	/**
+	 * Who knocks on this call and its "Anklopfen" setting
+	 * (ORISO-ElementCall#109). Sent once the widget is ready and whenever it
+	 * changes. Leave it out where nobody may see knocks (advice seekers).
+	 */
+	knockState?: OrisoKnockState | null;
+	/**
+	 * The person flipped "Anklopfen" in the call. Resolves with the stored
+	 * setting; a rejection tells the call to flip back.
+	 */
+	onSetKnock?: (knock: boolean) => Promise<boolean>;
+}
+
+/** ORISO's own widget actions, as the fork names them (ORISO-ElementCall#109, `src/widget.ts`). */
+export const ORISO_WIDGET_ACTIONS = {
+	/** toWidget `{ waiting, knock }`; `knock: null` = no link, no switch. */
+	knockState: 'org.oriso.call.knock_state',
+	/** fromWidget `{ knock }`; always answered, with `error` when it did not land. */
+	setKnock: 'org.oriso.call.set_knock'
+} as const;
+
+export interface OrisoKnockState {
+	/** People waiting to join this call, >= 0. */
+	waiting: number;
+	/** The call link's "Anklopfen"; `null` when the call has no link to switch. */
+	knock: boolean | null;
 }
 
 export interface ElementCallWidget {
@@ -97,6 +123,17 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.knockState, {
+			waiting: Math.max(0, Math.floor(state.waiting)),
+			knock: state.knock
+		})
+		.catch(() => {
+			/* an older call without the knock switch, or it went away */
+		});
+};
+
 export const useElementCallWidget = (
 	client: MatrixClient | null,
 	{
@@ -104,7 +141,9 @@ export const useElementCallWidget = (
 		isVideo,
 		skipLobby = true,
 		onClose,
-		onAlwaysOnScreenChange
+		onAlwaysOnScreenChange,
+		knockState = null,
+		onSetKnock
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	const [error, setError] = useState<Error | null>(null);
@@ -117,6 +156,11 @@ export const useElementCallWidget = (
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
 	>(null);
+	// Read inside the widget's action handlers, which outlive a render.
+	const knockStateRef = useRef<OrisoKnockState | null>(knockState);
+	knockStateRef.current = knockState;
+	const onSetKnockRef = useRef(onSetKnock);
+	onSetKnockRef.current = onSetKnock;
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -382,9 +426,60 @@ export const useElementCallWidget = (
 			]) {
 				api.on(`action:${action}`, acknowledgeLifecycleAction);
 			}
+
+			// "Anklopfen" belongs to the host's call link (ElementCall#109):
+			// change it there, answer either way, then tell the call the truth.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.setKnock}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const knock = (event.detail.data as { knock?: unknown })
+						?.knock;
+					const handler = onSetKnockRef.current;
+					const fail = (message: string) =>
+						api.transport.reply(event.detail, {
+							error: { message }
+						});
+					if (typeof knock !== 'boolean') {
+						fail('knock must be a boolean');
+						return;
+					}
+					if (!handler || knockStateRef.current?.knock == null) {
+						fail('This call has no link to switch');
+						return;
+					}
+					handler(knock).then(
+						(stored) => {
+							api.transport.reply(event.detail, {});
+							sendKnockState(api, {
+								waiting: knockStateRef.current?.waiting ?? 0,
+								knock: stored
+							});
+						},
+						() => {
+							fail('Anklopfen was not changed');
+							const current = knockStateRef.current;
+							if (current) sendKnockState(api, current);
+						}
+					);
+				}
+			);
 		},
 		[client, onAlwaysOnScreenChange, onClose, roomId, url]
 	);
+
+	// The call keeps the last state it got, so send only on a change — and
+	// again to every newly ready widget.
+	const knockWaiting = knockState?.waiting;
+	const knockSetting = knockState?.knock;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || knockWaiting === undefined) return;
+		sendKnockState(api, {
+			waiting: knockWaiting,
+			knock: knockSetting ?? null
+		});
+	}, [ready, knockWaiting, knockSetting]);
 
 	const hangup = useCallback(async (): Promise<void> => {
 		if (!apiRef.current) return;

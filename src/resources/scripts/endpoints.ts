@@ -121,6 +121,8 @@ export const endpoints = {
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
 	matrixCallState: userServiceOrigin + '/service/matrix/calls/state',
+	matrixCallShareLinks:
+		userServiceOrigin + '/service/matrix/calls/share-links',
 	matrixSyncRegister: (sessionId: number) =>
 		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {

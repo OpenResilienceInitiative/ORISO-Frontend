@@ -11,13 +11,11 @@
  * adc7612f4), same name and fields, because #1910 is not on `dev` yet. When
  * #1910 merges, delete the mirror below and import it from there.
  *
- * TODO(#1892, #1794): there is no API to read or change this yet. In
- * ORISO-UserService#1479 the admission is derived from the medium (audio and
- * video always KNOCK, `InviteLinkChatType.admission()`), `UpdateDirectLinkDTO`
- * has no `admission` field, and the per-call share link is not built. Until
- * it exists the switch runs on the in-memory store below (Storybook only) and
- * is not mounted in the call. Then: an HTTP store, shared by `CallShare` and
- * `CallAdmissionToggle`, and the toggle mounted in `GroupCallWidget`.
+ * In the running call the switch is drawn by the call itself
+ * (ORISO-ElementCall#109): `GroupCallWidget` reads and changes the share
+ * link's `knock` (ORISO-UserService#1488, `useCallShareLinkKnock`) and sends
+ * it to the call as `org.oriso.call.knock_state`. This host toggle stays on
+ * the in-memory store below, for Storybook only, and is not mounted.
  */
 export interface CallShareSettings {
 	/** Guests knock and wait until the counsellor lets them in. */
