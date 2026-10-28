@@ -4,7 +4,10 @@ import {
 	ActiveListSelection,
 	pickActiveItemKey
 } from '../../utils/listItemSelection';
-import { activityEventRouteSessionId } from './activityEvent';
+import {
+	activityEventRouteSessionId,
+	isMessageActivityEvent
+} from './activityEvent';
 import { getNextNotificationId } from './notificationQueue';
 
 export interface UseActivityTimelineInput {
@@ -25,6 +28,9 @@ export interface ActivityTimeline {
 	select: (id: string) => void;
 	/** The next unread card after the shown one, wrapping around (#845). */
 	nextUnreadId: string | null;
+	/** Whether the selected message card shows its conversation. */
+	conversationShown: boolean;
+	toggleConversation: () => void;
 }
 
 /**
@@ -40,6 +46,9 @@ export interface ActivityTimeline {
  *   the unread filter, where reading would drop it from the list and
  *   cascade-read the feed one selection at a time.
  * - Display, Open and Next all anchor on the same card.
+ * - A message card shows its conversation (preview-first, design feedback
+ *   2026-07-12); closing it holds for that card only, and a feed refresh
+ *   does not reopen it.
  */
 export const useActivityTimeline = ({
 	feed,
@@ -93,10 +102,27 @@ export const useActivityTimeline = ({
 
 	const select = useCallback((id: string) => setPickedId(id), []);
 
+	const [conversation, setConversation] = useState({
+		forId: selectedId,
+		open: true
+	});
+	const conversationOpen =
+		conversation.forId === selectedId ? conversation.open : true;
+	const toggleConversation = useCallback(
+		() => setConversation({ forId: selectedId, open: !conversationOpen }),
+		[selectedId, conversationOpen]
+	);
+
 	return {
 		selectedId,
 		selectedEvent,
 		select,
-		nextUnreadId: getNextNotificationId(feed, selectedId, true)
+		nextUnreadId: getNextNotificationId(feed, selectedId, true),
+		conversationShown: Boolean(
+			conversationOpen &&
+				selectedEvent &&
+				isMessageActivityEvent(selectedEvent)
+		),
+		toggleConversation
 	};
 };

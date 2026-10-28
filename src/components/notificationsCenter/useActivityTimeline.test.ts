@@ -115,4 +115,35 @@ describe('useActivityTimeline (#1888: the Timeline’s selection, in one place)'
 			expect(result.current.nextUnreadId).toBeNull();
 		});
 	});
+
+	describe('embedded conversation', () => {
+		it('opens with a message card and stays closed for a system card', () => {
+			const { result, rerender, initialProps } = setup({
+				feed: [
+					card('a'),
+					card('s', { eventType: 'request.new', category: 'system' })
+				]
+			});
+			expect(result.current.conversationShown).toBe(true);
+			act(() => result.current.select('s'));
+			rerender({ ...initialProps });
+			expect(result.current.conversationShown).toBe(false);
+		});
+
+		it('can be closed and reopened, and reopens with the next card', () => {
+			const { result } = setup();
+			act(() => result.current.toggleConversation());
+			expect(result.current.conversationShown).toBe(false);
+			act(() => result.current.toggleConversation());
+			expect(result.current.conversationShown).toBe(true);
+			act(() => result.current.toggleConversation());
+			act(() => result.current.select('b'));
+			expect(result.current.conversationShown).toBe(true);
+		});
+
+		it('is never shown without a selected card', () => {
+			const { result } = setup({ isPhone: true });
+			expect(result.current.conversationShown).toBe(false);
+		});
+	});
 });

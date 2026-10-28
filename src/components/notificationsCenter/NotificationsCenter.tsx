@@ -78,13 +78,10 @@ import { ConversationPreview } from './ConversationPreview';
 import {
 	activityEventCaseHandoverRequestId,
 	activityEventCategory,
-	activityEventRoomId,
 	activityEventSessionId,
 	describeActivityEvent
 } from './activityEvent';
-import { selectActivityEventsReadWithConversation } from './seenWhileReading';
-import { useConversationPreview } from './useConversationPreview';
-import { useSeenWhileReading } from './useSeenWhileReading';
+import { useTimelineConversation } from './useTimelineConversation';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { useActivityTimeline } from './useActivityTimeline';
 import { useActivityPreviewHydration } from './useActivityPreviewHydration';
@@ -268,10 +265,6 @@ export const NotificationsCenter = () => {
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
 		useState('');
-	// Timeline redesign: embedded conversation preview is opt-in through the
-	// expander pill attached to the active card (Figma: Active Chat History
-	// Selection state) instead of always-on.
-	const [embeddedChatOpen, setEmbeddedChatOpen] = useState(false);
 	const [cardMenuAnchor, setCardMenuAnchor] = useState<HTMLElement | null>(
 		null
 	);
@@ -489,7 +482,9 @@ export const NotificationsCenter = () => {
 		selectedId: activeNotificationId,
 		selectedEvent: selectedNotification,
 		select: selectNotification,
-		nextUnreadId
+		nextUnreadId,
+		conversationShown: showEmbeddedChat,
+		toggleConversation
 	} = useActivityTimeline({
 		feed: filteredFeed,
 		routeSelection: activeSelection,
@@ -515,23 +510,11 @@ export const NotificationsCenter = () => {
 		}
 	}, [familiesInFeed, activeFamily]);
 
-	// Preview-first (design feedback 2026-07-12): selecting a chat event shows
-	// the embedded conversation preview right away (Slack-style activity view);
-	// the plain text detail is one toggle away via the card menu. Non-message
-	// events keep the text detail. The preview never outlives its notification.
-	// E2EE note: the preview is the user's own session view rendered in the
-	// same client — decryption stays client-side, nothing extra leaves the
-	// device (same boundary as ADR-AT-01).
-	useEffect(() => {
-		const item =
-			filteredFeed.find(
-				(feedItem) => feedItem.id === activeNotificationId
-			) || null;
-		setEmbeddedChatOpen(
-			Boolean(item && activityEventCategory(item) === 'message')
-		);
-	}, [activeNotificationId, filteredFeed]);
-
+	// Preview-first (design feedback 2026-07-12): a chat event shows its
+	// conversation right away; the text detail is one toggle away via the card
+	// menu (useActivityTimeline). E2EE note: the preview is the user's own
+	// session view rendered in the same client — decryption stays client-side
+	// (same boundary as ADR-AT-01).
 	const selectedNotificationCategory = useMemo(
 		() =>
 			selectedNotification
@@ -614,17 +597,6 @@ export const NotificationsCenter = () => {
 			),
 		[getDefaultSessionsPath, getDefaultRequestsPath]
 	);
-	// #847: the preview renders from the app's own Matrix client — no more
-	// embeddedNotifications iframe (a second SPA whose session view registered
-	// an active view and suppressed the timeline's own message events).
-	const selectedRoomId = useMemo(
-		() =>
-			canShowChatPreview && selectedNotification
-				? activityEventRoomId(selectedNotification)
-				: null,
-		[canShowChatPreview, selectedNotification]
-	);
-
 	const isGroupCallRoom = (roomRef: string) =>
 		Boolean(
 			sessions?.some(
@@ -774,40 +746,16 @@ export const NotificationsCenter = () => {
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
-	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
-	// #1824: the conversation behind the selected event — its room, what the
-	// person may do there (useConversationPreview) — and D1.
-	const preview = useConversationPreview(
-		showEmbeddedChat ? selectedNotification : null,
-		{ visible: showEmbeddedChat }
-	);
-	useSeenWhileReading({
-		roomId: preview?.roomId ?? null,
-		threadRootId: preview?.threadRootId,
-		// Nothing is seen while the preview hides the conversation (#924).
-		enabled: Boolean(preview) && !preview?.capabilities.contentHidden,
+	// #847 / #1824: the conversation behind the selected card, rendered from
+	// the app's own Matrix client (no embeddedNotifications iframe, whose
+	// session view registered an active view and suppressed the Timeline's
+	// own message events), with D1 and D2 (useTimelineConversation).
+	const conversation = useTimelineConversation({
+		event: showEmbeddedChat ? selectedNotification : null,
 		feed: notificationFeed,
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
-	// D2: reading the conversation reads its message events in the Timeline —
-	// by the room the write happened in, so a card switched to while a send
-	// was running stays unread.
-	const handlePreviewConversationRead = useCallback(
-		(roomId: string) =>
-			selectActivityEventsReadWithConversation({
-				feed: notificationFeed,
-				roomId,
-				selectedId: selectedNotification?.id ?? null,
-				unreadOnly
-			}).forEach(markNotificationAsRead),
-		[
-			notificationFeed,
-			markNotificationAsRead,
-			selectedNotification?.id,
-			unreadOnly
-		]
-	);
 
 	if (notificationFeed.length === 0) {
 		return (
@@ -1172,7 +1120,7 @@ export const NotificationsCenter = () => {
 					{canShowChatPreview && (
 						<MenuItem
 							onClick={() => {
-								setEmbeddedChatOpen((value) => !value);
+								toggleConversation();
 								setCardMenuAnchor(null);
 							}}
 						>
@@ -1228,9 +1176,9 @@ export const NotificationsCenter = () => {
 						</div>
 					) : showEmbeddedChat ? (
 						<ConversationPreview
-							roomId={preview?.roomId ?? selectedRoomId}
-							threadRootId={preview?.threadRootId}
-							access={preview ?? undefined}
+							roomId={conversation.roomId}
+							threadRootId={conversation.preview?.threadRootId}
+							access={conversation.preview ?? undefined}
 							conversationPath={
 								selectedNotification
 									? getNotificationActionPath(
@@ -1238,7 +1186,7 @@ export const NotificationsCenter = () => {
 										)
 									: null
 							}
-							onConversationRead={handlePreviewConversationRead}
+							onConversationRead={conversation.onConversationRead}
 							onOpenConversation={handleOpenAction}
 						/>
 					) : (
