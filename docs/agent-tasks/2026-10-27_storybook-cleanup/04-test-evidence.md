@@ -67,3 +67,57 @@ Local browser readback at1440x900,820x1180 and390x844 confirms the new catalogue
 title, three real password fields, disabled empty-form save and stable IDs.
 These are local-only results; deployed Storybook keeps its previous category
 until human merge and deployment. No password-setting behavior is changed.
+
+## Chat-preview correction — 2026-10-28
+
+Frank identified the screenshots already published in PR1867 as the source of
+five defects: avatar size/appearance, timestamps, topic spacing, wrapped header
+name and the old date divider. The navigation-only verification was too narrow;
+it did not establish chat-component parity.
+
+The old desktop capture at base59d524882 already contains a handwritten chat
+header and message renderer. The cleanup made that same stale panel visible on
+phones. Two fresh390x844 probes at6e494b579 measured a56px title with28px line
+height. This is a Storybook composition defect; no deployed-chat regression is
+established by those screenshots.
+
+The correction uses SessionHeaderComponent, MessageTimeline and the real composer,
+inside the production ChatStage card structure. It deletes the duplicated header,
+topic/date/message markup and fallback composer. The curated synthetic session is
+isolated from the existing RuntimeRoutingShell data. No production component or
+stylesheet changed in this follow-up.
+
+Before implementation, both focused stories failed the added canonical-header
+assertion. During integration, a stronger browser assertion caught a wrapper
+class collision: a session-list header class must not wrap the chat header.
+The final composition uses the production wrapper and passes the original
+reproduction twice per viewport390x844,820x1180,1440x900. Assertions cover:
+
+- one-line ellipsis and header containment;
+  -48px header/message avatars;
+- one canonical topic label and date pill;
+  -09:18,09:21,09:24 in message time rails;
+- last timestamp reachable above the composer and retained navigation axes.
+
+Run the independent geometry/capture check from the repository root:
+
+```sh
+node docs/agent-tasks/2026-10-27_storybook-cleanup/verify-chat-surface.mjs
+# Optional: STORYBOOK_URL, CHAT_LOCALE, CHAT_EVIDENCE_DIR.
+```
+
+Local checks on Node24.15.0:14,523 unit tests passed,8skipped;838files passed,
+1skipped. Script lint/TypeScript, style lint, Storybook TypeScript and production
+build passed. The deployment-host guard passed. A separate read-only review
+found no remaining blocking scope/provider/security issues.
+
+The strict focused Storybook gate remains RED:2failed,1skipped. Content/layout
+assertions pass; outstanding audit rules include aria-required-children,
+aria-required-parent,label,color-contrast,nested-interactive and incomplete
+aria-allowed-attr/color-contrast checks. No suppression or audit bypass was added.
+These layout results are not an accessibility acceptance claim. CodeRabbit skips
+this draft; no bot approval is claimed. Verification is local only.
+
+The older published phone screenshot is the BEFORE state for this correction.
+Final candidate captures are published through the gateway and indexed in PR1867;
+raw images and browser state are not committed.

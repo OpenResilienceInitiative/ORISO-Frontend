@@ -48,3 +48,14 @@ Full icon and unused-story inventory is in `icon-and-legacy-audit.md`.
   archaeology. This reclassification does not claim that integration is done.
 - All nine gate stories fail the same accessibility/fixture gates both before
   and after this metadata change. Keep those failures visible.
+
+## 2026-10-28 — correct the misleading chat in our own evidence
+
+- Source resolved to PR1867's screenshots; asking Frank for another URL was unnecessary.
+- Confirmed stale handwritten chat in the old desktop baseline and mobile wrapping
+  introduced into view by the responsive story shell. Navigation-only validation
+  missed the chat fidelity problem.
+- Replaced duplicated renderer/fallback with production header,timeline,composer
+  and ChatStage composition. Added regression assertions and a repeatable capture script.
+- Local unit/lint/build/typecheck and independent review pass; strict Storybook
+  accessibility remains red. Keep the draft review boundary and no deployment claim.
