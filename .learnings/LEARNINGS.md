@@ -46,7 +46,7 @@ Format:
 ## 2026-07-14 — orchestration docs must match git-workflow base
 
 - Context: `docs/cursor-orchestrator/2026-07-14_pr-385-review-cursor-docs/` (PR #385 review)
-- Lesson: Keep `goal-loop`, `pr-prep`, `AGENTS.md`, and `git-workflow.mdc` on the same base (`pre-dev`). If orchestration writes under `docs/cursor-orchestrator/`, add a `.gitignore` negation or the trail cannot be committed.
+- Lesson: Keep `goal-loop`, `pr-prep`, `AGENTS.md`, and `git-workflow.mdc` on the same base (`dev`). (Corrected 2026-10-28: `pre-dev` is the Pre-Dev _server's_ branch, never a PR base; `.github/workflows/pr-base-check.yml` enforces it.) If orchestration writes under `docs/cursor-orchestrator/`, add a `.gitignore` negation or the trail cannot be committed.
 
 ## 2026-07-14 — Storybook Vite + MUI `styled_default`
 
