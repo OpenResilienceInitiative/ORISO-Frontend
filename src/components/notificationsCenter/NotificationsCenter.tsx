@@ -15,16 +15,11 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
-import {
-	getEventDescriptor,
-	getEventIcon,
-	renderEventStrings
-} from './eventDescriptors';
+import { getEventDescriptor, getEventIcon } from './eventDescriptors';
 import {
 	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
-	resolveStatusPageAction,
-	toInterpolationValues
+	resolveStatusPageAction
 } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
@@ -89,7 +84,14 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
-import { activityEventCategory, activityEventRoomId } from './activityEvent';
+import {
+	activityEventCaseHandoverRequestId,
+	activityEventCategory,
+	activityEventRoomId,
+	activityEventRouteSessionId,
+	activityEventSessionId,
+	describeActivityEvent
+} from './activityEvent';
 import { selectActivityEventsReadWithConversation } from './seenWhileReading';
 import { useConversationPreview } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
@@ -144,76 +146,10 @@ const MESSAGE_PREVIEW_ICONS: Partial<
 // hardcoded English strings ('now', 'Xm ago') with locale-aware formatting in
 // `timelineTime.ts`, which is imported above.
 
-// WP-06 / #1824: category, room and conversation of an activity event are
-// derived once, in activityEvent.ts.
-const resolveItemCategory = (item: any) => activityEventCategory(item);
-
-// WP-06: render an item's visible strings from its event descriptor's i18n
-// templates (ADR-AT-01 — the server record is text-free), falling back to the
-// server-provided title/text until the strict text-free migration (Slice 2).
-const describeItem = (
-	item: any,
-	translate: (key: string, options?: Record<string, unknown>) => string,
-	language?: string
-) => {
-	const descriptor = getEventDescriptor(item?.eventType);
-	const { title, text } = renderEventStrings(descriptor, translate, {
-		fallbackTitle: item?.title,
-		fallbackText: item?.text,
-		// #846: params metadata feeds template placeholders such as
-		// {{senderDisplayName}} — previously they rendered unresolved.
-		interpolation: toInterpolationValues(item?.params, language)
-	});
-	return { descriptor, title, text };
-};
-
 // #876: a planned maintenance notice links out to the public status page
 // instead of an in-app origin, so it never falls back to the sessions list.
 const openStatusPage = (url: string) => {
 	window.open(url, '_blank', 'noopener,noreferrer');
-};
-
-const resolveSessionId = (item: any): string | null => {
-	if (item?.sourceSessionId != null) {
-		return String(item.sourceSessionId);
-	}
-	if (item?.params?.sourceSessionId != null) {
-		return String(item.params.sourceSessionId);
-	}
-	if (item?.params?.seriesId != null) {
-		return String(item.params.seriesId);
-	}
-	const path = item?.actionPath;
-	if (!path) {
-		return null;
-	}
-	const match = String(path).match(/\/(\d+)(?:\?|$)/);
-	return match?.[1] || null;
-};
-
-const searchFromPath = (path?: string | null): string => {
-	const query = String(path || '').split('?')[1];
-	return query ? `?${query}` : '';
-};
-
-const resolveRoomId = (item: any) => activityEventRoomId(item);
-
-const resolveCaseHandoverRequestId = (item: any): string | null => {
-	const path = item?.actionPath;
-	const search = searchFromPath(path);
-	if (!search) {
-		return null;
-	}
-	const params = new URLSearchParams(search);
-	return params.get('caseHandoverRequestId');
-};
-
-const parseNumericId = (value?: string | null): number | null => {
-	if (!value || !/^\d+$/.test(value)) {
-		return null;
-	}
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
 type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
@@ -578,7 +514,9 @@ export const NotificationsCenter = () => {
 					return [];
 				}
 				const matrixEventId = item.params?.matrixEventId;
-				const sessionId = resolveSessionId(item);
+				const numericSessionId = activityEventSessionId(item);
+				const sessionId =
+					numericSessionId === null ? null : String(numericSessionId);
 				const session = getExtendedSession(
 					sessionId || undefined,
 					sessions || []
@@ -593,7 +531,7 @@ export const NotificationsCenter = () => {
 						roomRef,
 						matrixEventId,
 						senderName: item.params?.senderName,
-						fallbackText: describeItem(
+						fallbackText: describeActivityEvent(
 							item,
 							translate,
 							i18n.language
@@ -732,7 +670,7 @@ export const NotificationsCenter = () => {
 					)
 				},
 				(item) => {
-					const { title, text } = describeItem(
+					const { title, text } = describeActivityEvent(
 						item,
 						translate,
 						i18n.language
@@ -797,7 +735,7 @@ export const NotificationsCenter = () => {
 			pickActiveItemKey(
 				filteredFeed,
 				activeSelection,
-				(item) => ({ sessionId: resolveSessionId(item) }),
+				(item) => ({ sessionId: activityEventRouteSessionId(item) }),
 				(item) => item.id,
 				effectiveSelectedId
 			),
@@ -817,7 +755,7 @@ export const NotificationsCenter = () => {
 				(feedItem) => feedItem.id === activeNotificationId
 			) || null;
 		setEmbeddedChatOpen(
-			Boolean(item && resolveItemCategory(item) === 'message')
+			Boolean(item && activityEventCategory(item) === 'message')
 		);
 	}, [activeNotificationId, filteredFeed]);
 
@@ -830,7 +768,7 @@ export const NotificationsCenter = () => {
 	const selectedNotificationCategory = useMemo(
 		() =>
 			selectedNotification
-				? resolveItemCategory(selectedNotification)
+				? activityEventCategory(selectedNotification)
 				: 'system',
 		[selectedNotification]
 	);
@@ -852,13 +790,13 @@ export const NotificationsCenter = () => {
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
-				? describeItem(selectedNotification, translate, i18n.language)
+				? describeActivityEvent(
+						selectedNotification,
+						translate,
+						i18n.language
+					)
 				: null,
 		[selectedNotification, translate, i18n.language]
-	);
-	const selectedSessionId = useMemo(
-		() => resolveSessionId(selectedNotification),
-		[selectedNotification]
 	);
 	const {
 		linksToStatusPage: selectedLinksToStatusPage,
@@ -877,17 +815,19 @@ export const NotificationsCenter = () => {
 			);
 	const canOpenSelected =
 		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
-	const selectedCaseHandoverRequestId = useMemo(
-		() => resolveCaseHandoverRequestId(selectedNotification),
+	const selectedSessionNumericId = useMemo(
+		() =>
+			selectedNotification
+				? activityEventSessionId(selectedNotification)
+				: null,
 		[selectedNotification]
 	);
-	const selectedSessionNumericId = useMemo(
-		() => parseNumericId(selectedSessionId),
-		[selectedSessionId]
-	);
 	const selectedCaseHandoverRequestNumericId = useMemo(
-		() => parseNumericId(selectedCaseHandoverRequestId),
-		[selectedCaseHandoverRequestId]
+		() =>
+			selectedNotification
+				? activityEventCaseHandoverRequestId(selectedNotification)
+				: null,
+		[selectedNotification]
 	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
 	const canDecideCaseHandoverConsent =
@@ -927,7 +867,7 @@ export const NotificationsCenter = () => {
 	const selectedRoomId = useMemo(
 		() =>
 			canShowChatPreview && selectedNotification
-				? resolveRoomId(selectedNotification)
+				? activityEventRoomId(selectedNotification)
 				: null,
 		[canShowChatPreview, selectedNotification]
 	);
@@ -1294,11 +1234,12 @@ export const NotificationsCenter = () => {
 								activeIndex !== -1 && index === activeIndex - 1;
 							const isAfterActive =
 								activeIndex !== -1 && index === activeIndex + 1;
-							const { descriptor, title, text } = describeItem(
-								item,
-								translate,
-								i18n.language
-							);
+							const { descriptor, title, text } =
+								describeActivityEvent(
+									item,
+									translate,
+									i18n.language
+								);
 							const hydratedPreview = visiblePreview(item.id);
 							const visibleText = hydratedPreview?.text || text;
 							const Icon = hydratedPreview?.kind

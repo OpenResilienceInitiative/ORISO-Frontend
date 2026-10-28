@@ -505,6 +505,23 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
 	});
 
+	it('shows the consent card for an event that names its request and session in params (#1888)', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
+	});
+
 	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
 		renderSessionStream({
 			isGroup: false,

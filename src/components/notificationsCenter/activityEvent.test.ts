@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+	activityEventCaseHandoverRequestId,
 	activityEventCategory,
 	activityEventConversation,
 	activityEventRoomId,
+	activityEventRouteSessionId,
+	activityEventSessionId,
+	describeActivityEvent,
 	isMessageActivityEvent
 } from './activityEvent';
 
@@ -142,5 +146,134 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 				row({ actionPath: '/sessions/user/view/%21abc%ZZ/13' })
 			)
 		).toBeNull();
+	});
+
+	describe('session (#1888)', () => {
+		it('is the counselling session from the row, then params', () => {
+			expect(activityEventSessionId(row({ sourceSessionId: '7' }))).toBe(
+				7
+			);
+			expect(
+				activityEventSessionId(row({ params: { sourceSessionId: 8 } }))
+			).toBe(8);
+		});
+
+		it('is never a series id or a guess from the path', () => {
+			expect(
+				activityEventSessionId(
+					row({
+						params: { seriesId: 99 },
+						actionPath:
+							'/sessions/consultant/sessionView/session/99'
+					})
+				)
+			).toBeNull();
+		});
+
+		it.each(['', 'abc', '-3', '0', '1.5', '99999999999999999999'])(
+			'is null for the unusable id %j',
+			(sourceSessionId) => {
+				expect(
+					activityEventSessionId(row({ sourceSessionId }))
+				).toBeNull();
+			}
+		);
+	});
+
+	describe('route session (#1888: what the conversation route carries)', () => {
+		it('is the session when there is one', () => {
+			expect(
+				activityEventRouteSessionId(
+					row({ sourceSessionId: 7, params: { seriesId: 99 } })
+				)
+			).toBe('7');
+		});
+
+		it('is the series id a series card navigates to', () => {
+			expect(
+				activityEventRouteSessionId(row({ params: { seriesId: 99 } }))
+			).toBe('99');
+		});
+
+		it('falls back to the trailing id of the stored path', () => {
+			expect(
+				activityEventRouteSessionId(
+					row({
+						actionPath:
+							'/sessions/consultant/sessionView/!r:x/13?channel=team'
+					})
+				)
+			).toBe('13');
+			expect(activityEventRouteSessionId(row())).toBeNull();
+		});
+	});
+
+	describe('case-handover request (#1888)', () => {
+		it('prefers the id the backend sent', () => {
+			expect(
+				activityEventCaseHandoverRequestId(
+					row({
+						params: { caseHandoverRequestId: '5' },
+						actionPath:
+							'/sessions/user/view/!r:x/13?caseHandoverRequestId=6'
+					})
+				)
+			).toBe(5);
+		});
+
+		it('falls back to the query of the stored path', () => {
+			expect(
+				activityEventCaseHandoverRequestId(
+					row({
+						actionPath:
+							'/sessions/user/view/!r:x/13?channel=main&caseHandoverRequestId=6'
+					})
+				)
+			).toBe(6);
+		});
+
+		it.each([
+			[{}],
+			[{ actionPath: '/sessions/user/view/!r:x/13' }],
+			[
+				{
+					actionPath:
+						'/sessions/user/view/!r:x/13?caseHandoverRequestId=x'
+				}
+			],
+			[{ params: { caseHandoverRequestId: '1e3' } }]
+		])('is null without a usable id (%j)', (overrides) => {
+			expect(
+				activityEventCaseHandoverRequestId(row(overrides))
+			).toBeNull();
+		});
+	});
+
+	describe('display (#1888)', () => {
+		// An untranslated key renders its defaultValue, as with i18next.
+		const translate = (key: string, options?: Record<string, unknown>) =>
+			String(
+				options?.defaultValue ||
+					`${key}:${options?.senderDisplayName ?? ''}`
+			);
+
+		it('renders the descriptor templates with the params', () => {
+			const { descriptor, title } = describeActivityEvent(
+				row({ params: { senderDisplayName: 'Lisa' } }),
+				translate,
+				'de'
+			);
+			expect(descriptor.eventType).toBe('message.new');
+			expect(title).toContain('Lisa');
+		});
+
+		it('falls back to the server text while a template is untranslated', () => {
+			expect(
+				describeActivityEvent(
+					row({ eventType: 'legacy.thing', title: 'T', text: 'X' }),
+					translate
+				)
+			).toMatchObject({ title: 'T', text: 'X' });
+		});
 	});
 });
