@@ -13,3 +13,4 @@ export const apiRemoveSessionSupervisor = async (
 		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
 	});
 };
+
