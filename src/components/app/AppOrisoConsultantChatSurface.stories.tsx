@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
@@ -974,6 +974,8 @@ function SessionListPanel({
 							ref={listScrollRef}
 							className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
 							style={styles.listScroll}
+							role="list"
+							aria-label="Conversations"
 						>
 							{consultantChatSessions.map((session, index) => (
 								<RealSessionListItem
@@ -1197,7 +1199,9 @@ function AppOrisoRoutingFetchMockDecorator({
 }: {
 	children: React.ReactNode;
 }) {
-	useEffect(() => installAppOrisoRoutingFetchMocks(), []);
+	// A layout effect, so the mocks are in place before the list's first
+	// passive-effect fetch (drafts) (#1338).
+	useLayoutEffect(() => installAppOrisoRoutingFetchMocks(), []);
 	return <>{children}</>;
 }
 

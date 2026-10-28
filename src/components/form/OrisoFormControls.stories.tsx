@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Box, Stack, Typography } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { userEvent, within } from 'storybook/test';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import i18n from '../../i18n';
 import { OrisoMultiSelect, OrisoSelect } from './OrisoSelect';
 import { OrisoTextarea } from './OrisoTextarea';
@@ -242,6 +243,12 @@ export const MultiSelectEmpty: Story = {
 
 export const MultiSelectFiltered: Story = {
 	render: () => <SearchableLanguagesStory initialValue={['de']} />,
+	parameters: {
+		// #1338: MUI gives every Select child role="option", so the search
+		// field's header reads as an option holding a text field. Moving the
+		// search out of the list changes the menu; left for a product decision.
+		a11y: a11yExcept({ 'nested-interactive': ['.MuiListSubheader-root'] })
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('combobox'));

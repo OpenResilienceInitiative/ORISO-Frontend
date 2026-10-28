@@ -23,6 +23,42 @@ const withUser =
 		</UserDataContext.Provider>
 	);
 
+/**
+ * Accepts the app code and sends the e-mail code, as the user service does
+ * (#1338). Installed during render, before the dialog can submit, and fetch is
+ * restored when the story unmounts.
+ */
+const TwoFactorBackend = ({ children }: { children: React.ReactNode }) => {
+	const restore = React.useRef<(() => void) | null>(null);
+	if (!restore.current) {
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (input, init) => {
+			const request = input instanceof Request ? input : null;
+			const { pathname } = new URL(request?.url ?? String(input));
+			const method = init?.method ?? request?.method ?? 'GET';
+			if (
+				method === 'PUT' &&
+				(pathname === '/service/users/2fa/app' ||
+					pathname === '/service/users/2fa/email')
+			) {
+				return new Response(null, { status: 204 });
+			}
+			return originalFetch(input, init);
+		};
+		restore.current = () => {
+			globalThis.fetch = originalFetch;
+		};
+	}
+	React.useEffect(() => () => restore.current?.(), []);
+	return <>{children}</>;
+};
+
+const withTwoFactorBackend = (Story: React.ComponentType) => (
+	<TwoFactorBackend>
+		<Story />
+	</TwoFactorBackend>
+);
+
 const STORY_QR_PNG =
 	'iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAAAAAAZai4+AAABUklEQVR42u3aQQ7DIBBD0dz/0lTqqlUVas+QSMGfVRdJeCwKjOE45DbezX1mfLTjigYL1kasMW1zlkL5/T3vCxasZNa8SwW9dniwYMGas9xpAhYsWGtZtekAFixYOstdYvXS9Na9PCxYj2WtSnWUpfqSfAsWrIezRqPp3dtfhgUrjFVbqs8QOk4aEixYMSwlANLjpE5A/PUMLFiRLLczd9nWBw8LViarXy26G2ij0IUFK5hVu77TOao5fRcWrBhWLRJSStPaAGDBSmbpgZE7KehbcClzggVrU5YbvLr0/pYaFqwcVufSgPuuEQfDghXDKl4FMC8TKNEwLFjJrCvuxfW/AwtWJks/OFl1/CkNAxasSJbepb4tbhWxsGDBEv78etSrV9JGVQ0LFix5c/znOHM+AFiwIln6FKCHRO6RanEvDwvWFiz3ikAnfup/Exas7VgvwSyN3XsHaRgAAAAASUVORK5CYII=';
 
@@ -271,7 +307,7 @@ export const SecondFactorVerify: Story = {
  * which would take the story's own frame with it.
  */
 export const SecondFactorSuccess: Story = {
-	decorators: [owesSecondFactor],
+	decorators: [withTwoFactorBackend, owesSecondFactor],
 	render: () => (
 		<TwoFactorSetupDialog
 			canClose={false}
@@ -306,7 +342,7 @@ export const SecondFactorSuccess: Story = {
 
 /** The e-mail branch: the code lands in the inbox, and can be resent. */
 export const SecondFactorEmailCode: Story = {
-	decorators: [owesSecondFactor],
+	decorators: [withTwoFactorBackend, owesSecondFactor],
 	play: async () => {
 		const host = await dialog();
 

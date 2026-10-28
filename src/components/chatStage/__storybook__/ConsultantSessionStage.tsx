@@ -247,7 +247,11 @@ function ListColumn({ width, rail }: { width: number; rail: boolean }) {
 					createGroupChatActive={false}
 				/>
 				<div className="sessionsList__scrollArea">
-					<div className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar">
+					<div
+						className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
+						role="list"
+						aria-label="Conversations"
+					>
 						{items.map((item, index) => (
 							<ListRowSession key={item.session!.id} item={item}>
 								<SessionListItemComponent
