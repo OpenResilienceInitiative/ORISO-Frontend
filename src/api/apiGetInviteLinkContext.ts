@@ -11,6 +11,10 @@ export interface InviteLinkContext {
 	consultingTypeId: number | null;
 	topicId: number | null;
 	chatType: string | null;
+	/** Counsellor direct links only (ORISO-UserService#1479): new people get a temporary account. */
+	temporaryAccount?: boolean | null;
+	/** Counsellor direct links only: `KNOCK` for audio and video, `DIRECT` for chat. */
+	admission?: 'DIRECT' | 'KNOCK' | null;
 }
 
 /* The page waits on this before it either opens the live-chat room or falls
@@ -25,6 +29,8 @@ export const apiGetInviteLinkContext = (
 		url: `${apiUrl}/service/users/invitelinks/${encodeURIComponent(token)}/context`,
 		method: FETCH_METHODS.GET,
 		skipAuth: true,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		/* The response on failure: a switched-off direct link answers 410
+		   and the page says so instead of trying to redeem it. */
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE],
 		timeout: CONTEXT_TIMEOUT_MS
 	});

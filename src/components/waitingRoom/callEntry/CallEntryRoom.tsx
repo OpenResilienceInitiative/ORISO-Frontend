@@ -43,6 +43,13 @@ import {
 	CallModality
 } from './callEntryTypes';
 
+/** What the person chose at the door; the caller creates the account from it. */
+export interface CallEntryAccount {
+	username: string;
+	password: string;
+	identity: Pseudonym;
+}
+
 /** A level above this once means the microphone demonstrably hears. */
 const HEARD_LEVEL = 0.15;
 
@@ -93,7 +100,7 @@ export interface CallEntryRoomProps {
 	 * on the way, ORISO-Frontend#1737). `false`, or a promise of it, says the
 	 * join failed and the person stays.
 	 */
-	onJoin?: () => ClosingSwapResult;
+	onJoin?: (account: CallEntryAccount) => ClosingSwapResult;
 	/**
 	 * Where the person arrives: the call's main area, which the room that
 	 * swaps in marks with `data-closing-focal="call"`. `null` plays no closing
@@ -433,7 +440,9 @@ export const CallEntryRoom = ({
 								: (doneCount / conditions.length) * 100
 						}
 						beforeEnter={mayJoin}
-						onEnter={() => onJoin?.()}
+						onEnter={() =>
+							onJoin?.({ username, password, identity })
+						}
 						closing={closing ?? undefined}
 						label={copy.join[modality]}
 						status={
