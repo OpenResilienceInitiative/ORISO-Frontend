@@ -218,6 +218,40 @@ describe('useDraftMessage', () => {
 		}
 	);
 
+	it('a side-room composer never loads or clears the main room’s draft (#1824)', async () => {
+		const side = 'scope:!side:matrix.test|thread:main';
+		mocks.apiGetUserDraft.mockImplementation(async (key) => {
+			if (key === side) throw new Error('EMPTY');
+			return { scopeKey: key, text: '<p>Main-room draft</p>' } as any;
+		});
+		const loadDraft = vi.fn();
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: side,
+					isolateScope: true
+				}),
+			{ wrapper }
+		);
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		expect(mocks.apiGetUserDraft.mock.calls.map(([key]) => key)).toEqual([
+			side
+		]);
+		expect(loadDraft).not.toHaveBeenCalledWith(
+			expect.anything(),
+			'<p>Main-room draft</p>'
+		);
+		await act(async () => {
+			await result.current.clearDraftMessage();
+		});
+		const deleted = mocks.apiDeleteUserDraft.mock.calls.map(([key]) => key);
+		expect(deleted).toContain(side);
+		// The main room's and the session's drafts stay (the shared draft
+		// index is bookkeeping, not a conversation's draft).
+		expect(deleted).not.toContain('scope:!room:matrix.test|thread:main');
+		expect(deleted).not.toContain('scope:42|thread:main');
+	});
+
 	it('does not resume a disabled buffer into a different conversation', async () => {
 		const loadDraft = vi.fn();
 		const { result, rerender } = renderHook(

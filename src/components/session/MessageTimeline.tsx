@@ -62,8 +62,8 @@ export interface MessageTimelineProps {
 	reactionsFor?: (messageId: string) => AggregatedReaction[];
 	onReact?: (messageId: string, key: string) => void;
 	onUnreact?: (reactionEventId: string) => void;
-	/** #420: Activity Timeline preview — the real rows, nothing that writes. */
-	readOnly?: boolean;
+	/** #420 / #1824: rows in the Activity Timeline preview (see MessageItemComponent). */
+	previewMode?: MessageItemProps['previewMode'];
 }
 
 const never = () => false;
@@ -98,7 +98,7 @@ export const MessageTimeline = ({
 	reactionsFor,
 	onReact,
 	onUnreact,
-	readOnly = false
+	previewMode
 }: MessageTimelineProps) => {
 	const supplementIndex =
 		supplementTime === undefined
@@ -166,7 +166,7 @@ export const MessageTimeline = ({
 							}
 							onUnreact={onUnreact}
 							encryptionBroke={broke}
-							readOnly={readOnly}
+							previewMode={previewMode}
 						/>
 						{broke &&
 							(showDecryptionCardFor

@@ -1,10 +1,16 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConversationPreview } from './ConversationPreview';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MessageContextShell } from '../message/messageStoryShell';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
+import type { PreviewCapabilities } from './previewCapabilities';
+import type { ConversationPreviewAccess } from './ConversationPreview';
+import {
+	buildMockActiveSession,
+	ComposerStoryDecorator
+} from '../messageSubmitInterface/__storybook__/composerStoryDecorator';
 
 const minutesAgo = (minutes: number) => Date.now() - minutes * 60 * 1000;
 
@@ -432,5 +438,309 @@ export const ManyVisibleAuthorsPhone: Story = {
 		await expect(
 			canvasElement.querySelector('[data-cy="participant-overflow"]')
 		).toHaveTextContent('+5');
+	}
+};
+
+/* #1824: the writable preview — the same chat rows with their actions, the
+   chat's own composer, threads opened in place, and still nothing that
+   leaves the Timeline. Every story proves that opening it writes nothing:
+   no read receipt, no read marker, no event, and no active-view request
+   (the PATCH that would silence the Timeline). */
+const activeViewCalls: string[] = [];
+const watchActiveView = () => {
+	activeViewCalls.length = 0;
+	const original = globalThis.fetch;
+	globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+		const url = typeof input === 'string' ? input : String(input);
+		if (url.includes('active-view')) {
+			activeViewCalls.push(url);
+		}
+		return original(input, init);
+	};
+	return () => {
+		globalThis.fetch = original;
+	};
+};
+
+const can = (
+	overrides: Partial<PreviewCapabilities> = {}
+): PreviewCapabilities => ({
+	composer: true,
+	react: true,
+	manageOwn: true,
+	threadReply: true,
+	readOnlyReason: null,
+	contentHidden: false,
+	...overrides
+});
+const readOnly = (
+	readOnlyReason: PreviewCapabilities['readOnlyReason'],
+	overrides: Partial<PreviewCapabilities> = {}
+) =>
+	can({
+		composer: false,
+		react: false,
+		manageOwn: false,
+		threadReply: false,
+		readOnlyReason,
+		...overrides
+	});
+
+const conversationEvents = () => [
+	fakeEvent(
+		'$1',
+		'@lisa:oriso',
+		'Hallo, ich weiß gerade nicht weiter. Kann ich mit jemandem sprechen?',
+		48
+	),
+	fakeEvent(
+		'$2',
+		'@marge:oriso',
+		composerHtmlToTransportMarkup(
+			'<p>Natürlich — <strong>schön</strong>, dass Sie sich melden.</p>'
+		),
+		44
+	),
+	fakeEvent(
+		'$3',
+		'@lisa:oriso',
+		'',
+		40,
+		{
+			'm.relates_to': {
+				rel_type: 'm.annotation',
+				event_id: '$2',
+				key: '❤️'
+			}
+		},
+		'm.reaction'
+	),
+	fakeEvent('$4', '@lisa:oriso', 'Danke, das tut gut.', 30, {
+		'm.relates_to': { rel_type: 'm.thread', event_id: '$1' }
+	}),
+	fakeEvent('$5', '@lisa:oriso', 'Wann können wir weiterreden?', 12)
+];
+
+const writablePreview =
+	(
+		width: number | string = 640,
+		session = buildMockActiveSession()
+	): Decorator =>
+	(StoryComponent) => {
+		seedRegistry(conversationEvents());
+		const [restore] = React.useState(watchActiveView);
+		React.useEffect(() => restore, [restore]);
+		return (
+			<ComposerStoryDecorator activeSession={session}>
+				<div style={{ height: 640, width, display: 'flex' }}>
+					<StoryComponent />
+				</div>
+			</ComposerStoryDecorator>
+		);
+	};
+
+const access = (
+	capabilities: PreviewCapabilities,
+	extra: Partial<ConversationPreviewAccess> = {}
+): ConversationPreviewAccess => ({
+	capabilities,
+	session: buildMockActiveSession(),
+	...extra
+});
+
+const expectOpenedWithoutWriting = async (canvasElement: HTMLElement) => {
+	await waitFor(() =>
+		expect(canvasElement.querySelector('.messageItem')).not.toBeNull()
+	);
+	await expect(writeCalls).toEqual([]);
+	await expect(activeViewCalls).toEqual([]);
+};
+
+const expectComposer = async (canvasElement: HTMLElement) =>
+	waitFor(() =>
+		expect(
+			canvasElement.querySelector('.conversationPreview__composer')
+		).not.toBeNull()
+	);
+
+export const InteractiveReply: Story = {
+	decorators: [writablePreview()],
+	args: { roomId: '!preview:oriso', access: access(can()) },
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expectComposer(canvasElement);
+		// The header offers the explicit read moment.
+		await expect(
+			within(canvasElement).getByRole('button', {
+				name: /als gelesen markieren|mark conversation as read/i
+			})
+		).toBeInTheDocument();
+	}
+};
+
+export const InteractiveReplyPhone: Story = {
+	decorators: [writablePreview('100%')],
+	globals: { viewport: { value: 'phone390' } },
+	args: { roomId: '!preview:oriso', access: access(can()) },
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expectComposer(canvasElement);
+		const composer = canvasElement.querySelector(
+			'.conversationPreview__composer'
+		) as HTMLElement;
+		// Nothing is cut off at 390 px.
+		await expect(composer.scrollWidth).toBeLessThanOrEqual(
+			composer.clientWidth + 1
+		);
+	}
+};
+
+export const InteractiveReact: Story = {
+	decorators: [writablePreview()],
+	args: { roomId: '!preview:oriso', access: access(can()) },
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expect(
+			canvasElement.querySelector('button.messageItem__reactionPill')
+		).not.toBeNull();
+	}
+};
+
+export const EditOwn: Story = {
+	decorators: [writablePreview()],
+	args: { roomId: '!preview:oriso', access: access(can()) },
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		const own = canvasElement.querySelector(
+			'[data-message-id="$2"] .messageItem__kebabButton'
+		) as HTMLElement;
+		await userEvent.click(own);
+		await expect(
+			await within(document.body).findByRole('menuitem', {
+				name: /bearbeiten|edit/i
+			})
+		).toBeInTheDocument();
+	}
+};
+
+export const GroupReply: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(can({ manageOwn: true }), {
+			session: { ...buildMockActiveSession(), isGroup: true }
+		})
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expectComposer(canvasElement);
+	}
+};
+
+export const TeamMention: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(can({ threadReply: false }), {
+			composerTarget: {
+				targetRoomId: '!preview:oriso',
+				targetChannelKind: 'team',
+				teamDiscussion: true,
+				accent: 'team'
+			}
+		})
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expectComposer(canvasElement);
+	}
+};
+
+export const SupervisionSideRoom: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(can({ threadReply: false }), {
+			composerTarget: {
+				targetRoomId: '!preview:oriso',
+				accent: 'supervision',
+				feedbackMailIntent: true
+			}
+		})
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expectComposer(canvasElement);
+	}
+};
+
+export const ArchivedNoComposer: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(readOnly('archived')),
+		onOpenConversation: () => undefined
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expect(
+			canvasElement.querySelector('.conversationPreview__composer')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('.messageItem__kebabButton')
+		).toBeNull();
+	}
+};
+
+export const CoAccessReadOnly: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(readOnly('coAccess'), {
+			caseHandoverStatus: { expiresAt: '2026-11-30T12:00:00Z' } as any
+		})
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expect(
+			canvasElement.querySelector('.conversationPreview__composer')
+		).toBeNull();
+		await expect(
+			within(canvasElement).queryByRole('button', {
+				name: /als gelesen markieren|mark conversation as read/i
+			})
+		).toBeNull();
+	}
+};
+
+export const KnockPendingReadOnly: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(readOnly('notJoined')),
+		onOpenConversation: () => undefined
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expect(
+			canvasElement.querySelector('.conversationPreview__composer')
+		).toBeNull();
+	}
+};
+
+export const SupervisorReactOnly: Story = {
+	decorators: [writablePreview()],
+	args: {
+		roomId: '!preview:oriso',
+		access: access(readOnly('supervisor', { react: true }))
+	},
+	play: async ({ canvasElement }) => {
+		await expectOpenedWithoutWriting(canvasElement);
+		await expect(
+			canvasElement.querySelector('button.messageItem__reactionPill')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelector('.conversationPreview__composer')
+		).toBeNull();
 	}
 };

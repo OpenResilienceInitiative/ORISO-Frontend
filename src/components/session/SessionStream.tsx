@@ -51,6 +51,7 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
+import { useMatrixTyping } from './useMatrixTyping';
 import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
@@ -115,8 +116,6 @@ export const SessionStream = ({
 	checkMutedUserForThisSession,
 	bannedUsers
 }: SessionStreamProps) => {
-	const MATRIX_TYPING_TIMEOUT_MS = 3200;
-	const MATRIX_TYPING_TRIGGER_MS = 1000;
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -331,8 +330,6 @@ export const SessionStream = ({
 			? teamMessageState.messages
 			: EMPTY_MESSAGES;
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
-	const matrixTypingTimeoutRef = useRef<number | null>(null);
-	const matrixTypingLastTriggerRef = useRef(0);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -340,65 +337,9 @@ export const SessionStream = ({
 	);
 	const isMatrixSession = resolvedChatSession.isMatrixSession;
 	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
-	const clearMatrixTypingTimeout = useCallback(() => {
-		if (matrixTypingTimeoutRef.current) {
-			window.clearTimeout(matrixTypingTimeoutRef.current);
-			matrixTypingTimeoutRef.current = null;
-		}
-	}, []);
-	const sendMatrixTyping = useCallback(
-		(typing: boolean, targetRoomId = matrixRoomId) => {
-			if (!isMatrixSession || !targetRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendTyping(targetRoomId, typing)
-				.catch(() => {});
-		},
-		[isMatrixSession, matrixRoomId]
-	);
-	const handleSessionTyping = useCallback(
-		(isCleared: boolean, targetRoomId = matrixRoomId) => {
-			if (!isMatrixSession || !targetRoomId) {
-				return;
-			}
-			clearMatrixTypingTimeout();
-
-			const cancelTyping = () => {
-				sendMatrixTyping(false, targetRoomId);
-				matrixTypingTimeoutRef.current = null;
-				matrixTypingLastTriggerRef.current = 0;
-			};
-
-			const now = Date.now();
-			if (!isCleared) {
-				if (
-					matrixTypingLastTriggerRef.current +
-						MATRIX_TYPING_TRIGGER_MS <
-					now
-				) {
-					sendMatrixTyping(true, targetRoomId);
-					matrixTypingLastTriggerRef.current = now;
-				}
-				matrixTypingTimeoutRef.current = window.setTimeout(
-					cancelTyping,
-					MATRIX_TYPING_TIMEOUT_MS
-				);
-			} else {
-				matrixTypingTimeoutRef.current = window.setTimeout(
-					cancelTyping,
-					250
-				);
-			}
-		},
-		[
-			clearMatrixTypingTimeout,
-			isMatrixSession,
-			matrixRoomId,
-			sendMatrixTyping,
-			MATRIX_TYPING_TIMEOUT_MS,
-			MATRIX_TYPING_TRIGGER_MS
-		]
+	// The chat's typing rule, shared with the Activity Timeline preview (#1824).
+	const handleSessionTyping = useMatrixTyping(
+		isMatrixSession ? matrixRoomId : null
 	);
 
 	const caseHandoverGateNeeded = useMemo(
@@ -1250,14 +1191,6 @@ export const SessionStream = ({
 		fetchSessionMessages,
 		matrixClientService
 	]);
-
-	useEffect(
-		() => () => {
-			clearMatrixTypingTimeout();
-			sendMatrixTyping(false);
-		},
-		[clearMatrixTypingTimeout, sendMatrixTyping]
-	);
 
 	useEffect(() => {
 		if (subscribed.current) {
