@@ -209,7 +209,7 @@
 		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 16px;
 		background: var(--m3-surface-container-lowest, #fff);
-		box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
 	}
 
 	&__listTitle {
