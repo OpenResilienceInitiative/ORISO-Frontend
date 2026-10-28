@@ -20,7 +20,6 @@ import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
-import { GroupLegalMenu } from './GroupLegalMenu';
 import { useGroupConsent } from '../consent/useGroupConsent';
 import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import {
@@ -663,13 +662,6 @@ export const GroupWaitingRoom = ({
 				legalDepartment={legalDepartment}
 				showLoginLink={showLoginLink}
 				headerStart={groupHeading}
-				/* The desktop stage prints the legal links; the phone bar
-				   gets them as a menu, like every chat room (#1499). */
-				renderHeaderAction={(tone) =>
-					tone === 'onPrimary' ? (
-						<GroupLegalMenu department={legalDepartment} />
-					) : null
-				}
 			>
 				<Box
 					ref={setRoom}
@@ -714,8 +706,11 @@ export const GroupWaitingRoom = ({
 							xs: 'calc(12px + env(safe-area-inset-bottom))',
 							sm: '12px'
 						},
+						/* The mobile head is still on here; the legal row
+						   under the column is gone (#1895), so the column
+						   runs to the window's bottom like on a phone. */
 						'@media (min-width:900px) and (max-width:1199px)': {
-							minHeight: 'calc(100vh - 114px)'
+							minHeight: 'calc(100vh - 66px)'
 						}
 					}}
 				>
