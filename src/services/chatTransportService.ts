@@ -419,6 +419,34 @@ class ChatTransportService {
 		return () => (matrixClient as any).off('Room.timeline', handleTimeline);
 	}
 
+	/**
+	 * Read receipts of OTHER members in one room (FE#1802): they flip own
+	 * messages from "sent" to "read". Our own receipts are skipped — marking
+	 * the room read must not trigger the refresh that marks it read again.
+	 */
+	public onMatrixReadReceipt(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) return null;
+
+		const handleReceipt = (event: MatrixEvent, room: Room) => {
+			if (room?.roomId !== matrixRoomId) return;
+			const me = (matrixClient as any).getUserId?.();
+			const readers = Object.values(event?.getContent?.() || {}).flatMap(
+				(byType: any) =>
+					Object.values(byType || {}).flatMap((byUser: any) =>
+						Object.keys(byUser || {})
+					)
+			);
+			if (readers.some((userId) => userId !== me)) listener();
+		};
+
+		(matrixClient as any).on('Room.receipt', handleReceipt);
+		return () => (matrixClient as any).off('Room.receipt', handleReceipt);
+	}
+
 	public onMatrixTimeline(
 		matrixRoomId: string,
 		listener: TimelineListener

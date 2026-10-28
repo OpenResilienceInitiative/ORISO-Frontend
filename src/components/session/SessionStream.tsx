@@ -34,6 +34,7 @@ import {
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
+import { counterpartReaders } from '../../utils/matrixReadReceipts';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -468,6 +469,8 @@ export const SessionStream = ({
 		};
 	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
 
+	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
+	const consultantMatrixUserId = activeSession.item?.consultantMatrixUserId;
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
 			if (abortController.current) {
@@ -535,15 +538,31 @@ export const SessionStream = ({
 				const prepareRoomMessages = (
 					events: any[],
 					roomId?: string | null
-				): any[] =>
-					buildRoomTimeline(
+				): any[] => {
+					const matrixRoom = roomId
+						? chatTransportService.getMatrixRoom(roomId)
+						: null;
+					return buildRoomTimeline(
 						events,
 						roomId,
-						roomId
-							? chatTransportService.getMatrixRoom(roomId)
-							: null,
-						encryptedFallbackText
+						matrixRoom,
+						encryptedFallbackText,
+						// FE#1802: in the 1:1 room only the session
+						// counterpart's receipt makes an own message "read".
+						roomId === resolvedMatrixRoomId
+							? counterpartReaders(
+									{
+										isGroup: activeSession.isGroup,
+										item: {
+											askerMatrixUserId,
+											consultantMatrixUserId
+										}
+									},
+									(matrixRoom as any)?.myUserId
+								)
+							: undefined
 					);
+				};
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
 				// Side-room reactions stay out of the client timeline; the
@@ -593,6 +612,9 @@ export const SessionStream = ({
 			mayRequestHistoryKeys,
 			resolvedChatSession,
 			activeSession.item?.id,
+			activeSession.isGroup,
+			askerMatrixUserId,
+			consultantMatrixUserId,
 			supervisionRoomId,
 			teamRoomId,
 			translate
@@ -831,6 +853,7 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let receiptRefreshTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 		const refreshMessages = () => {
@@ -898,6 +921,22 @@ export const SessionStream = ({
 				return false;
 			}
 
+			// A peer's read receipt flips own messages to "read" (FE#1802).
+			const handleReadReceipt = () => {
+				if (receiptRefreshTimer !== null) return;
+				receiptRefreshTimer = window.setTimeout(() => {
+					receiptRefreshTimer = null;
+					refreshMessages();
+				}, 0);
+			};
+			watchedRoomIds.forEach((roomId) => {
+				const detach = chatTransportService.onMatrixReadReceipt(
+					roomId,
+					handleReadReceipt
+				);
+				if (detach) detachers.push(detach);
+			});
+
 			detachTimelineListeners = detachers;
 			// Initial-sync events may already be cached before this listener attaches.
 			// Hydrate once after every successful attachment so late-join decryption
@@ -951,6 +990,8 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			if (receiptRefreshTimer !== null)
+				window.clearTimeout(receiptRefreshTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
