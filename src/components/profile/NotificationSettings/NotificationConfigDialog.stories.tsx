@@ -12,6 +12,7 @@ import {
 	NotificationConfig
 } from '../../../utils/notificationSettings/notificationConfig';
 import type { SoundId } from '../../../utils/notificationSettings/model';
+import type { NotificationRole } from '../../../utils/notificationSettings/notificationChannelCapability';
 import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import { phone390Globals } from '../../message/messageStoryShell';
 import './notificationConfigDialog.styles.scss';
@@ -41,6 +42,7 @@ const InteractiveDialog = () => {
 				</button>
 			)}
 			<NotificationConfigDialog
+				role="consultant"
 				open={open}
 				config={config}
 				onConfirm={(next) => {
@@ -130,10 +132,12 @@ export const DialogMobile: DialogStory = {
  */
 const InteractiveBody = ({
 	initialArea = 'requests',
-	showLiveChatRow = false
+	showLiveChatRow = false,
+	role = 'consultant'
 }: {
 	initialArea?: NotificationArea;
 	showLiveChatRow?: boolean;
+	role?: NotificationRole;
 }) => {
 	const [config, setConfig] = useState<NotificationConfig>(
 		DEFAULT_NOTIFICATION_CONFIG
@@ -166,6 +170,7 @@ const InteractiveBody = ({
 				}
 				onPreview={previewNotificationSound}
 				showLiveChatRow={showLiveChatRow}
+				role={role}
 			/>
 		</div>
 	);
@@ -200,12 +205,74 @@ export const BodyCounsellorLiveChatRow: BodyStory = {
 /** Advice seekers never see the row: their live-chat messages stay on Standard. */
 export const BodyAdviceSeekerNoLiveChatRow: BodyStory = {
 	name: 'Body – Ratsuchende ohne Live-Chat-Zeile',
-	render: () => <InteractiveBody initialArea="conversations" />,
+	render: () => <InteractiveBody initialArea="conversations" role="asker" />,
 	play: async ({ canvasElement }) => {
 		await expect(
 			canvasElement.querySelector(
 				'[data-cy="notif-row-conversations-liveChat"]'
 			)
 		).toBeNull();
+	}
+};
+
+/** Asserts a row's controls are disabled and described by its visible reason. */
+const expectDisabledWithReason = async (
+	root: Element,
+	area: string,
+	kind: string
+) => {
+	const reason = root.querySelector<HTMLElement>(
+		`[data-cy="notif-reason-${area}-${kind}"]`
+	);
+	await expect(reason).not.toBeNull();
+	await expect(reason!.textContent!.trim()).not.toBe('');
+	for (const control of [
+		root.querySelector<HTMLSelectElement>(
+			`[data-cy="notif-banner-${area}-${kind}"]`
+		)!,
+		root.querySelector<HTMLSelectElement>(
+			`[data-cy="notif-row-${area}-${kind}"] select.notifConfig__select`
+		)!
+	]) {
+		await expect(control.disabled).toBe(true);
+		await expect(control.getAttribute('aria-disabled')).toBe('true');
+		await expect(control.getAttribute('aria-describedby')).toBe(reason!.id);
+	}
+};
+
+/**
+ * #778: a counsellor's Anfragen tab. "Neue Anfrage" fires; "Standard" only
+ * reaches advice seekers and "@ Erwähnung" has no event in this tab, so both
+ * are disabled and say why.
+ */
+export const BodyCounsellorDisabledChannels: BodyStory = {
+	name: 'Body – Berater:in, Kanäle ohne Auslöser deaktiviert',
+	render: () => <InteractiveBody initialArea="requests" role="consultant" />,
+	play: async ({ canvasElement }) => {
+		await expectDisabledWithReason(canvasElement, 'requests', 'standard');
+		await expectDisabledWithReason(canvasElement, 'requests', 'mention');
+		await expect(
+			canvasElement.querySelector('[data-cy="notif-reason-requests-new"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector<HTMLSelectElement>(
+				'[data-cy="notif-banner-requests-new"]'
+			)!.disabled
+		).toBe(false);
+	}
+};
+
+/** #778: an advice seeker never receives new enquiries — that row is disabled. */
+export const BodyAdviceSeekerDisabledChannels: BodyStory = {
+	name: 'Body – Ratsuchende, Kanäle ohne Auslöser deaktiviert',
+	render: () => <InteractiveBody initialArea="requests" role="asker" />,
+	play: async ({ canvasElement }) => {
+		await expectDisabledWithReason(canvasElement, 'requests', 'new');
+		await expectDisabledWithReason(canvasElement, 'requests', 'mention');
+		await expect(
+			canvasElement.querySelector<HTMLSelectElement>(
+				'[data-cy="notif-banner-requests-standard"]'
+			)!.disabled
+		).toBe(false);
 	}
 };

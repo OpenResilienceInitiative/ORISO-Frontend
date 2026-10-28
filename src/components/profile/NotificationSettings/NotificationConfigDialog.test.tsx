@@ -50,6 +50,7 @@ vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
 
 // The email link is a router Link.
 const baseProps = {
+	role: 'consultant' as const,
 	config: DEFAULT_NOTIFICATION_CONFIG,
 	activeArea: 'requests' as const,
 	onAreaChange: vi.fn(),
@@ -70,6 +71,7 @@ describe('NotificationConfigDialog', () => {
 		const { baseElement } = render(
 			<MemoryRouter>
 				<NotificationConfigDialog
+					role="consultant"
 					open
 					config={DEFAULT_NOTIFICATION_CONFIG}
 					onConfirm={onConfirm}
@@ -118,6 +120,7 @@ describe('NotificationConfigDialog', () => {
 						path="/profile/notifications/browser"
 						element={
 							<NotificationConfigDialog
+								role="consultant"
 								open
 								config={DEFAULT_NOTIFICATION_CONFIG}
 								onConfirm={onConfirm}
@@ -182,6 +185,7 @@ describe('NotificationConfigDialog', () => {
 						path="/profile/notifications/browser"
 						element={
 							<NotificationConfigDialog
+								role="consultant"
 								open
 								config={DEFAULT_NOTIFICATION_CONFIG}
 								onConfirm={vi.fn()}
@@ -217,6 +221,7 @@ describe('NotificationConfigDialog', () => {
 		render(
 			<MemoryRouter>
 				<NotificationConfigDialog
+					role="consultant"
 					open
 					config={DEFAULT_NOTIFICATION_CONFIG}
 					onConfirm={vi.fn()}
@@ -435,5 +440,109 @@ describe('Live-Chat row (FE#1470)', () => {
 		expect(
 			screen.getByTestId('notif-row-conversations-standard')
 		).toBeTruthy();
+	});
+});
+
+describe('Channels that cannot fire (epic #778, FE#1211)', () => {
+	afterEach(cleanup);
+
+	const renderRows = (
+		role: 'consultant' | 'asker',
+		activeArea: 'requests' | 'conversations' | 'timeCritical'
+	) =>
+		render(
+			<MemoryRouter>
+				<NotificationConfigView
+					{...baseProps}
+					role={role}
+					activeArea={activeArea}
+				/>
+			</MemoryRouter>
+		);
+
+	/** Controls of one row: banner select, tone select, volume + play buttons. */
+	const controls = (area: string, kind: string) => {
+		const row = screen.getByTestId(`notif-row-${area}-${kind}`);
+		return {
+			row,
+			banner: screen.getByTestId(`notif-banner-${area}-${kind}`),
+			tone: row.querySelector('select.notifConfig__select')!,
+			volumeUp: screen.getByTestId(`notif-volume-up-${area}-${kind}`)
+		};
+	};
+
+	it('disables the mention row of Anfragen for everyone, with a reason a screen reader reads', () => {
+		renderRows('consultant', 'requests');
+		const { banner, tone, volumeUp } = controls('requests', 'mention');
+		for (const el of [banner, tone, volumeUp]) {
+			expect((el as HTMLButtonElement).disabled).toBe(true);
+		}
+		const reason = screen.getByTestId('notif-reason-requests-mention');
+		expect(reason.textContent).toBe(
+			'profile.notifications.config.unavailable.noEvent'
+		);
+		for (const el of [banner, tone]) {
+			expect(el.getAttribute('aria-disabled')).toBe('true');
+			expect(el.getAttribute('aria-describedby')).toBe(reason.id);
+		}
+		expect(reason.id).toBeTruthy();
+	});
+
+	it('leaves the new-enquiry row live for a counsellor', () => {
+		renderRows('consultant', 'requests');
+		const { banner, tone } = controls('requests', 'new');
+		expect((banner as HTMLSelectElement).disabled).toBe(false);
+		expect((tone as HTMLSelectElement).disabled).toBe(false);
+		expect(banner.getAttribute('aria-describedby')).toBeNull();
+		expect(screen.queryByTestId('notif-reason-requests-new')).toBeNull();
+	});
+
+	it('explains rows that only exist for the other role', () => {
+		renderRows('consultant', 'requests');
+		expect(
+			screen.getByTestId('notif-reason-requests-standard').textContent
+		).toBe('profile.notifications.config.unavailable.notForRole');
+		cleanup();
+		renderRows('asker', 'requests');
+		expect(
+			(controls('requests', 'new').banner as HTMLSelectElement).disabled
+		).toBe(true);
+		expect(
+			screen.getByTestId('notif-reason-requests-new').textContent
+		).toBe('profile.notifications.config.unavailable.notForRole');
+		expect(
+			(controls('requests', 'standard').banner as HTMLSelectElement)
+				.disabled
+		).toBe(false);
+	});
+
+	it('keeps rows with a producer live for both roles (handover, call, appointment)', () => {
+		for (const [area, kinds] of [
+			['conversations', ['handover', 'standard']],
+			['timeCritical', ['call', 'appointment']]
+		] as const) {
+			for (const role of ['consultant', 'asker'] as const) {
+				renderRows(role, area);
+				for (const kind of kinds) {
+					expect(
+						(controls(area, kind).banner as HTMLSelectElement)
+							.disabled,
+						`${role} ${area}/${kind}`
+					).toBe(false);
+				}
+				cleanup();
+			}
+		}
+	});
+
+	it('does not let a disabled row change its settings', () => {
+		const onChange = vi.fn();
+		render(
+			<MemoryRouter>
+				<NotificationConfigView {...baseProps} onChange={onChange} />
+			</MemoryRouter>
+		);
+		fireEvent.click(screen.getByTestId('notif-volume-up-requests-mention'));
+		expect(onChange).not.toHaveBeenCalled();
 	});
 });

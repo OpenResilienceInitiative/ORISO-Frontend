@@ -41,6 +41,10 @@ export const NotificationSettingsPanel = () => {
 	const { settings, deviceSilenced, updateSettings, setDeviceSilenced } =
 		useNotificationSettings();
 	const { userData } = useContext(UserDataContext);
+	const isConsultant = !!hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
@@ -159,9 +163,8 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 				onPreview={previewNotificationSound}
-				showLiveChatRow={
-					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				}
+				showLiveChatRow={isConsultant}
+				role={isConsultant ? 'consultant' : 'asker'}
 			/>
 
 			<hr />

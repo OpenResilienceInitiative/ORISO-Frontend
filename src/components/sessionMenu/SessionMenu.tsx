@@ -185,9 +185,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		useNotificationSettings();
 	const appConfig = useAppConfig();
 	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
+	const isConsultant = !!hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	const hasEmailSettings =
-		!!appConfig?.releaseToggles?.enableNewNotifications ||
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+		!!appConfig?.releaseToggles?.enableNewNotifications || isConsultant;
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -1112,9 +1115,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
-				showLiveChatRow={
-					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				}
+				showLiveChatRow={isConsultant}
+				role={isConsultant ? 'consultant' : 'asker'}
 			/>
 		</div>
 	);

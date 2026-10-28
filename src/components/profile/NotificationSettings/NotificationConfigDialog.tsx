@@ -29,6 +29,12 @@ import {
 	NotificationKind,
 	VOLUME_STEP
 } from '../../../utils/notificationSettings/notificationConfig';
+import {
+	controlAvailability,
+	type NotificationRole,
+	unavailableReason,
+	unavailableReasonKey
+} from '../../../utils/notificationSettings/notificationChannelCapability';
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
@@ -38,12 +44,14 @@ import './notificationConfigDialog.styles.scss';
 const KindRow = ({
 	area,
 	kind,
+	role,
 	value,
 	onChange,
 	onPreview
 }: {
 	area: NotificationArea;
 	kind: NotificationKind;
+	role: NotificationRole;
 	value: KindConfig;
 	onChange: (
 		area: NotificationArea,
@@ -55,8 +63,23 @@ const KindRow = ({
 }) => {
 	const { t } = useTranslation();
 	const hasSound = value.sound !== 'none' && !!soundAssetFor(value.sound);
+	// #778: a channel that cannot fire for this role is disabled and says why.
+	const available = controlAvailability(role, area, kind);
+	const bannerOff = !available.banner.fires;
+	const soundOff = !available.sound.fires;
+	const reason = [available.banner, available.sound]
+		.map(unavailableReason)
+		.find((candidate) => candidate && candidate !== 'noPopup');
+	const reasonKey = reason ? unavailableReasonKey(reason) : null;
+	const reasonId = reasonKey ? `notif-reason-${area}-${kind}` : undefined;
 	return (
-		<div className="notifConfig__row" data-cy={`notif-row-${area}-${kind}`}>
+		<div
+			className={
+				'notifConfig__row' +
+				(reasonKey ? ' notifConfig__row--unavailable' : '')
+			}
+			data-cy={`notif-row-${area}-${kind}`}
+		>
 			<label className="notifConfig__label">
 				{t(`profile.notifications.config.kind.${kind}`)}
 			</label>
@@ -70,7 +93,7 @@ const KindRow = ({
 						type="button"
 						className="notifConfig__volumeBtn"
 						aria-label={t('profile.notifications.config.volumeUp')}
-						disabled={value.volume >= 1}
+						disabled={soundOff || value.volume >= 1}
 						onClick={() =>
 							onChange(
 								area,
@@ -89,7 +112,7 @@ const KindRow = ({
 						aria-label={t(
 							'profile.notifications.config.volumeDown'
 						)}
-						disabled={value.volume <= 0}
+						disabled={soundOff || value.volume <= 0}
 						onClick={() =>
 							onChange(
 								area,
@@ -113,6 +136,7 @@ const KindRow = ({
 							type="button"
 							className="notifConfig__fieldIcon notifConfig__fieldIcon--play"
 							aria-label={t('profile.notifications.config.play')}
+							disabled={soundOff}
 							onClick={() => onPreview(value.sound, value.volume)}
 							data-cy={`notif-play-${area}-${kind}`}
 						>
@@ -133,6 +157,9 @@ const KindRow = ({
 							`profile.notifications.config.kind.${kind}`
 						)}
 						value={value.sound}
+						disabled={soundOff}
+						aria-disabled={soundOff || undefined}
+						aria-describedby={soundOff ? reasonId : undefined}
 						onChange={(e) =>
 							onChange(
 								area,
@@ -168,6 +195,9 @@ const KindRow = ({
 					<select
 						className="notifConfig__bannerSelect"
 						value={value.banner}
+						disabled={bannerOff}
+						aria-disabled={bannerOff || undefined}
+						aria-describedby={bannerOff ? reasonId : undefined}
 						onChange={(e) =>
 							onChange(
 								area,
@@ -192,6 +222,15 @@ const KindRow = ({
 					</select>
 				</label>
 			</div>
+			{reasonKey && (
+				<p
+					id={reasonId}
+					className="notifConfig__reason"
+					data-cy={`notif-reason-${area}-${kind}`}
+				>
+					{t(reasonKey)}
+				</p>
+			)}
 		</div>
 	);
 };
@@ -218,6 +257,8 @@ export interface NotificationConfigViewProps {
 	showEmailLink?: boolean;
 	/** Only a counsellor's live-chat messages use the Live-Chat row (FE#1470). */
 	showLiveChatRow?: boolean;
+	/** Whose events the rows can fire (disables channels with no producer). */
+	role: NotificationRole;
 }
 
 export const NotificationConfigView = ({
@@ -228,7 +269,8 @@ export const NotificationConfigView = ({
 	onChange,
 	onPreview,
 	showEmailLink = true,
-	showLiveChatRow = false
+	showLiveChatRow = false,
+	role
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -284,6 +326,7 @@ export const NotificationConfigView = ({
 							key={kind}
 							area={activeArea}
 							kind={kind}
+							role={role}
 							value={config[activeArea][kind]}
 							onChange={onChange}
 							onPreview={onPreview}
@@ -352,6 +395,7 @@ interface NotificationConfigDialogProps {
 	/** False when the settings screen has no email panel for this user. */
 	showEmailLink?: boolean;
 	showLiveChatRow?: boolean;
+	role: NotificationRole;
 }
 
 export const NotificationConfigDialog = ({
@@ -360,7 +404,8 @@ export const NotificationConfigDialog = ({
 	onConfirm,
 	onClose,
 	showEmailLink = true,
-	showLiveChatRow = false
+	showLiveChatRow = false,
+	role
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -457,6 +502,7 @@ export const NotificationConfigDialog = ({
 					onPreview={handlePreview}
 					showEmailLink={showEmailLink}
 					showLiveChatRow={showLiveChatRow}
+					role={role}
 				/>
 			</M3Dialog>
 			<M3Dialog
