@@ -164,6 +164,8 @@ import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
 import { AcceptAssign } from './AcceptAssign';
+import { EnquiryTakenNotice } from './EnquiryTakenNotice';
+import { isEnquiryTakenByColleague } from './enquiryTakenByColleague';
 import { useTranslation } from 'react-i18next';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
@@ -1385,11 +1387,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		) {
 			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -3564,6 +3562,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						{translate('enquiry.rejection.closed')}
 					</div>
 				)}
+				{isEnquiryTakenByColleague(
+					type,
+					activeSession,
+					userData?.userId
+				) && <EnquiryTakenNotice />}
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
 					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
