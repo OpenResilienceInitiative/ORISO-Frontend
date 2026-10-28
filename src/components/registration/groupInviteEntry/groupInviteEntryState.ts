@@ -124,11 +124,18 @@ export const getGroupJoin = ({
 };
 
 /**
- * The server refused the group the registration names: unknown group, wrong
- * agency or invite token (UserService `GroupInviteRegistration`). The agency's
- * data-protection refusal has its own notice.
+ * The server refused the group the registration names: 403 wrong invite token,
+ * 404 unknown group (UserService `GroupInviteRegistration`). A 400 counts only
+ * with its reason, because plain validation errors are 400 too.
  */
-export const isGroupInviteRefusal = (error: unknown): boolean =>
-	error instanceof Response &&
-	[400, 403, 404].includes(error.status) &&
-	!getCounsellingDpaFailure(error);
+export const GROUP_INVITE_INVALID_REASON = 'GROUP_INVITE_INVALID';
+
+export const isGroupInviteRefusal = (error: unknown): boolean => {
+	if (!(error instanceof Response) || getCounsellingDpaFailure(error)) {
+		return false;
+	}
+	if (error.status === 400) {
+		return error.headers.get('X-Reason') === GROUP_INVITE_INVALID_REASON;
+	}
+	return error.status === 403 || error.status === 404;
+};

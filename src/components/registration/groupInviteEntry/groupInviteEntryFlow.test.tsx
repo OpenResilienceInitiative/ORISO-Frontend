@@ -600,11 +600,15 @@ describe('a broken invite link fails safely (#921)', () => {
 		expect(apiPostRegistration).not.toHaveBeenCalled();
 	});
 
-	it.each([400, 403, 404])(
-		'a join the server refuses (%i) explains the link instead of a short generic error',
-		async (status) => {
+	it.each([
+		[403, undefined],
+		[404, undefined],
+		[400, 'GROUP_INVITE_INVALID']
+	])(
+		'a join the server refuses (%i %s) explains the link instead of a short generic error',
+		async (status, reason) => {
 			apiPostRegistration.mockImplementationOnce(() =>
-				Promise.reject(refusal(status))
+				Promise.reject(refusal(status, reason))
 			);
 			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
 
@@ -621,18 +625,21 @@ describe('a broken invite link fails safely (#921)', () => {
 		}
 	);
 
-	it('a server failure keeps the form and the generic error', async () => {
-		apiPostRegistration.mockImplementationOnce(() =>
-			Promise.reject(refusal(500))
-		);
-		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+	it.each([500, 400])(
+		'a server failure or plain validation error (%i) keeps the form and the generic error',
+		async (status) => {
+			apiPostRegistration.mockImplementationOnce(() =>
+				Promise.reject(refusal(status))
+			);
+			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
 
-		fireEvent.click(primary());
+			fireEvent.click(primary());
 
-		await waitFor(() => expect(addNotification).toHaveBeenCalled());
-		expect(screen.getByTestId('account-data')).toBeTruthy();
-		expect(screen.queryByRole('alert')).toBeNull();
-	});
+			await waitFor(() => expect(addNotification).toHaveBeenCalled());
+			expect(screen.getByTestId('account-data')).toBeTruthy();
+			expect(screen.queryByRole('alert')).toBeNull();
+		}
+	);
 
 	it('the agency data-protection refusal keeps its own notice', async () => {
 		apiPostRegistration.mockImplementationOnce(() =>
