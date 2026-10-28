@@ -3,16 +3,18 @@ import { apiGetConsultantEnquiryCount } from '../../api/apiGetConsultantSessionL
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 /**
- * No signal reaches other counsellors when someone takes an enquiry, so the
- * badge re-checks this often while the tab is visible (FE#1435).
+ * Fallback only (FE#1435): a colleague's takeover normally arrives as the
+ * Matrix acceptance notice (`enquiryAccepted`); this re-check covers a missed
+ * notice and enquiries without one (anonymous live chat).
  */
 export const ENQUIRY_COUNT_POLL_MS = 30000;
 
 /**
  * Open enquiries for the "Anfragen" nav badge (FE#1435): null until the
  * first answer. Reloads on the enquiry-list refresh signal (a new enquiry in
- * the feed, an enquiry accepted or denied here), on a visible poll and when
- * the tab becomes visible again. A failed reload keeps the last count.
+ * the feed, an enquiry accepted or denied here), on the Matrix acceptance
+ * notice (a colleague took an enquiry), on a visible poll and when the tab
+ * becomes visible again. A failed reload keeps the last count.
  */
 export const useOpenEnquiryCount = (enabled: boolean): number | null => {
 	const [count, setCount] = useState<number | null>(null);
@@ -49,8 +51,14 @@ export const useOpenEnquiryCount = (enabled: boolean): number | null => {
 		const onEvent = (data: {
 			refreshEnquiryList?: boolean;
 			sessionId?: number;
+			enquiryAccepted?: boolean;
 		}) => {
-			if (data?.refreshEnquiryList || data?.sessionId) void load();
+			if (
+				data?.refreshEnquiryList ||
+				data?.sessionId ||
+				data?.enquiryAccepted
+			)
+				void load();
 		};
 		const isVisible = () => document.visibilityState !== 'hidden';
 		const onVisibility = () => {

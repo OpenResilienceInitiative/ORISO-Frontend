@@ -1,8 +1,8 @@
 /**
  * FE#1435: the "Anfragen" nav badge counts open enquiries. It loads once,
  * reloads when a new enquiry arrives or one is taken here (the enquiry-list
- * refresh signal), and re-checks every 30 s while the tab is visible so an
- * enquiry another counsellor takes drops off as well.
+ * refresh signal), drops when a colleague takes one (Matrix acceptance
+ * notice), and re-checks every 30 s while the tab is visible as a fallback.
  *
  * @vitest-environment oriso-jsdom
  */
@@ -93,7 +93,24 @@ describe('useOpenEnquiryCount (FE#1435)', () => {
 		expect(apiGetConsultantEnquiryCount).toHaveBeenCalledTimes(1);
 	});
 
-	it('re-checks every 30 s while visible, so an enquiry taken by someone else drops off', async () => {
+	it('drops at once when a colleague takes an enquiry (Matrix acceptance notice)', async () => {
+		apiGetConsultantEnquiryCount.mockResolvedValue(2);
+		const { result } = renderHook(() => useOpenEnquiryCount(true));
+		await waitFor(() => expect(result.current).toBe(2));
+
+		apiGetConsultantEnquiryCount.mockResolvedValue(1);
+		act(() => {
+			messageEventEmitter.emit({
+				roomId: '!enquiry',
+				isOwnMessage: false,
+				enquiryAccepted: true
+			});
+		});
+		await waitFor(() => expect(result.current).toBe(1));
+		expect(apiGetConsultantEnquiryCount).toHaveBeenCalledTimes(2);
+	});
+
+	it('re-checks every 30 s while visible, as a fallback when no signal arrives', async () => {
 		vi.useFakeTimers();
 		apiGetConsultantEnquiryCount.mockResolvedValue(1);
 		const { result } = renderHook(() => useOpenEnquiryCount(true));
