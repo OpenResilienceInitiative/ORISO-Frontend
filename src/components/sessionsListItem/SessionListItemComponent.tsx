@@ -1183,8 +1183,8 @@ export const SessionListItemComponent = ({
 					onKeyDown={(e) => handleKeyDownListItem(e)}
 					ref={setCardRef}
 					tabIndex={index === 0 ? 0 : -1}
-					role="tab"
-					aria-selected={isChatActive}
+					role="listitem"
+					aria-current={isChatActive ? 'true' : undefined}
 				>
 					<div className="sessionsListItem__row">
 						<div className="sessionsListItem__rowLeft">
@@ -1376,8 +1376,8 @@ export const SessionListItemComponent = ({
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={setCardRef}
 				tabIndex={index === 0 ? 0 : -1}
-				role="tab"
-				aria-selected={isChatActive}
+				role="listitem"
+				aria-current={isChatActive ? 'true' : undefined}
 			>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__rowLeft">

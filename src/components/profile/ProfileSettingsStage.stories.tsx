@@ -177,7 +177,43 @@ export const AskerGeneral1440: Story = {
 export const ConsultantActivities1440: Story = {
 	decorators: [withStage(consultant)],
 	globals: desktop1440,
-	parameters: { router: { initialPath: '/profile/aktivitaeten' } }
+	parameters: { router: { initialPath: '/profile/aktivitaeten' } },
+	// #1338: the activities tab loads the counsellor's figures for the month.
+	beforeEach: () => {
+		const realFetch = window.fetch;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = new URL(
+				String(
+					typeof input === 'string' || input instanceof URL
+						? input
+						: input.url
+				),
+				window.location.href
+			);
+			if (url.pathname === '/service/users/statistics/consultant') {
+				return new Response(
+					JSON.stringify({
+						startDate: url.searchParams.get('startDate'),
+						endDate: url.searchParams.get('endDate'),
+						numberOfAssignedSessions: 12,
+						numberOfActiveSessions: 5,
+						numberOfSentMessages: 48
+					}),
+					{
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					}
+				);
+			}
+			return realFetch(input, init);
+		}) as typeof window.fetch;
+		return () => {
+			window.fetch = realFetch;
+		};
+	}
 };
 
 export const ConsultantHelp1440: Story = {
