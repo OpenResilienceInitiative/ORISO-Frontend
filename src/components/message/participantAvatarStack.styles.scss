@@ -132,6 +132,8 @@
 
 	// Badge: sits on the last avatar and costs no width.
 	&--badge {
+		// The badge overhangs by 8px; keep the title clear of it.
+		margin-right: 8px;
 		padding-right: 0;
 
 		.participantStack__item--overflow {

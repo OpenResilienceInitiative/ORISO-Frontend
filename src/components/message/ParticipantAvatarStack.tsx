@@ -317,7 +317,7 @@ const OverflowList = ({
 							left: Math.max(
 								8,
 								Math.min(
-									anchor.right - 240,
+									anchor.left - 12,
 									window.innerWidth - 248
 								)
 							)
