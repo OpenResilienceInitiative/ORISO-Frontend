@@ -1,4 +1,5 @@
 // @vitest-environment oriso-jsdom
+import { recordAccountOperationResponse } from '../utils/accountOperationIntent';
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { useAccountOperationActions } from './useAccountOperationActions';
@@ -53,14 +54,18 @@ it('restores the original A unknown action after A to B to A and retires only an
 		actions.run('save', '/users/data', payload, async (_body, intent) => {
 			ids.push(intent.id);
 			if (outcome === 'unknown') throw new TypeError('reply lost');
-			if (outcome === 'refused')
-				throw new Response(null, {
+			if (outcome === 'refused') {
+				const response = new Response(null, {
 					status: 403,
 					headers: {
 						'X-ORISO-Mutation-Outcome': 'NO_EFFECT',
 						'X-ORISO-Mutation-Operation': intent.id
 					}
 				});
+				recordAccountOperationResponse(response, response);
+				return Promise.reject(response);
+			}
+			return undefined;
 		});
 	await expect(submit()).rejects.toThrow('reply lost');
 	session.token = tokenFor('person-B', 1);

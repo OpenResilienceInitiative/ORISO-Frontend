@@ -308,6 +308,10 @@ test('a previously verified refusal cannot acknowledge a different App attempt',
 						'X-ORISO-Mutation-Operation': intent.id
 					}
 				});
+				const { recordAccountOperationResponse } = await import(
+					'../src/utils/accountOperationIntent.ts'
+				);
+				recordAccountOperationResponse(previousReply, previousReply);
 				throw previousReply;
 			}
 		)
@@ -431,4 +435,118 @@ test('unreadable tokens are never retained as ownership or assumed to establish 
 		() => assertAccountOperationOwner(headers, owner, owner),
 		/REQUEST_IDENTITY_CHANGED/
 	);
+});
+
+test('C1 unobserved synthetic Response cannot retire an unknown account action', async () => {
+	const actions = new AccountOperationActions();
+	const ids = [];
+	const run = () =>
+		actions.run('save', '/users/data', {}, async (_payload, intent) => {
+			ids.push(intent.id);
+			if (ids.length === 1) throw new TypeError('reply lost');
+			if (ids.length === 2)
+				throw new Response(null, {
+					status: 403,
+					headers: {
+						'X-ORISO-Mutation-Outcome': 'NO_EFFECT',
+						'X-ORISO-Mutation-Operation': intent.id
+					}
+				});
+		});
+	await assert.rejects(run());
+	await assert.rejects(run());
+	await run();
+	assert.equal(
+		ids[2],
+		ids[0],
+		'C1-unobserved-Response-cannot-retire-unknown'
+	);
+});
+
+test('C1 recorded empty metadata cannot be replaced by later raw Response header mutation', async () => {
+	const { recordAccountOperationResponse } = await import(
+		'../src/utils/accountOperationIntent.ts'
+	);
+	const actions = new AccountOperationActions();
+	const ids = [];
+	const run = () =>
+		actions.run('save', '/users/data', {}, async (_payload, intent) => {
+			ids.push(intent.id);
+			if (ids.length === 1) throw new TypeError('reply lost');
+			if (ids.length === 2) {
+				const response = new Response(null, { status: 403 });
+				recordAccountOperationResponse(response, response);
+				response.headers.set('X-ORISO-Mutation-Outcome', 'NO_EFFECT');
+				response.headers.set('X-ORISO-Mutation-Operation', intent.id);
+				throw response;
+			}
+		});
+	await assert.rejects(run());
+	await assert.rejects(run());
+	await run();
+	assert.equal(ids[2], ids[0], 'C1-only-copied-transport-metadata');
+});
+
+test('C1 genuine raw Response observed by actual fetchData retires the matching action', async () => {
+	const { fetchData, FETCH_ERRORS } = await import('../src/api/fetchData.ts');
+	const previous = globalThis.fetch;
+	globalThis.__accountAuthToken = tokenFor('same-person', 1);
+	const ids = [];
+	globalThis.fetch = async (request) => {
+		ids.push(request.headers.get('Idempotency-Key'));
+		if (ids.length === 1) throw new TypeError('reply lost');
+		if (ids.length === 2)
+			return new Response(null, {
+				status: 409,
+				headers: {
+					'X-ORISO-Mutation-Outcome': 'NO_EFFECT',
+					'X-ORISO-Mutation-Operation':
+						request.headers.get('Idempotency-Key')
+				}
+			});
+		return new Response(null, { status: 204 });
+	};
+	const actions = new AccountOperationActions();
+	const url = 'https://unit.oriso.invalid/users/data';
+	const run = () =>
+		actions.run('save', url, {}, (_payload, intent) =>
+			fetchData({
+				url,
+				method: 'PATCH',
+				bodyData: '{}',
+				timeout: 1,
+				headersData: intent.headersFor('PATCH', url, '{}'),
+				responseHandling: [FETCH_ERRORS.CONFLICT_WITH_RESPONSE]
+			})
+		);
+	try {
+		await assert.rejects(run());
+		await assert.rejects(
+			run(),
+			(error) => error instanceof Response && error.status === 409
+		);
+		await run();
+		assert.notEqual(ids[2], ids[0]);
+	} finally {
+		globalThis.fetch = previous;
+		delete globalThis.__accountAuthToken;
+	}
+});
+
+test('C1 legacy no-intent local validation still recognizes its original statuses', async () => {
+	const { isTerminalAccountOperationRefusal } = await import(
+		'../src/utils/accountOperationIntent.ts'
+	);
+	for (const status of [400, 403, 412, 422]) {
+		assert.equal(
+			isTerminalAccountOperationRefusal(new Response(null, { status })),
+			true
+		);
+		assert.equal(
+			isTerminalAccountOperationRefusal(
+				Object.assign(new Error('validation'), { status })
+			),
+			true
+		);
+	}
 });

@@ -65,20 +65,14 @@ export const isTerminalAccountOperationRefusal = (
 		status = (error as Error & { status?: number }).status;
 	}
 	status = response?.status ?? status;
-	const raw =
-		typeof Response !== 'undefined' && error instanceof Response
-			? error
-			: undefined;
-	const outcome =
-		response?.outcome ?? raw?.headers.get('X-ORISO-Mutation-Outcome');
-	const operation =
-		response?.operation ?? raw?.headers.get('X-ORISO-Mutation-Operation');
+	const outcome = response?.outcome;
+	const operation = response?.operation;
 	if (
 		object &&
 		intent &&
 		outcome === 'NO_EFFECT' &&
 		operation === intent.id &&
-		[400, 403, 409].includes(status ?? 0)
+		[400, 403, 409].includes(response?.status ?? 0)
 	) {
 		verifiedRefusals.set(object, intent.id);
 		uncertainErrors.delete(object);

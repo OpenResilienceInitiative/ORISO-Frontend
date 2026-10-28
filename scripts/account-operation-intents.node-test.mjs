@@ -58,6 +58,21 @@ const {
 	AccountOperationActions
 } = await import('../src/utils/accountOperationIntent.ts');
 
+const { recordAccountOperationResponse } = await import(
+	'../src/utils/accountOperationIntent.ts'
+);
+const observedRefusal = (status, operation) => {
+	const response = new Response(null, {
+		status,
+		headers: {
+			'X-ORISO-Mutation-Outcome': 'NO_EFFECT',
+			'X-ORISO-Mutation-Operation': operation
+		}
+	});
+	recordAccountOperationResponse(response, response);
+	return response;
+};
+
 test('an unknown exact retry keeps its ID and captured payload', () => {
 	const slot = new AccountOperationSlot();
 	const input = { displayName: 'First' };
@@ -290,15 +305,7 @@ test('confirmed terminal refusal ends only its own action; a new submission gets
 	const send = (payload, intent) => {
 		seen.push(intent.id);
 		return seen.length === 1
-			? Promise.reject(
-					new Response(null, {
-						status: 400,
-						headers: {
-							'X-ORISO-Mutation-Outcome': 'NO_EFFECT',
-							'X-ORISO-Mutation-Operation': intent.id
-						}
-					})
-				)
+			? Promise.reject(observedRefusal(400, intent.id))
 			: Promise.resolve();
 	};
 	await assert.rejects(
