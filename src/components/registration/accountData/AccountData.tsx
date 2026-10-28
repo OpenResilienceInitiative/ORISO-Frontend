@@ -73,6 +73,7 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
+import { isAskerEmailCollectionAllowed } from '../../../utils/askerAccountPolicy';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
 
@@ -164,8 +165,11 @@ export const AccountData: FC<{
 	const currentUsername = useRef(username);
 	const { tenant } = useContext(TenantContext);
 	const legalLinks = useContext(LegalLinksContext);
-	const emailVisible = tenant?.settings?.emailVisible ?? false;
-	const emailRequired = tenant?.settings?.emailRequired ?? false;
+	const emailVisible =
+		isAskerEmailCollectionAllowed(tenant?.settings) &&
+		(tenant?.settings?.emailVisible ?? false);
+	const emailRequired =
+		emailVisible && (tenant?.settings?.emailRequired ?? false);
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
 	const [emailWasBlurred, setEmailWasBlurred] = useState<boolean>(false);
 	/* The password was minted for a temporary join and never shown. The flag
@@ -180,7 +184,8 @@ export const AccountData: FC<{
 	// A confirmable email is 2FA's second channel — requiring it here is a
 	// frontend-only guard until the backend module (email confirmation,
 	// persisted preference) lands; see #260.
-	const effectiveEmailRequired = emailRequired || twoFactorAuthEnabled;
+	const effectiveEmailRequired =
+		emailVisible && (emailRequired || twoFactorAuthEnabled);
 	const [usernameWasBlurred, setUsernameWasBlurred] =
 		useState<boolean>(false);
 	const { setDisabledNextButton, registrationData } =
@@ -382,7 +387,9 @@ export const AccountData: FC<{
 			onChange({
 				username,
 				password,
-				...(emailVisible && trimmedEmail ? { email: trimmedEmail } : {})
+				// Clear an address previously committed by this step, rather than
+				// leaving it in Registration's merged data when permission changes.
+				email: emailVisible && trimmedEmail ? trimmedEmail : undefined
 			});
 		} else {
 			setDisabledNextButton(true);
@@ -431,7 +438,10 @@ export const AccountData: FC<{
 	} as const;
 
 	const suggestUsername = () =>
-		applyGeneratedUsername(regeneratePseudonym(identity, locale));
+		applyGeneratedUsername({
+			...regeneratePseudonym(identity, locale),
+			avatar: identity.avatar
+		});
 	const suggestAvatar = () =>
 		setIdentity((currentIdentity) => ({
 			...currentIdentity,

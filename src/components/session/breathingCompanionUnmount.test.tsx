@@ -13,7 +13,8 @@ import {
 	screen,
 	act,
 	cleanup,
-	fireEvent
+	fireEvent,
+	waitFor
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -34,6 +35,10 @@ import {
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 
+import { apiPutSessionData } from '../../api/apiPutSessionData';
+import { apiPatchUserData } from '../../api/apiPatchUserData';
+const reloadLegacySession = vi.fn();
+const aliasPolicy = vi.hoisted(() => ({ featureDisplayNameEditable: true }));
 const SESSION_ID = 4711;
 const ROOM_ID = '!live-chat:matrix.example.org';
 
@@ -54,7 +59,7 @@ vi.mock('../../globalState', async () => {
 		hasUserAuthority: (authority: string, userData: any) =>
 			Boolean(userData?.grantedAuthorities?.includes(authority)),
 		getContact: () => ({ username: 'Beraterin' }),
-		useTenant: () => ({}),
+		useTenant: () => ({ settings: aliasPolicy }),
 		// Added when the side room's call controls landed: `SessionItemComponent`
 		// asks the consulting type whether calls are allowed at all. This test
 		// and that import came from two different branches and only met in the
@@ -94,15 +99,18 @@ vi.mock('../pseudonym/WaitingQueueActionBar', () => ({
 	)
 }));
 
-vi.mock('../pseudonym/PseudonymCard', () => ({
-	PseudonymCard: () => <div data-testid="pseudonym-card" />
-}));
+vi.mock('../pseudonym/PseudonymCard', async (original) => {
+	const real = await original<typeof import('../pseudonym/PseudonymCard')>();
+	return {
+		PseudonymCard: (
+			props: React.ComponentProps<typeof real.PseudonymCard>
+		) => <real.PseudonymCard {...props} skipTyping />
+	};
+});
 vi.mock('../pseudonym/PrivacyMessageCard', () => ({
 	PrivacyMessageCard: () => <div data-testid="privacy-card" />
 }));
-vi.mock('../pseudonym/PseudonymActionBar', () => ({
-	PseudonymActionBar: () => <div data-testid="pseudonym-action-bar" />
-}));
+
 vi.mock('../pseudonym/AnonymousConsentGate', () => ({
 	AnonymousConsentGate: () => <div data-testid="consent-gate" />
 }));
@@ -193,7 +201,7 @@ const askerUserData = {
 	dataPrivacyConfirmation: '2026-09-06T10:00:00Z'
 } as any;
 
-const buildActiveSession = (status: number) =>
+const buildActiveSession = (status: number, sessionId = SESSION_ID) =>
 	({
 		rid: ROOM_ID,
 		isGroup: false,
@@ -201,7 +209,7 @@ const buildActiveSession = (status: number) =>
 		user: { username: 'anon_7' },
 		consultant: { id: 'consultant-1', username: 'Beraterin' },
 		item: {
-			id: SESSION_ID,
+			id: sessionId,
 			matrixRoomId: ROOM_ID,
 			conversationType: 'LIVE_CHAT',
 			status,
@@ -210,40 +218,50 @@ const buildActiveSession = (status: number) =>
 		}
 	}) as any;
 
-const renderSession = (status: number, userData = askerUserData, path = '/') =>
-	render(
-		<MemoryRouter initialEntries={[path]}>
-			<NotificationsContext.Provider
-				value={{ addEventNotification: vi.fn() } as any}
+const sessionElement = (
+	status: number,
+	userData = askerUserData,
+	path = '/',
+	sessionId = SESSION_ID
+) => (
+	<MemoryRouter initialEntries={[path]}>
+		<NotificationsContext.Provider
+			value={{ addEventNotification: vi.fn() } as any}
+		>
+			<UserDataContext.Provider
+				value={{ userData, setUserData: vi.fn() } as any}
 			>
-				<UserDataContext.Provider
-					value={{ userData, setUserData: vi.fn() } as any}
+				<SessionTypeContext.Provider
+					value={{ type: SESSION_LIST_TYPES.MY_SESSION } as any}
 				>
-					<SessionTypeContext.Provider
-						value={{ type: SESSION_LIST_TYPES.MY_SESSION } as any}
+					<ActiveSessionContext.Provider
+						value={
+							{
+								activeSession: buildActiveSession(
+									status,
+									sessionId
+								),
+								reloadActiveSession: reloadLegacySession
+							} as any
+						}
 					>
-						<ActiveSessionContext.Provider
-							value={
-								{
-									activeSession: buildActiveSession(status),
-									reloadActiveSession: vi.fn()
-								} as any
-							}
-						>
-							<SessionItemComponent
-								typingUsers={[]}
-								bannedUsers={[]}
-								messages={[]}
-								hasUserInitiatedStopOrLeaveRequest={{
-									current: false
-								}}
-							/>
-						</ActiveSessionContext.Provider>
-					</SessionTypeContext.Provider>
-				</UserDataContext.Provider>
-			</NotificationsContext.Provider>
-		</MemoryRouter>
-	);
+						<SessionItemComponent
+							typingUsers={[]}
+							bannedUsers={[]}
+							messages={[]}
+							hasUserInitiatedStopOrLeaveRequest={{
+								current: false
+							}}
+						/>
+					</ActiveSessionContext.Provider>
+				</SessionTypeContext.Provider>
+			</UserDataContext.Provider>
+		</NotificationsContext.Provider>
+	</MemoryRouter>
+);
+
+const renderSession = (status: number, userData = askerUserData, path = '/') =>
+	render(sessionElement(status, userData, path));
 
 describe('SessionItemComponent — breathing companion lifetime', () => {
 	beforeEach(() => {
@@ -470,5 +488,136 @@ describe('SessionItemComponent — notification active-view lifecycle', () => {
 				.mocked(apiPatchNotificationActiveView)
 				.mock.calls.some(([request]) => request.active)
 		).toBe(false);
+	});
+});
+
+describe('legacy live-chat alias persistence', () => {
+	beforeEach(() => {
+		sessionStorage.clear();
+		aliasPolicy.featureDisplayNameEditable = true;
+		vi.clearAllMocks();
+	});
+	afterEach(cleanup);
+	it('writes the visible alias to the session without patching login identity', async () => {
+		renderSession(1);
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'profile.data.displayName' }),
+			{ target: { value: 'Legacy session alias' } }
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'anonymousChat.pseudonym.continueWithSelection'
+			})
+		);
+		await waitFor(() =>
+			expect(apiPutSessionData).toHaveBeenCalledWith(SESSION_ID, {
+				displayName: 'Legacy session alias'
+			})
+		);
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+	});
+	it('does not offer a dead confirm action for a blank custom alias', () => {
+		renderSession(1);
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'profile.data.displayName' }),
+			{ target: { value: '   ' } }
+		);
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'anonymousChat.pseudonym.continueWithSelection'
+			}).disabled
+		).toBe(true);
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'anonymousChat.pseudonym.changeName'
+			}).disabled
+		).toBe(false);
+	});
+	it('ignores an older save after navigating A to B and back to a newer A save', async () => {
+		let finishFirstA = () => {};
+		let finishSecondA = () => {};
+		vi.mocked(apiPutSessionData)
+			.mockReturnValueOnce(
+				new Promise<void>((resolve) => {
+					finishFirstA = resolve;
+				})
+			)
+			.mockResolvedValueOnce(undefined)
+			.mockReturnValueOnce(
+				new Promise<void>((resolve) => {
+					finishSecondA = resolve;
+				})
+			);
+		const view = renderSession(1);
+		const saveAlias = (name: string) => {
+			fireEvent.change(
+				screen.getByRole('textbox', {
+					name: 'profile.data.displayName'
+				}),
+				{ target: { value: name } }
+			);
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'anonymousChat.pseudonym.continueWithSelection'
+				})
+			);
+		};
+		saveAlias('Older A alias');
+		view.rerender(sessionElement(1, askerUserData, '/', SESSION_ID + 1));
+		saveAlias('B alias');
+		await waitFor(() =>
+			expect(
+				sessionStorage.getItem(
+					'anonymous-pseudonym-' + (SESSION_ID + 1)
+				)
+			).toBe('1')
+		);
+		view.rerender(sessionElement(1));
+		saveAlias('Newer A alias');
+		expect(apiPutSessionData).toHaveBeenCalledTimes(3);
+		reloadLegacySession.mockClear();
+		await act(async () => {
+			finishFirstA();
+		});
+		expect(reloadLegacySession).not.toHaveBeenCalled();
+		expect(
+			sessionStorage.getItem('anonymous-pseudonym-' + SESSION_ID)
+		).toBeNull();
+		expect(
+			sessionStorage.getItem('anonymous-pseudonym-name-' + SESSION_ID)
+		).toBeNull();
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'anonymousChat.pseudonym.continueWithSelection'
+			}).disabled
+		).toBe(true);
+		await act(async () => {
+			finishSecondA();
+		});
+		expect(
+			sessionStorage.getItem('anonymous-pseudonym-name-' + SESSION_ID)
+		).toBe('Newer A alias');
+	});
+	it('does not reload or mark an unmounted session after a delayed alias save', async () => {
+		let finishSave = () => {};
+		vi.mocked(apiPutSessionData).mockReturnValueOnce(
+			new Promise<void>((resolve) => {
+				finishSave = resolve;
+			})
+		);
+		const view = renderSession(1);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'anonymousChat.pseudonym.continueWithSelection'
+			})
+		);
+		view.unmount();
+		await act(async () => {
+			finishSave();
+		});
+		expect(reloadLegacySession).not.toHaveBeenCalled();
+		expect(
+			sessionStorage.getItem('anonymous-pseudonym-' + SESSION_ID)
+		).toBeNull();
 	});
 });

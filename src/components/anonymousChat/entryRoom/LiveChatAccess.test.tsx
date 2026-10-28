@@ -26,6 +26,8 @@ import {
 } from './entryRoomIdentity';
 import { LiveChatEntryRoom } from './LiveChatEntryRoom';
 import { LocaleContext } from '../../../globalState';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../../test/fixtures/askerAccountPolicyFixtures';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -81,7 +83,7 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 		expect(radios[0].getAttribute('aria-checked')).toBe('true');
 	});
 
-	it('hands the chosen name to the session and the account', async () => {
+	it('persists the chosen session alias without changing the login or account display name', async () => {
 		render(<LiveChatEntryRoom sessionId={7} />);
 
 		const third = screen.getAllByRole('radio')[2];
@@ -99,7 +101,6 @@ describe('the live chat door offers a choice of names (#1341)', () => {
 		);
 		// The redeemed account keeps the guest's language (no LocaleContext here → 'de').
 		expect(apiPatchUserData).toHaveBeenCalledWith({
-			displayName: chosen,
 			preferredLanguage: 'de'
 		});
 	});
@@ -427,4 +428,88 @@ describe('confirmed identity boundaries', () => {
 		sessionStorage.clear();
 		expect(readConfirmedEntryName(17)).toBe('katze_mika_1234');
 	});
+});
+
+const policyRoom = (editable: boolean) => (
+	<TenantContext.Provider
+		value={{
+			tenant: accountPolicyTenant({
+				featureDisplayNameEditable: editable
+			}),
+			setTenant: vi.fn(),
+			updateTenantSettings: vi.fn()
+		}}
+	>
+		<LiveChatEntryRoom sessionId={7} />
+	</TenantContext.Provider>
+);
+
+describe('the canonical display-name typing permission', () => {
+	it('retains four generated choices and a read-only name when typing is forbidden', () => {
+		render(policyRoom(false));
+		expect(screen.getAllByRole('radio')).toHaveLength(4);
+		expect(
+			screen.getByRole<HTMLInputElement>('textbox', {
+				name: 'profile.data.displayName'
+			}).readOnly
+		).toBe(true);
+	});
+	it('saves a typed alias to this session only and preserves the chosen avatar', async () => {
+		const view = render(policyRoom(true));
+		const pictures = view.container.querySelectorAll('img');
+		const before = Array.from(pictures).map((image) => image.src);
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'profile.data.displayName' }),
+			{
+				target: { value: 'My private alias' }
+			}
+		);
+		expect(
+			Array.from(view.container.querySelectorAll('img')).map(
+				(image) => image.src
+			)
+		).toEqual(before);
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+		await waitFor(() =>
+			expect(apiPutSessionData).toHaveBeenCalledWith(7, {
+				displayName: 'My private alias'
+			})
+		);
+		expect(apiPatchUserData).toHaveBeenCalledWith({
+			preferredLanguage: 'de'
+		});
+	});
+	it('does not submit a previously typed alias after typing is forbidden', async () => {
+		const view = render(policyRoom(true));
+		const generated = screen.getAllByRole('radio')[0].textContent;
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'profile.data.displayName' }),
+			{
+				target: { value: 'Custom alias' }
+			}
+		);
+		view.rerender(policyRoom(false));
+		fireEvent.click(screen.getByTestId('registration-footer-primary'));
+		await waitFor(() =>
+			expect(apiPutSessionData).toHaveBeenCalledWith(7, {
+				displayName: generated
+			})
+		);
+	});
+});
+
+it('does not patch another account after the name save outlives its entry room', async () => {
+	let finishSave = () => {};
+	vi.mocked(apiPutSessionData).mockReturnValueOnce(
+		new Promise<void>((resolve) => {
+			finishSave = resolve;
+		})
+	);
+	const view = render(policyRoom(false));
+	fireEvent.click(screen.getByTestId('registration-footer-primary'));
+	view.unmount();
+	await act(async () => {
+		finishSave();
+	});
+	expect(apiPatchUserData).not.toHaveBeenCalled();
 });

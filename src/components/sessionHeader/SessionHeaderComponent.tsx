@@ -66,7 +66,8 @@ import { appConfig } from '../../utils/appConfig';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
 	isAnonymousMatrixUsername,
-	resolveAnonymousChatDisplayName
+	resolveAnonymousChatDisplayName,
+	resolveAssignedAskerDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import {
@@ -617,6 +618,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const headerContactName = (() => {
 		if (isAnonymousAsker) {
+			const sessionAlias = resolveAssignedAskerDisplayName(
+				activeSession.user
+			);
+			if (sessionAlias) return sessionAlias;
 			let storedPseudonym: string | null = null;
 			try {
 				storedPseudonym =
@@ -626,13 +631,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			} catch {
 				storedPseudonym = null;
 			}
-			const ownPseudonym = resolveAnonymousChatDisplayName(
-				{
-					username: userData?.userName,
-					displayName: userData?.displayName || storedPseudonym
-				},
-				userData?.displayName || storedPseudonym || undefined
-			);
+			const cachedAlias = resolveAssignedAskerDisplayName({
+				displayName: storedPseudonym || undefined
+			});
+			if (cachedAlias) return cachedAlias;
+			const ownPseudonym = resolveAnonymousChatDisplayName({
+				username: activeSession.user?.username || userData?.userName
+			});
 			if (ownPseudonym) {
 				return ownPseudonym;
 			}

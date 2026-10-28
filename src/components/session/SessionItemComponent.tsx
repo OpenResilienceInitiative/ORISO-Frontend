@@ -1,3 +1,4 @@
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 import * as React from 'react';
@@ -292,6 +293,7 @@ const ROBOT_MESSAGE_REVEAL_GAP_MS = 3500;
 export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
+	const nameEditable = isAskerDisplayNameTypingAllowed(tenantData?.settings);
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
@@ -369,7 +371,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return false;
 		}
 	});
-	const [pseudonymSaving, setPseudonymSaving] = useState(false);
+	const aliasView = useRef({
+		active: true,
+		sessionId: activeSession.item.id,
+		generation: 0
+	});
+	// Returning to the same session starts a new view lifetime (A → B → A).
+	if (aliasView.current.sessionId !== activeSession.item.id) {
+		aliasView.current.sessionId = activeSession.item.id;
+		aliasView.current.generation += 1;
+	}
+	useEffect(() => {
+		const view = aliasView.current;
+		view.active = true;
+		return () => {
+			view.active = false;
+		};
+	}, []);
+	const savingAliasRequest = useRef<{
+		sessionId: number;
+		generation: number;
+	} | null>(null);
+	const [pendingAliasRequest, setPendingAliasRequest] =
+		useState<typeof savingAliasRequest.current>(null);
+	const pseudonymSaving =
+		pendingAliasRequest?.sessionId === activeSession.item.id &&
+		pendingAliasRequest?.generation === aliasView.current.generation;
 	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
 		null
 	);
@@ -447,8 +474,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
 		generatePseudonym(locale)
 	);
+	const [customPseudonymName, setCustomPseudonymName] = useState<{
+		sessionId: number;
+		value: string;
+	} | null>(null);
+	const selectedPseudonym = useMemo(
+		() =>
+			nameEditable &&
+			customPseudonymName?.sessionId === activeSession.item.id
+				? {
+						...currentPseudonym,
+						displayName: customPseudonymName.value
+					}
+				: currentPseudonym,
+		[
+			nameEditable,
+			customPseudonymName,
+			activeSession.item.id,
+			currentPseudonym
+		]
+	);
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+		setCustomPseudonymName(null);
+		setCurrentPseudonym((prev) => ({
+			...regeneratePseudonym(prev, locale),
+			avatar: prev.avatar
+		}));
 	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
@@ -1185,22 +1236,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * The login User-ID is left unchanged so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
-		if (pseudonymSaving) return;
-		setPseudonymSaving(true);
-		apiPutSessionData(activeSession.item.id, {
-			displayName: currentPseudonym.displayName
-		})
-			.then(() =>
-				apiPatchUserData({ displayName: currentPseudonym.displayName })
-			)
-			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
+		const alias = selectedPseudonym.displayName.trim();
+		const sessionId = activeSession.item.id;
+		if (
+			(savingAliasRequest.current?.generation ===
+				aliasView.current.generation &&
+				savingAliasRequest.current?.sessionId === sessionId) ||
+			!alias ||
+			alias.length > 255
+		)
+			return;
+		const request = { sessionId, generation: aliasView.current.generation };
+		savingAliasRequest.current = request;
+		setPendingAliasRequest(request);
+		const isCurrentView = () =>
+			aliasView.current.active &&
+			aliasView.current.sessionId === sessionId &&
+			aliasView.current.generation === request.generation;
+		apiPutSessionData(sessionId, { displayName: alias })
+			.then(() => (isCurrentView() ? reloadActiveSession?.() : undefined))
 			.then(() => {
+				if (!isCurrentView()) return;
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
 					sessionStorage.setItem(
-						`anonymous-pseudonym-name-${activeSession.item.id}`,
-						currentPseudonym.displayName
+						`anonymous-pseudonym-name-${sessionId}`,
+						alias
 					);
 				} catch {
 					/* ignore storage errors */
@@ -1209,13 +1271,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.catch(() => {
 				/* keep card visible on failure so user can retry */
 			})
-			.finally(() => setPseudonymSaving(false));
+			.finally(() => {
+				if (savingAliasRequest.current !== request) return;
+				savingAliasRequest.current = null;
+				if (aliasView.current.active) setPendingAliasRequest(null);
+			});
 	}, [
 		activeSession.item.id,
-		currentPseudonym,
-		pseudonymSaving,
-		pseudonymStorageKey,
-		setUserData
+		selectedPseudonym,
+		reloadActiveSession,
+		pseudonymStorageKey
 	]);
 
 	/**
@@ -1385,11 +1450,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		) {
 			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -3249,7 +3310,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
-								pseudonym={currentPseudonym}
+								pseudonym={selectedPseudonym}
+								editable={nameEditable && !pseudonymConfirmed}
+								disabled={pseudonymSaving || pseudonymConfirmed}
+								onNameChange={(value) => {
+									if (nameEditable)
+										setCustomPseudonymName({
+											sessionId: activeSession.item.id,
+											value
+										});
+								}}
 								skipTyping={pseudonymConfirmed}
 							/>
 							{pseudonymConfirmed && <PrivacyMessageCard />}
@@ -3600,6 +3670,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onRegenerate={handleRegeneratePseudonym}
 							onConfirm={handleConfirmPseudonym}
 							disabled={pseudonymSaving}
+							confirmDisabled={
+								!selectedPseudonym.displayName.trim()
+							}
 						/>
 					</div>
 				)}

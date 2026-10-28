@@ -6,6 +6,7 @@ interface PseudonymActionBarProps {
 	onRegenerate: () => void;
 	onConfirm: () => void;
 	disabled?: boolean;
+	confirmDisabled?: boolean;
 }
 
 /**
@@ -55,7 +56,8 @@ const DicePatternIcon: React.FC = () => {
 export const PseudonymActionBar: React.FC<PseudonymActionBarProps> = ({
 	onRegenerate,
 	onConfirm,
-	disabled
+	disabled,
+	confirmDisabled = false
 }) => {
 	const { t } = useTranslation();
 
@@ -81,7 +83,7 @@ export const PseudonymActionBar: React.FC<PseudonymActionBarProps> = ({
 				type="button"
 				className="pseudonymActionBar__btnContinue"
 				onClick={onConfirm}
-				disabled={disabled}
+				disabled={disabled || confirmDisabled}
 			>
 				<span className="pseudonymActionBar__btnContinueLabel">
 					{t('anonymousChat.pseudonym.continueWithSelection')}
