@@ -103,7 +103,9 @@
 			}
 		}
 
+		// The label rides on the handle, drawn above it.
 		&--handle {
+			z-index: 31;
 			margin-top: -18px;
 
 			.tlp__nowLabel {

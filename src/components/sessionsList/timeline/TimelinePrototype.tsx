@@ -480,7 +480,7 @@ export const TimelinePrototype = ({
 			<div
 				ref={futureRef}
 				className="tlp__futureInner"
-				role="tablist"
+				role={futureItems.length ? 'tablist' : 'group'}
 				aria-label="Anstehende Termine"
 			>
 				{futureItems.length === 0 ? (
