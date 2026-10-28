@@ -2753,5 +2753,14 @@
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
+	},
+	"calls": {
+		"share": {
+			"knock": {
+				"on": "Gäste warten, bis du sie einlässt."
+			},
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markiere den Link und kopiere ihn selbst.",
+			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald du auflegst, funktioniert er nicht mehr."
+		}
 	}
 }

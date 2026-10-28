@@ -6066,6 +6066,35 @@
 				"anmerkung": "Anmerkung",
 				"aufgabe": "Aufgabe"
 			}
+		},
+		"share": {
+			"open": "Anruf teilen",
+			"title": "Anruf teilen",
+			"close": "Schließen",
+			"settingsLabel": "Für Gäste mit diesem Link",
+			"knock": {
+				"label": "Anklopfen",
+				"on": "Gäste warten, bis Sie sie einlassen.",
+				"off": "Gäste kommen ohne Warten direkt in den Anruf."
+			},
+			"temporaryAccount": {
+				"label": "Temporäres Konto",
+				"on": "Gäste bekommen ein Gastkonto, das nach dem Anruf gelöscht wird.",
+				"off": "Gäste melden sich mit einem eigenen Konto an oder legen eines an."
+			},
+			"linkLabel": "Link zum Anruf",
+			"copy": "Kopieren",
+			"copied": "Kopiert",
+			"copiedStatus": "Der Link ist in der Zwischenablage.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markieren Sie den Link und kopieren Sie ihn selbst.",
+			"qrShow": "QR-Code",
+			"qrHide": "QR-Code ausblenden",
+			"qrAlt": "QR-Code mit dem Link zum Anruf",
+			"share": "Teilen",
+			"shareTitle": "Einladung zum Anruf",
+			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald Sie auflegen, funktioniert er nicht mehr.",
+			"consent": "Vor dem Eintritt bestätigen Gäste mit einem Tipp den Datenschutz und die Einwilligung der Beratungsstelle.",
+			"qrHint": "Mit der Kamera eines Handys scannen, um den Anruf dort zu öffnen."
 		}
 	},
 	"form": {

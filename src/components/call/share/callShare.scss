@@ -1,0 +1,385 @@
+/*
+ * Share a running call by link (#1794). The surface follows the call menu of
+ * "Dynamische Call-Ansichten" (plate 5b): a near-white card, 16px corners,
+ * a hairline ring and a soft drop shadow. The trigger is one slot of the
+ * white toolbar pill (plates 2a / 1c). Only M3 role tokens, each with its
+ * static fallback.
+ */
+
+/* ── Toolbar slot (plate 1c: 48px hit area, 40px state layer) ─────────── */
+
+.callShare__trigger {
+	align-items: center;
+	background: none;
+	border: 0;
+	cursor: pointer;
+	display: inline-flex;
+	height: 48px;
+	justify-content: center;
+	padding: 0;
+	width: 48px;
+
+	&:focus-visible {
+		outline: none;
+
+		.callShare__triggerInner {
+			outline: 3px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
+		}
+	}
+
+	&:hover .callShare__triggerInner {
+		background: var(--m3-surface-container, #f0edee);
+	}
+}
+
+.callShare__triggerInner {
+	align-items: center;
+	border-radius: 100px;
+	color: var(--m3-on-surface-variant, #444748);
+	display: inline-flex;
+	height: 40px;
+	justify-content: center;
+	transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
+	width: 40px;
+
+	svg {
+		height: 24px;
+		width: 24px;
+	}
+}
+
+.callShare__trigger--active .callShare__triggerInner,
+.callShare__trigger--active:hover .callShare__triggerInner {
+	background: var(--m3-surface-container-highest, #e4e2e2);
+	color: var(--m3-on-surface, #1a1c1e);
+}
+
+/* ── Surfaces ─────────────────────────────────────────────────────────── */
+
+/* Desktop: above the toolbar pill, 12px clear of it (plate 2a menu). */
+.MuiPopover-paper.callShare__popover {
+	background: var(--m3-surface, #fcf9f9);
+	border-radius: 16px;
+	box-shadow:
+		inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+		0 12px 30px rgba(0, 0, 0, 0.22);
+	margin-top: -12px;
+	max-height: calc(100vh - 32px);
+	max-width: calc(100vw - 32px);
+	width: 400px;
+}
+
+/* Phone: M3 bottom sheet, 28px top corners, drag handle. */
+.MuiDrawer-paper.callShare__sheet {
+	background: var(--m3-surface, #fcf9f9);
+	border-radius: 28px 28px 0 0;
+	max-height: 92vh;
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.callShare__handle {
+	align-self: center;
+	background: var(--m3-outline-variant, #c4c7c8);
+	border-radius: 2px;
+	flex: none;
+	height: 4px;
+	margin: 12px 0 4px;
+	width: 32px;
+}
+
+/* ── Panel ────────────────────────────────────────────────────────────── */
+
+.callShare {
+	box-sizing: border-box;
+	color: var(--m3-on-surface, #1a1c1e);
+	display: flex;
+	flex-direction: column;
+	font-family: inherit;
+	padding: 8px 16px 16px;
+
+	&__header {
+		align-items: center;
+		display: flex;
+		gap: 8px;
+		min-height: 48px;
+	}
+
+	&__title {
+		flex: 1;
+		font-size: 16px;
+		font-weight: 500;
+		letter-spacing: 0.15px;
+		line-height: 24px;
+		margin: 0;
+	}
+
+	&__close.MuiIconButton-root {
+		color: var(--m3-on-surface-variant, #444748);
+		margin-right: -8px;
+	}
+
+	/* Plate 5b section label: small caps-like overline. */
+	&__sectionLabel {
+		color: var(--m3-on-surface-variant, #444748);
+		display: block;
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		line-height: 16px;
+		margin: 8px 0 4px;
+		text-transform: uppercase;
+	}
+
+	/* M3 list, two-line items with a trailing switch. */
+	&__toggles {
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border-radius: 12px;
+		box-shadow: inset 0 0 0 1px var(--m3-outline-variant, #c4c7c8);
+		list-style: none;
+		margin: 0 0 8px;
+		padding: 0;
+	}
+
+	&__toggle {
+		align-items: center;
+		display: flex;
+		gap: 12px;
+		min-height: 64px;
+		padding: 8px 12px;
+
+		& + & {
+			border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		}
+	}
+
+	&__toggleIcon {
+		color: var(--m3-on-surface-variant, #444748);
+		display: inline-flex;
+		flex: none;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	&__toggleText {
+		cursor: pointer;
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	&__toggleLabel {
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+	}
+
+	&__toggleDescription {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		letter-spacing: 0.4px;
+		line-height: 16px;
+	}
+
+	&__linkRow {
+		align-items: stretch;
+		display: flex;
+		gap: 8px;
+	}
+
+	/* Read-only outlined field: the whole link selects on focus. */
+	&__linkField {
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
+		box-sizing: border-box;
+		color: var(--m3-on-surface, #1a1c1e);
+		flex: 1 1 auto;
+		font-family: inherit;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		min-height: 48px;
+		min-width: 0;
+		padding: 12px;
+		text-overflow: ellipsis;
+
+		&:focus-visible {
+			border-color: var(--m3-primary, #a5000a);
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	/* Filled button in the primary role, as in the self-help share dialog. */
+	&__copy {
+		align-items: center;
+		background: var(--m3-primary, #a5000a);
+		border: 0;
+		border-radius: 100px;
+		color: var(--m3-on-primary, #ffffff);
+		cursor: pointer;
+		display: inline-flex;
+		flex: none;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		justify-content: center;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		min-height: 48px;
+		padding: 0 20px 0 16px;
+
+		svg {
+			height: 20px;
+			width: 20px;
+		}
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__status {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		letter-spacing: 0.4px;
+		line-height: 16px;
+		margin: 4px 0 0;
+		min-height: 16px;
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 4px;
+	}
+
+	/* M3 outlined button: secondary to Copy. */
+	&__tonal {
+		align-items: center;
+		background: transparent;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 100px;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		display: inline-flex;
+		flex: 1 1 0;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		justify-content: center;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		min-height: 40px;
+		padding: 0 16px;
+		white-space: nowrap;
+
+		svg {
+			height: 18px;
+			width: 18px;
+		}
+
+		&:hover {
+			background: var(--m3-surface-container, #f0edee);
+		}
+
+		&[aria-expanded='true'] {
+			background: var(--m3-surface-container-highest, #e4e2e2);
+			color: var(--m3-on-surface, #1a1c1e);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	/* QR beside its hint, so the open popover still clears the toolbar. */
+	&__qr {
+		align-items: center;
+		display: flex;
+		gap: 16px;
+		margin-top: 12px;
+	}
+
+	/* White plate with a quiet zone, so phones read it on any background. */
+	&__qrPlate {
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border-radius: 12px;
+		box-shadow: inset 0 0 0 1px var(--m3-outline-variant, #c4c7c8);
+		display: flex;
+		flex: none;
+		padding: 8px;
+
+		img {
+			display: block;
+			height: 120px;
+			width: 120px;
+		}
+	}
+
+	&__qrPlaceholder {
+		display: block;
+		height: 120px;
+		width: 120px;
+	}
+
+	&__qrHint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+	}
+
+	&__notes {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		list-style: none;
+		margin: 16px 0 0;
+		padding: 0;
+
+		li {
+			align-items: flex-start;
+			color: var(--m3-on-surface-variant, #444748);
+			display: flex;
+			font-size: 12px;
+			gap: 8px;
+			letter-spacing: 0.4px;
+			line-height: 16px;
+		}
+
+		svg {
+			flex: none;
+			height: 16px;
+			width: 16px;
+		}
+	}
+}
+
+/* Narrow phones: Copy drops under the field, full width. */
+@media (width <= 359px) {
+	.callShare__linkRow {
+		flex-direction: column;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.callShare__triggerInner {
+		transition: none;
+	}
+}

@@ -6076,6 +6076,35 @@
 				"anmerkung": "Remarque",
 				"aufgabe": "Tâche"
 			}
+		},
+		"share": {
+			"open": "Partager l’appel",
+			"title": "Partager l’appel",
+			"close": "Fermer",
+			"settingsLabel": "Pour les invités avec ce lien",
+			"knock": {
+				"label": "Frapper avant d’entrer",
+				"on": "Les invités attendent que vous les fassiez entrer.",
+				"off": "Les invités rejoignent l’appel directement, sans attendre."
+			},
+			"temporaryAccount": {
+				"label": "Compte temporaire",
+				"on": "Les invités reçoivent un compte invité supprimé après l’appel.",
+				"off": "Les invités se connectent avec leur propre compte ou en créent un."
+			},
+			"linkLabel": "Lien vers l’appel",
+			"copy": "Copier",
+			"copied": "Copié",
+			"copiedStatus": "Le lien est dans le presse-papiers.",
+			"copyFailed": "La copie n’a pas fonctionné. Veuillez sélectionner le lien et le copier vous-même.",
+			"qrShow": "Code QR",
+			"qrHide": "Masquer le code QR",
+			"qrAlt": "Code QR avec le lien vers l’appel",
+			"share": "Partager",
+			"shareTitle": "Invitation à un appel",
+			"lifetime": "Le lien ne vaut que pour cet appel. Il ne fonctionne plus dès que vous raccrochez.",
+			"consent": "Avant d’entrer, les invités confirment d’un geste la protection des données et le consentement du centre de conseil.",
+			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel."
 		}
 	},
 	"form": {
