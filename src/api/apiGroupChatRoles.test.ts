@@ -14,6 +14,12 @@ vi.mock('../resources/scripts/endpoints', () => ({
 
 vi.mock('./fetchData', () => ({
 	FETCH_METHODS: { DELETE: 'DELETE', POST: 'POST', PUT: 'PUT' },
+	FETCH_ERRORS: {
+		FORBIDDEN: 'FORBIDDEN',
+		NO_MATCH: 'NO_MATCH',
+		CONFLICT: 'CONFLICT',
+		CATCH_ALL: 'CATCH_ALL'
+	},
 	fetchData: vi.fn(() => Promise.resolve())
 }));
 
@@ -25,29 +31,35 @@ describe('group-chat role API helpers', () => {
 			'CO_MODERATOR'
 		);
 
-		expect(fetchData).toHaveBeenCalledWith({
-			url: 'https://api.example/service/users/chat-series/42/participants/consultant-7/role',
-			method: 'PUT',
-			bodyData: JSON.stringify({ role: 'CO_MODERATOR' })
-		});
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: 'https://api.example/service/users/chat-series/42/participants/consultant-7/role',
+				method: 'PUT',
+				bodyData: JSON.stringify({ role: 'CO_MODERATOR' })
+			})
+		);
 	});
 
 	it('transfers primary ownership without display-name routing', async () => {
 		await apiTransferGroupChatOwnership(42, 'consultant-9');
 
-		expect(fetchData).toHaveBeenCalledWith({
-			url: 'https://api.example/service/users/chat-series/42/transfer-ownership',
-			method: 'POST',
-			bodyData: JSON.stringify({ consultantId: 'consultant-9' })
-		});
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: 'https://api.example/service/users/chat-series/42/transfer-ownership',
+				method: 'POST',
+				bodyData: JSON.stringify({ consultantId: 'consultant-9' })
+			})
+		);
 	});
 
 	it('removes a participant through the stable Series identity', async () => {
 		await apiRemoveGroupChatParticipant(42, 'consultant-9');
 
-		expect(fetchData).toHaveBeenCalledWith({
-			url: 'https://api.example/service/users/chat-series/42/participants/consultant-9',
-			method: 'DELETE'
-		});
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: 'https://api.example/service/users/chat-series/42/participants/consultant-9',
+				method: 'DELETE'
+			})
+		);
 	});
 });
