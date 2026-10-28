@@ -132,7 +132,9 @@ describe('callKnockModel', () => {
 });
 
 describe('knock notice texts', () => {
-	const LOCALES = ['de', 'de@informal', 'en', 'fr', 'ru', 'ti', 'tr'];
+	// de@informal is a sparse overlay: these texts say nothing formal, so it
+	// uses the de values (`fallbackLng`, guarded by src/i18n.test.ts).
+	const LOCALES = ['de', 'en', 'fr', 'ru', 'ti', 'tr'];
 	const KEYS = [
 		'region',
 		'someone',
@@ -144,6 +146,19 @@ describe('knock notice texts', () => {
 		'previous',
 		'next'
 	];
+	it('de@informal adds nothing of its own, so it reads the de texts', () => {
+		const informal = JSON.parse(
+			readFileSync(
+				resolve(
+					process.cwd(),
+					'src/resources/i18n/de@informal/common.json'
+				),
+				'utf8'
+			)
+		);
+		expect(informal.calls?.knock).toBeUndefined();
+	});
+
 	it.each(LOCALES)('%s has every key', (locale) => {
 		const json = JSON.parse(
 			readFileSync(
