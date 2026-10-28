@@ -926,7 +926,11 @@ export const SessionStream = ({
 				if (receiptRefreshTimer !== null) return;
 				receiptRefreshTimer = window.setTimeout(() => {
 					receiptRefreshTimer = null;
-					refreshMessages();
+					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// reaction or redaction arriving in the next 120 ms.
+					fetchSessionMessages().catch(() => {
+						// keep UI stable if a receipt races with navigation
+					});
 				}, 0);
 			};
 			watchedRoomIds.forEach((roomId) => {

@@ -431,15 +431,21 @@ class ChatTransportService {
 		const matrixClient = getMatrixClientService()?.getClient?.();
 		if (!matrixClient) return null;
 
+		const isObject = (value: unknown): value is Record<string, unknown> =>
+			typeof value === 'object' && value !== null;
 		const handleReceipt = (event: MatrixEvent, room: Room) => {
+			// Only a real m.receipt counts: the practice fake emits the message
+			// itself here, and reading its body as receipts looped the refresh.
 			if (room?.roomId !== matrixRoomId) return;
+			if (event?.getType?.() !== 'm.receipt') return;
 			const me = (matrixClient as any).getUserId?.();
-			const readers = Object.values(event?.getContent?.() || {}).flatMap(
-				(byType: any) =>
-					Object.values(byType || {}).flatMap((byUser: any) =>
-						Object.keys(byUser || {})
-					)
-			);
+			const readers = Object.values(event.getContent?.() || {})
+				.filter(isObject)
+				.flatMap((byType) =>
+					Object.values(byType)
+						.filter(isObject)
+						.flatMap((byUser) => Object.keys(byUser))
+				);
 			if (readers.some((userId) => userId !== me)) listener();
 		};
 

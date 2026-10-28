@@ -286,6 +286,7 @@ describe('chatTransportService Matrix timeline', () => {
 describe('chatTransportService Matrix read receipts (FE#1802)', () => {
 	const ME = '@me:example.org';
 	const receipt = (userId: string) => ({
+		getType: () => 'm.receipt',
 		getContent: () => ({
 			$event: { 'm.read': { [userId]: { ts: 1 } } }
 		})
@@ -321,6 +322,23 @@ describe('chatTransportService Matrix read receipts (FE#1802)', () => {
 
 		detach?.();
 		expect(fakeClient.listenerCount('Room.receipt')).toBe(0);
+	});
+	it('ignores a Room.receipt that carries no m.receipt event', () => {
+		// The practice fake emits the message itself; reading its body as a
+		// receipt looped refresh → mark read → refresh.
+		const listener = vi.fn();
+		chatTransportService.onMatrixReadReceipt(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.receipt',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({ msgtype: 'm.text', body: 'Hallo' })
+			},
+			{ roomId: ROOM_ID }
+		);
+
+		expect(listener).not.toHaveBeenCalled();
 	});
 });
 
