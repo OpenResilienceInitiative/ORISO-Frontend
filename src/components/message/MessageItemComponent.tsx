@@ -1209,7 +1209,7 @@ export const MessageItemComponent = ({
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
 	/* FE#1876. The recommendation card carries a button, so it is drawn only
-	   for a counsellor's event; a forged one renders nothing at all. The two
+	   for the assigned counsellor's event; anything else renders nothing. The two
 	   same-topic notices are plain text for everyone. */
 	const furtherCounsellingNotice =
 		parsedMessage.systemNotificationFurtherCounselling;
@@ -1218,9 +1218,7 @@ export const MessageItemComponent = ({
 		furtherCounsellingNotice?.type === FURTHER_COUNSELLING_RECOMMENDED &&
 		!isTrustedRecommendationSender({
 			senderId: userId,
-			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId,
-			askerMatrixUserId:
-				activeSession?.item?.askerMatrixUserId || askerMatrixUserId
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
 		});
 	const furtherCounsellingTitle = furtherCounsellingNotice
 		? translate(

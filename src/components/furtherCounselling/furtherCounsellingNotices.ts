@@ -20,10 +20,10 @@ export interface FurtherCounsellingRecommendedNotice {
 	createdAt: string | null;
 }
 
+/** Topic only: the old room learns nothing about the new conversation. */
 export interface TopicDuplicateStartedNotice {
 	type: typeof TOPIC_DUPLICATE_STARTED;
 	topicId: number;
-	newSessionId: number | null;
 }
 
 export interface TopicDuplicateEndedNotice {
@@ -87,11 +87,7 @@ export const parseFurtherCounsellingNotice = (
 		};
 	}
 	if (type === TOPIC_DUPLICATE_STARTED) {
-		return {
-			type,
-			topicId,
-			newSessionId: toPositiveId(raw.newSessionId)
-		};
+		return { type, topicId };
 	}
 	return { type: TOPIC_DUPLICATE_ENDED, topicId };
 };

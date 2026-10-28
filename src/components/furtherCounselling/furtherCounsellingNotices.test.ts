@@ -72,31 +72,24 @@ describe('parseFurtherCounsellingNotice', () => {
 		}
 	});
 
-	it('reads the duplicate-started notice with the new session id', () => {
+	it('reads the duplicate-started notice by its topic alone', () => {
+		expect(
+			parseFurtherCounsellingNotice({
+				type: TOPIC_DUPLICATE_STARTED,
+				topicId: 3
+			})
+		).toEqual({ type: TOPIC_DUPLICATE_STARTED, topicId: 3 });
+	});
+
+	it('drops a new session id an older backend still sends', () => {
+		// The old room must learn nothing about the new conversation.
 		expect(
 			parseFurtherCounsellingNotice({
 				type: TOPIC_DUPLICATE_STARTED,
 				topicId: 3,
 				newSessionId: 99
 			})
-		).toEqual({
-			type: TOPIC_DUPLICATE_STARTED,
-			topicId: 3,
-			newSessionId: 99
-		});
-	});
-
-	it('keeps a duplicate-started notice without a valid new session id', () => {
-		expect(
-			parseFurtherCounsellingNotice({
-				type: TOPIC_DUPLICATE_STARTED,
-				topicId: 3
-			})
-		).toEqual({
-			type: TOPIC_DUPLICATE_STARTED,
-			topicId: 3,
-			newSessionId: null
-		});
+		).toEqual({ type: TOPIC_DUPLICATE_STARTED, topicId: 3 });
 	});
 
 	it('ignores other notice types and non-objects', () => {

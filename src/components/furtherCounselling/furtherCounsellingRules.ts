@@ -130,22 +130,17 @@ export const pickPrefilledPostcode = (
 
 /**
  * Any room member can post a `[SYSTEM_NOTIFICATION]` body, so a recommendation
- * card is drawn only for a counsellor's event (the backend posts it as the
- * assigned consultant). The advice seeker is never trusted; with neither
- * identity known the card stays away.
+ * card is drawn only for an event of the session's assigned counsellor (the
+ * backend posts it strictly as that account). Anyone else, or an unknown
+ * counsellor id, draws nothing.
  */
 export const isTrustedRecommendationSender = ({
 	senderId,
-	consultantMatrixUserId,
-	askerMatrixUserId
+	consultantMatrixUserId
 }: {
 	senderId?: string | null;
 	consultantMatrixUserId?: string | null;
-	askerMatrixUserId?: string | null;
-}): boolean => {
-	if (!senderId) return false;
-	if (askerMatrixUserId && senderId === askerMatrixUserId) return false;
-	if (consultantMatrixUserId && senderId === consultantMatrixUserId)
-		return true;
-	return !!askerMatrixUserId;
-};
+}): boolean =>
+	!!senderId &&
+	!!consultantMatrixUserId &&
+	senderId === consultantMatrixUserId;

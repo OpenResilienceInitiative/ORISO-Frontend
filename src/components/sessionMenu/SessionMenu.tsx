@@ -453,9 +453,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
 					});
 					mobileListView();
-					navigate(
-						`${listPath}?sessionListTab=${SESSION_LIST_TAB_ARCHIVE}`
-					);
+					// The archive tab exists only for counsellors.
+					navigate(listPath);
 				})
 				.catch(() => {
 					setOverlayItem(endTopicDuplicateErrorOverlayItem);

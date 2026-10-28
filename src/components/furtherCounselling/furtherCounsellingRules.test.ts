@@ -240,49 +240,39 @@ describe('postcode prefill', () => {
 });
 
 describe('isTrustedRecommendationSender', () => {
-	it('trusts the assigned counsellor of the session', () => {
+	it('trusts exactly the assigned counsellor of the session', () => {
 		expect(
 			isTrustedRecommendationSender({
 				senderId: '@consultant:m.test',
-				consultantMatrixUserId: '@consultant:m.test',
-				askerMatrixUserId: '@asker:m.test'
+				consultantMatrixUserId: '@consultant:m.test'
 			})
 		).toBe(true);
 	});
 
-	it('trusts another non-asker room member when the asker is known', () => {
-		expect(
-			isTrustedRecommendationSender({
-				senderId: '@team-colleague:m.test',
-				consultantMatrixUserId: '@consultant:m.test',
-				askerMatrixUserId: '@asker:m.test'
-			})
-		).toBe(true);
+	it('does not trust any other room member', () => {
+		for (const senderId of ['@team-colleague:m.test', '@asker:m.test']) {
+			expect(
+				isTrustedRecommendationSender({
+					senderId,
+					consultantMatrixUserId: '@consultant:m.test'
+				})
+			).toBe(false);
+		}
 	});
 
-	it('never trusts the advice seeker, even as the session consultant id', () => {
-		expect(
-			isTrustedRecommendationSender({
-				senderId: '@asker:m.test',
-				consultantMatrixUserId: '@consultant:m.test',
-				askerMatrixUserId: '@asker:m.test'
-			})
-		).toBe(false);
-	});
-
-	it('fails closed when neither identity is known', () => {
-		expect(
-			isTrustedRecommendationSender({
-				senderId: '@someone:m.test',
-				consultantMatrixUserId: undefined,
-				askerMatrixUserId: undefined
-			})
-		).toBe(false);
+	it('fails closed when the counsellor id is unknown', () => {
+		for (const consultantMatrixUserId of [undefined, null, '']) {
+			expect(
+				isTrustedRecommendationSender({
+					senderId: '@someone:m.test',
+					consultantMatrixUserId
+				})
+			).toBe(false);
+		}
 		expect(
 			isTrustedRecommendationSender({
 				senderId: '',
-				consultantMatrixUserId: '',
-				askerMatrixUserId: '@asker:m.test'
+				consultantMatrixUserId: ''
 			})
 		).toBe(false);
 	});

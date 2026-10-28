@@ -195,7 +195,7 @@ export const DuplicateStarted: Story = {
 	name: 'Same topic — further counselling started',
 	args: {
 		viewerIsAsker: false,
-		notice: { type: TOPIC_DUPLICATE_STARTED, topicId: 7, newSessionId: 99 },
+		notice: { type: TOPIC_DUPLICATE_STARTED, topicId: 7 },
 		messageId: 'story-duplicate-started'
 	},
 	play: async ({ canvasElement }) => {

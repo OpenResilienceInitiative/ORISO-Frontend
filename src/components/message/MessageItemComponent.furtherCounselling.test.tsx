@@ -50,18 +50,19 @@ const recommendation = `[SYSTEM_NOTIFICATION]${JSON.stringify({
 })}`;
 const duplicateStarted = `[SYSTEM_NOTIFICATION]${JSON.stringify({
 	type: 'TOPIC_DUPLICATE_STARTED',
-	topicId: 7,
-	newSessionId: 9
+	topicId: 7
 })}`;
 
 const renderNotice = ({
 	raw,
 	senderId,
-	viewer
+	viewer,
+	consultantMatrixUserId = MOCK_CONSULTANT_MATRIX_ID
 }: {
 	raw: string;
 	senderId: string;
 	viewer: 'asker' | 'consultant';
+	consultantMatrixUserId?: string;
 }) =>
 	render(
 		<MemoryRouter>
@@ -102,8 +103,7 @@ const renderNotice = ({
 												...mockActiveSession1on1().item,
 												conversationType:
 													'AGENCY_COUNSELLING',
-												consultantMatrixUserId:
-													MOCK_CONSULTANT_MATRIX_ID
+												consultantMatrixUserId
 											}
 										},
 										reloadActiveSession: () => {},
@@ -181,6 +181,39 @@ describe('MessageItemComponent — further counselling notices (FE#1876)', () =>
 			screen.queryByText('furtherCounselling.card.defaultText')
 		).toBeNull();
 		expect(document.body.textContent).not.toContain('topicId');
+	});
+
+	it('draws nothing for a recommendation another room member posted', () => {
+		renderNotice({
+			raw: recommendation,
+			senderId: '@team-colleague:matrix.test',
+			viewer: 'asker'
+		});
+		expect(
+			screen.queryByText('furtherCounselling.card.defaultText')
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: 'furtherCounselling.card.findAgency'
+			})
+		).toBeNull();
+	});
+
+	it('draws nothing while the counsellor id of the session is unknown', () => {
+		renderNotice({
+			raw: recommendation,
+			senderId: MOCK_CONSULTANT_MATRIX_ID,
+			viewer: 'asker',
+			consultantMatrixUserId: ''
+		});
+		expect(
+			screen.queryByText('furtherCounselling.card.defaultText')
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: 'furtherCounselling.card.findAgency'
+			})
+		).toBeNull();
 	});
 
 	it('shows the same-topic notice as plain text', () => {

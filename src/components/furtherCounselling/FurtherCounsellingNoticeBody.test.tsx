@@ -178,10 +178,7 @@ describe('FurtherCounsellingNoticeBody', () => {
 	});
 
 	it('renders both duplicate notices as plain text for everyone', () => {
-		renderBody(
-			{ type: TOPIC_DUPLICATE_STARTED, topicId: 7, newSessionId: 3 },
-			false
-		);
+		renderBody({ type: TOPIC_DUPLICATE_STARTED, topicId: 7 }, false);
 		expect(
 			screen.getByText('furtherCounselling.duplicate.started[Schulden]')
 		).toBeTruthy();
