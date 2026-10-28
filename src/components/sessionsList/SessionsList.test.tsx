@@ -102,13 +102,19 @@ vi.mock('../../services/messageEventEmitter', () => ({
 vi.mock('./SessionsListToolbar', () => ({
 	SessionsListToolbar: ({
 		showSupervisionChip,
-		activeChip
+		activeChip,
+		onSearchChange
 	}: {
 		showSupervisionChip: boolean;
 		activeChip: string | null;
+		onSearchChange: (query: string) => void;
 	}) => (
 		<>
 			<output data-testid="active-chip">{activeChip ?? 'all'}</output>
+			<input
+				aria-label="case-search"
+				onChange={(event) => onSearchChange(event.target.value)}
+			/>
 			{showSupervisionChip ? <button>supervision-filter</button> : null}
 		</>
 	),
@@ -391,6 +397,21 @@ describe('Supervision filter over fetched pages (#1306)', () => {
 	afterEach(() => {
 		cleanup();
 		getList.mockResolvedValue({ sessions: [], total: 0 });
+	});
+	it('does not automatically scan remaining pages for an unmatched ordinary text search', async () => {
+		const total = SESSION_COUNT * 3;
+		getList.mockResolvedValue({ sessions: page(0), total });
+		render(<ListTree consultant fetched />);
+		expect(await screen.findByTestId('case-1')).toBeTruthy();
+		await act(async () => {
+			fireEvent.change(screen.getByLabelText('case-search'), {
+				target: { value: 'no-such-counselling-case' }
+			});
+		});
+		expect(screen.queryByTestId('case-1')).toBeNull();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0
+		]);
 	});
 	it('loads beyond two full ordinary pages without scrolling and retains the bookmarked filter until its assignment arrives', async () => {
 		const total = SESSION_COUNT * 2 + 1;

@@ -2284,16 +2284,21 @@ export const SessionsList = ({
 	// Filters can hide a whole loaded page, leaving no scroll trigger.
 	useEffect(() => {
 		// Enquiries merge two feeds with their own paging contract. Keep their
-		// existing display-only paging; toolbar-aware paging belongs to Gespräche.
+		// existing display-only paging. Only the Supervision chip adds a scan;
+		// ordinary text searches must not fetch the entire conversation history.
 		const ownConversations = type === SESSION_LIST_TYPES.MY_SESSION;
-		const toolbarHidesRows =
+		const pageSupervisionRows =
 			ownConversations &&
+			sessionToolbarChip === 'supervision' &&
+			!sessionToolbarSearch.trim();
+		const toolbarHidesRows =
+			pageSupervisionRows &&
 			sessionToolbarFilteredPairs.length < displayVisiblePairs.length;
 		const needsSupervisionPage =
 			ownConversations &&
 			sessionToolbarChip === 'supervision' &&
 			!canSupervise;
-		const visibleRows = ownConversations
+		const visibleRows = pageSupervisionRows
 			? sessionToolbarFilteredPairs.length
 			: displayVisiblePairs.length;
 		if (
@@ -2321,6 +2326,7 @@ export const SessionsList = ({
 		loadMoreSessions,
 		sessionToolbarChip,
 		sessionToolbarFilteredPairs.length,
+		sessionToolbarSearch,
 		showMySessionToolbar,
 		type
 	]);
