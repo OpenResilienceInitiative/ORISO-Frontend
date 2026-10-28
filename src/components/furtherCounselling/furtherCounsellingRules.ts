@@ -127,3 +127,25 @@ export const pickPrefilledPostcode = (
 		.sort(compareNewestFirst)[0];
 	return newest ? String(newest.postcode).padStart(5, '0') : undefined;
 };
+
+/**
+ * Any room member can post a `[SYSTEM_NOTIFICATION]` body, so a recommendation
+ * card is drawn only for a counsellor's event (the backend posts it as the
+ * assigned consultant). The advice seeker is never trusted; with neither
+ * identity known the card stays away.
+ */
+export const isTrustedRecommendationSender = ({
+	senderId,
+	consultantMatrixUserId,
+	askerMatrixUserId
+}: {
+	senderId?: string | null;
+	consultantMatrixUserId?: string | null;
+	askerMatrixUserId?: string | null;
+}): boolean => {
+	if (!senderId) return false;
+	if (askerMatrixUserId && senderId === askerMatrixUserId) return false;
+	if (consultantMatrixUserId && senderId === consultantMatrixUserId)
+		return true;
+	return !!askerMatrixUserId;
+};

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
 	canEndTopicDuplicate,
 	canRecommendFurtherCounselling,
+	isTrustedRecommendationSender,
 	pickPrefilledPostcode,
 	resolvePostcodeMode
 } from './furtherCounsellingRules';
@@ -235,5 +236,54 @@ describe('postcode prefill', () => {
 				'ALWAYS_EMPTY'
 			)
 		).toBeUndefined();
+	});
+});
+
+describe('isTrustedRecommendationSender', () => {
+	it('trusts the assigned counsellor of the session', () => {
+		expect(
+			isTrustedRecommendationSender({
+				senderId: '@consultant:m.test',
+				consultantMatrixUserId: '@consultant:m.test',
+				askerMatrixUserId: '@asker:m.test'
+			})
+		).toBe(true);
+	});
+
+	it('trusts another non-asker room member when the asker is known', () => {
+		expect(
+			isTrustedRecommendationSender({
+				senderId: '@team-colleague:m.test',
+				consultantMatrixUserId: '@consultant:m.test',
+				askerMatrixUserId: '@asker:m.test'
+			})
+		).toBe(true);
+	});
+
+	it('never trusts the advice seeker, even as the session consultant id', () => {
+		expect(
+			isTrustedRecommendationSender({
+				senderId: '@asker:m.test',
+				consultantMatrixUserId: '@consultant:m.test',
+				askerMatrixUserId: '@asker:m.test'
+			})
+		).toBe(false);
+	});
+
+	it('fails closed when neither identity is known', () => {
+		expect(
+			isTrustedRecommendationSender({
+				senderId: '@someone:m.test',
+				consultantMatrixUserId: undefined,
+				askerMatrixUserId: undefined
+			})
+		).toBe(false);
+		expect(
+			isTrustedRecommendationSender({
+				senderId: '',
+				consultantMatrixUserId: '',
+				askerMatrixUserId: '@asker:m.test'
+			})
+		).toBe(false);
 	});
 });

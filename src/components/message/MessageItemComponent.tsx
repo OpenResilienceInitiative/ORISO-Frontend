@@ -95,6 +95,12 @@ import {
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { FurtherCounsellingNoticeBody } from '../furtherCounselling/FurtherCounsellingNoticeBody';
+import {
+	FURTHER_COUNSELLING_RECOMMENDED,
+	TOPIC_DUPLICATE_STARTED
+} from '../furtherCounselling/furtherCounsellingNotices';
+import { isTrustedRecommendationSender } from '../furtherCounselling/furtherCounsellingRules';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
@@ -1202,6 +1208,30 @@ export const MessageItemComponent = ({
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	/* FE#1876. The recommendation card carries a button, so it is drawn only
+	   for a counsellor's event; a forged one renders nothing at all. The two
+	   same-topic notices are plain text for everyone. */
+	const furtherCounsellingNotice =
+		parsedMessage.systemNotificationFurtherCounselling;
+	const isFurtherCounsellingNotice = Boolean(furtherCounsellingNotice);
+	const isUntrustedRecommendation =
+		furtherCounsellingNotice?.type === FURTHER_COUNSELLING_RECOMMENDED &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId,
+			askerMatrixUserId:
+				activeSession?.item?.askerMatrixUserId || askerMatrixUserId
+		});
+	const furtherCounsellingTitle = furtherCounsellingNotice
+		? translate(
+				furtherCounsellingNotice.type ===
+					FURTHER_COUNSELLING_RECOMMENDED
+					? 'furtherCounselling.card.title'
+					: furtherCounsellingNotice.type === TOPIC_DUPLICATE_STARTED
+						? 'furtherCounselling.duplicate.startedTitle'
+						: 'furtherCounselling.duplicate.endedTitle'
+			)
+		: '';
 	/* T49: the supervision side room's notice is drawn with the SAME organism
 	   as the main chat's Carimat message (ErstantwortSequence → pseudonymCard),
 	   under the room's name — never with the generic chrome below. */
@@ -1981,7 +2011,9 @@ export const MessageItemComponent = ({
 						)
 					: isInquiryAcceptedEvent
 						? translate('caseHandover.accepted.title')
-						: systemNotificationTitle,
+						: isFurtherCounsellingNotice
+							? furtherCounsellingTitle
+							: systemNotificationTitle,
 				topicIcon: isCaseHandoverGrantedEvent ? (
 					<HandoverTopicIcon />
 				) : isInquiryAcceptedEvent ? (
@@ -2232,8 +2264,23 @@ export const MessageItemComponent = ({
 							 * notice wore three labels. See ORISO-Frontend#892.
 							 */}
 							{isSystemNotification &&
+								furtherCounsellingNotice && (
+									<FurtherCounsellingNoticeBody
+										notice={furtherCounsellingNotice}
+										viewerIsAsker={
+											!readOnly &&
+											hasUserAuthority(
+												AUTHORITIES.ASKER_DEFAULT,
+												userData
+											)
+										}
+										messageId={_id}
+									/>
+								)}
+							{isSystemNotification &&
 								!isCaseHandoverGrantedEvent &&
 								!isInquiryAcceptedEvent &&
+								!isFurtherCounsellingNotice &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
 										{systemNotificationDescription}
@@ -2699,6 +2746,10 @@ export const MessageItemComponent = ({
 				/>
 			</div>
 		);
+	}
+
+	if (isUntrustedRecommendation) {
+		return null;
 	}
 
 	if (isUserLeftChatEvent) {
