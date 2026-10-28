@@ -92,10 +92,23 @@ export const NewEnquiryNotice = (props: NewEnquiryNoticeProps) => {
 		close();
 		navigate(several ? ENQUIRY_LIST_PATH : props.path);
 	}, [close, navigate, props.path, several]);
-	// Opening Anfragen any other way (nav, feed) also settles the pop-up.
+	// Opening Anfragen any other way (nav, feed) also settles the pop-up, but
+	// only once it is really seen: a hidden tab keeps the card until it returns.
 	const { pathname } = useLocation();
 	useEffect(() => {
-		if (isEnquiryListOpen(pathname, true)) close();
+		const settleIfSeen = () => {
+			if (
+				isEnquiryListOpen(
+					pathname,
+					document.visibilityState !== 'hidden'
+				)
+			)
+				close();
+		};
+		settleIfSeen();
+		document.addEventListener('visibilitychange', settleIfSeen);
+		return () =>
+			document.removeEventListener('visibilitychange', settleIfSeen);
 	}, [close, pathname]);
 
 	return (

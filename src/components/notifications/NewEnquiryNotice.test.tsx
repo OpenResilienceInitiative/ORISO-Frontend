@@ -116,6 +116,27 @@ describe('NewEnquiryNotice', () => {
 		expect(remove).toHaveBeenCalledTimes(1);
 	});
 
+	it('stays while Anfragen sits in a hidden tab and goes once it is seen', () => {
+		let visibility: DocumentVisibilityState = 'hidden';
+		const spy = vi
+			.spyOn(document, 'visibilityState', 'get')
+			.mockImplementation(() => visibility);
+		try {
+			const remove = renderNotice(notice());
+			fireEvent.click(screen.getByText('go'));
+			expect(remove).not.toHaveBeenCalled();
+
+			visibility = 'visible';
+			fireEvent(document, new Event('visibilitychange'));
+			expect(remove).toHaveBeenCalledWith(
+				NEW_ENQUIRY_NOTICE_ID,
+				NOTIFICATION_TYPE_NEW_ENQUIRY
+			);
+		} finally {
+			spy.mockRestore();
+		}
+	});
+
 	it('goes away when the counsellor opens Anfragen any other way', () => {
 		const remove = renderNotice(notice());
 		expect(remove).not.toHaveBeenCalled();
