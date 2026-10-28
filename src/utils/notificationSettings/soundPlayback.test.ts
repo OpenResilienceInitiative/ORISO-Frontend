@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	DEFAULT_LOCAL_DEVICE_SETTINGS,
 	DEFAULT_NOTIFICATION_SETTINGS

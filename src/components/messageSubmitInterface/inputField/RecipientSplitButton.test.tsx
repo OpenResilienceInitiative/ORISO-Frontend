@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { RecipientSplitButton } from './RecipientSplitButton';
 
@@ -11,7 +11,7 @@ const renderButton = (
 	render(
 		<RecipientSplitButton
 			label="Alle"
-			icon={<svg data-testid="icon" />}
+			icon={<svg />}
 			isOpen={false}
 			onToggle={vi.fn()}
 			chevronLabel="Open send-to menu"
@@ -19,49 +19,54 @@ const renderButton = (
 		/>
 	);
 
-// `globals` is off in this project, so RTL never registers its own teardown.
-afterEach(() => cleanup());
+afterEach(cleanup);
 
-/** This project has no jest-dom matchers, so assert on the class list itself. */
-const chipClasses = (container: HTMLElement) =>
-	Array.from((container.firstChild as HTMLElement).classList);
+describe('RecipientSplitButton — shared small atom (#1806)', () => {
+	it.each(['all', 'targeted'] as const)(
+		'uses neutral shared geometry for %s',
+		(variant) => {
+			const { container } = renderButton({ variant });
+			const classes = (container.firstChild as HTMLElement).classList;
+			expect(classes.contains('splitButton--small')).toBe(true);
+			expect(
+				classes.contains(
+					variant === 'all'
+						? 'splitButton--outlined'
+						: 'splitButton--tonal'
+				)
+			).toBe(true);
+			expect(classes.contains('splitButton--primary')).toBe(false);
+		}
+	);
 
-describe('RecipientSplitButton', () => {
-	/**
-	 * #894 rule B. The grey "everyone" treatment existed only as CSS on
-	 * `.textarea__audienceSelectorMain` / `…Chevron` — class names this
-	 * component never renders. The chip was therefore always in the red
-	 * "targeted" colour, including when the message went to everybody, which
-	 * inverts the one signal the control is there to give.
-	 */
-	it('renders the neutral variant when the message goes to everyone', () => {
-		const { container } = renderButton({ variant: 'all' });
-		expect(chipClasses(container)).toContain('recipientSplitButton--all');
-	});
-
-	it('renders the targeted variant when recipients are restricted', () => {
-		const { container } = renderButton({
-			variant: 'targeted',
-			label: 'K. Paulstätter'
+	it('uses the shared elevated state while the recipient menu is open', () => {
+		const { container, getAllByRole } = renderButton({ isOpen: true });
+		expect(
+			(container.firstChild as HTMLElement).classList.contains(
+				'splitButton--elevated'
+			)
+		).toBe(true);
+		getAllByRole('button').forEach((button) => {
+			expect(button.getAttribute('aria-expanded')).toBe('true');
+			expect(button.getAttribute('aria-haspopup')).toBe('dialog');
 		});
-		expect(chipClasses(container)).toContain(
-			'recipientSplitButton--targeted'
-		);
-		expect(chipClasses(container)).not.toContain(
-			'recipientSplitButton--all'
-		);
 	});
 
-	it('treats a missing variant as targeted, the safer signal', () => {
-		const { container } = renderButton();
-		expect(chipClasses(container)).toContain(
-			'recipientSplitButton--targeted'
-		);
+	it('keeps both segments operable and exposes the full label', () => {
+		const onToggle = vi.fn();
+		const label = 'absichtslose Schildkröte Andrea';
+		const { getByRole } = renderButton({ label, onToggle });
+		fireEvent.click(getByRole('button', { name: label }));
+		fireEvent.click(getByRole('button', { name: 'Open send-to menu' }));
+		expect(onToggle).toHaveBeenCalledTimes(2);
 	});
-
-	it('exposes both halves as one labelled control', () => {
-		const { getByRole, getByText } = renderButton({ variant: 'all' });
-		expect(getByRole('button', { name: 'Open send-to menu' })).toBeTruthy();
-		expect(getByText('Alle')).toBeTruthy();
+	it('keeps both segments disabled when unavailable', () => {
+		const onToggle = vi.fn();
+		const { getAllByRole } = renderButton({ disabled: true, onToggle });
+		getAllByRole('button').forEach((button) => {
+			expect((button as HTMLButtonElement).disabled).toBe(true);
+			fireEvent.click(button);
+		});
+		expect(onToggle).not.toHaveBeenCalled();
 	});
 });

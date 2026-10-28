@@ -50,6 +50,16 @@ export interface TenantDataInterface {
 		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
+	/**
+	 * Who may be picked for an internal group chat (ORISO-TenantService#321).
+	 * Absent on a backend without the setting; read as `AGENCY` then.
+	 */
+	internalGroupChat?: {
+		recipientScope?: {
+			value?: 'PLATFORM' | 'TENANT' | 'AGENCY';
+			mode?: 'ENFORCED' | 'SUGGESTED';
+		} | null;
+	} | null;
 	/** Optional DPO of the Träger, public on the restricted tenant read (ORISO-Admin#1067). */
 	dataProtectionOfficer?: TraegerDpo | null;
 }

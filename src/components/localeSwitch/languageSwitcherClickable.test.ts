@@ -32,7 +32,7 @@
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const read = (...segments: string[]) =>
 	readFileSync(join(__dirname, ...segments), 'utf-8');

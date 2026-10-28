@@ -12,7 +12,7 @@
  */
 
 import { isPracticeId } from '../../practice/practiceIds';
-import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
+import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
 
 /** Sentinel option value meaning "everyone in this conversation". */
 export const AUDIENCE_ALL = '__all__';
@@ -263,8 +263,7 @@ export const createAudienceCollector = (
 		const compact = `${rawValue || ''}`.trim();
 		if (
 			!compact ||
-			isSystemMatrixUser(compact) ||
-			/^@?agency-\d+-service(?::|$)/.test(compact) ||
+			isTechnicalMatrixUser(compact) ||
 			isSelf(compact) ||
 			has(compact)
 		) {

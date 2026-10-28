@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { AppConfigContext } from '../globalState/provider/AppConfigProvider';
 import { AppConfigInterface } from '../globalState/interfaces';
 import { TenantContext } from '../globalState/provider/TenantProvider';
@@ -61,5 +61,37 @@ describe('useTenantTheming on a host without a tenant subdomain', () => {
 		// … and the app config still wins where both speak.
 		expect(settings.featureAnonymousChatEnabled).toBe(true);
 		expect(settings.useTenantService).toBe(true);
+	});
+
+	it('keeps the internal group chat recipient scope (#1772)', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 1,
+			name: 'Beratung',
+			settings: { featureGroupChatV2Enabled: true },
+			internalGroupChat: {
+				recipientScope: { value: 'TENANT', mode: 'SUGGESTED' }
+			}
+		});
+		const setTenant = vi.fn();
+		const wrapper = ({ children }: { children: React.ReactNode }) => (
+			<AppConfigContext.Provider
+				value={
+					{ useTenantService: true } as unknown as AppConfigInterface
+				}
+			>
+				<TenantContext.Provider
+					value={{ tenant: undefined, setTenant }}
+				>
+					{children as React.ReactElement}
+				</TenantContext.Provider>
+			</AppConfigContext.Provider>
+		);
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() => expect(setTenant).toHaveBeenCalled());
+		expect(
+			setTenant.mock.calls[0][0].internalGroupChat.recipientScope.value
+		).toBe('TENANT');
 	});
 });

@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { act, render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { TenantContext, TenantProvider } from './TenantProvider';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 

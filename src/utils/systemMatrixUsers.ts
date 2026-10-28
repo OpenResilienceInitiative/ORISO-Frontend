@@ -1,7 +1,7 @@
 /**
  * Matrix user IDs that must be filtered out of user-facing member lists.
  *
- * The client filters three classes of non-human account before rendering
+ * The client filters two classes of non-human account before rendering
  * recipients or member lists:
  *
  * 1. `@system` — the app's own system-notice sender across every deployment.
@@ -13,12 +13,10 @@
  *    accounts as if they were counsellors — see ORISO-Frontend#968 remnant
  *    4. The literal stays until every environment confirms its
  *    `server_name` and legacy accounts have been rotated.
- * 3. `group-chat-system[-<tenant>]` — the technical owner of a group session,
- *    delivered as a bare username by the session DTO or a full Matrix ID.
  *
- * Callers that also need to filter agency-service bots
- * (`^@agency-<id>-service:`) extend this with their own check — that pattern
- * is domain-specific to a couple of composers and does not belong here.
+ * People lists use the additive `isTechnicalMatrixUser` predicate below
+ * for reserved group/agency service identities. The legacy predicate stays
+ * unchanged for existing transport and crypto callers.
  */
 
 /**
@@ -31,8 +29,7 @@ export const LEGACY_MATRIX_HOMESERVER_SUFFIX = ':caritas.local';
 
 /**
  * True for Matrix system accounts (`@system`) and pre-ADR-005 legacy accounts
- * on the `@caritas.local` homeserver, and reserved technical group owners.
- * Never true for a human counsellor or
+ * on the `@caritas.local` homeserver. Never true for a human counsellor or
  * advice seeker on the current homeserver.
  */
 export const isSystemMatrixUser = (
@@ -41,10 +38,21 @@ export const isSystemMatrixUser = (
 	if (!userId) {
 		return false;
 	}
-	const localpart = userId.replace(/^@/, '').split(':')[0];
 	return (
 		userId.includes('@system') ||
-		userId.endsWith(LEGACY_MATRIX_HOMESERVER_SUFFIX) ||
-		/^group-chat-system(?:-(?:\d+|default))?$/.test(localpart)
+		userId.endsWith(LEGACY_MATRIX_HOMESERVER_SUFFIX)
 	);
 };
+
+/**
+ * Technical provisioning identities are never people in headers or recipients.
+ * `group-chat-system[-<tenant>|-default]` also arrives as a bare username from
+ * the session DTO, so the leading `@` and the homeserver part are optional.
+ */
+export const isTechnicalMatrixUser = (
+	userId: string | null | undefined
+): boolean =>
+	isSystemMatrixUser(userId) ||
+	/^@?(?:group-chat-system(?:-(?:\d+|default))?|agency-\d+-service)(?::|$)/.test(
+		userId || ''
+	);

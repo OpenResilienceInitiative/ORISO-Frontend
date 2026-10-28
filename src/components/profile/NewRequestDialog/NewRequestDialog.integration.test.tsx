@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -17,7 +17,7 @@ import {
 	expect,
 	it,
 	vi
-} from 'vitest';
+} from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
@@ -96,7 +96,7 @@ const installHttpBoundary = (status: number, reason: string) => {
 		vi.fn(async (request: Request) => {
 			const url = new URL(request.url);
 			if (request.method === 'GET') {
-				if (url.pathname === '/service/agencies/topics') {
+				if (url.pathname === '/service/topic/public') {
 					return Response.json([
 						{ id: 7, name: 'Social counselling' },
 						{ id: 9, name: 'Family counselling' }

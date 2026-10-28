@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
+import clsx from 'clsx';
 import './m3Checkbox.styles.scss';
 
 /**
@@ -16,7 +17,9 @@ export const M3Checkbox = ({
 	disabled = false,
 	hideLabel = false,
 	indeterminate = false,
-	describedBy
+	describedBy,
+	tone = 'default',
+	fill = false
 }: {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
@@ -33,6 +36,13 @@ export const M3Checkbox = ({
 	indeterminate?: boolean;
 	/** id of an element explaining the control (`aria-describedby`). */
 	describedBy?: string;
+	/**
+	 * `inherit`: label and unticked box take the surrounding text colour;
+	 * `onPrimary`: drawn on a primary-filled surface (ticked box inverts).
+	 */
+	tone?: 'default' | 'inherit' | 'onPrimary';
+	/** Fills its container, so the whole surface toggles it. */
+	fill?: boolean;
 }) => {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	useEffect(() => {
@@ -43,9 +53,13 @@ export const M3Checkbox = ({
 
 	return (
 		<label
-			className={`m3Checkbox${disabled ? ' m3Checkbox--disabled' : ''}${
-				indeterminate ? ' m3Checkbox--indeterminate' : ''
-			}`}
+			className={clsx(
+				'm3Checkbox',
+				disabled && 'm3Checkbox--disabled',
+				indeterminate && 'm3Checkbox--indeterminate',
+				tone !== 'default' && `m3Checkbox--${tone}`,
+				fill && 'm3Checkbox--fill'
+			)}
 		>
 			<span className="m3Checkbox__target">
 				<input

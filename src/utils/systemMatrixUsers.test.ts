@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	LEGACY_MATRIX_HOMESERVER_SUFFIX,
-	isSystemMatrixUser
+	isSystemMatrixUser,
+	isTechnicalMatrixUser
 } from './systemMatrixUsers';
 
 describe('LEGACY_MATRIX_HOMESERVER_SUFFIX', () => {
@@ -14,29 +15,6 @@ describe('LEGACY_MATRIX_HOMESERVER_SUFFIX', () => {
 });
 
 describe('isSystemMatrixUser', () => {
-	it.each([
-		'group-chat-system',
-		'group-chat-system-40',
-		'group-chat-system-default',
-		'@group-chat-system:predev.oriso.org',
-		'@group-chat-system-40:predev.oriso.org',
-		'@group-chat-system-default:dev.oriso.org'
-	])('filters the technical group owner %s', (identity) => {
-		expect(isSystemMatrixUser(identity)).toBe(true);
-	});
-
-	it.each([
-		'group-chat-systematic',
-		'@group-chat-systematic:dev.oriso.org',
-		'@bart:group-chat-system-40.example.org',
-		'bart-group-chat-system-40'
-	])(
-		'does not mistake a human or homeserver for a technical owner: %s',
-		(identity) => {
-			expect(isSystemMatrixUser(identity)).toBe(false);
-		}
-	);
-
 	it('filters the app system-notice sender', () => {
 		expect(isSystemMatrixUser('@system:matrix.example.org')).toBe(true);
 		expect(isSystemMatrixUser('@system-broadcast:matrix.example.org')).toBe(
@@ -69,6 +47,52 @@ describe('isSystemMatrixUser', () => {
 		// keeping it out of this helper keeps callers free to combine checks
 		// rather than baking every domain rule in here.
 		expect(isSystemMatrixUser('@agency-7-service:matrix.example.org')).toBe(
+			false
+		);
+	});
+});
+
+describe('isTechnicalMatrixUser', () => {
+	it.each([
+		'@system:matrix.example',
+		'@system-broadcast:matrix.example',
+		'@notification:caritas.local',
+		'@group-chat-system-40:matrix.example',
+		'@agency-12-service:matrix.example',
+		'group-chat-system',
+		'group-chat-system-40',
+		'group-chat-system-default',
+		'@group-chat-system:predev.oriso.org',
+		'@group-chat-system-default:dev.oriso.org'
+	])(
+		'excludes reserved technical identity %s from people lists',
+		(userId) => {
+			expect(isTechnicalMatrixUser(userId)).toBe(true);
+		}
+	);
+
+	it.each([
+		null,
+		undefined,
+		'',
+		'@bart:matrix.example',
+		'@my-group-chat-system-40:matrix.example',
+		'@group-chat-system-40-person:matrix.example',
+		'@agency-12-service-user:matrix.example',
+		'@agency-help-service:matrix.example',
+		'group-chat-systematic',
+		'@group-chat-systematic:dev.oriso.org',
+		'@bart:group-chat-system-40.example.org',
+		'bart-group-chat-system-40'
+	])('preserves human identities and empty values: %s', (userId) => {
+		expect(isTechnicalMatrixUser(userId)).toBe(false);
+	});
+
+	it('does not change the legacy system predicate for service accounts', () => {
+		expect(isSystemMatrixUser('@group-chat-system-40:matrix.example')).toBe(
+			false
+		);
+		expect(isSystemMatrixUser('@agency-12-service:matrix.example')).toBe(
 			false
 		);
 	});

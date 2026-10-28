@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { knockableGroupId } from './knockableGroupId';
 
 const TOKEN = 'tok_EN-9';

@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiAgencyLanguages } from '../../../api/apiAgencyLanguages';
 import { LanguagesContext } from '../../../globalState/provider/LanguagesProvider';
+import { useAppConfig } from '../../../hooks/useAppConfig';
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
 
 interface AgencyLanguagesProps {
@@ -14,12 +15,18 @@ export const AgencyLanguages = ({ agencyId }: AgencyLanguagesProps) => {
 	const { t } = useTranslation();
 	const [languagesString, setLanguagesString] = useState<string>('');
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
+	const settings = useAppConfig();
+	const multitenancyWithSingleDomainEnabled =
+		settings?.multitenancyWithSingleDomainEnabled;
 
 	useEffect(() => {
 		(async () => {
 			let languages = ['de'];
 			if (agencyId !== undefined) {
-				languages = await apiAgencyLanguages(agencyId, false).then(
+				languages = await apiAgencyLanguages(
+					agencyId,
+					multitenancyWithSingleDomainEnabled
+				).then(
 					(res) => (languages = [...fixedLanguages, ...res.languages])
 				);
 			}
@@ -38,7 +45,7 @@ export const AgencyLanguages = ({ agencyId }: AgencyLanguagesProps) => {
 					.join(' | ')
 			);
 		})();
-	}, [agencyId, fixedLanguages, t]);
+	}, [agencyId, fixedLanguages, multitenancyWithSingleDomainEnabled, t]);
 
 	return (
 		<Typography

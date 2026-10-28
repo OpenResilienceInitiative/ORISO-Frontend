@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { createRequire } from 'module';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { MatrixLiveEventBridge } from './matrixLiveEventBridge';
@@ -541,7 +548,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			false
 		);
 		expect(endCallIfMatching).toHaveBeenCalledTimes(1);
-		expect(endCallIfMatching).toHaveBeenCalledWith('c');
+		expect(endCallIfMatching).toHaveBeenCalledWith('c', room.roomId);
 		expect(endCall).not.toHaveBeenCalled();
 	});
 });

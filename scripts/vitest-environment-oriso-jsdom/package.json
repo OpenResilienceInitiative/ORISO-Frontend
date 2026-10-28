@@ -1,0 +1,13 @@
+{
+	"name": "vitest-environment-oriso-jsdom",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": "./index.mjs",
+	"files": [
+		"index.mjs"
+	],
+	"peerDependencies": {
+		"vitest": "5.0.5"
+	}
+}

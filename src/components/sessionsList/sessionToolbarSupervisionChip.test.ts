@@ -6,7 +6,7 @@
  * marker — there the old "any non-owner consultant row" heuristic remains so
  * the chip keeps working until the backend is upgraded.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { sessionMatchesToolbar } from './sessionToolbarFilters';
 
 const ME = 'consultant-me';

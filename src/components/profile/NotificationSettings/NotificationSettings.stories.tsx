@@ -121,7 +121,7 @@ export const DisplayFilters: Story = {
 			)!
 		);
 		await expect(
-			timeline.getByRole('button', { name: 'Pille: Entwürfe' })
+			timeline.getByRole('button', { name: 'Im Filter: Entwürfe' })
 		).toHaveTextContent('Aus');
 		const sessions = within(
 			canvasElement.querySelector<HTMLElement>(
@@ -129,7 +129,7 @@ export const DisplayFilters: Story = {
 			)!
 		);
 		await expect(
-			sessions.getByRole('button', { name: 'Pille: Ungelesen' })
+			sessions.getByRole('button', { name: 'Im Filter: Ungelesen' })
 		).toHaveTextContent('An');
 		await expect(
 			canvas.getByText(

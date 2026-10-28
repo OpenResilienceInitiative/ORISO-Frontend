@@ -11,7 +11,7 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import type { IUserDraftItem } from '../../api/apiUserDrafts';
+import { installNotificationDraftFixture } from './notificationDraftFixture';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -251,64 +251,14 @@ const withTimelineData =
 		</UserDataContext.Provider>
 	);
 
-/**
- * #1535: the timeline loads unsent drafts from `/users/drafts` itself. The
- * fetch patch answers only that path, and only while a story is mounted.
- */
-let storyDrafts: IUserDraftItem[] | null = null;
-let draftsFetchPatched = false;
-const patchDraftsFetch = () => {
-	if (draftsFetchPatched) return;
-	draftsFetchPatched = true;
-	const originalFetch = globalThis.fetch.bind(globalThis);
-	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-		const url =
-			typeof input === 'string'
-				? input
-				: input instanceof URL
-					? input.href
-					: input.url;
-		if (storyDrafts && url.includes('/service/users/drafts')) {
-			return new Response(
-				JSON.stringify({ items: storyDrafts, page: 0, perPage: 200 }),
-				{ status: 200, headers: { 'Content-Type': 'application/json' } }
-			);
-		}
-		return originalFetch(input, init);
-	};
-};
-
-// Set during render: the timeline's own effect fetches before a parent effect runs.
-const ServerDraftsScope = ({
-	drafts,
-	children
-}: {
-	drafts: IUserDraftItem[];
-	children: React.ReactNode;
-}) => {
-	patchDraftsFetch();
-	storyDrafts = drafts;
-	// Layout effects run before the timeline's fetch effect; re-set after a prior scope's cleanup.
-	React.useLayoutEffect(() => {
-		storyDrafts = drafts;
-		return () => {
-			storyDrafts = null;
-		};
-	}, [drafts]);
-	return <>{children}</>;
-};
-
-const withServerDrafts = (Story: React.ComponentType, context: any) => (
-	<ServerDraftsScope drafts={context.parameters.serverDrafts ?? []}>
-		<Story />
-	</ServerDraftsScope>
-);
-
 const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs'],
-	decorators: [withDisplayFilterStore, withServerDrafts],
+	decorators: [withDisplayFilterStore],
+	// Meta and story beforeEach hooks compose: StructuredFirstResponse keeps its Matrix lifecycle.
+	beforeEach: ({ parameters }) =>
+		installNotificationDraftFixture(parameters.serverDrafts ?? []),
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: '/notifications' },
@@ -496,7 +446,7 @@ export const DisplayFilterDialogOpen: Story = {
 			body.getByRole('checkbox', { name: 'In der Liste: Entwürfe' })
 		).not.toBeChecked();
 		await expect(
-			body.getByRole('button', { name: 'Pille: System' })
+			body.getByRole('button', { name: 'Im Filter: System' })
 		).toHaveTextContent('Aus');
 	}
 };
@@ -723,5 +673,80 @@ export const DraftAndChatEvents: Story = {
 			canvas.getAllByText('Chat beendet').length
 		).toBeGreaterThan(0);
 		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
+	}
+};
+
+/** #1714: the visible timeline distinguishes transfer, first acceptance and refusal. */
+export const HandoverEventGlyphs: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'glyph-transfer',
+				eventType: 'case.handover.granted',
+				createdAt: minutesAgo(2)
+			}),
+			feedItem({
+				id: 'glyph-accepted',
+				eventType: 'inquiry.accepted',
+				createdAt: minutesAgo(3)
+			}),
+			feedItem({
+				id: 'glyph-denied',
+				eventType: 'case.handover.consent.declined',
+				createdAt: minutesAgo(4)
+			})
+		])
+	],
+	play: async ({ canvasElement }) => {
+		// Known approved SVG shapes, checked at the public rendered cards rather
+		// than the descriptor map. The unit SVG stub cannot prove visual identity.
+		const cases = [
+			{
+				id: 'glyph-transfer',
+				shape: 'M37.5124 79.1667',
+				viewBox: '0 0 100 100'
+			},
+			{
+				id: 'glyph-accepted',
+				shape: 'M16.55 8L13 4.45',
+				viewBox: '0 0 24 24'
+			},
+			{
+				id: 'glyph-denied',
+				shape: 'M13.6667 7.5L12.5 6.33333',
+				viewBox: '0 0 20 20'
+			}
+		];
+		for (const glyph of cases) {
+			const row = canvasElement.querySelector<HTMLElement>(
+				`[data-notification-id="${glyph.id}"]`
+			)!;
+			const checkVisibleGlyph = (icon: SVGSVGElement | null) => {
+				expect(icon).toBeVisible();
+				expect(icon).toHaveAttribute('viewBox', glyph.viewBox);
+				expect(
+					icon?.querySelector('path')?.getAttribute('d')
+				).toContain(glyph.shape);
+			};
+			checkVisibleGlyph(
+				row.querySelector('.notificationsCenter__cardIcon svg')
+			);
+			const card = row.querySelector<HTMLButtonElement>(
+				'.notificationsCenter__card'
+			)!;
+			expect(card).toBeVisible();
+			await userEvent.click(card);
+			await waitFor(() => {
+				expect(
+					row.querySelector('.notificationsCenter__card--active')
+				).toBeVisible();
+				checkVisibleGlyph(
+					row.querySelector('.notificationsCenter__cardIcon svg')
+				);
+				expect(row).toHaveClass(
+					'notificationsCenter__listRow--withExpander'
+				);
+			});
+		}
 	}
 };

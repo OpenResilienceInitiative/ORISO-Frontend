@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import deTranslations from '../../resources/i18n/de/common.json';
 import deInformalTranslations from '../../resources/i18n/de@informal/common.json';
 import enTranslations from '../../resources/i18n/en/common.json';
