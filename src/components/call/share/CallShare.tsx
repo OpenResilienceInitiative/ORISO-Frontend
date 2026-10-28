@@ -78,6 +78,9 @@ export const CallShare = ({
 	const close = () => setOpen(false);
 	const panel = (
 		<CallSharePanel
+			// Another link is another call: a fresh panel drops its QR code and
+			// ignores copy results that finish for the old link.
+			key={link}
 			link={link}
 			settings={settings}
 			onSettingsChange={(next) => {

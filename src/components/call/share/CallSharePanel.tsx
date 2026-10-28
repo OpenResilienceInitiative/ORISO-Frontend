@@ -82,12 +82,6 @@ export const CallSharePanel = ({
 		onContentResize?.();
 	}, [qrOpen, qr, onContentResize]);
 
-	// A new link (another call) must not inherit "Kopiert".
-	useEffect(() => {
-		setCopied(false);
-		setCopyFailed(false);
-	}, [link]);
-
 	const handleCopy = async () => {
 		if (copying) {
 			return;
