@@ -14,8 +14,8 @@ vi.mock('react-i18next', () => ({
 const { CallAdmissionToggle } = await import('./CallAdmissionToggle');
 const {
 	admissionToKnock,
-	createMemoryCallAdmissionStore,
-	DEFAULT_CALL_ADMISSION,
+	createMemoryCallShareSettingsStore,
+	defaultCallShareSettings,
 	knockToAdmission
 } = await import('./callAdmission');
 const { CallParticipantsButton } = await import(
@@ -35,43 +35,55 @@ describe('call admission (#1892 scope extension)', () => {
 		expect(knockToAdmission(false)).toBe('DIRECT');
 		expect(admissionToKnock('KNOCK')).toBe(true);
 		expect(admissionToKnock('DIRECT')).toBe(false);
-		expect(DEFAULT_CALL_ADMISSION).toBe('KNOCK');
+		expect(defaultCallShareSettings()).toEqual({
+			knock: true,
+			temporaryAccount: true
+		});
 	});
 
 	it('starts on and says guests wait', () => {
 		render(
-			<CallAdmissionToggle store={createMemoryCallAdmissionStore()} />
+			<CallAdmissionToggle store={createMemoryCallShareSettingsStore()} />
 		);
 		expect(theSwitch().checked).toBe(true);
 		expect(screen.getByText('calls.admission.on')).toBeTruthy();
 	});
 
-	it('turns knocking off from the keyboard and stores it', async () => {
-		const store = createMemoryCallAdmissionStore('KNOCK');
+	it('turns knocking off from the keyboard and keeps the temporary-account choice', async () => {
+		const store = createMemoryCallShareSettingsStore({
+			knock: true,
+			temporaryAccount: false
+		});
 		const seen = vi.fn();
 		store.watch(seen);
 		render(<CallAdmissionToggle store={store} />);
 		theSwitch().focus();
 		await userEvent.keyboard(' ');
 		await waitFor(() => expect(theSwitch().checked).toBe(false));
-		expect(seen).toHaveBeenLastCalledWith('DIRECT');
+		expect(seen).toHaveBeenLastCalledWith({
+			knock: false,
+			temporaryAccount: false
+		});
 		expect(screen.getByText('calls.admission.off')).toBeTruthy();
 	});
 
 	it('follows a change made elsewhere, e.g. in the share popover', async () => {
-		const store = createMemoryCallAdmissionStore('KNOCK');
+		const store = createMemoryCallShareSettingsStore();
 		render(<CallAdmissionToggle store={store} />);
-		await act(() => store.set('DIRECT'));
+		await act(() => store.set({ knock: false, temporaryAccount: true }));
 		expect(theSwitch().checked).toBe(false);
 	});
 
 	it('keeps the stored value when saving fails', async () => {
-		const memory = createMemoryCallAdmissionStore('KNOCK');
+		const memory = createMemoryCallShareSettingsStore();
 		const set = vi.fn().mockRejectedValue(new Error('CATCH_ALL'));
 		render(<CallAdmissionToggle store={{ watch: memory.watch, set }} />);
 		await userEvent.click(theSwitch());
 		await waitFor(() => expect(theSwitch().disabled).toBe(false));
-		expect(set).toHaveBeenCalledWith('DIRECT');
+		expect(set).toHaveBeenCalledWith({
+			knock: false,
+			temporaryAccount: true
+		});
 		expect(theSwitch().checked).toBe(true);
 	});
 });

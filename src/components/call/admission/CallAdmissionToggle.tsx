@@ -4,15 +4,11 @@ import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { m3SnackbarColors } from '../../m3Snackbar/M3Snackbar';
-import {
-	admissionToKnock,
-	CallAdmission,
-	CallAdmissionStore,
-	knockToAdmission
-} from './callAdmission';
+import { CallShareSettings, CallShareSettingsStore } from './callAdmission';
 
 export interface CallAdmissionToggleProps {
-	store: CallAdmissionStore;
+	/** The same store the share popover uses (`CallShareSettings.knock`). */
+	store: CallShareSettingsStore;
 }
 
 /**
@@ -27,18 +23,19 @@ export const CallAdmissionToggle = ({ store }: CallAdmissionToggleProps) => {
 	const { t } = useTranslation();
 	const labelId = useId();
 	const descriptionId = useId();
-	const [admission, setAdmission] = useState<CallAdmission | null>(null);
+	const [settings, setSettings] = useState<CallShareSettings | null>(null);
 	const [saving, setSaving] = useState(false);
 
-	useEffect(() => store.watch(setAdmission), [store]);
+	useEffect(() => store.watch(setSettings), [store]);
 
-	if (admission === null) return null;
-	const knock = admissionToKnock(admission);
+	if (settings === null) return null;
+	const { knock } = settings;
 
 	const change = async (next: boolean) => {
 		setSaving(true);
 		try {
-			await store.set(knockToAdmission(next));
+			// Only `knock`; the temporary-account choice stays as it is.
+			await store.set({ ...settings, knock: next });
 		} catch {
 			// The store kept the old value, and so does the switch.
 		} finally {

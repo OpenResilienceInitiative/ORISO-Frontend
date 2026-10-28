@@ -1,21 +1,25 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useState } from 'react';
 import i18n from 'i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Box } from '@mui/material';
 import { CallAdmissionToggle } from './CallAdmissionToggle';
-import { CallAdmission, createMemoryCallAdmissionStore } from './callAdmission';
+import { createMemoryCallShareSettingsStore } from './callAdmission';
 import { desktop1440Globals } from '../../message/messageStoryShell';
 
 interface AdmissionStoryProps {
-	initial: CallAdmission;
+	/** `CallShareSettings.knock` at the start. */
+	knock: boolean;
 	/** A second switch on the same store, standing in for the share popover. */
 	withSharePopover?: boolean;
 }
 
-const AdmissionStory = ({ initial, withSharePopover }: AdmissionStoryProps) => {
-	const store = useMemo(() => createMemoryCallAdmissionStore(initial), []); // eslint-disable-line react-hooks/exhaustive-deps
+const AdmissionStory = ({ knock, withSharePopover }: AdmissionStoryProps) => {
+	// One store per story render; `knock` is only the starting value.
+	const [store] = useState(() =>
+		createMemoryCallShareSettingsStore({ knock, temporaryAccount: true })
+	);
 	return (
 		<Box
 			sx={{
@@ -66,7 +70,7 @@ const meta = {
 	title: 'Components/Call/Knock admission switch',
 	component: AdmissionStory,
 	tags: ['autodocs'],
-	args: { initial: 'KNOCK' },
+	args: { knock: true },
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
@@ -99,7 +103,7 @@ export const KnockOn: Story = {
 /** Knocking off: guests join directly. */
 export const KnockOff: Story = {
 	globals: desktop1440Globals,
-	args: { initial: 'DIRECT' },
+	args: { knock: false },
 	play: async ({ canvas }) => {
 		const toggle = await canvas.findByTestId('call-admission-toggle');
 		await expect(switchIn(toggle)).not.toBeChecked();

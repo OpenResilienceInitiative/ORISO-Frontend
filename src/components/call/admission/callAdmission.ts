@@ -2,23 +2,38 @@
  * Whether guests of a call knock first or join directly (#1892 scope
  * extension, FE#1794 §3 "a switch in the call turns knocking on or off").
  *
- * The values are UserService's own (`DirectLinkDTO.admission`,
- * ORISO-UserService#1479). The per-link "Anklopfen" toggle of the share
- * popover (FE#1794, `CallShareSettings.knock`) is the same setting:
- * `knock === true` is `KNOCK`, `false` is `DIRECT`.
+ * It is the same setting as the per-link "Anklopfen" toggle of the share
+ * popover (FE#1794, PR #1910): `CallShareSettings.knock`. The in-call switch
+ * reads and writes `knock` and leaves `temporaryAccount` untouched.
+ *
+ * DEPENDENCY: `CallShareSettings` mirrors
+ * `src/components/call/share/callShareSettings.ts` of PR #1910 (head
+ * adc7612f4), same name and fields, because #1910 is not on `dev` yet. When
+ * #1910 merges, delete the mirror below and import it from there.
  *
  * TODO(#1892, #1794): there is no API to read or change this yet. In
  * ORISO-UserService#1479 the admission is derived from the medium (audio and
- * video always KNOCK, `InviteLinkChatType.admission()`), and
- * `UpdateDirectLinkDTO` has no `admission` field; the per-call share link is
- * not built either. Until it exists the switch runs on the in-memory store
- * below (Storybook only) and is not mounted in the call. Replace the store
- * with an HTTP one and mount `CallAdmissionToggle` in `GroupCallWidget`.
+ * video always KNOCK, `InviteLinkChatType.admission()`), `UpdateDirectLinkDTO`
+ * has no `admission` field, and the per-call share link is not built. Until
+ * it exists the switch runs on the in-memory store below (Storybook only) and
+ * is not mounted in the call. Then: an HTTP store, shared by `CallShare` and
+ * `CallAdmissionToggle`, and the toggle mounted in `GroupCallWidget`.
  */
-export type CallAdmission = 'KNOCK' | 'DIRECT';
+export interface CallShareSettings {
+	/** Guests knock and wait until the counsellor lets them in. */
+	knock: boolean;
+	/** Guests get a temporary account, deleted after the call. */
+	temporaryAccount: boolean;
+}
 
-/** Knocking is on by default (Frank, 17 + 27 Oct, FE#1794). */
-export const DEFAULT_CALL_ADMISSION: CallAdmission = 'KNOCK';
+/** Same defaults as #1910 (Frank, 17 + 27 Oct): both on. */
+export const defaultCallShareSettings = (): CallShareSettings => ({
+	knock: true,
+	temporaryAccount: true
+});
+
+/** UserService's word for it (`DirectLinkDTO.admission`, ORISO-UserService#1479). */
+export type CallAdmission = 'KNOCK' | 'DIRECT';
 
 export const knockToAdmission = (knock: boolean): CallAdmission =>
 	knock ? 'KNOCK' : 'DIRECT';
@@ -27,31 +42,32 @@ export const admissionToKnock = (admission: CallAdmission): boolean =>
 	admission === 'KNOCK';
 
 /**
- * Where the setting lives. The share popover and the in-call switch must use
- * the same store instance, so both always show the same value.
+ * Where the call's share settings live. The share popover
+ * (`CallShare initialSettings / onSettingsChange`) and the in-call switch must
+ * use the same store, so both always show the same value.
  */
-export interface CallAdmissionStore {
-	/** Calls back with the current value at once and on every change. Returns the unsubscribe. */
-	watch: (onChange: (admission: CallAdmission) => void) => () => void;
-	/** Resolves once the new value is stored; rejects and keeps the old one on failure. */
-	set: (admission: CallAdmission) => Promise<void>;
+export interface CallShareSettingsStore {
+	/** Calls back with the current settings at once and on every change. Returns the unsubscribe. */
+	watch: (onChange: (settings: CallShareSettings) => void) => () => void;
+	/** Resolves once stored; rejects and keeps the old settings on failure. */
+	set: (settings: CallShareSettings) => Promise<void>;
 }
 
 /** In memory, for Storybook and tests, until the API exists (see TODO above). */
-export const createMemoryCallAdmissionStore = (
-	initial: CallAdmission = DEFAULT_CALL_ADMISSION
-): CallAdmissionStore => {
-	let value = initial;
-	const listeners = new Set<(admission: CallAdmission) => void>();
+export const createMemoryCallShareSettingsStore = (
+	initial: CallShareSettings = defaultCallShareSettings()
+): CallShareSettingsStore => {
+	let value = { ...initial };
+	const listeners = new Set<(settings: CallShareSettings) => void>();
 	return {
 		watch: (onChange) => {
 			listeners.add(onChange);
-			onChange(value);
+			onChange({ ...value });
 			return () => listeners.delete(onChange);
 		},
-		set: async (admission) => {
-			value = admission;
-			listeners.forEach((listener) => listener(value));
+		set: async (settings) => {
+			value = { ...settings };
+			listeners.forEach((listener) => listener({ ...value }));
 		}
 	};
 };
