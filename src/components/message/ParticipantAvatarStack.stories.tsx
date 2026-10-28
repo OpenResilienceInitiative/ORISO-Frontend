@@ -152,12 +152,13 @@ export const OverflowPlusN: Story = {
 };
 
 /**
- * Design options for the "+N" chip on the conversation card (maxVisible 2).
+ * Design options for the "+N" chip on the conversation card (maxVisible 2),
+ * shown at 40px and at the larger 48px group-chat size.
  * Local CSS only — nothing here changes the shared stack. Pick one and it
  * moves into `participantAvatarStack.styles.scss`.
  */
 const OVERFLOW_VARIANT_CSS = `
-.ovf { display:flex; align-items:center; gap:40px; padding:14px 0; }
+.ovf { display:flex; align-items:center; gap:36px; padding:16px 0; }
 .ovf__label { width:210px; font:600 13px/1.3 Inter,system-ui,sans-serif; color:#3b3b3b; }
 .ovf__label small { display:block; font-weight:400; color:#6b6b6b; }
 /* B: round chip, same size as the avatars — reads as one more avatar */
@@ -224,8 +225,15 @@ export const OverflowChipVariants: Story = {
 							maxVisible={2}
 						/>
 						<ParticipantAvatarStack
+							participants={[client, counsellor, supervisor]}
+							size={48}
+							overlap={24}
+							maxVisible={2}
+						/>
+						<ParticipantAvatarStack
 							participants={many}
-							size={40}
+							size={48}
+							overlap={24}
 							maxVisible={2}
 						/>
 					</div>
