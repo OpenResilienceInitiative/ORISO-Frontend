@@ -252,27 +252,29 @@ export const CallKnockNotice = ({
 						{t('calls.knock.admitAll')}
 					</Button>
 				)}
-				<Box sx={{ flex: 1 }} />
-				<Button
-					variant="text"
-					onClick={guard(() => onDecline(current.id), isBusy)}
-					aria-describedby={nameId}
-					aria-disabled={isBusy || undefined}
-					sx={textAction}
-					data-testid="call-knock-decline"
-				>
-					{t('calls.knock.decline')}
-				</Button>
-				<Button
-					variant="text"
-					onClick={guard(() => onAdmit(current.id), isBusy)}
-					aria-describedby={nameId}
-					aria-disabled={isBusy || undefined}
-					sx={filledAction}
-					data-testid="call-knock-admit"
-				>
-					{t('calls.knock.admit')}
-				</Button>
+				{/* The pair wraps as one, so "Einlassen" never ends up alone. */}
+				<Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
+					<Button
+						variant="text"
+						onClick={guard(() => onDecline(current.id), isBusy)}
+						aria-describedby={nameId}
+						aria-disabled={isBusy || undefined}
+						sx={textAction}
+						data-testid="call-knock-decline"
+					>
+						{t('calls.knock.decline')}
+					</Button>
+					<Button
+						variant="text"
+						onClick={guard(() => onAdmit(current.id), isBusy)}
+						aria-describedby={nameId}
+						aria-disabled={isBusy || undefined}
+						sx={filledAction}
+						data-testid="call-knock-admit"
+					>
+						{t('calls.knock.admit')}
+					</Button>
+				</Box>
 			</Box>
 		</Box>
 	);
