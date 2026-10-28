@@ -4,6 +4,7 @@ import {
 	AREA_KINDS,
 	areaForFamily,
 	NEVER_NOTIFY_FAMILIES,
+	NOTIFICATION_AREAS,
 	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DISABLED_AREAS,
@@ -14,11 +15,22 @@ import {
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
-	it('defaults: only a new enquiry rings, email on for new/standard and off for mention', () => {
+	it('defaults: short tone for event kinds that need attention (#1211)', () => {
+		for (const area of NOTIFICATION_AREAS) {
+			const a = DEFAULT_NOTIFICATION_CONFIG[area];
+			// FE#1435: only the Anfragen tab's "Neue Anfrage" rings with ton-1.
+			expect(a.new.sound).toBe(area === 'requests' ? 'ton-1' : 'ton-2');
+			expect(a.mention.sound).toBe('ton-2');
+			expect(a.handover.sound).toBe('ton-2');
+			expect(a.appointment.sound).toBe('ton-2');
+			// low priority stays silent, calls keep ringing
+			expect(a.standard.sound).toBe('none');
+			expect(a.call.sound).toBe('ring');
+		}
+	});
+
+	it('defaults: email on for new/standard and off for mention', () => {
 		const r = DEFAULT_NOTIFICATION_CONFIG.requests;
-		// FE#1435: "Neue Anfrage" rings out of the box; the rest stay silent.
-		expect(r.new.sound).toBe('ton-1');
-		expect(r.standard.sound).toBe('none');
 		expect(r.new.email).toBe(true);
 		expect(r.standard.email).toBe(true);
 		expect(r.mention.email).toBe(false);
@@ -49,6 +61,13 @@ describe('notificationConfig', () => {
 		expect(parsed.conversations.mention.banner).toBe('persistent');
 	});
 
+	it('parse keeps an explicit stored "none" over the new default', () => {
+		const parsed = parseNotificationConfig({
+			requests: { new: { sound: 'none' } }
+		});
+		expect(parsed.requests.new.sound).toBe('none');
+	});
+
 	it('parse tolerates garbage', () => {
 		const parsed = parseNotificationConfig({ requests: { new: 42 } });
 		expect(parsed.requests.new.sound).toBe('ton-1');
@@ -61,9 +80,9 @@ describe('notificationConfig', () => {
 			'requests',
 			'new',
 			'sound',
-			'ton-2'
+			'ton-5'
 		);
-		expect(next.requests.new.sound).toBe('ton-2');
+		expect(next.requests.new.sound).toBe('ton-5');
 		expect(next.requests.new.email).toBe(
 			DEFAULT_NOTIFICATION_CONFIG.requests.new.email
 		);
