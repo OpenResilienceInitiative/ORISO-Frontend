@@ -24,7 +24,8 @@ export const apiGetGroupChatInfo = async (
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.NO_MATCH,
-			FETCH_ERRORS.FORBIDDEN
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CATCH_ALL
 		]
 	});
 };

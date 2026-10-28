@@ -16,6 +16,9 @@ export const apiConsumeMagicLinkLogin = async (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ token }),
 		skipAuth: true,
-		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.UNAUTHORIZED]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.UNAUTHORIZED
+		]
 	});
-

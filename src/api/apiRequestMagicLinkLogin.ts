@@ -1,7 +1,9 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
-export const apiRequestMagicLinkLogin = async (username: string): Promise<void> => {
+export const apiRequestMagicLinkLogin = async (
+	username: string
+): Promise<void> => {
 	await fetchData({
 		url: endpoints.magicLinkRequest,
 		method: FETCH_METHODS.POST,
@@ -14,4 +16,3 @@ export const apiRequestMagicLinkLogin = async (username: string): Promise<void> 
 		]
 	});
 };
-

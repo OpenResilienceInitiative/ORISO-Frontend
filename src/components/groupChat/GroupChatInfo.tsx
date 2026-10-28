@@ -9,7 +9,9 @@ import {
 	hasUserAuthority,
 	useTenant,
 	ActiveSessionContext,
-	ActiveSessionProvider
+	ActiveSessionProvider,
+	SessionsDataContext,
+	REMOVE_SESSIONS
 } from '../../globalState';
 import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
 import { ButtonItem, BUTTON_TYPES } from '../button/Button';
@@ -82,6 +84,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	};
 
 	const { userData } = useContext(UserDataContext);
+	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const { path: listPath } = useContext(SessionTypeContext);
 
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
@@ -165,6 +168,11 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		setIsV2GroupChat(isV2GroupChatSession(activeSession));
 	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
+	const showGroupChatError = () => {
+		setOverlayItem(groupChatErrorOverlayItem);
+		setOverlayActive(true);
+	};
+
 	const handleStopGroupChatButton = () => {
 		setOverlayItem(stopGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
@@ -182,6 +190,14 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.STOP_GROUP_CHAT) {
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
+					if (!activeSession.item.repetitive) {
+						sessionsDispatch({
+							type: REMOVE_SESSIONS,
+							ids: activeSession.item.matrixRoomId
+								? [activeSession.item.matrixRoomId]
+								: [activeSession.item.id]
+						});
+					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
 				})
 				.catch(() => {
@@ -434,6 +450,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 						scheduleOnly={scheduleOnly}
 						embedded={dialog}
 						onBanned={setBannedOverlayName}
+						onBanFailed={showGroupChatError}
 						onShowQr={() => setQrOpen(true)}
 						topic={topic}
 						scheduleSummary={scheduleSummary}
@@ -568,6 +585,7 @@ const GroupChatInfoContent = ({
 	showInviteActions,
 	inviteLink,
 	onBanned,
+	onBanFailed,
 	onShowQr,
 	...props
 }: GroupChatInfoContentProps) =>
@@ -580,6 +598,7 @@ const GroupChatInfoContent = ({
 			showInviteActions={showInviteActions}
 			inviteLink={inviteLink}
 			onBanned={onBanned}
+			onBanFailed={onBanFailed}
 			onShowQr={onShowQr}
 		/>
 	);
@@ -593,6 +612,7 @@ const GroupChatInfoM3Connected = ({
 	showInviteActions,
 	inviteLink: { url, copyRegistrationLink },
 	onBanned,
+	onBanFailed,
 	onShowQr,
 	...props
 }: Omit<
@@ -608,6 +628,7 @@ const GroupChatInfoM3Connected = ({
 	showInviteActions: boolean;
 	inviteLink: ReturnType<typeof useGroupChatInviteLink>;
 	onBanned: (name: string) => void;
+	onBanFailed: () => void;
 	onShowQr: () => void;
 }) => {
 	const { t: translate } = useTranslation();
@@ -622,13 +643,16 @@ const GroupChatInfoM3Connected = ({
 	} | null>(null);
 	useEffect(() => {
 		if (activeSession.item.active) {
-			apiGetGroupChatInfo(activeSession.item.id).then((response) => {
-				setBannedUsers(
-					response.bannedUsers
-						? response.bannedUsers.map(decodeUsername)
-						: []
-				);
-			});
+			// The ban list is a nicety: a failed read must not break the page.
+			apiGetGroupChatInfo(activeSession.item.id)
+				.then((response) => {
+					setBannedUsers(
+						response.bannedUsers
+							? response.bannedUsers.map(decodeUsername)
+							: []
+					);
+				})
+				.catch(() => {});
 		}
 	}, [activeSession.item.active, activeSession.item.id]);
 
@@ -658,13 +682,16 @@ const GroupChatInfoM3Connected = ({
 		apiPostBanUser({
 			matrixUserId: participant.id,
 			chatId: activeSession.item.id
-		}).then(() => {
-			setBannedUsers((current) => [
-				...current,
-				participant.username ?? participant.name
-			]);
-			onBanned(participant.username ?? participant.name);
-		});
+		})
+			.then(() => {
+				setBannedUsers((current) => [
+					...current,
+					participant.username ?? participant.name
+				]);
+				onBanned(participant.username ?? participant.name);
+			})
+			// Say so instead of silently keeping the member.
+			.catch(() => onBanFailed());
 	};
 
 	return (

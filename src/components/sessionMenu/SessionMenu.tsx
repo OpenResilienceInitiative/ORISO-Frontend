@@ -349,6 +349,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
+					// A single chat is deleted: drop it from the list now. A series
+					// rolls on to its next room and stays.
+					if (!activeSession.item.repetitive) {
+						sessionsDispatch({
+							type: REMOVE_SESSIONS,
+							ids: activeSession.item.matrixRoomId
+								? [activeSession.item.matrixRoomId]
+								: [activeSession.item.id]
+						});
+					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
 				})
 				.catch(() => {
