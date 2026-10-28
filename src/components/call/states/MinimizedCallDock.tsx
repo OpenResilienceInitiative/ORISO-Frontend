@@ -10,7 +10,6 @@ import LockIcon from '@mui/icons-material/Lock';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { UserAvatar } from '../../message/UserAvatar';
 import type { CallParty } from '../callParty';
-import { ReactComponent as MicOnIcon } from '../../../resources/img/icons/audio-on.svg';
 import { ReactComponent as MicOffIcon } from '../../../resources/img/icons/audio-off.svg';
 import { ReactComponent as HangUpIcon } from '../../../resources/img/icons/call.svg';
 import { ReactComponent as MaximizeIcon } from '../../../resources/img/icons/maximize-content.svg';
@@ -120,11 +119,8 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 					aria-pressed={isMuted}
 					aria-label={isMuted ? t('calls.unmute') : t('calls.mute')}
 				>
-					{isMuted ? (
-						<MicOffIcon aria-hidden="true" />
-					) : (
-						<MicOnIcon aria-hidden="true" />
-					)}
+					{/* One glyph, filled when muted, as in the call's control bar. */}
+					<MicOffIcon aria-hidden="true" />
 				</ButtonBase>
 				<ButtonBase
 					className="call-icon-button minimized-call-dock__expand"
@@ -213,7 +209,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 					</ClickAwayListener>
 				</Popper>
 				<ButtonBase
-					className="call-fab call-fab--hangup call-fab--small"
+					className="call-fab call-fab--hangup call-fab--bar"
 					onClick={onHangUp}
 					aria-label={t('calls.endCall')}
 				>
