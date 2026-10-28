@@ -326,6 +326,42 @@ describe('GroupCallWidget Storybook harness', () => {
 		expect(callManager.getCurrentCall()?.callId).not.toBe('second-call');
 	});
 
+	it('answers only once when "End call and answer" is pressed twice', async () => {
+		const { view } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		let finishHangup: () => void = () => undefined;
+		api.transport.send.mockImplementation((action: string) =>
+			action === 'im.vector.hangup'
+				? new Promise((resolve) => {
+						finishHangup = () => resolve({});
+					})
+				: Promise.resolve({})
+		);
+
+		const answer = await view.findByRole('button', {
+			name: 'End call and answer'
+		});
+		fireEvent.click(answer);
+		fireEvent.click(answer);
+		finishHangup();
+
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: 'second-call',
+					state: 'connecting'
+				})
+			)
+		);
+		const hangups = api.transport.send.mock.calls.filter(
+			([action]) => action === 'im.vector.hangup'
+		);
+		expect(hangups).toHaveLength(1);
+	});
+
 	it('moves keyboard focus into the dock when the call is minimized', async () => {
 		const { view } = await renderActiveCall();
 

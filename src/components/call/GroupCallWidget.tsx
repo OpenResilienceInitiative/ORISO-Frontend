@@ -513,6 +513,7 @@ export const GroupCallWidget: React.FC = () => {
 	} | null>(null);
 	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
+	const answeringRef = useRef(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// React compares ref callbacks by function identity, not by DOM node: an
@@ -725,7 +726,9 @@ export const GroupCallWidget: React.FC = () => {
 	 */
 	const handleAnswerWaiting = () => {
 		const next = waitingCall;
-		if (!next) return;
+		// A second press during the handshake would blank the answered call.
+		if (!next || answeringRef.current) return;
+		answeringRef.current = true;
 		const endingCallId = callData?.callId;
 		void (async () => {
 			try {
@@ -738,9 +741,11 @@ export const GroupCallWidget: React.FC = () => {
 			} catch {
 				/* the running call's iframe may already be gone */
 			}
+			const current = callManager.getCurrentCall();
 			const stillRinging =
 				callManager.getWaitingCall()?.callId === next.callId ||
-				callManager.getCurrentCall()?.callId === next.callId;
+				(current?.callId === next.callId &&
+					current.state === 'ringing');
 			if (stillRinging) {
 				if (iframeRef.current) iframeRef.current.src = 'about:blank';
 				setElementCallUrl('');
@@ -750,7 +755,9 @@ export const GroupCallWidget: React.FC = () => {
 				// as asked.
 				closeCallSurface();
 			}
-		})();
+		})().finally(() => {
+			answeringRef.current = false;
+		});
 	};
 
 	const handleEndCall = () => {

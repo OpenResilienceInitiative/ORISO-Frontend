@@ -322,6 +322,39 @@
 			gap: 24px;
 		}
 	}
+
+	/* Landscape phones: a smaller ring, and the card scrolls before the
+	   answer and decline buttons can fall off the screen. */
+	max-height: calc(100dvh - 48px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+
+	@media (max-height: 500px) {
+		top: calc(env(safe-area-inset-top, 0px) + 12px);
+		max-height: calc(100dvh - 24px);
+		padding: 16px 16px 14px;
+
+		&__ring {
+			width: 56px;
+			height: 56px;
+			margin: 0 0 8px;
+
+			> :not(.incoming-call-card__pulse) {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%) scale(0.636);
+			}
+		}
+
+		&__busy {
+			margin-top: 10px;
+		}
+
+		&__actions {
+			margin-top: 12px;
+		}
+	}
 }
 
 /* ── Minimized dock ──────────────────────────────────────────────────── */
