@@ -449,7 +449,7 @@ export const GroupCallWidget: React.FC = () => {
 	const knockScope = useMemo(
 		() => callKnockScopeOf(callData),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[callData?.signalRoomId, callData?.roomId]
+		[callData?.signalRoomId, callData?.roomId, callData?.elementCallRoomId]
 	);
 
 	const notesLabels = useMemo(

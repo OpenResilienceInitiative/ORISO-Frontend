@@ -136,6 +136,18 @@ describe('callKnockModel', () => {
 		expect(callKnockScopeOf({ roomId: '!session:m' })).toEqual({
 			matrixRoomId: '!session:m'
 		});
+		// A group call: the group's room is the conversation.
+		expect(
+			callKnockScopeOf({
+				roomId: '!ec:m',
+				elementCallRoomId: '!ec:m',
+				signalRoomId: '!group:m'
+			})
+		).toEqual({ matrixRoomId: '!group:m' });
+		// Only the media room known: ask nothing rather than the wrong room.
+		expect(
+			callKnockScopeOf({ roomId: '!ec:m', elementCallRoomId: '!ec:m' })
+		).toBeNull();
 		expect(callKnockScopeOf(null)).toBeNull();
 	});
 

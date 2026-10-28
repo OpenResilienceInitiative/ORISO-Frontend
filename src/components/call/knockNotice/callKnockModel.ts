@@ -32,14 +32,24 @@ export const scopeQuery = (scope: CallKnockScope): string =>
 		: `matrixRoomId=${encodeURIComponent(scope.matrixRoomId)}`;
 
 /**
- * The call's conversation room: knocks are made on a 1:1 conversation, and
- * the call signals in that room (`signalRoomId`) even when Element Call
- * runs in a dedicated room of its own. `null` when there is no room yet.
+ * The call's CONVERSATION room (US#1488 / #1479): the 1:1 conversation, or
+ * the group's room in a group call — the room the call signals in
+ * (`signalRoomId`). Never the call's own media room (`elementCallRoomId`):
+ * the server does not know it as a conversation. `roomId` counts only when
+ * it is not that media room (the older 1:1 calls run in the chat room).
+ * `null` when there is no such room: then nothing is asked.
  */
 export const callKnockScopeOf = (
-	call: { roomId?: string; signalRoomId?: string } | null | undefined
+	call:
+		| { roomId?: string; signalRoomId?: string; elementCallRoomId?: string }
+		| null
+		| undefined
 ): CallKnockScope | null => {
-	const matrixRoomId = call?.signalRoomId || call?.roomId;
+	const fallback =
+		call?.roomId && call.roomId !== call.elementCallRoomId
+			? call.roomId
+			: undefined;
+	const matrixRoomId = call?.signalRoomId || fallback;
 	return matrixRoomId ? { matrixRoomId } : null;
 };
 
