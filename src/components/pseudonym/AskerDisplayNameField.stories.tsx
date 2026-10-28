@@ -10,7 +10,7 @@ import {
 const ControlledField = (args: AskerDisplayNameFieldProps) => {
 	const [value, setValue] = React.useState(args.value);
 	return (
-		<Box sx={{ width: 360, maxWidth: '100%' }}>
+		<Box sx={{ width: 'min(360px, calc(100vw - 32px))' }}>
 			<AskerDisplayNameField
 				{...args}
 				value={value}
