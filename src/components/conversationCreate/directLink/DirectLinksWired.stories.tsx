@@ -7,6 +7,8 @@ import {
 } from '../../message/messageStoryShell';
 import { CounsellorDashboardWired } from '../../counsellorDashboard/CounsellorDashboardWired';
 import { DirectLinkCreateCard } from './DirectLinkCreateCard';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
+import type { TenantDataInterface } from '../../../globalState/interfaces';
 import {
 	directLinkMock,
 	fixtureLink,
@@ -197,6 +199,53 @@ const Overview = () => (
 	</div>
 );
 
+/** A Träger with statistics switched off. */
+const withoutStatistics = {
+	tenant: {
+		id: 1,
+		name: 'Träger ohne Statistik',
+		settings: { featureStatisticsEnabled: false }
+	} as unknown as TenantDataInterface,
+	setTenant: () => undefined,
+	updateTenantSettings: () => undefined
+};
+
+const inDays = (days: number, hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + days);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+
+/** Two self-help circles in her own list, as `GET /sessions/consultants` sends them. */
+const circleSessions = () => [
+	{
+		chat: {
+			id: 71,
+			topic: 'Trauer am Abend',
+			conversationType: 'SELF_HELP',
+			startDateWithTime: inDays(2, 19),
+			duration: 90,
+			modality: 'VIDEO',
+			participants: [{}, {}, {}, {}],
+			active: false
+		}
+	},
+	{
+		chat: {
+			id: 72,
+			topic: 'Schulden gemeinsam angehen',
+			conversationType: 'SELF_HELP',
+			startDateWithTime: inDays(5, 18),
+			duration: 60,
+			modality: 'TEXT',
+			participants: [{}, {}],
+			active: false
+		}
+	},
+	{ session: { id: 9 }, user: { username: 'ratsuchend' } }
+];
+
 export const OverviewWithLinks: Story = {
 	name: 'Gespräche · overview with real links and figures',
 	globals: desktop1440Globals,
@@ -268,5 +317,64 @@ export const OverviewWithoutLinks: Story = {
 		await expect(
 			await canvas.findByTestId('dashboard-fallback')
 		).toBeVisible();
+	}
+};
+
+export const OverviewWithCircles: Story = {
+	name: 'Gespräche · links and the next self-help circles',
+	globals: desktop1440Globals,
+	beforeEach: () =>
+		installDirectLinkMockApi({
+			links: [fixtureLink(1)],
+			sessions: circleSessions()
+		}),
+	render: () => <Overview />,
+	play: async ({ canvas }) => {
+		await expect(await canvas.findByText('Trauer am Abend')).toBeVisible();
+		await expect(
+			canvas.getByText('Schulden gemeinsam angehen')
+		).toBeVisible();
+		const tile = canvas
+			.getByRole('heading', { name: 'Nächste Gesprächskreise' })
+			.closest('section') as HTMLElement;
+		const items = within(tile).getAllByRole('listitem');
+		// Soonest first; the plain conversation in the list is no circle.
+		await expect(items).toHaveLength(2);
+		await expect(items[0]).toHaveTextContent('Trauer am Abend');
+		await expect(items[0]).toHaveTextContent('4 Teilnehmende');
+	}
+};
+
+export const OverviewCirclesOnly: Story = {
+	name: 'Gespräche · no link, but circles ahead',
+	globals: phone390Globals,
+	beforeEach: () =>
+		installDirectLinkMockApi({ links: [], sessions: circleSessions() }),
+	render: () => <Overview />,
+	play: async ({ canvas }) => {
+		await expect(await canvas.findByText('Trauer am Abend')).toBeVisible();
+		await expect(canvas.queryByTestId('dashboard-fallback')).toBeNull();
+	}
+};
+
+export const OverviewStatisticsOff: Story = {
+	name: 'Gespräche · Träger switched statistics off: no figures',
+	globals: desktop1440Globals,
+	beforeEach: () => installDirectLinkMockApi({ links: [fixtureLink(1)] }),
+	render: () => (
+		<TenantContext.Provider value={withoutStatistics}>
+			<Overview />
+		</TenantContext.Provider>
+	),
+	play: async ({ canvas }) => {
+		await expect(await canvas.findByText('Flyer Schule')).toBeVisible();
+		await expect(
+			canvas.queryByRole('heading', { name: 'Beratungen' })
+		).toBeNull();
+		await expect(
+			directLinkMock().requests.some((request) =>
+				request.path.includes('/statistics/consultant')
+			)
+		).toBe(false);
 	}
 };

@@ -122,8 +122,9 @@ export const useDirectLinkKnock = (
 		knockingAgain.current = true;
 		start(current.token)
 			.then((conversation) => {
-				const next = pendingKnockFrom(current.token, conversation);
-				if (!next) return;
+				const fresh = pendingKnockFrom(current.token, conversation);
+				if (!fresh) return;
+				const next = { ...fresh, joinExisting: current.joinExisting };
 				rememberPendingKnock(next);
 				setCurrent(next);
 				setPhase((now) => {
@@ -137,7 +138,7 @@ export const useDirectLinkKnock = (
 			.finally(() => {
 				knockingAgain.current = false;
 			});
-	}, [current.token, start]);
+	}, [current.joinExisting, current.token, start]);
 
 	return { phase, gone, cancel, knockAgain, close };
 };

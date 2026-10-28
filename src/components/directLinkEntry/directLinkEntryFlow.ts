@@ -44,6 +44,11 @@ export interface PendingKnock {
 	matrixRoomId?: string | null;
 	medium: DirectLinkMedium;
 	status?: CallKnockStatus | null;
+	/**
+	 * Knocked from a running call's message in the conversation (FE#1893):
+	 * once let in, the person joins that call instead of starting one.
+	 */
+	joinExisting?: boolean;
 }
 
 const isPendingKnock = (value: unknown): value is PendingKnock => {
@@ -84,6 +89,73 @@ export const forgetPendingKnock = () => {
 	}
 };
 
+/** Tells the mounted knock gate that a knock was just stored. */
+export const PENDING_KNOCK_EVENT = 'oriso:directLinkKnock';
+
+export const announcePendingKnock = () => {
+	window.dispatchEvent(new Event(PENDING_KNOCK_EVENT));
+};
+
+/*
+ * Which of the person's conversations came through an audio or video direct
+ * link, and with which link. A later call in that conversation knocks through
+ * the same link (FE#1893); the server has no knock by conversation id. Kept
+ * on this device only (`localStorage`), so on another device the call card
+ * joins as before and the server's call policy decides.
+ */
+export const DIRECT_LINK_SESSIONS_KEY = 'oriso.directLinkSessions';
+const MAX_DIRECT_LINK_SESSIONS = 20;
+
+export interface DirectLinkSession {
+	token: string;
+	medium: DirectLinkMedium;
+	matrixRoomId?: string | null;
+}
+
+const readDirectLinkSessions = (): Record<string, DirectLinkSession> => {
+	try {
+		const parsed = JSON.parse(
+			localStorage.getItem(DIRECT_LINK_SESSIONS_KEY) ?? '{}'
+		);
+		return parsed && typeof parsed === 'object' ? parsed : {};
+	} catch {
+		return {};
+	}
+};
+
+export const rememberDirectLinkSession = (
+	sessionId: number,
+	link: DirectLinkSession
+) => {
+	if (link.medium === 'CHAT') return;
+	try {
+		const entries = Object.entries(readDirectLinkSessions()).filter(
+			([id]) => id !== String(sessionId)
+		);
+		entries.push([String(sessionId), link]);
+		localStorage.setItem(
+			DIRECT_LINK_SESSIONS_KEY,
+			JSON.stringify(
+				Object.fromEntries(entries.slice(-MAX_DIRECT_LINK_SESSIONS))
+			)
+		);
+	} catch {
+		/* see above */
+	}
+};
+
+export const directLinkSessionOf = (
+	sessionId: number | null | undefined
+): DirectLinkSession | null => {
+	if (sessionId == null) return null;
+	const link = readDirectLinkSessions()[String(sessionId)];
+	return typeof link?.token === 'string' &&
+		DIRECT_LINK_MEDIA_TYPES.includes(link.medium) &&
+		link.medium !== 'CHAT'
+		? link
+		: null;
+};
+
 export const pendingKnockFrom = (
 	token: string,
 	conversation: DirectLinkConversation
@@ -99,6 +171,13 @@ export const pendingKnockFrom = (
 				status: conversation.knockStatus ?? null
 			}
 		: null;
+
+/** The call notice in the feed knows only the room: it must not skip the knock. */
+export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
+	Boolean(roomId) &&
+	Object.values(readDirectLinkSessions()).some(
+		(link) => link?.matrixRoomId === roomId && link.medium !== 'CHAT'
+	);
 
 export interface OpenDirectLinkDeps {
 	start?: typeof apiStartDirectLinkConversation;
@@ -117,6 +196,11 @@ export const openDirectLinkConversation = async (
 	}: OpenDirectLinkDeps = {}
 ): Promise<DirectLinkConversation> => {
 	const conversation = await start(token);
+	rememberDirectLinkSession(conversation.sessionId, {
+		token,
+		medium: conversation.medium,
+		matrixRoomId: conversation.matrixRoomId ?? null
+	});
 	const knock = pendingKnockFrom(token, conversation);
 	if (knock) rememberPendingKnock(knock);
 	else forgetPendingKnock();

@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	apiCreateDirectLink,
 	apiGetDirectLinks,
-	apiUpdateDirectLink
+	apiUpdateDirectLink,
+	DIRECT_LINKS_CHANGED_EVENT
 } from '../../../api/apiDirectLinks';
 import { useDirectLinks } from './useDirectLinks';
 
@@ -58,6 +59,27 @@ describe('useDirectLinks', () => {
 			await result.current.create({ medium: 'CHAT', topicId: 4 });
 		});
 		expect(result.current.links.map((link) => link.id)).toEqual(['2', '1']);
+	});
+
+	it('tells an open "Meine Direktlinks" list about the new link', async () => {
+		vi.mocked(apiCreateDirectLink).mockResolvedValue(dto(2));
+		const changed = vi.fn();
+		window.addEventListener(DIRECT_LINKS_CHANGED_EVENT, changed);
+		const { result } = renderHook(() => useDirectLinks({ load: false }));
+		await act(async () => {
+			await result.current.create({ medium: 'CHAT', topicId: 4 });
+		});
+		expect(changed).toHaveBeenCalledOnce();
+
+		vi.mocked(apiCreateDirectLink).mockRejectedValue(new Error('nope'));
+		await act(async () => {
+			await result.current
+				.create({ medium: 'CHAT', topicId: 4 })
+				.catch(() => undefined);
+		});
+		// Only a link that was really created is announced.
+		expect(changed).toHaveBeenCalledOnce();
+		window.removeEventListener(DIRECT_LINKS_CHANGED_EVENT, changed);
 	});
 
 	it('switches a link and puts the switch back when the backend refuses', async () => {

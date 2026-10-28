@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	directLinkMediumOf,
+	directLinkSessionOf,
+	isDirectLinkCallRoom,
 	directLinkReturnPath,
 	loginPathForDirectLink,
 	openDirectLinkConversation,
@@ -10,7 +12,10 @@ import {
 
 vi.mock('../registration/autoLogin', () => ({ redirectToApp: vi.fn() }));
 
-beforeEach(() => sessionStorage.clear());
+beforeEach(() => {
+	sessionStorage.clear();
+	localStorage.clear();
+});
 
 const context = (chatType: string, admission: 'DIRECT' | 'KNOCK' | null) => ({
 	tenantId: 1,
@@ -47,6 +52,8 @@ describe('openDirectLinkConversation', () => {
 		});
 		expect(redirect).toHaveBeenCalledWith(9);
 		expect(readPendingKnock()).toBeNull();
+		// A chat conversation never knocks, so it is not remembered.
+		expect(directLinkSessionOf(9)).toBeNull();
 	});
 
 	it('hands the knock of a call to the app', async () => {
@@ -72,6 +79,14 @@ describe('openDirectLinkConversation', () => {
 			status: 'PENDING'
 		});
 		expect(redirect).toHaveBeenCalledWith(9);
+		// FE#1893: a later call in this conversation knocks through the link.
+		expect(directLinkSessionOf(9)).toEqual({
+			token: 'tok',
+			medium: 'VIDEO',
+			matrixRoomId: '!room:oriso'
+		});
+		expect(isDirectLinkCallRoom('!room:oriso')).toBe(true);
+		expect(isDirectLinkCallRoom('!other:oriso')).toBe(false);
 	});
 
 	it('enters nothing when the link refuses', async () => {

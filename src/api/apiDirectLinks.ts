@@ -142,3 +142,11 @@ export const apiCancelOwnCallKnock = (knockId: number): Promise<void> =>
 		method: FETCH_METHODS.DELETE,
 		responseHandling: handled
 	}).then(() => undefined);
+
+/* "Create chat" lives in another view: it announces a new link so an open
+   list (clock page or settings) shows it straight away. Same name and event
+   as in FE#1911 (PR #1911), so the two PRs agree once both land. */
+export const DIRECT_LINKS_CHANGED_EVENT = 'oriso:direct-links-changed';
+
+export const notifyDirectLinksChanged = () =>
+	window.dispatchEvent(new Event(DIRECT_LINKS_CHANGED_EVENT));

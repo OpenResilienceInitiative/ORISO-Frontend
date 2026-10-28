@@ -4,6 +4,7 @@ import {
 	apiGetDirectLinks,
 	apiUpdateDirectLink,
 	CreateDirectLinkBody,
+	notifyDirectLinksChanged,
 	toDirectLink
 } from '../../../api/apiDirectLinks';
 import { DirectLink } from './directLink';
@@ -64,6 +65,8 @@ export const useDirectLinks = ({ load = true } = {}): DirectLinksState => {
 	const create = useCallback(async (body: CreateDirectLinkBody) => {
 		const link = toDirectLink(await apiCreateDirectLink(body));
 		if (mounted.current) setLinks((current) => [link, ...current]);
+		// An open "Meine Direktlinks" list (FE#1894) reloads.
+		notifyDirectLinksChanged();
 		return link;
 	}, []);
 

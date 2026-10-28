@@ -13,9 +13,11 @@ import { startRoomCall } from '../call/startRoomCall';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import {
 	forgetPendingKnock,
+	PENDING_KNOCK_EVENT,
 	PendingKnock,
 	readPendingKnock
 } from './directLinkEntryFlow';
+import { rememberAdmittedCall, takeAdmittedJoin } from './callMessageKnock';
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
 
 /** How long the app may take to join the conversation's Matrix room. */
@@ -154,7 +156,8 @@ export const DirectLinkKnock = ({
  * Mounted once in the app. After a direct-link call entry the app is loaded
  * on the person's conversation with a knock in `sessionStorage`; this shows
  * the knock dialog over that conversation and, once the person is let in,
- * starts the call into it (FE#1893).
+ * starts the call into it (FE#1893). A knock from a running call's card
+ * shows the same dialog and then joins that call.
  */
 export const DirectLinkKnockGate = ({
 	deps = {},
@@ -170,6 +173,12 @@ export const DirectLinkKnockGate = ({
 	useEffect(() => {
 		setKnock((now) => now ?? readPendingKnock());
 	}, [location.pathname]);
+	/* A knock from a running call's card (FE#1893) arrives without a route change. */
+	useEffect(() => {
+		const pick = () => setKnock((now) => now ?? readPendingKnock());
+		window.addEventListener(PENDING_KNOCK_EVENT, pick);
+		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
+	}, []);
 	const startCall = deps.startCall ?? defaultStartCall;
 
 	/* Only over the person's own conversations: not on the invite page,
@@ -187,6 +196,14 @@ export const DirectLinkKnockGate = ({
 			onDone={() => setKnock(null)}
 			onAdmitted={(admitted) => {
 				setKnock(null);
+				if (admitted.joinExisting) {
+					/* Join the call that is already running; never start a
+					   second one. After a reload the card's next tap joins. */
+					const join = takeAdmittedJoin(admitted.sessionId);
+					if (join) join();
+					else rememberAdmittedCall(admitted.sessionId);
+					return;
+				}
 				void startCall(admitted).catch(() => undefined);
 			}}
 		/>

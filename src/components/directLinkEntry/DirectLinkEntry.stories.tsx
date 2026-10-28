@@ -9,11 +9,19 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { storyLegalLinks as legalLinks } from '../waitingRoom/storyLegalLinks';
 import {
 	desktop1440Globals,
-	phone390Globals
+	phone390Globals,
+	withMessageShell
 } from '../message/messageStoryShell';
+import { CallTimelineMessage } from '../message/CallTimelineMessage';
+import '../message/message.styles.scss';
+import { joinOrKnock } from './callMessageKnock';
 import { DirectLinkCallEntry } from './DirectLinkCallEntry';
-import { DirectLinkKnock } from './DirectLinkKnockGate';
-import type { PendingKnock } from './directLinkEntryFlow';
+import { DirectLinkKnock, DirectLinkKnockGate } from './DirectLinkKnockGate';
+import {
+	forgetPendingKnock,
+	rememberDirectLinkSession,
+	type PendingKnock
+} from './directLinkEntryFlow';
 import {
 	directLinkMock,
 	installDirectLinkMockApi
@@ -29,6 +37,8 @@ import {
  * 2. In the app, over that conversation: the knock wait dialog (#1834),
  *    polling `GET /users/call-knocks/mine/{id}` until the counsellor lets the
  *    person in (then the call starts) or turns them down.
+ * 3. Later, a running call's card in that conversation knocks the same way
+ *    and joins that call once the person is let in (FE#1893).
  *
  * The API is an in-memory stand-in for ORISO-UserService#1479 on `fetch`;
  * account creation and entering the app are spies.
@@ -288,5 +298,81 @@ export const KnockWithdrawn: Story = {
 					request.path.endsWith('/call-knocks/mine/501')
 			)
 		).toBe(true);
+	}
+};
+
+/* ---------- Running call's card in a direct-link conversation ---------- */
+
+const joinRunningCall = fn(async () => 'joined' as const);
+const startNewCall = fn(async () => undefined);
+
+export const KnockFromCallMessage: Story = {
+	name: "5 · Running call's card → knock → let in → joins that call",
+	globals: desktop1440Globals,
+	parameters: { router: { initialPath: '/sessions/user/view/4711' } },
+	decorators: [(Story) => withMessageShell(Story, { parameters: {} })],
+	beforeEach: () => {
+		joinRunningCall.mockClear();
+		startNewCall.mockClear();
+		forgetPendingKnock();
+		rememberDirectLinkSession(4711, { token: 'tok7', medium: 'VIDEO' });
+		return installDirectLinkMockApi({
+			knockAnswers: ['PENDING', 'PENDING', 'ADMITTED']
+		});
+	},
+	render: () => (
+		<>
+			<CallTimelineMessage
+				call={{
+					callId: 'call-direct',
+					roomRef: '!direct:oriso.org',
+					callRoomId: '!media:oriso.org',
+					state: 'running',
+					callType: 'video',
+					participants: [
+						{
+							userId: '@berater:oriso.org',
+							displayName: 'Frau Berger'
+						}
+					]
+				}}
+				onJoin={() => joinOrKnock(4711, joinRunningCall)}
+			/>
+			<DirectLinkKnockGate
+				pollMs={400}
+				deps={{
+					mediaDevices: scriptedDevices(),
+					startCall: startNewCall
+				}}
+			/>
+		</>
+	),
+	play: async ({ canvasElement, canvas }) => {
+		const body = dialog(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /Beitreten|Join call/ })
+		);
+		await waitFor(() =>
+			expect(
+				body.getByText('Kurz warten, bis Sie hereingelassen werden')
+			).toBeVisible()
+		);
+		await expect(joinRunningCall).not.toHaveBeenCalled();
+		await expect(
+			directLinkMock().requests.find((request) =>
+				request.path.endsWith('/invitelinks/tok7/conversations')
+			)
+		).toMatchObject({ method: 'POST' });
+		await waitFor(
+			() =>
+				expect(
+					body.getByText('Sie wurden hereingelassen')
+				).toBeVisible(),
+			{ timeout: 5000 }
+		);
+		await waitFor(() => expect(joinRunningCall).toHaveBeenCalledOnce(), {
+			timeout: 4000
+		});
+		await expect(startNewCall).not.toHaveBeenCalled();
 	}
 };

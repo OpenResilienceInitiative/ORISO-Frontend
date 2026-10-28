@@ -41,6 +41,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
+import { joinOrKnock } from '../directLinkEntry/callMessageKnock';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -2608,26 +2609,29 @@ export const MessageItemComponent = ({
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
 							: () =>
-									callManager.joinExistingCall(
-										callLifecycle,
-										/*
-										 * The card's own answer first.
-										 *
-										 * `activeSession.isGroup` describes
-										 * the CLIENT session, which is false
-										 * for a supervision call inside a 1:1
-										 * one — and a call rejoined as
-										 * non-group is ended for everybody
-										 * when one person leaves, because
-										 * `endCall` publishes a remote hangup
-										 * and finalises the lifecycle. The
-										 * side that started the call wrote
-										 * what it is; cards from before that
-										 * field existed fall back to the old
-										 * guess.
-										 */
-										callLifecycle.isGroup ??
-											Boolean(activeSession?.isGroup)
+									/* FE#1893: a direct-link call conversation knocks first. */
+									joinOrKnock(activeSession?.item?.id, () =>
+										callManager.joinExistingCall(
+											callLifecycle,
+											/*
+											 * The card's own answer first.
+											 *
+											 * `activeSession.isGroup` describes
+											 * the CLIENT session, which is false
+											 * for a supervision call inside a 1:1
+											 * one — and a call rejoined as
+											 * non-group is ended for everybody
+											 * when one person leaves, because
+											 * `endCall` publishes a remote hangup
+											 * and finalises the lifecycle. The
+											 * side that started the call wrote
+											 * what it is; cards from before that
+											 * field existed fall back to the old
+											 * guess.
+											 */
+											callLifecycle.isGroup ??
+												Boolean(activeSession?.isGroup)
+										)
 									)
 					}
 				/>

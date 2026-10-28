@@ -19,6 +19,8 @@ export interface DirectLinkMockOptions {
 		numberOfActiveSessions: number;
 		numberOfSentMessages: number;
 	};
+	/** The counsellor's own list ("Gespräche"); empty answers 204. */
+	sessions?: unknown[];
 }
 
 export interface DirectLinkMock {
@@ -121,6 +123,18 @@ export const installDirectLinkMockApi = (
 					numberOfSentMessages: 87
 				})
 			});
+		}
+		if (path.includes('/service/users/sessions/consultants')) {
+			record();
+			const sessions = options.sessions ?? [];
+			return sessions.length
+				? json({
+						offset: 0,
+						count: sessions.length,
+						total: sessions.length,
+						sessions
+					})
+				: new Response(null, { status: 204 });
 		}
 		const start = path.match(/\/invitelinks\/([^/]+)\/conversations$/);
 		if (start) {
