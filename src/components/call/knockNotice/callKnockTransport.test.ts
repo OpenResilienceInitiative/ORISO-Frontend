@@ -144,7 +144,9 @@ describe('knock notice texts', () => {
 		'admitAll',
 		'position',
 		'previous',
-		'next'
+		'next',
+		'participants',
+		'participantsWaiting'
 	];
 	it('de@informal adds nothing of its own, so it reads the de texts', () => {
 		const informal = JSON.parse(
@@ -157,6 +159,8 @@ describe('knock notice texts', () => {
 			)
 		);
 		expect(informal.calls?.knock).toBeUndefined();
+		// Only the sentence that addresses the counsellor differs.
+		expect(Object.keys(informal.calls?.admission ?? {})).toEqual(['on']);
 	});
 
 	it.each(LOCALES)('%s has every key', (locale) => {
@@ -177,5 +181,12 @@ describe('knock notice texts', () => {
 		});
 		expect(json.calls.knock.position).toContain('{{current}}');
 		expect(json.calls.knock.position).toContain('{{total}}');
+		expect(json.calls.knock.participantsWaiting).toContain('{{count}}');
+		['label', 'on', 'off'].forEach((key) =>
+			expect(
+				json.calls.admission?.[key],
+				`${locale} calls.admission.${key}`
+			).toBeTruthy()
+		);
 	});
 });

@@ -6076,7 +6076,14 @@
 			"admitAll": "Alle einlassen",
 			"position": "{{current}} von {{total}}",
 			"previous": "Vorherige Person",
-			"next": "Nächste Person"
+			"next": "Nächste Person",
+			"participants": "Teilnehmende",
+			"participantsWaiting": "Teilnehmende – wartend: {{count}}"
+		},
+		"admission": {
+			"label": "Anklopfen",
+			"on": "Gäste warten, bis Sie sie einlassen.",
+			"off": "Gäste kommen ohne Warten direkt in den Anruf."
 		}
 	},
 	"form": {

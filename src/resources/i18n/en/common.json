@@ -6001,7 +6001,14 @@
 			"admitAll": "Let everyone in",
 			"position": "{{current}} of {{total}}",
 			"previous": "Previous person",
-			"next": "Next person"
+			"next": "Next person",
+			"participants": "Participants",
+			"participantsWaiting": "Participants – waiting: {{count}}"
+		},
+		"admission": {
+			"label": "Knock first",
+			"on": "Guests wait until you let them in.",
+			"off": "Guests enter the call directly, without waiting."
 		}
 	},
 	"form": {

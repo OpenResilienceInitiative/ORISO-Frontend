@@ -2753,5 +2753,10 @@
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
+	},
+	"calls": {
+		"admission": {
+			"on": "Gäste warten, bis du sie einlässt."
+		}
 	}
 }

@@ -1,13 +1,22 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { CallKnockNotice } from './CallKnockNotice';
-import { useCallKnocks, UseCallKnocksOptions } from './useCallKnocks';
+import {
+	CallKnocksState,
+	useCallKnocks,
+	UseCallKnocksOptions
+} from './useCallKnocks';
 
 export interface CallKnockNoticeHostProps
 	extends Omit<UseCallKnocksOptions, 'enabled'> {
 	/** The call is minimised: dock the notice above it instead of covering it. */
 	minimised?: boolean;
 	enabled?: boolean;
+	/**
+	 * Knocks the caller already polls (for the toolbar count too). Given,
+	 * the host does not poll a second time.
+	 */
+	knocks?: CallKnocksState;
 }
 
 /**
@@ -20,12 +29,11 @@ export interface CallKnockNoticeHostProps
 export const CallKnockNoticeHost = ({
 	minimised = false,
 	enabled = true,
+	knocks,
 	...options
 }: CallKnockNoticeHostProps) => {
-	const { people, busy, admit, decline, admitAll } = useCallKnocks({
-		enabled,
-		...options
-	});
+	const own = useCallKnocks({ enabled: enabled && !knocks, ...options });
+	const { people, busy, admit, decline, admitAll } = knocks ?? own;
 
 	const notice = (
 		<CallKnockNotice

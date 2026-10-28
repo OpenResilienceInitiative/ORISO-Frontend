@@ -6086,7 +6086,14 @@
 			"admitAll": "Laisser entrer tout le monde",
 			"position": "{{current}} sur {{total}}",
 			"previous": "Personne précédente",
-			"next": "Personne suivante"
+			"next": "Personne suivante",
+			"participants": "Participant·es",
+			"participantsWaiting": "Participant·es – en attente : {{count}}"
+		},
+		"admission": {
+			"label": "Frapper avant d’entrer",
+			"on": "Les invités attendent que vous les fassiez entrer.",
+			"off": "Les invités rejoignent l’appel directement, sans attendre."
 		}
 	},
 	"form": {

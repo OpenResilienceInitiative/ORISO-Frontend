@@ -6086,7 +6086,14 @@
 			"admitAll": "ንኹሎም ኣእቱ",
 			"position": "{{current}} ካብ {{total}}",
 			"previous": "ዝሓለፈ ሰብ",
-			"next": "ዝቕጽል ሰብ"
+			"next": "ዝቕጽል ሰብ",
+			"participants": "ተሳተፍቲ",
+			"participantsWaiting": "ተሳተፍቲ – ዝጽበዩ: {{count}}"
+		},
+		"admission": {
+			"label": "ቅድም ኳሕኳሕ",
+			"on": "ጋሻ ክሳብ ተእትዎም ይጸበዩ።",
+			"off": "ጋሻ ከይተጸበዩ ብቐጥታ ናብ ጻውዒት ይኣትዉ።"
 		}
 	},
 	"form": {
