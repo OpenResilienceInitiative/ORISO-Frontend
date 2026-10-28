@@ -499,6 +499,12 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse({ available: true });
 	}
 
+	// ORISO-UserService#1486: story people are normal accounts (404), so asker
+	// messages carry no guest label and the composer asks nothing.
+	if (url.pathname === '/service/users/temporary-account') {
+		return new Response(null, { status: 404 });
+	}
+
 	if (url.pathname === '/service/users/data') {
 		return storybookJsonResponse(mockUserData);
 	}
