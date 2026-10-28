@@ -6268,8 +6268,6 @@
 		},
 		"list": {
 			"title": "Meine Direktlinks",
-			"create": "Neuer Direktlink",
-			"empty": "Aktuell gibt es keine Direktlinks",
 			"qr": "QR-Code zeigen",
 			"active": "{{name}} aktiv"
 		}

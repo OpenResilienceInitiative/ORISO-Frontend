@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AddIcon from '@mui/icons-material/Add';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
@@ -16,8 +15,6 @@ import './directLink.styles.scss';
 
 interface MyDirectLinksProps {
 	links: DirectLink[];
-	/** Opens "Create chat" — links are created only there. */
-	onCreate: () => void;
 	onToggle: (id: string, active: boolean) => void;
 	onShowQr: (link: DirectLink) => void;
 	onCopy?: (url: string) => void | Promise<void>;
@@ -25,11 +22,10 @@ interface MyDirectLinksProps {
 
 /**
  * #1795: the counsellor's direct links as illustrated tiles with quick copy,
- * QR and on/off. The last tile leads to "Create chat"; time windows come later.
+ * QR and on/off. Links are created only in "Create chat"; time windows come later.
  */
 export const MyDirectLinks = ({
 	links,
-	onCreate,
 	onToggle,
 	onShowQr,
 	onCopy = (url) => copyTextToClipboard(url)
@@ -124,25 +120,6 @@ export const MyDirectLinks = ({
 						</div>
 					</li>
 				))}
-				<li className="directLinkTile directLinkTile--add">
-					<button
-						type="button"
-						className="directLinkTile__addButton"
-						onClick={onCreate}
-					>
-						<span className="directLinkTile__addIcon">
-							<AddIcon aria-hidden />
-						</span>
-						<span className="directLinkTile__name">
-							{t('directLink.list.create')}
-						</span>
-						{links.length === 0 && (
-							<span className="directLinkTile__meta">
-								{t('directLink.list.empty')}
-							</span>
-						)}
-					</button>
-				</li>
 			</ul>
 		</section>
 	);

@@ -6278,8 +6278,6 @@
 		},
 		"list": {
 			"title": "Mes liens directs",
-			"create": "Nouveau lien direct",
-			"empty": "Aucun lien direct pour le moment",
 			"qr": "Afficher le code QR",
 			"active": "{{name}} actif"
 		}

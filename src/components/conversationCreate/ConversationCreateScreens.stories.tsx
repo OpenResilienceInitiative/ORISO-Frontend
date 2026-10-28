@@ -305,21 +305,25 @@ const FormatPicker = ({
 				/>
 			)}
 			{step === 'links' ? (
-				<CounsellorDashboard
-					stats={DASHBOARD_STATS}
-					links={links}
-					upcomingCircles={UPCOMING_CIRCLES}
-					onCreateLink={() => setStep('picker')}
-					onToggleLink={(id, active) =>
-						setLinks((current) =>
-							current.map((link) =>
-								link.id === id ? { ...link, active } : link
+				<DesktopFrame
+					framed={!compact}
+					onCreate={() => setStep('picker')}
+				>
+					<CounsellorDashboard
+						stats={DASHBOARD_STATS}
+						links={links}
+						upcomingCircles={UPCOMING_CIRCLES}
+						onToggleLink={(id, active) =>
+							setLinks((current) =>
+								current.map((link) =>
+									link.id === id ? { ...link, active } : link
+								)
 							)
-						)
-					}
-					onShowQr={setShared}
-					onCopy={() => undefined}
-				/>
+						}
+						onShowQr={setShared}
+						onCopy={() => undefined}
+					/>
+				</DesktopFrame>
 			) : step === 'directLink' ? (
 				<div className="conversationCreate__single conversationCreate__single--compact">
 					{directLinkCard}
@@ -397,6 +401,111 @@ const FormatPicker = ({
 	);
 };
 
+/**
+ * Story-only stand-in for the desktop app: navigation rail and the
+ * conversation list, whose width can be dragged (bottom-right corner) to see
+ * the overview follow its pane. "Erstellen" is the list's create chip.
+ */
+const DesktopFrame = ({
+	children,
+	framed = true,
+	onCreate
+}: {
+	children: React.ReactNode;
+	framed?: boolean;
+	onCreate?: () => void;
+}) => {
+	const { t } = useTranslation();
+	if (!framed) return <>{children}</>;
+	const surface = 'var(--m3-surface-container-high, #eae7e8)';
+	return (
+		<div
+			style={{
+				background: surface,
+				boxSizing: 'border-box',
+				display: 'flex',
+				gap: 8,
+				height: '100vh',
+				padding: '8px 0 8px 8px'
+			}}
+		>
+			<nav
+				aria-label="Navigation"
+				style={{
+					alignItems: 'center',
+					display: 'flex',
+					flex: '0 0 72px',
+					flexDirection: 'column',
+					gap: 20,
+					paddingTop: 16
+				}}
+			>
+				{[0, 1, 2, 3].map((item) => (
+					<span
+						key={item}
+						style={{
+							background:
+								item === 0
+									? 'var(--m3-secondary-container, #646d78)'
+									: 'var(--m3-outline-variant, #c4c7c8)',
+							borderRadius: 16,
+							height: 32,
+							width: 56
+						}}
+					/>
+				))}
+			</nav>
+			<aside
+				aria-label={t('notifications.displayFilter.sections.sessions')}
+				style={{
+					background: 'var(--m3-surface-container-lowest, #ffffff)',
+					borderRadius: 24,
+					boxSizing: 'border-box',
+					display: 'flex',
+					flex: '0 0 auto',
+					flexDirection: 'column',
+					gap: 12,
+					maxWidth: 640,
+					minWidth: 300,
+					overflow: 'auto',
+					padding: 16,
+					resize: 'horizontal',
+					width: 380
+				}}
+			>
+				<button
+					type="button"
+					onClick={onCreate}
+					style={{
+						alignSelf: 'flex-start',
+						background: 'var(--m3-primary, #a5000a)',
+						border: 'none',
+						borderRadius: 8,
+						color: 'var(--m3-on-primary, #ffffff)',
+						cursor: 'pointer',
+						fontSize: 14,
+						fontWeight: 500,
+						padding: '8px 16px'
+					}}
+				>
+					+ {t('sessionList.toolbar.chips.create')}
+				</button>
+				{[0, 1, 2, 3, 4].map((row) => (
+					<span
+						key={row}
+						style={{
+							background: 'var(--m3-surface-container, #f0edee)',
+							borderRadius: 16,
+							height: 72
+						}}
+					/>
+				))}
+			</aside>
+			<div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+		</div>
+	);
+};
+
 /** "Gespräche" with nothing selected: the session card holds the overview. */
 const SessionCardShell = ({ children }: { children: React.ReactNode }) => (
 	<div style={{ background: '#e9e6e6', padding: 24 }}>
@@ -427,12 +536,11 @@ const DashboardStory = ({
 	const [links, setLinks] = useState(initial);
 	const [shared, setShared] = useState<DirectLink>();
 	return (
-		<div style={{ height: '100vh' }}>
+		<DesktopFrame>
 			<CounsellorDashboard
 				stats={stats}
 				links={links}
 				upcomingCircles={circles}
-				onCreateLink={() => undefined}
 				onToggleLink={(id, active) =>
 					setLinks((current) =>
 						current.map((link) =>
@@ -451,7 +559,7 @@ const DashboardStory = ({
 					onClose={() => setShared(undefined)}
 				/>
 			)}
-		</div>
+		</DesktopFrame>
 	);
 };
 
@@ -601,7 +709,7 @@ export const DashboardSparse: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Little has happened yet: two figures, one direct link, no circles (most counsellors run none). The dashed tile leads to "Create chat".'
+				story: 'Little has happened yet: two figures, one direct link, no circles (most counsellors run none). A single link becomes a wide card instead of standing alone.'
 			}
 		}
 	},

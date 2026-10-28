@@ -6278,8 +6278,6 @@
 		},
 		"list": {
 			"title": "Doğrudan bağlantılarım",
-			"create": "Yeni doğrudan bağlantı",
-			"empty": "Henüz doğrudan bağlantı yok",
 			"qr": "QR kodunu göster",
 			"active": "{{name}} etkin"
 		}

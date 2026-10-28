@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
-import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkMediumIcon } from '../conversationCreate/directLink/DirectLinkMediumIcon';
 import { MyDirectLinks } from '../conversationCreate/directLink/MyDirectLinks';
@@ -22,7 +20,7 @@ export interface DashboardStats {
 	assignedSessions: number;
 	activeSessions: number;
 	sentMessages: number;
-	/** Not in the statistics service yet; the bar shows once it is. */
+	/** Not in the statistics service yet; figure and bar show once it is. */
 	archivedSessions?: number;
 }
 
@@ -31,7 +29,6 @@ export interface CounsellorDashboardProps {
 	links: DirectLink[];
 	/** At most three, soonest first. */
 	upcomingCircles: DashboardCircle[];
-	onCreateLink: () => void;
 	onToggleLink: (id: string, active: boolean) => void;
 	onShowQr: (link: DirectLink) => void;
 	onCopy?: (url: string) => void | Promise<void>;
@@ -39,14 +36,14 @@ export interface CounsellorDashboardProps {
 
 /**
  * #1795: what "Gespräche" shows while no conversation is selected — tiles on
- * the grey app background, no empty white conversation room. With no direct
- * link and no upcoming circle it stays the turning-cup empty state.
+ * the grey app background, no empty white conversation room. The layout
+ * follows the width of its own pane (container queries), not the viewport.
+ * With no direct link and no upcoming circle it stays the turning cup.
  */
 export const CounsellorDashboard = ({
 	stats,
 	links,
 	upcomingCircles,
-	onCreateLink,
 	onToggleLink,
 	onShowQr,
 	onCopy
@@ -64,31 +61,29 @@ export const CounsellorDashboard = ({
 	}
 
 	const { archivedSessions } = stats;
-	const sessionFigures = [
+	const figures = [
 		{ key: 'assigned', value: stats.assignedSessions },
 		{ key: 'active', value: stats.activeSessions },
 		...(archivedSessions === undefined
 			? []
-			: [{ key: 'archived', value: archivedSessions }])
+			: [{ key: 'archived', value: archivedSessions }]),
+		{ key: 'sentMessages', value: stats.sentMessages }
 	];
 	const total = stats.activeSessions + (archivedSessions ?? 0);
 
 	return (
 		<div className="counsellorDashboard" data-testid="counsellor-dashboard">
-			<h2 className="counsellorDashboard__title">
-				{t('dashboard.title')}
-			</h2>
-			<div className="counsellorDashboard__top">
+			<div className="counsellorDashboard__inner">
+				<h2 className="counsellorDashboard__title">
+					{t('dashboard.title')}
+				</h2>
 				<section
-					className="counsellorDashboard__tile counsellorDashboard__tile--sessions"
-					aria-labelledby="dashboardSessionsTitle"
+					className="counsellorDashboard__tile counsellorDashboard__stats"
+					aria-labelledby="dashboardStatsTitle"
 				>
 					<header className="counsellorDashboard__tileHeader">
-						<span className="counsellorDashboard__tileIcon">
-							<ForumOutlinedIcon aria-hidden />
-						</span>
 						<h3
-							id="dashboardSessionsTitle"
+							id="dashboardStatsTitle"
 							className="counsellorDashboard__tileTitle"
 						>
 							{t('dashboard.stats.title')}
@@ -98,7 +93,7 @@ export const CounsellorDashboard = ({
 						</span>
 					</header>
 					<dl className="counsellorDashboard__figures">
-						{sessionFigures.map(({ key, value }) => (
+						{figures.map(({ key, value }) => (
 							<div
 								key={key}
 								className={`counsellorDashboard__figure counsellorDashboard__figure--${key}`}
@@ -119,77 +114,64 @@ export const CounsellorDashboard = ({
 						</div>
 					)}
 				</section>
-				<section
-					className="counsellorDashboard__tile counsellorDashboard__tile--messages"
-					aria-labelledby="dashboardMessagesTitle"
+				<div
+					className={`counsellorDashboard__content${
+						links.length > 0 && upcomingCircles.length > 0
+							? ' counsellorDashboard__content--split'
+							: ''
+					}`}
 				>
-					<header className="counsellorDashboard__tileHeader">
-						<span className="counsellorDashboard__tileIcon">
-							<SendOutlinedIcon aria-hidden />
-						</span>
-						<h3
-							id="dashboardMessagesTitle"
-							className="counsellorDashboard__tileTitle"
+					{links.length > 0 && (
+						<MyDirectLinks
+							links={links}
+							onToggle={onToggleLink}
+							onShowQr={onShowQr}
+							onCopy={onCopy}
+						/>
+					)}
+					{upcomingCircles.length > 0 && (
+						<section
+							className="counsellorDashboard__tile counsellorDashboard__circlesTile"
+							aria-labelledby="dashboardCirclesTitle"
 						>
-							{t('dashboard.stats.sentMessages')}
-						</h3>
-					</header>
-					<p className="counsellorDashboard__bigNumber">
-						{stats.sentMessages}
-					</p>
-					<span className="counsellorDashboard__period">
-						{t('dashboard.stats.period')}
-					</span>
-				</section>
-				{upcomingCircles.length > 0 && (
-					<section
-						className="counsellorDashboard__tile counsellorDashboard__tile--circles"
-						aria-labelledby="dashboardCirclesTitle"
-					>
-						<h3
-							id="dashboardCirclesTitle"
-							className="counsellorDashboard__tileTitle"
-						>
-							{t('dashboard.circles.title')}
-						</h3>
-						<ul className="counsellorDashboard__circles">
-							{upcomingCircles.slice(0, 3).map((circle) => (
-								<li
-									key={circle.id}
-									className="counsellorDashboard__circle"
-								>
-									<span className="counsellorDashboard__circleIcon">
-										<DirectLinkMediumIcon
-											medium={circle.medium}
-										/>
-									</span>
-									<span className="counsellorDashboard__circleText">
-										<span className="counsellorDashboard__circleTopic">
-											{circle.topic}
+							<h3
+								id="dashboardCirclesTitle"
+								className="counsellorDashboard__tileTitle"
+							>
+								{t('dashboard.circles.title')}
+							</h3>
+							<ul className="counsellorDashboard__circles">
+								{upcomingCircles.slice(0, 3).map((circle) => (
+									<li
+										key={circle.id}
+										className="counsellorDashboard__circle"
+									>
+										<span className="counsellorDashboard__circleIcon">
+											<DirectLinkMediumIcon
+												medium={circle.medium}
+											/>
 										</span>
-										<span className="counsellorDashboard__circleMeta">
-											{circle.when} ·{' '}
-											{t(
-												'dashboard.circles.participants',
-												{
-													count: circle.participants
-												}
-											)}
+										<span className="counsellorDashboard__circleText">
+											<span className="counsellorDashboard__circleTopic">
+												{circle.topic}
+											</span>
+											<span className="counsellorDashboard__circleMeta">
+												{circle.when} ·{' '}
+												{t(
+													'dashboard.circles.participants',
+													{
+														count: circle.participants
+													}
+												)}
+											</span>
 										</span>
-									</span>
-								</li>
-							))}
-						</ul>
-					</section>
-				)}
+									</li>
+								))}
+							</ul>
+						</section>
+					)}
+				</div>
 			</div>
-			<MyDirectLinks
-				links={links}
-				onCreate={onCreateLink}
-				onToggle={onToggleLink}
-				onShowQr={onShowQr}
-				onCopy={onCopy}
-			/>
 		</div>
 	);
 };

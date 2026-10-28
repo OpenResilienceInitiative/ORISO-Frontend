@@ -6193,8 +6193,6 @@
 		},
 		"list": {
 			"title": "My direct links",
-			"create": "New direct link",
-			"empty": "There are no direct links yet",
 			"qr": "Show QR code",
 			"active": "{{name}} active"
 		}
