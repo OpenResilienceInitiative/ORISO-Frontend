@@ -82,15 +82,11 @@ import {
 	describeActivityEvent
 } from './activityEvent';
 import { useTimelineConversation } from './useTimelineConversation';
+import { useTimelineFeed } from './useTimelineFeed';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { useActivityTimeline } from './useActivityTimeline';
 import { useActivityPreviewHydration } from './useActivityPreviewHydration';
-import {
-	isTimelineDraftId,
-	mergeDraftsIntoFeed,
-	toNonEmbeddedPath
-} from './timelineDrafts';
-import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import { toNonEmbeddedPath } from './timelineDrafts';
 import { callManager } from '../../services/CallManager';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
@@ -219,17 +215,8 @@ export const NotificationsCenter = () => {
 		addNotification
 	} = useContext(NotificationsContext);
 	// #1535: unsent drafts join the list here only, not the provider feed.
-	const timelineDrafts = useTimelineDrafts();
-	const notificationFeed = useMemo(
-		() => mergeDraftsIntoFeed(serverFeed, timelineDrafts),
-		[serverFeed, timelineDrafts]
-	);
-	const markNotificationAsRead = useCallback(
-		(id: string) => {
-			if (!isTimelineDraftId(id)) markServerNotificationAsRead(id);
-		},
-		[markServerNotificationAsRead]
-	);
+	const { feed: notificationFeed, markRead: markNotificationAsRead } =
+		useTimelineFeed(serverFeed, markServerNotificationAsRead);
 	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
 	const {
 		effective: timelineFilter,
