@@ -1248,6 +1248,24 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 .sessionsListItem.sessionsListItem--grouped {
 	margin: 0;
 
+	// Selecting a card parts its neighbours: gap and corners ease in.
+	transition: margin 200ms cubic-bezier(0.2, 0, 0, 1);
+
+	.sessionsListItem__content {
+		transition:
+			border-radius 200ms cubic-bezier(0.2, 0, 0, 1),
+			border-color 160ms ease,
+			box-shadow 160ms ease,
+			background-color 160ms ease;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&,
+		.sessionsListItem__content {
+			transition: none;
+		}
+	}
+
 	&:not(.sessionsListItem--active) .sessionsListItem__content {
 		@include list-group-member;
 
