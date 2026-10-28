@@ -1,23 +1,51 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import {
-	ENTRY_HEIGHT,
+	RuntimeSessionProviders,
+	seedMatrixRoom
+} from '../../sessionsListItem/__storybook__/runtimeSessionCard';
+import {
 	TimelinePrototype,
 	type TimelinePrototypeProps
 } from './TimelinePrototype';
-import { mockBookings, mockEntries, mockSessions } from './timelineMock';
+import {
+	mockBookings,
+	mockEntries,
+	mockListItems,
+	mockSessions,
+	mockTopics,
+	unmappedListItem
+} from './timelineMock';
 
 const meta = {
 	title: 'Components/Session/List/Timeline prototype',
 	component: TimelinePrototype,
 	tags: ['autodocs'],
+	decorators: [
+		(Story) => {
+			seedMatrixRoom(3);
+			return (
+				<RuntimeSessionProviders
+					sessions={[
+						...Object.values(mockListItems),
+						unmappedListItem
+					]}
+					topics={mockTopics}
+				>
+					<Story />
+				</RuntimeSessionProviders>
+			);
+		}
+	],
 	parameters: {
 		layout: 'centered',
+		router: { initialPath: '/sessions/consultant/sessionView' },
 		docs: {
 			description: {
 				component:
 					'ADR-021 / PR 2 — prototype only, not wired into the real list. ' +
+					'Toolbar and cards are the real components; the prototype adds the future zone. ' +
 					'Pull the handle under the filter chips to reveal upcoming appointments; it rests at ' +
 					'closed / next appointment / half / almost all and cannot go past the last appointment. ' +
 					'Controls: scroll model (two panes vs. one timeline), "Jetzt" variant, role.'
@@ -35,6 +63,8 @@ const meta = {
 	args: {
 		entries: mockEntries(),
 		sessions: mockSessions,
+		items: mockListItems,
+		unmappedItem: unmappedListItem,
 		role: 'counsellor',
 		scrollModel: 'panes',
 		nowVariant: 'line',
@@ -47,6 +77,20 @@ type Story = StoryObj<typeof meta>;
 
 const handleOf = (canvasElement: HTMLElement) =>
 	canvasElement.querySelector<HTMLElement>('[role="separator"]')!;
+const futureRows = (canvasElement: HTMLElement) => [
+	...canvasElement.querySelectorAll<HTMLElement>(
+		'[data-cy="timeline-future"] .tlp__row'
+	)
+];
+/** The first stop: the next appointment, from its top edge to the handle. */
+const nextStop = (canvasElement: HTMLElement) => {
+	const last = futureRows(canvasElement).at(-1)!;
+	return (last.parentElement as HTMLElement).offsetHeight - last.offsetTop;
+};
+const content = (row: HTMLElement) =>
+	row.querySelector<HTMLElement>('.sessionsListItem__content')!;
+const REST_OUTLINE = 'rgb(255, 180, 170)'; // --m3-primary-fixed-dim
+const FOCUS_RING = 'rgb(204, 30, 28)'; // --m3-primary-container
 const futureHeight = (canvasElement: HTMLElement) =>
 	Math.round(
 		canvasElement
@@ -68,13 +112,18 @@ export const FutureHandle: Story = {
 		await userEvent.keyboard('{ArrowDown}');
 		await waitFor(() =>
 			expect(handle.getAttribute('aria-valuenow')).toBe(
-				String(ENTRY_HEIGHT)
+				String(nextStop(canvasElement))
 			)
 		);
 
-		// 22 dates + one booking without a room are in the future: the last stop is all of them.
+		// 22 dates + one booking without a room: the last stop shows all of them.
+		await expect(futureRows(canvasElement)).toHaveLength(
+			mockEntries().length
+		);
 		const max = Number(handle.getAttribute('aria-valuemax'));
-		await expect(max).toBe(mockEntries().length * ENTRY_HEIGHT);
+		await expect(max).toBeGreaterThan(
+			(mockEntries().length - 1) * nextStop(canvasElement)
+		);
 
 		await userEvent.keyboard('{End}');
 		await waitFor(() =>
@@ -104,9 +153,9 @@ export const SpringBack: Story = {
 			.querySelector<HTMLElement>('[data-cy="timeline-future"]')!
 			.getBoundingClientRect().top;
 		// One appointment only: the area ends right after it.
-		await expect(handle.getAttribute('aria-valuemax')).toBe(
-			String(ENTRY_HEIGHT)
-		);
+		await waitFor(() => expect(futureRows(canvasElement)).toHaveLength(1));
+		const max = Number(handle.getAttribute('aria-valuemax'));
+		await expect(max).toBeGreaterThanOrEqual(nextStop(canvasElement));
 
 		fireEvent.pointerDown(handle, {
 			button: 0,
@@ -116,62 +165,63 @@ export const SpringBack: Story = {
 		fireEvent.pointerMove(document, { pointerId: 1, clientY: top + 600 });
 		await waitFor(() => {
 			const shown = futureHeight(canvasElement);
-			expect(shown).toBeGreaterThan(ENTRY_HEIGHT);
-			expect(shown).toBeLessThanOrEqual(ENTRY_HEIGHT + 32);
+			expect(shown).toBeGreaterThan(max);
+			expect(shown).toBeLessThanOrEqual(max + 32);
 		});
 		fireEvent.pointerUp(document, { pointerId: 1 });
-		await waitFor(() =>
-			expect(futureHeight(canvasElement)).toBe(ENTRY_HEIGHT)
-		);
+		await waitFor(() => expect(futureHeight(canvasElement)).toBe(max));
 	}
 };
 
-/** The twin: the clicked entry gets the full state, its room the calm outline. */
+/** The twin: the clicked card holds the 2px ring, its room in the past the calm outline. */
 export const TwinSelection: Story = {
 	name: 'Twin entry — clicked one full, its room calm',
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		handleOf(canvasElement).focus();
-		await userEvent.keyboard('{End}');
-		const entry = canvasElement.querySelector<HTMLElement>(
-			'[data-entry-key="occ-9001-0"]'
+		const handle = handleOf(canvasElement);
+		handle.focus();
+		await userEvent.keyboard('{ArrowDown}');
+		const next = futureRows(canvasElement).at(-1)!;
+		await userEvent.click(content(next));
+		const past = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="timeline-past"] .tlp__row'
+			)
+		];
+		const room = past.find((row) =>
+			row.textContent?.includes('ruhiges Yak Kim')
 		)!;
-		await userEvent.click(entry);
-		await waitFor(() => expect(entry.dataset.selected).toBe('true'));
-		const room = canvas
-			.getAllByRole('tab')
-			.find(
-				(tab) =>
-					tab.textContent?.includes('Elternrunde') &&
-					tab.classList.contains('tlp__card')
-			)!;
-		await expect(room.classList.contains('tlp__card--calm')).toBe(true);
-		// The other dates of the same series stay quiet apart from the calm outline.
+		await waitFor(() =>
+			expect(
+				room.querySelector('.sessionsListItem--active')
+			).not.toBeNull()
+		);
+		await waitFor(() =>
+			expect(getComputedStyle(content(next)).borderTopColor).toBe(
+				FOCUS_RING
+			)
+		);
+		await expect(getComputedStyle(content(room)).borderTopColor).toBe(
+			REST_OUTLINE
+		);
+		// Exactly one open room in the past list.
 		await expect(
-			canvasElement
-				.querySelector('[data-entry-key="occ-9001-1"]')!
-				.classList.contains('tlp__entry--calm')
-		).toBe(true);
-		await expect(
-			canvasElement
-				.querySelector('[data-entry-key="occ-9002-0"]')!
-				.classList.contains('tlp__entry--none')
-		).toBe(true);
+			past.filter((row) => row.querySelector('.sessionsListItem--active'))
+		).toHaveLength(1);
 	}
 };
 
 /** A filter closes the area down to what it still holds. */
-export const FilterOneToOne: Story = {
-	name: 'Filter 1:1 — fewer appointments, shorter reach',
+export const FilterGroups: Story = {
+	name: 'Filter Gruppen — fewer appointments, shorter reach',
+	args: { initialFilter: 'group' },
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await userEvent.click(canvas.getByRole('button', { name: '1:1' }));
-		await waitFor(() =>
-			// two bookings with a room; the one without a room needs "Alle"
-			expect(handleOf(canvasElement).getAttribute('aria-valuemax')).toBe(
-				String(2 * ENTRY_HEIGHT)
+		// 16 group dates; the bookings and the one without a room need "Alle".
+		await waitFor(() => expect(futureRows(canvasElement)).toHaveLength(16));
+		await expect(
+			canvasElement.querySelectorAll(
+				'[data-cy="timeline-past"] .tlp__row'
 			)
-		);
+		).toHaveLength(2);
 	}
 };
 
@@ -202,6 +252,8 @@ const Variants = (props: Partial<TimelinePrototypeProps>) => (
 				<TimelinePrototype
 					entries={mockEntries()}
 					sessions={mockSessions}
+					items={mockListItems}
+					unmappedItem={unmappedListItem}
 					listHeight={420}
 					nowVariant={nowVariant}
 					{...props}

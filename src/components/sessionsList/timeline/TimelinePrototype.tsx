@@ -1,19 +1,26 @@
 /**
  * Chat-history timeline PROTOTYPE (ADR-021, PR 2) — Storybook only, nothing
- * here is wired into the real list. It answers three questions by hand:
- * how the future handle feels, which scroll model and which "Jetzt" marker
- * work, and what the twin entries and their menu look like.
+ * here is wired into the real list. The toolbar and every card are the real
+ * components (`SessionsListToolbar`, `SessionListItemComponent` with the
+ * list's grouping flags); the prototype only adds the future zone, its
+ * handle, the "Jetzt" marker and the split button on the twin cards.
  */
 import * as React from 'react';
 import {
 	useCallback,
 	useEffect,
 	useId,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+import type { ListItemInterface } from '../../../globalState/interfaces';
+import { SessionsListToolbar } from '../SessionsListToolbar';
+import type { SessionToolbarChipFilter } from '../sessionToolbarFilters';
+import { RuntimeSessionCard } from '../../sessionsListItem/__storybook__/runtimeSessionCard';
 import { ResizableHandle } from '../ResizableHandle';
 import { SplitButton } from '../../splitButton/SplitButton';
 import {
@@ -35,12 +42,14 @@ import {
 	type TimelineRole,
 	type TimelineSession
 } from './timelineModel';
+import '../sessionsList.styles.scss';
 import './timelinePrototype.styles.scss';
 
 export type ScrollModel = 'panes' | 'single';
 export type NowVariant = 'line' | 'handle' | 'band';
 
-export const ENTRY_HEIGHT = 124;
+/** Fallback card height until the real cards are measured. */
+export const ENTRY_HEIGHT = 160;
 /** Pull this far past the top of the single timeline to release the next stop. */
 export const PULL_RELEASE_PX = 60;
 
@@ -54,20 +63,21 @@ const MODALITY_ICON: Record<
 	location: LocationIcon
 };
 
-const FILTERS: [TimelineFilter, string][] = [
-	['all', 'Alle'],
-	['group', 'Gruppen'],
-	['one-to-one', '1:1']
-];
+/** The real toolbar chips the prototype listens to; every other chip shows all. */
+const FILTER_OF_CHIP: Partial<
+	Record<SessionToolbarChipFilter, TimelineFilter>
+> = { groups: 'group', nearby: 'one-to-one' };
 
-type Selection =
-	| { via: 'session'; sessionId: number }
-	| { via: 'entry'; key: string; sessionId?: number }
-	| null;
+const roomOf = (item: ListItemInterface) =>
+	item.chat?.matrixRoomId ?? item.session?.matrixRoomId ?? '';
 
 export interface TimelinePrototypeProps {
 	entries: FutureEntry[];
 	sessions: TimelineSession[];
+	/** The real list row of every session (same ids). */
+	items: Record<number, ListItemInterface>;
+	/** Card used for an appointment whose room is not known yet. */
+	unmappedItem: ListItemInterface;
 	role?: TimelineRole;
 	scrollModel?: ScrollModel;
 	nowVariant?: NowVariant;
@@ -136,78 +146,6 @@ const EntryMenu = ({
 	);
 };
 
-const EntryCard = ({
-	entry,
-	role,
-	state,
-	onSelect
-}: {
-	entry: FutureEntry;
-	role: TimelineRole;
-	state: 'full' | 'calm' | 'none';
-	onSelect: () => void;
-}) => {
-	const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
-	const toggleRef = useRef<HTMLButtonElement | null>(null);
-	const menuId = useId();
-	const Icon = MODALITY_ICON[entry.modality];
-	return (
-		<div
-			className={`tlp__entry tlp__entry--${state}`}
-			role="group"
-			aria-label={`${entry.title}, ${formatEntryDate(entry.start)}`}
-			data-cy="timeline-entry"
-			data-entry-key={entry.key}
-			data-selected={state === 'full' ? 'true' : 'false'}
-			onClick={onSelect}
-		>
-			<button
-				type="button"
-				className="tlp__entryHead"
-				aria-current={state === 'full' ? 'true' : undefined}
-				onClick={onSelect}
-			>
-				{entry.topic && <span className="tlp__tag">{entry.topic}</span>}
-				<span className="tlp__entryTitle">{entry.title}</span>
-			</button>
-			<div
-				className="tlp__entryAction"
-				onClick={(e) => e.stopPropagation()}
-			>
-				<SplitButton
-					size="compact"
-					variant={state === 'full' ? 'primary' : 'tonal'}
-					label={formatEntryDate(entry.start)}
-					icon={<Icon />}
-					mainOpensMenu={false}
-					onClick={onSelect}
-					onToggleMenu={() =>
-						setMenuAnchor(
-							menuAnchor
-								? null
-								: (toggleRef.current?.getBoundingClientRect() ??
-										null)
-						)
-					}
-					open={Boolean(menuAnchor)}
-					menuLabel="Terminmenü"
-					menuPopup="menu"
-					menuId={menuId}
-					trailingRef={toggleRef}
-				/>
-			</div>
-			{menuAnchor && (
-				<EntryMenu
-					entry={entry}
-					role={role}
-					anchor={menuAnchor}
-					onClose={() => setMenuAnchor(null)}
-				/>
-			)}
-		</div>
-	);
-};
-
 const NowArrow = ({ direction }: { direction: 'up' | 'down' }) => (
 	<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
 		<path
@@ -230,49 +168,266 @@ const NowMarker = ({ variant }: { variant: NowVariant }) => (
 	</div>
 );
 
+/**
+ * Real cards in the list's grouping: flush, one hairline, corners at the
+ * group ends; the open card leaves its group (same flags as `SessionsList`).
+ */
+const CardGroup = ({
+	items,
+	isOpenAt,
+	onPick,
+	decorate
+}: {
+	items: ListItemInterface[];
+	/** Which rows leave the group; the route still marks every row of the open room. */
+	isOpenAt: (index: number) => boolean;
+	onPick: (index: number) => void;
+	decorate?: (item: ListItemInterface, index: number) => React.ReactNode;
+}) => {
+	const isActive = (index: number) =>
+		index >= 0 && index < items.length && isOpenAt(index);
+	return (
+		<>
+			{items.map((item, index) => (
+				<div
+					key={`${roomOf(item)}-${index}`}
+					className="tlp__row"
+					onClickCapture={(event) => {
+						// The split button's menu toggle does not open the room.
+						if (
+							(event.target as Element).closest(
+								'.tlp__twinAction'
+							)
+						)
+							return;
+						onPick(index);
+					}}
+				>
+					<RuntimeSessionCard
+						session={item}
+						index={index}
+						grouped
+						isBeforeActive={isActive(index + 1)}
+						isAfterActive={isActive(index - 1)}
+						isGroupStart={index === 0 || isActive(index - 1)}
+						isGroupEnd={
+							index === items.length - 1 || isActive(index + 1)
+						}
+					/>
+					{decorate?.(item, index)}
+				</div>
+			))}
+		</>
+	);
+};
+
+/**
+ * The split button sits where the twin card would show its last message.
+ * Its main part opens the room exactly like a click on the card does.
+ */
+const TwinAction = ({
+	entry,
+	role,
+	active
+}: {
+	entry: FutureEntry;
+	role: TimelineRole;
+	active: boolean;
+}) => {
+	const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
+	const [place, setPlace] = useState<React.CSSProperties>({});
+	const hostRef = useRef<HTMLDivElement>(null);
+	const toggleRef = useRef<HTMLButtonElement | null>(null);
+	const menuId = useId();
+	const Icon = MODALITY_ICON[entry.modality];
+	const card = () =>
+		hostRef.current
+			?.closest('.tlp__row')
+			?.querySelector<HTMLElement>('.sessionsListItem__content');
+
+	// The card fills in after mount (Matrix preview, avatars): measure again
+	// whenever the row changes size or content.
+	useLayoutEffect(() => {
+		const row = hostRef.current?.closest<HTMLElement>('.tlp__row');
+		if (!row) return;
+		const measure = () => {
+			const preview = row.querySelector<HTMLElement>(
+				'.sessionsListItem__subject'
+			);
+			if (!preview) return;
+			const r = row.getBoundingClientRect();
+			// The preview box spans the card; its text starts after the avatar.
+			const text = document.createRange();
+			text.selectNodeContents(preview);
+			const p = text.getBoundingClientRect();
+			// Top-aligned: the 32px button grows into the gap below the preview.
+			setPlace({
+				left: Math.round(p.left - r.left),
+				top: Math.round(p.top - r.top - 2)
+			});
+		};
+		measure();
+		const observer =
+			typeof ResizeObserver !== 'undefined'
+				? new ResizeObserver(measure)
+				: null;
+		observer?.observe(row);
+		const mutations = new MutationObserver(measure);
+		mutations.observe(row, { childList: true, subtree: true });
+		return () => {
+			observer?.disconnect();
+			mutations.disconnect();
+		};
+	}, []);
+
+	return (
+		<div
+			ref={hostRef}
+			className="tlp__twinAction"
+			style={place}
+			data-cy="timeline-entry-action"
+		>
+			<SplitButton
+				size="small"
+				variant={active ? 'primary' : 'tonal'}
+				label={formatEntryDate(entry.start)}
+				icon={<Icon />}
+				mainOpensMenu={false}
+				onClick={() => {
+					card()?.click();
+					card()?.focus();
+				}}
+				onToggleMenu={() =>
+					setMenuAnchor(
+						menuAnchor
+							? null
+							: (toggleRef.current?.getBoundingClientRect() ??
+									null)
+					)
+				}
+				open={Boolean(menuAnchor)}
+				menuLabel="Terminmenü"
+				menuPopup="menu"
+				menuId={menuId}
+				trailingRef={toggleRef}
+			/>
+			{menuAnchor && (
+				<EntryMenu
+					entry={entry}
+					role={role}
+					anchor={menuAnchor}
+					onClose={() => setMenuAnchor(null)}
+				/>
+			)}
+		</div>
+	);
+};
+
 export const TimelinePrototype = ({
 	entries,
 	sessions,
+	items,
+	unmappedItem,
 	role = 'counsellor',
 	scrollModel = 'panes',
 	nowVariant = 'line',
 	listHeight = 520,
 	initialFilter = 'all'
 }: TimelinePrototypeProps) => {
-	const [filter, setFilter] = useState<TimelineFilter>(initialFilter);
+	const { t } = useTranslation();
+	const initialChip =
+		(Object.entries(FILTER_OF_CHIP).find(
+			([, value]) => value === initialFilter
+		)?.[0] as SessionToolbarChipFilter | undefined) ?? null;
+	const [chip, setChip] = useState<SessionToolbarChipFilter | null>(
+		initialChip
+	);
+	const filter: TimelineFilter = (chip && FILTER_OF_CHIP[chip]) || 'all';
 	const [reveal, setReveal] = useState(0);
 	const [dragging, setDragging] = useState(false);
-	const [selection, setSelection] = useState<Selection>(null);
+	// The clicked card holds the focus (2px ring) and leaves its group. Its
+	// room in the past is open too and shows the calm 1px outline; the other
+	// dates of a series stay in their group (ADR-021 §2, §4).
+	const [selection, setSelection] = useState<{
+		room: string;
+		entryKey?: string;
+	} | null>(null);
 	const [nowOffscreen, setNowOffscreen] = useState<'above' | 'below' | null>(
 		null
 	);
+	const [measured, setMeasured] = useState({
+		item: ENTRY_HEIGHT,
+		content: 0
+	});
 	const pullRef = useRef(0);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const nowRef = useRef<HTMLDivElement>(null);
+	const futureRef = useRef<HTMLDivElement>(null);
 
 	const visibleEntries = useMemo(
 		() => filterEntries(entries, filter),
 		[entries, filter]
 	);
-	const visibleSessions = useMemo(
+	// Furthest appointment first: the next one sits right above "Jetzt".
+	const futureItems = useMemo(
 		() =>
-			sessions.filter((s) => {
-				if (filter === 'all') return true;
-				return s.kind === filter;
-			}),
-		[sessions, filter]
+			[...visibleEntries]
+				.reverse()
+				.map((entry) =>
+					entry.sessionId !== undefined
+						? (items[entry.sessionId] ?? unmappedItem)
+						: unmappedItem
+				),
+		[visibleEntries, items, unmappedItem]
 	);
-	const contentHeight = visibleEntries.length * ENTRY_HEIGHT;
+	const futureEntries = useMemo(
+		() => [...visibleEntries].reverse(),
+		[visibleEntries]
+	);
+	const pastItems = useMemo(
+		() =>
+			sessions
+				.filter((s) => filter === 'all' || s.kind === filter)
+				.map((s) => items[s.sessionId])
+				.filter(Boolean),
+		[sessions, items, filter]
+	);
+
+	// Snap stops come from the real cards' height, not from a constant.
+	useEffect(() => {
+		const inner = futureRef.current;
+		if (!inner) return;
+		const measure = () => {
+			const rows = inner.querySelectorAll<HTMLElement>('.tlp__row');
+			const last = rows[rows.length - 1];
+			setMeasured({
+				// From the next appointment's top edge to the handle.
+				item: last
+					? Math.round(inner.offsetHeight - last.offsetTop)
+					: ENTRY_HEIGHT,
+				content: Math.round(inner.scrollHeight)
+			});
+		};
+		measure();
+		const observer =
+			typeof ResizeObserver !== 'undefined'
+				? new ResizeObserver(measure)
+				: null;
+		observer?.observe(inner);
+		return () => observer?.disconnect();
+	}, [futureItems.length, selection]);
+
+	const contentHeight = futureItems.length ? measured.content : 0;
 	const snapPoints = useMemo(
 		() =>
 			revealSnapPoints({
-				itemHeight: ENTRY_HEIGHT,
+				itemHeight: measured.item,
 				listHeight,
 				contentHeight
 			}),
-		[listHeight, contentHeight]
+		[measured.item, listHeight, contentHeight]
 	);
-	// A filter that has fewer appointments closes what no longer exists.
+	// A filter with fewer appointments closes what no longer exists.
 	// While dragging the stretch past the last item is shown; at rest it is cut off.
 	const shown = dragging ? reveal : clampReveal(reveal, contentHeight);
 
@@ -280,23 +435,6 @@ export const TimelinePrototype = ({
 		setDragging(!meta.final);
 		setReveal(height);
 	}, []);
-
-	const stateOfEntry = (entry: FutureEntry): 'full' | 'calm' | 'none' => {
-		if (!selection) return 'none';
-		if (selection.via === 'entry' && selection.key === entry.key)
-			return 'full';
-		return selection.sessionId !== undefined &&
-			selection.sessionId === entry.sessionId
-			? 'calm'
-			: 'none';
-	};
-	const stateOfSession = (
-		session: TimelineSession
-	): 'full' | 'calm' | 'none' => {
-		if (!selection || selection.sessionId !== session.sessionId)
-			return 'none';
-		return selection.via === 'session' ? 'full' : 'calm';
-	};
 
 	// Single timeline: a deliberate pull past the top releases the next stop.
 	const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -340,30 +478,50 @@ export const TimelinePrototype = ({
 			data-cy="timeline-future"
 		>
 			<div
+				ref={futureRef}
 				className="tlp__futureInner"
-				role="group"
-				tabIndex={0}
+				role="tablist"
 				aria-label="Anstehende Termine"
 			>
-				{visibleEntries.map((entry) => (
-					<EntryCard
-						key={entry.key}
-						entry={entry}
-						role={role}
-						state={stateOfEntry(entry)}
-						onSelect={() =>
+				{futureItems.length === 0 ? (
+					<p className="tlp__empty">Keine geplanten Termine</p>
+				) : (
+					<CardGroup
+						items={futureItems}
+						isOpenAt={(index) =>
+							futureEntries[index].key === selection?.entryKey
+						}
+						onPick={(index) =>
 							setSelection({
-								via: 'entry',
-								key: entry.key,
-								sessionId: entry.sessionId
+								room: roomOf(futureItems[index]),
+								entryKey: futureEntries[index].key
 							})
 						}
+						decorate={(item, index) => (
+							<TwinAction
+								entry={futureEntries[index]}
+								role={role}
+								active={
+									futureEntries[index].key ===
+									selection?.entryKey
+								}
+							/>
+						)}
 					/>
-				))}
-				{visibleEntries.length === 0 && (
-					<p className="tlp__empty">Keine geplanten Termine</p>
 				)}
 			</div>
+		</div>
+	);
+
+	const handle = (
+		<div className="tlp__handleHost">
+			<ResizableHandle
+				orientation="vertical"
+				height={shown}
+				maxHeight={contentHeight}
+				snapPoints={snapPoints}
+				onResize={onResize}
+			/>
 		</div>
 	);
 
@@ -374,42 +532,15 @@ export const TimelinePrototype = ({
 			aria-label="Gespräche"
 			data-cy="timeline-past"
 		>
-			{visibleSessions.map((session, index) => {
-				const state = stateOfSession(session);
-				return (
-					<div
-						key={session.sessionId}
-						className={`tlp__card tlp__card--${state}${
-							index === 0 ? ' tlp__card--first' : ''
-						}${index === visibleSessions.length - 1 ? ' tlp__card--last' : ''}`}
-						role="tab"
-						tabIndex={0}
-						aria-selected={state === 'full'}
-						onClick={() =>
-							setSelection({
-								via: 'session',
-								sessionId: session.sessionId
-							})
-						}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.preventDefault();
-								setSelection({
-									via: 'session',
-									sessionId: session.sessionId
-								});
-							}
-						}}
-						data-cy="timeline-card"
-					>
-						<span className="tlp__tag">{session.topic}</span>
-						<span className="tlp__cardTitle">{session.title}</span>
-						<span className="tlp__cardPreview">
-							{session.lastMessage}
-						</span>
-					</div>
-				);
-			})}
+			<CardGroup
+				items={pastItems}
+				isOpenAt={(index) =>
+					roomOf(pastItems[index]) === selection?.room
+				}
+				onPick={(index) =>
+					setSelection({ room: roomOf(pastItems[index]) })
+				}
+			/>
 		</div>
 	);
 
@@ -419,33 +550,29 @@ export const TimelinePrototype = ({
 			data-scroll-model={scrollModel}
 			data-cy="timeline-prototype"
 		>
-			<div className="tlp__chips" role="group" aria-label="Filter">
-				{FILTERS.map(([key, label]) => (
-					<button
-						key={key}
-						type="button"
-						className={`tlp__chip${filter === key ? ' tlp__chip--on' : ''}`}
-						aria-pressed={filter === key}
-						onClick={() => setFilter(key)}
-					>
-						{label}
-					</button>
-				))}
-			</div>
+			<SessionsListToolbar
+				translate={t}
+				searchValue=""
+				onSearchChange={() => {}}
+				activeChip={chip}
+				onChipToggle={(next) =>
+					setChip((current) => (current === next ? null : next))
+				}
+				showConsultantActions={role === 'counsellor'}
+				showCreateGroupChatAction={false}
+				showSupervisionChip={false}
+				showGroupChip
+				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+				archiveTabActive={false}
+				createGroupChatActive={false}
+			/>
 
 			{scrollModel === 'panes' ? (
 				<>
 					<div className="tlp__boundary">
 						{futurePane}
-						<div className="tlp__handleHost">
-							<ResizableHandle
-								orientation="vertical"
-								height={shown}
-								maxHeight={contentHeight}
-								snapPoints={snapPoints}
-								onResize={onResize}
-							/>
-						</div>
+						{handle}
 					</div>
 					<NowMarker variant={nowVariant} />
 					<div className="tlp__scroll" style={{ height: listHeight }}>
@@ -463,15 +590,7 @@ export const TimelinePrototype = ({
 				>
 					<div className="tlp__boundary">
 						{futurePane}
-						<div className="tlp__handleHost">
-							<ResizableHandle
-								orientation="vertical"
-								height={shown}
-								maxHeight={contentHeight}
-								snapPoints={snapPoints}
-								onResize={onResize}
-							/>
-						</div>
+						{handle}
 					</div>
 					<div ref={nowRef}>
 						<NowMarker variant={nowVariant} />

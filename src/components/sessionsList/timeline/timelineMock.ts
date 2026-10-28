@@ -1,3 +1,12 @@
+import type {
+	ListItemInterface,
+	TopicsDataInterface
+} from '../../../globalState/interfaces';
+import {
+	runtimeGroupChat,
+	runtimeSession,
+	runtimeTopic
+} from '../../sessionsListItem/__storybook__/runtimeSessionCard';
 import {
 	buildFutureEntries,
 	type TimelineBooking,
@@ -108,3 +117,68 @@ export const mockEntries = (
 		seriesToSession: mockSeriesToSession,
 		sessions: mockSessions
 	});
+
+const topic = (id: number, name: string): TopicsDataInterface => ({
+	...runtimeTopic,
+	id,
+	name,
+	slug: name.toLowerCase(),
+	internalIdentifier: name.toLowerCase(),
+	titles: { ...runtimeTopic.titles, short: name, long: name }
+});
+
+export const mockTopics = [runtimeTopic, topic(2, 'Schulden')];
+
+const oneToOne = (
+	id: number,
+	displayName: string,
+	lastMessage: string,
+	topicIndex = 0
+): ListItemInterface => ({
+	...runtimeSession,
+	user: {
+		...runtimeSession.user,
+		displayName,
+		username: `${id}@example.invalid`
+	},
+	session: {
+		...runtimeSession.session,
+		id,
+		askerMatrixUserId: `asker-${id}`,
+		matrixRoomId: `storybook-runtime-room-${id}`,
+		lastMessage,
+		topic: mockTopics[topicIndex]
+	}
+});
+
+/** The real list rows behind `mockSessions` (same ids), for the real card. */
+export const mockListItems: Record<number, ListItemInterface> = {
+	5601: runtimeGroupChat({ id: 5601, name: 'Elternrunde', repetitive: true }),
+	4401: oneToOne(
+		4401,
+		'ruhiges Yak Kim',
+		'Bis Donnerstag, ich bringe die Unterlagen mit.'
+	),
+	5604: runtimeGroupChat({
+		id: 5604,
+		name: 'Selbsthilfe Mitte',
+		repetitive: true
+	}),
+	4402: oneToOne(
+		4402,
+		'mutiger Fuchs',
+		'Ich habe den Brief gestern bekommen.',
+		1
+	),
+	4403: {
+		...runtimeSession,
+		session: {
+			...runtimeSession.session,
+			id: 4403,
+			matrixRoomId: 'storybook-runtime-room-4403'
+		}
+	}
+};
+
+/** A booking whose room is not known yet still needs a card to show. */
+export const unmappedListItem = oneToOne(4499, 'Termin ohne Zuordnung', '');

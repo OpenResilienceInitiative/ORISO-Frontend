@@ -2,7 +2,6 @@ import * as React from 'react';
 import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -29,6 +28,8 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
 import { SessionListItemComponent } from './SessionListItemComponent';
+import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
+import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import './sessionsListItem.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
@@ -386,91 +387,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-/**
- * Unread axis (#1147): read state is derived from the Matrix room, not from
- * the DTO's hard-coded `messagesRead`. Seed the registry so the runtime
- * stories pin both visual states.
- */
-const seedMatrixRoom = (
-	unreadCount: number,
-	count = 3,
-	delayed = false,
-	failed = false
-) => {
-	let members = Array.from({ length: count }, (_, index) => ({
-		userId: `@group-person-${index}:matrix.example.org`,
-		name: `Teilnehmende ${index + 1}`,
-		membership: 'join'
-	}));
-	const rooms = new Map<string, ReturnType<typeof makeRoom>>();
-	const messages = new Map<string, ReturnType<typeof previewEvent>[]>();
-	function previewEvent(body: string) {
-		const content = { msgtype: 'm.text', body };
-		return {
-			getType: () => 'm.room.message',
-			getContent: () => content,
-			getClearContent: () => content,
-			getSender: () => '@group-person-0:matrix.example.org',
-			getTs: () => 1_773_736_500_000
-		};
-	}
-	const listeners = new Map<string, Set<(...args: any[]) => void>>();
-	let finish: () => void = () => {};
-	const hydration = delayed
-		? new Promise<boolean>((resolve) => {
-				finish = () => resolve(true);
-			})
-		: Promise.resolve(true);
-	function makeRoom(roomId: string) {
-		return {
-			roomId,
-			loadMembersIfNeeded: () =>
-				failed
-					? Promise.reject(new Error('Membership unavailable'))
-					: hydration,
-			getJoinedMembers: () => members,
-			getUnreadNotificationCount: () => unreadCount
-		};
-	}
-	const removeListener = (name: string, listener: (...args: any[]) => void) =>
-		listeners.get(name)?.delete(listener);
-	const client = {
-		getRoom: (roomId: string) => {
-			if (!rooms.has(roomId)) rooms.set(roomId, makeRoom(roomId));
-			return rooms.get(roomId);
-		},
-		getUserId: () => '@consultant-storybook:matrix.example.org',
-		on: (name: string, listener: (...args: any[]) => void) => {
-			if (!listeners.has(name)) listeners.set(name, new Set());
-			listeners.get(name)!.add(listener);
-		},
-		off: removeListener,
-		removeListener
-	};
-	setMatrixClientServiceRef({
-		getClient: () => client,
-		getRoom: client.getRoom,
-		getRoomMessages: (roomId: string) => messages.get(roomId) || []
-	} as any);
-	return {
-		finish,
-		setMessage: (roomId: string, body: string) =>
-			messages.set(roomId, [previewEvent(body)]),
-		setCount: (next: number) => {
-			members = Array.from({ length: next }, (_, index) => ({
-				userId: `@group-person-${index}:matrix.example.org`,
-				name: `Teilnehmende ${index + 1}`,
-				membership: 'join'
-			}));
-			rooms.forEach((room) =>
-				listeners
-					.get('RoomState.members')
-					?.forEach((listener) => listener({}, room))
-			);
-		}
-	};
-};
 
 export const RuntimeComponent: Story = {
 	render: () => {

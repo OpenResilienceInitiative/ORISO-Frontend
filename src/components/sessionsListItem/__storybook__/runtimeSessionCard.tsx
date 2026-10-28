@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { setMatrixClientServiceRef } from '../../../services/matrixClientRegistry';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -12,6 +13,7 @@ import {
 } from '../../../globalState';
 import type {
 	ConsultingTypeInterface,
+	GroupChatItemInterface,
 	ListItemInterface,
 	TopicsDataInterface
 } from '../../../globalState/interfaces';
@@ -139,9 +141,12 @@ export function RuntimeSessionProviders({
 	sessions,
 	viewerId = runtimeUserData.userId,
 	asAsker = false,
+	topics = [runtimeTopic],
 	children
 }: {
 	sessions: ListItemInterface[];
+	/** Topics the cards resolve their tag from. */
+	topics?: TopicsDataInterface[];
 	viewerId?: string;
 	/** Log in as an advice seeker instead of the consultant. */
 	asAsker?: boolean;
@@ -177,7 +182,7 @@ export function RuntimeSessionProviders({
 				>
 					<TopicsContext.Provider
 						value={{
-							topics: [runtimeTopic],
+							topics,
 							refreshTopics: () => {}
 						}}
 					>
@@ -211,10 +216,17 @@ export function RuntimeSessionProviders({
 /** One real card; render inside {@link RuntimeSessionProviders}. */
 export function RuntimeSessionCard({
 	session,
-	index = 0
+	index = 0,
+	...grouping
 }: {
 	session: ListItemInterface;
 	index?: number;
+	/** The list's grouping flags (ADR-021); omit for a standalone card. */
+	grouped?: boolean;
+	isGroupStart?: boolean;
+	isGroupEnd?: boolean;
+	isBeforeActive?: boolean;
+	isAfterActive?: boolean;
 }) {
 	const activeSession = buildExtendedSession(session, '');
 	return (
@@ -229,7 +241,132 @@ export function RuntimeSessionCard({
 				defaultLanguage="de"
 				handleKeyDownLisItemContent={() => {}}
 				index={index}
+				{...grouping}
 			/>
 		</ActiveSessionContext.Provider>
 	);
 }
+
+/** A group chat owned by the viewer, so its card offers the settings menu. */
+export const runtimeGroupChat = ({
+	id,
+	name,
+	lastMessage = '',
+	repetitive = false,
+	conversationType
+}: {
+	id: number;
+	name: string;
+	lastMessage?: string;
+	repetitive?: boolean;
+	conversationType?: GroupChatItemInterface['conversationType'];
+}): ListItemInterface => ({
+	consultant: runtimeSession.consultant,
+	chat: {
+		id,
+		topic: name,
+		conversationType,
+		repetitive,
+		active: false,
+		consultingType: 1,
+		matrixRoomId: `!storybook-group-${id}:matrix.example.org`,
+		lastMessage,
+		messageDate: 1773736500,
+		messagesRead: true,
+		moderators: [],
+		assignedAgencies: [],
+		attachment: null,
+		duration: 60,
+		hintMessage: '',
+		e2eLastMessage: null,
+		startDate: '2026-03-17',
+		startTime: '10:00',
+		subscribed: true,
+		createdAt: '2026-03-17T10:00:00.000Z'
+	} as GroupChatItemInterface
+});
+
+/**
+ * Unread axis (#1147): read state is derived from the Matrix room, not from
+ * the DTO's hard-coded `messagesRead`. Seed the registry so the runtime
+ * stories pin both visual states.
+ */
+export const seedMatrixRoom = (
+	unreadCount: number,
+	count = 3,
+	delayed = false,
+	failed = false
+) => {
+	let members = Array.from({ length: count }, (_, index) => ({
+		userId: `@group-person-${index}:matrix.example.org`,
+		name: `Teilnehmende ${index + 1}`,
+		membership: 'join'
+	}));
+	const rooms = new Map<string, ReturnType<typeof makeRoom>>();
+	const messages = new Map<string, ReturnType<typeof previewEvent>[]>();
+	function previewEvent(body: string) {
+		const content = { msgtype: 'm.text', body };
+		return {
+			getType: () => 'm.room.message',
+			getContent: () => content,
+			getClearContent: () => content,
+			getSender: () => '@group-person-0:matrix.example.org',
+			getTs: () => 1_773_736_500_000
+		};
+	}
+	const listeners = new Map<string, Set<(...args: any[]) => void>>();
+	let finish: () => void = () => {};
+	const hydration = delayed
+		? new Promise<boolean>((resolve) => {
+				finish = () => resolve(true);
+			})
+		: Promise.resolve(true);
+	function makeRoom(roomId: string) {
+		return {
+			roomId,
+			loadMembersIfNeeded: () =>
+				failed
+					? Promise.reject(new Error('Membership unavailable'))
+					: hydration,
+			getJoinedMembers: () => members,
+			getUnreadNotificationCount: () => unreadCount
+		};
+	}
+	const removeListener = (name: string, listener: (...args: any[]) => void) =>
+		listeners.get(name)?.delete(listener);
+	const client = {
+		getRoom: (roomId: string) => {
+			if (!rooms.has(roomId)) rooms.set(roomId, makeRoom(roomId));
+			return rooms.get(roomId);
+		},
+		getUserId: () => '@consultant-storybook:matrix.example.org',
+		on: (name: string, listener: (...args: any[]) => void) => {
+			if (!listeners.has(name)) listeners.set(name, new Set());
+			listeners.get(name)!.add(listener);
+		},
+		off: removeListener,
+		removeListener
+	};
+	setMatrixClientServiceRef({
+		getClient: () => client,
+		getRoom: client.getRoom,
+		getRoomMessages: (roomId: string) => messages.get(roomId) || []
+	} as any);
+	return {
+		finish,
+		setMessage: (roomId: string, body: string) =>
+			messages.set(roomId, [previewEvent(body)]),
+		setCount: (next: number) => {
+			members = Array.from({ length: next }, (_, index) => ({
+				userId: `@group-person-${index}:matrix.example.org`,
+				name: `Teilnehmende ${index + 1}`,
+				membership: 'join'
+			}));
+			rooms.forEach((room) =>
+				listeners
+					.get('RoomState.members')
+					?.forEach((listener) => listener({}, room))
+			);
+		}
+	};
+};
