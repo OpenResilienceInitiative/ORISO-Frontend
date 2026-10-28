@@ -2763,5 +2763,8 @@
 			"title": "Dein Direktlink ist bereit",
 			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
 		}
+	},
+	"dashboard": {
+		"title": "Dein Überblick"
 	}
 }

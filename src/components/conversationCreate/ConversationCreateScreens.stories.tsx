@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
-import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
 import {
 	getTopicCardArtwork,
 	INTERNAL_CHAT_ARTWORK
@@ -21,6 +20,7 @@ import { FormatCard } from './FormatCard';
 import { PanelHeader } from './PanelHeader';
 import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
+import { TopicIcon } from './TopicIcon';
 import { TopicMedia } from './TopicMedia';
 import { ScheduleRows } from './circle/ScheduleRows';
 import {
@@ -29,7 +29,10 @@ import {
 } from './internal/InternalChatCreateCard';
 import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
-import { MyDirectLinks } from './directLink/MyDirectLinks';
+import {
+	CounsellorDashboard,
+	DashboardCircle
+} from '../counsellorDashboard/CounsellorDashboard';
 import { DirectLink } from './directLink/directLink';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import './conversationCreate.styles.scss';
@@ -162,7 +165,7 @@ const CircleCard = ({ menuOpen = false }: { menuOpen?: boolean }) => {
 					ref={anchorRef}
 					id="storyTopicButton"
 					fullWidth
-					icon={<CategorySearchIcon />}
+					icon={<TopicIcon filled={Boolean(topic)} />}
 					label={topic || t('groupChat.circle.topicLabel')}
 					variant={open ? 'elevated' : topic ? 'primary' : 'outlined'}
 					open={open}
@@ -210,6 +213,32 @@ const InternaCard = ({ preset }: { preset: 'empty' | 'filled' }) => {
 
 type PickerStep = 'picker' | 'directLink' | 'links';
 
+const DASHBOARD_STATS = { enquiries: 3, sessions: 18, circlesThisWeek: 2 };
+
+const UPCOMING_CIRCLES: DashboardCircle[] = [
+	{
+		id: 'c1',
+		topic: 'Schulden',
+		when: 'Do., 30. Okt · 19:00',
+		medium: 'VIDEO',
+		participants: 6
+	},
+	{
+		id: 'c2',
+		topic: 'Trauer',
+		when: 'Mo., 3. Nov · 18:00',
+		medium: 'AUDIO',
+		participants: 4
+	},
+	{
+		id: 'c3',
+		topic: 'Sozialberatung',
+		when: 'Mi., 5. Nov · 17:30',
+		medium: 'CHAT',
+		participants: 8
+	}
+];
+
 /** #1795: what the backend will hand back; story-only. */
 const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
 	id: `link-${index}`,
@@ -223,8 +252,8 @@ const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
 
 /**
  * Clickable: pick "Direktlink", choose topic and medium, create. The share
- * dialog opens; "Fertig" leads to the clock entry "Meine Direktlinks",
- * whose round button leads back here.
+ * dialog opens; "Fertig" leads to "Gespräche" with nothing selected, where
+ * the overview lists the link. Its round button leads back here.
  */
 const FormatPicker = ({
 	compact,
@@ -257,21 +286,21 @@ const FormatPicker = ({
 				/>
 			)}
 			{step === 'links' ? (
-				<div style={{ padding: compact ? 0 : 24 }}>
-					<MyDirectLinks
-						links={links}
-						onCreate={() => setStep('picker')}
-						onToggle={(id, active) =>
-							setLinks((current) =>
-								current.map((link) =>
-									link.id === id ? { ...link, active } : link
-								)
+				<CounsellorDashboard
+					stats={DASHBOARD_STATS}
+					links={links}
+					upcomingCircles={UPCOMING_CIRCLES}
+					onCreateLink={() => setStep('picker')}
+					onToggleLink={(id, active) =>
+						setLinks((current) =>
+							current.map((link) =>
+								link.id === id ? { ...link, active } : link
 							)
-						}
-						onShowQr={setShared}
-						onCopy={() => undefined}
-					/>
-				</div>
+						)
+					}
+					onShowQr={setShared}
+					onCopy={() => undefined}
+				/>
 			) : step === 'directLink' ? (
 				<div className="conversationCreate__single conversationCreate__single--compact">
 					{directLinkCard}
@@ -349,15 +378,41 @@ const FormatPicker = ({
 	);
 };
 
-const MyDirectLinksStory = ({ initial }: { initial: DirectLink[] }) => {
+/** "Gespräche" with nothing selected: the session card holds the overview. */
+const SessionCardShell = ({ children }: { children: React.ReactNode }) => (
+	<div style={{ background: '#e9e6e6', padding: 24 }}>
+		<div
+			style={{
+				background: '#fff',
+				border: '1px solid #ffb4aa',
+				borderRadius: 28,
+				margin: '0 auto',
+				maxWidth: 960,
+				minHeight: 640
+			}}
+		>
+			{children}
+		</div>
+	</div>
+);
+
+const DashboardStory = ({
+	initial,
+	circles
+}: {
+	initial: DirectLink[];
+	circles: DashboardCircle[];
+}) => {
 	const [links, setLinks] = useState(initial);
 	const [shared, setShared] = useState<DirectLink>();
 	return (
 		<>
-			<MyDirectLinks
+			<CounsellorDashboard
+				stats={DASHBOARD_STATS}
 				links={links}
-				onCreate={() => undefined}
-				onToggle={(id, active) =>
+				upcomingCircles={circles}
+				onCreateLink={() => undefined}
+				onToggleLink={(id, active) =>
 					setLinks((current) =>
 						current.map((link) =>
 							link.id === id ? { ...link, active } : link
@@ -409,7 +464,7 @@ const SAMPLE_LINKS: DirectLink[] = [
 	}
 ];
 
-/** Creates a video link end to end and lands in "Meine Direktlinks". */
+/** Creates a video link end to end and lands in the overview. */
 const createVideoLink = async (canvasElement: HTMLElement) => {
 	const canvas = within(canvasElement);
 	const body = within(document.body);
@@ -477,7 +532,7 @@ export const DirectLinkFlowDesktop: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: '#1795, clickable. Choose a topic and a medium, create the link, share it, then land in the clock entry "Meine Direktlinks". The temporary-account switch follows the medium (chat off, calls on) and can be changed.'
+				story: '#1795, clickable. Choose a topic and a medium, create the link, share it, then land in "Gespräche", where the overview lists the new link under "Meine Direktlinks". The temporary-account switch follows the medium (chat off, calls on) and can be changed.'
 			}
 		}
 	},
@@ -506,28 +561,33 @@ export const DirectLinkFlowMobile: Story = {
 	}
 };
 
-export const MyDirectLinksFilled: Story = {
-	name: 'Direct link — "Meine Direktlinks" with links',
+export const DashboardWithLinks: Story = {
+	name: 'Gespräche — overview with direct links and circles',
+	parameters: {
+		docs: {
+			description: {
+				story: 'What "Gespräche" shows while no conversation is selected, once the counsellor has a direct link or an upcoming circle. Figures and circles are sample data.'
+			}
+		}
+	},
 	render: () => (
-		<DesktopShell>
-			<div style={{ padding: 24 }}>
-				<MyDirectLinksStory initial={SAMPLE_LINKS} />
-			</div>
-		</DesktopShell>
+		<SessionCardShell>
+			<DashboardStory initial={SAMPLE_LINKS} circles={UPCOMING_CIRCLES} />
+		</SessionCardShell>
 	)
 };
 
-export const MyDirectLinksEmpty: Story = {
-	name: 'Direct link — "Meine Direktlinks" empty',
+export const DashboardNothingYet: Story = {
+	name: 'Gespräche — nothing yet: the turning cup stays',
 	render: () => (
-		<MobileShell>
-			<MyDirectLinksStory initial={[]} />
-		</MobileShell>
+		<SessionCardShell>
+			<DashboardStory initial={[]} circles={[]} />
+		</SessionCardShell>
 	),
 	play: async ({ canvasElement }) => {
 		await expect(
-			within(canvasElement).getByText('Aktuell gibt es keine Direktlinks')
-		).toBeVisible();
+			within(canvasElement).queryByTestId('counsellor-dashboard')
+		).toBeNull();
 	}
 };
 
@@ -635,7 +695,7 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 							<SplitButton
 								ref={topicRef}
 								fullWidth
-								icon={<CategorySearchIcon />}
+								icon={<TopicIcon filled={Boolean(topic)} />}
 								label={
 									topic || t('groupChat.circle.topicLabel')
 								}

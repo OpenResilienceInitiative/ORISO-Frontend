@@ -6273,5 +6273,19 @@
 			"qr": "QR-Code zeigen",
 			"active": "{{name}} aktiv"
 		}
+	},
+	"dashboard": {
+		"title": "Ihr Überblick",
+		"stats": {
+			"enquiries": "Offene Erstanfragen",
+			"sessions": "Meine Beratungen",
+			"circlesThisWeek": "Gesprächskreise diese Woche"
+		},
+		"circles": {
+			"title": "Nächste Gesprächskreise",
+			"none": "Keine Gesprächskreise geplant",
+			"participants": "{{count}} Teilnehmende",
+			"participants_one": "{{count}} Teilnehmende"
+		}
 	}
 }

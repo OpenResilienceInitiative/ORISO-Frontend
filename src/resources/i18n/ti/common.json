@@ -6283,5 +6283,19 @@
 			"qr": "QR ኮድ ኣርኢ",
 			"active": "{{name}} ንጡፍ"
 		}
+	},
+	"dashboard": {
+		"title": "ሓፈሻዊ ርእይቶኻ",
+		"stats": {
+			"enquiries": "ክፉታት ቀዳሞት ሕቶታት",
+			"sessions": "ምኽሪታተይ",
+			"circlesThisWeek": "ናይዚ ሰሙን ጉጅለታት ርእሰ-ሓገዝ"
+		},
+		"circles": {
+			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
+			"none": "ዝተመደበ ጉጅለ ርእሰ-ሓገዝ የለን",
+			"participants": "{{count}} ተሳተፍቲ",
+			"participants_one": "{{count}} ተሳታፊ"
+		}
 	}
 }

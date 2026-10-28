@@ -6283,5 +6283,19 @@
 			"qr": "QR kodunu göster",
 			"active": "{{name}} etkin"
 		}
+	},
+	"dashboard": {
+		"title": "Genel bakışınız",
+		"stats": {
+			"enquiries": "Açık ilk talepler",
+			"sessions": "Danışmanlıklarım",
+			"circlesThisWeek": "Bu haftaki öz yardım grupları"
+		},
+		"circles": {
+			"title": "Yaklaşan öz yardım grupları",
+			"none": "Planlanmış öz yardım grubu yok",
+			"participants": "{{count}} katılımcı",
+			"participants_one": "{{count}} katılımcı"
+		}
 	}
 }

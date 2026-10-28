@@ -1,0 +1,132 @@
+/* #1795: overview in "Gespräche" while no conversation is selected. */
+
+.counsellorDashboard {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	height: 100%;
+	overflow-y: auto;
+	padding: 24px;
+
+	&__title {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 28px;
+		font-weight: 400;
+		line-height: 36px;
+		margin: 0;
+	}
+
+	&__stats {
+		display: grid;
+		gap: 12px;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	&__stat {
+		background: var(--m3-surface-container-low, #f6f3f3);
+		border-radius: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 16px;
+	}
+
+	&__statValue {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 32px;
+		line-height: 40px;
+	}
+
+	&__statLabel {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__cards {
+		align-items: start;
+		display: grid;
+		gap: 16px;
+		grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+
+		.myDirectLinks {
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
+	}
+
+	&__card {
+		background: var(--m3-surface-container-low, #f6f3f3);
+		border-radius: 24px;
+		padding: 16px 24px 24px;
+	}
+
+	&__cardTitle {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 22px;
+		font-weight: 400;
+		line-height: 28px;
+		margin: 12px 0 8px;
+	}
+
+	&__none {
+		color: var(--m3-on-surface-variant, #444748);
+		margin: 0;
+	}
+
+	&__circles {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	&__circle {
+		align-items: center;
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+		display: flex;
+		gap: 12px;
+		padding: 12px 0;
+
+		&:last-child {
+			border-bottom: none;
+		}
+	}
+
+	&__circleIcon {
+		align-items: center;
+		background: var(--m3-secondary-container, #646d78);
+		border-radius: 50%;
+		color: var(--m3-on-secondary-container, #ffffff);
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		justify-content: center;
+		width: 40px;
+
+		svg {
+			height: 20px;
+			width: 20px;
+		}
+	}
+
+	&__circleText {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	&__circleTopic {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px;
+		line-height: 24px;
+	}
+
+	&__circleMeta {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+}

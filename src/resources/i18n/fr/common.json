@@ -6283,5 +6283,19 @@
 			"qr": "Afficher le code QR",
 			"active": "{{name}} actif"
 		}
+	},
+	"dashboard": {
+		"title": "Votre aperçu",
+		"stats": {
+			"enquiries": "Premières demandes ouvertes",
+			"sessions": "Mes consultations",
+			"circlesThisWeek": "Groupes d’entraide cette semaine"
+		},
+		"circles": {
+			"title": "Prochains groupes d’entraide",
+			"none": "Aucun groupe d’entraide prévu",
+			"participants": "{{count}} participant·e·s",
+			"participants_one": "{{count}} participant·e"
+		}
 	}
 }

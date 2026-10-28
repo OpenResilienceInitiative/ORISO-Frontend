@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
-import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
+import { TopicIcon } from '../TopicIcon';
 import { ReactComponent as AddCircleIcon } from '../../../resources/img/icons/add-circle.svg';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { Switch } from '../../Switch';
@@ -87,7 +87,7 @@ export const DirectLinkCard = ({
 							ref={topicRef}
 							id={`${id}-topic`}
 							fullWidth
-							icon={<CategorySearchIcon />}
+							icon={<TopicIcon filled={Boolean(topic)} />}
 							label={topic || t('directLink.card.topicLabel')}
 							variant={
 								topicMenuOpen
