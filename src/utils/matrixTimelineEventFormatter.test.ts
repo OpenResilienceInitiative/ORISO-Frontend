@@ -387,3 +387,41 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 		);
 	});
 });
+
+describe('formatMatrixTimelineEvent missing-key marker (#1827)', () => {
+	const failure = (reason: string | null) => ({
+		...makeEncryptedEvent(
+			{ msgtype: 'm.bad.encrypted', body: '** Unable to decrypt **' },
+			true
+		),
+		decryptionFailureReason: reason
+	});
+
+	it('marks a message whose key is missing on this device', () => {
+		const formatted = formatMatrixTimelineEvent(
+			failure('MEGOLM_UNKNOWN_INBOUND_SESSION_ID'),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBe('missing-key');
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+	});
+
+	it('leaves other failures unmarked', () => {
+		const formatted = formatMatrixTimelineEvent(
+			failure('UNKNOWN_ERROR'),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBeUndefined();
+	});
+
+	it('leaves readable messages unmarked', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({ msgtype: 'm.text', body: 'Hallo' }),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBeUndefined();
+	});
+});

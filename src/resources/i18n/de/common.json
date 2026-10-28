@@ -570,7 +570,13 @@
 		"message": {
 			"encryption": {
 				"error": "Nachricht verschlüsselt - Fehler beim Entschlüsseln",
-				"text": "Nachricht verschlüsselt"
+				"text": "Nachricht verschlüsselt",
+				"missingKey": {
+					"title_one": "Frühere Nachricht auf diesem Gerät nicht verfügbar",
+					"title_other": "{{count}} frühere Nachrichten auf diesem Gerät nicht verfügbar",
+					"hint_one": "Sie wird lesbar, sobald ein Gerät mit dem passenden Schlüssel online ist, zum Beispiel das einer Kollegin, eines Kollegen oder der ratsuchenden Person. Auch die Anmeldung auf dem Gerät, das zuvor genutzt wurde, hilft.",
+					"hint_other": "Sie werden lesbar, sobald ein Gerät mit dem passenden Schlüssel online ist, zum Beispiel das einer Kollegin, eines Kollegen oder der ratsuchenden Person. Auch die Anmeldung auf dem Gerät, das zuvor genutzt wurde, hilft."
+				}
 			},
 			"showMore": "Mehr anzeigen",
 			"showLess": "Weniger anzeigen"

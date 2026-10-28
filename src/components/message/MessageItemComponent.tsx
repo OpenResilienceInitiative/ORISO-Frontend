@@ -254,6 +254,8 @@ export interface MessageItem {
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
 	isEdited?: boolean;
+	/** #1827: this device has no room key for the message (not an error). */
+	undecryptableReason?: 'missing-key';
 }
 
 interface MessageItemComponentProps extends MessageItem {

@@ -558,7 +558,13 @@
 		"message": {
 			"encryption": {
 				"error": "Message encrypted - error during decryption",
-				"text": "Message encrypted"
+				"text": "Message encrypted",
+				"missingKey": {
+					"title_one": "Earlier message not available on this device",
+					"title_other": "{{count}} earlier messages not available on this device",
+					"hint_one": "It becomes readable once a device that has the key is online, for example a colleague's or the advice seeker's. Signing in on the device used before also helps.",
+					"hint_other": "They become readable once a device that has the key is online, for example a colleague's or the advice seeker's. Signing in on the device used before also helps."
+				}
 			},
 			"showMore": "Show more",
 			"showLess": "Show less"

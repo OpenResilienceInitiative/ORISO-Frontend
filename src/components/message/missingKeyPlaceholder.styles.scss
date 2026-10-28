@@ -1,0 +1,44 @@
+// #1827: calm, neutral notice for earlier messages without a key on this device.
+.missingKeyPlaceholder {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	box-sizing: border-box;
+	margin: 8px 16px;
+	padding: 12px 16px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 12px;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	color: var(--m3-on-surface-variant, #444);
+
+	&__icon {
+		flex-shrink: 0;
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		fill: currentcolor;
+	}
+
+	&__text {
+		min-width: 0;
+	}
+
+	&__title,
+	&__hint {
+		margin: 0;
+		overflow-wrap: anywhere;
+	}
+
+	&__title {
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: 500;
+		color: var(--m3-on-surface, #1d1b1b);
+	}
+
+	&__hint {
+		margin-top: 2px;
+		font-size: 13px;
+		line-height: 18px;
+	}
+}
