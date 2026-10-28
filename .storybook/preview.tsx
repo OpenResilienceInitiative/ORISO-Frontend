@@ -470,6 +470,14 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse({ languages: ['en', 'ar', 'uk'] });
 	}
 
+	// The "Anfragen" nav badge (FE#1435) asks both enquiry feeds for a total;
+	// by default there is nothing open (204), so no badge appears.
+	if (
+		url.pathname.includes('/service/conversations/consultants/enquiries/')
+	) {
+		return storybookEmptyResponse();
+	}
+
 	if (
 		url.pathname.includes('/service/conversations/consultants/availability')
 	) {

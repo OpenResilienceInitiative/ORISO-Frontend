@@ -2117,6 +2117,13 @@
 			"from": "From {{name}}",
 			"several": "{{count}} new messages",
 			"open": "Open chat"
+		},
+		"newEnquiry": {
+			"title": "New request",
+			"waiting": "An advice seeker is waiting for a reply.",
+			"several": "{{count}} new requests are waiting for a reply.",
+			"openOne": "View request",
+			"openList": "View requests"
 		}
 	},
 	"notifications": {
@@ -4362,7 +4369,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} new messages",
-			"unreadCount_one": "{{count}} new message"
+			"unreadCount_one": "{{count}} new message",
+			"openEnquiries": "{{count}} open requests",
+			"openEnquiries_one": "{{count}} open request"
 		}
 	},
 	"statusOverlay": {

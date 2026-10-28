@@ -96,7 +96,12 @@ const areaDefaults = (): Record<NotificationKind, KindConfig> => ({
 });
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
-	requests: areaDefaults(),
+	requests: {
+		...areaDefaults(),
+		// A new enquiry waits for someone to take it, so its row rings out
+		// of the box (FE#1435). Only the Anfragen tab's "Neue Anfrage" row.
+		new: kind({ sound: 'ton-1' })
+	},
 	conversations: areaDefaults(),
 	timeCritical: areaDefaults()
 };

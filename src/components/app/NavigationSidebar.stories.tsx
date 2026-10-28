@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import i18n from '../../i18n';
@@ -412,5 +412,112 @@ export const RuntimeConsultantMobile375Shell: Story = {
 		await expect(
 			canvasElement.querySelector('.navigationSidebarStory')
 		).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+/**
+ * FE#1435: answers the two enquiry feeds the "Anfragen" badge reads with a
+ * fixed total, installed during render (before the badge's first request)
+ * and restored on unmount.
+ */
+const WithOpenEnquiries = ({
+	total,
+	children
+}: {
+	total: number;
+	children: React.ReactNode;
+}) => {
+	const restore = useRef<(() => void) | null>(null);
+	if (!restore.current) {
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (input, init) => {
+			const url =
+				typeof input === 'string'
+					? input
+					: input instanceof URL
+						? input.toString()
+						: input.url;
+			if (url.includes('/consultants/enquiries/registered')) {
+				return new Response(
+					JSON.stringify({
+						sessions: [{}],
+						count: 1,
+						offset: 0,
+						total
+					}),
+					{
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					}
+				);
+			}
+			if (url.includes('/consultants/enquiries/anonymous')) {
+				return new Response(null, { status: 204 });
+			}
+			return originalFetch(input, init);
+		};
+		restore.current = () => {
+			globalThis.fetch = originalFetch;
+		};
+	}
+	useEffect(() => () => restore.current?.(), []);
+	return <>{children}</>;
+};
+
+const expectEnquiryBadge = async (canvasElement: HTMLElement, count: number) =>
+	waitFor(() => {
+		const owner = canvasElement.querySelector(
+			'a[href="/sessions/consultant/sessionPreview"]'
+		);
+		const badge = owner?.querySelector('.navigation__item__count');
+		expect(badge).toHaveTextContent(String(count));
+		expect(badge).toHaveAttribute('aria-hidden', 'true');
+		expect(owner).toHaveAccessibleName(
+			`${i18n.t('navigation.consultant.enquiries')}, ${i18n.t('sessionList.rail.openEnquiries', { count })}`
+		);
+	});
+
+export const RuntimeConsultantRailOpenEnquiries: Story = {
+	name: 'Runtime Consultant Rail — open enquiries (FE#1435)',
+	args: { role: 'consultant', layout: 'desktop' },
+	decorators: [
+		(StoryComponent) => (
+			<WithOpenEnquiries total={3}>
+				<StoryComponent />
+			</WithOpenEnquiries>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectEnquiryBadge(canvasElement, 3);
+	}
+};
+
+export const RuntimeConsultantMobileOpenEnquiries: Story = {
+	name: 'Runtime Consultant Mobile — open enquiries (FE#1435)',
+	args: { role: 'consultant', layout: 'mobile' },
+	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	decorators: [
+		(StoryComponent) => (
+			<WithOpenEnquiries total={12}>
+				<StoryComponent />
+			</WithOpenEnquiries>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectEnquiryBadge(canvasElement, 12);
+	}
+};
+
+export const RuntimeConsultantRailNoOpenEnquiries: Story = {
+	name: 'Runtime Consultant Rail — nothing open (FE#1435)',
+	args: { role: 'consultant', layout: 'desktop' },
+	play: async ({ canvasElement }) => {
+		// Default Storybook feeds are empty: no badge on "Anfragen".
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		await expect(
+			canvasElement.querySelector(
+				'a[href="/sessions/consultant/sessionPreview"] .navigation__item__count'
+			)
+		).toBeNull();
 	}
 };

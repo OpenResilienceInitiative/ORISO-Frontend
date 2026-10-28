@@ -2121,6 +2121,13 @@
 			"from": "От {{name}}",
 			"several": "Новых сообщений: {{count}}",
 			"open": "Открыть чат"
+		},
+		"newEnquiry": {
+			"title": "Новый запрос",
+			"waiting": "Человек ждёт ответа.",
+			"several": "Новых запросов ждут ответа: {{count}}",
+			"openOne": "Открыть запрос",
+			"openList": "Открыть запросы"
 		}
 	},
 	"notifications": {
@@ -4401,7 +4408,10 @@
 			"unreadCount": "{{count}} новых сообщений",
 			"unreadCount_one": "{{count}} новое сообщение",
 			"unreadCount_few": "{{count}} новых сообщения",
-			"unreadCount_many": "{{count}} новых сообщений"
+			"unreadCount_many": "{{count}} новых сообщений",
+			"openEnquiries": "{{count}} открытых запросов",
+			"openEnquiries_one": "{{count}} открытый запрос",
+			"openEnquiries_few": "{{count}} открытых запроса"
 		}
 	},
 	"statusOverlay": {
