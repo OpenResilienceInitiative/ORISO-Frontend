@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as InternalIcon } from '../../../resources/img/icons/internal-conversation.svg';
 import { OrisoTextField } from '../../form/OrisoTextField';
@@ -92,6 +92,8 @@ export const InternalChatCreateCard = ({
 	errorMessage
 }: InternalChatCreateCardProps) => {
 	const { t: translate } = useTranslation();
+	// Unique per card, so several cards on one page keep their ARIA references apart (#1338).
+	const id = useId();
 	const [menuOpen, setMenuOpen] = useState(false);
 	const splitButtonRef = useRef<HTMLDivElement | null>(null);
 
@@ -178,7 +180,7 @@ export const InternalChatCreateCard = ({
 		>
 			{agencyOptions && agencyOptions.length > 1 && onAgencyChange && (
 				<OrisoSelect
-					id="internalChatAgency"
+					id={`${id}-agency`}
 					label={translate('groupChat.create.agencySelect.label')}
 					options={agencyOptions}
 					value={selectedAgency || ''}
@@ -186,7 +188,7 @@ export const InternalChatCreateCard = ({
 				/>
 			)}
 			<OrisoTextField
-				id="internalChatName"
+				id={`${id}-name`}
 				label={translate('groupChat.internal.nameLabel')}
 				value={name}
 				fullWidth
@@ -210,10 +212,7 @@ export const InternalChatCreateCard = ({
 			<p className="internalChatCreateCard__supportText">
 				{translate('groupChat.internal.supportText')}
 			</p>
-			<p
-				className="internalChatCreateCard__hint"
-				id="internalChatScopeHint"
-			>
+			<p className="internalChatCreateCard__hint" id={`${id}-scopeHint`}>
 				{translate(recipientScopeHintKey(scope))}{' '}
 				{translate('groupChat.internal.privateRoomHint')}
 			</p>
@@ -233,8 +232,8 @@ export const InternalChatCreateCard = ({
 				<div className="internalChatCreateCard__splitButtonWrap">
 					<SplitButton
 						ref={splitButtonRef}
-						id="internalChatPersonButton"
-						describedBy="internalChatScopeHint"
+						id={`${id}-personButton`}
+						describedBy={`${id}-scopeHint`}
 						label={splitButtonLabel}
 						icon={<PersonAddIcon />}
 						variant={
@@ -258,7 +257,7 @@ export const InternalChatCreateCard = ({
 							onToggle={toggle}
 							anchorRef={splitButtonRef}
 							onClose={() => setMenuOpen(false)}
-							labelledBy="internalChatPersonButton"
+							labelledBy={`${id}-personButton`}
 							emptyLabel={translate(
 								'groupChat.internal.noColleagues'
 							)}
