@@ -12,6 +12,8 @@ vi.mock('../resources/scripts/endpoints', () => ({
 const api = await import('./apiCallKnocks');
 
 const BASE = 'https://api.test/service/users/call-knocks';
+const ROOM = { matrixRoomId: '!s:m.test' };
+const Q = 'matrixRoomId=!s%3Am.test';
 
 /** The knock contract of ORISO-UserService#1479 (`api/userservice.yaml`). */
 describe('apiCallKnocks (#1892)', () => {
@@ -19,10 +21,10 @@ describe('apiCallKnocks (#1892)', () => {
 
 	it.each([
 		[
-			'lists pending knocks',
-			() => api.apiGetPendingCallKnocks(),
+			'lists pending knocks of this call',
+			() => api.apiGetPendingCallKnocks(ROOM),
 			'GET',
-			BASE
+			`${BASE}?${Q}`
 		],
 		[
 			'admits one',
@@ -37,10 +39,10 @@ describe('apiCallKnocks (#1892)', () => {
 			`${BASE}/7/decline`
 		],
 		[
-			'admits all',
-			() => api.apiAdmitAllCallKnocks(),
+			'admits all of this call',
+			() => api.apiAdmitAllCallKnocks({ sessionId: 9 }),
 			'POST',
-			`${BASE}/admit-all`
+			`${BASE}/admit-all?sessionId=9`
 		]
 	])('%s', async (_, call, method, url) => {
 		await call();
@@ -54,6 +56,6 @@ describe('apiCallKnocks (#1892)', () => {
 
 	it('reads an empty answer as nobody waiting', async () => {
 		fetchData.mockResolvedValue({});
-		await expect(api.apiGetPendingCallKnocks()).resolves.toEqual([]);
+		await expect(api.apiGetPendingCallKnocks(ROOM)).resolves.toEqual([]);
 	});
 });

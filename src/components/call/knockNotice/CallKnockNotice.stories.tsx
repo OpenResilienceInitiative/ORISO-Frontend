@@ -15,23 +15,35 @@ import {
 	phone390Globals
 } from '../../message/messageStoryShell';
 
-const knock = (id: number, sessionId: number): CallKnock => ({
+/** The conversation of the call on screen, and the room it signals in. */
+const CALL_SESSION = 501;
+const CALL_ROOM = '!sb-session:matrix.storybook.test';
+const SCOPE = { matrixRoomId: CALL_ROOM };
+const ROOMS = { [CALL_ROOM]: CALL_SESSION };
+
+/** Names as the server sends them: the chosen username, never a legal name. */
+const knock = (
+	id: number,
+	displayName: string | null,
+	sessionId = CALL_SESSION
+): CallKnock => ({
 	id,
 	sessionId,
+	displayName,
 	status: 'PENDING',
 	medium: 'VIDEO',
 	requestedAt: '2026-10-28T10:00:00Z'
 });
 
-/** User-IDs as the session list shows them — never a legal name. */
-const NAMES: Record<number, string> = {
-	501: 'sonnenblume-27',
-	502: 'kiefer-08',
-	503: 'lavendel-13'
-};
-
-const ONE = [knock(1, 501)];
-const THREE = [knock(1, 501), knock(2, 502), knock(3, 503)];
+const ONE = [knock(1, 'sonnenblume-27')];
+const THREE = [
+	knock(1, 'sonnenblume-27'),
+	knock(2, 'kiefer-08'),
+	knock(3, 'lavendel-13')
+];
+/** Somebody waiting in the counsellor's OTHER conversation: never shown here. */
+const ELSEWHERE = knock(9, 'birke-55', 777);
+const THREE_AND_ELSEWHERE = [...THREE, ELSEWHERE];
 
 interface KnockStoryProps {
 	knocks: CallKnock[];
@@ -40,8 +52,6 @@ interface KnockStoryProps {
 	/** Lets a play function reach the fake to assert the decisions. */
 	onTransport?: (transport: FakeCallKnockTransport) => void;
 }
-
-const resolveName = async (sessionId: number) => NAMES[sessionId] ?? null;
 
 /**
  * The notice in a stand-in for the call stage: the real call widget needs
@@ -54,7 +64,7 @@ const KnockStory = ({
 	onTransport
 }: KnockStoryProps) => {
 	const transport = useMemo(() => {
-		const created = createFakeCallKnockTransport(knocks);
+		const created = createFakeCallKnockTransport(knocks, ROOMS);
 		onTransport?.(created);
 		return created;
 		// One transport per story render.
@@ -64,7 +74,7 @@ const KnockStory = ({
 		<CallKnockNoticeHost
 			minimised={minimised}
 			transport={transport}
-			resolveName={resolveName}
+			scope={SCOPE}
 			playSound={playSound}
 		/>
 	);
@@ -193,7 +203,7 @@ export const SeveralPeopleKnocking: Story = {
 	}
 };
 
-const MINIMISED = [knock(1, 501), knock(2, 502)];
+const MINIMISED = [knock(1, 'sonnenblume-27'), knock(2, 'kiefer-08')];
 
 /**
  * The call is minimised (the small view on a phone): the notice docks just
@@ -234,13 +244,15 @@ export const LetInWithOneClick: Story = {
 
 /**
  * Keyboard only: page to the second person, turn them down, let the others
- * in at once.
+ * in at once. Somebody waiting in another conversation is never shown and
+ * stays waiting: "Alle einlassen" only works for this call.
  */
 export const DecideFromTheKeyboard: Story = {
 	globals: desktop1440Globals,
 	args: {
-		knocks: THREE,
-		onTransport: (transport) => transports.set(THREE, transport)
+		knocks: THREE_AND_ELSEWHERE,
+		onTransport: (transport) =>
+			transports.set(THREE_AND_ELSEWHERE, transport)
 	},
 	play: async ({ canvas }) => {
 		const notice = await canvas.findByTestId('call-knock-notice');
@@ -276,9 +288,16 @@ export const DecideFromTheKeyboard: Story = {
 		await waitFor(() =>
 			expect(canvas.queryByTestId('call-knock-notice')).toBeNull()
 		);
-		await expect(transports.get(THREE)?.decisions).toEqual([
+		await expect(transports.get(THREE_AND_ELSEWHERE)?.decisions).toEqual([
 			'decline:2',
-			'admit-all'
+			`admit-all:matrixRoomId=${encodeURIComponent(CALL_ROOM)}`
 		]);
+		// The person in the other conversation is still waiting.
+		await expect(
+			transports
+				.get(THREE_AND_ELSEWHERE)
+				?.pending()
+				.map((k) => k.id)
+		).toEqual([9]);
 	}
 };

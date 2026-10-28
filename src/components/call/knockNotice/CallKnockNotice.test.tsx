@@ -23,16 +23,23 @@ const { createFakeCallKnockTransport } = await import(
 
 afterEach(cleanup);
 
-const knock = (id: number, sessionId = 500 + id): CallKnock => ({
+const names: Record<number, string> = { 1: 'anna-1', 2: 'ben-2' };
+
+/** Everybody knocks on the current call (session 501) unless told otherwise. */
+const knock = (
+	id: number,
+	sessionId = 501,
+	displayName: string | null = names[id] ?? null
+): CallKnock => ({
 	id,
 	sessionId,
+	displayName,
 	status: 'PENDING',
 	medium: 'AUDIO',
 	requestedAt: '2026-10-28T10:00:00Z'
 });
 
-const names: Record<number, string> = { 501: 'anna-1', 502: 'ben-2' };
-const resolveName = async (sessionId: number) => names[sessionId] ?? null;
+const SCOPE = { sessionId: 501 } as const;
 
 const setup = (
 	knocks: CallKnock[],
@@ -43,7 +50,7 @@ const setup = (
 	const view = render(
 		<CallKnockNoticeHost
 			transport={transport}
-			resolveName={resolveName}
+			scope={SCOPE}
 			playSound={playSound}
 			{...props}
 		/>
@@ -73,9 +80,49 @@ describe('CallKnockNotice (#1892)', () => {
 		expect(screen.queryByTestId('call-knock-notice')).toBeNull();
 	});
 
-	it('falls back to a neutral word when the name is unknown', async () => {
-		setup([knock(9, 999)]);
-		expect(await screen.findByText('calls.knock.someone')).toBeTruthy();
+	it.each([null, '', '   '])(
+		'falls back to "Eine Person" when the server sends the name %j',
+		async (displayName) => {
+			setup([knock(9, 501, displayName)]);
+			expect(await screen.findByText('calls.knock.someone')).toBeTruthy();
+		}
+	);
+
+	it('shows the name the server sends, without asking anywhere else', async () => {
+		setup([knock(3, 501, 'chosen-name')]);
+		expect(await screen.findByText('chosen-name')).toBeTruthy();
+	});
+
+	it('shows only knocks of the current call', async () => {
+		setup([knock(1), knock(2, 777)]);
+		expect(await screen.findByText('anna-1')).toBeTruthy();
+		expect(screen.queryByText('ben-2')).toBeNull();
+		expect(screen.queryByTestId('call-knock-position')).toBeNull();
+	});
+
+	it('"Alle einlassen" admits this call only, never another conversation', async () => {
+		const { transport } = setup([knock(1), knock(2), knock(5, 777)]);
+		await screen.findByText('anna-1');
+		await userEvent.click(
+			screen.getByRole('button', { name: 'calls.knock.admitAll' })
+		);
+		expect(transport.decisions).toEqual(['admit-all:sessionId=501']);
+		expect(transport.pending().map((k) => k.id)).toEqual([5]);
+		expect(screen.queryByTestId('call-knock-notice')).toBeNull();
+	});
+
+	it('asks nothing without a call to scope to', () => {
+		const transport = createFakeCallKnockTransport([knock(1)]);
+		const watchPending = vi.spyOn(transport, 'watchPending');
+		render(
+			<CallKnockNoticeHost
+				scope={null}
+				transport={transport}
+				playSound={vi.fn()}
+			/>
+		);
+		expect(watchPending).not.toHaveBeenCalled();
+		expect(screen.queryByTestId('call-knock-notice')).toBeNull();
 	});
 
 	it('ties each decision to the person shown', async () => {
@@ -116,7 +163,7 @@ describe('CallKnockNotice (#1892)', () => {
 		await userEvent.click(
 			screen.getByRole('button', { name: 'calls.knock.admitAll' })
 		);
-		expect(transport.decisions).toEqual(['admit-all']);
+		expect(transport.decisions).toEqual(['admit-all:sessionId=501']);
 		expect(screen.queryByTestId('call-knock-notice')).toBeNull();
 	});
 
@@ -162,7 +209,7 @@ describe('CallKnockNotice (#1892)', () => {
 		render(
 			<CallKnockNoticeHost
 				transport={{ ...transport, admit }}
-				resolveName={resolveName}
+				scope={SCOPE}
 				playSound={vi.fn()}
 			/>
 		);
@@ -189,7 +236,7 @@ describe('CallKnockNotice (#1892)', () => {
 					...transport,
 					decline: () => Promise.reject(new Error('CATCH_ALL'))
 				}}
-				resolveName={resolveName}
+				scope={SCOPE}
 				playSound={vi.fn()}
 			/>
 		);
@@ -240,7 +287,7 @@ describe('CallKnockNotice (#1892)', () => {
 			<CallKnockNoticeHost
 				enabled={false}
 				transport={transport}
-				resolveName={resolveName}
+				scope={SCOPE}
 				playSound={vi.fn()}
 			/>
 		);

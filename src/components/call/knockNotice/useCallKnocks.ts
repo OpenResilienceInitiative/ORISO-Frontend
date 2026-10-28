@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { apiGetSessionRoomBySessionId } from '../../../api/apiGetSessionRooms';
-import { resolveAnonymousChatDisplayName } from '../../../utils/anonymousChatDisplayName';
 import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
-import { CallKnock, KnockingPerson, newKnockIds } from './callKnockModel';
+import {
+	CallKnock,
+	CallKnockScope,
+	KnockingPerson,
+	knockerName,
+	newKnockIds,
+	scopeQuery
+} from './callKnockModel';
 import {
 	CallKnockTransport,
 	httpCallKnockTransport
 } from './callKnockTransport';
-
-/** The knocking person's User-ID as the session list shows it (#1209). */
-export const resolveKnockerName = async (
-	sessionId: number
-): Promise<string | null> => {
-	const { sessions } = await apiGetSessionRoomBySessionId(sessionId);
-	const user = sessions?.[0]?.user;
-	return resolveAnonymousChatDisplayName(user) || user?.username || null;
-};
 
 /** A short, quiet chime — the counsellor is talking to somebody. */
 export const playKnockSound = (): void =>
@@ -26,8 +22,12 @@ export type CallKnockBusy = number | 'all' | null;
 export interface UseCallKnocksOptions {
 	/** Only while the counsellor is in a call. */
 	enabled: boolean;
+	/**
+	 * The call the knocks belong to. Without one nothing is asked: the notice
+	 * and "Alle einlassen" must never reach the counsellor's other calls.
+	 */
+	scope: CallKnockScope | null;
 	transport?: CallKnockTransport;
-	resolveName?: (sessionId: number) => Promise<string | null>;
 	playSound?: () => void;
 }
 
@@ -40,48 +40,39 @@ export interface CallKnocksState {
 }
 
 /**
- * The people knocking on the counsellor's calls (ORISO-Frontend#1892): who
- * they are, a chime for every new one, and the three decisions. A decision
- * takes the person off the list as soon as the server confirms it.
+ * The people knocking on the counsellor's current call
+ * (ORISO-Frontend#1892): who they are, a chime for every new one, and the
+ * three decisions. A decision takes the person off the list as soon as the
+ * server confirms it.
  */
 export const useCallKnocks = ({
 	enabled,
+	scope,
 	transport = httpCallKnockTransport,
-	resolveName = resolveKnockerName,
 	playSound = playKnockSound
 }: UseCallKnocksOptions): CallKnocksState => {
 	const [knocks, setKnocks] = useState<CallKnock[]>([]);
-	const [names, setNames] = useState<Record<number, string | null>>({});
 	const [busy, setBusy] = useState<CallKnockBusy>(null);
 	const known = useRef<Set<number>>(new Set());
-	const asked = useRef<Set<number>>(new Set());
 	const playRef = useRef(playSound);
 	playRef.current = playSound;
 
+	// The scope object may be new on every render; its query is what counts.
+	const scopeKey = scope ? scopeQuery(scope) : null;
+	const scopeRef = useRef(scope);
+	scopeRef.current = scope;
+
 	useEffect(() => {
-		if (!enabled) {
-			setKnocks([]);
-			known.current = new Set();
-			return undefined;
-		}
-		return transport.watchPending((next) => {
+		setKnocks([]);
+		known.current = new Set();
+		const current = scopeRef.current;
+		if (!enabled || !current) return undefined;
+		return transport.watchPending(current, (next) => {
 			if (newKnockIds(known.current, next).length > 0) playRef.current();
 			known.current = new Set(next.map((k) => k.id));
 			setKnocks(next);
 		});
-	}, [enabled, transport]);
-
-	useEffect(() => {
-		knocks.forEach(({ sessionId }) => {
-			if (asked.current.has(sessionId)) return;
-			asked.current.add(sessionId);
-			resolveName(sessionId)
-				.catch(() => null)
-				.then((name) =>
-					setNames((current) => ({ ...current, [sessionId]: name }))
-				);
-		});
-	}, [knocks, resolveName]);
+	}, [enabled, scopeKey, transport]);
 
 	const removeLocally = (ids: number[] | 'all') =>
 		setKnocks((current) =>
@@ -114,19 +105,21 @@ export const useCallKnocks = ({
 		(knockId: number) => decide(knockId, () => transport.decline(knockId)),
 		[decide, transport]
 	);
-	const admitAll = useCallback(
-		() => decide('all', () => transport.admitAll()),
-		[decide, transport]
-	);
+	const admitAll = useCallback(async () => {
+		const current = scopeRef.current;
+		// No scope, no "admit all": the server would refuse it (400) anyway.
+		if (!current) return;
+		await decide('all', () => transport.admitAll(current));
+	}, [decide, transport]);
 
 	const people = useMemo(
 		() =>
 			knocks.map((k) => ({
 				id: k.id,
-				name: names[k.sessionId] ?? null,
+				name: knockerName(k),
 				medium: k.medium
 			})),
-		[knocks, names]
+		[knocks]
 	);
 
 	return { people, busy, admit, decline, admitAll };

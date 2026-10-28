@@ -42,6 +42,7 @@ import {
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { CallKnockNoticeHost } from './knockNotice/CallKnockNoticeHost';
+import { callKnockScopeOf } from './knockNotice/callKnockModel';
 import { UserAvatar } from '../message/UserAvatar';
 import { type CallParty, callPartyOf } from './callParty';
 import './GroupCallWidget.scss';
@@ -442,6 +443,13 @@ export const GroupCallWidget: React.FC = () => {
 	 */
 	const isConsultantUser = Boolean(
 		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+
+	// Only this call's knocks (#1892): never the counsellor's other conversations.
+	const knockScope = useMemo(
+		() => callKnockScopeOf(callData),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[callData?.signalRoomId, callData?.roomId]
 	);
 
 	const notesLabels = useMemo(
@@ -1063,7 +1071,10 @@ export const GroupCallWidget: React.FC = () => {
 						 * above the call when it is minimised.
 						 */}
 						{isConsultantUser && (
-							<CallKnockNoticeHost minimised={isMobileCompact} />
+							<CallKnockNoticeHost
+								minimised={isMobileCompact}
+								scope={knockScope}
+							/>
 						)}
 						<iframe
 							ref={setIframeNode}

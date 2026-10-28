@@ -5,7 +5,7 @@ import {
 	apiGetPendingCallKnocks
 } from '../../../api/apiCallKnocks';
 import { FETCH_ERRORS } from '../../../api/fetchData';
-import type { CallKnock } from './callKnockModel';
+import type { CallKnock, CallKnockScope } from './callKnockModel';
 
 /**
  * How call knocks reach the counsellor. One interface, so the notice never
@@ -13,18 +13,22 @@ import type { CallKnock } from './callKnockModel';
  * seam as the self-help knock (`JoinRequestTransport`, #1499).
  */
 export interface CallKnockTransport {
-	/** Calls back with the pending knocks, oldest first, whenever they change. Returns the unsubscribe. */
-	watchPending: (onChange: (knocks: CallKnock[]) => void) => () => void;
+	/** Calls back with this call's pending knocks, oldest first, whenever they change. Returns the unsubscribe. */
+	watchPending: (
+		scope: CallKnockScope,
+		onChange: (knocks: CallKnock[]) => void
+	) => () => void;
 	admit: (knockId: number) => Promise<void>;
 	decline: (knockId: number) => Promise<void>;
-	admitAll: () => Promise<void>;
+	/** Admits everybody waiting for this call only. */
+	admitAll: (scope: CallKnockScope) => Promise<void>;
 }
 
 export interface CallKnockApi {
-	listPending: () => Promise<CallKnock[]>;
+	listPending: (scope: CallKnockScope) => Promise<CallKnock[]>;
 	admit: (knockId: number) => Promise<unknown>;
 	decline: (knockId: number) => Promise<unknown>;
-	admitAll: () => Promise<unknown>;
+	admitAll: (scope: CallKnockScope) => Promise<unknown>;
 }
 
 const userServiceApi: CallKnockApi = {
@@ -34,7 +38,10 @@ const userServiceApi: CallKnockApi = {
 	admitAll: apiAdmitAllCallKnocks
 };
 
-/** 404: a UserService without the endpoints. 403: the caller is no counsellor. Either way, stop asking. */
+/**
+ * 404: a UserService without the endpoints, or a room it does not know as a
+ * conversation. 403: the caller is no counsellor. Either way, stop asking.
+ */
 const isFinal = (error: unknown) =>
 	error instanceof Error &&
 	(error.message === FETCH_ERRORS.NO_MATCH ||
@@ -73,7 +80,7 @@ export const createHttpCallKnockTransport = ({
 	api?: CallKnockApi;
 	intervalMs?: number;
 } = {}): CallKnockTransport => ({
-	watchPending: (onChange) => {
+	watchPending: (scope, onChange) => {
 		let stopped = false;
 		let loading = false;
 		let last: string | undefined;
@@ -89,7 +96,7 @@ export const createHttpCallKnockTransport = ({
 			if (stopped || loading) return;
 			if (timer) clearTimeout(timer);
 			loading = true;
-			api.listPending()
+			api.listPending(scope)
 				.then((knocks) => {
 					if (stopped) return;
 					const pending = knocks.filter(
@@ -119,7 +126,7 @@ export const createHttpCallKnockTransport = ({
 	},
 	admit: (knockId) => settle(api.admit(knockId)),
 	decline: (knockId) => settle(api.decline(knockId)),
-	admitAll: () => settle(api.admitAll())
+	admitAll: (scope) => settle(api.admitAll(scope))
 });
 
 /** The one the app mounts. */

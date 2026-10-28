@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useState } from 'react';
 import i18n from 'i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
@@ -11,20 +11,17 @@ import { useCallKnocks } from './useCallKnocks';
 import type { CallKnock } from './callKnockModel';
 import { desktop1440Globals } from '../../message/messageStoryShell';
 
-const knock = (id: number): CallKnock => ({
+const CALL_ROOM = '!sb-session:matrix.storybook.test';
+const ROOMS = { [CALL_ROOM]: 501 };
+
+const knock = (id: number, sessionId = 501): CallKnock => ({
 	id,
-	sessionId: 500 + id,
+	sessionId,
+	displayName: `gast-${id}`,
 	status: 'PENDING',
 	medium: 'VIDEO',
 	requestedAt: '2026-10-28T10:00:00Z'
 });
-
-const NAMES: Record<number, string> = {
-	501: 'sonnenblume-27',
-	502: 'kiefer-08',
-	503: 'lavendel-13'
-};
-const resolveName = async (sessionId: number) => NAMES[sessionId] ?? null;
 
 interface ToolbarStoryProps {
 	knocks: CallKnock[];
@@ -36,11 +33,14 @@ interface ToolbarStoryProps {
  * knocks it would otherwise fetch itself.
  */
 const ToolbarStory = ({ knocks, playSound }: ToolbarStoryProps) => {
-	const transport = useMemo(() => createFakeCallKnockTransport(knocks), []); // eslint-disable-line react-hooks/exhaustive-deps
+	// One fake per story render; `knocks` is only the starting list.
+	const [transport] = useState(() =>
+		createFakeCallKnockTransport(knocks, ROOMS)
+	);
 	const state = useCallKnocks({
 		enabled: true,
+		scope: { matrixRoomId: CALL_ROOM },
 		transport,
-		resolveName,
 		playSound
 	});
 	return (
@@ -94,7 +94,11 @@ const meta = {
 	title: 'Components/Call/Knock waiting count',
 	component: ToolbarStory,
 	tags: ['autodocs'],
-	args: { knocks: [knock(1), knock(2), knock(3)], playSound: fn() },
+	args: {
+		// Three in this call, one in another conversation: the badge says 3.
+		knocks: [knock(1), knock(2), knock(3), knock(9, 777)],
+		playSound: fn()
+	},
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
@@ -109,7 +113,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Three people knocking: the badge says 3, and so does the button's name. */
+/**
+ * Three people knocking on this call (and one elsewhere): the badge says 3,
+ * and so does the button's name.
+ */
 export const ThreeWaiting: Story = {
 	globals: desktop1440Globals,
 	play: async ({ canvas }) => {

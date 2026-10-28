@@ -5,7 +5,11 @@ import {
 	FETCH_SUCCESS,
 	fetchData
 } from './fetchData';
-import type { CallKnock } from '../components/call/knockNotice/callKnockModel';
+import {
+	CallKnock,
+	CallKnockScope,
+	scopeQuery
+} from '../components/call/knockNotice/callKnockModel';
 
 /* Every call names the statuses it expects: without a `responseHandling`
    an unexpected status would send the whole app to the error page. */
@@ -21,10 +25,12 @@ const handled = [
 const asList = (value: unknown): CallKnock[] =>
 	Array.isArray(value) ? value : [];
 
-/** People waiting for the counsellor's calls, oldest first (ORISO-UserService#1479). */
-export const apiGetPendingCallKnocks = (): Promise<CallKnock[]> =>
+/** People waiting to join this one call, oldest first (ORISO-UserService#1479). */
+export const apiGetPendingCallKnocks = (
+	scope: CallKnockScope
+): Promise<CallKnock[]> =>
 	fetchData({
-		url: endpoints.callKnocks,
+		url: `${endpoints.callKnocks}?${scopeQuery(scope)}`,
 		method: FETCH_METHODS.GET,
 		responseHandling: handled
 	}).then(asList);
@@ -43,9 +49,12 @@ export const apiDeclineCallKnock = (knockId: number): Promise<CallKnock> =>
 		responseHandling: handled
 	});
 
-export const apiAdmitAllCallKnocks = (): Promise<CallKnock[]> =>
+/** Everybody waiting for THIS call — never the counsellor's other conversations. */
+export const apiAdmitAllCallKnocks = (
+	scope: CallKnockScope
+): Promise<CallKnock[]> =>
 	fetchData({
-		url: `${endpoints.callKnocks}/admit-all`,
+		url: `${endpoints.callKnocks}/admit-all?${scopeQuery(scope)}`,
 		method: FETCH_METHODS.POST,
 		responseHandling: handled
 	}).then(asList);

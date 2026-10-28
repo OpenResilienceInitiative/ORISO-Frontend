@@ -8,7 +8,9 @@ import {
 } from './useCallKnocks';
 
 export interface CallKnockNoticeHostProps
-	extends Omit<UseCallKnocksOptions, 'enabled'> {
+	extends Omit<UseCallKnocksOptions, 'enabled' | 'scope'> {
+	/** The current call; required unless `knocks` is given. */
+	scope?: UseCallKnocksOptions['scope'];
 	/** The call is minimised: dock the notice above it instead of covering it. */
 	minimised?: boolean;
 	enabled?: boolean;
@@ -30,9 +32,14 @@ export const CallKnockNoticeHost = ({
 	minimised = false,
 	enabled = true,
 	knocks,
+	scope = null,
 	...options
 }: CallKnockNoticeHostProps) => {
-	const own = useCallKnocks({ enabled: enabled && !knocks, ...options });
+	const own = useCallKnocks({
+		enabled: enabled && !knocks,
+		scope,
+		...options
+	});
 	const { people, busy, admit, decline, admitAll } = knocks ?? own;
 
 	const notice = (

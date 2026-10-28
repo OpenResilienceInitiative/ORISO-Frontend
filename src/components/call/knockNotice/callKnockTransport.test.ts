@@ -11,7 +11,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FETCH_ERRORS } from '../../../api/fetchData';
 import type { CallKnock } from './callKnockModel';
-import { clampPage, newKnockIds } from './callKnockModel';
+import {
+	callKnockScopeOf,
+	clampPage,
+	knockerName,
+	newKnockIds,
+	scopeQuery
+} from './callKnockModel';
 import {
 	CallKnockApi,
 	createHttpCallKnockTransport
@@ -36,6 +42,8 @@ const api = (overrides: Partial<CallKnockApi> = {}): CallKnockApi => ({
 	...overrides
 });
 
+const SCOPE = { matrixRoomId: '!call:matrix.test' };
+
 const flush = async () => {
 	for (let i = 0; i < 5; i += 1) await Promise.resolve();
 };
@@ -54,7 +62,7 @@ describe('createHttpCallKnockTransport (#1892)', () => {
 		const stop = createHttpCallKnockTransport({
 			api: api({ listPending }),
 			intervalMs: 1000
-		}).watchPending(onChange);
+		}).watchPending(SCOPE, onChange);
 
 		await flush();
 		expect(onChange).toHaveBeenLastCalledWith([knock(1)]);
@@ -66,6 +74,7 @@ describe('createHttpCallKnockTransport (#1892)', () => {
 		stop();
 		await vi.advanceTimersByTimeAsync(5000);
 		expect(listPending).toHaveBeenCalledTimes(3);
+		expect(listPending).toHaveBeenCalledWith(SCOPE);
 	});
 
 	it.each([FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.FORBIDDEN])(
@@ -75,7 +84,7 @@ describe('createHttpCallKnockTransport (#1892)', () => {
 			createHttpCallKnockTransport({
 				api: api({ listPending }),
 				intervalMs: 1000
-			}).watchPending(vi.fn());
+			}).watchPending(SCOPE, vi.fn());
 			await flush();
 			await vi.advanceTimersByTimeAsync(5000);
 			expect(listPending).toHaveBeenCalledTimes(1);
@@ -91,7 +100,7 @@ describe('createHttpCallKnockTransport (#1892)', () => {
 		createHttpCallKnockTransport({
 			api: api({ listPending }),
 			intervalMs: 1000
-		}).watchPending(onChange);
+		}).watchPending(SCOPE, onChange);
 		await flush();
 		await vi.advanceTimersByTimeAsync(1000);
 		expect(onChange).toHaveBeenCalledWith([knock(1)]);
@@ -113,13 +122,36 @@ describe('createHttpCallKnockTransport (#1892)', () => {
 		});
 		await expect(transport.admit(1)).resolves.toBeUndefined();
 		await expect(transport.decline(1)).resolves.toBeUndefined();
-		await expect(transport.admitAll()).rejects.toThrow(
+		await expect(transport.admitAll(SCOPE)).rejects.toThrow(
 			FETCH_ERRORS.CATCH_ALL
 		);
 	});
 });
 
 describe('callKnockModel', () => {
+	it('scopes to the conversation room the call signals in', () => {
+		expect(
+			callKnockScopeOf({ roomId: '!ec:m', signalRoomId: '!session:m' })
+		).toEqual({ matrixRoomId: '!session:m' });
+		expect(callKnockScopeOf({ roomId: '!session:m' })).toEqual({
+			matrixRoomId: '!session:m'
+		});
+		expect(callKnockScopeOf(null)).toBeNull();
+	});
+
+	it('writes the scope as the server reads it', () => {
+		expect(scopeQuery({ sessionId: 7 })).toBe('sessionId=7');
+		expect(scopeQuery({ matrixRoomId: '!a:b.c' })).toBe(
+			'matrixRoomId=!a%3Ab.c'
+		);
+	});
+
+	it('uses the server name, empty means unknown', () => {
+		expect(knockerName({ ...knock(1), displayName: ' kim ' })).toBe('kim');
+		expect(knockerName({ ...knock(1), displayName: '' })).toBeNull();
+		expect(knockerName(knock(1))).toBeNull();
+	});
+
 	it('finds the knocks that are new', () => {
 		expect(newKnockIds(new Set([1]), [knock(1), knock(2)])).toEqual([2]);
 	});
