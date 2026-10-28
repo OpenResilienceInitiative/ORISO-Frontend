@@ -715,9 +715,13 @@ describe('GroupWaitingRoom – running group and rules', () => {
 			'[data-cy="group-running"]'
 		) as HTMLElement;
 		expect(running).toBeTruthy();
-		expect(screen.getByRole('timer').textContent).toBe(
-			'Läuft seit00Stunden12Minuten47Sekunden'
+		// Animation on: the clock of clocks counts up; its label speaks.
+		expect(screen.getByRole('timer').getAttribute('aria-label')).toBe(
+			'Läuft seit: 0 Stunden, 12 Minuten'
 		);
+		expect(
+			running.querySelector('[data-cy="group-running-clock"]')
+		).toBeTruthy();
 		expect(running.textContent).toContain(
 			'Läuft gerade · Moderation ist da'
 		);
@@ -726,6 +730,19 @@ describe('GroupWaitingRoom – running group and rules', () => {
 		).toBeNull();
 		expect(
 			document.querySelector('[data-cy="group-entry-rhythm"]')
+		).toBeNull();
+	});
+
+	it('shows the still tiles once the animation is switched off', () => {
+		renderRunning();
+		fireEvent.click(
+			screen.getByRole('switch', { name: 'Animation abschalten' })
+		);
+		expect(screen.getByRole('timer').textContent).toBe(
+			'Läuft seit00Stunden12Minuten47Sekunden'
+		);
+		expect(
+			document.querySelector('[data-cy="group-running-clock"]')
 		).toBeNull();
 	});
 

@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { translateWithFallback } from '../../../utils/translationFallback';
+import { ClockDigits } from '../waitingClock/ClockDigits';
+import { faceDigitCount } from '../waitingClock/waitingClockDigits';
 
 /**
  * Milliseconds since `since` — negative while it is still ahead — renewed
@@ -91,6 +93,12 @@ export const GroupRunningNow = ({
 			UNIT[key]
 		);
 	const sinceLabel = t('groupChat.entry.running.since', 'Läuft seit');
+	/* The tiles are the clock's still form: "Animation abschalten" and the
+	   OS setting both get them (Frank, 2026-10-28). */
+	const prefersReducedMotion = useMediaQuery(
+		'(prefers-reduced-motion: reduce)'
+	);
+	const still = motionOff || prefersReducedMotion;
 
 	return (
 		<Box
@@ -179,51 +187,62 @@ export const GroupRunningNow = ({
 						alignItems: 'center',
 						gap: 1.25,
 						width: '100%',
-						maxWidth: 480
+						maxWidth: still ? 480 : 760
 					}}
 				>
 					<Typography aria-hidden sx={captionSx}>
 						{sinceLabel}
 					</Typography>
-					<Box
-						aria-hidden
-						sx={{
-							display: 'grid',
-							gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-							gap: { xs: 1, sm: 1.75 },
-							width: '100%'
-						}}
-					>
-						{(
-							[
-								[hours, 'unitHours'],
-								[minutes, 'unitMinutes'],
-								[seconds, 'unitSeconds']
-							] as const
-						).map(([value, key], index) => (
-							<Box key={key} sx={tileSx}>
-								<Box
-									component="span"
-									sx={{
-										fontSize: { xs: 36, sm: 52 },
-										lineHeight: 1,
-										fontWeight: 700,
-										fontVariantNumeric: 'tabular-nums',
-										/* A zero hour stays quiet. */
-										color:
-											index === 0 && value === 0
-												? registrationMd3.onSurfaceVariant
-												: registrationMd3.onSurface
-									}}
-								>
-									{pad(value)}
+					{still ? (
+						<Box
+							aria-hidden
+							sx={{
+								display: 'grid',
+								gridTemplateColumns:
+									'repeat(3, minmax(0, 1fr))',
+								gap: { xs: 1, sm: 1.75 },
+								width: '100%'
+							}}
+						>
+							{(
+								[
+									[hours, 'unitHours'],
+									[minutes, 'unitMinutes'],
+									[seconds, 'unitSeconds']
+								] as const
+							).map(([value, key], index) => (
+								<Box key={key} sx={tileSx}>
+									<Box
+										component="span"
+										sx={{
+											fontSize: { xs: 36, sm: 52 },
+											lineHeight: 1,
+											fontWeight: 700,
+											fontVariantNumeric: 'tabular-nums',
+											/* A zero hour stays quiet. */
+											color:
+												index === 0 && value === 0
+													? registrationMd3.onSurfaceVariant
+													: registrationMd3.onSurface
+										}}
+									>
+										{pad(value)}
+									</Box>
+									<Box component="span" sx={captionSx}>
+										{unit(key)}
+									</Box>
 								</Box>
-								<Box component="span" sx={captionSx}>
-									{unit(key)}
-								</Box>
-							</Box>
-						))}
-					</Box>
+							))}
+						</Box>
+					) : (
+						<RunningClockWall
+							units={[
+								[hours, unit('unitHours')],
+								[minutes, unit('unitMinutes')],
+								[seconds, unit('unitSeconds')]
+							]}
+						/>
+					)}
 				</Box>
 			)}
 			{rules.length > 0 && (
@@ -318,3 +337,108 @@ const tileSx = {
 	justifyContent: 'center',
 	gap: { xs: 0.5, sm: 1 }
 } as const;
+
+/* One row of three groups, so it may grow wider than the 2x2 countdown;
+   capped where the row is still a picture and not a wall. */
+const WALL_MAX_SIZE = 32;
+const WALL_MIN_SIZE = 8;
+
+/** The cell gap of the countdown's lattice; `ClockDigits` derives the same. */
+const wallCellGap = (size: number) => Math.max(2, Math.round(size * 0.1));
+
+/** Width of hours, minutes and seconds side by side at mini-clock `size`. */
+export const runningWallWidth = (size: number, digits: number[]) => {
+	const gap = wallCellGap(size);
+	const digitW = size * 4 + gap * 3;
+	const groups = digits.reduce(
+		(sum, n) => sum + n * digitW + (n - 1) * gap,
+		0
+	);
+	return groups + (digits.length - 1) * Math.round(size * 0.55);
+};
+
+/** The largest mini-clock at which the row still fits `width`. */
+export const fitRunningWall = (width: number, digits: number[]) => {
+	for (let size = WALL_MAX_SIZE; size > WALL_MIN_SIZE; size--) {
+		if (runningWallWidth(size, digits) <= width) {
+			return size;
+		}
+	}
+	return WALL_MIN_SIZE;
+};
+
+/**
+ * Frank, 2026-10-28: with the animation on, the running group counts up on
+ * the same clock of clocks as the countdown, calm and grey — no "+", no
+ * tint, no smileys; nothing here is late.
+ */
+const RunningClockWall = ({
+	units
+}: {
+	units: Array<[value: number, label: string]>;
+}) => {
+	const ref = useRef<HTMLDivElement>(null);
+	const [width, setWidth] = useState<number | null>(null);
+	// No cursor to follow on a phone, as in the countdown.
+	const compact = useMediaQuery('(max-width: 599.98px)');
+	useEffect(() => {
+		const el = ref.current;
+		if (!el) return undefined;
+		setWidth(el.clientWidth);
+		if (typeof ResizeObserver === 'undefined') return undefined;
+		const observer = new ResizeObserver(([entry]) =>
+			setWidth(entry.contentRect.width)
+		);
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, []);
+	const size = fitRunningWall(
+		width ?? 480,
+		units.map(([value]) => faceDigitCount(value))
+	);
+	const gap = wallCellGap(size);
+
+	return (
+		<Box
+			ref={ref}
+			aria-hidden
+			data-cy="group-running-clock"
+			sx={{
+				display: 'flex',
+				justifyContent: 'center',
+				gap: `${Math.round(size * 0.55)}px`,
+				width: '100%'
+			}}
+		>
+			{units.map(([value, label], index) => (
+				<Box
+					key={label}
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						gap: 1,
+						flexShrink: 0
+					}}
+				>
+					<Box
+						sx={{
+							/* A zero hour stays quiet. */
+							opacity: index === 0 && value === 0 ? 0.45 : 1
+						}}
+					>
+						<ClockDigits
+							value={value}
+							size={size}
+							digitGap={gap}
+							magnet={!compact}
+						/>
+					</Box>
+					<Box component="span" sx={captionSx}>
+						{label}
+					</Box>
+				</Box>
+			))}
+		</Box>
+	);
+};

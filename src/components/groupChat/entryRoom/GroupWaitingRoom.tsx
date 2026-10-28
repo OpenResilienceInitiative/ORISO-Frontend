@@ -690,7 +690,10 @@ export const GroupWaitingRoom = ({
 						'flexGrow': 1,
 						'minHeight': {
 							xs: 'calc(100vh - 96px)',
-							lg: 'calc(100vh - 128px)'
+							/* Nothing is printed under the column once the
+							   stage splits: it runs to the window's bottom,
+							   where the bar is. */
+							lg: 'calc(100vh - 72px)'
 						},
 						'display': 'flex',
 						'flexDirection': 'column',
@@ -702,27 +705,17 @@ export const GroupWaitingRoom = ({
 						'pt': 1,
 						/* Park the last row 12 px above the bar's hairline
 						   (Frank, 2026-09-07: "wenn du die … 12 Pixel von der
-						   Futter-Trennlinie") — the bar is 81 px high until
-						   `sm`, 96 px from there up.
-
-						   From 900 px the stage prints its legal links under
-						   this column, so part of the reserve already sits
-						   below it: 48 px while the mobile head is still on
-						   (the row wraps), 32 px once the stage splits.
-
-						   The odd one out is written as a raw range and not as
-						   a second `@media (min-width:1200px)` key: that key
-						   already exists here, generated from `lg` above, and
-						   a hand-written twin replaces it instead of merging
-						   into it — which silently took the inset with it. */
+						   Futter-Trennlinie"). The bar reserves its own
+						   measured height with a spacer in this column since
+						   #1631, so only the 12 px are ours; reserving the bar
+						   here as well left the row floating 70–132 px above
+						   it (Frank, 2026-10-28). */
 						'pb': {
-							xs: 'calc(93px + env(safe-area-inset-bottom))',
-							sm: '108px',
-							lg: '76px'
+							xs: 'calc(12px + env(safe-area-inset-bottom))',
+							sm: '12px'
 						},
 						'@media (min-width:900px) and (max-width:1199px)': {
-							minHeight: 'calc(100vh - 114px)',
-							pb: '60px'
+							minHeight: 'calc(100vh - 114px)'
 						}
 					}}
 				>
