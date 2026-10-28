@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
@@ -57,7 +58,9 @@ describe('call states (FE#1904)', () => {
 			/>
 		);
 		const card = screen.getByRole('alertdialog', {
-			name: 'ruhiger Fuchs 432'
+			name: 'ruhiger Fuchs 432',
+			// Announced with what kind of call it is.
+			description: /Video call.*Encrypted/
 		});
 		expect(screen.getByTestId('transformed').contains(card)).toBe(false);
 	});
@@ -129,9 +132,12 @@ describe('call states (FE#1904)', () => {
 				onExpand={vi.fn()}
 			/>
 		);
-		const unmute = screen.getByRole('button', { name: 'Unmute' });
-		expect(unmute.getAttribute('aria-pressed')).toBe('true');
-		unmute.click();
+		// One fixed label; the state is in aria-pressed alone.
+		const mute = screen.getByRole('button', {
+			name: 'Mute',
+			pressed: true
+		});
+		mute.click();
 		expect(onToggleMute).toHaveBeenCalledTimes(1);
 		expect(
 			screen.getByRole('button', { name: 'Back to the full call' })
@@ -158,7 +164,8 @@ describe('call states (FE#1904)', () => {
 		expect(screen.queryByTestId('user-avatar')).toBeNull();
 	});
 
-	it('offers the camera in its menu for a video call', async () => {
+	it('offers the camera in its menu for a video call, and returns focus to ⋮', async () => {
+		const user = userEvent.setup();
 		const onToggleCamera = vi.fn();
 		renderIn(
 			<MinimizedCallDock
@@ -172,16 +179,19 @@ describe('call states (FE#1904)', () => {
 				onExpand={vi.fn()}
 			/>
 		);
-		screen.getByRole('button', { name: 'More options' }).click();
+		const more = screen.getByRole('button', { name: 'More options' });
+		await user.click(more);
 		const camera = await screen.findByRole('menuitem', {
 			name: /Turn off video/
 		});
 		expect(camera.textContent).toContain('Sound keeps going.');
-		camera.click();
+		await user.keyboard('{Enter}');
 		expect(onToggleCamera).toHaveBeenCalledTimes(1);
+		expect(document.activeElement).toBe(more);
 	});
 
 	it('leaves the camera out of the menu for an audio call', async () => {
+		const user = userEvent.setup();
 		renderIn(
 			<MinimizedCallDock
 				party={party}
@@ -192,7 +202,7 @@ describe('call states (FE#1904)', () => {
 				onExpand={vi.fn()}
 			/>
 		);
-		screen.getByRole('button', { name: 'More options' }).click();
+		await user.click(screen.getByRole('button', { name: 'More options' }));
 		expect(
 			await screen.findByRole('menuitem', {
 				name: 'Back to the full call'

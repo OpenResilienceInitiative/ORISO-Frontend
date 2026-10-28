@@ -82,7 +82,11 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	const menuButtonRef = React.useRef<HTMLButtonElement>(null);
 	const dockRef = React.useRef<HTMLElement>(null);
 	const menuRef = React.useRef<HTMLDivElement | null>(null);
-	const closeMenu = () => setMenuAnchor(null);
+	// Back to ⋮ after an item, so a keyboard user keeps their place in the dock.
+	const closeMenu = (restoreFocus = false) => {
+		setMenuAnchor(null);
+		if (restoreFocus) menuButtonRef.current?.focus();
+	};
 	// Popper mounts the menu after this render; focus its first item then.
 	const attachMenu = React.useCallback((node: HTMLDivElement | null) => {
 		menuRef.current = node;
@@ -156,7 +160,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 					className={`call-icon-button${isMuted ? ' call-icon-button--off' : ''}`}
 					onClick={onToggleMute}
 					aria-pressed={isMuted}
-					aria-label={isMuted ? t('calls.unmute') : t('calls.mute')}
+					aria-label={t('calls.mute')}
 				>
 					{/* One glyph, filled when muted, as in the call's control bar. */}
 					<MicOffIcon aria-hidden="true" />
@@ -197,7 +201,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 					]}
 					className="call-dock-menu-popper"
 				>
-					<ClickAwayListener onClickAway={closeMenu}>
+					<ClickAwayListener onClickAway={() => closeMenu()}>
 						{/* The app's shared menu atoms, as every other menu. */}
 						<ChatMenuDropdown
 							ref={attachMenu}
@@ -226,7 +230,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 									}
 									description={t('calls.states.cameraHint')}
 									onClick={() => {
-										closeMenu();
+										closeMenu(true);
 										onToggleCamera();
 									}}
 								/>

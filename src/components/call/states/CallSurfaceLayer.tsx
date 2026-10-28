@@ -9,8 +9,11 @@ import { createPortal } from 'react-dom';
  * animates its panes with transforms. A call surface rendered in place would
  * be clipped by whichever pane happened to hold it.
  *
- * Its z-index sits above the app shell (MUI app bar 1100, drawer 1200) and
- * below system dialogs (MUI modal 1300, snackbar 1400), see `callStates.scss`.
+ * The layer itself has no z-index; its children do (`callStates.scss`).
+ * The dock (`--call-surface-z`) sits above the app shell (MUI app bar 1100,
+ * drawer 1200) and below system dialogs (MUI modal 1300, snackbar 1400). A
+ * ringing card (`--call-incoming-z`) sits above everything, dialogs included,
+ * so a call never rings unseen.
  */
 export const CallSurfaceLayer: React.FC<{
 	children: React.ReactNode;

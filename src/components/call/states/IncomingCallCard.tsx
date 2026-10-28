@@ -48,6 +48,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const titleId = React.useId();
+	const metaId = React.useId();
 	const modality = isVideo ? t('calls.videoCall') : t('calls.audioCall');
 	const ModalityIcon = isVideo ? VideoIcon : AudioIcon;
 
@@ -57,6 +58,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 				className="incoming-call-card"
 				role="alertdialog"
 				aria-labelledby={titleId}
+				aria-describedby={metaId}
 				data-busy={ongoingCall ? 'true' : undefined}
 			>
 				<div className="incoming-call-card__ring" aria-hidden="true">
@@ -76,7 +78,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 						? caller.name
 						: t('calls.group.incomingDescription')}
 				</h2>
-				<p className="incoming-call-card__meta">
+				<p id={metaId} className="incoming-call-card__meta">
 					<ModalityIcon aria-hidden="true" />
 					<span>{modality}</span>
 					<span aria-hidden="true">·</span>
