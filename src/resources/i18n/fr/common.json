@@ -1980,7 +1980,15 @@
 			"counsellorsEmpty": "Aucun·e conseiller·ère dans cette salle",
 			"moderatorsEmpty": "Aucun·e modérateur·rice dans cette salle",
 			"toggleSection": "Basculer la section",
-			"selectAllBottom": "Tout sélectionner"
+			"selectAllBottom": "Tout sélectionner",
+			"unresolved": {
+				"headline": "Veuillez vérifier les destinataires",
+				"text": "Les destinataires sélectionnés n’ont pas pu être confirmés pour cette discussion. Choisissez à nouveau les destinataires, puis envoyez. Votre texte reste dans ce champ."
+			},
+			"attachmentBlocked": {
+				"headline": "Les fichiers sont envoyés à tout le monde",
+				"text": "Les fichiers et les messages vocaux ne peuvent pas être limités à certains collègues. Choisissez « Tous » pour les partager avec tout le monde, ou envoyez plutôt un message texte. Votre fichier ou enregistrement est conservé."
+			}
 		},
 		"edit": {
 			"cancel": "Annuler la modification",

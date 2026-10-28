@@ -214,6 +214,8 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	AUDIENCE_UNRESOLVED: 'AUDIENCE_UNRESOLVED',
+	AUDIENCE_ATTACHMENT_BLOCKED: 'AUDIENCE_ATTACHMENT_BLOCKED',
 	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
 	DPA_RESTRICTED: 'DPA_RESTRICTED',
 	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
@@ -1929,7 +1931,7 @@ export const MessageSubmitInterfaceComponent = ({
 					))
 			) {
 				setIsRequestInProgress(false);
-				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+				setActiveInfo(INFO_TYPES.AUDIENCE_UNRESOLVED);
 				return null;
 			}
 			let isAside = retryContext?.isAside || false;
@@ -1972,7 +1974,7 @@ export const MessageSubmitInterfaceComponent = ({
 				// retry instead of widening the chosen audience.
 				if (hasExplicitAudience && attachment) {
 					setIsRequestInProgress(false);
-					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					setActiveInfo(INFO_TYPES.AUDIENCE_ATTACHMENT_BLOCKED);
 					return null;
 				}
 				if (hasExplicitAudience) {
@@ -2384,6 +2386,19 @@ export const MessageSubmitInterfaceComponent = ({
 				isInfo: false,
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
+			};
+		} else if (
+			activeInfo === INFO_TYPES.AUDIENCE_UNRESOLVED ||
+			activeInfo === INFO_TYPES.AUDIENCE_ATTACHMENT_BLOCKED
+		) {
+			const key =
+				activeInfo === INFO_TYPES.AUDIENCE_UNRESOLVED
+					? 'message.audience.unresolved'
+					: 'message.audience.attachmentBlocked';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.headline`),
+				infoMessage: translate(`${key}.text`)
 			};
 		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
 			infoData = {

@@ -1980,7 +1980,15 @@
 			"counsellorsEmpty": "Bu odada hiç danışman yok",
 			"moderatorsEmpty": "Bu odada hiç moderatör yok",
 			"toggleSection": "Bölümü aç/kapat",
-			"selectAllBottom": "Tümünü seç"
+			"selectAllBottom": "Tümünü seç",
+			"unresolved": {
+				"headline": "Lütfen alıcıları kontrol edin",
+				"text": "Seçilen alıcılar bu sohbet için doğrulanamadı. Alıcıları yeniden seçin ve ardından gönderin. Metniniz bu alanda kalır."
+			},
+			"attachmentBlocked": {
+				"headline": "Dosyalar yalnızca herkese gider",
+				"text": "Dosyalar ve sesli mesajlar seçilen meslektaşlarla sınırlandırılamaz. Herkesle paylaşmak için „Tümü“ seçeneğini seçin veya bunun yerine bir metin mesajı gönderin. Dosyanız veya kaydınız korunur."
+			}
 		},
 		"edit": {
 			"cancel": "Düzenlemeyi iptal et",

@@ -204,7 +204,10 @@ it('blocks a stored technical target until Everyone is deliberately chosen witho
 	);
 	render(<Composer members={[system, homer, marge]} />);
 	const editor = await sendPrivateDraft();
-	await screen.findByRole('alert');
+	const alert = await screen.findByRole('alert');
+	expect(alert.textContent).toContain(
+		i18n.t('message.audience.unresolved.headline')
+	);
 	expect(send).not.toHaveBeenCalled();
 	expect(editor.textContent).toBe('Synthetic private draft');
 	fireEvent.click(
@@ -352,7 +355,7 @@ describe('a reviewed voice note (#1805)', () => {
 		await recordAndSend();
 		const alert = await screen.findByRole('alert');
 		expect(alert.textContent).toContain(
-			i18n.t('statusOverlay.error.headline')
+			i18n.t('message.audience.attachmentBlocked.headline')
 		);
 		expect(attachmentSend).not.toHaveBeenCalled();
 		expect(
@@ -422,7 +425,10 @@ describe('stale stored recipients in a group session (#1805)', () => {
 			/>
 		);
 		const editor = await sendPrivateDraft();
-		await screen.findByRole('alert');
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toContain(
+			i18n.t('message.audience.unresolved.headline')
+		);
 		expect(send).not.toHaveBeenCalled();
 		expect(editor.textContent).toBe('Synthetic private draft');
 		fireEvent.click(
