@@ -370,6 +370,8 @@ it.each([
 	'idle',
 	'pending',
 	'busy',
+	'device-ready',
+	'needs-sign-in',
 	'needs-recovery-key',
 	'retryable-failure'
 ] as RecoveryRuntimeStatus[])(

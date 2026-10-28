@@ -26,6 +26,7 @@ const state = vi.hoisted(() => ({
 	clientService: null as any,
 	update: vi.fn(),
 	change: vi.fn(),
+	hasEvidence: vi.fn(async () => true),
 	RepairRequiredError: class extends Error {},
 	RepairBlockedError: class extends Error {},
 	WorkLimitError: class extends Error {},
@@ -48,6 +49,7 @@ vi.mock('../../api', () => ({
 }));
 vi.mock('../../services/matrixPasswordRecoveryService', () => ({
 	changePasswordWithRecovery: state.change,
+	hasPasswordRecoveryEvidence: state.hasEvidence,
 	PasswordRecoveryRepairRequiredError: state.RepairRequiredError,
 	PasswordRecoveryRepairBlockedError: state.RepairBlockedError,
 	PasswordRecoveryWorkLimitError: state.WorkLimitError
@@ -98,6 +100,7 @@ vi.mock('../overlay/Overlay', () => ({
 }));
 beforeEach(() => {
 	vi.clearAllMocks();
+	state.hasEvidence.mockResolvedValue(true);
 	localStorage.clear();
 	state.userData.chatRecoveryMode = 'LOGIN_PASSWORD';
 	state.userData.passwordChangeRequired = false;
@@ -155,7 +158,37 @@ it('keeps legacy password changes on the existing path', async () => {
 	expect(state.change).not.toHaveBeenCalled();
 });
 
-it('links to recovery repair without changing credentials when enrollment is absent', async () => {
+/**
+ * QA (OBP 2.1, #69) was told to repair the chat recovery although recovery
+ * (secret storage, backup, recovery key) was set up — only the password
+ * envelope was missing, and the security settings offer no way to add one
+ * without a fresh recovery key. With no envelope nothing is sealed under the
+ * old password, so changing it loses nothing: same reasoning as the
+ * account-setup gate's first change.
+ */
+it('changes the password when no password envelope exists that it would have to rotate', async () => {
+	state.change.mockRejectedValue(new state.RepairRequiredError());
+	state.hasEvidence.mockResolvedValue(false);
+	state.update.mockResolvedValue(undefined);
+
+	submit();
+
+	await waitFor(() => expect(state.logout).toHaveBeenCalled());
+	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+});
+
+it('keeps the change blocked when evidence cannot be read', async () => {
+	state.change.mockRejectedValue(new state.RepairRequiredError());
+	state.hasEvidence.mockRejectedValue(new Error('homeserver unreachable'));
+
+	submit();
+
+	expect(await screen.findByRole('alert')).toBeTruthy();
+	expect(state.update).not.toHaveBeenCalled();
+	expect(state.logout).not.toHaveBeenCalled();
+});
+
+it('links to recovery repair without changing credentials when a partial enrollment exists', async () => {
 	state.change.mockRejectedValue(new state.RepairRequiredError());
 	submit();
 	expect(await screen.findByRole('alert')).toBeTruthy();

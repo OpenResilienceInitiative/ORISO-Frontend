@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
 import {
 	changePasswordWithRecovery,
+	hasPasswordRecoveryEvidence,
 	PasswordRecoveryRepairBlockedError,
 	PasswordRecoveryRepairRequiredError,
 	PasswordRecoveryWorkLimitError
@@ -382,6 +383,22 @@ export const PasswordReset = ({
 					if (
 						firstChange &&
 						error instanceof PasswordRecoveryRepairRequiredError
+					)
+						return apiUpdatePassword(oldPassword, newPassword);
+					/* Recovery may be complete (secret storage, backup,
+					   recovery key) with no password envelope at all — set up
+					   with the recovery key, or enrolled while the setup gate
+					   dropped the password. Nothing is sealed under the old
+					   password then, so the change loses nothing, and the
+					   security settings offer no repair without a fresh
+					   recovery key: blocking would dead-end (OBP 2.1, #69).
+					   A partial envelope still blocks — it would be orphaned. */
+					if (
+						error instanceof PasswordRecoveryRepairRequiredError &&
+						(await hasPasswordRecoveryEvidence(client).then(
+							(evidence) => !evidence,
+							() => false
+						))
 					)
 						return apiUpdatePassword(oldPassword, newPassword);
 					throw error;

@@ -394,12 +394,7 @@ export const EncryptionSettingsPanel = ({
 					data-cy="password-recovery-status"
 				>
 					<p role="status">
-						{t(
-							'encryption.passwordRecovery.' +
-								(passwordStatus === 'device-ready'
-									? 'deviceReady'
-									: passwordStatus)
-						)}
+						{t('encryption.passwordRecovery.' + passwordStatus)}
 					</p>
 					{canOfferPasswordRecovery && recoveryKeyToShow && (
 						<form

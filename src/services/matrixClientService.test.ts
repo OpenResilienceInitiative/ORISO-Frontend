@@ -95,8 +95,10 @@ describe('MatrixClientService', () => {
 		mockedMatrixClient.initRustCrypto.mockImplementation(async () => {
 			callOrder.push('crypto');
 		});
-		mockedMatrixClient.on.mockImplementation(() => {
-			callOrder.push('listener');
+		mockedMatrixClient.on.mockImplementation((eventName: string) => {
+			// Crypto-event listeners (decryption retry) attach here too; the
+			// ordering contract is about the sync listener.
+			if (eventName === 'sync') callOrder.push('listener');
 		});
 		mockedMatrixClient.startClient.mockImplementation(() => {
 			callOrder.push('start');

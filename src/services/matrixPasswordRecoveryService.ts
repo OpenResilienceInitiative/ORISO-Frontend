@@ -103,7 +103,14 @@ const fingerprint = async (
 	repairRequired = false
 ): Promise<string> => {
 	const root = await readRecoveryRoot(client);
-	const backup = await client.getCrypto()?.getKeyBackupInfo();
+	const crypto = client.getCrypto();
+	// The SDK caches "no backup" from its first check after start; a backup
+	// created later (another tab or device) would read as missing. Ask the
+	// server again before calling the recovery incomplete.
+	const backup =
+		(await crypto?.getKeyBackupInfo()) ??
+		(await crypto?.checkKeyBackupAndEnable?.())?.backupInfo ??
+		null;
 	if (!root || !backup) {
 		if (repairRequired) throw new PasswordRecoveryRepairRequiredError();
 		throw new EnvelopeUnavailable();

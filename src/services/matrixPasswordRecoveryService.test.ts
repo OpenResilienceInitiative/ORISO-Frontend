@@ -192,6 +192,28 @@ describe('native SDK envelope around the unchanged root (transport and backup AP
 			).not.toHaveBeenCalled();
 		}
 	);
+	/**
+	 * The SDK caches "no backup" from its first check after start. A backup
+	 * set up later in another tab or on another device leaves that cache
+	 * stale, and the password change then claimed the recovery needed repair
+	 * although it was complete (OBP 2.1, #69).
+	 */
+	it('re-checks the server backup when the SDK cache still says there is none', async () => {
+		await enrollPasswordRecovery(first, 'correct', rootCode, 2);
+		const crypto = first.getCrypto();
+		const backup = await crypto.getKeyBackupInfo();
+		crypto.getKeyBackupInfo.mockResolvedValue(null);
+		crypto.checkKeyBackupAndEnable = vi.fn(async () => {
+			crypto.getKeyBackupInfo.mockResolvedValue(backup);
+			return { backupInfo: backup, trustInfo: {} };
+		});
+		const update = vi.fn(async () => undefined);
+
+		await changePasswordWithRecovery(first, 'correct', 'new', update);
+
+		expect(crypto.checkKeyBackupAndEnable).toHaveBeenCalled();
+		expect(update).toHaveBeenCalledOnce();
+	});
 	it('distinguishes wrong old password from missing recovery material', async () => {
 		await enrollPasswordRecovery(first, 'correct', rootCode, 2);
 		const update = vi.fn();

@@ -106,6 +106,10 @@ const createFakeEncryptedMatrixEvent = (failed = false) => {
 			if (name === 'Event.decrypted')
 				decryptionListeners.delete(listener);
 		},
+		markDecrypted: () => {
+			eventType = 'm.room.message';
+			decryptionFailure = false;
+		},
 		emitDecrypted: (error?: Error) => {
 			if (!error) {
 				eventType = 'm.room.message';
@@ -258,6 +262,67 @@ describe('chatTransportService Matrix timeline', () => {
 
 		event.emitDecrypted();
 		expect(listener).toHaveBeenCalledTimes(1);
+	});
+
+	/**
+	 * A retry after a key import, a backup restore or a sender-device update
+	 * can succeed long after the per-event watch expired, or for an event this
+	 * view never saw arrive (scrollback, a re-attached view). The client
+	 * re-emits every event's `Event.decrypted`; the chat must re-render on it,
+	 * or the message stays "Nachricht verschlüsselt" until the next reload.
+	 */
+	it('re-renders a late decryption of an untracked event in the watched room', () => {
+		const room = { roomId: ROOM_ID, timeline: [] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const { event } = createFakeEncryptedMatrixEvent();
+		(event as any).getRoomId = () => ROOM_ID;
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		event.emitDecrypted();
+		fakeClient.emit('Event.decrypted', event);
+
+		expect(listener).toHaveBeenCalledOnce();
+		expect(listener).toHaveBeenCalledWith(event, room, false);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Event.decrypted')).toBe(0);
+	});
+
+	it('ignores client-level decryptions of other rooms and failed retries', () => {
+		const { event: other } = createFakeEncryptedMatrixEvent();
+		(other as any).getRoomId = () => OTHER_ROOM_ID;
+		other.emitDecrypted();
+		const { event: failed } = createFakeEncryptedMatrixEvent(true);
+		(failed as any).getRoomId = () => ROOM_ID;
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Event.decrypted', other);
+		fakeClient.emit('Event.decrypted', failed);
+		fakeClient.emit('Event.decrypted', failed, new Error('no key'));
+
+		expect(listener).not.toHaveBeenCalled();
+		detach?.();
+	});
+
+	it('does not notify twice when the per-event watch already handles the decryption', () => {
+		const { event } = createFakeEncryptedMatrixEvent();
+		(event as any).getRoomId = () => ROOM_ID;
+		const room = { roomId: ROOM_ID };
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		fakeClient.emit('Room.timeline', event, room, false);
+		listener.mockClear();
+
+		// The SDK re-emits on the client before the event's own listeners run.
+		event.markDecrypted();
+		fakeClient.emit('Event.decrypted', event);
+		event.emitDecrypted();
+
+		expect(listener).toHaveBeenCalledOnce();
+		detach?.();
 	});
 
 	it('expires a pending decryption listener after five minutes', () => {
