@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Drawer, Popover, PopoverActions } from '@mui/material';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
@@ -15,6 +15,8 @@ import './callShare.scss';
 
 /** Above `.group-call-widget` (10000): the surfaces are portalled to the body. */
 const CALL_SHARE_LAYER = 10001;
+/** In fullscreen only the fullscreen element is drawn; portal into it. */
+const portalTarget = () => document.fullscreenElement ?? document.body;
 
 export interface CallShareProps {
 	/** The guest link of this one call (backend later; #1794). */
@@ -82,6 +84,18 @@ export const CallShare = ({
 	);
 
 	const close = () => setOpen(false);
+	// The panel lives in the portal it opened in: a fullscreen change would
+	// leave it behind the new top layer.
+	useEffect(() => {
+		if (!open) return;
+		const onFullscreenChange = () => setOpen(false);
+		document.addEventListener('fullscreenchange', onFullscreenChange);
+		return () =>
+			document.removeEventListener(
+				'fullscreenchange',
+				onFullscreenChange
+			);
+	}, [open]);
 	const panel = (
 		<CallSharePanel
 			// Another link is another call: a fresh panel drops its QR code and
@@ -136,6 +150,7 @@ export const CallShare = ({
 					}}
 					slotProps={{ paper: { className: 'callShare__popover' } }}
 					sx={{ zIndex: CALL_SHARE_LAYER }}
+					container={portalTarget}
 				>
 					{panel}
 				</Popover>
@@ -146,6 +161,7 @@ export const CallShare = ({
 					onClose={close}
 					PaperProps={{ className: 'callShare__sheet' }}
 					sx={{ zIndex: CALL_SHARE_LAYER }}
+					container={portalTarget}
 				>
 					<span className="callShare__handle" aria-hidden />
 					{panel}

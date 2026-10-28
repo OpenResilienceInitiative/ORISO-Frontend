@@ -219,3 +219,36 @@ it('keeps a late answer for the previous call off the next call', async () => {
 	await new Promise((resolve) => setTimeout(resolve, 0));
 	expect(knock.checked).toBe(true);
 });
+
+/* GroupCallWidget puts .element-call-container into fullscreen; body is hidden then. */
+it('opens inside the fullscreen call and closes when fullscreen changes', async () => {
+	const fullscreen = document.createElement('div');
+	document.body.appendChild(fullscreen);
+	Object.defineProperty(document, 'fullscreenElement', {
+		configurable: true,
+		get: () => fullscreen
+	});
+	try {
+		render(
+			<CallShareForCall
+				sourceRoomId="!r:x"
+				callId="c1"
+				layout="desktop"
+			/>
+		);
+		const knock = await openPanel();
+		expect(fullscreen.contains(knock)).toBe(true);
+
+		document.dispatchEvent(new Event('fullscreenchange'));
+		await vi.waitFor(() =>
+			expect(
+				screen.queryByRole('switch', {
+					name: 'calls.share.knock.label'
+				})
+			).toBeNull()
+		);
+	} finally {
+		delete (document as { fullscreenElement?: Element }).fullscreenElement;
+		fullscreen.remove();
+	}
+});
