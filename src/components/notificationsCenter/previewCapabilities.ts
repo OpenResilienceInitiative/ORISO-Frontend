@@ -132,7 +132,8 @@ export const resolvePreviewCapabilities = ({
 		(roomKind === 'main' &&
 			(channelKind === 'supervision' || channelKind === 'team'))
 	) {
-		return readOnly('sessionUnknown');
+		// Fail closed: nothing of a case shows until it is known whose it is.
+		return readOnly('sessionUnknown', { contentHidden: true });
 	}
 	if (caseHandover !== 'notRequired') {
 		if (!caseHandover.canViewContent) {
@@ -151,7 +152,10 @@ export const resolvePreviewCapabilities = ({
 		if (session.isArchive) {
 			return readOnly('archived');
 		}
-		return teamDiscussionOpen ? writable({}) : readOnly('teamClosed');
+		if (!teamDiscussionOpen) {
+			return readOnly('teamClosed');
+		}
+		return roomJoined ? writable({}) : readOnly('notJoined');
 	}
 	if (roomKind === 'supervision') {
 		if (!viewer.isConsultant) {

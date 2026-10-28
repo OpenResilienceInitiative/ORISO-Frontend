@@ -895,7 +895,9 @@ export const MessageSubmitInterfaceComponent = ({
 			sessionId: activeSession?.item?.id ?? null,
 			roomRef: activeSession?.rid ?? null,
 			title: draftTitle,
-			forcedScopeKey: forcedDraftScopeKey
+			forcedScopeKey: forcedDraftScopeKey,
+			// A side room's draft never mixes with the client room's (#1824).
+			isolateScope: Boolean(targetRoomId)
 		}
 	);
 

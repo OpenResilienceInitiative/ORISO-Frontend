@@ -47,7 +47,15 @@ export const activityEventRoomId = (row: ActivityEventRow): string | null => {
 		.find(
 			(segment) => segment.startsWith('!') || segment.startsWith('%21')
 		);
-	return roomSegment ? decodeURIComponent(roomSegment) : null;
+	if (!roomSegment) {
+		return null;
+	}
+	// A stored path is backend data: bad percent-encoding must not throw.
+	try {
+		return decodeURIComponent(roomSegment);
+	} catch {
+		return null;
+	}
 };
 
 /**

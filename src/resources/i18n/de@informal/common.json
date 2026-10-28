@@ -688,7 +688,8 @@
 				"supervisorNoComposer": "Als Supervision kannst du hier reagieren, aber nicht schreiben.",
 				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar.",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffne die Unterhaltung, um sie anzunehmen.",
-				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung."
+				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung.",
+				"actionFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
 			}
 		},
 		"events": {

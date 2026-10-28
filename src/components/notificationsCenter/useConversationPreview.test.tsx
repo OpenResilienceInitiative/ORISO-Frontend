@@ -360,4 +360,35 @@ describe('useConversationPreview (#1824)', () => {
 		);
 		await waitFor(() => expect(result.current?.threadRootId).toBe('$root'));
 	});
+
+	it('stays read only when the supervisors cannot be loaded', async () => {
+		fakes.apiGetSessionSupervisors.mockRejectedValue(new Error('500'));
+		const { result } = render(row());
+		await waitFor(() =>
+			expect(fakes.apiGetSessionSupervisors).toHaveBeenCalled()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(result.current?.capabilities.composer).toBe(false);
+		expect(result.current?.capabilities.readOnlyReason).toBe(
+			'sessionUnknown'
+		);
+	});
+
+	it('stays read only when the group info cannot be loaded', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({
+				isGroup: true,
+				isSession: false,
+				item: { active: true, subscribed: true }
+			}),
+			ready: true
+		});
+		fakes.apiGetGroupChatInfo.mockRejectedValue(new Error('500'));
+		const { result } = render(row(), asker);
+		await waitFor(() =>
+			expect(fakes.apiGetGroupChatInfo).toHaveBeenCalled()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(result.current?.capabilities.composer).toBe(false);
+	});
 });

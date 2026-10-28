@@ -290,6 +290,12 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 	});
 
 	describe('fails closed', () => {
+		it('hides the content while the session is unknown (#924)', () => {
+			expect(resolve(counsellor({ session: null })).contentHidden).toBe(
+				true
+			);
+		});
+
 		it.each([
 			['no session', { session: null }],
 			['a room that is none of the session’s rooms', { roomKind: null }],
@@ -370,5 +376,17 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 				resolve(counsellor({ caseHandover: 'loading' })).contentHidden
 			).toBe(true);
 		});
+	});
+
+	it('team room: an open discussion still needs the room to be joined', () => {
+		expect(
+			resolve(
+				counsellor({
+					roomKind: 'team',
+					teamDiscussionOpen: true,
+					roomJoined: false
+				})
+			)
+		).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
 	});
 });

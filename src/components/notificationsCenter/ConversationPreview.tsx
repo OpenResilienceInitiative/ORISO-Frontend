@@ -155,7 +155,16 @@ export interface ConversationPreviewAccess {
 }
 
 /** Read-only reasons that also rule out a read receipt. */
-const NO_RECEIPT = new Set(['sessionUnknown', 'curtained', 'coAccess']);
+const NO_RECEIPT = new Set([
+	'sessionUnknown',
+	'curtained',
+	'coAccess',
+	'notJoined'
+]);
+
+/** Read-only reasons the conversation itself can resolve (accept, consent,
+ * re-open): only these offer "Open the conversation to reply". */
+const OPENS_TO_REPLY = new Set(['archived', 'enquiry', 'consentGate']);
 
 const READ_ONLY_TEXT: Partial<Record<string, string>> = {
 	archived: 'notifications.center.preview.archivedOpenToReply',
@@ -250,35 +259,46 @@ export const ConversationPreview = ({
 	// button sends the receipt; the Timeline card follows only when it went out.
 	const onConversationReadRef = useRef(onConversationRead);
 	onConversationReadRef.current = onConversationRead;
-	const [actionFailed, setActionFailed] = useState(false);
+	// Which failure to show: a composer send keeps its text; any other
+	// action (reaction, deletion, mark as read) just failed.
+	const [failure, setFailure] = useState<'send' | 'action' | null>(null);
 	const [markedRead, setMarkedRead] = useState(false);
 	useEffect(() => {
-		setActionFailed(false);
+		setFailure(null);
 		setMarkedRead(false);
 	}, [roomId, shownThreadRootId]);
 	// The room on screen now; a late write must not touch another one.
 	const shownRoomRef = useRef(roomId);
 	shownRoomRef.current = roomId;
-	const markConversationRead = useCallback(async (readRoomId: string) => {
-		if (await chatTransportService.markRoomAsRead(readRoomId)) {
+	const markConversationRead = useCallback(
+		async (readRoomId: string, explicit = false) => {
+			const sent = await chatTransportService.markRoomAsRead(readRoomId);
 			if (shownRoomRef.current === readRoomId) {
-				setMarkedRead(true);
+				if (sent) {
+					setMarkedRead(true);
+				} else if (explicit) {
+					// The button promised a read: say that it did not happen.
+					setFailure('action');
+				}
 			}
-			onConversationReadRef.current?.(readRoomId);
-		}
-	}, []);
+			if (sent) {
+				onConversationReadRef.current?.(readRoomId);
+			}
+		},
+		[]
+	);
 	const conversationActions = useConversationActions({
 		roomId,
 		resetKey: `${roomId}|${shownThreadRootId}`,
 		onWrite: (writtenRoomId) => {
 			if (shownRoomRef.current === writtenRoomId) {
-				setActionFailed(false);
+				setFailure(null);
 			}
 			void markConversationRead(writtenRoomId);
 		},
 		onWriteFailed: (writtenRoomId) => {
 			if (shownRoomRef.current === writtenRoomId) {
-				setActionFailed(true);
+				setFailure('action');
 			}
 		}
 	});
@@ -477,22 +497,27 @@ export const ConversationPreview = ({
 	}
 
 	const readOnlyReason = capabilities?.readOnlyReason ?? null;
-	const openButton = onOpenConversation && (
-		<button
-			type="button"
-			className="conversationPreview__button"
-			onClick={onOpenConversation}
-		>
-			{translate('notifications.center.preview.openToReply')}
-		</button>
-	);
+	const openButton = onOpenConversation &&
+		OPENS_TO_REPLY.has(readOnlyReason ?? '') && (
+			<button
+				type="button"
+				className="conversationPreview__button"
+				onClick={onOpenConversation}
+			>
+				{translate('notifications.center.preview.openToReply')}
+			</button>
+		);
 
 	// #924: a curtained case shows nothing of the conversation.
 	if (capabilities?.contentHidden) {
 		return (
 			<div className="conversationPreview conversationPreview--empty">
 				<p className="conversationPreview__notice">
-					{translate(READ_ONLY_TEXT.curtained!)}
+					{translate(
+						readOnlyReason === 'curtained'
+							? READ_ONLY_TEXT.curtained!
+							: 'notifications.center.preview.unavailable'
+					)}
 				</p>
 				{openButton}
 			</div>
@@ -568,7 +593,10 @@ export const ConversationPreview = ({
 										type="button"
 										className="conversationPreview__button"
 										onClick={() =>
-											void markConversationRead(roomId)
+											void markConversationRead(
+												roomId,
+												true
+											)
 										}
 									>
 										{translate(
@@ -640,9 +668,13 @@ export const ConversationPreview = ({
 						}
 					/>
 				</div>
-				{actionFailed && (
+				{failure && (
 					<p role="alert" className="conversationPreview__error">
-						{translate('notifications.center.preview.sendFailed')}
+						{translate(
+							failure === 'send'
+								? 'notifications.center.preview.sendFailed'
+								: 'notifications.center.preview.actionFailed'
+						)}
 					</p>
 				)}
 				{capabilities?.composer ? (
@@ -664,10 +696,10 @@ export const ConversationPreview = ({
 								// Bound to this render's room: the composer is keyed by
 								// room, so a send finishing after a switch reads its own.
 								handleMessageSendSuccess={() => {
-									setActionFailed(false);
+									setFailure(null);
 									void markConversationRead(roomId);
 								}}
-								onSendError={() => setActionFailed(true)}
+								onSendError={() => setFailure('send')}
 								threadRootId={shownThreadRootId}
 								replyTo={conversationActions.replyTo}
 								onCancelReply={

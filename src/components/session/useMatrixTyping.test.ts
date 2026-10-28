@@ -98,4 +98,15 @@ describe('useMatrixTyping (#1824, D3: the chat typing rule, shared)', () => {
 		expect(() => unmount()).not.toThrow();
 		transport.sendTyping.mockImplementation(async () => undefined);
 	});
+
+	it('ends the previous room when the same composer moves to another room', () => {
+		const { result } = renderHook(() => useMatrixTyping(ROOM));
+		act(() => result.current(false));
+		act(() => result.current(false, '!team:matrix.example'));
+		expect(transport.sendTyping).toHaveBeenCalledWith(ROOM, false);
+		expect(transport.sendTyping).toHaveBeenLastCalledWith(
+			'!team:matrix.example',
+			true
+		);
+	});
 });

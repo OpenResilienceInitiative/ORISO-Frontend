@@ -2436,7 +2436,8 @@
 				"curtained": "Ce dossier ne vous est pas visible pour le moment.",
 				"backToConversation": "Retour à la conversation",
 				"enquiryOpenToAccept": "Cette demande n’a pas encore été acceptée. Ouvrez la conversation pour l’accepter.",
-				"consentOpenToContinue": "Veuillez d’abord confirmer la suite dans le chat. Ouvrez la conversation pour cela."
+				"consentOpenToContinue": "Veuillez d’abord confirmer la suite dans le chat. Ouvrez la conversation pour cela.",
+				"actionFailed": "Cela n’a pas fonctionné. Veuillez réessayer."
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",

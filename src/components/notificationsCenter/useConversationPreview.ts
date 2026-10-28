@@ -279,9 +279,10 @@ export const useConversationPreview = (
 		subscribed: (session?.item as any)?.subscribed,
 		isBanned: bannedUsers.includes(userData?.userName)
 	});
+	// A failed lookup is no answer: it keeps the preview read only.
 	const stillLoading =
-		(supervisionLookup && !supervisors) ||
-		(Boolean(session?.isGroup) && !groupInfo);
+		(supervisionLookup && !supervisors?.value) ||
+		(Boolean(session?.isGroup) && !groupInfo?.value);
 
 	const capabilities = resolvePreviewCapabilities({
 		session,

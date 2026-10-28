@@ -135,4 +135,12 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 			});
 		});
 	});
+
+	it('a malformed stored path yields no room instead of throwing', () => {
+		expect(
+			activityEventRoomId(
+				row({ actionPath: '/sessions/user/view/%21abc%ZZ/13' })
+			)
+		).toBeNull();
+	});
 });

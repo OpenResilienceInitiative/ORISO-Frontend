@@ -2436,7 +2436,8 @@
 				"curtained": "እዚ ጉዳይ ሕጂ ንዓኻ ኣይረኣይን እዩ።",
 				"backToConversation": "ናብ ዘተ ተመለስ",
 				"enquiryOpenToAccept": "እዚ ሕቶ ገና ኣይተቐበለን። ንምቕባሉ ዘተ ክፈት።",
-				"consentOpenToContinue": "በጃኹም ቅድሚ ኩሉ ኣብ ቻት ከመይ ከም እትቕጽሉ ኣረጋግጹ። ንዕኡ ዘተ ክፈቱ።"
+				"consentOpenToContinue": "በጃኹም ቅድሚ ኩሉ ኣብ ቻት ከመይ ከም እትቕጽሉ ኣረጋግጹ። ንዕኡ ዘተ ክፈቱ።",
+				"actionFailed": "ኣይሰርሐን። በጃኹም ደጊምኩም ፈትኑ።"
 			},
 			"loadOlder": "ዝዓበየ ንጥፈታት ጽዓን",
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",

@@ -1069,7 +1069,7 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 			container.querySelector('.messageItem__reactionPill') as HTMLElement
 		);
 		expect((await screen.findByRole('alert')).textContent).toBe(
-			t('sendFailed')
+			t('actionFailed')
 		);
 	});
 
@@ -1197,5 +1197,89 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 		conversation();
 		open({ access: { capabilities: readOnly(reason) } });
 		expect(screen.getByText(t(key))).toBeTruthy();
+	});
+
+	describe('third review round (#1824)', () => {
+		it('says so when "Mark conversation as read" sent no receipt', async () => {
+			conversation();
+			transport.markRoomAsRead.mockResolvedValueOnce(false);
+			open();
+			fireEvent.click(
+				screen.getByRole('button', { name: t('markRead') })
+			);
+			expect((await screen.findByRole('alert')).textContent).toBe(
+				t('actionFailed')
+			);
+		});
+
+		it('a failed reaction says the action failed, not that text was kept', async () => {
+			conversation([
+				matrixEvent({
+					id: '$r1',
+					sender: LISA,
+					type: 'm.reaction',
+					content: {
+						'm.relates_to': {
+							rel_type: 'm.annotation',
+							event_id: '$theirs',
+							key: '👍'
+						}
+					}
+				})
+			]);
+			transport.sendReaction.mockRejectedValueOnce(new Error('403'));
+			const { container } = open();
+			fireEvent.click(
+				container.querySelector(
+					'.messageItem__reactionPill'
+				) as HTMLElement
+			);
+			expect((await screen.findByRole('alert')).textContent).toBe(
+				t('actionFailed')
+			);
+		});
+
+		it.each(['supervisor', 'teamClosed', 'notJoined', 'coAccess'] as const)(
+			'%s: no "open to reply" promise',
+			(reason) => {
+				conversation();
+				open({ access: { capabilities: readOnly(reason) } });
+				expect(
+					screen.queryByRole('button', { name: t('openToReply') })
+				).toBeNull();
+			}
+		);
+
+		it.each(['archived', 'enquiry', 'consentGate'] as const)(
+			'%s: offers to open the conversation',
+			(reason) => {
+				conversation();
+				open({ access: { capabilities: readOnly(reason) } });
+				expect(
+					screen.getByRole('button', { name: t('openToReply') })
+				).toBeTruthy();
+			}
+		);
+
+		it('not joined: no read receipt is offered', () => {
+			conversation();
+			open({ access: { capabilities: readOnly('notJoined') } });
+			expect(
+				screen.queryByRole('button', { name: t('markRead') })
+			).toBeNull();
+		});
+
+		it('unknown session: shows nothing of the conversation, neutrally', () => {
+			conversation();
+			const { container } = open({
+				access: {
+					capabilities: readOnly('sessionUnknown', {
+						contentHidden: true
+					})
+				}
+			});
+			expect(container.querySelector('.messageItem')).toBeNull();
+			expect(screen.getByText(t('unavailable'))).toBeTruthy();
+		});
 	});
 });

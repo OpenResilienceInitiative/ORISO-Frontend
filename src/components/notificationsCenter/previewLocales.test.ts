@@ -20,7 +20,8 @@ const KEYS = [
 	'backToConversation',
 	'sendFailed',
 	'enquiryOpenToAccept',
-	'consentOpenToContinue'
+	'consentOpenToContinue',
+	'actionFailed'
 ];
 
 /** Keys of the first #1824 draft that nothing renders any more. */

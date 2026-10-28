@@ -65,6 +65,14 @@ export const useMatrixTyping = (roomId: string | null | undefined) => {
 				);
 				return;
 			}
+			// The same composer moved to another room: end the old one first.
+			if (
+				typingInRoomRef.current &&
+				typingInRoomRef.current !== targetRoomId
+			) {
+				send(typingInRoomRef.current, false);
+				typingInRoomRef.current = null;
+			}
 			const now = Date.now();
 			if (
 				typingInRoomRef.current !== targetRoomId ||

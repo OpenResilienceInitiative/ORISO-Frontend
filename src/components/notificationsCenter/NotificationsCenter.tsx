@@ -1108,7 +1108,8 @@ export const NotificationsCenter = () => {
 	useSeenWhileReading({
 		roomId: preview?.roomId ?? null,
 		threadRootId: preview?.threadRootId,
-		enabled: Boolean(preview),
+		// Nothing is seen while the preview hides the conversation (#924).
+		enabled: Boolean(preview) && !preview?.capabilities.contentHidden,
 		feed: notificationFeed,
 		unreadOnly,
 		markRead: markNotificationAsRead

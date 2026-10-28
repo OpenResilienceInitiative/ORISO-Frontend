@@ -2457,7 +2457,8 @@
 				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
 				"backToConversation": "Zurück zur Unterhaltung",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffnen Sie die Unterhaltung, um sie anzunehmen.",
-				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung."
+				"consentOpenToContinue": "Bitte bestätigen Sie zuerst im Chat, wie es weitergeht. Öffnen Sie dazu die Unterhaltung.",
+				"actionFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 			},
 			"loadOlder": "Ältere Aktivitäten laden",
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",
