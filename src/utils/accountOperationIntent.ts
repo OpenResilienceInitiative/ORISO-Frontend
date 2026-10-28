@@ -240,10 +240,11 @@ export class AccountOperationActions {
 		this.readOwner = readOwner;
 	}
 
+	// A returning person can resume their unknown action. Other people's
+	// edits/acknowledgements never evict it; the mounted form owns this map.
 	private currentOwner(): string | undefined {
 		const owner = this.readOwner?.();
 		if (owner !== this.owner) {
-			this.slots.clear();
 			this.owner = owner;
 		}
 		return owner;
@@ -252,12 +253,14 @@ export class AccountOperationActions {
 	edited(operation: string, target: string): void {
 		// An intentional edit supersedes the previous form action. Its already
 		// captured transport retry still owns its old immutable intent object.
-		this.slots.delete(JSON.stringify([operation, target]));
+		this.slots.delete(
+			JSON.stringify([this.currentOwner(), operation, target])
+		);
 	}
 
 	private slotFor(operation: string, target: string) {
 		this.currentOwner();
-		const key = JSON.stringify([operation, target]);
+		const key = JSON.stringify([this.owner, operation, target]);
 		let slot = this.slots.get(key);
 		if (!slot) {
 			slot = new AccountOperationSlot();

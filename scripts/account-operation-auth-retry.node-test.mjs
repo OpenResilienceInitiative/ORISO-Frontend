@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { register } from 'node:module';
 
 const stubs = {
-	'../components/sessionCookie/accessSessionCookie': `export const getValueFromCookie=()=>globalThis.__accountAuthToken ?? 'stale-test-token'; export const removeAllCookies=()=>{};`,
+	'../components/sessionCookie/accessSessionCookie': `export const getValueFromCookie=()=>globalThis.__accountAuthToken ?? 'header.eyJzdWIiOiJzYW1lLXBlcnNvbiJ9.signature'; export const removeAllCookies=()=>{};`,
 	'../utils/generateCsrfToken': `export const generateCsrfToken=()=>'csrf-test';`,
 	'../components/error/errorHandling': `export const getErrorCaseForStatus=()=>{throw new Error('unexpected redirect')}; export const redirectToErrorPage=()=>{throw new Error('unexpected redirect')};`,
 	'../components/auth/auth': `export const isPublicAuthRoute=()=>true;`,
@@ -91,7 +91,7 @@ test('an authenticated frozen account request cannot retry anonymously on a publ
 		assert.equal(requests[0].headers['idempotency-key'], intent.id);
 		assert.equal(
 			requests[0].headers.authorization,
-			'Bearer stale-test-token'
+			'Bearer header.eyJzdWIiOiJzYW1lLXBlcnNvbiJ9.signature'
 		);
 	} finally {
 		globalThis.fetch = previousFetch;
@@ -413,4 +413,22 @@ test('an anonymous captured action cannot become authenticated on a later invoca
 		globalThis.fetch = previous;
 		delete globalThis.__accountAuthToken;
 	}
+});
+
+test('unreadable tokens are never retained as ownership or assumed to establish the same retry subject', async () => {
+	const { accountOperationOwner, assertAccountOperationOwner } = await import(
+		'../src/utils/accountOperationOwner.ts'
+	);
+	const owner = accountOperationOwner('synthetic-unreadable-credential');
+	assert.equal(owner, 'unverified');
+	const headers = new AccountOperationIntent().headersFor(
+		'PATCH',
+		'/users/data',
+		'{}'
+	);
+	assertAccountOperationOwner(headers, owner, owner);
+	assert.throws(
+		() => assertAccountOperationOwner(headers, owner, owner),
+		/REQUEST_IDENTITY_CHANGED/
+	);
 });
