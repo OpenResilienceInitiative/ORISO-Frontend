@@ -300,7 +300,7 @@ describe('NavigationBar unread badge semantic ownership', () => {
 			const view = render(tree(0));
 			await act(async () => {});
 			const owner = () =>
-				view.getByRole('tab', { name: new RegExp(labels.route) });
+				view.getByRole('link', { name: new RegExp(labels.route) });
 			expect(owner()).toHaveAccessibleName(labels.route);
 			expect(owner()).toHaveAttribute('href', '/notifications');
 			expect(owner()).toHaveAttribute('tabindex', '0');
