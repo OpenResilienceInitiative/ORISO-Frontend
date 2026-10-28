@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConversationPreview } from './ConversationPreview';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
@@ -74,6 +75,10 @@ const meta: Meta<typeof ConversationPreview> = {
 		)
 	],
 	parameters: {
+		// #1338: the message area scrolls but takes no focus: keyboard users cannot scroll it; the real fix is a tab stop, left for a product decision.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': ['.conversationPreview__messages']
+		}),
 		docs: {
 			description: {
 				component:

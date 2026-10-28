@@ -247,7 +247,13 @@ export const OrisoMultiSelect = ({
 						value={option.value}
 						disabled={option.disabled}
 					>
-						<Checkbox checked={value.includes(option.value)} />
+						{/* #1338: the option carries the selection; the box only
+						    shows it. Inert keeps its input out of the focus and
+						    accessibility tree, and clicks fall through to the option. */}
+						<Checkbox
+							checked={value.includes(option.value)}
+							inputProps={{ inert: true }}
+						/>
 						<ListItemText primary={option.label} />
 					</MenuItem>
 				))}

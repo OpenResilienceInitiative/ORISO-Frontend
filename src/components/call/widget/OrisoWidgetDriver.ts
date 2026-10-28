@@ -42,6 +42,8 @@ import {
 	WidgetDriver
 } from 'matrix-widget-api';
 import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
+import type { SendToDeviceContentMap } from 'matrix-js-sdk/lib/client';
+import type { ToDeviceBatch } from 'matrix-js-sdk/lib/models/ToDeviceMessage';
 
 import {
 	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
@@ -305,7 +307,7 @@ export class OrisoWidgetDriver extends WidgetDriver {
 			);
 		}
 
-		// `encryptAndSendToDevice` takes one payload for a set of devices, so
+		// `encryptToDeviceMessages` takes one payload for a set of devices, so
 		// group the map by payload identity rather than sending per device.
 		const byPayload = new Map<
 			string,
@@ -327,14 +329,48 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		});
 
 		await Promise.all(
-			Array.from(byPayload.values()).map(({ devices, payload }) =>
-				this.client.encryptAndSendToDevice(
+			Array.from(byPayload.values()).map(async ({ devices, payload }) => {
+				const batch = await crypto.encryptToDeviceMessages(
 					eventType,
 					devices,
 					payload as any
-				)
-			)
+				);
+				await this.deliverNow(batch);
+			})
 		);
+	}
+
+	/**
+	 * Puts an already encrypted batch on the wire immediately.
+	 *
+	 * `MatrixClient.encryptAndSendToDevice` is deliberately not used for media
+	 * keys: it appends to the client-wide to-device queue, which sends one batch
+	 * per HTTP request in strict order. The room-history key request puts one
+	 * batch per peer device into that queue — hundreds on an account with many
+	 * devices — and a call key behind them reached the peer 30-60 s late, so
+	 * the peer's video stayed black (FE#1828). A call key is time-critical, so
+	 * it skips the line. If the direct send fails it is handed to the queue,
+	 * which retries with backoff, so a flaky connection loses nothing.
+	 */
+	private async deliverNow(batch: ToDeviceBatch): Promise<void> {
+		if (batch.batch.length === 0) return;
+
+		const contentMap: SendToDeviceContentMap = new Map();
+		batch.batch.forEach(({ userId, deviceId, payload }) => {
+			const byDevice = contentMap.get(userId) ?? new Map();
+			byDevice.set(deviceId, payload);
+			contentMap.set(userId, byDevice);
+		});
+
+		try {
+			await this.client.sendToDevice(batch.eventType, contentMap);
+		} catch (error) {
+			console.warn(
+				'[call] direct to-device send failed, queueing for retry:',
+				error
+			);
+			await this.client.queueToDevice(batch);
+		}
 	}
 
 	public async readRoomEvents(
