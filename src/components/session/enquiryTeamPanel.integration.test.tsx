@@ -42,6 +42,7 @@ import { MatrixClientService } from '../../services/matrixClientService';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { chatTransportService } from '../../services/chatTransportService';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	setValueInCookie,
@@ -749,6 +750,9 @@ it('tells the counsellor when an enquiry link opens a case a colleague already t
 it('tells the counsellor on a phone even when the team panel fills the screen', async () => {
 	// Phone width: the side panel replaces the case card.
 	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const markRead = vi
+		.spyOn(chatTransportService, 'markRoomAsRead')
+		.mockResolvedValue(undefined);
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
 		status: 2,
 		assigned: true,
@@ -761,6 +765,8 @@ it('tells the counsellor on a phone even when the team panel fills the screen', 
 	);
 	expect(view.container.querySelector('.chatStage__card')).toBeNull();
 	expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
+	// The notice covers the panel: its messages were not seen.
+	expect(markRead).not.toHaveBeenCalledWith(TEAM);
 	fireEvent.click(
 		screen.getByRole('button', {
 			name: 'session.anonymous.takenByOtherConsultant.button.label'
