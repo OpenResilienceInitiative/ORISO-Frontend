@@ -55,6 +55,7 @@ import {
 } from './inputField/composerResize';
 import {
 	getExplicitAudienceValues,
+	retainsGroupAudienceSelection,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 import { useComposerDock } from './useComposerDock';
@@ -776,6 +777,31 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
+	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
+		isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+	const isClientUser = useMemo(() => {
+		const hasAskerAuthority = hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		);
+		const hasConsultantAuthority = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
+		return hasAskerAuthority && !hasConsultantAuthority;
+	}, [userData]);
+	const retainsGroupAudience = retainsGroupAudienceSelection({
+		chatType: currentChatType,
+		isClientUser,
+		isGroupSession: !!activeSession?.isGroup
+	});
 
 	const draftTitle = useMemo(() => {
 		const topicName =
@@ -1894,7 +1920,7 @@ export const MessageSubmitInterfaceComponent = ({
 					: composerHtmlToTransportMarkup(currentTypedMessage);
 			if (
 				!retryContext &&
-				activeSession.isGroup &&
+				retainsGroupAudience &&
 				((audienceSelectionStorageKey &&
 					restoredAudienceKey !== audienceSelectionStorageKey) ||
 					hasUnresolvedAudienceSelection(
@@ -1930,19 +1956,10 @@ export const MessageSubmitInterfaceComponent = ({
 				const humanTargetCount = audienceOptions.filter(
 					(option) => option.value !== AUDIENCE_ALL
 				).length;
-				const sendChatType = isSupervisor
-					? 'supervision'
-					: activeSession.isGroup
-						? 'group'
-						: isAnonymousChat
-							? 'anonymous'
-							: 'oneOnOne';
-				const sendIsClientUser =
-					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-					!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 				const explicitAudience = getExplicitAudienceValues({
-					chatType: sendChatType,
-					isClientUser: sendIsClientUser,
+					chatType: currentChatType,
+					isClientUser,
+					isGroupSession: !!activeSession.isGroup,
 					targetCount: humanTargetCount,
 					hasAllOption: audienceOptions.some(
 						(option) => option.value === AUDIENCE_ALL
@@ -1950,6 +1967,14 @@ export const MessageSubmitInterfaceComponent = ({
 					selectedValues: selectedAudienceValues
 				});
 				const hasExplicitAudience = explicitAudience.length > 0;
+				// An attachment (a voice note too) carries no VISIBLE_TO: in
+				// the side room every member would receive it. Keep it for a
+				// retry instead of widening the chosen audience.
+				if (hasExplicitAudience && attachment) {
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					return null;
+				}
 				if (hasExplicitAudience) {
 					prefixParts.push(buildVisibleToPrefix(explicitAudience));
 				}
@@ -2040,6 +2065,7 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			activeSession.isGroup,
+			retainsGroupAudience,
 			audienceSelectionStorageKey,
 			restoredAudienceKey,
 			attachmentSelected,
@@ -2050,7 +2076,8 @@ export const MessageSubmitInterfaceComponent = ({
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
-			isAnonymousChat,
+			currentChatType,
+			isClientUser,
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
@@ -2059,8 +2086,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues,
 			sendEnquiry,
 			sendMessage,
-			targetRoomId,
-			userData
+			targetRoomId
 		]
 	);
 
@@ -2390,14 +2416,6 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate('/booking/');
 	}, [navigate]);
 
-	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
-		isSupervisor
-			? 'supervision'
-			: activeSession.isGroup
-				? 'group'
-				: isAnonymousChat
-					? 'anonymous'
-					: 'oneOnOne';
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
@@ -2873,14 +2891,14 @@ export const MessageSubmitInterfaceComponent = ({
 		const nextOptions = buildAudienceOptions(
 			mapped,
 			defaultOption,
-			!!activeSession?.isGroup
+			retainsGroupAudience
 		);
 		setAudienceOptions(nextOptions);
 		setSelectedAudienceValues((currentValues) =>
 			reconcileAudienceSelection(
 				currentValues,
 				nextOptions,
-				!!activeSession?.isGroup
+				retainsGroupAudience
 			)
 		);
 	}, [
@@ -2904,6 +2922,7 @@ export const MessageSubmitInterfaceComponent = ({
 		currentChatType,
 		isSelfHelpGroup,
 		activeSession?.isGroup,
+		retainsGroupAudience,
 		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
@@ -2936,7 +2955,7 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		if (
 			!audienceSelectionStorageKey ||
-			(!activeSession?.isGroup && !audienceOptionsReady(audienceOptions))
+			(!retainsGroupAudience && !audienceOptionsReady(audienceOptions))
 		) {
 			return;
 		}
@@ -2953,14 +2972,14 @@ export const MessageSubmitInterfaceComponent = ({
 			restoreAudienceSelection(
 				saved,
 				audienceOptions,
-				!!activeSession?.isGroup
+				retainsGroupAudience
 			) ?? defaultAudienceSelection(audienceOptions)
 		);
 		// Commit the restored key with the selection, so persistence cannot
 		// overwrite a restricted saved choice with the initial Everyone state.
 		setRestoredAudienceKey(audienceSelectionStorageKey);
 	}, [
-		activeSession?.isGroup,
+		retainsGroupAudience,
 		audienceOptions,
 		audienceSelectionStorageKey,
 		restoredAudienceKey
@@ -3048,18 +3067,6 @@ export const MessageSubmitInterfaceComponent = ({
 			.filter(Boolean);
 		return Array.from(new Set(labels));
 	}, [audienceOptions, selectedAudienceValues, translate]);
-	const isClientUser = useMemo(() => {
-		const hasAskerAuthority = hasUserAuthority(
-			AUTHORITIES.ASKER_DEFAULT,
-			userData
-		);
-		const hasConsultantAuthority = hasUserAuthority(
-			AUTHORITIES.CONSULTANT_DEFAULT,
-			userData
-		);
-		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
-		return hasAskerAuthority && !hasConsultantAuthority;
-	}, [userData]);
 	const selectedAudienceChipLabel = useMemo(() => {
 		if (
 			hasUnresolvedAudienceSelection(
@@ -3097,6 +3104,7 @@ export const MessageSubmitInterfaceComponent = ({
 		return shouldShowAudienceSelector({
 			chatType: currentChatType,
 			isClientUser,
+			isGroupSession: !!activeSession?.isGroup,
 			targetCount: audienceTargetCount,
 			selectedValues: selectedAudienceValues,
 			hasAllOption: audienceOptions.some(
@@ -3104,6 +3112,7 @@ export const MessageSubmitInterfaceComponent = ({
 			)
 		});
 	}, [
+		activeSession?.isGroup,
 		audienceOptions,
 		audienceTargetCount,
 		currentChatType,
@@ -3111,7 +3120,7 @@ export const MessageSubmitInterfaceComponent = ({
 		selectedAudienceValues
 	]);
 	useEffect(() => {
-		if (showAudienceSelector || activeSession?.isGroup) {
+		if (showAudienceSelector || retainsGroupAudience) {
 			return;
 		}
 		setIsAudienceMenuOpen(false);
@@ -3124,7 +3133,7 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		}
 	}, [
-		activeSession?.isGroup,
+		retainsGroupAudience,
 		audienceSelectionStorageKey,
 		showAudienceSelector
 	]);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	getExplicitAudienceValues,
+	retainsGroupAudienceSelection,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 
@@ -67,4 +68,49 @@ describe('shouldShowAudienceSelector', () => {
 			})
 		).toEqual(['@moderator:example.org']);
 	});
+});
+
+describe('retainsGroupAudienceSelection', () => {
+	it.each([
+		['group', false, true, true],
+		['group', true, true, false],
+		['supervision', false, true, true],
+		['supervision', true, true, false],
+		['supervision', false, false, false],
+		['oneOnOne', false, false, false],
+		['anonymous', false, false, false]
+	] as const)(
+		'%s composer (client=%s, group session=%s) retains a restriction: %s',
+		(chatType, isClientUser, isGroupSession, retains) => {
+			expect(
+				retainsGroupAudienceSelection({
+					chatType,
+					isClientUser,
+					isGroupSession
+				})
+			).toBe(retains);
+		}
+	);
+
+	it.each([
+		['group', false, true],
+		['supervision', false, true],
+		['group', true, false],
+		['supervision', false, false]
+	] as const)(
+		'a retained restriction always keeps the picker visible (%s, client=%s, group session=%s)',
+		(chatType, isClientUser, isGroupSession) => {
+			const restricted = {
+				chatType,
+				isClientUser,
+				isGroupSession,
+				targetCount: 1,
+				hasAllOption: true,
+				selectedValues: ['@homer:example.org']
+			};
+			expect(shouldShowAudienceSelector(restricted)).toBe(
+				retainsGroupAudienceSelection(restricted)
+			);
+		}
+	);
 });

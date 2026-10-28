@@ -7,7 +7,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { createInstance } from 'i18next';
@@ -18,7 +18,7 @@ import {
 	ComposerStoryDecorator,
 	mockComposerUserData
 } from './__storybook__/composerStoryDecorator';
-import { SessionTypeContext } from '../../globalState';
+import { AUTHORITIES, SessionTypeContext } from '../../globalState';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import en from '../../resources/i18n/en/common.json';
 import { chatTransportService } from '../../services/chatTransportService';
@@ -47,6 +47,11 @@ vi.mock('../../api/apiPostError', async (original) => ({
 	apiPostError: async () => ({})
 }));
 
+const attachmentSend = vi.hoisted(() => vi.fn());
+vi.mock('../../api/apiSendMatrixAttachmentMessage', () => ({
+	apiSendMatrixAttachmentMessage: attachmentSend
+}));
+
 vi.mock('../../hooks/useE2EE', () => ({
 	useE2EE: () => ({ ready: true, encryptRoom: async () => {} })
 }));
@@ -68,7 +73,14 @@ const system = {
 	name: 'group-chat-system-40'
 };
 
-function Composer({ members }: { members: (typeof homer)[] }) {
+function Composer({
+	members,
+	user = userData,
+	...props
+}: {
+	members: (typeof homer)[];
+	user?: typeof userData;
+} & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
 		<I18nextProvider i18n={i18n}>
 			<MemoryRouter>
@@ -80,12 +92,13 @@ function Composer({ members }: { members: (typeof homer)[] }) {
 				>
 					<ComposerStoryDecorator
 						activeSession={session}
-						userData={userData}
+						userData={user}
 						roomMembers={members}
 					>
 						<MessageSubmitInterfaceComponent
 							autoFocusEditor={false}
 							placeholder="Synthetic message"
+							{...props}
 						/>
 					</ComposerStoryDecorator>
 				</SessionTypeContext.Provider>
@@ -272,4 +285,165 @@ it('reports an unsupported narrowed send as a message failure, retains the draft
 	);
 	expect(editor.textContent).toBe('Synthetic private draft');
 	expect(send).not.toHaveBeenCalled();
+});
+
+describe('a reviewed voice note (#1805)', () => {
+	class Recorder {
+		static isTypeSupported = () => true;
+		state = 'inactive';
+		mimeType = 'audio/webm';
+		ondataavailable: ((event: { data: Blob }) => void) | null = null;
+		onstop: (() => void) | null = null;
+		onerror: (() => void) | null = null;
+		start() {
+			this.state = 'recording';
+		}
+		stop() {
+			this.state = 'inactive';
+			this.ondataavailable?.({
+				data: new Blob(['synthetic audio'], { type: this.mimeType })
+			});
+			this.onstop?.();
+		}
+	}
+	beforeEach(() => {
+		attachmentSend.mockReset().mockResolvedValue(undefined);
+		vi.stubGlobal('MediaRecorder', Recorder);
+		Object.assign(URL, {
+			createObjectURL: () => 'blob:synthetic-voice',
+			revokeObjectURL: () => {}
+		});
+		Object.defineProperty(navigator, 'mediaDevices', {
+			configurable: true,
+			value: {
+				getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] })
+			}
+		});
+	});
+	afterEach(() => vi.unstubAllGlobals());
+
+	async function recordAndSend() {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: i18n.t('message.submit.toolbar.voiceRecording.label')
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: i18n.t('app.stop') })
+		);
+		await screen.findByRole('button', {
+			name: i18n.t('voice.recording.discard')
+		});
+		await userEvent.setup().click(
+			screen.getByRole('button', {
+				name: i18n.t('enquiry.write.input.button.title')
+			})
+		);
+	}
+
+	it('is kept, not sent, when a narrowed audience cannot travel with an attachment', async () => {
+		render(
+			<Composer
+				members={[system, homer, marge]}
+				supervisionRoomId="!synthetic-side:example.org"
+			/>
+		);
+		await chooseHomer();
+		await recordAndSend();
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toContain(
+			i18n.t('statusOverlay.error.headline')
+		);
+		expect(attachmentSend).not.toHaveBeenCalled();
+		expect(
+			screen.getByRole('button', {
+				name: i18n.t('voice.recording.discard')
+			})
+		).toBeTruthy();
+	});
+
+	it('still goes to the group room when everyone is the audience', async () => {
+		render(
+			<Composer
+				members={[system, homer, marge]}
+				supervisionRoomId="!synthetic-side:example.org"
+			/>
+		);
+		await screen.findByRole('button', {
+			name: i18n.t('message.audience.all')
+		});
+		await recordAndSend();
+		await waitFor(() => expect(attachmentSend).toHaveBeenCalledOnce());
+		expect(attachmentSend.mock.calls[0][0]).toBe(
+			'!storybook-group:example.org'
+		);
+	});
+});
+
+describe('stale stored recipients in a group session (#1805)', () => {
+	const asker = {
+		...userData,
+		userName: 'homer',
+		displayName: 'Homer',
+		grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+	};
+	const storeStaleRecipient = () =>
+		localStorage.setItem(
+			'oriso.audienceSelection.9001',
+			JSON.stringify(['@lisa:predev.oriso.org'])
+		);
+
+	it('do not block an asker, who has no recipient picker', async () => {
+		const send = vi
+			.spyOn(chatTransportService, 'sendTextMessage')
+			.mockResolvedValue({ event_id: '$synthetic' });
+		storeStaleRecipient();
+		render(<Composer members={[system, homer, marge]} user={asker} />);
+		await sendPrivateDraft();
+		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		expect(send.mock.calls[0][0].matrixRoomId).toBe(
+			'!storybook-group:example.org'
+		);
+		expect(send.mock.calls[0][0].message).not.toContain('VISIBLE_TO');
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('block a supervisor send but keep the picker to resolve them', async () => {
+		const send = vi
+			.spyOn(chatTransportService, 'sendTextMessage')
+			.mockResolvedValue({ event_id: '$synthetic' });
+		storeStaleRecipient();
+		// One human counterpart: without the restriction no picker would show.
+		render(
+			<Composer
+				members={[system, homer]}
+				isSupervisor
+				supervisionRoomId="!synthetic-side:example.org"
+			/>
+		);
+		const editor = await sendPrivateDraft();
+		await screen.findByRole('alert');
+		expect(send).not.toHaveBeenCalled();
+		expect(editor.textContent).toBe('Synthetic private draft');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: i18n.t('message.audience.menuHeading')
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: i18n.t('message.audience.selectAllBottom')
+			})
+		);
+		await userEvent.setup().click(
+			screen.getByRole('button', {
+				name: i18n.t('enquiry.write.input.button.title')
+			})
+		);
+		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		expect(send.mock.calls[0][0].matrixRoomId).toBe(
+			'!synthetic-side:example.org'
+		);
+		expect(send.mock.calls[0][0].message).not.toContain('VISIBLE_TO');
+	});
 });
