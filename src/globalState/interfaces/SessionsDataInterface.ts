@@ -34,6 +34,13 @@ export interface SessionConsultantInterface {
 	firstName?: string;
 	lastName?: string;
 	id?: string;
+	/**
+	 * The counsellor's CHOSEN avatar (#1046/#1047) — the public face an advice
+	 * seeker sees. Absent for counsellors who never chose; the deterministic
+	 * animal is then rendered as before.
+	 */
+	avatarKind?: string | null;
+	avatarId?: string | null;
 }
 
 export const STATUS_EMPTY = 0;
@@ -50,6 +57,9 @@ type statusFinished = typeof STATUS_FINISHED;
 
 export const STATUS_ARCHIVED = 4;
 type statusArchived = typeof STATUS_ARCHIVED;
+
+export const STATUS_REJECTED = 5;
+type statusRejected = typeof STATUS_REJECTED;
 
 export const REGISTRATION_TYPE_REGISTERED = 'REGISTERED';
 type registrationTypeRegistered = typeof REGISTRATION_TYPE_REGISTERED;
@@ -97,7 +107,8 @@ export interface SessionItemInterface {
 		| statusEnquiry
 		| statusActive
 		| statusFinished
-		| statusArchived;
+		| statusArchived
+		| statusRejected;
 	videoCallMessageDTO: VideoCallMessageDTO;
 	language?: string;
 	topic: TopicSessionInterface;
@@ -160,6 +171,7 @@ export interface GroupChatItemInterface {
 }
 
 export interface SessionUserInterface {
+	avatarId?: string | null;
 	username: string;
 	displayName?: string;
 	sessionData: SessionUserDataInterface;

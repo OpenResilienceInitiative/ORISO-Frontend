@@ -16,6 +16,18 @@ import {
 const ACCOUNT_DISABLED_DESCRIPTION = /account disabled/i;
 
 /**
+ * Keycloak answers the password grant of an account that still carries a
+ * required action (e.g. `UPDATE_PASSWORD`, set for admin-chosen passwords
+ * since ORISO-UserService#1303) with
+ * `400 {"error":"invalid_grant","error_description":"Account is not fully set up"}`.
+ *
+ * The password is correct. The password grant can never complete a required
+ * action, so retyping it will never work; only the setup link from the
+ * invitation mail or a password reset clears it. See ORISO-Frontend#1670.
+ */
+const SETUP_INCOMPLETE_DESCRIPTION = /account is not fully set up/i;
+
+/**
  * Keycloak's password grant reports every credential problem - wrong
  * username, wrong password, wrong or missing one-time code - as
  * `400 {"error":"invalid_grant","error_description":"Invalid user credentials"}`.
@@ -28,10 +40,32 @@ const INVALID_GRANT = 'invalid_grant';
 
 export const LOGIN_ERROR_KEYS = {
 	ACCOUNT_DELETED: 'login.warning.failed.accountDeleted',
+	/** Correct password, but a Keycloak required action is pending (#1670). */
+	SETUP_INCOMPLETE: 'login.warning.failed.setupIncomplete',
 	UNAUTHORIZED: 'login.warning.failed.unauthorized.text',
 	UNAUTHORIZED_OTP: 'login.warning.failed.unauthorized.otp',
 	/** Keycloak answered 429: too many codes or attempts for now (#1338). */
 	TOO_MANY_REQUESTS: 'login.warning.failed.tooManyRequests',
+	/**
+	 * The same refusal, but naming the wait Keycloak sent with it. One key per
+	 * unit and per grammatical number: a sentence spliced together from a
+	 * translated time phrase and a translated frame changes meaning in some
+	 * languages (Turkish "1 saat içinde" means *within* an hour, not after it).
+	 *
+	 * All seven catalogues carry these keys. The resolution still falls back to
+	 * the untimed TOO_MANY_REQUESTS sentence above when one of them is missing,
+	 * so a gap costs the number — never a German sentence in a French screen.
+	 */
+	TOO_MANY_REQUESTS_WAIT: {
+		second: 'login.warning.failed.tooManyRequestsWaitSecond',
+		seconds: 'login.warning.failed.tooManyRequestsWaitSeconds',
+		minute: 'login.warning.failed.tooManyRequestsWaitMinute',
+		minutes: 'login.warning.failed.tooManyRequestsWaitMinutes',
+		hour: 'login.warning.failed.tooManyRequestsWaitHour',
+		hours: 'login.warning.failed.tooManyRequestsWaitHours',
+		day: 'login.warning.failed.tooManyRequestsWaitDay',
+		days: 'login.warning.failed.tooManyRequestsWaitDays'
+	},
 	/** Anything that is not the user's fault: network, 5xx, malformed answers. */
 	UNAVAILABLE: 'login.warning.failed.unavailable'
 } as const;
@@ -44,12 +78,23 @@ export type LoginFailureOutcome =
 	| 'credentials'
 	| 'otp_required'
 	| 'account_disabled'
+	| 'setup_incomplete'
 	| 'rate_limited'
 	| 'unavailable';
 
 export type LoginErrorResolution =
 	/** Show `messageKey` as the login error. */
-	| { kind: 'message'; messageKey: string; outcome: LoginFailureOutcome }
+	| {
+			kind: 'message';
+			messageKey: string;
+			outcome: LoginFailureOutcome;
+			/**
+			 * A more precise variant of `messageKey` plus its interpolation,
+			 * used when the catalogue of the current language has that key.
+			 * `messageKey` stays the answer for every language that does not.
+			 */
+			preciseMessage?: { key: string; values: Record<string, number> };
+	  }
 	/** Credentials were fine, a second factor is required. */
 	| {
 			kind: 'otpRequired';
@@ -111,13 +156,61 @@ const credentialsMessage = (hasOtp: boolean): LoginErrorResolution => ({
 /** Anything beyond an hour is not a cooldown we could have configured. */
 const MAX_RESEND_WAIT_SECONDS = 3600;
 
-const readResendWait = (value: unknown): number | undefined =>
+/**
+ * A refusal may name a far longer wait than a resend cooldown: the failed-attempt
+ * lockout escalates, and a day is its agreed ceiling. Anything beyond that is not
+ * a wait we configured, so it is treated as no number at all rather than shown.
+ */
+const MAX_LOCKOUT_WAIT_SECONDS = 86400;
+
+const readSeconds = (value: unknown, limit: number): number | undefined =>
 	typeof value === 'number' &&
 	Number.isFinite(value) &&
 	value >= 0 &&
-	value <= MAX_RESEND_WAIT_SECONDS
+	value <= limit
 		? Math.ceil(value)
 		: undefined;
+
+const readResendWait = (value: unknown): number | undefined =>
+	readSeconds(value, MAX_RESEND_WAIT_SECONDS);
+
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+const SECONDS_PER_DAY = 86400;
+
+/**
+ * The wait as one key plus its interpolation.
+ *
+ * Every unit rounds UP. Rounding 89 seconds down to "about a minute" would send
+ * the person back 29 seconds too early, into the very refusal this message
+ * exists to prevent — and an early retry extends an escalating lockout.
+ */
+const waitMessage = (
+	seconds: number
+): { key: string; values: Record<string, number> } => {
+	const keys = LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS_WAIT;
+	if (seconds < SECONDS_PER_MINUTE) {
+		return seconds === 1
+			? { key: keys.second, values: {} }
+			: { key: keys.seconds, values: { seconds } };
+	}
+	if (seconds < SECONDS_PER_HOUR) {
+		const minutes = Math.ceil(seconds / SECONDS_PER_MINUTE);
+		return minutes === 1
+			? { key: keys.minute, values: {} }
+			: { key: keys.minutes, values: { minutes } };
+	}
+	if (seconds < SECONDS_PER_DAY) {
+		const hours = Math.ceil(seconds / SECONDS_PER_HOUR);
+		return hours === 1
+			? { key: keys.hour, values: {} }
+			: { key: keys.hours, values: { hours } };
+	}
+	const days = Math.ceil(seconds / SECONDS_PER_DAY);
+	return days === 1
+		? { key: keys.day, values: {} }
+		: { key: keys.days, values: { days } };
+};
 
 const unavailableMessage = (): LoginErrorResolution => ({
 	kind: 'message',
@@ -170,10 +263,19 @@ export const resolveLoginError = (
 				codeLimitReached: true
 			};
 		}
+		// Keycloak sends the remaining wait with the mail cap; the failed-attempt
+		// lockout does not send one yet, and then the untimed sentence stands.
+		const waitSeconds = readSeconds(
+			data?.resendAvailableInSeconds,
+			MAX_LOCKOUT_WAIT_SECONDS
+		);
 		return {
 			kind: 'message',
 			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
-			outcome: 'rate_limited'
+			outcome: 'rate_limited',
+			...(waitSeconds === undefined || waitSeconds === 0
+				? {}
+				: { preciseMessage: waitMessage(waitSeconds) })
 		};
 	}
 
@@ -195,6 +297,16 @@ export const resolveLoginError = (
 			kind: 'message',
 			messageKey: LOGIN_ERROR_KEYS.ACCOUNT_DELETED,
 			outcome: 'account_disabled'
+		};
+	}
+
+	// Same reasoning: the password was accepted, so neither the second factor
+	// nor the credentials message may claim otherwise.
+	if (SETUP_INCOMPLETE_DESCRIPTION.test(data?.error_description ?? '')) {
+		return {
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.SETUP_INCOMPLETE,
+			outcome: 'setup_incomplete'
 		};
 	}
 

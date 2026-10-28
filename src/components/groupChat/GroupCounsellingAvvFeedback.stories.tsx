@@ -307,7 +307,9 @@ const showFailure: Story['play'] = async ({ args }) => {
 	const notice = await view.findByRole('alert');
 	const copy =
 		args.failureStatus === 403
-			? catalogue.counselling.dpa.restricted
+			? args.scenario === 'assignment'
+				? catalogue.counselling.dpa.restrictedGroupJoin
+				: catalogue.counselling.dpa.restricted
 			: catalogue.counselling.dpa.unavailable;
 	await waitFor(() =>
 		expect(within(notice).getByText(copy.title)).toBeVisible()

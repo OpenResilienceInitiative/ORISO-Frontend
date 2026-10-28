@@ -1,5 +1,6 @@
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
+export const SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED = 'INQUIRY_ACCEPTED';
 export const SYSTEM_NOTIFICATION_USER_LEFT_CHAT = 'USER_LEFT_CHAT';
 export const SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED =
 	'CASE_HANDOVER_GRANTED';
@@ -21,6 +22,82 @@ const LEGACY_THREAD_PREFIX = '[THREAD:';
 export const buildVisibleToPrefix = (recipientIds: string[]) =>
 	`${VISIBLE_TO_PREFIX}${recipientIds.join(',')}${PREFIX_SUFFIX}`;
 
+/** Immutable facts carried by a persisted grant, never reconstructed from current policy. */
+export interface HandoverGrantMetadata {
+	requestId: number;
+	clientConsent: 'OPT_IN' | 'OPT_OUT' | 'NONE';
+	accessType: 'CO_ACCESS' | 'TAKEOVER';
+}
+
+/** Initial acceptance is not an enquiry greeting or a later handover grant. */
+export interface InquiryAcceptanceMetadata {
+	sessionId: number;
+	acceptedAt: string;
+}
+const parseInquiryAcceptanceMetadata = (
+	value: unknown
+): InquiryAcceptanceMetadata | null => {
+	if (!value || typeof value !== 'object') return null;
+	const metadata = value as InquiryAcceptanceMetadata;
+	if (
+		!Number.isSafeInteger(metadata.sessionId) ||
+		metadata.sessionId <= 0 ||
+		typeof metadata.acceptedAt !== 'string' ||
+		!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/.test(
+			metadata.acceptedAt
+		)
+	)
+		return null;
+	const timestamp = Date.parse(metadata.acceptedAt);
+	if (
+		!Number.isFinite(timestamp) ||
+		new Date(timestamp).toISOString().slice(0, 19) !==
+			metadata.acceptedAt.slice(0, 19)
+	)
+		return null;
+	return { sessionId: metadata.sessionId, acceptedAt: metadata.acceptedAt };
+};
+
+const parseHandoverGrantMetadata = (
+	value: unknown
+): HandoverGrantMetadata | null => {
+	if (!value || typeof value !== 'object') return null;
+	const metadata = value as HandoverGrantMetadata;
+	return Number.isSafeInteger(metadata.requestId) &&
+		metadata.requestId > 0 &&
+		['OPT_IN', 'OPT_OUT', 'NONE'].includes(metadata.clientConsent) &&
+		['CO_ACCESS', 'TAKEOVER'].includes(metadata.accessType)
+		? {
+				requestId: metadata.requestId,
+				clientConsent: metadata.clientConsent,
+				accessType: metadata.accessType
+			}
+		: null;
+};
+
+/** Who ended a chat, as USER_LEFT_CHAT carries it (ORISO-Frontend#1838). */
+export type ChatEndedBy = 'CONSULTANT' | 'ADVICE_SEEKER';
+
+const toChatEndedBy = (value: unknown): ChatEndedBy | null =>
+	value === 'CONSULTANT' || value === 'ADVICE_SEEKER' ? value : null;
+
+/**
+ * The words for "the chat ended", seen from the viewer's side. Older events
+ * do not say who ended them: the counsellor keeps the historical "User has
+ * left the chat", the advice seeker reads the neutral line.
+ */
+export const chatEndedTextKey = (
+	endedBy: ChatEndedBy | null,
+	viewerIsConsultant: boolean
+): string => {
+	if (endedBy === (viewerIsConsultant ? 'CONSULTANT' : 'ADVICE_SEEKER')) {
+		return 'message.youEndedChat';
+	}
+	if (endedBy === 'ADVICE_SEEKER') return 'message.userLeftChat';
+	if (endedBy === 'CONSULTANT') return 'message.consultantLeftChat';
+	return viewerIsConsultant ? 'message.userLeftChat' : 'message.chatEnded';
+};
+
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
 		return {
@@ -31,8 +108,13 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription: '',
 			systemNotificationType: null as string | null,
 			systemNotificationUsername: '',
+			systemNotificationEndedBy: null as ChatEndedBy | null,
 			systemNotificationReasonLabel: '',
 			systemNotificationExplanation: '',
+			systemNotificationAcceptance:
+				null as InquiryAcceptanceMetadata | null,
+			systemNotificationHandoverGrant:
+				null as HandoverGrantMetadata | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -44,8 +126,11 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationDescription = '';
 	let systemNotificationType: string | null = null;
 	let systemNotificationUsername = '';
+	let systemNotificationEndedBy: ChatEndedBy | null = null;
 	let systemNotificationReasonLabel = '';
 	let systemNotificationExplanation = '';
+	let systemNotificationAcceptance: InquiryAcceptanceMetadata | null = null;
+	let systemNotificationHandoverGrant: HandoverGrantMetadata | null = null;
 	let visibleToUserIds: string[] = [];
 
 	let keepParsingPrefixes = true;
@@ -107,15 +192,34 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				description?: string;
 				type?: string;
 				username?: string;
+				endedBy?: string;
 				reasonLabel?: string;
 				explanation?: string;
+				handover?: unknown;
+				acceptance?: unknown;
 			};
 			systemNotificationType = parsed?.type?.trim() || null;
 			systemNotificationUsername = parsed?.username?.trim() || '';
+			systemNotificationEndedBy = toChatEndedBy(parsed?.endedBy);
 			systemNotificationTitle = parsed?.title?.trim() || '';
 			systemNotificationDescription = parsed?.description?.trim() || '';
 			systemNotificationReasonLabel = parsed?.reasonLabel?.trim() || '';
 			systemNotificationExplanation = parsed?.explanation?.trim() || '';
+			if (
+				systemNotificationType === SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED
+			) {
+				systemNotificationAcceptance = parseInquiryAcceptanceMetadata(
+					parsed?.acceptance
+				);
+			}
+			if (
+				systemNotificationType ===
+				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
+			) {
+				systemNotificationHandoverGrant = parseHandoverGrantMetadata(
+					parsed?.handover
+				);
+			}
 		} catch (_error) {
 			const lines = payload
 				.split('\n')
@@ -136,8 +240,24 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationDescription,
 		systemNotificationType,
 		systemNotificationUsername,
+		systemNotificationEndedBy,
 		systemNotificationReasonLabel,
 		systemNotificationExplanation,
+		systemNotificationHandoverGrant,
+		systemNotificationAcceptance,
 		visibleToUserIds
 	};
 };
+
+/**
+ * A takeover notice's stored text is frozen in the session's language and
+ * register, so with the new counsellor's name the client words it itself
+ * (#1844). Co-access keeps its stored text: it carries the granted duration.
+ */
+export const isClientWordedTakeover = (
+	parsed: ReturnType<typeof parseMessagePrefixes>
+): boolean =>
+	parsed.systemNotificationType ===
+		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED &&
+	parsed.systemNotificationHandoverGrant?.accessType !== 'CO_ACCESS' &&
+	Boolean(parsed.systemNotificationUsername);

@@ -24,7 +24,8 @@ import { phone375Globals } from '../message/messageStoryShell';
  * loses the invitation. A dialog keeps them where the link put them.
  */
 const meta: Meta = {
-	title: 'Registration/Entry room — log in',
+	id: 'registration-entry-room-log-in',
+	title: 'Entry flows/Existing account/Sign in',
 	parameters: {
 		docs: {
 			description: {

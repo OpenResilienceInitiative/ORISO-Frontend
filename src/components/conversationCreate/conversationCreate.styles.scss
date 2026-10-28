@@ -222,7 +222,7 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__media {
-		height: 188px;
+		aspect-ratio: 16 / 9;
 		overflow: hidden;
 		position: relative;
 		width: 100%;
@@ -474,6 +474,27 @@ body.conversationCreate--active .navigation__wrapper {
 		letter-spacing: 0.25px;
 		line-height: 20px;
 		margin: 0;
+	}
+
+	/* Who can be picked and what happens on create (#1772). */
+	&__hint {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+	}
+
+	/* A refusal of the dedicated room stays on the card with its reason. */
+	&__error {
+		background: var(--m3-error-container, #ffdad6);
+		border-radius: 12px;
+		color: var(--m3-on-error-container, #410002);
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+		padding: 12px 16px;
 	}
 
 	&__actions {
@@ -963,8 +984,9 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__thumb {
+		aspect-ratio: 16 / 9;
 		flex-shrink: 0;
-		height: 72px;
+		height: auto;
 		object-fit: cover;
 		width: 84px;
 	}
@@ -1031,9 +1053,29 @@ body.conversationCreate--active .navigation__wrapper {
 			font-weight: 700;
 		}
 
+		/*
+		 * M3 focus state: a 10% state layer plus a rounded ring inside the
+		 * row, following the menu's curve. Only for keyboard use — a menu
+		 * opened by tap moves focus by script and must not look like a
+		 * second selection.
+		 */
+		position: relative;
+
 		&:focus-visible {
-			outline: 3px solid $cc-primary;
-			outline-offset: -3px;
+			outline: none;
+		}
+	}
+
+	&--keyboard &__option:focus-visible {
+		background-color: color-mix(in srgb, $cc-on-surface 10%, transparent);
+
+		&::after {
+			border: 2px solid $cc-secondary;
+			border-radius: 20px;
+			content: '';
+			inset: 2px 8px;
+			pointer-events: none;
+			position: absolute;
 		}
 	}
 }
@@ -1081,18 +1123,22 @@ body.conversationCreate--active .navigation__wrapper {
 		gap: 0;
 	}
 
+	/*
+	 * The two cards read as one: square where they meet and the same width.
+	 * The stacked-layout cap of 400px applied to the upper card only.
+	 */
 	.circleSettings__card {
 		border-bottom-left-radius: 0;
 		border-bottom-right-radius: 0;
 		border-bottom-width: 0;
+		max-width: none;
 		width: 100%;
 	}
 
 	.circleSettings__authorColumn {
 		background: $cc-surface-container-low;
 		border: 1px solid $cc-outline-variant;
-		border-bottom-left-radius: 28px;
-		border-bottom-right-radius: 28px;
+		border-radius: 0 0 28px 28px;
 		border-top-width: 0;
 		padding: 12px;
 	}

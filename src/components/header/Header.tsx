@@ -8,17 +8,20 @@ import { useTranslation } from 'react-i18next';
 import { useAtomValue } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { UIVersionToggle } from '../uiVersionToggle/UIVersionToggle';
+import { usePracticeActive } from '../../practice';
 
 export const Header = () => {
 	const { t: translate } = useTranslation();
 	const { tenant } = useContext(TenantContext);
 	const agencyLogo = useAtomValue(agencyLogoAtom);
+	// Practice (FE#1622): one click would open Element with every real room.
+	const isPracticing = usePracticeActive();
 
 	return (
 		<header className="header">
 			<Headline semanticLevel="2" text={translate('app.title')} />
 			<div className="header__right">
-				<UIVersionToggle />
+				{!isPracticing && <UIVersionToggle />}
 				{agencyLogo ? (
 					<img
 						src={agencyLogo}

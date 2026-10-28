@@ -6,7 +6,7 @@
  * honest label — including for askers (explicit product decision: grey out,
  * never hide).
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getSupervisorAddState } from './getSupervisorAddState';
 
 const consultantDefaults = {

@@ -1,5 +1,6 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useId, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
@@ -16,11 +17,14 @@ import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import {
 	getRoomUnreadCount,
-	isChatItemUnread
+	isChatItemUnread,
+	isRoomUnread
 } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
+import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
+import { GroupCardParticipants } from './GroupCardParticipants';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
@@ -94,6 +98,7 @@ import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelp
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
+import { TopicTag } from '../topicTag/TopicTag';
 import { useMatrixSessionEvents } from '../../hooks/useMatrixSessionPreview';
 import {
 	filterVisibleMatrixPreviewEvents,
@@ -102,7 +107,8 @@ import {
 	getPreviewLastMessageType,
 	getRoomPreviewsByChannel,
 	TimedRoomPreview,
-	toListPreviewLine
+	toListPreviewLine,
+	toPreviewKindText
 } from './matrixRoomPreview';
 import { SessionCardBody } from './SessionCardBody/SessionCardBody';
 import {
@@ -153,6 +159,8 @@ export const SessionListItemComponent = ({
 	// WP-06 Slice 0b: route-derived single source of truth for the active item
 	// (replaces the per-component rid/sessionId comparison below).
 	const { isActive } = useActiveListItem();
+	// Names the case for its selection checkbox (FE#1725 US27).
+	const caseNameId = useId();
 	const navigate = useNavigate();
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
@@ -179,11 +187,7 @@ export const SessionListItemComponent = ({
 	// `messagesRead` (hard-coded true by the backend). `unreadVersion` bumps
 	// on notification-count/receipt changes so the styling stays live.
 	const unreadVersion = useUnreadVersion();
-	const isItemUnread = useMemo(
-		() => isChatItemUnread(sessionItem),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[sessionItem, unreadVersion]
-	);
+
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -319,15 +323,25 @@ export const SessionListItemComponent = ({
 		[visibleSupervisionPreviewEvents]
 	);
 
+	const isConsultantViewer = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	const matrixPreviewLine = useMemo(
 		() =>
 			isMatrixBackedSession
 				? toListPreviewLine(
 						matrixSessionPreview,
-						translate as (key: string, fallback?: string) => string
+						translate as (key: string, fallback?: string) => string,
+						isConsultantViewer
 					)
 				: null,
-		[isMatrixBackedSession, matrixSessionPreview, translate]
+		[
+			isMatrixBackedSession,
+			matrixSessionPreview,
+			translate,
+			isConsultantViewer
+		]
 	);
 
 	useEffect(() => {
@@ -468,6 +482,15 @@ export const SessionListItemComponent = ({
 		userData?.userId
 	);
 	const isSupervisedByMe = supervisionState === 'supervisedByMe';
+	const isItemUnread = useMemo(
+		() =>
+			isChatItemUnread(sessionItem) ||
+			(isSupervisedByMe &&
+				isRoomUnread(sessionItem?.supervision?.sideRoomId)),
+		// Matrix receipt updates must refresh the expanded row as well as the rail.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionItem, isSupervisedByMe, unreadVersion]
+	);
 	const showSilentMemberEye = isSupervisorView && !isSupervisedByMe;
 	const supervisorNames =
 		!isAsker &&
@@ -974,9 +997,11 @@ export const SessionListItemComponent = ({
 			}
 			return preview.kind === 'text'
 				? preview.text || undefined
-				: translate(
-						`sessionList.preview.${preview.kind}`,
-						preview.kind
+				: toPreviewKindText(
+						preview.kind,
+						translate as (key: string, fallback?: string) => string,
+						isConsultantViewer,
+						preview.endedBy
 					);
 		};
 		const previewWhen = (preview: TimedRoomPreview | null) =>
@@ -1036,7 +1061,7 @@ export const SessionListItemComponent = ({
 					activeSession.item.matrixRoomId ||
 					String(activeSession.item.id ?? 'group')
 				}
-				size="40px"
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		) : !isAsker ? (
@@ -1050,14 +1075,24 @@ export const SessionListItemComponent = ({
 				}
 				username={activeSession.user?.username || ''}
 				displayName={railName}
-				size={40}
+				choice={chosenAvatarOf(activeSession.user)}
+				size={AVATAR_SIZES.session}
 			/>
 		) : (
 			<UserAvatar
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
-				userId={activeSession.consultant?.id || 'unknown'}
-				size="40px"
+				userId={
+					activeSession.item.consultantMatrixUserId ||
+					activeSession.consultant?.id ||
+					activeSession.consultant?.consultantId ||
+					'unknown'
+				}
+				choice={counsellorChoiceOf(
+					chosenAvatarOf(activeSession.consultant)
+				)}
+				avatarDisplayName={activeSession.consultant?.displayName}
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		);
@@ -1076,6 +1111,7 @@ export const SessionListItemComponent = ({
 						: activeSession.item.matrixRoomId
 				}
 				data-cy="session-list-item"
+				data-search-keep-open
 			>
 				<SessionRailPill
 					name={railName}
@@ -1136,6 +1172,7 @@ export const SessionListItemComponent = ({
 				)}
 				data-group-id={activeSession.rid ? activeSession.rid : ''}
 				data-cy="session-list-item"
+				data-search-keep-open
 			>
 				<div
 					className={clsx(
@@ -1145,15 +1182,15 @@ export const SessionListItemComponent = ({
 					onKeyDown={(e) => handleKeyDownListItem(e)}
 					ref={setCardRef}
 					tabIndex={index === 0 ? 0 : -1}
-					role="tab"
-					aria-selected={isChatActive}
+					role="listitem"
+					aria-current={isChatActive ? 'true' : undefined}
 				>
 					<div className="sessionsListItem__row">
 						<div className="sessionsListItem__rowLeft">
 							{activeSession.isGroup && (
-								<div className="sessionsListItem__topic">
+								<TopicTag className="sessionsListItem__topic">
 									{translate('groupChat.noTopicSpecified')}
-								</div>
+								</TopicTag>
 							)}
 						</div>
 						<div className="sessionsListItem__rowRight">
@@ -1199,31 +1236,14 @@ export const SessionListItemComponent = ({
 						</div>
 					</div>
 					<div className="sessionsListItem__row">
-						<div className="sessionInfo__groupIcon">
-							<div className="sessionsListItem__stackedAvatars">
-								{/* Always render 2 avatar placeholders */}
-								{[0, 1].map((_, index) => (
-									<div
-										key={index}
-										className="sessionsListItem__avatarWrapper"
-									>
-										<UserAvatar
-											username={`placeholder-${index}`}
-											displayName="User"
-											userId={`placeholder-${index}`}
-											size="32px"
-											ring={false}
-										/>
-									</div>
-								))}
-
-								{/* Optional third circle */}
-								<div className="sessionsListItem__avatarWrapper sessionsListItem__avatarWrapper--plus">
-									<div className="sessionsListItem__plusAvatar">
-										+1
-									</div>
-								</div>
-							</div>
+						<div className="sessionsListItem__participants">
+							<GroupCardParticipants
+								roomId={matrixRoomId}
+								enabled={
+									Boolean(activeSession?.isGroup) &&
+									!caseHandoverContentLocked
+								}
+							/>
 						</div>
 						<div
 							className={clsx(
@@ -1335,6 +1355,14 @@ export const SessionListItemComponent = ({
 			)}
 			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"
+			data-search-keep-open
+			// The first enquiry card: the only case of the practice flow, and
+			// harmless on a real list (the tour never targets it there).
+			data-tour-target={
+				index === 0 && activeSession.isEnquiry
+					? 'enquiry-list-item'
+					: undefined
+			}
 		>
 			<div
 				className={clsx(
@@ -1347,8 +1375,8 @@ export const SessionListItemComponent = ({
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={setCardRef}
 				tabIndex={index === 0 ? 0 : -1}
-				role="tab"
-				aria-selected={isChatActive}
+				role="listitem"
+				aria-current={isChatActive ? 'true' : undefined}
 			>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__rowLeft">
@@ -1358,17 +1386,17 @@ export const SessionListItemComponent = ({
 								   pick a topic. Fall back to the "No topic
 								   specified" chip used by group-chat cards
 								   so the topic column is never empty. */}
-								<div className="sessionsListItem__topic">
+								<TopicTag className="sessionsListItem__topic">
 									{topic?.name ||
 										translate('groupChat.noTopicSpecified')}
-								</div>
+								</TopicTag>
 								<div className="sessionsListItem__consultingType" />
 							</>
 						) : shouldShowPostcode && topic?.name ? (
 							<div className="sessionsListItem__topicPostcodeGroup">
-								<div className="sessionsListItem__topic">
+								<TopicTag className="sessionsListItem__topic">
 									{topic.name}
-								</div>
+								</TopicTag>
 								<div className="sessionsListItem__postcode">
 									{postcodeLabel}
 								</div>
@@ -1376,9 +1404,9 @@ export const SessionListItemComponent = ({
 						) : (
 							<>
 								{topic?.name && (
-									<div className="sessionsListItem__topic">
+									<TopicTag className="sessionsListItem__topic">
 										{topic.name}
-									</div>
+									</TopicTag>
 								)}
 								<div className="sessionsListItem__consultingType">
 									{shouldShowPostcode ? (
@@ -1436,6 +1464,7 @@ export const SessionListItemComponent = ({
 				<SessionCardBody
 					name={
 						<div
+							id={caseNameId}
 							className={clsx(
 								'sessionsListItem__username',
 								!isItemUnread &&
@@ -1515,6 +1544,7 @@ export const SessionListItemComponent = ({
 										activeSession.user?.username || ''
 									}
 									displayName={sessionTopic}
+									choice={chosenAvatarOf(activeSession.user)}
 									size={48}
 									outline={false}
 								/>
@@ -1526,8 +1556,18 @@ export const SessionListItemComponent = ({
 									}
 									displayName={sessionTopic}
 									userId={
+										activeSession.item
+											.consultantMatrixUserId ||
 										activeSession.consultant?.id ||
+										activeSession.consultant
+											?.consultantId ||
 										'unknown'
+									}
+									choice={counsellorChoiceOf(
+										chosenAvatarOf(activeSession.consultant)
+									)}
+									avatarDisplayName={
+										activeSession.consultant?.displayName
 									}
 									size="48px"
 									ring={false}
@@ -1642,7 +1682,7 @@ export const SessionListItemComponent = ({
 									)
 								}}
 								state={caseHandoverActionState}
-								active={isChatActive}
+								describedBy={caseNameId}
 								surfaceRef={cardRef}
 								batchMode={caseHandoverBatchMode}
 								selected={caseHandoverSelected}

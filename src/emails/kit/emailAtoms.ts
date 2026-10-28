@@ -177,36 +177,54 @@ export const emailDivider = (): string =>
 	`<tr><td height="1" bgcolor="${emailColor.outline}" ` +
 	'style="height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>';
 
-/**
- * The logo's table cell, on its own so the lockup can leave it out.
- *
- * A tenant without a logo sends `logoUrl: ''`, and an `<img src="">` renders as
- * a broken-image icon in most clients — worse than no logo at all. So a blank
- * URL yields no cell, and the text wordmark carries the header alone.
- *
- * The brand name always stands in the next cell, so the image is decorative:
- * `alt=""`. A logo that fails to load must leave nothing behind, not repeat
- * the name beside itself.
- *
- * The plain dialect replaces this exact fragment with a `{{logoCell}}` token
- * (see `emailDialect`), because a template file cannot express the conditional:
- * UserService's renderer makes the same present-or-absent decision at send
- * time, against the very markup this function emits.
- */
-export const emailLogoCell = (brand: EmailBrand): string =>
-	brand.logoUrl === ''
-		? ''
-		: `<td width="${emailLayout.logoSize}" valign="middle" style="width:${emailLayout.logoSize}px;padding-right:12px;">` +
-			`<img src="${emailEscape(brand.logoUrl)}" width="${emailLayout.logoSize}" height="${
-				emailLayout.logoSize
-			}" alt="" ` +
-			`style="display:block;width:${emailLayout.logoSize}px;height:${emailLayout.logoSize}px;border:0;border-radius:${emailRadius.logo}px;"></td>`;
+/** Intrinsic dimensions must be finite and positive before they affect layout. */
+export const emailLogoRatio = (brand: EmailBrand): number | undefined => {
+	const { logoWidth, logoHeight } = brand;
+	if (
+		!Number.isFinite(logoWidth) ||
+		!Number.isFinite(logoHeight) ||
+		!logoWidth ||
+		!logoHeight ||
+		logoWidth <= 0 ||
+		logoHeight <= 0
+	) {
+		return undefined;
+	}
+	const ratio = logoWidth / logoHeight;
+	return Number.isFinite(ratio) && ratio > 0 ? ratio : undefined;
+};
 
-/** Logo plus wordmark. The name is text, so the logo beside it is decorative. */
+export const emailLogoIsWide = (brand: EmailBrand): boolean =>
+	Boolean(brand.logoUrl) &&
+	(emailLogoRatio(brand) ?? 0) > emailLayout.logoWideRatio;
+
+/**
+ * Logos retain their intrinsic shape and are always 48px high. Known dimensions
+ * produce an explicit width for mail clients; unknown dimensions use width:auto.
+ * Wide logos carry the name as alt text because their adjacent wordmark is
+ * hidden on phones. A missing logo leaves the wordmark visible on every screen.
+ * The plain dialect folds this fragment into {{logoCell}} for the sender.
+ */
+export const emailLogoCell = (brand: EmailBrand): string => {
+	if (!brand.logoUrl) {
+		return '';
+	}
+	const ratio = emailLogoRatio(brand);
+	const width =
+		ratio === undefined ? undefined : emailLayout.logoSize * ratio;
+	const wide = emailLogoIsWide(brand);
+	return (
+		`<td class="logo-cell${wide ? ' logo-cell-wide' : ''}" valign="middle" style="padding-right:12px;">` +
+		`<img src="${emailEscape(brand.logoUrl)}" ${width === undefined ? '' : `width="${width}" `}height="${emailLayout.logoSize}" alt="${wide ? emailEscape(brand.platformName) : ''}" ` +
+		`style="display:block;width:${width === undefined ? 'auto' : `${width}px`};height:${emailLayout.logoSize}px;max-width:none;border:0;"></td>`
+	);
+};
+
+/** Logo plus wordmark, with a responsive hook only for known wide logos. */
 export const emailLogoLockup = (brand: EmailBrand): string =>
 	'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
 	emailLogoCell(brand) +
-	`<td valign="middle" style="${font(
+	`<td class="logo-wordmark${emailLogoIsWide(brand) ? ' logo-wordmark-wide' : ''}" valign="middle" style="${font(
 		emailType.brand.size,
 		emailType.brand.line,
 		{
@@ -214,7 +232,7 @@ export const emailLogoLockup = (brand: EmailBrand): string =>
 			tracking: emailType.brand.tracking,
 			color: emailColor.onSurface
 		}
-	)};">${emailEscape(brand.platformName)}</td>` +
+	)};word-break:break-word;">${emailEscape(brand.platformName)}</td>` +
 	'</tr></table>';
 
 /**

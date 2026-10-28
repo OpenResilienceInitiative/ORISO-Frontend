@@ -3,7 +3,7 @@
  * (spec §5.2 order and asker rule, §5.3).
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { DEFAULT_DISPLAY_FILTER, DisplayFilter } from './model';
 import {
 	applyRequestsFilter,
@@ -77,9 +77,9 @@ describe('classifySession (§5.2 order)', () => {
 		).toBe('oneToOne');
 	});
 
-	it('legacy fallback: no marker, owned by another consultant → supervision, only if eligible', () => {
+	it('ownership without a supervisor marker remains ordinary one-to-one', () => {
 		const { raw, extended } = session({});
-		expect(classifySession(raw, extended, ME, true)).toBe('supervision');
+		expect(classifySession(raw, extended, ME, true)).toBe('oneToOne');
 		const mine = session({}, ME);
 		expect(classifySession(mine.raw, mine.extended, ME, true)).toBe(
 			'oneToOne'
@@ -93,7 +93,7 @@ describe('classifySession (§5.2 order)', () => {
 		expect(classifySession(raw, extended, ME, true)).toBe('oneToOne');
 	});
 
-	it('structural group kinds come before the legacy fallback', () => {
+	it('groups keep their own kind without a supervisor marker', () => {
 		const circle = group('SELF_HELP');
 		const internal = group('INTERNAL_GROUP');
 		expect(classifySession(circle.raw, circle.extended, ME, true)).toBe(

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * Encryption settings, the login recovery prompt, the chat E2EE banner, and
@@ -23,7 +23,7 @@ const ONE_LANGUAGE_FALLBACKS = [
 	/'Wird geladen …'/,
 	/'Die Verschlüsselungseinstellungen sind gerade nicht verfügbar/,
 	/'Richten Sie einmalig einen Ersatzschlüssel ein/,
-	/'Ihr Tresor wird gerade schon eingerichtet/,
+	/'Ihr Ersatzschlüssel wird gerade schon eingerichtet/,
 	/'Die Einrichtung ist fehlgeschlagen/,
 	/'Dieser Ersatzschlüssel ist ungültig/,
 	/'Die Wiederherstellung ist fehlgeschlagen/,

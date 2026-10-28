@@ -3,7 +3,7 @@
  * Settings" menu. Every item the menu renders must resolve to a real handler;
  * actions without a shipped feature behind them are absent, not disabled stubs.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	getChatroomSettingsMenuVisibility,

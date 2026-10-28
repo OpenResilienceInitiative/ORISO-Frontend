@@ -36,7 +36,15 @@ export const EVENT_PARAM_KEYS = [
 	'senderDisplayName',
 	'contentClass',
 	'recipientRole',
+	'conversationType',
 	'clientConsent',
+	'caseHandoverRequestId',
+	// #1714: handover display names (CaseHandoverService producers).
+	'requesterName',
+	'initiatorName',
+	// #1714: accepted before the backend emits it, like `matrixEventId`;
+	// absent today, so the wording stays neutral.
+	'accessType',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -134,6 +142,13 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.senderDisplayName = asNullableString(source.senderDisplayName);
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
+	params.conversationType = asNullableString(source.conversationType);
+	// #1714: counsellor display names, metadata only (ADR-AT-01).
+	params.requesterName = asNullableString(source.requesterName);
+	params.initiatorName = asNullableString(source.initiatorName);
+	if (source.accessType === 'CO_ACCESS' || source.accessType === 'TAKEOVER') {
+		params.accessType = source.accessType;
+	}
 	const clientConsent = asNullableString(source.clientConsent);
 	if (
 		clientConsent === 'OPT_IN' ||
@@ -141,6 +156,9 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 		clientConsent === 'NONE'
 	) {
 		params.clientConsent = clientConsent;
+	}
+	if (isIdentifier(source.caseHandoverRequestId)) {
+		params.caseHandoverRequestId = source.caseHandoverRequestId;
 	}
 	if (isIdentifier(source.agencyId)) {
 		params.agencyId = source.agencyId;
@@ -263,3 +281,13 @@ export const resolveNotificationActionPath = (
 		? target.path
 		: null;
 };
+
+/** A started call that is already over opens like its `call.ended` card: its conversation. */
+export const resolveEndedCallConversationPath = (
+	item: NotificationActionInput,
+	sessionsBasePath: string
+): string | null =>
+	resolveNotificationActionPath(
+		{ ...item, eventType: 'call.ended' },
+		sessionsBasePath
+	);

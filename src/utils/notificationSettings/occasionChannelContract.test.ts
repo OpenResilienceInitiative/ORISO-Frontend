@@ -1,9 +1,29 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { EMAIL_IDS } from '../../emails/content/emailCatalogue';
 import { isKnownEventType } from '../../components/notificationsCenter/eventDescriptors/registry';
 import { occasionChannelContract } from './occasionChannelContract';
 
 describe('occasion channel contract', () => {
+	it('gives ordinary internal mail its own counsellor preference without inventing browser push', () => {
+		expect(occasionChannelContract('interne-nachricht').roles).toEqual([
+			'consultant'
+		]);
+		expect(
+			occasionChannelContract('interne-nachricht', 'consultant')
+		).toEqual({
+			emailPreference: {
+				kind: 'switch',
+				source: {
+					kind: 'settings',
+					field: 'internalChatNotificationEnabled'
+				}
+			},
+			browser: { kind: 'unmapped' }
+		});
+		expect(
+			occasionChannelContract('interne-nachricht', 'asker')
+		).toBeUndefined();
+	});
 	it('covers every mail occasion without assuming that a sender exists', () => {
 		for (const id of EMAIL_IDS) {
 			expect(
@@ -26,6 +46,33 @@ describe('occasion channel contract', () => {
 				}
 			}
 		}
+	});
+
+	it('maps asker consent mail to its real event and existing switch', () => {
+		expect(occasionChannelContract('einsicht-angefragt').roles).toEqual([
+			'asker'
+		]);
+		for (const id of [
+			'einsicht-angefragt',
+			'uebergabe-angefragt'
+		] as const) {
+			const contract = occasionChannelContract(id, 'asker');
+			expect(contract?.emailPreference).toEqual({
+				kind: 'switch',
+				source: {
+					kind: 'settings',
+					field: 'reassignmentNotificationEnabled'
+				}
+			});
+			expect(contract?.browser.kind).toBe('descriptor');
+			if (contract?.browser.kind === 'descriptor')
+				expect(contract.browser.eventTypes).toContain(
+					'case.handover.consent.requested'
+				);
+		}
+		expect(
+			occasionChannelContract('uebergabe-bestaetigt', 'asker')
+		).toBeUndefined();
 	});
 
 	it('keeps the two new-message recipients on their own email switches', () => {

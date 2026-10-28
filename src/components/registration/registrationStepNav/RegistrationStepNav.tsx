@@ -4,6 +4,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { Link as RouterLink } from 'react-router-dom';
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
+import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 
 export interface RegistrationStepNavProps {
 	/** `null` on the first step — the circle is then rendered disabled, not hidden. */
@@ -17,6 +18,7 @@ export interface RegistrationStepNavProps {
 	registeringLabel: string;
 	disabledNext?: boolean;
 	isRegistering?: boolean;
+	testingAttribute?: string;
 }
 
 /**
@@ -36,7 +38,8 @@ export const RegistrationStepNav = ({
 	registerLabel,
 	registeringLabel,
 	disabledNext = false,
-	isRegistering = false
+	isRegistering = false,
+	testingAttribute = 'registration-next'
 }: RegistrationStepNavProps) => {
 	const submitting = isRegistering;
 	const primaryLabel = nextStepUrl
@@ -52,6 +55,7 @@ export const RegistrationStepNav = ({
 			sx={{
 				display: 'flex',
 				alignItems: 'center',
+				flexDirection: 'row',
 				gap: 1.5,
 				width: '100%'
 			}}
@@ -82,96 +86,117 @@ export const RegistrationStepNav = ({
 				<ArrowBackRoundedIcon />
 			</ButtonBase>
 
-			<ButtonBase
-				// Always a submit, never a router link: the form's submit
-				// handler is what commits this step's answers into the
-				// registration data before navigating. A link would move to
-				// the next step with the current selection uncommitted, and
-				// the next screen would overwrite it. The desktop footer
-				// submits for the same reason.
-				type={primaryDisabled ? 'button' : 'submit'}
-				disabled={disabledNext && !submitting}
-				aria-disabled={primaryDisabled}
-				aria-busy={submitting}
-				onClick={
-					submitting
-						? (event: React.MouseEvent) => event.preventDefault()
-						: undefined
-				}
-				data-cy="registration-next"
-				sx={{
-					'flex': 1,
-					'minWidth': 0,
-					'height': 56,
-					'borderRadius': '28px',
-					'bgcolor': registrationMd3.primary,
-					'color': registrationMd3.onPrimary,
-					'boxShadow': `0 6px 0 0 ${registrationMd3.primaryDark}`,
-					'display': 'flex',
-					'alignItems': 'center',
-					'justifyContent': 'space-between',
-					'pl': 2.5,
-					'pr': 1,
-					'transition': 'box-shadow 120ms ease, transform 120ms ease',
-					'&:active': {
-						boxShadow: `0 2px 0 0 ${registrationMd3.primaryDark}`,
-						transform: 'translateY(4px)'
-					},
-					'&.Mui-disabled': {
-						bgcolor: registrationMd3.surfaceContainerHigh,
-						color: registrationMd3.onSurfaceVariant,
-						boxShadow: 'none'
-					},
-					'&:focus-visible': {
-						outline: `3px solid ${registrationMd3.focusLayer}`,
-						outlineOffset: 2
-					},
-					'@media (prefers-reduced-motion: reduce)': {
-						'transition': 'none',
-						'&:active': { transform: 'none' }
-					}
-				}}
-			>
-				<Typography
-					component="span"
-					sx={{
-						// Typography always resolves to text.primary and never
-						// inherits the colour of the surface it sits on, so the
-						// label has to say white itself.
-						color: 'inherit',
-						fontSize: 17,
-						fontWeight: 700,
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap'
-					}}
-				>
-					{primaryLabel}
-				</Typography>
-				<Box
-					component="span"
-					aria-hidden
-					sx={{
-						width: 40,
-						height: 40,
-						flexShrink: 0,
-						ml: 1,
-						borderRadius: '50%',
-						bgcolor: primaryDisabled
-							? 'transparent'
-							: 'rgba(255, 255, 255, 0.16)',
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center'
-					}}
-				>
-					{submitting ? (
-						<CircularProgress size={20} color="inherit" />
-					) : (
-						<ArrowForwardRoundedIcon />
-					)}
+			{!nextStepUrl ? (
+				<Box sx={{ flex: 1, minWidth: 0 }}>
+					<HandoverGateButton
+						state={
+							submitting
+								? 'entering'
+								: primaryDisabled
+									? 'preparing'
+									: 'ready'
+						}
+						type={primaryDisabled ? 'button' : 'submit'}
+						label={primaryLabel}
+						testingAttribute={testingAttribute}
+						status=""
+						indeterminate={submitting}
+					/>
 				</Box>
-			</ButtonBase>
+			) : (
+				<ButtonBase
+					// Always a submit, never a router link: the form's submit
+					// handler is what commits this step's answers into the
+					// registration data before navigating. A link would move to
+					// the next step with the current selection uncommitted, and
+					// the next screen would overwrite it. The desktop footer
+					// submits for the same reason.
+					type={primaryDisabled ? 'button' : 'submit'}
+					disabled={disabledNext && !submitting}
+					aria-disabled={primaryDisabled}
+					aria-busy={submitting}
+					onClick={
+						submitting
+							? (event: React.MouseEvent) =>
+									event.preventDefault()
+							: undefined
+					}
+					data-cy="registration-next"
+					sx={{
+						'flex': 1,
+						'minWidth': 0,
+						'height': 56,
+						'borderRadius': '28px',
+						'bgcolor': registrationMd3.primary,
+						'color': registrationMd3.onPrimary,
+						'boxShadow': `0 6px 0 0 ${registrationMd3.primaryDark}`,
+						'display': 'flex',
+						'alignItems': 'center',
+						'justifyContent': 'space-between',
+						'pl': 2.5,
+						'pr': 1,
+						'transition':
+							'box-shadow 120ms ease, transform 120ms ease',
+						'&:active': {
+							boxShadow: `0 2px 0 0 ${registrationMd3.primaryDark}`,
+							transform: 'translateY(4px)'
+						},
+						'&.Mui-disabled': {
+							bgcolor: registrationMd3.surfaceContainerHigh,
+							color: registrationMd3.onSurfaceVariant,
+							boxShadow: 'none'
+						},
+						'&:focus-visible': {
+							outline: `3px solid ${registrationMd3.focusLayer}`,
+							outlineOffset: 2
+						},
+						'@media (prefers-reduced-motion: reduce)': {
+							'transition': 'none',
+							'&:active': { transform: 'none' }
+						}
+					}}
+				>
+					<Typography
+						component="span"
+						sx={{
+							// Typography always resolves to text.primary and never
+							// inherits the colour of the surface it sits on, so the
+							// label has to say white itself.
+							color: 'inherit',
+							fontSize: 17,
+							fontWeight: 700,
+							overflow: 'hidden',
+							textOverflow: 'ellipsis',
+							whiteSpace: 'nowrap'
+						}}
+					>
+						{primaryLabel}
+					</Typography>
+					<Box
+						component="span"
+						aria-hidden
+						sx={{
+							width: 40,
+							height: 40,
+							flexShrink: 0,
+							ml: 1,
+							borderRadius: '50%',
+							bgcolor: primaryDisabled
+								? 'transparent'
+								: 'rgba(255, 255, 255, 0.16)',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center'
+						}}
+					>
+						{submitting ? (
+							<CircularProgress size={20} color="inherit" />
+						) : (
+							<ArrowForwardRoundedIcon />
+						)}
+					</Box>
+				</ButtonBase>
+			)}
 		</Box>
 	);
 };

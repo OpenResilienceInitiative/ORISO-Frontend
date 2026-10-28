@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Meta, StoryObj } from '@storybook/react';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { ScrollableSection } from './ScrollableSection';
 
 const meta = {
@@ -7,6 +9,10 @@ const meta = {
 	component: ScrollableSection,
 	tags: ['autodocs'],
 	parameters: {
+		// #1338: the body scrolls but takes no focus: keyboard users cannot scroll it; the real fix is a tab stop, left for a product decision.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': ['.scrollableSection__body']
+		}),
 		docs: {
 			description: {
 				component:
@@ -28,7 +34,9 @@ const storyFrameStyle: React.CSSProperties = {
 };
 
 const storyPanelStyle: React.CSSProperties = {
-	height: '100%'
+	height: '100%',
+	display: 'flex',
+	flexDirection: 'column'
 };
 
 const longBodyItems = Array.from({ length: 18 }, (_, index) => (
@@ -96,4 +104,51 @@ export const HeaderBodyFooter: Story = {
 			</div>
 		</ScrollableStoryFrame>
 	)
+};
+
+function StepBodyScrollReset() {
+	const [step, setStep] = useState(1);
+	return (
+		<ScrollableStoryFrame>
+			<div style={storyPanelStyle}>
+				<ScrollableSection bodyKey={step}>
+					<div>Persistent header</div>
+					<div>
+						{Array.from({ length: 18 }, (_, index) => (
+							<p key={index}>
+								Step {step}, row {index + 1}
+							</p>
+						))}
+					</div>
+					<button type="button" onClick={() => setStep(step + 1)}>
+						Next step
+					</button>
+				</ScrollableSection>
+			</div>
+		</ScrollableStoryFrame>
+	);
+}
+
+export const ChangedStepResetsOnlyBody: Story = {
+	args: { children: [] },
+	render: () => <StepBodyScrollReset />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const getBody = () => {
+			const body = canvasElement.querySelector<HTMLElement>(
+				'.scrollableSection__body'
+			);
+			if (!body) throw new Error('Scrollable body is missing');
+			return body;
+		};
+		const body = getBody();
+		body.scrollTop = body.scrollHeight;
+		await expect(body.scrollTop).toBeGreaterThan(0);
+		const next = canvas.getByRole('button', { name: 'Next step' });
+		await userEvent.click(next);
+		await waitFor(() => expect(getBody().scrollTop).toBe(0));
+		await expect(canvas.getByText('Step 2, row 1')).toBeVisible();
+		await expect(next).toHaveFocus();
+		await expect(canvas.getByText('Persistent header')).toBeVisible();
+	}
 };

@@ -1,0 +1,14 @@
+{
+	"environment": "local-storybook",
+	"syntheticHTTPBoundary": true,
+	"before": false,
+	"savedAfterReopen": true,
+	"dialogAccessibleName": "Einsichtnahme in Ihre Beratung",
+	"focusReturned": true,
+	"axe": {
+		"violations": [],
+		"passes": 22,
+		"incomplete": ["color-contrast"]
+	},
+	"realDevAcceptance": false
+}

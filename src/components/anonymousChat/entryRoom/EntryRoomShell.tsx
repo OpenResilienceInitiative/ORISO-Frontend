@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { useContext } from 'react';
 import { Box, Typography } from '@mui/material';
-import { StageLayout } from '../../stageLayout/StageLayout';
-import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 
 export interface EntryRoomShellProps {
@@ -34,7 +32,6 @@ export const EntryRoomShell = ({
 	department,
 	children
 }: EntryRoomShellProps) => {
-	const { Stage } = useContext(GlobalComponentContext);
 	const heading = (
 		<Box sx={{ textAlign: { xs: 'center', lg: 'left' } }}>
 			<Typography
@@ -65,14 +62,9 @@ export const EntryRoomShell = ({
 		</Box>
 	);
 	return (
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
+		<WaitingRoomFrame
 			legalDepartment={department}
 			showLoginLink={showLoginLink}
-			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} isReady={true} />}
-			mobileHero="bar"
 			headerStart={heading}
 		>
 			<Box
@@ -95,7 +87,9 @@ export const EntryRoomShell = ({
 					'@supports (overflow-x: clip)': { overflowX: 'clip' },
 					'px': { xs: 2.5, sm: 5 },
 					'pt': { xs: 3, sm: 4 },
-					'pb': '104px'
+					/* RegistrationFooter reserves its measured height, including
+					   the consent panel, rather than a fixed guessed clearance. */
+					'pb': 2
 				}}
 			>
 				<Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3 }}>
@@ -103,6 +97,6 @@ export const EntryRoomShell = ({
 				</Box>
 				{children}
 			</Box>
-		</StageLayout>
+		</WaitingRoomFrame>
 	);
 };

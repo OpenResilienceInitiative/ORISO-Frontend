@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -8,10 +8,13 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AskerAboutMeData } from './AskerAboutMeData';
 
 const apiPutEmailMock = vi.fn();
+
+// Real Profile stories cover the avatar editor; this test owns email retry.
+vi.mock('./ProfileAvatarChoice', () => ({ ProfileAvatarChoice: () => null }));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })

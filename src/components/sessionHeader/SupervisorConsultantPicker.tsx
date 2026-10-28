@@ -2,6 +2,8 @@ import * as React from 'react';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { Consultant } from '../../api/apiGetAgencyConsultantList';
 import { OrisoSelect } from '../form/OrisoSelect';
+import { orisoSelectMenuProps } from '../form/orisoInputDesign';
+import { SUPERVISOR_DIALOG_ID } from './SupervisorManagementDialog';
 
 export type SupervisorDirectoryState = 'loading' | 'ready' | 'error';
 
@@ -56,6 +58,10 @@ export const SupervisorConsultantPicker = ({
 				label: getConsultantLabel(consultant)
 			}))}
 			value={selectedConsultantId}
+			MenuProps={{
+				...orisoSelectMenuProps,
+				container: () => document.getElementById(SUPERVISOR_DIALOG_ID)
+			}}
 			onChange={handleChange}
 		/>
 	);

@@ -22,7 +22,11 @@ import {
 	KNOCK_STORY_NOW
 } from './joinRequest/__storybook__/joinRequestFixtures';
 import type { GroupChatModeratorRole } from './joinRequest/joinRequestModel';
-import type { ListItemInterface } from '../../globalState/interfaces';
+import type {
+	GroupChatItemInterface,
+	ListItemInterface
+} from '../../globalState/interfaces';
+import { useGroupChatInfoFixture } from './groupChatInfoStoryFixture';
 import {
 	desktop1440Globals,
 	phone390Globals
@@ -127,6 +131,7 @@ const KnockStage = ({
 				: runningListItem(),
 		[background]
 	);
+	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
 		<>
 			<GroupChatStage listItem={listItem} layout={layout}>
@@ -249,7 +254,7 @@ export const AdmitAndDecline1440: Story = {
 			within(yusuf).getByRole('button', { name: 'Reinlassen' })
 		);
 		await body().findByText(
-			'Yusuf Demir-Hoffmann ist jetzt im Gesprächskreis.',
+			'Die Zulassung von Yusuf Demir-Hoffmann ist bestätigt. Der Gruppenzugang muss noch bestätigt werden.',
 			{ selector: '.MuiAlert-message' }
 		);
 		const mira = body().getByRole('group', { name: 'Mira Sommer' });

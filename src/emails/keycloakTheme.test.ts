@@ -4,7 +4,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	APP_BASE_URL_ENV,
 	KEYCLOAK_LINK_PATHS,
@@ -176,7 +176,9 @@ describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 			const img = template.match(/<img [^>]*>/)?.[0] ?? '';
 			expect(img).toContain('src="${orisoLogoSrc}"');
 			expect(img).toContain(' alt=""');
-			expect(img).toContain('width="36" height="36"');
+			expect(img).toContain('height="48"');
+			expect(img).toContain('width:auto;height:48px;');
+			expect(img).not.toContain('width="');
 			expect(img).toContain('border:0');
 			expect(img).not.toContain('font-family');
 		});

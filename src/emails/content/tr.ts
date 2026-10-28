@@ -269,6 +269,19 @@ export const tr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Yeni bildirim',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Danışmanlığınızla ilgili bir talep',
+		paragraphs: [
+			'Danışmanlık merkezinizdeki başka bir uzman, görüşmenize geçici erişim için onayınızı istiyor.',
+			'Talebi korumalı alanda inceleyin. Mevcut danışmanınız danışmanlığınızdan sorumlu olmaya devam eder.'
+		],
+		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Yeni bildirim',
 		preheader: 'Lütfen giriş yapın.',
@@ -279,7 +292,7 @@ export const tr: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
@@ -364,15 +377,23 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Giriş için tek kullanımlık kodunuz',
+		subject: 'Tek kullanımlık kodunuz',
 		preheader: 'Kod {{expiryMinutes}} dakika geçerlidir.',
 		headline: 'Tek kullanımlık kodunuz',
-		paragraphs: ['Bu kodu giriş penceresine yazın.'],
+		paragraphs: ['Bu kodu {{platformName}} platformuna girin.'],
 		code: { label: 'Kod', value: '{{otpCode}}' },
-		cta: { label: 'Girişe git', href: '{{loginUrl}}' },
-		footnote: 'Giriş yapmak istemediyseniz lütfen şifrenizi değiştirin.',
+		cta: {
+			label: '{{platformName}} platformunu açın',
+			href: '{{loginUrl}}'
+		},
+		footnote:
+			'Bu kodu siz talep etmediyseniz bu e-postayı dikkate almayın.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Bu e-posta bir güvenlik kodu içerir ve iptal edilemez. Lütfen yanıtlamayınız.'
+		}
 	},
 
 	'einladung-traeger': {

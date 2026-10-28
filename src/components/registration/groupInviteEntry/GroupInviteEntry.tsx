@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { AccountData } from '../accountData/AccountData';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
-import { RegistrationHandover } from '../../app/registrationLoader/RegistrationHandover';
 import type { RegistrationData } from '../../../globalState';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { RegistrationCompletionProvider } from '../consentCompletion/RegistrationCompletionContext';
+import { GroupHeading } from '../../groupChat/entryRoom/GroupHeading';
 
 /**
  * The newcomer entry of a self-help group link, as designed in Storybook
@@ -24,7 +25,8 @@ export const GroupInviteEntry = ({
 	onChange,
 	onJoin,
 	joinDisabled,
-	busy
+	busy,
+	agencyName
 }: {
 	stage: ReactElement;
 	gcid: string;
@@ -35,28 +37,29 @@ export const GroupInviteEntry = ({
 	onJoin: () => void;
 	joinDisabled: boolean;
 	busy: boolean;
+	/** The agency the link names; the waiting room shows the same (#1689). */
+	agencyName?: string;
 }) => {
 	const { t } = useTranslation();
+	/* Only the agency: the topic stays hidden until the privacy agreement
+	   is recorded, as in the waiting room (#1499). */
+	const heading = <GroupHeading agencyName={agencyName} textAlign="left" />;
 
 	return (
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
-			showLoginLink={true}
-			showRegistrationLink={false}
-			loginParams={new URLSearchParams({ gcid, aid }).toString()}
-			loginState={INVITE_LOGIN_STATE}
-			stage={stage}
-			mobileHero="bar"
-		>
-			{busy ? (
-				<RegistrationHandover
-					ready={false}
-					forcedState="preparing"
-					variant="inline"
-					onEnter={() => undefined}
-				/>
-			) : (
+		<RegistrationCompletionProvider>
+			<StageLayout
+				className="stageLayout--registration"
+				showLegalLinks={true}
+				showLoginLink={true}
+				showRegistrationLink={false}
+				loginParams={new URLSearchParams({ gcid, aid }).toString()}
+				loginState={INVITE_LOGIN_STATE}
+				stage={stage}
+				mobileHero="bar"
+				headerStart={heading}
+			>
+				{/* Once `busy`, `Registration` swaps this whole screen for the
+				    shared waiting room (`WaitingRoomFrame`, #1219). */}
 				<Box
 					data-cy="group-invite-entry"
 					sx={{
@@ -65,9 +68,19 @@ export const GroupInviteEntry = ({
 						maxWidth: '100%',
 						px: { xs: 2.5, sm: 5 },
 						pt: { xs: 3, sm: 4 },
-						pb: { xs: '128px', sm: '136px' }
+						pb: 2
 					}}
 				>
+					{agencyName && (
+						<Box
+							sx={{
+								display: { xs: 'block', lg: 'none' },
+								mb: 1.5
+							}}
+						>
+							{heading}
+						</Box>
+					)}
 					<AccountData
 						onChange={onChange}
 						entry="link"
@@ -75,6 +88,7 @@ export const GroupInviteEntry = ({
 					/>
 					<RegistrationFooter
 						secondary={{
+							compact: true,
 							label: temporary
 								? t(
 										'registration.account.temporary.toggleOff',
@@ -93,12 +107,14 @@ export const GroupInviteEntry = ({
 										'Der Gruppe beitreten'
 									)
 								: t('registration.register'),
-							onClick: onJoin,
-							disabled: joinDisabled
+							onClick: () => {
+								if (!joinDisabled && !busy) onJoin();
+							},
+							disabled: joinDisabled || busy
 						}}
 					/>
 				</Box>
-			)}
-		</StageLayout>
+			</StageLayout>
+		</RegistrationCompletionProvider>
 	);
 };

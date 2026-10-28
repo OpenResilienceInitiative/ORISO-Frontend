@@ -1,3 +1,4 @@
+import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
@@ -7,26 +8,20 @@ import {
 	SingleComponentType,
 	TabGroups
 } from '../../utils/tabsHelper';
-import { PasswordReset } from '../passwordReset/PasswordReset';
-import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
-import { EncryptionSettingsPanel } from './EncryptionSettings';
 // import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import { EmailNotification } from './EmailNotifications';
 import { NotificationSettingsPanel } from './NotificationSettings';
-import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
 import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
+import AnimationOutlinedIcon from '@mui/icons-material/AnimationOutlined';
 import { BrowserNotification } from './BrowserNotifications';
 import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
+import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -37,30 +32,10 @@ export const profileRoutesSettings = (
 		url: '/sicherheit',
 		elements: [
 			{
-				component: PasswordReset,
-				icon: LockOutlinedIcon,
-				column: COLUMN_LEFT,
+				component: SecurityPrivacySettings,
+				boxed: false,
+				fullWidth: true,
 				order: 1
-			},
-			// {
-			// 	component: MagicLinksLoginFeature,
-			// 	column: COLUMN_LEFT,
-			// 	order: 2
-			// },
-			{
-				condition: (userData) => userData.twoFactorAuth?.isEnabled,
-				component: TwoFactorAuth,
-				icon: ShieldOutlinedIcon,
-				column: COLUMN_LEFT,
-				order: 2
-			},
-			// #437 key backup + recovery: encryption settings (recovery key
-			// setup / restore / reset). Self-handles the no-crypto case.
-			{
-				component: EncryptionSettingsPanel,
-				icon: KeyOutlinedIcon,
-				column: COLUMN_RIGHT,
-				order: 3
 			}
 		]
 	},
@@ -69,15 +44,13 @@ export const profileRoutesSettings = (
 		url: '/email',
 		elements: [
 			{
-				condition: () =>
-					!!settings?.releaseToggles?.enableNewNotifications,
+				condition: () => usesNewNotifications(settings),
 				component: EmailNotification,
 				column: COLUMN_LEFT,
 				order: 1
 			},
 			{
-				condition: () =>
-					!!settings?.releaseToggles?.enableNewNotifications,
+				condition: () => usesNewNotifications(settings),
 				component: NotificationSettingsPanel,
 				column: COLUMN_RIGHT,
 				order: 1
@@ -87,7 +60,7 @@ export const profileRoutesSettings = (
 					hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
 						userData
-					) && !settings?.releaseToggles?.enableNewNotifications,
+					) && !usesNewNotifications(settings),
 				component: ConsultantNotifications,
 				icon: NotificationsOutlinedIcon,
 				column: COLUMN_RIGHT,
@@ -97,7 +70,7 @@ export const profileRoutesSettings = (
 			// this screen once enableNewNotifications is on (#1551).
 			{
 				condition: () =>
-					!settings?.releaseToggles?.enableNewNotifications &&
+					!usesNewNotifications(settings) &&
 					!!isBrowserNotificationSupported(),
 				component: BrowserNotification,
 				icon: NotificationsActiveOutlinedIcon,
@@ -110,7 +83,12 @@ export const profileRoutesSettings = (
 		title: 'profile.routes.display',
 		url: '/anzeige',
 		elements: [
-			{ component: MenuEffectsSettings, column: COLUMN_RIGHT, order: 2 },
+			{
+				component: MenuEffectsSettings,
+				icon: AnimationOutlinedIcon,
+				column: COLUMN_RIGHT,
+				order: 2
+			},
 			{
 				condition: () => selectableLocales.length > 1,
 				component: Locale,
@@ -131,14 +109,5 @@ export const profileRoutesSettings = (
 				order: 6
 			}
 		]
-	},
-	{
-		condition: (userData) =>
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
-		component: DeleteAccount,
-		icon: DeleteOutlineIcon,
-		boxed: false,
-		order: 99,
-		fullWidth: true
 	}
 ];

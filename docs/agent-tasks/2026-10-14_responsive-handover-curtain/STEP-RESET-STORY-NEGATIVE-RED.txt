@@ -1,0 +1,32 @@
+Temporary negative control: omit keyed body; restored after this run.
+Full raw receipt retained in figma-design-1187/review-receipts/.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |storybook (chromium)| src/components/scrollableSection/ScrollableSection.stories.tsx > Changed Step Resets Only Body
+AssertionError:
+Click to debug the error directly in Storybook: http://localhost:6006/?path=/story/atoms-scrollablesection--changed-step-resets-only-body&addonPanel=storybook/interactions/panel
+
+expected 572 to be +0 // Object.is equality
+
+Expected: "0"
+Received: "572"
+
+ ❯ toBe src/components/scrollableSection/ScrollableSection.stories.tsx:144:50
+    142|   const next = canvas.getByRole('button', { name: 'Next step' });
+    143|   await userEvent.click(next);
+    144|   await waitFor(() => expect(getBody().scrollTop).toBe(0));
+       |                                                  ^
+    145|   await expect(canvas.getByText('Step 2, row 1')).toBeVisible();
+    146|   await expect(next).toHaveFocus();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/@testing-library/dom.esm.js:349:11
+ ❯ checkCallback node_modules/@testing-library/dom/dist/@testing-library/dom.esm.js:1097:23
+ ❯ checkRealTimersCallback node_modules/@testing-library/dom/dist/@testing-library/dom.esm.js:1091:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  12:27:13
+   Duration  3.91s (transform 0ms, setup 1.86s, collect 29ms, tests 1.11s, environment 0ms, prepare 2.38s)

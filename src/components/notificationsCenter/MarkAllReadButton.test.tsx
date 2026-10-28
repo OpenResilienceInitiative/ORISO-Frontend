@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MarkAllReadButton } from './MarkAllReadButton';
 
 vi.mock('@mui/icons-material/DoneAll', () => ({
@@ -55,5 +55,21 @@ describe('MarkAllReadButton (#1200)', () => {
 		);
 		expect(button.getAttribute('title')).toBe('Alle als gelesen');
 		expect(screen.getByTestId('done-all-icon')).toBeTruthy();
+	});
+	it('announces a pending mutation and prevents duplicate toolbar activation', () => {
+		const onClick = vi.fn();
+		render(
+			<MarkAllReadButton
+				hasUnread
+				busy
+				onClick={onClick}
+				label="Mark all as read"
+			/>
+		);
+		const button = screen.getByRole('button', { name: 'Mark all as read' });
+		expect(button.getAttribute('aria-busy')).toBe('true');
+		expect(button.hasAttribute('disabled')).toBe(true);
+		fireEvent.click(button);
+		expect(onClick).not.toHaveBeenCalled();
 	});
 });

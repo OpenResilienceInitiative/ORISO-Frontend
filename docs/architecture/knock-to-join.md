@@ -93,15 +93,15 @@ the opposite of the direction the platform took.
 
 ## Authorization
 
-| Action | Who | Server rule |
-| --- | --- | --- |
-| Knock | any consultant with the link, any Träger — **self-help groups only** | 400 for an internal team chat (the app never offers the knock there: `knockableGroupId`); 409 if she already has access; idempotent while PENDING |
-| See own request | the knocking counsellor | status only — no title, members, times of the group |
-| List open requests | OWNER and CO_MODERATOR of that group | only groups with a participant row of the caller in one of these roles |
-| Admit as participant | OWNER, CO_MODERATOR | 403 for PARTICIPANT or unrelated consultants; 409 unless PENDING |
-| Admit as co-moderator | OWNER only, requester of the owner's Träger | mirrors `GroupChatParticipantReconciliationService`; 403 / 400 |
-| Decline | OWNER, CO_MODERATOR | 409 unless PENDING |
-| Read the group afterwards | the admitted counsellor | one new rule in `ChatPermissionVerifier.verifyPermissionForChat`: a participant of the series passes (read, join, members, leave, message-read). `verifyCanModerateChat` is unchanged, and start/stop go through `requireCanModerate` — an admitted participant cannot start the group |
+| Action                    | Who                                                                  | Server rule                                                                                                                                                                                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Knock                     | any consultant with the link, any Träger — **self-help groups only** | 400 for an internal team chat (the app never offers the knock there: `knockableGroupId`); 409 if she already has access; idempotent while PENDING                                                                                                                                      |
+| See own request           | the knocking counsellor                                              | status only — no title, members, times of the group                                                                                                                                                                                                                                    |
+| List open requests        | OWNER and CO_MODERATOR of that group                                 | only groups with a participant row of the caller in one of these roles                                                                                                                                                                                                                 |
+| Admit as participant      | OWNER, CO_MODERATOR                                                  | 403 for PARTICIPANT or unrelated consultants; 409 unless PENDING                                                                                                                                                                                                                       |
+| Admit as co-moderator     | OWNER only, requester of the owner's Träger                          | mirrors `GroupChatParticipantReconciliationService`; 403 / 400                                                                                                                                                                                                                         |
+| Decline                   | OWNER, CO_MODERATOR                                                  | 409 unless PENDING                                                                                                                                                                                                                                                                     |
+| Read the group afterwards | the admitted counsellor                                              | one new rule in `ChatPermissionVerifier.verifyPermissionForChat`: a participant of the series passes (read, join, members, leave, message-read). `verifyCanModerateChat` is unchanged, and start/stop go through `requireCanModerate` — an admitted participant cannot start the group |
 
 Groups created before the participant table (no participant rows) are not
 listed and cannot be admitted into (409) — there is no session to attach the
@@ -124,14 +124,14 @@ OpenTelemetry signals to SigNoz, never Sentry.
 
 ## Frontend pieces
 
-| Piece | File | Storybook |
-| --- | --- | --- |
-| Stacked snackbar host (app-wide) | `m3Snackbar/M3SnackbarHost.tsx`, `snackbarStack.ts` | Molecules/M3Snackbar/Stack |
-| Join-request snackbar (child variant) | `groupChat/joinRequest/JoinRequestSnackbar.tsx` | Molecules/M3Snackbar/Join request |
-| Details popup | `groupChat/joinRequest/JoinRequestDialog.tsx` | Molecules/M3Snackbar/Join request |
-| Moderator wiring | `groupChat/joinRequest/JoinRequestCenter.tsx` (mounted in `AuthenticatedApp` for consultants) | Group chat/Knock to join (stage) |
-| Knocking counsellor | `GroupChatNotMember.tsx` + `useOwnJoinRequest.ts` (wired in `SessionView`) | Group chat/Not a member |
-| Transport | `joinRequestTransport.ts`, `httpJoinRequestTransport.ts`, `fakeJoinRequestTransport.ts` | — |
+| Piece                                 | File                                                                                          | Storybook                         |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
+| Stacked snackbar host (app-wide)      | `m3Snackbar/M3SnackbarHost.tsx`, `snackbarStack.ts`                                           | Molecules/M3Snackbar/Stack        |
+| Join-request snackbar (child variant) | `groupChat/joinRequest/JoinRequestSnackbar.tsx`                                               | Molecules/M3Snackbar/Join request |
+| Details popup                         | `groupChat/joinRequest/JoinRequestDialog.tsx`                                                 | Molecules/M3Snackbar/Join request |
+| Moderator wiring                      | `groupChat/joinRequest/JoinRequestCenter.tsx` (mounted in `AuthenticatedApp` for consultants) | Group chat/Knock to join (stage)  |
+| Knocking counsellor                   | `GroupChatNotMember.tsx` + `useOwnJoinRequest.ts` (wired in `SessionView`)                    | Group chat/Not a member           |
+| Transport                             | `joinRequestTransport.ts`, `httpJoinRequestTransport.ts`, `fakeJoinRequestTransport.ts`       | —                                 |
 
 Stack decisions: newest at the bottom edge (where M3 puts the single snackbar),
 older ones above, read oldest → newest (first come, first served); beyond three

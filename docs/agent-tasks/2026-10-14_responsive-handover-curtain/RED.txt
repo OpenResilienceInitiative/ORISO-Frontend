@@ -1,0 +1,55 @@
+
+Running 4 tests using 1 worker
+
+[1/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px
+  1) playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      52 | 		);
+      53 | 		await page.mouse.wheel(0, 1000);
+    > 54 | 		await expect
+         | 		^
+      55 | 			.poll(async () => {
+      56 | 				const button = (await request.boundingBox())!;
+      57 | 				return (
+        at /Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/protected-request.spec.ts:54:3
+
+    Error Context: test-results/responsive-handover-1187/protected-request-protecte-ba8bc-able-and-reachable-at-390px/error-context.md
+
+
+[2/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 820px
+[3/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 1440px
+[4/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px
+  2) playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      52 | 		);
+      53 | 		await page.mouse.wheel(0, 1000);
+    > 54 | 		await expect
+         | 		^
+      55 | 			.poll(async () => {
+      56 | 				const button = (await request.boundingBox())!;
+      57 | 				return (
+        at /Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/protected-request.spec.ts:54:3
+
+    Error Context: test-results/responsive-handover-1187/protected-request-protecte-6c494-able-and-reachable-at-320px/error-context.md
+
+
+  2 failed
+    playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px
+    playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px
+  2 passed (16.4s)

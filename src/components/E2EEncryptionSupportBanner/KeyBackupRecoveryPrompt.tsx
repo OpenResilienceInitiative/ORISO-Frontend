@@ -21,6 +21,7 @@ import {
 } from '../../services/recoveryReminderState';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
+import { logout } from '../logout/logout';
 import {
 	M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM,
 	M3_SNACKBAR_PHONE_MEDIA,
@@ -163,6 +164,8 @@ export const KeyBackupRecoveryPrompt = () => {
 	const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 	const showRecovery = openedFor === userId;
 	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
+	// The password unlocks this history at sign-in; no key to ask for (#1741).
+	const signInAgain = status === 'needs-sign-in';
 	// Scoped to the status revision: any change, even via 'pending' back to the same status, reshows it.
 	const dismissKey = `${userId}:${revision}`;
 	return (
@@ -182,20 +185,39 @@ export const KeyBackupRecoveryPrompt = () => {
 							)}
 							<span>
 								{t('encryption.passwordRecovery.' + status)}
-							</span>{' '}
-							<Link
-								to="/profile/einstellungen/sicherheit"
-								className="encryption-recovery-snackbar__link"
-							>
-								{t('encryption.passwordRecovery.settings')}
-							</Link>
+							</span>
+							{!signInAgain && (
+								<>
+									{' '}
+									<Link
+										to="/profile/einstellungen/sicherheit"
+										className="encryption-recovery-snackbar__link"
+									>
+										{t(
+											'encryption.passwordRecovery.settings'
+										)}
+									</Link>
+								</>
+							)}
 						</>
 					}
-					action={{
-						label: t('encryption.keyBackup.dialog.openVault'),
-						onClick: () => setOpenedFor(userId),
-						testId: 'key-backup-recovery-open'
-					}}
+					action={
+						signInAgain
+							? {
+									label: t(
+										'encryption.passwordRecovery.reauthenticate'
+									),
+									onClick: () => void logout(),
+									testId: 'key-backup-recovery-sign-in'
+								}
+							: {
+									label: t(
+										'encryption.keyBackup.dialog.openVault'
+									),
+									onClick: () => setOpenedFor(userId),
+									testId: 'key-backup-recovery-open'
+								}
+					}
 					actionOnOwnLine
 					onClose={() => setDismissedFor(dismissKey)}
 					closeLabel={t('encryption.keyBackup.snackbar.close')}

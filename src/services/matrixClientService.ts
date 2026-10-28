@@ -344,7 +344,7 @@ export class MatrixClientService {
 		}
 
 		this.refreshingToken = this.heldCryptoOperationsSettled()
-			.then(() => getMatrixAccessToken())
+			.then(() => getMatrixAccessToken({ forceRefresh: true }))
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag
@@ -415,6 +415,13 @@ export class MatrixClientService {
 			});
 
 		return this.staleDeviceRecovery;
+	}
+
+	/** Await initial sync without confusing a not-yet-hydrated room with exhaustion. */
+	public waitUntilReady(): Promise<void> {
+		if (!this.client)
+			return Promise.reject(new Error('Matrix client is unavailable'));
+		return this.waitForClientPrepared(this.client);
 	}
 
 	private waitForClientPrepared(

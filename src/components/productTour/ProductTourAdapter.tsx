@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Joyride } from 'react-joyride';
-import type { EventData } from 'react-joyride';
+import { ACTIONS, EVENTS, Joyride, STATUS } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -9,15 +8,20 @@ import {
 	initialTourRunState,
 	mapStepsToJoyride,
 	reduceTourCallback,
+	resolveTourSteps,
+	routeMatches,
 	tourTargetSelector,
+	TourCallbackInput,
 	TourRunState
 } from './tourEngine';
+import { subscribeToTourEvent } from './tourEvents';
 import { waitForTarget } from './targetReadiness';
 import type {
 	TourDefinition,
 	TourEvent,
 	TourPlacement,
 	TourProgress,
+	TourResolveContext,
 	TourStep
 } from './types';
 
@@ -27,23 +31,80 @@ export interface ProductTourAdapterProps {
 	active: boolean;
 	/** A higher-priority blocking surface (e.g. the 2FA dialog) is visible. */
 	paused?: boolean;
+	/**
+	 * Resolves the `when` conditions of the tour and its steps once, when the
+	 * tour mounts. Without it, unset flags apply (everything ON). Hosts that
+	 * count steps themselves resolve first and pass the resolved tour.
+	 */
+	context?: TourResolveContext;
 	/** Bounded wait for a step target before it is skipped as missing. */
 	targetTimeoutMs?: number;
 	onEvent?: (event: TourEvent, step?: TourStep) => void;
 	/** Called exactly once when the tour reaches completed or skipped. */
 	onTerminalStatus?: (progress: TourProgress) => void | Promise<void>;
+	/**
+	 * Host setup (e.g. entering practice mode). Runs before the first step is
+	 * prepared; the tour starts once it resolves, and never starts if it
+	 * rejects.
+	 */
+	onBeforeStart?: () => void | Promise<void>;
+	/**
+	 * Host teardown. At most once per mount, after the terminal status was
+	 * written, when the tour stops without one, or on unmount. Waits for a
+	 * still-pending setup, and never runs when setup never began.
+	 */
+	onEnd?: () => void;
 	tooltipComponent?: React.ComponentType<any>;
 }
 
 const DEFAULT_TARGET_TIMEOUT_MS = 4000;
 
+const ACTION_CONTROL_SELECTOR =
+	'button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+/** A highlighted wrapper is often not operable; hand focus to its editor/control. */
+const focusActionTarget = (step: TourStep | undefined) => {
+	if (!step?.advanceOn) return;
+	const targetName =
+		step.advanceOn.type === 'click'
+			? (step.advanceOn.target ?? step.target)
+			: step.target;
+	if (!targetName) return;
+	const anchor = document.querySelector<HTMLElement>(
+		tourTargetSelector(targetName)
+	);
+	if (!anchor) return;
+	const control = anchor.matches(ACTION_CONTROL_SELECTOR)
+		? anchor
+		: (anchor.querySelector<HTMLElement>('[contenteditable="true"]') ??
+			anchor.querySelector<HTMLElement>(ACTION_CONTROL_SELECTOR));
+	if (!control) return undefined;
+	// Late composer autofocus must yield to the action the tour just named.
+	// Reuse its existing focus-protection convention for this step only.
+	const protectedBefore = control.hasAttribute('data-keeps-focus');
+	if (!protectedBefore)
+		control.setAttribute('data-keeps-focus', 'tour-action');
+	control.focus({ preventScroll: true });
+	return () => {
+		if (
+			!protectedBefore &&
+			control.getAttribute('data-keeps-focus') === 'tour-action'
+		) {
+			control.removeAttribute('data-keeps-focus');
+		}
+	};
+};
+
 export const ProductTourAdapter = ({
 	tour,
 	active,
 	paused = false,
+	context,
 	targetTimeoutMs = DEFAULT_TARGET_TIMEOUT_MS,
 	onEvent,
 	onTerminalStatus,
+	onBeforeStart,
+	onEnd,
 	tooltipComponent
 }: ProductTourAdapterProps) => {
 	const { t: translate } = useTranslation();
@@ -69,16 +130,65 @@ export const ProductTourAdapter = ({
 	const startedAtRef = useRef<string | undefined>(undefined);
 	const terminalReportedRef = useRef(false);
 	const prepareTokenRef = useRef(0);
+	const mountedRef = useRef(false);
+	const actionFocusCleanupRef = useRef<(() => void) | undefined>(undefined);
 	const startedPreparingRef = useRef(false);
 	const locationRef = useRef(location);
 	locationRef.current = location;
+	const onBeforeStartRef = useRef(onBeforeStart);
+	onBeforeStartRef.current = onBeforeStart;
+	const onEndRef = useRef(onEnd);
+	onEndRef.current = onEnd;
+	// `setup` settles (never rejects) once the host setup is over, so a
+	// teardown that arrives early can wait for it.
+	const hostRef = useRef<{
+		began: boolean;
+		ended: boolean;
+		setup: Promise<void> | null;
+	}>({ began: false, ended: false, setup: null });
+
+	const endTour = useCallback(() => {
+		const host = hostRef.current;
+		if (!host.began || host.ended) {
+			return;
+		}
+		host.ended = true;
+		prepareTokenRef.current += 1;
+		actionFocusCleanupRef.current?.();
+		actionFocusCleanupRef.current = undefined;
+		const teardown = () => onEndRef.current?.();
+		if (host.setup) {
+			host.setup.then(teardown);
+		} else {
+			teardown();
+		}
+	}, []);
+
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+			// StrictMode immediately replays the effect. Only a real unmount
+			// leaves the adapter absent at the next microtask.
+			queueMicrotask(() => {
+				if (!mountedRef.current) endTour();
+			});
+		};
+	}, [endTour]);
 
 	const applyRunState = useCallback((next: TourRunState) => {
+		if (!mountedRef.current || hostRef.current.ended) return;
 		runStateRef.current = next;
 		setRunState(next);
 	}, []);
 
-	const { steps } = tour;
+	// Variants are resolved once per tour: a flag flipping mid-run must not
+	// change the step count under a running tour.
+	const contextRef = useRef(context);
+	const steps = useMemo(
+		() => resolveTourSteps(tour, contextRef.current),
+		[tour]
+	);
 	const joyrideSteps = useMemo(() => {
 		const mapped = mapStepsToJoyride(steps);
 		return mapped.map((step, index) =>
@@ -109,13 +219,17 @@ export const ProductTourAdapter = ({
 				startedAt: startedAtRef.current,
 				completedAt: new Date().toISOString()
 			};
-			Promise.resolve(onTerminalStatus?.(progress)).catch(() => {
-				// A failed write must not crash the tour surface; the caller
-				// owns retry/reporting semantics.
-				terminalReportedRef.current = false;
-			});
+			Promise.resolve(onTerminalStatus?.(progress))
+				.catch(() => {
+					// A failed write must not crash the tour surface; the caller
+					// owns retry/reporting semantics.
+					terminalReportedRef.current = false;
+				})
+				// Leave the host's mode only after the write, which a guarded
+				// mode may only allow while it is still active.
+				.finally(endTour);
 		},
-		[onTerminalStatus, tour.id, tour.version]
+		[endTour, onTerminalStatus, tour.id, tour.version]
 	);
 
 	/**
@@ -125,10 +239,14 @@ export const ProductTourAdapter = ({
 	 * without completion — unless only OPTIONAL steps were missing while
 	 * moving forward past shown steps, which completes the tour (trailing
 	 * optional anchors must not trap a fresh account in `in_progress`).
-	 * Resolves true when a step became presentable.
+	 * Guided tours with `requiredTargetPolicy: 'stop'` instead interrupt as
+	 * soon as a required action target is missing. Resolves true when ready.
 	 */
 	const prepareStep = useCallback(
 		async (index: number, direction: 1 | -1 = 1): Promise<boolean> => {
+			if (!mountedRef.current || hostRef.current.ended) return false;
+			actionFocusCleanupRef.current?.();
+			actionFocusCleanupRef.current = undefined;
 			prepareTokenRef.current += 1;
 			const token = prepareTokenRef.current;
 			let requiredMissing = false;
@@ -149,7 +267,11 @@ export const ProductTourAdapter = ({
 						tourTargetSelector(step.target),
 						{ timeoutMs: targetTimeoutMs }
 					);
-					if (prepareTokenRef.current !== token) {
+					if (
+						!mountedRef.current ||
+						hostRef.current.ended ||
+						prepareTokenRef.current !== token
+					) {
 						return false;
 					}
 					if (!found) {
@@ -158,6 +280,14 @@ export const ProductTourAdapter = ({
 						} else {
 							requiredMissing = true;
 							emit('target_missing', step);
+							if (tour.requiredTargetPolicy === 'stop') {
+								applyRunState({
+									...runStateRef.current,
+									run: false
+								});
+								endTour();
+								return false;
+							}
 						}
 						lastSkipped = step;
 						continue;
@@ -200,30 +330,90 @@ export const ProductTourAdapter = ({
 				return false;
 			}
 			applyRunState({ ...runStateRef.current, run: false });
+			endTour();
 			return false;
 		},
-		[applyRunState, emit, navigate, reportTerminal, steps, targetTimeoutMs]
+		[
+			applyRunState,
+			emit,
+			endTour,
+			navigate,
+			reportTerminal,
+			steps,
+			targetTimeoutMs,
+			tour.requiredTargetPolicy
+		]
 	);
 
 	// Gate the initial run: prepare step 0 (route + target) before Joyride
 	// ever positions against the page.
 	useEffect(() => {
-		if (!active || startedPreparingRef.current) {
+		if (!active || !steps.length || startedPreparingRef.current) {
 			return;
 		}
 		startedPreparingRef.current = true;
-		prepareStep(0).then((prepared) => {
-			if (prepared) {
-				applyRunState({ ...runStateRef.current, run: true });
+		const start = () => {
+			if (!mountedRef.current || hostRef.current.ended) return;
+			const preparation = prepareStep(0);
+			const token = prepareTokenRef.current;
+			preparation.then((prepared) => {
+				if (
+					prepared &&
+					mountedRef.current &&
+					!hostRef.current.ended &&
+					prepareTokenRef.current === token
+				) {
+					applyRunState({ ...runStateRef.current, run: true });
+				}
+			});
+		};
+
+		// A replacement adapter starts after the old adapter's queued cleanup.
+		// StrictMode's same-instance replay keeps this single setup pending.
+		queueMicrotask(() => {
+			if (!mountedRef.current || hostRef.current.ended) return;
+			const host = hostRef.current;
+			host.began = true;
+			let setup: Promise<void> | undefined;
+			try {
+				const pending = onBeforeStartRef.current?.();
+				setup = pending ? Promise.resolve(pending) : undefined;
+			} catch (error) {
+				setup = Promise.reject(error);
 			}
+			if (!setup) {
+				start();
+				return;
+			}
+			host.setup = setup.then(
+				() => {},
+				() => {}
+			);
+			setup.then(
+				() => {
+					// Unmounted while setup was pending: teardown is on its way.
+					if (mountedRef.current && !host.ended) {
+						start();
+					}
+				},
+				// The tour never starts; undo whatever the setup got done.
+				endTour
+			);
 		});
-	}, [active, applyRunState, prepareStep]);
+	}, [active, applyRunState, endTour, prepareStep, steps.length]);
 
 	const handleCallback = useCallback(
-		(data: EventData) => {
+		(data: TourCallbackInput) => {
+			if (!mountedRef.current || hostRef.current.ended) return;
 			const stepForIndex = (index: number): TourStep | undefined =>
 				steps[index];
 
+			if (data.type === EVENTS.TOOLTIP) {
+				actionFocusCleanupRef.current?.();
+				actionFocusCleanupRef.current = focusActionTarget(
+					stepForIndex(data.index)
+				);
+			}
 			const prev = runStateRef.current;
 			const { state, events } = reduceTourCallback(
 				prev,
@@ -234,7 +424,8 @@ export const ProductTourAdapter = ({
 					type: data.type
 				},
 				steps.length,
-				steps
+				steps,
+				tour.requiredTargetPolicy
 			);
 
 			events.forEach((event) => {
@@ -262,11 +453,109 @@ export const ProductTourAdapter = ({
 				return;
 			}
 			applyRunState(state);
+			const isTerminal =
+				state.status === 'completed' || state.status === 'skipped';
+			if (prev.run && !state.run && !isTerminal) {
+				// Stopped without a terminal status (e.g. a missing required
+				// target): the terminal paths tear down after their write.
+				endTour();
+			}
 		},
-		[applyRunState, emit, prepareStep, reportTerminal, steps]
+		[
+			applyRunState,
+			emit,
+			endTour,
+			prepareStep,
+			reportTerminal,
+			steps,
+			tour.requiredTargetPolicy
+		]
 	);
 
-	if (!active) {
+	// A step with `advanceOn` finishes through the user's own action instead of
+	// Next. Whatever fires, it takes the same path as Next (events, progress,
+	// completion) and only once per shown step. The callback is read through a
+	// ref so a navigation or re-render caused by the very click that fires it
+	// cannot re-arm the listeners and drop the advance.
+	const handleCallbackRef = useRef(handleCallback);
+	handleCallbackRef.current = handleCallback;
+	const advancedFromRef = useRef<number | null>(null);
+	useEffect(() => {
+		advancedFromRef.current = null;
+	}, [readyIndex]);
+
+	const advanceFrom = useCallback((index: number) => {
+		if (
+			advancedFromRef.current === index ||
+			runStateRef.current.stepIndex !== index ||
+			!runStateRef.current.run
+		) {
+			return;
+		}
+		advancedFromRef.current = index;
+		handleCallbackRef.current({
+			action: ACTIONS.NEXT,
+			index,
+			status: STATUS.RUNNING,
+			type: EVENTS.STEP_AFTER
+		});
+	}, []);
+
+	const currentStep = steps[readyIndex];
+	const currentAdvanceOn = currentStep?.advanceOn;
+	const currentTarget = currentStep?.target;
+	const listening = runState.run && !paused;
+
+	useEffect(() => {
+		if (!currentAdvanceOn || !listening) {
+			return undefined;
+		}
+		const index = readyIndex;
+		if (currentAdvanceOn.type === 'event') {
+			return subscribeToTourEvent(currentAdvanceOn.name, () =>
+				advanceFrom(index)
+			);
+		}
+		if (currentAdvanceOn.type !== 'click') {
+			return undefined;
+		}
+		const targetName = currentAdvanceOn.target ?? currentTarget;
+		if (!targetName) {
+			return undefined;
+		}
+		const selector = tourTargetSelector(targetName);
+		let timer: number | undefined;
+		// Capture phase: sees the click even if the target stops propagation.
+		const onClick = (event: MouseEvent) => {
+			if (
+				timer === undefined &&
+				event.target instanceof Element &&
+				event.target.closest(selector)
+			) {
+				// A macrotask later, so the target handles its own click before
+				// the tour navigates or re-renders around it.
+				timer = window.setTimeout(() => advanceFrom(index), 0);
+			}
+		};
+		document.addEventListener('click', onClick, true);
+		return () => {
+			document.removeEventListener('click', onClick, true);
+			window.clearTimeout(timer);
+		};
+	}, [advanceFrom, currentAdvanceOn, currentTarget, listening, readyIndex]);
+
+	useEffect(() => {
+		if (
+			listening &&
+			currentAdvanceOn?.type === 'route' &&
+			// Level-triggered: a step shown on a matching location moves on.
+			routeMatches(currentAdvanceOn.path, location)
+		) {
+			advanceFrom(readyIndex);
+		}
+	}, [advanceFrom, currentAdvanceOn, listening, location, readyIndex]);
+
+	if (!active || !steps.length) {
 		return null;
 	}
 
@@ -291,7 +580,13 @@ export const ProductTourAdapter = ({
 				// The app shell is a fixed-viewport layout; scrolling the
 				// window would break it and every tour target is in view.
 				skipScroll: true,
-				zIndex: 53
+				zIndex: 53,
+				// Guided flows opt out of ESC / overlay-click dismissal so a
+				// stray key or click cannot mark the exercise skipped.
+				...(tour.dismissible === false && {
+					dismissKeyAction: false,
+					overlayClickAction: false
+				})
 			}}
 		/>
 	);

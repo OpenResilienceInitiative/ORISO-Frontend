@@ -1,3 +1,4 @@
+import { isActiveSupervisorOf } from '../sessionsListItem/supervisionListState';
 import * as React from 'react';
 import {
 	useCallback,
@@ -41,11 +42,7 @@ import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkelet
 import { getModality, Modality } from '../session/getModality';
 import {
 	apiGetAskerSessionList,
-	apiGetCaseHandoverCandidates,
-	apiGetCaseHandoverReasons,
 	apiGetConsultantSessionList,
-	apiRequestCaseHandoverBatchAccess,
-	CaseHandoverReason,
 	FETCH_ERRORS,
 	SESSION_COUNT
 } from '../../api';
@@ -54,6 +51,7 @@ import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
+import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
@@ -62,6 +60,7 @@ import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
+import FocusTrap from 'focus-trap-react';
 import { useTranslation } from 'react-i18next';
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
@@ -70,7 +69,6 @@ import { useForegroundRefresh } from '../../hooks/useForegroundRefresh';
 import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
-	SessionSearchPersonResult,
 	SessionsListToolbar,
 	DisplayFilterKindChip
 } from './SessionsListToolbar';
@@ -83,10 +81,12 @@ import {
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
 } from './sessionToolbarFilters';
+import { sessionMatchesAgency, textAxisQuery } from './sessionSearchPeople';
 import {
-	buildSearchPeopleResults,
-	sessionMatchesAgencies
-} from './sessionSearchPeople';
+	useCaseHandoverSearch,
+	useSearchPeopleResults
+} from './useCaseHandoverSearch';
+import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { useSessionListViewState } from './SessionListViewStateContext';
 import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
 import {
@@ -102,6 +102,7 @@ import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
+import { useCaseHandoverBatch } from './useCaseHandoverBatch';
 import { getFormatChipVisibility } from './formatChipVisibility';
 import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -110,6 +111,9 @@ import {
 	DisplayFilterDialog,
 	DisplayFilterKindOption,
 	isDisplayFilterCustomised,
+	useDisplayFilterEmailColumn,
+	useDisplayFilterBrowserUnavailable,
+	useDisplayFilterBrowserMuted,
 	useDisplayFilterLabels,
 	visiblePillKinds,
 	reconcileActiveKind,
@@ -148,6 +152,7 @@ import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath'
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
+
 const SESSIONS_DISPLAY_FILTER_DIALOG_ID = 'sessions-display-filter-dialog';
 
 const withDraftScopeParam = (path: string, draftScopeKey: string) => {
@@ -201,26 +206,29 @@ const DraftMetadataListItem = ({
 	onOpen: (draft: IUserDraftItem) => void;
 	translate: (key: string) => string;
 }) => (
-	<button
-		type="button"
-		className="sessionsListDraftItem"
-		data-cy="sessions-list-draft-item"
-		onClick={() => onOpen(draft)}
-		disabled={!draft.actionPath}
-	>
-		<span className="sessionsListDraftItem__tag">
-			{translate('sessionList.toolbar.chips.drafts')}
-		</span>
-		<span className="sessionsListDraftItem__title">
-			{draft.title || translate('drafts.center.untitledChat')}
-		</span>
-		<span className="sessionsListDraftItem__meta">
-			{formatDraftTime(draft.updatedAt)}
-		</span>
-		<span className="sessionsListDraftItem__hint">
-			{translate('sessionList.toolbar.draftMetadataOnly')}
-		</span>
-	</button>
+	// A plain wrapper: the row is a button, which cannot be the list item (#1338).
+	<div role="listitem">
+		<button
+			type="button"
+			className="sessionsListDraftItem"
+			data-cy="sessions-list-draft-item"
+			onClick={() => onOpen(draft)}
+			disabled={!draft.actionPath}
+		>
+			<span className="sessionsListDraftItem__tag">
+				{translate('sessionList.toolbar.chips.drafts')}
+			</span>
+			<span className="sessionsListDraftItem__title">
+				{draft.title || translate('drafts.center.untitledChat')}
+			</span>
+			<span className="sessionsListDraftItem__meta">
+				{formatDraftTime(draft.updatedAt)}
+			</span>
+			<span className="sessionsListDraftItem__hint">
+				{translate('sessionList.toolbar.draftMetadataOnly')}
+			</span>
+		</button>
+	</div>
 );
 
 interface SessionsListProps {
@@ -248,7 +256,11 @@ export const SessionsList = ({
 	const internalListRef = useRef<HTMLDivElement | null>(null);
 	const listRef = scrollContainerRef ?? internalListRef;
 
-	const { sessions, dispatch } = useContext(SessionsDataContext);
+	const {
+		sessions,
+		dispatch,
+		ready: sessionsReady
+	} = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { setSessionListViewState } = useSessionListViewState();
 
@@ -280,14 +292,14 @@ export const SessionsList = ({
 		Promise.resolve()
 	);
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
+	const [sessionToolbarSearchOpen, setSessionToolbarSearchOpen] =
+		useState(false);
 	const [sessionToolbarSelectedTopic, setSessionToolbarSelectedTopic] =
 		useState<string | null>(null);
-	const [sessionToolbarSelectedAgencies, setSessionToolbarSelectedAgencies] =
-		useState<string[]>([]);
-	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
-		useState<string[]>([]);
-	const [caseHandoverCandidateSessions, setCaseHandoverCandidateSessions] =
-		useState<ListItemInterface[]>([]);
+	const [sessionToolbarSelectedAgency, setSessionToolbarSelectedAgency] =
+		useState<string | null>(null);
+	const [filteredOutNoticeDismissed, setFilteredOutNoticeDismissed] =
+		useState(false);
 	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
 	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
@@ -297,15 +309,13 @@ export const SessionsList = ({
 	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
 		number[]
 	>([]);
-	const [caseHandoverReasons, setCaseHandoverReasons] = useState<
-		CaseHandoverReason[]
-	>([]);
 	const [caseHandoverReasonCode, setCaseHandoverReasonCode] = useState('');
 	const [caseHandoverExplanation, setCaseHandoverExplanation] = useState('');
-	const [caseHandoverBatchSubmitting, setCaseHandoverBatchSubmitting] =
-		useState(false);
 	const [caseHandoverBatchSummary, setCaseHandoverBatchSummary] =
 		useState('');
+	const caseHandoverBatch = useCaseHandoverBatch({
+		actorId: userData.userId
+	});
 	/**
 	 * Initial chip selection:
 	 *   - enquiry list: honour ?chip=liveChat in the URL (sidebar toggle
@@ -390,6 +400,12 @@ export const SessionsList = ({
 		resetSection: resetListDisplayOverride
 	} = useDisplayFilter(displayFilterSection);
 	const displayFilterLabels = useDisplayFilterLabels(displayFilterSection);
+	const displayFilterEmail =
+		useDisplayFilterEmailColumn(displayFilterSection);
+	const displayFilterBrowserUnavailable =
+		useDisplayFilterBrowserUnavailable(displayFilterSection);
+	const displayFilterBrowserMuted =
+		useDisplayFilterBrowserMuted(displayFilterSection);
 	// The kind options are built further down (they need the unread counts);
 	// the toolbar predicate above them reads the latest list through a ref.
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
@@ -1225,42 +1241,14 @@ export const SessionsList = ({
 			),
 		[userDrafts]
 	);
-	useEffect(() => {
-		const query = sessionToolbarSearch.trim();
-
-		if (!showConsultantToolbarActions) {
-			setCaseHandoverCandidateSessions([]);
-			return;
-		}
-
-		if (!query) {
-			setCaseHandoverCandidateSessions([]);
-			return;
-		}
-
-		const controller = new AbortController();
-		const timeoutId = window.setTimeout(() => {
-			apiGetCaseHandoverCandidates({
-				query,
-				count: 50,
-				archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
-				signal: controller.signal
-			})
-				.then(({ sessions: candidateSessions }) => {
-					setCaseHandoverCandidateSessions(candidateSessions || []);
-				})
-				.catch((error) => {
-					if (error?.message !== FETCH_ERRORS.ABORT) {
-						setCaseHandoverCandidateSessions([]);
-					}
-				});
-		}, 250);
-
-		return () => {
-			window.clearTimeout(timeoutId);
-			controller.abort();
-		};
-	}, [sessionListTab, sessionToolbarSearch, showConsultantToolbarActions]);
+	const caseHandoverSearch = useCaseHandoverSearch({
+		enabled: showConsultantToolbarActions,
+		query: sessionToolbarSearch,
+		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+		keepFound: caseHandoverBatchMode,
+		searchOpen: sessionToolbarSearchOpen
+	});
+	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
 	const loadUserDrafts = useCallback(async () => {
 		if (!showMySessionToolbar) {
 			setUserDrafts([]);
@@ -1299,21 +1287,16 @@ export const SessionsList = ({
 		};
 	}, [loadUserDrafts, showMySessionToolbar]);
 
+	const caseHandoverReasons = useCaseHandoverReasons(caseHandoverBatchMode);
+	// A chosen reason that is no longer offered is dropped.
+	const { reasons: loadedReasons, loaded: reasonsLoaded } =
+		caseHandoverReasons;
 	useEffect(() => {
-		if (!caseHandoverBatchMode) {
-			return;
-		}
-		apiGetCaseHandoverReasons()
-			.then((items) => {
-				setCaseHandoverReasons(items || []);
-				setCaseHandoverReasonCode((current) =>
-					items?.some((item) => item.code === current) ? current : ''
-				);
-			})
-			.catch(() => {
-				setCaseHandoverReasons([]);
-			});
-	}, [caseHandoverBatchMode]);
+		if (!reasonsLoaded) return;
+		setCaseHandoverReasonCode((current) =>
+			loadedReasons.some((item) => item.code === current) ? current : ''
+		);
+	}, [loadedReasons, reasonsLoaded]);
 
 	const handleOpenDraft = useCallback(
 		(draft: IUserDraftItem) => {
@@ -1565,9 +1548,10 @@ export const SessionsList = ({
 			}
 		}
 	};
+	const { candidateSessions } = caseHandoverSearch;
 	const finalSessionsList = React.useMemo(() => {
 		const baseSessions = (sessions || []).filter(filterSessions);
-		if (caseHandoverCandidateSessions.length === 0) {
+		if (candidateSessions.length === 0) {
 			return baseSessions;
 		}
 
@@ -1577,7 +1561,7 @@ export const SessionsList = ({
 				.filter(Boolean)
 				.map(String)
 		);
-		const candidates = caseHandoverCandidateSessions
+		const candidates = candidateSessions
 			.filter(filterSessions)
 			.filter((session) => {
 				const id = session.session?.id || session.chat?.id;
@@ -1585,7 +1569,7 @@ export const SessionsList = ({
 			});
 
 		return [...candidates, ...baseSessions];
-	}, [caseHandoverCandidateSessions, filterSessions, sessions]);
+	}, [candidateSessions, filterSessions, sessions]);
 	const sessionToolbarPairs = React.useMemo(
 		() =>
 			finalSessionsList.map((raw) => ({
@@ -1596,7 +1580,11 @@ export const SessionsList = ({
 	);
 	const toolbarSearchTopicResults = React.useMemo(() => {
 		const byId = new Map<string, { id: string; label: string }>();
-		sessionToolbarPairs.forEach(({ extended }) => {
+		sessionToolbarPairs.forEach(({ raw, extended }) => {
+			// Topics follow the chosen counselling centre (FE#1725 US13).
+			if (!sessionMatchesAgency(raw, sessionToolbarSelectedAgency)) {
+				return;
+			}
 			const topic = extended?.item?.topic as TopicSessionInterface | null;
 			if (topic?.id !== undefined && topic?.name) {
 				byId.set(String(topic.id), {
@@ -1608,7 +1596,98 @@ export const SessionsList = ({
 		return Array.from(byId.values()).sort((a, b) =>
 			a.label.localeCompare(b.label)
 		);
-	}, [sessionToolbarPairs]);
+	}, [sessionToolbarPairs, sessionToolbarSelectedAgency]);
+	const askerRoleLabel = translate('sessionList.toolbar.search.role.asker');
+	const consultantRoleLabel = translate(
+		'sessionList.toolbar.search.role.consultant'
+	);
+	/** The role labels the People tab shows also count as role words. */
+	const searchRoleLabels = React.useMemo(
+		() => ({ asker: askerRoleLabel, consultant: consultantRoleLabel }),
+		[askerRoleLabel, consultantRoleLabel]
+	);
+	// Counsellors' internal and legal names are for staff only: an advice
+	// seeker sees and searches the public name alone.
+	const showStaffNames = !hasUserAuthority(
+		AUTHORITIES.ASKER_DEFAULT,
+		userData
+	);
+	const searchTextOptions = React.useMemo(
+		() => ({ roleLabels: searchRoleLabels, internalNames: showStaffNames }),
+		[searchRoleLabels, showStaffNames]
+	);
+	const toolbarSearchPeopleResults = useSearchPeopleResults(
+		sessionToolbarPairs,
+		{
+			...searchRoleLabels,
+			unknown: translate('sessionList.user.consultantUnknown')
+		},
+		{
+			id: userData?.userId,
+			name:
+				userData?.displayName ||
+				[userData?.firstName, userData?.lastName]
+					.filter(Boolean)
+					.join(' ') ||
+				userData?.userName
+		},
+		// Only the handover search limits counsellors to takeable ones.
+		showConsultantToolbarActions
+			? caseHandoverSearch.takeableCases
+			: undefined,
+		showStaffNames
+	);
+	const listSearchQuery = textAxisQuery(
+		sessionToolbarSearch,
+		caseHandoverSearch.pickedPeople,
+		searchRoleLabels
+	);
+	const { selectPeople } = caseHandoverSearch;
+	const handleSelectedPeopleChange = useCallback(
+		(ids: string[]) => selectPeople(ids, toolbarSearchPeopleResults),
+		[selectPeople, toolbarSearchPeopleResults]
+	);
+	const handleSelectedAgencyChange = useCallback((id: string | null) => {
+		setSessionToolbarSelectedAgency(id);
+		setSessionToolbarSelectedTopic(null);
+	}, []);
+	const { reset: resetPickedPeople } = caseHandoverSearch;
+	/**
+	 * Clears type, centre, topic and archive-only; `everything` also clears
+	 * text and people (the search's X, US14).
+	 */
+	const clearToolbarFilters = useCallback(
+		(everything: boolean) => {
+			if (everything) {
+				setSessionToolbarSearch('');
+				resetPickedPeople(caseHandoverSelectedIds);
+			}
+			setSessionToolbarSelectedTopic(null);
+			setSessionToolbarSelectedAgency(null);
+			setSessionToolbarChip(null);
+			const params = new URLSearchParams(location.search);
+			params.delete('chip');
+			params.delete('sessionListTab');
+			const search = params.toString() ? `?${params.toString()}` : '';
+			if (location.search !== search) {
+				navigate(
+					{ pathname: location.pathname, search },
+					{ replace: true }
+				);
+			}
+		},
+		[
+			caseHandoverSelectedIds,
+			location.pathname,
+			location.search,
+			navigate,
+			resetPickedPeople
+		]
+	);
+	const resetToolbarSearch = useCallback(
+		() => clearToolbarFilters(true),
+		[clearToolbarFilters]
+	);
 	const isSessionListItemActive = useCallback(
 		(session: ExtendedSessionInterface) =>
 			(session?.rid && session.rid === groupIdFromParam) ||
@@ -1622,7 +1701,10 @@ export const SessionsList = ({
 	// is memoised: unread/receipt events re-render this list often.
 	const canSupervise =
 		showConsultantToolbarActions &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		sessionToolbarPairs.some(({ extended }) =>
+			isActiveSupervisorOf(extended, userData?.userId)
+		);
 	const currentUserId = userData?.userId;
 	const displayFiltered = useMemo(
 		() =>
@@ -1853,7 +1935,7 @@ export const SessionsList = ({
 			sessionMatchesToolbar(
 				raw,
 				extended,
-				sessionToolbarSearch,
+				listSearchQuery,
 				sessionToolbarChip === 'other' ? null : sessionToolbarChip,
 				sessionToolbarSelectedPeople,
 				visibleUserDrafts,
@@ -1861,12 +1943,10 @@ export const SessionsList = ({
 				/* #1404: never let the chip hide the conversation that is
 				   open — the same route-active exception the display filter
 				   already makes one layer earlier. */
-				isSessionListItemActive(extended)
+				isSessionListItemActive(extended),
+				searchTextOptions
 			) &&
-			sessionMatchesAgencies(
-				raw,
-				sessionToolbarSelectedAgencies.map(Number)
-			) &&
+			sessionMatchesAgency(raw, sessionToolbarSelectedAgency) &&
 			(!sessionToolbarSelectedTopic ||
 				String(
 					(extended?.item?.topic as TopicSessionInterface | null)
@@ -1879,8 +1959,9 @@ export const SessionsList = ({
 			listDisplayFilter,
 			isSessionListItemActive,
 			sessionToolbarChip,
-			sessionToolbarSearch,
-			sessionToolbarSelectedAgencies,
+			listSearchQuery,
+			searchTextOptions,
+			sessionToolbarSelectedAgency,
 			sessionToolbarSelectedPeople,
 			sessionToolbarSelectedTopic,
 			type,
@@ -1926,13 +2007,42 @@ export const SessionsList = ({
 				: [...current, sessionId]
 		);
 	}, []);
+	const caseHandoverContinueRef = useRef<HTMLButtonElement | null>(null);
+	const caseHandoverWizardRef = useRef<HTMLDivElement | null>(null);
+	const caseHandoverWizardWasOpen = useRef(false);
+	// Focus into the wizard on open, back to the bar's Continue on close.
+	useEffect(() => {
+		if (caseHandoverReviewOpen) {
+			caseHandoverWizardWasOpen.current = true;
+			caseHandoverWizardRef.current?.focus();
+			return;
+		}
+		if (caseHandoverWizardWasOpen.current) {
+			caseHandoverWizardWasOpen.current = false;
+			caseHandoverContinueRef.current?.focus();
+		}
+	}, [caseHandoverReviewOpen]);
+	// Bulk bar Continue and the chevron's "Confirm selection" share this.
+	const handleOpenCaseHandoverWizard = useCallback(() => {
+		setCaseHandoverWizardStep('reason');
+		setCaseHandoverBatchSummary('');
+		setCaseHandoverReviewOpen(true);
+	}, []);
+	/** Cancel and Escape: back to the selection, which stays as it was. */
+	const handleCancelCaseHandoverWizard = useCallback(() => {
+		caseHandoverBatch.close(caseHandoverSelectedIds);
+		setCaseHandoverReviewOpen(false);
+		setCaseHandoverWizardStep('reason');
+		setCaseHandoverBatchSummary('');
+	}, [caseHandoverBatch, caseHandoverSelectedIds]);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
+		caseHandoverBatch.close(caseHandoverSelectedIds, true);
 		setCaseHandoverBatchMode(false);
 		setCaseHandoverReviewOpen(false);
 		setCaseHandoverSelectedIds([]);
 		setCaseHandoverExplanation('');
 		setCaseHandoverBatchSummary('');
-	}, []);
+	}, [caseHandoverBatch, caseHandoverSelectedIds]);
 	useEffect(() => {
 		if (
 			sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
@@ -1952,42 +2062,43 @@ export const SessionsList = ({
 			);
 			return;
 		}
-		setCaseHandoverBatchSubmitting(true);
 		setCaseHandoverBatchSummary('');
-		apiRequestCaseHandoverBatchAccess(
+		void caseHandoverBatch.submit(
 			caseHandoverSelectedIds,
 			caseHandoverReasonCode,
 			caseHandoverExplanation
-		)
-			.then((results) => {
-				const successful = (results || []).filter(
-					(result) => result.success
-				).length;
-				const failed = (results || []).length - successful;
-				setCaseHandoverBatchSummary(
-					translate('caseHandover.batch.result', {
-						successful,
-						failed
-					})
-				);
-				setCaseHandoverSelectedIds([]);
-				setCaseHandoverReviewOpen(false);
-				setCaseHandoverWizardStep('reason');
-				void refetchSessionList();
-			})
-			.catch(() => {
-				setCaseHandoverBatchSummary(
-					translate('caseHandover.error.failed')
-				);
-			})
-			.finally(() => setCaseHandoverBatchSubmitting(false));
+		);
 	}, [
+		caseHandoverBatch,
 		caseHandoverExplanation,
 		caseHandoverReasonCode,
 		caseHandoverSelectedIds,
-		refetchSessionList,
 		translate
 	]);
+	useEffect(() => {
+		if (!caseHandoverBatch.outcome) return;
+		const { granted, pending, denied, failed, unresolvedSessionIds } =
+			caseHandoverBatch.outcome;
+		setCaseHandoverBatchSummary(
+			translate('caseHandover.batch.result', {
+				granted,
+				pending,
+				denied,
+				failed
+			})
+		);
+		setCaseHandoverSelectedIds(unresolvedSessionIds);
+		if (unresolvedSessionIds.length === 0) {
+			setCaseHandoverReviewOpen(false);
+			setCaseHandoverWizardStep('reason');
+		}
+		if (granted > 0 || pending > 0) void refetchSessionList();
+	}, [caseHandoverBatch.outcome, refetchSessionList, translate]);
+	useEffect(() => {
+		if (caseHandoverBatch.error) {
+			setCaseHandoverBatchSummary(translate('caseHandover.error.failed'));
+		}
+	}, [caseHandoverBatch.error, translate]);
 	const unmatchedDrafts = React.useMemo(() => {
 		if (sessionToolbarChip !== 'drafts') {
 			return [];
@@ -2056,6 +2167,14 @@ export const SessionsList = ({
 		if (!sessionToolbarChip) {
 			return;
 		}
+		if (
+			sessionToolbarChip === 'supervision' &&
+			sessionsReady &&
+			!canSupervise
+		) {
+			handleToolbarChipToggle(sessionToolbarChip);
+			return;
+		}
 		const activeKind =
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
@@ -2072,6 +2191,8 @@ export const SessionsList = ({
 			handleToolbarChipToggle(sessionToolbarChip);
 		}
 	}, [
+		canSupervise,
+		sessionsReady,
 		displayFilterKinds,
 		handleToolbarChipToggle,
 		listDisplayFilter,
@@ -2182,23 +2303,6 @@ export const SessionsList = ({
 			visibleSessionCount: visibleListItemCount
 		});
 	}, [isLoading, setSessionListViewState, type, visibleListItemCount]);
-	/**
-	 * #1195 JOB2/JOB5 — clients and counsellors are separate roles, so a session
-	 * contributes one row per person instead of one row named after the client
-	 * but hard-coded to `Berater:in`.
-	 */
-	const toolbarSearchPeopleResults: SessionSearchPersonResult[] =
-		React.useMemo(
-			() =>
-				buildSearchPeopleResults(sessionToolbarPairs, {
-					asker: translate('sessionList.toolbar.search.role.asker'),
-					consultant: translate(
-						'sessionList.toolbar.search.role.consultant'
-					),
-					unknown: translate('sessionList.user.consultantUnknown')
-				}),
-			[sessionToolbarPairs, translate]
-		);
 	/** #1195 JOB1 — the counsellor's own agencies drive the two-agency filter. */
 	const toolbarSearchAgencyResults = React.useMemo(
 		() =>
@@ -2211,13 +2315,38 @@ export const SessionsList = ({
 			})),
 		[userData]
 	);
-	const showSupervisionChip =
-		showConsultantToolbarActions &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const showSupervisionChip = canSupervise;
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&
 		visibleListItemCount === 0;
+	const hasToolbarSearchFilter = Boolean(
+		sessionToolbarSearch.trim() ||
+			sessionToolbarSelectedPeople.length ||
+			sessionToolbarSelectedTopic ||
+			sessionToolbarSelectedAgency ||
+			sessionToolbarChip
+	);
+	useEffect(() => {
+		setFilteredOutNoticeDismissed(false);
+	}, [
+		sessionToolbarSearch,
+		sessionToolbarSelectedPeople,
+		sessionToolbarSelectedTopic,
+		sessionToolbarSelectedAgency,
+		sessionToolbarChip
+	]);
+	const showFilteredOutNotice =
+		toolbarFilteredOutAll &&
+		hasToolbarSearchFilter &&
+		!filteredOutNoticeDismissed;
+	/** Filters that hide cases besides the search itself (US17). */
+	const hasHidingFilter = Boolean(
+		sessionToolbarSelectedTopic ||
+			sessionToolbarSelectedAgency ||
+			sessionToolbarChip ||
+			sessionListTab === SESSION_LIST_TAB_ARCHIVE
+	);
 	const futureTimelineSeries = React.useMemo(
 		() =>
 			futureSourceSessions
@@ -2282,8 +2411,30 @@ export const SessionsList = ({
 					searchValue={sessionToolbarSearch}
 					onSearchChange={setSessionToolbarSearch}
 					searchPeopleResults={toolbarSearchPeopleResults}
+					searchPeopleStatus={caseHandoverSearch.eligibleStatus}
+					searchPeopleHint={
+						showConsultantToolbarActions
+							? translate(
+									'sessionList.toolbar.search.handoverPeopleHint'
+								)
+							: undefined
+					}
+					searchPeopleCappedNote={
+						showConsultantToolbarActions &&
+						caseHandoverSearch.eligibleCapped
+							? translate(
+									'sessionList.toolbar.search.handoverPeopleCapped'
+								)
+							: undefined
+					}
+					searchPeopleEligibleOnlyWhenBlank={
+						showConsultantToolbarActions
+					}
+					onSearchOpenChange={setSessionToolbarSearchOpen}
 					selectedPersonIds={sessionToolbarSelectedPeople}
-					onSelectedPersonIdsChange={setSessionToolbarSelectedPeople}
+					selectedPeopleDetails={caseHandoverSearch.pickedPeople}
+					onSelectedPersonIdsChange={handleSelectedPeopleChange}
+					onSearchReset={resetToolbarSearch}
 					activeChip={isCreateChatActive ? null : sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}
@@ -2335,10 +2486,8 @@ export const SessionsList = ({
 						onOpen: () => setDisplayFilterOpen(true)
 					}}
 					searchAgencyResults={toolbarSearchAgencyResults}
-					selectedAgencyIds={sessionToolbarSelectedAgencies}
-					onSelectedAgencyIdsChange={
-						setSessionToolbarSelectedAgencies
-					}
+					selectedAgencyId={sessionToolbarSelectedAgency}
+					onSelectedAgencyIdChange={handleSelectedAgencyChange}
 					searchTopicResults={toolbarSearchTopicResults}
 					selectedTopicId={sessionToolbarSelectedTopic}
 					onSelectedTopicIdChange={setSessionToolbarSelectedTopic}
@@ -2391,6 +2540,35 @@ export const SessionsList = ({
 			)}
 			{showMySessionToolbar && (
 				<M3Snackbar
+					open={showFilteredOutNotice}
+					message={translate(
+						'sessionList.toolbar.search.filteredOutAll'
+					)}
+					role="status"
+					action={
+						hasHidingFilter
+							? {
+									label: translate(
+										'sessionList.toolbar.search.removeFiltersKeepSearch'
+									),
+									onClick: () => clearToolbarFilters(false),
+									testId: 'session-search-filtered-out-reset'
+								}
+							: {
+									label: translate(
+										'sessionList.toolbar.search.clear'
+									),
+									onClick: resetToolbarSearch,
+									testId: 'session-search-filtered-out-reset'
+								}
+					}
+					onClose={() => setFilteredOutNoticeDismissed(true)}
+					closeLabel={displayFilterLabels.dialogLabels.close}
+					testId="session-search-filtered-out-notice"
+				/>
+			)}
+			{showMySessionToolbar && (
+				<M3Snackbar
 					open={deactivatedNotice !== null}
 					message={deactivatedNotice}
 					role="status"
@@ -2414,6 +2592,9 @@ export const SessionsList = ({
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={displayFilterKinds}
+					email={displayFilterEmail}
+					browserUnavailableReason={displayFilterBrowserUnavailable}
+					browserMutedNotice={displayFilterBrowserMuted}
 					value={listDisplayFilter}
 					canReset={listDisplayOverride !== null}
 					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
@@ -2455,63 +2636,89 @@ export const SessionsList = ({
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				caseHandoverReviewOpen && (
-					<div
-						className="sessionsList__caseHandoverWizardOverlay"
-						role="dialog"
-						aria-modal="true"
-						aria-label={translate('caseHandover.batch.title')}
+					// aria-modal promises an inert page: Tab and Shift+Tab stay
+					// inside. Focus in and back to Continue is handled above.
+					<FocusTrap
+						focusTrapOptions={{
+							initialFocus: false,
+							returnFocusOnDeactivate: false,
+							escapeDeactivates: false,
+							allowOutsideClick: true,
+							fallbackFocus: () =>
+								caseHandoverWizardRef.current ?? document.body
+						}}
 					>
-						<div className="sessionsList__caseHandoverWizardShell">
-							<div className="sessionsList__caseHandoverWizardBar">
-								<strong>
-									{translate('caseHandover.batch.title')}
-								</strong>
-								<span>
-									{translate(
-										'caseHandover.batch.selectedCount',
-										{
-											count: caseHandoverSelectedIds.length
-										}
-									)}
-								</span>
-								<button
-									type="button"
-									className="sessionsList__caseHandoverWizardClose"
-									onClick={() => {
-										setCaseHandoverReviewOpen(false);
-										setCaseHandoverWizardStep('reason');
-									}}
-								>
-									{translate('caseHandover.batch.cancel')}
-								</button>
+						<div
+							className="sessionsList__caseHandoverWizardOverlay"
+							role="dialog"
+							aria-modal="true"
+							aria-label={translate('caseHandover.batch.title')}
+							ref={caseHandoverWizardRef}
+							tabIndex={-1}
+							onKeyDown={(event) => {
+								if (event.key !== 'Escape') return;
+								event.stopPropagation();
+								handleCancelCaseHandoverWizard();
+							}}
+						>
+							<div className="sessionsList__caseHandoverWizardShell">
+								<div className="sessionsList__caseHandoverWizardBar">
+									<strong>
+										{translate('caseHandover.batch.title')}
+									</strong>
+									<span>
+										{translate(
+											'caseHandover.batch.selectedCount',
+											{
+												count: caseHandoverSelectedIds.length
+											}
+										)}
+									</span>
+									<button
+										type="button"
+										className="sessionsList__caseHandoverWizardClose"
+										onClick={handleCancelCaseHandoverWizard}
+									>
+										{translate('caseHandover.batch.cancel')}
+									</button>
+								</div>
+								<CaseHandoverCurtainView
+									step={caseHandoverWizardStep}
+									reasons={caseHandoverReasons.reasons}
+									reasonCode={caseHandoverReasonCode}
+									explanation={caseHandoverExplanation}
+									isSubmitting={caseHandoverBatch.submitting}
+									reasonsUnavailable={
+										caseHandoverReasons.unavailable
+									}
+									reasonsLoadFailed={
+										caseHandoverReasons.failed
+									}
+									onRetryReasons={caseHandoverReasons.retry}
+									error={
+										caseHandoverReviewOpen &&
+										caseHandoverBatchSummary
+											? caseHandoverBatchSummary
+											: undefined
+									}
+									onStart={() =>
+										setCaseHandoverWizardStep('reason')
+									}
+									onBack={() =>
+										setCaseHandoverWizardStep('reason')
+									}
+									onNext={() =>
+										setCaseHandoverWizardStep('describe')
+									}
+									onReasonSelect={setCaseHandoverReasonCode}
+									onExplanationChange={
+										setCaseHandoverExplanation
+									}
+									onSubmit={handleSubmitCaseHandoverBatch}
+								/>
 							</div>
-							<CaseHandoverCurtainView
-								step={caseHandoverWizardStep}
-								reasons={caseHandoverReasons}
-								reasonCode={caseHandoverReasonCode}
-								explanation={caseHandoverExplanation}
-								isSubmitting={caseHandoverBatchSubmitting}
-								error={
-									caseHandoverReviewOpen &&
-									caseHandoverBatchSummary
-										? caseHandoverBatchSummary
-										: undefined
-								}
-								onStart={() =>
-									setCaseHandoverWizardStep('reason')
-								}
-								onBack={() =>
-									setCaseHandoverWizardStep('reason')
-								}
-								onNext={() =>
-									setCaseHandoverWizardStep('describe')
-								}
-								onReasonSelect={setCaseHandoverReasonCode}
-								onExplanationChange={setCaseHandoverExplanation}
-								onSubmit={handleSubmitCaseHandoverBatch}
-							/>
 						</div>
-					</div>
+					</FocusTrap>
 				)}
 			<div className="sessionsList__scrollArea">
 				<div
@@ -2521,13 +2728,12 @@ export const SessionsList = ({
 						'sessionRailList': isRail
 					})}
 					ref={listRef}
-					role={isRail ? 'tablist' : undefined}
+					// Rail pills are tabs; full cards hold their own buttons (menu,
+					// mail, call), which a tab may not contain, so they are list
+					// items (#1338).
+					role={isRail ? 'tablist' : 'list'}
 					aria-orientation={isRail ? 'vertical' : undefined}
-					aria-label={
-						isRail
-							? translate('sessionList.view.headline')
-							: undefined
-					}
+					aria-label={translate('sessionList.view.headline')}
 					onScroll={handleListScroll}
 				>
 					{(!isLoading || finalSessionsList.length > 0) &&
@@ -2537,7 +2743,7 @@ export const SessionsList = ({
 								index
 							) => (
 								<ActiveSessionProvider
-									key={activeSession.item.id}
+									key={`${activeSession.isGroup ? 'chat' : 'session'}:${activeSession.item.id}`}
 									activeSession={activeSession}
 								>
 									<div
@@ -2550,9 +2756,12 @@ export const SessionsList = ({
 										{hiddenActiveRowIds.has(
 											sortedSessionIds[index]
 										) && (
+											// Announced like a status, without a
+											// status role inside the list (#1338).
 											<p
 												className="sessionsList__hiddenActiveRowHint"
-												role="status"
+												aria-live="polite"
+												aria-atomic="true"
 											>
 												{translate(
 													'notifications.displayFilter.hiddenActiveRow'
@@ -2600,8 +2809,8 @@ export const SessionsList = ({
 												);
 												setCaseHandoverBatchSummary('');
 											}}
-											onCaseHandoverBatchConfirm={() =>
-												setCaseHandoverReviewOpen(true)
+											onCaseHandoverBatchConfirm={
+												handleOpenCaseHandoverWizard
 											}
 											onCaseHandoverBatchClose={
 												handleCloseCaseHandoverBatch
@@ -2626,7 +2835,10 @@ export const SessionsList = ({
 					{isLoading && <SessionsListSkeleton />}
 
 					{isReloadButtonVisible && (
-						<div className="sessionsList__reloadWrapper">
+						<div
+							className="sessionsList__reloadWrapper"
+							role="listitem"
+						>
 							<Button
 								item={{
 									label: translate(
@@ -2657,6 +2869,30 @@ export const SessionsList = ({
 						}
 						sessionListTab={sessionListTab}
 						type={type}
+					/>
+				)}
+			{showCaseHandoverBatchUi &&
+				caseHandoverBatchMode &&
+				!caseHandoverReviewOpen && (
+					<CaseHandoverBulkBar
+						ref={caseHandoverContinueRef}
+						count={caseHandoverSelectedIds.length}
+						labels={{
+							region: translate('caseHandover.bulkBar.label'),
+							selected: translate(
+								'caseHandover.bulkBar.selected',
+								{ count: caseHandoverSelectedIds.length }
+							),
+							continueLabel: translate(
+								'caseHandover.bulkBar.continue'
+							),
+							cancel: translate('caseHandover.bulkBar.cancel'),
+							emptyHint: translate(
+								'caseHandover.bulkBar.emptyHint'
+							)
+						}}
+						onContinue={handleOpenCaseHandoverWizard}
+						onCancel={handleCloseCaseHandoverBatch}
 					/>
 				)}
 		</div>

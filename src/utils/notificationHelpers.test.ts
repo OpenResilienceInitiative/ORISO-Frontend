@@ -1,9 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #576 — permission gating for OS notifications: no popup without browser
  * permission + user opt-in, and the Safari-safe requestPermission wrapper.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	browserNotificationsSettings,
 	optInToBrowserNotifications,
@@ -13,6 +20,7 @@ import {
 } from './notificationHelpers';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { setKindField } from './notificationSettings/notificationConfig';
+import { replaceTenantSettings } from './tenantSettingsHelper';
 import { setAppConfig } from './appConfig';
 
 const constructed: Array<{ title: string; options: any }> = [];
@@ -52,6 +60,7 @@ const routePanel = (crossDevice: boolean) =>
 
 beforeEach(() => {
 	constructed.length = 0;
+	replaceTenantSettings();
 	localStorage.clear();
 	// The store is a module singleton, so opt-in state would otherwise leak
 	// from one test into the next.
@@ -159,6 +168,20 @@ describe('sendNotification permission gate', () => {
 		sendNotification('Hallo', { showAlways: true });
 		expect(constructed).toHaveLength(1);
 		expect(constructed[0].title).toBe('Hallo');
+	});
+
+	// The app owns the tone (soundPlayback.ts plays it focused or not, also
+	// for "Pop-up ohne Ton" = no tone): the OS must never add its own.
+	it('creates every OS pop-up silent, even when a caller asks for sound', () => {
+		stubNotification('granted');
+		saveBrowserNotificationsSettings({ enabled: true });
+		sendNotification('Hallo', { showAlways: true });
+		sendNotification('Hallo', { showAlways: true, silent: false });
+		expect(constructed).toHaveLength(2);
+		expect(constructed.map((entry) => entry.options.silent)).toEqual([
+			true,
+			true
+		]);
 	});
 
 	/*
@@ -321,4 +344,55 @@ describe('optInToBrowserNotifications (#1551)', () => {
 		await optInToBrowserNotifications();
 		expect(browserNotificationsSettings().enabled).toBe(false);
 	});
+});
+
+it('checks fresh effective browser policy at the actual OS delivery boundary without changing consultant subscriptions', () => {
+	stubNotification('granted');
+	saveBrowserNotificationsSettings({ enabled: true, newMessage: true });
+	replaceTenantSettings({
+		featureAskerBrowserAgencyCounsellingEnabled: false
+	});
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(0);
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'consultant',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(1);
+	replaceTenantSettings({
+		featureAskerBrowserAgencyCounsellingEnabled: true
+	});
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(2);
+	saveBrowserNotificationsSettings({ enabled: false });
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(2);
+});
+it('applies browser context defaults and denies an unsupported future session context', () => {
+	stubNotification('granted');
+	saveBrowserNotificationsSettings({ enabled: true });
+	sendNotification('Update', { showAlways: true }, 'asker', null);
+	expect(constructed).toHaveLength(1);
+	sendNotification('Update', { showAlways: true }, 'asker', 'UNKNOWN');
+	expect(constructed).toHaveLength(1);
+	replaceTenantSettings({ featureAskerBrowserLiveChatEnabled: false });
+	sendNotification('Update', { showAlways: true }, 'asker', 'LIVE_CHAT');
+	expect(constructed).toHaveLength(1);
 });

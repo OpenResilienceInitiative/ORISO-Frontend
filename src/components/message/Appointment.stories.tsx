@@ -25,7 +25,8 @@ import './message.styles.scss';
  * see `ReassignMessage.stories.tsx` for the routing detail.
  */
 const meta = {
-	title: 'Components/Chat/Appointment',
+	id: 'components-chat-appointment',
+	title: 'Chat/System messages/Appointments',
 	component: Appointment,
 	tags: ['autodocs'],
 	parameters: {

@@ -78,6 +78,23 @@ export const FinalStep: Story = {
 	})
 };
 
+export const SelfAdvancingStep: Story = {
+	args: tooltipProps({
+		step: {
+			title: 'walkthrough.step.1.title',
+			content: 'walkthrough.step.1.intro',
+			data: { advanceOn: { type: 'click' } }
+		}
+	}),
+	parameters: {
+		docs: {
+			description: {
+				story: 'A step with advanceOn has no Next: it finishes when the user does the highlighted action. Back and close stay.'
+			}
+		}
+	}
+};
+
 export const LongTranslatedCopy: Story = {
 	args: tooltipProps({
 		step: {

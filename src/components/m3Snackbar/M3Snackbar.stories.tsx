@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
 import { M3Snackbar } from './M3Snackbar';
 import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
@@ -251,5 +252,88 @@ export const Mobil: Story = {
 				story: 'Auf dem Telefon ist die 344-pt-Breite fast die ganze Seite. Hier zeigt sich, ob Nachricht, Aktion und Kreuz nebeneinander noch tragen — oder ob die Aktion eine eigene Zeile braucht.'
 			}
 		}
+	}
+};
+
+export const LongTranslatedAction: Story = {
+	args: {
+		message: 'Ihre Nachricht bleibt im geschützten Gespräch verfügbar.'
+	},
+	render: () => (
+		<div>
+			{[320, 390, 412, 820, 1440].map((width) => (
+				<div
+					key={width}
+					data-testid={`snackbar-column-${width}`}
+					style={{ width, maxWidth: '100%' }}
+				>
+					<M3Snackbar
+						placement="inline"
+						message="Ihre Nachricht bleibt im geschützten Gespräch verfügbar."
+						action={{
+							label: 'Weitere Informationen zur Wiederherstellung Ihres geschützten Nachrichtenverlaufs anzeigen'
+						}}
+						actionOnOwnLine
+						onClose={noop}
+						closeLabel="Schließen"
+					/>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		for (const width of [320, 390, 412, 820, 1440]) {
+			const host = canvas.getByTestId(`snackbar-column-${width}`);
+			const notice = within(host).getByRole('alert');
+			const action = within(host).getByRole('button', {
+				name: /Weitere Informationen/
+			});
+			expect(notice.scrollWidth).toBeLessThanOrEqual(notice.clientWidth);
+			for (const element of Array.from(notice.querySelectorAll('div')))
+				expect(element.scrollWidth).toBeLessThanOrEqual(
+					element.clientWidth + 1
+				);
+			expect(action.getBoundingClientRect().right).toBeLessThanOrEqual(
+				notice.getBoundingClientRect().right
+			);
+			action.focus();
+			expect(action).toHaveFocus();
+			expect(
+				action.getBoundingClientRect().height
+			).toBeGreaterThanOrEqual(44);
+		}
+	}
+};
+
+/** Transformed host models the actual available column for fixed placement. */
+export const FloatingNarrowColumn: Story = {
+	args: { message: SINGLE_LINE },
+	render: () => (
+		<div
+			data-testid="floating-host"
+			style={{
+				width: 320,
+				maxWidth: '100%',
+				height: 180,
+				transform: 'translateZ(0)'
+			}}
+		>
+			<M3Snackbar
+				message={SINGLE_LINE}
+				action={{ label: 'Aktion', onClick: noop }}
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const host = within(canvasElement).getByTestId('floating-host');
+		const notice = within(host).getByRole('alert');
+		expect(notice.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			host.getBoundingClientRect().left
+		);
+		expect(notice.getBoundingClientRect().right).toBeLessThanOrEqual(
+			host.getBoundingClientRect().right
+		);
+		expect(notice.scrollWidth).toBeLessThanOrEqual(notice.clientWidth);
 	}
 };

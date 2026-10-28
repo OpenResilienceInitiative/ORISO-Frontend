@@ -197,7 +197,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				}
 
 				.navigation__item--active .navigation__title--figma {
-					color: var(--m3-primary, #a5000a);
+					color: var(
+						--oriso-primary-text,
+						var(--m3-primary, #a5000a)
+					);
 					font-weight: 700;
 				}
 
@@ -632,7 +635,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 
 		&__count {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			background-color: $white;
 			transition: opacity 0.6s ease;
 			border-radius: 999px;

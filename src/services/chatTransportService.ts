@@ -1,5 +1,6 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
+import { Direction, MatrixEvent, Room } from 'matrix-js-sdk';
+import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 import {
 	apiPostMessageEventNotification,
 	MessageEventNotificationInput
@@ -356,6 +357,40 @@ class ChatTransportService {
 		return (
 			getMatrixClientService()?.getRoomMessages?.(matrixRoomId, limit) ||
 			[]
+		);
+	}
+
+	/**
+	 * What the client holds for one room, without loading anything: how many
+	 * live-timeline events are cached and whether the server has older ones.
+	 */
+	public getMatrixRoomHistoryState(matrixRoomId: string): {
+		cachedCount: number;
+		hasMoreOnServer: boolean;
+	} {
+		const room = this.getMatrixRoom(matrixRoomId);
+		return {
+			cachedCount: room?.timeline?.length ?? 0,
+			hasMoreOnServer:
+				room
+					?.getLiveTimeline?.()
+					?.getPaginationToken?.(Direction.Backward) != null
+		};
+	}
+
+	public async loadEarlierMatrixRoomMessages(
+		matrixRoomId: string
+	): Promise<boolean> {
+		const service = getMatrixClientService();
+		const client = service?.getClient();
+		if (!client) throw new Error('Matrix client is unavailable');
+		await service.waitUntilReady();
+		await loadEarlierMatrixRoomHistory(client, matrixRoomId);
+		return (
+			client
+				.getRoom(matrixRoomId)
+				?.getLiveTimeline()
+				.getPaginationToken(Direction.Backward) != null
 		);
 	}
 

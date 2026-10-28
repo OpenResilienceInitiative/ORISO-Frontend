@@ -6,6 +6,7 @@
  */
 export type GroupChatJoinRequestStatus =
 	| 'PENDING'
+	| 'ADMITTING'
 	| 'ADMITTED'
 	| 'DECLINED'
 	| 'CANCELLED';

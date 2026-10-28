@@ -76,7 +76,7 @@
 			}
 
 			path {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 		}
 	}
@@ -103,6 +103,6 @@
 	}
 
 	&--primary {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 	}
 }

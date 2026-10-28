@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { agencyWebsiteHref } from './agencyWebsiteUrl';
 
 // ORISO-Helm#368 (FE-03): a website stored without a scheme was resolved

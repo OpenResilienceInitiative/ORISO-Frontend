@@ -1,14 +1,25 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, cleanup, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 const { apiPostRegistration, autoLogin } = vi.hoisted(() => ({
 	apiPostRegistration: vi.fn(),
 	autoLogin: vi.fn()
 }));
 
-vi.mock('../../api/apiPostRegistration', () => ({ apiPostRegistration }));
-vi.mock('./autoLogin', () => ({ autoLogin }));
+// The retry goes through the deadline wrapper; the login behind it is what
+// these tests watch.
+vi.mock('../../api/apiPostRegistration', () => ({
+	apiPostRegistration,
+	autoLoginWithDeadline: autoLogin
+}));
 
 const { useRegisterThenLogin } = await import('./useRegisterThenLogin');
 

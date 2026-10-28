@@ -8,6 +8,28 @@ interface GroupChatRepeatSource {
 	repetitive?: boolean | null;
 }
 
+/** The interval's name, e.g. "Wöchentlich" — one key for every surface. */
+export const getGroupChatIntervalLabel = (
+	interval: GroupChatInterval,
+	translate: Translate
+): string =>
+	translate(`groupChat.create.interval.options.${interval.toLowerCase()}`);
+
+/**
+ * The number of dates, e.g. "10 Termine"; a single date is "einmalig", so
+ * the count key is only ever used for two or more. The create form shows
+ * this above the interval.
+ */
+export const getGroupChatRepeatCountLabel = (
+	repeatCount: number,
+	translate: Translate
+): string =>
+	repeatCount > 1
+		? translate('groupChat.circle.rows.repeatDates', {
+				count: repeatCount
+			})
+		: translate('groupChat.info.settings.repetition.single');
+
 /**
  * One wording for "how often" in Chat-Info and the share dialog, e.g.
  * "3 Termine, Alle zwei Wochen" or "einmalig".
@@ -20,9 +42,7 @@ export const getGroupChatRepeatLabel = (
 	if (repeatCount > 1 && source.chatInterval) {
 		return translate('groupChat.shareDialog.repeatValue', {
 			count: repeatCount,
-			interval: translate(
-				`groupChat.create.interval.options.${source.chatInterval.toLowerCase()}`
-			)
+			interval: getGroupChatIntervalLabel(source.chatInterval, translate)
 		});
 	}
 	// Legacy chats only carry `repetitive`, and those always ran weekly.

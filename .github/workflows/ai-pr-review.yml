@@ -149,7 +149,7 @@ jobs:
           repo="${GITHUB_REPOSITORY##*/}"
           work="$(mktemp -d)"
           staged="${work}/${repo}/.understand-anything"
-          state="committed copy (no refresh)"
+          state="unavailable (no verified graph could be fetched)"
 
           refresh() {
             curl -fsSL --retry 3 --retry-delay 2 --max-time 180 \
@@ -189,7 +189,7 @@ jobs:
             behind="$(git rev-list --count "${built%% *}..HEAD" 2>/dev/null || echo "?")"
             state="built from ${built} (${behind} commits behind this branch)"
           else
-            echo "::warning::Could not obtain a verified current graph for ${repo}; using the committed copy, which may be far behind."
+            echo "::warning::Could not obtain a verified current graph for ${repo}; no verified graph could be fetched, so the review proceeds without it."
           fi
 
           rm -rf "${work}"

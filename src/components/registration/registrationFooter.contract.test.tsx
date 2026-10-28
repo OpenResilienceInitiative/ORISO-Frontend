@@ -1,8 +1,15 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { Registration } from './Registration';
 import {
 	AppConfigContext,
@@ -151,9 +158,7 @@ const blocksFor = (element: Element): CssBlock[] => {
 
 	const own = new Set(Array.from(element.classList, (name) => `.${name}`));
 	return blocks.filter((block) =>
-		block.selector
-			.split(',')
-			.some((selector) => own.has(selector.trim()))
+		block.selector.split(',').some((selector) => own.has(selector.trim()))
 	);
 };
 
@@ -200,8 +205,7 @@ const renderRegistration = () =>
 									{
 										disabledNextButton: false,
 										setDisabledNextButton: () => undefined,
-										updateRegistrationData: () =>
-											undefined,
+										updateRegistrationData: () => undefined,
 										registrationData: {},
 										availableSteps,
 										registrationConsultingType: null
@@ -235,7 +239,10 @@ const findFixedFooter = (): HTMLElement => {
 	const nav = document.querySelector('[data-cy="registration-step-nav"]');
 	expect(nav, 'registration step navigation is rendered').toBeTruthy();
 	let candidate = (nav as HTMLElement).parentElement;
-	while (candidate && window.getComputedStyle(candidate).position !== 'fixed') {
+	while (
+		candidate &&
+		window.getComputedStyle(candidate).position !== 'fixed'
+	) {
 		candidate = candidate.parentElement;
 	}
 	expect(
@@ -281,9 +288,16 @@ describe('registration footer — contract', () => {
 		const footer = findFixedFooter();
 
 		const nav = footer.querySelector('[data-cy="registration-step-nav"]');
-		expect(nav, 'the compact step navigation lives in the bar').toBeTruthy();
-		expect(nav?.querySelector('[data-cy="registration-back"]')).toBeTruthy();
-		expect(nav?.querySelector('[data-cy="registration-next"]')).toBeTruthy();
+		expect(
+			nav,
+			'the compact step navigation lives in the bar'
+		).toBeTruthy();
+		expect(
+			nav?.querySelector('[data-cy="registration-back"]')
+		).toBeTruthy();
+		expect(
+			nav?.querySelector('[data-cy="registration-next"]')
+		).toBeTruthy();
 
 		// The wide layout has its own primary action next to the picks.
 		expect(

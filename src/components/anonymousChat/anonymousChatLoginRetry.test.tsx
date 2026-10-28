@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -9,7 +9,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	AppConfigContext,
 	LocaleContext,
@@ -38,7 +45,10 @@ vi.mock('../../api/apiGetConsultantAvailability', () => ({
 	apiGetConsultantAvailability: api.apiGetConsultantAvailability
 }));
 vi.mock('../../api/apiPostRegistration', () => ({
-	apiPostRegistration: api.apiPostRegistration
+	apiPostRegistration: api.apiPostRegistration,
+	// The retry goes through the deadline wrapper; the login behind it is what
+	// these tests watch.
+	autoLoginWithDeadline: api.autoLogin
 }));
 vi.mock('../registration/autoLogin', () => ({
 	autoLogin: api.autoLogin,

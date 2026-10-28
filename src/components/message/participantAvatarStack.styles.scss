@@ -1,9 +1,6 @@
-// Participant avatar stack — Figma "Avatar Group" (Room Header All,
-// 1320:38281): 40 px circles, 28 px step (12 px overlap, measured with
-// get_metadata), first participant on top. Tokens are the room header's
-// (`surface-container-lowest` ring, `primary-fixed` chip). The component
-// sets `--participant-size` / `--participant-step`; the defaults here are
-// the Figma header values.
+// Shared avatar stack. Default geometry is retained for existing consumers;
+// current headers supply 48px circles and a 24px step from HEADER_STACK_PROPS.
+// The white ring and count use the shared M3 tokens.
 
 .participantStack {
 	position: relative;
@@ -65,23 +62,22 @@
 		line-height: 16px;
 		letter-spacing: 0.5px;
 		white-space: nowrap;
-		pointer-events: none;
+		pointer-events: auto;
 		visibility: hidden;
 		opacity: 0;
 		transition: opacity 120ms ease;
+
+		// Keep the tooltip hovered while crossing the gap from its avatar.
+		&::before {
+			position: absolute;
+			inset: -6px 0 100%;
+			content: '';
+		}
 	}
 
-	&__item:hover &__tip,
-	&__item:focus-within &__tip,
 	&__item[data-open='true'] &__tip {
 		visibility: visible;
 		opacity: 1;
-	}
-
-	// Escape dismisses a keyboard-open tooltip without moving focus.
-	&__item[data-open='false']:focus-within &__tip {
-		visibility: hidden;
-		opacity: 0;
 	}
 
 	// "+N" — same shape as `.sessionInfo__memberCount` (Figma #430).
@@ -96,18 +92,26 @@
 		border-radius: 20px;
 		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
 		background: var(--m3-primary-fixed, #ffdad5);
-		color: var(--m3-primary, #a5000a);
+		color: var(
+			--oriso-primary-text-on-fixed,
+			var(--oriso-primary-text, var(--m3-primary, #a5000a))
+		);
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 1;
 		white-space: nowrap;
 	}
 
-	// The chip stays in the flow: its item is as wide as the chip, so it
-	// starts one step (28 px) after the last avatar and reserves its own
-	// width (no overlap with the title that follows the stack).
+	// Reserve the chip's own width and clear the previous avatar's overhang.
+	// Applying the gap only to adjacent items keeps chip-only stacks flush.
 	&__item--overflow {
 		width: auto;
+	}
+
+	&__item + &__item--overflow {
+		margin-left: calc(
+			var(--participant-size, 40px) - var(--participant-step, 28px)
+		);
 	}
 
 	&--overflow {

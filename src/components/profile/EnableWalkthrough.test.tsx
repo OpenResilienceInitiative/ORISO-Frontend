@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import de from '../../resources/i18n/de/common.json';
 import { NotificationsContext, UserDataContext } from '../../globalState';
 import { apiPatchConsultantData } from '../../api';
@@ -71,13 +71,13 @@ afterEach(() => {
 });
 
 describe('EnableWalkthrough (#1526)', () => {
-	it('names the one switch for all tours in the plural', () => {
+	it('names the introduction as the only automatically started tour', () => {
 		renderSwitch(false);
 
-		expect(screen.getByText('Rundgänge automatisch starten')).toBeTruthy();
+		expect(screen.getByText('Einführung automatisch starten')).toBeTruthy();
 		expect(
 			screen.getByRole('switch', {
-				name: 'Rundgänge automatisch starten'
+				name: 'Einführung automatisch starten'
 			})
 		).toBeTruthy();
 	});

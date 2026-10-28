@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 import { StageMobileHero } from '../stageLayout/StageMobileHero';
 import { LoginSecurityExplainer } from './LoginSecurityExplainer';
@@ -118,6 +119,11 @@ const LocaleGlobe = () => (
 export const SecurityExplainer: StoryObj = {
 	name: 'Erklärkarte „Warum das extra sicher ist“',
 	parameters: {
+		/* Designed colour (#1338): the "Learn more" link is #a5000a, set apart
+		   from the grey protocol line by colour alone (1.8:1). */
+		a11y: a11yExcept({
+			'link-in-text-block': ['.loginSecurity__protocol a']
+		}),
 		docs: {
 			description: {
 				story: 'Fährt an der Stelle des Formulars ein, wenn man die Teaser-Zeile unter dem Login klickt — kein zweiter Bildschirm, kein Tabwechsel. Das Argument ist der Schlüssel, nicht das Schloss: er entsteht auf dem Gerät und bleibt dort, die Server tragen nur Rauschen. Deshalb löst sich das Hex-Rauschen in der Mitte auch nie auf; ein Scrambler, der am Ende Klartext zeigt, würde die gegenteilige Geschichte erzählen. Bei `prefers-reduced-motion` steht es still.'
@@ -426,3 +432,79 @@ export const EmailCodeResendLimit = emailCodeStory(
 		);
 	}
 );
+
+/**
+ * ORISO-Frontend#1670: an account created with an admin-chosen password keeps
+ * Keycloak's `UPDATE_PASSWORD` required action, and the password grant answers
+ * it with 400 "Account is not fully set up". The password is right, so the
+ * screen must point to the setup link instead of "wrong password".
+ */
+const SetupIncompleteTokenStub = ({
+	children
+}: {
+	children: React.ReactNode;
+}) => {
+	const [isReady, setIsReady] = React.useState(false);
+	React.useLayoutEffect(() => {
+		const realFetch = window.fetch;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = String(
+				typeof input === 'string' || input instanceof URL
+					? input
+					: input.url
+			);
+			if (!url.includes('/protocol/openid-connect/token')) {
+				return realFetch(input as RequestInfo, init);
+			}
+			return jsonResponse(400, {
+				error: 'invalid_grant',
+				error_description: 'Account is not fully set up'
+			});
+		}) as typeof window.fetch;
+		setIsReady(true);
+		return () => {
+			window.fetch = realFetch;
+		};
+	}, []);
+	return isReady ? <>{children}</> : null;
+};
+
+export const SetupIncomplete: StoryObj = {
+	name: 'Konto noch nicht eingerichtet (#1670)',
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Ein neu angelegtes Konto mit vom Admin gesetztem Passwort trägt in Keycloak noch die Pflichtaktion „Passwort ändern“. Keycloak antwortet 400 „Account is not fully set up“: Das Passwort stimmt, deshalb verweist die Meldung auf den Einladungslink oder „Passwort vergessen?“ und markiert die Felder nicht als falsch.'
+			}
+		}
+	},
+	render: () => (
+		<SetupIncompleteTokenStub>
+			<LoginScreen />
+		</SetupIncompleteTokenStub>
+	),
+	play: async ({ canvasElement }) => {
+		const username = canvasElement.querySelector(
+			'#username'
+		) as HTMLInputElement;
+		const password = canvasElement.querySelector(
+			'#passwordInput'
+		) as HTMLInputElement;
+		await userEvent.type(username, 'neue-beraterin@example.org');
+		await userEvent.type(password, 'story-only{Enter}');
+		await waitFor(
+			() =>
+				expect(canvasElement).toHaveTextContent(
+					/noch nicht vollständig eingerichtet|not fully set up yet/
+				),
+			{ timeout: 4000 }
+		);
+		await expect(canvasElement).not.toHaveTextContent(
+			/Benutzername oder Passwort sind nicht korrekt|Username or password are not correct/
+		);
+	}
+};

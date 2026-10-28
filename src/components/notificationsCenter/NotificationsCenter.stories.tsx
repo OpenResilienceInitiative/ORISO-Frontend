@@ -1,21 +1,28 @@
 import * as React from 'react';
+import { MatrixEvent } from 'matrix-js-sdk';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import {
 	NotificationsContext,
+	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import type { IUserDraftItem } from '../../api/apiUserDrafts';
+import { installNotificationDraftFixture } from './notificationDraftFixture';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
 	withSectionOverride
 } from '../../utils/displayFilter/model';
 import { withDisplayFilterStore } from '../displayFilter/displayFilterStoryStore';
+import {
+	getMatrixClientService,
+	setMatrixClientServiceRef
+} from '../../services/matrixClientRegistry';
+import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 
 /**
  * WP-06 Activity Timeline mock feed. Covers every seeded event family
@@ -244,64 +251,14 @@ const withTimelineData =
 		</UserDataContext.Provider>
 	);
 
-/**
- * #1535: the timeline loads unsent drafts from `/users/drafts` itself. The
- * fetch patch answers only that path, and only while a story is mounted.
- */
-let storyDrafts: IUserDraftItem[] | null = null;
-let draftsFetchPatched = false;
-const patchDraftsFetch = () => {
-	if (draftsFetchPatched) return;
-	draftsFetchPatched = true;
-	const originalFetch = globalThis.fetch.bind(globalThis);
-	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-		const url =
-			typeof input === 'string'
-				? input
-				: input instanceof URL
-					? input.href
-					: input.url;
-		if (storyDrafts && url.includes('/service/users/drafts')) {
-			return new Response(
-				JSON.stringify({ items: storyDrafts, page: 0, perPage: 200 }),
-				{ status: 200, headers: { 'Content-Type': 'application/json' } }
-			);
-		}
-		return originalFetch(input, init);
-	};
-};
-
-// Set during render: the timeline's own effect fetches before a parent effect runs.
-const ServerDraftsScope = ({
-	drafts,
-	children
-}: {
-	drafts: IUserDraftItem[];
-	children: React.ReactNode;
-}) => {
-	patchDraftsFetch();
-	storyDrafts = drafts;
-	// Layout effects run before the timeline's fetch effect; re-set after a prior scope's cleanup.
-	React.useLayoutEffect(() => {
-		storyDrafts = drafts;
-		return () => {
-			storyDrafts = null;
-		};
-	}, [drafts]);
-	return <>{children}</>;
-};
-
-const withServerDrafts = (Story: React.ComponentType, context: any) => (
-	<ServerDraftsScope drafts={context.parameters.serverDrafts ?? []}>
-		<Story />
-	</ServerDraftsScope>
-);
-
 const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs'],
-	decorators: [withDisplayFilterStore, withServerDrafts],
+	decorators: [withDisplayFilterStore],
+	// Meta and story beforeEach hooks compose: StructuredFirstResponse keeps its Matrix lifecycle.
+	beforeEach: ({ parameters }) =>
+		installNotificationDraftFixture(parameters.serverDrafts ?? []),
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: '/notifications' },
@@ -324,6 +281,112 @@ type Story = StoryObj<typeof meta>;
 /** Consultant view with a feed across all event families, mixed read/unread. */
 export const FilledTimeline: Story = {
 	decorators: [withTimelineData(mockFeed)]
+};
+
+const firstResponseRoomId = '!timeline-first-response:matrix.storybook.test';
+const firstResponseEventId = '$timeline-first-response';
+const firstResponseSession: ListItemInterface = {
+	consultant: {
+		id: 'sb-consultant',
+		consultantId: 'sb-consultant',
+		username: 'storybook-consultant',
+		absent: false,
+		absenceMessage: ''
+	},
+	session: {
+		id: 1117,
+		agencyId: 1,
+		askerMatrixUserId: '@asker:matrix.storybook.test',
+		attachment: null,
+		consultingType: 1,
+		matrixRoomId: firstResponseRoomId,
+		e2eLastMessage: null,
+		messageDate: 0,
+		createDate: '2026-10-08T08:00:00.000Z',
+		messagesRead: true,
+		postcode: 10115,
+		registrationType: 'REGISTERED',
+		status: 2,
+		videoCallMessageDTO: null,
+		topic: { id: 1, name: 'Beratung', description: '' }
+	}
+};
+
+/** #1117: the actual Matrix hydrator formats a structured first response for the timeline and search. */
+export const StructuredFirstResponse: Story = {
+	beforeEach: () => {
+		const originalService = getMatrixClientService();
+		const event = new MatrixEvent({
+			event_id: firstResponseEventId,
+			room_id: firstResponseRoomId,
+			type: 'm.room.message',
+			sender: '@carimat:matrix.storybook.test',
+			origin_server_ts: Date.parse('2026-10-08T08:01:00.000Z'),
+			content: {
+				msgtype: 'm.text',
+				body: '[SYSTEM_NOTIFICATION]{"type":"FIRST_RESPONSE","version":1,"bausteine":[{"id":"greeting","body":"Schön, dass Sie sich gemeldet haben."}]}'
+			}
+		});
+		const room = {
+			roomId: firstResponseRoomId,
+			findEventById: (id: string) =>
+				id === firstResponseEventId ? event : null
+		};
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				getUserId: () => '@storybook:matrix.storybook.test',
+				getRoom: (id: string) =>
+					id === firstResponseRoomId ? room : null,
+				on: noop,
+				off: noop
+			})
+		} as any);
+		return () => setMatrixClientServiceRef(originalService);
+	},
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'first-response-1117',
+				eventType: 'message.new',
+				category: 'message',
+				createdAt: minutesAgo(4),
+				sourceSessionId: '1117',
+				params: {
+					roomRef: firstResponseRoomId,
+					matrixEventId: firstResponseEventId,
+					senderName: 'Carimat'
+				}
+			})
+		]),
+		(Story) => (
+			<SessionsDataContext.Provider
+				value={{
+					sessions: [firstResponseSession],
+					ready: true,
+					dispatch: noop
+				}}
+			>
+				<Story />
+			</SessionsDataContext.Provider>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Carimat: Schön, dass Sie sich gemeldet haben.'
+			)
+		).toBeVisible();
+		await expect(canvasElement).not.toHaveTextContent('FIRST_RESPONSE');
+		const search = canvas.getByRole('searchbox', {
+			name: 'Aktivität durchsuchen…'
+		});
+		await userEvent.type(search, 'Schön, dass Sie sich gemeldet haben.');
+		await expect(
+			canvas.getByText('Carimat: Schön, dass Sie sich gemeldet haben.')
+		).toBeVisible();
+		await userEvent.clear(search);
+	}
 };
 
 /** Client (asker) view — includes the two-button case-handover consent card. */
@@ -383,7 +446,7 @@ export const DisplayFilterDialogOpen: Story = {
 			body.getByRole('checkbox', { name: 'In der Liste: Entwürfe' })
 		).not.toBeChecked();
 		await expect(
-			body.getByRole('button', { name: 'Pille: System' })
+			body.getByRole('button', { name: 'Im Filter: System' })
 		).toHaveTextContent('Aus');
 	}
 };
@@ -610,5 +673,80 @@ export const DraftAndChatEvents: Story = {
 			canvas.getAllByText('Chat beendet').length
 		).toBeGreaterThan(0);
 		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
+	}
+};
+
+/** #1714: the visible timeline distinguishes transfer, first acceptance and refusal. */
+export const HandoverEventGlyphs: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'glyph-transfer',
+				eventType: 'case.handover.granted',
+				createdAt: minutesAgo(2)
+			}),
+			feedItem({
+				id: 'glyph-accepted',
+				eventType: 'inquiry.accepted',
+				createdAt: minutesAgo(3)
+			}),
+			feedItem({
+				id: 'glyph-denied',
+				eventType: 'case.handover.consent.declined',
+				createdAt: minutesAgo(4)
+			})
+		])
+	],
+	play: async ({ canvasElement }) => {
+		// Known approved SVG shapes, checked at the public rendered cards rather
+		// than the descriptor map. The unit SVG stub cannot prove visual identity.
+		const cases = [
+			{
+				id: 'glyph-transfer',
+				shape: 'M37.5124 79.1667',
+				viewBox: '0 0 100 100'
+			},
+			{
+				id: 'glyph-accepted',
+				shape: 'M16.55 8L13 4.45',
+				viewBox: '0 0 24 24'
+			},
+			{
+				id: 'glyph-denied',
+				shape: 'M13.6667 7.5L12.5 6.33333',
+				viewBox: '0 0 20 20'
+			}
+		];
+		for (const glyph of cases) {
+			const row = canvasElement.querySelector<HTMLElement>(
+				`[data-notification-id="${glyph.id}"]`
+			)!;
+			const checkVisibleGlyph = (icon: SVGSVGElement | null) => {
+				expect(icon).toBeVisible();
+				expect(icon).toHaveAttribute('viewBox', glyph.viewBox);
+				expect(
+					icon?.querySelector('path')?.getAttribute('d')
+				).toContain(glyph.shape);
+			};
+			checkVisibleGlyph(
+				row.querySelector('.notificationsCenter__cardIcon svg')
+			);
+			const card = row.querySelector<HTMLButtonElement>(
+				'.notificationsCenter__card'
+			)!;
+			expect(card).toBeVisible();
+			await userEvent.click(card);
+			await waitFor(() => {
+				expect(
+					row.querySelector('.notificationsCenter__card--active')
+				).toBeVisible();
+				checkVisibleGlyph(
+					row.querySelector('.notificationsCenter__cardIcon svg')
+				);
+				expect(row).toHaveClass(
+					'notificationsCenter__listRow--withExpander'
+				);
+			});
+		}
 	}
 };

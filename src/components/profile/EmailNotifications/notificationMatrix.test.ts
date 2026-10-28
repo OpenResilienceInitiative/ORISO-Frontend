@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	ADVICE_SEEKER_SWITCHES,
 	ALWAYS_SENT_KEYS,
@@ -19,7 +19,7 @@ describe('notification matrix (ADR-019)', () => {
 	it('gives advice seekers a much shorter list than counsellors', () => {
 		// The point of the ADR: not one list filtered by role. If these ever
 		// converge, someone has merged them back together.
-		expect(ADVICE_SEEKER_SWITCHES).toHaveLength(3);
+		expect(ADVICE_SEEKER_SWITCHES).toHaveLength(4);
 		expect(CONSULTANT_SWITCHES.length).toBeGreaterThan(
 			ADVICE_SEEKER_SWITCHES.length
 		);
@@ -34,7 +34,6 @@ describe('notification matrix (ADR-019)', () => {
 			'direkte-anfrage',
 			'tagesuebersicht',
 			'anfrage-zugewiesen',
-			'uebergabe-angefragt',
 			'uebergabe-bestaetigt',
 			'rueckmeldung'
 		]) {

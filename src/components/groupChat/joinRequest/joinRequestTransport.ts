@@ -38,6 +38,7 @@ export interface JoinRequestTransport {
 	watchPending: (
 		onChange: (requests: GroupChatJoinRequest[]) => void
 	) => () => void;
+	/** Accepts the admission intent; completed group access is confirmed by the own status. */
 	admit: (
 		request: GroupChatJoinRequest,
 		role: GroupChatJoinAdmitRole

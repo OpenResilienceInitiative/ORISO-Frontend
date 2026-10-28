@@ -23,6 +23,7 @@
 	align-items: flex-start;
 	gap: 8px;
 	min-width: 0;
+	max-width: none;
 }
 
 .erstantwort__bubble {
@@ -31,13 +32,9 @@
 	   rounded, the same idiom the message list uses for a run of messages. */
 	border-radius: 14px;
 
-	/* Shrink to the text. A bubble stretched to the full column reads as a
-	   document block rather than as somebody talking — most visible on the
-	   one-line Bausteine, where a full-width box for four words looks like a
-	   form field. `fit-content` keeps the chat grammar; the cap keeps the long
-	   Bausteine at a readable measure. */
-	width: fit-content;
-	max-width: min(100%, 34rem);
+	width: 100%;
+	min-width: 0;
+	max-width: none;
 }
 
 /* The flat top-left corner belongs to the *first bubble*, which is the sibling
@@ -48,7 +45,7 @@
 	border-radius: 4px 14px 14px 14px;
 }
 
-.erstantwort__bubble--typing {
+.carimatMessageFrame .erstantwort__bubble--typing {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -59,6 +56,7 @@
 	   card holding a pseudonym and a dice but absurd around three dots — it
 	   rendered as a wide empty box. The typing placeholder sizes to the dots. */
 	min-width: 0;
+	width: fit-content;
 }
 
 .erstantwort__headline {
@@ -129,3 +127,66 @@
 	align-self: flex-start;
 	margin-top: 12px;
 }
+
+.erstantwort__faq {
+	border-top: 1px solid var(--md-sys-color-outline-variant, #ddd);
+	padding: 12px 0;
+
+	summary {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		font-weight: 600;
+		line-height: 1.4;
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
+	}
+
+	p {
+		margin-top: 12px;
+	}
+}
+
+.erstantwort__faq:last-child {
+	border-bottom: 1px solid var(--md-sys-color-outline-variant, #ddd);
+}
+
+.erstantwort__faqLabel {
+	flex: 1;
+	min-width: 0;
+}
+
+.erstantwort__faqChevron {
+	flex: none;
+	transition: transform 0.2s ease;
+
+	.erstantwort__faq[open] & {
+		transform: rotate(180deg);
+	}
+}
+
+/* Emergency numbers: the last question, collapsed, red text and a phone icon
+   (not colour alone). The divider lines stay neutral — no red frame. */
+.erstantwort__faq--emergency summary {
+	color: var(--m3-primary, #a5000a);
+}
+
+.erstantwort__faq .erstantwort__faqIcon {
+	flex: none;
+	font-size: 20px;
+}
+
+/* One complete message: greeting, questions and goodbye in one bubble. */
+.erstantwort__bubble--message {
+	gap: 12px;
+}
+
+.erstantwort__questions {
+	margin-top: 4px;
+}
+
+/* Avatar/header/bubble geometry belongs to CarimatMessageFrame. */

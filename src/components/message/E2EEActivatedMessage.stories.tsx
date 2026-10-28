@@ -15,7 +15,8 @@ import './message.styles.scss';
  * matter: the German string is noticeably longer than the English one.
  */
 const meta = {
-	title: 'Components/Chat/E2EEActivatedMessage',
+	id: 'components-chat-e2eeactivatedmessage',
+	title: 'Chat/System messages/Encryption',
 	component: E2EEActivatedMessage,
 	tags: ['autodocs'],
 	parameters: {

@@ -10,8 +10,8 @@ export const consultantWalkthroughTour: TourDefinition = {
 	version: 1,
 	surface: 'frontend',
 	audiences: ['consultant'],
-	titleKey: 'walkthrough.title',
-	summaryKey: 'walkthrough.subtitle',
+	titleKey: 'walkthrough.introduction.title',
+	summaryKey: 'walkthrough.introduction.summary',
 	steps: [
 		{
 			id: 'intro',

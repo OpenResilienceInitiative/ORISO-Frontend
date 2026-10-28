@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1189 — reachability tests for the "Chat settings" entry in the group-chat
  * list-row menu. These tests MUST fail if the <SessionListItemMenu> is removed
@@ -6,7 +6,7 @@
  * cannot be reintroduced silently.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { generatePath, MemoryRouter } from 'react-router-dom';
 import {
@@ -23,18 +23,27 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-const { matrixPreviewMock, roomUnreadCountMock, localeState } = vi.hoisted(
-	() => ({
-		matrixPreviewMock: vi.fn(),
-		localeState: { realEnglish: false },
-		roomUnreadCountMock: vi.fn(() => 0)
-	})
-);
+const {
+	matrixPreviewMock,
+	roomUnreadCountMock,
+	groupMembersMock,
+	localeState
+} = vi.hoisted(() => ({
+	groupMembersMock: vi.fn(() => ({
+		status: 'ready',
+		members: [] as any[]
+	})),
+	matrixPreviewMock: vi.fn(),
+	localeState: { realEnglish: false },
+	roomUnreadCountMock: vi.fn<(roomId?: string) => number>(() => 0)
+}));
 
 afterEach(() => {
 	cleanup();
 	localeState.realEnglish = false;
 	matrixPreviewMock.mockReset();
+	groupMembersMock.mockReset();
+	groupMembersMock.mockReturnValue({ status: 'ready', members: [] });
 	roomUnreadCountMock.mockReset();
 	roomUnreadCountMock.mockReturnValue(0);
 });
@@ -60,9 +69,21 @@ vi.mock('../../hooks/useE2EE', () => ({
 	})
 }));
 
+vi.mock('../../hooks/useGroupCardMembers', () => ({
+	useGroupCardMembers: groupMembersMock
+}));
+
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
 	useMatrixSessionPreview: matrixPreviewMock,
 	useMatrixSessionEvents: (roomId: string) => matrixPreviewMock(roomId) || []
+}));
+
+vi.mock('../../services/matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({
+		getRoom: (roomId: string) => ({
+			getUnreadNotificationCount: () => roomUnreadCountMock(roomId)
+		})
+	})
 }));
 
 vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
@@ -344,7 +365,7 @@ const sessionsDispatch = vi.fn();
 const renderItem = (
 	activeSession: any,
 	userData = makeUserData(),
-	{ rail = false }: { rail?: boolean } = {}
+	{ rail = false, index = 0 }: { rail?: boolean; index?: number } = {}
 ) => {
 	const sessionTypeValue = {
 		type: SESSION_LIST_TYPES.MY_SESSION,
@@ -381,7 +402,7 @@ const renderItem = (
 									<SessionListRailProvider rail={rail}>
 										<SessionListItemComponent
 											defaultLanguage="de"
-											index={0}
+											index={index}
 										/>
 									</SessionListRailProvider>
 								</LegalLinksContext.Provider>
@@ -494,6 +515,30 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		expect(await screen.findByTestId('case-handover-action')).toBeTruthy();
 		expect(screen.queryByTestId('supervision-badge')).toBeNull();
 	});
+
+	it.each([
+		{ mainUnread: 0, sideUnread: 2, supervisedByMe: true, unread: true },
+		{ mainUnread: 3, sideUnread: 0, supervisedByMe: true, unread: true },
+		{ mainUnread: 0, sideUnread: 0, supervisedByMe: true, unread: false },
+		{ mainUnread: 0, sideUnread: 2, supervisedByMe: false, unread: false }
+	])(
+		'expanded row unread state agrees with authorized rooms: %j',
+		({ mainUnread, sideUnread, supervisedByMe, unread }) => {
+			const sideRoomId = '!supervision:matrix.example.org';
+			roomUnreadCountMock.mockImplementation((roomId: string) =>
+				roomId === sideRoomId ? sideUnread : mainUnread
+			);
+			const { container } = renderItem(
+				makeSession({ supervision: { supervisedByMe, sideRoomId } }),
+				makeUserData(ME)
+			);
+			const row = container.querySelector('.sessionsListItem');
+			expect(row).not.toBeNull();
+			expect(row.classList.contains('sessionsListItem--read')).toBe(
+				!unread
+			);
+		}
+	);
 
 	it('supervisedByMe → supervision badge, no eye, no handover action', async () => {
 		renderItem(
@@ -820,5 +865,83 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 		const pill = document.querySelector('[data-cy="session-rail-pill"]');
 		expect(pill).not.toBeNull();
 		expect(pill.textContent).toContain('Test group chat');
+	});
+});
+
+describe('SessionListItemComponent — product-tour anchor (FE#1622)', () => {
+	const card = () => document.querySelector('[data-cy="session-list-item"]');
+	const enquiry = () => ({
+		...makeSession(),
+		isEnquiry: true,
+		isNonEmptyEnquiry: true,
+		isSession: true
+	});
+
+	it('marks the first enquiry card as enquiry-list-item', () => {
+		renderItem(enquiry());
+
+		expect(card()?.getAttribute('data-tour-target')).toBe(
+			'enquiry-list-item'
+		);
+	});
+
+	it('does not mark an enquiry further down the list', () => {
+		renderItem(enquiry(), makeUserData(), { index: 1 });
+
+		expect(card()?.hasAttribute('data-tour-target')).toBe(false);
+	});
+
+	it('does not mark a first card that is not an enquiry', () => {
+		renderItem(makeSession());
+
+		expect(card()?.hasAttribute('data-tour-target')).toBe(false);
+	});
+});
+
+describe('SessionListItemComponent — real group participants (#1806)', () => {
+	it('renders actual eligible members and derives overflow instead of the dummy +1', () => {
+		groupMembersMock.mockReturnValue({
+			status: 'ready',
+			members: [
+				...Array.from({ length: 5 }, (_, i) => ({
+					userId: `@person-${i}:example.org`,
+					name: `Person ${i}`,
+					membership: 'join'
+				})),
+				{
+					userId: '@group-chat-system-40:example.org',
+					name: 'Technical owner',
+					membership: 'join'
+				}
+			]
+		});
+		const { container } = renderItem(makeGroupSession());
+		expect(
+			container.querySelectorAll('[data-cy="participant-avatar"]')
+		).toHaveLength(2);
+		expect(
+			container.querySelector('[data-cy="participant-overflow"]')
+				?.textContent
+		).toBe('+3');
+		expect(
+			container.querySelector('[data-user-id="@person-0:example.org"]')
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-user-id^="placeholder-"]')
+		).toBeNull();
+		expect(
+			container.querySelector('[data-user-id^="@group-chat-system-"]')
+		).toBeNull();
+	});
+
+	it('renders the pending state until membership has loaded, with no invented overflow', () => {
+		groupMembersMock.mockReturnValue({ status: 'loading', members: [] });
+		const { container } = renderItem(makeGroupSession());
+		expect(
+			container.querySelector('[data-cy="group-card-members-loading"]')
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
 	});
 });

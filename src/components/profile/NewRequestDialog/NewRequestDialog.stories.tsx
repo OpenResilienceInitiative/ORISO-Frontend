@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
@@ -54,7 +55,7 @@ const installHttpBoundary = (status: ReviewArgs['failureStatus']) => {
 		const request = new Request(input, init);
 		const url = new URL(request.url);
 		if (request.method === 'GET') {
-			if (url.pathname === '/service/agencies/topics') {
+			if (url.pathname === '/service/topic/public') {
 				return Response.json([
 					{ id: 7, name: 'Social counselling' },
 					{ id: 9, name: 'Family counselling' }
@@ -111,6 +112,11 @@ const meta = {
 	component: RequestReview,
 	tags: ['autodocs'],
 	parameters: {
+		// #1338: the dialog's content overlaps its close button's box; the button
+		// itself is as designed.
+		a11y: a11yExcept({
+			'target-size': ['.MuiDialogActions-root .button__item']
+		}),
 		layout: 'fullscreen',
 		docs: {
 			description: {

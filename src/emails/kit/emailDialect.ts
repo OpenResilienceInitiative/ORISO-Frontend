@@ -217,8 +217,23 @@ const toFreemarker = (source: string, escape: boolean): string => {
  * The replacement matches the cell as rendered for the placeholder brand, so a
  * preview built with a concrete brand keeps its real `<img>` untouched.
  */
-const toPlainHtml = (html: string): string =>
-	html.split(emailLogoCell(emailDefaultBrand)).join('{{logoCell}}');
+const toPlainHtml = (html: string): string => {
+	const logo = emailLogoCell(emailDefaultBrand);
+	if (!html.includes(logo)) {
+		return html;
+	}
+	return html
+		.split(logo)
+		.join('{{logoCell}}')
+		.replace(
+			'class="sp logo-header"',
+			'class="sp logo-header {{logoHeaderClass}}"'
+		)
+		.replace(
+			'class="logo-wordmark"',
+			'class="logo-wordmark {{logoWordmarkClass}}"'
+		);
+};
 
 /** Rewrites a rendered `text/html` part into the given dialect. */
 export const toEmailDialectHtml = (

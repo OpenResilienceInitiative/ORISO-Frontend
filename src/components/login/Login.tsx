@@ -36,6 +36,7 @@ import {
 	LocaleContext
 } from '../../globalState';
 import { UserDataInterface } from '../../globalState/interfaces';
+import { getChosenLocale } from '../../globalState/provider/LocaleProvider';
 import '../../resources/styles/styles';
 import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
@@ -66,6 +67,7 @@ import { apiRequestMagicLinkLogin } from '../../api/apiRequestMagicLinkLogin';
 import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { translateWithFallback } from '../../utils/translationFallback';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
@@ -329,11 +331,17 @@ export const Login = () => {
 	const postLogin = useCallback(
 		() =>
 			reloadUserData().then(async (userData: UserDataInterface) => {
-				// If user has changed language from default but the profile has different language in profile override it
+				// A language the person chose on the login screen wins over the
+				// stored profile language, which the app applies after the
+				// redirect. A choice that equals the browser default counts too
+				// (#1844); a merely detected language never overwrites the profile.
+				const chosenOnScreen =
+					locale !== initLocale || getChosenLocale() === locale;
 				let patchedUserData = {};
 				if (
-					userData.preferredLanguage !== locale &&
-					locale !== initLocale
+					locale &&
+					chosenOnScreen &&
+					userData.preferredLanguage !== locale
 				) {
 					patchedUserData['preferredLanguage'] = locale;
 				}
@@ -500,13 +508,26 @@ export const Login = () => {
 					(resolution.outcome === 'unavailable' ||
 						resolution.outcome === 'rate_limited');
 				if (!isShownAtResendLink) {
-					setShowLoginError(translate(resolution.messageKey));
-					// Only a credential problem marks the fields; an outage
-					// or a rate limit is not the user's input being wrong,
-					// and must not leave a stale mark behind.
+					// A refusal that named its wait says so, in the languages
+					// that have that sentence; the others keep the untimed one.
+					setShowLoginError(
+						resolution.preciseMessage
+							? translateWithFallback(
+									translate,
+									resolution.preciseMessage.key,
+									translate(resolution.messageKey) as string,
+									resolution.preciseMessage.values
+								)
+							: translate(resolution.messageKey)
+					);
+					// Only a credential problem marks the fields; an outage,
+					// a rate limit or an unfinished account setup is not the
+					// user's input being wrong, and must not leave a stale
+					// mark behind.
 					setLabelState(
 						resolution.outcome === 'unavailable' ||
-							resolution.outcome === 'rate_limited'
+							resolution.outcome === 'rate_limited' ||
+							resolution.outcome === 'setup_incomplete'
 							? null
 							: VALIDITY_INVALID
 					);
@@ -518,7 +539,9 @@ export const Login = () => {
 					recordLoginFailure({
 						outcome: 'rate_limited',
 						transport: describeLoginTransport(
-							error as Parameters<typeof describeLoginTransport>[0]
+							error as Parameters<
+								typeof describeLoginTransport
+							>[0]
 						),
 						stage: isOtpRequired || otp ? 'otp' : 'password'
 					});

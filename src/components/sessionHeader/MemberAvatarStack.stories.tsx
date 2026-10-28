@@ -25,8 +25,6 @@ const members = (count: number): StackMember[] =>
 		displayName: `Participant ${i + 1}`
 	}));
 
-const countLabel = (hidden: number) => `+${hidden} Personen`;
-
 /** Header title row with a fixed width so the stack has a known budget. */
 const TitleRow = ({ width, count }: { width: number; count: number }) => {
 	const rowRef = useRef<HTMLDivElement>(null);
@@ -38,12 +36,17 @@ const TitleRow = ({ width, count }: { width: number; count: number }) => {
 				style={{ width, border: '1px dashed #c4c7c8', padding: 4 }}
 			>
 				<div className="sessionInfo__memberStack">
-					<ChatroomMainInteractionIcon type="internal" showAddIcon />
+					{/* #1338: named as in the group header. */}
+					<ChatroomMainInteractionIcon
+						type="internal"
+						showAddIcon
+						addLabel="Supervisor hinzufügen – hier nicht verfügbar"
+						addTooltip={false}
+					/>
 					<MemberAvatarStack
 						members={members(count)}
 						measureRef={rowRef}
 						reservedWidth={76 + 12 * 2 + 140}
-						countLabel={countLabel}
 					/>
 				</div>
 				<h3 style={{ margin: 0 }}>Gruppenchat</h3>

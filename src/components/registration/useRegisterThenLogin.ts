@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { apiPostRegistration } from '../../api/apiPostRegistration';
+import {
+	apiPostRegistration,
+	autoLoginWithDeadline
+} from '../../api/apiPostRegistration';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { TenantDataInterface } from '../../globalState/interfaces';
-import { autoLogin } from './autoLogin';
 
 type RegistrationPayload = Parameters<typeof apiPostRegistration>[1];
 
@@ -33,7 +35,7 @@ export const useRegisterThenLogin = () => {
 			tenant: TenantDataInterface
 		): Promise<void> => {
 			if (accountCreatedRef.current) {
-				await autoLogin({
+				await autoLoginWithDeadline({
 					username: data.username || '',
 					password: data.password || '',
 					tenantData: tenant

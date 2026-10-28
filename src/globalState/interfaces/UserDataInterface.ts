@@ -30,6 +30,13 @@ export interface UserDataInterface {
 	 * frontend then falls back to the old browser-only value.
 	 */
 	liveChatViaSidebar?: boolean;
+	/** Counsellors (#1046): ICON shows the motif in `avatarId`; otherwise the default avatar. */
+	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	/**
+	 * The avatar picked in the profile (#1240), as the lower-case file stem
+	 * (`magpie`): a counsellor motif, or an advice seeker's animal.
+	 */
+	avatarId?: string | null;
 	publicSlug?: string;
 	pendingPublicSlug?: string;
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';

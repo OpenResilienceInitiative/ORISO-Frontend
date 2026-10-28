@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import profileRoutes from './profile.routes';
 import { BrowserNotification } from './BrowserNotifications';
 import { NOTIFICATION_SETTINGS_PATH } from './notificationSettingsPath';
@@ -8,6 +8,10 @@ import type {
 	TenantDataInterface
 } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
+
+vi.mock('./SecurityPrivacySettings', () => ({
+	SecurityPrivacySettings: () => null
+}));
 
 // Route tables only — keep the real component trees out of the test.
 const { stub } = vi.hoisted(() => ({
@@ -41,6 +45,10 @@ vi.mock('./AbsenceFormular', stub('AbsenceFormular'));
 vi.mock('./LiveChatAvailability', stub('LiveChatAvailability'));
 vi.mock('./EnableWalkthrough', stub('EnableWalkthrough'));
 vi.mock('../productTour/TourOverviewSection', stub('TourOverviewSection'));
+vi.mock(
+	'../../practice/PracticeOverviewSection',
+	stub('PracticeOverviewSection')
+);
 vi.mock('./OverviewMobile/Bookings', stub('OverviewBookings'));
 vi.mock('./OverviewMobile/Sessions', stub('OverviewSessions'));
 vi.mock('./AdditionalEnquiry/AdditionalEnquiry', stub('AdditionalEnquiry'));

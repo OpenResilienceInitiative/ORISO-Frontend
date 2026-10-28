@@ -4,6 +4,8 @@ export interface TenantDataInterface {
 	id: number | null;
 	name: string;
 	theming: {
+		assistantName?: string | null;
+		assistantIcon?: string | null;
 		logo: string;
 		associationLogo: string | null;
 		/**
@@ -48,6 +50,16 @@ export interface TenantDataInterface {
 		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
+	/**
+	 * Who may be picked for an internal group chat (ORISO-TenantService#321).
+	 * Absent on a backend without the setting; read as `AGENCY` then.
+	 */
+	internalGroupChat?: {
+		recipientScope?: {
+			value?: 'PLATFORM' | 'TENANT' | 'AGENCY';
+			mode?: 'ENFORCED' | 'SUGGESTED';
+		} | null;
+	} | null;
 	/** Optional DPO of the Träger, public on the restricted tenant read (ORISO-Admin#1067). */
 	dataProtectionOfficer?: TraegerDpo | null;
 }
@@ -103,6 +115,15 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesOneOnOneChatsEnabled?: boolean;
 	featureVoiceMessagesGroupChatsEnabled?: boolean;
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
+	/** ORISO-Admin#602: explicit false disables asker email invitation; absent keeps legacy behavior. */
+	featureAskerEmailEnabled?: boolean;
+	featureAskerEmailAgencyCounsellingEnabled?: boolean;
+	featureAskerEmailLiveChatEnabled?: boolean;
+	featureAskerEmailSelfHelpEnabled?: boolean;
+	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
+	featureAskerBrowserLiveChatEnabled?: boolean;
+	featureAskerBrowserSelfHelpEnabled?: boolean;
+
 	emailVisible?: boolean;
 	emailRequired?: boolean;
 }

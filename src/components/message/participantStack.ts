@@ -16,8 +16,14 @@ export interface StackParticipant {
 	displayName: string;
 	firstName?: string;
 	lastName?: string;
-	/** Advice seeker → animal avatar; everyone else → monogram / photo. */
+	/**
+	 * Advice seeker → the deterministic animal avatar. A counsellor renders
+	 * their CHOSEN avatar when they made one (#1047), otherwise the same animal.
+	 */
 	isAsker?: boolean;
+	/** The counsellor's chosen avatar (#1046/#1047); absent = no choice made. */
+	avatarKind?: string | null;
+	avatarId?: string | null;
 	/** Timestamp (ms) of the participant's last message, if known. */
 	lastActivity?: number;
 }
@@ -27,6 +33,14 @@ export interface ParticipantStack {
 	/** Count folded into the "+N" chip; 0 when everyone fits. */
 	overflow: number;
 }
+
+/** Legacy/default presentation, retained for existing consumers. */
+export const STACK_AVATAR_SIZE = 40;
+export const STACK_OVERLAP = 12;
+
+/** Current Avatar Group master (7608:40689), verified 2026-10-22. */
+export const HEADER_STACK_AVATAR_SIZE = 48;
+export const HEADER_STACK_OVERLAP = 24;
 
 /** Figma #430: a room header shows at most four avatars before "+N". */
 export const STACK_MAX_VISIBLE = 4;

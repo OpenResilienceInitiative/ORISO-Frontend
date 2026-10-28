@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -7,7 +7,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	apiCreateGroupChat,
 	apiUpdateGroupChat
@@ -39,7 +46,10 @@ vi.mock('../../globalState', async () => {
 		'../../globalState/context/UserDataContext'
 	);
 	const tenant = {
-		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] }
+		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] },
+		// These tests pick colleagues from the Träger's directory; the scope
+		// itself is covered in CreateConversationView.internalSubset.test.tsx.
+		internalGroupChat: { recipientScope: { value: 'TENANT' } }
 	};
 	return {
 		UserDataContext,
@@ -143,17 +153,6 @@ vi.mock('../../resources/img/icons/reload.svg', () => ({
 vi.mock('../../resources/img/icons/language_outline.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
-}));
-vi.mock(
-	'../../resources/img/illustrations/conversation/internal-team.png',
-	() => ({
-		default: 'internal-team.png'
-	})
-);
-vi.mock('../../resources/img/topics', () => ({
-	getTopicCardImage: () => 'topic.png',
-	hasTopicCardImage: () => false,
-	topicSlug: (value: string) => value
 }));
 vi.mock('../../resources/img/icons/keyboard_arrow_up.svg', () => ({
 	ReactComponent: () => null,
@@ -320,7 +319,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			screen.queryByText('groupChat.create.interval.options.weekly')
 		).toBeNull();
 		expect(
-			screen.getByText('groupChat.circle.rows.repeatValue')
+			screen.getByText('groupChat.info.settings.repetition.single')
 		).toBeTruthy();
 	});
 
@@ -335,6 +334,10 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			chatInterval: 'BIWEEKLY'
 		});
 
+		// Count and interval in one control: three dates, every two weeks.
+		expect(
+			screen.getByText('groupChat.circle.rows.repeatDates')
+		).toBeTruthy();
 		expect(
 			screen.getByText('groupChat.create.interval.options.biweekly')
 		).toBeTruthy();

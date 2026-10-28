@@ -16,8 +16,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
@@ -42,6 +44,7 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
+import { useAudienceMenuDismissal } from './inputField/useAudienceMenuDismissal';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
@@ -59,6 +62,7 @@ import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
 	resolveAskerMessageTransport,
+	resolveEnquiryMatrixRoom,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
@@ -80,6 +84,7 @@ import {
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
@@ -88,7 +93,6 @@ import {
 	AUTHORITIES,
 	getContact,
 	hasUserAuthority,
-	E2EEContext,
 	SessionTypeContext,
 	useTenant,
 	UserDataContext,
@@ -120,7 +124,6 @@ import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
 } from './composerMessageSnapshot';
-import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
 import './emojiPicker.styles';
@@ -135,7 +138,11 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
-import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
+import {
+	apiPostError,
+	ERROR_LEVEL_ERROR,
+	ERROR_LEVEL_WARN
+} from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { Overlay } from '../overlay/Overlay';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
@@ -205,6 +212,7 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
 	DPA_RESTRICTED: 'DPA_RESTRICTED',
 	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
@@ -507,18 +515,30 @@ export const MessageSubmitInterfaceComponent = ({
 	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	// Bumped when the composer unmounts: a permission prompt or recorder
+	// `stop` event that settles afterwards must not start or keep a take.
+	const voiceLifecycleRef = useRef(0);
+	// A second click while the permission prompt is open must not open a
+	// second stream (the first would keep the microphone on).
+	const voiceStartPendingRef = useRef(false);
+	const voiceReviewRef = useRef<HTMLDivElement>(null);
 	const mediaStreamRef = useRef<MediaStream | null>(null);
 	const voiceRecordingTimerRef = useRef<number | null>(null);
 	const voiceRecordingDurationRef = useRef(0);
 	const voiceRecordingStartedAtRef = useRef<number | null>(null);
 	const voiceDiscardAfterStopRef = useRef(false);
-	const voiceSendAfterStopRef = useRef(false);
+	// #1142: a recording is only ever sent from the review. It remembers the
+	// feedback intent of the action that started the recording, so changing
+	// the composer while the take is under review cannot reclassify it.
+	const recordedVoiceRef = useRef<{
+		file: File;
+		feedbackMailIntent: boolean;
+	} | null>(null);
 
 	const { userData } = useContext(UserDataContext);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
-	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { matrixClientService } = useMatrixClient();
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -647,13 +667,9 @@ export const MessageSubmitInterfaceComponent = ({
 		counsellors: true,
 		moderators: true
 	});
-	const audienceSelectionStorageKey = useMemo(() => {
-		const sessionId = activeSession?.item?.id;
-		if (!sessionId) {
-			return '';
-		}
-		return `oriso.audienceSelection.${sessionId}`;
-	}, [activeSession?.item?.id]);
+	const audienceSelectionStorageKey = audienceSelectionStorageKeyFor(
+		activeSession?.item?.id
+	);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -988,6 +1004,7 @@ export const MessageSubmitInterfaceComponent = ({
 		setAttachmentSelected(null);
 		setAttachmentUpload(null);
 		setVoiceAttachmentDurationSec(0);
+		recordedVoiceRef.current = null;
 		if (voicePreviewUrl) {
 			URL.revokeObjectURL(voicePreviewUrl);
 		}
@@ -1005,7 +1022,6 @@ export const MessageSubmitInterfaceComponent = ({
 		voiceRecordingDurationRef.current = 0;
 		voiceRecordingStartedAtRef.current = null;
 		voiceDiscardAfterStopRef.current = false;
-		voiceSendAfterStopRef.current = false;
 		if (mediaRecorderRef.current) {
 			mediaRecorderRef.current = null;
 		}
@@ -1025,18 +1041,53 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 
 	const stopVoiceRecording = useCallback(
-		(options?: { discard?: boolean; sendAfterStop?: boolean }) => {
-			voiceDiscardAfterStopRef.current = !!options?.discard;
-			voiceSendAfterStopRef.current = !!options?.sendAfterStop;
+		(options?: { discard?: boolean }) => {
+			// Sticky until `onstop` runs: Cancel after Stop must still win.
+			voiceDiscardAfterStopRef.current =
+				voiceDiscardAfterStopRef.current || !!options?.discard;
 			const recorder = mediaRecorderRef.current;
-			if (recorder && recorder.state !== 'inactive') {
-				recorder.stop();
+			if (recorder) {
+				if (recorder.state !== 'inactive') {
+					recorder.stop();
+				}
+				// An inactive recorder has been stopped already; its
+				// `onstop` reads the flag and cleans up.
 				return;
 			}
 			cleanupVoiceRecorder();
 		},
 		[cleanupVoiceRecorder]
 	);
+
+	// #1142: a take belongs to the chat it was made in. If the composer is
+	// reused for another session or side channel while a take is recording
+	// or under review, drop it instead of letting Send deliver it there.
+	// Starting a message edit counts as a change too: an edit is never sent
+	// as a voice note.
+	const voiceDestinationKey = [
+		activeSession.item.id,
+		targetRoomId ?? '',
+		threadRootId ?? '',
+		// Supervision routing resolves asynchronously: a take made before it
+		// settled would be sent to the side room with a stale feedback intent.
+		// The side room only matters for a supervisor; for everyone else a
+		// late `supervisionRoomId` leaves the take's route unchanged.
+		isSupervisor ? `supervisor:${supervisionRoomId ?? ''}` : '',
+		editingMessage?.eventId ?? editingMessageId ?? ''
+	].join('|');
+	const voiceDestinationRef = useRef(voiceDestinationKey);
+	useEffect(() => {
+		if (voiceDestinationRef.current === voiceDestinationKey) {
+			return;
+		}
+		voiceDestinationRef.current = voiceDestinationKey;
+		if (mediaRecorderRef.current) {
+			stopVoiceRecording({ discard: true });
+		}
+		if (recordedVoiceRef.current) {
+			cleanupAttachment();
+		}
+	}, [voiceDestinationKey, stopVoiceRecording, cleanupAttachment]);
 
 	const scrollEditorToBottom = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
@@ -1299,29 +1350,59 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message) => {
+		async (message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
-				return Promise.resolve();
+				return;
 			}
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (!matrixRoomId || !matrixClientService) {
+			if (!matrixClientService) {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
-			try {
-				assertMatrixRoomEncrypted(
-					matrixClientService.getClient(),
-					matrixRoomId
-				);
-			} catch {
+			// #1401: the session may show no Matrix room yet (list fetched before
+			// registration persisted the holding room) or none at all (the agency
+			// has no Matrix service account on this deployment). Re-read the
+			// session and give /sync a moment before deciding; a definite miss is
+			// reported with its reason instead of the generic retry prompt.
+			const roomResolution = await resolveEnquiryMatrixRoom({
+				knownRoomId: resolvedChatSession.matrixRoomId,
+				fetchSessionRoomId: () =>
+					apiGetSessionRoomBySessionId(activeSession.item.id).then(
+						(response) =>
+							response?.sessions?.[0]?.session?.matrixRoomId ??
+							null
+					),
+				isRoomEncrypted: (roomId) => {
+					const client = matrixClientService.getClient();
+					return !!client && isMatrixRoomEncrypted(client, roomId);
+				}
+			});
+			if (roomResolution.status === 'lookup-failed') {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
+			if (roomResolution.status !== 'ready') {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE);
+				apiPostError({
+					name:
+						roomResolution.status === 'room-missing'
+							? 'EnquiryMatrixRoomMissing'
+							: 'EnquiryMatrixRoomNotEncrypted',
+					message:
+						roomResolution.status === 'room-missing'
+							? `Enquiry session ${activeSession.item.id} (agency ${activeSession.item.agencyId}) has no Matrix room; registration did not provision the agency holding room`
+							: `Matrix room ${roomResolution.roomId} of enquiry session ${activeSession.item.id} did not become an encrypted room in time`,
+					level: ERROR_LEVEL_ERROR
+				}).then();
+				return;
+			}
+			const matrixRoomId = roomResolution.roomId;
 			const submissionUserId = matrixClientService
 				.getClient()
 				?.getUserId();
@@ -1391,6 +1472,7 @@ export const MessageSubmitInterfaceComponent = ({
 				});
 		},
 		[
+			activeSession.item.agencyId,
 			activeSession.item.id,
 			enquirySubmissionGuard,
 			encryptRoom,
@@ -1431,7 +1513,7 @@ export const MessageSubmitInterfaceComponent = ({
 			 * visible while it is in force.
 			 */
 			setIsAudienceMenuOpen(false);
-			clearDraftMessage();
+			const draftCleared = clearDraftMessage();
 			setActiveInfo('');
 			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
 			setTimeout(() => {
@@ -1446,7 +1528,12 @@ export const MessageSubmitInterfaceComponent = ({
 			setTimeout(() => {
 				resizeTextarea();
 			}, 200);
-			setTimeout(() => setIsRequestInProgress(false), 1200);
+			// Loading or saving the next draft must not cross the pending
+			// outgoing PATCH → DELETE, even when transport takes over 1200 ms.
+			void Promise.allSettled([
+				draftCleared,
+				new Promise<void>((resolve) => setTimeout(resolve, 1200))
+			]).then(() => setIsRequestInProgress(false));
 		},
 		[
 			clearDraftMessage,
@@ -1650,7 +1737,11 @@ export const MessageSubmitInterfaceComponent = ({
 					.then(() => {
 						onSendButton && onSendButton();
 						handleMessageSendSuccess(preserveComposerOnSuccess);
-						cleanupAttachment();
+						// A retried text send owns no attachment: it must not
+						// drop a voice take that is under review.
+						if (!retryOfId) {
+							cleanupAttachment();
+						}
 						// Reply context is consumed by the send (#435).
 						if (!retryOfId) {
 							onCancelReply && onCancelReply();
@@ -1658,6 +1749,21 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						const dpaFailure = getCounsellingDpaFailure(error);
+						if (dpaFailure) {
+							setActiveInfo(
+								dpaFailure.retryable
+									? INFO_TYPES.DPA_UNAVAILABLE
+									: INFO_TYPES.DPA_RESTRICTED
+							);
+							return;
+						}
+						setActiveInfo((info) =>
+							info === INFO_TYPES.DPA_RESTRICTED ||
+							info === INFO_TYPES.DPA_UNAVAILABLE
+								? ''
+								: info
+						);
 						// Surface the failure in the timeline ("Sending message
 						// failed"); the composer keeps the text so the user can
 						// resend without retyping.
@@ -1687,9 +1793,8 @@ export const MessageSubmitInterfaceComponent = ({
 			} else {
 				// Matrix file upload already sent the message
 				onSendButton && onSendButton();
-				handleMessageSendSuccess();
+				handleMessageSendSuccess(preserveComposerOnSuccess);
 				cleanupAttachment();
-				setIsRequestInProgress(false);
 			}
 		},
 		[
@@ -1746,17 +1851,29 @@ export const MessageSubmitInterfaceComponent = ({
 			const composerMessageBeforeSend = getTypedMarkdownMessage();
 			const currentTypedMessage =
 				messageOverride ?? composerMessageBeforeSend;
-			const preserveComposerOnSuccess = Boolean(
-				retryOfId &&
-					messageOverride !== undefined &&
-					shouldPreserveComposerAfterRetry(
-						composerMessageBeforeSend,
-						messageOverride
-					)
+			// #1142: a reviewed voice note goes out on its own. Text typed
+			// next to it stays in the composer, it is neither sent with the
+			// recording nor cleared by it.
+			const recordedVoice = recordedVoiceRef.current;
+			const isRecordedVoiceSend = Boolean(
+				!retryOfId && attachment && recordedVoice?.file === attachment
 			);
+			const preserveComposerOnSuccess =
+				(isRecordedVoiceSend &&
+					hasMessageContent(currentTypedMessage)) ||
+				Boolean(
+					retryOfId &&
+						messageOverride !== undefined &&
+						shouldPreserveComposerAfterRetry(
+							composerMessageBeforeSend,
+							messageOverride
+						)
+				);
+			// A voice note carries no text, so the kept draft's length is moot.
 			if (
+				!isRecordedVoiceSend &&
 				getPlainTextFromComposerValue(currentTypedMessage).length >
-				INPUT_MAX_LENGTH
+					INPUT_MAX_LENGTH
 			) {
 				return null;
 			}
@@ -1769,14 +1886,19 @@ export const MessageSubmitInterfaceComponent = ({
 
 			let message = retryContext
 				? retryContext.transportMessage
-				: composerHtmlToTransportMarkup(currentTypedMessage);
+				: isRecordedVoiceSend
+					? ''
+					: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
-			const sentFeedbackMailIntent = resolveFeedbackMailIntent({
-				explicitFeedbackComposer: feedbackMailIntent,
-				supervisorFeedbackAction: !!isSupervisor,
-				teamDiscussion,
-				retry: retryContext
-			});
+			const sentFeedbackMailIntent =
+				isRecordedVoiceSend && recordedVoice
+					? recordedVoice.feedbackMailIntent
+					: resolveFeedbackMailIntent({
+							explicitFeedbackComposer: feedbackMailIntent,
+							supervisorFeedbackAction: !!isSupervisor,
+							teamDiscussion,
+							retry: retryContext
+						});
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
 			// MSC3440 m.thread relation on the event (see chatTransportService),
@@ -1928,12 +2050,15 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 		if (isVoiceRecording) {
-			stopVoiceRecording({ sendAfterStop: true });
+			// #1142: submitting mid-recording only ends the take. The note
+			// goes out from the review, never straight from the recorder.
+			stopVoiceRecording();
 			return null;
 		}
 		if (
+			!recordedVoiceRef.current &&
 			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
-			INPUT_MAX_LENGTH
+				INPUT_MAX_LENGTH
 		) {
 			return null;
 		}
@@ -2027,14 +2152,28 @@ export const MessageSubmitInterfaceComponent = ({
 		attachmentInput.click();
 	}, []);
 
-	const displayAttachmentToUpload = useCallback((attachment: File) => {
-		setAttachmentSelected(attachment);
-		setActiveInfo('');
-		// Clear any existing text in the input when attachment is selected
-		setEditorState(EditorState.createEmpty());
-		setComposerText('');
-		composerRef.current?.clear();
-	}, []);
+	const displayAttachmentToUpload = useCallback(
+		(attachment: File, options?: { keepDraft?: boolean }) => {
+			// #1142: the voice review always shows the file that will be
+			// sent. Any other file (upload, drop, paste) replaces the staged
+			// recording; the preview URL is revoked by its effect cleanup.
+			if (recordedVoiceRef.current?.file !== attachment) {
+				recordedVoiceRef.current = null;
+				setVoicePreviewUrl(null);
+				setVoiceAttachmentDurationSec(0);
+			}
+			setAttachmentSelected(attachment);
+			setActiveInfo('');
+			if (options?.keepDraft) {
+				return;
+			}
+			// Clear any existing text in the input when attachment is selected
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+		},
+		[]
+	);
 
 	const handleLargeAttachments = useCallback(() => {
 		removeSelectedAttachment();
@@ -2110,9 +2249,17 @@ export const MessageSubmitInterfaceComponent = ({
 
 	useEffect(() => {
 		return () => {
+			voiceLifecycleRef.current += 1;
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
+
+	// The preview URL pins the recording's Blob until it is revoked. It is
+	// revoked once it is replaced, and here when the composer unmounts.
+	useEffect(() => {
+		if (!voicePreviewUrl) return;
+		return () => URL.revokeObjectURL(voicePreviewUrl);
+	}, [voicePreviewUrl]);
 
 	// Image thumbnail for the pre-send attachment card. Create/revoke are paired
 	// inside the hook's effect so StrictMode's mount → cleanup → mount recreates
@@ -2127,6 +2274,13 @@ export const MessageSubmitInterfaceComponent = ({
 		setActiveInfo('');
 		cleanupAttachment();
 	}, [attachmentUpload, cleanupAttachment, uploadProgress]);
+
+	// #1142: after Discard the review card unmounts; hand focus back to the
+	// editor so a keyboard user is not dropped on <body>.
+	const handleVoiceDiscard = useCallback(() => {
+		handleAttachmentRemoval();
+		requestAnimationFrame(() => composerRef.current?.focus());
+	}, [handleAttachmentRemoval]);
 
 	const getMessageSubmitInfo = useCallback((): MessageSubmitInfoInterface => {
 		let infoData;
@@ -2186,6 +2340,16 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
 			};
+		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(
+					'statusOverlay.enquiryRoomUnavailable.headline'
+				),
+				infoMessage: translate(
+					'statusOverlay.enquiryRoomUnavailable.text'
+				)
+			};
 		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
 			infoData = {
 				isInfo: false,
@@ -2216,7 +2380,10 @@ export const MessageSubmitInterfaceComponent = ({
 					? 'anonymous'
 					: 'oneOnOne';
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
+	const isPracticing = usePracticeActive();
 	const hasUploadFunctionality =
+		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
@@ -2226,7 +2393,7 @@ export const MessageSubmitInterfaceComponent = ({
 		featureVoiceMessagesGroupChatsEnabled = true,
 		featureVoiceMessagesSupervisionChatsEnabled = true
 	} = tenant?.settings || {};
-	const isVoiceMessageEnabledForCurrentChat =
+	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
 		(currentChatType === 'anonymous'
 			? featureVoiceMessagesAnonymousChatsEnabled !== false
@@ -2235,6 +2402,11 @@ export const MessageSubmitInterfaceComponent = ({
 				: currentChatType === 'supervision'
 					? featureVoiceMessagesSupervisionChatsEnabled !== false
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
+	// A voice note is never sent as an edit (m.replace has no attachment
+	// path): the microphone stays visible but unavailable while editing.
+	const isEditingAnyMessage = Boolean(editingMessage || editingMessageId);
+	const isVoiceMessageEnabledForCurrentChat =
+		!isEditingAnyMessage && isVoiceMessageAllowedForChatType;
 
 	const getMatrixRoomId = useCallback(
 		() => resolvedChatSession.matrixRoomId || null,
@@ -2796,26 +2968,14 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, [audienceSelectionStorageKey, selectedAudienceValues]);
 
+	useAudienceMenuDismissal(
+		isAudienceMenuOpen,
+		audienceMenuRef,
+		setIsAudienceMenuOpen
+	);
 	useEffect(() => {
 		if (!isAudienceMenuOpen) {
 			setAudienceOverlayBounds(null);
-			return;
-		}
-		const handleOutsideClick = (event: MouseEvent) => {
-			const target = event.target as Node | null;
-			if (!target) {
-				return;
-			}
-			if (!audienceMenuRef.current?.contains(target)) {
-				setIsAudienceMenuOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleOutsideClick);
-		return () =>
-			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isAudienceMenuOpen]);
-	useEffect(() => {
-		if (!isAudienceMenuOpen) {
 			return;
 		}
 		const updateAudienceOverlayBounds = () => {
@@ -3068,7 +3228,9 @@ export const MessageSubmitInterfaceComponent = ({
 			!hasUploadFunctionality ||
 			!isVoiceMessageEnabledForCurrentChat ||
 			attachmentSelected ||
-			uploadProgress
+			uploadProgress ||
+			voiceStartPendingRef.current ||
+			mediaRecorderRef.current
 		) {
 			return;
 		}
@@ -3085,10 +3247,27 @@ export const MessageSubmitInterfaceComponent = ({
 			supervisorFeedbackAction: !!isSupervisor,
 			teamDiscussion
 		});
+		const startedFor = voiceDestinationRef.current;
+		const startedLifecycle = voiceLifecycleRef.current;
+		voiceStartPendingRef.current = true;
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				audio: true
-			});
+			let stream: MediaStream;
+			try {
+				stream = await navigator.mediaDevices.getUserMedia({
+					audio: true
+				});
+			} finally {
+				voiceStartPendingRef.current = false;
+			}
+			if (
+				voiceDestinationRef.current !== startedFor ||
+				voiceLifecycleRef.current !== startedLifecycle
+			) {
+				// The chat changed or the composer unmounted while the
+				// permission prompt was open.
+				stream.getTracks().forEach((track) => track.stop());
+				return;
+			}
 			mediaStreamRef.current = stream;
 			const mimeTypeCandidates = [
 				'audio/webm;codecs=opus',
@@ -3109,10 +3288,13 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 			};
 			recorder.onstop = () => {
+				if (voiceLifecycleRef.current !== startedLifecycle) {
+					// Unmounted before the stop event: keep no take, no URL.
+					stream.getTracks().forEach((track) => track.stop());
+					return;
+				}
 				const discardAfterStop = voiceDiscardAfterStopRef.current;
-				const sendAfterStop = voiceSendAfterStopRef.current;
 				voiceDiscardAfterStopRef.current = false;
-				voiceSendAfterStopRef.current = false;
 				if (discardAfterStop) {
 					cleanupVoiceRecorder();
 					return;
@@ -3135,7 +3317,13 @@ export const MessageSubmitInterfaceComponent = ({
 						1,
 						Math.round(elapsedMs / 1000)
 					);
-					const extension = mimeType.includes('ogg') ? 'ogg' : 'webm';
+					// iOS Safari records audio/mp4; name it to match so the
+					// receiving side still recognises it as a voice note.
+					const extension = mimeType.includes('ogg')
+						? 'ogg'
+						: mimeType.includes('mp4')
+							? 'm4a'
+							: 'webm';
 					const voiceFile = new File(
 						[blob],
 						`voice-message-${Date.now()}-s${elapsedSec}-ms${elapsedMs}.${extension}`,
@@ -3144,29 +3332,17 @@ export const MessageSubmitInterfaceComponent = ({
 							lastModified: Date.now()
 						}
 					);
-					if (sendAfterStop) {
-						setIsRequestInProgress(true);
-						sendMessage(
-							'',
-							voiceFile,
-							isE2eeEnabled,
-							!!isSupervisor,
-							undefined,
-							undefined,
-							false,
-							undefined,
-							undefined,
-							undefined,
-							recordedFeedbackMailIntent
-						);
-					} else {
-						if (voicePreviewUrl) {
-							URL.revokeObjectURL(voicePreviewUrl);
-						}
-						setVoicePreviewUrl(URL.createObjectURL(blob));
-						setVoiceAttachmentDurationSec(elapsedSec);
-						displayAttachmentToUpload(voiceFile);
+					if (voicePreviewUrl) {
+						URL.revokeObjectURL(voicePreviewUrl);
 					}
+					recordedVoiceRef.current = {
+						file: voiceFile,
+						feedbackMailIntent: recordedFeedbackMailIntent
+					};
+					setVoicePreviewUrl(URL.createObjectURL(blob));
+					setVoiceAttachmentDurationSec(elapsedSec);
+					// #1142: a recording never consumes what the user typed.
+					displayAttachmentToUpload(voiceFile, { keepDraft: true });
 				}
 				cleanupVoiceRecorder();
 			};
@@ -3204,8 +3380,6 @@ export const MessageSubmitInterfaceComponent = ({
 		displayAttachmentToUpload,
 		cleanupVoiceRecorder,
 		stopVoiceRecording,
-		sendMessage,
-		isE2eeEnabled,
 		isSupervisor,
 		feedbackMailIntent,
 		teamDiscussion,
@@ -3249,6 +3423,14 @@ export const MessageSubmitInterfaceComponent = ({
 	 */
 	const isVoiceInsertionPending =
 		isVoiceRecording || isVoiceAttachmentSelected;
+	// #1142: Stop unmounts the button that had focus. Move focus to the
+	// review (announced by its group label) instead of dropping it on <body>.
+	const isVoiceReviewOpen = isVoiceAttachmentSelected && !!voicePreviewUrl;
+	useEffect(() => {
+		if (isVoiceReviewOpen) {
+			voiceReviewRef.current?.focus();
+		}
+	}, [isVoiceReviewOpen]);
 	useEffect(() => {
 		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
 	}, [isVoiceInsertionPending]);
@@ -3270,7 +3452,8 @@ export const MessageSubmitInterfaceComponent = ({
 			: '';
 	const canSendMessage =
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
-		!isMessageOverLimit;
+		(!isMessageOverLimit ||
+			(isVoiceAttachmentSelected && !!voicePreviewUrl));
 
 	const handleToolbarAction = useCallback((action: string) => {
 		composerRef.current?.runAction(action);
@@ -3613,6 +3796,7 @@ export const MessageSubmitInterfaceComponent = ({
 			emptyLabel: translate('message.mention.empty'),
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
+			listLabel: translate('message.submit.toolbar.mention'),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -4396,6 +4580,9 @@ export const MessageSubmitInterfaceComponent = ({
 										'textarea__input--editing'
 								)}
 								ref={textareaInputRef}
+								// Where the closing animation of a waiting room ends
+								// (ORISO-Frontend#1737).
+								data-closing-focal="message-field"
 								onKeyUp={(e) => {
 									resizeTextarea();
 									// Auto-scroll on Enter key or any key press
@@ -4445,7 +4632,56 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
-								{attachmentSelected ? (
+								{attachmentSelected &&
+								isVoiceAttachmentSelected &&
+								voicePreviewUrl ? (
+									<div className="textarea__attachmentMode textarea__attachmentMode--voice">
+										<div
+											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"
+											role="group"
+											ref={voiceReviewRef}
+											tabIndex={-1}
+											aria-label={translate(
+												'voice.recording.preview'
+											)}
+										>
+											<div className="textarea__attachmentModeInfo">
+												{voicePreviewUrl && (
+													// #996: the same player the
+													// sent message uses, so what
+													// you check before sending
+													// looks like what the other
+													// side gets.
+													<VoicePlayer
+														src={voicePreviewUrl}
+														durationSec={
+															voiceAttachmentDurationSec ||
+															null
+														}
+														size="sm"
+														showMeta={false}
+													/>
+												)}
+											</div>
+											<button
+												type="button"
+												className="textarea__voicePreview__discard"
+												onClick={handleVoiceDiscard}
+												title={translate(
+													'voice.recording.discard'
+												)}
+												aria-label={translate(
+													'voice.recording.discard'
+												)}
+											>
+												<RemoveIcon
+													aria-hidden="true"
+													focusable="false"
+												/>
+											</button>
+										</div>
+									</div>
+								) : attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
 											{attachmentPreviewUrl ? (
@@ -4545,7 +4781,14 @@ export const MessageSubmitInterfaceComponent = ({
 														}
 														showMic={
 															hasUploadFunctionality &&
-															isVoiceMessageEnabledForCurrentChat
+															isVoiceMessageAllowedForChatType
+														}
+														micUnavailableReason={
+															isEditingAnyMessage
+																? translate(
+																		'message.submit.toolbar.voiceRecording.disabledWhileEditing'
+																	)
+																: undefined
 														}
 														isRecording={
 															isVoiceRecording
@@ -4712,62 +4955,13 @@ export const MessageSubmitInterfaceComponent = ({
 												type="button"
 												className="textarea__voiceActionButton textarea__voiceActionButton--stop"
 												onClick={() =>
-													stopVoiceRecording({
-														sendAfterStop: true
-													})
+													stopVoiceRecording()
 												}
 											>
 												{translate('app.stop')}
 											</button>
 										</span>
 									</span>
-								) : attachmentSelected &&
-								  isVoiceAttachmentSelected ? (
-									<div className="textarea__attachmentWrapper">
-										<div className="textarea__voicePreview">
-											<span className="textarea__voicePreview__meta">
-												<AudioOnIcon />
-												<span>
-													{translate(
-														'voice.recording.preview'
-													)}
-												</span>
-												<span className="textarea__voicePreview__duration">
-													{formatRecordingDuration(
-														voiceAttachmentDurationSec
-													)}
-												</span>
-											</span>
-											{voicePreviewUrl && (
-												// #996: the same player the
-												// sent message uses, so what
-												// you check before sending
-												// looks like what the other
-												// side gets.
-												<VoicePlayer
-													src={voicePreviewUrl}
-													durationSec={
-														voiceAttachmentDurationSec ||
-														null
-													}
-													size="sm"
-												/>
-											)}
-											<span className="textarea__attachmentSelected__remove">
-												<RemoveIcon
-													onClick={
-														handleAttachmentRemoval
-													}
-													title={translate(
-														'app.remove'
-													)}
-													aria-label={translate(
-														'app.remove'
-													)}
-												/>
-											</span>
-										</div>
-									</div>
 								) : null)}
 						</span>
 						<div className="textarea__buttons">

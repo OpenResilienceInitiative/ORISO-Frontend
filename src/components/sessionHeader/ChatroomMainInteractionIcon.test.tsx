@@ -1,11 +1,11 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * FE#513 — the "+" add affordance must never render as a dead decorative
  * element: it is either an interactive button or a real disabled button with
  * an honest tooltip/label.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ChatroomMainInteractionIcon } from './ChatroomMainInteractionIcon';
 
@@ -28,6 +28,35 @@ describe('ChatroomMainInteractionIcon', () => {
 		expect(button.hasAttribute('disabled')).toBe(false);
 		fireEvent.click(button);
 		expect(onAddClick).toHaveBeenCalledTimes(1);
+	});
+
+	it('anchors the interactive add button for product tours, but not the disabled one', () => {
+		const { rerender } = render(
+			<ChatroomMainInteractionIcon
+				type="nearby"
+				showAddIcon
+				addLabel="Supervisor verwalten"
+				onAddClick={vi.fn()}
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: 'Supervisor verwalten' })
+				.getAttribute('data-tour-target')
+		).toBe('session-supervisor-add');
+
+		rerender(
+			<ChatroomMainInteractionIcon
+				type="nearby"
+				showAddIcon
+				addLabel="Supervisor verwalten"
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: 'Supervisor verwalten' })
+				.hasAttribute('data-tour-target')
+		).toBe(false);
 	});
 
 	it('renders a disabled button with an honest tooltip when no handler is provided', () => {

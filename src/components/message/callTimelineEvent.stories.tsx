@@ -22,7 +22,8 @@ import { phone375Globals } from './messageStoryShell';
  * same entry becomes the line in the log.
  */
 const meta: Meta = {
-	title: 'Chat/Call event in the timeline',
+	id: 'chat-call-event-in-the-timeline',
+	title: 'Chat/System messages/Call events',
 	parameters: {
 		docs: {
 			description: {

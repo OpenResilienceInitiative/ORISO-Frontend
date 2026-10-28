@@ -5,8 +5,10 @@ import { ExtendedSessionInterface } from '..';
 type ActiveSessionContextProps = {
 	children?: React.ReactNode;
 	activeSession: ExtendedSessionInterface | null;
-	reloadActiveSession?: () => void;
+	/** The reload's promise, when the provider has one to hand back. */
+	reloadActiveSession?: () => void | Promise<unknown>;
 	readActiveSession?: () => void;
+	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
 };
 
 export const ActiveSessionContext =
@@ -16,11 +18,17 @@ export const ActiveSessionProvider: React.FC<ActiveSessionContextProps> = ({
 	children,
 	activeSession,
 	reloadActiveSession,
-	readActiveSession
+	readActiveSession,
+	avatarMembers
 }) => {
 	const contextValue = useMemo(
-		() => ({ activeSession, reloadActiveSession, readActiveSession }),
-		[activeSession, reloadActiveSession, readActiveSession]
+		() => ({
+			activeSession,
+			reloadActiveSession,
+			readActiveSession,
+			avatarMembers
+		}),
+		[activeSession, reloadActiveSession, readActiveSession, avatarMembers]
 	);
 
 	// Expose active session globally for CallManager to access

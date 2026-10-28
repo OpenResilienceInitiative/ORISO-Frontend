@@ -22,7 +22,6 @@ import { Text } from '../../text/Text';
 import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
 import { OrisoTextField } from '../../form/OrisoTextField';
-import { M3Checkbox } from '../../M3Checkbox';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	EncryptionSetupStatus,
@@ -49,6 +48,7 @@ import {
 	executeWithReadyEncryptionClient,
 	resolveReadyEncryptionClient
 } from './encryptionClient';
+import { RecoveryKeySaveStep } from './RecoveryKeySaveStep';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -71,6 +71,8 @@ type PanelPhase =
 	| 'resetConfirm';
 
 export type EncryptionSettingsPanelProps = {
+	/** Hide the standalone heading when the recovery group already labels the card. */
+	showHeading?: boolean;
 	/** Storybook/tests: inject a client instead of the singleton service. */
 	clientOverride?: MatrixClient | null;
 	/** Storybook: start in a fixed phase instead of probing the client. */
@@ -79,7 +81,8 @@ export type EncryptionSettingsPanelProps = {
 
 export const EncryptionSettingsPanel = ({
 	clientOverride,
-	initialStatusOverride
+	initialStatusOverride,
+	showHeading = true
 }: EncryptionSettingsPanelProps = {}) => {
 	const enrollmentForm = useRef<HTMLFormElement>(null);
 	const { t } = useTranslation();
@@ -97,10 +100,8 @@ export const EncryptionSettingsPanel = ({
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null
 	);
-	const [keyStoredConfirmed, setKeyStoredConfirmed] = useState(false);
 	const [recoveryInput, setRecoveryInput] = useState('');
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
-	const [copied, setCopied] = useState(false);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [keyFromSilentSetup, setKeyFromSilentSetup] = useState(false);
 	const [loginPassword, setLoginPassword] = useState('');
@@ -152,8 +153,6 @@ export const EncryptionSettingsPanel = ({
 			// panel is where the user finally gets to see and save it.
 			if (pendingKey && !nextStatus.keyStorageOutOfSync) {
 				setRecoveryKeyToShow(pendingKey);
-				setKeyStoredConfirmed(false);
-				setCopied(false);
 				setKeyFromSilentSetup(true);
 				setPhase('showKey');
 				return;
@@ -213,8 +212,6 @@ export const EncryptionSettingsPanel = ({
 				savePendingRecoveryKey(userId, encodedKey);
 			}
 			setRecoveryKeyToShow(encodedKey);
-			setKeyStoredConfirmed(false);
-			setCopied(false);
 			setKeyFromSilentSetup(false);
 			setPhase('showKey');
 		} catch (setupError) {
@@ -243,22 +240,9 @@ export const EncryptionSettingsPanel = ({
 			dismissRecoveryReminder(userId);
 		}
 		setRecoveryKeyToShow(null);
-		setKeyStoredConfirmed(false);
 		setKeyFromSilentSetup(false);
 		void refreshStatus();
 	}, [refreshStatus, userId]);
-
-	const onCopyKey = useCallback(async () => {
-		if (!recoveryKeyToShow) {
-			return;
-		}
-		try {
-			await navigator.clipboard.writeText(recoveryKeyToShow);
-			setCopied(true);
-		} catch {
-			// Clipboard may be unavailable (permissions); manual copy remains.
-		}
-	}, [recoveryKeyToShow]);
 
 	const onRecover = useCallback(async () => {
 		if (!recoveryInput.trim()) {
@@ -328,16 +312,20 @@ export const EncryptionSettingsPanel = ({
 		content: recoveryInput
 	};
 
-	const renderHeader = () => (
-		<div className="profile__content__title">
-			<Headline text={t('profile.encryption.title')} semanticLevel="5" />
-			<Text
-				text={t('profile.encryption.description')}
-				type="standard"
-				className="tertiary"
-			/>
-		</div>
-	);
+	const renderHeader = () =>
+		showHeading && (
+			<div className="profile__content__title">
+				<Headline
+					text={t('profile.encryption.title')}
+					semanticLevel="5"
+				/>
+				<Text
+					text={t('profile.encryption.description')}
+					type="standard"
+					className="tertiary"
+				/>
+			</div>
+		);
 
 	if (phase === 'loading') {
 		return (
@@ -382,6 +370,9 @@ export const EncryptionSettingsPanel = ({
 
 			{phase === 'notSetUp' && (
 				<>
+					<p role="status">
+						{t('profile.encryption.status.notSetUp')}
+					</p>
 					<Text
 						text={t('profile.encryption.setup.explainer')}
 						type="standard"
@@ -556,51 +547,11 @@ export const EncryptionSettingsPanel = ({
 			)}
 
 			{phase === 'showKey' && recoveryKeyToShow && (
-				<>
-					<Text
-						text={
-							keyFromSilentSetup
-								? t(
-										'profile.encryption.showKey.silentExplainer'
-									)
-								: t('profile.encryption.showKey.explainer')
-						}
-						type="standard"
-					/>
-					<div
-						className="encryptionSettings__key"
-						data-cy="recovery-key-display"
-					>
-						<code>{recoveryKeyToShow}</code>
-					</div>
-					<div className="encryptionSettings__keyActions">
-						<Button
-							item={{
-								label: copied
-									? t('profile.encryption.showKey.copied')
-									: t('profile.encryption.showKey.copy'),
-								type: BUTTON_TYPES.SECONDARY
-							}}
-							buttonHandle={onCopyKey}
-							className="encryptionSettings__fullWidthAction"
-						/>
-					</div>
-					<M3Checkbox
-						checked={keyStoredConfirmed}
-						onChange={setKeyStoredConfirmed}
-						label={t('profile.encryption.showKey.confirmLabel')}
-						dataCy="encryption-key-stored-confirmation"
-					/>
-					<Button
-						item={{
-							label: t('profile.encryption.showKey.done'),
-							type: BUTTON_TYPES.PRIMARY,
-							disabled: !keyStoredConfirmed
-						}}
-						buttonHandle={onConfirmKeyStored}
-						className="encryptionSettings__fullWidthAction"
-					/>
-				</>
+				<RecoveryKeySaveStep
+					fromSilentSetup={keyFromSilentSetup}
+					recoveryKey={recoveryKeyToShow}
+					onConfirm={onConfirmKeyStored}
+				/>
 			)}
 
 			{phase === 'healthy' && (

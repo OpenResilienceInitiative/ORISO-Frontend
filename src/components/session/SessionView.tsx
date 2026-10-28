@@ -33,8 +33,72 @@ import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
 import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
 import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
+import { useSessionAvatarMembers } from '../../hooks/useSessionAvatarMembers';
+import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
+
+const positiveInteger = (value: string | null | undefined): number | null => {
+	if (!value || !/^\d+$/.test(value)) return null;
+	const parsed = Number(value);
+	return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+};
 
 export const SessionView = () => {
+	const { groupId, sessionId } = useParams<{
+		groupId: string;
+		sessionId: string;
+	}>();
+	const navigate = useNavigate();
+	const { pathname, search } = useLocation();
+	const sessionType = useContext(SessionTypeContext);
+	const { userData } = useContext(UserDataContext);
+	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	const { fromL } = useResponsive();
+
+	useEffect(() => {
+		if (!fromL) {
+			mobileDetailView();
+			return () => {
+				mobileListView();
+			};
+		}
+		desktopView();
+	}, [fromL]);
+
+	const parsedSessionId = positiveInteger(sessionId);
+	const requestId = positiveInteger(
+		new URLSearchParams(search).get('caseHandoverRequestId')
+	);
+	const isStableConsultantSessionRoute =
+		!groupId &&
+		parsedSessionId !== null &&
+		requestId !== null &&
+		pathname.includes('/sessions/consultant/sessionView/session/');
+
+	if (isStableConsultantSessionRoute) {
+		return (
+			<CaseHandoverOfferGate
+				actorId={userData.userId}
+				sessionId={parsedSessionId}
+				requestId={requestId}
+				onClose={() =>
+					navigate(
+						(sessionType?.path ||
+							'/sessions/consultant/sessionView') +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: '')
+					)
+				}
+			>
+				<SessionViewBody />
+			</CaseHandoverOfferGate>
+		);
+	}
+
+	return <SessionViewBody />;
+};
+
+const SessionViewBody = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
@@ -81,6 +145,14 @@ export const SessionView = () => {
 			)
 		}
 	);
+	// Only the open conversation requests members; list-row providers stay passive.
+	const avatarMembers = useSessionAvatarMembers(
+		activeSession?.isGroup && groupAccess === 'member'
+			? activeSession.item.id
+			: undefined,
+		userData?.userId
+	);
+
 	// …and may knock on a self-help group (never a team chat); once a
 	// moderator lets her in, the group is asked again.
 	const inviteToken = activeSession?.item?.id
@@ -111,17 +183,6 @@ export const SessionView = () => {
 		pathname,
 		userData?.userId
 	]);
-
-	const { fromL } = useResponsive();
-	useEffect(() => {
-		if (!fromL) {
-			mobileDetailView();
-			return () => {
-				mobileListView();
-			};
-		}
-		desktopView();
-	}, [fromL]);
 
 	const checkMutedUserForThisSession = useCallback(() => {
 		setForceBannedOverlay(false);
@@ -255,6 +316,7 @@ export const SessionView = () => {
 		<ActiveSessionProvider
 			activeSession={activeSession}
 			readActiveSession={readActiveSession}
+			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
 		>
 			<SessionStream

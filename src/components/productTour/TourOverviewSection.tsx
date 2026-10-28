@@ -2,18 +2,18 @@ import * as React from 'react';
 import { useCallback } from 'react';
 import { useSetAtom } from 'jotai';
 import { TourOverviewCarousel } from './TourOverviewCarousel';
-import { frontendTours } from './tourDefinitions';
+import { consultantWalkthroughTour } from './tourDefinitions';
 import { tourLaunchRequestAtom } from './tourLaunchState';
 import { versionedTourProgressRepository } from './versionedTourProgressRepository';
 import type { TourDefinition } from './types';
 import type { TourStartMode } from './TourOverviewCarousel';
 
-/**
- * Profile section wiring the tutorial carousel to the versioned progress API
- * and the tour host. Consultant-only for now — the consultant walkthrough is
- * the only shipped frontend tour.
- */
-export const TourOverviewSection = () => {
+/** The Help introduction uses the same versioned progress and launch host as before. */
+export const TourOverviewSection = ({
+	embedded = false
+}: {
+	embedded?: boolean;
+}) => {
 	const requestTourLaunch = useSetAtom(tourLaunchRequestAtom);
 
 	const loadProgress = useCallback(
@@ -34,7 +34,8 @@ export const TourOverviewSection = () => {
 
 	return (
 		<TourOverviewCarousel
-			tours={frontendTours}
+			tours={[consultantWalkthroughTour]}
+			embedded={embedded}
 			audience="consultant"
 			loadProgress={loadProgress}
 			onStartTour={handleStartTour}

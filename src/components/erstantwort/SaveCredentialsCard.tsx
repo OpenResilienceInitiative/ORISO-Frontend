@@ -40,10 +40,13 @@ import './SaveCredentialsCard.styles.scss';
 export interface SaveCredentialsCardProps {
 	/** The immutable Anmeldename (`userName`), never the display name. */
 	userName: string;
+	/** #420 preview: the login name stays readable; no copy, no way out of the preview. */
+	readOnly?: boolean;
 }
 
 export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
-	userName
+	userName,
+	readOnly = false
 }) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -104,13 +107,15 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 					readOnly
 					value={userName}
 				/>
-				<button
-					type="button"
-					className="saveCredentialsCard__copy"
-					onClick={copy}
-				>
-					{t('erstantwort.saveCredentials.copy')}
-				</button>
+				{!readOnly && (
+					<button
+						type="button"
+						className="saveCredentialsCard__copy"
+						onClick={copy}
+					>
+						{t('erstantwort.saveCredentials.copy')}
+					</button>
+				)}
 			</div>
 
 			<p
@@ -131,13 +136,15 @@ export const SaveCredentialsCard: React.FC<SaveCredentialsCardProps> = ({
 				{t('erstantwort.saveCredentials.sharedDevice')}
 			</p>
 
-			<button
-				type="button"
-				className="saveCredentialsCard__setPassword"
-				onClick={() => navigate(TWO_FACTOR_SETTINGS_PATH)}
-			>
-				{t('erstantwort.saveCredentials.setPassword')}
-			</button>
+			{!readOnly && (
+				<button
+					type="button"
+					className="saveCredentialsCard__setPassword"
+					onClick={() => navigate(TWO_FACTOR_SETTINGS_PATH)}
+				>
+					{t('erstantwort.saveCredentials.setPassword')}
+				</button>
+			)}
 		</div>
 	);
 };

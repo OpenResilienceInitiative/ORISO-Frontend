@@ -11,6 +11,16 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-09-05 — Storybook FAIL-on-import is a disconnect, not a broken story
+
+- Context: PR #1297 Storybook CI (`scripts/run-storybook-tests.mjs`)
+- Lesson: When Chromium dies mid-collect, Vitest marks the file that was importing `.storybook/vitest.setup.ts` as FAIL (`Failed to fetch dynamically imported module`) even though every `play()` that ran passed. Treat that as infrastructure and retry. Do not latch `FAIL` / `Test Files n failed` as an assertion. The `url.pathToFileURL` Vite lines are noise on every run.
+
+## 2026-09-04 — do not run Frontend `test:unit` and `build` together
+
+- Context: #1194 enquiry phase (`docs/agent-tasks/2026-09-04_1194-enquiry-phase/`)
+- Lesson: `test:unit` (6GB) plus `build` (8GB) in parallel can stall the last Vitest worker (TipTap `emojiInsert.test.tsx` GC thrash). Isolated, that file is 47ms. Run the two gates sequentially. Use `./node_modules/.bin/vitest`, not `npx vitest` (npx may fetch Vitest 5).
+
 ## 2026-08-31 — positional t() second args hide leftover English
 
 - Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
@@ -61,3 +71,7 @@ App handlers for Cmd/Ctrl+F, Cmd/Ctrl+Shift+N, Cmd/Ctrl+K must listen in the cap
 ## 2026-07-08 — matrix-js-sdk production logging
 
 `matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
+
+## 2026-10-09 — memory-only practice status
+
+A persisted step marker cannot reconstruct a fictional case that lives only in memory. Offer a truthful fresh-start state after interruption unless both the case and progress can be restored safely; leave ordinary tutorial resume semantics separate.

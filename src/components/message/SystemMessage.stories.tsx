@@ -17,7 +17,8 @@ import './message.styles.scss';
  * so a change here is felt in all of them.
  */
 const meta = {
-	title: 'Components/Chat/SystemMessage',
+	id: 'components-chat-systemmessage',
+	title: 'Chat/System messages/General notices',
 	component: SystemMessage,
 	tags: ['autodocs'],
 	parameters: {

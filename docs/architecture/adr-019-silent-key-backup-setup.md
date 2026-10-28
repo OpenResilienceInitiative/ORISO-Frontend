@@ -44,7 +44,7 @@ Split them.
 Its session-scoped dismissal is bound to the user who dismissed it, and it
 silences nothing but the dialog: a different account logging into the same tab
 still gets its own answer, and the background bootstrap always runs when it is
-eligible — nobody dismissed *that*.
+eligible — nobody dismissed _that_.
 
 Silent bootstrap is deliberately restricted to `!serverBackupExists &&
 !secretStorageReady` (`canBootstrapSilently`). Bootstrapping replaces secret
@@ -69,7 +69,7 @@ starting a rival bootstrap.
 - Nothing interrupts registration or the Anfrage. The backup exists anyway.
 - The backup is created at the one moment it reliably can be: right after a
   password login, while the device-signing UIA callback is still registered.
-  A user who clicked "Später" previously ended up with *no* backup at all.
+  A user who clicked "Später" previously ended up with _no_ backup at all.
 - The recovery key survives a reload before the user has written it down —
   today the manual flow shows it once and loses it if the tab closes.
 
@@ -78,7 +78,7 @@ starting a rival bootstrap.
 - The recovery key sits in `localStorage` until confirmed. It lives next to the
   Rust crypto store, which already holds this device's Megolm keys, so an
   attacker with local access gains little — but an XSS that reaches the parked
-  key gains durable access to *future* history too, which the crypto store
+  key gains durable access to _future_ history too, which the crypto store
   alone would not give. The window is bounded by the user's confirmation, and
   the key is per user and never sent anywhere.
 - A user who never opens Sicherheit never learns their recovery key. They are

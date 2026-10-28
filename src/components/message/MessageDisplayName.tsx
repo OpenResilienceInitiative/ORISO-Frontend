@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 
 interface MessageDisplayNameProps {
@@ -47,7 +48,7 @@ export const MessageDisplayName = ({
 	const trimmedSubtitle = (subtitle || '').trim();
 
 	return (
-		<>
+		<div className="messageItem__nameBlock">
 			<div
 				className={`messageItem__username messageItem__username--${type}`}
 			>
@@ -55,9 +56,15 @@ export const MessageDisplayName = ({
 			</div>
 			{trimmedSubtitle && (
 				<div className="messageItem__usernameSubtitle">
-					{trimmedSubtitle}
+					<AgencyIcon
+						data-testid="agency-icon"
+						className="messageItem__usernameSubtitleIcon"
+						aria-hidden="true"
+						focusable="false"
+					/>
+					<span>{trimmedSubtitle}</span>
 				</div>
 			)}
-		</>
+		</div>
 	);
 };

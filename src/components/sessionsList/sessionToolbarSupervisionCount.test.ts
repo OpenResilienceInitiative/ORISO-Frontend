@@ -5,32 +5,26 @@
  * had arrived. The count answers "is there something new in a case I
  * supervise" — so it counts UNREAD among supervised, not how many cases exist.
  *
- * `isChatItemUnread` reads the Matrix client, so it is stubbed here: these
- * tests are about which rows are counted, not about how unread is derived
- * (that is `sessionUnread`'s own suite, #1147).
+ * Seed Matrix room notifications so counters and filters exercise the real
+ * unread derivation shared with expanded rows (#1147).
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const unreadRooms = new Set<string>();
 
-vi.mock('../../utils/sessionUnread', async (importOriginal) => {
-	const actual =
-		await importOriginal<typeof import('../../utils/sessionUnread')>();
-	return {
-		...actual,
-		isRoomUnread: (roomId?: string | null) =>
-			Boolean(roomId && unreadRooms.has(roomId)),
-		isChatItemUnread: (
-			chatItem?: { matrixRoomId?: string | null } | null
-		) =>
-			Boolean(
-				chatItem?.matrixRoomId && unreadRooms.has(chatItem.matrixRoomId)
-			)
-	};
-});
+vi.mock('../../services/matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({
+		getRoom: (roomId: string) => ({
+			getUnreadNotificationCount: () => (unreadRooms.has(roomId) ? 1 : 0)
+		})
+	})
+}));
 
-const { countUnreadSupervisedSessions, countUnreadOtherSessions } =
-	await import('./sessionToolbarFilters');
+const {
+	countUnreadSupervisedSessions,
+	countUnreadOtherSessions,
+	sessionMatchesToolbar
+} = await import('./sessionToolbarFilters');
 
 const ME = 'consultant-me';
 const OWNER = 'consultant-owner';
@@ -213,5 +207,27 @@ describe('supervision bundled under Other', () => {
 				ME
 			)
 		).toBe(2);
+	});
+});
+
+describe('side-room unread uses the same source in the toolbar filter', () => {
+	beforeEach(() => unreadRooms.clear());
+	it('keeps a side-room-only unread supervised case in the Unread filter', () => {
+		unreadRooms.add('!side:hs');
+		const entry = pair('!main:hs', {
+			...supervisedByMe,
+			sideRoomId: '!side:hs'
+		});
+		expect(
+			sessionMatchesToolbar(
+				entry.raw,
+				entry.extended,
+				'',
+				'unread',
+				[],
+				[],
+				ME
+			)
+		).toBe(true);
 	});
 });

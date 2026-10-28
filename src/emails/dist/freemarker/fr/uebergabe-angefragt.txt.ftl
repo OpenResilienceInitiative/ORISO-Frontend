@@ -17,9 +17,7 @@ ${contactLine!''}
 
 ${platformName!''} est un service proposé par ${orgName!''}.
 
-Paramètres: ${settingsUrl!''}
 Protection des données: ${privacyUrl!''}
 Mentions légales: ${imprintUrl!''}
-Se désabonner des notifications: ${unsubscribeUrl!''}
 
 Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

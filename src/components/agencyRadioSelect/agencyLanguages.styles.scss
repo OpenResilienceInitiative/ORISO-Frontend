@@ -33,7 +33,7 @@ $input-size: 24px;
 	}
 
 	&__more {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		text-decoration: underline;
 		cursor: pointer;
 		background: none;
