@@ -6073,7 +6073,8 @@
 			"answerAndEnd": "Beenden und annehmen",
 			"backToCall": "Zurück zur großen Ansicht",
 			"speaking": "{{name}} spricht",
-			"dockLabel": "Gespräch mit {{name}}"
+			"dockLabel": "Gespräch mit {{name}}",
+			"cameraHint": "Der Ton läuft weiter."
 		}
 	},
 	"form": {

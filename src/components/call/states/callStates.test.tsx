@@ -136,9 +136,11 @@ describe('call states (FE#1904)', () => {
 			/>
 		);
 		screen.getByRole('button', { name: 'More options' }).click();
-		(
-			await screen.findByRole('menuitem', { name: 'Turn off video' })
-		).click();
+		const camera = await screen.findByRole('menuitem', {
+			name: /Turn off video/
+		});
+		expect(camera.textContent).toContain('Sound keeps going.');
+		camera.click();
 		expect(onToggleCamera).toHaveBeenCalledTimes(1);
 	});
 

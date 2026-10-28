@@ -6083,7 +6083,8 @@
 			"answerAndEnd": "Bitir ve yanıtla",
 			"backToCall": "Tam görünüme dön",
 			"speaking": "{{name}} konuşuyor",
-			"dockLabel": "{{name}} ile görüşme"
+			"dockLabel": "{{name}} ile görüşme",
+			"cameraHint": "Ses devam eder."
 		}
 	},
 	"form": {

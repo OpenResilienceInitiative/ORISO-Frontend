@@ -210,6 +210,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 											? t('calls.turnOnVideo')
 											: t('calls.turnOffVideo')
 									}
+									description={t('calls.states.cameraHint')}
 									onClick={() => {
 										closeMenu();
 										onToggleCamera();

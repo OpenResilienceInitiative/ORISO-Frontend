@@ -6091,7 +6091,8 @@
 			"answerAndEnd": "Завершить и ответить",
 			"backToCall": "Вернуться к полному окну звонка",
 			"speaking": "{{name}} говорит",
-			"dockLabel": "Звонок с {{name}}"
+			"dockLabel": "Звонок с {{name}}",
+			"cameraHint": "Звук при этом остаётся."
 		}
 	},
 	"form": {

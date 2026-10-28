@@ -6083,7 +6083,8 @@
 			"answerAndEnd": "ኣቋሪጽኩም ተቐበሉ",
 			"backToCall": "ናብ ምሉእ ርእይቶ ጻውዒት ተመለሱ",
 			"speaking": "{{name}} ይዛረብ ኣሎ",
-			"dockLabel": "ምስ {{name}} ዝርርብ"
+			"dockLabel": "ምስ {{name}} ዝርርብ",
+			"cameraHint": "ድምጺ ይቕጽል።"
 		}
 	},
 	"form": {

@@ -5998,7 +5998,8 @@
 			"answerAndEnd": "End call and answer",
 			"backToCall": "Back to the full call",
 			"speaking": "{{name}} is speaking",
-			"dockLabel": "Call with {{name}}"
+			"dockLabel": "Call with {{name}}",
+			"cameraHint": "Sound keeps going."
 		}
 	},
 	"form": {
