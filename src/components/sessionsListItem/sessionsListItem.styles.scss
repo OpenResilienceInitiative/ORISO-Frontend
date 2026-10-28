@@ -1285,6 +1285,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		// it so the outline reads as one card, whatever its place.
 		border-radius: $list-group-radius;
 
+		// Above its neighbours, so their edges never cut into the outline.
+		z-index: 11;
+
 		.sessionsListItem__menuIcon {
 			border-color: #fff;
 		}
