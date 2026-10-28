@@ -2116,7 +2116,8 @@
 				"large": "Meine Beratungen",
 				"nav": "Gespräch",
 				"small": "Nachrichten"
-			}
+			},
+			"directLinks": "Meine Direktlinks"
 		},
 		"activity": "Zeitstrahl",
 		"language": "Sprache",
@@ -2994,7 +2995,8 @@
 					"title": "Sicherheit"
 				},
 				"title": "Einstellungen",
-				"keyboardShortcuts": "Tastaturkürzel"
+				"keyboardShortcuts": "Tastaturkürzel",
+				"myLinks": "Meine Links"
 			}
 		},
 		"spokenLanguages": {
@@ -6270,7 +6272,28 @@
 		"list": {
 			"title": "Meine Direktlinks",
 			"qr": "QR-Code zeigen",
-			"active": "{{name}} aktiv"
+			"active": "{{name}} aktiv",
+			"edit": "{{name}} bearbeiten"
+		},
+		"edit": {
+			"title": "Direktlink bearbeiten",
+			"cancel": "Abbrechen",
+			"save": "Speichern",
+			"name": "Name",
+			"nameRequired": "Bitte geben Sie einen Namen ein.",
+			"topic": "Thema",
+			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
+			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+		},
+		"page": {
+			"create": "Neuen Direktlink in „Chat erstellen“ anlegen",
+			"emptyHeadline": "Aktuell gibt es keine Direktlinks",
+			"emptyText": "Einen Direktlink erstellen Sie unter „Chat erstellen“. Er erscheint danach hier.",
+			"loading": "Direktlinks werden geladen",
+			"loadFailed": "Ihre Direktlinks konnten nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuchen Sie es erneut."
 		},
 		"entry": {
 			"inactive": "Dieser Link ist nicht mehr aktiv.",

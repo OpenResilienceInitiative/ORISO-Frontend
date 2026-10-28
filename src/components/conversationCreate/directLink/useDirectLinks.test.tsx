@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	apiCreateDirectLink,
-	apiGetDirectLinks,
+	apiGetOwnDirectLinks,
 	apiUpdateDirectLink,
 	DIRECT_LINKS_CHANGED_EVENT
 } from '../../../api/apiDirectLinks';
@@ -15,28 +15,27 @@ vi.mock('../../../api/apiDirectLinks', async () => {
 	>('../../../api/apiDirectLinks');
 	return {
 		...actual,
-		apiGetDirectLinks: vi.fn(),
+		apiGetOwnDirectLinks: vi.fn(),
 		apiCreateDirectLink: vi.fn(),
 		apiUpdateDirectLink: vi.fn()
 	};
 });
 
-const dto = (id: number, active = true) => ({
-	id,
-	token: `t${id}`,
-	url: `https://app/invite/t${id}`,
+/** What the API functions answer: the tile model. */
+const link = (id: number, active = true) => ({
+	id: String(id),
 	name: `Link ${id}`,
+	topic: 'Schulden',
 	topicId: 4,
-	topicName: 'Schulden',
 	medium: 'CHAT' as const,
 	temporary: false,
 	active,
-	admission: 'DIRECT' as const
+	url: `https://app/invite/t${id}`
 });
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	vi.mocked(apiGetDirectLinks).mockResolvedValue([dto(1)]);
+	vi.mocked(apiGetOwnDirectLinks).mockResolvedValue([link(1)]);
 });
 
 describe('useDirectLinks', () => {
@@ -48,11 +47,11 @@ describe('useDirectLinks', () => {
 
 	it('does not load when only creating', async () => {
 		renderHook(() => useDirectLinks({ load: false }));
-		expect(apiGetDirectLinks).not.toHaveBeenCalled();
+		expect(apiGetOwnDirectLinks).not.toHaveBeenCalled();
 	});
 
 	it('puts a new link first', async () => {
-		vi.mocked(apiCreateDirectLink).mockResolvedValue(dto(2));
+		vi.mocked(apiCreateDirectLink).mockResolvedValue(link(2));
 		const { result } = renderHook(() => useDirectLinks());
 		await waitFor(() => expect(result.current.loaded).toBe(true));
 		await act(async () => {
@@ -62,7 +61,7 @@ describe('useDirectLinks', () => {
 	});
 
 	it('tells an open "Meine Direktlinks" list about the new link', async () => {
-		vi.mocked(apiCreateDirectLink).mockResolvedValue(dto(2));
+		vi.mocked(apiCreateDirectLink).mockResolvedValue(link(2));
 		const changed = vi.fn();
 		window.addEventListener(DIRECT_LINKS_CHANGED_EVENT, changed);
 		const { result } = renderHook(() => useDirectLinks({ load: false }));
@@ -84,7 +83,7 @@ describe('useDirectLinks', () => {
 
 	it('switches a link and puts the switch back when the backend refuses', async () => {
 		vi.mocked(apiUpdateDirectLink)
-			.mockResolvedValueOnce(dto(1, false))
+			.mockResolvedValueOnce(link(1, false))
 			.mockRejectedValueOnce(new Error('nope'));
 		const { result } = renderHook(() => useDirectLinks());
 		await waitFor(() => expect(result.current.loaded).toBe(true));

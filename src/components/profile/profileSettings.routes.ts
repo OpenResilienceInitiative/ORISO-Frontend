@@ -19,6 +19,7 @@ import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import AnimationOutlinedIcon from '@mui/icons-material/AnimationOutlined';
+import { MyLinksSettings } from '../directLinks/MyDirectLinksPanel';
 import { BrowserNotification } from './BrowserNotifications';
 import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
@@ -76,6 +77,21 @@ export const profileRoutesSettings = (
 				icon: NotificationsActiveOutlinedIcon,
 				column: COLUMN_LEFT,
 				order: 4
+			}
+		]
+	},
+	// #1894: the same direct links as under the clock entry.
+	{
+		title: 'profile.routes.settings.myLinks',
+		url: '/meine-links',
+		elements: [
+			{
+				condition: (userData) =>
+					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
+				component: MyLinksSettings,
+				boxed: false,
+				fullWidth: true,
+				order: 1
 			}
 		]
 	},

@@ -92,3 +92,25 @@ it('retains the security route with one full-width stable composer', () => {
 	]);
 	expect(groups.every(isTabGroup)).toBe(true);
 });
+
+vi.mock('../directLinks/MyDirectLinksPanel', () => ({
+	MyLinksSettings: () => null
+}));
+
+describe('Settings → "Meine Links" (#1894)', () => {
+	it('shows the counsellor’s direct links as their own settings tab', async () => {
+		const { MyLinksSettings } = await import(
+			'../directLinks/MyDirectLinksPanel'
+		);
+		const group = profileRoutesSettings([], {} as AppConfigInterface).find(
+			(entry) => isTabGroup(entry) && entry.url === '/meine-links'
+		);
+		if (!group || !isTabGroup(group)) throw new Error('missing tab');
+
+		expect(group.title).toBe('profile.routes.settings.myLinks');
+		expect(group.elements.map((element) => element.component)).toEqual([
+			MyLinksSettings
+		]);
+		expect(typeof group.elements[0].condition).toBe('function');
+	});
+});

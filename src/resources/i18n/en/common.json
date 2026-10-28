@@ -2094,7 +2094,8 @@
 				"large": "My consultations",
 				"nav": "Chats",
 				"small": "Messages"
-			}
+			},
+			"directLinks": "My direct links"
 		},
 		"activity": "Timeline",
 		"language": "Language",
@@ -2956,7 +2957,8 @@
 					"title": "Security"
 				},
 				"title": "Settings",
-				"keyboardShortcuts": "Keyboard Shortcuts"
+				"keyboardShortcuts": "Keyboard Shortcuts",
+				"myLinks": "My links"
 			}
 		},
 		"spokenLanguages": {
@@ -6195,7 +6197,28 @@
 		"list": {
 			"title": "My direct links",
 			"qr": "Show QR code",
-			"active": "{{name}} active"
+			"active": "{{name}} active",
+			"edit": "Edit {{name}}"
+		},
+		"edit": {
+			"title": "Edit direct link",
+			"cancel": "Cancel",
+			"save": "Save",
+			"name": "Name",
+			"nameRequired": "Please enter a name.",
+			"topic": "Topic",
+			"mediumFixed": "The type of contact cannot be changed",
+			"temporaryHint": "Applies only to people who open the link from now on.",
+			"failed": "The change could not be saved. Please try again."
+		},
+		"page": {
+			"create": "Create a new direct link in “Create chat”",
+			"emptyHeadline": "There are no direct links yet",
+			"emptyText": "You create a direct link in “Create chat”. It then appears here.",
+			"loading": "Loading direct links",
+			"loadFailed": "Your direct links could not be loaded.",
+			"retry": "Try again",
+			"toggleFailed": "The link could not be switched. Please try again."
 		},
 		"entry": {
 			"inactive": "This link is no longer active.",
