@@ -6076,6 +6076,17 @@
 				"anmerkung": "Remarque",
 				"aufgabe": "Tâche"
 			}
+		},
+		"knock": {
+			"region": "Personnes en attente",
+			"someone": "Une personne",
+			"wantsIn": "souhaite rejoindre l’appel",
+			"admit": "Laisser entrer",
+			"decline": "Refuser",
+			"admitAll": "Laisser entrer tout le monde",
+			"position": "{{current}} sur {{total}}",
+			"previous": "Personne précédente",
+			"next": "Personne suivante"
 		}
 	},
 	"form": {

@@ -6076,6 +6076,17 @@
 				"anmerkung": "መብርሂ",
 				"aufgabe": "ዕዮ"
 			}
+		},
+		"knock": {
+			"region": "ዝጽበዩ ዘለዉ ሰባት",
+			"someone": "ሓደ ሰብ",
+			"wantsIn": "ናብቲ ጻውዒት ክጽንበር ይደሊ",
+			"admit": "ኣእቱ",
+			"decline": "ኣይትቐበል",
+			"admitAll": "ንኹሎም ኣእቱ",
+			"position": "{{current}} ካብ {{total}}",
+			"previous": "ዝሓለፈ ሰብ",
+			"next": "ዝቕጽል ሰብ"
 		}
 	},
 	"form": {

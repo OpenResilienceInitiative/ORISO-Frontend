@@ -6066,6 +6066,17 @@
 				"anmerkung": "Anmerkung",
 				"aufgabe": "Aufgabe"
 			}
+		},
+		"knock": {
+			"region": "Wartende Personen",
+			"someone": "Eine Person",
+			"wantsIn": "möchte in den Anruf",
+			"admit": "Einlassen",
+			"decline": "Ablehnen",
+			"admitAll": "Alle einlassen",
+			"position": "{{current}} von {{total}}",
+			"previous": "Vorherige Person",
+			"next": "Nächste Person"
 		}
 	},
 	"form": {

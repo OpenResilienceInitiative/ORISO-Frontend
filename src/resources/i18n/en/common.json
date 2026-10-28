@@ -5991,6 +5991,17 @@
 				"anmerkung": "Remark",
 				"aufgabe": "Task"
 			}
+		},
+		"knock": {
+			"region": "People waiting",
+			"someone": "Someone",
+			"wantsIn": "wants to join the call",
+			"admit": "Let in",
+			"decline": "Decline",
+			"admitAll": "Let everyone in",
+			"position": "{{current}} of {{total}}",
+			"previous": "Previous person",
+			"next": "Next person"
 		}
 	},
 	"form": {

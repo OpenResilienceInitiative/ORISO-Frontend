@@ -102,6 +102,7 @@ export const endpoints = {
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
+	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:

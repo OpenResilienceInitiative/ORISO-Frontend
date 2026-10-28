@@ -41,6 +41,7 @@ import {
 } from './publishCallIdentity';
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
+import { CallKnockNoticeHost } from './knockNotice/CallKnockNoticeHost';
 import { UserAvatar } from '../message/UserAvatar';
 import { type CallParty, callPartyOf } from './callParty';
 import './GroupCallWidget.scss';
@@ -1055,6 +1056,14 @@ export const GroupCallWidget: React.FC = () => {
 								defaultCollapsed
 								labels={notesLabels}
 							/>
+						)}
+						{/*
+						 * Somebody knocking on a direct-link call (#1892):
+						 * let them in without leaving the call. Docked
+						 * above the call when it is minimised.
+						 */}
+						{isConsultantUser && (
+							<CallKnockNoticeHost minimised={isMobileCompact} />
 						)}
 						<iframe
 							ref={setIframeNode}

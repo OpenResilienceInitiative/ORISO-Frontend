@@ -6076,6 +6076,17 @@
 				"anmerkung": "Açıklama",
 				"aufgabe": "Görev"
 			}
+		},
+		"knock": {
+			"region": "Bekleyen kişiler",
+			"someone": "Biri",
+			"wantsIn": "görüşmeye katılmak istiyor",
+			"admit": "İçeri al",
+			"decline": "Reddet",
+			"admitAll": "Herkesi içeri al",
+			"position": "{{current}} / {{total}}",
+			"previous": "Önceki kişi",
+			"next": "Sonraki kişi"
 		}
 	},
 	"form": {
