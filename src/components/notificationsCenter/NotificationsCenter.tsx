@@ -22,7 +22,6 @@ import {
 	resolveStatusPageAction
 } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
-import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
@@ -88,7 +87,6 @@ import {
 	activityEventCaseHandoverRequestId,
 	activityEventCategory,
 	activityEventRoomId,
-	activityEventRouteSessionId,
 	activityEventSessionId,
 	describeActivityEvent
 } from './activityEvent';
@@ -97,7 +95,7 @@ import { useConversationPreview } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
 import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
-import { getNextNotificationId } from './notificationQueue';
+import { useActivityTimeline } from './useActivityTimeline';
 import {
 	isTimelineDraftId,
 	mergeDraftsIntoFeed,
@@ -261,13 +259,6 @@ export const NotificationsCenter = () => {
 		() => applyTimelineFilter(notificationFeed, timelineFilter),
 		[notificationFeed, timelineFilter]
 	);
-	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
-	// selection immediately opens the conversation there, so an auto-selected
-	// first card would be surprising. Desktop keeps the first card selected so
-	// the detail pane is never empty.
-	const [selectedNotificationId, setSelectedNotificationId] = useState<
-		string | null
-	>(untilL ? null : notificationFeed[0]?.id || null);
 	// WP-06 Slice 1: timeline family filter chip + search. `null` = no chip
 	// active = show everything (the former "All" chip duplicated this default
 	// and is gone). Chips toggle and always compose on top of the search query.
@@ -691,28 +682,24 @@ export const NotificationsCenter = () => {
 		]
 	);
 
-	// Keep the master-detail selection inside the visible (filtered) feed.
-	// Mobile never auto-selects (see selectedNotificationId above).
-	const effectiveSelectedId = useMemo(() => {
-		if (
-			selectedNotificationId &&
-			filteredFeed.some((item) => item.id === selectedNotificationId)
-		) {
-			return selectedNotificationId;
-		}
-		return untilL ? null : (filteredFeed[0]?.id ?? null);
-	}, [filteredFeed, selectedNotificationId, untilL]);
-
-	useEffect(() => {
-		if (selectedNotificationId !== effectiveSelectedId) {
-			setSelectedNotificationId(effectiveSelectedId);
-		}
-	}, [effectiveSelectedId, selectedNotificationId]);
+	// #1888: selection, #845 auto-read and "next unread" in one hook.
+	const {
+		selectedId: activeNotificationId,
+		selectedEvent: selectedNotification,
+		select: selectNotification,
+		nextUnreadId
+	} = useActivityTimeline({
+		feed: filteredFeed,
+		routeSelection: activeSelection,
+		isPhone: untilL,
+		unreadOnly,
+		markRead: markNotificationAsRead
+	});
 
 	// Clear any stale case-handover consent error when the selection changes.
 	useEffect(() => {
 		setCaseHandoverConsentError('');
-	}, [selectedNotificationId]);
+	}, [activeNotificationId]);
 
 	// Clear the active family filter when that family is no longer in the feed
 	// (no selection means "show everything" — there is no "All" chip).
@@ -725,22 +712,6 @@ export const NotificationsCenter = () => {
 			setActiveFamily(null);
 		}
 	}, [familiesInFeed, activeFamily]);
-
-	// WP-06 Slice 0b: resolve a SINGLE active card id through the shared
-	// selection primitive over the visible feed. When a conversation is
-	// route-active its card wins; otherwise the in-page master-detail selection
-	// is used. Exactly one card is active by construction.
-	const activeNotificationId = useMemo(
-		() =>
-			pickActiveItemKey(
-				filteredFeed,
-				activeSelection,
-				(item) => ({ sessionId: activityEventRouteSessionId(item) }),
-				(item) => item.id,
-				effectiveSelectedId
-			),
-		[filteredFeed, activeSelection, effectiveSelectedId]
-	);
 
 	// Preview-first (design feedback 2026-07-12): selecting a chat event shows
 	// the embedded conversation preview right away (Slack-style activity view);
@@ -759,12 +730,6 @@ export const NotificationsCenter = () => {
 		);
 	}, [activeNotificationId, filteredFeed]);
 
-	const selectedNotification = useMemo(
-		() =>
-			filteredFeed.find((item) => item.id === activeNotificationId) ||
-			null,
-		[filteredFeed, activeNotificationId]
-	);
 	const selectedNotificationCategory = useMemo(
 		() =>
 			selectedNotification
@@ -773,20 +738,6 @@ export const NotificationsCenter = () => {
 		[selectedNotification]
 	);
 
-	// #845: on desktop the selected card is rendered in the detail pane —
-	// displayed means read (Slack semantics). This also covers the
-	// auto-selected first card, which previously stayed unread and made
-	// the Next button die on its first click. Skipped while the unread
-	// filter is on: marking read would drop the card from the filtered
-	// list and cascade-read the entire feed one selection at a time.
-	useEffect(() => {
-		if (untilL || unreadOnly) {
-			return;
-		}
-		if (selectedNotification && !selectedNotification.readAt) {
-			markNotificationAsRead(selectedNotification.id);
-		}
-	}, [untilL, unreadOnly, selectedNotification, markNotificationAsRead]);
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
@@ -954,7 +905,7 @@ export const NotificationsCenter = () => {
 			navigate(getDefaultSessionsPath());
 			return;
 		}
-		setSelectedNotificationId(item.id);
+		selectNotification(item.id);
 	};
 
 	const handleOpenAction = () => {
@@ -966,14 +917,9 @@ export const NotificationsCenter = () => {
 			}
 			return;
 		}
-		const nextUnreadId = getNextNotificationId(
-			filteredFeed,
-			selectedNotification.id,
-			true
-		);
 		markNotificationAsRead(selectedNotification.id);
-		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
-			setSelectedNotificationId(nextUnreadId);
+		if (nextUnreadId) {
+			selectNotification(nextUnreadId);
 		}
 		if (joinCall(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
@@ -985,14 +931,7 @@ export const NotificationsCenter = () => {
 	};
 
 	const handleNextNotification = () => {
-		const nextUnreadId = getNextNotificationId(
-			filteredFeed,
-			selectedNotificationId,
-			true
-		);
-		// #845: defensive self-guard — the queue already excludes the
-		// anchor, so a match is always a different card.
-		if (nextUnreadId && nextUnreadId !== selectedNotificationId) {
+		if (nextUnreadId) {
 			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
@@ -1030,11 +969,6 @@ export const NotificationsCenter = () => {
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
-	const nextUnreadId = getNextNotificationId(
-		filteredFeed,
-		selectedNotificationId,
-		true
-	);
 	const SelectedIcon = selectedDisplay
 		? getEventIcon(selectedDisplay.descriptor.icon)
 		: null;
