@@ -1,4 +1,7 @@
 // @vitest-environment oriso-jsdom
+import type { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
+import type { AgencyConversationPolicy } from '../../globalState/interfaces/ConversationFeatureSettings';
+import { canonicalAgencySettings } from '../../test/fixtures/conversationPolicyFixtures';
 import * as React from 'react';
 import {
 	act,
@@ -26,6 +29,10 @@ import {
 } from '../../globalState';
 import { apiSendMatrixAttachmentMessage, apiSendMessage } from '../../api';
 
+const runtimeTenant = vi.hoisted(() => {
+	const settings: Partial<TenantDataSettingsInterface> = {};
+	return { settings };
+});
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
 	draftChange: vi.fn(),
@@ -52,7 +59,7 @@ vi.mock('../../globalState', async () => {
 			user: { grantedAuthorities?: string[] }
 		) => user?.grantedAuthorities?.includes(authority) || false,
 		getContact: () => ({ username: 'Counsellor' }),
-		useTenant: () => ({ settings: {} }),
+		useTenant: () => ({ settings: runtimeTenant.settings }),
 		UserDataContext: react.createContext(null),
 		ActiveSessionContext: react.createContext(null),
 		SessionTypeContext: react.createContext(null),
@@ -172,21 +179,32 @@ const session = {
 function Composer({
 	sessionId,
 	role = 'counsellor',
+	conversationType = 'AGENCY_COUNSELLING',
+	agencyFeaturePolicy,
 	...props
 }: Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>> & {
 	sessionId?: number;
 	role?: 'counsellor' | 'asker';
+	conversationType?: 'LIVE_CHAT' | 'AGENCY_COUNSELLING' | 'SELF_HELP';
+	agencyFeaturePolicy?: AgencyConversationPolicy;
 }) {
-	const activeSession = sessionId
-		? { ...session, item: { ...session.item, id: sessionId } }
-		: session;
+	const activeSession = {
+		...session,
+		isGroup: conversationType === 'SELF_HELP',
+		item: {
+			...session.item,
+			id: sessionId ?? session.item.id,
+			conversationType
+		}
+	};
 	return (
 		<MemoryRouter>
 			<ActiveSessionContext.Provider
 				value={
 					{
 						activeSession,
-						reloadActiveSession: mocks.draftChange
+						reloadActiveSession: mocks.draftChange,
+						agencyFeaturePolicy
 					} as any
 				}
 			>
@@ -224,6 +242,7 @@ function Composer({
 }
 
 beforeEach(() => {
+	runtimeTenant.settings = {};
 	vi.clearAllMocks();
 	Recorder.nextMimeType = 'audio/webm';
 	Recorder.deferStop = false;
@@ -1010,3 +1029,88 @@ it('keeps voice-only draft loading disabled until the outgoing clear settles', a
 		expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(true)
 	);
 });
+
+for (const conversationType of [
+	'LIVE_CHAT',
+	'AGENCY_COUNSELLING',
+	'SELF_HELP'
+] satisfies Array<'LIVE_CHAT' | 'AGENCY_COUNSELLING' | 'SELF_HELP'>) {
+	it(`uses canonical agency voice and upload permission in ${conversationType}`, () => {
+		runtimeTenant.settings = {
+			featureVoiceMessagesEnabled: false,
+			featureVoiceMessagesAnonymousChatsEnabled: false,
+			featureVoiceMessagesOneOnOneChatsEnabled: false,
+			featureVoiceMessagesGroupChatsEnabled: false,
+			featureMediaUploadEnabled: false,
+			featureMediaUploadAnonymousChatsEnabled: false,
+			featureMediaUploadOneOnOneChatsEnabled: false,
+			featureMediaUploadGroupChatsEnabled: false
+		};
+		render(
+			<Composer
+				conversationType={conversationType}
+				agencyFeaturePolicy={{
+					agencyId: 101,
+					state: 'ready',
+					settings: canonicalAgencySettings()
+				}}
+			/>
+		);
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', MIC).disabled
+		).toBe(false);
+		expect(document.querySelector('input[type="file"]')).not.toBeNull();
+	});
+}
+
+for (const mode of ['ENFORCED', 'SUGGESTED'] satisfies Array<
+	'ENFORCED' | 'SUGGESTED'
+>) {
+	for (const conversationType of [
+		'LIVE_CHAT',
+		'AGENCY_COUNSELLING',
+		'SELF_HELP'
+	] satisfies Array<'LIVE_CHAT' | 'AGENCY_COUNSELLING' | 'SELF_HELP'>) {
+		it(`keeps ${conversationType} voice and upload off for the canonical ${mode} answer`, () => {
+			render(
+				<Composer
+					conversationType={conversationType}
+					agencyFeaturePolicy={{
+						agencyId: 101,
+						state: 'ready',
+						settings: {
+							...canonicalAgencySettings(
+								{
+									featureVoiceMessagesEnabled: false,
+									featureMediaUploadEnabled: false
+								},
+								mode
+							),
+							featureVoiceMessagesEnabled: true,
+							featureMediaUploadEnabled: true
+						}
+					}}
+				/>
+			);
+			expect(screen.queryByRole('button', MIC)).toBeNull();
+			expect(document.querySelector('input[type="file"]')).toBeNull();
+		});
+	}
+}
+for (const state of ['loading', 'unavailable'] satisfies Array<
+	'loading' | 'unavailable'
+>) {
+	it(`closes actual composer media actions while agency policy is ${state}`, () => {
+		render(
+			<Composer
+				agencyFeaturePolicy={{
+					agencyId: 101,
+					state,
+					settings: canonicalAgencySettings()
+				}}
+			/>
+		);
+		expect(screen.queryByRole('button', MIC)).toBeNull();
+		expect(document.querySelector('input[type="file"]')).toBeNull();
+	});
+}

@@ -1,3 +1,5 @@
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -14,7 +16,7 @@ import {
 	mobileDetailView,
 	mobileListView
 } from '../app/navigationHandler';
-import { apiGetAgencyById, apiGetGroupChatInfo } from '../../api';
+import { apiGetGroupChatInfo } from '../../api';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
 import { JoinGroupChatView } from '../groupChat/JoinGroupChatView';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -245,27 +247,16 @@ const SessionViewBody = () => {
 		navigate
 	]);
 
+	const agencyFeatures = useSessionAgencyPolicy(
+		activeSession?.item?.id,
+		resolveConversationAgencyId(activeSession?.item)
+	);
 	useEffect(() => {
-		let isCanceled = false;
-		const agencyId = activeSession?.item?.agencyId;
-		if (!agencyId) return;
-
-		(async () => {
-			try {
-				const agency = await apiGetAgencyById(agencyId);
-				if (agency?.agencyLogo && !isCanceled) {
-					setAgencyLogo(agency.agencyLogo);
-				}
-			} catch {
-				// Logo fetch is cosmetic; never break the session view.
-			}
-		})();
-
+		setAgencyLogo(agencyFeatures.agency?.agencyLogo ?? '');
 		return () => {
-			isCanceled = true;
 			setAgencyLogo('');
 		};
-	}, [activeSession?.item?.agencyId, setAgencyLogo]);
+	}, [agencyFeatures.agency?.agencyLogo, setAgencyLogo]);
 
 	if (loading || !activeSession || groupAccess === 'checking') {
 		return <Loading />;
@@ -301,6 +292,7 @@ const SessionViewBody = () => {
 	) {
 		return (
 			<ActiveSessionProvider
+				agencyFeaturePolicy={agencyFeatures.policy}
 				activeSession={activeSession}
 				reloadActiveSession={reloadActiveSession}
 			>
@@ -314,6 +306,7 @@ const SessionViewBody = () => {
 
 	return (
 		<ActiveSessionProvider
+			agencyFeaturePolicy={agencyFeatures.policy}
 			activeSession={activeSession}
 			readActiveSession={readActiveSession}
 			avatarMembers={avatarMembers}

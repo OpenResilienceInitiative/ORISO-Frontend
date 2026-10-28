@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 import * as React from 'react';
@@ -292,6 +293,9 @@ const ROBOT_MESSAGE_REVEAL_GAP_MS = 3500;
 export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
+	const effectiveFeatures = useConversationFeatureSettings(
+		tenantData?.settings
+	);
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
@@ -1385,11 +1389,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		) {
 			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -2734,8 +2734,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.
+	const supervisionFeatures =
+		useConversationFeatureSettings(getTenantSettings());
 	const supervisionCallGates =
-		resolveSupervisionCallFeatureGates(getTenantSettings());
+		resolveSupervisionCallFeatureGates(supervisionFeatures);
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
@@ -3801,7 +3803,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								// Practice: no attachments; an upload would leave the page.
 								!isPracticing &&
 								hasMediaUploadFeature(
-									tenantData?.settings,
+									effectiveFeatures,
 									chatType
 								) && (
 									<DragAndDropArea

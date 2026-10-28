@@ -1,3 +1,4 @@
+import type { AgencyFeaturePolicy } from '../../globalState/interfaces/ConversationFeatureSettings';
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	getAgenciesOfferingFormat,
@@ -342,4 +343,134 @@ describe('getAgenciesOfferingFormat', () => {
 			)
 		).toEqual([]);
 	});
+});
+
+describe('server-resolved agency permission policies', () => {
+	it('offers both formats when the agency overrides a tenant recommendation off', () => {
+		const policy: AgencyFeaturePolicy = {
+			value: true,
+			mode: 'SUGGESTED',
+			inherited: false
+		};
+		const agency = {
+			id: 101,
+			settings: {
+				featureGroupChatV2Enabled: true,
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: true,
+				permissionPolicies: {
+					featureGroupChatV2Enabled: policy,
+					featureInternalGroupChatEnabled: policy,
+					featureSelfHelpGroupsEnabled: policy
+				}
+			}
+		};
+		const tenant = {
+			settings: {
+				featureGroupChatV2Enabled: false,
+				featureInternalGroupChatEnabled: false,
+				featureSelfHelpGroupsEnabled: false
+			}
+		};
+		expect(getConversationFormatAvailability(tenant, [agency])).toEqual({
+			internal: true,
+			circle: true
+		});
+	});
+});
+
+it('uses explicit canonical formats instead of the legacy V2 transition fallback', () => {
+	const on: AgencyFeaturePolicy = {
+		value: true,
+		mode: 'SUGGESTED',
+		inherited: false
+	};
+	const off: AgencyFeaturePolicy = {
+		value: false,
+		mode: 'ENFORCED',
+		inherited: true
+	};
+	const agency = {
+		id: 101,
+		settings: {
+			featureGroupChatV2Enabled: false,
+			permissionPolicies: {
+				featureGroupChatV2Enabled: off,
+				featureInternalGroupChatEnabled: on,
+				featureSelfHelpGroupsEnabled: on
+			}
+		}
+	};
+	expect(
+		getConversationFormatAvailability(
+			{ settings: { featureGroupChatV2Enabled: false } },
+			[agency]
+		)
+	).toEqual({ internal: true, circle: true });
+});
+
+it('keeps explicit modern canonical values when the corresponding flat values are null', () => {
+	const on: AgencyFeaturePolicy = {
+		value: true,
+		mode: 'SUGGESTED',
+		inherited: false
+	};
+	const off: AgencyFeaturePolicy = {
+		value: false,
+		mode: 'ENFORCED',
+		inherited: true
+	};
+	const agencies = [
+		{
+			id: 101,
+			settings: {
+				featureGroupChatV2Enabled: false,
+				featureInternalGroupChatEnabled: null,
+				featureSelfHelpGroupsEnabled: null,
+				permissionPolicies: {
+					featureGroupChatV2Enabled: off,
+					featureInternalGroupChatEnabled: on,
+					featureSelfHelpGroupsEnabled: off
+				}
+			}
+		}
+	];
+	const tenant = { settings: { featureGroupChatV2Enabled: false } };
+	expect(getConversationFormatAvailability(tenant, agencies)).toEqual({
+		internal: true,
+		circle: false
+	});
+	expect(getAgenciesOfferingFormat(tenant, agencies, 'internal')).toEqual([
+		101
+	]);
+});
+it('does not use a valid V2 fallback to rescue a malformed explicit modern policy', () => {
+	const settings = JSON.parse(
+		JSON.stringify({
+			featureGroupChatV2Enabled: true,
+			permissionPolicies: {
+				featureGroupChatV2Enabled: {
+					value: true,
+					mode: 'SUGGESTED',
+					inherited: true
+				},
+				featureInternalGroupChatEnabled: {
+					value: true,
+					mode: 'UNKNOWN',
+					inherited: false
+				},
+				featureSelfHelpGroupsEnabled: {
+					value: true,
+					mode: 'SUGGESTED',
+					inherited: false
+				}
+			}
+		})
+	);
+	expect(
+		getConversationFormatAvailability(
+			{ settings: { featureGroupChatV2Enabled: true } },
+			[{ id: 101, settings }]
+		)
+	).toEqual({ internal: false, circle: true });
 });
