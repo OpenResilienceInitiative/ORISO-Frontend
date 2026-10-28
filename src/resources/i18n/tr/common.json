@@ -2519,7 +2519,8 @@
 					"error": "Bu danışma merkezinin yöneticileri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
 					"fallbackName": "Merkez yöneticisi",
 					"link": "Danışma merkezi yöneticisiyle iletişime geç",
-					"none": "Bu danışma merkezi için kayıtlı bir yönetici yok"
+					"none": "Sohbet üzerinden ulaşılabilen bir yönetici yok – lütfen platform yönetimiyle iletişime geçin.",
+					"supportEmail": "Destek adresi:"
 				},
 				"label": "Danışma Merkezi",
 				"registrationLink": {

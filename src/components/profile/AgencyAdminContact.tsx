@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAppConfig } from '../../hooks/useAppConfig';
 import {
 	AgencyAdminContact as AdminContact,
 	apiGetAgencyAdminContacts
@@ -15,6 +16,20 @@ const NAME_MAX = 50;
 const toChatName = (agencyName: string, fallback: string): string => {
 	const name = (agencyName ?? '').trim().slice(0, NAME_MAX).trim();
 	return name.length >= NAME_MIN ? name : fallback;
+};
+
+/**
+ * One plain address only. The value comes from a public setting and ends up in
+ * a `mailto:` href, so anything that could add recipients, headers or a body
+ * (`?`, `&`, `,`, `;`, whitespace, angle brackets) is rejected rather than
+ * escaped: the hint then simply shows without a link.
+ */
+const SUPPORT_EMAIL_PATTERN =
+	/^[^\s@?&#,;<>"']+@[^\s@?&#,;<>"']+\.[^\s@?&#,;<>"']+$/;
+
+const toSupportEmail = (value: unknown): string | null => {
+	const email = typeof value === 'string' ? value.trim() : '';
+	return SUPPORT_EMAIL_PATTERN.test(email) ? email : null;
 };
 
 type State =
@@ -32,7 +47,9 @@ interface AgencyAdminContactProps {
  * Settings entry of one counselling centre (OBP 2.1 #117): contact the
  * centre's admin(s) in an internal chat named after the centre. The admins
  * come from the UserService (`admin-contacts`); with none, or when they cannot
- * be loaded, a hint replaces the link — never a dead button. Opening twice
+ * be loaded, a hint replaces the link — never a dead button. With none, the
+ * hint also names the platform's fallback support address (global setting
+ * `supportEmail`) as a mailto link when one is configured. Opening twice
  * with the same people reuses the room (decided by the UserService).
  */
 export const AgencyAdminContact = ({
@@ -42,6 +59,7 @@ export const AgencyAdminContact = ({
 	const { t: translate } = useTranslation();
 	const [state, setState] = useState<State>({ status: 'loading' });
 	const { submit, isSubmitting, errorReason } = useInternalSubsetChatSubmit();
+	const supportEmail = toSupportEmail(useAppConfig()?.supportEmail);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -69,7 +87,20 @@ export const AgencyAdminContact = ({
 	if (state.admins.length === 0) {
 		return (
 			<p className="text--tertiary mt--1" role="status">
-				{translate('profile.data.agency.adminContact.none')}
+				<span>
+					{translate('profile.data.agency.adminContact.none')}
+				</span>
+				{supportEmail && (
+					<>
+						{' '}
+						{translate(
+							'profile.data.agency.adminContact.supportEmail'
+						)}{' '}
+						<a className="primary" href={`mailto:${supportEmail}`}>
+							{supportEmail}
+						</a>
+					</>
+				)}
 			</p>
 		);
 	}

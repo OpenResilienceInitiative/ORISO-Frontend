@@ -2540,7 +2540,8 @@
 					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
 					"fallbackName": "Beratungsstellen-Admin",
 					"link": "Beratungsstellen-Admin kontaktieren",
-					"none": "Für diese Beratungsstelle ist kein Admin hinterlegt"
+					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
+					"supportEmail": "Support-Adresse:"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {

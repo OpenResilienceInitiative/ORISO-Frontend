@@ -21,6 +21,11 @@ vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
 
+let appConfig: { supportEmail?: string } = {};
+vi.mock('../../hooks/useAppConfig', () => ({
+	useAppConfig: () => appConfig
+}));
+
 const apiMock = vi.fn();
 vi.mock('../../api/apiGetAgencyAdminContacts', () => ({
 	apiGetAgencyAdminContacts: (...args: unknown[]) => apiMock(...args)
@@ -42,6 +47,7 @@ vi.mock('../conversationCreate/useInternalSubsetChatSubmit', () => ({
 afterEach(cleanup);
 
 beforeEach(() => {
+	appConfig = {};
 	apiMock.mockReset();
 	submit.mockReset();
 	hookState = { isSubmitting: false, errorReason: null };
@@ -95,6 +101,53 @@ describe('AgencyAdminContact (#117)', () => {
 			await screen.findByText('profile.data.agency.adminContact.none')
 		).toBeTruthy();
 		expect(screen.queryByRole('button')).toBeNull();
+	});
+
+	it('adds a mailto link to the configured support address when the centre has no admin', async () => {
+		appConfig = { supportEmail: 'support@example.org' };
+		apiMock.mockResolvedValue([]);
+		renderIt();
+
+		expect(
+			await screen.findByText('profile.data.agency.adminContact.none')
+		).toBeTruthy();
+		const mail = screen.getByRole('link', { name: 'support@example.org' });
+		expect(mail.getAttribute('href')).toBe('mailto:support@example.org');
+		expect(screen.queryByRole('button')).toBeNull();
+	});
+
+	it.each([
+		['not configured', undefined],
+		['empty', ''],
+		['blank', '   '],
+		['not an address', 'kein-email'],
+		['carrying mailto parameters', 'a@example.org?bcc=x@example.org'],
+		['a list', 'a@example.org, b@example.org']
+	])(
+		'shows the hint without a link when the support address is %s',
+		async (_label, supportEmail) => {
+			appConfig = { supportEmail };
+			apiMock.mockResolvedValue([]);
+			renderIt();
+
+			expect(
+				await screen.findByText('profile.data.agency.adminContact.none')
+			).toBeTruthy();
+			expect(screen.queryByRole('link')).toBeNull();
+		}
+	);
+
+	it('does not offer the support address while admins exist or loading failed', async () => {
+		appConfig = { supportEmail: 'support@example.org' };
+		apiMock.mockRejectedValue(new Error('CATCH_ALL'));
+		renderIt();
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('profile.data.agency.adminContact.error')
+			).toBeTruthy()
+		);
+		expect(screen.queryByRole('link')).toBeNull();
 	});
 
 	it('shows a hint, not a link, and does not throw when the admins cannot be loaded', async () => {

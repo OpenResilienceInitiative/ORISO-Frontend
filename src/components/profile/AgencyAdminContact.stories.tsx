@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { AppConfigContext } from '../../globalState';
+import { AppConfigInterface } from '../../globalState/interfaces';
 import { SessionsDataContext } from '../../globalState/provider/SessionsDataProvider';
 import { AgencyAdminContact } from './AgencyAdminContact';
 import './profile.styles';
@@ -80,24 +82,28 @@ const MockedUserService = ({
 };
 
 const stage =
-	(scenario: Scenario) =>
+	(scenario: Scenario, supportEmail?: string) =>
 	(Story: React.ComponentType): React.ReactElement => (
 		<MockedUserService scenario={scenario}>
-			<SessionsDataContext.Provider
-				value={{ sessions: [], ready: true, dispatch: () => {} }}
+			<AppConfigContext.Provider
+				value={{ supportEmail } as AppConfigInterface}
 			>
-				<div
-					className="profile"
-					style={{ maxWidth: 560, margin: '0 auto', padding: 16 }}
+				<SessionsDataContext.Provider
+					value={{ sessions: [], ready: true, dispatch: () => {} }}
 				>
-					<div className="profile__data__content">
-						<div>
-							Beratungsstelle Musterstadt
-							<Story />
+					<div
+						className="profile"
+						style={{ maxWidth: 560, margin: '0 auto', padding: 16 }}
+					>
+						<div className="profile__data__content">
+							<div>
+								Beratungsstelle Musterstadt
+								<Story />
+							</div>
 						</div>
 					</div>
-				</div>
-			</SessionsDataContext.Provider>
+				</SessionsDataContext.Provider>
+			</AppConfigContext.Provider>
 		</MockedUserService>
 	);
 
@@ -123,16 +129,31 @@ export const AdminsAvailable: Story = {
 	}
 };
 
-/** No admin on file: a hint replaces the link, never a dead button. */
+/**
+ * No admin reachable by chat: a hint replaces the link (never a dead button)
+ * and, because the platform admin configured a support address in the global
+ * settings, a mailto link to it follows.
+ */
 export const NoAdmin: Story = {
+	decorators: [stage('none', 'support@example.org')],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(await canvas.findByRole('status')).toBeVisible();
+		await expect(
+			await canvas.findByRole('link', { name: 'support@example.org' })
+		).toHaveAttribute('href', 'mailto:support@example.org');
+		await expect(canvas.queryByRole('button')).not.toBeInTheDocument();
+	}
+};
+
+/** No admin and no support address configured: the hint alone, no link. */
+export const NoAdminNoSupportEmail: Story = {
 	decorators: [stage('none')],
 	play: async ({ canvasElement }) => {
-		await expect(
-			await within(canvasElement).findByRole('status')
-		).toBeVisible();
-		await expect(
-			within(canvasElement).queryByRole('button')
-		).not.toBeInTheDocument();
+		const canvas = within(canvasElement);
+		await expect(await canvas.findByRole('status')).toBeVisible();
+		await expect(canvas.queryByRole('link')).not.toBeInTheDocument();
+		await expect(canvas.queryByRole('button')).not.toBeInTheDocument();
 	}
 };
 

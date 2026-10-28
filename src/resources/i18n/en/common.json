@@ -2516,7 +2516,8 @@
 					"error": "The admins of this counselling centre could not be loaded. Please try again later.",
 					"fallbackName": "Centre admin",
 					"link": "Contact the counselling centre admin",
-					"none": "No admin is on file for this counselling centre"
+					"none": "No admin is reachable by chat – please contact the platform administration.",
+					"supportEmail": "Support address:"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {

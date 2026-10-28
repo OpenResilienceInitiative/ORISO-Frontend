@@ -2519,7 +2519,8 @@
 					"error": "Les administrateurs de ce centre de consultation n'ont pas pu être chargés. Veuillez réessayer plus tard.",
 					"fallbackName": "Admin du centre",
 					"link": "Contacter l'administrateur du centre de consultation",
-					"none": "Aucun administrateur n'est enregistré pour ce centre de consultation"
+					"none": "Aucun administrateur n'est joignable par chat – veuillez vous adresser à l'administration de la plateforme.",
+					"supportEmail": "Adresse du support :"
 				},
 				"label": "Service de consultation",
 				"registrationLink": {
