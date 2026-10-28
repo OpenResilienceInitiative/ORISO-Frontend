@@ -167,7 +167,25 @@ const verifyOrdinaryRetry =
 		).toBeEnabled();
 	};
 
+/*
+ * An ordinary send failure is reported to the UserService (`apiPostError`);
+ * the retry stories answer that report like the real endpoint (#1338).
+ */
+const acceptErrorReports = () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) =>
+		String(input instanceof Request ? input.url : input).endsWith(
+			'/service/error-reports'
+		)
+			? new Response(null, { status: 204 })
+			: originalFetch(input, init);
+	return () => {
+		globalThis.fetch = originalFetch;
+	};
+};
+
 export const RestrictedThenPermissionFailure: Story = {
+	beforeEach: acceptErrorReports,
 	globals: { locale: 'en' },
 	render: () => (
 		<NativeJoinFeedback unavailable={false} ordinaryRetry="permission" />
@@ -175,6 +193,7 @@ export const RestrictedThenPermissionFailure: Story = {
 	play: verifyOrdinaryRetry('New counselling is currently restricted')
 };
 export const UnavailableThenNetworkFailure: Story = {
+	beforeEach: acceptErrorReports,
 	globals: { locale: 'de' },
 	render: () => <NativeJoinFeedback unavailable ordinaryRetry="network" />,
 	play: verifyOrdinaryRetry('Beratung derzeit nicht prüfbar')

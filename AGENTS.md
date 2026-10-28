@@ -91,9 +91,12 @@ delivery rules"). Summary:
   `In review`. Merge only on an explicit, per-PR instruction naming that PR.
 - **Request reviewers in the same step that opens the PR.** A PR without
   requested reviewers is not open for review.
-- **"Pre-Dev is free" means the server, not the branch.** Deploying images,
-  mutating config or data and running E2E on the Pre-Dev server needs no
-  approval; the `dev` _branch_ is review-gated like any shared branch.
+- **Branches:** open PRs against `dev`; `main` is the release branch, and agents
+  never target it (releases are done by Hassan). `ORISO-E2E` is the explicit
+  exception and integrates into `pre-dev`.
+- **Pre-Dev changes need explicit authorization.** Deploying images, mutating
+  config or data on the Pre-Dev server only happens with an explicit per-task
+  instruction from Frank that names Pre-Dev. Read-only inspection is fine.
 - **Restore what you borrowed.** Record image reference _and_ `imagePullPolicy`
   before swapping anything on Pre-Dev, put both back before reporting done, and
   say so in the report.
