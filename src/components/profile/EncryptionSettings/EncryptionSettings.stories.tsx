@@ -175,3 +175,26 @@ export const PasswordRecoveryForm: Story = {
 		).toBeVisible();
 	}
 };
+
+/** #1917: the runtime status "device-ready" shows its translated text, not the raw i18n key. */
+export const PasswordRecoveryDeviceReady: Story = {
+	args: { clientOverride: buildFakeClient() },
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(
+			'@encryption-story:example.test',
+			'device-ready'
+		);
+		return () =>
+			setRecoveryRuntimeStatus('@encryption-story:example.test', 'idle');
+	},
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const status = await within(canvasElement).findByText(
+			/^Dieses Gerät kann die vorhandenen Schlüssel verwenden\./
+		);
+		await expect(status).toBeVisible();
+		await expect(canvasElement.textContent).not.toContain(
+			'encryption.passwordRecovery'
+		);
+	}
+};
