@@ -230,7 +230,7 @@ export const KeyboardShortcutsSettings = () => {
 		return (
 			<div className="keyboardShortcutsSettings__controlCluster">
 				<OrisoSelect
-					id={`shortcut-${def.id.replace(/\./g, '-')}`}
+					id={`${accordionId}-shortcut-${def.id.replace(/\./g, '-')}`}
 					label={translate(def.labelTranslationKey)}
 					options={selectOptions}
 					value={selectValue}

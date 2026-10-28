@@ -203,7 +203,8 @@ const DraftMetadataListItem = ({
 	onOpen: (draft: IUserDraftItem) => void;
 	translate: (key: string) => string;
 }) => (
-	<div role="listitem" className="sessionsListDraftItem__listItem">
+	// A plain wrapper: the row is a button, which cannot be the list item (#1338).
+	<div role="listitem">
 		<button
 			type="button"
 			className="sessionsListDraftItem"
@@ -2731,9 +2732,12 @@ export const SessionsList = ({
 										{hiddenActiveRowIds.has(
 											sortedSessionIds[index]
 										) && (
+											// Announced like a status, without a
+											// status role inside the list (#1338).
 											<p
 												className="sessionsList__hiddenActiveRowHint"
-												role="status"
+												aria-live="polite"
+												aria-atomic="true"
 											>
 												{translate(
 													'notifications.displayFilter.hiddenActiveRow'

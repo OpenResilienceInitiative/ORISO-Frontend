@@ -315,22 +315,6 @@ const target = (name: string) =>
 		return element!;
 	}, SLOW);
 
-/*
- * #1338: the tour (react-joyride and its floating-ui positioning) re-measures
- * inside ResizeObserver callbacks, and Chrome reports the harmless "loop
- * completed with undelivered notifications", once or twice per run. For this
- * file's stories the callbacks run on the next frame instead, as the browser
- * would deliver them anyway, so the notice never fires.
- */
-const NativeResizeObserver = window.ResizeObserver;
-window.ResizeObserver = class extends NativeResizeObserver {
-	constructor(callback: ResizeObserverCallback) {
-		super((entries, observer) =>
-			requestAnimationFrame(() => callback(entries, observer))
-		);
-	}
-};
-
 const meta = {
 	title: 'Organisms/PracticeFlow',
 	component: PracticeFlowStage,
@@ -352,7 +336,22 @@ const meta = {
 			...TENANT_FLAGS,
 			featureTeamDiscussionEnabled: args.teamDiscussion
 		});
+		// #1338: the tour (react-joyride and its floating-ui positioning)
+		// re-measures inside ResizeObserver callbacks, and Chrome reports the
+		// harmless "loop completed with undelivered notifications", once or twice
+		// per run. While these stories run, callbacks arrive on the next frame, as
+		// the browser would deliver them anyway; observers created meanwhile keep
+		// that through the story's unmount.
+		const NativeResizeObserver = window.ResizeObserver;
+		window.ResizeObserver = class extends NativeResizeObserver {
+			constructor(callback: ResizeObserverCallback) {
+				super((entries, observer) =>
+					requestAnimationFrame(() => callback(entries, observer))
+				);
+			}
+		};
 		return () => {
+			window.ResizeObserver = NativeResizeObserver;
 			replaceTenantSettings({});
 		};
 	}

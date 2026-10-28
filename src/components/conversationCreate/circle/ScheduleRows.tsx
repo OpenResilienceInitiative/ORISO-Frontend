@@ -195,6 +195,7 @@ export const ScheduleRows = ({
 					onSelect={() => undefined}
 					anchorRef={dateRef}
 					onClose={() => setOpenRow(null)}
+					label={translate('groupChat.circle.rows.dateLabel')}
 					preferredHeight={420}
 				>
 					<OrisoCalendar

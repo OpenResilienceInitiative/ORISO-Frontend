@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { actWarnings, suspendedInAct } from './storyActWarnings';
+import { actWarnings, suspendedInAct } from '../../../.storybook/actWarnings';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Registration } from './Registration';
 import { AgencySpecificContext, RegistrationProvider } from '../../globalState';
@@ -209,7 +209,7 @@ export const LongTopicListKeepsStepHeader: Story = {
 export const HeaderSearchSelectsTopic: Story = {
 	parameters: {
 		verification: {
-			expectedErrors: [...headerSearchActWarnings, suspendedInAct(1)]
+			expectedErrors: [...headerSearchActWarnings, ...suspendedInAct(1)]
 		}
 	},
 	globals: desktop1440Globals,

@@ -140,6 +140,14 @@
 			position: relative;
 			z-index: 25;
 			background: var(--m3-background, $body-bg);
+
+			@include breakpoint($fromXLarge) {
+				background: linear-gradient(
+					90deg,
+					transparent 0 40vw,
+					var(--m3-background, $body-bg) 40vw 100%
+				);
+			}
 		}
 
 		.MuiTypography-root,
@@ -191,11 +199,13 @@
 				}
 			}
 
-			// Desktop split: the wrapper already starts after the 40vw stage,
-			// so this column fills it. Children (stepper, form) use
-			// width: 100% — no vw breakouts.
+			// Desktop split: stage is 40vw; this column is exactly 60vw.
+			// Children (stepper, form) use width: 100% — no vw breakouts.
 			@include breakpoint($fromXLarge) {
 				align-items: stretch;
+				width: 60vw;
+				max-width: 60vw;
+				margin-left: 40vw;
 				padding-top: 0;
 				padding-left: 0;
 				padding-right: 0;
@@ -365,7 +375,7 @@
 		@include breakpoint($fromXLarge) {
 			// Share the content column's surface. A content-driven footer on
 			// the fixed stage can meet its heading at any content height.
-			padding-left: $grid-base-three;
+			padding-left: calc(40vw + #{$grid-base-three});
 		}
 
 		@media screen and (width < #{$fromXLarge}) {
@@ -402,28 +412,13 @@
 		flex-shrink: 0;
 
 		/*
-		 * From the stage breakpoint up the wrapper starts where the 40vw stage
-		 * ends. Spanning the whole width, it lay on top of the stage: it
-		 * swallowed pointer events there, and a layer above the stage text,
-		 * even a transparent one, leaves the axe contrast check unable to
-		 * decide (`bgOverlap`, #1338). Every child then repeated the 40vw
-		 * offset; now none does. It stays above the stage (z-index), so the
-		 * first-visit slide from 100vw still runs under the column.
-		 */
-		@include breakpoint($fromXLarge) {
-			margin-left: 40vw;
-
-			// The header row alone still spans the whole page: on the login page
-			// the language pill sits at its left end, on the stage.
-			.stageLayout__header {
-				margin-left: -40vw;
-				width: calc(100% + 40vw);
-			}
-		}
-
-		/*
-		 * Kept for the column's own empty areas: the column itself switches
-		 * pointer events back on (`&__content`).
+		 * From the stage breakpoint up, the content column is only 60vw wide
+		 * but this wrapper still spans the whole width — so it lies on top of
+		 * the red stage and swallows every pointer event over it. Measured:
+		 * `elementFromPoint` over the stage returned the wrapper, never the
+		 * stage. Letting the wrapper pass clicks through, and switching them
+		 * back on for the column itself, gives the stage its hover and its
+		 * links back without moving a single box.
 		 */
 		pointer-events: none;
 
@@ -495,7 +490,7 @@
 
 		@include breakpoint($fromXLarge) {
 			width: 100%;
-			padding-left: 16px;
+			padding-left: calc(40vw + 16px);
 
 			& > *:not(.loadingIndicator) {
 				max-width: 700px;

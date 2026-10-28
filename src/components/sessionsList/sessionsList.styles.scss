@@ -775,12 +775,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 }
 
-// The list item around a draft row only names it for assistive technology;
-// the row keeps its own box (#1338).
-.sessionsListDraftItem__listItem {
-	display: contents;
-}
-
 .sessionsListDraftItem {
 	width: calc(100% - 24px);
 	min-height: 76px;
@@ -1376,10 +1370,14 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: #e1dedf;
 	}
 
-	// The tablist only groups the tabs for assistive technology; they keep
-	// sharing the row with the archive toggle.
+	// The tablist groups the three tabs for assistive technology. It takes three
+	// of the row's four equal shares plus the three tabs' side padding (3 x 16px),
+	// so the tabs and the archive toggle keep their widths (#1338).
 	&__searchModalTabList {
-		display: contents;
+		display: flex;
+		flex: 3 1 48px;
+		min-width: 0;
+		align-items: stretch;
 	}
 
 	&__searchModalTab {

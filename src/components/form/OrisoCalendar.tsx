@@ -411,45 +411,39 @@ export const OrisoCalendar = ({
 								);
 								const isToday = day.isSame(today, 'day');
 
-								// A grid row holds cells, not buttons; the cell
-								// takes no box, so the day stays the grid item (#1338).
+								// A grid row holds cells: the day button is the cell, and
+								// its selection is the cell's (#1338).
 								return (
-									<Box
+									<ButtonBase
 										key={day.format('YYYY-MM-DD')}
 										role="gridcell"
-										sx={{ display: 'contents' }}
+										focusRipple
+										autoFocus={Boolean(
+											autoFocus && isSelected
+										)}
+										disabled={isDayDisabled(
+											day,
+											minDate,
+											maxDate
+										)}
+										onClick={() => handleSelectDay(day)}
+										aria-label={day.format('D MMMM YYYY')}
+										aria-selected={isSelected}
+										className={
+											(isSelected
+												? 'orisoCalendarDay--selected '
+												: '') +
+											(isToday && !isSelected
+												? 'orisoCalendarDay--today '
+												: '') +
+											(!isCurrentMonth && !isSelected
+												? 'orisoCalendarDay--outside'
+												: '')
+										}
+										sx={dayCellSx}
 									>
-										<ButtonBase
-											focusRipple
-											autoFocus={Boolean(
-												autoFocus && isSelected
-											)}
-											disabled={isDayDisabled(
-												day,
-												minDate,
-												maxDate
-											)}
-											onClick={() => handleSelectDay(day)}
-											aria-label={day.format(
-												'D MMMM YYYY'
-											)}
-											aria-pressed={isSelected}
-											className={
-												(isSelected
-													? 'orisoCalendarDay--selected '
-													: '') +
-												(isToday && !isSelected
-													? 'orisoCalendarDay--today '
-													: '') +
-												(!isCurrentMonth && !isSelected
-													? 'orisoCalendarDay--outside'
-													: '')
-											}
-											sx={dayCellSx}
-										>
-											{day.date()}
-										</ButtonBase>
-									</Box>
+										{day.date()}
+									</ButtonBase>
 								);
 							})}
 						</Box>

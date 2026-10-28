@@ -359,7 +359,13 @@ export const NavigationBar = ({
 				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
 			)}
 		>
-			<div className="navigation__itemContainer">
+			{/* One tab stop, arrow keys move between the items: the toolbar role
+			    tells assistive technology so (#1338). */}
+			<div
+				className="navigation__itemContainer"
+				role="toolbar"
+				aria-orientation="vertical"
+			>
 				<NavGroup className="navigation__item__top">
 					{sessions &&
 						routerConfig.navigation
