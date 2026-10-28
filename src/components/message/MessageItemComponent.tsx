@@ -1,5 +1,9 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
+import {
+	retentionOf,
+	useOwnTemporaryAccount
+} from '../temporaryAccount/temporaryAccountStore';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
@@ -707,6 +711,22 @@ export const MessageItemComponent = ({
 	   that happened to post it. Laid out as "mine", the takeover notice lost
 	   its header and sat on the right for the counsellor who took the case. */
 	const isMyMessage = isOwnEvent && !parsedMessage.isSystemNotification;
+	/* #1869 / ORISO-UserService#1486: messages that go with a temporary
+	   account carry the "Temporär" pill — the guest's own, and on the
+	   counsellor's side the guest's in a 1:1 conversation. */
+	const viewerIsAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const { account: ownTemporaryAccount } = useOwnTemporaryAccount(
+		viewerIsAsker && !activeSession?.isGroup
+	);
+	const showTemporaryMarker =
+		Boolean(isTemporary) ||
+		(!parsedMessage.isSystemNotification &&
+			!activeSession?.isGroup &&
+			(isMyMessage
+				? viewerIsAsker && retentionOf(ownTemporaryAccount) === 'delete'
+				: !viewerIsAsker &&
+					retentionOf(activeSession?.user?.temporaryAccount) ===
+						'delete'));
 	const roomUser = useMemo(() => {
 		if (!matrixRoomUsersContext?.users?.length) {
 			return null;
@@ -2502,7 +2522,7 @@ export const MessageItemComponent = ({
 							 */}
 							{timeRailInBubble}
 							{/* #1869: own row under the time, never in the time line. */}
-							{isTemporary && <TemporaryMessageMarker />}
+							{showTemporaryMarker && <TemporaryMessageMarker />}
 						</MessageBubble>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2616,28 +2636,38 @@ export const MessageItemComponent = ({
 							? undefined
 							: () =>
 									/* FE#1893: a direct-link call conversation knocks first. */
-									joinOrKnock(activeSession?.item?.id, () =>
-										callManager.joinExistingCall(
-											callLifecycle,
-											/*
-											 * The card's own answer first.
-											 *
-											 * `activeSession.isGroup` describes
-											 * the CLIENT session, which is false
-											 * for a supervision call inside a 1:1
-											 * one — and a call rejoined as
-											 * non-group is ended for everybody
-											 * when one person leaves, because
-											 * `endCall` publishes a remote hangup
-											 * and finalises the lifecycle. The
-											 * side that started the call wrote
-											 * what it is; cards from before that
-											 * field existed fall back to the old
-											 * guess.
-											 */
-											callLifecycle.isGroup ??
-												Boolean(activeSession?.isGroup)
-										)
+									joinOrKnock(
+										activeSession?.item?.id,
+										() =>
+											callManager.joinExistingCall(
+												callLifecycle,
+												/*
+												 * The card's own answer first.
+												 *
+												 * `activeSession.isGroup` describes
+												 * the CLIENT session, which is false
+												 * for a supervision call inside a 1:1
+												 * one — and a call rejoined as
+												 * non-group is ended for everybody
+												 * when one person leaves, because
+												 * `endCall` publishes a remote hangup
+												 * and finalises the lifecycle. The
+												 * side that started the call wrote
+												 * what it is; cards from before that
+												 * field existed fall back to the old
+												 * guess.
+												 */
+												callLifecycle.isGroup ??
+													Boolean(
+														activeSession?.isGroup
+													)
+											),
+										{
+											asker: hasUserAuthority(
+												AUTHORITIES.ASKER_DEFAULT,
+												userData
+											)
+										}
 									)
 					}
 				/>

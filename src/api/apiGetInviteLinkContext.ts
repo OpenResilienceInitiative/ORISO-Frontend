@@ -15,6 +15,14 @@ export interface InviteLinkContext {
 	temporaryAccount?: boolean | null;
 	/** Counsellor direct links only: `KNOCK` for audio and video, `DIRECT` for chat. */
 	admission?: 'DIRECT' | 'KNOCK' | null;
+	/** Temporary direct links only (ORISO-UserService#1486): the account still gets a password. */
+	hidePasswordField?: boolean | null;
+	/** Temporary direct links only: what happens to the guest's messages. */
+	messageRetention?:
+		| 'ALWAYS_TEMPORARY'
+		| 'GUEST_DECIDES'
+		| 'ALWAYS_PERSISTENT'
+		| null;
 }
 
 /* The page waits on this before it either opens the live-chat room or falls

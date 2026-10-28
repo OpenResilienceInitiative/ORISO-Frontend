@@ -6326,7 +6326,8 @@
 			},
 			"note": "Cevabınız bu görüşmenin tamamı için geçerlidir.",
 			"confirm": "Devam",
-			"cancel": "İptal"
+			"cancel": "İptal",
+			"failed": "Yanıtınız kaydedilemedi. Mesajınız henüz gönderilmedi."
 		}
 	}
 }

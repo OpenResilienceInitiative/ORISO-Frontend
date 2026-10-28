@@ -157,6 +157,10 @@ export const InviteLink = () => {
 	   identity stays on screen as it was — it is now the account's — and
 	   "continue" only tries the login again. */
 	const [loginRetry, setLoginRetry] = useState(false);
+	const hidePasswordField = Boolean(
+		directLink?.context.temporaryAccount &&
+			directLink.context.hidePasswordField
+	);
 	const hasRunRef = useRef(false);
 	/* Whether the page is still on screen. The lookups before a redeem can take
 	   seconds; leaving meanwhile must not create a guest behind the person's
@@ -406,6 +410,17 @@ export const InviteLink = () => {
 							: '0',
 					...(legacyRedeem.topicId != null
 						? { mainTopicId: String(legacyRedeem.topicId) }
+						: {}),
+					/* ORISO-UserService#1486: a direct-link registration
+					   carries the link and its temporary flag; the server
+					   then creates no enquiry. */
+					...(directLink && token
+						? {
+								directLinkToken: token,
+								temporary: Boolean(
+									directLink.context.temporaryAccount
+								)
+							}
 						: {})
 				} as any,
 				false,
@@ -582,24 +597,28 @@ export const InviteLink = () => {
 								)
 							}}
 						/>
-						<OrisoTextField
-							value={password}
-							placeholder={t(
-								'registration.account.password.label'
-							)}
-							helperText={t('anonymousChat.password.warning')}
-							fullWidth
-							autoComplete="new-password"
-							inputProps={{
-								'aria-label': t(
+						{/* #1486: the platform may hide a temporary guest's
+						    password; the account still gets the generated one. */}
+						{!hidePasswordField && (
+							<OrisoTextField
+								value={password}
+								placeholder={t(
 									'registration.account.password.label'
-								),
-								'readOnly': true
-							}}
-							InputProps={{
-								readOnly: true
-							}}
-						/>
+								)}
+								helperText={t('anonymousChat.password.warning')}
+								fullWidth
+								autoComplete="new-password"
+								inputProps={{
+									'aria-label': t(
+										'registration.account.password.label'
+									),
+									'readOnly': true
+								}}
+								InputProps={{
+									readOnly: true
+								}}
+							/>
+						)}
 						{loginRetry && (
 							<Typography
 								role="status"

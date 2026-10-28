@@ -86,6 +86,7 @@ vi.mock('../pseudonym/AnimalAvatar', () => ({
 const i18nMock = vi.hoisted(() => {
 	const catalogue: Record<string, string> = {
 		'registration.account.username.label': 'User-ID',
+		'registration.account.password.label': 'Passwort',
 		'registration.registering': 'Registrierung läuft...',
 		'anonymousChat.pseudonym.changeName': 'Name ändern',
 		'anonymousChat.pseudonym.continueWithSelection': 'Weiter mit Auswahl',
@@ -280,13 +281,59 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 			expect.objectContaining({
 				agencyId: '7',
 				consultingType: '3',
-				mainTopicId: '11'
+				mainTopicId: '11',
+				// ORISO-UserService#1486: the link and its temporary flag go along.
+				directLinkToken: 'token-123',
+				temporary: false
 			}),
 			false,
 			tenantValue.tenant,
 			expect.any(Function)
 		);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
+	});
+
+	it('hides the password of a temporary chat guest when the platform says so', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+			...directContext('CHAT'),
+			temporaryAccount: true,
+			hidePasswordField: true,
+			messageRetention: 'GUEST_DECIDES'
+		} as any);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 44,
+			medium: 'CHAT',
+			admission: 'DIRECT',
+			created: true
+		});
+		renderInvite();
+
+		await screen.findByLabelText('User-ID');
+		expect(screen.queryByLabelText('Passwort')).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+		await waitFor(() =>
+			expect(redirectToApp).toHaveBeenCalledWith(undefined, {
+				sessionId: 44
+			})
+		);
+		// The account still gets the generated password.
+		const body = vi.mocked(apiPostRegistration).mock.calls[0][1] as any;
+		expect(body).toMatchObject({
+			directLinkToken: 'token-123',
+			temporary: true
+		});
+		expect(body.password.length).toBeGreaterThan(8);
+	});
+
+	it('shows the password field when the platform does not hide it', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		renderInvite();
+		await screen.findByLabelText('User-ID');
+		expect(screen.getByLabelText('Passwort')).toBeTruthy();
 	});
 
 	it('says a switched-off link is no longer active', async () => {

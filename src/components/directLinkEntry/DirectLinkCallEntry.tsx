@@ -20,12 +20,19 @@ import {
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
 
-/** The asker registration a direct link starts, from its public context. */
+/**
+ * A registration through a counsellor direct link (ORISO-UserService#1486):
+ * the link's token and its temporary flag go along. The server then creates
+ * no enquiry; the person's own conversation is opened right after.
+ */
 export const directLinkRegistration = (
 	context: InviteLinkContext,
 	{ username, password }: Pick<CallEntryAccount, 'username' | 'password'>,
-	locale: string
+	locale: string,
+	token: string
 ) => ({
+	directLinkToken: token,
+	temporary: Boolean(context.temporaryAccount),
 	username,
 	password,
 	agencyId: String(context.agencyId ?? ''),
@@ -86,7 +93,12 @@ export const DirectLinkCallEntry = ({
 		deps.register ??
 		((account: CallEntryAccount) =>
 			registerThenLogin.submit(
-				directLinkRegistration(context, account, locale) as never,
+				directLinkRegistration(
+					context,
+					account,
+					locale,
+					token
+				) as never,
 				false,
 				tenant as never
 			));
@@ -139,6 +151,9 @@ export const DirectLinkCallEntry = ({
 						: null
 			}}
 			onJoin={handleJoin}
+			hidePassword={Boolean(
+				context.temporaryAccount && context.hidePasswordField
+			)}
 		/>
 	);
 };

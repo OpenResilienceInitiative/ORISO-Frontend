@@ -6316,7 +6316,8 @@
 			},
 			"note": "Ihre Antwort gilt für dieses ganze Gespräch.",
 			"confirm": "Weiter",
-			"cancel": "Abbrechen"
+			"cancel": "Abbrechen",
+			"failed": "Ihre Antwort konnte nicht gespeichert werden. Ihre Nachricht ist noch nicht gesendet."
 		}
 	}
 }

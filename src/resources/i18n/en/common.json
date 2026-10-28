@@ -6241,7 +6241,8 @@
 			},
 			"note": "Your answer applies to this whole conversation.",
 			"confirm": "Continue",
-			"cancel": "Cancel"
+			"cancel": "Cancel",
+			"failed": "Your answer could not be saved. Your message has not been sent yet."
 		}
 	}
 }

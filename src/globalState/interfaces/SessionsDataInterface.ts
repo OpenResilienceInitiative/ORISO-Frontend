@@ -175,6 +175,22 @@ export interface SessionUserInterface {
 	username: string;
 	displayName?: string;
 	sessionData: SessionUserDataInterface;
+	/** A direct-link guest's temporary account (ORISO-UserService#1486); absent for normal users. */
+	temporaryAccount?: TemporaryAccountState | null;
+}
+
+/** `TemporaryAccountDTO` of ORISO-UserService#1486. */
+export interface TemporaryAccountState {
+	medium?: 'CHAT' | 'AUDIO' | 'VIDEO';
+	messageRetention:
+		| 'ALWAYS_TEMPORARY'
+		| 'GUEST_DECIDES'
+		| 'ALWAYS_PERSISTENT';
+	/** `null` while the guest has not answered. */
+	keepMessages?: boolean | null;
+	keepsMessages?: boolean;
+	deleted?: boolean;
+	isDeleted?: boolean;
 }
 
 export interface SessionUserDataInterface {

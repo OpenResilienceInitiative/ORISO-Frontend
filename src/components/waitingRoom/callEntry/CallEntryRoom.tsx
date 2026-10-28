@@ -9,6 +9,7 @@ import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateBut
 import { ClosingFocal } from '../../transition/closing/closingFocal';
 import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import { generatePassword } from '../../../utils/pseudonymGenerator';
 import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
 import { getUsernameFeedback } from '../../registration/accountData/usernameFeedback';
 import { REGISTRATION_DATA_VALIDATION } from '../../registration/registrationDataValidation';
@@ -111,6 +112,12 @@ export interface CallEntryRoomProps {
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
 	checkUsername?: (username: string) => Promise<boolean>;
+	/**
+	 * Temporary direct-link guests where the platform hides the password
+	 * (ORISO-UserService#1486): the account still gets one, generated here,
+	 * but the field and its suggest button are not shown.
+	 */
+	hidePassword?: boolean;
 }
 
 /**
@@ -149,7 +156,8 @@ export const CallEntryRoom = ({
 	closing = 'call',
 	onBlockerAction,
 	playTone,
-	checkUsername
+	checkUsername,
+	hidePassword = false
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -159,7 +167,9 @@ export const CallEntryRoom = ({
 	const [username, setUsername] = useState(
 		() => initialUsername ?? toRegistrationUsername(identity)
 	);
-	const [password, setPassword] = useState(initialPassword);
+	const [password, setPassword] = useState(() =>
+		hidePassword && !initialPassword ? generatePassword() : initialPassword
+	);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -321,6 +331,7 @@ export const CallEntryRoom = ({
 							onUsernameChange={setUsername}
 							password={password}
 							onPasswordChange={setPassword}
+							hidePassword={hidePassword}
 							usernameFeedback={usernameFeedback}
 							onUsernameBlur={() => setUsernameBlurred(true)}
 						/>

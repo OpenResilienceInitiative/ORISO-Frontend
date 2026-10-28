@@ -6326,7 +6326,8 @@
 			},
 			"note": "Votre réponse vaut pour tout cet entretien.",
 			"confirm": "Continuer",
-			"cancel": "Annuler"
+			"cancel": "Annuler",
+			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
 		}
 	}
 }
