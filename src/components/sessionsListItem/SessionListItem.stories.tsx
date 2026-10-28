@@ -205,13 +205,19 @@ function RuntimeCard({
 	userData = runtimeUserData,
 	index = 0,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	grouped = false,
+	isGroupStart = true,
+	isGroupEnd = true
 }: {
 	item: ListItemInterface;
 	userData?: any;
 	index?: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	grouped?: boolean;
+	isGroupStart?: boolean;
+	isGroupEnd?: boolean;
 }) {
 	const activeSession = buildExtendedSession(item, '');
 
@@ -270,6 +276,9 @@ function RuntimeCard({
 											index={index}
 											isBeforeActive={isBeforeActive}
 											isAfterActive={isAfterActive}
+											grouped={grouped}
+											isGroupStart={isGroupStart}
+											isGroupEnd={isGroupEnd}
 										/>
 									</ActiveSessionContext.Provider>
 								</LegalLinksContext.Provider>
@@ -1532,6 +1541,145 @@ export const StackedListWithSelection: Story = {
 		await expect(Math.round(box(after).top - box(selected).bottom)).toBe(
 			24
 		);
+	}
+};
+
+const groupedRows = (cards: ListItemInterface[], activeIndex = -1) =>
+	cards.map((item, index) => (
+		<RuntimeCard
+			key={index}
+			index={index}
+			item={item}
+			grouped
+			isBeforeActive={index === activeIndex - 1}
+			isAfterActive={activeIndex !== -1 && index === activeIndex + 1}
+			isGroupStart={index === 0 || index === activeIndex + 1}
+			isGroupEnd={index === cards.length - 1 || index === activeIndex - 1}
+		/>
+	));
+
+const cardStyle = (row: HTMLElement) =>
+	getComputedStyle(part(row, '.sessionsListItem__content'));
+const cardBox = (row: HTMLElement) =>
+	part(row, '.sessionsListItem__content').getBoundingClientRect();
+const REST_OUTLINE = 'rgb(255, 180, 170)'; // --m3-primary-fixed-dim
+const FOCUS_RING = 'rgb(204, 30, 28)'; // --m3-primary-container
+
+/**
+ * Grouped list (Figma 316-17441 / 8609-31260): unselected cards sit flush in
+ * one group with a single white hairline, 24px corners only at the group
+ * ends. The selected card leaves the group with 6px on both sides. Its ring
+ * follows the focus: 1px calm outline while the focus is elsewhere, 2px red
+ * while the card holds it; a keyboard-focused neighbour takes the ring.
+ */
+export const GroupedListWithSelection: Story = {
+	name: 'Liste — gruppiert, Auswahl dazwischen (Ring folgt Fokus)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell} role="tablist" aria-label="Gespräche">
+				{groupedRows(
+					[
+						runtimeGroupChat({ id: 5601, name: 'Elternrunde' }),
+						runtimeGroupChat({ id: 5602, name: 'New Redeploy' }),
+						runtimeSessionItem(),
+						runtimeGroupChat({ id: 5603, name: 'Teamrunde' }),
+						runtimeGroupChat({
+							id: 5604,
+							name: 'Selbsthilfe Mitte'
+						})
+					],
+					2
+				)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, 5);
+		const [first, before, selected, after, last] = rows;
+		await expect(
+			rows.map((row) =>
+				row.classList.contains('sessionsListItem--active')
+			)
+		).toEqual([false, false, true, false, false]);
+
+		// Flush inside a group, 6px around the selected card.
+		await expect(
+			Math.round(cardBox(before).top - cardBox(first).bottom)
+		).toBe(0);
+		await expect(
+			Math.round(cardBox(selected).top - cardBox(before).bottom)
+		).toBe(6);
+		await expect(
+			Math.round(cardBox(after).top - cardBox(selected).bottom)
+		).toBe(6);
+		await expect(
+			Math.round(cardBox(last).top - cardBox(after).bottom)
+		).toBe(0);
+
+		// One hairline between neighbours, never two.
+		await expect(cardStyle(before).borderTopWidth).toBe('0px');
+		await expect(cardStyle(last).borderTopWidth).toBe('0px');
+
+		// Corners: rounded only where a group starts or ends.
+		await expect(cardStyle(first).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(first).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(before).borderBottomLeftRadius).toBe('24px');
+		await expect(cardStyle(after).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(after).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(last).borderBottomLeftRadius).toBe('24px');
+		await expect(cardStyle(selected).borderTopLeftRadius).toBe('24px');
+
+		// Focus elsewhere: calm 1px outline on the selected card.
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
+		);
+		await expect(cardStyle(selected).borderTopWidth).toBe('1px');
+
+		// Focus on the selected card: the full 2px ring, size unchanged.
+		const restingHeight = cardBox(selected).height;
+		part(selected, '.sessionsListItem__content').focus();
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(FOCUS_RING)
+		);
+		await expect(cardStyle(selected).boxShadow).toContain('inset');
+		await expect(cardBox(selected).height).toBe(restingHeight);
+
+		// The focus moves on: the selected card calms down again.
+		part(after, '.sessionsListItem__content').focus();
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
+		);
+	}
+};
+
+/** Short list, nothing selected: the last card is rounded at the bottom too. */
+export const GroupedShortList: Story = {
+	name: 'Liste — gruppiert, kurze Liste ohne Auswahl',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell} role="tablist" aria-label="Gespräche">
+				{groupedRows([
+					runtimeGroupChat({ id: 5701, name: 'Elternrunde' }),
+					runtimeSessionItem(),
+					runtimeGroupChat({ id: 5702, name: 'Teamrunde' })
+				])}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [first, middle, last] = await settledRows(canvasElement, 3);
+		await expect(
+			Math.round(cardBox(middle).top - cardBox(first).bottom)
+		).toBe(0);
+		await expect(cardStyle(first).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(middle).borderTopLeftRadius).toBe('0px');
+		await expect(cardStyle(middle).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(last).borderBottomRightRadius).toBe('24px');
 	}
 };
 
