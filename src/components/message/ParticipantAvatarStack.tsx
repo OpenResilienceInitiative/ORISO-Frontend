@@ -157,6 +157,7 @@ export const ParticipantAvatarStack = ({
 					>
 						<span
 							className="participantStack__avatar"
+							role="img"
 							tabIndex={0}
 							aria-label={participant.displayName}
 							aria-describedby={
@@ -200,6 +201,7 @@ export const ParticipantAvatarStack = ({
 					{overflowStyle === 'pill' ? (
 						<span
 							className="participantStack__overflow"
+							role="img"
 							title={overflowLabel}
 							aria-label={overflowLabel}
 							data-cy="participant-overflow"

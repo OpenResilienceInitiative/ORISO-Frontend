@@ -1745,11 +1745,12 @@ export const GroupedLongList: Story = {
 		await expect(
 			rows.filter((r) => r.classList.contains('sessionsListItem--active'))
 		).toHaveLength(1);
-		await expect(radii()[6]).toBe('0px/24px');
-		await expect(radii()[8]).toBe('24px/0px');
+		// The corners ease in (200 ms): read them once they have settled.
+		await waitFor(() => expect(radii()[6]).toBe('0px/24px'));
+		await waitFor(() => expect(radii()[8]).toBe('24px/0px'));
 		await expect(radii()[4]).toBe('0px/0px');
 		await expect(radii()[9]).toBe('0px/24px');
-		await expect(radii()[7]).toBe('24px/24px');
+		await waitFor(() => expect(radii()[7]).toBe('24px/24px'));
 	}
 };
 
