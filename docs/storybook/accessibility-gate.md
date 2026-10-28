@@ -33,7 +33,7 @@ all failures during triage, run each of its four shards explicitly:
 ```sh
 for shard in 1 2 3 4; do
   node node_modules/vitest/vitest.mjs run --project storybook \
-    --maxWorkers=2 --minWorkers=1 --shard="$shard/4" \
+    --maxWorkers=2 --shard="$shard/4" \
     --reporter=json --outputFile="/tmp/storybook-a11y-$shard.json"
 done
 ```
