@@ -726,6 +726,7 @@ export const GroupCallWidget: React.FC = () => {
 	const handleAnswerWaiting = () => {
 		const next = waitingCall;
 		if (!next) return;
+		const endingCallId = callData?.callId;
 		void (async () => {
 			try {
 				await Promise.race([
@@ -737,9 +738,18 @@ export const GroupCallWidget: React.FC = () => {
 			} catch {
 				/* the running call's iframe may already be gone */
 			}
-			if (iframeRef.current) iframeRef.current.src = 'about:blank';
-			setElementCallUrl('');
-			callManager.answerWaitingCall(next.callId);
+			const stillRinging =
+				callManager.getWaitingCall()?.callId === next.callId ||
+				callManager.getCurrentCall()?.callId === next.callId;
+			if (stillRinging) {
+				if (iframeRef.current) iframeRef.current.src = 'about:blank';
+				setElementCallUrl('');
+				callManager.answerWaitingCall(next.callId);
+			} else if (callManager.getCurrentCall()?.callId === endingCallId) {
+				// The second caller gave up meanwhile; the running call still ends,
+				// as asked.
+				closeCallSurface();
+			}
 		})();
 	};
 

@@ -301,6 +301,31 @@ describe('GroupCallWidget Storybook harness', () => {
 		);
 	});
 
+	it('still ends the running call when the second caller gives up during the hangup', async () => {
+		const { view, iframe } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		api.transport.send.mockImplementation(async (action: string) => {
+			if (action !== 'im.vector.hangup') return {};
+			callManager.endCallIfMatching(
+				'second-call',
+				'!second-session:matrix.storybook.test'
+			);
+			return {};
+		});
+
+		fireEvent.click(
+			await view.findByRole('button', { name: 'End call and answer' })
+		);
+
+		// The person asked for this call to end; it does, with nothing to answer.
+		await waitFor(() => expect(callManager.hasActiveCall()).toBe(false));
+		expect(iframe.src).toBe('about:blank');
+		expect(callManager.getCurrentCall()?.callId).not.toBe('second-call');
+	});
+
 	it('takes keyboard focus back into the call when the dock expands', async () => {
 		const { view, iframe } = await renderActiveCall();
 
