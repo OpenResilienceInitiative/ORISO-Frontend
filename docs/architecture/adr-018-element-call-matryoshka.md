@@ -161,6 +161,14 @@ key exchange over encrypted Matrix events. Synapse MSC4140 delayed events are
 enabled so crashed or disconnected participants receive a bounded delayed
 leave instead of remaining as ghosts.
 
+Media keys leave the host through `OrisoWidgetDriver.sendToDevice`, which
+encrypts with `CryptoApi.encryptToDeviceMessages` and sends the batch directly.
+It deliberately does not use `MatrixClient.encryptAndSendToDevice`: that appends
+to the client-wide to-device queue, which sends one batch per request in strict
+order, so a backlog (for example the room-history key request, one batch per
+peer device) delays the key and leaves the peer's video black (FE#1828). A
+failed direct send falls back to that queue for retry.
+
 ## Data and Device Cutover
 
 No user or device migration is required for the current pre-production
