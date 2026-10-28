@@ -54,6 +54,8 @@ export interface DirectLinkConversation {
 	/** Audio and video only. */
 	knockId?: number | null;
 	knockStatus?: CallKnockStatus | null;
+	/** Let in once (#1479, 91f4c623): the person was admitted to this conversation before. */
+	callAdmitted?: boolean | null;
 }
 
 export interface CallKnock {
@@ -135,6 +137,25 @@ export const apiGetOwnCallKnock = (knockId: number): Promise<CallKnock> =>
 		method: FETCH_METHODS.GET,
 		responseHandling: handled
 	});
+
+/**
+ * The person's admission in one conversation, else their latest knock there
+ * (#1479, "let in once"); `null` when they never knocked (404).
+ */
+export const apiGetOwnCallKnockForSession = async (
+	sessionId: number
+): Promise<CallKnock | null> => {
+	try {
+		return await fetchData({
+			url: `${endpoints.ownCallKnocks.replace(/\/$/, '')}?sessionId=${encodeURIComponent(String(sessionId))}`,
+			method: FETCH_METHODS.GET,
+			responseHandling: handled
+		});
+	} catch (error) {
+		if ((error as Response)?.status === 404) return null;
+		throw error;
+	}
+};
 
 export const apiCancelOwnCallKnock = (knockId: number): Promise<void> =>
 	fetchData({

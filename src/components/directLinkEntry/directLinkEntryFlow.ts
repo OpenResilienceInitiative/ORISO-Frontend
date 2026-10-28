@@ -172,6 +172,42 @@ export const pendingKnockFrom = (
 			}
 		: null;
 
+/*
+ * "Let in once" (Frank, 2026-10-28): after the first admission the person
+ * joins later calls in that 1:1 conversation without knocking. The server
+ * is the source of truth (`GET /users/call-knocks/mine?sessionId=`, and
+ * `callAdmitted` when the link is opened again, #1479 91f4c623), so it works
+ * on every device. This per-device list only saves that lookup.
+ */
+export const DIRECT_LINK_ADMITTED_KEY = 'oriso.directLinkAdmitted';
+
+const readAdmitted = (): number[] => {
+	try {
+		const parsed = JSON.parse(
+			localStorage.getItem(DIRECT_LINK_ADMITTED_KEY) ?? '[]'
+		);
+		return Array.isArray(parsed) ? parsed : [];
+	} catch {
+		return [];
+	}
+};
+
+export const rememberAdmittedConversation = (sessionId: number) => {
+	try {
+		const all = readAdmitted().filter((id) => id !== sessionId);
+		all.push(sessionId);
+		localStorage.setItem(
+			DIRECT_LINK_ADMITTED_KEY,
+			JSON.stringify(all.slice(-50))
+		);
+	} catch {
+		/* Web Storage may be off; the person then knocks once more. */
+	}
+};
+
+export const wasAdmittedTo = (sessionId: number | null | undefined) =>
+	sessionId != null && readAdmitted().includes(sessionId);
+
 /** The call notice in the feed knows only the room: it must not skip the knock. */
 export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 	Boolean(roomId) &&
@@ -201,6 +237,9 @@ export const openDirectLinkConversation = async (
 		medium: conversation.medium,
 		matrixRoomId: conversation.matrixRoomId ?? null
 	});
+	if (conversation.callAdmitted) {
+		rememberAdmittedConversation(conversation.sessionId);
+	}
 	const knock = pendingKnockFrom(token, conversation);
 	if (knock) rememberPendingKnock(knock);
 	else forgetPendingKnock();

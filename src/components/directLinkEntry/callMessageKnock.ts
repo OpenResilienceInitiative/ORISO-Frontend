@@ -1,7 +1,13 @@
-import { apiStartDirectLinkConversation } from '../../api/apiDirectLinks';
+import {
+	apiGetOwnCallKnockForSession,
+	apiStartDirectLinkConversation,
+	CallKnock
+} from '../../api/apiDirectLinks';
 import {
 	announcePendingKnock,
 	directLinkSessionOf,
+	rememberAdmittedConversation,
+	wasAdmittedTo,
 	pendingKnockFrom,
 	rememberPendingKnock
 } from './directLinkEntryFlow';
@@ -18,42 +24,11 @@ export type CallJoinResult = 'joined' | 'busy' | 'ended' | 'unavailable';
 /** The join waiting for the counsellor's answer, per conversation. */
 const admittedJoins = new Map<number, () => void>();
 
-/*
- * "Let in once" (Frank, 2026-10-28): after the first admission the person
- * joins later calls in that 1:1 conversation without knocking. The server's
- * call policy follows the latest knock, and UserService#1479 exposes no
- * admission per conversation; knocking again would even open a new pending
- * knock and close the call until the counsellor answers. So the app keeps
- * the admission it saw, per conversation, on this device.
- */
-export const DIRECT_LINK_ADMITTED_KEY = 'oriso.directLinkAdmitted';
-
-const readAdmitted = (): number[] => {
-	try {
-		const parsed = JSON.parse(
-			localStorage.getItem(DIRECT_LINK_ADMITTED_KEY) ?? '[]'
-		);
-		return Array.isArray(parsed) ? parsed : [];
-	} catch {
-		return [];
-	}
-};
-
-export const rememberAdmittedConversation = (sessionId: number) => {
-	try {
-		const all = readAdmitted().filter((id) => id !== sessionId);
-		all.push(sessionId);
-		localStorage.setItem(
-			DIRECT_LINK_ADMITTED_KEY,
-			JSON.stringify(all.slice(-50))
-		);
-	} catch {
-		/* Web Storage may be off; the person then knocks once more. */
-	}
-};
-
-export const wasAdmittedTo = (sessionId: number | null | undefined) =>
-	sessionId != null && readAdmitted().includes(sessionId);
+export {
+	DIRECT_LINK_ADMITTED_KEY,
+	rememberAdmittedConversation,
+	wasAdmittedTo
+} from './directLinkEntryFlow';
 
 /** The knock gate runs this once the person was let in. */
 export const takeAdmittedJoin = (sessionId: number) => {
@@ -64,22 +39,69 @@ export const takeAdmittedJoin = (sessionId: number) => {
 
 export interface JoinOrKnockDeps {
 	start?: typeof apiStartDirectLinkConversation;
+	mine?: typeof apiGetOwnCallKnockForSession;
+	/** Only askers knock; a counsellor's join is never gated. */
+	asker?: boolean;
 }
 
+const waitOn = (
+	sessionId: number,
+	knock: Parameters<typeof rememberPendingKnock>[0],
+	join: () => Promise<CallJoinResult>
+): CallJoinResult => {
+	admittedJoins.set(sessionId, () => void join().catch(() => undefined));
+	rememberPendingKnock({ ...knock, joinExisting: true });
+	announcePendingKnock();
+	// The card shows no error: the knock dialog takes over.
+	return 'joined';
+};
+
 /**
- * What the call card's "Beitreten" does. Without a direct link on record
- * for the conversation it is the plain join. With one, it knocks through the
- * link and reports `joined`, so the card shows no error while the knock dialog
- * takes over; the join itself runs after admission.
+ * What the call card's "Beitreten" does for an asker:
+ * 1. Let in before (cache, else the server): join.
+ * 2. Still waiting (e.g. knocked on another device): the wait dialog.
+ * 3. A direct-link conversation without admission: knock through the link.
+ * 4. Anything else (never knocked, no link known): the plain join, and the
+ *    server's call policy decides.
  */
 export const joinOrKnock = async (
 	sessionId: number | null | undefined,
 	join: () => Promise<CallJoinResult>,
-	{ start = apiStartDirectLinkConversation }: JoinOrKnockDeps = {}
+	{
+		start = apiStartDirectLinkConversation,
+		mine = apiGetOwnCallKnockForSession,
+		asker = true
+	}: JoinOrKnockDeps = {}
 ): Promise<CallJoinResult> => {
-	const link = directLinkSessionOf(sessionId);
-	if (!link || sessionId == null) return join();
+	if (sessionId == null || !asker) return join();
 	if (wasAdmittedTo(sessionId)) return join();
+	const link = directLinkSessionOf(sessionId);
+
+	let own: CallKnock | null | undefined;
+	try {
+		own = await mine(sessionId);
+	} catch {
+		own = undefined; // lookup failed: the link below still answers
+	}
+	if (own?.status === 'ADMITTED') {
+		rememberAdmittedConversation(sessionId);
+		return join();
+	}
+	if (own === null && !link) return join();
+	if (own?.status === 'PENDING') {
+		return waitOn(
+			sessionId,
+			{
+				token: link?.token ?? '',
+				knockId: own.id,
+				sessionId,
+				medium: own.medium,
+				status: 'PENDING'
+			},
+			join
+		);
+	}
+	if (!link) return join();
 
 	let conversation;
 	try {
@@ -89,13 +111,9 @@ export const joinOrKnock = async (
 		return join();
 	}
 	const knock = pendingKnockFrom(link.token, conversation);
-	if (!knock || knock.status === 'ADMITTED') {
+	if (!knock || conversation.callAdmitted || knock.status === 'ADMITTED') {
 		rememberAdmittedConversation(sessionId);
 		return join();
 	}
-
-	admittedJoins.set(sessionId, () => void join().catch(() => undefined));
-	rememberPendingKnock({ ...knock, joinExisting: true });
-	announcePendingKnock();
-	return 'joined';
+	return waitOn(sessionId, knock, join);
 };

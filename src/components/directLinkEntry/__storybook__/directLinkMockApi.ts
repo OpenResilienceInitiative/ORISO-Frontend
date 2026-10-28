@@ -19,6 +19,8 @@ export interface DirectLinkMockOptions {
 		numberOfActiveSessions: number;
 		numberOfSentMessages: number;
 	};
+	/** `GET /call-knocks/mine?sessionId=`: the own knock there; unset answers 404. */
+	ownKnock?: CallKnockStatus;
 	/** The counsellor's own list ("Gespräche"); empty answers 204. */
 	sessions?: unknown[];
 }
@@ -149,6 +151,22 @@ export const installDirectLinkMockApi = (
 				knockId,
 				knockStatus: 'PENDING'
 			});
+		}
+		if (
+			path.endsWith('/call-knocks/mine') &&
+			url.searchParams.has('sessionId')
+		) {
+			record();
+			const sessionId = Number(url.searchParams.get('sessionId'));
+			return options.ownKnock
+				? json({
+						id: 499,
+						sessionId,
+						status: options.ownKnock,
+						medium: 'VIDEO',
+						requestedAt: '2026-10-28T09:00:00Z'
+					})
+				: json({}, 404);
 		}
 		const knock = path.match(/\/call-knocks\/mine\/(\d+)$/);
 		if (knock) {

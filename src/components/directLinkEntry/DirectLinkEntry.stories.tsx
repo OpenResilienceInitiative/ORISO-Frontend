@@ -436,3 +436,38 @@ export const CallMessageAfterAdmission: Story = {
 		).toBeNull();
 	}
 };
+
+export const CallMessageAdmittedElsewhere: Story = {
+	name: '7 · Let in on another device: the server says so, the card joins',
+	globals: phone390Globals,
+	parameters: { router: { initialPath: '/sessions/user/view/4711' } },
+	decorators: [(Story) => withMessageShell(Story, { parameters: {} })],
+	beforeEach: () => {
+		joinRunningCall.mockClear();
+		forgetPendingKnock();
+		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
+		localStorage.removeItem('oriso.directLinkSessions');
+		const restore = installDirectLinkMockApi({ ownKnock: 'ADMITTED' });
+		return () => {
+			restore();
+			localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
+		};
+	},
+	render: () => (
+		<>
+			<RunningCallCard />
+			<DirectLinkKnockGate deps={{ mediaDevices: scriptedDevices() }} />
+		</>
+	),
+	play: async ({ canvas }) => {
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /Beitreten|Join call/ })
+		);
+		await waitFor(() => expect(joinRunningCall).toHaveBeenCalledOnce());
+		await expect(
+			directLinkMock().requests.map(
+				(request) => request.method + ' ' + request.path
+			)
+		).toEqual([expect.stringMatching(/^GET .*\/call-knocks\/mine$/)]);
+	}
+};
