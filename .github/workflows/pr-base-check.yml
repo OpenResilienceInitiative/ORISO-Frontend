@@ -19,14 +19,16 @@ jobs:
         env:
           BASE: ${{ github.base_ref }}
           HEAD: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          THIS_REPO: ${{ github.repository }}
         run: |
           if [ "$BASE" = "dev" ]; then
             echo "Base is dev — ok."
             exit 0
           fi
-          if [ "$BASE" = "main" ] && [ "$HEAD" = "dev" ]; then
+          if [ "$BASE" = "main" ] && [ "$HEAD" = "dev" ] && [ "$HEAD_REPO" = "$THIS_REPO" ]; then
             echo "Release PR dev → main — ok."
             exit 0
           fi
-          echo "::error title=Wrong base branch::This PR targets '$BASE'. Feature PRs go to 'dev'; only 'dev' may go to 'main', and 'pre-dev' is never a target. Change the base branch in the PR header (Edit → base: dev)."
+          echo "::error title=Wrong base branch::This PR targets '$BASE'. Feature PRs go to 'dev'; only this repository's own 'dev' may go to 'main', and 'pre-dev' is never a target. Change the base branch in the PR header (Edit → base: dev)."
           exit 1
