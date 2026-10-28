@@ -70,9 +70,18 @@
 		visibility: hidden;
 	}
 
+	// A zero-height layer on the card list's top edge: the buttons land on
+	// their cards without a box covering the card text.
+	&__futureActions {
+		position: absolute;
+		right: 0;
+		left: 0;
+		z-index: 12;
+		height: 0;
+	}
+
 	&__twinAction {
 		position: absolute;
-		z-index: 12;
 	}
 
 	// --- "Jetzt" ---

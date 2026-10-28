@@ -175,14 +175,12 @@ const NowMarker = ({ variant }: { variant: NowVariant }) => (
 const CardGroup = ({
 	items,
 	isOpenAt,
-	onPick,
-	decorate
+	onPick
 }: {
 	items: ListItemInterface[];
 	/** Which rows leave the group; the route still marks every row of the open room. */
 	isOpenAt: (index: number) => boolean;
 	onPick: (index: number) => void;
-	decorate?: (item: ListItemInterface, index: number) => React.ReactNode;
 }) => {
 	const isActive = (index: number) =>
 		index >= 0 && index < items.length && isOpenAt(index);
@@ -192,16 +190,7 @@ const CardGroup = ({
 				<div
 					key={`${roomOf(item)}-${index}`}
 					className="tlp__row"
-					onClickCapture={(event) => {
-						// The split button's menu toggle does not open the room.
-						if (
-							(event.target as Element).closest(
-								'.tlp__twinAction'
-							)
-						)
-							return;
-						onPick(index);
-					}}
+					onClickCapture={() => onPick(index)}
 				>
 					<RuntimeSessionCard
 						session={item}
@@ -214,7 +203,6 @@ const CardGroup = ({
 							index === items.length - 1 || isActive(index + 1)
 						}
 					/>
-					{decorate?.(item, index)}
 				</div>
 			))}
 		</>
@@ -223,16 +211,22 @@ const CardGroup = ({
 
 /**
  * The split button sits where the twin card would show its last message.
- * Its main part opens the room exactly like a click on the card does.
+ * It lives in a layer beside the card list (a tablist may only hold tabs)
+ * and is placed over its card. Its main part opens the room exactly like a
+ * click on the card does.
  */
 const TwinAction = ({
 	entry,
 	role,
-	active
+	active,
+	index,
+	listRef
 }: {
 	entry: FutureEntry;
 	role: TimelineRole;
 	active: boolean;
+	index: number;
+	listRef: React.RefObject<HTMLDivElement>;
 }) => {
 	const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
 	const [place, setPlace] = useState<React.CSSProperties>({});
@@ -240,17 +234,22 @@ const TwinAction = ({
 	const toggleRef = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
 	const Icon = MODALITY_ICON[entry.modality];
+	const rowOf = () =>
+		listRef.current?.querySelectorAll<HTMLElement>(':scope > .tlp__row')[
+			index
+		];
 	const card = () =>
-		hostRef.current
-			?.closest('.tlp__row')
-			?.querySelector<HTMLElement>('.sessionsListItem__content');
+		rowOf()?.querySelector<HTMLElement>('.sessionsListItem__content');
 
 	// The card fills in after mount (Matrix preview, avatars): measure again
 	// whenever the row changes size or content.
 	useLayoutEffect(() => {
-		const row = hostRef.current?.closest<HTMLElement>('.tlp__row');
-		if (!row) return;
+		const list = listRef.current;
+		if (!list) return;
 		const measure = () => {
+			const row =
+				list.querySelectorAll<HTMLElement>(':scope > .tlp__row')[index];
+			if (!row) return;
 			const preview = row.querySelector<HTMLElement>(
 				'.sessionsListItem__subject'
 			);
@@ -263,7 +262,7 @@ const TwinAction = ({
 			// Top-aligned: the 32px button grows into the gap below the preview.
 			setPlace({
 				left: Math.round(p.left - r.left),
-				top: Math.round(p.top - r.top - 2)
+				top: Math.round(row.offsetTop + p.top - r.top - 2)
 			});
 		};
 		measure();
@@ -271,14 +270,14 @@ const TwinAction = ({
 			typeof ResizeObserver !== 'undefined'
 				? new ResizeObserver(measure)
 				: null;
-		observer?.observe(row);
+		observer?.observe(list);
 		const mutations = new MutationObserver(measure);
-		mutations.observe(row, { childList: true, subtree: true });
+		mutations.observe(list, { childList: true, subtree: true });
 		return () => {
 			observer?.disconnect();
 			mutations.disconnect();
 		};
-	}, []);
+	}, [index, listRef]);
 
 	return (
 		<div
@@ -497,18 +496,24 @@ export const TimelinePrototype = ({
 								entryKey: futureEntries[index].key
 							})
 						}
-						decorate={(item, index) => (
-							<TwinAction
-								entry={futureEntries[index]}
-								role={role}
-								active={
-									futureEntries[index].key ===
-									selection?.entryKey
-								}
-							/>
-						)}
 					/>
 				)}
+			</div>
+			<div
+				className="tlp__futureActions"
+				style={{ bottom: contentHeight }}
+				data-cy="timeline-entry-actions"
+			>
+				{futureEntries.map((entry, index) => (
+					<TwinAction
+						key={entry.key}
+						entry={entry}
+						role={role}
+						active={entry.key === selection?.entryKey}
+						index={index}
+						listRef={futureRef}
+					/>
+				))}
 			</div>
 		</div>
 	);
