@@ -3796,6 +3796,7 @@ export const MessageSubmitInterfaceComponent = ({
 			emptyLabel: translate('message.mention.empty'),
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
+			listLabel: translate('message.submit.toolbar.mention'),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
