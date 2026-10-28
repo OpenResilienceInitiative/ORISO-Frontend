@@ -33,6 +33,12 @@ vi.mock('../../../api/apiGetConsentText', () => ({
 	apiGetConsentText: (...args: unknown[]) => apiGetConsentText(...args)
 }));
 
+const apiGetPublicTopicName = vi.fn();
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: (...args: unknown[]) =>
+		apiGetPublicTopicName(...args)
+}));
+
 const apiPatchUserData = vi.fn(() => Promise.resolve());
 vi.mock('../../../api/apiPatchUserData', () => ({
 	apiPatchUserData: (...args: unknown[]) => (apiPatchUserData as any)(...args)
@@ -46,7 +52,12 @@ vi.mock('../../../api/apiPatchUserData', () => ({
  * account, the way the live chat's gate records it.
  */
 beforeEach(() => {
-	apiGetAgencyById.mockResolvedValue({ id: 19, topicIds: [17] });
+	apiGetAgencyById.mockResolvedValue({
+		id: 19,
+		name: 'Advice center Lichteberg',
+		topicIds: [17]
+	});
+	apiGetPublicTopicName.mockResolvedValue('Schulden');
 	apiGetConsentText.mockResolvedValue({
 		status: 'ok',
 		consentText: {
@@ -63,6 +74,28 @@ afterEach(() => {
 });
 
 describe('GroupConsentGate', () => {
+	it('fills topic and agency into the sentence, never a raw token', async () => {
+		// Measured on dev 28.10.: '…Impressum{{Thema}}Advice center Lichteberg'.
+		apiGetConsentText.mockResolvedValue({
+			status: 'ok',
+			consentText: {
+				sentence:
+					'Ich stimme {{legal_links}} zu. {{Thema}} {{Beratungsstelle}}',
+				versionId: 5
+			}
+		});
+		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);
+
+		const gate = await screen.findByTestId('group-consent-gate');
+		await waitFor(() =>
+			expect(gate.textContent).toContain(
+				'Schulden Advice center Lichteberg'
+			)
+		);
+		expect(apiGetPublicTopicName).toHaveBeenCalledWith(17);
+		expect(gate.textContent).not.toMatch(/\{\{|\}\}/);
+	});
+
 	it("shows the Beratungsstelle's own sentence and speaks about the group", async () => {
 		render(<GroupConsentGate agencyId={19} onAccepted={() => undefined} />);
 

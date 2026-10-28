@@ -46,6 +46,7 @@ import {
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from './liveChatAvailability';
+import { useConsentContext } from '../../waitingRoom/useConsentContext';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session this browser already has for the link. Tokens are set. */
@@ -308,6 +309,7 @@ const LiveChatEntryRoomContent = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 
+	const consentContext = useConsentContext(department);
 	const consent = useMemo(
 		() =>
 			resolveEntryRoomConsent({
@@ -316,9 +318,11 @@ const LiveChatEntryRoomContent = ({
 				platformHtml: platformConsentHtml,
 				missingPolicyHtml,
 				legalLinksHtml,
-				locale
+				locale,
+				context: consentContext
 			}),
 		[
+			consentContext,
 			department,
 			departmentConsent,
 			legalLinksHtml,
