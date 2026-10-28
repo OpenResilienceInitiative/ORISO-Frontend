@@ -78,6 +78,38 @@
 		}
 	}
 
+	&__sender {
+		font-weight: $font-weight-bold;
+	}
+
+	&__actions {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: $grid-base;
+	}
+
+	/* FE#1470: the one action of the live-chat pop-up. */
+	&__action {
+		min-height: $grid-base-four;
+		padding: 0 $grid-base-two;
+		border: 1px solid $white;
+		border-radius: $grid-base-four;
+		background: none;
+		color: $white;
+		font-size: $font-size-tertiary;
+		font-weight: $font-weight-bold;
+		cursor: pointer;
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.12);
+		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+	}
+
 	&--none,
 	&--info,
 	&--warning,

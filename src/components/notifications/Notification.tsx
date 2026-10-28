@@ -5,6 +5,11 @@ import {
 	IncomingVideoCallProps,
 	NOTIFICATION_TYPE_CALL
 } from '../incomingVideoCall/IncomingVideoCall';
+import {
+	LiveChatMessageNotice,
+	LiveChatMessageNoticeProps,
+	NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE
+} from './LiveChatMessageNotice';
 import './notification.styles';
 
 import {
@@ -34,6 +39,12 @@ export const Notification = ({ notification }: NotificationProps) => {
 			return (
 				<IncomingVideoCall
 					{...(notification as IncomingVideoCallProps)}
+				/>
+			);
+		case NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE:
+			return (
+				<LiveChatMessageNotice
+					{...(notification as LiveChatMessageNoticeProps)}
 				/>
 			);
 		case NOTIFICATION_TYPE_INFO:

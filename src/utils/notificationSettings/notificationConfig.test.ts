@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
+import { soundAssetFor } from './soundPlayback';
 import {
+	AREA_KINDS,
 	areaForFamily,
 	NEVER_NOTIFY_FAMILIES,
 	clampVolume,
@@ -161,5 +163,32 @@ describe('notificationConfig', () => {
 		expect(DEFAULT_NOTIFICATION_CONFIG.conversations.standard.volume).toBe(
 			0.5
 		);
+	});
+});
+
+describe('Live-Chat row (FE#1470)', () => {
+	it('shows a Live-Chat row in Gespräche that rings out of the box', () => {
+		expect(AREA_KINDS.conversations).toContain('liveChat');
+		const liveChat = DEFAULT_NOTIFICATION_CONFIG.conversations.liveChat;
+		expect(liveChat.sound).not.toBe('none');
+		expect(soundAssetFor(liveChat.sound)).not.toBeNull();
+		expect(liveChat.banner).toBe('temporary');
+	});
+
+	it('gives a config saved before the row existed the ringing default', () => {
+		const saved = parseNotificationConfig({
+			conversations: { standard: { sound: 'none', banner: 'off' } }
+		});
+		expect(saved.conversations.standard.banner).toBe('off');
+		expect(saved.conversations.liveChat).toEqual(
+			DEFAULT_NOTIFICATION_CONFIG.conversations.liveChat
+		);
+	});
+
+	it('keeps an explicit "no tone" choice on the Live-Chat row', () => {
+		const saved = parseNotificationConfig({
+			conversations: { liveChat: { sound: 'none' } }
+		});
+		expect(saved.conversations.liveChat.sound).toBe('none');
 	});
 });

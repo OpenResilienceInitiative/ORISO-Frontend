@@ -390,3 +390,46 @@ describe('NotificationConfigView', () => {
 		);
 	});
 });
+
+describe('Live-Chat row (FE#1470)', () => {
+	afterEach(cleanup);
+
+	it('shows counsellors the Live-Chat row in Gespräche, with its tone preselected', () => {
+		render(
+			<MemoryRouter>
+				<NotificationConfigView
+					{...baseProps}
+					activeArea="conversations"
+					showLiveChatRow
+				/>
+			</MemoryRouter>
+		);
+		expect(
+			screen.getByTestId('notif-row-conversations-liveChat')
+		).toBeTruthy();
+		// The play button only shows while a tone is chosen.
+		expect(
+			screen.getByTestId('notif-play-conversations-liveChat')
+		).toBeTruthy();
+		expect(
+			screen.queryByTestId('notif-play-conversations-standard')
+		).toBeNull();
+	});
+
+	it('hides the row from everyone else, where it could never fire', () => {
+		render(
+			<MemoryRouter>
+				<NotificationConfigView
+					{...baseProps}
+					activeArea="conversations"
+				/>
+			</MemoryRouter>
+		);
+		expect(
+			screen.queryByTestId('notif-row-conversations-liveChat')
+		).toBeNull();
+		expect(
+			screen.getByTestId('notif-row-conversations-standard')
+		).toBeTruthy();
+	});
+});

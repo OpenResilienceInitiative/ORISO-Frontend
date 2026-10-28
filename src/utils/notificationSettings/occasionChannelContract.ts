@@ -182,19 +182,35 @@ export type EventChannelContract = {
 export const resolveEventChannelContract = (
 	eventType: string | null | undefined,
 	recipientRole?: string | null,
-	options: { family?: EventFamily; mentioned?: boolean } = {}
+	options: {
+		family?: EventFamily;
+		mentioned?: boolean;
+		conversationType?: string | null;
+	} = {}
 ): EventChannelContract => {
 	const descriptor = getEventDescriptor(eventType);
 	const family = options.family ?? descriptor.family ?? 'system';
+	const role = recipientRole === 'user' ? 'asker' : recipientRole;
+	const kind = kindForEvent(
+		family,
+		eventType || '',
+		options.mentioned === true
+	);
 	const browser = {
 		family,
 		area: areaForFamily(family),
-		kind: kindForEvent(family, eventType || '', options.mentioned === true)
+		// FE#1470: a counsellor's live-chat messages have their own row.
+		kind:
+			kind === 'standard' &&
+			family === 'messages' &&
+			role === 'consultant' &&
+			options.conversationType === 'LIVE_CHAT'
+				? ('liveChat' as const)
+				: kind
 	};
 	if (!isKnownEventType(eventType) || descriptor.eventType !== eventType) {
 		return { association: { kind: 'unknown-event' }, browser };
 	}
-	const role = recipientRole === 'user' ? 'asker' : recipientRole;
 	if (role !== 'asker' && role !== 'consultant' && role !== 'admin') {
 		return { association: { kind: 'unknown-recipient' }, browser };
 	}

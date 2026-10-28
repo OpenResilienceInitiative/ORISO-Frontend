@@ -128,13 +128,26 @@ export const DialogMobile: DialogStory = {
  * The bare body (tabs + rows) without the dialog chrome — handy for isolating
  * layout. Preview here also plays real audio.
  */
-const InteractiveBody = () => {
+const InteractiveBody = ({
+	initialArea = 'requests',
+	showLiveChatRow = false
+}: {
+	initialArea?: NotificationArea;
+	showLiveChatRow?: boolean;
+}) => {
 	const [config, setConfig] = useState<NotificationConfig>(
 		DEFAULT_NOTIFICATION_CONFIG
 	);
-	const [area, setArea] = useState<NotificationArea>('requests');
+	const [area, setArea] = useState<NotificationArea>(initialArea);
 	return (
-		<div style={{ maxWidth: 560, padding: 16 }}>
+		// The Gespräche tab with the Live-Chat row is 5 rows tall: without the
+		// vertical padding it fits the 1280x800 test frame whole.
+		<div
+			style={{
+				maxWidth: 560,
+				padding: showLiveChatRow ? '0 16px' : 16
+			}}
+		>
 			<NotificationConfigView
 				config={config}
 				activeArea={area}
@@ -152,6 +165,7 @@ const InteractiveBody = () => {
 					}))
 				}
 				onPreview={previewNotificationSound}
+				showLiveChatRow={showLiveChatRow}
 			/>
 		</div>
 	);
@@ -160,3 +174,38 @@ const InteractiveBody = () => {
 type BodyStory = StoryObj<typeof NotificationConfigView>;
 
 export const Body: BodyStory = { render: () => <InteractiveBody /> };
+
+/**
+ * FE#1470: counsellors get their own "Live-Chat-Nachricht" row in Gespräche,
+ * with a tone chosen out of the box — a live-chat seeker is waiting now.
+ */
+export const BodyCounsellorLiveChatRow: BodyStory = {
+	name: 'Body – Berater:in mit Live-Chat-Zeile',
+	render: () => (
+		<InteractiveBody initialArea="conversations" showLiveChatRow />
+	),
+	play: async ({ canvasElement }) => {
+		const row = canvasElement.querySelector(
+			'[data-cy="notif-row-conversations-liveChat"]'
+		);
+		await expect(row).not.toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="notif-play-conversations-liveChat"]'
+			)
+		).not.toBeNull();
+	}
+};
+
+/** Advice seekers never see the row: their live-chat messages stay on Standard. */
+export const BodyAdviceSeekerNoLiveChatRow: BodyStory = {
+	name: 'Body – Ratsuchende ohne Live-Chat-Zeile',
+	render: () => <InteractiveBody initialArea="conversations" />,
+	play: async ({ canvasElement }) => {
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="notif-row-conversations-liveChat"]'
+			)
+		).toBeNull();
+	}
+};

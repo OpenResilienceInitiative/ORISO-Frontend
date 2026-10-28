@@ -212,7 +212,9 @@ export const playNotificationSound = (
 	/** Per-kind tone from the list's display filter (#1377 "Ton"). */
 	override?: SoundId,
 	/** Server recipient metadata classifies the occasion, never permission. */
-	recipientRole?: string | null
+	recipientRole?: string | null,
+	/** Server conversation metadata; selects the Live-Chat row (FE#1470). */
+	conversationType?: string | null
 ): void => {
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
@@ -224,7 +226,8 @@ export const playNotificationSound = (
 		recipientRole,
 		{
 			family,
-			mentioned: isMention
+			mentioned: isMention,
+			conversationType
 		}
 	).browser;
 	const kindConfig = settings.notificationConfig[area][kind];
