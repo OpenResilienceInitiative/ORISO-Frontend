@@ -2389,18 +2389,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// supervision channel was on screen; 0 while it is.
 	const [supervisionSeenAt, setSupervisionSeenAt] = useState(0);
 	useEffect(() => {
-		if (hasSupervisionSideRoom) {
+		if (hasSupervisionSideRoom && !isTakenByColleague) {
 			setSupervisionSeenAt(Date.now());
 		}
-	}, [hasSupervisionSideRoom, activeSession.item?.id]);
+	}, [hasSupervisionSideRoom, activeSession.item?.id, isTakenByColleague]);
 	useEffect(() => {
-		if (openPanel === 'supervision') {
+		if (openPanel === 'supervision' && !isTakenByColleague) {
 			setSupervisionSeenAt(Date.now());
 			if (supervisionRoomId) {
 				void chatTransportService.markRoomAsRead(supervisionRoomId);
 			}
 		}
-	}, [openPanel, supervisionMessages, supervisionRoomId]);
+	}, [openPanel, supervisionMessages, supervisionRoomId, isTakenByColleague]);
 	const supervisionUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(

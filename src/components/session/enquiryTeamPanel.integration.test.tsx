@@ -68,6 +68,7 @@ const boundary = vi.hoisted(() => {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
 		getTeam: vi.fn(),
+		getSupervisors: vi.fn(),
 		sessionRoom: vi.fn(),
 		fetch: vi.fn(),
 		rejectEnquiry: vi.fn(),
@@ -104,7 +105,8 @@ vi.mock('../../api/apiTeamDiscussion', () => ({
 	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args)
 }));
 vi.mock('../../api/apiGetSessionSupervisors', () => ({
-	apiGetSessionSupervisors: async () => []
+	apiGetSessionSupervisors: (...args: any[]) =>
+		boundary.getSupervisors(...args)
 }));
 vi.mock('../../api/apiGetSessionRooms', () => ({
 	apiGetSessionRoomBySessionId: (...args: any[]) =>
@@ -144,6 +146,7 @@ vi.mock('../../utils/pseudonymGenerator', async (original) => ({
 
 const MAIN = '!enquiry:test';
 const TEAM = '!team:test';
+const SUPERVISION = '!supervision:test';
 const TEXT =
 	'Meine vollständige Anfrage: ' +
 	'Dieser Absatz erklärt meine Situation ausführlich. '.repeat(24) +
@@ -252,6 +255,7 @@ beforeEach(async () => {
 		.mockReset()
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	boundary.getTeam.mockReset().mockResolvedValue(null);
+	boundary.getSupervisors.mockReset().mockResolvedValue([]);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
 	boundary.reload.mockReset();
@@ -292,6 +296,7 @@ function openEnquiry(
 		reloadedStatus?: number;
 		teamChannel?: boolean;
 		threadChannel?: boolean;
+		supervisionChannel?: boolean;
 		id?: number;
 		registrationType?: string;
 		conversationType?: string | null;
@@ -448,9 +453,11 @@ function openEnquiry(
 					'/sessions/consultant/sessionPreview/4711' +
 						(options.teamChannel
 							? '?channel=team'
-							: options.threadChannel
-								? '?channel=thread:%24original'
-								: '')
+							: options.supervisionChannel
+								? '?channel=supervision'
+								: options.threadChannel
+									? '?channel=thread:%24original'
+									: '')
 				]}
 			>
 				{providers.reduceRight(
@@ -747,37 +754,61 @@ it('tells the counsellor when an enquiry link opens a case a colleague already t
 	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy());
 });
 
-it('tells the counsellor on a phone even when the team panel fills the screen', async () => {
-	// Phone width: the side panel replaces the case card.
-	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
-	const markRead = vi
-		.spyOn(chatTransportService, 'markRoomAsRead')
-		.mockResolvedValue(undefined);
-	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
-		status: 2,
-		assigned: true,
-		teamChannel: true,
-		width: 390
-	});
-	await waitFor(
-		() => expect(view.container.querySelector('.sidePanel')).not.toBeNull(),
-		{ timeout: 15000 }
-	);
-	expect(view.container.querySelector('.chatStage__card')).toBeNull();
-	expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
-	// The notice covers the panel: its messages were not seen.
-	expect(markRead).not.toHaveBeenCalledWith(TEAM);
-	fireEvent.click(
-		screen.getByRole('button', {
-			name: 'session.anonymous.takenByOtherConsultant.button.label'
-		})
-	);
-	await waitFor(() =>
-		expect(view.getByTestId('route').textContent).toBe(
-			'/sessions/consultant/sessionPreview'
-		)
-	);
-}, 20000);
+it.each([
+	['team', TEAM],
+	['supervision', SUPERVISION]
+] as const)(
+	'tells the counsellor on a phone even when the %s panel fills the screen',
+	async (channel, sideRoom) => {
+		// Phone width: the side panel replaces the case card.
+		if (channel === 'team') {
+			boundary.getTeam.mockResolvedValue({
+				matrixRoomId: TEAM,
+				status: 'OPEN'
+			});
+		} else {
+			boundary.rooms.set(SUPERVISION, room(SUPERVISION, []));
+			boundary.getSupervisors.mockResolvedValue([
+				{
+					supervisorConsultantId: 'supervisor',
+					matrixRoomId: SUPERVISION
+				}
+			]);
+		}
+		const markRead = vi
+			.spyOn(chatTransportService, 'markRoomAsRead')
+			.mockResolvedValue(undefined);
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			status: 2,
+			assigned: true,
+			teamChannel: channel === 'team',
+			supervisionChannel: channel === 'supervision',
+			width: 390
+		});
+		await waitFor(
+			() =>
+				expect(
+					view.container.querySelector('.sidePanel')
+				).not.toBeNull(),
+			{ timeout: 15000 }
+		);
+		expect(view.container.querySelector('.chatStage__card')).toBeNull();
+		expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
+		// The notice covers the panel: its messages were not seen.
+		expect(markRead).not.toHaveBeenCalledWith(sideRoom);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'session.anonymous.takenByOtherConsultant.button.label'
+			})
+		);
+		await waitFor(() =>
+			expect(view.getByTestId('route').textContent).toBe(
+				'/sessions/consultant/sessionPreview'
+			)
+		);
+	},
+	20000
+);
 
 it('stays silent when the counsellor accepted the enquiry themself', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
