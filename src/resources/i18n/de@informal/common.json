@@ -2770,5 +2770,18 @@
 	},
 	"dashboard": {
 		"title": "Dein Überblick"
+	},
+	"temporaryAccount": {
+		"keepDialog": {
+			"title": "Sollen deine Nachrichten bleiben?",
+			"description": "Dein Gastkonto wird nach dem Gespräch gelöscht. Was soll mit deinen Nachrichten passieren?",
+			"keep": {
+				"hint": "Deine Nachrichten bleiben, wenn dein Konto gelöscht wird."
+			},
+			"delete": {
+				"hint": "Deine Nachrichten werden mit deinem Konto gelöscht."
+			},
+			"note": "Deine Antwort gilt für dieses ganze Gespräch."
+		}
 	}
 }

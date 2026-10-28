@@ -1,0 +1,90 @@
+/* #1869: temporary-account messages. Roles only, no hand-picked colours. */
+
+.temporaryMessageMarker {
+	display: inline-flex;
+	align-self: flex-start;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+	padding: 2px 8px;
+	border-radius: 9999px;
+	background: var(--m3-secondary, $secondary);
+	color: var(--m3-on-secondary, $white);
+	font-size: $font-size-secondary;
+	line-height: 16px;
+	white-space: nowrap;
+
+	&__icon {
+		width: 12px;
+		height: 12px;
+		flex-shrink: 0;
+	}
+}
+
+.m3Dialog.keepMessagesDialog {
+	.keepMessagesDialog__choices {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.keepMessagesDialog__choice {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		padding: 12px 16px;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 12px;
+		cursor: pointer;
+
+		input {
+			margin-top: 3px;
+			accent-color: var(--m3-primary, $primary);
+			flex-shrink: 0;
+		}
+
+		&:focus-within {
+			outline: 2px solid var(--m3-primary, $primary);
+			outline-offset: 2px;
+		}
+
+		&--selected {
+			border-color: var(--m3-primary, $primary);
+		}
+	}
+
+	.keepMessagesDialog__choiceText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.keepMessagesDialog__choiceLabel {
+		font-weight: 600;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	.keepMessagesDialog__choiceHint,
+	.keepMessagesDialog__note {
+		font-size: $font-size-secondary;
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
+
+	.keepMessagesDialog__note {
+		margin: 12px 0 0;
+	}
+}
+
+/* Phone: bottom sheet, same anatomy as the knock wait dialog (#1834). */
+.m3Dialog.keepMessagesDialog--sheet {
+	.MuiDialog-container {
+		align-items: flex-end;
+	}
+
+	.m3Dialog__surface {
+		max-height: calc(100% - 48px);
+		margin: 0;
+		border-radius: 28px 28px 0 0;
+		padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+	}
+}
