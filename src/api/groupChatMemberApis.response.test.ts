@@ -15,6 +15,7 @@ import {
 import { apiGetGroupChatInfo } from './apiGetGroupChatInfo';
 import { apiPostBanUser } from './apiPostBanUser';
 import { redirectToErrorPage } from '../components/error/errorHandling';
+import { logout } from '../components/logout/logout';
 
 vi.mock('../components/error/errorHandling', async (importOriginal) => ({
 	...(await importOriginal<
@@ -66,6 +67,17 @@ describe('group chat member calls never redirect to the error page', () => {
 			expect(redirectToErrorPage).not.toHaveBeenCalled();
 		});
 	});
+
+	// A revoked session must still end in the normal logout, not be swallowed
+	// by the Chat-Info's own error handling.
+	it.each(calls.slice(0, 4))(
+		'%s keeps the logout on HTTP 401',
+		async (_n, call) => {
+			vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ status: 401 }));
+			await expect(call()).rejects.toBeDefined();
+			expect(logout).toHaveBeenCalledWith(true, '/login');
+		}
+	);
 
 	it('remove participant still resolves on 204', async () => {
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ status: 204 }));

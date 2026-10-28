@@ -18,7 +18,7 @@ vi.mock('./fetchData', () => ({
 		FORBIDDEN: 'FORBIDDEN',
 		NO_MATCH: 'NO_MATCH',
 		CONFLICT: 'CONFLICT',
-		CATCH_ALL: 'CATCH_ALL'
+		CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED'
 	},
 	fetchData: vi.fn(() => Promise.resolve())
 }));
