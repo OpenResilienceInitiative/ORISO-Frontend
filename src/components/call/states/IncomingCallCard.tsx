@@ -6,7 +6,6 @@ import type { CallParty } from '../callParty';
 import { ReactComponent as VideoIcon } from '../../../resources/img/icons/modality-video.svg';
 import { ReactComponent as AudioIcon } from '../../../resources/img/icons/modality-audio.svg';
 import { ReactComponent as PhoneIcon } from '../../../resources/img/icons/call.svg';
-import { ReactComponent as HangUpIcon } from '../../../resources/img/icons/call-off.svg';
 import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
 import { CallSurfaceLayer } from './CallSurfaceLayer';
@@ -114,7 +113,7 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 							onClick={onDecline}
 							aria-label={t('calls.decline')}
 						>
-							<HangUpIcon aria-hidden="true" />
+							<PhoneIcon aria-hidden="true" />
 						</ButtonBase>
 						<span className="call-action__label" aria-hidden="true">
 							{t('calls.decline')}

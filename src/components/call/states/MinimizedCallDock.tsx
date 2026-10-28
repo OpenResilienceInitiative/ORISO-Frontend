@@ -12,7 +12,7 @@ import { UserAvatar } from '../../message/UserAvatar';
 import type { CallParty } from '../callParty';
 import { ReactComponent as MicOnIcon } from '../../../resources/img/icons/audio-on.svg';
 import { ReactComponent as MicOffIcon } from '../../../resources/img/icons/audio-off.svg';
-import { ReactComponent as HangUpIcon } from '../../../resources/img/icons/call-off.svg';
+import { ReactComponent as HangUpIcon } from '../../../resources/img/icons/call.svg';
 import { ReactComponent as MaximizeIcon } from '../../../resources/img/icons/maximize-content.svg';
 import { ReactComponent as CameraOnIcon } from '../../../resources/img/icons/camera-on.svg';
 import { ReactComponent as CameraOffIcon } from '../../../resources/img/icons/camera-off.svg';

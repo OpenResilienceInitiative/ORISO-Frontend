@@ -61,6 +61,7 @@
 	svg path,
 	svg use {
 		fill: currentColor;
+		fill-opacity: 1;
 	}
 
 	&:hover {
@@ -72,8 +73,13 @@
 		outline-offset: 3px;
 	}
 
+	/* One handset for answer and hang-up, turned down to end (Frank, 28 Oct). */
 	&--hangup {
 		background: var(--call-hangup);
+
+		svg {
+			transform: rotate(135deg);
+		}
 	}
 
 	&--answer {
