@@ -6,7 +6,7 @@ import { mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 const require = createRequire(`${process.cwd()}/package.json`);
 const { chromium } = require('playwright');
-const origin = process.env.STORYBOOK_URL || 'http://localhost:6017';
+const origin = process.env.STORYBOOK_URL || 'http://127.0.0.1:6017';
 const output = process.env.CHAT_EVIDENCE_DIR || '/tmp/oriso-chat-surface';
 const locale = process.env.CHAT_LOCALE || 'de';
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {
@@ -84,6 +84,11 @@ try {
 						second = links[1].getBoundingClientRect();
 					return {
 						actualLocale: document.documentElement.lang,
+						avatarStackOverflow: getComputedStyle(
+							chat.querySelector(
+								'.sessionInfo__participants.participantStack'
+							)
+						).overflow,
 						title: title.textContent,
 						titleHeight: title.getBoundingClientRect().height,
 						headerWidth: header.width,
@@ -138,6 +143,11 @@ try {
 				assert.ok(
 					metrics.actualLocale.startsWith(locale),
 					'Requested locale must actually be active'
+				);
+				assert.equal(
+					metrics.avatarStackOverflow,
+					'visible',
+					'Avatar outline must not be clipped'
 				);
 				assert.ok(
 					metrics.headerWidth >= metrics.chatWidth - 64,

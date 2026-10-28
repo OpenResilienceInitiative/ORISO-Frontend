@@ -121,3 +121,30 @@ this draft; no bot approval is claimed. Verification is local only.
 The older published phone screenshot is the BEFORE state for this correction.
 Final candidate captures are published through the gateway and indexed in PR1867;
 raw images and browser state are not committed.
+
+## Avatar outline follow-up — 2026-10-28
+
+The shared header's legacy text-participant rule clipped the avatar stack's
+2px outer separator. The first avatar starts at the stack's left edge, so
+`overflow:hidden` cut off precisely the border next to the type pill.
+A fresh390px browser reproduction failed the unclipped-outline assertion.
+The sampled left-edge pixel was RGB101/110/121 (underlying pill) before and
+255/255/255 (separator) after the scoped fix.
+
+The exception now applies only to `.sessionInfo__participants.participantStack`;
+text/loading labels retain truncation. Unlike the earlier story-only correction,
+this follow-up intentionally fixes one shared production CSS rule. Header and
+message dimensions, overlap, name ellipsis and topic placement remain unchanged.
+Independent review found no blocking scope/security finding.
+
+Validation:13 targeted unit tests pass; script lint/TypeScript,stylelint,
+Storybook typecheck and production build pass. Twice-per-viewport390/820/1440
+geometry checks pass with the new outline assertion. Three focused header stories
+pass their interaction/layout assertions but fail the strict accessibility gate
+for incomplete ARIA/contrast audits and the existing phone back-button contrast.
+No suppression added. Full unit suite was not repeated for this CSS-only runtime
+change; the preceding14,523-test run is recorded above, not claimed as a new run.
+
+Use127.0.0.1:6017 for this local candidate. A separate Admin Storybook process
+ownsIPv6 localhost:6017; it was neither stopped nor modified. This explains why
+an unqualified localhost URL can resolve to a different catalogue.
