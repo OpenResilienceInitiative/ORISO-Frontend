@@ -71,6 +71,7 @@ vi.mock('../../../api', async (importOriginal) => ({
 }));
 
 const redirectToApp = vi.fn();
+const addNotification = vi.fn();
 vi.mock('../autoLogin', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	redirectToApp: (...args: unknown[]) => redirectToApp(...args)
@@ -135,7 +136,7 @@ const renderAt = (
 				value={{ Stage: () => <div /> } as any}
 			>
 				<NotificationsContext.Provider
-					value={{ addNotification: () => undefined } as any}
+					value={{ addNotification } as any}
 				>
 					<TenantContext.Provider value={{ tenant: null } as any}>
 						<LocaleContext.Provider value={{ locale: 'de' } as any}>
@@ -194,6 +195,7 @@ beforeEach(() => {
 	stageProps.length = 0;
 	apiPostRegistration.mockClear();
 	redirectToApp.mockClear();
+	addNotification.mockClear();
 });
 
 afterEach(() => {
@@ -577,5 +579,93 @@ describe('newcomer entry for a self-help group link', () => {
 		renderAt('');
 		expect(screen.queryByTestId('account-data')).toBeNull();
 		expect(screen.getByTestId('step-body')).toBeTruthy();
+	});
+});
+
+describe('a broken invite link fails safely (#921)', () => {
+	const refusal = (status: number, reason?: string) =>
+		new Response(null, {
+			status,
+			headers: reason ? { 'X-Reason': reason } : {}
+		});
+
+	it('a link whose gcid is not a group id opens no account step', () => {
+		renderAt('?gcid=19.&aid=19');
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		expect(screen.getByRole('alert').textContent).toContain(
+			'registration.groupInvite.invalid.headline'
+		);
+		expect(apiPostRegistration).not.toHaveBeenCalled();
+	});
+
+	it.each([400, 403, 404])(
+		'a join the server refuses (%i) explains the link instead of a short generic error',
+		async (status) => {
+			apiPostRegistration.mockImplementationOnce(() =>
+				Promise.reject(refusal(status))
+			);
+			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+			fireEvent.click(primary());
+
+			await waitFor(() =>
+				expect(screen.getByRole('alert').textContent).toContain(
+					'registration.groupInvite.invalid.headline'
+				)
+			);
+			expect(screen.queryByTestId('account-data')).toBeNull();
+			expect(addNotification).not.toHaveBeenCalled();
+			expect(redirectToApp).not.toHaveBeenCalled();
+		}
+	);
+
+	it('a server failure keeps the form and the generic error', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(500))
+		);
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(screen.getByTestId('account-data')).toBeTruthy();
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('the agency data-protection refusal keeps its own notice', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(403, 'DPA_NEW_COUNSELLING_NOT_ALLOWED'))
+		);
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(addNotification.mock.calls[0][0].id).toBe(
+			'counselling.dpa.restricted'
+		);
+		expect(screen.getByTestId('account-data')).toBeTruthy();
+	});
+
+	it('an ordinary registration refused by the server keeps the generic error', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(400))
+		);
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, id: 7 },
+			mainTopic: grief,
+			zipcode: '10115',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(screen.queryByRole('alert')).toBeNull();
 	});
 });

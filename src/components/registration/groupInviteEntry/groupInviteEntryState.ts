@@ -1,4 +1,5 @@
 import { parseGroupChatInviteId } from '../../groupChat/groupChatInviteLink';
+import { getCounsellingDpaFailure } from '../../../api/counsellingDpaFailure';
 /**
  * Self-help group invite entry (#1499, FE#1289): `/login?gcid=<id>&aid=<agency>`
  * brings a newcomer to the designed entry screen (Storybook "0a — Eintritt:
@@ -51,7 +52,12 @@ export const getGroupInviteTopicId = (
 	return ids.length === 1 ? ids[0] : null;
 };
 
-export type GroupInviteEntryState = 'none' | 'pending' | 'entry' | 'steps';
+export type GroupInviteEntryState =
+	| 'none'
+	| 'invalid'
+	| 'pending'
+	| 'entry'
+	| 'steps';
 
 export const resolveGroupInviteEntry = ({
 	gcid,
@@ -70,6 +76,10 @@ export const resolveGroupInviteEntry = ({
 }): GroupInviteEntryState => {
 	if (!present(gcid) || !present(aid)) {
 		return 'none';
+	}
+	// Otherwise the join would register an ordinary account with a password nobody saw (#921).
+	if (!parseGroupChatInviteId(gcid)) {
+		return 'invalid';
 	}
 	if (!agency) {
 		return 'steps';
@@ -112,3 +122,13 @@ export const getGroupJoin = ({
 		? { chatId: Number(invite.seriesId), inviteToken: invite.inviteToken }
 		: { chatId: Number(invite.seriesId) };
 };
+
+/**
+ * The server refused the group the registration names: unknown group, wrong
+ * agency or invite token (UserService `GroupInviteRegistration`). The agency's
+ * data-protection refusal has its own notice.
+ */
+export const isGroupInviteRefusal = (error: unknown): boolean =>
+	error instanceof Response &&
+	[400, 403, 404].includes(error.status) &&
+	!getCounsellingDpaFailure(error);

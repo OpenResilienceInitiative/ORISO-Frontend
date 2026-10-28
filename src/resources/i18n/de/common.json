@@ -3708,7 +3708,11 @@
 				"headline": "Die Einladung konnte gerade nicht geladen werden.",
 				"body": "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihr Einladungslink bleibt gültig."
 			},
-			"loading": "Die Einladung wird geladen …"
+			"loading": "Die Einladung wird geladen …",
+			"invalid": {
+				"headline": "Dieser Einladungslink funktioniert nicht.",
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
+			}
 		}
 	},
 	"releaseNote": {
