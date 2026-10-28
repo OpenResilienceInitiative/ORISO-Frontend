@@ -6076,6 +6076,14 @@
 				"anmerkung": "Açıklama",
 				"aufgabe": "Görev"
 			}
+		},
+		"states": {
+			"encrypted": "Şifreli",
+			"endsCurrent": "Yanıtlarsanız {{name}} ile görüşmeniz sona erer.",
+			"answerAndEnd": "Bitir ve yanıtla",
+			"backToCall": "Tam görünüme dön",
+			"speaking": "{{name}} konuşuyor",
+			"dockLabel": "{{name}} ile görüşme"
 		}
 	},
 	"form": {

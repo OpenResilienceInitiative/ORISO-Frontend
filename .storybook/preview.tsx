@@ -933,6 +933,11 @@ const preview: Preview = {
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
 				},
+				phone412: {
+					name: 'Phone 412 (Pixel / Galaxy)',
+					styles: { width: '412px', height: '915px' },
+					type: 'mobile'
+				},
 				phone390Landscape: {
 					name: 'Phone 390 landscape (844×390)',
 					styles: { width: '844px', height: '390px' },

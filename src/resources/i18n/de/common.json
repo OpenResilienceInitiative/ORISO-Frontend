@@ -6066,6 +6066,14 @@
 				"anmerkung": "Anmerkung",
 				"aufgabe": "Aufgabe"
 			}
+		},
+		"states": {
+			"encrypted": "Verschlüsselt",
+			"endsCurrent": "Wenn Sie annehmen, endet Ihr Gespräch mit {{name}}.",
+			"answerAndEnd": "Beenden und annehmen",
+			"backToCall": "Zurück zur großen Ansicht",
+			"speaking": "{{name}} spricht",
+			"dockLabel": "Gespräch mit {{name}}"
 		}
 	},
 	"form": {

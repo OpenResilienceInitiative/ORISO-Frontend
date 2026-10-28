@@ -2753,5 +2753,10 @@
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
+	},
+	"calls": {
+		"states": {
+			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}."
+		}
 	}
 }

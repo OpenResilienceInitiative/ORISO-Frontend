@@ -5991,6 +5991,14 @@
 				"anmerkung": "Remark",
 				"aufgabe": "Task"
 			}
+		},
+		"states": {
+			"encrypted": "Encrypted",
+			"endsCurrent": "Answering ends your call with {{name}}.",
+			"answerAndEnd": "End call and answer",
+			"backToCall": "Back to the full call",
+			"speaking": "{{name}} is speaking",
+			"dockLabel": "Call with {{name}}"
 		}
 	},
 	"form": {

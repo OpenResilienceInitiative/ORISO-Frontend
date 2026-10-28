@@ -6084,6 +6084,14 @@
 				"anmerkung": "Примечание",
 				"aufgabe": "Задача"
 			}
+		},
+		"states": {
+			"encrypted": "Зашифровано",
+			"endsCurrent": "Если вы ответите, ваш разговор с {{name}} завершится.",
+			"answerAndEnd": "Завершить и ответить",
+			"backToCall": "Вернуться к полному окну звонка",
+			"speaking": "{{name}} говорит",
+			"dockLabel": "Звонок с {{name}}"
 		}
 	},
 	"form": {
