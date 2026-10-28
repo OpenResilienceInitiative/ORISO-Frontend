@@ -443,6 +443,34 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		cursor: grab;
 	}
 
+	// Vertical drag axis: the bar lies on the bottom edge of the area it
+	// reveals; the pill turns by 90° and keeps every state of the sidebar one.
+	&__resizeHandle--vertical {
+		top: auto;
+		right: 0;
+		bottom: -$handle-half;
+		left: 0;
+		width: auto;
+		height: $handle-width;
+		cursor: row-resize;
+
+		.sessionsList__resizeHandlePill {
+			top: 8px;
+			left: 50%;
+			width: 48px;
+			height: 8px;
+			transform: translateX(-50%);
+		}
+
+		&:hover .sessionsList__resizeHandlePill {
+			transform: translateX(-50%) scaleY(1.08);
+		}
+
+		&[data-dragging='true'] .sessionsList__resizeHandlePill {
+			transform: translateX(-50%) scaleY(1.12);
+		}
+	}
+
 	&__resizeHandlePill {
 		position: absolute;
 		left: 8px;

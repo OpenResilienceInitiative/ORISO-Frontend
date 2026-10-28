@@ -30,6 +30,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 import {
+	clampReveal,
+	heightFromPointerY,
+	nearestSnap,
+	rubberBand,
+	stepSnap
+} from './verticalHandleMath';
+import {
 	clampWidth,
 	getToggledSidebarWidth,
 	HOLD_TO_COLLAPSE_MS,
@@ -91,9 +98,9 @@ interface ScrollOnlyHandleProps extends ResizableHandleCommonProps {
  * props used to give, and makes passing a resize callback to a scroll-only
  * handle a type error rather than something silently ignored.
  */
-export type ResizableHandleProps = ResizeHandleProps | ScrollOnlyHandleProps;
+type HorizontalHandleProps = ResizeHandleProps | ScrollOnlyHandleProps;
 
-export const ResizableHandle: React.FC<ResizableHandleProps> = ({
+const HorizontalResizableHandle: React.FC<HorizontalHandleProps> = ({
 	mode = 'resizeAndScroll',
 	onResize,
 	currentWidth = 0,
@@ -484,4 +491,173 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			<span className="sessionsList__resizeHandlePill" />
 		</div>
 	);
+};
+
+/**
+ * Vertical drag axis (chat history, "future" handle): the handle sits on the
+ * bottom edge of the area it reveals and the drag changes that area's HEIGHT.
+ * Same classes, pill and states as the horizontal handle — only the axis
+ * differs. The height rests on `snapPoints`; a drag past `maxHeight` stretches
+ * a little and springs back on release, so the area never exceeds its content.
+ */
+interface VerticalHandleProps {
+	'orientation': 'vertical';
+	'height': number;
+	'maxHeight': number;
+	/** Resting heights, ascending; the first is the closed state. */
+	'snapPoints': number[];
+	/** `final` is false while dragging (stretched value) and true once settled. */
+	'onResize': (height: number, meta: { final: boolean }) => void;
+	'ariaLabel'?: string;
+	'className'?: string;
+	'data-cy'?: string;
+}
+
+/** Which axis the drag changes: width (default, the list column) or height. */
+type HorizontalWithOrientation = HorizontalHandleProps & {
+	orientation?: 'horizontal';
+};
+
+export type ResizableHandleProps =
+	| HorizontalWithOrientation
+	| VerticalHandleProps;
+
+const VerticalResizeHandle: React.FC<VerticalHandleProps> = ({
+	height,
+	maxHeight,
+	snapPoints,
+	onResize,
+	ariaLabel,
+	className,
+	'data-cy': dataCy = 'resizable-handle'
+}) => {
+	const { t } = useTranslation();
+	const [isDragging, setIsDragging] = useState(false);
+	const handleRef = useRef<HTMLDivElement | null>(null);
+	const pointerIdRef = useRef<number | null>(null);
+	const rawRef = useRef(height);
+
+	const settle = useCallback(
+		(raw: number) => nearestSnap(clampReveal(raw, maxHeight), snapPoints),
+		[maxHeight, snapPoints]
+	);
+
+	const handleMove = useCallback(
+		(e: PointerEvent) => {
+			if (pointerIdRef.current === null) return;
+			if (e.pointerId !== pointerIdRef.current) return;
+			const top =
+				handleRef.current?.parentElement?.getBoundingClientRect().top;
+			if (top === undefined) return;
+			rawRef.current = heightFromPointerY(e.clientY, top);
+			onResize(rubberBand(rawRef.current, maxHeight), { final: false });
+		},
+		[maxHeight, onResize]
+	);
+
+	const handleUp = useCallback(() => {
+		if (pointerIdRef.current === null) return;
+		pointerIdRef.current = null;
+		setIsDragging(false);
+		onResize(settle(rawRef.current), { final: true });
+	}, [onResize, settle]);
+
+	useEffect(() => {
+		if (!isDragging) return undefined;
+		document.addEventListener('pointermove', handleMove);
+		document.addEventListener('pointerup', handleUp);
+		document.addEventListener('pointercancel', handleUp);
+		document.body.style.cursor = 'row-resize';
+		document.body.style.userSelect = 'none';
+		return () => {
+			document.removeEventListener('pointermove', handleMove);
+			document.removeEventListener('pointerup', handleUp);
+			document.removeEventListener('pointercancel', handleUp);
+			document.body.style.cursor = '';
+			document.body.style.userSelect = '';
+		};
+	}, [isDragging, handleMove, handleUp]);
+
+	const resizeTo = (next: number) => onResize(next, { final: true });
+
+	return (
+		<div
+			ref={handleRef}
+			className={[
+				'sessionsList__resizeHandle',
+				'sessionsList__resizeHandle--vertical',
+				className
+			]
+				.filter(Boolean)
+				.join(' ')}
+			data-dragging={isDragging ? 'true' : 'false'}
+			data-cy={dataCy}
+			role="separator"
+			tabIndex={0}
+			aria-orientation="horizontal"
+			aria-valuemin={0}
+			aria-valuemax={maxHeight}
+			aria-valuenow={height}
+			aria-label={
+				ariaLabel ??
+				t(
+					'sessionList.resizeHandle.futureAriaLabel',
+					'Upcoming appointments: drag down to show them, Up and Down move between stops.'
+				)
+			}
+			onDoubleClick={(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				resizeTo(height > 0 ? 0 : (snapPoints.find((p) => p > 0) ?? 0));
+			}}
+			onPointerDown={(e) => {
+				if (e.button !== 0) return;
+				e.preventDefault();
+				e.stopPropagation();
+				handleRef.current?.focus({ preventScroll: true });
+				pointerIdRef.current = e.pointerId;
+				rawRef.current = height;
+				setIsDragging(true);
+				try {
+					e.currentTarget.setPointerCapture(e.pointerId);
+				} catch {
+					// Synthetic pointers (tests) have no capture.
+				}
+			}}
+			onKeyDown={(e) => {
+				switch (e.key) {
+					case 'ArrowDown':
+						e.preventDefault();
+						e.stopPropagation();
+						resizeTo(stepSnap(height, snapPoints, 1));
+						return;
+					case 'ArrowUp':
+						e.preventDefault();
+						e.stopPropagation();
+						resizeTo(stepSnap(height, snapPoints, -1));
+						return;
+					case 'Home':
+						e.preventDefault();
+						e.stopPropagation();
+						resizeTo(snapPoints[0] ?? 0);
+						return;
+					case 'End':
+						e.preventDefault();
+						e.stopPropagation();
+						resizeTo(maxHeight);
+						return;
+					default:
+				}
+			}}
+		>
+			<span className="sessionsList__resizeHandlePill" />
+		</div>
+	);
+};
+
+export const ResizableHandle: React.FC<ResizableHandleProps> = (props) => {
+	if ('orientation' in props && props.orientation === 'vertical') {
+		return <VerticalResizeHandle {...props} />;
+	}
+	return <HorizontalResizableHandle {...(props as HorizontalHandleProps)} />;
 };
