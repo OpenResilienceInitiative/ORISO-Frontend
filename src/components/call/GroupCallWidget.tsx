@@ -685,6 +685,16 @@ export const GroupCallWidget: React.FC = () => {
 		: t('calls.title');
 	const dockParty = knownParty ?? { name: unnamedCall };
 
+	/*
+	 * A second call must never ring unseen. Browser full screen puts the call
+	 * in the top layer, where no z-index reaches, so leave it while it rings.
+	 */
+	const waitingCallId = waitingCall?.callId;
+	useEffect(() => {
+		if (waitingCallId && document.fullscreenElement)
+			void document.exitFullscreen?.().catch(() => undefined);
+	}, [waitingCallId]);
+
 	// The dock's clock starts when the call surface opens; a new call resets it.
 	useEffect(() => {
 		setCallStartedAt(elementCallUrl ? Date.now() : null);

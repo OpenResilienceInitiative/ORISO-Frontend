@@ -167,6 +167,66 @@ describe('GroupCallWidget Storybook harness', () => {
 		expect(callManager.getCurrentCall()).toBeNull();
 	});
 
+	it('leaves browser full screen when a second call rings, so its card can be seen', async () => {
+		/*
+		 * The full-screen element sits in the browser's top layer; the ringing
+		 * card is portalled to <body> outside it, and no z-index reaches above
+		 * the top layer (FE#1904 review).
+		 */
+		const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(document, 'exitFullscreen', {
+			configurable: true,
+			value: exitFullscreen
+		});
+		Object.defineProperty(document, 'fullscreenElement', {
+			configurable: true,
+			get: () => document.body
+		});
+		try {
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+			const view = renderTranslated(
+				<MatrixClientContext.Provider
+					value={{
+						matrixClientService,
+						setMatrixClientService: () => {}
+					}}
+				>
+					<GroupCallWidget />
+				</MatrixClientContext.Provider>
+			);
+			await waitFor(() =>
+				expect(
+					view.container.querySelector('.element-call-iframe')
+				).toBeTruthy()
+			);
+			expect(exitFullscreen).not.toHaveBeenCalled();
+
+			act(() =>
+				callManager.receiveCall(
+					'!second-call:matrix.storybook.test',
+					false,
+					'second-call',
+					'@second:matrix.storybook.test',
+					true,
+					'!second-session:matrix.storybook.test',
+					true
+				)
+			);
+
+			await waitFor(() =>
+				expect(exitFullscreen).toHaveBeenCalledTimes(1)
+			);
+		} finally {
+			callManager.rejectWaitingCall();
+			delete (document as unknown as Record<string, unknown>)
+				.fullscreenElement;
+			delete (document as unknown as Record<string, unknown>)
+				.exitFullscreen;
+		}
+	});
+
 	it('waits for the call to say goodbye before destroying its document', async () => {
 		/*
 		 * `hangup()` is a widget action and the MatrixRTC leave happens INSIDE
