@@ -6258,7 +6258,8 @@
 			"mediumLabel": "İletişim türü",
 			"temporary": "Geçici hesap",
 			"temporaryHint": "Hesap görüşmeden sonra silinir.",
-			"create": "Bağlantı oluştur"
+			"create": "Bağlantı oluştur",
+			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin."
 		},
 		"medium": {
 			"chat": "Sohbet",
@@ -6280,6 +6281,11 @@
 			"title": "Doğrudan bağlantılarım",
 			"qr": "QR kodunu göster",
 			"active": "{{name}} etkin"
+		},
+		"entry": {
+			"inactive": "Bu bağlantı artık etkin değil.",
+			"haveAccount": "Zaten bir hesabınız var mı? Giriş yapın",
+			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 		}
 	},
 	"dashboard": {

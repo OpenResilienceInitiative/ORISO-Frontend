@@ -6258,7 +6258,8 @@
 			"mediumLabel": "ዓይነት ርክብ",
 			"temporary": "ግዝያዊ ሕሳብ",
 			"temporaryHint": "እቲ ሕሳብ ድሕሪ ዝርርብ ይድምሰስ።",
-			"create": "ሊንክ ፍጠር"
+			"create": "ሊንክ ፍጠር",
+			"createFailed": "እቲ ሊንክ ክፍጠር ኣይከኣለን። በጃኻ እንደገና ፈትን።"
 		},
 		"medium": {
 			"chat": "ቻት",
@@ -6280,6 +6281,11 @@
 			"title": "ቀጥታዊ ሊንክታተይ",
 			"qr": "QR ኮድ ኣርኢ",
 			"active": "{{name}} ንጡፍ"
+		},
+		"entry": {
+			"inactive": "እዚ ሊንክ ደጊም ንጡፍ ኣይኮነን።",
+			"haveAccount": "ሕሳብ ኣለካ ድዩ? እቶ",
+			"joinFailed": "ኣይሰለጠን። በጃኻ እንደገና ፈትን።"
 		}
 	},
 	"dashboard": {

@@ -6258,7 +6258,8 @@
 			"mediumLabel": "Type de contact",
 			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
-			"create": "Créer le lien"
+			"create": "Créer le lien",
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6280,6 +6281,11 @@
 			"title": "Mes liens directs",
 			"qr": "Afficher le code QR",
 			"active": "{{name}} actif"
+		},
+		"entry": {
+			"inactive": "Ce lien n'est plus actif.",
+			"haveAccount": "Vous avez déjà un compte ? Se connecter",
+			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		}
 	},
 	"dashboard": {

@@ -75,6 +75,10 @@ export interface TenantDataSettingsInterface {
 	featureTopicsEnabled: boolean;
 	topicsInRegistrationEnabled: boolean;
 	featureMediaUploadEnabled?: boolean;
+	/** "Direkteinladung erlauben" per medium (TenantService#332); unset = allowed. */
+	featureDirectInviteChatEnabled?: boolean;
+	featureDirectInviteAudioEnabled?: boolean;
+	featureDirectInviteVideoEnabled?: boolean;
 	featureMediaUploadAnonymousChatsEnabled?: boolean;
 	featureMediaUploadOneOnOneChatsEnabled?: boolean;
 	featureMediaUploadGroupChatsEnabled?: boolean;

@@ -77,6 +77,10 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	/* Counsellor direct links (ORISO-UserService#1479). */
+	directLinks: userServiceOrigin + '/service/users/directlinks',
+	inviteLinksBase: userServiceOrigin + '/service/users/invitelinks/',
+	ownCallKnocks: userServiceOrigin + '/service/users/call-knocks/mine/',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
