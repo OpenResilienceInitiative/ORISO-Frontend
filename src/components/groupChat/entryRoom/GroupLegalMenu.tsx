@@ -13,8 +13,8 @@ import type { GroupDepartment } from '../consent/useGroupDepartment';
  * Datenschutz and Impressum from a menu, the way every chat room offers them
  * (#1499, Frank 23.09.2026). On a phone the stage prints no legal links, so the
  * group's waiting room would otherwise have none at all. The documents are the
- * ones of the Beratungsstelle that runs the group when its department is
- * known, else the Träger's.
+ * platform's until the person has registered with a Beratungsstelle, then
+ * that department's — never the Träger's (Frank, 2026-10-28).
  */
 export const GroupLegalMenu = ({
 	department
@@ -98,7 +98,7 @@ export const GroupLegalMenu = ({
 								agencyId: department.agencyId,
 								topicId: department.topicId
 							}
-						: {})}
+						: { scope: 'platform' as const })}
 				/>
 			)}
 		</>

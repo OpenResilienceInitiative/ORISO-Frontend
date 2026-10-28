@@ -658,8 +658,9 @@ export const GroupWaitingRoom = ({
 			}}
 			data-cy="group-entry-room"
 		>
+			{/* No legalDepartment: until "Beitreten" the platform's documents
+			    apply; the group's own come with the consent (Frank, 2026-10-28). */}
 			<WaitingRoomFrame
-				legalDepartment={legalDepartment}
 				showLoginLink={showLoginLink}
 				headerStart={groupHeading}
 			>
