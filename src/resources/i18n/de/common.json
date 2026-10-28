@@ -6094,7 +6094,8 @@
 			"shareTitle": "Einladung zum Anruf",
 			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald Sie auflegen, funktioniert er nicht mehr.",
 			"consent": "Vor dem Eintritt bestätigen Gäste mit einem Tipp den Datenschutz und die Einwilligung der Beratungsstelle.",
-			"qrHint": "Mit der Kamera eines Handys scannen, um den Anruf dort zu öffnen."
+			"qrHint": "Mit der Kamera eines Handys scannen, um den Anruf dort zu öffnen.",
+			"settingsLive": "Änderungen gelten sofort für diesen Link, auch wenn er schon geteilt ist."
 		}
 	},
 	"form": {

@@ -6104,7 +6104,8 @@
 			"shareTitle": "Invitation à un appel",
 			"lifetime": "Le lien ne vaut que pour cet appel. Il ne fonctionne plus dès que vous raccrochez.",
 			"consent": "Avant d’entrer, les invités confirment d’un geste la protection des données et le consentement du centre de conseil.",
-			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel."
+			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel.",
+			"settingsLive": "Les modifications s’appliquent immédiatement à ce lien, même s’il a déjà été partagé."
 		}
 	},
 	"form": {

@@ -186,6 +186,14 @@
 		line-height: 16px;
 	}
 
+	&__settingsHint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		letter-spacing: 0.4px;
+		line-height: 16px;
+		margin: -4px 0 4px;
+	}
+
 	&__linkRow {
 		align-items: stretch;
 		display: flex;

@@ -83,6 +83,9 @@ export const PopoverDefault: Story = {
 			panel.getByText(/Sobald Sie auflegen, funktioniert er nicht mehr/)
 		).toBeVisible();
 		await expect(panel.getByText(/mit einem Tipp/)).toBeVisible();
+		await expect(
+			panel.getByText(/Änderungen gelten sofort für diesen Link/)
+		).toBeVisible();
 	}
 };
 
@@ -277,5 +280,49 @@ export const PhoneWebShareUnavailable: Story = {
 		await expect(
 			panel.queryByRole('button', { name: 'Teilen' })
 		).not.toBeInTheDocument();
+	}
+};
+
+/**
+ * Platform or Träger forbids temporary accounts (Frank, 28 Oct): the toggle
+ * is not offered at all, and the link carries no temporary account.
+ */
+const expectNoTemporaryToggle = async ({
+	args,
+	canvasElement
+}: {
+	args: { onSettingsChange?: (settings: object) => void };
+	canvasElement: HTMLElement;
+}) => {
+	const panel = within(await sharePanel(canvasElement));
+	await expect(
+		panel.queryByRole('switch', { name: 'Temporäres Konto' })
+	).not.toBeInTheDocument();
+	const knock = panel.getByRole('switch', { name: 'Anklopfen' });
+	await expect(knock).toBeChecked();
+	// Off and on again: the reported link settings never offer a temporary account.
+	await userEvent.click(knock);
+	await userEvent.click(knock);
+	await expect(args.onSettingsChange).toHaveBeenLastCalledWith({
+		knock: true,
+		temporaryAccount: false
+	});
+	await expect(knock).toBeChecked();
+};
+
+export const TemporaryAccountNotAllowed: Story = {
+	name: 'Popover – temporary accounts not allowed',
+	globals: desktop1280Globals,
+	args: { temporaryAccountAllowed: false },
+	play: expectNoTemporaryToggle
+};
+
+export const PhoneSheet320TemporaryAccountNotAllowed: Story = {
+	name: 'Phone 320 – temporary accounts not allowed',
+	globals: phone320Globals,
+	args: { layout: 'phone', temporaryAccountAllowed: false },
+	play: async (context) => {
+		await expectNoSideways(context.canvasElement);
+		await expectNoTemporaryToggle(context);
 	}
 };

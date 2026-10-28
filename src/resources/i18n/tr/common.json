@@ -6104,7 +6104,8 @@
 			"shareTitle": "Aramaya davet",
 			"lifetime": "Bağlantı yalnızca bu arama için geçerlidir. Siz kapatır kapatmaz çalışmaz.",
 			"consent": "Misafirler girmeden önce danışma merkezinin gizlilik politikasını ve onayını tek dokunuşla onaylar.",
-			"qrHint": "Aramayı telefonda açmak için telefon kamerasıyla tarayın."
+			"qrHint": "Aramayı telefonda açmak için telefon kamerasıyla tarayın.",
+			"settingsLive": "Değişiklikler, paylaşılmış olsa bile bu bağlantı için hemen geçerli olur."
 		}
 	},
 	"form": {

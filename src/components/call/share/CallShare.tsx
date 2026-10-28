@@ -27,6 +27,8 @@ export interface CallShareProps {
 	/** Omitted: the browser's own `navigator.share`, if any. `null`: hidden. */
 	webShare?: WebShare | null;
 	defaultQrOpen?: boolean;
+	/** `false` when the platform or Träger forbids temporary accounts. */
+	temporaryAccountAllowed?: boolean;
 }
 
 /**
@@ -42,14 +44,19 @@ export const CallShare = ({
 	onSettingsChange,
 	onCopy,
 	webShare,
-	defaultQrOpen
+	defaultQrOpen,
+	temporaryAccountAllowed = true
 }: CallShareProps) => {
 	const { t } = useTranslation();
 	const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
 	const [open, setOpen] = useState(defaultOpen);
-	const [settings, setSettings] = useState<CallShareSettings>(
-		initialSettings ?? defaultCallShareSettings()
-	);
+	const [settings, setSettings] = useState<CallShareSettings>(() => {
+		const initial = initialSettings ?? defaultCallShareSettings();
+		// Not allowed means not offered: the link carries no temporary account.
+		return temporaryAccountAllowed
+			? initial
+			: { ...initial, temporaryAccount: false };
+	});
 	const [share] = useState<WebShare | null>(() =>
 		webShare === undefined ? detectWebShare() : webShare
 	);
@@ -74,6 +81,7 @@ export const CallShare = ({
 			webShare={share}
 			onCopy={onCopy}
 			defaultQrOpen={defaultQrOpen}
+			temporaryAccountAllowed={temporaryAccountAllowed}
 			onContentResize={layout === 'desktop' ? reanchor : undefined}
 		/>
 	);

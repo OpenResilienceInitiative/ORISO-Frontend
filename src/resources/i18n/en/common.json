@@ -6019,7 +6019,8 @@
 			"shareTitle": "Invitation to a call",
 			"lifetime": "The link only works for this call. It stops working as soon as you hang up.",
 			"consent": "Before entering, guests confirm the counselling centre’s privacy policy and consent with one tap.",
-			"qrHint": "Scan with a phone camera to open the call there."
+			"qrHint": "Scan with a phone camera to open the call there.",
+			"settingsLive": "Changes apply right away to this link, even if it has already been shared."
 		}
 	},
 	"form": {

@@ -29,6 +29,11 @@ export interface CallSharePanelProps {
 	defaultQrOpen?: boolean;
 	/** The content changed height (QR shown or hidden); the popover re-anchors. */
 	onContentResize?: () => void;
+	/**
+	 * Platform or Träger forbids temporary accounts: the toggle is not shown
+	 * at all (Frank, 28 Oct), rather than shown disabled.
+	 */
+	temporaryAccountAllowed?: boolean;
 }
 
 /**
@@ -46,7 +51,8 @@ export const CallSharePanel = ({
 	webShare,
 	onCopy = (value) => copyTextToClipboard(value),
 	defaultQrOpen = false,
-	onContentResize
+	onContentResize,
+	temporaryAccountAllowed = true
 }: CallSharePanelProps) => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -101,7 +107,14 @@ export const CallSharePanel = ({
 		icon: React.ReactNode;
 	}[] = [
 		{ key: 'knock', icon: <DoorFrontOutlinedIcon /> },
-		{ key: 'temporaryAccount', icon: <HistoryToggleOffOutlinedIcon /> }
+		...(temporaryAccountAllowed
+			? [
+					{
+						key: 'temporaryAccount' as const,
+						icon: <HistoryToggleOffOutlinedIcon />
+					}
+				]
+			: [])
 	];
 
 	return (
@@ -172,6 +185,10 @@ export const CallSharePanel = ({
 					);
 				})}
 			</ul>
+			{/* Frank, 28 Oct: a change applies to the link already shared. */}
+			<p className="callShare__settingsHint">
+				{t('calls.share.settingsLive')}
+			</p>
 
 			<label className="callShare__sectionLabel" htmlFor={`${id}-link`}>
 				{t('calls.share.linkLabel')}
