@@ -29,7 +29,8 @@ function RuntimeNavigationRail({
 	layout = 'desktop',
 	railHeightPx,
 	fullMobileShell = false,
-	liveChatViaSidebar = true
+	liveChatViaSidebar = true,
+	tenantSettings
 }: {
 	role: 'consultant' | 'asker';
 	layout?: 'desktop' | 'mobile';
@@ -39,6 +40,8 @@ function RuntimeNavigationRail({
 	railHeightPx?: number;
 	/** Exercise the production mobile shell and its version overlay. */
 	fullMobileShell?: boolean;
+	/** Träger settings for the story tenant. */
+	tenantSettings?: Record<string, unknown>;
 }) {
 	const [logoutClicked, setLogoutClicked] = useState(false);
 	const isDesktop = layout === 'desktop';
@@ -71,6 +74,7 @@ function RuntimeNavigationRail({
 		<NavigationStoryProviders
 			role={role}
 			liveChatViaSidebar={liveChatViaSidebar}
+			tenantSettings={tenantSettings}
 		>
 			{/*
 			  app__wrapper is required so production shell + figma nav rules
@@ -227,6 +231,56 @@ export const RuntimeConsultantRail: Story = {
 
 		await userEvent.click(logoutAction as HTMLElement);
 		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+/**
+ * #1894 (Frank, 28 Oct): the clock entry "Meine Direktlinks" shows while
+ * "Direkteinladung erlauben" allows at least one medium, here only video.
+ */
+export const DirectLinksOneMediumAllowed: Story = {
+	name: 'Direct links: clock entry with one medium allowed',
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		tenantSettings: {
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: true
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('a[href="/direct-links"]')
+			).not.toBeNull()
+		);
+	}
+};
+
+/** #1894: with all three media off the clock entry is gone. */
+export const DirectLinksAllMediaOff: Story = {
+	name: 'Direct links: no clock entry when direct invitation is off',
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		tenantSettings: {
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'a[href="/sessions/consultant/sessionView"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('a[href="/direct-links"]')
+		).toBeNull();
 	}
 };
 

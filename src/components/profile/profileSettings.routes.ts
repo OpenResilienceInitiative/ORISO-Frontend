@@ -26,7 +26,9 @@ import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
-	settings: AppConfigInterface
+	settings: AppConfigInterface,
+	/** #1894: false when "Direkteinladung erlauben" allows no medium. */
+	directLinksAllowed = true
 ): (TabGroups | SingleComponentType)[] => [
 	{
 		title: 'profile.routes.settings.security.title',
@@ -87,6 +89,7 @@ export const profileRoutesSettings = (
 		elements: [
 			{
 				condition: (userData) =>
+					directLinksAllowed &&
 					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
 				component: MyLinksSettings,
 				boxed: false,

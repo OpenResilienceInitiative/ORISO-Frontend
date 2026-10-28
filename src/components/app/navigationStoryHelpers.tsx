@@ -91,6 +91,7 @@ export const storybookSettings = {
 export function NavigationStoryProviders({
 	role,
 	liveChatViaSidebar = true,
+	tenantSettings,
 	children
 }: {
 	role: 'consultant' | 'asker';
@@ -100,6 +101,8 @@ export function NavigationStoryProviders({
 	 * rail stories keep showing the Live Chat toggle.
 	 */
 	liveChatViaSidebar?: boolean;
+	/** Extra Träger settings, e.g. "Direkteinladung erlauben" (#1894). */
+	tenantSettings?: Record<string, unknown>;
 	children: React.ReactNode;
 }) {
 	const [userData, setUserData] = useState(() =>
@@ -194,7 +197,8 @@ export function NavigationStoryProviders({
 								id: 1,
 								name: 'ORISO Storybook',
 								settings: {
-									featureToolsEnabled: false
+									featureToolsEnabled: false,
+									...tenantSettings
 								}
 							} as any,
 							setTenant: () => {}

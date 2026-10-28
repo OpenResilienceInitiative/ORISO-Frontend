@@ -330,6 +330,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			// #1894: the clock entry, home of the counsellor's direct links
 			// (later also time windows).
 			{
+				// Hidden when no medium is allowed (useDirectLinksAllowed).
+				requiresDirectInvite: true,
 				to: '/direct-links',
 				icon: NavDirectLinksIcon,
 				iconHover: NavDirectLinksIcon,

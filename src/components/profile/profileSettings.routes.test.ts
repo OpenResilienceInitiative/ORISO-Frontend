@@ -113,4 +113,26 @@ describe('Settings → "Meine Links" (#1894)', () => {
 		]);
 		expect(typeof group.elements[0].condition).toBe('function');
 	});
+
+	it.each([
+		[true, 1],
+		[false, 0]
+	])(
+		'shows the tab only while direct invitation allows a medium (%s)',
+		(allowed, visible) => {
+			const group = profileRoutesSettings(
+				[],
+				{} as AppConfigInterface,
+				allowed
+			).find(
+				(entry) => isTabGroup(entry) && entry.url === '/meine-links'
+			);
+			if (!group || !isTabGroup(group)) throw new Error('missing tab');
+			expect(
+				group.elements.filter((entry) =>
+					solveCondition(entry.condition, {} as never, [])
+				)
+			).toHaveLength(visible);
+		}
+	);
 });
