@@ -13,8 +13,11 @@ import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import { Switch } from '../../Switch';
-import { copyTextToClipboard } from '../../../utils/clipboardHelpers';
-import type { CallShareSettings, WebShare } from './callShareSettings';
+import {
+	copyLinkToClipboard,
+	type CallShareSettings,
+	type WebShare
+} from './callShareSettings';
 import './callShare.scss';
 
 export interface CallSharePanelProps {
@@ -49,7 +52,7 @@ export const CallSharePanel = ({
 	onSettingsChange,
 	onClose,
 	webShare,
-	onCopy = (value) => copyTextToClipboard(value),
+	onCopy = (value) => copyLinkToClipboard(value),
 	defaultQrOpen = false,
 	onContentResize,
 	temporaryAccountAllowed = true

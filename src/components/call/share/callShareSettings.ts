@@ -38,3 +38,48 @@ export const detectWebShare = (
 		? (data: ShareData) => share.call(nav, data)
 		: null;
 };
+
+/**
+ * Not allowed means not offered: the link carries no temporary account, also
+ * when the policy changes while the share surface is open.
+ */
+export const effectiveCallShareSettings = (
+	settings: CallShareSettings,
+	temporaryAccountAllowed: boolean
+): CallShareSettings =>
+	temporaryAccountAllowed
+		? settings
+		: { ...settings, temporaryAccount: false };
+
+/**
+ * Plain-text copy that rejects when nothing reached the clipboard, so the
+ * panel never says "Kopiert" for a link that was not copied. The shared
+ * `copyTextToClipboard` ignores a failed `execCommand`.
+ */
+export const copyLinkToClipboard = async (
+	text: string,
+	nav:
+		| { clipboard?: Pick<Clipboard, 'writeText'> }
+		| undefined = typeof navigator === 'undefined' ? undefined : navigator,
+	exec: (command: string) => boolean = (command) =>
+		document.execCommand(command)
+): Promise<void> => {
+	if (nav?.clipboard?.writeText) {
+		await nav.clipboard.writeText(text);
+		return;
+	}
+	const textarea = document.createElement('textarea');
+	textarea.value = text;
+	textarea.setAttribute('readonly', '');
+	textarea.style.position = 'absolute';
+	textarea.style.left = '-10000em';
+	document.body.appendChild(textarea);
+	textarea.select();
+	try {
+		if (!exec('copy')) {
+			throw new Error('copy command failed');
+		}
+	} finally {
+		document.body.removeChild(textarea);
+	}
+};

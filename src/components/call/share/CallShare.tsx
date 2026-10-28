@@ -8,6 +8,7 @@ import {
 	CallShareSettings,
 	defaultCallShareSettings,
 	detectWebShare,
+	effectiveCallShareSettings,
 	WebShare
 } from './callShareSettings';
 import './callShare.scss';
@@ -50,13 +51,19 @@ export const CallShare = ({
 	const { t } = useTranslation();
 	const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
 	const [open, setOpen] = useState(defaultOpen);
-	const [settings, setSettings] = useState<CallShareSettings>(() => {
-		const initial = initialSettings ?? defaultCallShareSettings();
-		// Not allowed means not offered: the link carries no temporary account.
-		return temporaryAccountAllowed
-			? initial
-			: { ...initial, temporaryAccount: false };
-	});
+	const [stored, setStored] = useState<CallShareSettings>(
+		() => initialSettings ?? defaultCallShareSettings()
+	);
+	// A new link is another call: start from its own settings again.
+	const [storedFor, setStoredFor] = useState(link);
+	if (storedFor !== link) {
+		setStoredFor(link);
+		setStored(initialSettings ?? defaultCallShareSettings());
+	}
+	const settings = effectiveCallShareSettings(
+		stored,
+		temporaryAccountAllowed
+	);
 	const [share] = useState<WebShare | null>(() =>
 		webShare === undefined ? detectWebShare() : webShare
 	);
@@ -74,8 +81,12 @@ export const CallShare = ({
 			link={link}
 			settings={settings}
 			onSettingsChange={(next) => {
-				setSettings(next);
-				onSettingsChange?.(next);
+				const effective = effectiveCallShareSettings(
+					next,
+					temporaryAccountAllowed
+				);
+				setStored(effective);
+				onSettingsChange?.(effective);
 			}}
 			onClose={close}
 			webShare={share}
