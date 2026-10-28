@@ -19,6 +19,7 @@ import { GroupRulesIntro } from './GroupRulesIntro';
 import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
+import { JoinRefusalNotice } from './JoinRefusalNotice';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { GroupLegalMenu } from './GroupLegalMenu';
 import { useGroupConsent } from '../consent/useGroupConsent';
@@ -71,6 +72,8 @@ export interface GroupWaitingRoomProps {
 	embedded?: boolean;
 	/** "Beitreten" stays shut although the room is open (a banned member). */
 	joinBlocked?: boolean;
+	/** Why the last "Beitreten" did not work; its own row in the bar. */
+	joinNotice?: string;
 	/**
 	 * Who waits. `moderator` is the counsellor who opens the group: the clock
 	 * speaks to her, and the bar is live before the group is open (#1689).
@@ -115,6 +118,7 @@ export const GroupWaitingRoom = ({
 	showLoginLink = false,
 	embedded = false,
 	joinBlocked = false,
+	joinNotice,
 	audience = 'participant',
 	primaryLabel,
 	askConsent = true
@@ -528,7 +532,7 @@ export const GroupWaitingRoom = ({
 	    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
 	    gesperrt"). */
 	const bar =
-		asking && active && askConsent ? (
+		asking && active && askConsent && !joinBlocked ? (
 			<WaitingRoomBar
 				contained={embedded}
 				consent={
@@ -563,7 +567,7 @@ export const GroupWaitingRoom = ({
 										'groupChat.consent.saveFailed',
 										'Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.'
 									)
-								: undefined
+								: joinNotice
 						}
 						errorId="groupWaitingConsentError"
 						disabled={saving || joinBusy}
@@ -587,9 +591,13 @@ export const GroupWaitingRoom = ({
 		) : (
 			<WaitingRoomBar
 				contained={embedded}
-				stacked={Boolean(calendarRow) && !inlineCalendar}
+				stacked={
+					(Boolean(calendarRow) && !inlineCalendar) ||
+					Boolean(joinNotice)
+				}
 				primary={joinAction}
 			>
+				{joinNotice && <JoinRefusalNotice message={joinNotice} />}
 				{calendarRow}
 			</WaitingRoomBar>
 		);

@@ -28,7 +28,6 @@ import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
-import { JoinRefusalNotice } from './JoinRefusalNotice';
 import {
 	getGroupSeries,
 	getGroupUpcomingDates,
@@ -288,19 +287,17 @@ const ClientGroupEntryRoom = () => {
 				onJoin={handleJoin}
 				joinBusy={joinBusy}
 				joinBlocked={removed}
-			/>
-			{(joinFailed || removed) && (
-				<JoinRefusalNotice
-					message={
-						removed
-							? t('groupChat.removed.overlay.headline')
-							: t(
+				joinNotice={
+					removed
+						? t('groupChat.removed.overlay.headline')
+						: joinFailed
+							? t(
 									'groupChat.joinError.overlay.headline',
 									'Der Beitritt hat nicht geklappt.'
 								)
-					}
-				/>
-			)}
+							: undefined
+				}
+			/>
 		</>
 	);
 };

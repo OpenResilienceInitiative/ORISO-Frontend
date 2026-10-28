@@ -14,7 +14,6 @@ import {
 } from '../../globalState/interfaces';
 import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
-import { JoinRefusalNotice } from './entryRoom/JoinRefusalNotice';
 import { useTranslation } from 'react-i18next';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
@@ -254,11 +253,13 @@ const weekly = (start: Date) =>
 const Room = ({
 	start = IN_THREE_DAYS,
 	active = false,
-	joinBlocked = false
+	joinBlocked = false,
+	joinNotice
 }: {
 	start?: Date;
 	active?: boolean;
 	joinBlocked?: boolean;
+	joinNotice?: string;
 }) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
@@ -277,6 +278,7 @@ const Room = ({
 				rules={RULES}
 				active={active}
 				joinBlocked={joinBlocked}
+				joinNotice={joinNotice}
 				onJoin={() => undefined}
 				nowMs={NOW}
 				upcomingDates={weekly(start)}
@@ -384,12 +386,12 @@ export const WaitingAreaOpenMobile: StoryObj = {
 const RemovedRoom = () => {
 	const { t } = useTranslation();
 	return (
-		<>
-			<Room start={RUNNING} active joinBlocked />
-			<JoinRefusalNotice
-				message={t('groupChat.removed.overlay.headline')}
-			/>
-		</>
+		<Room
+			start={RUNNING}
+			active
+			joinBlocked
+			joinNotice={t('groupChat.removed.overlay.headline')}
+		/>
 	);
 };
 
@@ -406,13 +408,22 @@ const playRemoved = async ({
 	await expect(notice).toBeVisible();
 	const join = canvas.getByTestId('group-entry-join');
 	await expect(join).toBeDisabled();
-	// Readable above the bar, not hidden behind it or the button.
+	// Its own row: clear of "Beitreten" and of every other bar control.
 	const box = notice.getBoundingClientRect();
-	await expect(box.bottom).toBeLessThanOrEqual(
-		join.getBoundingClientRect().top
-	);
+	const overlaps = (other: DOMRect) =>
+		box.left < other.right &&
+		other.left < box.right &&
+		box.top < other.bottom &&
+		other.top < box.bottom;
+	await expect(overlaps(join.getBoundingClientRect())).toBe(false);
+	for (const control of Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('button, a')
+	).filter((el) => el.getBoundingClientRect().width > 0)) {
+		await expect(overlaps(control.getBoundingClientRect())).toBe(false);
+	}
 	await expect(box.left).toBeGreaterThanOrEqual(0);
 	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+	await expectWaitingRoomLayout(canvasElement);
 };
 
 export const WaitingAreaRemoved: StoryObj = {

@@ -80,9 +80,11 @@ vi.mock('./GroupWaitingRoom', () => ({
 		agencyName?: string;
 		active: boolean;
 		joinBlocked?: boolean;
+		joinNotice?: string;
 		onJoin: () => unknown;
 	}) => (
 		<div data-testid="waiting-room">
+			{props.joinNotice && <p role="alert">{props.joinNotice}</p>}
 			<span>{props.topicName}</span>
 			<span>{props.agencyName}</span>
 			<button
