@@ -2536,6 +2536,12 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
+					"fallbackName": "Beratungsstellen-Admin",
+					"link": "Beratungsstellen-Admin kontaktieren",
+					"none": "Für diese Beratungsstelle ist kein Admin hinterlegt"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {

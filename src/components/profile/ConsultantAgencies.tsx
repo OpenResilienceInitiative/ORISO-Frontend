@@ -11,12 +11,18 @@ import { copyTextToClipboard } from '../../utils/clipboardHelpers';
 import { GenerateQrCode } from '../generateQrCode/GenerateQrCode';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
+import { AgencyAdminContact } from './AgencyAdminContact';
 
 export const ConsultantAgencies = () => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation(['common', 'agencies']);
 
 	const { userData } = useContext(UserDataContext);
+
+	const agencyName = (item: { id: number; name: string }): string =>
+		translate([`agency.${item.id}.name`, item.name], {
+			ns: 'agencies'
+		});
 
 	return (
 		<div>
@@ -36,9 +42,13 @@ export const ConsultantAgencies = () => {
 							className="profile__data__content profile__data__content--agencies flex flex--fd-column flex-l--fd-row flex-l--jc-sb mb--2"
 							key={`agencies-${i}`}
 						>
-							{translate([`agency.${item.id}.name`, item.name], {
-								ns: 'agencies'
-							})}
+							<div>
+								{agencyName(item)}
+								<AgencyAdminContact
+									agencyId={item.id}
+									agencyName={agencyName(item)}
+								/>
+							</div>
 							<div className="flex flex--fd-row mt--1 flex-l--fd-column mt-l--0 ml-l--2 flex--ai-c flex-l--ai-fs">
 								<div>
 									<GenerateQrCode

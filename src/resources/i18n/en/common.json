@@ -2512,6 +2512,12 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "The admins of this counselling centre could not be loaded. Please try again later.",
+					"fallbackName": "Centre admin",
+					"link": "Contact the counselling centre admin",
+					"none": "No admin is on file for this counselling centre"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {

@@ -2515,6 +2515,12 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Bu danışma merkezinin yöneticileri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+					"fallbackName": "Merkez yöneticisi",
+					"link": "Danışma merkezi yöneticisiyle iletişime geç",
+					"none": "Bu danışma merkezi için kayıtlı bir yönetici yok"
+				},
 				"label": "Danışma Merkezi",
 				"registrationLink": {
 					"notification": {
