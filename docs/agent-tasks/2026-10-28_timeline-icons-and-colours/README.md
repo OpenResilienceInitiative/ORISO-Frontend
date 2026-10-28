@@ -41,3 +41,35 @@ The previous last-child selector did not match the final notification because a 
 The browser regression failed with0px instead of32px before the fix. It now verifies straight internal corners, touching edges (0px gap), equal widths and32px lower outside corners, then filters and restores the feed. Two additional real-control stories verify the same edge with load-more and error/retry controls. All three focused stories pass. The broader current sweep has15PASS/2FAIL across17stories; the remaining duplicate-SVG/accessibility failures are not suppressed.
 
 The earlier chat screenshot was taken during selection transitions and misleadingly showed detached rows. Replacement captures wait until the story play finishes and finite animations settle, and assert the group geometry before taking the screenshot. Desktop/tablet/phone checks agree on0px internal corners,32px lower outside corners and0px gap. The existing phone clipping limitation remains informational.
+
+
+## Desktop rail refinement — 2026-10-28
+
+Frank requested a saved desktop-only icon view matching Conversations; mobile
+and the accepted normal grouping stay intact. Activity now reuses SessionRailPill,
+its unread marks/tooltips, ResizableHandle, canonical80px rail and397px expanded
+floor. Existing browser-local notificationsTimeline_width holds the preference;
+legacy narrow values normalize to80 instead of wrapped cards. Desktop begins at
+1200px;1199px and smaller keep normal cards without rewriting the saved width.
+The shared pill gained only optional aria-current forwarding for ordinary-button
+hosts. No authentication, routing, Matrix state or notification semantics changed.
+
+Verification:
+- Width helper16tests red→green; selected-state browser assertion red→green.
+- Full unit839files PASS,1skipped;14540tests PASS,8skipped.
+- Script/style lint, appbuild, app/Storybook typechecks PASS, Node24.15.0.
+- New real-SVG browser stories4PASS including strict accessibility audits.
+- Clean-profile Chrome script at playwright/activity-timeline-rail-1871/verify.mjs
+  passes drag→80→reload, tooltip, selected aria-current, keyboard scroll,
+ 1199/1200 boundary,820/390 normal cards and saved preference, double-click→397
+  →reload, joined seams0px and final outside radius32px.
+- Existing main timeline stories13PASS/2FAIL (DisplayFilterDialogOpen,
+  AllEventTypes: incomplete/duplicateSVG audits). Shared rail stories10PASS/3FAIL
+  (mixed/phone/dark: repeated supervisionSVG IDs). No suppression added.
+- Independent review found and verified fixes for breakpoint and current-state
+  accessibility; final touched-scope review has no remaining findings.
+
+Request rail exists in source via RouterConfig enquiry→SessionsListWrapper→
+SessionListItemComponent→SessionRailPill. Actual request-page browser acceptance
+remains open; user deferred request implementation. No speculative sub-issue.
+Local only; human review/merge and deployed Dev acceptance remain open.

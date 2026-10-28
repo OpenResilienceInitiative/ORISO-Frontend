@@ -31,6 +31,59 @@
 		background: var(--m3-surface-container-high, #eae7e8);
 	}
 
+	// Only the desktop collapsed mode adopts the shared conversation rail.
+	&__listColumn--rail {
+		box-sizing: border-box;
+		padding: 16px;
+
+		.notificationsCenter__toolbar {
+			display: none;
+		}
+		.notificationsCenter__list {
+			padding: 0;
+			flex-shrink: 0;
+		}
+		.notificationsCenter__list > div {
+			flex-shrink: 0;
+		}
+		.notificationsCenter__pagination {
+			padding: 8px 0 4px;
+			button {
+				width: 48px;
+				height: 48px;
+				padding: 12px;
+			}
+			svg {
+				width: 24px;
+				height: 24px;
+				fill: currentcolor;
+			}
+		}
+	}
+
+	&__railIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--m3-secondary, #4c555f);
+
+		// Override only the avatar's full-size glyph rule; keep event paint intact.
+		.sessionRailPill & svg {
+			width: 24px;
+			height: 24px;
+			fill: currentcolor;
+		}
+	}
+
+	&__visuallyHidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
 	// Reuses the conversation page toolbar (search pill + filter chips,
 	// sessionsListToolbar__*). The column provides its own padding/surface.
 	&__listColumn .sessionsListToolbar {
@@ -646,7 +699,7 @@
 // Below the desktop breakpoint the timeline is a single full-width list and
 // opening a notification navigates directly (no in-page detail).
 // stylelint-disable-next-line media-feature-range-notation
-@media (max-width: 1200px) {
+@media (max-width: 1199px) {
 	.notificationsCenter {
 		&__listColumn {
 			flex: 1;

@@ -4,12 +4,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+import { SessionsDataContext } from '../../globalState';
 import {
-	NotificationsContext,
-	SessionsDataContext,
-	UserDataContext,
-	AUTHORITIES
-} from '../../globalState';
+	minutesAgo,
+	feedItem,
+	noop,
+	consultantUserData,
+	withTimelineData
+} from '../../../.storybook/notificationTimelineFixture';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { installNotificationDraftFixture } from './notificationDraftFixture';
 import { expectTimelineGroupEnd } from '../../../.storybook/notificationsCenterGroupAssertions';
@@ -32,24 +34,6 @@ import type { ListItemInterface } from '../../globalState/interfaces/SessionsDat
  * without live app data (ADR-AT-01: strings render client-side from the
  * event-descriptor registry; title/text here are only legacy fallbacks).
  */
-const minutesAgo = (min: number) =>
-	new Date(Date.now() - min * 60 * 1000).toISOString();
-
-const feedItem = (
-	overrides: Partial<NotificationFeedItem> & {
-		id: string;
-		eventType: string;
-		createdAt: string;
-	}
-): NotificationFeedItem => ({
-	type: 'info',
-	title: '',
-	text: '',
-	readAt: null,
-	category: 'system',
-	...overrides
-});
-
 const mockFeed: NotificationFeedItem[] = [
 	feedItem({
 		id: '1',
@@ -171,51 +155,6 @@ const mockFeed: NotificationFeedItem[] = [
 	})
 ];
 
-const noop = () => {};
-
-const notificationsValue = (feed: NotificationFeedItem[]) => ({
-	notifications: [],
-	notificationFeed: feed,
-	unreadNotificationCount: feed.filter((item) => !item.readAt).length,
-	serverUnreadTotal: feed.filter(
-		(item) => !item.readAt && !item.id.startsWith('local-')
-	).length,
-	serverUnreadTotalExcludesHidden: false,
-	hasUnreadNotifications: feed.some((item) => !item.readAt),
-	timelineDisplayFilter: { kinds: {}, autoReadHidden: false },
-	visibleUnreadCount: feed.filter((item) => !item.readAt).length,
-	hiddenUnreadInLoadedPages: 0,
-	markNotificationsReadConfirmed: async () => {},
-	setNotifications: noop,
-	hasNotification: () => false,
-	addNotification: noop,
-	addEventNotification: noop,
-	refreshNotificationFeed: noop,
-	loadOlderNotifications: async () => {},
-	hasOlderNotifications: false,
-	isLoadingOlderNotifications: false,
-	olderNotificationsError: false,
-	removeNotification: noop,
-	markNotificationAsRead: noop,
-	markAllNotificationsAsRead: noop,
-	clearNotificationFeed: noop
-});
-
-const consultantUserData = {
-	userId: 'sb-consultant',
-	userName: 'Storybook Consultant',
-	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT],
-	isWalkThroughEnabled: false,
-	twoFactorAuth: {
-		isEnabled: false,
-		isActive: false,
-		isShown: false,
-		isToBeActivated: false,
-		secret: '',
-		qrCode: ''
-	}
-} as any;
-
 /**
  * #1377 slice 3: the display filter comes from the account-data store. The
  * story attaches a synced fake client holding `parameters.displayFilters`
@@ -233,30 +172,6 @@ const customisedDisplayFilters = withSectionOverride(
 		autoReadHidden: true
 	}
 );
-
-const withTimelineData =
-	(
-		feed: NotificationFeedItem[],
-		userData: any = consultantUserData,
-		notifications: Partial<ReturnType<typeof notificationsValue>> = {}
-	) =>
-	(Story: React.ComponentType) => (
-		<UserDataContext.Provider
-			value={{
-				userData,
-				setUserData: noop,
-				reloadUserData: async () => null as any
-			}}
-		>
-			<NotificationsContext.Provider
-				value={{ ...notificationsValue(feed), ...notifications }}
-			>
-				<div style={{ height: '90vh', display: 'flex' }}>
-					<Story />
-				</div>
-			</NotificationsContext.Provider>
-		</UserDataContext.Provider>
-	);
 
 const meta = {
 	title: 'Organisms/NotificationsCenter',
