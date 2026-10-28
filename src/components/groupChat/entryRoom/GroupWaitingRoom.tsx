@@ -220,8 +220,9 @@ export const GroupWaitingRoom = ({
 	/* The clock is for waiting. Once the group runs it would count up a
 	   start that already happened, so the room says it has begun (#1787). */
 	const showClock = Boolean(plannedStart) && !active;
-	// The switch stops whatever moves: the clock, or the rules without it.
-	const showMotionSwitch = showClock || rules.length > 0;
+	// The switch stops whatever moves: the clock, the running clock wall, or
+	// the rules without either.
+	const showMotionSwitch = showClock || active || rules.length > 0;
 	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
 	const backToRoom = useCallback(() => setView('room'), []);
 	usePanelHistory(view !== 'room', backToRoom);

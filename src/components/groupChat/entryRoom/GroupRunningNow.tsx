@@ -99,6 +99,47 @@ export const GroupRunningNow = ({
 		'(prefers-reduced-motion: reduce)'
 	);
 	const still = motionOff || prefersReducedMotion;
+	const stillTiles = (
+		<Box
+			aria-hidden
+			sx={{
+				display: 'grid',
+				gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+				gap: { xs: 1, sm: 1.75 },
+				width: '100%'
+			}}
+		>
+			{(
+				[
+					[hours, 'unitHours'],
+					[minutes, 'unitMinutes'],
+					[seconds, 'unitSeconds']
+				] as const
+			).map(([value, key], index) => (
+				<Box key={key} sx={tileSx}>
+					<Box
+						component="span"
+						sx={{
+							fontSize: { xs: 36, sm: 52 },
+							lineHeight: 1,
+							fontWeight: 700,
+							fontVariantNumeric: 'tabular-nums',
+							/* A zero hour stays quiet. */
+							color:
+								index === 0 && value === 0
+									? registrationMd3.onSurfaceVariant
+									: registrationMd3.onSurface
+						}}
+					>
+						{pad(value)}
+					</Box>
+					<Box component="span" sx={captionSx}>
+						{unit(key)}
+					</Box>
+				</Box>
+			))}
+		</Box>
+	);
 
 	return (
 		<Box
@@ -194,46 +235,7 @@ export const GroupRunningNow = ({
 						{sinceLabel}
 					</Typography>
 					{still ? (
-						<Box
-							aria-hidden
-							sx={{
-								display: 'grid',
-								gridTemplateColumns:
-									'repeat(3, minmax(0, 1fr))',
-								gap: { xs: 1, sm: 1.75 },
-								width: '100%'
-							}}
-						>
-							{(
-								[
-									[hours, 'unitHours'],
-									[minutes, 'unitMinutes'],
-									[seconds, 'unitSeconds']
-								] as const
-							).map(([value, key], index) => (
-								<Box key={key} sx={tileSx}>
-									<Box
-										component="span"
-										sx={{
-											fontSize: { xs: 36, sm: 52 },
-											lineHeight: 1,
-											fontWeight: 700,
-											fontVariantNumeric: 'tabular-nums',
-											/* A zero hour stays quiet. */
-											color:
-												index === 0 && value === 0
-													? registrationMd3.onSurfaceVariant
-													: registrationMd3.onSurface
-										}}
-									>
-										{pad(value)}
-									</Box>
-									<Box component="span" sx={captionSx}>
-										{unit(key)}
-									</Box>
-								</Box>
-							))}
-						</Box>
+						stillTiles
 					) : (
 						<RunningClockWall
 							units={[
@@ -241,6 +243,7 @@ export const GroupRunningNow = ({
 								[minutes, unit('unitMinutes')],
 								[seconds, unit('unitSeconds')]
 							]}
+							fallback={stillTiles}
 						/>
 					)}
 				</Box>
@@ -357,25 +360,28 @@ export const runningWallWidth = (size: number, digits: number[]) => {
 	return groups + (digits.length - 1) * Math.round(size * 0.55);
 };
 
-/** The largest mini-clock at which the row still fits `width`. */
+/** The largest mini-clock at which the row still fits `width`; `null` when none does. */
 export const fitRunningWall = (width: number, digits: number[]) => {
-	for (let size = WALL_MAX_SIZE; size > WALL_MIN_SIZE; size--) {
+	for (let size = WALL_MAX_SIZE; size >= WALL_MIN_SIZE; size--) {
 		if (runningWallWidth(size, digits) <= width) {
 			return size;
 		}
 	}
-	return WALL_MIN_SIZE;
+	return null;
 };
 
 /**
  * Frank, 2026-10-28: with the animation on, the running group counts up on
- * the same clock of clocks as the countdown, calm and grey — no "+", no
- * tint, no smileys; nothing here is late.
+ * the same clock of clocks as the countdown, calm like it — hands in the
+ * countdown's ink, no "+", no tint, no smileys; nothing here is late. Too
+ * narrow for the smallest clock, the still tiles stand in.
  */
 const RunningClockWall = ({
-	units
+	units,
+	fallback
 }: {
 	units: Array<[value: number, label: string]>;
+	fallback: React.ReactNode;
 }) => {
 	const ref = useRef<HTMLDivElement>(null);
 	const [width, setWidth] = useState<number | null>(null);
@@ -392,10 +398,18 @@ const RunningClockWall = ({
 		observer.observe(el);
 		return () => observer.disconnect();
 	}, []);
+	// 0 is a box not laid out yet (or jsdom), not a narrow one.
 	const size = fitRunningWall(
-		width ?? 480,
+		width || 480,
 		units.map(([value]) => faceDigitCount(value))
 	);
+	if (size === null) {
+		return (
+			<Box ref={ref} sx={{ width: '100%' }}>
+				{fallback}
+			</Box>
+		);
+	}
 	const gap = wallCellGap(size);
 
 	return (
