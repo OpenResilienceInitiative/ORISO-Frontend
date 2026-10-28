@@ -39,10 +39,13 @@ export const CallShareForCall = ({
 	// What the server last confirmed: a failed change falls back to this.
 	const confirmed = useRef<CallShareSettings | null>(null);
 	const queue = useRef<Promise<void>>(Promise.resolve());
+	// Counts calls: answers that belong to an earlier call are dropped.
+	const call = useRef(0);
 
 	useEffect(() => {
 		let active = true;
 		let timer: ReturnType<typeof setTimeout> | undefined;
+		call.current += 1;
 		setLink(null);
 		const ask = (attempt: number) =>
 			apiCreateCallShareLink({ sourceRoomId, callId }).then((created) => {
@@ -73,16 +76,18 @@ export const CallShareForCall = ({
 	// switches.
 	const change = (next: CallShareSettings) => {
 		const request = ++latest.current;
+		const forCall = call.current;
 		setSettings(next);
 		queue.current = queue.current.then(() => {
-			if (request !== latest.current) return;
+			if (request !== latest.current || forCall !== call.current) return;
 			return apiUpdateCallShareLink(link.id, next)
 				.then((saved) => {
+					if (forCall !== call.current) return;
 					confirmed.current = saved;
 					if (request === latest.current) setSettings(saved);
 				})
 				.catch(() => {
-					if (request === latest.current)
+					if (forCall === call.current && request === latest.current)
 						setSettings(confirmed.current);
 				});
 		});

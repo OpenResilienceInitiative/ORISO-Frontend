@@ -185,3 +185,37 @@ it.each(['phone', 'desktop'] as const)(
 		expect(Number(getComputedStyle(root).zIndex)).toBeGreaterThan(10000);
 	}
 );
+
+it('keeps a late answer for the previous call off the next call', async () => {
+	const answers: Array<
+		(saved: { knock: boolean; temporaryAccount: boolean }) => void
+	> = [];
+	vi.mocked(apiUpdateCallShareLink).mockImplementation(
+		() => new Promise((resolve) => answers.push(resolve))
+	);
+	const { rerender } = render(
+		<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />
+	);
+	await userEvent.click(await openPanel());
+	expect(answers).toHaveLength(1);
+
+	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
+		...link,
+		id: 8,
+		settings: { knock: true, temporaryAccount: false }
+	});
+	rerender(
+		<CallShareForCall sourceRoomId="!r:x" callId="c2" layout="phone" />
+	);
+	await vi.waitFor(() =>
+		expect(apiCreateCallShareLink).toHaveBeenLastCalledWith({
+			sourceRoomId: '!r:x',
+			callId: 'c2'
+		})
+	);
+	answers[0]({ knock: false, temporaryAccount: true });
+
+	const knock = (await openPanel()) as HTMLInputElement;
+	await new Promise((resolve) => setTimeout(resolve, 0));
+	expect(knock.checked).toBe(true);
+});
