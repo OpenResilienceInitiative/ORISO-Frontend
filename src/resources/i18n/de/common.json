@@ -6074,7 +6074,10 @@
 			"backToCall": "Zurück zur großen Ansicht",
 			"speaking": "{{name}} spricht",
 			"dockLabel": "Gespräch mit {{name}}",
-			"cameraHint": "Der Ton läuft weiter."
+			"cameraHint": "Der Ton läuft weiter.",
+			"minimize": "Anruf verkleinern",
+			"groupCall": "Gruppenanruf",
+			"endsCurrentUnnamed": "Wenn Sie annehmen, endet Ihr laufendes Gespräch."
 		}
 	},
 	"form": {

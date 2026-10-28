@@ -90,3 +90,21 @@ export const callPartyOf = (
 
 	return null;
 };
+
+/**
+ * The other party of a one-to-one conversation, as seen from `ownUserId`:
+ * whom a running call is with, for the minimized dock (FE#1904).
+ */
+export const counterpartOf = (
+	conversation: CallConversation | null | undefined,
+	ownUserId: string | undefined
+): CallParty | null => {
+	const item = conversation?.session;
+	if (!item || !ownUserId) return null;
+	return callPartyOf(
+		conversation,
+		ownUserId === item.consultantMatrixUserId
+			? item.askerMatrixUserId
+			: item.consultantMatrixUserId
+	);
+};

@@ -6084,7 +6084,10 @@
 			"backToCall": "Tam görünüme dön",
 			"speaking": "{{name}} konuşuyor",
 			"dockLabel": "{{name}} ile görüşme",
-			"cameraHint": "Ses devam eder."
+			"cameraHint": "Ses devam eder.",
+			"minimize": "Aramayı küçült",
+			"groupCall": "Grup araması",
+			"endsCurrentUnnamed": "Yanıtlarsanız mevcut görüşmeniz sona erer."
 		}
 	},
 	"form": {

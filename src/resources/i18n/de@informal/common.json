@@ -2756,7 +2756,8 @@
 	},
 	"calls": {
 		"states": {
-			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}."
+			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}.",
+			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
 		}
 	}
 }

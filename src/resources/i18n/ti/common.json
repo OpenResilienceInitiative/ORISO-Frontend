@@ -6084,7 +6084,10 @@
 			"backToCall": "ናብ ምሉእ ርእይቶ ጻውዒት ተመለሱ",
 			"speaking": "{{name}} ይዛረብ ኣሎ",
 			"dockLabel": "ምስ {{name}} ዝርርብ",
-			"cameraHint": "ድምጺ ይቕጽል።"
+			"cameraHint": "ድምጺ ይቕጽል።",
+			"minimize": "ጻውዒት ኣንእስ",
+			"groupCall": "ናይ ጉጅለ ጻውዒት",
+			"endsCurrentUnnamed": "እንተ መሊስኩም፡ ዘሎኩም ዝርርብ ይውዳእ።"
 		}
 	},
 	"form": {

@@ -6084,7 +6084,10 @@
 			"backToCall": "Revenir à l’appel en grand",
 			"speaking": "{{name}} parle",
 			"dockLabel": "Appel avec {{name}}",
-			"cameraHint": "Le son continue."
+			"cameraHint": "Le son continue.",
+			"minimize": "Réduire l'appel",
+			"groupCall": "Appel de groupe",
+			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		}
 	},
 	"form": {

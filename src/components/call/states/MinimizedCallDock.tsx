@@ -5,6 +5,8 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Popper from '@mui/material/Popper';
 import LockIcon from '@mui/icons-material/Lock';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import GroupsIcon from '@mui/icons-material/Groups';
+import PersonIcon from '@mui/icons-material/Person';
 import { UserAvatar } from '../../message/UserAvatar';
 import {
 	ChatMenuDropdown,
@@ -20,8 +22,13 @@ import { CallSurfaceLayer } from './CallSurfaceLayer';
 import './callStates.scss';
 
 export interface MinimizedCallDockProps {
-	/** The other person in a one-to-one call, as `callPartyOf` names them. */
-	party: CallParty;
+	/**
+	 * The other person in a one-to-one call, as `callPartyOf` names them.
+	 * Without an avatar (a group, somebody unknown) a neutral glyph stands in.
+	 */
+	party: Pick<CallParty, 'name'> & Partial<Pick<CallParty, 'avatar'>>;
+	/** A group call: the neutral glyph shows a group. */
+	isGroup?: boolean;
 	/** Seconds since the call began; the caller owns the clock. */
 	elapsedSeconds: number;
 	isMuted: boolean;
@@ -55,6 +62,7 @@ export const formatCallDuration = (totalSeconds: number): string => {
  */
 export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	party,
+	isGroup,
 	elapsedSeconds,
 	isMuted,
 	isVideo = false,
@@ -109,7 +117,13 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 			>
 				<div className="minimized-call-dock__who">
 					<span className="minimized-call-dock__avatar">
-						<UserAvatar {...party.avatar} size={40} />
+						{party.avatar ? (
+							<UserAvatar {...party.avatar} size={40} />
+						) : (
+							<span className="minimized-call-dock__glyph">
+								{isGroup ? <GroupsIcon /> : <PersonIcon />}
+							</span>
+						)}
 					</span>
 					<span className="minimized-call-dock__text">
 						<span className="minimized-call-dock__name">

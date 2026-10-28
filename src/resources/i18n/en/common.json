@@ -5999,7 +5999,10 @@
 			"backToCall": "Back to the full call",
 			"speaking": "{{name}} is speaking",
 			"dockLabel": "Call with {{name}}",
-			"cameraHint": "Sound keeps going."
+			"cameraHint": "Sound keeps going.",
+			"minimize": "Minimize call",
+			"groupCall": "Group call",
+			"endsCurrentUnnamed": "Answering ends your current call."
 		}
 	},
 	"form": {

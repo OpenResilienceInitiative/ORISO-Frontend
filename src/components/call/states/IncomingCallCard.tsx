@@ -12,7 +12,7 @@ import { CallSurfaceLayer } from './CallSurfaceLayer';
 import './callStates.scss';
 
 export interface OngoingCall {
-	/** The other person's name, or the group's. */
+	/** The other person's name, or the group's; empty when unknown. */
 	name: string;
 	/** One avatar for a one-to-one call, several (stacked) for a group. */
 	avatars: CallParty['avatar'][];
@@ -86,22 +86,28 @@ export const IncomingCallCard: React.FC<IncomingCallCardProps> = ({
 
 				{ongoingCall && (
 					<div className="incoming-call-card__busy">
-						<span
-							className="incoming-call-card__ending"
-							aria-hidden="true"
-						>
-							{ongoingCall.avatars.slice(0, 3).map((avatar) => (
-								<UserAvatar
-									key={avatar.userId}
-									{...avatar}
-									size={32}
-								/>
-							))}
-						</span>
+						{ongoingCall.avatars.length > 0 && (
+							<span
+								className="incoming-call-card__ending"
+								aria-hidden="true"
+							>
+								{ongoingCall.avatars
+									.slice(0, 3)
+									.map((avatar) => (
+										<UserAvatar
+											key={avatar.userId}
+											{...avatar}
+											size={32}
+										/>
+									))}
+							</span>
+						)}
 						<p>
-							{t('calls.states.endsCurrent', {
-								name: ongoingCall.name
-							})}
+							{ongoingCall.name
+								? t('calls.states.endsCurrent', {
+										name: ongoingCall.name
+									})
+								: t('calls.states.endsCurrentUnnamed')}
 						</p>
 					</div>
 				)}

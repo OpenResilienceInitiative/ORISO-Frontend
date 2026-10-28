@@ -379,6 +379,21 @@
 		transition: box-shadow var(--call-motion);
 	}
 
+	&__glyph {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		display: grid;
+		place-items: center;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+	}
+
 	/* The person speaking is the one the stage lifts; here: a primary ring. */
 	&[data-speaking='true'] &__avatar {
 		box-shadow: 0 0 0 3px var(--m3-primary, #a5000a);

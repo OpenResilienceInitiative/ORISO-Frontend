@@ -98,6 +98,25 @@ describe('call states (FE#1904)', () => {
 		).toBeTruthy();
 	});
 
+	it('says only "your current call" when it does not know whom with', () => {
+		renderIn(
+			<IncomingCallCard
+				caller={party}
+				isVideo={false}
+				ongoingCall={{ name: '', avatars: [] }}
+				onAnswer={vi.fn()}
+				onDecline={vi.fn()}
+			/>
+		);
+		expect(
+			screen.getByText('Answering ends your current call.')
+		).toBeTruthy();
+		// No avatar to strike out, so no stray strike line either.
+		expect(
+			document.querySelector('.incoming-call-card__ending')
+		).toBeNull();
+	});
+
 	it('docks with mute, back and hang-up, and reports the mute state', () => {
 		const onToggleMute = vi.fn();
 		renderIn(
@@ -119,6 +138,24 @@ describe('call states (FE#1904)', () => {
 		).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'End call' })).toBeTruthy();
 		expect(screen.getByText('12:04')).toBeTruthy();
+	});
+
+	it('draws a neutral glyph, not a made-up animal, for a group call', () => {
+		renderIn(
+			<MinimizedCallDock
+				party={{ name: 'Group call' }}
+				isGroup
+				elapsedSeconds={5}
+				isMuted={false}
+				onToggleMute={vi.fn()}
+				onHangUp={vi.fn()}
+				onExpand={vi.fn()}
+			/>
+		);
+		expect(
+			screen.getByRole('region', { name: 'Call with Group call' })
+		).toBeTruthy();
+		expect(screen.queryByTestId('user-avatar')).toBeNull();
 	});
 
 	it('offers the camera in its menu for a video call', async () => {
