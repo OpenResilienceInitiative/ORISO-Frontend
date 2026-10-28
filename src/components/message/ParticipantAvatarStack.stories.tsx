@@ -152,6 +152,90 @@ export const OverflowPlusN: Story = {
 };
 
 /**
+ * Design options for the "+N" chip on the conversation card (maxVisible 2).
+ * Local CSS only — nothing here changes the shared stack. Pick one and it
+ * moves into `participantAvatarStack.styles.scss`.
+ */
+const OVERFLOW_VARIANT_CSS = `
+.ovf { display:flex; align-items:center; gap:40px; padding:14px 0; }
+.ovf__label { width:210px; font:600 13px/1.3 Inter,system-ui,sans-serif; color:#3b3b3b; }
+.ovf__label small { display:block; font-weight:400; color:#6b6b6b; }
+/* B: round chip, same size as the avatars — reads as one more avatar */
+.ovf--round .participantStack__overflow { padding:0; min-width:var(--participant-size); border-radius:50%; font-size:15px; }
+/* C: outlined — quiet, no second pink blob next to the avatars */
+.ovf--outline .participantStack__overflow { padding:0; min-width:var(--participant-size); border-radius:50%;
+  background:transparent; box-shadow:none; border:2px dashed var(--m3-primary-fixed-dim,#ffb4aa); font-size:15px; }
+/* D: badge on the last avatar — takes no extra width */
+.ovf--badge .participantStack { padding-right:0; }
+.ovf--badge .participantStack__item--overflow { position:absolute; top:auto; left:auto; right:-8px; bottom:-6px; margin:0 !important; width:auto; height:auto; z-index:2 !important; }
+.ovf--badge .participantStack__overflow { height:22px; min-width:22px; padding:0 6px; border-radius:11px; font-size:12px;
+  background:var(--m3-primary-container,#cc1e1c); color:#fff; }
+/* E: small satellite — half-size chip, vertically centred */
+.ovf--small .participantStack__overflow { height:28px; min-width:28px; padding:0 7px; border-radius:14px; font-size:13px;
+  background:#ece6e6; color:#3b3b3b; box-shadow:none; }
+`;
+
+export const OverflowChipVariants: Story = {
+	name: '"+N" chip — design options for the card',
+	render: () => {
+		const many = [
+			client,
+			counsellor,
+			supervisor,
+			{ userId: '@kim:oriso.invalid', displayName: 'Kim G.' },
+			{ userId: '@ali:oriso.invalid', displayName: 'Ali R.' },
+			{ userId: '@jo:oriso.invalid', displayName: 'Jo L.' },
+			{ userId: '@a:oriso.invalid', displayName: 'A B.' },
+			{ userId: '@b:oriso.invalid', displayName: 'B C.' },
+			{ userId: '@c:oriso.invalid', displayName: 'C D.' },
+			{ userId: '@d:oriso.invalid', displayName: 'D E.' },
+			{ userId: '@e:oriso.invalid', displayName: 'E F.' },
+			{ userId: '@f:oriso.invalid', displayName: 'F G.' },
+			{ userId: '@g:oriso.invalid', displayName: 'G H.' },
+			{ userId: '@h:oriso.invalid', displayName: 'H I.' }
+		];
+		const rows: [string, string, string][] = [
+			['ovf--now', 'A · Aktuell', 'rosa Pille, Text off-center'],
+			['ovf--round', 'B · Runder Chip', 'wie ein vierter Avatar'],
+			[
+				'ovf--outline',
+				'C · Gestrichelter Kreis',
+				'leise, „da ist noch mehr“'
+			],
+			['ovf--badge', 'D · Badge am Avatar', 'braucht keine Breite'],
+			[
+				'ovf--small',
+				'E · Kleiner grauer Chip',
+				'tritt hinter die Avatare zurück'
+			]
+		];
+		return (
+			<div>
+				<style>{OVERFLOW_VARIANT_CSS}</style>
+				{rows.map(([cls, title, note]) => (
+					<div key={cls} className={`ovf ${cls}`}>
+						<div className="ovf__label">
+							{title}
+							<small>{note}</small>
+						</div>
+						<ParticipantAvatarStack
+							participants={[client, counsellor, supervisor]}
+							size={40}
+							maxVisible={2}
+						/>
+						<ParticipantAvatarStack
+							participants={many}
+							size={40}
+							maxVisible={2}
+						/>
+					</div>
+				))}
+			</div>
+		);
+	}
+};
+
+/**
  * Preserve the existing 32 px card geometry independently of the header.
  */
 export const Size32: Story = {

@@ -1544,19 +1544,40 @@ export const StackedListWithSelection: Story = {
 	}
 };
 
-const groupedRows = (cards: ListItemInterface[], activeIndex = -1) =>
-	cards.map((item, index) => (
-		<RuntimeCard
-			key={index}
-			index={index}
-			item={item}
-			grouped
-			isBeforeActive={index === activeIndex - 1}
-			isAfterActive={activeIndex !== -1 && index === activeIndex + 1}
-			isGroupStart={index === 0 || index === activeIndex + 1}
-			isGroupEnd={index === cards.length - 1 || index === activeIndex - 1}
-		/>
-	));
+/** Selection follows the click like the real list: the group flags are
+ * derived from the selected index on every render. */
+function GroupedRows({
+	cards,
+	initialActive
+}: {
+	cards: ListItemInterface[];
+	initialActive: number;
+}) {
+	const [active, setActive] = React.useState(initialActive);
+	return (
+		<>
+			{cards.map((item, index) => (
+				<div key={index} onClickCapture={() => setActive(index)}>
+					<RuntimeCard
+						index={index}
+						item={item}
+						grouped
+						isBeforeActive={index === active - 1}
+						isAfterActive={active !== -1 && index === active + 1}
+						isGroupStart={index === 0 || index === active + 1}
+						isGroupEnd={
+							index === cards.length - 1 || index === active - 1
+						}
+					/>
+				</div>
+			))}
+		</>
+	);
+}
+
+const groupedRows = (cards: ListItemInterface[], activeIndex = -1) => (
+	<GroupedRows cards={cards} initialActive={activeIndex} />
+);
 
 const cardStyle = (row: HTMLElement) =>
 	getComputedStyle(part(row, '.sessionsListItem__content'));
@@ -1680,6 +1701,55 @@ export const GroupedShortList: Story = {
 		await expect(cardStyle(middle).borderTopLeftRadius).toBe('0px');
 		await expect(cardStyle(middle).borderBottomLeftRadius).toBe('0px');
 		await expect(cardStyle(last).borderBottomRightRadius).toBe('24px');
+	}
+};
+
+/** Ten cards: the selection moves with each click and the groups re-form. */
+export const GroupedLongList: Story = {
+	name: 'Liste — gruppiert, zehn Karten (Auswahl wandert)',
+	render: () => {
+		seedMatrixRoom(2);
+		const cards = Array.from({ length: 10 }, (_, i) =>
+			i === 4
+				? runtimeSessionItem()
+				: runtimeGroupChat({ id: 5800 + i, name: `Runde ${i + 1}` })
+		);
+		return (
+			<div style={listShell} role="tablist" aria-label="Gespräche">
+				{groupedRows(cards, 4)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, 10);
+		const radii = () =>
+			rows.map((row) => {
+				const s = cardStyle(row);
+				return `${s.borderTopLeftRadius}/${s.borderBottomLeftRadius}`;
+			});
+
+		// Cards 5..9 form one group; 2..4 are square inside their group.
+		await expect(radii()[0]).toBe('24px/0px');
+		await expect(radii()[2]).toBe('0px/0px');
+		await expect(radii()[3]).toBe('0px/24px');
+		await expect(radii()[5]).toBe('24px/0px');
+		await expect(radii()[9]).toBe('0px/24px');
+
+		// Select the eighth card: its neighbours close and open the groups.
+		await userEvent.click(part(rows[7], '.sessionsListItem__content'));
+		await waitFor(() =>
+			expect(rows[7].classList.contains('sessionsListItem--active')).toBe(
+				true
+			)
+		);
+		await expect(
+			rows.filter((r) => r.classList.contains('sessionsListItem--active'))
+		).toHaveLength(1);
+		await expect(radii()[6]).toBe('0px/24px');
+		await expect(radii()[8]).toBe('24px/0px');
+		await expect(radii()[4]).toBe('0px/0px');
+		await expect(radii()[9]).toBe('0px/24px');
+		await expect(radii()[7]).toBe('24px/24px');
 	}
 };
 

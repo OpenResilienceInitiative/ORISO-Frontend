@@ -1280,6 +1280,14 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		border-width: 0 0 1px !important;
 		border-color: $list-group-divider-color !important;
 		box-shadow: inset 0 0 0 1px $list-item-active-rest-border-color;
+
+		// A card in the middle of a group would show a square frame: round
+		// it so the outline reads as one card, whatever its place.
+		border-radius: $list-group-radius;
+
+		.sessionsListItem__menuIcon {
+			border-color: #fff;
+		}
 	}
 
 	&.sessionsListItem--menuOpen.sessionsListItem--groupStart:not(
@@ -1310,8 +1318,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			}
 		}
 
+		// White ring around ⋮ (also while its menu is open), no pink halo.
 		.sessionsListItem__menuIcon {
-			border-color: $list-item-active-rest-border-color;
+			border-color: #fff;
 		}
 
 		// The border is 1px in every state now; the 2px compensation goes.
@@ -1340,10 +1349,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			}
 		}
 
-		&:not(.sessionsListItem--menuOpen):focus-within
-			.sessionsListItem__menuIcon {
-			border-color: $list-item-focus-color;
-		}
 	}
 
 	// Menu-open cards keep 1px everywhere, so drop the 2px compensation too.
