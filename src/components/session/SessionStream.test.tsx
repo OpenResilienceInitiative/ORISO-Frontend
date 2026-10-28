@@ -1468,7 +1468,8 @@ describe('SessionStream Matrix room lifecycle', () => {
 				[counsellor, asker, '@silent-colleague:example.org'].map(
 					(userId) => ({ userId })
 				),
-			hasUserReadEvent: (userId: string) => readBy.has(userId)
+			hasUserReadEvent: (userId: string, eventId: string) =>
+				eventId === '$mine' && readBy.has(userId)
 		};
 		const ownMessage = {
 			getType: () => 'm.room.message',
