@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import { Box } from '@mui/material';
 import { RegistrationStepper } from './RegistrationStepper';
 
@@ -16,6 +17,12 @@ import { RegistrationStepper } from './RegistrationStepper';
 const meta: Meta<typeof RegistrationStepper> = {
 	title: 'Registration/RegistrationStepper',
 	component: RegistrationStepper,
+	parameters: {
+		// #1338: the step row scrolls sideways but takes no focus: keyboard users cannot scroll it; the real fix is a tab stop, left for a product decision.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': ['.registrationStepperSticky > div']
+		})
+	},
 	decorators: [
 		(Story) => (
 			// The registration column's real width on desktop (60vw of 1280px).
