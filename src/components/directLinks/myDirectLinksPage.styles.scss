@@ -1,6 +1,6 @@
 /* #1894: "Meine Direktlinks" (clock entry) and Settings → "Meine Links". ORISO M3 tokens only. */
 .myDirectLinksPage {
-	background: var(--m3-surface-container-lowest);
+	background: var(--m3-surface-container-lowest, #ffffff);
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
@@ -30,10 +30,10 @@
 
 	&__create {
 		align-items: center;
-		background: var(--m3-primary);
+		background: var(--m3-primary, #a5000a);
 		border: none;
 		border-radius: 50%;
-		color: var(--m3-on-primary);
+		color: var(--m3-on-primary, #ffffff);
 		cursor: pointer;
 		display: flex;
 		height: 48px;
@@ -41,18 +41,18 @@
 		width: 48px;
 
 		&:hover {
-			background: var(--m3-primary-hover, var(--m3-primary));
+			background: var(--m3-primary-hover, #820006);
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary);
+			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 2px;
 		}
 	}
 
 	&__empty {
 		align-items: center;
-		border-top: 1px solid var(--m3-outline-variant);
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 		display: flex;
 		flex-direction: column;
 		padding: 48px 16px;
@@ -66,7 +66,7 @@
 	}
 
 	&__emptyHeadline {
-		color: var(--m3-on-surface);
+		color: var(--m3-on-surface, #1b1b1c);
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 24px;
@@ -75,7 +75,7 @@
 	}
 
 	&__emptyText {
-		color: var(--m3-on-surface-variant);
+		color: var(--m3-on-surface-variant, #444748);
 		font-size: 14px;
 		line-height: 20px;
 		margin: 8px 0 0;
@@ -84,7 +84,7 @@
 
 	&__status {
 		align-items: center;
-		color: var(--m3-on-surface-variant);
+		color: var(--m3-on-surface-variant, #444748);
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
@@ -94,9 +94,9 @@
 
 	&__retry {
 		background: transparent;
-		border: 1px solid var(--m3-outline);
+		border: 1px solid var(--m3-outline, #747878);
 		border-radius: 20px;
-		color: var(--m3-primary);
+		color: var(--m3-primary, #a5000a);
 		cursor: pointer;
 		font: inherit;
 		font-weight: 500;
@@ -105,7 +105,7 @@
 	}
 
 	&__error {
-		color: var(--m3-error);
+		color: var(--m3-error, #b3261e);
 		font-size: 14px;
 		margin: 0;
 	}
@@ -121,13 +121,13 @@
 
 	&__medium {
 		align-items: center;
-		color: var(--m3-on-surface);
+		color: var(--m3-on-surface, #1b1b1c);
 		display: flex;
 		gap: 8px;
 	}
 
 	&__fixed {
-		color: var(--m3-on-surface-variant);
+		color: var(--m3-on-surface-variant, #444748);
 		font-size: 12px;
 		margin-left: auto;
 	}
@@ -146,19 +146,19 @@
 	}
 
 	&__switchLabel {
-		color: var(--m3-on-surface);
+		color: var(--m3-on-surface, #1b1b1c);
 		font-size: 16px;
 		line-height: 24px;
 	}
 
 	&__hint {
-		color: var(--m3-on-surface-variant);
+		color: var(--m3-on-surface-variant, #444748);
 		font-size: 14px;
 		line-height: 20px;
 	}
 
 	&__error {
-		color: var(--m3-error);
+		color: var(--m3-error, #b3261e);
 		font-size: 14px;
 		margin: 0;
 	}
