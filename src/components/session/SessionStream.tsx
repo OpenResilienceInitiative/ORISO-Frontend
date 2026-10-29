@@ -40,6 +40,7 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -985,6 +986,17 @@ export const SessionStream = ({
 		[translate]
 	);
 
+	// #1923: a ban leaves the group running; say "removed", not "ended".
+	const groupChatRemovedOverlay: OverlayItem = useMemo(
+		() => ({
+			...groupChatStoppedOverlay,
+			svg: XIcon,
+			illustrationBackground: 'error',
+			headline: translate('groupChat.removed.overlay.headline')
+		}),
+		[groupChatStoppedOverlay, translate]
+	);
+
 	// Restores the "subscription removed" UX on
 	// Matrix signals (own membership -> leave/ban after a kick, ban or admin
 	// room purge; m.room.tombstone when a room is shut down/replaced):
@@ -994,12 +1006,17 @@ export const SessionStream = ({
 	//   to the session list.
 	const handleMatrixRoomLifecycle = useUpdatingRef(
 		useCallback(
-			(_change: MatrixRoomLifecycleChange) => {
+			(change: MatrixRoomLifecycleChange) => {
 				if (activeSession.isGroup) {
 					if (hasUserInitiatedStopOrLeaveRequest.current) {
 						hasUserInitiatedStopOrLeaveRequest.current = false;
 					} else {
-						setOverlayItem(groupChatStoppedOverlay);
+						setOverlayItem(
+							change.type === 'myMembership' &&
+								change.membership === 'ban'
+								? groupChatRemovedOverlay
+								: groupChatStoppedOverlay
+						);
 						setIsOverlayActive(true);
 					}
 				} else if (type === SESSION_LIST_TYPES.MY_SESSION) {
@@ -1008,6 +1025,7 @@ export const SessionStream = ({
 			},
 			[
 				activeSession.isGroup,
+				groupChatRemovedOverlay,
 				groupChatStoppedOverlay,
 				listPath,
 				navigate,

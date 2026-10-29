@@ -1326,6 +1326,30 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(mocks.navigate).not.toHaveBeenCalled();
 	});
 
+	// #1923: a banned asker read "the chat has ended" although it kept running.
+	it('tells a banned group member they were removed, not that the chat ended', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(screen.getByTestId('session-item')).toBeDefined();
+		});
+		await waitFor(() => {
+			expect(mocks.lifecycleListeners.length).toBeGreaterThan(0);
+		});
+
+		emitLifecycle({
+			type: 'myMembership',
+			membership: 'ban',
+			prevMembership: 'join'
+		});
+
+		await waitFor(() => {
+			expect(screen.getByTestId('overlay').textContent).toBe(
+				'groupChat.removed.overlay.headline'
+			);
+		});
+	});
+
 	it('re-attaches room listeners after a token refresh swaps the Matrix client', async () => {
 		renderSessionStream({ isGroup: true });
 

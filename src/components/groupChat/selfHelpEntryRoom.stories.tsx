@@ -14,6 +14,7 @@ import {
 } from '../../globalState/interfaces';
 import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import { useTranslation } from 'react-i18next';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
 import {
@@ -251,10 +252,14 @@ const weekly = (start: Date) =>
    start that has passed still waits for her (#1787). */
 const Room = ({
 	start = IN_THREE_DAYS,
-	active = false
+	active = false,
+	joinBlocked = false,
+	joinNotice
 }: {
 	start?: Date;
 	active?: boolean;
+	joinBlocked?: boolean;
+	joinNotice?: string;
 }) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
@@ -272,6 +277,8 @@ const Room = ({
 				welcomeText={WELCOME}
 				rules={RULES}
 				active={active}
+				joinBlocked={joinBlocked}
+				joinNotice={joinNotice}
 				onJoin={() => undefined}
 				nowMs={NOW}
 				upcomingDates={weekly(start)}
@@ -371,6 +378,67 @@ export const WaitingAreaOpenMobile: StoryObj = {
 	name: '3c — Gruppe läuft, mobil',
 	globals: phone390Globals,
 	render: () => <Room start={RUNNING} active />,
+	parameters: { layout: 'fullscreen' }
+};
+
+/* #1923: a counsellor removed this person. The server refuses the join with a
+   reason; the room says so and keeps "Beitreten" closed. */
+const RemovedRoom = () => {
+	const { t } = useTranslation();
+	return (
+		<Room
+			start={RUNNING}
+			active
+			joinBlocked
+			joinNotice={t('groupChat.removed.overlay.headline')}
+		/>
+	);
+};
+
+const playRemoved = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const canvas = within(canvasElement);
+	const notice = await canvas.findByRole('alert');
+	await expect(notice).toHaveTextContent(
+		'Sie wurden aus dieser Gruppe entfernt.'
+	);
+	await expect(notice).toBeVisible();
+	const join = canvas.getByTestId('group-entry-join');
+	await expect(join).toBeDisabled();
+	// Its own row: clear of "Beitreten" and of every other bar control.
+	const box = notice.getBoundingClientRect();
+	const overlaps = (other: DOMRect) =>
+		box.left < other.right &&
+		other.left < box.right &&
+		box.top < other.bottom &&
+		other.top < box.bottom;
+	await expect(overlaps(join.getBoundingClientRect())).toBe(false);
+	for (const control of Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('button, a')
+	).filter((el) => el.getBoundingClientRect().width > 0)) {
+		await expect(overlaps(control.getBoundingClientRect())).toBe(false);
+	}
+	await expect(box.left).toBeGreaterThanOrEqual(0);
+	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+	await expectWaitingRoomLayout(canvasElement);
+};
+
+export const WaitingAreaRemoved: StoryObj = {
+	play: playRemoved,
+	name: '2d — Aus der Gruppe entfernt · 1366 (#1923)',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <RemovedRoom />,
+	parameters: { layout: 'fullscreen' }
+};
+
+export const WaitingAreaRemovedMobile: StoryObj = {
+	play: playRemoved,
+	name: '3d — Aus der Gruppe entfernt, mobil (#1923)',
+	globals: phone390Globals,
+	render: () => <RemovedRoom />,
 	parameters: { layout: 'fullscreen' }
 };
 

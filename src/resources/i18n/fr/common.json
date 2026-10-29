@@ -1362,6 +1362,11 @@
 			"accept": "J'accepte",
 			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",
 			"saveFailed": "Votre accord n'a pas pu être enregistré. Veuillez réessayer."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Vous avez été retiré(e) de ce groupe."
+			}
 		}
 	},
 	"help": {
