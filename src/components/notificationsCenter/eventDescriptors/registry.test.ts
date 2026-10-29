@@ -111,7 +111,9 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'appointment.cancelled': 'conversation',
 	'appointment.briefing': 'conversation',
 	// #876: a planned maintenance notice links out to the public status page.
-	'service.notice.planned': 'statusPage'
+	'service.notice.planned': 'statusPage',
+	// #1159: the deleted chat cannot be opened any more.
+	'session.asker_deleted': 'none'
 };
 
 // Resolve a dotted i18n key against a loaded common.json object.
@@ -132,8 +134,8 @@ describe('WP-06 event-descriptor registry', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
 		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + planned service notice (#876) = 35.
-		expect(KNOWN_EVENT_TYPES.length).toBe(35);
+		// + planned service notice (#876) + deleted advice seeker (#1159) = 36.
+		expect(KNOWN_EVENT_TYPES.length).toBe(36);
 		[
 			'request.new',
 			'request.denied',

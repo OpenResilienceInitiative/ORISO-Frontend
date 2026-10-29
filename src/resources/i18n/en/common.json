@@ -2368,6 +2368,10 @@
 			"serviceNoticePlanned": {
 				"title": "Scheduled maintenance",
 				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
+			},
+			"sessionAskerDeleted": {
+				"title": "Deleted advice seeker",
+				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
 			}
 		},
 		"error": "failed",
@@ -4356,6 +4360,10 @@
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message"
+		},
+		"deletedAsker": {
+			"title": "Deleted advice seeker",
+			"hint": "This chat was deleted. Personal data and messages are no longer available."
 		}
 	},
 	"statusOverlay": {

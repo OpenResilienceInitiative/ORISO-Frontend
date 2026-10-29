@@ -404,6 +404,15 @@ const seeds: EventDescriptor[] = [
 		icon: 'system',
 		i18nKey: 'serviceNoticePlanned',
 		resolveActionTarget: statusPageTarget
+	}),
+	// #1159: an advice seeker's chat was deleted. Nothing is left to open, so
+	// the row informs and has no action.
+	descriptor('session.asker_deleted', {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'sessionAskerDeleted',
+		resolveActionTarget: () => ({ kind: 'none' })
 	})
 ];
 
