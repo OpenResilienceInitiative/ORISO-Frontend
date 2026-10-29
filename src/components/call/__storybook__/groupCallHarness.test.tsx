@@ -74,6 +74,23 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 	};
 });
 
+const knockApi = vi.hoisted(() => ({
+	pending: vi.fn().mockResolvedValue([]),
+	shareLink: vi.fn().mockResolvedValue(null)
+}));
+
+vi.mock('../../../api/apiCallKnocks', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../../api/apiCallKnocks')>()),
+	apiGetPendingCallKnocks: knockApi.pending
+}));
+
+vi.mock('../../../api/apiCallShareLinkKnock', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../api/apiCallShareLinkKnock')
+	>()),
+	apiGetCallShareLinkKnock: knockApi.shareLink
+}));
+
 vi.mock('../../../resources/scripts/runtimeConfig', async (importOriginal) => ({
 	...(await importOriginal<
 		typeof import('../../../resources/scripts/runtimeConfig')
@@ -744,6 +761,40 @@ describe('what the host adds around the call', () => {
 		seedIncomingElementCall();
 		callManager.answerCall();
 	};
+
+	const counsellor = {
+		userId: '@berater:matrix.storybook.test',
+		grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+	};
+
+	it("asks for knocks in a counsellor's Element Call call", async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		activeCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
+		expect(knockApi.shareLink).toHaveBeenCalled();
+	});
+
+	it('asks for no knocks in a legacy call, which shows no widget', async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		resetCallManager();
+		callManager.receiveCall(
+			FAKE_ELEMENT_CALL_ROOM_ID,
+			true,
+			FAKE_CALL_ID,
+			'@caller:matrix.storybook.test',
+			true,
+			FAKE_SIGNAL_ROOM_ID,
+			false
+		);
+		callManager.answerCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await act(async () => {});
+		expect(knockApi.pending).not.toHaveBeenCalled();
+		expect(knockApi.shareLink).not.toHaveBeenCalled();
+	});
 
 	it('gives a counsellor the private notepad beside the stage', async () => {
 		const service = makeFakeMatrixClientService('active');

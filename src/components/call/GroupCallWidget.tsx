@@ -42,6 +42,10 @@ import {
 } from './publishCallIdentity';
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
+import { CallKnockNoticeHost } from './knockNotice/CallKnockNoticeHost';
+import { callKnockScopeOf } from './knockNotice/callKnockModel';
+import { useCallKnocks } from './knockNotice/useCallKnocks';
+import { useCallShareLinkKnock } from './knockNotice/useCallShareLinkKnock';
 import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
 import { IncomingCallCard } from './states/IncomingCallCard';
 import { DockedCall } from './states/DockedCall';
@@ -179,12 +183,69 @@ export const GroupCallWidget: React.FC = () => {
 		(!callData.isIncoming ||
 			callState === 'connecting' ||
 			callState === 'in_call');
+	/*
+	 * Only a counsellor gets the notepad.
+	 *
+	 * Ticket 06 is a counsellor's scratchpad — "not a shared agenda, not a
+	 * transcript, not minutes". Offering it to an advice seeker would suggest
+	 * the counselling centre keeps notes on them, in a product whose whole
+	 * promise is that it does not.
+	 */
+	const isConsultantUser = Boolean(
+		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+
+	// Only this call's knocks (#1892): never the counsellor's other conversations.
+	const knockScope = useMemo(
+		() => callKnockScopeOf(callData),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[callData?.signalRoomId, callData?.roomId, callData?.elementCallRoomId]
+	);
+
+	// A legacy call renders no widget (see below): nothing to knock on.
+	const knocksEnabled =
+		isConsultantUser && shouldPrepareWidget && !!callData?.usesElementCall;
+
+	// Polled once here: the notice and the call's own count show the same list.
+	const callKnocks = useCallKnocks({
+		enabled: knocksEnabled,
+		scope: knockScope
+	});
+	// The call link's "Anklopfen" (UserService#1488), for the switch in the
+	// call (ElementCall#109). Every counsellor in the call may change it.
+	const shareLinkCall = useMemo(
+		() =>
+			callData?.signalRoomId && callData.callId
+				? {
+						sourceRoomId: callData.signalRoomId,
+						callId: callData.callId
+					}
+				: null,
+		[callData?.signalRoomId, callData?.callId]
+	);
+	const shareLinkKnock = useCallShareLinkKnock({
+		enabled: knocksEnabled,
+		call: shareLinkCall
+	});
+	const knockState = useMemo(
+		() =>
+			isConsultantUser
+				? {
+						waiting: callKnocks.people.length,
+						knock: shareLinkKnock.knock
+					}
+				: null,
+		[isConsultantUser, callKnocks.people.length, shareLinkKnock.knock]
+	);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
-			onClose: closeCallSurface
+			onClose: closeCallSurface,
+			knockState,
+			onSetKnock: shareLinkKnock.setKnock
 		}
 	);
 
@@ -450,18 +511,6 @@ export const GroupCallWidget: React.FC = () => {
 		if (!callRoomId) return;
 		return (): void => forgetPublishedIdentity(callRoomId);
 	}, [callRoomId]);
-
-	/*
-	 * Only a counsellor gets the notepad.
-	 *
-	 * Ticket 06 is a counsellor's scratchpad — "not a shared agenda, not a
-	 * transcript, not minutes". Offering it to an advice seeker would suggest
-	 * the counselling centre keeps notes on them, in a product whose whole
-	 * promise is that it does not.
-	 */
-	const isConsultantUser = Boolean(
-		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-	);
 
 	const notesLabels = useMemo(
 		() => ({
@@ -1192,6 +1241,17 @@ export const GroupCallWidget: React.FC = () => {
 								className="element-call-notes"
 								defaultCollapsed
 								labels={notesLabels}
+							/>
+						)}
+						{/*
+						 * Somebody knocking on a direct-link call (#1892):
+						 * let them in without leaving the call. Docked
+						 * above the call when it is minimised.
+						 */}
+						{isConsultantUser && (
+							<CallKnockNoticeHost
+								minimised={isMinimized}
+								knocks={callKnocks}
 							/>
 						)}
 						<iframe

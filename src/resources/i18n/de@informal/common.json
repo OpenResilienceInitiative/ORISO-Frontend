@@ -2826,5 +2826,10 @@
 			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
 			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
 		}
+	},
+	"calls": {
+		"admission": {
+			"on": "Gäste warten, bis du sie einlässt."
+		}
 	}
 }

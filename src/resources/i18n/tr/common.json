@@ -6132,6 +6132,24 @@
 			"consent": "Misafirler girmeden önce danışma merkezinin gizlilik politikasını ve onayını tek dokunuşla onaylar.",
 			"qrHint": "Aramayı telefonda açmak için telefon kamerasıyla tarayın.",
 			"settingsLive": "Değişiklikler, paylaşılmış olsa bile bu bağlantı için hemen geçerli olur."
+		},
+		"knock": {
+			"region": "Bekleyen kişiler",
+			"someone": "Biri",
+			"wantsIn": "görüşmeye katılmak istiyor",
+			"admit": "İçeri al",
+			"decline": "Reddet",
+			"admitAll": "Herkesi içeri al",
+			"position": "{{current}} / {{total}}",
+			"previous": "Önceki kişi",
+			"next": "Sonraki kişi",
+			"participants": "Katılımcılar",
+			"participantsWaiting": "Katılımcılar – bekleyen: {{count}}"
+		},
+		"admission": {
+			"label": "Önce kapıyı çal",
+			"on": "Misafirler siz içeri alana kadar bekler.",
+			"off": "Misafirler beklemeden doğrudan aramaya katılır."
 		}
 	},
 	"form": {

@@ -907,4 +907,155 @@ describe('useElementCallWidget', () => {
 		expect(iframe.src).toBe('about:blank');
 		expect(replacement.src).toBe(result.current.url);
 	});
+
+	describe('knocking in the call (ElementCall#109)', () => {
+		const KNOCK_STATE = 'org.oriso.call.knock_state';
+		const SET_KNOCK = 'org.oriso.call.set_knock';
+
+		const mount = async (initial: {
+			knockState: { waiting: number; knock: boolean | null } | null;
+			onSetKnock?: (knock: boolean) => Promise<boolean>;
+		}) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: typeof initial) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const knockStateSends = (api: any) =>
+			api.transport.send.mock.calls.filter(
+				(call: unknown[]) => call[0] === KNOCK_STATE
+			);
+
+		const setKnock = (api: any, data: unknown) => {
+			const request = {
+				action: SET_KNOCK,
+				requestId: 'set-knock-1',
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(SET_KNOCK, {
+				cancelable: true,
+				detail: request
+			});
+			act(() => api.emit(`action:${SET_KNOCK}`, event));
+			return { request, event };
+		};
+
+		it('sends the state once the call is ready, and again when the count changes', async () => {
+			const { api, rerender } = await mount({
+				knockState: { waiting: 0, knock: true }
+			});
+			// Before capability negotiation the call would drop it.
+			expect(knockStateSends(api)).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 0, knock: true }]
+			]);
+
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 2, knock: true }
+			]);
+
+			// Same state again: nothing new to tell.
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api)).toHaveLength(2);
+		});
+
+		it('sends knock null when the call has no link, and refuses set_knock', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 1, knock: null },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 1, knock: null }]
+			]);
+
+			const { request, event } = setKnock(api, { knock: false });
+			expect(event.defaultPrevented).toBe(true);
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('sends nothing for somebody who may not see knocks', async () => {
+			const { api } = await mount({ knockState: null });
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toHaveLength(0);
+		});
+
+		it('changes the link on set_knock, answers, and confirms the stored state', async () => {
+			const onSetKnock = vi.fn().mockResolvedValue(false);
+			const { api } = await mount({
+				knockState: { waiting: 3, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			expect(onSetKnock).toHaveBeenCalledWith(false);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {})
+			);
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 3, knock: false }
+			]);
+		});
+
+		it('answers with an error when the change did not land, so the call flips back', async () => {
+			const onSetKnock = vi
+				.fn()
+				.mockRejectedValue(new Error('CATCH_ALL'));
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {
+					error: { message: expect.any(String) }
+				})
+			);
+			expect(api.transport.reply).not.toHaveBeenCalledWith(request, {});
+			// And the truth again, in case the call lost track.
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 0, knock: true }
+			]);
+		});
+
+		it('refuses a set_knock without a boolean', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			const { request } = setKnock(api, { knock: 'yes' });
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
+	});
 });

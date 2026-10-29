@@ -6132,6 +6132,24 @@
 			"consent": "Avant d’entrer, les invités confirment d’un geste la protection des données et le consentement du centre de conseil.",
 			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel.",
 			"settingsLive": "Les modifications s’appliquent immédiatement à ce lien, même s’il a déjà été partagé."
+		},
+		"knock": {
+			"region": "Personnes en attente",
+			"someone": "Une personne",
+			"wantsIn": "souhaite rejoindre l’appel",
+			"admit": "Laisser entrer",
+			"decline": "Refuser",
+			"admitAll": "Laisser entrer tout le monde",
+			"position": "{{current}} sur {{total}}",
+			"previous": "Personne précédente",
+			"next": "Personne suivante",
+			"participants": "Participant·es",
+			"participantsWaiting": "Participant·es – en attente : {{count}}"
+		},
+		"admission": {
+			"label": "Frapper avant d’entrer",
+			"on": "Les invités attendent que vous les fassiez entrer.",
+			"off": "Les invités rejoignent l’appel directement, sans attendre."
 		}
 	},
 	"form": {

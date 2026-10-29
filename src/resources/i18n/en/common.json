@@ -6047,6 +6047,24 @@
 			"consent": "Before entering, guests confirm the counselling centre’s privacy policy and consent with one tap.",
 			"qrHint": "Scan with a phone camera to open the call there.",
 			"settingsLive": "Changes apply right away to this link, even if it has already been shared."
+		},
+		"knock": {
+			"region": "People waiting",
+			"someone": "Someone",
+			"wantsIn": "wants to join the call",
+			"admit": "Let in",
+			"decline": "Decline",
+			"admitAll": "Let everyone in",
+			"position": "{{current}} of {{total}}",
+			"previous": "Previous person",
+			"next": "Next person",
+			"participants": "Participants",
+			"participantsWaiting": "Participants – waiting: {{count}}"
+		},
+		"admission": {
+			"label": "Knock first",
+			"on": "Guests wait until you let them in.",
+			"off": "Guests enter the call directly, without waiting."
 		}
 	},
 	"form": {
