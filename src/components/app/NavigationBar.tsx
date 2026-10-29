@@ -122,7 +122,7 @@ export const NavigationBar = ({
 			error: liveChatError,
 			lostReason: liveChatLostReason
 		}
-	] = useLiveChatAvailable();
+	] = useLiveChatAvailable(isConsultant);
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
 	// #576: optional global notification-status button in the rail — flips the
 	// account-wide mute (the one switch that overrides everything). Placement
@@ -359,7 +359,13 @@ export const NavigationBar = ({
 				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
 			)}
 		>
-			<div className="navigation__itemContainer" role="tablist">
+			{/* One tab stop, arrow keys move between the items: the toolbar role
+			    tells assistive technology so (#1338). */}
+			<div
+				className="navigation__itemContainer"
+				role="toolbar"
+				aria-orientation="vertical"
+			>
 				<NavGroup className="navigation__item__top">
 					{sessions &&
 						routerConfig.navigation
@@ -518,7 +524,6 @@ export const NavigationBar = ({
 											ref_menu.current[index] = el;
 										}}
 										tabIndex={index === 0 ? 0 : -1}
-										role="tab"
 									>
 										{useFigmaSlot ? (
 											<div
@@ -691,7 +696,6 @@ export const NavigationBar = ({
 								figmaConsultantNav &&
 									'navigation__item--nav-language'
 							)}
-							role="tab"
 							tabIndex={-1}
 							ref={(el) => {
 								ref_local.current = el;
@@ -789,7 +793,7 @@ export const NavigationBar = ({
 							'navigation__item',
 							figmaConsultantNav && 'navigation__item--nav-logout'
 						)}
-						role="tab"
+						role="button"
 						tabIndex={-1}
 						ref={(el) => {
 							ref_logout.current = el;
