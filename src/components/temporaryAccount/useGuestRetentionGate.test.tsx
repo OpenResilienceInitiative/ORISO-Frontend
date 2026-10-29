@@ -20,7 +20,7 @@ import {
 	apiGetTemporaryAccount,
 	apiPutMessageRetention
 } from '../../api/apiTemporaryAccount';
-import { useGuestRetentionGate } from './useGuestRetentionGate';
+import { LOOKUP_WAIT_MS, useGuestRetentionGate } from './useGuestRetentionGate';
 import { resetTemporaryAccount } from './temporaryAccountStore';
 
 vi.mock('../../api/apiTemporaryAccount', () => ({
@@ -149,5 +149,24 @@ describe('useGuestRetentionGate', () => {
 		fireEvent.click(screen.getByText('send'));
 		await waitFor(() => expect(send).toHaveBeenCalledOnce());
 		expect(screen.queryByTestId('keep-messages-dialog')).toBeNull();
+	});
+
+	it('does not hold a send longer than the lookup wait', async () => {
+		vi.useFakeTimers();
+		try {
+			resetTemporaryAccount();
+			vi.mocked(apiGetTemporaryAccount).mockReturnValue(
+				new Promise(() => undefined)
+			);
+			render(<Composer />);
+			fireEvent.click(screen.getByText('send'));
+			expect(send).not.toHaveBeenCalled();
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(LOOKUP_WAIT_MS);
+			});
+			expect(send).toHaveBeenCalledOnce();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

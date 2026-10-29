@@ -77,6 +77,7 @@ vi.mock('matrix-js-sdk', () => ({
 vi.mock('../../api/fetchData', () => ({
 	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL', CONFLICT: 'CONFLICT' },
 	FETCH_METHODS: { GET: 'GET' },
+	FETCH_SUCCESS: { CONTENT: 'CONTENT' },
 	fetchData: vi.fn()
 }));
 

@@ -5,6 +5,7 @@ import {
 	NOTIFICATION_TYPE_ERROR,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
+import { withTimeout } from '../../utils/promiseTimeout';
 import { KeepMessagesDialog } from './KeepMessagesDialog';
 import { MessageRetention } from './messageRetention';
 import {
@@ -21,8 +22,11 @@ import {
  * stay. `gate(proceed)` returns `true` when it took over: `proceed` then runs
  * after the answer, or not at all when the guest cancels (the draft stays).
  * Until the account is known, a send waits for the lookup (retried when it
- * failed); if it fails again the send goes out unasked, as for no account.
+ * failed), at most `LOOKUP_WAIT_MS`; if it fails again or takes longer, the
+ * send goes out unasked, as for no account.
  */
+export const LOOKUP_WAIT_MS = 5_000;
+
 export const useGuestRetentionGate = (enabled: boolean) => {
 	const { t } = useTranslation();
 	const { addNotification } = useContext(NotificationsContext) ?? {
@@ -42,15 +46,23 @@ export const useGuestRetentionGate = (enabled: boolean) => {
 				return true;
 			}
 			pending.current = proceed;
-			void loadTemporaryAccount().then(() => {
-				if (pending.current !== proceed) return;
-				if (needsRetentionAnswer(getOwnTemporaryAccount().account)) {
-					setOpen(true);
-					return;
-				}
-				pending.current = null;
-				proceed();
-			});
+			void withTimeout(
+				loadTemporaryAccount(),
+				LOOKUP_WAIT_MS,
+				'temporary account lookup'
+			)
+				.catch(() => undefined)
+				.then(() => {
+					if (pending.current !== proceed) return;
+					if (
+						needsRetentionAnswer(getOwnTemporaryAccount().account)
+					) {
+						setOpen(true);
+						return;
+					}
+					pending.current = null;
+					proceed();
+				});
 			return true;
 		},
 		[account, enabled, status]
