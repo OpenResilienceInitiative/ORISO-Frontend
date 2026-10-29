@@ -1240,9 +1240,12 @@ export const SessionListItemComponent = ({
 							<div className="sessionsListItem__rowLeft">
 								{groupModality !== Modality.INTERNAL_GROUP && (
 									<TopicTag className="sessionsListItem__topic">
-										{(groupModality === Modality.SELF_HELP &&
+										{(groupModality ===
+											Modality.SELF_HELP &&
 											groupName) ||
-											translate('groupChat.noTopicSpecified')}
+											translate(
+												'groupChat.noTopicSpecified'
+											)}
 									</TopicTag>
 								)}
 							</div>

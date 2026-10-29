@@ -112,6 +112,13 @@ export interface SessionItemInterface {
 	videoCallMessageDTO: VideoCallMessageDTO;
 	language?: string;
 	topic: TopicSessionInterface;
+	/** Selected topic id (SessionDTO); the topic object may be absent. */
+	mainTopicId?: number;
+	/**
+	 * FE#1876, asker list only: this running chat is the newer of two on the
+	 * same topic, so the asker may end it. Absent on older backends.
+	 */
+	isTopicDuplicate?: boolean;
 	/**
 	 * ADR-008 supervision marker. `undefined` on backends that predate the
 	 * field — consumers fall back to heuristics, never to "not supervised".
