@@ -56,7 +56,7 @@ describe('the notepad over a stage with no width to give away', () => {
 	});
 
 	it('never takes the notepad away outright', () => {
-		// It is the consultant's only notepad. `display: none` at a
+		// It is the only notepad in the call. `display: none` at a
 		// breakpoint left nothing to open, which is the bug the rail replaced.
 		expect(scss).not.toMatch(
 			/\.element-call-notes[^{]*\{[^}]*display:\s*none/

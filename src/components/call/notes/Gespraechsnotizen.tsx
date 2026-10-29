@@ -83,7 +83,7 @@ export interface GespraechsnotizenProps {
 const COPIED_FOR_MS = 2000;
 
 /**
- * Gesprächsnotizen — the counsellor's private scratchpad, ticket 06.
+ * Gesprächsnotizen — a private scratchpad for whoever is in the call, ticket 06 (#1929).
  *
  * "Private is the feature. It is not a shared agenda, not a transcript, not
  * minutes." Everything here follows from that one line. The notes live in
