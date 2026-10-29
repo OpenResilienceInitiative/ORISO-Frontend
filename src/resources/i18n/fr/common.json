@@ -6110,7 +6110,7 @@
 			"settingsLabel": "Pour les invités avec ce lien",
 			"knock": {
 				"label": "Frapper avant d’entrer",
-				"on": "Les invités attendent que vous les fassiez entrer.",
+				"on": "Les invités attendent que vous les fassiez entrer. Si vous le désactivez, toutes les personnes en attente entrent aussitôt.",
 				"off": "Les invités rejoignent l’appel directement, sans attendre."
 			},
 			"temporaryAccount": {

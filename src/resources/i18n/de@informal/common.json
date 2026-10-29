@@ -2769,7 +2769,7 @@
 		},
 		"share": {
 			"knock": {
-				"on": "Gäste warten, bis du sie einlässt."
+				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
 			},
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte markiere den Link und kopiere ihn selbst.",
 			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald du auflegst, funktioniert er nicht mehr."

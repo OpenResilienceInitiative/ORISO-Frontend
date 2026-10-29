@@ -6025,7 +6025,7 @@
 			"settingsLabel": "For guests with this link",
 			"knock": {
 				"label": "Knock first",
-				"on": "Guests wait until you let them in.",
+				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
 				"off": "Guests enter the call directly, without waiting."
 			},
 			"temporaryAccount": {

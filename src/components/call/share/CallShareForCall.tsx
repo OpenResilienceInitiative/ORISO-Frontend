@@ -46,6 +46,8 @@ export const CallShareForCall = ({
 		let active = true;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		call.current += 1;
+		// A change still out for the previous call must not hold this one up.
+		queue.current = Promise.resolve();
 		setLink(null);
 		const ask = (attempt: number) =>
 			apiCreateCallShareLink({ sourceRoomId, callId }).then((created) => {

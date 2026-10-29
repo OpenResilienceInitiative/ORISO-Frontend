@@ -6110,7 +6110,7 @@
 			"settingsLabel": "Bu bağlantıyla gelen misafirler için",
 			"knock": {
 				"label": "Önce kapıyı çal",
-				"on": "Misafirler siz içeri alana kadar bekler.",
+				"on": "Misafirler siz içeri alana kadar bekler. Kapatırsanız bekleyen herkes hemen içeri girer.",
 				"off": "Misafirler beklemeden doğrudan aramaya katılır."
 			},
 			"temporaryAccount": {

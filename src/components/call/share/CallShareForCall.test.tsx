@@ -220,6 +220,35 @@ it('keeps a late answer for the previous call off the next call', async () => {
 	expect(knock.checked).toBe(true);
 });
 
+it('does not hold the next call’s changes behind one still out for the previous call', async () => {
+	vi.mocked(apiUpdateCallShareLink).mockImplementation((id) =>
+		id === 7
+			? new Promise(() => {})
+			: Promise.resolve({ knock: false, temporaryAccount: false })
+	);
+	const { rerender } = render(
+		<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />
+	);
+	await userEvent.click(await openPanel());
+	expect(apiUpdateCallShareLink).toHaveBeenCalledTimes(1);
+
+	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
+		...link,
+		id: 8,
+		settings: { knock: true, temporaryAccount: false }
+	});
+	rerender(
+		<CallShareForCall sourceRoomId="!r:x" callId="c2" layout="phone" />
+	);
+	await userEvent.click(await openPanel());
+	await vi.waitFor(() =>
+		expect(apiUpdateCallShareLink).toHaveBeenLastCalledWith(8, {
+			knock: false,
+			temporaryAccount: false
+		})
+	);
+});
+
 /* GroupCallWidget puts .element-call-container into fullscreen; body is hidden then. */
 it('opens inside the fullscreen call and closes when fullscreen changes', async () => {
 	const fullscreen = document.createElement('div');

@@ -6100,7 +6100,7 @@
 			"settingsLabel": "Für Gäste mit diesem Link",
 			"knock": {
 				"label": "Anklopfen",
-				"on": "Gäste warten, bis Sie sie einlassen.",
+				"on": "Gäste warten, bis Sie sie einlassen. Schalten Sie es aus, kommen alle Wartenden sofort herein.",
 				"off": "Gäste kommen ohne Warten direkt in den Anruf."
 			},
 			"temporaryAccount": {
