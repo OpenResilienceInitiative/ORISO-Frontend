@@ -18,9 +18,9 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { DirectLinkEditDialog } from './DirectLinkEditDialog';
 import { MyDirectLinksView } from './MyDirectLinksView';
 import { useMyDirectLinks } from './useMyDirectLinks';
+import { CREATE_CHAT_PATH } from '../app/routePaths';
 
-export const CREATE_CHAT_PATH =
-	'/sessions/consultant/sessionView/createGroupChat/';
+export { CREATE_CHAT_PATH };
 
 /** #1894: list + QR + edit, wired to UserService#1479. */
 export const MyDirectLinksPanel = () => {

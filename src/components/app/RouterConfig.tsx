@@ -32,6 +32,7 @@ import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resource
 import { ReactComponent as NavDirectLinksIcon } from '../../resources/img/icons/navigation/schedule_400.svg';
 import { ReactComponent as NavDirectLinksIconFilled } from '../../resources/img/icons/navigation/schedule_filled.svg';
 import { MyDirectLinksPage } from '../directLinks/MyDirectLinksPanel';
+import { CREATE_CHAT_PATH } from './routePaths';
 import {
 	NavChatsIcon,
 	NavChatsIconHover,
@@ -396,7 +397,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/createGroupChat/',
+				path: CREATE_CHAT_PATH,
 				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
