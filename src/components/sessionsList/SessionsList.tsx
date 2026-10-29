@@ -380,7 +380,9 @@ export const SessionsList = ({
 	 * refetch so anonymous enquiries appear/disappear without a reload.
 	 * The flag is also read inside apiGetConsultantSessionList itself.
 	 */
-	const [liveChatAvailable] = useLiveChatAvailable();
+	const [liveChatAvailable] = useLiveChatAvailable(
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
 	// #1377 slices 4/5: the user's display filter for this list.
 	const displayFilterSection =
 		type === SESSION_LIST_TYPES.ENQUIRY ? 'requests' : 'sessions';

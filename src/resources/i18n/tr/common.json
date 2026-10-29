@@ -230,6 +230,11 @@
 			"headline": "Yasaklandılar.",
 			"info": "Sizden sohbet kurallarına uymanızı istemiştik.<br/><br/>Bugün sohbet kurallarına defalarca uymadığınız için sizi bugünkü sohbetten çıkardık.<br/><br/>Sohbet kurallarını öğrenin!</br></br>Eğer sohbet kurallarına uymaya istekliyseniz, yarın sohbete tekrar hoş geldiniz!"
 		},
+		"confirm": {
+			"description": "Bu kişi artık bu grupta yazamaz ve gruptan çıkarıldığını görür.",
+			"submit": "Çıkar",
+			"title": "{{name}} bu gruptan çıkarılsın mı?"
+		},
 		"is": {
 			"banned": " Spellbound"
 		}
@@ -1362,6 +1367,11 @@
 			"accept": "Kabul ediyorum",
 			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz.",
 			"saveFailed": "Onayınız kaydedilemedi. Lütfen tekrar deneyin."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Bu gruptan çıkarıldınız."
+			}
 		}
 	},
 	"help": {
@@ -3688,7 +3698,11 @@
 				"headline": "Davet şu anda yüklenemedi.",
 				"body": "Lütfen bağlantınızı kontrol edip tekrar deneyin. Davet bağlantınız geçerliliğini korur."
 			},
-			"loading": "Davet yükleniyor …"
+			"loading": "Davet yükleniyor …",
+			"invalid": {
+				"headline": "Bu davet bağlantısı çalışmıyor.",
+				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
+			}
 		}
 	},
 	"releaseNote": {
@@ -6264,6 +6278,56 @@
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
 			"micMeter": "Mikrofonunuzun ses düzeyi"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Doğrudan bağlantı",
+			"subtitle": "Danışmanlık arayanlar için",
+			"headline": "Doğrudan size ulaşan bir bağlantı",
+			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
+			"topicLabel": "Konu seçin",
+			"mediumLabel": "İletişim türü",
+			"temporary": "Geçici hesap",
+			"temporaryHint": "Hesap görüşmeden sonra silinir.",
+			"create": "Bağlantı oluştur"
+		},
+		"medium": {
+			"chat": "Sohbet",
+			"audio": "Sesli arama",
+			"video": "Görüntülü arama"
+		},
+		"temporary": "Geçici",
+		"copy": "Bağlantıyı kopyala",
+		"share": {
+			"title": "Doğrudan bağlantınız hazır",
+			"description": "Bağlantıyı veya QR kodunu paylaşın. Her kişi sizinle kendi görüşmesini alır.",
+			"copied": "Kopyalandı",
+			"share": "Paylaş",
+			"qrAlt": "Doğrudan bağlantının QR kodu",
+			"done": "Tamam",
+			"linkLabel": "Doğrudan bağlantı"
+		},
+		"list": {
+			"title": "Doğrudan bağlantılarım",
+			"qr": "QR kodunu göster",
+			"active": "{{name}} etkin"
+		}
+	},
+	"dashboard": {
+		"title": "Genel bakışınız",
+		"stats": {
+			"title": "Danışmanlıklar",
+			"period": "Son 30 gün",
+			"assigned": "Yeni üstlenilen",
+			"active": "Aktif",
+			"archived": "Arşivlenen",
+			"sentMessages": "Gönderilen mesajlar"
+		},
+		"circles": {
+			"title": "Yaklaşan öz yardım grupları",
+			"participants": "{{count}} katılımcı",
+			"participants_one": "{{count}} katılımcı"
 		}
 	}
 }

@@ -4,6 +4,16 @@ import parse, { DOMNode, Element } from 'html-react-parser';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkButton, LegalLinkButtonProps } from './LegalLinkButton';
 
+const withoutAid = (href: string) => {
+	try {
+		const url = new URL(href);
+		url.searchParams.delete('aid');
+		return url.toString();
+	} catch {
+		return href;
+	}
+};
+
 export type LegalDialogScope = Pick<
 	LegalLinkButtonProps,
 	'scope' | 'agencyId' | 'topicId'
@@ -29,15 +39,16 @@ export const useLegalHtmlWithDialogs = ({
 	const legalLinks = useContext(LegalLinksContext);
 
 	/* The raw i18n key belongs to an href — the dialog needs it to tell imprint
-	   from privacy in a language-safe way. Anchors are rendered with
-	   `{ aid: null }`, so the lookup uses the same parameters. */
+	   from privacy in a language-safe way. A sentence may render its anchors
+	   with the agency's `aid` (`useConsentSentences`), so both sides of the
+	   lookup drop it. */
 	const rawLabelForHref = useMemo(() => {
 		const byUrl = new Map<string, string>();
 		legalLinks.forEach((link) => {
-			byUrl.set(link.getUrl({ aid: null }), link.label);
+			byUrl.set(withoutAid(link.getUrl({ aid: null })), link.label);
 		});
 		return (href: string | undefined) =>
-			href ? byUrl.get(href) : undefined;
+			href ? byUrl.get(withoutAid(href)) : undefined;
 	}, [legalLinks]);
 
 	return useCallback(
