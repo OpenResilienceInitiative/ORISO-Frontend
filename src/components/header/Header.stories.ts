@@ -4,7 +4,7 @@ import { Header } from './Header';
 const meta = {
 	title: 'Organisms/Header',
 	component: Header,
-	tags: ['autodocs', 'needs-data'],
+	tags: ['autodocs'],
 	parameters: {
 		// Figma: the full consultant session view (App.Oriso); the Header bar is the
 		// top of this frame. Replace with a Header-only node link for a tighter match.

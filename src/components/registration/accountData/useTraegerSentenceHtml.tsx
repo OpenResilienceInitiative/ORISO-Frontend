@@ -12,7 +12,8 @@ import {
 } from '../../../utils/legalContent';
 import {
 	stripLegalLinksToken,
-	substituteConsentContext,
+	ConsentContext,
+	fillConsentPlaceholders,
 	substituteLegalLinks
 } from '../../../utils/consentText';
 
@@ -93,12 +94,7 @@ export interface TraegerSentence {
 	lang: string;
 }
 
-export interface ConsentContext {
-	/** Beratungsstelle name — substituted for `{{Beratungsstelle}}` when the server left it raw (issue #1263). */
-	agencyName?: string;
-	/** Thema name — substituted for `{{Thema}}` on the same defensive path. */
-	topicName?: string;
-}
+export type { ConsentContext };
 
 export const useTraegerSentenceHtml = (
 	consentText: ConsentTextData | null,
@@ -140,13 +136,11 @@ export const useTraegerSentenceHtml = (
 		if (!resolvedRaw) {
 			return null;
 		}
-		/* Fill `{{Beratungsstelle}}` and `{{Thema}}` client-side as a defensive
-		   fallback for the server: ADR-021 decision 5 assigns them to
-		   AgencyService, but `GET /agencies/{id}/topics/{tid}/legal` still
-		   returns them raw (issue #1263). A no-op once the server catches up. */
+		/* The public legal endpoint cannot resolve `{{Thema}}` without a token
+		   and leaves it raw (issue #1263); fill it here, drop anything unknown. */
 		const resolved = {
 			...resolvedRaw,
-			html: substituteConsentContext(resolvedRaw.html, {
+			html: fillConsentPlaceholders(resolvedRaw.html, {
 				agencyName,
 				topicName
 			})

@@ -12,6 +12,9 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 
 vi.mock('lottie-web', () => ({ default: {} }));
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: () => Promise.resolve(undefined)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 /* The phone bar is where the stage puts `renderHeaderAction('onPrimary')`. */
@@ -96,8 +99,9 @@ const renderRoom = () =>
  * # Datenschutz and Impressum in the client's group waiting room (#1499)
  *
  * On a phone the stage prints no legal links. The room gets the same way to
- * them as every chat room: a menu, which opens the documents of the
- * Beratungsstelle that runs the group.
+ * them as every chat room: a menu. Until "Beitreten" it opens the platform's
+ * documents — not the Träger's, not yet the group's Beratungsstelle's, whose
+ * documents come with the consent (Frank, 2026-10-28).
  */
 describe('GroupWaitingRoom — legal menu', () => {
 	afterEach(cleanup);
@@ -115,7 +119,7 @@ describe('GroupWaitingRoom — legal menu', () => {
 		).toBeTruthy();
 	});
 
-	it("opens the group's Beratungsstelle documents", async () => {
+	it('opens the platform documents, although the group is known', async () => {
 		renderRoom();
 		// The agency's topic arrives with the agency lookup.
 		await act(async () => undefined);
@@ -127,8 +131,7 @@ describe('GroupWaitingRoom — legal menu', () => {
 
 		const modal = screen.getByTestId('legal-modal');
 		expect(modal.dataset.title).toBe('Datenschutzerklärung');
-		expect(modal.dataset.scope).toBe('agency');
-		expect(modal.dataset.agency).toBe('19');
-		expect(modal.dataset.topic).toBe('17');
+		expect(modal.dataset.scope).toBe('platform');
+		expect(modal.dataset.agency).toBe('undefined');
 	});
 });
