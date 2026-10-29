@@ -20,7 +20,6 @@ import type { GroupChatRepeat, GroupChatSeries } from '../groupChatSeries';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
-import { GroupLegalMenu } from './GroupLegalMenu';
 import { useGroupConsent } from '../consent/useGroupConsent';
 import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import {
@@ -221,8 +220,9 @@ export const GroupWaitingRoom = ({
 	/* The clock is for waiting. Once the group runs it would count up a
 	   start that already happened, so the room says it has begun (#1787). */
 	const showClock = Boolean(plannedStart) && !active;
-	// The switch stops whatever moves: the clock, or the rules without it.
-	const showMotionSwitch = showClock || rules.length > 0;
+	// The switch stops whatever moves: the clock, the running clock wall, or
+	// the rules without either.
+	const showMotionSwitch = showClock || active || rules.length > 0;
 	const joinLabel = primaryLabel ?? tr('join', 'Beitreten');
 	const backToRoom = useCallback(() => setView('room'), []);
 	usePanelHistory(view !== 'room', backToRoom);
@@ -659,17 +659,11 @@ export const GroupWaitingRoom = ({
 			}}
 			data-cy="group-entry-room"
 		>
+			{/* No legalDepartment: until "Beitreten" the platform's documents
+			    apply; the group's own come with the consent (Frank, 2026-10-28). */}
 			<WaitingRoomFrame
-				legalDepartment={legalDepartment}
 				showLoginLink={showLoginLink}
 				headerStart={groupHeading}
-				/* The desktop stage prints the legal links; the phone bar
-				   gets them as a menu, like every chat room (#1499). */
-				renderHeaderAction={(tone) =>
-					tone === 'onPrimary' ? (
-						<GroupLegalMenu department={legalDepartment} />
-					) : null
-				}
 			>
 				<Box
 					ref={setRoom}
@@ -690,7 +684,10 @@ export const GroupWaitingRoom = ({
 						'flexGrow': 1,
 						'minHeight': {
 							xs: 'calc(100vh - 96px)',
-							lg: 'calc(100vh - 128px)'
+							/* Nothing is printed under the column once the
+							   stage splits: it runs to the window's bottom,
+							   where the bar is. */
+							lg: 'calc(100vh - 72px)'
 						},
 						'display': 'flex',
 						'flexDirection': 'column',
@@ -702,27 +699,20 @@ export const GroupWaitingRoom = ({
 						'pt': 1,
 						/* Park the last row 12 px above the bar's hairline
 						   (Frank, 2026-09-07: "wenn du die … 12 Pixel von der
-						   Futter-Trennlinie") — the bar is 81 px high until
-						   `sm`, 96 px from there up.
-
-						   From 900 px the stage prints its legal links under
-						   this column, so part of the reserve already sits
-						   below it: 48 px while the mobile head is still on
-						   (the row wraps), 32 px once the stage splits.
-
-						   The odd one out is written as a raw range and not as
-						   a second `@media (min-width:1200px)` key: that key
-						   already exists here, generated from `lg` above, and
-						   a hand-written twin replaces it instead of merging
-						   into it — which silently took the inset with it. */
+						   Futter-Trennlinie"). The bar reserves its own
+						   measured height with a spacer in this column since
+						   #1631, so only the 12 px are ours; reserving the bar
+						   here as well left the row floating 70–132 px above
+						   it (Frank, 2026-10-28). */
 						'pb': {
-							xs: 'calc(93px + env(safe-area-inset-bottom))',
-							sm: '108px',
-							lg: '76px'
+							xs: 'calc(12px + env(safe-area-inset-bottom))',
+							sm: '12px'
 						},
+						/* The mobile head is still on here; the legal row
+						   under the column is gone (#1895), so the column
+						   runs to the window's bottom like on a phone. */
 						'@media (min-width:900px) and (max-width:1199px)': {
-							minHeight: 'calc(100vh - 114px)',
-							pb: '60px'
+							minHeight: 'calc(100vh - 66px)'
 						}
 					}}
 				>

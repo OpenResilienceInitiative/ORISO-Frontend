@@ -660,9 +660,9 @@ const LiveChatEntryRoomContent = ({
 		<EntryRoomShell
 			kicker={kicker}
 			statusLine={statusLine}
-			/* Gate 2 (ADR-022): once a centre has taken the conversation its
-			   department governs — before, the platform does. */
-			department={accepted ? department : null}
+			/* No department: the room's legal links stay the platform's; the
+			   accepting centre's documents come with the consent sheet
+			   (Gate 2, ADR-022; Frank, 2026-10-28). */
 		>
 			{/* One view at a time slides in; the frame and the stage stay. */}
 			<EntryRoomView key={closed ? 'closed' : stage}>
