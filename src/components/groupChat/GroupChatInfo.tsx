@@ -24,6 +24,7 @@ import {
 import { apiPostBanUser } from '../../api/apiPostBanUser';
 import {
 	canModerateGroupChat,
+	getStoppedGroupChatRemovalIds,
 	isGroupChatOwner,
 	isV2GroupChatSession
 } from './groupChatHelpers';
@@ -190,12 +191,13 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.STOP_GROUP_CHAT) {
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
-					if (!activeSession.item.repetitive) {
+					const removedIds = getStoppedGroupChatRemovalIds(
+						activeSession.item
+					);
+					if (removedIds) {
 						sessionsDispatch({
 							type: REMOVE_SESSIONS,
-							ids: activeSession.item.matrixRoomId
-								? [activeSession.item.matrixRoomId]
-								: [activeSession.item.id]
+							ids: removedIds
 						});
 					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);

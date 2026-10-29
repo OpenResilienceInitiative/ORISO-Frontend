@@ -55,6 +55,7 @@ import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
 import {
 	canModerateGroupChat,
+	getStoppedGroupChatRemovalIds,
 	isGroupChatOwner
 } from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
@@ -349,14 +350,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
-					// A single chat is deleted: drop it from the list now. A series
-					// rolls on to its next room and stays.
-					if (!activeSession.item.repetitive) {
+					const removedIds = getStoppedGroupChatRemovalIds(
+						activeSession.item
+					);
+					if (removedIds) {
 						sessionsDispatch({
 							type: REMOVE_SESSIONS,
-							ids: activeSession.item.matrixRoomId
-								? [activeSession.item.matrixRoomId]
-								: [activeSession.item.id]
+							ids: removedIds
 						});
 					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
