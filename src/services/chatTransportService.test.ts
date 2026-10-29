@@ -291,6 +291,8 @@ describe('chatTransportService Matrix timeline', () => {
 	});
 
 	it('ignores client-level decryptions of other rooms and failed retries', () => {
+		fakeClient = createFakeMatrixClient({ roomId: ROOM_ID, timeline: [] });
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
 		const { event: other } = createFakeEncryptedMatrixEvent();
 		(other as any).getRoomId = () => OTHER_ROOM_ID;
 		other.emitDecrypted();
@@ -310,7 +312,9 @@ describe('chatTransportService Matrix timeline', () => {
 	it('does not notify twice when the per-event watch already handles the decryption', () => {
 		const { event } = createFakeEncryptedMatrixEvent();
 		(event as any).getRoomId = () => ROOM_ID;
-		const room = { roomId: ROOM_ID };
+		const room = { roomId: ROOM_ID, timeline: [] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
 		const listener = vi.fn();
 		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
 		fakeClient.emit('Room.timeline', event, room, false);
