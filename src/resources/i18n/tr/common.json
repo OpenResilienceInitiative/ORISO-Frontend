@@ -6261,5 +6261,55 @@
 			"micOff": "Mikrofonu kapat",
 			"micMeter": "Mikrofonunuzun ses düzeyi"
 		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Doğrudan bağlantı",
+			"subtitle": "Danışmanlık arayanlar için",
+			"headline": "Doğrudan size ulaşan bir bağlantı",
+			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
+			"topicLabel": "Konu seçin",
+			"mediumLabel": "İletişim türü",
+			"temporary": "Geçici hesap",
+			"temporaryHint": "Hesap görüşmeden sonra silinir.",
+			"create": "Bağlantı oluştur"
+		},
+		"medium": {
+			"chat": "Sohbet",
+			"audio": "Sesli arama",
+			"video": "Görüntülü arama"
+		},
+		"temporary": "Geçici",
+		"copy": "Bağlantıyı kopyala",
+		"share": {
+			"title": "Doğrudan bağlantınız hazır",
+			"description": "Bağlantıyı veya QR kodunu paylaşın. Her kişi sizinle kendi görüşmesini alır.",
+			"copied": "Kopyalandı",
+			"share": "Paylaş",
+			"qrAlt": "Doğrudan bağlantının QR kodu",
+			"done": "Tamam",
+			"linkLabel": "Doğrudan bağlantı"
+		},
+		"list": {
+			"title": "Doğrudan bağlantılarım",
+			"qr": "QR kodunu göster",
+			"active": "{{name}} etkin"
+		}
+	},
+	"dashboard": {
+		"title": "Genel bakışınız",
+		"stats": {
+			"title": "Danışmanlıklar",
+			"period": "Son 30 gün",
+			"assigned": "Yeni üstlenilen",
+			"active": "Aktif",
+			"archived": "Arşivlenen",
+			"sentMessages": "Gönderilen mesajlar"
+		},
+		"circles": {
+			"title": "Yaklaşan öz yardım grupları",
+			"participants": "{{count}} katılımcı",
+			"participants_one": "{{count}} katılımcı"
+		}
 	}
 }

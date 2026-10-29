@@ -6261,5 +6261,55 @@
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
 		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Lien direct",
+			"subtitle": "Pour les personnes en recherche de conseil",
+			"headline": "Un lien direct vers vous",
+			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
+			"topicLabel": "Choisir un thème",
+			"mediumLabel": "Type de contact",
+			"temporary": "Compte temporaire",
+			"temporaryHint": "Le compte est supprimé après l’entretien.",
+			"create": "Créer le lien"
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Appel audio",
+			"video": "Appel vidéo"
+		},
+		"temporary": "Temporaire",
+		"copy": "Copier le lien",
+		"share": {
+			"title": "Votre lien direct est prêt",
+			"description": "Partagez le lien ou le code QR. Chaque personne obtient son propre entretien avec vous.",
+			"copied": "Copié",
+			"share": "Partager",
+			"qrAlt": "Code QR du lien direct",
+			"done": "Terminé",
+			"linkLabel": "Lien direct"
+		},
+		"list": {
+			"title": "Mes liens directs",
+			"qr": "Afficher le code QR",
+			"active": "{{name}} actif"
+		}
+	},
+	"dashboard": {
+		"title": "Votre aperçu",
+		"stats": {
+			"title": "Consultations",
+			"period": "30 derniers jours",
+			"assigned": "Nouvelles prises en charge",
+			"active": "Actives",
+			"archived": "Archivées",
+			"sentMessages": "Messages envoyés"
+		},
+		"circles": {
+			"title": "Prochains groupes d’entraide",
+			"participants": "{{count}} participant·e·s",
+			"participants_one": "{{count}} participant·e"
+		}
 	}
 }
