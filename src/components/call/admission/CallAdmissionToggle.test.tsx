@@ -74,7 +74,7 @@ describe('call admission (#1892 scope extension)', () => {
 		expect(theSwitch().checked).toBe(false);
 	});
 
-	it('keeps the stored value when saving fails', async () => {
+	it('keeps the stored value and says so when saving fails', async () => {
 		const memory = createMemoryCallShareSettingsStore();
 		const set = vi.fn().mockRejectedValue(new Error('CATCH_ALL'));
 		render(<CallAdmissionToggle store={{ watch: memory.watch, set }} />);
@@ -85,6 +85,9 @@ describe('call admission (#1892 scope extension)', () => {
 			temporaryAccount: true
 		});
 		expect(theSwitch().checked).toBe(true);
+		expect(screen.getByRole('alert').textContent).toBe(
+			'groupChat.joinRequest.failed'
+		);
 	});
 });
 

@@ -25,6 +25,7 @@ export const CallAdmissionToggle = ({ store }: CallAdmissionToggleProps) => {
 	const descriptionId = useId();
 	const [settings, setSettings] = useState<CallShareSettings | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [failed, setFailed] = useState(false);
 
 	useEffect(() => store.watch(setSettings), [store]);
 
@@ -33,11 +34,13 @@ export const CallAdmissionToggle = ({ store }: CallAdmissionToggleProps) => {
 
 	const change = async (next: boolean) => {
 		setSaving(true);
+		setFailed(false);
 		try {
 			// Only `knock`; the temporary-account choice stays as it is.
 			await store.set({ ...settings, knock: next });
 		} catch {
 			// The store kept the old value, and so does the switch.
+			setFailed(true);
 		} finally {
 			setSaving(false);
 		}
@@ -86,6 +89,21 @@ export const CallAdmissionToggle = ({ store }: CallAdmissionToggleProps) => {
 				>
 					{knock ? t('calls.admission.on') : t('calls.admission.off')}
 				</Typography>
+				{failed && (
+					<Typography
+						component="p"
+						role="alert"
+						sx={{
+							color: 'inherit',
+							fontSize: 12,
+							lineHeight: '16px',
+							letterSpacing: '0.4px',
+							m: 0
+						}}
+					>
+						{t('groupChat.joinRequest.failed')}
+					</Typography>
+				)}
 			</Box>
 			<Switch
 				checked={knock}
