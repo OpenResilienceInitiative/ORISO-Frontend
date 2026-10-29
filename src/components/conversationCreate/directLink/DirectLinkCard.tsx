@@ -42,6 +42,9 @@ interface DirectLinkCardProps {
 	isSubmitting?: boolean;
 	/** Why the last attempt failed, shown under the button. */
 	errorMessage?: string;
+	/** The topics did not load; shown with a retry instead of the picker. */
+	topicsLoadFailed?: boolean;
+	onRetryTopics?: () => void;
 }
 
 /**
@@ -55,13 +58,16 @@ export const DirectLinkCard = ({
 	className,
 	media = DIRECT_LINK_MEDIA,
 	isSubmitting = false,
-	errorMessage
+	errorMessage,
+	topicsLoadFailed = false,
+	onRetryTopics
 }: DirectLinkCardProps) => {
 	const { t } = useTranslation();
 	const id = useId();
 	const topicRef = useRef<HTMLDivElement | null>(null);
-	const singleTopic = topics.length === 1 ? topics[0].value : '';
-	const [topic, setTopic] = useState(singleTopic);
+	const [pickedTopic, setTopic] = useState('');
+	// Topics may arrive after the first render; a single one needs no choice.
+	const topic = topics.length === 1 ? topics[0].value : pickedTopic;
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 	const [medium, setMedium] = useState<DirectLinkMedium>();
 	const [temporary, setTemporary] = useState(false);
@@ -96,6 +102,14 @@ export const DirectLinkCard = ({
 				{t('directLink.card.text')}
 			</p>
 			<div className="conversationCreate__cardActions directLinkCard__fields">
+				{topicsLoadFailed && (
+					<p role="alert" className="conversationCreate__error">
+						{t('groupChat.loadError.topics')}
+						<button type="button" onClick={onRetryTopics}>
+							{t('groupChat.loadError.retry')}
+						</button>
+					</p>
+				)}
 				{topics.length > 1 && (
 					<>
 						<SplitButton
@@ -138,8 +152,9 @@ export const DirectLinkCard = ({
 						)}
 					</>
 				)}
+				{/* Toggle buttons, not radios: Tab, Enter and Space suffice. */}
 				<div
-					role="radiogroup"
+					role="group"
 					aria-label={t('directLink.card.mediumLabel')}
 					className="directLinkCard__media"
 				>
@@ -147,8 +162,7 @@ export const DirectLinkCard = ({
 						<button
 							key={value}
 							type="button"
-							role="radio"
-							aria-checked={medium === value}
+							aria-pressed={medium === value}
 							className={`directLinkCard__medium${
 								medium === value
 									? ' directLinkCard__medium--selected'
