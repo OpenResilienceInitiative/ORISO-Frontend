@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	LocaleContext,
@@ -105,28 +105,25 @@ export const DirectLinkCallEntry = ({
 	const open =
 		deps.open ?? ((value: string) => openDirectLinkConversation(value));
 
-	const handleJoin = useCallback(
-		async (account: CallEntryAccount) => {
-			setJoining(true);
-			try {
-				await register(account);
-				await open(token);
-				return true;
-			} catch {
-				setJoining(false);
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: t('directLink.entry.joinFailed'),
-					text: '',
-					closeable: true,
-					timeout: 5000
-				});
-				return false;
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- register/open are stable for the screen's life
-		[addNotification, t, token]
-	);
+	// Not memoised: `register` reads the current locale and tenant.
+	const handleJoin = async (account: CallEntryAccount) => {
+		setJoining(true);
+		try {
+			await register(account);
+			await open(token);
+			return true;
+		} catch {
+			setJoining(false);
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t('directLink.entry.joinFailed'),
+				text: '',
+				closeable: true,
+				timeout: 5000
+			});
+			return false;
+		}
+	};
 
 	return (
 		<CallEntryRoom
