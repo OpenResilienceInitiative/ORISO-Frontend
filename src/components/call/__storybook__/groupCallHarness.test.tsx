@@ -362,6 +362,57 @@ describe('GroupCallWidget Storybook harness', () => {
 		expect(hangups).toHaveLength(1);
 	});
 
+	it('leaves full screen entered while a second call is already ringing', async () => {
+		let fullscreen: Element | null = null;
+		const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(document, 'exitFullscreen', {
+			configurable: true,
+			value: exitFullscreen
+		});
+		Object.defineProperty(document, 'fullscreenElement', {
+			configurable: true,
+			get: () => fullscreen
+		});
+		try {
+			await renderActiveCall();
+			ringSecondCall();
+			expect(exitFullscreen).not.toHaveBeenCalled();
+
+			fullscreen = document.body;
+			act(() => {
+				document.dispatchEvent(new Event('fullscreenchange'));
+			});
+
+			await waitFor(() =>
+				expect(exitFullscreen).toHaveBeenCalledTimes(1)
+			);
+		} finally {
+			delete (document as unknown as Record<string, unknown>)
+				.fullscreenElement;
+			delete (document as unknown as Record<string, unknown>)
+				.exitFullscreen;
+		}
+	});
+
+	it('mutes on the first press in the dock, before the call reported its devices', async () => {
+		const { view } = await renderActiveCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+		fireEvent.click(
+			await view.findByRole('button', { name: 'Mute', pressed: false })
+		);
+
+		await waitFor(() =>
+			expect(api.transport.send).toHaveBeenCalledWith(
+				'io.element.device_mute',
+				{ audio_enabled: false }
+			)
+		);
+	});
+
 	it('moves keyboard focus into the dock when the call is minimized', async () => {
 		const { view } = await renderActiveCall();
 

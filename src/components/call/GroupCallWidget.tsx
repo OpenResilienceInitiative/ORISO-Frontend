@@ -701,7 +701,7 @@ export const GroupCallWidget: React.FC = () => {
 	useEffect(() => {
 		if (waitingCallId && document.fullscreenElement)
 			void document.exitFullscreen?.().catch(() => undefined);
-	}, [waitingCallId]);
+	}, [waitingCallId, isFullscreen]);
 
 	// The dock's clock starts when the call surface opens; a new call resets it.
 	useEffect(() => {
@@ -1013,6 +1013,12 @@ export const GroupCallWidget: React.FC = () => {
 	}
 
 	const isDocked = isMinimized && !!elementCallUrl;
+	// Until the call reports its devices, assume what it started with; the
+	// dock shows this and its toggles flip it.
+	const shownDevices = widget.devices ?? {
+		audio_enabled: true,
+		video_enabled: !!callData?.isVideo
+	};
 
 	return (
 		<>
@@ -1037,26 +1043,20 @@ export const GroupCallWidget: React.FC = () => {
 					party={dockParty}
 					isGroup={!!callData.isGroup}
 					startedAt={callStartedAt}
-					isMuted={
-						widget.devices ? !widget.devices.audio_enabled : false
-					}
+					isMuted={!shownDevices.audio_enabled}
 					isVideo={callData.isVideo}
-					isCameraOff={
-						widget.devices
-							? !widget.devices.video_enabled
-							: !callData.isVideo
-					}
+					isCameraOff={!shownDevices.video_enabled}
 					onToggleMute={() =>
 						void widget
 							.setDevices({
-								audio_enabled: !widget.devices?.audio_enabled
+								audio_enabled: !shownDevices.audio_enabled
 							})
 							.catch(() => undefined)
 					}
 					onToggleCamera={() =>
 						void widget
 							.setDevices({
-								video_enabled: !widget.devices?.video_enabled
+								video_enabled: !shownDevices.video_enabled
 							})
 							.catch(() => undefined)
 					}
