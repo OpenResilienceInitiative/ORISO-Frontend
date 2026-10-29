@@ -227,6 +227,11 @@
 			"headline": "You have been banned.",
 			"info": "We have asked you to respect the chat rules.<br/><br/>Because you have repeatedly failed to comply with the chat rules today, we have excluded you from todays chat.<br/><br/>Familiarize yourself with the chat rules!<br/><br/>If you are ready to follow the chat rules, you are welcome to chat again from tomorrow!"
 		},
+		"confirm": {
+			"description": "They can no longer write in this group and will see that they were removed.",
+			"submit": "Remove",
+			"title": "Remove {{name}} from this group?"
+		},
 		"is": {
 			"banned": " Banned"
 		}
