@@ -29,6 +29,12 @@ vi.mock('../../legalLinks/LegalLinks', () => ({
 	__esModule: true,
 	default: () => <span />
 }));
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: () => Promise.resolve(undefined)
+}));
+vi.mock('../../../api/apiGetAgencyId', () => ({
+	apiGetAgencyById: () => Promise.resolve(null)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../../api/apiGetAnonymousEnquiryDetails', () => ({
 	apiGetAnonymousEnquiryDetails: vi.fn()

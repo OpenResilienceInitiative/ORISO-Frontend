@@ -59,6 +59,13 @@ vi.mock('../../../api/apiGetConsentText', () => ({
 	apiGetConsentText: (agencyId: number, topicId: number) =>
 		apiGetConsentText(agencyId, topicId)
 }));
+
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: () => Promise.resolve('Trauer')
+}));
+vi.mock('../../../api/apiGetAgencyId', () => ({
+	apiGetAgencyById: () => Promise.resolve({ id: 7, name: 'Caritas Berlin' })
+}));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 vi.mock('../../stageLayout/StageLayout', () => ({
 	StageLayout: ({
