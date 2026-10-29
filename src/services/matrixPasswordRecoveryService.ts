@@ -686,8 +686,8 @@ export const changePasswordWithRecovery = async (
 /**
  * The password was changed outside this app (Admin "Mein Konto", forgot-password, a setup link):
  * the account already has `currentPassword`, but the recovery key is still sealed under
- * `previousPassword`. Re-wrap it to the current password exactly as an in-app change would, retire
- * the old copies, and unlock the history on this device (#1931).
+ * `previousPassword`. Re-wrap it to the current password exactly as an in-app change would, unlock
+ * the history on this device, and only then retire the old copies (#1931).
  *
  * Call only after `currentPassword` was proven (re-authentication including a required OTP).
  * Rejects with {@link PasswordRecoveryPasswordRejectedError} when the previous password opens
@@ -705,10 +705,17 @@ export const resealWithPreviousPassword = async (
 		currentPassword,
 		new DerivationBudget()
 	);
+	// Prove the key on this device before the previous-password copies go: a
+	// failed restore must leave a retry with the previous password possible.
+	try {
+		await recoverWithKey(client, staged.payload.recoveryKey);
+	} catch (error) {
+		await discardCandidate(client, staged.id);
+		throw error;
+	}
 	try {
 		await retirePredecessors(client, staged);
 	} catch {
 		/* candidate is independently discoverable */
 	}
-	await recoverWithKey(client, staged.payload.recoveryKey);
 };

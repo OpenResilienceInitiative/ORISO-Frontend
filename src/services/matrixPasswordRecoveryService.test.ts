@@ -907,6 +907,32 @@ describe('an envelope left sealed under the previous password', () => {
 		).toEqual({ kind: 'ready' });
 	});
 
+	it('keeps the previous-password copies when this device cannot restore the history', async () => {
+		await changeInAdmin('legacy');
+		const before = structuredClone([...server.data]);
+		const fresh = device(server);
+		vi.mocked(fresh.getCrypto().restoreKeyBackup).mockRejectedValueOnce(
+			new Error('backup restore failed')
+		);
+
+		await expect(
+			resealWithPreviousPassword(fresh, 'previous-synthetic', 'admin-new')
+		).rejects.toThrow('backup restore failed');
+
+		// Nothing retired (the staged copy is only emptied), so a retry works.
+		for (const [type, content] of before)
+			expect(server.data.get(type)).toEqual(content);
+		expect(candidateEvents()).toHaveLength(0);
+		await resealWithPreviousPassword(
+			device(server),
+			'previous-synthetic',
+			'admin-new'
+		);
+		expect(
+			await recoverWithLoginPassword(device(server), 'admin-new')
+		).toEqual({ kind: 'ready' });
+	});
+
 	it('changes nothing when the previous password is wrong as well', async () => {
 		await changeInAdmin('candidate');
 		const before = structuredClone([...server.data]);
