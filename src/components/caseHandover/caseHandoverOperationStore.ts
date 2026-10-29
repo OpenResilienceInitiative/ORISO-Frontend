@@ -26,7 +26,8 @@ const TERMINAL_OPERATION_STATUSES = new Set([
 	'GRANTED',
 	'DENIED',
 	'CLIENT_CONSENT_DECLINED',
-	'RECIPIENT_DECLINED'
+	'RECIPIENT_DECLINED',
+	'WITHDRAWN'
 ]);
 
 const isTerminalOperation = (status?: CaseHandoverStatus) =>

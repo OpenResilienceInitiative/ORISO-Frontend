@@ -150,6 +150,28 @@ describe('CaseHandoverOfferGate', () => {
 		expect(screen.getByText('caseHandover.offer.declined')).toBeTruthy();
 	});
 
+	it('tells the recipient the offer was withdrawn and offers no decision', async () => {
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+			status({ status: 'WITHDRAWN' })
+		);
+		render(
+			<CaseHandoverOfferGate
+				actorId="recipient-a"
+				sessionId={41}
+				requestId={501}
+				onClose={vi.fn()}
+			>
+				<div>private</div>
+			</CaseHandoverOfferGate>
+		);
+
+		expect(
+			await screen.findByText('caseHandover.offer.withdrawn')
+		).toBeTruthy();
+		expect(screen.queryByTestId('case-handover-offer-accept')).toBeNull();
+		expect(screen.queryByTestId('case-handover-offer-decline')).toBeNull();
+	});
+
 	it('isolates A to B request churn and ignores reverse-order stale responses', async () => {
 		const requestA = deferred<CaseHandoverStatus>();
 		const requestB = deferred<CaseHandoverStatus>();

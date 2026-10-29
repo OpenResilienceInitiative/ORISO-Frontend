@@ -147,3 +147,57 @@ describe('handover variants exist in every locale (#1714)', () => {
 		expect(locales[lng].caseHandover.history.unknownColleague).toBeTruthy();
 	});
 });
+
+describe('offer lifecycle timeline entries (withdraw / decline / sent)', () => {
+	const eventTypes = [
+		'case.handover.offer.sent',
+		'case.handover.offer.declined',
+		'case.handover.offer.withdrawn'
+	];
+
+	it.each(eventTypes)(
+		'%s renders a real title and text, never a raw key',
+		(type) => {
+			const { title, text } = render(type, {});
+			expect(title).toBeTruthy();
+			expect(text).toBeTruthy();
+			expect(`${title} ${text}`).not.toMatch(
+				/notifications\.events|\{\{/
+			);
+		}
+	);
+
+	it('words the withdrawal as "off", not as a handover to accept', () => {
+		const { title, text } = render('case.handover.offer.withdrawn', {});
+		expect(title).toBe('Übergabeangebot zurückgezogen');
+		expect(text).toContain('zurückgezogen');
+		expect(text).not.toContain('übernehmen');
+	});
+
+	const locales = { de, en, fr, ru, tr } as Record<string, any>;
+	it.each(Object.keys(locales))(
+		'%s has all offer lifecycle entries',
+		(lng) => {
+			const events = locales[lng].notifications.events;
+			for (const key of [
+				'caseHandoverOfferSent',
+				'caseHandoverOfferDeclined',
+				'caseHandoverOfferWithdrawn'
+			]) {
+				expect(events[key].title).toBeTruthy();
+				expect(events[key].text).toBeTruthy();
+			}
+			for (const key of [
+				'withdraw',
+				'withdrawn',
+				'withdrawError',
+				'withdrawConflict'
+			]) {
+				expect(locales[lng].caseHandover.offer[key]).toBeTruthy();
+			}
+			expect(
+				locales[lng].caseHandover.offer.status.WITHDRAWN
+			).toBeTruthy();
+		}
+	);
+});

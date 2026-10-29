@@ -198,6 +198,8 @@ export const CaseHandoverOfferGate = ({
 		messageKey = `caseHandover.offer.${error}`;
 	} else if (offer?.status === 'RECIPIENT_DECLINED') {
 		messageKey = 'caseHandover.offer.declined';
+	} else if (offer?.status === 'WITHDRAWN') {
+		messageKey = 'caseHandover.offer.withdrawn';
 	} else if (offer?.status === 'PENDING_CLIENT_CONSENT') {
 		messageKey = 'caseHandover.offer.awaitingClientConsent';
 	} else if (offer?.status === 'DENIED') {
