@@ -6311,5 +6311,30 @@
 			"participants": "{{count}} ተሳተፍቲ",
 			"participants_one": "{{count}} ተሳታፊ"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "ግዝያዊ",
+			"title": "ምስ ናይ ጋሻ ሕሳብ ሓቢሩ ይድምሰስ"
+		},
+		"deletedGuest": "ጋሻ (ተደምሲሱ)",
+		"chip": {
+			"guest": "ናይ ጋሻ ሕሳብ"
+		},
+		"keepDialog": {
+			"title": "መልእኽትታትኩም ይጽንሑ ዶ?",
+			"description": "ናይ ጋሻ ሕሳብኩም ድሕሪ እቲ ዝርርብ ይድምሰስ። ንመልእኽትታትኩም እንታይ ይግበር?",
+			"keep": {
+				"label": "ድሕሪ ምድምሳስ እውን ይጸንሑ",
+				"hint": "ሕሳብኩም ምስ ተደምሰሰ መልእኽትታትኩም ይጸንሑ።"
+			},
+			"delete": {
+				"label": "ግዝያዊ",
+				"hint": "መልእኽትታትኩም ምስ ሕሳብኩም ይድምሰሱ።"
+			},
+			"note": "መልስኹም ንብዘሎ እዚ ዝርርብ ይሰርሕ።",
+			"confirm": "ቀጽል",
+			"cancel": "ሰርዝ"
+		}
 	}
 }

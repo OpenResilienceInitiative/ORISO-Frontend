@@ -6226,5 +6226,30 @@
 			"participants": "{{count}} participants",
 			"participants_one": "{{count}} participant"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporary",
+			"title": "Deleted together with the guest account"
+		},
+		"deletedGuest": "Guest (deleted)",
+		"chip": {
+			"guest": "Guest account"
+		},
+		"keepDialog": {
+			"title": "Should your messages stay?",
+			"description": "Your guest account is deleted after the conversation. What should happen to your messages?",
+			"keep": {
+				"label": "Keep them after deletion",
+				"hint": "Your messages stay when your account is deleted."
+			},
+			"delete": {
+				"label": "Temporary",
+				"hint": "Your messages are deleted with your account."
+			},
+			"note": "Your answer applies to this whole conversation.",
+			"confirm": "Continue",
+			"cancel": "Cancel"
+		}
 	}
 }

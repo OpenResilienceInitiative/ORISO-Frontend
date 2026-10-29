@@ -6311,5 +6311,30 @@
 			"participants": "{{count}} katılımcı",
 			"participants_one": "{{count}} katılımcı"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Geçici",
+			"title": "Misafir hesabıyla birlikte silinir"
+		},
+		"deletedGuest": "Misafir (silindi)",
+		"chip": {
+			"guest": "Misafir hesabı"
+		},
+		"keepDialog": {
+			"title": "Mesajlarınız kalsın mı?",
+			"description": "Misafir hesabınız görüşmeden sonra silinir. Mesajlarınıza ne olsun?",
+			"keep": {
+				"label": "Silindikten sonra da sakla",
+				"hint": "Hesabınız silindiğinde mesajlarınız kalır."
+			},
+			"delete": {
+				"label": "Geçici",
+				"hint": "Mesajlarınız hesabınızla birlikte silinir."
+			},
+			"note": "Cevabınız bu görüşmenin tamamı için geçerlidir.",
+			"confirm": "Devam",
+			"cancel": "İptal"
+		}
 	}
 }
