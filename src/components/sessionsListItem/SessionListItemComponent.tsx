@@ -806,10 +806,27 @@ export const SessionListItemComponent = ({
 		}
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
 	const handleArchiveSession = () => {
 		setFlyoutOpen(false);
-		setOverlayItem(archiveSessionSuccessOverlayItem);
-		setOverlayActive(true);
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		const sessionId = activeSession.item.id;
+		const sessionGroupId = activeSession.item.matrixRoomId;
+		apiPutArchive(sessionId)
+			.then(() => {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: sessionGroupId ? [sessionGroupId] : [sessionId]
+				});
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
 	};
 
 	const handleDearchiveSession = () => {
@@ -828,8 +845,9 @@ export const SessionListItemComponent = ({
 					}
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
 	};
 
@@ -921,28 +939,13 @@ export const SessionListItemComponent = ({
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
-			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
-				.then(() => {
-					sessionsDispatch({
-						type: REMOVE_SESSIONS,
-						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
-					});
-
-					mobileListView();
-					navigate(listPath);
-				})
-				.catch((error) => {
-					// console.error(error);
-				})
-				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
-					setIsRequestInProgress(false);
-					setFlyoutOpen(false);
-				});
+			// The request already succeeded; this only leaves the archived chat.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			setFlyoutOpen(false);
+			mobileListView();
+			navigate(listPath);
 		}
 	};
 
