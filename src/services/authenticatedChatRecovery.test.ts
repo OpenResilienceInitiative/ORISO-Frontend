@@ -158,6 +158,31 @@ describe('authenticated setup coordination', () => {
 		expect(setup).not.toHaveBeenCalled();
 		expect(recover).not.toHaveBeenCalled();
 	});
+	it('announces the commit right before setup, and never once cancelled', async () => {
+		const order: string[] = [];
+		setup.mockImplementation(async () => {
+			order.push('setup');
+			return 'synthetic-key';
+		});
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 2 },
+			'synthetic-password',
+			() => false,
+			() => order.push('commit')
+		);
+		expect(order).toEqual(['commit', 'setup']);
+
+		const onCommit = vi.fn();
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 2 },
+			'synthetic-password',
+			() => true,
+			onCommit
+		);
+		expect(onCommit).not.toHaveBeenCalled();
+	});
 });
 
 it('keeps reload verification in settings when existing device keys are usable', async () => {
@@ -621,10 +646,15 @@ describe('sealing recovery under the first own password', () => {
 		);
 	});
 
-	it('gives up waiting at its deadline and records a retryable status', async () => {
+	it('stops a run that has not committed yet at its deadline: no root, no parked key', async () => {
 		vi.useFakeTimers();
 		try {
-			setup.mockReturnValue(new Promise(() => undefined));
+			let releaseEvidence!: (value: boolean) => void;
+			evidence.mockReturnValue(
+				new Promise<boolean>((resolve) => {
+					releaseEvidence = resolve;
+				})
+			);
 
 			const outcome = sealRecoveryUnderFirstPassword(
 				client(),
@@ -640,7 +670,68 @@ describe('sealing recovery under the first own password', () => {
 				'@synthetic:test',
 				'retryable-failure'
 			);
+			const reportsAtDeadline = runtimeStatus.mock.calls.length;
+
+			// The gate logs out now; the late run must not commit anything after it.
+			releaseEvidence(false);
+			await vi.runAllTimersAsync();
+
+			expect(setup).not.toHaveBeenCalled();
 			expect(enroll).not.toHaveBeenCalled();
+			expect(getPendingRecoveryKey('@synthetic:test')).toBeNull();
+			expect(runtimeStatus).toHaveBeenCalledTimes(reportsAtDeadline);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('keeps waiting past its deadline once setup has committed, until the key is sealed under the new password', async () => {
+		vi.useFakeTimers();
+		try {
+			let finishSetup!: (key: string) => void;
+			setup.mockReturnValue(
+				new Promise<string>((resolve) => {
+					finishSetup = resolve;
+				})
+			);
+			let finishEnroll!: () => void;
+			enroll.mockReturnValue(
+				new Promise<void>((resolve) => {
+					finishEnroll = resolve;
+				})
+			);
+			const c = client();
+			let settled = false;
+
+			const outcome = sealRecoveryUnderFirstPassword(
+				c,
+				policy,
+				'new-synthetic',
+				undefined,
+				1000
+			).finally(() => {
+				settled = true;
+			});
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(setup).toHaveBeenCalledOnce();
+			expect(settled).toBe(false);
+
+			finishSetup('synthetic-key');
+			await vi.advanceTimersByTimeAsync(0);
+			expect(enroll).toHaveBeenCalledWith(
+				c,
+				'new-synthetic',
+				'synthetic-key',
+				2
+			);
+			expect(settled).toBe(false);
+
+			finishEnroll();
+			await expect(outcome).resolves.toBe('ready');
+			expect(runtimeStatus).toHaveBeenLastCalledWith(
+				'@synthetic:test',
+				'ready'
+			);
 		} finally {
 			vi.useRealTimers();
 		}

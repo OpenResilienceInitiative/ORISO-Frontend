@@ -29,7 +29,6 @@ import {
 	setRecoveryRuntimeStatus,
 	type RecoveryRuntimeStatus
 } from './recoveryReminderState';
-import { withTimeout } from '../utils/promiseTimeout';
 
 type HoldTokenRefresh = <T>(operation: () => Promise<T>) => Promise<T>;
 
@@ -38,7 +37,9 @@ export const initializeChatRecovery = async (
 	client: MatrixClient,
 	policy: ChatRecoveryPolicy,
 	password: string | null,
-	cancelled: () => boolean = () => false
+	cancelled: () => boolean = () => false,
+	/** Called synchronously right before a recovery root is committed server-side. */
+	onCommit: () => void = () => undefined
 ): Promise<RecoveryRuntimeStatus | undefined> => {
 	const userId = client.getUserId();
 	if (!userId || cancelled()) return;
@@ -59,6 +60,7 @@ export const initializeChatRecovery = async (
 					client,
 					password
 				);
+				if (cancelled()) return;
 				if (recovery.kind !== 'not-enrolled') {
 					if (recovery.kind === 'ready') {
 						await loadPendingRecoveryKey(userId);
@@ -77,6 +79,9 @@ export const initializeChatRecovery = async (
 				!(await readRecoveryRoot(client)) &&
 				!(await hasPasswordRecoveryEvidence(client))
 			) {
+				// Last checkpoint before the commit; nothing awaits in between.
+				if (cancelled()) return;
+				onCommit();
 				recoveryKey = await setUpRecovery(client);
 				// Setup has committed a root: preserve its only export for this user.
 				savePendingRecoveryKey(userId, recoveryKey);
@@ -184,6 +189,8 @@ export const startAuthenticatedChatRecovery = (
 	});
 };
 
+const DEADLINE = Symbol('first password seal deadline');
+
 /** How long the setup gate's password step waits for the seal before it logs out anyway. */
 export const FIRST_PASSWORD_SEAL_TIMEOUT_MS = 30_000;
 
@@ -196,9 +203,12 @@ export const FIRST_PASSWORD_SEAL_TIMEOUT_MS = 30_000;
  * Call only after the password change succeeded, and only with the NEW password: the old one is
  * the administrator's, and nothing may ever be sealed under it (#1481).
  *
- * Never rejects and never waits past its deadline: the password change and the logout must go
- * on regardless. A failure leaves a retryable status, and the next password sign-in that is past
- * the gate sets recovery up as before.
+ * Never rejects. At its deadline a run that has not committed a recovery root yet is stopped at
+ * its next checkpoint (no root, no parked key) and a retryable status is returned, so the logout
+ * may go on. A run that has already committed one is awaited to the end instead: stopping it, or
+ * logging out under it, between setup and enrolment would leave a root without its envelope and
+ * the logout would then wipe its only parked key. A failure leaves a retryable status, and the
+ * next password sign-in that is past the gate sets recovery up as before.
  */
 export const sealRecoveryUnderFirstPassword = async (
 	client: MatrixClient,
@@ -209,20 +219,40 @@ export const sealRecoveryUnderFirstPassword = async (
 ): Promise<RecoveryRuntimeStatus | undefined> => {
 	const userId = client.getUserId();
 	if (policy.mode !== 'LOGIN_PASSWORD' || !userId || !newPassword) return;
-	try {
-		/* Not cancelled at the deadline: a run that finishes later still
-		   seals under the new password, and stopping it between setup and
-		   enrolment would only leave recovery without its envelope. */
-		const outcome = await withTimeout(
-			holdTokenRefresh(() =>
-				initializeChatRecovery(client, policy, newPassword)
-			),
-			timeoutMs,
-			'First password recovery seal timed out'
-		);
-		return outcome ?? 'retryable-failure';
-	} catch {
+	let stopped = false;
+	let committing = false;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const giveUp = () => {
 		setRecoveryRuntimeStatus(userId, 'retryable-failure');
-		return 'retryable-failure';
+		return 'retryable-failure' as const;
+	};
+	try {
+		const run = holdTokenRefresh(() =>
+			initializeChatRecovery(
+				client,
+				policy,
+				newPassword,
+				() => stopped && !committing,
+				() => {
+					committing = true;
+				}
+			)
+		);
+		const deadline = new Promise<typeof DEADLINE>((resolve) => {
+			timer = setTimeout(() => resolve(DEADLINE), timeoutMs);
+		});
+		const first = await Promise.race([run, deadline]);
+		if (first !== DEADLINE) return first ?? 'retryable-failure';
+		stopped = true;
+		if (!committing) {
+			// Aborts at its next checkpoint; its eventual settlement is irrelevant.
+			run.catch(() => undefined);
+			return giveUp();
+		}
+		return (await run) ?? 'retryable-failure';
+	} catch {
+		return giveUp();
+	} finally {
+		clearTimeout(timer);
 	}
 };
