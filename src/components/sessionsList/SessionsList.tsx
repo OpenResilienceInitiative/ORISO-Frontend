@@ -1994,8 +1994,10 @@ export const SessionsList = ({
 	 * deleted advice-seeker chat used to be. Only in the counsellor's unfiltered
 	 * list: a placeholder matches no chip, search, person, centre or topic.
 	 */
+	// Not in the rail: its pills are tabs, and a placeholder is no tab.
 	const showDeletedAskerRows =
 		showConsultantToolbarActions &&
+		!isRail &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
 	const [deletedAskerPlaceholders, setDeletedAskerPlaceholders] = useState<
 		DeletedAskerSession[]
@@ -2910,7 +2912,10 @@ export const SessionsList = ({
 							)
 						)}
 
+					{/* A failed page load leaves the page count unknown, so rows
+					    "older than everything" wait for a successful retry. */}
 					{!isLoading &&
+						!isReloadButtonVisible &&
 						deletedAskerPlacement.trailing.map((row) => (
 							<DeletedAskerListItem
 								key={row.key}
