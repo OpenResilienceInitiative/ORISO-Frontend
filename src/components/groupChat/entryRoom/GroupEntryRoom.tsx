@@ -11,6 +11,7 @@ import {
 	apiGetAskerSessionList,
 	apiGetGroupChatInfo,
 	apiPutGroupChat,
+	FETCH_ERRORS,
 	GROUP_CHAT_API
 } from '../../../api';
 import { apiGetChatRoomById } from '../../../api/apiGetChatRoomById';
@@ -155,6 +156,8 @@ const ClientGroupEntryRoom = () => {
 	const { session, ready, reload } = useGroupChatSession(chatId);
 	const [joinBusy, setJoinBusy] = useState(false);
 	const [joinFailed, setJoinFailed] = useState(false);
+	// #1923: a moderator banned this person; joining again cannot work.
+	const [removed, setRemoved] = useState(false);
 
 	const item = session?.item;
 	const active = Boolean(item?.active);
@@ -223,7 +226,9 @@ const ClientGroupEntryRoom = () => {
 				const notice = getCounsellingDpaNotification(error, t, {
 					groupJoin: true
 				});
-				if (notice && notifications)
+				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT)
+					setRemoved(true);
+				else if (notice && notifications)
 					notifications.addNotification(notice);
 				else setJoinFailed(true);
 				setJoinBusy(false);
@@ -281,26 +286,18 @@ const ClientGroupEntryRoom = () => {
 				active={active}
 				onJoin={handleJoin}
 				joinBusy={joinBusy}
+				joinBlocked={removed}
+				joinNotice={
+					removed
+						? t('groupChat.removed.overlay.headline')
+						: joinFailed
+							? t(
+									'groupChat.joinError.overlay.headline',
+									'Der Beitritt hat nicht geklappt.'
+								)
+							: undefined
+				}
 			/>
-			{joinFailed && (
-				<Typography
-					role="alert"
-					sx={{
-						position: 'fixed',
-						left: 0,
-						right: 0,
-						bottom: 104,
-						textAlign: 'center',
-						color: 'error.main',
-						zIndex: 66
-					}}
-				>
-					{t(
-						'groupChat.joinError.overlay.headline',
-						'Der Beitritt hat nicht geklappt.'
-					)}
-				</Typography>
-			)}
 		</>
 	);
 };

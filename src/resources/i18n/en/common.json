@@ -227,6 +227,11 @@
 			"headline": "You have been banned.",
 			"info": "We have asked you to respect the chat rules.<br/><br/>Because you have repeatedly failed to comply with the chat rules today, we have excluded you from todays chat.<br/><br/>Familiarize yourself with the chat rules!<br/><br/>If you are ready to follow the chat rules, you are welcome to chat again from tomorrow!"
 		},
+		"confirm": {
+			"description": "They can no longer write in this group and will see that they were removed.",
+			"submit": "Remove",
+			"title": "Remove {{name}} from this group?"
+		},
 		"is": {
 			"banned": " Banned"
 		}
@@ -1339,6 +1344,11 @@
 			"accept": "Agree",
 			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
 			"saveFailed": "Your agreement could not be saved. Please try again."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "You were removed from this group."
+			}
 		}
 	},
 	"help": {
@@ -3654,7 +3664,11 @@
 				"headline": "The invitation could not be loaded right now.",
 				"body": "Please check your connection and try again. Your invitation link stays valid."
 			},
-			"loading": "Loading the invitation …"
+			"loading": "Loading the invitation …",
+			"invalid": {
+				"headline": "This invitation link does not work.",
+				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
+			}
 		}
 	},
 	"releaseNote": {

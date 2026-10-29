@@ -1159,6 +1159,11 @@ export const SessionListItemComponent = ({
 			? translate('groupChat.listItem.subjectEmpty.self')
 			: translate('groupChat.listItem.subjectEmpty.other');
 		const groupModality = getModality(activeSession);
+		// A group stores only `topic`; for a Gesprächskreis it is the chosen topic.
+		const groupName =
+			typeof activeSession.item.topic === 'string'
+				? activeSession.item.topic
+				: activeSession.item.topic?.name || '';
 		return (
 			<div
 				onClick={handleOnClick}
@@ -1188,9 +1193,11 @@ export const SessionListItemComponent = ({
 				>
 					<div className="sessionsListItem__row">
 						<div className="sessionsListItem__rowLeft">
-							{activeSession.isGroup && (
+							{groupModality !== Modality.INTERNAL_GROUP && (
 								<TopicTag className="sessionsListItem__topic">
-									{translate('groupChat.noTopicSpecified')}
+									{(groupModality === Modality.SELF_HELP &&
+										groupName) ||
+										translate('groupChat.noTopicSpecified')}
 								</TopicTag>
 							)}
 						</div>
@@ -1253,9 +1260,7 @@ export const SessionListItemComponent = ({
 									'sessionsListItem__username--readLabel'
 							)}
 						>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
+							{groupName}
 						</div>
 					</div>
 					<div className="sessionsListItem__row">

@@ -225,6 +225,11 @@
 			"headline": "Sie wurden gebannt.",
 			"info": "Wir haben Sie gebeten, die Chat-Regeln einzuhalten.<br/><br/>Weil Sie heute die Chat-Regeln wiederholt nicht eingehalten haben, haben wir Sie für den heutigen Chat ausgeschlossen.<br/><br/>Machen Sie sich mit den Chat-Regeln vertraut!</br></br>Wenn Sie bereit sind, die Chat-Regeln einzuhalten, sind Sie ab morgen wieder im Chat willkommen!"
 		},
+		"confirm": {
+			"description": "Die Person kann in dieser Gruppe nicht mehr schreiben und sieht, dass sie entfernt wurde.",
+			"submit": "Entfernen",
+			"title": "{{name}} aus dieser Gruppe entfernen?"
+		},
 		"is": {
 			"banned": " Gebannt"
 		}
@@ -1357,6 +1362,11 @@
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
 			"saveFailed": "Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Sie wurden aus dieser Gruppe entfernt."
+			}
 		}
 	},
 	"help": {
@@ -3708,7 +3718,11 @@
 				"headline": "Die Einladung konnte gerade nicht geladen werden.",
 				"body": "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihr Einladungslink bleibt gültig."
 			},
-			"loading": "Die Einladung wird geladen …"
+			"loading": "Die Einladung wird geladen …",
+			"invalid": {
+				"headline": "Dieser Einladungslink funktioniert nicht.",
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
+			}
 		}
 	},
 	"releaseNote": {

@@ -154,6 +154,16 @@ describe('resolveGroupInviteEntry — what the registration route shows', () => 
 		).toBe('steps');
 	});
 
+	it.each(['19.', 'abc', '19.tok en', '.q2Vx8mK4'])(
+		'calls a gcid that is no group id invalid (%s)',
+		(gcid) => {
+			expect(resolveGroupInviteEntry({ ...base, gcid })).toBe('invalid');
+			expect(
+				resolveGroupInviteEntry({ ...base, gcid, agency: null })
+			).toBe('invalid');
+		}
+	);
+
 	it('falls back to the steps when the agency could not be loaded', () => {
 		expect(resolveGroupInviteEntry({ ...base, agency: null })).toBe(
 			'steps'
