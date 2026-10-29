@@ -1,6 +1,6 @@
 // @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
-import { directLinkRegistration } from './DirectLinkCallEntry';
+import { directLinkRegistration } from './directLinkRegistration';
 
 vi.mock('../registration/autoLogin', () => ({ redirectToApp: vi.fn() }));
 

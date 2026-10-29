@@ -63,6 +63,7 @@ import {
 	openDirectLinkConversation
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 
 /**
  * Landing page for invite links.
@@ -397,32 +398,31 @@ export const InviteLink = () => {
 		setStatus('registering');
 		try {
 			await registerThenLogin.submit(
-				{
-					username,
-					password,
-					agencyId: String(legacyRedeem.agencyId),
-					postcode: '00000',
-					termsAccepted: 'true',
-					preferredLanguage: locale,
-					consultingType:
-						legacyRedeem.consultingTypeId != null
-							? String(legacyRedeem.consultingTypeId)
-							: '0',
-					...(legacyRedeem.topicId != null
-						? { mainTopicId: String(legacyRedeem.topicId) }
-						: {}),
-					/* ORISO-UserService#1486: a direct-link registration
-					   carries the link and its temporary flag; the server
-					   then creates no enquiry. */
-					...(directLink && token
-						? {
-								directLinkToken: token,
-								temporary: Boolean(
-									directLink.context.temporaryAccount
-								)
-							}
-						: {})
-				} as any,
+				/* ORISO-UserService#1486: a direct-link registration carries the
+				   link and its temporary flag (one builder for chat and call);
+				   the server then creates no enquiry. */
+				(directLink && token
+					? directLinkRegistration(
+							directLink.context,
+							{ username, password },
+							locale,
+							token
+						)
+					: {
+							username,
+							password,
+							agencyId: String(legacyRedeem.agencyId),
+							postcode: '00000',
+							termsAccepted: 'true',
+							preferredLanguage: locale,
+							consultingType:
+								legacyRedeem.consultingTypeId != null
+									? String(legacyRedeem.consultingTypeId)
+									: '0',
+							...(legacyRedeem.topicId != null
+								? { mainTopicId: String(legacyRedeem.topicId) }
+								: {})
+						}) as any,
 				false,
 				tenant as any
 			);
