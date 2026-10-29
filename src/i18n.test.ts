@@ -327,3 +327,34 @@ describe('consulting-type catalogues are per language (#1154)', () => {
 		}
 	);
 });
+
+/** Keys repeated inside one JSON object; JSON.parse silently keeps only the last. */
+const duplicateKeys = (text: string): string[] => {
+	const stack: Set<string>[] = [];
+	const found: string[] = [];
+	const token = /"(?:[^"\\]|\\.)*"\s*:?|[{}[\]]/g;
+	for (const [match] of text.matchAll(token)) {
+		if (match === '{') stack.push(new Set());
+		else if (match === '[') stack.push(new Set(['[']));
+		else if (match === '}' || match === ']') stack.pop();
+		else if (match.endsWith(':')) {
+			const keys = stack[stack.length - 1];
+			const key = match.slice(0, match.lastIndexOf('"') + 1);
+			if (keys.has(key)) found.push(key);
+			keys.add(key);
+		}
+	}
+	return found;
+};
+
+describe('translation catalogues', () => {
+	it('repeat no key inside one object, which would hide the first block', () => {
+		const offenders = globSync('src/resources/i18n/**/*.json')
+			.map((file) => ({
+				file,
+				keys: duplicateKeys(readFileSync(file, 'utf8'))
+			}))
+			.filter(({ keys }) => keys.length > 0);
+		expect(offenders).toEqual([]);
+	});
+});
