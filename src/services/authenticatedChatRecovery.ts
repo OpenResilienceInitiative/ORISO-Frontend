@@ -29,6 +29,9 @@ import {
 	setRecoveryRuntimeStatus,
 	type RecoveryRuntimeStatus
 } from './recoveryReminderState';
+import { withTimeout } from '../utils/promiseTimeout';
+
+type HoldTokenRefresh = <T>(operation: () => Promise<T>) => Promise<T>;
 
 /** All automatic branches preserve any existing root/backup/enrollment evidence. */
 export const initializeChatRecovery = async (
@@ -179,4 +182,47 @@ export const startAuthenticatedChatRecovery = (
 				handoff.expiresAt
 			);
 	});
+};
+
+/** How long the setup gate's password step waits for the seal before it logs out anyway. */
+export const FIRST_PASSWORD_SEAL_TIMEOUT_MS = 30_000;
+
+/**
+ * The account-setup gate's password step (#1917): the counsellor has just set their OWN
+ * password for the first time, and the server has accepted it. Set recovery up and seal the
+ * recovery key under that password now, so a second factor still owed afterwards changes nothing
+ * for encryption — the next sign-in drops its password while the gate is pending.
+ *
+ * Call only after the password change succeeded, and only with the NEW password: the old one is
+ * the administrator's, and nothing may ever be sealed under it (#1481).
+ *
+ * Never rejects and never waits past its deadline: the password change and the logout must go
+ * on regardless. A failure leaves a retryable status, and the next password sign-in that is past
+ * the gate sets recovery up as before.
+ */
+export const sealRecoveryUnderFirstPassword = async (
+	client: MatrixClient,
+	policy: ChatRecoveryPolicy,
+	newPassword: string,
+	holdTokenRefresh: HoldTokenRefresh = (operation) => operation(),
+	timeoutMs: number = FIRST_PASSWORD_SEAL_TIMEOUT_MS
+): Promise<RecoveryRuntimeStatus | undefined> => {
+	const userId = client.getUserId();
+	if (policy.mode !== 'LOGIN_PASSWORD' || !userId || !newPassword) return;
+	try {
+		/* Not cancelled at the deadline: a run that finishes later still
+		   seals under the new password, and stopping it between setup and
+		   enrolment would only leave recovery without its envelope. */
+		const outcome = await withTimeout(
+			holdTokenRefresh(() =>
+				initializeChatRecovery(client, policy, newPassword)
+			),
+			timeoutMs,
+			'First password recovery seal timed out'
+		);
+		return outcome ?? 'retryable-failure';
+	} catch {
+		setRecoveryRuntimeStatus(userId, 'retryable-failure');
+		return 'retryable-failure';
+	}
 };

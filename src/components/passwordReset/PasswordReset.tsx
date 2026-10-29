@@ -19,6 +19,7 @@ import {
 	sealRecoveryKeyUnderPassword
 } from '../../services/passwordRecoveryEnrollment';
 import { PasswordEnvelopeStep } from './PasswordEnvelopeStep';
+import { sealRecoveryUnderFirstPassword } from '../../services/authenticatedChatRecovery';
 import * as React from 'react';
 import { useState, useContext, useRef } from 'react';
 import { InputField, InputFieldItem } from '../inputField/InputField';
@@ -407,16 +408,8 @@ export const PasswordReset = ({
 					);
 					return null;
 				} catch (error) {
-					/* No envelope exists at all — thrown before the password
-					   API is ever called, so there is no double change to
-					   fear. Outside the gate this points at the security
-					   settings; behind it those are unreachable, and there is
-					   still nothing to rotate. */
-					if (
-						firstChange &&
-						error instanceof PasswordRecoveryRepairRequiredError
-					)
-						return changeOnly();
+					if (!(error instanceof PasswordRecoveryRepairRequiredError))
+						throw error;
 					/* Recovery may be complete (secret storage, backup,
 					   recovery key) with no password envelope at all — set up
 					   with the recovery key, or enrolled while the setup gate
@@ -427,18 +420,46 @@ export const PasswordReset = ({
 					   A partial envelope still blocks — it would be orphaned.
 					   The new password must still come to unlock the history,
 					   so the follow-up step seals the recovery key under it. */
-					if (
-						error instanceof PasswordRecoveryRepairRequiredError &&
-						(await hasPasswordRecoveryEvidence(client).then(
-							(evidence) => !evidence,
-							() => false
-						))
-					) {
+					const withoutEnvelope = await hasPasswordRecoveryEvidence(
+						client
+					).then(
+						(evidence) => !evidence,
+						() => false
+					);
+					const completeRecovery =
+						withoutEnvelope &&
+						(await hasCompleteKeyRecovery(client));
+					/* No envelope exists at all — thrown before the password
+					   API is ever called, so there is no double change to
+					   fear. Behind the gate the security settings are
+					   unreachable and there is nothing to rotate, so the
+					   change goes through — and, unless the account is being
+					   re-onboarded onto recovery it already has (the
+					   follow-up step below covers that), recovery is set up
+					   and sealed under the NEW password right here (#1917): a
+					   second factor still owed would otherwise make the next
+					   sign-in drop the password, and nothing would be sealed
+					   until a later one. Never under the old password — that
+					   is the administrator's (#1481). */
+					if (firstChange && !completeRecovery) {
+						await apiUpdatePassword(oldPassword, newPassword);
+						await sealRecoveryUnderFirstPassword(
+							client,
+							policy,
+							newPassword,
+							(operation) =>
+								getMatrixClientService()?.holdTokenRefreshDuring(
+									operation
+								) ?? operation()
+						).catch(() => undefined);
+						return null;
+					}
+					if (withoutEnvelope) {
 						await apiUpdatePassword(oldPassword, newPassword);
 						/* Without secret storage and a server backup there is
 						   no recovery key to ask for; the next password
 						   sign-in sets recovery up under the new password. */
-						return (await hasCompleteKeyRecovery(client))
+						return completeRecovery
 							? {
 									client,
 									userId: id,

@@ -9,6 +9,7 @@ import {
 } from 'vite-plus/test';
 import {
 	initializeChatRecovery,
+	sealRecoveryUnderFirstPassword,
 	startAuthenticatedChatRecovery
 } from './authenticatedChatRecovery';
 import {
@@ -536,6 +537,112 @@ describe('no password in hand on a device without the backup key (#1741)', () =>
 			expect(
 				await consumeLoginRecoveryPassword('@synthetic:test')
 			).toBeNull();
+		}
+	});
+});
+
+/**
+ * The account-setup gate's password step (#1917): the counsellor has just set
+ * their OWN password for the first time. Recovery is set up and sealed under
+ * it right there, so a second factor still owed afterwards changes nothing for
+ * encryption. Nothing may ever be sealed under the administrator's password,
+ * and nothing here may hold the password change or the logout up.
+ */
+describe('sealing recovery under the first own password', () => {
+	const policy = { mode: 'LOGIN_PASSWORD', revision: 2 } as const;
+
+	it('sets recovery up and seals the key under the new password', async () => {
+		const c = client();
+		const hold = vi.fn((operation: () => Promise<unknown>) => operation());
+
+		const outcome = await sealRecoveryUnderFirstPassword(
+			c,
+			policy,
+			'new-synthetic',
+			hold as any
+		);
+
+		expect(outcome).toBe('ready');
+		expect(hold).toHaveBeenCalledOnce();
+		expect(setup).toHaveBeenCalledOnce();
+		expect(enroll).toHaveBeenCalledOnce();
+		expect(enroll).toHaveBeenCalledWith(
+			c,
+			'new-synthetic',
+			'synthetic-key',
+			2
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'ready'
+		);
+	});
+
+	it('seals nothing outside the login-password mode', async () => {
+		const outcome = await sealRecoveryUnderFirstPassword(
+			client(),
+			{ mode: 'RECOVERY_KEY' },
+			'new-synthetic'
+		);
+
+		expect(outcome).toBeUndefined();
+		expect(recover).not.toHaveBeenCalled();
+		expect(setup).not.toHaveBeenCalled();
+		expect(enroll).not.toHaveBeenCalled();
+		expect(runtimeStatus).not.toHaveBeenCalled();
+	});
+
+	it('resolves with a retryable status when sealing fails', async () => {
+		enroll.mockRejectedValue(new Error('homeserver unreachable'));
+
+		await expect(
+			sealRecoveryUnderFirstPassword(client(), policy, 'new-synthetic')
+		).resolves.toBe('retryable-failure');
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'retryable-failure'
+		);
+	});
+
+	it('resolves with a retryable status when even the token hold fails', async () => {
+		await expect(
+			sealRecoveryUnderFirstPassword(
+				client(),
+				policy,
+				'new-synthetic',
+				async () => {
+					throw new Error('refresh failed');
+				}
+			)
+		).resolves.toBe('retryable-failure');
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'retryable-failure'
+		);
+	});
+
+	it('gives up waiting at its deadline and records a retryable status', async () => {
+		vi.useFakeTimers();
+		try {
+			setup.mockReturnValue(new Promise(() => undefined));
+
+			const outcome = sealRecoveryUnderFirstPassword(
+				client(),
+				policy,
+				'new-synthetic',
+				undefined,
+				1000
+			);
+			await vi.advanceTimersByTimeAsync(1000);
+
+			await expect(outcome).resolves.toBe('retryable-failure');
+			expect(runtimeStatus).toHaveBeenLastCalledWith(
+				'@synthetic:test',
+				'retryable-failure'
+			);
+			expect(enroll).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
 		}
 	});
 });

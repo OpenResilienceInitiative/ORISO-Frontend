@@ -21,7 +21,10 @@ const state = vi.hoisted(() => ({
 	userData: {
 		chatRecoveryMode: 'LOGIN_PASSWORD',
 		chatRecoveryPolicyRevision: 1,
-		passwordChangeRequired: false
+		passwordChangeRequired: false,
+		twoFactorAuth: undefined as
+			| { isRequired: boolean; isActive: boolean }
+			| undefined
 	},
 	clientService: null as any,
 	update: vi.fn(),
@@ -30,6 +33,9 @@ const state = vi.hoisted(() => ({
 	completeRecovery: vi.fn(async () => true),
 	loadParked: vi.fn(async (): Promise<string | null> => null),
 	seal: vi.fn(async (..._args: unknown[]) => undefined),
+	firstSeal: vi.fn(
+		async (..._args: unknown[]): Promise<string | undefined> => 'ready'
+	),
 	RepairRequiredError: class extends Error {},
 	RepairBlockedError: class extends Error {},
 	WorkLimitError: class extends Error {},
@@ -70,6 +76,9 @@ vi.mock('../../services/passwordRecoveryEnrollment', () => ({
 	sealRecoveryKeyUnderPassword: state.seal,
 	passwordRecoveryEnrollmentErrorKey: () =>
 		'encryption.passwordRecovery.enrollmentFailed'
+}));
+vi.mock('../../services/authenticatedChatRecovery', () => ({
+	sealRecoveryUnderFirstPassword: state.firstSeal
 }));
 vi.mock('../profile/EncryptionSettings/RecoveryKeyField', () => ({
 	RecoveryKeyField: ({ value, onChange }: any) => (
@@ -133,6 +142,8 @@ beforeEach(() => {
 	state.completeRecovery.mockResolvedValue(true);
 	state.loadParked.mockResolvedValue(null);
 	state.seal.mockResolvedValue(undefined);
+	state.firstSeal.mockResolvedValue('ready');
+	state.userData.twoFactorAuth = undefined;
 	localStorage.clear();
 	state.userData.chatRecoveryMode = 'LOGIN_PASSWORD';
 	state.userData.passwordChangeRequired = false;
@@ -396,6 +407,158 @@ it('finishes the first password change when there is no enrolment to rotate', as
 
 	await waitFor(() => expect(state.logout).toHaveBeenCalled());
 	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+});
+
+/**
+ * #1917: an administrator provisioned the counsellor with a one-time password
+ * and a mandatory second factor. The next sign-in would still be behind the
+ * gate (the factor is owed), so it drops the password and nothing would be
+ * sealed until a later sign-in — a device switch before that leaves the
+ * history unreadable without the recovery key. So the gate's password step
+ * sets recovery up and seals it under the counsellor's OWN new password, right
+ * after the server accepted it. Never under the administrator's.
+ */
+describe('the gate’s first password change', () => {
+	beforeEach(() => {
+		state.userData.passwordChangeRequired = true;
+		state.userData.twoFactorAuth = { isRequired: true, isActive: false };
+		state.change.mockRejectedValue(new state.RepairRequiredError());
+		state.hasEvidence.mockResolvedValue(false);
+		state.completeRecovery.mockResolvedValue(false);
+		state.update.mockResolvedValue(undefined);
+	});
+
+	it('seals recovery under the new password after the change, before logging out', async () => {
+		const order: string[] = [];
+		state.update.mockImplementation(async () => {
+			order.push('update');
+		});
+		state.firstSeal.mockImplementation(async () => {
+			order.push('seal');
+			return 'ready';
+		});
+		state.logout.mockImplementation(() => {
+			order.push('logout');
+		});
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(order).toEqual(['update', 'seal', 'logout']);
+		expect(state.update).toHaveBeenCalledWith(
+			'old-synthetic',
+			'new-synthetic'
+		);
+		expect(state.firstSeal).toHaveBeenCalledOnce();
+		expect(state.firstSeal).toHaveBeenCalledWith(
+			expect.objectContaining({ getUserId: expect.any(Function) }),
+			{ mode: 'LOGIN_PASSWORD', revision: 1 },
+			'new-synthetic',
+			expect.any(Function)
+		);
+		expect(JSON.stringify(state.firstSeal.mock.calls)).not.toContain(
+			'old-synthetic'
+		);
+		expect(state.seal).not.toHaveBeenCalled();
+	});
+
+	it('still logs out when sealing fails, and leaves the retry to the next sign-in', async () => {
+		state.firstSeal.mockResolvedValue('retryable-failure');
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.update).toHaveBeenCalledWith(
+			'old-synthetic',
+			'new-synthetic'
+		);
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('still logs out when sealing throws outright', async () => {
+		state.firstSeal.mockRejectedValue(new Error('unexpected'));
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('seals nothing when the password change itself fails', async () => {
+		state.update.mockRejectedValue(new Error('BAD_REQUEST'));
+
+		submit();
+
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.passwordChangeFailed'
+			)
+		).toBeTruthy();
+		expect(state.firstSeal).not.toHaveBeenCalled();
+		expect(state.logout).not.toHaveBeenCalled();
+	});
+
+	it('also seals while an interrupted earlier attempt left evidence behind', async () => {
+		state.hasEvidence.mockResolvedValue(true);
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.firstSeal).toHaveBeenCalledWith(
+			expect.anything(),
+			{ mode: 'LOGIN_PASSWORD', revision: 1 },
+			'new-synthetic',
+			expect.any(Function)
+		);
+	});
+
+	it('seals nothing outside the login-password mode', async () => {
+		state.userData.chatRecoveryMode = 'RECOVERY_KEY';
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.firstSeal).not.toHaveBeenCalled();
+		expect(state.change).not.toHaveBeenCalled();
+	});
+
+	it('changes the password without sealing when there is no chat client', async () => {
+		state.clientService = null;
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.firstSeal).not.toHaveBeenCalled();
+	});
+
+	it('takes a re-onboarded account with complete recovery to the follow-up step instead', async () => {
+		state.completeRecovery.mockResolvedValue(true);
+		state.loadParked.mockResolvedValue('EsTc parked key');
+
+		submit();
+
+		await waitFor(() => expect(state.logout).toHaveBeenCalled());
+		expect(state.firstSeal).not.toHaveBeenCalled();
+		expect(state.seal).toHaveBeenCalledWith(
+			expect.anything(),
+			'@synthetic:test',
+			'new-synthetic',
+			'EsTc parked key',
+			1
+		);
+	});
+});
+
+it('seals nothing on an ordinary password change outside the gate', async () => {
+	state.change.mockRejectedValue(new state.RepairRequiredError());
+	state.hasEvidence.mockResolvedValue(false);
+	state.completeRecovery.mockResolvedValue(false);
+	state.update.mockResolvedValue(undefined);
+
+	submit();
+
+	await waitFor(() => expect(state.logout).toHaveBeenCalled());
+	expect(state.firstSeal).not.toHaveBeenCalled();
 });
 
 /**
