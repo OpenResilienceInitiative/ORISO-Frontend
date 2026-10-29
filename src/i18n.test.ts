@@ -339,7 +339,7 @@ const duplicateKeys = (text: string): string[] => {
 		else if (match === '}' || match === ']') stack.pop();
 		else if (match.endsWith(':')) {
 			const keys = stack[stack.length - 1];
-			// Decoded, so "calls" and "\\u0063alls" count as the same key, as for JSON.parse.
+			// Decoded, so "calls" and "\u0063alls" count as the same key, as for JSON.parse.
 			const key: string = JSON.parse(
 				match.slice(0, match.lastIndexOf('"') + 1)
 			);
