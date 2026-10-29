@@ -411,10 +411,10 @@ it('finishes the first password change when there is no enrolment to rotate', as
 
 /**
  * #1917: an administrator provisioned the counsellor with a one-time password
- * and a mandatory second factor. The next sign-in would still be behind the
- * gate (the factor is owed), so it drops the password and nothing would be
- * sealed until a later sign-in — a device switch before that leaves the
- * history unreadable without the recovery key. So the gate's password step
+ * and a mandatory second factor. The gate's password step logs out right
+ * after the change, so nothing would be sealed until a later sign-in — a
+ * device switch before that leaves the history unreadable without the
+ * recovery key. So the gate's password step
  * sets recovery up and seals it under the counsellor's OWN new password, right
  * after the server accepted it. Never under the administrator's.
  */

@@ -190,8 +190,8 @@ export const FIRST_PASSWORD_SEAL_TIMEOUT_MS = 30_000;
 /**
  * The account-setup gate's password step (#1917): the counsellor has just set their OWN
  * password for the first time, and the server has accepted it. Set recovery up and seal the
- * recovery key under that password now, so a second factor still owed afterwards changes nothing
- * for encryption — the next sign-in drops its password while the gate is pending.
+ * recovery key under that password now, so the history is sealed even before the next sign-in;
+ * that sign-in (with only the second factor owed) then unlocks it with the same password (#1931).
  *
  * Call only after the password change succeeded, and only with the NEW password: the old one is
  * the administrator's, and nothing may ever be sealed under it (#1481).

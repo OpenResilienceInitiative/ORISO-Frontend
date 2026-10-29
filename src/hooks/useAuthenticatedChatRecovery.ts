@@ -11,16 +11,24 @@ import {
 	hasUserAuthority
 } from '../globalState/helpers/stateHelpers';
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
-import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupStep';
+import {
+	ACCOUNT_SETUP_STEPS,
+	resolveAccountSetupStep
+} from '../components/twoFactorAuth/accountSetupStep';
 
 /**
  * Set the signed-in account's chat recovery up once its client has synced.
  *
  * Two accounts are held back, because nothing may be derived from a credential that is not the
- * account holder's alone: an anonymous session has no durable identity, and an account still
- * behind the setup gate signed in with the administrator's password. In LOGIN_PASSWORD mode the
- * recovery key would be sealed under that password and is never rotated afterwards, so it is
- * dropped instead and the next sign-in sets recovery up properly.
+ * account holder's alone: an anonymous session has no durable identity, and an account that still
+ * owes its own password signed in with the administrator's one-time password. In LOGIN_PASSWORD
+ * mode the recovery key would be sealed under that password and is never rotated afterwards, so it
+ * is dropped instead and the next sign-in sets recovery up properly (#1481).
+ *
+ * An account that only owes its second factor is NOT held back: its password is already the
+ * person's own — admin-created accounts set it in the Admin onboarding wizard or via
+ * forgot-password, because Keycloak refuses the one-time password. Recovery is sealed under it now,
+ * while the setup gate keeps blocking the UI until the second factor is enrolled (#1931).
  *
  * A hook of its own so the conditions are testable without mounting the authenticated app.
  */
@@ -38,7 +46,9 @@ export const useAuthenticatedChatRecovery = (
 			userData as UserDataInterface
 		);
 	const recoveryUserLoaded = !!userData;
-	const setupPending = isAccountSetupPending(userData);
+	/* Only the password step means the sign-in password is the administrator's. */
+	const adminPasswordPending =
+		resolveAccountSetupStep(userData) === ACCOUNT_SETUP_STEPS.PASSWORD;
 
 	useEffect(() => {
 		if (!matrixClientService || !recoveryUserLoaded) return;
@@ -49,7 +59,7 @@ export const useAuthenticatedChatRecovery = (
 			const userId = client?.getUserId();
 			if (!client || !userId || recoveryClients.current.has(client))
 				return;
-			if (recoveryAnonymous || setupPending) {
+			if (recoveryAnonymous || adminPasswordPending) {
 				clearLoginRecoveryPassword();
 				return;
 			}
@@ -93,7 +103,7 @@ export const useAuthenticatedChatRecovery = (
 		matrixClientService,
 		recoveryUserLoaded,
 		recoveryAnonymous,
-		setupPending,
+		adminPasswordPending,
 		recoveryMode,
 		recoveryRevision
 	]);
