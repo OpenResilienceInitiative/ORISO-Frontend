@@ -75,6 +75,8 @@ type CallStateChangeListener = (callData: CallData | null) => void;
 class CallManager {
 	private static instance: CallManager;
 	private currentCall: CallData | null = null;
+	/** A second call ringing while `currentCall` runs (FE#1904). */
+	private waitingCall: CallData | null = null;
 	private pendingJoin: object | null = null;
 	private pendingStart: {
 		callId: string;
@@ -1145,7 +1147,25 @@ class CallManager {
 		}
 
 		if (this.currentCall) {
-			// console.warn("⚠️  Already have an active call, ignoring incoming call");
+			/*
+			 * Busy: a second call rings beside the running one instead of
+			 * being dropped (Frank, 28 Oct). One waits at most; the running
+			 * call's own invite never rings twice.
+			 */
+			if (this.currentCall.callId === callId || this.waitingCall) return;
+			this.waitingCall = {
+				callId,
+				roomId: callRoomId,
+				isVideo,
+				isIncoming: true,
+				isGroup,
+				usesElementCall,
+				callerUserId,
+				state: 'ringing',
+				elementCallRoomId: callRoomId,
+				signalRoomId: signallingRoomId || callRoomId
+			};
+			this.notifyListeners();
 			return;
 		}
 
@@ -1197,6 +1217,48 @@ class CallManager {
 	}
 
 	/**
+	 * Answer the waiting second call: the running call ends first, then the
+	 * waiting one connects in its place. If the running call already ended
+	 * on its own (its hangup closes the surface), the call was promoted and
+	 * rings as the current one; it is answered as such.
+	 */
+	public answerWaitingCall(callId: string): void {
+		const next = this.waitingCall;
+		if (next?.callId !== callId) {
+			if (
+				this.currentCall?.callId === callId &&
+				this.currentCall.state === 'ringing'
+			)
+				this.answerCall();
+			return;
+		}
+		this.waitingCall = null;
+		this.leaveCall();
+		this.pendingStart = null;
+		this.pendingJoin = null;
+		this.currentCall = { ...next, state: 'connecting' };
+		this.notifyListeners();
+	}
+
+	/** Decline the waiting second call; the running call goes on. */
+	public rejectWaitingCall(): void {
+		const rejected = this.waitingCall;
+		if (!rejected) return;
+		this.waitingCall = null;
+		if (rejected.usesElementCall && !rejected.isGroup) {
+			this.sendElementCallHangup(rejected, 'user_rejected');
+		}
+		this.notifyListeners();
+	}
+
+	/** The running call is gone: a waiting call becomes the one that rings. */
+	private promoteWaitingCall(): void {
+		if (!this.waitingCall) return;
+		this.currentCall = this.waitingCall;
+		this.waitingCall = null;
+	}
+
+	/**
 	 * Reject the current incoming call
 	 */
 	public rejectCall(): void {
@@ -1228,6 +1290,7 @@ class CallManager {
 
 		// Warm-up / orphaned capture from the session click handler
 		releaseAllCallWarmupStreams();
+		this.promoteWaitingCall();
 
 		// console.log("✅ Call rejected and cleared");
 		// console.log("═══════════════════════════════════════════════");
@@ -1276,6 +1339,7 @@ class CallManager {
 		// media inside the iframe; this covers SessionMenu's getUserMedia
 		// warm-up which previously leaked on the Element Call path.
 		releaseAllCallWarmupStreams();
+		this.promoteWaitingCall();
 
 		this.notifyListeners();
 	}
@@ -1310,6 +1374,7 @@ class CallManager {
 				...(finalised ? { lifecycleFinalised: true } : {})
 			};
 			releaseAllCallWarmupStreams();
+			this.promoteWaitingCall();
 			this.notifyListeners();
 			return;
 		}
@@ -1326,6 +1391,16 @@ class CallManager {
 		callId: string | undefined,
 		signalRoomId: string
 	): boolean {
+		const waiting = this.waitingCall;
+		if (
+			callId &&
+			waiting?.callId === callId &&
+			(waiting.signalRoomId || waiting.roomId) === signalRoomId
+		) {
+			this.waitingCall = null;
+			this.notifyListeners();
+			return true;
+		}
 		if (
 			!callId ||
 			!this.currentCall ||
@@ -1411,6 +1486,11 @@ class CallManager {
 	 */
 	public getCurrentCall(): CallData | null {
 		return this.currentCall;
+	}
+
+	/** The second call ringing beside the running one, if any. */
+	public getWaitingCall(): CallData | null {
+		return this.waitingCall;
 	}
 
 	/**
