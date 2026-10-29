@@ -843,13 +843,18 @@ export const MenuOnThePhone: Story = {
 		return <RuntimeSessionListItem />;
 	},
 	play: async ({ canvasElement }) => {
+		// The 50 ms entrance delay has no transform; its first frame scales
+		// the row to 0.98. Read the settled anchor, like the desktop story.
+		settleCardEntrance(canvasElement);
 		const { menu, trigger } = await openTheMenu(canvasElement);
 		await expect(['below', 'above']).toContain(menu.dataset.placement);
 		// It hangs from the trigger's corner: 2 px below, right edge 4 px in.
-		const pill = trigger.getBoundingClientRect();
-		const hung = menu.getBoundingClientRect();
-		await expect(Math.round(pill.right - hung.right)).toBe(4);
-		await expect(Math.round(hung.top - pill.bottom)).toBe(2);
+		await waitFor(() => {
+			const pill = trigger.getBoundingClientRect();
+			const hung = menu.getBoundingClientRect();
+			expect(Math.round(pill.right - hung.right)).toBe(4);
+			expect(Math.round(hung.top - pill.bottom)).toBe(2);
+		});
 		await expectOnlyTheMenuRinged(canvasElement);
 		// And it stays inside the viewport either way.
 		const box = menu.getBoundingClientRect();

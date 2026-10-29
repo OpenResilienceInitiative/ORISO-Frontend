@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
@@ -1325,8 +1326,9 @@ export const MessageItemComponent = ({
 			? 'unchecked'
 			: 'safe';
 	};
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
-		tenant?.settings,
+		effectiveFeatures,
 		mediaChatType
 	);
 

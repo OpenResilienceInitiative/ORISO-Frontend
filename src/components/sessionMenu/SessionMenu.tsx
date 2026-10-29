@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getSessionMenuAgency } from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
@@ -138,6 +139,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		settings: currentTenantSettings,
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
+	const effectiveFeatures = useConversationFeatureSettings(
+		currentTenantSettings
+	);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
 	const supervisionPanel = useSupervisionPanel();
@@ -486,7 +490,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// One gate for every caller: the side room's controls ask the same
 	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
-	const callGates = resolveCallFeatureGates(currentTenantSettings, chatType);
+	const callGates = resolveCallFeatureGates(effectiveFeatures, chatType);
 	const isAudioCallsEnabled = callGates.audio && !isPracticing;
 	const isVideoCallsEnabled = callGates.video && !isPracticing;
 

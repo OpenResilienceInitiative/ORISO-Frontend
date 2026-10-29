@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
@@ -2382,17 +2383,18 @@ export const MessageSubmitInterfaceComponent = ({
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const hasUploadFunctionality =
 		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
-		hasMediaUploadFeature(tenant?.settings, currentChatType);
+		hasMediaUploadFeature(effectiveFeatures, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
 		featureVoiceMessagesOneOnOneChatsEnabled = true,
 		featureVoiceMessagesGroupChatsEnabled = true,
 		featureVoiceMessagesSupervisionChatsEnabled = true
-	} = tenant?.settings || {};
+	} = effectiveFeatures;
 	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
 		(currentChatType === 'anonymous'
