@@ -19,6 +19,8 @@ export interface DirectLinkCreateCardProps {
 	/** Phones: the share dialog fills the screen. */
 	compact?: boolean;
 	className?: string;
+	topicsLoadFailed?: boolean;
+	onRetryTopics?: () => void;
 }
 
 /**
@@ -32,7 +34,9 @@ export const DirectLinkCreateCard = ({
 	media,
 	onDone,
 	compact = false,
-	className
+	className,
+	topicsLoadFailed,
+	onRetryTopics
 }: DirectLinkCreateCardProps) => {
 	const { t } = useTranslation();
 	const { create } = useDirectLinks({ load: false });
@@ -78,6 +82,8 @@ export const DirectLinkCreateCard = ({
 				media={media}
 				onCreate={handleCreate}
 				isSubmitting={submitting}
+				topicsLoadFailed={topicsLoadFailed}
+				onRetryTopics={onRetryTopics}
 				errorMessage={
 					failed ? t('directLink.card.createFailed') : undefined
 				}

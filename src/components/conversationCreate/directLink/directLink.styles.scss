@@ -1,5 +1,7 @@
 /* #1795: direct link card, share dialog and "Meine Direktlinks". M3 roles only. */
 
+@import '../pillButton';
+
 .directLinkCard {
 	&__fields {
 		display: flex;
@@ -77,25 +79,9 @@
 	}
 
 	&__create {
-		align-items: center;
-		background: rgba(27, 27, 28, 0.1);
-		border: none;
-		border-radius: 100px;
-		color: var(--m3-on-surface, #1b1b1c);
-		display: flex;
-		font-size: 16px;
-		font-weight: 500;
-		gap: 8px;
-		justify-content: center;
-		line-height: 24px;
-		opacity: 0.38;
-		padding: 12px 24px;
-		width: 100%;
+		@include cc-pill-button;
 
-		svg {
-			height: 24px;
-			width: 24px;
-		}
+		padding: 12px 24px;
 
 		&--ready {
 			background: var(--m3-primary, #a5000a);

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 import type { ListItemInterface } from '../../globalState/interfaces';
-import { statisticsEnabled, upcomingCirclesFrom } from './dashboardData';
+import {
+	formatCircleWhen,
+	last30Days,
+	statisticsEnabled,
+	upcomingCirclesFrom
+} from './dashboardData';
 
 const now = new Date('2026-10-28T12:00:00Z');
 
@@ -101,5 +106,31 @@ describe('statisticsEnabled', () => {
 				settings: { featureStatisticsEnabled: true }
 			} as never)
 		).toBe(true);
+	});
+});
+
+describe('formatCircleWhen', () => {
+	it('accepts the informal German UI locale', () => {
+		const when = new Date('2026-10-30T18:00:00Z');
+		expect(formatCircleWhen(when, 'de@informal')).toBe(
+			formatCircleWhen(when, 'de')
+		);
+	});
+});
+
+describe('last30Days', () => {
+	it('counts in the local calendar, not in UTC', () => {
+		const zone = process.env.TZ;
+		process.env.TZ = 'Europe/Berlin';
+		try {
+			// 00:30 in Berlin is still the previous day in UTC.
+			const today = new Date('2026-10-29T00:30:00+01:00');
+			expect(last30Days(today)).toEqual({
+				startDate: '2026-09-30',
+				endDate: '2026-10-29'
+			});
+		} finally {
+			process.env.TZ = zone;
+		}
 	});
 });

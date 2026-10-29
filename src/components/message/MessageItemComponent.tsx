@@ -2663,10 +2663,13 @@ export const MessageItemComponent = ({
 													)
 											),
 										{
-											asker: hasUserAuthority(
-												AUTHORITIES.ASKER_DEFAULT,
-												userData
-											)
+											// Direct links are 1:1; a group has no own knock to look up.
+											asker:
+												!activeSession?.isGroup &&
+												hasUserAuthority(
+													AUTHORITIES.ASKER_DEFAULT,
+													userData
+												)
 										}
 									)
 					}

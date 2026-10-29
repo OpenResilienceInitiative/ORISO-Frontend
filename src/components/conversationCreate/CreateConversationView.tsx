@@ -556,6 +556,8 @@ const CreateConversationFlow = ({
 			agencies={directLinkAgencies}
 			media={directLinkMedia}
 			compact={!fromL}
+			topicsLoadFailed={topicsLoadFailed}
+			onRetryTopics={loadTopics}
 			/* "Fertig": the link now lives in "Gespräche". */
 			onDone={() => navigate('/sessions/consultant/sessionView')}
 		/>

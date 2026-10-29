@@ -78,7 +78,7 @@ export const CreateAndShare: Story = {
 		const body = within(canvasElement.ownerDocument.body);
 		await chooseTopic(canvasElement, 'Schulden');
 		await userEvent.click(
-			canvas.getByRole('radio', { name: 'Videoanruf' })
+			canvas.getByRole('button', { name: 'Videoanruf' })
 		);
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Link erstellen' })
@@ -124,7 +124,7 @@ export const CreateForOneOfTwoAgencies: Story = {
 	),
 	play: async ({ canvasElement, canvas }) => {
 		await chooseTopic(canvasElement, 'Sozialberatung');
-		await userEvent.click(canvas.getByRole('radio', { name: 'Chat' }));
+		await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Link erstellen' })
 		);
@@ -156,10 +156,14 @@ export const OnlyAllowedMedia: Story = {
 	beforeEach: () => installDirectLinkMockApi(),
 	render: () => <Card media={['CHAT']} />,
 	play: async ({ canvas }) => {
-		await expect(canvas.getAllByRole('radio')).toHaveLength(1);
-		await expect(canvas.getByRole('radio', { name: 'Chat' })).toBeVisible();
 		await expect(
-			canvas.queryByRole('radio', { name: 'Videoanruf' })
+			canvas.getAllByRole('button', { pressed: false })
+		).toHaveLength(1);
+		await expect(
+			canvas.getByRole('button', { name: 'Chat' })
+		).toBeVisible();
+		await expect(
+			canvas.queryByRole('button', { name: 'Videoanruf' })
 		).toBeNull();
 	}
 };
@@ -171,7 +175,7 @@ export const CreateFails: Story = {
 	render: () => <Card />,
 	play: async ({ canvasElement, canvas }) => {
 		await chooseTopic(canvasElement, 'Schulden');
-		await userEvent.click(canvas.getByRole('radio', { name: 'Chat' }));
+		await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Link erstellen' })
 		);

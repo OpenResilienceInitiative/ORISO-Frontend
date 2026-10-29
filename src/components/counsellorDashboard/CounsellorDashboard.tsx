@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkMediumIcon } from '../conversationCreate/directLink/DirectLinkMediumIcon';
@@ -33,6 +34,8 @@ export interface CounsellorDashboardProps {
 	onToggleLink: (id: string, active: boolean) => void;
 	onShowQr: (link: DirectLink) => void;
 	onCopy?: (url: string) => void | Promise<void>;
+	/** Shown under the title, e.g. the links failed to load. */
+	alert?: ReactNode;
 }
 
 const DashboardStatsTile = ({ stats }: { stats: DashboardStats }) => {
@@ -101,11 +104,12 @@ export const CounsellorDashboard = ({
 	upcomingCircles,
 	onToggleLink,
 	onShowQr,
-	onCopy
+	onCopy,
+	alert
 }: CounsellorDashboardProps) => {
 	const { t } = useTranslation();
 
-	if (links.length === 0 && upcomingCircles.length === 0) {
+	if (!alert && links.length === 0 && upcomingCircles.length === 0) {
 		return (
 			<EmptyState
 				className="session__emptyState"
@@ -121,6 +125,7 @@ export const CounsellorDashboard = ({
 				<h2 className="counsellorDashboard__title">
 					{t('dashboard.title')}
 				</h2>
+				{alert}
 				{stats && <DashboardStatsTile stats={stats} />}
 				<div
 					className={`counsellorDashboard__content${

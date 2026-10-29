@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	LocaleContext,
@@ -19,32 +19,7 @@ import {
 } from '../waitingRoom/callEntry/callEntryTypes';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
-
-/**
- * A registration through a counsellor direct link (ORISO-UserService#1486):
- * the link's token and its temporary flag go along. The server then creates
- * no enquiry; the person's own conversation is opened right after.
- */
-export const directLinkRegistration = (
-	context: InviteLinkContext,
-	{ username, password }: Pick<CallEntryAccount, 'username' | 'password'>,
-	locale: string,
-	token: string
-) => ({
-	directLinkToken: token,
-	temporary: Boolean(context.temporaryAccount),
-	username,
-	password,
-	agencyId: String(context.agencyId ?? ''),
-	postcode: '00000',
-	termsAccepted: 'true',
-	preferredLanguage: locale,
-	consultingType:
-		context.consultingTypeId != null
-			? String(context.consultingTypeId)
-			: '0',
-	...(context.topicId != null ? { mainTopicId: String(context.topicId) } : {})
-});
+import { directLinkRegistration } from './directLinkRegistration';
 
 export interface DirectLinkCallEntryDeps {
 	/** Creates the account and signs in. */
@@ -105,28 +80,25 @@ export const DirectLinkCallEntry = ({
 	const open =
 		deps.open ?? ((value: string) => openDirectLinkConversation(value));
 
-	const handleJoin = useCallback(
-		async (account: CallEntryAccount) => {
-			setJoining(true);
-			try {
-				await register(account);
-				await open(token);
-				return true;
-			} catch {
-				setJoining(false);
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: t('directLink.entry.joinFailed'),
-					text: '',
-					closeable: true,
-					timeout: 5000
-				});
-				return false;
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- register/open are stable for the screen's life
-		[addNotification, t, token]
-	);
+	// Not memoised: `register` reads the current locale and tenant.
+	const handleJoin = async (account: CallEntryAccount) => {
+		setJoining(true);
+		try {
+			await register(account);
+			await open(token);
+			return true;
+		} catch {
+			setJoining(false);
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t('directLink.entry.joinFailed'),
+				text: '',
+				closeable: true,
+				timeout: 5000
+			});
+			return false;
+		}
+	};
 
 	return (
 		<CallEntryRoom

@@ -10,6 +10,7 @@ import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 
 vi.mock('../../api/apiRedeemInviteLink', async () => {
 	const actual = await vi.importActual<
@@ -325,6 +326,34 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 			temporary: true
 		});
 		expect(body.password.length).toBeGreaterThan(8);
+	});
+
+	it('sends a chat link the same registration as a call link', async () => {
+		const context = { ...directContext('CHAT'), agencyId: null };
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			context as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 45,
+			medium: 'CHAT',
+			admission: 'DIRECT',
+			created: true
+		});
+		renderInvite();
+		await screen.findByLabelText('User-ID');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const body = vi.mocked(apiPostRegistration).mock.calls[0][1] as any;
+		expect(body).toEqual(
+			directLinkRegistration(
+				context as any,
+				body,
+				body.preferredLanguage,
+				'token-123'
+			)
+		);
 	});
 
 	it('shows the password field when the platform does not hide it', async () => {

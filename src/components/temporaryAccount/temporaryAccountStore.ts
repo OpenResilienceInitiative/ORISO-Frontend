@@ -6,6 +6,10 @@ import {
 } from '../../api/apiTemporaryAccount';
 import type { TemporaryAccountState } from '../../globalState/interfaces';
 import {
+	addEventListener,
+	EVENT_SESSION_TEARDOWN
+} from '../../utils/eventHandler';
+import {
 	effectiveRetention,
 	MessageRetention,
 	mustAskGuest
@@ -16,18 +20,23 @@ import {
  * read once per page and shared by every message and the composer.
  */
 interface Snapshot {
-	status: 'idle' | 'loading' | 'ready';
+	/** `failed`: the lookup broke; the next load (or send) tries again. */
+	status: 'idle' | 'loading' | 'ready' | 'failed';
 	account: TemporaryAccountState | null;
 }
 
 let snapshot: Snapshot = { status: 'idle', account: null };
 const listeners = new Set<() => void>();
 let inflight: Promise<void> | null = null;
+// Bumped on reset, so a lookup of the previous person never lands.
+let generation = 0;
 
 const publish = (next: Snapshot) => {
 	snapshot = next;
 	listeners.forEach((listener) => listener());
 };
+
+export const getOwnTemporaryAccount = () => snapshot;
 
 export const loadTemporaryAccount = (
 	{ force = false } = {},
@@ -35,22 +44,37 @@ export const loadTemporaryAccount = (
 ): Promise<void> => {
 	if (inflight) return inflight;
 	if (snapshot.status === 'ready' && !force) return Promise.resolve();
+	const started = generation;
+	const settle = (next: Snapshot) => {
+		if (started === generation) publish(next);
+	};
 	publish({ ...snapshot, status: 'loading' });
-	inflight = get()
-		.then((account) => publish({ status: 'ready', account }))
-		// A failed lookup is no temporary account: nothing is labelled or asked.
-		.catch(() => publish({ status: 'ready', account: null }))
+	const request = get()
+		.then((account) => settle({ status: 'ready', account }))
+		// Only a 404 means "no temporary account"; anything else stays retryable.
+		.catch(() => settle({ status: 'failed', account: null }))
 		.finally(() => {
-			inflight = null;
+			if (inflight === request) inflight = null;
 		});
-	return inflight;
+	inflight = request;
+	return request;
 };
 
-/** Tests and stories only. */
+/** Sign-out, tests and stories: forget the previous person's account. */
 export const resetTemporaryAccount = (
 	account: TemporaryAccountState | null = null,
 	status: Snapshot['status'] = account ? 'ready' : 'idle'
-) => publish({ status, account });
+) => {
+	generation += 1;
+	inflight = null;
+	publish({ status, account });
+};
+
+// The next person must be asked about their own messages.
+addEventListener(EVENT_SESSION_TEARDOWN, async (args) => {
+	resetTemporaryAccount();
+	return args;
+});
 
 const subscribe = (listener: () => void) => {
 	listeners.add(listener);
@@ -58,7 +82,7 @@ const subscribe = (listener: () => void) => {
 };
 
 /** `enabled`: only askers have one; counsellors never ask. */
-export const useOwnTemporaryAccount = (enabled: boolean) => {
+export const useOwnTemporaryAccount = (enabled: boolean): Snapshot => {
 	const current = useSyncExternalStore(subscribe, () => snapshot);
 	useEffect(() => {
 		if (enabled) void loadTemporaryAccount();
@@ -93,7 +117,7 @@ export const needsRetentionAnswer = (
 /** Deleted guests read "Gast (gelöscht)" on the counsellor's side. */
 export const isDeletedGuest = (
 	account: TemporaryAccountState | null | undefined
-) => Boolean(account?.deleted || account?.isDeleted);
+) => Boolean(account?.deleted);
 
 export const answerRetention = async (
 	choice: MessageRetention,

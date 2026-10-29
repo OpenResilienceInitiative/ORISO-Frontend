@@ -119,11 +119,26 @@ export const useDirectLinkKnock = (
 
 	const knockAgain = useCallback(() => {
 		if (knockingAgain.current) return;
+		// Without the link (a knock adopted from another device) or when the
+		// link refuses, there is nothing to wait for: the dialog goes.
+		if (!current.token) {
+			close();
+			return;
+		}
 		knockingAgain.current = true;
 		start(current.token)
 			.then((conversation) => {
 				const fresh = pendingKnockFrom(current.token, conversation);
-				if (!fresh) return;
+				if (!fresh) {
+					// DIRECT: the link lets the person in without a knock now.
+					setPhase((now) =>
+						nextKnockWaitPhase(
+							nextKnockWaitPhase(now, 'knockAgain'),
+							'admitted'
+						)
+					);
+					return;
+				}
 				const next = { ...fresh, joinExisting: current.joinExisting };
 				rememberPendingKnock(next);
 				setCurrent(next);
@@ -134,11 +149,11 @@ export const useDirectLinkKnock = (
 						: waiting;
 				});
 			})
-			.catch(() => undefined)
+			.catch(close)
 			.finally(() => {
 				knockingAgain.current = false;
 			});
-	}, [current.joinExisting, current.token, start]);
+	}, [close, current.joinExisting, current.token, start]);
 
 	return { phase, gone, cancel, knockAgain, close };
 };
