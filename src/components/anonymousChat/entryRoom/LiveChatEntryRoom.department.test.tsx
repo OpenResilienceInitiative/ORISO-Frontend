@@ -29,6 +29,12 @@ vi.mock('../../legalLinks/LegalLinks', () => ({
 	__esModule: true,
 	default: () => <span />
 }));
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: () => Promise.resolve(undefined)
+}));
+vi.mock('../../../api/apiGetAgencyId', () => ({
+	apiGetAgencyById: () => Promise.resolve(null)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../../api/apiGetAnonymousEnquiryDetails', () => ({
 	apiGetAnonymousEnquiryDetails: vi.fn()
@@ -57,9 +63,9 @@ afterEach(() => {
 });
 
 /* Gate 2 (ADR-022): once a centre has taken the conversation, its department
-   (ADR-003: agency × topic) governs the sentence and every legal link on the
-   page — the frame's footer included, not only the checkbox. */
-it("hands the accepting centre's department to the sentence and to the frame", async () => {
+   (ADR-003: agency × topic) governs the consent sentence. The frame's legal
+   links stay the platform's — nobody has signed up yet (Frank, 2026-10-28). */
+it("hands the accepting centre's department to the sentence, not to the frame", async () => {
 	vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
 		status: 'IN_PROGRESS',
 		agencyId: 7,
@@ -74,7 +80,7 @@ it("hands the accepting centre's department to the sentence and to the frame", a
 
 	expect(apiGetConsentText).toHaveBeenCalledWith(7, 20);
 	expect(room.props.department).toEqual({ agencyId: 7, topicId: 20 });
-	expect(shell.props.department).toEqual({ agencyId: 7, topicId: 20 });
+	expect(shell.props.department).toBeUndefined();
 });
 
 it('keeps the platform documents in the frame while nobody has accepted', async () => {
@@ -90,5 +96,5 @@ it('keeps the platform documents in the frame while nobody has accepted', async 
 		await vi.advanceTimersByTimeAsync(0);
 	});
 
-	expect(shell.props.department).toBeNull();
+	expect(shell.props.department).toBeUndefined();
 });

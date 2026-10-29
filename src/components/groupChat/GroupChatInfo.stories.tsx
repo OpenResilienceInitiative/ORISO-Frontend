@@ -70,6 +70,9 @@ const MEMBERS = [
  */
 type ChatInfoResponse = 'ok' | 'fail' | 'hang';
 
+/** Ban requests the mocked backend received, reset per story. */
+const banRequests: string[] = [];
+
 const useBackendMocks = (
 	listItem: ListItemInterface,
 	bannedUsers: string[] = [],
@@ -83,6 +86,7 @@ const useBackendMocks = (
 		const originalOn = service.onMatrixRoomMembers;
 		// The moderator list uses Matrix ids, as the real room does.
 		(listItem.chat as any).moderators = [MEMBERS[0].userId];
+		banRequests.length = 0;
 		globalThis.fetch = async (input, init) => {
 			const url =
 				typeof input === 'string'
@@ -90,6 +94,10 @@ const useBackendMocks = (
 					: input instanceof URL
 						? input.toString()
 						: input.url;
+			if (url.endsWith('/ban')) {
+				banRequests.push(url);
+				return new Response(null, { status: 204 });
+			}
 			if (url.includes('/service/users/sessions/room')) {
 				return new Response(JSON.stringify({ sessions: [listItem] }), {
 					status: 200,
@@ -699,4 +707,84 @@ export const DialogAskerBanCheckFailed: Story = {
 		).toBeNull();
 		await expect(dialog.queryByText('ruhiges Yak Kim')).toBeNull();
 	}
+};
+
+/** #1923 E — "Bannen" asks first; only the confirm button removes the member. */
+const banAsksFirst: Story['play'] = async () => {
+	const page = within(document.body);
+	const info = await page.findByRole('dialog', {}, { timeout: 5000 });
+	await within(info).findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+	const options = await waitFor(() => {
+		const button = within(info).getByRole('button', {
+			name: 'Optionen für ruhiges Yak Kim'
+		});
+		expect(button).toBeVisible();
+		return button;
+	});
+	const title = i18n.t('banUser.confirm.title', { name: 'ruhiges Yak Kim' });
+	const openConfirm = async () => {
+		await userEvent.click(options);
+		await userEvent.click(
+			await page.findByRole('menuitem', {
+				name: i18n.t('banUser.ban.trigger').trim()
+			})
+		);
+		const confirm = await page.findByRole('dialog', { name: title });
+		await waitFor(() => expect(confirm).toBeVisible());
+		return confirm;
+	};
+
+	// Cancel: nothing is sent, focus returns to ⋮.
+	let confirm = await openConfirm();
+	await expect(confirm).toHaveTextContent(
+		i18n.t('banUser.confirm.description')
+	);
+	await expect(
+		within(confirm).getByRole('button', { name: i18n.t('app.close') })
+	).toBeVisible();
+	await userEvent.click(
+		within(confirm).getByRole('button', { name: i18n.t('app.cancel') })
+	);
+	await waitFor(() =>
+		expect(page.queryByRole('dialog', { name: title })).toBeNull()
+	);
+	await waitFor(() => expect(options).toHaveFocus());
+	await expect(banRequests).toHaveLength(0);
+
+	// Escape cancels too, and leaves the Chat-Info open.
+	confirm = await openConfirm();
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() =>
+		expect(page.queryByRole('dialog', { name: title })).toBeNull()
+	);
+	await expect(info).toBeVisible();
+	await expect(banRequests).toHaveLength(0);
+
+	// Confirm removes exactly once.
+	confirm = await openConfirm();
+	await userEvent.click(
+		within(confirm).getByRole('button', {
+			name: i18n.t('banUser.confirm.submit')
+		})
+	);
+	await waitFor(() => expect(banRequests).toHaveLength(1));
+	await expect(banRequests[0]).toContain('ruhiges-yak-kim');
+	await waitFor(() =>
+		expect(page.queryByRole('dialog', { name: title })).toBeNull()
+	);
+	await expect(banRequests).toHaveLength(1);
+};
+
+export const DialogBanConfirm1366: Story = {
+	name: 'Dialog · 1366 ban asks first, Cancel and Escape do nothing',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: banAsksFirst
+};
+
+export const DialogBanConfirm390: Story = {
+	name: 'Dialog · 390 ban asks first, Cancel and Escape do nothing',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog />,
+	play: banAsksFirst
 };

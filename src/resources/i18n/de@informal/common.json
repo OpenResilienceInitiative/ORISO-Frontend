@@ -439,6 +439,11 @@
 			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimme der Datenschutzerklärung dieser Beratungsstelle zu, bevor du in der Gruppe schreibst.",
 			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
 			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Du wurdest aus dieser Gruppe entfernt."
+			}
 		}
 	},
 	"help": {
@@ -1345,6 +1350,9 @@
 		"groupInvite": {
 			"loadError": {
 				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			},
+			"invalid": {
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte frag die Person, die dir den Link geschickt hat, nach einem neuen."
 			}
 		}
 	},
@@ -2753,6 +2761,19 @@
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
+	},
+	"directLink": {
+		"card": {
+			"headline": "Ein Link direkt zu dir",
+			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf."
+		},
+		"share": {
+			"title": "Dein Direktlink ist bereit",
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+		}
+	},
+	"dashboard": {
+		"title": "Dein Überblick"
 	},
 	"temporaryAccount": {
 		"keepDialog": {

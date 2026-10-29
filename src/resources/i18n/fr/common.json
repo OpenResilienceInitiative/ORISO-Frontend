@@ -230,6 +230,11 @@
 			"headline": "Ils ont été bannis.",
 			"info": "Nous vous avons demandé de respecter les règles du chat.<br/><br/>Comme vous n'avez pas respecté les règles du chat à plusieurs reprises aujourd'hui, nous vous avons exclu du chat d'aujourd'hui.<br/><br/>Faites connaissance avec les règles du chat!</br></br>Si vous êtes prêt à respecter les règles du chat, vous serez à nouveau le bienvenu sur le chat dès demain !"
 		},
+		"confirm": {
+			"description": "Cette personne ne pourra plus écrire dans ce groupe et verra qu’elle en a été retirée.",
+			"submit": "Retirer",
+			"title": "Retirer {{name}} de ce groupe ?"
+		},
 		"is": {
 			"banned": " Captivé"
 		}
@@ -1362,6 +1367,11 @@
 			"accept": "J'accepte",
 			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",
 			"saveFailed": "Votre accord n'a pas pu être enregistré. Veuillez réessayer."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Vous avez été retiré(e) de ce groupe."
+			}
 		}
 	},
 	"help": {
@@ -3688,7 +3698,11 @@
 				"headline": "L'invitation n'a pas pu être chargée pour le moment.",
 				"body": "Veuillez vérifier votre connexion et réessayer. Votre lien d'invitation reste valable."
 			},
-			"loading": "Chargement de l'invitation …"
+			"loading": "Chargement de l'invitation …",
+			"invalid": {
+				"headline": "Ce lien d'invitation ne fonctionne pas.",
+				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
+			}
 		}
 	},
 	"releaseNote": {
@@ -6246,6 +6260,56 @@
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Lien direct",
+			"subtitle": "Pour les personnes en recherche de conseil",
+			"headline": "Un lien direct vers vous",
+			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
+			"topicLabel": "Choisir un thème",
+			"mediumLabel": "Type de contact",
+			"temporary": "Compte temporaire",
+			"temporaryHint": "Le compte est supprimé après l’entretien.",
+			"create": "Créer le lien"
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Appel audio",
+			"video": "Appel vidéo"
+		},
+		"temporary": "Temporaire",
+		"copy": "Copier le lien",
+		"share": {
+			"title": "Votre lien direct est prêt",
+			"description": "Partagez le lien ou le code QR. Chaque personne obtient son propre entretien avec vous.",
+			"copied": "Copié",
+			"share": "Partager",
+			"qrAlt": "Code QR du lien direct",
+			"done": "Terminé",
+			"linkLabel": "Lien direct"
+		},
+		"list": {
+			"title": "Mes liens directs",
+			"qr": "Afficher le code QR",
+			"active": "{{name}} actif"
+		}
+	},
+	"dashboard": {
+		"title": "Votre aperçu",
+		"stats": {
+			"title": "Consultations",
+			"period": "30 derniers jours",
+			"assigned": "Nouvelles prises en charge",
+			"active": "Actives",
+			"archived": "Archivées",
+			"sentMessages": "Messages envoyés"
+		},
+		"circles": {
+			"title": "Prochains groupes d’entraide",
+			"participants": "{{count}} participant·e·s",
+			"participants_one": "{{count}} participant·e"
 		}
 	},
 	"temporaryAccount": {
