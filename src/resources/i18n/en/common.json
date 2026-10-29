@@ -2585,7 +2585,7 @@
 			"profileIcon": "Profile icon",
 			"register": {
 				"button": {
-					"label": "Register"
+					"label": "Request counselling"
 				},
 				"consultingModeInfo": {
 					"groupChats": "In self-help, those affected exchange information with each other about a topic or concern. Those affected talk about their problems, feelings and hopes and learn how others have overcome problems. The groups are led by moderators.",
@@ -2596,7 +2596,7 @@
 				},
 				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
 				"dialog": {
-					"openButton": "Request another topic",
+					"openButton": "Start further counselling",
 					"title": "Start a new request",
 					"close": "Close"
 				},
@@ -6187,6 +6187,56 @@
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommend further counselling",
+			"endDuplicate": "End duplicate counselling",
+			"endDuplicateDescription": "Ends this second counselling on the same topic"
+		},
+		"recommend": {
+			"title": "Recommend further counselling",
+			"intro": "The person seeking advice sees your recommendation as a card in the chat and can find a suitable counselling centre from there.",
+			"topicLabel": "Topic",
+			"noteLabel": "Note (optional)",
+			"noteHint": "The note appears on the card in the chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Send recommendation",
+			"cancel": "Cancel",
+			"successHeadline": "Your recommendation has been sent.",
+			"successButton": "Close",
+			"error": "The recommendation could not be sent. Please try again.",
+			"errorForbidden": "Only the counsellor assigned to this conversation can recommend further counselling.",
+			"errorConflict": "A recommendation is not possible in this conversation right now.",
+			"topicsUnavailable": "The topics could not be loaded. Please try again later."
+		},
+		"card": {
+			"title": "Recommendation: further counselling",
+			"topic": "Topic: {{topic}}",
+			"defaultText": "Please keep to one counselling per topic. Your current counsellor will be informed as soon as the new counselling begins.",
+			"noteLabel": "Note from the counsellor",
+			"findAgency": "Find a counselling centre",
+			"requested": "Request sent",
+			"topicUnknown": "another topic"
+		},
+		"duplicate": {
+			"startedTitle": "Further counselling on the same topic",
+			"started": "A further counselling on the topic {{topic}} has started. Please agree together which one continues. The other one should be ended.",
+			"endedTitle": "Second counselling ended",
+			"ended": "The second counselling on the topic {{topic}} has been ended.",
+			"confirm": {
+				"headline": "End duplicate counselling?",
+				"copy": "This counselling will be ended and moved to the archive. Your other counselling on the same topic continues.",
+				"confirm": "End counselling",
+				"cancel": "Cancel"
+			},
+			"error": "The counselling could not be ended. Please try again."
+		},
+		"request": {
+			"sameTopicInfo": "Only one counselling per topic is intended at a time. If you start a counselling on a topic you are already discussing, your current counsellor will be informed as soon as the new one is accepted. One of the two will then be ended.",
+			"consentAria": "Consent to the counselling centre’s data protection terms",
+			"cancel": "Cancel"
 		}
 	},
 	"directLink": {

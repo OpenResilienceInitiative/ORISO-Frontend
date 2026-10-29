@@ -2762,6 +2762,23 @@
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
 	},
+	"furtherCounselling": {
+		"recommend": {
+			"intro": "Die ratsuchende Person sieht deine Empfehlung als Karte im Chat und kann von dort eine passende Beratungsstelle finden.",
+			"successHeadline": "Deine Empfehlung wurde gesendet.",
+			"error": "Die Empfehlung konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"topicsUnavailable": "Die Themen konnten nicht geladen werden. Bitte versuche es später erneut."
+		},
+		"duplicate": {
+			"confirm": {
+				"copy": "Diese Beratung wird beendet und ins Archiv verschoben. Deine andere Beratung zum gleichen Thema läuft weiter."
+			},
+			"error": "Die Beratung konnte nicht beendet werden. Bitte versuche es erneut."
+		},
+		"request": {
+			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Startest du eine Beratung zu einem Thema, das du schon besprichst, wird deine bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet."
+		}
+	},
 	"calls": {
 		"states": {
 			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}.",

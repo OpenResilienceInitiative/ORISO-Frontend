@@ -2589,7 +2589,7 @@
 			"profileIcon": "Photo de profil",
 			"register": {
 				"button": {
-					"label": "S'inscrire"
+					"label": "Demander un accompagnement"
 				},
 				"consultingModeInfo": {
 					"groupChats": "Dans le cadre de l'entraide, les personnes concernées échangent entre elles sur un thème ou une préoccupation. Les personnes concernées parlent de leurs problèmes, de leurs sentiments et de leurs espoirs et apprennent ainsi comment d'autres ont surmonté des problèmes. Les groupes sont dirigés par des animateurs.",
@@ -2600,7 +2600,7 @@
 				},
 				"headline": "Avez-vous besoin de conseils ou d'aide sur d'autres sujets ?<br>Nous vous soutenons volontiers.",
 				"dialog": {
-					"openButton": "Demander un autre champ thématique",
+					"openButton": "Commencer un autre accompagnement",
 					"title": "Faire une nouvelle demande",
 					"close": "Fermer"
 				},
@@ -6272,6 +6272,56 @@
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommander un autre accompagnement",
+			"endDuplicate": "Mettre fin au doublon",
+			"endDuplicateDescription": "Met fin à ce second accompagnement sur le même thème"
+		},
+		"recommend": {
+			"title": "Recommander un autre accompagnement",
+			"intro": "La personne qui demande conseil voit votre recommandation sous forme de carte dans le chat et peut y trouver un centre de conseil adapté.",
+			"topicLabel": "Thème",
+			"noteLabel": "Remarque (facultatif)",
+			"noteHint": "La remarque apparaît sur la carte dans le chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Envoyer la recommandation",
+			"cancel": "Annuler",
+			"successHeadline": "Votre recommandation a été envoyée.",
+			"successButton": "Fermer",
+			"error": "La recommandation n’a pas pu être envoyée. Veuillez réessayer.",
+			"errorForbidden": "Seul·e le·la conseiller·ère responsable de cet échange peut recommander un autre accompagnement.",
+			"errorConflict": "Aucune recommandation n’est possible dans cet échange pour le moment.",
+			"topicsUnavailable": "Les thèmes n’ont pas pu être chargés. Veuillez réessayer plus tard."
+		},
+		"card": {
+			"title": "Recommandation : autre accompagnement",
+			"topic": "Thème : {{topic}}",
+			"defaultText": "Merci de ne suivre qu’un seul accompagnement par thème. Votre conseiller·ère actuel·le sera informé·e dès que le nouvel accompagnement commencera.",
+			"noteLabel": "Remarque du·de la conseiller·ère",
+			"findAgency": "Trouver un centre de conseil",
+			"requested": "Demande envoyée",
+			"topicUnknown": "un autre thème"
+		},
+		"duplicate": {
+			"startedTitle": "Autre accompagnement sur le même thème",
+			"started": "Un autre accompagnement sur le thème {{topic}} a commencé. Veuillez convenir ensemble de celui qui se poursuit. L’autre devrait être clôturé.",
+			"endedTitle": "Second accompagnement terminé",
+			"ended": "Le second accompagnement sur le thème {{topic}} a été clôturé.",
+			"confirm": {
+				"headline": "Mettre fin à ce doublon ?",
+				"copy": "Cet accompagnement sera clôturé et déplacé dans les archives. Votre autre accompagnement sur le même thème se poursuit.",
+				"confirm": "Clôturer l’accompagnement",
+				"cancel": "Annuler"
+			},
+			"error": "L’accompagnement n’a pas pu être clôturé. Veuillez réessayer."
+		},
+		"request": {
+			"sameTopicInfo": "Un seul accompagnement par thème est prévu à la fois. Si vous commencez un accompagnement sur un thème dont vous parlez déjà, votre conseiller·ère actuel·le sera informé·e dès que le nouveau sera accepté. L’un des deux sera alors clôturé.",
+			"consentAria": "Consentement à la protection des données du centre de conseil",
+			"cancel": "Annuler"
 		}
 	},
 	"directLink": {

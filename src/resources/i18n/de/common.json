@@ -2610,7 +2610,7 @@
 			"profileIcon": "Profilbild",
 			"register": {
 				"button": {
-					"label": "Registrieren"
+					"label": "Beratung anfragen"
 				},
 				"consultingModeInfo": {
 					"groupChats": "In der Selbsthilfe tauschen sich Betroffene über ein Thema oder ein Anliegen miteinander aus. Die Betroffenen sprechen über ihre Probleme, Gefühle und Hoffnungen und erfahren so, wie andere Probleme bewältigt haben. Die Gruppen werden von Moderatorinnen oder Moderatoren geleitet.",
@@ -2621,7 +2621,7 @@
 				},
 				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne.",
 				"dialog": {
-					"openButton": "Weiteres Thema anfragen",
+					"openButton": "Weitere Beratung starten",
 					"title": "Neue Anfrage stellen",
 					"close": "Schließen"
 				},
@@ -6262,6 +6262,56 @@
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
 			"micMeter": "Lautstärke Ihres Mikrofons"
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Weitere Beratung empfehlen",
+			"endDuplicate": "Doppelte Beratung beenden",
+			"endDuplicateDescription": "Beendet diese zweite Beratung zum gleichen Thema"
+		},
+		"recommend": {
+			"title": "Weitere Beratung empfehlen",
+			"intro": "Die ratsuchende Person sieht Ihre Empfehlung als Karte im Chat und kann von dort eine passende Beratungsstelle finden.",
+			"topicLabel": "Thema",
+			"noteLabel": "Notiz (optional)",
+			"noteHint": "Die Notiz erscheint auf der Karte im Chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Empfehlung senden",
+			"cancel": "Abbrechen",
+			"successHeadline": "Ihre Empfehlung wurde gesendet.",
+			"successButton": "Schließen",
+			"error": "Die Empfehlung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+			"errorForbidden": "Nur die zuständige Berater:in dieser Beratung kann eine weitere Beratung empfehlen.",
+			"errorConflict": "In dieser Beratung ist gerade keine Empfehlung möglich.",
+			"topicsUnavailable": "Die Themen konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+		},
+		"card": {
+			"title": "Empfehlung: weitere Beratung",
+			"topic": "Thema: {{topic}}",
+			"defaultText": "Bitte führen Sie zum gleichen Thema nur eine Beratung. Ihre bisherige Berater:in wird informiert, sobald die neue Beratung beginnt.",
+			"noteLabel": "Notiz der Berater:in",
+			"findAgency": "Beratungsstelle finden",
+			"requested": "Anfrage gestellt",
+			"topicUnknown": "ein weiteres Thema"
+		},
+		"duplicate": {
+			"startedTitle": "Weitere Beratung zum gleichen Thema",
+			"started": "Zum Thema {{topic}} wurde eine weitere Beratung begonnen. Bitte klären Sie gemeinsam, welche Beratung weitergeführt wird. Die andere sollte beendet werden.",
+			"endedTitle": "Zweite Beratung beendet",
+			"ended": "Die zweite Beratung zum Thema {{topic}} wurde beendet.",
+			"confirm": {
+				"headline": "Doppelte Beratung beenden?",
+				"copy": "Diese Beratung wird beendet und ins Archiv verschoben. Ihre andere Beratung zum gleichen Thema läuft weiter.",
+				"confirm": "Beratung beenden",
+				"cancel": "Abbrechen"
+			},
+			"error": "Die Beratung konnte nicht beendet werden. Bitte versuchen Sie es erneut."
+		},
+		"request": {
+			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Starten Sie eine Beratung zu einem Thema, das Sie schon besprechen, wird Ihre bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet.",
+			"consentAria": "Einwilligung in den Datenschutz der Beratungsstelle",
+			"cancel": "Abbrechen"
 		}
 	},
 	"directLink": {

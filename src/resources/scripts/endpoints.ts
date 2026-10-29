@@ -52,6 +52,7 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
+	askerSessionsBase: userServiceOrigin + '/service/users/askers/sessions',
 	banUser: (matrixUserId, chatId) =>
 		userServiceOrigin +
 		`/service/users/${encodeURIComponent(matrixUserId)}/chat/${chatId}/ban`,
