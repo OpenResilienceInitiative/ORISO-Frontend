@@ -52,7 +52,7 @@
 		"@vector-im/compound-web": "^8.2.5",
 		"@vitejs/plugin-react": "^4.7.0",
 		"bfj": "^8.0.0",
-		"browserslist": "^4.22.2",
+		"browserslist": "^4.28.8",
 		"classnames": "^2.5.1",
 		"clsx": "^1.2.1",
 		"core-js": "^3.35.1",
