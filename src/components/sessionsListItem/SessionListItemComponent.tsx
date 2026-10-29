@@ -831,7 +831,9 @@ export const SessionListItemComponent = ({
 
 	const handleDearchiveSession = () => {
 		setFlyoutOpen(false);
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession?.();
 				setTimeout(() => {

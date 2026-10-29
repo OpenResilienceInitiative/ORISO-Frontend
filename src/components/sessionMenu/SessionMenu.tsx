@@ -103,6 +103,7 @@ import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/sup
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
 import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	canEndTopicDuplicate,
 	canRecommendFurtherCounselling
@@ -368,7 +369,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	};
 
 	const handleDearchiveSession = () => {
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession();
 				// Short timeout to wait for RC events finished
