@@ -2767,6 +2767,9 @@
 		"entry": {
 			"haveAccount": "Du hast schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
+		},
+		"page": {
+			"loadFailed": "Deine Direktlinks konnten nicht geladen werden."
 		}
 	},
 	"dashboard": {

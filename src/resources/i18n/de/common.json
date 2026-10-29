@@ -6276,6 +6276,9 @@
 			"inactive": "Dieser Link ist nicht mehr aktiv.",
 			"haveAccount": "Sie haben schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
+		},
+		"page": {
+			"loadFailed": "Ihre Direktlinks konnten nicht geladen werden."
 		}
 	},
 	"dashboard": {

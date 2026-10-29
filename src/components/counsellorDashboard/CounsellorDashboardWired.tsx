@@ -17,21 +17,16 @@ import {
 	DashboardCircle,
 	DashboardStats
 } from './CounsellorDashboard';
-import { statisticsEnabled, upcomingCirclesFrom } from './dashboardData';
+import {
+	last30Days,
+	statisticsEnabled,
+	upcomingCirclesFrom
+} from './dashboardData';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
-
-/** "Letzte 30 Tage", as the tile says: today and the 29 days before. */
-export const last30Days = (today = new Date()) => {
-	const start = new Date(today);
-	start.setDate(start.getDate() - 29);
-	return { startDate: isoDate(start), endDate: isoDate(today) };
-};
-
-const toStats = (dto: ConsultantStatisticsDTO | null): DashboardStats => ({
-	assignedSessions: dto?.numberOfAssignedSessions ?? 0,
-	activeSessions: dto?.numberOfActiveSessions ?? 0,
-	sentMessages: dto?.numberOfSentMessages ?? 0
+const toStats = (dto: ConsultantStatisticsDTO): DashboardStats => ({
+	assignedSessions: dto.numberOfAssignedSessions ?? 0,
+	activeSessions: dto.numberOfActiveSessions ?? 0,
+	sentMessages: dto.numberOfSentMessages ?? 0
 });
 
 /** Enough of her own list to find the next circles; one page, no paging. */
@@ -54,10 +49,10 @@ export const CounsellorDashboardWired = ({
 	fallback,
 	compact = false
 }: CounsellorDashboardWiredProps) => {
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const tenant = useTenant();
 	const showStats = statisticsEnabled(tenant);
-	const { links, loaded, toggle } = useDirectLinks();
+	const { links, loaded, loadFailed, reload, toggle } = useDirectLinks();
 	const [stats, setStats] = useState<ConsultantStatisticsDTO | null>(null);
 	const [circles, setCircles] = useState<DashboardCircle[]>([]);
 	const [qrLink, setQrLink] = useState<DirectLink>();
@@ -98,13 +93,29 @@ export const CounsellorDashboardWired = ({
 		};
 	}, [showStats]);
 
-	if (!loaded || (links.length === 0 && circles.length === 0))
+	// A failed list is no "nothing to do": say so and offer a retry.
+	const linksFailed = loadFailed && links.length === 0;
+	if (!loaded || (!linksFailed && links.length === 0 && circles.length === 0))
 		return <>{fallback}</>;
 
 	return (
 		<>
 			<CounsellorDashboard
-				stats={showStats ? toStats(stats) : undefined}
+				alert={
+					linksFailed ? (
+						<p
+							role="alert"
+							className="counsellorDashboard__loadError"
+						>
+							{t('directLink.page.loadFailed')}
+							<button type="button" onClick={reload}>
+								{t('groupChat.loadError.retry')}
+							</button>
+						</p>
+					) : undefined
+				}
+				// No tile of zeros while the figures load or after they failed.
+				stats={showStats && stats ? toStats(stats) : undefined}
 				links={links}
 				upcomingCircles={circles}
 				onToggleLink={(id, active) => void toggle(id, active)}
