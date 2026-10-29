@@ -158,11 +158,14 @@ describe('authenticated setup coordination', () => {
 		expect(setup).not.toHaveBeenCalled();
 		expect(recover).not.toHaveBeenCalled();
 	});
-	it('announces the commit right before setup, and never once cancelled', async () => {
+	it('announces the commit right before setup and before enrolment, and never once cancelled', async () => {
 		const order: string[] = [];
 		setup.mockImplementation(async () => {
 			order.push('setup');
 			return 'synthetic-key';
+		});
+		enroll.mockImplementation(async () => {
+			order.push('enroll');
 		});
 		await initializeChatRecovery(
 			client(),
@@ -171,7 +174,7 @@ describe('authenticated setup coordination', () => {
 			() => false,
 			() => order.push('commit')
 		);
-		expect(order).toEqual(['commit', 'setup']);
+		expect(order).toEqual(['commit', 'setup', 'commit', 'enroll']);
 
 		const onCommit = vi.fn();
 		await initializeChatRecovery(
@@ -732,6 +735,49 @@ describe('sealing recovery under the first own password', () => {
 				'@synthetic:test',
 				'ready'
 			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+	it('also waits past its deadline for an envelope write already under way for a parked key', async () => {
+		const { savePendingRecoveryKey } = await import(
+			'./pendingRecoveryKeyStore'
+		);
+		vi.useFakeTimers();
+		try {
+			const c = client();
+			c.secretStorage.getKey.mockResolvedValue(['root', {}]);
+			status.mockResolvedValue(healthy);
+			savePendingRecoveryKey('@synthetic:test', 'waiting-key');
+			let finishEnroll!: () => void;
+			enroll.mockReturnValue(
+				new Promise<void>((resolve) => {
+					finishEnroll = resolve;
+				})
+			);
+			let settled = false;
+
+			const outcome = sealRecoveryUnderFirstPassword(
+				c,
+				policy,
+				'new-synthetic',
+				undefined,
+				1000
+			).finally(() => {
+				settled = true;
+			});
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(setup).not.toHaveBeenCalled();
+			expect(enroll).toHaveBeenCalledWith(
+				c,
+				'new-synthetic',
+				'waiting-key',
+				2
+			);
+			expect(settled).toBe(false);
+
+			finishEnroll();
+			await expect(outcome).resolves.toBe('ready');
 		} finally {
 			vi.useRealTimers();
 		}

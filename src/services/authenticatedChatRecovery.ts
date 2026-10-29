@@ -38,7 +38,7 @@ export const initializeChatRecovery = async (
 	policy: ChatRecoveryPolicy,
 	password: string | null,
 	cancelled: () => boolean = () => false,
-	/** Called synchronously right before a recovery root is committed server-side. */
+	/** Called synchronously right before a server write that cannot be cancelled: setup or enrolment. */
 	onCommit: () => void = () => undefined
 ): Promise<RecoveryRuntimeStatus | undefined> => {
 	const userId = client.getUserId();
@@ -115,6 +115,9 @@ export const initializeChatRecovery = async (
 					report('needs-recovery-key');
 					return;
 				}
+				// The envelope write is not cancellable either.
+				if (cancelled()) return;
+				onCommit();
 				await enrollPasswordRecovery(
 					client,
 					password,
@@ -203,9 +206,9 @@ export const FIRST_PASSWORD_SEAL_TIMEOUT_MS = 30_000;
  * Call only after the password change succeeded, and only with the NEW password: the old one is
  * the administrator's, and nothing may ever be sealed under it (#1481).
  *
- * Never rejects. At its deadline a run that has not committed a recovery root yet is stopped at
+ * Never rejects. At its deadline a run that has not started a server write yet is stopped at
  * its next checkpoint (no root, no parked key) and a retryable status is returned, so the logout
- * may go on. A run that has already committed one is awaited to the end instead: stopping it, or
+ * may go on. A run already in setup or enrolment is awaited to the end instead: stopping it, or
  * logging out under it, between setup and enrolment would leave a root without its envelope and
  * the logout would then wipe its only parked key. A failure leaves a retryable status, and the
  * next password sign-in that is past the gate sets recovery up as before.
