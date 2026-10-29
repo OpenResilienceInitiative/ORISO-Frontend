@@ -146,6 +146,15 @@ import {
 	sessionKindLabel
 } from '../displayFilter/kindOptions';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
+import {
+	apiGetDeletedAskerSessions,
+	type DeletedAskerSession
+} from '../../api/apiGetDeletedAskerSessions';
+import { DeletedAskerListItem } from './DeletedAskerListItem';
+import {
+	buildDeletedAskerRows,
+	placeDeletedAskerRows
+} from './deletedAskerRows';
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
@@ -1979,6 +1988,81 @@ export const SessionsList = ({
 		() => sortedSessionPairs.map(sessionPairId),
 		[sortedSessionPairs]
 	);
+
+	/*
+	 * ORISO-Frontend#1159: a grey "Gelöschte:r Ratsuchende:r" row where a
+	 * deleted advice-seeker chat used to be. Only in the counsellor's unfiltered
+	 * list: a placeholder matches no chip, search, person, centre or topic.
+	 */
+	// Not in the rail: its pills are tabs, and a placeholder is no tab.
+	const showDeletedAskerRows =
+		showConsultantToolbarActions &&
+		!isRail &&
+		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	const [deletedAskerPlaceholders, setDeletedAskerPlaceholders] = useState<
+		DeletedAskerSession[]
+	>([]);
+	useEffect(() => {
+		if (!showDeletedAskerRows) {
+			setDeletedAskerPlaceholders([]);
+			return undefined;
+		}
+		const controller = new AbortController();
+		apiGetDeletedAskerSessions(controller.signal).then((placeholders) => {
+			if (!controller.signal.aborted) {
+				setDeletedAskerPlaceholders(placeholders);
+			}
+		});
+		return () => controller.abort();
+	}, [showDeletedAskerRows]);
+	const toolbarNarrowsList =
+		!!sessionToolbarChip ||
+		!!listSearchQuery ||
+		sessionToolbarSelectedPeople.length > 0 ||
+		!!sessionToolbarSelectedAgency ||
+		!!sessionToolbarSelectedTopic;
+	const deletedAskerPlacement = useMemo(() => {
+		if (!showDeletedAskerRows || toolbarNarrowsList) {
+			return { before: [], trailing: [] };
+		}
+		const markedForDeletion = (sessions ?? [])
+			.filter(
+				(raw: ListItemInterface) =>
+					!raw?.chat &&
+					raw?.user?.deleted &&
+					typeof raw?.session?.id === 'number'
+			)
+			.map((raw: ListItemInterface) => ({
+				sessionId: raw.session.id,
+				lastInteraction: getLastInteractionTimestamp(
+					buildExtendedSession(raw, groupIdFromParam)
+				)
+			}));
+		const shownSessionIds = new Set<number>(
+			sortedSessions
+				.filter((session) => !session.isGroup)
+				.map((session) => Number(session.item?.id))
+		);
+		return placeDeletedAskerRows(
+			sortedSessions.map(getLastInteractionTimestamp),
+			buildDeletedAskerRows(
+				deletedAskerPlaceholders,
+				markedForDeletion,
+				shownSessionIds
+			),
+			totalItems > currentOffset + SESSION_COUNT
+		);
+	}, [
+		currentOffset,
+		deletedAskerPlaceholders,
+		getLastInteractionTimestamp,
+		groupIdFromParam,
+		sessions,
+		showDeletedAskerRows,
+		sortedSessions,
+		toolbarNarrowsList,
+		totalItems
+	]);
 	// The future panel is gated by its own show-only kind, never by the row
 	// filter (§5.2): its input is the toolbar-matched set BEFORE the display
 	// filter, so hiding "Circles" does not remove the panel.
@@ -2718,84 +2802,128 @@ export const SessionsList = ({
 								activeSession: ExtendedSessionInterface,
 								index
 							) => (
-								<ActiveSessionProvider
+								<React.Fragment
 									key={`${activeSession.isGroup ? 'chat' : 'session'}:${activeSession.item.id}`}
-									activeSession={activeSession}
 								>
-									<div
-										className={clsx(
-											hiddenActiveRowIds.has(
-												sortedSessionIds[index]
-											) && 'sessionsList__hiddenActiveRow'
-										)}
+									{deletedAskerPlacement.before[index]?.map(
+										(row) => (
+											<DeletedAskerListItem
+												key={row.key}
+												row={row}
+												locale={defaultLanguage}
+												translate={translate}
+											/>
+										)
+									)}
+									<ActiveSessionProvider
+										activeSession={activeSession}
 									>
-										{hiddenActiveRowIds.has(
-											sortedSessionIds[index]
-										) && (
-											// Announced like a status, without a
-											// status role inside the list (#1338).
-											<p
-												className="sessionsList__hiddenActiveRowHint"
-												aria-live="polite"
-												aria-atomic="true"
-											>
-												{translate(
-													'notifications.displayFilter.hiddenActiveRow'
-												)}
-											</p>
-										)}
-										<SessionListItemComponent
-											defaultLanguage={defaultLanguage}
-											itemRef={(el) =>
-												(ref_list_array.current[index] =
-													el)
-											}
-											handleKeyDownLisItemContent={(e) =>
-												handleKeyDownLisItemContent(
-													e,
-													index
-												)
-											}
-											index={index}
-											isBeforeActive={
-												!!sortedSessions[index + 1] &&
-												isSessionListItemActive(
-													sortedSessions[index + 1]
-												)
-											}
-											isAfterActive={
-												!!sortedSessions[index - 1] &&
-												isSessionListItemActive(
-													sortedSessions[index - 1]
-												)
-											}
-											caseHandoverBatchMode={
-												caseHandoverBatchMode
-											}
-											caseHandoverSelected={caseHandoverSelectedIds.includes(
-												activeSession.item.id
+										<div
+											className={clsx(
+												hiddenActiveRowIds.has(
+													sortedSessionIds[index]
+												) &&
+													'sessionsList__hiddenActiveRow'
 											)}
-											onCaseHandoverSelect={
-												handleCaseHandoverSelect
-											}
-											onCaseHandoverBatchStart={() => {
-												setCaseHandoverBatchMode(true);
-												setCaseHandoverReviewOpen(
-													false
-												);
-												setCaseHandoverBatchSummary('');
-											}}
-											onCaseHandoverBatchConfirm={
-												handleOpenCaseHandoverWizard
-											}
-											onCaseHandoverBatchClose={
-												handleCloseCaseHandoverBatch
-											}
-										/>
-									</div>
-								</ActiveSessionProvider>
+										>
+											{hiddenActiveRowIds.has(
+												sortedSessionIds[index]
+											) && (
+												// Announced like a status, without a
+												// status role inside the list (#1338).
+												<p
+													className="sessionsList__hiddenActiveRowHint"
+													aria-live="polite"
+													aria-atomic="true"
+												>
+													{translate(
+														'notifications.displayFilter.hiddenActiveRow'
+													)}
+												</p>
+											)}
+											<SessionListItemComponent
+												defaultLanguage={
+													defaultLanguage
+												}
+												itemRef={(el) =>
+													(ref_list_array.current[
+														index
+													] = el)
+												}
+												handleKeyDownLisItemContent={(
+													e
+												) =>
+													handleKeyDownLisItemContent(
+														e,
+														index
+													)
+												}
+												index={index}
+												isBeforeActive={
+													!!sortedSessions[
+														index + 1
+													] &&
+													isSessionListItemActive(
+														sortedSessions[
+															index + 1
+														]
+													)
+												}
+												isAfterActive={
+													!!sortedSessions[
+														index - 1
+													] &&
+													isSessionListItemActive(
+														sortedSessions[
+															index - 1
+														]
+													)
+												}
+												caseHandoverBatchMode={
+													caseHandoverBatchMode
+												}
+												caseHandoverSelected={caseHandoverSelectedIds.includes(
+													activeSession.item.id
+												)}
+												onCaseHandoverSelect={
+													handleCaseHandoverSelect
+												}
+												onCaseHandoverBatchStart={() => {
+													setCaseHandoverBatchMode(
+														true
+													);
+													setCaseHandoverReviewOpen(
+														false
+													);
+													setCaseHandoverBatchSummary(
+														''
+													);
+												}}
+												onCaseHandoverBatchConfirm={
+													handleOpenCaseHandoverWizard
+												}
+												onCaseHandoverBatchClose={
+													handleCloseCaseHandoverBatch
+												}
+											/>
+										</div>
+									</ActiveSessionProvider>
+								</React.Fragment>
 							)
 						)}
+
+					{/* A failed page load leaves the page count unknown, so rows
+					    "older than everything" wait for a successful retry. */}
+					{!isLoading &&
+						!isReloadButtonVisible &&
+						deletedAskerPlacement.trailing.map((row) => (
+							<DeletedAskerListItem
+								key={row.key}
+								row={row}
+								locale={defaultLanguage}
+								translate={translate}
+							/>
+						))}
 
 					{!isLoading &&
 						sessionToolbarChip === 'drafts' &&

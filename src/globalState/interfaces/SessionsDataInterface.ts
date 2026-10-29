@@ -174,6 +174,8 @@ export interface SessionUserInterface {
 	avatarId?: string | null;
 	username: string;
 	displayName?: string;
+	/** The advice seeker is marked for deletion (UserService `SessionUserDTO.isDeleted`). */
+	deleted?: boolean;
 	sessionData: SessionUserDataInterface;
 }
 

@@ -2372,6 +2372,10 @@
 			"serviceNoticePlanned": {
 				"title": "Плановые работы",
 				"text": "{{maintenanceDate}} платформа будет недоступна с {{maintenanceStart}} до {{maintenanceEnd}}. Уже написанные сообщения не пропадут."
+			},
+			"sessionAskerDeleted": {
+				"title": "Удалённый клиент",
+				"text": "Чат с клиентом был удалён. Личные данные и сообщения больше недоступны."
 			}
 		},
 		"error": "Не удалось",
@@ -4395,6 +4399,10 @@
 			"unreadCount_one": "{{count}} новое сообщение",
 			"unreadCount_few": "{{count}} новых сообщения",
 			"unreadCount_many": "{{count}} новых сообщений"
+		},
+		"deletedAsker": {
+			"title": "Удалённый клиент",
+			"hint": "Этот чат был удалён. Личные данные и сообщения больше недоступны."
 		}
 	},
 	"statusOverlay": {

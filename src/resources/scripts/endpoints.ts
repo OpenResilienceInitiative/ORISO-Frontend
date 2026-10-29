@@ -77,6 +77,9 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	consultantDeletedAskerSessions:
+		userServiceOrigin +
+		'/service/users/sessions/consultants/deleted-askers',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
