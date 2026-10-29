@@ -2547,6 +2547,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
+					"fallbackName": "Beratungsstellen-Admin",
+					"link": "Beratungsstellen-Admin kontaktieren",
+					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
+					"supportEmail": "Support-Adresse:"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {
@@ -5688,7 +5695,26 @@
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
 			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
 			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Ihr Passwort wurde nicht geändert.",
-			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt."
+			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Ihr Passwort entsperrt Ihren Gesprächsverlauf auf einem neuen Gerät noch nicht. Geben Sie einmal Ihren Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Ihr Passwort wurde geändert.",
+				"explanation": "Damit Ihr neues Passwort Ihre Chats auf neuen Geräten entsperrt, geben Sie einmal Ihren Ersatzschlüssel ein.",
+				"submit": "Mit neuem Passwort schützen",
+				"later": "Später",
+				"laterHint": "Ohne diesen Schritt entsperrt Ihr neues Passwort Ihren Verlauf auf neuen Geräten nicht. Sie können ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Ihr aktuelles Passwort öffnet die Sicherung Ihres Gesprächsverlaufs nicht. Das passiert, wenn Ihr Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichern Sie Ihren Verlauf auf einem dieser Wege mit Ihrem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit Ihrem Passwort öffnet.",
+				"choose": "Wie möchten Sie Ihren Verlauf neu sichern?",
+				"usePreviousPassword": "Vorheriges Passwort eingeben",
+				"useRecoveryKey": "Ersatzschlüssel eingeben",
+				"previousPasswordHint": "Geben Sie das Passwort ein, das Sie vor der Änderung verwendet haben. Danach öffnet nur noch Ihr aktuelles Passwort Ihren Verlauf.",
+				"recoveryKeyHint": "Geben Sie Ihren gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit Ihrem aktuellen Passwort ersetzt. Ihr Ersatzschlüssel bleibt gültig.",
+				"previousPassword": "Vorheriges Passwort",
+				"submit": "Mit aktuellem Passwort sichern",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfen Sie die Eingabe oder verwenden Sie Ihren Ersatzschlüssel."
+			}
 		}
 	},
 	"accountInvite": {

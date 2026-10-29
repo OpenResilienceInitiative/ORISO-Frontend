@@ -28,4 +28,6 @@ export interface AppSettingsInterface {
 	useOverviewPage?: boolean;
 	/** feature flag for the documentation  */
 	documentationEnabled?: boolean;
+	/** Fallback support e-mail (platform admin, global settings); shown when a centre has no chat-reachable admin (#1915). */
+	supportEmail?: string;
 }

@@ -2523,6 +2523,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "The admins of this counselling centre could not be loaded. Please try again later.",
+					"fallbackName": "Centre admin",
+					"link": "Contact the counselling centre admin",
+					"none": "No admin is reachable by chat – please contact the platform administration.",
+					"supportEmail": "Support address:"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {
@@ -5613,7 +5620,26 @@
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
 			"repairRequired": "Repair chat recovery in security settings before changing your password. Your password has not changed.",
-			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
+			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists.",
+			"notEnrolled": "Password recovery not set up: your password does not yet unlock your conversation history on a new device. Enter your recovery key once to set it up.",
+			"afterChange": {
+				"title": "Your password has been changed.",
+				"explanation": "So that your new password unlocks your chats on new devices, enter your recovery key once.",
+				"submit": "Protect with new password",
+				"later": "Later",
+				"laterHint": "Without this step your new password will not unlock your history on new devices. You can do it at any time in the security settings."
+			},
+			"stale": {
+				"explanation": "Your current password does not open the backup of your conversation history. This happens when your password was changed outside this app, for example under “My account” in the administration area or via “Forgot password”. Secure your history with your current password in one of these ways so that it opens with your password on new devices again.",
+				"choose": "How would you like to secure your history again?",
+				"usePreviousPassword": "Enter previous password",
+				"useRecoveryKey": "Enter recovery key",
+				"previousPasswordHint": "Enter the password you used before the change. Afterwards only your current password opens your history.",
+				"recoveryKeyHint": "Enter your saved recovery key. The old backup is then replaced by one secured with your current password. Your recovery key stays valid.",
+				"previousPassword": "Previous password",
+				"submit": "Secure with current password",
+				"previousPasswordRejected": "This previous password does not open the backup. Check your entry or use your recovery key."
+			}
 		}
 	},
 	"accountInvite": {

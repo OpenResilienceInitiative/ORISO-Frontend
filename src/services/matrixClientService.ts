@@ -10,6 +10,7 @@ import {
 import { matrixCallService } from './matrixCallService';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
+import { matrixDecryptionRetry } from './matrixDecryptionRetry';
 import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { startDeviceDehydration } from './matrixDeviceDehydration';
@@ -204,6 +205,9 @@ export class MatrixClientService {
 			appConfig?.releaseToggles?.enableInvisibleCrypto === true &&
 				loginData.isAnonymous !== true
 		);
+		// Before startClient: the first device-list query of the initial sync
+		// must already re-decrypt what the SDK refused for an unknown sender.
+		matrixDecryptionRetry.initialize(client);
 
 		(client as any).on(
 			'sync',
@@ -927,6 +931,7 @@ export class MatrixClientService {
 		matrixLiveEventBridge.detach();
 		matrixCallService.detach();
 		matrixRoomHistoryKeyTransfer.detach();
+		matrixDecryptionRetry.detach();
 		this.notifySyncStateListeners();
 	}
 

@@ -111,30 +111,59 @@ describe('useAuthenticatedChatRecovery', () => {
 
 	/**
 	 * In LOGIN_PASSWORD mode this seals the Megolm key backup under the
-	 * password used to sign in. While the account-setup gate is up that is the
-	 * administrator's password — the very secret the gate exists to retire —
-	 * and the recovery key sealed under it stays valid for good, so a
-	 * transient shared password would become permanent access to the
+	 * password used to sign in. While the account still owes its own password
+	 * that is the administrator's one-time password — the very secret the gate
+	 * exists to retire — and the recovery key sealed under it stays valid for
+	 * good, so a transient shared password would become permanent access to the
 	 * counsellor's encrypted history. Nothing may be derived from it until the
 	 * counsellor has replaced it (#1481).
 	 */
-	it.each([
-		['its own password', owesPassword],
-		['a second factor', owesSecondFactor]
-	])(
-		'derives nothing from the administrator’s password while the account still owes %s',
-		(_label, userData) => {
-			const service = createClientService();
+	it('derives nothing from the administrator’s password while the account still owes its own password', () => {
+		const service = createClientService();
 
-			renderHook(() =>
-				useAuthenticatedChatRecovery(service as any, userData)
-			);
-			service.sync('PREPARED');
+		renderHook(() =>
+			useAuthenticatedChatRecovery(service as any, owesPassword)
+		);
+		service.sync('PREPARED');
 
-			expect(startAuthenticatedChatRecovery).not.toHaveBeenCalled();
-			expect(clearLoginRecoveryPassword).toHaveBeenCalled();
-		}
-	);
+		expect(startAuthenticatedChatRecovery).not.toHaveBeenCalled();
+		expect(clearLoginRecoveryPassword).toHaveBeenCalled();
+	});
+
+	/**
+	 * Admin-created accounts set their first own password in the Admin
+	 * onboarding wizard or via forgot-password — Keycloak refuses the one-time
+	 * password — so the Frontend gate usually only shows the second-factor step.
+	 * The sign-in password is then the counsellor's own: recovery is set up and
+	 * sealed under it, while the gate keeps blocking the UI (#1931).
+	 */
+	it('sets recovery up with the sign-in password while the account only owes a second factor', () => {
+		const service = createClientService();
+
+		renderHook(() =>
+			useAuthenticatedChatRecovery(service as any, owesSecondFactor)
+		);
+		service.sync('PREPARED');
+
+		expect(startAuthenticatedChatRecovery).toHaveBeenCalledOnce();
+		expect(clearLoginRecoveryPassword).not.toHaveBeenCalled();
+	});
+
+	it('sets recovery up on the next sync once only a second factor is owed', () => {
+		const service = createClientService();
+		const { rerender } = renderHook(
+			({ userData }) =>
+				useAuthenticatedChatRecovery(service as any, userData),
+			{ initialProps: { userData: owesPassword } }
+		);
+		service.sync('PREPARED');
+		expect(startAuthenticatedChatRecovery).not.toHaveBeenCalled();
+
+		rerender({ userData: owesSecondFactor });
+		service.sync('PREPARED');
+
+		expect(startAuthenticatedChatRecovery).toHaveBeenCalledOnce();
+	});
 
 	it('sets recovery up on the next sync once setup is settled', () => {
 		const service = createClientService();

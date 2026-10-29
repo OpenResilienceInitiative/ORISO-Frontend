@@ -2526,6 +2526,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Les administrateurs de ce centre de consultation n'ont pas pu être chargés. Veuillez réessayer plus tard.",
+					"fallbackName": "Admin du centre",
+					"link": "Contacter l'administrateur du centre de consultation",
+					"none": "Aucun administrateur n'est joignable par chat – veuillez vous adresser à l'administration de la plateforme.",
+					"supportEmail": "Adresse du support :"
+				},
 				"label": "Service de consultation",
 				"registrationLink": {
 					"notification": {
@@ -5698,7 +5705,26 @@
 			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
 			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
 			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié.",
-			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste."
+			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste.",
+			"notEnrolled": "Récupération par mot de passe non configurée : votre mot de passe ne déverrouille pas encore l'historique de vos conversations sur un nouvel appareil. Saisissez une fois votre clé de récupération pour la configurer.",
+			"afterChange": {
+				"title": "Votre mot de passe a été modifié.",
+				"explanation": "Pour que votre nouveau mot de passe déverrouille vos discussions sur de nouveaux appareils, saisissez une fois votre clé de récupération.",
+				"submit": "Protéger avec le nouveau mot de passe",
+				"later": "Plus tard",
+				"laterHint": "Sans cette étape, votre nouveau mot de passe ne déverrouille pas votre historique sur de nouveaux appareils. Vous pouvez la faire à tout moment dans les paramètres de sécurité."
+			},
+			"stale": {
+				"explanation": "Votre mot de passe actuel n’ouvre pas la sauvegarde de votre historique. Cela arrive lorsque votre mot de passe a été modifié en dehors de cette application, par exemple sous « Mon compte » dans l’espace d’administration ou via « Mot de passe oublié ». Sécurisez votre historique avec votre mot de passe actuel de l’une de ces façons, afin qu’il s’ouvre à nouveau avec votre mot de passe sur de nouveaux appareils.",
+				"choose": "Comment souhaitez-vous sécuriser à nouveau votre historique ?",
+				"usePreviousPassword": "Saisir l’ancien mot de passe",
+				"useRecoveryKey": "Saisir la clé de récupération",
+				"previousPasswordHint": "Saisissez le mot de passe que vous utilisiez avant la modification. Ensuite, seul votre mot de passe actuel ouvre votre historique.",
+				"recoveryKeyHint": "Saisissez votre clé de récupération enregistrée. L’ancienne sauvegarde est ensuite remplacée par une sauvegarde protégée par votre mot de passe actuel. Votre clé de récupération reste valable.",
+				"previousPassword": "Ancien mot de passe",
+				"submit": "Sécuriser avec le mot de passe actuel",
+				"previousPasswordRejected": "Cet ancien mot de passe n’ouvre pas la sauvegarde. Vérifiez votre saisie ou utilisez votre clé de récupération."
+			}
 		}
 	},
 	"accountInvite": {

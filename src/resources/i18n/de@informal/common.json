@@ -2516,7 +2516,20 @@
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
 			"enrollmentExplanation": "Schütze deinen vorhandenen Ersatzschlüssel zusätzlich mit deinem aktuellen Passwort. Dein gespeicherter Ersatzschlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
-			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Dein Passwort entsperrt deinen Gesprächsverlauf auf einem neuen Gerät noch nicht. Gib einmal deinen Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Dein Passwort wurde geändert.",
+				"explanation": "Damit dein neues Passwort deine Chats auf neuen Geräten entsperrt, gib einmal deinen Ersatzschlüssel ein.",
+				"laterHint": "Ohne diesen Schritt entsperrt dein neues Passwort deinen Verlauf auf neuen Geräten nicht. Du kannst ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Dein aktuelles Passwort öffnet die Sicherung deines Gesprächsverlaufs nicht. Das passiert, wenn dein Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichere deinen Verlauf auf einem dieser Wege mit deinem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit deinem Passwort öffnet.",
+				"choose": "Wie möchtest du deinen Verlauf neu sichern?",
+				"previousPasswordHint": "Gib das Passwort ein, das du vor der Änderung verwendet hast. Danach öffnet nur noch dein aktuelles Passwort deinen Verlauf.",
+				"recoveryKeyHint": "Gib deinen gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit deinem aktuellen Passwort ersetzt. Dein Ersatzschlüssel bleibt gültig.",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfe die Eingabe oder verwende deinen Ersatzschlüssel."
+			}
 		}
 	},
 	"accountInvite": {
