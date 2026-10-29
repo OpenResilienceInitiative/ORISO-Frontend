@@ -12,6 +12,9 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 
 vi.mock('lottie-web', () => ({ default: {} }));
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: () => Promise.resolve(undefined)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 /* The phone bar is where the stage puts `renderHeaderAction('onPrimary')`. */

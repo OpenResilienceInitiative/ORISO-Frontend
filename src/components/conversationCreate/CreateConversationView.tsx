@@ -24,7 +24,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
-import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
+import { TopicIcon } from './TopicIcon';
 import {
 	getTopicCardArtwork,
 	INTERNAL_CHAT_ARTWORK
@@ -606,7 +606,7 @@ const CreateConversationFlow = ({
 						<SplitButton
 							ref={pickerSplitButtonRef}
 							fullWidth
-							icon={<CategorySearchIcon />}
+							icon={<TopicIcon filled={Boolean(pickerTopic)} />}
 							label={
 								pickerTopic ||
 								translate('groupChat.circle.topicLabel')

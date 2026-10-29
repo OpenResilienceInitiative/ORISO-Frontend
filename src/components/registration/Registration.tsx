@@ -97,11 +97,13 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import {
+	GroupInviteInvalid,
 	GroupInviteLoadError,
 	GroupInviteLoading
 } from './groupInviteEntry/GroupInviteLoadError';
 import {
 	getGroupJoin,
+	isGroupInviteRefusal,
 	resolveGroupInviteEntry
 } from './groupInviteEntry/groupInviteEntryState';
 import { parseGroupChatInviteId } from '../groupChat/groupChatInviteLink';
@@ -285,6 +287,7 @@ export const Registration = () => {
 	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	const [inviteRefused, setInviteRefused] = useState<boolean>(false);
 	/* The minted password is never shown, so nobody can log in again once the
 	   browser is closed; the backend deletes such an account later
 	   (ORISO-UserService#1001). */
@@ -795,6 +798,10 @@ export const Registration = () => {
 						addNotification(dpaNotice);
 						return;
 					}
+					if (groupJoin && isGroupInviteRefusal(error)) {
+						setInviteRefused(true);
+						return;
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
@@ -868,6 +875,16 @@ export const Registration = () => {
 				department={handoverDepartment}
 				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
 				closing={joinsTheGroup ? null : undefined}
+			/>
+		);
+	}
+
+	if (inviteEntry === 'invalid' || inviteRefused) {
+		return (
+			<GroupInviteInvalid
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
 			/>
 		);
 	}
