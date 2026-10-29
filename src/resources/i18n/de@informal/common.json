@@ -2762,6 +2762,12 @@
 			"micMeter": "Lautstärke deines Mikrofons"
 		}
 	},
+	"calls": {
+		"states": {
+			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}.",
+			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
+		}
+	},
 	"directLink": {
 		"card": {
 			"headline": "Ein Link direkt zu dir",

@@ -6090,6 +6090,18 @@
 				"anmerkung": "Remarque",
 				"aufgabe": "Tâche"
 			}
+		},
+		"states": {
+			"encrypted": "Chiffré",
+			"endsCurrent": "Si vous répondez, votre appel avec {{name}} prendra fin.",
+			"answerAndEnd": "Terminer et répondre",
+			"backToCall": "Revenir à l’appel en grand",
+			"speaking": "{{name}} parle",
+			"dockLabel": "Appel avec {{name}}",
+			"cameraHint": "Le son continue.",
+			"minimize": "Réduire l'appel",
+			"groupCall": "Appel de groupe",
+			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		}
 	},
 	"form": {

@@ -6090,6 +6090,18 @@
 				"anmerkung": "መብርሂ",
 				"aufgabe": "ዕዮ"
 			}
+		},
+		"states": {
+			"encrypted": "ዝተመስጠረ",
+			"endsCurrent": "እንተ መሊስኩም፡ ምስ {{name}} ዘሎኩም ዝርርብ ይውዳእ።",
+			"answerAndEnd": "ኣቋሪጽኩም ተቐበሉ",
+			"backToCall": "ናብ ምሉእ ርእይቶ ጻውዒት ተመለሱ",
+			"speaking": "{{name}} ይዛረብ ኣሎ",
+			"dockLabel": "ምስ {{name}} ዝርርብ",
+			"cameraHint": "ድምጺ ይቕጽል።",
+			"minimize": "ጻውዒት ኣንእስ",
+			"groupCall": "ናይ ጉጅለ ጻውዒት",
+			"endsCurrentUnnamed": "እንተ መሊስኩም፡ ዘሎኩም ዝርርብ ይውዳእ።"
 		}
 	},
 	"form": {
