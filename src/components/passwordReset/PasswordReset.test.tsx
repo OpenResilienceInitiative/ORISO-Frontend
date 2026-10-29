@@ -138,7 +138,11 @@ it('updates password through staged recovery and logs out only after it resolves
 	finish!();
 	await waitFor(() => expect(state.logout).toHaveBeenCalled());
 	expect(state.change).toHaveBeenCalledOnce();
-	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+	expect(state.update).toHaveBeenCalledWith(
+		'old-synthetic',
+		'new-synthetic',
+		expect.objectContaining({ id: expect.any(String) })
+	);
 });
 it('does not call the password API or logout if envelope preparation fails', async () => {
 	state.change.mockRejectedValue(new Error('envelope unavailable'));
@@ -196,7 +200,11 @@ it('changes the password without a chat client while the account still owes its 
 	submit();
 
 	await waitFor(() => expect(state.logout).toHaveBeenCalled());
-	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+	expect(state.update).toHaveBeenCalledWith(
+		'old-synthetic',
+		'new-synthetic',
+		expect.objectContaining({ id: expect.any(String) })
+	);
 	expect(state.change).not.toHaveBeenCalled();
 });
 
@@ -212,7 +220,11 @@ it('finishes the first password change when the chat client never becomes ready'
 	submit();
 
 	await waitFor(() => expect(state.logout).toHaveBeenCalled());
-	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+	expect(state.update).toHaveBeenCalledWith(
+		'old-synthetic',
+		'new-synthetic',
+		expect.objectContaining({ id: expect.any(String) })
+	);
 });
 
 it('finishes the first password change when there is no enrolment to rotate', async () => {
@@ -223,7 +235,11 @@ it('finishes the first password change when there is no enrolment to rotate', as
 	submit();
 
 	await waitFor(() => expect(state.logout).toHaveBeenCalled());
-	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+	expect(state.update).toHaveBeenCalledWith(
+		'old-synthetic',
+		'new-synthetic',
+		expect.objectContaining({ id: expect.any(String) })
+	);
 });
 
 /**
@@ -389,4 +405,25 @@ describe('inside the account-setup dialog', () => {
 		).toBe(true);
 		expect(state.update).not.toHaveBeenCalled();
 	});
+});
+
+it('retains the captured password intent through the Matrix callback after a lost reply', async () => {
+	state.update
+		.mockRejectedValueOnce(new TypeError('reply lost'))
+		.mockResolvedValueOnce(undefined);
+	state.change.mockImplementation(async (_client, _old, _new, update) =>
+		update()
+	);
+	submit();
+	await waitFor(() => expect(state.update).toHaveBeenCalledTimes(1));
+	await waitFor(() =>
+		expect(
+			(screen.getByText('save-password') as HTMLButtonElement).disabled
+		).toBe(false)
+	);
+	fireEvent.click(screen.getByText('save-password'));
+	await waitFor(() => expect(state.logout).toHaveBeenCalled());
+	expect(state.update).toHaveBeenCalledTimes(2);
+	expect(state.update.mock.calls[0][2].id).toEqual(expect.any(String));
+	expect(state.update.mock.calls[1]).toEqual(state.update.mock.calls[0]);
 });

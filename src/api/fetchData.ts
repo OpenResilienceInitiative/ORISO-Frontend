@@ -1,3 +1,7 @@
+import {
+	accountOperationOwner,
+	assertAccountOperationOwner
+} from '../utils/accountOperationOwner';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../utils/generateCsrfToken';
 import {
@@ -10,6 +14,7 @@ import { removeAllCookies } from '../components/sessionCookie/accessSessionCooki
 import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
+import { recordAccountOperationResponse } from '../utils/accountOperationIntent';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
@@ -39,6 +44,7 @@ export const FETCH_ERRORS = {
 	NO_MATCH: 'NO_MATCH',
 	TIMEOUT: 'TIMEOUT',
 	UNAUTHORIZED: 'UNAUTHORIZED',
+	REQUEST_IDENTITY_CHANGED: 'REQUEST_IDENTITY_CHANGED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
 	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 	/** 403 with X-Reason USER_BANNED_FROM_CHAT: a moderator removed the caller. */
@@ -130,10 +136,43 @@ export const fetchData = ({
 	recoverOnPublicAuthRoute = true,
 	isStaleAuthRetry = false
 }: FetchDataProps): Promise<any> =>
-	new Promise((resolve, reject) => {
+	new Promise((resolve, rejectResponse) => {
+		let receivedStatus: number | undefined;
+		let receivedResponse: Response | undefined;
+		const reject = (error?: unknown) => {
+			if (receivedResponse)
+				recordAccountOperationResponse(error, receivedResponse);
+			// Keep existing error names/messages. Only an observed HTTP reply
+			// supplies status; transport failures must remain unknown.
+			if (
+				error instanceof Error &&
+				receivedStatus !== undefined &&
+				!('status' in error) &&
+				Object.isExtensible(error)
+			) {
+				Object.defineProperty(error, 'status', {
+					value: receivedStatus,
+					configurable: true
+				});
+			}
+			rejectResponse(error);
+		};
 		const reqLog = new RequestLog(url, method, timeout);
 
 		const accessToken = getValueFromCookie('keycloak');
+		const manualAuthorization = new Headers({ ...headersData }).get(
+			'Authorization'
+		);
+		assertAccountOperationOwner(
+			headersData,
+			accountOperationOwner(accessToken),
+			skipAuth
+				? 'anonymous'
+				: accountOperationOwner(
+						manualAuthorization?.replace(/^Bearer /, '') ??
+							accessToken
+					)
+		);
 		const authorization =
 			!skipAuth && accessToken
 				? {
@@ -141,21 +180,26 @@ export const fetchData = ({
 					}
 				: null;
 
-		// Retried exactly once, anonymously, and with recovery disabled so a
-		// second 401 cannot loop.
+		// A frozen account action keeps its original authentication context.
+		// Explicitly public account calls start with skipAuth; they keep their key.
+		const hasFrozenIntent = Object.keys(headersData ?? {}).some(
+			(header) => header.toLowerCase() === 'idempotency-key'
+		);
 		const retryWithoutAuth = () =>
-			fetchData({
-				url,
-				method,
-				headersData,
-				bodyData,
-				skipAuth: true,
-				responseHandling,
-				timeout,
-				signal,
-				recoverOnPublicAuthRoute: false,
-				isStaleAuthRetry: true
-			});
+			hasFrozenIntent
+				? Promise.reject(new Error(FETCH_ERRORS.UNAUTHORIZED))
+				: fetchData({
+						url,
+						method,
+						headersData,
+						bodyData,
+						skipAuth: true,
+						responseHandling,
+						timeout,
+						signal,
+						recoverOnPublicAuthRoute: false,
+						isStaleAuthRetry: true
+					});
 
 		const csrfToken = generateCsrfToken();
 
@@ -217,6 +261,8 @@ export const fetchData = ({
 
 		fetch(req)
 			.then((response) => {
+				receivedStatus = response.status;
+				receivedResponse = response;
 				reqLog.finish(response.status);
 				if (response.status === 200 || response.status === 201) {
 					const data =

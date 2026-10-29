@@ -13,9 +13,13 @@ vi.mock('../resources/scripts/endpoints', () => ({
 	}
 }));
 
-vi.mock('./fetchData', () => ({
+vi.mock('./fetchData', async (importOriginal) => ({
+	...(await importOriginal<typeof import('./fetchData')>()),
 	FETCH_ERRORS: {
 		BAD_REQUEST: 'BAD_REQUEST',
+		CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE',
+		CATCH_ALL: 'CATCH_ALL',
+		TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 		FORBIDDEN: 'FORBIDDEN',
 		GATEWAY_TIMEOUT: 'GATEWAY_TIMEOUT',
 		UNAUTHORIZED: 'UNAUTHORIZED'
@@ -28,6 +32,9 @@ vi.mock('./fetchData', () => ({
 vi.mock('./index', () => ({
 	FETCH_ERRORS: {
 		BAD_REQUEST: 'BAD_REQUEST',
+		CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE',
+		CATCH_ALL: 'CATCH_ALL',
+		TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 		UNAUTHORIZED: 'UNAUTHORIZED'
 	},
 	FETCH_METHODS: { POST: 'POST' },
@@ -68,7 +75,82 @@ describe('magic link login API helpers', () => {
 			method: 'POST',
 			bodyData: JSON.stringify({ token: 'magic-token' }),
 			skipAuth: true,
-			responseHandling: ['CONTENT', 'BAD_REQUEST', 'UNAUTHORIZED']
+			responseHandling: [
+				'CONTENT',
+				'CATCH_ALL_WITH_RESPONSE',
+				'UNAUTHORIZED'
+			]
+		});
+	});
+
+	it('sends the second factor together with the same magic-link token', async () => {
+		fetchDataMock.mockResolvedValue({});
+		await apiConsumeMagicLinkLogin('magic-token', '123456');
+		expect(fetchDataMock).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				bodyData: JSON.stringify({
+					token: 'magic-token',
+					otp: '123456'
+				}),
+				skipAuth: true
+			})
+		);
+	});
+
+	it.each([
+		[400, 'APP', undefined],
+		[400, 'EMAIL', 30],
+		[429, 'EMAIL', 30]
+	])(
+		'preserves the finite %s %s challenge for the login form',
+		async (status, otpType, wait) => {
+			const data = {
+				error: 'invalid_grant',
+				error_description: 'Missing totp',
+				otpType,
+				...(wait === undefined
+					? {}
+					: { resendAvailableInSeconds: wait })
+			};
+			fetchDataMock.mockRejectedValueOnce(
+				new Response(JSON.stringify(data), { status: Number(status) })
+			);
+			await expect(
+				apiConsumeMagicLinkLogin('magic-token')
+			).rejects.toMatchObject({
+				message: status === 429 ? 'TOO_MANY_REQUESTS' : 'BAD_REQUEST',
+				options: { data }
+			});
+		}
+	);
+	it.each([
+		{ label: 'array factor', fields: { otpType: ['APP'] }, status: 400 },
+		{
+			label: 'fractional wait',
+			fields: { otpType: 'EMAIL', resendAvailableInSeconds: 0.5 },
+			status: 400
+		},
+		{
+			label: 'extra field',
+			fields: { otpType: 'APP', extra: true },
+			status: 400
+		},
+		{ label: 'APP throttle', fields: { otpType: 'APP' }, status: 429 }
+	])('refuses a malformed $label challenge', async ({ fields, status }) => {
+		fetchDataMock.mockRejectedValueOnce(
+			new Response(
+				JSON.stringify({
+					error: 'invalid_grant',
+					error_description: 'Missing totp',
+					...fields
+				}),
+				{ status }
+			)
+		);
+		await expect(
+			apiConsumeMagicLinkLogin('magic-token')
+		).rejects.toMatchObject({
+			message: 'CATCH_ALL'
 		});
 	});
 });

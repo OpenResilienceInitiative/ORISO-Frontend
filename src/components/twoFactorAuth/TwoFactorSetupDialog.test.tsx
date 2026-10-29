@@ -52,6 +52,7 @@ vi.mock('../../api', () => ({
 		BAD_REQUEST: 'BAD_REQUEST',
 		CONFLICT: 'CONFLICT',
 		PRECONDITION_FAILED: 'PRECONDITION_FAILED',
+		TIMEOUT: 'TIMEOUT',
 		TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS'
 	}
 }));
@@ -336,10 +337,13 @@ describe('TwoFactorSetupDialog', () => {
 		clickButton('twoFactorAuth.setupDialog.action.confirm');
 
 		await waitFor(() =>
-			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledWith({
-				otp: '123456',
-				secret: '12345678901234567890123456789012'
-			})
+			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledWith(
+				{
+					otp: '123456',
+					secret: '12345678901234567890123456789012'
+				},
+				expect.objectContaining({ id: expect.any(String) })
+			)
 		);
 		expect(apiPatchTwoFactorAuthEncourageMock).toHaveBeenCalledWith(false);
 		expect(onSetupComplete).toHaveBeenCalledTimes(1);
@@ -453,7 +457,8 @@ describe('TwoFactorSetupDialog', () => {
 
 		await waitFor(() =>
 			expect(apiPutTwoFactorAuthEmailMock).toHaveBeenCalledWith(
-				'maxmuster@email.de'
+				'maxmuster@email.de',
+				expect.objectContaining({ id: expect.any(String) })
 			)
 		);
 		// The connect step only renders after apiPutTwoFactorAuthEmail resolves
@@ -483,7 +488,8 @@ describe('TwoFactorSetupDialog', () => {
 
 		await waitFor(() =>
 			expect(apiPostTwoFactorAuthEmailWithCodeMock).toHaveBeenCalledWith(
-				'654321'
+				'654321',
+				expect.objectContaining({ id: expect.any(String) })
 			)
 		);
 		expect(onSetupComplete).toHaveBeenCalledTimes(1);
@@ -586,6 +592,47 @@ describe('TwoFactorSetupDialog', () => {
 			screen.queryByText('twoFactorAuth.setupDialog.error.appSetup')
 		).toBeNull();
 	});
+
+	it.each([new Error('TIMEOUT'), new TypeError('Failed to fetch')])(
+		'keeps an uncertain app result visible and reuses the owned retry for %s',
+		async (error) => {
+			apiPutTwoFactorAuthAppMock.mockRejectedValueOnce(error);
+			apiPatchTwoFactorAuthEncourageMock.mockResolvedValue(undefined);
+			const { onSetupAborted, onSetupComplete } = renderDialog();
+
+			await screen.findByText('twoFactorAuth.setupDialog.decision.app');
+			clickButton('twoFactorAuth.setupDialog.decision.app');
+			clickButton('twoFactorAuth.setupDialog.app.install.done');
+			clickButton('twoFactorAuth.setupDialog.action.next');
+			fireEvent.change(
+				await screen.findByLabelText(
+					'twoFactorAuth.setupDialog.app.verify.input'
+				),
+				{ target: { value: '123456' } }
+			);
+			clickButton('twoFactorAuth.setupDialog.action.confirm');
+
+			expect(
+				await screen.findByText(
+					'twoFactorAuth.setupDialog.error.outcomeUnknown'
+				)
+			).toBeTruthy();
+			expect(onSetupAborted).toHaveBeenCalledTimes(1);
+			expect(onSetupComplete).not.toHaveBeenCalled();
+			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledTimes(1);
+			const first = apiPutTwoFactorAuthAppMock.mock.calls[0];
+			apiPutTwoFactorAuthAppMock.mockResolvedValueOnce(undefined);
+			clickButton('twoFactorAuth.setupDialog.action.confirm');
+			await waitFor(() =>
+				expect(onSetupComplete).toHaveBeenCalledTimes(1)
+			);
+			expect(apiPutTwoFactorAuthAppMock).toHaveBeenCalledTimes(2);
+			expect(apiPutTwoFactorAuthAppMock.mock.calls[1][0]).toEqual(
+				first[0]
+			);
+			expect(apiPutTwoFactorAuthAppMock.mock.calls[1][1]).toBe(first[1]);
+		}
+	);
 
 	it('notifies the parent when app activation fails', async () => {
 		apiPutTwoFactorAuthAppMock.mockRejectedValue(new Error('BAD_REQUEST'));

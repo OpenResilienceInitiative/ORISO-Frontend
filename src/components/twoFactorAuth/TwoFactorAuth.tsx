@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +21,7 @@ export { OTP_LENGTH, TWO_FACTOR_TYPES } from './twoFactorAuthConstants';
 
 export const TwoFactorAuth = () => {
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const location = useLocation();
 	// v7 dropped the useLocation<T>() generic; cast the nav state back to a
 	// known shape so these reads stay type-checked.
@@ -59,10 +62,11 @@ export const TwoFactorAuth = () => {
 	}, [locationState.showBackupKey, userData.twoFactorAuth.isActive]);
 
 	const completeSetup = useCallback(async () => {
+		accountActions.edited('2fa-delete', endpoints.twoFactorAuth);
 		await reloadUserData();
 		setIsSwitchChecked(true);
 		setupCompletedRef.current = true;
-	}, [reloadUserData]);
+	}, [accountActions, reloadUserData]);
 
 	const abortSetup = useCallback(() => {
 		setIsSwitchChecked(userData.twoFactorAuth.isActive);
@@ -74,11 +78,16 @@ export const TwoFactorAuth = () => {
 	);
 
 	const disableTwoFactorAuth = useCallback(async () => {
-		await apiDeleteTwoFactorAuth();
+		await accountActions.run(
+			'2fa-delete',
+			endpoints.twoFactorAuth,
+			null,
+			(_, intent) => apiDeleteTwoFactorAuth(intent)
+		);
 		await reloadUserData();
 		setIsSwitchChecked(false);
 		setIsDialogOpen(false);
-	}, [reloadUserData]);
+	}, [accountActions, reloadUserData]);
 
 	const handleSwitchChange = () => {
 		if (!isSwitchChecked) {
@@ -88,7 +97,10 @@ export const TwoFactorAuth = () => {
 		}
 
 		setIsSwitchChecked(false);
-		apiDeleteTwoFactorAuth()
+		accountActions
+			.run('2fa-delete', endpoints.twoFactorAuth, null, (_, intent) =>
+				apiDeleteTwoFactorAuth(intent)
+			)
 			.then(reloadUserData)
 			.catch(() => setIsSwitchChecked(true));
 	};

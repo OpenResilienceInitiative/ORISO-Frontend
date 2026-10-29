@@ -1,11 +1,25 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS, FETCH_ERRORS } from './fetchData';
+import {
+	AccountOperationIntent,
+	accountOperationHeaders
+} from '../utils/accountOperationIntent';
 
-export const apiPutEmail = async (email: string): Promise<any> => {
+export const apiPutEmail = async (
+	email: string,
+	operationIntent?: AccountOperationIntent
+): Promise<any> => {
 	const url = endpoints.email;
+	const bodyData = JSON.stringify(email.trim());
 
 	return fetchData({
-		bodyData: JSON.stringify(email.trim()),
+		bodyData,
+		headersData: accountOperationHeaders(
+			operationIntent,
+			FETCH_METHODS.PUT,
+			url,
+			bodyData
+		),
 		url: url,
 		method: FETCH_METHODS.PUT,
 		responseHandling: [

@@ -1,5 +1,9 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS, FETCH_ERRORS } from './fetchData';
+import {
+	AccountOperationIntent,
+	accountOperationHeaders
+} from '../utils/accountOperationIntent';
 
 /**
  * The ORISO userservice spec no longer exposes PatchConsultantDTO; the PATCH
@@ -12,13 +16,20 @@ export type PatchConsultantDTO = {
 };
 
 export const apiPatchConsultantData = async (
-	consultantData: PatchConsultantDTO
+	consultantData: PatchConsultantDTO,
+	operationIntent?: AccountOperationIntent
 ): Promise<any> => {
 	const url = endpoints.userData;
 	const bodyData = JSON.stringify(consultantData);
 
 	return fetchData({
 		bodyData: bodyData,
+		headersData: accountOperationHeaders(
+			operationIntent,
+			FETCH_METHODS.PATCH,
+			url,
+			bodyData
+		),
 		url: url,
 		method: FETCH_METHODS.PATCH,
 		responseHandling: [FETCH_ERRORS.CONFLICT_WITH_RESPONSE]

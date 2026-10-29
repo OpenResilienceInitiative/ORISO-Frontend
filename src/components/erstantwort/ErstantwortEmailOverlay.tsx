@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +39,7 @@ export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
 > = ({ onClose, onSaved }) => {
 	const { t } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const active = useRef(true);
 	useEffect(() => {
 		active.current = true;
@@ -54,6 +57,7 @@ export const ErstantwortEmailOverlay: React.FC<
 
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const value = event.target.value;
+		if (value !== email) accountActions.edited('email', endpoints.email);
 		setEmail(value);
 		setErrorText(null);
 		if (!value.length) {
@@ -77,7 +81,8 @@ export const ErstantwortEmailOverlay: React.FC<
 		if (isSaving || !isValid) return;
 		setIsSaving(true);
 		setErrorText(null);
-		apiPutEmail(email)
+		accountActions
+			.run('email', endpoints.email, email, apiPutEmail)
 			.then(() => {
 				if (!active.current) return;
 				setIsSaving(false);

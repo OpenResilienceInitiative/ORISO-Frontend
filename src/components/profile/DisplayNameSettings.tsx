@@ -1,3 +1,5 @@
+import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
+import { endpoints } from '../../resources/scripts/endpoints';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +20,7 @@ import { Text } from '../text/Text';
 /** The existing consultant editor, moved from General into Privacy. */
 export const DisplayNameSettings = () => {
 	const { t: translate } = useTranslation();
+	const accountActions = useAccountOperationActions();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { addNotification } = useContext(NotificationsContext);
 	const [isEditEnabled, setIsEditEnabled] = useState(false);
@@ -36,9 +39,14 @@ export const DisplayNameSettings = () => {
 		type: BUTTON_TYPES.LINK
 	};
 
-	const handleValidDisplayName = useCallback((displayName) => {
-		setEditedDisplayName(displayName);
-	}, []);
+	const handleValidDisplayName = useCallback(
+		(displayName) => {
+			if (displayName !== editedDisplayName)
+				accountActions.edited('profile', endpoints.userData);
+			setEditedDisplayName(displayName);
+		},
+		[accountActions, editedDisplayName]
+	);
 
 	const handleCancelEditButton = () => {
 		const displayName = userData.displayName || userData.userName || '';
@@ -53,7 +61,13 @@ export const DisplayNameSettings = () => {
 		}
 		saveInFlight.current = true;
 		setIsSaving(true);
-		apiPatchUserData({ displayName: editedDisplayName })
+		accountActions
+			.run(
+				'profile',
+				endpoints.userData,
+				{ displayName: editedDisplayName },
+				apiPatchUserData
+			)
 			.then(() => {
 				reloadUserData().catch((error) => {
 					/* console.log(error); */

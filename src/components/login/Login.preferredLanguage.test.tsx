@@ -3,7 +3,14 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	LocaleContext,
 	TenantContext,
@@ -14,6 +21,7 @@ import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import { setAppConfig } from '../../utils/appConfig';
+import { AccountOperationIntent } from '../../utils/accountOperationIntent';
 import { Login } from './Login';
 
 /*
@@ -117,9 +125,11 @@ describe('Login keeps the language of the login screen (#1844)', () => {
 		signIn('en', 'de');
 
 		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
-		expect(apiPatchUserData).toHaveBeenCalledWith({
-			preferredLanguage: 'en'
-		});
+		expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+		expect(apiPatchUserData).toHaveBeenCalledWith(
+			{ preferredLanguage: 'en' },
+			expect.any(AccountOperationIntent)
+		);
 	});
 
 	it('keeps the profile language when the screen only shows the detected browser language', async () => {

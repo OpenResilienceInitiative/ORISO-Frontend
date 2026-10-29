@@ -26,6 +26,8 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { FETCH_ERRORS, FetchErrorWithOptions } from '../../api';
 import { autoLogin } from '../registration/autoLogin';
+import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
+import * as loginAuth from '../auth/auth';
 import { setAppConfig } from '../../utils/appConfig';
 import { Login } from './Login';
 
@@ -40,6 +42,10 @@ vi.mock('../registration/autoLogin', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../registration/autoLogin')>()),
 	autoLogin: vi.fn(),
 	redirectToApp: vi.fn()
+}));
+
+vi.mock('../../api/apiConsumeMagicLinkLogin', () => ({
+	apiConsumeMagicLinkLogin: vi.fn()
 }));
 
 vi.mock('../stageLayout/StageLayout', () => ({
@@ -84,9 +90,9 @@ const elapse = (ms: number) =>
 		await vi.advanceTimersByTimeAsync(ms);
 	});
 
-const renderLogin = () =>
+const renderLogin = (entry = '/login') =>
 	render(
-		<MemoryRouter initialEntries={['/login']}>
+		<MemoryRouter initialEntries={[entry]}>
 			<LocaleContext.Provider
 				value={
 					{
@@ -147,6 +153,7 @@ const status = () => screen.getByRole('status');
 beforeEach(() => {
 	vi.useFakeTimers();
 	vi.mocked(autoLogin).mockReset();
+	vi.mocked(apiConsumeMagicLinkLogin).mockReset();
 	setAppConfig({ blockConsultantAppLogin: false } as never);
 	window.localStorage.clear();
 });
@@ -155,6 +162,130 @@ afterEach(() => {
 	cleanup();
 	vi.useRealTimers();
 	vi.restoreAllMocks();
+});
+
+describe('Magic-link login preserves the required second factor', () => {
+	it('does not install a late magic-link session after leaving the login page', async () => {
+		let complete!: (
+			value: Awaited<ReturnType<typeof apiConsumeMagicLinkLogin>>
+		) => void;
+		vi.mocked(apiConsumeMagicLinkLogin).mockReturnValueOnce(
+			new Promise((resolve) => {
+				complete = resolve;
+			})
+		);
+		const install = vi
+			.spyOn(loginAuth, 'setTokens')
+			.mockImplementation(() => {});
+		const view = renderLogin('/login?magicToken=magic-fixture');
+		await flush();
+		view.unmount();
+		await act(async () =>
+			complete({
+				access_token: 'fixture-late-access',
+				expires_in: 300,
+				refresh_token: 'fixture-late-refresh',
+				refresh_expires_in: 600
+			})
+		);
+		await flush();
+		expect(install).not.toHaveBeenCalled();
+	});
+
+	it('ignores a late magic-link session after the person chooses another login', async () => {
+		let complete!: (
+			value: Awaited<ReturnType<typeof apiConsumeMagicLinkLogin>>
+		) => void;
+		vi.mocked(apiConsumeMagicLinkLogin).mockReturnValueOnce(
+			new Promise((resolve) => {
+				complete = resolve;
+			})
+		);
+		const install = vi
+			.spyOn(loginAuth, 'setTokens')
+			.mockImplementation(() => {});
+		const view = renderLogin('/login?magicToken=magic-fixture');
+		await flush();
+		fireEvent.change(view.container.querySelector('#username')!, {
+			target: { value: 'another@example.org' }
+		});
+		await act(async () =>
+			complete({
+				access_token: 'fixture-late-access',
+				expires_in: 300,
+				refresh_token: 'fixture-late-refresh',
+				refresh_expires_in: 600
+			})
+		);
+		await flush();
+		expect(install).not.toHaveBeenCalled();
+		expect(autoLogin).not.toHaveBeenCalled();
+	});
+
+	it('shows the app code step and retries the same link with the entered code', async () => {
+		const appChallenge = new FetchErrorWithOptions(
+			FETCH_ERRORS.BAD_REQUEST,
+			{
+				data: {
+					error: 'invalid_grant',
+					error_description: 'Missing totp',
+					otpType: 'APP'
+				}
+			}
+		);
+		vi.mocked(apiConsumeMagicLinkLogin)
+			.mockRejectedValueOnce(appChallenge)
+			.mockRejectedValueOnce(
+				new FetchErrorWithOptions(FETCH_ERRORS.BAD_REQUEST, {
+					data: { error: 'invalid_grant' }
+				})
+			);
+		const view = renderLogin('/login?magicToken=magic-fixture');
+		await flush();
+		expect(apiConsumeMagicLinkLogin).toHaveBeenCalledWith('magic-fixture');
+		expect(
+			view.container.querySelector('.loginForm__otp--active')
+		).not.toBeNull();
+		fireEvent.change(view.container.querySelector('#otp')!, {
+			target: { value: '123456' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', { name: 'login.button.label' })
+		);
+		await flush();
+		expect(apiConsumeMagicLinkLogin).toHaveBeenCalledTimes(2);
+		expect(apiConsumeMagicLinkLogin).toHaveBeenLastCalledWith(
+			'magic-fixture',
+			'123456'
+		);
+		expect(autoLogin).not.toHaveBeenCalled();
+		expect(
+			view.container.querySelector('.loginForm__otp--active')
+		).not.toBeNull();
+		expect(
+			screen.getByText('login.warning.failed.unauthorized.otp')
+		).toBeTruthy();
+	});
+
+	it('resends an email code with the same link after the server countdown', async () => {
+		vi.mocked(apiConsumeMagicLinkLogin).mockRejectedValue(
+			emailChallenge({ resendAvailableInSeconds: 30 })
+		);
+		const view = renderLogin('/login?magicToken=magic-fixture');
+		await flush();
+		expect(
+			view.container.querySelector('.loginForm__otp--active')
+		).not.toBeNull();
+		expect(resendButton().textContent).toBe(`${COUNTDOWN} 0:30`);
+		await elapse(30000);
+		fireEvent.click(resendButton());
+		await flush();
+		expect(apiConsumeMagicLinkLogin).toHaveBeenCalledTimes(2);
+		expect(apiConsumeMagicLinkLogin).toHaveBeenLastCalledWith(
+			'magic-fixture'
+		);
+		expect(autoLogin).not.toHaveBeenCalled();
+	});
 });
 
 describe('Login e-mail code: resend link (#1338)', () => {
