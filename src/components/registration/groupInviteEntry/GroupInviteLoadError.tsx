@@ -94,3 +94,32 @@ export const GroupInviteLoadError = ({
 		</InviteStage>
 	);
 };
+
+/** The link names no group this person can join (#921); retrying cannot help. */
+export const GroupInviteInvalid = (props: InviteStageProps) => {
+	const { t } = useTranslation();
+
+	return (
+		<InviteStage {...props}>
+			<Box
+				role="alert"
+				data-cy="group-invite-invalid"
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'flex-start',
+					gap: 2,
+					px: { xs: 2.5, sm: 5 },
+					pt: { xs: 3, sm: 4 }
+				}}
+			>
+				<Typography variant="h5" component="h1">
+					{t('registration.groupInvite.invalid.headline')}
+				</Typography>
+				<Typography variant="body1">
+					{t('registration.groupInvite.invalid.body')}
+				</Typography>
+			</Box>
+		</InviteStage>
+	);
+};
