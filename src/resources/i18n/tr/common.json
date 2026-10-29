@@ -230,6 +230,11 @@
 			"headline": "Yasaklandılar.",
 			"info": "Sizden sohbet kurallarına uymanızı istemiştik.<br/><br/>Bugün sohbet kurallarına defalarca uymadığınız için sizi bugünkü sohbetten çıkardık.<br/><br/>Sohbet kurallarını öğrenin!</br></br>Eğer sohbet kurallarına uymaya istekliyseniz, yarın sohbete tekrar hoş geldiniz!"
 		},
+		"confirm": {
+			"description": "Bu kişi artık bu grupta yazamaz ve gruptan çıkarıldığını görür.",
+			"submit": "Çıkar",
+			"title": "{{name}} bu gruptan çıkarılsın mı?"
+		},
 		"is": {
 			"banned": " Spellbound"
 		}
