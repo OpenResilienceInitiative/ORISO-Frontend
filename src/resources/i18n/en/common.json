@@ -6017,6 +6017,36 @@
 			"minimize": "Minimize call",
 			"groupCall": "Group call",
 			"endsCurrentUnnamed": "Answering ends your current call."
+		},
+		"share": {
+			"open": "Share call",
+			"title": "Share call",
+			"close": "Close",
+			"settingsLabel": "For guests with this link",
+			"knock": {
+				"label": "Knock first",
+				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
+				"off": "Guests enter the call directly, without waiting."
+			},
+			"temporaryAccount": {
+				"label": "Temporary account",
+				"on": "Guests get a guest account that is deleted after the call.",
+				"off": "Guests sign in with their own account or create one."
+			},
+			"linkLabel": "Link to the call",
+			"copy": "Copy",
+			"copied": "Copied",
+			"copiedStatus": "The link is on your clipboard.",
+			"copyFailed": "Copying did not work. Please select the link and copy it yourself.",
+			"qrShow": "QR code",
+			"qrHide": "Hide QR code",
+			"qrAlt": "QR code with the link to the call",
+			"share": "Share",
+			"shareTitle": "Invitation to a call",
+			"lifetime": "The link only works for this call. It stops working as soon as you hang up.",
+			"consent": "Before entering, guests confirm the counselling centre’s privacy policy and consent with one tap.",
+			"qrHint": "Scan with a phone camera to open the call there.",
+			"settingsLive": "Changes apply right away to this link, even if it has already been shared."
 		}
 	},
 	"form": {

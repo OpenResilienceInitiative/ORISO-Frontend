@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
+import { CallShareForCall } from './share/CallShareForCall';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -1170,6 +1171,22 @@ export const GroupCallWidget: React.FC = () => {
 						 * surface, so the stage reflows to the remaining
 						 * width rather than being covered.
 						 */}
+						{/* Host side, like the notes: no widget capability needed (#1794). */}
+						{/* Element Call never sets CallData.state to connected; a
+						    ready widget is the joined call. */}
+						{isConsultantUser &&
+							widget.ready &&
+							callData?.signalRoomId && (
+								<div className="element-call-share">
+									<CallShareForCall
+										sourceRoomId={callData.signalRoomId}
+										callId={callData.callId}
+										layout={
+											isMobileView ? 'phone' : 'desktop'
+										}
+									/>
+								</div>
+							)}
 						{isConsultantUser && (
 							<Gespraechsnotizen
 								className="element-call-notes"
