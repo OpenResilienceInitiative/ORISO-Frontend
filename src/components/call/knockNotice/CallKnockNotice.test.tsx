@@ -20,10 +20,15 @@ const { CallKnockNoticeHost } = await import('./CallKnockNoticeHost');
 const { createFakeCallKnockTransport } = await import(
 	'./fakeCallKnockTransport'
 );
+const { createSnackbarStack } = await import('../../m3Snackbar/snackbarStack');
 
 afterEach(cleanup);
 
-const names: Record<number, string> = { 1: 'anna-1', 2: 'ben-2' };
+const names: Record<number, string> = {
+	1: 'anna-1',
+	2: 'ben-2',
+	3: 'cem-3'
+};
 
 /** Everybody knocks on the current call (session 501) unless told otherwise. */
 const knock = (
@@ -278,6 +283,118 @@ describe('CallKnockNotice (#1892)', () => {
 		const notice = await screen.findByTestId('call-knock-notice');
 		expect(notice.getAttribute('data-placement')).toBe('overlay');
 		expect(view.container.contains(notice)).toBe(true);
+	});
+
+	it('keeps somebody who knocked while "Alle einlassen" was on its way', async () => {
+		const transport = createFakeCallKnockTransport([knock(1), knock(2)]);
+		let release: () => void = () => undefined;
+		const admitAll = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					release = resolve;
+				})
+		);
+		render(
+			<CallKnockNoticeHost
+				transport={{ ...transport, admitAll }}
+				scope={SCOPE}
+				playSound={vi.fn()}
+			/>
+		);
+		await screen.findByText('anna-1');
+		await userEvent.click(
+			screen.getByRole('button', { name: 'calls.knock.admitAll' })
+		);
+		// A poll reports a new arrival before the server's answer comes back.
+		act(() => transport.setPending([knock(1), knock(2), knock(3)]));
+		await act(async () => release());
+		expect(await screen.findByText('cem-3')).toBeTruthy();
+		expect(screen.queryByText('anna-1')).toBeNull();
+		expect(screen.queryByTestId('call-knock-position')).toBeNull();
+	});
+
+	it('takes no second decision while one is on its way, on any page', async () => {
+		const transport = createFakeCallKnockTransport([knock(1), knock(2)]);
+		let release: () => void = () => undefined;
+		const admit = vi.fn(
+			(knockId: number) =>
+				new Promise<void>((resolve) => {
+					release = () => {
+						transport.decisions.push(`admit:${knockId}`);
+						resolve();
+					};
+				})
+		);
+		render(
+			<CallKnockNoticeHost
+				transport={{ ...transport, admit }}
+				scope={SCOPE}
+				playSound={vi.fn()}
+			/>
+		);
+		await screen.findByText('anna-1');
+		await userEvent.click(
+			screen.getByRole('button', { name: 'calls.knock.admit' })
+		);
+		await userEvent.click(
+			screen.getByRole('button', { name: 'calls.knock.next' })
+		);
+		expect(await screen.findByText('ben-2')).toBeTruthy();
+		for (const name of ['calls.knock.admit', 'calls.knock.decline']) {
+			const button = screen.getByRole('button', { name });
+			expect(button.getAttribute('aria-disabled')).toBe('true');
+			await userEvent.click(button);
+		}
+		expect(admit).toHaveBeenCalledTimes(1);
+		await act(async () => release());
+		expect(transport.decisions).toEqual(['admit:1']);
+	});
+
+	it('stays on the person shown when somebody before them leaves', async () => {
+		const { transport } = setup([knock(1), knock(2), knock(3)]);
+		await screen.findByText('anna-1');
+		await userEvent.click(
+			screen.getByRole('button', { name: 'calls.knock.next' })
+		);
+		expect(await screen.findByText('ben-2')).toBeTruthy();
+		act(() => transport.setPending([knock(2), knock(3)]));
+		expect(screen.getByTestId('call-knock-name').textContent).toBe('ben-2');
+		expect(screen.getByTestId('call-knock-position').textContent).toBe(
+			'calls.knock.position(current=1,total=2)'
+		);
+	});
+
+	it('says so in a snackbar when the decision fails', async () => {
+		const transport = createFakeCallKnockTransport([knock(1)]);
+		const snackbarStack = createSnackbarStack();
+		render(
+			<CallKnockNoticeHost
+				transport={{
+					...transport,
+					admit: () => Promise.reject(new Error('CATCH_ALL'))
+				}}
+				scope={SCOPE}
+				playSound={vi.fn()}
+				snackbarStack={snackbarStack}
+			/>
+		);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'calls.knock.admit' })
+		);
+		await waitFor(() =>
+			expect(
+				snackbarStack.getSnapshot().map((entry) => entry.announcement)
+			).toEqual(['groupChat.joinRequest.failed'])
+		);
+		expect(screen.getByText('anna-1')).toBeTruthy();
+	});
+
+	it('scrolls inside a small call stage instead of cutting off its buttons', async () => {
+		setup([knock(1), knock(2)]);
+		const notice = await screen.findByTestId('call-knock-notice');
+		const style = window.getComputedStyle(notice);
+		expect(style.overflowY).toBe('auto');
+		expect(style.maxHeight).toBe('calc(100% - 60px)');
 	});
 
 	it('does not ask the server when switched off', () => {

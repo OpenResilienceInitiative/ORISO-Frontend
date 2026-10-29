@@ -1,5 +1,12 @@
+import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
+import { useTranslation } from 'react-i18next';
+import { M3Snackbar } from '../../m3Snackbar/M3Snackbar';
+import {
+	appSnackbarStack,
+	SnackbarStack
+} from '../../m3Snackbar/snackbarStack';
+import { playEventSound } from '../../../utils/notificationSettings/soundPlayback';
 import {
 	CallKnock,
 	CallKnockScope,
@@ -14,8 +21,9 @@ import {
 } from './callKnockTransport';
 
 /** A short, quiet chime — the counsellor is talking to somebody. */
-export const playKnockSound = (): void =>
-	previewNotificationSound('chime', 0.6);
+export const playKnockSound = (): void => playEventSound('chime', 0.6);
+
+const FAILURE_MS = 8000;
 
 export type CallKnockBusy = number | 'all' | null;
 
@@ -29,6 +37,8 @@ export interface UseCallKnocksOptions {
 	scope: CallKnockScope | null;
 	transport?: CallKnockTransport;
 	playSound?: () => void;
+	/** Where a failed decision is reported. */
+	snackbarStack?: SnackbarStack;
 }
 
 export interface CallKnocksState {
@@ -43,16 +53,22 @@ export interface CallKnocksState {
  * The people knocking on the counsellor's current call
  * (ORISO-Frontend#1892): who they are, a chime for every new one, and the
  * three decisions. A decision takes the person off the list as soon as the
- * server confirms it.
+ * server confirms it. One decision at a time: a second one waits until the
+ * first has landed, so two can never contradict each other.
  */
 export const useCallKnocks = ({
 	enabled,
 	scope,
 	transport = httpCallKnockTransport,
-	playSound = playKnockSound
+	playSound = playKnockSound,
+	snackbarStack = appSnackbarStack
 }: UseCallKnocksOptions): CallKnocksState => {
+	const { t } = useTranslation();
 	const [knocks, setKnocks] = useState<CallKnock[]>([]);
+	const knocksRef = useRef<CallKnock[]>([]);
+	knocksRef.current = knocks;
 	const [busy, setBusy] = useState<CallKnockBusy>(null);
+	const busyRef = useRef<CallKnockBusy>(null);
 	const known = useRef<Set<number>>(new Set());
 	const playRef = useRef(playSound);
 	playRef.current = playSound;
@@ -74,27 +90,48 @@ export const useCallKnocks = ({
 		});
 	}, [enabled, scopeKey, transport]);
 
-	const removeLocally = (ids: number[] | 'all') =>
-		setKnocks((current) =>
-			ids === 'all' ? [] : current.filter((k) => !ids.includes(k.id))
-		);
+	const failed = useCallback(() => {
+		const message = t('groupChat.joinRequest.failed');
+		snackbarStack.enqueue({
+			announcement: message,
+			autoHideDuration: FAILURE_MS,
+			render: ({ dismiss }) =>
+				React.createElement(M3Snackbar, {
+					placement: 'inline',
+					role: 'status',
+					message,
+					onClose: dismiss,
+					closeLabel: t('app.close'),
+					sx: { maxWidth: 'none' }
+				})
+		});
+	}, [snackbarStack, t]);
 
 	const decide = useCallback(
 		async (
 			key: Exclude<CallKnockBusy, null>,
 			request: () => Promise<void>
 		) => {
+			if (busyRef.current !== null) return;
+			// Only who was on the list when asked: a later arrival still waits.
+			const decided =
+				key === 'all' ? knocksRef.current.map((k) => k.id) : [key];
+			busyRef.current = key;
 			setBusy(key);
 			try {
 				await request();
-				removeLocally(key === 'all' ? 'all' : [key]);
+				setKnocks((current) =>
+					current.filter((k) => !decided.includes(k.id))
+				);
 			} catch {
 				// Still waiting: the next poll shows the true state.
+				failed();
 			} finally {
+				busyRef.current = null;
 				setBusy(null);
 			}
 		},
-		[]
+		[failed]
 	);
 
 	const admit = useCallback(

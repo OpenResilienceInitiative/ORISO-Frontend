@@ -21,7 +21,7 @@ export interface CallKnockNoticeProps {
 	 * `docked`: the call is minimised — the notice sits just above it.
 	 */
 	placement?: CallKnockPlacement;
-	/** A decision is on its way: its buttons ignore clicks (focus stays put). */
+	/** A decision is on its way: every decision ignores clicks (focus stays put). */
 	busy?: CallKnockBusy;
 	onAdmit: (knockId: number) => void;
 	onDecline: (knockId: number) => void;
@@ -79,6 +79,9 @@ const placementSx: Record<CallKnockPlacement, SxProps<Theme>> = {
 		transform: 'translateX(-50%)',
 		width: 'calc(100% - 24px)',
 		maxWidth: 360,
+		// A small stage clips its content: scroll rather than lose the buttons.
+		maxHeight: 'calc(100% - 60px)',
+		overflowY: 'auto',
 		zIndex: 7
 	},
 	docked: {
@@ -114,23 +117,37 @@ export const CallKnockNotice = ({
 	const { t } = useTranslation();
 	const nameId = useId();
 	const regionId = useId();
-	const [page, setPage] = useState(0);
+	// Follows the person, not the position: the list may change under her.
+	const [selected, setSelected] = useState<{
+		id: number | null;
+		index: number;
+	}>({ id: null, index: 0 });
 	const count = people.length;
+	const found = people.findIndex((p) => p.id === selected.id);
+	// The person shown has gone: whoever is now in that place.
+	const page = found >= 0 ? found : clampPage(selected.index, count);
+	const shownId = count > 0 ? people[page].id : null;
 
 	useEffect(() => {
-		setPage((current) => clampPage(current, count));
-	}, [count]);
+		if (
+			shownId !== null &&
+			(shownId !== selected.id || page !== selected.index)
+		)
+			setSelected({ id: shownId, index: page });
+	}, [shownId, page, selected]);
 
 	if (count === 0) return null;
 
-	const current = people[clampPage(page, count)];
+	const current = people[page];
 	const several = count > 1;
-	const isBusy = busy === 'all' || busy === current.id;
+	const isBusy = busy !== null;
 	const guard = (action: () => void, blocked: boolean) => () => {
 		if (!blocked) action();
 	};
-	const turn = (step: number) => () =>
-		setPage((value) => (clampPage(value, count) + step + count) % count);
+	const turn = (step: number) => () => {
+		const index = (page + step + count) % count;
+		setSelected({ id: people[index].id, index });
+	};
 
 	return (
 		<Box
@@ -170,7 +187,7 @@ export const CallKnockNotice = ({
 						{' · '}
 						<span data-testid="call-knock-position">
 							{t('calls.knock.position', {
-								current: clampPage(page, count) + 1,
+								current: page + 1,
 								total: count
 							})}
 						</span>
@@ -244,8 +261,8 @@ export const CallKnockNotice = ({
 				{several && (
 					<Button
 						variant="text"
-						onClick={guard(onAdmitAll, busy !== null)}
-						aria-disabled={busy !== null || undefined}
+						onClick={guard(onAdmitAll, isBusy)}
+						aria-disabled={isBusy || undefined}
 						sx={textAction}
 						data-testid="call-knock-admit-all"
 					>
