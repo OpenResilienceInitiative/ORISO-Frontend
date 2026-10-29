@@ -46,7 +46,11 @@ jobs:
     storybook-tests:
         name: Storybook component tests (interactions + a11y)
         runs-on: ubuntu-latest
-        timeout-minutes: 25
+        # A healthy run needs 15-19 min (four shards of ~2.5 min each, plus install).
+        # On a slow runner the Chrome install alone took 8 min and the browser-
+        # disconnect retries (up to 4 per shard) add ~2.7 min each, which pushed
+        # a green suite past 25 min and cancelled it (FE#1864, job 122284030554).
+        timeout-minutes: 40
 
         steps:
             - name: Checkout repository
