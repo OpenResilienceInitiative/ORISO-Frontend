@@ -2757,7 +2757,8 @@
 	"directLink": {
 		"card": {
 			"headline": "Ein Link direkt zu dir",
-			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf."
+			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
 		},
 		"share": {
 			"title": "Dein Direktlink ist bereit",
