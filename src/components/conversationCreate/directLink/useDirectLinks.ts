@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	apiCreateDirectLink,
-	apiGetDirectLinks,
+	apiGetOwnDirectLinks,
 	apiUpdateDirectLink,
 	CreateDirectLinkBody,
-	notifyDirectLinksChanged,
-	toDirectLink
+	notifyDirectLinksChanged
 } from '../../../api/apiDirectLinks';
 import { DirectLink } from './directLink';
 
@@ -43,10 +42,10 @@ export const useDirectLinks = ({ load = true } = {}): DirectLinksState => {
 	useEffect(() => {
 		if (!load) return;
 		let cancelled = false;
-		apiGetDirectLinks()
+		apiGetOwnDirectLinks()
 			.then((list) => {
 				if (cancelled) return;
-				setLinks(list.map(toDirectLink));
+				setLinks(list);
 				setLoadFailed(false);
 			})
 			.catch(() => {
@@ -63,7 +62,7 @@ export const useDirectLinks = ({ load = true } = {}): DirectLinksState => {
 	const reload = useCallback(() => setAttempt((count) => count + 1), []);
 
 	const create = useCallback(async (body: CreateDirectLinkBody) => {
-		const link = toDirectLink(await apiCreateDirectLink(body));
+		const link = await apiCreateDirectLink(body);
 		if (mounted.current) setLinks((current) => [link, ...current]);
 		// An open "Meine Direktlinks" list (FE#1894) reloads.
 		notifyDirectLinksChanged();

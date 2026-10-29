@@ -2105,7 +2105,8 @@
 				"large": "Mes consultations",
 				"nav": "Conversation",
 				"small": "Nouvelles"
-			}
+			},
+			"directLinks": "Mes liens directs"
 		},
 		"activity": "Chronologie",
 		"language": "Langue",
@@ -2983,7 +2984,8 @@
 					"title": "Sécurité"
 				},
 				"title": "Réglages",
-				"keyboardShortcuts": "Raccourcis clavier"
+				"keyboardShortcuts": "Raccourcis clavier",
+				"myLinks": "Mes liens"
 			}
 		},
 		"spokenLanguages": {
@@ -6404,7 +6406,8 @@
 		"list": {
 			"title": "Mes liens directs",
 			"qr": "Afficher le code QR",
-			"active": "{{name}} actif"
+			"active": "{{name}} actif",
+			"edit": "Modifier {{name}}"
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
@@ -6412,7 +6415,24 @@
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},
 		"page": {
-			"loadFailed": "Vos liens directs n’ont pas pu être chargés."
+			"loadFailed": "Vos liens directs n’ont pas pu être chargés.",
+			"create": "Créer un nouveau lien direct dans « Créer un chat »",
+			"emptyHeadline": "Il n’y a pas encore de liens directs",
+			"emptyText": "Vous créez un lien direct dans « Créer un chat ». Il apparaît ensuite ici.",
+			"loading": "Chargement des liens directs",
+			"retry": "Réessayer",
+			"toggleFailed": "Le lien n’a pas pu être activé ou désactivé. Veuillez réessayer."
+		},
+		"edit": {
+			"title": "Modifier le lien direct",
+			"cancel": "Annuler",
+			"save": "Enregistrer",
+			"name": "Nom",
+			"nameRequired": "Veuillez saisir un nom.",
+			"topic": "Thème",
+			"mediumFixed": "Le type de contact ne peut pas être modifié",
+			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
+			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer."
 		}
 	},
 	"dashboard": {

@@ -96,6 +96,10 @@ export const endpoints = {
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
+	/** #1894: one of the counsellor's own direct links (UserService#1479). */
+	directLink: (linkId: string) =>
+		userServiceOrigin +
+		`/service/users/directlinks/${encodeURIComponent(linkId)}`,
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',

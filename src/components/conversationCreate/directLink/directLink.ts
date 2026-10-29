@@ -13,6 +13,9 @@ export interface DirectLink {
 	/** Editable after creation, e.g. "Flyer Schule". */
 	name: string;
 	topic: string;
+	/** Set once the link comes from UserService (#1894). */
+	topicId?: number;
+	agencyId?: number;
 	/** Fixed after creation. */
 	medium: DirectLinkMedium;
 	/** New people get a temporary account. Applies to new people only. */

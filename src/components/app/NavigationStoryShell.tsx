@@ -14,6 +14,7 @@ import './authenticatedApp.styles.scss';
 export function NavigationStoryShell({
 	role,
 	liveChatViaSidebar = true,
+	tenantSettings,
 	onLogout,
 	className = '',
 	children,
@@ -21,6 +22,8 @@ export function NavigationStoryShell({
 }: Omit<React.HTMLAttributes<HTMLDivElement>, 'role'> & {
 	role: 'consultant' | 'asker';
 	liveChatViaSidebar?: boolean;
+	/** Träger settings for the story tenant. */
+	tenantSettings?: Record<string, unknown>;
 	onLogout: () => void;
 }) {
 	const routerConfig = useMemo(() => {
@@ -34,6 +37,7 @@ export function NavigationStoryShell({
 		<NavigationStoryProviders
 			role={role}
 			liveChatViaSidebar={liveChatViaSidebar}
+			tenantSettings={tenantSettings}
 		>
 			<div {...shellProps} className={`app__wrapper ${className}`}>
 				{children}

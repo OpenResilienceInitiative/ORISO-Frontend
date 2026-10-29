@@ -2807,7 +2807,13 @@
 			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
 		},
 		"page": {
-			"loadFailed": "Deine Direktlinks konnten nicht geladen werden."
+			"loadFailed": "Deine Direktlinks konnten nicht geladen werden.",
+			"emptyText": "Einen Direktlink erstellst du unter „Chat erstellen“. Er erscheint danach hier.",
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuche es erneut."
+		},
+		"edit": {
+			"nameRequired": "Bitte gib einen Namen ein.",
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}
 	},
 	"dashboard": {

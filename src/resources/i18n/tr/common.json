@@ -2105,7 +2105,8 @@
 				"large": "İstişarelerim",
 				"nav": "Sohbetler",
 				"small": "Haberler"
-			}
+			},
+			"directLinks": "Doğrudan bağlantılarım"
 		},
 		"activity": "Zaman çizelgesi",
 		"language": "Dil",
@@ -2983,7 +2984,8 @@
 					"title": "Güvenlik"
 				},
 				"title": "Ayarlar",
-				"keyboardShortcuts": "Klavye Kısayolları"
+				"keyboardShortcuts": "Klavye Kısayolları",
+				"myLinks": "Bağlantılarım"
 			}
 		},
 		"spokenLanguages": {
@@ -6404,7 +6406,8 @@
 		"list": {
 			"title": "Doğrudan bağlantılarım",
 			"qr": "QR kodunu göster",
-			"active": "{{name}} etkin"
+			"active": "{{name}} etkin",
+			"edit": "{{name}} düzenle"
 		},
 		"entry": {
 			"inactive": "Bu bağlantı artık etkin değil.",
@@ -6412,7 +6415,24 @@
 			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 		},
 		"page": {
-			"loadFailed": "Doğrudan bağlantılarınız yüklenemedi."
+			"loadFailed": "Doğrudan bağlantılarınız yüklenemedi.",
+			"create": "“Sohbet oluştur” bölümünde yeni doğrudan bağlantı oluştur",
+			"emptyHeadline": "Henüz doğrudan bağlantı yok",
+			"emptyText": "Doğrudan bağlantıyı “Sohbet oluştur” bölümünde oluşturursunuz. Ardından burada görünür.",
+			"loading": "Doğrudan bağlantılar yükleniyor",
+			"retry": "Tekrar dene",
+			"toggleFailed": "Bağlantı açılıp kapatılamadı. Lütfen tekrar deneyin."
+		},
+		"edit": {
+			"title": "Doğrudan bağlantıyı düzenle",
+			"cancel": "İptal",
+			"save": "Kaydet",
+			"name": "Ad",
+			"nameRequired": "Lütfen bir ad girin.",
+			"topic": "Konu",
+			"mediumFixed": "İletişim türü değiştirilemez",
+			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
+			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin."
 		}
 	},
 	"dashboard": {

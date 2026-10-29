@@ -35,6 +35,7 @@ export const DirectLinkShareDialog = ({
 	const { t } = useTranslation();
 	const [qr, setQr] = useState('');
 	const [copied, setCopied] = useState(false);
+	const [copyFailed, setCopyFailed] = useState(false);
 
 	useEffect(() => {
 		QRCode.toDataURL(link.url, { errorCorrectionLevel: 'M', width: 320 })
@@ -43,7 +44,10 @@ export const DirectLinkShareDialog = ({
 	}, [link.url]);
 
 	useEffect(() => {
-		if (!open) setCopied(false);
+		if (!open) {
+			setCopied(false);
+			setCopyFailed(false);
+		}
 	}, [open]);
 
 	const canShare = typeof navigator !== 'undefined' && 'share' in navigator;
@@ -101,8 +105,14 @@ export const DirectLinkShareDialog = ({
 					type="button"
 					className="directLinkShareDialog__action"
 					onClick={async () => {
-						await onCopy(link.url);
-						setCopied(true);
+						try {
+							await onCopy(link.url);
+							setCopyFailed(false);
+							setCopied(true);
+						} catch {
+							setCopied(false);
+							setCopyFailed(true);
+						}
 					}}
 				>
 					{copied ? (
@@ -127,6 +137,11 @@ export const DirectLinkShareDialog = ({
 					</button>
 				)}
 			</div>
+			{copyFailed && (
+				<p role="alert" className="directLinkCopyError">
+					{t('groupChat.shareDialog.copyFailed')}
+				</p>
+			)}
 		</M3Dialog>
 	);
 };

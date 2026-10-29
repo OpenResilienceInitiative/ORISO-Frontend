@@ -505,6 +505,12 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return new Response(null, { status: 404 });
 	}
 
+	// #1894: the counsellor's own direct links (settings "Meine Links"); stories
+	// that show links install their own mock on top.
+	if (url.pathname === '/service/users/directlinks' && method === 'GET') {
+		return storybookJsonResponse([]);
+	}
+
 	if (url.pathname === '/service/users/data') {
 		return storybookJsonResponse(mockUserData);
 	}

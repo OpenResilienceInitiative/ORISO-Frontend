@@ -5,24 +5,31 @@ import {
 	FETCH_SUCCESS,
 	fetchData
 } from './fetchData';
-import type {
+import {
+	DIRECT_LINK_MEDIA,
 	DirectLink,
 	DirectLinkMedium
 } from '../components/conversationCreate/directLink/directLink';
 
-/** ORISO-UserService#1479, `DirectLinkDTO`. */
+/**
+ * Counsellor direct links, ORISO-UserService#1479: the counsellor's own
+ * links (create in "Create chat" #1908, list and edit #1894) and the
+ * person's side (own conversation, knock first for calls).
+ */
+
+/** `DirectLinkDTO`. Loose on purpose: an entry the app cannot show is dropped. */
 export interface DirectLinkDTO {
 	id: number;
-	token: string;
+	token?: string;
 	url: string;
 	name?: string | null;
-	topicId: number;
+	topicId?: number;
 	topicName?: string | null;
 	agencyId?: number | null;
-	medium: DirectLinkMedium;
+	medium: string;
 	temporary: boolean;
 	active: boolean;
-	admission: 'DIRECT' | 'KNOCK';
+	admission?: 'DIRECT' | 'KNOCK';
 	createDate?: string;
 }
 
@@ -35,7 +42,8 @@ export interface CreateDirectLinkBody {
 	agencyId?: number;
 }
 
-export interface UpdateDirectLinkBody {
+/** `UpdateDirectLinkDTO`: absent fields stay unchanged. */
+export interface DirectLinkUpdate {
 	name?: string;
 	topicId?: number;
 	temporary?: boolean;
@@ -78,44 +86,90 @@ export const isInactiveDirectLinkError = (error: unknown): boolean =>
 	typeof (error as Response)?.status === 'number' &&
 	(error as Response).status === 410;
 
-/** The frontend model the Storybook components were built on (#1795). */
-export const toDirectLink = (dto: DirectLinkDTO): DirectLink => ({
-	id: String(dto.id),
-	name: dto.name?.trim() || dto.topicName || '',
-	topic: dto.topicName ?? '',
-	medium: dto.medium,
-	temporary: dto.temporary,
-	active: dto.active,
-	url: dto.url
-});
+/* The server answers a relative URL when APP_BASE_URL is unset; a copied
+   link must still open from another device. */
+const absoluteUrl = (url: string) =>
+	/^https?:\/\//i.test(url)
+		? url
+		: new URL(url, window.location.origin).toString();
 
-export const apiGetDirectLinks = (): Promise<DirectLinkDTO[]> =>
-	fetchData({
-		url: endpoints.directLinks,
-		method: FETCH_METHODS.GET,
-		responseHandling: handled
-	}).then((list) => (Array.isArray(list) ? list : []));
+/** The tile model of the Storybook components (#1795); `null` for an entry it cannot show. */
+export const toDirectLink = (dto: DirectLinkDTO): DirectLink | null => {
+	if (
+		!dto ||
+		dto.id == null ||
+		!dto.url ||
+		!DIRECT_LINK_MEDIA.includes(dto.medium as DirectLinkMedium)
+	) {
+		return null;
+	}
+	const topic = dto.topicName ?? '';
+	return {
+		id: String(dto.id),
+		name: dto.name?.trim() || topic,
+		topic,
+		topicId: dto.topicId,
+		agencyId: dto.agencyId ?? undefined,
+		medium: dto.medium as DirectLinkMedium,
+		temporary: !!dto.temporary,
+		active: !!dto.active,
+		url: absoluteUrl(dto.url)
+	};
+};
 
-export const apiCreateDirectLink = (
+const readable = (value: unknown): DirectLink => {
+	const link = toDirectLink(value as DirectLinkDTO);
+	if (!link) {
+		throw new Error('Unreadable direct link');
+	}
+	return link;
+};
+
+/** The caller's own links, newest first, switched-off ones included. */
+export const apiGetOwnDirectLinks = async (): Promise<DirectLink[]> => {
+	let value: unknown;
+	try {
+		value = await fetchData({
+			url: endpoints.directLinks,
+			method: FETCH_METHODS.GET,
+			responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch (error) {
+		if (error instanceof Error && error.message === FETCH_ERRORS.EMPTY) {
+			return [];
+		}
+		throw error;
+	}
+	return (Array.isArray(value) ? value : [])
+		.map(toDirectLink)
+		.filter((link): link is DirectLink => link !== null);
+};
+
+export const apiCreateDirectLink = async (
 	body: CreateDirectLinkBody
-): Promise<DirectLinkDTO> =>
-	fetchData({
-		url: endpoints.directLinks,
-		method: FETCH_METHODS.POST,
-		bodyData: JSON.stringify(body),
-		responseHandling: handled
-	});
+): Promise<DirectLink> =>
+	readable(
+		await fetchData({
+			url: endpoints.directLinks,
+			method: FETCH_METHODS.POST,
+			bodyData: JSON.stringify(body),
+			responseHandling: handled
+		})
+	);
 
-export const apiUpdateDirectLink = (
-	id: string | number,
-	body: UpdateDirectLinkBody
-): Promise<DirectLinkDTO> =>
-	fetchData({
-		url: `${endpoints.directLinks}/${encodeURIComponent(String(id))}`,
-		method: FETCH_METHODS.PATCH,
-		bodyData: JSON.stringify(body),
-		responseHandling: handled
-	});
+export const apiUpdateDirectLink = async (
+	linkId: string,
+	update: DirectLinkUpdate
+): Promise<DirectLink> =>
+	readable(
+		await fetchData({
+			url: endpoints.directLink(linkId),
+			method: FETCH_METHODS.PATCH,
+			bodyData: JSON.stringify(update),
+			// CONTENT: without it fetchData hands back the raw Response.
+			responseHandling: handled
+		})
+	);
 
 /**
  * Opens (or reopens) the signed-in person's own conversation with the link's
@@ -165,8 +219,7 @@ export const apiCancelOwnCallKnock = (knockId: number): Promise<void> =>
 	}).then(() => undefined);
 
 /* "Create chat" lives in another view: it announces a new link so an open
-   list (clock page or settings) shows it straight away. Same name and event
-   as in FE#1911 (PR #1911), so the two PRs agree once both land. */
+   list (clock page or settings) shows it straight away. */
 export const DIRECT_LINKS_CHANGED_EVENT = 'oriso:direct-links-changed';
 
 export const notifyDirectLinksChanged = () =>
