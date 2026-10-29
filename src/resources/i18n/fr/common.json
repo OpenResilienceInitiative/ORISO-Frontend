@@ -6329,5 +6329,30 @@
 			"participants": "{{count}} participant·e·s",
 			"participants_one": "{{count}} participant·e"
 		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporaire",
+			"title": "Supprimé avec le compte invité"
+		},
+		"deletedGuest": "Invité (supprimé)",
+		"chip": {
+			"guest": "Compte invité"
+		},
+		"keepDialog": {
+			"title": "Vos messages doivent-ils rester ?",
+			"description": "Votre compte invité sera supprimé après l’entretien. Que doit-il advenir de vos messages ?",
+			"keep": {
+				"label": "Les conserver après la suppression",
+				"hint": "Vos messages restent lorsque votre compte est supprimé."
+			},
+			"delete": {
+				"label": "Temporaire",
+				"hint": "Vos messages sont supprimés avec votre compte."
+			},
+			"note": "Votre réponse vaut pour tout cet entretien.",
+			"confirm": "Continuer",
+			"cancel": "Annuler"
+		}
 	}
 }
