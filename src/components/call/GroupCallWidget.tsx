@@ -1233,7 +1233,7 @@ export const GroupCallWidget: React.FC = () => {
 						 */}
 						{isConsultantUser && (
 							<CallKnockNoticeHost
-								minimised={isMobileCompact}
+								minimised={isMinimized}
 								knocks={callKnocks}
 							/>
 						)}
