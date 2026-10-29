@@ -24,7 +24,7 @@ it('asks without credentials and gives up after a bounded time', async () => {
 			),
 			method: FETCH_METHODS.GET,
 			skipAuth: true,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL],
+			responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE],
 			timeout: expect.any(Number)
 		})
 	);

@@ -262,6 +262,37 @@
 	}
 }
 
+/* Share button (#1794): top left, the counterpart of the close/fullscreen corner. */
+.element-call-share {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	z-index: 5;
+
+	.callShare__triggerInner {
+		background: rgba(0, 0, 0, 0.6);
+		color: #fff;
+		height: 32px;
+		width: 32px;
+
+		svg {
+			height: 18px;
+			width: 18px;
+		}
+	}
+
+	/* The red ring of the panel trigger is lost on the dark stage. */
+	.callShare__trigger:focus-visible .callShare__triggerInner {
+		outline: 3px solid #fff;
+		outline-offset: 1px;
+	}
+
+	.callShare__trigger:hover .callShare__triggerInner,
+	.callShare__trigger--active .callShare__triggerInner {
+		background: rgba(0, 0, 0, 0.8);
+	}
+}
+
 .element-call-drag-handle {
 	position: absolute;
 	top: 0;

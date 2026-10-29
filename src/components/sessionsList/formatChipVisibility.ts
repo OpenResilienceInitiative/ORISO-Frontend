@@ -2,6 +2,7 @@ import {
 	AgencyFormatSource,
 	getConversationFormatAvailability
 } from '../conversationCreate/formatAvailability';
+import { getDirectLinkMedia } from '../conversationCreate/directLink/directLinkAvailability';
 
 interface FormatChipVisibility {
 	/** The "Neue Unterhaltung erstellen" entry in the toolbar. */
@@ -33,7 +34,10 @@ export const getFormatChipVisibility = (
 		// so the entry survives as long as one of them is available.
 		createGroupChat:
 			showConsultantToolbarActions &&
-			(availability.circle || availability.internal),
+			(availability.circle ||
+				availability.internal ||
+				// #1795: a direct link is created in the same flow.
+				getDirectLinkMedia(tenant as never, agencies).length > 0),
 		groups: showConsultantToolbarActions && availability.circle,
 		internalGroup: showConsultantToolbarActions && availability.internal
 	};

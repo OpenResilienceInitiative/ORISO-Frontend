@@ -2589,7 +2589,7 @@
 			"profileIcon": "Photo de profil",
 			"register": {
 				"button": {
-					"label": "S'inscrire"
+					"label": "Demander un accompagnement"
 				},
 				"consultingModeInfo": {
 					"groupChats": "Dans le cadre de l'entraide, les personnes concernées échangent entre elles sur un thème ou une préoccupation. Les personnes concernées parlent de leurs problèmes, de leurs sentiments et de leurs espoirs et apprennent ainsi comment d'autres ont surmonté des problèmes. Les groupes sont dirigés par des animateurs.",
@@ -2600,7 +2600,7 @@
 				},
 				"headline": "Avez-vous besoin de conseils ou d'aide sur d'autres sujets ?<br>Nous vous soutenons volontiers.",
 				"dialog": {
-					"openButton": "Demander un autre champ thématique",
+					"openButton": "Commencer un autre accompagnement",
 					"title": "Faire une nouvelle demande",
 					"close": "Fermer"
 				},
@@ -6103,6 +6103,36 @@
 			"groupCall": "Appel de groupe",
 			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		},
+		"share": {
+			"open": "Partager l’appel",
+			"title": "Partager l’appel",
+			"close": "Fermer",
+			"settingsLabel": "Pour les invités avec ce lien",
+			"knock": {
+				"label": "Frapper avant d’entrer",
+				"on": "Les invités attendent que vous les fassiez entrer. Si vous le désactivez, toutes les personnes en attente entrent aussitôt.",
+				"off": "Les invités rejoignent l’appel directement, sans attendre."
+			},
+			"temporaryAccount": {
+				"label": "Compte temporaire",
+				"on": "Les invités reçoivent un compte invité supprimé après l’appel.",
+				"off": "Les invités se connectent avec leur propre compte ou en créent un."
+			},
+			"linkLabel": "Lien vers l’appel",
+			"copy": "Copier",
+			"copied": "Copié",
+			"copiedStatus": "Le lien est dans le presse-papiers.",
+			"copyFailed": "La copie n’a pas fonctionné. Veuillez sélectionner le lien et le copier vous-même.",
+			"qrShow": "Code QR",
+			"qrHide": "Masquer le code QR",
+			"qrAlt": "Code QR avec le lien vers l’appel",
+			"share": "Partager",
+			"shareTitle": "Invitation à un appel",
+			"lifetime": "Le lien ne vaut que pour cet appel. Il ne fonctionne plus dès que vous raccrochez.",
+			"consent": "Avant d’entrer, les invités confirment d’un geste la protection des données et le consentement du centre de conseil.",
+			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel.",
+			"settingsLive": "Les modifications s’appliquent immédiatement à ce lien, même s’il a déjà été partagé."
+		},
 		"knock": {
 			"region": "Personnes en attente",
 			"someone": "Une personne",
@@ -6292,6 +6322,56 @@
 			"micMeter": "Volume de votre micro"
 		}
 	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommander un autre accompagnement",
+			"endDuplicate": "Mettre fin au doublon",
+			"endDuplicateDescription": "Met fin à ce second accompagnement sur le même thème"
+		},
+		"recommend": {
+			"title": "Recommander un autre accompagnement",
+			"intro": "La personne qui demande conseil voit votre recommandation sous forme de carte dans le chat et peut y trouver un centre de conseil adapté.",
+			"topicLabel": "Thème",
+			"noteLabel": "Remarque (facultatif)",
+			"noteHint": "La remarque apparaît sur la carte dans le chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Envoyer la recommandation",
+			"cancel": "Annuler",
+			"successHeadline": "Votre recommandation a été envoyée.",
+			"successButton": "Fermer",
+			"error": "La recommandation n’a pas pu être envoyée. Veuillez réessayer.",
+			"errorForbidden": "Seul·e le·la conseiller·ère responsable de cet échange peut recommander un autre accompagnement.",
+			"errorConflict": "Aucune recommandation n’est possible dans cet échange pour le moment.",
+			"topicsUnavailable": "Les thèmes n’ont pas pu être chargés. Veuillez réessayer plus tard."
+		},
+		"card": {
+			"title": "Recommandation : autre accompagnement",
+			"topic": "Thème : {{topic}}",
+			"defaultText": "Merci de ne suivre qu’un seul accompagnement par thème. Votre conseiller·ère actuel·le sera informé·e dès que le nouvel accompagnement commencera.",
+			"noteLabel": "Remarque du·de la conseiller·ère",
+			"findAgency": "Trouver un centre de conseil",
+			"requested": "Demande envoyée",
+			"topicUnknown": "un autre thème"
+		},
+		"duplicate": {
+			"startedTitle": "Autre accompagnement sur le même thème",
+			"started": "Un autre accompagnement sur le thème {{topic}} a commencé. Veuillez convenir ensemble de celui qui se poursuit. L’autre devrait être clôturé.",
+			"endedTitle": "Second accompagnement terminé",
+			"ended": "Le second accompagnement sur le thème {{topic}} a été clôturé.",
+			"confirm": {
+				"headline": "Mettre fin à ce doublon ?",
+				"copy": "Cet accompagnement sera clôturé et déplacé dans les archives. Votre autre accompagnement sur le même thème se poursuit.",
+				"confirm": "Clôturer l’accompagnement",
+				"cancel": "Annuler"
+			},
+			"error": "L’accompagnement n’a pas pu être clôturé. Veuillez réessayer."
+		},
+		"request": {
+			"sameTopicInfo": "Un seul accompagnement par thème est prévu à la fois. Si vous commencez un accompagnement sur un thème dont vous parlez déjà, votre conseiller·ère actuel·le sera informé·e dès que le nouveau sera accepté. L’un des deux sera alors clôturé.",
+			"consentAria": "Consentement à la protection des données du centre de conseil",
+			"cancel": "Annuler"
+		}
+	},
 	"directLink": {
 		"card": {
 			"title": "Lien direct",
@@ -6302,7 +6382,8 @@
 			"mediumLabel": "Type de contact",
 			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
-			"create": "Créer le lien"
+			"create": "Créer le lien",
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6324,6 +6405,14 @@
 			"title": "Mes liens directs",
 			"qr": "Afficher le code QR",
 			"active": "{{name}} actif"
+		},
+		"entry": {
+			"inactive": "Ce lien n'est plus actif.",
+			"haveAccount": "Vous avez déjà un compte ? Se connecter",
+			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
+		},
+		"page": {
+			"loadFailed": "Vos liens directs n’ont pas pu être chargés."
 		}
 	},
 	"dashboard": {
@@ -6364,7 +6453,8 @@
 			},
 			"note": "Votre réponse vaut pour tout cet entretien.",
 			"confirm": "Continuer",
-			"cancel": "Annuler"
+			"cancel": "Annuler",
+			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
 		}
 	}
 }

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkMediumIcon } from '../conversationCreate/directLink/DirectLinkMediumIcon';
@@ -25,14 +26,71 @@ export interface DashboardStats {
 }
 
 export interface CounsellorDashboardProps {
-	stats: DashboardStats;
+	/** Left out where the Träger switched statistics off: the tile goes. */
+	stats?: DashboardStats;
 	links: DirectLink[];
 	/** At most three, soonest first. */
 	upcomingCircles: DashboardCircle[];
 	onToggleLink: (id: string, active: boolean) => void;
 	onShowQr: (link: DirectLink) => void;
 	onCopy?: (url: string) => void | Promise<void>;
+	/** Shown under the title, e.g. the links failed to load. */
+	alert?: ReactNode;
 }
+
+const DashboardStatsTile = ({ stats }: { stats: DashboardStats }) => {
+	const { t } = useTranslation();
+	const { archivedSessions } = stats;
+	const figures = [
+		{ key: 'assigned', value: stats.assignedSessions },
+		{ key: 'active', value: stats.activeSessions },
+		...(archivedSessions === undefined
+			? []
+			: [{ key: 'archived', value: archivedSessions }]),
+		{ key: 'sentMessages', value: stats.sentMessages }
+	];
+	const total = stats.activeSessions + (archivedSessions ?? 0);
+
+	return (
+		<section
+			className="counsellorDashboard__tile counsellorDashboard__stats"
+			aria-labelledby="dashboardStatsTitle"
+		>
+			<header className="counsellorDashboard__tileHeader">
+				<h3
+					id="dashboardStatsTitle"
+					className="counsellorDashboard__tileTitle"
+				>
+					{t('dashboard.stats.title')}
+				</h3>
+				<span className="counsellorDashboard__period">
+					{t('dashboard.stats.period')}
+				</span>
+			</header>
+			<dl className="counsellorDashboard__figures">
+				{figures.map(({ key, value }) => (
+					<div
+						key={key}
+						className={`counsellorDashboard__figure counsellorDashboard__figure--${key}`}
+					>
+						<dt>{t(`dashboard.stats.${key}`)}</dt>
+						<dd>{value}</dd>
+					</div>
+				))}
+			</dl>
+			{archivedSessions !== undefined && total > 0 && (
+				<div className="counsellorDashboard__bar" aria-hidden>
+					<span
+						className="counsellorDashboard__barActive"
+						style={{
+							width: `${(stats.activeSessions / total) * 100}%`
+						}}
+					/>
+				</div>
+			)}
+		</section>
+	);
+};
 
 /**
  * #1795: what "Gespräche" shows while no conversation is selected — tiles on
@@ -46,11 +104,12 @@ export const CounsellorDashboard = ({
 	upcomingCircles,
 	onToggleLink,
 	onShowQr,
-	onCopy
+	onCopy,
+	alert
 }: CounsellorDashboardProps) => {
 	const { t } = useTranslation();
 
-	if (links.length === 0 && upcomingCircles.length === 0) {
+	if (!alert && links.length === 0 && upcomingCircles.length === 0) {
 		return (
 			<EmptyState
 				className="session__emptyState"
@@ -60,60 +119,14 @@ export const CounsellorDashboard = ({
 		);
 	}
 
-	const { archivedSessions } = stats;
-	const figures = [
-		{ key: 'assigned', value: stats.assignedSessions },
-		{ key: 'active', value: stats.activeSessions },
-		...(archivedSessions === undefined
-			? []
-			: [{ key: 'archived', value: archivedSessions }]),
-		{ key: 'sentMessages', value: stats.sentMessages }
-	];
-	const total = stats.activeSessions + (archivedSessions ?? 0);
-
 	return (
 		<div className="counsellorDashboard" data-testid="counsellor-dashboard">
 			<div className="counsellorDashboard__inner">
 				<h2 className="counsellorDashboard__title">
 					{t('dashboard.title')}
 				</h2>
-				<section
-					className="counsellorDashboard__tile counsellorDashboard__stats"
-					aria-labelledby="dashboardStatsTitle"
-				>
-					<header className="counsellorDashboard__tileHeader">
-						<h3
-							id="dashboardStatsTitle"
-							className="counsellorDashboard__tileTitle"
-						>
-							{t('dashboard.stats.title')}
-						</h3>
-						<span className="counsellorDashboard__period">
-							{t('dashboard.stats.period')}
-						</span>
-					</header>
-					<dl className="counsellorDashboard__figures">
-						{figures.map(({ key, value }) => (
-							<div
-								key={key}
-								className={`counsellorDashboard__figure counsellorDashboard__figure--${key}`}
-							>
-								<dt>{t(`dashboard.stats.${key}`)}</dt>
-								<dd>{value}</dd>
-							</div>
-						))}
-					</dl>
-					{archivedSessions !== undefined && total > 0 && (
-						<div className="counsellorDashboard__bar" aria-hidden>
-							<span
-								className="counsellorDashboard__barActive"
-								style={{
-									width: `${(stats.activeSessions / total) * 100}%`
-								}}
-							/>
-						</div>
-					)}
-				</section>
+				{alert}
+				{stats && <DashboardStatsTile stats={stats} />}
 				<div
 					className={`counsellorDashboard__content${
 						links.length > 0 && upcomingCircles.length > 0

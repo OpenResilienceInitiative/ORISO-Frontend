@@ -2585,7 +2585,7 @@
 			"profileIcon": "Profile icon",
 			"register": {
 				"button": {
-					"label": "Register"
+					"label": "Request counselling"
 				},
 				"consultingModeInfo": {
 					"groupChats": "In self-help, those affected exchange information with each other about a topic or concern. Those affected talk about their problems, feelings and hopes and learn how others have overcome problems. The groups are led by moderators.",
@@ -2596,7 +2596,7 @@
 				},
 				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
 				"dialog": {
-					"openButton": "Request another topic",
+					"openButton": "Start further counselling",
 					"title": "Start a new request",
 					"close": "Close"
 				},
@@ -6018,6 +6018,36 @@
 			"groupCall": "Group call",
 			"endsCurrentUnnamed": "Answering ends your current call."
 		},
+		"share": {
+			"open": "Share call",
+			"title": "Share call",
+			"close": "Close",
+			"settingsLabel": "For guests with this link",
+			"knock": {
+				"label": "Knock first",
+				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
+				"off": "Guests enter the call directly, without waiting."
+			},
+			"temporaryAccount": {
+				"label": "Temporary account",
+				"on": "Guests get a guest account that is deleted after the call.",
+				"off": "Guests sign in with their own account or create one."
+			},
+			"linkLabel": "Link to the call",
+			"copy": "Copy",
+			"copied": "Copied",
+			"copiedStatus": "The link is on your clipboard.",
+			"copyFailed": "Copying did not work. Please select the link and copy it yourself.",
+			"qrShow": "QR code",
+			"qrHide": "Hide QR code",
+			"qrAlt": "QR code with the link to the call",
+			"share": "Share",
+			"shareTitle": "Invitation to a call",
+			"lifetime": "The link only works for this call. It stops working as soon as you hang up.",
+			"consent": "Before entering, guests confirm the counselling centre’s privacy policy and consent with one tap.",
+			"qrHint": "Scan with a phone camera to open the call there.",
+			"settingsLive": "Changes apply right away to this link, even if it has already been shared."
+		},
 		"knock": {
 			"region": "People waiting",
 			"someone": "Someone",
@@ -6207,6 +6237,56 @@
 			"micMeter": "Your microphone volume"
 		}
 	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommend further counselling",
+			"endDuplicate": "End duplicate counselling",
+			"endDuplicateDescription": "Ends this second counselling on the same topic"
+		},
+		"recommend": {
+			"title": "Recommend further counselling",
+			"intro": "The person seeking advice sees your recommendation as a card in the chat and can find a suitable counselling centre from there.",
+			"topicLabel": "Topic",
+			"noteLabel": "Note (optional)",
+			"noteHint": "The note appears on the card in the chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Send recommendation",
+			"cancel": "Cancel",
+			"successHeadline": "Your recommendation has been sent.",
+			"successButton": "Close",
+			"error": "The recommendation could not be sent. Please try again.",
+			"errorForbidden": "Only the counsellor assigned to this conversation can recommend further counselling.",
+			"errorConflict": "A recommendation is not possible in this conversation right now.",
+			"topicsUnavailable": "The topics could not be loaded. Please try again later."
+		},
+		"card": {
+			"title": "Recommendation: further counselling",
+			"topic": "Topic: {{topic}}",
+			"defaultText": "Please keep to one counselling per topic. Your current counsellor will be informed as soon as the new counselling begins.",
+			"noteLabel": "Note from the counsellor",
+			"findAgency": "Find a counselling centre",
+			"requested": "Request sent",
+			"topicUnknown": "another topic"
+		},
+		"duplicate": {
+			"startedTitle": "Further counselling on the same topic",
+			"started": "A further counselling on the topic {{topic}} has started. Please agree together which one continues. The other one should be ended.",
+			"endedTitle": "Second counselling ended",
+			"ended": "The second counselling on the topic {{topic}} has been ended.",
+			"confirm": {
+				"headline": "End duplicate counselling?",
+				"copy": "This counselling will be ended and moved to the archive. Your other counselling on the same topic continues.",
+				"confirm": "End counselling",
+				"cancel": "Cancel"
+			},
+			"error": "The counselling could not be ended. Please try again."
+		},
+		"request": {
+			"sameTopicInfo": "Only one counselling per topic is intended at a time. If you start a counselling on a topic you are already discussing, your current counsellor will be informed as soon as the new one is accepted. One of the two will then be ended.",
+			"consentAria": "Consent to the counselling centre’s data protection terms",
+			"cancel": "Cancel"
+		}
+	},
 	"directLink": {
 		"card": {
 			"title": "Direct link",
@@ -6217,7 +6297,8 @@
 			"mediumLabel": "Kind of contact",
 			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
-			"create": "Create link"
+			"create": "Create link",
+			"createFailed": "The link could not be created. Please try again."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6239,6 +6320,14 @@
 			"title": "My direct links",
 			"qr": "Show QR code",
 			"active": "{{name}} active"
+		},
+		"entry": {
+			"inactive": "This link is no longer active.",
+			"haveAccount": "Already have an account? Sign in",
+			"joinFailed": "That did not work. Please try again."
+		},
+		"page": {
+			"loadFailed": "Your direct links could not be loaded."
 		}
 	},
 	"dashboard": {
@@ -6279,7 +6368,8 @@
 			},
 			"note": "Your answer applies to this whole conversation.",
 			"confirm": "Continue",
-			"cancel": "Cancel"
+			"cancel": "Cancel",
+			"failed": "Your answer could not be saved. Your message has not been sent yet."
 		}
 	}
 }

@@ -1174,12 +1174,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 }
 
-.createChatItem {
-	.sessionsListItem__row {
-		min-height: 18px;
-	}
-}
-
 .skeleton {
 	&:hover {
 		cursor: auto !important;

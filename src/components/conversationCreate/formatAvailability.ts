@@ -137,7 +137,8 @@ export const getAvailableFormats = (
 	return formats;
 };
 
-export type CreateStep = 'picker' | 'internal' | 'circle';
+/** `directLink`: the #1795 card on its own (only offered, never resolved here). */
+export type CreateStep = 'picker' | 'internal' | 'circle' | 'directLink';
 
 /**
  * Which step the create flow opens on. A duplicate occurrence only forces the

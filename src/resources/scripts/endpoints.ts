@@ -52,6 +52,7 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
+	askerSessionsBase: userServiceOrigin + '/service/users/askers/sessions',
 	banUser: (matrixUserId, chatId) =>
 		userServiceOrigin +
 		`/service/users/${encodeURIComponent(matrixUserId)}/chat/${chatId}/ban`,
@@ -77,6 +78,12 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	/* Counsellor direct links (ORISO-UserService#1479). */
+	directLinks: userServiceOrigin + '/service/users/directlinks',
+	inviteLinksBase: userServiceOrigin + '/service/users/invitelinks/',
+	ownCallKnocks: userServiceOrigin + '/service/users/call-knocks/mine/',
+	/* A direct-link guest's own temporary account (ORISO-UserService#1486). */
+	temporaryAccount: userServiceOrigin + '/service/users/temporary-account',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:

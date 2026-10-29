@@ -413,6 +413,21 @@ describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
 		).toBe('/sessions');
 	});
 
+	// #1795: signed in from a direct link, back to that link.
+	it('returns to the direct link the person signed in from', () => {
+		expect(
+			buildAppRedirectPath(undefined, undefined, null, '/invite/Ab_9-x')
+		).toBe('/invite/Ab_9-x');
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'//evil.example/invite/x'
+			)
+		).toBe('/sessions');
+	});
+
 	it('lands on the remembered consultant session', () => {
 		expect(
 			buildAppRedirectPath(

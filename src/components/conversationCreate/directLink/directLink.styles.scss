@@ -1,5 +1,7 @@
 /* #1795: direct link card, share dialog and "Meine Direktlinks". M3 roles only. */
 
+@import '../pillButton';
+
 .directLinkCard {
 	&__fields {
 		display: flex;
@@ -47,9 +49,11 @@
 			width: 18px;
 		}
 
+		/* Same pair as the tonal topic button above it; secondary-container
+		   with its on-colour misses 4.5:1 on the ORISO palette (4.45). */
 		&--selected {
-			background: var(--m3-secondary-container, #646d78);
-			color: var(--m3-on-secondary-container, #ffffff);
+			background: var(--m3-secondary, #4c555f);
+			color: var(--m3-on-primary, #ffffff);
 		}
 	}
 
@@ -75,25 +79,9 @@
 	}
 
 	&__create {
-		align-items: center;
-		background: rgba(27, 27, 28, 0.1);
-		border: none;
-		border-radius: 100px;
-		color: var(--m3-on-surface, #1b1b1c);
-		display: flex;
-		font-size: 16px;
-		font-weight: 500;
-		gap: 8px;
-		justify-content: center;
-		line-height: 24px;
-		opacity: 0.38;
-		padding: 12px 24px;
-		width: 100%;
+		@include cc-pill-button;
 
-		svg {
-			height: 24px;
-			width: 24px;
-		}
+		padding: 12px 24px;
 
 		&--ready {
 			background: var(--m3-primary, #a5000a);
