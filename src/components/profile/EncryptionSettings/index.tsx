@@ -432,7 +432,9 @@ export const EncryptionSettingsPanel = ({
 						{t(
 							offerExistingKeyEnrollment
 								? 'encryption.passwordRecovery.notEnrolled'
-								: 'encryption.passwordRecovery.' +
+								: offerStaleEnvelopeRepair
+									? 'encryption.passwordRecovery.stale.explanation'
+									: 'encryption.passwordRecovery.' +
 										passwordStatus
 						)}
 					</p>
@@ -615,15 +617,19 @@ export const EncryptionSettingsPanel = ({
 
 			{phase === 'healthy' && (
 				<>
-					<div
-						className="encryptionSettings__status encryptionSettings__status--ok"
-						data-cy="encryption-status-ok"
-					>
-						<Text
-							text={t('profile.encryption.status.ok')}
-							type="standard"
-						/>
-					</div>
+					{/* Not while the password no longer opens the history:
+					    "stays readable on new devices" would be untrue. */}
+					{!offerStaleEnvelopeRepair && (
+						<div
+							className="encryptionSettings__status encryptionSettings__status--ok"
+							data-cy="encryption-status-ok"
+						>
+							<Text
+								text={t('profile.encryption.status.ok')}
+								type="standard"
+							/>
+						</div>
+					)}
 					{recoveredCount !== null && (
 						<Text
 							text={t('profile.encryption.recover.success', {

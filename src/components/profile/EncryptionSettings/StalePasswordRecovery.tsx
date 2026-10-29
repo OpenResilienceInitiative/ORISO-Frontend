@@ -33,6 +33,7 @@ export type StalePasswordRecoveryProps = {
  * not open it. Two ways back, both ending with the history sealed under the CURRENT password:
  * re-wrap it with the previous password, or prove the recovery key and replace the stale copies.
  * The current password is proven first, by the same re-authentication the enrolment uses.
+ * The panel's status line carries the explanation; this renders the choice and the form.
  */
 export const StalePasswordRecovery = ({
 	userId,
@@ -101,7 +102,6 @@ export const StalePasswordRecovery = ({
 			data-cy="password-recovery-stale"
 			onSubmit={submit}
 		>
-			<p>{t('encryption.passwordRecovery.stale.explanation')}</p>
 			<RadioGroup
 				aria-label={t('encryption.passwordRecovery.stale.choose')}
 				value={method ?? ''}

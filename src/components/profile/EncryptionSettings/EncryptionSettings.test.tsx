@@ -404,8 +404,13 @@ it.each([
 				/>
 			</UserDataContext.Provider>
 		);
+		// An envelope exists (default evidence), so 'needs-recovery-key' is the stale state (#1931).
 		expect(
-			await screen.findByText('encryption.passwordRecovery.' + status)
+			await screen.findByText(
+				status === 'needs-recovery-key'
+					? 'encryption.passwordRecovery.stale.explanation'
+					: 'encryption.passwordRecovery.' + status
+			)
 		).toBeTruthy();
 		if (['idle', 'pending', 'busy'].includes(status)) {
 			expect(
@@ -569,7 +574,7 @@ describe('password recovery without any envelope', () => {
 
 		expect(
 			await screen.findByText(
-				'encryption.passwordRecovery.needs-recovery-key'
+				'encryption.passwordRecovery.stale.explanation'
 			)
 		).toBeTruthy();
 		expect(
@@ -655,6 +660,11 @@ describe('an envelope sealed under the previous password', () => {
 				'encryption.passwordRecovery.stale.useRecoveryKey'
 			)
 		).toBeTruthy();
+		// One clear message: no generic status line, no "set up, stays readable" box.
+		expect(
+			screen.queryByText('encryption.passwordRecovery.needs-recovery-key')
+		).toBeNull();
+		expect(screen.queryByText('profile.encryption.status.ok')).toBeNull();
 		// One recovery-key entry only: the repair's, which re-seals as well.
 		expect(
 			screen.queryByRole('button', { name: 'Verlauf wiederherstellen' })
@@ -692,6 +702,8 @@ describe('an envelope sealed under the previous password', () => {
 		expect(
 			await screen.findByText('encryption.passwordRecovery.ready')
 		).toBeTruthy();
+		// Sealed under the current password again: the healthy box may say so.
+		expect(screen.getByText('profile.encryption.status.ok')).toBeTruthy();
 		expect(
 			screen.queryByText('encryption.passwordRecovery.stale.explanation')
 		).toBeNull();
@@ -714,7 +726,7 @@ describe('an envelope sealed under the previous password', () => {
 			)
 		).toBeTruthy();
 		expect(
-			screen.getByText('encryption.passwordRecovery.needs-recovery-key')
+			screen.getByText('encryption.passwordRecovery.stale.explanation')
 		).toBeTruthy();
 	});
 
