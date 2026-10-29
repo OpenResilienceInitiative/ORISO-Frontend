@@ -29,6 +29,7 @@ import { SessionStream } from './SessionStream';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
+import { markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { buildCallLifecycleContent } from '../../utils/callLifecycleMessage';
 
 const ROOM_ID = '!session:matrix.example.org';
@@ -1324,6 +1325,27 @@ describe('SessionStream Matrix room lifecycle', () => {
 			);
 		});
 		expect(mocks.navigate).not.toHaveBeenCalled();
+	});
+
+	// #1923: leaving from the list card must not also say the group ended.
+	it('stays quiet when the person left the group on purpose from the list card', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(screen.getByTestId('session-item')).toBeDefined();
+		});
+		await waitFor(() => {
+			expect(mocks.lifecycleListeners.length).toBeGreaterThan(0);
+		});
+
+		markSelfLeave(ROOM_ID);
+		emitLifecycle({
+			type: 'myMembership',
+			membership: 'leave',
+			prevMembership: 'join'
+		});
+
+		expect(screen.queryByTestId('overlay')).toBeNull();
 	});
 
 	// #1923: a banned asker read "the chat has ended" although it kept running.
