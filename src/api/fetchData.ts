@@ -41,6 +41,8 @@ export const FETCH_ERRORS = {
 	UNAUTHORIZED: 'UNAUTHORIZED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
 	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+	/** 403 with X-Reason USER_BANNED_FROM_CHAT: a moderator removed the caller. */
+	USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT',
 	X_REASON: 'X-Reason'
 };
 
@@ -241,6 +243,15 @@ export const fetchData = ({
 					getCounsellingDpaFailure(response)
 				) {
 					reject(response);
+				} else if (
+					response.status === 403 &&
+					responseHandling?.includes(
+						FETCH_ERRORS.USER_BANNED_FROM_CHAT
+					) &&
+					response.headers?.get(FETCH_ERRORS.X_REASON) ===
+						FETCH_ERRORS.USER_BANNED_FROM_CHAT
+				) {
+					reject(new Error(FETCH_ERRORS.USER_BANNED_FROM_CHAT));
 				} else if (responseHandling) {
 					if (
 						response.status === 400 &&

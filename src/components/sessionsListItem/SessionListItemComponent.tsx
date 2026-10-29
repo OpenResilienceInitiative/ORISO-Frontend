@@ -90,11 +90,20 @@ import {
 	apiGetCaseHandoverStatus,
 	apiPutArchive,
 	apiPutDearchive,
+	apiPutGroupChat,
+	GROUP_CHAT_API,
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
-import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
+import {
+	archiveSessionSuccessOverlayItem,
+	groupChatErrorOverlayItem,
+	leaveGroupChatSecurityOverlayItem,
+	leaveGroupChatSuccessOverlayItem
+} from '../sessionMenu/sessionMenuHelpers';
+import { logout } from '../logout/logout';
+import { clearSelfLeave, markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
@@ -517,7 +526,8 @@ export const SessionListItemComponent = ({
 		isGroupChatOwner:
 			!!activeSession && isGroupChatOwner(activeSession, userData),
 		isGroupChatActive: !!activeSession?.item?.active,
-		hasMatrixRoom: !!activeSession?.item?.matrixRoomId
+		hasMatrixRoom: !!activeSession?.item?.matrixRoomId,
+		isGroupChatSubscribed: !!activeSession?.item?.subscribed
 	});
 	// Every flag below requires `!isAsker`, so this stays false for askers —
 	// their menu is gated separately on the legal-links branch.
@@ -823,6 +833,13 @@ export const SessionListItemComponent = ({
 			});
 	};
 
+	// #1923: the asker confirms first; the overlay offers Leave and Cancel.
+	const handleLeaveGroup = () => {
+		setFlyoutOpen(false);
+		setOverlayItem(leaveGroupChatSecurityOverlayItem);
+		setOverlayActive(true);
+	};
+
 	// Closes the menu first, then opens the confirmation that lives outside it.
 	const handleDeleteSession = () => {
 		setFlyoutOpen(false);
@@ -878,6 +895,31 @@ export const SessionListItemComponent = ({
 			setOverlayActive(false);
 			setOverlayItem(null);
 			setIsRequestInProgress(false);
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.LEAVE_GROUP_CHAT) {
+			const roomId = activeSession.item.matrixRoomId;
+			if (roomId) markSelfLeave(roomId);
+			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.LEAVE)
+				.then(() => setOverlayItem(leaveGroupChatSuccessOverlayItem))
+				.catch(() => {
+					if (roomId) clearSelfLeave(roomId);
+					setOverlayItem(groupChatErrorOverlayItem);
+				})
+				.finally(() => setIsRequestInProgress(false));
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			// Removing the card unmounts this overlay, so it is the last step.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			sessionsDispatch({
+				type: REMOVE_SESSIONS,
+				ids: activeSession.item.matrixRoomId
+					? [activeSession.item.matrixRoomId]
+					: [activeSession.item.id]
+			});
+			mobileListView();
+			navigate(listPath + getSessionListTab());
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
+			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
@@ -1159,175 +1201,202 @@ export const SessionListItemComponent = ({
 			? translate('groupChat.listItem.subjectEmpty.self')
 			: translate('groupChat.listItem.subjectEmpty.other');
 		const groupModality = getModality(activeSession);
+		// A group stores only `topic`; for a Gesprächskreis it is the chosen topic.
+		const groupName =
+			typeof activeSession.item.topic === 'string'
+				? activeSession.item.topic
+				: activeSession.item.topic?.name || '';
 		return (
-			<div
-				onClick={handleOnClick}
-				className={clsx(
-					'sessionsListItem',
-					'sessionsListItem--groupChat',
-					isChatActive && 'sessionsListItem--active',
-					flyoutOpen && 'sessionsListItem--menuOpen',
-					!isChatActive && !isItemUnread && 'sessionsListItem--read',
-					isBeforeActive && 'sessionsListItem--beforeActive',
-					isAfterActive && 'sessionsListItem--afterActive'
-				)}
-				data-group-id={activeSession.rid ? activeSession.rid : ''}
-				data-cy="session-list-item"
-				data-search-keep-open
-			>
+			<>
 				<div
+					onClick={handleOnClick}
 					className={clsx(
-						'sessionsListItem__content',
-						isChatActive && 'sessionsListItem__content--active'
+						'sessionsListItem',
+						'sessionsListItem--groupChat',
+						isChatActive && 'sessionsListItem--active',
+						flyoutOpen && 'sessionsListItem--menuOpen',
+						!isChatActive &&
+							!isItemUnread &&
+							'sessionsListItem--read',
+						isBeforeActive && 'sessionsListItem--beforeActive',
+						isAfterActive && 'sessionsListItem--afterActive'
 					)}
-					onKeyDown={(e) => handleKeyDownListItem(e)}
-					ref={setCardRef}
-					tabIndex={index === 0 ? 0 : -1}
-					role="listitem"
-					aria-current={isChatActive ? 'true' : undefined}
+					data-group-id={activeSession.rid ? activeSession.rid : ''}
+					data-cy="session-list-item"
+					data-search-keep-open
 				>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__rowLeft">
-							{activeSession.isGroup && (
-								<TopicTag className="sessionsListItem__topic">
-									{translate('groupChat.noTopicSpecified')}
-								</TopicTag>
-							)}
+					<div
+						className={clsx(
+							'sessionsListItem__content',
+							isChatActive && 'sessionsListItem__content--active'
+						)}
+						onKeyDown={(e) => handleKeyDownListItem(e)}
+						ref={setCardRef}
+						tabIndex={index === 0 ? 0 : -1}
+						role="listitem"
+						aria-current={isChatActive ? 'true' : undefined}
+					>
+						<div className="sessionsListItem__row">
+							<div className="sessionsListItem__rowLeft">
+								{groupModality !== Modality.INTERNAL_GROUP && (
+									<TopicTag className="sessionsListItem__topic">
+										{(groupModality === Modality.SELF_HELP &&
+											groupName) ||
+											translate('groupChat.noTopicSpecified')}
+									</TopicTag>
+								)}
+							</div>
+							<div className="sessionsListItem__rowRight">
+								{/*
+								 * Only `showChatSettings` can be true here: the other
+								 * flags need `isSession`, which `buildExtendedSession`
+								 * never sets alongside `isGroup`. That invariant is
+								 * load-bearing — Overlay, LegalLinkModal and
+								 * DeleteSession all live in the main return below, so
+								 * an archive or delete entry surfacing on a group row
+								 * would fire with no confirmation behind it (the
+								 * delete ref would simply be null). Widen the helper
+								 * for group chats only together with those.
+								 */}
+								{(hasChatroomSettingsActions ||
+									chatroomSettingsMenu.showLeaveGroup) && (
+									<SessionListItemMenu
+										flyoutOpen={flyoutOpen}
+										menuIconRef={menuIconRef}
+										surfaceRef={cardRef}
+										dropdownRef={dropdownRef}
+										dropdownId={dropdownId}
+										dropdownLabel={dropdownLabel}
+										translate={translate}
+										onMenuClick={handleMenuClick}
+										onClose={() => setFlyoutOpen(false)}
+										onMenuKeyDown={handleMenuKeyDown}
+										onDropdownKeyDown={
+											handleDropdownKeyDown
+										}
+										isAsker={isAsker}
+										visibility={chatroomSettingsMenu}
+										onChatSettings={handleChatSettings}
+										onArchive={handleArchiveSession}
+										onDearchive={handleDearchiveSession}
+										onDelete={handleDeleteSession}
+										onRequestHelp={handleRequestHelp}
+										onLeaveGroup={handleLeaveGroup}
+										legalLinks={legalLinks}
+										agencyId={activeSession?.agency?.id}
+										onLegalLinkClick={(title, url) => {
+											setFlyoutOpen(false);
+											setLegalModal({ title, url });
+										}}
+									/>
+								)}
+							</div>
 						</div>
-						<div className="sessionsListItem__rowRight">
-							{/*
-							 * Only `showChatSettings` can be true here: the other
-							 * flags need `isSession`, which `buildExtendedSession`
-							 * never sets alongside `isGroup`. That invariant is
-							 * load-bearing — Overlay, LegalLinkModal and
-							 * DeleteSession all live in the main return below, so
-							 * an archive or delete entry surfacing on a group row
-							 * would fire with no confirmation behind it (the
-							 * delete ref would simply be null). Widen the helper
-							 * for group chats only together with those.
-							 */}
-							{hasChatroomSettingsActions && (
-								<SessionListItemMenu
-									flyoutOpen={flyoutOpen}
-									menuIconRef={menuIconRef}
-									surfaceRef={cardRef}
-									dropdownRef={dropdownRef}
-									dropdownId={dropdownId}
-									dropdownLabel={dropdownLabel}
-									translate={translate}
-									onMenuClick={handleMenuClick}
-									onClose={() => setFlyoutOpen(false)}
-									onMenuKeyDown={handleMenuKeyDown}
-									onDropdownKeyDown={handleDropdownKeyDown}
-									isAsker={isAsker}
-									visibility={chatroomSettingsMenu}
-									onChatSettings={handleChatSettings}
-									onArchive={handleArchiveSession}
-									onDearchive={handleDearchiveSession}
-									onDelete={handleDeleteSession}
-									onRequestHelp={handleRequestHelp}
-									legalLinks={legalLinks}
-									agencyId={activeSession?.agency?.id}
-									onLegalLinkClick={(title, url) => {
-										setFlyoutOpen(false);
-										setLegalModal({ title, url });
-									}}
+						<div className="sessionsListItem__row">
+							<div className="sessionsListItem__participants">
+								<GroupCardParticipants
+									roomId={matrixRoomId}
+									enabled={
+										Boolean(activeSession?.isGroup) &&
+										!caseHandoverContentLocked
+									}
 								/>
-							)}
+							</div>
+							<div
+								className={clsx(
+									'sessionsListItem__username',
+									!isItemUnread &&
+										'sessionsListItem__username--readLabel'
+								)}
+							>
+								{groupName}
+							</div>
 						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__participants">
-							<GroupCardParticipants
-								roomId={matrixRoomId}
-								enabled={
-									Boolean(activeSession?.isGroup) &&
-									!caseHandoverContentLocked
+						<div className="sessionsListItem__row">
+							<SessionListItemLastMessage
+								lastMessage={
+									displayLastMessage
+										? displayLastMessage
+										: defaultSubjectText
 								}
 							/>
-						</div>
-						<div
-							className={clsx(
-								'sessionsListItem__username',
-								!isItemUnread &&
-									'sessionsListItem__username--readLabel'
+							{activeSession.item.attachment && (
+								<SessionListItemAttachment
+									attachment={activeSession.item.attachment}
+								/>
 							)}
-						>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<SessionListItemLastMessage
-							lastMessage={
-								displayLastMessage
-									? displayLastMessage
-									: defaultSubjectText
-							}
-						/>
-						{activeSession.item.attachment && (
-							<SessionListItemAttachment
-								attachment={activeSession.item.attachment}
-							/>
-						)}
-						{groupModality === Modality.INTERNAL_GROUP && (
-							<div
-								className={clsx(
-									'sessionsListItem__consultingTypeIcon',
-									'sessionsListItem__consultingTypeIcon--internal'
-								)}
-							>
-								<img
-									src={internalConversationIcon}
-									alt={translate(
-										'sessionList.item.sessionType.internal'
+							{groupModality === Modality.INTERNAL_GROUP && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--internal'
 									)}
-									className="sessionsListItem__consultingTypeIcon--internalIcon"
-								/>
-								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
-									{translate(
-										'sessionList.item.sessionType.internal'
-									)}
-								</span>
-							</div>
-						)}
-						{groupModality === Modality.SELF_HELP && (
-							<div
-								className={clsx(
-									'sessionsListItem__consultingTypeIcon',
-									'sessionsListItem__consultingTypeIcon--selfHelp'
-								)}
-							>
-								<img
-									src={selfHelpIcon}
-									alt={translate(
-										'sessionList.item.sessionType.selfHelp'
-									)}
-									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
-								/>
-								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
-									{translate(
-										'sessionList.item.sessionType.selfHelp'
-									)}
-								</span>
-							</div>
-						)}
-						{groupModality !== Modality.INTERNAL_GROUP &&
-							groupModality !== Modality.SELF_HELP && (
-								<div className="sessionsListItem__consultingTypeIcon">
+								>
 									<img
-										src={teamImage}
+										src={internalConversationIcon}
 										alt={translate(
-											'sessionList.item.sessionType.team'
+											'sessionList.item.sessionType.internal'
 										)}
-										className="sessionsListItem__consultingTypeIcon--team"
+										className="sessionsListItem__consultingTypeIcon--internalIcon"
 									/>
+									<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+										{translate(
+											'sessionList.item.sessionType.internal'
+										)}
+									</span>
 								</div>
 							)}
+							{groupModality === Modality.SELF_HELP && (
+								<div
+									className={clsx(
+										'sessionsListItem__consultingTypeIcon',
+										'sessionsListItem__consultingTypeIcon--selfHelp'
+									)}
+								>
+									<img
+										src={selfHelpIcon}
+										alt={translate(
+											'sessionList.item.sessionType.selfHelp'
+										)}
+										className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+									/>
+									<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+										{translate(
+											'sessionList.item.sessionType.selfHelp'
+										)}
+									</span>
+								</div>
+							)}
+							{groupModality !== Modality.INTERNAL_GROUP &&
+								groupModality !== Modality.SELF_HELP && (
+									<div className="sessionsListItem__consultingTypeIcon">
+										<img
+											src={teamImage}
+											alt={translate(
+												'sessionList.item.sessionType.team'
+											)}
+											className="sessionsListItem__consultingTypeIcon--team"
+										/>
+									</div>
+								)}
+						</div>
 					</div>
 				</div>
-			</div>
+				{/* Siblings of the card, so overlay clicks never open the group. */}
+				{overlayActive && overlayItem && (
+					<Overlay
+						item={overlayItem}
+						handleOverlay={handleOverlayAction}
+					/>
+				)}
+				{legalModal && (
+					<LegalLinkModal
+						title={legalModal.title}
+						url={legalModal.url}
+						onClose={() => setLegalModal(null)}
+					/>
+				)}
+			</>
 		);
 	}
 

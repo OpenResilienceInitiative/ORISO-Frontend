@@ -9,6 +9,7 @@ import {
 	buildExtendedSession,
 	ConsultingTypesContext,
 	E2EEContext,
+	ModalProvider,
 	SessionTypeContext,
 	SessionsDataContext,
 	TopicsContext,
@@ -166,13 +167,15 @@ const runtimeGroupChat = ({
 	name,
 	lastMessage = '',
 	repetitive = false,
-	conversationType
+	conversationType,
+	active = false
 }: {
 	id: number;
 	name: string;
 	lastMessage?: string;
 	repetitive?: boolean;
 	conversationType?: GroupChatItemInterface['conversationType'];
+	active?: boolean;
 }): ListItemInterface => ({
 	consultant: runtimeSession.consultant,
 	chat: {
@@ -180,7 +183,7 @@ const runtimeGroupChat = ({
 		topic: name,
 		conversationType,
 		repetitive,
-		active: false,
+		active,
 		consultingType: 1,
 		matrixRoomId: `!storybook-group-${id}:matrix.example.org`,
 		lastMessage,
@@ -1357,13 +1360,23 @@ const part = (row: HTMLElement, selector: string) => {
 };
 
 /** Real group members: the first two people and the hidden-member count. */
-const expectGroupRow = async (row: HTMLElement, name: string, count = 3) => {
+/** `chip`: the topic chip's text, or null for an Interna card, which has none. */
+const expectGroupRow = async (
+	row: HTMLElement,
+	name: string,
+	count = 3,
+	chip: string | null = null
+) => {
 	await expect(row.classList.contains('sessionsListItem--groupChat')).toBe(
 		true
 	);
-	await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
-		'kein Thema gewählt'
-	);
+	if (chip === null) {
+		await expect(row.querySelector('.sessionsListItem__topic')).toBeNull();
+	} else {
+		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
+			chip
+		);
+	}
 	await waitFor(() =>
 		expect(
 			row.querySelectorAll('[data-cy="participant-avatar"]')
@@ -1558,7 +1571,7 @@ export const GroupChatRow: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
-		await expectGroupRow(row, 'New Redeploy');
+		await expectGroupRow(row, 'New Redeploy', 3, 'kein Thema gewählt');
 		// The production preview reads the seeded decrypted Matrix event.
 		await expect(part(row, '.sessionsListItem__subject').textContent).toBe(
 			'Willkommen in der Teamrunde'
@@ -1802,7 +1815,7 @@ export const GuidedSelfHelpGroup: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const [row] = await settledRows(canvasElement);
-		await expectGroupRow(row, 'Montagsrunde');
+		await expectGroupRow(row, 'Montagsrunde', 3, 'Montagsrunde');
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 				.textContent
@@ -1814,6 +1827,59 @@ export const GuidedSelfHelpGroup: Story = {
 			).getAttribute('alt')
 		).toBe('Gesprächskreis');
 	}
+};
+
+/** FE#1913: a Gesprächskreis chip shows its topic; an Interna card has no chip. */
+const GroupTopicChipPair = () => {
+	seedMatrixRoom(2);
+	return (
+		<div style={listShell} role="list" aria-label="Conversations">
+			<RuntimeCard
+				index={0}
+				item={runtimeGroupChat({
+					id: 5511,
+					name: 'Schulden',
+					repetitive: true
+				})}
+			/>
+			<RuntimeCard
+				index={1}
+				item={runtimeGroupChat({ id: 5512, name: 'Teamrunde' })}
+			/>
+		</div>
+	);
+};
+
+const expectGroupTopicChips = async (canvasElement: HTMLElement) => {
+	const [selfHelp, interna] = await settledRows(canvasElement, 2);
+	await expectGroupRow(selfHelp, 'Schulden', 3, 'Schulden');
+	const chip = part(selfHelp, '.sessionsListItem__topic');
+	await expect(chip.classList.contains('topicTag')).toBe(true);
+	await expect(chip.getBoundingClientRect().width).toBeGreaterThan(0);
+	await expect(
+		part(selfHelp, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
+			.textContent
+	).toBe('Gesprächskreis');
+	await expectGroupRow(interna, 'Teamrunde', 3, null);
+	await expect(
+		part(interna, '.sessionsListItem__consultingTypeIcon--internalLabel')
+			.textContent
+	).toBe('Interna');
+	await expect(canvasElement.textContent).not.toContain('kein Thema gewählt');
+};
+
+export const GroupTopicChip: Story = {
+	name: 'Gruppe — Themen-Chip: Gesprächskreis „Schulden“, Interna ohne Chip',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <GroupTopicChipPair />,
+	play: async ({ canvasElement }) => expectGroupTopicChips(canvasElement)
+};
+
+export const GroupTopicChipOnThePhone: Story = {
+	name: 'Gruppe — Themen-Chip, 390 px',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => <GroupTopicChipPair />,
+	play: async ({ canvasElement }) => expectGroupTopicChips(canvasElement)
 };
 
 /* ------------------------------------------------------------------ *
@@ -2192,4 +2258,90 @@ export const GroupSelectedWithRealParticipants: Story = {
 				'/sessions/consultant/sessionView/!storybook-group-5902:matrix.example.org/5902'
 		}
 	}
+};
+
+/* ------------------------------------------------------------------ *
+ * #1923: an asker leaves a running group from its card
+ * ------------------------------------------------------------------ */
+
+const groupAsker = {
+	...runtimeUserData,
+	userId: 'asker-5601',
+	userName: 'asker-5601',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+};
+
+const AskerInRunningGroup = () => {
+	seedMatrixRoom(2);
+	return (
+		<ModalProvider>
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					userData={groupAsker}
+					item={runtimeGroupChat({
+						id: 5601,
+						name: 'Donnerstagsrunde',
+						conversationType: 'SELF_HELP',
+						active: true
+					})}
+				/>
+			</div>
+			{/* The app shell's portal target for Overlay. */}
+			<div id="overlay" />
+		</ModalProvider>
+	);
+};
+
+/** Leave → confirmation with Leave and Cancel → Cancel keeps the group. */
+const playAskerLeaveConfirmation = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	await settledRows(canvasElement);
+	const { menu } = await openTheMenu(canvasElement);
+	const leave = part(menu, '[data-cy="session-list-menu-leave-group"]');
+	await expect(leave.textContent).toContain('Chat verlassen');
+	await userEvent.click(leave);
+
+	const dialog = await waitFor(() => {
+		const element = document.querySelector<HTMLElement>('.overlay');
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	const page = within(dialog);
+	// The overlay fades in; wait for it instead of reading the first frame.
+	await waitFor(() =>
+		expect(
+			page.getByText('Möchten Sie den Chat wirklich verlassen?')
+		).toBeVisible()
+	);
+	await expect(
+		page.getByRole('button', { name: 'Chat verlassen' })
+	).toBeVisible();
+	const cancel = page.getByRole('button', { name: 'Abbrechen' });
+	const box = cancel.getBoundingClientRect();
+	await expect(box.left).toBeGreaterThanOrEqual(0);
+	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+
+	await userEvent.click(cancel);
+	await waitFor(() => expect(document.querySelector('.overlay')).toBeNull());
+	await expect(
+		canvasElement.querySelectorAll('.sessionsListItem--groupChat')
+	).toHaveLength(1);
+};
+
+export const AskerLeavesGroupFromCard: Story = {
+	name: 'Gruppe — Ratsuchende verlassen sie über das Menü (#1923)',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <AskerInRunningGroup />,
+	play: playAskerLeaveConfirmation
+};
+
+export const AskerLeavesGroupFromCardOnThePhone: Story = {
+	name: 'Gruppe verlassen — 390 px (#1923)',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => <AskerInRunningGroup />,
+	play: playAskerLeaveConfirmation
 };

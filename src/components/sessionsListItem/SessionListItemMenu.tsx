@@ -13,6 +13,7 @@ import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.s
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as EditGroupChatIcon } from '../../resources/img/icons/gear.svg';
+import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { ChatroomSettingsMenuVisibility } from './chatroomSettingsMenu';
@@ -38,6 +39,7 @@ export interface SessionListItemMenuProps {
 	onDearchive: () => void;
 	onDelete: () => void;
 	onRequestHelp: () => void;
+	onLeaveGroup?: () => void;
 	legalLinks: TProvidedLegalLink[];
 	agencyId: number | undefined;
 	onLegalLinkClick: (title: string, url: string) => void;
@@ -67,6 +69,7 @@ export const SessionListItemMenu = ({
 	onDearchive,
 	onDelete,
 	onRequestHelp,
+	onLeaveGroup,
 	legalLinks,
 	agencyId,
 	onLegalLinkClick
@@ -130,6 +133,30 @@ export const SessionListItemMenu = ({
 						{isAsker ? (
 							<>
 								<div className="sessionsListItem__dropdownContent">
+									{visibility.showLeaveGroup &&
+										onLeaveGroup && (
+											<button
+												onClick={(event) => {
+													// The menu is portalled, but React still bubbles to the card.
+													event.stopPropagation();
+													onLeaveGroup();
+												}}
+												className="sessionsListItem__dropdownOption"
+												type="button"
+												data-cy="session-list-menu-leave-group"
+											>
+												<LeaveChatIcon className="sessionsListItem__dropdownOptionIcon" />
+												<div className="sessionsListItem__dropdownOptionCenter">
+													<div className="sessionsListItem__dropdownOptionTitleRow">
+														<span className="sessionsListItem__dropdownOptionTitle">
+															{translate(
+																'chatFlyout.leaveGroupChat'
+															)}
+														</span>
+													</div>
+												</div>
+											</button>
+										)}
 									<LegalLinks
 										legalLinks={legalLinks}
 										params={{ aid: agencyId }}
