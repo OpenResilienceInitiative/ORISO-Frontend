@@ -5,6 +5,7 @@ import {
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import { isRestorableSessionPath } from '../../utils/lastOpenSession';
 import { emailPreferencesReturnPath } from '../../utils/emailPreferencesReturn';
+import { directLinkReturnPath } from '../../utils/directLinkReturn';
 import { encodeUsername } from '../../utils/encryptionHelpers';
 import { setTokens } from '../auth/auth';
 import { FETCH_ERRORS } from '../../api';
@@ -224,6 +225,9 @@ export const buildAppRedirectPath = (
 	if (!value) {
 		const emailSettings = emailPreferencesReturnPath(returnTo);
 		if (emailSettings) return emailSettings;
+		/* #1795: signed in from a direct link, back to that link. */
+		const directLink = directLinkReturnPath(returnTo);
+		if (directLink) return directLink;
 	}
 
 	if (isRestorableSessionPath(restorePath)) {

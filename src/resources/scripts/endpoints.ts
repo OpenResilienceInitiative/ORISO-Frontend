@@ -52,6 +52,7 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
+	askerSessionsBase: userServiceOrigin + '/service/users/askers/sessions',
 	banUser: (matrixUserId, chatId) =>
 		userServiceOrigin +
 		`/service/users/${encodeURIComponent(matrixUserId)}/chat/${chatId}/ban`,
@@ -77,6 +78,12 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	/* Counsellor direct links (ORISO-UserService#1479). */
+	directLinks: userServiceOrigin + '/service/users/directlinks',
+	inviteLinksBase: userServiceOrigin + '/service/users/invitelinks/',
+	ownCallKnocks: userServiceOrigin + '/service/users/call-knocks/mine/',
+	/* A direct-link guest's own temporary account (ORISO-UserService#1486). */
+	temporaryAccount: userServiceOrigin + '/service/users/temporary-account',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
@@ -89,6 +96,10 @@ export const endpoints = {
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
+	/** #1894: one of the counsellor's own direct links (UserService#1479). */
+	directLink: (linkId: string) =>
+		userServiceOrigin +
+		`/service/users/directlinks/${encodeURIComponent(linkId)}`,
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
@@ -102,6 +113,7 @@ export const endpoints = {
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
+	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:
@@ -120,6 +132,8 @@ export const endpoints = {
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
 	matrixCallState: userServiceOrigin + '/service/matrix/calls/state',
+	matrixCallShareLinks:
+		userServiceOrigin + '/service/matrix/calls/share-links',
 	matrixSyncRegister: (sessionId: number) =>
 		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {

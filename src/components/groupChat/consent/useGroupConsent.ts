@@ -10,6 +10,7 @@ import {
 } from '../../anonymousChat/entryRoom/entryRoomConsent';
 import { useGroupDepartment } from './useGroupDepartment';
 import { useConsentSentences } from '../../waitingRoom/useConsentSentences';
+import { useConsentContext } from '../../waitingRoom/useConsentContext';
 
 /**
  * Gate 2 of ADR-022 for a self-help group (#1499): which sentence the client
@@ -79,6 +80,7 @@ export const useGroupConsent = (agencyId?: number | null) => {
 
 	const { legalLinksHtml, platformHtml, missingPolicyHtml } =
 		useConsentSentences(agencyId);
+	const names = useConsentContext(department);
 
 	const consent = resolveEntryRoomConsent({
 		hasDepartment: departmentState.status === 'loading' || !!department,
@@ -86,7 +88,8 @@ export const useGroupConsent = (agencyId?: number | null) => {
 		platformHtml,
 		missingPolicyHtml,
 		legalLinksHtml,
-		locale: i18n?.language || 'de'
+		locale: i18n?.language || 'de',
+		context: names.context
 	});
 
 	/**
@@ -115,5 +118,10 @@ export const useGroupConsent = (agencyId?: number | null) => {
 		[userDataContext]
 	);
 
-	return { ...consent, department, record };
+	return {
+		...consent,
+		readable: consent.readable && !names.pending,
+		department,
+		record
+	};
 };

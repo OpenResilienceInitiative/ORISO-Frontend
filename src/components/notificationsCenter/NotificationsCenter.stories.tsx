@@ -11,7 +11,7 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import type { IUserDraftItem } from '../../api/apiUserDrafts';
+import { installNotificationDraftFixture } from './notificationDraftFixture';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -251,64 +251,14 @@ const withTimelineData =
 		</UserDataContext.Provider>
 	);
 
-/**
- * #1535: the timeline loads unsent drafts from `/users/drafts` itself. The
- * fetch patch answers only that path, and only while a story is mounted.
- */
-let storyDrafts: IUserDraftItem[] | null = null;
-let draftsFetchPatched = false;
-const patchDraftsFetch = () => {
-	if (draftsFetchPatched) return;
-	draftsFetchPatched = true;
-	const originalFetch = globalThis.fetch.bind(globalThis);
-	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-		const url =
-			typeof input === 'string'
-				? input
-				: input instanceof URL
-					? input.href
-					: input.url;
-		if (storyDrafts && url.includes('/service/users/drafts')) {
-			return new Response(
-				JSON.stringify({ items: storyDrafts, page: 0, perPage: 200 }),
-				{ status: 200, headers: { 'Content-Type': 'application/json' } }
-			);
-		}
-		return originalFetch(input, init);
-	};
-};
-
-// Set during render: the timeline's own effect fetches before a parent effect runs.
-const ServerDraftsScope = ({
-	drafts,
-	children
-}: {
-	drafts: IUserDraftItem[];
-	children: React.ReactNode;
-}) => {
-	patchDraftsFetch();
-	storyDrafts = drafts;
-	// Layout effects run before the timeline's fetch effect; re-set after a prior scope's cleanup.
-	React.useLayoutEffect(() => {
-		storyDrafts = drafts;
-		return () => {
-			storyDrafts = null;
-		};
-	}, [drafts]);
-	return <>{children}</>;
-};
-
-const withServerDrafts = (Story: React.ComponentType, context: any) => (
-	<ServerDraftsScope drafts={context.parameters.serverDrafts ?? []}>
-		<Story />
-	</ServerDraftsScope>
-);
-
 const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs'],
-	decorators: [withDisplayFilterStore, withServerDrafts],
+	decorators: [withDisplayFilterStore],
+	// Meta and story beforeEach hooks compose: StructuredFirstResponse keeps its Matrix lifecycle.
+	beforeEach: ({ parameters }) =>
+		installNotificationDraftFixture(parameters.serverDrafts ?? []),
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: '/notifications' },
@@ -496,7 +446,7 @@ export const DisplayFilterDialogOpen: Story = {
 			body.getByRole('checkbox', { name: 'In der Liste: Entwürfe' })
 		).not.toBeChecked();
 		await expect(
-			body.getByRole('button', { name: 'Pille: System' })
+			body.getByRole('button', { name: 'Im Filter: System' })
 		).toHaveTextContent('Aus');
 	}
 };

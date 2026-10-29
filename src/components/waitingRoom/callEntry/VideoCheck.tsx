@@ -157,7 +157,9 @@ export const VideoCheck = ({
 						px: 1.25,
 						py: 0.5,
 						borderRadius: '12px',
-						bgcolor: 'rgba(0,0,0,.45)',
+						/* .6, not .45: white 13px text keeps 4.5:1 on any
+						   animal colour, even white (.45 gave 4.04:1). */
+						bgcolor: 'rgba(0,0,0,.6)',
 						color: '#fff'
 					}}
 				>

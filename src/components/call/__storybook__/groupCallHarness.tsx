@@ -3,7 +3,8 @@
  * Do not import from production app code.
  */
 import * as React from 'react';
-import { vi } from 'vitest';
+// Storybook's spy works in the browser too; the test runner's `vi` does not.
+import { fn } from 'storybook/test';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { callManager } from '../../../services/CallManager';
@@ -99,8 +100,8 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 			 * so the room's encryption covers it. `sendStateEvent` is kept here
 			 * only so a test can assert it is never used for this again.
 			 */
-			sendEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
-			sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
+			sendEvent: fn().mockResolvedValue({ event_id: '$identity' }),
+			sendStateEvent: fn().mockResolvedValue({ event_id: '$state' }),
 			getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
 			matrixRTC: { getRoomSession: () => rtcSession },
 			getRoom: (roomId: string) =>
@@ -184,6 +185,7 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 };
 
 export const resetCallManager = () => {
+	callManager.rejectWaitingCall();
 	if (callManager.getCurrentCall()) {
 		callManager.endCall(false);
 	}
@@ -202,7 +204,11 @@ export const seedIncomingElementCall = () => {
 	);
 };
 
-export type GroupCallStoryMode = 'incoming' | 'connecting' | 'active';
+export type GroupCallStoryMode =
+	| 'incoming'
+	| 'connecting'
+	| 'active'
+	| 'secondCall';
 
 type HarnessProps = {
 	mode: GroupCallStoryMode;
@@ -223,8 +229,20 @@ export const GroupCallStoryHarness: React.FC<HarnessProps> = ({ mode }) => {
 		resetCallManager();
 		seedIncomingElementCall();
 
-		if (mode === 'connecting' || mode === 'active') {
+		if (mode !== 'incoming') {
 			callManager.answerCall();
+		}
+		// A second call rings while the first runs (FE#1904).
+		if (mode === 'secondCall') {
+			callManager.receiveCall(
+				'!sb-second-call:matrix.storybook.test',
+				false,
+				'sb-group-call-2',
+				'@second-caller:matrix.storybook.test',
+				true,
+				'!sb-second-session:matrix.storybook.test',
+				true
+			);
 		}
 
 		setReady(true);

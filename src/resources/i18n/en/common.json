@@ -227,6 +227,11 @@
 			"headline": "You have been banned.",
 			"info": "We have asked you to respect the chat rules.<br/><br/>Because you have repeatedly failed to comply with the chat rules today, we have excluded you from todays chat.<br/><br/>Familiarize yourself with the chat rules!<br/><br/>If you are ready to follow the chat rules, you are welcome to chat again from tomorrow!"
 		},
+		"confirm": {
+			"description": "They can no longer write in this group and will see that they were removed.",
+			"submit": "Remove",
+			"title": "Remove {{name}} from this group?"
+		},
 		"is": {
 			"banned": " Banned"
 		}
@@ -643,6 +648,17 @@
 				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
+		},
+		"rejection": {
+			"action": "Decline request",
+			"confirmTitle": "Decline this request?",
+			"description": "The request will be declined. The advice seeker can still read the existing conversation.",
+			"confirm": "Decline request",
+			"error": "The decline could not yet be fully confirmed. The decision may already be saved. Please try again.",
+			"conflict": "The request has changed or is no longer available. Please reload the current view.",
+			"closed": "This request was declined.",
+			"inProgress": "Completing the decline…",
+			"cancel": "Cancel"
 		}
 	},
 	"error": {
@@ -726,12 +742,13 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar",
 			"copyGoogle": "Copy Google Calendar link",
 			"copyOutlook": "Copy Outlook Calendar link",
 			"linkCopied": "Calendar link copied.",
 			"copyError": "The calendar link could not be copied. Please try again.",
-			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates.",
+			"addThis": "Add this date to your calendar",
+			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -1013,7 +1030,6 @@
 				"back": "Back to the countdown",
 				"headline": "How the group works",
 				"subline": "Three things that help before your first time.",
-				"appointments": "Add the dates to your calendar",
 				"steps": {
 					"formats": {
 						"title": "How the group meets",
@@ -1030,8 +1046,7 @@
 						"text": "The link area regularly holds fresh meetings and takes you straight to the next date.",
 						"alt": "New date cards appear one after another; a clear link symbol leads the curious person to the next group meeting."
 					}
-				},
-				"upcoming": "Next dates"
+				}
 			},
 			"status": {
 				"active": "Running now",
@@ -1056,7 +1071,7 @@
 					"etaSoon": "any moment now",
 					"flipAria": "{{label}}: {{value}}. Flip to read.",
 					"flipHint": "click to flip",
-					"greetingLabel": "A welcome from your counsellor",
+					"greetingLabel": "A welcome from the moderator",
 					"headline": "Your group chat starts {{eta}}.",
 					"moderatorHeadline": "The group session starts {{eta}}.",
 					"moderatorOverdueHeadline": "The group is waiting.",
@@ -1064,8 +1079,8 @@
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
-					"overdueHeadline": "We'll be with you in a moment.",
-					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
+					"overdueHeadline": "The group starts in a moment.",
+					"overdueSubtitle": "The moderator is about to open the group — please hang on a little longer.",
 					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
 					"subtitleCard": "Tap the clock, greeting and netiquette behind it.",
 					"subtitleStill": "The greeting and the netiquette are below the numbers.",
@@ -1184,7 +1199,49 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown",
-			"legalMenu": "Legal"
+			"legalMenu": "Legal",
+			"dates": {
+				"headline": "The next meetings",
+				"subline": "Tap a date to add it to your calendar.",
+				"none": "No further dates are planned at the moment.",
+				"add": "Add",
+				"addLabel": "Add {{date}} to your calendar",
+				"next": "Next",
+				"seriesTitle": "All at once",
+				"seriesSub": "add as a series",
+				"seriesLong": "Add all as a series",
+				"repeat": {
+					"DAILY": "The group meets every day at the same time.",
+					"WEEKLY": "The group meets every week at the same time.",
+					"BIWEEKLY": "The group meets every two weeks at the same time.",
+					"MONTHLY": "The group meets every month at the same time.",
+					"QUARTERLY": "The group meets every quarter at the same time.",
+					"YEARLY": "The group meets every year at the same time."
+				}
+			},
+			"addDate": "Add to calendar",
+			"allDates": "All dates",
+			"nextDates": "Next dates",
+			"joinFrom": "from {{time}}",
+			"rhythm": {
+				"DAILY": "every day",
+				"WEEKLY": "every week",
+				"BIWEEKLY": "every two weeks",
+				"MONTHLY": "every month",
+				"QUARTERLY": "every quarter",
+				"YEARLY": "every year"
+			},
+			"running": {
+				"since": "Running for",
+				"status": "Running now",
+				"statusModerated": "Running now · moderator is here",
+				"headline": "The group started {{ago}}.",
+				"subline": "You can join at any time – nobody has to say anything."
+			},
+			"rules": {
+				"headline": "How we treat each other",
+				"subline": "Read it once – then you are in."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1287,6 +1344,11 @@
 			"accept": "Agree",
 			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
 			"saveFailed": "Your agreement could not be saved. Please try again."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "You were removed from this group."
+			}
 		}
 	},
 	"help": {
@@ -2042,7 +2104,8 @@
 				"large": "My consultations",
 				"nav": "Chats",
 				"small": "Messages"
-			}
+			},
+			"directLinks": "My direct links"
 		},
 		"activity": "Timeline",
 		"language": "Language",
@@ -2068,21 +2131,21 @@
 			"title": "View",
 			"description": "Which kinds this list shows, which get a chip and how they sound.",
 			"showColumn": "In the list",
-			"pillColumn": "Show",
-			"soundColumn": "Sound",
+			"pillColumn": "In filter",
+			"soundColumn": "Browser",
 			"soundKind": "Play tone: {{kind}}",
-			"soundMenu": "Choose tone: {{kind}}",
+			"soundMenu": "Browser notification: {{kind}}",
 			"soundDefault": "Default",
-			"pillMenu": "Choose display: {{kind}}",
+			"pillMenu": "Choose filter: {{kind}}",
 			"liveChatDynamic": "Dynamic",
 			"liveChatFixed": "Pinned",
 			"pillOff": "Off",
 			"pillOn": "On",
 			"placeholderHint": "Coming soon.",
 			"showKind": "In the list: {{kind}}",
-			"pillKind": "Pill: {{kind}}",
+			"pillKind": "In filter: {{kind}}",
 			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
-			"pillNotApplicable": "No pill for this kind",
+			"pillNotApplicable": "No filter button for this kind",
 			"autoRead": "Mark hidden items as read immediately",
 			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
 			"autoReadSessions": "Don't count hidden chats as unread",
@@ -2099,7 +2162,7 @@
 			"viewLabels": "Icons + text",
 			"viewText": "Text",
 			"autoSort": "Move unread to the left",
-			"autoSortDescription": "Chips with unread items move to the start of the row.",
+			"autoSortDescription": "Buttons with unread items move to the front.",
 			"deactivatedHint": "Switched off by your organisation. Existing conversations stay visible until they are archived.",
 			"deactivatedChip": "{{kind}} (switched off by your organisation)",
 			"deactivatedNotice": "{{kind}} is switched off for your organisation. Existing conversations stay visible until they are archived; new ones cannot be created.",
@@ -2119,7 +2182,36 @@
 				"sessions": "Conversations",
 				"requests": "Requests"
 			},
-			"liveChatSession": "While open"
+			"liveChatSession": "While open",
+			"kindColumn": "Kind",
+			"legendShow": "Items of this kind appear in the list",
+			"legendPill": "Button above the list that narrows it to this kind",
+			"legendSound": "Pop-up on this device, with a sound or silent",
+			"legendEmail": "Notice to your inbox, never the message content",
+			"quickHeading": "More filter buttons",
+			"quickNote": "These buttons filter the list or open an action. They never notify you.",
+			"presentationHeading": "How the filter buttons look",
+			"soundWithTone": "Pop-up with sound",
+			"soundSilent": "Pop-up without sound",
+			"soundSilentDescription": "Only the window, no sound",
+			"emailColumn": "E-mail",
+			"emailKind": "E-mail: {{kind}}",
+			"emailMenu": "Choose e-mail: {{kind}}",
+			"channelUnavailable": "not available",
+			"emailUnavailableReason": "There are no e-mail notifications for this kind yet",
+			"emailMasterOff": "E-mail notifications are switched off in your profile",
+			"browserOff": "Pop-ups are switched off in your profile",
+			"descriptions": {
+				"sessions": "Choose for each kind of conversation whether it gets a filter button and how you are notified about new messages.",
+				"requests": "Choose for each kind of request whether it gets a filter button and how you are notified about new requests.",
+				"timeline": "Choose for each kind whether it appears in the list, gets a filter button and whether you receive an e-mail.",
+				"timelineWithoutEmail": "Choose for each kind whether it appears in the list and gets a filter button."
+			},
+			"kindsHeadings": {
+				"sessions": "Kinds of conversation",
+				"requests": "Kinds of request",
+				"timeline": "Kinds of event"
+			}
 		},
 		"families": {
 			"all": "All",
@@ -2245,8 +2337,8 @@
 				"text": "The online appointment was cancelled."
 			},
 			"requestDenied": {
-				"title": "Request denied",
-				"text": "The client request was denied."
+				"title": "Request declined",
+				"text": "This request was declined."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client joined waiting room",
@@ -2494,7 +2586,7 @@
 			"profileIcon": "Profile icon",
 			"register": {
 				"button": {
-					"label": "Register"
+					"label": "Request counselling"
 				},
 				"consultingModeInfo": {
 					"groupChats": "In self-help, those affected exchange information with each other about a topic or concern. Those affected talk about their problems, feelings and hopes and learn how others have overcome problems. The groups are led by moderators.",
@@ -2505,7 +2597,7 @@
 				},
 				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
 				"dialog": {
-					"openButton": "Request another topic",
+					"openButton": "Start further counselling",
 					"title": "Start a new request",
 					"close": "Close"
 				},
@@ -2827,6 +2919,10 @@
 					"feedback": {
 						"title": "Professional exchange",
 						"description": "A reply is waiting for you in the protected professional exchange."
+					},
+					"internalChat": {
+						"title": "Internal messages",
+						"description": "A new message in an internal chat with other counsellors."
 					}
 				},
 				"shared": {
@@ -2871,7 +2967,8 @@
 					"title": "Security"
 				},
 				"title": "Settings",
-				"keyboardShortcuts": "Keyboard Shortcuts"
+				"keyboardShortcuts": "Keyboard Shortcuts",
+				"myLinks": "My links"
 			}
 		},
 		"spokenLanguages": {
@@ -3569,7 +3666,11 @@
 				"headline": "The invitation could not be loaded right now.",
 				"body": "Please check your connection and try again. Your invitation link stays valid."
 			},
-			"loading": "Loading the invitation …"
+			"loading": "Loading the invitation …",
+			"invalid": {
+				"headline": "This invitation link does not work.",
+				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
+			}
 		}
 	},
 	"releaseNote": {
@@ -3758,6 +3859,7 @@
 			"selectedReason": "Selected reason: {{reason}}",
 			"explanation": "Explanation: {{explanation}}",
 			"tookOverTitle": "New counsellor took over your case",
+			"tookOverBody": "{{advisor}} will continue your counselling from now on.",
 			"noActionNeeded": "You don't need to take any action",
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
@@ -4779,6 +4881,7 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",
 				"ended": "Video call ended",
@@ -5853,6 +5956,7 @@
 		"group": {
 			"incomingTitle": "Incoming call",
 			"incomingDescription": "Someone is calling…",
+			"incomingFrom": "{{name}} is calling…",
 			"close": "Close call",
 			"autoFit": "Auto-fit",
 			"autoFitAria": "Auto-fit call window",
@@ -5903,6 +6007,66 @@
 				"anmerkung": "Remark",
 				"aufgabe": "Task"
 			}
+		},
+		"states": {
+			"encrypted": "Encrypted",
+			"endsCurrent": "Answering ends your call with {{name}}.",
+			"answerAndEnd": "End call and answer",
+			"backToCall": "Back to the full call",
+			"speaking": "{{name}} is speaking",
+			"dockLabel": "Call with {{name}}",
+			"cameraHint": "Sound keeps going.",
+			"minimize": "Minimize call",
+			"groupCall": "Group call",
+			"endsCurrentUnnamed": "Answering ends your current call."
+		},
+		"share": {
+			"open": "Share call",
+			"title": "Share call",
+			"close": "Close",
+			"settingsLabel": "For guests with this link",
+			"knock": {
+				"label": "Knock first",
+				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
+				"off": "Guests enter the call directly, without waiting."
+			},
+			"temporaryAccount": {
+				"label": "Temporary account",
+				"on": "Guests get a guest account that is deleted after the call.",
+				"off": "Guests sign in with their own account or create one."
+			},
+			"linkLabel": "Link to the call",
+			"copy": "Copy",
+			"copied": "Copied",
+			"copiedStatus": "The link is on your clipboard.",
+			"copyFailed": "Copying did not work. Please select the link and copy it yourself.",
+			"qrShow": "QR code",
+			"qrHide": "Hide QR code",
+			"qrAlt": "QR code with the link to the call",
+			"share": "Share",
+			"shareTitle": "Invitation to a call",
+			"lifetime": "The link only works for this call. It stops working as soon as you hang up.",
+			"consent": "Before entering, guests confirm the counselling centre’s privacy policy and consent with one tap.",
+			"qrHint": "Scan with a phone camera to open the call there.",
+			"settingsLive": "Changes apply right away to this link, even if it has already been shared."
+		},
+		"knock": {
+			"region": "People waiting",
+			"someone": "Someone",
+			"wantsIn": "wants to join the call",
+			"admit": "Let in",
+			"decline": "Decline",
+			"admitAll": "Let everyone in",
+			"position": "{{current}} of {{total}}",
+			"previous": "Previous person",
+			"next": "Next person",
+			"participants": "Participants",
+			"participantsWaiting": "Participants – waiting: {{count}}"
+		},
+		"admission": {
+			"label": "Knock first",
+			"on": "Guests wait until you let them in.",
+			"off": "Guests enter the call directly, without waiting."
 		}
 	},
 	"form": {
@@ -6010,6 +6174,222 @@
 				"text": "The agreement status could not be verified. Please try again. Your entries are retained.",
 				"inviteText": "The contract confirmation could not be checked right now. Please try again."
 			}
+		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Reference component",
+			"title": "Applied design tokens",
+			"declaredExplanation": "Source details describe the declared mapping. Values are measured from the reference component.",
+			"refresh": "Refresh inspection",
+			"empty": "No measurements yet.",
+			"unavailable": "Unavailable",
+			"scroll": "Scroll token measurements",
+			"caption": "Applied token measurements",
+			"target": "Target",
+			"token": "Token / property",
+			"expected": "Expected (engine)",
+			"calculated": "Calculated (inherited token)",
+			"applied": "Applied (component)",
+			"result": "Result",
+			"source": "Declared source",
+			"status": {
+				"match": "Match",
+				"mismatch": "Mismatch",
+				"missing": "Missing",
+				"unresolved": "Unresolved"
+			},
+			"issues": {
+				"missing-element": "Target element was not found.",
+				"missing-expected": "No independent expected value is available.",
+				"missing-token": "The inherited token is missing or invalid.",
+				"unresolved-token": "The inherited token could not be resolved.",
+				"missing-applied": "The applied value is missing.",
+				"calculated-mismatch": "Inherited token differs from the engine.",
+				"applied-mismatch": "Applied value differs from the engine."
+			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Please wait until you are let in",
+			"descriptionCall": "Until then, nobody can see or hear you. You can already set up your microphone and camera here.",
+			"descriptionGroup": "As soon as you are let in, you can write in the group.",
+			"statusCall": "Knocked – your counsellor can see that you are waiting.",
+			"statusGroup": "Knocked – the group lead can see that you are waiting.",
+			"openUntil": "The group chat is open until {{time}}.",
+			"cancel": "Stop waiting"
+		},
+		"admitted": {
+			"title": "You have been let in",
+			"statusCall": "Connecting the call …",
+			"statusGroup": "Opening the group chat …"
+		},
+		"declined": {
+			"title": "Not right now",
+			"descriptionCall": "Your counsellor cannot let you in at the moment. Try again later or send a message.",
+			"descriptionGroup": "The group lead cannot let you in at the moment. Try again later."
+		},
+		"knockAgain": "Knock again",
+		"devices": {
+			"camera": "Camera",
+			"microphone": "Microphone",
+			"micOn": "Unmute microphone",
+			"micOff": "Mute microphone",
+			"micMeter": "Your microphone volume"
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommend further counselling",
+			"endDuplicate": "End duplicate counselling",
+			"endDuplicateDescription": "Ends this second counselling on the same topic"
+		},
+		"recommend": {
+			"title": "Recommend further counselling",
+			"intro": "The person seeking advice sees your recommendation as a card in the chat and can find a suitable counselling centre from there.",
+			"topicLabel": "Topic",
+			"noteLabel": "Note (optional)",
+			"noteHint": "The note appears on the card in the chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Send recommendation",
+			"cancel": "Cancel",
+			"successHeadline": "Your recommendation has been sent.",
+			"successButton": "Close",
+			"error": "The recommendation could not be sent. Please try again.",
+			"errorForbidden": "Only the counsellor assigned to this conversation can recommend further counselling.",
+			"errorConflict": "A recommendation is not possible in this conversation right now.",
+			"topicsUnavailable": "The topics could not be loaded. Please try again later."
+		},
+		"card": {
+			"title": "Recommendation: further counselling",
+			"topic": "Topic: {{topic}}",
+			"defaultText": "Please keep to one counselling per topic. Your current counsellor will be informed as soon as the new counselling begins.",
+			"noteLabel": "Note from the counsellor",
+			"findAgency": "Find a counselling centre",
+			"requested": "Request sent",
+			"topicUnknown": "another topic"
+		},
+		"duplicate": {
+			"startedTitle": "Further counselling on the same topic",
+			"started": "A further counselling on the topic {{topic}} has started. Please agree together which one continues. The other one should be ended.",
+			"endedTitle": "Second counselling ended",
+			"ended": "The second counselling on the topic {{topic}} has been ended.",
+			"confirm": {
+				"headline": "End duplicate counselling?",
+				"copy": "This counselling will be ended and moved to the archive. Your other counselling on the same topic continues.",
+				"confirm": "End counselling",
+				"cancel": "Cancel"
+			},
+			"error": "The counselling could not be ended. Please try again."
+		},
+		"request": {
+			"sameTopicInfo": "Only one counselling per topic is intended at a time. If you start a counselling on a topic you are already discussing, your current counsellor will be informed as soon as the new one is accepted. One of the two will then be ended.",
+			"consentAria": "Consent to the counselling centre’s data protection terms",
+			"cancel": "Cancel"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Direct link",
+			"subtitle": "For people seeking advice",
+			"headline": "A link straight to you",
+			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
+			"topicLabel": "Choose topic",
+			"mediumLabel": "Kind of contact",
+			"temporary": "Temporary account",
+			"temporaryHint": "The account is deleted after the conversation.",
+			"create": "Create link",
+			"createFailed": "The link could not be created. Please try again."
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Audio call",
+			"video": "Video call"
+		},
+		"temporary": "Temporary",
+		"copy": "Copy link",
+		"share": {
+			"title": "Your direct link is ready",
+			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"copied": "Copied",
+			"share": "Share",
+			"qrAlt": "QR code for the direct link",
+			"done": "Done",
+			"linkLabel": "Direct link"
+		},
+		"list": {
+			"title": "My direct links",
+			"qr": "Show QR code",
+			"active": "{{name}} active",
+			"edit": "Edit {{name}}"
+		},
+		"entry": {
+			"inactive": "This link is no longer active.",
+			"haveAccount": "Already have an account? Sign in",
+			"joinFailed": "That did not work. Please try again."
+		},
+		"page": {
+			"loadFailed": "Your direct links could not be loaded.",
+			"create": "Create a new direct link in “Create chat”",
+			"emptyHeadline": "There are no direct links yet",
+			"emptyText": "You create a direct link in “Create chat”. It then appears here.",
+			"loading": "Loading direct links",
+			"retry": "Try again",
+			"toggleFailed": "The link could not be switched. Please try again."
+		},
+		"edit": {
+			"title": "Edit direct link",
+			"cancel": "Cancel",
+			"save": "Save",
+			"name": "Name",
+			"nameRequired": "Please enter a name.",
+			"topic": "Topic",
+			"mediumFixed": "The type of contact cannot be changed",
+			"temporaryHint": "Applies only to people who open the link from now on.",
+			"failed": "The change could not be saved. Please try again."
+		}
+	},
+	"dashboard": {
+		"title": "Your overview",
+		"stats": {
+			"title": "Counselling",
+			"period": "Last 30 days",
+			"assigned": "Newly taken on",
+			"active": "Active",
+			"archived": "Archived",
+			"sentMessages": "Messages sent"
+		},
+		"circles": {
+			"title": "Upcoming self-help circles",
+			"participants": "{{count}} participants",
+			"participants_one": "{{count}} participant"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporary",
+			"title": "Deleted together with the guest account"
+		},
+		"deletedGuest": "Guest (deleted)",
+		"chip": {
+			"guest": "Guest account"
+		},
+		"keepDialog": {
+			"title": "Should your messages stay?",
+			"description": "Your guest account is deleted after the conversation. What should happen to your messages?",
+			"keep": {
+				"label": "Keep them after deletion",
+				"hint": "Your messages stay when your account is deleted."
+			},
+			"delete": {
+				"label": "Temporary",
+				"hint": "Your messages are deleted with your account."
+			},
+			"note": "Your answer applies to this whole conversation.",
+			"confirm": "Continue",
+			"cancel": "Cancel",
+			"failed": "Your answer could not be saved. Your message has not been sent yet."
 		}
 	}
 }

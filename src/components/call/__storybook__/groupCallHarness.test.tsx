@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import React from 'react';
 import {
@@ -16,7 +16,7 @@ import {
 	expect,
 	it,
 	vi
-} from 'vitest';
+} from 'vite-plus/test';
 
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
@@ -73,6 +73,23 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 		}
 	};
 });
+
+const knockApi = vi.hoisted(() => ({
+	pending: vi.fn().mockResolvedValue([]),
+	shareLink: vi.fn().mockResolvedValue(null)
+}));
+
+vi.mock('../../../api/apiCallKnocks', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../../api/apiCallKnocks')>()),
+	apiGetPendingCallKnocks: knockApi.pending
+}));
+
+vi.mock('../../../api/apiCallShareLinkKnock', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../api/apiCallShareLinkKnock')
+	>()),
+	apiGetCallShareLinkKnock: knockApi.shareLink
+}));
 
 vi.mock('../../../resources/scripts/runtimeConfig', async (importOriginal) => ({
 	...(await importOriginal<
@@ -165,6 +182,274 @@ describe('GroupCallWidget Storybook harness', () => {
 
 		resetCallManager();
 		expect(callManager.getCurrentCall()).toBeNull();
+	});
+
+	it('leaves browser full screen when a second call rings, so its card can be seen', async () => {
+		/*
+		 * The full-screen element sits in the browser's top layer; the ringing
+		 * card is portalled to <body> outside it, and no z-index reaches above
+		 * the top layer (FE#1904 review).
+		 */
+		const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(document, 'exitFullscreen', {
+			configurable: true,
+			value: exitFullscreen
+		});
+		Object.defineProperty(document, 'fullscreenElement', {
+			configurable: true,
+			get: () => document.body
+		});
+		try {
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+			const view = renderTranslated(
+				<MatrixClientContext.Provider
+					value={{
+						matrixClientService,
+						setMatrixClientService: () => {}
+					}}
+				>
+					<GroupCallWidget />
+				</MatrixClientContext.Provider>
+			);
+			await waitFor(() =>
+				expect(
+					view.container.querySelector('.element-call-iframe')
+				).toBeTruthy()
+			);
+			expect(exitFullscreen).not.toHaveBeenCalled();
+
+			act(() =>
+				callManager.receiveCall(
+					'!second-call:matrix.storybook.test',
+					false,
+					'second-call',
+					'@second:matrix.storybook.test',
+					true,
+					'!second-session:matrix.storybook.test',
+					true
+				)
+			);
+
+			await waitFor(() =>
+				expect(exitFullscreen).toHaveBeenCalledTimes(1)
+			);
+		} finally {
+			callManager.rejectWaitingCall();
+			delete (document as unknown as Record<string, unknown>)
+				.fullscreenElement;
+			delete (document as unknown as Record<string, unknown>)
+				.exitFullscreen;
+		}
+	});
+
+	const renderActiveCall = async () => {
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		const iframe = await waitFor(() => {
+			const found = view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement | null;
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		return { view, iframe };
+	};
+
+	const ringSecondCall = () =>
+		act(() =>
+			callManager.receiveCall(
+				'!second-call:matrix.storybook.test',
+				false,
+				'second-call',
+				'@second:matrix.storybook.test',
+				true,
+				'!second-session:matrix.storybook.test',
+				true
+			)
+		);
+
+	it('keeps the second call ringing when the call closes itself during the hangup', async () => {
+		/*
+		 * Element Call may answer the hangup with its own close, which closes
+		 * the surface and moves the waiting call up. The end button's own
+		 * teardown after the handshake must then leave that call alone.
+		 */
+		const { view } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			on: ReturnType<typeof vi.fn>;
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		api.transport.send.mockImplementation(async (action: string) => {
+			if (action !== 'im.vector.hangup') return {};
+			const close = api.on.mock.calls.find(
+				([name]) => name === 'action:io.element.close'
+			)?.[1] as (event: unknown) => void;
+			close({ detail: {}, preventDefault: () => undefined });
+			return {};
+		});
+
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: 'second-call',
+					state: 'ringing'
+				})
+			)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({ callId: 'second-call', state: 'ringing' })
+		);
+	});
+
+	it('still ends the running call when the second caller gives up during the hangup', async () => {
+		const { view, iframe } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		api.transport.send.mockImplementation(async (action: string) => {
+			if (action !== 'im.vector.hangup') return {};
+			callManager.endCallIfMatching(
+				'second-call',
+				'!second-session:matrix.storybook.test'
+			);
+			return {};
+		});
+
+		fireEvent.click(
+			await view.findByRole('button', { name: 'End call and answer' })
+		);
+
+		// The person asked for this call to end; it does, with nothing to answer.
+		await waitFor(() => expect(callManager.hasActiveCall()).toBe(false));
+		expect(iframe.src).toBe('about:blank');
+		expect(callManager.getCurrentCall()?.callId).not.toBe('second-call');
+	});
+
+	it('answers only once when "End call and answer" is pressed twice', async () => {
+		const { view } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		let finishHangup: () => void = () => undefined;
+		api.transport.send.mockImplementation((action: string) =>
+			action === 'im.vector.hangup'
+				? new Promise((resolve) => {
+						finishHangup = () => resolve({});
+					})
+				: Promise.resolve({})
+		);
+
+		const answer = await view.findByRole('button', {
+			name: 'End call and answer'
+		});
+		fireEvent.click(answer);
+		fireEvent.click(answer);
+		finishHangup();
+
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: 'second-call',
+					state: 'connecting'
+				})
+			)
+		);
+		const hangups = api.transport.send.mock.calls.filter(
+			([action]) => action === 'im.vector.hangup'
+		);
+		expect(hangups).toHaveLength(1);
+	});
+
+	it('leaves full screen entered while a second call is already ringing', async () => {
+		let fullscreen: Element | null = null;
+		const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(document, 'exitFullscreen', {
+			configurable: true,
+			value: exitFullscreen
+		});
+		Object.defineProperty(document, 'fullscreenElement', {
+			configurable: true,
+			get: () => fullscreen
+		});
+		try {
+			await renderActiveCall();
+			ringSecondCall();
+			expect(exitFullscreen).not.toHaveBeenCalled();
+
+			fullscreen = document.body;
+			act(() => {
+				document.dispatchEvent(new Event('fullscreenchange'));
+			});
+
+			await waitFor(() =>
+				expect(exitFullscreen).toHaveBeenCalledTimes(1)
+			);
+		} finally {
+			delete (document as unknown as Record<string, unknown>)
+				.fullscreenElement;
+			delete (document as unknown as Record<string, unknown>)
+				.exitFullscreen;
+		}
+	});
+
+	it('mutes on the first press in the dock, before the call reported its devices', async () => {
+		const { view } = await renderActiveCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+		fireEvent.click(
+			await view.findByRole('button', { name: 'Mute', pressed: false })
+		);
+
+		await waitFor(() =>
+			expect(api.transport.send).toHaveBeenCalledWith(
+				'io.element.device_mute',
+				{ audio_enabled: false }
+			)
+		);
+	});
+
+	it('moves keyboard focus into the dock when the call is minimized', async () => {
+		const { view } = await renderActiveCall();
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+
+		const back = await view.findByRole('button', {
+			name: 'Back to the full call'
+		});
+		await waitFor(() => expect(document.activeElement).toBe(back));
+	});
+
+	it('takes keyboard focus back into the call when the dock expands', async () => {
+		const { view, iframe } = await renderActiveCall();
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+		fireEvent.click(
+			await view.findByRole('button', { name: 'Back to the full call' })
+		);
+
+		await waitFor(() => expect(document.activeElement).toBe(iframe));
 	});
 
 	it('waits for the call to say goodbye before destroying its document', async () => {
@@ -476,6 +761,40 @@ describe('what the host adds around the call', () => {
 		seedIncomingElementCall();
 		callManager.answerCall();
 	};
+
+	const counsellor = {
+		userId: '@berater:matrix.storybook.test',
+		grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+	};
+
+	it("asks for knocks in a counsellor's Element Call call", async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		activeCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
+		expect(knockApi.shareLink).toHaveBeenCalled();
+	});
+
+	it('asks for no knocks in a legacy call, which shows no widget', async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		resetCallManager();
+		callManager.receiveCall(
+			FAKE_ELEMENT_CALL_ROOM_ID,
+			true,
+			FAKE_CALL_ID,
+			'@caller:matrix.storybook.test',
+			true,
+			FAKE_SIGNAL_ROOM_ID,
+			false
+		);
+		callManager.answerCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await act(async () => {});
+		expect(knockApi.pending).not.toHaveBeenCalled();
+		expect(knockApi.shareLink).not.toHaveBeenCalled();
+	});
 
 	it('gives a counsellor the private notepad beside the stage', async () => {
 		const service = makeFakeMatrixClientService('active');

@@ -1,6 +1,13 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	useLiveChatAvailable,
 	useLiveChatAvailabilityHeartbeat
@@ -59,6 +66,29 @@ describe('live-chat availability state', () => {
 		cleanup();
 		vi.clearAllMocks();
 		vi.useRealTimers();
+	});
+
+	it('never asks the counsellor-only endpoint for an asker', async () => {
+		// Dev 28.10.: the 403 for askers was reported as "error page undefined".
+		const { result } = renderHook(() => useLiveChatAvailable(false));
+
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+		expect(apiGetLiveChatAvailability).not.toHaveBeenCalled();
+		expect(result.current[0]).toBe(false);
+	});
+
+	it('asks once the role turns out to be a counsellor', async () => {
+		const { rerender } = renderHook(
+			({ enabled }) => useLiveChatAvailable(enabled),
+			{ initialProps: { enabled: false } }
+		);
+		expect(apiGetLiveChatAvailability).not.toHaveBeenCalled();
+
+		rerender({ enabled: true });
+
+		await waitFor(() =>
+			expect(apiGetLiveChatAvailability).toHaveBeenCalledTimes(1)
+		);
 	});
 
 	it('does not display stale local availability when the backend says false', async () => {

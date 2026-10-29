@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { formatRatio, rateContrast } from './contrastRating';
 
 // Expected values are the published WCAG 2.2 figures for well-known greys,

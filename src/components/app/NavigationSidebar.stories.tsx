@@ -1,16 +1,10 @@
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent } from 'storybook/test';
-import { NavigationBar } from './NavigationBar';
-import { RouterConfigConsultant, RouterConfigUser } from './RouterConfig';
-import { config } from '../../resources/scripts/config';
-import {
-	NavigationStoryProviders,
-	storybookSettings
-} from './navigationStoryHelpers';
-import './navigation.styles.scss';
-import './authenticatedApp.styles.scss';
+import { expect, userEvent, waitFor } from 'storybook/test';
+import i18n from '../../i18n';
+import { NavigationStoryShell } from './NavigationStoryShell';
+import './navigationSidebarStory.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
@@ -28,7 +22,8 @@ function RuntimeNavigationRail({
 	layout = 'desktop',
 	railHeightPx,
 	fullMobileShell = false,
-	liveChatViaSidebar = true
+	liveChatViaSidebar = true,
+	tenantSettings
 }: {
 	role: 'consultant' | 'asker';
 	layout?: 'desktop' | 'mobile';
@@ -38,76 +33,59 @@ function RuntimeNavigationRail({
 	railHeightPx?: number;
 	/** Exercise the production mobile shell and its version overlay. */
 	fullMobileShell?: boolean;
+	/** Träger settings for the story tenant. */
+	tenantSettings?: Record<string, unknown>;
 }) {
 	const [logoutClicked, setLogoutClicked] = useState(false);
 	const isDesktop = layout === 'desktop';
 	const desktopHeight = railHeightPx ?? 860;
 
-	const routerConfig = useMemo(() => {
-		const settings = { ...config, ...storybookSettings };
-		return role === 'consultant'
-			? RouterConfigConsultant(settings)
-			: RouterConfigUser(settings, false);
-	}, [role]);
-
-	const shellStyle = isDesktop
-		? {
-				width: '85px',
-				height: `${desktopHeight}px`,
-				minHeight: railHeightPx ? `${railHeightPx}px` : '720px',
-				background: '#eae7e8',
-				overflow: 'hidden'
-			}
-		: {
-				width: '100%',
-				maxWidth: '375px',
-				height: fullMobileShell ? '100vh' : '76px',
-				background: '#eae7e8',
-				overflow: 'hidden'
-			};
-
 	return (
-		<NavigationStoryProviders
+		<NavigationStoryShell
 			role={role}
 			liveChatViaSidebar={liveChatViaSidebar}
+			tenantSettings={tenantSettings}
+			onLogout={() => setLogoutClicked(true)}
+			className="navigationSidebarStory"
+			data-logout-clicked={logoutClicked}
+			style={
+				{
+					'--storybook-navigation-direction': isDesktop
+						? 'row'
+						: 'column',
+					'--storybook-navigation-width': isDesktop ? '85px' : '100%',
+					'--storybook-navigation-max-width': isDesktop
+						? 'none'
+						: '375px',
+					'--storybook-navigation-height': isDesktop
+						? `${desktopHeight}px`
+						: fullMobileShell
+							? '100vh'
+							: '76px',
+					'--storybook-navigation-min-height': isDesktop
+						? railHeightPx
+							? `${railHeightPx}px`
+							: '720px'
+						: '0',
+					'--storybook-navigation-mobile-height': fullMobileShell
+						? '100vh'
+						: '76px',
+					'--storybook-navigation-menu-height': fullMobileShell
+						? 'auto'
+						: '100%'
+				} as React.CSSProperties
+			}
 		>
-			{/*
-			  app__wrapper is required so production shell + figma nav rules
-			  (authenticatedApp + app-scoped navigation styles) apply in Storybook.
-			*/}
-			<div
-				className="app__wrapper navigationSidebarStory"
-				data-logout-clicked={logoutClicked}
-				style={shellStyle}
-			>
-				{fullMobileShell && (
-					<div style={{ flex: 1, minHeight: 0, padding: 24 }}>
-						<h1>Meine Beratungen</h1>
-						<p>Mobile navigation at 375px</p>
-					</div>
-				)}
-				<style>
-					{`
-						.navigationSidebarStory.app__wrapper {
-							display: flex;
-							flex-direction: ${isDesktop ? 'row' : 'column'};
-						}
-
-						.navigationSidebarStory .navigation__wrapper {
-							width: ${isDesktop ? '85px' : '100%'};
-							height: ${fullMobileShell ? 'auto' : '100%'};
-						}
-					`}
-				</style>
-				<NavigationBar
-					routerConfig={routerConfig}
-					onLogout={() => setLogoutClicked(true)}
-				/>
-				{fullMobileShell && (
-					<div className="app__platformVersion">2.9.14 - abc1234</div>
-				)}
-			</div>
-		</NavigationStoryProviders>
+			{fullMobileShell && (
+				<div style={{ flex: 1, minHeight: 0, padding: 24 }}>
+					<h1>Meine Beratungen</h1>
+					<p>Mobile navigation at 375px</p>
+				</div>
+			)}
+			{fullMobileShell && (
+				<div className="app__platformVersion">2.9.14 - abc1234</div>
+			)}
+		</NavigationStoryShell>
 	);
 }
 
@@ -155,7 +133,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
+					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Below 900px, including narrow Docs canvases, the menu becomes a full-width horizontal bar. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
 			}
 		}
 	}
@@ -180,6 +158,23 @@ export const RuntimeConsultantRail: Story = {
 		await expect(activeSessionsLink).toHaveClass(
 			'navigation__item--active'
 		);
+		// The original CI case renders the first-visit profile badge. Its
+		// navigation owner, not a nameless span, must announce the count.
+		await waitFor(() => {
+			const badge = canvasElement.querySelector(
+				'.navigation__item__count'
+			);
+			expect(badge).not.toBeNull();
+			expect(badge).toHaveTextContent('1');
+			expect(badge).toHaveAttribute('aria-hidden', 'true');
+			expect(badge).not.toHaveAttribute('aria-label');
+			const owner = badge?.closest('a');
+			expect(owner).toHaveAttribute('href', '/profile');
+			expect(owner).not.toHaveAttribute('role');
+			expect(owner).toHaveAccessibleName(
+				`${i18n.t('navigation.myProfile')}, ${i18n.t('sessionList.rail.unreadCount', { count: 1 })}`
+			);
+		});
 
 		const logoutAction = canvasElement.querySelector(
 			'.navigation__item--nav-logout'
@@ -209,6 +204,56 @@ export const RuntimeConsultantRail: Story = {
 
 		await userEvent.click(logoutAction as HTMLElement);
 		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+/**
+ * #1894 (Frank, 28 Oct): the clock entry "Meine Direktlinks" shows while
+ * "Direkteinladung erlauben" allows at least one medium, here only video.
+ */
+export const DirectLinksOneMediumAllowed: Story = {
+	name: 'Direct links: clock entry with one medium allowed',
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		tenantSettings: {
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: true
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('a[href="/direct-links"]')
+			).not.toBeNull()
+		);
+	}
+};
+
+/** #1894: with all three media off the clock entry is gone. */
+export const DirectLinksAllMediaOff: Story = {
+	name: 'Direct links: no clock entry when direct invitation is off',
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		tenantSettings: {
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'a[href="/sessions/consultant/sessionView"]'
+				)
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('a[href="/direct-links"]')
+		).toBeNull();
 	}
 };
 

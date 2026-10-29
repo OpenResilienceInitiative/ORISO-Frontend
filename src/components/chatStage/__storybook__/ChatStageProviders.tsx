@@ -27,6 +27,7 @@ import { SESSION_LIST_TYPES } from '../../session/sessionHelpers';
 import { ComposerStoryDecorator } from '../../messageSubmitInterface/__storybook__/composerStoryDecorator';
 import {
 	CLIENT_MATRIX_ID,
+	CLIENT_ROOM_ID,
 	CLIENT_NAME,
 	COUNSELLOR_MATRIX_ID,
 	COUNSELLOR_NAME,
@@ -36,8 +37,23 @@ import {
 	stageSession,
 	stageTopic,
 	SUPERVISOR_MATRIX_ID,
-	SUPERVISOR_NAME
+	SUPERVISOR_NAME,
+	SUPERVISION_ROOM_ID,
+	TEAM_ROOM_ID,
+	SESSION_ID
 } from './chatStageFixtures';
+
+// Exact absent draft rows observed in the stage stories, stable across renders.
+const stageEmptyDraftScopes: readonly string[] = [
+	`scope:${CLIENT_ROOM_ID}|thread:main`,
+	`scope:${SESSION_ID}|thread:main`,
+	`scope:${SUPERVISION_ROOM_ID}|thread:main`,
+	`scope:${CLIENT_ROOM_ID}|thread:$m3`,
+	`scope:${SESSION_ID}|thread:$m3`,
+	`scope:${CLIENT_ROOM_ID}|thread:$thread-2`,
+	`scope:${SESSION_ID}|thread:$thread-2`,
+	`scope:${TEAM_ROOM_ID}|thread:main`
+];
 
 export const stageRoomMembers = [
 	{ userId: COUNSELLOR_MATRIX_ID, name: COUNSELLOR_NAME },
@@ -162,6 +178,9 @@ export function ChatStageProviders({
 										<ComposerStoryDecorator
 											activeSession={activeSession}
 											roomMembers={stageRoomMembers}
+											emptyDraftScopes={
+												stageEmptyDraftScopes
+											}
 										>
 											<MatrixClientContext.Provider
 												value={matrixValue}

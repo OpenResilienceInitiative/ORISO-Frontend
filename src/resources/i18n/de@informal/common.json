@@ -265,11 +265,9 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
-					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
 					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
-					"overdueHeadline": "Wir sind gleich für dich da.",
-					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
 				}
 			},
@@ -378,7 +376,16 @@
 		"entry": {
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"dates": {
+				"subline": "Tipp auf einen Termin, um ihn einzutragen."
+			},
+			"running": {
+				"subline": "Du kannst jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"subline": "Einmal kurz lesen – dann bist du dabei."
+			}
 		},
 		"info": {
 			"gallery": {
@@ -432,6 +439,11 @@
 			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimme der Datenschutzerklärung dieser Beratungsstelle zu, bevor du in der Gruppe schreibst.",
 			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
 			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Du wurdest aus dieser Gruppe entfernt."
+			}
 		}
 	},
 	"help": {
@@ -641,6 +653,10 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"browserOff": "Pop-ups sind in deinem Profil ausgeschaltet",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in deinem Profil ausgeschaltet"
+		},
 		"enquiry": {
 			"new": "Du hast eine neue Live-Chat Anfrage!"
 		},
@@ -1334,6 +1350,9 @@
 		"groupInvite": {
 			"loadError": {
 				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			},
+			"invalid": {
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte frag die Person, die dir den Link geschickt hat, nach einem neuen."
 			}
 		}
 	},
@@ -2375,6 +2394,11 @@
 		}
 	},
 	"caseHandover": {
+		"systemMessage": {
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"tookOverBody": "{{advisor}} führt deine Beratung ab jetzt weiter.",
+			"noActionNeeded": "Du musst nichts weiter tun"
+		},
 		"offer": {
 			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
 			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
@@ -2717,6 +2741,99 @@
 				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",
 				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuche es erneut."
 			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Kurz warten, bis du reingelassen wirst",
+			"descriptionCall": "Bis dahin sieht und hört dich niemand. Mikrofon und Kamera kannst du hier schon einstellen.",
+			"descriptionGroup": "Sobald du reingelassen wirst, kannst du in der Gruppe mitschreiben.",
+			"statusCall": "Angeklopft – deine Beratung sieht, dass du wartest.",
+			"statusGroup": "Angeklopft – die Gruppenleitung sieht, dass du wartest."
+		},
+		"admitted": {
+			"title": "Du wurdest reingelassen"
+		},
+		"declined": {
+			"descriptionCall": "Deine Beratung kann dich im Moment nicht reinlassen. Versuch es später noch einmal oder schreib eine Nachricht.",
+			"descriptionGroup": "Die Gruppenleitung kann dich im Moment nicht reinlassen. Versuch es später noch einmal."
+		},
+		"devices": {
+			"micMeter": "Lautstärke deines Mikrofons"
+		}
+	},
+	"furtherCounselling": {
+		"recommend": {
+			"intro": "Die ratsuchende Person sieht deine Empfehlung als Karte im Chat und kann von dort eine passende Beratungsstelle finden.",
+			"successHeadline": "Deine Empfehlung wurde gesendet.",
+			"error": "Die Empfehlung konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"topicsUnavailable": "Die Themen konnten nicht geladen werden. Bitte versuche es später erneut."
+		},
+		"duplicate": {
+			"confirm": {
+				"copy": "Diese Beratung wird beendet und ins Archiv verschoben. Deine andere Beratung zum gleichen Thema läuft weiter."
+			},
+			"error": "Die Beratung konnte nicht beendet werden. Bitte versuche es erneut."
+		},
+		"request": {
+			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Startest du eine Beratung zu einem Thema, das du schon besprichst, wird deine bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet."
+		}
+	},
+	"calls": {
+		"admission": {
+			"on": "Gäste warten, bis du sie einlässt."
+		},
+		"states": {
+			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}.",
+			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
+		},
+		"share": {
+			"knock": {
+				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
+			},
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markiere den Link und kopiere ihn selbst.",
+			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald du auflegst, funktioniert er nicht mehr."
+		}
+	},
+	"directLink": {
+		"card": {
+			"headline": "Ein Link direkt zu dir",
+			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
+		},
+		"share": {
+			"title": "Dein Direktlink ist bereit",
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+		},
+		"entry": {
+			"haveAccount": "Du hast schon ein Konto? Anmelden",
+			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
+		},
+		"page": {
+			"loadFailed": "Deine Direktlinks konnten nicht geladen werden.",
+			"emptyText": "Einen Direktlink erstellst du unter „Chat erstellen“. Er erscheint danach hier.",
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuche es erneut."
+		},
+		"edit": {
+			"nameRequired": "Bitte gib einen Namen ein.",
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		}
+	},
+	"dashboard": {
+		"title": "Dein Überblick"
+	},
+	"temporaryAccount": {
+		"keepDialog": {
+			"title": "Sollen deine Nachrichten bleiben?",
+			"description": "Dein Gastkonto wird nach dem Gespräch gelöscht. Was soll mit deinen Nachrichten passieren?",
+			"keep": {
+				"hint": "Deine Nachrichten bleiben, wenn dein Konto gelöscht wird."
+			},
+			"delete": {
+				"hint": "Deine Nachrichten werden mit deinem Konto gelöscht."
+			},
+			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
+			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
 		}
 	}
 }

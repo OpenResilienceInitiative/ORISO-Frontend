@@ -1,4 +1,11 @@
 export interface AppSettingsInterface {
+	/**
+	 * FE#1876, platform-wide (GET /service/settings): how the request dialog
+	 * prefills the postcode. Missing means SMART.
+	 */
+	furtherCounsellingPostcodeMode?: 'SMART' | 'ALWAYS_EMPTY' | string;
+	/** FE#1876: same-topic handling. Shown only; no client logic in v1. */
+	topicDuplicateMode?: string;
 	/** Feature flag to enable SSO on budibase */
 	budibaseSSO?: boolean;
 	/** App setting to get calendar link */

@@ -3,7 +3,7 @@
  * Settings" menu. Every item the menu renders must resolve to a real handler;
  * actions without a shipped feature behind them are absent, not disabled stubs.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
@@ -28,6 +28,7 @@ const consultantSession = (
 	isGroupChatOwner: false,
 	isGroupChatActive: false,
 	hasMatrixRoom: true,
+	isGroupChatSubscribed: false,
 	...overrides
 });
 
@@ -297,6 +298,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 					'showChatSettings',
 					'showDearchive',
 					'showDelete',
+					'showLeaveGroup',
 					'showRequestHelp'
 				]);
 			});
@@ -356,5 +358,61 @@ describe('withTeamDiscussionParam', () => {
 		const params = new URLSearchParams(result.split('?')[1]);
 		expect(params.get('sessionListTab')).toBe('archive');
 		expect(params.getAll('teamDiscussion')).toEqual(['1']);
+	});
+});
+
+// #1923 — the asker had no way to leave a group from the list.
+describe('getChatroomSettingsMenuVisibility leave group', () => {
+	const askerGroup = (overrides: Partial<ChatroomSettingsMenuInput> = {}) =>
+		consultantSession({
+			isAsker: true,
+			isConsultant: false,
+			isSession: false,
+			isGroup: true,
+			isAgencyCounselling: false,
+			isGroupChatActive: true,
+			isGroupChatSubscribed: true,
+			...overrides
+		});
+
+	it('is offered to an asker who joined a running group', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(askerGroup()).showLeaveGroup
+		).toBe(true);
+	});
+
+	it('is withheld while the group is not running', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				askerGroup({ isGroupChatActive: false })
+			).showLeaveGroup
+		).toBe(false);
+	});
+
+	it('is withheld from an asker who has not joined', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				askerGroup({ isGroupChatSubscribed: false })
+			).showLeaveGroup
+		).toBe(false);
+	});
+
+	it('is withheld from counsellors, who leave from the chat header', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				ownedGroupChat({
+					isGroupChatActive: true,
+					isGroupChatSubscribed: true
+				})
+			).showLeaveGroup
+		).toBe(false);
+	});
+
+	it('is withheld on a one-to-one session', () => {
+		expect(
+			getChatroomSettingsMenuVisibility(
+				askerGroup({ isGroup: false, isSession: true })
+			).showLeaveGroup
+		).toBe(false);
 	});
 });

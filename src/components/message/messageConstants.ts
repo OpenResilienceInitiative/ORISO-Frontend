@@ -1,3 +1,8 @@
+import {
+	FurtherCounsellingNotice,
+	parseFurtherCounsellingNotice
+} from '../furtherCounselling/furtherCounsellingNotices';
+
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
 export const SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED = 'INQUIRY_ACCEPTED';
@@ -115,6 +120,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				null as InquiryAcceptanceMetadata | null,
 			systemNotificationHandoverGrant:
 				null as HandoverGrantMetadata | null,
+			systemNotificationFurtherCounselling:
+				null as FurtherCounsellingNotice | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -131,6 +138,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationExplanation = '';
 	let systemNotificationAcceptance: InquiryAcceptanceMetadata | null = null;
 	let systemNotificationHandoverGrant: HandoverGrantMetadata | null = null;
+	let systemNotificationFurtherCounselling: FurtherCounsellingNotice | null =
+		null;
 	let visibleToUserIds: string[] = [];
 
 	let keepParsingPrefixes = true;
@@ -212,6 +221,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 					parsed?.acceptance
 				);
 			}
+			systemNotificationFurtherCounselling =
+				parseFurtherCounsellingNotice(parsed);
 			if (
 				systemNotificationType ===
 				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
@@ -245,6 +256,20 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationExplanation,
 		systemNotificationHandoverGrant,
 		systemNotificationAcceptance,
+		systemNotificationFurtherCounselling,
 		visibleToUserIds
 	};
 };
+
+/**
+ * A takeover notice's stored text is frozen in the session's language and
+ * register, so with the new counsellor's name the client words it itself
+ * (#1844). Co-access keeps its stored text: it carries the granted duration.
+ */
+export const isClientWordedTakeover = (
+	parsed: ReturnType<typeof parseMessagePrefixes>
+): boolean =>
+	parsed.systemNotificationType ===
+		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED &&
+	parsed.systemNotificationHandoverGrant?.accessType !== 'CO_ACCESS' &&
+	Boolean(parsed.systemNotificationUsername);

@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	accountExistsAfterTimeout,
 	apiPostRegistration,
@@ -185,11 +185,25 @@ describe('accountExistsAfterTimeout', () => {
 		).resolves.toBe(false);
 	});
 
+	it('also checks when the gateway gave up first with a 504', async () => {
+		vi.mocked(apiGetIsUsernameAvailable).mockResolvedValueOnce(false);
+
+		await expect(
+			accountExistsAfterTimeout(
+				new Response(null, { status: 504 }),
+				'tender_frog_784'
+			)
+		).resolves.toBe(true);
+	});
+
 	it('does not check for any other failure', async () => {
 		vi.mocked(apiGetIsUsernameAvailable).mockClear();
 
 		await expect(
 			accountExistsAfterTimeout(new Error('BAD_REQUEST'), 'x')
+		).resolves.toBe(false);
+		await expect(
+			accountExistsAfterTimeout(new Response(null, { status: 500 }), 'x')
 		).resolves.toBe(false);
 		await expect(accountExistsAfterTimeout(timeout, '')).resolves.toBe(
 			false

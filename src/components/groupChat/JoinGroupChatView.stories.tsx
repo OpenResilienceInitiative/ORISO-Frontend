@@ -24,6 +24,7 @@ import type {
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { JoinGroupChatView } from './JoinGroupChatView';
+import { useGroupChatInfoFixture } from './groupChatInfoStoryFixture';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import './joinChat.styles';
 
@@ -208,107 +209,116 @@ const StoryProviders = ({
 	fullHeight?: boolean;
 	/** Pins the chat column to the width it really has next to the lists. */
 	columnWidth?: number;
-}) => (
-	<div
-		style={{
-			...(columnWidth
-				? { width: columnWidth }
-				: { maxWidth: 920, margin: '0 auto' }),
-			...(fullHeight
-				? { height: '100vh', display: 'flex', flexDirection: 'column' }
-				: {}),
-			background: '#fcf9f9'
-		}}
-	>
-		{fullHeight && (
-			// The app's session.styles.scss makes the panel a flex column of the
-			// window's height; this story does not load it.
-			<style>
-				{
-					'.session.joinChat{flex:1;display:flex;flex-direction:column;min-height:0}'
-				}
-			</style>
-		)}
-		<UserDataContext.Provider
-			value={{
-				userData,
-				setUserData: () => {},
-				reloadUserData: async () => userData
+}) => {
+	useGroupChatInfoFixture(session.item as GroupChatItemInterface);
+	return (
+		<div
+			style={{
+				...(columnWidth
+					? { width: columnWidth }
+					: { maxWidth: 920, margin: '0 auto' }),
+				...(fullHeight
+					? {
+							height: '100vh',
+							display: 'flex',
+							flexDirection: 'column'
+						}
+					: {}),
+				background: '#fcf9f9'
 			}}
 		>
-			<SessionTypeContext.Provider
+			{fullHeight && (
+				// The app's session.styles.scss makes the panel a flex column of the
+				// window's height; this story does not load it.
+				<style>
+					{
+						'.session.joinChat{flex:1;display:flex;flex-direction:column;min-height:0}'
+					}
+				</style>
+			)}
+			<UserDataContext.Provider
 				value={{
-					type: SESSION_LIST_TYPES.MY_SESSION,
-					path: '/sessions/user/view'
+					userData,
+					setUserData: () => {},
+					reloadUserData: async () => userData
 				}}
 			>
-				<ConsultingTypesContext.Provider
+				<SessionTypeContext.Provider
 					value={{
-						consultingTypes: [storyConsultingType],
-						setConsultingTypes: () => {}
+						type: SESSION_LIST_TYPES.MY_SESSION,
+						path: '/sessions/user/view'
 					}}
 				>
-					<TopicsContext.Provider
+					<ConsultingTypesContext.Provider
 						value={{
-							topics: [storyTopic],
-							refreshTopics: () => {}
+							consultingTypes: [storyConsultingType],
+							setConsultingTypes: () => {}
 						}}
 					>
-						<SessionsDataContext.Provider
+						<TopicsContext.Provider
 							value={{
-								ready: true,
-								sessions: [],
-								dispatch: () => {}
+								topics: [storyTopic],
+								refreshTopics: () => {}
 							}}
 						>
-							<E2EEContext.Provider
+							<SessionsDataContext.Provider
 								value={{
-									key: '',
-									reloadPrivateKey: () => {},
-									isE2eeEnabled: false,
-									e2EEReady: true
+									ready: true,
+									sessions: [],
+									dispatch: () => {}
 								}}
 							>
-								<ConsultantListContext.Provider
+								<E2EEContext.Provider
 									value={{
-										consultantList: [],
-										setConsultantList: () => {}
+										key: '',
+										reloadPrivateKey: () => {},
+										isE2eeEnabled: false,
+										e2EEReady: true
 									}}
 								>
-									<ServerSettingsContext.Provider
+									<ConsultantListContext.Provider
 										value={{
-											settings: [],
-											settingsReady: true,
-											getSetting: () => null
+											consultantList: [],
+											setConsultantList: () => {}
 										}}
 									>
-										<MatrixClientContext.Provider
+										<ServerSettingsContext.Provider
 											value={{
-												matrixClientService,
-												setMatrixClientService: () => {}
+												settings: [],
+												settingsReady: true,
+												getSetting: () => null
 											}}
 										>
-											<ActiveSessionContext.Provider
+											<MatrixClientContext.Provider
 												value={{
-													activeSession: session,
-													reloadActiveSession:
-														() => {},
-													readActiveSession: () => {}
+													matrixClientService,
+													setMatrixClientService:
+														() => {}
 												}}
 											>
-												{children}
-											</ActiveSessionContext.Provider>
-										</MatrixClientContext.Provider>
-									</ServerSettingsContext.Provider>
-								</ConsultantListContext.Provider>
-							</E2EEContext.Provider>
-						</SessionsDataContext.Provider>
-					</TopicsContext.Provider>
-				</ConsultingTypesContext.Provider>
-			</SessionTypeContext.Provider>
-		</UserDataContext.Provider>
-	</div>
-);
+												<ActiveSessionContext.Provider
+													value={{
+														activeSession: session,
+														reloadActiveSession:
+															() => {},
+														readActiveSession:
+															() => {}
+													}}
+												>
+													{children}
+												</ActiveSessionContext.Provider>
+											</MatrixClientContext.Provider>
+										</ServerSettingsContext.Provider>
+									</ConsultantListContext.Provider>
+								</E2EEContext.Provider>
+							</SessionsDataContext.Provider>
+						</TopicsContext.Provider>
+					</ConsultingTypesContext.Provider>
+				</SessionTypeContext.Provider>
+			</UserDataContext.Provider>
+		</div>
+	);
+};
 
 /* ------------------------------------------------------------------ *
  * Meta + stories
@@ -393,11 +403,16 @@ const measureBar = async (canvasElement: HTMLElement) => {
 	};
 };
 
-/** Both buttons on one line each, inside the column, calendar above. */
+/**
+ * Both buttons on one line each, inside the column: the calendar above
+ * "Beitreten" in a narrow column, beside it in a wide one (Frank,
+ * 2026-10-19).
+ */
 const expectBarFits = async (
 	canvasElement: HTMLElement,
 	columnWidth: number,
-	minCalendarWidth: number
+	minCalendarWidth: number,
+	layout: 'stacked' | 'inline' = 'stacked'
 ) => {
 	await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
 	const { calendar, join } = await measureBar(canvasElement);
@@ -408,7 +423,17 @@ const expectBarFits = async (
 	/* Nothing pokes out of the column. */
 	await expect(calendar.right).toBeLessThanOrEqual(columnWidth);
 	await expect(join.right).toBeLessThanOrEqual(columnWidth);
-	/* Stacked: the calendar above "Beitreten". */
+	if (layout === 'inline') {
+		await expect(calendar.right).toBeLessThanOrEqual(join.left);
+		await expect(
+			Math.abs(
+				calendar.top +
+					calendar.height / 2 -
+					(join.top + join.height / 2)
+			)
+		).toBeLessThanOrEqual(2);
+		return;
+	}
 	await expect(calendar.bottom).toBeLessThanOrEqual(join.top);
 };
 
@@ -433,7 +458,7 @@ export const NarrowColumnAt1366: Story = {
 	}
 };
 
-/** Wide column (1920 px window): the same stacked bar, full column width. */
+/** Wide column (1920 px window): the calendar pill beside "Beitreten". */
 export const WideColumnAt1920: Story = {
 	globals: { viewport: { value: 'desktop1920' } },
 	render: () => (
@@ -445,7 +470,7 @@ export const WideColumnAt1920: Story = {
 		</StoryProviders>
 	),
 	play: async ({ canvasElement }) => {
-		await expectBarFits(canvasElement, 900, 150);
+		await expectBarFits(canvasElement, 900, 150, 'inline');
 	}
 };
 

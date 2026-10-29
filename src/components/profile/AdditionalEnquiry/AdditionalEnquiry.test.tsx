@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AdditionalEnquiry } from './AdditionalEnquiry';
 
 vi.mock('react-i18next', () => ({
@@ -17,14 +17,31 @@ vi.mock('../../../globalState', async () => {
 		SessionsDataContext: ReactModule.createContext({
 			sessions: [
 				{
+					agency: { id: 43, name: 'Older agency' },
+					session: {
+						id: 2,
+						postcode: 80331,
+						createDate: '2026-01-01T10:00:00Z'
+					}
+				},
+				{
 					agency: { id: 42, name: 'Agency', postcode: '10115' },
-					session: { id: 1, postcode: 1067 }
+					session: {
+						id: 1,
+						postcode: 1067,
+						createDate: '2026-10-20T10:00:00Z'
+					}
 				}
 			],
 			dispatch: vi.fn()
 		})
 	};
 });
+
+const appConfig: { furtherCounsellingPostcodeMode?: string } = {};
+vi.mock('../../../hooks/useAppConfig', () => ({
+	useAppConfig: () => appConfig
+}));
 
 vi.mock('../../button/Button', () => ({
 	BUTTON_TYPES: { LINK: 'link', PRIMARY: 'primary' },
@@ -53,6 +70,7 @@ describe('AdditionalEnquiry', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
+		delete appConfig.furtherCounsellingPostcodeMode;
 	});
 
 	it('opens the dialog with zero-padded postcode and known agency ids', () => {
@@ -64,9 +82,20 @@ describe('AdditionalEnquiry', () => {
 			screen.getByText('profile.data.register.dialog.openButton')
 		);
 
-		// numeric session postcode 1067 must arrive as "01067"
+		// SMART by default: the newest session's numeric 1067 as "01067"
 		expect(screen.getByTestId('new-request-dialog').textContent).toBe(
-			'postcode:01067;known:42'
+			'postcode:01067;known:43,42'
+		);
+	});
+
+	it('leaves the postcode empty when the platform says ALWAYS_EMPTY', () => {
+		appConfig.furtherCounsellingPostcodeMode = 'ALWAYS_EMPTY';
+		render(<AdditionalEnquiry />);
+		fireEvent.click(
+			screen.getByText('profile.data.register.dialog.openButton')
+		);
+		expect(screen.getByTestId('new-request-dialog').textContent).toBe(
+			'postcode:;known:43,42'
 		);
 	});
 });

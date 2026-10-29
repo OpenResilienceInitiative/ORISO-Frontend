@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -17,7 +17,7 @@ import {
 	expect,
 	it,
 	vi
-} from 'vitest';
+} from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
@@ -96,7 +96,7 @@ const installHttpBoundary = (status: number, reason: string) => {
 		vi.fn(async (request: Request) => {
 			const url = new URL(request.url);
 			if (request.method === 'GET') {
-				if (url.pathname === '/service/agencies/topics') {
+				if (url.pathname === '/service/topic/public') {
 					return Response.json([
 						{ id: 7, name: 'Social counselling' },
 						{ id: 9, name: 'Family counselling' }
@@ -116,6 +116,18 @@ const installHttpBoundary = (status: number, reason: string) => {
 				}
 				if (url.pathname === '/service/users/consultants/languages') {
 					return Response.json({ languages: [] });
+				}
+				const legal = url.pathname.match(
+					/^\/service\/agencies\/(\d+)\/topics\/(\d+)\/legal$/
+				);
+				if (legal) {
+					return Response.json({
+						dpp: {
+							content: '<p>Privacy policy</p>',
+							consentText: `I agree to the privacy policy of centre ${legal[1]}.`,
+							versionId: 77
+						}
+					});
 				}
 				if (url.pathname === '/service/users/data') {
 					return Response.json({ userId: 'synthetic-asker' });
@@ -189,7 +201,18 @@ describe('New request AVV feedback through the real HTTP and UI boundaries', () 
 			await user.click(
 				await screen.findByRole('radio', { name: 'Another centre' })
 			);
-			await user.click(screen.getByRole('button', { name: 'Register' }));
+			await user.click(
+				screen.getByRole('button', { name: 'Request counselling' })
+			);
+			// FE#1876: the centre's consent slides up; nothing is sent yet.
+			const consent = await screen.findByRole('checkbox', {
+				name: /privacy policy of centre 43/
+			});
+			expect(submittedRequests).toEqual([]);
+			await user.click(consent);
+			await user.click(
+				screen.getByRole('button', { name: 'Request counselling' })
+			);
 			const expectedRequest = {
 				agencyId: 43,
 				mainTopicId: 9,
@@ -227,7 +250,9 @@ describe('New request AVV feedback through the real HTTP and UI boundaries', () 
 					}) as HTMLInputElement
 				).checked
 			).toBe(true);
-			await user.click(screen.getByRole('button', { name: 'Register' }));
+			await user.click(
+				screen.getByRole('button', { name: 'Request counselling' })
+			);
 			await waitFor(() =>
 				expect(submittedRequests).toEqual([
 					expectedRequest,

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import type { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';

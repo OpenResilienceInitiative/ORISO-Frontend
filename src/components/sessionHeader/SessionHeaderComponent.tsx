@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -43,7 +44,8 @@ import {
 } from '../../globalState/interfaces';
 import {
 	STATUS_ENQUIRY,
-	STATUS_ACTIVE
+	STATUS_ACTIVE,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	getViewPathForType,
@@ -215,6 +217,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
+		Number(activeSession.item.status) !== STATUS_REJECTED &&
 		(isAnonymousChat
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);
@@ -614,6 +617,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		!isChatFinished;
 
 	const headerContactName = (() => {
+		/* ORISO-UserService#1486: the guest's temporary account is gone. */
+		if (
+			isConsultantUser &&
+			!activeSession.isGroup &&
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		) {
+			return translate('temporaryAccount.deletedGuest');
+		}
 		if (isAnonymousAsker) {
 			let storedPseudonym: string | null = null;
 			try {
@@ -1066,6 +1077,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						to={listPath + getSessionListTab()}
 						onClick={handleBackButton}
 						className="sessionInfo__backButton"
+						aria-label={translate('app.back')}
 					>
 						<BackIcon />
 					</Link>
@@ -1289,7 +1301,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
 					activeSession.item.status
 				) &&
-				activeSession.item.agencyId && (
+				activeSession.item.agencyId > 0 && (
 					<ContactSheetRequest
 						key={activeSession.item.id}
 						sessionId={activeSession.item.id}

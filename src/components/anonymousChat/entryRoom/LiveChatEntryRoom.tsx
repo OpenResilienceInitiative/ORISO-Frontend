@@ -46,6 +46,7 @@ import {
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from './liveChatAvailability';
+import { useConsentContext } from '../../waitingRoom/useConsentContext';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session this browser already has for the link. Tokens are set. */
@@ -308,25 +309,31 @@ const LiveChatEntryRoomContent = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 
-	const consent = useMemo(
-		() =>
-			resolveEntryRoomConsent({
-				hasDepartment: department !== null,
-				department: departmentConsent,
-				platformHtml: platformConsentHtml,
-				missingPolicyHtml,
-				legalLinksHtml,
-				locale
-			}),
-		[
-			department,
-			departmentConsent,
+	const consentNames = useConsentContext(department);
+	const consent = useMemo(() => {
+		const resolved = resolveEntryRoomConsent({
+			hasDepartment: department !== null,
+			department: departmentConsent,
+			platformHtml: platformConsentHtml,
+			missingPolicyHtml,
 			legalLinksHtml,
 			locale,
-			missingPolicyHtml,
-			platformConsentHtml
-		]
-	);
+			context: consentNames.context
+		});
+		return {
+			...resolved,
+			readable: resolved.readable && !consentNames.pending
+		};
+	}, [
+		consentNames.context,
+		consentNames.pending,
+		department,
+		departmentConsent,
+		legalLinksHtml,
+		locale,
+		missingPolicyHtml,
+		platformConsentHtml
+	]);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
 	const mark = (name: string, value = '1') => {
@@ -562,8 +569,8 @@ const LiveChatEntryRoomContent = ({
 	   component, then the hand-over — a full load, as the redeem did before,
 	   so the app boots with the tokens the redeem set. */
 	const handleAccept = useCallback(async () => {
-		if (sessionId === null) return;
-		if (busy) return;
+		if (sessionId === null) return false;
+		if (busy) return false;
 		setBusy(true);
 		try {
 			await apiPatchUserData({
@@ -592,8 +599,15 @@ const LiveChatEntryRoomContent = ({
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
+			/* The page is being replaced: the closing animation keeps its
+			   cover on until it is, instead of opening onto this room again,
+			   and hands it to the next document as the page goes
+			   (closingHandover), which reveals onto the message field. */
+			return new Promise<void>(() => undefined);
 		} catch {
 			if (!cancelled.current) setBusy(false);
+			// The person stays: the closing animation need not wait for a chat.
+			return false;
 		}
 	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -653,9 +667,9 @@ const LiveChatEntryRoomContent = ({
 		<EntryRoomShell
 			kicker={kicker}
 			statusLine={statusLine}
-			/* Gate 2 (ADR-022): once a centre has taken the conversation its
-			   department governs — before, the platform does. */
-			department={accepted ? department : null}
+			/* No department: the room's legal links stay the platform's; the
+			   accepting centre's documents come with the consent sheet
+			   (Gate 2, ADR-022; Frank, 2026-10-28). */
 		>
 			{/* One view at a time slides in; the frame and the stage stay. */}
 			<EntryRoomView key={closed ? 'closed' : stage}>
@@ -718,9 +732,7 @@ const LiveChatEntryRoomContent = ({
 						department={department}
 						busy={busy}
 						leaveFailed={leaveFailed}
-						onAccept={() => {
-							void handleAccept();
-						}}
+						onAccept={() => handleAccept()}
 						onLeave={handleLeave}
 						onMailCounselling={goToMail}
 					/>

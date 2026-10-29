@@ -230,6 +230,11 @@
 			"headline": "Ils ont été bannis.",
 			"info": "Nous vous avons demandé de respecter les règles du chat.<br/><br/>Comme vous n'avez pas respecté les règles du chat à plusieurs reprises aujourd'hui, nous vous avons exclu du chat d'aujourd'hui.<br/><br/>Faites connaissance avec les règles du chat!</br></br>Si vous êtes prêt à respecter les règles du chat, vous serez à nouveau le bienvenu sur le chat dès demain !"
 		},
+		"confirm": {
+			"description": "Cette personne ne pourra plus écrire dans ce groupe et verra qu’elle en a été retirée.",
+			"submit": "Retirer",
+			"title": "Retirer {{name}} de ce groupe ?"
+		},
 		"is": {
 			"banned": " Captivé"
 		}
@@ -660,6 +665,17 @@
 				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
+		},
+		"rejection": {
+			"action": "Refuser la demande",
+			"confirmTitle": "Refuser cette demande ?",
+			"description": "La demande sera refusée. La personne qui demande conseil pourra toujours lire la conversation existante.",
+			"confirm": "Refuser la demande",
+			"error": "Le refus n’a pas encore pu être entièrement confirmé. La décision est peut-être déjà enregistrée. Veuillez réessayer.",
+			"conflict": "La demande a changé ou n’est plus disponible. Veuillez recharger la vue actuelle.",
+			"closed": "Cette demande a été refusée.",
+			"inProgress": "Finalisation du refus…",
+			"cancel": "Annuler"
 		}
 	},
 	"error": {
@@ -743,12 +759,13 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda",
 			"copyGoogle": "Copier le lien Google Agenda",
 			"copyOutlook": "Copier le lien du calendrier Outlook",
 			"linkCopied": "Lien du calendrier copié.",
 			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
-			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique.",
+			"addThis": "Ajouter cette date au calendrier",
+			"shareHintSeries": "Liens pour votre site : toutes les dates en série, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -942,7 +959,6 @@
 				"back": "Retour au compte à rebours",
 				"headline": "Comment fonctionne le groupe",
 				"subline": "Trois choses utiles avant la première fois.",
-				"appointments": "Ajouter les dates au calendrier",
 				"steps": {
 					"formats": {
 						"title": "Comment le groupe se réunit",
@@ -959,8 +975,7 @@
 						"text": "L’espace des liens propose régulièrement de nouvelles rencontres et vous mène directement à la prochaine date.",
 						"alt": "De nouvelles cartes de rendez-vous apparaissent l’une après l’autre ; un symbole de lien clair mène la personne curieuse à la prochaine rencontre du groupe."
 					}
-				},
-				"upcoming": "Prochaines dates"
+				}
 			},
 			"status": {
 				"active": "En cours",
@@ -985,7 +1000,7 @@
 					"etaSoon": "dans un instant",
 					"flipAria": "{{label}} : {{value}}. Retourner pour lire.",
 					"flipHint": "cliquer pour retourner",
-					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
+					"greetingLabel": "Mot de bienvenue de la modération",
 					"headline": "Votre chat de groupe commence {{eta}}.",
 					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
 					"moderatorOverdueHeadline": "Le groupe vous attend.",
@@ -993,8 +1008,8 @@
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
-					"overdueHeadline": "Nous serons avec vous dans un instant.",
-					"overdueSubtitle": "Votre conseiller·ère va ouvrir la salle — merci de patienter encore un peu.",
+					"overdueHeadline": "Le groupe commence dans un instant.",
+					"overdueSubtitle": "La modération va ouvrir le groupe — merci de patienter encore un peu.",
 					"subtitle": "Cliquez sur un chiffre — le mot de bienvenue et la nétiquette vous attendent derrière.",
 					"subtitleCard": "Touchez l’horloge, bienvenue et nétiquette au dos.",
 					"subtitleStill": "Le mot de bienvenue et la nétiquette figurent sous les chiffres.",
@@ -1207,7 +1222,49 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours",
-			"legalMenu": "Mentions légales"
+			"legalMenu": "Mentions légales",
+			"dates": {
+				"headline": "Les prochaines rencontres",
+				"subline": "Touchez une date pour l’ajouter à votre calendrier.",
+				"none": "Aucune autre date n’est prévue pour le moment.",
+				"add": "Ajouter",
+				"addLabel": "Ajouter {{date}} au calendrier",
+				"next": "Prochaine",
+				"seriesTitle": "Toutes à la fois",
+				"seriesSub": "ajouter en série",
+				"seriesLong": "Tout ajouter en série",
+				"repeat": {
+					"DAILY": "Le groupe se réunit chaque jour à la même heure.",
+					"WEEKLY": "Le groupe se réunit chaque semaine à la même heure.",
+					"BIWEEKLY": "Le groupe se réunit toutes les deux semaines à la même heure.",
+					"MONTHLY": "Le groupe se réunit chaque mois à la même heure.",
+					"QUARTERLY": "Le groupe se réunit tous les trimestres à la même heure.",
+					"YEARLY": "Le groupe se réunit tous les ans à la même heure."
+				}
+			},
+			"addDate": "Ajouter au calendrier",
+			"allDates": "Toutes les dates",
+			"nextDates": "Prochaines dates",
+			"joinFrom": "à partir de {{time}}",
+			"rhythm": {
+				"DAILY": "chaque jour",
+				"WEEKLY": "chaque semaine",
+				"BIWEEKLY": "toutes les deux semaines",
+				"MONTHLY": "chaque mois",
+				"QUARTERLY": "tous les trimestres",
+				"YEARLY": "tous les ans"
+			},
+			"running": {
+				"since": "En cours depuis",
+				"status": "En cours",
+				"statusModerated": "En cours · la modération est là",
+				"headline": "Le groupe a commencé {{ago}}.",
+				"subline": "Vous pouvez rejoindre à tout moment – personne n’est obligé de parler."
+			},
+			"rules": {
+				"headline": "Comment nous nous comportons les uns envers les autres",
+				"subline": "Lisez-les une fois – et vous êtes des nôtres."
+			}
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1310,6 +1367,11 @@
 			"accept": "J'accepte",
 			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",
 			"saveFailed": "Votre accord n'a pas pu être enregistré. Veuillez réessayer."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Vous avez été retiré(e) de ce groupe."
+			}
 		}
 	},
 	"help": {
@@ -2043,7 +2105,8 @@
 				"large": "Mes consultations",
 				"nav": "Conversation",
 				"small": "Nouvelles"
-			}
+			},
+			"directLinks": "Mes liens directs"
 		},
 		"activity": "Chronologie",
 		"language": "Langue",
@@ -2071,21 +2134,21 @@
 			"title": "Filtre d’affichage",
 			"description": "Quels types apparaissent dans cette liste, lesquels reçoivent une pastille et quel son ils émettent.",
 			"showColumn": "Afficher",
-			"pillColumn": "Pastille",
-			"soundColumn": "Son",
+			"pillColumn": "Dans le filtre",
+			"soundColumn": "Navigateur",
 			"soundKind": "Écouter le son : {{kind}}",
-			"soundMenu": "Choisir le son : {{kind}}",
+			"soundMenu": "Notification du navigateur : {{kind}}",
 			"soundDefault": "Par défaut",
-			"pillMenu": "Choisir l’affichage : {{kind}}",
+			"pillMenu": "Choisir le filtre : {{kind}}",
 			"liveChatDynamic": "Dynamique",
 			"liveChatFixed": "Fixe",
 			"pillOff": "Désactivé",
 			"pillOn": "Activé",
 			"placeholderHint": "Bientôt disponible.",
 			"showKind": "Afficher : {{kind}}",
-			"pillKind": "Pastille : {{kind}}",
+			"pillKind": "Dans le filtre : {{kind}}",
 			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
-			"pillNotApplicable": "Pas de pastille pour ce type",
+			"pillNotApplicable": "Pas de bouton de filtre pour ce type",
 			"autoRead": "Marquer immédiatement les éléments masqués comme lus",
 			"autoReadDescription": "Ne concerne que cette liste. Aucun accusé de lecture n’est envoyé aux discussions.",
 			"autoReadSessions": "Ne pas compter les discussions masquées comme non lues",
@@ -2102,7 +2165,7 @@
 			"viewLabels": "Icônes + texte",
 			"viewText": "Texte",
 			"autoSort": "Placer les non lus à gauche",
-			"autoSortDescription": "Les pastilles avec des éléments non lus passent en tête de ligne.",
+			"autoSortDescription": "Les boutons avec des éléments non lus passent en tête.",
 			"deactivatedHint": "Désactivé par votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage.",
 			"deactivatedChip": "{{kind}} (désactivé par votre organisme)",
 			"deactivatedNotice": "{{kind}} est désactivé pour votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage ; aucune nouvelle ne peut être créée.",
@@ -2122,7 +2185,36 @@
 				"sessions": "Échanges",
 				"requests": "Demandes"
 			},
-			"liveChatSession": "Si ouvert"
+			"liveChatSession": "Si ouvert",
+			"kindColumn": "Type",
+			"legendShow": "Les éléments de ce type apparaissent dans la liste",
+			"legendPill": "Bouton au-dessus de la liste pour la limiter à ce type",
+			"legendSound": "Fenêtre sur cet appareil, avec ou sans son",
+			"legendEmail": "Avis dans votre boîte de réception, sans le contenu du message",
+			"quickHeading": "Autres boutons de filtre",
+			"quickNote": "Ces boutons filtrent la liste ou ouvrent une action. Ils ne déclenchent aucune notification.",
+			"presentationHeading": "Apparence des boutons de filtre",
+			"soundWithTone": "Fenêtre avec son",
+			"soundSilent": "Fenêtre sans son",
+			"soundSilentDescription": "Seulement la fenêtre, sans son",
+			"emailColumn": "Courriel",
+			"emailKind": "Courriel : {{kind}}",
+			"emailMenu": "Choisir le courriel : {{kind}}",
+			"channelUnavailable": "non disponible",
+			"emailUnavailableReason": "Les notifications par courriel ne sont pas encore disponibles pour ce type",
+			"emailMasterOff": "Les notifications par courriel sont désactivées dans votre profil",
+			"browserOff": "Les fenêtres contextuelles sont désactivées dans votre profil",
+			"descriptions": {
+				"sessions": "Choisissez pour chaque type d’échange s’il reçoit un bouton de filtre et comment vous êtes averti des nouveaux messages.",
+				"requests": "Choisissez pour chaque type de demande s’il reçoit un bouton de filtre et comment vous êtes averti des nouvelles demandes.",
+				"timeline": "Choisissez pour chaque type s’il apparaît dans la liste, reçoit un bouton de filtre et si vous recevez un courriel.",
+				"timelineWithoutEmail": "Choisissez pour chaque type s’il apparaît dans la liste et reçoit un bouton de filtre."
+			},
+			"kindsHeadings": {
+				"sessions": "Types d’échange",
+				"requests": "Types de demande",
+				"timeline": "Types d’événement"
+			}
 		},
 		"families": {
 			"all": "Toutes",
@@ -2249,7 +2341,7 @@
 			},
 			"requestDenied": {
 				"title": "Demande refusée",
-				"text": "La demande du·de la client·e a été refusée."
+				"text": "Cette demande a été refusée."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client·e dans la salle d'attente",
@@ -2498,7 +2590,7 @@
 			"profileIcon": "Photo de profil",
 			"register": {
 				"button": {
-					"label": "S'inscrire"
+					"label": "Demander un accompagnement"
 				},
 				"consultingModeInfo": {
 					"groupChats": "Dans le cadre de l'entraide, les personnes concernées échangent entre elles sur un thème ou une préoccupation. Les personnes concernées parlent de leurs problèmes, de leurs sentiments et de leurs espoirs et apprennent ainsi comment d'autres ont surmonté des problèmes. Les groupes sont dirigés par des animateurs.",
@@ -2509,7 +2601,7 @@
 				},
 				"headline": "Avez-vous besoin de conseils ou d'aide sur d'autres sujets ?<br>Nous vous soutenons volontiers.",
 				"dialog": {
-					"openButton": "Demander un autre champ thématique",
+					"openButton": "Commencer un autre accompagnement",
 					"title": "Faire une nouvelle demande",
 					"close": "Fermer"
 				},
@@ -2813,6 +2905,10 @@
 					"feedback": {
 						"title": "Échange professionnel",
 						"description": "Une réponse vous attend dans l'échange professionnel protégé."
+					},
+					"internalChat": {
+						"title": "Messages internes",
+						"description": "Un nouveau message dans une discussion interne avec les autres conseillers."
 					}
 				},
 				"shared": {
@@ -2888,7 +2984,8 @@
 					"title": "Sécurité"
 				},
 				"title": "Réglages",
-				"keyboardShortcuts": "Raccourcis clavier"
+				"keyboardShortcuts": "Raccourcis clavier",
+				"myLinks": "Mes liens"
 			}
 		},
 		"spokenLanguages": {
@@ -3603,7 +3700,11 @@
 				"headline": "L'invitation n'a pas pu être chargée pour le moment.",
 				"body": "Veuillez vérifier votre connexion et réessayer. Votre lien d'invitation reste valable."
 			},
-			"loading": "Chargement de l'invitation …"
+			"loading": "Chargement de l'invitation …",
+			"invalid": {
+				"headline": "Ce lien d'invitation ne fonctionne pas.",
+				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
+			}
 		}
 	},
 	"releaseNote": {
@@ -3792,6 +3893,7 @@
 			"selectedReason": "Motif choisi : {{reason}}",
 			"explanation": "Explication : {{explanation}}",
 			"tookOverTitle": "Une nouvelle personne consultante a repris votre dossier",
+			"tookOverBody": "{{advisor}} poursuivra désormais votre accompagnement.",
 			"noActionNeeded": "Vous n'avez rien d'autre à faire",
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",
@@ -4814,6 +4916,7 @@
 		"timeline": {
 			"join": "Rejoindre l’appel",
 			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"endedElsewhere": "Cet appel est déjà terminé.",
 			"video": {
 				"running": "Appel vidéo en cours",
 				"ended": "Appel vidéo terminé",
@@ -5938,6 +6041,7 @@
 		"group": {
 			"incomingTitle": "Appel entrant",
 			"incomingDescription": "Quelqu'un vous appelle…",
+			"incomingFrom": "{{name}} vous appelle…",
 			"close": "Fermer l'appel",
 			"autoFit": "Ajuster automatiquement",
 			"autoFitAria": "Ajuster la fenêtre d'appel",
@@ -5988,6 +6092,66 @@
 				"anmerkung": "Remarque",
 				"aufgabe": "Tâche"
 			}
+		},
+		"states": {
+			"encrypted": "Chiffré",
+			"endsCurrent": "Si vous répondez, votre appel avec {{name}} prendra fin.",
+			"answerAndEnd": "Terminer et répondre",
+			"backToCall": "Revenir à l’appel en grand",
+			"speaking": "{{name}} parle",
+			"dockLabel": "Appel avec {{name}}",
+			"cameraHint": "Le son continue.",
+			"minimize": "Réduire l'appel",
+			"groupCall": "Appel de groupe",
+			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
+		},
+		"share": {
+			"open": "Partager l’appel",
+			"title": "Partager l’appel",
+			"close": "Fermer",
+			"settingsLabel": "Pour les invités avec ce lien",
+			"knock": {
+				"label": "Frapper avant d’entrer",
+				"on": "Les invités attendent que vous les fassiez entrer. Si vous le désactivez, toutes les personnes en attente entrent aussitôt.",
+				"off": "Les invités rejoignent l’appel directement, sans attendre."
+			},
+			"temporaryAccount": {
+				"label": "Compte temporaire",
+				"on": "Les invités reçoivent un compte invité supprimé après l’appel.",
+				"off": "Les invités se connectent avec leur propre compte ou en créent un."
+			},
+			"linkLabel": "Lien vers l’appel",
+			"copy": "Copier",
+			"copied": "Copié",
+			"copiedStatus": "Le lien est dans le presse-papiers.",
+			"copyFailed": "La copie n’a pas fonctionné. Veuillez sélectionner le lien et le copier vous-même.",
+			"qrShow": "Code QR",
+			"qrHide": "Masquer le code QR",
+			"qrAlt": "Code QR avec le lien vers l’appel",
+			"share": "Partager",
+			"shareTitle": "Invitation à un appel",
+			"lifetime": "Le lien ne vaut que pour cet appel. Il ne fonctionne plus dès que vous raccrochez.",
+			"consent": "Avant d’entrer, les invités confirment d’un geste la protection des données et le consentement du centre de conseil.",
+			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel.",
+			"settingsLive": "Les modifications s’appliquent immédiatement à ce lien, même s’il a déjà été partagé."
+		},
+		"knock": {
+			"region": "Personnes en attente",
+			"someone": "Une personne",
+			"wantsIn": "souhaite rejoindre l’appel",
+			"admit": "Laisser entrer",
+			"decline": "Refuser",
+			"admitAll": "Laisser entrer tout le monde",
+			"position": "{{current}} sur {{total}}",
+			"previous": "Personne précédente",
+			"next": "Personne suivante",
+			"participants": "Participant·es",
+			"participantsWaiting": "Participant·es – en attente : {{count}}"
+		},
+		"admission": {
+			"label": "Frapper avant d’entrer",
+			"on": "Les invités attendent que vous les fassiez entrer.",
+			"off": "Les invités rejoignent l’appel directement, sans attendre."
 		}
 	},
 	"form": {
@@ -6095,6 +6259,222 @@
 				"text": "Le statut de confirmation de l’accord n’a pas pu être vérifié. Réessayez. Vos saisies sont conservées.",
 				"inviteText": "La confirmation du contrat ne peut pas être vérifiée pour le moment. Veuillez réessayer."
 			}
+		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Composant de référence",
+			"title": "Jetons de conception appliqués",
+			"declaredExplanation": "Les détails de la source décrivent la correspondance déclarée. Les valeurs sont mesurées sur le composant de référence.",
+			"refresh": "Actualiser la vérification",
+			"empty": "Aucune mesure pour le moment.",
+			"unavailable": "Indisponible",
+			"scroll": "Faire défiler les mesures des jetons",
+			"caption": "Mesures des jetons appliqués",
+			"target": "Cible",
+			"token": "Jeton / propriété",
+			"expected": "Attendu (moteur)",
+			"calculated": "Calculé (jeton hérité)",
+			"applied": "Appliqué (composant)",
+			"result": "Résultat",
+			"source": "Source déclarée",
+			"status": {
+				"match": "Concordance",
+				"mismatch": "Écart",
+				"missing": "Manquant",
+				"unresolved": "Non résolu"
+			},
+			"issues": {
+				"missing-element": "L’élément cible est introuvable.",
+				"missing-expected": "Aucune valeur attendue indépendante n’est disponible.",
+				"missing-token": "Le jeton hérité est manquant ou invalide.",
+				"unresolved-token": "Le jeton hérité n’a pas pu être résolu.",
+				"missing-applied": "La valeur appliquée est manquante.",
+				"calculated-mismatch": "Le jeton hérité diffère de celui du moteur.",
+				"applied-mismatch": "La valeur appliquée diffère de celle du moteur."
+			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Patientez un instant, vous allez être admis",
+			"descriptionCall": "D'ici là, personne ne vous voit ni ne vous entend. Vous pouvez déjà régler votre micro et votre caméra ici.",
+			"descriptionGroup": "Dès que vous serez admis, vous pourrez écrire dans le groupe.",
+			"statusCall": "Vous avez frappé – votre conseiller voit que vous attendez.",
+			"statusGroup": "Vous avez frappé – l'animation du groupe voit que vous attendez.",
+			"openUntil": "Le chat de groupe est ouvert jusqu'à {{time}}.",
+			"cancel": "Ne plus attendre"
+		},
+		"admitted": {
+			"title": "Vous avez été admis",
+			"statusCall": "Connexion à l'appel …",
+			"statusGroup": "Ouverture du chat de groupe …"
+		},
+		"declined": {
+			"title": "Pas pour le moment",
+			"descriptionCall": "Votre conseiller ne peut pas vous admettre pour le moment. Réessayez plus tard ou envoyez un message.",
+			"descriptionGroup": "L'animation du groupe ne peut pas vous admettre pour le moment. Réessayez plus tard."
+		},
+		"knockAgain": "Frapper à nouveau",
+		"devices": {
+			"camera": "Caméra",
+			"microphone": "Micro",
+			"micOn": "Activer le micro",
+			"micOff": "Couper le micro",
+			"micMeter": "Volume de votre micro"
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommander un autre accompagnement",
+			"endDuplicate": "Mettre fin au doublon",
+			"endDuplicateDescription": "Met fin à ce second accompagnement sur le même thème"
+		},
+		"recommend": {
+			"title": "Recommander un autre accompagnement",
+			"intro": "La personne qui demande conseil voit votre recommandation sous forme de carte dans le chat et peut y trouver un centre de conseil adapté.",
+			"topicLabel": "Thème",
+			"noteLabel": "Remarque (facultatif)",
+			"noteHint": "La remarque apparaît sur la carte dans le chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Envoyer la recommandation",
+			"cancel": "Annuler",
+			"successHeadline": "Votre recommandation a été envoyée.",
+			"successButton": "Fermer",
+			"error": "La recommandation n’a pas pu être envoyée. Veuillez réessayer.",
+			"errorForbidden": "Seul·e le·la conseiller·ère responsable de cet échange peut recommander un autre accompagnement.",
+			"errorConflict": "Aucune recommandation n’est possible dans cet échange pour le moment.",
+			"topicsUnavailable": "Les thèmes n’ont pas pu être chargés. Veuillez réessayer plus tard."
+		},
+		"card": {
+			"title": "Recommandation : autre accompagnement",
+			"topic": "Thème : {{topic}}",
+			"defaultText": "Merci de ne suivre qu’un seul accompagnement par thème. Votre conseiller·ère actuel·le sera informé·e dès que le nouvel accompagnement commencera.",
+			"noteLabel": "Remarque du·de la conseiller·ère",
+			"findAgency": "Trouver un centre de conseil",
+			"requested": "Demande envoyée",
+			"topicUnknown": "un autre thème"
+		},
+		"duplicate": {
+			"startedTitle": "Autre accompagnement sur le même thème",
+			"started": "Un autre accompagnement sur le thème {{topic}} a commencé. Veuillez convenir ensemble de celui qui se poursuit. L’autre devrait être clôturé.",
+			"endedTitle": "Second accompagnement terminé",
+			"ended": "Le second accompagnement sur le thème {{topic}} a été clôturé.",
+			"confirm": {
+				"headline": "Mettre fin à ce doublon ?",
+				"copy": "Cet accompagnement sera clôturé et déplacé dans les archives. Votre autre accompagnement sur le même thème se poursuit.",
+				"confirm": "Clôturer l’accompagnement",
+				"cancel": "Annuler"
+			},
+			"error": "L’accompagnement n’a pas pu être clôturé. Veuillez réessayer."
+		},
+		"request": {
+			"sameTopicInfo": "Un seul accompagnement par thème est prévu à la fois. Si vous commencez un accompagnement sur un thème dont vous parlez déjà, votre conseiller·ère actuel·le sera informé·e dès que le nouveau sera accepté. L’un des deux sera alors clôturé.",
+			"consentAria": "Consentement à la protection des données du centre de conseil",
+			"cancel": "Annuler"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Lien direct",
+			"subtitle": "Pour les personnes en recherche de conseil",
+			"headline": "Un lien direct vers vous",
+			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
+			"topicLabel": "Choisir un thème",
+			"mediumLabel": "Type de contact",
+			"temporary": "Compte temporaire",
+			"temporaryHint": "Le compte est supprimé après l’entretien.",
+			"create": "Créer le lien",
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Appel audio",
+			"video": "Appel vidéo"
+		},
+		"temporary": "Temporaire",
+		"copy": "Copier le lien",
+		"share": {
+			"title": "Votre lien direct est prêt",
+			"description": "Partagez le lien ou le code QR. Chaque personne obtient son propre entretien avec vous.",
+			"copied": "Copié",
+			"share": "Partager",
+			"qrAlt": "Code QR du lien direct",
+			"done": "Terminé",
+			"linkLabel": "Lien direct"
+		},
+		"list": {
+			"title": "Mes liens directs",
+			"qr": "Afficher le code QR",
+			"active": "{{name}} actif",
+			"edit": "Modifier {{name}}"
+		},
+		"entry": {
+			"inactive": "Ce lien n'est plus actif.",
+			"haveAccount": "Vous avez déjà un compte ? Se connecter",
+			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
+		},
+		"page": {
+			"loadFailed": "Vos liens directs n’ont pas pu être chargés.",
+			"create": "Créer un nouveau lien direct dans « Créer un chat »",
+			"emptyHeadline": "Il n’y a pas encore de liens directs",
+			"emptyText": "Vous créez un lien direct dans « Créer un chat ». Il apparaît ensuite ici.",
+			"loading": "Chargement des liens directs",
+			"retry": "Réessayer",
+			"toggleFailed": "Le lien n’a pas pu être activé ou désactivé. Veuillez réessayer."
+		},
+		"edit": {
+			"title": "Modifier le lien direct",
+			"cancel": "Annuler",
+			"save": "Enregistrer",
+			"name": "Nom",
+			"nameRequired": "Veuillez saisir un nom.",
+			"topic": "Thème",
+			"mediumFixed": "Le type de contact ne peut pas être modifié",
+			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
+			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer."
+		}
+	},
+	"dashboard": {
+		"title": "Votre aperçu",
+		"stats": {
+			"title": "Consultations",
+			"period": "30 derniers jours",
+			"assigned": "Nouvelles prises en charge",
+			"active": "Actives",
+			"archived": "Archivées",
+			"sentMessages": "Messages envoyés"
+		},
+		"circles": {
+			"title": "Prochains groupes d’entraide",
+			"participants": "{{count}} participant·e·s",
+			"participants_one": "{{count}} participant·e"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporaire",
+			"title": "Supprimé avec le compte invité"
+		},
+		"deletedGuest": "Invité (supprimé)",
+		"chip": {
+			"guest": "Compte invité"
+		},
+		"keepDialog": {
+			"title": "Vos messages doivent-ils rester ?",
+			"description": "Votre compte invité sera supprimé après l’entretien. Que doit-il advenir de vos messages ?",
+			"keep": {
+				"label": "Les conserver après la suppression",
+				"hint": "Vos messages restent lorsque votre compte est supprimé."
+			},
+			"delete": {
+				"label": "Temporaire",
+				"hint": "Vos messages sont supprimés avec votre compte."
+			},
+			"note": "Votre réponse vaut pour tout cet entretien.",
+			"confirm": "Continuer",
+			"cancel": "Annuler",
+			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
 		}
 	}
 }
