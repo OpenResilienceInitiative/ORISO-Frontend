@@ -2371,6 +2371,10 @@
 			"serviceNoticePlanned": {
 				"title": "Maintenance prévue",
 				"text": "Le {{maintenanceDate}}, la plateforme sera indisponible entre {{maintenanceStart}} et {{maintenanceEnd}}. Les messages déjà écrits ne seront pas perdus."
+			},
+			"sessionAskerDeleted": {
+				"title": "Personne en quête de conseil supprimée",
+				"text": "Un chat avec une personne en quête de conseil a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
 			}
 		},
 		"error": "Échec",
@@ -4390,6 +4394,10 @@
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
 			"unreadCount_one": "{{count}} nouveau message"
+		},
+		"deletedAsker": {
+			"title": "Personne en quête de conseil supprimée",
+			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
 		}
 	},
 	"statusOverlay": {

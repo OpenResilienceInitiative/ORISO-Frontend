@@ -2371,6 +2371,10 @@
 			"serviceNoticePlanned": {
 				"title": "Planlı bakım",
 				"text": "{{maintenanceDate}} tarihinde platform, {{maintenanceStart}} ile {{maintenanceEnd}} arasında erişilemez olacak. Daha önce yazdığınız mesajlar kaybolmaz."
+			},
+			"sessionAskerDeleted": {
+				"title": "Silinmiş danışan",
+				"text": "Bir danışanla yapılan sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
 			}
 		},
 		"error": "Başarısız",
@@ -4390,6 +4394,10 @@
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
 			"unreadCount_one": "{{count}} yeni mesaj"
+		},
+		"deletedAsker": {
+			"title": "Silinmiş danışan",
+			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
 		}
 	},
 	"statusOverlay": {
