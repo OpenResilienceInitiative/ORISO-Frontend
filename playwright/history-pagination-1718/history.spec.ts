@@ -520,7 +520,24 @@ for (const navigateToNewest of [false, true]) {
 			await scroll.hover();
 			await page.mouse.wheel(0, -100000);
 			await expect.poll(() => historyPages.length).toBe(1);
-			if (navigateToNewest) await page.mouse.wheel(0, 100000);
+			// mouse.wheel returns before scrolling finishes. Capture a stationary
+			// position at the intended edge before releasing the delayed response.
+			await expect
+				.poll(() => scroll.evaluate((element) => element.scrollTop))
+				.toBe(0);
+			if (navigateToNewest) {
+				await page.mouse.wheel(0, 100000);
+				await expect
+					.poll(() =>
+						scroll.evaluate(
+							(element) =>
+								element.scrollHeight -
+								element.clientHeight -
+								element.scrollTop
+						)
+					)
+					.toBeLessThanOrEqual(1);
+			}
 			const chosenMessage = page.locator(
 				`[data-message-id="$history-${navigateToNewest ? 140 : 121}"]`
 			);

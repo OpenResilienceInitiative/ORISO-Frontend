@@ -23,14 +23,22 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-const { matrixPreviewMock, roomUnreadCountMock } = vi.hoisted(() => ({
-	matrixPreviewMock: vi.fn(),
-	roomUnreadCountMock: vi.fn(() => 0)
-}));
+const { matrixPreviewMock, roomUnreadCountMock, groupMembersMock } = vi.hoisted(
+	() => ({
+		groupMembersMock: vi.fn(() => ({
+			status: 'ready',
+			members: [] as any[]
+		})),
+		matrixPreviewMock: vi.fn(),
+		roomUnreadCountMock: vi.fn(() => 0)
+	})
+);
 
 afterEach(() => {
 	cleanup();
 	matrixPreviewMock.mockReset();
+	groupMembersMock.mockReset();
+	groupMembersMock.mockReturnValue({ status: 'ready', members: [] });
 	roomUnreadCountMock.mockReset();
 	roomUnreadCountMock.mockReturnValue(0);
 });
@@ -54,6 +62,10 @@ vi.mock('../../hooks/useE2EE', () => ({
 		encrypted: false,
 		ready: true
 	})
+}));
+
+vi.mock('../../hooks/useGroupCardMembers', () => ({
+	useGroupCardMembers: groupMembersMock
 }));
 
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
@@ -685,5 +697,53 @@ describe('SessionListItemComponent — product-tour anchor (FE#1622)', () => {
 		renderItem(makeSession());
 
 		expect(card()?.hasAttribute('data-tour-target')).toBe(false);
+	});
+});
+
+describe('SessionListItemComponent — real group participants (#1806)', () => {
+	it('renders actual eligible members and derives overflow instead of the dummy +1', () => {
+		groupMembersMock.mockReturnValue({
+			status: 'ready',
+			members: [
+				...Array.from({ length: 5 }, (_, i) => ({
+					userId: `@person-${i}:example.org`,
+					name: `Person ${i}`,
+					membership: 'join'
+				})),
+				{
+					userId: '@group-chat-system-40:example.org',
+					name: 'Technical owner',
+					membership: 'join'
+				}
+			]
+		});
+		const { container } = renderItem(makeGroupSession());
+		expect(
+			container.querySelectorAll('[data-cy="participant-avatar"]')
+		).toHaveLength(2);
+		expect(
+			container.querySelector('[data-cy="participant-overflow"]')
+				?.textContent
+		).toBe('+3');
+		expect(
+			container.querySelector('[data-user-id="@person-0:example.org"]')
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-user-id^="placeholder-"]')
+		).toBeNull();
+		expect(
+			container.querySelector('[data-user-id^="@group-chat-system-"]')
+		).toBeNull();
+	});
+
+	it('renders the pending state until membership has loaded, with no invented overflow', () => {
+		groupMembersMock.mockReturnValue({ status: 'loading', members: [] });
+		const { container } = renderItem(makeGroupSession());
+		expect(
+			container.querySelector('[data-cy="group-card-members-loading"]')
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-cy="participant-overflow"]')
+		).toBeNull();
 	});
 });

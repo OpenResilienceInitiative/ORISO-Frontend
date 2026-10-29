@@ -59,6 +59,7 @@ import {
 	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
 	useLiveChatAvailabilityLossNotice
 } from './useLiveChatAvailabilityLossNotice';
+import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -133,6 +134,8 @@ export const NavigationBar = ({
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	// #1485: the one heartbeat owner is also the one that says why it stopped.
 	useLiveChatAvailabilityLossNotice(liveChatLostReason);
+	// #1704: live, but the provider's agreement turns advice seekers away.
+	useLiveChatDpaRestrictionNotice(isConsultant && liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -227,6 +230,14 @@ export const NavigationBar = ({
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
 	}, [isFirstVisit]);
+	// A timer left running past unmount sets state on a torn-down tree.
+	useEffect(
+		() => () => {
+			clearTimeout(animateNavIconTimeoutRef.current);
+			animateNavIconTimeoutRef.current = null;
+		},
+		[]
+	);
 
 	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
 	// server total minus hidden unread rows on loaded pages, an upper bound);

@@ -301,10 +301,7 @@ export const GroupInfoGallery = ({
 						   2026-09-07). The carousel keeps its own gap. */
 					}}
 				>
-					<HandoverCarousel
-						steps={steps}
-						cardWidth={{ xs: 300, sm: 372 }}
-					/>
+					<HandoverCarousel steps={steps} />
 				</Box>
 
 				{!!upcomingDates?.length && (

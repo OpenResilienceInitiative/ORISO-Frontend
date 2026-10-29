@@ -15,14 +15,21 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import type { GlobalTypes } from 'storybook/internal/types';
-import { useGlobals } from 'storybook/preview-api';
+import { useGlobals, useParameter } from 'storybook/preview-api';
 import {
 	type OrisoSchemeName,
 	computeOrisoPalette
 } from '../src/utils/theme/orisoScheme';
+import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
 
 /** The ORISO default tenant; the switcher previews schemes, not seeds. */
 export const STORYBOOK_SEED = '#A5000A';
+
+/**
+ * A story can set `parameters.orisoSeed` to render with a Träger's own
+ * brand colour, e.g. a light one that must still yield legible text.
+ */
+export const ORISO_SEED_PARAMETER = 'orisoSeed';
 
 export const orisoSchemeGlobalType: GlobalTypes = {
 	scheme: {
@@ -48,12 +55,10 @@ export const withOrisoScheme = (
 ): React.ReactElement => {
 	const [{ scheme }] = useGlobals();
 	const active: OrisoSchemeName = isScheme(scheme) ? scheme : 'light';
+	const seed = useParameter<string>(ORISO_SEED_PARAMETER, STORYBOOK_SEED);
 
 	useEffect(() => {
-		const { tokens } = computeOrisoPalette(
-			{ primary: STORYBOOK_SEED },
-			active
-		);
+		const { tokens } = computeOrisoPalette({ primary: seed }, active);
 		const root = document.documentElement;
 		for (const [name, value] of Object.entries(tokens)) {
 			root.style.setProperty(name, value);
@@ -63,14 +68,23 @@ export const withOrisoScheme = (
 		// while its content renders dark.
 		document.body.style.backgroundColor = tokens['--m3-surface'];
 		document.body.style.color = tokens['--m3-on-surface'];
+		// Only a story seed rebuilds the MUI theme, so the other stories
+		// render exactly as before.
+		const announce = (): void => {
+			if (seed !== STORYBOOK_SEED) {
+				window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
+			}
+		};
+		announce();
 		return (): void => {
 			for (const name of Object.keys(tokens)) {
 				root.style.removeProperty(name);
 			}
 			document.body.style.removeProperty('background-color');
 			document.body.style.removeProperty('color');
+			announce();
 		};
-	}, [active]);
+	}, [active, seed]);
 
 	return <Story />;
 };

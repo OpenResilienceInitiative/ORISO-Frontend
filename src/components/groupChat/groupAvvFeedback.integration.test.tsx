@@ -267,6 +267,10 @@ const failures = [
 	[502, 'DPA_POLICY_UNAVAILABLE', 'de', 'Beratung derzeit nicht prüfbar']
 ] as const;
 
+/** Joining a group is not a counselling: the refusal title says so (403 only). */
+const groupJoinTitle = (status: number, title: string) =>
+	status === 403 ? 'Joining this group is currently not possible' : title;
+
 describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 	it.each(['success', 'tenant change'] as const)(
 		'keeps one assignment notice when the reason changes, then clears it on %s',
@@ -310,7 +314,7 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			const refused = await screen.findByRole('alert');
 			expect(
 				within(refused).getByText(
-					'New counselling is currently restricted'
+					'Joining this group is currently not possible'
 				)
 			).toBeTruthy();
 			await user.click(
@@ -323,7 +327,9 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			);
 			expect(screen.getAllByRole('alert')).toHaveLength(1);
 			expect(
-				screen.queryByText('New counselling is currently restricted')
+				screen.queryByText(
+					'Joining this group is currently not possible'
+				)
 			).toBeNull();
 			if (outcome === 'success') {
 				await user.click(
@@ -450,6 +456,12 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 						path === '/service/users/chat/19'
 					)
 						return Response.json({ id: 19, active });
+					// The seeker's consent is recorded before the join.
+					if (
+						request.method === 'PATCH' &&
+						path === '/service/users/data'
+					)
+						return new Response(null, { status: 200 });
 					expect(path).toBe(`/service/users/chat/19/${command}`);
 					expect(request.method).toBe('PUT');
 					requests.push(request.url);
@@ -466,13 +478,29 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 				'/sessions/user/view',
 				user
 			);
-			const submit = await screen.findByRole('button', {
-				name: i18n.t(`groupChat.join.button.label.${command}`)
-			});
+			// The seeker joins from the shared waiting room ("Beitreten",
+			// #1219); the moderator starts from her own view.
+			const label = i18n.t(
+				active
+					? 'groupChat.entry.join'
+					: 'groupChat.join.button.label.start'
+			);
+			await screen.findByRole('button', { name: label });
+			// The bar remounts when the consent sheet opens: look it up anew.
+			const submit = () => screen.getByRole('button', { name: label });
 			const actor = userEvent.setup();
-			await actor.click(submit);
+			await actor.click(submit());
+			if (active) {
+				// "Beitreten" asks for consent first (Frank, 2026-10-16).
+				await actor.click(screen.getByRole('checkbox'));
+				await actor.click(submit());
+			}
 			const notice = await screen.findByRole('alert');
-			expect(within(notice).getByText(title)).toBeTruthy();
+			expect(
+				within(notice).getByText(
+					command === 'join' ? groupJoinTitle(status, title) : title
+				)
+			).toBeTruthy();
 			expect(
 				screen.getByLabelText('Successful session reloads').textContent
 			).toBe('0');
@@ -484,7 +512,7 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 					name: i18n.t('app.close')
 				})
 			);
-			await actor.click(submit);
+			await actor.click(submit());
 			await waitFor(() => expect(requests).toHaveLength(2));
 			expect(requests[1]).toBe(requests[0]);
 			expect(
@@ -531,6 +559,12 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 						path === '/service/users/chat/19'
 					)
 						return Response.json({ id: 19, active: true });
+					// The consent ticked on "Beitreten" is recorded first.
+					if (
+						request.method === 'PATCH' &&
+						path === '/service/users/data'
+					)
+						return new Response(null, { status: 200 });
 					expect(path).toBe('/service/users/chat/19/join');
 					expect(request.method).toBe('PUT');
 					requests.push(request.url);
@@ -551,15 +585,23 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 				</ReaderProviders>,
 				'/groups/19/entry'
 			);
-			const join = await screen.findByRole('button', {
-				name: i18n.t('groupChat.entry.join')
-			});
+			// The room's own button: while the group loads, the bar already
+			// shows a waiting one of the same name.
+			const joinButton = () => screen.getByTestId('group-entry-join');
+			expect(
+				(await screen.findByTestId('group-entry-join')).textContent
+			).toContain(i18n.t('groupChat.entry.join'));
 			const user = userEvent.setup();
-			await user.click(join);
+			// "Beitreten" asks for consent first (Frank, 2026-10-16).
+			await user.click(joinButton());
+			await user.click(screen.getByRole('checkbox'));
+			await user.click(joinButton());
 			const notice = await screen.findByRole('alert');
-			expect(within(notice).getByText(title)).toBeTruthy();
+			expect(
+				within(notice).getByText(groupJoinTitle(status, title))
+			).toBeTruthy();
 			await waitFor(() =>
-				expect((join as HTMLButtonElement).disabled).toBe(false)
+				expect((joinButton() as HTMLButtonElement).disabled).toBe(false)
 			);
 			expect(screen.getByLabelText('Current route').textContent).toBe(
 				'/groups/19/entry'
@@ -569,7 +611,7 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 					name: i18n.t('app.close')
 				})
 			);
-			await user.click(join);
+			await user.click(joinButton());
 			await waitFor(() => expect(requests).toHaveLength(2));
 			expect(requests[1]).toBe(requests[0]);
 		}
@@ -603,7 +645,9 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			);
 			renderWithProviders(<PendingAssignment />);
 			const notice = await screen.findByRole('alert');
-			expect(within(notice).getByText(title)).toBeTruthy();
+			expect(
+				within(notice).getByText(groupJoinTitle(status, title))
+			).toBeTruthy();
 			expect(screen.getByLabelText('Current route').textContent).toBe(
 				'/sessions/user/view'
 			);

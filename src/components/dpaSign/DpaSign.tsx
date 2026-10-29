@@ -1,3 +1,8 @@
+import {
+	DpaSignedContract,
+	createDpaPrintReceipt,
+	DpaPrintReceipt
+} from './DpaSignedContract';
 import { formatDpaDate } from './formatDpaDate';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import {
@@ -14,7 +19,7 @@ import {
 } from '@mui/material';
 import type { TFunction } from 'i18next';
 import * as React from 'react';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import {
@@ -81,6 +86,9 @@ export const DpaSign = () => {
 		() => i18n.getFixedT(chromeLanguage),
 		[i18n, chromeLanguage]
 	);
+	const [printReceipt, setPrintReceipt] = useState<DpaPrintReceipt | null>(
+		null
+	);
 	const [submitState, setSubmitState] = useState<SubmitState>('idle');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [preview, setPreview] = useState<DpaSignPreviewResponse | null>(null);
@@ -100,8 +108,13 @@ export const DpaSign = () => {
 		[token]
 	);
 
+	const activeToken = useRef(decodedToken);
+	activeToken.current = decodedToken;
+
 	useEffect(() => {
 		let active = true;
+		setPrintReceipt(null);
+		setSubmitState('idle');
 		setPreview(null);
 		setPreviewLoading(true);
 		setPreviewErrorKind(null);
@@ -170,13 +183,18 @@ export const DpaSign = () => {
 		setSubmitState('submitting');
 
 		try {
-			await apiConfirmDpaSignature(decodedToken, {
+			const confirmation = await apiConfirmDpaSignature(decodedToken, {
 				...formState,
 				signerIsMember: false,
 				source: 'PUBLIC_SIGN_LINK'
 			});
+			if (activeToken.current !== decodedToken) return;
+			setPrintReceipt(
+				createDpaPrintReceipt(preview, confirmation, formState.language)
+			);
 			setSubmitState('success');
 		} catch (error) {
+			if (activeToken.current !== decodedToken) return;
 			setSubmitState('error');
 			setErrorMessage(resolveErrorMessage(error, t));
 		}
@@ -196,6 +214,7 @@ export const DpaSign = () => {
 				py: { xs: 2, md: 6 }
 			}}
 		>
+			{printReceipt && <DpaSignedContract receipt={printReceipt} t={t} />}
 			<Paper
 				component="form"
 				elevation={0}
@@ -313,9 +332,31 @@ export const DpaSign = () => {
 								{t('dpaSign.signerHeading')}
 							</Typography>
 							{submitState === 'success' ? (
-								<Alert severity="success">
-									{t('dpaSign.success')}
-								</Alert>
+								<>
+									<Alert severity="success">
+										{t('dpaSign.success')}
+									</Alert>
+									<Button
+										type="button"
+										variant="outlined"
+										size="large"
+										disabled={!printReceipt}
+										onClick={() => window.print()}
+										sx={{ justifySelf: 'start' }}
+									>
+										{t('dpaSign.print')}
+									</Button>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{t(
+											printReceipt
+												? 'dpaSign.printHint'
+												: 'dpaSign.printUnavailable'
+										)}
+									</Typography>
+								</>
 							) : (
 								<>
 									<TextField

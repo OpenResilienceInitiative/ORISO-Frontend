@@ -302,6 +302,11 @@ describe('newcomer entry for a self-help group link', () => {
 		];
 		expect(body.agencyId).toBe('7');
 		expect(body).not.toHaveProperty('groupChatId');
+		// The app must not join the group the registration refused.
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(redirectToApp).toHaveBeenCalledWith(undefined, {
+			sessionId: '211'
+		});
 	});
 
 	it('while joining, the screen speaks about the group, not about a counselling enquiry', async () => {

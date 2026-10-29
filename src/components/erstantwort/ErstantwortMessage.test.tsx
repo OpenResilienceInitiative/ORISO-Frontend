@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
@@ -41,7 +41,8 @@ function setup(
 	emailActive = false,
 	conversationType?: string,
 	isAskerEmailEnabled?: boolean,
-	rawMessage?: string
+	rawMessage?: string,
+	messageId?: string
 ) {
 	const userData = {
 		email: 'asker@example.org',
@@ -50,7 +51,7 @@ function setup(
 			settings: { newChatMessageNotificationEnabled: emailActive }
 		}
 	} as UserDataInterface;
-	render(
+	return render(
 		<MemoryRouter>
 			<UserDataContext.Provider
 				value={{
@@ -63,6 +64,7 @@ function setup(
 					<ErstantwortMessage
 						trigger="AFTER_ENQUIRY_DISPATCHED"
 						rawMessage={rawMessage}
+						messageId={messageId}
 						conversationType={conversationType}
 						isAskerEmailEnabled={isAskerEmailEnabled}
 						skipAnimation
@@ -168,10 +170,142 @@ it('keeps frozen FAQ and invitation words when the saved channel suppresses its 
 			]
 		});
 	setup(true, 'AGENCY_COUNSELLING', true, rawMessage);
-	expect(screen.getByText('Who reads this?').tagName).toBe('SUMMARY');
+	expect(
+		screen.getByText('Who reads this?').closest('summary')
+	).not.toBeNull();
 	expect(screen.getByText('You can add an email address.')).toBeTruthy();
 	expect(
 		screen.queryByRole('button', { name: /notificationChoice.email / })
 	).toBeNull();
 	expect(screen.queryByRole('button', { name: 'Add email' })).toBeNull();
+});
+
+it('keeps the setup collapsed after a reload once the person closed it with the X (ORISO-Frontend#1700)', () => {
+	const first = setup(
+		false,
+		undefined,
+		undefined,
+		undefined,
+		'$first-answer'
+	);
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.dismiss'
+		})
+	);
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	first.unmount();
+
+	// The same message, rendered again after a reload.
+	setup(false, undefined, undefined, undefined, '$first-answer');
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+});
+it('shows the setup in full again after "ändern", also after a reload', () => {
+	const first = setup(
+		false,
+		undefined,
+		undefined,
+		undefined,
+		'$first-answer'
+	);
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.dismiss'
+		})
+	);
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	);
+	first.unmount();
+
+	setup(false, undefined, undefined, undefined, '$first-answer');
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
+
+const firstResponse = (...ids: string[]) =>
+	SYSTEM_NOTIFICATION_PREFIX +
+	JSON.stringify({
+		type: 'FIRST_RESPONSE',
+		version: 1,
+		bausteine: ids.map((id) =>
+			id === 'emailNotification'
+				? {
+						id,
+						body: 'You can add an email address.',
+						action: { kind: 'ADD_EMAIL', label: 'Add email' }
+					}
+				: { id, headline: `Headline ${id}`, body: `Body ${id}` }
+		)
+	});
+
+it('keeps the one-line summary and "change" on the persisted invitation once a channel is reachable (ORISO-Frontend#1767 review)', () => {
+	setup(
+		true,
+		'AGENCY_COUNSELLING',
+		true,
+		firstResponse('whoReadsAlong', 'emailNotification'),
+		'$first-answer'
+	);
+	expect(screen.getByText('You can add an email address.')).toBeTruthy();
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+	// Still no automatic invitation: the choices stay hidden behind "change".
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	);
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
+
+it('keeps the one-line summary and "change" on a persisted channel choice once a channel is reachable (ORISO-Frontend#1767 review)', () => {
+	setup(
+		true,
+		'AGENCY_COUNSELLING',
+		true,
+		firstResponse('whoReadsAlong', 'notificationChoice'),
+		'$first-answer'
+	);
+	expect(screen.getByText('Body notificationChoice')).toBeTruthy();
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+});
+
+it('shows no summary on a persisted message when the tenant offers no channel at all', () => {
+	setup(
+		false,
+		'AGENCY_COUNSELLING',
+		false,
+		firstResponse('whoReadsAlong', 'notificationChoice'),
+		'$first-answer'
+	);
+	expect(
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeNull();
 });

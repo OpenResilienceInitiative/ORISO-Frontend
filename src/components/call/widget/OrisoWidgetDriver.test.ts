@@ -391,6 +391,39 @@ describe('OrisoWidgetDriver', () => {
 			).toEqual(['$3', '$4']);
 		});
 
+		it('reads an identity it may not send', async () => {
+			/*
+			 * The asymmetry that keeps the design's first rule intact.
+			 *
+			 * Identity moved out of room state (which Matrix does not
+			 * encrypt) and into the encrypted timeline, so the widget has to
+			 * be able to READ a timeline event of this type to draw anybody.
+			 * Before the split, both directions of room events were checked
+			 * against one set, so allowing the read would have allowed the
+			 * widget to write somebody else's identity — the one thing the
+			 * call must never decide.
+			 */
+			const IDENTITY = 'org.oriso.call.identity';
+			const d = new OrisoWidgetDriver(
+				clientWithTimeline([
+					eventStub(IDENTITY, '$1', {
+						kind: 'animal',
+						file: 'fox.svg',
+						bg: '#165E83',
+						ink: '#ffffff'
+					})
+				]),
+				CALL_ROOM
+			);
+
+			const out = await d.readRoomEvents(IDENTITY, undefined, 10);
+			expect(out).toHaveLength(1);
+
+			await expect(
+				d.sendEvent(IDENTITY, { kind: 'animal' })
+			).rejects.toThrow(/may not send/);
+		});
+
 		it('returns only what follows `since`', async () => {
 			const d = new OrisoWidgetDriver(
 				clientWithTimeline([

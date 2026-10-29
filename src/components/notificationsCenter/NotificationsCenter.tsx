@@ -16,7 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
@@ -90,6 +90,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
@@ -508,7 +509,27 @@ export const NotificationsCenter = () => {
 			audio: translate('notifications.center.preview.audio'),
 			video: translate('notifications.center.preview.video'),
 			notice: translate('notifications.center.preview.notice'),
+			// System notices read as the chat words them (MessageItemComponent).
+			userLeftChat: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+				? translate('message.userLeftChat')
+				: translate('message.consultantLeftChat'),
+			chatEndedText: (endedBy) =>
+				translate(
+					chatEndedTextKey(
+						endedBy,
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						)
+					)
+				),
+			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
+			// The chat's own wording for a message this device cannot decrypt.
+			undecryptable: translate('e2ee.message.encryption.text'),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'
@@ -517,7 +538,7 @@ export const NotificationsCenter = () => {
 				'notifications.center.preview.eventUnavailable'
 			)
 		}),
-		[translate]
+		[translate, userData]
 	);
 	const candidatePreviewSources = useMemo(
 		() =>

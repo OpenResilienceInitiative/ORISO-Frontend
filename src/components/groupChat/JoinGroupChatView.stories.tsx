@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor, within } from 'storybook/test';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -23,6 +24,7 @@ import type {
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { JoinGroupChatView } from './JoinGroupChatView';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import './joinChat.styles';
 
 /* ------------------------------------------------------------------ *
@@ -146,7 +148,8 @@ const buildWaitingSession = (
 				messageDate: Math.floor(start.getTime() / 1000),
 				messagesRead: true,
 				moderators: [],
-				repetitive: false,
+				repetitive: true,
+				conversationType: 'SELF_HELP',
 				startDate: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
 				startTime: `${pad(start.getHours())}:${pad(start.getMinutes())}:${pad(start.getSeconds())}`,
 				subscribed: true,
@@ -162,26 +165,75 @@ const buildWaitingSession = (
  * Providers (SessionHeader.stories pattern)
  * ------------------------------------------------------------------ */
 
+// One stable client: the notification store re-attaches on every new instance.
+const storyMatrixClient = {
+	getRoom: () => null,
+	getRooms: () => [],
+	// The header's ⋮ menu reads notification settings from account data.
+	getAccountData: () => undefined,
+	setAccountData: async () => ({}),
+	on: () => undefined,
+	removeListener: () => undefined
+};
+
 const matrixClientService = {
-	getClient: () => ({
-		getRoom: () => null,
-		getRooms: () => []
-	})
+	getClient: () => storyMatrixClient
+} as any;
+
+// Counsellor viewer who may open the room: the moderator keeps the in-app
+// waiting view with "Start chat" instead of the shared waiting room (#1499).
+const storyModeratorData = {
+	...storyUserData,
+	userId: 'consultant-storybook',
+	userName: 'consultant-storybook',
+	displayName: 'Consultant Storybook',
+	grantedAuthorities: [
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		AUTHORITIES.CREATE_NEW_CHAT
+	],
+	userRoles: ['CONSULTANT']
 } as any;
 
 const StoryProviders = ({
 	session,
-	children
+	children,
+	columnWidth,
+	userData = storyUserData,
+	fullHeight = false
 }: {
 	session: ExtendedSessionInterface;
 	children: React.ReactNode;
+	userData?: any;
+	/** Give the column the window's height, as the chat panel has in the app. */
+	fullHeight?: boolean;
+	/** Pins the chat column to the width it really has next to the lists. */
+	columnWidth?: number;
 }) => (
-	<div style={{ maxWidth: 920, margin: '0 auto', background: '#fcf9f9' }}>
+	<div
+		style={{
+			...(columnWidth
+				? { width: columnWidth }
+				: { maxWidth: 920, margin: '0 auto' }),
+			...(fullHeight
+				? { height: '100vh', display: 'flex', flexDirection: 'column' }
+				: {}),
+			background: '#fcf9f9'
+		}}
+	>
+		{fullHeight && (
+			// The app's session.styles.scss makes the panel a flex column of the
+			// window's height; this story does not load it.
+			<style>
+				{
+					'.session.joinChat{flex:1;display:flex;flex-direction:column;min-height:0}'
+				}
+			</style>
+		)}
 		<UserDataContext.Provider
 			value={{
-				userData: storyUserData,
+				userData,
 				setUserData: () => {},
-				reloadUserData: async () => storyUserData
+				reloadUserData: async () => userData
 			}}
 		>
 			<SessionTypeContext.Provider
@@ -290,7 +342,10 @@ export const WaitingFuture: Story = {
 		>
 			<JoinGroupChatView />
 		</StoryProviders>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+	}
 };
 
 /** Planned start 4 minutes ago — the 4b overdue state counting up. */
@@ -299,5 +354,114 @@ export const WaitingOverdue: Story = {
 		<StoryProviders session={buildWaitingSession(-252)}>
 			<JoinGroupChatView />
 		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+	}
+};
+
+/** The counsellor who opens the room, ~2 days before the start. */
+export const ModeratorWaitingFuture: Story = {
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(2 * 86400 + 3 * 3600 + 21 * 60 + 50)}
+			userData={storyModeratorData}
+			fullHeight
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
 	)
+};
+
+/**
+ * The bar of the in-app waiting room, measured in the browser: the calendar
+ * button and "Beitreten". Since #1219 the asker sees the shared waiting room
+ * in the chat card, whose bar stacks the two buttons at every width, as in
+ * the link waiting room. One-letter-per-line wrapping shows as a tall,
+ * narrow button, so the assertions are on size, not on text.
+ */
+const measureBar = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const calendar = await canvas.findByTestId('group-entry-calendar');
+	const join = canvas.getByTestId('group-entry-join');
+	await waitFor(() =>
+		expect(calendar.getBoundingClientRect().width).toBeGreaterThan(0)
+	);
+	return {
+		calendar: calendar.getBoundingClientRect(),
+		join: join.getBoundingClientRect()
+	};
+};
+
+/** Both buttons on one line each, inside the column, calendar above. */
+const expectBarFits = async (
+	canvasElement: HTMLElement,
+	columnWidth: number,
+	minCalendarWidth: number
+) => {
+	await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+	const { calendar, join } = await measureBar(canvasElement);
+	await expect(calendar.width).toBeGreaterThanOrEqual(minCalendarWidth);
+	/* One line of text plus padding; one letter per line is 200+ px tall. */
+	await expect(calendar.height).toBeLessThanOrEqual(56);
+	await expect(join.height).toBeLessThanOrEqual(64);
+	/* Nothing pokes out of the column. */
+	await expect(calendar.right).toBeLessThanOrEqual(columnWidth);
+	await expect(join.right).toBeLessThanOrEqual(columnWidth);
+	/* Stacked: the calendar above "Beitreten". */
+	await expect(calendar.bottom).toBeLessThanOrEqual(join.top);
+};
+
+/**
+ * #1499 follow-up, measured on dev at 1366 px with the chat info open: the
+ * chat column is only ~370 px wide while the window counts as "large". The
+ * calendar button shrank to 64 px and both texts wrapped one letter per line.
+ */
+export const NarrowColumnAt1366: Story = {
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(24 * 86400 + 3 * 3600)}
+			columnWidth={370}
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		/* 306 px measured; a one-letter column is 64 px. */
+		await expectBarFits(canvasElement, 370, 150);
+	}
+};
+
+/** Wide column (1920 px window): the same stacked bar, full column width. */
+export const WideColumnAt1920: Story = {
+	globals: { viewport: { value: 'desktop1920' } },
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(24 * 86400 + 3 * 3600)}
+			columnWidth={900}
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		await expectBarFits(canvasElement, 900, 150);
+	}
+};
+
+/** Phone: the short "Kalender" above "Beitreten", nothing squeezed. */
+export const PhoneAt390: Story = {
+	globals: { viewport: { value: 'phone390' } },
+	render: () => (
+		<StoryProviders
+			session={buildWaitingSession(24 * 86400 + 3 * 3600)}
+			columnWidth={390}
+		>
+			<JoinGroupChatView />
+		</StoryProviders>
+	),
+	play: async ({ canvasElement }) => {
+		/* The phone label is the short "Kalender" (110 px measured). */
+		await expectBarFits(canvasElement, 390, 90);
+	}
 };

@@ -1,7 +1,15 @@
+import type { MatrixEvent } from 'matrix-js-sdk';
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
-import { toMessagePreviewText } from './messagePreviewText';
+import {
+	getSystemNotificationPreview,
+	toMessagePreviewText
+} from './messagePreviewText';
 import { parseErstantwortPayload } from '../components/erstantwort/erstantwortPayload';
+import {
+	type ChatEndedBy,
+	parseMessagePrefixes
+} from '../components/message/messageConstants';
 
 const normalizePreviewText = (value: string): string =>
 	value.replace(/\s+/g, ' ').trim();
@@ -12,7 +20,12 @@ export type MatrixActivityPreviewLabels = {
 	audio: string;
 	video: string;
 	notice: string;
+	userLeftChat: string;
+	/** USER_LEFT_CHAT worded by who ended it (#1838); else `userLeftChat`. */
+	chatEndedText?: (endedBy: ChatEndedBy | null) => string;
+	systemNotification: string;
 	unsupported: string;
+	undecryptable: string;
 	pending: string;
 	roomUnavailable: string;
 	eventUnavailable: string;
@@ -26,12 +39,19 @@ export type MatrixActivityPreviewKind =
 	| 'video'
 	| 'notice'
 	| 'unsupported'
+	| 'undecryptable'
 	| 'unknown';
+
+/** The SDK swaps an event it cannot decrypt for `m.bad.encrypted` content. */
+const isUndecryptable = (event: MatrixEvent): boolean =>
+	event.isDecryptionFailure?.() === true ||
+	event.getContent?.()?.msgtype === 'm.bad.encrypted';
 
 export const getMatrixActivityPreviewKind = (
 	resolution: MatrixActivityEventResolution
 ): MatrixActivityPreviewKind => {
 	if (resolution.status !== 'resolved') return 'unknown';
+	if (isUndecryptable(resolution.event)) return 'undecryptable';
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =
 		typeof content.msgtype === 'string' ? content.msgtype : null;
@@ -74,6 +94,9 @@ export const buildMatrixActivityTextPreview = (
 		return fallbackByStatus[resolution.status] || fallbackText;
 	}
 
+	if (isUndecryptable(resolution.event)) {
+		return withSender(senderName, labels?.undecryptable || fallbackText);
+	}
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =
 		typeof content.msgtype === 'string' ? content.msgtype : null;
@@ -102,10 +125,23 @@ export const buildMatrixActivityTextPreview = (
 				: labels?.unsupported || fallbackText;
 		return withSender(senderName, preview);
 	}
+	const systemNotice = getSystemNotificationPreview(rawBody);
+	if (systemNotice) {
+		return (
+			(systemNotice === 'user_left_chat'
+				? labels?.chatEndedText?.(
+						parseMessagePrefixes(rawBody).systemNotificationEndedBy
+					) || labels?.userLeftChat
+				: labels?.systemNotification) || fallbackText
+		);
+	}
 	const body = toMessagePreviewText(rawBody);
 	if (!body) {
 		return fallbackText;
 	}
 
-	return withSender(senderName, body);
+	// The chat draws a system notice without its sender, so the preview does too.
+	return parseMessagePrefixes(rawBody).isSystemNotification
+		? body
+		: withSender(senderName, body);
 };

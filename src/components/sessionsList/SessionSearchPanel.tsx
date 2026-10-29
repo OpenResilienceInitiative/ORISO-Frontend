@@ -3,7 +3,13 @@ import clsx from 'clsx';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
+import { UserAvatar } from '../message/UserAvatar';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import {
+	AvatarIdentity,
+	chosenAvatarOf,
+	counsellorChoiceOf
+} from '../../utils/avatarChoice';
 import type { SessionSearchPersonRole } from './sessionSearchPeople';
 import './sessionsList.styles';
 
@@ -19,8 +25,8 @@ const visiblePeopleKeyOf = (people: { id: string }[]) =>
  * "Search Bar | Organisms" (node 4121-12160) and Section 00 behaviour notes.
  *
  * Tabs: People (checkbox multi-select), By type (radio), Counselling centre
- * (topic radio — a person must never have two topics selected at once, hence
- * single-select), plus an independent "Archive only" toggle tab.
+ * (agency radio — a handover never crosses centres — and topic radio), plus
+ * an independent "Archive only" toggle tab.
  *
  * Purely controlled; confirm semantics (checkmark / Enter) live with the
  * caller because the confirm affordance sits in the search pill itself.
@@ -30,13 +36,24 @@ export type SessionSearchTab = 'people' | 'type' | 'centre';
 
 export interface SessionSearchPersonOption {
 	id: string;
+	/** Public name. */
 	name: string;
-	/** e.g. "Berater:in | Mainz 30232" */
+	/** Counsellor's internal name, shown under the public one (FE#1725 US8). */
+	internalName?: string;
+	/** e.g. "Berater:in | Beratungsstelle Mainz" */
 	subtitle: string;
 	/** Clients and counsellors are separate roles (#1195 JOB5). */
 	role?: SessionSearchPersonRole;
+	agencyId?: number;
+	agencyName?: string;
 	/** Stable key for the generated animal avatar; falls back to `id`. */
 	avatarSeed?: string;
+	/** Counsellor's saved avatar; counsellors render on the primary pair. */
+	avatar?: AvatarIdentity;
+	/** Lower-case haystack for the shared text match. */
+	searchText?: string;
+	/** A colleague whose cases may be taken over (FE#1152). */
+	eligible?: boolean;
 }
 
 /** A counselling centre the signed-in counsellor belongs to (#1195 JOB1). */
@@ -67,8 +84,18 @@ export interface SessionSearchPanelLabels {
 	tabCentre: string;
 	tabArchiveOnly: string;
 	emptyPeople: string;
+	/** Shown while the eligible colleagues are loading (FE#1152). */
+	peopleLoading?: string;
+	/** Shown when the eligible colleagues could not be loaded (FE#1152). */
+	peopleLoadError?: string;
 	emptyTypes: string;
 	emptyTopics: string;
+	agencyGroup?: string;
+	topicGroup?: string;
+	/** Prefix of the internal-name line, e.g. "Interner Name". */
+	internalName?: string;
+	/** Prefix of the public name when an internal name is shown too. */
+	publicName?: string;
 }
 
 interface SessionSearchPanelProps {
@@ -78,6 +105,12 @@ interface SessionSearchPanelProps {
 	archiveOnly: boolean;
 	onArchiveOnlyChange: (archiveOnly: boolean) => void;
 	people: SessionSearchPersonOption[];
+	/** Loading state of the eligible colleagues; omitted outside a handover. */
+	peopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
+	/** Why a colleague may be missing (FE#1152); omitted outside a handover. */
+	peopleHint?: string;
+	/** The eligible colleagues were loaded only up to a limit (FE#1152). */
+	peopleCappedNote?: string;
 	selectedPersonIds: string[];
 	onPersonToggle: (id: string) => void;
 	types: SessionSearchTypeOption[];
@@ -86,14 +119,14 @@ interface SessionSearchPanelProps {
 	topics: SessionSearchTopicOption[];
 	selectedTopicId: string | null;
 	onTopicSelect: (id: string | null) => void;
-	/**
-	 * JOB1 — a counsellor belonging to two agencies filters along both, so this
-	 * axis is multi-select and sits above the single-select topic list.
-	 */
+	/** One counselling centre at a time, above the topic list (FE#1725 US12). */
 	agencies?: SessionSearchAgencyOption[];
-	selectedAgencyIds?: string[];
-	onAgencyToggle?: (id: string) => void;
+	selectedAgencyId?: string | null;
+	onAgencySelect?: (id: string | null) => void;
 }
+
+const hasBothNames = (person: SessionSearchPersonOption) =>
+	Boolean(person.internalName) && person.internalName !== person.name;
 
 const iconFill = (active: boolean) =>
 	active
@@ -163,15 +196,29 @@ const SelectionRadio = ({ selected }: { selected: boolean }) => (
 );
 
 /**
- * JOB4 — result rows carry the shared generated animal avatar instead of a
- * letter monogram, matching the green-marked reference in the report.
+ * Advice seekers keep the generated animal (JOB4); counsellors use the
+ * primary-pair counsellor avatar, as in the chat since FE#1686 (FE#1725 US9).
  */
-const PersonAvatar = ({ seed }: { seed: string }) => (
+const PersonAvatar = ({ person }: { person: SessionSearchPersonOption }) => (
 	<span
 		className="sessionsListToolbar__personAvatar"
 		data-testid="session-search-person-avatar"
 	>
-		<AnimalAvatar avatar={generateAvatarForUser(seed)} size={40} />
+		{person.role === 'consultant' ? (
+			<UserAvatar
+				username={person.name}
+				displayName={person.name}
+				userId={person.avatarSeed || person.id}
+				choice={counsellorChoiceOf(chosenAvatarOf(person.avatar))}
+				size={40}
+				ring={false}
+			/>
+		) : (
+			<AnimalAvatar
+				avatar={generateAvatarForUser(person.avatarSeed || person.id)}
+				size={40}
+			/>
+		)}
 	</span>
 );
 
@@ -182,6 +229,9 @@ export const SessionSearchPanel = ({
 	archiveOnly,
 	onArchiveOnlyChange,
 	people,
+	peopleStatus = 'idle',
+	peopleHint,
+	peopleCappedNote,
 	selectedPersonIds,
 	onPersonToggle,
 	types,
@@ -191,8 +241,8 @@ export const SessionSearchPanel = ({
 	selectedTopicId,
 	onTopicSelect,
 	agencies = [],
-	selectedAgencyIds = [],
-	onAgencyToggle
+	selectedAgencyId = null,
+	onAgencySelect
 }: SessionSearchPanelProps) => {
 	/**
 	 * JOB3 — the list shows the 10 most recent people from the visible timeline
@@ -322,15 +372,29 @@ export const SessionSearchPanel = ({
 										}
 										data-cy={`session-search-person-${person.id}`}
 									>
-										<PersonAvatar
-											seed={
-												person.avatarSeed || person.id
-											}
-										/>
+										<PersonAvatar person={person} />
 										<div className="sessionsListToolbar__personMeta">
-											<div className="sessionsListToolbar__personName">
-												{person.name}
-											</div>
+											{/* Both names labelled, so the counsellor knows which is which (US8). */}
+											{hasBothNames(person) ? (
+												<>
+													<div className="sessionsListToolbar__personName">
+														{labels.publicName
+															? `${labels.publicName}: `
+															: ''}
+														{person.name}
+													</div>
+													<div className="sessionsListToolbar__personSubtitle">
+														{labels.internalName
+															? `${labels.internalName}: `
+															: ''}
+														{person.internalName}
+													</div>
+												</>
+											) : (
+												<div className="sessionsListToolbar__personName">
+													{person.name}
+												</div>
+											)}
 											<div className="sessionsListToolbar__personSubtitle">
 												{person.subtitle}
 											</div>
@@ -352,9 +416,40 @@ export const SessionSearchPanel = ({
 						</div>
 					) : (
 						<div className="sessionsListToolbar__searchEmpty">
-							{labels.emptyPeople}
+							{peopleStatus === 'loading' && labels.peopleLoading
+								? labels.peopleLoading
+								: labels.emptyPeople}
 						</div>
 					))}
+				{activeTab === 'people' && peopleStatus === 'error' && (
+					<div
+						className="sessionsListToolbar__searchNotice sessionsListToolbar__searchNotice--error"
+						role="alert"
+						data-testid="session-search-people-error"
+					>
+						{labels.peopleLoadError}
+					</div>
+				)}
+				{activeTab === 'people' &&
+					peopleStatus === 'ready' &&
+					peopleCappedNote && (
+						<div
+							className="sessionsListToolbar__searchNotice"
+							data-testid="session-search-people-capped"
+						>
+							{peopleCappedNote}
+						</div>
+					)}
+				{activeTab === 'people' &&
+					peopleStatus !== 'error' &&
+					peopleHint && (
+						<div
+							className="sessionsListToolbar__searchNotice"
+							data-testid="session-search-people-hint"
+						>
+							{peopleHint}
+						</div>
+					)}
 				{activeTab === 'type' &&
 					(types.length > 0 ? (
 						<div role="radiogroup" aria-label={labels.tabType}>
@@ -392,21 +487,23 @@ export const SessionSearchPanel = ({
 				{activeTab === 'centre' && agencies.length > 0 && (
 					<div
 						className="sessionsListToolbar__searchAgencyGroup"
-						role="group"
-						aria-label={labels.tabCentre}
+						role="radiogroup"
+						aria-label={labels.agencyGroup || labels.tabCentre}
 					>
 						{agencies.map((agency) => {
-							const isSelected = selectedAgencyIds.includes(
-								agency.id
-							);
+							const isSelected = selectedAgencyId === agency.id;
 							return (
 								<button
 									type="button"
 									key={agency.id}
-									role="checkbox"
+									role="radio"
 									aria-checked={isSelected}
 									className="sessionsListToolbar__personRow"
-									onClick={() => onAgencyToggle?.(agency.id)}
+									onClick={() =>
+										onAgencySelect?.(
+											isSelected ? null : agency.id
+										)
+									}
 									data-cy={`session-search-agency-${agency.id}`}
 									data-testid={`session-search-agency-${agency.id}`}
 								>
@@ -420,7 +517,7 @@ export const SessionSearchPanel = ({
 											</div>
 										)}
 									</div>
-									<SelectionCheckbox selected={isSelected} />
+									<SelectionRadio selected={isSelected} />
 								</button>
 							);
 						})}
@@ -428,7 +525,10 @@ export const SessionSearchPanel = ({
 				)}
 				{activeTab === 'centre' &&
 					(topics.length > 0 ? (
-						<div role="radiogroup" aria-label={labels.tabCentre}>
+						<div
+							role="radiogroup"
+							aria-label={labels.topicGroup || labels.tabCentre}
+						>
 							{topics.map((topic) => {
 								const isSelected = selectedTopicId === topic.id;
 								return (

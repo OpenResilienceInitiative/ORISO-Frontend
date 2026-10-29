@@ -58,6 +58,11 @@ vi.mock('../useGroupChatAuthorContent', () => ({
 		rules: ['Regel eins']
 	})
 }));
+vi.mock('../../waitingRoom/WaitingRoomFrame', () => ({
+	WaitingRoomFrame: ({ children }: { children: React.ReactNode }) => (
+		<>{children}</>
+	)
+}));
 vi.mock('./GroupWaitingRoom', () => ({
 	GroupWaitingRoom: (props: {
 		topicName?: string;

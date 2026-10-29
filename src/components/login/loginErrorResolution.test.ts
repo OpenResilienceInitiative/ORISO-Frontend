@@ -283,7 +283,75 @@ describe('resolveLoginError', () => {
 		expect(resolveLoginError(codeLimit, true)).toEqual({
 			kind: 'message',
 			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
-			outcome: 'rate_limited'
+			outcome: 'rate_limited',
+			preciseMessage: {
+				key: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS_WAIT.minutes,
+				values: { minutes: 13 }
+			}
+		});
+	});
+
+	/*
+	 * #1338: Keycloak sends the remaining wait with the refusal. "Please wait a
+	 * few minutes" is wrong in both directions — it sends someone back after two
+	 * minutes when the wait is twelve, and that early retry extends an
+	 * escalating lockout; and it makes a 30-second wait look like a lockout.
+	 */
+	describe('naming the wait a 429 came with', () => {
+		const refusalAfter = (seconds: unknown) =>
+			resolveLoginError(
+				{
+					message: FETCH_ERRORS.TOO_MANY_REQUESTS,
+					options: { data: { resendAvailableInSeconds: seconds } }
+				},
+				true
+			);
+
+		const waitOf = (seconds: unknown) =>
+			(refusalAfter(seconds) as { preciseMessage?: unknown })
+				.preciseMessage;
+
+		const KEYS = LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS_WAIT;
+
+		it.each([
+			['exactly a second', 1, KEYS.second, {}],
+			['below a minute, in seconds', 45, KEYS.seconds, { seconds: 45 }],
+			['exactly a minute', 60, KEYS.minute, {}],
+			// 89 s rounded DOWN would say "a minute" and invite a retry 29 s early
+			[
+				'89 seconds, rounded up to two minutes',
+				89,
+				KEYS.minutes,
+				{
+					minutes: 2
+				}
+			],
+			['exactly an hour', 3600, KEYS.hour, {}],
+			[
+				'90 minutes, rounded up to two hours',
+				5400,
+				KEYS.hours,
+				{
+					hours: 2
+				}
+			],
+			['exactly a day', 86400, KEYS.day, {}]
+		])('names %s', (_what, seconds, key, values) => {
+			expect(waitOf(seconds)).toEqual({ key, values });
+		});
+
+		it.each([
+			['no wait at all', undefined],
+			['a wait of zero', 0],
+			['longer than the agreed one-day ceiling', 86401],
+			['a negative number', -5],
+			['something that is not a number', '600']
+		])('keeps the untimed sentence for %s', (_what, seconds) => {
+			expect(refusalAfter(seconds)).toEqual({
+				kind: 'message',
+				messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+				outcome: 'rate_limited'
+			});
 		});
 	});
 

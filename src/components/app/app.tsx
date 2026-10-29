@@ -39,13 +39,12 @@ import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
+import { loadAuthenticatedApp } from './appChunks';
 
 const Login = lazyWithReload(() =>
 	import('../login/Login').then((m) => ({ default: m.Login }))
 );
-const AuthenticatedApp = lazyWithReload(() =>
-	import('./AuthenticatedApp').then((m) => ({ default: m.AuthenticatedApp }))
-);
+const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 const InviteLink = lazyWithReload(() =>
 	import('../invite/InviteLink').then((m) => ({
 		default: m.InviteLink

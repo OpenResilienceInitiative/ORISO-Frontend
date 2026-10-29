@@ -223,7 +223,9 @@ it.each(['ready', 'missing', 'failed'] as const)(
 				container.querySelector('[data-cy="group-entry-loading"]')
 			).not.toBeNull()
 		);
-		assertSingleIdentity('authenticated');
+		// Loading already stands in the waiting-room frame (#1219), so the
+		// stage owns the identity from the first frame on.
+		assertSingleIdentity('stage');
 		if (state === 'failed') rejectList(new Error('offline'));
 		else
 			resolveList({

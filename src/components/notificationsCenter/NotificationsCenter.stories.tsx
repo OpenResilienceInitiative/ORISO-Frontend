@@ -725,3 +725,78 @@ export const DraftAndChatEvents: Story = {
 		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
 	}
 };
+
+/** #1714: the visible timeline distinguishes transfer, first acceptance and refusal. */
+export const HandoverEventGlyphs: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'glyph-transfer',
+				eventType: 'case.handover.granted',
+				createdAt: minutesAgo(2)
+			}),
+			feedItem({
+				id: 'glyph-accepted',
+				eventType: 'inquiry.accepted',
+				createdAt: minutesAgo(3)
+			}),
+			feedItem({
+				id: 'glyph-denied',
+				eventType: 'case.handover.consent.declined',
+				createdAt: minutesAgo(4)
+			})
+		])
+	],
+	play: async ({ canvasElement }) => {
+		// Known approved SVG shapes, checked at the public rendered cards rather
+		// than the descriptor map. The unit SVG stub cannot prove visual identity.
+		const cases = [
+			{
+				id: 'glyph-transfer',
+				shape: 'M37.5124 79.1667',
+				viewBox: '0 0 100 100'
+			},
+			{
+				id: 'glyph-accepted',
+				shape: 'M16.55 8L13 4.45',
+				viewBox: '0 0 24 24'
+			},
+			{
+				id: 'glyph-denied',
+				shape: 'M13.6667 7.5L12.5 6.33333',
+				viewBox: '0 0 20 20'
+			}
+		];
+		for (const glyph of cases) {
+			const row = canvasElement.querySelector<HTMLElement>(
+				`[data-notification-id="${glyph.id}"]`
+			)!;
+			const checkVisibleGlyph = (icon: SVGSVGElement | null) => {
+				expect(icon).toBeVisible();
+				expect(icon).toHaveAttribute('viewBox', glyph.viewBox);
+				expect(
+					icon?.querySelector('path')?.getAttribute('d')
+				).toContain(glyph.shape);
+			};
+			checkVisibleGlyph(
+				row.querySelector('.notificationsCenter__cardIcon svg')
+			);
+			const card = row.querySelector<HTMLButtonElement>(
+				'.notificationsCenter__card'
+			)!;
+			expect(card).toBeVisible();
+			await userEvent.click(card);
+			await waitFor(() => {
+				expect(
+					row.querySelector('.notificationsCenter__card--active')
+				).toBeVisible();
+				checkVisibleGlyph(
+					row.querySelector('.notificationsCenter__cardIcon svg')
+				);
+				expect(row).toHaveClass(
+					'notificationsCenter__listRow--withExpander'
+				);
+			});
+		}
+	}
+};

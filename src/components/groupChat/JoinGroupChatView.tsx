@@ -20,7 +20,8 @@ import {
 	GROUP_CHAT_API
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
-import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { logout } from '../logout/logout';
 import { Navigate } from 'react-router-dom';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
@@ -43,11 +44,42 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
+import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import {
+	getGroupUpcomingDates,
+	getGroupWaitingRoomTopic
+} from './entryRoom/groupWaitingRoomData';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
 	bannedUsers?: string[];
 }
+
+/**
+ * The moderator's clock, sized like the shared waiting room's (Frank,
+ * 2026-10-19: the counter must look like the one behind the link): the content
+ * column's own height minus what sits around the clock in it — the column's
+ * padding, the headline and subline above, the rules line below.
+ */
+const MODERATOR_CLOCK_RESERVE = 180;
+const moderatorClockHeight = (contentHeight: number) =>
+	Math.max(160, contentHeight - MODERATOR_CLOCK_RESERVE);
+
+const useModeratorClockHeight = (content: HTMLElement | null) => {
+	const [height, setHeight] = useState(320);
+	useEffect(() => {
+		if (!content) return;
+		const measure = () =>
+			setHeight(moderatorClockHeight(content.clientHeight));
+		measure();
+		const RO = globalThis.ResizeObserver;
+		if (!RO) return;
+		const observer = new RO(measure);
+		observer.observe(content);
+		return () => observer.disconnect();
+	}, [content]);
+	return height;
+};
 
 export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
@@ -234,7 +266,9 @@ export const JoinGroupChatView = ({
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
-				const notice = getCounsellingDpaNotification(error, translate);
+				const notice = getCounsellingDpaNotification(error, translate, {
+					groupJoin: groupChatApiCall === GROUP_CHAT_API.JOIN
+				});
 				if (notice && notifications) {
 					notifications.addNotification(notice);
 					return;
@@ -280,6 +314,8 @@ export const JoinGroupChatView = ({
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
 	const prefersReducedMotion = usePrefersReducedMotion();
+	const [content, setContent] = useState<HTMLDivElement | null>(null);
+	const clockHeight = useModeratorClockHeight(content);
 	// The counsellor who opens the room gets her own waiting text (#1499).
 	const canStartChat =
 		hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&
@@ -296,13 +332,69 @@ export const JoinGroupChatView = ({
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
+	const overlays = (
+		<>
+			{requestOverlayVisible && (
+				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
+			)}
+
+			{overlayActive && (
+				<Overlay
+					item={overlayItem}
+					handleOverlay={handleOverlayAction}
+					handleOverlayClose={handleOverlayClose}
+				/>
+			)}
+		</>
+	);
+
+	/* An advice seeker waits in the same room as behind the group's link —
+	   clock, "Mehr erfahren", calendar and "Beitreten" in the bar — only
+	   inside the chat card instead of on the stage (#1219; Frank,
+	   2026-10-16: the room in the app must look like the one behind the
+	   link). The moderator keeps the view below: hers starts the chat. */
+	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+		const item = activeSession.item;
+		return (
+			<div className="session joinChat joinChat--room">
+				<SessionHeaderComponent
+					isJoinGroupChatView={true}
+					bannedUsers={bannedUsers}
+				/>
+				<GroupWaitingRoom
+					embedded
+					topicName={getGroupWaitingRoomTopic(
+						item,
+						userData.dataPrivacyConfirmation
+					)}
+					agencyName={item.assignedAgencies?.[0]?.name}
+					agencyId={item.assignedAgencies?.[0]?.id}
+					plannedStart={plannedStart}
+					upcomingDates={getGroupUpcomingDates(item)}
+					durationMinutes={item.duration}
+					eventId={item.id}
+					welcomeText={authorContent.hintMessage || undefined}
+					rules={groupChatRules}
+					active={Boolean(item.active)}
+					joinBlocked={bannedUsers.includes(userData.userName)}
+					onJoin={handleButtonClick}
+					joinBusy={isRequestInProgress}
+				/>
+				{overlays}
+			</div>
+		);
+	}
+
 	return (
 		<div className="session joinChat">
 			<SessionHeaderComponent
 				isJoinGroupChatView={true}
 				bannedUsers={bannedUsers}
 			/>
-			<div className="joinChat__content session__content">
+			<div
+				className="joinChat__content session__content"
+				ref={setContent}
+			>
 				{/* The scheduled-chat countdown carries its own headline
 				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
 				    above it just repeats the frame. Only show the standalone
@@ -331,6 +423,11 @@ export const JoinGroupChatView = ({
 								canStartChat ? 'moderator' : 'participant'
 							}
 							hideMotionToggle
+							clockSize="fit"
+							fitHeight={clockHeight}
+							spacing="tight"
+							labelsOutside
+							gap={8}
 						/>
 					</div>
 				)}
@@ -370,10 +467,27 @@ export const JoinGroupChatView = ({
 						</div>
 					)}
 					<div className="joinChat__actionsMain">
-						<Button
-							item={buttonItem}
-							buttonHandle={handleButtonClick}
-							disabled={isButtonDisabled}
+						{/* The same gate as every waiting room (#1219): brand
+						    colour while it waits instead of a greyed-out
+						    button, and a sweep while the join request runs. */}
+						<HandoverGateButton
+							state={
+								isRequestInProgress
+									? 'entering'
+									: isButtonDisabled
+										? 'preparing'
+										: 'ready'
+							}
+							progress={
+								isButtonDisabled && !isRequestInProgress
+									? 0
+									: undefined
+							}
+							indeterminate={isRequestInProgress}
+							label={buttonItem.label}
+							status=""
+							onEnter={handleButtonClick}
+							testingAttribute="group-join-button"
 						/>
 					</div>
 					{showCountdown && plannedStart && (
@@ -391,17 +505,7 @@ export const JoinGroupChatView = ({
 				</div>
 			</div>
 
-			{requestOverlayVisible && (
-				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
-			)}
-
-			{overlayActive && (
-				<Overlay
-					item={overlayItem}
-					handleOverlay={handleOverlayAction}
-					handleOverlayClose={handleOverlayClose}
-				/>
-			)}
+			{overlays}
 		</div>
 	);
 };

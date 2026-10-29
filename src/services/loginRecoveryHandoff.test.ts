@@ -238,3 +238,34 @@ it('drops only its own key when a tab clears', async () => {
 		'synthetic-b'
 	);
 });
+
+// #1741: a failed first unlock must not use up the only chance within the 120 s.
+it('can hand a password back for one more attempt, but never past its original expiry', async () => {
+	vi.useFakeTimers();
+	await handoff.stageLoginRecoveryPassword('@a:test', 'synthetic');
+	const first = await handoff.consumeLoginRecoveryHandoff('@a:test');
+	expect(first?.password).toBe('synthetic');
+	await handoff.restageLoginRecoveryPassword(
+		'@a:test',
+		first!.password,
+		first!.expiresAt
+	);
+	await documentLoad();
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBe(
+		'synthetic'
+	);
+
+	await handoff.restageLoginRecoveryPassword(
+		'@a:test',
+		'synthetic',
+		first!.expiresAt
+	);
+	vi.setSystemTime(first!.expiresAt + 1);
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
+	await handoff.restageLoginRecoveryPassword(
+		'@a:test',
+		'synthetic',
+		first!.expiresAt
+	);
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
+});

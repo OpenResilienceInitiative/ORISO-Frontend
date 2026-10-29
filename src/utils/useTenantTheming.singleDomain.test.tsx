@@ -62,4 +62,36 @@ describe('useTenantTheming on a host without a tenant subdomain', () => {
 		expect(settings.featureAnonymousChatEnabled).toBe(true);
 		expect(settings.useTenantService).toBe(true);
 	});
+
+	it('keeps the internal group chat recipient scope (#1772)', async () => {
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 1,
+			name: 'Beratung',
+			settings: { featureGroupChatV2Enabled: true },
+			internalGroupChat: {
+				recipientScope: { value: 'TENANT', mode: 'SUGGESTED' }
+			}
+		});
+		const setTenant = vi.fn();
+		const wrapper = ({ children }: { children: React.ReactNode }) => (
+			<AppConfigContext.Provider
+				value={
+					{ useTenantService: true } as unknown as AppConfigInterface
+				}
+			>
+				<TenantContext.Provider
+					value={{ tenant: undefined, setTenant }}
+				>
+					{children as React.ReactElement}
+				</TenantContext.Provider>
+			</AppConfigContext.Provider>
+		);
+
+		renderHook(() => useTenantTheming(), { wrapper });
+
+		await waitFor(() => expect(setTenant).toHaveBeenCalled());
+		expect(
+			setTenant.mock.calls[0][0].internalGroupChat.recipientScope.value
+		).toBe('TENANT');
+	});
 });

@@ -109,6 +109,12 @@ export interface EventActionParams {
 	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
 	/** Exact scoped Case Handover request opened by a recipient offer. */
 	caseHandoverRequestId?: string | number | null;
+	/** Counsellor who receives access (PULL requester or PUSH recipient). */
+	requesterName?: string | null;
+	/** Counsellor who started a PUSH offer. */
+	initiatorName?: string | null;
+	/** Frozen server handover semantics; never inferred from a reason label. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | null;
 	/** Agency the enquiry belongs to (request events). */
 	agencyId?: string | number | null;
 	/** Main topic of the enquiry (request events). */

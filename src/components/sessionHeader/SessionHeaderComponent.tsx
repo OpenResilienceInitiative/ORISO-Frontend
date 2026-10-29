@@ -68,7 +68,10 @@ import {
 	resolveAnonymousChatDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	HEADER_STACK_PROPS,
+	ParticipantAvatarStack
+} from '../message/ParticipantAvatarStack';
 import { type StackParticipant } from '../message/participantStack';
 import {
 	bumpLastActivity,
@@ -1133,6 +1136,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								/>
 								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
+										{...HEADER_STACK_PROPS}
 										participants={headerParticipants}
 										/* Phone (< 900 px): one avatar + a
 										   compact "+N" — the title keeps the

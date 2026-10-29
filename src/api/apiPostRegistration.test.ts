@@ -127,7 +127,9 @@ describe('apiPostRegistration auto-login deadline', () => {
 			{} as any,
 			onAccountCreated
 		);
-		const settled = expect(result).rejects.toThrow(AUTO_LOGIN_TIMEOUT_ERROR);
+		const settled = expect(result).rejects.toThrow(
+			AUTO_LOGIN_TIMEOUT_ERROR
+		);
 
 		await vi.advanceTimersByTimeAsync(AUTO_LOGIN_TIMEOUT_MS);
 

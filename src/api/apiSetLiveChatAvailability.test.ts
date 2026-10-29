@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiGetLiveChatAvailability,
+	apiGetNewCounsellingAllowed,
 	apiHeartbeatLiveChatAvailability,
 	apiSetLiveChatAvailability
 } from './apiSetLiveChatAvailability';
@@ -20,6 +21,33 @@ vi.mock('./fetchData', async () => {
 
 afterEach(() => {
 	vi.clearAllMocks();
+});
+
+describe('provider agreement flag on the availability read (#1704)', () => {
+	it('passes the server flag through', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({
+			available: true,
+			newCounsellingAllowed: false
+		});
+
+		await expect(apiGetNewCounsellingAllowed()).resolves.toBe(false);
+		expect(fetchData).toHaveBeenCalledWith({
+			url: endpoints.consultantLiveChatAvailability,
+			method: FETCH_METHODS.GET
+		});
+	});
+
+	it('reads unknown when the server does not send the flag', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ available: true });
+
+		await expect(apiGetNewCounsellingAllowed()).resolves.toBeNull();
+	});
+
+	it('reads unknown instead of failing when the request fails', async () => {
+		vi.mocked(fetchData).mockRejectedValueOnce(new Error('offline'));
+
+		await expect(apiGetNewCounsellingAllowed()).resolves.toBeNull();
+	});
 });
 
 describe('live-chat availability API', () => {

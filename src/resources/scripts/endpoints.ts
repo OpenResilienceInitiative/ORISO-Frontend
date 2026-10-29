@@ -16,6 +16,8 @@ const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
 const keycloakOrigin = getKeycloakOrigin(apiUrl);
 
 export const endpoints = {
+	accountInactivityActivity:
+		userServiceOrigin + '/service/users/account-inactivity/activity',
 	accountInvite: (token: string) =>
 		userServiceOrigin +
 		`/service/users/account-invites/${encodeURIComponent(token)}`,
@@ -97,6 +99,8 @@ export const endpoints = {
 	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
 	error: userServiceOrigin + '/service/error-reports',
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
+	internalSubsetChat:
+		userServiceOrigin + '/service/users/chat/internal-subset',
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	keycloakAccessToken:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
@@ -115,6 +119,7 @@ export const endpoints = {
 	passwordResetConfirm:
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
+	matrixCallState: userServiceOrigin + '/service/matrix/calls/state',
 	matrixSyncRegister: (sessionId: number) =>
 		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {

@@ -134,6 +134,16 @@ describe('SaveCredentialsCard', () => {
 		);
 	});
 
+	it('keeps the login name but drops every action in the read-only preview (#420)', () => {
+		renderCard({ readOnly: true });
+
+		expect(screen.getByDisplayValue('katze_mika_1234')).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /kopieren/i })).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'Passwort jetzt setzen' })
+		).toBeNull();
+	});
+
 	it('marks the login name field so a password manager can pick it up', () => {
 		/* The browser save prompt is the mechanism — the Credential Management API
 		   is Chromium-only and must not be it. A correctly named and autocompleted
