@@ -103,6 +103,7 @@ import {
 	toNonEmbeddedPath
 } from './timelineDrafts';
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
@@ -285,7 +286,9 @@ const joinNotificationCall = (
 		!params.callRoomId.trim() ||
 		(params.callType !== 'audio' && params.callType !== 'video') ||
 		// An empty session list would store a group call as one-to-one.
-		!topologyReady
+		!topologyReady ||
+		// FE#1893: a direct-link call knocks from its card in the conversation.
+		isDirectLinkCallRoom(params.roomRef)
 	) {
 		onCannotJoin();
 		return true;

@@ -6274,7 +6274,8 @@
 			"mediumLabel": "Art des Kontakts",
 			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
-			"create": "Link erstellen"
+			"create": "Link erstellen",
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6296,6 +6297,14 @@
 			"title": "Meine Direktlinks",
 			"qr": "QR-Code zeigen",
 			"active": "{{name}} aktiv"
+		},
+		"entry": {
+			"inactive": "Dieser Link ist nicht mehr aktiv.",
+			"haveAccount": "Sie haben schon ein Konto? Anmelden",
+			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
+		},
+		"page": {
+			"loadFailed": "Ihre Direktlinks konnten nicht geladen werden."
 		}
 	},
 	"dashboard": {
@@ -6336,7 +6345,8 @@
 			},
 			"note": "Ihre Antwort gilt für dieses ganze Gespräch.",
 			"confirm": "Weiter",
-			"cancel": "Abbrechen"
+			"cancel": "Abbrechen",
+			"failed": "Ihre Antwort konnte nicht gespeichert werden. Ihre Nachricht ist noch nicht gesendet."
 		}
 	}
 }

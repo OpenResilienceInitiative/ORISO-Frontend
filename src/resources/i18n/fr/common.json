@@ -6284,7 +6284,8 @@
 			"mediumLabel": "Type de contact",
 			"temporary": "Compte temporaire",
 			"temporaryHint": "Le compte est supprimé après l’entretien.",
-			"create": "Créer le lien"
+			"create": "Créer le lien",
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6306,6 +6307,14 @@
 			"title": "Mes liens directs",
 			"qr": "Afficher le code QR",
 			"active": "{{name}} actif"
+		},
+		"entry": {
+			"inactive": "Ce lien n'est plus actif.",
+			"haveAccount": "Vous avez déjà un compte ? Se connecter",
+			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
+		},
+		"page": {
+			"loadFailed": "Vos liens directs n’ont pas pu être chargés."
 		}
 	},
 	"dashboard": {
@@ -6346,7 +6355,8 @@
 			},
 			"note": "Votre réponse vaut pour tout cet entretien.",
 			"confirm": "Continuer",
-			"cancel": "Annuler"
+			"cancel": "Annuler",
+			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
 		}
 	}
 }

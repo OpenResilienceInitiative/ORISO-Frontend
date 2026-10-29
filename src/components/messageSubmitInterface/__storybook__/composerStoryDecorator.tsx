@@ -353,6 +353,12 @@ const installComposerFetchMocks = () => {
 			return jsonResponse(storybookAgencyConsultants);
 		}
 
+		// ORISO-UserService#1486: the story asker is a normal account (404),
+		// so the composer asks no keep-messages question.
+		if (pathname.endsWith('/service/users/temporary-account')) {
+			return new Response(null, { status: 404 });
+		}
+
 		// Supervisors only exist on the 1:1 session fixture. Returning them for
 		// the group chat too would flip the audience selector into supervision
 		// mode and hide the room members.

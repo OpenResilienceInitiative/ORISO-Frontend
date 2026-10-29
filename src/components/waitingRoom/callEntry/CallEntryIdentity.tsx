@@ -40,6 +40,8 @@ export interface CallEntryIdentityProps {
 	/** The registration's own User-ID feedback (length, taken, retry). */
 	usernameFeedback?: UsernameFeedback;
 	onUsernameBlur?: () => void;
+	/** No password field: the account's password is generated (#1486). */
+	hidePassword?: boolean;
 }
 
 /**
@@ -57,6 +59,7 @@ export const CallEntryIdentity = ({
 	onUsernameChange,
 	password,
 	onPasswordChange,
+	hidePassword = false,
 	usernameFeedback,
 	onUsernameBlur
 }: CallEntryIdentityProps) => {
@@ -119,11 +122,13 @@ export const CallEntryIdentity = ({
 					label={t('registration.account.suggest.username')}
 					onClick={suggestUsername}
 				/>
-				<IdentitySuggestButton
-					icon={genKeyIcon}
-					label={t('registration.account.suggest.password')}
-					onClick={suggestPassword}
-				/>
+				{!hidePassword && (
+					<IdentitySuggestButton
+						icon={genKeyIcon}
+						label={t('registration.account.suggest.password')}
+						onClick={suggestPassword}
+					/>
+				)}
 				<IdentitySuggestButton
 					icon={genAvatarIcon}
 					label={t('registration.account.suggest.avatar')}
@@ -164,42 +169,50 @@ export const CallEntryIdentity = ({
 					)
 				}}
 			/>
-			<OrisoTextField
-				value={password}
-				onChange={(event) => onPasswordChange(event.target.value)}
-				label={t('registration.account.password.label')}
-				helperText={copy.passwordHelper}
-				type={visible ? 'text' : 'password'}
-				required
-				fullWidth
-				autoComplete="new-password"
-				InputProps={{
-					startAdornment: (
-						<InputAdornment position="start">
-							<VpnKeyOutlinedIcon
-								sx={{ color: registrationMd3.onSurfaceVariant }}
-							/>
-						</InputAdornment>
-					),
-					endAdornment: (
-						<InputAdornment position="end">
-							<IconButton
-								edge="end"
-								onClick={() => setVisible(!visible)}
-								aria-label={visibilityLabel}
-								title={visibilityLabel}
-							>
-								{visible ? (
-									<VisibilityOffIcon />
-								) : (
-									<VisibilityIcon />
-								)}
-							</IconButton>
-						</InputAdornment>
-					)
-				}}
-			/>
-			<PasswordRuleChips password={password} />
+			{!hidePassword && (
+				<>
+					<OrisoTextField
+						value={password}
+						onChange={(event) =>
+							onPasswordChange(event.target.value)
+						}
+						label={t('registration.account.password.label')}
+						helperText={copy.passwordHelper}
+						type={visible ? 'text' : 'password'}
+						required
+						fullWidth
+						autoComplete="new-password"
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<VpnKeyOutlinedIcon
+										sx={{
+											color: registrationMd3.onSurfaceVariant
+										}}
+									/>
+								</InputAdornment>
+							),
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										edge="end"
+										onClick={() => setVisible(!visible)}
+										aria-label={visibilityLabel}
+										title={visibilityLabel}
+									>
+										{visible ? (
+											<VisibilityOffIcon />
+										) : (
+											<VisibilityIcon />
+										)}
+									</IconButton>
+								</InputAdornment>
+							)
+						}}
+					/>
+					<PasswordRuleChips password={password} />
+				</>
+			)}
 		</Box>
 	);
 };

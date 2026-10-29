@@ -2771,11 +2771,19 @@
 	"directLink": {
 		"card": {
 			"headline": "Ein Link direkt zu dir",
-			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf."
+			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
 		},
 		"share": {
 			"title": "Dein Direktlink ist bereit",
 			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+		},
+		"entry": {
+			"haveAccount": "Du hast schon ein Konto? Anmelden",
+			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
+		},
+		"page": {
+			"loadFailed": "Deine Direktlinks konnten nicht geladen werden."
 		}
 	},
 	"dashboard": {
@@ -2791,7 +2799,8 @@
 			"delete": {
 				"hint": "Deine Nachrichten werden mit deinem Konto gelöscht."
 			},
-			"note": "Deine Antwort gilt für dieses ganze Gespräch."
+			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
+			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
 		}
 	}
 }

@@ -6199,7 +6199,8 @@
 			"mediumLabel": "Kind of contact",
 			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
-			"create": "Create link"
+			"create": "Create link",
+			"createFailed": "The link could not be created. Please try again."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6221,6 +6222,14 @@
 			"title": "My direct links",
 			"qr": "Show QR code",
 			"active": "{{name}} active"
+		},
+		"entry": {
+			"inactive": "This link is no longer active.",
+			"haveAccount": "Already have an account? Sign in",
+			"joinFailed": "That did not work. Please try again."
+		},
+		"page": {
+			"loadFailed": "Your direct links could not be loaded."
 		}
 	},
 	"dashboard": {
@@ -6261,7 +6270,8 @@
 			},
 			"note": "Your answer applies to this whole conversation.",
 			"confirm": "Continue",
-			"cancel": "Cancel"
+			"cancel": "Cancel",
+			"failed": "Your answer could not be saved. Your message has not been sent yet."
 		}
 	}
 }

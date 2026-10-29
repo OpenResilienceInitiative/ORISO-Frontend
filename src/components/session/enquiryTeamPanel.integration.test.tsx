@@ -97,6 +97,11 @@ vi.mock('../../api/apiTeamDiscussion', () => ({
 	apiGetTeamDiscussion: (...args: any[]) => boundary.getTeam(...args),
 	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args)
 }));
+// The seeker is a normal account, not a temporary guest (404).
+vi.mock('../../api/apiTemporaryAccount', () => ({
+	apiGetTemporaryAccount: async () => null,
+	apiPutMessageRetention: async () => 'saved'
+}));
 vi.mock('../../api/apiGetSessionSupervisors', () => ({
 	apiGetSessionSupervisors: async () => []
 }));

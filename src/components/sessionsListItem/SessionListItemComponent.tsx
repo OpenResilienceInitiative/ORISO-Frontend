@@ -1,4 +1,5 @@
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
+import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import * as React from 'react';
 import { useContext, useEffect, useId, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
@@ -994,6 +995,12 @@ export const SessionListItemComponent = ({
 		} else {
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
+	} else if (
+		!activeSession.isGroup &&
+		isDeletedGuest(activeSession.user?.temporaryAccount)
+	) {
+		// ORISO-UserService#1486: the guest's temporary account is gone.
+		sessionTopic = translate('temporaryAccount.deletedGuest');
 	} else {
 		sessionTopic =
 			resolveAnonymousChatDisplayName(activeSession.user) ||

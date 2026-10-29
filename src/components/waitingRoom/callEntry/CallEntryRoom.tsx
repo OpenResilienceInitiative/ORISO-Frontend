@@ -9,6 +9,7 @@ import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateBut
 import { ClosingFocal } from '../../transition/closing/closingFocal';
 import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import { generatePassword } from '../../../utils/pseudonymGenerator';
 import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
 import { getUsernameFeedback } from '../../registration/accountData/usernameFeedback';
 import { REGISTRATION_DATA_VALIDATION } from '../../registration/registrationDataValidation';
@@ -42,6 +43,13 @@ import {
 	CallEntryBlocker,
 	CallModality
 } from './callEntryTypes';
+
+/** What the person chose at the door; the caller creates the account from it. */
+export interface CallEntryAccount {
+	username: string;
+	password: string;
+	identity: Pseudonym;
+}
 
 /** A level above this once means the microphone demonstrably hears. */
 const HEARD_LEVEL = 0.15;
@@ -93,7 +101,7 @@ export interface CallEntryRoomProps {
 	 * on the way, ORISO-Frontend#1737). `false`, or a promise of it, says the
 	 * join failed and the person stays.
 	 */
-	onJoin?: () => ClosingSwapResult;
+	onJoin?: (account: CallEntryAccount) => ClosingSwapResult;
 	/**
 	 * Where the person arrives: the call's main area, which the room that
 	 * swaps in marks with `data-closing-focal="call"`. `null` plays no closing
@@ -104,6 +112,12 @@ export interface CallEntryRoomProps {
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
 	checkUsername?: (username: string) => Promise<boolean>;
+	/**
+	 * Temporary direct-link guests where the platform hides the password
+	 * (ORISO-UserService#1486): the account still gets one, generated here,
+	 * but the field and its suggest button are not shown.
+	 */
+	hidePassword?: boolean;
 }
 
 /**
@@ -142,7 +156,8 @@ export const CallEntryRoom = ({
 	closing = 'call',
 	onBlockerAction,
 	playTone,
-	checkUsername
+	checkUsername,
+	hidePassword = false
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -152,7 +167,9 @@ export const CallEntryRoom = ({
 	const [username, setUsername] = useState(
 		() => initialUsername ?? toRegistrationUsername(identity)
 	);
-	const [password, setPassword] = useState(initialPassword);
+	const [password, setPassword] = useState(() =>
+		hidePassword && !initialPassword ? generatePassword() : initialPassword
+	);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -314,6 +331,7 @@ export const CallEntryRoom = ({
 							onUsernameChange={setUsername}
 							password={password}
 							onPasswordChange={setPassword}
+							hidePassword={hidePassword}
 							usernameFeedback={usernameFeedback}
 							onUsernameBlur={() => setUsernameBlurred(true)}
 						/>
@@ -433,7 +451,9 @@ export const CallEntryRoom = ({
 								: (doneCount / conditions.length) * 100
 						}
 						beforeEnter={mayJoin}
-						onEnter={() => onJoin?.()}
+						onEnter={() =>
+							onJoin?.({ username, password, identity })
+						}
 						closing={closing ?? undefined}
 						label={copy.join[modality]}
 						status={

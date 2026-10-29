@@ -12,6 +12,7 @@ import {
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
+import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import {
 	phone390Globals,
@@ -364,6 +365,73 @@ export const ReadyToSend: Story = {
 			});
 			await expect(sendButton).toBeEnabled();
 		});
+	}
+};
+
+/**
+ * #1869 / ORISO-UserService#1486: a temporary guest whose platform lets them
+ * decide is asked once, before the first message leaves, whether their
+ * messages stay after the guest account is deleted.
+ */
+export const TemporaryGuestAskedBeforeFirstMessage: Story = {
+	name: 'Temporary guest — asked once before the first message',
+	beforeEach: () => {
+		resetTemporaryAccount({
+			medium: 'CHAT',
+			messageRetention: 'GUEST_DECIDES',
+			keepMessages: null
+		});
+		return () => resetTemporaryAccount();
+	},
+	render: () => <ComposerShell userData={mockComposerAskerData} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) throw new Error('composer editor not mounted yet');
+			return node;
+		});
+		await userEvent.click(editor);
+		await userEvent.type(editor, 'Hallo');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /senden|send/i })
+		);
+
+		const dialog = await body.findByTestId('keep-messages-dialog');
+		// Nothing left yet: the draft waits for the answer.
+		await expect(editor).toHaveTextContent('Hallo');
+		await expect(
+			within(dialog).getByRole('button', { name: 'Weiter' })
+		).toBeDisabled();
+		await userEvent.click(
+			within(dialog).getByText('Auch nach dem Löschen behalten')
+		);
+		await expect(
+			within(dialog).getByRole('button', { name: 'Weiter' })
+		).toBeEnabled();
+
+		// Cancel sends nothing and keeps the draft; the next send asks again.
+		// (Confirm → PUT → send is covered by useGuestRetentionGate.test.)
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Abbrechen' })
+		);
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
+		await expect(editor).toHaveTextContent('Hallo');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /senden|send/i })
+		);
+		const again = await body.findByTestId('keep-messages-dialog');
+		await userEvent.click(
+			within(again).getByRole('button', { name: 'Abbrechen' })
+		);
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
 	}
 };
 
