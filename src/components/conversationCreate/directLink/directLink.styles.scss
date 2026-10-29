@@ -373,3 +373,14 @@
 		width: auto;
 	}
 }
+
+/* The clipboard refused: list and share dialog say so in place. */
+.directLinkCopyError {
+	background: var(--m3-error-container, #ffdad6);
+	border-radius: 12px;
+	color: var(--m3-on-error-container, #410002);
+	font-size: 14px;
+	line-height: 20px;
+	margin: 8px 0 0;
+	padding: 12px 16px;
+}

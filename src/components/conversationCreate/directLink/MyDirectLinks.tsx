@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
@@ -13,6 +13,9 @@ import { ArtworkImage } from '../ArtworkImage';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
 import './directLink.styles.scss';
+
+/** How long the check stays on a copied tile. */
+const COPIED_MS = 2_000;
 
 interface MyDirectLinksProps {
 	links: DirectLink[];
@@ -42,6 +45,27 @@ export const MyDirectLinks = ({
 }: MyDirectLinksProps) => {
 	const { t } = useTranslation();
 	const [copiedId, setCopiedId] = useState<string>();
+	const [copyFailed, setCopyFailed] = useState(false);
+
+	useEffect(() => {
+		if (!copiedId) return;
+		const timer = window.setTimeout(
+			() => setCopiedId(undefined),
+			COPIED_MS
+		);
+		return () => window.clearTimeout(timer);
+	}, [copiedId]);
+
+	const copy = async (target: DirectLink) => {
+		try {
+			await onCopy(target.url);
+			setCopyFailed(false);
+			setCopiedId(target.id);
+		} catch {
+			setCopiedId(undefined);
+			setCopyFailed(true);
+		}
+	};
 
 	return (
 		<section className="myDirectLinks" aria-labelledby="myDirectLinksTitle">
@@ -56,6 +80,11 @@ export const MyDirectLinks = ({
 					</div>
 				)}
 			</header>
+			{copyFailed && (
+				<p role="alert" className="directLinkCopyError">
+					{t('groupChat.shareDialog.copyFailed')}
+				</p>
+			)}
 			{links.length === 0 && emptyState ? (
 				emptyState
 			) : (
@@ -104,10 +133,7 @@ export const MyDirectLinks = ({
 										aria-label={t('directLink.copy')}
 										title={t('directLink.copy')}
 										disabled={!link.active}
-										onClick={async () => {
-											await onCopy(link.url);
-											setCopiedId(link.id);
-										}}
+										onClick={() => void copy(link)}
 									>
 										{copiedId === link.id ? (
 											<CheckOutlinedIcon aria-hidden />
