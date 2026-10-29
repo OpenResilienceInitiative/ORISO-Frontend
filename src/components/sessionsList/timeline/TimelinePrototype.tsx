@@ -211,7 +211,7 @@ const CardGroup = ({
 
 /**
  * The split button sits where the twin card would show its last message.
- * It lives in a layer beside the card list (a tablist may only hold tabs)
+ * It lives in a layer beside the card list (a list may only hold its items)
  * and is placed over its card. Its main part opens the room exactly like a
  * click on the card does.
  */
@@ -479,7 +479,7 @@ export const TimelinePrototype = ({
 			<div
 				ref={futureRef}
 				className="tlp__futureInner"
-				role={futureItems.length ? 'tablist' : 'group'}
+				role={futureItems.length ? 'list' : 'group'}
 				aria-label="Anstehende Termine"
 			>
 				{futureItems.length === 0 ? (
@@ -533,7 +533,7 @@ export const TimelinePrototype = ({
 	const pastList = (
 		<div
 			className="tlp__past"
-			role="tablist"
+			role="list"
 			aria-label="Gespräche"
 			data-cy="timeline-past"
 		>
