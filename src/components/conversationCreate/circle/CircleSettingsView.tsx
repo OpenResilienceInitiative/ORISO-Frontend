@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-help-group.svg';
-import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
+import { TopicIcon } from '../TopicIcon';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { ReactComponent as AddCircleIcon } from '../../../resources/img/icons/add-circle.svg';
@@ -332,7 +332,7 @@ export const CircleSettingsView = ({
 				ref={topicButtonRef}
 				id="circleTopicRow"
 				fullWidth
-				icon={<CategorySearchIcon />}
+				icon={<TopicIcon filled={Boolean(topic)} />}
 				label={topic || translate('groupChat.circle.topicLabel')}
 				variant={
 					topicMenuOpen ? 'elevated' : topic ? 'tonal' : 'outlined'
