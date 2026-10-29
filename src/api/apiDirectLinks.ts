@@ -166,7 +166,8 @@ export const apiUpdateDirectLink = async (
 			url: endpoints.directLink(linkId),
 			method: FETCH_METHODS.PATCH,
 			bodyData: JSON.stringify(update),
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+			// CONTENT: without it fetchData hands back the raw Response.
+			responseHandling: handled
 		})
 	);
 

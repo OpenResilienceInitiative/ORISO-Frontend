@@ -108,6 +108,23 @@ describe('apiUpdateDirectLink', () => {
 		expect(link.active).toBe(true);
 	});
 
+	it('reads a real 200 answer through fetchData', async () => {
+		const actual =
+			await vi.importActual<typeof import('./fetchData')>('./fetchData');
+		vi.mocked(fetchData).mockImplementation(actual.fetchData);
+		const fetchMock = vi.fn(async () =>
+			Response.json({ ...dto, name: 'Neu' }, { status: 200 })
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const link = await apiUpdateDirectLink('7', { name: 'Neu' });
+			expect(fetchMock).toHaveBeenCalledOnce();
+			expect(link.name).toBe('Neu');
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
 	it('rejects an answer it cannot read', async () => {
 		vi.mocked(fetchData).mockResolvedValue({});
 		await expect(
