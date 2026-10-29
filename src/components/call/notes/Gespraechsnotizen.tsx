@@ -63,6 +63,13 @@ export interface GespraechsnotizenProps {
 	/** Collapsed to the rail on first render. */
 	readonly defaultCollapsed?: boolean;
 	/**
+	 * Folded or open, held by the host — the call bar's notes button (#1929)
+	 * folds it from outside. Leave it out and the pad keeps its own state.
+	 */
+	readonly collapsed?: boolean;
+	/** Told when the pad's own fold button is pressed. */
+	readonly onCollapsedChange?: (collapsed: boolean) => void;
+	/**
 	 * The clipboard, injectable.
 	 *
 	 * Not for convenience: this is the only way anything leaves the panel, so
@@ -91,13 +98,20 @@ const COPIED_FOR_MS = 2000;
 export const Gespraechsnotizen = ({
 	labels,
 	defaultCollapsed = false,
+	collapsed: heldCollapsed,
+	onCollapsedChange,
 	writeText,
 	className
 }: GespraechsnotizenProps) => {
 	const [notes, setNotes] = useState<readonly Note[]>([]);
 	const [draftType, setDraftType] = useState<NoteType>('anmerkung');
 	const [draftText, setDraftText] = useState('');
-	const [collapsed, setCollapsed] = useState(defaultCollapsed);
+	const [ownCollapsed, setOwnCollapsed] = useState(defaultCollapsed);
+	const collapsed = heldCollapsed ?? ownCollapsed;
+	const toggleCollapsed = () => {
+		setOwnCollapsed(!collapsed);
+		onCollapsedChange?.(!collapsed);
+	};
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [copied, setCopied] = useState(false);
 
@@ -169,7 +183,7 @@ export const Gespraechsnotizen = ({
 					className={styles.collapseButton}
 					aria-label={collapsed ? labels.expand : labels.collapse}
 					aria-expanded={!collapsed}
-					onClick={() => setCollapsed((was) => !was)}
+					onClick={toggleCollapsed}
 				>
 					<CollapseIcon
 						className={styles.collapseIcon}

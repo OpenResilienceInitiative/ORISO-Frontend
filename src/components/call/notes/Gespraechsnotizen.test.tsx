@@ -243,6 +243,50 @@ describe('Gesprächsnotizen', () => {
 		).toBeDefined();
 	});
 
+	/* The call bar's notes button (#1929) opens and folds the pad from outside. */
+	it('follows a fold state held by its host and keeps the notes', async () => {
+		const Host = () => {
+			const [collapsed, setCollapsed] = React.useState(false);
+			return (
+				<>
+					<button onClick={() => setCollapsed((was) => !was)}>
+						call bar notes
+					</button>
+					<Gespraechsnotizen
+						labels={labels}
+						collapsed={collapsed}
+						onCollapsedChange={setCollapsed}
+					/>
+				</>
+			);
+		};
+		render(<Host />);
+		await write('Thema Miete');
+		const pad = () =>
+			screen
+				.getByTestId('gespraechsnotizen')
+				.getAttribute('data-collapsed');
+
+		const user = userEvent.setup();
+		await user.click(
+			screen.getByRole('button', { name: 'call bar notes' })
+		);
+		expect(pad()).toBe('true');
+		await user.click(
+			screen.getByRole('button', { name: 'call bar notes' })
+		);
+		expect(pad()).toBe('false');
+		expect(screen.getByText('Thema Miete')).toBeDefined();
+
+		// Its own fold button tells the host, so both stay in step.
+		await user.click(screen.getByRole('button', { name: labels.collapse }));
+		expect(pad()).toBe('true');
+		await user.click(
+			screen.getByRole('button', { name: 'call bar notes' })
+		);
+		expect(pad()).toBe('false');
+	});
+
 	it('is keyboard-complete: add, type-select, copy, close', async () => {
 		// The ticket's last criterion, exercised with no pointer at all.
 		const writeText = vi
