@@ -1362,6 +1362,11 @@
 			"accept": "Kabul ediyorum",
 			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz.",
 			"saveFailed": "Onayınız kaydedilemedi. Lütfen tekrar deneyin."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Bu gruptan çıkarıldınız."
+			}
 		}
 	},
 	"help": {
