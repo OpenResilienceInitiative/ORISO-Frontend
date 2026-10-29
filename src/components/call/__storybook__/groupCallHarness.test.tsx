@@ -923,10 +923,10 @@ describe('what the host adds around the call', () => {
 		expect(container?.getAttribute('data-narrow-stage')).toBeNull();
 	});
 
-	it('gives an advice seeker their own private notepad too (#1929)', async () => {
-		// Frank, 2026-10-29: everyone in the call may jot things down. The
-		// notes stay on the own screen and end with the call, so nobody keeps
-		// notes on anybody else.
+	it('never offers the notepad to an advice seeker', async () => {
+		// The panel is a counsellor's scratchpad. Offering it to a seeker
+		// would suggest the centre keeps notes on them, in a product whose
+		// whole promise is that it does not.
 		const service = makeFakeMatrixClientService('active');
 		activeCall();
 		const view = withUser(
@@ -941,11 +941,7 @@ describe('what the host adds around the call', () => {
 				view.container.querySelector('.element-call-iframe')
 			).toBeTruthy()
 		);
-		expect(
-			view.container.querySelector('.element-call-notes')
-		).toBeTruthy();
-		// Sharing the call stays with the counsellor.
-		expect(view.container.querySelector('.element-call-share')).toBeFalsy();
+		expect(view.container.querySelector('.element-call-notes')).toBeFalsy();
 	});
 
 	it('announces the own identity to the call room, in the timeline', async () => {

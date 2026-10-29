@@ -448,57 +448,6 @@ describe('useElementCallWidget', () => {
 		expect(api.transport.send).toHaveBeenCalledWith('im.vector.hangup', {});
 	});
 
-	it('opens the host notepad when the call bar asks, and only where there is one (#1929)', async () => {
-		const mount = (onToggleNotes?: () => void) => {
-			const { result } = renderHook(() =>
-				useElementCallWidget(createClient(), {
-					roomId: CALL_ROOM,
-					isVideo: true,
-					onToggleNotes
-				})
-			);
-			return result;
-		};
-		const ask = async (result: ReturnType<typeof mount>, index: number) => {
-			await waitFor(() => expect(result.current.url).not.toBeNull());
-			const iframe = document.createElement('iframe');
-			iframe.src = result.current.url!;
-			act(() => result.current.attachIframe(iframe));
-			const api = widgetApiMocks.apiInstances[index];
-			const request = {
-				action: 'org.oriso.call.toggle_notes',
-				requestId: `notes-${index}`,
-				widgetId: 'widget',
-				data: {}
-			};
-			const event = new CustomEvent('org.oriso.call.toggle_notes', {
-				cancelable: true,
-				detail: request
-			});
-			act(() => api.emit('action:org.oriso.call.toggle_notes', event));
-			return { api, request, event };
-		};
-
-		const onToggleNotes = vi.fn();
-		const counsellor = await ask(mount(onToggleNotes), 0);
-		expect(counsellor.event.defaultPrevented).toBe(true);
-		expect(counsellor.api.transport.reply).toHaveBeenCalledWith(
-			counsellor.request,
-			{}
-		);
-		expect(onToggleNotes).toHaveBeenCalledTimes(1);
-
-		// No notepad (advice seekers): answer at once so the call does not wait.
-		const seeker = await ask(mount(), 1);
-		expect(seeker.event.defaultPrevented).toBe(true);
-		expect(seeker.api.transport.reply).toHaveBeenCalledWith(
-			seeker.request,
-			{
-				error: { message: 'There is no notepad here' }
-			}
-		);
-	});
-
 	it('tracks the call’s microphone and camera and switches them from the host', async () => {
 		const client = createClient();
 		const { result } = renderHook(() =>

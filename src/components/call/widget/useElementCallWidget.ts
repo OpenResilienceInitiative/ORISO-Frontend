@@ -42,15 +42,7 @@ export interface ElementCallWidgetOptions {
 	onClose?: () => void;
 	/** Keeps the floating host surface visible when Element Call requests it. */
 	onAlwaysOnScreenChange?: (alwaysOnScreen: boolean) => void;
-	/**
-	 * The call bar's notes button (ORISO-ElementCall#107) asks the host to
-	 * open or fold its notepad. Leave it out where there is no notepad.
-	 */
-	onToggleNotes?: () => void;
 }
-
-/** ORISO's call bar asks the host to open or fold its notepad (`src/widget.ts`). */
-const TOGGLE_NOTES_ACTION = 'org.oriso.call.toggle_notes';
 
 export interface ElementCallWidget {
 	/** `null` until every precondition is met; render nothing before then. */
@@ -133,8 +125,7 @@ export const useElementCallWidget = (
 		isVideo,
 		skipLobby = true,
 		onClose,
-		onAlwaysOnScreenChange,
-		onToggleNotes
+		onAlwaysOnScreenChange
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	const [error, setError] = useState<Error | null>(null);
@@ -148,9 +139,6 @@ export const useElementCallWidget = (
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
 	>(null);
-	// Read inside the widget's action handler, which outlives a render.
-	const onToggleNotesRef = useRef(onToggleNotes);
-	onToggleNotesRef.current = onToggleNotes;
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -387,23 +375,6 @@ export const useElementCallWidget = (
 			};
 			api.on('action:im.vector.hangup', handleClose);
 			api.on('action:io.element.close', handleClose);
-
-			// Answered at once either way, so the call never waits on it.
-			api.on(
-				`action:${TOGGLE_NOTES_ACTION}`,
-				(event: CustomEvent<IWidgetApiRequest>) => {
-					event.preventDefault();
-					const toggle = onToggleNotesRef.current;
-					if (!toggle) {
-						api.transport.reply(event.detail, {
-							error: { message: 'There is no notepad here' }
-						});
-						return;
-					}
-					api.transport.reply(event.detail, {});
-					toggle();
-				}
-			);
 
 			api.on(
 				'action:io.element.device_mute',

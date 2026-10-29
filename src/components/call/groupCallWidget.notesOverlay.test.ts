@@ -56,41 +56,10 @@ describe('the notepad over a stage with no width to give away', () => {
 	});
 
 	it('never takes the notepad away outright', () => {
-		// It is the only notepad in the call. `display: none` at a
+		// It is the consultant's only notepad. `display: none` at a
 		// breakpoint left nothing to open, which is the bug the rail replaced.
 		expect(scss).not.toMatch(
 			/\.element-call-notes[^{]*\{[^}]*display:\s*none/
-		);
-	});
-});
-
-describe("the host's buttons beside the notepad (#1929)", () => {
-	it('moves every right-anchored host button left of the notepad', () => {
-		// Measured in the call story: the close button sat on the rail's fold
-		// button, so the notepad could not be opened from its own rail.
-		const blocks = scss.match(
-			/\.element-call-(close|fullscreen|autofit) \{[^}]*\}/g
-		);
-		const anchored = (blocks ?? []).filter((block) =>
-			/\bright:/.test(block)
-		);
-		expect(anchored.length).toBe(5);
-		// The drag strip across the top lay over the fold button as well.
-		expect(scss).toMatch(
-			/\.element-call-drag-handle \{[^}]*right: var\(--call-notes-inset, 0px\);/
-		);
-		for (const block of anchored)
-			expect(block).toMatch(
-				/right: calc\(\d+px \+ var\(--call-notes-inset, 0px\)\)/
-			);
-	});
-
-	it('reserves the rail when folded and the panel when open', () => {
-		expect(scss).toMatch(
-			/&:has\(> \.element-call-notes\) \{\s*--call-notes-inset: 44px;/
-		);
-		expect(scss).toMatch(
-			/&:has\(> \.element-call-notes:not\(\[data-collapsed='true'\]\)\) \{\s*--call-notes-inset: 320px;/
 		);
 	});
 });
