@@ -3693,7 +3693,11 @@
 				"headline": "Davet şu anda yüklenemedi.",
 				"body": "Lütfen bağlantınızı kontrol edip tekrar deneyin. Davet bağlantınız geçerliliğini korur."
 			},
-			"loading": "Davet yükleniyor …"
+			"loading": "Davet yükleniyor …",
+			"invalid": {
+				"headline": "Bu davet bağlantısı çalışmıyor.",
+				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
+			}
 		}
 	},
 	"releaseNote": {

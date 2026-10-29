@@ -1350,6 +1350,9 @@
 		"groupInvite": {
 			"loadError": {
 				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			},
+			"invalid": {
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte frag die Person, die dir den Link geschickt hat, nach einem neuen."
 			}
 		}
 	},

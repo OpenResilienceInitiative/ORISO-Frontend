@@ -3659,7 +3659,11 @@
 				"headline": "The invitation could not be loaded right now.",
 				"body": "Please check your connection and try again. Your invitation link stays valid."
 			},
-			"loading": "Loading the invitation …"
+			"loading": "Loading the invitation …",
+			"invalid": {
+				"headline": "This invitation link does not work.",
+				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
+			}
 		}
 	},
 	"releaseNote": {
