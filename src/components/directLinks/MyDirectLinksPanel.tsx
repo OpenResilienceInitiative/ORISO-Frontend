@@ -27,7 +27,7 @@ export const MyDirectLinksPanel = () => {
 	const navigate = useNavigate();
 	const { fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
-	const { links, state, toggleFailed, reload, toggle, update } =
+	const { links, state, toggleFailed, pendingIds, reload, toggle, update } =
 		useMyDirectLinks();
 	const [qrLink, setQrLink] = useState<DirectLink | null>(null);
 	const [editing, setEditing] = useState<DirectLink | null>(null);
@@ -83,6 +83,7 @@ export const MyDirectLinksPanel = () => {
 				links={links}
 				toggleFailed={toggleFailed}
 				onToggle={toggle}
+				pendingIds={pendingIds}
 				onShowQr={setQrLink}
 				onEdit={setEditing}
 				onCreate={() => navigate(CREATE_CHAT_PATH)}

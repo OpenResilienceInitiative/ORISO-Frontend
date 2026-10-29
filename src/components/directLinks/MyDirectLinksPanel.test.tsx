@@ -133,6 +133,27 @@ describe('My direct links (#1894)', () => {
 		);
 	});
 
+	it('holds the switch until its request answers, then restores the value before it', async () => {
+		let refuse: (error: Error) => void = () => undefined;
+		vi.mocked(apiUpdateDirectLink).mockReturnValueOnce(
+			new Promise((_resolve, reject) => {
+				refuse = reject;
+			})
+		);
+		renderPage();
+		const tile = (await screen.findByText('Flyer Schule')).closest('li')!;
+		const toggle = within(tile).getByRole('switch');
+
+		fireEvent.click(toggle);
+		expect(toggle).toHaveProperty('disabled', true);
+		fireEvent.click(toggle);
+		expect(apiUpdateDirectLink).toHaveBeenCalledOnce();
+
+		await act(async () => refuse(new Error('500')));
+		expect(toggle).toHaveProperty('disabled', false);
+		expect(tile.className).not.toContain('directLinkTile--off');
+	});
+
 	it('switches back and says so when the server refuses', async () => {
 		vi.mocked(apiUpdateDirectLink).mockRejectedValue(new Error('403'));
 		renderPage();

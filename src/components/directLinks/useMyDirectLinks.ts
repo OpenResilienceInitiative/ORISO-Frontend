@@ -49,34 +49,63 @@ export const useMyDirectLinks = () => {
 		};
 	}, [invalidate, reload]);
 
-	const replace = (link: DirectLink) =>
-		setLinks((all) =>
-			all.map((item) => (item.id === link.id ? link : item))
-		);
+	const replace = useCallback(
+		(link: DirectLink) =>
+			setLinks((all) =>
+				all.map((item) => (item.id === link.id ? link : item))
+			),
+		[]
+	);
+
+	// One request per link at a time; its switch waits for the answer.
+	const linksRef = useRef(links);
+	linksRef.current = links;
+	const pendingRef = useRef(new Set<string>());
+	const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(
+		() => new Set()
+	);
+	const setPending = useCallback((id: string, pending: boolean) => {
+		if (pending) pendingRef.current.add(id);
+		else pendingRef.current.delete(id);
+		setPendingIds(new Set(pendingRef.current));
+	}, []);
 
 	/* Optimistic: the tile greys out at once and flips back if the server says no. */
-	const toggle = useCallback(async (id: string, active: boolean) => {
-		setToggleFailed(false);
-		setLinks((all) =>
-			all.map((item) => (item.id === id ? { ...item, active } : item))
-		);
-		try {
-			replace(await apiUpdateDirectLink(id, { active }));
-		} catch {
-			setLinks((all) =>
-				all.map((item) =>
-					item.id === id ? { ...item, active: !active } : item
-				)
-			);
-			setToggleFailed(true);
-		}
-	}, []);
+	const toggle = useCallback(
+		async (id: string, active: boolean) => {
+			if (pendingRef.current.has(id)) return;
+			const before =
+				linksRef.current.find((item) => item.id === id)?.active ??
+				!active;
+			const set = (value: boolean) =>
+				setLinks((all) =>
+					all.map((item) =>
+						item.id === id ? { ...item, active: value } : item
+					)
+				);
+			setPending(id, true);
+			setToggleFailed(false);
+			set(active);
+			try {
+				replace(await apiUpdateDirectLink(id, { active }));
+			} catch {
+				set(before);
+				setToggleFailed(true);
+			} finally {
+				setPending(id, false);
+			}
+		},
+		[replace, setPending]
+	);
 
-	const update = useCallback(async (id: string, change: DirectLinkUpdate) => {
-		const saved = await apiUpdateDirectLink(id, change);
-		replace(saved);
-		return saved;
-	}, []);
+	const update = useCallback(
+		async (id: string, change: DirectLinkUpdate) => {
+			const saved = await apiUpdateDirectLink(id, change);
+			replace(saved);
+			return saved;
+		},
+		[replace]
+	);
 
-	return { links, state, toggleFailed, reload, toggle, update };
+	return { links, state, toggleFailed, pendingIds, reload, toggle, update };
 };

@@ -20,6 +20,8 @@ const COPIED_MS = 2_000;
 interface MyDirectLinksProps {
 	links: DirectLink[];
 	onToggle: (id: string, active: boolean) => void;
+	/** Links whose on/off request is still running: their switch waits. */
+	pendingIds?: ReadonlySet<string>;
 	onShowQr: (link: DirectLink) => void;
 	onCopy?: (url: string) => void | Promise<void>;
 	/** #1894: edit name, topic and the temporary switch. */
@@ -37,6 +39,7 @@ interface MyDirectLinksProps {
 export const MyDirectLinks = ({
 	links,
 	onToggle,
+	pendingIds,
 	onShowQr,
 	onCopy = (url) => copyTextToClipboard(url),
 	onEdit,
@@ -171,6 +174,7 @@ export const MyDirectLinks = ({
 									)}
 									<Switch
 										checked={link.active}
+										disabled={pendingIds?.has(link.id)}
 										onChange={(active) =>
 											onToggle(link.id, active)
 										}

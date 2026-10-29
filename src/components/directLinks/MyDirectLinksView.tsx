@@ -13,6 +13,7 @@ export interface MyDirectLinksViewProps {
 	links: DirectLink[];
 	toggleFailed?: boolean;
 	onToggle: (id: string, active: boolean) => void;
+	pendingIds?: ReadonlySet<string>;
 	onShowQr: (link: DirectLink) => void;
 	onEdit: (link: DirectLink) => void;
 	onCreate: () => void;
@@ -68,6 +69,7 @@ export const MyDirectLinksView = ({
 	links,
 	toggleFailed = false,
 	onToggle,
+	pendingIds,
 	onShowQr,
 	onEdit,
 	onCreate,
@@ -107,6 +109,7 @@ export const MyDirectLinksView = ({
 			<MyDirectLinks
 				links={links}
 				onToggle={onToggle}
+				pendingIds={pendingIds}
 				onShowQr={onShowQr}
 				onEdit={onEdit}
 				onCopy={onCopy}
