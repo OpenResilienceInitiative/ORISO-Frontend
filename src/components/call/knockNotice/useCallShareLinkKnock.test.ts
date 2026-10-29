@@ -121,4 +121,54 @@ describe('useCallShareLinkKnock', () => {
 		expect(get).toHaveBeenCalledTimes(2);
 		expect(result.current.knock).toBe(true);
 	});
+
+	it('ignores a poll that started while a change was on its way', async () => {
+		vi.useFakeTimers();
+		let answerPoll: (value: { id: number; knock: boolean }) => void = () =>
+			undefined;
+		const get = vi
+			.fn()
+			.mockResolvedValueOnce({ id: 7, knock: true })
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						answerPoll = resolve;
+					})
+			)
+			.mockResolvedValue({ id: 7, knock: false });
+		let landChange: (stored: boolean) => void = () => undefined;
+		const set = vi.fn(
+			() =>
+				new Promise<boolean>((resolve) => {
+					landChange = resolve;
+				})
+		);
+		const { result } = renderHook(() =>
+			useCallShareLinkKnock({
+				enabled: true,
+				call: CALL,
+				api: fakeApi({ get, set }),
+				intervalMs: 1000
+			})
+		);
+		await act(async () => {});
+		expect(result.current.knock).toBe(true);
+
+		let change: Promise<boolean> = Promise.resolve(false);
+		act(() => {
+			change = result.current.setKnock(false);
+		});
+		// The poll asks before the change lands, and reads the old setting.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1000);
+		});
+		expect(get).toHaveBeenCalledTimes(2);
+		await act(async () => {
+			landChange(false);
+			await change;
+		});
+		expect(result.current.knock).toBe(false);
+		await act(async () => answerPoll({ id: 7, knock: true }));
+		expect(result.current.knock).toBe(false);
+	});
 });

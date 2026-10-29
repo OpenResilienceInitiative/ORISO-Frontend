@@ -46,8 +46,12 @@ export const useCallShareLinkKnock = ({
 }: UseCallShareLinkKnockOptions): CallShareLinkKnockState => {
 	const [link, setLink] = useState<CallShareLinkKnock | null>(null);
 	const linkRef = useRef<CallShareLinkKnock | null>(null);
-	// Bumped by every change: a poll that started before it is stale.
+	// Bumped by every change: an older change's answer is stale.
 	const version = useRef(0);
+	// A poll that overlaps a change may have read the old setting: changes on
+	// their way, and changes landed so far.
+	const writing = useRef(0);
+	const landed = useRef(0);
 	const apiRef = useRef(api);
 	apiRef.current = api;
 
@@ -65,11 +69,16 @@ export const useCallShareLinkKnock = ({
 		let stopped = false;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const tick = () => {
-			const asked = version.current;
+			const asked = landed.current;
 			apiRef.current
 				.get({ sourceRoomId, callId })
 				.then((next) => {
-					if (!stopped && asked === version.current) store(next);
+					if (
+						!stopped &&
+						!writing.current &&
+						asked === landed.current
+					)
+						store(next);
 				})
 				.catch(() => {
 					// The server did not answer: keep what we knew.
@@ -89,11 +98,20 @@ export const useCallShareLinkKnock = ({
 		const current = linkRef.current;
 		if (!current) throw new Error('No share link for this call');
 		const request = ++version.current;
-		const stored = await apiRef.current.set(current.id, knock);
-		// The same link, and no newer change since: take the server's word.
-		if (request === version.current && linkRef.current?.id === current.id)
-			store({ id: current.id, knock: stored });
-		return stored;
+		writing.current += 1;
+		try {
+			const stored = await apiRef.current.set(current.id, knock);
+			// The same link, and no newer change since: take the server's word.
+			if (
+				request === version.current &&
+				linkRef.current?.id === current.id
+			)
+				store({ id: current.id, knock: stored });
+			return stored;
+		} finally {
+			writing.current -= 1;
+			landed.current += 1;
+		}
 	}, []);
 
 	return { knock: link ? link.knock : null, setKnock };
