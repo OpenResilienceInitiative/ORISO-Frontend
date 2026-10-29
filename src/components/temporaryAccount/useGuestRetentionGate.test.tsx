@@ -16,7 +16,10 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
-import { apiPutMessageRetention } from '../../api/apiTemporaryAccount';
+import {
+	apiGetTemporaryAccount,
+	apiPutMessageRetention
+} from '../../api/apiTemporaryAccount';
 import { useGuestRetentionGate } from './useGuestRetentionGate';
 import { resetTemporaryAccount } from './temporaryAccountStore';
 
@@ -111,5 +114,40 @@ describe('useGuestRetentionGate', () => {
 		render(<Composer />);
 		fireEvent.click(screen.getByText('send'));
 		expect(gated).toBe(false);
+	});
+
+	it('holds a send until the lookup answers, then asks', async () => {
+		resetTemporaryAccount();
+		vi.mocked(apiGetTemporaryAccount).mockResolvedValue({
+			messageRetention: 'GUEST_DECIDES',
+			keepMessages: null
+		});
+		render(<Composer />);
+		fireEvent.click(screen.getByText('send'));
+		expect(gated).toBe(true);
+		await screen.findByTestId('keep-messages-dialog');
+		expect(send).not.toHaveBeenCalled();
+	});
+
+	it('retries a failed lookup on the next send', async () => {
+		resetTemporaryAccount(null, 'failed');
+		vi.mocked(apiGetTemporaryAccount).mockResolvedValue({
+			messageRetention: 'GUEST_DECIDES',
+			keepMessages: null
+		});
+		render(<Composer />);
+		fireEvent.click(screen.getByText('send'));
+		await screen.findByTestId('keep-messages-dialog');
+		expect(apiGetTemporaryAccount).toHaveBeenCalled();
+		expect(send).not.toHaveBeenCalled();
+	});
+
+	it('sends unasked when the person has no temporary account', async () => {
+		resetTemporaryAccount();
+		vi.mocked(apiGetTemporaryAccount).mockResolvedValue(null);
+		render(<Composer />);
+		fireEvent.click(screen.getByText('send'));
+		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		expect(screen.queryByTestId('keep-messages-dialog')).toBeNull();
 	});
 });

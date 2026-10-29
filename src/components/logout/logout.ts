@@ -32,6 +32,7 @@ import {
 } from '../../services/clientStorageHygiene';
 import { withTimeout } from '../../utils/promiseTimeout';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
 import {
 	endPractice,
 	exitPracticeMode,
@@ -189,6 +190,8 @@ export const teardownLocalSession = (): void => {
 	// The app-wide snackbars outlive the host; a join request naming someone
 	// must not greet the next person who signs in (#1499).
 	appSnackbarStack.clear();
+	// The next guest must be asked about their own messages (#1869).
+	resetTemporaryAccount();
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

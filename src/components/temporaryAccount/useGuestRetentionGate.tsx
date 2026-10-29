@@ -9,6 +9,8 @@ import { KeepMessagesDialog } from './KeepMessagesDialog';
 import { MessageRetention } from './messageRetention';
 import {
 	answerRetention,
+	getOwnTemporaryAccount,
+	loadTemporaryAccount,
 	needsRetentionAnswer,
 	useOwnTemporaryAccount
 } from './temporaryAccountStore';
@@ -18,24 +20,40 @@ import {
  * asked once, before the first message or upload, whether their messages
  * stay. `gate(proceed)` returns `true` when it took over: `proceed` then runs
  * after the answer, or not at all when the guest cancels (the draft stays).
+ * Until the account is known, a send waits for the lookup (retried when it
+ * failed); if it fails again the send goes out unasked, as for no account.
  */
 export const useGuestRetentionGate = (enabled: boolean) => {
 	const { t } = useTranslation();
 	const { addNotification } = useContext(NotificationsContext) ?? {
 		addNotification: () => undefined
 	};
-	const { account } = useOwnTemporaryAccount(enabled);
+	const { account, status } = useOwnTemporaryAccount(enabled);
 	const [open, setOpen] = useState(false);
 	const pending = useRef<(() => void) | null>(null);
 
 	const gate = useCallback(
 		(proceed: () => void) => {
-			if (!enabled || !needsRetentionAnswer(account)) return false;
+			if (!enabled) return false;
+			if (status === 'ready') {
+				if (!needsRetentionAnswer(account)) return false;
+				pending.current = proceed;
+				setOpen(true);
+				return true;
+			}
 			pending.current = proceed;
-			setOpen(true);
+			void loadTemporaryAccount().then(() => {
+				if (pending.current !== proceed) return;
+				if (needsRetentionAnswer(getOwnTemporaryAccount().account)) {
+					setOpen(true);
+					return;
+				}
+				pending.current = null;
+				proceed();
+			});
 			return true;
 		},
-		[account, enabled]
+		[account, enabled, status]
 	);
 
 	const confirm = useCallback(

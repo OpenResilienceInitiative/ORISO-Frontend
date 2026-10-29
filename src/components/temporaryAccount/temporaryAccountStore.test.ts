@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetTemporaryAccount } from '../../api/apiTemporaryAccount';
 import {
 	answerRetention,
+	getOwnTemporaryAccount,
 	isDeletedGuest,
 	loadTemporaryAccount,
 	needsRetentionAnswer,
@@ -53,11 +54,8 @@ describe('temporary account rules', () => {
 		expect(retentionOf(undefined)).toBeUndefined();
 	});
 
-	it('knows a deleted guest by either field', () => {
+	it('knows a deleted guest', () => {
 		expect(isDeletedGuest(guest({ deleted: true }))).toBe(true);
-		expect(
-			isDeletedGuest({ ...guest(), deleted: undefined, isDeleted: true })
-		).toBe(true);
 		expect(isDeletedGuest(guest())).toBe(false);
 		expect(isDeletedGuest(undefined)).toBe(false);
 	});
@@ -69,9 +67,14 @@ describe('answerRetention', () => {
 		const put = vi.fn().mockResolvedValue('saved');
 		await answerRetention('keep', put);
 		expect(put).toHaveBeenCalledWith(true);
-		vi.mocked(apiGetTemporaryAccount).mockResolvedValue(null);
 		// No reload needed: the store already has the answer.
 		expect(apiGetTemporaryAccount).not.toHaveBeenCalled();
+		const { account } = getOwnTemporaryAccount();
+		expect(account).toMatchObject({
+			keepMessages: true,
+			keepsMessages: true
+		});
+		expect(needsRetentionAnswer(account)).toBe(false);
 	});
 
 	it('reads the account again after a 409', async () => {
@@ -84,6 +87,9 @@ describe('answerRetention', () => {
 			'alreadyDecided'
 		);
 		expect(apiGetTemporaryAccount).toHaveBeenCalledOnce();
+		const { account } = getOwnTemporaryAccount();
+		expect(account).toMatchObject({ keepMessages: false });
+		expect(needsRetentionAnswer(account)).toBe(false);
 	});
 
 	it('loads once per page', async () => {
@@ -91,5 +97,35 @@ describe('answerRetention', () => {
 		await Promise.all([loadTemporaryAccount(), loadTemporaryAccount()]);
 		await loadTemporaryAccount();
 		expect(apiGetTemporaryAccount).toHaveBeenCalledOnce();
+	});
+
+	it('keeps a failed lookup retryable instead of caching "no account"', async () => {
+		vi.mocked(apiGetTemporaryAccount)
+			.mockRejectedValueOnce(new Error('503'))
+			.mockResolvedValueOnce(guest());
+		await loadTemporaryAccount();
+		expect(getOwnTemporaryAccount().status).toBe('failed');
+		await loadTemporaryAccount();
+		expect(apiGetTemporaryAccount).toHaveBeenCalledTimes(2);
+		expect(needsRetentionAnswer(getOwnTemporaryAccount().account)).toBe(
+			true
+		);
+	});
+
+	it('drops a lookup that lands after a reset (sign-out)', async () => {
+		let answer: (value: unknown) => void = () => undefined;
+		vi.mocked(apiGetTemporaryAccount).mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as never
+		);
+		const previous = loadTemporaryAccount();
+		resetTemporaryAccount();
+		answer(guest({ keepMessages: true }));
+		await previous;
+		expect(getOwnTemporaryAccount()).toEqual({
+			status: 'idle',
+			account: null
+		});
 	});
 });
