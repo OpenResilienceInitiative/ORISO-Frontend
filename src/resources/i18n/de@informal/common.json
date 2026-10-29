@@ -2796,16 +2796,16 @@
 		"admission": {
 			"on": "Gäste warten, bis du sie einlässt."
 		},
-		"share": {
-			"copyFailed": "Kopieren hat nicht geklappt. Bitte markiere den Link und kopiere ihn selbst.",
-			"knock": {
-				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
-			},
-			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald du auflegst, funktioniert er nicht mehr."
-		},
 		"states": {
 			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}.",
 			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
+		},
+		"share": {
+			"knock": {
+				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
+			},
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markiere den Link und kopiere ihn selbst.",
+			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald du auflegst, funktioniert er nicht mehr."
 		}
 	},
 	"directLink": {
