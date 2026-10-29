@@ -14,7 +14,10 @@ import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegist
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
-import { callEventListeners } from '../../utils/eventHandler';
+import {
+	callEventListeners,
+	EVENT_SESSION_TEARDOWN
+} from '../../utils/eventHandler';
 import {
 	getMatrixClientService,
 	setMatrixClientServiceRef
@@ -32,7 +35,6 @@ import {
 } from '../../services/clientStorageHygiene';
 import { withTimeout } from '../../utils/promiseTimeout';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
-import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
 import {
 	endPractice,
 	exitPracticeMode,
@@ -190,8 +192,9 @@ export const teardownLocalSession = (): void => {
 	// The app-wide snackbars outlive the host; a join request naming someone
 	// must not greet the next person who signs in (#1499).
 	appSnackbarStack.clear();
-	// The next guest must be asked about their own messages (#1869).
-	resetTemporaryAccount();
+	// Module stores that cannot be imported here (cycle via fetchData), e.g.
+	// the guest's temporary account (#1869), reset themselves on this.
+	void callEventListeners(EVENT_SESSION_TEARDOWN);
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

@@ -6,6 +6,9 @@ export type TEventListener = {
 
 const events: TEventListener[] = [];
 
+/** `teardownLocalSession`: drop module-level, user-scoped state. */
+export const EVENT_SESSION_TEARDOWN = 'session_teardown';
+
 export const addEventListener = (name: string, handler: TEventHandler) => {
 	const eventListenerIndex = events.findIndex(
 		(event) => event.name === name && event.handler === handler

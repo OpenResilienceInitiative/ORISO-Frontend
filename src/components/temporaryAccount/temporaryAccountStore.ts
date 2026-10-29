@@ -6,6 +6,10 @@ import {
 } from '../../api/apiTemporaryAccount';
 import type { TemporaryAccountState } from '../../globalState/interfaces';
 import {
+	addEventListener,
+	EVENT_SESSION_TEARDOWN
+} from '../../utils/eventHandler';
+import {
 	effectiveRetention,
 	MessageRetention,
 	mustAskGuest
@@ -65,6 +69,12 @@ export const resetTemporaryAccount = (
 	inflight = null;
 	publish({ status, account });
 };
+
+// The next person must be asked about their own messages.
+addEventListener(EVENT_SESSION_TEARDOWN, async (args) => {
+	resetTemporaryAccount();
+	return args;
+});
 
 const subscribe = (listener: () => void) => {
 	listeners.add(listener);

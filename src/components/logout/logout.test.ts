@@ -36,7 +36,8 @@ vi.mock('../../utils/appConfig', () => ({
 	appConfig: { urls: { toEntry: '/' } }
 }));
 vi.mock('../../utils/eventHandler', () => ({
-	callEventListeners: vi.fn().mockResolvedValue(false)
+	callEventListeners: vi.fn().mockResolvedValue(false),
+	EVENT_SESSION_TEARDOWN: 'session_teardown'
 }));
 vi.mock('../../services/matrixClientRegistry', () => ({
 	getMatrixClientService: () => ({
