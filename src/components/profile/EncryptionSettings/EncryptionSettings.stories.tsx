@@ -298,12 +298,16 @@ export const PasswordRecoveryStaleEnvelope: Story = {
 				/^Ihr aktuelles Passwort öffnet die Sicherung/
 			)
 		).toBeVisible();
-		await expect(
-			canvas.getByLabelText('Vorheriges Passwort eingeben')
-		).toBeVisible();
-		await expect(
-			canvas.getByLabelText('Ersatzschlüssel eingeben')
-		).toBeVisible();
+		// MUI hides the native radio input itself; its label is what shows.
+		for (const choice of [
+			'Vorheriges Passwort eingeben',
+			'Ersatzschlüssel eingeben'
+		]) {
+			await expect(canvas.getByText(choice)).toBeVisible();
+			await expect(
+				canvas.getByRole('radio', { name: choice })
+			).not.toBeChecked();
+		}
 	}
 };
 
