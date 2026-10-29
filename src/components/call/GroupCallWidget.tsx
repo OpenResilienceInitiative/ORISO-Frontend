@@ -182,9 +182,13 @@ export const GroupCallWidget: React.FC = () => {
 		[callData?.signalRoomId, callData?.roomId, callData?.elementCallRoomId]
 	);
 
+	// A legacy call renders no widget (see below): nothing to knock on.
+	const knocksEnabled =
+		isConsultantUser && shouldPrepareWidget && !!callData?.usesElementCall;
+
 	// Polled once here: the notice and the call's own count show the same list.
 	const callKnocks = useCallKnocks({
-		enabled: isConsultantUser && shouldPrepareWidget,
+		enabled: knocksEnabled,
 		scope: knockScope
 	});
 	// The call link's "Anklopfen" (UserService#1488), for the switch in the
@@ -200,7 +204,7 @@ export const GroupCallWidget: React.FC = () => {
 		[callData?.signalRoomId, callData?.callId]
 	);
 	const shareLinkKnock = useCallShareLinkKnock({
-		enabled: isConsultantUser && shouldPrepareWidget,
+		enabled: knocksEnabled,
 		call: shareLinkCall
 	});
 	const knockState = useMemo(
