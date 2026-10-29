@@ -34,14 +34,13 @@
 		border-radius: 0;
 	}
 
-	&.group-call-widget--mobile-compact {
-		left: auto !important;
-		top: auto !important;
-		right: 12px;
-		bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-		border-radius: 14px;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-		overflow: hidden;
+	/*
+	 * Put aside into the dock (FE#1904). Hidden, not unmounted: the iframe
+	 * holds the call, and unmounting it would drop the call.
+	 */
+	&.group-call-widget--docked {
+		visibility: hidden;
+		pointer-events: none;
 	}
 
 	&.group-call-widget--fullscreen {
@@ -51,7 +50,6 @@
 	}
 }
 
-.incoming-call-popup,
 .connecting-popup {
 	background: #0b0b0b;
 	border-radius: 16px;
@@ -138,6 +136,41 @@
 	&:hover {
 		background: rgba(0, 0, 0, 0.8);
 	}
+}
+
+.element-call-minimize {
+	position: absolute;
+	top: 10px;
+	right: 90px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: none;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	font-size: 18px;
+	cursor: pointer;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&:hover {
+		background: rgba(0, 0, 0, 0.8);
+	}
+}
+
+/* Beside the close button on a phone, and left of auto-fit on desktop. */
+.group-call-widget--mobile .element-call-minimize {
+	right: 50px;
+}
+
+.group-call-widget:not(
+		.group-call-widget--mobile,
+		.group-call-widget--fullscreen
+	)
+	.element-call-minimize {
+	right: 130px;
 }
 
 .element-call-autofit {
@@ -296,17 +329,10 @@
 	}
 }
 
-.incoming-call-content,
 .connecting-content {
 	padding: 40px 20px;
 	text-align: center;
 	background: #0b0b0b;
-
-	.incoming-call-avatar {
-		display: flex;
-		justify-content: center;
-		margin: 0 auto 20px;
-	}
 
 	h2 {
 		margin: 0 0 8px;
@@ -319,45 +345,6 @@
 		margin: 0 0 24px;
 		color: #bdbdbd;
 		font-size: 14px;
-	}
-}
-
-.incoming-call-actions {
-	display: flex;
-	gap: 12px;
-	justify-content: center;
-
-	button {
-		padding: 12px 32px;
-		border: none;
-		border-radius: 8px;
-		font-size: 15px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-	}
-
-	.btn-answer {
-		background: #4caf50;
-		color: white;
-
-		&:hover {
-			background: #45a049;
-			transform: translateY(-2px);
-			box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-		}
-	}
-
-	.btn-decline {
-		background: #f44336;
-		color: white;
-
-		&:hover {
-			background: #da190b;
-			transform: translateY(-2px);
-			box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
-		}
 	}
 }
 
@@ -375,40 +362,6 @@
 
 	.element-call-iframe {
 		border-radius: 0;
-	}
-
-	.group-call-widget.group-call-widget--mobile-compact {
-		border-radius: 14px;
-	}
-
-	.group-call-widget.group-call-widget--mobile-compact {
-		.livekit-room-container,
-		.element-call-container {
-			width: min(220px, 44vw);
-			height: min(170px, 32vh);
-			border-radius: 14px;
-		}
-
-		.element-call-iframe {
-			border-radius: 14px;
-		}
-
-		.element-call-close,
-		.element-call-fullscreen {
-			width: 28px;
-			height: 28px;
-			font-size: 14px;
-		}
-
-		.element-call-close {
-			top: 6px;
-			right: calc(6px + var(--call-notes-inset, 0px));
-		}
-
-		.element-call-fullscreen {
-			top: 6px;
-			right: calc(40px + var(--call-notes-inset, 0px));
-		}
 	}
 }
 
@@ -548,7 +501,6 @@
 		border-radius: 0;
 	}
 
-	.incoming-call-popup,
 	.connecting-popup {
 		width: 90vw;
 	}

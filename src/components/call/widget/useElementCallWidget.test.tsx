@@ -499,6 +499,54 @@ describe('useElementCallWidget', () => {
 		);
 	});
 
+	it('tracks the call’s microphone and camera and switches them from the host', async () => {
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+		expect(result.current.devices).toBeNull();
+
+		// The call reports each change of its own.
+		act(() =>
+			api.emit(
+				'action:io.element.device_mute',
+				new CustomEvent('io.element.device_mute', {
+					cancelable: true,
+					detail: {
+						action: 'io.element.device_mute',
+						requestId: 'report-1',
+						widgetId: 'widget',
+						data: { audio_enabled: true, video_enabled: true }
+					}
+				})
+			)
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: true,
+			video_enabled: true
+		});
+
+		// The dock asks for a change; the call answers with its new state.
+		api.transport.send.mockResolvedValueOnce({
+			audio_enabled: false,
+			video_enabled: true
+		});
+		await act(() => result.current.setDevices({ audio_enabled: false }));
+		expect(api.transport.send).toHaveBeenCalledWith(
+			'io.element.device_mute',
+			{ audio_enabled: false }
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: false,
+			video_enabled: true
+		});
+	});
+
 	it('forwards local echoes, state updates, and allowed to-device events', async () => {
 		const client = createClient();
 		const { result } = renderHook(() =>

@@ -42,8 +42,9 @@ import {
 } from './publishCallIdentity';
 import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
-import { UserAvatar } from '../message/UserAvatar';
-import { type CallParty, callPartyOf } from './callParty';
+import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
+import { IncomingCallCard } from './states/IncomingCallCard';
+import { DockedCall } from './states/DockedCall';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -97,6 +98,20 @@ const HANGUP_HANDSHAKE_MS = 1500;
 const IDENTITY_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
 const IDENTITY_RETRY_CEILING_MS = 8000;
 
+/** Looks up the conversation a call belongs to; returns the effect cleanup. */
+const conversationOf = (
+	roomId: string,
+	found: (conversation: CallConversation | null) => void
+): (() => void) => {
+	const controller = new AbortController();
+	apiGetSessionRoomsByRoomIds([roomId], controller.signal)
+		.then(({ sessions }) => {
+			if (!controller.signal.aborted) found(sessions?.[0] ?? null);
+		})
+		.catch(() => undefined);
+	return () => controller.abort();
+};
+
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
@@ -105,9 +120,13 @@ export const GroupCallWidget: React.FC = () => {
 	const userData = useContext(UserDataContext)?.userData;
 	const ownAvatarUserId = useOwnAvatarUserId();
 	const [callData, setCallData] = useState<CallData | null>(null);
-	const [incomingCaller, setIncomingCaller] = useState<CallParty | null>(
+	/* The conversation the call belongs to, and a second call's (FE#1904). */
+	const [conversation, setConversation] = useState<CallConversation | null>(
 		null
 	);
+	const [waitingCall, setWaitingCall] = useState<CallData | null>(null);
+	const [waitingConversation, setWaitingConversation] =
+		useState<CallConversation | null>(null);
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
@@ -476,7 +495,9 @@ export const GroupCallWidget: React.FC = () => {
 	});
 	const [position, setPosition] = useState({ x: 100, y: 100 });
 	const [isMobileView, setIsMobileView] = useState(false);
-	const [isMobileCompact, setIsMobileCompact] = useState(false);
+	/* Put aside into the dock; the iframe stays mounted, or the call drops. */
+	const [isMinimized, setIsMinimized] = useState(false);
+	const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
 	const dragRef = useRef<{
 		startX: number;
 		startY: number;
@@ -494,6 +515,7 @@ export const GroupCallWidget: React.FC = () => {
 	} | null>(null);
 	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
+	const answeringRef = useRef(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// React compares ref callbacks by function identity, not by DOM node: an
@@ -543,6 +565,7 @@ export const GroupCallWidget: React.FC = () => {
 	useEffect(() => {
 		const unsubscribe = callManager.subscribe((newCallData) => {
 			setCallData(newCallData);
+			setWaitingCall(callManager.getWaitingCall());
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
 				setIsDismissed(newCallData.state === 'left');
@@ -553,6 +576,7 @@ export const GroupCallWidget: React.FC = () => {
 		});
 		const currentCall = callManager.getCurrentCall();
 		setCallData(currentCall);
+		setWaitingCall(callManager.getWaitingCall());
 		setCallState(currentCall?.state || null);
 		setIsDismissed(currentCall?.state === 'left');
 		return () => unsubscribe();
@@ -560,12 +584,7 @@ export const GroupCallWidget: React.FC = () => {
 
 	useEffect(() => {
 		const updateViewport = () => {
-			const mobile = window.innerWidth <= 640;
-			setIsMobileView(mobile);
-			if (!mobile) {
-				// Compact mode is mobile-only; reset it on larger screens.
-				setIsMobileCompact(false);
-			}
+			setIsMobileView(window.innerWidth <= 640);
 		};
 
 		updateViewport();
@@ -633,26 +652,64 @@ export const GroupCallWidget: React.FC = () => {
 	]);
 
 	/*
-	 * Who is ringing, looked up in the conversation the call belongs to, so
-	 * the popup shows the caller's name and avatar from the session list
-	 * instead of a fixed "G" (#780). Unknown callers keep the generic line.
+	 * Who is ringing, and whom the call is with, looked up in the
+	 * conversation the call belongs to, so the card and the dock show names
+	 * and avatars from the session list instead of a fixed "G" (#780).
+	 * Unknown callers keep the generic line.
 	 */
-	const ringingIncoming =
-		!!callData?.isIncoming && callData.state === 'ringing';
-	const ringingRoomId = callData?.signalRoomId || callData?.roomId;
-	const callerUserId = callData?.callerUserId;
+	const conversationRoomId = callData?.signalRoomId || callData?.roomId;
+	const waitingRoomId = waitingCall?.signalRoomId || waitingCall?.roomId;
 	useEffect(() => {
-		setIncomingCaller(null);
-		if (!ringingIncoming || !ringingRoomId) return;
-		const controller = new AbortController();
-		apiGetSessionRoomsByRoomIds([ringingRoomId], controller.signal)
-			.then(({ sessions }) => {
-				if (!controller.signal.aborted)
-					setIncomingCaller(callPartyOf(sessions?.[0], callerUserId));
-			})
-			.catch(() => undefined);
-		return () => controller.abort();
-	}, [ringingIncoming, ringingRoomId, callerUserId]);
+		setConversation(null);
+		if (!conversationRoomId) return;
+		return conversationOf(conversationRoomId, setConversation);
+	}, [conversationRoomId]);
+	useEffect(() => {
+		setWaitingConversation(null);
+		if (!waitingRoomId) return;
+		return conversationOf(waitingRoomId, setWaitingConversation);
+	}, [waitingRoomId]);
+	const incomingCaller = callPartyOf(conversation, callData?.callerUserId);
+	const waitingCaller = callPartyOf(
+		waitingConversation,
+		waitingCall?.callerUserId
+	);
+	// Whom the call is with; nobody for a group, which the dock names as such.
+	const knownParty = callData?.isGroup
+		? null
+		: callData?.isIncoming
+			? incomingCaller
+			: counterpartOf(
+					conversation,
+					matrixClientService?.getClient()?.getUserId() ?? undefined
+				);
+	const unnamedCall = callData?.isGroup
+		? t('calls.states.groupCall')
+		: t('calls.title');
+	const dockParty = knownParty ?? { name: unnamedCall };
+
+	// Back from the dock, keyboard focus follows the user into the call.
+	const wasMinimized = useRef(false);
+	useEffect(() => {
+		if (wasMinimized.current && !isMinimized) iframeRef.current?.focus();
+		wasMinimized.current = isMinimized;
+	}, [isMinimized]);
+
+	/*
+	 * A second call must never ring unseen. Browser full screen puts the call
+	 * in the top layer, where no z-index reaches, so leave it while it rings.
+	 */
+	const waitingCallId = waitingCall?.callId;
+	useEffect(() => {
+		if (waitingCallId && document.fullscreenElement)
+			void document.exitFullscreen?.().catch(() => undefined);
+	}, [waitingCallId, isFullscreen]);
+
+	// The dock's clock starts when the call surface opens; a new call resets it.
+	useEffect(() => {
+		setCallStartedAt(elementCallUrl ? Date.now() : null);
+		if (!elementCallUrl) setIsMinimized(false);
+	}, [elementCallUrl, callData?.callId]);
 
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
@@ -662,6 +719,47 @@ export const GroupCallWidget: React.FC = () => {
 	const handleDecline = () => {
 		setIsDismissed(true);
 		callManager.endCall();
+	};
+
+	/*
+	 * Answering a second call ends the running one first, through the same
+	 * hangup handshake as the end button, so the others see this person
+	 * leave before the next call opens.
+	 */
+	const handleAnswerWaiting = () => {
+		const next = waitingCall;
+		// A second press during the handshake would blank the answered call.
+		if (!next || answeringRef.current) return;
+		answeringRef.current = true;
+		const endingCallId = callData?.callId;
+		void (async () => {
+			try {
+				await Promise.race([
+					widget.hangup(),
+					new Promise<void>((resolve) =>
+						setTimeout(resolve, HANGUP_HANDSHAKE_MS)
+					)
+				]);
+			} catch {
+				/* the running call's iframe may already be gone */
+			}
+			const current = callManager.getCurrentCall();
+			const stillRinging =
+				callManager.getWaitingCall()?.callId === next.callId ||
+				(current?.callId === next.callId &&
+					current.state === 'ringing');
+			if (stillRinging) {
+				if (iframeRef.current) iframeRef.current.src = 'about:blank';
+				setElementCallUrl('');
+				callManager.answerWaitingCall(next.callId);
+			} else if (callManager.getCurrentCall()?.callId === endingCallId) {
+				// The second caller gave up meanwhile; the running call still ends,
+				// as asked.
+				closeCallSurface();
+			}
+		})().finally(() => {
+			answeringRef.current = false;
+		});
 	};
 
 	const handleEndCall = () => {
@@ -683,6 +781,7 @@ export const GroupCallWidget: React.FC = () => {
 		 * blanks the iframe itself — doing it here as well was how the race
 		 * got in.
 		 */
+		const endingCallId = callData?.callId;
 		void (async () => {
 			try {
 				await Promise.race([
@@ -694,16 +793,14 @@ export const GroupCallWidget: React.FC = () => {
 			} catch {
 				/* local teardown still completes if the iframe already closed */
 			}
-			closeCallSurface();
+			// The call may have closed itself meanwhile and moved a waiting
+			// second call up; that one is not ours to end.
+			const current = callManager.getCurrentCall();
+			if (!current || current.callId === endingCallId) closeCallSurface();
 		})();
 	};
 
 	const handleToggleFullscreen = () => {
-		if (isMobileView) {
-			setIsMobileCompact((value) => !value);
-			return;
-		}
-
 		const container = containerRef.current;
 		if (!container) return;
 
@@ -723,7 +820,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
+				'.btn-end-call, iframe, .element-call-close, .element-call-minimize, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -743,7 +840,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
+				'.btn-end-call, iframe, .element-call-close, .element-call-minimize, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -764,7 +861,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (e.button !== 0) return;
 		e.preventDefault();
 		e.stopPropagation();
-		if (isMobileView || isFullscreen || isMobileCompact) return;
+		if (isMobileView || isFullscreen || isMinimized) return;
 		(e.target as HTMLElement).setPointerCapture?.(e.pointerId);
 		setIsResizing(true);
 		setResizeCursor(resizeCursorForEdge(edge));
@@ -803,7 +900,7 @@ export const GroupCallWidget: React.FC = () => {
 	 * function's business, not this one's.
 	 */
 	const handleResizeKeyDown = (e: React.KeyboardEvent, edge: ResizeEdge) => {
-		if (isMobileView || isFullscreen || isMobileCompact) return;
+		if (isMobileView || isFullscreen || isMinimized) return;
 		const step = e.shiftKey ? RESIZE_STEP_FAST : RESIZE_STEP;
 		const move: Record<string, { dx: number; dy: number }> = {
 			ArrowLeft: { dx: -step, dy: 0 },
@@ -902,13 +999,77 @@ export const GroupCallWidget: React.FC = () => {
 	// Only render for group calls
 	if (isDismissed || !callData || !callData.usesElementCall) return null;
 
+	/*
+	 * Ringing: the card in the call language (FE#1904), with no backdrop, so
+	 * the app behind stays usable. It replaces the old black popup.
+	 */
+	if (callData.isIncoming && callData.state === 'ringing') {
+		return (
+			<IncomingCallCard
+				caller={incomingCaller}
+				isVideo={callData.isVideo}
+				onAnswer={handleAnswer}
+				onDecline={handleDecline}
+			/>
+		);
+	}
+
+	const isDocked = isMinimized && !!elementCallUrl;
+	// Until the call reports its devices, assume what it started with; the
+	// dock shows this and its toggles flip it.
+	const shownDevices = widget.devices ?? {
+		audio_enabled: true,
+		video_enabled: !!callData?.isVideo
+	};
+
 	return (
 		<>
-			{!isFullscreen && !isMobileView && (
+			{!isFullscreen && !isMobileView && !isDocked && (
 				<div className="call-modal-backdrop" aria-hidden="true" />
 			)}
+			{/* A second call rings above everything and says what it ends. */}
+			{waitingCall && (
+				<IncomingCallCard
+					caller={waitingCaller}
+					isVideo={waitingCall.isVideo}
+					ongoingCall={{
+						name: knownParty?.name ?? '',
+						avatars: knownParty ? [knownParty.avatar] : []
+					}}
+					onAnswer={handleAnswerWaiting}
+					onDecline={() => callManager.rejectWaitingCall()}
+				/>
+			)}
+			{isDocked && callStartedAt !== null && (
+				<DockedCall
+					party={dockParty}
+					isGroup={!!callData.isGroup}
+					startedAt={callStartedAt}
+					isMuted={!shownDevices.audio_enabled}
+					isVideo={callData.isVideo}
+					isCameraOff={!shownDevices.video_enabled}
+					onToggleMute={() =>
+						void widget
+							.setDevices({
+								audio_enabled: !shownDevices.audio_enabled
+							})
+							.catch(() => undefined)
+					}
+					onToggleCamera={() =>
+						void widget
+							.setDevices({
+								video_enabled: !shownDevices.video_enabled
+							})
+							.catch(() => undefined)
+					}
+					onHangUp={handleEndCall}
+					onExpand={() => setIsMinimized(false)}
+					autoFocus
+				/>
+			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				aria-hidden={isDocked ? true : undefined}
 				style={{
 					left: `${position.x}px`,
 					top: `${position.y}px`,
@@ -917,50 +1078,7 @@ export const GroupCallWidget: React.FC = () => {
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
-				{/* Incoming call - show answer/decline buttons */}
-				{callData.isIncoming && callData.state === 'ringing' ? (
-					<div className="incoming-call-popup">
-						<button
-							className="element-call-close"
-							onClick={handleDecline}
-							aria-label={t('calls.group.close')}
-						>
-							×
-						</button>
-						<div className="incoming-call-content">
-							{incomingCaller && (
-								<div className="incoming-call-avatar">
-									<UserAvatar
-										{...incomingCaller.avatar}
-										size={80}
-									/>
-								</div>
-							)}
-							<h2>{t('calls.group.incomingTitle')}</h2>
-							<p>
-								{incomingCaller
-									? t('calls.group.incomingFrom', {
-											name: incomingCaller.name
-										})
-									: t('calls.group.incomingDescription')}
-							</p>
-							<div className="incoming-call-actions">
-								<button
-									className="btn-answer"
-									onClick={handleAnswer}
-								>
-									{t('calls.answer')}
-								</button>
-								<button
-									className="btn-decline"
-									onClick={handleDecline}
-								>
-									{t('calls.decline')}
-								</button>
-							</div>
-						</div>
-					</div>
-				) : elementCallUrl ? (
+				{elementCallUrl ? (
 					/* Active call - show Element Call iframe */
 					<div
 						className="element-call-container"
@@ -1003,36 +1121,39 @@ export const GroupCallWidget: React.FC = () => {
 								⛶
 							</button>
 						)}
+						{/* Into the dock (FE#1904); on a phone this replaces the small tile. */}
 						<button
-							className="element-call-fullscreen"
-							onClick={handleToggleFullscreen}
-							aria-label={
-								isMobileView
-									? isMobileCompact
-										? t('calls.group.openFullView')
-										: t('calls.group.switchToSmallView')
-									: isFullscreen
+							type="button"
+							className="element-call-minimize"
+							onClick={(e) => {
+								e.stopPropagation();
+								if (document.fullscreenElement)
+									void document.exitFullscreen?.();
+								setIsMinimized(true);
+							}}
+							aria-label={t('calls.states.minimize')}
+							title={t('calls.states.minimize')}
+						>
+							–
+						</button>
+						{!isMobileView && (
+							<button
+								className="element-call-fullscreen"
+								onClick={handleToggleFullscreen}
+								aria-label={
+									isFullscreen
 										? t('calls.group.exitFullScreen')
 										: t('calls.group.enterFullScreen')
-							}
-							title={
-								isMobileView
-									? isMobileCompact
-										? t('calls.group.fullView')
-										: t('calls.group.smallView')
-									: isFullscreen
+								}
+								title={
+									isFullscreen
 										? t('calls.group.exitFullScreen')
 										: t('calls.group.fullScreen')
-							}
-						>
-							{isMobileView
-								? isMobileCompact
-									? '⤢'
-									: '⤡'
-								: isFullscreen
-									? '⤡'
-									: '⤢'}
-						</button>
+								}
+							>
+								{isFullscreen ? '⤡' : '⤢'}
+							</button>
+						)}
 						{/*
 						 * The private notepad lives HERE, in the host, and
 						 * not inside the call.

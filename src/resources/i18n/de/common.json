@@ -6081,6 +6081,18 @@
 				"aufgabe": "Aufgabe"
 			}
 		},
+		"states": {
+			"encrypted": "Verschlüsselt",
+			"endsCurrent": "Wenn Sie annehmen, endet Ihr Gespräch mit {{name}}.",
+			"answerAndEnd": "Beenden und annehmen",
+			"backToCall": "Zurück zur großen Ansicht",
+			"speaking": "{{name}} spricht",
+			"dockLabel": "Gespräch mit {{name}}",
+			"cameraHint": "Der Ton läuft weiter.",
+			"minimize": "Anruf verkleinern",
+			"groupCall": "Gruppenanruf",
+			"endsCurrentUnnamed": "Wenn Sie annehmen, endet Ihr laufendes Gespräch."
+		},
 		"share": {
 			"open": "Anruf teilen",
 			"title": "Anruf teilen",
@@ -6330,6 +6342,31 @@
 			"title": "Nächste Gesprächskreise",
 			"participants": "{{count}} Teilnehmende",
 			"participants_one": "{{count}} Teilnehmende"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporär",
+			"title": "Wird mit dem Gastkonto gelöscht"
+		},
+		"deletedGuest": "Gast (gelöscht)",
+		"chip": {
+			"guest": "Gastkonto"
+		},
+		"keepDialog": {
+			"title": "Sollen Ihre Nachrichten bleiben?",
+			"description": "Ihr Gastkonto wird nach dem Gespräch gelöscht. Was soll mit Ihren Nachrichten passieren?",
+			"keep": {
+				"label": "Auch nach dem Löschen behalten",
+				"hint": "Ihre Nachrichten bleiben, wenn Ihr Konto gelöscht wird."
+			},
+			"delete": {
+				"label": "Temporär",
+				"hint": "Ihre Nachrichten werden mit Ihrem Konto gelöscht."
+			},
+			"note": "Ihre Antwort gilt für dieses ganze Gespräch.",
+			"confirm": "Weiter",
+			"cancel": "Abbrechen"
 		}
 	}
 }

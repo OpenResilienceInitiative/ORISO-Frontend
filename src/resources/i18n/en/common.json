@@ -6006,6 +6006,18 @@
 				"aufgabe": "Task"
 			}
 		},
+		"states": {
+			"encrypted": "Encrypted",
+			"endsCurrent": "Answering ends your call with {{name}}.",
+			"answerAndEnd": "End call and answer",
+			"backToCall": "Back to the full call",
+			"speaking": "{{name}} is speaking",
+			"dockLabel": "Call with {{name}}",
+			"cameraHint": "Sound keeps going.",
+			"minimize": "Minimize call",
+			"groupCall": "Group call",
+			"endsCurrentUnnamed": "Answering ends your current call."
+		},
 		"share": {
 			"open": "Share call",
 			"title": "Share call",
@@ -6255,6 +6267,31 @@
 			"title": "Upcoming self-help circles",
 			"participants": "{{count}} participants",
 			"participants_one": "{{count}} participant"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporary",
+			"title": "Deleted together with the guest account"
+		},
+		"deletedGuest": "Guest (deleted)",
+		"chip": {
+			"guest": "Guest account"
+		},
+		"keepDialog": {
+			"title": "Should your messages stay?",
+			"description": "Your guest account is deleted after the conversation. What should happen to your messages?",
+			"keep": {
+				"label": "Keep them after deletion",
+				"hint": "Your messages stay when your account is deleted."
+			},
+			"delete": {
+				"label": "Temporary",
+				"hint": "Your messages are deleted with your account."
+			},
+			"note": "Your answer applies to this whole conversation.",
+			"confirm": "Continue",
+			"cancel": "Cancel"
 		}
 	}
 }
