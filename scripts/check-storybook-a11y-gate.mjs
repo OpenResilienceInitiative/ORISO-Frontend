@@ -48,7 +48,6 @@ export const AccessibleControl = {
 				'storybook',
 				fixtureDir,
 				'--maxWorkers=2',
-				'--minWorkers=1',
 				'--reporter=default',
 				'--reporter=json',
 				`--outputFile=${reportPath}`

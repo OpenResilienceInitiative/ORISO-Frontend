@@ -806,10 +806,10 @@ body.conversationCreate--active .navigation__wrapper {
 		margin: 0;
 		min-height: 48px;
 		min-width: 0;
-		overflow: hidden;
-		padding: 8px 24px;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+
+		/* Wraps on a phone instead of cutting the title off. */
+		overflow-wrap: anywhere;
+		padding: 8px clamp(12px, 4vw, 24px);
 	}
 
 	&__panelMenu {
@@ -984,11 +984,13 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__thumb {
-		aspect-ratio: 16 / 9;
+		/* Fills the row's full height; cover crops into the artwork. */
+		align-self: stretch;
 		flex-shrink: 0;
 		height: auto;
+		min-height: 100%;
 		object-fit: cover;
-		width: 84px;
+		width: 104px;
 	}
 
 	&--selected {

@@ -10,6 +10,7 @@ import {
 
 import { apiPutGroupChat, GROUP_CHAT_API } from './apiPutGroupChat';
 import { requestCollector } from '../utils/requestCollector';
+import { FETCH_ERRORS } from './fetchData';
 
 // jsdom's Request rejects its own AbortSignal; this one only records the url.
 class TestRequest {
@@ -61,5 +62,30 @@ describe('apiPutGroupChat with an invite token', () => {
 			expect(url).not.toContain('s3cret-token');
 			expect(url).toContain('inviteToken=');
 		});
+	});
+});
+
+/** #1923: the server refuses a banned member's join with 403 and a reason. */
+describe('apiPutGroupChat join refused for a banned member', () => {
+	const refuse = (reason: string | null) =>
+		fetchMock.mockResolvedValueOnce({
+			status: 403,
+			headers: new Headers(reason ? { 'X-Reason': reason } : {})
+		});
+
+	it('rejects with USER_BANNED_FROM_CHAT', async () => {
+		refuse('USER_BANNED_FROM_CHAT');
+
+		await expect(apiPutGroupChat(31, GROUP_CHAT_API.JOIN)).rejects.toThrow(
+			'USER_BANNED_FROM_CHAT'
+		);
+	});
+
+	it('keeps the general error for a 403 without that reason', async () => {
+		refuse(null);
+
+		await expect(apiPutGroupChat(31, GROUP_CHAT_API.JOIN)).rejects.toThrow(
+			FETCH_ERRORS.CATCH_ALL
+		);
 	});
 });

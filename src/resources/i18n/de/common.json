@@ -225,6 +225,11 @@
 			"headline": "Sie wurden gebannt.",
 			"info": "Wir haben Sie gebeten, die Chat-Regeln einzuhalten.<br/><br/>Weil Sie heute die Chat-Regeln wiederholt nicht eingehalten haben, haben wir Sie für den heutigen Chat ausgeschlossen.<br/><br/>Machen Sie sich mit den Chat-Regeln vertraut!</br></br>Wenn Sie bereit sind, die Chat-Regeln einzuhalten, sind Sie ab morgen wieder im Chat willkommen!"
 		},
+		"confirm": {
+			"description": "Die Person kann in dieser Gruppe nicht mehr schreiben und sieht, dass sie entfernt wurde.",
+			"submit": "Entfernen",
+			"title": "{{name}} aus dieser Gruppe entfernen?"
+		},
 		"is": {
 			"banned": " Gebannt"
 		}
@@ -1357,6 +1362,11 @@
 			"accept": "Einverstanden",
 			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
 			"saveFailed": "Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Sie wurden aus dieser Gruppe entfernt."
+			}
 		}
 	},
 	"help": {
@@ -3708,7 +3718,11 @@
 				"headline": "Die Einladung konnte gerade nicht geladen werden.",
 				"body": "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihr Einladungslink bleibt gültig."
 			},
-			"loading": "Die Einladung wird geladen …"
+			"loading": "Die Einladung wird geladen …",
+			"invalid": {
+				"headline": "Dieser Einladungslink funktioniert nicht.",
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
+			}
 		}
 	},
 	"releaseNote": {
@@ -6266,6 +6280,56 @@
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
 			"micMeter": "Lautstärke Ihres Mikrofons"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Direktlink",
+			"subtitle": "Für Ratsuchende",
+			"headline": "Ein Link direkt zu Ihnen",
+			"text": "Wer den Link öffnet, landet ohne Umweg bei Ihnen – im Chat, im Audio- oder im Videoanruf.",
+			"topicLabel": "Thema wählen",
+			"mediumLabel": "Art des Kontakts",
+			"temporary": "Temporäres Konto",
+			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
+			"create": "Link erstellen"
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Audioanruf",
+			"video": "Videoanruf"
+		},
+		"temporary": "Temporär",
+		"copy": "Link kopieren",
+		"share": {
+			"title": "Ihr Direktlink ist bereit",
+			"description": "Teilen Sie Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit Ihnen.",
+			"copied": "Kopiert",
+			"share": "Teilen",
+			"qrAlt": "QR-Code zum Direktlink",
+			"done": "Fertig",
+			"linkLabel": "Direktlink"
+		},
+		"list": {
+			"title": "Meine Direktlinks",
+			"qr": "QR-Code zeigen",
+			"active": "{{name}} aktiv"
+		}
+	},
+	"dashboard": {
+		"title": "Ihr Überblick",
+		"stats": {
+			"title": "Beratungen",
+			"period": "Letzte 30 Tage",
+			"assigned": "Neu übernommen",
+			"active": "Aktiv",
+			"archived": "Archiviert",
+			"sentMessages": "Gesendete Nachrichten"
+		},
+		"circles": {
+			"title": "Nächste Gesprächskreise",
+			"participants": "{{count}} Teilnehmende",
+			"participants_one": "{{count}} Teilnehmende"
 		}
 	}
 }
