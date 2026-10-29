@@ -3,7 +3,8 @@
  * Do not import from production app code.
  */
 import * as React from 'react';
-import { vi } from 'vite-plus/test';
+// Storybook's spy runs in the browser too; `vite-plus/test` broke every call story.
+import { fn } from 'storybook/test';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { callManager } from '../../../services/CallManager';
@@ -99,8 +100,8 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 			 * so the room's encryption covers it. `sendStateEvent` is kept here
 			 * only so a test can assert it is never used for this again.
 			 */
-			sendEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
-			sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
+			sendEvent: fn().mockResolvedValue({ event_id: '$identity' }),
+			sendStateEvent: fn().mockResolvedValue({ event_id: '$state' }),
 			getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
 			matrixRTC: { getRoomSession: () => rtcSession },
 			getRoom: (roomId: string) =>

@@ -82,10 +82,24 @@
 	border-radius: 16px;
 }
 
+/* The notepad docks at the right edge for everyone in the call (#1929). The
+   host's own buttons move left of it rather than sitting on its fold button. */
+.element-call-container {
+	--call-notes-inset: 0px;
+
+	&:has(> .element-call-notes) {
+		--call-notes-inset: 44px;
+	}
+
+	&:has(> .element-call-notes:not([data-collapsed='true'])) {
+		--call-notes-inset: 320px;
+	}
+}
+
 .element-call-close {
 	position: absolute;
 	top: 10px;
-	right: 10px;
+	right: calc(10px + var(--call-notes-inset, 0px));
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
@@ -107,7 +121,7 @@
 .element-call-fullscreen {
 	position: absolute;
 	top: 10px;
-	right: 50px;
+	right: calc(50px + var(--call-notes-inset, 0px));
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
@@ -129,7 +143,7 @@
 .element-call-autofit {
 	position: absolute;
 	top: 10px;
-	right: 90px;
+	right: calc(90px + var(--call-notes-inset, 0px));
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
@@ -258,7 +272,7 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	right: 0;
+	right: var(--call-notes-inset, 0px);
 	height: 28px;
 	cursor: move;
 	z-index: 4;
@@ -388,12 +402,12 @@
 
 		.element-call-close {
 			top: 6px;
-			right: 6px;
+			right: calc(6px + var(--call-notes-inset, 0px));
 		}
 
 		.element-call-fullscreen {
 			top: 6px;
-			right: 40px;
+			right: calc(40px + var(--call-notes-inset, 0px));
 		}
 	}
 }

@@ -160,12 +160,25 @@ export const GroupCallWidget: React.FC = () => {
 		(!callData.isIncoming ||
 			callState === 'connecting' ||
 			callState === 'in_call');
+	// Sharing the call is the counsellor's (#1794).
+	const isConsultantUser = Boolean(
+		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+	/*
+	 * Everyone in the call gets their own notepad (#1929): private, on the own
+	 * screen only, gone with the call — so nobody keeps notes on anybody else.
+	 * Folded until opened here or from the call bar.
+	 */
+	const [notesCollapsed, setNotesCollapsed] = useState(true);
+	const toggleNotes = useCallback(() => setNotesCollapsed((was) => !was), []);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
-			onClose: closeCallSurface
+			onClose: closeCallSurface,
+			onToggleNotes: toggleNotes
 		}
 	);
 
@@ -431,18 +444,6 @@ export const GroupCallWidget: React.FC = () => {
 		if (!callRoomId) return;
 		return (): void => forgetPublishedIdentity(callRoomId);
 	}, [callRoomId]);
-
-	/*
-	 * Only a counsellor gets the notepad.
-	 *
-	 * Ticket 06 is a counsellor's scratchpad — "not a shared agenda, not a
-	 * transcript, not minutes". Offering it to an advice seeker would suggest
-	 * the counselling centre keeps notes on them, in a product whose whole
-	 * promise is that it does not.
-	 */
-	const isConsultantUser = Boolean(
-		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-	);
 
 	const notesLabels = useMemo(
 		() => ({
@@ -1066,13 +1067,12 @@ export const GroupCallWidget: React.FC = () => {
 									/>
 								</div>
 							)}
-						{isConsultantUser && (
-							<Gespraechsnotizen
-								className="element-call-notes"
-								defaultCollapsed
-								labels={notesLabels}
-							/>
-						)}
+						<Gespraechsnotizen
+							className="element-call-notes"
+							collapsed={notesCollapsed}
+							onCollapsedChange={setNotesCollapsed}
+							labels={notesLabels}
+						/>
 						<iframe
 							ref={setIframeNode}
 							src={elementCallUrl}
