@@ -1,4 +1,5 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
@@ -260,6 +261,8 @@ export interface MessageItem {
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
 	isEdited?: boolean;
+	/** #1869: sent by a temporary account and deleted together with it. */
+	isTemporary?: boolean;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -351,6 +354,7 @@ export const MessageItemComponent = ({
 	replyToEventId,
 	threadRootEventId,
 	isEdited,
+	isTemporary,
 	replyQuote,
 	onReplyDirect,
 	onEditDirect,
@@ -2541,6 +2545,8 @@ export const MessageItemComponent = ({
 							 * like every other bubble in the stream.
 							 */}
 							{timeRailInBubble}
+							{/* #1869: own row under the time, never in the time line. */}
+							{isTemporary && <TemporaryMessageMarker />}
 						</MessageBubble>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">

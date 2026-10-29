@@ -59,7 +59,28 @@ export interface ElementCallWidget {
 	hangup: () => Promise<void>;
 	/** Set when the call cannot be embedded at all; surface it, do not swallow. */
 	error: Error | null;
+	/** Microphone and camera as the call last reported them; `null` before. */
+	devices: CallDeviceState | null;
+	/** Asks the call to switch the microphone or camera (`io.element.device_mute`). */
+	setDevices: (change: Partial<CallDeviceState>) => Promise<void>;
 }
+
+/** The call's own report of its devices, as Element Call sends it. */
+export interface CallDeviceState {
+	audio_enabled: boolean;
+	video_enabled: boolean;
+}
+
+const deviceStateOf = (data: unknown): CallDeviceState | null => {
+	const value = data as Partial<CallDeviceState> | null;
+	return typeof value?.audio_enabled === 'boolean' &&
+		typeof value.video_enabled === 'boolean'
+		? {
+				audio_enabled: value.audio_enabled,
+				video_enabled: value.video_enabled
+			}
+		: null;
+};
 
 const widgetIdForRoom = async (
 	roomId: string,
@@ -110,6 +131,7 @@ export const useElementCallWidget = (
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
 	const [ready, setReady] = useState(false);
+	const [devices, setDeviceState] = useState<CallDeviceState | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
 	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -331,6 +353,7 @@ export const useElementCallWidget = (
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
 			setReady(false);
+			setDeviceState(null);
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
@@ -357,6 +380,10 @@ export const useElementCallWidget = (
 				'action:io.element.device_mute',
 				(event: CustomEvent<IWidgetApiRequest>) => {
 					event.preventDefault();
+					// The call reports every change; the minimized dock shows it.
+					const reported = deviceStateOf(event.detail.data);
+					if (reported && apiRef.current === api)
+						setDeviceState(reported);
 					api.transport.reply(event.detail, event.detail.data);
 				}
 			);
@@ -390,6 +417,19 @@ export const useElementCallWidget = (
 		if (!apiRef.current) return;
 		await apiRef.current.transport.send('im.vector.hangup', {});
 	}, []);
+
+	const setDevices = useCallback(
+		async (change: Partial<CallDeviceState>): Promise<void> => {
+			const api = apiRef.current;
+			if (!api) return;
+			const reply = await api.transport.send('io.element.device_mute', {
+				...change
+			});
+			const reported = deviceStateOf(reply);
+			if (reported && apiRef.current === api) setDeviceState(reported);
+		},
+		[]
+	);
 
 	// Push room and to-device traffic into the widget. The widget API only
 	// *answers* requests; anything the widget needs to observe has to be fed.
@@ -548,5 +588,5 @@ export const useElementCallWidget = (
 		[]
 	);
 
-	return { url, ready, attachIframe, hangup, error };
+	return { url, ready, attachIframe, hangup, error, devices, setDevices };
 };

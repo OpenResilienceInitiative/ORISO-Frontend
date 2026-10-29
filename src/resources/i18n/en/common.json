@@ -227,6 +227,11 @@
 			"headline": "You have been banned.",
 			"info": "We have asked you to respect the chat rules.<br/><br/>Because you have repeatedly failed to comply with the chat rules today, we have excluded you from todays chat.<br/><br/>Familiarize yourself with the chat rules!<br/><br/>If you are ready to follow the chat rules, you are welcome to chat again from tomorrow!"
 		},
+		"confirm": {
+			"description": "They can no longer write in this group and will see that they were removed.",
+			"submit": "Remove",
+			"title": "Remove {{name}} from this group?"
+		},
 		"is": {
 			"banned": " Banned"
 		}
@@ -1339,6 +1344,11 @@
 			"accept": "Agree",
 			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
 			"saveFailed": "Your agreement could not be saved. Please try again."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "You were removed from this group."
+			}
 		}
 	},
 	"help": {
@@ -3654,7 +3664,11 @@
 				"headline": "The invitation could not be loaded right now.",
 				"body": "Please check your connection and try again. Your invitation link stays valid."
 			},
-			"loading": "Loading the invitation …"
+			"loading": "Loading the invitation …",
+			"invalid": {
+				"headline": "This invitation link does not work.",
+				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
+			}
 		}
 	},
 	"releaseNote": {
@@ -5991,6 +6005,18 @@
 				"anmerkung": "Remark",
 				"aufgabe": "Task"
 			}
+		},
+		"states": {
+			"encrypted": "Encrypted",
+			"endsCurrent": "Answering ends your call with {{name}}.",
+			"answerAndEnd": "End call and answer",
+			"backToCall": "Back to the full call",
+			"speaking": "{{name}} is speaking",
+			"dockLabel": "Call with {{name}}",
+			"cameraHint": "Sound keeps going.",
+			"minimize": "Minimize call",
+			"groupCall": "Group call",
+			"endsCurrentUnnamed": "Answering ends your current call."
 		}
 	},
 	"form": {
@@ -6210,6 +6236,81 @@
 		"request": {
 			"sameTopicInfo": "Only one counselling per topic is intended at a time. If you start a counselling on a topic you are already discussing, your current counsellor will be informed as soon as the new one is accepted. One of the two will then be ended.",
 			"consentAria": "Consent to the counselling centre’s data protection terms",
+			"cancel": "Cancel"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Direct link",
+			"subtitle": "For people seeking advice",
+			"headline": "A link straight to you",
+			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
+			"topicLabel": "Choose topic",
+			"mediumLabel": "Kind of contact",
+			"temporary": "Temporary account",
+			"temporaryHint": "The account is deleted after the conversation.",
+			"create": "Create link"
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Audio call",
+			"video": "Video call"
+		},
+		"temporary": "Temporary",
+		"copy": "Copy link",
+		"share": {
+			"title": "Your direct link is ready",
+			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"copied": "Copied",
+			"share": "Share",
+			"qrAlt": "QR code for the direct link",
+			"done": "Done",
+			"linkLabel": "Direct link"
+		},
+		"list": {
+			"title": "My direct links",
+			"qr": "Show QR code",
+			"active": "{{name}} active"
+		}
+	},
+	"dashboard": {
+		"title": "Your overview",
+		"stats": {
+			"title": "Counselling",
+			"period": "Last 30 days",
+			"assigned": "Newly taken on",
+			"active": "Active",
+			"archived": "Archived",
+			"sentMessages": "Messages sent"
+		},
+		"circles": {
+			"title": "Upcoming self-help circles",
+			"participants": "{{count}} participants",
+			"participants_one": "{{count}} participant"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporary",
+			"title": "Deleted together with the guest account"
+		},
+		"deletedGuest": "Guest (deleted)",
+		"chip": {
+			"guest": "Guest account"
+		},
+		"keepDialog": {
+			"title": "Should your messages stay?",
+			"description": "Your guest account is deleted after the conversation. What should happen to your messages?",
+			"keep": {
+				"label": "Keep them after deletion",
+				"hint": "Your messages stay when your account is deleted."
+			},
+			"delete": {
+				"label": "Temporary",
+				"hint": "Your messages are deleted with your account."
+			},
+			"note": "Your answer applies to this whole conversation.",
+			"confirm": "Continue",
 			"cancel": "Cancel"
 		}
 	}

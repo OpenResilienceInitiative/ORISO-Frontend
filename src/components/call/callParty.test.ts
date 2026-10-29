@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ListItemInterface } from '../../globalState/interfaces';
-import { callPartyOf } from './callParty';
+import { callPartyOf, counterpartOf } from './callParty';
 
 const conversation = {
 	session: {
@@ -48,5 +48,22 @@ describe('callPartyOf', () => {
 		expect(callPartyOf(conversation, '@colleague:example')).toBeNull();
 		expect(callPartyOf(conversation, undefined)).toBeNull();
 		expect(callPartyOf(undefined, '@bart_getme_2fa:example')).toBeNull();
+	});
+});
+
+// FE#1904: the minimized dock names whom the running call is with.
+describe('counterpartOf', () => {
+	it('is the advice seeker for the counsellor, and the counsellor for the advice seeker', () => {
+		expect(
+			counterpartOf(conversation, '@bart_getme_2fa:example')?.name
+		).toBe('dragonfly_kendall_4108');
+		expect(
+			counterpartOf(conversation, '@dragonfly_kendall_4108:example')?.name
+		).toBe('Bart Simpson');
+	});
+
+	it('is nobody without a session or an own id', () => {
+		expect(counterpartOf(null, '@bart_getme_2fa:example')).toBeNull();
+		expect(counterpartOf(conversation, undefined)).toBeNull();
 	});
 });

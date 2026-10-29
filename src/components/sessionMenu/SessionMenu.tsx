@@ -414,6 +414,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setIsRequestInProgress(false);
 				});
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			// A left group must not linger in the list until the next reload (#1923).
+			if (overlayItem === leaveGroupChatSuccessOverlayItem) {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: activeSession.item.matrixRoomId
+						? [activeSession.item.matrixRoomId]
+						: [activeSession.item.id]
+				});
+			}
 			setRedirectToSessionsList(true);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
@@ -1274,13 +1283,18 @@ const SessionMenuFlyoutGroup = ({
 	// the waiting room and the join view show this menu on phones too (#1499).
 	const isRunning =
 		Boolean(activeSession.item.active) && !isJoinGroupChatView;
+	// A sole moderator must not orphan the group; askers may always leave (#1923).
+	const isCounsellor = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 
 	return (
 		<>
 			{isRunning &&
 				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
-				moderators.length > 1 && (
+				(!isCounsellor || moderators.length > 1) && (
 					<div
 						onClick={handleLeaveGroupChat}
 						role="button"
