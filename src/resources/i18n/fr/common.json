@@ -5697,6 +5697,17 @@
 				"submit": "Protéger avec le nouveau mot de passe",
 				"later": "Plus tard",
 				"laterHint": "Sans cette étape, votre nouveau mot de passe ne déverrouille pas votre historique sur de nouveaux appareils. Vous pouvez la faire à tout moment dans les paramètres de sécurité."
+			},
+			"stale": {
+				"explanation": "Votre mot de passe actuel n’ouvre pas la sauvegarde de votre historique. Cela arrive lorsque votre mot de passe a été modifié en dehors de cette application, par exemple sous « Mon compte » dans l’espace d’administration ou via « Mot de passe oublié ». Sécurisez votre historique avec votre mot de passe actuel de l’une de ces façons, afin qu’il s’ouvre à nouveau avec votre mot de passe sur de nouveaux appareils.",
+				"choose": "Comment souhaitez-vous sécuriser à nouveau votre historique ?",
+				"usePreviousPassword": "Saisir l’ancien mot de passe",
+				"useRecoveryKey": "Saisir la clé de récupération",
+				"previousPasswordHint": "Saisissez le mot de passe que vous utilisiez avant la modification. Ensuite, seul votre mot de passe actuel ouvre votre historique.",
+				"recoveryKeyHint": "Saisissez votre clé de récupération enregistrée. L’ancienne sauvegarde est ensuite remplacée par une sauvegarde protégée par votre mot de passe actuel. Votre clé de récupération reste valable.",
+				"previousPassword": "Ancien mot de passe",
+				"submit": "Sécuriser avec le mot de passe actuel",
+				"previousPasswordRejected": "Cet ancien mot de passe n’ouvre pas la sauvegarde. Vérifiez votre saisie ou utilisez votre clé de récupération."
 			}
 		}
 	},

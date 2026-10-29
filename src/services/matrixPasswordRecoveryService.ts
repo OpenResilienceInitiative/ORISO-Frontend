@@ -53,7 +53,9 @@ export type PasswordRecoveryStatus = {
 	kind: 'ready' | 'not-enrolled' | 'needs-recovery-key' | 'retryable-failure';
 };
 class EnvelopeUnavailable extends Error {}
-class PasswordRejected extends Error {}
+/** The given password opens none of the password-sealed copies of the recovery key. */
+export class PasswordRecoveryPasswordRejectedError extends Error {}
+const PasswordRejected = PasswordRecoveryPasswordRejectedError;
 export class PasswordRecoveryRepairBlockedError extends Error {}
 export class PasswordRecoveryRepairRequiredError extends Error {}
 export class PasswordRecoveryWorkLimitError extends Error {}
@@ -331,14 +333,21 @@ export const enrollPasswordRecoveryAfterKeyRecovery = async (
 	)
 		throw new EnvelopeUnavailable();
 	await readMetadata(client);
+	// Proves the key: only after this may stale copies be replaced.
 	await recoverWithKey(client, encodedRecoveryKey);
 	const identity = await fingerprint(client);
 	const predecessors: string[] = [];
 	for (const id of await candidateIds(client)) {
+		/* A candidate not sealed under its own wrapping key is a partial or
+		   foreign write: nothing proves what it holds, so it blocks. */
+		if (!(await isSealedUnderOwnKey(client, id)))
+			throw new PasswordRecoveryRepairBlockedError();
 		const existing = await unlockCandidate(client, password, id, budget);
-		if (!existing) throw new PasswordRecoveryRepairBlockedError();
-		if (existing)
-			predecessors.push(id, ...existing.payload.predecessorKeyIds!);
+		/* A well-formed copy the current password does not open is stale —
+		   sealed under a password changed outside this app (#1931). The
+		   recovery key it would hold is the one just proven, so the fresh
+		   copy replaces it once that copy is verified. */
+		predecessors.push(id, ...(existing?.payload.predecessorKeyIds ?? []));
 	}
 	const next = await addPasswordKey(client, password, budget);
 	const payload: Payload = {
@@ -415,6 +424,12 @@ const candidateIds = async (client: MatrixClient): Promise<string[]> => {
 		throw new EnvelopeUnavailable();
 	return [...new Set(ids)];
 };
+const isSealedUnderOwnKey = async (client: MatrixClient, id: string) =>
+	!!(
+		await readRecoveryAccountData<{
+			encrypted?: Record<string, unknown>;
+		}>(client, candidateName(id))
+	)?.encrypted?.[id];
 const unlockCandidate = async (
 	client: MatrixClient,
 	password: string,
@@ -524,17 +539,24 @@ const recoverWithPasswordBudget = async (
 			}
 			return { kind: 'ready' };
 		}
-		if (!metadata)
+		const legacy = await readRecoveryAccountData<{ encrypted?: unknown }>(
+			client,
+			PASSWORD_RECOVERY_SECRET
+		);
+		if (!metadata) {
+			/* Candidates alone are a complete enrolment (sealed with the
+			   recovery key, #1917); none opening means the password changed
+			   since. A legacy envelope without metadata is an interrupted
+			   first write instead. */
+			if (ids.length && !legacy?.encrypted)
+				return { kind: 'needs-recovery-key' };
 			return {
 				kind:
 					ids.length || (await hasPasswordRecoveryEvidence(client))
 						? 'retryable-failure'
 						: 'not-enrolled'
 			};
-		const legacy = await readRecoveryAccountData<{ encrypted?: unknown }>(
-			client,
-			PASSWORD_RECOVERY_SECRET
-		);
+		}
 		if (!legacy?.encrypted) return { kind: 'needs-recovery-key' };
 		const unlocked = await unlock(client, password, metadata, budget);
 		await recoverWithKey(client, unlocked.payload.recoveryKey);
@@ -549,15 +571,20 @@ const recoverWithPasswordBudget = async (
 	}
 };
 
-/** Staging never replaces another device's candidate or the shared envelope. */
-export const changePasswordWithRecovery = async (
+type StagedCandidate = NonNullable<Awaited<ReturnType<typeof unlockCandidate>>>;
+
+/**
+ * Re-wrap the recovery key from `oldPassword` to `newPassword`: open whichever password-sealed
+ * copy the old password opens, stage a separately addressed candidate under the new one and verify
+ * it. The predecessors are retired by the caller, once the new password is the account's.
+ * Staging never replaces another device's candidate or the shared envelope.
+ */
+const stagePasswordRewrap = async (
 	client: MatrixClient,
 	oldPassword: string,
 	newPassword: string,
-	updatePassword: () => Promise<unknown>,
-	isDefiniteFailure: (error: unknown) => boolean = () => false
-): Promise<void> => {
-	const budget = new DerivationBudget();
+	budget: DerivationBudget
+): Promise<StagedCandidate> => {
 	const metadata = await readMetadata(client);
 	const identity = await fingerprint(client, true);
 	const predecessors: string[] = [];
@@ -608,7 +635,6 @@ export const changePasswordWithRecovery = async (
 		policyRevision: metadata?.policyRevision ?? payload.policyRevision
 	};
 	await assertUnchanged(client, identity);
-	let staged: NonNullable<Awaited<ReturnType<typeof unlockCandidate>>>;
 	try {
 		await storePayload(
 			client,
@@ -624,15 +650,30 @@ export const changePasswordWithRecovery = async (
 		);
 		if (!candidate) throw new EnvelopeUnavailable();
 		await assertUnchanged(client, identity);
-		staged = candidate;
+		return candidate;
 	} catch (error) {
 		await discardCandidate(client, next.id);
 		throw error;
 	}
+};
+
+export const changePasswordWithRecovery = async (
+	client: MatrixClient,
+	oldPassword: string,
+	newPassword: string,
+	updatePassword: () => Promise<unknown>,
+	isDefiniteFailure: (error: unknown) => boolean = () => false
+): Promise<void> => {
+	const staged = await stagePasswordRewrap(
+		client,
+		oldPassword,
+		newPassword,
+		new DerivationBudget()
+	);
 	try {
 		await updatePassword();
 	} catch (error) {
-		if (isDefiniteFailure(error)) await discardCandidate(client, next.id);
+		if (isDefiniteFailure(error)) await discardCandidate(client, staged.id);
 		throw error;
 	}
 	try {
@@ -640,4 +681,34 @@ export const changePasswordWithRecovery = async (
 	} catch {
 		/* candidate is independently discoverable */
 	}
+};
+
+/**
+ * The password was changed outside this app (Admin "Mein Konto", forgot-password, a setup link):
+ * the account already has `currentPassword`, but the recovery key is still sealed under
+ * `previousPassword`. Re-wrap it to the current password exactly as an in-app change would, retire
+ * the old copies, and unlock the history on this device (#1931).
+ *
+ * Call only after `currentPassword` was proven (re-authentication including a required OTP).
+ * Rejects with {@link PasswordRecoveryPasswordRejectedError} when the previous password opens
+ * nothing; then nothing has changed.
+ */
+export const resealWithPreviousPassword = async (
+	client: MatrixClient,
+	previousPassword: string,
+	currentPassword: string
+): Promise<void> => {
+	if (!previousPassword || !currentPassword) throw new PasswordRejected();
+	const staged = await stagePasswordRewrap(
+		client,
+		previousPassword,
+		currentPassword,
+		new DerivationBudget()
+	);
+	try {
+		await retirePredecessors(client, staged);
+	} catch {
+		/* candidate is independently discoverable */
+	}
+	await recoverWithKey(client, staged.payload.recoveryKey);
 };

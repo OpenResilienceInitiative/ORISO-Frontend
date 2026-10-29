@@ -1,5 +1,9 @@
 // @vitest-environment oriso-jsdom
-import { PasswordRecoveryWorkLimitError } from '../../../services/matrixPasswordRecoveryService';
+import {
+	PasswordRecoveryPasswordRejectedError,
+	PasswordRecoveryWorkLimitError
+} from '../../../services/matrixPasswordRecoveryService';
+import { reauthenticateRecovery } from '../../../services/reauthenticateRecovery';
 import * as React from 'react';
 import {
 	cleanup,
@@ -38,6 +42,7 @@ const setUpRecovery = vi.hoisted(() =>
 const getEncryptionStatus = vi.hoisted(() => vi.fn());
 const enrollAfterRecovery = vi.hoisted(() => vi.fn());
 const hasEvidence = vi.hoisted(() => vi.fn(async () => true));
+const resealWithPrevious = vi.hoisted(() => vi.fn(async () => undefined));
 vi.mock(
 	'../../../services/matrixPasswordRecoveryService',
 	async (importOriginal) => ({
@@ -45,7 +50,8 @@ vi.mock(
 			typeof import('../../../services/matrixPasswordRecoveryService')
 		>()),
 		enrollPasswordRecoveryAfterKeyRecovery: enrollAfterRecovery,
-		hasPasswordRecoveryEvidence: hasEvidence
+		hasPasswordRecoveryEvidence: hasEvidence,
+		resealWithPreviousPassword: resealWithPrevious
 	})
 );
 vi.mock('../../../services/reauthenticateRecovery', () => ({
@@ -556,7 +562,7 @@ describe('password recovery without any envelope', () => {
 		).toBeTruthy();
 	});
 
-	it('keeps the existing behaviour when an envelope exists', async () => {
+	it('offers no enrolment of a new envelope when one exists', async () => {
 		hasEvidence.mockResolvedValue(true);
 		setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
 		renderPanel();
@@ -567,7 +573,200 @@ describe('password recovery without any envelope', () => {
 			)
 		).toBeTruthy();
 		expect(
-			screen.queryByLabelText('encryption.passwordRecovery.loginPassword')
+			screen.queryByText('encryption.passwordRecovery.notEnrolled')
 		).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: 'encryption.passwordRecovery.enroll'
+			})
+		).toBeNull();
+	});
+});
+
+/**
+ * #1931: the password was changed outside the Frontend (Admin "Mein Konto",
+ * forgot-password, a setup link). The sign-in password opens none of the
+ * existing copies, so the status is 'needs-recovery-key' although an envelope
+ * exists. The panel used to show only that status and a logout button; it now
+ * offers both ways back to a seal under the current password.
+ */
+describe('an envelope sealed under the previous password', () => {
+	const userId = '@stale:test';
+	const client = { getUserId: () => userId } as MatrixClient;
+	const renderPanel = (status: EncryptionSetupStatus = healthy) => {
+		getEncryptionStatus.mockResolvedValue(status);
+		return render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							chatRecoveryMode: 'LOGIN_PASSWORD',
+							chatRecoveryPolicyRevision: 5,
+							twoFactorAuth: { isActive: true }
+						}
+					} as any
+				}
+			>
+				<EncryptionSettingsPanel clientOverride={client} />
+			</UserDataContext.Provider>
+		);
+	};
+	const choose = async (method: 'usePreviousPassword' | 'useRecoveryKey') =>
+		fireEvent.click(
+			await screen.findByLabelText(
+				`encryption.passwordRecovery.stale.${method}`
+			)
+		);
+	const fill = (label: string, value: string) =>
+		fireEvent.change(screen.getByLabelText(label), { target: { value } });
+	const submit = () =>
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'encryption.passwordRecovery.stale.submit'
+			})
+		);
+
+	beforeEach(() => {
+		hasEvidence.mockResolvedValue(true);
+		enrollAfterRecovery.mockReset();
+		resealWithPrevious.mockReset();
+		vi.mocked(reauthenticateRecovery).mockReset();
+		setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+	});
+
+	it.each([
+		['this device holds the history', healthy],
+		['this device is out of sync', outOfSync]
+	])('explains both ways back when %s', async (_label, status) => {
+		renderPanel(status);
+
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.stale.explanation'
+			)
+		).toBeTruthy();
+		expect(
+			screen.getByLabelText(
+				'encryption.passwordRecovery.stale.usePreviousPassword'
+			)
+		).toBeTruthy();
+		expect(
+			screen.getByLabelText(
+				'encryption.passwordRecovery.stale.useRecoveryKey'
+			)
+		).toBeTruthy();
+		// One recovery-key entry only: the repair's, which re-seals as well.
+		expect(
+			screen.queryByRole('button', { name: 'Verlauf wiederherstellen' })
+		).toBeNull();
+		expect(
+			screen.queryByText('encryption.passwordRecovery.reauthenticate')
+		).toBeNull();
+	});
+
+	it('re-wraps with the previous password once the current one is proven', async () => {
+		renderPanel();
+		await choose('usePreviousPassword');
+		fill(
+			'encryption.passwordRecovery.stale.previousPassword',
+			'previous-pw'
+		);
+		fill('encryption.passwordRecovery.loginPassword', 'current-pw');
+		fill('encryption.passwordRecovery.otp', '123456');
+		submit();
+
+		await waitFor(() =>
+			expect(resealWithPrevious).toHaveBeenCalledWith(
+				client,
+				'previous-pw',
+				'current-pw'
+			)
+		);
+		expect(reauthenticateRecovery).toHaveBeenCalledWith(
+			'current-pw',
+			'123456'
+		);
+		expect(
+			vi.mocked(reauthenticateRecovery).mock.invocationCallOrder[0]
+		).toBeLessThan(resealWithPrevious.mock.invocationCallOrder[0]);
+		expect(
+			await screen.findByText('encryption.passwordRecovery.ready')
+		).toBeTruthy();
+		expect(
+			screen.queryByText('encryption.passwordRecovery.stale.explanation')
+		).toBeNull();
+		expect(enrollAfterRecovery).not.toHaveBeenCalled();
+	});
+
+	it('says so when the previous password opens nothing either', async () => {
+		resealWithPrevious.mockRejectedValueOnce(
+			new PasswordRecoveryPasswordRejectedError()
+		);
+		renderPanel();
+		await choose('usePreviousPassword');
+		fill('encryption.passwordRecovery.stale.previousPassword', 'wrong-pw');
+		fill('encryption.passwordRecovery.loginPassword', 'current-pw');
+		submit();
+
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.stale.previousPasswordRejected'
+			)
+		).toBeTruthy();
+		expect(
+			screen.getByText('encryption.passwordRecovery.needs-recovery-key')
+		).toBeTruthy();
+	});
+
+	it('re-seals nothing when the current password is not proven', async () => {
+		vi.mocked(reauthenticateRecovery).mockRejectedValueOnce(
+			new Error('invalid_grant')
+		);
+		renderPanel();
+		await choose('usePreviousPassword');
+		fill(
+			'encryption.passwordRecovery.stale.previousPassword',
+			'previous-pw'
+		);
+		fill('encryption.passwordRecovery.loginPassword', 'not-current');
+		submit();
+
+		expect(
+			await screen.findByText(
+				'encryption.passwordRecovery.enrollmentFailed'
+			)
+		).toBeTruthy();
+		expect(resealWithPrevious).not.toHaveBeenCalled();
+	});
+
+	it('replaces the stale copies with the recovery key under the current password', async () => {
+		renderPanel(outOfSync);
+		await choose('useRecoveryKey');
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'Ersatzschlüssel' }),
+			{
+				target: { value: ' EsTc stale key ' }
+			}
+		);
+		fill('encryption.passwordRecovery.loginPassword', 'current-pw');
+		fill('encryption.passwordRecovery.otp', '654321');
+		submit();
+
+		await waitFor(() =>
+			expect(enrollAfterRecovery).toHaveBeenCalledWith(
+				client,
+				'current-pw',
+				'EsTc stale key',
+				5
+			)
+		);
+		expect(reauthenticateRecovery).toHaveBeenCalledWith(
+			'current-pw',
+			'654321'
+		);
+		expect(
+			await screen.findByText('encryption.passwordRecovery.ready')
+		).toBeTruthy();
+		expect(resealWithPrevious).not.toHaveBeenCalled();
 	});
 });

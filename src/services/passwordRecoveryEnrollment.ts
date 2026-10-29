@@ -2,8 +2,11 @@ import type { MatrixClient } from 'matrix-js-sdk';
 import { InvalidRecoveryKeyError } from './matrixKeyBackupService';
 import {
 	enrollPasswordRecoveryAfterKeyRecovery,
+	PasswordRecoveryPasswordRejectedError,
 	PasswordRecoveryRepairBlockedError,
-	PasswordRecoveryWorkLimitError
+	PasswordRecoveryRepairRequiredError,
+	PasswordRecoveryWorkLimitError,
+	resealWithPreviousPassword
 } from './matrixPasswordRecoveryService';
 import {
 	markPendingRecoveryKeyPasswordProtected,
@@ -37,14 +40,35 @@ export const sealRecoveryKeyUnderPassword = async (
 	setRecoveryRuntimeStatus(userId, 'ready');
 };
 
+/**
+ * The password was changed outside this app and the recovery key is still sealed under the
+ * previous one (#1931): re-wrap it to the current password. The caller must have proven the
+ * current password (re-authentication including a required OTP).
+ */
+export const resealRecoveryWithPreviousPassword = async (
+	client: MatrixClient,
+	userId: string,
+	previousPassword: string,
+	currentPassword: string
+): Promise<void> => {
+	await withRecoverySetupLock(userId, () =>
+		resealWithPreviousPassword(client, previousPassword, currentPassword)
+	);
+	setRecoveryRuntimeStatus(userId, 'ready');
+};
+
 /** The i18n key that explains why sealing the recovery key failed. */
 export const passwordRecoveryEnrollmentErrorKey = (error: unknown): string =>
-	error instanceof RecoverySetupBusyError
-		? 'profile.encryption.setup.busy'
-		: error instanceof InvalidRecoveryKeyError
-			? 'profile.encryption.recover.invalidKey'
-			: error instanceof PasswordRecoveryRepairBlockedError
-				? 'encryption.passwordRecovery.repairBlocked'
-				: error instanceof PasswordRecoveryWorkLimitError
-					? 'encryption.passwordRecovery.retryable-failure'
-					: 'encryption.passwordRecovery.enrollmentFailed';
+	error instanceof PasswordRecoveryPasswordRejectedError
+		? 'encryption.passwordRecovery.stale.previousPasswordRejected'
+		: error instanceof PasswordRecoveryRepairRequiredError
+			? 'encryption.passwordRecovery.repairRequired'
+			: error instanceof RecoverySetupBusyError
+				? 'profile.encryption.setup.busy'
+				: error instanceof InvalidRecoveryKeyError
+					? 'profile.encryption.recover.invalidKey'
+					: error instanceof PasswordRecoveryRepairBlockedError
+						? 'encryption.passwordRecovery.repairBlocked'
+						: error instanceof PasswordRecoveryWorkLimitError
+							? 'encryption.passwordRecovery.retryable-failure'
+							: 'encryption.passwordRecovery.enrollmentFailed';

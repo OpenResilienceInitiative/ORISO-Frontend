@@ -48,6 +48,7 @@ import {
 } from './encryptionClient';
 import { RecoveryKeySaveStep } from './RecoveryKeySaveStep';
 import { RecoveryKeyField } from './RecoveryKeyField';
+import { StalePasswordRecovery } from './StalePasswordRecovery';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -131,6 +132,18 @@ export const EncryptionSettingsPanel = ({
 		passwordEnvelopeMissing &&
 		canOfferPasswordRecovery &&
 		phase === 'healthy' &&
+		!recoveryKeyToShow;
+
+	/* The sign-in password opened none of the existing password copies: it
+	   was changed outside this app (Admin "Mein Konto", forgot-password, a
+	   setup link), and the history is still sealed under the previous one.
+	   Offer the ways back to a seal under the current password (#1931). */
+	const offerStaleEnvelopeRepair =
+		passwordMode &&
+		!!userId &&
+		passwordStatus === 'needs-recovery-key' &&
+		!passwordEnvelopeMissing &&
+		(phase === 'healthy' || phase === 'outOfSync') &&
 		!recoveryKeyToShow;
 
 	const getReadyClient = useCallback(
@@ -563,7 +576,21 @@ export const EncryptionSettingsPanel = ({
 								/>
 							</form>
 						)}
-					{canOfferPasswordRecovery && (
+					{offerStaleEnvelopeRepair && (
+						<StalePasswordRecovery
+							userId={userId}
+							resolvePolicyRevision={() => {
+								const policy = getChatRecoveryPolicy(userData);
+								if (policy.mode !== 'LOGIN_PASSWORD')
+									throw new Error('Recovery unavailable');
+								return policy.revision;
+							}}
+							otpRequired={!!userData?.twoFactorAuth?.isActive}
+							getReadyClient={getReadyClient}
+							onError={setError}
+						/>
+					)}
+					{canOfferPasswordRecovery && !offerStaleEnvelopeRepair && (
 						<Button
 							item={{
 								type: BUTTON_TYPES.SECONDARY,
@@ -648,20 +675,26 @@ export const EncryptionSettingsPanel = ({
 							type="standard"
 						/>
 					</div>
-					<InputField
-						item={recoveryInputItem}
-						inputHandle={(event) =>
-							setRecoveryInput(event.target.value)
-						}
-					/>
-					<Button
-						item={{
-							label: t('profile.encryption.recover.cta'),
-							type: BUTTON_TYPES.PRIMARY,
-							disabled: busy || !recoveryInput.trim()
-						}}
-						buttonHandle={onRecover}
-					/>
+					{/* The repair above takes the recovery key too, and
+					    re-seals it under the current password as well. */}
+					{!offerStaleEnvelopeRepair && (
+						<>
+							<InputField
+								item={recoveryInputItem}
+								inputHandle={(event) =>
+									setRecoveryInput(event.target.value)
+								}
+							/>
+							<Button
+								item={{
+									label: t('profile.encryption.recover.cta'),
+									type: BUTTON_TYPES.PRIMARY,
+									disabled: busy || !recoveryInput.trim()
+								}}
+								buttonHandle={onRecover}
+							/>
+						</>
+					)}
 					<hr />
 					<Text
 						text={t('profile.encryption.reset.explainer')}

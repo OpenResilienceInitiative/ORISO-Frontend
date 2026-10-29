@@ -5612,6 +5612,17 @@
 				"submit": "Protect with new password",
 				"later": "Later",
 				"laterHint": "Without this step your new password will not unlock your history on new devices. You can do it at any time in the security settings."
+			},
+			"stale": {
+				"explanation": "Your current password does not open the backup of your conversation history. This happens when your password was changed outside this app, for example under “My account” in the administration area or via “Forgot password”. Secure your history with your current password in one of these ways so that it opens with your password on new devices again.",
+				"choose": "How would you like to secure your history again?",
+				"usePreviousPassword": "Enter previous password",
+				"useRecoveryKey": "Enter recovery key",
+				"previousPasswordHint": "Enter the password you used before the change. Afterwards only your current password opens your history.",
+				"recoveryKeyHint": "Enter your saved recovery key. The old backup is then replaced by one secured with your current password. Your recovery key stays valid.",
+				"previousPassword": "Previous password",
+				"submit": "Secure with current password",
+				"previousPasswordRejected": "This previous password does not open the backup. Check your entry or use your recovery key."
 			}
 		}
 	},

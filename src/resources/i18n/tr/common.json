@@ -5697,6 +5697,17 @@
 				"submit": "Yeni parolayla koru",
 				"later": "Daha sonra",
 				"laterHint": "Bu adım olmadan yeni parolanız yeni cihazlarda geçmişinizin kilidini açmaz. Bunu istediğiniz zaman güvenlik ayarlarından yapabilirsiniz."
+			},
+			"stale": {
+				"explanation": "Geçerli parolanız konuşma geçmişinizin yedeğini açmıyor. Bu, parolanız bu uygulamanın dışında değiştirildiğinde olur; örneğin yönetim alanındaki “Hesabım” bölümünde veya “Parolamı unuttum” ile. Geçmişinizin yeni cihazlarda yeniden parolanızla açılması için onu bu yollardan biriyle geçerli parolanızla güvenceye alın.",
+				"choose": "Geçmişinizi yeniden nasıl güvenceye almak istersiniz?",
+				"usePreviousPassword": "Önceki parolayı girin",
+				"useRecoveryKey": "Kurtarma anahtarını girin",
+				"previousPasswordHint": "Değişiklikten önce kullandığınız parolayı girin. Ardından geçmişinizi yalnızca geçerli parolanız açar.",
+				"recoveryKeyHint": "Kaydettiğiniz kurtarma anahtarını girin. Eski yedek ardından geçerli parolanızla korunan bir yedekle değiştirilir. Kurtarma anahtarınız geçerli kalır.",
+				"previousPassword": "Önceki parola",
+				"submit": "Geçerli parolayla güvenceye al",
+				"previousPasswordRejected": "Bu önceki parola yedeği açmıyor. Girişinizi kontrol edin veya kurtarma anahtarınızı kullanın."
 			}
 		}
 	},

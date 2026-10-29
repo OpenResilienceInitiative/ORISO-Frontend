@@ -5687,6 +5687,17 @@
 				"submit": "Mit neuem Passwort schützen",
 				"later": "Später",
 				"laterHint": "Ohne diesen Schritt entsperrt Ihr neues Passwort Ihren Verlauf auf neuen Geräten nicht. Sie können ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Ihr aktuelles Passwort öffnet die Sicherung Ihres Gesprächsverlaufs nicht. Das passiert, wenn Ihr Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichern Sie Ihren Verlauf auf einem dieser Wege mit Ihrem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit Ihrem Passwort öffnet.",
+				"choose": "Wie möchten Sie Ihren Verlauf neu sichern?",
+				"usePreviousPassword": "Vorheriges Passwort eingeben",
+				"useRecoveryKey": "Ersatzschlüssel eingeben",
+				"previousPasswordHint": "Geben Sie das Passwort ein, das Sie vor der Änderung verwendet haben. Danach öffnet nur noch Ihr aktuelles Passwort Ihren Verlauf.",
+				"recoveryKeyHint": "Geben Sie Ihren gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit Ihrem aktuellen Passwort ersetzt. Ihr Ersatzschlüssel bleibt gültig.",
+				"previousPassword": "Vorheriges Passwort",
+				"submit": "Mit aktuellem Passwort sichern",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfen Sie die Eingabe oder verwenden Sie Ihren Ersatzschlüssel."
 			}
 		}
 	},

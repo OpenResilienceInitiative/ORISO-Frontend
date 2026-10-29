@@ -2514,6 +2514,13 @@
 				"title": "Dein Passwort wurde geändert.",
 				"explanation": "Damit dein neues Passwort deine Chats auf neuen Geräten entsperrt, gib einmal deinen Ersatzschlüssel ein.",
 				"laterHint": "Ohne diesen Schritt entsperrt dein neues Passwort deinen Verlauf auf neuen Geräten nicht. Du kannst ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Dein aktuelles Passwort öffnet die Sicherung deines Gesprächsverlaufs nicht. Das passiert, wenn dein Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichere deinen Verlauf auf einem dieser Wege mit deinem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit deinem Passwort öffnet.",
+				"choose": "Wie möchtest du deinen Verlauf neu sichern?",
+				"previousPasswordHint": "Gib das Passwort ein, das du vor der Änderung verwendet hast. Danach öffnet nur noch dein aktuelles Passwort deinen Verlauf.",
+				"recoveryKeyHint": "Gib deinen gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit deinem aktuellen Passwort ersetzt. Dein Ersatzschlüssel bleibt gültig.",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfe die Eingabe oder verwende deinen Ersatzschlüssel."
 			}
 		}
 	},
