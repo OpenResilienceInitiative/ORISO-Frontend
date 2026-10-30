@@ -10,6 +10,9 @@ import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 vi.mock('./SecurityPrivacySettings', () => ({
 	SecurityPrivacySettings: () => null
 }));
+vi.mock('../timelineSettings/TimelineSettings', () => ({
+	TimelineSettings: () => null
+}));
 
 vi.mock('../../globalState', () => ({
 	hasUserAuthority: () => true,
