@@ -1,5 +1,6 @@
 import { SecurityPrivacySettings } from './SecurityPrivacySettings';
 import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
+import { TimelineSettings } from '../timelineSettings/TimelineSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import {
@@ -19,6 +20,7 @@ import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import AnimationOutlinedIcon from '@mui/icons-material/AnimationOutlined';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { BrowserNotification } from './BrowserNotifications';
 import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
@@ -88,6 +90,12 @@ export const profileRoutesSettings = (
 				icon: AnimationOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 2
+			},
+			{
+				component: TimelineSettings,
+				icon: EventOutlinedIcon,
+				column: COLUMN_RIGHT,
+				order: 3
 			},
 			{
 				condition: () => selectableLocales.length > 1,

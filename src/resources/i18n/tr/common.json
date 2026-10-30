@@ -4,6 +4,35 @@
 		"unavailable": "Katılımcılar yüklenemedi.",
 		"empty": "Katılımcı yok."
 	},
+	"timelineSettings": {
+		"title": "Görüşme listesinde randevular",
+		"description": "Listenin yaklaşan randevuları nasıl gösterdiği. Tüm cihazlarda geçerlidir.",
+		"scrollModel": {
+			"legend": "Kaydırma",
+			"panes": "İki alan: üstte gelecek, altta geçmiş",
+			"single": "Tek zaman çizelgesi: gelecek ancak „Şimdi“nin ötesine çekmeye devam edince açılır"
+		},
+		"reveal": {
+			"legend": "Randevular yaklaşırken göster",
+			"none": "Hiçbir şey",
+			"next": "Bir sonraki randevu",
+			"half": "Listenin yarısı",
+			"most": "Neredeyse hepsi"
+		},
+		"pastDate": {
+			"legend": "Geçmiş görüşmelerde tarih",
+			"tag": "Konu etiketinde",
+			"line": "Ayrı bir satırda",
+			"off": "Gösterme"
+		},
+		"nowVariant": {
+			"legend": "„Şimdi“ işareti (yalnızca test aşamasında)",
+			"line": "Rozetli çizgi",
+			"handle": "Tutamakta",
+			"band": "Oklu bant"
+		},
+		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
+	},
 	"menuEffects": {
 		"title": "Menü görünümü",
 		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
