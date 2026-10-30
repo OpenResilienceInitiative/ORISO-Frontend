@@ -46,12 +46,30 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 	return null;
 };
 
+const QUERY_SESSION_LIST =
+	/^(\/sessions\/[^/]+\/(?:sessionPreview|sessionView))\/?$/;
+
+// UserService's team-discussion link names the session only in its query
+// (`…/sessionPreview?sessionId=42&teamDiscussion=1`). That list route renders
+// no conversation, so the id moves into the path, the rest of the query stays.
+const withQuerySessionInPath = (path: string | null): string | null => {
+	if (!path) return path;
+	const url = new URL(path, 'http://oriso.invalid');
+	const list = QUERY_SESSION_LIST.exec(url.pathname);
+	const sessionId = url.searchParams.get('sessionId');
+	if (!list || !sessionId) return path;
+	url.searchParams.delete('sessionId');
+	return `${list[1]}/session/${encodeURIComponent(sessionId)}${url.search}${url.hash}`;
+};
+
 // B2 / T24: server action paths may still carry the legacy `threadRootId`
 // (UserService B2 pending) — the frontend contract is `?channel=thread:<id>`,
 // rewritten once here at the boundary.
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
-	path: rewriteLegacyChannelPath(buildConversationPath(params))
+	path: rewriteLegacyChannelPath(
+		withQuerySessionInPath(buildConversationPath(params))
+	)
 });
 
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
