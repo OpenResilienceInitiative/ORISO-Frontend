@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationSettingsPanel } from './index';
 import { APP_ORISO_FIGMA_URL } from '../../storybookDesignLinks';
 import { notificationSettingsStore } from '../../../utils/notificationSettings/store';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { withDisplayFilterStore } from '../../displayFilter/displayFilterStoryStore';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -20,9 +19,8 @@ import {
 const withStoreState =
 	(prepare: () => void) => (Story: React.ComponentType) => {
 		const Seeded = () => {
-			useEffect(() => {
-				return () => notificationSettingsStore.resetForTests();
-			}, []);
+			// Every story seeds its own state; a reset on unmount would race
+			// with the next story's seeding and wipe it.
 			prepare();
 			return (
 				<div style={{ maxWidth: 480, padding: 16 }}>
@@ -136,5 +134,82 @@ export const DisplayFilters: Story = {
 				'Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.'
 			)
 		).toBeVisible();
+	}
+};
+
+const systemToneBox = (canvasElement: HTMLElement) =>
+	within(
+		canvasElement.querySelector<HTMLElement>(
+			'[data-cy="notif-system-tone"]'
+		)!
+	);
+
+/**
+ * System notices have their own tone picker next to the system switch:
+ * default ton-2, same play / volume controls as the rows in the dialog. The
+ * choice lands in the notification settings.
+ */
+export const SystemTone: Story = {
+	decorators: [
+		withStoreState(() => notificationSettingsStore.resetForTests())
+	],
+	play: async ({ canvasElement }) => {
+		const box = systemToneBox(canvasElement);
+		const picker = box.getByRole('combobox', {
+			name: 'Ton für Systemmeldungen'
+		});
+		await expect(picker).toHaveValue('ton-2');
+		await expect(picker).toBeEnabled();
+
+		await userEvent.selectOptions(picker, 'ton-5');
+		await expect(
+			notificationSettingsStore.getState().settings.systemTone.sound
+		).toBe('ton-5');
+
+		await userEvent.click(box.getByRole('button', { name: 'Lauter' }));
+		await expect(
+			notificationSettingsStore.getState().settings.systemTone.volume
+		).toBe(0.75);
+		await userEvent.click(box.getByRole('button', { name: 'Leiser' }));
+		await userEvent.click(box.getByRole('button', { name: 'Leiser' }));
+		await expect(
+			notificationSettingsStore.getState().settings.systemTone.volume
+		).toBe(0.25);
+
+		await expect(
+			box.getByRole('button', { name: 'Ton vorhören' })
+		).toBeEnabled();
+		// "No tone": nothing to preview, the muted icon replaces the button.
+		await userEvent.selectOptions(picker, 'none');
+		await expect(
+			box.queryByRole('button', { name: 'Ton vorhören' })
+		).toBeNull();
+	}
+};
+
+/** A stored choice is shown, and the system switch gates the picker. */
+export const SystemToneSwitchedOff: Story = {
+	decorators: [
+		withStoreState(() => {
+			notificationSettingsStore.resetForTests();
+			notificationSettingsStore.updateSettings({
+				families: { system: false },
+				systemTone: { sound: 'ton-9', volume: 0.25 }
+			});
+		})
+	],
+	play: async ({ canvasElement }) => {
+		const box = systemToneBox(canvasElement);
+		const picker = box.getByRole('combobox', {
+			name: 'Ton für Systemmeldungen'
+		});
+		await expect(picker).toHaveValue('ton-9');
+		await expect(picker).toBeDisabled();
+		await expect(
+			box.getByRole('button', { name: 'Lauter' })
+		).toBeDisabled();
+		await expect(
+			box.getByRole('button', { name: 'Ton vorhören' })
+		).toBeDisabled();
 	}
 };

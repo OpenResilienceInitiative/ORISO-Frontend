@@ -48,6 +48,59 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 		expect((parsed as any).futureTopLevel).toBeUndefined();
 	});
 
+	describe('system notice tone', () => {
+		it('defaults to ton-2 at medium volume', () => {
+			expect(DEFAULT_NOTIFICATION_SETTINGS.systemTone).toEqual({
+				sound: 'ton-2',
+				volume: 0.5
+			});
+		});
+
+		it('falls back to the default when nothing (valid) is stored', () => {
+			// Settings written before the picker existed carry no value.
+			expect(parseNotificationSettings({}).systemTone).toEqual({
+				sound: 'ton-2',
+				volume: 0.5
+			});
+			expect(
+				parseNotificationSettings({
+					systemTone: { sound: 7, volume: 'loud' }
+				}).systemTone
+			).toEqual({ sound: 'ton-2', volume: 0.5 });
+			expect(
+				parseNotificationSettings({ systemTone: 'ton-9' }).systemTone
+			).toEqual({ sound: 'ton-2', volume: 0.5 });
+		});
+
+		it('keeps a stored choice and clamps the volume', () => {
+			expect(
+				parseNotificationSettings({
+					systemTone: { sound: 'ton-9', volume: 0.25 }
+				}).systemTone
+			).toEqual({ sound: 'ton-9', volume: 0.25 });
+			expect(
+				parseNotificationSettings({
+					systemTone: { sound: 'none', volume: 7 }
+				}).systemTone
+			).toEqual({ sound: 'none', volume: 1 });
+		});
+
+		it('merges a partial update and leaves the other field alone', () => {
+			const merged = mergeNotificationSettings(
+				DEFAULT_NOTIFICATION_SETTINGS,
+				{ systemTone: { volume: 0.75 } }
+			);
+			expect(merged.systemTone).toEqual({ sound: 'ton-2', volume: 0.75 });
+			const other = mergeNotificationSettings(merged, {
+				systemTone: { sound: 'ton-5' }
+			});
+			expect(other.systemTone).toEqual({ sound: 'ton-5', volume: 0.75 });
+			expect(DEFAULT_NOTIFICATION_SETTINGS.systemTone.sound).toBe(
+				'ton-2'
+			);
+		});
+	});
+
 	it('merges deep-partial updates immutably', () => {
 		const merged = mergeNotificationSettings(
 			DEFAULT_NOTIFICATION_SETTINGS,

@@ -2884,6 +2884,7 @@
 					"notSentYet": "This notification is not available yet."
 				},
 				"showBanner": "Show banner",
+				"systemTone": "Tone for system notices",
 				"ringTone": "Ring tone",
 				"wecker": {
 					"title": "Alarm-clock mode (planned)",

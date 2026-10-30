@@ -2870,6 +2870,7 @@
 					"notSentYet": "Bu bildirim henüz kullanılabilir değil."
 				},
 				"showBanner": "Banner göster",
+				"systemTone": "Sistem bildirimleri sesi",
 				"ringTone": "Zil sesi",
 				"wecker": {
 					"title": "Çalar saat modu (planlanıyor)",

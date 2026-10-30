@@ -9,7 +9,8 @@ import {
 } from 'vite-plus/test';
 import {
 	DEFAULT_LOCAL_DEVICE_SETTINGS,
-	DEFAULT_NOTIFICATION_SETTINGS
+	DEFAULT_NOTIFICATION_SETTINGS,
+	type SoundId
 } from './model';
 import { setKindField } from './notificationConfig';
 import {
@@ -184,7 +185,12 @@ describe('playNotificationSound (config-driven)', () => {
 				nextNow()
 			);
 
-		it('play the fixed short tone while the system switch is on, whatever the Standard row says', () => {
+		const withTone = (sound: SoundId, volume: number) => ({
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			systemTone: { sound, volume }
+		});
+
+		it('play ton-2 at medium volume by default, whatever the Standard row says', () => {
 			// Standard defaults to "no sound": the tone must not depend on it.
 			play();
 			expect(played).toHaveLength(1);
@@ -192,9 +198,21 @@ describe('playNotificationSound (config-driven)', () => {
 			expect(played[0].volume).toBe(0.5);
 		});
 
-		it('are silent when the system switch is off', () => {
+		it('play the tone and volume chosen for system notices', () => {
+			play(withTone('ton-7', 0.25));
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-7');
+			expect(played[0].volume).toBe(0.25);
+		});
+
+		it('stay silent when the chosen system tone is "none"', () => {
+			play(withTone('none', 0.5));
+			expect(played).toHaveLength(0);
+		});
+
+		it('are silent when the system switch is off, whatever tone is chosen', () => {
 			play({
-				...DEFAULT_NOTIFICATION_SETTINGS,
+				...withTone('ton-7', 1),
 				families: {
 					...DEFAULT_NOTIFICATION_SETTINGS.families,
 					system: false
@@ -204,9 +222,13 @@ describe('playNotificationSound (config-driven)', () => {
 		});
 
 		it('ignore the Standard row of the Gespräche tab', () => {
-			play(settingsWith('conversations', 'standard', 'ton-9', 1));
+			play({
+				...settingsWith('conversations', 'standard', 'ton-9', 1),
+				systemTone: { sound: 'ton-4', volume: 0.75 }
+			});
 			expect(played).toHaveLength(1);
-			expect(played[0].src).toContain('ton-2');
+			expect(played[0].src).toContain('ton-4');
+			expect(played[0].volume).toBe(0.75);
 		});
 	});
 

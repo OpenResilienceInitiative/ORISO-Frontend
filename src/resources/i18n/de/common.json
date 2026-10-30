@@ -2922,6 +2922,7 @@
 					"notSentYet": "Diese Benachrichtigung ist noch nicht verfügbar."
 				},
 				"showBanner": "Banner anzeigen",
+				"systemTone": "Ton für Systemmeldungen",
 				"ringTone": "Klingelton",
 				"wecker": {
 					"title": "Wecker-Modus (geplant)",

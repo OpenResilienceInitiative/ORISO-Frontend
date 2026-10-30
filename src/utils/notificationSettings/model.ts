@@ -14,7 +14,9 @@
 
 import { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
 import {
+	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
+	DEFAULT_VOLUME,
 	NotificationConfig,
 	parseNotificationConfig
 } from './notificationConfig';
@@ -22,6 +24,12 @@ import { NEVER_NOTIFY_FAMILIES } from './notificationConfig';
 
 /** Per-family on/off switches — mirrors the timeline's event families. */
 export type FamilyToggles = Record<EventFamily, boolean>;
+
+/** Tone and volume of system notices (they have no row in the dialog). */
+export interface SystemTone {
+	sound: SoundId;
+	volume: number;
+}
 
 export interface OrisoNotificationSettings {
 	/** Master mute across every device (account-wide). */
@@ -47,6 +55,8 @@ export interface OrisoNotificationSettings {
 	dndUntil: string | null;
 	/** Per-area notification config (Figma dialog, #576). */
 	notificationConfig: NotificationConfig;
+	/** Chosen next to the system switch; the switch gates banner and tone. */
+	systemTone: SystemTone;
 	/**
 	 * Which one-time default upgrades this config has seen. Stored configs
 	 * hold every row explicitly, so a changed factory default needs this to
@@ -161,6 +171,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: OrisoNotificationSettings = {
 		showMessagePreview: false
 	},
 	notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
+	systemTone: { sound: 'ton-2', volume: DEFAULT_VOLUME },
 	notificationConfigRevision: NOTIFICATION_SETTINGS_REVISION
 };
 
@@ -176,6 +187,22 @@ export const DEFAULT_LOCAL_DEVICE_SETTINGS: LocalDeviceNotificationSettings = {
 
 const asBoolean = (value: unknown, fallback: boolean): boolean =>
 	typeof value === 'boolean' ? value : fallback;
+
+/** A stored value that is not a usable tone falls back to ton-2 at medium. */
+const parseSystemTone = (raw: unknown): SystemTone => {
+	const source = (raw ?? {}) as Record<string, unknown>;
+	const fallback = DEFAULT_NOTIFICATION_SETTINGS.systemTone;
+	return {
+		sound:
+			typeof source.sound === 'string'
+				? (source.sound as SoundId)
+				: fallback.sound,
+		volume:
+			typeof source.volume === 'number' && Number.isFinite(source.volume)
+				? clampVolume(source.volume)
+				: fallback.volume
+	};
+};
 
 /**
  * Parse untrusted content (account data / localStorage) into a full settings
@@ -219,6 +246,7 @@ export const parseNotificationSettings = (
 				? source.notificationConfigRevision
 				: 0
 		),
+		systemTone: parseSystemTone(source.systemTone),
 		notificationConfigRevision: NOTIFICATION_SETTINGS_REVISION
 	};
 };
@@ -241,6 +269,7 @@ export type NotificationSettingsUpdate = {
 	>;
 	dndUntil?: string | null;
 	notificationConfig?: NotificationConfig;
+	systemTone?: Partial<SystemTone>;
 };
 
 /** Immutably merge a partial update into full settings. */
@@ -260,6 +289,7 @@ export const mergeNotificationSettings = (
 		update.notificationConfig !== undefined
 			? update.notificationConfig
 			: current.notificationConfig,
+	systemTone: { ...current.systemTone, ...(update.systemTone || {}) },
 	notificationConfigRevision: current.notificationConfigRevision
 });
 

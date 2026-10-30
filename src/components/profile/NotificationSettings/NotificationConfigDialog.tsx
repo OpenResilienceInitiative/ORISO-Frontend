@@ -4,36 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
-import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
-import { ReactComponent as PlayCircleIcon } from '../../../resources/img/icons/play-circle.svg';
-import { ReactComponent as ArrowUpIcon } from '../../../resources/img/icons/keyboard_arrow_up.svg';
-import { ReactComponent as ArrowDownIcon } from '../../../resources/img/icons/keyboard_arrow_down.svg';
-import {
-	NOTIFICATION_TONE_IDS,
-	SoundId
-} from '../../../utils/notificationSettings/model';
-import {
-	previewNotificationSound,
-	soundAssetFor
-} from '../../../utils/notificationSettings/soundPlayback';
+import { SoundId } from '../../../utils/notificationSettings/model';
+import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import { EMAIL_PREFERENCES_PATH } from '../../../utils/emailPreferencesReturn';
 import {
 	AREA_KINDS,
 	BannerMode,
-	clampVolume,
 	DISABLED_AREAS,
 	KindConfig,
 	NOTIFICATION_AREAS,
 	NotificationArea,
 	NotificationConfig,
-	NotificationKind,
-	VOLUME_STEP
+	NotificationKind
 } from '../../../utils/notificationSettings/notificationConfig';
 import {
 	rowAvailability,
 	type NotificationRole,
 	visibleAreas
 } from '../../../utils/notificationSettings/notificationChannelCapability';
+import { ToneControls } from './ToneControls';
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
@@ -61,7 +50,6 @@ const KindRow = ({
 	onPreview: (soundId: SoundId, volume: number) => void;
 }) => {
 	const { t } = useTranslation();
-	const hasSound = value.sound !== 'none' && !!soundAssetFor(value.sound);
 	// #778: a channel that will fire once a producer exists is disabled and
 	// says why; rows that can never fire for this role are not rendered.
 	const { bannerEnabled, soundEnabled, reasonKey } = rowAvailability(
@@ -84,107 +72,19 @@ const KindRow = ({
 			<label className="notifConfig__label">
 				{t(`profile.notifications.config.kind.${kind}`)}
 			</label>
-			<div className="notifConfig__rowControls">
-				{/* Volume up/down — the react-sounds volume, per kind. */}
-				<div
-					className="notifConfig__volume"
-					data-cy={`notif-volume-${area}-${kind}`}
-				>
-					<button
-						type="button"
-						className="notifConfig__volumeBtn"
-						aria-label={t('profile.notifications.config.volumeUp')}
-						disabled={soundOff || value.volume >= 1}
-						onClick={() =>
-							onChange(
-								area,
-								kind,
-								'volume',
-								clampVolume(value.volume + VOLUME_STEP)
-							)
-						}
-						data-cy={`notif-volume-up-${area}-${kind}`}
-					>
-						<ArrowUpIcon aria-hidden="true" />
-					</button>
-					<button
-						type="button"
-						className="notifConfig__volumeBtn"
-						aria-label={t(
-							'profile.notifications.config.volumeDown'
-						)}
-						disabled={soundOff || value.volume <= 0}
-						onClick={() =>
-							onChange(
-								area,
-								kind,
-								'volume',
-								clampVolume(value.volume - VOLUME_STEP)
-							)
-						}
-						data-cy={`notif-volume-down-${area}-${kind}`}
-					>
-						<ArrowDownIcon aria-hidden="true" />
-					</button>
-				</div>
-
-				<div className="notifConfig__selectWrap">
-					{/* Icon lives INSIDE the field (left), per the Figma: a
-					    chosen tone → a play button to hear it; no sound →
-					    the crossed-out (muted) icon, not clickable. */}
-					{hasSound ? (
-						<button
-							type="button"
-							className="notifConfig__fieldIcon notifConfig__fieldIcon--play"
-							aria-label={t('profile.notifications.config.play')}
-							disabled={soundOff}
-							onClick={() => onPreview(value.sound, value.volume)}
-							data-cy={`notif-play-${area}-${kind}`}
-						>
-							<PlayCircleIcon aria-hidden="true" />
-						</button>
-					) : (
-						<span
-							className="notifConfig__fieldIcon notifConfig__fieldIcon--mute"
-							aria-hidden="true"
-							data-cy={`notif-muted-${area}-${kind}`}
-						>
-							<NotificationAudioOffIcon />
-						</span>
-					)}
-					<select
-						className="notifConfig__select"
-						aria-label={t(
-							`profile.notifications.config.kind.${kind}`
-						)}
-						value={value.sound}
-						disabled={soundOff}
-						aria-describedby={soundOff ? reasonId : undefined}
-						onChange={(e) =>
-							onChange(
-								area,
-								kind,
-								'sound',
-								e.target.value as SoundId
-							)
-						}
-					>
-						<option value="none">
-							{t('profile.notifications.config.noSound')}
-						</option>
-						<option value="ring">
-							{t('profile.notifications.config.ringTone')}
-						</option>
-						{NOTIFICATION_TONE_IDS.map((id, index) => (
-							<option key={id} value={id}>
-								{t('profile.notifications.config.tone', {
-									number: index + 1
-								})}
-							</option>
-						))}
-					</select>
-				</div>
-			</div>
+			<ToneControls
+				sound={value.sound}
+				volume={value.volume}
+				label={t(`profile.notifications.config.kind.${kind}`)}
+				disabled={soundOff}
+				describedBy={reasonId}
+				cySuffix={`${area}-${kind}`}
+				onSoundChange={(sound) => onChange(area, kind, 'sound', sound)}
+				onVolumeChange={(volume) =>
+					onChange(area, kind, 'volume', volume)
+				}
+				onPreview={onPreview}
+			/>
 			<div className="notifConfig__channels">
 				{/* Banner: off / temporary / persistent (requireInteraction —
 				    Chromium only; Firefox/Safari fall back to temporary). */}

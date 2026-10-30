@@ -2870,6 +2870,7 @@
 					"notSentYet": "Cette notification n'est pas encore disponible."
 				},
 				"showBanner": "Afficher la bannière",
+				"systemTone": "Son des notifications système",
 				"ringTone": "Sonnerie",
 				"wecker": {
 					"title": "Mode réveil (prévu)",
