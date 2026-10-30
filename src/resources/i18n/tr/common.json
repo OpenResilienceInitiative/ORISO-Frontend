@@ -6113,25 +6113,6 @@
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
 		},
-		"notes": {
-			"title": "Görüşme notları",
-			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
-			"type": "Not türü",
-			"text": "Not",
-			"add": "Not ekle",
-			"remove": "Notu kaldır",
-			"copy": "Tümünü kopyala",
-			"copied": "Kopyalandı",
-			"empty": "Henüz bir not yok.",
-			"collapse": "Notları daralt",
-			"expand": "Notları genişlet",
-			"open": "Görüşme notları",
-			"types": {
-				"frage": "Soru",
-				"anmerkung": "Açıklama",
-				"aufgabe": "Görev"
-			}
-		},
 		"states": {
 			"encrypted": "Şifreli",
 			"endsCurrent": "Yanıtlarsanız {{name}} ile görüşmeniz sona erer.",
