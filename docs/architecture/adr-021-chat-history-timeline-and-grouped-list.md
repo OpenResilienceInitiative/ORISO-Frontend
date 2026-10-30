@@ -5,7 +5,8 @@
 - Owners: ORISO Frontend (Frank Gerhardt)
 - Decision scope: ORISO-Frontend (session list, room header, display settings)
 - Related: Figma App.Oriso 316-17441, 8609-31260; commits 76da0d496 (April grouping),
-  afa9dc075 (July grouping), f3d563148 (grouping removed); FutureTimelinePanel.tsx;
+  afa9dc075 (July grouping), f3d563148 (grouping removed); FutureTimelinePanel.tsx
+  (removed by PR 4, replaced by `timeline/FutureZone.tsx`);
   FE#781 (omit vs disable menu items); FE#1884 (tracking issue)
 
 ## Context
@@ -78,9 +79,24 @@ conversation is open once focus moves to the editor.
    variant (test phase only), date on the topic tag (a: segment on the tag, default;
    b: own row).
 10. The old future strip and the `futureTimeline` chip are removed only after the
-    prototype is accepted. Until then the timeline parts (handle, twin entries,
-    "Jetzt" marker, display settings) stay out of the productive list. The grouped
-    list (§1, §2) is not part of this gate and ships with its own PR.
+    prototype is accepted. The removal and the wiring into the productive list are
+    their own PR (PR 4, stacked on the settings PR); the timeline PRs (prototype,
+    settings, integration) ship together after the joint test. The grouped list
+    (§1, §2) is not part of this gate and ships with its own PR.
+
+## Implementation notes (PR 4, 2026-10-30)
+
+- `FutureZone` holds the handle, the twin rows, the split-button layer and "Jetzt";
+  the prototype and `SessionsList` both render it with their own cards.
+- The list loads every group series once (now + 3 months, like the old strip) and
+  the viewer's bookings (counsellor: active bookings; asker: own bookings). A
+  group twin shows while its room is a visible row; a booking without a room only
+  with no filter or search (§8).
+- The group header shows the series' next date. 1:1 headers stay empty until a
+  booking carries its session id.
+- The opening survives a chat switch (module memory) and starts from the
+  "show on upcoming appointments" setting after a reload.
+- Not in the narrow rail and not in the archive tab.
 
 ## Card details decided on 2026-10-28 (grouped list review)
 
