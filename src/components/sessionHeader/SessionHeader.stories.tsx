@@ -45,6 +45,8 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { RoomNextAppointment } from '../sessionsList/timeline/AppointmentSplitButton';
+import type { FutureEntry } from '../sessionsList/timeline/timelineModel';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -1446,4 +1448,94 @@ export const GroupMenuAskerBanned390: Story = {
 			storyAskerData.userName
 		]),
 	play: expectNoChatInfoWhenBanned
+};
+
+/* ------------------------------------------------------------------ *
+ * ADR-021 timeline prototype: the room's next appointment, directly below
+ * the header divider. Not mounted in the real headers until the prototype
+ * is accepted (PR 4 of #1884).
+ * ------------------------------------------------------------------ */
+
+const nextOneToOne: FutureEntry = {
+	key: 'booking-7001',
+	kind: 'one-to-one',
+	sessionId: 4401,
+	title: 'ruhiges Yak Kim',
+	topic: 'Familienberatung',
+	start: new Date('2026-10-29T16:00:00'),
+	modality: 'video',
+	canDuplicate: false
+};
+
+const nextGroupDate: FutureEntry = {
+	key: 'occ-9001-0',
+	kind: 'group',
+	title: 'Elternrunde',
+	topic: 'Familienberatung',
+	start: new Date('2026-11-04T18:00:00'),
+	modality: 'chat',
+	canDuplicate: true
+};
+
+const withNextAppointment = (header: React.ReactNode, entry: FutureEntry) => (
+	<>
+		{header}
+		<div style={headerShell}>
+			<RoomNextAppointment entry={entry} role="counsellor" />
+		</div>
+	</>
+);
+
+const expectAppointmentMenu =
+	(label: string, items: string[]) =>
+	async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="room-next-appointment"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		const main = within(bar).getByRole('button', { name: label });
+		// 40px: the compact split button.
+		await expect(Math.round(main.getBoundingClientRect().height)).toBe(40);
+		// Inside the room the main part opens the appointment menu too.
+		await userEvent.click(main);
+		const menu = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="timeline-entry-menu"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		for (const item of items)
+			await expect(within(menu).getByText(item)).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+	};
+
+export const NextAppointmentOneToOne: Story = {
+	name: 'Next appointment below the header — 1:1 (timeline prototype)',
+	render: () =>
+		withNextAppointment(
+			renderSessionHeader(mockActiveConversation()),
+			nextOneToOne
+		),
+	play: expectAppointmentMenu('Do 29. Okt 16:00', [
+		'Termin verschieben',
+		'Termin absagen'
+	])
+};
+
+export const NextAppointmentGroup: Story = {
+	name: 'Next appointment below the header — group (timeline prototype)',
+	render: () =>
+		withNextAppointment(
+			renderGroupHeader(mockGroupSessionSmall()),
+			nextGroupDate
+		),
+	play: expectAppointmentMenu('Mi 4. Nov 18:00', [
+		'Termin absagen',
+		'Als Einzeltermin duplizieren',
+		'Gruppe konfigurieren'
+	])
 };

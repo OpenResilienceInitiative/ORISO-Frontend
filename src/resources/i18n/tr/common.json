@@ -4400,7 +4400,8 @@
 			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır.",
 			"expand": "Görüşme listesini genişlet",
 			"collapse": "Sohbeti büyütmek için görüşme listesini daralt",
-			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin.",
+			"futureAriaLabel": "Yaklaşan randevular: göstermek için aşağı sürükleyin, Yukarı ve Aşağı tuşları kademeler arasında geçer."
 		},
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",

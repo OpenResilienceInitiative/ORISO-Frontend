@@ -4,6 +4,7 @@ import {
 	entryMenu,
 	filterEntries,
 	formatEntryDate,
+	nextEntryBySession,
 	type TimelineSession
 } from './timelineModel';
 
@@ -91,6 +92,15 @@ describe('future entries', () => {
 			'booking-7'
 		]);
 		expect(filterEntries(entries, 'group')).toHaveLength(2);
+	});
+});
+
+describe('next appointment per room', () => {
+	it('keeps the nearest date of every room, skips entries without a room', () => {
+		const next = nextEntryBySession(build());
+		expect([...next.keys()].sort()).toEqual([1, 2]);
+		expect(next.get(1)?.key).toBe('occ-90-1');
+		expect(next.get(2)?.key).toBe('booking-7');
 	});
 });
 

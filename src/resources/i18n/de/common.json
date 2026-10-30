@@ -4417,7 +4417,8 @@
 			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste.",
 			"expand": "Beratungsliste einblenden",
 			"collapse": "Beratungsliste einklappen, um den Chatraum zu vergrößern",
-			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
+			"scrollAriaLabel": "Zum Scrollen der Liste ziehen.",
+			"futureAriaLabel": "Anstehende Termine: nach unten ziehen zum Einblenden, Pfeil hoch/runter springt zwischen den Stufen."
 		},
 		"rail": {
 			"unreadCount": "{{count}} neue Nachrichten",

@@ -131,6 +131,22 @@ export const filterEntries = (
 					entry.sessionId !== undefined && entry.kind === filter
 			);
 
+/**
+ * The nearest appointment of every room: drives the clock circle on the
+ * room's card and the line below its header. Entries are sorted, so the
+ * first one per room wins.
+ */
+export const nextEntryBySession = (
+	entries: FutureEntry[]
+): Map<number, FutureEntry> => {
+	const next = new Map<number, FutureEntry>();
+	for (const entry of entries) {
+		if (entry.sessionId !== undefined && !next.has(entry.sessionId))
+			next.set(entry.sessionId, entry);
+	}
+	return next;
+};
+
 const stripDot = (text: string) => text.replace(/\./g, '');
 
 /** "Mo 13. Dez 18:00" */

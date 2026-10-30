@@ -9,34 +9,24 @@ import * as React from 'react';
 import {
 	useCallback,
 	useEffect,
-	useId,
 	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
 } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { ListItemInterface } from '../../../globalState/interfaces';
 import { SessionsListToolbar } from '../SessionsListToolbar';
 import type { SessionToolbarChipFilter } from '../sessionToolbarFilters';
 import { RuntimeSessionCard } from '../../sessionsListItem/__storybook__/runtimeSessionCard';
 import { ResizableHandle } from '../ResizableHandle';
-import { SplitButton } from '../../splitButton/SplitButton';
-import {
-	ChatMenuDropdown,
-	ChatMenuDropdownItem
-} from '../../chatMenuDropdown/ChatMenuDropdown';
-import { ReactComponent as ChatIcon } from '../../../resources/img/icons/modality-chat.svg';
-import { ReactComponent as AudioIcon } from '../../../resources/img/icons/modality-audio.svg';
-import { ReactComponent as VideoIcon } from '../../../resources/img/icons/modality-video.svg';
-import { ReactComponent as LocationIcon } from '../../../resources/img/icons/location.svg';
+import { AppointmentSplitButton } from './AppointmentSplitButton';
 import { revealSnapPoints, stepSnap, clampReveal } from '../verticalHandleMath';
+import type { SessionCardDatePlacement } from '../../sessionsListItem/SessionListItemComponent';
 import {
-	entryMenu,
 	filterEntries,
 	formatEntryDate,
-	type EntryModality,
+	nextEntryBySession,
 	type FutureEntry,
 	type TimelineFilter,
 	type TimelineRole,
@@ -52,16 +42,6 @@ export type NowVariant = 'line' | 'handle' | 'band';
 export const ENTRY_HEIGHT = 160;
 /** Pull this far past the top of the single timeline to release the next stop. */
 export const PULL_RELEASE_PX = 60;
-
-const MODALITY_ICON: Record<
-	EntryModality,
-	React.FC<React.SVGProps<SVGSVGElement>>
-> = {
-	chat: ChatIcon,
-	audio: AudioIcon,
-	video: VideoIcon,
-	location: LocationIcon
-};
 
 /** The real toolbar chips the prototype listens to; every other chip shows all. */
 const FILTER_OF_CHIP: Partial<
@@ -84,67 +64,9 @@ export interface TimelinePrototypeProps {
 	/** Height of the list below the handle. */
 	listHeight?: number;
 	initialFilter?: TimelineFilter;
+	/** Date on past cards (display setting): segment at the tag, own line, off, or dev's corner. */
+	pastDate?: SessionCardDatePlacement;
 }
-
-const EntryMenu = ({
-	entry,
-	role,
-	anchor,
-	onClose
-}: {
-	entry: FutureEntry;
-	role: TimelineRole;
-	anchor: DOMRect;
-	onClose: () => void;
-}) => {
-	const items = entryMenu(entry, role);
-	const ref = useRef<HTMLDivElement>(null);
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-		const onDown = (e: MouseEvent) =>
-			!ref.current?.contains(e.target as Node) && onClose();
-		document.addEventListener('keydown', onKey);
-		document.addEventListener('mousedown', onDown);
-		return () => {
-			document.removeEventListener('keydown', onKey);
-			document.removeEventListener('mousedown', onDown);
-		};
-	}, [onClose]);
-	return createPortal(
-		<div
-			onClick={(e) => e.stopPropagation()}
-			style={{
-				position: 'fixed',
-				zIndex: 1400,
-				top: anchor.bottom + 8,
-				left: Math.max(
-					8,
-					Math.min(anchor.right - 320, window.innerWidth - 328)
-				)
-			}}
-		>
-			<ChatMenuDropdown
-				ref={ref}
-				role="menu"
-				ariaLabel="Termin"
-				data-cy="timeline-entry-menu"
-				style={{ width: 320 }}
-			>
-				{items.map((item) => (
-					<ChatMenuDropdownItem
-						key={item.key}
-						role="menuitem"
-						title={item.title}
-						description={item.description}
-						disabled={item.disabled}
-						onClick={onClose}
-					/>
-				))}
-			</ChatMenuDropdown>
-		</div>,
-		document.body
-	);
-};
 
 const NowArrow = ({ direction }: { direction: 'up' | 'down' }) => (
 	<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -175,12 +97,17 @@ const NowMarker = ({ variant }: { variant: NowVariant }) => (
 const CardGroup = ({
 	items,
 	isOpenAt,
-	onPick
+	onPick,
+	datePlacement,
+	upcomingOf
 }: {
 	items: ListItemInterface[];
 	/** Which rows leave the group; the route still marks every row of the open room. */
 	isOpenAt: (index: number) => boolean;
 	onPick: (index: number) => void;
+	datePlacement: SessionCardDatePlacement;
+	/** Label of the row's next appointment, if any (clock circle). */
+	upcomingOf?: (index: number) => string | undefined;
 }) => {
 	const isActive = (index: number) =>
 		index >= 0 && index < items.length && isOpenAt(index);
@@ -202,6 +129,8 @@ const CardGroup = ({
 						isGroupEnd={
 							index === items.length - 1 || isActive(index + 1)
 						}
+						datePlacement={datePlacement}
+						upcomingAppointment={upcomingOf?.(index)}
 					/>
 				</div>
 			))}
@@ -228,12 +157,7 @@ const TwinAction = ({
 	index: number;
 	listRef: React.RefObject<HTMLDivElement>;
 }) => {
-	const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
 	const [place, setPlace] = useState<React.CSSProperties>({});
-	const hostRef = useRef<HTMLDivElement>(null);
-	const toggleRef = useRef<HTMLButtonElement | null>(null);
-	const menuId = useId();
-	const Icon = MODALITY_ICON[entry.modality];
 	const rowOf = () =>
 		listRef.current?.querySelectorAll<HTMLElement>(':scope > .tlp__row')[
 			index
@@ -281,43 +205,19 @@ const TwinAction = ({
 
 	return (
 		<div
-			ref={hostRef}
 			className="tlp__twinAction"
 			style={place}
 			data-cy="timeline-entry-action"
 		>
-			<SplitButton
-				size="small"
-				variant={active ? 'primary' : 'tonal'}
-				label={formatEntryDate(entry.start)}
-				icon={<Icon />}
-				mainOpensMenu={false}
-				onClick={() => {
+			<AppointmentSplitButton
+				entry={entry}
+				role={role}
+				active={active}
+				onOpen={() => {
 					card()?.click();
 					card()?.focus();
 				}}
-				onToggleMenu={() =>
-					setMenuAnchor(
-						menuAnchor
-							? null
-							: (toggleRef.current?.getBoundingClientRect() ??
-									null)
-					)
-				}
-				open={Boolean(menuAnchor)}
-				menuLabel="Terminmenü"
-				menuPopup="menu"
-				menuId={menuId}
-				trailingRef={toggleRef}
 			/>
-			{menuAnchor && (
-				<EntryMenu
-					entry={entry}
-					role={role}
-					anchor={menuAnchor}
-					onClose={() => setMenuAnchor(null)}
-				/>
-			)}
 		</div>
 	);
 };
@@ -331,7 +231,8 @@ export const TimelinePrototype = ({
 	scrollModel = 'panes',
 	nowVariant = 'line',
 	listHeight = 520,
-	initialFilter = 'all'
+	initialFilter = 'all',
+	pastDate = 'tag'
 }: TimelinePrototypeProps) => {
 	const { t } = useTranslation();
 	const initialChip =
@@ -383,14 +284,18 @@ export const TimelinePrototype = ({
 		() => [...visibleEntries].reverse(),
 		[visibleEntries]
 	);
-	const pastItems = useMemo(
+	const pastSessions = useMemo(
 		() =>
-			sessions
-				.filter((s) => filter === 'all' || s.kind === filter)
-				.map((s) => items[s.sessionId])
-				.filter(Boolean),
+			sessions.filter(
+				(s) =>
+					(filter === 'all' || s.kind === filter) &&
+					items[s.sessionId]
+			),
 		[sessions, items, filter]
 	);
+	const pastItems = pastSessions.map((s) => items[s.sessionId]);
+	// Every planned date counts, whatever the filter shows above the handle.
+	const nextOfSession = useMemo(() => nextEntryBySession(entries), [entries]);
 
 	// Snap stops come from the real cards' height, not from a constant.
 	useEffect(() => {
@@ -496,6 +401,8 @@ export const TimelinePrototype = ({
 								entryKey: futureEntries[index].key
 							})
 						}
+						// The twin's date is its split button.
+						datePlacement="off"
 					/>
 				)}
 			</div>
@@ -545,6 +452,15 @@ export const TimelinePrototype = ({
 				onPick={(index) =>
 					setSelection({ room: roomOf(pastItems[index]) })
 				}
+				datePlacement={pastDate}
+				upcomingOf={(index) => {
+					const next = nextOfSession.get(
+						pastSessions[index].sessionId
+					);
+					return next
+						? `Nächster Termin: ${formatEntryDate(next.start)}`
+						: undefined;
+				}}
 			/>
 		</div>
 	);

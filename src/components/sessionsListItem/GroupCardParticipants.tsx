@@ -10,10 +10,13 @@ import { groupCardParticipants } from './groupCardMemberParticipants';
 /** Group-only: counselling rooms retain their separate silent-membership rules. */
 export const GroupCardParticipants = ({
 	roomId,
-	enabled
+	enabled,
+	leading
 }: {
 	roomId?: string;
 	enabled: boolean;
+	/** Joins the stack as its first member (upcoming-appointment clock). */
+	leading?: React.ReactNode;
 }) => {
 	const { t } = useTranslation();
 	const { status, members } = useGroupCardMembers(roomId, enabled);
@@ -41,11 +44,14 @@ export const GroupCardParticipants = ({
 		);
 	if (!participants.length)
 		return (
-			<span
-				data-cy="group-card-members-empty"
-				role="status"
-				aria-label={t('groupCardParticipants.empty')}
-			/>
+			<>
+				<span
+					data-cy="group-card-members-empty"
+					role="status"
+					aria-label={t('groupCardParticipants.empty')}
+				/>
+				{leading}
+			</>
 		);
 	return (
 		<ParticipantAvatarStack
@@ -53,6 +59,7 @@ export const GroupCardParticipants = ({
 			size={AVATAR_SIZES.default}
 			maxVisible={2}
 			overflowStyle="badge"
+			leading={leading}
 			data-cy="group-card-participants"
 		/>
 	);

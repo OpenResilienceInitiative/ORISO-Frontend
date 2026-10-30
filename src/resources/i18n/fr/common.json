@@ -4400,7 +4400,8 @@
 			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste.",
 			"expand": "Afficher la liste des consultations",
 			"collapse": "Réduire la liste des consultations pour agrandir le chat",
-			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
+			"scrollAriaLabel": "Faites glisser pour faire défiler la liste.",
+			"futureAriaLabel": "Rendez-vous à venir : faites glisser vers le bas pour les afficher, Haut et Bas passent d’un palier à l’autre."
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",

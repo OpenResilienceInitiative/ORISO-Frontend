@@ -417,6 +417,16 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		text-overflow: ellipsis;
 	}
 
+	// ADR-021 display setting "date in its own line" below the topic row.
+	&__dateLine {
+		// Same inset as the topic row above it.
+		padding: 4px 16px 0;
+		color: var(--m3-on-surface-variant, $tertiary);
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
+	}
+
 	&__date {
 		color: var(--m3-on-surface-variant, $tertiary);
 		font-size: 12px;

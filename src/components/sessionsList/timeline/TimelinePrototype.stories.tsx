@@ -48,7 +48,8 @@ const meta = {
 					'Toolbar and cards are the real components; the prototype adds the future zone. ' +
 					'Pull the handle under the filter chips to reveal upcoming appointments; it rests at ' +
 					'closed / next appointment / half / almost all and cannot go past the last appointment. ' +
-					'Controls: scroll model (two panes vs. one timeline), "Jetzt" variant, role.'
+					'Controls: scroll model (two panes vs. one timeline), "Jetzt" variant, role, ' +
+					'date on past cards (segment at the topic tag / own line / off / corner as on dev).'
 			}
 		}
 	},
@@ -58,7 +59,11 @@ const meta = {
 			control: 'inline-radio',
 			options: ['line', 'handle', 'band']
 		},
-		role: { control: 'inline-radio', options: ['counsellor', 'asker'] }
+		role: { control: 'inline-radio', options: ['counsellor', 'asker'] },
+		pastDate: {
+			control: 'inline-radio',
+			options: ['tag', 'line', 'off', 'corner']
+		}
 	},
 	args: {
 		entries: mockEntries(),
@@ -68,6 +73,7 @@ const meta = {
 		role: 'counsellor',
 		scrollModel: 'panes',
 		nowVariant: 'line',
+		pastDate: 'tag',
 		listHeight: 520
 	}
 } satisfies Meta<typeof TimelinePrototype>;
@@ -272,4 +278,119 @@ export const NowVariants: Story = {
 export const SingleTimeline: Story = {
 	name: 'Scroll model b — one timeline (pull past the top to release)',
 	args: { scrollModel: 'single', listHeight: 360 }
+};
+
+const pastRow = (canvasElement: HTMLElement, name: string) =>
+	[
+		...canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="timeline-past"] .tlp__row'
+		)
+	].find((row) => row.textContent?.includes(name))!;
+
+/** Switching chats keeps the handle where it is; a reload starts closed (FutureHandle). */
+export const ChatSwitchKeepsHandle: Story = {
+	name: 'Handle — stays put while switching chats',
+	play: async ({ canvasElement }) => {
+		const handle = handleOf(canvasElement);
+		await expect(handle.getAttribute('aria-valuenow')).toBe('0');
+		handle.focus();
+		await userEvent.keyboard('{ArrowDown}');
+		await waitFor(() =>
+			expect(handle.getAttribute('aria-valuenow')).toBe(
+				String(nextStop(canvasElement))
+			)
+		);
+		const opened = handle.getAttribute('aria-valuenow')!;
+		await waitFor(() =>
+			expect(futureHeight(canvasElement)).toBe(Number(opened))
+		);
+
+		await userEvent.click(content(pastRow(canvasElement, 'mutiger Fuchs')));
+		await userEvent.click(
+			content(pastRow(canvasElement, 'ruhiges Yak Kim'))
+		);
+		await waitFor(() =>
+			expect(
+				pastRow(canvasElement, 'ruhiges Yak Kim').querySelector(
+					'.sessionsListItem--active'
+				)
+			).not.toBeNull()
+		);
+		await expect(handle.getAttribute('aria-valuenow')).toBe(opened);
+		await expect(futureHeight(canvasElement)).toBe(Number(opened));
+	}
+};
+
+/** Rooms with a planned date carry the grey clock; the label names the date. */
+export const UpcomingClock: Story = {
+	name: 'Clock circle — rooms with an upcoming appointment',
+	play: async ({ canvasElement }) => {
+		const clockOf = (name: string) =>
+			pastRow(canvasElement, name).querySelector<HTMLElement>(
+				'[data-cy="upcoming-appointment-clock"]'
+			);
+		// 1:1: small at the avatar's corner; group: first member of the stack.
+		await waitFor(() =>
+			expect(clockOf('ruhiges Yak Kim')?.getAttribute('aria-label')).toBe(
+				'Nächster Termin: Do 29. Okt 16:00'
+			)
+		);
+		await expect(
+			clockOf('ruhiges Yak Kim')?.classList.contains(
+				'upcomingAppointmentClock--overlay'
+			)
+		).toBe(true);
+		await waitFor(() =>
+			expect(
+				clockOf('Elternrunde')?.closest(
+					'.participantStack__item--leading'
+				)
+			).not.toBeNull()
+		);
+		// Mail counselling (last row) has nothing planned.
+		const rows = canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="timeline-past"] .tlp__row'
+		);
+		await expect(
+			rows[rows.length - 1].querySelector(
+				'[data-cy="upcoming-appointment-clock"]'
+			)
+		).toBeNull();
+	}
+};
+
+/** Display setting "date": a segment of the topic tag (default) or its own line. */
+export const PastDateAtTag: Story = {
+	name: 'Date on past cards — segment at the topic tag',
+	play: async ({ canvasElement }) => {
+		const row = pastRow(canvasElement, 'ruhiges Yak Kim');
+		await waitFor(() =>
+			expect(
+				row.querySelector('.topicTag [data-cy="session-card-tag-date"]')
+			).not.toBeNull()
+		);
+		await expect(row.querySelector('.sessionsListItem__date')).toBeNull();
+		// Twins show their date in the split button only.
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="timeline-future"] [data-cy="session-card-tag-date"], [data-cy="timeline-future"] .sessionsListItem__date'
+			)
+		).toBeNull();
+	}
+};
+
+export const PastDateOwnLine: Story = {
+	name: 'Date on past cards — own line',
+	args: { pastDate: 'line' },
+	play: async ({ canvasElement }) => {
+		const row = pastRow(canvasElement, 'ruhiges Yak Kim');
+		await waitFor(() =>
+			expect(
+				row.querySelector('[data-cy="session-card-date-line"]')
+			).not.toBeNull()
+		);
+		await expect(
+			row.querySelector('[data-cy="session-card-tag-date"]')
+		).toBeNull();
+	}
 };

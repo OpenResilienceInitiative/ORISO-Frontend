@@ -4366,7 +4366,8 @@
 			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"expand": "Expand consultations list",
 			"collapse": "Collapse consultations list to enlarge the chat",
-			"scrollAriaLabel": "Drag to scroll the list."
+			"scrollAriaLabel": "Drag to scroll the list.",
+			"futureAriaLabel": "Upcoming appointments: drag down to show them, Up and Down move between stops."
 		},
 		"rail": {
 			"unreadCount": "{{count}} new messages",
