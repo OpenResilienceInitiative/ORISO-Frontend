@@ -103,6 +103,7 @@ import {
 	toNonEmbeddedPath
 } from './timelineDrafts';
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
@@ -112,6 +113,7 @@ import {
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
+import { MISSING_KEY_COPY_KEY } from '../../utils/matrixDecryptionFailure';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -285,7 +287,9 @@ const joinNotificationCall = (
 		!params.callRoomId.trim() ||
 		(params.callType !== 'audio' && params.callType !== 'video') ||
 		// An empty session list would store a group call as one-to-one.
-		!topologyReady
+		!topologyReady ||
+		// FE#1893: a direct-link call knocks from its card in the conversation.
+		isDirectLinkCallRoom(params.roomRef)
 	) {
 		onCannotJoin();
 		return true;
@@ -597,6 +601,10 @@ export const NotificationsCenter = () => {
 			unsupported: translate('notifications.center.preview.unsupported'),
 			// The chat's own wording for a message this device cannot decrypt.
 			undecryptable: translate('e2ee.message.encryption.text'),
+			undecryptableMissingKey: translate(
+				`${MISSING_KEY_COPY_KEY}.title`,
+				{ count: 1 }
+			),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'

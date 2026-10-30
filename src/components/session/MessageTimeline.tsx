@@ -18,6 +18,9 @@ import {
 	MessageItemComponent
 } from '../message/MessageItemComponent';
 import { MessageSendFailed } from '../message/MessageSendFailed';
+import { MissingKeyPlaceholder } from '../message/MissingKeyPlaceholder';
+import { groupMissingKeyMessages } from './missingKeyGroups';
+import { useTranslation } from 'react-i18next';
 import type { AggregatedReaction } from '../../utils/messageRelations';
 
 type MessageItemProps = React.ComponentProps<typeof MessageItemComponent>;
@@ -100,15 +103,35 @@ export const MessageTimeline = ({
 	onUnreact,
 	readOnly = false
 }: MessageTimelineProps) => {
+	const { t: translate } = useTranslation();
 	const supplementIndex =
 		supplementTime === undefined
 			? -1
 			: messages.findIndex(
 					(message) => Number(message.messageTime) > supplementTime
 				);
+	// #1827: a run of messages without a key on this device becomes ONE notice.
+	const entries = groupMissingKeyMessages(messages, supplementIndex);
 	return (
 		<>
-			{messages.map((message: MessageItem, index) => {
+			{entries.map((entry) => {
+				if (entry.kind === 'missing-key') {
+					const first = entry.messages[0];
+					const dateKey =
+						first.messageDate?.str || first.messageDate?.date;
+					return (
+						<React.Fragment key={`${keyPrefix}${first._id}`}>
+							{entry.index === supplementIndex && supplement}
+							<MissingKeyPlaceholder
+								count={entry.messages.length}
+								dateLabel={
+									dateKey ? translate(dateKey) : undefined
+								}
+							/>
+						</React.Fragment>
+					);
+				}
+				const { message, index } = entry;
 				const own = isMyMessage(message.userId);
 				const broke = decryptionFailures?.has(message._id) ?? false;
 				return (

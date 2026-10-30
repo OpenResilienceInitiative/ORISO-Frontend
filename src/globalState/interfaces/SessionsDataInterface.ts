@@ -112,6 +112,13 @@ export interface SessionItemInterface {
 	videoCallMessageDTO: VideoCallMessageDTO;
 	language?: string;
 	topic: TopicSessionInterface;
+	/** Selected topic id (SessionDTO); the topic object may be absent. */
+	mainTopicId?: number;
+	/**
+	 * FE#1876, asker list only: this running chat is the newer of two on the
+	 * same topic, so the asker may end it. Absent on older backends.
+	 */
+	isTopicDuplicate?: boolean;
 	/**
 	 * ADR-008 supervision marker. `undefined` on backends that predate the
 	 * field — consumers fall back to heuristics, never to "not supervised".
@@ -175,6 +182,22 @@ export interface SessionUserInterface {
 	username: string;
 	displayName?: string;
 	sessionData: SessionUserDataInterface;
+	/** A direct-link guest's temporary account (ORISO-UserService#1486); absent for normal users. */
+	temporaryAccount?: TemporaryAccountState | null;
+}
+
+/** `TemporaryAccountDTO` of ORISO-UserService#1486. */
+export interface TemporaryAccountState {
+	medium?: 'CHAT' | 'AUDIO' | 'VIDEO';
+	messageRetention:
+		| 'ALWAYS_TEMPORARY'
+		| 'GUEST_DECIDES'
+		| 'ALWAYS_PERSISTENT';
+	/** The guest's own answer under GUEST_DECIDES; `null` or absent while undecided. */
+	keepMessages?: boolean | null;
+	/** The effective outcome at deletion; undecided counts as `false`. */
+	keepsMessages?: boolean;
+	deleted?: boolean;
 }
 
 export interface SessionUserDataInterface {

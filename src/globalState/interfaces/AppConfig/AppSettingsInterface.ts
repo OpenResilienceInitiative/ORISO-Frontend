@@ -1,4 +1,11 @@
 export interface AppSettingsInterface {
+	/**
+	 * FE#1876, platform-wide (GET /service/settings): how the request dialog
+	 * prefills the postcode. Missing means SMART.
+	 */
+	furtherCounsellingPostcodeMode?: 'SMART' | 'ALWAYS_EMPTY' | string;
+	/** FE#1876: same-topic handling. Shown only; no client logic in v1. */
+	topicDuplicateMode?: string;
 	/** Feature flag to enable SSO on budibase */
 	budibaseSSO?: boolean;
 	/** App setting to get calendar link */
@@ -21,4 +28,6 @@ export interface AppSettingsInterface {
 	useOverviewPage?: boolean;
 	/** feature flag for the documentation  */
 	documentationEnabled?: boolean;
+	/** Fallback support e-mail (platform admin, global settings); shown when a centre has no chat-reachable admin (#1915). */
+	supportEmail?: string;
 }

@@ -1,0 +1,118 @@
+import * as React from 'react';
+import { useEffect, useId, useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Switch } from '../../Switch';
+import { m3SnackbarColors } from '../../m3Snackbar/M3Snackbar';
+import { CallShareSettings, CallShareSettingsStore } from './callAdmission';
+
+export interface CallAdmissionToggleProps {
+	/** The same store the share popover uses (`CallShareSettings.knock`). */
+	store: CallShareSettingsStore;
+}
+
+/**
+ * "Anklopfen" inside the running call (#1892, FE#1794 §3): on, guests wait
+ * until the counsellor lets them in; off, they join directly. Same wording as
+ * the per-link toggle of the share popover, because it is the same setting.
+ *
+ * The switch follows the store, not the click: it moves once the value is
+ * stored, so it never shows a state the server did not accept.
+ */
+export const CallAdmissionToggle = ({ store }: CallAdmissionToggleProps) => {
+	const { t } = useTranslation();
+	const labelId = useId();
+	const descriptionId = useId();
+	const [settings, setSettings] = useState<CallShareSettings | null>(null);
+	const [saving, setSaving] = useState(false);
+	const [failed, setFailed] = useState(false);
+
+	useEffect(() => store.watch(setSettings), [store]);
+
+	if (settings === null) return null;
+	const { knock } = settings;
+
+	const change = async (next: boolean) => {
+		setSaving(true);
+		setFailed(false);
+		try {
+			// Only `knock`; the temporary-account choice stays as it is.
+			await store.set({ ...settings, knock: next });
+		} catch {
+			// The store kept the old value, and so does the switch.
+			setFailed(true);
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	return (
+		<Box
+			data-testid="call-admission-toggle"
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: 1.5,
+				backgroundColor: m3SnackbarColors.surface,
+				color: m3SnackbarColors.onSurface,
+				borderRadius: '12px',
+				px: 2,
+				py: 1
+			}}
+		>
+			<Box sx={{ minWidth: 0, flex: 1 }}>
+				<Typography
+					id={labelId}
+					component="p"
+					sx={{
+						color: 'inherit',
+						fontSize: 14,
+						fontWeight: 500,
+						lineHeight: '20px',
+						letterSpacing: '0.1px',
+						m: 0
+					}}
+				>
+					{t('calls.admission.label')}
+				</Typography>
+				<Typography
+					id={descriptionId}
+					component="p"
+					aria-live="polite"
+					sx={{
+						color: 'inherit',
+						fontSize: 12,
+						lineHeight: '16px',
+						letterSpacing: '0.4px',
+						m: 0
+					}}
+				>
+					{knock ? t('calls.admission.on') : t('calls.admission.off')}
+				</Typography>
+				{failed && (
+					<Typography
+						component="p"
+						role="alert"
+						sx={{
+							color: 'inherit',
+							fontSize: 12,
+							lineHeight: '16px',
+							letterSpacing: '0.4px',
+							m: 0
+						}}
+					>
+						{t('groupChat.joinRequest.failed')}
+					</Typography>
+				)}
+			</Box>
+			<Switch
+				checked={knock}
+				onChange={(next) => void change(next)}
+				disabled={saving}
+				aria-labelledby={labelId}
+				aria-describedby={descriptionId}
+				data-testid="call-admission-switch"
+			/>
+		</Box>
+	);
+};

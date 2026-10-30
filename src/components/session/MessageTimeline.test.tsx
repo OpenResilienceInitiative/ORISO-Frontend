@@ -18,6 +18,12 @@ vi.mock('../message/MessageItemComponent', () => ({
 	)
 }));
 
+vi.mock('../message/MissingKeyPlaceholder', () => ({
+	MissingKeyPlaceholder: ({ count }: { count: number }) => (
+		<div data-testid="missing-key">{count}</div>
+	)
+}));
+
 vi.mock('../message/MessageSendFailed', () => ({
 	MessageSendFailed: () => null
 }));
@@ -88,5 +94,51 @@ describe('MessageTimeline identity overrides', () => {
 		expect(
 			screen.getByTestId('message').getAttribute('data-asker-id')
 		).toBe('@side-room-client:oriso.invalid');
+	});
+});
+
+describe('MessageTimeline missing-key messages (#1827)', () => {
+	const row = (id: string, extra: Record<string, unknown> = {}) => ({
+		_id: id,
+		message: id,
+		messageDate: { str: '', date: null },
+		messageTime: '1',
+		isNotRead: false,
+		t: null,
+		rid: '!main',
+		displayName: 'Client',
+		username: 'client',
+		userId: '@client',
+		...extra
+	});
+	const renderRows = (messages: ReturnType<typeof row>[]) =>
+		render(
+			<MessageTimeline
+				messages={messages as never}
+				clientName="Client"
+				isMyMessage={() => false}
+				handleDecryptionErrors={vi.fn()}
+				handleDecryptionSuccess={vi.fn()}
+				e2eeParams={{} as never}
+			/>
+		);
+
+	it('renders consecutive missing-key messages as one placeholder', () => {
+		renderRows([
+			row('a', { undecryptableReason: 'missing-key' }),
+			row('b', { undecryptableReason: 'missing-key' }),
+			row('c', { undecryptableReason: 'missing-key' }),
+			row('readable')
+		]);
+		expect(screen.getAllByTestId('missing-key')).toHaveLength(1);
+		expect(screen.getByTestId('missing-key').textContent).toBe('3');
+		expect(screen.getAllByTestId('message')).toHaveLength(1);
+		expect(screen.getByTestId('message').textContent).toBe('readable');
+	});
+
+	it('keeps a generic undecryptable message as an ordinary row', () => {
+		renderRows([row('Nachricht verschlüsselt')]);
+		expect(screen.queryByTestId('missing-key')).toBeNull();
+		expect(screen.getAllByTestId('message')).toHaveLength(1);
 	});
 });

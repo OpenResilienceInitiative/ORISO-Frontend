@@ -34,6 +34,7 @@ describe('buildMatrixActivityTextPreview', () => {
 		systemNotification: 'System notification',
 		unsupported: 'Unsupported message',
 		undecryptable: 'Message encrypted',
+		undecryptableMissingKey: 'Earlier message not available on this device',
 		pending: 'Waiting for decryption',
 		roomUnavailable: 'Conversation unavailable on this device',
 		eventUnavailable: 'Message unavailable in local history'
@@ -346,6 +347,40 @@ describe('buildMatrixActivityTextPreview', () => {
 			).toBe('undecryptable');
 		}
 	);
+
+	it('names a message whose key is missing on this device honestly (#1827)', () => {
+		const event = {
+			getType: () => 'm.room.encrypted',
+			getContent: () => ({ msgtype: 'm.bad.encrypted' }),
+			isDecryptionFailure: () => true,
+			decryptionFailureReason: 'MEGOLM_UNKNOWN_INBOUND_SESSION_ID'
+		};
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Lisa',
+				'New message',
+				labels
+			)
+		).toBe('Lisa: Earlier message not available on this device');
+	});
+
+	it('keeps the generic wording for other decryption failures (#1827)', () => {
+		const event = {
+			getType: () => 'm.room.encrypted',
+			getContent: () => ({ msgtype: 'm.bad.encrypted' }),
+			isDecryptionFailure: () => true,
+			decryptionFailureReason: 'UNKNOWN_ERROR'
+		};
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Lisa',
+				'New message',
+				labels
+			)
+		).toBe('Lisa: Message encrypted');
+	});
 
 	it('falls back safely for an unsupported Matrix message type', () => {
 		const event = {

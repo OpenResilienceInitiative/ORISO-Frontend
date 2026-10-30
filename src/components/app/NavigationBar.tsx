@@ -1,3 +1,4 @@
+import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
 import * as React from 'react';
 import {
 	PropsWithChildren,
@@ -128,7 +129,7 @@ export const NavigationBar = ({
 			error: liveChatError,
 			lostReason: liveChatLostReason
 		}
-	] = useLiveChatAvailable();
+	] = useLiveChatAvailable(isConsultant);
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
 	// #576: optional global notification-status button in the rail — flips the
 	// account-wide mute (the one switch that overrides everything). Placement
@@ -137,6 +138,7 @@ export const NavigationBar = ({
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
+	const directLinksAllowed = useDirectLinksAllowed(isConsultant);
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	// #1485: the one heartbeat owner is also the one that says why it stopped.
 	useLiveChatAvailabilityLossNotice(liveChatLostReason);
@@ -397,13 +399,15 @@ export const NavigationBar = ({
 						routerConfig.navigation
 							.filter(
 								(item: any) =>
-									!item.condition ||
-									item.condition(
-										userData,
-										consultingTypes,
-										sessions,
-										hasTools
-									)
+									(!item.requiresDirectInvite ||
+										directLinksAllowed) &&
+									(!item.condition ||
+										item.condition(
+											userData,
+											consultingTypes,
+											sessions,
+											hasTools
+										))
 							)
 							.map((item, index) => {
 								const Icon = item?.icon;

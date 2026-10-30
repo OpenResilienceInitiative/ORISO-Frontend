@@ -227,6 +227,11 @@
 			"headline": "You have been banned.",
 			"info": "We have asked you to respect the chat rules.<br/><br/>Because you have repeatedly failed to comply with the chat rules today, we have excluded you from todays chat.<br/><br/>Familiarize yourself with the chat rules!<br/><br/>If you are ready to follow the chat rules, you are welcome to chat again from tomorrow!"
 		},
+		"confirm": {
+			"description": "They can no longer write in this group and will see that they were removed.",
+			"submit": "Remove",
+			"title": "Remove {{name}} from this group?"
+		},
 		"is": {
 			"banned": " Banned"
 		}
@@ -558,7 +563,13 @@
 		"message": {
 			"encryption": {
 				"error": "Message encrypted - error during decryption",
-				"text": "Message encrypted"
+				"text": "Message encrypted",
+				"missingKey": {
+					"title_one": "Earlier message not available on this device",
+					"title_other": "{{count}} earlier messages not available on this device",
+					"hint_one": "It becomes readable once a device that has the key is online, for example a colleague's or the advice seeker's. Signing in on the device used before also helps.",
+					"hint_other": "They become readable once a device that has the key is online, for example a colleague's or the advice seeker's. Signing in on the device used before also helps."
+				}
 			},
 			"showMore": "Show more",
 			"showLess": "Show less"
@@ -1339,6 +1350,11 @@
 			"accept": "Agree",
 			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
 			"saveFailed": "Your agreement could not be saved. Please try again."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "You were removed from this group."
+			}
 		}
 	},
 	"help": {
@@ -2094,7 +2110,8 @@
 				"large": "My consultations",
 				"nav": "Chats",
 				"small": "Messages"
-			}
+			},
+			"directLinks": "My direct links"
 		},
 		"activity": "Timeline",
 		"language": "Language",
@@ -2525,6 +2542,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "The admins of this counselling centre could not be loaded. Please try again later.",
+					"fallbackName": "Centre admin",
+					"link": "Contact the counselling centre admin",
+					"none": "No admin is reachable by chat – please contact the platform administration.",
+					"supportEmail": "Support address:"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {
@@ -2588,7 +2612,7 @@
 			"profileIcon": "Profile icon",
 			"register": {
 				"button": {
-					"label": "Register"
+					"label": "Request counselling"
 				},
 				"consultingModeInfo": {
 					"groupChats": "In self-help, those affected exchange information with each other about a topic or concern. Those affected talk about their problems, feelings and hopes and learn how others have overcome problems. The groups are led by moderators.",
@@ -2599,7 +2623,7 @@
 				},
 				"headline": "Do you also need advice or help on other topics?<br>We will be happy to support you.",
 				"dialog": {
-					"openButton": "Request another topic",
+					"openButton": "Start further counselling",
 					"title": "Start a new request",
 					"close": "Close"
 				},
@@ -2970,7 +2994,8 @@
 					"title": "Security"
 				},
 				"title": "Settings",
-				"keyboardShortcuts": "Keyboard Shortcuts"
+				"keyboardShortcuts": "Keyboard Shortcuts",
+				"myLinks": "My links"
 			}
 		},
 		"spokenLanguages": {
@@ -3668,7 +3693,11 @@
 				"headline": "The invitation could not be loaded right now.",
 				"body": "Please check your connection and try again. Your invitation link stays valid."
 			},
-			"loading": "Loading the invitation …"
+			"loading": "Loading the invitation …",
+			"invalid": {
+				"headline": "This invitation link does not work.",
+				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
+			}
 		}
 	},
 	"releaseNote": {
@@ -5613,7 +5642,26 @@
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
 			"repairRequired": "Repair chat recovery in security settings before changing your password. Your password has not changed.",
-			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
+			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists.",
+			"notEnrolled": "Password recovery not set up: your password does not yet unlock your conversation history on a new device. Enter your recovery key once to set it up.",
+			"afterChange": {
+				"title": "Your password has been changed.",
+				"explanation": "So that your new password unlocks your chats on new devices, enter your recovery key once.",
+				"submit": "Protect with new password",
+				"later": "Later",
+				"laterHint": "Without this step your new password will not unlock your history on new devices. You can do it at any time in the security settings."
+			},
+			"stale": {
+				"explanation": "Your current password does not open the backup of your conversation history. This happens when your password was changed outside this app, for example under “My account” in the administration area or via “Forgot password”. Secure your history with your current password in one of these ways so that it opens with your password on new devices again.",
+				"choose": "How would you like to secure your history again?",
+				"usePreviousPassword": "Enter previous password",
+				"useRecoveryKey": "Enter recovery key",
+				"previousPasswordHint": "Enter the password you used before the change. Afterwards only your current password opens your history.",
+				"recoveryKeyHint": "Enter your saved recovery key. The old backup is then replaced by one secured with your current password. Your recovery key stays valid.",
+				"previousPassword": "Previous password",
+				"submit": "Secure with current password",
+				"previousPasswordRejected": "This previous password does not open the backup. Check your entry or use your recovery key."
+			}
 		}
 	},
 	"accountInvite": {
@@ -6007,6 +6055,66 @@
 				"anmerkung": "Remark",
 				"aufgabe": "Task"
 			}
+		},
+		"states": {
+			"encrypted": "Encrypted",
+			"endsCurrent": "Answering ends your call with {{name}}.",
+			"answerAndEnd": "End call and answer",
+			"backToCall": "Back to the full call",
+			"speaking": "{{name}} is speaking",
+			"dockLabel": "Call with {{name}}",
+			"cameraHint": "Sound keeps going.",
+			"minimize": "Minimize call",
+			"groupCall": "Group call",
+			"endsCurrentUnnamed": "Answering ends your current call."
+		},
+		"share": {
+			"open": "Share call",
+			"title": "Share call",
+			"close": "Close",
+			"settingsLabel": "For guests with this link",
+			"knock": {
+				"label": "Knock first",
+				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
+				"off": "Guests enter the call directly, without waiting."
+			},
+			"temporaryAccount": {
+				"label": "Temporary account",
+				"on": "Guests get a guest account that is deleted after the call.",
+				"off": "Guests sign in with their own account or create one."
+			},
+			"linkLabel": "Link to the call",
+			"copy": "Copy",
+			"copied": "Copied",
+			"copiedStatus": "The link is on your clipboard.",
+			"copyFailed": "Copying did not work. Please select the link and copy it yourself.",
+			"qrShow": "QR code",
+			"qrHide": "Hide QR code",
+			"qrAlt": "QR code with the link to the call",
+			"share": "Share",
+			"shareTitle": "Invitation to a call",
+			"lifetime": "The link only works for this call. It stops working as soon as you hang up.",
+			"consent": "Before entering, guests confirm the counselling centre’s privacy policy and consent with one tap.",
+			"qrHint": "Scan with a phone camera to open the call there.",
+			"settingsLive": "Changes apply right away to this link, even if it has already been shared."
+		},
+		"knock": {
+			"region": "People waiting",
+			"someone": "Someone",
+			"wantsIn": "wants to join the call",
+			"admit": "Let in",
+			"decline": "Decline",
+			"admitAll": "Let everyone in",
+			"position": "{{current}} of {{total}}",
+			"previous": "Previous person",
+			"next": "Next person",
+			"participants": "Participants",
+			"participantsWaiting": "Participants – waiting: {{count}}"
+		},
+		"admission": {
+			"label": "Knock first",
+			"on": "Guests wait until you let them in.",
+			"off": "Guests enter the call directly, without waiting."
 		}
 	},
 	"form": {
@@ -6177,6 +6285,159 @@
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommend further counselling",
+			"endDuplicate": "End duplicate counselling",
+			"endDuplicateDescription": "Ends this second counselling on the same topic"
+		},
+		"recommend": {
+			"title": "Recommend further counselling",
+			"intro": "The person seeking advice sees your recommendation as a card in the chat and can find a suitable counselling centre from there.",
+			"topicLabel": "Topic",
+			"noteLabel": "Note (optional)",
+			"noteHint": "The note appears on the card in the chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Send recommendation",
+			"cancel": "Cancel",
+			"successHeadline": "Your recommendation has been sent.",
+			"successButton": "Close",
+			"error": "The recommendation could not be sent. Please try again.",
+			"errorForbidden": "Only the counsellor assigned to this conversation can recommend further counselling.",
+			"errorConflict": "A recommendation is not possible in this conversation right now.",
+			"topicsUnavailable": "The topics could not be loaded. Please try again later."
+		},
+		"card": {
+			"title": "Recommendation: further counselling",
+			"topic": "Topic: {{topic}}",
+			"defaultText": "Please keep to one counselling per topic. Your current counsellor will be informed as soon as the new counselling begins.",
+			"noteLabel": "Note from the counsellor",
+			"findAgency": "Find a counselling centre",
+			"requested": "Request sent",
+			"topicUnknown": "another topic"
+		},
+		"duplicate": {
+			"startedTitle": "Further counselling on the same topic",
+			"started": "A further counselling on the topic {{topic}} has started. Please agree together which one continues. The other one should be ended.",
+			"endedTitle": "Second counselling ended",
+			"ended": "The second counselling on the topic {{topic}} has been ended.",
+			"confirm": {
+				"headline": "End duplicate counselling?",
+				"copy": "This counselling will be ended and moved to the archive. Your other counselling on the same topic continues.",
+				"confirm": "End counselling",
+				"cancel": "Cancel"
+			},
+			"error": "The counselling could not be ended. Please try again."
+		},
+		"request": {
+			"sameTopicInfo": "Only one counselling per topic is intended at a time. If you start a counselling on a topic you are already discussing, your current counsellor will be informed as soon as the new one is accepted. One of the two will then be ended.",
+			"consentAria": "Consent to the counselling centre’s data protection terms",
+			"cancel": "Cancel"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Direct link",
+			"subtitle": "For people seeking advice",
+			"headline": "A link straight to you",
+			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
+			"topicLabel": "Choose topic",
+			"mediumLabel": "Kind of contact",
+			"temporary": "Temporary account",
+			"temporaryHint": "The account is deleted after the conversation.",
+			"create": "Create link",
+			"createFailed": "The link could not be created. Please try again."
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Audio call",
+			"video": "Video call"
+		},
+		"temporary": "Temporary",
+		"copy": "Copy link",
+		"share": {
+			"title": "Your direct link is ready",
+			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"copied": "Copied",
+			"share": "Share",
+			"qrAlt": "QR code for the direct link",
+			"done": "Done",
+			"linkLabel": "Direct link"
+		},
+		"list": {
+			"title": "My direct links",
+			"qr": "Show QR code",
+			"active": "{{name}} active",
+			"edit": "Edit {{name}}"
+		},
+		"entry": {
+			"inactive": "This link is no longer active.",
+			"haveAccount": "Already have an account? Sign in",
+			"joinFailed": "That did not work. Please try again."
+		},
+		"page": {
+			"loadFailed": "Your direct links could not be loaded.",
+			"create": "Create a new direct link in “Create chat”",
+			"emptyHeadline": "There are no direct links yet",
+			"emptyText": "You create a direct link in “Create chat”. It then appears here.",
+			"loading": "Loading direct links",
+			"retry": "Try again",
+			"toggleFailed": "The link could not be switched. Please try again."
+		},
+		"edit": {
+			"title": "Edit direct link",
+			"cancel": "Cancel",
+			"save": "Save",
+			"name": "Name",
+			"nameRequired": "Please enter a name.",
+			"topic": "Topic",
+			"mediumFixed": "The type of contact cannot be changed",
+			"temporaryHint": "Applies only to people who open the link from now on.",
+			"failed": "The change could not be saved. Please try again."
+		}
+	},
+	"dashboard": {
+		"title": "Your overview",
+		"stats": {
+			"title": "Counselling",
+			"period": "Last 30 days",
+			"assigned": "Newly taken on",
+			"active": "Active",
+			"archived": "Archived",
+			"sentMessages": "Messages sent"
+		},
+		"circles": {
+			"title": "Upcoming self-help circles",
+			"participants": "{{count}} participants",
+			"participants_one": "{{count}} participant"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporary",
+			"title": "Deleted together with the guest account"
+		},
+		"deletedGuest": "Guest (deleted)",
+		"chip": {
+			"guest": "Guest account"
+		},
+		"keepDialog": {
+			"title": "Should your messages stay?",
+			"description": "Your guest account is deleted after the conversation. What should happen to your messages?",
+			"keep": {
+				"label": "Keep them after deletion",
+				"hint": "Your messages stay when your account is deleted."
+			},
+			"delete": {
+				"label": "Temporary",
+				"hint": "Your messages are deleted with your account."
+			},
+			"note": "Your answer applies to this whole conversation.",
+			"confirm": "Continue",
+			"cancel": "Cancel",
+			"failed": "Your answer could not be saved. Your message has not been sent yet."
 		}
 	}
 }

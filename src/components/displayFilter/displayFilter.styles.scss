@@ -664,6 +664,8 @@
 /* The picker menus: the house menu surface in compact density (Storybook
    "Components/Chat/MenuDropdown"), a caption over the tones and a divider
    before the silent pop-up. */
+/* 272px on phones too: its long tone names wrap well at this width. The rows
+   still take the compact menu's larger phone size. */
 .kindOptionPicker__menu.chatMenuDropdown {
 	width: 272px;
 	max-height: min(520px, calc(100vh - 32px));

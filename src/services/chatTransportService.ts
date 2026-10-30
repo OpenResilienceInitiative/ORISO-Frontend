@@ -480,7 +480,31 @@ class ChatTransportService {
 			}
 		};
 
+		// A late success for an event without a per-event watch: the watch
+		// expired, or the event never passed through this view's timeline
+		// listener (scrollback, a re-attached view). Retries after a key import,
+		// a backup restore or a sender-device update land here (#69). The SDK
+		// re-emits on the client before the event's own listeners run, so a
+		// watched event is left to its watch and notified once.
+		const handleClientDecrypted = (
+			decryptedEvent: MatrixEvent,
+			error?: Error
+		) => {
+			if (
+				detached ||
+				error ||
+				pendingDecryptions.has(decryptedEvent) ||
+				decryptedEvent?.getRoomId?.() !== matrixRoomId ||
+				awaitsTimelineDecryption(decryptedEvent)
+			) {
+				return;
+			}
+			const room = matrixClient.getRoom?.(matrixRoomId);
+			if (room) listener(decryptedEvent, room, false);
+		};
+
 		(matrixClient as any).on('Room.timeline', handleTimeline);
+		(matrixClient as any).on('Event.decrypted', handleClientDecrypted);
 		// Reload hydration may precede this view subscription. Historical events
 		// still need a clear-content refresh when their asynchronous decrypt ends.
 		const cachedRoom = matrixClient.getRoom?.(matrixRoomId);
@@ -493,6 +517,7 @@ class ChatTransportService {
 		return () => {
 			detached = true;
 			(matrixClient as any).off('Room.timeline', handleTimeline);
+			(matrixClient as any).off('Event.decrypted', handleClientDecrypted);
 			Array.from(pendingDecryptions.keys()).forEach(
 				clearPendingDecryption
 			);

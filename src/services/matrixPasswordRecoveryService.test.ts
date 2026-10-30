@@ -11,17 +11,22 @@ import { encodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
 import {
 	enrollPasswordRecovery,
 	enrollPasswordRecoveryAfterKeyRecovery,
+	hasCompleteKeyRecovery,
+	hasPasswordRecoveryEvidence,
+	PasswordRecoveryPasswordRejectedError,
 	PasswordRecoveryRepairBlockedError,
 	PasswordRecoveryRepairRequiredError,
 	PasswordRecoveryWorkLimitError,
 	recoverWithLoginPassword,
 	changePasswordWithRecovery,
+	resealWithPreviousPassword,
 	PASSWORD_RECOVERY_SECRET,
 	PASSWORD_RECOVERY_METADATA,
 	PASSWORD_RECOVERY_CANDIDATE_PREFIX
 } from './matrixPasswordRecoveryService';
 import {
 	recoverWithKey,
+	InvalidRecoveryKeyError,
 	clearSecretStorageKeys,
 	secretStorageKeyCallback,
 	withSecretStorageKeys
@@ -192,6 +197,28 @@ describe('native SDK envelope around the unchanged root (transport and backup AP
 			).not.toHaveBeenCalled();
 		}
 	);
+	/**
+	 * The SDK caches "no backup" from its first check after start. A backup
+	 * set up later in another tab or on another device leaves that cache
+	 * stale, and the password change then claimed the recovery needed repair
+	 * although it was complete (OBP 2.1, #69).
+	 */
+	it('re-checks the server backup when the SDK cache still says there is none', async () => {
+		await enrollPasswordRecovery(first, 'correct', rootCode, 2);
+		const crypto = first.getCrypto();
+		const backup = await crypto.getKeyBackupInfo();
+		crypto.getKeyBackupInfo.mockResolvedValue(null);
+		crypto.checkKeyBackupAndEnable = vi.fn(async () => {
+			crypto.getKeyBackupInfo.mockResolvedValue(backup);
+			return { backupInfo: backup, trustInfo: {} };
+		});
+		const update = vi.fn(async () => undefined);
+
+		await changePasswordWithRecovery(first, 'correct', 'new', update);
+
+		expect(crypto.checkKeyBackupAndEnable).toHaveBeenCalled();
+		expect(update).toHaveBeenCalledOnce();
+	});
 	it('distinguishes wrong old password from missing recovery material', async () => {
 		await enrollPasswordRecovery(first, 'correct', rootCode, 2);
 		const update = vi.fn();
@@ -614,7 +641,7 @@ describe('native SDK envelope around the unchanged root (transport and backup AP
 		expect(first.getCrypto().importSecretsBundle).not.toHaveBeenCalled();
 	});
 
-	it('blocks reset-password enrollment when prior password candidates cannot be retired safely', async () => {
+	it('lets a proven recovery key replace password candidates sealed under a password that was reset elsewhere', async () => {
 		await enrollPasswordRecovery(first, 'original-synthetic', rootCode, 2);
 		await changePasswordWithRecovery(
 			first,
@@ -622,16 +649,32 @@ describe('native SDK envelope around the unchanged root (transport and backup AP
 			'old-current',
 			async () => undefined
 		);
-		const snapshot = structuredClone([...server.data]);
-		await expect(
-			enrollPasswordRecoveryAfterKeyRecovery(
+		// Forgot-password: the identity is updated, the candidate is not.
+		expect(
+			await recoverWithLoginPassword(
 				device(server),
-				'forgotten-reset-new',
-				rootCode,
-				2
+				'forgotten-reset-new'
 			)
-		).rejects.toBeInstanceOf(PasswordRecoveryRepairBlockedError);
-		expect([...server.data]).toEqual(snapshot);
+		).toEqual({ kind: 'needs-recovery-key' });
+
+		await enrollPasswordRecoveryAfterKeyRecovery(
+			device(server),
+			'forgotten-reset-new',
+			rootCode,
+			2
+		);
+
+		expect(candidateEvents()).toHaveLength(1);
+		expect(server.data.get(PASSWORD_RECOVERY_SECRET)).toEqual({});
+		expect(
+			await recoverWithLoginPassword(
+				device(server),
+				'forgotten-reset-new'
+			)
+		).toEqual({ kind: 'ready' });
+		expect(
+			await recoverWithLoginPassword(device(server), 'old-current')
+		).toEqual({ kind: 'needs-recovery-key' });
 		await expect(recoverWithKey(device(server), rootCode)).resolves.toEqual(
 			{ imported: 2, total: 2 }
 		);
@@ -755,4 +798,229 @@ it('does not return a key when teardown occurs during asynchronous key validatio
 			expect(await callback).toBeNull();
 		}
 	);
+});
+
+/**
+ * #1917: recovery set up with the recovery key only — no password envelope.
+ * The password change goes through unrotated; the follow-up step must then
+ * leave the NEW password, and only it, able to unlock the history.
+ */
+describe('sealing an existing recovery key after a change without envelope', () => {
+	it('lets only the new password unlock the history once the key is sealed', async () => {
+		await expect(
+			changePasswordWithRecovery(first, 'old', 'new', vi.fn())
+		).rejects.toBeInstanceOf(PasswordRecoveryRepairRequiredError);
+		expect(await hasPasswordRecoveryEvidence(first)).toBe(false);
+		expect(await hasCompleteKeyRecovery(first)).toBe(true);
+
+		await enrollPasswordRecoveryAfterKeyRecovery(first, 'new', rootCode, 2);
+
+		expect(await hasPasswordRecoveryEvidence(first)).toBe(true);
+		expect(
+			(await recoverWithLoginPassword(device(server), 'new')).kind
+		).toBe('ready');
+		expect(
+			(await recoverWithLoginPassword(device(server), 'old')).kind
+		).not.toBe('ready');
+	});
+
+	it.each(['root', 'backup'])(
+		'reports no complete key recovery without a %s',
+		async (missing) => {
+			if (missing === 'root')
+				server.data.delete('m.secret_storage.default_key');
+			else {
+				first.getCrypto().getKeyBackupInfo.mockResolvedValue(null);
+				first.getCrypto().checkKeyBackupAndEnable = vi.fn(
+					async () => null
+				);
+			}
+			expect(await hasCompleteKeyRecovery(first)).toBe(false);
+		}
+	);
+});
+
+/**
+ * #1931: the password was changed outside the Frontend (Admin "Mein Konto",
+ * forgot-password, setup link). The identity is updated, the envelope is not:
+ * it stays sealed under the previous password, so a new device asks for the
+ * recovery key. Two ways back, both ending sealed under the CURRENT password.
+ */
+describe('an envelope left sealed under the previous password', () => {
+	const changeInAdmin = async (setUp: 'legacy' | 'candidate') => {
+		await enrollPasswordRecovery(first, 'previous-synthetic', rootCode, 2);
+		if (setUp === 'candidate') {
+			await changePasswordWithRecovery(
+				first,
+				'previous-synthetic',
+				'frontend-synthetic',
+				async () => undefined
+			);
+			return 'frontend-synthetic';
+		}
+		return 'previous-synthetic';
+	};
+
+	it.each(['legacy', 'candidate'] as const)(
+		're-wraps a %s envelope from the previous password to the current one',
+		async (setUp) => {
+			const previous = await changeInAdmin(setUp);
+			const fresh = device(server);
+			expect(await recoverWithLoginPassword(fresh, 'admin-new')).toEqual({
+				kind: 'needs-recovery-key'
+			});
+
+			await resealWithPreviousPassword(fresh, previous, 'admin-new');
+
+			expect(
+				await recoverWithLoginPassword(device(server), 'admin-new')
+			).toEqual({ kind: 'ready' });
+			expect(
+				await recoverWithLoginPassword(device(server), previous)
+			).toEqual({ kind: 'needs-recovery-key' });
+			expect(candidateEvents()).toHaveLength(1);
+			expect(server.data.get(PASSWORD_RECOVERY_SECRET)).toEqual({});
+			// The re-sealed device itself holds the history now.
+			expect(fresh.getCrypto().restoreKeyBackup).toHaveBeenCalled();
+		}
+	);
+
+	it('lets a later in-app password change rotate the re-sealed envelope again', async () => {
+		await changeInAdmin('legacy');
+		await resealWithPreviousPassword(
+			device(server),
+			'previous-synthetic',
+			'admin-new'
+		);
+		const update = vi.fn(async () => undefined);
+
+		await changePasswordWithRecovery(
+			device(server),
+			'admin-new',
+			'frontend-newer',
+			update
+		);
+
+		expect(update).toHaveBeenCalledOnce();
+		expect(
+			await recoverWithLoginPassword(device(server), 'frontend-newer')
+		).toEqual({ kind: 'ready' });
+	});
+
+	it('keeps the previous-password copies when this device cannot restore the history', async () => {
+		await changeInAdmin('legacy');
+		const before = structuredClone([...server.data]);
+		const fresh = device(server);
+		vi.mocked(fresh.getCrypto().restoreKeyBackup).mockRejectedValueOnce(
+			new Error('backup restore failed')
+		);
+
+		await expect(
+			resealWithPreviousPassword(fresh, 'previous-synthetic', 'admin-new')
+		).rejects.toThrow('backup restore failed');
+
+		// Nothing retired (the staged copy is only emptied), so a retry works.
+		for (const [type, content] of before)
+			expect(server.data.get(type)).toEqual(content);
+		expect(candidateEvents()).toHaveLength(0);
+		await resealWithPreviousPassword(
+			device(server),
+			'previous-synthetic',
+			'admin-new'
+		);
+		expect(
+			await recoverWithLoginPassword(device(server), 'admin-new')
+		).toEqual({ kind: 'ready' });
+	});
+
+	it('changes nothing when the previous password is wrong as well', async () => {
+		await changeInAdmin('candidate');
+		const before = structuredClone([...server.data]);
+
+		await expect(
+			resealWithPreviousPassword(
+				device(server),
+				'not-the-previous',
+				'admin-new'
+			)
+		).rejects.toBeInstanceOf(PasswordRecoveryPasswordRejectedError);
+
+		expect([...server.data]).toEqual(before);
+		expect(
+			await recoverWithLoginPassword(device(server), 'frontend-synthetic')
+		).toEqual({ kind: 'ready' });
+	});
+
+	it('asks for the recovery key when a candidate-only envelope no longer opens', async () => {
+		// Sealed with the recovery key only (#1917): candidates, no metadata.
+		await enrollPasswordRecoveryAfterKeyRecovery(
+			first,
+			'previous-synthetic',
+			rootCode,
+			2
+		);
+		expect(server.data.get(PASSWORD_RECOVERY_METADATA)).toBeUndefined();
+
+		expect(
+			await recoverWithLoginPassword(device(server), 'admin-new')
+		).toEqual({ kind: 'needs-recovery-key' });
+	});
+
+	it('replaces a stale legacy envelope once the recovery key is proven', async () => {
+		await changeInAdmin('legacy');
+
+		await enrollPasswordRecoveryAfterKeyRecovery(
+			device(server),
+			'admin-new',
+			rootCode,
+			2
+		);
+
+		expect(
+			await recoverWithLoginPassword(device(server), 'admin-new')
+		).toEqual({ kind: 'ready' });
+		expect(
+			await recoverWithLoginPassword(device(server), 'previous-synthetic')
+		).toEqual({ kind: 'needs-recovery-key' });
+	});
+
+	it('keeps the stale copies when the recovery key is not proven', async () => {
+		await changeInAdmin('candidate');
+		const before = structuredClone([...server.data]);
+
+		await expect(
+			enrollPasswordRecoveryAfterKeyRecovery(
+				device(server),
+				'admin-new',
+				encodeRecoveryKey(new Uint8Array(32).fill(3)),
+				2
+			)
+		).rejects.toBeInstanceOf(InvalidRecoveryKeyError);
+
+		expect([...server.data]).toEqual(before);
+	});
+
+	it('still blocks on a candidate that is not sealed under its own key', async () => {
+		await changeInAdmin('candidate');
+		const [[type, content]] = candidateEvents();
+		// A partial or foreign write: the payload names a different key.
+		server.data.set(type, {
+			encrypted: { 'some-other-key': Object.values(content.encrypted)[0] }
+		});
+		server.data.set(`${PASSWORD_RECOVERY_CANDIDATE_PREFIX}foreign`, {
+			encrypted: { 'some-other-key': {} }
+		});
+		const before = structuredClone([...server.data]);
+
+		await expect(
+			enrollPasswordRecoveryAfterKeyRecovery(
+				device(server),
+				'admin-new',
+				rootCode,
+				2
+			)
+		).rejects.toBeInstanceOf(PasswordRecoveryRepairBlockedError);
+
+		expect([...server.data]).toEqual(before);
+	});
 });

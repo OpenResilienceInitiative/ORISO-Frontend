@@ -3,6 +3,7 @@ import { getGroupChatPlannedStart } from './groupChatDate';
 import {
 	canModerateGroupChat,
 	getGroupChatWaitingAreaVisibility,
+	getStoppedGroupChatRemovalIds,
 	isV2GroupChatSession,
 	shouldShowGroupChatJoinView
 } from './groupChatHelpers';
@@ -177,5 +178,31 @@ describe('isV2GroupChatSession', () => {
 				item: { modality: 'TEXT', consultingType: 1 }
 			})
 		).toBe(true);
+	});
+});
+
+describe('getStoppedGroupChatRemovalIds', () => {
+	it('removes a stopped single chat by its Matrix room id', () => {
+		expect(
+			getStoppedGroupChatRemovalIds({
+				id: 7,
+				matrixRoomId: '!room:synthetic.test',
+				repetitive: false
+			})
+		).toEqual(['!room:synthetic.test']);
+	});
+
+	it('falls back to the session id without a Matrix room', () => {
+		expect(getStoppedGroupChatRemovalIds({ id: 7 })).toEqual([7]);
+	});
+
+	it('keeps a stopped series in the list: it rolls on to its next room', () => {
+		expect(
+			getStoppedGroupChatRemovalIds({
+				id: 7,
+				matrixRoomId: '!room:synthetic.test',
+				repetitive: true
+			})
+		).toBeNull();
 	});
 });
