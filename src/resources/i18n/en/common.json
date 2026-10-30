@@ -2869,6 +2869,7 @@
 				},
 				"kind": {
 					"new": "New request",
+					"teamDiscussion": "Team discussion",
 					"standard": "Standard notification",
 					"liveChat": "Live chat message",
 					"mention": "@ Mention",
@@ -2879,7 +2880,11 @@
 				"play": "Preview sound",
 				"volumeUp": "Louder",
 				"volumeDown": "Quieter",
+				"unavailable": {
+					"notSentYet": "This notification is not available yet."
+				},
 				"showBanner": "Show banner",
+				"systemTone": "Tone for system notices",
 				"ringTone": "Ring tone",
 				"wecker": {
 					"title": "Alarm-clock mode (planned)",

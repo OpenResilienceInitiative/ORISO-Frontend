@@ -228,6 +228,8 @@ const withTones = () => {
 	for (const kind of ['mention', 'handover', 'standard'] as const) {
 		config = setKindField(config, 'conversations', kind, 'sound', 'ton-1');
 	}
+	// A team-discussion mention is filed under Anfrage (FE#1211).
+	config = setKindField(config, 'requests', 'mention', 'sound', 'ton-1');
 	notificationSettingsStore.updateSettings({ notificationConfig: config });
 };
 
@@ -488,7 +490,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		notificationSettingsStore.updateSettings({
 			notificationConfig: setKindField(
 				config,
-				'conversations',
+				'requests',
 				'mention',
 				'banner',
 				'off'
@@ -514,7 +516,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			notificationConfig: setKindField(
 				notificationSettingsStore.getState().settings
 					.notificationConfig,
-				'conversations',
+				'requests',
 				'mention',
 				'sound',
 				'none'

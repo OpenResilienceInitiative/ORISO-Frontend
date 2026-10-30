@@ -12,6 +12,7 @@ import {
 	NotificationConfig
 } from '../../../utils/notificationSettings/notificationConfig';
 import type { SoundId } from '../../../utils/notificationSettings/model';
+import type { NotificationRole } from '../../../utils/notificationSettings/notificationChannelCapability';
 import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import { phone390Globals } from '../../message/messageStoryShell';
 import './notificationConfigDialog.styles.scss';
@@ -41,6 +42,7 @@ const InteractiveDialog = () => {
 				</button>
 			)}
 			<NotificationConfigDialog
+				role="consultant"
 				open={open}
 				config={config}
 				onConfirm={(next) => {
@@ -130,10 +132,11 @@ export const DialogMobile: DialogStory = {
  */
 const InteractiveBody = ({
 	initialArea = 'requests',
-	showLiveChatRow = false
+	role = 'consultant'
 }: {
 	initialArea?: NotificationArea;
-	showLiveChatRow?: boolean;
+	/** 'unknown' = user data not loaded yet. */
+	role?: NotificationRole | 'unknown';
 }) => {
 	const [config, setConfig] = useState<NotificationConfig>(
 		DEFAULT_NOTIFICATION_CONFIG
@@ -145,7 +148,7 @@ const InteractiveBody = ({
 		<div
 			style={{
 				maxWidth: 560,
-				padding: showLiveChatRow ? '0 16px' : 16
+				padding: role === 'consultant' ? '0 16px' : 16
 			}}
 		>
 			<NotificationConfigView
@@ -165,7 +168,7 @@ const InteractiveBody = ({
 					}))
 				}
 				onPreview={previewNotificationSound}
-				showLiveChatRow={showLiveChatRow}
+				role={role === 'unknown' ? undefined : role}
 			/>
 		</div>
 	);
@@ -182,7 +185,7 @@ export const Body: BodyStory = { render: () => <InteractiveBody /> };
 export const BodyCounsellorLiveChatRow: BodyStory = {
 	name: 'Body – Berater:in mit Live-Chat-Zeile',
 	render: () => (
-		<InteractiveBody initialArea="conversations" showLiveChatRow />
+		<InteractiveBody initialArea="conversations" role="consultant" />
 	),
 	play: async ({ canvasElement }) => {
 		const row = canvasElement.querySelector(
@@ -200,12 +203,95 @@ export const BodyCounsellorLiveChatRow: BodyStory = {
 /** Advice seekers never see the row: their live-chat messages stay on Standard. */
 export const BodyAdviceSeekerNoLiveChatRow: BodyStory = {
 	name: 'Body – Ratsuchende ohne Live-Chat-Zeile',
-	render: () => <InteractiveBody initialArea="conversations" />,
+	render: () => <InteractiveBody initialArea="conversations" role="asker" />,
 	play: async ({ canvasElement }) => {
 		await expect(
 			canvasElement.querySelector(
 				'[data-cy="notif-row-conversations-liveChat"]'
 			)
 		).toBeNull();
+	}
+};
+
+const rowIds = (root: Element) =>
+	Array.from(root.querySelectorAll('[data-cy^="notif-row-"]')).map((el) =>
+		el.getAttribute('data-cy')
+	);
+
+/**
+ * #778: rows that can never fire for the viewer's role are not shown. A
+ * counsellor's Anfragen tab keeps "Neue Anfrage" only: Standard reaches
+ * advice seekers and there is no @-mention in this tab.
+ */
+export const BodyCounsellorHidesRowsThatNeverFire: BodyStory = {
+	name: 'Body – Berater:in, Zeilen ohne Auslöser ausgeblendet',
+	render: () => <InteractiveBody initialArea="requests" role="consultant" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-mention'
+		]);
+		await expect(
+			canvasElement.querySelector<HTMLSelectElement>(
+				'[data-cy="notif-banner-requests-new"]'
+			)!.disabled
+		).toBe(false);
+	}
+};
+
+/** #778: an advice seeker never receives new enquiries or mentions. */
+export const BodyAdviceSeekerHidesRowsThatNeverFire: BodyStory = {
+	name: 'Body – Ratsuchende, Zeilen ohne Auslöser ausgeblendet',
+	render: () => <InteractiveBody initialArea="requests" role="asker" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-standard'
+		]);
+	}
+};
+
+/**
+ * While the user data is loading nobody may see the wrong rows: the neutral
+ * dialog shows every row, all live (Live-Chat row excepted).
+ */
+export const BodyRoleStillLoading: BodyStory = {
+	name: 'Body – Rolle noch nicht geladen',
+	render: () => <InteractiveBody initialArea="requests" role="unknown" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-standard',
+			'notif-row-requests-mention'
+		]);
+		for (const select of canvasElement.querySelectorAll('select')) {
+			await expect(select.disabled).toBe(false);
+		}
+	}
+};
+
+/**
+ * #778: a mention in an ordinary chat has no producer yet (UserService#1510),
+ * so a counsellor's Gespräche row is disabled and says why.
+ */
+export const BodyCounsellorMentionNotYetAvailable: BodyStory = {
+	name: 'Body – Berater:in, Erwähnung im Chat noch nicht verfügbar',
+	render: () => (
+		<InteractiveBody initialArea="conversations" role="consultant" />
+	),
+	play: async ({ canvasElement }) => {
+		const banner = canvasElement.querySelector<HTMLSelectElement>(
+			'[data-cy="notif-banner-conversations-mention"]'
+		)!;
+		const reason = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="notif-reason-conversations-mention"]'
+		)!;
+		await expect(banner.disabled).toBe(true);
+		await expect(banner.getAttribute('aria-describedby')).toBe(reason.id);
+		await expect(reason.textContent!.trim()).not.toBe('');
+		await expect(rowIds(canvasElement)).not.toContain(
+			'notif-row-conversations-new'
+		);
 	}
 };

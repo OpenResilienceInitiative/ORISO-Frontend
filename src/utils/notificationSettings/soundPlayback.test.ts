@@ -9,7 +9,8 @@ import {
 } from 'vite-plus/test';
 import {
 	DEFAULT_LOCAL_DEVICE_SETTINGS,
-	DEFAULT_NOTIFICATION_SETTINGS
+	DEFAULT_NOTIFICATION_SETTINGS,
+	type SoundId
 } from './model';
 import { setKindField } from './notificationConfig';
 import {
@@ -132,6 +133,103 @@ describe('playNotificationSound (config-driven)', () => {
 		expect(played).toHaveLength(1);
 		expect(played[0].src).toContain('ton-9');
 		expect(played[0].volume).toBe(1);
+	});
+
+	it('a team-discussion post uses its own Anfrage row, a mention in it the Anfrage mention row', () => {
+		const settings = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			notificationConfig: setKindField(
+				setKindField(
+					DEFAULT_NOTIFICATION_SETTINGS.notificationConfig,
+					'requests',
+					'teamDiscussion' as never,
+					'sound',
+					'ton-5' as never
+				),
+				'requests',
+				'mention',
+				'sound',
+				'ton-7' as never
+			)
+		};
+		playNotificationSound(
+			settings,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'team.discussion.new',
+			false,
+			nextNow()
+		);
+		playNotificationSound(
+			settings,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'team.discussion.new',
+			true,
+			nextNow()
+		);
+		expect(played.map((p) => p.src)).toEqual([
+			expect.stringContaining('ton-5'),
+			expect.stringContaining('ton-7')
+		]);
+	});
+
+	describe('system notices (one switch for banner and tone)', () => {
+		const play = (settings = DEFAULT_NOTIFICATION_SETTINGS) =>
+			playNotificationSound(
+				settings,
+				DEFAULT_LOCAL_DEVICE_SETTINGS,
+				'system',
+				'supervisor.added',
+				false,
+				nextNow()
+			);
+
+		const withTone = (sound: SoundId, volume: number) => ({
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			systemTone: { sound, volume }
+		});
+
+		it('play ton-2 at medium volume by default, whatever the Standard row says', () => {
+			// Standard defaults to "no sound": the tone must not depend on it.
+			play();
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-2');
+			expect(played[0].volume).toBe(0.5);
+		});
+
+		it('play the tone and volume chosen for system notices', () => {
+			play(withTone('ton-7', 0.25));
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-7');
+			expect(played[0].volume).toBe(0.25);
+		});
+
+		it('stay silent when the chosen system tone is "none"', () => {
+			play(withTone('none', 0.5));
+			expect(played).toHaveLength(0);
+		});
+
+		it('are silent when the system switch is off, whatever tone is chosen', () => {
+			play({
+				...withTone('ton-7', 1),
+				families: {
+					...DEFAULT_NOTIFICATION_SETTINGS.families,
+					system: false
+				}
+			});
+			expect(played).toHaveLength(0);
+		});
+
+		it('ignore the Standard row of the Gespräche tab', () => {
+			play({
+				...settingsWith('conversations', 'standard', 'ton-9', 1),
+				systemTone: { sound: 'ton-4', volume: 0.75 }
+			});
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-4');
+			expect(played[0].volume).toBe(0.75);
+		});
 	});
 
 	it('stays silent when the configured kind has no sound', () => {

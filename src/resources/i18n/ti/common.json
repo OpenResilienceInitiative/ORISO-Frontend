@@ -2855,6 +2855,7 @@
 				},
 				"kind": {
 					"new": "ሓድሽ ሕቶ",
+					"teamDiscussion": "ናይ ጋንታ ዕላል",
 					"standard": "ልሙድ መፍለጢ",
 					"liveChat": "መልእኽቲ ቀጥታ ዕላል",
 					"mention": "@ ምጥቃስ",
@@ -2865,7 +2866,11 @@
 				"play": "ድምጺ ቅድመ ስማዕ",
 				"volumeUp": "ዓው ኣብል",
 				"volumeDown": "ትሕት ኣብል",
+				"unavailable": {
+					"notSentYet": "እዚ መፍለጢ ገና ኣይተረኽበን።"
+				},
 				"showBanner": "ባነር ኣርኢ",
+				"systemTone": "ናይ ሲስተም ሓበሬታታት ድምጺ",
 				"ringTone": "ናይ ደወል ድምጺ",
 				"wecker": {
 					"title": "ናይ ኣላርም ኩነታት (ተመዲቡ ዘሎ)",

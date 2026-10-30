@@ -9,6 +9,8 @@ import { useNotificationSettings } from '../../../hooks/useNotificationSettings'
 import { DoNotDisturbControl } from './DoNotDisturbControl';
 import { DisplayFilterProfileSection } from './DisplayFilterProfileSection';
 import { NotificationConfigView } from './NotificationConfigDialog';
+import { notificationRoleFor } from './notificationRole';
+import { ToneControls } from './ToneControls';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
 import {
 	NotificationArea,
@@ -23,7 +25,6 @@ import {
 	requestNotificationPermissionSafe
 } from '../../../utils/notificationHelpers';
 import { UserDataContext } from '../../../globalState/context/UserDataContext';
-import { AUTHORITIES, hasUserAuthority } from '../../../globalState';
 import './notificationSettingsPanel.styles.scss';
 
 /**
@@ -41,6 +42,7 @@ export const NotificationSettingsPanel = () => {
 	const { settings, deviceSilenced, updateSettings, setDeviceSilenced } =
 		useNotificationSettings();
 	const { userData } = useContext(UserDataContext);
+	const notificationRole = notificationRoleFor(userData);
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
@@ -159,9 +161,7 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 				onPreview={previewNotificationSound}
-				showLiveChatRow={
-					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				}
+				role={notificationRole}
 			/>
 
 			<hr />
@@ -171,7 +171,8 @@ export const NotificationSettingsPanel = () => {
 
 			<hr />
 
-			{/* System notifications stay a single global switch, outside the tabs. */}
+			{/* System notifications stay a single global switch, outside the
+			    tabs; it gates banner and tone, the tone is picked beside it. */}
 			<Switch
 				titleKey={familyLabelKey('system')}
 				checked={settings.families.system}
@@ -179,6 +180,25 @@ export const NotificationSettingsPanel = () => {
 					updateSettings({ families: { system: checked } })
 				}
 			/>
+			<div className="notifConfig__row" data-cy="notif-system-tone">
+				<span className="notifConfig__label" aria-hidden="true">
+					{t('profile.notifications.config.systemTone')}
+				</span>
+				<ToneControls
+					sound={settings.systemTone.sound}
+					volume={settings.systemTone.volume}
+					label={t('profile.notifications.config.systemTone')}
+					disabled={!settings.families.system}
+					cySuffix="system"
+					onSoundChange={(sound) =>
+						updateSettings({ systemTone: { sound } })
+					}
+					onVolumeChange={(volume) =>
+						updateSettings({ systemTone: { volume } })
+					}
+					onPreview={previewNotificationSound}
+				/>
+			</div>
 		</div>
 	);
 };

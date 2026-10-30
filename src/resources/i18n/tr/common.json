@@ -2855,6 +2855,7 @@
 				},
 				"kind": {
 					"new": "Yeni talep",
+					"teamDiscussion": "Ekip görüşmesi",
 					"standard": "Standart bildirim",
 					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
@@ -2865,7 +2866,11 @@
 				"play": "Sesi dinle",
 				"volumeUp": "Daha yüksek",
 				"volumeDown": "Daha kısık",
+				"unavailable": {
+					"notSentYet": "Bu bildirim henüz kullanılabilir değil."
+				},
 				"showBanner": "Banner göster",
+				"systemTone": "Sistem bildirimleri sesi",
 				"ringTone": "Zil sesi",
 				"wecker": {
 					"title": "Çalar saat modu (planlanıyor)",
