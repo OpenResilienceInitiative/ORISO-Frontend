@@ -107,6 +107,7 @@ import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { TopicTag } from '../topicTag/TopicTag';
+import { UpcomingAppointmentClock } from './UpcomingAppointmentClock';
 import { useMatrixSessionEvents } from '../../hooks/useMatrixSessionPreview';
 import {
 	filterVisibleMatrixPreviewEvents,
@@ -153,7 +154,20 @@ interface SessionListItemProps {
 	onCaseHandoverBatchStart?: () => void;
 	onCaseHandoverBatchConfirm?: () => void;
 	onCaseHandoverBatchClose?: () => void;
+	/**
+	 * Label of the room's next appointment (ADR-021). Set: a grey clock circle
+	 * joins the avatar stack. Timeline prototype only until it ships.
+	 */
+	upcomingAppointment?: string;
+	/**
+	 * Where a conversation card shows its date (ADR-021 display setting):
+	 * `corner` as on dev, `tag` as a segment of the topic tag, `line` in its
+	 * own line below the tag, `off` not at all.
+	 */
+	datePlacement?: SessionCardDatePlacement;
 }
+
+export type SessionCardDatePlacement = 'corner' | 'tag' | 'line' | 'off';
 
 export const SessionListItemComponent = ({
 	defaultLanguage,
@@ -170,7 +184,9 @@ export const SessionListItemComponent = ({
 	onCaseHandoverSelect,
 	onCaseHandoverBatchStart,
 	onCaseHandoverBatchConfirm,
-	onCaseHandoverBatchClose
+	onCaseHandoverBatchClose,
+	upcomingAppointment,
+	datePlacement = 'corner'
 }: SessionListItemProps) => {
 	const { t: translate } = useTranslation(['common']);
 	const location = useLocation();
@@ -1311,6 +1327,13 @@ export const SessionListItemComponent = ({
 										Boolean(activeSession?.isGroup) &&
 										!caseHandoverContentLocked
 									}
+									leading={
+										upcomingAppointment && (
+											<UpcomingAppointmentClock
+												label={upcomingAppointment}
+											/>
+										)
+									}
 								/>
 							</div>
 							<div
@@ -1419,6 +1442,21 @@ export const SessionListItemComponent = ({
 		!autoSelectPostcode &&
 		!isAnonymousChat &&
 		Boolean(postcodeLabel);
+	const cardDate = prettyPrintDate(
+		activeSession.item.messageDate,
+		activeSession.item.createDate
+	);
+	// Without a topic tag there is nothing to attach the date to.
+	const cardDatePlacement: SessionCardDatePlacement =
+		datePlacement === 'tag' && !isAnonymousChat && !topic?.name
+			? 'corner'
+			: datePlacement;
+	const tagDate =
+		cardDatePlacement === 'tag' ? (
+			<span className="topicTag__date" data-cy="session-card-tag-date">
+				{cardDate}
+			</span>
+		) : null;
 
 	return (
 		<div
@@ -1473,6 +1511,7 @@ export const SessionListItemComponent = ({
 								<TopicTag className="sessionsListItem__topic">
 									{topic?.name ||
 										translate('groupChat.noTopicSpecified')}
+									{tagDate}
 								</TopicTag>
 								<div className="sessionsListItem__consultingType" />
 							</>
@@ -1480,6 +1519,7 @@ export const SessionListItemComponent = ({
 							<div className="sessionsListItem__topicPostcodeGroup">
 								<TopicTag className="sessionsListItem__topic">
 									{topic.name}
+									{tagDate}
 								</TopicTag>
 								<div className="sessionsListItem__postcode">
 									{postcodeLabel}
@@ -1490,6 +1530,7 @@ export const SessionListItemComponent = ({
 								{topic?.name && (
 									<TopicTag className="sessionsListItem__topic">
 										{topic.name}
+										{tagDate}
 									</TopicTag>
 								)}
 								<div className="sessionsListItem__consultingType">
@@ -1508,12 +1549,11 @@ export const SessionListItemComponent = ({
 						)}
 					</div>
 					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">
-							{prettyPrintDate(
-								activeSession.item.messageDate,
-								activeSession.item.createDate
-							)}
-						</div>
+						{cardDatePlacement === 'corner' && (
+							<div className="sessionsListItem__date">
+								{cardDate}
+							</div>
+						)}
 						{(isAsker || hasChatroomSettingsActions) && (
 							<SessionListItemMenu
 								flyoutOpen={flyoutOpen}
@@ -1544,6 +1584,14 @@ export const SessionListItemComponent = ({
 						)}
 					</div>
 				</div>
+				{cardDatePlacement === 'line' && (
+					<div
+						className="sessionsListItem__dateLine"
+						data-cy="session-card-date-line"
+					>
+						{cardDate}
+					</div>
+				)}
 				{/* Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout */}
 				<SessionCardBody
 					name={
@@ -1656,6 +1704,12 @@ export const SessionListItemComponent = ({
 									size="48px"
 									ring={false}
 									outline={false}
+								/>
+							)}
+							{upcomingAppointment && (
+								<UpcomingAppointmentClock
+									label={upcomingAppointment}
+									overlay
 								/>
 							)}
 						</div>

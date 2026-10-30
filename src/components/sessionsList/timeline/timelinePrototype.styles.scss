@@ -1,0 +1,173 @@
+// Chat-history timeline prototype (ADR-021, PR 2). Storybook only.
+// The toolbar and the cards bring their own styles; this file only lays out
+// the future zone, the handle host, "Jetzt" and the twin's split button.
+
+.tlp {
+	position: relative;
+	width: 440px;
+	padding: 4px 8px 12px;
+	background: #eae7e8;
+
+	// The future opens above "Jetzt"; the handle sits on its bottom edge.
+	&__boundary {
+		position: relative;
+		margin-top: 8px;
+	}
+
+	&__future {
+		position: relative;
+		overflow: hidden;
+		transition: height 220ms cubic-bezier(0.2, 0, 0, 1);
+
+		&[data-dragging='true'] {
+			transition: none;
+		}
+	}
+
+	// Pinned to the bottom: the next appointment is the first to show.
+	&__futureInner {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		padding-bottom: 12px;
+	}
+
+	&__handleHost {
+		position: relative;
+		height: 16px;
+	}
+
+	&__empty {
+		margin: 0;
+		padding: 16px 0;
+		color: var(--m3-on-surface-variant, #534341);
+		font-size: 14px;
+		text-align: center;
+	}
+
+	&__scroll {
+		overflow-y: auto;
+
+		&--single {
+			overscroll-behavior: contain;
+		}
+	}
+
+	&__row {
+		position: relative;
+	}
+
+	// The twin: the real card with a thin dark outline; the split button
+	// takes the place of the last message (ADR-021 §4, §5).
+	.tlp__future
+		.sessionsListItem:not(.sessionsListItem--active)
+		.sessionsListItem__content {
+		border-color: var(--m3-on-surface, #1d1b1b);
+	}
+
+	&__future .sessionsListItem__subject {
+		visibility: hidden;
+	}
+
+	// A zero-height layer on the card list's top edge: the buttons land on
+	// their cards without a box covering the card text.
+	&__futureActions {
+		position: absolute;
+		right: 0;
+		left: 0;
+		z-index: 12;
+		height: 0;
+	}
+
+	&__twinAction {
+		position: absolute;
+	}
+
+	// --- "Jetzt" ---
+
+	&__now {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 24px;
+		margin: 6px 0;
+		pointer-events: none;
+
+		&--line {
+			background: linear-gradient(
+					var(--m3-outline, #857370),
+					var(--m3-outline, #857370)
+				)
+				center / 100% 1px no-repeat;
+
+			.tlp__nowLabel {
+				position: relative;
+				padding: 2px 12px;
+				border-radius: 12px;
+				background: var(--m3-primary-container, #cc1e1c);
+				color: #fff;
+			}
+		}
+
+		// The label rides on the handle, drawn above it.
+		&--handle {
+			z-index: 31;
+			margin-top: -18px;
+
+			.tlp__nowLabel {
+				padding: 2px 12px;
+				border-radius: 12px;
+				background: var(--m3-secondary-container, #646d78);
+				color: #fff;
+			}
+		}
+
+		&--band {
+			padding: 4px 12px;
+			border-radius: 12px;
+			background: var(--m3-primary-fixed, #ffdad5);
+			color: var(--oriso-primary-text-on-fixed, #a5000a);
+		}
+	}
+
+	&__nowLabel {
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+
+	&__pill {
+		position: absolute;
+		left: 50%;
+		z-index: 5;
+		height: 36px;
+		padding: 0 16px;
+		border: 0;
+		border-radius: 18px;
+		background: var(--m3-primary-container, #cc1e1c);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+		color: #fff;
+		font: inherit;
+		font-size: 13px;
+		font-weight: 600;
+		cursor: pointer;
+		transform: translateX(-50%);
+
+		&--above {
+			top: 56px;
+		}
+
+		&--below {
+			bottom: 20px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__future {
+			transition: none;
+		}
+	}
+}

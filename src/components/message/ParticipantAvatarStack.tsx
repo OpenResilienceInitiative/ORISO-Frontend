@@ -40,6 +40,11 @@ export interface ParticipantAvatarStackProps {
 	 * beside the stack — both open the list of the folded people on click.
 	 */
 	'overflowStyle'?: 'pill' | 'badge' | 'bubble';
+	/**
+	 * One more member before the people, e.g. the upcoming-appointment clock
+	 * (ADR-021). First, so a "+N" badge stays on the last avatar.
+	 */
+	'leading'?: React.ReactNode;
 	'className'?: string;
 	'data-cy'?: string;
 }
@@ -94,6 +99,7 @@ export const ParticipantAvatarStack = ({
 	overlap = STACK_OVERLAP,
 	maxVisible = STACK_MAX_VISIBLE,
 	overflowStyle = 'pill',
+	leading,
 	className,
 	'data-cy': dataCy = 'participant-stack'
 }: ParticipantAvatarStackProps) => {
@@ -152,6 +158,14 @@ export const ParticipantAvatarStack = ({
 			})}
 			data-cy={dataCy}
 		>
+			{leading && (
+				<li
+					className="participantStack__item participantStack__item--leading"
+					style={{ zIndex: visible.length + 1 }}
+				>
+					{leading}
+				</li>
+			)}
 			{visible.map((participant, index) => {
 				const tipId = `${tipIdBase}-${index}`;
 				return (
