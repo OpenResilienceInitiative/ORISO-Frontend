@@ -298,8 +298,9 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 				'mention:42:1:Kollegin Weber'
 			)
 		);
+		// The id leaves the query for the path: the bare list route shows no chat.
 		expect(screen.getByTestId('path').textContent).toBe(
-			'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=%21team42'
+			'/sessions/consultant/sessionPreview/session/42?teamDiscussion=1&roomId=%21team42'
 		);
 		expect(play).toHaveBeenCalledTimes(1);
 
