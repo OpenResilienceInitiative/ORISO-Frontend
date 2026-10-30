@@ -2131,7 +2131,13 @@
 		"error": "Hata",
 		"info": "Bilgi",
 		"success": "Başarılı",
-		"warning": "Uyarı"
+		"warning": "Uyarı",
+		"liveChatMessage": {
+			"title": "Canlı sohbette yeni mesaj",
+			"from": "Gönderen: {{name}}",
+			"several": "{{count}} yeni mesaj",
+			"open": "Sohbeti aç"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2847,6 +2853,7 @@
 				"kind": {
 					"new": "Yeni talep",
 					"standard": "Standart bildirim",
+					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
 					"handover": "Devir",
 					"call": "Gelen arama",

@@ -179,7 +179,7 @@ export const sendNotification = (
 		const { area, kind } = resolveEventChannelContract(
 			options.eventType,
 			recipientRole,
-			{ family, mentioned: options.mentioned }
+			{ family, mentioned: options.mentioned, conversationType }
 		).browser;
 		const kindConfig = settings.notificationConfig[area][kind];
 		if (kindConfig.banner === 'off') {

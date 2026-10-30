@@ -2131,7 +2131,13 @@
 		"error": "Erreur",
 		"info": "Information",
 		"success": "Succès",
-		"warning": "Avertissement"
+		"warning": "Avertissement",
+		"liveChatMessage": {
+			"title": "Nouveau message dans le chat en direct",
+			"from": "De {{name}}",
+			"several": "{{count}} nouveaux messages",
+			"open": "Ouvrir le chat"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2847,6 +2853,7 @@
 				"kind": {
 					"new": "Nouvelle demande",
 					"standard": "Notification standard",
+					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",
 					"handover": "Transfert",
 					"call": "Appel entrant",

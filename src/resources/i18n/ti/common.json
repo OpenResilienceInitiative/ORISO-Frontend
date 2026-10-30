@@ -2131,7 +2131,13 @@
 		"error": "ጌጋ",
 		"info": "ሓበሬታ",
 		"success": "ዓወት",
-		"warning": "መጠንቀቕታ"
+		"warning": "መጠንቀቕታ",
+		"liveChatMessage": {
+			"title": "ሓድሽ መልእኽቲ ኣብ ቀጥታ ዕላል",
+			"from": "ካብ {{name}}",
+			"several": "{{count}} ሓደስቲ መልእኽትታት",
+			"open": "ዕላል ክፈት"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2847,6 +2853,7 @@
 				"kind": {
 					"new": "ሓድሽ ሕቶ",
 					"standard": "ልሙድ መፍለጢ",
+					"liveChat": "መልእኽቲ ቀጥታ ዕላል",
 					"mention": "@ ምጥቃስ",
 					"handover": "ምትሕልላፍ",
 					"call": "ዝኣቱ ጻውዒት",

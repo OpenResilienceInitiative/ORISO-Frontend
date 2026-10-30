@@ -1261,6 +1261,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
+				showLiveChatRow={
+					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				}
 			/>
 		</div>
 	);
