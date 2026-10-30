@@ -132,12 +132,11 @@ export const DialogMobile: DialogStory = {
  */
 const InteractiveBody = ({
 	initialArea = 'requests',
-	showLiveChatRow = false,
 	role = 'consultant'
 }: {
 	initialArea?: NotificationArea;
-	showLiveChatRow?: boolean;
-	role?: NotificationRole;
+	/** 'unknown' = user data not loaded yet. */
+	role?: NotificationRole | 'unknown';
 }) => {
 	const [config, setConfig] = useState<NotificationConfig>(
 		DEFAULT_NOTIFICATION_CONFIG
@@ -149,7 +148,7 @@ const InteractiveBody = ({
 		<div
 			style={{
 				maxWidth: 560,
-				padding: showLiveChatRow ? '0 16px' : 16
+				padding: role === 'consultant' ? '0 16px' : 16
 			}}
 		>
 			<NotificationConfigView
@@ -169,8 +168,7 @@ const InteractiveBody = ({
 					}))
 				}
 				onPreview={previewNotificationSound}
-				showLiveChatRow={showLiveChatRow}
-				role={role}
+				role={role === 'unknown' ? undefined : role}
 			/>
 		</div>
 	);
@@ -187,7 +185,7 @@ export const Body: BodyStory = { render: () => <InteractiveBody /> };
 export const BodyCounsellorLiveChatRow: BodyStory = {
 	name: 'Body – Berater:in mit Live-Chat-Zeile',
 	render: () => (
-		<InteractiveBody initialArea="conversations" showLiveChatRow />
+		<InteractiveBody initialArea="conversations" role="consultant" />
 	),
 	play: async ({ canvasElement }) => {
 		const row = canvasElement.querySelector(
@@ -215,45 +213,21 @@ export const BodyAdviceSeekerNoLiveChatRow: BodyStory = {
 	}
 };
 
-/** Asserts a row's controls are disabled and described by its visible reason. */
-const expectDisabledWithReason = async (
-	root: Element,
-	area: string,
-	kind: string
-) => {
-	const reason = root.querySelector<HTMLElement>(
-		`[data-cy="notif-reason-${area}-${kind}"]`
+const rowIds = (root: Element) =>
+	Array.from(root.querySelectorAll('[data-cy^="notif-row-"]')).map((el) =>
+		el.getAttribute('data-cy')
 	);
-	await expect(reason).not.toBeNull();
-	await expect(reason!.textContent!.trim()).not.toBe('');
-	for (const control of [
-		root.querySelector<HTMLSelectElement>(
-			`[data-cy="notif-banner-${area}-${kind}"]`
-		)!,
-		root.querySelector<HTMLSelectElement>(
-			`[data-cy="notif-row-${area}-${kind}"] select.notifConfig__select`
-		)!
-	]) {
-		await expect(control.disabled).toBe(true);
-		await expect(control.getAttribute('aria-disabled')).toBe('true');
-		await expect(control.getAttribute('aria-describedby')).toBe(reason!.id);
-	}
-};
 
 /**
- * #778: a counsellor's Anfragen tab. "Neue Anfrage" fires; "Standard" only
- * reaches advice seekers and "@ Erwähnung" has no event in this tab, so both
- * are disabled and say why.
+ * #778: rows that can never fire for the viewer's role are not shown. A
+ * counsellor's Anfragen tab keeps "Neue Anfrage" only: Standard reaches
+ * advice seekers and there is no @-mention in this tab.
  */
-export const BodyCounsellorDisabledChannels: BodyStory = {
-	name: 'Body – Berater:in, Kanäle ohne Auslöser deaktiviert',
+export const BodyCounsellorHidesRowsThatNeverFire: BodyStory = {
+	name: 'Body – Berater:in, Zeilen ohne Auslöser ausgeblendet',
 	render: () => <InteractiveBody initialArea="requests" role="consultant" />,
 	play: async ({ canvasElement }) => {
-		await expectDisabledWithReason(canvasElement, 'requests', 'standard');
-		await expectDisabledWithReason(canvasElement, 'requests', 'mention');
-		await expect(
-			canvasElement.querySelector('[data-cy="notif-reason-requests-new"]')
-		).toBeNull();
+		await expect(rowIds(canvasElement)).toEqual(['notif-row-requests-new']);
 		await expect(
 			canvasElement.querySelector<HTMLSelectElement>(
 				'[data-cy="notif-banner-requests-new"]'
@@ -262,17 +236,32 @@ export const BodyCounsellorDisabledChannels: BodyStory = {
 	}
 };
 
-/** #778: an advice seeker never receives new enquiries — that row is disabled. */
-export const BodyAdviceSeekerDisabledChannels: BodyStory = {
-	name: 'Body – Ratsuchende, Kanäle ohne Auslöser deaktiviert',
+/** #778: an advice seeker never receives new enquiries or mentions. */
+export const BodyAdviceSeekerHidesRowsThatNeverFire: BodyStory = {
+	name: 'Body – Ratsuchende, Zeilen ohne Auslöser ausgeblendet',
 	render: () => <InteractiveBody initialArea="requests" role="asker" />,
 	play: async ({ canvasElement }) => {
-		await expectDisabledWithReason(canvasElement, 'requests', 'new');
-		await expectDisabledWithReason(canvasElement, 'requests', 'mention');
-		await expect(
-			canvasElement.querySelector<HTMLSelectElement>(
-				'[data-cy="notif-banner-requests-standard"]'
-			)!.disabled
-		).toBe(false);
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-standard'
+		]);
+	}
+};
+
+/**
+ * While the user data is loading nobody may see the wrong rows: the neutral
+ * dialog shows every row, all live (Live-Chat row excepted).
+ */
+export const BodyRoleStillLoading: BodyStory = {
+	name: 'Body – Rolle noch nicht geladen',
+	render: () => <InteractiveBody initialArea="requests" role="unknown" />,
+	play: async ({ canvasElement }) => {
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-standard',
+			'notif-row-requests-mention'
+		]);
+		for (const select of canvasElement.querySelectorAll('select')) {
+			await expect(select.disabled).toBe(false);
+		}
 	}
 };

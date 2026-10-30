@@ -2898,9 +2898,7 @@
 				"volumeUp": "Lauter",
 				"volumeDown": "Leiser",
 				"unavailable": {
-					"notSentYet": "Der Server sendet dieses Ereignis noch nicht, deshalb kann hier noch nichts ausgelöst werden.",
-					"notForRole": "Dieses Ereignis gibt es für diese Rolle nicht, deshalb wird hier nichts ausgelöst.",
-					"noEvent": "Für diese Zeile gibt es kein Ereignis, deshalb wird hier nichts ausgelöst."
+					"notSentYet": "Diese Benachrichtigung ist noch nicht verfügbar."
 				},
 				"showBanner": "Banner anzeigen",
 				"ringTone": "Klingelton",

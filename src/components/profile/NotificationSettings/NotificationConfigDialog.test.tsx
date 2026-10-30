@@ -4,7 +4,14 @@
  * (Termine disabled), per-kind sound dropdown + send-by-email, tab switching.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	cleanup,
 	configure,
@@ -47,6 +54,42 @@ vi.mock('../../../resources/img/icons/keyboard_arrow_up.svg', () => ({
 vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
 	ReactComponent: () => null
 }));
+
+// Test seam: lets a spec make a row "not yet available" or a whole tab empty.
+type Availability =
+	import('../../../utils/notificationSettings/notificationChannelCapability').RowAvailability;
+let availabilityOverride:
+	| ((area: string, kind: string) => Availability | undefined)
+	| null = null;
+vi.mock(
+	'../../../utils/notificationSettings/notificationChannelCapability',
+	async (importOriginal) => {
+		const actual =
+			await importOriginal<
+				typeof import('../../../utils/notificationSettings/notificationChannelCapability')
+			>();
+		const rowAvailability: typeof actual.rowAvailability = (
+			role,
+			area,
+			kind,
+			cases
+		) =>
+			availabilityOverride?.(area, kind) ??
+			actual.rowAvailability(role, area, kind, cases);
+		return {
+			...actual,
+			rowAvailability,
+			visibleAreas: (role, areas, kindsOf) =>
+				areas.filter((area) =>
+					kindsOf(area).some(
+						(kind) =>
+							rowAvailability(role, area, kind).visibility !==
+							'hidden'
+					)
+				)
+		};
+	}
+);
 
 // The email link is a router Link.
 const baseProps = {
@@ -239,7 +282,10 @@ describe('NotificationConfigDialog', () => {
 });
 
 describe('NotificationConfigView', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		availabilityOverride = null;
+	});
 
 	it('renders the three harmonised area tabs, all enabled', () => {
 		render(<NotificationConfigView {...baseProps} />);
@@ -288,8 +334,8 @@ describe('NotificationConfigView', () => {
 		);
 	});
 
-	it('renders the three kind rows for the active area', () => {
-		render(<NotificationConfigView {...baseProps} />);
+	it('renders the three kind rows for the active area while the role is unknown', () => {
+		render(<NotificationConfigView {...baseProps} role={undefined} />);
 		expect(screen.getByTestId('notif-row-requests-new')).toBeTruthy();
 		expect(screen.getByTestId('notif-row-requests-standard')).toBeTruthy();
 		expect(screen.getByTestId('notif-row-requests-mention')).toBeTruthy();
@@ -351,7 +397,7 @@ describe('NotificationConfigView', () => {
 
 	it('shows the muted icon and no play button when no sound is chosen', () => {
 		// "Standard" stays silent by default ("Neue Anfrage" rings, FE#1435).
-		render(<NotificationConfigView {...baseProps} />);
+		render(<NotificationConfigView {...baseProps} role={undefined} />);
 		expect(
 			screen.queryByTestId('notif-muted-requests-standard')
 		).toBeTruthy();
@@ -409,7 +455,6 @@ describe('Live-Chat row (FE#1470)', () => {
 				<NotificationConfigView
 					{...baseProps}
 					activeArea="conversations"
-					showLiveChatRow
 				/>
 			</MemoryRouter>
 		);
@@ -430,6 +475,7 @@ describe('Live-Chat row (FE#1470)', () => {
 			<MemoryRouter>
 				<NotificationConfigView
 					{...baseProps}
+					role="asker"
 					activeArea="conversations"
 				/>
 			</MemoryRouter>
@@ -443,11 +489,14 @@ describe('Live-Chat row (FE#1470)', () => {
 	});
 });
 
-describe('Channels that cannot fire (epic #778, FE#1211)', () => {
-	afterEach(cleanup);
+describe('Rows that never fire are hidden, rows without a producer yet are disabled (epic #778)', () => {
+	afterEach(() => {
+		cleanup();
+		availabilityOverride = null;
+	});
 
 	const renderRows = (
-		role: 'consultant' | 'asker',
+		role: 'consultant' | 'asker' | undefined,
 		activeArea: 'requests' | 'conversations' | 'timeCritical'
 	) =>
 		render(
@@ -459,90 +508,151 @@ describe('Channels that cannot fire (epic #778, FE#1211)', () => {
 				/>
 			</MemoryRouter>
 		);
-
-	/** Controls of one row: banner select, tone select, volume + play buttons. */
-	const controls = (area: string, kind: string) => {
-		const row = screen.getByTestId(`notif-row-${area}-${kind}`);
-		return {
-			row,
-			banner: screen.getByTestId(`notif-banner-${area}-${kind}`),
-			tone: row.querySelector('select.notifConfig__select')!,
-			volumeUp: screen.getByTestId(`notif-volume-up-${area}-${kind}`)
-		};
-	};
-
-	it('disables the mention row of Anfragen for everyone, with a reason a screen reader reads', () => {
-		renderRows('consultant', 'requests');
-		const { banner, tone, volumeUp } = controls('requests', 'mention');
-		for (const el of [banner, tone, volumeUp]) {
-			expect((el as HTMLButtonElement).disabled).toBe(true);
-		}
-		const reason = screen.getByTestId('notif-reason-requests-mention');
-		expect(reason.textContent).toBe(
-			'profile.notifications.config.unavailable.noEvent'
+	const rowIds = () =>
+		Array.from(document.querySelectorAll('[data-cy^="notif-row-"]')).map(
+			(el) => el.getAttribute('data-cy')
 		);
-		for (const el of [banner, tone]) {
-			expect(el.getAttribute('aria-disabled')).toBe('true');
-			expect(el.getAttribute('aria-describedby')).toBe(reason.id);
-		}
-		expect(reason.id).toBeTruthy();
-	});
 
-	it('leaves the new-enquiry row live for a counsellor', () => {
+	it('shows a counsellor only the Anfragen row that can fire for them', () => {
 		renderRows('consultant', 'requests');
-		const { banner, tone } = controls('requests', 'new');
-		expect((banner as HTMLSelectElement).disabled).toBe(false);
-		expect((tone as HTMLSelectElement).disabled).toBe(false);
-		expect(banner.getAttribute('aria-describedby')).toBeNull();
-		expect(screen.queryByTestId('notif-reason-requests-new')).toBeNull();
-	});
-
-	it('explains rows that only exist for the other role', () => {
-		renderRows('consultant', 'requests');
+		expect(rowIds()).toEqual(['notif-row-requests-new']);
 		expect(
-			screen.getByTestId('notif-reason-requests-standard').textContent
-		).toBe('profile.notifications.config.unavailable.notForRole');
-		cleanup();
-		renderRows('asker', 'requests');
-		expect(
-			(controls('requests', 'new').banner as HTMLSelectElement).disabled
-		).toBe(true);
-		expect(
-			screen.getByTestId('notif-reason-requests-new').textContent
-		).toBe('profile.notifications.config.unavailable.notForRole');
-		expect(
-			(controls('requests', 'standard').banner as HTMLSelectElement)
-				.disabled
+			(
+				screen.getByTestId(
+					'notif-banner-requests-new'
+				) as HTMLSelectElement
+			).disabled
 		).toBe(false);
 	});
 
-	it('keeps rows with a producer live for both roles (handover, call, appointment)', () => {
-		for (const [area, kinds] of [
-			['conversations', ['handover', 'standard']],
-			['timeCritical', ['call', 'appointment']]
-		] as const) {
-			for (const role of ['consultant', 'asker'] as const) {
-				renderRows(role, area);
-				for (const kind of kinds) {
-					expect(
-						(controls(area, kind).banner as HTMLSelectElement)
-							.disabled,
-						`${role} ${area}/${kind}`
-					).toBe(false);
-				}
-				cleanup();
-			}
-		}
+	it('shows an advice seeker only Standard in Anfragen, and no mention, new-request or live-chat rows', () => {
+		renderRows('asker', 'requests');
+		expect(rowIds()).toEqual(['notif-row-requests-standard']);
+		cleanup();
+		renderRows('asker', 'conversations');
+		expect(rowIds()).toEqual([
+			'notif-row-conversations-standard',
+			'notif-row-conversations-handover'
+		]);
 	});
 
-	it('does not let a disabled row change its settings', () => {
-		const onChange = vi.fn();
-		render(
-			<MemoryRouter>
-				<NotificationConfigView {...baseProps} onChange={onChange} />
-			</MemoryRouter>
-		);
-		fireEvent.click(screen.getByTestId('notif-volume-up-requests-mention'));
-		expect(onChange).not.toHaveBeenCalled();
+	it('shows the neutral, fully live dialog while the user data is still loading', () => {
+		renderRows(undefined, 'requests');
+		expect(rowIds()).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-standard',
+			'notif-row-requests-mention'
+		]);
+		for (const select of document.querySelectorAll('select')) {
+			expect(select.disabled).toBe(false);
+		}
+		expect(document.querySelector('.notifConfig__reason')).toBeNull();
+		cleanup();
+		renderRows(undefined, 'conversations');
+		expect(
+			screen.queryByTestId('notif-row-conversations-liveChat')
+		).toBeNull();
+	});
+
+	describe('a row whose event has no producer yet', () => {
+		const notYet: Availability = {
+			visibility: 'disabled',
+			bannerEnabled: false,
+			soundEnabled: false,
+			reasonKey: 'profile.notifications.config.unavailable.notSentYet'
+		};
+		beforeEach(() => {
+			availabilityOverride = (area, kind) =>
+				area === 'timeCritical' && kind === 'appointment'
+					? notYet
+					: undefined;
+		});
+
+		it('is disabled with a visible reason that the controls are described by', () => {
+			renderRows('consultant', 'timeCritical');
+			const banner = screen.getByTestId(
+				'notif-banner-timeCritical-appointment'
+			) as HTMLSelectElement;
+			const tone = screen
+				.getByTestId('notif-row-timeCritical-appointment')
+				.querySelector(
+					'select.notifConfig__select'
+				) as HTMLSelectElement;
+			const reason = screen.getByTestId(
+				'notif-reason-timeCritical-appointment'
+			);
+			expect(reason.textContent).toBe(notYet.reasonKey);
+			for (const control of [banner, tone]) {
+				expect(control.disabled).toBe(true);
+				// Natively disabled: no redundant aria-disabled.
+				expect(control.hasAttribute('aria-disabled')).toBe(false);
+				expect(control.getAttribute('aria-describedby')).toBe(
+					reason.id
+				);
+			}
+			// The call row beside it is untouched.
+			expect(
+				(
+					screen.getByTestId(
+						'notif-banner-timeCritical-call'
+					) as HTMLSelectElement
+				).disabled
+			).toBe(false);
+		});
+
+		it('does not let the disabled row change its settings', () => {
+			const onChange = vi.fn();
+			render(
+				<MemoryRouter>
+					<NotificationConfigView
+						{...baseProps}
+						activeArea="timeCritical"
+						onChange={onChange}
+					/>
+				</MemoryRouter>
+			);
+			fireEvent.click(
+				screen.getByTestId('notif-volume-up-timeCritical-appointment')
+			);
+			expect(onChange).not.toHaveBeenCalled();
+		});
+
+		it('gives the reason a unique id when two dialogs show the same row', () => {
+			render(
+				<MemoryRouter>
+					<NotificationConfigView
+						{...baseProps}
+						activeArea="timeCritical"
+					/>
+					<NotificationConfigView
+						{...baseProps}
+						activeArea="timeCritical"
+					/>
+				</MemoryRouter>
+			);
+			const ids = screen
+				.getAllByTestId('notif-reason-timeCritical-appointment')
+				.map((el) => el.id);
+			expect(ids).toHaveLength(2);
+			expect(new Set(ids).size).toBe(2);
+			expect(document.querySelectorAll(`[id="${ids[0]}"]`)).toHaveLength(
+				1
+			);
+		});
+	});
+
+	it('does not offer a tab whose rows are all hidden, and falls back to the first tab', () => {
+		const hidden: Availability = {
+			visibility: 'hidden',
+			bannerEnabled: false,
+			soundEnabled: false,
+			reasonKey: null
+		};
+		availabilityOverride = (area) =>
+			area === 'timeCritical' ? hidden : undefined;
+		renderRows('consultant', 'timeCritical');
+		expect(screen.queryByTestId('notif-tab-timeCritical')).toBeNull();
+		expect(screen.getByTestId('notif-tab-requests')).toBeTruthy();
+		expect(rowIds()).toEqual(['notif-row-requests-new']);
 	});
 });

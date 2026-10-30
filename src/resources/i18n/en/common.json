@@ -2860,9 +2860,7 @@
 				"volumeUp": "Louder",
 				"volumeDown": "Quieter",
 				"unavailable": {
-					"notSentYet": "The server does not send this event yet, so nothing can fire here.",
-					"notForRole": "This event does not exist for this role, so nothing fires here.",
-					"noEvent": "There is no event for this row, so nothing fires here."
+					"notSentYet": "This notification is not available yet."
 				},
 				"showBanner": "Show banner",
 				"ringTone": "Ring tone",

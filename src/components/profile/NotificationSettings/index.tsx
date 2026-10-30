@@ -9,6 +9,7 @@ import { useNotificationSettings } from '../../../hooks/useNotificationSettings'
 import { DoNotDisturbControl } from './DoNotDisturbControl';
 import { DisplayFilterProfileSection } from './DisplayFilterProfileSection';
 import { NotificationConfigView } from './NotificationConfigDialog';
+import { notificationRoleFor } from './notificationRole';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
 import {
 	NotificationArea,
@@ -23,7 +24,6 @@ import {
 	requestNotificationPermissionSafe
 } from '../../../utils/notificationHelpers';
 import { UserDataContext } from '../../../globalState/context/UserDataContext';
-import { AUTHORITIES, hasUserAuthority } from '../../../globalState';
 import './notificationSettingsPanel.styles.scss';
 
 /**
@@ -41,10 +41,7 @@ export const NotificationSettingsPanel = () => {
 	const { settings, deviceSilenced, updateSettings, setDeviceSilenced } =
 		useNotificationSettings();
 	const { userData } = useContext(UserDataContext);
-	const isConsultant = !!hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	);
+	const notificationRole = notificationRoleFor(userData);
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
@@ -163,8 +160,7 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 				onPreview={previewNotificationSound}
-				showLiveChatRow={isConsultant}
-				role={isConsultant ? 'consultant' : 'asker'}
+				role={notificationRole}
 			/>
 
 			<hr />

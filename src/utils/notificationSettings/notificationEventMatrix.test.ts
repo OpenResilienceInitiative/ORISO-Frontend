@@ -16,6 +16,10 @@ import {
 import {
 	channelCapability,
 	EVENT_CASES,
+	rowAvailability,
+	visibleAreas,
+	type EventCase,
+	type RowVisibility,
 	NOTIFICATION_CHANNELS,
 	NOTIFICATION_ROLES,
 	rowForCase,
@@ -40,7 +44,6 @@ const EXPECTED_ROW: Record<
 		asker: 'conversations/standard'
 	},
 	'message.new+liveChat': { consultant: 'conversations/liveChat' },
-	'message.new+mentioned': { consultant: 'conversations/mention' },
 	'thread.reply.new': {
 		consultant: 'conversations/standard',
 		asker: 'conversations/standard'
@@ -53,6 +56,9 @@ const EXPECTED_ROW: Record<
 	'team.discussion.new': { consultant: 'conversations/new' },
 	'team.discussion.new+mentioned': { consultant: 'conversations/mention' },
 	'case.handover.consent.requested': { asker: 'conversations/handover' },
+	'case.handover.consent.requested+optIn': {
+		asker: 'conversations/handover'
+	},
 	'case.handover.granted': {
 		consultant: 'conversations/handover',
 		asker: 'conversations/handover'
@@ -122,7 +128,6 @@ const EXPECTED_ROW: Record<
 
 /** Event types UserService origin/dev does NOT write (checked 2026-10-28). */
 const NOT_EMITTED = [
-	'message.new+mentioned',
 	'handover.requested',
 	'handover.partial',
 	'handover.all_confirmed',
@@ -137,16 +142,17 @@ const NOT_EMITTED = [
 
 /**
  * Cases with an in-app pop-up card (Frank, 28 Oct): live chat, new enquiry,
- * mention, and only the handover events a counsellor must act on. Handover
- * status steps and the consent request (addressed to the advice seeker) get none.
+ * mention (team discussions only: the one producer of params.mentioned), the
+ * handover offer a counsellor must act on, and the advice seeker's consent
+ * request when their yes is needed (OPT_IN). Handover status steps get none.
  */
 const POPUP_CASES = [
 	'request.new',
 	'waiting_room.client.joined',
 	'message.new+liveChat',
-	'message.new+mentioned',
 	'team.discussion.new+mentioned',
-	'case.handover.offer.received'
+	'case.handover.offer.received',
+	'case.handover.consent.requested+optIn'
 ];
 
 const caseId = (c: { eventType: string; variant?: string }) =>
@@ -236,7 +242,7 @@ const EXPECTED_POPUP_ROWS: Record<NotificationRole, Row[]> = {
 		'conversations/mention',
 		'conversations/handover'
 	],
-	asker: []
+	asker: ['conversations/handover']
 };
 
 describe('row capability: what can fire per dialog row', () => {
@@ -317,5 +323,110 @@ describe('row defaults the matrix promises', () => {
 				).not.toBe('off');
 			}
 		}
+	});
+});
+
+/** Frank, 30 Oct: never-firing rows are hidden, not-yet-firing rows disabled. */
+const EXPECTED_VISIBILITY: Record<
+	Row,
+	{ consultant: RowVisibility; asker: RowVisibility }
+> = {
+	'requests/new': { consultant: 'visible', asker: 'hidden' },
+	'requests/standard': { consultant: 'hidden', asker: 'visible' },
+	'requests/mention': { consultant: 'hidden', asker: 'hidden' },
+	'conversations/new': { consultant: 'visible', asker: 'hidden' },
+	'conversations/standard': { consultant: 'visible', asker: 'visible' },
+	'conversations/liveChat': { consultant: 'visible', asker: 'hidden' },
+	'conversations/mention': { consultant: 'visible', asker: 'hidden' },
+	'conversations/handover': { consultant: 'visible', asker: 'visible' },
+	'timeCritical/call': { consultant: 'visible', asker: 'visible' },
+	'timeCritical/appointment': { consultant: 'visible', asker: 'visible' }
+};
+
+describe('row availability in the dialog', () => {
+	const rows = Object.keys(EXPECTED_VISIBILITY) as Row[];
+
+	it.each(rows)('%s is shown, disabled or hidden per role', (row) => {
+		const [area, kind] = row.split('/') as [
+			NotificationArea,
+			NotificationKind
+		];
+		for (const role of NOTIFICATION_ROLES) {
+			expect(
+				rowAvailability(role, area, kind).visibility,
+				`${row}/${role}`
+			).toBe(EXPECTED_VISIBILITY[row][role]);
+		}
+	});
+
+	it('shows the neutral dialog while the role is unknown, minus the counsellor-only live-chat row', () => {
+		for (const row of rows) {
+			const [area, kind] = row.split('/') as [
+				NotificationArea,
+				NotificationKind
+			];
+			const availability = rowAvailability(undefined, area, kind);
+			expect(availability.visibility, row).toBe(
+				kind === 'liveChat' ? 'hidden' : 'visible'
+			);
+			expect(
+				availability.bannerEnabled && availability.soundEnabled
+			).toBe(true);
+		}
+	});
+
+	it('disables (not hides) a row whose event exists but has no producer yet, with a reason', () => {
+		const unwritten: EventCase[] = [
+			{
+				eventType: 'appointment.scheduled',
+				recipients: ['consultant', 'asker'],
+				emitted: false,
+				source: 'none'
+			}
+		];
+		for (const role of NOTIFICATION_ROLES) {
+			expect(
+				rowAvailability(role, 'timeCritical', 'appointment', unwritten)
+			).toEqual({
+				visibility: 'disabled',
+				bannerEnabled: false,
+				soundEnabled: false,
+				reasonKey: 'profile.notifications.config.unavailable.notSentYet'
+			});
+		}
+	});
+
+	it('hides no tab for any role today, and drops a tab whose rows are all hidden', () => {
+		for (const role of NOTIFICATION_ROLES) {
+			expect(
+				visibleAreas(
+					role,
+					NOTIFICATION_AREAS,
+					(area) => AREA_KINDS[area]
+				)
+			).toEqual([...NOTIFICATION_AREAS]);
+		}
+		expect(
+			visibleAreas('asker', NOTIFICATION_AREAS, (area) =>
+				area === 'timeCritical' ? ['liveChat'] : AREA_KINDS[area]
+			)
+		).toEqual(['requests', 'conversations']);
+	});
+});
+
+describe('target conversation open and visible', () => {
+	it('is silent (no card, tone, banner) for exactly live chat, mention and handover pop-up events', () => {
+		expect(
+			EVENT_CASES.filter((c) => c.silentWhenOpen)
+				.map(caseId)
+				.sort()
+		).toEqual(
+			[
+				'message.new+liveChat',
+				'team.discussion.new+mentioned',
+				'case.handover.offer.received',
+				'case.handover.consent.requested+optIn'
+			].sort()
+		);
 	});
 });

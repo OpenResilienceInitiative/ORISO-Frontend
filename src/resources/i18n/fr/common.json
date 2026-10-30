@@ -2846,9 +2846,7 @@
 				"volumeUp": "Plus fort",
 				"volumeDown": "Moins fort",
 				"unavailable": {
-					"notSentYet": "Le serveur n'envoie pas encore cet événement, rien ne peut donc se déclencher ici.",
-					"notForRole": "Cet événement n'existe pas pour ce rôle, rien ne se déclenche donc ici.",
-					"noEvent": "Aucun événement ne correspond à cette ligne, rien ne se déclenche donc ici."
+					"notSentYet": "Cette notification n'est pas encore disponible."
 				},
 				"showBanner": "Afficher la bannière",
 				"ringTone": "Sonnerie",

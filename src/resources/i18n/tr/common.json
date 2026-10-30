@@ -2846,9 +2846,7 @@
 				"volumeUp": "Daha yüksek",
 				"volumeDown": "Daha kısık",
 				"unavailable": {
-					"notSentYet": "Sunucu bu olayı henüz göndermiyor, bu yüzden burada şimdilik hiçbir şey tetiklenemez.",
-					"notForRole": "Bu olay bu rol için mevcut değil, bu yüzden burada hiçbir şey tetiklenmez.",
-					"noEvent": "Bu satır için bir olay yok, bu yüzden burada hiçbir şey tetiklenmez."
+					"notSentYet": "Bu bildirim henüz kullanılabilir değil."
 				},
 				"showBanner": "Banner göster",
 				"ringTone": "Zil sesi",

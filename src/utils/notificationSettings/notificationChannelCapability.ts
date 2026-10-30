@@ -27,18 +27,34 @@ export const NOTIFICATION_ROLES: ReadonlyArray<NotificationRole> = [
 	'asker'
 ];
 
-/** 'mentioned' = @-mention flag set; 'liveChat' = LIVE_CHAT conversation. */
-export type EventVariant = 'mentioned' | 'liveChat';
+/**
+ * 'mentioned' = params.mentioned set; 'liveChat' = LIVE_CHAT conversation;
+ * 'optIn' = params.clientConsent is OPT_IN (the advice seeker's yes is needed).
+ */
+export type EventVariant = 'mentioned' | 'liveChat' | 'optIn';
 
 export interface EventCase {
 	eventType: string;
 	variant?: EventVariant;
 	/** Roles the event is addressed to. */
 	recipients: ReadonlyArray<NotificationRole>;
-	/** UserService (origin/dev, 2026-10-28) writes this event type. */
+	/**
+	 * UserService writes this event type. Hand-flagged: the source of truth is
+	 * the event-type literals passed to `createEvent*` in UserService `src/main`
+	 * (read on origin/dev 44f4517c2, 2026-10-28). Re-check when UserService changes.
+	 */
 	emitted: boolean;
-	/** Roles for which an in-app pop-up card exists (live chat, new enquiry, mention, handover offer). */
+	/**
+	 * Roles that get an in-app pop-up card: live chat, new enquiry, mention (team
+	 * discussion), counsellor handover offer, advice seeker's opt-in consent.
+	 */
 	popupFor?: ReadonlyArray<NotificationRole>;
+	/**
+	 * With the target conversation open and visible, the card, tone and banner
+	 * are all skipped (the message itself is the signal). Only set where the
+	 * runtime does so; everything else announces regardless.
+	 */
+	silentWhenOpen?: boolean;
 	/** Where the producer lives, or why there is none. */
 	source: string;
 }
@@ -91,17 +107,8 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		recipients: CONSULTANT,
 		emitted: true,
 		popupFor: CONSULTANT,
+		silentWhenOpen: true,
 		source: `${ES}.createMessageNotificationFromRoom`
-	},
-	{
-		// Pop-up exists, but no producer sets params.mentioned on ordinary
-		// messages yet (UserService sets it only for team discussions).
-		eventType: 'message.new',
-		variant: 'mentioned',
-		recipients: CONSULTANT,
-		emitted: false,
-		popupFor: CONSULTANT,
-		source: 'no producer (params.mentioned is never set on message.new)'
 	},
 	{
 		eventType: 'thread.reply.new',
@@ -128,21 +135,32 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: 'TeamDiscussionNotificationService'
 	},
 	{
-		// The only producer that sets params.mentioned (team discussions).
+		// The only producer that sets params.mentioned (team discussions), so
+		// the mention pop-up exists for this event alone.
 		eventType: 'team.discussion.new',
 		variant: 'mentioned',
 		recipients: CONSULTANT,
 		emitted: true,
 		popupFor: CONSULTANT,
+		silentWhenOpen: true,
 		source: 'TeamDiscussionNotificationService'
 	},
 	// Handover
 	{
+		// Addressed to the advice seeker. OPT_OUT / NONE only inform: no card.
 		eventType: 'case.handover.consent.requested',
-		// The producer addresses the advice seeker; the handover pop-up is
-		// counsellor-only (Frank, 28 Oct), so this one never earns a card.
 		recipients: ASKER,
 		emitted: true,
+		source: `${CH}.notifyPendingConsent`
+	},
+	{
+		// OPT_IN: the advice seeker's yes is needed, so a card asks for it.
+		eventType: 'case.handover.consent.requested',
+		variant: 'optIn',
+		recipients: ASKER,
+		emitted: true,
+		popupFor: ASKER,
+		silentWhenOpen: true,
 		source: `${CH}.notifyPendingConsent`
 	},
 	{
@@ -162,6 +180,7 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		recipients: CONSULTANT,
 		emitted: true,
 		popupFor: CONSULTANT,
+		silentWhenOpen: true,
 		source: `${CH}.notifyRecipientOffer`
 	},
 	...[
@@ -275,9 +294,10 @@ export const channelCapability = (
 	role: NotificationRole,
 	area: NotificationArea,
 	kind: NotificationKind,
-	channel: NotificationChannel
+	channel: NotificationChannel,
+	cases: ReadonlyArray<EventCase> = EVENT_CASES
 ): ChannelCapability => {
-	const landing = EVENT_CASES.filter((eventCase) => {
+	const landing = cases.filter((eventCase) => {
 		const row = eventCase.recipients.includes(role)
 			? rowForCase(eventCase, role)
 			: null;
@@ -299,7 +319,7 @@ export const channelCapability = (
 		return { fires: false, reason: 'notSentYet' };
 	}
 	const otherRole = NOTIFICATION_ROLES.some((other) =>
-		EVENT_CASES.some((eventCase) => {
+		cases.some((eventCase) => {
 			const row = eventCase.recipients.includes(other)
 				? rowForCase(eventCase, other)
 				: null;
@@ -327,12 +347,84 @@ export const unavailableReasonKey = (reason: UnavailableReason): string =>
 export const controlAvailability = (
 	role: NotificationRole,
 	area: NotificationArea,
-	kind: NotificationKind
+	kind: NotificationKind,
+	cases: ReadonlyArray<EventCase> = EVENT_CASES
 ): { banner: ChannelCapability; sound: ChannelCapability } => {
-	const popup = channelCapability(role, area, kind, 'popup');
-	const banner = channelCapability(role, area, kind, 'banner');
+	const popup = channelCapability(role, area, kind, 'popup', cases);
+	const banner = channelCapability(role, area, kind, 'banner', cases);
 	return {
 		banner: popup.fires ? popup : banner,
-		sound: channelCapability(role, area, kind, 'sound')
+		sound: channelCapability(role, area, kind, 'sound', cases)
 	};
 };
+
+/**
+ * How the dialog treats a row (Frank, 30 Oct): `hidden` when it can never
+ * fire for this role, `disabled` (with a reason) when it will fire once a
+ * producer exists, `visible` otherwise. Unknown role (user data not loaded
+ * yet) shows the neutral dialog: every row live, except the counsellor-only
+ * Live-Chat row.
+ */
+export type RowVisibility = 'visible' | 'disabled' | 'hidden';
+
+export interface RowAvailability {
+	visibility: RowVisibility;
+	bannerEnabled: boolean;
+	soundEnabled: boolean;
+	/** i18n key of the visible reason; set only for `disabled` rows. */
+	reasonKey: string | null;
+}
+
+export const rowAvailability = (
+	role: NotificationRole | undefined,
+	area: NotificationArea,
+	kind: NotificationKind,
+	cases: ReadonlyArray<EventCase> = EVENT_CASES
+): RowAvailability => {
+	if (role === undefined) {
+		return {
+			visibility: kind === 'liveChat' ? 'hidden' : 'visible',
+			bannerEnabled: true,
+			soundEnabled: true,
+			reasonKey: null
+		};
+	}
+	const { banner, sound } = controlAvailability(role, area, kind, cases);
+	const bannerEnabled = banner.fires;
+	const soundEnabled = sound.fires;
+	if (bannerEnabled && soundEnabled) {
+		return {
+			visibility: 'visible',
+			bannerEnabled,
+			soundEnabled,
+			reasonKey: null
+		};
+	}
+	const reasons = [unavailableReason(banner), unavailableReason(sound)];
+	if (reasons.includes('notSentYet')) {
+		return {
+			visibility: 'disabled',
+			bannerEnabled,
+			soundEnabled,
+			reasonKey: unavailableReasonKey('notSentYet')
+		};
+	}
+	return {
+		visibility: 'hidden',
+		bannerEnabled,
+		soundEnabled,
+		reasonKey: null
+	};
+};
+
+/** Areas with at least one row left to show (an empty tab is hidden). */
+export const visibleAreas = (
+	role: NotificationRole | undefined,
+	areas: ReadonlyArray<NotificationArea>,
+	kindsOf: (area: NotificationArea) => ReadonlyArray<NotificationKind>
+): NotificationArea[] =>
+	areas.filter((area) =>
+		kindsOf(area).some(
+			(kind) => rowAvailability(role, area, kind).visibility !== 'hidden'
+		)
+	);

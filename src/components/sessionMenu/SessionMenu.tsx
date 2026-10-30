@@ -70,6 +70,7 @@ import { ReactComponent as ProfileIcon } from '../../resources/img/icons/profil_
 import { ReactComponent as MenuVideoCallIcon } from '../../resources/img/icons/modality-video.svg';
 import { ReactComponent as MenuAudioCallIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
+import { notificationRoleFor } from '../profile/NotificationSettings/notificationRole';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
 import { getLegalLinkKind } from '../legalLinks/useLegalLinkContent';
@@ -185,12 +186,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		useNotificationSettings();
 	const appConfig = useAppConfig();
 	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
-	const isConsultant = !!hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	);
+	const notificationRole = notificationRoleFor(userData);
 	const hasEmailSettings =
-		!!appConfig?.releaseToggles?.enableNewNotifications || isConsultant;
+		!!appConfig?.releaseToggles?.enableNewNotifications ||
+		notificationRole === 'consultant';
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -1115,8 +1114,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
-				showLiveChatRow={isConsultant}
-				role={isConsultant ? 'consultant' : 'asker'}
+				role={notificationRole}
 			/>
 		</div>
 	);
