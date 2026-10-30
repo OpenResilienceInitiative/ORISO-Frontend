@@ -17,3 +17,12 @@
 	font-weight: 600;
 	line-height: 20px;
 }
+
+// A settings list, not a form step: the radio rows sit close together.
+.timelineSettings__group .radioButton {
+	min-height: 32px;
+
+	& + .radioButton {
+		margin: 4px 0 0 !important;
+	}
+}
