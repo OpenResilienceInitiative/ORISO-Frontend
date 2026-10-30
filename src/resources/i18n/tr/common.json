@@ -2117,16 +2117,22 @@
 		"warning": "Uyarı",
 		"eventNotice": {
 			"mention": {
-				"title": "Yeni anma",
+				"title": "Ekip görüşmesinde anıldınız",
 				"from": "Gönderen: {{name}}",
 				"several": "{{count}} yeni anma",
-				"open": "Görüşmeyi aç"
+				"open": "Ekip görüşmesini aç"
 			},
 			"handover": {
 				"title": "Yeni vaka devri",
 				"from": "Gönderen: {{name}}",
 				"several": "{{count}} vaka devri bildirimi",
 				"open": "Vakayı görüntüle"
+			},
+			"consent": {
+				"title": "Vaka devri için onay gerekiyor",
+				"text": "Devir bir yanıt bekliyor.",
+				"several": "{{count}} vaka devri talebi yanıt bekliyor.",
+				"open": "Talebi görüntüle"
 			}
 		},
 		"liveChatMessage": {

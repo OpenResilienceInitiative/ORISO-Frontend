@@ -19,6 +19,8 @@ import {
 	EventNoticeProps,
 	eventNoticeActor,
 	eventNoticeKindFor,
+	isConversationOpen,
+	isTeamDiscussionOpen,
 	NOTIFICATION_TYPE_EVENT_NOTICE,
 	upsertEventNotice
 } from './EventNotice';
@@ -63,7 +65,11 @@ const GoTo = ({ to }: { to: string }) => {
 	return <button onClick={() => navigate(to)}>go</button>;
 };
 
-const renderNotice = (props: EventNoticeProps, start = '/') => {
+const renderNotice = (
+	props: EventNoticeProps,
+	start = '/',
+	goTo = '/sessions/consultant/sessionView/!room42/42'
+) => {
 	const removeNotification = vi.fn();
 	render(
 		<MemoryRouter initialEntries={[start]}>
@@ -72,7 +78,7 @@ const renderNotice = (props: EventNoticeProps, start = '/') => {
 			>
 				<EventNotice {...props} />
 				<Where />
-				<GoTo to="/sessions/consultant/sessionView/!room42/42" />
+				<GoTo to={goTo} />
 			</NotificationsContext.Provider>
 		</MemoryRouter>
 	);
@@ -120,24 +126,75 @@ describe('EventNotice', () => {
 		expect(remove).toHaveBeenCalledTimes(1);
 	});
 
-	it('goes away once the conversation is opened another way', () => {
-		const remove = renderNotice(notice());
-		expect(remove).not.toHaveBeenCalled();
+	it.each([
+		['handover', '/sessions/consultant/sessionView/!room42/42'],
+		['consent', '/sessions/user/view/session/42'],
+		[
+			'mention',
+			'/sessions/consultant/sessionPreview/!main42/42?channel=team'
+		]
+	] as const)(
+		'goes away once the target is opened another way (%s)',
+		(kind, to) => {
+			const remove = renderNotice(
+				notice({ kind, id: `event-notice:${kind}:42` }),
+				'/',
+				to
+			);
+			expect(remove).not.toHaveBeenCalled();
+			fireEvent.click(screen.getByText('go'));
+			expect(remove).toHaveBeenCalledWith(
+				`event-notice:${kind}:42`,
+				NOTIFICATION_TYPE_EVENT_NOTICE
+			);
+		}
+	);
+
+	it('keeps a mention card when only the main chat of the enquiry is opened', () => {
+		const remove = renderNotice(
+			notice(),
+			'/',
+			'/sessions/consultant/sessionPreview/!main42/42'
+		);
 		fireEvent.click(screen.getByText('go'));
-		expect(remove).toHaveBeenCalledWith(
-			'event-notice:mention:42',
-			NOTIFICATION_TYPE_EVENT_NOTICE
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('names no one on the consent card and shows its neutral text', () => {
+		renderNotice(
+			notice({
+				kind: 'consent',
+				id: 'event-notice:consent:42',
+				actorName: 'Kollege Braun',
+				path: '/sessions/user/view/session/42?caseHandoverRequestId=7'
+			})
+		);
+		const card = screen.getByRole('status');
+		expect(card.textContent).toContain(
+			'notification.eventNotice.consent.title'
+		);
+		expect(card.textContent).toContain(
+			'notification.eventNotice.consent.text'
+		);
+		expect(card.textContent).not.toContain('Braun');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'notification.eventNotice.consent.open'
+			})
+		);
+		expect(screen.getByTestId('where').textContent).toBe(
+			'/sessions/user/view/session/42'
 		);
 	});
 
-	it('waits in a hidden tab even with the conversation route open, and settles on return', () => {
+	it('waits in a hidden tab even with the target route open, and settles on return', () => {
 		let state: DocumentVisibilityState = 'hidden';
 		vi.spyOn(document, 'visibilityState', 'get').mockImplementation(
 			() => state
 		);
 		const remove = renderNotice(
 			notice(),
-			'/sessions/consultant/sessionView/!room42/42'
+			'/sessions/consultant/sessionPreview/!main42/42?channel=team'
 		);
 		expect(remove).not.toHaveBeenCalled();
 		state = 'visible';
@@ -154,76 +211,150 @@ describe('EventNotice', () => {
 });
 
 describe('event pop-up rules', () => {
+	// UserService shapes: the team-discussion producer sets no recipientRole,
+	// the handover producers neither; the link tells whose row it is.
+	const TEAM =
+		'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42';
+	const OFFER =
+		'/sessions/consultant/sessionView/session/42?caseHandoverRequestId=7';
+	const ASKER = '/sessions/user/view/session/42?caseHandoverRequestId=7';
 	const row = (
 		eventType: string,
-		params: Record<string, unknown> = {},
-		actionPath = '/sessions/consultant/sessionView/!room42/42'
-	) => ({
-		eventType,
-		sourceSessionId: '42',
-		actionPath,
-		params: { recipientRole: 'consultant', ...params }
-	});
+		actionPath: string,
+		params: Record<string, unknown> = {}
+	) => ({ eventType, sourceSessionId: '42', actionPath, params });
 
 	it.each([
-		[row('message.new', { mentioned: true }), 'mention'],
-		[row('case.handover.offer.received'), 'handover'],
-		[row('case.handover.consent.requested'), 'handover'],
-		// No role on the row: the counsellor link decides.
+		[row('team.discussion.new', TEAM, { mentioned: true }), 'mention'],
+		[row('case.handover.offer.received', OFFER), 'handover'],
 		[
-			row('case.handover.offer.received', { recipientRole: null }),
+			row('case.handover.consent.requested', ASKER, {
+				clientConsent: 'OPT_IN'
+			}),
+			'consent'
+		],
+		// An explicit role agrees with the link.
+		[
+			row('case.handover.offer.received', OFFER, {
+				recipientRole: 'consultant'
+			}),
 			'handover'
 		],
-		// Status steps of a handover stay in the feed, without a card.
-		[row('handover.requested'), null],
-		[row('case.handover.granted'), null],
-		[row('handover.all_confirmed'), null],
-		[row('handover.auto_confirmed'), null],
-		[row('case.handover.consent.declined'), null],
-		[row('message.new', { mentioned: false }), null],
-		[row('message.new'), null],
 		[
-			row('message.new', {
+			row('case.handover.consent.requested', ASKER, {
+				recipientRole: 'user',
+				clientConsent: 'OPT_IN'
+			}),
+			'consent'
+		],
+		// A post without a mention, and every message.new, earn no card.
+		[row('team.discussion.new', TEAM, { mentioned: false }), null],
+		[row('team.discussion.new', TEAM), null],
+		[
+			row('message.new', '/sessions/consultant/sessionView/!room42/42', {
 				mentioned: true,
-				conversationType: 'LIVE_CHAT'
+				recipientRole: 'consultant'
 			}),
 			null
 		],
-		[row('message.new', { mentioned: true, recipientRole: 'user' }), null],
-		[row('handover.denied'), null],
-		[row('handover.partial'), null],
-		[row('request.new'), null],
+		// The consent request waits for the advice seeker only on OPT_IN.
+		[
+			row('case.handover.consent.requested', ASKER, {
+				clientConsent: 'OPT_OUT'
+			}),
+			null
+		],
+		[
+			row('case.handover.consent.requested', ASKER, {
+				clientConsent: 'NONE'
+			}),
+			null
+		],
+		[row('case.handover.consent.requested', ASKER), null],
+		// Never in the counsellor's row, whatever the consent mode.
 		[
 			row(
-				'case.handover.offer.received',
-				{ recipientRole: null },
-				'/sessions/user/sessionView/!room42/42'
+				'case.handover.consent.requested',
+				'/sessions/consultant/sessionView/session/42',
+				{ clientConsent: 'OPT_IN' }
 			),
 			null
 		],
 		[
-			{ ...row('message.new', { mentioned: true }), sourceSessionId: '' },
+			row('case.handover.consent.requested', ASKER, {
+				recipientRole: 'consultant',
+				clientConsent: 'OPT_IN'
+			}),
+			null
+		],
+		// Mention and offer only reach counsellors.
+		[
+			row('team.discussion.new', '/sessions/user/view/session/42', {
+				mentioned: true
+			}),
+			null
+		],
+		[
+			row('case.handover.offer.received', ASKER, {
+				recipientRole: 'user'
+			}),
+			null
+		],
+		// Status steps stay in the feed.
+		[row('handover.requested', OFFER), null],
+		[row('case.handover.granted', OFFER), null],
+		[row('handover.all_confirmed', OFFER), null],
+		[row('case.handover.consent.declined', OFFER), null],
+		[row('request.new', OFFER), null],
+		[
+			{
+				...row('team.discussion.new', TEAM, { mentioned: true }),
+				sourceSessionId: ''
+			},
 			null
 		]
 	])('%j → %s', (event, kind) => {
 		expect(eventNoticeKindFor(event)).toBe(kind);
 	});
 
-	it('takes the sender for a mention and the initiator for a handover', () => {
-		const params = { senderName: 'Sender', initiatorName: 'Initiator' };
-		expect(eventNoticeActor('mention', row('message.new', params))).toBe(
-			'Sender'
-		);
+	it('takes the sender label for a mention, the initiator for an offer and no name for the consent request', () => {
 		expect(
-			eventNoticeActor('handover', row('handover.requested', params))
-		).toBe('Initiator');
+			eventNoticeActor(
+				'mention',
+				row('team.discussion.new', TEAM, {
+					senderDisplayName: 'Display',
+					senderName: 'Fallback'
+				})
+			)
+		).toBe('Display');
+		expect(
+			eventNoticeActor(
+				'mention',
+				row('team.discussion.new', TEAM, { senderName: 'Fallback' })
+			)
+		).toBe('Fallback');
+		expect(
+			eventNoticeActor(
+				'mention',
+				row('team.discussion.new', TEAM, { senderDisplayName: '' })
+			)
+		).toBeNull();
 		expect(
 			eventNoticeActor(
 				'handover',
-				row('handover.requested', { senderName: 'Sender' })
+				row('case.handover.offer.received', OFFER, {
+					initiatorName: 'Initiator'
+				})
 			)
-		).toBe('Sender');
-		expect(eventNoticeActor('mention', row('message.new'))).toBeNull();
+		).toBe('Initiator');
+		expect(
+			eventNoticeActor(
+				'consent',
+				row('case.handover.consent.requested', ASKER, {
+					requesterName: 'Staff'
+				})
+			)
+		).toBeNull();
 	});
 
 	it('counts on the shown card instead of stacking a second one', () => {
@@ -233,5 +364,80 @@ describe('event pop-up rules', () => {
 		expect(second).toHaveLength(2);
 		expect((second[1] as EventNoticeProps).count).toBe(2);
 		expect(second[0]).toBe(other);
+	});
+});
+
+describe('where the target is open', () => {
+	const target = { sessionId: '42', roomRef: '!room42' };
+
+	it.each([
+		['/sessions/consultant/sessionView/!room42/42', '', true],
+		['/sessions/consultant/sessionView/session/42', '?x=1', true],
+		['/sessions/user/view/session/42', '', true],
+		['/sessions/consultant/sessionPreview/!room42/42', '', true],
+		['/sessions/consultant/sessionView/!room43/43', '', false],
+		['/sessions/consultant/sessionView/!room4/142', '', false],
+		['/sessions/consultant/sessionView/session/42/userProfile', '', false],
+		['/sessions/consultant/sessionView', '', false]
+	])('conversation %s%s → open=%s', (pathname, search, open) => {
+		expect(isConversationOpen(target, pathname, search, true)).toBe(open);
+		expect(isConversationOpen(target, pathname, search, false)).toBe(false);
+	});
+
+	it.each([
+		[
+			'/sessions/consultant/sessionPreview/!main42/42',
+			'?channel=team',
+			true
+		],
+		[
+			'/sessions/consultant/sessionPreview/session/42',
+			'?teamDiscussion=1',
+			true
+		],
+		[
+			'/sessions/consultant/sessionPreview/session/42',
+			'?channel=team&at=$e',
+			true
+		],
+		[
+			'/sessions/consultant/sessionPreview',
+			'?sessionId=42&teamDiscussion=1&roomId=!team42',
+			true
+		],
+		// The main chat of the same enquiry, or another channel, is not it.
+		['/sessions/consultant/sessionPreview/!main42/42', '', false],
+		[
+			'/sessions/consultant/sessionPreview/!main42/42',
+			'?channel=supervision',
+			false
+		],
+		[
+			'/sessions/consultant/sessionPreview/!main43/43',
+			'?channel=team',
+			false
+		],
+		[
+			'/sessions/consultant/sessionPreview',
+			'?sessionId=43&teamDiscussion=1&roomId=!team43',
+			false
+		]
+	])('team discussion %s%s → open=%s', (pathname, search, open) => {
+		expect(
+			isTeamDiscussionOpen(
+				{ sessionId: '42', roomRef: '!team42' },
+				pathname,
+				search,
+				true
+			)
+		).toBe(open);
+		expect(
+			isTeamDiscussionOpen(
+				{ sessionId: '42', roomRef: '!team42' },
+				pathname,
+				search,
+				false
+			)
+		).toBe(false);
 	});
 });

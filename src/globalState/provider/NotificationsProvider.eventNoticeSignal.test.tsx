@@ -1,7 +1,9 @@
 /**
- * FE#779: mention and case-handover events raise one in-app pop-up card per
- * conversation (and kind), the row's tone and at most one OS banner, all from
- * the one feed announcement path. Ordinary messages get no pop-up.
+ * FE#779: team-discussion mentions, offered handovers (counsellor) and consent
+ * requests that wait for the advice seeker's yes raise one in-app pop-up card
+ * per conversation and kind, the row's tone and at most one OS banner, all
+ * from the one feed announcement path. Fixtures use the shapes UserService
+ * emits. Ordinary messages get no pop-up.
  *
  * @vitest-environment oriso-jsdom
  */
@@ -61,45 +63,109 @@ type Notice = {
 	path: string | null;
 };
 
-const mention = (
+const base = (
 	id: number,
-	params: Record<string, unknown> = {},
-	sessionId = 42
+	eventType: string,
+	category: 'message' | 'system',
+	actionPath: string,
+	params: Record<string, unknown>,
+	sessionId: number
 ) => ({
 	id,
-	eventType: 'message.new',
-	category: 'message' as const,
+	eventType,
+	category,
 	title: '',
 	text: 'PRIVATE MESSAGE TEXT',
 	createdAt: new Date(Date.UTC(2026, 9, 28, 12, 0, id)).toISOString(),
 	readAt: null,
 	sourceSessionId: sessionId,
-	actionPath: `/sessions/consultant/sessionView/!room${sessionId}/${sessionId}`,
-	params: {
-		sessionId,
-		roomRef: `!room${sessionId}`,
-		conversationType: 'AGENCY_COUNSELLING',
-		recipientRole: 'consultant',
-		senderName: 'Kollegin Weber',
-		mentioned: true,
-		...params
-	}
+	actionPath,
+	params: { sessionId, ...params }
 });
 
+/**
+ * The shape UserService emits (TeamDiscussionNotificationService
+ * .buildParams): no recipientRole, roomId instead of roomRef, the sender as
+ * senderDisplayName, and a path that carries teamDiscussion=1.
+ */
+const mention = (
+	id: number,
+	params: Record<string, unknown> = {},
+	sessionId = 42
+) =>
+	base(
+		id,
+		'team.discussion.new',
+		'message',
+		`/sessions/consultant/sessionPreview?sessionId=${sessionId}&teamDiscussion=1&roomId=!team${sessionId}`,
+		{
+			roomId: `!team${sessionId}`,
+			senderDisplayName: 'Kollegin Weber',
+			mentioned: true,
+			...params
+		},
+		sessionId
+	);
+
+/** CaseHandoverService offer to the recipient (buildCaseHandoverOfferParams). */
 const handover = (
 	id: number,
 	params: Record<string, unknown> = {},
-	sessionId = 42,
-	eventType = 'case.handover.offer.received'
-) => ({
-	...mention(
+	sessionId = 42
+) =>
+	base(
 		id,
-		{ mentioned: false, senderName: null, ...params },
+		'case.handover.offer.received',
+		'system',
+		`/sessions/consultant/sessionView/session/${sessionId}?caseHandoverRequestId=7`,
+		{
+			conversationType: 'AGENCY_COUNSELLING',
+			roomRef: `!room${sessionId}`,
+			initiatorName: 'Kollege Braun',
+			caseHandoverRequestId: 7,
+			...params
+		},
 		sessionId
-	),
-	eventType,
-	category: 'system' as const
-});
+	);
+
+/** notifyPendingConsent: goes to the advice seeker (buildCaseHandoverParams). */
+const consent = (
+	id: number,
+	params: Record<string, unknown> = {},
+	sessionId = 42
+) =>
+	base(
+		id,
+		'case.handover.consent.requested',
+		'system',
+		`/sessions/user/view/session/${sessionId}?caseHandoverRequestId=7`,
+		{
+			conversationType: 'AGENCY_COUNSELLING',
+			roomRef: `!room${sessionId}`,
+			requesterName: 'Kollege Braun',
+			caseHandoverRequestId: 7,
+			clientConsent: 'OPT_IN',
+			...params
+		},
+		sessionId
+	);
+
+/** An ordinary message row as the message producer emits it. */
+const message = (id: number, params: Record<string, unknown> = {}) =>
+	base(
+		id,
+		'message.new',
+		'message',
+		'/sessions/consultant/sessionView/!room42/42',
+		{
+			roomRef: '!room42',
+			conversationType: 'AGENCY_COUNSELLING',
+			recipientRole: 'consultant',
+			senderName: 'Kollegin Weber',
+			...params
+		},
+		42
+	);
 
 const Probe = () => {
 	const context = useContext(NotificationsContext)!;
@@ -131,7 +197,7 @@ let permission: NotificationPermission = 'granted';
 let visibility: DocumentVisibilityState = 'visible';
 let focused = true;
 
-type Item = ReturnType<typeof mention>;
+type Item = ReturnType<typeof base>;
 
 /** Mount with an empty history, then deliver `items` as new activity. */
 const deliver = async (items: Item[]) => {
@@ -221,7 +287,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		window.history.replaceState({}, '', '/');
 	});
 
-	it('shows one mention card with the sender and plays the mention tone once', async () => {
+	it('shows one team-discussion mention card with the sender and plays the mention tone once', async () => {
 		withTones();
 		await deliver([mention(1)]);
 
@@ -231,7 +297,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			)
 		);
 		expect(screen.getByTestId('path').textContent).toBe(
-			'/sessions/consultant/sessionView/!room42/42'
+			'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=%21team42'
 		);
 		expect(play).toHaveBeenCalledTimes(1);
 
@@ -246,19 +312,17 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		expect(play).toHaveBeenCalledTimes(1);
 	});
 
-	it.each([
-		['case.handover.offer.received'],
-		['case.handover.consent.requested']
-	])('shows a handover card for %s', async (eventType) => {
+	it('shows a handover card for an offered case, with the initiator', async () => {
 		withTones();
-		await deliver([
-			handover(1, { initiatorName: 'Kollege Braun' }, 42, eventType)
-		]);
+		await deliver([handover(1)]);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('notices').textContent).toBe(
 				'handover:42:1:Kollege Braun'
 			)
+		);
+		expect(screen.getByTestId('path').textContent).toBe(
+			'/sessions/consultant/sessionView/session/42?caseHandoverRequestId=7'
 		);
 		expect(play).toHaveBeenCalledTimes(1);
 	});
@@ -273,47 +337,133 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 
 		await waitFor(() =>
 			expect(screen.getByTestId('notices').textContent).toBe(
-				'mention:42:2:Kollegin Weber,mention:77:1:Kollegin Weber,handover:42:1:null'
+				'mention:42:2:Kollegin Weber,mention:77:1:Kollegin Weber,handover:42:1:Kollege Braun'
 			)
 		);
 	});
 
 	it.each([
-		['an ordinary counselling message', { mentioned: false }],
+		[
+			'a team-discussion post without a mention',
+			mention(1, { mentioned: false })
+		],
+		[
+			'a mention row of a normal chat message (no producer sets it yet)',
+			message(1, { mentioned: true })
+		],
+		['an ordinary counselling message', message(1)],
 		[
 			'an ordinary group message',
-			{ mentioned: false, conversationType: 'GROUP' }
+			message(1, { conversationType: 'GROUP' })
 		],
-		['the asker’s row', { recipientRole: 'user' }]
-	])('raises no card for %s', async (_label, params) => {
+		[
+			'a mention in the advice seeker’s own row',
+			{
+				...mention(1),
+				actionPath: '/sessions/user/view/session/42'
+			}
+		],
+		[
+			'a handover status step',
+			{ ...handover(1), eventType: 'case.handover.granted' }
+		],
+		[
+			'the consent request in a counsellor row',
+			{
+				...consent(1),
+				actionPath: '/sessions/consultant/sessionView/session/42'
+			}
+		]
+	])('raises no card for %s', async (_label, item) => {
+		await deliver([item]);
+
+		expect(screen.getByTestId('notices').textContent).toBe('');
+	});
+
+	it.each([
+		['OPT_IN', 'consent:42:1:null'],
+		['OPT_OUT', ''],
+		['NONE', ''],
+		[undefined, '']
+	])(
+		'the advice seeker gets a consent card only when their yes is needed (clientConsent %s)',
+		async (clientConsent, expected) => {
+			withTones();
+			await deliver([consent(1, { clientConsent })]);
+
+			expect(screen.getByTestId('notices').textContent).toBe(expected);
+			if (expected) {
+				// The staff-only counsellor name never reaches the card.
+				expect(screen.getByTestId('notices').textContent).not.toContain(
+					'Braun'
+				);
+				expect(screen.getByTestId('path').textContent).toBe(
+					'/sessions/user/view/session/42?caseHandoverRequestId=7'
+				);
+			}
+		}
+	);
+
+	it.each([
+		[
+			'a team discussion (channel=team)',
+			mention(1),
+			'/sessions/consultant/sessionPreview/!room42/42?channel=team'
+		],
+		[
+			'a team discussion (legacy teamDiscussion=1)',
+			mention(1),
+			'/sessions/consultant/sessionPreview/session/42?teamDiscussion=1'
+		],
+		[
+			'a team discussion (legacy path with query ids)',
+			mention(1),
+			'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
+		],
+		[
+			'an offered case',
+			handover(1),
+			'/sessions/consultant/sessionView/session/42'
+		],
+		[
+			'the consent request’s conversation',
+			consent(1),
+			'/sessions/user/view/session/42'
+		]
+	])(
+		'is completely silent while %s is on screen: no card, no tone, no OS banner',
+		async (_label, item, url) => {
+			withTones();
+			window.history.replaceState({}, '', url);
+			await deliver([item]);
+
+			expect(screen.getByTestId('notices').textContent).toBe('');
+			expect(play).not.toHaveBeenCalled();
+			expect(banners).not.toHaveBeenCalled();
+		}
+	);
+
+	it('still announces a team-discussion mention when the same enquiry is open on its main chat', async () => {
 		withTones();
-		await deliver([mention(1, params)]);
-
-		expect(screen.getByTestId('notices').textContent).toBe('');
-	});
-
-	it('keeps a live-chat mention on the live-chat card only', async () => {
-		await deliver([mention(1, { conversationType: 'LIVE_CHAT' })]);
-
-		expect(screen.getByTestId('notices').textContent).toBe('');
-	});
-
-	it('stays quiet for the conversation already on screen', async () => {
 		window.history.replaceState(
 			{},
 			'',
-			'/sessions/consultant/sessionView/!room42/42'
+			'/sessions/consultant/sessionPreview/!room42/42'
 		);
-		await deliver([mention(1), handover(2)]);
+		await deliver([mention(1)]);
 
-		expect(screen.getByTestId('notices').textContent).toBe('');
-		expect(banners).not.toHaveBeenCalled();
+		await waitFor(() =>
+			expect(screen.getByTestId('notices').textContent).toBe(
+				'mention:42:1:Kollegin Weber'
+			)
+		);
+		expect(play).toHaveBeenCalledTimes(1);
 	});
 
 	it('stays quiet while notifications are muted', async () => {
 		withTones();
 		notificationSettingsStore.updateSettings({ globalMute: true });
-		await deliver([mention(1), handover(2)]);
+		await deliver([mention(1), handover(2), consent(3)]);
 
 		expect(screen.getByTestId('notices').textContent).toBe('');
 		expect(play).not.toHaveBeenCalled();
@@ -367,15 +517,32 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		expect(play).not.toHaveBeenCalled();
 	});
 
+	it('honours the handover row for the advice seeker’s consent card', async () => {
+		const config =
+			notificationSettingsStore.getState().settings.notificationConfig;
+		notificationSettingsStore.updateSettings({
+			notificationConfig: setKindField(
+				config,
+				'conversations',
+				'handover',
+				'banner',
+				'off'
+			)
+		});
+		await deliver([consent(1)]);
+
+		expect(screen.getByTestId('notices').textContent).toBe('');
+	});
+
 	it('in a background tab raises exactly one OS banner per event, without message text, and keeps the card', async () => {
 		withTones();
 		visibility = 'hidden';
 		focused = false;
-		// Even with this conversation’s route open: hidden means nobody sees it.
+		// Even with this team discussion open: hidden means nobody sees it.
 		window.history.replaceState(
 			{},
 			'',
-			'/sessions/consultant/sessionView/!room42/42'
+			'/sessions/consultant/sessionPreview/!room42/42?channel=team'
 		);
 		await deliver([mention(1), handover(2, {}, 77)]);
 
@@ -384,7 +551,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			'PRIVATE MESSAGE TEXT'
 		);
 		expect(screen.getByTestId('notices').textContent).toBe(
-			'mention:42:1:Kollegin Weber,handover:77:1:null'
+			'mention:42:1:Kollegin Weber,handover:77:1:Kollege Braun'
 		);
 
 		// A repeated poll must not banner again.
@@ -400,11 +567,11 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		visibility = 'hidden';
 		focused = false;
 		permission = 'default';
-		await deliver([mention(1)]);
+		await deliver([mention(1), consent(2, {}, 77)]);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('notices').textContent).toBe(
-				'mention:42:1:Kollegin Weber'
+				'mention:42:1:Kollegin Weber,consent:77:1:null'
 			)
 		);
 		expect(banners).not.toHaveBeenCalled();
@@ -412,17 +579,14 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			(Notification as unknown as { requestPermission: () => void })
 				.requestPermission
 		).not.toHaveBeenCalled();
-		expect(play).toHaveBeenCalledTimes(1);
+		expect(play).toHaveBeenCalledTimes(2);
 	});
 
 	it.each([
-		['an ordinary counselling message', mention(1, { mentioned: false })],
-		[
-			'a group message',
-			mention(1, { mentioned: false, conversationType: 'GROUP' })
-		],
-		['a mention', mention(1)],
-		['a handover', handover(1)]
+		['an ordinary counselling message', message(1)],
+		['a group message', message(1, { conversationType: 'GROUP' })],
+		['a team-discussion mention', mention(1)],
+		['a handover offer', handover(1)]
 	])(
 		'raises exactly one OS banner for %s in a background tab, however often it is polled',
 		async (_label, item) => {
@@ -457,7 +621,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		});
 		visibility = 'hidden';
 		focused = false;
-		await deliver([mention(1, { mentioned: false })]);
+		await deliver([message(1)]);
 
 		expect(play).toHaveBeenCalledTimes(1);
 		expect(banners).not.toHaveBeenCalled();

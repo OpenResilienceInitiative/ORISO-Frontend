@@ -29,9 +29,19 @@ const notice = (
 	kind,
 	sessionId,
 	roomRef: `!room${sessionId}`,
-	actorName: kind === 'mention' ? 'Kollegin Weber' : 'Kollege Braun',
+	actorName:
+		kind === 'mention'
+			? 'Kollegin Weber'
+			: kind === 'handover'
+				? 'Kollege Braun'
+				: null,
 	count: 1,
-	path: `/sessions/consultant/sessionView/!room${sessionId}/${sessionId}`,
+	path:
+		kind === 'consent'
+			? `/sessions/user/view/session/${sessionId}?caseHandoverRequestId=7`
+			: kind === 'mention'
+				? `/sessions/consultant/sessionPreview?sessionId=${sessionId}&teamDiscussion=1&roomId=!team${sessionId}`
+				: `/sessions/consultant/sessionView/session/${sessionId}?caseHandoverRequestId=7`,
 	...overrides
 });
 
@@ -79,7 +89,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Das In-App-Pop-up für eine Erwähnung oder eine Fallübergabe an die Beraterin (ORISO-Frontend#779). Es erscheint im bestehenden Hinweis-Stapel oben rechts (mobil oben über die volle Breite), zeigt nur den Namen der handelnden Person und nie den Nachrichtentext. Weitere Ereignisse derselben Art im selben Gespräch zählen auf derselben Karte hoch; je Gespräch und Art gibt es höchstens eine Karte. Die Karte bleibt stehen, bis die Beraterin das Gespräch öffnet oder sie schließt, und gehorcht der Spalte „Pop-up“ der Zeile „Erwähnung“ bzw. „Übergabe“. Normale Nachrichten bekommen keine Karte.'
+					'Das In-App-Pop-up für eine Erwähnung in der Team-Besprechung, ein Fallangebot an die Beraterin und für eine Übergabe, die auf die Zustimmung der ratsuchenden Person wartet (ORISO-Frontend#779). Es erscheint im bestehenden Hinweis-Stapel oben rechts (mobil oben über die volle Breite), zeigt höchstens den Namen der handelnden Person (bei der Zustimmung niemanden: Grund und Beratungsperson bleiben intern) und nie den Nachrichtentext. Weitere Ereignisse derselben Art im selben Gespräch zählen auf derselben Karte hoch; je Gespräch und Art gibt es höchstens eine Karte. Die Karte bleibt stehen, bis die Beraterin das Gespräch öffnet oder sie schließt, und gehorcht der Spalte „Pop-up“ der Zeile „Erwähnung“ bzw. „Übergabe“. Normale Nachrichten bekommen keine Karte. Ist das Ziel schon offen und sichtbar, bleibt alles still.'
 			}
 		}
 	},
@@ -95,10 +105,12 @@ export const Mention: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const card = await canvas.findByRole('status');
-		await expect(card).toHaveTextContent('Neue Erwähnung');
+		await expect(card).toHaveTextContent(
+			'Erwähnung in der Team-Besprechung'
+		);
 		await expect(card).toHaveTextContent('Von Kollegin Weber');
 		await userEvent.click(
-			canvas.getByRole('button', { name: 'Beratung öffnen' })
+			canvas.getByRole('button', { name: 'Team-Besprechung öffnen' })
 		);
 		await waitFor(() => expect(canvas.queryByRole('status')).toBeNull());
 	}
@@ -189,6 +201,43 @@ export const NoName: Story = {
 			'Von '
 		);
 	}
+};
+
+export const ConsentNeeded: Story = {
+	name: 'Zustimmung zur Fallübergabe nötig (Ratsuchende)',
+	args: { notices: [notice('consent', '42')] },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const card = await canvas.findByRole('status');
+		await expect(card).toHaveTextContent(
+			'Zustimmung zur Fallübergabe nötig'
+		);
+		await expect(card).toHaveTextContent(
+			'Die Übergabe wartet auf eine Antwort.'
+		);
+		await expect(card).not.toHaveTextContent('Von ');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Anfrage ansehen' })
+		);
+		await waitFor(() => expect(canvas.queryByRole('status')).toBeNull());
+	}
+};
+
+export const SeveralConsentRequests: Story = {
+	name: 'Mehrere Zustimmungsanfragen',
+	args: { notices: [notice('consent', '42', { count: 2 })] },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(await canvas.findByRole('status')).toHaveTextContent(
+			'2 Anfragen zur Fallübergabe warten auf eine Antwort.'
+		);
+	}
+};
+
+export const ConsentMobile: Story = {
+	name: 'Zustimmung, mobil',
+	globals: phone375Globals,
+	args: { notices: [notice('consent', '42')] }
 };
 
 export const Tablet: Story = {

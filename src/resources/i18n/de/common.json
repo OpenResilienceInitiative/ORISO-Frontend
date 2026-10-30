@@ -2138,16 +2138,22 @@
 		"warning": "Warnung",
 		"eventNotice": {
 			"mention": {
-				"title": "Neue Erwähnung",
+				"title": "Erwähnung in der Team-Besprechung",
 				"from": "Von {{name}}",
 				"several": "{{count}} neue Erwähnungen",
-				"open": "Beratung öffnen"
+				"open": "Team-Besprechung öffnen"
 			},
 			"handover": {
 				"title": "Neue Fallübergabe",
 				"from": "Von {{name}}",
 				"several": "{{count}} Hinweise zur Fallübergabe",
 				"open": "Fall ansehen"
+			},
+			"consent": {
+				"title": "Zustimmung zur Fallübergabe nötig",
+				"text": "Die Übergabe wartet auf eine Antwort.",
+				"several": "{{count}} Anfragen zur Fallübergabe warten auf eine Antwort.",
+				"open": "Anfrage ansehen"
 			}
 		},
 		"liveChatMessage": {

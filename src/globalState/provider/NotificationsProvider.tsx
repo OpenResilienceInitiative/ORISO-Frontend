@@ -649,18 +649,26 @@ export function NotificationsProvider(props) {
 					);
 				}
 			}
-			// FE#779: a mention or a case handover to a counsellor also raises
-			// one in-app card per conversation — unless that conversation is on
-			// screen. Tone and OS banner below follow their rows as before.
+			// FE#779: a team-discussion mention, an offered case (counsellor) and
+			// a consent request waiting for the advice seeker's yes also raise
+			// one in-app card per conversation. With that target on screen the
+			// event is completely silent (no card, tone or banner), like a
+			// live chat; elsewhere tone and OS banner follow their rows.
 			const noticeKind = eventNoticeKindFor(event);
-			if (
-				noticeKind &&
-				!isEventNoticeTargetOpen(
-					event,
-					window.location.pathname,
-					document.visibilityState !== 'hidden'
+			if (noticeKind) {
+				if (
+					isEventNoticeTargetOpen(
+						noticeKind,
+						{
+							sessionId: event.sourceSessionId,
+							roomRef: event.params?.roomRef
+						},
+						window.location.pathname,
+						window.location.search,
+						document.visibilityState !== 'hidden'
+					)
 				)
-			) {
+					continue;
 				const { area, kind } = resolveEventChannelContract(
 					event.eventType,
 					event.params?.recipientRole,

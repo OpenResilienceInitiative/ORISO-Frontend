@@ -9,35 +9,34 @@ import {
 import { ReactComponent as MentionIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
-import { isLiveChatOpen, LiveChatFeedEvent } from './LiveChatMessageNotice';
 import './notification.styles';
 
 /**
- * In-app pop-up for a mention or a case handover addressed to a counsellor
- * (FE#779), built like the live-chat pop-up (FE#1470). One card per
- * conversation and kind: it counts up instead of stacking and shows the
- * actor's name, never message text.
+ * In-app pop-up for events that need a person's attention (FE#779), built like
+ * the live-chat pop-up (FE#1470). One card per conversation and kind: it counts
+ * up instead of stacking. It names the actor where there is a public one,
+ * never message text, reasons or staff-only details.
+ *
+ *  - mention:  a team-discussion post that mentions the counsellor
+ *  - handover: a case offered to the counsellor
+ *  - consent:  a handover that waits for the advice seeker's yes (OPT_IN)
  */
 export const NOTIFICATION_TYPE_EVENT_NOTICE = 'eventNotice';
 export type NotificationTypeEventNotice = typeof NOTIFICATION_TYPE_EVENT_NOTICE;
 
-export type EventNoticeKind = 'mention' | 'handover';
+export type EventNoticeKind = 'mention' | 'handover' | 'consent';
 
-/**
- * Handover events that need the counsellor to act: a case offered to them,
- * or their consent requested. Status steps stay in the feed (Frank, 28 Oct).
- */
-const HANDOVER_NOTICE_EVENTS: ReadonlyArray<string> = [
-	'case.handover.offer.received',
-	'case.handover.consent.requested'
-];
+/** The only feed event that carries `mentioned` today (UserService). */
+const MENTION_NOTICE_EVENT = 'team.discussion.new';
+const HANDOVER_NOTICE_EVENT = 'case.handover.offer.received';
+const CONSENT_NOTICE_EVENT = 'case.handover.consent.requested';
 
 export interface EventNoticeProps extends NotificationType {
 	id: string;
 	notificationType: NotificationTypeEventNotice;
 	kind: EventNoticeKind;
 	sessionId: string;
-	/** Matrix room of the conversation, to notice it being opened elsewhere. */
+	/** Room to notice the target being opened by another route. */
 	roomRef?: string | null;
 	/** Who mentioned or handed over (metadata only, never content). */
 	actorName?: string | null;
@@ -56,48 +55,142 @@ export const eventNoticeId = (kind: EventNoticeKind, sessionId: string) =>
 	`event-notice:${kind}:${sessionId}`;
 
 /** The feed fields the pop-up decision reads. */
-export interface EventNoticeFeedEvent extends LiveChatFeedEvent {
-	params?: LiveChatFeedEvent['params'] & {
+export interface EventNoticeFeedEvent {
+	eventType: string;
+	sourceSessionId?: string;
+	actionPath?: string;
+	params?: {
+		recipientRole?: string | null;
+		roomRef?: string | null;
+		senderName?: string | null;
+		senderDisplayName?: string | null;
 		initiatorName?: string | null;
+		mentioned?: boolean | null;
+		clientConsent?: string | null;
 	};
 }
 
-const isCounsellorRow = (event: EventNoticeFeedEvent) =>
-	event.params?.recipientRole === 'consultant' ||
-	(!event.params?.recipientRole &&
-		!!event.actionPath?.startsWith('/sessions/consultant/'));
+// The producers of these events set no recipientRole; the link says whose
+// row it is. An explicit role must agree with it.
+const isCounsellorRow = (event: EventNoticeFeedEvent) => {
+	const role = event.params?.recipientRole;
+	return role
+		? role === 'consultant'
+		: !!event.actionPath?.startsWith('/sessions/consultant/');
+};
+const isAskerRow = (event: EventNoticeFeedEvent) => {
+	const role = event.params?.recipientRole;
+	return role
+		? role === 'user' || role === 'asker'
+		: !!event.actionPath?.startsWith('/sessions/user/');
+};
 
 /**
- * Which pop-up a feed event earns, if any. Ordinary messages earn none, and a
- * live-chat mention stays on the live-chat card.
+ * Which pop-up a feed event earns, if any. Ordinary messages earn none (no
+ * producer marks a mention on them yet), and the consent request earns one
+ * only where it waits for the advice seeker's own yes.
  */
 export const eventNoticeKindFor = (
 	event: EventNoticeFeedEvent
 ): EventNoticeKind | null => {
-	if (!event.sourceSessionId || !isCounsellorRow(event)) return null;
-	if (HANDOVER_NOTICE_EVENTS.includes(event.eventType)) return 'handover';
+	if (!event.sourceSessionId) return null;
 	if (
+		event.eventType === MENTION_NOTICE_EVENT &&
 		event.params?.mentioned === true &&
-		event.params?.conversationType !== 'LIVE_CHAT'
+		isCounsellorRow(event)
 	)
 		return 'mention';
+	if (event.eventType === HANDOVER_NOTICE_EVENT && isCounsellorRow(event))
+		return 'handover';
+	if (
+		event.eventType === CONSENT_NOTICE_EVENT &&
+		event.params?.clientConsent === 'OPT_IN' &&
+		isAskerRow(event)
+	)
+		return 'consent';
 	return null;
 };
 
+/** The public actor label; the consent card names no one (staff-only). */
 export const eventNoticeActor = (
 	kind: EventNoticeKind,
 	event: EventNoticeFeedEvent
-): string | null =>
-	(kind === 'handover'
-		? (event.params?.initiatorName ?? event.params?.senderName)
-		: event.params?.senderName) ?? null;
+): string | null => {
+	if (kind === 'consent') return null;
+	const params = event.params;
+	const name =
+		kind === 'handover'
+			? params?.initiatorName
+			: params?.senderDisplayName || params?.senderName;
+	return name || null;
+};
 
-/** Whether the counsellor is looking at this conversation right now. */
-export const isEventNoticeTargetOpen = (
-	event: EventNoticeFeedEvent,
+interface NoticeTarget {
+	sessionId?: string | null;
+	roomRef?: string | null;
+}
+
+const pathSegments = (path: string) =>
+	path.split(/[?#]/)[0].split('/').filter(Boolean).map(decodeURIComponent);
+
+const CONVERSATION_ROUTES = ['sessionView', 'sessionPreview', 'view'];
+
+/** Whether this conversation's detail view is the route and the tab visible. */
+export const isConversationOpen = (
+	target: NoticeTarget,
 	pathname: string,
+	_search: string,
 	visible: boolean
-) => isLiveChatOpen(event, pathname, visible);
+): boolean => {
+	if (!visible) return false;
+	const segments = pathSegments(pathname);
+	if (!segments.some((segment) => CONVERSATION_ROUTES.includes(segment)))
+		return false;
+	const last = segments[segments.length - 1];
+	return (
+		(!!target.sessionId && last === String(target.sessionId)) ||
+		(!!target.roomRef && segments.includes(target.roomRef))
+	);
+};
+
+/**
+ * Whether the enquiry's team discussion is on screen: the enquiry view with
+ * the team channel (`?channel=team`, or the legacy `?teamDiscussion=1` the
+ * notification links carry) — or the bare link itself with the ids in its
+ * query. The enquiry's main chat does not show the discussion.
+ */
+export const isTeamDiscussionOpen = (
+	target: NoticeTarget,
+	pathname: string,
+	search: string,
+	visible: boolean
+): boolean => {
+	if (!visible) return false;
+	const query = new URLSearchParams(search);
+	if (query.get('channel') !== 'team' && query.get('teamDiscussion') !== '1')
+		return false;
+	if (isConversationOpen(target, pathname, search, visible)) return true;
+	const segments = pathSegments(pathname);
+	if (!segments.includes('sessionPreview')) return false;
+	const querySession = query.get('sessionId');
+	const queryRoom = query.get('roomId');
+	return (
+		(!!querySession && querySession === String(target.sessionId)) ||
+		(!!queryRoom && queryRoom === target.roomRef)
+	);
+};
+
+/** Whether the counsellor/advice seeker is looking at this event's target. */
+export const isEventNoticeTargetOpen = (
+	kind: EventNoticeKind,
+	target: NoticeTarget,
+	pathname: string,
+	search: string,
+	visible: boolean
+) =>
+	kind === 'mention'
+		? isTeamDiscussionOpen(target, pathname, search, visible)
+		: isConversationOpen(target, pathname, search, visible);
 
 /** Adds the card, or counts one more event on the card already shown. */
 export const upsertEventNotice = <T extends NotificationType>(
@@ -136,17 +229,15 @@ export const EventNotice = (props: EventNoticeProps) => {
 	}, [close, navigate, props.path]);
 	// Opening the conversation any other way also settles the card, but only
 	// once it is really seen: a hidden tab keeps the card until it returns.
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	useEffect(() => {
 		const settleIfSeen = () => {
 			if (
 				isEventNoticeTargetOpen(
-					{
-						eventType: 'message.new',
-						sourceSessionId: props.sessionId,
-						params: { roomRef: props.roomRef }
-					},
+					kind,
+					{ sessionId: props.sessionId, roomRef: props.roomRef },
 					pathname,
+					search,
 					document.visibilityState !== 'hidden'
 				)
 			)
@@ -156,9 +247,9 @@ export const EventNotice = (props: EventNoticeProps) => {
 		document.addEventListener('visibilitychange', settleIfSeen);
 		return () =>
 			document.removeEventListener('visibilitychange', settleIfSeen);
-	}, [close, pathname, props.roomRef, props.sessionId]);
+	}, [close, kind, pathname, props.roomRef, props.sessionId, search]);
 
-	const Icon = kind === 'handover' ? HandoverIcon : MentionIcon;
+	const Icon = kind === 'mention' ? MentionIcon : HandoverIcon;
 	return (
 		<div
 			className={`notification notification--info notification--eventNotice notification--${kind}`}
@@ -183,7 +274,12 @@ export const EventNotice = (props: EventNoticeProps) => {
 				</button>
 			</div>
 			<div className="notification__text">
-				{props.actorName && (
+				{kind === 'consent' && props.count === 1 && (
+					<div data-cy="consent-notice-text">
+						{t('notification.eventNotice.consent.text')}
+					</div>
+				)}
+				{kind !== 'consent' && props.actorName && (
 					<div className="notification__sender">
 						{t(`notification.eventNotice.${kind}.from`, {
 							name: props.actorName
