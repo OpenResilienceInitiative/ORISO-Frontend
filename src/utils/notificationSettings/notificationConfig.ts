@@ -82,13 +82,15 @@ const kind = (partial: Partial<KindConfig> = {}): KindConfig => ({
 });
 
 const areaDefaults = (): Record<NotificationKind, KindConfig> => ({
-	new: kind(),
+	// Events that need attention get one short tone (ton-2, 0.3 s; selectable in the UI) out of the box (#1211);
+	// 'standard' (ongoing chatter) stays silent. Stored user choices still win.
+	new: kind({ sound: 'ton-2' }),
 	standard: kind(),
-	mention: kind({ email: false }),
-	handover: kind(),
+	mention: kind({ sound: 'ton-2', email: false }),
+	handover: kind({ sound: 'ton-2' }),
 	// Calls keep ringing out of the box — the dedicated ring tone.
 	call: kind({ sound: 'ring', email: false }),
-	appointment: kind()
+	appointment: kind({ sound: 'ton-2' })
 });
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {

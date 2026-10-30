@@ -346,8 +346,10 @@ describe('NotificationConfigView', () => {
 
 	it('shows the muted icon and no play button when no sound is chosen', () => {
 		render(<NotificationConfigView {...baseProps} />);
-		expect(screen.queryByTestId('notif-muted-requests-new')).toBeTruthy();
-		expect(screen.queryByTestId('notif-play-requests-new')).toBeNull();
+		expect(
+			screen.queryByTestId('notif-muted-requests-standard')
+		).toBeTruthy();
+		expect(screen.queryByTestId('notif-play-requests-standard')).toBeNull();
 	});
 
 	it('shows a play button (not the muted icon) when a tone is chosen, and previews at volume', () => {
