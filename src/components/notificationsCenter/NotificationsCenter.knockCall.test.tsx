@@ -77,7 +77,7 @@ const Location = () => (
 );
 const renderCenter = async (
 	width = 1400,
-	item = knockItem,
+	item: NotificationFeedItem | NotificationFeedItem[] = knockItem,
 	sessions: unknown[] = [],
 	ready = true
 ) => {
@@ -110,7 +110,9 @@ const renderCenter = async (
 							<NotificationsContext.Provider
 								value={
 									{
-										notificationFeed: [item],
+										notificationFeed: Array.isArray(item)
+											? item
+											: [item],
 										markNotificationAsRead: markRead,
 										addNotification,
 										refreshNotificationFeed: vi.fn(),
@@ -206,4 +208,44 @@ it('does not end a call the counsellor is in elsewhere: it opens the conversatio
 		)
 	);
 	expect(startRoomCall).not.toHaveBeenCalled();
+	// "Beitreten" did not join: say why instead of opening silently.
+	expect(addNotification).toHaveBeenCalledWith(
+		expect.objectContaining({
+			notificationType: 'info',
+			text: 'Unable to join right now. End any other active call and try again.'
+		})
+	);
+});
+
+it('tells nothing extra when the call starts', async () => {
+	await renderCenter();
+	await user.click(
+		screen.getAllByRole('button', { name: 'Join', exact: true })[0]
+	);
+	await waitFor(() => expect(startRoomCall).toHaveBeenCalledTimes(1));
+	expect(addNotification).not.toHaveBeenCalled();
+});
+
+it('"Next notification" onto a knock only selects it: no camera, no call, no navigation', async () => {
+	const accepted: NotificationFeedItem = {
+		id: 'accepted-1',
+		type: 'info',
+		eventType: 'inquiry.accepted',
+		category: 'system',
+		title: '',
+		text: '',
+		createdAt: '2026-10-30T00:05:00Z',
+		readAt: null,
+		actionPath: '/sessions/consultant/sessionView/room-101/101'
+	} as NotificationFeedItem;
+	await renderCenter(1400, [accepted, knockItem]);
+	await user.click(
+		screen.getByRole('button', { name: 'Next notification', exact: true })
+	);
+
+	await waitFor(() => expect(markRead).toHaveBeenCalledWith('knock-1'));
+	expect(startRoomCall).not.toHaveBeenCalled();
+	expect(screen.getByLabelText('Current route').textContent).toBe(
+		'/notifications'
+	);
 });

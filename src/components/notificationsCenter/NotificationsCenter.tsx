@@ -1064,17 +1064,33 @@ export const NotificationsCenter = () => {
 			item.params || {}
 		);
 		if (target.kind !== 'callRoom') return false;
-		enterKnockCall(target, {
+		const entered = enterKnockCall(target, {
 			start: startRoomCall,
 			currentCall: () => callManager.getCurrentCall()
 		});
+		if (!entered && target.roomId) {
+			// In a call elsewhere: "Beitreten" opens the conversation only, so
+			// say why the call did not start.
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_INFO,
+				title: translate('notification.info'),
+				text: translate('videoCall.timeline.joinFailed'),
+				closeable: true,
+				timeout: 10000
+			});
+		}
 		navigate(getNotificationActionPath(item) || getDefaultSessionsPath());
 		return true;
 	};
 
-	const openNotification = (item: (typeof notificationFeed)[number]) => {
+	const openNotification = (
+		item: (typeof notificationFeed)[number],
+		// "Next notification" browses: it never starts a call (camera,
+		// microphone) behind the counsellor's back.
+		{ browsing = false }: { browsing?: boolean } = {}
+	) => {
 		markNotificationAsRead(item.id);
-		if (openKnock(item)) return;
+		if (!browsing && openKnock(item)) return;
 		const statusPage = resolveStatusPageAction(item);
 		if (untilL && statusPage.linksToStatusPage) {
 			if (statusPage.url) {
@@ -1136,7 +1152,7 @@ export const NotificationsCenter = () => {
 				(item) => item.id === nextUnreadId
 			);
 			if (nextItem) {
-				openNotification(nextItem);
+				openNotification(nextItem, { browsing: true });
 			}
 		}
 	};

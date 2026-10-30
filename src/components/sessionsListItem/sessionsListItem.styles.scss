@@ -156,7 +156,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		// FE#1952: like Mail, a direct link keeps the primary colour when active.
-		.sessionsListItem__consultingTypeIcon--directLinkIcon {
+		// The glyph is an svg, so the override must outrank the `svg` filter above.
+		.sessionsListItem__consultingTypeIcon
+			svg.sessionsListItem__consultingTypeIcon--directLinkIcon {
 			filter: none;
 		}
 	}

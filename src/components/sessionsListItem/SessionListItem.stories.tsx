@@ -1435,6 +1435,47 @@ export const DirectLinkConversations: Story = {
 	}
 };
 
+/**
+ * FE#1952: the selected video direct-link card. Like Mail, the glyph keeps
+ * the primary colour of its label; the active card's black-to-red filter
+ * must not repaint it.
+ */
+export const DirectLinkConversationSelected: Story = {
+	name: 'Direktlink-Gespräch — ausgewählt (FE#1952)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView/session/4502' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				sessionOverrides={{
+					id: 4502,
+					...({ directLinkMedium: 'VIDEO' } as object)
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.classList.contains('sessionsListItem--active')).toBe(
+			true
+		);
+		const glyph = part(
+			row,
+			'svg.sessionsListItem__consultingTypeIcon--directLinkIcon'
+		);
+		await expect(getComputedStyle(glyph).filter).toBe('none');
+		const label = part(
+			row,
+			'.sessionsListItem__consultingTypeIcon--directLinkLabel'
+		);
+		await expect(getComputedStyle(glyph).color).toBe(
+			getComputedStyle(label).color
+		);
+	}
+};
+
 /** Resting consultant card: topic and postcode as one pill, Mail, alias preview in italics. */
 export const ConsultantUnselected: Story = {
 	name: 'Beratung — nicht ausgewählt',
