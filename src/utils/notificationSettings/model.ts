@@ -68,25 +68,40 @@ export interface OrisoNotificationSettings {
 /**
  * 1 (FE#1435): the "Neue Anfrage" row rings by default. A config stored
  * before carries the old silent default, upgraded once on load.
+ * 2 (FE#1211): team-discussion mentions moved from Gespräche to Anfragen →
+ * Erwähnung. The old Anfragen row never fired, so the choice made under
+ * Gespräche carries over once.
  */
-export const NOTIFICATION_SETTINGS_REVISION = 1;
+export const NOTIFICATION_SETTINGS_REVISION = 2;
 
 const upgradeNotificationConfig = (
 	config: NotificationConfig,
 	revision: number
-): NotificationConfig =>
-	revision < 1 && config.requests.new.sound === 'none'
-		? {
-				...config,
-				requests: {
-					...config.requests,
-					new: {
-						...config.requests.new,
-						sound: DEFAULT_NOTIFICATION_CONFIG.requests.new.sound
-					}
+): NotificationConfig => {
+	let upgraded = config;
+	if (revision < 1 && upgraded.requests.new.sound === 'none') {
+		upgraded = {
+			...upgraded,
+			requests: {
+				...upgraded.requests,
+				new: {
+					...upgraded.requests.new,
+					sound: DEFAULT_NOTIFICATION_CONFIG.requests.new.sound
 				}
 			}
-		: config;
+		};
+	}
+	if (revision < 2) {
+		upgraded = {
+			...upgraded,
+			requests: {
+				...upgraded.requests,
+				mention: { ...upgraded.conversations.mention }
+			}
+		};
+	}
+	return upgraded;
+};
 
 /** A curated sound choice; 'none' is silent, 'default' inherits the message sound. */
 export type SoundId =
