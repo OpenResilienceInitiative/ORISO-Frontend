@@ -33,6 +33,9 @@ const RAIL_MARK_COPY: SessionRailMarkLabels = {
 	thread: 'Thread',
 	supervision: 'Supervision',
 	mail: 'Mail',
+	videoCall: 'Videoanruf',
+	audioCall: 'Audioanruf',
+	directLink: 'Direktlink',
 	unread: 'Ungelesen'
 };
 

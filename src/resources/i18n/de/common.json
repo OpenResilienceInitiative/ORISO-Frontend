@@ -2384,6 +2384,18 @@
 				"title": "Einladung zu internem Gruppenanruf",
 				"text": "Sie wurden zu einem internen Gruppenanruf eingeladen."
 			},
+			"callKnockRequested": {
+				"title": "Jemand klopft an",
+				"text": "Eine Person möchte in Ihren Anruf. Öffnen Sie das Gespräch, um sie einzulassen.",
+				"video": {
+					"title": "Jemand klopft an – Videoanruf",
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Öffnen Sie das Gespräch, um sie einzulassen."
+				},
+				"audio": {
+					"title": "Jemand klopft an – Audioanruf",
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Öffnen Sie das Gespräch, um sie einzulassen."
+				}
+			},
 			"appointmentRequested": {
 				"title": "Termin für einen Anruf angefragt",
 				"text": "Es liegt eine neue Terminanfrage für einen Anruf vor."
@@ -4317,7 +4329,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Gesprächskreis",
 				"internal": "Interna",
-				"team": "Team Beratung"
+				"team": "Team Beratung",
+				"directLinkVideo": "Videoanruf",
+				"directLinkAudio": "Audioanruf",
+				"directLinkChat": "Direktlink"
 			}
 		},
 		"createChat": {

@@ -2363,6 +2363,18 @@
 				"title": "Dahili grup aramasına davet",
 				"text": "Dahili bir grup aramasına davet edildiniz."
 			},
+			"callKnockRequested": {
+				"title": "Biri kapıyı çalıyor",
+				"text": "Biri aramanıza katılmak istiyor. İçeri almak için görüşmeyi açın.",
+				"video": {
+					"title": "Biri kapıyı çalıyor – görüntülü arama",
+					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için görüşmeyi açın."
+				},
+				"audio": {
+					"title": "Biri kapıyı çalıyor – sesli arama",
+					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için görüşmeyi açın."
+				}
+			},
 			"appointmentRequested": {
 				"title": "Arama için randevu talep edildi",
 				"text": "Bir arama için yeni bir randevu talebi var."
@@ -4410,7 +4422,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Sohbet çemberi",
 				"internal": "Dahili",
-				"team": "Ekip danışmanlığı"
+				"team": "Ekip danışmanlığı",
+				"directLinkVideo": "Görüntülü arama",
+				"directLinkAudio": "Sesli arama",
+				"directLinkChat": "Doğrudan bağlantı"
 			}
 		},
 		"supervision": {

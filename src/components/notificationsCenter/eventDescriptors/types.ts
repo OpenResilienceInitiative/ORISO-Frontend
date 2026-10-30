@@ -99,6 +99,8 @@ export interface EventActionParams {
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */
 	isVideo?: boolean | null;
+	/** FE#1952: which call a direct-link knock is for. */
+	medium?: 'AUDIO' | 'VIDEO' | null;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */

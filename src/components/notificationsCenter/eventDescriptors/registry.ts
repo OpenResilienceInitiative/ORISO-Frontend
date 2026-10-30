@@ -342,6 +342,16 @@ const seeds: EventDescriptor[] = [
 		resolveActionTarget: conversationTarget
 	}),
 
+	// FE#1952: someone knocks on the counsellor's direct-link call. Opens the
+	// conversation, where the counsellor starts the call and lets them in.
+	descriptor('call.knock.requested', {
+		family: 'calls',
+		category: 'system',
+		icon: 'callStarted',
+		i18nKey: 'callKnockRequested',
+		resolveActionTarget: conversationTarget
+	}),
+
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----
 	descriptor('appointment.requested', {
 		family: 'appointments',

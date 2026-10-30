@@ -154,6 +154,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
 			color: var(--m3-on-surface-variant, #444748) !important;
 		}
+
+		// FE#1952: like Mail, a direct link keeps the primary colour when active.
+		.sessionsListItem__consultingTypeIcon--directLinkIcon {
+			filter: none;
+		}
 	}
 
 	// Read state: muted gray background for sessions the counselor has already read
@@ -973,6 +978,36 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		&--nearbyLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
+			line-height: 20px;
+			letter-spacing: 0;
+		}
+
+		// FE#1952: a direct-link conversation names its medium in the mail's
+		// place, in the mail's primary colour.
+		&--directLink {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+			white-space: nowrap;
+			align-items: center;
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
+		}
+
+		&--directLinkIcon {
+			width: 24px !important;
+			height: 24px !important;
+			flex-shrink: 0;
+
+			* {
+				fill: currentcolor !important;
+			}
+		}
+
+		&--directLinkLabel {
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
 			font-weight: 600;
