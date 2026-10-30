@@ -44,6 +44,7 @@ vi.mock('./ConsultantStatistics', stub('ConsultantStatistics'));
 vi.mock('./AbsenceFormular', stub('AbsenceFormular'));
 vi.mock('./LiveChatAvailability', stub('LiveChatAvailability'));
 vi.mock('./EnableWalkthrough', stub('EnableWalkthrough'));
+vi.mock('../timelineSettings/TimelineSettings', stub('TimelineSettings'));
 vi.mock('../productTour/TourOverviewSection', stub('TourOverviewSection'));
 vi.mock(
 	'../../practice/PracticeOverviewSection',
