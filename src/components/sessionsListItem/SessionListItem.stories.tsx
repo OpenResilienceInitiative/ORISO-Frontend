@@ -3,6 +3,7 @@ import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -1557,20 +1558,19 @@ export const StackedListWithSelection: Story = {
 	}
 };
 
-/** Selection follows the click like the real list: the group flags are
- * derived from the selected index on every render. */
-function GroupedRows({
-	cards,
-	initialActive
-}: {
-	cards: ListItemInterface[];
-	initialActive: number;
-}) {
-	const [active, setActive] = React.useState(initialActive);
+/** Selection follows the route like the real list: the group flags come
+ * from the same route-derived active item the card uses, so opening a
+ * card's menu (no navigation) never moves the group boundaries. */
+function GroupedRows({ cards }: { cards: ListItemInterface[] }) {
+	const { isActive } = useActiveListItem();
+	const active = cards.findIndex((item) => {
+		const room = item.chat ?? item.session;
+		return isActive({ groupId: room?.matrixRoomId, sessionId: room?.id });
+	});
 	return (
 		<>
 			{cards.map((item, index) => (
-				<div key={index} onClickCapture={() => setActive(index)}>
+				<div key={index}>
 					<RuntimeCard
 						index={index}
 						item={item}
@@ -1588,8 +1588,9 @@ function GroupedRows({
 	);
 }
 
-const groupedRows = (cards: ListItemInterface[], activeIndex = -1) => (
-	<GroupedRows cards={cards} initialActive={activeIndex} />
+// The route (story parameter `router.initialPath`) decides the open card.
+const groupedRows = (cards: ListItemInterface[]) => (
+	<GroupedRows cards={cards} />
 );
 
 const cardStyle = (row: HTMLElement) =>
@@ -1612,19 +1613,16 @@ export const GroupedListWithSelection: Story = {
 		seedMatrixRoom(2);
 		return (
 			<div style={listShell} role="list" aria-label="Conversations">
-				{groupedRows(
-					[
-						runtimeGroupChat({ id: 5601, name: 'Elternrunde' }),
-						runtimeGroupChat({ id: 5602, name: 'New Redeploy' }),
-						runtimeSessionItem(),
-						runtimeGroupChat({ id: 5603, name: 'Teamrunde' }),
-						runtimeGroupChat({
-							id: 5604,
-							name: 'Selbsthilfe Mitte'
-						})
-					],
-					2
-				)}
+				{groupedRows([
+					runtimeGroupChat({ id: 5601, name: 'Elternrunde' }),
+					runtimeGroupChat({ id: 5602, name: 'New Redeploy' }),
+					runtimeSessionItem(),
+					runtimeGroupChat({ id: 5603, name: 'Teamrunde' }),
+					runtimeGroupChat({
+						id: 5604,
+						name: 'Selbsthilfe Mitte'
+					})
+				])}
 			</div>
 		);
 	},
@@ -1729,7 +1727,7 @@ export const GroupedLongList: Story = {
 		);
 		return (
 			<div style={listShell} role="list" aria-label="Conversations">
-				{groupedRows(cards, 4)}
+				{groupedRows(cards)}
 			</div>
 		);
 	},

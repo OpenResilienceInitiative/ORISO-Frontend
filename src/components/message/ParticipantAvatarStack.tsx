@@ -10,7 +10,7 @@
  * (ORISO-Frontend#1193). Order and overflow come from `participantStack.ts`.
  */
 import * as React from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
@@ -58,6 +58,35 @@ export const HEADER_STACK_PROPS = {
 	size: HEADER_STACK_AVATAR_SIZE,
 	overlap: HEADER_STACK_OVERLAP
 } as const;
+
+const OVERFLOW_PANEL_WIDTH = 240;
+const VIEWPORT_INSET = 8;
+const PANEL_GAP = 8;
+
+/**
+ * Where the list of folded participants opens: below the badge, or above it
+ * when it would run past the bottom of the window and fits above. Kept
+ * `VIEWPORT_INSET` from the window's edges.
+ */
+export const overflowPanelPosition = (
+	anchor: Pick<DOMRect, 'top' | 'bottom' | 'left'>,
+	panelHeight: number,
+	viewport: { width: number; height: number }
+): { top: number; left: number } => {
+	const below = anchor.bottom + PANEL_GAP;
+	const above = anchor.top - PANEL_GAP - panelHeight;
+	const fitsBelow = below + panelHeight <= viewport.height - VIEWPORT_INSET;
+	return {
+		top: !fitsBelow && above >= VIEWPORT_INSET ? above : below,
+		left: Math.max(
+			VIEWPORT_INSET,
+			Math.min(
+				anchor.left - 12,
+				viewport.width - OVERFLOW_PANEL_WIDTH - VIEWPORT_INSET
+			)
+		)
+	};
+};
 
 export const ParticipantAvatarStack = ({
 	participants,
@@ -243,6 +272,11 @@ const OverflowList = ({
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const panelRef = useRef<HTMLDivElement>(null);
 	const panelId = useId();
+	const [panelHeight, setPanelHeight] = useState(0);
+	// Measured before paint, so a list that opens upwards never flashes below.
+	useLayoutEffect(() => {
+		if (open) setPanelHeight(panelRef.current?.offsetHeight ?? 0);
+	}, [open, hidden.length]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -338,16 +372,10 @@ const OverflowList = ({
 						aria-label={title}
 						className="participantStack__list"
 						data-cy="participant-overflow-list"
-						style={{
-							top: anchor.bottom + 8,
-							left: Math.max(
-								8,
-								Math.min(
-									anchor.left - 12,
-									window.innerWidth - 248
-								)
-							)
-						}}
+						style={overflowPanelPosition(anchor, panelHeight, {
+							width: window.innerWidth,
+							height: window.innerHeight
+						})}
 						onClick={stop}
 						onKeyDown={onPanelKey}
 						onMouseDown={stop}
