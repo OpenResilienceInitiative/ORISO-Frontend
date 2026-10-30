@@ -4,7 +4,7 @@
  * in the future part of the list and below the room header.
  */
 import * as React from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './appointmentSplitButton.styles.scss';
 import { SplitButton } from '../../splitButton/SplitButton';
@@ -36,6 +36,37 @@ const MODALITY_ICON: Record<
 
 export type AppointmentAction = (key: string, entry: FutureEntry) => void;
 
+const MENU_WIDTH = 320;
+const MENU_GAP = 8;
+const VIEWPORT_INSET = 8;
+
+/**
+ * Where the menu sits: below the arrow, or above it when it would leave the
+ * window below and there is more room above (a twin right over "Jetzt" near
+ * the bottom of the list).
+ */
+export const entryMenuPosition = (
+	anchor: Pick<DOMRect, 'top' | 'bottom' | 'right'>,
+	menuHeight: number,
+	viewport: { width: number; height: number }
+) => {
+	const below = anchor.bottom + MENU_GAP;
+	const roomBelow = viewport.height - below - VIEWPORT_INSET;
+	const roomAbove = anchor.top - MENU_GAP - VIEWPORT_INSET;
+	const top =
+		menuHeight > roomBelow && roomAbove > roomBelow
+			? Math.max(VIEWPORT_INSET, anchor.top - MENU_GAP - menuHeight)
+			: below;
+	const left = Math.max(
+		VIEWPORT_INSET,
+		Math.min(
+			anchor.right - MENU_WIDTH,
+			viewport.width - MENU_WIDTH - VIEWPORT_INSET
+		)
+	);
+	return { top, left };
+};
+
 const EntryMenu = ({
 	entry,
 	role,
@@ -51,6 +82,10 @@ const EntryMenu = ({
 }) => {
 	const items = entryMenu(entry, role);
 	const ref = useRef<HTMLDivElement>(null);
+	const [menuHeight, setMenuHeight] = useState(0);
+	useLayoutEffect(() => {
+		setMenuHeight(ref.current?.getBoundingClientRect().height ?? 0);
+	}, [items.length]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
 		const onDown = (e: MouseEvent) =>
@@ -68,11 +103,10 @@ const EntryMenu = ({
 			style={{
 				position: 'fixed',
 				zIndex: 1400,
-				top: anchor.bottom + 8,
-				left: Math.max(
-					8,
-					Math.min(anchor.right - 320, window.innerWidth - 328)
-				)
+				...entryMenuPosition(anchor, menuHeight, {
+					width: window.innerWidth,
+					height: window.innerHeight
+				})
 			}}
 		>
 			<ChatMenuDropdown
@@ -80,7 +114,7 @@ const EntryMenu = ({
 				role="menu"
 				ariaLabel="Termin"
 				data-cy="timeline-entry-menu"
-				style={{ width: 320 }}
+				style={{ width: MENU_WIDTH }}
 			>
 				{items.map((item) => (
 					<ChatMenuDropdownItem
