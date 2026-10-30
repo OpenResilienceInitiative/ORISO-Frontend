@@ -442,6 +442,9 @@ export const RuntimeConsultantMobile375Shell: Story = {
 	}
 };
 
+/** How often the badge's registered-enquiry request was answered. */
+const answeredEnquiryFeeds = { registered: 0 };
+
 /**
  * FE#1435: answers the two enquiry feeds the "Anfragen" badge reads with a
  * fixed total, installed during render (before the badge's first request)
@@ -456,6 +459,7 @@ const WithOpenEnquiries = ({
 }) => {
 	const restore = useRef<(() => void) | null>(null);
 	if (!restore.current) {
+		answeredEnquiryFeeds.registered = 0;
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = async (input, init) => {
 			const url =
@@ -465,10 +469,11 @@ const WithOpenEnquiries = ({
 						? input.toString()
 						: input.url;
 			if (url.includes('/consultants/enquiries/registered')) {
+				answeredEnquiryFeeds.registered += 1;
 				return new Response(
 					JSON.stringify({
-						sessions: [{}],
-						count: 1,
+						sessions: total ? [{}] : [],
+						count: total ? 1 : 0,
 						offset: 0,
 						total
 					}),
@@ -538,9 +543,19 @@ export const RuntimeConsultantMobileOpenEnquiries: Story = {
 export const RuntimeConsultantRailNoOpenEnquiries: Story = {
 	name: 'Runtime Consultant Rail — nothing open (FE#1435)',
 	args: { role: 'consultant', layout: 'desktop' },
+	decorators: [
+		(StoryComponent) => (
+			<WithOpenEnquiries total={0}>
+				<StoryComponent />
+			</WithOpenEnquiries>
+		)
+	],
 	play: async ({ canvasElement }) => {
-		// Default Storybook feeds are empty: no badge on "Anfragen".
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		// The badge's own request came back with 0, then one task for the render.
+		await waitFor(() =>
+			expect(answeredEnquiryFeeds.registered).toBeGreaterThan(0)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		await expect(
 			canvasElement.querySelector(
 				'a[href="/sessions/consultant/sessionPreview"] .navigation__item__count'
