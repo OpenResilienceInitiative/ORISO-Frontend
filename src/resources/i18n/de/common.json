@@ -4,6 +4,35 @@
 		"unavailable": "Teilnehmende konnten nicht geladen werden.",
 		"empty": "Keine Teilnehmenden."
 	},
+	"timelineSettings": {
+		"title": "Termine in der Gesprächsliste",
+		"description": "Wie die Liste anstehende Termine zeigt. Gilt auf allen Geräten.",
+		"scrollModel": {
+			"legend": "Blättern",
+			"panes": "Zwei Bereiche: oben die Zukunft, unten die Vergangenheit",
+			"single": "Eine Zeitleiste: die Zukunft öffnet sich erst, wenn man über „Jetzt“ hinaus weiterzieht"
+		},
+		"reveal": {
+			"legend": "Bei anstehenden Terminen zeigen",
+			"none": "Nichts",
+			"next": "Den nächsten Termin",
+			"half": "Die halbe Liste",
+			"most": "Fast alles"
+		},
+		"pastDate": {
+			"legend": "Datum bei vergangenen Gesprächen",
+			"tag": "Am Themen-Fähnchen",
+			"line": "In einer eigenen Zeile",
+			"off": "Nicht anzeigen"
+		},
+		"nowVariant": {
+			"legend": "„Jetzt“-Markierung (nur in der Testphase)",
+			"line": "Linie mit Pille",
+			"handle": "Am Griff",
+			"band": "Band mit Pfeilen"
+		},
+		"writeFailed": "Die Einstellung konnte nicht gespeichert werden. Bitte versuche es noch einmal."
+	},
 	"menuEffects": {
 		"title": "Menüdarstellung",
 		"label": "Schleier und sanfte Menüanimationen",

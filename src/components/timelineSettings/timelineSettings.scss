@@ -1,0 +1,19 @@
+// ADR-021: one radio group per timeline setting in "Anzeige".
+.timelineSettings__group {
+	margin: 8px 0 0;
+	padding: 0;
+	border: 0;
+
+	&:disabled {
+		opacity: 0.6;
+	}
+}
+
+.timelineSettings__legend {
+	margin-bottom: 4px;
+	padding: 0;
+	color: var(--m3-on-surface, #1e1e1e);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+}

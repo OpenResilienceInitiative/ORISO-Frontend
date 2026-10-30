@@ -62,6 +62,7 @@ import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData'
 import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { useTimelineSettingsStoreBinding } from '../../hooks/useTimelineSettings';
 import { useAccountInactivityActivity } from '../../hooks/useAccountInactivityActivity';
 import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
@@ -93,6 +94,7 @@ export const AuthenticatedApp = ({
 	// #1377: the display-filter store follows the published client (and
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
+	useTimelineSettingsStoreBinding();
 	useAuthenticatedChatRecovery(matrixClientService, userData);
 	const groupJoinSettled = usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first

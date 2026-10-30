@@ -4,6 +4,35 @@
 		"unavailable": "Les participants n’ont pas pu être chargés.",
 		"empty": "Aucun participant."
 	},
+	"timelineSettings": {
+		"title": "Rendez-vous dans la liste des conversations",
+		"description": "Comment la liste affiche les rendez-vous à venir. S’applique sur tous les appareils.",
+		"scrollModel": {
+			"legend": "Défilement",
+			"panes": "Deux zones : l’avenir en haut, le passé en bas",
+			"single": "Une seule chronologie : l’avenir s’ouvre seulement si vous continuez à tirer au-delà de « Maintenant »"
+		},
+		"reveal": {
+			"legend": "Quand des rendez-vous approchent, afficher",
+			"none": "Rien",
+			"next": "Le prochain rendez-vous",
+			"half": "La moitié de la liste",
+			"most": "Presque tout"
+		},
+		"pastDate": {
+			"legend": "Date des conversations passées",
+			"tag": "Sur l’étiquette du thème",
+			"line": "Sur une ligne à part",
+			"off": "Ne pas afficher"
+		},
+		"nowVariant": {
+			"legend": "Repère « Maintenant » (phase de test uniquement)",
+			"line": "Ligne avec pastille",
+			"handle": "Sur la poignée",
+			"band": "Bande avec flèches"
+		},
+		"writeFailed": "Le réglage n’a pas pu être enregistré. Veuillez réessayer."
+	},
 	"menuEffects": {
 		"title": "Affichage des menus",
 		"label": "Voile et animations douces",
