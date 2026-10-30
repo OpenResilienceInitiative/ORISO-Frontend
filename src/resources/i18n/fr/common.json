@@ -2855,6 +2855,7 @@
 				},
 				"kind": {
 					"new": "Nouvelle demande",
+					"teamDiscussion": "Discussion d'équipe",
 					"standard": "Notification standard",
 					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",

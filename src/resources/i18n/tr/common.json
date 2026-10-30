@@ -2855,6 +2855,7 @@
 				},
 				"kind": {
 					"new": "Yeni talep",
+					"teamDiscussion": "Ekip görüşmesi",
 					"standard": "Standart bildirim",
 					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",

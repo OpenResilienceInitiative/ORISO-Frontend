@@ -2907,6 +2907,7 @@
 				},
 				"kind": {
 					"new": "Neue Anfrage",
+					"teamDiscussion": "Team-Besprechung",
 					"standard": "Standard-Benachrichtigung",
 					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",

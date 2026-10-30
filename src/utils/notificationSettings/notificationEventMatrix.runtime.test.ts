@@ -78,6 +78,7 @@ const feedRow = (eventCase: EventCase, role: NotificationRole): FeedRow => {
 	};
 	if (eventType === 'message.new' || eventType === 'thread.reply.new') {
 		params.senderName = 'Alex';
+		if (variant === 'mentioned') params.mentioned = true;
 		params.recipientRole = role === 'consultant' ? 'consultant' : 'user';
 	}
 	if (eventType === 'case.handover.consent.requested')

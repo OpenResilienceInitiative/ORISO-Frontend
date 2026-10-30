@@ -134,6 +134,82 @@ describe('playNotificationSound (config-driven)', () => {
 		expect(played[0].volume).toBe(1);
 	});
 
+	it('a team-discussion post uses its own Anfrage row, a mention in it the Anfrage mention row', () => {
+		const settings = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			notificationConfig: setKindField(
+				setKindField(
+					DEFAULT_NOTIFICATION_SETTINGS.notificationConfig,
+					'requests',
+					'teamDiscussion' as never,
+					'sound',
+					'ton-5' as never
+				),
+				'requests',
+				'mention',
+				'sound',
+				'ton-7' as never
+			)
+		};
+		playNotificationSound(
+			settings,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'team.discussion.new',
+			false,
+			nextNow()
+		);
+		playNotificationSound(
+			settings,
+			DEFAULT_LOCAL_DEVICE_SETTINGS,
+			'messages',
+			'team.discussion.new',
+			true,
+			nextNow()
+		);
+		expect(played.map((p) => p.src)).toEqual([
+			expect.stringContaining('ton-5'),
+			expect.stringContaining('ton-7')
+		]);
+	});
+
+	describe('system notices (one switch for banner and tone)', () => {
+		const play = (settings = DEFAULT_NOTIFICATION_SETTINGS) =>
+			playNotificationSound(
+				settings,
+				DEFAULT_LOCAL_DEVICE_SETTINGS,
+				'system',
+				'supervisor.added',
+				false,
+				nextNow()
+			);
+
+		it('play the fixed short tone while the system switch is on, whatever the Standard row says', () => {
+			// Standard defaults to "no sound": the tone must not depend on it.
+			play();
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-2');
+			expect(played[0].volume).toBe(0.5);
+		});
+
+		it('are silent when the system switch is off', () => {
+			play({
+				...DEFAULT_NOTIFICATION_SETTINGS,
+				families: {
+					...DEFAULT_NOTIFICATION_SETTINGS.families,
+					system: false
+				}
+			});
+			expect(played).toHaveLength(0);
+		});
+
+		it('ignore the Standard row of the Gespräche tab', () => {
+			play(settingsWith('conversations', 'standard', 'ton-9', 1));
+			expect(played).toHaveLength(1);
+			expect(played[0].src).toContain('ton-2');
+		});
+	});
+
 	it('stays silent when the configured kind has no sound', () => {
 		playNotificationSound(
 			DEFAULT_NOTIFICATION_SETTINGS, // every kind defaults to none

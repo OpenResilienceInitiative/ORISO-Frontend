@@ -24,6 +24,7 @@ import {
 	OrisoNotificationSettings,
 	SoundId
 } from './model';
+import { DEFAULT_VOLUME } from './notificationConfig';
 import { resolveEventChannelContract } from './occasionChannelContract';
 import { onFirstUserGesture } from '../onFirstUserGesture';
 
@@ -194,6 +195,9 @@ export const previewNotificationSound = (
 	audio.play().catch(() => undefined);
 };
 
+/** The fixed tone of system notices: one short tone, no settings row. */
+const SYSTEM_TONE = { sound: 'ton-2' as SoundId, volume: DEFAULT_VOLUME };
+
 /**
  * Play the configured notification sound for an event — independent of window
  * focus and browser-notification permission. The sound and volume come from
@@ -230,7 +234,12 @@ export const playNotificationSound = (
 			conversationType
 		}
 	).browser;
-	const kindConfig = settings.notificationConfig[area][kind];
+	// System notices have no row: the single system switch (checked by the
+	// suppression gate above) decides, for the banner and the tone alike.
+	const kindConfig =
+		family === 'system'
+			? SYSTEM_TONE
+			: settings.notificationConfig[area][kind];
 	const asset = soundAssetFor(override ?? kindConfig.sound);
 	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {

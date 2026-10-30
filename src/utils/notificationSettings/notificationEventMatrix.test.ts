@@ -53,8 +53,9 @@ const EXPECTED_ROW: Record<
 		consultant: 'conversations/standard',
 		asker: 'conversations/standard'
 	},
-	'team.discussion.new': { consultant: 'conversations/new' },
-	'team.discussion.new+mentioned': { consultant: 'conversations/mention' },
+	'team.discussion.new': { consultant: 'requests/teamDiscussion' },
+	'team.discussion.new+mentioned': { consultant: 'requests/mention' },
+	'message.new+mentioned': { consultant: 'conversations/mention' },
 	'case.handover.consent.requested': { asker: 'conversations/handover' },
 	'case.handover.consent.requested+optIn': {
 		asker: 'conversations/handover'
@@ -116,8 +117,8 @@ const EXPECTED_ROW: Record<
 		consultant: 'timeCritical/appointment',
 		asker: 'timeCritical/appointment'
 	},
-	// System family: the banner follows the single system switch; the tone
-	// still reads the Standard row of the Gespräch tab.
+	// System family: banner and tone follow the single system switch; the
+	// row below is only where the contract files them.
 	'supervisor.added': { consultant: 'conversations/standard' },
 	'supervisor.removed': { consultant: 'conversations/standard' },
 	'supervisor.assigned': { consultant: 'conversations/standard' },
@@ -128,6 +129,7 @@ const EXPECTED_ROW: Record<
 
 /** Event types UserService origin/dev does NOT write (checked 2026-10-28). */
 const NOT_EMITTED = [
+	'message.new+mentioned',
 	'handover.requested',
 	'handover.partial',
 	'handover.all_confirmed',
@@ -222,13 +224,14 @@ const EXPECTED_ROW_CAPABILITY: Record<
 	{ consultant: Expect; asker: Expect }
 > = {
 	'requests/new': { consultant: 'all', asker: 'notForRole' },
+	'requests/teamDiscussion': { consultant: 'all', asker: 'notForRole' },
 	'requests/standard': { consultant: 'notForRole', asker: 'all' },
-	// No event of the Anfragen family is ever an @-mention.
-	'requests/mention': { consultant: 'noEvent', asker: 'noEvent' },
-	'conversations/new': { consultant: 'all', asker: 'notForRole' },
+	// Team-discussion mentions are the only mentions that exist today.
+	'requests/mention': { consultant: 'all', asker: 'notForRole' },
 	'conversations/standard': { consultant: 'all', asker: 'all' },
 	'conversations/liveChat': { consultant: 'all', asker: 'notForRole' },
-	'conversations/mention': { consultant: 'all', asker: 'notForRole' },
+	// Ordinary-chat mentions have no producer yet (UserService#1510).
+	'conversations/mention': { consultant: 'notSentYet', asker: 'notForRole' },
 	'conversations/handover': { consultant: 'all', asker: 'all' },
 	'timeCritical/call': { consultant: 'all', asker: 'all' },
 	'timeCritical/appointment': { consultant: 'all', asker: 'all' }
@@ -239,7 +242,7 @@ const EXPECTED_POPUP_ROWS: Record<NotificationRole, Row[]> = {
 	consultant: [
 		'requests/new',
 		'conversations/liveChat',
-		'conversations/mention',
+		'requests/mention',
 		'conversations/handover'
 	],
 	asker: ['conversations/handover']
@@ -289,8 +292,8 @@ describe('row defaults the matrix promises', () => {
 	const TONE: Record<Row, string> = {
 		'requests/new': 'ton-1',
 		'requests/standard': 'none',
+		'requests/teamDiscussion': 'ton-2',
 		'requests/mention': 'ton-2',
-		'conversations/new': 'ton-2',
 		'conversations/standard': 'none',
 		'conversations/liveChat': 'ton-1',
 		'conversations/mention': 'ton-2',
@@ -332,12 +335,12 @@ const EXPECTED_VISIBILITY: Record<
 	{ consultant: RowVisibility; asker: RowVisibility }
 > = {
 	'requests/new': { consultant: 'visible', asker: 'hidden' },
+	'requests/teamDiscussion': { consultant: 'visible', asker: 'hidden' },
 	'requests/standard': { consultant: 'hidden', asker: 'visible' },
-	'requests/mention': { consultant: 'hidden', asker: 'hidden' },
-	'conversations/new': { consultant: 'visible', asker: 'hidden' },
+	'requests/mention': { consultant: 'visible', asker: 'hidden' },
 	'conversations/standard': { consultant: 'visible', asker: 'visible' },
 	'conversations/liveChat': { consultant: 'visible', asker: 'hidden' },
-	'conversations/mention': { consultant: 'visible', asker: 'hidden' },
+	'conversations/mention': { consultant: 'disabled', asker: 'hidden' },
 	'conversations/handover': { consultant: 'visible', asker: 'visible' },
 	'timeCritical/call': { consultant: 'visible', asker: 'visible' },
 	'timeCritical/appointment': { consultant: 'visible', asker: 'visible' }

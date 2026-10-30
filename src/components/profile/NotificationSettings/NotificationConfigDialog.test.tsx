@@ -513,9 +513,13 @@ describe('Rows that never fire are hidden, rows without a producer yet are disab
 			(el) => el.getAttribute('data-cy')
 		);
 
-	it('shows a counsellor only the Anfragen row that can fire for them', () => {
+	it('shows a counsellor only the Anfragen rows that can fire for them, Team-Besprechung next to Neue Anfrage', () => {
 		renderRows('consultant', 'requests');
-		expect(rowIds()).toEqual(['notif-row-requests-new']);
+		expect(rowIds()).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-mention'
+		]);
 		expect(
 			(
 				screen.getByTestId(
@@ -540,6 +544,7 @@ describe('Rows that never fire are hidden, rows without a producer yet are disab
 		renderRows(undefined, 'requests');
 		expect(rowIds()).toEqual([
 			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
 			'notif-row-requests-standard',
 			'notif-row-requests-mention'
 		]);
@@ -653,6 +658,25 @@ describe('Rows that never fire are hidden, rows without a producer yet are disab
 		renderRows('consultant', 'timeCritical');
 		expect(screen.queryByTestId('notif-tab-timeCritical')).toBeNull();
 		expect(screen.getByTestId('notif-tab-requests')).toBeTruthy();
-		expect(rowIds()).toEqual(['notif-row-requests-new']);
+		expect(rowIds()).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-mention'
+		]);
+	});
+
+	it('shows the ordinary-chat mention row disabled for a counsellor until UserService#1510, with its reason', () => {
+		renderRows('consultant', 'conversations');
+		const banner = screen.getByTestId(
+			'notif-banner-conversations-mention'
+		) as HTMLSelectElement;
+		const reason = screen.getByTestId('notif-reason-conversations-mention');
+		expect(banner.disabled).toBe(true);
+		expect(banner.getAttribute('aria-describedby')).toBe(reason.id);
+		expect(reason.textContent).toBe(
+			'profile.notifications.config.unavailable.notSentYet'
+		);
+		// The Gespräche → "Neue Anfrage" row is gone for everyone.
+		expect(screen.queryByTestId('notif-row-conversations-new')).toBeNull();
 	});
 });

@@ -227,7 +227,11 @@ export const BodyCounsellorHidesRowsThatNeverFire: BodyStory = {
 	name: 'Body – Berater:in, Zeilen ohne Auslöser ausgeblendet',
 	render: () => <InteractiveBody initialArea="requests" role="consultant" />,
 	play: async ({ canvasElement }) => {
-		await expect(rowIds(canvasElement)).toEqual(['notif-row-requests-new']);
+		await expect(rowIds(canvasElement)).toEqual([
+			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
+			'notif-row-requests-mention'
+		]);
 		await expect(
 			canvasElement.querySelector<HTMLSelectElement>(
 				'[data-cy="notif-banner-requests-new"]'
@@ -257,11 +261,37 @@ export const BodyRoleStillLoading: BodyStory = {
 	play: async ({ canvasElement }) => {
 		await expect(rowIds(canvasElement)).toEqual([
 			'notif-row-requests-new',
+			'notif-row-requests-teamDiscussion',
 			'notif-row-requests-standard',
 			'notif-row-requests-mention'
 		]);
 		for (const select of canvasElement.querySelectorAll('select')) {
 			await expect(select.disabled).toBe(false);
 		}
+	}
+};
+
+/**
+ * #778: a mention in an ordinary chat has no producer yet (UserService#1510),
+ * so a counsellor's Gespräche row is disabled and says why.
+ */
+export const BodyCounsellorMentionNotYetAvailable: BodyStory = {
+	name: 'Body – Berater:in, Erwähnung im Chat noch nicht verfügbar',
+	render: () => (
+		<InteractiveBody initialArea="conversations" role="consultant" />
+	),
+	play: async ({ canvasElement }) => {
+		const banner = canvasElement.querySelector<HTMLSelectElement>(
+			'[data-cy="notif-banner-conversations-mention"]'
+		)!;
+		const reason = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="notif-reason-conversations-mention"]'
+		)!;
+		await expect(banner.disabled).toBe(true);
+		await expect(banner.getAttribute('aria-describedby')).toBe(reason.id);
+		await expect(reason.textContent!.trim()).not.toBe('');
+		await expect(rowIds(canvasElement)).not.toContain(
+			'notif-row-conversations-new'
+		);
 	}
 };

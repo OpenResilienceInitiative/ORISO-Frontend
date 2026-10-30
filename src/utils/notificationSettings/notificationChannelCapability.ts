@@ -111,6 +111,16 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: `${ES}.createMessageNotificationFromRoom`
 	},
 	{
+		// Mentions in ordinary chats: the row exists but nothing sets
+		// params.mentioned on message.new yet (ORISO-UserService#1510), so the
+		// Gespräche -> @ Erwähnung row is shown disabled until then.
+		eventType: 'message.new',
+		variant: 'mentioned',
+		recipients: CONSULTANT,
+		emitted: false,
+		source: 'ORISO-UserService#1510 (no producer yet)'
+	},
+	{
 		eventType: 'thread.reply.new',
 		recipients: BOTH,
 		emitted: true,
@@ -228,7 +238,7 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 			source: 'GroupChatLifecycleNotificationService'
 		})
 	),
-	// System (banner follows the single system switch, not a row)
+	// System (banner and tone follow the single system switch, not a row)
 	...['supervisor.added', 'supervisor.removed', 'supervisor.assigned'].map(
 		(eventType): EventCase => ({
 			eventType,

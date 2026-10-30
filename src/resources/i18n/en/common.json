@@ -2869,6 +2869,7 @@
 				},
 				"kind": {
 					"new": "New request",
+					"teamDiscussion": "Team discussion",
 					"standard": "Standard notification",
 					"liveChat": "Live chat message",
 					"mention": "@ Mention",
