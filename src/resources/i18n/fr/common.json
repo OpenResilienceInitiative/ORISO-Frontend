@@ -2115,6 +2115,26 @@
 		"info": "Information",
 		"success": "Succès",
 		"warning": "Avertissement",
+		"eventNotice": {
+			"mention": {
+				"title": "Mention dans la discussion d’équipe",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion d’équipe"
+			},
+			"handover": {
+				"title": "Nouveau transfert de dossier",
+				"from": "De {{name}}",
+				"several": "{{count}} avis de transfert de dossier",
+				"open": "Voir le dossier"
+			},
+			"consent": {
+				"title": "Consentement au transfert de dossier requis",
+				"text": "Le transfert attend une réponse.",
+				"several": "{{count}} demandes de transfert de dossier attendent une réponse.",
+				"open": "Voir la demande"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Nouveau message dans le chat en direct",
 			"from": "De {{name}}",

@@ -2112,6 +2112,26 @@
 		"info": "Info",
 		"success": "Success",
 		"warning": "Warning",
+		"eventNotice": {
+			"mention": {
+				"title": "Mention in the team discussion",
+				"from": "From {{name}}",
+				"several": "{{count}} new mentions",
+				"open": "Open team discussion"
+			},
+			"handover": {
+				"title": "New case handover",
+				"from": "From {{name}}",
+				"several": "{{count}} case handover notices",
+				"open": "View case"
+			},
+			"consent": {
+				"title": "Consent to a case handover needed",
+				"text": "The handover is waiting for an answer.",
+				"several": "{{count}} case handover requests are waiting for an answer.",
+				"open": "View request"
+			}
+		},
 		"liveChatMessage": {
 			"title": "New live chat message",
 			"from": "From {{name}}",
