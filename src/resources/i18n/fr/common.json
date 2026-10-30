@@ -2365,14 +2365,14 @@
 			},
 			"callKnockRequested": {
 				"title": "Une personne frappe",
-				"text": "Une personne souhaite rejoindre votre appel. Ouvrez la conversation pour la laisser entrer.",
+				"text": "Une personne souhaite rejoindre votre appel. Rejoignez l'appel pour la laisser entrer.",
 				"video": {
 					"title": "Une personne frappe – appel vidéo",
-					"text": "Une personne souhaite rejoindre votre appel vidéo via votre lien direct. Ouvrez la conversation pour la laisser entrer."
+					"text": "Une personne souhaite rejoindre votre appel vidéo via votre lien direct. Rejoignez l'appel pour la laisser entrer."
 				},
 				"audio": {
 					"title": "Une personne frappe – appel audio",
-					"text": "Une personne souhaite rejoindre votre appel audio via votre lien direct. Ouvrez la conversation pour la laisser entrer."
+					"text": "Une personne souhaite rejoindre votre appel audio via votre lien direct. Rejoignez l'appel pour la laisser entrer."
 				}
 			},
 			"appointmentRequested": {
@@ -4399,6 +4399,7 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
+				"directLinks": "Liens directs",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",

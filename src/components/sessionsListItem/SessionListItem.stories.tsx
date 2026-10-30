@@ -1393,6 +1393,48 @@ const expectGroupRow = async (
 	);
 };
 
+/**
+ * FE#1952: four conversations of one counsellor. The first came in by mail;
+ * the others came in through the counsellor's video, audio and chat direct
+ * link. The card names how each one came in, instead of "Mail" for all.
+ */
+const DIRECT_LINK_ROWS = [
+	{ id: 4501, medium: undefined, user: 'ruhiges_yak' },
+	{ id: 4502, medium: 'VIDEO', user: 'sonnenblume_47' },
+	{ id: 4503, medium: 'AUDIO', user: 'blauer_reiher' },
+	{ id: 4504, medium: 'CHAT', user: 'stiller_fuchs' }
+] as const;
+
+export const DirectLinkConversations: Story = {
+	name: 'Direktlink-Gespräche (FE#1952)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{DIRECT_LINK_ROWS.map((row, index) => (
+					<RuntimeCard
+						key={row.id}
+						index={index}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: row.id,
+								matrixRoomId: `!direct-${row.id}:matrix.example.org`,
+								lastMessage: 'Hallo, ich warte im Anruf.',
+								// Unknown to builds before FE#1952: they show "Mail".
+								...({ directLinkMedium: row.medium } as object)
+							},
+							userOverrides: { username: row.user }
+						})}
+					/>
+				))}
+			</div>
+		);
+	}
+};
+
 /** Resting consultant card: topic and postcode as one pill, Mail, alias preview in italics. */
 export const ConsultantUnselected: Story = {
 	name: 'Beratung — nicht ausgewählt',

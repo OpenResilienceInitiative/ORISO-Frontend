@@ -9,6 +9,7 @@ import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHe
 import {
 	isAnonymousAskerSession,
 	isConversationCircleSession,
+	isDirectLinkSession,
 	isInternalGroupChatSession,
 	SessionToolbarChipFilter
 } from '../../components/sessionsList/sessionToolbarFilters';
@@ -28,6 +29,7 @@ export type SessionKindId =
 	| 'unread'
 	| 'drafts'
 	| 'oneToOne'
+	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'circle'
@@ -48,6 +50,8 @@ export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
 	'unread',
 	'drafts',
 	'oneToOne',
+	// FE#1952: right after Mail, as in the toolbar.
+	'directLinks',
 	'liveChat',
 	'internalGroup',
 	'circle',
@@ -86,6 +90,7 @@ export const SESSION_KIND_CHIP: Partial<
 	unread: 'unread',
 	drafts: 'drafts',
 	oneToOne: 'nearby',
+	directLinks: 'directLinks',
 	nearby: 'nearby',
 	liveChat: 'liveChat',
 	internalGroup: 'internalGroup',
@@ -139,6 +144,10 @@ export const classifySession = (
 		String(raw.consultant.id) !== String(currentUserId || '')
 	) {
 		return 'supervision';
+	}
+	// FE#1952: a 1:1 conversation that came in through a direct link.
+	if (isDirectLinkSession(raw)) {
+		return 'directLinks';
 	}
 	return 'oneToOne';
 };

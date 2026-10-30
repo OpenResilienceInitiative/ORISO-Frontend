@@ -282,7 +282,9 @@ export const resolveNotificationActionPath = (
 	return target.kind === 'conversation' ||
 		target.kind === 'groupChatJoin' ||
 		target.kind === 'request' ||
-		target.kind === 'draft'
+		target.kind === 'draft' ||
+		// FE#1952: where a knock lands once its call is started (or cannot be).
+		target.kind === 'callRoom'
 		? target.path
 		: null;
 };

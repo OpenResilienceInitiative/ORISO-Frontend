@@ -2365,14 +2365,14 @@
 			},
 			"callKnockRequested": {
 				"title": "Biri kapıyı çalıyor",
-				"text": "Biri aramanıza katılmak istiyor. İçeri almak için görüşmeyi açın.",
+				"text": "Biri aramanıza katılmak istiyor. İçeri almak için aramaya katılın.",
 				"video": {
 					"title": "Biri kapıyı çalıyor – görüntülü arama",
-					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için görüşmeyi açın."
+					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
 				},
 				"audio": {
 					"title": "Biri kapıyı çalıyor – sesli arama",
-					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için görüşmeyi açın."
+					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
 				}
 			},
 			"appointmentRequested": {
@@ -4399,6 +4399,7 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
+				"directLinks": "Doğrudan bağlantılar",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",

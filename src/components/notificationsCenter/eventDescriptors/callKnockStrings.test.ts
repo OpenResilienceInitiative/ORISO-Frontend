@@ -78,7 +78,7 @@ describe('knock on a direct-link call (FE#1952)', () => {
 	it('names the video call', () => {
 		expect(render('VIDEO')).toEqual({
 			title: 'Jemand klopft an – Videoanruf',
-			text: 'Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Öffnen Sie das Gespräch, um sie einzulassen.'
+			text: 'Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen.'
 		});
 	});
 
@@ -90,13 +90,13 @@ describe('knock on a direct-link call (FE#1952)', () => {
 	it('still reads as a knock when the medium is missing', () => {
 		expect(render()).toEqual({
 			title: 'Jemand klopft an',
-			text: 'Eine Person möchte in Ihren Anruf. Öffnen Sie das Gespräch, um sie einzulassen.'
+			text: 'Eine Person möchte in Ihren Anruf. Treten Sie dem Anruf bei, um sie einzulassen.'
 		});
 	});
 
 	it('speaks informally for de@informal', () => {
 		expect(render('VIDEO', 'de@informal').text).toBe(
-			'Eine Person möchte über deinen Direktlink in deinen Videoanruf. Öffne das Gespräch, um sie einzulassen.'
+			'Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen.'
 		);
 	});
 
@@ -112,7 +112,28 @@ describe('knock on a direct-link call (FE#1952)', () => {
 		}
 	);
 
-	it('opens the conversation the person knocks in', () => {
+	it('goes straight into the call of the conversation the person knocks in', () => {
+		const target = getEventDescriptor(
+			'call.knock.requested'
+		).resolveActionTarget({
+			...parseEventActionParams(payload('VIDEO')),
+			actionPath:
+				'/sessions/consultant/sessionView/!direct:matrix.example/500'
+		});
+		expect(target).toEqual({
+			kind: 'callRoom',
+			roomId: '!direct:matrix.example',
+			isVideo: true,
+			path: '/sessions/consultant/sessionView/!direct:matrix.example/500'
+		});
+		expect(
+			getEventDescriptor('call.knock.requested').resolveActionTarget(
+				parseEventActionParams(payload('AUDIO'))
+			)
+		).toMatchObject({ kind: 'callRoom', isVideo: false });
+	});
+
+	it('still opens the conversation when the call cannot start from the entry', () => {
 		expect(
 			resolveNotificationActionPath(
 				{
@@ -127,7 +148,11 @@ describe('knock on a direct-link call (FE#1952)', () => {
 		).toBe('/sessions/consultant/sessionView/!direct:matrix.example/500');
 		expect(
 			getEventDescriptor('call.knock.requested').resolveActionTarget({})
-				.kind
-		).toBe('conversation');
+		).toEqual({
+			kind: 'callRoom',
+			roomId: null,
+			isVideo: false,
+			path: null
+		});
 	});
 });

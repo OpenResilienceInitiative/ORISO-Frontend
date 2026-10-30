@@ -771,3 +771,51 @@ export const UnreadCountCapped: Story = {
 		await expect(mark.scrollWidth).toBeLessThanOrEqual(mark.clientWidth);
 	}
 };
+
+/**
+ * FE#1952: the collapsed list. A mail conversation keeps its Mail mark; one
+ * that came in through the counsellor's video, audio or chat direct link
+ * shows that instead.
+ */
+export const DirectLinkMarks: Story = {
+	name: 'Pille — Direktlink-Herkunft (FE#1952)',
+	render: () => (
+		<div style={{ display: 'flex', gap: 24 }}>
+			{[undefined, 'VIDEO', 'AUDIO', 'CHAT'].map((medium, index) => (
+				<Pill
+					key={medium ?? 'mail'}
+					name={
+						[
+							'ruhiges_yak',
+							'sonnenblume_47',
+							'blauer_reiher',
+							'stiller_fuchs'
+						][index]
+					}
+					userId={`sb-direct-${index}`}
+					marks={getSessionRailMarks({
+						modality: 'AGENCY_COUNSELLING',
+						unread: index === 1,
+						// Unknown to builds before FE#1952: they show Mail.
+						...({ directLinkMedium: medium } as object)
+					} as Parameters<typeof getSessionRailMarks>[0])}
+					unreadCount={index === 1 ? 1 : undefined}
+				/>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const shown = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.sessionRailPill__mark'
+			)
+		).map((mark) => mark.dataset.mark);
+		await expect(shown).toEqual([
+			'mail',
+			'videoCall',
+			'unread',
+			'audioCall',
+			'directLink'
+		]);
+	}
+};

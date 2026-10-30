@@ -750,3 +750,54 @@ export const HandoverEventGlyphs: Story = {
 		}
 	}
 };
+
+/**
+ * FE#1952: someone opened the counsellor's video direct link and knocks. The
+ * entry rings with the call tone (covered by tests, not visible here); one
+ * click starts the call of that conversation (covered by
+ * `NotificationsCenter.knockCall.test.tsx`).
+ */
+export const KnockOnDirectLink: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'knock-video',
+				eventType: 'call.knock.requested',
+				createdAt: minutesAgo(1),
+				sourceSessionId: '500',
+				actionPath:
+					'/sessions/consultant/sessionView/!direct:matrix.example/500',
+				params: {
+					conversationType: 'AGENCY_COUNSELLING',
+					roomRef: '!direct:matrix.example',
+					medium: 'VIDEO'
+				}
+			}),
+			feedItem({
+				id: 'knock-audio',
+				eventType: 'call.knock.requested',
+				createdAt: minutesAgo(12),
+				readAt: minutesAgo(10),
+				sourceSessionId: '501',
+				actionPath:
+					'/sessions/consultant/sessionView/!direct-audio:matrix.example/501',
+				params: {
+					conversationType: 'AGENCY_COUNSELLING',
+					roomRef: '!direct-audio:matrix.example',
+					medium: 'AUDIO'
+				}
+			})
+		])
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText('Jemand klopft an – Videoanruf').length
+			).toBeGreaterThan(0)
+		);
+		await expect(
+			canvas.getAllByText('Jemand klopft an – Audioanruf').length
+		).toBeGreaterThan(0);
+	}
+};

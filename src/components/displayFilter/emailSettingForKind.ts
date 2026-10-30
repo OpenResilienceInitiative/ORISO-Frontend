@@ -22,6 +22,8 @@ const SWITCH_BY_KIND: Record<
 	sessions: {
 		// Messages from advice seekers in a counselling conversation.
 		oneToOne: 'newMessage',
+		// FE#1952: a direct-link conversation is a counselling conversation too.
+		directLinks: 'newMessage',
 		appointments: 'appointment',
 		// Frank 2026-10-15: the Fachaustausch switch (counsellors only).
 		supervision: 'feedback'

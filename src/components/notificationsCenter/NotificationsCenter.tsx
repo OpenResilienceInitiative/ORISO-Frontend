@@ -105,6 +105,8 @@ import {
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
 import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
+import { startRoomCall } from '../call/startRoomCall';
+import { enterKnockCall } from './knockCallAction';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
 	formatAbsoluteTime,
@@ -258,6 +260,14 @@ const parseNumericId = (value?: string | null): number | null => {
 };
 
 type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
+
+/**
+ * Entries whose action goes in rather than opening a chat: a group chat that
+ * opened, and a knock on a direct-link call (FE#1952: the click joins the
+ * call, so "Chat öffnen" would promise the wrong thing).
+ */
+const joinsOnOpen = (eventType?: string | null): boolean =>
+	eventType === 'group_chat.opened' || eventType === 'call.knock.requested';
 
 /**
  * Call cards join their existing authorized binding. A card that cannot join
@@ -918,7 +928,7 @@ export const NotificationsCenter = () => {
 		? translate('notifications.center.openStatusPage')
 		: selectedNotification?.actionLabel ||
 			translate(
-				selectedNotification?.eventType === 'group_chat.opened'
+				joinsOnOpen(selectedNotification?.eventType)
 					? 'notifications.center.join'
 					: 'notifications.center.open'
 			);
@@ -1046,8 +1056,25 @@ export const NotificationsCenter = () => {
 		);
 	};
 
+	// FE#1952: a knock takes the counsellor into the call of its conversation
+	// in one click (desktop card included), and the conversation opens with it.
+	// Only `false` for every entry that is no knock.
+	const openKnock = (item: NotificationFeedItem): boolean => {
+		const target = getEventDescriptor(item.eventType).resolveActionTarget(
+			item.params || {}
+		);
+		if (target.kind !== 'callRoom') return false;
+		enterKnockCall(target, {
+			start: startRoomCall,
+			currentCall: () => callManager.getCurrentCall()
+		});
+		navigate(getNotificationActionPath(item) || getDefaultSessionsPath());
+		return true;
+	};
+
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
+		if (openKnock(item)) return;
 		const statusPage = resolveStatusPageAction(item);
 		if (untilL && statusPage.linksToStatusPage) {
 			if (statusPage.url) {
@@ -1086,6 +1113,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
+		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
@@ -1433,7 +1461,11 @@ export const NotificationsCenter = () => {
 													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
 													: item.actionLabel ||
 														translate(
-															'notifications.center.open'
+															joinsOnOpen(
+																item.eventType
+															)
+																? 'notifications.center.join'
+																: 'notifications.center.open'
 														)
 											}
 											onClick={handleOpenAction}

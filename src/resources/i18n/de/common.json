@@ -2386,14 +2386,14 @@
 			},
 			"callKnockRequested": {
 				"title": "Jemand klopft an",
-				"text": "Eine Person möchte in Ihren Anruf. Öffnen Sie das Gespräch, um sie einzulassen.",
+				"text": "Eine Person möchte in Ihren Anruf. Treten Sie dem Anruf bei, um sie einzulassen.",
 				"video": {
 					"title": "Jemand klopft an – Videoanruf",
-					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Öffnen Sie das Gespräch, um sie einzulassen."
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
 				},
 				"audio": {
 					"title": "Jemand klopft an – Audioanruf",
-					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Öffnen Sie das Gespräch, um sie einzulassen."
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
 				}
 			},
 			"appointmentRequested": {
@@ -4427,6 +4427,7 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
+				"directLinks": "Direktlinks",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",

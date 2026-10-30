@@ -101,7 +101,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'call.missed': 'conversation',
 	'call.invited': 'conversation',
 	// FE#1952: a knock on a direct-link call opens its conversation.
-	'call.knock.requested': 'conversation',
+	'call.knock.requested': 'callRoom',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
 	'group_chat.cancelled': 'conversation',
