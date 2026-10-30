@@ -91,7 +91,18 @@ const hasCard = (row: FeedRow) =>
 	isNewEnquiryForCounsellor(row) ||
 	eventNoticeKindFor(row) !== null;
 
+/**
+ * Where the user is when the event's target is on screen. Normally the row's
+ * own link; the team-discussion link is a bare redirect target that renders
+ * an empty view, so the screen to compare with is the enquiry view with the
+ * team channel open.
+ */
 const location = (row: FeedRow) => {
+	if (row.eventType === 'team.discussion.new')
+		return {
+			pathname: `/sessions/consultant/sessionPreview/${enc(ROOM)}/${SESSION}`,
+			search: '?channel=team'
+		};
 	const [pathname, search = ''] = row.actionPath.split('?');
 	return { pathname, search: search ? `?${search}` : '' };
 };
@@ -196,7 +207,7 @@ describe('event table vs runtime predicates', () => {
 		expect(consent('OPT_IN', 'consultant')).toBeNull();
 	});
 
-	it('keeps team-discussion mentions on screen only when the team channel is open', () => {
+	it('treats a team-discussion mention as seen only on the enquiry view with the team channel open', () => {
 		const post = feedRow(
 			EVENT_CASES.find(
 				(c) => caseId(c) === 'team.discussion.new+mentioned'
@@ -204,16 +215,17 @@ describe('event table vs runtime predicates', () => {
 			'consultant'
 		);
 		const target = { sessionId: SESSION, roomRef: undefined };
-		// The enquiry's main chat does not show the discussion: not silent.
-		expect(
-			isEventNoticeTargetOpen(
-				'mention',
-				target,
-				`/sessions/consultant/sessionPreview/${enc(ROOM)}/${SESSION}`,
-				'',
-				true
-			)
-		).toBe(false);
+		const open = (pathname: string, search: string) =>
+			isEventNoticeTargetOpen('mention', target, pathname, search, true);
+		const enquiry = `/sessions/consultant/sessionPreview/${enc(ROOM)}/${SESSION}`;
+		expect(open(enquiry, '?channel=team')).toBe(true);
+		expect(open(enquiry, '?teamDiscussion=1')).toBe(true);
+		// The enquiry's main chat does not show the discussion.
+		expect(open(enquiry, '')).toBe(false);
+		// The bare link UserService writes renders an empty view: not seen,
+		// so the card, tone and banner still announce.
+		const [barePath, bareSearch] = post.actionPath.split('?');
+		expect(open(barePath, `?${bareSearch}`)).toBe(false);
 		expect(silentWhenTargetOpen(post)).toBe(true);
 	});
 });
