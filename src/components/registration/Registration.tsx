@@ -56,7 +56,8 @@ import { endpoints } from '../../resources/scripts/endpoints';
 import {
 	accountExistsAfterTimeout,
 	apiGetAskerSessionList,
-	apiPostRegistration
+	apiPostRegistration,
+	autoLoginWithDeadline
 } from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
@@ -86,8 +87,10 @@ import { clearAccountDataDraft } from './accountData/accountDataDraft';
 import { stageAccountCreatedLogin } from './accountCreatedLogin';
 import {
 	clearRegistrationSubmitting,
+	getTemporaryAccountAwaitingLogin,
 	isRegistrationSubmitting,
 	markRegistrationSubmitting,
+	setTemporaryAccountAwaitingLogin,
 	subscribeRegistrationSubmitting
 } from './registrationSubmission';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -681,6 +684,64 @@ export const Registration = () => {
 		});
 		/* The app after the load shows the same words as this frame (#1219). */
 		rememberHandoverGroupJoin(Boolean(groupJoin));
+		/* Everything after a login that worked — the first one after the
+		   registration or a repeated one (#1941). */
+		const enterApp = async () => {
+			markHandoverMilestone('signedIn');
+			/* Best-effort, every one of them: Web Storage throws when
+			   it is disabled or full (Safari's private mode is the
+			   classic), and none of this is worth not arriving in the
+			   app for. The welcome animation is the only thing lost,
+			   and only if its key is the one that failed. */
+			forgetRegistrationDraft();
+			let sessionId: string | undefined;
+			try {
+				sessionId = getPostRegistrationSessionId(
+					await apiGetAskerSessionList()
+				);
+			} catch {
+				sessionId = undefined;
+			}
+			markHandoverMilestone('sessions');
+			/* Keep a document load for both registration handover and
+			   the browser's password-save signal (#1208, #1402).
+			   A client-side transition can leave the submitted form
+			   painted while the app URL already shows. The welcome
+			   animation survives via POST_REGISTRATION_LOADER_KEY. */
+			/* A link the registration did not accept (another agency)
+			   joins no group afterwards either: no `gcid` for the app,
+			   so assignment and copy agree. */
+			redirectToApp(
+				groupJoin
+					? getPostRegistrationGroupChatId(location.search)
+					: undefined,
+				{ sessionId }
+			);
+		};
+		/* A temporary join whose account exists and whose login failed
+		   (#1941): only the login is tried again, with the credentials the
+		   account was created with. Registering again would make a second
+		   account for the same person. */
+		const awaitingLogin = getTemporaryAccountAwaitingLogin();
+		if (awaitingLogin) {
+			resetHandoverProgress();
+			markRegistrationSubmitting();
+			markHandoverMilestone('account');
+			autoLoginWithDeadline({
+				...awaitingLogin,
+				tenantData: tenant
+			}).then(
+				() => {
+					setTemporaryAccountAwaitingLogin(null);
+					return enterApp();
+				},
+				() => {
+					clearRegistrationSubmitting();
+					resetHandoverProgress();
+				}
+			);
+			return;
+		}
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -740,38 +801,7 @@ export const Registration = () => {
 					markHandoverMilestone('account');
 				}
 			)
-				.then(async () => {
-					markHandoverMilestone('signedIn');
-					/* Best-effort, every one of them: Web Storage throws when
-					   it is disabled or full (Safari's private mode is the
-					   classic), and none of this is worth not arriving in the
-					   app for. The welcome animation is the only thing lost,
-					   and only if its key is the one that failed. */
-					forgetRegistrationDraft();
-					let sessionId: string | undefined;
-					try {
-						sessionId = getPostRegistrationSessionId(
-							await apiGetAskerSessionList()
-						);
-					} catch {
-						sessionId = undefined;
-					}
-					markHandoverMilestone('sessions');
-					/* Keep a document load for both registration handover and
-					   the browser's password-save signal (#1208, #1402).
-					   A client-side transition can leave the submitted form
-					   painted while the app URL already shows. The welcome
-					   animation survives via POST_REGISTRATION_LOADER_KEY. */
-					/* A link the registration did not accept (another agency)
-					   joins no group afterwards either: no `gcid` for the app,
-					   so assignment and copy agree. */
-					redirectToApp(
-						groupJoin
-							? getPostRegistrationGroupChatId(location.search)
-							: undefined,
-						{ sessionId }
-					);
-				})
+				.then(enterApp)
 				.catch(async (error) => {
 					// console.error('Registration failed:', error);
 					if (
@@ -787,6 +817,19 @@ export const Registration = () => {
 						   work, and the flag stays set until that load. The
 						   login page is told why the person is there and which
 						   User-ID they chose — never the password (#1533). */
+						if (data.temporary) {
+							/* …except for a temporary join: its password was
+							   minted and never shown, so the login page cannot
+							   let this person in (#1941). The screen offers the
+							   login again instead. */
+							setTemporaryAccountAwaitingLogin({
+								username: data.username || '',
+								password: data.password || ''
+							});
+							clearRegistrationSubmitting();
+							resetHandoverProgress();
+							return;
+						}
 						stageAccountCreatedLogin(data.username || '');
 						redirectToLogin();
 						return;
@@ -875,6 +918,27 @@ export const Registration = () => {
 				department={handoverDepartment}
 				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
 				closing={joinsTheGroup ? null : undefined}
+			/>
+		);
+	}
+
+	/* Read during render: the failure that sets it also clears the submit,
+	   and that clear re-renders whichever mount is on screen. Not the account
+	   form — its User-ID is taken by now, by this very account (#1941). */
+	if (getTemporaryAccountAwaitingLogin()) {
+		return (
+			<GroupInviteEntry
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				temporary={true}
+				loginRetry={true}
+				onToggleTemporary={toggleInviteWithAccount}
+				onChange={setStepData}
+				onJoin={onRegisterClick}
+				joinDisabled={false}
+				busy={isRegistering}
+				agencyName={urlParamsAgency?.name}
 			/>
 		);
 	}

@@ -27,7 +27,10 @@ import {
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
-import { clearRegistrationSubmitting } from '../registrationSubmission';
+import {
+	clearRegistrationSubmitting,
+	setTemporaryAccountAwaitingLogin
+} from '../registrationSubmission';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 
@@ -62,19 +65,24 @@ vi.mock('../accountData/AccountData', () => ({
 }));
 
 const apiPostRegistration = vi.fn(() => Promise.resolve());
+const autoLoginWithDeadline = vi.fn(() => Promise.resolve());
 vi.mock('../../../api', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	apiPostRegistration: (...args: unknown[]) =>
 		(apiPostRegistration as any)(...args),
+	autoLoginWithDeadline: (...args: unknown[]) =>
+		(autoLoginWithDeadline as any)(...args),
 	apiGetAskerSessionList: () =>
 		Promise.resolve({ sessions: [{ session: { id: 211 } }] })
 }));
 
 const redirectToApp = vi.fn();
+const redirectToLogin = vi.fn();
 const addNotification = vi.fn();
 vi.mock('../autoLogin', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
-	redirectToApp: (...args: unknown[]) => redirectToApp(...args)
+	redirectToApp: (...args: unknown[]) => redirectToApp(...args),
+	redirectToLogin: (...args: unknown[]) => redirectToLogin(...args)
 }));
 
 /**
@@ -194,8 +202,12 @@ beforeEach(() => {
 	stepPick = null;
 	stageProps.length = 0;
 	apiPostRegistration.mockClear();
+	autoLoginWithDeadline.mockClear();
 	redirectToApp.mockClear();
+	redirectToLogin.mockClear();
 	addNotification.mockClear();
+	// Document-lived like the submit flag; the mocked redirects never end it.
+	setTemporaryAccountAwaitingLogin(null);
 });
 
 afterEach(() => {
@@ -674,5 +686,71 @@ describe('a broken invite link fails safely (#921)', () => {
 
 		await waitFor(() => expect(addNotification).toHaveBeenCalled());
 		expect(screen.queryByRole('alert')).toBeNull();
+	});
+});
+
+describe('a temporary join whose sign-in fails after the account exists (#1941)', () => {
+	/* `apiPostRegistration` reports the account through its callback, then
+	   the automatic sign-in gives up — on a slow connection after 20 s. */
+	const signInFailsAfterAccount = () =>
+		apiPostRegistration.mockImplementationOnce(((...args: unknown[]) => {
+			(args[4] as () => void)();
+			return Promise.reject(new Error('AUTO_LOGIN_TIMEOUT'));
+		}) as any);
+	const loginRetry = () =>
+		document.querySelector('[data-cy="group-invite-login-retry"]');
+
+	it('offers the sign-in again instead of a login that asks for a password nobody knows', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(loginRetry()).toBeTruthy());
+		expect(redirectToLogin).not.toHaveBeenCalled();
+		expect(
+			screen.queryByTestId('account-data'),
+			'the name belongs to the new account now; asking it again ends in "already taken"'
+		).toBeNull();
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		expect(primary().textContent).toBe('Der Gruppe beitreten');
+	});
+
+	it('the next press only signs in, with the same credentials, and enters the group', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+		fireEvent.click(primary());
+		await waitFor(() => expect(loginRetry()).toBeTruthy());
+
+		fireEvent.click(primary());
+
+		await waitFor(() =>
+			expect(redirectToApp).toHaveBeenCalledWith('19', {
+				sessionId: '211'
+			})
+		);
+		expect(autoLoginWithDeadline).toHaveBeenCalledWith(
+			expect.objectContaining({
+				username: 'ente_yuki_7984',
+				password: 'Minted-in-the-test-1'
+			})
+		);
+		expect(
+			apiPostRegistration,
+			'never a second account for the same person'
+		).toHaveBeenCalledTimes(1);
+	});
+
+	it('a permanent account still goes to the login — its owner knows the password', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+		fireEvent.click(secondary());
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(redirectToLogin).toHaveBeenCalledTimes(1));
+		expect(loginRetry()).toBeNull();
 	});
 });

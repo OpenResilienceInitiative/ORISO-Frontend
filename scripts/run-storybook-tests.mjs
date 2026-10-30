@@ -8,10 +8,8 @@ const MAX_CAPTURED_OUTPUT = 500_000;
 /** Full-suite re-runs after a disconnect-only abort (initial attempt + retries). */
 export const MAX_BROWSER_DISCONNECT_RETRIES = 4;
 const RETRY_COOLDOWN_MS = 2_000;
-const ASSERTION_FAILURE_SIGNATURES = [
-	/\bTests\s+[1-9]\d*\s+failed\b/i,
-	/\bAssertionError\b/
-];
+const ASSERTION_FAILURE_SIGNATURE = /\bAssertionError\b/;
+const FAILED_TEST_SUMMARY_SIGNATURE = /\bTests\s+[1-9]\d*\s+failed\b/i;
 const IMPORT_CRASH_SIGNATURES = [
 	/Failed to import test file/i,
 	/Failed to fetch dynamically imported module/i,
@@ -59,22 +57,26 @@ export const storybookShardArgs = (index, count) =>
 const stripAnsi = (output) => output.replace(/\u001b\[[0-9;]*m/g, '');
 
 const hasAssertionFailure = (output) =>
-	ASSERTION_FAILURE_SIGNATURES.some((signature) =>
-		signature.test(stripAnsi(output))
-	);
+	ASSERTION_FAILURE_SIGNATURE.test(stripAnsi(output));
+
+const hasFailedTestSummary = (output) =>
+	FAILED_TEST_SUMMARY_SIGNATURE.test(stripAnsi(output));
 
 /** Classify each failed suite before its output can leave the rolling buffer. */
 export const createSuiteFailureTracker = () => {
 	const pendingLines = new Map();
 	let activeSuite = null;
 	let genuineFailure = false;
-	let importFailures = 0;
+	let infrastructureFailures = 0;
 	let reportedFailedSuites = 0;
 
 	const finishSuite = () => {
 		if (activeSuite !== null) {
-			if (activeSuite.importCrash) {
-				importFailures += 1;
+			if (
+				activeSuite.importCrash ||
+				(activeSuite.browserDisconnect && activeSuite.failedToRun)
+			) {
+				infrastructureFailures += 1;
 			} else {
 				genuineFailure = true;
 			}
@@ -85,10 +87,20 @@ export const createSuiteFailureTracker = () => {
 		const plain = stripAnsi(line);
 		if (/^\s*FAIL\s+/.test(plain)) {
 			finishSuite();
-			activeSuite = { importCrash: false };
+			activeSuite = {
+				importCrash: false,
+				browserDisconnect: false,
+				failedToRun: false
+			};
 		}
 		if (activeSuite !== null && looksLikeImportCrash(plain)) {
 			activeSuite.importCrash = true;
+		}
+		if (activeSuite !== null && looksLikeBrowserDisconnect(plain)) {
+			activeSuite.browserDisconnect = true;
+		}
+		if (activeSuite !== null && /Failed to run the test\b/i.test(plain)) {
+			activeSuite.failedToRun = true;
 		}
 		const summary = plain.match(/\bTest Files\s+(\d+)\s+failed\b/i);
 		if (summary) {
@@ -116,9 +128,11 @@ export const createSuiteFailureTracker = () => {
 			}
 			pendingLines.clear();
 			finishSuite();
-			// An import crash cannot explain any additional failed suite whose
-			// block was absent from the captured tail or otherwise unclassified.
-			return genuineFailure || reportedFailedSuites > importFailures;
+			// A classified infrastructure failure cannot explain any additional
+			// failed suite whose block was absent or otherwise unclassified.
+			return (
+				genuineFailure || reportedFailedSuites > infrastructureFailures
+			);
 		}
 	};
 };
@@ -164,8 +178,9 @@ export const looksLikeBrowserDisconnect = (output) => {
  *
  * Assertion failures are latched as chunks arrive. Failed suite blocks are
  * classified independently by a streaming tracker, which retains their outcome
- * even after the rolling output drops the original text. Only import-crash
- * blocks may retry; a genuine or unclassified failed suite stops the retry.
+ * even after the rolling output drops the original text. Import crashes and
+ * files Vitest explicitly failed because its browser disconnected may retry;
+ * a genuine or unclassified failed suite stops the retry.
  *
  * Gating on it made the retry unreachable in CI: the Storybook run emits
  * thousands of "Module … has been externalized for browser compatibility"
@@ -188,13 +203,19 @@ export const shouldRetryStorybookRun = (
 	code,
 	capturedOutput,
 	{ failureDetected = false } = {}
-) =>
-	code !== 0 &&
-	!failureDetected &&
-	!hasAssertionFailure(capturedOutput) &&
-	!hasUnexplainedSuiteFail(capturedOutput) &&
-	(looksLikeBrowserDisconnect(capturedOutput) ||
-		looksLikeImportCrash(capturedOutput));
+) => {
+	const browserDisconnect = looksLikeBrowserDisconnect(capturedOutput);
+	const browserAttributedFailure =
+		browserDisconnect && /Failed to run the test\b/i.test(capturedOutput);
+	return (
+		code !== 0 &&
+		!failureDetected &&
+		!hasAssertionFailure(capturedOutput) &&
+		(!hasFailedTestSummary(capturedOutput) || browserAttributedFailure) &&
+		!hasUnexplainedSuiteFail(capturedOutput) &&
+		(browserDisconnect || looksLikeImportCrash(capturedOutput))
+	);
+};
 
 const sleep = (ms) =>
 	new Promise((resolve) => {
