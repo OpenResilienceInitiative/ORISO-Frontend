@@ -41,6 +41,13 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../api/apiGetAgencyId', () => ({
 	apiGetAgencyById: vi.fn(() => Promise.resolve({ id: 19, topicIds: [17] }))
 }));
+// The agency's topic triggers the consent-text lookup; a real request
+// outlives the test and fails once the window is gone.
+vi.mock('../../../api/apiGetConsentText', () => ({
+	apiGetConsentText: vi
+		.fn()
+		.mockResolvedValue({ status: 'ok', consentText: null })
+}));
 vi.mock('../../legalLinks/LegalLinkModal', () => ({
 	LegalLinkModal: (props: {
 		title: string;
