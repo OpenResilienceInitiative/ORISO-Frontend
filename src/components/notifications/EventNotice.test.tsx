@@ -378,6 +378,12 @@ describe('where the target is open', () => {
 		['/sessions/consultant/sessionView/!room43/43', '', false],
 		['/sessions/consultant/sessionView/!room4/142', '', false],
 		['/sessions/consultant/sessionView/session/42/userProfile', '', false],
+		['/sessions/consultant/sessionView/!room42/42/userProfile', '', false],
+		[
+			'/sessions/consultant/sessionView/!room42/42',
+			'?embeddedNotifications=1',
+			false
+		],
 		['/sessions/consultant/sessionView', '', false]
 	])('conversation %s%s → open=%s', (pathname, search, open) => {
 		expect(isConversationOpen(target, pathname, search, true)).toBe(open);

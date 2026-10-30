@@ -6,6 +6,7 @@ import {
 	NotificationsContext,
 	NotificationType
 } from '../../globalState/provider/NotificationsProvider';
+import { isNotificationActiveViewRoute } from '../session/notificationActiveView';
 import { ReactComponent as MentionIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -133,19 +134,17 @@ interface NoticeTarget {
 const pathSegments = (path: string) =>
 	path.split(/[?#]/)[0].split('/').filter(Boolean).map(decodeURIComponent);
 
-const CONVERSATION_ROUTES = ['sessionView', 'sessionPreview', 'view'];
-
 /** Whether this conversation's detail view is the route and the tab visible. */
 export const isConversationOpen = (
 	target: NoticeTarget,
 	pathname: string,
-	_search: string,
+	search: string,
 	visible: boolean
 ): boolean => {
-	if (!visible) return false;
-	const segments = pathSegments(pathname);
-	if (!segments.some((segment) => CONVERSATION_ROUTES.includes(segment)))
+	// Profile and settings subroutes replace the conversation on screen.
+	if (!visible || !isNotificationActiveViewRoute(pathname, search))
 		return false;
+	const segments = pathSegments(pathname);
 	const last = segments[segments.length - 1];
 	return (
 		(!!target.sessionId && last === String(target.sessionId)) ||
