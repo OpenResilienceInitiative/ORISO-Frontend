@@ -231,6 +231,20 @@ describe('WP-06 event-descriptor registry', () => {
 			});
 		});
 
+		it("moves the team-discussion link's query session id into the path", () => {
+			const target = getEventDescriptor(
+				'team.discussion.new'
+			).resolveActionTarget({
+				actionPath:
+					'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
+			});
+			// The bare list route renders SessionViewEmpty, not the discussion.
+			expect(target).toEqual({
+				kind: 'conversation',
+				path: '/sessions/consultant/sessionPreview/session/42?teamDiscussion=1&roomId=%21team42'
+			});
+		});
+
 		it('builds a conversation path from sourceSessionId + base when no actionPath', () => {
 			const target = getEventDescriptor(
 				'message.new'

@@ -2136,6 +2136,26 @@
 		"info": "Information",
 		"success": "Erfolg",
 		"warning": "Warnung",
+		"eventNotice": {
+			"mention": {
+				"title": "Erwähnung in der Team-Besprechung",
+				"from": "Von {{name}}",
+				"several": "{{count}} neue Erwähnungen",
+				"open": "Team-Besprechung öffnen"
+			},
+			"handover": {
+				"title": "Neue Fallübergabe",
+				"from": "Von {{name}}",
+				"several": "{{count}} Hinweise zur Fallübergabe",
+				"open": "Fall ansehen"
+			},
+			"consent": {
+				"title": "Zustimmung zur Fallübergabe nötig",
+				"text": "Die Übergabe wartet auf eine Antwort.",
+				"several": "{{count}} Anfragen zur Fallübergabe warten auf eine Antwort.",
+				"open": "Anfrage ansehen"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Neue Nachricht im Live-Chat",
 			"from": "Von {{name}}",

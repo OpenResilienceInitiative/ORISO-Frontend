@@ -2115,6 +2115,26 @@
 		"info": "ሓበሬታ",
 		"success": "ዓወት",
 		"warning": "መጠንቀቕታ",
+		"eventNotice": {
+			"mention": {
+				"title": "ኣብ ዕላል ጉጅለ ጥቕሲ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} ሓደሽቲ ጥቕስታት",
+				"open": "ዕላል ጉጅለ ክፈት"
+			},
+			"handover": {
+				"title": "ሓድሽ ምቕያር ጉዳይ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} መርኣያታት ምቕያር ጉዳይ",
+				"open": "ጉዳይ ርአይ"
+			},
+			"consent": {
+				"title": "ንምቕያር ጉዳይ ስምምዕ የድሊ",
+				"text": "እቲ ምቕያር መልሲ ይጽበ ኣሎ።",
+				"several": "{{count}} ሕቶታት ምቕያር ጉዳይ መልሲ ይጽበዩ ኣለዉ።",
+				"open": "ሕቶ ርአይ"
+			}
+		},
 		"liveChatMessage": {
 			"title": "ሓድሽ መልእኽቲ ኣብ ቀጥታ ዕላል",
 			"from": "ካብ {{name}}",
