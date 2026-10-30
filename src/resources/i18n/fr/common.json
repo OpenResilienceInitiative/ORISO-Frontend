@@ -2321,7 +2321,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Offre de transfert envoyée",
-				"text": "L'offre attend la réponse du collègue. Elle peut être retirée tant qu'il n'a pas décidé."
+				"text": "L'offre attend la réponse du collègue. Elle peut être retirée tant que la passation n'est pas terminée."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Offre de transfert refusée",

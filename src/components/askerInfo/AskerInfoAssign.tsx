@@ -94,6 +94,7 @@ export const AskerInfoAssign = ({
 	const generationRef = useRef(0);
 	const sequenceRef = useRef(0);
 	const submittingRef = useRef(false);
+	const withdrawSequenceRef = useRef(0);
 	const sessionId = activeSession?.item.id;
 	const actorId = userData?.userId;
 	const identity = useMemo(
@@ -239,7 +240,8 @@ export const AskerInfoAssign = ({
 
 	const refreshOfferStatus = useCallback(
 		async (requestId: number) => {
-			if (!sessionId) return;
+			// A withdrawal in flight owns the offer state until it answers.
+			if (!sessionId || submittingRef.current) return;
 			const generation = generationRef.current;
 			const sequence = ++sequenceRef.current;
 			try {
@@ -370,7 +372,7 @@ export const AskerInfoAssign = ({
 		const requestId = offerStatus?.requestId;
 		if (!sessionId || !requestId || submittingRef.current) return;
 		const generation = generationRef.current;
-		const sequence = ++sequenceRef.current;
+		const withdrawSequence = ++withdrawSequenceRef.current;
 		submittingRef.current = true;
 		setBusy(true);
 		setError('');
@@ -381,14 +383,19 @@ export const AskerInfoAssign = ({
 			);
 			if (
 				generation === generationRef.current &&
-				sequence === sequenceRef.current
+				withdrawSequence === withdrawSequenceRef.current
 			) {
-				applyOfferStatus(response, requestId);
+				// Drop refreshes started before the answer; the response is newer.
+				sequenceRef.current += 1;
+				applyOfferStatus(
+					{ ...response, requestId: response.requestId ?? requestId },
+					requestId
+				);
 			}
 		} catch (withdrawError) {
 			if (
 				generation === generationRef.current &&
-				sequence === sequenceRef.current
+				withdrawSequence === withdrawSequenceRef.current
 			) {
 				if (
 					withdrawError instanceof Error &&
@@ -406,7 +413,7 @@ export const AskerInfoAssign = ({
 		} finally {
 			if (
 				generation === generationRef.current &&
-				sequence === sequenceRef.current
+				withdrawSequence === withdrawSequenceRef.current
 			) {
 				submittingRef.current = false;
 				setBusy(false);

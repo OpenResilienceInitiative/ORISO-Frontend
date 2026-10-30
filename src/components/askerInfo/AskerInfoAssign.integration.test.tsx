@@ -330,6 +330,75 @@ describe('AskerInfoAssign with the real SupervisorDialog', () => {
 			).toBeTruthy();
 		});
 
+		it('a focus refresh during the withdrawal cannot leave the button stuck', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+				openOffer
+			);
+			let failWithdrawal: (error: Error) => void = () => {};
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockReturnValue(
+				new Promise((_, reject) => {
+					failWithdrawal = reject;
+				})
+			);
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+			fireEvent(window, new Event('focus'));
+			failWithdrawal(new Error('NETWORK'));
+
+			expect(
+				await screen.findByText('caseHandover.offer.withdrawError')
+			).toBeTruthy();
+			const retry = screen.getByRole('button', {
+				name: 'caseHandover.offer.withdraw'
+			}) as HTMLButtonElement;
+			expect(retry.disabled).toBe(false);
+			expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+		});
+
+		it('applies a withdrawal answer that omits the request id', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			const { requestId: _omitted, ...withoutId } = openOffer;
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockResolvedValue({
+				...withoutId,
+				status: 'WITHDRAWN'
+			});
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+
+			expect(
+				await screen.findByText('caseHandover.offer.status.WITHDRAWN')
+			).toBeTruthy();
+		});
+
 		it('keeps the offer pending and says so when the withdrawal fails', async () => {
 			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
 				sessionId: 41,

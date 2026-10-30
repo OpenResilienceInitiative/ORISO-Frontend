@@ -2321,7 +2321,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Devir teklifi gönderildi",
-				"text": "Teklif meslektaşın yanıtını bekliyor. Karar verilene kadar geri çekilebilir."
+				"text": "Teklif meslektaşın yanıtını bekliyor. Devir tamamlanmadığı sürece geri çekilebilir."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Devir teklifi reddedildi",

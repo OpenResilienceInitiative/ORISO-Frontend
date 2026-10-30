@@ -2342,7 +2342,7 @@
 			},
 			"caseHandoverOfferSent": {
 				"title": "Übergabeangebot gesendet",
-				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Bis zur Entscheidung kann es zurückgezogen werden."
+				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Solange die Übergabe nicht abgeschlossen ist, kann es zurückgezogen werden."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Übergabeangebot abgelehnt",
