@@ -406,10 +406,11 @@ describe('where the target is open', () => {
 			'?channel=team&at=$e',
 			true
 		],
+		// The bare link with ids only in the query renders the empty list view.
 		[
 			'/sessions/consultant/sessionPreview',
 			'?sessionId=42&teamDiscussion=1&roomId=!team42',
-			true
+			false
 		],
 		// The main chat of the same enquiry, or another channel, is not it.
 		['/sessions/consultant/sessionPreview/!main42/42', '', false],

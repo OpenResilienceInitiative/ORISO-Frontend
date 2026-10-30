@@ -155,8 +155,8 @@ export const isConversationOpen = (
 /**
  * Whether the enquiry's team discussion is on screen: the enquiry view with
  * the team channel (`?channel=team`, or the legacy `?teamDiscussion=1` the
- * notification links carry) — or the bare link itself with the ids in its
- * query. The enquiry's main chat does not show the discussion.
+ * notification links carry). The enquiry's main chat does not show the
+ * discussion.
  */
 export const isTeamDiscussionOpen = (
 	target: NoticeTarget,
@@ -168,15 +168,8 @@ export const isTeamDiscussionOpen = (
 	const query = new URLSearchParams(search);
 	if (query.get('channel') !== 'team' && query.get('teamDiscussion') !== '1')
 		return false;
-	if (isConversationOpen(target, pathname, search, visible)) return true;
-	const segments = pathSegments(pathname);
-	if (!segments.includes('sessionPreview')) return false;
-	const querySession = query.get('sessionId');
-	const queryRoom = query.get('roomId');
-	return (
-		(!!querySession && querySession === String(target.sessionId)) ||
-		(!!queryRoom && queryRoom === target.roomRef)
-	);
+	// The bare query link renders the empty list view, not the discussion.
+	return isConversationOpen(target, pathname, search, visible);
 };
 
 /** Whether the counsellor/advice seeker is looking at this event's target. */
