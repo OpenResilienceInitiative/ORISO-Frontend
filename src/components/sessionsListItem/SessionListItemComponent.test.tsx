@@ -7,7 +7,13 @@
  */
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { generatePath, MemoryRouter } from 'react-router-dom';
 import {
 	UserDataContext,
@@ -23,16 +29,20 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-const { matrixPreviewMock, roomUnreadCountMock, groupMembersMock } = vi.hoisted(
-	() => ({
-		groupMembersMock: vi.fn(() => ({
-			status: 'ready',
-			members: [] as any[]
-		})),
-		matrixPreviewMock: vi.fn(),
-		roomUnreadCountMock: vi.fn(() => 0)
-	})
-);
+const {
+	matrixPreviewMock,
+	roomUnreadCountMock,
+	groupMembersMock,
+	apiPutArchiveMock
+} = vi.hoisted(() => ({
+	apiPutArchiveMock: vi.fn(),
+	groupMembersMock: vi.fn(() => ({
+		status: 'ready',
+		members: [] as any[]
+	})),
+	matrixPreviewMock: vi.fn(),
+	roomUnreadCountMock: vi.fn(() => 0)
+}));
 
 afterEach(() => {
 	cleanup();
@@ -41,6 +51,8 @@ afterEach(() => {
 	groupMembersMock.mockReturnValue({ status: 'ready', members: [] });
 	roomUnreadCountMock.mockReset();
 	roomUnreadCountMock.mockReturnValue(0);
+	apiPutArchiveMock.mockReset();
+	sessionsDispatch.mockClear();
 });
 
 // ---------------------------------------------------------------------------
@@ -92,7 +104,7 @@ vi.mock('../../hooks/useActiveListItem', () => ({
 vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<any>()),
 	apiGetCaseHandoverStatus: () => Promise.resolve(null),
-	apiPutArchive: () => Promise.resolve(),
+	apiPutArchive: (...args: unknown[]) => apiPutArchiveMock(...args),
 	apiPutDearchive: () => Promise.resolve()
 }));
 
@@ -208,8 +220,35 @@ vi.mock('../session/DeleteSession', () => ({
 	}
 }));
 vi.mock('../overlay/Overlay', () => ({
-	Overlay: () => <span />,
-	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE', ARCHIVE: 'ARCHIVE' }
+	Overlay: ({
+		item,
+		handleOverlay
+	}: {
+		item: { copy?: string; headline?: string; buttonSet?: any[] };
+		handleOverlay: (fn: string) => void;
+	}) => (
+		<div data-testid="overlay">
+			<span>{item.copy ?? item.headline}</span>
+			{(item.buttonSet ?? []).map((b) => (
+				<button
+					key={b.function}
+					onClick={() => handleOverlay(b.function)}
+				>
+					{b.label}
+				</button>
+			))}
+			<button onClick={() => handleOverlay('CLOSE')}>
+				close-overlay
+			</button>
+		</div>
+	),
+	OVERLAY_FUNCTIONS: {
+		CLOSE: 'CLOSE',
+		ARCHIVE: 'ARCHIVE',
+		LEAVE_GROUP_CHAT: 'LEAVE_GROUP_CHAT',
+		REDIRECT: 'REDIRECT',
+		LOGOUT: 'LOGOUT'
+	}
 }));
 vi.mock('../legalLinks/LegalLinkModal', () => ({
 	LegalLinkModal: () => <span />
@@ -773,5 +812,72 @@ describe('SessionListItemComponent — group card topic chip (#1913)', () => {
 			makeGroupSession({ topic: 'Teamrunde', repetitive: false })
 		);
 		expect(chip(container)).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — list-card archive', () => {
+	const archivedIds = {
+		type: 'REMOVE_SESSIONS',
+		ids: ['!session:matrix.example.org']
+	};
+
+	const clickArchive = () => {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		);
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="session-list-menu-archive"]'
+			) as HTMLElement
+		);
+	};
+
+	it('shows the confirmation first and removes the card only after the user leaves it', async () => {
+		apiPutArchiveMock.mockResolvedValue({});
+		renderItem(makeSession());
+
+		clickArchive();
+
+		const overlay = await screen.findByTestId('overlay');
+		expect(overlay.textContent).toContain(
+			'archive.overlay.session.success.copy'
+		);
+		expect(sessionsDispatch).not.toHaveBeenCalled();
+
+		fireEvent.click(
+			screen.getByText('archive.overlay.session.success.button')
+		);
+
+		expect(sessionsDispatch).toHaveBeenCalledWith(archivedIds);
+		expect(screen.queryByTestId('overlay')).toBeNull();
+	});
+
+	it('still removes the archived chat when the confirmation is closed', async () => {
+		apiPutArchiveMock.mockResolvedValue({});
+		renderItem(makeSession());
+
+		clickArchive();
+		await screen.findByTestId('overlay');
+		fireEvent.click(screen.getByText('close-overlay'));
+
+		expect(sessionsDispatch).toHaveBeenCalledWith(archivedIds);
+	});
+
+	it('shows the error and keeps the chat when the server refuses', async () => {
+		apiPutArchiveMock.mockRejectedValue(new Error('500'));
+		renderItem(makeSession());
+
+		clickArchive();
+
+		const overlay = await screen.findByTestId('overlay');
+		await waitFor(() =>
+			expect(overlay.textContent).toContain(
+				'groupChat.createError.overlay.headline'
+			)
+		);
+		fireEvent.click(screen.getByText('close-overlay'));
+		expect(sessionsDispatch).not.toHaveBeenCalled();
 	});
 });

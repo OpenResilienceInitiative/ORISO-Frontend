@@ -806,15 +806,30 @@ export const SessionListItemComponent = ({
 		}
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
 	const handleArchiveSession = () => {
 		setFlyoutOpen(false);
-		setOverlayItem(archiveSessionSuccessOverlayItem);
-		setOverlayActive(true);
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		apiPutArchive(activeSession.item.id)
+			.then(() => {
+				// The overlay lives in this card: removing the card now would
+				// unmount it before the confirmation is ever seen.
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
 	};
 
 	const handleDearchiveSession = () => {
 		setFlyoutOpen(false);
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession?.();
 				setTimeout(() => {
@@ -828,8 +843,9 @@ export const SessionListItemComponent = ({
 					}
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
 	};
 
@@ -886,15 +902,27 @@ export const SessionListItemComponent = ({
 		);
 	};
 
+	const removeArchivedSession = () =>
+		sessionsDispatch({
+			type: REMOVE_SESSIONS,
+			ids: activeSession.item.matrixRoomId
+				? [activeSession.item.matrixRoomId]
+				: [activeSession.item.id]
+		});
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (isRequestInProgress) {
 			return null;
 		}
 		setIsRequestInProgress(true);
 		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+			const wasArchived =
+				overlayItem === archiveSessionSuccessOverlayItem;
 			setOverlayActive(false);
 			setOverlayItem(null);
 			setIsRequestInProgress(false);
+			// Dismissing the confirmation must not leave the archived chat listed.
+			if (wasArchived) removeArchivedSession();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LEAVE_GROUP_CHAT) {
 			const roomId = activeSession.item.matrixRoomId;
 			if (roomId) markSelfLeave(roomId);
@@ -921,28 +949,15 @@ export const SessionListItemComponent = ({
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
-			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
-				.then(() => {
-					sessionsDispatch({
-						type: REMOVE_SESSIONS,
-						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
-					});
-
-					mobileListView();
-					navigate(listPath);
-				})
-				.catch((error) => {
-					// console.error(error);
-				})
-				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
-					setIsRequestInProgress(false);
-					setFlyoutOpen(false);
-				});
+			// The request already succeeded; this only leaves the archived chat.
+			// Removing the card unmounts this overlay, so it is the last step.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			setFlyoutOpen(false);
+			mobileListView();
+			navigate(listPath);
+			removeArchivedSession();
 		}
 	};
 
