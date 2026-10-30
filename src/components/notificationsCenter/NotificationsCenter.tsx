@@ -113,6 +113,7 @@ import {
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
+import { MISSING_KEY_COPY_KEY } from '../../utils/matrixDecryptionFailure';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -600,6 +601,10 @@ export const NotificationsCenter = () => {
 			unsupported: translate('notifications.center.preview.unsupported'),
 			// The chat's own wording for a message this device cannot decrypt.
 			undecryptable: translate('e2ee.message.encryption.text'),
+			undecryptableMissingKey: translate(
+				`${MISSING_KEY_COPY_KEY}.title`,
+				{ count: 1 }
+			),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'

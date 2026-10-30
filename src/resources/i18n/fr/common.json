@@ -580,7 +580,13 @@
 		"message": {
 			"encryption": {
 				"error": "Message crypté - erreur lors du décryptage",
-				"text": "Message crypté"
+				"text": "Message crypté",
+				"missingKey": {
+					"title_one": "Message antérieur non disponible sur cet appareil",
+					"title_other": "{{count}} messages antérieurs non disponibles sur cet appareil",
+					"hint_one": "Il redeviendra lisible dès qu'un appareil disposant de la clé sera en ligne, par exemple celui d'un collègue ou de la personne qui demande conseil. Se connecter sur l'appareil utilisé auparavant peut aussi aider.",
+					"hint_other": "Ils redeviendront lisibles dès qu'un appareil disposant de la clé sera en ligne, par exemple celui d'un collègue ou de la personne qui demande conseil. Se connecter sur l'appareil utilisé auparavant peut aussi aider."
+				}
 			},
 			"showMore": "Voir plus",
 			"showLess": "Afficher moins"
