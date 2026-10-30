@@ -72,6 +72,17 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 			).toEqual({ sound: 'ton-2', volume: 0.5 });
 		});
 
+		it('is the default for a revision-1 config, next to the revision-2 upgrade', () => {
+			const parsed = parseNotificationSettings({
+				notificationConfigRevision: 1,
+				families: { system: true }
+			});
+			expect(parsed.systemTone).toEqual({ sound: 'ton-2', volume: 0.5 });
+			expect(parsed.notificationConfigRevision).toBe(
+				DEFAULT_NOTIFICATION_SETTINGS.notificationConfigRevision
+			);
+		});
+
 		it('keeps a stored choice and clamps the volume', () => {
 			expect(
 				parseNotificationSettings({

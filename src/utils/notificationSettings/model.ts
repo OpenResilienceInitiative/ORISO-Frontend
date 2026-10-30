@@ -71,6 +71,7 @@ export interface OrisoNotificationSettings {
  * 2 (FE#1211): team-discussion mentions moved from Gespräche to Anfragen →
  * Erwähnung. The old Anfragen row never fired, so the choice made under
  * Gespräche carries over once.
+ * `systemTone` needs no revision: absent means ton-2 at medium volume.
  */
 export const NOTIFICATION_SETTINGS_REVISION = 2;
 
