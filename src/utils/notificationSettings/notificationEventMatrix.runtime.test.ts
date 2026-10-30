@@ -11,6 +11,7 @@ import {
 	isLiveChatOpen
 } from '../../components/notifications/LiveChatMessageNotice';
 import { isNewEnquiryForCounsellor } from '../../components/notifications/NewEnquiryNotice';
+import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors/registry';
 import {
 	eventNoticeKindFor,
 	isEventNoticeTargetOpen,
@@ -92,18 +93,18 @@ const hasCard = (row: FeedRow) =>
 	eventNoticeKindFor(row) !== null;
 
 /**
- * Where the user is when the event's target is on screen. Normally the row's
- * own link; the team-discussion link is a bare redirect target that renders
- * an empty view, so the screen to compare with is the enquiry view with the
- * team channel open.
+ * Where the user is when the event's target is on screen: the screen the
+ * card opens. The registry first moves the team link's query session id into
+ * the path (`…/sessionPreview/session/42?teamDiscussion=1&roomId=…`), so the
+ * comparison uses that rewritten target, not UserService's raw link.
  */
 const location = (row: FeedRow) => {
-	if (row.eventType === 'team.discussion.new')
-		return {
-			pathname: `/sessions/consultant/sessionPreview/${enc(ROOM)}/${SESSION}`,
-			search: '?channel=team'
-		};
-	const [pathname, search = ''] = row.actionPath.split('?');
+	const target = getEventDescriptor(row.eventType).resolveActionTarget({
+		actionPath: row.actionPath
+	});
+	const path =
+		(target.kind === 'conversation' && target.path) || row.actionPath;
+	const [pathname, search = ''] = path.split('?');
 	return { pathname, search: search ? `?${search}` : '' };
 };
 
@@ -222,10 +223,14 @@ describe('event table vs runtime predicates', () => {
 		expect(open(enquiry, '?teamDiscussion=1')).toBe(true);
 		// The enquiry's main chat does not show the discussion.
 		expect(open(enquiry, '')).toBe(false);
-		// The bare link UserService writes renders an empty view: not seen,
-		// so the card, tone and banner still announce.
+		// UserService's raw link names the session only in its query and renders
+		// an empty list view: not seen. The registry rewrites it to the session
+		// path, which the card opens and which counts as seen.
 		const [barePath, bareSearch] = post.actionPath.split('?');
 		expect(open(barePath, `?${bareSearch}`)).toBe(false);
+		expect(location(post).pathname).toBe(
+			`/sessions/consultant/sessionPreview/session/${SESSION}`
+		);
 		expect(silentWhenTargetOpen(post)).toBe(true);
 	});
 });
