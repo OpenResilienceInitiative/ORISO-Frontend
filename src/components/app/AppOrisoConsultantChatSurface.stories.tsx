@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor } from 'storybook/test';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import SupervisedUserCircleRoundedIcon from '@mui/icons-material/SupervisedUserCircleRounded';
@@ -444,9 +445,32 @@ const requestUrl = (input: RequestInfo | URL): string => {
 };
 
 const findRuntimeSession = (id: number) =>
-	runtimeSessions.find(
+	runtimeListSessions().find(
 		(session) => session.session?.id === id || session.chat?.id === id
 	);
+
+/**
+ * ADR-021 future zone: the group becomes a series with two dates and the
+ * counsellor has one 1:1 booking. Off for every other story.
+ */
+let runtimeTimelineFixtures = false;
+const inDays = (days: number, hour: number) => {
+	const date = new Date();
+	date.setDate(date.getDate() + days);
+	date.setHours(hour, 0, 0, 0);
+	return date.toISOString();
+};
+const runtimeListSessions = () =>
+	runtimeTimelineFixtures
+		? runtimeSessions.map((session) =>
+				session.chat
+					? {
+							...session,
+							chat: { ...session.chat, repeatCount: 8 }
+						}
+					: session
+			)
+		: runtimeSessions;
 
 let appOrisoRoutingFetchMockDepth = 0;
 let appOrisoRoutingOriginalFetch: typeof globalThis.fetch | null = null;
@@ -477,7 +501,12 @@ const installAppOrisoRoutingFetchMocks = () => {
 
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = requestUrl(input);
-		if (!url.includes('api.storybook.test')) {
+		// The dev Storybook resolves the service origins to its own host
+		// (local .env); the test runner uses the fixed test API host.
+		const sameOriginService = url.startsWith(
+			`${window.location.origin}/service/`
+		);
+		if (!url.includes('api.storybook.test') && !sameOriginService) {
 			return originalFetch(input, init);
 		}
 
@@ -490,9 +519,49 @@ const installAppOrisoRoutingFetchMocks = () => {
 				'/service/conversations/consultants/enquiries/registered'
 		) {
 			return storybookJsonResponse({
-				sessions: runtimeSessions,
+				sessions: runtimeListSessions(),
 				total: runtimeSessions.length
 			});
+		}
+
+		if (
+			runtimeTimelineFixtures &&
+			pathname === '/service/users/chat-series/9001/occurrences'
+		) {
+			return storybookJsonResponse(
+				[2, 9].map((days, occurrenceIndex) => ({
+					seriesId: 9001,
+					occurrenceIndex,
+					originalStart: inDays(days, 18),
+					start: inDays(days, 18),
+					duration: 60,
+					modality: 'VIDEO'
+				}))
+			);
+		}
+
+		if (
+			runtimeTimelineFixtures &&
+			/^\/service\/appointservice\/consultants\/[^/]+\/bookings$/.test(
+				pathname
+			)
+		) {
+			return storybookJsonResponse([
+				{
+					id: 77,
+					uid: 'storybook-booking-77',
+					startTime: inDays(4, 10),
+					endTime: inDays(4, 11),
+					eventTypeId: 1,
+					location: 'VIDEO_CALL',
+					description: '',
+					userId: 1,
+					askerId: 'asker-77',
+					askerName: 'Ratsuchende Lena',
+					title: 'Beratung',
+					videoAppointmentId: ''
+				}
+			]);
 		}
 
 		if (pathname === '/service/users/sessions/room') {
@@ -500,14 +569,14 @@ const installAppOrisoRoutingFetchMocks = () => {
 				.split(',')
 				.filter(Boolean);
 			const sessions = ids.length
-				? runtimeSessions.filter((session) =>
+				? runtimeListSessions().filter((session) =>
 						ids.includes(
 							session.session?.matrixRoomId ||
 								session.chat?.matrixRoomId ||
 								''
 						)
 					)
-				: runtimeSessions;
+				: runtimeListSessions();
 			return storybookJsonResponse({ sessions });
 		}
 
@@ -1402,6 +1471,55 @@ export const ConsultantChat: Story = {
 		return () => {
 			window.fetch = realFetch;
 		};
+	}
+};
+
+export const RuntimeRoutingShellFutureZone: Story = {
+	name: 'Runtime Routing Shell — future zone (ADR-021)',
+	decorators: [
+		(Story) => (
+			<AppOrisoRoutingFetchMockDecorator>
+				<Story />
+			</AppOrisoRoutingFetchMockDecorator>
+		)
+	],
+	beforeEach: () => {
+		runtimeTimelineFixtures = true;
+		return () => {
+			runtimeTimelineFixtures = false;
+		};
+	},
+	render: () => <AppOrisoRoutingRuntimeShell />,
+	play: async ({ canvasElement }) => {
+		const zone = await waitFor(
+			() => {
+				const found = canvasElement.querySelector<HTMLElement>(
+					'[data-cy="sessions-list-timeline"]'
+				);
+				if (!found) throw new Error('future zone not mounted yet');
+				return found;
+			},
+			{ timeout: 8000 }
+		);
+		// Two group dates (real room card) and the booking without a room.
+		await waitFor(() =>
+			expect(
+				zone.querySelectorAll('[data-cy="timeline-future"] .tlp__row')
+			).toHaveLength(3)
+		);
+		expect(
+			zone.querySelector('[data-cy="timeline-unmapped-card"]')
+				?.textContent
+		).toContain('Ratsuchende Lena');
+		expect(zone.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
+		// The group's past card carries the clock circle.
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector(
+					'.sessionsList__scrollContainer .upcomingAppointmentClock'
+				)
+			).not.toBeNull()
+		);
 	}
 };
 

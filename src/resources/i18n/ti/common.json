@@ -797,22 +797,6 @@
 			"addThis": "ነዚ ቆጸራ ናብ ዓውደ-ኣዋርሕ ወስኽ",
 			"shareHintSeries": "ናይ ካላንደር መላግቦታት ንመርበብኩም፦ ኩሎም ቆጸራታት ከም ተኸታታሊ፣ ብዘይ መላግቦ ዕድመ ወይ ኣውቶማቲክ ምሕዳስ።"
 		},
-		"futureTimeline": {
-			"appointmentFallback": "ቆጸራ",
-			"ariaLabel": "መጻኢ ቆጸራታት",
-			"commandError": "እቲ ቆጸራ ክቕየር ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
-			"duplicate": "ከም ናይ ሓደ ግዜ ቆጸራ ቅዳሕ ግበር",
-			"empty": "ዝመጽእ ቆጸራ የለን።",
-			"groupChatFallback": "ጉጅለ ዕላል",
-			"hide": "መጻኢ ቆጸራታት ሕባእ",
-			"loadMore": "ተወሳኺ ሰለስተ ኣዋርሕ ጸዓን",
-			"loadError": "ገለ መጻኢ ቆጸራታት ክጽዕኑ ኣይከኣሉን።",
-			"loading": "መጻኢ ቆጸራታት ይጽዕኑ ኣለዉ…",
-			"now": "ሕጂ",
-			"revealAriaLabel": "መጻኢ ቆጸራታት ኣርኢ",
-			"show": "መጻኢ ቆጸራታት ኣርኢ",
-			"skip": "ቆጸራ ዘሊልካ ሕለፍ"
-		},
 		"roles": {
 			"CO_MODERATOR": "ተሓጋጋዚ መራሒ ዘተ",
 			"OWNER": "ወናኒ",
@@ -4435,6 +4419,12 @@
 		"rail": {
 			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
 			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ"
+		},
+		"timeline": {
+			"now": "ሕጂ",
+			"upcoming": "መጻኢ ቆጸራታት",
+			"empty": "ዝመጽእ ቆጸራ የለን።",
+			"nextAppointment": "ቆጸራ: {{date}}"
 		}
 	},
 	"statusOverlay": {

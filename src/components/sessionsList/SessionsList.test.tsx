@@ -93,7 +93,14 @@ vi.mock('./SessionsListToolbar', () => ({
 	buildArchiveTabPath: () => '/archive',
 	buildCreateGroupChatPath: () => '/create'
 }));
-vi.mock('./FutureTimelinePanel', () => ({ FutureTimelinePanel: () => null }));
+const futureState = vi.hoisted(() => ({ entries: [] as any[] }));
+vi.mock('./timeline/useFutureEntries', () => ({
+	FUTURE_MONTHS: 3,
+	useFutureEntries: () => ({
+		entries: futureState.entries,
+		markCancelled: () => undefined
+	})
+}));
 vi.mock('../sessionsListItem/SessionListItemSkeleton', () => ({
 	SessionsListSkeleton: () => null
 }));
@@ -218,5 +225,45 @@ describe('SessionsList case handover batch seam', () => {
 		expect(screen.getAllByTestId('selected-0')[0].textContent).toBe(
 			'false'
 		);
+	});
+});
+
+describe('SessionsList future zone (ADR-021)', () => {
+	afterEach(() => {
+		cleanup();
+		futureState.entries = [];
+	});
+
+	it('shows no zone without planned appointments', async () => {
+		renderList();
+		await screen.findAllByText('start-batch');
+		expect(
+			document.querySelector('[data-cy="sessions-list-timeline"]')
+		).toBeNull();
+	});
+
+	it('shows a booking without a room as its own twin above "Jetzt"', async () => {
+		futureState.entries = [
+			{
+				key: 'booking-7',
+				kind: 'one-to-one',
+				title: 'Ratsuchende A',
+				start: new Date(Date.now() + 86_400_000),
+				modality: 'video',
+				canDuplicate: false,
+				booking: { id: 7, uid: 'uid-7' }
+			}
+		];
+		renderList();
+		await screen.findAllByText('start-batch');
+		const zone = document.querySelector(
+			'[data-cy="sessions-list-timeline"]'
+		);
+		expect(zone).not.toBeNull();
+		expect(
+			zone!.querySelector('[data-cy="timeline-unmapped-card"]')
+				?.textContent
+		).toContain('Ratsuchende A');
+		expect(zone!.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
 	});
 });

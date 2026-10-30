@@ -792,22 +792,6 @@
 			"addThis": "Diesen Termin zum Kalender hinzufügen",
 			"shareHintSeries": "Kalenderlinks für Ihre Webseite: alle Termine als Serie, ohne Einladungslink oder automatische Aktualisierung."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Termin",
-			"ariaLabel": "Zukünftige Termine",
-			"commandError": "Der Termin konnte nicht geändert werden. Bitte erneut versuchen.",
-			"duplicate": "Als Einzeltermin duplizieren",
-			"empty": "Keine bevorstehenden Termine.",
-			"groupChatFallback": "Gruppenchat",
-			"hide": "Zukünftige Termine ausblenden",
-			"loadMore": "Drei weitere Monate laden",
-			"loadError": "Einige zukünftige Termine konnten nicht geladen werden.",
-			"loading": "Zukünftige Termine werden geladen…",
-			"now": "Jetzt",
-			"revealAriaLabel": "Zukünftige Termine anzeigen",
-			"show": "Zukünftige Termine anzeigen",
-			"skip": "Termin überspringen"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-Moderator:in",
 			"OWNER": "Eigentümer:in",
@@ -4452,6 +4436,12 @@
 		"rail": {
 			"unreadCount": "{{count}} neue Nachrichten",
 			"unreadCount_one": "{{count}} neue Nachricht"
+		},
+		"timeline": {
+			"now": "Jetzt",
+			"upcoming": "Anstehende Termine",
+			"empty": "Keine bevorstehenden Termine.",
+			"nextAppointment": "Nächster Termin: {{date}}"
 		}
 	},
 	"statusOverlay": {

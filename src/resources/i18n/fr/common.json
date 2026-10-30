@@ -797,22 +797,6 @@
 			"addThis": "Ajouter cette date au calendrier",
 			"shareHintSeries": "Liens pour votre site : toutes les dates en série, sans lien d’invitation ni mise à jour automatique."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Rendez-vous",
-			"ariaLabel": "Rendez-vous à venir",
-			"commandError": "Le rendez-vous n'a pas pu être modifié. Veuillez réessayer.",
-			"duplicate": "Dupliquer comme rendez-vous unique",
-			"empty": "Aucun rendez-vous à venir.",
-			"groupChatFallback": "Chat de groupe",
-			"hide": "Masquer les rendez-vous à venir",
-			"loadMore": "Charger trois mois de plus",
-			"loadError": "Certains rendez-vous à venir n'ont pas pu être chargés.",
-			"loading": "Chargement des rendez-vous à venir…",
-			"now": "Maintenant",
-			"revealAriaLabel": "Afficher les rendez-vous à venir",
-			"show": "Afficher les rendez-vous à venir",
-			"skip": "Ignorer ce rendez-vous"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-modérateur·rice",
 			"OWNER": "Propriétaire",
@@ -4435,6 +4419,12 @@
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
 			"unreadCount_one": "{{count}} nouveau message"
+		},
+		"timeline": {
+			"now": "Maintenant",
+			"upcoming": "Rendez-vous à venir",
+			"empty": "Aucun rendez-vous à venir.",
+			"nextAppointment": "Prochain rendez-vous : {{date}}"
 		}
 	},
 	"statusOverlay": {

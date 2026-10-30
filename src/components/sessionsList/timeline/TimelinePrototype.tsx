@@ -6,22 +6,19 @@
  * handle, the "Jetzt" marker and the split button on the twin cards.
  */
 import * as React from 'react';
-import {
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState
-} from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ListItemInterface } from '../../../globalState/interfaces';
 import { SessionsListToolbar } from '../SessionsListToolbar';
 import type { SessionToolbarChipFilter } from '../sessionToolbarFilters';
 import { RuntimeSessionCard } from '../../sessionsListItem/__storybook__/runtimeSessionCard';
-import { ResizableHandle } from '../ResizableHandle';
-import { AppointmentSplitButton } from './AppointmentSplitButton';
-import { revealSnapPoints, stepSnap, clampReveal } from '../verticalHandleMath';
+import {
+	FutureZone,
+	NowMarker,
+	PULL_RELEASE_PX,
+	type FutureZoneHandle,
+	type NowVariant
+} from './FutureZone';
 import type { SessionCardDatePlacement } from '../../sessionsListItem/SessionListItemComponent';
 import {
 	filterEntries,
@@ -36,12 +33,8 @@ import '../sessionsList.styles.scss';
 import './timelinePrototype.styles.scss';
 
 export type ScrollModel = 'panes' | 'single';
-export type NowVariant = 'line' | 'handle' | 'band';
-
-/** Fallback card height until the real cards are measured. */
-export const ENTRY_HEIGHT = 160;
-/** Pull this far past the top of the single timeline to release the next stop. */
-export const PULL_RELEASE_PX = 60;
+export type { NowVariant } from './FutureZone';
+export { ENTRY_HEIGHT, PULL_RELEASE_PX } from './FutureZone';
 
 /** The real toolbar chips the prototype listens to; every other chip shows all. */
 const FILTER_OF_CHIP: Partial<
@@ -67,28 +60,6 @@ export interface TimelinePrototypeProps {
 	/** Date on past cards (display setting): segment at the tag, own line, off, or dev's corner. */
 	pastDate?: SessionCardDatePlacement;
 }
-
-const NowArrow = ({ direction }: { direction: 'up' | 'down' }) => (
-	<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-		<path
-			d={direction === 'up' ? 'M6 2 L11 8 H1 Z' : 'M6 10 L1 4 H11 Z'}
-			fill="currentColor"
-		/>
-	</svg>
-);
-
-const NowMarker = ({ variant }: { variant: NowVariant }) => (
-	<div
-		className={`tlp__now tlp__now--${variant}`}
-		data-cy="timeline-now"
-		role="separator"
-		aria-label="Jetzt"
-	>
-		{variant === 'band' && <NowArrow direction="up" />}
-		<span className="tlp__nowLabel">Jetzt</span>
-		{variant === 'band' && <NowArrow direction="down" />}
-	</div>
-);
 
 /**
  * Real cards in the list's grouping: flush, one hairline, corners at the
@@ -138,90 +109,6 @@ const CardGroup = ({
 	);
 };
 
-/**
- * The split button sits where the twin card would show its last message.
- * It lives in a layer beside the card list (a list may only hold its items)
- * and is placed over its card. Its main part opens the room exactly like a
- * click on the card does.
- */
-const TwinAction = ({
-	entry,
-	role,
-	active,
-	index,
-	listRef
-}: {
-	entry: FutureEntry;
-	role: TimelineRole;
-	active: boolean;
-	index: number;
-	listRef: React.RefObject<HTMLDivElement>;
-}) => {
-	const [place, setPlace] = useState<React.CSSProperties>({});
-	const rowOf = () =>
-		listRef.current?.querySelectorAll<HTMLElement>(':scope > .tlp__row')[
-			index
-		];
-	const card = () =>
-		rowOf()?.querySelector<HTMLElement>('.sessionsListItem__content');
-
-	// The card fills in after mount (Matrix preview, avatars): measure again
-	// whenever the row changes size or content.
-	useLayoutEffect(() => {
-		const list = listRef.current;
-		if (!list) return;
-		const measure = () => {
-			const row =
-				list.querySelectorAll<HTMLElement>(':scope > .tlp__row')[index];
-			if (!row) return;
-			const preview = row.querySelector<HTMLElement>(
-				'.sessionsListItem__subject'
-			);
-			if (!preview) return;
-			const r = row.getBoundingClientRect();
-			// The preview box spans the card; its text starts after the avatar.
-			const text = document.createRange();
-			text.selectNodeContents(preview);
-			const p = text.getBoundingClientRect();
-			// Top-aligned: the 32px button grows into the gap below the preview.
-			setPlace({
-				left: Math.round(p.left - r.left),
-				top: Math.round(row.offsetTop + p.top - r.top - 2)
-			});
-		};
-		measure();
-		const observer =
-			typeof ResizeObserver !== 'undefined'
-				? new ResizeObserver(measure)
-				: null;
-		observer?.observe(list);
-		const mutations = new MutationObserver(measure);
-		mutations.observe(list, { childList: true, subtree: true });
-		return () => {
-			observer?.disconnect();
-			mutations.disconnect();
-		};
-	}, [index, listRef]);
-
-	return (
-		<div
-			className="tlp__twinAction"
-			style={place}
-			data-cy="timeline-entry-action"
-		>
-			<AppointmentSplitButton
-				entry={entry}
-				role={role}
-				active={active}
-				onOpen={() => {
-					card()?.click();
-					card()?.focus();
-				}}
-			/>
-		</div>
-	);
-};
-
 export const TimelinePrototype = ({
 	entries,
 	sessions,
@@ -243,8 +130,6 @@ export const TimelinePrototype = ({
 		initialChip
 	);
 	const filter: TimelineFilter = (chip && FILTER_OF_CHIP[chip]) || 'all';
-	const [reveal, setReveal] = useState(0);
-	const [dragging, setDragging] = useState(false);
 	// The clicked card holds the focus (2px ring) and leaves its group. Its
 	// room in the past is open too and shows the calm 1px outline; the other
 	// dates of a series stay in their group (ADR-021 §2, §4).
@@ -255,35 +140,19 @@ export const TimelinePrototype = ({
 	const [nowOffscreen, setNowOffscreen] = useState<'above' | 'below' | null>(
 		null
 	);
-	const [measured, setMeasured] = useState({
-		item: ENTRY_HEIGHT,
-		content: 0
-	});
 	const pullRef = useRef(0);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const nowRef = useRef<HTMLDivElement>(null);
-	const futureRef = useRef<HTMLDivElement>(null);
+	const zoneRef = useRef<FutureZoneHandle>(null);
 
 	const visibleEntries = useMemo(
 		() => filterEntries(entries, filter),
 		[entries, filter]
 	);
-	// Furthest appointment first: the next one sits right above "Jetzt".
-	const futureItems = useMemo(
-		() =>
-			[...visibleEntries]
-				.reverse()
-				.map((entry) =>
-					entry.sessionId !== undefined
-						? (items[entry.sessionId] ?? unmappedItem)
-						: unmappedItem
-				),
-		[visibleEntries, items, unmappedItem]
-	);
-	const futureEntries = useMemo(
-		() => [...visibleEntries].reverse(),
-		[visibleEntries]
-	);
+	const itemOf = (entry: FutureEntry) =>
+		entry.sessionId !== undefined
+			? (items[entry.sessionId] ?? unmappedItem)
+			: unmappedItem;
 	const pastSessions = useMemo(
 		() =>
 			sessions.filter(
@@ -297,49 +166,6 @@ export const TimelinePrototype = ({
 	// Every planned date counts, whatever the filter shows above the handle.
 	const nextOfSession = useMemo(() => nextEntryBySession(entries), [entries]);
 
-	// Snap stops come from the real cards' height, not from a constant.
-	useEffect(() => {
-		const inner = futureRef.current;
-		if (!inner) return;
-		const measure = () => {
-			const rows = inner.querySelectorAll<HTMLElement>('.tlp__row');
-			const last = rows[rows.length - 1];
-			setMeasured({
-				// From the next appointment's top edge to the handle.
-				item: last
-					? Math.round(inner.offsetHeight - last.offsetTop)
-					: ENTRY_HEIGHT,
-				content: Math.round(inner.scrollHeight)
-			});
-		};
-		measure();
-		const observer =
-			typeof ResizeObserver !== 'undefined'
-				? new ResizeObserver(measure)
-				: null;
-		observer?.observe(inner);
-		return () => observer?.disconnect();
-	}, [futureItems.length, selection]);
-
-	const contentHeight = futureItems.length ? measured.content : 0;
-	const snapPoints = useMemo(
-		() =>
-			revealSnapPoints({
-				itemHeight: measured.item,
-				listHeight,
-				contentHeight
-			}),
-		[measured.item, listHeight, contentHeight]
-	);
-	// A filter with fewer appointments closes what no longer exists.
-	// While dragging the stretch past the last item is shown; at rest it is cut off.
-	const shown = dragging ? reveal : clampReveal(reveal, contentHeight);
-
-	const onResize = useCallback((height: number, meta: { final: boolean }) => {
-		setDragging(!meta.final);
-		setReveal(height);
-	}, []);
-
 	// Single timeline: a deliberate pull past the top releases the next stop.
 	const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
 		if (scrollModel !== 'single') return;
@@ -351,7 +177,7 @@ export const TimelinePrototype = ({
 		pullRef.current += -e.deltaY;
 		if (pullRef.current >= PULL_RELEASE_PX) {
 			pullRef.current = 0;
-			setReveal(stepSnap(shown, snapPoints, 1));
+			zoneRef.current?.stepOpen();
 		}
 	};
 
@@ -374,67 +200,30 @@ export const TimelinePrototype = ({
 			el.scrollTo({ top: marker.offsetTop - 8, behavior: 'smooth' });
 	};
 
-	const futurePane = (
-		<div
-			className="tlp__future"
-			data-dragging={dragging ? 'true' : 'false'}
-			style={{ height: shown }}
-			data-cy="timeline-future"
-		>
-			<div
-				ref={futureRef}
-				className="tlp__futureInner"
-				role={futureItems.length ? 'list' : 'group'}
-				aria-label="Anstehende Termine"
-			>
-				{futureItems.length === 0 ? (
-					<p className="tlp__empty">Keine geplanten Termine</p>
-				) : (
-					<CardGroup
-						items={futureItems}
-						isOpenAt={(index) =>
-							futureEntries[index].key === selection?.entryKey
-						}
-						onPick={(index) =>
-							setSelection({
-								room: roomOf(futureItems[index]),
-								entryKey: futureEntries[index].key
-							})
-						}
-						// The twin's date is its split button.
-						datePlacement="off"
-					/>
-				)}
-			</div>
-			<div
-				className="tlp__futureActions"
-				style={{ bottom: contentHeight }}
-				data-cy="timeline-entry-actions"
-			>
-				{futureEntries.map((entry, index) => (
-					<TwinAction
-						key={entry.key}
-						entry={entry}
-						role={role}
-						active={entry.key === selection?.entryKey}
-						index={index}
-						listRef={futureRef}
-					/>
-				))}
-			</div>
-		</div>
-	);
-
-	const handle = (
-		<div className="tlp__handleHost">
-			<ResizableHandle
-				orientation="vertical"
-				height={shown}
-				maxHeight={contentHeight}
-				snapPoints={snapPoints}
-				onResize={onResize}
-			/>
-		</div>
+	const zone = (
+		<FutureZone
+			ref={zoneRef}
+			entries={visibleEntries}
+			role={role}
+			listHeight={listHeight}
+			selectedKey={selection?.entryKey}
+			onSelect={(entry) =>
+				setSelection({
+					room: roomOf(itemOf(entry)),
+					entryKey: entry.key
+				})
+			}
+			renderCard={(entry, index, flags) => (
+				<RuntimeSessionCard
+					session={itemOf(entry)}
+					index={index}
+					grouped
+					{...flags}
+					// The twin's date is its split button.
+					datePlacement="off"
+				/>
+			)}
+		/>
 	);
 
 	const pastList = (
@@ -491,10 +280,7 @@ export const TimelinePrototype = ({
 
 			{scrollModel === 'panes' ? (
 				<>
-					<div className="tlp__boundary">
-						{futurePane}
-						{handle}
-					</div>
+					{zone}
 					<NowMarker variant={nowVariant} />
 					<div className="tlp__scroll" style={{ height: listHeight }}>
 						{pastList}
@@ -509,10 +295,7 @@ export const TimelinePrototype = ({
 					onScroll={onSingleScroll}
 					data-cy="timeline-single"
 				>
-					<div className="tlp__boundary">
-						{futurePane}
-						{handle}
-					</div>
+					{zone}
 					<div ref={nowRef}>
 						<NowMarker variant={nowVariant} />
 					</div>

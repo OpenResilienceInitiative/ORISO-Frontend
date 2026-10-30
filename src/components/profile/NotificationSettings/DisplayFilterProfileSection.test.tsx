@@ -296,9 +296,6 @@ describe('DisplayFilterProfileSection', () => {
 			).toBeFalsy()
 		);
 		expect(
-			checkbox('display-filter-profile-sessions-show-futureTimeline')
-		).toBeFalsy();
-		expect(
 			checkbox('display-filter-profile-sessions-show-internalGroup')
 		).toBeTruthy();
 		expect(apiGetAgenciesByIds).toHaveBeenCalledWith([7]);

@@ -797,22 +797,6 @@
 			"addThis": "Bu randevuyu takvime ekle",
 			"shareHintSeries": "Web siteniz için takvim bağlantıları: tüm randevular seri olarak; davet bağlantısı veya otomatik güncelleme içermez."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Randevu",
-			"ariaLabel": "Gelecekteki randevular",
-			"commandError": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
-			"duplicate": "Tek seferlik randevu olarak çoğalt",
-			"empty": "Yaklaşan randevu yok.",
-			"groupChatFallback": "Grup sohbeti",
-			"hide": "Gelecekteki randevuları gizle",
-			"loadMore": "Üç ay daha yükle",
-			"loadError": "Gelecekteki bazı randevular yüklenemedi.",
-			"loading": "Gelecekteki randevular yükleniyor…",
-			"now": "Şimdi",
-			"revealAriaLabel": "Gelecekteki randevuları göster",
-			"show": "Gelecekteki randevuları göster",
-			"skip": "Randevuyu atla"
-		},
 		"roles": {
 			"CO_MODERATOR": "Yardımcı moderatör",
 			"OWNER": "Sahip",
@@ -4435,6 +4419,12 @@
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
 			"unreadCount_one": "{{count}} yeni mesaj"
+		},
+		"timeline": {
+			"now": "Şimdi",
+			"upcoming": "Gelecekteki randevular",
+			"empty": "Yaklaşan randevu yok.",
+			"nextAppointment": "Sonraki randevu: {{date}}"
 		}
 	},
 	"statusOverlay": {

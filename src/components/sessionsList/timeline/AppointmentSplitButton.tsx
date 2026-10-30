@@ -34,16 +34,20 @@ const MODALITY_ICON: Record<
 	location: LocationIcon
 };
 
+export type AppointmentAction = (key: string, entry: FutureEntry) => void;
+
 const EntryMenu = ({
 	entry,
 	role,
 	anchor,
-	onClose
+	onClose,
+	onAction
 }: {
 	entry: FutureEntry;
 	role: TimelineRole;
 	anchor: DOMRect;
 	onClose: () => void;
+	onAction?: AppointmentAction;
 }) => {
 	const items = entryMenu(entry, role);
 	const ref = useRef<HTMLDivElement>(null);
@@ -85,7 +89,10 @@ const EntryMenu = ({
 						title={item.title}
 						description={item.description}
 						disabled={item.disabled}
-						onClick={onClose}
+						onClick={() => {
+							onClose();
+							onAction?.(item.key, entry);
+						}}
 					/>
 				))}
 			</ChatMenuDropdown>
@@ -106,6 +113,8 @@ export interface AppointmentSplitButtonProps {
 	 * (below its header): the main part opens the same menu as the arrow.
 	 */
 	onOpen?: () => void;
+	/** A menu entry was chosen (cancel, duplicate, configure, ...). */
+	onAction?: AppointmentAction;
 }
 
 export const AppointmentSplitButton = ({
@@ -113,7 +122,8 @@ export const AppointmentSplitButton = ({
 	role,
 	active = false,
 	size = 'small',
-	onOpen
+	onOpen,
+	onAction
 }: AppointmentSplitButtonProps) => {
 	const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
 	const toggleRef = useRef<HTMLButtonElement | null>(null);
@@ -147,6 +157,7 @@ export const AppointmentSplitButton = ({
 					role={role}
 					anchor={menuAnchor}
 					onClose={() => setMenuAnchor(null)}
+					onAction={onAction}
 				/>
 			)}
 		</>
@@ -155,19 +166,26 @@ export const AppointmentSplitButton = ({
 
 /**
  * The room's next appointment, directly below the header divider (ADR-021),
- * on phone and desktop. 1:1 rooms place it after `sessionInfo__metaInfo` in
- * `SessionHeaderComponent`, group rooms after `sessionInfo__headerWrapper` in
- * `GroupChatHeader`; until the prototype is accepted only the stories do.
+ * on phone and desktop. Group rooms show it after `sessionInfo__headerWrapper`
+ * in `GroupChatHeader` (`RoomNextAppointmentSlot`); 1:1 rooms get it after
+ * `sessionInfo__metaInfo` once a booking carries its session id.
  */
 export const RoomNextAppointment = ({
 	entry,
-	role
+	role,
+	onAction
 }: {
 	entry?: FutureEntry;
 	role: TimelineRole;
+	onAction?: AppointmentAction;
 }) =>
 	entry ? (
 		<div className="roomNextAppointment" data-cy="room-next-appointment">
-			<AppointmentSplitButton entry={entry} role={role} size="compact" />
+			<AppointmentSplitButton
+				entry={entry}
+				role={role}
+				size="compact"
+				onAction={onAction}
+			/>
 		</div>
 	) : null;

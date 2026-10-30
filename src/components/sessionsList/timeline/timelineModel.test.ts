@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	buildFutureEntries,
+	entriesForList,
 	entryMenu,
 	filterEntries,
 	formatEntryDate,
@@ -95,6 +96,27 @@ describe('future entries', () => {
 	});
 });
 
+describe('what the actions need', () => {
+	it('keeps the original start of a date and the cal.com handles of a booking', () => {
+		const [phone, , group] = build();
+		expect(group.occurrence).toEqual({
+			seriesId: 90,
+			originalStart: '2026-11-04T18:00:00',
+			duration: 60,
+			modality: 'VIDEO'
+		});
+		expect(phone.booking?.id).toBe(7);
+	});
+
+	it('a group the counsellor does not moderate offers no changes', () => {
+		const items = entryMenu(
+			{ kind: 'group', canDuplicate: false, canModerate: false },
+			'counsellor'
+		);
+		expect(items.map((i) => i.key)).toEqual(['reminder']);
+	});
+});
+
 describe('next appointment per room', () => {
 	it('keeps the nearest date of every room, skips entries without a room', () => {
 		const next = nextEntryBySession(build());
@@ -139,5 +161,27 @@ describe('entry menu', () => {
 	it('asker may cancel a 1:1 but not a group date yet', () => {
 		expect(keys('one-to-one', 'asker')).toEqual(['reminder*', 'cancel']);
 		expect(keys('group', 'asker')).toEqual(['reminder*', 'cancel*']);
+	});
+});
+
+describe('entries in the real list', () => {
+	const entry = (key: string, sessionId?: number, kind = 'group') =>
+		({ key, sessionId, kind }) as any;
+	const all = [
+		entry('own-group', 1),
+		entry('hidden-group', 2),
+		entry('booking', undefined, 'one-to-one')
+	];
+
+	it('a group date shows only while its room is a visible row', () => {
+		expect(
+			entriesForList(all, new Set([1]), false).map((e) => e.key)
+		).toEqual(['own-group', 'booking']);
+	});
+
+	it('a date without a room shows only without filter or search', () => {
+		expect(
+			entriesForList(all, new Set([1, 2]), true).map((e) => e.key)
+		).toEqual(['own-group', 'hidden-group']);
 	});
 });
