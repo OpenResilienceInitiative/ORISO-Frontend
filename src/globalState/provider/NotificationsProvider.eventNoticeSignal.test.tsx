@@ -416,11 +416,6 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			'/sessions/consultant/sessionPreview/session/42?teamDiscussion=1'
 		],
 		[
-			'a team discussion (legacy path with query ids)',
-			mention(1),
-			'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
-		],
-		[
 			'an offered case',
 			handover(1),
 			'/sessions/consultant/sessionView/session/42'
@@ -442,6 +437,22 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			expect(banners).not.toHaveBeenCalled();
 		}
 	);
+
+	it('still announces a mention on the bare query link, which renders the empty list view', async () => {
+		withTones();
+		window.history.replaceState(
+			{},
+			'',
+			'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
+		);
+		await deliver([mention(1)]);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('notices').textContent).toBe(
+				'mention:42:1:Kollegin Weber'
+			)
+		);
+	});
 
 	it('still announces a team-discussion mention when the same enquiry is open on its main chat', async () => {
 		withTones();
