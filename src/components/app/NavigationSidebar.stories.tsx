@@ -522,7 +522,7 @@ export const RuntimeConsultantRailOpenEnquiries: Story = {
 export const RuntimeConsultantMobileOpenEnquiries: Story = {
 	name: 'Runtime Consultant Mobile — open enquiries (FE#1435)',
 	args: { role: 'consultant', layout: 'mobile' },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'phone375', isRotated: false } },
 	decorators: [
 		(StoryComponent) => (
 			<WithOpenEnquiries total={12}>
