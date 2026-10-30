@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import de from '../../resources/i18n/de/common.json';
 import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
@@ -387,7 +390,7 @@ type Story = StoryObj<typeof meta>;
  * stories pin both visual states.
  */
 const seedMatrixRoom = (
-	unreadCount: number,
+	unreadCount: number | Readonly<Record<string, number>>,
 	count = 3,
 	delayed = false,
 	failed = false
@@ -424,7 +427,10 @@ const seedMatrixRoom = (
 					? Promise.reject(new Error('Membership unavailable'))
 					: hydration,
 			getJoinedMembers: () => members,
-			getUnreadNotificationCount: () => unreadCount
+			getUnreadNotificationCount: () =>
+				typeof unreadCount === 'number'
+					? unreadCount
+					: (unreadCount[roomId] ?? 0)
 		};
 	}
 	const removeListener = (name: string, listener: (...args: any[]) => void) =>
@@ -1999,6 +2005,164 @@ export const AskerEmptyEnquiryRow: Story = {
 		await expect(
 			canvasElement.querySelector('.sessionsListItem__content')
 		).not.toHaveClass('consultantSearchLoaderHost');
+	}
+};
+
+/**
+ * #1306 — the supervisor's row says what it is.
+ *
+ * The badge above is icon-only: the word "Supervision" lives in
+ * `title`/`aria-label`. Measured on dev on 14.09.2026, the only VISIBLE word on
+ * a supervisor's row was "Mail", so the row read as mail counselling to the one
+ * person it is not. The consulting type is not lost — the supervisor reads the
+ * client chat one panel to the right, which says what kind of chat it is.
+ */
+export const SupervisionRowLabel: Story = {
+	name: 'Supervision — the row reads "Supervision", not "Mail" (#1306)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				viewerId={SUPERVISOR_ID}
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: true,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor']
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const modality = canvasElement.querySelector(
+				'[data-testid="supervision-modality"]'
+			);
+			expect(modality).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+			expect(modality!.querySelector('svg')).not.toBeNull();
+			// The mail label is gone for this viewer.
+			expect(
+				canvasElement.querySelector(
+					'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+				)
+			).toBeNull();
+		});
+	}
+};
+
+/** A side-room-only message must keep the expanded supervisor card unread. */
+export const SupervisionSideRoomUnread: Story = {
+	name: 'Supervision — unread private message keeps the case unread (#1306)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		const sideRoomId = '!supervision:matrix.example.org';
+		seedMatrixRoom({ [sideRoomId]: 2 });
+		return (
+			<RuntimeSessionListItem
+				viewerId={SUPERVISOR_ID}
+				sessionOverrides={{
+					supervision: {
+						supervisedByMe: true,
+						supervisorConsultantIds: [SUPERVISOR_ID],
+						supervisorDisplayNames: ['Sabine Supervisor'],
+						sideRoomId
+					}
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const row = canvasElement.querySelector('.sessionsListItem');
+			expect(row).not.toBeNull();
+			expect(row).not.toHaveClass('sessionsListItem--active');
+			expect(row).not.toHaveClass('sessionsListItem--read');
+			expect(
+				canvasElement.querySelector(
+					'[data-testid="supervision-modality"]'
+				)
+			).not.toBeNull();
+		});
+	}
+};
+
+/**
+ * The label truncates rather than pushing the row apart. "Supervision" fits
+ * German and English; a longer translation must not shove the date out of the
+ * card, and `title` preserves the descriptive supervision tooltip.
+ */
+const longSupervisionLabel =
+	'Supervision mit einer absichtlich sehr langen Bezeichnung';
+const supervisionDescription = 'Supervision – Sie lesen in diesem Chat mit';
+const longSupervisionTranslations = createInstance();
+void longSupervisionTranslations.init({
+	lng: 'de',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: {
+		de: {
+			common: {
+				...de,
+				sessionList: {
+					...de.sessionList,
+					toolbar: {
+						...de.sessionList.toolbar,
+						chips: {
+							...de.sessionList.toolbar.chips,
+							supervision: longSupervisionLabel
+						}
+					}
+				}
+			}
+		}
+	},
+	interpolation: { escapeValue: false }
+});
+
+export const SupervisionRowLabelTruncates: Story = {
+	name: 'Supervision — a long translation truncates instead of pushing (#1306)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={longSupervisionTranslations}>
+				<div style={{ width: 320 }}>
+					<RuntimeSessionListItem
+						viewerId={SUPERVISOR_ID}
+						sessionOverrides={{
+							supervision: {
+								supervisedByMe: true,
+								supervisorConsultantIds: [SUPERVISOR_ID],
+								supervisorDisplayNames: ['Sabine Supervisor']
+							}
+						}}
+					/>
+				</div>
+			</I18nextProvider>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const label = canvasElement.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			) as HTMLElement | null;
+			expect(label).not.toBeNull();
+			expect(label!.textContent).toBe(longSupervisionLabel);
+			expect(label!.scrollWidth).toBeGreaterThan(label!.clientWidth);
+			expect(label!.getAttribute('title')).toBe(supervisionDescription);
+			// The row must not grow wider than the card it sits in.
+			const card = canvasElement.querySelector(
+				'.sessionsListItem__content'
+			) as HTMLElement | null;
+			expect(card).not.toBeNull();
+			expect(label!.getBoundingClientRect().right).toBeLessThanOrEqual(
+				card!.getBoundingClientRect().right + 1
+			);
+		});
 	}
 };
 

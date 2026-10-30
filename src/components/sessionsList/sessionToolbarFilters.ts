@@ -2,11 +2,8 @@ import { getModality, Modality } from '../session/getModality';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
-import { isChatItemUnread } from '../../utils/sessionUnread';
-import {
-	getSupervisionListState,
-	hasSupervisionMarker
-} from '../sessionsListItem/supervisionListState';
+import { isChatItemUnread, isRoomUnread } from '../../utils/sessionUnread';
+import { getSupervisionListState } from '../sessionsListItem/supervisionListState';
 import {
 	SessionSearchTextOptions,
 	sessionMatchesPeople,
@@ -164,6 +161,43 @@ export const draftMatchesSession = (
 	);
 };
 
+/**
+ * Counts unread cases explicitly supervised by this viewer. The display
+ * filter owns which rows are eligible, so callers pass its unread source.
+ * Legacy ownership guesses still affect filtering but never inflate this
+ * notification count.
+ */
+export const countUnreadSupervisedSessions = (
+	pairs: ReadonlyArray<{
+		raw: ListItemInterface;
+		extended: ExtendedSessionInterface;
+	}>,
+	currentUserId?: string
+): number =>
+	pairs.filter(
+		({ raw, extended }) =>
+			getSupervisionListState(extended, currentUserId) ===
+				'supervisedByMe' &&
+			(isChatItemUnread(getToolbarChatItem(raw)) ||
+				isRoomUnread(extended.item?.supervision?.sideRoomId))
+	).length;
+
+/** Count unread kinds bundled into Other using the same supervision source as its pill. */
+export const countUnreadOtherSessions = (
+	kinds: ReadonlyArray<string>,
+	unreadByKind: Readonly<Record<string, number>>,
+	pairs: Parameters<typeof countUnreadSupervisedSessions>[0],
+	currentUserId?: string
+): number =>
+	kinds.reduce(
+		(total, kind) =>
+			total +
+			(kind === 'supervision'
+				? countUnreadSupervisedSessions(pairs, currentUserId)
+				: (unreadByKind[kind] ?? 0)),
+		0
+	);
+
 export function sessionMatchesToolbar(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface,
@@ -223,27 +257,12 @@ export function sessionMatchesToolbar(
 		if (!isConversationCircleSession(extended)) {
 			return false;
 		}
-	} else if (effectiveChip === 'supervision') {
-		if (hasSupervisionMarker(extended)) {
-			// ADR-008 list marker: the backend says whether I supervise this row.
-			if (
-				getSupervisionListState(extended, currentUserId) !==
-				'supervisedByMe'
-			) {
-				return false;
-			}
-		} else {
-			// Older backend without the marker: fall back to the heuristic
-			// "any row owned by another consultant". Remove once every
-			// environment sends `session.supervision`.
-			if (!raw.consultant?.id) {
-				return false;
-			}
-			if (String(raw.consultant.id) === String(currentUserId || '')) {
-				// Assigned consultant chats are excluded; only supervised chats remain.
-				return false;
-			}
-		}
+	} else if (
+		effectiveChip === 'supervision' &&
+		getSupervisionListState(extended, currentUserId) !== 'supervisedByMe'
+	) {
+		// Ownership alone also matches internal groups and handover candidates.
+		return false;
 	}
 
 	// Person rows are `<role>:<userId>:<agencyId>` (FE#1725); several

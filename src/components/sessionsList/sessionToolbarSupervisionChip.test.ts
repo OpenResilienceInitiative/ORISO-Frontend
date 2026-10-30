@@ -2,9 +2,8 @@
  * Supervision chip (ADR-008 list marker).
  *
  * The chip must match sessions the viewer actively supervises, using the
- * backend's `session.supervision` marker. Older backends do not send the
- * marker — there the old "any non-owner consultant row" heuristic remains so
- * the chip keeps working until the backend is upgraded.
+ * backend's `session.supervision` marker. Ownership alone is not supervision:
+ * an unrelated internal group must not appear under the Supervision filter.
  */
 import { describe, expect, it } from 'vite-plus/test';
 import { sessionMatchesToolbar } from './sessionToolbarFilters';
@@ -78,9 +77,9 @@ describe('sessionMatchesToolbar — supervision chip', () => {
 		expect(matches(r)).toBe(true);
 	});
 
-	describe('fallback without marker (older backend)', () => {
-		it('keeps matching non-owner consultant rows', () => {
-			expect(matches(raw({}))).toBe(true);
+	describe('rows without an explicit supervisor marker', () => {
+		it('excludes non-owner rows instead of guessing supervision from ownership', () => {
+			expect(matches(raw({}))).toBe(false);
 		});
 
 		it('keeps excluding own rows', () => {

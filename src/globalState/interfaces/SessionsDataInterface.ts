@@ -120,8 +120,9 @@ export interface SessionItemInterface {
 	 */
 	isTopicDuplicate?: boolean;
 	/**
-	 * ADR-008 supervision marker. `undefined` on backends that predate the
-	 * field — consumers fall back to heuristics, never to "not supervised".
+	 * ADR-008 supervision marker. Supported backends provide it for assigned
+	 * supervisors; consumers treat an undefined marker as not supervised.
+	 * Ownership alone never implies supervision.
 	 */
 	supervision?: UserService.Schemas.SessionSupervisionDTO;
 }

@@ -101,14 +101,9 @@ const isSupervisedByMe = (
 	getSupervisionListState(extended, currentUserId) === 'supervisedByMe';
 
 /**
- * Exactly one kind per row, evaluated in the spec's order (§5.2): supervision
- * by backend marker (only if the viewer can supervise) → circle → internal
- * group → live chat → supervision by legacy fallback (no marker, row owned
- * by another consultant, only if the viewer can supervise) → one-to-one.
- * The legacy heuristic runs after the structural group kinds because it
- * cannot tell a supervised case from a group an eligible consultant merely
- * subscribes to; and never for askers, whose ordinary chats it would
- * otherwise call "supervision".
+ * Exactly one kind per row: explicit supervisor marker for an eligible viewer,
+ * then circle, internal group, live chat and one-to-one. Ordinary non-owner
+ * rows are not supervision; ownership also describes handover candidates.
  */
 export const classifySession = (
 	raw: ListItemInterface,
@@ -132,14 +127,7 @@ export const classifySession = (
 	if (isAnonymousAskerSession(raw, extended)) {
 		return 'liveChat';
 	}
-	if (
-		canSupervise &&
-		!marker &&
-		raw.consultant?.id &&
-		String(raw.consultant.id) !== String(currentUserId || '')
-	) {
-		return 'supervision';
-	}
+
 	return 'oneToOne';
 };
 
