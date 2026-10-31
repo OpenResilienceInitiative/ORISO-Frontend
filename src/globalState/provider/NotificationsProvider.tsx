@@ -26,6 +26,14 @@ import {
 	NotificationTypeLiveChatMessage,
 	upsertLiveChatMessageNotice
 } from '../../components/notifications/LiveChatMessageNotice';
+import {
+	isEnquiryListOpen,
+	isNewEnquiryForCounsellor,
+	NEW_ENQUIRY_NOTICE_ID,
+	NOTIFICATION_TYPE_NEW_ENQUIRY,
+	NotificationTypeNewEnquiry,
+	upsertNewEnquiryNotice
+} from '../../components/notifications/NewEnquiryNotice';
 import { isNotificationSuppressed } from '../../utils/notificationSettings/model';
 import { resolveEventChannelContract } from '../../utils/notificationSettings/occasionChannelContract';
 import {
@@ -93,6 +101,7 @@ export type NotificationTypeSuccess = typeof NOTIFICATION_TYPE_SUCCESS;
 export type NotificationTypes =
 	| NotificationTypeCall
 	| NotificationTypeLiveChatMessage
+	| NotificationTypeNewEnquiry
 	| NotificationTypeError
 	| NotificationTypeInfo
 	| NotificationTypeWarning
@@ -581,6 +590,44 @@ export function NotificationsProvider(props) {
 							sessionId,
 							roomRef: event.params?.roomRef ?? null,
 							senderName: event.params?.senderName ?? null,
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
+			// FE#1435: a new enquiry also raises one in-app pop-up card, so a
+			// counsellor in another section notices it. Not while Anfragen is
+			// on screen: the new row appears there by itself (the tone stays).
+			if (
+				isNewEnquiryForCounsellor(event) &&
+				!isEnquiryListOpen(
+					window.location.pathname,
+					document.visibilityState !== 'hidden'
+				)
+			) {
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{ family: descriptor.family, mentioned }
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					setNotifications((list) =>
+						upsertNewEnquiryNotice(list, {
+							id: NEW_ENQUIRY_NOTICE_ID,
+							notificationType: NOTIFICATION_TYPE_NEW_ENQUIRY,
 							count: 1,
 							path: toNonEmbeddedPath(
 								resolveNotificationActionPath(

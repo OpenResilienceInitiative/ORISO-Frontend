@@ -2137,6 +2137,13 @@
 			"from": "Gönderen: {{name}}",
 			"several": "{{count}} yeni mesaj",
 			"open": "Sohbeti aç"
+		},
+		"newEnquiry": {
+			"title": "Yeni talep",
+			"waiting": "Danışan bir kişi yanıt bekliyor.",
+			"several": "{{count}} yeni talep yanıt bekliyor.",
+			"openOne": "Talebi görüntüle",
+			"openList": "Talepleri görüntüle"
 		}
 	},
 	"notifications": {
@@ -4442,7 +4449,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
-			"unreadCount_one": "{{count}} yeni mesaj"
+			"unreadCount_one": "{{count}} yeni mesaj",
+			"openEnquiries": "{{count}} açık talep",
+			"openEnquiries_one": "{{count}} açık talep"
 		}
 	},
 	"statusOverlay": {

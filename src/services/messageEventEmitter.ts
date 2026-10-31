@@ -13,6 +13,8 @@ type MessageEventData = {
 	timestamp?: number;
 	refreshEnquiryList?: boolean;
 	refreshSessionList?: boolean;
+	/** FE#1435: the room's enquiry was just accepted (by anyone in the agency). */
+	enquiryAccepted?: boolean;
 	/** Feed reconciliation must not trigger another feed request. */
 	source?: 'notification-feed';
 };

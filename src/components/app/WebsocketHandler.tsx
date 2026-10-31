@@ -12,12 +12,14 @@ export const WebsocketHandler = () => {
 			eventId?: string;
 			timestamp?: number;
 			isOwnMessage?: boolean;
+			enquiryAccepted?: boolean;
 		}) => {
 			messageEventEmitter.emit({
 				roomId: event?.roomId,
 				matrixEventId: event?.eventId,
 				isOwnMessage: event?.isOwnMessage === true,
-				timestamp: event?.timestamp
+				timestamp: event?.timestamp,
+				enquiryAccepted: event?.enquiryAccepted === true
 			});
 			if (!event?.isOwnMessage) setIncomingRefreshPending(true);
 		};

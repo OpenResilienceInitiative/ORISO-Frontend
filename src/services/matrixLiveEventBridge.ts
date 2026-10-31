@@ -1,5 +1,10 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
+import {
+	parseMessagePrefixes,
+	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
+	SYSTEM_NOTIFICATION_PREFIX
+} from '../components/message/messageConstants';
 
 /**
  * P2 feed-update signal (ADR-020). UserService emits this content-free Matrix
@@ -27,6 +32,19 @@ const isVideoCallInvite = (content: Record<string, unknown>): boolean => {
 		require('../utils/videoCallHelpers') as typeof import('../utils/videoCallHelpers');
 	return isVideoCallFromMatrixInviteContent(content);
 };
+
+/**
+ * FE#1435: UserService posts this plain-text notice as the accepting
+ * counsellor into the enquiry room (InquiryAcceptanceNoticeDelivery). The
+ * agency's other counsellors sit in that room as silent members (ADR-002),
+ * so it is their "a colleague took this enquiry" signal. Only the type is
+ * read; the body never leaves the bridge.
+ */
+const isEnquiryAcceptedNotice = (body: unknown): boolean =>
+	typeof body === 'string' &&
+	body.startsWith(SYSTEM_NOTIFICATION_PREFIX) &&
+	parseMessagePrefixes(body).systemNotificationType ===
+		SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED;
 
 const isElementOrGroupCallInvite = (
 	content: Record<string, unknown>
@@ -349,7 +367,7 @@ export class MatrixLiveEventBridge {
 	 */
 	private handleRoomMessage(event: MatrixEvent, room: Room): void {
 		const sender = event.getSender();
-		const { msgtype } = event.getContent();
+		const { msgtype, body } = event.getContent();
 
 		const myUserId = this.client?.getUserId();
 		const isOwnMessage = sender === myUserId;
@@ -365,7 +383,8 @@ export class MatrixLiveEventBridge {
 			isOwnMessage: isOwnMessage,
 			msgtype: msgtype,
 			eventId: event.getId(),
-			timestamp: event.getTs()
+			timestamp: event.getTs(),
+			enquiryAccepted: isEnquiryAcceptedNotice(body)
 		});
 	}
 

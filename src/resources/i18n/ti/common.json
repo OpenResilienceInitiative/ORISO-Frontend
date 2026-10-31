@@ -2137,6 +2137,13 @@
 			"from": "ካብ {{name}}",
 			"several": "{{count}} ሓደስቲ መልእኽትታት",
 			"open": "ዕላል ክፈት"
+		},
+		"newEnquiry": {
+			"title": "ሓድሽ ሕቶ",
+			"waiting": "ሓደ ምኽሪ ዝደሊ ሰብ መልሲ ይጽበ ኣሎ።",
+			"several": "{{count}} ሓደስቲ ሕቶታት መልሲ ይጽበዩ ኣለዉ።",
+			"openOne": "ሕቶ ርአ",
+			"openList": "ሕቶታት ርአ"
 		}
 	},
 	"notifications": {
@@ -4442,7 +4449,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
-			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ"
+			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ",
+			"openEnquiries": "{{count}} ክፉታት ሕቶታት",
+			"openEnquiries_one": "{{count}} ክፉት ሕቶ"
 		}
 	},
 	"statusOverlay": {

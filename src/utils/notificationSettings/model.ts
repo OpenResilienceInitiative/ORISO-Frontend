@@ -47,7 +47,36 @@ export interface OrisoNotificationSettings {
 	dndUntil: string | null;
 	/** Per-area notification config (Figma dialog, #576). */
 	notificationConfig: NotificationConfig;
+	/**
+	 * Which one-time default upgrades this config has seen. Stored configs
+	 * hold every row explicitly, so a changed factory default needs this to
+	 * tell "never chosen" from a deliberate choice made afterwards.
+	 */
+	notificationConfigRevision: number;
 }
+
+/**
+ * 1 (FE#1435): the "Neue Anfrage" row rings by default. A config stored
+ * before carries the old silent default, upgraded once on load.
+ */
+export const NOTIFICATION_SETTINGS_REVISION = 1;
+
+const upgradeNotificationConfig = (
+	config: NotificationConfig,
+	revision: number
+): NotificationConfig =>
+	revision < 1 && config.requests.new.sound === 'none'
+		? {
+				...config,
+				requests: {
+					...config.requests,
+					new: {
+						...config.requests.new,
+						sound: DEFAULT_NOTIFICATION_CONFIG.requests.new.sound
+					}
+				}
+			}
+		: config;
 
 /** A curated sound choice; 'none' is silent, 'default' inherits the message sound. */
 export type SoundId =
@@ -131,7 +160,8 @@ export const DEFAULT_NOTIFICATION_SETTINGS: OrisoNotificationSettings = {
 		enabled: false,
 		showMessagePreview: false
 	},
-	notificationConfig: DEFAULT_NOTIFICATION_CONFIG
+	notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
+	notificationConfigRevision: NOTIFICATION_SETTINGS_REVISION
 };
 
 /** Device-scoped state (one account-data event per device, MSC3890 pattern). */
@@ -183,7 +213,13 @@ export const parseNotificationSettings = (
 			)
 		},
 		dndUntil: typeof source.dndUntil === 'string' ? source.dndUntil : null,
-		notificationConfig: parseNotificationConfig(source.notificationConfig)
+		notificationConfig: upgradeNotificationConfig(
+			parseNotificationConfig(source.notificationConfig),
+			typeof source.notificationConfigRevision === 'number'
+				? source.notificationConfigRevision
+				: 0
+		),
+		notificationConfigRevision: NOTIFICATION_SETTINGS_REVISION
 	};
 };
 
@@ -223,7 +259,8 @@ export const mergeNotificationSettings = (
 	notificationConfig:
 		update.notificationConfig !== undefined
 			? update.notificationConfig
-			: current.notificationConfig
+			: current.notificationConfig,
+	notificationConfigRevision: current.notificationConfigRevision
 });
 
 /**

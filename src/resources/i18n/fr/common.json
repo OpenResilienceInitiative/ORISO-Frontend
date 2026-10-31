@@ -2137,6 +2137,13 @@
 			"from": "De {{name}}",
 			"several": "{{count}} nouveaux messages",
 			"open": "Ouvrir le chat"
+		},
+		"newEnquiry": {
+			"title": "Nouvelle demande",
+			"waiting": "Une personne attend une réponse.",
+			"several": "{{count}} nouvelles demandes attendent une réponse.",
+			"openOne": "Voir la demande",
+			"openList": "Voir les demandes"
 		}
 	},
 	"notifications": {
@@ -4442,7 +4449,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
-			"unreadCount_one": "{{count}} nouveau message"
+			"unreadCount_one": "{{count}} nouveau message",
+			"openEnquiries": "{{count}} demandes ouvertes",
+			"openEnquiries_one": "{{count}} demande ouverte"
 		}
 	},
 	"statusOverlay": {

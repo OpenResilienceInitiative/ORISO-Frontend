@@ -2158,6 +2158,13 @@
 			"from": "Von {{name}}",
 			"several": "{{count}} neue Nachrichten",
 			"open": "Chat öffnen"
+		},
+		"newEnquiry": {
+			"title": "Neue Anfrage",
+			"waiting": "Eine ratsuchende Person wartet auf Antwort.",
+			"several": "{{count}} neue Anfragen warten auf Antwort.",
+			"openOne": "Anfrage ansehen",
+			"openList": "Anfragen ansehen"
 		}
 	},
 	"notifications": {
@@ -4459,7 +4466,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} neue Nachrichten",
-			"unreadCount_one": "{{count}} neue Nachricht"
+			"unreadCount_one": "{{count}} neue Nachricht",
+			"openEnquiries": "{{count}} offene Anfragen",
+			"openEnquiries_one": "{{count}} offene Anfrage"
 		}
 	},
 	"statusOverlay": {

@@ -50,6 +50,12 @@ vi.mock('../../api/apiGetTools', () => ({
 	userHasBudibaseTools: vi.fn(() => Promise.resolve(false))
 }));
 
+// The enquiry badge polls on its own timer (FE#1435, own test); these tests
+// count only the unread-badge animation timers.
+vi.mock('./useOpenEnquiryCount', () => ({
+	useOpenEnquiryCount: () => null
+}));
+
 const routerConfig = {
 	navigation: [
 		{
