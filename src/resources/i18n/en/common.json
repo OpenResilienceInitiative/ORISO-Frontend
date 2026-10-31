@@ -6045,25 +6045,6 @@
 			"startFailed": "Failed to start call: {{message}}",
 			"elementUrlMissing": "The Element address is not set, so the Element UI cannot be opened."
 		},
-		"notes": {
-			"title": "Call notes",
-			"privacy": "Private. Only for you, and only for as long as the call lasts.",
-			"type": "Kind of note",
-			"text": "Note",
-			"add": "Add note",
-			"remove": "Remove note",
-			"copy": "Copy all",
-			"copied": "Copied",
-			"empty": "Nothing noted yet.",
-			"collapse": "Collapse notes",
-			"expand": "Expand notes",
-			"open": "Call notes",
-			"types": {
-				"frage": "Question",
-				"anmerkung": "Remark",
-				"aufgabe": "Task"
-			}
-		},
 		"states": {
 			"encrypted": "Encrypted",
 			"endsCurrent": "Answering ends your call with {{name}}.",
