@@ -15,6 +15,7 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import { SlideIn } from './SlideIn';
 import { SlideOutPresence } from './SlideOutPresence';
 import { StepTransition } from './StepTransition';
 import { transitionMotion } from './transitionMotion';
@@ -117,6 +118,61 @@ describe('StepTransition', () => {
 		expect(css()).toMatch(
 			new RegExp(`\\.${nextClass}\\{[^}]*animation:slideInFromRight`)
 		);
+	});
+});
+
+/**
+ * A transform kept after the slide makes the view the containing block of
+ * every fixed bar inside it: the live-chat entry's bottom bar stood 40px left
+ * of the screen edge, under the red stage, on every view after the first
+ * (E2E run e2e-20261030-2120). The slide may hold its first frame before it
+ * starts, never its last one after it ends.
+ */
+describe('SlideIn', () => {
+	beforeEach(() => preferReducedMotion(false));
+	afterEach(cleanup);
+
+	const animationsOf = (dataCy: string) => {
+		const view = document.querySelector(`[data-cy="${dataCy}"]`)!;
+		const className = [...view.classList].find((name) =>
+			name.startsWith('css-')
+		)!;
+		const css = [...document.querySelectorAll('style')]
+			.map((node) => node.textContent ?? '')
+			.join('');
+		return [
+			...css.matchAll(
+				new RegExp(`\\.${className}\\{[^}]*?animation:([^;}]*)`, 'g')
+			)
+		]
+			.map((match) => match[1])
+			.filter((animation) => animation !== 'none');
+	};
+
+	it('leaves no transform behind once a view has slid in', () => {
+		render(
+			<SlideIn data-cy="view" from="right">
+				<p>view</p>
+			</SlideIn>
+		);
+
+		const animations = animationsOf('view');
+		expect(animations).toHaveLength(1);
+		expect(animations[0]).toMatch(/^slideInFromRight .* backwards$/);
+	});
+
+	it('leaves none behind at any breakpoint either', () => {
+		render(
+			<SlideIn data-cy="view" from={{ xs: 'below', lg: 'right' }}>
+				<p>view</p>
+			</SlideIn>
+		);
+
+		const animations = animationsOf('view');
+		expect(animations).toHaveLength(2);
+		for (const animation of animations) {
+			expect(animation).toMatch(/ backwards$/);
+		}
 	});
 });
 

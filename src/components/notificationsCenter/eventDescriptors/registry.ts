@@ -321,6 +321,30 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'caseHandoverOfferReceived',
 		resolveActionTarget: conversationTarget
 	}),
+	// The offering counsellor's side of an offer: sent, declined, withdrawn
+	// (the recipient also gets "withdrawn"). Staff-only: the advice seeker is
+	// never told about a colleague-to-colleague offer.
+	descriptor('case.handover.offer.sent', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverOfferSent',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.offer.declined', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverOfferDeclined',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.offer.withdrawn', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handoverDenied',
+		i18nKey: 'caseHandoverOfferWithdrawn',
+		resolveActionTarget: conversationTarget
+	}),
 
 	// ----- Calls family (Slice 5) -----
 	// Live, joinable call -> Join overlay (does not navigate).

@@ -21,7 +21,9 @@ import {
 	apiCreateCaseHandoverOffer,
 	apiGetCaseHandoverReasons,
 	apiGetCaseHandoverRecipients,
-	apiGetCaseHandoverStatus
+	apiGetCaseHandoverRequestStatus,
+	apiGetCaseHandoverStatus,
+	apiWithdrawCaseHandoverOffer
 } from '../../api/apiCaseHandover';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
 import { resetCaseHandoverOperationStoreForTests } from '../caseHandover/caseHandoverOperationStore';
@@ -36,7 +38,8 @@ vi.mock('../../api/apiCaseHandover', () => ({
 	apiGetCaseHandoverReasons: vi.fn(),
 	apiGetCaseHandoverRecipients: vi.fn(),
 	apiGetCaseHandoverRequestStatus: vi.fn(),
-	apiGetCaseHandoverStatus: vi.fn()
+	apiGetCaseHandoverStatus: vi.fn(),
+	apiWithdrawCaseHandoverOffer: vi.fn()
 }));
 
 const activeSession = {
@@ -197,5 +200,235 @@ describe('AskerInfoAssign with the real SupervisorDialog', () => {
 		expect(calls[0][1].expectedOwnershipRevision).toBe(7);
 		expect(calls[1][1].expectedOwnershipRevision).toBe(8);
 		expect(calls[1][1].operationId).not.toBe(calls[0][1].operationId);
+	});
+
+	describe('withdrawing a pending offer', () => {
+		const openOffer = {
+			requestId: 501,
+			sessionId: 41,
+			status: 'PENDING_RECIPIENT_ACCEPTANCE',
+			direction: 'PUSH' as const,
+			recipientConsultantId: 'recipient-1',
+			canViewContent: true,
+			clientConsentRequired: false,
+			ownershipRevision: 7
+		};
+
+		it('finds the open offer again after a reload and shows no second offer form', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+
+			expect(
+				await screen.findByText(
+					'caseHandover.offer.status.PENDING_RECIPIENT_ACCEPTANCE'
+				)
+			).toBeTruthy();
+			expect(
+				screen.getByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			).toBeTruthy();
+			expect(screen.queryByRole('dialog')).toBeNull();
+		});
+
+		it('withdraws it, says so, and removes the button', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockResolvedValue({
+				...openOffer,
+				status: 'WITHDRAWN'
+			});
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+
+			expect(
+				await screen.findByText('caseHandover.offer.status.WITHDRAWN')
+			).toBeTruthy();
+			expect(apiWithdrawCaseHandoverOffer).toHaveBeenCalledWith(41, 501);
+			expect(
+				screen.queryByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			).toBeNull();
+		});
+
+		it('offers the withdrawal right after the offer was sent', async () => {
+			vi.mocked(apiCreateCaseHandoverOffer).mockResolvedValue(openOffer);
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			const dialog = await screen.findByRole('dialog');
+			await fillRealDialog();
+			fireEvent.click(
+				within(dialog).getByTestId('supervisor-dialog-confirm')
+			);
+
+			expect(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			).toBeTruthy();
+		});
+
+		it('tells the counsellor when the colleague answered first instead of pretending it worked', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockRejectedValue(
+				new Error('CONFLICT')
+			);
+			vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue({
+				...openOffer,
+				status: 'RECIPIENT_DECLINED'
+			});
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+
+			expect(
+				await screen.findByText('caseHandover.offer.withdrawConflict')
+			).toBeTruthy();
+			expect(
+				await screen.findByText(
+					'caseHandover.offer.status.RECIPIENT_DECLINED'
+				)
+			).toBeTruthy();
+		});
+
+		it('a focus refresh during the withdrawal cannot leave the button stuck', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+				openOffer
+			);
+			let failWithdrawal: (error: Error) => void = () => {};
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockReturnValue(
+				new Promise((_, reject) => {
+					failWithdrawal = reject;
+				})
+			);
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+			fireEvent(window, new Event('focus'));
+			failWithdrawal(new Error('NETWORK'));
+
+			expect(
+				await screen.findByText('caseHandover.offer.withdrawError')
+			).toBeTruthy();
+			const retry = screen.getByRole('button', {
+				name: 'caseHandover.offer.withdraw'
+			}) as HTMLButtonElement;
+			expect(retry.disabled).toBe(false);
+			expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+		});
+
+		it('applies a withdrawal answer that omits the request id', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			const { requestId: _omitted, ...withoutId } = openOffer;
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockResolvedValue({
+				...withoutId,
+				status: 'WITHDRAWN'
+			});
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+
+			expect(
+				await screen.findByText('caseHandover.offer.status.WITHDRAWN')
+			).toBeTruthy();
+		});
+
+		it('keeps the offer pending and says so when the withdrawal fails', async () => {
+			vi.mocked(apiGetCaseHandoverStatus).mockResolvedValue({
+				sessionId: 41,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				ownershipRevision: 7,
+				openOffer
+			});
+			vi.mocked(apiWithdrawCaseHandoverOffer).mockRejectedValue(
+				new Error('NETWORK')
+			);
+			renderAssign();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'caseHandover.offer.open' })
+			);
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			);
+
+			expect(
+				await screen.findByText('caseHandover.offer.withdrawError')
+			).toBeTruthy();
+			expect(
+				screen.getByRole('button', {
+					name: 'caseHandover.offer.withdraw'
+				})
+			).toBeTruthy();
+		});
 	});
 });

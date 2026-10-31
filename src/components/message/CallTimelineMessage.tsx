@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ActiveSessionContext } from '../../globalState';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { callPartyOf } from '../call/callParty';
+import { formatMessagePersonName } from './messageNameUtils';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
 import { useCallTimelineState } from './useCallTimelineState';
 
@@ -69,7 +70,8 @@ export const CallTimelineMessage = ({
 	 * accounts hold the login name, so "Called by bart_getme_2fa" — the one
 	 * identifier the public display name exists to keep off screen.
 	 */
-	const activeSession = React.useContext(ActiveSessionContext)?.activeSession;
+	const sessionContext = React.useContext(ActiveSessionContext);
+	const activeSession = sessionContext?.activeSession;
 	const partyOf = (userId: string | undefined) =>
 		callPartyOf(
 			activeSession && {
@@ -84,8 +86,22 @@ export const CallTimelineMessage = ({
 				(participant) => participant.userId === call.actorUserId
 			)?.displayName
 		: undefined;
+	/*
+	 * A group has no consultant/asker pair, so `partyOf` knows nobody and the
+	 * Matrix profile name (the login, e.g. "blinky2") would be shown. The
+	 * group's member list carries the public display name (OBP 2.1 #32).
+	 */
+	const member = activeSession?.isGroup
+		? sessionContext?.avatarMembers?.find(
+				(entry) => entry._id === call.actorUserId
+			)
+		: undefined;
+	const memberName = member?.displayName?.trim()
+		? formatMessagePersonName(member.displayName, member.username)
+		: undefined;
 	const actorName =
 		partyOf(call.actorUserId)?.name ??
+		memberName ??
 		(named === call.actorUserId ? undefined : named);
 	/*
 	 * The date in the language the interface is in, not the browser's.
