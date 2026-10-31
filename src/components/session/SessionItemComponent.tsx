@@ -1385,11 +1385,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		) {
 			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -2914,19 +2910,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setEditingMessage(buildEditContext(message));
 	}, []);
 
-	const handleDeleteDirect = useCallback(
-		(message: MessageItem) => {
-			if (isRejectedSession || !resolvedMatrixRoomId || !message?._id) {
+	// Delete = Matrix redaction of the event in ITS room. The timeline only
+	// offers it on the viewer's own messages; the main chat and the
+	// Teamberatung panel share this one path.
+	const redactMessageInRoom = useCallback(
+		(matrixRoomId: string | undefined, message: MessageItem) => {
+			if (isRejectedSession || !matrixRoomId || !message?._id) {
 				return;
 			}
 			chatTransportService
 				.redactMessage({
-					matrixRoomId: resolvedMatrixRoomId,
+					matrixRoomId,
 					targetEventId: message._id
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId, isRejectedSession]
+		[isRejectedSession]
+	);
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) =>
+			redactMessageInRoom(resolvedMatrixRoomId, message),
+		[redactMessageInRoom, resolvedMatrixRoomId]
+	);
+	const handleDeleteTeamMessage = useCallback(
+		(message: MessageItem) => redactMessageInRoom(teamRoomId, message),
+		[redactMessageInRoom, teamRoomId]
 	);
 
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
@@ -4494,6 +4502,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							handleDecryptionSuccess={handleDecryptionSuccess}
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
+							onDeleteDirect={
+								isRejectedSession
+									? undefined
+									: handleDeleteTeamMessage
+							}
 						/>
 						{failedSends
 							.filter((failed) =>

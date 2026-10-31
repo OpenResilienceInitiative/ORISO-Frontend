@@ -34,6 +34,7 @@ import {
 	SessionsDataContext,
 	ServerSettingsContext
 } from '../../globalState';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { LocaleContext } from '../../globalState/context/LocaleContext';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
@@ -81,6 +82,11 @@ vi.mock('../../api', async (original) => ({
 vi.mock('matrix-js-sdk', async (original) => ({
 	...(await original<any>()),
 	createClient: () => boundary.client
+}));
+// jsdom gives every node zero layout, so focus-trap sees no tabbable element
+// and throws on activate (the delete confirmation is the first overlay here).
+vi.mock('focus-trap-react', () => ({
+	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 // Browser-only animation implementation has no canvas renderer in jsdom.
 vi.mock('lottie-web', () => ({
@@ -212,6 +218,13 @@ beforeEach(async () => {
 	} as any;
 	HTMLElement.prototype.scrollIntoView = vi.fn();
 	HTMLElement.prototype.scrollTo = vi.fn();
+	// The delete confirmation is an Overlay: it needs the #overlay mount point
+	// the app shell provides.
+	if (!document.getElementById('overlay')) {
+		const mount = document.createElement('div');
+		mount.id = 'overlay';
+		document.body.appendChild(mount);
+	}
 	boundary.rooms.clear();
 	boundary.rooms.set(
 		MAIN,
@@ -295,6 +308,7 @@ function openEnquiry(
 		conversationType?: string | null;
 		agencyId?: number;
 		assigned?: boolean;
+		allowDeleting?: boolean;
 	} = {}
 ) {
 	const status = options.status ?? 1;
@@ -396,7 +410,13 @@ function openEnquiry(
 			ConsultantListContext,
 			{ consultantList: [], setConsultantList: vi.fn() }
 		],
-		[ServerSettingsContext, { getSetting: () => undefined }],
+		[
+			ServerSettingsContext,
+			{
+				getSetting: () =>
+					options.allowDeleting ? { value: true } : undefined
+			}
+		],
 		[SessionsDataContext, { sessionsData: {}, dispatch: vi.fn() }],
 		[TopicsContext, { topics: [], setTopics: vi.fn() }],
 		[
@@ -438,14 +458,16 @@ function openEnquiry(
 							{child}
 						</Context.Provider>
 					),
-					<LiveSession>
-						<RouteProbe />
-						<SessionStream
-							readonly={false}
-							bannedUsers={[]}
-							checkMutedUserForThisSession={() => {}}
-						/>
-					</LiveSession>
+					<ModalProvider>
+						<LiveSession>
+							<RouteProbe />
+							<SessionStream
+								readonly={false}
+								bannedUsers={[]}
+								checkMutedUserForThisSession={() => {}}
+							/>
+						</LiveSession>
+					</ModalProvider>
 				)}
 			</MemoryRouter>
 		</I18nextProvider>
@@ -608,6 +630,68 @@ it('keeps archived team history readable without a composer when the server repo
 		view.container.querySelector('.chatStage__mainPane')?.textContent
 	).toContain(TEXT);
 }, 20000);
+
+it('lets the author delete their own team message through the same Matrix redaction as the main chat, and nobody else', async () => {
+	const mine = 'Meine Einschätzung zur Anfrage.';
+	const theirs = 'Die Einschätzung der Kollegin.';
+	const event = (id: string, sender: string, body: string) =>
+		new MatrixEvent({
+			event_id: id,
+			room_id: TEAM,
+			sender,
+			type: 'm.room.message',
+			origin_server_ts: Date.now(),
+			content: { msgtype: 'm.text', body }
+		});
+	boundary.rooms.set(
+		TEAM,
+		room(TEAM, [
+			event('$team-mine', '@consultant:test', mine),
+			event('$team-theirs', '@colleague:test', theirs)
+		])
+	);
+	boundary.client.redactEvent = vi
+		.fn()
+		.mockResolvedValue({ event_id: '$redaction' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		allowDeleting: true
+	});
+	const panelText = () =>
+		view.container.querySelector('.chatStage__panel .sidePanel')
+			?.textContent ?? '';
+	await waitFor(() => expect(panelText()).toContain(theirs), {
+		timeout: 15000
+	});
+	const menuItems = async (message: string) => {
+		const item = Array.from(
+			view.container.querySelectorAll('.chatStage__panel .messageItem')
+		).find((candidate) => candidate.textContent?.includes(message));
+		fireEvent.click(
+			item!.querySelector('button[aria-label="message.menu.open"]')!
+		);
+		return screen.findAllByRole('menuitem');
+	};
+
+	// A colleague's message offers no delete.
+	const foreign = await menuItems(theirs);
+	expect(foreign.map((el) => el.textContent)).not.toContain(
+		'message.menu.delete'
+	);
+	fireEvent.keyDown(document.body, { key: 'Escape' });
+
+	// Own message: delete → confirm → redaction in the TEAM room.
+	const own = await menuItems(mine);
+	fireEvent.click(
+		own.find((el) => el.textContent?.includes('message.menu.delete'))!
+	);
+	fireEvent.click(await screen.findByText('message.delete.overlay.confirm'));
+	await waitFor(() =>
+		expect(boundary.client.redactEvent).toHaveBeenCalledWith(
+			TEAM,
+			'$team-mine'
+		)
+	);
+}, 30000);
 
 it('keeps the consultant enquiry one-way and hides system notices while retaining asker messages', async () => {
 	const timeline = boundary.rooms.get(MAIN).timeline;
