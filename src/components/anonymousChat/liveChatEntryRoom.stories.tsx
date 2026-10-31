@@ -107,21 +107,24 @@ const rollFour = (): GuestName[] => {
 	return picked;
 };
 
-const Access = () => {
+const Access = ({ slideIn = false }: { slideIn?: boolean }) => {
 	const [names, setNames] = React.useState(rollFour);
 	const [selected, setSelected] = React.useState(0);
+	const access = (
+		<LiveChatAccess
+			names={names}
+			selectedIndex={selected}
+			onSelect={setSelected}
+			onReroll={() => {
+				setNames(rollFour());
+				setSelected(0);
+			}}
+			onContinue={() => undefined}
+		/>
+	);
 	return (
 		<Shell statusKey="liveChat.entry.status.access">
-			<LiveChatAccess
-				names={names}
-				selectedIndex={selected}
-				onSelect={setSelected}
-				onReroll={() => {
-					setNames(rollFour());
-					setSelected(0);
-				}}
-				onContinue={() => undefined}
-			/>
+			{slideIn ? <EntryRoomView>{access}</EntryRoomView> : access}
 		</Shell>
 	);
 };
@@ -291,6 +294,26 @@ export const StepAccessMobile: StoryObj = {
 	parameters: full(
 		'Dieselbe Auswahl auf 375 pt: zwei Karten nebeneinander, lange Namen brechen um. Der Bildschirm war vorher fast leer — das war Franks Beschwerde.'
 	)
+};
+/* The app mounts every view through `EntryRoomView`, which slides it in. The
+   slide must not leave the view as the containing block of the fixed bar:
+   it then stood 40px left of the screen edge, under the red stage (E2E run
+   e2e-20261030-2120). */
+export const StepAccessSlidIn: StoryObj = {
+	globals: desktop1440Globals,
+	name: 'A — Der Zugang, eingeglitten wie in der App',
+	render: () => <Access slideIn />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
+	parameters: full(
+		'Der Zugang, wie die App ihn zeigt: eingeglitten über `EntryRoomView`. Nach dem Gleiten steht die Leiste unten bündig an der Bühne und endet am rechten Rand.'
+	)
+};
+export const StepAccessSlidInMobile: StoryObj = {
+	globals: phone390Globals,
+	name: 'A — Der Zugang, eingeglitten wie in der App, mobil (390)',
+	render: () => <Access slideIn />,
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
+	parameters: { layout: 'fullscreen' }
 };
 export const StepWaiting: StoryObj = {
 	globals: desktop1440Globals,
