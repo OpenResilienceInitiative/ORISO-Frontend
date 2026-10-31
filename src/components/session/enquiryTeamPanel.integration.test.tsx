@@ -693,6 +693,48 @@ it('lets the author delete their own team message through the same Matrix redact
 	);
 }, 30000);
 
+it('offers no delete in an archived, read-only team discussion', async () => {
+	const mine = 'Meine Einschätzung vor der Annahme.';
+	boundary.rooms.set(
+		TEAM,
+		room(TEAM, [
+			new MatrixEvent({
+				event_id: '$team-archived-mine',
+				room_id: TEAM,
+				sender: '@consultant:test',
+				type: 'm.room.message',
+				origin_server_ts: Date.now(),
+				content: { msgtype: 'm.text', body: mine }
+			})
+		])
+	);
+	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		allowDeleting: true
+	});
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__panel .sidePanel')
+					?.textContent
+			).toContain(mine),
+		{ timeout: 15000 }
+	);
+	const item = Array.from(
+		view.container.querySelectorAll('.chatStage__panel .messageItem')
+	).find((candidate) => candidate.textContent?.includes(mine));
+	const menuButton = item?.querySelector(
+		'button[aria-label="message.menu.open"]'
+	);
+	if (menuButton) {
+		fireEvent.click(menuButton);
+		const entries = await screen.findAllByRole('menuitem');
+		expect(entries.map((el) => el.textContent)).not.toContain(
+			'message.menu.delete'
+		);
+	}
+}, 30000);
+
 it('keeps the consultant enquiry one-way and hides system notices while retaining asker messages', async () => {
 	const timeline = boundary.rooms.get(MAIN).timeline;
 	for (const [id, body] of [

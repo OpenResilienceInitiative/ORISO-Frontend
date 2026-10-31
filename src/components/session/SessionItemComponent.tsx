@@ -4502,10 +4502,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							handleDecryptionSuccess={handleDecryptionSuccess}
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
+							// An archived discussion is read-only in Matrix (ADR-016): a
+							// redaction there is refused, so it offers no delete either.
 							onDeleteDirect={
-								isRejectedSession
-									? undefined
-									: handleDeleteTeamMessage
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
+									? handleDeleteTeamMessage
+									: undefined
 							}
 						/>
 						{failedSends
