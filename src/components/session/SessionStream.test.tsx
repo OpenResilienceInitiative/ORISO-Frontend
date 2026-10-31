@@ -166,7 +166,8 @@ vi.mock(
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
-				requestKeys: mocks.requestHistoryKeys
+				requestKeys: mocks.requestHistoryKeys,
+				getPendingApprovals: () => []
 			}
 		};
 	}
@@ -211,10 +212,15 @@ vi.mock(
 
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
-		if (
-			props.mainTimelineSupplement?.props?.sessionId ===
-			mocks.suspendedSessionId
-		) {
+		const supplement = props.mainTimelineSupplement;
+		const supplementChildren = React.Children.toArray(
+			supplement?.props?.children
+		) as any[];
+		const supplementSessionId =
+			supplement?.props?.sessionId ??
+			supplementChildren.find((child) => child?.props?.sessionId)?.props
+				?.sessionId;
+		if (supplementSessionId === mocks.suspendedSessionId) {
 			mocks.suspendedRenders++;
 			throw mocks.suspendedRender;
 		}

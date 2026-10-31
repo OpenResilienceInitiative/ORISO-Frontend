@@ -1,0 +1,72 @@
+@import '../../resources/styles/settings';
+
+.historyRequestCard {
+	display: grid;
+	gap: 8px;
+	margin: 16px 0;
+	padding: 16px;
+	border: 1px solid var(--m3-outline-variant, currentColor);
+	border-radius: 16px;
+	background: var(--m3-surface-container-high, transparent);
+	color: var(--m3-on-surface, inherit);
+	font-family: $font-family-sans-serif;
+}
+
+.historyRequestCard__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.historyRequestCard__intro,
+.historyRequestCard__failed {
+	margin: 0;
+}
+
+.historyRequestCard__reason {
+	margin: 0;
+	padding: 8px 12px;
+	border-left: 3px solid var(--m3-primary, currentColor);
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+.historyRequestCard__failed {
+	color: var(--m3-error, inherit);
+}
+
+.historyRequestCard__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.historyRequestCard__decline,
+.historyRequestCard__approve {
+	padding: 8px 16px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.5;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, currentColor);
+		outline-offset: 2px;
+	}
+}
+
+.historyRequestCard__decline {
+	color: var(--m3-on-surface-variant, inherit);
+}
+
+.historyRequestCard__approve {
+	color: var(--m3-primary, inherit);
+}
