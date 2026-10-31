@@ -491,3 +491,62 @@ it('names both parties by the names the session list uses, not the login in thei
 	expect(avatarNames).toContain('Bart Simpson');
 	expect(avatarNames.join(' ')).not.toMatch(/bart_getme/i);
 });
+
+it('names the caller in an internal group chat by the member display name, not the login (OBP 2.1 #32)', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'missed-group-call',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'missed',
+		actorUserId: '@blinky2:example',
+		participants: [{ userId: '@blinky2:example', displayName: 'blinky2' }]
+	};
+	const activeSession = {
+		isGroup: true,
+		item: { moderators: [] }
+	} as unknown as ExtendedSessionInterface;
+	const members = [
+		{
+			_id: '@blinky2:example',
+			username: 'blinky2',
+			displayName: 'Blinky Zwei'
+		}
+	];
+	render(
+		<ActiveSessionContext.Provider
+			value={{ activeSession, avatarMembers: members }}
+		>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+
+	expect(screen.getByText(/startedBy: Blinky Zwei/)).toBeTruthy();
+	expect(screen.queryByText(/blinky2/)).toBeNull();
+});
+
+it('falls back to the profile name of a group-call caller when no display name is known', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'missed-group-call-2',
+		roomRef: '!group:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'missed',
+		actorUserId: '@blinky2:example',
+		participants: [{ userId: '@blinky2:example', displayName: 'blinky2' }]
+	};
+	const activeSession = {
+		isGroup: true,
+		item: { moderators: [] }
+	} as unknown as ExtendedSessionInterface;
+	render(
+		<ActiveSessionContext.Provider
+			value={{ activeSession, avatarMembers: [] }}
+		>
+			<CallTimelineMessage call={call} />
+		</ActiveSessionContext.Provider>
+	);
+
+	// Pre-existing behaviour: the profile name is shown when it is all there is.
+	expect(screen.getByText(/startedBy: blinky2/)).toBeTruthy();
+});
