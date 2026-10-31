@@ -239,11 +239,15 @@ it('"Next notification" onto a knock only selects it: no camera, no call, no nav
 		actionPath: '/sessions/consultant/sessionView/room-101/101'
 	} as NotificationFeedItem;
 	await renderCenter(1400, [accepted, knockItem]);
+	const detailTitle = () =>
+		screen.getByRole('heading', { level: 2 }).textContent;
+	expect(detailTitle()).not.toMatch(/knocking/i);
 	await user.click(
 		screen.getByRole('button', { name: 'Next notification', exact: true })
 	);
 
 	await waitFor(() => expect(markRead).toHaveBeenCalledWith('knock-1'));
+	expect(detailTitle()).toMatch(/knocking/i);
 	expect(startRoomCall).not.toHaveBeenCalled();
 	expect(screen.getByLabelText('Current route').textContent).toBe(
 		'/notifications'
