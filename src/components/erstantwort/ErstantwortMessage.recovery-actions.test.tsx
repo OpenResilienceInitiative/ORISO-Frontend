@@ -107,7 +107,7 @@ describe('ErstantwortMessage email action', () => {
 		renderMessage();
 
 		expect(
-			screen.queryByRole('heading', { name: 'E-Mail-Adresse angeben' })
+			screen.queryByRole('heading', { name: 'Zugang sichern' })
 		).toBeNull();
 
 		act(() => {
@@ -117,7 +117,7 @@ describe('ErstantwortMessage email action', () => {
 		});
 
 		expect(
-			screen.getByRole('heading', { name: 'E-Mail-Adresse angeben' })
+			screen.getByRole('heading', { name: 'Zugang sichern' })
 		).toBeTruthy();
 		expect(screen.getByRole('textbox')).toBeTruthy();
 	});
