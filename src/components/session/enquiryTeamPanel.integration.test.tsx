@@ -24,6 +24,7 @@ import { SessionStream } from './SessionStream';
 // measure Vite's first compilation of this large module.
 import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import {
 	ActiveSessionContext,
 	UserDataContext,
@@ -41,6 +42,7 @@ import { MatrixClientService } from '../../services/matrixClientService';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { chatTransportService } from '../../services/chatTransportService';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	setValueInCookie,
@@ -66,6 +68,7 @@ const boundary = vi.hoisted(() => {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
 		getTeam: vi.fn(),
+		getSupervisors: vi.fn(),
 		sessionRoom: vi.fn(),
 		fetch: vi.fn(),
 		rejectEnquiry: vi.fn(),
@@ -74,6 +77,10 @@ const boundary = vi.hoisted(() => {
 		client: null as any
 	};
 });
+// jsdom has no layout, so the overlay's focus trap finds nothing tabbable.
+vi.mock('focus-trap-react', () => ({
+	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
+}));
 vi.mock('../../api', async (original) => ({
 	...(await original<any>()),
 	apiRejectEnquiry: (...args: any[]) => boundary.rejectEnquiry(...args)
@@ -103,7 +110,8 @@ vi.mock('../../api/apiTemporaryAccount', () => ({
 	apiPutMessageRetention: async () => 'saved'
 }));
 vi.mock('../../api/apiGetSessionSupervisors', () => ({
-	apiGetSessionSupervisors: async () => []
+	apiGetSessionSupervisors: (...args: any[]) =>
+		boundary.getSupervisors(...args)
 }));
 vi.mock('../../api/apiGetSessionRooms', () => ({
 	apiGetSessionRoomBySessionId: (...args: any[]) =>
@@ -143,6 +151,7 @@ vi.mock('../../utils/pseudonymGenerator', async (original) => ({
 
 const MAIN = '!enquiry:test';
 const TEAM = '!team:test';
+const SUPERVISION = '!supervision:test';
 const TEXT =
 	'Meine vollständige Anfrage: ' +
 	'Dieser Absatz erklärt meine Situation ausführlich. '.repeat(24) +
@@ -251,6 +260,7 @@ beforeEach(async () => {
 		.mockReset()
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	boundary.getTeam.mockReset().mockResolvedValue(null);
+	boundary.getSupervisors.mockReset().mockResolvedValue([]);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
 	boundary.reload.mockReset();
@@ -268,6 +278,7 @@ beforeEach(async () => {
 afterEach(() => {
 	exitPracticeMode();
 	cleanup();
+	document.getElementById('overlay')?.remove();
 	service?.stopAndCleanup();
 	setMatrixClientServiceRef(null);
 	expect(boundary.fetch).not.toHaveBeenCalled();
@@ -290,11 +301,15 @@ function openEnquiry(
 		reloadedStatus?: number;
 		teamChannel?: boolean;
 		threadChannel?: boolean;
+		supervisionChannel?: boolean;
 		id?: number;
 		registrationType?: string;
 		conversationType?: string | null;
 		agencyId?: number;
 		assigned?: boolean;
+		/** Owner the reload reports once the case has left the enquiry state. */
+		reloadedConsultant?: string;
+		width?: number;
 	} = {}
 ) {
 	const status = options.status ?? 1;
@@ -347,6 +362,16 @@ function openEnquiry(
 						const reloaded = options.reloadedStatus ?? 2;
 						setCurrent({
 							...activeSession,
+							...(options.reloadedConsultant
+								? {
+										consultant: {
+											id: options.reloadedConsultant,
+											consultantId:
+												options.reloadedConsultant,
+											username: options.reloadedConsultant
+										}
+									}
+								: {}),
 							isEnquiry: false,
 							isRejected: reloaded === 5,
 							item: { ...activeSession.item, status: reloaded }
@@ -360,7 +385,7 @@ function openEnquiry(
 		);
 	}
 	const providers: [React.Context<any>, any][] = [
-		[ResponsiveContext, { width: 1440 }],
+		[ResponsiveContext, { width: options.width ?? 1440 }],
 		[
 			UserDataContext,
 			{
@@ -420,6 +445,12 @@ function openEnquiry(
 			{ matrixClientService: service, setMatrixClientService: vi.fn() }
 		]
 	];
+	// Overlays portal into the app's #overlay host.
+	if (!document.getElementById('overlay')) {
+		const overlayHost = document.createElement('div');
+		overlayHost.id = 'overlay';
+		document.body.appendChild(overlayHost);
+	}
 	return render(
 		<I18nextProvider i18n={translations}>
 			<MemoryRouter
@@ -427,9 +458,11 @@ function openEnquiry(
 					'/sessions/consultant/sessionPreview/4711' +
 						(options.teamChannel
 							? '?channel=team'
-							: options.threadChannel
-								? '?channel=thread:%24original'
-								: '')
+							: options.supervisionChannel
+								? '?channel=supervision'
+								: options.threadChannel
+									? '?channel=thread:%24original'
+									: '')
 				]}
 			>
 				{providers.reduceRight(
@@ -438,14 +471,16 @@ function openEnquiry(
 							{child}
 						</Context.Provider>
 					),
-					<LiveSession>
-						<RouteProbe />
-						<SessionStream
-							readonly={false}
-							bannedUsers={[]}
-							checkMutedUserForThisSession={() => {}}
-						/>
-					</LiveSession>
+					<ModalProvider>
+						<LiveSession>
+							<RouteProbe />
+							<SessionStream
+								readonly={false}
+								bannedUsers={[]}
+								checkMutedUserForThisSession={() => {}}
+							/>
+						</LiveSession>
+					</ModalProvider>
 				)}
 			</MemoryRouter>
 		</I18nextProvider>
@@ -683,6 +718,127 @@ it('updates an already open enquiry when another colleague accepts it', async ()
 			).toBeNull();
 		},
 		{ timeout: 10000 }
+	);
+}, 20000);
+
+// This fixture's i18n only carries the rejection copy; other keys render as-is.
+const TAKEN_HEADLINE =
+	'session.anonymous.takenByOtherConsultant.overlay.headline';
+
+// #1472: the case used to turn into a colleague's read-only case without a word.
+it('tells the counsellor when a colleague took the enquiry they have open', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		reloadedConsultant: 'colleague'
+	});
+	await waitFor(() =>
+		expect(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeTruthy()
+	);
+	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
+	boundary.sessionRoom.mockResolvedValue({
+		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
+	});
+	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy(), {
+		timeout: 10000
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'session.anonymous.takenByOtherConsultant.button.label'
+		})
+	);
+	await waitFor(() =>
+		expect(view.getByTestId('route').textContent).toBe(
+			'/sessions/consultant/sessionPreview'
+		)
+	);
+}, 20000);
+
+it('tells the counsellor when an enquiry link opens a case a colleague already took', async () => {
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { status: 2, assigned: true });
+	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy());
+});
+
+it.each([
+	['team', TEAM],
+	['supervision', SUPERVISION]
+] as const)(
+	'tells the counsellor on a phone even when the %s panel fills the screen',
+	async (channel, sideRoom) => {
+		// Phone width: the side panel replaces the case card.
+		if (channel === 'team') {
+			boundary.getTeam.mockResolvedValue({
+				matrixRoomId: TEAM,
+				status: 'OPEN'
+			});
+		} else {
+			boundary.rooms.set(SUPERVISION, room(SUPERVISION, []));
+			boundary.getSupervisors.mockResolvedValue([
+				{
+					supervisorConsultantId: 'supervisor',
+					matrixRoomId: SUPERVISION
+				}
+			]);
+		}
+		const markRead = vi
+			.spyOn(chatTransportService, 'markRoomAsRead')
+			.mockResolvedValue(undefined);
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			status: 2,
+			assigned: true,
+			teamChannel: channel === 'team',
+			supervisionChannel: channel === 'supervision',
+			width: 390
+		});
+		await waitFor(
+			() =>
+				expect(
+					view.container.querySelector('.sidePanel')
+				).not.toBeNull(),
+			{ timeout: 15000 }
+		);
+		expect(view.container.querySelector('.chatStage__card')).toBeNull();
+		expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
+		// The notice covers the panel: its messages were not seen.
+		expect(markRead).not.toHaveBeenCalledWith(sideRoom);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'session.anonymous.takenByOtherConsultant.button.label'
+			})
+		);
+		await waitFor(() =>
+			expect(view.getByTestId('route').textContent).toBe(
+				'/sessions/consultant/sessionPreview'
+			)
+		);
+	},
+	20000
+);
+
+it('stays silent when the counsellor accepted the enquiry themself', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		reloadedConsultant: 'consultant'
+	});
+	await waitFor(() =>
+		expect(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeTruthy()
+	);
+	boundary.sessionRoom.mockResolvedValue({
+		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
+	});
+	await waitFor(
+		() =>
+			expect(
+				screen.queryByRole('button', {
+					name: 'enquiry.acceptButton.known'
+				})
+			).toBeNull(),
+		{ timeout: 10000 }
+	);
+	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
+	expect(view.getByTestId('route').textContent).toMatch(
+		/^\/sessions\/consultant\/sessionPreview\/4711/
 	);
 }, 20000);
 
