@@ -9,7 +9,8 @@ export type CallKnockMedium = 'CHAT' | 'AUDIO' | 'VIDEO';
 
 export interface CallKnock {
 	id: number;
-	sessionId: number;
+	/** Empty for a call-share-link knock: the guest must not learn the conversation (UserService#1488). */
+	sessionId?: number;
 	/** The name the person chose (decoded username, never e-mail or real name). Since US#1479 @ 13cb3700. */
 	displayName?: string | null;
 	status: CallKnockStatus;
