@@ -1807,16 +1807,28 @@ export const MessageItemComponent = ({
 		userId === askerMatrixUserId
 			? resolveAnonymousChatDisplayName(activeSession?.user)
 			: null;
+	// Matrix profiles hold the login name, so after a reload the event only
+	// carries the username. The group's member list has the public display
+	// name for every participant (OBP 2.1 #12).
+	const groupMemberDisplayName = activeSession?.isGroup
+		? (
+				avatarMembers.find((member) => member._id === userId)
+					?.displayName || ''
+			).trim() || undefined
+		: undefined;
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
 			? consultantMatch?.consultantDisplayName ||
 				liveChatGuestName ||
+				groupMemberDisplayName ||
 				roomUser?.displayName ||
 				displayName
 			: displayName;
+	// In a group every non-moderator counts as a "user message", but a
+	// counsellor viewing their own message is still a counsellor.
 	const ownConsultantName =
-		isMyMessage && !isUserMessage()
+		isMyMessage && (!isUserMessage() || !isAskerViewer)
 			? resolveOwnConsultantName({
 					displayName: userData?.displayName,
 					firstName: userData?.firstName,
