@@ -1635,3 +1635,17 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		transform: scale(1);
 	}
 }
+
+// ADR-021: the future zone above "Jetzt" sits on the cards' gutter.
+.sessionsList__timeline {
+	flex-shrink: 0;
+	margin: 0 6px;
+
+	@include breakpoint($fromLarge) {
+		margin: 0 12px;
+	}
+
+	.sessionsList__scrollContainer & {
+		margin: 0;
+	}
+}

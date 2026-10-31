@@ -780,22 +780,6 @@
 			"addThis": "Add this date to your calendar",
 			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Appointment",
-			"ariaLabel": "Future timeline",
-			"commandError": "The occurrence could not be changed. Please try again.",
-			"duplicate": "Duplicate as one-off",
-			"empty": "No upcoming events.",
-			"groupChatFallback": "Group chat",
-			"hide": "Hide future events",
-			"loadMore": "Load three more months",
-			"loadError": "Some future events could not be loaded.",
-			"loading": "Loading future events…",
-			"now": "Now",
-			"revealAriaLabel": "Reveal future timeline",
-			"show": "Show future events",
-			"skip": "Skip occurrence"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-moderator",
 			"OWNER": "Owner",
@@ -4401,6 +4385,12 @@
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message"
+		},
+		"timeline": {
+			"now": "Now",
+			"upcoming": "Upcoming appointments",
+			"empty": "No upcoming appointments.",
+			"nextAppointment": "Next appointment: {{date}}"
 		}
 	},
 	"statusOverlay": {

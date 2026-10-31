@@ -100,7 +100,6 @@ export const DisplayFilterProfileSection = () => {
 					case 'internalGroup':
 						return showInternalGroups;
 					case 'circle':
-					case 'futureTimeline':
 						return showGroups;
 					case 'supervision':
 						return canSupervise;
@@ -111,7 +110,6 @@ export const DisplayFilterProfileSection = () => {
 				id: kind,
 				label: sessionKindLabel(t, kind),
 				icon: SESSION_KIND_ICONS[kind],
-				showOnly: kind === 'futureTimeline',
 				modes: kind === 'liveChat',
 				pillOnly: PILL_ONLY_SESSION_KINDS.includes(kind),
 				placeholder: kind === 'appointments'

@@ -14,6 +14,8 @@ export type TimelineFilter = 'all' | EntryKind;
 export interface TimelineOccurrence {
 	seriesId: number;
 	occurrenceIndex: number;
+	/** Identifies the date when it is skipped (`apiSkipChatOccurrence`). */
+	originalStart?: string;
 	start: string;
 	duration: number;
 	modality: 'TEXT' | 'AUDIO' | 'VIDEO';
@@ -31,6 +33,13 @@ export interface TimelineBooking {
 		| 'USER_PHONE';
 	/** New field the appointment service has to store (ADR-021 follow-up). */
 	sessionId?: number;
+	/** cal.com booking uid (cancel). */
+	uid?: string;
+	/** cal.com path (reschedule). */
+	rescheduleLink?: string;
+	askerId?: string;
+	askerName?: string;
+	title?: string;
 }
 
 export interface TimelineSession {
@@ -40,6 +49,10 @@ export interface TimelineSession {
 	topic: string;
 	lastActivity: number;
 	lastMessage: string;
+	/** Room of the session (opening and configuring the group). */
+	matrixRoomId?: string;
+	/** False when the viewer may not change this group's dates. */
+	canModerate?: boolean;
 }
 
 export interface FutureEntry {
@@ -53,6 +66,22 @@ export interface FutureEntry {
 	modality: EntryModality;
 	/** Group occurrences can be copied into a single appointment (kept from the old strip). */
 	canDuplicate: boolean;
+	/** False: the viewer may not change this group date (menu shows only what is open to all). */
+	canModerate?: boolean;
+	matrixRoomId?: string;
+	/** What the menu actions need from the source record. */
+	occurrence?: {
+		seriesId: number;
+		originalStart: string;
+		duration: number;
+		modality: TimelineOccurrence['modality'];
+	};
+	booking?: {
+		id: number;
+		uid?: string;
+		rescheduleLink?: string;
+		askerId?: string;
+	};
 }
 
 const MODALITY_BY_OCCURRENCE: Record<
@@ -97,7 +126,15 @@ export const buildFutureEntries = ({
 			topic: session?.topic,
 			start: new Date(o.start),
 			modality: MODALITY_BY_OCCURRENCE[o.modality],
-			canDuplicate: true
+			canDuplicate: session?.canModerate !== false,
+			canModerate: session?.canModerate,
+			matrixRoomId: session?.matrixRoomId,
+			occurrence: {
+				seriesId: o.seriesId,
+				originalStart: o.originalStart ?? o.start,
+				duration: o.duration,
+				modality: o.modality
+			}
 		};
 	});
 	const fromBookings = bookings.map<FutureEntry>((b) => {
@@ -107,11 +144,19 @@ export const buildFutureEntries = ({
 			key: `booking-${b.id}`,
 			kind: 'one-to-one',
 			sessionId: b.sessionId,
-			title: session?.title ?? 'Beratungstermin',
+			title:
+				session?.title ?? b.askerName ?? b.title ?? 'Beratungstermin',
 			topic: session?.topic,
 			start: new Date(b.startTime),
-			modality: MODALITY_BY_LOCATION[b.location],
-			canDuplicate: false
+			modality: MODALITY_BY_LOCATION[b.location] ?? 'video',
+			canDuplicate: false,
+			matrixRoomId: session?.matrixRoomId,
+			booking: {
+				id: b.id,
+				uid: b.uid,
+				rescheduleLink: b.rescheduleLink,
+				askerId: b.askerId
+			}
 		};
 	});
 	return [...fromOccurrences, ...fromBookings]
@@ -130,6 +175,22 @@ export const filterEntries = (
 				(entry) =>
 					entry.sessionId !== undefined && entry.kind === filter
 			);
+
+/**
+ * What the real list shows above "Jetzt": a filter applies to both sides of
+ * the handle, so a group twin shows only while its room is a visible row; an
+ * appointment without a room only while no filter or search is active.
+ */
+export const entriesForList = (
+	entries: FutureEntry[],
+	visibleGroupIds: ReadonlySet<number>,
+	hasFilter: boolean
+): FutureEntry[] =>
+	entries.filter((entry) =>
+		entry.sessionId !== undefined
+			? entry.kind === 'group' && visibleGroupIds.has(entry.sessionId)
+			: !hasFilter
+	);
 
 /**
  * The nearest appointment of every room: drives the clock circle on the
@@ -176,7 +237,7 @@ const COMING_SOON = '(kommt bald)';
 
 /** The entry's menu, per role and kind (ADR-021 table). */
 export const entryMenu = (
-	entry: Pick<FutureEntry, 'kind' | 'canDuplicate'>,
+	entry: Pick<FutureEntry, 'kind' | 'canDuplicate' | 'canModerate'>,
 	role: TimelineRole
 ): EntryMenuItem[] => {
 	const isGroup = entry.kind === 'group';
@@ -201,6 +262,17 @@ export const entryMenu = (
 						description: 'Diesen Beratungstermin absagen.',
 						disabled: false
 					}
+		];
+	}
+	if (isGroup && entry.canModerate === false) {
+		// Not this counsellor's group: only what is open to every member.
+		return [
+			{
+				key: 'reminder',
+				title: 'Erinnerung einstellen',
+				description: `Wie früh und wie aufdringlich ${COMING_SOON}`,
+				disabled: true
+			}
 		];
 	}
 	const items: EntryMenuItem[] = [

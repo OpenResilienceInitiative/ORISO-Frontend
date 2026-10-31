@@ -30,6 +30,7 @@ import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
+import { RoomNextAppointmentSlot } from '../../sessionsList/timeline/RoomNextAppointmentSlot';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -395,6 +396,8 @@ export const GroupChatHeader = ({
 					bannedUsers={bannedUsers}
 				/>
 			</div>
+			{/* ADR-021: the next date of the series, below the header line. */}
+			<RoomNextAppointmentSlot />
 		</div>
 	);
 };

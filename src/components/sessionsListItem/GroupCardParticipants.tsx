@@ -25,22 +25,26 @@ export const GroupCardParticipants = ({
 		[members]
 	);
 	if (!enabled) return null;
+	// The clock does not depend on the members: it shows while they load too.
 	if (status !== 'ready')
 		return (
-			<span
-				data-cy="group-card-members-loading"
-				role="status"
-				aria-label={t(
-					`groupCardParticipants.${status === 'error' ? 'unavailable' : 'loading'}`
-				)}
-			>
-				<Skeleton
-					variant="circular"
-					width={AVATAR_SIZES.default}
-					height={AVATAR_SIZES.default}
-					animation={status === 'error' ? false : 'pulse'}
-				/>
-			</span>
+			<>
+				{leading}
+				<span
+					data-cy="group-card-members-loading"
+					role="status"
+					aria-label={t(
+						`groupCardParticipants.${status === 'error' ? 'unavailable' : 'loading'}`
+					)}
+				>
+					<Skeleton
+						variant="circular"
+						width={AVATAR_SIZES.default}
+						height={AVATAR_SIZES.default}
+						animation={status === 'error' ? false : 'pulse'}
+					/>
+				</span>
+			</>
 		);
 	if (!participants.length)
 		return (

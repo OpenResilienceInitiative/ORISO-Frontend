@@ -22,7 +22,7 @@ import {
 } from '../../components/displayFilter/displayFilterTypes';
 import { DisplayFilter } from './model';
 
-/** Gespräche kinds (§5.2). `futureTimeline` gates the panel, not rows. */
+/** Gespräche kinds (§5.2). */
 export type SessionKindId =
 	| 'create'
 	| 'unread'
@@ -34,7 +34,6 @@ export type SessionKindId =
 	| 'supervision'
 	| 'archive'
 	| 'appointments'
-	| 'futureTimeline'
 	| typeof OTHER_KIND_ID;
 
 /** Anfragen kinds (§5.3). */
@@ -56,7 +55,6 @@ export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
 	// of its own); Termine is announced but not wired yet (placeholder).
 	'archive',
 	'appointments',
-	'futureTimeline',
 	OTHER_KIND_ID
 ];
 
