@@ -42,7 +42,8 @@ function setup(
 	conversationType?: string,
 	isAskerEmailEnabled?: boolean,
 	rawMessage?: string,
-	messageId?: string
+	messageId?: string,
+	passSkipAnimation = true
 ) {
 	const userData = {
 		email: 'asker@example.org',
@@ -67,7 +68,7 @@ function setup(
 						messageId={messageId}
 						conversationType={conversationType}
 						isAskerEmailEnabled={isAskerEmailEnabled}
-						skipAnimation
+						{...(passSkipAnimation ? { skipAnimation: true } : {})}
 					/>
 				</ModalProvider>
 			</UserDataContext.Provider>
@@ -250,6 +251,45 @@ const firstResponse = (...ids: string[]) =>
 				: { id, headline: `Headline ${id}`, body: `Body ${id}` }
 		)
 	});
+
+it('draws a persisted first answer as one block on first render and after a remount', () => {
+	// Frank, 2026-10-14: the staged reveal (typing dots, 1.4 s per bubble) is far
+	// too slow. No animation prop: every bubble is on screen at once.
+	vi.useFakeTimers();
+	try {
+		const raw = firstResponse('whoReadsAlong', 'emailNotification');
+		const first = setup(
+			false,
+			undefined,
+			undefined,
+			raw,
+			'$first-answer',
+			false
+		);
+		expect(screen.getByText('Body whoReadsAlong')).toBeTruthy();
+		expect(screen.getByText('You can add an email address.')).toBeTruthy();
+		expect(
+			first.container.querySelector('.erstantwort__bubble--typing')
+		).toBeNull();
+		first.unmount();
+
+		// The same persisted message, rendered again after a reload.
+		const second = setup(
+			false,
+			undefined,
+			undefined,
+			raw,
+			'$first-answer',
+			false
+		);
+		expect(screen.getByText('Body whoReadsAlong')).toBeTruthy();
+		expect(
+			second.container.querySelector('.erstantwort__bubble--typing')
+		).toBeNull();
+	} finally {
+		vi.useRealTimers();
+	}
+});
 
 it('keeps the one-line summary and "change" on the persisted invitation once a channel is reachable (ORISO-Frontend#1767 review)', () => {
 	setup(
