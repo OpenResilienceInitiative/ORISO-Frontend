@@ -49,6 +49,7 @@ const mocks = vi.hoisted(() => {
 			room: any,
 			toStart: boolean
 		) => void)[],
+		redactionListeners: [] as (() => void)[],
 		detachLifecycle: vi.fn(),
 		getMatrixRoomMessages: vi.fn(() => []),
 		getSessionSupervisors: vi.fn(() => Promise.resolve([])),
@@ -147,6 +148,13 @@ vi.mock('../../services/chatTransportService', () => ({
 				};
 			}
 		),
+		onMatrixRedaction: vi.fn((_roomId: string, listener: () => void) => {
+			mocks.redactionListeners.push(listener);
+			return () => {
+				const index = mocks.redactionListeners.indexOf(listener);
+				if (index >= 0) mocks.redactionListeners.splice(index, 1);
+			};
+		}),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
 				mocks.lifecycleListeners.push(listener);
@@ -443,6 +451,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 		mocks.lifecycleListeners.length = 0;
 		mocks.timelineListeners.length = 0;
+		mocks.redactionListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
 		mocks.suspendedSessionId = null;
@@ -1474,6 +1483,29 @@ describe('SessionStream Matrix room lifecycle', () => {
 				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
 					callsBeforeTimelineEvents + 2
 				);
+			},
+			{ timeout: 500 }
+		);
+	});
+
+	it('refreshes the messages when a message is redacted, without waiting for another timeline event', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(mocks.redactionListeners.length).toBe(1);
+		});
+		const callsBeforeRedaction =
+			mocks.getMatrixRoomMessages.mock.calls.length;
+
+		act(() => {
+			mocks.redactionListeners.forEach((listener) => listener());
+		});
+
+		await waitFor(
+			() => {
+				expect(
+					mocks.getMatrixRoomMessages.mock.calls.length
+				).toBeGreaterThan(callsBeforeRedaction);
 			},
 			{ timeout: 500 }
 		);
