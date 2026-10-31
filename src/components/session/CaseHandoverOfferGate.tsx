@@ -189,6 +189,17 @@ export const CaseHandoverOfferGate = ({
 		return <>{children}</>;
 	}
 
+	// The offering counsellor reaches this route from their own sent, declined
+	// or withdrawn timeline entries. The dialog is the recipient's decision, so
+	// they see their conversation instead; the backend still decides access.
+	if (
+		offer?.direction === 'PUSH' &&
+		offer.initiatorConsultantId === actorId &&
+		offer.recipientConsultantId !== actorId
+	) {
+		return <>{children}</>;
+	}
+
 	if (loading && !offer && !error) {
 		return <Loading />;
 	}
