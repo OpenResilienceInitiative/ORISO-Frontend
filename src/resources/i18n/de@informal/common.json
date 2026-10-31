@@ -594,7 +594,13 @@
 			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
 			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Alle auswählen"
+			"selectAllBottom": "Alle auswählen",
+			"unresolved": {
+				"text": "Die gewählten Adressaten konnten für diesen Chat nicht bestätigt werden. Wähle die Adressaten erneut aus und sende dann. Dein Text bleibt in diesem Feld erhalten."
+			},
+			"attachmentBlocked": {
+				"text": "Dateien und Sprachnachrichten lassen sich nicht auf ausgewählte Kolleg:innen beschränken. Wähle „Alle“, um sie mit allen zu teilen, oder sende stattdessen eine Textnachricht. Deine Datei oder Aufnahme bleibt erhalten."
+			}
 		},
 		"delete": {
 			"deleted": {

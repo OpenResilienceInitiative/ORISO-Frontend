@@ -55,6 +55,7 @@ import {
 } from './inputField/composerResize';
 import {
 	getExplicitAudienceValues,
+	retainsGroupAudienceSelection,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 import { useComposerDock } from './useComposerDock';
@@ -69,13 +70,13 @@ import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
-import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
+	buildAudienceOptions,
 	classifyAudienceKind,
 	unmatchedMemberKind,
 	createAudienceCollector,
@@ -83,6 +84,7 @@ import {
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
+	hasUnresolvedAudienceSelection,
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
@@ -214,6 +216,8 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	AUDIENCE_UNRESOLVED: 'AUDIENCE_UNRESOLVED',
+	AUDIENCE_ATTACHMENT_BLOCKED: 'AUDIENCE_ATTACHMENT_BLOCKED',
 	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
 	DPA_RESTRICTED: 'DPA_RESTRICTED',
 	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
@@ -644,7 +648,9 @@ export const MessageSubmitInterfaceComponent = ({
 	 * restore effect would re-run on every option rebuild and overwrite what the
 	 * user just picked — see #894 rule D.
 	 */
-	const restoredAudienceKeyRef = useRef<string | null>(null);
+	const [restoredAudienceKey, setRestoredAudienceKey] = useState<
+		string | null
+	>(null);
 	const [selectedAudienceValues, setSelectedAudienceValues] = useState<
 		string[]
 	>([AUDIENCE_ALL]);
@@ -775,6 +781,31 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
+	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
+		isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+	const isClientUser = useMemo(() => {
+		const hasAskerAuthority = hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		);
+		const hasConsultantAuthority = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
+		return hasAskerAuthority && !hasConsultantAuthority;
+	}, [userData]);
+	const retainsGroupAudience = retainsGroupAudienceSelection({
+		chatType: currentChatType,
+		isClientUser,
+		isGroupSession: !!activeSession?.isGroup
+	});
 
 	const draftTitle = useMemo(() => {
 		const topicName =
@@ -1585,7 +1616,7 @@ export const MessageSubmitInterfaceComponent = ({
 				// An aside with no side room must never leak into the client
 				// room — abort the send and surface an error instead.
 				setIsRequestInProgress(false);
-				handleAttachmentUploadError(INFO_TYPES.ATTACHMENT_OTHER_ERROR);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
 				apiPostError({
 					name: 'SupervisionAsideRoutingError',
 					message:
@@ -1891,6 +1922,20 @@ export const MessageSubmitInterfaceComponent = ({
 				: isRecordedVoiceSend
 					? ''
 					: composerHtmlToTransportMarkup(currentTypedMessage);
+			if (
+				!retryContext &&
+				retainsGroupAudience &&
+				((audienceSelectionStorageKey &&
+					restoredAudienceKey !== audienceSelectionStorageKey) ||
+					hasUnresolvedAudienceSelection(
+						selectedAudienceValues,
+						audienceOptions
+					))
+			) {
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.AUDIENCE_UNRESOLVED);
+				return null;
+			}
 			let isAside = retryContext?.isAside || false;
 			const sentFeedbackMailIntent =
 				isRecordedVoiceSend && recordedVoice
@@ -1915,19 +1960,10 @@ export const MessageSubmitInterfaceComponent = ({
 				const humanTargetCount = audienceOptions.filter(
 					(option) => option.value !== AUDIENCE_ALL
 				).length;
-				const sendChatType = isSupervisor
-					? 'supervision'
-					: activeSession.isGroup
-						? 'group'
-						: isAnonymousChat
-							? 'anonymous'
-							: 'oneOnOne';
-				const sendIsClientUser =
-					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-					!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 				const explicitAudience = getExplicitAudienceValues({
-					chatType: sendChatType,
-					isClientUser: sendIsClientUser,
+					chatType: currentChatType,
+					isClientUser,
+					isGroupSession: !!activeSession.isGroup,
 					targetCount: humanTargetCount,
 					hasAllOption: audienceOptions.some(
 						(option) => option.value === AUDIENCE_ALL
@@ -1935,6 +1971,14 @@ export const MessageSubmitInterfaceComponent = ({
 					selectedValues: selectedAudienceValues
 				});
 				const hasExplicitAudience = explicitAudience.length > 0;
+				// An attachment (a voice note too) carries no VISIBLE_TO: in
+				// the side room every member would receive it. Keep it for a
+				// retry instead of widening the chosen audience.
+				if (hasExplicitAudience && attachment) {
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.AUDIENCE_ATTACHMENT_BLOCKED);
+					return null;
+				}
 				if (hasExplicitAudience) {
 					prefixParts.push(buildVisibleToPrefix(explicitAudience));
 				}
@@ -2025,6 +2069,9 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			activeSession.isGroup,
+			retainsGroupAudience,
+			audienceSelectionStorageKey,
+			restoredAudienceKey,
 			attachmentSelected,
 			feedbackMailIntent,
 			teamDiscussion,
@@ -2033,7 +2080,8 @@ export const MessageSubmitInterfaceComponent = ({
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
-			isAnonymousChat,
+			currentChatType,
+			isClientUser,
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
@@ -2042,8 +2090,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues,
 			sendEnquiry,
 			sendMessage,
-			targetRoomId,
-			userData
+			targetRoomId
 		]
 	);
 
@@ -2356,6 +2403,19 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
 			};
+		} else if (
+			activeInfo === INFO_TYPES.AUDIENCE_UNRESOLVED ||
+			activeInfo === INFO_TYPES.AUDIENCE_ATTACHMENT_BLOCKED
+		) {
+			const key =
+				activeInfo === INFO_TYPES.AUDIENCE_UNRESOLVED
+					? 'message.audience.unresolved'
+					: 'message.audience.attachmentBlocked';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.headline`),
+				infoMessage: translate(`${key}.text`)
+			};
 		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
 			infoData = {
 				isInfo: false,
@@ -2387,14 +2447,6 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate('/booking/');
 	}, [navigate]);
 
-	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
-		isSupervisor
-			? 'supervision'
-			: activeSession.isGroup
-				? 'group'
-				: isAnonymousChat
-					? 'anonymous'
-					: 'oneOnOne';
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
@@ -2741,14 +2793,6 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!memberId) {
 				return;
 			}
-			if (
-				isSystemMatrixUser(memberId) ||
-				// Agency provisioning/service bots (@agency-<id>-service) are not
-				// human recipients — never offer them as an audience target.
-				/^@agency-\d+-service:/.test(memberId)
-			) {
-				return;
-			}
 			if (audience.isSelf(memberId)) {
 				return;
 			}
@@ -2875,18 +2919,18 @@ export const MessageSubmitInterfaceComponent = ({
 						option.kind === 'supervisor'
 					)
 			);
-		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
-		// group/supervision conversations with more than one human counterpart.
-		// A 1:1 conversation has no real targets here (the asker is filtered out
-		// by their enc.* member name), so it collapses to zero options and the
-		// selector stays hidden (showAudienceSelector: audienceTargetCount <= 1).
-		const includeAllOption = mapped.length > 1;
-		const nextOptions = includeAllOption
-			? [defaultOption, ...mapped]
-			: mapped;
+		const nextOptions = buildAudienceOptions(
+			mapped,
+			defaultOption,
+			retainsGroupAudience
+		);
 		setAudienceOptions(nextOptions);
 		setSelectedAudienceValues((currentValues) =>
-			reconcileAudienceSelection(currentValues, nextOptions)
+			reconcileAudienceSelection(
+				currentValues,
+				nextOptions,
+				retainsGroupAudience
+			)
 		);
 	}, [
 		type,
@@ -2909,6 +2953,7 @@ export const MessageSubmitInterfaceComponent = ({
 		currentChatType,
 		isSelfHelpGroup,
 		activeSession?.isGroup,
+		retainsGroupAudience,
 		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
@@ -2927,30 +2972,27 @@ export const MessageSubmitInterfaceComponent = ({
 	 */
 	useEffect(() => {
 		setIsAudienceMenuOpen(false);
-		restoredAudienceKeyRef.current = null;
+		setRestoredAudienceKey(null);
 	}, [activeSession?.item?.id, threadRootId]);
 
 	/**
-	 * Restore this chat's stored recipients — once, and only once the option
-	 * list is real.
+	 * Restore this chat's stored recipients once. Groups retain restrictions
+	 * before any human member arrives; a partial roster must never broaden them.
 	 *
 	 * `audienceOptions` starts as a lone `__all__` placeholder and gains the
-	 * actual recipients when the Matrix members load. Restoring against the
-	 * placeholder would match nothing, fall back to "everyone", mark the chat
-	 * as restored, and then skip the real list when it arrives — losing the
-	 * saved selection exactly as the old code did.
+	 * actual recipients when the Matrix members load. Other chat kinds still
+	 * wait for the real list before matching their stored recipients.
 	 */
 	useEffect(() => {
 		if (
 			!audienceSelectionStorageKey ||
-			!audienceOptionsReady(audienceOptions)
+			(!retainsGroupAudience && !audienceOptionsReady(audienceOptions))
 		) {
 			return;
 		}
-		if (restoredAudienceKeyRef.current === audienceSelectionStorageKey) {
+		if (restoredAudienceKey === audienceSelectionStorageKey) {
 			return;
 		}
-		restoredAudienceKeyRef.current = audienceSelectionStorageKey;
 		let saved: string | null = null;
 		try {
 			saved = window.localStorage.getItem(audienceSelectionStorageKey);
@@ -2958,10 +3000,21 @@ export const MessageSubmitInterfaceComponent = ({
 			// Storage can be unavailable (private mode, blocked cookies).
 		}
 		setSelectedAudienceValues(
-			restoreAudienceSelection(saved, audienceOptions) ??
-				defaultAudienceSelection(audienceOptions)
+			restoreAudienceSelection(
+				saved,
+				audienceOptions,
+				retainsGroupAudience
+			) ?? defaultAudienceSelection(audienceOptions)
 		);
-	}, [audienceOptions, audienceSelectionStorageKey]);
+		// Commit the restored key with the selection, so persistence cannot
+		// overwrite a restricted saved choice with the initial Everyone state.
+		setRestoredAudienceKey(audienceSelectionStorageKey);
+	}, [
+		retainsGroupAudience,
+		audienceOptions,
+		audienceSelectionStorageKey,
+		restoredAudienceKey
+	]);
 
 	/**
 	 * Persist the selection — but never before the restore above has run for
@@ -2970,7 +3023,7 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		if (
 			!audienceSelectionStorageKey ||
-			restoredAudienceKeyRef.current !== audienceSelectionStorageKey
+			restoredAudienceKey !== audienceSelectionStorageKey
 		) {
 			return;
 		}
@@ -2982,7 +3035,11 @@ export const MessageSubmitInterfaceComponent = ({
 		} catch (_error) {
 			// Ignore quota/storage exceptions.
 		}
-	}, [audienceSelectionStorageKey, selectedAudienceValues]);
+	}, [
+		audienceSelectionStorageKey,
+		selectedAudienceValues,
+		restoredAudienceKey
+	]);
 
 	useAudienceMenuDismissal(
 		isAudienceMenuOpen,
@@ -3041,19 +3098,15 @@ export const MessageSubmitInterfaceComponent = ({
 			.filter(Boolean);
 		return Array.from(new Set(labels));
 	}, [audienceOptions, selectedAudienceValues, translate]);
-	const isClientUser = useMemo(() => {
-		const hasAskerAuthority = hasUserAuthority(
-			AUTHORITIES.ASKER_DEFAULT,
-			userData
-		);
-		const hasConsultantAuthority = hasUserAuthority(
-			AUTHORITIES.CONSULTANT_DEFAULT,
-			userData
-		);
-		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
-		return hasAskerAuthority && !hasConsultantAuthority;
-	}, [userData]);
 	const selectedAudienceChipLabel = useMemo(() => {
+		if (
+			hasUnresolvedAudienceSelection(
+				selectedAudienceValues,
+				audienceOptions
+			)
+		) {
+			return translate('message.audience.menuHeading');
+		}
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
@@ -3066,7 +3119,12 @@ export const MessageSubmitInterfaceComponent = ({
 		return translate('message.audience.multiCount', {
 			count: selectedAudienceLabels.length
 		});
-	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
+	}, [
+		audienceOptions,
+		selectedAudienceLabels,
+		selectedAudienceValues,
+		translate
+	]);
 	const audienceTargetCount = useMemo(
 		() =>
 			audienceOptions.filter((option) => option.value !== AUDIENCE_ALL)
@@ -3077,14 +3135,23 @@ export const MessageSubmitInterfaceComponent = ({
 		return shouldShowAudienceSelector({
 			chatType: currentChatType,
 			isClientUser,
+			isGroupSession: !!activeSession?.isGroup,
 			targetCount: audienceTargetCount,
+			selectedValues: selectedAudienceValues,
 			hasAllOption: audienceOptions.some(
 				(option) => option.value === AUDIENCE_ALL
 			)
 		});
-	}, [audienceOptions, audienceTargetCount, currentChatType, isClientUser]);
+	}, [
+		activeSession?.isGroup,
+		audienceOptions,
+		audienceTargetCount,
+		currentChatType,
+		isClientUser,
+		selectedAudienceValues
+	]);
 	useEffect(() => {
-		if (showAudienceSelector) {
+		if (showAudienceSelector || retainsGroupAudience) {
 			return;
 		}
 		setIsAudienceMenuOpen(false);
@@ -3096,7 +3163,11 @@ export const MessageSubmitInterfaceComponent = ({
 				// Storage may be disabled; in-memory reset still keeps routing safe.
 			}
 		}
-	}, [audienceSelectionStorageKey, showAudienceSelector]);
+	}, [
+		retainsGroupAudience,
+		audienceSelectionStorageKey,
+		showAudienceSelector
+	]);
 	/**
 	 * #894 rule C: the symbol follows the recipient's actual role, taken from
 	 * the option that was built for them. It used to be inferred by searching
@@ -3171,23 +3242,30 @@ export const MessageSubmitInterfaceComponent = ({
 		[]
 	);
 
-	const toggleAudienceSelection = useCallback((value: string) => {
-		setSelectedAudienceValues((previousValues) => {
-			if (value === AUDIENCE_ALL) {
-				return [AUDIENCE_ALL];
-			}
-			const withoutAll = previousValues.filter(
-				(entry) => entry !== AUDIENCE_ALL
-			);
-			if (withoutAll.includes(value)) {
-				const nextValues = withoutAll.filter(
-					(entry) => entry !== value
+	// A deliberate pick replaces restored recipients who are no longer in
+	// the room; keeping them would block every send (#1805).
+	const toggleAudienceSelection = useCallback(
+		(value: string) => {
+			setSelectedAudienceValues((previousValues) => {
+				if (value === AUDIENCE_ALL) {
+					return [AUDIENCE_ALL];
+				}
+				const withoutAll = previousValues.filter(
+					(entry) =>
+						entry !== AUDIENCE_ALL &&
+						audienceOptions.some((option) => option.value === entry)
 				);
-				return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
-			}
-			return [...withoutAll, value];
-		});
-	}, []);
+				if (withoutAll.includes(value)) {
+					const nextValues = withoutAll.filter(
+						(entry) => entry !== value
+					);
+					return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
+				}
+				return [...withoutAll, value];
+			});
+		},
+		[audienceOptions]
+	);
 	const toggleAudienceSectionExpanded = useCallback(
 		(sectionKey: 'clients' | 'counsellors' | 'moderators') => {
 			setExpandedAudienceSections((previousValue) => ({
@@ -3215,7 +3293,13 @@ export const MessageSubmitInterfaceComponent = ({
 					.map((entry) => entry.value);
 				const withoutAll = previousValues.includes(AUDIENCE_ALL)
 					? allVisibleValues
-					: previousValues.filter((value) => value !== AUDIENCE_ALL);
+					: previousValues.filter(
+							(value) =>
+								value !== AUDIENCE_ALL &&
+								audienceOptions.some(
+									(option) => option.value === value
+								)
+						);
 				const hasAllSelected = sectionValues.every((value) =>
 					withoutAll.includes(value)
 				);
@@ -3236,7 +3320,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return isEverythingSelected ? [AUDIENCE_ALL] : nextValues;
 			});
 		},
-		[audienceGroupedSections]
+		[audienceGroupedSections, audienceOptions]
 	);
 
 	const startVoiceRecording = useCallback(async () => {

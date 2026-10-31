@@ -4,6 +4,8 @@ import {
 	AUDIENCE_ALL,
 	audienceIdentityKeys,
 	buildAudienceRoster,
+	buildAudienceOptions,
+	hasUnresolvedAudienceSelection,
 	classifyAudienceKind,
 	unmatchedMemberKind,
 	createAudienceCollector,
@@ -27,6 +29,87 @@ const withAll = (...rest: AudienceOption[]): AudienceOption[] => [
 	{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' },
 	...rest
 ];
+
+describe('group audience hydration (#1805)', () => {
+	const allOption = withAll()[0];
+	it('retains a group restriction whose selected member has not loaded yet', () => {
+		const options = buildAudienceOptions(
+			[option('@homer')],
+			allOption,
+			true
+		);
+		const saved = JSON.stringify(['@marge']);
+		expect(restoreAudienceSelection(saved, options, true)).toEqual([
+			'@marge'
+		]);
+		expect(reconcileAudienceSelection(['@marge'], options, true)).toEqual([
+			'@marge'
+		]);
+		expect(hasUnresolvedAudienceSelection(['@marge'], options)).toBe(true);
+		expect(
+			hasUnresolvedAudienceSelection(
+				['@marge'],
+				buildAudienceOptions(
+					[option('@homer'), option('@marge')],
+					allOption,
+					true
+				)
+			)
+		).toBe(false);
+	});
+
+	it('keeps an invalid technical stored choice unresolved until an explicit new choice', () => {
+		const options = buildAudienceOptions(
+			[option('@homer')],
+			allOption,
+			true
+		);
+		const saved = JSON.stringify(['group-chat-system-40']);
+		const selection = restoreAudienceSelection(saved, options, true)!;
+		expect(selection).toEqual(['group-chat-system-40']);
+		expect(hasUnresolvedAudienceSelection(selection, options)).toBe(true);
+		expect(hasUnresolvedAudienceSelection([AUDIENCE_ALL], options)).toBe(
+			false
+		);
+	});
+	it('retains everyone while the group roster arrives in stages', () => {
+		let selection = [AUDIENCE_ALL];
+		for (const recipients of [
+			[],
+			[option('@homer')],
+			[option('@homer'), option('@marge')]
+		]) {
+			const options = buildAudienceOptions(recipients, allOption, true);
+			selection = reconcileAudienceSelection(selection, options);
+			expect(selection).toEqual([AUDIENCE_ALL]);
+		}
+	});
+
+	it('can restore a deliberate everyone selection before the second member arrives', () => {
+		const options = buildAudienceOptions(
+			[option('@homer')],
+			allOption,
+			true
+		);
+		expect(
+			restoreAudienceSelection(JSON.stringify([AUDIENCE_ALL]), options)
+		).toEqual([AUDIENCE_ALL]);
+	});
+
+	it('keeps the existing one-to-one and explicit recipient choices', () => {
+		expect(buildAudienceOptions([option('@homer')], allOption)).toEqual([
+			option('@homer')
+		]);
+		const options = buildAudienceOptions(
+			[option('@homer'), option('@marge')],
+			allOption,
+			true
+		);
+		expect(reconcileAudienceSelection(['@marge'], options)).toEqual([
+			'@marge'
+		]);
+	});
+});
 
 describe('defaultAudienceSelection', () => {
 	it('prefers "all" when the option exists', () => {
@@ -431,6 +514,21 @@ describe('audienceIdentityKeys', () => {
 });
 
 describe('createAudienceCollector', () => {
+	it('excludes technical owners from both session DTO and Matrix identities', () => {
+		const collector = createAudienceCollector(['@bart:predev.oriso.org']);
+		collector.add('group-chat-system-40', 'Technical session owner');
+		collector.add(
+			'@group-chat-system-40:predev.oriso.org',
+			'Technical member'
+		);
+		collector.add('@system:predev.oriso.org', 'System notice sender');
+		collector.add('@agency-12-service:predev.oriso.org', 'Agency service');
+		collector.add('@homer:predev.oriso.org', 'Homer');
+		expect(collector.entries()).toEqual([
+			['@homer:predev.oriso.org', 'Homer']
+		]);
+	});
+
 	/**
 	 * The regression this collector exists for.
 	 *
