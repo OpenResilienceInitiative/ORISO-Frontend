@@ -4,14 +4,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+import { SessionsDataContext } from '../../globalState';
 import {
-	NotificationsContext,
-	SessionsDataContext,
-	UserDataContext,
-	AUTHORITIES
-} from '../../globalState';
+	minutesAgo,
+	feedItem,
+	noop,
+	consultantUserData,
+	withTimelineData
+} from '../../../.storybook/notificationTimelineFixture';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { installNotificationDraftFixture } from './notificationDraftFixture';
+import { expectTimelineGroupEnd } from '../../../.storybook/notificationsCenterGroupAssertions';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -31,24 +34,6 @@ import type { ListItemInterface } from '../../globalState/interfaces/SessionsDat
  * without live app data (ADR-AT-01: strings render client-side from the
  * event-descriptor registry; title/text here are only legacy fallbacks).
  */
-const minutesAgo = (min: number) =>
-	new Date(Date.now() - min * 60 * 1000).toISOString();
-
-const feedItem = (
-	overrides: Partial<NotificationFeedItem> & {
-		id: string;
-		eventType: string;
-		createdAt: string;
-	}
-): NotificationFeedItem => ({
-	type: 'info',
-	title: '',
-	text: '',
-	readAt: null,
-	category: 'system',
-	...overrides
-});
-
 const mockFeed: NotificationFeedItem[] = [
 	feedItem({
 		id: '1',
@@ -170,51 +155,6 @@ const mockFeed: NotificationFeedItem[] = [
 	})
 ];
 
-const noop = () => {};
-
-const notificationsValue = (feed: NotificationFeedItem[]) => ({
-	notifications: [],
-	notificationFeed: feed,
-	unreadNotificationCount: feed.filter((item) => !item.readAt).length,
-	serverUnreadTotal: feed.filter(
-		(item) => !item.readAt && !item.id.startsWith('local-')
-	).length,
-	serverUnreadTotalExcludesHidden: false,
-	hasUnreadNotifications: feed.some((item) => !item.readAt),
-	timelineDisplayFilter: { kinds: {}, autoReadHidden: false },
-	visibleUnreadCount: feed.filter((item) => !item.readAt).length,
-	hiddenUnreadInLoadedPages: 0,
-	markNotificationsReadConfirmed: async () => {},
-	setNotifications: noop,
-	hasNotification: () => false,
-	addNotification: noop,
-	addEventNotification: noop,
-	refreshNotificationFeed: noop,
-	loadOlderNotifications: async () => {},
-	hasOlderNotifications: false,
-	isLoadingOlderNotifications: false,
-	olderNotificationsError: false,
-	removeNotification: noop,
-	markNotificationAsRead: noop,
-	markAllNotificationsAsRead: noop,
-	clearNotificationFeed: noop
-});
-
-const consultantUserData = {
-	userId: 'sb-consultant',
-	userName: 'Storybook Consultant',
-	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT],
-	isWalkThroughEnabled: false,
-	twoFactorAuth: {
-		isEnabled: false,
-		isActive: false,
-		isShown: false,
-		isToBeActivated: false,
-		secret: '',
-		qrCode: ''
-	}
-} as any;
-
 /**
  * #1377 slice 3: the display filter comes from the account-data store. The
  * story attaches a synced fake client holding `parameters.displayFilters`
@@ -232,24 +172,6 @@ const customisedDisplayFilters = withSectionOverride(
 		autoReadHidden: true
 	}
 );
-
-const withTimelineData =
-	(feed: NotificationFeedItem[], userData: any = consultantUserData) =>
-	(Story: React.ComponentType) => (
-		<UserDataContext.Provider
-			value={{
-				userData,
-				setUserData: noop,
-				reloadUserData: async () => null as any
-			}}
-		>
-			<NotificationsContext.Provider value={notificationsValue(feed)}>
-				<div style={{ height: '90vh', display: 'flex' }}>
-					<Story />
-				</div>
-			</NotificationsContext.Provider>
-		</UserDataContext.Provider>
-	);
 
 const meta = {
 	title: 'Organisms/NotificationsCenter',
@@ -485,6 +407,259 @@ export const AllEventTypes: Story = {
 			)
 		)
 	]
+};
+
+/** User-approved library choices, rendered through the real row and detail CSS. */
+export const ApprovedEventIcons: Story = {
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'approved-thread',
+				eventType: 'thread.reply.new',
+				createdAt: minutesAgo(2)
+			}),
+			feedItem({
+				id: 'approved-message',
+				eventType: 'message.new',
+				createdAt: minutesAgo(3)
+			}),
+			feedItem({
+				id: 'approved-appointment',
+				eventType: 'appointment.scheduled',
+				createdAt: minutesAgo(4)
+			})
+		])
+	],
+	globals: { viewport: { value: 'desktop1440' }, scheme: 'light' },
+	parameters: {
+		design: {
+			type: 'figma',
+			url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=7574-39299'
+		},
+		docs: {
+			description: {
+				story: 'Approved library icons and Figma timeline states: neutral grouped entries, white selected card, primary icon circle and neutral timestamp. Small text on gray uses the darker on-surface-variant token for readable contrast. Thread, outline messages and calendar retain the approved shapes and contrasting check. Request filters retain their existing selected Full / unselected Outline variants. Missing variants are later design work; the account-deletion assignment remains open.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const rowIcon = (id: string) =>
+			canvasElement.querySelector<SVGSVGElement>(
+				`[data-notification-id="approved-${id}"] .notificationsCenter__cardIcon svg`
+			);
+		await waitFor(() => expect(rowIcon('appointment')).toBeVisible());
+		const expectGroupEnd = () =>
+			expectTimelineGroupEnd(
+				canvasElement,
+				'approved-message',
+				'approved-appointment'
+			);
+		await expectGroupEnd();
+		expect(
+			within(canvasElement).queryByText(
+				/Ende des Aktivitätsverlaufs|End of activity history/
+			)
+		).not.toBeInTheDocument();
+
+		// The browser renders the actual assets; unit SVG stubs cannot prove shape or paint.
+		expect(
+			rowIcon('thread')?.querySelector('path')?.getAttribute('d')
+		).toContain('M15 21V18H11V8');
+		expect(
+			rowIcon('message')?.querySelector('path')?.getAttribute('d')
+		).toContain('M7.09737 14.6816');
+		const expectContrastingCheck = (icon: SVGSVGElement | null) => {
+			expect(icon).toBeVisible();
+			const badge = icon?.querySelector('circle');
+			const check = icon?.querySelector('path:last-child');
+			expect(badge).not.toBeNull();
+			expect(check).not.toBeNull();
+			if (!badge || !check)
+				throw new Error('Calendar badge and check must render');
+			const probe = document.createElement('span');
+			probe.style.color = 'var(--m3-on-primary, #ffffff)';
+			icon?.parentElement?.appendChild(probe);
+			try {
+				expect(getComputedStyle(check).fill).toBe(
+					getComputedStyle(probe).color
+				);
+				expect(getComputedStyle(check).fill).not.toBe(
+					getComputedStyle(badge).fill
+				);
+			} finally {
+				probe.remove();
+			}
+		};
+		expectContrastingCheck(rowIcon('appointment'));
+		const threadCard = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-thread"] .notificationsCenter__card'
+		);
+		if (!threadCard) throw new Error('Thread reply card must render');
+		const messageCard = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-message"] .notificationsCenter__card'
+		);
+		if (!messageCard) throw new Error('Message card must render');
+		const expectColor = (
+			element: Element | null,
+			property:
+				| 'color'
+				| 'backgroundColor'
+				| 'borderColor'
+				| 'borderLeftColor',
+			token: string
+		) => {
+			if (!element) throw new Error('Timeline color target must render');
+			const probe = document.createElement('span');
+			probe.style.color = `var(${token})`;
+			element.appendChild(probe);
+			try {
+				expect(getComputedStyle(element)[property]).toBe(
+					getComputedStyle(probe).color
+				);
+			} finally {
+				probe.remove();
+			}
+		};
+		expectColor(
+			messageCard,
+			'backgroundColor',
+			'--m3-surface-container-high'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardIcon'),
+			'backgroundColor',
+			'--m3-surface-container-lowest'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardIcon'),
+			'borderColor',
+			'--m3-outline-variant'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardTitle'),
+			'color',
+			'--m3-secondary'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardTime'),
+			'color',
+			'--m3-on-surface-variant'
+		);
+		expectColor(
+			messageCard.querySelector('.notificationsCenter__cardConnector'),
+			'borderLeftColor',
+			'--m3-tertiary-container'
+		);
+		// Phones/tablets route directly to the conversation instead of selecting a detail.
+		if (window.innerWidth < 1200) return;
+		await userEvent.click(threadCard);
+		await waitFor(() =>
+			expect(threadCard).toHaveClass('notificationsCenter__card--active')
+		);
+		expectColor(
+			threadCard,
+			'backgroundColor',
+			'--m3-surface-container-lowest'
+		);
+		expectColor(threadCard, 'borderColor', '--m3-primary');
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardIcon'),
+			'backgroundColor',
+			'--m3-primary'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardIcon'),
+			'color',
+			'--m3-on-primary'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardTitle'),
+			'color',
+			'--m3-on-primary-fixed'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardText'),
+			'color',
+			'--m3-on-tertiary-fixed'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardTime'),
+			'color',
+			'--m3-secondary-container'
+		);
+		expectColor(
+			threadCard.querySelector('.notificationsCenter__cardConnector'),
+			'borderLeftColor',
+			'--m3-primary'
+		);
+		expectColor(
+			canvasElement.querySelector(
+				'[data-notification-id="approved-thread"] .notificationsCenter__cardMenuButton'
+			),
+			'borderColor',
+			'--m3-on-primary-container'
+		);
+		await userEvent.hover(threadCard);
+		expectColor(
+			threadCard,
+			'backgroundColor',
+			'--m3-surface-container-lowest'
+		);
+		const card = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-appointment"] .notificationsCenter__card'
+		);
+		if (!card) throw new Error('Scheduled appointment card must render');
+		await userEvent.click(card);
+		await waitFor(() =>
+			expect(card).toHaveClass('notificationsCenter__card--active')
+		);
+		expectContrastingCheck(rowIcon('appointment'));
+		await waitFor(() =>
+			expectContrastingCheck(
+				canvasElement.querySelector(
+					'.notificationsCenter__detailIcon svg'
+				)
+			)
+		);
+		// Leave the user-reported thread reply selected in the interactive preview.
+		await userEvent.click(threadCard);
+		const search = within(canvasElement).getByPlaceholderText(
+			/Aktivität durchsuchen|Search activity/
+		);
+		await userEvent.type(
+			search,
+			messageCard
+				.querySelector('.notificationsCenter__cardTitle')
+				?.textContent?.trim() || ''
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__listRow')
+			).toHaveLength(1)
+		);
+		const single = canvasElement.querySelector(
+			'.notificationsCenter__card'
+		);
+		if (!single) throw new Error('Filtered timeline card must render');
+		await waitFor(() =>
+			expect(
+				parseFloat(getComputedStyle(single).borderBottomLeftRadius)
+			).toBeGreaterThan(0)
+		);
+		await userEvent.clear(search);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll('.notificationsCenter__listRow')
+			).toHaveLength(3)
+		);
+		const restoredThread = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-notification-id="approved-thread"] .notificationsCenter__card'
+		);
+		if (!restoredThread)
+			throw new Error('Thread card must return after clearing search');
+		await userEvent.click(restoredThread);
+		await expectGroupEnd();
+	}
 };
 
 /**
@@ -748,5 +923,62 @@ export const HandoverEventGlyphs: Story = {
 				);
 			});
 		}
+	}
+};
+
+const groupedPagingFeed = Array.from({ length: 10 }, (_, index) =>
+	feedItem({
+		id: `group-${index}`,
+		eventType: 'message.new',
+		createdAt: minutesAgo(index + 1)
+	})
+);
+const loadGroupedHistory = fn(async () => {});
+
+/** The real pagination controls follow the final row without breaking its rounded edge. */
+export const GroupWithMoreActivity: Story = {
+	decorators: [
+		withTimelineData(groupedPagingFeed, consultantUserData, {
+			hasOlderNotifications: true,
+			loadOlderNotifications: loadGroupedHistory
+		})
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	beforeEach: () => {
+		loadGroupedHistory.mockClear();
+	},
+	play: async ({ canvasElement }) => {
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: /Ältere Aktivitäten laden|Load older activity/
+			})
+		);
+		await expect(loadGroupedHistory).toHaveBeenCalledOnce();
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+	}
+};
+
+export const GroupWithHistoryError: Story = {
+	decorators: [
+		withTimelineData(groupedPagingFeed, consultantUserData, {
+			olderNotificationsError: true,
+			loadOlderNotifications: loadGroupedHistory
+		})
+	],
+	globals: { viewport: { value: 'desktop1440' } },
+	beforeEach: () => {
+		loadGroupedHistory.mockClear();
+	},
+	play: async ({ canvasElement }) => {
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
+		expect(within(canvasElement).getByRole('alert')).toBeVisible();
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: /Erneut versuchen|Try again/
+			})
+		);
+		await expect(loadGroupedHistory).toHaveBeenCalledOnce();
+		await expectTimelineGroupEnd(canvasElement, 'group-8', 'group-9');
 	}
 };

@@ -1,12 +1,8 @@
 // Timeline / notifications page — Figma "App.Oriso → Zeitstrahl | Timeline"
 // (nodes 7576-22889 / 7582-27615). Shares the conversation page interaction
 // pattern: resizable list column + vertical dragger + detail surface.
-// Palette mirrors the M3 ORISO tokens (orisoInputDesign.ts):
-//   primary          #a5000a   on-primary        #ffffff
-//   primary-container#ffdad7   selected surface  #ffecef
-//   surface          #fcf9f9   surface-container #f1eeee
-//   on-surface       #1b1b1c   on-surface-variant#444748
-//   secondary        #4c555f   outline-variant   #c4c7c7
+// Timeline card palette: Figma App.Oriso 7574:39299 / 7574:39661.
+// Keep event glyphs dynamic; the shared card state owns their colours.
 
 .notificationsCenter {
 	display: flex;
@@ -33,6 +29,59 @@
 		padding: 16px 20px 16px 16px;
 		gap: 4px;
 		background: var(--m3-surface-container-high, #eae7e8);
+	}
+
+	// Only the desktop collapsed mode adopts the shared conversation rail.
+	&__listColumn--rail {
+		box-sizing: border-box;
+		padding: 16px;
+
+		.notificationsCenter__toolbar {
+			display: none;
+		}
+		.notificationsCenter__list {
+			padding: 0;
+			flex-shrink: 0;
+		}
+		.notificationsCenter__list > div {
+			flex-shrink: 0;
+		}
+		.notificationsCenter__pagination {
+			padding: 8px 0 4px;
+			button {
+				width: 48px;
+				height: 48px;
+				padding: 12px;
+			}
+			svg {
+				width: 24px;
+				height: 24px;
+				fill: currentcolor;
+			}
+		}
+	}
+
+	&__railIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--m3-secondary, #4c555f);
+
+		// Override only the avatar's full-size glyph rule; keep event paint intact.
+		.sessionRailPill & svg {
+			width: 24px;
+			height: 24px;
+			fill: currentcolor;
+		}
+	}
+
+	&__visuallyHidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	// Reuses the conversation page toolbar (search pill + filter chips,
@@ -123,9 +172,9 @@
 		gap: 12px;
 		text-align: left;
 		padding: 16px 20px;
-		border: 1px solid #ffffff;
+		border: 1px solid var(--white, #ffffff);
 		border-radius: 0;
-		background: #eae7e8;
+		background: var(--m3-surface-container-high, #eae7e8);
 		cursor: pointer;
 		position: relative;
 		box-sizing: border-box;
@@ -136,7 +185,7 @@
 			box-shadow 140ms ease;
 
 		&:hover {
-			background: #f0e7e7;
+			background: var(--m3-hover-layer, #f9eff0);
 		}
 
 		&:focus-visible {
@@ -152,7 +201,8 @@
 		border-top-right-radius: 32px;
 	}
 
-	&__listRow:last-child:not(.notificationsCenter__listRow--active)
+	// Pagination controls may follow the last visible row.
+	&__listRow--last:not(.notificationsCenter__listRow--active)
 		.notificationsCenter__card {
 		border-bottom-left-radius: 32px;
 		border-bottom-right-radius: 32px;
@@ -182,8 +232,8 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		border: 1px solid #dcd9d9;
-		background: #ffffff;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background: var(--m3-surface-container-lowest, #ffffff);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -206,7 +256,7 @@
 		flex: 1;
 		min-height: 14px;
 		margin-top: 2px;
-		border-left: 3px dotted #a9acac;
+		border-left: 3px dotted var(--m3-tertiary-container, #9ba4b0);
 	}
 
 	&__cardContent {
@@ -226,7 +276,7 @@
 	&__cardTitle {
 		font-size: 15px;
 		font-weight: 600;
-		color: #1b1b1c;
+		color: var(--m3-secondary, #4c555f);
 	}
 
 	// Figma: supporting text with the timestamp right-aligned on the same line.
@@ -241,7 +291,8 @@
 		flex: 1;
 		min-width: 0;
 		font-size: 13px;
-		color: #444748;
+		// Figma muted text fails AA on the gray group surface (4.27:1).
+		color: var(--m3-on-surface-variant, #444748);
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -250,7 +301,8 @@
 
 	&__cardTime {
 		font-size: 12px;
-		color: #6b7280;
+		// Use the accessible neutral role on gray; selected white cards use Figma muted text.
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 	}
 
@@ -286,7 +338,7 @@
 	// Active card (Figma: white surface, red border, fully rounded).
 	// Selecting a card grows it in subtly (same easing as the toolbar chips).
 	&__card--active {
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 2px solid var(--m3-primary, #a5000a);
 		border-radius: 28px;
 		padding: 15px 19px;
@@ -295,7 +347,7 @@
 		transform-origin: center left;
 
 		&:hover {
-			background: #ffffff;
+			background: var(--m3-surface-container-lowest, #ffffff);
 			border-color: var(--m3-primary, #a5000a);
 		}
 
@@ -306,10 +358,10 @@
 			color: var(--m3-on-primary, #ffffff);
 
 			svg {
-				fill: #ffffff;
+				fill: currentcolor;
 
 				path {
-					fill: #ffffff;
+					fill: currentcolor;
 				}
 			}
 		}
@@ -320,16 +372,17 @@
 		}
 
 		.notificationsCenter__cardTitle {
-			color: #1b1b1c;
+			color: var(--m3-on-primary-fixed, #410001);
 		}
 
 		.notificationsCenter__cardText {
+			color: var(--m3-on-tertiary-fixed, #141c25);
 			-webkit-line-clamp: 3;
 			padding-right: 24px;
 		}
 
 		.notificationsCenter__cardTime--footer {
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			color: var(--m3-secondary-container, #646d78);
 			font-weight: 600;
 		}
 
@@ -355,10 +408,10 @@
 		appearance: none;
 		width: 44px;
 		height: 28px;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border: 1px solid var(--m3-on-primary-container, #ffe2de);
 		border-radius: 999px;
-		background: #ffffff;
-		color: #444748;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-secondary, #4c555f);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -646,7 +699,7 @@
 // Below the desktop breakpoint the timeline is a single full-width list and
 // opening a notification navigates directly (no in-page detail).
 // stylelint-disable-next-line media-feature-range-notation
-@media (max-width: 1200px) {
+@media (max-width: 1199px) {
 	.notificationsCenter {
 		&__listColumn {
 			flex: 1;

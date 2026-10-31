@@ -1518,7 +1518,10 @@
 		"fileName": "calendar-check.svg",
 		"sourcePath": "src/resources/img/icons/calendar-check.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/message/Appointment.tsx"],
+		"usageFiles": [
+			"src/components/message/Appointment.tsx",
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1984,6 +1987,7 @@
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
 			"src/components/message/Appointment.tsx",
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/passwordResetRequest/PasswordResetSentView.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/DeleteAccount.tsx",
@@ -2233,10 +2237,7 @@
 		"fileName": "corner-up-left.svg",
 		"sourcePath": "src/resources/img/icons/corner-up-left.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/pseudonym/WaitingQueueActionBar.tsx"
-		],
+		"usageFiles": ["src/components/pseudonym/WaitingQueueActionBar.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -2625,6 +2626,7 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/sessionsList/SessionRailPill.tsx",
 			"src/components/sessionsListItem/SessionListItemLastMessage.tsx"
 		],
@@ -3235,8 +3237,10 @@
 		"fileName": "messages_outline.svg",
 		"sourcePath": "src/resources/img/icons/messages_outline.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": [
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:minimize-content:base",
@@ -3746,6 +3750,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:placeholder:base",
+		"family": "placeholder",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "placeholder.svg",
+		"sourcePath": "src/resources/img/icons/placeholder.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
 		"id": "ui-icon:play-circle:base",
 		"family": "play-circle",
 		"state": "base",
@@ -4198,7 +4215,6 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/displayFilter/displayFilterStoryData.ts",
 			"src/components/displayFilter/kindOptions.ts",
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
@@ -4433,10 +4449,8 @@
 		"fileName": "timeline-pin-drop.svg",
 		"sourcePath": "src/resources/img/icons/timeline-pin-drop.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:timeline-request-client:base",
