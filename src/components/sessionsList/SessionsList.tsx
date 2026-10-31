@@ -2771,6 +2771,20 @@ export const SessionsList = ({
 													sortedSessions[index - 1]
 												)
 											}
+											grouped={!isRail}
+											isGroupStart={
+												index === 0 ||
+												isSessionListItemActive(
+													sortedSessions[index - 1]
+												)
+											}
+											isGroupEnd={
+												index ===
+													sortedSessions.length - 1 ||
+												isSessionListItemActive(
+													sortedSessions[index + 1]
+												)
+											}
 											caseHandoverBatchMode={
 												caseHandoverBatchMode
 											}

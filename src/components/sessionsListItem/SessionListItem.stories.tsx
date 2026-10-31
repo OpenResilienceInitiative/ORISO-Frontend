@@ -3,6 +3,7 @@ import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -208,13 +209,19 @@ function RuntimeCard({
 	userData = runtimeUserData,
 	index = 0,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	grouped = false,
+	isGroupStart = true,
+	isGroupEnd = true
 }: {
 	item: ListItemInterface;
 	userData?: any;
 	index?: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	grouped?: boolean;
+	isGroupStart?: boolean;
+	isGroupEnd?: boolean;
 }) {
 	const activeSession = buildExtendedSession(item, '');
 
@@ -273,6 +280,9 @@ function RuntimeCard({
 											index={index}
 											isBeforeActive={isBeforeActive}
 											isAfterActive={isAfterActive}
+											grouped={grouped}
+											isGroupStart={isGroupStart}
+											isGroupEnd={isGroupEnd}
 										/>
 									</ActiveSessionContext.Provider>
 								</LegalLinksContext.Provider>
@@ -1545,6 +1555,213 @@ export const StackedListWithSelection: Story = {
 		await expect(Math.round(box(after).top - box(selected).bottom)).toBe(
 			24
 		);
+	}
+};
+
+/** Selection follows the route like the real list: the group flags come
+ * from the same route-derived active item the card uses, so opening a
+ * card's menu (no navigation) never moves the group boundaries. */
+function GroupedRows({ cards }: { cards: ListItemInterface[] }) {
+	const { isActive } = useActiveListItem();
+	const active = cards.findIndex((item) => {
+		const room = item.chat ?? item.session;
+		return isActive({ groupId: room?.matrixRoomId, sessionId: room?.id });
+	});
+	return (
+		<>
+			{cards.map((item, index) => (
+				<div key={index}>
+					<RuntimeCard
+						index={index}
+						item={item}
+						grouped
+						isBeforeActive={index === active - 1}
+						isAfterActive={active !== -1 && index === active + 1}
+						isGroupStart={index === 0 || index === active + 1}
+						isGroupEnd={
+							index === cards.length - 1 || index === active - 1
+						}
+					/>
+				</div>
+			))}
+		</>
+	);
+}
+
+// The route (story parameter `router.initialPath`) decides the open card.
+const groupedRows = (cards: ListItemInterface[]) => (
+	<GroupedRows cards={cards} />
+);
+
+const cardStyle = (row: HTMLElement) =>
+	getComputedStyle(part(row, '.sessionsListItem__content'));
+const cardBox = (row: HTMLElement) =>
+	part(row, '.sessionsListItem__content').getBoundingClientRect();
+const REST_OUTLINE = 'rgb(255, 180, 170)'; // --m3-primary-fixed-dim
+const FOCUS_RING = 'rgb(204, 30, 28)'; // --m3-primary-container
+
+/**
+ * Grouped list (Figma 316-17441 / 8609-31260): unselected cards sit flush in
+ * one group with a single white hairline, 24px corners only at the group
+ * ends. The selected card leaves the group with 6px on both sides. Its ring
+ * follows the focus: 1px calm outline while the focus is elsewhere, 2px red
+ * while the card holds it; a keyboard-focused neighbour takes the ring.
+ */
+export const GroupedListWithSelection: Story = {
+	name: 'Liste — gruppiert, Auswahl dazwischen (Ring folgt Fokus)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{groupedRows([
+					runtimeGroupChat({ id: 5601, name: 'Elternrunde' }),
+					runtimeGroupChat({ id: 5602, name: 'New Redeploy' }),
+					runtimeSessionItem(),
+					runtimeGroupChat({ id: 5603, name: 'Teamrunde' }),
+					runtimeGroupChat({
+						id: 5604,
+						name: 'Selbsthilfe Mitte'
+					})
+				])}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, 5);
+		const [first, before, selected, after, last] = rows;
+		await expect(
+			rows.map((row) =>
+				row.classList.contains('sessionsListItem--active')
+			)
+		).toEqual([false, false, true, false, false]);
+
+		// Flush inside a group, 6px around the selected card.
+		await expect(
+			Math.round(cardBox(before).top - cardBox(first).bottom)
+		).toBe(0);
+		await expect(
+			Math.round(cardBox(selected).top - cardBox(before).bottom)
+		).toBe(6);
+		await expect(
+			Math.round(cardBox(after).top - cardBox(selected).bottom)
+		).toBe(6);
+		await expect(
+			Math.round(cardBox(last).top - cardBox(after).bottom)
+		).toBe(0);
+
+		// One hairline between neighbours, never two.
+		await expect(cardStyle(before).borderTopWidth).toBe('0px');
+		await expect(cardStyle(last).borderTopWidth).toBe('0px');
+
+		// Corners: rounded only where a group starts or ends.
+		await expect(cardStyle(first).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(first).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(before).borderBottomLeftRadius).toBe('24px');
+		await expect(cardStyle(after).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(after).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(last).borderBottomLeftRadius).toBe('24px');
+		await expect(cardStyle(selected).borderTopLeftRadius).toBe('24px');
+
+		// Focus elsewhere: calm 1px outline on the selected card.
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
+		);
+		await expect(cardStyle(selected).borderTopWidth).toBe('1px');
+
+		// Focus on the selected card: the full 2px ring, size unchanged.
+		const restingHeight = cardBox(selected).height;
+		part(selected, '.sessionsListItem__content').focus();
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(FOCUS_RING)
+		);
+		await expect(cardStyle(selected).boxShadow).toContain('inset');
+		await expect(cardBox(selected).height).toBe(restingHeight);
+
+		// The focus moves on: the selected card calms down again.
+		part(after, '.sessionsListItem__content').focus();
+		await waitFor(() =>
+			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
+		);
+	}
+};
+
+/** Short list, nothing selected: the last card is rounded at the bottom too. */
+export const GroupedShortList: Story = {
+	name: 'Liste — gruppiert, kurze Liste ohne Auswahl',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{groupedRows([
+					runtimeGroupChat({ id: 5701, name: 'Elternrunde' }),
+					runtimeSessionItem(),
+					runtimeGroupChat({ id: 5702, name: 'Teamrunde' })
+				])}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [first, middle, last] = await settledRows(canvasElement, 3);
+		await expect(
+			Math.round(cardBox(middle).top - cardBox(first).bottom)
+		).toBe(0);
+		await expect(cardStyle(first).borderTopLeftRadius).toBe('24px');
+		await expect(cardStyle(middle).borderTopLeftRadius).toBe('0px');
+		await expect(cardStyle(middle).borderBottomLeftRadius).toBe('0px');
+		await expect(cardStyle(last).borderBottomRightRadius).toBe('24px');
+	}
+};
+
+/** Ten cards: the selection moves with each click and the groups re-form. */
+export const GroupedLongList: Story = {
+	name: 'Liste — gruppiert, zehn Karten (Auswahl wandert)',
+	render: () => {
+		seedMatrixRoom(2);
+		const cards = Array.from({ length: 10 }, (_, i) =>
+			i === 4
+				? runtimeSessionItem()
+				: runtimeGroupChat({ id: 5800 + i, name: `Runde ${i + 1}` })
+		);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{groupedRows(cards)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, 10);
+		const radii = () =>
+			rows.map((row) => {
+				const s = cardStyle(row);
+				return `${s.borderTopLeftRadius}/${s.borderBottomLeftRadius}`;
+			});
+
+		// Cards 5..9 form one group; 2..4 are square inside their group.
+		await expect(radii()[0]).toBe('24px/0px');
+		await expect(radii()[2]).toBe('0px/0px');
+		await expect(radii()[3]).toBe('0px/24px');
+		await expect(radii()[5]).toBe('24px/0px');
+		await expect(radii()[9]).toBe('0px/24px');
+
+		// Select the eighth card: its neighbours close and open the groups.
+		await userEvent.click(part(rows[7], '.sessionsListItem__content'));
+		await waitFor(() =>
+			expect(rows[7].classList.contains('sessionsListItem--active')).toBe(
+				true
+			)
+		);
+		await expect(
+			rows.filter((r) => r.classList.contains('sessionsListItem--active'))
+		).toHaveLength(1);
+		// The corners ease in (200 ms): read them once they have settled.
+		await waitFor(() => expect(radii()[6]).toBe('0px/24px'));
+		await waitFor(() => expect(radii()[8]).toBe('24px/0px'));
+		await expect(radii()[4]).toBe('0px/0px');
+		await expect(radii()[9]).toBe('0px/24px');
+		await waitFor(() => expect(radii()[7]).toBe('24px/24px'));
 	}
 };
 

@@ -358,7 +358,8 @@
 		"participants": {
 			"label": "ተሳተፍቲ፡ {{names}}",
 			"more": "{{count}} ተወሰኽቲ ተሳተፍቲ",
-			"more_one": "1 ተወሳኺ ሰብ"
+			"more_one": "1 ተወሳኺ ሰብ",
+			"moreList": "ተወሰኽቲ ተሳተፍቲ ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "ቻነል ቀይር",

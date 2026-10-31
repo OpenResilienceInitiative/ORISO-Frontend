@@ -10,11 +10,13 @@
  * (ORISO-Frontend#1193). Order and overflow come from `participantStack.ts`.
  */
 import * as React from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { MessageAvatar } from './MessageAvatar';
 import {
+	formatOverflowCount,
 	resolveParticipantStack,
 	STACK_MAX_VISIBLE,
 	STACK_AVATAR_SIZE,
@@ -32,6 +34,12 @@ export interface ParticipantAvatarStackProps {
 	/** Overlap between avatars; header and card geometry are independent. */
 	'overlap'?: number;
 	'maxVisible'?: number;
+	/**
+	 * How the "+N" folds in. `pill` (default, headers) is a static chip;
+	 * `badge` sits on the last avatar and `bubble` is a grey speech bubble
+	 * beside the stack — both open the list of the folded people on click.
+	 */
+	'overflowStyle'?: 'pill' | 'badge' | 'bubble';
 	'className'?: string;
 	'data-cy'?: string;
 }
@@ -51,11 +59,41 @@ export const HEADER_STACK_PROPS = {
 	overlap: HEADER_STACK_OVERLAP
 } as const;
 
+const OVERFLOW_PANEL_WIDTH = 240;
+const VIEWPORT_INSET = 8;
+const PANEL_GAP = 8;
+
+/**
+ * Where the list of folded participants opens: below the badge, or above it
+ * when it would run past the bottom of the window and fits above. Kept
+ * `VIEWPORT_INSET` from the window's edges.
+ */
+export const overflowPanelPosition = (
+	anchor: Pick<DOMRect, 'top' | 'bottom' | 'left'>,
+	panelHeight: number,
+	viewport: { width: number; height: number }
+): { top: number; left: number } => {
+	const below = anchor.bottom + PANEL_GAP;
+	const above = anchor.top - PANEL_GAP - panelHeight;
+	const fitsBelow = below + panelHeight <= viewport.height - VIEWPORT_INSET;
+	return {
+		top: !fitsBelow && above >= VIEWPORT_INSET ? above : below,
+		left: Math.max(
+			VIEWPORT_INSET,
+			Math.min(
+				anchor.left - 12,
+				viewport.width - OVERFLOW_PANEL_WIDTH - VIEWPORT_INSET
+			)
+		)
+	};
+};
+
 export const ParticipantAvatarStack = ({
 	participants,
 	size = STACK_AVATAR_SIZE,
 	overlap = STACK_OVERLAP,
 	maxVisible = STACK_MAX_VISIBLE,
+	overflowStyle = 'pill',
 	className,
 	'data-cy': dataCy = 'participant-stack'
 }: ParticipantAvatarStackProps) => {
@@ -75,7 +113,7 @@ export const ParticipantAvatarStack = ({
 		document.addEventListener('keydown', dismiss);
 		return () => document.removeEventListener('keydown', dismiss);
 	}, [openIndex]);
-	const { visible, overflow } = resolveParticipantStack(
+	const { visible, overflow, hidden } = resolveParticipantStack(
 		participants,
 		maxVisible
 	);
@@ -95,6 +133,9 @@ export const ParticipantAvatarStack = ({
 			className={[
 				'participantStack',
 				overflow > 0 && 'participantStack--overflow',
+				overflow > 0 &&
+					overflowStyle !== 'pill' &&
+					`participantStack--${overflowStyle}`,
 				className
 			]
 				.filter(Boolean)
@@ -145,6 +186,7 @@ export const ParticipantAvatarStack = ({
 					>
 						<span
 							className="participantStack__avatar"
+							role="img"
 							tabIndex={0}
 							aria-label={participant.displayName}
 							aria-describedby={
@@ -183,16 +225,25 @@ export const ParticipantAvatarStack = ({
 			{overflow > 0 && (
 				<li
 					className="participantStack__item participantStack__item--overflow"
-					style={{ zIndex: 0 }}
+					style={{ zIndex: overflowStyle === 'badge' ? 2 : 0 }}
 				>
-					<span
-						className="participantStack__overflow"
-						title={overflowLabel}
-						aria-label={overflowLabel}
-						data-cy="participant-overflow"
-					>
-						+{overflow}
-					</span>
+					{overflowStyle === 'pill' ? (
+						<span
+							className="participantStack__overflow"
+							role="img"
+							title={overflowLabel}
+							aria-label={overflowLabel}
+							data-cy="participant-overflow"
+						>
+							+{overflow}
+						</span>
+					) : (
+						<OverflowList
+							count={overflow}
+							label={overflowLabel}
+							hidden={hidden}
+						/>
+					)}
 				</li>
 			)}
 		</ul>
@@ -200,3 +251,163 @@ export const ParticipantAvatarStack = ({
 };
 
 export default ParticipantAvatarStack;
+
+/**
+ * The "+N" as a button: opens the folded people in a list under it. Rendered
+ * in a portal (the card clips its children) and cut off from the card's own
+ * click and key handling, so opening it never selects the conversation.
+ */
+const OverflowList = ({
+	count,
+	label,
+	hidden
+}: {
+	count: number;
+	label: string;
+	hidden: StackParticipant[];
+}) => {
+	const { t: translate } = useTranslation();
+	const [open, setOpen] = useState(false);
+	const [anchor, setAnchor] = useState<DOMRect | null>(null);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+	const panelRef = useRef<HTMLDivElement>(null);
+	const panelId = useId();
+	const [panelHeight, setPanelHeight] = useState(0);
+	// Measured before paint, so a list that opens upwards never flashes below.
+	useLayoutEffect(() => {
+		if (open) setPanelHeight(panelRef.current?.offsetHeight ?? 0);
+	}, [open, hidden.length]);
+
+	useEffect(() => {
+		if (!open) return;
+		// Keyboard users land in the list; Escape there brings them back.
+		panelRef.current?.focus();
+		// Scroll and resize remove the focused list: hand focus back to the
+		// badge. An outside click keeps the focus it moved to.
+		const close = () => {
+			const hadFocus = panelRef.current?.contains(document.activeElement);
+			setOpen(false);
+			if (hadFocus) buttonRef.current?.focus();
+		};
+		// Scrolling the list itself must not close it (long lists scroll).
+		const closeOnScroll = (event: Event) => {
+			const target = event.target;
+			if (target instanceof Node && panelRef.current?.contains(target))
+				return;
+			close();
+		};
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return;
+			event.stopPropagation();
+			setOpen(false);
+			buttonRef.current?.focus();
+		};
+		const onPointer = (event: MouseEvent) => {
+			const target = event.target as Node;
+			if (
+				panelRef.current?.contains(target) ||
+				buttonRef.current?.contains(target)
+			)
+				return;
+			setOpen(false);
+		};
+		document.addEventListener('keydown', onKey);
+		document.addEventListener('mousedown', onPointer);
+		window.addEventListener('resize', close);
+		window.addEventListener('scroll', closeOnScroll, true);
+		return () => {
+			document.removeEventListener('keydown', onKey);
+			document.removeEventListener('mousedown', onPointer);
+			window.removeEventListener('resize', close);
+			window.removeEventListener('scroll', closeOnScroll, true);
+		};
+	}, [open]);
+
+	const stop = (event: React.SyntheticEvent) => event.stopPropagation();
+	const onPanelKey = (event: React.KeyboardEvent) => {
+		event.stopPropagation();
+		// Escape closes; Tab closes too and continues from the badge, since
+		// the portal sits at the end of the document.
+		if (event.key !== 'Escape' && event.key !== 'Tab') return;
+		setOpen(false);
+		buttonRef.current?.focus();
+	};
+	const toggle = (event: React.MouseEvent) => {
+		event.stopPropagation();
+		setAnchor(buttonRef.current?.getBoundingClientRect() ?? null);
+		setOpen((value) => !value);
+	};
+	const title = translate('chatStage.participants.moreList', {
+		count,
+		defaultValue: 'Weitere Beteiligte ({{count}})'
+	});
+
+	return (
+		<>
+			<button
+				ref={buttonRef}
+				type="button"
+				className="participantStack__overflow participantStack__overflow--button"
+				aria-label={label}
+				aria-haspopup="dialog"
+				aria-expanded={open}
+				aria-controls={open ? panelId : undefined}
+				data-cy="participant-overflow"
+				onClick={toggle}
+				onKeyDown={(event) => {
+					if (event.key === 'Enter' || event.key === ' ')
+						event.stopPropagation();
+				}}
+			>
+				{formatOverflowCount(count)}
+			</button>
+			{open &&
+				anchor &&
+				createPortal(
+					<div
+						ref={panelRef}
+						id={panelId}
+						role="dialog"
+						tabIndex={-1}
+						aria-label={title}
+						className="participantStack__list"
+						data-cy="participant-overflow-list"
+						style={overflowPanelPosition(anchor, panelHeight, {
+							width: window.innerWidth,
+							height: window.innerHeight
+						})}
+						onClick={stop}
+						onKeyDown={onPanelKey}
+						onMouseDown={stop}
+					>
+						<p className="participantStack__listTitle">{title}</p>
+						<ul className="participantStack__listItems">
+							{hidden.map((participant) => (
+								<li
+									key={participant.userId}
+									className="participantStack__listItem"
+								>
+									<MessageAvatar
+										isGroup={!participant.isAsker}
+										isSystemNotification={false}
+										userId={participant.userId}
+										username={
+											participant.username ??
+											participant.displayName
+										}
+										displayName={participant.displayName}
+										firstName={participant.firstName}
+										lastName={participant.lastName}
+										choice={chosenAvatarOf(participant)}
+										size={32}
+									/>
+									<span>{participant.displayName}</span>
+								</li>
+							))}
+						</ul>
+					</div>,
+					document.body
+				)}
+		</>
+	);
+};

@@ -141,6 +141,13 @@ interface SessionListItemProps {
 	index: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	/** Card sits in the grouped list (`SessionsList`): flush with its
+	 * neighbours, rounded only at the group ends. */
+	grouped?: boolean;
+	/** First card of a group: top of the list or right below the active card. */
+	isGroupStart?: boolean;
+	/** Last card of a group: end of the list or right above the active card. */
+	isGroupEnd?: boolean;
 	caseHandoverBatchMode?: boolean;
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
@@ -156,6 +163,9 @@ export const SessionListItemComponent = ({
 	index,
 	isBeforeActive = false,
 	isAfterActive = false,
+	grouped = false,
+	isGroupStart = true,
+	isGroupEnd = true,
 	caseHandoverBatchMode = false,
 	caseHandoverSelected = false,
 	onCaseHandoverSelect,
@@ -1234,7 +1244,12 @@ export const SessionListItemComponent = ({
 							!isItemUnread &&
 							'sessionsListItem--read',
 						isBeforeActive && 'sessionsListItem--beforeActive',
-						isAfterActive && 'sessionsListItem--afterActive'
+						isAfterActive && 'sessionsListItem--afterActive',
+						grouped && 'sessionsListItem--grouped',
+						grouped &&
+							isGroupStart &&
+							'sessionsListItem--groupStart',
+						grouped && isGroupEnd && 'sessionsListItem--groupEnd'
 					)}
 					data-group-id={activeSession.rid ? activeSession.rid : ''}
 					data-cy="session-list-item"
@@ -1439,7 +1454,10 @@ export const SessionListItemComponent = ({
 				caseHandoverContentLocked &&
 					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
-				isAfterActive && 'sessionsListItem--afterActive'
+				isAfterActive && 'sessionsListItem--afterActive',
+				grouped && 'sessionsListItem--grouped',
+				grouped && isGroupStart && 'sessionsListItem--groupStart',
+				grouped && isGroupEnd && 'sessionsListItem--groupEnd'
 			)}
 			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"

@@ -353,7 +353,8 @@
 		"participants": {
 			"label": "Participants: {{names}}",
 			"more": "{{count}} more participants",
-			"more_one": "1 more participant"
+			"more_one": "1 more participant",
+			"moreList": "More participants ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Switch channel",

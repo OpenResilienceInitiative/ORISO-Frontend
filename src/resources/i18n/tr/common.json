@@ -358,7 +358,8 @@
 		"participants": {
 			"label": "Katılımcılar: {{names}}",
 			"more": "{{count}} katılımcı daha",
-			"more_one": "1 kişi daha"
+			"more_one": "1 kişi daha",
+			"moreList": "Diğer katılımcılar ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal değiştir",

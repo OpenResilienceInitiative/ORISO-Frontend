@@ -358,7 +358,8 @@
 		"participants": {
 			"label": "Участники: {{names}}",
 			"more": "Ещё {{count}} участников",
-			"more_one": "Ещё 1 человек"
+			"more_one": "Ещё 1 человек",
+			"moreList": "Другие участники ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Сменить канал",
