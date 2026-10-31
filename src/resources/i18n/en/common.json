@@ -2372,6 +2372,18 @@
 				"title": "Invitation to internal group call",
 				"text": "You have been invited to an internal group call."
 			},
+			"callKnockRequested": {
+				"title": "Someone is knocking",
+				"text": "Someone wants to join your call. Join the call to let them in.",
+				"video": {
+					"title": "Someone is knocking – video call",
+					"text": "Someone wants to join your video call through your direct link. Join the call to let them in."
+				},
+				"audio": {
+					"title": "Someone is knocking – audio call",
+					"text": "Someone wants to join your audio call through your direct link. Join the call to let them in."
+				}
+			},
 			"appointmentRequested": {
 				"title": "Call appointment requested",
 				"text": "There is a new appointment request for a call."
@@ -4280,7 +4292,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Peer support group",
 				"internal": "Internal",
-				"team": "Team counselling"
+				"team": "Team counselling",
+				"directLinkVideo": "Video call",
+				"directLinkAudio": "Audio call",
+				"directLinkChat": "Direct link"
 			}
 		},
 		"createChat": {
@@ -4378,6 +4393,7 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
+				"directLinks": "Direct links",
 				"other": "More",
 				"create": "Create",
 				"group": "Filters",

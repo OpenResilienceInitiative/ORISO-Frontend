@@ -2375,6 +2375,18 @@
 				"title": "Invitation à un appel de groupe interne",
 				"text": "Vous avez été invité·e à un appel de groupe interne."
 			},
+			"callKnockRequested": {
+				"title": "Une personne frappe",
+				"text": "Une personne souhaite rejoindre votre appel. Rejoignez l'appel pour la laisser entrer.",
+				"video": {
+					"title": "Une personne frappe – appel vidéo",
+					"text": "Une personne souhaite rejoindre votre appel vidéo via votre lien direct. Rejoignez l'appel pour la laisser entrer."
+				},
+				"audio": {
+					"title": "Une personne frappe – appel audio",
+					"text": "Une personne souhaite rejoindre votre appel audio via votre lien direct. Rejoignez l'appel pour la laisser entrer."
+				}
+			},
 			"appointmentRequested": {
 				"title": "Rendez-vous demandé pour un appel",
 				"text": "Une nouvelle demande de rendez-vous pour un appel a été reçue."
@@ -4404,6 +4416,7 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
+				"directLinks": "Liens directs",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4427,7 +4440,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Cercle de parole",
 				"internal": "Échange interne",
-				"team": "Conseil en équipe"
+				"team": "Conseil en équipe",
+				"directLinkVideo": "Appel vidéo",
+				"directLinkAudio": "Appel audio",
+				"directLinkChat": "Lien direct"
 			}
 		},
 		"supervision": {

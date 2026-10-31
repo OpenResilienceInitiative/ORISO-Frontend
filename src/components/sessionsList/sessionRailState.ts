@@ -29,6 +29,14 @@
  *                (`session/getModality.ts`, ADR-006 — the single modality
  *                selector; the expanded row draws the same envelope from it).
  *
+ *   videoCall /  FE#1952: `getDirectLinkMedium(...)` (`session/directLinkOrigin.ts`
+ *   audioCall /  over `SessionDTO.directLinkMedium`). A conversation opened
+ *   directLink   through a counsellor direct link takes the mail's slot with
+ *                the link's medium instead of the envelope — it never was a
+ *                mail counselling. At most one of mail / videoCall /
+ *                audioCall / directLink is present, so the pill keeps four
+ *                slots.
+ *
  *   unread       `isChatItemUnread(...)` (`utils/sessionUnread.ts`, #1147 —
  *                derived from the Matrix room's notification count. The DTO's
  *                `messagesRead` is hard-coded `true` and must not be read.)
@@ -39,15 +47,26 @@
  * around between rows.
  */
 
+import type { DirectLinkMedium } from '../session/directLinkOrigin';
 import { Modality } from '../session/getModality';
 
-export type SessionRailMark = 'thread' | 'supervision' | 'mail' | 'unread';
+export type SessionRailMark =
+	| 'thread'
+	| 'supervision'
+	| 'mail'
+	| 'videoCall'
+	| 'audioCall'
+	| 'directLink'
+	| 'unread';
 
 /** Rendering order. Fixed, so a mark keeps its slot from row to row. */
 export const SESSION_RAIL_MARK_ORDER: readonly SessionRailMark[] = [
 	'thread',
 	'supervision',
 	'mail',
+	'videoCall',
+	'audioCall',
+	'directLink',
 	'unread'
 ] as const;
 
@@ -58,11 +77,19 @@ export interface SessionRailMarkInput {
 	supervisionState?: 'none' | 'supervisedByMe' | 'supervisedByOthers' | null;
 	/** `getModality()` result — compared against `AGENCY_COUNSELLING`. */
 	modality?: string | null;
+	/** `getDirectLinkMedium()` result (FE#1952); replaces the mail mark. */
+	directLinkMedium?: string | null;
 	/** `isChatItemUnread()` result. */
 	unread?: boolean | null;
 }
 
 const MAIL_MODALITY = Modality.AGENCY_COUNSELLING;
+
+const DIRECT_LINK_MARKS: Record<DirectLinkMedium, SessionRailMark> = {
+	VIDEO: 'videoCall',
+	AUDIO: 'audioCall',
+	CHAT: 'directLink'
+};
 
 /**
  * The marks for one row, already in render order. Undefined inputs mean "the
@@ -72,14 +99,28 @@ export const getSessionRailMarks = ({
 	previewChannel,
 	supervisionState,
 	modality,
+	directLinkMedium,
 	unread
 }: SessionRailMarkInput): SessionRailMark[] => {
+	const agencyCounselling = modality === MAIL_MODALITY;
+	const directLink =
+		agencyCounselling &&
+		directLinkMedium &&
+		Object.prototype.hasOwnProperty.call(
+			DIRECT_LINK_MARKS,
+			directLinkMedium
+		)
+			? DIRECT_LINK_MARKS[directLinkMedium as DirectLinkMedium]
+			: undefined;
 	const present: Record<SessionRailMark, boolean> = {
 		thread: previewChannel === 'thread',
 		supervision:
 			supervisionState === 'supervisedByMe' ||
 			supervisionState === 'supervisedByOthers',
-		mail: modality === MAIL_MODALITY,
+		mail: agencyCounselling && !directLink,
+		videoCall: directLink === 'videoCall',
+		audioCall: directLink === 'audioCall',
+		directLink: directLink === 'directLink',
 		unread: unread === true
 	};
 	return SESSION_RAIL_MARK_ORDER.filter((mark) => present[mark]);
@@ -94,6 +135,9 @@ export const getSessionRailMarks = ({
  *   `chatStage.switcher.kind.thread`      → "Thread"
  *   `sessionList.toolbar.chips.supervision` → "Supervision"
  *   `sessionList.toolbar.chips.nearby`     → "Mail"
+ *   `sessionList.item.sessionType.directLinkVideo` → "Videoanruf"   (FE#1952)
+ *   `sessionList.item.sessionType.directLinkAudio` → "Audioanruf"   (FE#1952)
+ *   `sessionList.item.sessionType.directLinkChat`  → "Direktlink"   (FE#1952)
  *   `sessionList.toolbar.chips.unread`     → "Ungelesen"
  */
 export type SessionRailMarkLabels = Record<SessionRailMark, string>;

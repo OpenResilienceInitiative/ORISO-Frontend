@@ -2799,6 +2799,12 @@ declare namespace UserService {
 			 */
 			consentedLegalVersionId?: number; // int64
 			/**
+			 * ORISO-Frontend#1952 - the medium of the counsellor direct link (#1475) this conversation was opened through; absent for every other conversation. A label for the list ("Videoanruf", "Audioanruf", "Direktlink" instead of "Mail"), not a modality: conversationType stays the ADR-006 value. Additive - older clients can ignore it.
+			 * example:
+			 * VIDEO
+			 */
+			directLinkMedium?: 'CHAT' | 'AUDIO' | 'VIDEO';
+			/**
 			 * true when Gate 2 applies to this session and no consent pointer is recorded, i.e. the client must show the consent gate instead of the composer. Internal rooms (no help-seeker) always report false. Additive - older clients can ignore it.
 			 * example:
 			 * false

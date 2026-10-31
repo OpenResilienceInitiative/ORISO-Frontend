@@ -54,6 +54,15 @@ const HANDOVER_ACCESS_WORDING: Record<
 	'case.handover.granted': { withoutAccessType: 'generic' }
 };
 
+/**
+ * FE#1952: a direct-link knock names the call it is for. `medium` comes from
+ * the producer's params; without it the base wording ("someone is knocking")
+ * stays true for both media.
+ */
+const MEDIUM_WORDING: Record<string, Record<string, string>> = {
+	'call.knock.requested': { VIDEO: 'video', AUDIO: 'audio' }
+};
+
 export const renderEventStrings = (
 	descriptor: EventDescriptor,
 	translate: TranslateFn,
@@ -87,6 +96,20 @@ export const renderEventStrings = (
 			);
 			textTemplate = textTemplate.replace(/\.text$/, `.${variant}.text`);
 		}
+	}
+	const mediumVariant =
+		MEDIUM_WORDING[descriptor.eventType]?.[
+			String(interpolation.medium ?? '')
+		];
+	if (mediumVariant) {
+		titleTemplate = titleTemplate.replace(
+			/\.title$/,
+			`.${mediumVariant}.title`
+		);
+		textTemplate = textTemplate.replace(
+			/\.text$/,
+			`.${mediumVariant}.text`
+		);
 	}
 	const title = translate(titleTemplate, {
 		defaultValue: input.fallbackTitle ?? '',

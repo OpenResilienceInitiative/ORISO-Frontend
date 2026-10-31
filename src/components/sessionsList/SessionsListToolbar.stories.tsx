@@ -919,3 +919,51 @@ function ToolbarChipMenuPreset({
 		</div>
 	);
 }
+
+/**
+ * FE#1952: conversations that came in through a counsellor direct link have
+ * their own "Direktlinks" chip right after "Mail" and no longer count there.
+ * The list shows the chip once it holds such a conversation.
+ */
+function ToolbarWithDirectLinks() {
+	const { t } = useTranslation();
+	const [search, setSearch] = useState('');
+	const [activeChip, setActiveChip] =
+		useState<SessionToolbarChipFilter | null>(null);
+	return (
+		<div style={shell}>
+			<SessionsListToolbar
+				translate={t}
+				searchValue={search}
+				onSearchChange={setSearch}
+				activeChip={activeChip}
+				onChipToggle={(chip) =>
+					setActiveChip((p) => (p === chip ? null : chip))
+				}
+				showConsultantActions
+				showCreateGroupChatAction
+				showSupervisionChip
+				chipView="labels"
+				chipCounts={{ unread: 3, drafts: 0, nearby: 1, directLinks: 2 }}
+				// Unknown to builds before FE#1952: no chip there.
+				{...({ showDirectLinksChip: true } as object)}
+				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+				archiveTabActive={false}
+				createGroupChatActive={false}
+			/>
+		</div>
+	);
+}
+
+export const DirectLinksChip: Story = {
+	name: 'Direktlinks chip (FE#1952)',
+	render: () => <ToolbarWithDirectLinks />,
+	play: async ({ canvasElement }) => {
+		const chip = canvasElement.querySelector(
+			'[data-cy="sessions-list-chip-direct-links"]'
+		);
+		await expect(chip).not.toBeNull();
+		await expect(chip!.textContent).toContain('Direktlinks');
+	}
+};

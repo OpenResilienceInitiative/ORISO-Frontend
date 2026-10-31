@@ -103,6 +103,8 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
 	'call.invited': 'conversation',
+	// FE#1952: a knock on a direct-link call opens its conversation.
+	'call.knock.requested': 'callRoom',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
 	'group_chat.cancelled': 'conversation',
@@ -133,10 +135,11 @@ describe('WP-06 event-descriptor registry', () => {
 
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
-		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments
+		// + 8 handover + 5 call (incl. the FE#1952 direct-link knock)
+		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + planned service notice (#876) + offer sent/declined/withdrawn = 38.
-		expect(KNOWN_EVENT_TYPES.length).toBe(38);
+		// + planned service notice (#876) + offer sent/declined/withdrawn = 39.
+		expect(KNOWN_EVENT_TYPES.length).toBe(39);
 		[
 			'request.new',
 			'request.denied',
@@ -158,6 +161,7 @@ describe('WP-06 event-descriptor registry', () => {
 			'call.ended',
 			'call.missed',
 			'call.invited',
+			'call.knock.requested',
 			'group_chat.reminder',
 			'group_chat.opened',
 			'group_chat.cancelled',

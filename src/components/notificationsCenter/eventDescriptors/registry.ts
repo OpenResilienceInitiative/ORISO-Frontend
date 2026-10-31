@@ -54,6 +54,18 @@ const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	path: rewriteLegacyChannelPath(buildConversationPath(params))
 });
 
+// FE#1952: the person is already waiting, so the knock goes into the call of
+// its conversation (`roomRef`), not only into the conversation.
+const knockCallTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'callRoom',
+	roomId:
+		typeof params.roomRef === 'string' && params.roomRef.trim()
+			? params.roomRef
+			: null,
+	isVideo: params.medium === 'VIDEO',
+	path: buildConversationPath(params)
+});
+
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'groupChatJoin',
 	path: buildConversationPath(params)
@@ -364,6 +376,17 @@ const seeds: EventDescriptor[] = [
 		icon: 'callInvited',
 		i18nKey: 'callInvited',
 		resolveActionTarget: conversationTarget
+	}),
+
+	// FE#1952: someone knocks on the counsellor's direct-link call. One click
+	// takes the counsellor into the call of that conversation, where the knock
+	// notice lets the person in (Frank, 2026-10-30).
+	descriptor('call.knock.requested', {
+		family: 'calls',
+		category: 'system',
+		icon: 'callStarted',
+		i18nKey: 'callKnockRequested',
+		resolveActionTarget: knockCallTarget
 	}),
 
 	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----
