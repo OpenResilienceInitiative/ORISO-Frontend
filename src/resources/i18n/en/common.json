@@ -2316,6 +2316,18 @@
 				"title": "Case handover declined",
 				"text": "Client consent was declined. Content visibility remains locked."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Case handover offer sent",
+				"text": "The offer is waiting for the colleague's answer. It can be withdrawn as long as the handover is not complete."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Case handover offer declined",
+				"text": "The colleague declined the offer. The case stays with the current counsellor."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Case handover offer withdrawn",
+				"text": "The offer was withdrawn. The case stays with the current counsellor."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
 				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
@@ -3713,6 +3725,10 @@
 			"declined": "You declined this handover.",
 			"denied": "This handover was denied.",
 			"clientConsentDeclined": "The client declined this handover.",
+			"withdraw": "Withdraw offer",
+			"withdrawn": "This handover offer was withdrawn.",
+			"withdrawError": "The offer could not be withdrawn. Please try again.",
+			"withdrawConflict": "The offer has already been answered and can no longer be withdrawn.",
 			"noContent": "This request does not give you permission to view the conversation.",
 			"forbidden": "You are not authorised to view this handover request.",
 			"notFound": "This handover request no longer exists.",
@@ -3729,7 +3745,8 @@
 				"GRANTED": "The handover has been completed.",
 				"RECIPIENT_DECLINED": "The selected colleague declined.",
 				"DENIED": "The handover was denied.",
-				"CLIENT_CONSENT_DECLINED": "The client declined the handover."
+				"CLIENT_CONSENT_DECLINED": "The client declined the handover.",
+				"WITHDRAWN": "The offer was withdrawn."
 			}
 		},
 		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",

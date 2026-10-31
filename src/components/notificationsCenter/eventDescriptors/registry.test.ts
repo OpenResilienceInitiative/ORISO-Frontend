@@ -96,6 +96,9 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'case.handover.granted': 'conversation',
 	'case.handover.consent.declined': 'conversation',
 	'case.handover.offer.received': 'conversation',
+	'case.handover.offer.sent': 'conversation',
+	'case.handover.offer.declined': 'conversation',
+	'case.handover.offer.withdrawn': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
@@ -132,8 +135,8 @@ describe('WP-06 event-descriptor registry', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
 		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + planned service notice (#876) = 35.
-		expect(KNOWN_EVENT_TYPES.length).toBe(35);
+		// + planned service notice (#876) + offer sent/declined/withdrawn = 38.
+		expect(KNOWN_EVENT_TYPES.length).toBe(38);
 		[
 			'request.new',
 			'request.denied',
@@ -148,6 +151,9 @@ describe('WP-06 event-descriptor registry', () => {
 			'case.handover.granted',
 			'case.handover.consent.declined',
 			'case.handover.offer.received',
+			'case.handover.offer.sent',
+			'case.handover.offer.declined',
+			'case.handover.offer.withdrawn',
 			'call.started',
 			'call.ended',
 			'call.missed',

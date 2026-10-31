@@ -2319,6 +2319,18 @@
 				"title": "Vaka devri reddedildi",
 				"text": "Danışan onayı reddedildi. İçerikler kilitli kalır."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Devir teklifi gönderildi",
+				"text": "Teklif meslektaşın yanıtını bekliyor. Devir tamamlanmadığı sürece geri çekilebilir."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Devir teklifi reddedildi",
+				"text": "Meslektaş teklifi reddetti. Vaka mevcut danışmanda kalır."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Devir teklifi geri çekildi",
+				"text": "Teklif geri çekildi. Vaka mevcut danışmanda kalır."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
 				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
@@ -3747,6 +3759,10 @@
 			"declined": "Bu devri reddettiniz.",
 			"denied": "Bu devir reddedildi.",
 			"clientConsentDeclined": "Danışan bu devri reddetti.",
+			"withdraw": "Teklifi geri çek",
+			"withdrawn": "Bu devir teklifi geri çekildi.",
+			"withdrawError": "Teklif geri çekilemedi. Lütfen tekrar deneyin.",
+			"withdrawConflict": "Teklif zaten yanıtlandı ve artık geri çekilemez.",
 			"noContent": "Bu istek görüşmeyi okuma izni vermiyor.",
 			"forbidden": "Bu devir isteğini görme yetkiniz yok.",
 			"notFound": "Bu devir isteği artık mevcut değil.",
@@ -3763,7 +3779,8 @@
 				"GRANTED": "Devir tamamlandı.",
 				"RECIPIENT_DECLINED": "Seçilen meslektaş reddetti.",
 				"DENIED": "Devir reddedildi.",
-				"CLIENT_CONSENT_DECLINED": "Danışan devri reddetti."
+				"CLIENT_CONSENT_DECLINED": "Danışan devri reddetti.",
+				"WITHDRAWN": "Teklif geri çekildi."
 			}
 		},
 		"copy": "Bu vaka yalnızca üst veri olarak görünür. Bir devir nedeni seçin ve neden erişime ihtiyaç duyduğunuzu açıklayın.",

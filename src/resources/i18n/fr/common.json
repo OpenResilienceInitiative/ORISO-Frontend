@@ -2319,6 +2319,18 @@
 				"title": "Transfert de dossier refusé",
 				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Offre de transfert envoyée",
+				"text": "L'offre attend la réponse du collègue. Elle peut être retirée tant que la passation n'est pas terminée."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Offre de transfert refusée",
+				"text": "Le collègue a refusé l'offre. Le dossier reste chez la personne conseillère actuelle."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Offre de transfert retirée",
+				"text": "L'offre a été retirée. Le dossier reste chez la personne conseillère actuelle."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Proposition de transfert",
 				"text": "{{fromConsultantName}} souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation.",
@@ -3747,6 +3759,10 @@
 			"declined": "Vous avez refusé ce transfert.",
 			"denied": "Ce transfert a été refusé.",
 			"clientConsentDeclined": "La personne conseillée a refusé ce transfert.",
+			"withdraw": "Retirer l'offre",
+			"withdrawn": "Cette offre de transfert a été retirée.",
+			"withdrawError": "L'offre n'a pas pu être retirée. Veuillez réessayer.",
+			"withdrawConflict": "L'offre a déjà reçu une réponse et ne peut plus être retirée.",
 			"noContent": "Cette demande ne vous autorise pas à lire la conversation.",
 			"forbidden": "Vous n’êtes pas autorisé à consulter cette demande.",
 			"notFound": "Cette demande n’existe plus.",
@@ -3763,7 +3779,8 @@
 				"GRANTED": "Le transfert est terminé.",
 				"RECIPIENT_DECLINED": "Le collègue sélectionné a refusé.",
 				"DENIED": "Le transfert a été refusé.",
-				"CLIENT_CONSENT_DECLINED": "Le client a refusé le transfert."
+				"CLIENT_CONSENT_DECLINED": "Le client a refusé le transfert.",
+				"WITHDRAWN": "L'offre a été retirée."
 			}
 		},
 		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",

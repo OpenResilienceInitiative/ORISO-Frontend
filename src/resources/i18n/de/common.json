@@ -2340,6 +2340,18 @@
 				"title": "Fallübergabe abgelehnt",
 				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Übergabeangebot gesendet",
+				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Solange die Übergabe nicht abgeschlossen ist, kann es zurückgezogen werden."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Übergabeangebot abgelehnt",
+				"text": "Die Kolleg:in hat das Angebot abgelehnt. Der Fall bleibt bei der bisherigen Beratungsperson."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Übergabeangebot zurückgezogen",
+				"text": "Das Angebot wurde zurückgezogen. Der Fall bleibt bei der bisherigen Beratungsperson."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
 				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
@@ -3767,6 +3779,10 @@
 			"declined": "Sie haben diese Übergabe abgelehnt.",
 			"denied": "Diese Übergabe wurde abgelehnt.",
 			"clientConsentDeclined": "Die ratsuchende Person hat diese Übergabe abgelehnt.",
+			"withdraw": "Angebot zurückziehen",
+			"withdrawn": "Dieses Übergabeangebot wurde zurückgezogen.",
+			"withdrawError": "Das Angebot konnte nicht zurückgezogen werden. Bitte erneut versuchen.",
+			"withdrawConflict": "Das Angebot wurde bereits beantwortet und kann nicht mehr zurückgezogen werden.",
 			"noContent": "Diese Anfrage erlaubt Ihnen nicht, das Gespräch zu lesen.",
 			"forbidden": "Sie dürfen diese Übergabeanfrage nicht aufrufen.",
 			"notFound": "Diese Übergabeanfrage besteht nicht mehr.",
@@ -3783,7 +3799,8 @@
 				"GRANTED": "Die Übergabe wurde abgeschlossen.",
 				"RECIPIENT_DECLINED": "Die ausgewählte Kolleg:in hat abgelehnt.",
 				"DENIED": "Die Übergabe wurde abgelehnt.",
-				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt."
+				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt.",
+				"WITHDRAWN": "Das Angebot wurde zurückgezogen."
 			}
 		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",

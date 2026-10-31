@@ -9,5 +9,10 @@
  */
 export const CASE_HANDOVER_RESOLUTION_EVENTS = new Set([
 	'case.handover.granted',
-	'case.handover.consent.declined'
+	'case.handover.consent.declined',
+	// A colleague offer ends without a grant: the recipient said no, or the
+	// offering counsellor took it back. Both screens refresh instead of waiting
+	// for a focus event.
+	'case.handover.offer.declined',
+	'case.handover.offer.withdrawn'
 ]);
