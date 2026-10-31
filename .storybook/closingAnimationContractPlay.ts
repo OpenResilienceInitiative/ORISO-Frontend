@@ -619,16 +619,19 @@ export const verifyClosingHandover = async (
 		await userEvent.click(press);
 
 		// The browser really navigated: a different document, not the old one repainted.
+		// The cover plays first, then the page loads: the same margin as every
+		// other wait here. The cap itself is asserted further down.
 		await waitFor(() => expect(next).toBeDefined(), {
-			timeout: transitionMotion.closing.capMs
+			timeout: transitionMotion.closing.capMs + 2000
 		});
 		expect(next).not.toBe(oldDocument);
 		expect(next!.URL.startsWith('blob:')).toBe(true);
 
 		// The first thing the new document shows is the finished cover: nothing
 		// is painted between the old page and the cover, and it is not played again.
-		await waitFor(() =>
-			expect(recording!.snapshots.length).toBeGreaterThan(0)
+		await waitFor(
+			() => expect(recording!.snapshots.length).toBeGreaterThan(0),
+			{ timeout: transitionMotion.closing.capMs }
 		);
 		const first = recording!.snapshots[0];
 		expect(first.animation).toBe('wave-reveal');

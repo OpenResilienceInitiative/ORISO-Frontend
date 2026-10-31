@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
 	entryFormDemoEnabled,
+	findConsentPanel,
 	verifyConsentOpening
 } from '../../../.storybook/consentCompletionStoryPlay';
 import { useContext, useEffect, useMemo, useState } from 'react';
@@ -384,9 +385,7 @@ const showConsentAfterSuggestions: NonNullable<Story['play']> = async ({
 	await userEvent.click(
 		await canvas.findByRole('button', { name: /Alle 3/ })
 	);
-	const panel = await canvas.findByRole('region', {
-		name: 'Datenschutz'
-	});
+	const panel = await findConsentPanel(canvas);
 	await verifyConsentOpening(panel);
 	const checkbox = within(panel).getByRole('checkbox', {
 		name: /Ich habe die.*Datenschutzerklärung/
