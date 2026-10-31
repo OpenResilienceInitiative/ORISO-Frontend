@@ -419,6 +419,31 @@ class ChatTransportService {
 		return () => (matrixClient as any).off('Room.timeline', handleTimeline);
 	}
 
+	/**
+	 * A message of `matrixRoomId` has just been redacted (`Room.redaction`).
+	 * That is the moment the SDK flips the target event to "redacted" — also
+	 * when the redaction is our OWN, whose remote echo never emits a second
+	 * `Room.timeline` event, so a timeline listener alone shows the deletion
+	 * only after some unrelated event triggers the next refresh.
+	 */
+	public onMatrixRedaction(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) {
+			return null;
+		}
+		const handleRedaction = (_event: MatrixEvent, room?: Room) => {
+			if (room?.roomId === matrixRoomId) {
+				listener();
+			}
+		};
+		(matrixClient as any).on('Room.redaction', handleRedaction);
+		return () =>
+			(matrixClient as any).off('Room.redaction', handleRedaction);
+	}
+
 	public onMatrixTimeline(
 		matrixRoomId: string,
 		listener: TimelineListener
