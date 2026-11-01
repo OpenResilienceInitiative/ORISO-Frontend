@@ -30,17 +30,22 @@ export const participantRole = (
 
 /**
  * Server role per Matrix user id of the chat's members. The badges are a
- * nicety: a failed read leaves the map empty and the list shows names only.
+ * nicety: a failed read leaves the known roles and the list shows names only.
+ *
+ * `membersKey` changes whenever the room's membership does (the Matrix member
+ * update), so someone who joins while Chat-Info is open gets a badge too. An
+ * answer that a newer request has superseded is dropped.
  */
 export const useGroupChatMemberRoles = (
-	chatId: number | undefined
+	chatId: number | undefined,
+	membersKey = ''
 ): ReadonlyMap<string, ServerMemberRole> => {
-	const [roles, setRoles] = useState<ReadonlyMap<string, ServerMemberRole>>(
-		() => new Map()
-	);
+	const [roles, setRoles] = useState<{
+		chatId: number | undefined;
+		byMember: ReadonlyMap<string, ServerMemberRole>;
+	}>(() => ({ chatId, byMember: new Map() }));
 
 	useEffect(() => {
-		setRoles(new Map());
 		if (chatId === undefined) return;
 		let cancelled = false;
 		apiGetChatMembers(chatId)
@@ -51,13 +56,16 @@ export const useGroupChatMemberRoles = (
 					if (member._id && member.role)
 						next.set(member._id, member.role);
 				});
-				setRoles(next);
+				setRoles({ chatId, byMember: next });
 			})
 			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
-	}, [chatId]);
+	}, [chatId, membersKey]);
 
-	return roles;
+	// Another chat's roles never show, not even until its first answer.
+	return roles.chatId === chatId ? roles.byMember : EMPTY_ROLES;
 };
+
+const EMPTY_ROLES: ReadonlyMap<string, ServerMemberRole> = new Map();

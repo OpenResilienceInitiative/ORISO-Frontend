@@ -646,7 +646,8 @@ export const GroupChatInfoM3Connected = ({
 	// Everyone sees everyone's role (#107); unknown roles show no badge. The
 	// server lists members of a running chat only.
 	const memberRoles = useGroupChatMemberRoles(
-		activeSession.item.active ? activeSession.item.id : undefined
+		activeSession.item.active ? activeSession.item.id : undefined,
+		users.map((user) => user._id).join(',')
 	);
 	const [bannedUsers, setBannedUsers] = useState<string[]>([]);
 	const [menu, setMenu] = useState<{

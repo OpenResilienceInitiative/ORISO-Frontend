@@ -42,9 +42,11 @@ vi.mock('../../globalState', async () => {
 	};
 });
 
+const room = vi.hoisted(() => ({ joined: [] as any[] }));
 vi.mock('../../hooks/useMatrixRoomUsers', () => ({
 	useMatrixRoomUsers: () => ({
 		users: [
+			...room.joined,
 			{ _id: '@asker:hs', username: 'asker', displayName: 'Anna' },
 			{
 				_id: '@consultant:hs',
@@ -69,21 +71,22 @@ vi.mock('../../api', () => ({
 	GROUP_CHAT_API: {}
 }));
 
-const renderConnected = () =>
-	render(
-		<MemoryRouter>
-			<GroupChatInfoM3Connected
-				topic="Gruppe"
-				settings={[]}
-				isCurrentUserModerator={false}
-				showInviteActions={false}
-				inviteLink={{ url: '', copyRegistrationLink: () => {} } as any}
-				onBanned={() => {}}
-				onBanFailed={() => {}}
-				onShowQr={() => {}}
-			/>
-		</MemoryRouter>
-	);
+const connectedUi = () => (
+	<MemoryRouter>
+		<GroupChatInfoM3Connected
+			topic="Gruppe"
+			settings={[]}
+			isCurrentUserModerator={false}
+			showInviteActions={false}
+			inviteLink={{ url: '', copyRegistrationLink: () => {} } as any}
+			onBanned={() => {}}
+			onBanFailed={() => {}}
+			onShowQr={() => {}}
+		/>
+	</MemoryRouter>
+);
+
+const renderConnected = () => render(connectedUi());
 
 const rowOf = (name: string) =>
 	screen.getByText(name).closest('li') as HTMLElement;
@@ -122,6 +125,32 @@ describe('Chat-Info participant roles', () => {
 			)
 		).toBeTruthy();
 		expect(apiGetChatMembers).toHaveBeenCalledWith(7);
+	});
+
+	// CodeRabbit on #1986: someone who joins while Chat-Info is open gets a badge too.
+	it('reads the roles again when someone joins while the page is open', async () => {
+		room.joined = [];
+		vi.mocked(apiGetChatMembers)
+			.mockResolvedValueOnce({ members: [] })
+			.mockResolvedValueOnce({
+				members: [{ _id: '@late:hs', role: 'ADVICE_SEEKER' }]
+			});
+		const view = renderConnected();
+		await waitFor(() => expect(apiGetChatMembers).toHaveBeenCalledTimes(1));
+
+		room.joined = [
+			{ _id: '@late:hs', username: 'late', displayName: 'Lena' }
+		];
+		view.rerender(connectedUi());
+
+		await waitFor(() =>
+			expect(
+				within(rowOf('Lena')).getByText(
+					'groupChat.info.subscribers.role.asker'
+				)
+			).toBeTruthy()
+		);
+		room.joined = [];
 	});
 
 	it('still lists everyone by name when the roles cannot be read', async () => {

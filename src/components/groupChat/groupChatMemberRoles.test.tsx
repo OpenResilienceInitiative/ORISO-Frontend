@@ -1,5 +1,5 @@
 // @vitest-environment oriso-jsdom
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetChatMembers } from '../../api/apiGetChatMembers';
 import {
@@ -46,7 +46,11 @@ describe('participantRole', () => {
 });
 
 describe('useGroupChatMemberRoles', () => {
-	beforeEach(() => vi.clearAllMocks());
+	// Reset queued answers too, so no test inherits another's mock.
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiGetChatMembers).mockReset();
+	});
 
 	it('maps each Matrix member to its role', async () => {
 		vi.mocked(apiGetChatMembers).mockResolvedValue({
@@ -72,6 +76,59 @@ describe('useGroupChatMemberRoles', () => {
 
 		await waitFor(() => expect(apiGetChatMembers).toHaveBeenCalled());
 		expect(result.current.size).toBe(0);
+	});
+
+	// A participant who joins while Chat-Info is open gets her badge too.
+	it('asks again when the room membership changes', async () => {
+		vi.mocked(apiGetChatMembers)
+			.mockResolvedValueOnce({
+				members: [{ _id: '@c:hs', role: 'CONSULTANT' }]
+			})
+			.mockResolvedValueOnce({
+				members: [
+					{ _id: '@c:hs', role: 'CONSULTANT' },
+					{ _id: '@new:hs', role: 'ADVICE_SEEKER' }
+				]
+			});
+
+		const { result, rerender } = renderHook(
+			({ members }) => useGroupChatMemberRoles(7, members),
+			{ initialProps: { members: '@c:hs' } }
+		);
+		await waitFor(() =>
+			expect(result.current.get('@c:hs')).toBe('CONSULTANT')
+		);
+
+		rerender({ members: '@c:hs,@new:hs' });
+
+		await waitFor(() =>
+			expect(result.current.get('@new:hs')).toBe('ADVICE_SEEKER')
+		);
+		expect(apiGetChatMembers).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps the newer answer when an older one arrives late', async () => {
+		let resolveOld: (value: any) => void = () => {};
+		vi.mocked(apiGetChatMembers)
+			.mockReturnValueOnce(
+				new Promise((resolve) => (resolveOld = resolve))
+			)
+			.mockResolvedValueOnce({
+				members: [{ _id: '@new:hs', role: 'ADVICE_SEEKER' }]
+			});
+
+		const { result, rerender } = renderHook(
+			({ members }) => useGroupChatMemberRoles(7, members),
+			{ initialProps: { members: '@c:hs' } }
+		);
+		rerender({ members: '@c:hs,@new:hs' });
+		await waitFor(() =>
+			expect(result.current.get('@new:hs')).toBe('ADVICE_SEEKER')
+		);
+
+		await act(async () => resolveOld({ members: [] }));
+
+		expect(result.current.get('@new:hs')).toBe('ADVICE_SEEKER');
 	});
 
 	it('does not ask without a chat', () => {
