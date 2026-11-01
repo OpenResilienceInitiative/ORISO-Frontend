@@ -361,13 +361,7 @@ export const NavigationBar = ({
 				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
 			)}
 		>
-			{/* One tab stop, arrow keys move between the items: the toolbar role
-			    tells assistive technology so (#1338). */}
-			<div
-				className="navigation__itemContainer"
-				role="toolbar"
-				aria-orientation="vertical"
-			>
+			<div className="navigation__itemContainer" role="tablist">
 				<NavGroup className="navigation__item__top">
 					{sessions &&
 						routerConfig.navigation
@@ -528,6 +522,7 @@ export const NavigationBar = ({
 											ref_menu.current[index] = el;
 										}}
 										tabIndex={index === 0 ? 0 : -1}
+										role="tab"
 									>
 										{useFigmaSlot ? (
 											<div
@@ -700,6 +695,7 @@ export const NavigationBar = ({
 								figmaConsultantNav &&
 									'navigation__item--nav-language'
 							)}
+							role="tab"
 							tabIndex={-1}
 							ref={(el) => {
 								ref_local.current = el;
@@ -797,7 +793,7 @@ export const NavigationBar = ({
 							'navigation__item',
 							figmaConsultantNav && 'navigation__item--nav-logout'
 						)}
-						role="button"
+						role="tab"
 						tabIndex={-1}
 						ref={(el) => {
 							ref_logout.current = el;

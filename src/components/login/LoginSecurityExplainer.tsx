@@ -188,9 +188,10 @@ export const LoginSecurityExplainer = ({
 			<p className="loginSecurity__footnote">
 				{translate('login.security.explainer.key')}
 				<span className="loginSecurity__protocol">
-					{/* <strong> is one of Trans's built-in HTML tags; passing it as a
-					    component made React 19 report an unkeyed child (#1338). */}
-					<Trans i18nKey="login.security.explainer.protocol" />{' '}
+					<Trans
+						i18nKey="login.security.explainer.protocol"
+						components={{ strong: <strong /> }}
+					/>{' '}
 					<a
 						href={MATRIX_E2EE_URL}
 						target="_blank"

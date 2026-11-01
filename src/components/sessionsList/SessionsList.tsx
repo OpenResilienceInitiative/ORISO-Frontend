@@ -204,29 +204,26 @@ const DraftMetadataListItem = ({
 	onOpen: (draft: IUserDraftItem) => void;
 	translate: (key: string) => string;
 }) => (
-	// A plain wrapper: the row is a button, which cannot be the list item (#1338).
-	<div role="listitem">
-		<button
-			type="button"
-			className="sessionsListDraftItem"
-			data-cy="sessions-list-draft-item"
-			onClick={() => onOpen(draft)}
-			disabled={!draft.actionPath}
-		>
-			<span className="sessionsListDraftItem__tag">
-				{translate('sessionList.toolbar.chips.drafts')}
-			</span>
-			<span className="sessionsListDraftItem__title">
-				{draft.title || translate('drafts.center.untitledChat')}
-			</span>
-			<span className="sessionsListDraftItem__meta">
-				{formatDraftTime(draft.updatedAt)}
-			</span>
-			<span className="sessionsListDraftItem__hint">
-				{translate('sessionList.toolbar.draftMetadataOnly')}
-			</span>
-		</button>
-	</div>
+	<button
+		type="button"
+		className="sessionsListDraftItem"
+		data-cy="sessions-list-draft-item"
+		onClick={() => onOpen(draft)}
+		disabled={!draft.actionPath}
+	>
+		<span className="sessionsListDraftItem__tag">
+			{translate('sessionList.toolbar.chips.drafts')}
+		</span>
+		<span className="sessionsListDraftItem__title">
+			{draft.title || translate('drafts.center.untitledChat')}
+		</span>
+		<span className="sessionsListDraftItem__meta">
+			{formatDraftTime(draft.updatedAt)}
+		</span>
+		<span className="sessionsListDraftItem__hint">
+			{translate('sessionList.toolbar.draftMetadataOnly')}
+		</span>
+	</button>
 );
 
 interface SessionsListProps {
@@ -2731,12 +2728,13 @@ export const SessionsList = ({
 						'sessionRailList': isRail
 					})}
 					ref={listRef}
-					// Rail pills are tabs; full cards hold their own buttons (menu,
-					// mail, call), which a tab may not contain, so they are list
-					// items (#1338).
-					role={isRail ? 'tablist' : 'list'}
+					role={isRail ? 'tablist' : undefined}
 					aria-orientation={isRail ? 'vertical' : undefined}
-					aria-label={translate('sessionList.view.headline')}
+					aria-label={
+						isRail
+							? translate('sessionList.view.headline')
+							: undefined
+					}
 					onScroll={handleListScroll}
 				>
 					{(!isLoading || finalSessionsList.length > 0) &&
@@ -2759,12 +2757,9 @@ export const SessionsList = ({
 										{hiddenActiveRowIds.has(
 											sortedSessionIds[index]
 										) && (
-											// Announced like a status, without a
-											// status role inside the list (#1338).
 											<p
 												className="sessionsList__hiddenActiveRowHint"
-												aria-live="polite"
-												aria-atomic="true"
+												role="status"
 											>
 												{translate(
 													'notifications.displayFilter.hiddenActiveRow'
@@ -2838,10 +2833,7 @@ export const SessionsList = ({
 					{isLoading && <SessionsListSkeleton />}
 
 					{isReloadButtonVisible && (
-						<div
-							className="sessionsList__reloadWrapper"
-							role="listitem"
-						>
+						<div className="sessionsList__reloadWrapper">
 							<Button
 								item={{
 									label: translate(

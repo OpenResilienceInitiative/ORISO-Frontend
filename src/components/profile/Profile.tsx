@@ -327,8 +327,7 @@ export const Profile = () => {
 					</div>
 					<div
 						className="profile__nav flex flex__col--grow flex__col--shrink flex--jc-c flex--ai-s flex-l__col--50p"
-						// On phones this row only holds the page title (#1338).
-						role={fromL ? 'tablist' : undefined}
+						role="tablist"
 					>
 						{fromL
 							? profileRoutes(

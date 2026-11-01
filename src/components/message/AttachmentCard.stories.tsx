@@ -142,8 +142,7 @@ export const AllStates: Story = {
 			]
 				.map((cardArgs) => cardArgs as AttachmentCardProps)
 				.map((cardArgs) => (
-					// Locked and decrypting show the same file (#1338).
-					<AttachmentCard key={cardArgs.actionLabel} {...cardArgs} />
+					<AttachmentCard key={cardArgs.fileName} {...cardArgs} />
 				))}
 		</div>
 	)

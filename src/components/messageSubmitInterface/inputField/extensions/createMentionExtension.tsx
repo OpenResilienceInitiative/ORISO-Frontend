@@ -23,8 +23,6 @@ export interface MentionProvider {
 	emptyLabel?: string;
 	unavailableLabel?: string;
 	loadingLabel?: string;
-	/** The popup's accessible name. */
-	listLabel?: string;
 }
 
 /**
@@ -75,8 +73,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				directoryState: provider.getDirectoryState?.() ?? 'ready',
 				emptyLabel: provider.emptyLabel,
 				unavailableLabel: provider.unavailableLabel,
-				loadingLabel: provider.loadingLabel,
-				listLabel: provider.listLabel
+				loadingLabel: provider.loadingLabel
 			});
 
 			const reposition = (clientRect: (() => DOMRect | null) | null) => {

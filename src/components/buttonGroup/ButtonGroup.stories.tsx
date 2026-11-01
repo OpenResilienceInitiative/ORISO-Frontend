@@ -293,14 +293,7 @@ export const AutoStacking: Story = {
 				width={360}
 				label="Container 360px — the pair cannot fit, so it stacks"
 			>
-				{/* #1338: the second copy needs its own button ids. */}
-				<ButtonGroup
-					{...args}
-					items={args.items.map((item) => ({
-						...item,
-						id: `${item.id}-narrow`
-					}))}
-				/>
+				<ButtonGroup {...args} />
 			</Box>
 		</div>
 	)

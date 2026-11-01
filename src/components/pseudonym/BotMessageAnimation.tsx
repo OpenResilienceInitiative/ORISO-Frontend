@@ -10,8 +10,6 @@ export const TypingDots: React.FC<{ className?: string }> = ({ className }) => {
 	return (
 		<span
 			className={className}
-			// A plain span cannot carry a name; as an image the dots read as "typing" (#1338).
-			role="img"
 			aria-label={t('typingIndicator.aria')}
 			style={{
 				display: 'inline-flex',

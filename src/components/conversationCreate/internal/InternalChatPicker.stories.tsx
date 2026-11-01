@@ -139,9 +139,9 @@ const desktop1440 = { viewport: { value: 'desktop1440' } };
 const english = { locale: 'en' };
 
 const openPersonList = async (canvasElement: HTMLElement) => {
-	// The split button's first button opens the list.
+	// The id sits on the split button's wrapper; its first button opens the list.
 	const trigger = canvasElement.querySelector<HTMLButtonElement>(
-		'.internalChatCreateCard__splitButtonWrap button'
+		'#internalChatPersonButton button'
 	);
 	await userEvent.click(trigger as HTMLButtonElement);
 	return within(document.body).findByRole('listbox');

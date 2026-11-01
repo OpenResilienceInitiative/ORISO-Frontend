@@ -51,7 +51,6 @@ export const MixedMembership: StoryObj = {
 			items={items}
 			command={() => {}}
 			notInChatLabel="nicht im Chat"
-			listLabel="Person erwähnen"
 		/>
 	)
 };
@@ -63,7 +62,6 @@ export const AllInChat: StoryObj = {
 			items={items.filter((i) => i.isInRoom)}
 			command={() => {}}
 			notInChatLabel="nicht im Chat"
-			listLabel="Person erwähnen"
 		/>
 	)
 };

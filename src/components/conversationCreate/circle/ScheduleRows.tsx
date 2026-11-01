@@ -195,7 +195,6 @@ export const ScheduleRows = ({
 					onSelect={() => undefined}
 					anchorRef={dateRef}
 					onClose={() => setOpenRow(null)}
-					label={translate('groupChat.circle.rows.dateLabel')}
 					preferredHeight={420}
 				>
 					<OrisoCalendar
@@ -294,7 +293,6 @@ export const ScheduleRows = ({
 					}}
 					anchorRef={durationRef}
 					onClose={() => setOpenRow(null)}
-					label={durationLabel}
 				/>
 			)}
 
@@ -349,7 +347,6 @@ export const ScheduleRows = ({
 					}}
 					anchorRef={mediumRef}
 					onClose={() => setOpenRow(null)}
-					label={translate('groupChat.circle.rows.mediumLabel')}
 				/>
 			)}
 
@@ -383,7 +380,6 @@ export const ScheduleRows = ({
 					}}
 					anchorRef={languageRef}
 					onClose={() => setOpenRow(null)}
-					label={translate('groupChat.circle.rows.languageLabel')}
 				/>
 			)}
 		</div>

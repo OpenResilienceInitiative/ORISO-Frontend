@@ -22,11 +22,7 @@ import {
 	KNOCK_STORY_NOW
 } from './joinRequest/__storybook__/joinRequestFixtures';
 import type { GroupChatModeratorRole } from './joinRequest/joinRequestModel';
-import type {
-	GroupChatItemInterface,
-	ListItemInterface
-} from '../../globalState/interfaces';
-import { useGroupChatInfoFixture } from './groupChatInfoStoryFixture';
+import type { ListItemInterface } from '../../globalState/interfaces';
 import {
 	desktop1440Globals,
 	phone390Globals
@@ -131,7 +127,6 @@ const KnockStage = ({
 				: runningListItem(),
 		[background]
 	);
-	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
 		<>
 			<GroupChatStage listItem={listItem} layout={layout}>

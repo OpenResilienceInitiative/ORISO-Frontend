@@ -1077,7 +1077,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						to={listPath + getSessionListTab()}
 						onClick={handleBackButton}
 						className="sessionInfo__backButton"
-						aria-label={translate('app.back')}
 					>
 						<BackIcon />
 					</Link>

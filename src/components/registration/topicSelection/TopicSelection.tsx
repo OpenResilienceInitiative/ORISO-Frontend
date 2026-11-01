@@ -822,12 +822,7 @@ export const TopicSelection: FC<{
 													sx={{ p: 0 }}
 													data-cy={`topic-group-${topicGroup.id}-topic-selection-radio-group`}
 												>
-													{/* The radiogroup above groups the rows; a
-													    <ul> of non-<li> rows is not a list (#1338). */}
-													<List
-														disablePadding
-														component="div"
-													>
+													<List disablePadding>
 														{topicGroup.topics.map(
 															(
 																placement,
@@ -1058,12 +1053,10 @@ const TopicSelect = ({
 					tabIndex={-1}
 					disableRipple
 					edge="end"
-					// Decorative: the row is the radio. A focusable input inside it
-					// is a second, nested control (#1338). A disabled input swallows
-					// clicks, so the icon lets them through to the row's handler.
-					inputProps={{ 'aria-hidden': true, 'disabled': true }}
+					onClick={(event) => event.stopPropagation()}
+					onChange={onChange}
+					inputProps={{ 'aria-hidden': true }}
 					sx={{
-						pointerEvents: 'none',
 						mt: 0.5,
 						alignSelf: 'flex-start',
 						color: registrationMd3.outline

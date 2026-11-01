@@ -19,8 +19,6 @@ import {
 } from './waitingClock/waitingClockStoryChecks';
 import './joinChat.styles';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
-import { useGroupChatInfoFixture } from './groupChatInfoStoryFixture';
-import type { GroupChatItemInterface } from '../../globalState/interfaces';
 import {
 	effectiveBackground,
 	wcagContrast
@@ -57,7 +55,6 @@ const Stage = ({
 		() => buildGroupStageListItem(deltaSeconds),
 		[deltaSeconds]
 	);
-	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
 		<GroupChatStage listItem={listItem} layout={layout}>
 			<JoinGroupChatView />
@@ -241,7 +238,6 @@ const OpenGroupStage = () => {
 			chat: { ...item.chat, active: true, subscribed: false }
 		} as typeof item;
 	}, []);
-	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
 		<GroupChatStage listItem={listItem} layout="desktop">
 			<JoinGroupChatView />

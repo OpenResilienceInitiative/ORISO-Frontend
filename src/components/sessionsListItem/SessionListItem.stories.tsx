@@ -337,7 +337,7 @@ const runtimeViewer = ({
 
 function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 	return (
-		<div style={listShell} role="list" aria-label="Conversations">
+		<div style={listShell}>
 			<RuntimeCard
 				item={runtimeSessionItem(options)}
 				userData={runtimeViewer(options)}
@@ -1585,7 +1585,7 @@ export const StackedListWithSelection: Story = {
 	render: () => {
 		seedMatrixRoom(2);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					index={0}
 					isBeforeActive
@@ -1640,7 +1640,7 @@ export const GroupChatRow: Story = {
 			'Willkommen in der Teamrunde'
 		);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5501,
@@ -1705,7 +1705,7 @@ export const InteractiveMenuAndLongContent: Story = {
 	render: () => {
 		seedMatrixRoom(2);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					index={0}
 					item={runtimeSessionItem({
@@ -1796,7 +1796,7 @@ export const InternalCounsellorChat: Story = {
 			'Das ist schon komisch mit dieser Anfrage.'
 		);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5503,
@@ -1884,7 +1884,7 @@ export const GuidedSelfHelpGroup: Story = {
 			'Das soll aber einzigartig'
 		);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5504,
@@ -1990,7 +1990,7 @@ export const TenantPrimaryColour: Story = {
 		seedMatrixRoom(2);
 		return (
 			<div style={TENANT_TOKENS as React.CSSProperties}>
-				<div style={listShell} role="list" aria-label="Conversations">
+				<div style={listShell}>
 					<RuntimeCard index={0} item={runtimeSessionItem()} />
 					<RuntimeCard
 						index={1}
@@ -2179,7 +2179,7 @@ export const GroupOneParticipant: Story = {
 	render: () => {
 		seedMatrixRoom(0, 1);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({ id: 5901, name: 'Eine Person' })}
 				/>
@@ -2196,7 +2196,7 @@ export const GroupTwoParticipants: Story = {
 	render: () => {
 		seedMatrixRoom(0, 2);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({ id: 5902, name: 'Zwei Personen' })}
 				/>
@@ -2213,7 +2213,7 @@ export const GroupManyParticipants: Story = {
 	render: () => {
 		seedMatrixRoom(0, 27);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5927,
@@ -2239,7 +2239,7 @@ const GroupHydrationDemo = () => {
 			<button onClick={() => fixture.setCount(4)}>
 				Person tritt Gruppe bei
 			</button>
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5903,
@@ -2282,7 +2282,7 @@ export const GroupNoParticipants: Story = {
 	render: () => {
 		seedMatrixRoom(0, 0);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({ id: 5900, name: 'Leere Gruppe' })}
 				/>
@@ -2309,7 +2309,7 @@ export const GroupMembershipUnavailable: Story = {
 	render: () => {
 		seedMatrixRoom(0, 0, false, true);
 		return (
-			<div style={listShell} role="list" aria-label="Conversations">
+			<div style={listShell}>
 				<RuntimeCard
 					item={runtimeGroupChat({
 						id: 5999,

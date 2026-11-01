@@ -270,13 +270,7 @@ export const GroupStageProviders = ({
 				>
 					<TopicsContext.Provider
 						value={{
-							// The waiting area looks its rules up by the group's
-							// consulting type id; without that entry it reports
-							// "No topic found" (#1338).
-							topics: [
-								groupTopic,
-								{ ...groupTopic, id: GROUP_CONSULTING_TYPE_ID }
-							],
+							topics: [groupTopic],
 							refreshTopics: () => {}
 						}}
 					>
@@ -381,11 +375,7 @@ const StageList = () => {
 					chipCounts={{ groups: 1 }}
 				/>
 				<div className="sessionsList__scrollArea">
-					<div
-						className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
-						role="list"
-						aria-label="Conversations"
-					>
+					<div className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar">
 						<SessionListItemComponent
 							defaultLanguage="de"
 							handleKeyDownLisItemContent={() => {}}

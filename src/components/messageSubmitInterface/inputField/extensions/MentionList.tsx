@@ -26,7 +26,6 @@ export interface MentionListProps {
 	emptyLabel?: string;
 	unavailableLabel?: string;
 	loadingLabel?: string;
-	listLabel?: string;
 }
 
 export interface MentionListRef {
@@ -47,8 +46,7 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 			directoryState = 'ready',
 			emptyLabel,
 			unavailableLabel,
-			loadingLabel,
-			listLabel
+			loadingLabel
 		},
 		ref
 	) => {
@@ -101,9 +99,8 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 			if (!message) {
 				return null;
 			}
-			// No options to pick yet, so no listbox: only the status line (#1338).
 			return (
-				<div className="mentionList">
+				<div className="mentionList" role="listbox">
 					<p
 						className={[
 							'mentionList__status',
@@ -121,7 +118,7 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 		}
 
 		return (
-			<div className="mentionList" role="listbox" aria-label={listLabel}>
+			<div className="mentionList" role="listbox">
 				{items.map((item, index) => (
 					<button
 						type="button"

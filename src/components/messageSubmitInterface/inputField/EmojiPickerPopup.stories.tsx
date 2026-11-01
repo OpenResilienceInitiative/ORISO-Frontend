@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import { EmojiPickerPopup } from './EmojiPickerPopup';
 
 const meta = {
@@ -10,11 +9,6 @@ const meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'centered',
-		// #1338: emoji-picker-react's search field points aria-controls at an id
-		// it never renders (epr-search-id); the library owns that markup.
-		a11y: a11yExcept({
-			'aria-valid-attr-value': ['input[aria-controls="epr-search-id"]']
-		}),
 		docs: {
 			description: {
 				component:

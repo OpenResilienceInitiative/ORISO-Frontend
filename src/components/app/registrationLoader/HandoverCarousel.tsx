@@ -304,7 +304,6 @@ export const HandoverCarousel = ({
 			</Box>
 
 			<Box
-				data-cy="handover-carousel-dots"
 				sx={{
 					flex: 'none',
 					display: 'flex',

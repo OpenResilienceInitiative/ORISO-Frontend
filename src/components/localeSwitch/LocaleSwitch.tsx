@@ -105,7 +105,6 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 			setLocale(value);
 		},
 		id: 'languageSelect',
-		ariaLabel: translate('app.selectLanguage'),
 		className,
 		selectedOptions: selectableLocales.map((lng) => ({
 			label: translate([lng, lng], { ns: 'languages' }),

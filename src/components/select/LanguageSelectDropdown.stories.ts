@@ -16,8 +16,6 @@ const meta = {
 	title: 'Molecules/LanguageSelectDropdown',
 	component: LanguageSelectDropdown,
 	tags: ['autodocs'],
-	// #1338: named like the app's own language switch (app.selectLanguage).
-	args: { ariaLabel: 'Select language' },
 	parameters: {
 		docs: {
 			description: {

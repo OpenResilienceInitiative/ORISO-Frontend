@@ -350,11 +350,7 @@ export const HighContrastSpecimen: React.FC<HighContrastSpecimenProps> = ({
 		</div>
 
 		<SectionLabel>Sitzungsliste</SectionLabel>
-		<div
-			className="hcSpecimen__list"
-			role="list"
-			aria-label="Conversations"
-		>
+		<div className="hcSpecimen__list" role="tablist">
 			<SessionRow />
 		</div>
 
