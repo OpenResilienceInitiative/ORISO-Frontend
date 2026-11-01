@@ -35,7 +35,8 @@ describe('CONSULTANT_RENAMED notice (OBP 2.1 #119, ORISO-UserService#1533)', () 
 		['another type', { type: 'USER_LEFT_CHAT' }],
 		['no old name', { oldName: undefined }],
 		['a blank new name', { newName: '   ' }],
-		['a non-string name', { newName: 42 }]
+		['a non-string name', { newName: 42 }],
+		['the same name after trimming', { newName: '  Frau Alt. ' }]
 	])('ignores a payload with %s', (_label, extra) => {
 		expect(parseConsultantRenamedNotice(renamed(extra))).toBeNull();
 	});

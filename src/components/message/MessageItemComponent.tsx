@@ -69,7 +69,10 @@ import { HistoricalReassignMessage } from './ReassignMessage';
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
-import { consultantRenamedNoticeText } from './consultantRenamedNotice';
+import {
+	consultantRenamedNoticeText,
+	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
+} from './consultantRenamedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
@@ -1279,6 +1282,11 @@ export const MessageItemComponent = ({
 					translate
 				)
 			: null;
+	/* A rename event the parser rejected (blank or unchanged names) draws
+	   nothing — the generic chrome would otherwise show its raw JSON. */
+	const isRejectedConsultantRenamedEvent =
+		parsedMessage.systemNotificationType ===
+			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
 	const systemNotificationTitle =
 		consultantRenamedText?.title ||
 		parsedMessage.systemNotificationTitle ||
@@ -2815,7 +2823,7 @@ export const MessageItemComponent = ({
 		);
 	}
 
-	if (isUntrustedRecommendation) {
+	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
 		return null;
 	}
 

@@ -22,7 +22,10 @@ export const parseConsultantRenamedNotice = (
 	if (type !== SYSTEM_NOTIFICATION_CONSULTANT_RENAMED) return null;
 	const previous = nonBlank(oldName);
 	const next = nonBlank(newName);
-	return previous && next ? { oldName: previous, newName: next } : null;
+	// Only a real change is announced (the server skips no-ops too).
+	return previous && next && previous !== next
+		? { oldName: previous, newName: next }
+		: null;
 };
 
 export const consultantRenamedNoticeText = (

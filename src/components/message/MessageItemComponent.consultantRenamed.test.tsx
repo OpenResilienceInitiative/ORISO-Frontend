@@ -144,4 +144,28 @@ describe('MessageItemComponent — counsellor renamed (OBP 2.1 #119)', () => {
 			);
 		}
 	);
+
+	it.each([
+		['a blank new name', { newName: '   ' }],
+		['no old name', { oldName: undefined }],
+		['the same name after trimming', { newName: ' Frau Alt. ' }]
+	])('draws nothing for a rename event with %s', (_label, extra) => {
+		renderNotice({
+			raw: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+				type: 'CONSULTANT_RENAMED',
+				oldName: 'Frau Alt.',
+				newName: 'Frau Neu.',
+				...extra
+			})}`,
+			senderId: MOCK_CONSULTANT_MATRIX_ID,
+			viewer: 'asker'
+		});
+		// Neither the raw JSON payload nor the generic system card.
+		expect(document.body.textContent).not.toContain('CONSULTANT_RENAMED');
+		expect(document.body.textContent).not.toContain('oldName');
+		expect(
+			screen.queryByText('message.systemNotificationTitle')
+		).toBeNull();
+		expect(document.querySelector('.messageItem')).toBeNull();
+	});
 });
