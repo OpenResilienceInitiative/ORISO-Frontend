@@ -610,7 +610,9 @@ export const SessionsList = ({
 		// list that loaded empty right after registration stayed on
 		// "keine aktiven Beratungen" until a reload (OBP 2.1 #3).
 		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
-			return apiGetAskerSessionList().then((response) => {
+			// `fresh`: a request still running from the first load was asked
+			// before this signal and must not answer it.
+			return apiGetAskerSessionList({ fresh: true }).then((response) => {
 				// The asker request resolves a failure to an empty list, so an
 				// empty answer may be an error: merge, never wipe loaded rows.
 				// Removals arrive as their own REMOVE_SESSIONS events.

@@ -174,3 +174,25 @@ it('keeps the loaded conversations when an asker refresh answers empty', async (
 	await act(async () => {});
 	expect(rowCount(view.container)).toBe(1);
 });
+
+it('does not lose a refresh signal that arrives while the first asker list is still loading', async () => {
+	askerList.mockReset();
+	consultantList.mockReset();
+	let finishFirst!: (value: unknown) => void;
+	const first = new Promise((resolve) => {
+		finishFirst = resolve;
+	});
+	// Mirrors apiGetAskerSessionList: callers share the running request; a
+	// fresh one is asked only after it settles.
+	askerList.mockImplementation((options?: { fresh?: boolean }) =>
+		options?.fresh ? first.then(() => ({ sessions: [fresh] })) : first
+	);
+	const view = renderAsker();
+	await waitFor(() => expect(askerList).toHaveBeenCalledTimes(1));
+
+	act(() => messageEventEmitter.emit({ roomId: '!new501:oriso' }));
+	await act(async () => finishFirst({ sessions: [] }));
+
+	await waitFor(() => expect(rowCount(view.container)).toBe(1));
+	expect(screen.queryByText('sessionList.empty.mySessions')).toBeNull();
+});
