@@ -65,27 +65,31 @@ const PANEL_GAP = 8;
 
 /**
  * Where the list of folded participants opens: below the badge, or above it
- * when it would run past the bottom of the window and fits above. Kept
- * `VIEWPORT_INSET` from the window's edges.
+ * when it would run past the bottom of the window and fits above. When it
+ * fits neither way it takes the larger side and shrinks to it (the list
+ * scrolls inside). Kept `VIEWPORT_INSET` from the window's edges.
  */
 export const overflowPanelPosition = (
 	anchor: Pick<DOMRect, 'top' | 'bottom' | 'left'>,
 	panelHeight: number,
 	viewport: { width: number; height: number }
-): { top: number; left: number } => {
+): { top: number; left: number; maxHeight?: number } => {
 	const below = anchor.bottom + PANEL_GAP;
-	const above = anchor.top - PANEL_GAP - panelHeight;
-	const fitsBelow = below + panelHeight <= viewport.height - VIEWPORT_INSET;
-	return {
-		top: !fitsBelow && above >= VIEWPORT_INSET ? above : below,
-		left: Math.max(
-			VIEWPORT_INSET,
-			Math.min(
-				anchor.left - 12,
-				viewport.width - OVERFLOW_PANEL_WIDTH - VIEWPORT_INSET
-			)
+	const roomBelow = viewport.height - VIEWPORT_INSET - below;
+	const roomAbove = anchor.top - PANEL_GAP - VIEWPORT_INSET;
+	const left = Math.max(
+		VIEWPORT_INSET,
+		Math.min(
+			anchor.left - 12,
+			viewport.width - OVERFLOW_PANEL_WIDTH - VIEWPORT_INSET
 		)
-	};
+	);
+	if (panelHeight <= roomBelow) return { top: below, left };
+	if (panelHeight <= roomAbove)
+		return { top: anchor.top - PANEL_GAP - panelHeight, left };
+	return roomAbove > roomBelow
+		? { top: VIEWPORT_INSET, left, maxHeight: roomAbove }
+		: { top: below, left, maxHeight: roomBelow };
 };
 
 export const ParticipantAvatarStack = ({
