@@ -9,6 +9,7 @@ import { TwoFactorSetupDialog } from './TwoFactorSetupDialog';
 import { TWO_FACTOR_TYPES, type TwoFactorType } from './twoFactorAuthConstants';
 
 type MuiMockProps = React.PropsWithChildren<{
+	'aria-describedby'?: string;
 	'autoFocus'?: boolean;
 	'className'?: string;
 	'disabled'?: boolean;
@@ -65,6 +66,7 @@ vi.mock('@mui/material', async () => {
 		Box: ({ children, className, id }: MuiMockProps) =>
 			ReactModule.createElement('div', { className, id }, children),
 		Button: ({
+			'aria-describedby': ariaDescribedBy,
 			children,
 			className,
 			disabled,
@@ -73,15 +75,30 @@ vi.mock('@mui/material', async () => {
 		}: MuiMockProps) =>
 			ReactModule.createElement(
 				'button',
-				{ className, disabled, onClick, type: 'button' },
+				{
+					'aria-describedby': ariaDescribedBy,
+					className,
+					disabled,
+					onClick,
+					'type': 'button'
+				},
 				startIcon,
 				children
 			),
-		Dialog: ({ children, className, open }: MuiMockProps) =>
+		Dialog: ({
+			'aria-describedby': ariaDescribedBy,
+			children,
+			className,
+			open
+		}: MuiMockProps) =>
 			open
 				? ReactModule.createElement(
 						'div',
-						{ className, role: 'dialog' },
+						{
+							'aria-describedby': ariaDescribedBy,
+							className,
+							'role': 'dialog'
+						},
 						children
 					)
 				: null,
@@ -622,6 +639,11 @@ describe('TwoFactorSetupDialog', () => {
 			'twoFactorAuth.setupDialog.decision.appActive'
 		);
 		expect(hint.getAttribute('role')).toBe('status');
+		// The disabled button and the dialog itself both point at the hint, so it is read out.
+		expect(appButton.getAttribute('aria-describedby')).toBe(hint.id);
+		expect(
+			screen.getByRole('dialog').getAttribute('aria-describedby')
+		).toContain(hint.id);
 		expect(
 			screen.queryByText('twoFactorAuth.setupDialog.decision.emailActive')
 		).toBeNull();
@@ -630,10 +652,19 @@ describe('TwoFactorSetupDialog', () => {
 	it('says the same for an already active e-mail method', async () => {
 		renderDialog({ currentType: TWO_FACTOR_TYPES.EMAIL });
 
+		const hint = await screen.findByText(
+			'twoFactorAuth.setupDialog.decision.emailActive'
+		);
+		const emailButton = screen.getByRole('button', {
+			name: 'twoFactorAuth.setupDialog.decision.email'
+		});
+		expect(emailButton.getAttribute('aria-describedby')).toBe(hint.id);
 		expect(
-			await screen.findByText(
-				'twoFactorAuth.setupDialog.decision.emailActive'
-			)
-		).toBeTruthy();
+			screen
+				.getByRole('button', {
+					name: 'twoFactorAuth.setupDialog.decision.app'
+				})
+				.getAttribute('aria-describedby')
+		).toBeNull();
 	});
 });

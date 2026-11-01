@@ -847,7 +847,13 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			}}
 			TransitionComponent={Fade}
 			TransitionProps={{ timeout: 180 }}
-			aria-describedby="two-factor-setup-description"
+			aria-describedby={
+				/* The hint is in the DOM before the dialog opens, so its live region may
+				   not be announced; describing the dialog with it makes sure it is read. */
+				step === 'decision' && activeMethodHintKey
+					? `two-factor-setup-description ${activeMethodHintId}`
+					: 'two-factor-setup-description'
+			}
 			aria-labelledby="two-factor-setup-title"
 			className="twoFactorSetupDialog"
 			disableEscapeKeyDown={!canClose}
