@@ -815,6 +815,58 @@ it.each([
 	20000
 );
 
+it.each([
+	['team', TEAM],
+	['supervision', SUPERVISION]
+] as const)(
+	'keeps unseen %s messages unread while the taken notice shows',
+	async (channel, sideRoom) => {
+		// No panel open: only the mount-time guard keeps them unread.
+		boundary.rooms.set(
+			sideRoom,
+			room(sideRoom, [
+				new MatrixEvent({
+					event_id: `$${channel}-unseen`,
+					room_id: sideRoom,
+					sender: '@colleague:test',
+					type: 'm.room.message',
+					origin_server_ts: Date.now() - 60000,
+					content: { msgtype: 'm.text', body: 'Noch nicht gelesen.' }
+				})
+			])
+		);
+		if (channel === 'team') {
+			boundary.getTeam.mockResolvedValue({
+				matrixRoomId: TEAM,
+				status: 'OPEN'
+			});
+		} else {
+			boundary.getSupervisors.mockResolvedValue([
+				{
+					supervisorConsultantId: 'supervisor',
+					matrixRoomId: SUPERVISION
+				}
+			]);
+		}
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			status: 2,
+			assigned: true
+		});
+		await waitFor(() =>
+			expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy()
+		);
+		await waitFor(
+			() =>
+				expect(
+					view.container.querySelector('.channelSwitcher__badge')
+						?.textContent
+				).toBe('1'),
+			{ timeout: 10000 }
+		);
+	},
+	20000
+);
+
 it('stays silent when the counsellor accepted the enquiry themself', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
 		reloadedConsultant: 'consultant'
