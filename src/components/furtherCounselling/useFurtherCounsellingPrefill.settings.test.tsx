@@ -24,12 +24,8 @@ vi.mock('../../api/apiFrontendSettings', () => ({
 vi.mock('../../api/apiServerSettings', () => ({
 	apiServerSettings: vi.fn(async () => serverSettings.current)
 }));
-/* Imported transitively; lottie-web's readiness timer (a 100 ms interval)
-   would fire after this file's jsdom is gone ("document is not defined").
-   Source code reaches lottie-web only through lottie-react, which loads it from
-   inside node_modules where vi.mock('lottie-web') does not apply — so mock
-   lottie-react itself, and lottie-web is never loaded. */
-vi.mock('lottie-react', () => ({ default: () => null }));
+/* Imported transitively; lottie-web's readiness timer would fire after this
+   file's jsdom is gone ("document is not defined"). */
 vi.mock('lottie-web', () => ({ default: {} }));
 
 const sessions = [
