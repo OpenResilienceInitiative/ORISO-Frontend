@@ -99,6 +99,8 @@ export interface EventActionParams {
 	callRoomId?: string | null;
 	/** Whether a live call is video (Slice 5). */
 	isVideo?: boolean | null;
+	/** FE#1952: which call a direct-link knock is for. */
+	medium?: 'AUDIO' | 'VIDEO' | null;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */
@@ -163,6 +165,14 @@ export type EventActionTarget =
 	| { kind: 'request'; path: string | null }
 	| { kind: 'draft'; forcedScopeKey: string | null; path: string | null }
 	| { kind: 'join'; callRoomId: string | null; isVideo: boolean }
+	// FE#1952: a knock on a direct-link call. One click starts (or is already
+	// in) the call of the conversation `roomId`; `path` opens that conversation.
+	| {
+			kind: 'callRoom';
+			roomId: string | null;
+			isVideo: boolean;
+			path: string | null;
+	  }
 	// #876: opens the public status page in a new tab; never an in-app route.
 	| { kind: 'statusPage'; url: string | null }
 	| { kind: 'none' };

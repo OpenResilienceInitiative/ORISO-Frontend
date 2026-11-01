@@ -341,7 +341,8 @@ const makeGroupSession = ({
 const makeSession = ({
 	consultantId = OWNER_USER_ID,
 	supervision = undefined as any,
-	matrixRoomId = '!session:matrix.example.org'
+	matrixRoomId = '!session:matrix.example.org',
+	directLinkMedium = undefined as 'CHAT' | 'AUDIO' | 'VIDEO' | undefined
 } = {}) => ({
 	item: {
 		id: 202,
@@ -359,7 +360,8 @@ const makeSession = ({
 		attachment: null,
 		videoCallMessageDTO: null,
 		topic: { id: 1, name: 'Topic', description: '' },
-		...(supervision !== undefined ? { supervision } : {})
+		...(supervision !== undefined ? { supervision } : {}),
+		...(directLinkMedium !== undefined ? { directLinkMedium } : {})
 	},
 	rid: matrixRoomId,
 	type: 'singleChat' as const,
@@ -633,6 +635,64 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 				name: 'sessionList.toolbar.chips.nearby'
 			})
 		).toBeTruthy();
+	});
+
+	// FE#1952: a conversation opened through a direct link said "Mail".
+	it.each([
+		['VIDEO', 'videoCall', 'sessionList.item.sessionType.directLinkVideo'],
+		['AUDIO', 'audioCall', 'sessionList.item.sessionType.directLinkAudio'],
+		['CHAT', 'directLink', 'sessionList.item.sessionType.directLinkChat']
+	] as const)(
+		'marks a %s direct-link conversation by its medium instead of mail',
+		(directLinkMedium, mark, label) => {
+			renderItem(makeSession({ directLinkMedium }), makeUserData(), {
+				rail: true
+			});
+			const marks = Array.from(
+				document.querySelectorAll('.sessionRailPill__mark')
+			).map((element) => (element as HTMLElement).dataset.mark);
+			expect(marks).toEqual([mark]);
+			expect(screen.getByRole('img', { name: label })).toBeTruthy();
+			expect(
+				screen.queryByRole('img', {
+					name: 'sessionList.toolbar.chips.nearby'
+				})
+			).toBeNull();
+		}
+	);
+
+	it.each([
+		['VIDEO', 'sessionList.item.sessionType.directLinkVideo'],
+		['AUDIO', 'sessionList.item.sessionType.directLinkAudio'],
+		['CHAT', 'sessionList.item.sessionType.directLinkChat']
+	] as const)(
+		'labels a %s direct-link conversation by its medium on the card',
+		(directLinkMedium, label) => {
+			renderItem(makeSession({ directLinkMedium }));
+			const chip = document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--directLink'
+			);
+			expect(chip?.textContent).toBe(label);
+			expect(
+				document.querySelector(
+					'.sessionsListItem__consultingTypeIcon--nearby'
+				)
+			).toBeNull();
+		}
+	);
+
+	it('keeps the mail chip on the card for a conversation without a direct link', () => {
+		renderItem(makeSession());
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearby'
+			)?.textContent
+		).toBe('sessionList.toolbar.chips.nearby');
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--directLink'
+			)
+		).toBeNull();
 	});
 
 	it('adds the supervision mark only when the DTO carries the ADR-008 marker', () => {
