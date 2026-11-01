@@ -736,6 +736,15 @@
 				"coAccess": {
 					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
 				}
+			},
+			"callKnockRequested": {
+				"text": "Eine Person möchte in deinen Anruf. Tritt dem Anruf bei, um sie einzulassen.",
+				"video": {
+					"text": "Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
+				},
+				"audio": {
+					"text": "Eine Person möchte über deinen Direktlink in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
+				}
 			}
 		}
 	},
