@@ -223,9 +223,21 @@ test('the CI Storybook step makes Vitest collect Chromium garbage after every fi
 		/- name: Run Storybook component tests\n([\s\S]*?)(?=\n\s*- name:)/
 	);
 	assert.ok(step, 'Storybook step not found in ci-pull-request.yml');
-	assert.match(
-		step[1],
-		/VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB:\s*["']?1000["']?/
+	// Only a key of the step's own env mapping counts, not a mention in a
+	// comment or in the run command.
+	const env = step[1].match(/^(\s+)env:\n((?:\1\s+.*\n?)*)/m);
+	assert.ok(env, 'Storybook step has no env mapping');
+	const keys = env[2]
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line && !line.startsWith('#'));
+	assert.ok(
+		keys.some((line) =>
+			/^VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB:\s*["']?1000["']?$/.test(
+				line
+			)
+		),
+		'VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB=1000 is not set in the step env'
 	);
 });
 
