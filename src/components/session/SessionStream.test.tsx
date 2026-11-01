@@ -29,6 +29,7 @@ import { SessionStream } from './SessionStream';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
+import { markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { buildCallLifecycleContent } from '../../utils/callLifecycleMessage';
 
 const ROOM_ID = '!session:matrix.example.org';
@@ -48,6 +49,7 @@ const mocks = vi.hoisted(() => {
 			room: any,
 			toStart: boolean
 		) => void)[],
+		receiptListeners: [] as (() => void)[],
 		detachLifecycle: vi.fn(),
 		getMatrixRoomMessages: vi.fn(() => []),
 		getSessionSupervisors: vi.fn(() => Promise.resolve([])),
@@ -146,6 +148,13 @@ vi.mock('../../services/chatTransportService', () => ({
 				};
 			}
 		),
+		onMatrixReadReceipt: vi.fn((_roomId: string, listener: () => void) => {
+			mocks.receiptListeners.push(listener);
+			return () => {
+				const index = mocks.receiptListeners.indexOf(listener);
+				if (index >= 0) mocks.receiptListeners.splice(index, 1);
+			};
+		}),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
 				mocks.lifecycleListeners.push(listener);
@@ -442,6 +451,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 		mocks.lifecycleListeners.length = 0;
 		mocks.timelineListeners.length = 0;
+		mocks.receiptListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
 		mocks.suspendedSessionId = null;
@@ -1326,6 +1336,51 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(mocks.navigate).not.toHaveBeenCalled();
 	});
 
+	// #1923: leaving from the list card must not also say the group ended.
+	it('stays quiet when the person left the group on purpose from the list card', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(screen.getByTestId('session-item')).toBeDefined();
+		});
+		await waitFor(() => {
+			expect(mocks.lifecycleListeners.length).toBeGreaterThan(0);
+		});
+
+		markSelfLeave(ROOM_ID);
+		emitLifecycle({
+			type: 'myMembership',
+			membership: 'leave',
+			prevMembership: 'join'
+		});
+
+		expect(screen.queryByTestId('overlay')).toBeNull();
+	});
+
+	// #1923: a banned asker read "the chat has ended" although it kept running.
+	it('tells a banned group member they were removed, not that the chat ended', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(screen.getByTestId('session-item')).toBeDefined();
+		});
+		await waitFor(() => {
+			expect(mocks.lifecycleListeners.length).toBeGreaterThan(0);
+		});
+
+		emitLifecycle({
+			type: 'myMembership',
+			membership: 'ban',
+			prevMembership: 'join'
+		});
+
+		await waitFor(() => {
+			expect(screen.getByTestId('overlay').textContent).toBe(
+				'groupChat.removed.overlay.headline'
+			);
+		});
+	});
+
 	it('re-attaches room listeners after a token refresh swaps the Matrix client', async () => {
 		renderSessionStream({ isGroup: true });
 
@@ -1431,6 +1486,91 @@ describe('SessionStream Matrix room lifecycle', () => {
 			},
 			{ timeout: 500 }
 		);
+	});
+
+	it('re-reads the room when a peer read receipt arrives (FE#1802)', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => expect(mocks.receiptListeners.length).toBe(1));
+		const callsBefore = mocks.getMatrixRoomMessages.mock.calls.length;
+
+		act(() => mocks.receiptListeners.forEach((listener) => listener()));
+
+		await waitFor(() =>
+			expect(
+				mocks.getMatrixRoomMessages.mock.calls.length
+			).toBeGreaterThan(callsBefore)
+		);
+	});
+
+	it('counts only the asker receipt for a counsellor message in a 1:1 (FE#1802, ADR-002)', async () => {
+		const counsellor = '@counsellor:example.org';
+		const asker = '@asker:example.org';
+		const readBy = new Set(['@silent-colleague:example.org']);
+		const room = {
+			roomId: ROOM_ID,
+			myUserId: counsellor,
+			getJoinedMembers: () =>
+				[counsellor, asker, '@silent-colleague:example.org'].map(
+					(userId) => ({ userId })
+				),
+			hasUserReadEvent: (userId: string, eventId: string) =>
+				eventId === '$mine' && readBy.has(userId)
+		};
+		const ownMessage = {
+			getType: () => 'm.room.message',
+			getSender: () => counsellor,
+			getId: () => '$mine',
+			getTs: () => 1000,
+			getContent: () => ({ msgtype: 'm.text', body: 'Hello' }),
+			isRedacted: () => false
+		};
+		vi.mocked(chatTransportService.getMatrixRoom).mockImplementation(
+			(roomId: string) => (roomId === ROOM_ID ? (room as any) : null)
+		);
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === ROOM_ID ? [ownMessage] : []
+		);
+		try {
+			renderSessionStream({
+				isGroup: false,
+				userData: consultantUserData,
+				activeSession: {
+					rid: ROOM_ID,
+					isGroup: false,
+					isSession: true,
+					item: {
+						id: 1,
+						matrixRoomId: ROOM_ID,
+						active: true,
+						status: 2,
+						conversationType: 'AGENCY_COUNSELLING',
+						askerMatrixUserId: asker,
+						consultantMatrixUserId: counsellor
+					}
+				}
+			});
+
+			await waitFor(() =>
+				expect(mocks.sessionItemProps?.messages?.[0]?.isNotRead).toBe(
+					true
+				)
+			);
+
+			await waitFor(() => expect(mocks.receiptListeners.length).toBe(1));
+			readBy.add(asker);
+			act(() => mocks.receiptListeners.forEach((listener) => listener()));
+			await waitFor(() =>
+				expect(mocks.sessionItemProps?.messages?.[0]?.isNotRead).toBe(
+					false
+				)
+			);
+		} finally {
+			vi.mocked(chatTransportService.getMatrixRoom).mockImplementation(
+				() => null
+			);
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
 	});
 
 	it('hydrates the initial timeline after its listener attaches', async () => {

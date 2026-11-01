@@ -105,3 +105,21 @@ export const getGroupChatWaitingAreaVisibility = (
 		showRulesHeadline: !showCountdown
 	};
 };
+
+interface StoppedGroupChatItem {
+	id?: number;
+	matrixRoomId?: string | null;
+	repetitive?: boolean;
+}
+
+/**
+ * The session ids to drop from the list once a group chat was stopped: a single
+ * chat is deleted and goes now; a series rolls on to its next room and stays (null).
+ */
+export const getStoppedGroupChatRemovalIds = (
+	item: StoppedGroupChatItem
+): string[] | number[] | null => {
+	if (item.repetitive) return null;
+	if (item.matrixRoomId) return [item.matrixRoomId];
+	return item.id === undefined ? null : [item.id];
+};

@@ -193,3 +193,49 @@ export const videoCallErrorOverlayItem: OverlayItem = {
 		}
 	]
 };
+
+/** FE#1876: the asker confirms ending the newer same-topic conversation. */
+export const endTopicDuplicateConfirmOverlayItem: OverlayItem = {
+	svg: XIllustration,
+	illustrationBackground: 'error',
+	headline: 'furtherCounselling.duplicate.confirm.headline',
+	copy: 'furtherCounselling.duplicate.confirm.copy',
+	buttonSet: [
+		{
+			label: 'furtherCounselling.duplicate.confirm.confirm',
+			function: 'END_TOPIC_DUPLICATE',
+			type: BUTTON_TYPES.PRIMARY
+		},
+		{
+			label: 'furtherCounselling.duplicate.confirm.cancel',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.SECONDARY
+		}
+	]
+};
+
+export const endTopicDuplicateErrorOverlayItem: OverlayItem = {
+	svg: XIllustration,
+	illustrationBackground: 'error',
+	headline: 'furtherCounselling.duplicate.error',
+	buttonSet: [
+		{
+			label: 'furtherCounselling.recommend.successButton',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.PRIMARY
+		}
+	]
+};
+
+/** FE#1876: the recommendation was accepted and posted into the room. */
+export const recommendFurtherCounsellingSuccessOverlayItem: OverlayItem = {
+	svg: CheckIllustration,
+	headline: 'furtherCounselling.recommend.successHeadline',
+	buttonSet: [
+		{
+			label: 'furtherCounselling.recommend.successButton',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.PRIMARY
+		}
+	]
+};

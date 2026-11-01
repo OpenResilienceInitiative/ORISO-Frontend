@@ -175,3 +175,182 @@ export const PasswordRecoveryForm: Story = {
 		).toBeVisible();
 	}
 };
+
+/** #1917: the runtime status "device-ready" shows its translated text, not the raw i18n key. */
+export const PasswordRecoveryDeviceReady: Story = {
+	args: { clientOverride: buildFakeClient() },
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(
+			'@encryption-story:example.test',
+			'device-ready'
+		);
+		return () =>
+			setRecoveryRuntimeStatus('@encryption-story:example.test', 'idle');
+	},
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const status = await within(canvasElement).findByText(
+			/^Dieses Gerät kann die vorhandenen Schlüssel verwenden\./
+		);
+		await expect(status).toBeVisible();
+		await expect(canvasElement.textContent).not.toContain(
+			'encryption.passwordRecovery'
+		);
+	}
+};
+
+/**
+ * #1917: recovery works on this device but no password envelope exists (set up
+ * with the recovery key only, or the follow-up after a password change was
+ * skipped). The panel says so and takes the recovery key the person already
+ * holds, instead of only offering a fresh one.
+ */
+export const PasswordRecoveryNotEnrolled: Story = {
+	args: {
+		clientOverride: Object.assign(buildFakeClient(), {
+			http: {
+				// No envelope, metadata or candidates on the server.
+				authedRequest: async (_method: string, path: string) => {
+					if (path === '/sync')
+						return {
+							next_batch: 'story',
+							account_data: { events: [] }
+						};
+					throw Object.assign(new Error('not found'), {
+						errcode: 'M_NOT_FOUND'
+					});
+				}
+			}
+		})
+	},
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(
+			'@encryption-story:example.test',
+			'needs-recovery-key'
+		);
+		return () =>
+			setRecoveryRuntimeStatus('@encryption-story:example.test', 'idle');
+	},
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				/^Passwort-Wiederherstellung nicht eingerichtet/
+			)
+		).toBeVisible();
+		await expect(
+			canvas.getByRole('textbox', { name: 'Ersatzschlüssel' })
+		).toBeVisible();
+		await expect(canvas.getByLabelText('Aktuelles Passwort')).toBeVisible();
+	}
+};
+
+/** A password copy exists on the server, but the sign-in password does not open it. */
+const staleEnvelopeClient = (
+	overrides: Partial<Record<string, unknown>> = {}
+) =>
+	Object.assign(buildFakeClient(overrides), {
+		http: {
+			authedRequest: async (_method: string, path: string) => {
+				if (path === '/sync')
+					return {
+						next_batch: 'story',
+						account_data: {
+							events: [
+								{
+									type: 'org.oriso.password_recovery_candidate.v1.story-key',
+									content: { encrypted: { 'story-key': {} } }
+								}
+							]
+						}
+					};
+				throw Object.assign(new Error('not found'), {
+					errcode: 'M_NOT_FOUND'
+				});
+			}
+		}
+	});
+
+const staleEnvelopeStatus = () => {
+	setRecoveryRuntimeStatus(
+		'@encryption-story:example.test',
+		'needs-recovery-key'
+	);
+	return () =>
+		setRecoveryRuntimeStatus('@encryption-story:example.test', 'idle');
+};
+
+/**
+ * #1931: the password was changed outside the Frontend (Admin "Mein Konto",
+ * forgot-password, a setup link). The history is still sealed under the
+ * previous password, so the sign-in found an envelope it cannot open. The panel
+ * offers both ways back to a seal under the current password.
+ */
+export const PasswordRecoveryStaleEnvelope: Story = {
+	args: { clientOverride: staleEnvelopeClient() },
+	beforeEach: staleEnvelopeStatus,
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				/^Ihr aktuelles Passwort öffnet die Sicherung/
+			)
+		).toBeVisible();
+		// MUI hides the native radio input itself; its label is what shows.
+		for (const choice of [
+			'Vorheriges Passwort eingeben',
+			'Ersatzschlüssel eingeben'
+		]) {
+			await expect(canvas.getByText(choice)).toBeVisible();
+			await expect(
+				canvas.getByRole('radio', { name: choice })
+			).not.toBeChecked();
+		}
+	}
+};
+
+/** #1931, way 1: unlock with the previous password, re-wrap to the current one. */
+export const PasswordRecoveryStaleEnvelopePreviousPassword: Story = {
+	args: { clientOverride: staleEnvelopeClient() },
+	beforeEach: staleEnvelopeStatus,
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByLabelText('Vorheriges Passwort eingeben')
+		);
+		await expect(
+			canvas.getByLabelText('Vorheriges Passwort')
+		).toBeVisible();
+		await expect(canvas.getByLabelText('Aktuelles Passwort')).toBeVisible();
+		await expect(canvas.getByLabelText('Einmalcode')).toBeVisible();
+	}
+};
+
+/**
+ * #1931, way 2 on a new device: the recovery key proves itself, then replaces
+ * the stale copies with one sealed under the current password.
+ */
+export const PasswordRecoveryStaleEnvelopeRecoveryKey: Story = {
+	args: {
+		clientOverride: staleEnvelopeClient({
+			getSessionBackupPrivateKey: async () => null,
+			getActiveSessionBackupVersion: async () => null,
+			isSecretStorageReady: async () => false
+		})
+	},
+	beforeEach: staleEnvelopeStatus,
+	decorators: PasswordRecoveryForm.decorators,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByLabelText('Ersatzschlüssel eingeben')
+		);
+		await expect(
+			canvas.getByRole('textbox', { name: 'Ersatzschlüssel' })
+		).toBeVisible();
+		await expect(canvas.getByLabelText('Aktuelles Passwort')).toBeVisible();
+	}
+};

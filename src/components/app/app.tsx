@@ -36,6 +36,7 @@ import { Notifications } from '../notifications/Notifications';
 import { CallProvider } from '../../globalState/provider/CallProvider';
 import { MatrixClientProvider } from '../../globalState/context/MatrixClientContext';
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
+import { DirectLinkKnockGate } from '../directLinkEntry/DirectLinkKnockGate';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
@@ -256,6 +257,8 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 							<NotificationsContainer />
 							<FloatingCallWidget />
 							<GroupCallWidget />
+							{/* #1795 / FE#1893: the knock of a call direct link. */}
+							<DirectLinkKnockGate />
 						</Suspense>
 					</MatrixClientProvider>
 				</CallProvider>

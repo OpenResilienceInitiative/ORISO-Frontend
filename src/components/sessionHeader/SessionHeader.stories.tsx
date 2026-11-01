@@ -913,9 +913,12 @@ export const ActiveConversationParticipants: Story = {
 		const pill = canvasElement
 			.querySelector('.chatroomMainInteractionIcon')!
 			.getBoundingClientRect();
-		const stack = canvasElement
-			.querySelector('[data-cy="session-header-participants"]')!
-			.getBoundingClientRect();
+		const stackElement = canvasElement.querySelector(
+			'[data-cy="session-header-participants"]'
+		)!;
+		// The outer white ring and keyboard-focus ring must clear the type pill.
+		await expect(getComputedStyle(stackElement).overflow).toBe('visible');
+		const stack = stackElement.getBoundingClientRect();
 		await expect(Math.round(pill.right - stack.left)).toBe(8);
 		const title = canvasElement
 			.querySelector('.sessionInfo__username h3')!
@@ -1020,9 +1023,12 @@ export const ActiveConversationManyParticipantsPhone: Story = {
 			).toBe('+5');
 		});
 		const { titleRect } = await expectTitleClearOfActions(canvasElement);
-		const stack = canvasElement
-			.querySelector('[data-cy="session-header-participants"]')!
-			.getBoundingClientRect();
+		const stackElement = canvasElement.querySelector(
+			'[data-cy="session-header-participants"]'
+		)!;
+		// The outer white ring and keyboard-focus ring must clear the type pill.
+		await expect(getComputedStyle(stackElement).overflow).toBe('visible');
+		const stack = stackElement.getBoundingClientRect();
 		await expect(
 			titleRect.width / (titleRect.width + stack.width)
 		).toBeGreaterThanOrEqual(0.4);

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -616,6 +617,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		!isChatFinished;
 
 	const headerContactName = (() => {
+		/* ORISO-UserService#1486: the guest's temporary account is gone. */
+		if (
+			isConsultantUser &&
+			!activeSession.isGroup &&
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		) {
+			return translate('temporaryAccount.deletedGuest');
+		}
 		if (isAnonymousAsker) {
 			let storedPseudonym: string | null = null;
 			try {

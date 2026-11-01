@@ -19,6 +19,16 @@ import {
 	NotificationTypeCall
 } from '../../components/incomingVideoCall/IncomingVideoCall';
 import {
+	isLiveChatMessageForCounsellor,
+	isLiveChatOpen,
+	liveChatMessageNoticeId,
+	NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE,
+	NotificationTypeLiveChatMessage,
+	upsertLiveChatMessageNotice
+} from '../../components/notifications/LiveChatMessageNotice';
+import { isNotificationSuppressed } from '../../utils/notificationSettings/model';
+import { resolveEventChannelContract } from '../../utils/notificationSettings/occasionChannelContract';
+import {
 	apiClearEventNotifications,
 	apiGetEventNotifications,
 	apiMarkAllEventNotificationsRead,
@@ -33,7 +43,11 @@ import {
 	getValueFromCookie
 } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
-import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
+import {
+	parseEventActionParams,
+	resolveNotificationActionPath
+} from '../../components/notificationsCenter/notificationActionTarget';
+import { toNonEmbeddedPath } from '../../components/notificationsCenter/timelineDrafts';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	installAudioUnlock,
@@ -58,6 +72,8 @@ import {
 } from '../../utils/displayFilter/timeline';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
+/** Fallback base of a counsellor's chat links, as in the activity feed. */
+const CONSULTANT_SESSIONS_PATH = '/sessions/consultant/sessionPreview';
 
 export const NOTIFICATION_TYPE_NONE = 'none';
 export type NotificationTypeNone = typeof NOTIFICATION_TYPE_NONE;
@@ -76,6 +92,7 @@ export type NotificationTypeSuccess = typeof NOTIFICATION_TYPE_SUCCESS;
 
 export type NotificationTypes =
 	| NotificationTypeCall
+	| NotificationTypeLiveChatMessage
 	| NotificationTypeError
 	| NotificationTypeInfo
 	| NotificationTypeWarning
@@ -524,6 +541,57 @@ export function NotificationsProvider(props) {
 				continue;
 			const descriptor = getEventDescriptor(event.eventType);
 			const mentioned = event.params?.mentioned === true;
+			// FE#1470: a live-chat message to a counsellor also raises an
+			// in-app pop-up — unless that chat is already on screen, where
+			// the message itself is the signal and a tone would only nag.
+			const liveChat = isLiveChatMessageForCounsellor(event);
+			if (
+				liveChat &&
+				isLiveChatOpen(
+					event,
+					window.location.pathname,
+					document.visibilityState !== 'hidden'
+				)
+			)
+				continue;
+			if (liveChat) {
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{
+						family: descriptor.family,
+						mentioned,
+						conversationType: event.params?.conversationType
+					}
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					const sessionId = String(event.sourceSessionId);
+					setNotifications((list) =>
+						upsertLiveChatMessageNotice(list, {
+							id: liveChatMessageNoticeId(sessionId),
+							notificationType:
+								NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE,
+							sessionId,
+							roomRef: event.params?.roomRef ?? null,
+							senderName: event.params?.senderName ?? null,
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
 			// #1377 "Ton": the user muted this kind of session in the list's
 			// display filter → no sound, whatever the area settings say. Before
 			// the account data is synced the store already holds the local
@@ -548,7 +616,8 @@ export function NotificationsProvider(props) {
 							displayFilter.filters,
 							event.sourceSessionId
 						),
-						event.params?.recipientRole
+						event.params?.recipientRole,
+						event.params?.conversationType
 					);
 				} catch {
 					// Device audio support must not prevent feed or banner delivery.
