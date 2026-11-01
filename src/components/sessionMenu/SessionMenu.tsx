@@ -98,6 +98,7 @@ import {
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
+import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotificationAccess';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -198,10 +199,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
-	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
-	const hasEmailSettings =
-		!!appConfig?.releaseToggles?.enableNewNotifications ||
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	// Never link to an e-mail panel the Admin permissions hide (#1979).
+	const hasEmailSettings = hasEmailSettingsPanel(
+		appConfig,
+		currentTenantSettings,
+		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
