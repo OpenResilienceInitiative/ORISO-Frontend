@@ -18,8 +18,15 @@ describe('entryMenuPosition', () => {
 		expect(entryMenuPosition(anchor(623), 382, viewport).top).toBe(233);
 	});
 
-	it('stays below when it fits neither way but has more room there', () => {
-		expect(entryMenuPosition(anchor(300), 800, viewport).top).toBe(348);
+	it('shrinks to the larger side when it fits neither way', () => {
+		expect(entryMenuPosition(anchor(300), 800, viewport)).toMatchObject({
+			top: 348,
+			maxHeight: 544
+		});
+		expect(entryMenuPosition(anchor(600), 800, viewport)).toMatchObject({
+			top: 8,
+			maxHeight: 584
+		});
 	});
 
 	it('keeps the menu inside the window horizontally', () => {
