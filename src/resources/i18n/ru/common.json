@@ -2062,6 +2062,8 @@
 		"anonymousUser": "Пользователь",
 		"supervisionEnabledTitle": "Супервизия включена!",
 		"supervisionEnabledDescription": "{{name}} добавлен(а) в этот чат в качестве консультанта-супервизора.",
+		"supervisionDisabledTitle": "Супервизия завершена!",
+		"supervisionDisabledDescription": "{{name}} удален(а) из этого чата как консультант-супервизор.",
 		"today": "Сегодня",
 		"tomorrow": "Завтра",
 		"unread": "непрочитанное",

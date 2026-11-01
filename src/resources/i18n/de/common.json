@@ -2078,6 +2078,8 @@
 		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
+		"supervisionDisabledTitle": "Supervision beendet!",
+		"supervisionDisabledDescription": "{{name}} wurde als Supervisor-Berater:in aus diesem Chat entfernt.",
 		"today": "Heute",
 		"tomorrow": "Morgen",
 		"unread": "ungelesen",

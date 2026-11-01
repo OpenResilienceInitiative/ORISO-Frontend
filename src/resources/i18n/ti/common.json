@@ -2057,6 +2057,8 @@
 		"anonymousUser": "ተጠቃሚ",
 		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
 		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",
+		"supervisionDisabledTitle": "ምክትታል ተወዲኡ!",
+		"supervisionDisabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ካብዚ ቻት ተወጊዱ።",
 		"today": "ሎምዓንቲ",
 		"tomorrow": "ጉሓት",
 		"unread": "ዘይተነበበ",
