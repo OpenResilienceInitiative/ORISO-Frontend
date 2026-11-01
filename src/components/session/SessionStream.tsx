@@ -918,11 +918,18 @@ export const SessionStream = ({
 				.filter(Boolean) as Array<() => void>;
 			// A deletion (ours included) must show at once, not with the next
 			// unrelated event: refresh when the SDK marks the message redacted.
+			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// encrypted message arriving in the same sync batch.
+			const handleRedaction = () => {
+				fetchSessionMessages().catch(() => {
+					// keep UI stable if a redaction races with navigation
+				});
+			};
 			const redactionDetachers = watchedRoomIds
 				.map((roomId) =>
 					chatTransportService.onMatrixRedaction(
 						roomId,
-						refreshMessages
+						handleRedaction
 					)
 				)
 				.filter(Boolean) as Array<() => void>;

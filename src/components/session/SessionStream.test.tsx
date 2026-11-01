@@ -92,9 +92,12 @@ const mocks = vi.hoisted(() => {
 	};
 });
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
-}));
+vi.mock('react-i18next', () => {
+	// One t per module, as react-i18next keeps it stable across renders:
+	// a fresh t per render would re-run every effect that depends on it.
+	const t = (key: string) => key;
+	return { useTranslation: () => ({ t }) };
+});
 
 vi.mock('react-router-dom', async (importOriginal) => {
 	const actual =
@@ -420,6 +423,10 @@ const handoverNotification = (
 	createdAt: '2026-09-13T10:00:00.000Z',
 	category: 'system'
 });
+
+// The attach-time hydration stamps the 120 ms timeline coalescing window.
+const passCoalescingWindow = () =>
+	act(() => new Promise((resolve) => setTimeout(resolve, 150)));
 
 const emitLifecycle = (change: any) => {
 	act(() => {
@@ -1474,6 +1481,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		await waitFor(() => {
 			expect(mocks.timelineListeners.length).toBe(1);
 		});
+		await passCoalescingWindow();
 		const callsBeforeTimelineEvents =
 			mocks.getMatrixRoomMessages.mock.calls.length;
 		const encryptedEvent = { getType: () => 'm.room.encrypted' };
@@ -1515,6 +1523,44 @@ describe('SessionStream Matrix room lifecycle', () => {
 				expect(
 					mocks.getMatrixRoomMessages.mock.calls.length
 				).toBeGreaterThan(callsBeforeRedaction);
+			},
+			{ timeout: 500 }
+		);
+	});
+
+	it('still refreshes an encrypted message that arrives right after a redaction', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(mocks.redactionListeners.length).toBe(1);
+		});
+		await passCoalescingWindow();
+
+		// Our own redaction's remote echo fires Room.redaction only; an
+		// encrypted message in the same sync batch must not be coalesced
+		// away, or a failed decryption leaves it invisible.
+		act(() => {
+			mocks.redactionListeners.forEach((listener) => listener());
+		});
+		const callsAfterRedaction =
+			mocks.getMatrixRoomMessages.mock.calls.length;
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		act(() => {
+			mocks.timelineListeners.forEach((listener) =>
+				listener(
+					{ getType: () => 'm.room.encrypted' },
+					{ roomId: ROOM_ID },
+					false
+				)
+			);
+		});
+
+		await waitFor(
+			() => {
+				expect(
+					mocks.getMatrixRoomMessages.mock.calls.length
+				).toBeGreaterThan(callsAfterRedaction);
 			},
 			{ timeout: 500 }
 		);
