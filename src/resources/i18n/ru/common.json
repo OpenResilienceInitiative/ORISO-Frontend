@@ -2059,6 +2059,8 @@
 		"consultantLeftChat": "Консультант покинул чат",
 		"youEndedChat": "Вы завершили чат",
 		"chatEnded": "Чат завершён",
+		"consultantRenamedTitle": "Имя изменено",
+		"consultantRenamedDescription": "{{oldName}} теперь отображается как {{newName}}.",
 		"anonymousUser": "Пользователь",
 		"supervisionEnabledTitle": "Супервизия включена!",
 		"supervisionEnabledDescription": "{{name}} добавлен(а) в этот чат в качестве консультанта-супервизора.",

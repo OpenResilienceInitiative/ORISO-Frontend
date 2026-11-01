@@ -2075,6 +2075,8 @@
 		"consultantLeftChat": "Berater:in hat den Chat verlassen",
 		"youEndedChat": "Sie haben den Chat beendet",
 		"chatEnded": "Der Chat wurde beendet",
+		"consultantRenamedTitle": "Name geändert",
+		"consultantRenamedDescription": "{{oldName}} heißt jetzt {{newName}}.",
 		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",

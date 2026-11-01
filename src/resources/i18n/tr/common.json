@@ -2054,6 +2054,8 @@
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
 		"youEndedChat": "Sohbeti sonlandırdınız",
 		"chatEnded": "Sohbet sona erdi",
+		"consultantRenamedTitle": "Ad değiştirildi",
+		"consultantRenamedDescription": "{{oldName}} artık {{newName}} adını kullanıyor.",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",

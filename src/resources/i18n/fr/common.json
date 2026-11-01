@@ -2054,6 +2054,8 @@
 		"consultantLeftChat": "La personne consultante a quitté le chat",
 		"youEndedChat": "Vous avez mis fin au chat",
 		"chatEnded": "Le chat est terminé",
+		"consultantRenamedTitle": "Nom modifié",
+		"consultantRenamedDescription": "{{oldName}} s'appelle désormais {{newName}}.",
 		"anonymousUser": "Utilisateur",
 		"supervisionEnabledTitle": "Supervision activée !",
 		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",
