@@ -1030,7 +1030,12 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants",
-				"menuLabel": "Options for {{name}}"
+				"menuLabel": "Options for {{name}}",
+				"role": {
+					"asker": "Advice seeker",
+					"consultant": "Counsellor",
+					"supervisor": "Supervisor"
+				}
 			},
 			"gallery": {
 				"back": "Back to the countdown",

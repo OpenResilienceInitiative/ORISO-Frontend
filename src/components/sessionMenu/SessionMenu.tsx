@@ -109,6 +109,7 @@ import {
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -510,13 +511,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasMatrixRoom
-		? generatePath(baseUrl, {
-				groupId: activeSession.item.matrixRoomId,
-				id: String(activeSession.item.id),
-				subRoute: 'groupChatInfo'
-			})
-		: '';
+	const groupChatInfoLink = getGroupChatInfoLink(
+		listPath,
+		activeSession.item.matrixRoomId,
+		activeSession.item.id,
+		getSessionListTab()
+	);
 	const editGroupChatSettingsLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,

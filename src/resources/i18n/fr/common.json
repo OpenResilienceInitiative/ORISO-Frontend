@@ -959,7 +959,12 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes",
-				"menuLabel": "Options pour {{name}}"
+				"menuLabel": "Options pour {{name}}",
+				"role": {
+					"asker": "Personne en quête de conseil",
+					"consultant": "Conseiller·ère",
+					"supervisor": "Superviseur·e"
+				}
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",

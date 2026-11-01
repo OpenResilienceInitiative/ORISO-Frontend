@@ -959,7 +959,12 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar",
-				"menuLabel": "{{name}} için seçenekler"
+				"menuLabel": "{{name}} için seçenekler",
+				"role": {
+					"asker": "Danışan",
+					"consultant": "Danışman",
+					"supervisor": "Süpervizör"
+				}
 			},
 			"gallery": {
 				"back": "Geri sayıma dön",

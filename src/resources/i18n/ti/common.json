@@ -959,7 +959,12 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ",
-				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት"
+				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት",
+				"role": {
+					"asker": "ምኽሪ ዝደሊ",
+					"consultant": "ኣማኻሪ",
+					"supervisor": "ተቖጻጻሪ"
+				}
 			},
 			"gallery": {
 				"back": "ናብቲ ቆጻሪ ተመለስ",

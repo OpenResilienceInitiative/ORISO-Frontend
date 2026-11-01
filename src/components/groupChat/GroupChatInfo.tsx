@@ -69,6 +69,10 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { GroupChatRoleManager } from './GroupChatRoleManager';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatRepeatLabel } from './groupChatRepeatLabel';
+import {
+	participantRole,
+	useGroupChatMemberRoles
+} from './groupChatMemberRoles';
 
 export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const settings = useAppConfig();
@@ -610,7 +614,7 @@ const GroupChatInfoContent = ({
  * The M3 Chat-Info with the parts that need the active-session context:
  * room members from Matrix, bans, the QR code and the invite link.
  */
-const GroupChatInfoM3Connected = ({
+export const GroupChatInfoM3Connected = ({
 	isCurrentUserModerator,
 	showInviteActions,
 	inviteLink: { url, copyRegistrationLink },
@@ -639,6 +643,11 @@ const GroupChatInfoM3Connected = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const users = matrixRoomUsersContext?.users || [];
 	const moderators = matrixRoomUsersContext?.moderators || [];
+	// Everyone sees everyone's role (#107); unknown roles show no badge. The
+	// server lists members of a running chat only.
+	const memberRoles = useGroupChatMemberRoles(
+		activeSession.item.active ? activeSession.item.id : undefined
+	);
 	const [bannedUsers, setBannedUsers] = useState<string[]>([]);
 	const [menu, setMenu] = useState<{
 		anchor: HTMLElement;
@@ -664,6 +673,16 @@ const GroupChatInfoM3Connected = ({
 		}
 	}, [activeSession.item.active, activeSession.item.id]);
 
+	const roleLabelOf = (subscriber: (typeof users)[number]) => {
+		const role = participantRole(
+			memberRoles.get(subscriber._id),
+			subscriber.powerLevel
+		);
+		return role
+			? translate(`groupChat.info.subscribers.role.${role}`)
+			: undefined;
+	};
+
 	const participants: GroupChatInfoParticipant[] = users.map(
 		(subscriber) => ({
 			id: subscriber._id,
@@ -673,6 +692,7 @@ const GroupChatInfoM3Connected = ({
 				? decodeUsername(subscriber.displayName)
 				: decodeUsername(subscriber.username),
 			isModerator: moderators.includes(subscriber._id),
+			roleLabel: roleLabelOf(subscriber),
 			statusLabel:
 				isCurrentUserModerator &&
 				bannedUsers.includes(subscriber.username)
