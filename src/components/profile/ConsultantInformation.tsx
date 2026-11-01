@@ -24,7 +24,8 @@ import { useAppConfig } from '../../hooks/useAppConfig';
 import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 import {
 	buildPersonalRegistrationLink,
-	isValidPublicSlug
+	isValidPublicSlug,
+	PUBLIC_SLUG_MAX_LENGTH
 } from './publicContactLink';
 
 export const ConsultantInformation = () => {
@@ -184,7 +185,9 @@ export const ConsultantInformation = () => {
 						)}
 					</div>
 					<Text
-						text={translate('profile.data.publicSlug.info')}
+						text={translate('profile.data.publicSlug.info', {
+							max: PUBLIC_SLUG_MAX_LENGTH
+						})}
 						type="standard"
 						className="tertiary"
 					/>
@@ -198,6 +201,7 @@ export const ConsultantInformation = () => {
 						}
 						isDisabled={!isSlugEditEnabled}
 						onValueIsValid={handleValidPublicSlug}
+						maxLength={PUBLIC_SLUG_MAX_LENGTH}
 					/>
 					<Text
 						text={publicSlugStatusText}

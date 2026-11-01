@@ -2615,7 +2615,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Utilisez uniquement des lettres minuscules et des chiffres, séparés par un seul trait d'union (p. ex. team-2). Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
+				"info": "Utilisez uniquement des lettres minuscules et des chiffres, séparés par un seul trait d'union (p. ex. team-2), {{max}} caractères au maximum. Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
 				"input": "Nom du lien de contact public",
 				"label": "Lien de contact public",
 				"notification": {

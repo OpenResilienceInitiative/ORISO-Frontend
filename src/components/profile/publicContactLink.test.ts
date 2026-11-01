@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	buildPersonalRegistrationLink,
-	isValidPublicSlug
+	isValidPublicSlug,
+	PUBLIC_SLUG_MAX_LENGTH
 } from './publicContactLink';
 
 // ORISO-UserService#1534: same rule as the UserService (PublicSlugFormat).
@@ -46,6 +47,21 @@ describe('isValidPublicSlug', () => {
 		''
 	])('rejects "%s"', (slug) => {
 		expect(isValidPublicSlug(slug)).toBe(false);
+	});
+});
+
+// ORISO-UserService#1543: same 50-character maximum as the UserService.
+describe('link name length', () => {
+	it('is limited to 50 characters', () => {
+		expect(PUBLIC_SLUG_MAX_LENGTH).toBe(50);
+	});
+
+	it('accepts a name of exactly the maximum length', () => {
+		expect(isValidPublicSlug(`${'a'.repeat(48)}-2`)).toBe(true);
+	});
+
+	it.each([51, 129])('rejects a name of %i characters', (length) => {
+		expect(isValidPublicSlug('a'.repeat(length))).toBe(false);
 	});
 });
 

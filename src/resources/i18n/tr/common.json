@@ -2615,7 +2615,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Yalnızca küçük harf ve rakam kullanın, aralarına tek tire koyun (ör. team-2). Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
+				"info": "Yalnızca küçük harf ve rakam kullanın, aralarına tek tire koyun (ör. team-2), en fazla {{max}} karakter. Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
 				"input": "Herkese açık iletişim bağlantısının adı",
 				"label": "Herkese açık iletişim bağlantısı",
 				"notification": {

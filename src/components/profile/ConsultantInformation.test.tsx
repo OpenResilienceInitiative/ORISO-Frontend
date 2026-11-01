@@ -49,6 +49,7 @@ vi.mock('../editableData/EditableData', () => ({
 			aria-label={props.label}
 			defaultValue={props.initialValue}
 			disabled={props.isDisabled}
+			maxLength={props.maxLength}
 			onChange={(event) => props.onValueIsValid(event.target.value)}
 		/>
 	)
@@ -161,6 +162,25 @@ describe('link name validation (ORISO-UserService#1534)', () => {
 	// The shared Button marks item.disabled with a class, not the attribute.
 	const saveButton = () =>
 		screen.getByText('profile.data.edit.button.save').closest('button')!;
+
+	// ORISO-UserService#1543
+	it('limits the link name input to 50 characters', () => {
+		mount();
+
+		expect(
+			screen
+				.getByRole('textbox', { name: 'profile.data.publicSlug.input' })
+				.getAttribute('maxLength')
+		).toBe('50');
+	});
+
+	it('keeps saving disabled for a pasted name longer than 50 characters', () => {
+		mount({ publicSlug: 'qa-shazia-test' });
+
+		editTo('a'.repeat(51));
+
+		expect(saveButton().className).toContain('button__item--disabled');
+	});
 
 	it('allows saving a name with digits', () => {
 		mount({ publicSlug: 'qa-shazia-test' });

@@ -2611,7 +2611,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Use lowercase letters and digits only, separated by single hyphens (e.g. team-2). New slugs become active after admin approval.",
+				"info": "Use lowercase letters and digits only, separated by single hyphens (e.g. team-2), at most {{max}} characters. New slugs become active after admin approval.",
 				"input": "Public contact link name",
 				"label": "Public contact link",
 				"notification": {
