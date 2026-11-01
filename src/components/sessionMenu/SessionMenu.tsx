@@ -99,6 +99,7 @@ import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotificationAccess';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -199,10 +200,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
-	// Never link to an e-mail panel the Admin permissions hide (#1979).
+	// Never link to an e-mail panel the Admin permissions hide (#1979). Read
+	// the merged tenant context, like the Settings panel itself: the
+	// per-session refresh is a raw partial answer and could disagree.
+	const tenant = useTenant();
 	const hasEmailSettings = hasEmailSettingsPanel(
 		appConfig,
-		currentTenantSettings,
+		tenant?.settings,
 		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 	);
 	const [overlayActive, setOverlayActive] = useState(false);
