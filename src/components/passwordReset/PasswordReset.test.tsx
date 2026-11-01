@@ -707,7 +707,11 @@ describe('inside the account-setup dialog', () => {
 		type(`${K}new.label`, 'aB3!');
 		expect(met()).toEqual([true, true, true, false]);
 
-		type(`${K}new.label`, 'aB3!aB3!aB');
+		// 15 characters: still short of the shared 16 character minimum.
+		type(`${K}new.label`, 'aB3!aB3!aB3!aB3');
+		expect(met()).toEqual([true, true, true, false]);
+
+		type(`${K}new.label`, 'aB3!aB3!aB3!aB3!');
 		expect(met()).toEqual([true, true, true, true]);
 	});
 

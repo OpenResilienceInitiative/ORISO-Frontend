@@ -2732,7 +2732,7 @@
 						"dialogLabel": "Repeat the new password"
 					},
 					"insecure": "Your password is not secure.",
-					"instructions": "<span class=\"text--bold\">Your password must meet the following criteria to guarantee a protected consultation:</span><ul class=\"pl--2 my--1\"><li>upper/lower case</li><li>min. one number</li><li>min. one special character (e.g.: ?, !, +, #, &, ...)</li><li>min. 9 characters</li></ul>",
+					"instructions": "<span class=\"text--bold\">Your password must meet the following criteria to guarantee a protected consultation:</span><ul class=\"pl--2 my--1\"><li>upper/lower case</li><li>min. one number</li><li>min. one special character (e.g.: ?, !, +, #, &, ...)</li><li>min. 16 characters</li></ul>",
 					"new": {
 						"label": "New password"
 					},
@@ -2761,7 +2761,7 @@
 						"mixedCase": "upper and lower case letters",
 						"number": "at least one number",
 						"specialChar": "one special character (?, !, +, # …)",
-						"minLength": "at least 9 characters",
+						"minLength": "at least 16 characters",
 						"met": "met"
 					},
 					"submitAndContinue": "Save password and continue"
@@ -3357,7 +3357,7 @@
 			"criteria": {
 				"fulfilled": "fulfilled",
 				"open": "open",
-				"length": "At least 9 characters",
+				"length": "At least 16 characters",
 				"number": "at least one number",
 				"specialChar": "at least one special character",
 				"upperLowerCase": "Upper/lower case"
