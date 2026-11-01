@@ -42,21 +42,18 @@ const VIEWPORT_INSET = 8;
 
 /**
  * Where the menu sits: below the arrow, or above it when it would leave the
- * window below and there is more room above (a twin right over "Jetzt" near
- * the bottom of the list).
+ * window below and fits above (a twin right over "Jetzt" near the bottom of
+ * the list). When it fits neither way it takes the larger side and shrinks
+ * to it; the menu then scrolls inside.
  */
 export const entryMenuPosition = (
 	anchor: Pick<DOMRect, 'top' | 'bottom' | 'right'>,
 	menuHeight: number,
 	viewport: { width: number; height: number }
-) => {
+): { top: number; left: number; maxHeight?: number } => {
 	const below = anchor.bottom + MENU_GAP;
 	const roomBelow = viewport.height - below - VIEWPORT_INSET;
 	const roomAbove = anchor.top - MENU_GAP - VIEWPORT_INSET;
-	const top =
-		menuHeight > roomBelow && roomAbove > roomBelow
-			? Math.max(VIEWPORT_INSET, anchor.top - MENU_GAP - menuHeight)
-			: below;
 	const left = Math.max(
 		VIEWPORT_INSET,
 		Math.min(
@@ -64,7 +61,12 @@ export const entryMenuPosition = (
 			viewport.width - MENU_WIDTH - VIEWPORT_INSET
 		)
 	);
-	return { top, left };
+	if (menuHeight <= roomBelow) return { top: below, left };
+	if (menuHeight <= roomAbove)
+		return { top: anchor.top - MENU_GAP - menuHeight, left };
+	return roomAbove > roomBelow
+		? { top: VIEWPORT_INSET, left, maxHeight: roomAbove }
+		: { top: below, left, maxHeight: roomBelow };
 };
 
 const EntryMenu = ({
@@ -103,6 +105,7 @@ const EntryMenu = ({
 			style={{
 				position: 'fixed',
 				zIndex: 1400,
+				overflowY: 'auto',
 				...entryMenuPosition(anchor, menuHeight, {
 					width: window.innerWidth,
 					height: window.innerHeight
