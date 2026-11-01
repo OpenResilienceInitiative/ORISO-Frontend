@@ -605,6 +605,26 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		// An asker's list comes from the asker endpoint; the counsellor one
+		// answers 403, so every live refresh used to be a silent no-op and a
+		// list that loaded empty right after registration stayed on
+		// "keine aktiven Beratungen" until a reload (OBP 2.1 #3).
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			return apiGetAskerSessionList().then((response) => {
+				// The asker request resolves a failure to an empty list, so an
+				// empty answer may be an error: merge, never wipe loaded rows.
+				// Removals arrive as their own REMOVE_SESSIONS events.
+				const sessions = response?.sessions ?? [];
+				if (sessions.length > 0) {
+					dispatch({
+						type: UPDATE_SESSIONS,
+						ready: true,
+						sessions
+					});
+				}
+			});
+		}
+
 		return getConsultantSessionList(0)
 			.then(({ sessions, total }) => {
 				dispatch({
@@ -616,7 +636,7 @@ export const SessionsList = ({
 				setCurrentOffset(0);
 			})
 			.catch(() => {});
-	}, [dispatch, getConsultantSessionList, type]);
+	}, [dispatch, getConsultantSessionList, type, userData]);
 
 	/*
 	 * Re-run the enquiry fetch when switching Nearby ↔ Live Chat so auto-paging
