@@ -4742,8 +4742,10 @@
 			},
 			"decision": {
 				"app": "Sicher per App verbinden",
+				"appActive": "Die Authenticator-App ist bereits als zweiter Faktor aktiv. Zum Wechseln wählen Sie die andere Methode.",
 				"copy": "Schützen Sie Ihr Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ können Sie Codes per E-Mail erhalten.",
 				"email": "E-Mail-Code verwenden (weniger sicher)",
+				"emailActive": "E-Mail-Codes sind bereits als zweiter Faktor aktiv. Zum Wechseln wählen Sie die App.",
 				"title": "Zweiten Faktor wählen"
 			},
 			"email": {

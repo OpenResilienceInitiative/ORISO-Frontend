@@ -610,4 +610,30 @@ describe('TwoFactorSetupDialog', () => {
 			)
 		).toBeTruthy();
 	});
+
+	it('says why the app option cannot be chosen while app 2FA is already active', async () => {
+		renderDialog({ currentType: TWO_FACTOR_TYPES.APP });
+
+		const appButton = await screen.findByRole('button', {
+			name: 'twoFactorAuth.setupDialog.decision.app'
+		});
+		expect(appButton.hasAttribute('disabled')).toBe(true);
+		const hint = screen.getByText(
+			'twoFactorAuth.setupDialog.decision.appActive'
+		);
+		expect(hint.getAttribute('role')).toBe('status');
+		expect(
+			screen.queryByText('twoFactorAuth.setupDialog.decision.emailActive')
+		).toBeNull();
+	});
+
+	it('says the same for an already active e-mail method', async () => {
+		renderDialog({ currentType: TWO_FACTOR_TYPES.EMAIL });
+
+		expect(
+			await screen.findByText(
+				'twoFactorAuth.setupDialog.decision.emailActive'
+			)
+		).toBeTruthy();
+	});
 });

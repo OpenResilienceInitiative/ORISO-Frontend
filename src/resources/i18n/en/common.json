@@ -4690,8 +4690,10 @@
 			},
 			"decision": {
 				"app": "Connect securely via app",
+				"appActive": "The authenticator app is already active as your second factor. To switch, choose the other method.",
 				"copy": "Protect your account with a second factor. The authenticator app is the more secure option; alternatively you can receive codes by email.",
 				"email": "Use email code (less secure)",
+				"emailActive": "E-mail codes are already active as your second factor. To switch, choose the app.",
 				"title": "Choose your second factor"
 			},
 			"email": {

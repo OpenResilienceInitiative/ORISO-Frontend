@@ -4725,8 +4725,10 @@
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
+				"appActive": "L'application d'authentification est déjà active comme second facteur. Pour changer, choisissez l'autre méthode.",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
 				"email": "Utiliser un code par e-mail (moins sûr)",
+				"emailActive": "Les codes par e-mail sont déjà actifs comme second facteur. Pour changer, choisissez l'application.",
 				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
