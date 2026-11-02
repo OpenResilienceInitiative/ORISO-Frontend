@@ -36,8 +36,12 @@ export const storybookVitestArgs = [
  * `vitest --shard=i/n` gives each vitest invocation (and its browser) a
  * fraction of the files, well below the threshold, and a disconnect only
  * costs the affected shard a retry.
+ *
+ * Eight, not four (#1988): since #1864 a shard of ~76 story files lived
+ * ~160-200 s and lost Chrome ~0.35 times per attempt. Halving the files per
+ * browser session keeps each tab below that point again.
  */
-export const DEFAULT_STORYBOOK_SHARDS = 4;
+export const DEFAULT_STORYBOOK_SHARDS = 8;
 
 export const resolveShardCount = (env = process.env) => {
 	// Number(), not parseInt(): '6workers' and '1.5' must fall back, not
