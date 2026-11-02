@@ -161,14 +161,14 @@ export interface M3SnackbarProps {
 	 */
 	containerSx?: SxProps<Theme>;
 	/**
-	 * Floating only. A standing notice steps aside while another floating snackbar is open — M3
-	 * shows one at a time, and both would share the same spot — and returns when it closes.
+	 * Floating only. A standing notice steps aside while another floating snackbar or a dialog is
+	 * open — M3 shows one at a time, and both would share the same spot — and returns when it closes.
 	 */
 	yieldToOthers?: boolean;
 	testId?: string;
 }
 
-/* Floating snackbars that are open and do not yield. */
+/* Open dialogs and floating snackbars that do not yield. */
 const openSnackbars = new Set<string>();
 const openSnackbarListeners = new Set<() => void>();
 const notifyOpenSnackbars = () => openSnackbarListeners.forEach((l) => l());
@@ -184,7 +184,8 @@ const anotherSnackbarOpen = () => openSnackbars.size > 0;
  * Tells standing notices (`yieldToOthers`) that something else now occupies the
  * snackbar spot. Every floating snackbar calls it; the stacked host
  * (`M3SnackbarHost`) calls it while it holds anything, so the two systems can
- * never paint over each other.
+ * never paint over each other. A dialog (`Overlay`, `M3Dialog`) calls it while it is open,
+ * because a notice would rest above the dialog's buttons and take their clicks.
  */
 export const useFloatingSnackbarPresence = (active: boolean) => {
 	const id = useId();
