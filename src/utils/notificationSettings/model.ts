@@ -17,6 +17,7 @@ import {
 	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DEFAULT_VOLUME,
+	KindConfig,
 	NotificationConfig,
 	parseNotificationConfig
 } from './notificationConfig';
@@ -70,10 +71,29 @@ export interface OrisoNotificationSettings {
  * before carries the old silent default, upgraded once on load.
  * 2 (FE#1211): team-discussion mentions moved from Gespräche to Anfragen →
  * Erwähnung. The old Anfragen row never fired, so the choice made under
- * Gespräche carries over once.
+ * Gespräche carries over once, unless that row holds a choice of its own.
  * `systemTone` needs no revision: absent means ton-2 at medium volume.
  */
 export const NOTIFICATION_SETTINGS_REVISION = 2;
+
+/**
+ * Whether the Anfragen mention row is still a default: the silent one stored
+ * before FE#1211, or today's, which a config without the row parses to.
+ */
+const isUntouchedRequestsMention = ({
+	banner,
+	sound,
+	email,
+	volume
+}: KindConfig) => {
+	const defaults = DEFAULT_NOTIFICATION_CONFIG.requests.mention;
+	return (
+		(sound === 'none' || sound === defaults.sound) &&
+		banner === defaults.banner &&
+		email === defaults.email &&
+		volume === defaults.volume
+	);
+};
 
 const upgradeNotificationConfig = (
 	config: NotificationConfig,
@@ -92,7 +112,7 @@ const upgradeNotificationConfig = (
 			}
 		};
 	}
-	if (revision < 2) {
+	if (revision < 2 && isUntouchedRequestsMention(upgraded.requests.mention)) {
 		upgraded = {
 			...upgraded,
 			requests: {

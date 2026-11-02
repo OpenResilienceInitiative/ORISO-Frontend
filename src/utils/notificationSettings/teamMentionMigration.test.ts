@@ -13,11 +13,12 @@ import {
 } from './model';
 
 const chosen = { banner: 'off', sound: 'ton-7', email: false, volume: 0.75 };
+/** The stored default of the Anfragen row before the move: silent. */
 const untouchedDefault = {
 	banner: 'temporary',
-	sound: 'ton-2',
+	sound: 'none',
 	email: false,
-	volume: 1
+	volume: 0.5
 };
 
 const storedBefore = (revision?: number) => ({
@@ -50,6 +51,28 @@ describe('team-discussion mention settings move to Anfragen (FE#1211)', () => {
 		expect(parsed.notificationConfigRevision).toBe(
 			NOTIFICATION_SETTINGS_REVISION
 		);
+	});
+
+	it('carries the choice over when no Anfragen row was stored', () => {
+		const parsed = parseNotificationSettings({
+			notificationConfig: { conversations: { mention: chosen } },
+			notificationConfigRevision: 1
+		});
+
+		expect(teamMention(parsed)).toEqual(chosen);
+	});
+
+	it('keeps an Anfragen row that differs from the old default', () => {
+		const ownChoice = { ...untouchedDefault, sound: 'ton-4' };
+		const parsed = parseNotificationSettings({
+			notificationConfig: {
+				requests: { mention: ownChoice },
+				conversations: { mention: chosen }
+			},
+			notificationConfigRevision: 1
+		});
+
+		expect(teamMention(parsed)).toEqual(ownChoice);
 	});
 
 	it('keeps an Anfragen mention choice made after the move', () => {
