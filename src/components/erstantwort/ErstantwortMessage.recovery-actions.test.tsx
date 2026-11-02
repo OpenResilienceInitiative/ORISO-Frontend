@@ -111,6 +111,7 @@ const renderMessage = (viewer: object = userData, rawMessage?: string) =>
 					}
 				>
 					<ErstantwortMessage
+						conversationType="AGENCY_COUNSELLING"
 						rawMessage={rawMessage}
 						trigger="AFTER_FIRST_MESSAGE"
 						skipAnimation
@@ -191,6 +192,7 @@ describe('ErstantwortMessage email action', () => {
 						}
 					>
 						<ErstantwortMessage
+							conversationType="AGENCY_COUNSELLING"
 							trigger="AFTER_ENQUIRY_DISPATCHED"
 							sessionId={51}
 							displayName="Sanftes Alpaka Kala"
@@ -223,4 +225,12 @@ describe('ErstantwortMessage email action', () => {
 			})
 		);
 	});
+});
+
+it('does not offer the email action when fresh account eligibility is denied', () => {
+	const denied = { ...userData, isAskerEmailCollectionAllowed: false };
+	renderMessage(denied);
+	expect(
+		screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+	).toBeNull();
 });

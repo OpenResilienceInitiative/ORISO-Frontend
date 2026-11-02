@@ -20,6 +20,8 @@ export interface UserDataInterface {
 	grantedAuthorities: [string];
 	hasArchive: boolean;
 	isDisplayNameEditable: boolean;
+	/** Read-only server decision from fresh account policy and actual owned seeker contexts. */
+	isAskerEmailCollectionAllowed?: boolean;
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;

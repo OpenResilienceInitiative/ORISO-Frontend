@@ -3549,6 +3549,11 @@
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
 				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
+			},
+			"displayName": {
+				"optional": "Nom affiché (facultatif). Si vous ne le précisez pas, votre User-ID sera affiché.",
+				"suggest": "Proposer un nom",
+				"useUsername": "Utiliser le User-ID"
 			}
 		},
 		"back": "Retour",

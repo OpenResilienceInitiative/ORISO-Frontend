@@ -17,6 +17,7 @@ import {
 	accountPolicyTenant,
 	accountPolicyUser
 } from '../../../test/fixtures/askerAccountPolicyFixtures';
+import type { TenantDataSettingsInterface } from '../../../globalState/interfaces/TenantDataInterface';
 import { apiPutEmail } from '../../../api';
 
 vi.mock('react-i18next', () => ({
@@ -75,9 +76,12 @@ afterEach(() => {
 const tree = (
 	allowed: boolean | undefined,
 	consultant = false,
-	child: React.ReactNode = <EmailNotification />
+	child: React.ReactNode = <EmailNotification />,
+	settings: Partial<TenantDataSettingsInterface> = {},
+	capability?: boolean
 ) => {
 	const user = accountPolicyUser({
+		isAskerEmailCollectionAllowed: capability,
 		grantedAuthorities: [
 			consultant
 				? 'AUTHORIZATION_CONSULTANT_DEFAULT'
@@ -96,6 +100,7 @@ const tree = (
 				<TenantContext.Provider
 					value={{
 						tenant: accountPolicyTenant({
+							...settings,
 							featureAskerEmailEnabled: allowed
 						}),
 						setTenant: vi.fn(),
@@ -176,4 +181,70 @@ describe('account email collection entry points', () => {
 		).toBeNull();
 		expect(apiPutEmail).not.toHaveBeenCalled();
 	});
+});
+
+describe('server-owned account email eligibility', () => {
+	it.each([undefined, false])(
+		'refuses restrictive policy when server capability is %s',
+		(capability) => {
+			render(
+				tree(
+					true,
+					false,
+					<EmailNotification />,
+					{ featureAskerEmailCollectionLiveChatEnabled: false },
+					capability
+				)
+			);
+			expect(
+				screen.queryByRole('button', {
+					name: 'profile.notifications.noEmail.button'
+				})
+			).toBeNull();
+		}
+	);
+	it('allows the server-confirmed union even when one type is off', () => {
+		render(
+			tree(
+				true,
+				false,
+				<EmailNotification />,
+				{ featureAskerEmailCollectionLiveChatEnabled: false },
+				true
+			)
+		);
+		expect(
+			screen.getByRole('button', {
+				name: 'profile.notifications.noEmail.button'
+			})
+		).toBeTruthy();
+	});
+	it('closes an open editor on restrictive eligibility revocation', () => {
+		const child = <SetEmailModal onClose={vi.fn()} />;
+		const settings = { featureAskerEmailCollectionSelfHelpEnabled: false };
+		const view = render(tree(true, false, child, settings, true));
+		fireEvent.change(screen.getByRole('textbox'), {
+			target: { value: 'asker@example.test' }
+		});
+		view.rerender(tree(true, false, child, settings, false));
+		expect(screen.queryByRole('textbox')).toBeNull();
+		expect(apiPutEmail).not.toHaveBeenCalled();
+	});
+});
+
+it('honors an explicit server denial even when all context permissions retain legacy defaults', () => {
+	render(tree(true, false, <EmailNotification />, {}, false));
+	expect(
+		screen.queryByRole('button', {
+			name: 'profile.notifications.noEmail.button'
+		})
+	).toBeNull();
+});
+it('does not apply a server asker denial to consultants', () => {
+	render(tree(true, true, <EmailNotification />, {}, false));
+	expect(
+		screen.getByRole('button', {
+			name: 'profile.notifications.noEmail.button'
+		})
+	).toBeTruthy();
 });

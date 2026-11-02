@@ -15,3 +15,41 @@ export const isAskerDisplayNameTypingAllowed = (
 		'featureDisplayNameEditable'
 	> | null
 ): boolean => settings?.featureDisplayNameEditable !== false;
+
+export type SeekerConversationType = Exclude<
+	UserService.Schemas.ConversationType,
+	'INTERNAL_GROUP'
+>;
+const collectionKeys = {
+	AGENCY_COUNSELLING: 'featureAskerEmailCollectionAgencyCounsellingEnabled',
+	LIVE_CHAT: 'featureAskerEmailCollectionLiveChatEnabled',
+	SELF_HELP: 'featureAskerEmailCollectionSelfHelpEnabled'
+} as const;
+type EmailCollectionSettings = Partial<
+	Pick<
+		TenantDataSettingsInterface,
+		| 'featureAskerEmailEnabled'
+		| (typeof collectionKeys)[SeekerConversationType]
+	>
+>;
+
+export const isContextEmailCollectionAllowed = (
+	settings: EmailCollectionSettings | null | undefined,
+	context: unknown
+): boolean => {
+	if (
+		context !== 'AGENCY_COUNSELLING' &&
+		context !== 'LIVE_CHAT' &&
+		context !== 'SELF_HELP'
+	)
+		return false;
+	return (
+		isAskerEmailCollectionAllowed(settings) &&
+		settings?.[collectionKeys[context]] !== false
+	);
+};
+
+export const hasRestrictedEmailCollection = (
+	settings?: EmailCollectionSettings | null
+): boolean =>
+	Object.values(collectionKeys).some((key) => settings?.[key] === false);

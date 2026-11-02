@@ -1,3 +1,4 @@
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
 > = ({ onClose, onSaved }) => {
 	const { t } = useTranslation();
+	const emailAllowed = useAccountEmailCollectionAllowed();
 	const active = useRef(true);
 	useEffect(() => {
 		active.current = true;
@@ -74,7 +76,7 @@ export const ErstantwortEmailOverlay: React.FC<
 	};
 
 	const save = () => {
-		if (isSaving || !isValid) return;
+		if (!emailAllowed || isSaving || !isValid) return;
 		setIsSaving(true);
 		setErrorText(null);
 		apiPutEmail(email)
@@ -165,6 +167,8 @@ export const ErstantwortEmailOverlay: React.FC<
 		),
 		svg: EnvelopeIllustration
 	};
+
+	if (!emailAllowed) return null;
 
 	return (
 		<Overlay

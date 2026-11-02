@@ -19,7 +19,8 @@ const apiPutEmailMock = vi.fn();
 const apiDeleteEmailMock = vi.fn().mockResolvedValue(undefined);
 const policy = vi.hoisted(() => ({ featureAskerEmailEnabled: true }));
 vi.mock('../../globalState/provider/TenantProvider', () => ({
-	useTenant: () => ({ settings: policy })
+	useTenant: () => ({ settings: policy }),
+	useTenantState: () => ({ tenant: { settings: policy }, isLoading: false })
 }));
 
 // Real Profile stories cover the avatar editor; this test owns email retry.

@@ -1,6 +1,6 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
-import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
@@ -1168,7 +1168,7 @@ export const MessageItemComponent = ({
 		() => notificationConversationType(activeSession),
 		[activeSession]
 	);
-	const grantNotificationPolicy = notificationChannelPolicy(
+	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
 		erstantwortModality
 	);

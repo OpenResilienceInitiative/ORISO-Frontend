@@ -1,3 +1,4 @@
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +18,7 @@ import { ErstantwortDisplayNameOverlay } from './ErstantwortDisplayNameOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { NotificationSetupCollapse } from './NotificationSetupMessage';
 import { useTenant } from '../../globalState/provider/TenantProvider';
-import { notificationChannelPolicy } from './notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from './notificationChannelPolicy';
 import { useNotificationChannels } from './useNotificationChannels';
 import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
 import {
@@ -88,11 +89,15 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
 	const tenant = useTenant();
-	const channels = notificationChannelPolicy(
+	const channels = emailCollectionSetupPolicy(
 		tenant?.settings,
 		conversationType
 	);
-	const emailAllowed = isAskerEmailEnabled !== false && channels.emailAllowed;
+	const accountEmailAllowed = useAccountEmailCollectionAllowed();
+	const emailAllowed =
+		accountEmailAllowed &&
+		isAskerEmailEnabled !== false &&
+		channels.emailAllowed;
 	const { hasReachableChannel } = useNotificationChannels(
 		emailAllowed,
 		channels.browserAllowed

@@ -75,6 +75,7 @@ export const accountExistsAfterTimeout = async (
 type RegistrationPayload = {
 	agencyId?: string;
 	username?: string;
+	displayName?: string;
 	password?: string;
 } & Record<string, unknown>;
 
@@ -94,8 +95,14 @@ export const apiPostRegistration = (
 	onAccountCreated?: () => void
 ): Promise<any> => {
 	removeAllCookies([COOKIE_KEY]);
+	const { displayName, ...registrationData } = data;
+	const trimmedDisplayName =
+		typeof displayName === 'string' ? displayName.trim() : '';
 	const requestData: RegistrationPayload = {
-		...data,
+		...registrationData,
+		...(trimmedDisplayName && data.groupChatId == null
+			? { displayName: trimmedDisplayName }
+			: {}),
 		...(typeof data.password === 'string' && {
 			password: encodeURIComponent(data.password)
 		}),

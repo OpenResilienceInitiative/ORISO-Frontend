@@ -1,3 +1,10 @@
+import {
+	getAuthenticatedAccountIdentity,
+	subscribeToAuthenticatedTenant
+} from '../../utils/authenticatedTenant';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
 import {
 	useCallback,
@@ -259,6 +266,77 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	);
 	const [otp, setOtp] = useState('');
 	const [email, setEmail] = useState(initialEmail);
+	const emailCollectionAllowed = useAccountEmailCollectionAllowed();
+	const canUseEmail =
+		emailCollectionAllowed ||
+		Boolean(
+			initialEmail.trim() &&
+				email.trim().toLowerCase() === initialEmail.trim().toLowerCase()
+		);
+	const actorId = useContext(UserDataContext)?.userData?.userId;
+	const tenantId = useTenant()?.id;
+	const emailLifetime = useMemo(
+		() => ({ actorId, tenantId, open }),
+		[actorId, tenantId, open]
+	);
+	const latestEmailLifetime = useRef<object | null>(emailLifetime);
+	latestEmailLifetime.current = emailLifetime;
+	const emailScope = useMemo(
+		() => ({
+			actorId,
+			tenantId,
+			email,
+			initialEmail,
+			emailCollectionAllowed,
+			open
+		}),
+		[actorId, tenantId, email, initialEmail, emailCollectionAllowed, open]
+	);
+	const latestEmailScope = useRef<object | null>(emailScope);
+	const latestEmailRequest = useRef<{
+		lifetime: typeof emailLifetime;
+		committed: boolean;
+	} | null>(null);
+	latestEmailScope.current = emailScope;
+	useEffect(() => {
+		let identity = getAuthenticatedAccountIdentity();
+		return subscribeToAuthenticatedTenant(() => {
+			const next = getAuthenticatedAccountIdentity();
+			if (next !== identity && latestEmailRequest.current) {
+				latestEmailRequest.current = null;
+				setIsRequestInProgress(false);
+			}
+			identity = next;
+		});
+	}, []);
+
+	useEffect(() => {
+		if (
+			latestEmailRequest.current &&
+			(!latestEmailRequest.current.committed ||
+				latestEmailRequest.current.lifetime !== emailLifetime)
+		) {
+			latestEmailRequest.current = null;
+			setIsRequestInProgress(false);
+		}
+	}, [emailScope, emailLifetime]);
+	useEffect(
+		() => () => {
+			latestEmailRequest.current = null;
+		},
+		[]
+	);
+	useEffect(() => {
+		if (
+			!canUseEmail &&
+			!latestEmailRequest.current?.committed &&
+			(step === 'email-select' || step === 'email-connect')
+		) {
+			setEmail(initialEmail);
+			setOtp('');
+			setStep('decision');
+		}
+	}, [canUseEmail, initialEmail, step]);
 	const [errorKey, setErrorKey] = useState('');
 	const [helperKey, setHelperKey] = useState('');
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
@@ -366,7 +444,11 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	}, [isRequestInProgress]);
 
 	const finishSetup = useCallback(
-		async (nextStep: TwoFactorSetupStep) => {
+		async (
+			nextStep: TwoFactorSetupStep,
+			isCurrent: () => boolean = () => true
+		) => {
+			if (!isCurrent()) return;
 			setOtp('');
 			setErrorKey('');
 			setHelperKey('');
@@ -377,47 +459,55 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				// 2FA is already active; encourage is best-effort.
 			}
 
+			if (!isCurrent()) return;
 			try {
 				await onSetupComplete();
 			} catch {
 				// The 2FA credential is already active at this point. User data can
 				// still be stale until the next login (especially after changing the
 				// account e-mail), so a failed refresh must not report setup failure.
-				onSetupAborted?.();
+				if (isCurrent()) onSetupAborted?.();
 			}
 
-			setStep(nextStep);
+			if (isCurrent()) setStep(nextStep);
 		},
 		[onSetupAborted, onSetupComplete]
 	);
 
 	const sendEmailActivationCode = useCallback(
 		async (nextStep?: TwoFactorSetupStep) => {
-			if (!isStringValidEmail(email)) {
+			if (!canUseEmail || !isStringValidEmail(email)) {
 				setErrorKey('twoFactorAuth.setupDialog.error.invalidEmail');
 				return;
 			}
 
+			const request = { lifetime: emailLifetime, committed: false };
+			latestEmailRequest.current = request;
+			const isCurrent = () =>
+				latestEmailScope.current === emailScope &&
+				latestEmailRequest.current === request;
 			setIsRequestInProgress(true);
 			setErrorKey('');
 			setHelperKey('');
 
 			try {
 				await apiPutTwoFactorAuthEmail(email);
+				if (!isCurrent()) return;
 				setHelperKey('twoFactorAuth.setupDialog.email.connect.sent');
 				if (nextStep) {
 					setStep(nextStep);
 				}
 			} catch (error) {
+				if (!isCurrent()) return;
 				setFetchError(
 					error as Error,
 					'twoFactorAuth.setupDialog.error.emailSend'
 				);
 			} finally {
-				setIsRequestInProgress(false);
+				if (isCurrent()) setIsRequestInProgress(false);
 			}
 		},
-		[email, setFetchError]
+		[email, canUseEmail, emailScope, emailLifetime, setFetchError]
 	);
 
 	const activateApp = useCallback(async () => {
@@ -449,22 +539,44 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			return;
 		}
 
+		const request = { lifetime: emailLifetime, committed: false };
+		latestEmailRequest.current = request;
+		const isCurrent = () =>
+			latestEmailScope.current === emailScope &&
+			latestEmailRequest.current === request;
+		const isCommittedCurrent = () =>
+			latestEmailLifetime.current === emailLifetime &&
+			latestEmailRequest.current === request;
 		setIsRequestInProgress(true);
 		setErrorKey('');
 
 		try {
+			if (!canUseEmail) return;
 			await apiPostTwoFactorAuthEmailWithCode(otp);
-			await finishSetup('email-success');
+			if (!isCurrent()) return;
+			request.committed = true;
+			await finishSetup('email-success', isCommittedCurrent);
 		} catch (error) {
+			if (!(request.committed ? isCommittedCurrent() : isCurrent()))
+				return;
 			onSetupAborted?.();
 			setFetchError(
 				error as Error,
 				'twoFactorAuth.setupDialog.error.emailSetup'
 			);
 		} finally {
-			setIsRequestInProgress(false);
+			if (request.committed ? isCommittedCurrent() : isCurrent())
+				setIsRequestInProgress(false);
 		}
-	}, [finishSetup, onSetupAborted, otp, setFetchError]);
+	}, [
+		canUseEmail,
+		emailScope,
+		emailLifetime,
+		finishSetup,
+		onSetupAborted,
+		otp,
+		setFetchError
+	]);
 
 	const handlePrimaryAction = useCallback(() => {
 		const nextStep = getNextSetupStep(
@@ -514,6 +626,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	};
 
 	const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (!emailCollectionAllowed) return;
 		setEmail(event.target.value.trim());
 		setErrorKey('');
 	};
@@ -536,6 +649,8 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const isPrimaryDisabled =
 		isRequestInProgress ||
+		((step === 'email-select' || step === 'email-connect') &&
+			!canUseEmail) ||
 		(step === 'email-select' && !isStringValidEmail(email)) ||
 		((step === 'app-verify' || step === 'email-connect') &&
 			!isOtpValid(otp));
@@ -566,6 +681,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				className="twoFactorSetupDialog__choiceButton twoFactorSetupDialog__choiceButton--secondary"
 				disabled={
 					isRequestInProgress ||
+					(!emailCollectionAllowed && !initialEmail.trim()) ||
 					currentType === TWO_FACTOR_TYPES.EMAIL
 				}
 				onClick={() => chooseMethod(TWO_FACTOR_TYPES.EMAIL)}
@@ -742,6 +858,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				}
 				hint={translate('twoFactorAuth.setupDialog.email.select.hint')}
 				id="two-factor-setup-email"
+				readOnly={!emailCollectionAllowed || isRequestInProgress}
 				inputMode="email"
 				label={translate(
 					'twoFactorAuth.setupDialog.email.select.input'

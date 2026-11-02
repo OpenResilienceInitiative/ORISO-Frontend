@@ -3531,6 +3531,11 @@
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",
 				"note": "Until then you write as usual, and your messages stay for the others. You yourself cannot come back into this conversation afterwards."
+			},
+			"displayName": {
+				"optional": "Display name (optional). Leave blank to show your User-ID.",
+				"suggest": "New name",
+				"useUsername": "Use User-ID"
 			}
 		},
 		"back": "Back",

@@ -1,3 +1,4 @@
+import { isContextEmailCollectionAllowed } from '../../utils/askerAccountPolicy';
 import { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
 
 /** Effective tenant policy is read-only here; account/device opt-ins remain separate. */
@@ -27,5 +28,19 @@ export const notificationChannelPolicy = (
 				? context !== 'LiveChat'
 				: settings[emailKey] === true),
 		browserAllowed: settings?.[browserKey] !== false
+	};
+};
+
+/** UI solicitation combines collection and delivery; delivery policy itself is unchanged. */
+export const emailCollectionSetupPolicy = (
+	settings: Partial<TenantDataSettingsInterface> | undefined,
+	conversationType: string | null | undefined
+) => {
+	const channels = notificationChannelPolicy(settings, conversationType);
+	return {
+		...channels,
+		emailAllowed:
+			channels.emailAllowed &&
+			isContextEmailCollectionAllowed(settings, conversationType)
 	};
 };

@@ -1,3 +1,4 @@
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,7 @@ import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
  * Choice is derived from live account settings; a click is never completion.
  */
 export const NotificationSetup = ({
-	isEmailEnabled = true,
+	isEmailEnabled: configuredEmailEnabled = true,
 	isBrowserEnabled = true,
 	onStart,
 	onDone
@@ -30,6 +31,8 @@ export const NotificationSetup = ({
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const tenant = useTenant();
+	const accountEmailAllowed = useAccountEmailCollectionAllowed();
+	const isEmailEnabled = configuredEmailEnabled && accountEmailAllowed;
 	const continuation = useRef(0);
 	const {
 		emailActive,
@@ -194,7 +197,7 @@ export const NotificationSetup = ({
 					})}
 				</p>
 			)}
-			{emailOpen && (
+			{emailOpen && isEmailEnabled && (
 				<ErstantwortEmailOverlay
 					onClose={() => {
 						continuation.current += 1;

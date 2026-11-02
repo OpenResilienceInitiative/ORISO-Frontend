@@ -73,7 +73,11 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
-import { isAskerEmailCollectionAllowed } from '../../../utils/askerAccountPolicy';
+import { AskerDisplayNameField } from '../../pseudonym/AskerDisplayNameField';
+import {
+	isAskerDisplayNameTypingAllowed,
+	isContextEmailCollectionAllowed
+} from '../../../utils/askerAccountPolicy';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
 
@@ -90,6 +94,7 @@ export const AccountData: FC<{
 	 * them", so the shape can be judged in Storybook before it is wired.
 	 */
 	entry?: 'registration' | 'link';
+	conversationType?: 'AGENCY_COUNSELLING' | 'SELF_HELP';
 	/**
 	 * Link entry only: join without ever choosing — or seeing — a password.
 	 *
@@ -134,6 +139,7 @@ export const AccountData: FC<{
 }> = ({
 	onChange,
 	entry = 'registration',
+	conversationType = 'AGENCY_COUNSELLING',
 	temporary = false,
 	compact = false,
 	dataProtection = 'checkbox'
@@ -165,8 +171,20 @@ export const AccountData: FC<{
 	const currentUsername = useRef(username);
 	const { tenant } = useContext(TenantContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const aliasEditable = isAskerDisplayNameTypingAllowed(tenant?.settings);
+	const [displayName, setDisplayName] = useState(
+		restoredDraft?.displayName ?? ''
+	);
+	const [generatedDisplayName, setGeneratedDisplayName] = useState(
+		restoredDraft?.generatedDisplayName ?? ''
+	);
+	const effectiveDisplayName =
+		conversationType === 'AGENCY_COUNSELLING'
+			? (aliasEditable ? displayName : generatedDisplayName).trim()
+			: '';
+
 	const emailVisible =
-		isAskerEmailCollectionAllowed(tenant?.settings) &&
+		isContextEmailCollectionAllowed(tenant?.settings, conversationType) &&
 		(tenant?.settings?.emailVisible ?? false);
 	const emailRequired =
 		emailVisible && (tenant?.settings?.emailRequired ?? false);
@@ -325,6 +343,8 @@ export const AccountData: FC<{
 	/* Keep the draft current on every change so stepper navigation is lossless. */
 	useEffect(() => {
 		setAccountDataDraft({
+			displayName,
+			generatedDisplayName,
 			identity,
 			username,
 			password,
@@ -335,6 +355,8 @@ export const AccountData: FC<{
 			passwordMinted
 		});
 	}, [
+		displayName,
+		generatedDisplayName,
 		identity,
 		username,
 		password,
@@ -371,7 +393,8 @@ export const AccountData: FC<{
 		isUsernameLongEnough &&
 		isPasswordValid &&
 		password === repeatPassword &&
-		emailFeedback.isSatisfied;
+		emailFeedback.isSatisfied &&
+		effectiveDisplayName.length <= 255;
 
 	useEffect(() => {
 		if (
@@ -385,6 +408,7 @@ export const AccountData: FC<{
 			const trimmedEmail = email.trim();
 			setDisabledNextButton(false);
 			onChange({
+				displayName: effectiveDisplayName || undefined,
 				username,
 				password,
 				// Clear an address previously committed by this step, rather than
@@ -395,6 +419,7 @@ export const AccountData: FC<{
 			setDisabledNextButton(true);
 		}
 	}, [
+		effectiveDisplayName,
 		username,
 		password,
 		repeatPassword,
@@ -711,6 +736,45 @@ export const AccountData: FC<{
 					)
 				}}
 			/>
+			{conversationType === 'AGENCY_COUNSELLING' && (
+				<Box sx={{ mt: gap('20px') }}>
+					<Typography component="p" variant="body2" sx={{ mb: 1 }}>
+						{t('registration.account.displayName.optional')}
+					</Typography>
+					<AskerDisplayNameField
+						value={
+							aliasEditable ? displayName : generatedDisplayName
+						}
+						onChange={setDisplayName}
+						editable={aliasEditable}
+					/>
+					<Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+						<IdentitySuggestButton
+							icon={genDiceIcon}
+							label={t(
+								'registration.account.displayName.suggest'
+							)}
+							onClick={() => {
+								const next =
+									generatePseudonym(locale).displayName;
+								setGeneratedDisplayName(next);
+								setDisplayName(next);
+							}}
+						/>
+						<IdentitySuggestButton
+							icon={genUserIcon}
+							label={t(
+								'registration.account.displayName.useUsername'
+							)}
+							onClick={() => {
+								setDisplayName('');
+								setGeneratedDisplayName('');
+							}}
+						/>
+					</Box>
+				</Box>
+			)}
+
 			{emailVisible && (
 				<OrisoTextField
 					value={email}

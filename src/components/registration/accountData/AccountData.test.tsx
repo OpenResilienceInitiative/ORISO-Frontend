@@ -75,7 +75,8 @@ const renderAccountData = (
 	registrationData: Record<string, unknown> = {},
 	temporary = false,
 	onChange = vi.fn(),
-	dataProtection: 'checkbox' | 'snackbar' = 'checkbox'
+	dataProtection: 'checkbox' | 'snackbar' = 'checkbox',
+	conversationType: 'AGENCY_COUNSELLING' | 'SELF_HELP' = 'AGENCY_COUNSELLING'
 ) =>
 	render(
 		<LegalLinksContext.Provider
@@ -108,6 +109,7 @@ const renderAccountData = (
 						<AccountData
 							onChange={onChange}
 							dataProtection={dataProtection}
+							conversationType={conversationType}
 							temporary={temporary}
 						/>
 					</TenantContext.Provider>
@@ -330,4 +332,145 @@ it('rolling the login suggestion preserves the independently chosen avatar (#102
 		})
 	);
 	expect(getAccountDataDraft().identity.avatar).toEqual(initial.avatar);
+});
+
+describe('optional ordinary registration alias', () => {
+	it('starts blank and keeps credentials and avatar when alias typing or dice changes', () => {
+		renderAccountData(tenantWith({}));
+		const login = screen.getByLabelText<HTMLInputElement>(
+			'registration.account.username.label'
+		);
+		const before = getAccountDataDraft();
+		const alias = screen.getByLabelText<HTMLInputElement>(
+			'profile.data.displayName'
+		);
+		expect(alias.value).toBe('');
+		expect(alias.required).toBe(false);
+		fireEvent.change(alias, { target: { value: 'Visible alias' } });
+		expect(alias.value).toBe('Visible alias');
+		expect(login.value).toBe(before.username);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'registration.account.displayName.suggest'
+			})
+		);
+		expect(alias.value).not.toBe('');
+		expect(alias.value).not.toBe('Visible alias');
+		expect(login.value).toBe(before.username);
+		expect(getAccountDataDraft().identity.avatar).toEqual(
+			before.identity.avatar
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'registration.account.displayName.useUsername'
+			})
+		);
+		expect(alias.value).toBe('');
+		expect(login.value).toBe(before.username);
+	});
+	it('allows only generated alias choices when typing is disabled', () => {
+		renderAccountData(tenantWith({ featureDisplayNameEditable: false }));
+		const alias = screen.getByLabelText<HTMLInputElement>(
+			'profile.data.displayName'
+		);
+		expect(alias.readOnly).toBe(true);
+		fireEvent.change(alias, { target: { value: 'Forbidden custom' } });
+		expect(alias.value).toBe('');
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'registration.account.displayName.suggest'
+			})
+		);
+		expect(alias.value).not.toBe('');
+	});
+	it('offers no unsupported alias field for self-help signup', () => {
+		renderAccountData(
+			tenantWith({}),
+			{},
+			false,
+			vi.fn(),
+			'checkbox',
+			'SELF_HELP'
+		);
+		expect(screen.queryByLabelText('profile.data.displayName')).toBeNull();
+	});
+});
+
+describe('registration context collection permission', () => {
+	it.each(['AGENCY_COUNSELLING', 'SELF_HELP'] as const)(
+		'hides %s email and email2FA despite visible/required presentation',
+		(type) => {
+			renderAccountData(
+				tenantWith({
+					emailVisible: true,
+					emailRequired: true,
+					featureAskerEmailCollectionAgencyCounsellingEnabled: false,
+					featureAskerEmailCollectionSelfHelpEnabled: false
+				}),
+				{},
+				false,
+				vi.fn(),
+				'checkbox',
+				type
+			);
+			expect(
+				screen.queryByLabelText('registration.account.email.label')
+			).toBeNull();
+			expect(
+				screen.queryByLabelText(
+					'registration.account.twoFactorAuth.label'
+				)
+			).toBeNull();
+		}
+	);
+	it('does not apply the self-help collection cap to counselling signup', () => {
+		renderAccountData(
+			tenantWith({
+				emailVisible: true,
+				featureAskerEmailCollectionSelfHelpEnabled: false
+			})
+		);
+		expect(
+			screen.getByLabelText('registration.account.email.label')
+		).toBeDefined();
+	});
+});
+
+describe('completed optional alias data', () => {
+	it.each([
+		['AGENCY_COUNSELLING', true, 'Chosen alias'],
+		['AGENCY_COUNSELLING', false, undefined],
+		['SELF_HELP', true, undefined]
+	] as const)(
+		'submits only supported alias data for %s typing=%s',
+		async (type, editable, expected) => {
+			setAccountDataDraft({
+				identity: generatePseudonym('de'),
+				username: 'fixed_login',
+				password: 'Sichere-Passphrase9!',
+				repeatPassword: 'Sichere-Passphrase9!',
+				acceptedConsentBinding: null,
+				email: '',
+				twoFactorAuthEnabled: false,
+				displayName: '  Chosen alias  '
+			});
+			const onChange = vi.fn();
+			renderAccountData(
+				tenantWith({ featureDisplayNameEditable: editable }),
+				{},
+				false,
+				onChange,
+				'snackbar',
+				type
+			);
+			await waitFor(() =>
+				expect(onChange).toHaveBeenCalledWith(
+					expect.objectContaining({
+						username: 'fixed_login',
+						displayName: expected
+					})
+				)
+			);
+		}
+	);
 });
