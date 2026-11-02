@@ -916,10 +916,32 @@ export const SessionStream = ({
 					)
 				)
 				.filter(Boolean) as Array<() => void>;
+			// A deletion (ours included) must show at once, not with the next
+			// unrelated event: refresh when the SDK marks the message redacted.
+			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// encrypted message arriving in the same sync batch.
+			const handleRedaction = () => {
+				fetchSessionMessages().catch(() => {
+					// keep UI stable if a redaction races with navigation
+				});
+			};
+			const redactionDetachers = watchedRoomIds
+				.map((roomId) =>
+					chatTransportService.onMatrixRedaction(
+						roomId,
+						handleRedaction
+					)
+				)
+				.filter(Boolean) as Array<() => void>;
 
 			// Only consider attach successful once every watched room is bound.
-			if (detachers.length !== watchedRoomIds.length) {
-				detachers.forEach((detach) => detach());
+			if (
+				detachers.length !== watchedRoomIds.length ||
+				redactionDetachers.length !== watchedRoomIds.length
+			) {
+				[...detachers, ...redactionDetachers].forEach((detach) =>
+					detach()
+				);
 				return false;
 			}
 
@@ -943,7 +965,7 @@ export const SessionStream = ({
 				if (detach) detachers.push(detach);
 			});
 
-			detachTimelineListeners = detachers;
+			detachTimelineListeners = [...detachers, ...redactionDetachers];
 			// Initial-sync events may already be cached before this listener attaches.
 			// Hydrate once after every successful attachment so late-join decryption
 			// failures can trigger their room-key request after the room exists.
