@@ -8,6 +8,8 @@ import {
 	getSupervisionListState,
 	hasSupervisionMarker
 } from '../sessionsListItem/supervisionListState';
+import { OTHER_KIND_ID } from '../displayFilter/displayFilterTypes';
+import type { SessionKindId } from '../../utils/displayFilter/sessions';
 import {
 	SessionSearchTextOptions,
 	sessionMatchesPeople,
@@ -94,6 +96,62 @@ export function isAnonymousAskerSession(
 ): boolean {
 	return getModality(raw) === Modality.LIVE_CHAT;
 }
+
+const isSupervisedByMe = (
+	extended: ExtendedSessionInterface,
+	currentUserId: string | undefined
+): boolean =>
+	getSupervisionListState(extended, currentUserId) === 'supervisedByMe';
+
+/**
+ * Exactly one kind per row, evaluated in the spec's order (§5.2): supervision
+ * by backend marker (only if the viewer can supervise) → circle → internal
+ * group → live chat → supervision by legacy fallback (no marker, row owned
+ * by another consultant, only if the viewer can supervise) → one-to-one.
+ * The legacy heuristic runs after the structural group kinds because it
+ * cannot tell a supervised case from a group an eligible consultant merely
+ * subscribes to; and never for askers, whose ordinary chats it would
+ * otherwise call "supervision".
+ *
+ * The display filter (`utils/displayFilter/sessions`) and the Supervision
+ * chip below both use this one function, so they cannot disagree (#1703).
+ */
+export const classifySession = (
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface,
+	currentUserId: string | undefined,
+	canSupervise: boolean
+): SessionKindId => {
+	if (!raw?.session && !raw?.chat) {
+		return OTHER_KIND_ID;
+	}
+	const marker = hasSupervisionMarker(extended);
+	if (canSupervise && marker && isSupervisedByMe(extended, currentUserId)) {
+		return 'supervision';
+	}
+	if (isConversationCircleSession(extended)) {
+		return 'circle';
+	}
+	if (isInternalGroupChatSession(extended)) {
+		return 'internalGroup';
+	}
+	if (isAnonymousAskerSession(raw, extended)) {
+		return 'liveChat';
+	}
+	if (
+		canSupervise &&
+		!marker &&
+		raw.consultant?.id &&
+		String(raw.consultant.id) !== String(currentUserId || '')
+	) {
+		return 'supervision';
+	}
+	// FE#1952: a 1:1 conversation that came in through a direct link.
+	if (isDirectLinkSession(raw)) {
+		return 'directLinks';
+	}
+	return 'oneToOne';
+};
 
 /**
  * The chat item behind a list entry (group chat wins over 1:1 session) —
@@ -246,25 +304,14 @@ export function sessionMatchesToolbar(
 			return false;
 		}
 	} else if (effectiveChip === 'supervision') {
-		if (hasSupervisionMarker(extended)) {
-			// ADR-008 list marker: the backend says whether I supervise this row.
-			if (
-				getSupervisionListState(extended, currentUserId) !==
-				'supervisedByMe'
-			) {
-				return false;
-			}
-		} else {
-			// Older backend without the marker: fall back to the heuristic
-			// "any row owned by another consultant". Remove once every
-			// environment sends `session.supervision`.
-			if (!raw.consultant?.id) {
-				return false;
-			}
-			if (String(raw.consultant.id) === String(currentUserId || '')) {
-				// Assigned consultant chats are excluded; only supervised chats remain.
-				return false;
-			}
+		// Same rule as the display filter (#1703): a colleague's group chat
+		// is never supervision, whatever the marker fallback says. The chip
+		// is only listed for consultants who can supervise.
+		if (
+			classifySession(raw, extended, currentUserId, true) !==
+			'supervision'
+		) {
+			return false;
 		}
 	}
 
