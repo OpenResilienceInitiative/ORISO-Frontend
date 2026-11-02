@@ -36,6 +36,15 @@ interface DirectLinkCardProps {
 	topics: { value: string; label: string }[];
 	onCreate: (draft: DirectLinkDraft) => void;
 	className?: string;
+	/** Media "Direkteinladung erlauben" allows here (default: all three). */
+	media?: DirectLinkMedium[];
+	/** While the link is being created: the button waits. */
+	isSubmitting?: boolean;
+	/** Why the last attempt failed, shown under the button. */
+	errorMessage?: string;
+	/** The topics did not load; shown with a retry instead of the picker. */
+	topicsLoadFailed?: boolean;
+	onRetryTopics?: () => void;
 }
 
 /**
@@ -46,13 +55,19 @@ interface DirectLinkCardProps {
 export const DirectLinkCard = ({
 	topics,
 	onCreate,
-	className
+	className,
+	media = DIRECT_LINK_MEDIA,
+	isSubmitting = false,
+	errorMessage,
+	topicsLoadFailed = false,
+	onRetryTopics
 }: DirectLinkCardProps) => {
 	const { t } = useTranslation();
 	const id = useId();
 	const topicRef = useRef<HTMLDivElement | null>(null);
-	const singleTopic = topics.length === 1 ? topics[0].value : '';
-	const [topic, setTopic] = useState(singleTopic);
+	const [pickedTopic, setTopic] = useState('');
+	// Topics may arrive after the first render; a single one needs no choice.
+	const topic = topics.length === 1 ? topics[0].value : pickedTopic;
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 	const [medium, setMedium] = useState<DirectLinkMedium>();
 	const [temporary, setTemporary] = useState(false);
@@ -62,7 +77,9 @@ export const DirectLinkCard = ({
 		setTemporary(defaultTemporary(next));
 	};
 
-	const ready = Boolean(topic && medium);
+	const ready = Boolean(topic && medium) && !isSubmitting;
+	/* `value` may be an id (the wired card); the button names the topic. */
+	const topicLabel = topics.find((option) => option.value === topic)?.label;
 
 	return (
 		<FormatCard
@@ -85,6 +102,14 @@ export const DirectLinkCard = ({
 				{t('directLink.card.text')}
 			</p>
 			<div className="conversationCreate__cardActions directLinkCard__fields">
+				{topicsLoadFailed && (
+					<p role="alert" className="conversationCreate__error">
+						{t('groupChat.loadError.topics')}
+						<button type="button" onClick={onRetryTopics}>
+							{t('groupChat.loadError.retry')}
+						</button>
+					</p>
+				)}
 				{topics.length > 1 && (
 					<>
 						<SplitButton
@@ -92,7 +117,11 @@ export const DirectLinkCard = ({
 							id={`${id}-topic`}
 							fullWidth
 							icon={<TopicIcon filled={Boolean(topic)} />}
-							label={topic || t('directLink.card.topicLabel')}
+							label={
+								topicLabel ||
+								topic ||
+								t('directLink.card.topicLabel')
+							}
 							variant={
 								topicMenuOpen
 									? 'elevated'
@@ -123,17 +152,17 @@ export const DirectLinkCard = ({
 						)}
 					</>
 				)}
+				{/* Toggle buttons, not radios: Tab, Enter and Space suffice. */}
 				<div
-					role="radiogroup"
+					role="group"
 					aria-label={t('directLink.card.mediumLabel')}
 					className="directLinkCard__media"
 				>
-					{DIRECT_LINK_MEDIA.map((value) => (
+					{media.map((value) => (
 						<button
 							key={value}
 							type="button"
-							role="radio"
-							aria-checked={medium === value}
+							aria-pressed={medium === value}
 							className={`directLinkCard__medium${
 								medium === value
 									? ' directLinkCard__medium--selected'
@@ -179,6 +208,7 @@ export const DirectLinkCard = ({
 						ready ? ' directLinkCard__create--ready' : ''
 					}`}
 					disabled={!ready}
+					aria-busy={isSubmitting || undefined}
 					onClick={() =>
 						medium && onCreate({ topic, medium, temporary })
 					}
@@ -186,6 +216,11 @@ export const DirectLinkCard = ({
 					<AddCircleIcon aria-hidden />
 					{t('directLink.card.create')}
 				</button>
+				{errorMessage && (
+					<p role="alert" className="conversationCreate__error">
+						{errorMessage}
+					</p>
+				)}
 			</div>
 		</FormatCard>
 	);

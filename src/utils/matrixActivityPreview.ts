@@ -1,4 +1,5 @@
 import type { MatrixEvent } from 'matrix-js-sdk';
+import { isMissingKeyDecryptionFailure } from './matrixDecryptionFailure';
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
 import {
@@ -29,6 +30,8 @@ export type MatrixActivityPreviewLabels = {
 	systemNotification: string;
 	unsupported: string;
 	undecryptable: string;
+	/** #1827: the key is missing on this device; honest instead of generic. */
+	undecryptableMissingKey?: string;
 	pending: string;
 	roomUnavailable: string;
 	eventUnavailable: string;
@@ -98,7 +101,11 @@ export const buildMatrixActivityTextPreview = (
 	}
 
 	if (isUndecryptable(resolution.event)) {
-		return withSender(senderName, labels?.undecryptable || fallbackText);
+		const label =
+			(isMissingKeyDecryptionFailure(resolution.event) &&
+				labels?.undecryptableMissingKey) ||
+			labels?.undecryptable;
+		return withSender(senderName, label || fallbackText);
 	}
 	const content = resolution.event.getContent?.() ?? {};
 	const msgtype =

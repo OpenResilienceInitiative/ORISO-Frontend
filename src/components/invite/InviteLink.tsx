@@ -44,6 +44,7 @@ import {
 	resolveReusableInviteSession
 } from './inviteSessionReuse';
 import { StageLayout } from '../stageLayout/StageLayout';
+import { Loading } from '../app/Loading';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { OrisoTextField } from '../form/OrisoTextField';
 import genDiceIcon from '../../resources/img/registration-md3/icons/gen-dice.svg';
@@ -53,6 +54,16 @@ import {
 	registrationScreenTitleSx
 } from '../registration/registrationDesign/registrationDesign';
 import type { Pseudonym } from '../../utils/anonName/engine';
+import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
+import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+import {
+	directLinkMediumOf,
+	loginPathForDirectLink,
+	openDirectLinkConversation
+} from '../directLinkEntry/directLinkEntryFlow';
+import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 
 /**
  * Landing page for invite links.
@@ -119,7 +130,15 @@ export const InviteLink = () => {
 		| 'room'
 		| 'invite'
 		| 'staff'
+		| 'directCall'
+		| 'directOpening'
 	>('loading');
+	/* #1795: a counsellor's direct link. Chat guests use the identity step
+	   below; call guests the call entry; signed-in people go straight in. */
+	const [directLink, setDirectLink] = useState<{
+		context: InviteLinkContext;
+		medium: DirectLinkMedium;
+	} | null>(null);
 	/* A live-chat link the room opens before it is redeemed. */
 	const [liveTopic, setLiveTopic] = useState<{
 		topicId: number;
@@ -139,6 +158,10 @@ export const InviteLink = () => {
 	   identity stays on screen as it was — it is now the account's — and
 	   "continue" only tries the login again. */
 	const [loginRetry, setLoginRetry] = useState(false);
+	const hidePasswordField = Boolean(
+		directLink?.context.temporaryAccount &&
+			directLink.context.hidePasswordField
+	);
 	const hasRunRef = useRef(false);
 	/* Whether the page is still on screen. The lookups before a redeem can take
 	   seconds; leaving meanwhile must not create a guest behind the person's
@@ -203,9 +226,49 @@ export const InviteLink = () => {
 				   public and redeems nothing. Without it — a link kind that
 				   has none, or a failed lookup — the page redeems on arrival
 				   as before, rather than leave the guest at a dead door. */
+				let inactive = false;
 				const context = await apiGetInviteLinkContext(token).catch(
-					() => null
+					(error) => {
+						inactive = isInactiveDirectLinkError(error);
+						return null;
+					}
 				);
+				if (inactive) {
+					setStatus('error');
+					setErrorMessage(t('directLink.entry.inactive'));
+					return;
+				}
+				const directMedium = directLinkMediumOf(context);
+				if (context && directMedium) {
+					if (!mountedRef.current) return;
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
+					setDirectLink({ context, medium: directMedium });
+					if (hasActiveAuthSession()) {
+						/* Signed in: the own conversation, then the app. */
+						setStatus('directOpening');
+						await openDirectLinkConversation(token);
+						return;
+					}
+					if (directMedium !== 'CHAT') {
+						setStatus('directCall');
+						return;
+					}
+					const minted = mintInviteGuestCredentials(locale);
+					setLegacyRedeem({
+						tenantId: context.tenantId ?? 0,
+						agencyId: context.agencyId ?? 0,
+						consultingTypeId: context.consultingTypeId,
+						topicId: context.topicId
+					});
+					setIdentity(minted.identity);
+					setUsername(minted.username);
+					setPassword(minted.password);
+					setStatus('identity');
+					return;
+				}
 				if (
 					context?.chatType === 'LIVE_CHAT' &&
 					typeof context.topicId === 'number'
@@ -269,7 +332,11 @@ export const InviteLink = () => {
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(inviteErrorText(err, t));
+				setErrorMessage(
+					isInactiveDirectLinkError(err)
+						? t('directLink.entry.inactive')
+						: inviteErrorText(err, t)
+				);
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);
@@ -331,24 +398,40 @@ export const InviteLink = () => {
 		setStatus('registering');
 		try {
 			await registerThenLogin.submit(
-				{
-					username,
-					password,
-					agencyId: String(legacyRedeem.agencyId),
-					postcode: '00000',
-					termsAccepted: 'true',
-					preferredLanguage: locale,
-					consultingType:
-						legacyRedeem.consultingTypeId != null
-							? String(legacyRedeem.consultingTypeId)
-							: '0',
-					...(legacyRedeem.topicId != null
-						? { mainTopicId: String(legacyRedeem.topicId) }
-						: {})
-				} as any,
+				/* ORISO-UserService#1486: a direct-link registration carries the
+				   link and its temporary flag (one builder for chat and call);
+				   the server then creates no enquiry. */
+				(directLink && token
+					? directLinkRegistration(
+							directLink.context,
+							{ username, password },
+							locale,
+							token
+						)
+					: {
+							username,
+							password,
+							agencyId: String(legacyRedeem.agencyId),
+							postcode: '00000',
+							termsAccepted: 'true',
+							preferredLanguage: locale,
+							consultingType:
+								legacyRedeem.consultingTypeId != null
+									? String(legacyRedeem.consultingTypeId)
+									: '0',
+							...(legacyRedeem.topicId != null
+								? { mainTopicId: String(legacyRedeem.topicId) }
+								: {})
+						}) as any,
 				false,
 				tenant as any
 			);
+			if (directLink && token) {
+				/* The account exists and is signed in: the own conversation
+				   with the counsellor, not a new enquiry. */
+				await openDirectLinkConversation(token);
+				return;
+			}
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
 			if (registerThenLogin.accountCreated()) {
@@ -369,7 +452,9 @@ export const InviteLink = () => {
 		tenant,
 		navigate,
 		t,
-		registerThenLogin
+		registerThenLogin,
+		directLink,
+		token
 	]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
@@ -386,6 +471,20 @@ export const InviteLink = () => {
 					redeem: redeemForRoom
 				}}
 				topicSlug={topicSlug}
+			/>
+		);
+	}
+
+	if (status === 'directOpening') {
+		return <Loading />;
+	}
+
+	if (status === 'directCall' && directLink && token) {
+		return (
+			<DirectLinkCallEntry
+				token={token}
+				context={directLink.context}
+				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
 			/>
 		);
 	}
@@ -498,24 +597,28 @@ export const InviteLink = () => {
 								)
 							}}
 						/>
-						<OrisoTextField
-							value={password}
-							placeholder={t(
-								'registration.account.password.label'
-							)}
-							helperText={t('anonymousChat.password.warning')}
-							fullWidth
-							autoComplete="new-password"
-							inputProps={{
-								'aria-label': t(
+						{/* #1486: the platform may hide a temporary guest's
+						    password; the account still gets the generated one. */}
+						{!hidePasswordField && (
+							<OrisoTextField
+								value={password}
+								placeholder={t(
 									'registration.account.password.label'
-								),
-								'readOnly': true
-							}}
-							InputProps={{
-								readOnly: true
-							}}
-						/>
+								)}
+								helperText={t('anonymousChat.password.warning')}
+								fullWidth
+								autoComplete="new-password"
+								inputProps={{
+									'aria-label': t(
+										'registration.account.password.label'
+									),
+									'readOnly': true
+								}}
+								InputProps={{
+									readOnly: true
+								}}
+							/>
+						)}
 						{loginRetry && (
 							<Typography
 								role="status"
@@ -547,6 +650,20 @@ export const InviteLink = () => {
 						>
 							{t('anonymousChat.pseudonym.continueWithSelection')}
 						</Button>
+						{directLink && token && !loginRetry && (
+							<Button
+								fullWidth
+								href={loginPathForDirectLink(token)}
+								data-cy="direct-link-login"
+								sx={{
+									mt: 1,
+									textTransform: 'none',
+									color: registrationMd3.primary
+								}}
+							>
+								{t('directLink.entry.haveAccount')}
+							</Button>
+						)}
 					</Box>
 				)}
 				{status === 'error' && (

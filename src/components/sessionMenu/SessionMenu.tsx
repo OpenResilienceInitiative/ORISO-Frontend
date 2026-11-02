@@ -39,6 +39,9 @@ import { getModality, Modality } from '../session/getModality';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import {
 	archiveSessionSuccessOverlayItem,
+	endTopicDuplicateConfirmOverlayItem,
+	endTopicDuplicateErrorOverlayItem,
+	recommendFurtherCounsellingSuccessOverlayItem,
 	groupChatErrorOverlayItem,
 	leaveGroupChatSecurityOverlayItem,
 	leaveGroupChatSuccessOverlayItem,
@@ -55,6 +58,7 @@ import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
 import {
 	canModerateGroupChat,
+	getStoppedGroupChatRemovalIds,
 	isGroupChatOwner
 } from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
@@ -96,6 +100,15 @@ import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
+import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
+import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import {
+	canEndTopicDuplicate,
+	canRecommendFurtherCounselling
+} from '../furtherCounselling/furtherCounsellingRules';
+import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -138,7 +151,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		settings: currentTenantSettings,
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
-	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
+	const { dispatch: sessionsDispatch, sessions: sessionList } =
+		useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
 	const supervisionPanel = useSupervisionPanel();
 	// Practice: no calls, no booking (they would start real network traffic).
@@ -203,14 +217,31 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const isSessionOwner =
 		Boolean(activeSession.consultant?.id) &&
 		String(activeSession.consultant.id) === String(userData.userId);
-	const showRequestAdvice =
-		!isRejectedCase &&
-		isSessionOwner &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		type !== SESSION_LIST_TYPES.ENQUIRY &&
-		Boolean(activeSession.isSession) &&
+	// FE#1876: the recommend item shares this audience (furtherCounsellingRules).
+	const showRequestAdvice = canRecommendFurtherCounselling({
+		isRejectedCase,
+		isSessionOwner,
+		isConsultant: !!hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		),
+		isEnquiryList: type === SESSION_LIST_TYPES.ENQUIRY,
+		isSession: Boolean(activeSession.isSession),
+		isGroup: Boolean(activeSession.isGroup),
+		isSupervisor: Boolean(props.isSupervisor)
+	});
+	const showRecommendFurtherCounselling = showRequestAdvice;
+	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
+	const showEndTopicDuplicate =
 		!activeSession.isGroup &&
-		!props.isSupervisor;
+		Boolean(activeSession.isSession) &&
+		canEndTopicDuplicate({
+			isAsker: !!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
+			current: activeSession.item as Parameters<
+				typeof canEndTopicDuplicate
+			>[0]['current'],
+			sessions: Array.isArray(sessionList) ? sessionList : []
+		});
 
 	useEffect(() => {
 		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
@@ -302,15 +333,45 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		setOverlayActive(true);
 	};
 
-	const handleArchiveSession = () => {
+	const handleRecommendFurtherCounselling = () => {
 		closeMenu();
-		menuTriggerRef.current?.focus();
-		setOverlayItem(archiveSessionSuccessOverlayItem);
+		setRecommendDialogOpen(true);
+	};
+
+	const handleEndTopicDuplicate = () => {
+		closeMenu();
+		setOverlayItem(endTopicDuplicateConfirmOverlayItem);
 		setOverlayActive(true);
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
+	const handleArchiveSession = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		const sessionId = activeSession.item.id;
+		const sessionGroupId = activeSession.item.matrixRoomId;
+		apiPutArchive(sessionId)
+			.then(() => {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: sessionGroupId ? [sessionGroupId] : [sessionId]
+				});
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
+	};
+
 	const handleDearchiveSession = () => {
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession();
 				// Short timeout to wait for RC events finished
@@ -326,8 +387,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					closeMenu();
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
 	};
 
@@ -349,6 +411,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.STOP)
 				.then(() => {
+					const removedIds = getStoppedGroupChatRemovalIds(
+						activeSession.item
+					);
+					if (removedIds) {
+						sessionsDispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedIds
+						});
+					}
 					setOverlayItem(stopGroupChatSuccessOverlayItem);
 				})
 				.catch(() => {
@@ -387,28 +458,33 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
+			// The request already succeeded; this only leaves the archived chat.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			closeMenu();
+			mobileListView();
+			navigate(listPath);
+		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
+			apiPutEndTopicDuplicate(sessionId)
 				.then(() => {
-					// Remove from current sessions list immediately
+					setOverlayActive(false);
+					setOverlayItem(null);
 					sessionsDispatch({
 						type: REMOVE_SESSIONS,
 						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
 					});
-
 					mobileListView();
+					// The archive tab exists only for counsellors.
 					navigate(listPath);
 				})
-				.catch((error) => {
-					// console.error(error);
+				.catch(() => {
+					setOverlayItem(endTopicDuplicateErrorOverlayItem);
 				})
 				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
 					setIsRequestInProgress(false);
-					closeMenu();
 				});
 		} else if (buttonFunction === 'GOTO_MANUAL') {
 			navigate('/profile/hilfe/videoCall');
@@ -915,6 +991,61 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</div>
 							)}
 
+							{showRecommendFurtherCounselling && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleRecommendFurtherCounselling}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-recommend-further-counselling"
+								>
+									<SessionMenuItemContent
+										icon={<RecommendIcon />}
+										title={translate(
+											'furtherCounselling.menu.recommend'
+										)}
+									/>
+								</div>
+							)}
+
+							{showEndTopicDuplicate && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleEndTopicDuplicate}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-end-topic-duplicate"
+								>
+									<SessionMenuItemContent
+										icon={<EndDuplicateIcon />}
+										title={translate(
+											'furtherCounselling.menu.endDuplicate'
+										)}
+										description={translate(
+											'furtherCounselling.menu.endDuplicateDescription'
+										)}
+									/>
+								</div>
+							)}
+
 							{!hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
@@ -1112,6 +1243,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					handleOverlay={handleOverlayAction}
 				/>
 			)}
+			{recommendDialogOpen && (
+				<RecommendFurtherCounsellingDialog
+					open
+					sessionId={activeSession.item.id}
+					onClose={() => setRecommendDialogOpen(false)}
+					onSent={() => {
+						setRecommendDialogOpen(false);
+						setOverlayItem(
+							recommendFurtherCounsellingSuccessOverlayItem
+						);
+						setOverlayActive(true);
+					}}
+				/>
+			)}
 			<NotificationConfigDialog
 				open={notifConfigOpen}
 				config={notifSettings.notificationConfig}
@@ -1121,6 +1266,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
+				showLiveChatRow={
+					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				}
 			/>
 		</div>
 	);

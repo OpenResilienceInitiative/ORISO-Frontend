@@ -369,6 +369,12 @@ $room-header-gap-top: 2px;
 		max-width: 100%;
 		line-height: 1.4;
 
+		// Text participants truncate, but avatar stacks paint their white and
+		// keyboard-focus rings outside the box, including over the type pill.
+		&.participantStack {
+			overflow: visible;
+		}
+
 		&--loading {
 			min-height: 16px;
 		}

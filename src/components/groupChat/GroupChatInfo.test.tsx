@@ -34,6 +34,8 @@ vi.mock('../../globalState', async () => {
 		SessionTypeContext: react.createContext({ path: '/sessions' }),
 		ActiveSessionContext: react.createContext({}),
 		NotificationsContext: react.createContext({}),
+		SessionsDataContext: react.createContext({ dispatch: () => undefined }),
+		REMOVE_SESSIONS: 'REMOVE_SESSIONS',
 		ActiveSessionProvider: ({ children }: any) => children
 	};
 });

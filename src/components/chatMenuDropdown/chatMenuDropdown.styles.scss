@@ -218,4 +218,34 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	.chatMenuDropdown__itemIcon {
 		margin-top: 0;
 	}
+
+	// Phones (Frank, 28 Oct): bigger touch zones, more air, rounder corners.
+	// Desktop keeps the compact size and its screen space.
+	@media (max-width: 599px) {
+		width: 280px;
+		padding: 12px;
+		border-radius: 20px;
+
+		.chatMenuDropdown__item {
+			min-height: 56px;
+			padding: 12px 16px;
+			gap: 16px;
+			border-radius: 14px;
+		}
+
+		.chatMenuDropdown__itemIcon,
+		.chatMenuDropdown__itemIcon svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		.chatMenuDropdown__itemTitle {
+			font-size: 17px;
+		}
+
+		.chatMenuDropdown__itemDescription {
+			font-size: 13px;
+			line-height: 18px;
+		}
+	}
 }
