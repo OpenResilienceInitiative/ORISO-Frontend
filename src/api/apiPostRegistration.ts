@@ -100,7 +100,9 @@ export const apiPostRegistration = (
 		typeof displayName === 'string' ? displayName.trim() : '';
 	const requestData: RegistrationPayload = {
 		...registrationData,
-		...(trimmedDisplayName && data.groupChatId == null
+		...(trimmedDisplayName &&
+		data.groupChatId == null &&
+		data.directLinkToken == null
 			? { displayName: trimmedDisplayName }
 			: {}),
 		...(typeof data.password === 'string' && {

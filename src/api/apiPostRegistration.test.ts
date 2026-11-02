@@ -256,3 +256,25 @@ describe('optional signup alias payload', () => {
 		expect(JSON.parse(bodyData)).not.toHaveProperty('displayName');
 	});
 });
+
+it('omits an unsupported signup alias for the no-session direct-link registration', async () => {
+	vi.mocked(fetchData).mockClear();
+	await apiPostRegistration(
+		'/service/users/askers/new',
+		{
+			username: 'login_id',
+			password: 'Password9!',
+			displayName: 'Stale signup alias',
+			directLinkToken: 'direct-token'
+		},
+		false,
+		accountPolicyTenant()
+	);
+	const bodyData = vi.mocked(fetchData).mock.calls[0][0].bodyData;
+	if (typeof bodyData !== 'string') throw new Error('Expected JSON request');
+	expect(JSON.parse(bodyData)).toMatchObject({
+		username: 'login_id',
+		directLinkToken: 'direct-token'
+	});
+	expect(JSON.parse(bodyData)).not.toHaveProperty('displayName');
+});

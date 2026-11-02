@@ -17,6 +17,10 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import type { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
+import type { AgencyConversationPolicy } from '../../globalState/interfaces/ConversationFeatureSettings';
+import { canonicalAgencySettings } from '../../test/fixtures/conversationPolicyFixtures';
+import { mockUserData } from '../message/MessageItemComponent.mocks';
 import {
 	afterEach,
 	beforeEach,
@@ -39,6 +43,10 @@ import { apiPutSessionData } from '../../api/apiPutSessionData';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 const reloadLegacySession = vi.fn();
 const aliasPolicy = vi.hoisted(() => ({ featureDisplayNameEditable: true }));
+const runtimeTenant = vi.hoisted(() => {
+	const settings: Partial<TenantDataSettingsInterface> = {};
+	return { settings };
+});
 const SESSION_ID = 4711;
 const ROOM_ID = '!live-chat:matrix.example.org';
 
@@ -59,7 +67,9 @@ vi.mock('../../globalState', async () => {
 		hasUserAuthority: (authority: string, userData: any) =>
 			Boolean(userData?.grantedAuthorities?.includes(authority)),
 		getContact: () => ({ username: 'Beraterin' }),
-		useTenant: () => ({ settings: aliasPolicy }),
+		useTenant: () => ({
+			settings: { ...runtimeTenant.settings, ...aliasPolicy }
+		}),
 		// Added when the side room's call controls landed: `SessionItemComponent`
 		// asks the consulting type whether calls are allowed at all. This test
 		// and that import came from two different branches and only met in the
@@ -134,7 +144,9 @@ vi.mock('../message/MessageItemComponent', () => ({
 	MessageItemComponent: () => null
 }));
 vi.mock('../dragAndDropArea/DragAndDropArea', () => ({
-	DragAndDropArea: ({ children }: any) => <div>{children}</div>
+	DragAndDropArea: ({ children }: { children?: React.ReactNode }) => (
+		<div data-testid="drop-area">{children}</div>
+	)
 }));
 vi.mock('../messageSubmitInterface/messageSubmitInterfaceComponent', () => ({
 	MessageSubmitInterfaceComponent: () => null
@@ -210,6 +222,7 @@ const buildActiveSession = (status: number, sessionId = SESSION_ID) =>
 		consultant: { id: 'consultant-1', username: 'Beraterin' },
 		item: {
 			id: sessionId,
+			agencyId: 101,
 			matrixRoomId: ROOM_ID,
 			conversationType: 'LIVE_CHAT',
 			status,
@@ -222,7 +235,8 @@ const sessionElement = (
 	status: number,
 	userData = askerUserData,
 	path = '/',
-	sessionId = SESSION_ID
+	sessionId = SESSION_ID,
+	agencyFeaturePolicy?: AgencyConversationPolicy
 ) => (
 	<MemoryRouter initialEntries={[path]}>
 		<NotificationsContext.Provider
@@ -241,7 +255,8 @@ const sessionElement = (
 									status,
 									sessionId
 								),
-								reloadActiveSession: reloadLegacySession
+								reloadActiveSession: reloadLegacySession,
+								agencyFeaturePolicy
 							} as any
 						}
 					>
@@ -260,8 +275,15 @@ const sessionElement = (
 	</MemoryRouter>
 );
 
-const renderSession = (status: number, userData = askerUserData, path = '/') =>
-	render(sessionElement(status, userData, path));
+const renderSession = (
+	status: number,
+	userData = askerUserData,
+	path = '/',
+	agencyFeaturePolicy?: AgencyConversationPolicy
+) =>
+	render(
+		sessionElement(status, userData, path, SESSION_ID, agencyFeaturePolicy)
+	);
 
 describe('SessionItemComponent — breathing companion lifetime', () => {
 	beforeEach(() => {
@@ -498,6 +520,24 @@ describe('legacy live-chat alias persistence', () => {
 		vi.clearAllMocks();
 	});
 	afterEach(cleanup);
+	it('keeps account alias typing disabled while canonical agency capabilities are enabled', () => {
+		aliasPolicy.featureDisplayNameEditable = false;
+		renderSession(1, askerUserData, '/', {
+			agencyId: 101,
+			state: 'ready',
+			settings: canonicalAgencySettings()
+		});
+		expect(
+			screen.getByRole<HTMLInputElement>('textbox', {
+				name: 'profile.data.displayName'
+			}).readOnly
+		).toBe(true);
+		expect(
+			screen.getByRole<HTMLButtonElement>('button', {
+				name: 'anonymousChat.pseudonym.changeName'
+			}).disabled
+		).toBe(false);
+	});
 	it('writes the visible alias to the session without patching login identity', async () => {
 		renderSession(1);
 		fireEvent.change(
@@ -620,4 +660,24 @@ describe('legacy live-chat alias persistence', () => {
 			sessionStorage.getItem('anonymous-pseudonym-' + SESSION_ID)
 		).toBeNull();
 	});
+});
+
+it('uses the canonical agency media permission for the actual drag-and-drop boundary', () => {
+	runtimeTenant.settings = {
+		featureMediaUploadEnabled: false,
+		featureMediaUploadAnonymousChatsEnabled: false
+	};
+	const userData = mockUserData({
+		userId: 'consultant-1',
+		grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'],
+		userRoles: ['CONSULTANT']
+	});
+	renderSession(2, userData, '/', {
+		agencyId: 101,
+		state: 'ready',
+		settings: canonicalAgencySettings()
+	});
+	expect(screen.getByTestId('drop-area')).toBeTruthy();
+	cleanup();
+	runtimeTenant.settings = {};
 });

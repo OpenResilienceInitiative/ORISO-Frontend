@@ -48,6 +48,7 @@ import {
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from './liveChatAvailability';
+import { useConsentContext } from '../../waitingRoom/useConsentContext';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session this browser already has for the link. Tokens are set. */
@@ -319,25 +320,31 @@ const LiveChatEntryRoomContent = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 
-	const consent = useMemo(
-		() =>
-			resolveEntryRoomConsent({
-				hasDepartment: department !== null,
-				department: departmentConsent,
-				platformHtml: platformConsentHtml,
-				missingPolicyHtml,
-				legalLinksHtml,
-				locale
-			}),
-		[
-			department,
-			departmentConsent,
+	const consentNames = useConsentContext(department);
+	const consent = useMemo(() => {
+		const resolved = resolveEntryRoomConsent({
+			hasDepartment: department !== null,
+			department: departmentConsent,
+			platformHtml: platformConsentHtml,
+			missingPolicyHtml,
 			legalLinksHtml,
 			locale,
-			missingPolicyHtml,
-			platformConsentHtml
-		]
-	);
+			context: consentNames.context
+		});
+		return {
+			...resolved,
+			readable: resolved.readable && !consentNames.pending
+		};
+	}, [
+		consentNames.context,
+		consentNames.pending,
+		department,
+		departmentConsent,
+		legalLinksHtml,
+		locale,
+		missingPolicyHtml,
+		platformConsentHtml
+	]);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
 	const mark = (name: string, value = '1') => {
@@ -673,9 +680,9 @@ const LiveChatEntryRoomContent = ({
 		<EntryRoomShell
 			kicker={kicker}
 			statusLine={statusLine}
-			/* Gate 2 (ADR-022): once a centre has taken the conversation its
-			   department governs — before, the platform does. */
-			department={accepted ? department : null}
+			/* No department: the room's legal links stay the platform's; the
+			   accepting centre's documents come with the consent sheet
+			   (Gate 2, ADR-022; Frank, 2026-10-28). */
 		>
 			{/* One view at a time slides in; the frame and the stage stay. */}
 			<EntryRoomView key={closed ? 'closed' : stage}>

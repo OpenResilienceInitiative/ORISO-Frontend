@@ -6,6 +6,7 @@ import {
 	applyCallLifecycleEdits,
 	collapseCallLifecycleMessages
 } from '../../utils/callLifecycleMessage';
+import { ownReadStatus } from '../../utils/matrixReadReceipts';
 
 /**
  * The one pipeline that turns raw Matrix room events into chat rows.
@@ -24,25 +25,35 @@ import {
  * `collapseCallLifecycleMessages` keeps one card per call. Plain
  * `applyMessageEdits` alone DROPS every `m.replace` without folding it, so
  * every room — main, supervision, team — must run the full pipeline.
+ *
+ * Read status (FE#1802): an own message is `unread` until a reader's Matrix
+ * read receipt covers it. `readers` names whose receipts count; without it,
+ * any other member counts (see `ownReadStatus`).
  */
 export const buildRoomTimeline = (
 	events: any[],
 	roomId: string | null | undefined,
 	matrixRoom: any,
-	encryptedFallbackText: string
-): MessageItem[] =>
-	prepareMessages(
+	encryptedFallbackText: string,
+	readers?: string[]
+): MessageItem[] => {
+	const isUnread = ownReadStatus(events, matrixRoom, readers);
+	return prepareMessages(
 		collapseCallLifecycleMessages(
 			applyMessageEdits(
 				applyCallLifecycleEdits(
 					(events || [])
-						.map((event: any) =>
-							formatMatrixTimelineEvent(
+						.map((event: any) => {
+							const item = formatMatrixTimelineEvent(
 								event,
 								matrixRoom,
 								encryptedFallbackText
-							)
-						)
+							);
+							const unread = isUnread(event);
+							return item && unread !== undefined
+								? { ...item, unread }
+								: item;
+						})
 						.filter(Boolean)
 						.map((item: any) =>
 							roomId ? { ...item, rid: roomId } : item
@@ -51,3 +62,4 @@ export const buildRoomTimeline = (
 			)
 		)
 	);
+};

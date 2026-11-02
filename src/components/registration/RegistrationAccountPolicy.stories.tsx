@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import i18n from '../../i18n';
 import { AccountData } from './accountData/AccountData';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
@@ -12,11 +12,13 @@ import {
 	accountPolicyTenant,
 	accountPolicyUser
 } from '../../test/fixtures/askerAccountPolicyFixtures';
+import { AskerAboutMeData } from '../profile/AskerAboutMeData';
+import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { EmailNotification } from '../profile/EmailNotifications';
 import { TwoFactorSetupDialog } from '../twoFactorAuth/TwoFactorSetupDialog';
 
 type FixtureProps = {
-	surface: 'registration' | 'selfHelp' | 'profile' | 'otp';
+	surface: 'registration' | 'selfHelp' | 'profile' | 'otp' | 'removal';
 	editable: boolean;
 	collectionAllowed: boolean;
 	accountEligible: boolean;
@@ -41,6 +43,18 @@ const AccountPolicyFixture = ({
 	});
 	const user = accountPolicyUser({
 		email: storedEmail || undefined,
+		...(surface === 'removal'
+			? {
+					twoFactorAuth: {
+						isActive: true,
+						isEnabled: true,
+						secret: '',
+						qrCode: '',
+						isShown: false,
+						type: TWO_FACTOR_TYPES.EMAIL
+					}
+				}
+			: {}),
 		isAskerEmailCollectionAllowed: accountEligible
 	});
 	return (
@@ -55,6 +69,7 @@ const AccountPolicyFixture = ({
 				}}
 			>
 				<ModalProvider>
+					{surface === 'removal' && <div id="overlay" />}
 					<Box sx={{ width: 'min(520px, 100%)', mx: 'auto', p: 2 }}>
 						{surface === 'registration' ||
 						surface === 'selfHelp' ? (
@@ -66,6 +81,8 @@ const AccountPolicyFixture = ({
 										: 'AGENCY_COUNSELLING'
 								}
 							/>
+						) : surface === 'removal' ? (
+							<AskerAboutMeData />
 						) : surface === 'profile' ? (
 							<EmailNotification />
 						) : (
@@ -206,5 +223,37 @@ export const NewEmailNotAllowed: Story = {
 				name: i18n.t('twoFactorAuth.setupDialog.decision.email')
 			})
 		).toBeDisabled();
+	}
+};
+
+/** Confirmation only: no delete request or irreversible action is performed. */
+export const StoredEmailRemovalConfirmation: Story = {
+	args: {
+		surface: 'removal',
+		accountEligible: false,
+		storedEmail: 'existing@example.test'
+	},
+	play: async ({ canvasElement }) => {
+		const host = within(canvasElement.ownerDocument.body);
+		await expect(
+			within(canvasElement).queryByText(i18n.t('profile.data.emailInfo'))
+		).not.toBeInTheDocument();
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: i18n.t('profile.unsetEmail.confirmOverlay.button.confirm')
+			})
+		);
+		await waitFor(() =>
+			expect(
+				host.getByRole('heading', {
+					name: i18n.t('profile.unsetEmail.confirmOverlay.headline')
+				})
+			).toBeVisible()
+		);
+		await expect(
+			host.getByText(
+				i18n.t('twoFactorAuth.email.delete.confirmOverlay.copy')
+			)
+		).toBeVisible();
 	}
 };

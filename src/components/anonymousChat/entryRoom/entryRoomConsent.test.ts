@@ -124,4 +124,30 @@ describe('resolveEntryRoomConsent', () => {
 
 		expect(consent.html).toContain(LINKS);
 	});
+
+	it('fills the topic and agency the public endpoint left raw', () => {
+		const consent = resolve({
+			department: {
+				status: 'ok',
+				sentence:
+					'Ich stimme {{legal_links}} zu.{{Thema}} {{Beratungsstelle}}',
+				versionId: 7
+			},
+			context: { agencyName: 'Lichteberg', topicName: 'Schulden' }
+		});
+
+		expect(consent.html).toBe(`Ich stimme ${LINKS} zu.Schulden Lichteberg`);
+	});
+
+	it('never shows a token it cannot fill', () => {
+		const consent = resolve({
+			department: {
+				status: 'ok',
+				sentence: 'Ich stimme {{legal_links}} zu. {{Thema}}',
+				versionId: 7
+			}
+		});
+
+		expect(consent.html).not.toMatch(/\{\{|\}\}/);
+	});
 });

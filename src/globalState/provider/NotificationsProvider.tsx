@@ -19,6 +19,33 @@ import {
 	NotificationTypeCall
 } from '../../components/incomingVideoCall/IncomingVideoCall';
 import {
+	isLiveChatMessageForCounsellor,
+	isLiveChatOpen,
+	liveChatMessageNoticeId,
+	NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE,
+	NotificationTypeLiveChatMessage,
+	upsertLiveChatMessageNotice
+} from '../../components/notifications/LiveChatMessageNotice';
+import {
+	eventNoticeActor,
+	eventNoticeId,
+	eventNoticeKindFor,
+	isEventNoticeTargetOpen,
+	NOTIFICATION_TYPE_EVENT_NOTICE,
+	NotificationTypeEventNotice,
+	upsertEventNotice
+} from '../../components/notifications/EventNotice';
+import {
+	isEnquiryListOpen,
+	isNewEnquiryForCounsellor,
+	NEW_ENQUIRY_NOTICE_ID,
+	NOTIFICATION_TYPE_NEW_ENQUIRY,
+	NotificationTypeNewEnquiry,
+	upsertNewEnquiryNotice
+} from '../../components/notifications/NewEnquiryNotice';
+import { isNotificationSuppressed } from '../../utils/notificationSettings/model';
+import { resolveEventChannelContract } from '../../utils/notificationSettings/occasionChannelContract';
+import {
 	apiClearEventNotifications,
 	apiGetEventNotifications,
 	apiMarkAllEventNotificationsRead,
@@ -33,7 +60,11 @@ import {
 	getValueFromCookie
 } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
-import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
+import {
+	parseEventActionParams,
+	resolveNotificationActionPath
+} from '../../components/notificationsCenter/notificationActionTarget';
+import { toNonEmbeddedPath } from '../../components/notificationsCenter/timelineDrafts';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	installAudioUnlock,
@@ -58,6 +89,8 @@ import {
 } from '../../utils/displayFilter/timeline';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
+/** Fallback base of a counsellor's chat links, as in the activity feed. */
+const CONSULTANT_SESSIONS_PATH = '/sessions/consultant/sessionPreview';
 
 export const NOTIFICATION_TYPE_NONE = 'none';
 export type NotificationTypeNone = typeof NOTIFICATION_TYPE_NONE;
@@ -76,6 +109,9 @@ export type NotificationTypeSuccess = typeof NOTIFICATION_TYPE_SUCCESS;
 
 export type NotificationTypes =
 	| NotificationTypeCall
+	| NotificationTypeLiveChatMessage
+	| NotificationTypeNewEnquiry
+	| NotificationTypeEventNotice
 	| NotificationTypeError
 	| NotificationTypeInfo
 	| NotificationTypeWarning
@@ -524,6 +560,152 @@ export function NotificationsProvider(props) {
 				continue;
 			const descriptor = getEventDescriptor(event.eventType);
 			const mentioned = event.params?.mentioned === true;
+			// FE#1470: a live-chat message to a counsellor also raises an
+			// in-app pop-up — unless that chat is already on screen, where
+			// the message itself is the signal and a tone would only nag.
+			const liveChat = isLiveChatMessageForCounsellor(event);
+			if (
+				liveChat &&
+				isLiveChatOpen(
+					event,
+					window.location.pathname,
+					document.visibilityState !== 'hidden'
+				)
+			)
+				continue;
+			if (liveChat) {
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{
+						family: descriptor.family,
+						mentioned,
+						conversationType: event.params?.conversationType
+					}
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					const sessionId = String(event.sourceSessionId);
+					setNotifications((list) =>
+						upsertLiveChatMessageNotice(list, {
+							id: liveChatMessageNoticeId(sessionId),
+							notificationType:
+								NOTIFICATION_TYPE_LIVE_CHAT_MESSAGE,
+							sessionId,
+							roomRef: event.params?.roomRef ?? null,
+							senderName: event.params?.senderName ?? null,
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
+			// FE#1435: a new enquiry also raises one in-app pop-up card, so a
+			// counsellor in another section notices it. Not while Anfragen is
+			// on screen: the new row appears there by itself (the tone stays).
+			if (
+				isNewEnquiryForCounsellor(event) &&
+				!isEnquiryListOpen(
+					window.location.pathname,
+					document.visibilityState !== 'hidden'
+				)
+			) {
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{ family: descriptor.family, mentioned }
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					setNotifications((list) =>
+						upsertNewEnquiryNotice(list, {
+							id: NEW_ENQUIRY_NOTICE_ID,
+							notificationType: NOTIFICATION_TYPE_NEW_ENQUIRY,
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
+			// FE#779: a team-discussion mention, an offered case (counsellor) and
+			// a consent request waiting for the advice seeker's yes also raise
+			// one in-app card per conversation. With that target on screen the
+			// event is completely silent (no card, tone or banner), like a
+			// live chat; elsewhere tone and OS banner follow their rows.
+			const noticeKind = eventNoticeKindFor(event);
+			if (noticeKind) {
+				if (
+					isEventNoticeTargetOpen(
+						noticeKind,
+						{
+							sessionId: event.sourceSessionId,
+							roomRef: event.params?.roomRef
+						},
+						window.location.pathname,
+						window.location.search,
+						document.visibilityState !== 'hidden'
+					)
+				)
+					continue;
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{
+						family: descriptor.family,
+						mentioned,
+						conversationType: event.params?.conversationType
+					}
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					const sessionId = String(event.sourceSessionId);
+					setNotifications((list) =>
+						upsertEventNotice(list, {
+							id: eventNoticeId(noticeKind, sessionId),
+							notificationType: NOTIFICATION_TYPE_EVENT_NOTICE,
+							kind: noticeKind,
+							sessionId,
+							roomRef: event.params?.roomRef ?? null,
+							actorName: eventNoticeActor(noticeKind, event),
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
 			// #1377 "Ton": the user muted this kind of session in the list's
 			// display filter → no sound, whatever the area settings say. Before
 			// the account data is synced the store already holds the local
@@ -548,7 +730,8 @@ export function NotificationsProvider(props) {
 							displayFilter.filters,
 							event.sourceSessionId
 						),
-						event.params?.recipientRole
+						event.params?.recipientRole,
+						event.params?.conversationType
 					);
 				} catch {
 					// Device audio support must not prevent feed or banner delivery.

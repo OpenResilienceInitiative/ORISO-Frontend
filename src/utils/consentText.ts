@@ -18,6 +18,18 @@ const LEGAL_LINKS_TOKEN = /\{\{\s*legal_links\s*\}\}/g;
 export const hasLegalLinksToken = (sentence: string): boolean =>
 	new RegExp(LEGAL_LINKS_TOKEN.source).test(sentence);
 
+export interface ConsentContext {
+	agencyName?: string;
+	topicName?: string;
+}
+
+const escapeHtml = (value: string): string =>
+	value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;');
+
 /**
  * Client-side fallback for `{{Beratungsstelle}}` and `{{Thema}}`.
  *
@@ -36,14 +48,30 @@ export const hasLegalLinksToken = (sentence: string): boolean =>
  */
 export const substituteConsentContext = (
 	sentence: string,
-	{ agencyName, topicName }: { agencyName?: string; topicName?: string }
+	{ agencyName, topicName }: ConsentContext
 ): string =>
 	sentence
-		.replace(
-			/\{\{\s*Beratungsstelle\s*\}\}/g,
-			agencyName ?? '{{Beratungsstelle}}'
+		.replace(/\{\{\s*Beratungsstelle\s*\}\}/g, () =>
+			agencyName ? escapeHtml(agencyName) : '{{Beratungsstelle}}'
 		)
-		.replace(/\{\{\s*Thema\s*\}\}/g, topicName ?? '{{Thema}}');
+		.replace(/\{\{\s*Thema\s*\}\}/g, () =>
+			topicName ? escapeHtml(topicName) : '{{Thema}}'
+		);
+
+/** Any `{{key}}` except `{{legal_links}}`, which the links step fills. */
+const OTHER_TOKEN = /\{\{(?!\s*legal_links\s*\}\})[^{}]*\}\}/g;
+
+/**
+ * Fills `{{Beratungsstelle}}` and `{{Thema}}`, then drops every token still
+ * left: a reader must never see `{{Thema}}` next to a checkbox.
+ */
+export const fillConsentPlaceholders = (
+	sentence: string,
+	context: ConsentContext
+): string =>
+	substituteConsentContext(sentence, context)
+		.replace(OTHER_TOKEN, '')
+		.replace(/ {2,}/g, ' ');
 
 /**
  * Replaces `{{legal_links}}` with the rendered links markup.

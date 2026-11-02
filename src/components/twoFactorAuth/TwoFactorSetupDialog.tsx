@@ -664,9 +664,33 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 					? 'twoFactorAuth.setupDialog.action.close'
 					: 'twoFactorAuth.setupDialog.action.next';
 
+	/* A method that is already active cannot be set up again, so its button is
+	   disabled. A disabled button is silent: say why, next to it. */
+	const activeMethodHintId = 'two-factor-setup-active-method';
+	const activeMethodHintKey =
+		currentType === TWO_FACTOR_TYPES.APP
+			? 'twoFactorAuth.setupDialog.decision.appActive'
+			: currentType === TWO_FACTOR_TYPES.EMAIL
+				? 'twoFactorAuth.setupDialog.decision.emailActive'
+				: null;
+
 	const renderDecision = () => (
 		<div className="twoFactorSetupDialog__decision">
+			{activeMethodHintKey && (
+				<p
+					className="twoFactorSetupDialog__activeHint"
+					id={activeMethodHintId}
+					role="status"
+				>
+					{translate(activeMethodHintKey)}
+				</p>
+			)}
 			<Button
+				aria-describedby={
+					currentType === TWO_FACTOR_TYPES.APP
+						? activeMethodHintId
+						: undefined
+				}
 				className="twoFactorSetupDialog__choiceButton"
 				disabled={
 					isRequestInProgress || currentType === TWO_FACTOR_TYPES.APP
@@ -678,6 +702,11 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				{translate('twoFactorAuth.setupDialog.decision.app')}
 			</Button>
 			<Button
+				aria-describedby={
+					currentType === TWO_FACTOR_TYPES.EMAIL
+						? activeMethodHintId
+						: undefined
+				}
 				className="twoFactorSetupDialog__choiceButton twoFactorSetupDialog__choiceButton--secondary"
 				disabled={
 					isRequestInProgress ||
@@ -935,7 +964,13 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			}}
 			TransitionComponent={Fade}
 			TransitionProps={{ timeout: 180 }}
-			aria-describedby="two-factor-setup-description"
+			aria-describedby={
+				/* The hint is in the DOM before the dialog opens, so its live region may
+				   not be announced; describing the dialog with it makes sure it is read. */
+				step === 'decision' && activeMethodHintKey
+					? `two-factor-setup-description ${activeMethodHintId}`
+					: 'two-factor-setup-description'
+			}
 			aria-labelledby="two-factor-setup-title"
 			className="twoFactorSetupDialog"
 			disableEscapeKeyDown={!canClose}
