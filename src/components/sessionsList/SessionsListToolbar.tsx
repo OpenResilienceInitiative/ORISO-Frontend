@@ -5,6 +5,7 @@ import { SESSION_LIST_TAB_ARCHIVE } from '../session/sessionHelpers';
 import {
 	ArchiveFilterIcon,
 	CreateChatFilterIcon,
+	DirectLinkFilterIcon,
 	DraftFilterIcon,
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
@@ -157,6 +158,8 @@ interface SessionsListToolbarProps {
 	chipAutoSort?: boolean;
 	/** Offer the Sonstiges chip (lists that classify their rows, #1377). */
 	showOtherChip?: boolean;
+	/** FE#1952: the list has conversations that came in through a direct link. */
+	showDirectLinksChip?: boolean;
 	/** The Archiv link (Gespräche); the display filter's Archiv pill drives it. */
 	showArchiveChip?: boolean;
 	/** Pill of the Erstellen row (display filter); the Träger gate stays `showCreateGroupChatAction`. */
@@ -254,6 +257,12 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		labelKey: 'sessionList.toolbar.chips.nearby',
 		Icon: MailFilterIcon,
 		dataCy: 'sessions-list-chip-nearby'
+	},
+	{
+		id: 'directLinks',
+		labelKey: 'sessionList.toolbar.chips.directLinks',
+		Icon: DirectLinkFilterIcon,
+		dataCy: 'sessions-list-chip-direct-links'
 	},
 	{
 		id: 'liveChat',
@@ -381,6 +390,7 @@ export const SessionsListToolbar = ({
 	chipView = 'icons',
 	chipAutoSort = false,
 	showOtherChip = false,
+	showDirectLinksChip = false,
 	showArchiveChip = true,
 	showCreateChip = true
 }: SessionsListToolbarProps) => {
@@ -600,6 +610,9 @@ export const SessionsListToolbar = ({
 			if (chip.id === 'other') {
 				return showOtherChip;
 			}
+			if (chip.id === 'directLinks') {
+				return showDirectLinksChip;
+			}
 			return true;
 		});
 		// Drafts are a count, not unread: they never float.
@@ -619,6 +632,7 @@ export const SessionsListToolbar = ({
 		hiddenKindChips,
 		showGroupChip,
 		showInternalGroupChip,
+		showDirectLinksChip,
 		showLiveChatChip,
 		showOtherChip,
 		showSupervisionChip,

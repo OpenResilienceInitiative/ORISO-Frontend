@@ -1,4 +1,5 @@
 import { getModality, Modality } from '../session/getModality';
+import { getDirectLinkMedium } from '../session/directLinkOrigin';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
@@ -19,6 +20,8 @@ export type SessionToolbarChipFilter =
 	| 'unread'
 	| 'drafts'
 	| 'nearby'
+	// FE#1952: conversations that came in through a counsellor direct link.
+	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'groups'
@@ -46,6 +49,8 @@ export const normalizeSessionToolbarChip = (
 			return 'nearby';
 		case 'drafts':
 			return 'drafts';
+		case 'directLinks':
+			return 'directLinks';
 		case 'other':
 			return 'other';
 		case 'liveChat':
@@ -72,6 +77,15 @@ export const isConversationCircleSession = (
 export const isInternalGroupChatSession = (
 	session: SessionToolbarGroupSession
 ): boolean => Boolean(session.isGroup && !isConversationCircleSession(session));
+
+/**
+ * FE#1952 (Frank, 2026-10-30): a conversation that came in through a
+ * counsellor direct link has its own "Direktlinks" chip and leaves "Mail".
+ * Same reading as the row's label (`getDirectLinkMedium`): agency counselling
+ * with a direct-link medium.
+ */
+export const isDirectLinkSession = (raw: ListItemInterface): boolean =>
+	getDirectLinkMedium(raw) !== undefined;
 
 /**
  * Live-chat / anonymous asker sessions on the registered-enquiry feed.
@@ -131,6 +145,10 @@ export const classifySession = (
 		String(raw.consultant.id) !== String(currentUserId || '')
 	) {
 		return 'supervision';
+	}
+	// FE#1952: a 1:1 conversation that came in through a direct link.
+	if (isDirectLinkSession(raw)) {
+		return 'directLinks';
 	}
 	return 'oneToOne';
 };
@@ -254,6 +272,14 @@ export function sessionMatchesToolbar(
 		return false;
 	}
 	if (effectiveChip === 'nearby' && (isAnonymous || extended.isGroup)) {
+		return false;
+	}
+	// FE#1952: direct-link conversations have their own chip, not "Mail".
+	const isDirectLink = isDirectLinkSession(raw);
+	if (effectiveChip === 'nearby' && isDirectLink) {
+		return false;
+	}
+	if (effectiveChip === 'directLinks' && !isDirectLink) {
 		return false;
 	}
 

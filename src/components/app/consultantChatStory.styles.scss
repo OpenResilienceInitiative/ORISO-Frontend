@@ -1,0 +1,45 @@
+.appOrisoConsultantChatStory {
+	display: grid;
+	grid-template-columns: 85px var(--storybook-session-list-width) 24px minmax(
+			0,
+			1fr
+		);
+	height: 860px;
+	min-height: 720px;
+	overflow: hidden;
+	background: var(--m3-surface-container-high, #eae7e8);
+	color: var(--m3-on-surface, #1d1b20);
+	font-family:
+		Inter,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		sans-serif;
+
+	.appOrisoRuntimeRail {
+		width: 85px;
+		min-height: 0;
+	}
+
+	@media (width < #{$fromLarge}) {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr) auto;
+		height: 100vh;
+		min-height: 0;
+
+		.appOrisoRuntimeRail {
+			grid-row: 2;
+			width: 100%;
+			height: auto;
+		}
+
+		> aside,
+		> [aria-hidden='true'] {
+			display: none !important;
+		}
+
+		> .session {
+			grid-row: 1;
+		}
+	}
+}
