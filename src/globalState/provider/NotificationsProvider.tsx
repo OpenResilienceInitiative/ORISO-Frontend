@@ -27,6 +27,15 @@ import {
 	upsertLiveChatMessageNotice
 } from '../../components/notifications/LiveChatMessageNotice';
 import {
+	eventNoticeActor,
+	eventNoticeId,
+	eventNoticeKindFor,
+	isEventNoticeTargetOpen,
+	NOTIFICATION_TYPE_EVENT_NOTICE,
+	NotificationTypeEventNotice,
+	upsertEventNotice
+} from '../../components/notifications/EventNotice';
+import {
 	isEnquiryListOpen,
 	isNewEnquiryForCounsellor,
 	NEW_ENQUIRY_NOTICE_ID,
@@ -102,6 +111,7 @@ export type NotificationTypes =
 	| NotificationTypeCall
 	| NotificationTypeLiveChatMessage
 	| NotificationTypeNewEnquiry
+	| NotificationTypeEventNotice
 	| NotificationTypeError
 	| NotificationTypeInfo
 	| NotificationTypeWarning
@@ -628,6 +638,63 @@ export function NotificationsProvider(props) {
 						upsertNewEnquiryNotice(list, {
 							id: NEW_ENQUIRY_NOTICE_ID,
 							notificationType: NOTIFICATION_TYPE_NEW_ENQUIRY,
+							count: 1,
+							path: toNonEmbeddedPath(
+								resolveNotificationActionPath(
+									event,
+									CONSULTANT_SESSIONS_PATH
+								)
+							)
+						})
+					);
+				}
+			}
+			// FE#779: a team-discussion mention, an offered case (counsellor) and
+			// a consent request waiting for the advice seeker's yes also raise
+			// one in-app card per conversation. With that target on screen the
+			// event is completely silent (no card, tone or banner), like a
+			// live chat; elsewhere tone and OS banner follow their rows.
+			const noticeKind = eventNoticeKindFor(event);
+			if (noticeKind) {
+				if (
+					isEventNoticeTargetOpen(
+						noticeKind,
+						{
+							sessionId: event.sourceSessionId,
+							roomRef: event.params?.roomRef
+						},
+						window.location.pathname,
+						window.location.search,
+						document.visibilityState !== 'hidden'
+					)
+				)
+					continue;
+				const { area, kind } = resolveEventChannelContract(
+					event.eventType,
+					event.params?.recipientRole,
+					{
+						family: descriptor.family,
+						mentioned,
+						conversationType: event.params?.conversationType
+					}
+				).browser;
+				if (
+					!isNotificationSuppressed(
+						settings,
+						device,
+						descriptor.family
+					) &&
+					settings.notificationConfig[area][kind].banner !== 'off'
+				) {
+					const sessionId = String(event.sourceSessionId);
+					setNotifications((list) =>
+						upsertEventNotice(list, {
+							id: eventNoticeId(noticeKind, sessionId),
+							notificationType: NOTIFICATION_TYPE_EVENT_NOTICE,
+							kind: noticeKind,
+							sessionId,
+							roomRef: event.params?.roomRef ?? null,
+							actorName: eventNoticeActor(noticeKind, event),
 							count: 1,
 							path: toNonEmbeddedPath(
 								resolveNotificationActionPath(
