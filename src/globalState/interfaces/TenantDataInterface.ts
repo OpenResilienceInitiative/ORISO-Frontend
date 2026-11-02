@@ -75,6 +75,10 @@ export interface TenantDataSettingsInterface {
 	featureTopicsEnabled: boolean;
 	topicsInRegistrationEnabled: boolean;
 	featureMediaUploadEnabled?: boolean;
+	/** "Direkteinladung erlauben" per medium (TenantService#332); unset = allowed. */
+	featureDirectInviteChatEnabled?: boolean;
+	featureDirectInviteAudioEnabled?: boolean;
+	featureDirectInviteVideoEnabled?: boolean;
 	featureMediaUploadAnonymousChatsEnabled?: boolean;
 	featureMediaUploadOneOnOneChatsEnabled?: boolean;
 	featureMediaUploadGroupChatsEnabled?: boolean;
@@ -123,6 +127,8 @@ export interface TenantDataSettingsInterface {
 	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
 	featureAskerBrowserLiveChatEnabled?: boolean;
 	featureAskerBrowserSelfHelpEnabled?: boolean;
+	/** Explicit false: counsellors get no e-mail about internal group chats. */
+	featureConsultantEmailInternalGroupEnabled?: boolean;
 
 	emailVisible?: boolean;
 	emailRequired?: boolean;

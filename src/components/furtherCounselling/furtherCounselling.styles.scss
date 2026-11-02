@@ -1,0 +1,62 @@
+/* FE#1876 recommendation card: content of a Carimat system-message bubble. */
+.furtherCounsellingCard {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+
+	p {
+		margin: 0;
+	}
+
+	&__topic {
+		font-size: 15px;
+		font-weight: 700;
+		line-height: 1.4;
+		color: var(--m3-on-surface, #1f1a19);
+		overflow-wrap: anywhere;
+	}
+
+	&__note {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 8px 12px;
+		border-left: 3px solid var(--m3-outline-variant, #d8c2be);
+		background: var(--m3-surface-container-low, rgba(255, 255, 255, 0.6));
+		border-radius: 4px;
+	}
+
+	&__noteLabel {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--m3-on-surface-variant, #534341);
+	}
+
+	&__noteText {
+		font-size: 14px;
+		line-height: 1.4;
+		color: var(--m3-on-surface, #1f1a19);
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	&__status {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--m3-tertiary, #2e6b30);
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		margin-top: 4px;
+
+		.button__item {
+			margin: 0;
+		}
+	}
+}

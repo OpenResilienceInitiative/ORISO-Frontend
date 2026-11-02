@@ -12,7 +12,10 @@ import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
-import { isUndecryptedRoomEvent } from './matrixDecryptionFailure';
+import {
+	isMissingKeyDecryptionFailure,
+	isUndecryptedRoomEvent
+} from './matrixDecryptionFailure';
 
 /**
  * Where an attachment's bytes come from.
@@ -105,6 +108,11 @@ export const formatMatrixTimelineEvent = (
 	};
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
+	}
+	if (isUndecryptedEvent && isMissingKeyDecryptionFailure(event)) {
+		// #1827: lets the timeline show an honest "not on this device" notice
+		// instead of the generic encrypted-message text.
+		baseMessage.undecryptableReason = 'missing-key';
 	}
 	const callLifecycle = parseCallLifecycleMessage(content);
 	if (callLifecycle) {

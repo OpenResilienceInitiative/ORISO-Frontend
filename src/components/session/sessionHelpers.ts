@@ -212,7 +212,10 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				// Relations foundation (#435): relations survive the mapping.
 				replyToEventId: message.replyToEventId || null,
 				threadRootEventId: message.threadRootEventId || null,
-				isEdited: !!message.isEdited
+				isEdited: !!message.isEdited,
+				...(message.undecryptableReason
+					? { undecryptableReason: message.undecryptableReason }
+					: {})
 			};
 		})
 		.filter((item) => {
