@@ -1,6 +1,6 @@
 import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
@@ -12,6 +12,10 @@ import {
 	NotificationChoiceCard
 } from './NotificationChoiceCard';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
+import {
+	getAuthenticatedAccountIdentity,
+	subscribeToAuthenticatedTenant
+} from '../../utils/authenticatedTenant';
 
 /** Shared account/device setup, used by first enquiry and optional chat shortcuts.
  * Choice is derived from live account settings; a click is never completion.
@@ -34,6 +38,9 @@ export const NotificationSetup = ({
 	const accountEmailAllowed = useAccountEmailCollectionAllowed();
 	const isEmailEnabled = configuredEmailEnabled && accountEmailAllowed;
 	const continuation = useRef(0);
+	const acceptedEmailOperation = useRef<number | null>(null);
+	const latestEmailEnabled = useRef(isEmailEnabled);
+	latestEmailEnabled.current = isEmailEnabled;
 	const {
 		emailActive,
 		consentEmailActive,
@@ -55,17 +62,35 @@ export const NotificationSetup = ({
 					? 'BROWSER'
 					: null;
 
-	useEffect(() => {
+	const reset = useCallback(() => {
 		continuation.current += 1;
+		acceptedEmailOperation.current = null;
 		setEmailOpen(false);
 		setPending(null);
 		setBusy(false);
 		setAwaitingBrowser(false);
 		setError(null);
+	}, []);
+	useEffect(() => {
+		reset();
 		return () => {
 			continuation.current += 1;
+			acceptedEmailOperation.current = null;
 		};
-	}, [isEmailEnabled, isBrowserEnabled, tenant?.id, userData?.userId]);
+	}, [isBrowserEnabled, tenant?.id, userData?.userId, reset]);
+	useEffect(() => {
+		// A successful subscription's own reload temporarily withdraws capability.
+		// It must not erase the requested, independently permitted browser step.
+		if (acceptedEmailOperation.current !== continuation.current) reset();
+	}, [isEmailEnabled, reset]);
+	useEffect(() => {
+		let identity = getAuthenticatedAccountIdentity();
+		return subscribeToAuthenticatedTenant(() => {
+			const next = getAuthenticatedAccountIdentity();
+			if (next !== identity) reset();
+			identity = next;
+		});
+	}, [reset]);
 
 	const finish = async (choice: NotificationChoice) => {
 		if (
@@ -73,7 +98,8 @@ export const NotificationSetup = ({
 			(choice !== 'EMAIL' && !browserSupported)
 		)
 			return;
-		const operation = continuation.current;
+		const operation = ++continuation.current;
+		acceptedEmailOperation.current = null;
 		const current = () => continuation.current === operation;
 		setBusy(true);
 		setError(null);
@@ -90,7 +116,8 @@ export const NotificationSetup = ({
 						}
 					}
 				});
-				if (!current()) return;
+				if (!current() || !latestEmailEnabled.current) return;
+				acceptedEmailOperation.current = operation;
 				const saved = await reloadUserData();
 				if (!current()) return;
 				if (

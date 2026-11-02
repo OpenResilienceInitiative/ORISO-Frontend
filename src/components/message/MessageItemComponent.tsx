@@ -2,6 +2,7 @@ import { useConversationFeatureSettings } from '../../hooks/useConversationFeatu
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
 import {
+	isDeletedGuest,
 	retentionOf,
 	useOwnTemporaryAccount
 } from '../temporaryAccount/temporaryAccountStore';
@@ -1825,10 +1826,24 @@ export const MessageItemComponent = ({
 	 */
 	// Session aliases belong only to the exact asker of this session. The
 	// Matrix event can still contain the login or a previous session's name.
-	const sessionAskerName =
-		!!askerMatrixUserId && userId === askerMatrixUserId
-			? resolveAssignedAskerDisplayName(activeSession?.user)
-			: null;
+	const sessionAskerName = (() => {
+		if (
+			!activeSession?.item?.askerMatrixUserId ||
+			userId !== activeSession.item.askerMatrixUserId
+		)
+			return null;
+		const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
+		if (
+			activeSession.user?.deleted === true ||
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		)
+			return deletedGuestLabel;
+		// Preserve an already anonymized legacy event; it is never identity proof.
+		// The stored session owner above is the only basis for applying this alias.
+		if (username === deletedGuestLabel && displayName === deletedGuestLabel)
+			return displayName;
+		return resolveAssignedAskerDisplayName(activeSession.user);
+	})();
 	// Matrix profiles hold the login name, so after a reload the event only
 	// carries the username. The group's member list has the public display
 	// name for every participant (OBP 2.1 #12).

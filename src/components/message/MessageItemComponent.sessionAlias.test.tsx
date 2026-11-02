@@ -138,3 +138,111 @@ describe('session-scoped asker message alias', () => {
 		expect(screen.queryByText('Asker alias')).toBeNull();
 	});
 });
+
+it('does not trust a sender-derived asker override over the stored session owner', () => {
+	render(
+		<MessageContextShell
+			activeSession={sessionWithAlias(
+				'AGENCY_COUNSELLING',
+				'Asker alias'
+			)}
+		>
+			<MessageItemComponent
+				{...mockMessageItemComponentProps({
+					userId: '@former-consultant:example.org',
+					askerMatrixUserId: '@former-consultant:example.org',
+					displayName: 'Former consultant public name',
+					message: 'Earlier advice',
+					isMyMessage: false
+				})}
+			/>
+		</MessageContextShell>
+	);
+	expect(screen.queryByText('Asker alias')).toBeNull();
+	expect(screen.getByText('Former consultant public name')).toBeTruthy();
+});
+
+it('keeps the legacy event name when no stored session owner proves the alias belongs to this sender', () => {
+	const session = sessionWithAlias('LIVE_CHAT', 'Unproven session alias');
+	session.item.askerMatrixUserId = '';
+	render(
+		<MessageContextShell activeSession={session}>
+			{aliasMessage()}
+		</MessageContextShell>
+	);
+	expect(screen.queryByText('Unproven session alias')).toBeNull();
+	expect(screen.getByText('Old event name')).toBeTruthy();
+});
+
+it('anonymizes retained guest messages before a stale session alias after account deletion', () => {
+	const session = sessionWithAlias('LIVE_CHAT', 'Old guest alias');
+	session.user.temporaryAccount = {
+		medium: 'CHAT',
+		messageRetention: 'ALWAYS_PERSISTENT',
+		keepsMessages: true,
+		deleted: true
+	};
+	render(
+		<MessageContextShell activeSession={session}>
+			{aliasMessage()}
+		</MessageContextShell>
+	);
+	expect(screen.queryByText('Old guest alias')).toBeNull();
+	expect(screen.getByText('temporaryAccount.deletedGuest')).toBeTruthy();
+});
+it('does not revive a stale session alias over an already anonymized legacy event', () => {
+	render(
+		<MessageContextShell
+			activeSession={sessionWithAlias('LIVE_CHAT', 'Old guest alias')}
+		>
+			<MessageItemComponent
+				{...mockMessageItemComponentProps({
+					userId: MOCK_ASKER_MATRIX_ID,
+					username: 'temporaryAccount.deletedGuest',
+					displayName: 'temporaryAccount.deletedGuest',
+					clientName: 'temporaryAccount.deletedGuest',
+					message: 'Retained message',
+					isMyMessage: false
+				})}
+			/>
+		</MessageContextShell>
+	);
+	expect(screen.queryByText('Old guest alias')).toBeNull();
+	expect(screen.getByText('temporaryAccount.deletedGuest')).toBeTruthy();
+});
+
+it('uses the canonical deleted-user marker even without a temporary-account snapshot', () => {
+	const session = sessionWithAlias('LIVE_CHAT', 'Old guest alias');
+	render(
+		<MessageContextShell
+			activeSession={{
+				...session,
+				user: { ...session.user, ...{ deleted: true } }
+			}}
+		>
+			{aliasMessage()}
+		</MessageContextShell>
+	);
+	expect(screen.queryByText('Old guest alias')).toBeNull();
+	expect(screen.getByText('temporaryAccount.deletedGuest')).toBeTruthy();
+});
+it.each([MOCK_CONSULTANT_MATRIX_ID, '@former:example.test'])(
+	'does not anonymize consultant sender %s when the session asker was deleted',
+	(sender) => {
+		const session = sessionWithAlias('LIVE_CHAT', 'Old guest alias');
+		session.user.temporaryAccount = {
+			medium: 'CHAT',
+			messageRetention: 'ALWAYS_PERSISTENT',
+			keepsMessages: true,
+			deleted: true
+		};
+		render(
+			<MessageContextShell activeSession={session}>
+				{aliasMessage(false, sender)}
+			</MessageContextShell>
+		);
+		expect(screen.queryByText('temporaryAccount.deletedGuest')).toBeNull();
+		expect(screen.queryByText('Old guest alias')).toBeNull();
+		expect(screen.getByText('An ordinary message')).toBeTruthy();
+	}
+);

@@ -3480,16 +3480,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											'sessionList.user.consultantUnknown'
 										)
 									}
-									askerMatrixUserIdFor={(message) =>
-										!activeSession.rid &&
-										message.userId &&
-										!message.userId.includes(
-											activeSession.consultant
-												?.username || ''
-										)
-											? message.userId
-											: activeSession.item
-													.askerMatrixUserId
+									askerMatrixUserIdFor={() =>
+										activeSession.item.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
 									hideSystemMessages={
@@ -4183,12 +4175,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			onBack={closeChannel}
 		/>
 	) : undefined;
-	const askerMatrixUserIdFor = (message: MessageItem) =>
-		!activeSession.rid &&
-		message.userId &&
-		!message.userId.includes(activeSession.consultant?.username || '')
-			? message.userId
-			: activeSession.item.askerMatrixUserId;
+	// Assignment can change; a former consultant is never proof of asker identity.
+	const askerMatrixUserIdFor = () => activeSession.item.askerMatrixUserId;
 	const e2eeParams = { key, keyID, encrypted, subscriptionKeyLost };
 	const panelComposerFlush = desktopPanelOpen ? 'bottom-right' : undefined;
 

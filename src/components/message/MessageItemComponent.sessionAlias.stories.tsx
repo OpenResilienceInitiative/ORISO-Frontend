@@ -107,3 +107,48 @@ export const OwnCounselling: Story = {
 	render: renderSession(true, true, 'AGENCY_COUNSELLING'),
 	play: assignedAlias
 };
+
+export const FormerConsultantKeepsOwnName: Story = {
+	render: () => {
+		const session = mockActiveSession1on1();
+		return (
+			<MessageContextShell
+				activeSession={{
+					...session,
+					item: {
+						...session.item,
+						conversationType: 'AGENCY_COUNSELLING'
+					},
+					user: { ...session.user, displayName: ALIAS }
+				}}
+			>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						userId: MOCK_ASKER_MATRIX_ID,
+						displayName: EVENT_NAME,
+						message: 'Message from this session asker',
+						isMyMessage: false
+					})}
+				/>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						userId: '@former:example.test',
+						askerMatrixUserId: '@former:example.test',
+						displayName: 'Former consultant public name',
+						message: 'Earlier consultant advice',
+						isMyMessage: false
+					})}
+				/>
+			</MessageContextShell>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getByText('Former consultant public name')
+			).toBeVisible()
+		);
+		await expect(canvas.getAllByText(ALIAS)).toHaveLength(1);
+	}
+};
