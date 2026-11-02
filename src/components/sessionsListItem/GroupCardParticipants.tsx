@@ -6,6 +6,7 @@ import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { useGroupCardMembers } from '../../hooks/useGroupCardMembers';
 import { groupCardParticipants } from './groupCardMemberParticipants';
+import { ReactComponent as GroupsIcon } from '../../resources/img/icons/groups.svg';
 import './groupCardParticipants.styles.scss';
 
 const AVATAR = AVATAR_SIZES.message;
@@ -59,7 +60,7 @@ export const GroupCardParticipants = ({
 			/>
 		);
 	// Above three people faces say nothing and take the text's room: one circle
-	// of the avatar's size with the count (Frank, 02.11.2026).
+	// of the avatar's size with the people and their count (Frank, 02.11.2026).
 	if (participants.length > MAX_FACES) {
 		const crowd = t('groupCardParticipants.crowd', {
 			count: participants.length
@@ -72,6 +73,7 @@ export const GroupCardParticipants = ({
 				title={crowd}
 				data-cy="group-card-crowd"
 			>
+				<GroupsIcon className="groupCardCrowd__icon" aria-hidden />
 				{participants.length > 99 ? '99+' : participants.length}
 			</span>
 		);

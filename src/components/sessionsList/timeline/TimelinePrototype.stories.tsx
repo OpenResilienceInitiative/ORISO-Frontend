@@ -531,7 +531,7 @@ export const RailCalendarMark: Story = {
 	}
 };
 
-/** Above four people faces say nothing: one field with the count. */
+/** Above three people one circle with the people and their count; its colours follow the ring. */
 export const CrowdField: Story = {
 	name: 'Card — above three people the count circle',
 	parameters: { ownMatrixSeed: true },
@@ -540,17 +540,31 @@ export const CrowdField: Story = {
 		return <TimelinePrototype {...args} />;
 	},
 	play: async ({ canvasElement }) => {
-		const row = pastRow(canvasElement, 'Elternrunde');
+		const circle = () =>
+			pastRow(canvasElement, 'Elternrunde').querySelector<HTMLElement>(
+				'[data-cy="group-card-crowd"]'
+			)!;
+		const colours = () => {
+			const { backgroundColor, color } = getComputedStyle(circle());
+			return [backgroundColor, color];
+		};
+		await waitFor(() => expect(circle()?.textContent).toBe('23'));
+		const box = circle().getBoundingClientRect();
+		await expect([box.width, box.height]).toEqual([48, 48]);
+		await expect(circle().querySelector('svg')).not.toBeNull();
 		await waitFor(() =>
-			expect(
-				row.querySelector('[data-cy="group-card-crowd"]')?.textContent
-			).toBe('23')
+			expect(colours()).toEqual(['rgb(255, 255, 255)', 'rgb(27, 27, 28)'])
 		);
-		const circle = row
-			.querySelector('[data-cy="group-card-crowd"]')!
-			.getBoundingClientRect();
-		await expect(circle.width).toBe(48);
-		await expect(circle.height).toBe(48);
+		// Open with the focus on the card: primary.
+		await userEvent.click(circle());
+		await waitFor(() =>
+			expect(colours()).toEqual(['rgb(165, 0, 10)', 'rgb(255, 255, 255)'])
+		);
+		// Focus elsewhere: accent and dark red.
+		(document.activeElement as HTMLElement).blur();
+		await waitFor(() =>
+			expect(colours()).toEqual(['rgb(255, 218, 213)', 'rgb(147, 0, 8)'])
+		);
 	}
 };
 
