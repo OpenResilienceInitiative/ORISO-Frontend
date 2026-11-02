@@ -1688,6 +1688,13 @@ export const AttachmentErrorSnackbar: Story = {
 export const MentionExperience: Story = {
 	name: 'Erlebnis — @ im echten Composer',
 	render: () => <ComposerShell />,
+	parameters: {
+		a11y: {
+			// The list opens at the caret, so it lies over the toolbar until it
+			// closes. Axe reads that as a target too small to hit.
+			context: { exclude: ['.composerToolbar__button--scrollToNewest'] }
+		}
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
@@ -1696,6 +1703,55 @@ export const MentionExperience: Story = {
 		await waitFor(() =>
 			expect(document.querySelector('.mentionList')).toBeTruthy()
 		);
+		// Speaks from the @: right above the caret, its corner square there.
+		const list = document.querySelector('.mentionList') as HTMLElement;
+		const paragraph = canvasElement.querySelector(
+			'.ProseMirror p'
+		) as HTMLElement;
+		await waitFor(() => {
+			const gap =
+				paragraph.getBoundingClientRect().top -
+				list.getBoundingClientRect().bottom;
+			expect(gap).toBeGreaterThanOrEqual(0);
+			expect(gap).toBeLessThan(12);
+			expect(getComputedStyle(list).borderBottomLeftRadius).toBe('0px');
+		});
+	}
+};
+
+/** Several people: tick them, search in between, click beside the list. */
+export const MentionSeveralPeople: Story = {
+	name: 'Erlebnis — @ mehrere Personen auswählen',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /erwähnen|mention/i })
+		);
+		const body = within(document.body);
+		const boxes = await body.findAllByRole('checkbox');
+		expect(boxes.length).toBeGreaterThan(1);
+
+		await userEvent.click(boxes[0]);
+		await userEvent.click(body.getAllByRole('checkbox')[1]);
+
+		// Still open, so a second person can be ticked.
+		expect(document.querySelector('.mentionList')).toBeTruthy();
+		expect(document.querySelector('.mentionList__hint')).toBeTruthy();
+		expect(
+			body
+				.getAllByRole('checkbox')
+				.filter((box) => (box as HTMLInputElement).checked)
+		).toHaveLength(2);
+
+		// A click into nothing inserts both and closes the list.
+		await userEvent.click(document.body);
+		await waitFor(() =>
+			expect(document.querySelector('.mentionList')).toBeNull()
+		);
+		expect(
+			canvasElement.querySelectorAll('.ProseMirror .messageItem__mention')
+		).toHaveLength(2);
 	}
 };
 

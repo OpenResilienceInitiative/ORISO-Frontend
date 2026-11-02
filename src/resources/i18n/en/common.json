@@ -1990,6 +1990,8 @@
 			}
 		},
 		"mention": {
+			"check": "Also select {{name}}",
+			"checked": "Selected: {{value}}. Click beside the list to insert.",
 			"notInChat": "not in chat",
 			"empty": "No one found",
 			"unavailable": "The list could not be loaded",

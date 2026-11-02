@@ -3898,6 +3898,10 @@ export const MessageSubmitInterfaceComponent = ({
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
 			listLabel: translate('message.submit.toolbar.mention'),
+			getCheckLabel: (name: string) =>
+				translate('message.mention.check', { name }),
+			getCheckedLabel: (count: number) =>
+				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;

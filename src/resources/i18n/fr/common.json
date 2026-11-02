@@ -1984,6 +1984,8 @@
 			}
 		},
 		"mention": {
+			"check": "Sélectionner aussi {{name}}",
+			"checked": "Sélection : {{value}}. Cliquez à côté pour insérer.",
 			"notInChat": "pas dans le chat",
 			"empty": "Aucune personne trouvée",
 			"unavailable": "La liste n'a pas pu être chargée",

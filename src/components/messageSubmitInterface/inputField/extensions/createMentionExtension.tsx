@@ -1,11 +1,12 @@
-import { ReactRenderer } from '@tiptap/react';
+import { Editor, Range, ReactRenderer } from '@tiptap/react';
 import Mention from '@tiptap/extension-mention';
-import type { SuggestionOptions } from '@tiptap/suggestion';
+import { exitSuggestion, SuggestionOptions } from '@tiptap/suggestion';
 import { computePosition, flip, offset, shift } from '@floating-ui/dom';
 import {
 	MentionDirectoryState,
 	MentionList,
-	MentionListRef
+	MentionListRef,
+	MentionPick
 } from './MentionList';
 import { filterMentionCandidates, MentionCandidate } from './mentionFiltering';
 
@@ -25,6 +26,8 @@ export interface MentionProvider {
 	loadingLabel?: string;
 	/** The popup's accessible name. */
 	listLabel?: string;
+	getCheckLabel?: (name: string) => string;
+	getCheckedLabel?: (count: number) => string;
 }
 
 /**
@@ -52,6 +55,27 @@ const MentionWithMatrixId = Mention.extend({
 	}
 });
 
+/** Replaces the typed `@…` with one pill per person, each followed by a space. */
+const insertMentions = (
+	editor: Editor,
+	range: Range,
+	people: MentionPick[]
+) => {
+	const nodeAfter = editor.view.state.selection.$to.nodeAfter;
+	const to = nodeAfter?.text?.startsWith(' ') ? range.to + 1 : range.to;
+	editor
+		.chain()
+		.focus()
+		.insertContentAt(
+			{ from: range.from, to },
+			people.flatMap((person) => [
+				{ type: 'mention', attrs: person },
+				{ type: 'text', text: ' ' }
+			])
+		)
+		.run();
+};
+
 /**
  * Configures the TipTap Mention extension with a Slack-like suggestion popup.
  * Candidates come from the injected provider (agency consultants + room
@@ -70,19 +94,58 @@ export const createMentionExtension = (provider: MentionProvider) => {
 		render: () => {
 			let component: ReactRenderer<MentionListRef> | null = null;
 			let popup: HTMLDivElement | null = null;
+			// Always the newest: the range grows with every typed character.
+			let editor: Editor | null = null;
+			let range: Range | null = null;
 
 			const statusProps = () => ({
 				directoryState: provider.getDirectoryState?.() ?? 'ready',
 				emptyLabel: provider.emptyLabel,
 				unavailableLabel: provider.unavailableLabel,
 				loadingLabel: provider.loadingLabel,
-				listLabel: provider.listLabel
+				listLabel: provider.listLabel,
+				getCheckLabel: provider.getCheckLabel,
+				getCheckedLabel: provider.getCheckedLabel
 			});
 
-			const reposition = (
-				clientRect: (() => DOMRect | null) | null,
-				editorDom: Element
-			) => {
+			const close = () => {
+				if (editor) {
+					exitSuggestion(editor.view);
+				}
+			};
+
+			const commandMany = (people: MentionPick[]) => {
+				if (editor && range) {
+					insertMentions(editor, range, people);
+				}
+				close();
+			};
+
+			// Ticking clears the search, so the next name can be typed straight away.
+			const clearQuery = () => {
+				if (editor && range && range.to > range.from + 1) {
+					editor
+						.chain()
+						.deleteRange({ from: range.from + 1, to: range.to })
+						.run();
+				}
+			};
+
+			// Only an active click beside the list ends it: this is what lets
+			// somebody tick a second person.
+			const onPointerDownOutside = (event: PointerEvent) => {
+				if (popup?.contains(event.target as Node)) {
+					return;
+				}
+				const people = component?.ref?.getChecked() ?? [];
+				if (people.length) {
+					commandMany(people);
+				} else {
+					close();
+				}
+			};
+
+			const reposition = (clientRect: (() => DOMRect | null) | null) => {
 				if (!popup || !clientRect) {
 					return;
 				}
@@ -90,33 +153,30 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				if (!rect) {
 					return;
 				}
-				// Above the whole composer, at the caret's column: anchored to
-				// the caret the list would cover the toolbar.
-				const card = editorDom.closest(
-					'.textarea__wrapper-send-message'
-				);
-				const top = card?.getBoundingClientRect().top ?? rect.top;
-				const virtualEl = {
-					getBoundingClientRect: () =>
-						new DOMRect(rect.left, top, rect.width, 0)
-				};
+				const virtualEl = { getBoundingClientRect: () => rect };
 				computePosition(virtualEl as any, popup, {
 					placement: 'top-start',
-					middleware: [offset(8), flip(), shift({ padding: 8 })]
-				}).then(({ x, y }) => {
+					middleware: [offset(6), flip(), shift({ padding: 8 })]
+				}).then(({ x, y, placement }) => {
 					if (popup) {
 						popup.style.left = `${x}px`;
 						popup.style.top = `${y}px`;
+						// The corner facing the @ goes square, like a speech bubble.
+						popup.dataset.placement = placement;
 					}
 				});
 			};
 
 			return {
 				onStart: (props) => {
+					editor = props.editor;
+					range = props.range;
 					component = new ReactRenderer(MentionList, {
 						props: {
 							items: props.items,
 							command: props.command,
+							commandMany,
+							onCheckedChange: clearQuery,
 							notInChatLabel: provider.notInChatLabel,
 							...statusProps()
 						},
@@ -128,24 +188,36 @@ export const createMentionExtension = (provider: MentionProvider) => {
 					popup.style.zIndex = '80';
 					popup.appendChild(component.element);
 					document.body.appendChild(popup);
-					reposition(props.clientRect ?? null, props.editor.view.dom);
+					document.addEventListener(
+						'pointerdown',
+						onPointerDownOutside,
+						true
+					);
+					reposition(props.clientRect ?? null);
 				},
 				onUpdate: (props) => {
+					range = props.range;
 					component?.updateProps({
 						items: props.items,
 						command: props.command,
 						notInChatLabel: provider.notInChatLabel,
 						...statusProps()
 					});
-					reposition(props.clientRect ?? null, props.editor.view.dom);
+					reposition(props.clientRect ?? null);
 				},
 				onKeyDown: (props) => {
 					if (props.event.key === 'Escape') {
+						close();
 						return true;
 					}
 					return component?.ref?.onKeyDown(props.event) ?? false;
 				},
 				onExit: () => {
+					document.removeEventListener(
+						'pointerdown',
+						onPointerDownOutside,
+						true
+					);
 					popup?.remove();
 					popup = null;
 					component?.destroy();

@@ -5,7 +5,7 @@
  * tests hold each cause to its own visible message.
  */
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MentionList } from './MentionList';
@@ -75,7 +75,7 @@ describe('MentionList empty states (#993)', () => {
 		renderList([candidate], 'ready');
 
 		expect(
-			screen.getByRole('option', { name: /M\. Musterfrau/ })
+			screen.getByRole('button', { name: /M\. Musterfrau/ })
 		).toBeTruthy();
 		expect(screen.queryByText('Niemand gefunden')).toBeNull();
 	});
@@ -83,7 +83,65 @@ describe('MentionList empty states (#993)', () => {
 	it('flags a consultant who is not in the chat but still offers them', () => {
 		renderList([{ ...candidate, isInRoom: false }], 'ready');
 
-		const option = screen.getByRole('option', { name: /M\. Musterfrau/ });
+		const option = screen.getByRole('button', { name: /M\. Musterfrau/ });
 		expect(option.textContent).toContain('nicht im Chat');
+	});
+});
+
+describe('MentionList with several people', () => {
+	const other: MentionCandidate = {
+		...candidate,
+		id: 'c-2',
+		displayName: 'A. Krüger',
+		username: 'a.krueger'
+	};
+	const renderPicker = (items: MentionCandidate[]) => {
+		const command = vi.fn();
+		const commandMany = vi.fn();
+		const props = { command, commandMany, notInChatLabel: 'nicht im Chat' };
+		const view = render(<MentionList items={items} {...props} />);
+		return {
+			command,
+			commandMany,
+			search: (next: MentionCandidate[]) =>
+				view.rerender(<MentionList items={next} {...props} />)
+		};
+	};
+
+	it('still inserts one person at once when a name is clicked', () => {
+		const { command, commandMany } = renderPicker([candidate, other]);
+
+		fireEvent.click(screen.getByRole('button', { name: /Krüger/ }));
+
+		expect(command).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'c-2' })
+		);
+		expect(commandMany).not.toHaveBeenCalled();
+	});
+
+	it('keeps a ticked person on top while the search no longer matches', () => {
+		const { search } = renderPicker([candidate, other]);
+
+		fireEvent.click(screen.getAllByRole('checkbox')[1]);
+		search([candidate]);
+
+		const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
+		expect(boxes).toHaveLength(2);
+		expect(boxes[0].checked).toBe(true);
+		expect(screen.getAllByRole('button')[0].textContent).toContain(
+			'Krüger'
+		);
+	});
+
+	it('inserts the ticked people together with a clicked name', () => {
+		const { command, commandMany } = renderPicker([candidate, other]);
+
+		fireEvent.click(screen.getAllByRole('checkbox')[1]);
+		fireEvent.click(screen.getByRole('button', { name: /Musterfrau/ }));
+
+		expect(
+			commandMany.mock.calls[0][0].map((p: { id: string }) => p.id)
+		).toEqual(['c-2', candidate.id]);
+		expect(command).not.toHaveBeenCalled();
 	});
 });
