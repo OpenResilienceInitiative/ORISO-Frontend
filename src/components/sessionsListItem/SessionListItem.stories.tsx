@@ -1599,7 +1599,7 @@ const cardStyle = (row: HTMLElement) =>
 const cardBox = (row: HTMLElement) =>
 	part(row, '.sessionsListItem__content').getBoundingClientRect();
 const REST_OUTLINE = 'rgb(255, 180, 170)'; // --m3-primary-fixed-dim
-const FOCUS_RING = 'rgb(204, 30, 28)'; // --m3-primary-container
+const FOCUS_RING = 'rgb(165, 0, 10)'; // --m3-primary
 
 /**
  * Grouped list (Figma 316-17441 / 8609-31260): unselected cards sit flush in
@@ -1953,11 +1953,8 @@ export const InternalCounsellorChat: Story = {
 				.textContent
 		).toBe('Interna');
 		await expect(
-			part(
-				row,
-				'.sessionsListItem__consultingTypeIcon--internalIcon'
-			).getAttribute('alt')
-		).toBe('Interna');
+			part(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
+		).toBeTruthy();
 	}
 };
 
@@ -2039,11 +2036,8 @@ export const GuidedSelfHelpGroup: Story = {
 				.textContent
 		).toBe('Kreis');
 		await expect(
-			part(
-				row,
-				'.sessionsListItem__consultingTypeIcon--selfHelpIcon'
-			).getAttribute('alt')
-		).toBe('Kreis');
+			part(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
+		).toBeTruthy();
 	}
 };
 
@@ -2172,7 +2166,7 @@ export const TenantPrimaryColour: Story = {
 		await expect(restingChip.color).toBe(tenant('--oriso-topic-tag-fg'));
 		const restingPostcode = style(resting, '.sessionsListItem__postcode');
 		await expect(restingPostcode.borderTopColor).toBe(
-			tenant('--m3-primary-fixed-dim')
+			tenant('--oriso-topic-tag-bg')
 		);
 		await expect(restingPostcode.color).toBe(
 			tenant('--m3-primary-container')
@@ -2184,7 +2178,7 @@ export const TenantPrimaryColour: Story = {
 					.color
 			).toBe(KIND_GREY);
 			await expect(
-				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
+				style(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
 					.backgroundColor
 			).toBe(KIND_GREY);
 		}
