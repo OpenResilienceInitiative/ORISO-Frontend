@@ -113,6 +113,7 @@ import { refetchEnquiryListState } from './refetchEnquiryList';
 import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { useSessionListRail } from './SessionListRailContext';
 import { useCaseHandoverBatch } from './useCaseHandoverBatch';
 import { getFormatChipVisibility } from './formatChipVisibility';
@@ -258,6 +259,7 @@ export const SessionsList = ({
 
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
+	const { isActive } = useActiveListItem();
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -1699,10 +1701,12 @@ export const SessionsList = ({
 	);
 	const isSessionListItemActive = useCallback(
 		(session: ExtendedSessionInterface) =>
-			(session?.rid && session.rid === groupIdFromParam) ||
-			(session?.item?.id !== undefined &&
-				String(session.item.id) === String(sessionIdFromParam || '')),
-		[groupIdFromParam, sessionIdFromParam]
+			isActive({
+				groupId: session?.item?.matrixRoomId,
+				rid: session?.rid,
+				sessionId: session?.item?.id
+			}),
+		[isActive]
 	);
 	// #1377 §5.2/§5.3: the display filter runs after `filterSessions` and
 	// before the toolbar chip, so the chip refinement composes on top. The
