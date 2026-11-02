@@ -984,7 +984,12 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes",
-				"menuLabel": "Options pour {{name}}"
+				"menuLabel": "Options pour {{name}}",
+				"role": {
+					"asker": "Personne en quête de conseil",
+					"consultant": "Conseiller·ère",
+					"supervisor": "Superviseur·e"
+				}
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
@@ -2021,7 +2026,15 @@
 			"counsellorsEmpty": "Aucun·e conseiller·ère dans cette salle",
 			"moderatorsEmpty": "Aucun·e modérateur·rice dans cette salle",
 			"toggleSection": "Basculer la section",
-			"selectAllBottom": "Tout sélectionner"
+			"selectAllBottom": "Tout sélectionner",
+			"unresolved": {
+				"headline": "Veuillez vérifier les destinataires",
+				"text": "Les destinataires sélectionnés n’ont pas pu être confirmés pour cette discussion. Choisissez à nouveau les destinataires, puis envoyez. Votre texte reste dans ce champ."
+			},
+			"attachmentBlocked": {
+				"headline": "Les fichiers sont envoyés à tout le monde",
+				"text": "Les fichiers et les messages vocaux ne peuvent pas être limités à certains collègues. Choisissez « Tous » pour les partager avec tout le monde, ou envoyez plutôt un message texte. Votre fichier ou enregistrement est conservé."
+			}
 		},
 		"edit": {
 			"cancel": "Annuler la modification",
@@ -2079,9 +2092,13 @@
 		"consultantLeftChat": "La personne consultante a quitté le chat",
 		"youEndedChat": "Vous avez mis fin au chat",
 		"chatEnded": "Le chat est terminé",
+		"consultantRenamedTitle": "Nom modifié",
+		"consultantRenamedDescription": "{{oldName}} s'appelle désormais {{newName}}.",
 		"anonymousUser": "Utilisateur",
 		"supervisionEnabledTitle": "Supervision activée !",
 		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",
+		"supervisionDisabledTitle": "Supervision terminée !",
+		"supervisionDisabledDescription": "{{name}} a été retiré·e de ce chat en tant que conseiller·ère superviseur·e.",
 		"today": "Aujourd'hui",
 		"tomorrow": "Demain",
 		"unread": "non lu",
@@ -2640,7 +2657,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Utilisez uniquement des lettres minuscules et des traits d'union. Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
+				"info": "Utilisez uniquement des lettres minuscules et des chiffres, séparés par un seul trait d'union (p. ex. team-2), {{max}} caractères au maximum. Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
 				"input": "Nom du lien de contact public",
 				"label": "Lien de contact public",
 				"notification": {

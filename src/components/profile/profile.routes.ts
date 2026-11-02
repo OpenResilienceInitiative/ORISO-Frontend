@@ -234,7 +234,8 @@ const profileRoutes = (
 			elements: profileRoutesSettings(
 				selectableLocales,
 				settings,
-				directLinksAllowed
+				directLinksAllowed,
+				tenant?.settings
 			)
 		},
 		{

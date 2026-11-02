@@ -984,7 +984,12 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ",
-				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት"
+				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት",
+				"role": {
+					"asker": "ምኽሪ ዝደሊ",
+					"consultant": "ኣማኻሪ",
+					"supervisor": "ተቖጻጻሪ"
+				}
 			},
 			"gallery": {
 				"back": "ናብቲ ቆጻሪ ተመለስ",
@@ -2021,7 +2026,15 @@
 			"counsellorsEmpty": "ኣብዚ ክፍሊ ኣማኸርቲ የለዉን",
 			"moderatorsEmpty": "ኣብዚ ክፍሊ መራሕቲ ዘተ የለዉን",
 			"toggleSection": "ክፍሊ ቀያይር",
-			"selectAllBottom": "ኩሉ ምረጽ"
+			"selectAllBottom": "ኩሉ ምረጽ",
+			"unresolved": {
+				"headline": "በጃኹም ተቐበልቲ ኣረጋግጹ",
+				"text": "ዝተመርጹ ተቐበልቲ ንዚ ዕላል እዚ ክረጋገጹ ኣይከኣሉን። ተቐበልቲ እንደገና ምረጹ፡ ድሕሪኡ ስደዱ። ጽሑፍኩም ኣብዚ ቦታ ይጸንሕ።"
+			},
+			"attachmentBlocked": {
+				"headline": "ፋይላት ንኹሉ ጥራይ ይኸዱ",
+				"text": "ፋይላትን ናይ ድምጺ መልእኽትታትን ናብ ዝተመርጹ ብጾት ጥራይ ክድረቱ ኣይክእሉን። ምስ ኩሉ ንምክፋል «ኩሎም» ምረጹ፡ ወይ ኣብ ክንዳኡ ጽሑፍ መልእኽቲ ስደዱ። ፋይልኩም ወይ ቅጂኹም ይዕቀብ።"
+			}
 		},
 		"edit": {
 			"cancel": "ምስትኽኻል ሰርዝ",
@@ -2079,9 +2092,13 @@
 		"consultantLeftChat": "እቲ ኣማኻሪ ካብቲ ቻት ወጺኡ",
 		"youEndedChat": "ነቲ ቻት ኣብቂዕኩሞ",
 		"chatEnded": "እቲ ቻት ተዛዚሙ",
+		"consultantRenamedTitle": "ስም ተቐይሩ",
+		"consultantRenamedDescription": "ናይ {{oldName}} ስም ሕጂ {{newName}} እዩ።",
 		"anonymousUser": "ተጠቃሚ",
 		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
 		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",
+		"supervisionDisabledTitle": "ምክትታል ተወዲኡ!",
+		"supervisionDisabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ካብዚ ቻት ተወጊዱ።",
 		"today": "ሎምዓንቲ",
 		"tomorrow": "ጉሓት",
 		"unread": "ዘይተነበበ",
@@ -2640,7 +2657,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "ንኣሽቱ ፊደላትን ሰረዝን (-) ጥራይ ተጠቐሙ። ሓደስቲ ስማት ብምምሕዳር ምስ ጸደቑ ጥራይ እዮም ኣብ ስራሕ ዝውዕሉ።",
+				"info": "ንኣሽቱ ፊደላትን ቁጽርታትን ጥራይ ተጠቐሙ፣ ብሓደ ሰረዝ (-) ተፈላልዮም (ንኣብነት team-2)፣ እንተበዝሐ {{max}} ፊደላት። ሓደስቲ ስማት ብምምሕዳር ምስ ጸደቑ ጥራይ እዮም ኣብ ስራሕ ዝውዕሉ።",
 				"input": "ስም ናይቲ ህዝባዊ መራኸቢ ሊንክ",
 				"label": "ህዝባዊ መራኸቢ ሊንክ",
 				"notification": {

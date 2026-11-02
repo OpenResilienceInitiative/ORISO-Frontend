@@ -1055,7 +1055,12 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants",
-				"menuLabel": "Options for {{name}}"
+				"menuLabel": "Options for {{name}}",
+				"role": {
+					"asker": "Advice seeker",
+					"consultant": "Counsellor",
+					"supervisor": "Supervisor"
+				}
 			},
 			"gallery": {
 				"back": "Back to the countdown",
@@ -2027,7 +2032,15 @@
 			"counsellorsEmpty": "No counsellors are in this room",
 			"moderatorsEmpty": "No moderators are in this room",
 			"toggleSection": "Toggle section",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Select All",
+			"unresolved": {
+				"headline": "Please check the recipients",
+				"text": "The selected recipients could not be confirmed for this chat. Choose the recipients again, then send. Your text stays in this field."
+			},
+			"attachmentBlocked": {
+				"headline": "Files only go to everyone",
+				"text": "Files and voice messages cannot be limited to selected colleagues. Choose “All” to share them with everyone, or send a text message instead. Your file or recording stays here."
+			}
 		},
 		"edit": {
 			"cancel": "Cancel editing",
@@ -2085,9 +2098,13 @@
 		"consultantLeftChat": "Consultant has left the chat",
 		"youEndedChat": "You ended the chat",
 		"chatEnded": "The chat has ended",
+		"consultantRenamedTitle": "Name changed",
+		"consultantRenamedDescription": "{{oldName}} is now called {{newName}}.",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
+		"supervisionDisabledTitle": "Supervision Ended!",
+		"supervisionDisabledDescription": "{{name}} was removed as a consultant supervisor from this chat.",
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
@@ -2636,7 +2653,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Use lowercase letters and hyphens only. New slugs become active after admin approval.",
+				"info": "Use lowercase letters and digits only, separated by single hyphens (e.g. team-2), at most {{max}} characters. New slugs become active after admin approval.",
 				"input": "Public contact link name",
 				"label": "Public contact link",
 				"notification": {
