@@ -24,11 +24,14 @@ export const NotificationSetup = ({
 	isEmailEnabled: configuredEmailEnabled = true,
 	isBrowserEnabled = true,
 	onStart,
+	onEmailAccepted,
 	onDone
 }: {
 	isEmailEnabled?: boolean;
 	isBrowserEnabled?: boolean;
 	onStart?: () => void;
+	/** Server accepted the subscription; presentation retention is not permission. */
+	onEmailAccepted?: () => void;
 	/** A choice went through without an error: also when it changed nothing. */
 	onDone?: () => void;
 }) => {
@@ -53,6 +56,10 @@ export const NotificationSetup = ({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [awaitingBrowser, setAwaitingBrowser] = useState(false);
+	const [failedEmailReadback, setFailedEmailReadback] = useState<{
+		choice: NotificationChoice;
+		operation: number;
+	} | null>(null);
 	const chosen: NotificationChoice | null =
 		emailActive && browserActive
 			? 'BOTH'
@@ -70,6 +77,7 @@ export const NotificationSetup = ({
 		setBusy(false);
 		setAwaitingBrowser(false);
 		setError(null);
+		setFailedEmailReadback(null);
 	}, []);
 	useEffect(() => {
 		reset();
@@ -92,43 +100,69 @@ export const NotificationSetup = ({
 		});
 	}, [reset]);
 
-	const finish = async (choice: NotificationChoice) => {
+	const finish = async (
+		choice: NotificationChoice,
+		acceptedOperation?: number
+	) => {
+		const resuming =
+			acceptedOperation !== undefined &&
+			acceptedEmailOperation.current === acceptedOperation &&
+			continuation.current === acceptedOperation;
+		if (acceptedOperation !== undefined && !resuming) return;
 		if (
-			(choice !== 'BROWSER' && !isEmailEnabled) ||
+			(!resuming && choice !== 'BROWSER' && !isEmailEnabled) ||
 			(choice !== 'EMAIL' && !browserSupported)
 		)
 			return;
-		const operation = ++continuation.current;
-		acceptedEmailOperation.current = null;
+		const operation = acceptedOperation ?? ++continuation.current;
+		if (!resuming) acceptedEmailOperation.current = null;
 		const current = () => continuation.current === operation;
 		setBusy(true);
 		setError(null);
+		setFailedEmailReadback(null);
 		try {
-			if (choice !== 'BROWSER' && (!emailActive || !consentEmailActive)) {
-				await apiPatchUserData({
-					emailNotifications: {
-						...userData?.emailNotifications,
-						emailNotificationsEnabled: true,
-						settings: {
-							...userData?.emailNotifications?.settings,
-							newChatMessageNotificationEnabled: true,
-							reassignmentNotificationEnabled: true
+			if (
+				resuming ||
+				(choice !== 'BROWSER' && (!emailActive || !consentEmailActive))
+			) {
+				if (!resuming) {
+					await apiPatchUserData({
+						emailNotifications: {
+							...userData?.emailNotifications,
+							emailNotificationsEnabled: true,
+							settings: {
+								...userData?.emailNotifications?.settings,
+								newChatMessageNotificationEnabled: true,
+								reassignmentNotificationEnabled: true
+							}
 						}
+					});
+					if (!current() || !latestEmailEnabled.current) return;
+					acceptedEmailOperation.current = operation;
+					onEmailAccepted?.();
+					if (!current()) return;
+				}
+				try {
+					const saved = await reloadUserData();
+					if (!current()) return;
+					if (
+						!saved?.email ||
+						!saved?.emailNotifications?.emailNotificationsEnabled ||
+						!saved?.emailNotifications?.settings
+							?.newChatMessageNotificationEnabled ||
+						!saved?.emailNotifications?.settings
+							?.reassignmentNotificationEnabled
+					)
+						throw new Error('Not confirmed');
+				} catch {
+					if (current()) {
+						setFailedEmailReadback({ choice, operation });
+						setError(
+							t('erstantwort.notificationChoice.refreshFailed')
+						);
 					}
-				});
-				if (!current() || !latestEmailEnabled.current) return;
-				acceptedEmailOperation.current = operation;
-				const saved = await reloadUserData();
-				if (!current()) return;
-				if (
-					!saved?.email ||
-					!saved?.emailNotifications?.emailNotificationsEnabled ||
-					!saved?.emailNotifications?.settings
-						?.newChatMessageNotificationEnabled ||
-					!saved?.emailNotifications?.settings
-						?.reassignmentNotificationEnabled
-				)
-					throw new Error('Not confirmed');
+					return;
+				}
 			}
 			if (
 				choice === 'BOTH' &&
@@ -176,17 +210,27 @@ export const NotificationSetup = ({
 		} else void finish(choice);
 	};
 
-	if (!isEmailEnabled && !isBrowserEnabled) return null;
+	const acceptedEmailActive =
+		acceptedEmailOperation.current === continuation.current;
+	if (!isEmailEnabled && !isBrowserEnabled && !acceptedEmailActive)
+		return null;
 	return (
 		<>
-			<NotificationChoiceCard
-				onChoose={choose}
-				chosen={chosen}
-				controlled
-				isEmailEnabled={isEmailEnabled}
-				isBrowserNotificationSupported={browserSupported}
-				busy={busy || emailOpen}
-			/>
+			{acceptedEmailActive && (
+				<p role="status">
+					{t('erstantwort.notificationChoice.emailAccepted')}
+				</p>
+			)}
+			{(isEmailEnabled || isBrowserEnabled) && (
+				<NotificationChoiceCard
+					onChoose={choose}
+					chosen={chosen}
+					controlled
+					isEmailEnabled={isEmailEnabled}
+					isBrowserNotificationSupported={browserSupported}
+					busy={busy || emailOpen}
+				/>
+			)}
 			{awaitingBrowser && (
 				<button
 					type="button"
@@ -206,6 +250,21 @@ export const NotificationSetup = ({
 				</p>
 			)}
 			{error && <p role="alert">{error}</p>}
+			{failedEmailReadback && acceptedEmailActive && (
+				<button
+					type="button"
+					className="erstantwort__action"
+					disabled={busy}
+					onClick={() =>
+						void finish(
+							failedEmailReadback.choice,
+							failedEmailReadback.operation
+						)
+					}
+				>
+					{t('erstantwort.emailNotification.retryRefresh')}
+				</button>
+			)}
 			{chosen && (
 				<p role="status">
 					{t('erstantwort.notificationChoice.active', {

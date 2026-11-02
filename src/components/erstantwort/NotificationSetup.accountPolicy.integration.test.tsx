@@ -61,10 +61,12 @@ const signIn = (sub = 'policy-asker', tenantId = 1) =>
 	);
 const deferred = <T,>() => {
 	let resolve!: (value: T) => void;
-	const promise = new Promise<T>((yes) => {
+	let reject!: (reason: unknown) => void;
+	const promise = new Promise<T>((yes, no) => {
 		resolve = yes;
+		reject = no;
 	});
-	return { promise, resolve };
+	return { promise, resolve, reject };
 };
 const account = (allowed = true, subscribed = false) =>
 	accountPolicyUser({
@@ -80,7 +82,13 @@ const account = (allowed = true, subscribed = false) =>
 	});
 const onDone = vi.fn();
 const requestPermission = vi.fn();
-const Harness = ({ firstReply = false }: { firstReply?: boolean }) => {
+const Harness = ({
+	firstReply = false,
+	emailOnlySetup = false
+}: {
+	firstReply?: boolean;
+	emailOnlySetup?: boolean;
+}) => {
 	const accountEmailAllowed = useAccountEmailCollectionAllowed();
 	const { userData, reloadUserData, setUserData } =
 		React.useContext(UserDataContext);
@@ -101,7 +109,11 @@ const Harness = ({ firstReply = false }: { firstReply?: boolean }) => {
 			<button onClick={() => void reloadUserData()}>reload</button>
 			{firstReply ? (
 				<ErstantwortMessage
-					trigger="AFTER_FIRST_MESSAGE"
+					trigger={
+						emailOnlySetup
+							? 'AFTER_ENQUIRY_DISPATCHED'
+							: 'AFTER_FIRST_MESSAGE'
+					}
 					conversationType="AGENCY_COUNSELLING"
 					skipAnimation
 				/>
@@ -114,13 +126,15 @@ const Harness = ({ firstReply = false }: { firstReply?: boolean }) => {
 		</>
 	);
 };
-const setup = (firstReply = false) =>
+const setup = (firstReply = false, emailOnlySetup = false) =>
 	render(
 		<MemoryRouter>
 			<TenantContext.Provider
 				value={{
 					tenant: accountPolicyTenant({
-						featureAskerEmailCollectionLiveChatEnabled: false
+						featureAskerEmailCollectionLiveChatEnabled: false,
+						featureAskerBrowserAgencyCounsellingEnabled:
+							!emailOnlySetup
 					}),
 					setTenant: vi.fn(),
 					updateTenantSettings: vi.fn()
@@ -128,7 +142,10 @@ const setup = (firstReply = false) =>
 			>
 				<UserDataProvider>
 					<ModalProvider>
-						<Harness firstReply={firstReply} />
+						<Harness
+							firstReply={firstReply}
+							emailOnlySetup={emailOnlySetup}
+						/>
 					</ModalProvider>
 				</UserDataProvider>
 			</TenantContext.Provider>
@@ -380,3 +397,148 @@ it.each(['actor', 'tenant', 'actor A→B→A'] as const)(
 		expect(apiGetUserData).toHaveBeenCalledTimes(2);
 	}
 );
+
+it('confirms the accepted email but shows refresh failure and retries GET only with capability closed', async () => {
+	const retry = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined })
+		.mockRejectedValueOnce(new Error('offline'))
+		.mockReturnValueOnce(retry.promise);
+	vi.mocked(apiPutEmail).mockResolvedValue(undefined);
+	setup(true);
+	await openFirstReplyEmail();
+	await waitFor(() =>
+		expect(screen.getByTestId('capability').textContent).toBe('false')
+	);
+	expect(
+		screen.getByRole('heading', {
+			name: 'furtherSteps.email.success.overlay.headline'
+		})
+	).toBeTruthy();
+	expect(screen.getByRole('alert').textContent).toContain(
+		'erstantwort.emailNotification.refreshFailed'
+	);
+	expect(screen.queryByRole('textbox')).toBeNull();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.emailNotification.retryRefresh'
+		})
+	);
+	await waitFor(() => expect(apiGetUserData).toHaveBeenCalledTimes(3));
+	expect(screen.queryByRole('textbox')).toBeNull();
+	expect(apiPutEmail).toHaveBeenCalledTimes(1);
+	await act(async () =>
+		retry.resolve({ ...account(), email: 'new@example.test' })
+	);
+	expect(screen.queryByRole('alert')).toBeNull();
+	expect(
+		screen.getByRole('heading', {
+			name: 'furtherSteps.email.success.overlay.headline'
+		})
+	).toBeTruthy();
+	expect(screen.getByTestId('capability').textContent).toBe('true');
+	expect(apiPutEmail).toHaveBeenCalledTimes(1);
+});
+
+it('keeps an accepted email-only subscription refresh error visible and retries GET only in the actual parent', async () => {
+	const retry = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce(account())
+		.mockRejectedValueOnce(new Error('offline'))
+		.mockReturnValueOnce(retry.promise);
+	setup(true, true);
+	fireEvent.click(
+		await screen.findByRole('button', { name: /notificationChoice.email/ })
+	);
+	await waitFor(() =>
+		expect(screen.getByTestId('capability').textContent).toBe('false')
+	);
+	expect(screen.getByRole('alert').textContent).toContain(
+		'erstantwort.notificationChoice.refreshFailed'
+	);
+	expect(
+		document.querySelector('input:not([readonly]):not([disabled])')
+	).toBeNull();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.emailNotification.retryRefresh'
+		})
+	);
+	await waitFor(() => expect(apiGetUserData).toHaveBeenCalledTimes(3));
+	expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+	expect(apiPutEmail).not.toHaveBeenCalled();
+	await act(async () => retry.resolve(account(true, true)));
+	expect(screen.queryByRole('alert')).toBeNull();
+	expect(screen.getByTestId('capability').textContent).toBe('true');
+	expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+});
+
+it('discards a closed accepted-email readback failure without reopening its confirmation', async () => {
+	const refresh = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined })
+		.mockReturnValueOnce(refresh.promise);
+	vi.mocked(apiPutEmail).mockResolvedValue(undefined);
+	setup(true);
+	await openFirstReplyEmail();
+	await screen.findByRole('heading', {
+		name: 'furtherSteps.email.success.overlay.headline'
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'furtherSteps.email.overlay.button2.label'
+		})
+	);
+	await act(async () => refresh.reject(new Error('offline')));
+	expect(
+		screen.queryByRole('heading', {
+			name: 'furtherSteps.email.success.overlay.headline'
+		})
+	).toBeNull();
+	expect(screen.queryByRole('alert')).toBeNull();
+	expect(apiPutEmail).toHaveBeenCalledTimes(1);
+});
+it('does not apply an old accepted-email readback failure to a newer auth-generation form', async () => {
+	const refresh = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined })
+		.mockReturnValueOnce(refresh.promise)
+		.mockResolvedValueOnce({ ...account(), email: undefined });
+	vi.mocked(apiPutEmail).mockResolvedValue(undefined);
+	setup(true);
+	await openFirstReplyEmail();
+	await screen.findByRole('heading', {
+		name: 'furtherSteps.email.success.overlay.headline'
+	});
+	act(() => {
+		signIn('other');
+		signIn();
+	});
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	await waitFor(() =>
+		expect(screen.getByTestId('capability').textContent).toBe('true')
+	);
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.emailNotification.action'
+		})
+	);
+	fireEvent.change(await screen.findByRole('textbox'), {
+		target: { value: 'current@example.test' }
+	});
+	await act(async () => refresh.reject(new Error('offline')));
+	expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe(
+		'current@example.test'
+	);
+	expect(
+		screen.queryByText('erstantwort.emailNotification.refreshFailed')
+	).toBeNull();
+	expect(apiPutEmail).toHaveBeenCalledTimes(1);
+});

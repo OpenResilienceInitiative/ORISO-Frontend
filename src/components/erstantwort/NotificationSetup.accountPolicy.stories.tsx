@@ -18,7 +18,17 @@ import { ErstantwortMessage } from './ErstantwortMessage';
 
 let releaseRefresh: (() => void) | undefined;
 let browserRequests = 0;
-const Setup = ({ firstReply = false }: { firstReply?: boolean }) => {
+let emailWrites = 0;
+let notificationWrites = 0;
+type FixtureProps = {
+	firstReply?: boolean;
+	emailOnlySetup?: boolean;
+	refreshFailure?: boolean;
+};
+const Setup = ({
+	firstReply = false,
+	emailOnlySetup = false
+}: FixtureProps) => {
 	const { userData, reloadUserData } = React.useContext(UserDataContext);
 	const emailAllowed = useAccountEmailCollectionAllowed();
 	React.useEffect(() => {
@@ -31,7 +41,11 @@ const Setup = ({ firstReply = false }: { firstReply?: boolean }) => {
 			</span>
 			{firstReply ? (
 				<ErstantwortMessage
-					trigger="AFTER_FIRST_MESSAGE"
+					trigger={
+						emailOnlySetup
+							? 'AFTER_ENQUIRY_DISPATCHED'
+							: 'AFTER_FIRST_MESSAGE'
+					}
 					conversationType="AGENCY_COUNSELLING"
 					skipAnimation
 				/>
@@ -43,7 +57,11 @@ const Setup = ({ firstReply = false }: { firstReply?: boolean }) => {
 };
 
 /** Real provider, HTTP primitive and setup; only server responses/OS permission are synthetic. */
-const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
+const Fixture = ({
+	firstReply = false,
+	emailOnlySetup = false,
+	refreshFailure = false
+}: FixtureProps) => {
 	const [ready, setReady] = React.useState(false);
 	React.useEffect(() => {
 		const originalFetch = globalThis.fetch;
@@ -54,13 +72,19 @@ const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
 		const originalBrowser = localStorage.getItem('BROWSER_NOTIFICATIONS');
 		let subscribed = false,
 			acceptedWrite = false,
-			email = firstReply ? undefined : 'existing@example.test',
+			email =
+				firstReply && !emailOnlySetup
+					? undefined
+					: 'existing@example.test',
+			refreshAttempts = 0,
 			permission = 'default';
 		const overlay = document.createElement('div');
 		overlay.id = 'overlay';
 		document.body.appendChild(overlay);
 		releaseRefresh = undefined;
 		browserRequests = 0;
+		emailWrites = 0;
+		notificationWrites = 0;
 		notificationSettingsStore.resetForTests();
 		localStorage.removeItem('BROWSER_NOTIFICATIONS');
 		const response = () =>
@@ -93,12 +117,17 @@ const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
 			) {
 				if (method === 'PATCH') {
 					subscribed = true;
+					notificationWrites++;
 					acceptedWrite = true;
 					return new Response('{}', { status: 200 });
 				}
 				if (!acceptedWrite) return response();
-				return new Promise<Response>((resolve) => {
-					releaseRefresh = () => resolve(response());
+				return new Promise<Response>((resolve, reject) => {
+					const attempt = ++refreshAttempts;
+					releaseRefresh = () =>
+						refreshFailure && attempt === 1
+							? reject(new TypeError('Synthetic offline refresh'))
+							: resolve(response());
 				});
 			}
 			if (
@@ -112,6 +141,7 @@ const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
 						? await input.clone().text()
 						: '');
 				email = JSON.parse(String(body));
+				emailWrites++;
 				acceptedWrite = true;
 				return new Response(null, { status: 204 });
 			}
@@ -147,14 +177,16 @@ const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
 			notificationSettingsStore.resetForTests();
 			releaseRefresh = undefined;
 		};
-	}, [firstReply]);
+	}, [firstReply, emailOnlySetup, refreshFailure]);
 	if (!ready) return null;
 	return (
 		<>
 			<TenantContext.Provider
 				value={{
 					tenant: accountPolicyTenant({
-						featureAskerEmailCollectionLiveChatEnabled: false
+						featureAskerEmailCollectionLiveChatEnabled: false,
+						featureAskerBrowserAgencyCounsellingEnabled:
+							!emailOnlySetup
 					}),
 					setTenant: () => {},
 					updateTenantSettings: () => {}
@@ -162,7 +194,10 @@ const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
 			>
 				<UserDataProvider>
 					<ModalProvider>
-						<Setup firstReply={firstReply} />
+						<Setup
+							firstReply={firstReply}
+							emailOnlySetup={emailOnlySetup}
+						/>
 					</ModalProvider>
 				</UserDataProvider>
 			</TenantContext.Provider>
@@ -214,6 +249,7 @@ export const AcceptedRefreshKeepsBoth: Story = {
 };
 
 export const AcceptedFirstReplyEmailStaysClosed: Story = {
+	name: 'Accepted first-reply email keeps the form closed',
 	args: { firstReply: true },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement),
@@ -246,5 +282,110 @@ export const AcceptedFirstReplyEmailStaysClosed: Story = {
 			).toHaveTextContent('true')
 		);
 		await expect(page.queryByRole('textbox')).toBeNull();
+	}
+};
+
+const acceptedFailure = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement),
+		page = within(canvasElement.ownerDocument.body);
+	await userEvent.click(
+		await canvas.findByRole('button', {
+			name: i18n.t('erstantwort.emailNotification.action')
+		})
+	);
+	await userEvent.type(await page.findByRole('textbox'), 'new@example.test');
+	await userEvent.click(
+		page.getByRole('button', {
+			name: i18n.t('furtherSteps.email.overlay.button1.label')
+		})
+	);
+	await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
+	await waitFor(() =>
+		expect(canvas.getByTestId('collection-capability')).toHaveTextContent(
+			'undefined'
+		)
+	);
+	releaseRefresh!();
+	await waitFor(() =>
+		expect(canvas.getByTestId('collection-capability')).toHaveTextContent(
+			'false'
+		)
+	);
+	await waitFor(() =>
+		expect(
+			page.getByRole('heading', {
+				name: i18n.t('furtherSteps.email.success.overlay.headline')
+			})
+		).toBeVisible()
+	);
+	await expect(page.getByRole('alert')).toHaveTextContent(
+		i18n.t('erstantwort.emailNotification.refreshFailed')
+	);
+	await expect(page.queryByRole('textbox')).toBeNull();
+	await expect(emailWrites).toBe(1);
+	return { canvas, page };
+};
+export const AcceptedEmailRefreshFailure: Story = {
+	args: { firstReply: true, refreshFailure: true },
+	play: async ({ canvasElement }) => {
+		await acceptedFailure(canvasElement);
+	}
+};
+export const AcceptedEmailRefreshRetry: Story = {
+	args: { firstReply: true, refreshFailure: true },
+	play: async ({ canvasElement }) => {
+		const { canvas, page } = await acceptedFailure(canvasElement),
+			previous = releaseRefresh;
+		await userEvent.click(
+			page.getByRole('button', {
+				name: i18n.t('erstantwort.emailNotification.retryRefresh')
+			})
+		);
+		await waitFor(() => expect(releaseRefresh).not.toBe(previous));
+		await expect(page.queryByRole('textbox')).toBeNull();
+		releaseRefresh!();
+		await waitFor(() =>
+			expect(
+				canvas.getByTestId('collection-capability')
+			).toHaveTextContent('true')
+		);
+		await expect(page.queryByRole('alert')).toBeNull();
+		await expect(emailWrites).toBe(1);
+	}
+};
+export const AcceptedEmailOnlyRefreshFailure: Story = {
+	args: { firstReply: true, emailOnlySetup: true, refreshFailure: true },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: new RegExp(i18n.t('erstantwort.notificationChoice.email'))
+			})
+		);
+		await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
+		await waitFor(() =>
+			expect(
+				canvas.getByTestId('collection-capability')
+			).toHaveTextContent('undefined')
+		);
+		releaseRefresh!();
+		await waitFor(() =>
+			expect(
+				canvas.getByTestId('collection-capability')
+			).toHaveTextContent('false')
+		);
+		await expect(canvas.getByRole('alert')).toHaveTextContent(
+			i18n.t('erstantwort.notificationChoice.refreshFailed')
+		);
+		await expect(
+			canvas.getByRole('button', {
+				name: i18n.t('erstantwort.emailNotification.retryRefresh')
+			})
+		).toBeVisible();
+		await expect(
+			canvasElement.querySelector('input:not([readonly]):not([disabled])')
+		).toBeNull();
+		await expect(notificationWrites).toBe(1);
+		await expect(emailWrites).toBe(0);
 	}
 };

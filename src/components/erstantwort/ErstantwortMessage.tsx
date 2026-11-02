@@ -20,7 +20,10 @@ import {
 	useOpenTwoFactorSettings
 } from '../../hooks/useOpenTwoFactorSettings';
 import { ErstantwortSequence } from './ErstantwortSequence';
-import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
+import {
+	ErstantwortEmailOverlay,
+	type EmailRefreshStatus
+} from './ErstantwortEmailOverlay';
 import { ErstantwortDisplayNameOverlay } from './ErstantwortDisplayNameOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { NotificationSetupCollapse } from './NotificationSetupMessage';
@@ -34,6 +37,7 @@ import {
 } from './erstantwortPayload';
 import {
 	ErstantwortLiveState,
+	type ResolvedBaustein,
 	resolveErstantwortBausteine
 } from './erstantwortResolve';
 import { ErstantwortTrigger } from './erstantwortCatalogue';
@@ -100,6 +104,23 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
 	const tenant = useTenant();
+	const emailScope = useMemo(
+		() => ({
+			actorId: userData?.userId,
+			tenantId: tenant?.id,
+			sessionId,
+			messageId,
+			conversationType
+		}),
+		[userData?.userId, tenant?.id, sessionId, messageId, conversationType]
+	);
+	const [acceptedNotification, setAcceptedNotification] = useState<{
+		scope: typeof emailScope;
+		baustein: ResolvedBaustein;
+		index: number;
+	} | null>(null);
+	const acceptedNotificationCurrent =
+		acceptedNotification?.scope === emailScope;
 	const channels = emailCollectionSetupPolicy(
 		tenant?.settings,
 		conversationType
@@ -118,27 +139,31 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	// Keep an in-progress setup visible through its saved confirmation. On reload,
 	// existing reachability suppresses automatic invitations again.
 	const offerNotificationSetup =
-		(emailAllowed || channels.browserAllowed) &&
-		(notificationSetupStarted || !hasReachableChannel);
+		acceptedNotificationCurrent ||
+		((emailAllowed || channels.browserAllowed) &&
+			(notificationSetupStarted || !hasReachableChannel));
 	// A persisted message keeps its place in the history after a channel is
 	// reachable: the slot then starts as the one-line summary with "ändern"
 	// instead of vanishing. No invitation is offered again (offerNotificationSetup
 	// still decides that); a tenant without any channel has nothing to show.
-	const showSetupSlot = emailAllowed || channels.browserAllowed;
-	const emailScope = useMemo(
-		() => ({
-			actorId: userData?.userId,
-			tenantId: tenant?.id,
-			sessionId,
-			messageId,
-			conversationType
-		}),
-		[userData?.userId, tenant?.id, sessionId, messageId, conversationType]
-	);
+	const showSetupSlot =
+		acceptedNotificationCurrent || emailAllowed || channels.browserAllowed;
+
 	const [emailOverlay, setEmailOverlay] = useState<{
 		scope: typeof emailScope;
 		id: number;
 	} | null>(null);
+	const [emailRefreshStatus, setEmailRefreshStatus] = useState<
+		'editing' | EmailRefreshStatus
+	>('editing');
+	const latestEmailRefreshStatus = useRef(emailRefreshStatus);
+	const updateEmailRefreshStatus = useCallback(
+		(status: 'editing' | EmailRefreshStatus) => {
+			latestEmailRefreshStatus.current = status;
+			setEmailRefreshStatus(status);
+		},
+		[]
+	);
 	const latestEmailOverlay = useRef(emailOverlay);
 	latestEmailOverlay.current = emailOverlay;
 	const latestEmailScope = useRef(emailScope);
@@ -149,7 +174,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const closeEmailOverlay = useCallback(() => {
 		latestEmailOverlay.current = null;
 		setEmailOverlay(null);
-	}, []);
+		updateEmailRefreshStatus('editing');
+	}, [updateEmailRefreshStatus]);
 	const openEmailOverlay = useCallback(() => {
 		if (
 			!latestEmailAllowed.current ||
@@ -158,19 +184,25 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			return;
 		const opening = { scope: emailScope, id: ++emailOpening.current };
 		latestEmailOverlay.current = opening;
+		updateEmailRefreshStatus('editing');
 		setEmailOverlay(opening);
-	}, [emailScope]);
+	}, [emailScope, updateEmailRefreshStatus]);
 	useEffect(() => {
 		closeEmailOverlay();
+		setAcceptedNotification(null);
 	}, [emailScope, closeEmailOverlay]);
 	useEffect(() => {
-		if (!emailAllowed) closeEmailOverlay();
+		if (!emailAllowed && latestEmailRefreshStatus.current === 'editing')
+			closeEmailOverlay();
 	}, [emailAllowed, closeEmailOverlay]);
 	useEffect(() => {
 		let identity = getAuthenticatedAccountIdentity();
 		return subscribeToAuthenticatedTenant(() => {
 			const next = getAuthenticatedAccountIdentity();
-			if (next !== identity) closeEmailOverlay();
+			if (next !== identity) {
+				closeEmailOverlay();
+				setAcceptedNotification(null);
+			}
 			identity = next;
 		});
 	}, [closeEmailOverlay]);
@@ -179,6 +211,24 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			latestEmailOverlay.current = null;
 		},
 		[]
+	);
+	const refreshAcceptedEmail = useCallback(
+		(opening: NonNullable<typeof emailOverlay>) => {
+			const current = () =>
+				latestEmailOverlay.current === opening &&
+				latestEmailScope.current === opening.scope;
+			if (!current() || latestEmailRefreshStatus.current === 'pending')
+				return;
+			updateEmailRefreshStatus('pending');
+			void reloadUserData()
+				.then(() => {
+					if (current()) updateEmailRefreshStatus('confirmed');
+				})
+				.catch(() => {
+					if (current()) updateEmailRefreshStatus('failed');
+				});
+		},
+		[reloadUserData, updateEmailRefreshStatus]
 	);
 	const [isDisplayNameOverlayOpen, setIsDisplayNameOverlayOpen] =
 		useState(false);
@@ -236,6 +286,17 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				)
 			: [...offeredBausteine];
 	if (
+		acceptedNotificationCurrent &&
+		acceptedNotification &&
+		!bausteine.some((item) => item.id === acceptedNotification.baustein.id)
+	) {
+		bausteine.splice(
+			Math.min(acceptedNotification.index, bausteine.length),
+			0,
+			{ ...acceptedNotification.baustein, action: undefined }
+		);
+	}
+	if (
 		persistedInvitation &&
 		offerNotificationSetup &&
 		!hasChoice &&
@@ -290,7 +351,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		!readOnly &&
 		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 
-	if (!bausteine.length) return null;
+	if (!bausteine.length && !emailOverlay) return null;
 
 	return (
 		<>
@@ -314,6 +375,29 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
+								key={JSON.stringify([
+									emailScope.actorId,
+									emailScope.tenantId,
+									sessionId,
+									messageId,
+									conversationType
+								])}
+								onEmailAccepted={() => {
+									const index = bausteine.findIndex(
+										(item) =>
+											item.id === 'emailNotification'
+									);
+									if (
+										latestEmailScope.current ===
+											emailScope &&
+										index >= 0
+									)
+										setAcceptedNotification({
+											scope: emailScope,
+											baustein: bausteine[index],
+											index
+										});
+								}}
 								isEmailEnabled={emailAllowed}
 								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
@@ -325,6 +409,29 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						!readOnly && showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
+								key={JSON.stringify([
+									emailScope.actorId,
+									emailScope.tenantId,
+									sessionId,
+									messageId,
+									conversationType
+								])}
+								onEmailAccepted={() => {
+									const index = bausteine.findIndex(
+										(item) =>
+											item.id === 'notificationChoice'
+									);
+									if (
+										latestEmailScope.current ===
+											emailScope &&
+										index >= 0
+									)
+										setAcceptedNotification({
+											scope: emailScope,
+											baustein: bausteine[index],
+											index
+										});
+								}}
 								isEmailEnabled={emailAllowed}
 								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
@@ -340,26 +447,35 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					)
 				}}
 			/>
-			{emailOverlay && emailAllowed && (
-				<ErstantwortEmailOverlay
-					key={emailOverlay.id}
-					onClose={() => {
-						if (latestEmailOverlay.current === emailOverlay)
-							closeEmailOverlay();
-					}}
-					onSaved={() => {
-						if (
-							latestEmailOverlay.current !== emailOverlay ||
-							latestEmailScope.current !== emailOverlay.scope ||
-							!latestEmailAllowed.current
-						)
-							return;
-						// The address was accepted. Close this opening before the fail-closed reload.
-						closeEmailOverlay();
-						void reloadUserData().catch(() => undefined);
-					}}
-				/>
-			)}
+			{emailOverlay &&
+				(emailAllowed || emailRefreshStatus !== 'editing') && (
+					<ErstantwortEmailOverlay
+						key={emailOverlay.id}
+						refreshStatus={
+							emailRefreshStatus === 'editing'
+								? undefined
+								: emailRefreshStatus
+						}
+						onRetryRefresh={() =>
+							refreshAcceptedEmail(emailOverlay)
+						}
+						onClose={() => {
+							if (latestEmailOverlay.current === emailOverlay)
+								closeEmailOverlay();
+						}}
+						onSaved={() => {
+							if (
+								latestEmailOverlay.current !== emailOverlay ||
+								latestEmailScope.current !==
+									emailOverlay.scope ||
+								!latestEmailAllowed.current
+							)
+								return;
+							// The write is accepted; only read-only success survives the fail-closed reload.
+							refreshAcceptedEmail(emailOverlay);
+						}}
+					/>
+				)}
 			{isDisplayNameOverlayOpen && sessionId !== undefined && (
 				<ErstantwortDisplayNameOverlay
 					key={sessionId}

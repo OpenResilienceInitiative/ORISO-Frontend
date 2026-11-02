@@ -5554,7 +5554,9 @@
 			"browserSilenced": "Browser notifications are silenced in your notification settings.",
 			"channelBoth": "Email and browser on this device",
 			"channelEmail": "Email",
-			"channelBrowser": "Browser on this device"
+			"channelBrowser": "Browser on this device",
+			"emailAccepted": "The email notification change was accepted.",
+			"refreshFailed": "The change was accepted. Your current settings could not be loaded."
 		},
 		"notificationSummary": {
 			"label": "Notifications: {{state}}",
@@ -5600,7 +5602,9 @@
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
 			"saveFailed": "Saving failed. Please try again.",
-			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support."
+			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support.",
+			"refreshFailed": "Your email address is saved. Your current settings could not be loaded.",
+			"retryRefresh": "Reload settings"
 		},
 		"accountProtection": {
 			"headline": "Your access, additionally protected",
