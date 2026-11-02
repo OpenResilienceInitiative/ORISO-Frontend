@@ -888,6 +888,10 @@ declare namespace UserService {
 			displayName?: string;
 			utcOffset?: string;
 			userId?: string;
+			/**
+			 * What the member is on the platform, shown to everyone in the chat (OBP 2.1 #107).
+			 */
+			role?: 'CONSULTANT' | 'ADVICE_SEEKER';
 		}
 		export interface ChatMembersResponseDTO {
 			members?: ChatMemberResponseDTO[];

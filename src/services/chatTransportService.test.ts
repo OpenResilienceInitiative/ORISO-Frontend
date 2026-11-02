@@ -159,6 +159,26 @@ describe('chatTransportService Matrix timeline', () => {
 		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
 	});
 
+	it('reports the moment a message in the watched room is actually redacted', () => {
+		const listener = vi.fn();
+		const redaction = { getType: () => 'm.room.redaction' };
+		const detach = chatTransportService.onMatrixRedaction(
+			ROOM_ID,
+			listener
+		);
+
+		// Room.redaction fires when the SDK flips the target to "redacted",
+		// including the remote echo of our OWN redaction, which never
+		// produces a second Room.timeline event.
+		fakeClient.emit('Room.redaction', redaction, { roomId: OTHER_ROOM_ID });
+		expect(listener).not.toHaveBeenCalled();
+		fakeClient.emit('Room.redaction', redaction, { roomId: ROOM_ID });
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.redaction')).toBe(0);
+	});
+
 	it('refreshes an initial-sync historical event when decryption finishes later', () => {
 		const { event } = createFakeEncryptedMatrixEvent();
 		const listener = vi.fn();
