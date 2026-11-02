@@ -4481,7 +4481,10 @@
 			"unreadCount_one": "{{count}} yeni mesaj"
 		},
 		"timeline": {
-			"running": "devam ediyor"
+			"now": "Şimdi",
+			"running": "devam ediyor",
+			"upcoming": "Gelecekteki randevular",
+			"nextAppointment": "Sonraki randevu: {{date}}"
 		}
 	},
 	"statusOverlay": {

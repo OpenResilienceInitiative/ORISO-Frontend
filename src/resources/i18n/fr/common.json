@@ -4481,7 +4481,10 @@
 			"unreadCount_one": "{{count}} nouveau message"
 		},
 		"timeline": {
-			"running": "en cours"
+			"now": "Maintenant",
+			"running": "en cours",
+			"upcoming": "Rendez-vous à venir",
+			"nextAppointment": "Prochain rendez-vous : {{date}}"
 		}
 	},
 	"statusOverlay": {

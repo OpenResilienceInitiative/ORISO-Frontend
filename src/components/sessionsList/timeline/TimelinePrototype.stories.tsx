@@ -549,8 +549,10 @@ export const CrowdField: Story = {
 			return [backgroundColor, color];
 		};
 		await waitFor(() => expect(circle()?.textContent).toBe('23'));
-		const box = circle().getBoundingClientRect();
-		await expect([box.width, box.height]).toEqual([48, 48]);
+		await waitFor(() => {
+			const box = circle().getBoundingClientRect();
+			expect([box.width, box.height]).toEqual([48, 48]);
+		});
 		await expect(circle().querySelector('svg')).not.toBeNull();
 		await waitFor(() =>
 			expect(colours()).toEqual(['rgb(255, 255, 255)', 'rgb(27, 27, 28)'])
@@ -587,10 +589,13 @@ export const OpenCardFollowsTheFocus: Story = {
 				.backgroundColor
 		});
 		await waitFor(() => expect(row()).toBeTruthy());
-		const closed = row()
-			.querySelector<HTMLElement>('.sessionsListItem__topic')!
-			.getBoundingClientRect();
-		await expect(closed.height).toBe(22);
+		await waitFor(() =>
+			expect(
+				row()
+					.querySelector<HTMLElement>('.sessionsListItem__topic')!
+					.getBoundingClientRect().height
+			).toBe(22)
+		);
 		await userEvent.click(
 			row().querySelector<HTMLElement>('.sessionsListItem__topic')!
 		);
@@ -719,10 +724,13 @@ export const CardRowKindBesideButton: Story = {
 		await expect(
 			Math.abs(middle(kind) - middle(button))
 		).toBeLessThanOrEqual(1);
-		await expect(
-			button.getBoundingClientRect().left -
-				row.getBoundingClientRect().left
-		).toBe(16);
+		// waitFor: cards scale in (0.98 → 1), which scales every measured length.
+		await waitFor(() =>
+			expect(
+				button.getBoundingClientRect().left -
+					row.getBoundingClientRect().left
+			).toBe(16)
+		);
 		const card = row.closest('.sessionsListItem')!;
 		const bodyKind = card.querySelector('.sessionCard__trailing')!;
 		await expect(getComputedStyle(bodyKind).display).toBe('none');
@@ -744,7 +752,9 @@ export const CardRowPreviewOneLine: Story = {
 			'.sessionCard__preview > *'
 		) as HTMLElement;
 		preview.textContent = 'Sehr langer Text. '.repeat(20);
-		await expect(preview.getBoundingClientRect().height).toBe(16);
+		await waitFor(() =>
+			expect(preview.getBoundingClientRect().height).toBe(16)
+		);
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
 		// Without an appointment the same long text keeps its lines.
 		const free = canvasElement.querySelector(
