@@ -38,7 +38,9 @@ permissions:
     contents: read
 
 # Two rollouts on the same server at once would race on the same
-# deployment; queue them instead of cancelling one halfway.
+# deployment. A running rollout is never cancelled; a newer request
+# replaces one that is still pending, which is fine because the server
+# script always deploys whatever is current.
 concurrency:
     group: frontend-deploy-${{ github.event.inputs.environment }}
     cancel-in-progress: false
@@ -59,6 +61,7 @@ jobs:
                   TARGET: ${{ github.event.inputs.environment == 'dev' && 'development' || 'pre-development' }}
                   HAS_HOST: ${{ secrets.DEPLOY_SSH_HOST != '' }}
                   HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+                  HAS_FINGERPRINT: ${{ secrets.DEPLOY_SSH_FINGERPRINT != '' }}
               run: |
                   missing=""
                   [ "$HAS_HOST" = "true" ] || missing="$missing DEPLOY_SSH_HOST"
@@ -67,6 +70,7 @@ jobs:
                     echo "::error::GitHub environment '$TARGET' is missing:$missing (Settings → Environments → $TARGET)"
                     exit 1
                   fi
+                  [ "$HAS_FINGERPRINT" = "true" ] || echo "::warning::DEPLOY_SSH_FINGERPRINT is not set in '$TARGET'; the server's host key is not verified."
 
             - name: Run deploy-frontend-dev.sh on the server
               uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
