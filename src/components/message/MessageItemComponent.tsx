@@ -87,6 +87,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
+import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import clsx from 'clsx';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -2049,6 +2050,12 @@ export const MessageItemComponent = ({
 				isMyMessage && 'messageItem__timeRail--outgoing'
 			)}
 		>
+			{isSupervisorFeedback && (
+				<div className="messageItem__feedbackTag">
+					<SupervisionGlyph aria-hidden="true" focusable="false" />
+					{translate('message.feedbackTag')}
+				</div>
+			)}
 			{!isMyMessage && reactionChips}
 			{messageTimeInBubble}
 			{isMyMessage && reactionChips}
@@ -2345,11 +2352,6 @@ export const MessageItemComponent = ({
 										{systemNotificationDescription}
 									</div>
 								)}
-							{isSupervisorFeedback && (
-								<div className="messageItem__feedbackTag">
-									{translate('message.feedbackTag')}
-								</div>
-							)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
 							{replyToEventId && !isSystemNotification && (
@@ -2902,17 +2904,28 @@ export const MessageItemComponent = ({
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
 								<div className="messageItem__avatar">
-									<MessageAvatar
-										isGroup={!!activeSession?.isGroup}
-										isSystemNotification={false}
-										userId={userId}
-										username={username}
-										choice={incomingAvatarChoice}
-										displayName={
-											resolvedIncomingDisplayName
-										}
-										size={AVATAR_SIZES.message}
-									/>
+									{isSupervisorFeedback ? (
+										// In supervision the role matters more than
+										// the face. The name still stands above.
+										<span className="messageItem__supervisionAvatar">
+											<SupervisionGlyph
+												aria-hidden="true"
+												focusable="false"
+											/>
+										</span>
+									) : (
+										<MessageAvatar
+											isGroup={!!activeSession?.isGroup}
+											isSystemNotification={false}
+											userId={userId}
+											username={username}
+											choice={incomingAvatarChoice}
+											displayName={
+												resolvedIncomingDisplayName
+											}
+											size={AVATAR_SIZES.message}
+										/>
+									)}
 								</div>
 								{!readOnly && (
 									<button
