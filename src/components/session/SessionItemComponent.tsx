@@ -1385,11 +1385,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		) {
 			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -2976,6 +2972,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		apiRegisterMatrixRoomForSync(sessionId);
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
+	// Phone: a side panel fills the screen instead of the main chat.
+	const mainChatHidden = isPhoneLayout && openPanel !== null;
 	useEffect(() => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
@@ -3008,7 +3006,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: active ? activeThreadRootId : null,
-				active
+				active,
+				mainChatHidden: (active && mainChatHidden) || undefined
 			}).catch(() => undefined);
 		};
 
@@ -3040,7 +3039,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAskerUser,
 		isConsultantUser,
 		location.pathname,
-		location.search
+		location.search,
+		mainChatHidden
 	]);
 
 	// Track the decryption success because we have a short timing issue when

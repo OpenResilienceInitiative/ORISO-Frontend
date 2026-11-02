@@ -48,6 +48,7 @@ import {
 } from '../sessionCookie/accessSessionCookie';
 import { setTenantSettings } from '../../utils/tenantSettingsHelper';
 
+const activeViewPatch = vi.hoisted(() => vi.fn(async () => undefined));
 const boundary = vi.hoisted(() => {
 	Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 		configurable: true,
@@ -111,7 +112,7 @@ vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetTenantConsultantList: async () => []
 }));
 vi.mock('../../api/apiPatchNotificationActiveView', () => ({
-	apiPatchNotificationActiveView: async () => undefined
+	apiPatchNotificationActiveView: activeViewPatch
 }));
 vi.mock('../../api/apiMatrixSyncRegister', () => ({
 	apiRegisterMatrixRoomForSync: async () => undefined
@@ -285,6 +286,7 @@ function openEnquiry(
 		reloadedStatus?: number;
 		teamChannel?: boolean;
 		threadChannel?: boolean;
+		width?: number;
 		id?: number;
 		registrationType?: string;
 		conversationType?: string | null;
@@ -355,7 +357,7 @@ function openEnquiry(
 		);
 	}
 	const providers: [React.Context<any>, any][] = [
-		[ResponsiveContext, { width: 1440 }],
+		[ResponsiveContext, { width: options.width ?? 1440 }],
 		[
 			UserDataContext,
 			{
@@ -470,6 +472,24 @@ it('opens the enquiry with its complete original text and the shared team panel 
 		view.container.querySelector('.sidePanel')?.textContent
 	).not.toContain('notifications.center.preview.empty');
 }, 20000);
+
+it.each([
+	['a phone', 390, true],
+	['a desktop', 1440, undefined]
+])(
+	'tells the server whether the panel hides the main chat on %s',
+	async (_label, width, mainChatHidden) => {
+		vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+		openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true, width });
+		await waitFor(
+			() =>
+				expect(activeViewPatch).toHaveBeenLastCalledWith(
+					expect.objectContaining({ active: true, mainChatHidden })
+				),
+			{ timeout: 15000 }
+		);
+	}
+);
 
 it('shows the complete enquiry text when opened outside the enquiry list', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION);

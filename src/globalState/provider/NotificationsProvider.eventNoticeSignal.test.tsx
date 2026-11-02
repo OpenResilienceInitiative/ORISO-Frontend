@@ -575,6 +575,35 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		}
 	);
 
+	it('announces a main-chat mention while a side panel hides that chat on a phone', async () => {
+		withTones();
+		const width = window.innerWidth;
+		Object.defineProperty(window, 'innerWidth', {
+			configurable: true,
+			value: 390
+		});
+		try {
+			window.history.replaceState(
+				{},
+				'',
+				'/sessions/consultant/sessionView/!room42/42?channel=thread:%24other'
+			);
+			await deliver([message(1, { mentioned: true })]);
+
+			await waitFor(() =>
+				expect(screen.getByTestId('notices').textContent).toBe(
+					'chatMention:42:1:Kollegin Weber'
+				)
+			);
+			expect(play).toHaveBeenCalledTimes(1);
+		} finally {
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value: width
+			});
+		}
+	});
+
 	it('is completely silent while the mentioned thread itself is on screen', async () => {
 		withTones();
 		window.history.replaceState(

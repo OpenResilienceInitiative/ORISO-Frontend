@@ -7,6 +7,7 @@ import {
 	NotificationType
 } from '../../globalState/provider/NotificationsProvider';
 import { isNotificationActiveViewRoute } from '../session/notificationActiveView';
+import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 import {
 	normalizeLegacyChannelSearch,
 	parseChannel
@@ -197,6 +198,13 @@ export const isTeamDiscussionOpen = (
 	return isConversationOpen(target, pathname, search, visible);
 };
 
+const openChannel = (search: string) =>
+	parseChannel(normalizeLegacyChannelSearch(search) ?? search).channel;
+
+/** On a phone a side channel fills the screen instead of the main chat. */
+const isMainChatHidden = (search: string) =>
+	window.innerWidth < STAGE_LAYOUT.DESKTOP_MIN_WIDTH && !!openChannel(search);
+
 /**
  * Whether this thread's panel is on screen. The parent chat does not show the
  * thread's replies. The feed's links carry the legacy `threadRootId` until the
@@ -208,9 +216,7 @@ const isThreadOpen = (
 	search: string,
 	visible: boolean
 ): boolean => {
-	const { channel } = parseChannel(
-		normalizeLegacyChannelSearch(search) ?? search
-	);
+	const channel = openChannel(search);
 	return (
 		channel?.kind === 'thread' &&
 		channel.rootId === target.threadRootId &&
@@ -228,8 +234,11 @@ export const isEventNoticeTargetOpen = (
 ) => {
 	if (kind === 'mention')
 		return isTeamDiscussionOpen(target, pathname, search, visible);
-	if (kind === 'chatMention' && target.threadRootId)
-		return isThreadOpen(target, pathname, search, visible);
+	if (kind === 'chatMention') {
+		if (target.threadRootId)
+			return isThreadOpen(target, pathname, search, visible);
+		if (isMainChatHidden(search)) return false;
+	}
 	return isConversationOpen(target, pathname, search, visible);
 };
 

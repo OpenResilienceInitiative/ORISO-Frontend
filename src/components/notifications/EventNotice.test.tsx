@@ -478,6 +478,84 @@ describe('where the target is open', () => {
 		).toBe(false);
 	});
 
+	describe('with a side panel over the main chat on a phone', () => {
+		const pathname = '/sessions/consultant/sessionView/!room42/42';
+		const width = window.innerWidth;
+		const setWidth = (value: number) =>
+			Object.defineProperty(window, 'innerWidth', {
+				configurable: true,
+				value
+			});
+		afterEach(() => setWidth(width));
+
+		it.each([
+			['a thread', '?channel=thread:$other'],
+			['the supervision panel', '?channel=supervision'],
+			['the team panel', '?channel=team']
+		])('a main-chat mention is not seen behind %s', (_label, search) => {
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					search,
+					true
+				)
+			).toBe(false);
+			// The desktop shows both panes side by side.
+			setWidth(900);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					search,
+					true
+				)
+			).toBe(true);
+		});
+
+		it('sees a main-chat mention with no panel open', () => {
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					'',
+					true
+				)
+			).toBe(true);
+		});
+
+		it('sees a thread mention with that thread filling the screen', () => {
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					{ ...target, threadRootId: '$root1' },
+					pathname,
+					'?channel=thread:$root1',
+					true
+				)
+			).toBe(true);
+		});
+
+		it('leaves the other kinds on the conversation check', () => {
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'handover',
+					target,
+					pathname,
+					'?channel=thread:$other',
+					true
+				)
+			).toBe(true);
+		});
+	});
+
 	it('gives a thread its own card, apart from the chat and other threads', () => {
 		expect(eventNoticeId('chatMention', '42')).toBe(
 			'event-notice:chatMention:42'
