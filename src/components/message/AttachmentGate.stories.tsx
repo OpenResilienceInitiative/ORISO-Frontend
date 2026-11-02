@@ -271,7 +271,7 @@ const ExperienceDemo = ({
 	verdict?: 'safe' | 'blocked';
 }) => {
 	const [phase, setPhase] = useState<'gate' | 'checking' | 'done'>('gate');
-	const timer = useRef<number>();
+	const timer = useRef<number | undefined>(undefined);
 	useEffect(() => () => window.clearTimeout(timer.current), []);
 
 	if (phase === 'done' && verdict === 'safe') {

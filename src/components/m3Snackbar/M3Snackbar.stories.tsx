@@ -341,6 +341,7 @@ export const FloatingNarrowColumn: Story = {
 /** Fehlerzustand: dieselbe dunkle Fläche, das Symbol trägt den Unterschied. */
 export const ErrorTone: Story = {
 	name: 'Fehler',
+	args: { message: 'Die Datei konnte nicht gesendet werden.' },
 	render: () => (
 		<Page>
 			<M3Snackbar
