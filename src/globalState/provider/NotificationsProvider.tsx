@@ -381,6 +381,14 @@ const notificationSessionKey = (token: string | null): string | null => {
 	]);
 };
 
+/**
+ * ORISO-UserService#1510: the Matrix listener often writes a message row before
+ * the mention marks it. The marked row counts as new, so the mention is still
+ * announced, once.
+ */
+const observedEventKey = (event: NotificationFeedItem) =>
+	event.params?.mentioned === true ? `${event.id}:mentioned` : event.id;
+
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
 	const [notificationFeed, setNotificationFeed] = useState<
@@ -536,7 +544,7 @@ export function NotificationsProvider(props) {
 								item.params?.matrixEventId
 							)
 					)
-					.map((item) => item.id)
+					.map(observedEventKey)
 			);
 			initialFeedTimeRef.current = Math.max(
 				Number.NEGATIVE_INFINITY,
@@ -546,8 +554,11 @@ export function NotificationsProvider(props) {
 		const observed = observedEventIdsRef.current;
 		const { settings, device } = notificationSettingsStore.getState();
 		for (const event of feed) {
-			if (observed.has(event.id)) continue;
-			observed.add(event.id);
+			const eventKey = observedEventKey(event);
+			if (observed.has(eventKey)) continue;
+			// A chat-mention row is marked after the plain row arrived.
+			const markedLate = observed.has(event.id);
+			observed.add(eventKey);
 			const pendingLive = pendingLiveEventIdsRef.current.delete(
 				event.params?.matrixEventId
 			);
@@ -563,7 +574,8 @@ export function NotificationsProvider(props) {
 			// FE#1470: a live-chat message to a counsellor also raises an
 			// in-app pop-up — unless that chat is already on screen, where
 			// the message itself is the signal and a tone would only nag.
-			const liveChat = isLiveChatMessageForCounsellor(event);
+			const liveChat =
+				!markedLate && isLiveChatMessageForCounsellor(event);
 			if (
 				liveChat &&
 				isLiveChatOpen(

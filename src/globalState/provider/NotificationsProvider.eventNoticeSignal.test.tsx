@@ -3,7 +3,8 @@
  * requests that wait for the advice seeker's yes raise one in-app pop-up card
  * per conversation and kind, the row's tone and at most one OS banner, all
  * from the one feed announcement path. Fixtures use the shapes UserService
- * emits. Ordinary messages get no pop-up.
+ * emits. Ordinary messages get a pop-up only when they mention the counsellor
+ * (ORISO-UserService#1510).
  *
  * @vitest-environment oriso-jsdom
  */
@@ -313,6 +314,71 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		expect(play).toHaveBeenCalledTimes(1);
 	});
 
+	it('shows a chat-mention card and plays the mention tone for a mention in an ordinary chat', async () => {
+		withTones();
+		await deliver([message(1, { mentioned: true })]);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('notices').textContent).toBe(
+				'chatMention:42:1:Kollegin Weber'
+			)
+		);
+		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it('announces the mention once when the row is marked after the plain row arrived', async () => {
+		withTones();
+		await deliver([message(1)]);
+		await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+		expect(screen.getByTestId('notices').textContent).toBe('');
+
+		// The Matrix listener wrote the row first; the mention marks it later.
+		apiGetEventNotifications.mockResolvedValue({
+			items: [message(1, { mentioned: true })],
+			unreadCount: 1
+		});
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(screen.getByTestId('notices').textContent).toBe(
+				'chatMention:42:1:Kollegin Weber'
+			)
+		);
+
+		// Another poll of the marked row announces nothing again.
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(4)
+		);
+		expect(screen.getByTestId('notices').textContent).toBe(
+			'chatMention:42:1:Kollegin Weber'
+		);
+		// The family's sound gap keeps the two signals to one tone.
+		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps a marked row silent when it was already there on mount', async () => {
+		withTones();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [message(1, { mentioned: true })],
+			unreadCount: 1
+		});
+		render(
+			<NotificationsProvider>
+				<Probe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('1')
+		);
+		fireEvent.click(screen.getByText('refresh'));
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
+		);
+
+		expect(screen.getByTestId('notices').textContent).toBe('');
+		expect(play).not.toHaveBeenCalled();
+	});
+
 	it('shows a handover card for an offered case, with the initiator', async () => {
 		withTones();
 		await deliver([handover(1)]);
@@ -347,10 +413,6 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		[
 			'a team-discussion post without a mention',
 			mention(1, { mentioned: false })
-		],
-		[
-			'a mention row of a normal chat message (no producer sets it yet)',
-			message(1, { mentioned: true })
 		],
 		['an ordinary counselling message', message(1)],
 		[

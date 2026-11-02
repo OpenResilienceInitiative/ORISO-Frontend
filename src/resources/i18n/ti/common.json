@@ -2116,6 +2116,12 @@
 		"success": "ዓወት",
 		"warning": "መጠንቀቕታ",
 		"eventNotice": {
+			"chatMention": {
+				"title": "ኣብ ዕላል ጥቕሲ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} ሓደሽቲ ጥቕስታት",
+				"open": "ዕላል ክፈት"
+			},
 			"mention": {
 				"title": "ኣብ ዕላል ጉጅለ ጥቕሲ",
 				"from": "ካብ {{name}}",

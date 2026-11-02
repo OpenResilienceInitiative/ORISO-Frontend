@@ -2116,6 +2116,12 @@
 		"success": "Başarılı",
 		"warning": "Uyarı",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Sohbette anıldınız",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} yeni anma",
+				"open": "Sohbeti aç"
+			},
 			"mention": {
 				"title": "Ekip görüşmesinde anıldınız",
 				"from": "Gönderen: {{name}}",

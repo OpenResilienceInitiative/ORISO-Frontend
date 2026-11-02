@@ -2116,6 +2116,12 @@
 		"success": "Succès",
 		"warning": "Avertissement",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Mention dans une discussion",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion"
+			},
 			"mention": {
 				"title": "Mention dans la discussion d’équipe",
 				"from": "De {{name}}",

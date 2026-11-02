@@ -2113,6 +2113,12 @@
 		"success": "Success",
 		"warning": "Warning",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Mention in a chat",
+				"from": "From {{name}}",
+				"several": "{{count}} new mentions",
+				"open": "Open chat"
+			},
 			"mention": {
 				"title": "Mention in the team discussion",
 				"from": "From {{name}}",

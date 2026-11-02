@@ -160,6 +160,19 @@ describe('EventNotice', () => {
 		expect(remove).not.toHaveBeenCalled();
 	});
 
+	it('settles a chat-mention card when that chat is opened', () => {
+		const remove = renderNotice(
+			notice({ kind: 'chatMention', id: 'event-notice:chatMention:42' }),
+			'/',
+			'/sessions/consultant/sessionView/!main42/42'
+		);
+		fireEvent.click(screen.getByText('go'));
+		expect(remove).toHaveBeenCalledWith(
+			'event-notice:chatMention:42',
+			'eventNotice'
+		);
+	});
+
 	it('names no one on the consent card and shows its neutral text', () => {
 		renderNotice(
 			notice({
@@ -247,13 +260,36 @@ describe('event pop-up rules', () => {
 			}),
 			'consent'
 		],
-		// A post without a mention, and every message.new, earn no card.
+		// A post without a mention earns no card.
 		[row('team.discussion.new', TEAM, { mentioned: false }), null],
 		[row('team.discussion.new', TEAM), null],
+		// ORISO-UserService#1510: a mention in an ordinary chat or its thread.
 		[
 			row('message.new', '/sessions/consultant/sessionView/!room42/42', {
 				mentioned: true,
 				recipientRole: 'consultant'
+			}),
+			'chatMention'
+		],
+		[
+			row(
+				'thread.reply.new',
+				'/sessions/consultant/sessionView/!room42/42',
+				{ mentioned: true, recipientRole: 'consultant' }
+			),
+			'chatMention'
+		],
+		[
+			row('message.new', '/sessions/consultant/sessionView/!room42/42', {
+				recipientRole: 'consultant'
+			}),
+			null
+		],
+		// Only ever a counsellor's row.
+		[
+			row('message.new', '/sessions/user/view/!room42/42', {
+				mentioned: true,
+				recipientRole: 'user'
 			}),
 			null
 		],

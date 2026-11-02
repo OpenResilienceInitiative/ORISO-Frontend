@@ -2117,6 +2117,12 @@
 		"success": "Успешно",
 		"warning": "Предупреждение",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Упоминание в чате",
+				"from": "От {{name}}",
+				"several": "Новых упоминаний: {{count}}",
+				"open": "Открыть чат"
+			},
 			"mention": {
 				"title": "Упоминание в обсуждении команды",
 				"from": "От {{name}}",

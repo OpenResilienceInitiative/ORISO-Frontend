@@ -19,16 +19,22 @@ import './notification.styles';
  * never message text, reasons or staff-only details.
  *
  *  - mention:  a team-discussion post that mentions the counsellor
+ *  - chatMention: a message in an ordinary chat that mentions the counsellor
  *  - handover: a case offered to the counsellor
  *  - consent:  a handover that waits for the advice seeker's yes (OPT_IN)
  */
 export const NOTIFICATION_TYPE_EVENT_NOTICE = 'eventNotice';
 export type NotificationTypeEventNotice = typeof NOTIFICATION_TYPE_EVENT_NOTICE;
 
-export type EventNoticeKind = 'mention' | 'handover' | 'consent';
+export type EventNoticeKind =
+	| 'mention'
+	| 'chatMention'
+	| 'handover'
+	| 'consent';
 
-/** The only feed event that carries `mentioned` today (UserService). */
 const MENTION_NOTICE_EVENT = 'team.discussion.new';
+/** ORISO-UserService#1510: the server marks a mention on these rows too. */
+const CHAT_MENTION_NOTICE_EVENTS = ['message.new', 'thread.reply.new'];
 const HANDOVER_NOTICE_EVENT = 'case.handover.offer.received';
 const CONSENT_NOTICE_EVENT = 'case.handover.consent.requested';
 
@@ -87,9 +93,9 @@ const isAskerRow = (event: EventNoticeFeedEvent) => {
 };
 
 /**
- * Which pop-up a feed event earns, if any. Ordinary messages earn none (no
- * producer marks a mention on them yet), and the consent request earns one
- * only where it waits for the advice seeker's own yes.
+ * Which pop-up a feed event earns, if any. An ordinary message earns one only
+ * when it mentions the counsellor, and the consent request only where it waits
+ * for the advice seeker's own yes.
  */
 export const eventNoticeKindFor = (
 	event: EventNoticeFeedEvent
@@ -101,6 +107,12 @@ export const eventNoticeKindFor = (
 		isCounsellorRow(event)
 	)
 		return 'mention';
+	if (
+		CHAT_MENTION_NOTICE_EVENTS.includes(event.eventType) &&
+		event.params?.mentioned === true &&
+		isCounsellorRow(event)
+	)
+		return 'chatMention';
 	if (event.eventType === HANDOVER_NOTICE_EVENT && isCounsellorRow(event))
 		return 'handover';
 	if (
@@ -241,7 +253,10 @@ export const EventNotice = (props: EventNoticeProps) => {
 			document.removeEventListener('visibilitychange', settleIfSeen);
 	}, [close, kind, pathname, props.roomRef, props.sessionId, search]);
 
-	const Icon = kind === 'mention' ? MentionIcon : HandoverIcon;
+	const Icon =
+		kind === 'mention' || kind === 'chatMention'
+			? MentionIcon
+			: HandoverIcon;
 	return (
 		<div
 			className={`notification notification--info notification--eventNotice notification--${kind}`}
