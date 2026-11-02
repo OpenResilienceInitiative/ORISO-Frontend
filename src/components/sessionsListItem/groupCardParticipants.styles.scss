@@ -1,27 +1,17 @@
-// Count field that replaces the faces above four people (Figma 316-16775).
+// Count circle that replaces the faces above three people: the avatar's own
+// size, so the card's text wraps it like a single avatar.
 .groupCardCrowd {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 4px;
 	box-sizing: border-box;
+	width: 48px;
 	height: 48px;
-	padding: 0 12px;
-	border-radius: 24px;
+	border-radius: 50%;
 	background: var(--m3-secondary-container, #646d78);
 	color: #fff;
 	font-size: 16px;
 	font-weight: 500;
 	line-height: 24px;
 	white-space: nowrap;
-
-	svg {
-		width: 20px;
-		height: 20px;
-	}
-
-	svg,
-	svg * {
-		fill: currentColor;
-	}
 }

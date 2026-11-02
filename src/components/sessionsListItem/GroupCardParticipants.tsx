@@ -5,18 +5,17 @@ import { useTranslation } from 'react-i18next';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { useGroupCardMembers } from '../../hooks/useGroupCardMembers';
-import { ReactComponent as GroupIcon } from '../../resources/img/icons/groups.svg';
-import { STACK_MAX_VISIBLE } from '../message/participantStack';
 import { groupCardParticipants } from './groupCardMemberParticipants';
 import './groupCardParticipants.styles.scss';
 
 const AVATAR = AVATAR_SIZES.message;
 const OVERLAP = 24;
+const MAX_FACES = 3;
 
-/** How wide the stack or the count field is: the card's text wraps around it. */
+/** How wide the stack or the count circle is: the card's text wraps around it. */
 export const groupCardStackWidth = (count: number): number =>
-	count > STACK_MAX_VISIBLE
-		? 56 + 10 * `+${count}`.length
+	count > MAX_FACES
+		? AVATAR
 		: AVATAR + Math.max(0, count - 1) * (AVATAR - OVERLAP);
 
 /** Group-only: counselling rooms retain their separate silent-membership rules. */
@@ -59,8 +58,9 @@ export const GroupCardParticipants = ({
 				aria-label={t('groupCardParticipants.empty')}
 			/>
 		);
-	// Above four people faces say nothing: one field with the count (Figma 316-16775).
-	if (participants.length > STACK_MAX_VISIBLE) {
+	// Above three people faces say nothing and take the text's room: one circle
+	// of the avatar's size with the count (Frank, 02.11.2026).
+	if (participants.length > MAX_FACES) {
 		const crowd = t('groupCardParticipants.crowd', {
 			count: participants.length
 		});
@@ -71,10 +71,8 @@ export const GroupCardParticipants = ({
 				aria-label={crowd}
 				title={crowd}
 				data-cy="group-card-crowd"
-				style={{ width: groupCardStackWidth(participants.length) }}
 			>
-				+{participants.length}
-				<GroupIcon aria-hidden="true" focusable="false" />
+				{participants.length > 99 ? '99+' : participants.length}
 			</span>
 		);
 	}
@@ -83,7 +81,7 @@ export const GroupCardParticipants = ({
 			participants={participants}
 			size={AVATAR}
 			overlap={OVERLAP}
-			maxVisible={STACK_MAX_VISIBLE}
+			maxVisible={MAX_FACES}
 			data-cy="group-card-participants"
 		/>
 	);

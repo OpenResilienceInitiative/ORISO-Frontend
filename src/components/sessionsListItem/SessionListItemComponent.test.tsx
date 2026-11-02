@@ -819,10 +819,10 @@ describe('SessionListItemComponent — real group participants (#1806)', () => {
 			]
 		});
 		const { container } = renderItem(makeGroupSession());
-		// Five people: the count field, not the technical owner as a sixth.
+		// Five people: the count circle, not the technical owner as a sixth.
 		expect(
 			container.querySelector('[data-cy="group-card-crowd"]')?.textContent
-		).toBe('+5');
+		).toBe('5');
 		expect(
 			container.querySelector('[data-user-id^="placeholder-"]')
 		).toBeNull();
