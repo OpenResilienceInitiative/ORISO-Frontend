@@ -536,3 +536,37 @@ describe('global do-not-disturb', () => {
 		).toBe(false);
 	});
 });
+
+describe('tones the dialog no longer offers (FE#1211)', () => {
+	it.each(['chime', 'ding', 'soft'])(
+		'%s becomes the short default tone, keeping its volume',
+		(sound) => {
+			const parsed = parseNotificationSettings({
+				notificationConfig: {
+					conversations: { standard: { sound, volume: 0.75 } }
+				},
+				systemTone: { sound, volume: 0.25 }
+			});
+
+			expect(parsed.notificationConfig.conversations.standard).toEqual(
+				expect.objectContaining({ sound: 'ton-2', volume: 0.75 })
+			);
+			expect(parsed.systemTone).toEqual({
+				sound: 'ton-2',
+				volume: 0.25
+			});
+		}
+	);
+
+	it.each(['none', 'default', 'ring', 'ton-7'])('%s stays', (sound) => {
+		const parsed = parseNotificationSettings({
+			notificationConfig: { conversations: { standard: { sound } } },
+			systemTone: { sound }
+		});
+
+		expect(parsed.notificationConfig.conversations.standard.sound).toBe(
+			sound
+		);
+		expect(parsed.systemTone.sound).toBe(sound);
+	});
+});

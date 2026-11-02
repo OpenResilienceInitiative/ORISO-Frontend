@@ -119,6 +119,12 @@ const isArea = (v: unknown): v is NotificationArea =>
 const isKind = (v: unknown): v is NotificationKind =>
 	NOTIFICATION_KINDS.includes(v as NotificationKind);
 
+/** Tones the dialog no longer offers play as the short default (Frank, 2 Nov). */
+const RETIRED_SOUNDS: ReadonlyArray<string> = ['chime', 'ding', 'soft'];
+
+export const parseStoredSound = (sound: string): SoundId =>
+	RETIRED_SOUNDS.includes(sound) ? 'ton-2' : (sound as SoundId);
+
 /** Tolerant parse: keep known area/kind values, fall back to defaults otherwise. */
 export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 	const source = (raw ?? {}) as Record<string, any>;
@@ -151,7 +157,7 @@ export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 							: fallback.banner,
 				sound:
 					typeof kindSrc.sound === 'string'
-						? (kindSrc.sound as SoundId)
+						? parseStoredSound(kindSrc.sound)
 						: fallback.sound,
 				email:
 					typeof kindSrc.email === 'boolean'

@@ -19,7 +19,8 @@ import {
 	DEFAULT_VOLUME,
 	KindConfig,
 	NotificationConfig,
-	parseNotificationConfig
+	parseNotificationConfig,
+	parseStoredSound
 } from './notificationConfig';
 import { NEVER_NOTIFY_FAMILIES } from './notificationConfig';
 
@@ -231,7 +232,7 @@ const parseSystemTone = (raw: unknown): SystemTone => {
 	return {
 		sound:
 			typeof source.sound === 'string'
-				? (source.sound as SoundId)
+				? parseStoredSound(source.sound)
 				: fallback.sound,
 		volume:
 			typeof source.volume === 'number' && Number.isFinite(source.volume)
