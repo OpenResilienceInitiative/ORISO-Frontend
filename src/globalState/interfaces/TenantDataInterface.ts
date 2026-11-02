@@ -127,6 +127,8 @@ export interface TenantDataSettingsInterface {
 	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
 	featureAskerBrowserLiveChatEnabled?: boolean;
 	featureAskerBrowserSelfHelpEnabled?: boolean;
+	/** Explicit false: counsellors get no e-mail about internal group chats. */
+	featureConsultantEmailInternalGroupEnabled?: boolean;
 
 	emailVisible?: boolean;
 	emailRequired?: boolean;
