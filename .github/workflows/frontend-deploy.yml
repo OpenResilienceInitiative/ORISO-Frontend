@@ -1,60 +1,110 @@
-name: "ORISO Frontend Deploy"
+name: 'ORISO Frontend Deploy'
 
-run-name: >
-  ${{ github.event_name == 'workflow_dispatch'
-      && format('Deploy Frontend to {0}', github.event.inputs.environment)
-      || format('Deploy Frontend to {0}', 'dev') }}
+run-name: Deploy Frontend to ${{ github.event.inputs.environment }}
+
+# Rolls the frontend out on one of the ORISO servers by running that
+# server's own deploy script over SSH.
+#
+# Why it runs here and not in an agent's cloud session: cloud sessions only
+# get HTTPS out through a proxy, so they cannot reach port 22 on the servers.
+# They can start this workflow and read its log, which keeps the SSH key in
+# GitHub's secret store instead of in a container or a chat.
+#
+# dev and pre-dev each have their own GitHub environment holding the same
+# secret names, so one job serves both:
+#
+#   GitHub environment   server               secrets (environment-scoped)
+#   development          dev.oriso.org        DEPLOY_SSH_HOST, DEPLOY_SSH_KEY
+#   pre-development      predev.oriso.org     DEPLOY_SSH_HOST, DEPLOY_SSH_KEY
+#
+# Optional in both: DEPLOY_SSH_USER (default root), DEPLOY_SSH_PORT (default
+# 22) and DEPLOY_SSH_FINGERPRINT (the server's SHA256 host key fingerprint;
+# when set, the runner refuses to talk to any other host).
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        description: Target environment
-        required: true
-        default: dev
-        options:
-          - dev
-          - prod
+    workflow_dispatch:
+        inputs:
+            environment:
+                type: choice
+                description: Target environment
+                required: true
+                default: pre-dev
+                options:
+                    - pre-dev
+                    - dev
+                    - prod
+
+permissions:
+    contents: read
+
+# Two rollouts on the same server at once would race on the same
+# deployment; queue them instead of cancelling one halfway.
+concurrency:
+    group: frontend-deploy-${{ github.event.inputs.environment }}
+    cancel-in-progress: false
 
 jobs:
-  deploy-dev:
-    if: ${{ github.event.inputs.environment == 'dev' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: development
-    steps:
-      - name: Deploy to development server
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
-        with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          port: ${{ secrets.DEV_SSH_PORT || 22 }}
-          script: |
-            set -euo pipefail
-            export KUBECONFIG="$HOME/.kube/config"
-            export NVM_DIR="$HOME/.nvm"
-            if [ -s "$NVM_DIR/nvm.sh" ]; then
-              . "$NVM_DIR/nvm.sh"
-              nvm use 18 || nvm use default || true
-            fi
-            bash /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend/deploy-frontend.sh
+    deploy-oriso-server:
+        name: Deploy to ${{ github.event.inputs.environment }}
+        if: ${{ github.event.inputs.environment == 'dev' || github.event.inputs.environment == 'pre-dev' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        environment:
+            name: ${{ github.event.inputs.environment == 'dev' && 'development' || 'pre-development' }}
+            url: ${{ github.event.inputs.environment == 'dev' && 'https://dev.oriso.org' || 'https://predev.oriso.org' }}
+        steps:
+            # Without this step a missing secret shows up as an opaque SSH error.
+            - name: Check the deploy secrets are set
+              env:
+                  TARGET: ${{ github.event.inputs.environment == 'dev' && 'development' || 'pre-development' }}
+                  HAS_HOST: ${{ secrets.DEPLOY_SSH_HOST != '' }}
+                  HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+              run: |
+                  missing=""
+                  [ "$HAS_HOST" = "true" ] || missing="$missing DEPLOY_SSH_HOST"
+                  [ "$HAS_KEY" = "true" ] || missing="$missing DEPLOY_SSH_KEY"
+                  if [ -n "$missing" ]; then
+                    echo "::error::GitHub environment '$TARGET' is missing:$missing (Settings → Environments → $TARGET)"
+                    exit 1
+                  fi
 
-  deploy-prod:
-    if: ${{ github.event.inputs.environment == 'prod' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: production
-    steps:
-      - name: Deploy to production server
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
-        with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          port: ${{ secrets.PROD_SSH_PORT || 22 }}
-          script: |
-            set -euo pipefail
-            bash /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend/deploy-production.sh
+            - name: Run deploy-frontend-dev.sh on the server
+              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              with:
+                  host: ${{ secrets.DEPLOY_SSH_HOST }}
+                  username: ${{ secrets.DEPLOY_SSH_USER || 'root' }}
+                  key: ${{ secrets.DEPLOY_SSH_KEY }}
+                  port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+                  fingerprint: ${{ secrets.DEPLOY_SSH_FINGERPRINT }}
+                  # The action's default is 10m; a frontend rollout can take longer.
+                  command_timeout: 25m
+                  # Both servers keep their scripts in /root/deploy-script; the
+                  # frontend script is called deploy-frontend-dev.sh on both.
+                  script: |
+                      set -euo pipefail
+                      cd /root/deploy-script
+                      bash ./deploy-frontend-dev.sh
 
+                      # Proof of what is running now, so the run log answers
+                      # "which image is live?" without anyone logging in.
+                      echo "--- frontend pods in namespace caritas after the deploy"
+                      kubectl get pods -n caritas -l app=frontend \
+                        -o jsonpath='{range .items[*]}{.metadata.name}{"  "}{.status.containerStatuses[0].image}{"  "}{.status.containerStatuses[0].imageID}{"\n"}{end}' \
+                        || echo "(could not read the frontend pods; the deploy script result above still stands)"
+
+    deploy-prod:
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        environment: production
+        steps:
+            - name: Deploy to production server
+              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              with:
+                  host: ${{ secrets.PROD_SSH_HOST }}
+                  username: ${{ secrets.PROD_SSH_USER }}
+                  key: ${{ secrets.PROD_SSH_KEY }}
+                  port: ${{ secrets.PROD_SSH_PORT || 22 }}
+                  script: |
+                      set -euo pipefail
+                      bash /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend/deploy-production.sh
