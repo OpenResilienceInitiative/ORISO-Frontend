@@ -324,6 +324,34 @@ describe('useTenantTheming – restore default look (#1788)', () => {
 		await waitFor(() => expect(document.title).toBe('Zweite Stelle'));
 	});
 
+	it('keeps the Theme Builder preview palette when the aid changes and the lookup fails', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/theme-demo?themePreviewPrimary=0061ff&aid=1'
+		);
+		mocks.apiGetTenantTheming.mockResolvedValueOnce(
+			tenantResponse(STORED_ICO)
+		);
+		const { rerender } = renderWithAid();
+		await waitFor(() => expect(primary()).not.toBe(''));
+		const preview = primary();
+
+		mocks.apiGetTenantTheming.mockRejectedValueOnce(new Error('nope'));
+		window.history.replaceState(
+			{},
+			'',
+			'/theme-demo?themePreviewPrimary=0061ff&aid=2'
+		);
+		rerender();
+
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalledTimes(2)
+		);
+		await waitFor(() => expect(document.title).toBe('ORISO'));
+		expect(primary()).toBe(preview);
+	});
+
 	it('leaves the single-centre link untouched', async () => {
 		mocks.apiGetTenantTheming.mockResolvedValue(tenantResponse(STORED_ICO));
 		const { rerender } = renderWithAid();
