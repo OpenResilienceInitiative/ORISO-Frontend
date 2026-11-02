@@ -64,6 +64,12 @@ beforeEach(() => {
 });
 
 describe('timeline settings model', () => {
+	it('moves a stored date at the topic tag to the default', () => {
+		expect(
+			parseTimelineSettings({ version: 1, pastDate: 'tag' }).pastDate
+		).toBe(DEFAULT_TIMELINE_SETTINGS.pastDate);
+	});
+
 	it('falls back per value, never as a whole', () => {
 		expect(
 			parseTimelineSettings({
@@ -135,11 +141,9 @@ describe('timeline settings store', () => {
 		timelineSettingsStore.attachClient(client as any);
 		client.emitAccountData(TIMELINE_SETTINGS_EVENT_TYPE, {
 			version: 1,
-			nowVariant: 'band'
+			reveal: 'half'
 		});
-		expect(timelineSettingsStore.getState().settings.nowVariant).toBe(
-			'band'
-		);
+		expect(timelineSettingsStore.getState().settings.reveal).toBe('half');
 	});
 
 	it('is read-only for a record of a newer client', () => {

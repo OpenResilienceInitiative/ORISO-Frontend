@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
-		"empty": "Aucun participant."
+		"empty": "Aucun participant.",
+		"crowd": "{{count}} personnes"
 	},
 	"timelineSettings": {
 		"title": "Rendez-vous dans la liste des conversations",
@@ -21,15 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "Date des conversations passées",
-			"tag": "Sur l’étiquette du thème",
 			"line": "Sur une ligne à part",
-			"off": "Ne pas afficher"
-		},
-		"nowVariant": {
-			"legend": "Repère « Maintenant » (phase de test uniquement)",
-			"line": "Ligne avec pastille",
-			"handle": "Sur la poignée",
-			"band": "Bande avec flèches"
+			"off": "Ne pas afficher",
+			"corner": "Dans le coin de la carte"
 		},
 		"writeFailed": "Le réglage n’a pas pu être enregistré. Veuillez réessayer."
 	},
@@ -4416,7 +4411,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Cercle de parole",
+				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe"
 			}
@@ -4435,6 +4430,9 @@
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
 			"unreadCount_one": "{{count}} nouveau message"
+		},
+		"timeline": {
+			"running": "en cours"
 		}
 	},
 	"statusOverlay": {

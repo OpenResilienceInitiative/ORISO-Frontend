@@ -6,12 +6,10 @@
 
 /** Two panes split at "Jetzt", or one timeline with a pull to release the future. */
 export type TimelineScrollModel = 'panes' | 'single';
-/** Where a past card shows its date: segment of the topic tag, own line, or not at all. */
-export type TimelinePastDate = 'tag' | 'line' | 'off';
+/** Where a past card shows its date: in the card's corner, own line, or not at all. */
+export type TimelinePastDate = 'corner' | 'line' | 'off';
 /** How far the future opens on its own when appointments are coming up (= the handle's stops). */
 export type TimelineReveal = 'none' | 'next' | 'half' | 'most';
-/** "Jetzt" marker; a setting only while the variants are being tested. */
-export type TimelineNowVariant = 'line' | 'handle' | 'band';
 
 export const TIMELINE_SETTINGS_VERSION = 1;
 
@@ -20,21 +18,18 @@ export interface TimelineSettings {
 	scrollModel: TimelineScrollModel;
 	pastDate: TimelinePastDate;
 	reveal: TimelineReveal;
-	nowVariant: TimelineNowVariant;
 }
 
 export const DEFAULT_TIMELINE_SETTINGS: TimelineSettings = {
 	version: TIMELINE_SETTINGS_VERSION,
 	scrollModel: 'panes',
-	pastDate: 'tag',
-	reveal: 'none',
-	nowVariant: 'line'
+	pastDate: 'corner',
+	reveal: 'none'
 };
 
 const SCROLL_MODELS: readonly TimelineScrollModel[] = ['panes', 'single'];
-const PAST_DATES: readonly TimelinePastDate[] = ['tag', 'line', 'off'];
+const PAST_DATES: readonly TimelinePastDate[] = ['corner', 'line', 'off'];
 const REVEALS: readonly TimelineReveal[] = ['none', 'next', 'half', 'most'];
-const NOW_VARIANTS: readonly TimelineNowVariant[] = ['line', 'handle', 'band'];
 
 const pick = <T extends string>(
 	value: unknown,
@@ -62,8 +57,7 @@ export const parseTimelineSettings = (raw: unknown): TimelineSettings => {
 				: TIMELINE_SETTINGS_VERSION,
 		scrollModel: pick(record.scrollModel, SCROLL_MODELS, d.scrollModel),
 		pastDate: pick(record.pastDate, PAST_DATES, d.pastDate),
-		reveal: pick(record.reveal, REVEALS, d.reveal),
-		nowVariant: pick(record.nowVariant, NOW_VARIANTS, d.nowVariant)
+		reveal: pick(record.reveal, REVEALS, d.reveal)
 	};
 };
 
@@ -74,6 +68,5 @@ export const isNewerTimelineSettingsVersion = (
 export const TIMELINE_SETTING_OPTIONS = {
 	scrollModel: SCROLL_MODELS,
 	pastDate: PAST_DATES,
-	reveal: REVEALS,
-	nowVariant: NOW_VARIANTS
+	reveal: REVEALS
 } as const;

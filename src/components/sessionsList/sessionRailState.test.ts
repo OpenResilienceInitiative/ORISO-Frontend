@@ -50,7 +50,14 @@ describe('getSessionRailMarks', () => {
 		expect(getSessionRailMarks({ unread: null })).toEqual([]);
 	});
 
-	it("keeps Frank's order — thread, supervision, mail, unread — whatever the input order", () => {
+	it('shows the calendar mark only for a room with a next appointment', () => {
+		expect(getSessionRailMarks({ appointment: true })).toEqual([
+			'appointment'
+		]);
+		expect(getSessionRailMarks({ appointment: false })).toEqual([]);
+	});
+
+	it("keeps Frank's order — thread, supervision, mail, then the date, unread — whatever the input order", () => {
 		expect(
 			getSessionRailMarks({
 				unread: true,
@@ -63,6 +70,7 @@ describe('getSessionRailMarks', () => {
 			'thread',
 			'supervision',
 			'mail',
+			'appointment',
 			'unread'
 		]);
 	});
@@ -72,6 +80,7 @@ describe('getSessionRailMarks', () => {
 			unread: true,
 			modality: 'AGENCY_COUNSELLING',
 			supervisionState: 'supervisedByOthers',
+			appointment: true,
 			previewChannel: 'thread'
 		});
 		expect(all).toHaveLength(SESSION_RAIL_MARK_ORDER.length);

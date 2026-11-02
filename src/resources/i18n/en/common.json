@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants."
+		"empty": "No participants.",
+		"crowd": "{{count}} participants"
 	},
 	"timelineSettings": {
 		"title": "Appointments in the conversation list",
@@ -21,15 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "Date on past conversations",
-			"tag": "At the topic tag",
 			"line": "In its own line",
-			"off": "Do not show"
-		},
-		"nowVariant": {
-			"legend": "“Now” marker (test phase only)",
-			"line": "Line with pill",
-			"handle": "On the handle",
-			"band": "Band with arrows"
+			"off": "Do not show",
+			"corner": "In the corner of the card"
 		},
 		"writeFailed": "The setting could not be saved. Please try again."
 	},
@@ -4269,7 +4264,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group",
+				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling"
 			}
@@ -4401,6 +4396,9 @@
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message"
+		},
+		"timeline": {
+			"running": "in progress"
 		}
 	},
 	"statusOverlay": {

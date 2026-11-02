@@ -1,0 +1,275 @@
+// Future part of the chat-history list (ADR-021): the appointment pills above
+// "Jetzt" and "Jetzt" itself, which is the handle. Shared by the real list and
+// the Storybook prototype.
+
+// The future opens above "Jetzt", pinned to it: the next appointment is the
+// first to show, and the ones further out scroll inside the zone.
+.tlp__boundary {
+	position: relative;
+	margin-top: 8px;
+	container: future-zone / inline-size;
+}
+
+.tlp__future {
+	display: flex;
+	flex-direction: column-reverse;
+	overflow: hidden auto;
+	transition: height 220ms cubic-bezier(0.2, 0, 0, 1);
+
+	&[data-dragging='true'] {
+		transition: none;
+	}
+}
+
+.tlp__futureInner {
+	position: relative;
+	flex: none;
+}
+
+.tlp__futureInner > .tlp__row {
+	padding-bottom: 6px;
+}
+
+// --- One appointment ---
+
+.tlp__entry {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 44px;
+	padding: 0 14px 0 12px;
+	border: 1px solid transparent;
+	border-radius: 22px;
+	background: var(--m3-surface-container-highest, #dcdfe3);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background-color 150ms ease,
+		color 150ms ease,
+		border-color 150ms ease;
+
+	&:hover {
+		background: var(--m3-surface-dim, #d3d6da);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 1px;
+	}
+
+	&--soon,
+	&--soon:hover {
+		background: var(--m3-primary, #a5000a);
+		color: #ffe2de;
+	}
+
+	// The same as a selected chat card (Figma 316-16775).
+	&--selected:not(&--soon),
+	&--selected:not(&--soon):hover {
+		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		background: #f5f5f5;
+	}
+
+	&--selected#{&}--soon {
+		box-shadow: 0 0 0 2px var(--m3-primary-fixed-dim, #ffb4aa);
+	}
+}
+
+.tlp__entryIcon {
+	flex: none;
+	width: 20px;
+	height: 20px;
+
+	path,
+	* {
+		fill: currentColor;
+	}
+}
+
+.tlp__entryText {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.tlp__entryTime {
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	line-height: 18px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlp__entryTitle {
+	overflow: hidden;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlp__entryUnread {
+	display: inline-flex;
+	flex: none;
+
+	// The magenta dot disappears on the red pill.
+	.tlp__entry--soon:not(.tlp__entry--selected) & {
+		--oriso-unread-indicator-color: var(--m3-on-primary-container, #ffe2de);
+	}
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+.tlp__entryPeople {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 2px;
+	font-size: 12px;
+	line-height: 16px;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	svg,
+	svg * {
+		fill: currentColor;
+	}
+}
+
+.tlp__entryWhen {
+	flex: none;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+	text-align: right;
+	white-space: nowrap;
+}
+
+@container future-zone (max-width: 300px) {
+	.tlp__entryPeople {
+		display: none;
+	}
+}
+
+// --- "Jetzt": the handle, on a line that runs out towards both sides ---
+
+.tlp__now {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 32px;
+	background: linear-gradient(
+			90deg,
+			transparent,
+			var(--m3-primary-fixed-dim, #ffb4aa) 30%,
+			var(--m3-primary-fixed-dim, #ffb4aa) 70%,
+			transparent
+		)
+		center / 100% 1px no-repeat;
+}
+
+// Two classes outrank the list's handle rules, which span the whole edge.
+.sessionsList__resizeHandle.tlp__nowGrip {
+	position: relative;
+	top: auto;
+	right: auto;
+	bottom: auto;
+	left: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: auto;
+	min-width: 96px;
+	height: 32px;
+	border-radius: 16px;
+	background: transparent;
+	transform: none;
+	cursor: grab;
+
+	&[data-dragging='true'] {
+		cursor: grabbing;
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&:hover .tlp__nowTag,
+	&:focus-visible .tlp__nowTag,
+	&[data-dragging='true'] .tlp__nowTag {
+		padding: 4px 18px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+		font-size: 14px;
+	}
+
+	&:focus-visible .tlp__nowTag {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 1px;
+	}
+}
+
+.tlp__nowTag {
+	padding: 2px 12px;
+	border-radius: 12px;
+	background: var(--m3-primary-fixed-dim, #ffb4aa);
+	color: var(--m3-on-primary-fixed, #410001);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.5px;
+	line-height: 16px;
+	pointer-events: none;
+	transition:
+		padding 140ms ease,
+		font-size 140ms ease,
+		box-shadow 140ms ease;
+}
+
+// "↑ Jetzt" / "↓ Jetzt" in the single timeline once the marker scrolled away.
+.tlp__pill {
+	position: absolute;
+	left: 50%;
+	z-index: 5;
+	height: 36px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 18px;
+	background: var(--m3-primary-container, #cc1e1c);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	color: #fff;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transform: translateX(-50%);
+
+	&--above {
+		top: 56px;
+	}
+
+	&--below {
+		bottom: 20px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tlp__future,
+	.tlp__entry,
+	.tlp__nowTag {
+		transition: none;
+	}
+}

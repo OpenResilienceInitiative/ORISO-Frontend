@@ -1,0 +1,27 @@
+// Count field that replaces the faces above four people (Figma 316-16775).
+.groupCardCrowd {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	box-sizing: border-box;
+	height: 48px;
+	padding: 0 12px;
+	border-radius: 24px;
+	background: var(--m3-secondary-container, #646d78);
+	color: #fff;
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 24px;
+	white-space: nowrap;
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	svg,
+	svg * {
+		fill: currentColor;
+	}
+}

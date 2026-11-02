@@ -63,7 +63,7 @@ export const Defaults: Story = {
 		const canvas = within(canvasElement);
 		await expect(canvas.getByLabelText(/Zwei Bereiche/)).toBeChecked();
 		await expect(canvas.getByLabelText('Nichts')).toBeChecked();
-		await expect(canvas.getByLabelText('Am Themen-Fähnchen')).toBeChecked();
+		await expect(canvas.getByLabelText('In der Kartenecke')).toBeChecked();
 	}
 };
 

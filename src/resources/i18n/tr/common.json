@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
 		"unavailable": "Katılımcılar yüklenemedi.",
-		"empty": "Katılımcı yok."
+		"empty": "Katılımcı yok.",
+		"crowd": "{{count}} katılımcı"
 	},
 	"timelineSettings": {
 		"title": "Görüşme listesinde randevular",
@@ -21,15 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "Geçmiş görüşmelerde tarih",
-			"tag": "Konu etiketinde",
 			"line": "Ayrı bir satırda",
-			"off": "Gösterme"
-		},
-		"nowVariant": {
-			"legend": "„Şimdi“ işareti (yalnızca test aşamasında)",
-			"line": "Rozetli çizgi",
-			"handle": "Tutamakta",
-			"band": "Oklu bant"
+			"off": "Gösterme",
+			"corner": "Kartın köşesinde"
 		},
 		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
 	},
@@ -4416,7 +4411,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Sohbet çemberi",
+				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı"
 			}
@@ -4435,6 +4430,9 @@
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
 			"unreadCount_one": "{{count}} yeni mesaj"
+		},
+		"timeline": {
+			"running": "devam ediyor"
 		}
 	},
 	"statusOverlay": {

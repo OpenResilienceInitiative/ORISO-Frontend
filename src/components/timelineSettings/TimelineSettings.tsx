@@ -13,12 +13,7 @@ import './timelineSettings.scss';
 type SettingKey = keyof typeof TIMELINE_SETTING_OPTIONS;
 
 /** Order on the page (ADR-021 §6); the "Jetzt" variant only while it is tested. */
-const GROUPS: SettingKey[] = [
-	'scrollModel',
-	'reveal',
-	'pastDate',
-	'nowVariant'
-];
+const GROUPS: SettingKey[] = ['scrollModel', 'reveal', 'pastDate'];
 
 /**
  * "Anzeige" → appointments in the conversation list (ADR-021). Clients and
