@@ -3899,6 +3899,11 @@ export const MessageSubmitInterfaceComponent = ({
 				const members = readMembers();
 				const idsOf = (member: { value: string; label: string }) => [
 					...Array.from(getComparableAudienceIds(member.value)),
+					// The directory holds decoded names (#1998), but supervisors
+					// still arrive with the stored, encoded one ("enc.…").
+					...Array.from(
+						getComparableAudienceIds(decodeUsername(member.value))
+					),
 					...Array.from(getComparableAudienceIds(member.label))
 				];
 				const inRoomValues = new Set(members.flatMap(idsOf));
