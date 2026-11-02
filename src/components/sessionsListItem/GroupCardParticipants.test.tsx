@@ -33,11 +33,11 @@ describe('GroupCardParticipants — production shared stack (#1806)', () => {
 			);
 			expect(
 				container.querySelectorAll('[data-cy="participant-avatar"]')
-			).toHaveLength(count > 4 ? 0 : count);
+			).toHaveLength(count > 3 ? 0 : count);
 			const crowd = container.querySelector(
 				'[data-cy="group-card-crowd"]'
 			);
-			if (count > 4) expect(crowd?.textContent).toBe(`+${count}`);
+			if (count > 3) expect(crowd?.textContent).toBe(`${count}`);
 			else expect(crowd).toBeNull();
 			expect(
 				container.querySelector('[data-cy="participant-overflow"]')

@@ -1308,10 +1308,10 @@ const expectGroupRow = async (
 	await waitFor(() =>
 		expect(
 			row.querySelectorAll('[data-cy="participant-avatar"]')
-		).toHaveLength(count > 4 ? 0 : count)
+		).toHaveLength(count > 3 ? 0 : count)
 	);
 	const crowd = row.querySelector('[data-cy="group-card-crowd"]');
-	if (count > 4) await expect(crowd?.textContent).toBe(`+${count}`);
+	if (count > 3) await expect(crowd?.textContent).toBe(`${count}`);
 	else await expect(crowd).toBeNull();
 	await expect(
 		row.querySelector('[data-user-id^="placeholder-"]')
