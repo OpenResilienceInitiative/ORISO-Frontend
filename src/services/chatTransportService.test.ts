@@ -159,6 +159,26 @@ describe('chatTransportService Matrix timeline', () => {
 		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
 	});
 
+	it('reports the moment a message in the watched room is actually redacted', () => {
+		const listener = vi.fn();
+		const redaction = { getType: () => 'm.room.redaction' };
+		const detach = chatTransportService.onMatrixRedaction(
+			ROOM_ID,
+			listener
+		);
+
+		// Room.redaction fires when the SDK flips the target to "redacted",
+		// including the remote echo of our OWN redaction, which never
+		// produces a second Room.timeline event.
+		fakeClient.emit('Room.redaction', redaction, { roomId: OTHER_ROOM_ID });
+		expect(listener).not.toHaveBeenCalled();
+		fakeClient.emit('Room.redaction', redaction, { roomId: ROOM_ID });
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.redaction')).toBe(0);
+	});
+
 	it('refreshes an initial-sync historical event when decryption finishes later', () => {
 		const { event } = createFakeEncryptedMatrixEvent();
 		const listener = vi.fn();
@@ -349,6 +369,65 @@ describe('chatTransportService Matrix timeline', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe('chatTransportService Matrix read receipts (FE#1802)', () => {
+	const ME = '@me:example.org';
+	const receipt = (userId: string) => ({
+		getType: () => 'm.receipt',
+		getContent: () => ({
+			$event: { 'm.read': { [userId]: { ts: 1 } } }
+		})
+	});
+	let fakeClient: ReturnType<typeof createFakeMatrixClient> & {
+		getUserId: () => string;
+	};
+
+	beforeEach(() => {
+		fakeClient = { ...createFakeMatrixClient(), getUserId: () => ME };
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+	});
+
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	it('notifies on a peer receipt in the room, not on my own or another room', () => {
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixReadReceipt(
+			ROOM_ID,
+			listener
+		);
+
+		fakeClient.emit('Room.receipt', receipt(ME), { roomId: ROOM_ID });
+		fakeClient.emit('Room.receipt', receipt('@peer:example.org'), {
+			roomId: OTHER_ROOM_ID
+		});
+		expect(listener).not.toHaveBeenCalled();
+
+		fakeClient.emit('Room.receipt', receipt('@peer:example.org'), {
+			roomId: ROOM_ID
+		});
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.receipt')).toBe(0);
+	});
+	it('ignores a Room.receipt that carries no m.receipt event', () => {
+		// The practice fake emits the message itself; reading its body as a
+		// receipt looped refresh → mark read → refresh.
+		const listener = vi.fn();
+		chatTransportService.onMatrixReadReceipt(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.receipt',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({ msgtype: 'm.text', body: 'Hallo' })
+			},
+			{ roomId: ROOM_ID }
+		);
+
+		expect(listener).not.toHaveBeenCalled();
 	});
 });
 

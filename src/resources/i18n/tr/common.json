@@ -959,7 +959,12 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar",
-				"menuLabel": "{{name}} için seçenekler"
+				"menuLabel": "{{name}} için seçenekler",
+				"role": {
+					"asker": "Danışan",
+					"consultant": "Danışman",
+					"supervisor": "Süpervizör"
+				}
 			},
 			"gallery": {
 				"back": "Geri sayıma dön",
@@ -1996,7 +2001,15 @@
 			"counsellorsEmpty": "Bu odada hiç danışman yok",
 			"moderatorsEmpty": "Bu odada hiç moderatör yok",
 			"toggleSection": "Bölümü aç/kapat",
-			"selectAllBottom": "Tümünü seç"
+			"selectAllBottom": "Tümünü seç",
+			"unresolved": {
+				"headline": "Lütfen alıcıları kontrol edin",
+				"text": "Seçilen alıcılar bu sohbet için doğrulanamadı. Alıcıları yeniden seçin ve ardından gönderin. Metniniz bu alanda kalır."
+			},
+			"attachmentBlocked": {
+				"headline": "Dosyalar yalnızca herkese gider",
+				"text": "Dosyalar ve sesli mesajlar seçilen meslektaşlarla sınırlandırılamaz. Herkesle paylaşmak için „Tümü“ seçeneğini seçin veya bunun yerine bir metin mesajı gönderin. Dosyanız veya kaydınız korunur."
+			}
 		},
 		"edit": {
 			"cancel": "Düzenlemeyi iptal et",
@@ -2054,9 +2067,13 @@
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
 		"youEndedChat": "Sohbeti sonlandırdınız",
 		"chatEnded": "Sohbet sona erdi",
+		"consultantRenamedTitle": "Ad değiştirildi",
+		"consultantRenamedDescription": "{{oldName}} artık {{newName}} adını kullanıyor.",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
+		"supervisionDisabledTitle": "Süpervizyon sona erdi!",
+		"supervisionDisabledDescription": "{{name}} bu sohbetten süpervizör danışman olarak çıkarıldı.",
 		"today": "Bugün",
 		"tomorrow": "Yarın",
 		"unread": "okunmamış",
@@ -2375,6 +2392,18 @@
 				"title": "Dahili grup aramasına davet",
 				"text": "Dahili bir grup aramasına davet edildiniz."
 			},
+			"callKnockRequested": {
+				"title": "Biri kapıyı çalıyor",
+				"text": "Biri aramanıza katılmak istiyor. İçeri almak için aramaya katılın.",
+				"video": {
+					"title": "Biri kapıyı çalıyor – görüntülü arama",
+					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+				},
+				"audio": {
+					"title": "Biri kapıyı çalıyor – sesli arama",
+					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+				}
+			},
 			"appointmentRequested": {
 				"title": "Arama için randevu talep edildi",
 				"text": "Bir arama için yeni bir randevu talebi var."
@@ -2603,7 +2632,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Yalnızca küçük harf ve tire kullanın. Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
+				"info": "Yalnızca küçük harf ve rakam kullanın, aralarına tek tire koyun (ör. team-2), en fazla {{max}} karakter. Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
 				"input": "Herkese açık iletişim bağlantısının adı",
 				"label": "Herkese açık iletişim bağlantısı",
 				"notification": {
@@ -4404,6 +4433,7 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
+				"directLinks": "Doğrudan bağlantılar",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
@@ -4427,7 +4457,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Sohbet çemberi",
 				"internal": "Dahili",
-				"team": "Ekip danışmanlığı"
+				"team": "Ekip danışmanlığı",
+				"directLinkVideo": "Görüntülü arama",
+				"directLinkAudio": "Sesli arama",
+				"directLinkChat": "Doğrudan bağlantı"
 			}
 		},
 		"supervision": {

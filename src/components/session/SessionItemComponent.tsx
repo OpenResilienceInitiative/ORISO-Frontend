@@ -164,6 +164,8 @@ import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
 import { AcceptAssign } from './AcceptAssign';
+import { EnquiryTakenNotice } from './EnquiryTakenNotice';
+import { isEnquiryTakenByColleague } from './enquiryTakenByColleague';
 import { useTranslation } from 'react-i18next';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
@@ -1385,11 +1387,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		) {
 			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -2234,6 +2232,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const teamRoomId = props.teamRoomId;
 	const teamMessages = props.teamMessages;
 	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
+	// #1472: the notice covers the panel, so nothing in it counts as seen.
+	const isTakenByColleague = isEnquiryTakenByColleague(
+		type,
+		activeSession,
+		userData?.userId
+	);
 	// Creation is initiated by the list/deep-link contract, which first resolves
 	// the POST and then supplies this id. Do not expose an in-stage channel item
 	// until it can resolve to a real room, except for an eligible enquiry where
@@ -2385,18 +2389,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// supervision channel was on screen; 0 while it is.
 	const [supervisionSeenAt, setSupervisionSeenAt] = useState(0);
 	useEffect(() => {
-		if (hasSupervisionSideRoom) {
+		if (hasSupervisionSideRoom && !isTakenByColleague) {
 			setSupervisionSeenAt(Date.now());
 		}
-	}, [hasSupervisionSideRoom, activeSession.item?.id]);
+	}, [hasSupervisionSideRoom, activeSession.item?.id, isTakenByColleague]);
 	useEffect(() => {
-		if (openPanel === 'supervision') {
+		if (openPanel === 'supervision' && !isTakenByColleague) {
 			setSupervisionSeenAt(Date.now());
 			if (supervisionRoomId) {
 				void chatTransportService.markRoomAsRead(supervisionRoomId);
 			}
 		}
-	}, [openPanel, supervisionMessages, supervisionRoomId]);
+	}, [openPanel, supervisionMessages, supervisionRoomId, isTakenByColleague]);
 	const supervisionUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(
@@ -2418,18 +2422,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setTeamSeenAt(0);
 	}, [activeSession.item?.id]);
 	useEffect(() => {
-		if (hasTeamSideRoom) {
+		if (hasTeamSideRoom && !isTakenByColleague) {
 			setTeamSeenAt(Date.now());
 		}
-	}, [hasTeamSideRoom, activeSession.item?.id]);
+	}, [hasTeamSideRoom, activeSession.item?.id, isTakenByColleague]);
 	useEffect(() => {
-		if (openPanel === 'team') {
+		if (openPanel === 'team' && !isTakenByColleague) {
 			setTeamSeenAt(Date.now());
 			if (teamRoomId) {
 				void chatTransportService.markRoomAsRead(teamRoomId);
 			}
 		}
-	}, [openPanel, teamMessages, teamRoomId]);
+	}, [openPanel, teamMessages, teamRoomId, isTakenByColleague]);
 	const teamUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(
@@ -2914,19 +2918,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setEditingMessage(buildEditContext(message));
 	}, []);
 
-	const handleDeleteDirect = useCallback(
-		(message: MessageItem) => {
-			if (isRejectedSession || !resolvedMatrixRoomId || !message?._id) {
+	// Delete = Matrix redaction of the event in ITS room. The timeline only
+	// offers it on the viewer's own messages; the main chat and the
+	// Teamberatung panel share this one path.
+	const redactMessageInRoom = useCallback(
+		(matrixRoomId: string | undefined, message: MessageItem) => {
+			if (isRejectedSession || !matrixRoomId || !message?._id) {
 				return;
 			}
 			chatTransportService
 				.redactMessage({
-					matrixRoomId: resolvedMatrixRoomId,
+					matrixRoomId,
 					targetEventId: message._id
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId, isRejectedSession]
+		[isRejectedSession]
+	);
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) =>
+			redactMessageInRoom(resolvedMatrixRoomId, message),
+		[redactMessageInRoom, resolvedMatrixRoomId]
+	);
+	const handleDeleteTeamMessage = useCallback(
+		(message: MessageItem) => redactMessageInRoom(teamRoomId, message),
+		[redactMessageInRoom, teamRoomId]
 	);
 
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
@@ -4494,6 +4510,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							handleDecryptionSuccess={handleDecryptionSuccess}
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
+							// An archived discussion is read-only in Matrix (ADR-016): a
+							// redaction there is refused, so it offers no delete either.
+							onDeleteDirect={
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
+									? handleDeleteTeamMessage
+									: undefined
+							}
 						/>
 						{failedSends
 							.filter((failed) =>
@@ -4633,6 +4657,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	return (
 		<SupervisionPanelContext.Provider value={supervisionPanelContextValue}>
 			{isPhoneLayout && sidePanel ? sidePanel : cardWithPanel}
+			{/* Outside the phone switch: a full-screen panel hides the card. */}
+			{isTakenByColleague && <EnquiryTakenNotice />}
 		</SupervisionPanelContext.Provider>
 	);
 };

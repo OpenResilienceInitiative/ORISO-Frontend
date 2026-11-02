@@ -10,6 +10,11 @@ import { SessionRailPill } from '../sessionsList/SessionRailPill';
 import { getSessionRailMarks } from '../sessionsList/sessionRailState';
 import { getModality, Modality } from '../session/getModality';
 import {
+	directLinkLabelKey,
+	getDirectLinkMedium
+} from '../session/directLinkOrigin';
+import { DirectLinkGlyph } from '../session/DirectLinkGlyph';
+import {
 	convertISO8601ToMSSinceEpoch,
 	getPrettyDateFromMessageDate,
 	MILLISECONDS_PER_SECOND
@@ -1076,6 +1081,10 @@ export const SessionListItemComponent = ({
 			? getRoomUnreadCount(supervisionSideRoomId)
 			: 0;
 		const railUnreadCount = mainUnreadCount + supervisionUnreadCount;
+		const railMainTooltip = {
+			body: previewBody(railChannelPreviews?.main ?? null),
+			meta: previewWhen(railChannelPreviews?.main ?? null)
+		};
 		const railTooltips = {
 			pill: {
 				title: railName,
@@ -1092,10 +1101,12 @@ export const SessionListItemComponent = ({
 					body: previewBody(railChannelPreviews?.thread ?? null),
 					meta: previewWhen(railChannelPreviews?.thread ?? null)
 				},
-				mail: {
-					body: previewBody(railChannelPreviews?.main ?? null),
-					meta: previewWhen(railChannelPreviews?.main ?? null)
-				},
+				mail: railMainTooltip,
+				// FE#1952: a direct-link conversation's origin mark stands in the
+				// mail's slot and previews the same main channel.
+				videoCall: railMainTooltip,
+				audioCall: railMainTooltip,
+				directLink: railMainTooltip,
 				supervision: {
 					body: previewBody(railSupervisionPreview),
 					meta: previewWhen(railSupervisionPreview)
@@ -1178,6 +1189,7 @@ export const SessionListItemComponent = ({
 						previewChannel: matrixSessionPreview?.channel,
 						supervisionState,
 						modality: getModality(activeSession),
+						directLinkMedium: getDirectLinkMedium(activeSession),
 						unread: isItemUnread || supervisionUnreadCount > 0
 					})}
 					markLabels={{
@@ -1186,6 +1198,9 @@ export const SessionListItemComponent = ({
 							'sessionList.toolbar.chips.supervision'
 						),
 						mail: translate('sessionList.toolbar.chips.nearby'),
+						videoCall: translate(directLinkLabelKey('VIDEO')),
+						audioCall: translate(directLinkLabelKey('AUDIO')),
+						directLink: translate(directLinkLabelKey('CHAT')),
 						unread: translate('sessionList.toolbar.chips.unread')
 					}}
 					tooltips={railTooltips}
@@ -1420,6 +1435,9 @@ export const SessionListItemComponent = ({
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
 	const modality = getModality(activeSession);
+	// FE#1952: a conversation opened through a direct link names its medium
+	// where every other agency-counselling conversation says "Mail".
+	const directLinkMedium = getDirectLinkMedium(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
@@ -1852,33 +1870,55 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{modality ===
-										Modality.AGENCY_COUNSELLING && (
-										<div
-											className={clsx(
-												'sessionsListItem__consultingTypeIcon',
-												'sessionsListItem__consultingTypeIcon--nearby'
-											)}
-										>
-											{/* The SVG has a grey fill baked in, so it is worn as a mask
-											    and takes the primary colour from CSS. */}
-											<span
-												className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-												// The visible word next to it is the name.
-												aria-hidden="true"
-												style={
-													{
-														'--nearby-icon-url': `url("${mailConversationIcon}")`
-													} as React.CSSProperties
-												}
-											/>
-											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-												{translate(
-													'sessionList.toolbar.chips.nearby'
+									{modality === Modality.AGENCY_COUNSELLING &&
+										directLinkMedium && (
+											<div
+												className={clsx(
+													'sessionsListItem__consultingTypeIcon',
+													'sessionsListItem__consultingTypeIcon--directLink'
 												)}
-											</span>
-										</div>
-									)}
+												data-medium={directLinkMedium}
+											>
+												<DirectLinkGlyph
+													medium={directLinkMedium}
+													className="sessionsListItem__consultingTypeIcon--directLinkIcon"
+												/>
+												<span className="sessionsListItem__consultingTypeIcon--directLinkLabel">
+													{translate(
+														directLinkLabelKey(
+															directLinkMedium
+														)
+													)}
+												</span>
+											</div>
+										)}
+									{modality === Modality.AGENCY_COUNSELLING &&
+										!directLinkMedium && (
+											<div
+												className={clsx(
+													'sessionsListItem__consultingTypeIcon',
+													'sessionsListItem__consultingTypeIcon--nearby'
+												)}
+											>
+												{/* The SVG has a grey fill baked in, so it is worn as a mask
+											    and takes the primary colour from CSS. */}
+												<span
+													className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+													// The visible word next to it is the name.
+													aria-hidden="true"
+													style={
+														{
+															'--nearby-icon-url': `url("${mailConversationIcon}")`
+														} as React.CSSProperties
+													}
+												/>
+												<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+													{translate(
+														'sessionList.toolbar.chips.nearby'
+													)}
+												</span>
+											</div>
+										)}
 									{modality === Modality.INTERNAL_GROUP && (
 										<div
 											className={clsx(

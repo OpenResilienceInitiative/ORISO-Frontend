@@ -368,6 +368,9 @@ const RAIL_DEMO_COPY = {
 	thread: 'Thread',
 	supervision: 'Supervision',
 	mail: 'Mail',
+	videoCall: 'Videoanruf',
+	audioCall: 'Audioanruf',
+	directLink: 'Direktlink',
 	unread: 'Ungelesen'
 };
 

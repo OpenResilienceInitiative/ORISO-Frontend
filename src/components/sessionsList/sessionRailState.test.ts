@@ -63,18 +63,73 @@ describe('getSessionRailMarks', () => {
 			'thread',
 			'supervision',
 			'mail',
+			'videoCall',
+			'audioCall',
+			'directLink',
 			'unread'
 		]);
 	});
 
+	// FE#1952: a conversation opened through a counsellor direct link was
+	// marked "Mail". It says where it came from instead, in the mail's slot.
+	it.each([
+		['VIDEO', 'videoCall'],
+		['AUDIO', 'audioCall'],
+		['CHAT', 'directLink']
+	] as const)(
+		'marks a %s direct-link conversation as %s instead of mail',
+		(directLinkMedium, mark) => {
+			expect(
+				getSessionRailMarks({
+					modality: 'AGENCY_COUNSELLING',
+					directLinkMedium
+				})
+			).toEqual([mark]);
+			expect(
+				getSessionRailMarks({
+					unread: true,
+					modality: 'AGENCY_COUNSELLING',
+					directLinkMedium,
+					supervisionState: 'supervisedByMe',
+					previewChannel: 'thread'
+				})
+			).toEqual(['thread', 'supervision', mark, 'unread']);
+		}
+	);
+
+	it('ignores a direct-link origin outside agency counselling and unknown media', () => {
+		expect(
+			getSessionRailMarks({
+				modality: 'LIVE_CHAT',
+				directLinkMedium: 'VIDEO'
+			})
+		).toEqual([]);
+		expect(
+			getSessionRailMarks({
+				modality: 'AGENCY_COUNSELLING',
+				directLinkMedium: 'FAX'
+			})
+		).toEqual(['mail']);
+		expect(
+			getSessionRailMarks({
+				modality: 'AGENCY_COUNSELLING',
+				directLinkMedium: null
+			})
+		).toEqual(['mail']);
+	});
+
 	it('never emits more marks than the pill has slots', () => {
-		const all = getSessionRailMarks({
-			unread: true,
-			modality: 'AGENCY_COUNSELLING',
-			supervisionState: 'supervisedByOthers',
-			previewChannel: 'thread'
-		});
-		expect(all).toHaveLength(SESSION_RAIL_MARK_ORDER.length);
-		expect(new Set(all).size).toBe(all.length);
+		// Four slots: thread, supervision, origin (mail or a direct link), unread.
+		for (const directLinkMedium of [undefined, 'VIDEO', 'AUDIO', 'CHAT']) {
+			const all = getSessionRailMarks({
+				unread: true,
+				modality: 'AGENCY_COUNSELLING',
+				directLinkMedium,
+				supervisionState: 'supervisedByOthers',
+				previewChannel: 'thread'
+			});
+			expect(all).toHaveLength(4);
+			expect(new Set(all).size).toBe(all.length);
+		}
 	});
 });
