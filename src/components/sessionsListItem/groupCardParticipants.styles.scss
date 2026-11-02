@@ -1,17 +1,39 @@
 // Count circle that replaces the faces above three people: the avatar's own
-// size, so the card's text wraps it like a single avatar.
+// size, so the card's text wraps it like a single avatar. White with black on a
+// closed card, like its menu button; on the open card it follows the ring:
+// primary with the focus there, accent and dark red with the focus elsewhere.
 .groupCardCrowd {
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	box-sizing: border-box;
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	background: var(--m3-secondary-container, #646d78);
-	color: #fff;
-	font-size: 16px;
+	background: #fff;
+	color: var(--m3-on-surface, #1a1c1e);
+	font-size: 14px;
 	font-weight: 500;
-	line-height: 24px;
+	line-height: 16px;
 	white-space: nowrap;
+	transition:
+		background-color 160ms ease,
+		color 160ms ease;
+
+	&__icon {
+		width: 22px;
+		height: 22px;
+		margin-bottom: -3px;
+	}
+
+	.sessionsListItem--active & {
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-on-primary-fixed-variant, #930008);
+	}
+
+	.sessionsListItem--active:not(.sessionsListItem--menuOpen):focus-within & {
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+	}
 }
