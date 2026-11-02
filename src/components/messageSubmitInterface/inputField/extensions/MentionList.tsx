@@ -121,33 +121,53 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 		}
 
 		return (
-			<div className="mentionList" role="listbox" aria-label={listLabel}>
-				{items.map((item, index) => (
-					<button
-						type="button"
-						role="option"
-						aria-selected={index === selectedIndex}
-						key={item.id}
-						className={[
-							'mentionList__item',
-							index === selectedIndex &&
-								'mentionList__item--active',
-							!item.isInRoom && 'mentionList__item--notInChat'
-						]
-							.filter(Boolean)
-							.join(' ')}
-						onClick={() => selectItem(index)}
-					>
-						<span className="mentionList__name">
-							{item.displayName}
-						</span>
-						{!item.isInRoom && (
-							<span className="mentionList__badge">
-								{notInChatLabel}
+			<div className="mentionList">
+				{listLabel && (
+					<p className="mentionList__title" aria-hidden="true">
+						{listLabel}
+					</p>
+				)}
+				<div
+					className="mentionList__options"
+					role="listbox"
+					aria-label={listLabel}
+				>
+					{items.map((item, index) => (
+						<button
+							type="button"
+							role="option"
+							aria-selected={index === selectedIndex}
+							key={item.id}
+							className={[
+								'mentionList__item',
+								index === selectedIndex &&
+									'mentionList__item--active',
+								!item.isInRoom && 'mentionList__item--notInChat'
+							]
+								.filter(Boolean)
+								.join(' ')}
+							onClick={() => selectItem(index)}
+						>
+							<span
+								className="mentionList__initial"
+								aria-hidden="true"
+							>
+								{item.displayName
+									.trim()
+									.charAt(0)
+									.toUpperCase()}
 							</span>
-						)}
-					</button>
-				))}
+							<span className="mentionList__name">
+								{item.displayName}
+							</span>
+							{!item.isInRoom && (
+								<span className="mentionList__badge">
+									{notInChatLabel}
+								</span>
+							)}
+						</button>
+					))}
+				</div>
 			</div>
 		);
 	}

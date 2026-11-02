@@ -79,7 +79,10 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				listLabel: provider.listLabel
 			});
 
-			const reposition = (clientRect: (() => DOMRect | null) | null) => {
+			const reposition = (
+				clientRect: (() => DOMRect | null) | null,
+				editorDom: Element
+			) => {
 				if (!popup || !clientRect) {
 					return;
 				}
@@ -87,8 +90,15 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				if (!rect) {
 					return;
 				}
+				// Above the whole composer, at the caret's column: anchored to
+				// the caret the list would cover the toolbar.
+				const card = editorDom.closest(
+					'.textarea__wrapper-send-message'
+				);
+				const top = card?.getBoundingClientRect().top ?? rect.top;
 				const virtualEl = {
-					getBoundingClientRect: () => rect
+					getBoundingClientRect: () =>
+						new DOMRect(rect.left, top, rect.width, 0)
 				};
 				computePosition(virtualEl as any, popup, {
 					placement: 'top-start',
@@ -118,7 +128,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 					popup.style.zIndex = '80';
 					popup.appendChild(component.element);
 					document.body.appendChild(popup);
-					reposition(props.clientRect ?? null);
+					reposition(props.clientRect ?? null, props.editor.view.dom);
 				},
 				onUpdate: (props) => {
 					component?.updateProps({
@@ -127,7 +137,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 						notInChatLabel: provider.notInChatLabel,
 						...statusProps()
 					});
-					reposition(props.clientRect ?? null);
+					reposition(props.clientRect ?? null, props.editor.view.dom);
 				},
 				onKeyDown: (props) => {
 					if (props.event.key === 'Escape') {
