@@ -2017,7 +2017,15 @@
 			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
 			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Alle auswählen"
+			"selectAllBottom": "Alle auswählen",
+			"unresolved": {
+				"headline": "Bitte Adressaten prüfen",
+				"text": "Die gewählten Adressaten konnten für diesen Chat nicht bestätigt werden. Wählen Sie die Adressaten erneut aus und senden Sie dann. Ihr Text bleibt in diesem Feld erhalten."
+			},
+			"attachmentBlocked": {
+				"headline": "Dateien gehen nur an alle",
+				"text": "Dateien und Sprachnachrichten lassen sich nicht auf ausgewählte Kolleg:innen beschränken. Wählen Sie „Alle“, um sie mit allen zu teilen, oder senden Sie stattdessen eine Textnachricht. Ihre Datei oder Aufnahme bleibt erhalten."
+			}
 		},
 		"edit": {
 			"cancel": "Bearbeiten abbrechen",

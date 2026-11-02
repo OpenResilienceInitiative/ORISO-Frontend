@@ -2002,7 +2002,15 @@
 			"counsellorsEmpty": "No counsellors are in this room",
 			"moderatorsEmpty": "No moderators are in this room",
 			"toggleSection": "Toggle section",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Select All",
+			"unresolved": {
+				"headline": "Please check the recipients",
+				"text": "The selected recipients could not be confirmed for this chat. Choose the recipients again, then send. Your text stays in this field."
+			},
+			"attachmentBlocked": {
+				"headline": "Files only go to everyone",
+				"text": "Files and voice messages cannot be limited to selected colleagues. Choose “All” to share them with everyone, or send a text message instead. Your file or recording stays here."
+			}
 		},
 		"edit": {
 			"cancel": "Cancel editing",
