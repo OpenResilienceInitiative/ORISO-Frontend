@@ -4504,7 +4504,10 @@
 			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ"
 		},
 		"timeline": {
-			"running": "ይካየድ ኣሎ"
+			"now": "ሕጂ",
+			"running": "ይካየድ ኣሎ",
+			"upcoming": "መጻኢ ቆጸራታት",
+			"nextAppointment": "ቆጸራ: {{date}}"
 		}
 	},
 	"statusOverlay": {

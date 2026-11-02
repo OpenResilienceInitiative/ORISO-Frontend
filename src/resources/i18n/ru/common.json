@@ -4513,7 +4513,10 @@
 			"unreadCount_many": "{{count}} новых сообщений"
 		},
 		"timeline": {
-			"running": "идёт"
+			"now": "Сейчас",
+			"running": "идёт",
+			"upcoming": "Предстоящие встречи",
+			"nextAppointment": "Следующая встреча: {{date}}"
 		}
 	},
 	"statusOverlay": {

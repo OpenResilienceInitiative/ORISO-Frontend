@@ -4521,7 +4521,10 @@
 			"unreadCount_one": "{{count}} neue Nachricht"
 		},
 		"timeline": {
-			"running": "läuft"
+			"now": "Jetzt",
+			"running": "läuft",
+			"upcoming": "Anstehende Termine",
+			"nextAppointment": "Nächster Termin: {{date}}"
 		}
 	},
 	"statusOverlay": {

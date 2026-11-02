@@ -4470,7 +4470,10 @@
 			"unreadCount_one": "{{count}} new message"
 		},
 		"timeline": {
-			"running": "in progress"
+			"now": "Now",
+			"running": "in progress",
+			"upcoming": "Upcoming appointments",
+			"nextAppointment": "Next appointment: {{date}}"
 		}
 	},
 	"statusOverlay": {
