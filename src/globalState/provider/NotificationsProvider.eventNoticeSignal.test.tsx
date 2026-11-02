@@ -10,6 +10,8 @@
  */
 
 import React, { useContext } from 'react';
+import { reportShownChannel } from '../../components/session/notificationActiveView';
+import { SessionChannel } from '../../utils/channelRoute';
 import {
 	cleanup,
 	fireEvent,
@@ -304,6 +306,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		vi.unstubAllGlobals();
 		notificationSettingsStore.resetForTests();
 		window.history.replaceState({}, '', '/');
+		reportShownChannel(null);
 	});
 
 	it('shows one team-discussion mention card with the sender and plays the mention tone once', async () => {
@@ -552,18 +555,25 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		expect(play).toHaveBeenCalledTimes(1);
 	});
 
-	it.each([
-		['its parent chat', ''],
-		['another thread', '?channel=thread:%24other']
+	it.each<[string, string, SessionChannel | null]>([
+		['its parent chat', '', null],
+		[
+			'another thread',
+			'?channel=thread:%24other',
+			{ kind: 'thread', rootId: '$other' }
+		],
+		// The URL asks for it, but its root is not in the loaded history.
+		['the main chat instead of it', '?channel=thread:%24root1', null]
 	])(
 		'still announces a thread mention with %s on screen',
-		async (_label, search) => {
+		async (_label, search, shown) => {
 			withTones();
 			window.history.replaceState(
 				{},
 				'',
 				`/sessions/consultant/sessionView/!room42/42${search}`
 			);
+			reportShownChannel(shown);
 			await deliver([threadReply(1)]);
 
 			await waitFor(() =>
@@ -588,6 +598,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 				'',
 				'/sessions/consultant/sessionView/!room42/42?channel=thread:%24other'
 			);
+			reportShownChannel({ kind: 'thread', rootId: '$other' });
 			await deliver([message(1, { mentioned: true })]);
 
 			await waitFor(() =>
@@ -611,6 +622,7 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			'',
 			'/sessions/consultant/sessionView/!room42/42?channel=thread:%24root1'
 		);
+		reportShownChannel({ kind: 'thread', rootId: '$root1' });
 		await deliver([threadReply(1)]);
 
 		expect(screen.getByTestId('notices').textContent).toBe('');

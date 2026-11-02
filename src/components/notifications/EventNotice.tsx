@@ -1,17 +1,22 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useSyncExternalStore
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
 	NotificationsContext,
 	NotificationType
 } from '../../globalState/provider/NotificationsProvider';
-import { isNotificationActiveViewRoute } from '../session/notificationActiveView';
-import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 import {
-	normalizeLegacyChannelSearch,
-	parseChannel
-} from '../../utils/channelRoute';
+	getShownChannel,
+	isNotificationActiveViewRoute,
+	subscribeShownChannel
+} from '../session/notificationActiveView';
+import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 import { ReactComponent as MentionIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -198,17 +203,13 @@ export const isTeamDiscussionOpen = (
 	return isConversationOpen(target, pathname, search, visible);
 };
 
-const openChannel = (search: string) =>
-	parseChannel(normalizeLegacyChannelSearch(search) ?? search).channel;
-
 /** On a phone a side channel fills the screen instead of the main chat. */
-const isMainChatHidden = (search: string) =>
-	window.innerWidth < STAGE_LAYOUT.DESKTOP_MIN_WIDTH && !!openChannel(search);
+const isMainChatHidden = () =>
+	window.innerWidth < STAGE_LAYOUT.DESKTOP_MIN_WIDTH && !!getShownChannel();
 
 /**
  * Whether this thread's panel is on screen. The parent chat does not show the
- * thread's replies. The feed's links carry the legacy `threadRootId` until the
- * session view rewrites it.
+ * thread's replies.
  */
 const isThreadOpen = (
 	target: NoticeTarget,
@@ -216,7 +217,7 @@ const isThreadOpen = (
 	search: string,
 	visible: boolean
 ): boolean => {
-	const channel = openChannel(search);
+	const channel = getShownChannel();
 	return (
 		channel?.kind === 'thread' &&
 		channel.rootId === target.threadRootId &&
@@ -237,7 +238,7 @@ export const isEventNoticeTargetOpen = (
 	if (kind === 'chatMention') {
 		if (target.threadRootId)
 			return isThreadOpen(target, pathname, search, visible);
-		if (isMainChatHidden(search)) return false;
+		if (isMainChatHidden()) return false;
 	}
 	return isConversationOpen(target, pathname, search, visible);
 };
@@ -280,6 +281,10 @@ export const EventNotice = (props: EventNoticeProps) => {
 	// Opening the conversation any other way also settles the card, but only
 	// once it is really seen: a hidden tab keeps the card until it returns.
 	const { pathname, search } = useLocation();
+	const shownChannel = useSyncExternalStore(
+		subscribeShownChannel,
+		getShownChannel
+	);
 	useEffect(() => {
 		const settleIfSeen = () => {
 			if (
@@ -308,7 +313,8 @@ export const EventNotice = (props: EventNoticeProps) => {
 		props.roomRef,
 		props.sessionId,
 		props.threadRootId,
-		search
+		search,
+		shownChannel
 	]);
 
 	const Icon =

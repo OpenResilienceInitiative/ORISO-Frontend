@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	act,
 	cleanup,
 	configure,
 	fireEvent,
@@ -26,6 +27,9 @@ import {
 	NOTIFICATION_TYPE_EVENT_NOTICE,
 	upsertEventNotice
 } from './EventNotice';
+
+import { reportShownChannel } from '../session/notificationActiveView';
+import { SessionChannel } from '../../utils/channelRoute';
 
 // The component tags nodes with data-cy (Cypress convention).
 configure({ testIdAttribute: 'data-cy' });
@@ -88,7 +92,10 @@ const renderNotice = (
 };
 
 describe('EventNotice', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		reportShownChannel(null);
+	});
 
 	it.each(['mention', 'handover'] as const)(
 		'names the actor, never message text, and opens the target (%s)',
@@ -175,7 +182,7 @@ describe('EventNotice', () => {
 		);
 	});
 
-	it('keeps a thread-mention card while only the parent chat is opened', () => {
+	it('keeps a thread-mention card while the parent chat is opened', () => {
 		const remove = renderNotice(
 			notice({
 				kind: 'chatMention',
@@ -189,7 +196,7 @@ describe('EventNotice', () => {
 		expect(remove).not.toHaveBeenCalled();
 	});
 
-	it('settles a thread-mention card when that thread is opened', () => {
+	it('settles a thread-mention card only when the chat card reports that thread', () => {
 		const remove = renderNotice(
 			notice({
 				kind: 'chatMention',
@@ -200,6 +207,8 @@ describe('EventNotice', () => {
 			'/sessions/consultant/sessionView/!room42/42?channel=thread:$root1'
 		);
 		fireEvent.click(screen.getByText('go'));
+		expect(remove).not.toHaveBeenCalled();
+		act(() => reportShownChannel({ kind: 'thread', rootId: '$root1' }));
 		expect(remove).toHaveBeenCalledWith(
 			'event-notice:chatMention:42:thread:$root1',
 			'eventNotice'
@@ -437,43 +446,44 @@ describe('event pop-up rules', () => {
 });
 
 describe('where the target is open', () => {
+	afterEach(() => reportShownChannel(null));
+
 	const target = { sessionId: '42', roomRef: '!room42' };
 
-	it.each([
-		['the parent chat', '', false],
-		['another thread', '?channel=thread:$other', false],
-		['the team discussion', '?channel=team', false],
-		['that thread', '?channel=thread:$root1', true],
-		// The feed's link, before the session view rewrites it to `channel=`.
-		['that thread by its feed link', '?threadRootId=%24root1', true]
-	])('a thread mention with %s (%s) → open=%s', (_label, search, open) => {
+	it.each<[string, SessionChannel | null, boolean]>([
+		['the parent chat', null, false],
+		['another thread', { kind: 'thread', rootId: '$other' }, false],
+		['the team discussion', { kind: 'team' }, false],
+		['that thread', { kind: 'thread', rootId: '$root1' }, true]
+	])('a thread mention with %s shown', (_label, shown, open) => {
 		const pathname = '/sessions/consultant/sessionView/!room42/42';
 		const thread = { ...target, threadRootId: '$root1' };
+		reportShownChannel(shown);
 		expect(
-			isEventNoticeTargetOpen(
-				'chatMention',
-				thread,
-				pathname,
-				search,
-				true
-			)
+			isEventNoticeTargetOpen('chatMention', thread, pathname, '', true)
 		).toBe(open);
 		expect(
 			isEventNoticeTargetOpen(
 				'chatMention',
 				thread,
 				'/sessions/consultant/sessionView/!room43/43',
-				'?channel=thread:$root1',
+				'',
 				true
 			)
 		).toBe(false);
 		expect(
+			isEventNoticeTargetOpen('chatMention', thread, pathname, '', false)
+		).toBe(false);
+	});
+
+	it('does not take the URL for the thread: its root may not be loaded', () => {
+		expect(
 			isEventNoticeTargetOpen(
 				'chatMention',
-				thread,
-				pathname,
-				search,
-				false
+				{ ...target, threadRootId: '$root1' },
+				'/sessions/consultant/sessionView/!room42/42',
+				'?channel=thread:$root1',
+				true
 			)
 		).toBe(false);
 	});
@@ -488,18 +498,19 @@ describe('where the target is open', () => {
 			});
 		afterEach(() => setWidth(width));
 
-		it.each([
-			['a thread', '?channel=thread:$other'],
-			['the supervision panel', '?channel=supervision'],
-			['the team panel', '?channel=team']
-		])('a main-chat mention is not seen behind %s', (_label, search) => {
+		it.each<[string, SessionChannel]>([
+			['a thread', { kind: 'thread', rootId: '$other' }],
+			['the supervision panel', { kind: 'supervision' }],
+			['the team panel', { kind: 'team' }]
+		])('a main-chat mention is not seen behind %s', (_label, shown) => {
+			reportShownChannel(shown);
 			setWidth(899);
 			expect(
 				isEventNoticeTargetOpen(
 					'chatMention',
 					target,
 					pathname,
-					search,
+					'',
 					true
 				)
 			).toBe(false);
@@ -510,7 +521,7 @@ describe('where the target is open', () => {
 					'chatMention',
 					target,
 					pathname,
-					search,
+					'',
 					true
 				)
 			).toBe(true);
@@ -529,14 +540,28 @@ describe('where the target is open', () => {
 			).toBe(true);
 		});
 
+		it('sees a main-chat mention when the requested panel did not open', () => {
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					'?channel=thread:$other',
+					true
+				)
+			).toBe(true);
+		});
+
 		it('sees a thread mention with that thread filling the screen', () => {
 			setWidth(899);
+			reportShownChannel({ kind: 'thread', rootId: '$root1' });
 			expect(
 				isEventNoticeTargetOpen(
 					'chatMention',
 					{ ...target, threadRootId: '$root1' },
 					pathname,
-					'?channel=thread:$root1',
+					'',
 					true
 				)
 			).toBe(true);
@@ -544,14 +569,9 @@ describe('where the target is open', () => {
 
 		it('leaves the other kinds on the conversation check', () => {
 			setWidth(899);
+			reportShownChannel({ kind: 'thread', rootId: '$other' });
 			expect(
-				isEventNoticeTargetOpen(
-					'handover',
-					target,
-					pathname,
-					'?channel=thread:$other',
-					true
-				)
+				isEventNoticeTargetOpen('handover', target, pathname, '', true)
 			).toBe(true);
 		});
 	});

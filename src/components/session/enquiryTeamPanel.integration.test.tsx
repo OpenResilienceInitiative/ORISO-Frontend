@@ -24,6 +24,7 @@ import { SessionStream } from './SessionStream';
 // measure Vite's first compilation of this large module.
 import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
+import { getShownChannel } from './notificationActiveView';
 import {
 	ActiveSessionContext,
 	UserDataContext,
@@ -286,6 +287,7 @@ function openEnquiry(
 		reloadedStatus?: number;
 		teamChannel?: boolean;
 		threadChannel?: boolean;
+		threadRootId?: string;
 		width?: number;
 		id?: number;
 		registrationType?: string;
@@ -425,7 +427,7 @@ function openEnquiry(
 						(options.teamChannel
 							? '?channel=team'
 							: options.threadChannel
-								? '?channel=thread:%24original'
+								? `?channel=thread:${encodeURIComponent(options.threadRootId ?? '$original')}`
 								: '')
 				]}
 			>
@@ -490,6 +492,40 @@ it.each([
 		);
 	}
 );
+
+it('reports a thread the card really shows, and not one only the URL asks for', async () => {
+	vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		threadChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(getShownChannel()).toEqual({
+				kind: 'thread',
+				rootId: '$original'
+			}),
+		{ timeout: 15000 }
+	);
+	expect(activeViewPatch).toHaveBeenLastCalledWith(
+		expect.objectContaining({ active: true, threadRootId: '$original' })
+	);
+	view.unmount();
+	expect(getShownChannel()).toBeNull();
+
+	activeViewPatch.mockClear();
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		threadChannel: true,
+		threadRootId: '$not-loaded'
+	});
+	await waitFor(
+		() =>
+			expect(activeViewPatch).toHaveBeenLastCalledWith(
+				expect.objectContaining({ active: true, threadRootId: null })
+			),
+		{ timeout: 15000 }
+	);
+	expect(getShownChannel()).toBeNull();
+}, 30000);
 
 it('shows the complete enquiry text when opened outside the enquiry list', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION);
