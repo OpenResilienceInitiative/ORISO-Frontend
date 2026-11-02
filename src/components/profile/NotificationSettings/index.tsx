@@ -24,6 +24,9 @@ import {
 } from '../../../utils/notificationHelpers';
 import { UserDataContext } from '../../../globalState/context/UserDataContext';
 import { AUTHORITIES, hasUserAuthority } from '../../../globalState';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { useAppConfig } from '../../../hooks/useAppConfig';
+import { hasEmailSettingsPanel } from '../EmailNotifications/emailNotificationAccess';
 import './notificationSettingsPanel.styles.scss';
 
 /**
@@ -41,6 +44,12 @@ export const NotificationSettingsPanel = () => {
 	const { settings, deviceSilenced, updateSettings, setDeviceSilenced } =
 		useNotificationSettings();
 	const { userData } = useContext(UserDataContext);
+	const appConfig = useAppConfig();
+	const tenant = useTenant();
+	const isConsultant = !!hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
@@ -159,9 +168,13 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 				onPreview={previewNotificationSound}
-				showLiveChatRow={
-					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				}
+				// #1979: no link to an e-mail panel the permissions hide.
+				showEmailLink={hasEmailSettingsPanel(
+					appConfig,
+					tenant?.settings,
+					isConsultant
+				)}
+				showLiveChatRow={isConsultant}
 			/>
 
 			<hr />
