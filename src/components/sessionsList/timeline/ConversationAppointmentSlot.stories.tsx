@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
-import { MemoryRouter } from 'react-router-dom';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -58,7 +57,7 @@ const Slot = ({
 	const [restore] = useState(() => installFetch(route));
 	React.useEffect(() => restore, [restore]);
 	return (
-		<MemoryRouter>
+		<>
 			<NotificationsContext.Provider
 				value={{ addNotification: () => undefined } as never}
 			>
@@ -99,7 +98,7 @@ const Slot = ({
 					</UserDataContext.Provider>
 				</SessionTypeContext.Provider>
 			</NotificationsContext.Provider>
-		</MemoryRouter>
+		</>
 	);
 };
 
@@ -151,5 +150,22 @@ export const MoveConflict: Story = {
 		route: { get: [appointment], write: 409 },
 		role: 'consultant',
 		canChange: true
+	},
+	play: async ({ canvasElement }) => {
+		const body = within(document.body);
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="room-next-appointment"] .splitButton__main'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await userEvent.click(bar);
+		await userEvent.click(await body.findByText('Termin verschieben'));
+		const dialog = await body.findByTestId('appointment-date-dialog');
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Verschieben' })
+		);
+		await expect(await within(dialog).findByRole('alert')).toBeVisible();
 	}
 };

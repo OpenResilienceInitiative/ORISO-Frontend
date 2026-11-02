@@ -21,6 +21,6 @@
 
 	&__error {
 		margin: 0;
-		color: var(--m3-error);
+		color: var(--m3-error, #cc0000);
 	}
 }

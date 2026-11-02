@@ -4491,7 +4491,40 @@
 			"now": "ሕጂ",
 			"running": "ይካየድ ኣሎ",
 			"upcoming": "መጻኢ ቆጸራታት",
-			"nextAppointment": "ቆጸራ: {{date}}"
+			"nextAppointment": "ቆጸራ: {{date}}",
+			"appointment": {
+				"create": "ቆጸራ ፍጠር",
+				"dialog": {
+					"createTitle": "ቆጸራ ፍጠር",
+					"moveTitle": "ቆጸራ ኣግፋሕ",
+					"description": "እዚ ቆጸራ ናይዚ ምኽሪ እዩ። ኣብ ዝርርብ መተሓሳሰቢ ክርአ እዩ።",
+					"createAction": "ፍጠር",
+					"moveAction": "ኣግፋሕ",
+					"date": "ዕለት",
+					"start": "መጀመሪ",
+					"end": "መወዳእታ",
+					"error": {
+						"incomplete": "በጃኹም ዕለትን ሰዓትን ምረጹ።",
+						"past": "እቲ ቆጸራ ኣብ መጻኢ ክኸውን ኣለዎ።",
+						"order": "እቲ መወዳእታ ድሕሪ እቲ መጀመሪ ክኸውን ኣለዎ።",
+						"conflict": "እዚ ቆጸራ ክቕየር ኣይክእልን፡ ተሰሪዙ ወይ እቲ ምኽሪ ተወዲኡ እዩ።",
+						"failed": "እቲ ቆጸራ ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+					}
+				},
+				"notice": {
+					"created": "ቆጸራ ተሓዚ፦ {{date}}",
+					"moved": "ቆጸራ ናብ ተቐይሩ፦ {{date}}",
+					"cancelled": "ቆጸራ ተሰሪዙ፦ {{date}}"
+				},
+				"noticeFailed": {
+					"title": "መተሓሳሰቢ ኣይተላእከን",
+					"text": "እቲ ቆጸራ ተዓቂቡ ኣሎ፡ ግን እቲ መተሓሳሰቢ ናብ ዝርርብ ክለኣኽ ኣይከኣለን።"
+				},
+				"cancelFailed": {
+					"title": "ቆጸራ ኣይተሰረዘን",
+					"text": "እቲ ቆጸራ ክስረዝ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+				}
+			}
 		}
 	},
 	"statusOverlay": {

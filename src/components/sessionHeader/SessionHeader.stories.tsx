@@ -1486,7 +1486,7 @@ const nextGroupDate: FutureEntry = {
 const withNextAppointment = (header: React.ReactNode, entry: FutureEntry) => (
 	<>
 		{header}
-		<div style={headerShell}>
+		<div style={headerShell} data-cy="story-next-appointment">
 			<RoomNextAppointment entry={entry} role="counsellor" />
 		</div>
 	</>
@@ -1496,8 +1496,9 @@ const expectAppointmentMenu =
 	(label: string, items: string[]) =>
 	async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const bar = await waitFor(() => {
+			// The header's own slot may render a bar too: this is the prototype's.
 			const found = canvasElement.querySelector<HTMLElement>(
-				'[data-cy="room-next-appointment"]'
+				'[data-cy="story-next-appointment"] [data-cy="room-next-appointment"]'
 			);
 			expect(found).not.toBeNull();
 			return found!;
