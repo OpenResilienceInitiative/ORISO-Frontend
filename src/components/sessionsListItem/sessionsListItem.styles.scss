@@ -1409,7 +1409,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	.sessionsListItem__consultingTypeIcon
 		.sessionsListItem__consultingTypeIcon--kindIcon {
-		background-color: var(--m3-on-primary-fixed-variant, #930008);
+		color: var(--m3-on-primary-fixed-variant, #930008);
+		background-color: currentcolor;
 	}
 
 	.sessionsListItem__consultingTypeIcon--nearbyLabel,
