@@ -113,6 +113,10 @@ import {
 import { getSupervisorAddState } from './getSupervisorAddState';
 import { resolveSupervisorDirectoryAgencyId } from './supervisorDirectory';
 import {
+	buildSupervisorSystemMessagePayload,
+	type SupervisorSystemMessageKind
+} from './supervisorSystemMessage';
+import {
 	getConsultantLabel,
 	SupervisorConsultantPicker
 } from './SupervisorConsultantPicker';
@@ -416,19 +420,21 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		);
 	};
 
-	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
+	const postSupervisorSystemMessage = async (
+		kind: SupervisorSystemMessageKind,
+		supervisorName: string
+	) => {
 		const matrixRoomId = isMatrixRoom(activeSession.rid)
 			? activeSession.rid
 			: activeSession.item?.matrixRoomId;
 		if (!matrixRoomId || !activeSession.item.id) {
 			return;
 		}
-		const payload = JSON.stringify({
-			title: translate('message.supervisionEnabledTitle'),
-			description: translate('message.supervisionEnabledDescription', {
-				name: supervisorName
-			})
-		});
+		const payload = buildSupervisorSystemMessagePayload(
+			kind,
+			supervisorName,
+			translate
+		);
 		try {
 			const client = matrixClientService?.getClient?.();
 			if (client) {
@@ -482,7 +488,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				selectedConsultantIdForRequest,
 				supervisionReason
 			);
-			await postSupervisorAddedSystemMessage(selectedSupervisorName);
+			await postSupervisorSystemMessage('added', selectedSupervisorName);
 			await loadSupervisors();
 			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
@@ -546,6 +552,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			await apiRemoveSessionSupervisor(
 				activeSession.item.id,
 				supervisorId
+			);
+			await postSupervisorSystemMessage(
+				'removed',
+				supervisorToRemoveName
 			);
 			await loadSupervisors();
 			addNotification({

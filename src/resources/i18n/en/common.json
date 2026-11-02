@@ -2076,6 +2076,8 @@
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
+		"supervisionDisabledTitle": "Supervision Ended!",
+		"supervisionDisabledDescription": "{{name}} was removed as a consultant supervisor from this chat.",
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",

@@ -2070,6 +2070,8 @@
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
+		"supervisionDisabledTitle": "Süpervizyon sona erdi!",
+		"supervisionDisabledDescription": "{{name}} bu sohbetten süpervizör danışman olarak çıkarıldı.",
 		"today": "Bugün",
 		"tomorrow": "Yarın",
 		"unread": "okunmamış",

@@ -2070,6 +2070,8 @@
 		"anonymousUser": "Utilisateur",
 		"supervisionEnabledTitle": "Supervision activée !",
 		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",
+		"supervisionDisabledTitle": "Supervision terminée !",
+		"supervisionDisabledDescription": "{{name}} a été retiré·e de ce chat en tant que conseiller·ère superviseur·e.",
 		"today": "Aujourd'hui",
 		"tomorrow": "Demain",
 		"unread": "non lu",
