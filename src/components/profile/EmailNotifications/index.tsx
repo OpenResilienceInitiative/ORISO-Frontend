@@ -6,6 +6,7 @@ import {
 	UserDataContext,
 	hasUserAuthority
 } from '../../../globalState';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { EmailToggle } from './EmailToggle';
@@ -22,6 +23,7 @@ import {
 	CONSULTANT_SWITCHES,
 	switchForOccasion
 } from './notificationMatrix';
+import { visibleEmailSwitches } from './emailNotificationAccess';
 
 /**
  * E-mail notification settings follow ADR-024's role boundary, with the
@@ -41,9 +43,12 @@ export const EmailNotification = () => {
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const switches = isConsultant
-		? CONSULTANT_SWITCHES
-		: ADVICE_SEEKER_SWITCHES;
+	// #1979: a switch whose mail the Träger switched off is not offered.
+	const tenant = useTenant();
+	const switches = visibleEmailSwitches(
+		isConsultant ? CONSULTANT_SWITCHES : ADVICE_SEEKER_SWITCHES,
+		tenant?.settings
+	);
 
 	// Every ORISO mail's footer links here with `?mail=<occasion>`, so the
 	// recipient lands on the switch that produced the mail in their hand rather

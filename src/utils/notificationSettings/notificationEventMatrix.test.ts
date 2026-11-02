@@ -68,11 +68,15 @@ const EXPECTED_ROW: Record<
 		consultant: 'conversations/handover'
 	},
 	'case.handover.offer.received': { consultant: 'conversations/handover' },
+	'case.handover.offer.sent': { consultant: 'conversations/handover' },
+	'case.handover.offer.declined': { consultant: 'conversations/handover' },
+	'case.handover.offer.withdrawn': { consultant: 'conversations/handover' },
 	'handover.requested': { consultant: 'conversations/handover' },
 	'handover.partial': { consultant: 'conversations/handover' },
 	'handover.all_confirmed': { consultant: 'conversations/handover' },
 	'handover.auto_confirmed': { consultant: 'conversations/handover' },
 	'handover.denied': { consultant: 'conversations/handover' },
+	'call.knock.requested': { consultant: 'timeCritical/call' },
 	'call.invited': {
 		consultant: 'timeCritical/call',
 		asker: 'timeCritical/call'

@@ -24,6 +24,10 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import type { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
+import type { AgencyConversationPolicy } from '../../globalState/interfaces/ConversationFeatureSettings';
+import { canonicalAgencySettings } from '../../test/fixtures/conversationPolicyFixtures';
+import { mockUserData } from '../message/MessageItemComponent.mocks';
 import { SessionItemComponent } from './SessionItemComponent';
 import {
 	ActiveSessionContext,
@@ -34,6 +38,10 @@ import {
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 
+const runtimeTenant = vi.hoisted(() => {
+	const settings: Partial<TenantDataSettingsInterface> = {};
+	return { settings };
+});
 const SESSION_ID = 4711;
 const ROOM_ID = '!live-chat:matrix.example.org';
 
@@ -54,7 +62,7 @@ vi.mock('../../globalState', async () => {
 		hasUserAuthority: (authority: string, userData: any) =>
 			Boolean(userData?.grantedAuthorities?.includes(authority)),
 		getContact: () => ({ username: 'Beraterin' }),
-		useTenant: () => ({}),
+		useTenant: () => ({ settings: runtimeTenant.settings }),
 		// Added when the side room's call controls landed: `SessionItemComponent`
 		// asks the consulting type whether calls are allowed at all. This test
 		// and that import came from two different branches and only met in the
@@ -126,7 +134,9 @@ vi.mock('../message/MessageItemComponent', () => ({
 	MessageItemComponent: () => null
 }));
 vi.mock('../dragAndDropArea/DragAndDropArea', () => ({
-	DragAndDropArea: ({ children }: any) => <div>{children}</div>
+	DragAndDropArea: ({ children }: { children?: React.ReactNode }) => (
+		<div data-testid="drop-area">{children}</div>
+	)
 }));
 vi.mock('../messageSubmitInterface/messageSubmitInterfaceComponent', () => ({
 	MessageSubmitInterfaceComponent: () => null
@@ -202,6 +212,7 @@ const buildActiveSession = (status: number) =>
 		consultant: { id: 'consultant-1', username: 'Beraterin' },
 		item: {
 			id: SESSION_ID,
+			agencyId: 101,
 			matrixRoomId: ROOM_ID,
 			conversationType: 'LIVE_CHAT',
 			status,
@@ -210,7 +221,12 @@ const buildActiveSession = (status: number) =>
 		}
 	}) as any;
 
-const renderSession = (status: number, userData = askerUserData, path = '/') =>
+const renderSession = (
+	status: number,
+	userData = askerUserData,
+	path = '/',
+	agencyFeaturePolicy?: AgencyConversationPolicy
+) =>
 	render(
 		<MemoryRouter initialEntries={[path]}>
 			<NotificationsContext.Provider
@@ -226,7 +242,8 @@ const renderSession = (status: number, userData = askerUserData, path = '/') =>
 							value={
 								{
 									activeSession: buildActiveSession(status),
-									reloadActiveSession: vi.fn()
+									reloadActiveSession: vi.fn(),
+									agencyFeaturePolicy
 								} as any
 							}
 						>
@@ -471,4 +488,24 @@ describe('SessionItemComponent — notification active-view lifecycle', () => {
 				.mock.calls.some(([request]) => request.active)
 		).toBe(false);
 	});
+});
+
+it('uses the canonical agency media permission for the actual drag-and-drop boundary', () => {
+	runtimeTenant.settings = {
+		featureMediaUploadEnabled: false,
+		featureMediaUploadAnonymousChatsEnabled: false
+	};
+	const userData = mockUserData({
+		userId: 'consultant-1',
+		grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'],
+		userRoles: ['CONSULTANT']
+	});
+	renderSession(2, userData, '/', {
+		agencyId: 101,
+		state: 'ready',
+		settings: canonicalAgencySettings()
+	});
+	expect(screen.getByTestId('drop-area')).toBeTruthy();
+	cleanup();
+	runtimeTenant.settings = {};
 });

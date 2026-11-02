@@ -193,6 +193,24 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		silentWhenOpen: true,
 		source: `${CH}.notifyRecipientOffer`
 	},
+	{
+		eventType: 'case.handover.offer.sent',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: `${CH}.notifyOfferSent`
+	},
+	{
+		eventType: 'case.handover.offer.declined',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: `${CH}.notifyOfferDeclined`
+	},
+	{
+		eventType: 'case.handover.offer.withdrawn',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: `${CH}.notifyOfferWithdrawn`
+	},
 	...[
 		'handover.requested',
 		'handover.partial',
@@ -216,6 +234,12 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 			source: `${ES}.createCall*Notification`
 		})
 	),
+	{
+		eventType: 'call.knock.requested',
+		recipients: CONSULTANT,
+		emitted: true,
+		source: `${ES}.createCallKnockRequestedNotification`
+	},
 	// Appointments
 	...[
 		'appointment.requested',

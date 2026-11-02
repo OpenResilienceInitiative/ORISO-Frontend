@@ -25,6 +25,9 @@ import {
 	requestNotificationPermissionSafe
 } from '../../../utils/notificationHelpers';
 import { UserDataContext } from '../../../globalState/context/UserDataContext';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { useAppConfig } from '../../../hooks/useAppConfig';
+import { hasEmailSettingsPanel } from '../EmailNotifications/emailNotificationAccess';
 import './notificationSettingsPanel.styles.scss';
 
 /**
@@ -43,6 +46,8 @@ export const NotificationSettingsPanel = () => {
 		useNotificationSettings();
 	const { userData } = useContext(UserDataContext);
 	const notificationRole = notificationRoleFor(userData);
+	const appConfig = useAppConfig();
+	const tenant = useTenant();
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
@@ -162,6 +167,12 @@ export const NotificationSettingsPanel = () => {
 				}
 				onPreview={previewNotificationSound}
 				role={notificationRole}
+				// #1979: no link to an e-mail panel the permissions hide.
+				showEmailLink={hasEmailSettingsPanel(
+					appConfig,
+					tenant?.settings,
+					notificationRole === 'consultant'
+				)}
 			/>
 
 			<hr />

@@ -507,6 +507,18 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse({ available: true });
 	}
 
+	// ORISO-UserService#1486: story people are normal accounts (404), so asker
+	// messages carry no guest label and the composer asks nothing.
+	if (url.pathname === '/service/users/temporary-account') {
+		return new Response(null, { status: 404 });
+	}
+
+	// #1894: the counsellor's own direct links (settings "Meine Links"); stories
+	// that show links install their own mock on top.
+	if (url.pathname === '/service/users/directlinks' && method === 'GET') {
+		return storybookJsonResponse([]);
+	}
+
 	if (url.pathname === '/service/users/data') {
 		return storybookJsonResponse(mockUserData);
 	}
@@ -973,6 +985,11 @@ const preview: Preview = {
 				phone390: {
 					name: 'Phone 390 (iPhone 12/13/14)',
 					styles: { width: '390px', height: '844px' },
+					type: 'mobile'
+				},
+				phone412: {
+					name: 'Phone 412 (Pixel / Galaxy)',
+					styles: { width: '412px', height: '915px' },
 					type: 'mobile'
 				},
 				phone390Landscape: {

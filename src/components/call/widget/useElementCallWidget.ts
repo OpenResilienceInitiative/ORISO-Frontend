@@ -42,6 +42,32 @@ export interface ElementCallWidgetOptions {
 	onClose?: () => void;
 	/** Keeps the floating host surface visible when Element Call requests it. */
 	onAlwaysOnScreenChange?: (alwaysOnScreen: boolean) => void;
+	/**
+	 * Who knocks on this call and its "Anklopfen" setting
+	 * (ORISO-ElementCall#109). Sent once the widget is ready and whenever it
+	 * changes. Leave it out where nobody may see knocks (advice seekers).
+	 */
+	knockState?: OrisoKnockState | null;
+	/**
+	 * The person flipped "Anklopfen" in the call. Resolves with the stored
+	 * setting; a rejection tells the call to flip back.
+	 */
+	onSetKnock?: (knock: boolean) => Promise<boolean>;
+}
+
+/** ORISO's own widget actions, as the fork names them (ORISO-ElementCall#109, `src/widget.ts`). */
+export const ORISO_WIDGET_ACTIONS = {
+	/** toWidget `{ waiting, knock }`; `knock: null` = no link, no switch. */
+	knockState: 'org.oriso.call.knock_state',
+	/** fromWidget `{ knock }`; always answered, with `error` when it did not land. */
+	setKnock: 'org.oriso.call.set_knock'
+} as const;
+
+export interface OrisoKnockState {
+	/** People waiting to join this call, >= 0. */
+	waiting: number;
+	/** The call link's "Anklopfen"; `null` when the call has no link to switch. */
+	knock: boolean | null;
 }
 
 export interface ElementCallWidget {
@@ -59,7 +85,28 @@ export interface ElementCallWidget {
 	hangup: () => Promise<void>;
 	/** Set when the call cannot be embedded at all; surface it, do not swallow. */
 	error: Error | null;
+	/** Microphone and camera as the call last reported them; `null` before. */
+	devices: CallDeviceState | null;
+	/** Asks the call to switch the microphone or camera (`io.element.device_mute`). */
+	setDevices: (change: Partial<CallDeviceState>) => Promise<void>;
 }
+
+/** The call's own report of its devices, as Element Call sends it. */
+export interface CallDeviceState {
+	audio_enabled: boolean;
+	video_enabled: boolean;
+}
+
+const deviceStateOf = (data: unknown): CallDeviceState | null => {
+	const value = data as Partial<CallDeviceState> | null;
+	return typeof value?.audio_enabled === 'boolean' &&
+		typeof value.video_enabled === 'boolean'
+		? {
+				audio_enabled: value.audio_enabled,
+				video_enabled: value.video_enabled
+			}
+		: null;
+};
 
 const widgetIdForRoom = async (
 	roomId: string,
@@ -97,6 +144,17 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.knockState, {
+			waiting: Math.max(0, Math.floor(state.waiting)),
+			knock: state.knock
+		})
+		.catch(() => {
+			/* an older call without the knock switch, or it went away */
+		});
+};
+
 export const useElementCallWidget = (
 	client: MatrixClient | null,
 	{
@@ -104,12 +162,15 @@ export const useElementCallWidget = (
 		isVideo,
 		skipLobby = true,
 		onClose,
-		onAlwaysOnScreenChange
+		onAlwaysOnScreenChange,
+		knockState = null,
+		onSetKnock
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
 	const [ready, setReady] = useState(false);
+	const [devices, setDeviceState] = useState<CallDeviceState | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
 	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -117,6 +178,11 @@ export const useElementCallWidget = (
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
 	>(null);
+	// Read inside the widget's action handlers, which outlive a render.
+	const knockStateRef = useRef<OrisoKnockState | null>(knockState);
+	knockStateRef.current = knockState;
+	const onSetKnockRef = useRef(onSetKnock);
+	onSetKnockRef.current = onSetKnock;
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
@@ -331,6 +397,7 @@ export const useElementCallWidget = (
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
 			setReady(false);
+			setDeviceState(null);
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
@@ -357,6 +424,10 @@ export const useElementCallWidget = (
 				'action:io.element.device_mute',
 				(event: CustomEvent<IWidgetApiRequest>) => {
 					event.preventDefault();
+					// The call reports every change; the minimized dock shows it.
+					const reported = deviceStateOf(event.detail.data);
+					if (reported && apiRef.current === api)
+						setDeviceState(reported);
 					api.transport.reply(event.detail, event.detail.data);
 				}
 			);
@@ -382,14 +453,78 @@ export const useElementCallWidget = (
 			]) {
 				api.on(`action:${action}`, acknowledgeLifecycleAction);
 			}
+
+			// "Anklopfen" belongs to the host's call link (ElementCall#109):
+			// change it there, answer either way, then tell the call the truth.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.setKnock}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const knock = (event.detail.data as { knock?: unknown })
+						?.knock;
+					const handler = onSetKnockRef.current;
+					const fail = (message: string) =>
+						api.transport.reply(event.detail, {
+							error: { message }
+						});
+					if (typeof knock !== 'boolean') {
+						fail('knock must be a boolean');
+						return;
+					}
+					if (!handler || knockStateRef.current?.knock == null) {
+						fail('This call has no link to switch');
+						return;
+					}
+					handler(knock).then(
+						(stored) => {
+							api.transport.reply(event.detail, {});
+							sendKnockState(api, {
+								waiting: knockStateRef.current?.waiting ?? 0,
+								knock: stored
+							});
+						},
+						() => {
+							fail('Anklopfen was not changed');
+							const current = knockStateRef.current;
+							if (current) sendKnockState(api, current);
+						}
+					);
+				}
+			);
 		},
 		[client, onAlwaysOnScreenChange, onClose, roomId, url]
 	);
+
+	// The call keeps the last state it got, so send only on a change — and
+	// again to every newly ready widget.
+	const knockWaiting = knockState?.waiting;
+	const knockSetting = knockState?.knock;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || knockWaiting === undefined) return;
+		sendKnockState(api, {
+			waiting: knockWaiting,
+			knock: knockSetting ?? null
+		});
+	}, [ready, knockWaiting, knockSetting]);
 
 	const hangup = useCallback(async (): Promise<void> => {
 		if (!apiRef.current) return;
 		await apiRef.current.transport.send('im.vector.hangup', {});
 	}, []);
+
+	const setDevices = useCallback(
+		async (change: Partial<CallDeviceState>): Promise<void> => {
+			const api = apiRef.current;
+			if (!api) return;
+			const reply = await api.transport.send('io.element.device_mute', {
+				...change
+			});
+			const reported = deviceStateOf(reply);
+			if (reported && apiRef.current === api) setDeviceState(reported);
+		},
+		[]
+	);
 
 	// Push room and to-device traffic into the widget. The widget API only
 	// *answers* requests; anything the widget needs to observe has to be fed.
@@ -548,5 +683,5 @@ export const useElementCallWidget = (
 		[]
 	);
 
-	return { url, ready, attachIframe, hangup, error };
+	return { url, ready, attachIframe, hangup, error, devices, setDevices };
 };
