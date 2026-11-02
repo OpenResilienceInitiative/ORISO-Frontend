@@ -2067,6 +2067,8 @@
 		"consultantLeftChat": "እቲ ኣማኻሪ ካብቲ ቻት ወጺኡ",
 		"youEndedChat": "ነቲ ቻት ኣብቂዕኩሞ",
 		"chatEnded": "እቲ ቻት ተዛዚሙ",
+		"consultantRenamedTitle": "ስም ተቐይሩ",
+		"consultantRenamedDescription": "ናይ {{oldName}} ስም ሕጂ {{newName}} እዩ።",
 		"anonymousUser": "ተጠቃሚ",
 		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
 		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",
