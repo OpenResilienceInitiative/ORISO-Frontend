@@ -313,8 +313,12 @@ export const EventNotice = (props: EventNoticeProps) => {
 		};
 		settleIfSeen();
 		document.addEventListener('visibilitychange', settleIfSeen);
-		return () =>
+		// Growing past the phone layout brings the main chat back on screen.
+		window.addEventListener('resize', settleIfSeen);
+		return () => {
 			document.removeEventListener('visibilitychange', settleIfSeen);
+			window.removeEventListener('resize', settleIfSeen);
+		};
 	}, [
 		close,
 		kind,

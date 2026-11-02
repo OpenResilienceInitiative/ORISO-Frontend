@@ -65,6 +65,13 @@ const notice = (
 	...overrides
 });
 
+const initialWidth = window.innerWidth;
+const setWidth = (value: number) =>
+	Object.defineProperty(window, 'innerWidth', {
+		configurable: true,
+		value
+	});
+
 const Where = () => <div data-cy="where">{useLocation().pathname}</div>;
 const GoTo = ({ to }: { to: string }) => {
 	const navigate = useNavigate();
@@ -95,6 +102,7 @@ describe('EventNotice', () => {
 	afterEach(() => {
 		cleanup();
 		reportShownChannel(null);
+		setWidth(initialWidth);
 	});
 
 	it.each(['mention', 'handover'] as const)(
@@ -212,6 +220,29 @@ describe('EventNotice', () => {
 		expect(remove).toHaveBeenCalledWith(
 			'event-notice:chatMention:42:thread:$root1',
 			'eventNotice'
+		);
+	});
+
+	it('settles a main-chat card when the window grows past the phone layout', () => {
+		setWidth(899);
+		reportShownChannel({ kind: 'thread', rootId: '$other' });
+		const remove = renderNotice(
+			notice({ kind: 'chatMention', id: 'event-notice:chatMention:42' }),
+			'/sessions/consultant/sessionView/!room42/42'
+		);
+		expect(remove).not.toHaveBeenCalled();
+
+		// Still a phone: the side panel keeps hiding the main chat.
+		setWidth(600);
+		fireEvent(window, new Event('resize'));
+		expect(remove).not.toHaveBeenCalled();
+
+		// Both panes now sit side by side, with route and panel unchanged.
+		setWidth(900);
+		fireEvent(window, new Event('resize'));
+		expect(remove).toHaveBeenCalledWith(
+			'event-notice:chatMention:42',
+			NOTIFICATION_TYPE_EVENT_NOTICE
 		);
 	});
 
@@ -490,13 +521,7 @@ describe('where the target is open', () => {
 
 	describe('with a side panel over the main chat on a phone', () => {
 		const pathname = '/sessions/consultant/sessionView/!room42/42';
-		const width = window.innerWidth;
-		const setWidth = (value: number) =>
-			Object.defineProperty(window, 'innerWidth', {
-				configurable: true,
-				value
-			});
-		afterEach(() => setWidth(width));
+		afterEach(() => setWidth(initialWidth));
 
 		it.each<[string, SessionChannel]>([
 			['a thread', { kind: 'thread', rootId: '$other' }],
