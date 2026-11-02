@@ -7,6 +7,10 @@ import {
 	NotificationType
 } from '../../globalState/provider/NotificationsProvider';
 import { isNotificationActiveViewRoute } from '../session/notificationActiveView';
+import {
+	normalizeLegacyChannelSearch,
+	parseChannel
+} from '../../utils/channelRoute';
 import { ReactComponent as MentionIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -14,9 +18,10 @@ import './notification.styles';
 
 /**
  * In-app pop-up for events that need a person's attention (FE#779), built like
- * the live-chat pop-up (FE#1470). One card per conversation and kind: it counts
- * up instead of stacking. It names the actor where there is a public one,
- * never message text, reasons or staff-only details.
+ * the live-chat pop-up (FE#1470). One card per conversation and kind, and per
+ * thread for a mention in one: it counts up instead of stacking. It names the
+ * actor where there is a public one, never message text, reasons or staff-only
+ * details.
  *
  *  - mention:  a team-discussion post that mentions the counsellor
  *  - chatMention: a message in an ordinary chat that mentions the counsellor
@@ -45,6 +50,8 @@ export interface EventNoticeProps extends NotificationType {
 	sessionId: string;
 	/** Room to notice the target being opened by another route. */
 	roomRef?: string | null;
+	/** The thread a chat mention was made in; null for the main chat. */
+	threadRootId?: string | null;
 	/** Who mentioned or handed over (metadata only, never content). */
 	actorName?: string | null;
 	/** Events of this kind in this conversation since the card appeared. */
@@ -58,8 +65,12 @@ export const isNotificationTypeEventNotice = (
 ): notification is EventNoticeProps =>
 	notification.notificationType === NOTIFICATION_TYPE_EVENT_NOTICE;
 
-export const eventNoticeId = (kind: EventNoticeKind, sessionId: string) =>
-	`event-notice:${kind}:${sessionId}`;
+export const eventNoticeId = (
+	kind: EventNoticeKind,
+	sessionId: string,
+	threadRootId?: string | null
+) =>
+	`event-notice:${kind}:${sessionId}${threadRootId ? `:thread:${threadRootId}` : ''}`;
 
 /** The feed fields the pop-up decision reads. */
 export interface EventNoticeFeedEvent {
@@ -69,6 +80,7 @@ export interface EventNoticeFeedEvent {
 	params?: {
 		recipientRole?: string | null;
 		roomRef?: string | null;
+		threadRootId?: string | null;
 		senderName?: string | null;
 		senderDisplayName?: string | null;
 		initiatorName?: string | null;
@@ -141,6 +153,7 @@ export const eventNoticeActor = (
 interface NoticeTarget {
 	sessionId?: string | null;
 	roomRef?: string | null;
+	threadRootId?: string | null;
 }
 
 const pathSegments = (path: string) =>
@@ -184,6 +197,27 @@ export const isTeamDiscussionOpen = (
 	return isConversationOpen(target, pathname, search, visible);
 };
 
+/**
+ * Whether this thread's panel is on screen. The parent chat does not show the
+ * thread's replies. The feed's links carry the legacy `threadRootId` until the
+ * session view rewrites it.
+ */
+const isThreadOpen = (
+	target: NoticeTarget,
+	pathname: string,
+	search: string,
+	visible: boolean
+): boolean => {
+	const { channel } = parseChannel(
+		normalizeLegacyChannelSearch(search) ?? search
+	);
+	return (
+		channel?.kind === 'thread' &&
+		channel.rootId === target.threadRootId &&
+		isConversationOpen(target, pathname, search, visible)
+	);
+};
+
 /** Whether the counsellor/advice seeker is looking at this event's target. */
 export const isEventNoticeTargetOpen = (
 	kind: EventNoticeKind,
@@ -191,10 +225,13 @@ export const isEventNoticeTargetOpen = (
 	pathname: string,
 	search: string,
 	visible: boolean
-) =>
-	kind === 'mention'
-		? isTeamDiscussionOpen(target, pathname, search, visible)
-		: isConversationOpen(target, pathname, search, visible);
+) => {
+	if (kind === 'mention')
+		return isTeamDiscussionOpen(target, pathname, search, visible);
+	if (kind === 'chatMention' && target.threadRootId)
+		return isThreadOpen(target, pathname, search, visible);
+	return isConversationOpen(target, pathname, search, visible);
+};
 
 /** Adds the card, or counts one more event on the card already shown. */
 export const upsertEventNotice = <T extends NotificationType>(
@@ -239,7 +276,11 @@ export const EventNotice = (props: EventNoticeProps) => {
 			if (
 				isEventNoticeTargetOpen(
 					kind,
-					{ sessionId: props.sessionId, roomRef: props.roomRef },
+					{
+						sessionId: props.sessionId,
+						roomRef: props.roomRef,
+						threadRootId: props.threadRootId
+					},
 					pathname,
 					search,
 					document.visibilityState !== 'hidden'
@@ -251,7 +292,15 @@ export const EventNotice = (props: EventNoticeProps) => {
 		document.addEventListener('visibilitychange', settleIfSeen);
 		return () =>
 			document.removeEventListener('visibilitychange', settleIfSeen);
-	}, [close, kind, pathname, props.roomRef, props.sessionId, search]);
+	}, [
+		close,
+		kind,
+		pathname,
+		props.roomRef,
+		props.sessionId,
+		props.threadRootId,
+		search
+	]);
 
 	const Icon =
 		kind === 'mention' || kind === 'chatMention'

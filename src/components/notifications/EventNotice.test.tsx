@@ -18,8 +18,10 @@ import {
 	EventNotice,
 	EventNoticeProps,
 	eventNoticeActor,
+	eventNoticeId,
 	eventNoticeKindFor,
 	isConversationOpen,
+	isEventNoticeTargetOpen,
 	isTeamDiscussionOpen,
 	NOTIFICATION_TYPE_EVENT_NOTICE,
 	upsertEventNotice
@@ -169,6 +171,37 @@ describe('EventNotice', () => {
 		fireEvent.click(screen.getByText('go'));
 		expect(remove).toHaveBeenCalledWith(
 			'event-notice:chatMention:42',
+			'eventNotice'
+		);
+	});
+
+	it('keeps a thread-mention card while only the parent chat is opened', () => {
+		const remove = renderNotice(
+			notice({
+				kind: 'chatMention',
+				id: 'event-notice:chatMention:42:thread:$root1',
+				threadRootId: '$root1'
+			}),
+			'/',
+			'/sessions/consultant/sessionView/!room42/42'
+		);
+		fireEvent.click(screen.getByText('go'));
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('settles a thread-mention card when that thread is opened', () => {
+		const remove = renderNotice(
+			notice({
+				kind: 'chatMention',
+				id: 'event-notice:chatMention:42:thread:$root1',
+				threadRootId: '$root1'
+			}),
+			'/',
+			'/sessions/consultant/sessionView/!room42/42?channel=thread:$root1'
+		);
+		fireEvent.click(screen.getByText('go'));
+		expect(remove).toHaveBeenCalledWith(
+			'event-notice:chatMention:42:thread:$root1',
 			'eventNotice'
 		);
 	});
@@ -405,6 +438,57 @@ describe('event pop-up rules', () => {
 
 describe('where the target is open', () => {
 	const target = { sessionId: '42', roomRef: '!room42' };
+
+	it.each([
+		['the parent chat', '', false],
+		['another thread', '?channel=thread:$other', false],
+		['the team discussion', '?channel=team', false],
+		['that thread', '?channel=thread:$root1', true],
+		// The feed's link, before the session view rewrites it to `channel=`.
+		['that thread by its feed link', '?threadRootId=%24root1', true]
+	])('a thread mention with %s (%s) → open=%s', (_label, search, open) => {
+		const pathname = '/sessions/consultant/sessionView/!room42/42';
+		const thread = { ...target, threadRootId: '$root1' };
+		expect(
+			isEventNoticeTargetOpen(
+				'chatMention',
+				thread,
+				pathname,
+				search,
+				true
+			)
+		).toBe(open);
+		expect(
+			isEventNoticeTargetOpen(
+				'chatMention',
+				thread,
+				'/sessions/consultant/sessionView/!room43/43',
+				'?channel=thread:$root1',
+				true
+			)
+		).toBe(false);
+		expect(
+			isEventNoticeTargetOpen(
+				'chatMention',
+				thread,
+				pathname,
+				search,
+				false
+			)
+		).toBe(false);
+	});
+
+	it('gives a thread its own card, apart from the chat and other threads', () => {
+		expect(eventNoticeId('chatMention', '42')).toBe(
+			'event-notice:chatMention:42'
+		);
+		expect(eventNoticeId('chatMention', '42', '$root1')).toBe(
+			'event-notice:chatMention:42:thread:$root1'
+		);
+		expect(eventNoticeId('chatMention', '42', '$root2')).not.toBe(
+			eventNoticeId('chatMention', '42', '$root1')
+		);
+	});
 
 	it.each([
 		['/sessions/consultant/sessionView/!room42/42', '', true],

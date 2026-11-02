@@ -668,12 +668,17 @@ export function NotificationsProvider(props) {
 			// live chat; elsewhere tone and OS banner follow their rows.
 			const noticeKind = eventNoticeKindFor(event);
 			if (noticeKind) {
+				const threadRootId =
+					noticeKind === 'chatMention'
+						? event.params?.threadRootId
+						: null;
 				if (
 					isEventNoticeTargetOpen(
 						noticeKind,
 						{
 							sessionId: event.sourceSessionId,
-							roomRef: event.params?.roomRef
+							roomRef: event.params?.roomRef,
+							threadRootId
 						},
 						window.location.pathname,
 						window.location.search,
@@ -701,11 +706,16 @@ export function NotificationsProvider(props) {
 					const sessionId = String(event.sourceSessionId);
 					setNotifications((list) =>
 						upsertEventNotice(list, {
-							id: eventNoticeId(noticeKind, sessionId),
+							id: eventNoticeId(
+								noticeKind,
+								sessionId,
+								threadRootId
+							),
 							notificationType: NOTIFICATION_TYPE_EVENT_NOTICE,
 							kind: noticeKind,
 							sessionId,
 							roomRef: event.params?.roomRef ?? null,
+							threadRootId: threadRootId ?? null,
 							actorName: eventNoticeActor(noticeKind, event),
 							count: 1,
 							path: toNonEmbeddedPath(

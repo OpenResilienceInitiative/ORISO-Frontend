@@ -168,6 +168,24 @@ const message = (id: number, params: Record<string, unknown> = {}) =>
 		42
 	);
 
+const threadReply = (id: number, params: Record<string, unknown> = {}) =>
+	base(
+		id,
+		'thread.reply.new',
+		'message',
+		'/sessions/consultant/sessionView/!room42/42?threadRootId=%24root1',
+		{
+			roomRef: '!room42',
+			conversationType: 'AGENCY_COUNSELLING',
+			recipientRole: 'consultant',
+			senderName: 'Kollegin Weber',
+			threadRootId: '$root1',
+			mentioned: true,
+			...params
+		},
+		42
+	);
+
 const Probe = () => {
 	const context = useContext(NotificationsContext)!;
 	const notices = (context.notifications as unknown as Notice[]).filter(
@@ -532,6 +550,43 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 			)
 		);
 		expect(play).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		['its parent chat', ''],
+		['another thread', '?channel=thread:%24other']
+	])(
+		'still announces a thread mention with %s on screen',
+		async (_label, search) => {
+			withTones();
+			window.history.replaceState(
+				{},
+				'',
+				`/sessions/consultant/sessionView/!room42/42${search}`
+			);
+			await deliver([threadReply(1)]);
+
+			await waitFor(() =>
+				expect(screen.getByTestId('notices').textContent).toBe(
+					'chatMention:42:1:Kollegin Weber'
+				)
+			);
+			expect(play).toHaveBeenCalledTimes(1);
+		}
+	);
+
+	it('is completely silent while the mentioned thread itself is on screen', async () => {
+		withTones();
+		window.history.replaceState(
+			{},
+			'',
+			'/sessions/consultant/sessionView/!room42/42?channel=thread:%24root1'
+		);
+		await deliver([threadReply(1)]);
+
+		expect(screen.getByTestId('notices').textContent).toBe('');
+		expect(play).not.toHaveBeenCalled();
+		expect(banners).not.toHaveBeenCalled();
 	});
 
 	it('stays quiet while notifications are muted', async () => {
