@@ -313,7 +313,7 @@ export const rowForCase = (
 	return { area, kind };
 };
 
-/** Why a channel cannot fire; all but `noPopup` have a `…config.unavailable.<reason>` text. */
+/** Why a channel cannot fire. Only `notSentYet` has a `…config.unavailable.<reason>` text. */
 export type UnavailableReason =
 	| 'notSentYet'
 	| 'notForRole'
@@ -370,8 +370,9 @@ export const unavailableReason = (
 	'reason' in capability ? capability.reason : null;
 
 /** Key of the helper text explaining why a row cannot fire. */
-export const unavailableReasonKey = (reason: UnavailableReason): string =>
-	`profile.notifications.config.unavailable.${reason}`;
+export const unavailableReasonKey = (
+	reason: Extract<UnavailableReason, 'notSentYet'>
+): string => `profile.notifications.config.unavailable.${reason}`;
 
 /**
  * What the dialog's two controls can do for a row. The "Banner" select gates
