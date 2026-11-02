@@ -293,6 +293,22 @@ export const OverflowBadgeOpensList: Story = {
 		</div>
 	),
 	play: async ({ canvasElement }) => {
+		// The badge overlaps the last avatar and stays on top while it is hovered.
+		const items = canvasElement.querySelectorAll<HTMLElement>(
+			'.participantStack__item'
+		);
+		const badgeItem = canvasElement.querySelector<HTMLElement>(
+			'.participantStack__item--overflow'
+		)!;
+		const lastAvatar = items[items.length - 2];
+		await userEvent.hover(lastAvatar);
+		await waitFor(() =>
+			expect(Number(lastAvatar.style.zIndex)).toBeLessThan(
+				Number(badgeItem.style.zIndex)
+			)
+		);
+		await userEvent.unhover(lastAvatar);
+
 		(window as any).__cardClicked = false;
 		const chip = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="participant-overflow"]'
