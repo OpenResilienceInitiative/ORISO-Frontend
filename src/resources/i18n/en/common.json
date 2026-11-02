@@ -200,6 +200,17 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Check and open",
+			"checking": "Checking for viruses …",
+			"checkingImage": "Checking the image …",
+			"checkVirus": "Virus scan",
+			"checkImage": "Image analysis: safe and within the guidelines?",
+			"decrypt": "Decrypt",
+			"decrypting": "Decrypting …",
+			"encryptedHint": "End-to-end encrypted",
+			"retry": "Try again"
+		},
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",

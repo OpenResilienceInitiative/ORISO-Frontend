@@ -13,16 +13,17 @@ import {
 } from '../../utils/matrixAuthenticatedMedia';
 import {
 	downloadScannedEncryptedMedia,
-	isMediaContentScannerEnabled
+	isMediaContentScannerEnabled,
+	isMediaImageCheckEnabled
 } from '../../services/mediaContentScanner';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_ERROR
 } from '../../globalState';
-import { LoadingSpinner } from '../loadingSpinner/LoadingSpinner';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { getIconForAttachmentType } from './messageHelpers';
 import { AttachmentCard } from './AttachmentCard';
+import { AttachmentGate, AttachmentGateStatus } from './AttachmentGate';
 import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 import { voiceDurationMsFromFileName } from '../../utils/voiceMessageFileName';
@@ -328,6 +329,42 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		</>
 	);
 
+	// Both run on the scanner, which answers once for the whole file. So they
+	// are shown running side by side, never as a sequence the client cannot see.
+	const scanStatus = (): AttachmentGateStatus => {
+		if (!isMediaContentScannerEnabled()) {
+			return {
+				kind: 'working',
+				label: translate('attachments.gate.decrypting')
+			};
+		}
+		if (!isImage || !isMediaImageCheckEnabled()) {
+			return {
+				kind: 'working',
+				label: translate('attachments.gate.checking')
+			};
+		}
+		return {
+			kind: 'working',
+			label: translate('attachments.gate.checkingImage'),
+			checks: [
+				{
+					label: translate('attachments.gate.checkVirus'),
+					state: 'running'
+				},
+				{
+					label: translate('attachments.gate.checkImage'),
+					state: 'running'
+				}
+			]
+		};
+	};
+
+	const gateAspectRatio =
+		attachmentDimensions.width && attachmentDimensions.height
+			? `${attachmentDimensions.width} / ${attachmentDimensions.height}`
+			: undefined;
+
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = plainMediaUrl;
 
@@ -348,6 +385,8 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				// The surrounding message already draws the bubble; it also
 				// sets --voicePlayer-tile-idle for own messages.
 				bubble="none"
+				fill
+				showMeta={false}
 			/>
 		),
 		[durationFromFileName]
@@ -358,42 +397,49 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		// `error` means nothing judged the file, so it is withheld just as
 		// strictly — only the wording differs, because claiming a file was
 		// rejected when no check ran would be untrue.
-		const metaKey =
-			effectiveMediaState === 'error'
-				? 'attachments.mediaCheck.error'
-				: 'attachments.mediaCheck.blocked';
 		return (
-			<AttachmentCard
-				action={{ kind: 'none' }}
-				blocked
-				icon={getAttachmentIcon(props.file.type)}
+			<AttachmentGate
+				mimeType={props.file.type}
 				fileName={props.attachment.title}
-				meta={translate(metaKey)}
-				actionLabel={`${props.attachment.title} — ${translate(metaKey)}`}
+				meta={fileMeta}
+				status={
+					effectiveMediaState === 'error'
+						? {
+								kind: 'error',
+								label: translate(
+									'attachments.mediaCheck.error'
+								),
+								retryLabel: translate('attachments.gate.retry'),
+								// Only a verdict of our own can be asked for again.
+								onRetry:
+									scanVerdict === 'error'
+										? () => setScanVerdict(null)
+										: undefined
+							}
+						: {
+								kind: 'blocked',
+								label: translate(
+									'attachments.mediaCheck.blocked'
+								)
+							}
+				}
 			/>
 		);
 	}
 
 	if (isAwaitingReveal) {
 		return (
-			<AttachmentCard
-				action={{ kind: 'none' }}
+			<AttachmentGate
+				mimeType={props.file.type}
 				fileName={props.attachment.title}
-				meta={translate('attachments.mediaCheck.unchecked')}
-				actionLabel={`${props.attachment.title} — ${translate(
-					'attachments.mediaCheck.unchecked'
-				)}`}
-				preview={
-					<span className="attachmentCard__preview attachmentCard__preview--blurred">
-						<button
-							type="button"
-							className="attachmentCard__reveal"
-							onClick={revealUncheckedImage}
-						>
-							{translate('attachments.mediaCheck.reveal')}
-						</button>
-					</span>
-				}
+				meta={fileMeta}
+				aspectRatio={gateAspectRatio}
+				status={{
+					kind: 'gate',
+					actionLabel: translate('attachments.mediaCheck.reveal'),
+					hint: translate('attachments.mediaCheck.unchecked'),
+					onAction: revealUncheckedImage
+				}}
 			/>
 		);
 	}
@@ -462,27 +508,37 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					/>
 				)
 			) : (
-				<AttachmentCard
-					action={{
-						kind: 'unlock',
-						onUnlock:
-							attachmentStatus === ENCRYPTED
-								? () => decryptFile()
-								: undefined,
-						busy: attachmentStatus === IS_DECRYPTING
-					}}
-					icon={
-						attachmentStatus === IS_DECRYPTING ? (
-							<LoadingSpinner />
-						) : (
-							getAttachmentIcon(props.file.type)
-						)
-					}
+				<AttachmentGate
+					mimeType={props.file.type}
 					fileName={props.attachment.title}
-					meta={translate(`e2ee.attachment.${attachmentStatus}`)}
-					actionLabel={`${props.attachment.title} — ${translate(
-						`e2ee.attachment.${attachmentStatus}`
-					)}`}
+					meta={fileMeta}
+					aspectRatio={gateAspectRatio}
+					status={
+						attachmentStatus === IS_DECRYPTING
+							? scanStatus()
+							: attachmentStatus === DECRYPTION_ERROR
+								? {
+										kind: 'error',
+										label: translate(
+											'e2ee.attachment.decryption_error'
+										)
+									}
+								: {
+										kind: 'gate',
+										actionLabel: translate(
+											isMediaContentScannerEnabled()
+												? 'attachments.gate.check'
+												: 'attachments.gate.decrypt'
+										),
+										ariaLabel: `${props.attachment.title} — ${translate(
+											'e2ee.attachment.encrypted'
+										)}`,
+										hint: translate(
+											'attachments.gate.encryptedHint'
+										),
+										onAction: () => decryptFile()
+									}
+					}
 				/>
 			)}
 		</>
