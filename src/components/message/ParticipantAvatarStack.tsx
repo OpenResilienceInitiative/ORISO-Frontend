@@ -229,7 +229,11 @@ export const ParticipantAvatarStack = ({
 			{overflow > 0 && (
 				<li
 					className="participantStack__item participantStack__item--overflow"
-					style={{ zIndex: overflowStyle === 'badge' ? 2 : 0 }}
+					style={{
+						// Above the hovered avatar too, which it overlaps.
+						zIndex:
+							overflowStyle === 'badge' ? visible.length + 2 : 0
+					}}
 				>
 					{overflowStyle === 'pill' ? (
 						<span

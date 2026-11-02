@@ -1760,11 +1760,16 @@ export const GroupedListWithSelection: Story = {
 		await expect(cardStyle(selected).boxShadow).toContain('inset');
 		await expect(cardBox(selected).height).toBe(restingHeight);
 
-		// The focus moves on: the selected card calms down again.
+		// The focus moves on: the ring goes with it, the selected card calms down.
+		const neighbourHeight = cardBox(after).height;
 		part(after, '.sessionsListItem__content').focus();
 		await waitFor(() =>
 			expect(cardStyle(selected).borderTopColor).toBe(REST_OUTLINE)
 		);
+		await waitFor(() =>
+			expect(cardStyle(after).boxShadow).toContain('inset')
+		);
+		await expect(cardBox(after).height).toBe(neighbourHeight);
 	}
 };
 
