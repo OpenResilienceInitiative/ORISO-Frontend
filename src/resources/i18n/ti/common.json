@@ -203,6 +203,17 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "መርሚርካ ክፈት",
+			"checking": "ቫይረስ ይምርመር ኣሎ …",
+			"checkingImage": "ስእሊ ይምርመር ኣሎ …",
+			"checkVirus": "መርመራ ቫይረስ",
+			"checkImage": "ትንተና ስእሊ፦ ውሑስን መምርሒታት ዘኽብርን ድዩ?",
+			"decrypt": "ምስጢር ፍታሕ",
+			"decrypting": "ምስጢር ይፍታሕ ኣሎ …",
+			"encryptedHint": "ካብ ጫፍ ናብ ጫፍ ምስጢራዊ",
+			"retry": "እንደገና ፈትን"
+		},
 		"mediaCheck": {
 			"unchecked": "ስእሊ ካብ ስሙ ዘይተፈልጠ ቻት – ገና ኣይተመርመረን",
 			"reveal": "ስእሊ ኣርኢ",

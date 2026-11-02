@@ -203,6 +203,17 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Vérifier et ouvrir",
+			"checking": "Recherche de virus …",
+			"checkingImage": "Vérification de l'image …",
+			"checkVirus": "Analyse antivirus",
+			"checkImage": "Analyse de l'image : sûre et conforme aux règles ?",
+			"decrypt": "Déchiffrer",
+			"decrypting": "Déchiffrement …",
+			"encryptedHint": "Chiffré de bout en bout",
+			"retry": "Réessayer"
+		},
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
