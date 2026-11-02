@@ -19,8 +19,7 @@ import { KeepMessagesDialog } from './KeepMessagesDialog';
 import { MessageRetention } from './messageRetention';
 
 /**
- * #1869 — Storybook design only, nothing is wired into the app yet.
- * The platform setting (ORISO-Admin#1241) decides per temporary account:
+ * #1869 — the platform setting (ORISO-Admin#1241) decides per temporary account:
  * always temporary, the guest decides, or always kept.
  * Marker and divider are the counsellor's view only. The guest gets the
  * normal asker chat, unchanged; only the keep-messages dialog is theirs.

@@ -18,6 +18,7 @@ import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/displ
 import {
 	ArchiveFilterIcon,
 	CreateChatFilterIcon,
+	DirectLinkFilterIcon,
 	DraftFilterIcon,
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
@@ -47,6 +48,7 @@ export const SESSION_KIND_ICONS: Record<string, KindIcon> = {
 	unread: UnreadFilterIcon as unknown as KindIcon,
 	drafts: DraftFilterIcon as unknown as KindIcon,
 	oneToOne: MailFilterIcon as unknown as KindIcon,
+	directLinks: DirectLinkFilterIcon as unknown as KindIcon,
 	nearby: MailFilterIcon as unknown as KindIcon,
 	liveChat: LiveChatFilterIcon as unknown as KindIcon,
 	internalGroup: InternalGroupFilterIcon as unknown as KindIcon,

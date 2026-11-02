@@ -175,3 +175,25 @@
 		line-height: 20px;
 	}
 }
+
+/* The links failed to load: same look as the create-chat load errors. */
+.counsellorDashboard__loadError {
+	align-items: center;
+	background: var(--m3-error-container, $form-error);
+	border-radius: 12px;
+	color: var(--m3-on-error-container, $white);
+	display: flex;
+	gap: 12px;
+	justify-content: space-between;
+	margin: 0;
+	padding: 12px 16px;
+
+	button {
+		background: none;
+		border: 1px solid currentColor;
+		border-radius: 20px;
+		color: inherit;
+		cursor: pointer;
+		padding: 6px 16px;
+	}
+}

@@ -600,7 +600,13 @@
 		"message": {
 			"encryption": {
 				"error": "Nachricht verschlüsselt - Fehler beim Entschlüsseln",
-				"text": "Nachricht verschlüsselt"
+				"text": "Nachricht verschlüsselt",
+				"missingKey": {
+					"title_one": "Frühere Nachricht auf diesem Gerät nicht verfügbar",
+					"title_other": "{{count}} frühere Nachrichten auf diesem Gerät nicht verfügbar",
+					"hint_one": "Sie wird lesbar, sobald ein Gerät mit dem passenden Schlüssel online ist, zum Beispiel das einer Kollegin, eines Kollegen oder der ratsuchenden Person. Auch die Anmeldung auf dem Gerät, das zuvor genutzt wurde, hilft.",
+					"hint_other": "Sie werden lesbar, sobald ein Gerät mit dem passenden Schlüssel online ist, zum Beispiel das einer Kollegin, eines Kollegen oder der ratsuchenden Person. Auch die Anmeldung auf dem Gerät, das zuvor genutzt wurde, hilft."
+				}
 			},
 			"showMore": "Mehr anzeigen",
 			"showLess": "Weniger anzeigen"
@@ -2135,7 +2141,8 @@
 				"large": "Meine Beratungen",
 				"nav": "Gespräch",
 				"small": "Nachrichten"
-			}
+			},
+			"directLinks": "Meine Direktlinks"
 		},
 		"activity": "Zeitstrahl",
 		"language": "Sprache",
@@ -2154,7 +2161,13 @@
 		"error": "Fehler",
 		"info": "Information",
 		"success": "Erfolg",
-		"warning": "Warnung"
+		"warning": "Warnung",
+		"liveChatMessage": {
+			"title": "Neue Nachricht im Live-Chat",
+			"from": "Von {{name}}",
+			"several": "{{count}} neue Nachrichten",
+			"open": "Chat öffnen"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2336,6 +2349,18 @@
 				"title": "Fallübergabe abgelehnt",
 				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Übergabeangebot gesendet",
+				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Solange die Übergabe nicht abgeschlossen ist, kann es zurückgezogen werden."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Übergabeangebot abgelehnt",
+				"text": "Die Kolleg:in hat das Angebot abgelehnt. Der Fall bleibt bei der bisherigen Beratungsperson."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Übergabeangebot zurückgezogen",
+				"text": "Das Angebot wurde zurückgezogen. Der Fall bleibt bei der bisherigen Beratungsperson."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
 				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
@@ -2379,6 +2404,18 @@
 			"callInvited": {
 				"title": "Einladung zu internem Gruppenanruf",
 				"text": "Sie wurden zu einem internen Gruppenanruf eingeladen."
+			},
+			"callKnockRequested": {
+				"title": "Jemand klopft an",
+				"text": "Eine Person möchte in Ihren Anruf. Treten Sie dem Anruf bei, um sie einzulassen.",
+				"video": {
+					"title": "Jemand klopft an – Videoanruf",
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+				},
+				"audio": {
+					"title": "Jemand klopft an – Audioanruf",
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+				}
 			},
 			"appointmentRequested": {
 				"title": "Termin für einen Anruf angefragt",
@@ -2555,6 +2592,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Die Admins dieser Beratungsstelle konnten nicht geladen werden. Bitte später erneut versuchen.",
+					"fallbackName": "Beratungsstellen-Admin",
+					"link": "Beratungsstellen-Admin kontaktieren",
+					"none": "Kein Admin per Chat erreichbar – bitte wende dich an die Plattformverwaltung.",
+					"supportEmail": "Support-Adresse:"
+				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
 					"notification": {
@@ -2619,7 +2663,7 @@
 			"profileIcon": "Profilbild",
 			"register": {
 				"button": {
-					"label": "Registrieren"
+					"label": "Beratung anfragen"
 				},
 				"consultingModeInfo": {
 					"groupChats": "In der Selbsthilfe tauschen sich Betroffene über ein Thema oder ein Anliegen miteinander aus. Die Betroffenen sprechen über ihre Probleme, Gefühle und Hoffnungen und erfahren so, wie andere Probleme bewältigt haben. Die Gruppen werden von Moderatorinnen oder Moderatoren geleitet.",
@@ -2630,7 +2674,7 @@
 				},
 				"headline": "Benötigen Sie auch zu anderen Themen Rat oder Hilfe?<br>Wir unterstützen Sie gerne.",
 				"dialog": {
-					"openButton": "Weiteres Thema anfragen",
+					"openButton": "Weitere Beratung starten",
 					"title": "Neue Anfrage stellen",
 					"close": "Schließen"
 				},
@@ -2894,6 +2938,7 @@
 				"kind": {
 					"new": "Neue Anfrage",
 					"standard": "Standard-Benachrichtigung",
+					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
 					"handover": "Übergabe",
 					"call": "Eingehender Anruf",
@@ -3013,7 +3058,8 @@
 					"title": "Sicherheit"
 				},
 				"title": "Einstellungen",
-				"keyboardShortcuts": "Tastaturkürzel"
+				"keyboardShortcuts": "Tastaturkürzel",
+				"myLinks": "Meine Links"
 			}
 		},
 		"spokenLanguages": {
@@ -3754,6 +3800,10 @@
 			"declined": "Sie haben diese Übergabe abgelehnt.",
 			"denied": "Diese Übergabe wurde abgelehnt.",
 			"clientConsentDeclined": "Die ratsuchende Person hat diese Übergabe abgelehnt.",
+			"withdraw": "Angebot zurückziehen",
+			"withdrawn": "Dieses Übergabeangebot wurde zurückgezogen.",
+			"withdrawError": "Das Angebot konnte nicht zurückgezogen werden. Bitte erneut versuchen.",
+			"withdrawConflict": "Das Angebot wurde bereits beantwortet und kann nicht mehr zurückgezogen werden.",
 			"noContent": "Diese Anfrage erlaubt Ihnen nicht, das Gespräch zu lesen.",
 			"forbidden": "Sie dürfen diese Übergabeanfrage nicht aufrufen.",
 			"notFound": "Diese Übergabeanfrage besteht nicht mehr.",
@@ -3770,7 +3820,8 @@
 				"GRANTED": "Die Übergabe wurde abgeschlossen.",
 				"RECIPIENT_DECLINED": "Die ausgewählte Kolleg:in hat abgelehnt.",
 				"DENIED": "Die Übergabe wurde abgelehnt.",
-				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt."
+				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt.",
+				"WITHDRAWN": "Das Angebot wurde zurückgezogen."
 			}
 		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
@@ -4304,7 +4355,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Kreis",
 				"internal": "Interna",
-				"team": "Team Beratung"
+				"team": "Team Beratung",
+				"directLinkVideo": "Videoanruf",
+				"directLinkAudio": "Audioanruf",
+				"directLinkChat": "Direktlink"
 			}
 		},
 		"createChat": {
@@ -4399,6 +4453,7 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
+				"directLinks": "Direktlinks",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",
@@ -5702,7 +5757,26 @@
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
 			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
 			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Ihr Passwort wurde nicht geändert.",
-			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt."
+			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Ihr Passwort entsperrt Ihren Gesprächsverlauf auf einem neuen Gerät noch nicht. Geben Sie einmal Ihren Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Ihr Passwort wurde geändert.",
+				"explanation": "Damit Ihr neues Passwort Ihre Chats auf neuen Geräten entsperrt, geben Sie einmal Ihren Ersatzschlüssel ein.",
+				"submit": "Mit neuem Passwort schützen",
+				"later": "Später",
+				"laterHint": "Ohne diesen Schritt entsperrt Ihr neues Passwort Ihren Verlauf auf neuen Geräten nicht. Sie können ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Ihr aktuelles Passwort öffnet die Sicherung Ihres Gesprächsverlaufs nicht. Das passiert, wenn Ihr Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichern Sie Ihren Verlauf auf einem dieser Wege mit Ihrem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit Ihrem Passwort öffnet.",
+				"choose": "Wie möchten Sie Ihren Verlauf neu sichern?",
+				"usePreviousPassword": "Vorheriges Passwort eingeben",
+				"useRecoveryKey": "Ersatzschlüssel eingeben",
+				"previousPasswordHint": "Geben Sie das Passwort ein, das Sie vor der Änderung verwendet haben. Danach öffnet nur noch Ihr aktuelles Passwort Ihren Verlauf.",
+				"recoveryKeyHint": "Geben Sie Ihren gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit Ihrem aktuellen Passwort ersetzt. Ihr Ersatzschlüssel bleibt gültig.",
+				"previousPassword": "Vorheriges Passwort",
+				"submit": "Mit aktuellem Passwort sichern",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfen Sie die Eingabe oder verwenden Sie Ihren Ersatzschlüssel."
+			}
 		}
 	},
 	"accountInvite": {
@@ -6096,6 +6170,66 @@
 				"anmerkung": "Anmerkung",
 				"aufgabe": "Aufgabe"
 			}
+		},
+		"states": {
+			"encrypted": "Verschlüsselt",
+			"endsCurrent": "Wenn Sie annehmen, endet Ihr Gespräch mit {{name}}.",
+			"answerAndEnd": "Beenden und annehmen",
+			"backToCall": "Zurück zur großen Ansicht",
+			"speaking": "{{name}} spricht",
+			"dockLabel": "Gespräch mit {{name}}",
+			"cameraHint": "Der Ton läuft weiter.",
+			"minimize": "Anruf verkleinern",
+			"groupCall": "Gruppenanruf",
+			"endsCurrentUnnamed": "Wenn Sie annehmen, endet Ihr laufendes Gespräch."
+		},
+		"share": {
+			"open": "Anruf teilen",
+			"title": "Anruf teilen",
+			"close": "Schließen",
+			"settingsLabel": "Für Gäste mit diesem Link",
+			"knock": {
+				"label": "Anklopfen",
+				"on": "Gäste warten, bis Sie sie einlassen. Schalten Sie es aus, kommen alle Wartenden sofort herein.",
+				"off": "Gäste kommen ohne Warten direkt in den Anruf."
+			},
+			"temporaryAccount": {
+				"label": "Temporäres Konto",
+				"on": "Gäste bekommen ein Gastkonto, das nach dem Anruf gelöscht wird.",
+				"off": "Gäste melden sich mit einem eigenen Konto an oder legen eines an."
+			},
+			"linkLabel": "Link zum Anruf",
+			"copy": "Kopieren",
+			"copied": "Kopiert",
+			"copiedStatus": "Der Link ist in der Zwischenablage.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markieren Sie den Link und kopieren Sie ihn selbst.",
+			"qrShow": "QR-Code",
+			"qrHide": "QR-Code ausblenden",
+			"qrAlt": "QR-Code mit dem Link zum Anruf",
+			"share": "Teilen",
+			"shareTitle": "Einladung zum Anruf",
+			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald Sie auflegen, funktioniert er nicht mehr.",
+			"consent": "Vor dem Eintritt bestätigen Gäste mit einem Tipp den Datenschutz und die Einwilligung der Beratungsstelle.",
+			"qrHint": "Mit der Kamera eines Handys scannen, um den Anruf dort zu öffnen.",
+			"settingsLive": "Änderungen gelten sofort für diesen Link, auch wenn er schon geteilt ist."
+		},
+		"knock": {
+			"region": "Wartende Personen",
+			"someone": "Eine Person",
+			"wantsIn": "möchte in den Anruf",
+			"admit": "Einlassen",
+			"decline": "Ablehnen",
+			"admitAll": "Alle einlassen",
+			"position": "{{current}} von {{total}}",
+			"previous": "Vorherige Person",
+			"next": "Nächste Person",
+			"participants": "Teilnehmende",
+			"participantsWaiting": "Teilnehmende – wartend: {{count}}"
+		},
+		"admission": {
+			"label": "Anklopfen",
+			"on": "Gäste warten, bis Sie sie einlassen.",
+			"off": "Gäste kommen ohne Warten direkt in den Anruf."
 		}
 	},
 	"form": {
@@ -6268,6 +6402,56 @@
 			"micMeter": "Lautstärke Ihres Mikrofons"
 		}
 	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Weitere Beratung empfehlen",
+			"endDuplicate": "Doppelte Beratung beenden",
+			"endDuplicateDescription": "Beendet diese zweite Beratung zum gleichen Thema"
+		},
+		"recommend": {
+			"title": "Weitere Beratung empfehlen",
+			"intro": "Die ratsuchende Person sieht Ihre Empfehlung als Karte im Chat und kann von dort eine passende Beratungsstelle finden.",
+			"topicLabel": "Thema",
+			"noteLabel": "Notiz (optional)",
+			"noteHint": "Die Notiz erscheint auf der Karte im Chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Empfehlung senden",
+			"cancel": "Abbrechen",
+			"successHeadline": "Ihre Empfehlung wurde gesendet.",
+			"successButton": "Schließen",
+			"error": "Die Empfehlung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+			"errorForbidden": "Nur die zuständige Berater:in dieser Beratung kann eine weitere Beratung empfehlen.",
+			"errorConflict": "In dieser Beratung ist gerade keine Empfehlung möglich.",
+			"topicsUnavailable": "Die Themen konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+		},
+		"card": {
+			"title": "Empfehlung: weitere Beratung",
+			"topic": "Thema: {{topic}}",
+			"defaultText": "Bitte führen Sie zum gleichen Thema nur eine Beratung. Ihre bisherige Berater:in wird informiert, sobald die neue Beratung beginnt.",
+			"noteLabel": "Notiz der Berater:in",
+			"findAgency": "Beratungsstelle finden",
+			"requested": "Anfrage gestellt",
+			"topicUnknown": "ein weiteres Thema"
+		},
+		"duplicate": {
+			"startedTitle": "Weitere Beratung zum gleichen Thema",
+			"started": "Zum Thema {{topic}} wurde eine weitere Beratung begonnen. Bitte klären Sie gemeinsam, welche Beratung weitergeführt wird. Die andere sollte beendet werden.",
+			"endedTitle": "Zweite Beratung beendet",
+			"ended": "Die zweite Beratung zum Thema {{topic}} wurde beendet.",
+			"confirm": {
+				"headline": "Doppelte Beratung beenden?",
+				"copy": "Diese Beratung wird beendet und ins Archiv verschoben. Ihre andere Beratung zum gleichen Thema läuft weiter.",
+				"confirm": "Beratung beenden",
+				"cancel": "Abbrechen"
+			},
+			"error": "Die Beratung konnte nicht beendet werden. Bitte versuchen Sie es erneut."
+		},
+		"request": {
+			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Starten Sie eine Beratung zu einem Thema, das Sie schon besprechen, wird Ihre bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet.",
+			"consentAria": "Einwilligung in den Datenschutz der Beratungsstelle",
+			"cancel": "Abbrechen"
+		}
+	},
 	"directLink": {
 		"card": {
 			"title": "Direktlink",
@@ -6278,7 +6462,8 @@
 			"mediumLabel": "Art des Kontakts",
 			"temporary": "Temporäres Konto",
 			"temporaryHint": "Das Konto wird nach dem Gespräch gelöscht.",
-			"create": "Link erstellen"
+			"create": "Link erstellen",
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6299,7 +6484,33 @@
 		"list": {
 			"title": "Meine Direktlinks",
 			"qr": "QR-Code zeigen",
-			"active": "{{name}} aktiv"
+			"active": "{{name}} aktiv",
+			"edit": "{{name}} bearbeiten"
+		},
+		"entry": {
+			"inactive": "Dieser Link ist nicht mehr aktiv.",
+			"haveAccount": "Sie haben schon ein Konto? Anmelden",
+			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
+		},
+		"page": {
+			"loadFailed": "Ihre Direktlinks konnten nicht geladen werden.",
+			"create": "Neuen Direktlink in „Chat erstellen“ anlegen",
+			"emptyHeadline": "Aktuell gibt es keine Direktlinks",
+			"emptyText": "Einen Direktlink erstellen Sie unter „Chat erstellen“. Er erscheint danach hier.",
+			"loading": "Direktlinks werden geladen",
+			"retry": "Erneut versuchen",
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuchen Sie es erneut."
+		},
+		"edit": {
+			"title": "Direktlink bearbeiten",
+			"cancel": "Abbrechen",
+			"save": "Speichern",
+			"name": "Name",
+			"nameRequired": "Bitte geben Sie einen Namen ein.",
+			"topic": "Thema",
+			"mediumFixed": "Art des Kontakts lässt sich nicht ändern",
+			"temporaryHint": "Gilt nur für Personen, die den Link neu öffnen.",
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
 		}
 	},
 	"dashboard": {
@@ -6340,7 +6551,8 @@
 			},
 			"note": "Ihre Antwort gilt für dieses ganze Gespräch.",
 			"confirm": "Weiter",
-			"cancel": "Abbrechen"
+			"cancel": "Abbrechen",
+			"failed": "Ihre Antwort konnte nicht gespeichert werden. Ihre Nachricht ist noch nicht gesendet."
 		}
 	}
 }

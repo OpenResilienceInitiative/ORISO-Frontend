@@ -106,6 +106,10 @@ export interface AgencySettingsInterface {
 	featureGroupChatV2Enabled?: boolean | null;
 	featureInternalGroupChatEnabled?: boolean | null;
 	featureSelfHelpGroupsEnabled?: boolean | null;
+	/** "Direkteinladung erlauben" per medium (TenantService#332, AgencyService#347). */
+	featureDirectInviteChatEnabled?: boolean | null;
+	featureDirectInviteAudioEnabled?: boolean | null;
+	featureDirectInviteVideoEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {

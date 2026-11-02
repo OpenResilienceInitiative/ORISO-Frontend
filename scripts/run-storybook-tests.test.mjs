@@ -41,6 +41,15 @@ const pr1297ImportCrash = [
 	disconnect
 ].join('\n');
 
+const pr1946BrowserDisconnect = [
+	' FAIL   storybook (chromium)  src/components/askerInfo/AskerInfo.stories.ts [ src/components/askerInfo/AskerInfo.stories.ts ]',
+	'Error: Failed to run the test /home/runner/work/ORISO-Frontend/ORISO-Frontend/src/components/askerInfo/AskerInfo.stories.ts.',
+	'Caused by: BrowserConnectionError: [vitest] Browser connection was closed while running tests. Was the page closed unexpectedly?',
+	'Test Files  1 failed | 67 passed (75)',
+	'Tests  1 failed | 555 passed (556)',
+	'Errors  1 error'
+].join('\n');
+
 test('retries when the browser disconnect is the only reported failure', () => {
 	assert.equal(shouldRetryStorybookRun(1, disconnect), true);
 });
@@ -76,6 +85,14 @@ test('retries when Chrome dies mid-import and Vitest marks that file FAIL', () =
 		}),
 		true
 	);
+});
+
+test('retries when a browser disconnect is reported as a failed story file', () => {
+	// PR #1946: every completed assertion passed, but Vitest attributed the
+	// closed browser connection to whichever story file was being collected.
+	// That synthetic failed test must not turn the disconnect into product code.
+	assert.equal(looksLikeBrowserDisconnect(pr1946BrowserDisconnect), true);
+	assert.equal(shouldRetryStorybookRun(1, pr1946BrowserDisconnect), true);
 });
 
 test('does not retry and mask a failed assertion reported before the disconnect', () => {

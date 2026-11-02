@@ -606,7 +606,7 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 	await userEvent.click(
 		await body.findByRole('option', { name: 'Schulden' })
 	);
-	await userEvent.click(card.getByRole('radio', { name: /Videoanruf/ }));
+	await userEvent.click(card.getByRole('button', { name: /Videoanruf/ }));
 	// Calls default to a temporary account.
 	await expect(
 		card.getByRole('switch', { name: 'Temporäres Konto' })
