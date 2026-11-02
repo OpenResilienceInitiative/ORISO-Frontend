@@ -62,7 +62,9 @@ export const EVENT_PARAM_KEYS = [
 	'maintenanceDate',
 	'maintenanceStart',
 	'maintenanceEnd',
-	'statusUrl'
+	'statusUrl',
+	// FE#1952: which call a direct-link knock is for (call.knock.requested).
+	'medium'
 ] as const;
 
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -130,6 +132,9 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);
+	if (source.medium === 'AUDIO' || source.medium === 'VIDEO') {
+		params.medium = source.medium;
+	}
 	if (typeof source.isVideo === 'boolean' || source.isVideo === null) {
 		params.isVideo = source.isVideo as boolean | null;
 	}
@@ -277,7 +282,9 @@ export const resolveNotificationActionPath = (
 	return target.kind === 'conversation' ||
 		target.kind === 'groupChatJoin' ||
 		target.kind === 'request' ||
-		target.kind === 'draft'
+		target.kind === 'draft' ||
+		// FE#1952: where a knock lands once its call is started (or cannot be).
+		target.kind === 'callRoom'
 		? target.path
 		: null;
 };

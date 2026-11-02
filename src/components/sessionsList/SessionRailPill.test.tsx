@@ -9,6 +9,9 @@ describe('SessionRailPill accessibility', () => {
 		thread: 'Thread',
 		supervision: 'Supervision',
 		mail: 'Mail',
+		videoCall: 'Video call',
+		audioCall: 'Audio call',
+		directLink: 'Direct link',
 		appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 		unread: 'Unread'
 	};

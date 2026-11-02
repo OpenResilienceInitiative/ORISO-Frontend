@@ -1,0 +1,26 @@
+/* Shared by the create-conversation cards: the full-width M3 pill action. */
+
+/* The 10% on-surface wash M3 puts under a disabled filled control. */
+$cc-disabled-surface: rgba(27, 27, 28, 0.1);
+
+/* Disabled look by default; each card adds its own padding and enabled state. */
+@mixin cc-pill-button {
+	align-items: center;
+	background: $cc-disabled-surface;
+	border: none;
+	border-radius: 100px;
+	color: var(--m3-on-surface, #1b1b1c);
+	display: flex;
+	font-size: 16px;
+	font-weight: 500;
+	gap: 8px;
+	justify-content: center;
+	line-height: 24px;
+	opacity: 0.38;
+	width: 100%;
+
+	svg {
+		height: 24px;
+		width: 24px;
+	}
+}

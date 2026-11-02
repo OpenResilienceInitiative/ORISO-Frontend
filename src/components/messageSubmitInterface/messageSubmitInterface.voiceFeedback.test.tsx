@@ -70,6 +70,11 @@ vi.mock('../../api', () => ({
 	apiPutDearchive: vi.fn().mockResolvedValue(undefined),
 	apiSendEnquiry: vi.fn().mockResolvedValue(undefined)
 }));
+// Asker sends wait for the temporary-account lookup (#1869): no network here.
+vi.mock('../../api/apiTemporaryAccount', () => ({
+	apiGetTemporaryAccount: vi.fn(() => Promise.resolve(null)),
+	apiPutMessageRetention: vi.fn()
+}));
 vi.mock('../../api/apiPostError', () => ({
 	apiPostError: vi.fn().mockResolvedValue(undefined),
 	ERROR_LEVEL_WARN: 'warn'

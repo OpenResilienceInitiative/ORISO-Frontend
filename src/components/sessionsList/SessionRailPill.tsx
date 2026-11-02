@@ -40,6 +40,7 @@ import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/su
 import { AppointmentKindGlyph } from './timeline/AppointmentKindGlyph';
 import type { EntryModality } from './timeline/timelineModel';
 import { MailFilterIcon } from './MailFilterIcon';
+import { DirectLinkGlyph } from '../session/DirectLinkGlyph';
 import type {
 	SessionRailMark,
 	SessionRailMarkLabels
@@ -124,6 +125,11 @@ const MARK_GLYPHS: Record<SessionRailMark, React.ReactNode> = {
 	supervision: <SupervisionGlyph aria-hidden="true" focusable="false" />,
 	// The #1148 envelope, i.e. the Mail filter chip's own glyph.
 	mail: <MailFilterIcon />,
+	// FE#1952: a direct-link conversation's medium, in the mail's slot — the
+	// same glyph the expanded card draws next to "Videoanruf" & co.
+	videoCall: <DirectLinkGlyph medium="VIDEO" />,
+	audioCall: <DirectLinkGlyph medium="AUDIO" />,
+	directLink: <DirectLinkGlyph medium="CHAT" />,
 	// Depends on the appointment: its kind, drawn where the mark is rendered.
 	appointment: null,
 	// The house's unread language is a filled dot in the unread role

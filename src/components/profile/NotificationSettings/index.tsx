@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
@@ -22,6 +22,8 @@ import {
 	isSupported,
 	requestNotificationPermissionSafe
 } from '../../../utils/notificationHelpers';
+import { UserDataContext } from '../../../globalState/context/UserDataContext';
+import { AUTHORITIES, hasUserAuthority } from '../../../globalState';
 import './notificationSettingsPanel.styles.scss';
 
 /**
@@ -38,6 +40,7 @@ export const NotificationSettingsPanel = () => {
 	const { t } = useTranslation();
 	const { settings, deviceSilenced, updateSettings, setDeviceSilenced } =
 		useNotificationSettings();
+	const { userData } = useContext(UserDataContext);
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
@@ -156,6 +159,9 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 				onPreview={previewNotificationSound}
+				showLiveChatRow={
+					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				}
 			/>
 
 			<hr />
