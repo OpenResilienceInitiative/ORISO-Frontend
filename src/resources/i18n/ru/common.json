@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Загрузка участников …",
 		"unavailable": "Не удалось загрузить участников.",
-		"empty": "Нет участников."
+		"empty": "Нет участников.",
+		"crowd": "Участников: {{count}}"
 	},
 	"menuEffects": {
 		"title": "Вид меню",
@@ -4390,7 +4391,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Круг общения",
+				"selfHelp": "Круг",
 				"internal": "Внутреннее",
 				"team": "Командная консультация"
 			}
@@ -4411,6 +4412,9 @@
 			"unreadCount_one": "{{count}} новое сообщение",
 			"unreadCount_few": "{{count}} новых сообщения",
 			"unreadCount_many": "{{count}} новых сообщений"
+		},
+		"timeline": {
+			"running": "идёт"
 		}
 	},
 	"statusOverlay": {

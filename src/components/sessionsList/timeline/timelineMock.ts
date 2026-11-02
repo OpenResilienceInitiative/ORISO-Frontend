@@ -115,7 +115,10 @@ export const mockEntries = (
 		occurrences,
 		bookings,
 		seriesToSession: mockSeriesToSession,
-		sessions: mockSessions
+		sessions: mockSessions.map((session) => ({
+			...session,
+			matrixRoomId: mockRoomOf(session.sessionId)
+		}))
 	});
 
 const topic = (id: number, name: string): TopicsDataInterface => ({
@@ -180,5 +183,49 @@ export const mockListItems: Record<number, ListItemInterface> = {
 	}
 };
 
-/** A booking whose room is not known yet still needs a card to show. */
-export const unmappedListItem = oneToOne(4499, 'Termin ohne Zuordnung', '');
+export const mockRoomOf = (sessionId: number) => {
+	const item = mockListItems[sessionId];
+	return item?.chat?.matrixRoomId ?? item?.session?.matrixRoomId;
+};
+
+/**
+ * "Zum Ausprobieren": the next date starts in `nextInMinutes`, the others
+ * follow; a walk-in date without a room is always among them.
+ */
+export const playgroundEntries = (nextInMinutes: number, amount: number) => {
+	const now = new Date();
+	const at = (minutes: number) =>
+		new Date(now.getTime() + minutes * 60_000).toISOString();
+	const occurrences: TimelineOccurrence[] = [];
+	const bookings: TimelineBooking[] = [];
+	for (let index = 0; index < amount; index++) {
+		const start = at(nextInMinutes + index * 150);
+		if (index % 3 === 2) {
+			bookings.push({
+				id: 8000 + index,
+				startTime: start,
+				endTime: at(nextInMinutes + index * 150 + 45),
+				location: 'IN_PERSON',
+				askerName: 'Sprechstunde vor Ort'
+			});
+		} else {
+			occurrences.push({
+				seriesId: index % 3 === 0 ? 9001 : 9002,
+				occurrenceIndex: index,
+				start,
+				duration: 60,
+				modality: index % 3 === 0 ? 'VIDEO' : 'TEXT'
+			});
+		}
+	}
+	return buildFutureEntries({
+		now,
+		occurrences,
+		bookings,
+		seriesToSession: mockSeriesToSession,
+		sessions: mockSessions.map((session) => ({
+			...session,
+			matrixRoomId: mockRoomOf(session.sessionId)
+		}))
+	});
+};

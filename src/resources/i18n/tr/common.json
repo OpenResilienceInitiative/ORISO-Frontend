@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
 		"unavailable": "Katılımcılar yüklenemedi.",
-		"empty": "Katılımcı yok."
+		"empty": "Katılımcı yok.",
+		"crowd": "{{count}} katılımcı"
 	},
 	"menuEffects": {
 		"title": "Menü görünümü",
@@ -4387,7 +4388,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Sohbet çemberi",
+				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı"
 			}
@@ -4406,6 +4407,9 @@
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
 			"unreadCount_one": "{{count}} yeni mesaj"
+		},
+		"timeline": {
+			"running": "devam ediyor"
 		}
 	},
 	"statusOverlay": {

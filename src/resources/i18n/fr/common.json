@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
-		"empty": "Aucun participant."
+		"empty": "Aucun participant.",
+		"crowd": "{{count}} personnes"
 	},
 	"menuEffects": {
 		"title": "Affichage des menus",
@@ -4387,7 +4388,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Cercle de parole",
+				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe"
 			}
@@ -4406,6 +4407,9 @@
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
 			"unreadCount_one": "{{count}} nouveau message"
+		},
+		"timeline": {
+			"running": "en cours"
 		}
 	},
 	"statusOverlay": {

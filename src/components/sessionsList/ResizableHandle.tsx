@@ -31,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 import {
 	clampReveal,
-	heightFromPointerY,
+	heightFromDrag,
 	nearestSnap,
 	rubberBand,
 	stepSnap
@@ -508,6 +508,8 @@ interface VerticalHandleProps {
 	'snapPoints': number[];
 	/** `final` is false while dragging (stretched value) and true once settled. */
 	'onResize': (height: number, meta: { final: boolean }) => void;
+	/** Replaces the 8 x 48 pill: what the person grabs (the "Jetzt" tag). */
+	'grip'?: React.ReactNode;
 	'ariaLabel'?: string;
 	'className'?: string;
 	'data-cy'?: string;
@@ -527,6 +529,7 @@ const VerticalResizeHandle: React.FC<VerticalHandleProps> = ({
 	maxHeight,
 	snapPoints,
 	onResize,
+	grip,
 	ariaLabel,
 	className,
 	'data-cy': dataCy = 'resizable-handle'
@@ -536,6 +539,9 @@ const VerticalResizeHandle: React.FC<VerticalHandleProps> = ({
 	const handleRef = useRef<HTMLDivElement | null>(null);
 	const pointerIdRef = useRef<number | null>(null);
 	const rawRef = useRef(height);
+	// Where the press started: the handle's parent moves with the height, so
+	// the drag counts from the press, not from the parent's edge.
+	const pressRef = useRef({ y: 0, height });
 
 	const settle = useCallback(
 		(raw: number) => nearestSnap(clampReveal(raw, maxHeight), snapPoints),
@@ -546,10 +552,11 @@ const VerticalResizeHandle: React.FC<VerticalHandleProps> = ({
 		(e: PointerEvent) => {
 			if (pointerIdRef.current === null) return;
 			if (e.pointerId !== pointerIdRef.current) return;
-			const top =
-				handleRef.current?.parentElement?.getBoundingClientRect().top;
-			if (top === undefined) return;
-			rawRef.current = heightFromPointerY(e.clientY, top);
+			rawRef.current = heightFromDrag(
+				pressRef.current.height,
+				pressRef.current.y,
+				e.clientY
+			);
 			onResize(rubberBand(rawRef.current, maxHeight), { final: false });
 		},
 		[maxHeight, onResize]
@@ -614,9 +621,9 @@ const VerticalResizeHandle: React.FC<VerticalHandleProps> = ({
 				if (e.button !== 0) return;
 				e.preventDefault();
 				e.stopPropagation();
-				handleRef.current?.focus({ preventScroll: true });
 				pointerIdRef.current = e.pointerId;
 				rawRef.current = height;
+				pressRef.current = { y: e.clientY, height };
 				setIsDragging(true);
 				try {
 					e.currentTarget.setPointerCapture(e.pointerId);
@@ -650,7 +657,7 @@ const VerticalResizeHandle: React.FC<VerticalHandleProps> = ({
 				}
 			}}
 		>
-			<span className="sessionsList__resizeHandlePill" />
+			{grip ?? <span className="sessionsList__resizeHandlePill" />}
 		</div>
 	);
 };

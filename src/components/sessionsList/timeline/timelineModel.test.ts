@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+	entryCountdown,
+	formatEntryRange,
+	hasEnded,
 	buildFutureEntries,
+	entriesForList,
 	entryMenu,
 	filterEntries,
 	formatEntryDate,
@@ -95,6 +99,27 @@ describe('future entries', () => {
 	});
 });
 
+describe('what the actions need', () => {
+	it('keeps the original start of a date and the cal.com handles of a booking', () => {
+		const [phone, , group] = build();
+		expect(group.occurrence).toEqual({
+			seriesId: 90,
+			originalStart: '2026-11-04T18:00:00',
+			duration: 60,
+			modality: 'VIDEO'
+		});
+		expect(phone.booking?.id).toBe(7);
+	});
+
+	it('a group the counsellor does not moderate offers no changes', () => {
+		const items = entryMenu(
+			{ kind: 'group', canDuplicate: false, canModerate: false },
+			'counsellor'
+		);
+		expect(items.map((i) => i.key)).toEqual(['reminder']);
+	});
+});
+
 describe('next appointment per room', () => {
 	it('keeps the nearest date of every room, skips entries without a room', () => {
 		const next = nextEntryBySession(build());
@@ -139,5 +164,81 @@ describe('entry menu', () => {
 	it('asker may cancel a 1:1 but not a group date yet', () => {
 		expect(keys('one-to-one', 'asker')).toEqual(['reminder*', 'cancel']);
 		expect(keys('group', 'asker')).toEqual(['reminder*', 'cancel*']);
+	});
+});
+
+describe('entries in the real list', () => {
+	const entry = (key: string, sessionId?: number, kind = 'group') =>
+		({ key, sessionId, kind }) as any;
+	const all = [
+		entry('own-group', 1),
+		entry('hidden-group', 2),
+		entry('booking', undefined, 'one-to-one')
+	];
+
+	it('a group date shows only while its room is a visible row', () => {
+		expect(
+			entriesForList(all, new Set([1]), false).map((e) => e.key)
+		).toEqual(['own-group', 'booking']);
+	});
+
+	it('a date without a room shows only without filter or search', () => {
+		expect(
+			entriesForList(all, new Set([1, 2]), true).map((e) => e.key)
+		).toEqual(['own-group', 'hidden-group']);
+	});
+});
+
+describe('pill time and countdown', () => {
+	const now = new Date('2026-10-28T10:00:00');
+	const inMinutes = (minutes: number) =>
+		new Date(now.getTime() + minutes * 60_000);
+
+	it('leaves out the day today and names it on any other day', () => {
+		expect(
+			formatEntryRange({ start: inMinutes(30), end: inMinutes(90) }, now)
+		).toBe('10:30–11:30');
+		expect(
+			formatEntryRange(
+				{
+					start: new Date('2026-10-30T18:00:00'),
+					end: new Date('2026-10-30T19:00:00')
+				},
+				now
+			)
+		).toBe('Fr 30. Okt 18:00–19:00');
+	});
+
+	it('turns red from five minutes before and runs on as "läuft"', () => {
+		expect(entryCountdown({ start: inMinutes(6) }, now).soon).toBe(false);
+		expect(entryCountdown({ start: inMinutes(5) }, now).soon).toBe(true);
+		expect(entryCountdown({ start: inMinutes(-1) }, now)).toEqual({
+			running: true,
+			soon: true
+		});
+	});
+
+	it('counts calendar days: late tonight is hours, past midnight "morgen"', () => {
+		expect(
+			entryCountdown({ start: new Date('2026-10-28T22:00:00') }, now)
+				.label
+		).toBe('in 12 Std.');
+		expect(
+			entryCountdown({ start: new Date('2026-10-29T01:00:00') }, now)
+				.label
+		).toBe('morgen');
+		expect(
+			entryCountdown({ start: new Date('2026-11-02T09:00:00') }, now)
+				.label
+		).toBe('in 5 Tagen');
+	});
+
+	it('keeps a running appointment until its end', () => {
+		const running = { start: inMinutes(-10), end: inMinutes(50) };
+		expect(hasEnded(running, now)).toBe(false);
+		expect(
+			hasEnded({ start: inMinutes(-10), end: inMinutes(-1) }, now)
+		).toBe(true);
+		expect(hasEnded({ start: inMinutes(-1) }, now)).toBe(true);
 	});
 });

@@ -18,14 +18,15 @@ describe('entryMenuPosition', () => {
 		expect(entryMenuPosition(anchor(623), 382, viewport).top).toBe(233);
 	});
 
-	it('shrinks to the larger side when it fits neither way', () => {
-		expect(entryMenuPosition(anchor(300), 800, viewport)).toMatchObject({
-			top: 348,
-			maxHeight: 544
+	it('stays whole and covers the arrow when it fits neither way', () => {
+		// Measured in Storybook: a low window cut the framed menu off at the bottom.
+		expect(entryMenuPosition(anchor(300), 800, viewport)).toEqual({
+			top: 92,
+			left: 80
 		});
-		expect(entryMenuPosition(anchor(600), 800, viewport)).toMatchObject({
-			top: 8,
-			maxHeight: 584
+		expect(entryMenuPosition(anchor(600), 800, viewport)).toEqual({
+			top: 92,
+			left: 80
 		});
 	});
 

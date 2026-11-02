@@ -8,9 +8,12 @@
 export const RUBBER_BAND_MAX_PX = 32;
 const RUBBER_BAND_RESISTANCE = 0.25;
 
-/** Height of the area for a pointer at `clientY`, handle on the area's bottom edge. */
-export const heightFromPointerY = (clientY: number, top: number): number =>
-	Math.round(clientY - top);
+/** Height of the area while dragging: the height at the press plus the way the pointer moved. */
+export const heightFromDrag = (
+	pressHeight: number,
+	pressY: number,
+	clientY: number
+): number => Math.round(pressHeight + clientY - pressY);
 
 export const clampReveal = (height: number, maxHeight: number): number =>
 	Math.min(Math.max(height, 0), Math.max(0, maxHeight));

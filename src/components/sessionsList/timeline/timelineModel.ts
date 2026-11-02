@@ -14,6 +14,8 @@ export type TimelineFilter = 'all' | EntryKind;
 export interface TimelineOccurrence {
 	seriesId: number;
 	occurrenceIndex: number;
+	/** Identifies the date when it is skipped (`apiSkipChatOccurrence`). */
+	originalStart?: string;
 	start: string;
 	duration: number;
 	modality: 'TEXT' | 'AUDIO' | 'VIDEO';
@@ -22,6 +24,7 @@ export interface TimelineOccurrence {
 export interface TimelineBooking {
 	id: number;
 	startTime: string;
+	endTime?: string;
 	location:
 		| 'CHAT'
 		| 'PHONE_CALL'
@@ -31,6 +34,13 @@ export interface TimelineBooking {
 		| 'USER_PHONE';
 	/** New field the appointment service has to store (ADR-021 follow-up). */
 	sessionId?: number;
+	/** cal.com booking uid (cancel). */
+	uid?: string;
+	/** cal.com path (reschedule). */
+	rescheduleLink?: string;
+	askerId?: string;
+	askerName?: string;
+	title?: string;
 }
 
 export interface TimelineSession {
@@ -40,6 +50,10 @@ export interface TimelineSession {
 	topic: string;
 	lastActivity: number;
 	lastMessage: string;
+	/** Room of the session (opening and configuring the group). */
+	matrixRoomId?: string;
+	/** False when the viewer may not change this group's dates. */
+	canModerate?: boolean;
 }
 
 export interface FutureEntry {
@@ -50,9 +64,27 @@ export interface FutureEntry {
 	title: string;
 	topic?: string;
 	start: Date;
+	/** Absent: the source names no end, the entry leaves at its start. */
+	end?: Date;
 	modality: EntryModality;
 	/** Group occurrences can be copied into a single appointment (kept from the old strip). */
 	canDuplicate: boolean;
+	/** False: the viewer may not change this group date (menu shows only what is open to all). */
+	canModerate?: boolean;
+	matrixRoomId?: string;
+	/** What the menu actions need from the source record. */
+	occurrence?: {
+		seriesId: number;
+		originalStart: string;
+		duration: number;
+		modality: TimelineOccurrence['modality'];
+	};
+	booking?: {
+		id: number;
+		uid?: string;
+		rescheduleLink?: string;
+		askerId?: string;
+	};
 }
 
 const MODALITY_BY_OCCURRENCE: Record<
@@ -69,6 +101,15 @@ const MODALITY_BY_LOCATION: Record<TimelineBooking['location'], EntryModality> =
 		LINK: 'video',
 		IN_PERSON: 'location'
 	};
+
+const MINUTE = 60_000;
+const DAY = 24 * 60 * MINUTE;
+
+/** A running appointment stays above "Jetzt" until it is over. */
+export const hasEnded = (
+	entry: Pick<FutureEntry, 'start' | 'end'>,
+	now: Date
+): boolean => (entry.end ?? entry.start).getTime() <= now.getTime();
 
 export const buildFutureEntries = ({
 	now,
@@ -96,8 +137,17 @@ export const buildFutureEntries = ({
 			title: session?.title ?? 'Gruppentermin',
 			topic: session?.topic,
 			start: new Date(o.start),
+			end: new Date(new Date(o.start).getTime() + o.duration * MINUTE),
 			modality: MODALITY_BY_OCCURRENCE[o.modality],
-			canDuplicate: true
+			canDuplicate: session?.canModerate !== false,
+			canModerate: session?.canModerate,
+			matrixRoomId: session?.matrixRoomId,
+			occurrence: {
+				seriesId: o.seriesId,
+				originalStart: o.originalStart ?? o.start,
+				duration: o.duration,
+				modality: o.modality
+			}
 		};
 	});
 	const fromBookings = bookings.map<FutureEntry>((b) => {
@@ -107,15 +157,24 @@ export const buildFutureEntries = ({
 			key: `booking-${b.id}`,
 			kind: 'one-to-one',
 			sessionId: b.sessionId,
-			title: session?.title ?? 'Beratungstermin',
+			title:
+				session?.title ?? b.askerName ?? b.title ?? 'Beratungstermin',
 			topic: session?.topic,
 			start: new Date(b.startTime),
-			modality: MODALITY_BY_LOCATION[b.location],
-			canDuplicate: false
+			end: b.endTime ? new Date(b.endTime) : undefined,
+			modality: MODALITY_BY_LOCATION[b.location] ?? 'video',
+			canDuplicate: false,
+			matrixRoomId: session?.matrixRoomId,
+			booking: {
+				id: b.id,
+				uid: b.uid,
+				rescheduleLink: b.rescheduleLink,
+				askerId: b.askerId
+			}
 		};
 	});
 	return [...fromOccurrences, ...fromBookings]
-		.filter((entry) => entry.start.getTime() > now.getTime())
+		.filter((entry) => !hasEnded(entry, now))
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
 };
 
@@ -130,6 +189,22 @@ export const filterEntries = (
 				(entry) =>
 					entry.sessionId !== undefined && entry.kind === filter
 			);
+
+/**
+ * What the real list shows above "Jetzt": a filter applies to both sides of
+ * the handle, so a group twin shows only while its room is a visible row; an
+ * appointment without a room only while no filter or search is active.
+ */
+export const entriesForList = (
+	entries: FutureEntry[],
+	visibleGroupIds: ReadonlySet<number>,
+	hasFilter: boolean
+): FutureEntry[] =>
+	entries.filter((entry) =>
+		entry.sessionId !== undefined
+			? entry.kind === 'group' && visibleGroupIds.has(entry.sessionId)
+			: !hasFilter
+	);
 
 /**
  * The nearest appointment of every room: drives the clock circle on the
@@ -165,6 +240,69 @@ export const formatEntryDate = (start: Date, locale = 'de-DE'): string => {
 	return `${weekday} ${start.getDate()}. ${month} ${time}`;
 };
 
+const clockTime = (date: Date, locale: string) =>
+	new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	}).format(date);
+
+const startOfDay = (date: Date) =>
+	new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+/** "Fr 30. Okt 18:00–19:00" (Figma: the button on a card names the whole slot). */
+export const formatEntrySlot = (
+	entry: Pick<FutureEntry, 'start' | 'end'>,
+	locale = 'de-DE'
+): string =>
+	`${formatEntryDate(entry.start, locale)}${
+		entry.end ? `–${clockTime(entry.end, locale)}` : ''
+	}`;
+
+/** "18:00–19:00" today, the whole slot on any other day. */
+export const formatEntryRange = (
+	entry: Pick<FutureEntry, 'start' | 'end'>,
+	now: Date,
+	locale = 'de-DE'
+): string =>
+	startOfDay(entry.start) === startOfDay(now)
+		? `${clockTime(entry.start, locale)}${
+				entry.end ? `–${clockTime(entry.end, locale)}` : ''
+			}`
+		: formatEntrySlot(entry, locale);
+
+/** Below this many minutes an appointment turns red. */
+export const SOON_MINUTES = 5;
+
+export interface EntryCountdown {
+	/** "in 5 Min.", "morgen", "in 3 Tagen"; absent while it is running. */
+	label?: string;
+	running: boolean;
+	soon: boolean;
+}
+
+/** Whole calendar days count, so tonight is never "morgen" and vice versa. */
+export const entryCountdown = (
+	entry: Pick<FutureEntry, 'start'>,
+	now: Date,
+	locale = 'de-DE'
+): EntryCountdown => {
+	const ms = entry.start.getTime() - now.getTime();
+	if (ms <= 0) return { running: true, soon: true };
+	const relative = new Intl.RelativeTimeFormat(locale, {
+		numeric: 'auto',
+		style: 'short'
+	});
+	const minutes = Math.ceil(ms / MINUTE);
+	const days = Math.round((startOfDay(entry.start) - startOfDay(now)) / DAY);
+	let label: string;
+	if (minutes < 60) label = relative.format(minutes, 'minute');
+	else if (days === 0)
+		label = relative.format(Math.round(minutes / 60), 'hour');
+	else label = relative.format(days, 'day');
+	return { label, running: false, soon: minutes <= SOON_MINUTES };
+};
+
 export interface EntryMenuItem {
 	key: string;
 	title: string;
@@ -176,7 +314,7 @@ const COMING_SOON = '(kommt bald)';
 
 /** The entry's menu, per role and kind (ADR-021 table). */
 export const entryMenu = (
-	entry: Pick<FutureEntry, 'kind' | 'canDuplicate'>,
+	entry: Pick<FutureEntry, 'kind' | 'canDuplicate' | 'canModerate'>,
 	role: TimelineRole
 ): EntryMenuItem[] => {
 	const isGroup = entry.kind === 'group';
@@ -201,6 +339,17 @@ export const entryMenu = (
 						description: 'Diesen Beratungstermin absagen.',
 						disabled: false
 					}
+		];
+	}
+	if (isGroup && entry.canModerate === false) {
+		// Not this counsellor's group: only what is open to every member.
+		return [
+			{
+				key: 'reminder',
+				title: 'Erinnerung einstellen',
+				description: `Wie früh und wie aufdringlich ${COMING_SOON}`,
+				disabled: true
+			}
 		];
 	}
 	const items: EntryMenuItem[] = [

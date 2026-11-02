@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
 		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
-		"empty": "ተሳተፍቲ የለዉን።"
+		"empty": "ተሳተፍቲ የለዉን።",
+		"crowd": "{{count}} ተሳተፍቲ"
 	},
 	"menuEffects": {
 		"title": "ኣቀራርባ ምናሌ",
@@ -4387,7 +4388,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "ክቢ ዝርርብ",
+				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ"
 			}
@@ -4406,6 +4407,9 @@
 		"rail": {
 			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
 			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ"
+		},
+		"timeline": {
+			"running": "ይካየድ ኣሎ"
 		}
 	},
 	"statusOverlay": {
