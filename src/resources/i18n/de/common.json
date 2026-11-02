@@ -2786,7 +2786,7 @@
 						"dialogLabel": "Neues Passwort wiederholen"
 					},
 					"insecure": "Ihr Passwort ist nicht sicher.",
-					"instructions": "<span class=\"text--bold\">Ihr Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 9 Zeichen</li></ul>",
+					"instructions": "<span class=\"text--bold\">Ihr Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 16 Zeichen</li></ul>",
 					"new": {
 						"label": "Neues Passwort"
 					},
@@ -2815,7 +2815,7 @@
 						"mixedCase": "Groß- und Kleinbuchstaben",
 						"number": "mindestens eine Zahl",
 						"specialChar": "ein Sonderzeichen (?, !, +, # …)",
-						"minLength": "mindestens 9 Zeichen",
+						"minLength": "mindestens 16 Zeichen",
 						"met": "erfüllt"
 					},
 					"submitAndContinue": "Passwort speichern und weiter"
@@ -3438,7 +3438,7 @@
 			"criteria": {
 				"fulfilled": "Erfüllt",
 				"open": "Offen",
-				"length": "mindestens 9 Zeichen",
+				"length": "mindestens 16 Zeichen",
 				"number": "mindestens eine Zahl",
 				"specialChar": "mindestens ein Sonderzeichen",
 				"upperLowerCase": "Groß-/Kleinschreibung"
