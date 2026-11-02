@@ -337,3 +337,27 @@ export const FloatingNarrowColumn: Story = {
 		expect(notice.scrollWidth).toBeLessThanOrEqual(notice.clientWidth);
 	}
 };
+
+/** Fehlerzustand: dieselbe dunkle Fläche, das Symbol trägt den Unterschied. */
+export const ErrorTone: Story = {
+	name: 'Fehler',
+	render: () => (
+		<Page>
+			<M3Snackbar
+				placement="inline"
+				tone="error"
+				message="Diese Datei konnte nicht gesendet werden."
+				onClose={noop}
+				closeLabel="Schließen"
+			/>
+			<M3Snackbar
+				placement="inline"
+				tone="error"
+				message="Die Nachricht konnte nicht gesendet werden. Bitte prüfen Sie Ihre Verbindung."
+				action={{ label: 'Erneut', onClick: noop }}
+				onClose={noop}
+				closeLabel="Schließen"
+			/>
+		</Page>
+	)
+};
