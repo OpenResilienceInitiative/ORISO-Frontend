@@ -14,6 +14,7 @@ import {
 } from '../../globalState/interfaces';
 import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import { useTranslation } from 'react-i18next';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
 import {
@@ -25,7 +26,7 @@ import {
 	expectCaptionClear,
 	expectOverdueClockOnOneRow
 } from './waitingClock/waitingClockStoryChecks';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	effectiveBackground,
 	wcagContrast
@@ -251,10 +252,14 @@ const weekly = (start: Date) =>
    start that has passed still waits for her (#1787). */
 const Room = ({
 	start = IN_THREE_DAYS,
-	active = false
+	active = false,
+	joinBlocked = false,
+	joinNotice
 }: {
 	start?: Date;
 	active?: boolean;
+	joinBlocked?: boolean;
+	joinNotice?: string;
 }) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
@@ -272,6 +277,8 @@ const Room = ({
 				welcomeText={WELCOME}
 				rules={RULES}
 				active={active}
+				joinBlocked={joinBlocked}
+				joinNotice={joinNotice}
 				onJoin={() => undefined}
 				nowMs={NOW}
 				upcomingDates={weekly(start)}
@@ -327,7 +334,7 @@ export const WaitingAreaOpen: StoryObj = {
 		) as HTMLElement;
 		await expect(running).toBeVisible();
 		await expect(running).toHaveTextContent('Läuft gerade');
-		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
+		await expectRunningClock(canvasElement);
 		await expect(
 			canvas.queryByText('Die Gruppe beginnt gleich.')
 		).toBeNull();
@@ -350,7 +357,7 @@ export const WaitingAreaOpen: StoryObj = {
 		layout: 'fullscreen',
 		docs: {
 			description: {
-				story: 'Die Moderation hat die Gruppe geöffnet: grünes „Läuft gerade", eine graue Uhr zählt hoch, wie lange die Gruppe schon läuft, darunter die Regeln in einer ruhigen Pille. In der Leiste „Nächste Termine" neben „Beitreten". Nichts ist rot (Frank, 19.10.).'
+				story: 'Die Moderation hat die Gruppe geöffnet: grünes „Läuft gerade", die Uhr aus Uhren zählt hoch (mit „Animation abschalten" die ruhigen Kacheln), wie lange die Gruppe schon läuft, darunter die Regeln in einer ruhigen Pille. In der Leiste „Nächste Termine" neben „Beitreten". Nichts ist rot (Frank, 19.10.).'
 			}
 		}
 	}
@@ -359,7 +366,7 @@ export const WaitingAreaOpen: StoryObj = {
 export const WaitingAreaOpenMobile: StoryObj = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
+		await expectRunningClock(canvasElement);
 		const dates = canvas.getByTestId('group-entry-dates');
 		const join = canvas.getByTestId('group-entry-join');
 		// Its own row above "Beitreten", the full width.
@@ -370,6 +377,110 @@ export const WaitingAreaOpenMobile: StoryObj = {
 	},
 	name: '3c — Gruppe läuft, mobil',
 	globals: phone390Globals,
+	render: () => <Room start={RUNNING} active />,
+	parameters: { layout: 'fullscreen' }
+};
+
+/* #1923: a counsellor removed this person. The server refuses the join with a
+   reason; the room says so and keeps "Beitreten" closed. */
+const RemovedRoom = () => {
+	const { t } = useTranslation();
+	return (
+		<Room
+			start={RUNNING}
+			active
+			joinBlocked
+			joinNotice={t('groupChat.removed.overlay.headline')}
+		/>
+	);
+};
+
+const playRemoved = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const canvas = within(canvasElement);
+	const notice = await canvas.findByRole('alert');
+	await expect(notice).toHaveTextContent(
+		'Sie wurden aus dieser Gruppe entfernt.'
+	);
+	await expect(notice).toBeVisible();
+	const join = canvas.getByTestId('group-entry-join');
+	await expect(join).toBeDisabled();
+	// Its own row: clear of "Beitreten" and of every other bar control.
+	const box = notice.getBoundingClientRect();
+	const overlaps = (other: DOMRect) =>
+		box.left < other.right &&
+		other.left < box.right &&
+		box.top < other.bottom &&
+		other.top < box.bottom;
+	await expect(overlaps(join.getBoundingClientRect())).toBe(false);
+	for (const control of Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('button, a')
+	).filter((el) => el.getBoundingClientRect().width > 0)) {
+		await expect(overlaps(control.getBoundingClientRect())).toBe(false);
+	}
+	await expect(box.left).toBeGreaterThanOrEqual(0);
+	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+	await expectWaitingRoomLayout(canvasElement);
+};
+
+export const WaitingAreaRemoved: StoryObj = {
+	play: playRemoved,
+	name: '2d — Aus der Gruppe entfernt · 1366 (#1923)',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <RemovedRoom />,
+	parameters: { layout: 'fullscreen' }
+};
+
+export const WaitingAreaRemovedMobile: StoryObj = {
+	play: playRemoved,
+	name: '3d — Aus der Gruppe entfernt, mobil (#1923)',
+	globals: phone390Globals,
+	render: () => <RemovedRoom />,
+	parameters: { layout: 'fullscreen' }
+};
+
+/**
+ * Frank, 2026-10-28: with the animation on, the running group counts up on
+ * the countdown's clock of clocks; switched off, the still tiles carry the
+ * numbers. Either way the switch row stands 12 px above the bar, not
+ * floating in the column.
+ */
+const expectRunningClock = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(canvas.getByRole('timer')).toHaveAttribute(
+		'aria-label',
+		'Läuft seit: 0 Stunden, 12 Minuten'
+	);
+	await expect(
+		canvasElement.querySelector('[data-cy="group-running-clock"]')
+	).toBeVisible();
+	const row = canvas.getByTestId('group-entry-more').parentElement
+		?.parentElement as HTMLElement;
+	const bar = canvasElement.ownerDocument.querySelector(
+		'[data-cy="registration-footer"]'
+	) as HTMLElement;
+	const gap =
+		bar.getBoundingClientRect().top - row.getBoundingClientRect().bottom;
+	await expect(Math.abs(gap - 12)).toBeLessThanOrEqual(3);
+};
+
+export const WaitingAreaOpenStill: StoryObj = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('switch', { name: 'Animation abschalten' })
+		);
+		await expect(canvas.getByRole('timer')).toHaveTextContent(/00.*12.*47/);
+		await expect(
+			canvasElement.querySelector('[data-cy="group-running-clock"]')
+		).toBeNull();
+		await expectWaitingRoomLayout(canvasElement);
+	},
+	name: '2c — Gruppe läuft, Animation aus · 1440',
+	globals: desktop1440Globals,
 	render: () => <Room start={RUNNING} active />,
 	parameters: { layout: 'fullscreen' }
 };

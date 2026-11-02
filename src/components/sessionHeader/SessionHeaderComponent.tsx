@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -111,6 +112,10 @@ import {
 } from './ChatroomMainInteractionIcon';
 import { getSupervisorAddState } from './getSupervisorAddState';
 import { resolveSupervisorDirectoryAgencyId } from './supervisorDirectory';
+import {
+	buildSupervisorSystemMessagePayload,
+	type SupervisorSystemMessageKind
+} from './supervisorSystemMessage';
 import {
 	getConsultantLabel,
 	SupervisorConsultantPicker
@@ -415,19 +420,21 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		);
 	};
 
-	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
+	const postSupervisorSystemMessage = async (
+		kind: SupervisorSystemMessageKind,
+		supervisorName: string
+	) => {
 		const matrixRoomId = isMatrixRoom(activeSession.rid)
 			? activeSession.rid
 			: activeSession.item?.matrixRoomId;
 		if (!matrixRoomId || !activeSession.item.id) {
 			return;
 		}
-		const payload = JSON.stringify({
-			title: translate('message.supervisionEnabledTitle'),
-			description: translate('message.supervisionEnabledDescription', {
-				name: supervisorName
-			})
-		});
+		const payload = buildSupervisorSystemMessagePayload(
+			kind,
+			supervisorName,
+			translate
+		);
 		try {
 			const client = matrixClientService?.getClient?.();
 			if (client) {
@@ -481,7 +488,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				selectedConsultantIdForRequest,
 				supervisionReason
 			);
-			await postSupervisorAddedSystemMessage(selectedSupervisorName);
+			await postSupervisorSystemMessage('added', selectedSupervisorName);
 			await loadSupervisors();
 			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
@@ -545,6 +552,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			await apiRemoveSessionSupervisor(
 				activeSession.item.id,
 				supervisorId
+			);
+			await postSupervisorSystemMessage(
+				'removed',
+				supervisorToRemoveName
 			);
 			await loadSupervisors();
 			addNotification({
@@ -616,6 +627,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		!isChatFinished;
 
 	const headerContactName = (() => {
+		/* ORISO-UserService#1486: the guest's temporary account is gone. */
+		if (
+			isConsultantUser &&
+			!activeSession.isGroup &&
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		) {
+			return translate('temporaryAccount.deletedGuest');
+		}
 		if (isAnonymousAsker) {
 			let storedPseudonym: string | null = null;
 			try {

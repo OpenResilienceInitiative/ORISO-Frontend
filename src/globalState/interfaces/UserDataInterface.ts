@@ -108,6 +108,10 @@ export interface AgencyDataInterface {
 export interface AgencySettingsInterface
 	extends Partial<Record<ConversationFeatureKey, boolean | null>> {
 	permissionPolicies?: AgencyFeaturePolicies | null;
+	/** "Direkteinladung erlauben" per medium (TenantService#332, AgencyService#347). */
+	featureDirectInviteChatEnabled?: boolean | null;
+	featureDirectInviteAudioEnabled?: boolean | null;
+	featureDirectInviteVideoEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {

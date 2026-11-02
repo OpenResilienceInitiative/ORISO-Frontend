@@ -31,6 +31,7 @@ import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
+import { getGroupChatInfoLink } from '../../groupChat/groupChatInfoLink';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -250,6 +251,19 @@ export const GroupChatHeader = ({
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
 
+	// #107: the member row opens the member view — for everyone who may open
+	// the Chat-Info from the menu (not before joining, never when banned).
+	const membersLink =
+		!isJoinGroupChatView &&
+		(isConsultant || !bannedUsers?.includes(userData.userName))
+			? getGroupChatInfoLink(
+					listPath,
+					matrixRoomId,
+					activeSession.item.id,
+					sessionTabPath
+				)
+			: '';
+
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,
@@ -341,6 +355,8 @@ export const GroupChatHeader = ({
 								members={stackMembers}
 								measureRef={titleRowRef}
 								reservedWidth={TITLE_ROW_RESERVED_WIDTH}
+								to={membersLink || undefined}
+								label={t('groupChat.info.subscribers.headline')}
 							/>
 						</div>
 						{!hideTopic && (

@@ -25,8 +25,9 @@
  * the document and dies with the document, which is when a submit can no longer
  * be in flight — so it can never strand a later visitor on a handover screen
  * for a submit that is long over. Nothing about the account is kept here, only
- * the fact that one is being created; the same reasoning and the same lifetime
- * as `accountDataDraft`.
+ * the fact that one is being created — except the temporary join below, whose
+ * login has nobody else who knows the password; the same reasoning and the
+ * same lifetime as `accountDataDraft`.
  */
 let submitting = false;
 
@@ -67,4 +68,29 @@ export const clearRegistrationSubmitting = (): void => {
 	}
 	submitting = false;
 	notify();
+};
+
+export type TemporaryAccountLogin = { username: string; password: string };
+
+/**
+ * A temporary group join whose account exists but whose automatic login did
+ * not (#1941). Its password was minted and never shown, so the login page is no
+ * way in: the screen offers the login again with the credentials the account
+ * was created with, and never registers a second time (the #1533 rule of the
+ * anonymous chat and the invite link).
+ *
+ * Module state for the same reason as `submitting`: the failure lands in the
+ * closure of a screen the tenant reload may already have replaced. It is set
+ * before the failure clears `submitting`, so the screen that clear re-renders
+ * reads it.
+ */
+let temporaryAccountAwaitingLogin: TemporaryAccountLogin | null = null;
+
+export const getTemporaryAccountAwaitingLogin =
+	(): TemporaryAccountLogin | null => temporaryAccountAwaitingLogin;
+
+export const setTemporaryAccountAwaitingLogin = (
+	account: TemporaryAccountLogin | null
+): void => {
+	temporaryAccountAwaitingLogin = account;
 };

@@ -189,6 +189,17 @@ export const CaseHandoverOfferGate = ({
 		return <>{children}</>;
 	}
 
+	// The offering counsellor reaches this route from their own sent, declined
+	// or withdrawn timeline entries. The dialog is the recipient's decision, so
+	// they see their conversation instead; the backend still decides access.
+	if (
+		offer?.direction === 'PUSH' &&
+		offer.initiatorConsultantId === actorId &&
+		offer.recipientConsultantId !== actorId
+	) {
+		return <>{children}</>;
+	}
+
 	if (loading && !offer && !error) {
 		return <Loading />;
 	}
@@ -198,6 +209,8 @@ export const CaseHandoverOfferGate = ({
 		messageKey = `caseHandover.offer.${error}`;
 	} else if (offer?.status === 'RECIPIENT_DECLINED') {
 		messageKey = 'caseHandover.offer.declined';
+	} else if (offer?.status === 'WITHDRAWN') {
+		messageKey = 'caseHandover.offer.withdrawn';
 	} else if (offer?.status === 'PENDING_CLIENT_CONSENT') {
 		messageKey = 'caseHandover.offer.awaitingClientConsent';
 	} else if (offer?.status === 'DENIED') {

@@ -4,6 +4,7 @@ export type ServerAppConfigInterface = {
 
 interface ServerAppConfigCustomInterface {
 	mainTenantSubdomainForSingleDomainMultitenancy?: ServerAppConfigValueInterface<string>;
+	supportEmail?: ServerAppConfigValueInterface<string>;
 	releaseToggles: Record<string, string>;
 }
 

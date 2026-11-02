@@ -19,6 +19,8 @@ export type CaseHandoverStatusValue =
 	| 'CLIENT_CONSENT_DECLINED'
 	| 'RECLAIMED'
 	| 'EXPIRED'
+	/** The offering counsellor took a colleague offer back before it was settled. */
+	| 'WITHDRAWN'
 	/**
 	 * Client-side only, never sent by the server: the decision was refused
 	 * with 409 because the case owner changed after the request was created.
@@ -35,6 +37,7 @@ const CLOSED_CASE_HANDOVER_STATUSES: readonly string[] = [
 	'CLIENT_CONSENT_DECLINED',
 	'RECLAIMED',
 	'EXPIRED',
+	'WITHDRAWN',
 	'OWNER_CHANGED'
 ];
 
@@ -81,6 +84,11 @@ export interface CaseHandoverStatus {
 	expiresAt?: string;
 	/** The viewer holds an open CO_ACCESS they may extend (#200). */
 	canExtend?: boolean;
+	/**
+	 * Only on the owner's own status: the colleague offer they made that is
+	 * still open, so it can be found (and withdrawn) again after a reload.
+	 */
+	openOffer?: CaseHandoverStatus | null;
 }
 
 export interface CaseHandoverBatchResult {
@@ -263,6 +271,24 @@ export const apiDecideCaseHandoverRecipient = async (
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
+	});
+
+/**
+ * The offering counsellor takes a colleague offer back while it is still open.
+ * Idempotent on the server; 409 means the offer was already settled.
+ */
+export const apiWithdrawCaseHandoverOffer = async (
+	sessionId: number,
+	requestId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/${requestId}/withdraw`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.FORBIDDEN,
 			FETCH_ERRORS.CONFLICT
 		]
