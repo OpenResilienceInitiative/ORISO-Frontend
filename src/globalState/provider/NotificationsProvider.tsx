@@ -91,6 +91,7 @@ import {
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 /** Fallback base of a counsellor's chat links, as in the activity feed. */
 const CONSULTANT_SESSIONS_PATH = '/sessions/consultant/sessionPreview';
+const ASKER_SESSIONS_PATH = '/sessions/user/view';
 
 export const NOTIFICATION_TYPE_NONE = 'none';
 export type NotificationTypeNone = typeof NOTIFICATION_TYPE_NONE;
@@ -721,7 +722,9 @@ export function NotificationsProvider(props) {
 							path: toNonEmbeddedPath(
 								resolveNotificationActionPath(
 									event,
-									CONSULTANT_SESSIONS_PATH
+									noticeKind === 'consent'
+										? ASKER_SESSIONS_PATH
+										: CONSULTANT_SESSIONS_PATH
 								)
 							)
 						})

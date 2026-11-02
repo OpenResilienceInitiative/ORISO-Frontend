@@ -488,6 +488,23 @@ describe('NotificationsProvider mention + handover pop-up (FE#779)', () => {
 		}
 	);
 
+	it('sends the advice seeker to their own session route when the row has no link', async () => {
+		withTones();
+		await deliver([
+			{
+				...consent(1, { recipientRole: 'user' }),
+				actionPath: undefined
+			}
+		]);
+
+		expect(screen.getByTestId('notices').textContent).toBe(
+			'consent:42:1:null'
+		);
+		expect(screen.getByTestId('path').textContent).toBe(
+			'/sessions/user/view/session/42'
+		);
+	});
+
 	it.each([
 		[
 			'a team discussion (channel=team)',

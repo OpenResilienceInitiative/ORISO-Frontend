@@ -14,6 +14,7 @@ import {
 import {
 	getShownChannel,
 	isNotificationActiveViewRoute,
+	pathSegments,
 	subscribeShownChannel
 } from '../session/notificationActiveView';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
@@ -165,9 +166,6 @@ interface NoticeTarget {
 	roomRef?: string | null;
 	threadRootId?: string | null;
 }
-
-const pathSegments = (path: string) =>
-	path.split(/[?#]/)[0].split('/').filter(Boolean).map(decodeURIComponent);
 
 /** Whether this conversation's detail view is the route and the tab visible. */
 export const isConversationOpen = (

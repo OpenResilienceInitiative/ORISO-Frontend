@@ -479,6 +479,25 @@ describe('event pop-up rules', () => {
 describe('where the target is open', () => {
 	afterEach(() => reportShownChannel(null));
 
+	it('treats a stray percent sign in the route as a plain character', () => {
+		expect(
+			isConversationOpen(
+				{ sessionId: '42' },
+				'/sessions/consultant/sessionView/100%',
+				'',
+				true
+			)
+		).toBe(false);
+		expect(
+			isConversationOpen(
+				{ sessionId: '100%' },
+				'/sessions/consultant/sessionView/100%',
+				'',
+				true
+			)
+		).toBe(true);
+	});
+
 	const target = { sessionId: '42', roomRef: '!room42' };
 
 	it.each<[string, SessionChannel | null, boolean]>([
