@@ -568,6 +568,52 @@ export const CrowdField: Story = {
 	}
 };
 
+/**
+ * Figma 115:27131: the open card is Selected while the focus is on it and
+ * Secondary Selected while it is elsewhere (typing field, a menu in the chat).
+ * Hover needs a real pointer, so the real-build run covers that state.
+ */
+export const OpenCardFollowsTheFocus: Story = {
+	name: 'Card — Selected with the focus, Secondary Selected without',
+	play: async ({ canvasElement }) => {
+		const row = () => pastRow(canvasElement, 'Elternrunde');
+		const part = (selector: string) =>
+			getComputedStyle(row().querySelector<HTMLElement>(selector)!);
+		const state = () => ({
+			card: part('.sessionsListItem__content').backgroundColor,
+			chip: part('.sessionsListItem__topic').backgroundColor,
+			chipText: part('.sessionsListItem__topic').color,
+			kind: part('.sessionsListItem__consultingTypeIcon--kindIcon')
+				.backgroundColor
+		});
+		await waitFor(() => expect(row()).toBeTruthy());
+		const closed = row()
+			.querySelector<HTMLElement>('.sessionsListItem__topic')!
+			.getBoundingClientRect();
+		await expect(closed.height).toBe(22);
+		await userEvent.click(
+			row().querySelector<HTMLElement>('.sessionsListItem__topic')!
+		);
+		await waitFor(() =>
+			expect(state()).toEqual({
+				card: 'rgb(255, 255, 255)',
+				chip: 'rgb(165, 0, 10)',
+				chipText: 'rgb(255, 255, 255)',
+				kind: 'rgb(147, 0, 8)'
+			})
+		);
+		(document.activeElement as HTMLElement).blur();
+		await waitFor(() =>
+			expect(state()).toEqual({
+				card: 'rgb(246, 243, 243)',
+				chip: 'rgb(255, 180, 170)',
+				chipText: 'rgb(65, 0, 1)',
+				kind: 'rgb(77, 86, 96)'
+			})
+		);
+	}
+};
+
 /** "Jetzt" is the grip: the word lives in the handle, in the accent colour. */
 export const NowIsTheGrip: Story = {
 	name: '"Jetzt" — the handle itself, on a line that runs out',
