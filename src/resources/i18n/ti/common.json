@@ -959,7 +959,12 @@
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
 				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ",
-				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት"
+				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት",
+				"role": {
+					"asker": "ምኽሪ ዝደሊ",
+					"consultant": "ኣማኻሪ",
+					"supervisor": "ተቖጻጻሪ"
+				}
 			},
 			"gallery": {
 				"back": "ናብቲ ቆጻሪ ተመለስ",
@@ -1996,7 +2001,15 @@
 			"counsellorsEmpty": "ኣብዚ ክፍሊ ኣማኸርቲ የለዉን",
 			"moderatorsEmpty": "ኣብዚ ክፍሊ መራሕቲ ዘተ የለዉን",
 			"toggleSection": "ክፍሊ ቀያይር",
-			"selectAllBottom": "ኩሉ ምረጽ"
+			"selectAllBottom": "ኩሉ ምረጽ",
+			"unresolved": {
+				"headline": "በጃኹም ተቐበልቲ ኣረጋግጹ",
+				"text": "ዝተመርጹ ተቐበልቲ ንዚ ዕላል እዚ ክረጋገጹ ኣይከኣሉን። ተቐበልቲ እንደገና ምረጹ፡ ድሕሪኡ ስደዱ። ጽሑፍኩም ኣብዚ ቦታ ይጸንሕ።"
+			},
+			"attachmentBlocked": {
+				"headline": "ፋይላት ንኹሉ ጥራይ ይኸዱ",
+				"text": "ፋይላትን ናይ ድምጺ መልእኽትታትን ናብ ዝተመርጹ ብጾት ጥራይ ክድረቱ ኣይክእሉን። ምስ ኩሉ ንምክፋል «ኩሎም» ምረጹ፡ ወይ ኣብ ክንዳኡ ጽሑፍ መልእኽቲ ስደዱ። ፋይልኩም ወይ ቅጂኹም ይዕቀብ።"
+			}
 		},
 		"edit": {
 			"cancel": "ምስትኽኻል ሰርዝ",
@@ -2054,9 +2067,13 @@
 		"consultantLeftChat": "እቲ ኣማኻሪ ካብቲ ቻት ወጺኡ",
 		"youEndedChat": "ነቲ ቻት ኣብቂዕኩሞ",
 		"chatEnded": "እቲ ቻት ተዛዚሙ",
+		"consultantRenamedTitle": "ስም ተቐይሩ",
+		"consultantRenamedDescription": "ናይ {{oldName}} ስም ሕጂ {{newName}} እዩ።",
 		"anonymousUser": "ተጠቃሚ",
 		"supervisionEnabledTitle": "ምክትታል ተነቓቒሑ!",
 		"supervisionEnabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።",
+		"supervisionDisabledTitle": "ምክትታል ተወዲኡ!",
+		"supervisionDisabledDescription": "{{name}} ከም ተቖጻጻሪ ኣማኻሪ ካብዚ ቻት ተወጊዱ።",
 		"today": "ሎምዓንቲ",
 		"tomorrow": "ጉሓት",
 		"unread": "ዘይተነበበ",
@@ -2375,6 +2392,18 @@
 				"title": "ዕድመ ናብ ውሽጣዊ ናይ ጉጅለ ጻውዒት",
 				"text": "ናብ ውሽጣዊ ናይ ጉጅለ ጻውዒት ተዓዲምኩም ኣለኹም።"
 			},
+			"callKnockRequested": {
+				"title": "ሓደ ሰብ ኳሕኳሕ ይብል ኣሎ",
+				"text": "ሓደ ሰብ ናብ ጻውዒትኩም ክጽንበር ይደሊ። ንምእታዉ ናብቲ ጻውዒት ተጸንበሩ።",
+				"video": {
+					"title": "ሓደ ሰብ ኳሕኳሕ ይብል ኣሎ – ናይ ቪድዮ ጻውዒት",
+					"text": "ሓደ ሰብ ብቀጥታዊ ሊንክኹም ናብ ናይ ቪድዮ ጻውዒትኩም ክጽንበር ይደሊ። ንምእታዉ ናብቲ ጻውዒት ተጸንበሩ።"
+				},
+				"audio": {
+					"title": "ሓደ ሰብ ኳሕኳሕ ይብል ኣሎ – ናይ ድምጺ ጻውዒት",
+					"text": "ሓደ ሰብ ብቀጥታዊ ሊንክኹም ናብ ናይ ድምጺ ጻውዒትኩም ክጽንበር ይደሊ። ንምእታዉ ናብቲ ጻውዒት ተጸንበሩ።"
+				}
+			},
 			"appointmentRequested": {
 				"title": "ቆጸራ ንጻውዒት ተሓቲቱ",
 				"text": "ሓድሽ ናይ ቆጸራ ሕቶ ንጻውዒት ኣሎ።"
@@ -2603,7 +2632,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "ንኣሽቱ ፊደላትን ሰረዝን (-) ጥራይ ተጠቐሙ። ሓደስቲ ስማት ብምምሕዳር ምስ ጸደቑ ጥራይ እዮም ኣብ ስራሕ ዝውዕሉ።",
+				"info": "ንኣሽቱ ፊደላትን ቁጽርታትን ጥራይ ተጠቐሙ፣ ብሓደ ሰረዝ (-) ተፈላልዮም (ንኣብነት team-2)፣ እንተበዝሐ {{max}} ፊደላት። ሓደስቲ ስማት ብምምሕዳር ምስ ጸደቑ ጥራይ እዮም ኣብ ስራሕ ዝውዕሉ።",
 				"input": "ስም ናይቲ ህዝባዊ መራኸቢ ሊንክ",
 				"label": "ህዝባዊ መራኸቢ ሊንክ",
 				"notification": {
@@ -4404,6 +4433,7 @@
 				"unread": "ዘይተነበበ",
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
+				"directLinks": "ቀጥታዊ ሊንክታት",
 				"other": "ተወሳኺ",
 				"create": "ፍጠር",
 				"group": "መጻረዪ",
@@ -4427,7 +4457,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "ክቢ ዝርርብ",
 				"internal": "ውሽጣዊ",
-				"team": "ጋንታዊ ምኽሪ"
+				"team": "ጋንታዊ ምኽሪ",
+				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
+				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
+				"directLinkChat": "ቀጥታዊ ሊንክ"
 			}
 		},
 		"supervision": {
@@ -4725,8 +4758,10 @@
 			},
 			"decision": {
 				"app": "ብኣፕ ብውሑስ ተራኸቡ",
+				"appActive": "እታ Authenticator ኣፕ ድሮ ከም ካልኣይ ረቛሒ ንጡፍቲ እያ። ንምቕያር ነቲ ካልእ ኣገባብ ምረጹ።",
 				"copy": "ንኣካውንትኩም ብካልኣይ ረቛሒ ሓልውዎ። እታ Authenticator ኣፕ ዝያዳ ውሕስቲ እያ፤ ከም ኣማራጺ ድማ ኮድ ብኢመይል ክትቅበሉ ትኽእሉ።",
 				"email": "ናይ ኢመይል ኮድ ተጠቐሙ (ውሕስነቱ ትሑት)",
+				"emailActive": "ናይ ኢመይል ኮዳት ድሮ ከም ካልኣይ ረቛሒ ንጡፋት እዮም። ንምቕያር ነታ ኣፕ ምረጹ።",
 				"title": "ካልኣይ ረቛሒ ምረጹ"
 			},
 			"email": {
@@ -6129,25 +6164,6 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
-		},
-		"notes": {
-			"title": "መዝገብ ዝርርብ",
-			"privacy": "ብሕታዊ። ንዓኻ ጥራይ፣ ከምኡ’ውን ክሳብ እቲ ዝርርብ ዝጸንሕ ጥራይ።",
-			"type": "ዓይነት መዝገብ",
-			"text": "መዝገብ",
-			"add": "መዝገብ ወስኽ",
-			"remove": "መዝገብ ኣውጽእ",
-			"copy": "ኩሉ ቅዳሕ",
-			"copied": "ተቐድሐ",
-			"empty": "ክሳብ ሕጂ ዝተመዝገበ የለን።",
-			"collapse": "መዛግብቲ ዕጸው",
-			"expand": "መዛግብቲ ክፈት",
-			"open": "መዝገብ ዝርርብ",
-			"types": {
-				"frage": "ሕቶ",
-				"anmerkung": "መብርሂ",
-				"aufgabe": "ዕዮ"
-			}
 		},
 		"states": {
 			"encrypted": "ዝተመስጠረ",

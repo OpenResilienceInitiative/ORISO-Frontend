@@ -419,6 +419,65 @@ class ChatTransportService {
 		return () => (matrixClient as any).off('Room.timeline', handleTimeline);
 	}
 
+	/**
+	 * A message of `matrixRoomId` has just been redacted (`Room.redaction`).
+	 * That is the moment the SDK flips the target event to "redacted" — also
+	 * when the redaction is our OWN, whose remote echo never emits a second
+	 * `Room.timeline` event, so a timeline listener alone shows the deletion
+	 * only after some unrelated event triggers the next refresh.
+	 */
+	public onMatrixRedaction(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) {
+			return null;
+		}
+		const handleRedaction = (_event: MatrixEvent, room?: Room) => {
+			if (room?.roomId === matrixRoomId) {
+				listener();
+			}
+		};
+		(matrixClient as any).on('Room.redaction', handleRedaction);
+		return () =>
+			(matrixClient as any).off('Room.redaction', handleRedaction);
+	}
+
+	/**
+	 * Read receipts of OTHER members in one room (FE#1802): they flip own
+	 * messages from "sent" to "read". Our own receipts are skipped — marking
+	 * the room read must not trigger the refresh that marks it read again.
+	 */
+	public onMatrixReadReceipt(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) return null;
+
+		const isObject = (value: unknown): value is Record<string, unknown> =>
+			typeof value === 'object' && value !== null;
+		const handleReceipt = (event: MatrixEvent, room: Room) => {
+			// Only a real m.receipt counts: the practice fake emits the message
+			// itself here, and reading its body as receipts looped the refresh.
+			if (room?.roomId !== matrixRoomId) return;
+			if (event?.getType?.() !== 'm.receipt') return;
+			const me = (matrixClient as any).getUserId?.();
+			const readers = Object.values(event.getContent?.() || {})
+				.filter(isObject)
+				.flatMap((byType) =>
+					Object.values(byType)
+						.filter(isObject)
+						.flatMap((byUser) => Object.keys(byUser))
+				);
+			if (readers.some((userId) => userId !== me)) listener();
+		};
+
+		(matrixClient as any).on('Room.receipt', handleReceipt);
+		return () => (matrixClient as any).off('Room.receipt', handleReceipt);
+	}
+
 	public onMatrixTimeline(
 		matrixRoomId: string,
 		listener: TimelineListener

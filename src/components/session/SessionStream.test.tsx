@@ -49,6 +49,8 @@ const mocks = vi.hoisted(() => {
 			room: any,
 			toStart: boolean
 		) => void)[],
+		redactionListeners: [] as (() => void)[],
+		receiptListeners: [] as (() => void)[],
 		detachLifecycle: vi.fn(),
 		getMatrixRoomMessages: vi.fn(() => []),
 		getSessionSupervisors: vi.fn(() => Promise.resolve([])),
@@ -90,9 +92,12 @@ const mocks = vi.hoisted(() => {
 	};
 });
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
-}));
+vi.mock('react-i18next', () => {
+	// One t per module, as react-i18next keeps it stable across renders:
+	// a fresh t per render would re-run every effect that depends on it.
+	const t = (key: string) => key;
+	return { useTranslation: () => ({ t }) };
+});
 
 vi.mock('react-router-dom', async (importOriginal) => {
 	const actual =
@@ -147,6 +152,20 @@ vi.mock('../../services/chatTransportService', () => ({
 				};
 			}
 		),
+		onMatrixRedaction: vi.fn((_roomId: string, listener: () => void) => {
+			mocks.redactionListeners.push(listener);
+			return () => {
+				const index = mocks.redactionListeners.indexOf(listener);
+				if (index >= 0) mocks.redactionListeners.splice(index, 1);
+			};
+		}),
+		onMatrixReadReceipt: vi.fn((_roomId: string, listener: () => void) => {
+			mocks.receiptListeners.push(listener);
+			return () => {
+				const index = mocks.receiptListeners.indexOf(listener);
+				if (index >= 0) mocks.receiptListeners.splice(index, 1);
+			};
+		}),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
 				mocks.lifecycleListeners.push(listener);
@@ -405,6 +424,10 @@ const handoverNotification = (
 	category: 'system'
 });
 
+// The attach-time hydration stamps the 120 ms timeline coalescing window.
+const passCoalescingWindow = () =>
+	act(() => new Promise((resolve) => setTimeout(resolve, 150)));
+
 const emitLifecycle = (change: any) => {
 	act(() => {
 		mocks.lifecycleListeners.forEach((listener) => listener(change));
@@ -443,6 +466,8 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 		mocks.lifecycleListeners.length = 0;
 		mocks.timelineListeners.length = 0;
+		mocks.redactionListeners.length = 0;
+		mocks.receiptListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
 		mocks.suspendedSessionId = null;
@@ -1456,6 +1481,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		await waitFor(() => {
 			expect(mocks.timelineListeners.length).toBe(1);
 		});
+		await passCoalescingWindow();
 		const callsBeforeTimelineEvents =
 			mocks.getMatrixRoomMessages.mock.calls.length;
 		const encryptedEvent = { getType: () => 'm.room.encrypted' };
@@ -1477,6 +1503,152 @@ describe('SessionStream Matrix room lifecycle', () => {
 			},
 			{ timeout: 500 }
 		);
+	});
+
+	it('refreshes the messages when a message is redacted, without waiting for another timeline event', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(mocks.redactionListeners.length).toBe(1);
+		});
+		const callsBeforeRedaction =
+			mocks.getMatrixRoomMessages.mock.calls.length;
+
+		act(() => {
+			mocks.redactionListeners.forEach((listener) => listener());
+		});
+
+		await waitFor(
+			() => {
+				expect(
+					mocks.getMatrixRoomMessages.mock.calls.length
+				).toBeGreaterThan(callsBeforeRedaction);
+			},
+			{ timeout: 500 }
+		);
+	});
+
+	it('still refreshes an encrypted message that arrives right after a redaction', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(mocks.redactionListeners.length).toBe(1);
+		});
+		await passCoalescingWindow();
+
+		// Our own redaction's remote echo fires Room.redaction only; an
+		// encrypted message in the same sync batch must not be coalesced
+		// away, or a failed decryption leaves it invisible.
+		act(() => {
+			mocks.redactionListeners.forEach((listener) => listener());
+		});
+		const callsAfterRedaction =
+			mocks.getMatrixRoomMessages.mock.calls.length;
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		act(() => {
+			mocks.timelineListeners.forEach((listener) =>
+				listener(
+					{ getType: () => 'm.room.encrypted' },
+					{ roomId: ROOM_ID },
+					false
+				)
+			);
+		});
+
+		await waitFor(
+			() => {
+				expect(
+					mocks.getMatrixRoomMessages.mock.calls.length
+				).toBeGreaterThan(callsAfterRedaction);
+			},
+			{ timeout: 500 }
+		);
+	});
+
+	it('re-reads the room when a peer read receipt arrives (FE#1802)', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => expect(mocks.receiptListeners.length).toBe(1));
+		const callsBefore = mocks.getMatrixRoomMessages.mock.calls.length;
+
+		act(() => mocks.receiptListeners.forEach((listener) => listener()));
+
+		await waitFor(() =>
+			expect(
+				mocks.getMatrixRoomMessages.mock.calls.length
+			).toBeGreaterThan(callsBefore)
+		);
+	});
+
+	it('counts only the asker receipt for a counsellor message in a 1:1 (FE#1802, ADR-002)', async () => {
+		const counsellor = '@counsellor:example.org';
+		const asker = '@asker:example.org';
+		const readBy = new Set(['@silent-colleague:example.org']);
+		const room = {
+			roomId: ROOM_ID,
+			myUserId: counsellor,
+			getJoinedMembers: () =>
+				[counsellor, asker, '@silent-colleague:example.org'].map(
+					(userId) => ({ userId })
+				),
+			hasUserReadEvent: (userId: string, eventId: string) =>
+				eventId === '$mine' && readBy.has(userId)
+		};
+		const ownMessage = {
+			getType: () => 'm.room.message',
+			getSender: () => counsellor,
+			getId: () => '$mine',
+			getTs: () => 1000,
+			getContent: () => ({ msgtype: 'm.text', body: 'Hello' }),
+			isRedacted: () => false
+		};
+		vi.mocked(chatTransportService.getMatrixRoom).mockImplementation(
+			(roomId: string) => (roomId === ROOM_ID ? (room as any) : null)
+		);
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === ROOM_ID ? [ownMessage] : []
+		);
+		try {
+			renderSessionStream({
+				isGroup: false,
+				userData: consultantUserData,
+				activeSession: {
+					rid: ROOM_ID,
+					isGroup: false,
+					isSession: true,
+					item: {
+						id: 1,
+						matrixRoomId: ROOM_ID,
+						active: true,
+						status: 2,
+						conversationType: 'AGENCY_COUNSELLING',
+						askerMatrixUserId: asker,
+						consultantMatrixUserId: counsellor
+					}
+				}
+			});
+
+			await waitFor(() =>
+				expect(mocks.sessionItemProps?.messages?.[0]?.isNotRead).toBe(
+					true
+				)
+			);
+
+			await waitFor(() => expect(mocks.receiptListeners.length).toBe(1));
+			readBy.add(asker);
+			act(() => mocks.receiptListeners.forEach((listener) => listener()));
+			await waitFor(() =>
+				expect(mocks.sessionItemProps?.messages?.[0]?.isNotRead).toBe(
+					false
+				)
+			);
+		} finally {
+			vi.mocked(chatTransportService.getMatrixRoom).mockImplementation(
+				() => null
+			);
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
 	});
 
 	it('hydrates the initial timeline after its listener attaches', async () => {

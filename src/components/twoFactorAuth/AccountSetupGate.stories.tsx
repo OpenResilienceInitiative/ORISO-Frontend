@@ -180,7 +180,7 @@ export const PasswordRefused: Story = {
 	}
 };
 
-/** A password of the counsellor's own: every criterion ticked, saving enabled. */
+/** A password of the counsellor's own (16+ characters): every criterion ticked, saving enabled. */
 export const PasswordReady: Story = {
 	decorators: [owesPassword],
 	play: async () => {
@@ -188,8 +188,8 @@ export const PasswordReady: Story = {
 		const [current, next, confirm] = passwordFields(host);
 
 		await userEvent.type(current, 'Storybook!Example1');
-		await userEvent.type(next, 'Sonnenblume!9x');
-		await userEvent.type(confirm, 'Sonnenblume!9x');
+		await userEvent.type(next, 'Sonnenblume!9xAbend');
+		await userEvent.type(confirm, 'Sonnenblume!9xAbend');
 
 		const criteria = host.querySelectorAll(
 			'.passwordReset__criterion--met'

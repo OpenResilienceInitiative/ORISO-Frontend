@@ -1,3 +1,7 @@
+import {
+	readConversationPolicyValue,
+	resolveConversationFeatureSettings
+} from '../../utils/conversationFeatureSettings';
 import { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
 import { AgencySettingsInterface } from '../../globalState/interfaces/UserDataInterface';
 
@@ -7,11 +11,9 @@ import { AgencySettingsInterface } from '../../globalState/interfaces/UserDataIn
  * enabled for the agency. If only one format is available the picker screen
  * is skipped; if none is available the create entry is hidden entirely.
  *
- * featureGroupChatV2Enabled is the master switch: false turns both formats
- * off. Each format also has its own flag (featureInternalGroupChatEnabled,
- * featureSelfHelpGroupsEnabled) that refines an enabled v2; where one is
- * missing it follows the master switch. A Beratungsstelle can only restrict
- * what the Träger allows (#1440).
+ * Canonical agency policies already resolve the parent recommendation or
+ * enforcement. Explicit Internal/SelfHelp policies outrank the legacy V2
+ * transition fallback. Flat-only legacy responses keep their old hard caps.
  */
 
 type FormatSettings = Partial<TenantDataSettingsInterface> & {
@@ -34,8 +36,8 @@ const settingsOf = (
 /**
  * The group-chat settings of one Beratungsstelle, as the public agency
  * response (`GET /service/agencies/{ids}`) delivers them: already the
- * effective values, i.e. Träger AND Beratungsstelle combined. A missing or
- * `null` value means "this agency adds no restriction".
+ * canonical policy values, or the older flat restriction-only projection.
+ * A valid legacy response may omit settings; an unavailable response is distinct.
  */
 export type AgencyFormatSettings = AgencySettingsInterface;
 
@@ -43,17 +45,10 @@ export type AgencyFormatSettings = AgencySettingsInterface;
 export interface AgencyFormatSource {
 	id: number;
 	settings?: AgencyFormatSettings | null;
+	unavailable?: boolean;
 }
 
-const FORMAT_FLAG: Record<
-	ConversationFormat,
-	'featureInternalGroupChatEnabled' | 'featureSelfHelpGroupsEnabled'
-> = {
-	internal: 'featureInternalGroupChatEnabled',
-	circle: 'featureSelfHelpGroupsEnabled'
-};
-
-// Master switch on every level: featureGroupChatV2Enabled === false turns
+// Legacy fallback master switch: featureGroupChatV2Enabled === false turns
 // both formats off whatever the format flags say; the format flags only
 // refine an enabled v2.
 const tenantAvailability = (
@@ -70,20 +65,43 @@ const tenantAvailability = (
 	};
 };
 
-// Same master switch for the agency; below it the per-format flag, and a
-// missing or null value means "no restriction" — an agency whose values are
-// not known yet never hides a format the Träger allows.
-const agencyAllows = (
-	agency: AgencyFormatSource,
-	format: ConversationFormat
-): boolean =>
-	agency.settings?.featureGroupChatV2Enabled === false
-		? false
-		: (agency.settings?.[FORMAT_FLAG[format]] ?? true);
+// Canonical policies are resolved by the server. Confirmed legacy responses
+// retain tenant hard caps; unavailable authority closes both formats.
+const effectiveAvailability = (
+	tenant: { settings?: FormatSettings } | null | undefined,
+	agency: AgencyFormatSource
+): ConversationFormatAvailability => {
+	if (agency.unavailable) return { internal: false, circle: false };
+	const policies = agency.settings?.permissionPolicies;
+	if (policies != null) {
+		if (typeof policies !== 'object' || Array.isArray(policies))
+			return { internal: false, circle: false };
+		// Explicit modern formats outrank the V2 transition fallback.
+		const allowed = (
+			key:
+				| 'featureInternalGroupChatEnabled'
+				| 'featureSelfHelpGroupsEnabled'
+		) => {
+			const policy = Object.prototype.hasOwnProperty.call(policies, key)
+				? policies[key]
+				: policies.featureGroupChatV2Enabled;
+			return readConversationPolicyValue(policy) === true;
+		};
+		return {
+			internal: allowed('featureInternalGroupChatEnabled'),
+			circle: allowed('featureSelfHelpGroupsEnabled')
+		};
+	}
+	return tenantAvailability({
+		settings: resolveConversationFeatureSettings(
+			settingsOf(tenant),
+			agency.settings
+		)
+	});
+};
 
 /**
- * The agencies of the counsellor that offer `format`: the Träger must allow
- * it, and the agency must not have switched it off. Used to narrow the
+ * The agencies whose effective policy offers `format`. Used to narrow the
  * agency choice inside a format's create screen.
  */
 export const getAgenciesOfferingFormat = (
@@ -91,15 +109,13 @@ export const getAgenciesOfferingFormat = (
 	agencies: AgencyFormatSource[],
 	format: ConversationFormat
 ): number[] =>
-	tenantAvailability(tenant)[format]
-		? agencies
-				.filter((agency) => agencyAllows(agency, format))
-				.map((agency) => agency.id)
-		: [];
+	agencies
+		.filter((agency) => effectiveAvailability(tenant, agency)[format])
+		.map((agency) => agency.id);
 
 /**
- * A format is offered when the Träger allows it AND at least one of the
- * counsellor's agencies allows it. With `targetAgencyId` only that agency
+ * A format is offered when at least one counsellor agency's resolved policy
+ * allows it. With `targetAgencyId` only that agency
  * counts (a chat created for one specific Beratungsstelle). A target that is
  * not in `agencies` offers nothing. Without any known agency the Träger's
  * answer stands.
@@ -115,9 +131,11 @@ export const getConversationFormatAvailability = (
 			? agencies
 			: agencies.filter((agency) => agency.id === targetAgencyId);
 	const offered = (format: ConversationFormat) =>
-		tenantResult[format] &&
-		(agencies.length === 0 ||
-			relevant.some((agency) => agencyAllows(agency, format)));
+		agencies.length === 0
+			? tenantResult[format]
+			: relevant.some(
+					(agency) => effectiveAvailability(tenant, agency)[format]
+				);
 	return {
 		internal: offered('internal'),
 		circle: offered('circle')

@@ -74,6 +74,7 @@ import {
 import {
 	draftMatchesSession,
 	isAnonymousAskerSession,
+	isDirectLinkSession,
 	normalizeSessionToolbarChip,
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
@@ -604,6 +605,28 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		// An asker's list comes from the asker endpoint; the counsellor one
+		// answers 403, so every live refresh used to be a silent no-op and a
+		// list that loaded empty right after registration stayed on
+		// "keine aktiven Beratungen" until a reload (OBP 2.1 #3).
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			// `fresh`: a request still running from the first load was asked
+			// before this signal and must not answer it.
+			return apiGetAskerSessionList({ fresh: true }).then((response) => {
+				// The asker request resolves a failure to an empty list, so an
+				// empty answer may be an error: merge, never wipe loaded rows.
+				// Removals arrive as their own REMOVE_SESSIONS events.
+				const sessions = response?.sessions ?? [];
+				if (sessions.length > 0) {
+					dispatch({
+						type: UPDATE_SESSIONS,
+						ready: true,
+						sessions
+					});
+				}
+			});
+		}
+
 		return getConsultantSessionList(0)
 			.then(({ sessions, total }) => {
 				dispatch({
@@ -615,7 +638,7 @@ export const SessionsList = ({
 				setCurrentOffset(0);
 			})
 			.catch(() => {});
-	}, [dispatch, getConsultantSessionList, type]);
+	}, [dispatch, getConsultantSessionList, type, userData]);
 
 	/*
 	 * Re-run the enquiry fetch when switching Nearby ↔ Live Chat so auto-paging
@@ -1801,6 +1824,14 @@ export const SessionsList = ({
 			),
 		[sessionToolbarPairs]
 	);
+	// FE#1952: the "Direktlinks" chip (and its display-filter row) appear once
+	// the list holds a conversation that came in through a direct link.
+	const hasDirectLinkRow = React.useMemo(
+		() =>
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			sessionToolbarPairs.some(({ raw }) => isDirectLinkSession(raw)),
+		[sessionToolbarPairs, type]
+	);
 	const activeIsLiveChat = React.useMemo(
 		() =>
 			sessionToolbarPairs.some(
@@ -1844,6 +1875,8 @@ export const SessionsList = ({
 					return showGroupChip;
 				case 'supervision':
 					return canSupervise;
+				case 'directLinks':
+					return hasDirectLinkRow;
 				default:
 					return true;
 			}
@@ -1890,6 +1923,7 @@ export const SessionsList = ({
 		);
 	}, [
 		canSupervise,
+		hasDirectLinkRow,
 		rowsByKind,
 		showCreateGroupChatAction,
 		showGroupChip,
@@ -2454,6 +2488,9 @@ export const SessionsList = ({
 					chipView={chipPresentation.view}
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
+					showDirectLinksChip={
+						hasDirectLinkRow || sessionToolbarChip === 'directLinks'
+					}
 					displayFilter={{
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
@@ -2474,6 +2511,16 @@ export const SessionsList = ({
 							id: 'nearby',
 							label: translate('sessionList.toolbar.chips.nearby')
 						},
+						...(hasDirectLinkRow
+							? [
+									{
+										id: 'directLinks',
+										label: translate(
+											'sessionList.toolbar.chips.directLinks'
+										)
+									}
+								]
+							: []),
 						{
 							id: 'liveChat',
 							label: translate(

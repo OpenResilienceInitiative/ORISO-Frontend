@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getSessionMenuAgency } from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
@@ -98,6 +99,8 @@ import {
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
+import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotificationAccess';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -109,6 +112,7 @@ import {
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -151,6 +155,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		settings: currentTenantSettings,
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
+	const effectiveFeatures = useConversationFeatureSettings(
+		currentTenantSettings
+	);
 	const { dispatch: sessionsDispatch, sessions: sessionList } =
 		useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
@@ -198,10 +205,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const appConfig = useAppConfig();
-	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
-	const hasEmailSettings =
-		!!appConfig?.releaseToggles?.enableNewNotifications ||
-		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	// Never link to an e-mail panel the Admin permissions hide (#1979). Read
+	// the merged tenant context, like the Settings panel itself: the
+	// per-session refresh is a raw partial answer and could disagree.
+	const tenant = useTenant();
+	const hasEmailSettings = hasEmailSettingsPanel(
+		appConfig,
+		tenant?.settings,
+		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -510,13 +522,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasMatrixRoom
-		? generatePath(baseUrl, {
-				groupId: activeSession.item.matrixRoomId,
-				id: String(activeSession.item.id),
-				subRoute: 'groupChatInfo'
-			})
-		: '';
+	const groupChatInfoLink = getGroupChatInfoLink(
+		listPath,
+		activeSession.item.matrixRoomId,
+		activeSession.item.id,
+		getSessionListTab()
+	);
 	const editGroupChatSettingsLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
@@ -571,7 +582,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// One gate for every caller: the side room's controls ask the same
 	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
-	const callGates = resolveCallFeatureGates(currentTenantSettings, chatType);
+	const callGates = resolveCallFeatureGates(effectiveFeatures, chatType);
 	const isAudioCallsEnabled = callGates.audio && !isPracticing;
 	const isVideoCallsEnabled = callGates.video && !isPracticing;
 

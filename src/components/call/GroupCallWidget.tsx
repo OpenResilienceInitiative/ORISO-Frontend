@@ -40,7 +40,6 @@ import {
 	publishCallIdentity,
 	republishCallIdentity
 } from './publishCallIdentity';
-import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { CallKnockNoticeHost } from './knockNotice/CallKnockNoticeHost';
 import { callKnockScopeOf } from './knockNotice/callKnockModel';
@@ -55,20 +54,6 @@ const GROUP_DEFAULT_WIDTH = 520;
 const GROUP_DEFAULT_HEIGHT = 320;
 const GROUP_ASPECT = GROUP_DEFAULT_WIDTH / GROUP_DEFAULT_HEIGHT;
 const GROUP_MIN = { width: 280, height: 180 };
-
-/*
- * The expanded notepad's width, from `gespraechsnotizen.module.scss`, and the
- * narrowest stage that can seat it beside the call.
- *
- * The stage is a floating window, not the page: its width is `stageSize`,
- * which autofit scales to the screen and the counsellor then drags with the
- * resize handles. So "is there room for both" is a question about the stage
- * and cannot be answered by a viewport media query — a 1920px screen can hold
- * a 300px-wide stage. Below this the panel lays over the stage instead; the
- * stylesheet reads `data-narrow-stage` for it.
- */
-const NOTES_PANEL_WIDTH = 320;
-const NOTES_SIDE_BY_SIDE_MIN_WIDTH = NOTES_PANEL_WIDTH + GROUP_MIN.width;
 
 /**
  * How long the surface waits for the call's own goodbye, in ms.
@@ -183,14 +168,7 @@ export const GroupCallWidget: React.FC = () => {
 		(!callData.isIncoming ||
 			callState === 'connecting' ||
 			callState === 'in_call');
-	/*
-	 * Only a counsellor gets the notepad.
-	 *
-	 * Ticket 06 is a counsellor's scratchpad — "not a shared agenda, not a
-	 * transcript, not minutes". Offering it to an advice seeker would suggest
-	 * the counselling centre keeps notes on them, in a product whose whole
-	 * promise is that it does not.
-	 */
+	// Sharing the call and admitting knocks are the counsellor's.
 	const isConsultantUser = Boolean(
 		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 	);
@@ -511,28 +489,6 @@ export const GroupCallWidget: React.FC = () => {
 		if (!callRoomId) return;
 		return (): void => forgetPublishedIdentity(callRoomId);
 	}, [callRoomId]);
-
-	const notesLabels = useMemo(
-		() => ({
-			title: t('calls.notes.title'),
-			privacy: t('calls.notes.privacy'),
-			type: t('calls.notes.type'),
-			text: t('calls.notes.text'),
-			add: t('calls.notes.add'),
-			remove: t('calls.notes.remove'),
-			copy: t('calls.notes.copy'),
-			copied: t('calls.notes.copied'),
-			empty: t('calls.notes.empty'),
-			collapse: t('calls.notes.collapse'),
-			expand: t('calls.notes.expand'),
-			types: {
-				frage: t('calls.notes.types.frage'),
-				anmerkung: t('calls.notes.types.anmerkung'),
-				aufgabe: t('calls.notes.types.aufgabe')
-			}
-		}),
-		[t]
-	);
 
 	// Dragging / resize state
 	const [isDragging, setIsDragging] = useState(false);
@@ -1131,13 +1087,6 @@ export const GroupCallWidget: React.FC = () => {
 					<div
 						className="element-call-container"
 						ref={containerRef}
-						data-narrow-stage={
-							!isMobileView &&
-							!isFullscreen &&
-							stageSize.width < NOTES_SIDE_BY_SIDE_MIN_WIDTH
-								? 'true'
-								: undefined
-						}
 						style={
 							isMobileView || isFullscreen
 								? undefined
@@ -1202,25 +1151,7 @@ export const GroupCallWidget: React.FC = () => {
 								{isFullscreen ? '⤡' : '⤢'}
 							</button>
 						)}
-						{/*
-						 * The private notepad lives HERE, in the host, and
-						 * not inside the call.
-						 *
-						 * "Private is the feature." Its test proves that
-						 * nothing it holds reaches fetch, XHR, either
-						 * storage or sendBeacon — and that proof only means
-						 * something where there is no second boundary to
-						 * cross. Inside the iframe the same claim would have
-						 * to be re-made against the widget transport as
-						 * well, and the panel would have to carry copies of
-						 * five ORISO icons and the composer's menu with it.
-						 *
-						 * The handoff puts it beside the stage, which is
-						 * exactly where this is: a flex sibling of the call
-						 * surface, so the stage reflows to the remaining
-						 * width rather than being covered.
-						 */}
-						{/* Host side, like the notes: no widget capability needed (#1794). */}
+						{/* Host side: no widget capability needed (#1794). */}
 						{/* Element Call never sets CallData.state to connected; a
 						    ready widget is the joined call. */}
 						{isConsultantUser &&
@@ -1236,13 +1167,6 @@ export const GroupCallWidget: React.FC = () => {
 									/>
 								</div>
 							)}
-						{isConsultantUser && (
-							<Gespraechsnotizen
-								className="element-call-notes"
-								defaultCollapsed
-								labels={notesLabels}
-							/>
-						)}
 						{/*
 						 * Somebody knocking on a direct-link call (#1892):
 						 * let them in without leaving the call. Docked

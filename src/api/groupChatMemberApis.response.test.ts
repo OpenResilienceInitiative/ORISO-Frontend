@@ -13,6 +13,7 @@ import {
 	apiTransferGroupChatOwnership
 } from './apiGroupChatRoles';
 import { apiGetGroupChatInfo } from './apiGetGroupChatInfo';
+import { apiGetChatMembers } from './apiGetChatMembers';
 import { apiPostBanUser } from './apiPostBanUser';
 import { redirectToErrorPage } from '../components/error/errorHandling';
 import { logout } from '../components/logout/logout';
@@ -57,6 +58,8 @@ describe('group chat member calls never redirect to the error page', () => {
 		],
 		['transfer ownership', () => apiTransferGroupChatOwnership(1, 'c1')],
 		['read chat info', () => apiGetGroupChatInfo(1)],
+		// The participants' role badges (#107) are read on the same page.
+		['read member roles', () => apiGetChatMembers(1)],
 		['ban user', () => apiPostBanUser({ matrixUserId: '@a:b', chatId: 1 })]
 	];
 
@@ -70,7 +73,7 @@ describe('group chat member calls never redirect to the error page', () => {
 
 	// A revoked session must still end in the normal logout, not be swallowed
 	// by the Chat-Info's own error handling.
-	it.each(calls.slice(0, 4))(
+	it.each(calls.slice(0, 5))(
 		'%s keeps the logout on HTTP 401',
 		async (_n, call) => {
 			vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ status: 401 }));
