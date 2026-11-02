@@ -94,11 +94,10 @@ import {
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import {
 	FutureZone,
-	NowMarker,
 	PULL_RELEASE_PX,
 	type FutureZoneHandle
 } from './timeline/FutureZone';
-import { UnmappedAppointmentCard } from './timeline/UnmappedAppointmentCard';
+import { AppointmentSplitButton } from './timeline/AppointmentSplitButton';
 import { useFutureEntries } from './timeline/useFutureEntries';
 import { useAppointmentActions } from './timeline/useAppointmentActions';
 import {
@@ -154,7 +153,7 @@ import {
 	SessionKindId,
 	sessionPairId
 } from '../../utils/displayFilter/sessions';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import { isChatItemUnread, isRoomUnread } from '../../utils/sessionUnread';
 import {
 	SESSION_KIND_ICONS,
 	sessionKindLabel
@@ -2330,10 +2329,11 @@ export const SessionsList = ({
 	// the visible rows, so a filter applies to both sides of the handle.
 	const { settings: timelineSettings } = useTimelineSettings();
 	const isAskerList = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-	const showTimeline =
+	const timelineApplies =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
-		!isRail &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
+	// The ultra-thin rail has no zone, only the calendar mark on its pills.
+	const showTimeline = timelineApplies && !isRail;
 	const timelineSeries = React.useMemo<TimelineSession[]>(
 		() =>
 			sessionToolbarPairs
@@ -2369,7 +2369,7 @@ export const SessionsList = ({
 		series: timelineSeries,
 		userId: userData?.userId,
 		isAsker: isAskerList,
-		enabled: showTimeline
+		enabled: timelineApplies
 	});
 	const onAppointmentAction = useAppointmentActions({
 		onCancelled: markCancelled
@@ -2413,15 +2413,48 @@ export const SessionsList = ({
 			: undefined;
 	};
 	const timelineRole = isAskerList ? 'asker' : 'counsellor';
+	const appointmentActionOf = (session: ExtendedSessionInterface) => {
+		const next = session.isGroup
+			? nextGroupAppointment.get(session.item.id)
+			: undefined;
+		return next
+			? ({
+					openRoom,
+					active
+				}: {
+					openRoom: () => void;
+					active: boolean;
+				}) => (
+					<AppointmentSplitButton
+						entry={next}
+						role={timelineRole}
+						active={active}
+						fullWidth
+						onOpen={openRoom}
+						onAction={onAppointmentAction}
+					/>
+				)
+			: undefined;
+	};
 	const singleTimeline =
 		showTimeline && timelineSettings.scrollModel === 'single';
 	const zoneRef = useRef<FutureZoneHandle>(null);
 	const pullRef = useRef(0);
 	const nowRef = useRef<HTMLDivElement>(null);
+	// Measured on screen: "Jetzt" sits inside the positioned zone.
+	const nowTopInList = () => {
+		const el = listRef.current as HTMLDivElement | null;
+		const marker = nowRef.current;
+		return el && marker
+			? marker.getBoundingClientRect().top -
+					el.getBoundingClientRect().top +
+					el.scrollTop
+			: 0;
+	};
 	const [nowOffscreen, setNowOffscreen] = useState<'above' | 'below' | null>(
 		null
 	);
-	// The clicked twin leaves its group until another room is opened.
+	// The clicked appointment stays marked until another room is opened.
 	const [selectedTwin, setSelectedTwin] = useState<FutureEntry | null>(null);
 	useEffect(() => {
 		setSelectedTwin((current) =>
@@ -2466,7 +2499,7 @@ export const SessionsList = ({
 		const el = listRef.current as HTMLDivElement | null;
 		const marker = nowRef.current;
 		if (!el || !marker) return;
-		const markerTop = marker.offsetTop - el.offsetTop;
+		const markerTop = nowTopInList();
 		if (el.scrollTop > markerTop + marker.offsetHeight)
 			setNowOffscreen('above');
 		else if (el.scrollTop + el.clientHeight < markerTop)
@@ -2478,12 +2511,11 @@ export const SessionsList = ({
 		const marker = nowRef.current;
 		if (el && marker)
 			el.scrollTo({
-				top: marker.offsetTop - el.offsetTop - 8,
+				top: nowTopInList() - 8,
 				behavior: 'smooth'
 			});
 	};
 
-	const nowLabel = translate('sessionList.timeline.now');
 	const timelineZone = showTimeline && zoneEntries.length > 0 && (
 		<div
 			className="sessionsList__timeline"
@@ -2491,49 +2523,22 @@ export const SessionsList = ({
 		>
 			<FutureZone
 				ref={zoneRef}
+				nowRef={nowRef}
 				entries={zoneEntries}
 				role={timelineRole}
 				listHeight={timelineListHeight}
 				initialReveal={timelineSettings.reveal}
 				memoryKey="sessionsList"
 				selectedKey={selectedTwin?.key}
-				onSelect={setSelectedTwin}
-				onAction={onAppointmentAction}
-				label={translate('sessionList.timeline.upcoming')}
-				emptyLabel={translate('sessionList.timeline.empty')}
-				overlayAction={(entry) => entry.sessionId !== undefined}
-				renderCard={(entry, index, flags) => {
-					const session =
-						entry.sessionId !== undefined
-							? visibleGroupById.get(entry.sessionId)
-							: undefined;
-					return session ? (
-						<ActiveSessionProvider activeSession={session}>
-							<SessionListItemComponent
-								defaultLanguage={defaultLanguage}
-								index={-1}
-								grouped
-								{...flags}
-								// The twin's date is its split button.
-								datePlacement="off"
-							/>
-						</ActiveSessionProvider>
-					) : (
-						<UnmappedAppointmentCard
-							entry={entry}
-							role={timelineRole}
-							flags={flags}
-							onAction={onAppointmentAction}
-						/>
-					);
+				onOpen={(entry) => {
+					setSelectedTwin(entry);
+					onAppointmentAction('open', entry);
 				}}
+				onAction={onAppointmentAction}
+				unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
+				label={translate('sessionList.timeline.upcoming')}
+				nowLabel={translate('sessionList.timeline.now')}
 			/>
-			{!singleTimeline && (
-				<NowMarker
-					variant={timelineSettings.nowVariant}
-					label={nowLabel}
-				/>
-			)}
 		</div>
 	);
 
@@ -2883,17 +2888,7 @@ export const SessionsList = ({
 					onScroll={handleTimelineScroll}
 					onWheel={handleTimelineWheel}
 				>
-					{singleTimeline && timelineZone && (
-						<>
-							{timelineZone}
-							<div ref={nowRef}>
-								<NowMarker
-									variant={timelineSettings.nowVariant}
-									label={nowLabel}
-								/>
-							</div>
-						</>
-					)}
+					{singleTimeline && timelineZone}
 					{(!isLoading || finalSessionsList.length > 0) &&
 						sortedSessions.map(
 							(
@@ -2953,6 +2948,17 @@ export const SessionsList = ({
 											}
 											grouped={!isRail}
 											upcomingAppointment={upcomingLabelOf(
+												activeSession
+											)}
+											upcomingAppointmentModality={
+												activeSession.isGroup
+													? nextGroupAppointment.get(
+															activeSession.item
+																.id
+														)?.modality
+													: undefined
+											}
+											appointmentAction={appointmentActionOf(
 												activeSession
 											)}
 											datePlacement={
@@ -3039,7 +3045,7 @@ export const SessionsList = ({
 						data-cy="timeline-now-pill"
 					>
 						{nowOffscreen === 'above' ? '↑ ' : '↓ '}
-						{nowLabel}
+						{translate('sessionList.timeline.now')}
 					</button>
 				)}
 			</div>

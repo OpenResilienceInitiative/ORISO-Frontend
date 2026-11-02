@@ -37,6 +37,8 @@ import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { AppointmentKindGlyph } from './timeline/AppointmentKindGlyph';
+import type { EntryModality } from './timeline/timelineModel';
 import { MailFilterIcon } from './MailFilterIcon';
 import type {
 	SessionRailMark,
@@ -75,6 +77,8 @@ export interface SessionRailPillProps {
 	'avatar': React.ReactNode;
 	/** Already ordered — use `getSessionRailMarks()`. */
 	'marks': readonly SessionRailMark[];
+	/** What kind of appointment the `appointment` mark stands for. */
+	'appointmentModality'?: EntryModality;
 	/** Accessible name per mark; the host maps existing i18n keys onto it. */
 	'markLabels': SessionRailMarkLabels;
 	/**
@@ -120,6 +124,8 @@ const MARK_GLYPHS: Record<SessionRailMark, React.ReactNode> = {
 	supervision: <SupervisionGlyph aria-hidden="true" focusable="false" />,
 	// The #1148 envelope, i.e. the Mail filter chip's own glyph.
 	mail: <MailFilterIcon />,
+	// Depends on the appointment: its kind, drawn where the mark is rendered.
+	appointment: null,
 	// The house's unread language is a filled dot in the unread role
 	// (`session__threadListUnreadDot`, `sessionsListToolbar__chipBadge`), not
 	// a pictogram — drawn in CSS, so no icon was invented for it either.
@@ -177,6 +183,7 @@ export const SessionRailPill = ({
 	name,
 	avatar,
 	marks,
+	appointmentModality,
 	markLabels,
 	tooltips,
 	unreadCount,
@@ -329,6 +336,10 @@ export const SessionRailPill = ({
 								<span className="sessionRailPill__markCount">
 									{unreadCount > 99 ? '99+' : unreadCount}
 								</span>
+							) : mark === 'appointment' ? (
+								<AppointmentKindGlyph
+									modality={appointmentModality}
+								/>
 							) : (
 								MARK_GLYPHS[mark]
 							)}

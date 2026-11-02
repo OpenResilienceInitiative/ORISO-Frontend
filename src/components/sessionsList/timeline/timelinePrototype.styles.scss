@@ -3,9 +3,12 @@
 
 .tlp {
 	position: relative;
-	width: 440px;
 	padding: 4px 8px 12px;
 	background: #eae7e8;
+
+	&--rail {
+		padding: 4px 16px 12px;
+	}
 
 	&__scroll {
 		overflow-y: auto;

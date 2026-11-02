@@ -9,6 +9,7 @@ describe('SessionRailPill accessibility', () => {
 		thread: 'Thread',
 		supervision: 'Supervision',
 		mail: 'Mail',
+		appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 		unread: 'Unread'
 	};
 

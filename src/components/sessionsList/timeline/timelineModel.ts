@@ -24,6 +24,7 @@ export interface TimelineOccurrence {
 export interface TimelineBooking {
 	id: number;
 	startTime: string;
+	endTime?: string;
 	location:
 		| 'CHAT'
 		| 'PHONE_CALL'
@@ -63,6 +64,8 @@ export interface FutureEntry {
 	title: string;
 	topic?: string;
 	start: Date;
+	/** Absent: the source names no end, the entry leaves at its start. */
+	end?: Date;
 	modality: EntryModality;
 	/** Group occurrences can be copied into a single appointment (kept from the old strip). */
 	canDuplicate: boolean;
@@ -99,6 +102,15 @@ const MODALITY_BY_LOCATION: Record<TimelineBooking['location'], EntryModality> =
 		IN_PERSON: 'location'
 	};
 
+const MINUTE = 60_000;
+const DAY = 24 * 60 * MINUTE;
+
+/** A running appointment stays above "Jetzt" until it is over. */
+export const hasEnded = (
+	entry: Pick<FutureEntry, 'start' | 'end'>,
+	now: Date
+): boolean => (entry.end ?? entry.start).getTime() <= now.getTime();
+
 export const buildFutureEntries = ({
 	now,
 	occurrences,
@@ -125,6 +137,7 @@ export const buildFutureEntries = ({
 			title: session?.title ?? 'Gruppentermin',
 			topic: session?.topic,
 			start: new Date(o.start),
+			end: new Date(new Date(o.start).getTime() + o.duration * MINUTE),
 			modality: MODALITY_BY_OCCURRENCE[o.modality],
 			canDuplicate: session?.canModerate !== false,
 			canModerate: session?.canModerate,
@@ -148,6 +161,7 @@ export const buildFutureEntries = ({
 				session?.title ?? b.askerName ?? b.title ?? 'Beratungstermin',
 			topic: session?.topic,
 			start: new Date(b.startTime),
+			end: b.endTime ? new Date(b.endTime) : undefined,
 			modality: MODALITY_BY_LOCATION[b.location] ?? 'video',
 			canDuplicate: false,
 			matrixRoomId: session?.matrixRoomId,
@@ -160,7 +174,7 @@ export const buildFutureEntries = ({
 		};
 	});
 	return [...fromOccurrences, ...fromBookings]
-		.filter((entry) => entry.start.getTime() > now.getTime())
+		.filter((entry) => !hasEnded(entry, now))
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
 };
 
@@ -224,6 +238,69 @@ export const formatEntryDate = (start: Date, locale = 'de-DE'): string => {
 		hour12: false
 	}).format(start);
 	return `${weekday} ${start.getDate()}. ${month} ${time}`;
+};
+
+const clockTime = (date: Date, locale: string) =>
+	new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	}).format(date);
+
+const startOfDay = (date: Date) =>
+	new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+/** "Fr 30. Okt 18:00–19:00" (Figma: the button on a card names the whole slot). */
+export const formatEntrySlot = (
+	entry: Pick<FutureEntry, 'start' | 'end'>,
+	locale = 'de-DE'
+): string =>
+	`${formatEntryDate(entry.start, locale)}${
+		entry.end ? `–${clockTime(entry.end, locale)}` : ''
+	}`;
+
+/** "18:00–19:00" today, the whole slot on any other day. */
+export const formatEntryRange = (
+	entry: Pick<FutureEntry, 'start' | 'end'>,
+	now: Date,
+	locale = 'de-DE'
+): string =>
+	startOfDay(entry.start) === startOfDay(now)
+		? `${clockTime(entry.start, locale)}${
+				entry.end ? `–${clockTime(entry.end, locale)}` : ''
+			}`
+		: formatEntrySlot(entry, locale);
+
+/** Below this many minutes an appointment turns red. */
+export const SOON_MINUTES = 5;
+
+export interface EntryCountdown {
+	/** "in 5 Min.", "morgen", "in 3 Tagen"; absent while it is running. */
+	label?: string;
+	running: boolean;
+	soon: boolean;
+}
+
+/** Whole calendar days count, so tonight is never "morgen" and vice versa. */
+export const entryCountdown = (
+	entry: Pick<FutureEntry, 'start'>,
+	now: Date,
+	locale = 'de-DE'
+): EntryCountdown => {
+	const ms = entry.start.getTime() - now.getTime();
+	if (ms <= 0) return { running: true, soon: true };
+	const relative = new Intl.RelativeTimeFormat(locale, {
+		numeric: 'auto',
+		style: 'short'
+	});
+	const minutes = Math.ceil(ms / MINUTE);
+	const days = Math.round((startOfDay(entry.start) - startOfDay(now)) / DAY);
+	let label: string;
+	if (minutes < 60) label = relative.format(minutes, 'minute');
+	else if (days === 0)
+		label = relative.format(Math.round(minutes / 60), 'hour');
+	else label = relative.format(days, 'day');
+	return { label, running: false, soon: minutes <= SOON_MINUTES };
 };
 
 export interface EntryMenuItem {

@@ -91,6 +91,7 @@ export const useFutureEntries = ({
 				bookings: bookings.map((b) => ({
 					id: b.id,
 					startTime: b.startTime,
+					endTime: b.endTime,
 					location: b.location,
 					uid: b.uid,
 					rescheduleLink: b.rescheduleLink,

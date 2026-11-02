@@ -25,6 +25,7 @@ import { SESSION_LIST_TYPES } from '../../session/sessionHelpers';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import {
 	SessionListItemComponent,
+	type SessionListItemProps,
 	type SessionCardDatePlacement
 } from '../SessionListItemComponent';
 import '../sessionsListItem.styles.scss';
@@ -232,6 +233,8 @@ export function RuntimeSessionCard({
 	isAfterActive?: boolean;
 	/** ADR-021 timeline prototype: clock circle and date placement. */
 	upcomingAppointment?: string;
+	upcomingAppointmentModality?: SessionListItemProps['upcomingAppointmentModality'];
+	appointmentAction?: SessionListItemProps['appointmentAction'];
 	datePlacement?: SessionCardDatePlacement;
 }) {
 	const activeSession = buildExtendedSession(session, '');

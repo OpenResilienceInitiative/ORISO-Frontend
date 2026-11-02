@@ -39,7 +39,10 @@ const batchState = vi.hoisted(() => ({
 }));
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string) => key,
+		i18n: { language: 'de' }
+	})
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('./useCaseHandoverBatch', () => ({
@@ -242,7 +245,7 @@ describe('SessionsList future zone (ADR-021)', () => {
 		).toBeNull();
 	});
 
-	it('shows a booking without a room as its own twin above "Jetzt"', async () => {
+	it('shows a booking without a room as its own pill above "Jetzt"', async () => {
 		futureState.entries = [
 			{
 				key: 'booking-7',
@@ -261,8 +264,9 @@ describe('SessionsList future zone (ADR-021)', () => {
 		);
 		expect(zone).not.toBeNull();
 		expect(
-			zone!.querySelector('[data-cy="timeline-unmapped-card"]')
-				?.textContent
+			zone!.querySelector(
+				'[data-cy="timeline-entry"][data-unmapped="true"]'
+			)?.textContent
 		).toContain('Ratsuchende A');
 		expect(zone!.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
 	});

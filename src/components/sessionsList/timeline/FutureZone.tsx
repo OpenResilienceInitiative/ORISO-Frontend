@@ -1,9 +1,8 @@
 /**
- * The future part of the chat-history list (ADR-021): twin cards of the
- * planned appointments above "Jetzt", opened by the vertical handle. Used by
- * the real `SessionsList` and by the Storybook prototype; each brings its own
- * card (`renderCard`), this zone owns the handle, the snap stops and the
- * split button laid over every twin.
+ * The future part of the chat-history list (ADR-021): a pill per planned
+ * appointment above "Jetzt". "Jetzt" itself is the handle that opens them, so
+ * the zone owns the snap stops, the grip and the line it sits on. Used by the
+ * real `SessionsList` and by the Storybook prototype.
  */
 import * as React from 'react';
 import {
@@ -11,40 +10,33 @@ import {
 	useCallback,
 	useEffect,
 	useImperativeHandle,
-	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
 } from 'react';
 import { ResizableHandle } from '../ResizableHandle';
 import { revealSnapPoints, stepSnap, clampReveal } from '../verticalHandleMath';
-import {
-	AppointmentSplitButton,
-	type AppointmentAction
-} from './AppointmentSplitButton';
-import type { FutureEntry, TimelineRole } from './timelineModel';
+import type { AppointmentAction } from './AppointmentSplitButton';
+import { FutureEntryPill } from './FutureEntryPill';
+import { hasEnded, type FutureEntry, type TimelineRole } from './timelineModel';
 import './futureZone.styles.scss';
 
-export type NowVariant = 'line' | 'handle' | 'band';
 /** How far the zone opens on first show (display setting). */
 export type FutureReveal = 'none' | 'next' | 'half' | 'most';
 
-/** Fallback card height until the real cards are measured. */
-export const ENTRY_HEIGHT = 160;
+/** Fallback row height until the real pills are measured. */
+export const ENTRY_HEIGHT = 50;
 /** Pull this far past the top of the single timeline to release the next stop. */
 export const PULL_RELEASE_PX = 60;
+/** The zone never takes more of the list than this; it scrolls inside. */
+const MAX_LIST_SHARE = 0.85;
+/** Countdown and red state move on without a reload. */
+const CLOCK_TICK_MS = 30_000;
 
 /** Kept for the page's lifetime: a chat switch must not close the zone, a reload does. */
 const rememberedReveal = new Map<string, number>();
 
 export const resetRememberedRevealForTests = () => rememberedReveal.clear();
-
-export interface TwinCardFlags {
-	isBeforeActive: boolean;
-	isAfterActive: boolean;
-	isGroupStart: boolean;
-	isGroupEnd: boolean;
-}
 
 export interface FutureZoneHandle {
 	/** Single timeline: a pull past the top opens the next stop. */
@@ -57,146 +49,24 @@ export interface FutureZoneProps {
 	role: TimelineRole;
 	/** Height of the list below the handle: half / almost all of it are stops. */
 	listHeight: number;
-	/** The card of a twin; `index` counts from the furthest appointment. */
-	renderCard: (
-		entry: FutureEntry,
-		index: number,
-		flags: TwinCardFlags
-	) => React.ReactNode;
-	/** False: the card shows its split button itself (no room to open). */
-	overlayAction?: (entry: FutureEntry) => boolean;
 	selectedKey?: string;
-	onSelect?: (entry: FutureEntry) => void;
+	/** A pill with a room was clicked. */
+	onOpen?: (entry: FutureEntry) => void;
+	/** A menu entry was chosen (cancel, duplicate, configure, ...). */
 	onAction?: AppointmentAction;
+	/** Whether the entry's room has unread messages. */
+	unreadOf?: (entry: FutureEntry) => boolean;
 	initialReveal?: FutureReveal;
 	/** Set: the opening survives a remount (chat switch) until the page reloads. */
 	memoryKey?: string;
-	emptyLabel?: string;
 	label?: string;
+	/** The grip's visible word, translated by the host. */
+	nowLabel?: string;
+	/** Single timeline: where "Jetzt" sits, to jump back to it. */
+	nowRef?: React.Ref<HTMLDivElement>;
+	/** Stories pin the clock; the real list runs on the real one. */
+	fixedNow?: Date;
 }
-
-export const NowArrow = ({ direction }: { direction: 'up' | 'down' }) => (
-	<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-		<path
-			d={direction === 'up' ? 'M6 2 L11 8 H1 Z' : 'M6 10 L1 4 H11 Z'}
-			fill="currentColor"
-		/>
-	</svg>
-);
-
-export const NowMarker = ({
-	variant,
-	label = 'Jetzt'
-}: {
-	variant: NowVariant;
-	label?: string;
-}) => (
-	<div
-		className={`tlp__now tlp__now--${variant}`}
-		data-cy="timeline-now"
-		role="separator"
-		aria-label={label}
-	>
-		{variant === 'band' && <NowArrow direction="up" />}
-		<span className="tlp__nowLabel">{label}</span>
-		{variant === 'band' && <NowArrow direction="down" />}
-	</div>
-);
-
-/**
- * The split button sits where the twin card would show its last message.
- * It lives in a layer beside the card list (a list may only hold its items)
- * and is placed over its card. Its main part opens the room exactly like a
- * click on the card does.
- */
-const TwinAction = ({
-	entry,
-	role,
-	active,
-	index,
-	listRef,
-	onAction
-}: {
-	entry: FutureEntry;
-	role: TimelineRole;
-	active: boolean;
-	index: number;
-	listRef: React.RefObject<HTMLDivElement>;
-	onAction?: AppointmentAction;
-}) => {
-	const [place, setPlace] = useState<React.CSSProperties>({});
-	const card = () =>
-		listRef.current
-			?.querySelectorAll<HTMLElement>(':scope > .tlp__row')
-			[index]?.querySelector<HTMLElement>('.sessionsListItem__content');
-
-	// The card fills in after mount (Matrix preview, avatars): measure again
-	// whenever the row changes size or content.
-	useLayoutEffect(() => {
-		const list = listRef.current;
-		if (!list) return;
-		const measure = () => {
-			const row =
-				list.querySelectorAll<HTMLElement>(':scope > .tlp__row')[index];
-			if (!row) return;
-			const r = row.getBoundingClientRect();
-			const preview = row.querySelector<HTMLElement>(
-				'.sessionsListItem__subject'
-			);
-			if (preview) {
-				// The preview box spans the card; its text starts after the avatar.
-				const text = document.createRange();
-				text.selectNodeContents(preview);
-				const p = text.getBoundingClientRect();
-				// Top-aligned: the 32px button grows into the gap below the preview.
-				setPlace({
-					left: Math.round(p.left - r.left),
-					top: Math.round(row.offsetTop + p.top - r.top - 2)
-				});
-				return;
-			}
-			// A room without messages yet: right under its name.
-			const name = row.querySelector<HTMLElement>('.sessionCard__name');
-			if (!name) return;
-			const n = name.getBoundingClientRect();
-			setPlace({
-				left: Math.round(n.left - r.left),
-				top: Math.round(row.offsetTop + n.bottom - r.top + 4)
-			});
-		};
-		measure();
-		const observer =
-			typeof ResizeObserver !== 'undefined'
-				? new ResizeObserver(measure)
-				: null;
-		observer?.observe(list);
-		const mutations = new MutationObserver(measure);
-		mutations.observe(list, { childList: true, subtree: true });
-		return () => {
-			observer?.disconnect();
-			mutations.disconnect();
-		};
-	}, [index, listRef]);
-
-	return (
-		<div
-			className="tlp__twinAction"
-			style={place}
-			data-cy="timeline-entry-action"
-		>
-			<AppointmentSplitButton
-				entry={entry}
-				role={role}
-				active={active}
-				onAction={onAction}
-				onOpen={() => {
-					card()?.click();
-					card()?.focus();
-				}}
-			/>
-		</div>
-	);
-};
 
 const revealTarget = (
 	reveal: FutureReveal,
@@ -216,15 +86,16 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 			entries,
 			role,
 			listHeight,
-			renderCard,
-			overlayAction = () => true,
 			selectedKey,
-			onSelect,
+			onOpen,
 			onAction,
+			unreadOf,
 			initialReveal = 'none',
 			memoryKey,
-			emptyLabel = 'Keine geplanten Termine',
-			label = 'Anstehende Termine'
+			label = 'Anstehende Termine',
+			nowLabel = 'Jetzt',
+			nowRef,
+			fixedNow
 		},
 		ref
 	) => {
@@ -236,7 +107,17 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 			item: ENTRY_HEIGHT,
 			content: 0
 		});
+		const [tick, setTick] = useState(() => new Date());
+		const now = fixedNow ?? tick;
 		const futureRef = useRef<HTMLDivElement>(null);
+
+		useEffect(() => {
+			const timer = window.setInterval(
+				() => setTick(new Date()),
+				CLOCK_TICK_MS
+			);
+			return () => window.clearInterval(timer);
+		}, []);
 
 		const setReveal = useCallback(
 			(height: number) => {
@@ -247,9 +128,12 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 		);
 
 		// Furthest appointment first: the next one sits right above "Jetzt".
-		const shownEntries = useMemo(() => [...entries].reverse(), [entries]);
+		const shownEntries = useMemo(
+			() => entries.filter((entry) => !hasEnded(entry, now)).reverse(),
+			[entries, now]
+		);
 
-		// Snap stops come from the real cards' height, not from a constant.
+		// Snap stops come from the real pills' height, not from a constant.
 		useEffect(() => {
 			const inner = futureRef.current;
 			if (!inner) return;
@@ -261,7 +145,7 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 					item: last
 						? Math.round(inner.offsetHeight - last.offsetTop)
 						: ENTRY_HEIGHT,
-					content: Math.round(inner.scrollHeight)
+					content: Math.round(inner.offsetHeight)
 				});
 			};
 			measure();
@@ -271,9 +155,14 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 					: null;
 			observer?.observe(inner);
 			return () => observer?.disconnect();
-		}, [shownEntries.length, selectedKey]);
+		}, [shownEntries.length]);
 
-		const contentHeight = shownEntries.length ? measured.content : 0;
+		const contentHeight = shownEntries.length
+			? Math.min(
+					measured.content,
+					Math.round(listHeight * MAX_LIST_SHARE)
+				)
+			: 0;
 		const snapPoints = useMemo(
 			() =>
 				revealSnapPoints({
@@ -285,7 +174,7 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 		);
 
 		// First show on this page: open as far as the display setting says,
-		// once the cards have been measured.
+		// once the pills have been measured.
 		useEffect(() => {
 			if (reveal >= 0 || contentHeight <= 0) return;
 			setReveal(
@@ -324,11 +213,6 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 			[shown, snapPoints, setReveal]
 		);
 
-		const isActive = (index: number) =>
-			index >= 0 &&
-			index < shownEntries.length &&
-			shownEntries[index].key === selectedKey;
-
 		return (
 			<div className="tlp__boundary" data-cy="timeline-boundary">
 				<div
@@ -340,58 +224,37 @@ export const FutureZone = forwardRef<FutureZoneHandle, FutureZoneProps>(
 					<div
 						ref={futureRef}
 						className="tlp__futureInner"
-						role={shownEntries.length ? 'list' : 'group'}
+						role="list"
 						aria-label={label}
 					>
-						{shownEntries.length === 0 ? (
-							<p className="tlp__empty">{emptyLabel}</p>
-						) : (
-							shownEntries.map((entry, index) => (
-								<div
-									key={entry.key}
-									className="tlp__row"
-									onClickCapture={() => onSelect?.(entry)}
-								>
-									{renderCard(entry, index, {
-										isBeforeActive: isActive(index + 1),
-										isAfterActive: isActive(index - 1),
-										isGroupStart:
-											index === 0 || isActive(index - 1),
-										isGroupEnd:
-											index === shownEntries.length - 1 ||
-											isActive(index + 1)
-									})}
-								</div>
-							))
-						)}
-					</div>
-					<div
-						className="tlp__futureActions"
-						style={{ bottom: contentHeight }}
-						data-cy="timeline-entry-actions"
-					>
-						{shownEntries.map((entry, index) =>
-							overlayAction(entry) ? (
-								<TwinAction
-									key={entry.key}
+						{shownEntries.map((entry) => (
+							<div
+								key={entry.key}
+								className="tlp__row"
+								role="listitem"
+							>
+								<FutureEntryPill
 									entry={entry}
 									role={role}
-									active={entry.key === selectedKey}
-									index={index}
-									listRef={futureRef}
+									now={now}
+									selected={entry.key === selectedKey}
+									unread={unreadOf?.(entry)}
+									onOpen={onOpen}
 									onAction={onAction}
 								/>
-							) : null
-						)}
+							</div>
+						))}
 					</div>
 				</div>
-				<div className="tlp__handleHost">
+				<div ref={nowRef} className="tlp__now" data-cy="timeline-now">
 					<ResizableHandle
 						orientation="vertical"
+						className="tlp__nowGrip"
 						height={shown}
 						maxHeight={contentHeight}
 						snapPoints={snapPoints}
 						onResize={onResize}
+						grip={<span className="tlp__nowTag">{nowLabel}</span>}
 					/>
 				</div>
 			</div>

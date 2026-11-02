@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	clampReveal,
-	heightFromPointerY,
+	heightFromDrag,
 	nearestSnap,
 	revealSnapPoints,
 	rubberBand,
@@ -10,8 +10,9 @@ import {
 } from './verticalHandleMath';
 
 describe('vertical handle math', () => {
-	it('reads the height from the pointer, handle on the bottom edge', () => {
-		expect(heightFromPointerY(340, 100)).toBe(240);
+	it('follows the pointer one to one from the press', () => {
+		expect(heightFromDrag(150, 400, 460)).toBe(210);
+		expect(heightFromDrag(150, 400, 340)).toBe(90);
 	});
 
 	it('clamps to the content', () => {

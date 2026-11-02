@@ -1,5 +1,6 @@
 /**
- * What the appointment menu does (ADR-021 table). Group dates: cancel via
+ * What the appointment menu does (ADR-021 table). `open` is the pill's click.
+ * Group dates: cancel via
  * the series API, duplicate into the create-group form (kept from the old
  * future strip), configure the group. 1:1 bookings: cal.com's reschedule
  * and cancel pages. Entries marked "kommt bald" never reach this.
@@ -31,6 +32,13 @@ export const useAppointmentActions = ({
 		(key: string, entry: FutureEntry) => {
 			const { occurrence, booking } = entry;
 			switch (key) {
+				case 'open':
+					if (entry.matrixRoomId && entry.sessionId !== undefined) {
+						navigate(
+							`${listPath}/${entry.matrixRoomId}/${entry.sessionId}${tabQuery}`
+						);
+					}
+					return;
 				case 'cancel':
 					if (occurrence) {
 						apiSkipChatOccurrence(

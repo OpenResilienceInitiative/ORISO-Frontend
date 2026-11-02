@@ -1508,8 +1508,9 @@ export const RuntimeRoutingShellFutureZone: Story = {
 			).toHaveLength(3)
 		);
 		expect(
-			zone.querySelector('[data-cy="timeline-unmapped-card"]')
-				?.textContent
+			zone.querySelector(
+				'[data-cy="timeline-entry"][data-unmapped="true"]'
+			)?.textContent
 		).toContain('Ratsuchende Lena');
 		expect(zone.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
 		// The group's past card carries the clock circle.

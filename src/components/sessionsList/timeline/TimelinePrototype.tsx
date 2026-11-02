@@ -1,23 +1,24 @@
 /**
- * Chat-history timeline PROTOTYPE (ADR-021, PR 2) — Storybook only, nothing
- * here is wired into the real list. The toolbar and every card are the real
- * components (`SessionsListToolbar`, `SessionListItemComponent` with the
- * list's grouping flags); the prototype only adds the future zone, its
- * handle, the "Jetzt" marker and the split button on the twin cards.
+ * Chat-history timeline PROTOTYPE (ADR-021, PR 2) — Storybook only. The
+ * toolbar, every card, the appointment row and the future zone are the real
+ * components; the prototype only supplies the data and stands in for the route
+ * (a second click deselects, which the real list leaves to the route).
  */
 import * as React from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { ListItemInterface } from '../../../globalState/interfaces';
 import { SessionsListToolbar } from '../SessionsListToolbar';
 import type { SessionToolbarChipFilter } from '../sessionToolbarFilters';
 import { RuntimeSessionCard } from '../../sessionsListItem/__storybook__/runtimeSessionCard';
+import { isRoomUnread } from '../../../utils/sessionUnread';
+import { SessionListRailProvider } from '../SessionListRailContext';
+import { AppointmentSplitButton } from './AppointmentSplitButton';
 import {
 	FutureZone,
-	NowMarker,
 	PULL_RELEASE_PX,
-	type FutureZoneHandle,
-	type NowVariant
+	type FutureZoneHandle
 } from './FutureZone';
 import type { SessionCardDatePlacement } from '../../sessionsListItem/SessionListItemComponent';
 import {
@@ -33,7 +34,6 @@ import '../sessionsList.styles.scss';
 import './timelinePrototype.styles.scss';
 
 export type ScrollModel = 'panes' | 'single';
-export type { NowVariant } from './FutureZone';
 export { ENTRY_HEIGHT, PULL_RELEASE_PX } from './FutureZone';
 
 /** The real toolbar chips the prototype listens to; every other chip shows all. */
@@ -49,17 +49,23 @@ export interface TimelinePrototypeProps {
 	sessions: TimelineSession[];
 	/** The real list row of every session (same ids). */
 	items: Record<number, ListItemInterface>;
-	/** Card used for an appointment whose room is not known yet. */
-	unmappedItem: ListItemInterface;
 	role?: TimelineRole;
 	scrollModel?: ScrollModel;
-	nowVariant?: NowVariant;
 	/** Height of the list below the handle. */
 	listHeight?: number;
 	initialFilter?: TimelineFilter;
 	/** Date on past cards (display setting): segment at the tag, own line, off, or dev's corner. */
 	pastDate?: SessionCardDatePlacement;
+	/** Height of the appointment row on a card: Figma XSmall (32) or Small (40). */
+	rowButtonSize?: 'xsmall' | 'compact';
+	/** Width of the list column; 80 is the ultra-thin rail. */
+	width?: number;
+	/** Pins the clock (stories with fixed dates); absent: the real one. */
+	now?: Date;
 }
+
+const RAIL_WIDTH = 80;
+const LIST_PATH = '/sessions/consultant/sessionView';
 
 /**
  * Real cards in the list's grouping: flush, one hairline, corners at the
@@ -70,15 +76,22 @@ const CardGroup = ({
 	isOpenAt,
 	onPick,
 	datePlacement,
-	upcomingOf
+	upcomingOf,
+	modalityOf,
+	actionOf
 }: {
 	items: ListItemInterface[];
 	/** Which rows leave the group; the route still marks every row of the open room. */
 	isOpenAt: (index: number) => boolean;
 	onPick: (index: number) => void;
 	datePlacement: SessionCardDatePlacement;
-	/** Label of the row's next appointment, if any (clock circle). */
+	/** Label of the row's next appointment, if any. */
 	upcomingOf?: (index: number) => string | undefined;
+	modalityOf?: (index: number) => FutureEntry['modality'] | undefined;
+	/** The row's next appointment as a split button, if any. */
+	actionOf?: (
+		index: number
+	) => React.ComponentProps<typeof RuntimeSessionCard>['appointmentAction'];
 }) => {
 	const isActive = (index: number) =>
 		index >= 0 && index < items.length && isOpenAt(index);
@@ -88,7 +101,8 @@ const CardGroup = ({
 				<div
 					key={`${roomOf(item)}-${index}`}
 					className="tlp__row"
-					onClickCapture={() => onPick(index)}
+					// Bubble: after the card's own click has opened the room.
+					onClick={() => onPick(index)}
 				>
 					<RuntimeSessionCard
 						session={item}
@@ -102,6 +116,8 @@ const CardGroup = ({
 						}
 						datePlacement={datePlacement}
 						upcomingAppointment={upcomingOf?.(index)}
+						upcomingAppointmentModality={modalityOf?.(index)}
+						appointmentAction={actionOf?.(index)}
 					/>
 				</div>
 			))}
@@ -113,15 +129,18 @@ export const TimelinePrototype = ({
 	entries,
 	sessions,
 	items,
-	unmappedItem,
 	role = 'counsellor',
 	scrollModel = 'panes',
-	nowVariant = 'line',
 	listHeight = 520,
 	initialFilter = 'all',
-	pastDate = 'tag'
+	pastDate = 'corner',
+	rowButtonSize = 'xsmall',
+	width = 440,
+	now
 }: TimelinePrototypeProps) => {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const rail = width <= RAIL_WIDTH;
 	const initialChip =
 		(Object.entries(FILTER_OF_CHIP).find(
 			([, value]) => value === initialFilter
@@ -130,9 +149,7 @@ export const TimelinePrototype = ({
 		initialChip
 	);
 	const filter: TimelineFilter = (chip && FILTER_OF_CHIP[chip]) || 'all';
-	// The clicked card holds the focus (2px ring) and leaves its group. Its
-	// room in the past is open too and shows the calm 1px outline; the other
-	// dates of a series stay in their group (ADR-021 §2, §4).
+	// Which room is open and, if it was opened from a pill, which appointment.
 	const [selection, setSelection] = useState<{
 		room: string;
 		entryKey?: string;
@@ -149,10 +166,7 @@ export const TimelinePrototype = ({
 		() => filterEntries(entries, filter),
 		[entries, filter]
 	);
-	const itemOf = (entry: FutureEntry) =>
-		entry.sessionId !== undefined
-			? (items[entry.sessionId] ?? unmappedItem)
-			: unmappedItem;
+	const pastRef = useRef<HTMLDivElement>(null);
 	const pastSessions = useMemo(
 		() =>
 			sessions.filter(
@@ -181,11 +195,22 @@ export const TimelinePrototype = ({
 		}
 	};
 
+	// Measured on screen: "Jetzt" sits inside the positioned zone.
+	const nowTop = () => {
+		const el = scrollRef.current;
+		const marker = nowRef.current;
+		return el && marker
+			? marker.getBoundingClientRect().top -
+					el.getBoundingClientRect().top +
+					el.scrollTop
+			: 0;
+	};
+
 	const onSingleScroll = () => {
 		const el = scrollRef.current;
 		const marker = nowRef.current;
 		if (!el || !marker) return;
-		const markerTop = marker.offsetTop;
+		const markerTop = nowTop();
 		if (el.scrollTop > markerTop + marker.offsetHeight)
 			setNowOffscreen('above');
 		else if (el.scrollTop + el.clientHeight < markerTop)
@@ -197,39 +222,54 @@ export const TimelinePrototype = ({
 		const el = scrollRef.current;
 		const marker = nowRef.current;
 		if (el && marker)
-			el.scrollTo({ top: marker.offsetTop - 8, behavior: 'smooth' });
+			el.scrollTo({ top: nowTop() - 8, behavior: 'smooth' });
+	};
+
+	// The route stands in for "which room is open": the card itself navigates.
+	const closeRoom = () => {
+		setSelection(null);
+		navigate(LIST_PATH);
+	};
+	const openEntry = (entry: FutureEntry) => {
+		if (selection?.entryKey === entry.key) {
+			closeRoom();
+			return;
+		}
+		const index = pastSessions.findIndex(
+			(s) => s.sessionId === entry.sessionId
+		);
+		pastRef.current
+			?.querySelectorAll<HTMLElement>(
+				':scope > .tlp__row .sessionsListItem__content'
+			)
+			[index]?.click();
+		setSelection({
+			room: roomOf(items[entry.sessionId!]),
+			entryKey: entry.key
+		});
 	};
 
 	const zone = (
 		<FutureZone
 			ref={zoneRef}
+			nowRef={nowRef}
 			entries={visibleEntries}
 			role={role}
 			listHeight={listHeight}
 			selectedKey={selection?.entryKey}
-			onSelect={(entry) =>
-				setSelection({
-					room: roomOf(itemOf(entry)),
-					entryKey: entry.key
-				})
-			}
-			renderCard={(entry, index, flags) => (
-				<RuntimeSessionCard
-					session={itemOf(entry)}
-					index={index}
-					grouped
-					{...flags}
-					// The twin's date is its split button.
-					datePlacement="off"
-				/>
-			)}
+			onOpen={openEntry}
+			unreadOf={(entry) => isRoomUnread(entry.matrixRoomId)}
+			nowLabel={t('sessionList.timeline.now')}
+			fixedNow={now}
 		/>
 	);
 
 	const pastList = (
 		<div
+			ref={pastRef}
 			className="tlp__past"
-			role="list"
+			role={rail ? 'tablist' : 'list'}
+			aria-orientation={rail ? 'vertical' : undefined}
 			aria-label="Gespräche"
 			data-cy="timeline-past"
 		>
@@ -238,10 +278,16 @@ export const TimelinePrototype = ({
 				isOpenAt={(index) =>
 					roomOf(pastItems[index]) === selection?.room
 				}
-				onPick={(index) =>
-					setSelection({ room: roomOf(pastItems[index]) })
-				}
+				onPick={(index) => {
+					const room = roomOf(pastItems[index]);
+					if (selection?.room === room && !selection.entryKey)
+						closeRoom();
+					else setSelection({ room });
+				}}
 				datePlacement={pastDate}
+				modalityOf={(index) =>
+					nextOfSession.get(pastSessions[index].sessionId)?.modality
+				}
 				upcomingOf={(index) => {
 					const next = nextOfSession.get(
 						pastSessions[index].sessionId
@@ -250,13 +296,53 @@ export const TimelinePrototype = ({
 						? `Nächster Termin: ${formatEntryDate(next.start)}`
 						: undefined;
 				}}
+				actionOf={(index) => {
+					const next = nextOfSession.get(
+						pastSessions[index].sessionId
+					);
+					if (!next) return undefined;
+					const RowAction = ({
+						openRoom,
+						active
+					}: {
+						openRoom: () => void;
+						active: boolean;
+					}) => (
+						<AppointmentSplitButton
+							entry={next}
+							role={role}
+							active={active}
+							size={rowButtonSize}
+							fullWidth
+							onOpen={openRoom}
+						/>
+					);
+					return RowAction;
+				}}
 			/>
 		</div>
 	);
 
+	if (rail) {
+		return (
+			<SessionListRailProvider rail>
+				<div
+					className="tlp tlp--rail"
+					style={{ width }}
+					data-cy="timeline-prototype"
+				>
+					<div className="tlp__scroll" style={{ height: listHeight }}>
+						{pastList}
+					</div>
+				</div>
+			</SessionListRailProvider>
+		);
+	}
+
 	return (
 		<div
 			className="tlp"
+			style={{ width }}
 			data-scroll-model={scrollModel}
 			data-cy="timeline-prototype"
 		>
@@ -281,7 +367,6 @@ export const TimelinePrototype = ({
 			{scrollModel === 'panes' ? (
 				<>
 					{zone}
-					<NowMarker variant={nowVariant} />
 					<div className="tlp__scroll" style={{ height: listHeight }}>
 						{pastList}
 					</div>
@@ -296,9 +381,6 @@ export const TimelinePrototype = ({
 					data-cy="timeline-single"
 				>
 					{zone}
-					<div ref={nowRef}>
-						<NowMarker variant={nowVariant} />
-					</div>
 					{pastList}
 				</div>
 			)}

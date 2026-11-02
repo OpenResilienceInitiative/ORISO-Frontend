@@ -132,27 +132,25 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			color: #da5248 !important;
 		}
 
-		// Mail keeps the primary colour when active: it is the modality's colour, not a highlight.
+		// Mail, Kreis and Interna stay grey on the open card (Figma 316-16775).
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
-			color: var(
-				--oriso-primary-text,
-				var(--m3-primary, $primary)
-			) !important;
-		}
-
-		.sessionsListItem__consultingTypeIcon--nearbyIcon {
-			// The mask already paints it; the black-to-red filter the other
-			// modalities use would double up on it.
-			filter: none;
-			background-color: var(
-				--oriso-primary-text,
-				var(--m3-primary, $primary)
-			);
+			color: var(--m3-secondary, #4c555f) !important;
 		}
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
 		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
 			color: var(--m3-on-surface-variant, #444748) !important;
+		}
+
+		.sessionsListItem__consultingTypeIcon
+			.sessionsListItem__consultingTypeIcon--nearbyIcon,
+		.sessionsListItem__consultingTypeIcon
+			img.sessionsListItem__consultingTypeIcon--internalIcon,
+		.sessionsListItem__consultingTypeIcon
+			img.sessionsListItem__consultingTypeIcon--selfHelpIcon {
+			// The master icons are grey already; the black-to-red filter above
+			// belongs to the older modality glyphs.
+			filter: none;
 		}
 	}
 
@@ -241,6 +239,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		position: relative;
 		z-index: 10;
 		overflow: hidden;
+		container: session-list-card / inline-size;
 
 		&--anonymous {
 			border-color: $session-light-border;
@@ -806,9 +805,14 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 
 	&__participants {
+		position: relative;
 		display: inline-flex;
 		align-items: center;
 		flex-shrink: 0;
+
+		.upcomingAppointmentClock--overlay {
+			z-index: 41;
+		}
 	}
 
 	&__username {
@@ -964,14 +968,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// The asset has a grey fill baked in, so it is worn as a mask coloured here.
 		&--nearbyIcon {
-			width: 24px !important;
-			height: 24px !important;
+			width: 32px !important;
+			height: 32px !important;
 			flex-shrink: 0;
 			display: block;
-			background-color: var(
-				--oriso-primary-text,
-				var(--m3-primary, $primary)
-			);
+			background-color: var(--m3-secondary, #4c555f);
 			mask-image: var(--nearby-icon-url);
 			mask-size: contain;
 			mask-position: center;
@@ -985,8 +986,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&--nearbyLabel {
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
-			font-weight: 600;
-			color: var(--oriso-primary-text, var(--m3-primary, $primary));
+			font-weight: 500;
+			color: var(--m3-secondary, #4c555f);
 			line-height: 20px;
 			letter-spacing: 0;
 		}
@@ -998,12 +999,13 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			gap: 8px;
 			height: 38px;
 			white-space: nowrap;
+			align-items: center;
 		}
 
 		&--internalIcon,
 		&--selfHelpIcon {
-			width: 24px !important;
-			height: 24px !important;
+			width: 32px !important;
+			height: 32px !important;
 			flex-shrink: 0;
 		}
 
@@ -1011,7 +1013,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&--selfHelpLabel {
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
-			font-weight: 600;
+			font-weight: 500;
 			color: var(--m3-secondary, #4b515a);
 			line-height: 20px;
 			letter-spacing: 0;
@@ -1020,6 +1022,109 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	.tag {
 		margin-left: $grid-base;
+	}
+
+	// The room's next appointment, below the text in full width (Figma 48px row).
+	// Same side margin left and right: the button starts under the faces.
+	&__appointment {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 16px 16px;
+
+		.splitButton--primary .splitButton__segment {
+			color: #ffe2de;
+		}
+	}
+
+	&__appointmentButton {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	&__appointmentKind {
+		display: flex;
+		flex: none;
+		align-items: center;
+
+		.sessionsListItem__consultingTypeIcon {
+			gap: 6px;
+			margin: 0;
+			padding-right: 0;
+		}
+	}
+
+	&--withAppointment .upcomingAppointmentClock {
+		display: none;
+	}
+
+	// Too narrow for a readable date: the symbol, with the date as its tooltip.
+	@container session-list-card (max-width: 340px) {
+		&__appointment {
+			display: none;
+		}
+
+		&--withAppointment .upcomingAppointmentClock {
+			display: inline-flex;
+		}
+	}
+
+	// The row is there: the kind sits beside its button, the body shrinks to the
+	// faces and the text ends after one line. Without a row nothing is cut.
+	@container session-list-card (min-width: 341px) {
+		&--kindInRow .sessionCard .sessionCard__preview > * {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		&--kindInRow .sessionCard {
+			height: 56px;
+		}
+
+		&--kindInRow .sessionCard__flow {
+			height: 48px;
+		}
+
+		&--kindInRow .sessionCard__trailing {
+			display: none;
+		}
+	}
+
+	@container session-list-card (max-width: 340px) {
+		&__appointmentKind {
+			display: none;
+		}
+	}
+
+	// The whole date comes first: the kind gives up its word, not the button.
+	@container session-list-card (max-width: 369px) {
+		&__appointmentKind .sessionsListItem__consultingTypeIcon--internalLabel,
+		&__appointmentKind
+			.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+	}
+
+	// Too narrow for icon and word: the word would squeeze the preview down to
+	// single letters. It stays for screen readers.
+	@container session-list-card (max-width: 240px) {
+		.sessionsListItem__consultingTypeIcon--nearbyLabel,
+		.sessionsListItem__consultingTypeIcon--internalLabel,
+		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
 	}
 
 	// Case-handover split button (FE#1725): the `SplitButton` atom at its

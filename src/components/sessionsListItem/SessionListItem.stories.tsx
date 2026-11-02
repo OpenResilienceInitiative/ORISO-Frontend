@@ -1052,8 +1052,8 @@ const expectCardLayout = async (
 		await expect(Math.round(name.top)).toBe(Math.round(avatar.top));
 		await expect(Math.round(name.height)).toBe(CARD_NAME);
 
-		// Mail: its word ends under the pill's right edge, centred on the
-		// third line, 16 px above the card's bottom edge.
+		// Mail: its word ends under the pill's right edge, centred on the third
+		// line; the 32 px icon stands 4 px past the 24 px band above the edge.
 		const clip = at('.sessionCard__flow');
 		const mail = at(
 			'.sessionCard__trailing .sessionsListItem__consultingTypeIcon--nearby'
@@ -1073,7 +1073,7 @@ const expectCardLayout = async (
 			Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
 		).toBeLessThanOrEqual(1);
 		await expect(Math.round(box.bottom - CARD_BORDER - mail.bottom)).toBe(
-			CARD_INSET
+			CARD_INSET - 4
 		);
 
 		// The left edge: a steady diagonal, never back to the card's edge.
@@ -1263,6 +1263,7 @@ export const AskerSearchingRow: Story = {
  * ------------------------------------------------------------------ */
 
 const PRIMARY = 'rgb(165, 0, 10)';
+const KIND_GREY = 'rgb(77, 86, 96)'; // --m3-secondary: Mail, Kreis, Interna
 const PRIMARY_CONTAINER = 'rgb(204, 30, 28)';
 const ON_PRIMARY_CONTAINER = 'rgb(255, 226, 222)';
 
@@ -1303,14 +1304,15 @@ const expectGroupRow = async (
 			chip
 		);
 	}
+	// Up to four faces; above that one field with the count (Figma 316-16775).
 	await waitFor(() =>
 		expect(
 			row.querySelectorAll('[data-cy="participant-avatar"]')
-		).toHaveLength(Math.min(count, 2))
+		).toHaveLength(count > 4 ? 0 : count)
 	);
-	const overflow = row.querySelector('[data-cy="participant-overflow"]');
-	if (count > 2) await expect(overflow?.textContent).toBe(`+${count - 2}`);
-	else await expect(overflow).toBeNull();
+	const crowd = row.querySelector('[data-cy="group-card-crowd"]');
+	if (count > 4) await expect(crowd?.textContent).toBe(`+${count}`);
+	else await expect(crowd).toBeNull();
 	await expect(
 		row.querySelector('[data-user-id^="placeholder-"]')
 	).toBeNull();
@@ -1390,7 +1392,7 @@ export const ConsultantSelected: Story = {
 			getComputedStyle(
 				part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 			).color
-		).toBe(PRIMARY);
+		).toBe(KIND_GREY);
 	}
 };
 
@@ -1952,13 +1954,13 @@ export const GuidedSelfHelpGroup: Story = {
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 				.textContent
-		).toBe('Gesprächskreis');
+		).toBe('Kreis');
 		await expect(
 			part(
 				row,
 				'.sessionsListItem__consultingTypeIcon--selfHelpIcon'
 			).getAttribute('alt')
-		).toBe('Gesprächskreis');
+		).toBe('Kreis');
 	}
 };
 
@@ -1992,7 +1994,7 @@ const expectGroupTopicChips = async (canvasElement: HTMLElement) => {
 	await expect(
 		part(selfHelp, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 			.textContent
-	).toBe('Gesprächskreis');
+	).toBe('Kreis');
 	await expectGroupRow(interna, 'Teamrunde', 3, null);
 	await expect(
 		part(interna, '.sessionsListItem__consultingTypeIcon--internalLabel')
@@ -2033,9 +2035,9 @@ const rgb = (hex: string) => {
 	return `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`;
 };
 
-/** Selected card, topic chip and Mail mark follow the tenant's palette instead of the default red. */
+/** Selected card and topic chip follow the tenant's palette; Mail stays grey (Figma 316-16775). */
 export const TenantPrimaryColour: Story = {
-	name: 'Träger-Farbe — Auswahl, Themen-Chip und Mail folgen ihr',
+	name: 'Träger-Farbe — Auswahl und Themen-Chip folgen ihr',
 	render: () => {
 		seedMatrixRoom(2);
 		return (
@@ -2097,11 +2099,11 @@ export const TenantPrimaryColour: Story = {
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 					.color
-			).toBe(tenant('--oriso-primary-text'));
+			).toBe(KIND_GREY);
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
 					.backgroundColor
-			).toBe(tenant('--oriso-primary-text'));
+			).toBe(KIND_GREY);
 		}
 	}
 };

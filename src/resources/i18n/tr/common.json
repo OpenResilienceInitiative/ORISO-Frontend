@@ -1,6 +1,7 @@
 {
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
+		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
 		"empty": "Katılımcı yok."
 	},
@@ -21,15 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "Geçmiş görüşmelerde tarih",
-			"tag": "Konu etiketinde",
+			"corner": "Kartın köşesinde",
 			"line": "Ayrı bir satırda",
 			"off": "Gösterme"
-		},
-		"nowVariant": {
-			"legend": "„Şimdi“ işareti (yalnızca test aşamasında)",
-			"line": "Rozetli çizgi",
-			"handle": "Tutamakta",
-			"band": "Oklu bant"
 		},
 		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
 	},
@@ -4400,7 +4395,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Sohbet çemberi",
+				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı"
 			}
@@ -4422,8 +4417,8 @@
 		},
 		"timeline": {
 			"now": "Şimdi",
+			"running": "devam ediyor",
 			"upcoming": "Gelecekteki randevular",
-			"empty": "Yaklaşan randevu yok.",
 			"nextAppointment": "Sonraki randevu: {{date}}"
 		}
 	},

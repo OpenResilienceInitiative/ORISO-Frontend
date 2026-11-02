@@ -1,6 +1,7 @@
 {
 	"groupCardParticipants": {
 		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
+		"crowd": "{{count}} ተሳተፍቲ",
 		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
 		"empty": "ተሳተፍቲ የለዉን።"
 	},
@@ -21,15 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "ዕለት ኣብ ዝሓለፉ ዘተታት",
-			"tag": "ኣብ መለለዪ ኣርእስቲ",
+			"corner": "ኣብ ኩርናዕ ካርድ",
 			"line": "ኣብ ናይ ባዕሉ መስመር",
 			"off": "ኣይተርኢ"
-		},
-		"nowVariant": {
-			"legend": "መለለዪ „ሕጂ“ (ኣብ እዋን ፈተነ ጥራይ)",
-			"line": "መስመር ምስ ምልክት",
-			"handle": "ኣብ መትሓዚ",
-			"band": "ባንድ ምስ ምልክታት"
 		},
 		"writeFailed": "እቲ ምድላው ክዕቀብ ኣይከኣለን። በጃኻ እንደገና ፈትን።"
 	},
@@ -4400,7 +4395,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "ክቢ ዝርርብ",
+				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ"
 			}
@@ -4422,8 +4417,8 @@
 		},
 		"timeline": {
 			"now": "ሕጂ",
+			"running": "ይካየድ ኣሎ",
 			"upcoming": "መጻኢ ቆጸራታት",
-			"empty": "ዝመጽእ ቆጸራ የለን።",
 			"nextAppointment": "ቆጸራ: {{date}}"
 		}
 	},
