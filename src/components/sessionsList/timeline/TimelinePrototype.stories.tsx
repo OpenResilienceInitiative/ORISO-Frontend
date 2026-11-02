@@ -533,7 +533,7 @@ export const RailCalendarMark: Story = {
 
 /** Above four people faces say nothing: one field with the count. */
 export const CrowdField: Story = {
-	name: 'Card — above four people the count field',
+	name: 'Card — above three people the count circle',
 	parameters: { ownMatrixSeed: true },
 	render: (args) => {
 		seedMatrixRoom(0, 23);
@@ -544,8 +544,13 @@ export const CrowdField: Story = {
 		await waitFor(() =>
 			expect(
 				row.querySelector('[data-cy="group-card-crowd"]')?.textContent
-			).toBe('+23')
+			).toBe('23')
 		);
+		const circle = row
+			.querySelector('[data-cy="group-card-crowd"]')!
+			.getBoundingClientRect();
+		await expect(circle.width).toBe(48);
+		await expect(circle.height).toBe(48);
 	}
 };
 
