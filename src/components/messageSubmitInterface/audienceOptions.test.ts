@@ -17,6 +17,7 @@ import {
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
+	roomMentionMembers,
 	type AudienceOption
 } from './audienceOptions';
 
@@ -685,4 +686,38 @@ describe('audienceSelectionStorageKeyFor', () => {
 			expect(audienceSelectionStorageKeyFor(sessionId)).toBe('');
 		}
 	);
+});
+describe('roomMentionMembers', () => {
+	it('offers the joined and invited members of the room by their Matrix id (#1998)', () => {
+		const room = {
+			getMembers: () => [
+				{
+					userId: '@marge:dev.example',
+					name: 'Marge',
+					membership: 'join'
+				},
+				{
+					userId: '@patty:dev.example',
+					name: 'Patty',
+					membership: 'invite'
+				},
+				{
+					userId: '@selma:dev.example',
+					name: 'Selma',
+					membership: 'leave'
+				},
+				{ userId: '@bob:dev.example', name: 'Bob', membership: 'ban' },
+				{ name: 'No id', membership: 'join' }
+			]
+		};
+		expect(roomMentionMembers(room)).toEqual([
+			{ value: '@marge:dev.example', label: 'Marge' },
+			{ value: '@patty:dev.example', label: 'Patty' }
+		]);
+	});
+
+	it('offers nobody for a room the client does not know yet', () => {
+		expect(roomMentionMembers(null)).toEqual([]);
+		expect(roomMentionMembers({})).toEqual([]);
+	});
 });

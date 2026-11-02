@@ -49,6 +49,33 @@ export interface AudienceOption {
 }
 
 /**
+ * Who can be @-mentioned in a room the composer writes to directly, such as
+ * the team discussion (#1998): its joined and invited members.
+ */
+export const roomMentionMembers = (
+	room:
+		| {
+				getMembers?: () => Array<{
+					userId?: string;
+					name?: string;
+					membership?: string;
+				}>;
+		  }
+		| null
+		| undefined
+): Array<{ value: string; label: string }> =>
+	(room?.getMembers?.() || [])
+		.filter(
+			(member) =>
+				!!member?.userId &&
+				(member.membership === 'join' || member.membership === 'invite')
+		)
+		.map((member) => ({
+			value: `${member.userId}`,
+			label: member.name || ''
+		}));
+
+/**
  * A group's roster can arrive one member at a time. Keep "everyone" available
  * throughout, so reconciliation never narrows that choice during hydration.
  * The selector may still stay hidden when there is only one human counterpart.

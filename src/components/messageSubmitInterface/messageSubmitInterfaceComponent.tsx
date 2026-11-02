@@ -71,6 +71,7 @@ import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
+import { decodeUsername } from '../../utils/encryptionHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -89,6 +90,7 @@ import {
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
+	roomMentionMembers,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
@@ -2691,7 +2693,12 @@ export const MessageSubmitInterfaceComponent = ({
 						}`
 							.trim()
 							.replace(/\s+/g, ' ');
-						const username = `${consultant?.username || ''}`.trim();
+						// #1998: the list sends the stored, encoded name
+						// ("enc.…"); room members carry the plain one in their
+						// Matrix id, so only the decoded name can match them.
+						const username = decodeUsername(
+							`${consultant?.username || ''}`.trim()
+						);
 						nextDirectory.set(consultantId, {
 							displayName:
 								displayName ||
@@ -3846,46 +3853,34 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		inRoomValues: new Set<string>(),
-		matrixUserIdByComparableId: new Map<string, string>(),
+		readMembers: (): Array<{ value: string; label: string }> => [],
 		selfId: userData?.userId as string | undefined
 	});
+	// #1998: the team discussion has its own room. The audience above belongs
+	// to the enquiry's room and stays empty until the enquiry is accepted, so
+	// there every colleague read as "not in chat" and a mention went out
+	// without its Matrix id. The team room is read when the list opens: this
+	// component does not re-render while someone types, so a snapshot from
+	// the last render can predate the room's members.
+	const teamMentionRoomId = teamDiscussion ? targetRoomId : undefined;
+	const audienceMentionMembers = audienceOptions.filter(
+		(option) => option.value !== AUDIENCE_ALL
+	);
 	mentionDataRef.current = {
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		inRoomValues: new Set(
-			audienceOptions
-				.filter((option) => option.value !== AUDIENCE_ALL)
-				.flatMap((option) => [
-					...Array.from(getComparableAudienceIds(option.value)),
-					...Array.from(getComparableAudienceIds(option.label))
-				])
-		),
 		// Intentional mentions (#435): audienceOptions already resolves room
 		// members to their real Matrix user id (option.value is member.userId
-		// for room members — see the audience-options effect above). Reusing
-		// that instead of a second room-member fetch keeps this a single
-		// source of truth, and only ever a *resolved* member id ends up here.
-		matrixUserIdByComparableId: new Map(
-			audienceOptions
-				.filter(
-					(option) =>
-						option.value !== AUDIENCE_ALL &&
-						/^@[^:@\s]+:.+$/.test(option.value)
-				)
-				.flatMap((option) =>
-					Array.from(
-						new Set([
-							...Array.from(
-								getComparableAudienceIds(option.value)
-							),
-							...Array.from(
-								getComparableAudienceIds(option.label)
-							)
-						])
-					).map((id): [string, string] => [id, option.value])
-				)
-		),
+		// for room members — see the audience-options effect above), so only
+		// a *resolved* member id ends up in a mention.
+		readMembers: () =>
+			teamMentionRoomId
+				? roomMentionMembers(
+						matrixClientService
+							?.getClient?.()
+							?.getRoom?.(teamMentionRoomId)
+					)
+				: audienceMentionMembers,
 		selfId: userData?.userId
 	};
 
@@ -3900,8 +3895,22 @@ export const MessageSubmitInterfaceComponent = ({
 			loadingLabel: translate('message.mention.loading'),
 			listLabel: translate('message.submit.toolbar.mention'),
 			getCandidates: () => {
-				const { directory, inRoomValues, matrixUserIdByComparableId } =
-					mentionDataRef.current;
+				const { directory, readMembers } = mentionDataRef.current;
+				const members = readMembers();
+				const idsOf = (member: { value: string; label: string }) => [
+					...Array.from(getComparableAudienceIds(member.value)),
+					...Array.from(getComparableAudienceIds(member.label))
+				];
+				const inRoomValues = new Set(members.flatMap(idsOf));
+				const matrixUserIdByComparableId = new Map(
+					members
+						.filter((member) => /^@[^:@\s]+:.+$/.test(member.value))
+						.flatMap((member) =>
+							Array.from(new Set(idsOf(member))).map(
+								(id): [string, string] => [id, member.value]
+							)
+						)
+				);
 				return Array.from(directory.entries()).map(
 					([consultantId, info]) => {
 						const comparableIds = getComparableAudienceIds(
