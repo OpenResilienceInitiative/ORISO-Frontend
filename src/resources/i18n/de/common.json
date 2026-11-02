@@ -1044,7 +1044,12 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende",
-				"menuLabel": "Optionen für {{name}}"
+				"menuLabel": "Optionen für {{name}}",
+				"role": {
+					"asker": "Ratsuchende:r",
+					"consultant": "Berater:in",
+					"supervisor": "Supervisor:in"
+				}
 			},
 			"gallery": {
 				"back": "Zurück zum Countdown",

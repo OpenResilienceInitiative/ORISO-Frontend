@@ -964,7 +964,12 @@
 			"subscribers": {
 				"empty": "Нет участников",
 				"headline": "Участники",
-				"menuLabel": "Действия для {{name}}"
+				"menuLabel": "Действия для {{name}}",
+				"role": {
+					"asker": "Обращающийся за советом",
+					"consultant": "Консультант",
+					"supervisor": "Супервизор"
+				}
 			},
 			"gallery": {
 				"back": "Назад к обратному отсчёту",
