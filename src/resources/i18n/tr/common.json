@@ -4758,8 +4758,10 @@
 			},
 			"decision": {
 				"app": "Uygulama ile güvenli şekilde bağlan",
+				"appActive": "Kimlik doğrulama uygulaması ikinci faktör olarak zaten etkin. Değiştirmek için diğer yöntemi seçin.",
 				"copy": "Hesabınızı ikinci bir faktörle koruyun. Kimlik doğrulama uygulaması daha güvenli seçenektir; alternatif olarak kodları e-posta ile de alabilirsiniz.",
 				"email": "E-posta kodu kullan (daha az güvenli)",
+				"emailActive": "E-posta kodları ikinci faktör olarak zaten etkin. Değiştirmek için uygulamayı seçin.",
 				"title": "İkinci faktörü seçin"
 			},
 			"email": {
