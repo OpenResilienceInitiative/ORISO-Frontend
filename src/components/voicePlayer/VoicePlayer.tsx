@@ -37,6 +37,8 @@ export interface VoicePlayerProps {
 	size?: VoicePlayerSize;
 	/** Meta line under the tiles / the label column next to the ring. */
 	showMeta?: boolean;
+	/** Takes the width of the bubble, with the tiles stretched to fill it. */
+	fill?: boolean;
 	/** Shown in the ring tooltip when no `note` is given. */
 	sender?: string;
 	/** Shown in the ring tooltip next to `sender`. */
@@ -84,6 +86,7 @@ export const VoicePlayer = ({
 	bubble = 'incoming',
 	size = 'md',
 	showMeta = true,
+	fill = false,
 	sender,
 	sentAt,
 	note,
@@ -236,6 +239,7 @@ export const VoicePlayer = ({
 				`voicePlayer--${variant}`,
 				`voicePlayer--${size}`,
 				`voicePlayer--bubble-${bubble}`,
+				fill ? 'voicePlayer--fill' : null,
 				isOutgoing ? 'voicePlayer--outgoing' : null,
 				className
 			]
