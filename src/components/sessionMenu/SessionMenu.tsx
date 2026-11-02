@@ -103,11 +103,13 @@ import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/sup
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
 import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	canEndTopicDuplicate,
 	canRecommendFurtherCounselling
 } from '../furtherCounselling/furtherCounsellingRules';
 import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
+import { getGroupChatInfoLink } from '../groupChat/groupChatInfoLink';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -343,15 +345,34 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		setOverlayActive(true);
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
 	const handleArchiveSession = () => {
 		closeMenu();
 		menuTriggerRef.current?.focus();
-		setOverlayItem(archiveSessionSuccessOverlayItem);
-		setOverlayActive(true);
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		const sessionId = activeSession.item.id;
+		const sessionGroupId = activeSession.item.matrixRoomId;
+		apiPutArchive(sessionId)
+			.then(() => {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: sessionGroupId ? [sessionGroupId] : [sessionId]
+				});
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
 	};
 
 	const handleDearchiveSession = () => {
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession();
 				// Short timeout to wait for RC events finished
@@ -367,8 +388,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					closeMenu();
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
 	};
 
@@ -437,29 +459,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
-			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
-				.then(() => {
-					// Remove from current sessions list immediately
-					sessionsDispatch({
-						type: REMOVE_SESSIONS,
-						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
-					});
-
-					mobileListView();
-					navigate(listPath);
-				})
-				.catch((error) => {
-					// console.error(error);
-				})
-				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
-					setIsRequestInProgress(false);
-					closeMenu();
-				});
+			// The request already succeeded; this only leaves the archived chat.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			closeMenu();
+			mobileListView();
+			navigate(listPath);
 		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
@@ -505,13 +511,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasMatrixRoom
-		? generatePath(baseUrl, {
-				groupId: activeSession.item.matrixRoomId,
-				id: String(activeSession.item.id),
-				subRoute: 'groupChatInfo'
-			})
-		: '';
+	const groupChatInfoLink = getGroupChatInfoLink(
+		listPath,
+		activeSession.item.matrixRoomId,
+		activeSession.item.id,
+		getSessionListTab()
+	);
 	const editGroupChatSettingsLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
@@ -1261,6 +1266,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				}}
 				onClose={() => setNotifConfigOpen(false)}
 				showEmailLink={hasEmailSettings}
+				showLiveChatRow={
+					!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				}
 			/>
 		</div>
 	);

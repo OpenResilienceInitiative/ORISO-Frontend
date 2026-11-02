@@ -226,6 +226,12 @@ $profile-footer-justify-content: center !default;
 		}
 
 		&__personal_link {
+			&__url {
+				margin-bottom: 0;
+				overflow-wrap: anywhere;
+				user-select: all;
+			}
+
 			& > span,
 			.generateQrCode {
 				margin-right: $grid-base-two;

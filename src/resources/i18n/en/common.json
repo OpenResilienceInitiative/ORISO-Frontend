@@ -563,7 +563,13 @@
 		"message": {
 			"encryption": {
 				"error": "Message encrypted - error during decryption",
-				"text": "Message encrypted"
+				"text": "Message encrypted",
+				"missingKey": {
+					"title_one": "Earlier message not available on this device",
+					"title_other": "{{count}} earlier messages not available on this device",
+					"hint_one": "It becomes readable once a device that has the key is online, for example a colleague's or the advice seeker's. Signing in on the device used before also helps.",
+					"hint_other": "They become readable once a device that has the key is online, for example a colleague's or the advice seeker's. Signing in on the device used before also helps."
+				}
 			},
 			"showMore": "Show more",
 			"showLess": "Show less"
@@ -1024,7 +1030,12 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants",
-				"menuLabel": "Options for {{name}}"
+				"menuLabel": "Options for {{name}}",
+				"role": {
+					"asker": "Advice seeker",
+					"consultant": "Counsellor",
+					"supervisor": "Supervisor"
+				}
 			},
 			"gallery": {
 				"back": "Back to the countdown",
@@ -1996,7 +2007,15 @@
 			"counsellorsEmpty": "No counsellors are in this room",
 			"moderatorsEmpty": "No moderators are in this room",
 			"toggleSection": "Toggle section",
-			"selectAllBottom": "Select All"
+			"selectAllBottom": "Select All",
+			"unresolved": {
+				"headline": "Please check the recipients",
+				"text": "The selected recipients could not be confirmed for this chat. Choose the recipients again, then send. Your text stays in this field."
+			},
+			"attachmentBlocked": {
+				"headline": "Files only go to everyone",
+				"text": "Files and voice messages cannot be limited to selected colleagues. Choose “All” to share them with everyone, or send a text message instead. Your file or recording stays here."
+			}
 		},
 		"edit": {
 			"cancel": "Cancel editing",
@@ -2054,9 +2073,13 @@
 		"consultantLeftChat": "Consultant has left the chat",
 		"youEndedChat": "You ended the chat",
 		"chatEnded": "The chat has ended",
+		"consultantRenamedTitle": "Name changed",
+		"consultantRenamedDescription": "{{oldName}} is now called {{newName}}.",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
+		"supervisionDisabledTitle": "Supervision Ended!",
+		"supervisionDisabledDescription": "{{name}} was removed as a consultant supervisor from this chat.",
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
@@ -2122,7 +2145,13 @@
 		"error": "Error",
 		"info": "Info",
 		"success": "Success",
-		"warning": "Warning"
+		"warning": "Warning",
+		"liveChatMessage": {
+			"title": "New live chat message",
+			"from": "From {{name}}",
+			"several": "{{count}} new messages",
+			"open": "Open chat"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2304,6 +2333,18 @@
 				"title": "Case handover declined",
 				"text": "Client consent was declined. Content visibility remains locked."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Case handover offer sent",
+				"text": "The offer is waiting for the colleague's answer. It can be withdrawn as long as the handover is not complete."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Case handover offer declined",
+				"text": "The colleague declined the offer. The case stays with the current counsellor."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Case handover offer withdrawn",
+				"text": "The offer was withdrawn. The case stays with the current counsellor."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
 				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
@@ -2347,6 +2388,18 @@
 			"callInvited": {
 				"title": "Invitation to internal group call",
 				"text": "You have been invited to an internal group call."
+			},
+			"callKnockRequested": {
+				"title": "Someone is knocking",
+				"text": "Someone wants to join your call. Join the call to let them in.",
+				"video": {
+					"title": "Someone is knocking – video call",
+					"text": "Someone wants to join your video call through your direct link. Join the call to let them in."
+				},
+				"audio": {
+					"title": "Someone is knocking – audio call",
+					"text": "Someone wants to join your audio call through your direct link. Join the call to let them in."
+				}
 			},
 			"appointmentRequested": {
 				"title": "Call appointment requested",
@@ -2575,7 +2628,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Use lowercase letters and hyphens only. New slugs become active after admin approval.",
+				"info": "Use lowercase letters and digits only, separated by single hyphens (e.g. team-2), at most {{max}} characters. New slugs become active after admin approval.",
 				"input": "Public contact link name",
 				"label": "Public contact link",
 				"notification": {
@@ -2855,6 +2908,7 @@
 				"kind": {
 					"new": "New request",
 					"standard": "Standard notification",
+					"liveChat": "Live chat message",
 					"mention": "@ Mention",
 					"handover": "Handover",
 					"call": "Incoming call",
@@ -3700,6 +3754,10 @@
 			"declined": "You declined this handover.",
 			"denied": "This handover was denied.",
 			"clientConsentDeclined": "The client declined this handover.",
+			"withdraw": "Withdraw offer",
+			"withdrawn": "This handover offer was withdrawn.",
+			"withdrawError": "The offer could not be withdrawn. Please try again.",
+			"withdrawConflict": "The offer has already been answered and can no longer be withdrawn.",
 			"noContent": "This request does not give you permission to view the conversation.",
 			"forbidden": "You are not authorised to view this handover request.",
 			"notFound": "This handover request no longer exists.",
@@ -3716,7 +3774,8 @@
 				"GRANTED": "The handover has been completed.",
 				"RECIPIENT_DECLINED": "The selected colleague declined.",
 				"DENIED": "The handover was denied.",
-				"CLIENT_CONSENT_DECLINED": "The client declined the handover."
+				"CLIENT_CONSENT_DECLINED": "The client declined the handover.",
+				"WITHDRAWN": "The offer was withdrawn."
 			}
 		},
 		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
@@ -4250,7 +4309,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Peer support group",
 				"internal": "Internal",
-				"team": "Team counselling"
+				"team": "Team counselling",
+				"directLinkVideo": "Video call",
+				"directLinkAudio": "Audio call",
+				"directLinkChat": "Direct link"
 			}
 		},
 		"createChat": {
@@ -4348,6 +4410,7 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
+				"directLinks": "Direct links",
 				"other": "More",
 				"create": "Create",
 				"group": "Filters",

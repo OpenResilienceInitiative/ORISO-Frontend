@@ -69,6 +69,10 @@ import { HistoricalReassignMessage } from './ReassignMessage';
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
+import {
+	consultantRenamedNoticeText,
+	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
+} from './consultantRenamedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
@@ -266,6 +270,8 @@ export interface MessageItem {
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
 	isEdited?: boolean;
+	/** #1827: this device has no room key for the message (not an error). */
+	undecryptableReason?: 'missing-key';
 	/** #1869: sent by a temporary account and deleted together with it. */
 	isTemporary?: boolean;
 }
@@ -1267,10 +1273,26 @@ export const MessageItemComponent = ({
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		)
 	);
+	/* OBP 2.1 #119: the rename notice carries names only; it is worded here,
+	   in the reader's language, and then drawn by the generic chrome. */
+	const consultantRenamedText =
+		parsedMessage.systemNotificationConsultantRenamed
+			? consultantRenamedNoticeText(
+					parsedMessage.systemNotificationConsultantRenamed,
+					translate
+				)
+			: null;
+	/* A rename event the parser rejected (blank or unchanged names) draws
+	   nothing — the generic chrome would otherwise show its raw JSON. */
+	const isRejectedConsultantRenamedEvent =
+		parsedMessage.systemNotificationType ===
+			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
 	const systemNotificationTitle =
+		consultantRenamedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
+		consultantRenamedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
 	const systemNotificationReasonLabel = neutralLegacyReasonLabel(
@@ -1805,16 +1827,28 @@ export const MessageItemComponent = ({
 		userId === askerMatrixUserId
 			? resolveAnonymousChatDisplayName(activeSession?.user)
 			: null;
+	// Matrix profiles hold the login name, so after a reload the event only
+	// carries the username. The group's member list has the public display
+	// name for every participant (OBP 2.1 #12).
+	const groupMemberDisplayName = activeSession?.isGroup
+		? (
+				avatarMembers.find((member) => member._id === userId)
+					?.displayName || ''
+			).trim() || undefined
+		: undefined;
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
 			? consultantMatch?.consultantDisplayName ||
 				liveChatGuestName ||
+				groupMemberDisplayName ||
 				roomUser?.displayName ||
 				displayName
 			: displayName;
+	// In a group every non-moderator counts as a "user message", but a
+	// counsellor viewing their own message is still a counsellor.
 	const ownConsultantName =
-		isMyMessage && !isUserMessage()
+		isMyMessage && (!isUserMessage() || !isAskerViewer)
 			? resolveOwnConsultantName({
 					displayName: userData?.displayName,
 					firstName: userData?.firstName,
@@ -2789,7 +2823,7 @@ export const MessageItemComponent = ({
 		);
 	}
 
-	if (isUntrustedRecommendation) {
+	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
 		return null;
 	}
 

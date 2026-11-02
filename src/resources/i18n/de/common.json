@@ -575,7 +575,13 @@
 		"message": {
 			"encryption": {
 				"error": "Nachricht verschlüsselt - Fehler beim Entschlüsseln",
-				"text": "Nachricht verschlüsselt"
+				"text": "Nachricht verschlüsselt",
+				"missingKey": {
+					"title_one": "Frühere Nachricht auf diesem Gerät nicht verfügbar",
+					"title_other": "{{count}} frühere Nachrichten auf diesem Gerät nicht verfügbar",
+					"hint_one": "Sie wird lesbar, sobald ein Gerät mit dem passenden Schlüssel online ist, zum Beispiel das einer Kollegin, eines Kollegen oder der ratsuchenden Person. Auch die Anmeldung auf dem Gerät, das zuvor genutzt wurde, hilft.",
+					"hint_other": "Sie werden lesbar, sobald ein Gerät mit dem passenden Schlüssel online ist, zum Beispiel das einer Kollegin, eines Kollegen oder der ratsuchenden Person. Auch die Anmeldung auf dem Gerät, das zuvor genutzt wurde, hilft."
+				}
 			},
 			"showMore": "Mehr anzeigen",
 			"showLess": "Weniger anzeigen"
@@ -1038,7 +1044,12 @@
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
 				"headline": "Teilnehmende",
-				"menuLabel": "Optionen für {{name}}"
+				"menuLabel": "Optionen für {{name}}",
+				"role": {
+					"asker": "Ratsuchende:r",
+					"consultant": "Berater:in",
+					"supervisor": "Supervisor:in"
+				}
 			},
 			"gallery": {
 				"back": "Zurück zum Countdown",
@@ -2011,7 +2022,15 @@
 			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
 			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Alle auswählen"
+			"selectAllBottom": "Alle auswählen",
+			"unresolved": {
+				"headline": "Bitte Adressaten prüfen",
+				"text": "Die gewählten Adressaten konnten für diesen Chat nicht bestätigt werden. Wählen Sie die Adressaten erneut aus und senden Sie dann. Ihr Text bleibt in diesem Feld erhalten."
+			},
+			"attachmentBlocked": {
+				"headline": "Dateien gehen nur an alle",
+				"text": "Dateien und Sprachnachrichten lassen sich nicht auf ausgewählte Kolleg:innen beschränken. Wählen Sie „Alle“, um sie mit allen zu teilen, oder senden Sie stattdessen eine Textnachricht. Ihre Datei oder Aufnahme bleibt erhalten."
+			}
 		},
 		"edit": {
 			"cancel": "Bearbeiten abbrechen",
@@ -2069,9 +2088,13 @@
 		"consultantLeftChat": "Berater:in hat den Chat verlassen",
 		"youEndedChat": "Sie haben den Chat beendet",
 		"chatEnded": "Der Chat wurde beendet",
+		"consultantRenamedTitle": "Name geändert",
+		"consultantRenamedDescription": "{{oldName}} heißt jetzt {{newName}}.",
 		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
+		"supervisionDisabledTitle": "Supervision beendet!",
+		"supervisionDisabledDescription": "{{name}} wurde als Supervisor-Berater:in aus diesem Chat entfernt.",
 		"today": "Heute",
 		"tomorrow": "Morgen",
 		"unread": "ungelesen",
@@ -2146,7 +2169,13 @@
 		"error": "Fehler",
 		"info": "Information",
 		"success": "Erfolg",
-		"warning": "Warnung"
+		"warning": "Warnung",
+		"liveChatMessage": {
+			"title": "Neue Nachricht im Live-Chat",
+			"from": "Von {{name}}",
+			"several": "{{count}} neue Nachrichten",
+			"open": "Chat öffnen"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2328,6 +2357,18 @@
 				"title": "Fallübergabe abgelehnt",
 				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Übergabeangebot gesendet",
+				"text": "Das Angebot wartet auf die Antwort der Kolleg:in. Solange die Übergabe nicht abgeschlossen ist, kann es zurückgezogen werden."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Übergabeangebot abgelehnt",
+				"text": "Die Kolleg:in hat das Angebot abgelehnt. Der Fall bleibt bei der bisherigen Beratungsperson."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Übergabeangebot zurückgezogen",
+				"text": "Das Angebot wurde zurückgezogen. Der Fall bleibt bei der bisherigen Beratungsperson."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Angebot zur Fallübergabe",
 				"text": "{{fromConsultantName}} möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen.",
@@ -2371,6 +2412,18 @@
 			"callInvited": {
 				"title": "Einladung zu internem Gruppenanruf",
 				"text": "Sie wurden zu einem internen Gruppenanruf eingeladen."
+			},
+			"callKnockRequested": {
+				"title": "Jemand klopft an",
+				"text": "Eine Person möchte in Ihren Anruf. Treten Sie dem Anruf bei, um sie einzulassen.",
+				"video": {
+					"title": "Jemand klopft an – Videoanruf",
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Videoanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+				},
+				"audio": {
+					"title": "Jemand klopft an – Audioanruf",
+					"text": "Eine Person möchte über Ihren Direktlink in Ihren Audioanruf. Treten Sie dem Anruf bei, um sie einzulassen."
+				}
 			},
 			"appointmentRequested": {
 				"title": "Termin für einen Anruf angefragt",
@@ -2600,7 +2653,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Verwenden Sie nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"info": "Verwenden Sie nur Kleinbuchstaben und Ziffern, getrennt durch einzelne Bindestriche (z. B. team-2), höchstens {{max}} Zeichen. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
 				"input": "Name des öffentlichen Kontakt-Links",
 				"label": "Öffentlicher Kontakt-Link",
 				"notification": {
@@ -2893,6 +2946,7 @@
 				"kind": {
 					"new": "Neue Anfrage",
 					"standard": "Standard-Benachrichtigung",
+					"liveChat": "Live-Chat-Nachricht",
 					"mention": "@ Erwähnung",
 					"handover": "Übergabe",
 					"call": "Eingehender Anruf",
@@ -3754,6 +3808,10 @@
 			"declined": "Sie haben diese Übergabe abgelehnt.",
 			"denied": "Diese Übergabe wurde abgelehnt.",
 			"clientConsentDeclined": "Die ratsuchende Person hat diese Übergabe abgelehnt.",
+			"withdraw": "Angebot zurückziehen",
+			"withdrawn": "Dieses Übergabeangebot wurde zurückgezogen.",
+			"withdrawError": "Das Angebot konnte nicht zurückgezogen werden. Bitte erneut versuchen.",
+			"withdrawConflict": "Das Angebot wurde bereits beantwortet und kann nicht mehr zurückgezogen werden.",
 			"noContent": "Diese Anfrage erlaubt Ihnen nicht, das Gespräch zu lesen.",
 			"forbidden": "Sie dürfen diese Übergabeanfrage nicht aufrufen.",
 			"notFound": "Diese Übergabeanfrage besteht nicht mehr.",
@@ -3770,7 +3828,8 @@
 				"GRANTED": "Die Übergabe wurde abgeschlossen.",
 				"RECIPIENT_DECLINED": "Die ausgewählte Kolleg:in hat abgelehnt.",
 				"DENIED": "Die Übergabe wurde abgelehnt.",
-				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt."
+				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt.",
+				"WITHDRAWN": "Das Angebot wurde zurückgezogen."
 			}
 		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
@@ -4304,7 +4363,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Gesprächskreis",
 				"internal": "Interna",
-				"team": "Team Beratung"
+				"team": "Team Beratung",
+				"directLinkVideo": "Videoanruf",
+				"directLinkAudio": "Audioanruf",
+				"directLinkChat": "Direktlink"
 			}
 		},
 		"createChat": {
@@ -4399,6 +4461,7 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
+				"directLinks": "Direktlinks",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",

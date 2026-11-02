@@ -361,3 +361,17 @@ describe('translation catalogues', () => {
 		expect(offenders).toEqual([]);
 	});
 });
+
+// OBP 2.1 #107: every participant of a group or team chat carries a role
+// badge, in every language the app ships.
+const participantRoles = ['asker', 'consultant', 'supervisor'] as const;
+it.each(Object.entries(fullCatalogues))(
+	'%s names every participant role badge',
+	(_locale, catalogue) => {
+		participantRoles.forEach((role) => {
+			const label = catalogue.groupChat.info.subscribers.role?.[role];
+			expect(label, role).toEqual(expect.any(String));
+			expect(label.trim(), role).not.toBe('');
+		});
+	}
+);
