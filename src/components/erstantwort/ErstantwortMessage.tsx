@@ -1,6 +1,13 @@
 import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -31,6 +38,10 @@ import {
 } from './erstantwortResolve';
 import { ErstantwortTrigger } from './erstantwortCatalogue';
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import {
+	getAuthenticatedAccountIdentity,
+	subscribeToAuthenticatedTenant
+} from '../../utils/authenticatedTenant';
 
 /**
  * The chat-side container for the Erstantwort (ADR-018, ORISO-Frontend#772).
@@ -114,7 +125,61 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	// instead of vanishing. No invitation is offered again (offerNotificationSetup
 	// still decides that); a tenant without any channel has nothing to show.
 	const showSetupSlot = emailAllowed || channels.browserAllowed;
-	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
+	const emailScope = useMemo(
+		() => ({
+			actorId: userData?.userId,
+			tenantId: tenant?.id,
+			sessionId,
+			messageId,
+			conversationType
+		}),
+		[userData?.userId, tenant?.id, sessionId, messageId, conversationType]
+	);
+	const [emailOverlay, setEmailOverlay] = useState<{
+		scope: typeof emailScope;
+		id: number;
+	} | null>(null);
+	const latestEmailOverlay = useRef(emailOverlay);
+	latestEmailOverlay.current = emailOverlay;
+	const latestEmailScope = useRef(emailScope);
+	latestEmailScope.current = emailScope;
+	const latestEmailAllowed = useRef(emailAllowed);
+	latestEmailAllowed.current = emailAllowed;
+	const emailOpening = useRef(0);
+	const closeEmailOverlay = useCallback(() => {
+		latestEmailOverlay.current = null;
+		setEmailOverlay(null);
+	}, []);
+	const openEmailOverlay = useCallback(() => {
+		if (
+			!latestEmailAllowed.current ||
+			latestEmailScope.current !== emailScope
+		)
+			return;
+		const opening = { scope: emailScope, id: ++emailOpening.current };
+		latestEmailOverlay.current = opening;
+		setEmailOverlay(opening);
+	}, [emailScope]);
+	useEffect(() => {
+		closeEmailOverlay();
+	}, [emailScope, closeEmailOverlay]);
+	useEffect(() => {
+		if (!emailAllowed) closeEmailOverlay();
+	}, [emailAllowed, closeEmailOverlay]);
+	useEffect(() => {
+		let identity = getAuthenticatedAccountIdentity();
+		return subscribeToAuthenticatedTenant(() => {
+			const next = getAuthenticatedAccountIdentity();
+			if (next !== identity) closeEmailOverlay();
+			identity = next;
+		});
+	}, [closeEmailOverlay]);
+	useEffect(
+		() => () => {
+			latestEmailOverlay.current = null;
+		},
+		[]
+	);
 	const [isDisplayNameOverlayOpen, setIsDisplayNameOverlayOpen] =
 		useState(false);
 
@@ -191,7 +256,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		(kind: ErstantwortActionKind) => {
 			switch (kind) {
 				case 'ADD_EMAIL':
-					setIsEmailOverlayOpen(true);
+					openEmailOverlay();
 					break;
 				case 'ENABLE_2FA':
 					openTwoFactorSettings({ showBackupKey: true });
@@ -215,7 +280,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					break;
 			}
 		},
-		[navigate, openTwoFactorSettings, sessionId]
+		[navigate, openTwoFactorSettings, sessionId, openEmailOverlay]
 	);
 
 	/* The calls to action address the advice seeker. A counsellor reads the
@@ -275,10 +340,24 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					)
 				}}
 			/>
-			{isEmailOverlayOpen && emailAllowed && (
+			{emailOverlay && emailAllowed && (
 				<ErstantwortEmailOverlay
-					onClose={() => setIsEmailOverlayOpen(false)}
-					onSaved={reloadUserData}
+					key={emailOverlay.id}
+					onClose={() => {
+						if (latestEmailOverlay.current === emailOverlay)
+							closeEmailOverlay();
+					}}
+					onSaved={() => {
+						if (
+							latestEmailOverlay.current !== emailOverlay ||
+							latestEmailScope.current !== emailOverlay.scope ||
+							!latestEmailAllowed.current
+						)
+							return;
+						// The address was accepted. Close this opening before the fail-closed reload.
+						closeEmailOverlay();
+						void reloadUserData().catch(() => undefined);
+					}}
 				/>
 			)}
 			{isDisplayNameOverlayOpen && sessionId !== undefined && (

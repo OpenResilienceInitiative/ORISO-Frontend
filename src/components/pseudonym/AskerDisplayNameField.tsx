@@ -27,6 +27,7 @@ export const AskerDisplayNameField = ({
 			}}
 			inputProps={{
 				'aria-label': t('profile.data.displayName'),
+				'autoComplete': 'off',
 				'maxLength': 255,
 				'readOnly': !editable
 			}}

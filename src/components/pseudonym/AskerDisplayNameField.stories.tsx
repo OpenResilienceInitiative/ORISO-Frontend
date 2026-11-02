@@ -36,6 +36,7 @@ type Story = StoryObj<typeof meta>;
 export const Editable: Story = {
 	play: async ({ canvasElement }) => {
 		const input = within(canvasElement).getByRole('textbox');
+		await expect(input).toHaveAttribute('autocomplete', 'off');
 		await userEvent.clear(input);
 		await userEvent.type(input, 'My session alias');
 		await expect(input).toHaveValue('My session alias');
@@ -45,6 +46,7 @@ export const GeneratedOnly: Story = {
 	args: { editable: false },
 	play: async ({ canvasElement }) => {
 		const input = within(canvasElement).getByRole('textbox');
+		await expect(input).toHaveAttribute('autocomplete', 'off');
 		await userEvent.type(input, 'Cannot type this');
 		await expect(input).toHaveValue('freundliche Katze Mika');
 		await expect(input).toHaveAttribute('readonly');

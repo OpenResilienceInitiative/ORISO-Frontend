@@ -14,20 +14,36 @@ import {
 } from '../../test/fixtures/askerAccountPolicyFixtures';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { endpoints } from '../../resources/scripts/endpoints';
+import { ErstantwortMessage } from './ErstantwortMessage';
 
 let releaseRefresh: (() => void) | undefined;
 let browserRequests = 0;
-const Setup = () => {
-	const { reloadUserData } = React.useContext(UserDataContext);
+const Setup = ({ firstReply = false }: { firstReply?: boolean }) => {
+	const { userData, reloadUserData } = React.useContext(UserDataContext);
 	const emailAllowed = useAccountEmailCollectionAllowed();
 	React.useEffect(() => {
 		void reloadUserData();
 	}, [reloadUserData]);
-	return <NotificationSetup isEmailEnabled={emailAllowed} />;
+	return (
+		<>
+			<span hidden data-testid="collection-capability">
+				{String(userData?.isAskerEmailCollectionAllowed)}
+			</span>
+			{firstReply ? (
+				<ErstantwortMessage
+					trigger="AFTER_FIRST_MESSAGE"
+					conversationType="AGENCY_COUNSELLING"
+					skipAnimation
+				/>
+			) : (
+				<NotificationSetup isEmailEnabled={emailAllowed} />
+			)}
+		</>
+	);
 };
 
 /** Real provider, HTTP primitive and setup; only server responses/OS permission are synthetic. */
-const Fixture = () => {
+const Fixture = ({ firstReply = false }: { firstReply?: boolean }) => {
 	const [ready, setReady] = React.useState(false);
 	React.useEffect(() => {
 		const originalFetch = globalThis.fetch;
@@ -37,7 +53,12 @@ const Fixture = () => {
 		);
 		const originalBrowser = localStorage.getItem('BROWSER_NOTIFICATIONS');
 		let subscribed = false,
+			acceptedWrite = false,
+			email = firstReply ? undefined : 'existing@example.test',
 			permission = 'default';
+		const overlay = document.createElement('div');
+		overlay.id = 'overlay';
+		document.body.appendChild(overlay);
 		releaseRefresh = undefined;
 		browserRequests = 0;
 		notificationSettingsStore.resetForTests();
@@ -45,7 +66,7 @@ const Fixture = () => {
 		const response = () =>
 			Response.json(
 				accountPolicyUser({
-					email: 'existing@example.test',
+					email,
 					isAskerEmailCollectionAllowed: true,
 					emailNotifications: {
 						emailNotificationsEnabled: subscribed,
@@ -72,12 +93,27 @@ const Fixture = () => {
 			) {
 				if (method === 'PATCH') {
 					subscribed = true;
+					acceptedWrite = true;
 					return new Response('{}', { status: 200 });
 				}
-				if (!subscribed) return response();
+				if (!acceptedWrite) return response();
 				return new Promise<Response>((resolve) => {
 					releaseRefresh = () => resolve(response());
 				});
+			}
+			if (
+				new URL(url, window.location.origin).pathname ===
+					new URL(endpoints.email, window.location.origin).pathname &&
+				method === 'PUT'
+			) {
+				const body =
+					init?.body ??
+					(input instanceof Request
+						? await input.clone().text()
+						: '');
+				email = JSON.parse(String(body));
+				acceptedWrite = true;
+				return new Response(null, { status: 204 });
 			}
 			return originalFetch(input, init);
 		};
@@ -97,6 +133,7 @@ const Fixture = () => {
 		setReady(true);
 		return () => {
 			globalThis.fetch = originalFetch;
+			overlay.remove();
 			if (originalNotification)
 				Object.defineProperty(
 					globalThis,
@@ -110,24 +147,26 @@ const Fixture = () => {
 			notificationSettingsStore.resetForTests();
 			releaseRefresh = undefined;
 		};
-	}, []);
+	}, [firstReply]);
 	if (!ready) return null;
 	return (
-		<TenantContext.Provider
-			value={{
-				tenant: accountPolicyTenant({
-					featureAskerEmailCollectionLiveChatEnabled: false
-				}),
-				setTenant: () => {},
-				updateTenantSettings: () => {}
-			}}
-		>
-			<UserDataProvider>
-				<ModalProvider>
-					<Setup />
-				</ModalProvider>
-			</UserDataProvider>
-		</TenantContext.Provider>
+		<>
+			<TenantContext.Provider
+				value={{
+					tenant: accountPolicyTenant({
+						featureAskerEmailCollectionLiveChatEnabled: false
+					}),
+					setTenant: () => {},
+					updateTenantSettings: () => {}
+				}}
+			>
+				<UserDataProvider>
+					<ModalProvider>
+						<Setup firstReply={firstReply} />
+					</ModalProvider>
+				</UserDataProvider>
+			</TenantContext.Provider>
+		</>
 	);
 };
 const meta = {
@@ -171,5 +210,41 @@ export const AcceptedRefreshKeepsBoth: Story = {
 			).toHaveAttribute('aria-pressed', 'true')
 		);
 		await expect(browserRequests).toBe(1);
+	}
+};
+
+export const AcceptedFirstReplyEmailStaysClosed: Story = {
+	args: { firstReply: true },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement),
+			page = within(canvasElement.ownerDocument.body);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: i18n.t('erstantwort.emailNotification.action')
+			})
+		);
+		await userEvent.type(
+			await page.findByRole('textbox'),
+			'new@example.test'
+		);
+		await userEvent.click(
+			page.getByRole('button', {
+				name: i18n.t('furtherSteps.email.overlay.button1.label')
+			})
+		);
+		await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
+		await waitFor(() =>
+			expect(
+				canvas.getByTestId('collection-capability')
+			).toHaveTextContent('undefined')
+		);
+		await expect(page.queryByRole('textbox')).toBeNull();
+		releaseRefresh!();
+		await waitFor(() =>
+			expect(
+				canvas.getByTestId('collection-capability')
+			).toHaveTextContent('true')
+		);
+		await expect(page.queryByRole('textbox')).toBeNull();
 	}
 };

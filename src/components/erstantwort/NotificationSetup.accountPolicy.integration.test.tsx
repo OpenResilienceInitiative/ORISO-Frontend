@@ -17,7 +17,9 @@ import {
 	accountPolicyTenant,
 	accountPolicyUser
 } from '../../test/fixtures/askerAccountPolicyFixtures';
-import { apiGetUserData } from '../../api';
+import { apiGetUserData, apiPutEmail } from '../../api';
+import { ErstantwortMessage } from './ErstantwortMessage';
+import { MemoryRouter } from 'react-router-dom';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import {
 	setValueInCookie,
@@ -78,7 +80,7 @@ const account = (allowed = true, subscribed = false) =>
 	});
 const onDone = vi.fn();
 const requestPermission = vi.fn();
-const Harness = () => {
+const Harness = ({ firstReply = false }: { firstReply?: boolean }) => {
 	const accountEmailAllowed = useAccountEmailCollectionAllowed();
 	const { userData, reloadUserData, setUserData } =
 		React.useContext(UserDataContext);
@@ -91,30 +93,46 @@ const Harness = () => {
 				{String(userData?.isAskerEmailCollectionAllowed)}
 			</output>
 			<button onClick={() => setUserData(account(false))}>revoke</button>
-			<NotificationSetup
-				isEmailEnabled={accountEmailAllowed}
-				onDone={onDone}
-			/>
+			<button
+				onClick={() => setUserData({ ...account(), email: undefined })}
+			>
+				restore
+			</button>
+			<button onClick={() => void reloadUserData()}>reload</button>
+			{firstReply ? (
+				<ErstantwortMessage
+					trigger="AFTER_FIRST_MESSAGE"
+					conversationType="AGENCY_COUNSELLING"
+					skipAnimation
+				/>
+			) : (
+				<NotificationSetup
+					isEmailEnabled={accountEmailAllowed}
+					onDone={onDone}
+				/>
+			)}
 		</>
 	);
 };
-const setup = () =>
+const setup = (firstReply = false) =>
 	render(
-		<TenantContext.Provider
-			value={{
-				tenant: accountPolicyTenant({
-					featureAskerEmailCollectionLiveChatEnabled: false
-				}),
-				setTenant: vi.fn(),
-				updateTenantSettings: vi.fn()
-			}}
-		>
-			<UserDataProvider>
-				<ModalProvider>
-					<Harness />
-				</ModalProvider>
-			</UserDataProvider>
-		</TenantContext.Provider>
+		<MemoryRouter>
+			<TenantContext.Provider
+				value={{
+					tenant: accountPolicyTenant({
+						featureAskerEmailCollectionLiveChatEnabled: false
+					}),
+					setTenant: vi.fn(),
+					updateTenantSettings: vi.fn()
+				}}
+			>
+				<UserDataProvider>
+					<ModalProvider>
+						<Harness firstReply={firstReply} />
+					</ModalProvider>
+				</UserDataProvider>
+			</TenantContext.Provider>
+		</MemoryRouter>
 	);
 const chooseBoth = async () =>
 	fireEvent.click(
@@ -148,9 +166,14 @@ afterEach(() => {
 });
 
 it('preserves BOTH through its own real provider capability refresh and a fresh browser gesture', async () => {
+	const initial = deferred<UserDataInterface>();
 	const refresh = deferred<UserDataInterface>();
-	vi.mocked(apiGetUserData).mockReturnValueOnce(refresh.promise);
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockReturnValueOnce(initial.promise)
+		.mockReturnValueOnce(refresh.promise);
 	setup();
+	await act(async () => initial.resolve(account()));
 	await chooseBoth();
 	await waitFor(() =>
 		expect(screen.getByTestId('capability').textContent).toBe('undefined')
@@ -200,5 +223,160 @@ it.each(['actor', 'tenant', 'actor A→B→A'] as const)(
 		expect(continueBrowser()).toBeNull();
 		expect(requestPermission).not.toHaveBeenCalled();
 		expect(onDone).not.toHaveBeenCalled();
+	}
+);
+
+it('closes the actual accepted first-reply email form across its real provider refresh without reopening it', async () => {
+	const refresh = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined })
+		.mockReturnValueOnce(refresh.promise);
+	vi.mocked(apiPutEmail).mockResolvedValue(undefined);
+	setup(true);
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.emailNotification.action'
+		})
+	);
+	fireEvent.change(await screen.findByRole('textbox'), {
+		target: { value: 'new@example.test' }
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'furtherSteps.email.overlay.button1.label'
+		})
+	);
+	await waitFor(() => expect(apiPutEmail).toHaveBeenCalledOnce());
+	await waitFor(() =>
+		expect(screen.getByTestId('capability').textContent).toBe('undefined')
+	);
+	await act(async () =>
+		refresh.resolve({ ...account(), email: 'new@example.test' })
+	);
+	expect(screen.queryByRole('textbox')).toBeNull();
+	expect(apiPutEmail).toHaveBeenCalledTimes(1);
+});
+
+const openFirstReplyEmail = async () => {
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.emailNotification.action'
+		})
+	);
+	fireEvent.change(await screen.findByRole('textbox'), {
+		target: { value: 'new@example.test' }
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'furtherSteps.email.overlay.button1.label'
+		})
+	);
+};
+it('keeps a rejected first-reply email form retryable until the server accepts it', async () => {
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined })
+		.mockResolvedValueOnce({ ...account(), email: 'new@example.test' });
+	vi.mocked(apiPutEmail)
+		.mockRejectedValueOnce(new Error('offline'))
+		.mockResolvedValueOnce(undefined);
+	setup(true);
+	await openFirstReplyEmail();
+	await screen.findAllByText('erstantwort.emailNotification.saveFailed');
+	expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe(
+		'new@example.test'
+	);
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'furtherSteps.email.overlay.button1.label'
+		})
+	);
+	await waitFor(() => expect(apiGetUserData).toHaveBeenCalledTimes(2));
+	await waitFor(() => expect(screen.queryByRole('textbox')).toBeNull());
+	expect(apiPutEmail).toHaveBeenCalledTimes(2);
+});
+it('does not close a new first-reply email opening when a cancelled write returns late', async () => {
+	const write = deferred<void>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined });
+	vi.mocked(apiPutEmail).mockReturnValueOnce(write.promise);
+	setup(true);
+	await openFirstReplyEmail();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'furtherSteps.email.overlay.button2.label'
+		})
+	);
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.emailNotification.action'
+		})
+	);
+	fireEvent.change(await screen.findByRole('textbox'), {
+		target: { value: 'current@example.test' }
+	});
+	await act(async () => write.resolve());
+	expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe(
+		'current@example.test'
+	);
+	expect(apiGetUserData).toHaveBeenCalledTimes(1);
+});
+it('does not restore the first-reply form or refresh an obsolete write after collection revocation', async () => {
+	const write = deferred<void>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined });
+	vi.mocked(apiPutEmail).mockReturnValueOnce(write.promise);
+	setup(true);
+	await openFirstReplyEmail();
+	fireEvent.click(screen.getByRole('button', { name: 'revoke' }));
+	fireEvent.click(screen.getByRole('button', { name: 'restore' }));
+	expect(screen.queryByRole('textbox')).toBeNull();
+	await act(async () => write.resolve());
+	expect(apiGetUserData).toHaveBeenCalledTimes(1);
+});
+it.each(['actor', 'tenant', 'actor A→B→A'] as const)(
+	'discards the first-reply opening after an authenticated %s transition',
+	async (change) => {
+		const write = deferred<void>();
+		const nextSubject = change === 'actor' ? 'other' : 'policy-asker';
+		vi.mocked(apiGetUserData)
+			.mockReset()
+			.mockResolvedValueOnce({ ...account(), email: undefined })
+			.mockResolvedValueOnce({
+				...account(),
+				email: undefined,
+				userId: nextSubject
+			});
+		vi.mocked(apiPutEmail).mockReturnValueOnce(write.promise);
+		setup(true);
+		await openFirstReplyEmail();
+		act(() => {
+			if (change === 'tenant') signIn('policy-asker', 2);
+			else {
+				signIn('other');
+				if (change === 'actor A→B→A') signIn();
+			}
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+		await waitFor(() =>
+			expect(screen.getByTestId('capability').textContent).toBe('true')
+		);
+		expect(screen.queryByRole('textbox')).toBeNull();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'erstantwort.emailNotification.action'
+			})
+		);
+		fireEvent.change(await screen.findByRole('textbox'), {
+			target: { value: 'current@example.test' }
+		});
+		await act(async () => write.resolve());
+		expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe(
+			'current@example.test'
+		);
+		expect(apiGetUserData).toHaveBeenCalledTimes(2);
 	}
 );
