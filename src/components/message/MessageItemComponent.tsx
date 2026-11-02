@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
 import {
@@ -1400,8 +1401,9 @@ export const MessageItemComponent = ({
 			? 'unchecked'
 			: 'safe';
 	};
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
-		tenant?.settings,
+		effectiveFeatures,
 		mediaChatType
 	);
 

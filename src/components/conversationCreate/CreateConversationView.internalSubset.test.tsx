@@ -9,7 +9,14 @@ import {
 	waitFor,
 	within
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	apiCreateInternalSubsetChat,
 	InternalSubsetChatError,
@@ -22,6 +29,11 @@ import {
 	Consultant,
 	fetchAgencyConsultantList
 } from '../../api/apiGetAgencyConsultantList';
+import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
+import {
+	conversationAgency,
+	canonicalAgencySettings
+} from '../../test/fixtures/conversationPolicyFixtures';
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
@@ -160,6 +172,11 @@ const openPersonMenu = async () => {
 	return screen.findByRole('listbox');
 };
 
+beforeEach(() => {
+	vi.mocked(apiGetAgenciesByIds).mockImplementation(async (ids) =>
+		ids.map((id) => ({ ...conversationAgency(id), settings: null }))
+	);
+});
 describe('Interna picker with the recipient scope (#1772)', () => {
 	beforeEach(() => {
 		vi.mocked(useSession).mockReturnValue({
@@ -527,4 +544,45 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 		const menu = await openPersonMenu();
 		expect(within(menu).queryByText('Anna Test')).toBeNull();
 	});
+});
+
+it('opens the real Internal create flow from fresh canonical policy despite legacy V2 and parent off', async () => {
+	vi.mocked(useSession).mockReturnValue({
+		session: undefined,
+		ready: true,
+		reload: async () => {},
+		read: () => {}
+	});
+	vi.mocked(fetchAgencyConsultantList).mockResolvedValue([sameCentre]);
+	tenantState.tenant = {
+		settings: {
+			featureGroupChatV2Enabled: false,
+			featureInternalGroupChatEnabled: false,
+			featureSelfHelpGroupsEnabled: false,
+			activeLanguages: ['de']
+		}
+	};
+	vi.mocked(apiGetAgenciesByIds).mockResolvedValueOnce([
+		conversationAgency(
+			5,
+			canonicalAgencySettings({
+				featureGroupChatV2Enabled: false,
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: false
+			})
+		)
+	]);
+	try {
+		renderView();
+		expect(
+			await screen.findByRole('button', {
+				name: 'groupChat.internal.addPerson'
+			})
+		).toBeTruthy();
+		expect(apiGetAgenciesByIds).toHaveBeenCalledWith([5]);
+	} finally {
+		cleanup();
+		resetCounsellorAgencyFormatsForTests();
+		vi.clearAllMocks();
+	}
 });

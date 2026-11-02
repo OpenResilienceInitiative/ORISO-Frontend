@@ -22,6 +22,7 @@ import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { conversationAgency } from '../../test/fixtures/conversationPolicyFixtures';
 import {
 	resetCounsellorAgencyFormatsForTests,
 	useCounsellorAgencyFormats
@@ -237,8 +238,10 @@ describe('CreateConversationView – formats the Träger has switched off', () =
 			read: vi.fn(),
 			ready: true
 		} as any);
-		// Agencies without known settings add no restriction.
-		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([]);
+		// A confirmed legacy agency without settings inherits tenant hard caps.
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			{ ...conversationAgency(5), settings: null }
+		]);
 	});
 
 	it('offers both cards when the Träger has group chats enabled', async () => {
@@ -370,13 +373,14 @@ describe('CreateConversationView – formats the Beratungsstelle has switched of
 		expect(screen.getByText(INTERNAL_CARD)).toBeTruthy();
 	});
 
-	it('falls back to the Träger’s answer when the agency settings fail to load', async () => {
+	it('offers no format when agency authority is unavailable', async () => {
 		vi.mocked(apiGetAgenciesByIds).mockRejectedValue(new Error('boom'));
 
 		renderCreateFlow();
 
-		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
-		expect(screen.getByText(INTERNAL_CARD)).toBeTruthy();
+		await waitFor(() => expect(apiGetAgenciesByIds).toHaveBeenCalled());
+		expect(screen.queryByText(CIRCLE_CARD)).toBeNull();
+		expect(screen.queryByText(INTERNAL_CARD)).toBeNull();
 	});
 
 	it('offers a format only for the agencies that allow it', async () => {
