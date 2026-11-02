@@ -29,6 +29,10 @@ import { ReactComponent as ProfileIconOutline } from '../../resources/img/icons/
 import { ReactComponent as ProfileIconFilled } from '../../resources/img/icons/profil_filled.svg';
 import { ReactComponent as NavCounsellorRequestIcon } from '../../resources/img/icons/navigation/counsellor_request_400.svg';
 import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resources/img/icons/navigation/counsellor_request_filled.svg';
+import { ReactComponent as NavDirectLinksIcon } from '../../resources/img/icons/navigation/schedule_400.svg';
+import { ReactComponent as NavDirectLinksIconFilled } from '../../resources/img/icons/navigation/schedule_filled.svg';
+import { MyDirectLinksPage } from '../directLinks/MyDirectLinksPanel';
+import { CREATE_CHAT_PATH } from './routePaths';
 import {
 	NavChatsIcon,
 	NavChatsIconHover,
@@ -323,6 +327,20 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				titleKeys: {
 					large: 'navigation.booking.events'
 				}
+			},
+			// #1894: the clock entry, home of the counsellor's direct links
+			// (later also time windows).
+			{
+				// Hidden when no medium is allowed (useDirectLinksAllowed).
+				requiresDirectInvite: true,
+				to: '/direct-links',
+				icon: NavDirectLinksIcon,
+				iconHover: NavDirectLinksIcon,
+				iconFilled: NavDirectLinksIconFilled,
+				navSlot: 'row' as const,
+				titleKeys: {
+					large: 'navigation.consultant.directLinks'
+				}
 			}
 		],
 		listRoutes: [
@@ -379,7 +397,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/createGroupChat/',
+				path: CREATE_CHAT_PATH,
 				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -434,6 +452,11 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				path: '/overview',
 				component: OverviewPage
+			},
+			{
+				path: '/direct-links',
+				exact: true,
+				component: MyDirectLinksPage
 			},
 			{
 				path: '/profile',

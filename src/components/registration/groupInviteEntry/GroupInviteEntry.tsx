@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
-import { Box } from '@mui/material';
+import { Alert, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { AccountData } from '../accountData/AccountData';
@@ -26,7 +26,8 @@ export const GroupInviteEntry = ({
 	onJoin,
 	joinDisabled,
 	busy,
-	agencyName
+	agencyName,
+	loginRetry = false
 }: {
 	stage: ReactElement;
 	gcid: string;
@@ -39,6 +40,12 @@ export const GroupInviteEntry = ({
 	busy: boolean;
 	/** The agency the link names; the waiting room shows the same (#1689). */
 	agencyName?: string;
+	/**
+	 * The temporary account exists, only signing in failed (#1941). The name
+	 * is no longer asked — it belongs to that account now — and the button
+	 * tries the sign-in again.
+	 */
+	loginRetry?: boolean;
 }) => {
 	const { t } = useTranslation();
 	/* Only the agency: the topic stays hidden until the privacy agreement
@@ -81,25 +88,38 @@ export const GroupInviteEntry = ({
 							{heading}
 						</Box>
 					)}
-					<AccountData
-						onChange={onChange}
-						entry="link"
-						temporary={temporary}
-					/>
+					{loginRetry ? (
+						<Alert
+							severity="warning"
+							data-cy="group-invite-login-retry"
+						>
+							{t('registration.accountCreated.retry')}
+						</Alert>
+					) : (
+						<AccountData
+							onChange={onChange}
+							entry="link"
+							temporary={temporary}
+						/>
+					)}
 					<RegistrationFooter
-						secondary={{
-							compact: true,
-							label: temporary
-								? t(
-										'registration.account.temporary.toggleOff',
-										'Konto anlegen'
-									)
-								: t(
-										'registration.account.temporary.toggleOn',
-										'Ohne Konto beitreten'
-									),
-							onClick: onToggleTemporary
-						}}
+						secondary={
+							loginRetry
+								? undefined
+								: {
+										compact: true,
+										label: temporary
+											? t(
+													'registration.account.temporary.toggleOff',
+													'Konto anlegen'
+												)
+											: t(
+													'registration.account.temporary.toggleOn',
+													'Ohne Konto beitreten'
+												),
+										onClick: onToggleTemporary
+									}
+						}
 						primary={{
 							label: temporary
 								? t(

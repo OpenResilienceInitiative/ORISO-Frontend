@@ -1,3 +1,9 @@
+import {
+	MY_LINKS_SETTINGS_PATH,
+	SETTINGS_OVERVIEW_PATH,
+	useDirectLinksAllowed,
+	useDirectLinksRedirect
+} from '../directLinks/useDirectLinksAllowed';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
@@ -69,6 +75,18 @@ export const Profile = () => {
 	// the chat, which is derived from the Matrix user id when the client is up.
 	const ownAvatarUserId = useOwnAvatarUserId();
 	const { consultingTypes } = useContext(ConsultingTypesContext);
+	// #1894: Settings → "Meine Links" only while a medium is allowed.
+	const isCounsellor = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
+	const directLinksAllowed = useDirectLinksAllowed(isCounsellor);
+	// A bookmarked "Meine Links" goes to the Settings overview instead.
+	useDirectLinksRedirect(
+		isCounsellor,
+		(pathname) => pathname.startsWith(MY_LINKS_SETTINGS_PATH),
+		SETTINGS_OVERVIEW_PATH
+	);
 
 	const visibleElements = (
 		elements: (TabGroups | SingleComponentType | null)[] = []
@@ -114,7 +132,13 @@ export const Profile = () => {
 
 	useEffect(() => {
 		setMobileMenu(
-			profileRoutes(settings, tenant, selectableLocales, isFirstVisit)
+			profileRoutes(
+				settings,
+				tenant,
+				selectableLocales,
+				isFirstVisit,
+				directLinksAllowed
+			)
 				.filter((tab) =>
 					solveTabConditions(tab, userData, consultingTypes ?? [])
 				)
@@ -162,7 +186,8 @@ export const Profile = () => {
 		userData,
 		selectableLocales,
 		tenant,
-		isFirstVisit
+		isFirstVisit,
+		directLinksAllowed
 	]);
 
 	const [subpage, setSubpage] = useState(undefined);
@@ -310,7 +335,8 @@ export const Profile = () => {
 									settings,
 									tenant,
 									selectableLocales,
-									isFirstVisit
+									isFirstVisit,
+									directLinksAllowed
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -382,7 +408,8 @@ export const Profile = () => {
 									settings,
 									tenant,
 									selectableLocales,
-									isFirstVisit
+									isFirstVisit,
+									directLinksAllowed
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -440,7 +467,8 @@ export const Profile = () => {
 									settings,
 									tenant,
 									selectableLocales,
-									isFirstVisit
+									isFirstVisit,
+									directLinksAllowed
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -469,7 +497,8 @@ export const Profile = () => {
 								settings,
 								tenant,
 								selectableLocales,
-								isFirstVisit
+								isFirstVisit,
+								directLinksAllowed
 							)
 								.filter((tab) =>
 									solveTabConditions(
@@ -539,7 +568,8 @@ export const Profile = () => {
 											settings,
 											tenant,
 											selectableLocales,
-											isFirstVisit
+											isFirstVisit,
+											directLinksAllowed
 										)[0].url
 									}`}
 									replace

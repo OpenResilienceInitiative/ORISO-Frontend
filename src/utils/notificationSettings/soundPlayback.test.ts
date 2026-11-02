@@ -17,6 +17,7 @@ import {
 	__resetSoundThrottlesForTests,
 	createSoundThrottle,
 	installAudioUnlock,
+	playEventSound,
 	playNotificationSound,
 	selectEventToAnnounce,
 	soundAssetFor
@@ -51,7 +52,7 @@ describe('createSoundThrottle', () => {
  * ------------------------------------------------------------------ */
 
 describe('playNotificationSound (config-driven)', () => {
-	const played: Array<{ src: string; volume: number }> = [];
+	const played: Array<{ src: string; volume: number; audio: unknown }> = [];
 	// far apart so the module-level 2s throttle never interferes
 	let now = 1_000_000;
 	const nextNow = () => (now += 10_000);
@@ -68,7 +69,7 @@ describe('playNotificationSound (config-driven)', () => {
 		}
 		play() {
 			this.paused = false;
-			played.push({ src: this.src, volume: this.volume });
+			played.push({ src: this.src, volume: this.volume, audio: this });
 			return Promise.resolve();
 		}
 	}
@@ -243,6 +244,20 @@ describe('playNotificationSound (config-driven)', () => {
 		// a fresh element was used, so the in-flight (primed) sound survives
 		expect(played).toHaveLength(primed + 1);
 		expect(played[primed].src).toContain('ton-3');
+	});
+
+	it('playEventSound replays the gesture-primed element (Safari)', () => {
+		const target = document.createElement('div');
+		installAudioUnlock(target);
+		target.dispatchEvent(new Event('pointerdown'));
+		const primed = played[0].audio as FakeAudio;
+		// the silent priming sound is over
+		primed.paused = true;
+		playEventSound('chime', 0.6);
+		expect(played).toHaveLength(2);
+		expect(played[1].audio).toBe(primed);
+		expect(played[1].src).not.toContain('data:audio/wav');
+		expect(played[1].volume).toBe(0.6);
 	});
 
 	it('installAudioUnlock primes a shared element on the first gesture', () => {
