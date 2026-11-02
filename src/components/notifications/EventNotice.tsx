@@ -6,7 +6,10 @@ import {
 	NotificationsContext,
 	NotificationType
 } from '../../globalState/provider/NotificationsProvider';
-import { isNotificationActiveViewRoute } from '../session/notificationActiveView';
+import {
+	isNotificationActiveViewRoute,
+	pathSegments
+} from '../session/notificationActiveView';
 import { ReactComponent as MentionIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -130,9 +133,6 @@ interface NoticeTarget {
 	sessionId?: string | null;
 	roomRef?: string | null;
 }
-
-const pathSegments = (path: string) =>
-	path.split(/[?#]/)[0].split('/').filter(Boolean).map(decodeURIComponent);
 
 /** Whether this conversation's detail view is the route and the tab visible. */
 export const isConversationOpen = (
