@@ -17,6 +17,10 @@ import {
 	subscribeShownChannel
 } from '../session/notificationActiveView';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
+import {
+	normalizeLegacyChannelSearch,
+	parseChannel
+} from '../../utils/channelRoute';
 import { ReactComponent as MentionIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as HandoverIcon } from '../../resources/img/icons/case_handover_200_24px.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -203,9 +207,14 @@ export const isTeamDiscussionOpen = (
 	return isConversationOpen(target, pathname, search, visible);
 };
 
-/** On a phone a side channel fills the screen instead of the main chat. */
-const isMainChatHidden = () =>
-	window.innerWidth < STAGE_LAYOUT.DESKTOP_MIN_WIDTH && !!getShownChannel();
+/**
+ * On a phone a side channel fills the screen instead of the main chat. The
+ * requested one counts too: the chat card has not reported yet while it loads.
+ */
+const isMainChatHidden = (search: string) =>
+	window.innerWidth < STAGE_LAYOUT.DESKTOP_MIN_WIDTH &&
+	(!!getShownChannel() ||
+		!!parseChannel(normalizeLegacyChannelSearch(search) ?? search).channel);
 
 /**
  * Whether this thread's panel is on screen. The parent chat does not show the
@@ -238,7 +247,7 @@ export const isEventNoticeTargetOpen = (
 	if (kind === 'chatMention') {
 		if (target.threadRootId)
 			return isThreadOpen(target, pathname, search, visible);
-		if (isMainChatHidden()) return false;
+		if (isMainChatHidden(search)) return false;
 	}
 	return isConversationOpen(target, pathname, search, visible);
 };

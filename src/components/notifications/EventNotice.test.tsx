@@ -540,17 +540,50 @@ describe('where the target is open', () => {
 			).toBe(true);
 		});
 
-		it('sees a main-chat mention when the requested panel did not open', () => {
+		it.each([
+			['a side channel', '?channel=team'],
+			['a thread by its feed link', '?threadRootId=%24other']
+		])(
+			'does not see a main-chat mention while %s is still loading',
+			(_label, search) => {
+				setWidth(899);
+				expect(
+					isEventNoticeTargetOpen(
+						'chatMention',
+						target,
+						pathname,
+						search,
+						true
+					)
+				).toBe(false);
+				setWidth(900);
+				expect(
+					isEventNoticeTargetOpen(
+						'chatMention',
+						target,
+						pathname,
+						search,
+						true
+					)
+				).toBe(true);
+			}
+		);
+
+		it('keeps a main-chat card when a phone goes straight to a side channel', () => {
 			setWidth(899);
-			expect(
-				isEventNoticeTargetOpen(
-					'chatMention',
-					target,
-					pathname,
-					'?channel=thread:$other',
-					true
-				)
-			).toBe(true);
+			const remove = renderNotice(
+				notice({
+					kind: 'chatMention',
+					id: 'event-notice:chatMention:42'
+				}),
+				'/',
+				'/sessions/consultant/sessionView/!room42/42?channel=team'
+			);
+			fireEvent.click(screen.getByText('go'));
+			expect(remove).not.toHaveBeenCalled();
+			act(() => reportShownChannel({ kind: 'team' }));
+			expect(remove).not.toHaveBeenCalled();
+			cleanup();
 		});
 
 		it('sees a thread mention with that thread filling the screen', () => {
