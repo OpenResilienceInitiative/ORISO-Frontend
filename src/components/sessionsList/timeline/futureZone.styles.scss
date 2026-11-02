@@ -186,6 +186,9 @@
 // Two classes outrank the list's handle rules, which span the whole edge.
 .sessionsList__resizeHandle.tlp__nowGrip {
 	position: relative;
+
+	// The old edge handle stacks above the toolbar; this one stays below the search.
+	z-index: auto;
 	top: auto;
 	right: auto;
 	bottom: auto;

@@ -620,6 +620,70 @@ export const OpenCardFollowsTheFocus: Story = {
 };
 
 /** "Jetzt" is the grip: the word lives in the handle, in the accent colour. */
+/** The search lies over the list, "Jetzt" included, and Escape folds it away. */
+export const SearchLiesAboveNow: Story = {
+	name: 'Search — lies above "Jetzt", Escape closes it',
+	play: async ({ canvasElement }) => {
+		const grip = await waitFor(() => {
+			const found =
+				canvasElement.querySelector<HTMLElement>('.tlp__nowGrip');
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		const input = canvasElement.querySelector<HTMLInputElement>(
+			'[data-cy="sessions-list-search"]'
+		)!;
+		await userEvent.click(input);
+		const panel = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-search-panel"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		const { left, width, top, height } = grip.getBoundingClientRect();
+		await waitFor(() =>
+			expect(
+				panel.contains(
+					document.elementFromPoint(
+						left + width / 2,
+						top + height / 2
+					)
+				)
+			).toBe(true)
+		);
+
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="session-search-panel"]')
+			).toBeNull()
+		);
+		await expect(document.activeElement).toBe(input);
+	}
+};
+
+/** Like every other chip, the archive chip names itself once it is on. */
+export const ArchiveChipShowsItsName: Story = {
+	name: 'Archive chip — on shows its name',
+	play: async ({ canvasElement }) => {
+		const chip = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="sessions-list-chip-archive"]'
+			);
+			expect(found).not.toBeNull();
+			return found as HTMLElement;
+		});
+		const label = chip.querySelector('.sessionsListToolbar__chipLabel')!;
+		await expect(label.getAttribute('aria-hidden')).toBe('true');
+		await userEvent.click(chip);
+		await waitFor(() =>
+			expect(chip.getAttribute('aria-current')).toBe('page')
+		);
+		await expect(label.getAttribute('aria-hidden')).toBe('false');
+	}
+};
+
 export const NowIsTheGrip: Story = {
 	name: '"Jetzt" — the handle itself, on a line that runs out',
 	play: async ({ canvasElement }) => {
