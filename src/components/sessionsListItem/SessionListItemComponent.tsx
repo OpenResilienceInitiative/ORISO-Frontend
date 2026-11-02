@@ -45,7 +45,10 @@ import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/ch
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
 import mailConversationIcon from '../../resources/img/icons/chatroom/nearby_counselling_200_32.svg';
+import mailConversationHoverIcon from '../../resources/img/icons/chatroom/nearby_counselling_400_32.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200_32.svg';
+import internalConversationHoverIcon from '../../resources/img/icons/chatroom/internal_conversation_400_24.svg';
+import selfHelpHoverIcon from '../../resources/img/icons/chatroom/self_help_group_400_24.svg';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 // Self-help consulting-type icon (not the supervision marker).
 import selfHelpIcon from '../../resources/img/icons/chatroom/self_help_group_200_32.svg';
@@ -192,6 +195,29 @@ export interface SessionListItemProps {
 }
 
 export type SessionCardDatePlacement = 'corner' | 'line' | 'off';
+
+/**
+ * The card's kind icon, worn as a mask so CSS colours it per card state; a
+ * hovered card shows the heavier asset. The visible word next to it is the name.
+ */
+const ConsultingKindIcon = ({
+	src,
+	hoverSrc
+}: {
+	src: string;
+	hoverSrc: string;
+}) => (
+	<span
+		className="sessionsListItem__consultingTypeIcon--kindIcon"
+		aria-hidden="true"
+		style={
+			{
+				'--kind-icon-url': `url("${src}")`,
+				'--kind-icon-hover-url': `url("${hoverSrc}")`
+			} as React.CSSProperties
+		}
+	/>
+);
 
 export const SessionListItemComponent = ({
 	defaultLanguage,
@@ -1331,12 +1357,9 @@ export const SessionListItemComponent = ({
 							'sessionsListItem__consultingTypeIcon--internal'
 						)}
 					>
-						<img
+						<ConsultingKindIcon
 							src={internalConversationIcon}
-							alt={translate(
-								'sessionList.item.sessionType.internal'
-							)}
-							className="sessionsListItem__consultingTypeIcon--internalIcon"
+							hoverSrc={internalConversationHoverIcon}
 						/>
 						<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 							{translate('sessionList.item.sessionType.internal')}
@@ -1350,12 +1373,9 @@ export const SessionListItemComponent = ({
 							'sessionsListItem__consultingTypeIcon--selfHelp'
 						)}
 					>
-						<img
+						<ConsultingKindIcon
 							src={selfHelpIcon}
-							alt={translate(
-								'sessionList.item.sessionType.selfHelp'
-							)}
-							className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+							hoverSrc={selfHelpHoverIcon}
 						/>
 						<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 							{translate('sessionList.item.sessionType.selfHelp')}
@@ -2043,16 +2063,10 @@ export const SessionListItemComponent = ({
 													'sessionsListItem__consultingTypeIcon--nearby'
 												)}
 											>
-												{/* The SVG has a grey fill baked in, so it is worn as a mask
-											    and takes the primary colour from CSS. */}
-												<span
-													className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-													// The visible word next to it is the name.
-													aria-hidden="true"
-													style={
-														{
-															'--nearby-icon-url': `url("${mailConversationIcon}")`
-														} as React.CSSProperties
+												<ConsultingKindIcon
+													src={mailConversationIcon}
+													hoverSrc={
+														mailConversationHoverIcon
 													}
 												/>
 												<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
@@ -2069,12 +2083,11 @@ export const SessionListItemComponent = ({
 												'sessionsListItem__consultingTypeIcon--internal'
 											)}
 										>
-											<img
+											<ConsultingKindIcon
 												src={internalConversationIcon}
-												alt={translate(
-													'sessionList.item.sessionType.internal'
-												)}
-												className="sessionsListItem__consultingTypeIcon--internalIcon"
+												hoverSrc={
+													internalConversationHoverIcon
+												}
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 												{translate(
@@ -2103,12 +2116,9 @@ export const SessionListItemComponent = ({
 												'sessionsListItem__consultingTypeIcon--selfHelp'
 											)}
 										>
-											<img
+											<ConsultingKindIcon
 												src={selfHelpIcon}
-												alt={translate(
-													'sessionList.item.sessionType.selfHelp'
-												)}
-												className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+												hoverSrc={selfHelpHoverIcon}
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 												{translate(

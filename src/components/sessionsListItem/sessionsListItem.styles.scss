@@ -1,7 +1,6 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
 $session-card-bg: var(--m3-surface-container-high, #eae7e8);
-$session-card-hover-bg: #f0e7e7;
 
 // WP-06 Slice 0b: source the active-state colours from the shared list-item
 // selection tokens (settings.scss → _listItemSelection.scss). Values are
@@ -21,8 +20,8 @@ $session-focus-ring: var(
 	--oriso-session-focus-ring,
 	var(--m3-primary-fixed, #ffdad5)
 );
-$session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
-$session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
+$session-chip-hover-bg: var(--m3-secondary-container, #646d78);
+$session-postcode-border: $topic-tag-bg;
 $session-postcode-color: var(--m3-primary-container, #cc1e1c);
 $case-handover-action: var(--m3-primary, $primary);
 $case-handover-action-hover: var(--m3-primary-hover, $hover-primary);
@@ -147,11 +146,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		// primary colour when active; the glyph is an svg, so the override must
 		// outrank the `svg` filter above.
 		.sessionsListItem__consultingTypeIcon
-			.sessionsListItem__consultingTypeIcon--nearbyIcon,
-		.sessionsListItem__consultingTypeIcon
-			img.sessionsListItem__consultingTypeIcon--internalIcon,
-		.sessionsListItem__consultingTypeIcon
-			img.sessionsListItem__consultingTypeIcon--selfHelpIcon,
+			.sessionsListItem__consultingTypeIcon--kindIcon,
 		.sessionsListItem__consultingTypeIcon
 			svg.sessionsListItem__consultingTypeIcon--directLinkIcon {
 			filter: none;
@@ -269,21 +264,38 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&:hover,
 		&:active {
 			@include breakpoint($fromLarge) {
-				background-color: $session-card-hover-bg;
 				border-color: #e6caca;
 			}
 		}
 	}
 
-	&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
-		.sessionsListItem__content:hover {
-		.sessionsListItem__topic {
-			@include topic-tag-colors-emphasis;
-		}
+	// Hover (Figma 115:27132): light card, grey chip, the kind one weight heavier.
+	@media (hover: hover) {
+		&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
+			.sessionsListItem__content:hover {
+			background-color: var(--m3-surface, #fcf9f9);
 
-		.sessionsListItem__postcode {
-			border-color: $session-chip-hover-bg;
-			color: $session-chip-hover-bg;
+			.sessionsListItem__topic {
+				background-color: $session-chip-hover-bg;
+				color: var(--m3-on-primary, #fff);
+			}
+
+			.sessionsListItem__postcode {
+				background-color: var(--m3-surface-container-lowest, #fff);
+				border-color: $session-chip-hover-bg;
+				color: $session-chip-hover-bg;
+			}
+
+			.sessionsListItem__consultingTypeIcon--kindIcon {
+				mask-image: var(--kind-icon-hover-url);
+				-webkit-mask-image: var(--kind-icon-hover-url);
+			}
+
+			.sessionsListItem__consultingTypeIcon--nearbyLabel,
+			.sessionsListItem__consultingTypeIcon--internalLabel,
+			.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+				font-weight: 600;
+			}
 		}
 	}
 
@@ -719,11 +731,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		@include topic-tag-colors;
 
-		@media screen and (width <= 899px) {
-			// Give tag text slightly more room on compact screens.
-			padding-left: 6px;
-			padding-right: 6px;
-		}
+		// As tall and as wide inside as the chip beside a postcode, whose 1px
+		// outline makes the pair 22px high.
+		padding: 3px 12px;
 	}
 
 	&__topicPostcodeGroup .sessionsListItem__topic {
@@ -970,18 +980,18 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			align-items: center;
 		}
 
-		// The asset has a grey fill baked in, so it is worn as a mask coloured here.
-		&--nearbyIcon {
+		// The assets have a grey fill baked in, so they are worn as a mask coloured here.
+		&--kindIcon {
 			width: 32px !important;
 			height: 32px !important;
 			flex-shrink: 0;
 			display: block;
 			background-color: var(--m3-secondary, #4c555f);
-			mask-image: var(--nearby-icon-url);
+			mask-image: var(--kind-icon-url);
 			mask-size: contain;
 			mask-position: center;
 			mask-repeat: no-repeat;
-			-webkit-mask-image: var(--nearby-icon-url);
+			-webkit-mask-image: var(--kind-icon-url);
 			-webkit-mask-size: contain;
 			-webkit-mask-position: center;
 			-webkit-mask-repeat: no-repeat;
@@ -1034,13 +1044,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 38px;
 			white-space: nowrap;
 			align-items: center;
-		}
-
-		&--internalIcon,
-		&--selfHelpIcon {
-			width: 32px !important;
-			height: 32px !important;
-			flex-shrink: 0;
 		}
 
 		&--internalLabel,
@@ -1383,6 +1386,76 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 }
 
+// Selected (Figma 115:27170): the focus is on the open card.
+@mixin session-card-selected {
+	.sessionsListItem__topic {
+		background-color: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+	}
+
+	.sessionsListItem__postcode {
+		background-color: transparent;
+		border-color: var(--m3-primary, #a5000a);
+		color: var(--m3-primary, #a5000a);
+	}
+
+	.sessionsListItem__menuIcon {
+		border-color: var(--m3-primary, #a5000a);
+	}
+
+	.sessionsListItem__username {
+		font-weight: 400;
+	}
+
+	.sessionsListItem__consultingTypeIcon
+		.sessionsListItem__consultingTypeIcon--kindIcon {
+		background-color: var(--m3-on-primary-fixed-variant, #930008);
+	}
+
+	.sessionsListItem__consultingTypeIcon--nearbyLabel,
+	.sessionsListItem__consultingTypeIcon--internalLabel,
+	.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+		color: var(--m3-on-primary-fixed-variant, #930008) !important;
+	}
+}
+
+// Secondary Selected (Figma 310:15076): the open card while the focus is
+// elsewhere (typing field, a menu in the chat), or a card whose ⋮ menu is open.
+@mixin session-card-secondary {
+	.sessionsListItem__content {
+		background-color: var(--m3-surface-container-low, #f6f3f3) !important;
+
+		&:hover,
+		&:focus,
+		&:active {
+			background-color: var(
+				--m3-surface-container-low,
+				#f6f3f3
+			) !important;
+		}
+	}
+
+	.sessionsListItem__topic {
+		background-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		color: var(--m3-on-primary-fixed, #410001);
+	}
+
+	.sessionsListItem__postcode {
+		background-color: transparent;
+		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		color: var(--m3-on-primary-fixed, #410001);
+	}
+
+	// The open menu keeps its filled pill (`--menuOpen`).
+	&:not(.sessionsListItem--menuOpen) .sessionsListItem__menuIcon {
+		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+	}
+
+	.sessionsListItem__username {
+		font-weight: 600;
+	}
+}
+
 // Grouped list + "the ring follows the focus" (Meine Gespräche, Anfragen).
 // Outlines, corners and gaps only — card height, text wrap and icons stay as
 // they are. Tokens and mixins: `_listItemSelection.scss`. Cards opt in through
@@ -1482,10 +1555,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			}
 		}
 
-		// White ring around ⋮ (also while its menu is open), no pink halo.
-		.sessionsListItem__menuIcon {
-			border-color: #fff;
-		}
+		@include session-card-secondary;
 
 		// The border is 1px in every state now; the 2px compensation goes.
 		.sessionsListItem__content--flow {
@@ -1504,14 +1574,31 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			// Beats the legacy 2px focus-visible border: the ring is drawn
 			// inside, so the card keeps its size.
 			border-width: 1px !important;
-			border-color: $list-item-focus-color !important;
+			border-color: $session-selected-border !important;
+			background-color: var(
+				--m3-surface-container-lowest,
+				#fff
+			) !important;
 
 			&:hover,
 			&:focus,
 			&:active {
-				border-color: $list-item-focus-color !important;
+				border-color: $session-selected-border !important;
+				background-color: var(
+					--m3-surface-container-lowest,
+					#fff
+				) !important;
 			}
 		}
+
+		&:not(.sessionsListItem--menuOpen):focus-within {
+			@include session-card-selected;
+		}
+	}
+
+	// A closed card whose ⋮ menu is open is the second object too.
+	&.sessionsListItem--menuOpen:not(.sessionsListItem--active) {
+		@include session-card-secondary;
 	}
 
 	// Menu-open cards keep 1px everywhere, so drop the 2px compensation too.

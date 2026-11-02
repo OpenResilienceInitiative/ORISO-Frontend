@@ -129,10 +129,14 @@ function DemoCard({
 						</div>
 					) : (
 						<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-							<img
-								src={nearbyConversationIcon}
-								alt="Mail"
-								className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							<span
+								className="sessionsListItem__consultingTypeIcon--kindIcon"
+								aria-hidden="true"
+								style={
+									{
+										'--kind-icon-url': `url("${nearbyConversationIcon}")`
+									} as React.CSSProperties
+								}
 							/>
 							<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 								Mail
