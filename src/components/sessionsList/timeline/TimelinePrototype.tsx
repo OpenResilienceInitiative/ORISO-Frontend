@@ -7,7 +7,7 @@
 import * as React from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { ListItemInterface } from '../../../globalState/interfaces';
 import { SessionsListToolbar } from '../SessionsListToolbar';
 import type { SessionToolbarChipFilter } from '../sessionToolbarFilters';
@@ -140,6 +140,7 @@ export const TimelinePrototype = ({
 }: TimelinePrototypeProps) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
+	const { search } = useLocation();
 	const rail = width <= RAIL_WIDTH;
 	const initialChip =
 		(Object.entries(FILTER_OF_CHIP).find(
@@ -360,7 +361,10 @@ export const TimelinePrototype = ({
 				showGroupChip
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
-				archiveTabActive={false}
+				archiveTabActive={
+					new URLSearchParams(search).get('sessionListTab') ===
+					'archive'
+				}
 				createGroupChatActive={false}
 			/>
 

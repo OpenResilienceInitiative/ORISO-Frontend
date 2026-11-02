@@ -867,6 +867,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 // Figma-aligned search + horizontal filter chips (consultant / asker MY_SESSION)
 .sessionsListToolbar {
 	$toolbar-search-bg: #f6f3f3;
+	$search-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	$toolbar-text: #444748;
 
 	// Figma filter pill contract: inactive icon-only pills, expanded active pill.
@@ -927,11 +928,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 4px 4px 4px 0;
 		position: relative;
 		box-sizing: border-box;
+		transition:
+			border-radius 150ms cubic-bezier(0.2, 0, 0, 1),
+			box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
 	}
 
 	&__searchInner--attached {
 		border-bottom-left-radius: 0;
 		border-bottom-right-radius: 0;
+		box-shadow: $search-elevation;
 	}
 
 	&__iconButton {
@@ -1339,13 +1344,31 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		right: 0;
 		margin-top: 0;
 		border-radius: 0 0 28px 28px;
-		border: 1px solid #d9d6d7;
-		border-top: none;
-		background: $sessionShellSurface;
+		border-top: 1px solid var(--m3-outline-variant, #d9d6d7);
+		background: $toolbar-search-bg;
 		overflow: hidden;
 		max-height: min(56vh, 520px);
 		overflow-y: auto;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		overscroll-behavior: contain;
+		box-shadow: $search-elevation;
+		transform-origin: top center;
+		animation: sessionsListToolbarSearchOpen 220ms
+			cubic-bezier(0.05, 0.7, 0.1, 1);
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
+	}
+
+	&__searchModal--closing {
+		pointer-events: none;
+		animation: sessionsListToolbarSearchClose 120ms
+			cubic-bezier(0.3, 0, 0.8, 0.15) forwards;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+			visibility: hidden;
+		}
 	}
 
 	&__searchModalHeader {
@@ -1394,8 +1417,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		display: flex;
 		align-items: stretch;
 		overflow-x: auto;
-		border-bottom: 1px solid #ccc;
-		background: #e1dedf;
+		border-bottom: 1px solid var(--m3-outline-variant, #d9d6d7);
 	}
 
 	// The tablist groups the three tabs for assistive technology. It takes three
@@ -1426,6 +1448,21 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		align-items: center;
 		justify-content: center;
 		gap: 2px;
+		transition:
+			color 150ms cubic-bezier(0.2, 0, 0, 1),
+			background-color 150ms cubic-bezier(0.2, 0, 0, 1),
+			border-color 150ms cubic-bezier(0.2, 0, 0, 1);
+
+		@media (hover: hover) {
+			&:hover {
+				background-color: var(--m3-surface-container-high, #eae7e8);
+			}
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
 	}
 
 	&__searchModalTab--active {
@@ -1574,8 +1611,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 13px;
 		line-height: 18px;
 		color: var(--m3-on-surface-variant, #444748);
-		background: var(--m3-surface-container-low, #f5f2f3);
-		border-bottom: 1px solid var(--m3-outline-variant, #d9d6d7);
 	}
 
 	&__searchConfirmButton {
@@ -1623,6 +1658,21 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		&--error {
 			color: var(--m3-error, #ba1a1a);
 		}
+	}
+}
+
+// The search panel unfolds from the bar and folds back into it.
+@keyframes sessionsListToolbarSearchOpen {
+	from {
+		opacity: 0.2;
+		transform: translateY(-8px) scaleY(0.96);
+	}
+}
+
+@keyframes sessionsListToolbarSearchClose {
+	to {
+		opacity: 0;
+		transform: translateY(-4px) scaleY(0.98);
 	}
 }
 
