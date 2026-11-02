@@ -178,14 +178,60 @@ describe('entries in the real list', () => {
 
 	it('a group date shows only while its room is a visible row', () => {
 		expect(
-			entriesForList(all, new Set([1]), false).map((e) => e.key)
+			entriesForList(all, new Set(['group:1']), false).map((e) => e.key)
 		).toEqual(['own-group', 'booking']);
 	});
 
 	it('a date without a room shows only without filter or search', () => {
 		expect(
-			entriesForList(all, new Set([1, 2]), true).map((e) => e.key)
+			entriesForList(all, new Set(['group:1', 'group:2']), true).map(
+				(e) => e.key
+			)
 		).toEqual(['own-group', 'hidden-group']);
+	});
+
+	it('a 1:1 twin follows its conversation through a filter', () => {
+		const twin = [entry('twin', 7, 'one-to-one')];
+		const shown = (rooms: string[], hasFilter: boolean) =>
+			entriesForList(twin, new Set(rooms), hasFilter).length;
+		expect(shown(['one-to-one:7'], true)).toBe(1);
+		expect(shown([], true)).toBe(0);
+		// Its conversation is not loaded yet: not lost while nothing filters.
+		expect(shown([], false)).toBe(1);
+		// A group with the same id is another room.
+		expect(shown(['group:7'], true)).toBe(0);
+	});
+
+	it('maps a 1:1 appointment to its conversation, not a group with that id', () => {
+		const [twin] = buildFutureEntries({
+			now: NOW,
+			occurrences: [],
+			seriesToSession: {},
+			sessions: [
+				{ ...sessions[0], sessionId: 7, title: 'Gruppe' },
+				{ ...sessions[1], sessionId: 7, matrixRoomId: '!a:b' }
+			],
+			bookings: [
+				{
+					id: 'u-1',
+					appointmentId: 'u-1',
+					sessionId: 7,
+					startTime: '2026-10-29T10:00:00Z',
+					location: 'CHAT'
+				}
+			]
+		});
+		expect(twin.title).toBe('ruhiges Yak Kim');
+		expect(twin.matrixRoomId).toBe('!a:b');
+		expect(twin.booking?.appointmentId).toBe('u-1');
+	});
+
+	it('nobody but the counsellor of a room gets its change actions', () => {
+		const items = entryMenu(
+			{ kind: 'one-to-one', canDuplicate: false, canModerate: false },
+			'counsellor'
+		);
+		expect(items.map((i) => i.key)).toEqual(['reminder']);
 	});
 });
 

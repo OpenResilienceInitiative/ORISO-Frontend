@@ -4457,7 +4457,40 @@
 			"now": "Now",
 			"running": "in progress",
 			"upcoming": "Upcoming appointments",
-			"nextAppointment": "Next appointment: {{date}}"
+			"nextAppointment": "Next appointment: {{date}}",
+			"appointment": {
+				"create": "Add appointment",
+				"dialog": {
+					"createTitle": "Add appointment",
+					"moveTitle": "Move appointment",
+					"description": "The appointment belongs to this conversation. A notice appears in the conversation.",
+					"createAction": "Add",
+					"moveAction": "Move",
+					"date": "Date",
+					"start": "Start",
+					"end": "End",
+					"error": {
+						"incomplete": "Please choose a date and time.",
+						"past": "The appointment must be in the future.",
+						"order": "The end must be after the start.",
+						"conflict": "This appointment can no longer be changed: it was cancelled or the conversation has ended.",
+						"failed": "The appointment could not be saved. Please try again."
+					}
+				},
+				"notice": {
+					"created": "Appointment scheduled: {{date}}",
+					"moved": "Appointment moved to: {{date}}",
+					"cancelled": "Appointment cancelled: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Notice not sent",
+					"text": "The appointment is saved, but the notice in the conversation could not be sent."
+				},
+				"cancelFailed": {
+					"title": "Appointment not cancelled",
+					"text": "The appointment could not be cancelled. Please try again."
+				}
+			}
 		}
 	},
 	"statusOverlay": {

@@ -4508,7 +4508,40 @@
 			"now": "Jetzt",
 			"running": "läuft",
 			"upcoming": "Anstehende Termine",
-			"nextAppointment": "Nächster Termin: {{date}}"
+			"nextAppointment": "Nächster Termin: {{date}}",
+			"appointment": {
+				"create": "Termin anlegen",
+				"dialog": {
+					"createTitle": "Termin anlegen",
+					"moveTitle": "Termin verschieben",
+					"description": "Der Termin gehört zu dieser Beratung. In der Unterhaltung erscheint ein Hinweis.",
+					"createAction": "Anlegen",
+					"moveAction": "Verschieben",
+					"date": "Datum",
+					"start": "Beginn",
+					"end": "Ende",
+					"error": {
+						"incomplete": "Bitte Datum und Uhrzeit wählen.",
+						"past": "Der Termin muss in der Zukunft liegen.",
+						"order": "Das Ende muss nach dem Beginn liegen.",
+						"conflict": "Dieser Termin lässt sich nicht mehr ändern: Er wurde abgesagt oder die Beratung ist beendet.",
+						"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+					}
+				},
+				"notice": {
+					"created": "Termin vereinbart: {{date}}",
+					"moved": "Termin verschoben auf: {{date}}",
+					"cancelled": "Termin abgesagt: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Hinweis nicht gesendet",
+					"text": "Der Termin ist gespeichert, der Hinweis in der Unterhaltung konnte aber nicht gesendet werden."
+				},
+				"cancelFailed": {
+					"title": "Termin nicht abgesagt",
+					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
+				}
+			}
 		}
 	},
 	"statusOverlay": {

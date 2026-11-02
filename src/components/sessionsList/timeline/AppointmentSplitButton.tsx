@@ -242,25 +242,30 @@ export const AppointmentSplitButton = ({
 /**
  * The room's next appointment, directly below the header divider (ADR-021),
  * on phone and desktop. Group rooms show it after `sessionInfo__headerWrapper`
- * in `GroupChatHeader` (`RoomNextAppointmentSlot`); 1:1 rooms get it after
- * `sessionInfo__metaInfo` once a booking carries its session id.
+ * in `GroupChatHeader`, 1:1 rooms after `sessionInfo__metaInfo` in
+ * `SessionHeaderComponent`. `action` sits beside it, also with no appointment.
  */
 export const RoomNextAppointment = ({
 	entry,
 	role,
-	onAction
+	onAction,
+	action
 }: {
 	entry?: FutureEntry;
 	role: TimelineRole;
 	onAction?: AppointmentAction;
+	action?: React.ReactNode;
 }) =>
-	entry ? (
+	entry || action ? (
 		<div className="roomNextAppointment" data-cy="room-next-appointment">
-			<AppointmentSplitButton
-				entry={entry}
-				role={role}
-				size="compact"
-				onAction={onAction}
-			/>
+			{entry && (
+				<AppointmentSplitButton
+					entry={entry}
+					role={role}
+					size="compact"
+					onAction={onAction}
+				/>
+			)}
+			{action}
 		</div>
 	) : null;

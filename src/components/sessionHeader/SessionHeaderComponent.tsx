@@ -22,6 +22,7 @@ import {
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiSendMessage } from '../../api/apiSendMessage';
+import { ConversationAppointmentSlot } from '../sessionsList/timeline/ConversationAppointmentSlot';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_SUCCESS,
@@ -1303,6 +1304,17 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 					{topic?.name && <SessionTopic name={topic.name} />}
 				</div>
+			)}
+			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
+				<ConversationAppointmentSlot
+					canChange={
+						// Handover co-access may create too: the backend decides
+						// for a colleague who is not the assigned counsellor.
+						isConsultantUser &&
+						!isChatFinished &&
+						activeSession.item.status === STATUS_ACTIVE
+					}
+				/>
 			)}
 			{isAskerUser &&
 				!isConsultantUser &&

@@ -1,8 +1,7 @@
 /**
  * The open room's next appointment below its header (ADR-021), with the same
- * menu as its twin in the list. Group rooms read their series; 1:1 rooms stay
- * empty until a booking carries its session id (appointment service, ADR-021
- * follow-up) — without it a booking cannot be tied to a room.
+ * menu as its twin in the list. This is the group rooms' slot, reading their
+ * series; 1:1 rooms have `ConversationAppointmentSlot`.
  */
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
