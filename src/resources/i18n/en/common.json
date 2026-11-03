@@ -6128,6 +6128,10 @@
 			"endsCurrentUnnamed": "Answering ends your current call."
 		},
 		"share": {
+			"signInToJoin": "Sign in to join this call.",
+			"conversationMember": "You are already part of this conversation. Join the call from its chat.",
+			"openConversations": "Open my conversations",
+			"joinForbidden": "You cannot join this call through this link.",
 			"open": "Share call",
 			"title": "Share call",
 			"close": "Close",

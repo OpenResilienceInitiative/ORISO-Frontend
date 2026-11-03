@@ -221,6 +221,8 @@ export const GroupCallWidget: React.FC = () => {
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
+			// Let the guest confirm devices in the iframe before it publishes media.
+			skipLobby: !callData?.sharedCallGuest,
 			onClose: closeCallSurface,
 			knockState,
 			onSetKnock: shareLinkKnock.setKnock
@@ -661,7 +663,9 @@ export const GroupCallWidget: React.FC = () => {
 	 * and avatars from the session list instead of a fixed "G" (#780).
 	 * Unknown callers keep the generic line.
 	 */
-	const conversationRoomId = callData?.signalRoomId || callData?.roomId;
+	const conversationRoomId = callData?.sharedCallGuest
+		? undefined
+		: callData?.signalRoomId || callData?.roomId;
 	const waitingRoomId = waitingCall?.signalRoomId || waitingCall?.roomId;
 	useEffect(() => {
 		setConversation(null);
