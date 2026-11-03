@@ -2151,6 +2151,12 @@
 		"success": "Başarılı",
 		"warning": "Uyarı",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Sohbette anıldınız",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} yeni anma",
+				"open": "Sohbeti aç"
+			},
 			"mention": {
 				"title": "Ekip görüşmesinde anıldınız",
 				"from": "Gönderen: {{name}}",
@@ -5560,6 +5566,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Bu bağlantı şu anda duraklatılmıştır.",
 		"error": {
 			"title": "Bu davet bağlantısı artık kullanılamıyor",
 			"generic": "Davet bağlantısı kullanılamadı",
@@ -6208,6 +6215,10 @@
 			"endsCurrentUnnamed": "Yanıtlarsanız mevcut görüşmeniz sona erer."
 		},
 		"share": {
+			"signInToJoin": "Bu aramaya katılmak için oturum açın.",
+			"conversationMember": "Bu görüşmenin zaten bir katılımcısısınız. Aramaya görüşmenin sohbetinden katılın.",
+			"openConversations": "Görüşmelerimi aç",
+			"joinForbidden": "Bu bağlantıyla aramaya katılamazsınız.",
 			"open": "Aramayı paylaş",
 			"title": "Aramayı paylaş",
 			"close": "Kapat",
@@ -6587,6 +6598,10 @@
 			"confirm": "Devam",
 			"cancel": "İptal",
 			"failed": "Yanıtınız kaydedilemedi. Mesajınız henüz gönderilmedi."
+		},
+		"lookupFailed": {
+			"title": "Hesabınız kontrol edilemedi",
+			"text": "Mesajınız henüz gönderilmedi ve yazı alanında duruyor. Lütfen bağlantınızı kontrol edip yeniden gönderin."
 		}
 	}
 }

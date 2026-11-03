@@ -30,7 +30,7 @@ const notice = (
 	sessionId,
 	roomRef: `!room${sessionId}`,
 	actorName:
-		kind === 'mention'
+		kind === 'mention' || kind === 'chatMention'
 			? 'Kollegin Weber'
 			: kind === 'handover'
 				? 'Kollege Braun'
@@ -41,7 +41,9 @@ const notice = (
 			? `/sessions/user/view/session/${sessionId}?caseHandoverRequestId=7`
 			: kind === 'mention'
 				? `/sessions/consultant/sessionPreview?sessionId=${sessionId}&teamDiscussion=1&roomId=!team${sessionId}`
-				: `/sessions/consultant/sessionView/session/${sessionId}?caseHandoverRequestId=7`,
+				: kind === 'chatMention'
+					? `/sessions/consultant/sessionView/!room${sessionId}/${sessionId}`
+					: `/sessions/consultant/sessionView/session/${sessionId}?caseHandoverRequestId=7`,
 	...overrides
 });
 
@@ -113,6 +115,20 @@ export const Mention: Story = {
 			canvas.getByRole('button', { name: 'Team-Besprechung öffnen' })
 		);
 		await waitFor(() => expect(canvas.queryByRole('status')).toBeNull());
+	}
+};
+
+export const ChatMention: Story = {
+	name: 'Erwähnung in einem normalen Chat',
+	args: { notices: [notice('chatMention', '42')] },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const card = await canvas.findByRole('status');
+		await expect(card).toHaveTextContent('Erwähnung im Chat');
+		await expect(card).toHaveTextContent('Von Kollegin Weber');
+		await expect(
+			canvas.getByRole('button', { name: 'Chat öffnen' })
+		).toBeVisible();
 	}
 };
 

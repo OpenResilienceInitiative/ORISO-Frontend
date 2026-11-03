@@ -142,6 +142,13 @@ export const CallPrejoinDialog = ({
 				}
 			})
 		)
+			.then((result) => {
+				// Refused without a knock (e.g. withdrawn, no link here): the
+				// card says it; nothing is left to wait for in this window.
+				if (result !== undefined && result !== 'joined') {
+					onCloseRef.current();
+				}
+			})
 			.catch(() => undefined)
 			.finally(() => setBusy(false));
 	};
@@ -222,7 +229,11 @@ export const CallPrejoinDialog = ({
 					if (knock) knockState?.close();
 					onClose();
 				}}
-				onKnockAgain={() => knockState?.knockAgain()}
+				/* Knocking again goes through the link; without it on this
+				   device the refusal offers only "Schließen" (FE#1893). */
+				onKnockAgain={
+					knock?.token ? () => knockState?.knockAgain() : undefined
+				}
 				sheet={sheet}
 			/>
 		</>

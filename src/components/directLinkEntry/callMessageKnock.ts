@@ -41,6 +41,21 @@ export const takeAdmittedJoin = (sessionId: number) => {
 };
 
 /**
+ * Who can be sent to the lobby at all. The server's call policy
+ * (ORISO-UserService `MatrixRtcCallPolicyService`, KNOCK_NOT_ADMITTED) gates
+ * only an advice seeker whose latest direct-link knock in the conversation
+ * is not ADMITTED; direct links are 1:1. A counsellor and a group member
+ * join directly.
+ */
+export const callCardMayKnock = ({
+	isAsker,
+	isGroup
+}: {
+	isAsker: boolean;
+	isGroup: boolean;
+}): boolean => isAsker && !isGroup;
+
+/**
  * The pre-join check that is open over the call message (#2016). It is the
  * one window: it waits for the counsellor itself, so no second dialog.
  */
@@ -70,6 +85,36 @@ export const releaseKnock = (knockId: number) => {
 	claimedKnocks.delete(knockId);
 };
 export const isKnockClaimed = (knockId: number) => claimedKnocks.has(knockId);
+
+/**
+ * Turned down before, and this device has no link to knock again with: the
+ * server would refuse the call, so the lobby shows the refusal instead of
+ * opening a call that cannot connect. Nothing waits for an admission. With
+ * the device check open (#2016) the refusal shows in that same window.
+ */
+const showRefusal = (
+	sessionId: number,
+	own: CallKnock,
+	join: () => Promise<CallJoinResult>,
+	{ onKnock }: JoinOrKnockDeps
+): CallJoinResult => {
+	const refused: PendingKnock = {
+		token: '',
+		knockId: own.id,
+		sessionId,
+		medium: own.medium,
+		status: 'DECLINED',
+		joinExisting: true
+	};
+	rememberPendingKnock(refused);
+	if (onKnock) {
+		claimKnock(refused.knockId);
+		onKnock(refused, join);
+	} else {
+		announcePendingKnock();
+	}
+	return 'joined';
+};
 
 const waitOn = (
 	sessionId: number,
@@ -115,7 +160,10 @@ export const admissionAction = (
  * 1. Let in before (cache, else the server): join.
  * 2. Still waiting (e.g. knocked on another device): the wait dialog.
  * 3. A direct-link conversation without admission: knock through the link.
- * 4. Anything else (never knocked, no link known): the plain join, and the
+ * 4. Turned down or withdrawn and no link on this device: no call, because
+ *    the server refuses it — the refusal in the lobby, or the card's
+ *    "cannot join" for a withdrawn knock (a new knock needs the link).
+ * 5. Anything else (never knocked, lookup failed): the plain join, and the
  *    server's call policy decides.
  */
 export const joinOrKnock = async (
@@ -162,7 +210,14 @@ export const joinOrKnock = async (
 			deps
 		);
 	}
-	if (!link) return join();
+	if (!link) {
+		/* Turned down or withdrawn, and no link here to knock again: the
+		   server refuses the call (KNOCK_NOT_ADMITTED), so none is opened. */
+		if (own?.status === 'DECLINED')
+			return showRefusal(sessionId, own, joinCall, deps);
+		if (own?.status === 'CANCELLED') return 'unavailable';
+		return join();
+	}
 
 	let conversation;
 	try {

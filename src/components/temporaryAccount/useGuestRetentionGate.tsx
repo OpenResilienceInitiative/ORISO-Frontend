@@ -22,8 +22,10 @@ import {
  * stay. `gate(proceed)` returns `true` when it took over: `proceed` then runs
  * after the answer, or not at all when the guest cancels (the draft stays).
  * Until the account is known, a send waits for the lookup (retried when it
- * failed), at most `LOOKUP_WAIT_MS`; if it fails again or takes longer, the
- * send goes out unasked, as for no account.
+ * failed), at most `LOOKUP_WAIT_MS`. #2009: if it fails again or takes longer,
+ * the send does not go out (fail closed): the person is told, the draft
+ * stays, and the next send tries the lookup again. Only a lookup that
+ * answered "no temporary account" sends unasked.
  */
 export const LOOKUP_WAIT_MS = 5_000;
 
@@ -54,9 +56,22 @@ export const useGuestRetentionGate = (enabled: boolean) => {
 				.catch(() => undefined)
 				.then(() => {
 					if (pending.current !== proceed) return;
-					if (
-						needsRetentionAnswer(getOwnTemporaryAccount().account)
-					) {
+					const own = getOwnTemporaryAccount();
+					if (own.status !== 'ready') {
+						// Unknown is not "no account": hold the message.
+						pending.current = null;
+						// Fixed id: repeated tries show one notice, not a stack.
+						addNotification({
+							id: 'temporaryAccount.lookupFailed',
+							notificationType: NOTIFICATION_TYPE_ERROR,
+							title: t('temporaryAccount.lookupFailed.title'),
+							text: t('temporaryAccount.lookupFailed.text'),
+							closeable: true,
+							announce: 'alert'
+						});
+						return;
+					}
+					if (needsRetentionAnswer(own.account)) {
 						setOpen(true);
 						return;
 					}
@@ -65,7 +80,7 @@ export const useGuestRetentionGate = (enabled: boolean) => {
 				});
 			return true;
 		},
-		[account, enabled, status]
+		[account, addNotification, enabled, status, t]
 	);
 
 	const confirm = useCallback(

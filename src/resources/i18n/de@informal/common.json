@@ -2824,6 +2824,9 @@
 			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
 		},
 		"share": {
+			"signInToJoin": "Melde dich an, um diesem Anruf beizutreten.",
+			"conversationMember": "Du gehörst bereits zu diesem Gespräch. Tritt dem Anruf im zugehörigen Chat bei.",
+			"joinForbidden": "Du kannst diesem Anruf über diesen Link nicht beitreten.",
 			"knock": {
 				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
 			},
@@ -2870,6 +2873,10 @@
 			},
 			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
 			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten dein Konto nicht prüfen",
+			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
 	}
 }

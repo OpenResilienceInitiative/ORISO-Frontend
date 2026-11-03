@@ -65,6 +65,58 @@ describe('call manager durable timeline', () => {
 		vi.unstubAllGlobals();
 	});
 
+	const sharedCallSeat = {
+		callId: 'shared-call',
+		sourceRoomId: '!source:example',
+		callRoomId: '!media:example',
+		guestMatrixUserId: '@caller:example',
+		medium: 'VIDEO' as const
+	};
+
+	it('joins and leaves only the encrypted media room of a shared call', async () => {
+		const media = {
+			getMyMembership: () => 'join',
+			hasEncryptionStateEvent: () => true
+		};
+		joinRoom.mockImplementation(async (id) => {
+			getRoom.mockImplementation((wanted) =>
+				wanted === id ? media : null
+			);
+			return media;
+		});
+		session.memberships = [{ sender: '@counsellor:example' }];
+
+		expect(await callManager.joinSharedCall(sharedCallSeat)).toBe('joined');
+		expect(joinRoom.mock.calls).toEqual([['!media:example']]);
+		expect(callManager.getCurrentCall()).toMatchObject({
+			callId: 'shared-call',
+			roomId: '!media:example',
+			isGroup: true
+		});
+		expect(callManager.getCurrentCall()?.signalRoomId).toBeUndefined();
+		expect(apiCallState).not.toHaveBeenCalled();
+		callManager.leaveCall();
+		expect(leave.mock.calls).toEqual([['!media:example']]);
+		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		{ guestMatrixUserId: '@other:example' },
+		{ callRoomId: '!source:example' }
+	])(
+		'refuses a shared-call seat for another account or the source room',
+		async (invalid) => {
+			expect(
+				await callManager.joinSharedCall({
+					...sharedCallSeat,
+					...invalid
+				})
+			).toBe('unavailable');
+			expect(joinRoom).not.toHaveBeenCalled();
+			expect(callManager.getCurrentCall()).toBeNull();
+		}
+	);
+
 	it('does not join a timeline target without a persisted call binding', async () => {
 		vi.mocked(apiCallState).mockResolvedValue(null);
 		getRoom.mockImplementation((id: string) =>

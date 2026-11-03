@@ -2148,6 +2148,12 @@
 		"success": "Success",
 		"warning": "Warning",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Mention in a chat",
+				"from": "From {{name}}",
+				"several": "{{count}} new mentions",
+				"open": "Open chat"
+			},
 			"mention": {
 				"title": "Mention in the team discussion",
 				"from": "From {{name}}",
@@ -5507,6 +5513,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "This link is currently paused.",
 		"error": {
 			"title": "This invite link can no longer be used",
 			"generic": "Invite link could not be used",
@@ -6123,6 +6130,10 @@
 			"endsCurrentUnnamed": "Answering ends your current call."
 		},
 		"share": {
+			"signInToJoin": "Sign in to join this call.",
+			"conversationMember": "You are already part of this conversation. Join the call from its chat.",
+			"openConversations": "Open my conversations",
+			"joinForbidden": "You cannot join this call through this link.",
 			"open": "Share call",
 			"title": "Share call",
 			"close": "Close",
@@ -6502,6 +6513,10 @@
 			"confirm": "Continue",
 			"cancel": "Cancel",
 			"failed": "Your answer could not be saved. Your message has not been sent yet."
+		},
+		"lookupFailed": {
+			"title": "We could not check your account",
+			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
 		}
 	}
 }

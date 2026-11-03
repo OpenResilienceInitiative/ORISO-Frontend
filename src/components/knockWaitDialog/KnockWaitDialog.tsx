@@ -42,7 +42,12 @@ export interface KnockWaitDialogProps {
 	 * the caller closes the dialog. There is no "cancelled" screen.
 	 */
 	onCancel: () => void;
-	onKnockAgain: () => void;
+	/**
+	 * "Erneut anklopfen" after a refusal. Without it there is no way to knock
+	 * again from here (FE#1893: a knock needs the direct link, and this device
+	 * may not have it), so the refusal offers only "Schließen".
+	 */
+	onKnockAgain?: () => void;
 	onClose: () => void;
 	/**
 	 * `ready` only (#2016): "Jetzt beitreten". The caller closes the dialog
@@ -141,12 +146,14 @@ export const KnockWaitDialog = ({
 		onClick: onClose,
 		testId: 'knock-wait-close'
 	};
-	const knockAgain: M3DialogAction = {
-		label: t('knockWait.knockAgain'),
-		onClick: onKnockAgain,
-		primary: true,
-		testId: 'knock-wait-again'
-	};
+	const knockAgain: M3DialogAction | null = onKnockAgain
+		? {
+				label: t('knockWait.knockAgain'),
+				onClick: onKnockAgain,
+				primary: true,
+				testId: 'knock-wait-again'
+			}
+		: null;
 
 	let title: ReactNode;
 	let description: ReactNode;
@@ -294,7 +301,9 @@ export const KnockWaitDialog = ({
 				t('knockWait.declined.descriptionCall'),
 				t('knockWait.declined.descriptionGroup')
 			);
-			actions = [close, knockAgain];
+			actions = knockAgain
+				? [close, knockAgain]
+				: [{ ...close, primary: true }];
 			break;
 	}
 
