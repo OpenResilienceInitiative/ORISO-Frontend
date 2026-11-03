@@ -1157,6 +1157,8 @@
 			},
 			"nameLabel": "Dahili sohbetin adı",
 			"noColleagues": "Seçilebilecek meslektaş yok",
+			"searchPeople": "Kişi ara",
+			"noMatchingPeople": "Eşleşen kişi bulunamadı.",
 			"personCount_one": "{{count}} kişi eklendi",
 			"personCount_other": "{{count}} kişi eklendi",
 			"privateRoomHint": "Yalnızca seçilen kişiler için ayrı, şifreli bir oda oluşturulur.",

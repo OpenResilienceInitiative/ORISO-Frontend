@@ -350,6 +350,10 @@ body.conversationCreate--active .navigation__wrapper {
 	position: fixed;
 	z-index: 1200;
 
+	&__search {
+		padding: 12px 12px 4px;
+	}
+
 	&__row {
 		align-items: center;
 		background: none;
@@ -361,6 +365,7 @@ body.conversationCreate--active .navigation__wrapper {
 		justify-content: space-between;
 		min-height: 48px;
 		padding: 4px 8px 4px 16px;
+		width: 100%;
 
 		&:last-child {
 			border-bottom: none;
@@ -378,7 +383,8 @@ body.conversationCreate--active .navigation__wrapper {
 		font-weight: 500;
 		letter-spacing: 0.25px;
 		line-height: 20px;
-		text-align: center;
+		overflow-wrap: anywhere;
+		text-align: start;
 	}
 
 	&__toggle {
@@ -497,15 +503,14 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__actions {
-		align-items: flex-start;
 		display: flex;
-		gap: 4px;
+		flex-direction: column;
+		gap: 8px;
 		margin-top: auto;
 	}
 
 	&__splitButtonWrap {
-		flex: 1;
-		min-width: 0;
+		width: 100%;
 		position: relative;
 	}
 
@@ -513,15 +518,17 @@ body.conversationCreate--active .navigation__wrapper {
 		align-items: center;
 		background: $cc-disabled-surface;
 		border: none;
-		border-radius: 50%;
+		border-radius: 28px;
 		color: $cc-on-surface-variant;
 		cursor: pointer;
 		display: flex;
 		flex-shrink: 0;
-		height: 56px;
+		font: inherit;
+		min-height: 48px;
 		justify-content: center;
 		opacity: 0.38;
-		width: 56px;
+		padding: 8px 16px;
+		width: 100%;
 
 		&:not(:disabled) {
 			background: $cc-primary;

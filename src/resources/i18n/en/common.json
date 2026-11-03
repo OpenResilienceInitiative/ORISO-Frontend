@@ -921,6 +921,8 @@
 			},
 			"nameLabel": "Internal name",
 			"noColleagues": "No colleagues to choose from",
+			"searchPeople": "Search for a person",
+			"noMatchingPeople": "No matching people found.",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
 			"privateRoomHint": "A separate encrypted room is created for the selected people only.",

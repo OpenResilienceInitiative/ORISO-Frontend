@@ -1157,6 +1157,8 @@
 			},
 			"nameLabel": "ስም ውሽጣዊ ዕላል",
 			"noColleagues": "ክምረጹ ዝኽእሉ መሳርሕቲ የለዉን",
+			"searchPeople": "ሰብ ድለዩ",
+			"noMatchingPeople": "ዝሰማማዕ ሰብ ኣይተረኽበን።",
 			"personCount_one": "{{count}} ሰብ ተወሲኹ",
 			"personCount_other": "{{count}} ሰባት ተወሲኾም",
 			"privateRoomHint": "ንዝተመርጹ ሰባት ጥራይ ብምስጢር ዝተሓለወ ፍሉይ ክፍሊ ይፈጠር።",

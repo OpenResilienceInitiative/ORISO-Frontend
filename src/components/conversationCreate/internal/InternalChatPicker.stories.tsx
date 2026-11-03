@@ -209,6 +209,37 @@ export const ScopePlatform: Story = {
 	}
 };
 
+export const SearchAndSelect: Story = {
+	globals: english,
+	render: ScopePlatform.render,
+	play: async ({ canvasElement }) => {
+		const list = await openPersonList(canvasElement);
+		const picker = within(document.body);
+		const search = picker.getByRole('searchbox');
+		await expect(search).toHaveFocus();
+
+		const rightEdges = [
+			...list.querySelectorAll('.personSelectMenu__toggle')
+		].map((toggle) => toggle.getBoundingClientRect().right);
+		await expect(new Set(rightEdges).size).toBe(1);
+
+		await userEvent.type(search, 'Another organisation');
+		await expect(optionNames(list)).toEqual([
+			'Elena Fischer (Another organisation)'
+		]);
+		await userEvent.keyboard('{ArrowDown}{Enter}');
+		await expect(
+			within(list).getByRole('option', { selected: true })
+		).toBeVisible();
+		await userEvent.click(search);
+		await userEvent.clear(search);
+		await expect(optionNames(list)).toHaveLength(5);
+		await expect(
+			within(list).getByRole('option', { selected: true })
+		).toBeVisible();
+	}
+};
+
 export const SelectionIsTheRecipientList: Story = {
 	name: 'Selection = recipients',
 	parameters: {

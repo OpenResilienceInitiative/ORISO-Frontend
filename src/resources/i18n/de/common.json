@@ -933,6 +933,8 @@
 			},
 			"nameLabel": "Name Interna",
 			"noColleagues": "Keine Kolleg:innen zur Auswahl",
+			"searchPeople": "Person suchen",
+			"noMatchingPeople": "Keine passende Person gefunden.",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
 			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",

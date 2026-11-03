@@ -1162,6 +1162,8 @@
 			},
 			"nameLabel": "Название внутреннего чата",
 			"noColleagues": "Нет коллег для выбора",
+			"searchPeople": "Найти человека",
+			"noMatchingPeople": "Подходящие люди не найдены.",
 			"personCount_one": "Добавлен {{count}} человек",
 			"personCount_other": "Добавлено человек: {{count}}",
 			"privateRoomHint": "Для выбранных людей создаётся отдельная зашифрованная комната.",

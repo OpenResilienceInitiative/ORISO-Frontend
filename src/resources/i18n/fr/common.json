@@ -1157,6 +1157,8 @@
 			},
 			"nameLabel": "Nom de l'échange interne",
 			"noColleagues": "Aucun collègue à sélectionner",
+			"searchPeople": "Rechercher une personne",
+			"noMatchingPeople": "Aucune personne correspondante.",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
 			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
