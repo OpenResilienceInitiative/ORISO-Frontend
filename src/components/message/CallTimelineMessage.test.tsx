@@ -550,3 +550,56 @@ it('falls back to the profile name of a group-call caller when no display name i
 	// Pre-existing behaviour: the profile name is shown when it is all there is.
 	expect(screen.getByText(/startedBy: blinky2/)).toBeTruthy();
 });
+
+it('checks camera and microphone before joining, and joins only on "Jetzt beitreten" (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+
+	fireEvent.click(screen.getByRole('button'));
+	expect(await screen.findByTestId('knock-wait-dialog')).toBeTruthy();
+	expect(onJoin).not.toHaveBeenCalled();
+
+	await act(async () => {
+		fireEvent.click(screen.getByTestId('knock-wait-join'));
+	});
+	expect(onJoin).toHaveBeenCalledTimes(1);
+	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+});
+
+it('joins at once where no device check is asked for (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => false}
+		/>
+	);
+	await act(async () => {
+		fireEvent.click(screen.getByRole('button'));
+	});
+	expect(onJoin).toHaveBeenCalledTimes(1);
+	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+});

@@ -1,14 +1,9 @@
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { UserDataContext } from '../../globalState';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
-import { useLiveCallDevices } from '../waitingRoom/callEntry/useLiveCallDevices';
-import {
-	CallDeviceControls,
-	CallModality
-} from '../waitingRoom/callEntry/callEntryTypes';
-import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
+import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
 import { startRoomCall } from '../call/startRoomCall';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import {
@@ -90,15 +85,10 @@ export const DirectLinkKnock = ({
 	deps = {},
 	pollMs
 }: DirectLinkKnockProps) => {
-	const { userData } = useContext(UserDataContext) ?? ({} as never);
 	const state = useDirectLinkKnock(knock, deps, pollMs);
-	const modality = modalityOf(knock);
-	const [controls, setControls] = useState<CallDeviceControls>({
-		micOn: true,
-		cameraOn: modality === 'video',
-		selection: {}
+	const device = useCallDeviceCheck(modalityOf(knock), {
+		mediaDevices: deps.mediaDevices
 	});
-	const live = useLiveCallDevices(modality, controls, deps.mediaDevices);
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
@@ -117,37 +107,13 @@ export const DirectLinkKnock = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per admission
 	}, [state.phase]);
 
-	const name = userData?.userName ?? '';
-	const avatar = useMemo(
-		() => generateAvatarForUser(userData?.userId || name || 'guest'),
-		[name, userData?.userId]
-	);
-
 	return (
 		<KnockWaitDialog
 			variant="call"
 			phase={state.phase}
-			media={{
-				modality,
-				name,
-				avatar,
-				devices: live.devices,
-				selection: controls.selection,
-				stream: live.stream,
-				micLevel: live.micLevel,
-				micOn: controls.micOn,
-				cameraOn: controls.cameraOn,
-				cameraAvailable: !live.cameraMissing,
-				onToggleMic: () =>
-					setControls((now) => ({ ...now, micOn: !now.micOn })),
-				onToggleCamera: () =>
-					setControls((now) => ({ ...now, cameraOn: !now.cameraOn })),
-				onSelectDevice: (kind, id) =>
-					setControls((now) => ({
-						...now,
-						selection: { ...now.selection, [kind]: id }
-					}))
-			}}
+			/* While waiting there is no retry to offer: the preview stays,
+			   with the camera off, as before. */
+			media={{ ...device.check, blocker: undefined }}
 			onCancel={state.cancel}
 			onKnockAgain={state.knockAgain}
 			onClose={state.close}

@@ -45,6 +45,8 @@ import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import {
 	getGroupSeries,
 	getGroupUpcomingDates,
@@ -94,6 +96,7 @@ export const JoinGroupChatView = ({
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
+	const [checkingDevices, setCheckingDevices] = useState(false);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -351,8 +354,24 @@ export const JoinGroupChatView = ({
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
+	/* #2016: the circle's pre-lobby offers the call's device check as an
+	   option; the choice waits for the group's next call. */
+	const offerDeviceCheck = shouldShowDeviceCheck({
+		surface: 'circleLobby',
+		mediaSupported: Boolean(navigator.mediaDevices?.getUserMedia),
+		roomRef: activeSession.rid
+	});
 	const overlays = (
 		<>
+			{checkingDevices && activeSession.rid && (
+				<CallPrejoinDialog
+					modality="video"
+					purpose="check"
+					roomRef={activeSession.rid}
+					onDone={() => setCheckingDevices(false)}
+					onClose={() => setCheckingDevices(false)}
+				/>
+			)}
 			{requestOverlayVisible && (
 				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
 			)}
@@ -413,6 +432,11 @@ export const JoinGroupChatView = ({
 					}
 					onJoin={handleButtonClick}
 					joinBusy={isRequestInProgress}
+					onDeviceCheck={
+						offerDeviceCheck
+							? () => setCheckingDevices(true)
+							: undefined
+					}
 				/>
 				{overlays}
 			</div>

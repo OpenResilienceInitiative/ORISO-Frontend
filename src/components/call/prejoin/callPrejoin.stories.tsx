@@ -1,10 +1,7 @@
 import * as React from 'react';
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { useMediaQuery } from '@mui/material';
-import MicRoundedIcon from '@mui/icons-material/MicRounded';
-import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
 import {
 	desktop1440Globals,
 	MessageStoryShell,
@@ -12,22 +9,7 @@ import {
 } from '../../message/messageStoryShell';
 import { CallTimelineMessage } from '../../message/CallTimelineMessage';
 import '../../message/message.styles.scss';
-import '../../knockWaitDialog/knockWaitDialog.styles.scss';
 import type { CallLifecycleMessage } from '../../../utils/callLifecycleMessage';
-import { M3Dialog } from '../../m3Dialog/M3Dialog';
-import { VideoCheck } from '../../waitingRoom/callEntry/VideoCheck';
-import { DeviceToggle } from '../../waitingRoom/callEntry/DeviceToggle';
-import { DevicePicker } from '../../waitingRoom/callEntry/DevicePicker';
-import { MicLevelMeter } from '../../waitingRoom/callEntry/MicLevelMeter';
-import { CallNotice } from '../../waitingRoom/callEntry/CallNotice';
-import {
-	CallDeviceKind,
-	CallDevices,
-	CallDeviceSelection,
-	CallEntryBlocker,
-	CallModality
-} from '../../waitingRoom/callEntry/callEntryTypes';
-import type { Avatar } from '../../../utils/pseudonymGenerator';
 import { JoinGroupChatView } from '../../groupChat/JoinGroupChatView';
 import {
 	buildGroupStageListItem,
@@ -39,26 +21,97 @@ import {
 import { useGroupChatInfoFixture } from '../../groupChat/groupChatInfoStoryFixture';
 import type { GroupChatItemInterface } from '../../../globalState/interfaces';
 import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
+import { forgetAllJoinMedia, peekJoinMedia } from './callPrejoin';
 
-/* ---------- Fixtures ---------- */
+/* ---------- The browser's devices, faked ---------- */
 
-const devices: CallDevices = {
-	camera: [
-		{ id: 'cam-1', label: 'FaceTime HD-Kamera' },
-		{ id: 'cam-2', label: 'Logitech C920' }
-	],
-	microphone: [
-		{ id: 'mic-1', label: 'MacBook Pro-Mikrofon' },
-		{ id: 'mic-2', label: 'Jabra Evolve2 Headset' }
-	],
-	speaker: [{ id: 'spk-1', label: 'MacBook Pro-Lautsprecher' }]
+type DeviceCase = 'ok' | 'permissionDenied' | 'noCamera' | 'noMicrophone';
+
+const LABELS: [MediaDeviceKind, string, string][] = [
+	['videoinput', 'cam-1', 'FaceTime HD-Kamera'],
+	['videoinput', 'cam-2', 'Logitech C920'],
+	['audioinput', 'mic-1', 'MacBook Pro-Mikrofon'],
+	['audioinput', 'mic-2', 'Jabra Evolve2 Headset'],
+	['audiooutput', 'spk-1', 'MacBook Pro-Lautsprecher']
+];
+
+/**
+ * Stands in for `navigator.mediaDevices`, so the real check
+ * (`useLiveCallDevices`) runs without a permission prompt: a painted canvas
+ * as the camera, a silent tone as the microphone, or the browser's refusals.
+ */
+const fakeMediaDevices = (which: DeviceCase) => {
+	const tracks: MediaStreamTrack[] = [];
+	const contexts: AudioContext[] = [];
+	const refuse = (name: string) =>
+		Promise.reject(new DOMException(name, name));
+	const mediaDevices = {
+		getUserMedia: async ({ video }: MediaStreamConstraints) => {
+			if (which === 'permissionDenied') return refuse('NotAllowedError');
+			if (which === 'noMicrophone') return refuse('NotFoundError');
+			if (video && which === 'noCamera') return refuse('NotFoundError');
+			const context = new AudioContext();
+			contexts.push(context);
+			const own = context.createMediaStreamDestination().stream;
+			if (video) {
+				const canvas = document.createElement('canvas');
+				canvas.width = 640;
+				canvas.height = 360;
+				const paint = canvas.getContext('2d')!;
+				const light = paint.createRadialGradient(
+					200,
+					90,
+					20,
+					320,
+					180,
+					420
+				);
+				light.addColorStop(0, '#8a7f74');
+				light.addColorStop(1, '#2b2a2e');
+				paint.fillStyle = light;
+				paint.fillRect(0, 0, 640, 360);
+				canvas
+					.captureStream()
+					.getTracks()
+					.forEach((t) => own.addTrack(t));
+			}
+			tracks.push(...own.getTracks());
+			return own;
+		},
+		enumerateDevices: async () =>
+			LABELS.filter(
+				([kind]) => !(which === 'noCamera' && kind === 'videoinput')
+			).map(([kind, deviceId, label]) => ({
+				kind,
+				deviceId,
+				label,
+				groupId: deviceId
+			})),
+		addEventListener: () => undefined,
+		removeEventListener: () => undefined
+	} as unknown as MediaDevices;
+	return { mediaDevices, tracks, contexts };
 };
 
-/** A laptop without a webcam: only the microphone is checked. */
-const noCamera: CallDevices = { ...devices, camera: [] };
+let fake: ReturnType<typeof fakeMediaDevices> | undefined;
 
-/** Fixed animal, so screenshots and tests do not reroll. */
-const owl: Avatar = { file: 'owl.svg', bg: '#FCE2C4', iconColor: '#1b1b1c' };
+/** The app reads `navigator.mediaDevices`; so does this story. */
+const withDevices = (which: DeviceCase) => () => {
+	fake = fakeMediaDevices(which);
+	Object.defineProperty(navigator, 'mediaDevices', {
+		value: fake.mediaDevices,
+		configurable: true
+	});
+	return () => {
+		// Back to the browser's own (the prototype's getter).
+		delete (navigator as { mediaDevices?: MediaDevices }).mediaDevices;
+		fake?.contexts.forEach((context) => void context.close());
+		fake = undefined;
+		forgetAllJoinMedia();
+	};
+};
+
+/* ---------- Variant 1: the call message in the chat ---------- */
 
 /** A running video call a counsellor started, as the room records it. */
 const runningCall: CallLifecycleMessage = {
@@ -72,200 +125,27 @@ const runningCall: CallLifecycleMessage = {
 	present: [{ userId: '@berger:example', displayName: 'Frau Berger' }]
 };
 
-/* ---------- The composition (Storybook only in this step) ---------- */
-
-interface DeviceDialogProps {
-	modality: CallModality;
-	devices: CallDevices;
-	blocker?: CallEntryBlocker;
-	cameraAvailable?: boolean;
-	/** `join`: from the call message. `check`: the circle's option. */
-	mode: 'join' | 'check';
-	onJoin: (state: { micOn: boolean; cameraOn: boolean }) => void;
-	onCancel: () => void;
-	onRetry?: () => void;
-}
-
 /**
- * Step 1 of #2016: nothing new, only arranged. The knock wait dialog's
- * shell (`M3Dialog` with its `knockWaitDialog` sheet styles, #1834) holding
- * the guest waiting room's device check (`VideoCheck`, `DeviceToggle`,
- * `MicLevelMeter`, `DevicePicker`, `CallNotice` from `waitingRoom/callEntry`).
+ * The existing chat row with the running call, as the app renders it.
+ * `deviceCheck` answers what `MessageItemComponent` asks
+ * `shouldShowDeviceCheck`; `onJoin` stands in for `callManager`.
  */
-const DeviceDialog = ({
-	modality,
-	devices: list,
-	blocker,
-	cameraAvailable = true,
-	mode,
-	onJoin,
-	onCancel,
-	onRetry
-}: DeviceDialogProps) => {
+const FromCallMessage = ({ onJoin }: { onJoin: () => void }) => {
 	const phone = useMediaQuery('(max-width: 599.95px)');
-	const [micOn, setMicOn] = useState(true);
-	const [cameraOn, setCameraOn] = useState(modality === 'video');
-	const [selection, setSelection] = useState<CallDeviceSelection>({});
-	const video = modality === 'video';
-	const kinds: CallDeviceKind[] = video
-		? ['microphone', 'camera']
-		: ['microphone'];
-	const pickers = kinds.filter((kind) => list[kind].length > 1);
-	return (
-		<M3Dialog
-			onClose={onCancel}
-			closeLabel="Schließen"
-			width={480}
-			title="Kamera und Mikrofon prüfen"
-			description={
-				mode === 'join'
-					? 'Niemand sieht oder hört Sie, bevor Sie beitreten. Die Vorschau sehen nur Sie.'
-					: 'Ihre Auswahl gilt, wenn Sie in dieser Gruppe einem Gespräch beitreten. Die Vorschau sehen nur Sie.'
-			}
-			actions={[
-				...(blocker && onRetry
-					? [
-							{
-								label: 'Erneut prüfen',
-								onClick: onRetry,
-								testId: 'call-prejoin-retry'
-							}
-						]
-					: []),
-				{
-					label: mode === 'join' ? 'Jetzt beitreten' : 'Fertig',
-					onClick: () =>
-						onJoin({
-							micOn,
-							cameraOn: cameraOn && cameraAvailable
-						}),
-					primary: true,
-					testId: 'call-prejoin-join'
-				}
-			]}
-			showDivider={false}
-			className={
-				phone
-					? 'knockWaitDialog knockWaitDialog--sheet'
-					: 'knockWaitDialog'
-			}
-			data-testid="call-prejoin-dialog"
-		>
-			{blocker ? (
-				<CallNotice blocker={blocker} />
-			) : (
-				<div className="knockWaitDialog__media">
-					{video ? (
-						<VideoCheck
-							name="eule_mika_4821"
-							avatar={owl}
-							cameraOn={cameraOn && cameraAvailable}
-							cameraAvailable={cameraAvailable}
-							micOn={micOn}
-							micLevel={0.45}
-							onToggleCamera={() => setCameraOn((on) => !on)}
-							onToggleMic={() => setMicOn((on) => !on)}
-						/>
-					) : (
-						<div className="knockWaitDialog__voice">
-							<DeviceToggle
-								tone="onSurface"
-								on={micOn}
-								onToggle={() => setMicOn((on) => !on)}
-								iconOn={<MicRoundedIcon />}
-								iconOff={<MicOffRoundedIcon />}
-								name="Mikrofon"
-								labelOn="Mikrofon aus"
-								labelOff="Mikrofon an"
-								testId="toggle-mic"
-							/>
-							{micOn && (
-								<MicLevelMeter
-									level={0.45}
-									label="Lautstärke Ihres Mikrofons"
-								/>
-							)}
-						</div>
-					)}
-					{pickers.length > 0 && (
-						<div className="knockWaitDialog__pickers">
-							{pickers.map((kind) => (
-								<DevicePicker
-									key={kind}
-									kind={kind}
-									kindLabel={
-										kind === 'camera'
-											? 'Kamera'
-											: 'Mikrofon'
-									}
-									devices={list[kind]}
-									selectedId={selection[kind]}
-									onSelect={(id) =>
-										setSelection((now) => ({
-											...now,
-											[kind]: id
-										}))
-									}
-								/>
-							))}
-						</div>
-					)}
-				</div>
-			)}
-		</M3Dialog>
-	);
-};
-
-/* ---------- Variant 1: the call message in the chat ---------- */
-
-type CallArgs = Omit<DeviceDialogProps, 'mode' | 'onCancel'> & {
-	onCancel: () => void;
-	onCallJoin: () => void;
-};
-
-/**
- * The existing chat row with the running call. "Beitreten" opens the device
- * check first; "Jetzt beitreten" closes it and only then joins the call.
- */
-const FromCallMessage = ({
-	onCancel,
-	onCallJoin,
-	onJoin,
-	...props
-}: CallArgs) => {
-	const phone = useMediaQuery('(max-width: 599.95px)');
-	const [open, setOpen] = useState(false);
 	return (
 		<div style={{ display: 'flex', justifyContent: 'center' }}>
-			<div
-				style={{ width: '100%', maxWidth: 900 }}
-				inert={open || undefined}
-			>
+			<div style={{ width: '100%', maxWidth: 900 }}>
 				<MessageStoryShell compact={phone}>
 					<CallTimelineMessage
 						call={runningCall}
+						deviceCheck={() => true}
 						onJoin={() => {
-							setOpen(true);
+							onJoin();
 							return Promise.resolve('joined' as const);
 						}}
 					/>
 				</MessageStoryShell>
 			</div>
-			{open && (
-				<DeviceDialog
-					{...props}
-					mode="join"
-					onCancel={() => {
-						onCancel();
-						setOpen(false);
-					}}
-					onJoin={(state) => {
-						onJoin(state);
-						setOpen(false);
-						onCallJoin();
-					}}
-				/>
-			)}
 		</div>
 	);
 };
@@ -274,17 +154,12 @@ const FromCallMessage = ({
 
 const FUTURE_SECONDS = 2 * 86400 + 3 * 3600 + 21 * 60 + 50;
 
-type CircleArgs = Omit<DeviceDialogProps, 'mode' | 'onCancel'> & {
-	layout: 'desktop' | 'mobile';
-	onCancel: () => void;
-};
-
 /**
- * The existing circle pre-lobby for a signed-in advice seeker (clock, start
- * time, "Mehr erfahren", locked "Beitreten"), unchanged, with the same device
- * check over it as an option.
+ * The existing circle pre-lobby of a signed-in advice seeker (clock, start
+ * time, "Mehr erfahren", locked "Beitreten"), as `JoinGroupChatView` renders
+ * it, now with "Kamera & Mikrofon" in its quiet row.
  */
-const CircleLobby = ({ layout, onCancel, onJoin, ...props }: CircleArgs) => {
+const CircleLobby = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
 	const listItem = React.useMemo(() => {
 		const item = buildGroupStageListItem(FUTURE_SECONDS);
 		(item.chat as GroupChatItemInterface).assignedAgencies = [
@@ -293,31 +168,14 @@ const CircleLobby = ({ layout, onCancel, onJoin, ...props }: CircleArgs) => {
 		return item;
 	}, []);
 	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
-	const [open, setOpen] = useState(true);
 	return (
-		<>
-			<GroupChatStage
-				listItem={listItem}
-				layout={layout}
-				viewer={groupStageAsker}
-			>
-				<JoinGroupChatView />
-			</GroupChatStage>
-			{open && (
-				<DeviceDialog
-					{...props}
-					mode="check"
-					onCancel={() => {
-						onCancel();
-						setOpen(false);
-					}}
-					onJoin={(state) => {
-						onJoin(state);
-						setOpen(false);
-					}}
-				/>
-			)}
-		</>
+		<GroupChatStage
+			listItem={listItem}
+			layout={layout}
+			viewer={groupStageAsker}
+		>
+			<JoinGroupChatView />
+		</GroupChatStage>
 	);
 };
 
@@ -328,10 +186,13 @@ const page = (canvasElement: HTMLElement) =>
 	within(canvasElement.ownerDocument.body);
 
 const dialog = (canvasElement: HTMLElement) =>
-	page(canvasElement).findByTestId('call-prejoin-dialog');
+	page(canvasElement).findByTestId('knock-wait-dialog');
 
-const joinButton = (canvasElement: HTMLElement) =>
+const callJoin = (canvasElement: HTMLElement) =>
 	page(canvasElement).findByRole('button', { name: /Beitreten|Join call/ });
+
+const circleOption = (canvasElement: HTMLElement) =>
+	page(canvasElement).findByTestId('group-entry-devices');
 
 /** MUI fades the dialog in; screenshots and axe need it settled. */
 const expectSettled = async (canvasElement: HTMLElement) => {
@@ -344,8 +205,14 @@ const expectSettled = async (canvasElement: HTMLElement) => {
 const expectClosed = (canvasElement: HTMLElement) =>
 	waitFor(() =>
 		expect(
-			page(canvasElement).queryByTestId('call-prejoin-dialog')
+			page(canvasElement).queryByTestId('knock-wait-dialog')
 		).toBeNull()
+	);
+
+/** The camera and microphone are let go once the dialog closes. */
+const expectReleased = () =>
+	waitFor(() =>
+		expect(fake!.tracks.every((t) => t.readyState === 'ended')).toBe(true)
 	);
 
 /** Phone: a bottom sheet, flush with the bottom and both sides. */
@@ -360,10 +227,20 @@ const expectBottomSheet = async (canvasElement: HTMLElement) => {
 	);
 };
 
+/** The preview is live: the picture is on and the pickers are filled. */
+const expectLivePreview = async (canvasElement: HTMLElement) => {
+	const p = page(canvasElement);
+	await waitFor(() => expect(fake!.tracks.length).toBeGreaterThan(1));
+	await expect(await p.findByTestId('video-check')).toBeVisible();
+	await expect(
+		await p.findByRole('button', { name: /^Mikrofon: / })
+	).toBeVisible();
+};
+
 /**
  * The name chip sits on the camera picture; axe cannot compute contrast over
- * a picture. Scoped exactly as in the knock wait dialog's stories; the
- * camera-off and blocker stories keep the full check.
+ * a picture. Scoped exactly as in the knock wait dialog's stories (the phone
+ * sheet's title over the chat included); everything else is audited.
  */
 const textOnThePicture = {
 	a11y: {
@@ -387,163 +264,19 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'#2016 — camera and microphone check for people who are already signed in. Nothing new is built: the knock wait dialog (#1834) holds the guest waiting room\'s device check. **Call:** "Beitreten" on the call message in the chat opens it, "Jetzt beitreten" joins. **Circle:** the existing self-help pre-lobby with the same check as an option. Desktop: centred dialog; phone: bottom sheet.'
+					'#2016 — camera and microphone check for people who are already signed in. Nothing new is built: the knock wait dialog (#1834, phase `ready`) holds the guest waiting room\'s device check (`CallDeviceCheck`). **Call:** "Beitreten" on the call message in the chat opens it, "Jetzt beitreten" closes it and joins. **Circle:** the existing self-help pre-lobby offers the same check as an option ("Kamera & Mikrofon"); the choice waits for the group\'s next call. Desktop: centred dialog; phone: bottom sheet. The browser\'s devices are faked, so the stories never ask for a camera.'
 			}
 		}
 	},
-	args: {
-		onCancel: fn(),
-		onJoin: fn(),
-		onRetry: fn()
-	}
+	args: { onJoin: fn() }
 } satisfies Meta;
 export default meta;
 
-type Story = StoryObj<CallArgs & CircleArgs>;
+type Story = StoryObj<{ onJoin: () => void }>;
 
-const video = { modality: 'video', devices } satisfies Partial<CallArgs>;
-
-/* ----- Call ----- */
-
-export const CallDevicesOk: Story = {
-	name: 'Call · devices OK · desktop 1440',
-	globals: desktop1440Globals,
-	parameters: textOnThePicture,
-	args: { ...video, onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement, args }) => {
-		const p = page(canvasElement);
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await expect(p.getByTestId('video-check')).toBeVisible();
-		// Not joined yet: the check comes first.
-		await expect(args.onCallJoin).not.toHaveBeenCalled();
-		await userEvent.click(p.getByTestId('call-prejoin-join'));
-		await expectClosed(canvasElement);
-		await expect(args.onJoin).toHaveBeenCalledWith({
-			micOn: true,
-			cameraOn: true
-		});
-		await expect(args.onCallJoin).toHaveBeenCalledTimes(1);
-	}
+const callMessage: Story = {
+	render: (args) => <FromCallMessage {...args} />
 };
-
-export const CallCameraOffThenJoin: Story = {
-	name: 'Call · camera switched off before joining',
-	globals: desktop1440Globals,
-	args: { ...video, onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement, args }) => {
-		const p = page(canvasElement);
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await userEvent.click(p.getByTestId('toggle-camera'));
-		await userEvent.click(p.getByTestId('call-prejoin-join'));
-		await expect(args.onJoin).toHaveBeenCalledWith({
-			micOn: true,
-			cameraOn: false
-		});
-	}
-};
-
-export const CallCancel: Story = {
-	name: 'Call · close without joining',
-	globals: desktop1440Globals,
-	parameters: textOnThePicture,
-	args: { ...video, onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement, args }) => {
-		const p = page(canvasElement);
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await userEvent.click(p.getByRole('button', { name: 'Schließen' }));
-		await expectClosed(canvasElement);
-		await expect(args.onCancel).toHaveBeenCalledTimes(1);
-		await expect(args.onCallJoin).not.toHaveBeenCalled();
-	}
-};
-
-export const CallDevicesOkPhone: Story = {
-	name: 'Call · devices OK · phone 390',
-	globals: phone390Globals,
-	parameters: textOnThePicture,
-	args: { ...video, onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement }) => {
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await expectBottomSheet(canvasElement);
-	}
-};
-
-export const CallPermissionDenied: Story = {
-	name: 'Call · permission denied',
-	globals: desktop1440Globals,
-	args: { ...video, blocker: 'permissionDenied', onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement, args }) => {
-		const p = page(canvasElement);
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await expect(p.getByTestId('call-notice')).toHaveAttribute(
-			'data-blocker',
-			'permissionDenied'
-		);
-		await userEvent.click(p.getByTestId('call-prejoin-retry'));
-		await expect(args.onRetry).toHaveBeenCalledTimes(1);
-	}
-};
-
-export const CallPermissionDeniedPhone: Story = {
-	name: 'Call · permission denied · phone 390',
-	globals: phone390Globals,
-	args: { ...video, blocker: 'permissionDenied', onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement }) => {
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await expectBottomSheet(canvasElement);
-	}
-};
-
-export const CallNoCamera: Story = {
-	name: 'Call · no camera',
-	globals: desktop1440Globals,
-	args: {
-		...video,
-		devices: noCamera,
-		cameraAvailable: false,
-		onCallJoin: fn()
-	},
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement, args }) => {
-		const p = page(canvasElement);
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await expect(p.getByTestId('toggle-camera')).toBeDisabled();
-		await userEvent.click(p.getByTestId('call-prejoin-join'));
-		await expect(args.onJoin).toHaveBeenCalledWith({
-			micOn: true,
-			cameraOn: false
-		});
-	}
-};
-
-export const CallNoMicrophone: Story = {
-	name: 'Call · no microphone',
-	globals: desktop1440Globals,
-	args: { ...video, blocker: 'noDevice', onCallJoin: fn() },
-	render: (args) => <FromCallMessage {...args} />,
-	play: async ({ canvasElement }) => {
-		await userEvent.click(await joinButton(canvasElement));
-		await expectSettled(canvasElement);
-		await expect(
-			page(canvasElement).getByTestId('call-notice')
-		).toHaveAttribute('data-blocker', 'noDevice');
-	}
-};
-
-/* ----- Circle ----- */
 
 const circleParameters = {
 	router: {
@@ -551,40 +284,211 @@ const circleParameters = {
 	}
 };
 
+/* ----- Call ----- */
+
+export const CallDevicesOk: Story = {
+	...callMessage,
+	name: 'Call · devices OK · desktop 1440',
+	globals: desktop1440Globals,
+	parameters: textOnThePicture,
+	beforeEach: withDevices('ok'),
+	play: async ({ canvasElement, args }) => {
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		// Not joined yet: the check comes first.
+		await expect(args.onJoin).not.toHaveBeenCalled();
+	}
+};
+
+export const CallCameraOffThenJoin: Story = {
+	...callMessage,
+	name: 'Call · camera off, join: the choice goes to the call',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('ok'),
+	play: async ({ canvasElement, args }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.click(p.getByTestId('toggle-camera'));
+		await userEvent.click(p.getByTestId('knock-wait-join'));
+		await expectClosed(canvasElement);
+		// Closed before the call starts, so the call gets the camera.
+		await expectReleased();
+		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
+		await expect(peekJoinMedia(runningCall.roomRef)).toEqual({
+			audio_enabled: true,
+			video_enabled: false
+		});
+	}
+};
+
+export const CallClose: Story = {
+	...callMessage,
+	name: 'Call · Escape closes without joining',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('ok'),
+	play: async ({ canvasElement, args }) => {
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.keyboard('{Escape}');
+		await expectClosed(canvasElement);
+		await expectReleased();
+		await expect(args.onJoin).not.toHaveBeenCalled();
+		await expect(peekJoinMedia(runningCall.roomRef)).toBe(null);
+	}
+};
+
+export const CallDevicesOkPhone: Story = {
+	...callMessage,
+	name: 'Call · devices OK · phone 390',
+	globals: phone390Globals,
+	parameters: textOnThePicture,
+	beforeEach: withDevices('ok'),
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await expectBottomSheet(canvasElement);
+	}
+};
+
+export const CallPermissionDenied: Story = {
+	...callMessage,
+	name: 'Call · permission denied',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('permissionDenied'),
+	play: async ({ canvasElement, args }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expect(await p.findByTestId('call-notice')).toHaveAttribute(
+			'data-blocker',
+			'permissionDenied'
+		);
+		await expect(p.getByTestId('knock-wait-retry')).toBeVisible();
+		// Joining stays possible; the call then asks the browser itself.
+		await userEvent.click(p.getByTestId('knock-wait-join'));
+		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
+		await expect(peekJoinMedia(runningCall.roomRef)).toBe(null);
+	}
+};
+
+export const CallPermissionDeniedPhone: Story = {
+	...callMessage,
+	name: 'Call · permission denied · phone 390',
+	globals: phone390Globals,
+	parameters: textOnThePicture,
+	beforeEach: withDevices('permissionDenied'),
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await page(canvasElement).findByTestId('call-notice');
+		await expectBottomSheet(canvasElement);
+	}
+};
+
+export const CallNoCamera: Story = {
+	...callMessage,
+	name: 'Call · no camera',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('noCamera'),
+	play: async ({ canvasElement, args }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await waitFor(() =>
+			expect(p.getByTestId('toggle-camera')).toBeDisabled()
+		);
+		await userEvent.click(p.getByTestId('knock-wait-join'));
+		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
+		await expect(peekJoinMedia(runningCall.roomRef)).toEqual({
+			audio_enabled: true,
+			video_enabled: false
+		});
+	}
+};
+
+export const CallNoMicrophone: Story = {
+	...callMessage,
+	name: 'Call · no microphone',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('noMicrophone'),
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expect(
+			await page(canvasElement).findByTestId('call-notice')
+		).toHaveAttribute('data-blocker', 'noDevice');
+	}
+};
+
+/* ----- Circle ----- */
+
+export const CircleLobbyOption: Story = {
+	name: 'Circle · pre-lobby offers the check · desktop 1440',
+	globals: desktop1440Globals,
+	parameters: circleParameters,
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="desktop" />,
+	play: async ({ canvasElement }) => {
+		// The circle's own elements stay: clock, start time, locked join.
+		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+		await expect(await circleOption(canvasElement)).toBeVisible();
+		// An option: nothing is asked of the browser until it is opened.
+		await expect(fake!.tracks).toHaveLength(0);
+	}
+};
+
 export const CircleDevicesOk: Story = {
-	name: 'Circle · pre-lobby with device check · desktop 1440',
+	name: 'Circle · device check open · desktop 1440',
 	globals: desktop1440Globals,
 	parameters: { ...circleParameters, ...textOnThePicture },
-	args: { ...video, layout: 'desktop' },
-	render: (args) => <CircleLobby {...args} />,
-	play: async ({ canvasElement, args }) => {
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="desktop" />,
+	play: async ({ canvasElement }) => {
+		await userEvent.click(await circleOption(canvasElement));
 		await expectSettled(canvasElement);
-		// The circle's own elements stay: the clock and its start time.
-		await waitFor(() =>
-			expect(
-				canvasElement.querySelector('[data-cy="group-entry-room"]')
-			).not.toBeNull()
-		);
-		await userEvent.click(
-			page(canvasElement).getByTestId('call-prejoin-join')
-		);
+		await expectLivePreview(canvasElement);
+	}
+};
+
+export const CircleMicOffDone: Story = {
+	name: 'Circle · mic off, "Fertig": kept for the group\'s call',
+	globals: desktop1440Globals,
+	parameters: circleParameters,
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="desktop" />,
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await circleOption(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.click(p.getByTestId('toggle-mic'));
+		await userEvent.click(p.getByRole('button', { name: 'Fertig' }));
 		await expectClosed(canvasElement);
-		await expect(args.onJoin).toHaveBeenCalledWith({
-			micOn: true,
-			cameraOn: true
+		await expectReleased();
+		await expect(peekJoinMedia(GROUP_STAGE_ROOM_ID)).toEqual({
+			audio_enabled: false,
+			video_enabled: true
 		});
+		// Back in the unchanged pre-lobby.
 		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
 	}
 };
 
 export const CircleDevicesOkPhone: Story = {
-	name: 'Circle · pre-lobby with device check · phone 390',
+	name: 'Circle · device check open · phone 390',
 	globals: phone390Globals,
 	parameters: { ...circleParameters, ...textOnThePicture },
-	args: { ...video, layout: 'mobile' },
-	render: (args) => <CircleLobby {...args} />,
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="mobile" />,
 	play: async ({ canvasElement }) => {
+		await userEvent.click(await circleOption(canvasElement));
 		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
 		await expectBottomSheet(canvasElement);
 	}
 };
@@ -593,31 +497,30 @@ export const CirclePermissionDenied: Story = {
 	name: 'Circle · permission denied',
 	globals: desktop1440Globals,
 	parameters: circleParameters,
-	args: { ...video, layout: 'desktop', blocker: 'permissionDenied' },
-	render: (args) => <CircleLobby {...args} />,
+	beforeEach: withDevices('permissionDenied'),
+	render: () => <CircleLobby layout="desktop" />,
 	play: async ({ canvasElement }) => {
+		await userEvent.click(await circleOption(canvasElement));
 		await expectSettled(canvasElement);
 		await expect(
-			page(canvasElement).getByTestId('call-notice')
+			await page(canvasElement).findByTestId('call-notice')
 		).toBeVisible();
 	}
 };
 
-export const CircleNoCamera: Story = {
+export const CircleNoCameraPhone: Story = {
 	name: 'Circle · no camera · phone 390',
 	globals: phone390Globals,
-	parameters: circleParameters,
-	args: {
-		...video,
-		layout: 'mobile',
-		devices: noCamera,
-		cameraAvailable: false
-	},
-	render: (args) => <CircleLobby {...args} />,
+	parameters: { ...circleParameters, ...textOnThePicture },
+	beforeEach: withDevices('noCamera'),
+	render: () => <CircleLobby layout="mobile" />,
 	play: async ({ canvasElement }) => {
+		await userEvent.click(await circleOption(canvasElement));
 		await expectSettled(canvasElement);
-		await expect(
-			page(canvasElement).getByTestId('toggle-camera')
-		).toBeDisabled();
+		await waitFor(() =>
+			expect(
+				page(canvasElement).getByTestId('toggle-camera')
+			).toBeDisabled()
+		);
 	}
 };

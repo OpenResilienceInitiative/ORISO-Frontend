@@ -17,6 +17,7 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
+import { devicesForCall, takeJoinMedia } from './prejoin/callPrejoin';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -281,6 +282,25 @@ export const GroupCallWidget: React.FC = () => {
 	 * Becoming ready therefore forces one more publish.
 	 */
 	const lastReady = useRef(widget.ready);
+
+	/*
+	 * #2016: what the person chose in the device check before joining (the
+	 * call message, or the circle's pre-lobby), once, as soon as the call can
+	 * be told. Element Call starts with `skipLobby`, so this is the only
+	 * way the choice reaches it: `io.element.device_mute`. Which camera or
+	 * microphone was picked cannot be passed — see `joinMediaFrom`.
+	 */
+	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
+	const joinMediaIsVideo = !!callData?.isVideo;
+	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	useEffect(() => {
+		if (!widgetReady) return;
+		const media = devicesForCall(
+			joinMediaIsVideo,
+			takeJoinMedia(joinMediaRoom)
+		);
+		if (media) void setWidgetDevices(media).catch(() => undefined);
+	}, [widgetReady, joinMediaRoom, joinMediaIsVideo, setWidgetDevices]);
 
 	useEffect(() => {
 		// Recorded before the guard, so that closing the surface — which sets

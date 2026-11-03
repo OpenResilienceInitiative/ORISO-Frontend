@@ -3,45 +3,21 @@ import './knockWaitDialog.styles.scss';
 import { ReactNode, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircularProgress, useMediaQuery } from '@mui/material';
-import MicRoundedIcon from '@mui/icons-material/MicRounded';
-import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import EventBusyRoundedIcon from '@mui/icons-material/EventBusyRounded';
 import { M3Dialog, M3DialogAction } from '../m3Dialog/M3Dialog';
 import { GdprIcon } from '../../resources/img/icons';
-import { VideoCheck } from '../waitingRoom/callEntry/VideoCheck';
-import { DeviceToggle } from '../waitingRoom/callEntry/DeviceToggle';
-import { DevicePicker } from '../waitingRoom/callEntry/DevicePicker';
-import { MicLevelMeter } from '../waitingRoom/callEntry/MicLevelMeter';
 import {
-	CallDeviceKind,
-	CallDevices,
-	CallDeviceSelection,
-	CallModality
-} from '../waitingRoom/callEntry/callEntryTypes';
-import type { Avatar } from '../../utils/pseudonymGenerator';
+	CallDeviceCheck,
+	CallDeviceCheckProps
+} from '../waitingRoom/callEntry/CallDeviceCheck';
 import { KnockWaitPhase, KnockWaitVariant } from './knockWaitPhase';
 
-/** Mic and camera of the call variant; the caller owns the real stream. */
-export interface KnockWaitMedia {
-	modality: CallModality;
-	/** The person's User-ID on the preview tile. */
-	name: string;
-	/** The person's animal: the picture while the camera is off. */
-	avatar: Avatar;
-	devices: CallDevices;
-	selection: CallDeviceSelection;
-	stream?: MediaStream | null;
-	/** 0–1. */
-	micLevel: number;
-	micOn: boolean;
-	cameraOn: boolean;
-	/** `false` when there is no usable webcam. */
-	cameraAvailable?: boolean;
-	onToggleMic: () => void;
-	onToggleCamera: () => void;
-	onSelectDevice: (kind: CallDeviceKind, id: string) => void;
-}
+/**
+ * Mic and camera of the call variant; the caller owns the real stream. The
+ * waiting room's shared device check (`CallDeviceCheck`).
+ */
+export type KnockWaitMedia = CallDeviceCheckProps;
 
 export interface KnockWaitDialogProps {
 	open?: boolean;
@@ -69,6 +45,19 @@ export interface KnockWaitDialogProps {
 	onKnockAgain: () => void;
 	onClose: () => void;
 	/**
+	 * `ready` only (#2016): "Jetzt beitreten". The caller closes the dialog
+	 * first, so its preview lets go of the camera, then joins.
+	 */
+	onJoin?: () => void;
+	/**
+	 * `ready` only. `join` (default): the check right before the call.
+	 * `check`: the circle pre-lobby's option, kept for the group's next call;
+	 * the action says "Fertig".
+	 */
+	purpose?: 'join' | 'check';
+	/** `ready` only: the check could not run, ask the browser again. */
+	onRetry?: () => void;
+	/**
 	 * Bottom sheet instead of a centred dialog. Defaults to phones (< 600px);
 	 * stories may force either.
 	 */
@@ -82,7 +71,12 @@ const HERO: Partial<Record<KnockWaitPhase, ReactNode>> = {
 };
 
 /**
- * The small "wait until you are let in" dialog over the chat (Frank,
+ * The small dialog over the chat before a signed-in person enters a call.
+ *
+ * `ready` (#2016): the device check before joining from the call message,
+ * and the circle pre-lobby's device option.
+ *
+ * The other phases: the "wait until you are let in" dialog (Frank,
  * 2026-10-21): a signed-in person clicks the call message, or opens a
  * time-limited self-help group chat that needs the lead's admission.
  *
@@ -103,6 +97,9 @@ export const KnockWaitDialog = ({
 	onCancel,
 	onKnockAgain,
 	onClose,
+	onJoin,
+	purpose = 'join',
+	onRetry,
 	sheet
 }: KnockWaitDialogProps) => {
 	const { t } = useTranslation();
@@ -152,6 +149,38 @@ export const KnockWaitDialog = ({
 	let actions: M3DialogAction[] = [];
 
 	switch (phase) {
+		case 'ready':
+			title = t('knockWait.ready.title');
+			description =
+				purpose === 'check'
+					? t('knockWait.ready.descriptionCheck')
+					: t('knockWait.ready.description');
+			body = media ? <CallDeviceCheck {...media} /> : null;
+			actions = [
+				...(media?.blocker && onRetry
+					? [
+							{
+								label: t('knockWait.ready.retry'),
+								onClick: onRetry,
+								testId: 'knock-wait-retry'
+							}
+						]
+					: []),
+				...(onJoin
+					? [
+							{
+								label:
+									purpose === 'check'
+										? t('knockWait.ready.done')
+										: t('knockWait.ready.join'),
+								onClick: onJoin,
+								primary: true,
+								testId: 'knock-wait-join'
+							}
+						]
+					: [])
+			];
+			break;
 		case 'consent':
 			title = t('groupChat.consent.headline');
 			description = agencyName
@@ -206,7 +235,7 @@ export const KnockWaitDialog = ({
 			);
 			body = (
 				<>
-					{isCall && media && <KnockWaitMediaControls {...media} />}
+					{isCall && media && <CallDeviceCheck {...media} />}
 					<Status text={announcement} />
 					{!isCall && openUntil && (
 						<p className="knockWaitDialog__quiet">
@@ -292,83 +321,3 @@ const Status = ({ text }: { text: string }) => (
 		<span>{text}</span>
 	</p>
 );
-
-/**
- * Only mic and camera, and a device choice only where there is one to make:
- * the call entry's preview tile, or for a phone call one mic switch and its
- * meter. No speaker test, no identity, no tips.
- */
-const KnockWaitMediaControls = ({
-	modality,
-	name,
-	avatar,
-	devices,
-	selection,
-	stream,
-	micLevel,
-	micOn,
-	cameraOn,
-	cameraAvailable = true,
-	onToggleMic,
-	onToggleCamera,
-	onSelectDevice
-}: KnockWaitMedia) => {
-	const { t } = useTranslation();
-	const video = modality === 'video';
-	const kinds: CallDeviceKind[] = video
-		? ['microphone', 'camera']
-		: ['microphone'];
-	const pickers = kinds.filter((kind) => devices[kind].length > 1);
-
-	return (
-		<div className="knockWaitDialog__media">
-			{video ? (
-				<VideoCheck
-					name={name}
-					avatar={avatar}
-					stream={stream}
-					cameraOn={cameraOn && cameraAvailable}
-					cameraAvailable={cameraAvailable}
-					micOn={micOn}
-					micLevel={micLevel}
-					onToggleCamera={onToggleCamera}
-					onToggleMic={onToggleMic}
-				/>
-			) : (
-				<div className="knockWaitDialog__voice">
-					<DeviceToggle
-						tone="onSurface"
-						on={micOn}
-						onToggle={onToggleMic}
-						iconOn={<MicRoundedIcon />}
-						iconOff={<MicOffRoundedIcon />}
-						name={t('knockWait.devices.microphone')}
-						labelOn={t('knockWait.devices.micOff')}
-						labelOff={t('knockWait.devices.micOn')}
-						testId="toggle-mic"
-					/>
-					{micOn && (
-						<MicLevelMeter
-							level={micLevel}
-							label={t('knockWait.devices.micMeter')}
-						/>
-					)}
-				</div>
-			)}
-			{pickers.length > 0 && (
-				<div className="knockWaitDialog__pickers">
-					{pickers.map((kind) => (
-						<DevicePicker
-							key={kind}
-							kind={kind}
-							kindLabel={t(`knockWait.devices.${kind}`)}
-							devices={devices[kind]}
-							selectedId={selection[kind]}
-							onSelect={(id) => onSelectDevice(kind, id)}
-						/>
-					))}
-				</div>
-			)}
-		</div>
-	);
-};
