@@ -24,8 +24,10 @@ import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
 	applyTenantPalette,
-	isThemePreviewRoute
+	isThemePreviewRoute,
+	resetTenantPalette
 } from './theme/applyTenantTheme';
+import { captureHeadLook } from './tenantHeadLook';
 
 const getOrCreateHeadNode = (
 	tagName: string,
@@ -122,6 +124,15 @@ const useTenantTheming = () => {
 	// signed-in tenant and, before sign-in, the link's agency (#1782). Only
 	// meaningful once a resolution has succeeded.
 	const appliedTenantId = useRef<string | undefined>(undefined);
+	// Takes the document back to the look it had before a tenant was applied.
+	// Set by the first apply, spent by the first restore (#1788).
+	const restoreDefaultLook = useRef<(() => void) | null>(null);
+
+	const resetLook = useCallback(() => {
+		restoreDefaultLook.current?.();
+		restoreDefaultLook.current = null;
+		resetTenantPalette();
+	}, []);
 
 	const cypressTenantEnabled = useMemo(
 		() => (window as any).Cypress?.env('TENANT_ENABLED'),
@@ -188,6 +199,7 @@ const useTenantTheming = () => {
 					decodedTenant.name = decodeHTML(tenant.name);
 				}
 
+				restoreDefaultLook.current ??= captureHeadLook();
 				applyTheming(decodedTenant, previewApplied);
 				tenantContext?.setTenant(decodedTenant);
 			}
@@ -219,6 +231,7 @@ const useTenantTheming = () => {
 			appliedTenantId.current !== requestedTenantId
 		) {
 			setIsLoadingTenant(true);
+			resetLook();
 			tenantContext?.setTenant(null as any);
 		}
 
@@ -241,6 +254,7 @@ const useTenantTheming = () => {
 				// tenant feature off rather than guessing.
 				if (appliedTenantId.current !== requestedTenantId) {
 					appliedTenantId.current = requestedTenantId;
+					resetLook();
 					tenantContext?.setTenant(null as any);
 				}
 			})

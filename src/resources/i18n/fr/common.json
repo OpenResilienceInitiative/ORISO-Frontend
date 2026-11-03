@@ -2158,11 +2158,44 @@
 		"info": "Information",
 		"success": "Succès",
 		"warning": "Avertissement",
+		"eventNotice": {
+			"chatMention": {
+				"title": "Mention dans une discussion",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion"
+			},
+			"mention": {
+				"title": "Mention dans la discussion d’équipe",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion d’équipe"
+			},
+			"handover": {
+				"title": "Nouveau transfert de dossier",
+				"from": "De {{name}}",
+				"several": "{{count}} avis de transfert de dossier",
+				"open": "Voir le dossier"
+			},
+			"consent": {
+				"title": "Consentement au transfert de dossier requis",
+				"text": "Le transfert attend une réponse.",
+				"several": "{{count}} demandes de transfert de dossier attendent une réponse.",
+				"open": "Voir la demande"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Nouveau message dans le chat en direct",
 			"from": "De {{name}}",
 			"several": "{{count}} nouveaux messages",
 			"open": "Ouvrir le chat"
+		},
+		"newEnquiry": {
+			"title": "Nouvelle demande",
+			"waiting": "Une personne attend une réponse.",
+			"several": "{{count}} nouvelles demandes attendent une réponse.",
+			"openOne": "Voir la demande",
+			"openList": "Voir les demandes"
 		}
 	},
 	"notifications": {
@@ -3631,6 +3664,11 @@
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
 				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
+			},
+			"displayName": {
+				"optional": "Nom affiché (facultatif). Si vous ne le précisez pas, votre User-ID sera affiché.",
+				"suggest": "Proposer un nom",
+				"useUsername": "Utiliser le User-ID"
 			}
 		},
 		"back": "Retour",
@@ -4485,7 +4523,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
-			"unreadCount_one": "{{count}} nouveau message"
+			"unreadCount_one": "{{count}} nouveau message",
+			"openEnquiries": "{{count}} demandes ouvertes",
+			"openEnquiries_one": "{{count}} demande ouverte"
 		},
 		"timeline": {
 			"now": "Maintenant",
@@ -4807,8 +4847,10 @@
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
+				"appActive": "L'application d'authentification est déjà active comme second facteur. Pour changer, choisissez l'autre méthode.",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
 				"email": "Utiliser un code par e-mail (moins sûr)",
+				"emailActive": "Les codes par e-mail sont déjà actifs comme second facteur. Pour changer, choisissez l'application.",
 				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
@@ -5577,6 +5619,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Ce lien est actuellement en pause.",
 		"error": {
 			"title": "Ce lien d’invitation ne peut plus être utilisé",
 			"generic": "Le lien d’invitation n’a pas pu être utilisé",
@@ -5649,7 +5692,9 @@
 			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
-			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support."
+			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
+			"retryRefresh": "Recharger"
 		},
 		"accountProtection": {
 			"headline": "Votre accès, protégé en plus",
@@ -5698,7 +5743,9 @@
 			"channelBrowser": "Navigateur sur cet appareil",
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
-			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
+			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},
 		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
 		"faq": {
@@ -6088,7 +6135,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
-				"subline": "Anonyme, sans compte. Choisissez un identifiant — ou relancez les dés.",
+				"subline": "Anonyme, sans compte.",
 				"label": "Votre identifiant",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
@@ -6212,25 +6259,6 @@
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
 		},
-		"notes": {
-			"title": "Notes d’entretien",
-			"privacy": "Privé. Seulement pour vous, et seulement pendant l’entretien.",
-			"type": "Type de note",
-			"text": "Note",
-			"add": "Ajouter une note",
-			"remove": "Supprimer la note",
-			"copy": "Tout copier",
-			"copied": "Copié",
-			"empty": "Rien de noté pour l’instant.",
-			"collapse": "Replier les notes",
-			"expand": "Déplier les notes",
-			"open": "Notes d’entretien",
-			"types": {
-				"frage": "Question",
-				"anmerkung": "Remarque",
-				"aufgabe": "Tâche"
-			}
-		},
 		"states": {
 			"encrypted": "Chiffré",
 			"endsCurrent": "Si vous répondez, votre appel avec {{name}} prendra fin.",
@@ -6244,6 +6272,10 @@
 			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		},
 		"share": {
+			"signInToJoin": "Connectez-vous pour rejoindre cet appel.",
+			"conversationMember": "Vous participez déjà à cette conversation. Rejoignez l’appel depuis la discussion.",
+			"openConversations": "Ouvrir mes conversations",
+			"joinForbidden": "Vous ne pouvez pas rejoindre cet appel avec ce lien.",
 			"open": "Partager l’appel",
 			"title": "Partager l’appel",
 			"close": "Fermer",
@@ -6613,6 +6645,10 @@
 			"confirm": "Continuer",
 			"cancel": "Annuler",
 			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
+		},
+		"lookupFailed": {
+			"title": "Nous n'avons pas pu vérifier votre compte",
+			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
 	}
 }

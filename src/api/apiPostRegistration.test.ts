@@ -8,6 +8,7 @@ import {
 	REGISTRATION_TIMEOUT_MS
 } from './apiPostRegistration';
 import { autoLogin } from '../components/registration/autoLogin';
+import { accountPolicyTenant } from '../test/fixtures/askerAccountPolicyFixtures';
 import { fetchData } from './fetchData';
 import { apiGetIsUsernameAvailable } from './apiGetIsUsernameAvailable';
 
@@ -210,4 +211,70 @@ describe('accountExistsAfterTimeout', () => {
 		);
 		expect(apiGetIsUsernameAvailable).not.toHaveBeenCalled();
 	});
+});
+
+describe('optional signup alias payload', () => {
+	it.each([undefined, '', '   ', '  Chosen alias  '])(
+		'keeps the credential and sends only a trimmed nonempty alias (%s)',
+		async (displayName) => {
+			vi.mocked(fetchData).mockClear();
+			await apiPostRegistration(
+				'/service/users/askers/new',
+				{ username: 'login_id', password: 'Password9!', displayName },
+				false,
+				accountPolicyTenant()
+			);
+			expect(fetchData).toHaveBeenCalledWith(
+				expect.objectContaining({ bodyData: expect.any(String) })
+			);
+			const bodyData = vi.mocked(fetchData).mock.calls[0][0].bodyData;
+			if (typeof bodyData !== 'string')
+				throw new Error('Expected JSON request');
+			const body: Record<string, unknown> = JSON.parse(bodyData);
+			expect(body.username).toBe('login_id');
+			if (displayName?.trim())
+				expect(body.displayName).toBe('Chosen alias');
+			else expect(body).not.toHaveProperty('displayName');
+		}
+	);
+	it('never submits an unsupported member alias when joining a self-help group', async () => {
+		vi.mocked(fetchData).mockClear();
+		await apiPostRegistration(
+			'/service/users/askers/new',
+			{
+				username: 'login_id',
+				password: 'Password9!',
+				displayName: 'Stale alias',
+				groupChatId: 42
+			},
+			false,
+			accountPolicyTenant()
+		);
+		const bodyData = vi.mocked(fetchData).mock.calls[0][0].bodyData;
+		if (typeof bodyData !== 'string')
+			throw new Error('Expected JSON request');
+		expect(JSON.parse(bodyData)).not.toHaveProperty('displayName');
+	});
+});
+
+it('omits an unsupported signup alias for the no-session direct-link registration', async () => {
+	vi.mocked(fetchData).mockClear();
+	await apiPostRegistration(
+		'/service/users/askers/new',
+		{
+			username: 'login_id',
+			password: 'Password9!',
+			displayName: 'Stale signup alias',
+			directLinkToken: 'direct-token'
+		},
+		false,
+		accountPolicyTenant()
+	);
+	const bodyData = vi.mocked(fetchData).mock.calls[0][0].bodyData;
+	if (typeof bodyData !== 'string') throw new Error('Expected JSON request');
+	expect(JSON.parse(bodyData)).toMatchObject({
+		username: 'login_id',
+		directLinkToken: 'direct-token'
+	});
+	expect(JSON.parse(bodyData)).not.toHaveProperty('displayName');
 });
