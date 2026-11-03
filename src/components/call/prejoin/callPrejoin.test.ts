@@ -301,6 +301,19 @@ describe('switchDevicesOnReady: the fallback for an older call (CodeRabbit 44572
 		expect(send).toHaveBeenCalledTimes(3);
 	});
 
+	it('does not report success to a call that went away meanwhile (CodeRabbit 4457965169)', async () => {
+		let current = true;
+		const send = vi.fn().mockImplementation(async () => {
+			current = false;
+		});
+		await expect(
+			switchDevicesOnReady(send, media, {
+				delayMs: 0,
+				isCurrent: () => current
+			})
+		).resolves.toBe(false);
+	});
+
 	it('stops once the call is no longer there', async () => {
 		let current = true;
 		const send = vi.fn().mockImplementation(async () => {
