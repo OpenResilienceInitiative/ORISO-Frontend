@@ -141,7 +141,8 @@ export const DirectLinkKnock = ({
 					modality: modalityOf(knock),
 					micOn: device.controls.micOn,
 					cameraOn: device.controls.cameraOn,
-					cameraAvailable: device.cameraAvailable
+					cameraAvailable: device.cameraAvailable,
+					blocker: device.blocker
 				})
 			);
 		}
