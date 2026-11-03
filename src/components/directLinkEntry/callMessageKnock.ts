@@ -11,6 +11,7 @@ import {
 	pendingKnockFrom,
 	rememberPendingKnock
 } from './directLinkEntryFlow';
+import { knockJoinCallOf } from './directLinkEntryFlow';
 import type { PendingKnock } from './directLinkEntryFlow';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 
@@ -76,7 +77,11 @@ const waitOn = (
 	join: () => Promise<CallJoinResult>,
 	{ onKnock, call }: JoinOrKnockDeps
 ): CallJoinResult => {
-	const pending = { ...knock, joinExisting: true, joinCall: call };
+	const pending: PendingKnock = {
+		...knock,
+		joinExisting: true,
+		...(call ? { joinCall: knockJoinCallOf(call) } : {})
+	};
 	rememberPendingKnock(pending);
 	if (onKnock) {
 		claimKnock(pending.knockId);

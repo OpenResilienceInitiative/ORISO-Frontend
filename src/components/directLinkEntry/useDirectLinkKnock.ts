@@ -42,6 +42,8 @@ export const phaseForKnockStatus = (
 			: 'waiting';
 
 export interface DirectLinkKnockState {
+	/** The knock waited on now; "Erneut anklopfen" replaces it. */
+	knockId: number;
 	phase: KnockWaitPhase;
 	/** The knock was withdrawn (here or elsewhere): the dialog goes. */
 	gone: boolean;
@@ -139,7 +141,11 @@ export const useDirectLinkKnock = (
 					);
 					return;
 				}
-				const next = { ...fresh, joinExisting: current.joinExisting };
+				const next = {
+					...fresh,
+					joinExisting: current.joinExisting,
+					joinCall: current.joinCall
+				};
 				rememberPendingKnock(next);
 				setCurrent(next);
 				setPhase((now) => {
@@ -153,7 +159,14 @@ export const useDirectLinkKnock = (
 			.finally(() => {
 				knockingAgain.current = false;
 			});
-	}, [close, current.joinExisting, current.token, start]);
+	}, [close, current.joinCall, current.joinExisting, current.token, start]);
 
-	return { phase, gone, cancel, knockAgain, close };
+	return {
+		knockId: current.knockId,
+		phase,
+		gone,
+		cancel,
+		knockAgain,
+		close
+	};
 };

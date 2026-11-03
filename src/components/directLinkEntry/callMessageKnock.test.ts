@@ -12,6 +12,7 @@ import {
 } from './callMessageKnock';
 import {
 	PENDING_KNOCK_EVENT,
+	PENDING_KNOCK_KEY,
 	readPendingKnock,
 	rememberDirectLinkSession
 } from './directLinkEntryFlow';
@@ -210,7 +211,9 @@ describe('one window for knocking from the call message (#2016)', () => {
 		callRoomId: '!media:oriso',
 		state: 'running' as const,
 		callType: 'video' as const,
-		participants: []
+		actorUserId: '@berger:oriso',
+		participants: [{ userId: '@berger:oriso', displayName: 'Frau Berger' }],
+		present: [{ userId: '@berger:oriso', displayName: 'Frau Berger' }]
 	};
 
 	it('hands the knock to the open check instead of a second dialog', async () => {
@@ -236,6 +239,25 @@ describe('one window for knocking from the call message (#2016)', () => {
 			joinCall: { callId: 'c-1', roomRef: '!room:oriso' }
 		});
 		window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	});
+
+	it('keeps no participant data in the tab, only what the reload join needs', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+		await joinOrKnock(9, vi.fn(), { start, mine, onKnock: vi.fn(), call });
+		const stored = JSON.parse(
+			sessionStorage.getItem(PENDING_KNOCK_KEY) ?? '{}'
+		);
+		expect(stored.joinCall).toEqual({
+			callId: 'c-1',
+			state: 'running',
+			roomRef: '!room:oriso',
+			callRoomId: '!media:oriso',
+			callType: 'video'
+		});
+		expect(JSON.stringify(stored)).not.toMatch(
+			/berger|participants|present/i
+		);
 	});
 
 	it('lets the check close before a join that needs no knock', async () => {

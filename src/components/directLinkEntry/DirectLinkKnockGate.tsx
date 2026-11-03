@@ -79,7 +79,11 @@ const defaultJoinRunningCall = async (knock: PendingKnock) => {
 	const call = knock.joinCall;
 	if (!call) return;
 	await waitForJoinedRoom(call.roomRef);
-	await callManager.joinExistingCall(call, call.isGroup ?? false);
+	// The card's people are not stored with the knock; the join reads none.
+	await callManager.joinExistingCall(
+		{ ...call, participants: [] },
+		call.isGroup ?? false
+	);
 };
 
 /** The room whose call takes the switches (`GroupCallWidget`). */

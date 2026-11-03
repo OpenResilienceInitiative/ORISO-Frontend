@@ -202,10 +202,6 @@
 	/* Base = the dismissing action: M3 neutral. Keeping it neutral and colouring
 	   only the confirming action stops a two-button row reading as "all
 	   primary". Hover tint follows `currentColor` so both variants work. */
-	&__actionSpinner {
-		margin-right: 8px;
-	}
-
 	&__action {
 		display: inline-flex;
 		height: 40px;

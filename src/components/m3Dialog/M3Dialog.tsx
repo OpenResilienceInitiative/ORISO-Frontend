@@ -207,7 +207,6 @@ export const M3Dialog = ({
 								>
 									{action.busy && (
 										<CircularProgress
-											className="m3Dialog__actionSpinner"
 											size={14}
 											thickness={5}
 											color="inherit"

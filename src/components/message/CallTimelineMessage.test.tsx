@@ -9,7 +9,16 @@ import {
 } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
-import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
+import {
+	claimKnock,
+	isKnockClaimed,
+	type CallJoinHooks
+} from '../directLinkEntry/callMessageKnock';
+import {
+	forgetPendingKnock,
+	PENDING_KNOCK_EVENT,
+	rememberPendingKnock
+} from '../directLinkEntry/directLinkEntryFlow';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import {
 	ActiveSessionContext,
@@ -665,4 +674,48 @@ it('waits for the counsellor in the same window when the join knocks (#2016)', a
 		'knockWait.ready.join'
 	);
 	expect(screen.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+});
+
+it('hands a knock it still waits on back to the knock gate when it goes (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const knock = {
+		token: 'tok',
+		knockId: 41,
+		sessionId: 9,
+		medium: 'VIDEO' as const,
+		joinExisting: true
+	};
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		rememberPendingKnock(knock);
+		claimKnock(knock.knockId);
+		hooks?.onKnock?.(knock, async () => 'joined' as const);
+		return 'joined' as const;
+	});
+	const view = render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	expect(isKnockClaimed(41)).toBe(true);
+
+	const announced = vi.fn();
+	window.addEventListener(PENDING_KNOCK_EVENT, announced);
+	view.unmount();
+	window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	expect(isKnockClaimed(41)).toBe(false);
+	expect(announced).toHaveBeenCalledTimes(1);
+	forgetPendingKnock();
 });
