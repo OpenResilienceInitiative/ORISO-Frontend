@@ -43,6 +43,7 @@ interface NotificationSetupCollapseProps {
 	/** Short copy above the choices; shown with them, gone when collapsed. */
 	copy?: React.ReactNode;
 	onStart?: () => void;
+	onEmailAccepted?: () => void;
 }
 
 interface NotificationSetupMessageProps extends NotificationSetupCollapseProps {
@@ -72,7 +73,8 @@ export const NotificationSetupCollapse = ({
 	isEmailEnabled = true,
 	isBrowserEnabled = true,
 	copy,
-	onStart
+	onStart,
+	onEmailAccepted
 }: NotificationSetupCollapseProps) => {
 	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext);
@@ -298,6 +300,7 @@ export const NotificationSetupCollapse = ({
 					isEmailEnabled={isEmailEnabled}
 					isBrowserEnabled={isBrowserEnabled}
 					onStart={onStart}
+					onEmailAccepted={onEmailAccepted}
 					onDone={() => setChoiceDone(true)}
 				/>
 			</div>
