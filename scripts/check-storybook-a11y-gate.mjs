@@ -17,7 +17,12 @@ try {
 		`
 /* eslint-disable jsx-a11y/alt-text -- intentionally invalid accessibility probe */
 import React from 'react';
-const meta = { title: 'Tests/Accessibility gate probe' };
+// Colour contrast is off for product stories (#1338); the probe turns it back
+// on to prove the gate still fails on it.
+const meta = {
+ title: 'Tests/Accessibility gate probe',
+ parameters: { a11y: { options: { rules: { 'color-contrast': { enabled: true } } } } }
+};
 export default meta;
 export const LowContrast = {
  render: () => <p style={{ color: '#e4e2e2', background: '#eeeeee' }}>Unreadable text</p>
@@ -43,7 +48,6 @@ export const AccessibleControl = {
 				'storybook',
 				fixtureDir,
 				'--maxWorkers=2',
-				'--minWorkers=1',
 				'--reporter=default',
 				'--reporter=json',
 				`--outputFile=${reportPath}`

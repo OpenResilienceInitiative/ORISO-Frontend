@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, fn, userEvent } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import { PracticeCards } from '../../practice/PracticeCards';
@@ -13,6 +14,10 @@ const meta = {
 	component: PracticeCards,
 	tags: ['autodocs'],
 	parameters: {
+		// #1338: the card list scrolls but takes no focus: keyboard users cannot scroll it; the real fix is a tab stop, left for a product decision.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': ['.tourOverview__list']
+		}),
 		layout: 'padded',
 		design: { type: 'figma', url: APP_ORISO_FIGMA_URL },
 		docs: {

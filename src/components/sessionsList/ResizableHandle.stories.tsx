@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { ResizableHandle } from './ResizableHandle';
 import './sessionsList.styles.scss';
@@ -10,6 +11,14 @@ const meta = {
 	component: ResizableHandle,
 	tags: ['autodocs'],
 	parameters: {
+		// #1338: the two demo panes only scroll so the handle can be dragged
+		// against content; they are not part of the component.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': [
+				'[data-testid="list-scroll"]',
+				'[data-testid="thread-scroll"]'
+			]
+		}),
 		docs: {
 			description: {
 				component:

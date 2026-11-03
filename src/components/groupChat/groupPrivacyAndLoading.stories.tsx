@@ -263,6 +263,77 @@ export const PrivacyGate390: Story = {
 	play: async ({ canvasElement }) => expectGate(canvasElement)
 };
 
+/* The agency's own sentence as dev serves it on the public path: the
+   endpoint cannot resolve `{{Thema}}` without a token and leaves it raw. */
+const SENTENCE_FROM_SERVER =
+	'Ich habe die {{legal_links}} zur Kenntnis genommen. Thema: {{Thema}}, Beratungsstelle: {{Beratungsstelle}}.';
+
+const installLegalBoundary = () => {
+	const originalFetch = globalThis.fetch;
+	const json = (body: unknown) =>
+		new Response(JSON.stringify(body), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	const boundary: typeof fetch = async (input, init) => {
+		const path = new URL(new Request(input, init).url).pathname;
+		if (path === '/service/agencies/2')
+			return json([
+				{ id: 2, name: 'Advice center Lichteberg', topicIds: [14] }
+			]);
+		if (path === '/service/agencies/2/topics/14/legal')
+			return json({
+				dpp: {
+					content: '<p>Datenschutz</p>',
+					consentText: SENTENCE_FROM_SERVER,
+					versionId: 15
+				},
+				imprint: { content: '<p>Impressum</p>', consentText: null }
+			});
+		if (path === '/service/topic/public')
+			return json([{ id: 14, name: 'Schulden' }]);
+		return originalFetch(input, init);
+	};
+	globalThis.fetch = boundary;
+	return () => {
+		if (globalThis.fetch === boundary) globalThis.fetch = originalFetch;
+	};
+};
+
+const GateWithAgencySentence = () => (
+	<LegalLinksContext.Provider value={gateLegalLinks}>
+		<GroupConsentGate agencyId={2} onAccepted={() => undefined} />
+	</LegalLinksContext.Provider>
+);
+
+const expectFilledSentence = async (canvasElement: HTMLElement) => {
+	const gate = await within(canvasElement.ownerDocument.body).findByTestId(
+		'group-consent-gate'
+	);
+	await waitFor(() =>
+		expect(gate.textContent).toContain(
+			'Thema: Schulden, Beratungsstelle: Advice center Lichteberg.'
+		)
+	);
+	await expect(gate.textContent).not.toMatch(/\{\{|\}\}/);
+};
+
+export const PrivacyGateFilledPlaceholders1440: Story = {
+	name: '1a · Privacy gate — topic and agency filled, no raw placeholder · 1440',
+	globals: desktop1440Globals,
+	beforeEach: installLegalBoundary,
+	render: () => <GateWithAgencySentence />,
+	play: async ({ canvasElement }) => expectFilledSentence(canvasElement)
+};
+
+export const PrivacyGateFilledPlaceholders390: Story = {
+	name: '1a · Privacy gate — topic and agency filled, no raw placeholder · 390',
+	globals: phone390Globals,
+	beforeEach: installLegalBoundary,
+	render: () => <GateWithAgencySentence />,
+	play: async ({ canvasElement }) => expectFilledSentence(canvasElement)
+};
+
 /* ---------------------------------------------------------------------------
    1b — Datenschutz and Impressum from a menu
    --------------------------------------------------------------------------- */

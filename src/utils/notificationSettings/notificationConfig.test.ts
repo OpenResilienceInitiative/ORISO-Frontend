@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
+import { soundAssetFor } from './soundPlayback';
 import {
+	AREA_KINDS,
 	areaForFamily,
 	NEVER_NOTIFY_FAMILIES,
 	clampVolume,
@@ -12,9 +14,11 @@ import {
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
-	it('defaults: sounds off, email on for new/standard and off for mention', () => {
+	it('defaults: only a new enquiry rings, email on for new/standard and off for mention', () => {
 		const r = DEFAULT_NOTIFICATION_CONFIG.requests;
-		expect(r.new.sound).toBe('none');
+		// FE#1435: "Neue Anfrage" rings out of the box; the rest stay silent.
+		expect(r.new.sound).toBe('ton-1');
+		expect(r.standard.sound).toBe('none');
 		expect(r.new.email).toBe(true);
 		expect(r.standard.email).toBe(true);
 		expect(r.mention.email).toBe(false);
@@ -47,7 +51,7 @@ describe('notificationConfig', () => {
 
 	it('parse tolerates garbage', () => {
 		const parsed = parseNotificationConfig({ requests: { new: 42 } });
-		expect(parsed.requests.new.sound).toBe('none');
+		expect(parsed.requests.new.sound).toBe('ton-1');
 		expect(parsed.requests.new.email).toBe(true);
 	});
 
@@ -64,7 +68,7 @@ describe('notificationConfig', () => {
 			DEFAULT_NOTIFICATION_CONFIG.requests.new.email
 		);
 		// original untouched
-		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('none');
+		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('ton-1');
 	});
 
 	it('setKindField toggles email independently per area', () => {
@@ -161,5 +165,32 @@ describe('notificationConfig', () => {
 		expect(DEFAULT_NOTIFICATION_CONFIG.conversations.standard.volume).toBe(
 			0.5
 		);
+	});
+});
+
+describe('Live-Chat row (FE#1470)', () => {
+	it('shows a Live-Chat row in Gespräche that rings out of the box', () => {
+		expect(AREA_KINDS.conversations).toContain('liveChat');
+		const liveChat = DEFAULT_NOTIFICATION_CONFIG.conversations.liveChat;
+		expect(liveChat.sound).not.toBe('none');
+		expect(soundAssetFor(liveChat.sound)).not.toBeNull();
+		expect(liveChat.banner).toBe('temporary');
+	});
+
+	it('gives a config saved before the row existed the ringing default', () => {
+		const saved = parseNotificationConfig({
+			conversations: { standard: { sound: 'none', banner: 'off' } }
+		});
+		expect(saved.conversations.standard.banner).toBe('off');
+		expect(saved.conversations.liveChat).toEqual(
+			DEFAULT_NOTIFICATION_CONFIG.conversations.liveChat
+		);
+	});
+
+	it('keeps an explicit "no tone" choice on the Live-Chat row', () => {
+		const saved = parseNotificationConfig({
+			conversations: { liveChat: { sound: 'none' } }
+		});
+		expect(saved.conversations.liveChat.sound).toBe('none');
 	});
 });

@@ -1,5 +1,6 @@
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
@@ -21,26 +22,38 @@ import {
 	NOTIFICATION_TONE_IDS,
 	type SoundId
 } from '../../utils/notificationSettings/model';
+import {
+	getAuthenticatedAccountIdentity,
+	subscribeToAuthenticatedTenant
+} from '../../utils/authenticatedTenant';
 
 /** Shared account/device setup, used by first enquiry and optional chat shortcuts.
  * Choice is derived from live account settings; a click is never completion.
  */
 export const NotificationSetup = ({
-	isEmailEnabled = true,
+	isEmailEnabled: configuredEmailEnabled = true,
 	isBrowserEnabled = true,
 	onStart,
+	onEmailAccepted,
 	onDone
 }: {
 	isEmailEnabled?: boolean;
 	isBrowserEnabled?: boolean;
 	onStart?: () => void;
+	/** Server accepted the subscription; presentation retention is not permission. */
+	onEmailAccepted?: () => void;
 	/** A choice went through without an error: also when it changed nothing. */
 	onDone?: () => void;
 }) => {
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const tenant = useTenant();
+	const accountEmailAllowed = useAccountEmailCollectionAllowed();
+	const isEmailEnabled = configuredEmailEnabled && accountEmailAllowed;
 	const continuation = useRef(0);
+	const acceptedEmailOperation = useRef<number | null>(null);
+	const latestEmailEnabled = useRef(isEmailEnabled);
+	latestEmailEnabled.current = isEmailEnabled;
 	const {
 		emailActive,
 		consentEmailActive,
@@ -58,6 +71,10 @@ export const NotificationSetup = ({
 	const [, setPermissionCheck] = useState(0);
 	const browserBlocked =
 		browserSupported && Notification.permission === 'denied';
+	const [failedEmailReadback, setFailedEmailReadback] = useState<{
+		choice: NotificationChoice;
+		operation: number;
+	} | null>(null);
 	const chosen: NotificationChoice | null =
 		emailActive && browserActive
 			? 'BOTH'
@@ -67,18 +84,37 @@ export const NotificationSetup = ({
 					? 'BROWSER'
 					: null;
 
-	useEffect(() => {
+	const reset = useCallback(() => {
 		continuation.current += 1;
+		acceptedEmailOperation.current = null;
 		setEmailOpen(false);
 		setPending(null);
 		setBusy(false);
 		setAwaitingBrowser(false);
 		setBrowserDialogOpen(false);
 		setError(null);
+		setFailedEmailReadback(null);
+	}, []);
+	useEffect(() => {
+		reset();
 		return () => {
 			continuation.current += 1;
+			acceptedEmailOperation.current = null;
 		};
-	}, [isEmailEnabled, isBrowserEnabled, tenant?.id, userData?.userId]);
+	}, [isBrowserEnabled, tenant?.id, userData?.userId, reset]);
+	useEffect(() => {
+		// A successful subscription's own reload temporarily withdraws capability.
+		// It must not erase the requested, independently permitted browser step.
+		if (acceptedEmailOperation.current !== continuation.current) reset();
+	}, [isEmailEnabled, reset]);
+	useEffect(() => {
+		let identity = getAuthenticatedAccountIdentity();
+		return subscribeToAuthenticatedTenant(() => {
+			const next = getAuthenticatedAccountIdentity();
+			if (next !== identity) reset();
+			identity = next;
+		});
+	}, [reset]);
 
 	// The person may lift a browser block in the browser settings and come
 	// back to this page: read the permission again on return.
@@ -97,42 +133,70 @@ export const NotificationSetup = ({
 	}, [browserSupported]);
 
 	/** Resolves true only when the browser opt-in really completed. */
-	const finish = async (choice: NotificationChoice): Promise<boolean> => {
+	const finish = async (
+		choice: NotificationChoice,
+		acceptedOperation?: number
+	): Promise<boolean> => {
+		const resuming =
+			acceptedOperation !== undefined &&
+			acceptedEmailOperation.current === acceptedOperation &&
+			continuation.current === acceptedOperation;
+		if (acceptedOperation !== undefined && !resuming) return false;
 		if (
-			(choice !== 'BROWSER' && !isEmailEnabled) ||
+			(!resuming && choice !== 'BROWSER' && !isEmailEnabled) ||
 			(choice !== 'EMAIL' && !browserSupported)
 		)
 			return false;
-		const operation = continuation.current;
+		const operation = acceptedOperation ?? ++continuation.current;
+		if (!resuming) acceptedEmailOperation.current = null;
 		const current = () => continuation.current === operation;
 		setBusy(true);
 		setError(null);
+		setFailedEmailReadback(null);
 		let completed = false;
 		try {
-			if (choice !== 'BROWSER' && (!emailActive || !consentEmailActive)) {
-				await apiPatchUserData({
-					emailNotifications: {
-						...userData?.emailNotifications,
-						emailNotificationsEnabled: true,
-						settings: {
-							...userData?.emailNotifications?.settings,
-							newChatMessageNotificationEnabled: true,
-							reassignmentNotificationEnabled: true
+			if (
+				resuming ||
+				(choice !== 'BROWSER' && (!emailActive || !consentEmailActive))
+			) {
+				if (!resuming) {
+					await apiPatchUserData({
+						emailNotifications: {
+							...userData?.emailNotifications,
+							emailNotificationsEnabled: true,
+							settings: {
+								...userData?.emailNotifications?.settings,
+								newChatMessageNotificationEnabled: true,
+								reassignmentNotificationEnabled: true
+							}
 						}
+					});
+					if (!current() || !latestEmailEnabled.current) return false;
+					acceptedEmailOperation.current = operation;
+					onEmailAccepted?.();
+					if (!current()) return false;
+				}
+				try {
+					const saved = await reloadUserData();
+					if (!current()) return false;
+					if (
+						!saved?.email ||
+						!saved?.emailNotifications?.emailNotificationsEnabled ||
+						!saved?.emailNotifications?.settings
+							?.newChatMessageNotificationEnabled ||
+						!saved?.emailNotifications?.settings
+							?.reassignmentNotificationEnabled
+					)
+						throw new Error('Not confirmed');
+				} catch {
+					if (current()) {
+						setFailedEmailReadback({ choice, operation });
+						setError(
+							t('erstantwort.notificationChoice.refreshFailed')
+						);
 					}
-				});
-				if (!current()) return false;
-				const saved = await reloadUserData();
-				if (!current()) return false;
-				if (
-					!saved?.email ||
-					!saved?.emailNotifications?.emailNotificationsEnabled ||
-					!saved?.emailNotifications?.settings
-						?.newChatMessageNotificationEnabled ||
-					!saved?.emailNotifications?.settings
-						?.reassignmentNotificationEnabled
-				)
-					throw new Error('Not confirmed');
+					return false;
+				}
 			}
 			if (
 				choice === 'BOTH' &&
@@ -222,8 +286,10 @@ export const NotificationSetup = ({
 
 	const confirmBrowser = (tone: SoundId, changed: boolean) => {
 		// No await before the permission request: it needs this click.
+		const run = finish('BROWSER');
+		// finish() starts a new operation synchronously, before its first await.
 		const operation = continuation.current;
-		void finish('BROWSER')
+		void run
 			.then((completed) => {
 				// Another account or tenant may be active by now.
 				if (!completed || continuation.current !== operation) return;
@@ -242,17 +308,27 @@ export const NotificationSetup = ({
 			});
 	};
 
-	if (!isEmailEnabled && !isBrowserEnabled) return null;
+	const acceptedEmailActive =
+		acceptedEmailOperation.current === continuation.current;
+	if (!isEmailEnabled && !isBrowserEnabled && !acceptedEmailActive)
+		return null;
 	return (
 		<>
-			<NotificationChoiceCard
-				onChoose={choose}
-				chosen={chosen}
-				controlled
-				isEmailEnabled={isEmailEnabled}
-				isBrowserNotificationSupported={browserSupported}
-				busy={busy || emailOpen}
-			/>
+			{acceptedEmailActive && (
+				<p role="status">
+					{t('erstantwort.notificationChoice.emailAccepted')}
+				</p>
+			)}
+			{(isEmailEnabled || isBrowserEnabled) && (
+				<NotificationChoiceCard
+					onChoose={choose}
+					chosen={chosen}
+					controlled
+					isEmailEnabled={isEmailEnabled}
+					isBrowserNotificationSupported={browserSupported}
+					busy={busy || emailOpen}
+				/>
+			)}
 			{awaitingBrowser && !browserDialogOpen && (
 				<>
 					<p role="status">
@@ -280,6 +356,21 @@ export const NotificationSetup = ({
 				</p>
 			)}
 			{error && <p role="alert">{error}</p>}
+			{failedEmailReadback && acceptedEmailActive && (
+				<button
+					type="button"
+					className="erstantwort__action"
+					disabled={busy}
+					onClick={() =>
+						void finish(
+							failedEmailReadback.choice,
+							failedEmailReadback.operation
+						)
+					}
+				>
+					{t('erstantwort.emailNotification.retryRefresh')}
+				</button>
+			)}
 			{chosen && (
 				<p role="status">
 					{t('erstantwort.notificationChoice.active', {
@@ -308,7 +399,7 @@ export const NotificationSetup = ({
 					onConfirm={confirmBrowser}
 				/>
 			)}
-			{emailOpen && (
+			{emailOpen && isEmailEnabled && (
 				<ErstantwortEmailOverlay
 					userName={userData?.userName}
 					onClose={() => {

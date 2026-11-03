@@ -1,4 +1,6 @@
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
+import { Alert } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
@@ -21,18 +23,24 @@ import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelo
  * reaches the person and the form stays usable.
  */
 
+export type EmailRefreshStatus = 'pending' | 'failed' | 'confirmed';
+
 export interface ErstantwortEmailOverlayProps {
 	onClose: () => void;
 	/** Called after the address was accepted, so the caller can reload userData. */
 	onSaved: () => void;
 	/** The immutable login name; shown with a copy button when given. */
 	userName?: string;
+	/** Read-back of the saved address; 'failed' offers a retry in the dialog. */
+	refreshStatus?: EmailRefreshStatus;
+	onRetryRefresh?: () => void;
 }
 
 export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
-> = ({ onClose, onSaved, userName }) => {
+> = ({ onClose, onSaved, userName, refreshStatus, onRetryRefresh }) => {
 	const { t } = useTranslation();
+	const emailAllowed = useAccountEmailCollectionAllowed();
 	const active = useRef(true);
 	useEffect(() => {
 		active.current = true;
@@ -44,6 +52,7 @@ export const ErstantwortEmailOverlay: React.FC<
 	const [isInvalid, setIsInvalid] = useState(false);
 	const [errorText, setErrorText] = useState<string | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isSaved, setIsSaved] = useState(false);
 
 	const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
 		'idle'
@@ -72,13 +81,14 @@ export const ErstantwortEmailOverlay: React.FC<
 	};
 
 	const save = () => {
-		if (isSaving || !isValid) return;
+		if (!emailAllowed || isSaving || !isValid) return;
 		setIsSaving(true);
 		setErrorText(null);
 		apiPutEmail(email)
 			.then(() => {
 				if (!active.current) return;
 				setIsSaving(false);
+				setIsSaved(true);
 				onSaved();
 			})
 			.catch((error: unknown) => {
@@ -129,6 +139,45 @@ export const ErstantwortEmailOverlay: React.FC<
 	   The live region is separate and visually hidden: after pressing Save
 	   focus stays on the button, so a helper-text change alone announces
 	   nothing and the person can reasonably assume the save worked. */
+	if (!emailAllowed && !isSaved) return null;
+
+	/* The address is stored; what remains is only the read-back. The form is
+	   gone, so a failed reload cannot leave a Save button that sends it again. */
+	if (isSaved) {
+		return (
+			<M3Dialog
+				open
+				onClose={close}
+				icon={<EnvelopeIcon />}
+				closeLabel={t('app.close')}
+				title={t('furtherSteps.email.success.overlay.headline')}
+				actions={[
+					...(refreshStatus === 'failed' && onRetryRefresh
+						? [
+								{
+									label: t(
+										'erstantwort.emailNotification.retryRefresh'
+									),
+									onClick: onRetryRefresh
+								}
+							]
+						: []),
+					{
+						label: t('furtherSteps.email.overlay.button2.label'),
+						onClick: close,
+						primary: true
+					}
+				]}
+			>
+				{refreshStatus === 'failed' && (
+					<Alert severity="error">
+						{t('erstantwort.emailNotification.refreshFailed')}
+					</Alert>
+				)}
+			</M3Dialog>
+		);
+	}
+
 	return (
 		<M3Dialog
 			open

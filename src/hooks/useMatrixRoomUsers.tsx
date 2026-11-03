@@ -6,6 +6,8 @@ export type RoomUser = {
 	_id: string;
 	username: string;
 	displayName?: string;
+	/** Matrix power level in this room; a supervisor reads along at 10. */
+	powerLevel?: number;
 };
 
 const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
@@ -17,7 +19,11 @@ const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
 			return {
 				_id: userId,
 				username: localPart,
-				displayName: member?.name || member?.rawDisplayName || localPart
+				displayName:
+					member?.name || member?.rawDisplayName || localPart,
+				...(typeof member?.powerLevel === 'number' && {
+					powerLevel: member.powerLevel
+				})
 			};
 		});
 

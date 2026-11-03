@@ -72,6 +72,11 @@ export interface GroupChatInfoParticipant {
 	isModerator?: boolean;
 	/** A short state under the name, e.g. "Gebannt"; also hides the menu. */
 	statusLabel?: string;
+	/**
+	 * Role badge everyone sees (#107), e.g. "Ratsuchende:r", "Berater:in",
+	 * "Supervisor:in". Absent while the role is unknown.
+	 */
+	roleLabel?: string;
 }
 
 export type GroupChatTeamRole = 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
@@ -168,6 +173,19 @@ const sectionCardSx: SxProps<Theme> = {
 	py: 1,
 	minWidth: 0
 };
+
+// Same outline chip as the room's status chip; text, not colour, carries
+// the role.
+const roleChipSx = {
+	height: 24,
+	ml: 1,
+	borderRadius: '8px',
+	...type.labelMedium,
+	border: '1px solid var(--m3-outline-variant)',
+	bgcolor: 'transparent',
+	color: 'var(--m3-on-surface-variant)',
+	verticalAlign: 'middle'
+} as const;
 
 const sectionHeadSx: SxProps<Theme> = {
 	display: 'flex',
@@ -572,7 +590,25 @@ export const GroupChatInfoM3 = ({
 													</ListItemAvatar>
 													<ListItemText
 														primary={
-															participant.name
+															participant.roleLabel ? (
+																<>
+																	{
+																		participant.name
+																	}
+																	<Chip
+																		size="small"
+																		label={
+																			participant.roleLabel
+																		}
+																		data-cy="participant-role"
+																		sx={
+																			roleChipSx
+																		}
+																	/>
+																</>
+															) : (
+																participant.name
+															)
 														}
 														secondary={
 															participant.statusLabel

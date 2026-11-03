@@ -74,6 +74,7 @@ import {
 import {
 	draftMatchesSession,
 	isAnonymousAskerSession,
+	isDirectLinkSession,
 	normalizeSessionToolbarChip,
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
@@ -203,26 +204,29 @@ const DraftMetadataListItem = ({
 	onOpen: (draft: IUserDraftItem) => void;
 	translate: (key: string) => string;
 }) => (
-	<button
-		type="button"
-		className="sessionsListDraftItem"
-		data-cy="sessions-list-draft-item"
-		onClick={() => onOpen(draft)}
-		disabled={!draft.actionPath}
-	>
-		<span className="sessionsListDraftItem__tag">
-			{translate('sessionList.toolbar.chips.drafts')}
-		</span>
-		<span className="sessionsListDraftItem__title">
-			{draft.title || translate('drafts.center.untitledChat')}
-		</span>
-		<span className="sessionsListDraftItem__meta">
-			{formatDraftTime(draft.updatedAt)}
-		</span>
-		<span className="sessionsListDraftItem__hint">
-			{translate('sessionList.toolbar.draftMetadataOnly')}
-		</span>
-	</button>
+	// A plain wrapper: the row is a button, which cannot be the list item (#1338).
+	<div role="listitem">
+		<button
+			type="button"
+			className="sessionsListDraftItem"
+			data-cy="sessions-list-draft-item"
+			onClick={() => onOpen(draft)}
+			disabled={!draft.actionPath}
+		>
+			<span className="sessionsListDraftItem__tag">
+				{translate('sessionList.toolbar.chips.drafts')}
+			</span>
+			<span className="sessionsListDraftItem__title">
+				{draft.title || translate('drafts.center.untitledChat')}
+			</span>
+			<span className="sessionsListDraftItem__meta">
+				{formatDraftTime(draft.updatedAt)}
+			</span>
+			<span className="sessionsListDraftItem__hint">
+				{translate('sessionList.toolbar.draftMetadataOnly')}
+			</span>
+		</button>
+	</div>
 );
 
 interface SessionsListProps {
@@ -377,7 +381,9 @@ export const SessionsList = ({
 	 * refetch so anonymous enquiries appear/disappear without a reload.
 	 * The flag is also read inside apiGetConsultantSessionList itself.
 	 */
-	const [liveChatAvailable] = useLiveChatAvailable();
+	const [liveChatAvailable] = useLiveChatAvailable(
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
 	// #1377 slices 4/5: the user's display filter for this list.
 	const displayFilterSection =
 		type === SESSION_LIST_TYPES.ENQUIRY ? 'requests' : 'sessions';
@@ -599,6 +605,28 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		// An asker's list comes from the asker endpoint; the counsellor one
+		// answers 403, so every live refresh used to be a silent no-op and a
+		// list that loaded empty right after registration stayed on
+		// "keine aktiven Beratungen" until a reload (OBP 2.1 #3).
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			// `fresh`: a request still running from the first load was asked
+			// before this signal and must not answer it.
+			return apiGetAskerSessionList({ fresh: true }).then((response) => {
+				// The asker request resolves a failure to an empty list, so an
+				// empty answer may be an error: merge, never wipe loaded rows.
+				// Removals arrive as their own REMOVE_SESSIONS events.
+				const sessions = response?.sessions ?? [];
+				if (sessions.length > 0) {
+					dispatch({
+						type: UPDATE_SESSIONS,
+						ready: true,
+						sessions
+					});
+				}
+			});
+		}
+
 		return getConsultantSessionList(0)
 			.then(({ sessions, total }) => {
 				dispatch({
@@ -610,7 +638,7 @@ export const SessionsList = ({
 				setCurrentOffset(0);
 			})
 			.catch(() => {});
-	}, [dispatch, getConsultantSessionList, type]);
+	}, [dispatch, getConsultantSessionList, type, userData]);
 
 	/*
 	 * Re-run the enquiry fetch when switching Nearby ↔ Live Chat so auto-paging
@@ -1796,6 +1824,14 @@ export const SessionsList = ({
 			),
 		[sessionToolbarPairs]
 	);
+	// FE#1952: the "Direktlinks" chip (and its display-filter row) appear once
+	// the list holds a conversation that came in through a direct link.
+	const hasDirectLinkRow = React.useMemo(
+		() =>
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			sessionToolbarPairs.some(({ raw }) => isDirectLinkSession(raw)),
+		[sessionToolbarPairs, type]
+	);
 	const activeIsLiveChat = React.useMemo(
 		() =>
 			sessionToolbarPairs.some(
@@ -1839,6 +1875,8 @@ export const SessionsList = ({
 					return showGroupChip;
 				case 'supervision':
 					return canSupervise;
+				case 'directLinks':
+					return hasDirectLinkRow;
 				default:
 					return true;
 			}
@@ -1885,6 +1923,7 @@ export const SessionsList = ({
 		);
 	}, [
 		canSupervise,
+		hasDirectLinkRow,
 		rowsByKind,
 		showCreateGroupChatAction,
 		showGroupChip,
@@ -2449,6 +2488,9 @@ export const SessionsList = ({
 					chipView={chipPresentation.view}
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
+					showDirectLinksChip={
+						hasDirectLinkRow || sessionToolbarChip === 'directLinks'
+					}
 					displayFilter={{
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
@@ -2469,6 +2511,16 @@ export const SessionsList = ({
 							id: 'nearby',
 							label: translate('sessionList.toolbar.chips.nearby')
 						},
+						...(hasDirectLinkRow
+							? [
+									{
+										id: 'directLinks',
+										label: translate(
+											'sessionList.toolbar.chips.directLinks'
+										)
+									}
+								]
+							: []),
 						{
 							id: 'liveChat',
 							label: translate(
@@ -2701,13 +2753,12 @@ export const SessionsList = ({
 						'sessionRailList': isRail
 					})}
 					ref={listRef}
-					role={isRail ? 'tablist' : undefined}
+					// Rail pills are tabs; full cards hold their own buttons (menu,
+					// mail, call), which a tab may not contain, so they are list
+					// items (#1338).
+					role={isRail ? 'tablist' : 'list'}
 					aria-orientation={isRail ? 'vertical' : undefined}
-					aria-label={
-						isRail
-							? translate('sessionList.view.headline')
-							: undefined
-					}
+					aria-label={translate('sessionList.view.headline')}
 					onScroll={handleListScroll}
 				>
 					{(!isLoading || finalSessionsList.length > 0) &&
@@ -2730,9 +2781,12 @@ export const SessionsList = ({
 										{hiddenActiveRowIds.has(
 											sortedSessionIds[index]
 										) && (
+											// Announced like a status, without a
+											// status role inside the list (#1338).
 											<p
 												className="sessionsList__hiddenActiveRowHint"
-												role="status"
+												aria-live="polite"
+												aria-atomic="true"
 											>
 												{translate(
 													'notifications.displayFilter.hiddenActiveRow'
@@ -2806,7 +2860,10 @@ export const SessionsList = ({
 					{isLoading && <SessionsListSkeleton />}
 
 					{isReloadButtonVisible && (
-						<div className="sessionsList__reloadWrapper">
+						<div
+							className="sessionsList__reloadWrapper"
+							role="listitem"
+						>
 							<Button
 								item={{
 									label: translate(

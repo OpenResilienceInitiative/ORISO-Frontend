@@ -211,6 +211,7 @@ function Journey({
 									/>
 								) : (
 									<CaseHandoverConversation
+										conversationType="AGENCY_COUNSELLING"
 										sessionId={42}
 										mode="OPT_IN"
 										consentGranted={consent}

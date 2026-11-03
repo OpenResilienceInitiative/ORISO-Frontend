@@ -1,14 +1,17 @@
 import { getCounsellingDpaFailure } from '../../../api/counsellingDpaFailure';
 import * as React from 'react';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+	Alert,
+	Box,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
-	IconButton
+	IconButton,
+	Typography
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { SelectChangeEvent } from '@mui/material/Select';
@@ -16,16 +19,18 @@ import { UserDataContext } from '../../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../../button/Button';
 import { OrisoSelect, OrisoSelectOption } from '../../form/OrisoSelect';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../../overlay/Overlay';
-import { logout } from '../../logout/logout';
 import { mobileListView } from '../../app/navigationHandler';
 import { useTranslation } from 'react-i18next';
-import { CheckAnimation } from '../../animatedIllustration/AnimatedIllustration';
 import { ReactComponent as XIcon } from '../../../resources/img/illustrations/x.svg';
 import { AdditionalAgencySelection } from '../AdditionalEnquiry/AdditionalAgencySelection';
 import { apiPostAdditionalEnquiry, FETCH_ERRORS, X_REASON } from '../../../api';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
 import { TopicsDataInterface } from '../../../globalState/interfaces';
 import { getRegistrationTopicDisplay } from '../../registration/registrationDesign/registrationDesign';
+import { apiPutSessionConsent } from '../../../api/apiPutSessionConsent';
+import { ConsentCompletionPanel } from '../../registration/consentCompletion/ConsentCompletionPanel';
+import { DataProtectionConsentLabel } from '../../registration/accountData/DataProtectionConsentLabel';
+import { useRequestConsentGate } from './useRequestConsentGate';
 
 export interface NewRequestDialogProps {
 	open: boolean;
@@ -36,20 +41,28 @@ export interface NewRequestDialogProps {
 	prefilledPostcode?: string;
 	/** Agencies the asker is already in contact with; listed first + badged. */
 	knownAgencyIds?: number[];
+	/** Told once the enquiry exists, before the dialog navigates into it. */
+	onRequestCreated?: (sessionId: number) => void;
 }
 
 /**
  * Reusable "start a request on another topic" pop-up. Used on the asker
- * profile public-data page; designed to be reopened from consultant-driven
- * forwarding flows (agency chat, live chat) with a preselected topic.
- * Creates a new enquiry via POST /users/askers/session/new - no re-register.
+ * profile public-data page and from the counsellor's recommendation card in
+ * the chat (FE#1876, preselected topic). Creates a new enquiry via
+ * POST /users/askers/session/new - no re-register.
+ *
+ * "Beratung anfragen" first slides up the consent of the chosen centre
+ * (ADR-022 gate 2, moved forward, also for a centre the asker already knows).
+ * Only a confirmed consent creates the session; it is then pinned to the
+ * department version and the asker lands straight in the new enquiry.
  */
 export const NewRequestDialog = ({
 	open,
 	onClose,
 	preselectedTopicId,
 	prefilledPostcode,
-	knownAgencyIds
+	knownAgencyIds,
+	onRequestCreated
 }: NewRequestDialogProps) => {
 	const { t: translate, i18n } = useTranslation([
 		'common',
@@ -66,7 +79,8 @@ export const NewRequestDialog = ({
 	const [selectedPostcode, setSelectedPostcode] = useState<any>('');
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
-	const [sessionId, setSessionId] = useState(null);
+	const [consentStep, setConsentStep] = useState(false);
+	const consentInputRef = useRef<HTMLInputElement>(null);
 	const [dpaFailure, setDpaFailure] =
 		useState<ReturnType<typeof getCounsellingDpaFailure>>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
@@ -80,25 +94,9 @@ export const NewRequestDialog = ({
 		type: BUTTON_TYPES.PRIMARY
 	};
 
-	const overlayItemNewRegistrationSuccess: OverlayItem = {
-		svg: CheckAnimation,
-		headline: translate('profile.data.registerSuccess.overlay.headline'),
-		buttonSet: [
-			{
-				label: translate(
-					'profile.data.registerSuccess.overlay.button1.label'
-				),
-				function: OVERLAY_FUNCTIONS.REDIRECT,
-				type: BUTTON_TYPES.PRIMARY
-			},
-			{
-				label: translate(
-					'profile.data.registerSuccess.overlay.button2.label'
-				),
-				function: OVERLAY_FUNCTIONS.LOGOUT,
-				type: BUTTON_TYPES.LINK
-			}
-		]
+	const buttonCancel: ButtonItem = {
+		label: translate('furtherCounselling.request.cancel'),
+		type: BUTTON_TYPES.SECONDARY
 	};
 
 	const overlayItemNewRegistrationError: OverlayItem = {
@@ -148,6 +146,25 @@ export const NewRequestDialog = ({
 		setIsButtonDisabled(!isAllRequiredDataSet());
 	}, [selectedAgency]); // eslint-disable-line react-hooks/exhaustive-deps
 
+	const selectedTopic =
+		topics.find((topic) => topic.id === selectedTopicId) ?? null;
+	const consentAgency = selectedAgency?.id ? selectedAgency : null;
+	const consent = useRequestConsentGate(consentAgency, selectedTopic);
+
+	/* A changed centre, topic or postcode is a different request: the consent
+	   on offer belonged to the previous one, so it retracts. */
+	useEffect(() => {
+		setConsentStep(false);
+		consent.reset();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedAgency?.id, selectedTopicId, selectedPostcode]);
+
+	useEffect(() => {
+		if (consentStep && consent.isResolved) {
+			consentInputRef.current?.focus();
+		}
+	}, [consentStep, consent.isResolved]);
+
 	const handleConsultingTypeSelect = (event: SelectChangeEvent<string>) => {
 		const topicId = event.target.value;
 		setSelectedTopicId(parseInt(topicId));
@@ -162,10 +179,37 @@ export const NewRequestDialog = ({
 		}))
 		.sort((a, b) => a.label.localeCompare(b.label));
 
+	const openNewEnquiry = (newSessionId?: number) => {
+		reloadUserData().catch(() => {
+			// non-fatal: the next mount refetches user data anyway
+		});
+		if (newSessionId != null) onRequestCreated?.(newSessionId);
+		mobileListView();
+		onClose();
+		/* Normal session view (same screen consultants see from the enquiry
+		   list) rather than the /write/ formulation helper. */
+		navigate({
+			pathname:
+				newSessionId != null
+					? `/sessions/user/view/session/${newSessionId}`
+					: `/sessions/user/view`
+		});
+	};
+
 	const handleRegistration = () => {
 		if (isRequestInProgress || !isAllRequiredDataSet()) {
 			return;
 		}
+		if (!consentStep) {
+			setConsentStep(true);
+			return;
+		}
+		// Fail closed: no session without the confirmed consent on screen.
+		if (!consent.accepted) {
+			consentInputRef.current?.focus();
+			return;
+		}
+		const versionId = consent.versionId;
 		setIsRequestInProgress(true);
 
 		apiPostAdditionalEnquiry(
@@ -173,14 +217,25 @@ export const NewRequestDialog = ({
 			selectedAgency.id,
 			selectedPostcode,
 			selectedTopicId
-		)
-			.then((response) => {
-				setSessionId(response.sessionId);
-				setOverlayItem(overlayItemNewRegistrationSuccess);
-				setOverlayActive(true);
+		).then(
+			async (response) => {
+				/* Pin the agreement to the department version that was on
+				   screen (ADR-022). Best effort: the enquiry exists already,
+				   and Träger or platform wording carries no version. */
+				if (versionId !== null && response?.sessionId != null) {
+					try {
+						await apiPutSessionConsent(
+							response.sessionId,
+							versionId
+						);
+					} catch {
+						/* the enquiry stands; the pointer is a refinement */
+					}
+				}
 				setIsRequestInProgress(false);
-			})
-			.catch((error: Response) => {
+				openNewEnquiry(response?.sessionId);
+			},
+			(error: Response) => {
 				const failure = getCounsellingDpaFailure(error);
 				setDpaFailure(failure);
 				if (failure) {
@@ -212,40 +267,22 @@ export const NewRequestDialog = ({
 				setIsButtonDisabled(true);
 				setOverlayActive(true);
 				setIsRequestInProgress(false);
-			});
+			}
+		);
 	};
 
 	const handleOverlayAction = (buttonFunction: string) => {
-		reloadUserData().catch(() => {
-			// non-fatal: the next mount refetches user data anyway
-		});
-
-		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-			mobileListView();
-			onClose();
-			/* Normal session view (same screen consultants see from the
-			   enquiry list) rather than the /write/ formulation helper -
-			   the asker lands in a regular chat surface with the message
-			   composer, matching the behaviour of an enquiry picked from
-			   the list. */
-			navigate({
-				pathname: sessionId
-					? `/sessions/user/view/session/${sessionId}`
-					: `/sessions/user/view`
-			});
-		} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 			setOverlayItem(null);
 			setOverlayActive(false);
 			if (!dpaFailure) setSelectedTopicId(preselectedTopicId ?? null);
 			setDpaFailure(null);
-		} else {
-			logout();
 		}
 	};
 
-	// The success and error overlay is portalled below the MUI dialog (z-index
-	// 55 against 1300), so the dialog steps aside while it shows: otherwise the
-	// advice seeker never sees "registered" or its buttons (ORISO-Frontend#1655).
+	// The error overlay is portalled below the MUI dialog (z-index 55 against
+	// 1300), so the dialog steps aside while it shows: otherwise the advice
+	// seeker never sees it or its button (ORISO-Frontend#1655).
 	const showOverlay = overlayActive && !dpaFailure;
 
 	return (
@@ -292,11 +329,6 @@ export const NewRequestDialog = ({
 							}
 						/>
 					)}
-					<Button
-						item={buttonSetRegistration}
-						buttonHandle={handleRegistration}
-						disabled={isButtonDisabled}
-					/>
 					{overlayActive && dpaFailure && (
 						<Dialog
 							open
@@ -327,6 +359,84 @@ export const NewRequestDialog = ({
 						</Dialog>
 					)}
 				</DialogContent>
+				<Box
+					className="newRequestDialog__footer"
+					data-cy="new-request-footer"
+					sx={{
+						px: 3,
+						pb: 2,
+						pt: 1,
+						display: 'flex',
+						flexDirection: 'column',
+						gap: 1.5,
+						borderTop: consentStep ? 1 : 0,
+						borderColor: 'divider'
+					}}
+				>
+					<Typography
+						variant="body2"
+						color="text.secondary"
+						data-cy="new-request-same-topic-info"
+					>
+						{translate('furtherCounselling.request.sameTopicInfo')}
+					</Typography>
+					{consentStep && (
+						<>
+							<ConsentCompletionPanel
+								visible
+								ariaLabel={translate(
+									'furtherCounselling.request.consentAria'
+								)}
+								checked={consent.accepted}
+								disabled={!consent.isResolved}
+								onChange={consent.toggle}
+								inputRef={consentInputRef}
+								label={
+									<DataProtectionConsentLabel
+										agency={consentAgency ?? undefined}
+										topic={selectedTopic ?? undefined}
+										onResolutionChange={
+											consent.onResolutionChange
+										}
+									/>
+								}
+							/>
+							{consent.failure && (
+								<Alert severity="error">
+									{translate(
+										consent.failure === 'unrenderable'
+											? 'registration.dataProtection.unrenderable'
+											: 'registration.agency.legal.unavailable'
+									)}
+								</Alert>
+							)}
+						</>
+					)}
+					<Box
+						sx={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: 1,
+							justifyContent: 'flex-end'
+						}}
+					>
+						{consentStep && (
+							<Button
+								item={buttonCancel}
+								buttonHandle={onClose}
+							/>
+						)}
+						<Button
+							item={buttonSetRegistration}
+							buttonHandle={handleRegistration}
+							disabled={
+								isButtonDisabled ||
+								isRequestInProgress ||
+								(consentStep && !consent.accepted)
+							}
+						/>
+					</Box>
+				</Box>
 			</Dialog>
 			{open && showOverlay && (
 				<Overlay
