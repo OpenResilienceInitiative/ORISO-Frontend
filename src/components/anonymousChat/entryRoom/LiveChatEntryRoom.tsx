@@ -1,5 +1,9 @@
 import { useAccountOperationActions } from '../../../hooks/useAccountOperationActions';
 import { endpoints } from '../../../resources/scripts/endpoints';
+import { apiGetPublicTenantById } from '../../../api/apiGetTenantTheming';
+import type { TenantDataInterface } from '../../../globalState/interfaces';
+import { useTenant } from '../../../globalState/provider/TenantProvider';
+import { isAskerDisplayNameTypingAllowed } from '../../../utils/askerAccountPolicy';
 import * as React from 'react';
 import {
 	useCallback,
@@ -48,6 +52,7 @@ import {
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from './liveChatAvailability';
+import { useConsentContext } from '../../waitingRoom/useConsentContext';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session this browser already has for the link. Tokens are set. */
@@ -60,6 +65,7 @@ export interface LiveChatEntryRoomProps {
 	invite?: {
 		/** Unknown while the page still reads the link; the room keeps looking. */
 		topicId?: number;
+		tenantId?: number | null;
 		consultingTypeId?: number;
 		/** Redeems the link, sets its tokens, and returns the new session. */
 		redeem: () => Promise<number>;
@@ -189,6 +195,33 @@ const LiveChatEntryRoomContent = ({
 	const navigate = useNavigate();
 	const localeContext = useContext(LocaleContext);
 	const locale = localeContext?.locale ?? 'de';
+	const tenant = useTenant();
+	const inviteTenantId = invite?.tenantId;
+	const [inviteTenant, setInviteTenant] =
+		useState<TenantDataInterface | null>(null);
+	useEffect(() => {
+		if (!inviteTenantId || inviteTenantId === tenant?.id) return;
+		let current = true;
+		void apiGetPublicTenantById(inviteTenantId)
+			.then((resolved) => {
+				if (current && resolved?.id === inviteTenantId)
+					setInviteTenant(resolved);
+			})
+			.catch(() => undefined);
+		return () => {
+			current = false;
+		};
+	}, [inviteTenantId, tenant?.id]);
+	const nameSettings =
+		!invite || inviteTenantId === tenant?.id
+			? tenant?.settings
+			: inviteTenant?.id === inviteTenantId
+				? inviteTenant?.settings
+				: undefined;
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		nameSettings,
+		'LIVE_CHAT'
+	);
 	const legalLinks = useContext(LegalLinksContext);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
@@ -219,6 +252,13 @@ const LiveChatEntryRoomContent = ({
 		rollGuestNames(locale)
 	);
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [customDisplayName, setCustomDisplayName] = useState<string | null>(
+		null
+	);
+	const selectedName =
+		nameEditable && customDisplayName !== null
+			? customDisplayName
+			: (names[selectedIndex]?.userId ?? '');
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
@@ -311,25 +351,31 @@ const LiveChatEntryRoomContent = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 
-	const consent = useMemo(
-		() =>
-			resolveEntryRoomConsent({
-				hasDepartment: department !== null,
-				department: departmentConsent,
-				platformHtml: platformConsentHtml,
-				missingPolicyHtml,
-				legalLinksHtml,
-				locale
-			}),
-		[
-			department,
-			departmentConsent,
+	const consentNames = useConsentContext(department);
+	const consent = useMemo(() => {
+		const resolved = resolveEntryRoomConsent({
+			hasDepartment: department !== null,
+			department: departmentConsent,
+			platformHtml: platformConsentHtml,
+			missingPolicyHtml,
 			legalLinksHtml,
 			locale,
-			missingPolicyHtml,
-			platformConsentHtml
-		]
-	);
+			context: consentNames.context
+		});
+		return {
+			...resolved,
+			readable: resolved.readable && !consentNames.pending
+		};
+	}, [
+		consentNames.context,
+		consentNames.pending,
+		department,
+		departmentConsent,
+		legalLinksHtml,
+		locale,
+		missingPolicyHtml,
+		platformConsentHtml
+	]);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
 	const mark = (name: string, value = '1') => {
@@ -340,12 +386,13 @@ const LiveChatEntryRoomContent = ({
 		}
 	};
 
-	/* A → B: the name goes to the session and the account; the old pseudonym
-	   card did exactly this (SessionItemComponent handleConfirmPseudonym). */
+	/* A → B: persist the session alias; account PATCH only preserves locale.
+	   Asker displayName on account PATCH is not a supported persistence path. */
 	const handleContinue = useCallback(async () => {
 		if (busy) return;
 		const chosen = names[selectedIndex];
-		if (!chosen) return;
+		const alias = selectedName.trim();
+		if (!chosen || !alias || alias.length > 255) return;
 		setBusy(true);
 		setContinueFailed(false);
 		try {
@@ -399,8 +446,9 @@ const LiveChatEntryRoomContent = ({
 			/* One name, everywhere: the counsellor's queue shows the same
 			   string the guest just picked. */
 			await apiPutSessionData(id, {
-				displayName: chosen.userId
+				displayName: alias
 			});
+			if (cancelled.current) return;
 			/* The redeem creates the account without a language, so the server
 			   stores German; keep the one the guest is reading, or the app
 			   switches to German when it boots after the gate. The server only
@@ -409,12 +457,12 @@ const LiveChatEntryRoomContent = ({
 				'locale',
 				endpoints.userData,
 				{
-					displayName: chosen.userId,
 					preferredLanguage: normalizePreferredLanguage(locale)
 				},
 				apiPatchUserData
 			);
-			rememberConfirmedEntryName(id, chosen.userId);
+			if (cancelled.current) return;
+			rememberConfirmedEntryName(id, alias);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
 			/* Without this the door swallowed the failure: the stage stayed on
@@ -424,7 +472,16 @@ const LiveChatEntryRoomContent = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [accountActions, busy, names, selectedIndex, sessionId, invite, locale]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [
+		accountActions,
+		busy,
+		names,
+		selectedIndex,
+		selectedName,
+		sessionId,
+		invite,
+		locale
+	]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
 	   that needs no account. An answered zero needs a second look, because the
@@ -668,9 +725,9 @@ const LiveChatEntryRoomContent = ({
 		<EntryRoomShell
 			kicker={kicker}
 			statusLine={statusLine}
-			/* Gate 2 (ADR-022): once a centre has taken the conversation its
-			   department governs — before, the platform does. */
-			department={accepted ? department : null}
+			/* No department: the room's legal links stay the platform's; the
+			   accepting centre's documents come with the consent sheet
+			   (Gate 2, ADR-022; Frank, 2026-10-28). */
 		>
 			{/* One view at a time slides in; the frame and the stage stay. */}
 			<EntryRoomView key={closed ? 'closed' : stage}>
@@ -695,6 +752,9 @@ const LiveChatEntryRoomContent = ({
 						selectedIndex={selectedIndex}
 						busy={busy}
 						failed={continueFailed}
+						displayName={selectedName}
+						editable={nameEditable}
+						onDisplayNameChange={setCustomDisplayName}
 						onSelect={(index) => {
 							if (index !== selectedIndex)
 								accountActions.edited(
@@ -702,6 +762,7 @@ const LiveChatEntryRoomContent = ({
 									endpoints.userData
 								);
 							setSelectedIndex(index);
+							setCustomDisplayName(null);
 						}}
 						onReroll={() => {
 							accountActions.edited('locale', endpoints.userData);
@@ -709,6 +770,7 @@ const LiveChatEntryRoomContent = ({
 						   must never need a second click. */
 							setNames(rollGuestNames(locale));
 							setSelectedIndex(0);
+							setCustomDisplayName(null);
 						}}
 						onContinue={() => {
 							void handleContinue();

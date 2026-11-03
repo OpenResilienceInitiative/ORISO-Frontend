@@ -24,6 +24,7 @@ import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { conversationAgency } from '../../test/fixtures/conversationPolicyFixtures';
 import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
@@ -81,9 +82,11 @@ vi.mock('../../resources/img/illustrations/Team.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-// The create view waits for the agencies' settings (#1440); none known here.
+// Confirmed legacy agencies without settings preserve tenant hard caps.
 vi.mock('../../api/apiGetAgenciesByIds', () => ({
-	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
+	apiGetAgenciesByIds: vi.fn(async (ids: number[]) =>
+		ids.map((id) => ({ ...conversationAgency(id), settings: null }))
+	)
 }));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])

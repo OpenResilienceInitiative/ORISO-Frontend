@@ -30,6 +30,18 @@ export const isRedeemInviteLinkSessionResponse = (
 	typeof (data as RedeemInviteLinkSessionResponse).accessToken === 'string' &&
 	typeof (data as RedeemInviteLinkSessionResponse).sessionId === 'number';
 
+export const isPausedInvite = async (error: unknown): Promise<boolean> => {
+	if (!(error instanceof Response) || error.status !== 410) return false;
+	const body = await error
+		.clone()
+		.json()
+		.catch(() => null);
+	return (
+		body?.reason === 'INVITE_LINK_PAUSED' ||
+		body?.reason === 'DIRECT_LINK_INACTIVE'
+	);
+};
+
 export const redeemInviteLink = async (
 	token: string
 ): Promise<RedeemInviteLinkResponse> => {
@@ -41,7 +53,11 @@ export const redeemInviteLink = async (
 	});
 
 	if (!response.ok) {
-		if (getCounsellingDpaFailure(response)) throw response;
+		if (
+			getCounsellingDpaFailure(response) ||
+			(await isPausedInvite(response))
+		)
+			throw response;
 		const body = await response.text().catch(() => '');
 		throw new Error(body || `Redeem failed (HTTP ${response.status})`);
 	}

@@ -129,7 +129,9 @@ export default defineConfig({
 					// Guarded internally, so it is a no-op under the node environment.
 					setupFiles: [
 						'./src/test/jsdomPolyfills.ts',
-						'./src/test/noChunkWarming.ts'
+						'./src/test/noChunkWarming.ts',
+						// lottie-web's readiness timer outlives short files' jsdom (#1977).
+						'./src/test/noLottie.ts'
 					],
 					// The app's runtimeConfig reads REACT_APP_* vars at module load and
 					// throws if the Keycloak realm is missing. Vite only auto-loads VITE_*
@@ -171,7 +173,9 @@ export default defineConfig({
 						'@mui/icons-material/AnimationOutlined',
 						// Waiting-room stories otherwise discover this mid-shard and
 						// reload React modules while other stories are rendering.
-						'@mui/icons-material/WavingHandOutlined'
+						'@mui/icons-material/WavingHandOutlined',
+						// Further-counselling notices otherwise trigger optimization mid-story.
+						'@mui/icons-material/CheckCircleOutlineRounded'
 					]
 				},
 				test: {

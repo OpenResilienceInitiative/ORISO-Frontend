@@ -1,4 +1,9 @@
 // @vitest-environment oriso-jsdom
+import {
+	canonicalAgencySettings,
+	conversationAgency
+} from '../test/fixtures/conversationPolicyFixtures';
+import { getConversationFormatAvailability } from '../components/conversationCreate/formatAvailability';
 import * as React from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import {
@@ -24,6 +29,14 @@ const Probe = () => {
 	const { agencies, isLoading } = useCounsellorAgencyFormats();
 	return (
 		<div>
+			<output data-testid="create-allowed">
+				{String(
+					getConversationFormatAvailability(
+						{ settings: { featureGroupChatV2Enabled: true } },
+						agencies
+					).internal
+				)}
+			</output>
 			<span data-cy="loading">{String(isLoading)}</span>
 			<span data-cy="circles">
 				{String(
@@ -105,4 +118,144 @@ describe('useCounsellorAgencyFormats', () => {
 			'false'
 		);
 	});
+});
+
+it('does not fall back to permissive tenant flags after the fresh agency request fails', async () => {
+	resetCounsellorAgencyFormatsForTests();
+	vi.mocked(apiGetAgenciesByIds).mockRejectedValueOnce(
+		new Error('Unavailable')
+	);
+	const view = render(<Harness ids={[1]} />);
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('[data-cy="loading"]')?.textContent
+		).toBe('false')
+	);
+	expect(view.getByTestId('create-allowed').textContent).toBe('false');
+	cleanup();
+	resetCounsellorAgencyFormatsForTests();
+});
+
+it('rejects a matching agency id returned for a different authenticated tenant', async () => {
+	resetCounsellorAgencyFormatsForTests();
+	document.cookie = `keycloak=header.${btoa(JSON.stringify({ tenantId: 14 }))}.signature`;
+	vi.mocked(apiGetAgenciesByIds).mockResolvedValueOnce([
+		{ ...conversationAgency(1, canonicalAgencySettings()), tenantId: 17 }
+	]);
+	const view = render(<Harness ids={[1]} />);
+	try {
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('[data-cy="loading"]')?.textContent
+			).toBe('false')
+		);
+		expect(view.getByTestId('create-allowed').textContent).toBe('false');
+	} finally {
+		cleanup();
+		resetCounsellorAgencyFormatsForTests();
+		document.cookie = 'keycloak=; Max-Age=0';
+	}
+});
+
+it('requests a fresh A authority after visiting B and returning while older A is pending', async () => {
+	vi.clearAllMocks();
+	resetCounsellorAgencyFormatsForTests();
+	let finishFirst: (
+		value: import('../globalState/interfaces').AgencyDataInterface[]
+	) => void = () => {};
+	let finishLast: (
+		value: import('../globalState/interfaces').AgencyDataInterface[]
+	) => void = () => {};
+	const first = new Promise<
+		import('../globalState/interfaces').AgencyDataInterface[]
+	>((resolve) => {
+		finishFirst = resolve;
+	});
+	const last = new Promise<
+		import('../globalState/interfaces').AgencyDataInterface[]
+	>((resolve) => {
+		finishLast = resolve;
+	});
+	vi.mocked(apiGetAgenciesByIds)
+		.mockReturnValueOnce(first)
+		.mockResolvedValueOnce([conversationAgency(2)])
+		.mockReturnValueOnce(last);
+	const view = render(<Harness ids={[1]} />);
+	try {
+		await waitFor(() =>
+			expect(apiGetAgenciesByIds).toHaveBeenCalledTimes(1)
+		);
+		view.rerender(<Harness ids={[2]} />);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('[data-cy="loading"]')?.textContent
+			).toBe('false')
+		);
+		view.rerender(<Harness ids={[1]} />);
+		await waitFor(() =>
+			expect(apiGetAgenciesByIds).toHaveBeenCalledTimes(3)
+		);
+		await act(async () => {
+			finishFirst([conversationAgency(1)]);
+		});
+		expect(
+			view.container.querySelector('[data-cy="loading"]')?.textContent
+		).toBe('true');
+		await act(async () => {
+			finishLast([conversationAgency(1)]);
+		});
+		expect(
+			view.container.querySelector('[data-cy="loading"]')?.textContent
+		).toBe('false');
+		expect(view.getByTestId('create-allowed').textContent).toBe('true');
+	} finally {
+		cleanup();
+		resetCounsellorAgencyFormatsForTests();
+		vi.clearAllMocks();
+	}
+});
+
+it('rejects duplicate conflicting agency authority instead of last response wins', async () => {
+	resetCounsellorAgencyFormatsForTests();
+	vi.clearAllMocks();
+	vi.mocked(apiGetAgenciesByIds).mockResolvedValueOnce([
+		conversationAgency(
+			1,
+			canonicalAgencySettings({ featureInternalGroupChatEnabled: false })
+		),
+		conversationAgency(1)
+	]);
+	const view = render(<Harness ids={[1]} />);
+	try {
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('[data-cy="loading"]')?.textContent
+			).toBe('false')
+		);
+		expect(view.getByTestId('create-allowed').textContent).toBe('false');
+	} finally {
+		cleanup();
+		resetCounsellorAgencyFormatsForTests();
+		vi.clearAllMocks();
+	}
+});
+
+it('does not offer creation from tenant defaults before the first public agency authority arrives', async () => {
+	resetCounsellorAgencyFormatsForTests();
+	vi.clearAllMocks();
+	vi.mocked(apiGetAgenciesByIds).mockReturnValueOnce(new Promise(() => {}));
+	const view = render(<Harness ids={[1]} />);
+	try {
+		await waitFor(() =>
+			expect(apiGetAgenciesByIds).toHaveBeenCalledTimes(1)
+		);
+		expect(
+			view.container.querySelector('[data-cy="loading"]')?.textContent
+		).toBe('true');
+		expect(view.getByTestId('create-allowed').textContent).toBe('false');
+	} finally {
+		cleanup();
+		resetCounsellorAgencyFormatsForTests();
+		vi.clearAllMocks();
+	}
 });

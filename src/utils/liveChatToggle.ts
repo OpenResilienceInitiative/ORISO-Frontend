@@ -139,12 +139,13 @@ export interface LiveChatAvailabilityState {
 	lostReason: LiveChatAvailabilityLossReason | null;
 }
 
-/** Hook: visible state always starts from and reconciles with the backend. */
-export const useLiveChatAvailable = (): [
-	boolean,
-	(v: boolean) => Promise<void>,
-	LiveChatAvailabilityState
-] => {
+/**
+ * Hook: visible state always starts from and reconciles with the backend.
+ * `enabled` false for askers: the endpoint is counsellor-only and answers 403.
+ */
+export const useLiveChatAvailable = (
+	enabled = true
+): [boolean, (v: boolean) => Promise<void>, LiveChatAvailabilityState] => {
 	const [active, setActive] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [pending, setPending] = useState(false);
@@ -153,6 +154,12 @@ export const useLiveChatAvailable = (): [
 		useState<LiveChatAvailabilityLossReason | null>(null);
 
 	useEffect(() => {
+		if (!enabled) {
+			setActive(false);
+			setLoading(false);
+			return undefined;
+		}
+		setLoading(true);
 		let mounted = true;
 		const reconcile = async () => {
 			const requestedAtRevision = availabilityRevision;
@@ -233,7 +240,7 @@ export const useLiveChatAvailable = (): [
 			);
 			window.removeEventListener('storage', onStorage);
 		};
-	}, []);
+	}, [enabled]);
 
 	const update = useCallback(async (nextActive: boolean) => {
 		setPending(true);

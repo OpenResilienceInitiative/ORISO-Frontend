@@ -6,7 +6,8 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import {
 	afterEach,
@@ -52,7 +53,10 @@ vi.mock('../../globalState', async () => {
 vi.mock('../../api', () => ({
 	apiGetGroupChatInfo: vi.fn(() => new Promise(() => undefined)),
 	apiPutGroupChat: vi.fn(),
-	FETCH_ERRORS: { NO_MATCH: 'NO_MATCH' },
+	FETCH_ERRORS: {
+		NO_MATCH: 'NO_MATCH',
+		USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT'
+	},
 	GROUP_CHAT_API: { JOIN: '/join', START: '/start' }
 }));
 vi.mock('../../hooks/useWatcher', () => ({
@@ -144,6 +148,7 @@ vi.mock('./entryRoom/GroupWaitingRoom', () => ({
 		joinBlocked: boolean;
 	}) => (
 		<button
+			data-blocked={String(Boolean(props.joinBlocked))}
 			onClick={() => {
 				joinResult.value = props.onJoin();
 			}}
@@ -282,5 +287,20 @@ describe('JoinGroupChatView — the embedded room hands its join request back', 
 
 		expect(joinResult.value).toBe(false);
 		expect(apiPutGroupChat).not.toHaveBeenCalled();
+	});
+
+	// #1923: the server answers a banned member with a reason; join stays closed.
+	it('blocks joining again when the server says the person was removed', async () => {
+		vi.mocked(apiPutGroupChat).mockRejectedValue(
+			new Error('USER_BANNED_FROM_CHAT')
+		);
+
+		render(<JoinGroupChatView />);
+		fireEvent.click(screen.getByText('join'));
+
+		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
+		await waitFor(() =>
+			expect(screen.getByText('join').dataset.blocked).toBe('true')
+		);
 	});
 });

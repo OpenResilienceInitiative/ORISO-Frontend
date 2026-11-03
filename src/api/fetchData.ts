@@ -34,6 +34,8 @@ export const FETCH_ERRORS = {
 	BAD_REQUEST: 'BAD_REQUEST',
 	CATCH_ALL: 'CATCH_ALL',
 	CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE',
+	/** Like CATCH_ALL, but a 401 still takes the normal session handling (logout). */
+	CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED',
 	COUNSELLING_DPA_RESPONSE: 'COUNSELLING_DPA_RESPONSE',
 	CONFLICT: 'CONFLICT',
 	CONFLICT_WITH_RESPONSE: 'CONFLICT_WITH_RESPONSE',
@@ -47,6 +49,8 @@ export const FETCH_ERRORS = {
 	REQUEST_IDENTITY_CHANGED: 'REQUEST_IDENTITY_CHANGED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
 	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+	/** 403 with X-Reason USER_BANNED_FROM_CHAT: a moderator removed the caller. */
+	USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT',
 	X_REASON: 'X-Reason'
 };
 
@@ -287,6 +291,15 @@ export const fetchData = ({
 					getCounsellingDpaFailure(response)
 				) {
 					reject(response);
+				} else if (
+					response.status === 403 &&
+					responseHandling?.includes(
+						FETCH_ERRORS.USER_BANNED_FROM_CHAT
+					) &&
+					response.headers?.get(FETCH_ERRORS.X_REASON) ===
+						FETCH_ERRORS.USER_BANNED_FROM_CHAT
+				) {
+					reject(new Error(FETCH_ERRORS.USER_BANNED_FROM_CHAT));
 				} else if (responseHandling) {
 					if (
 						response.status === 400 &&
@@ -328,7 +341,11 @@ export const fetchData = ({
 						responseHandling.includes(FETCH_ERRORS.CATCH_ALL) ||
 						responseHandling.includes(
 							FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE
-						)
+						) ||
+						(response.status !== 401 &&
+							responseHandling.includes(
+								FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+							))
 					) {
 						reject(
 							responseHandling.includes(

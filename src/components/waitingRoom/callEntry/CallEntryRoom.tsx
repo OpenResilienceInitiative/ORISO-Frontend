@@ -9,6 +9,7 @@ import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateBut
 import { ClosingFocal } from '../../transition/closing/closingFocal';
 import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import { generatePassword } from '../../../utils/pseudonymGenerator';
 import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
 import { getUsernameFeedback } from '../../registration/accountData/usernameFeedback';
 import { REGISTRATION_DATA_VALIDATION } from '../../registration/registrationDataValidation';
@@ -42,6 +43,13 @@ import {
 	CallEntryBlocker,
 	CallModality
 } from './callEntryTypes';
+
+/** What the person chose at the door; the caller creates the account from it. */
+export interface CallEntryAccount {
+	username: string;
+	password: string;
+	identity: Pseudonym;
+}
 
 /** A level above this once means the microphone demonstrably hears. */
 const HEARD_LEVEL = 0.15;
@@ -93,7 +101,7 @@ export interface CallEntryRoomProps {
 	 * on the way, ORISO-Frontend#1737). `false`, or a promise of it, says the
 	 * join failed and the person stays.
 	 */
-	onJoin?: () => ClosingSwapResult;
+	onJoin?: (account: CallEntryAccount) => ClosingSwapResult;
 	/**
 	 * Where the person arrives: the call's main area, which the room that
 	 * swaps in marks with `data-closing-focal="call"`. `null` plays no closing
@@ -104,6 +112,15 @@ export interface CallEntryRoomProps {
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
 	checkUsername?: (username: string) => Promise<boolean>;
+	/**
+	 * Temporary direct-link guests where the platform hides the password
+	 * (ORISO-UserService#1486): the account still gets one, generated here,
+	 * but the field and its suggest button are not shown.
+	 */
+	hidePassword?: boolean;
+	/** An existing account only needs the device and consent checks. */
+	signedIn?: boolean;
+	loginLink?: React.ReactNode;
 }
 
 /**
@@ -142,7 +159,10 @@ export const CallEntryRoom = ({
 	closing = 'call',
 	onBlockerAction,
 	playTone,
-	checkUsername
+	checkUsername,
+	hidePassword = false,
+	signedIn = false,
+	loginLink
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -152,7 +172,9 @@ export const CallEntryRoom = ({
 	const [username, setUsername] = useState(
 		() => initialUsername ?? toRegistrationUsername(identity)
 	);
-	const [password, setPassword] = useState(initialPassword);
+	const [password, setPassword] = useState(() =>
+		hidePassword && !initialPassword ? generatePassword() : initialPassword
+	);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -198,7 +220,7 @@ export const CallEntryRoom = ({
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
 	const availability = useUsernameAvailability(
 		username,
-		usernameValid,
+		usernameValid && !signedIn,
 		checkUsername
 	);
 	const [usernameBlurred, setUsernameBlurred] = useState(false);
@@ -210,7 +232,7 @@ export const CallEntryRoom = ({
 		availabilityCheckFailed: availability.failed
 	});
 
-	const conditions = [
+	const accountConditions = [
 		{
 			done:
 				usernameValid &&
@@ -221,7 +243,10 @@ export const CallEntryRoom = ({
 		{
 			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
-		},
+		}
+	];
+	const conditions = [
+		...(signedIn ? [] : accountConditions),
 		{ done: micHeard || !micOn, missing: copy.missingMicrophone }
 	];
 	const doneCount = conditions.filter((condition) => condition.done).length;
@@ -295,29 +320,35 @@ export const CallEntryRoom = ({
 						alignItems: 'start',
 						gridTemplateColumns: {
 							xs: 'minmax(0, 1fr)',
-							lg: 'minmax(0, 1.3fr) minmax(0, 1fr)'
+							lg: signedIn
+								? 'minmax(0, 1fr)'
+								: 'minmax(0, 1.3fr) minmax(0, 1fr)'
 						}
 					}}
 				>
 					{/* Identity first: a guest confirms who they are before
 					    anything else (Frank, 2026-10-16). First on the phone and
 					    for screen readers; the right column on a desktop. */}
-					<Box
-						data-testid="call-entry-identity-column"
-						sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
-					>
-						<CallEntryIdentity
-							modality={modality}
-							identity={identity}
-							onIdentityChange={setIdentity}
-							username={username}
-							onUsernameChange={setUsername}
-							password={password}
-							onPasswordChange={setPassword}
-							usernameFeedback={usernameFeedback}
-							onUsernameBlur={() => setUsernameBlurred(true)}
-						/>
-					</Box>
+					{!signedIn && (
+						<Box
+							data-testid="call-entry-identity-column"
+							sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
+						>
+							<CallEntryIdentity
+								modality={modality}
+								identity={identity}
+								onIdentityChange={setIdentity}
+								username={username}
+								onUsernameChange={setUsername}
+								password={password}
+								onPasswordChange={setPassword}
+								hidePassword={hidePassword}
+								usernameFeedback={usernameFeedback}
+								onUsernameBlur={() => setUsernameBlurred(true)}
+							/>
+							{loginLink}
+						</Box>
+					)}
 					{/* Picture or voice, then the devices right under it. */}
 					<Box
 						data-testid="call-entry-media-column"
@@ -433,7 +464,9 @@ export const CallEntryRoom = ({
 								: (doneCount / conditions.length) * 100
 						}
 						beforeEnter={mayJoin}
-						onEnter={() => onJoin?.()}
+						onEnter={() =>
+							onJoin?.({ username, password, identity })
+						}
 						closing={closing ?? undefined}
 						label={copy.join[modality]}
 						status={

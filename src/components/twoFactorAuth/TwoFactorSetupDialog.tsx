@@ -1,5 +1,12 @@
 import { useAccountOperationActions } from '../../hooks/useAccountOperationActions';
 import { endpoints } from '../../resources/scripts/endpoints';
+import {
+	getAuthenticatedAccountIdentity,
+	subscribeToAuthenticatedTenant
+} from '../../utils/authenticatedTenant';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
 import {
 	useCallback,
@@ -262,6 +269,77 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	);
 	const [otp, setOtp] = useState('');
 	const [email, setEmail] = useState(initialEmail);
+	const emailCollectionAllowed = useAccountEmailCollectionAllowed();
+	const canUseEmail =
+		emailCollectionAllowed ||
+		Boolean(
+			initialEmail.trim() &&
+				email.trim().toLowerCase() === initialEmail.trim().toLowerCase()
+		);
+	const actorId = useContext(UserDataContext)?.userData?.userId;
+	const tenantId = useTenant()?.id;
+	const emailLifetime = useMemo(
+		() => ({ actorId, tenantId, open }),
+		[actorId, tenantId, open]
+	);
+	const latestEmailLifetime = useRef<object | null>(emailLifetime);
+	latestEmailLifetime.current = emailLifetime;
+	const emailScope = useMemo(
+		() => ({
+			actorId,
+			tenantId,
+			email,
+			initialEmail,
+			emailCollectionAllowed,
+			open
+		}),
+		[actorId, tenantId, email, initialEmail, emailCollectionAllowed, open]
+	);
+	const latestEmailScope = useRef<object | null>(emailScope);
+	const latestEmailRequest = useRef<{
+		lifetime: typeof emailLifetime;
+		committed: boolean;
+	} | null>(null);
+	latestEmailScope.current = emailScope;
+	useEffect(() => {
+		let identity = getAuthenticatedAccountIdentity();
+		return subscribeToAuthenticatedTenant(() => {
+			const next = getAuthenticatedAccountIdentity();
+			if (next !== identity && latestEmailRequest.current) {
+				latestEmailRequest.current = null;
+				setIsRequestInProgress(false);
+			}
+			identity = next;
+		});
+	}, []);
+
+	useEffect(() => {
+		if (
+			latestEmailRequest.current &&
+			(!latestEmailRequest.current.committed ||
+				latestEmailRequest.current.lifetime !== emailLifetime)
+		) {
+			latestEmailRequest.current = null;
+			setIsRequestInProgress(false);
+		}
+	}, [emailScope, emailLifetime]);
+	useEffect(
+		() => () => {
+			latestEmailRequest.current = null;
+		},
+		[]
+	);
+	useEffect(() => {
+		if (
+			!canUseEmail &&
+			!latestEmailRequest.current?.committed &&
+			(step === 'email-select' || step === 'email-connect')
+		) {
+			setEmail(initialEmail);
+			setOtp('');
+			setStep('decision');
+		}
+	}, [canUseEmail, initialEmail, step]);
 	const [errorKey, setErrorKey] = useState('');
 	const [helperKey, setHelperKey] = useState('');
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
@@ -374,7 +452,11 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	}, [isRequestInProgress]);
 
 	const finishSetup = useCallback(
-		async (nextStep: TwoFactorSetupStep) => {
+		async (
+			nextStep: TwoFactorSetupStep,
+			isCurrent: () => boolean = () => true
+		) => {
+			if (!isCurrent()) return;
 			setOtp('');
 			setErrorKey('');
 			setHelperKey('');
@@ -385,27 +467,33 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				// 2FA is already active; encourage is best-effort.
 			}
 
+			if (!isCurrent()) return;
 			try {
 				await onSetupComplete();
 			} catch {
 				// The 2FA credential is already active at this point. User data can
 				// still be stale until the next login (especially after changing the
 				// account e-mail), so a failed refresh must not report setup failure.
-				onSetupAborted?.();
+				if (isCurrent()) onSetupAborted?.();
 			}
 
-			setStep(nextStep);
+			if (isCurrent()) setStep(nextStep);
 		},
 		[onSetupAborted, onSetupComplete]
 	);
 
 	const sendEmailActivationCode = useCallback(
 		async (nextStep?: TwoFactorSetupStep) => {
-			if (!isStringValidEmail(email)) {
+			if (!canUseEmail || !isStringValidEmail(email)) {
 				setErrorKey('twoFactorAuth.setupDialog.error.invalidEmail');
 				return;
 			}
 
+			const request = { lifetime: emailLifetime, committed: false };
+			latestEmailRequest.current = request;
+			const isCurrent = () =>
+				latestEmailScope.current === emailScope &&
+				latestEmailRequest.current === request;
 			setIsRequestInProgress(true);
 			setErrorKey('');
 			setHelperKey('');
@@ -417,20 +505,29 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 					email,
 					apiPutTwoFactorAuthEmail
 				);
+				if (!isCurrent()) return;
 				setHelperKey('twoFactorAuth.setupDialog.email.connect.sent');
 				if (nextStep) {
 					setStep(nextStep);
 				}
 			} catch (error) {
+				if (!isCurrent()) return;
 				setFetchError(
 					error as Error,
 					'twoFactorAuth.setupDialog.error.emailSend'
 				);
 			} finally {
-				setIsRequestInProgress(false);
+				if (isCurrent()) setIsRequestInProgress(false);
 			}
 		},
-		[accountActions, email, setFetchError]
+		[
+			accountActions,
+			email,
+			canUseEmail,
+			emailScope,
+			emailLifetime,
+			setFetchError
+		]
 	);
 
 	const activateApp = useCallback(async () => {
@@ -474,27 +571,50 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			return;
 		}
 
+		const request = { lifetime: emailLifetime, committed: false };
+		latestEmailRequest.current = request;
+		const isCurrent = () =>
+			latestEmailScope.current === emailScope &&
+			latestEmailRequest.current === request;
+		const isCommittedCurrent = () =>
+			latestEmailLifetime.current === emailLifetime &&
+			latestEmailRequest.current === request;
 		setIsRequestInProgress(true);
 		setErrorKey('');
 
 		try {
+			if (!canUseEmail) return;
 			await accountActions.run(
 				'2fa-email-validate',
 				endpoints.twoFactorAuthEmail + '/validate',
 				otp,
 				apiPostTwoFactorAuthEmailWithCode
 			);
-			await finishSetup('email-success');
+			if (!isCurrent()) return;
+			request.committed = true;
+			await finishSetup('email-success', isCommittedCurrent);
 		} catch (error) {
+			if (!(request.committed ? isCommittedCurrent() : isCurrent()))
+				return;
 			onSetupAborted?.();
 			setFetchError(
 				error as Error,
 				'twoFactorAuth.setupDialog.error.emailSetup'
 			);
 		} finally {
-			setIsRequestInProgress(false);
+			if (request.committed ? isCommittedCurrent() : isCurrent())
+				setIsRequestInProgress(false);
 		}
-	}, [accountActions, finishSetup, onSetupAborted, otp, setFetchError]);
+	}, [
+		accountActions,
+		canUseEmail,
+		emailScope,
+		emailLifetime,
+		finishSetup,
+		onSetupAborted,
+		otp,
+		setFetchError
+	]);
 
 	const handlePrimaryAction = useCallback(() => {
 		const nextStep = getNextSetupStep(
@@ -549,6 +669,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	};
 
 	const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (!emailCollectionAllowed) return;
 		accountActions.edited('2fa-email-send', endpoints.twoFactorAuthEmail);
 		setEmail(event.target.value.trim());
 		setErrorKey('');
@@ -572,6 +693,8 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const isPrimaryDisabled =
 		isRequestInProgress ||
+		((step === 'email-select' || step === 'email-connect') &&
+			!canUseEmail) ||
 		(step === 'email-select' && !isStringValidEmail(email)) ||
 		((step === 'app-verify' || step === 'email-connect') &&
 			!isOtpValid(otp));
@@ -585,9 +708,33 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 					? 'twoFactorAuth.setupDialog.action.close'
 					: 'twoFactorAuth.setupDialog.action.next';
 
+	/* A method that is already active cannot be set up again, so its button is
+	   disabled. A disabled button is silent: say why, next to it. */
+	const activeMethodHintId = 'two-factor-setup-active-method';
+	const activeMethodHintKey =
+		currentType === TWO_FACTOR_TYPES.APP
+			? 'twoFactorAuth.setupDialog.decision.appActive'
+			: currentType === TWO_FACTOR_TYPES.EMAIL
+				? 'twoFactorAuth.setupDialog.decision.emailActive'
+				: null;
+
 	const renderDecision = () => (
 		<div className="twoFactorSetupDialog__decision">
+			{activeMethodHintKey && (
+				<p
+					className="twoFactorSetupDialog__activeHint"
+					id={activeMethodHintId}
+					role="status"
+				>
+					{translate(activeMethodHintKey)}
+				</p>
+			)}
 			<Button
+				aria-describedby={
+					currentType === TWO_FACTOR_TYPES.APP
+						? activeMethodHintId
+						: undefined
+				}
 				className="twoFactorSetupDialog__choiceButton"
 				disabled={
 					isRequestInProgress || currentType === TWO_FACTOR_TYPES.APP
@@ -599,9 +746,15 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				{translate('twoFactorAuth.setupDialog.decision.app')}
 			</Button>
 			<Button
+				aria-describedby={
+					currentType === TWO_FACTOR_TYPES.EMAIL
+						? activeMethodHintId
+						: undefined
+				}
 				className="twoFactorSetupDialog__choiceButton twoFactorSetupDialog__choiceButton--secondary"
 				disabled={
 					isRequestInProgress ||
+					(!emailCollectionAllowed && !initialEmail.trim()) ||
 					currentType === TWO_FACTOR_TYPES.EMAIL
 				}
 				onClick={() => chooseMethod(TWO_FACTOR_TYPES.EMAIL)}
@@ -778,6 +931,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				}
 				hint={translate('twoFactorAuth.setupDialog.email.select.hint')}
 				id="two-factor-setup-email"
+				readOnly={!emailCollectionAllowed || isRequestInProgress}
 				inputMode="email"
 				label={translate(
 					'twoFactorAuth.setupDialog.email.select.input'
@@ -854,7 +1008,13 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			}}
 			TransitionComponent={Fade}
 			TransitionProps={{ timeout: 180 }}
-			aria-describedby="two-factor-setup-description"
+			aria-describedby={
+				/* The hint is in the DOM before the dialog opens, so its live region may
+				   not be announced; describing the dialog with it makes sure it is read. */
+				step === 'decision' && activeMethodHintKey
+					? `two-factor-setup-description ${activeMethodHintId}`
+					: 'two-factor-setup-description'
+			}
 			aria-labelledby="two-factor-setup-title"
 			className="twoFactorSetupDialog"
 			disableEscapeKeyDown={!canClose}
