@@ -165,18 +165,26 @@ export const AccountData: FC<{
 	>(restoredDraft?.acceptedConsentBinding ?? null);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
 		useState<boolean>(false);
-	const [username, setUsername] = useState<string>(
-		restoredDraft?.username ?? ''
+	const [generatedUsername, setGeneratedUsername] = useState(
+		() =>
+			restoredDraft?.generatedUsername ?? toRegistrationUsername(identity)
 	);
-	const currentUsername = useRef(username);
+	const [typedUsername, setUsername] = useState<string>(
+		restoredDraft?.username ?? generatedUsername
+	);
+	const currentUsername = useRef(typedUsername);
 	const { tenant } = useContext(TenantContext);
 	const legalLinks = useContext(LegalLinksContext);
-	const aliasEditable = isAskerDisplayNameTypingAllowed(tenant?.settings);
+	const aliasEditable = isAskerDisplayNameTypingAllowed(
+		tenant?.settings,
+		conversationType
+	);
+	const username = aliasEditable ? typedUsername : generatedUsername;
 	const [displayName, setDisplayName] = useState(
 		restoredDraft?.displayName ?? ''
 	);
 	const [generatedDisplayName, setGeneratedDisplayName] = useState(
-		restoredDraft?.generatedDisplayName ?? ''
+		restoredDraft?.generatedDisplayName || identity.displayName
 	);
 	const effectiveDisplayName =
 		conversationType === 'AGENCY_COUNSELLING'
@@ -320,6 +328,7 @@ export const AccountData: FC<{
 		(nextIdentity: Pseudonym) => {
 			setIdentity(nextIdentity);
 			const nextUsername = toRegistrationUsername(nextIdentity);
+			setGeneratedUsername(nextUsername);
 			if (nextUsername !== currentUsername.current) {
 				currentUsername.current = nextUsername;
 				setUsername(nextUsername);
@@ -329,24 +338,14 @@ export const AccountData: FC<{
 		[resetUsernameAvailability]
 	);
 
-	useEffect(() => {
-		// Run once so first entry shows the same generated identity until the
-		// user intentionally changes it. When a draft was restored the user's
-		// previous identity/username must NOT be overwritten by a fresh one —
-		// the debounced availability effect below re-checks it anyway.
-		if (!restoredDraft) {
-			applyGeneratedUsername(identity);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	/* Keep the draft current on every change so stepper navigation is lossless. */
 	useEffect(() => {
 		setAccountDataDraft({
 			displayName,
 			generatedDisplayName,
+			generatedUsername,
 			identity,
-			username,
+			username: typedUsername,
 			password,
 			repeatPassword,
 			acceptedConsentBinding,
@@ -357,8 +356,9 @@ export const AccountData: FC<{
 	}, [
 		displayName,
 		generatedDisplayName,
+		generatedUsername,
 		identity,
-		username,
+		typedUsername,
 		password,
 		repeatPassword,
 		acceptedConsentBinding,
@@ -710,6 +710,7 @@ export const AccountData: FC<{
 			<OrisoTextField
 				value={username}
 				onChange={(event) => {
+					if (!aliasEditable) return;
 					const normalizedVal = event.target.value
 						.toLowerCase()
 						.replace(/[^a-z0-9_-]/g, '');
@@ -724,7 +725,8 @@ export const AccountData: FC<{
 				fullWidth
 				autoComplete="username"
 				inputProps={{
-					'aria-label': t('registration.account.username.label')
+					'aria-label': t('registration.account.username.label'),
+					'readOnly': !aliasEditable
 				}}
 				InputProps={{
 					startAdornment: (
@@ -738,9 +740,15 @@ export const AccountData: FC<{
 			/>
 			{conversationType === 'AGENCY_COUNSELLING' && (
 				<Box sx={{ mt: gap('20px') }}>
-					<Typography component="p" variant="body2" sx={{ mb: 1 }}>
-						{t('registration.account.displayName.optional')}
-					</Typography>
+					{aliasEditable && (
+						<Typography
+							component="p"
+							variant="body2"
+							sx={{ mb: 1 }}
+						>
+							{t('registration.account.displayName.optional')}
+						</Typography>
+					)}
 					<AskerDisplayNameField
 						value={
 							aliasEditable ? displayName : generatedDisplayName
@@ -761,16 +769,20 @@ export const AccountData: FC<{
 								setDisplayName(next);
 							}}
 						/>
-						<IdentitySuggestButton
-							icon={genUserIcon}
-							label={t(
-								'registration.account.displayName.useUsername'
-							)}
-							onClick={() => {
-								setDisplayName('');
-								setGeneratedDisplayName('');
-							}}
-						/>
+						{aliasEditable && (
+							<IdentitySuggestButton
+								icon={genUserIcon}
+								label={t(
+									'registration.account.displayName.useUsername'
+								)}
+								onClick={() => {
+									setDisplayName('');
+									setGeneratedDisplayName(
+										identity.displayName
+									);
+								}}
+							/>
+						)}
 					</Box>
 				</Box>
 			)}

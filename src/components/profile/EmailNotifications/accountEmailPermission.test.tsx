@@ -192,7 +192,7 @@ describe('server-owned account email eligibility', () => {
 					true,
 					false,
 					<EmailNotification />,
-					{ featureAskerEmailCollectionLiveChatEnabled: false },
+					{ featureAskerEmailCollectionSelfHelpEnabled: false },
 					capability
 				)
 			);
@@ -209,7 +209,7 @@ describe('server-owned account email eligibility', () => {
 				true,
 				false,
 				<EmailNotification />,
-				{ featureAskerEmailCollectionLiveChatEnabled: false },
+				{ featureAskerEmailCollectionSelfHelpEnabled: false },
 				true
 			)
 		);

@@ -190,7 +190,10 @@ const LiveChatEntryRoomContent = ({
 	const localeContext = useContext(LocaleContext);
 	const locale = localeContext?.locale ?? 'de';
 	const tenant = useTenant();
-	const nameEditable = isAskerDisplayNameTypingAllowed(tenant?.settings);
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		tenant?.settings,
+		'LIVE_CHAT'
+	);
 	const legalLinks = useContext(LegalLinksContext);
 	const tr = useCallback(
 		(key: string, fallback: string) =>

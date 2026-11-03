@@ -132,7 +132,7 @@ const setup = (firstReply = false, emailOnlySetup = false) =>
 			<TenantContext.Provider
 				value={{
 					tenant: accountPolicyTenant({
-						featureAskerEmailCollectionLiveChatEnabled: false,
+						featureAskerEmailCollectionSelfHelpEnabled: false,
 						featureAskerBrowserAgencyCounsellingEnabled:
 							!emailOnlySetup
 					}),
@@ -408,14 +408,12 @@ it('confirms the accepted email but shows refresh failure and retries GET only w
 	vi.mocked(apiPutEmail).mockResolvedValue(undefined);
 	setup(true);
 	await openFirstReplyEmail();
-	await waitFor(() =>
-		expect(screen.getByTestId('capability').textContent).toBe('false')
-	);
 	expect(
-		screen.getByRole('heading', {
+		await screen.findByRole('heading', {
 			name: 'furtherSteps.email.success.overlay.headline'
 		})
 	).toBeTruthy();
+	expect(screen.getByTestId('capability').textContent).toBe('false');
 	expect(screen.getByRole('alert').textContent).toContain(
 		'erstantwort.emailNotification.refreshFailed'
 	);

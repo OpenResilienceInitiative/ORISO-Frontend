@@ -184,7 +184,7 @@ const Fixture = ({
 			<TenantContext.Provider
 				value={{
 					tenant: accountPolicyTenant({
-						featureAskerEmailCollectionLiveChatEnabled: false,
+						featureAskerEmailCollectionSelfHelpEnabled: false,
 						featureAskerBrowserAgencyCounsellingEnabled:
 							!emailOnlySetup
 					}),

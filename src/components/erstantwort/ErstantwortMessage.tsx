@@ -480,7 +480,10 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				<ErstantwortDisplayNameOverlay
 					key={sessionId}
 					sessionId={sessionId}
-					editable={isAskerDisplayNameTypingAllowed(tenant?.settings)}
+					editable={isAskerDisplayNameTypingAllowed(
+						tenant?.settings,
+						conversationType ?? 'AGENCY_COUNSELLING'
+					)}
 					currentName={displayName || userData?.userName || ''}
 					locale={i18n.language || 'de'}
 					onClose={() => setIsDisplayNameOverlayOpen(false)}

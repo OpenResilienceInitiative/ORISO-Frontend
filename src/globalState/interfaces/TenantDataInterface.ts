@@ -123,10 +123,12 @@ export interface TenantDataSettingsInterface {
 	featureAskerEmailEnabled?: boolean;
 	/** Collection permission, separate from notification delivery. Absent preserves compatibility. */
 	featureAskerEmailCollectionAgencyCounsellingEnabled?: boolean;
-	featureAskerEmailCollectionLiveChatEnabled?: boolean;
 	featureAskerEmailCollectionSelfHelpEnabled?: boolean;
 	/** Free entry of the visible session alias; login User-ID remains unchanged. */
 	featureDisplayNameEditable?: boolean;
+	featureDisplayNameEditableAgencyCounsellingEnabled?: boolean;
+	featureDisplayNameEditableLiveChatEnabled?: boolean;
+	featureDisplayNameEditableSelfHelpEnabled?: boolean;
 	featureAskerEmailAgencyCounsellingEnabled?: boolean;
 	featureAskerEmailLiveChatEnabled?: boolean;
 	featureAskerEmailSelfHelpEnabled?: boolean;

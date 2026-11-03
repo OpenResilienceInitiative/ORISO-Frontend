@@ -61,8 +61,13 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 		);
 	};
 
+	const canSave =
+		!isSaving &&
+		Boolean(displayedName.trim()) &&
+		(editable || pseudonym !== null);
+
 	const save = () => {
-		if (isSaving) return;
+		if (!canSave) return;
 		const nameToSave = displayedName.trim();
 		if (!nameToSave || nameToSave.length > 255) return;
 		setIsSaving(true);
@@ -89,7 +94,7 @@ export const ErstantwortDisplayNameOverlay: React.FC<
 	const formItem: OverlayItem = {
 		buttonSet: [
 			{
-				disabled: isSaving || !displayedName.trim(),
+				disabled: !canSave,
 				label: t('erstantwort.displayName.overlay.save', 'Übernehmen'),
 				type: BUTTON_TYPES.PRIMARY
 			},

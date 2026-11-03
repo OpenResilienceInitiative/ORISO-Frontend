@@ -125,6 +125,9 @@ describe('ErstantwortDisplayNameOverlay', () => {
 			/>
 		);
 
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Namen neu würfeln' })
+		);
 		act(() => {
 			screen.getByRole('button', { name: 'Übernehmen' }).click();
 		});
@@ -231,11 +234,21 @@ describe('display-name typing is governed by the tenant account permission', () 
 				name: 'profile.data.displayName'
 			}).readOnly
 		).toBe(true);
+		const save = screen.getByRole<HTMLButtonElement>('button', {
+			name: 'Übernehmen'
+		});
+		expect(save.disabled).toBe(true);
+		fireEvent.click(save);
+		expect(apiPutSessionData).not.toHaveBeenCalled();
 		expect(
 			screen.getByRole<HTMLButtonElement>('button', {
 				name: 'Namen neu würfeln'
 			}).disabled
 		).toBe(false);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Namen neu würfeln' })
+		);
+		expect(save.disabled).toBe(false);
 	});
 });
 

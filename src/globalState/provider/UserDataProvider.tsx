@@ -51,7 +51,11 @@ export function UserDataProvider(props) {
 						...previous,
 						data: {
 							...previous.data,
-							isAskerEmailCollectionAllowed: undefined
+							isAskerEmailCollectionAllowed:
+								previous.data.isAskerEmailCollectionAllowed ===
+								false
+									? false
+									: undefined
 						}
 					}
 				: previous

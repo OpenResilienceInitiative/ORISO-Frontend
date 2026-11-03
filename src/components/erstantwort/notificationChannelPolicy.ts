@@ -23,15 +23,14 @@ export const notificationChannelPolicy = (
 		`featureAskerBrowser${context}Enabled` as keyof TenantDataSettingsInterface;
 	return {
 		emailAllowed:
+			context !== 'LiveChat' &&
 			settings?.featureAskerEmailEnabled !== false &&
-			(settings?.[emailKey] === undefined
-				? context !== 'LiveChat'
-				: settings[emailKey] === true),
+			(settings?.[emailKey] === undefined || settings[emailKey] === true),
 		browserAllowed: settings?.[browserKey] !== false
 	};
 };
 
-/** UI solicitation combines collection and delivery; delivery policy itself is unchanged. */
+/** UI solicitation requires both collection and delivery. */
 export const emailCollectionSetupPolicy = (
 	settings: Partial<TenantDataSettingsInterface> | undefined,
 	conversationType: string | null | undefined

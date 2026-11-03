@@ -25,7 +25,7 @@ import {
 	isMyMessage,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
-import { getModality, Modality } from './getModality';
+import { getModality, getModalityIfKnown, Modality } from './getModality';
 import {
 	isComposerBusy,
 	isTimelineAtBottom,
@@ -203,6 +203,7 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { readConfirmedEntryName } from '../anonymousChat/entryRoom/entryRoomIdentity';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
@@ -296,13 +297,16 @@ const ROBOT_MESSAGE_REVEAL_GAP_MS = 3500;
 export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
-	const nameEditable = isAskerDisplayNameTypingAllowed(tenantData?.settings);
 	const effectiveFeatures = useConversationFeatureSettings(
 		tenantData?.settings
 	);
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		tenantData?.settings,
+		getModalityIfKnown(activeSession)
+	);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -500,6 +504,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			currentPseudonym
 		]
 	);
+	const confirmedPseudonymName = pseudonymConfirmed
+		? (activeSession.user?.displayName ??
+			readConfirmedEntryName(activeSession.item.id))
+		: null;
 	const handleRegeneratePseudonym = useCallback(() => {
 		setCustomPseudonymName(null);
 		setCurrentPseudonym((prev) => ({
@@ -3336,7 +3344,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
-								pseudonym={selectedPseudonym}
+								pseudonym={
+									confirmedPseudonymName
+										? {
+												...selectedPseudonym,
+												displayName:
+													confirmedPseudonymName
+											}
+										: selectedPseudonym
+								}
 								editable={nameEditable && !pseudonymConfirmed}
 								disabled={pseudonymSaving || pseudonymConfirmed}
 								onNameChange={(value) => {

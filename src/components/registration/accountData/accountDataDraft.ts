@@ -10,6 +10,7 @@ export interface AccountDataDraft {
 	identity: Pseudonym;
 	displayName?: string;
 	generatedDisplayName?: string;
+	generatedUsername?: string;
 	username: string;
 	password: string;
 	repeatPassword: string;

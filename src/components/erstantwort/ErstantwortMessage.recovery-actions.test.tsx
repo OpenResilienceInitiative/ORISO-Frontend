@@ -1,3 +1,5 @@
+import { TenantContext } from '../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../test/fixtures/askerAccountPolicyFixtures';
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { createInstance } from 'i18next';
@@ -183,22 +185,30 @@ describe('ErstantwortMessage email action', () => {
 		render(
 			<I18nextProvider i18n={i18n}>
 				<MemoryRouter>
-					<UserDataContext.Provider
-						value={
-							{
-								userData,
-								reloadUserData: vi.fn()
-							} as React.ContextType<typeof UserDataContext>
-						}
+					<TenantContext.Provider
+						value={{
+							tenant: accountPolicyTenant(),
+							setTenant: vi.fn(),
+							updateTenantSettings: vi.fn()
+						}}
 					>
-						<ErstantwortMessage
-							conversationType="AGENCY_COUNSELLING"
-							trigger="AFTER_ENQUIRY_DISPATCHED"
-							sessionId={51}
-							displayName="Sanftes Alpaka Kala"
-							skipAnimation
-						/>
-					</UserDataContext.Provider>
+						<UserDataContext.Provider
+							value={
+								{
+									userData,
+									reloadUserData: vi.fn()
+								} as React.ContextType<typeof UserDataContext>
+							}
+						>
+							<ErstantwortMessage
+								conversationType="AGENCY_COUNSELLING"
+								trigger="AFTER_ENQUIRY_DISPATCHED"
+								sessionId={51}
+								displayName="Sanftes Alpaka Kala"
+								skipAnimation
+							/>
+						</UserDataContext.Provider>
+					</TenantContext.Provider>
 				</MemoryRouter>
 			</I18nextProvider>
 		);

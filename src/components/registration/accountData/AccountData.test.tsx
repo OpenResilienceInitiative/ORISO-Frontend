@@ -373,9 +373,21 @@ describe('optional ordinary registration alias', () => {
 		const alias = screen.getByLabelText<HTMLInputElement>(
 			'profile.data.displayName'
 		);
+		const generatedAlias = alias.value;
+		expect(generatedAlias).not.toBe('');
 		expect(alias.readOnly).toBe(true);
+		expect(
+			screen.getByLabelText<HTMLInputElement>(
+				'registration.account.username.label'
+			).readOnly
+		).toBe(true);
 		fireEvent.change(alias, { target: { value: 'Forbidden custom' } });
-		expect(alias.value).toBe('');
+		expect(alias.value).toBe(generatedAlias);
+		expect(
+			screen.queryByRole('button', {
+				name: 'registration.account.displayName.useUsername'
+			})
+		).toBeNull();
 		fireEvent.click(
 			screen.getByRole('button', {
 				name: 'registration.account.displayName.suggest'
@@ -444,8 +456,10 @@ describe('completed optional alias data', () => {
 	] as const)(
 		'submits only supported alias data for %s typing=%s',
 		async (type, editable, expected) => {
+			const identity = generatePseudonym('de');
 			setAccountDataDraft({
-				identity: generatePseudonym('de'),
+				identity,
+				generatedUsername: 'generated_login_1234',
 				username: 'fixed_login',
 				password: 'Sichere-Passphrase9!',
 				repeatPassword: 'Sichere-Passphrase9!',
@@ -466,8 +480,10 @@ describe('completed optional alias data', () => {
 			await waitFor(() =>
 				expect(onChange).toHaveBeenCalledWith(
 					expect.objectContaining({
-						username: 'fixed_login',
-						displayName: expected
+						username: editable
+							? 'fixed_login'
+							: 'generated_login_1234',
+						displayName: editable ? expected : identity.displayName
 					})
 				)
 			);

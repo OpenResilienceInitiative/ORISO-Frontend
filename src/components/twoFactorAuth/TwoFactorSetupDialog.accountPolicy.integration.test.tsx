@@ -93,7 +93,7 @@ it('keeps committed email-factor success through its own real provider capabilit
 		<TenantContext.Provider
 			value={{
 				tenant: accountPolicyTenant({
-					featureAskerEmailCollectionLiveChatEnabled: false
+					featureAskerEmailCollectionSelfHelpEnabled: false
 				}),
 				setTenant: vi.fn(),
 				updateTenantSettings: vi.fn()

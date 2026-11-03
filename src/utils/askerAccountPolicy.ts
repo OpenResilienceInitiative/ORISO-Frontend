@@ -8,28 +8,42 @@ export const isAskerEmailCollectionAllowed = (
 	> | null
 ): boolean => settings?.featureAskerEmailEnabled !== false;
 
-/** Generated choices remain available even when arbitrary name entry is off. */
-export const isAskerDisplayNameTypingAllowed = (
-	settings?: Pick<
-		TenantDataSettingsInterface,
-		'featureDisplayNameEditable'
-	> | null
-): boolean => settings?.featureDisplayNameEditable !== false;
-
 export type SeekerConversationType = Exclude<
 	UserService.Schemas.ConversationType,
 	'INTERNAL_GROUP'
 >;
+
+const nameKeys = {
+	AGENCY_COUNSELLING: 'featureDisplayNameEditableAgencyCounsellingEnabled',
+	LIVE_CHAT: 'featureDisplayNameEditableLiveChatEnabled',
+	SELF_HELP: 'featureDisplayNameEditableSelfHelpEnabled'
+} as const;
+
+/** Generated names remain available when arbitrary name entry is off. */
+export const isAskerDisplayNameTypingAllowed = (
+	settings: Partial<TenantDataSettingsInterface> | null | undefined,
+	context: string | null | undefined
+): boolean => {
+	if (
+		!settings ||
+		settings.featureDisplayNameEditable === false ||
+		(context !== 'AGENCY_COUNSELLING' &&
+			context !== 'LIVE_CHAT' &&
+			context !== 'SELF_HELP')
+	)
+		return false;
+	return settings[nameKeys[context]] !== false;
+};
+
 const collectionKeys = {
 	AGENCY_COUNSELLING: 'featureAskerEmailCollectionAgencyCounsellingEnabled',
-	LIVE_CHAT: 'featureAskerEmailCollectionLiveChatEnabled',
 	SELF_HELP: 'featureAskerEmailCollectionSelfHelpEnabled'
 } as const;
 type EmailCollectionSettings = Partial<
 	Pick<
 		TenantDataSettingsInterface,
 		| 'featureAskerEmailEnabled'
-		| (typeof collectionKeys)[SeekerConversationType]
+		| (typeof collectionKeys)[keyof typeof collectionKeys]
 	>
 >;
 
@@ -37,11 +51,7 @@ export const isContextEmailCollectionAllowed = (
 	settings: EmailCollectionSettings | null | undefined,
 	context: unknown
 ): boolean => {
-	if (
-		context !== 'AGENCY_COUNSELLING' &&
-		context !== 'LIVE_CHAT' &&
-		context !== 'SELF_HELP'
-	)
+	if (context !== 'AGENCY_COUNSELLING' && context !== 'SELF_HELP')
 		return false;
 	return (
 		isAskerEmailCollectionAllowed(settings) &&
