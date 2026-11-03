@@ -5122,6 +5122,7 @@
 		"label": "Sprachnachricht",
 		"play": "Sprachnachricht abspielen",
 		"pause": "Sprachnachricht anhalten",
+		"loading": "Sprachnachricht wird geladen",
 		"timeline": "Zeitachse",
 		"jumpTo": "Zu {{time}} springen",
 		"aria": "Sprachnachricht, {{duration}}, abspielen",

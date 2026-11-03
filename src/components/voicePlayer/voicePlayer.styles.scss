@@ -130,6 +130,19 @@
 		}
 	}
 
+	&__spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid currentColor;
+		border-right-color: transparent;
+		border-radius: 50%;
+		animation: voicePlayerSpin 0.8s linear infinite;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
+	}
+
 	&__toggle--tiles {
 		background: var(--m3-primary, #a5000a);
 		color: var(--m3-on-primary, #ffffff);
@@ -363,5 +376,11 @@
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 2px;
 		}
+	}
+}
+
+@keyframes voicePlayerSpin {
+	to {
+		transform: rotate(360deg);
 	}
 }

@@ -2596,6 +2596,7 @@ export const MessageItemComponent = ({
 										inlineDisplayEnabled={
 											attachmentInlineDisplayEnabled
 										}
+										isOwnMessage={isMyMessage}
 									/>
 								))}
 							{/*

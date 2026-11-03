@@ -27,6 +27,10 @@ import { AttachmentGate, AttachmentGateStatus } from './AttachmentGate';
 import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 import { voiceDurationMsFromFileName } from '../../utils/voiceMessageFileName';
+import {
+	isVoiceMessageHeard,
+	markVoiceMessageHeard
+} from '../../utils/heardVoiceMessages';
 
 /**
  * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
@@ -50,6 +54,8 @@ interface MessageAttachmentProps {
 	mediaCheckState?: MediaCheckState;
 	/** featureMediaInlineDisplay* for the chat type: off = plain file card, no preview. */
 	inlineDisplayEnabled?: boolean;
+	/** The sender knows their own recording, so it waits for Play. */
+	isOwnMessage?: boolean;
 }
 
 const NOT_ENCRYPTED = 'not_encrypted';
@@ -233,6 +239,52 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		props.attachment.type === 'image';
 	const isAudio = props.file.type?.startsWith('audio/');
 
+	// Prefer the canonical duration encoded in the file name so sender and
+	// receiver show the same length; VoicePlayer falls back to the duration
+	// reported by the audio element when the name carries none.
+	const durationMsFromFileName = voiceDurationMsFromFileName(
+		props.file?.name || props.attachment?.title || ''
+	);
+	const durationFromFileName =
+		durationMsFromFileName === null ? null : durationMsFromFileName / 1000;
+
+	// A long chat must not fetch and decrypt every old recording (#1140). The
+	// player needs no bytes to stand there, so they follow when the message
+	// comes into view and is still unheard, otherwise on Play. Without a length
+	// in the file name it loads in view too, or the player would show 0:00.
+	const voiceMediaUrl =
+		matrixEncryptedFile?.url ??
+		props.attachment.mxcUrl ??
+		props.attachment.downloadUrl;
+	const [isVoiceWanted, setIsVoiceWanted] = React.useState(false);
+	const voicePlayerRef = React.useRef<HTMLDivElement>(null);
+	const isVoiceWaiting = isAudio && !isVoiceWanted;
+	const loadVoiceInView =
+		durationFromFileName === null ||
+		(!props.isOwnMessage && !isVoiceMessageHeard(voiceMediaUrl));
+
+	React.useEffect(() => {
+		const player = voicePlayerRef.current;
+		if (
+			!isVoiceWaiting ||
+			!loadVoiceInView ||
+			!player ||
+			typeof IntersectionObserver === 'undefined'
+		) {
+			return;
+		}
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((entry) => entry.isIntersecting)) {
+					setIsVoiceWanted(true);
+				}
+			},
+			{ rootMargin: '200px' }
+		);
+		observer.observe(player);
+		return () => observer.disconnect();
+	}, [isVoiceWaiting, loadVoiceInView]);
+
 	const [revealed, setRevealed] = React.useState(false);
 	const mediaCheckState = props.mediaCheckState ?? 'safe';
 	const inlineDisplayEnabled = props.inlineDisplayEnabled ?? true;
@@ -258,6 +310,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const authenticatedMediaUrl = useAuthenticatedMatrixMediaUrl(
 		needsAuthenticatedMedia &&
 			!isAwaitingReveal &&
+			!isVoiceWaiting &&
 			effectiveMediaState !== 'blocked' &&
 			effectiveMediaState !== 'error'
 			? props.attachment.mxcUrl
@@ -275,22 +328,27 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	// so the verdict is fetched as soon as the attachment renders rather than
 	// behind a click. Not while an image is still waiting to be revealed — that
 	// gate exists precisely so nothing is fetched yet. Without a scanner
-	// deployed this does nothing and the existing unlock flow stays in place.
+	// deployed the existing unlock flow stays in place, except for voice, which
+	// has no gate: its bytes come once they are wanted, scanner or not.
 	React.useEffect(() => {
 		if (
-			isMatrixEncryptedAttachment &&
-			isMediaContentScannerEnabled() &&
+			((isMatrixEncryptedAttachment && isMediaContentScannerEnabled()) ||
+				(isEncryptedAttachment && isAudio)) &&
 			attachmentStatus === ENCRYPTED &&
 			scanVerdict === null &&
-			!isAwaitingReveal
+			!isAwaitingReveal &&
+			!isVoiceWaiting
 		) {
 			void decryptFile();
 		}
 	}, [
 		attachmentStatus,
 		decryptFile,
+		isAudio,
 		isAwaitingReveal,
+		isEncryptedAttachment,
 		isMatrixEncryptedAttachment,
+		isVoiceWaiting,
 		scanVerdict
 	]);
 
@@ -368,19 +426,13 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = plainMediaUrl;
 
-	// Prefer the canonical duration encoded in the file name so sender and
-	// receiver show the same length; VoicePlayer falls back to the duration
-	// reported by the audio element when the name carries none.
-	const durationMsFromFileName = voiceDurationMsFromFileName(
-		props.file?.name || props.attachment?.title || ''
-	);
-	const durationFromFileName =
-		durationMsFromFileName === null ? null : durationMsFromFileName / 1000;
-
 	const renderVoiceAttachment = useCallback(
-		(src: string) => (
+		(src?: string) => (
 			<VoicePlayer
 				src={src}
+				containerRef={voicePlayerRef}
+				onRequestSource={() => setIsVoiceWanted(true)}
+				onPlayStart={() => markVoiceMessageHeard(voiceMediaUrl)}
 				durationSec={durationFromFileName}
 				// The surrounding message already draws the bubble; it also
 				// sets --voicePlayer-tile-idle for own messages.
@@ -389,7 +441,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				showMeta={false}
 			/>
 		),
-		[durationFromFileName]
+		[durationFromFileName, voiceMediaUrl]
 	);
 
 	if (effectiveMediaState === 'blocked' || effectiveMediaState === 'error') {
@@ -444,69 +496,65 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		);
 	}
 
+	if (isAudio && attachmentStatus !== DECRYPTION_ERROR) {
+		return renderVoiceAttachment(
+			(isEncryptedAttachment ? encryptedFile : downloadUrl) || undefined
+		);
+	}
+
 	return (
 		<>
 			{!isEncryptedAttachment ? (
-				isAudio ? (
-					renderVoiceAttachment(downloadUrl)
-				) : (
-					<AttachmentCard
-						action={
-							// Authenticated media (#1487): until the bytes have
-							// been fetched there is no URL to link to, and an
-							// empty href would navigate the page. The card stays
-							// unlinked instead of pretending to be downloadable.
-							downloadUrl
-								? {
-										kind: 'download',
-										href: downloadUrl,
-										fileName: props.file.name
-									}
-								: { kind: 'none' }
-						}
-						icon={
-							!showImagePreview &&
-							getAttachmentIcon(props.file.type)
-						}
-						fileName={props.attachment.title}
-						meta={fileMeta}
-						actionLabel={translate('attachments.download.aria', {
-							name: props.attachment.title
-						})}
-						preview={
-							showImagePreview && imageUrl
-								? renderImagePreview(imageUrl)
-								: undefined
-						}
-					/>
-				)
+				<AttachmentCard
+					action={
+						// Authenticated media (#1487): until the bytes have
+						// been fetched there is no URL to link to, and an
+						// empty href would navigate the page. The card stays
+						// unlinked instead of pretending to be downloadable.
+						downloadUrl
+							? {
+									kind: 'download',
+									href: downloadUrl,
+									fileName: props.file.name
+								}
+							: { kind: 'none' }
+					}
+					icon={
+						!showImagePreview && getAttachmentIcon(props.file.type)
+					}
+					fileName={props.attachment.title}
+					meta={fileMeta}
+					actionLabel={translate('attachments.download.aria', {
+						name: props.attachment.title
+					})}
+					preview={
+						showImagePreview && imageUrl
+							? renderImagePreview(imageUrl)
+							: undefined
+					}
+				/>
 			) : // Encrypted file - clickable to decrypt/download
 			encryptedFile && attachmentStatus === DECRYPTION_FINISHED ? (
-				isAudio ? (
-					renderVoiceAttachment(encryptedFile)
-				) : (
-					<AttachmentCard
-						action={{
-							kind: 'download',
-							href: encryptedFile,
-							fileName: props.file.name
-						}}
-						icon={
-							!showImagePreview &&
-							getAttachmentIcon(props.file.type)
-						}
-						fileName={props.attachment.title}
-						meta={fileMeta}
-						actionLabel={translate('attachments.download.aria', {
-							name: props.attachment.title
-						})}
-						preview={
-							showImagePreview
-								? renderImagePreview(encryptedFile)
-								: undefined
-						}
-					/>
-				)
+				<AttachmentCard
+					action={{
+						kind: 'download',
+						href: encryptedFile,
+						fileName: props.file.name
+					}}
+					icon={
+						!showImagePreview && getAttachmentIcon(props.file.type)
+					}
+					fileName={props.attachment.title}
+					meta={fileMeta}
+					actionLabel={translate('attachments.download.aria', {
+						name: props.attachment.title
+					})}
+					preview={
+						showImagePreview
+							? renderImagePreview(encryptedFile)
+							: undefined
+					}
+				/>
 			) : (
 				<AttachmentGate
 					mimeType={props.file.type}

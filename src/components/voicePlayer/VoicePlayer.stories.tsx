@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { VoicePlayer } from './VoicePlayer';
 import { useSilentAudio } from './__storybook__/silentAudio';
 
@@ -409,4 +410,45 @@ export const Responsive: Story = {
 	name: 'Mitschrumpfen',
 	args: { durationSec: 12 },
 	render: () => <ResponsiveStory />
+};
+
+/**
+ * An encrypted recording that is not on this device yet (#1140). The player
+ * stands at once because the length comes from the file name. Play fetches the
+ * bytes, shows that it is waiting, and starts when they arrive. The wait here
+ * is the story's own timer.
+ */
+const LoadsOnPlayDemo = () => {
+	const loaded = useSilentAudio(14);
+	const [src, setSrc] = useState<string | undefined>();
+	return (
+		<VoicePlayer
+			src={src}
+			durationSec={14}
+			onRequestSource={() => {
+				window.setTimeout(() => setSrc(loaded), 1500);
+			}}
+		/>
+	);
+};
+
+export const LoadsOnPlay: Story = {
+	render: () => <LoadsOnPlayDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: /abspielen|play/i })
+		);
+		const waiting = await canvas.findByRole('button', {
+			name: /geladen|loading/i
+		});
+		await expect(waiting).toHaveAttribute('aria-busy', 'true');
+		await waitFor(
+			() =>
+				expect(canvasElement.querySelector('audio')).toHaveAttribute(
+					'src'
+				),
+			{ timeout: 3000 }
+		);
+	}
 };

@@ -5105,6 +5105,7 @@
 		"label": "Message vocal",
 		"play": "Lire le message vocal",
 		"pause": "Mettre le message vocal en pause",
+		"loading": "Chargement du message vocal",
 		"timeline": "Barre de progression",
 		"jumpTo": "Aller à {{time}}",
 		"aria": "Message vocal, {{duration}}, lire",

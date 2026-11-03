@@ -15,8 +15,17 @@ export type VoicePlayerBubble = 'incoming' | 'outgoing' | 'none';
 export type { VoicePlayerSize };
 
 export interface VoicePlayerProps {
-	/** Audio source. Omit only for layout previews — playback needs it. */
+	/**
+	 * Audio source. Without one, Play asks for it through `onRequestSource` and
+	 * starts as soon as it arrives.
+	 */
 	src?: string;
+	/** Fetches the bytes the player does not have yet. May be called repeatedly. */
+	onRequestSource?: () => void;
+	/** Playback started, by the person or after a wait for the source. */
+	onPlayStart?: () => void;
+	/** The player's root, for whoever watches whether it is in view. */
+	containerRef?: React.Ref<HTMLDivElement>;
 	/**
 	 * Canonical duration in seconds. Prefer the value derived from the file
 	 * name so sender and receiver show the same length; when it is unknown the
@@ -81,6 +90,9 @@ const PauseIcon = ({ size }: { size: number }) => (
 
 export const VoicePlayer = ({
 	src,
+	onRequestSource,
+	onPlayStart,
+	containerRef,
 	durationSec,
 	variant = 'tiles',
 	bubble = 'incoming',
@@ -101,6 +113,7 @@ export const VoicePlayer = ({
 		number | null
 	>(null);
 	const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+	const [isWaitingForSource, setIsWaitingForSource] = useState(false);
 
 	const duration =
 		durationSec != null && durationSec > 0
@@ -115,12 +128,28 @@ export const VoicePlayer = ({
 		[duration, size]
 	);
 
-	const seekTo = useCallback((seconds: number) => {
-		setPositionSec(seconds);
-		if (audioRef.current) {
-			audioRef.current.currentTime = seconds;
+	const seekTo = useCallback(
+		(seconds: number) => {
+			setPositionSec(seconds);
+			if (audioRef.current) {
+				audioRef.current.currentTime = seconds;
+			}
+			if (!src) {
+				onRequestSource?.();
+			}
+		},
+		[onRequestSource, src]
+	);
+
+	// Play was pressed before the bytes were there.
+	useEffect(() => {
+		if (src && isWaitingForSource) {
+			setIsWaitingForSource(false);
+			audioRef.current?.play().catch(() => {
+				// ignore autoplay/permission rejections
+			});
 		}
-	}, []);
+	}, [isWaitingForSource, src]);
 
 	// Apply the resume position once, as soon as a duration is known.
 	const hasAppliedInitialProgress = useRef(false);
@@ -141,6 +170,12 @@ export const VoicePlayer = ({
 		if (!audio) {
 			return;
 		}
+		if (!src && onRequestSource) {
+			// A second press while waiting takes the wish to play back.
+			setIsWaitingForSource((waiting) => !waiting);
+			onRequestSource();
+			return;
+		}
 		if (audio.paused) {
 			if (duration > 0 && audio.currentTime >= duration - 0.05) {
 				audio.currentTime = 0;
@@ -151,7 +186,7 @@ export const VoicePlayer = ({
 		} else {
 			audio.pause();
 		}
-	}, [duration]);
+	}, [duration, onRequestSource, src]);
 
 	const clock = `${formatClock(position)} / ${formatClock(duration)}`;
 	const remaining =
@@ -182,21 +217,33 @@ export const VoicePlayer = ({
 			? [sender, sentAt].filter(Boolean).join(' · ')
 			: translate('voicePlayer.encrypted'));
 
-	const toggleLabel = isPlaying
-		? translate('voicePlayer.pause')
-		: translate('voicePlayer.play');
+	const toggleLabel = isWaitingForSource
+		? translate('voicePlayer.loading')
+		: isPlaying
+			? translate('voicePlayer.pause')
+			: translate('voicePlayer.play');
+
+	const renderToggleIcon = (iconSize: number) =>
+		isWaitingForSource ? (
+			<span className="voicePlayer__spinner" aria-hidden="true" />
+		) : isPlaying ? (
+			<PauseIcon size={iconSize} />
+		) : (
+			<PlayIcon size={iconSize} />
+		);
 
 	const playButton = (
 		<button
 			type="button"
 			className={`voicePlayer__toggle voicePlayer__toggle--${variant}`}
+			aria-busy={isWaitingForSource || undefined}
 			onClick={(event) => {
 				event.preventDefault();
 				event.stopPropagation();
 				togglePlayback();
 			}}
 			aria-label={
-				isRing
+				isRing && !isWaitingForSource
 					? translate('voicePlayer.aria', {
 							duration: formatClock(duration)
 						})
@@ -218,22 +265,17 @@ export const VoicePlayer = ({
 		>
 			{isRing ? (
 				<span className="voicePlayer__knob">
-					{isPlaying ? (
-						<PauseIcon size={13} />
-					) : (
-						<PlayIcon size={13} />
-					)}
+					{renderToggleIcon(13)}
 				</span>
-			) : isPlaying ? (
-				<PauseIcon size={14} />
 			) : (
-				<PlayIcon size={14} />
+				renderToggleIcon(14)
 			)}
 		</button>
 	);
 
 	return (
 		<div
+			ref={containerRef}
 			className={[
 				'voicePlayer',
 				`voicePlayer--${variant}`,
@@ -324,7 +366,10 @@ export const VoicePlayer = ({
 				src={src}
 				preload="metadata"
 				className="voicePlayer__audio"
-				onPlay={() => setIsPlaying(true)}
+				onPlay={() => {
+					setIsPlaying(true);
+					onPlayStart?.();
+				}}
 				onPause={() => setIsPlaying(false)}
 				onEnded={() => {
 					setIsPlaying(false);
@@ -334,6 +379,10 @@ export const VoicePlayer = ({
 					setPositionSec(audioRef.current?.currentTime ?? 0)
 				}
 				onLoadedMetadata={() => {
+					// A tile picked before the bytes were there.
+					if (audioRef.current && positionSec > 0) {
+						audioRef.current.currentTime = positionSec;
+					}
 					const reported = audioRef.current?.duration ?? null;
 					setMetadataDurationSec(
 						reported != null &&

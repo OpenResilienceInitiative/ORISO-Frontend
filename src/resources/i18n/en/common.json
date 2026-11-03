@@ -5070,6 +5070,7 @@
 		"label": "Voice message",
 		"play": "Play voice message",
 		"pause": "Pause voice message",
+		"loading": "Loading voice message",
 		"timeline": "Timeline",
 		"jumpTo": "Jump to {{time}}",
 		"aria": "Voice message, {{duration}}, play",
