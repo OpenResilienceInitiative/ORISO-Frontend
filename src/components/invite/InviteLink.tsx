@@ -479,10 +479,7 @@ export const InviteLink = () => {
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
-	/* While it looks, and for a live-chat link after that, the room itself is
-	   on screen — the same element throughout, so on a desktop the stage stays
-	   and only the column changes. */
-	if (status === 'loading' || status === 'invite') {
+	if (status === 'invite') {
 		return (
 			<LiveChatEntryRoom
 				invite={{
@@ -495,7 +492,7 @@ export const InviteLink = () => {
 		);
 	}
 
-	if (status === 'directOpening') {
+	if (status === 'loading' || status === 'directOpening') {
 		return <Loading />;
 	}
 

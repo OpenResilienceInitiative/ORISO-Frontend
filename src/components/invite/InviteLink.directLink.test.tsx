@@ -432,6 +432,8 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 				new Response('{"reason":"INVITE_LINK_PAUSED"}', { status: 410 })
 			);
 			const view = within(renderInvite().container);
+			expect(view.getByTestId('loading')).toBeTruthy();
+			expect(view.queryByTestId('live-chat-entry-room')).toBeNull();
 			expect((await view.findByRole('alert')).textContent).toContain(
 				'Dieser Link ist aktuell pausiert.'
 			);
