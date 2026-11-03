@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+	callStartFor,
+	chosenDeviceLabel,
 	devicesForCall,
 	forgetAllJoinMedia,
 	initialControlsFor,
@@ -98,6 +100,35 @@ describe('joinMediaFrom (#2016): what is passed to the call', () => {
 		});
 	});
 
+	it('passes the picked microphone and camera by label (ElementCall#116)', () => {
+		expect(
+			joinMediaFrom({
+				...base,
+				microphoneLabel: 'Jabra Evolve2 Headset',
+				cameraLabel: 'Logitech C920'
+			})
+		).toEqual({
+			audio_enabled: true,
+			video_enabled: true,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'Logitech C920'
+		});
+	});
+
+	it('passes no camera label for a phone call or a missing camera', () => {
+		const labelled = {
+			...base,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'Logitech C920'
+		};
+		expect(
+			joinMediaFrom({ ...labelled, modality: 'audio' })
+		).not.toHaveProperty('cameraLabel');
+		expect(
+			joinMediaFrom({ ...labelled, cameraAvailable: false })
+		).not.toHaveProperty('cameraLabel');
+	});
+
 	it('passes nothing when the check could not run', () => {
 		expect(joinMediaFrom({ ...base, blocker: 'permissionDenied' })).toBe(
 			null
@@ -146,6 +177,17 @@ describe('the choice, from the check to the call (#2016)', () => {
 		expect(initialControlsFor('audio', null).cameraOn).toBe(false);
 	});
 
+	it('switches in the call only on/off, never the labels', () => {
+		expect(
+			devicesForCall(true, {
+				audio_enabled: true,
+				video_enabled: false,
+				microphoneLabel: 'Jabra Evolve2 Headset',
+				cameraLabel: 'Logitech C920'
+			})
+		).toEqual({ audio_enabled: true, video_enabled: false });
+	});
+
 	it('switches in the call only what the call has', () => {
 		expect(devicesForCall(true, null)).toBe(null);
 		expect(
@@ -154,5 +196,64 @@ describe('the choice, from the check to the call (#2016)', () => {
 		expect(
 			devicesForCall(false, { audio_enabled: false, video_enabled: true })
 		).toEqual({ audio_enabled: false });
+	});
+});
+
+describe('chosenDeviceLabel (ElementCall#116)', () => {
+	const microphones = [
+		{ id: 'mic-1', label: 'MacBook Pro-Mikrofon' },
+		{ id: 'mic-2', label: 'Jabra Evolve2 Headset' }
+	];
+
+	it('is the label of the picked device', () => {
+		expect(chosenDeviceLabel(microphones, 'mic-2')).toBe(
+			'Jabra Evolve2 Headset'
+		);
+	});
+
+	it('is the label of the device the check showed when nothing was picked', () => {
+		// The picker shows the first device as chosen; the call gets that one.
+		expect(chosenDeviceLabel(microphones, undefined)).toBe(
+			'MacBook Pro-Mikrofon'
+		);
+	});
+
+	it('is nothing without devices', () => {
+		expect(chosenDeviceLabel([], undefined)).toBeUndefined();
+	});
+});
+
+describe('callStartFor: the choice on the widget URL (ElementCall#116)', () => {
+	const media = {
+		audio_enabled: false,
+		video_enabled: false,
+		microphoneLabel: 'Jabra Evolve2 Headset',
+		cameraLabel: 'Logitech C920'
+	};
+
+	it('starts a video call with both switches and both devices', () => {
+		expect(callStartFor(true, media)).toEqual({
+			audioEnabled: false,
+			videoEnabled: false,
+			audioInput: 'Jabra Evolve2 Headset',
+			videoInput: 'Logitech C920'
+		});
+	});
+
+	it('tells a phone call only about the microphone', () => {
+		expect(callStartFor(false, media)).toEqual({
+			audioEnabled: false,
+			audioInput: 'Jabra Evolve2 Headset'
+		});
+	});
+
+	it('leaves out a device that was not named', () => {
+		expect(
+			callStartFor(true, { audio_enabled: true, video_enabled: true })
+		).toEqual({ audioEnabled: true, videoEnabled: true });
+	});
+
+	it('is nothing without a check', () => {
+		expect(callStartFor(true, null)).toBe(null);
 	});
 });
