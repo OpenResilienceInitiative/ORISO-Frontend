@@ -353,6 +353,27 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 
 	if (!bausteine.length && !emailOverlay) return null;
 
+	const setupKey = JSON.stringify([
+		emailScope.actorId,
+		emailScope.tenantId,
+		emailScope.sessionId,
+		emailScope.messageId,
+		emailScope.conversationType
+	]);
+	const recordAcceptedNotification = (
+		id: 'emailNotification' | 'notificationChoice'
+	) => {
+		if (latestEmailScope.current !== emailScope) return;
+		const index = bausteine.findIndex((item) => item.id === id);
+		if (index >= 0) {
+			setAcceptedNotification({
+				scope: emailScope,
+				baustein: bausteine[index],
+				index
+			});
+		}
+	};
+
 	return (
 		<>
 			<ErstantwortSequence
@@ -375,29 +396,12 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
-								key={JSON.stringify([
-									emailScope.actorId,
-									emailScope.tenantId,
-									sessionId,
-									messageId,
-									conversationType
-								])}
-								onEmailAccepted={() => {
-									const index = bausteine.findIndex(
-										(item) =>
-											item.id === 'emailNotification'
-									);
-									if (
-										latestEmailScope.current ===
-											emailScope &&
-										index >= 0
+								key={setupKey}
+								onEmailAccepted={() =>
+									recordAcceptedNotification(
+										'emailNotification'
 									)
-										setAcceptedNotification({
-											scope: emailScope,
-											baustein: bausteine[index],
-											index
-										});
-								}}
+								}
 								isEmailEnabled={emailAllowed}
 								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
@@ -409,29 +413,12 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						!readOnly && showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
-								key={JSON.stringify([
-									emailScope.actorId,
-									emailScope.tenantId,
-									sessionId,
-									messageId,
-									conversationType
-								])}
-								onEmailAccepted={() => {
-									const index = bausteine.findIndex(
-										(item) =>
-											item.id === 'notificationChoice'
-									);
-									if (
-										latestEmailScope.current ===
-											emailScope &&
-										index >= 0
+								key={setupKey}
+								onEmailAccepted={() =>
+									recordAcceptedNotification(
+										'notificationChoice'
 									)
-										setAcceptedNotification({
-											scope: emailScope,
-											baustein: bausteine[index],
-											index
-										});
-								}}
+								}
 								isEmailEnabled={emailAllowed}
 								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
