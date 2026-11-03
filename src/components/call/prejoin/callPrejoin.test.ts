@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	callStartFor,
 	chosenDeviceLabel,
@@ -9,6 +9,7 @@ import {
 	peekJoinMedia,
 	rememberJoinMedia,
 	shouldShowDeviceCheck,
+	switchDevicesOnReady,
 	takeJoinMedia
 } from './callPrejoin';
 
@@ -274,5 +275,44 @@ describe('callStartFor: the choice on the widget URL (ElementCall#116)', () => {
 
 	it('is nothing without a check', () => {
 		expect(callStartFor(true, null)).toBe(null);
+	});
+});
+
+describe('switchDevicesOnReady: the fallback for an older call (CodeRabbit 4457278942)', () => {
+	const media = { audio_enabled: true, video_enabled: false };
+
+	it('tries again when the call did not take it', async () => {
+		const send = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('timeout'))
+			.mockResolvedValueOnce(undefined);
+		await expect(
+			switchDevicesOnReady(send, media, { delayMs: 0 })
+		).resolves.toBe(true);
+		expect(send).toHaveBeenCalledTimes(2);
+		expect(send).toHaveBeenLastCalledWith(media);
+	});
+
+	it('gives up after a few tries', async () => {
+		const send = vi.fn().mockRejectedValue(new Error('gone'));
+		await expect(
+			switchDevicesOnReady(send, media, { attempts: 3, delayMs: 0 })
+		).resolves.toBe(false);
+		expect(send).toHaveBeenCalledTimes(3);
+	});
+
+	it('stops once the call is no longer there', async () => {
+		let current = true;
+		const send = vi.fn().mockImplementation(async () => {
+			current = false;
+			throw new Error('closed');
+		});
+		await expect(
+			switchDevicesOnReady(send, media, {
+				delayMs: 0,
+				isCurrent: () => current
+			})
+		).resolves.toBe(false);
+		expect(send).toHaveBeenCalledTimes(1);
 	});
 });

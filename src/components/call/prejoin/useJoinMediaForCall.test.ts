@@ -52,4 +52,23 @@ describe('useJoinMediaForCall (ElementCall#116)', () => {
 		// Still waiting for the call it was chosen for.
 		expect(peekJoinMedia(ROOM)).toEqual(chosen);
 	});
+
+	it('takes a new choice when the same call is joined again after leaving (CodeRabbit 4457279045)', () => {
+		rememberJoinMedia(ROOM, chosen);
+		const { result, rerender } = renderHook(
+			({ call }) => useJoinMediaForCall(ROOM, call),
+			{ initialProps: { call: 'call-1' as string | null } }
+		);
+		expect(result.current).toEqual(chosen);
+
+		// Left the call; the group call keeps running with the same id.
+		rerender({ call: null });
+		const cameraOn = { audio_enabled: false, video_enabled: true };
+		rememberJoinMedia(ROOM, cameraOn);
+		rerender({ call: 'call-1' });
+		expect(result.current).toEqual(cameraOn);
+		rerender({ call: 'call-1' });
+		expect(result.current).toEqual(cameraOn);
+		expect(peekJoinMedia(ROOM)).toBe(null);
+	});
 });
