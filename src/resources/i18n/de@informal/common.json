@@ -2867,6 +2867,10 @@
 			},
 			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
 			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten dein Konto nicht prüfen",
+			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
 	}
 }

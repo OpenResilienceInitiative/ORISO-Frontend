@@ -6586,6 +6586,10 @@
 			"confirm": "Devam",
 			"cancel": "İptal",
 			"failed": "Yanıtınız kaydedilemedi. Mesajınız henüz gönderilmedi."
+		},
+		"lookupFailed": {
+			"title": "Hesabınız kontrol edilemedi",
+			"text": "Mesajınız henüz gönderilmedi ve yazı alanında duruyor. Lütfen bağlantınızı kontrol edip yeniden gönderin."
 		}
 	}
 }

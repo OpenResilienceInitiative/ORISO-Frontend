@@ -6501,6 +6501,10 @@
 			"confirm": "Continue",
 			"cancel": "Cancel",
 			"failed": "Your answer could not be saved. Your message has not been sent yet."
+		},
+		"lookupFailed": {
+			"title": "We could not check your account",
+			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
 		}
 	}
 }
