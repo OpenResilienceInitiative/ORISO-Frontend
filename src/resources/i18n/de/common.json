@@ -6566,6 +6566,10 @@
 			"confirm": "Weiter",
 			"cancel": "Abbrechen",
 			"failed": "Ihre Antwort konnte nicht gespeichert werden. Ihre Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten Ihr Konto nicht prüfen",
+			"text": "Ihre Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfen Sie Ihre Verbindung und senden Sie erneut."
 		}
 	}
 }
