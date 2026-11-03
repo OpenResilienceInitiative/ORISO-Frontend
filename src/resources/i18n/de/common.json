@@ -165,6 +165,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Anhang: {{name}}",
+			"remove": "{{name}} entfernen",
+			"cancel": "Abbrechen",
+			"retry": "Erneut senden",
+			"chooseAnother": "Andere Datei wählen",
+			"captionHint": "Der Text wird als Beschriftung mitgesendet.",
+			"progressLabel": "{{name}} wird gesendet",
+			"status": {
+				"preparing": "Wird vorbereitet …",
+				"uploading": "Wird hochgeladen",
+				"finishing": "Wird gesendet …"
+			},
+			"error": {
+				"tooLarge": "Diese Datei ist {{size}} groß. Erlaubt sind höchstens {{limit}} MB. Es wurde nichts hochgeladen.",
+				"format": "Dieses Dateiformat ist nicht erlaubt. Möglich sind jpg, png, pdf, docx, xlsx, webm, ogg und mp3.",
+				"serverTooLarge": "Der Server lehnt diese Datei als zu groß ab. Datei und Text bleiben hier.",
+				"network": "Die Verbindung ist abgebrochen. Datei und Text bleiben hier.",
+				"service": "Der Dienst ist gerade nicht erreichbar. Datei und Text bleiben hier.",
+				"cancelled": "Abgebrochen. Datei und Text bleiben hier.",
+				"other": "Das Senden hat nicht geklappt. Datei und Text bleiben hier."
+			}
+		},
 		"download": {
 			"label": "Herunterladen",
 			"aria": "{{name}} herunterladen"

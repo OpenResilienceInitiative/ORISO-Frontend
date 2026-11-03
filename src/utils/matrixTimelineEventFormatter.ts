@@ -145,8 +145,15 @@ export const formatMatrixTimelineEvent = (
 	if (mediaUrl && content?.msgtype !== 'm.text') {
 		const mediaRoute = getMatrixMediaRoute(mediaUrl);
 		const isEncryptedMedia = Boolean(content?.file?.url);
+		// MSC2530: a `filename` other than `body` makes `body` the caption.
+		const fileName = content.filename || content.body;
+		const hasCaption = Boolean(
+			content.body &&
+				content.filename &&
+				content.body !== content.filename
+		);
 		const attachment: ChatAttachment = {
-			title: content.body,
+			title: fileName,
 			downloadUrl: mediaRoute.downloadUrl,
 			type: content.msgtype === 'm.image' ? 'image' : 'file',
 			mediaType: content.info?.mimetype,
@@ -173,8 +180,11 @@ export const formatMatrixTimelineEvent = (
 		if (content.info?.['org.oriso.media_check_state'] === 'blocked') {
 			attachment.mediaCheckState = 'blocked';
 		}
+		if (hasCaption) {
+			attachment.hasCaption = true;
+		}
 		baseMessage.file = {
-			name: content.body,
+			name: fileName,
 			type: content.info?.mimetype || 'application/octet-stream'
 		} satisfies ChatFile;
 		if (isEncryptedMedia) {

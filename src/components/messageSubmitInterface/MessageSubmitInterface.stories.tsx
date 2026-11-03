@@ -572,7 +572,7 @@ export const ImageAttachmentPreview: Story = {
 
 		await waitFor(() => {
 			const thumb = canvasElement.querySelector(
-				'.textarea__attachmentModeThumb'
+				'.composerAttachmentCard__thumb'
 			);
 			if (!thumb) {
 				throw new Error('attachment thumbnail not rendered yet');
@@ -1659,9 +1659,9 @@ export const ReplyExperienceMobile: Story = {
 	globals: phone390Globals
 };
 
-/** Zu große Datei: dieselbe Meldung wie im Chat, jetzt als Fehler-Snackbar über dem Composer. */
-export const AttachmentErrorSnackbar: Story = {
-	name: 'Erlebnis — Datei zu groß, Fehler-Snackbar',
+/** Zu große Datei: die Meldung steht auf der Karte der Datei, nicht mehr als Snackbar. */
+export const AttachmentTooLargeCard: Story = {
+	name: 'Erlebnis — Datei zu groß, Meldung auf der Karte',
 	render: () => <ComposerShell />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -1677,9 +1677,12 @@ export const AttachmentErrorSnackbar: Story = {
 		});
 		await userEvent.upload(input, tooBig);
 		const alert = await canvas.findByRole('alert');
-		expect(alert.closest('.messageSubmitInfoDock')).toBeTruthy();
+		expect(alert.closest('.composerAttachmentCard')).toBeTruthy();
+		expect(
+			canvasElement.querySelector('.messageSubmitInfoDock')
+		).toBeNull();
 		await userEvent.click(
-			within(alert).getByRole('button', { name: /Schließen|Close/ })
+			canvas.getByRole('button', { name: /scan\.pdf entfernen/ })
 		);
 		await waitFor(() => expect(canvas.queryByRole('alert')).toBeNull());
 		// Leave it open for whoever looks at the story.

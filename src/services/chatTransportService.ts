@@ -311,7 +311,9 @@ class ChatTransportService {
 				abortController: options.abortController,
 				uploadProgress: options.uploadProgress,
 				threadRootId: options.threadRootId,
-				replyToEventId: options.replyToEventId
+				replyToEventId: options.replyToEventId,
+				caption: options.caption,
+				mentionedUserIds: options.mentionedUserIds
 			}
 		);
 
@@ -333,6 +335,9 @@ class ChatTransportService {
 				supervisorMessage: !!options.supervisorMessage,
 				teamDiscussion: !!options.teamDiscussion,
 				senderDisplayName: options.senderDisplayName || null,
+				mentionedUserIds: options.mentionedUserIds?.length
+					? options.mentionedUserIds
+					: null,
 				matrixEventId: response?.event_id || null
 			}).catch(() => undefined);
 

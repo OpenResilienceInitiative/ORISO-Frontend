@@ -165,6 +165,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Ek: {{name}}",
+			"remove": "{{name}} dosyasını kaldır",
+			"cancel": "İptal",
+			"retry": "Tekrar gönder",
+			"chooseAnother": "Başka dosya seç",
+			"captionHint": "Metin, dosyanın açıklaması olarak gönderilir.",
+			"progressLabel": "{{name}} gönderiliyor",
+			"status": {
+				"preparing": "Hazırlanıyor …",
+				"uploading": "Yükleniyor",
+				"finishing": "Gönderiliyor …"
+			},
+			"error": {
+				"tooLarge": "Bu dosyanın boyutu {{size}}. Sınır {{limit}} MB. Hiçbir şey yüklenmedi.",
+				"format": "Bu dosya biçimine izin verilmiyor. jpg, png, pdf, docx, xlsx, webm, ogg ve mp3 kullanılabilir.",
+				"serverTooLarge": "Sunucu bu dosyayı çok büyük olduğu için reddetti. Dosya ve metin burada kalır.",
+				"network": "Bağlantı kesildi. Dosya ve metin burada kalır.",
+				"service": "Hizmet şu anda kullanılamıyor. Dosya ve metin burada kalır.",
+				"cancelled": "İptal edildi. Dosya ve metin burada kalır.",
+				"other": "Gönderilemedi. Dosya ve metin burada kalır."
+			}
+		},
 		"download": {
 			"label": "İndir",
 			"aria": "{{name}} dosyasını indir"
@@ -184,7 +207,7 @@
 			},
 			"size": {
 				"headline": "Seçtiğiniz dosya çok büyük.",
-				"message": "{{attachment_filesize}}En fazla MB yükleyebilirsiniz."
+				"message": "En fazla {{attachment_filesize}} MB yükleyebilirsiniz."
 			}
 		},
 		"list": {

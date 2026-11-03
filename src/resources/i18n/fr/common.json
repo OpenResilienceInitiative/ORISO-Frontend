@@ -165,6 +165,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Pièce jointe : {{name}}",
+			"remove": "Retirer {{name}}",
+			"cancel": "Annuler",
+			"retry": "Renvoyer",
+			"chooseAnother": "Choisir un autre fichier",
+			"captionHint": "Le texte sera envoyé comme légende du fichier.",
+			"progressLabel": "Envoi de {{name}}",
+			"status": {
+				"preparing": "Préparation …",
+				"uploading": "Téléversement",
+				"finishing": "Envoi …"
+			},
+			"error": {
+				"tooLarge": "Ce fichier fait {{size}}. La limite est de {{limit}} Mo. Rien n'a été téléversé.",
+				"format": "Ce format de fichier n'est pas autorisé. Formats possibles : jpg, png, pdf, docx, xlsx, webm, ogg et mp3.",
+				"serverTooLarge": "Le serveur refuse ce fichier car il est trop volumineux. Le fichier et le texte restent ici.",
+				"network": "La connexion a été interrompue. Le fichier et le texte restent ici.",
+				"service": "Le service est momentanément indisponible. Le fichier et le texte restent ici.",
+				"cancelled": "Annulé. Le fichier et le texte restent ici.",
+				"other": "L'envoi n'a pas abouti. Le fichier et le texte restent ici."
+			}
+		},
 		"download": {
 			"label": "Télécharger",
 			"aria": "Télécharger {{name}}"

@@ -22,6 +22,8 @@ export interface ChatAttachment {
 	height?: number;
 	encryptedFile?: MatrixEncryptedFile;
 	mediaCheckState?: 'blocked';
+	/** The message text is a caption to show with the file, not its name. */
+	hasCaption?: boolean;
 }
 
 export interface ChatFile {

@@ -165,6 +165,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "ተሓዝቶ፦ {{name}}",
+			"remove": "{{name}} ኣልግስ",
+			"cancel": "ሰርዝ",
+			"retry": "ደጊምካ ስደድ",
+			"chooseAnother": "ካልእ ፋይል ምረጽ",
+			"captionHint": "እቲ ጽሑፍ ከም መግለጺ ናይቲ ፋይል ይለኣኽ።",
+			"progressLabel": "{{name}} ይለኣኽ ኣሎ",
+			"status": {
+				"preparing": "ይዳሎ ኣሎ …",
+				"uploading": "ይጽዓን ኣሎ",
+				"finishing": "ይለኣኽ ኣሎ …"
+			},
+			"error": {
+				"tooLarge": "እዚ ፋይል {{size}} እዩ። እቲ ዝለዓለ ገደብ {{limit}} MB እዩ። ዝተጻዕነ የለን።",
+				"format": "እዚ ዓይነት ፋይል ኣይፍቀድን። jpg፣ png፣ pdf፣ docx፣ xlsx፣ webm፣ ogg ከምኡ'ውን mp3 ክትጥቀሙ ትኽእሉ።",
+				"serverTooLarge": "እቲ ሰርቨር እዚ ፋይል ኣዝዩ ዓቢ ስለዝኾነ ነጺግዎ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"network": "እቲ ምትእስሳር ተቋሪጹ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"service": "እቲ ኣገልግሎት ሕጂ ኣይርከብን። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"cancelled": "ተሰሪዙ። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።",
+				"other": "ምልኣኽ ኣይተዓወተን። ፋይልን ጽሑፍን ኣብዚ ይጸንሑ።"
+			}
+		},
 		"download": {
 			"label": "ምውራድ",
 			"aria": "{{name}} ኣውርድ"

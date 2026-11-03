@@ -1616,96 +1616,18 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			z-index: 2;
 		}
 
-		&__attachmentMode {
+		// The file waiting to go out. It sits on the lower edge and the text
+		// keeps to the space above it; the component measures the height.
+		&__attachmentCard {
 			position: absolute;
-			inset: 0;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 16px 72px 52px 16px;
-			background: transparent;
-			z-index: 5;
+			left: 8px;
+			right: 8px;
+			bottom: 8px;
+			z-index: 6;
 		}
 
-		&__attachmentModeCard {
-			width: 100%;
-			max-width: 620px;
-			display: flex;
-			align-items: center;
-			gap: 12px;
-			padding: 12px 14px;
-			border: 1px solid #f3c8c8;
-			border-radius: 14px;
-			background: #fff7f7;
-			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-		}
-
-		&__attachmentModeThumb {
-			width: 48px;
-			height: 48px;
-			object-fit: cover;
-			border-radius: 8px;
-			flex-shrink: 0;
-
-			// Clip the alt text if an image ever fails to load, so it can
-			// never spill out of the thumbnail box.
-			overflow: hidden;
-		}
-
-		&__attachmentModeIcon {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			width: 32px;
-			height: 32px;
-			border-radius: 8px;
-			background: #fff;
-			border: 1px solid #f1d5d5;
-			flex: 0 0 auto;
-		}
-
-		&__attachmentModeInfo {
-			display: flex;
-			flex-direction: column;
-			min-width: 0;
-			flex: 1 1 auto;
-		}
-
-		&__attachmentModeName {
-			margin: 0;
-			font-size: 14px;
-			font-weight: 600;
-			color: #222;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-		}
-
-		&__attachmentModeMeta {
-			font-size: 12px;
-			color: #6b7280;
-		}
-
-		&__attachmentModeRemove {
-			border: none;
-			background: #fff;
-			border-radius: 8px;
-			width: 30px;
-			height: 30px;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			cursor: pointer;
-			flex: 0 0 auto;
-
-			svg {
-				width: 12px;
-				height: 12px;
-			}
-
-			&:hover {
-				background: #ffe9e9;
-			}
+		&__input--attachmentMode .tiptap-composer .ProseMirror {
+			bottom: calc(var(--composer-attachment-card-height, 58px) + 14px);
 		}
 
 		// A voice note in the composer, recording or in review. Both states
