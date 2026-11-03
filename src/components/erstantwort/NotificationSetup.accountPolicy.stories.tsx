@@ -272,7 +272,7 @@ export const AcceptedFirstReplyEmailStaysClosed: Story = {
 		await waitFor(() =>
 			expect(
 				canvas.getByTestId('collection-capability')
-			).toHaveTextContent('undefined')
+			).toHaveTextContent('true')
 		);
 		await expect(page.queryByRole('textbox')).toBeNull();
 		releaseRefresh!();
@@ -302,7 +302,7 @@ const acceptedFailure = async (canvasElement: HTMLElement) => {
 	await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
 	await waitFor(() =>
 		expect(canvas.getByTestId('collection-capability')).toHaveTextContent(
-			'undefined'
+			'true'
 		)
 	);
 	releaseRefresh!();
@@ -366,7 +366,7 @@ export const AcceptedEmailOnlyRefreshFailure: Story = {
 		await waitFor(() =>
 			expect(
 				canvas.getByTestId('collection-capability')
-			).toHaveTextContent('undefined')
+			).toHaveTextContent('true')
 		);
 		releaseRefresh!();
 		await waitFor(() =>
