@@ -20,13 +20,24 @@ import { apiGetOwnCallKnock } from '../../api/apiDirectLinks';
 import {
 	forgetPendingKnock,
 	PENDING_KNOCK_EVENT,
+	readPendingKnock,
 	rememberPendingKnock
 } from '../directLinkEntry/directLinkEntryFlow';
+
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import {
 	ActiveSessionContext,
 	type ExtendedSessionInterface
 } from '../../globalState';
+
+/** The running call a knock from the card records for a reload. */
+const joinCallRef = {
+	callId: 'running-call',
+	state: 'running' as const,
+	roomRef: '!source:example',
+	callRoomId: '!media:example',
+	callType: 'video' as const
+};
 
 /** The interface language, switchable per test. */
 const ui = vi.hoisted(() => ({ language: '' }));
@@ -696,7 +707,7 @@ it('hands a knock it still waits on back to the knock gate when it goes (#2016)'
 		joinExisting: true
 	};
 	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
-		rememberPendingKnock(knock);
+		rememberPendingKnock({ ...knock, joinCall: joinCallRef });
 		claimKnock(knock.knockId);
 		hooks?.onKnock?.(knock, async () => 'joined' as const);
 		return 'joined' as const;
@@ -720,6 +731,7 @@ it('hands a knock it still waits on back to the knock gate when it goes (#2016)'
 	window.removeEventListener(PENDING_KNOCK_EVENT, announced);
 	expect(isKnockClaimed(41)).toBe(false);
 	expect(announced).toHaveBeenCalledTimes(1);
+	expect(readPendingKnock()?.joinCall).toBeUndefined();
 	forgetPendingKnock();
 });
 
@@ -767,7 +779,7 @@ it('hands a knock that arrives after the window closed to the knock gate (#2016)
 	window.addEventListener(PENDING_KNOCK_EVENT, announced);
 	await act(async () => {
 		// What `joinOrKnock` does once the server answers.
-		rememberPendingKnock(knock);
+		rememberPendingKnock({ ...knock, joinCall: joinCallRef });
 		claimKnock(knock.knockId);
 		hooksSeen?.onKnock?.(knock, async () => 'joined' as const);
 		knockSent();
@@ -775,6 +787,10 @@ it('hands a knock that arrives after the window closed to the knock gate (#2016)
 	window.removeEventListener(PENDING_KNOCK_EVENT, announced);
 	expect(isKnockClaimed(42)).toBe(false);
 	expect(announced).toHaveBeenCalledTimes(1);
+	// Dismissed: once let in, the gate must not put the person into the
+	// call; the card's next "Beitreten" does (#2028 review).
+	expect(readPendingKnock()?.knockId).toBe(42);
+	expect(readPendingKnock()?.joinCall).toBeUndefined();
 	forgetPendingKnock();
 });
 

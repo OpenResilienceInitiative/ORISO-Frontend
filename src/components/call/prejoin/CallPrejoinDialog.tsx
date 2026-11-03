@@ -27,7 +27,8 @@ import {
 	announcePendingKnock,
 	forgetPendingKnock,
 	PendingKnock,
-	readPendingKnock
+	readPendingKnock,
+	rememberPendingKnock
 } from '../../directLinkEntry/directLinkEntryFlow';
 
 /** How long "Sie wurden hereingelassen" stays before the call takes over. */
@@ -62,11 +63,18 @@ export interface CallPrejoinDialogProps {
 
 /**
  * Lets go of a knock this window held. One still stored goes back to the
- * knock gate, which shows it at once.
+ * knock gate, which shows it at once — without the running call: the
+ * person dismissed the check, so being let in must not put them into the
+ * call with mic and camera on. Let in, the gate says so and the card's
+ * "Beitreten" joins (#2028 review).
  */
 const handBackToGate = (knockId: number) => {
 	releaseKnock(knockId);
-	if (readPendingKnock()?.knockId === knockId) announcePendingKnock();
+	const stored = readPendingKnock();
+	if (stored?.knockId !== knockId) return;
+	const { joinCall: _dismissed, ...withoutCall } = stored;
+	rememberPendingKnock(withoutCall);
+	announcePendingKnock();
 };
 
 /** Reports the knock's state up; renders nothing. */
