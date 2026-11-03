@@ -173,7 +173,9 @@ export default defineConfig({
 						'@mui/icons-material/AnimationOutlined',
 						// Waiting-room stories otherwise discover this mid-shard and
 						// reload React modules while other stories are rendering.
-						'@mui/icons-material/WavingHandOutlined'
+						'@mui/icons-material/WavingHandOutlined',
+						// Further-counselling notices otherwise trigger optimization mid-story.
+						'@mui/icons-material/CheckCircleOutlineRounded'
 					]
 				},
 				test: {

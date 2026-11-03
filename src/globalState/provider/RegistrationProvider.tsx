@@ -37,6 +37,7 @@ export const RegistrationContext = createContext<RegistrationContextInterface>(
 
 interface SessionStorageData {
 	username: string;
+	displayName?: string;
 	password: string;
 	email?: string;
 	agencyId: number;

@@ -6,11 +6,15 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Pseudonym } from '../../utils/pseudonymGenerator';
 import { AnimalAvatar } from './AnimalAvatar';
+import { AskerDisplayNameField } from './AskerDisplayNameField';
 import { TypewriterText, TypingReveal } from './BotMessageAnimation';
 import './PseudonymCard.styles.scss';
 
 interface PseudonymCardProps {
 	pseudonym: Pseudonym;
+	editable?: boolean;
+	onNameChange?: (value: string) => void;
+	disabled?: boolean;
 	/** Skip the typing-dots phase and reveal immediately. */
 	skipTyping?: boolean;
 	/** Fires once the typewriter has finished writing the message. */
@@ -36,6 +40,9 @@ interface PseudonymCardProps {
  */
 export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 	pseudonym,
+	editable = false,
+	onNameChange,
+	disabled = false,
 	skipTyping = false,
 	onDone
 }) => {
@@ -88,7 +95,16 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 							/>
 
 							<div className="pseudonymCard__name">
-								{pseudonym.displayName}
+								{onNameChange ? (
+									<AskerDisplayNameField
+										value={pseudonym.displayName}
+										onChange={onNameChange}
+										editable={editable}
+										disabled={disabled}
+									/>
+								) : (
+									pseudonym.displayName
+								)}
 							</div>
 						</div>
 					)}

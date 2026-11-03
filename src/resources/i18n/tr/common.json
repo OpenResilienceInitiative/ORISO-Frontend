@@ -3665,6 +3665,11 @@
 				"toggleOn": "Hesap açmadan katıl",
 				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
 				"note": "O ana kadar normal şekilde yazarsınız ve mesajlarınız diğerleri için kalır. Siz ise sonrasında bu görüşmeye geri dönemezsiniz."
+			},
+			"displayName": {
+				"optional": "Görünen ad (isteğe bağlı). Boş bırakırsanız User-ID gösterilir.",
+				"suggest": "Ad öner",
+				"useUsername": "User-ID kullan"
 			}
 		},
 		"back": "Geri",
@@ -5639,7 +5644,9 @@
 			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
 			"action": "E-posta adresi ekle",
 			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin.",
-			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin."
+			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin.",
+			"refreshFailed": "E-posta adresiniz kaydedildi. Güncel ayarlarınız yüklenemedi.",
+			"retryRefresh": "Yeniden yükle"
 		},
 		"accountProtection": {
 			"headline": "Erişiminiz, ek olarak korunur",
@@ -5688,7 +5695,9 @@
 			"channelBrowser": "Bu cihazdaki tarayıcı",
 			"channelEmail": "E-posta",
 			"enableBrowser": "Tarayıcı bildirimlerini etkinleştir",
-			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin."
+			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"emailAccepted": "E-posta bildirimi değişikliği kabul edildi.",
+			"refreshFailed": "Değişiklik kabul edildi. Güncel ayarlarınız yüklenemedi."
 		},
 		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor.",
 		"faq": {
@@ -6078,7 +6087,7 @@
 			},
 			"access": {
 				"headline": "Bugünkü adınız.",
-				"subline": "Anonim, hesapsız. Bir kullanıcı kimliği seçin — ya da yeniden atın.",
+				"subline": "Anonim, hesapsız.",
 				"label": "Kullanıcı kimliğiniz",
 				"temporary": "Bu erişim yalnızca bu görüşme için geçerlidir. Sonrasında tüm mesajlarla birlikte en geç 48 saat içinde sileriz. Sıranız gelene kadar bu pencerede kalın.",
 				"reroll": "Yeniden at",
