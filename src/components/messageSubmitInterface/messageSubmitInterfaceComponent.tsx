@@ -1079,7 +1079,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, []);
 
-	const handleVoiceUploadError = useCallback(
+	const handleCardlessUploadError = useCallback(
 		(reason: AttachmentFailureReason) => {
 			// Discarding a take while it uploads is not an error to report.
 			if (reason !== 'cancelled') {
@@ -1100,14 +1100,15 @@ export const MessageSubmitInterfaceComponent = ({
 	/**
 	 * A failed send never takes anything away: the file stays on the card with
 	 * the reason and a retry, and the draft stays in the editor. A recorded
-	 * voice note has no such card and reports through the info banner.
+	 * voice note has no such card and reports through the info banner. So does a
+	 * file whose chat the person has left: a retry would send it to the wrong one.
 	 */
 	const handleAttachmentSendFailure = useCallback(
 		(
 			error: unknown,
 			attachment: File,
 			cancelled: boolean,
-			recordedVoice: boolean
+			withoutCard: boolean
 		) => {
 			const reason = classifyAttachmentSendError(error, cancelled);
 			setUploadProgress(0);
@@ -1119,14 +1120,14 @@ export const MessageSubmitInterfaceComponent = ({
 					level: ERROR_LEVEL_WARN
 				}).then();
 			}
-			if (recordedVoice) {
-				handleVoiceUploadError(reason);
+			if (withoutCard) {
+				handleCardlessUploadError(reason);
 				return;
 			}
 			setAttachmentFailure(reason);
 			setIsRequestInProgress(false);
 		},
-		[handleVoiceUploadError]
+		[handleCardlessUploadError]
 	);
 
 	const stopVoiceRecording = useCallback(
@@ -1730,12 +1731,17 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 
 			const hasTextContent = hasMessageContent(message);
+			// The composer stays mounted across chats, and a running send keeps
+			// going after the person has moved on. What it leaves behind must not
+			// touch the chat they are in now.
+			let leftChatDuringSend = false;
 			if (attachment) {
 				const isRecordedVoice =
 					recordedVoiceRef.current?.file === attachment;
 				// Matrix attachments stay on the SDK media path.
 				if (hasMatrixSessionId(matrixSessionId)) {
 					const abortController = new AbortController();
+					const sendDestination = voiceDestinationRef.current;
 					try {
 						if (!matrixRoomId) {
 							throw new Error('Matrix room ID is missing');
@@ -1787,14 +1793,17 @@ export const MessageSubmitInterfaceComponent = ({
 							error,
 							attachment,
 							abortController.signal.aborted,
-							isRecordedVoice
+							isRecordedVoice ||
+								voiceDestinationRef.current !== sendDestination
 						);
 						return;
 					} finally {
 						markAttachmentSending(false);
 						setAttachmentUpload(null);
 					}
-					if (!isRecordedVoice) {
+					leftChatDuringSend =
+						voiceDestinationRef.current !== sendDestination;
+					if (!isRecordedVoice && !leftChatDuringSend) {
 						onCancelReply && onCancelReply();
 					}
 				} else {
@@ -1906,7 +1915,9 @@ export const MessageSubmitInterfaceComponent = ({
 			} else {
 				// Matrix file upload already sent the message
 				onSendButton && onSendButton();
-				handleMessageSendSuccess(preserveComposerOnSuccess);
+				handleMessageSendSuccess(
+					preserveComposerOnSuccess || leftChatDuringSend
+				);
 				cleanupAttachment();
 			}
 		},
@@ -5013,7 +5024,8 @@ export const MessageSubmitInterfaceComponent = ({
 															handleMentionInsert
 														}
 														showAttachment={
-															hasUploadFunctionality
+															hasUploadFunctionality &&
+															!isEditingAnyMessage
 														}
 														onAttachmentClick={
 															handleAttachmentSelect

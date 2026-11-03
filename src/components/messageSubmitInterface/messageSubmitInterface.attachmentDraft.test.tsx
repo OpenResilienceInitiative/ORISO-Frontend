@@ -145,15 +145,18 @@ const session = {
 	user: { username: 'client', sessionData: {} }
 };
 
-function Composer(
-	props: Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>
-) {
+function Composer({
+	activeSession = session,
+	...props
+}: Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>> & {
+	activeSession?: typeof session;
+}) {
 	return (
 		<MemoryRouter>
 			<ActiveSessionContext.Provider
 				value={
 					{
-						activeSession: session,
+						activeSession,
 						reloadActiveSession: mocks.draftChange
 					} as any
 				}
@@ -532,5 +535,56 @@ describe('progress and cancel', () => {
 		expect(
 			screen.getByTestId('composer-draft').getAttribute('contenteditable')
 		).toBe('false');
+	});
+});
+
+describe('a file on its way when the person moves to another chat', () => {
+	const otherChat = {
+		...session,
+		item: { ...session.item, id: 361, matrixRoomId: '!other:example.org' }
+	};
+	const sendThenMove = async () => {
+		let settle = {
+			resolve: (_value?: unknown) => {},
+			reject: (_error: unknown) => {}
+		};
+		sendMock().mockReturnValueOnce(
+			new Promise((resolve, reject) => {
+				settle = { resolve, reject };
+			}) as any
+		);
+		const { container, rerender } = render(<Composer />);
+		await pickFile(container, makeFile());
+		await clickSend();
+		rerender(<Composer activeSession={otherChat} />);
+		return settle;
+	};
+
+	it('is not offered for a retry there when it fails', async () => {
+		const send = await sendThenMove();
+		await act(async () => {
+			send.reject(Object.assign(new Error('x'), { httpStatus: 503 }));
+		});
+
+		expect(screen.queryByText('befund.pdf')).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: 'attachments.composer.retry'
+			})
+		).toBeNull();
+		expect(sendMock()).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves the draft of that chat alone when it succeeds', async () => {
+		const send = await sendThenMove();
+		await act(async () => {
+			send.resolve();
+		});
+
+		await waitFor(() =>
+			expect(screen.queryByText('befund.pdf')).toBeNull()
+		);
+		expect(mocks.composerClear).not.toHaveBeenCalled();
+		expect(mocks.clearDraft).not.toHaveBeenCalled();
 	});
 });

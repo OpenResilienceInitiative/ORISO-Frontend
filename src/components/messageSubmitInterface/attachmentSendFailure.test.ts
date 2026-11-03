@@ -83,7 +83,7 @@ describe('canRetryAttachment', () => {
 	it('offers no retry where the same file cannot work', () => {
 		expect(canRetryAttachment('tooLarge')).toBe(false);
 		expect(canRetryAttachment('format')).toBe(false);
+		expect(canRetryAttachment('serverTooLarge')).toBe(false);
 		expect(canRetryAttachment('network')).toBe(true);
-		expect(canRetryAttachment('serverTooLarge')).toBe(true);
 	});
 });

@@ -13,7 +13,7 @@ export type AttachmentFailureReason =
 
 /** A second attempt with the same file can work out for these. */
 export const canRetryAttachment = (reason: AttachmentFailureReason): boolean =>
-	reason !== 'tooLarge' && reason !== 'format';
+	reason !== 'tooLarge' && reason !== 'serverTooLarge' && reason !== 'format';
 
 const isConnectionProblem = (error: {
 	message?: unknown;

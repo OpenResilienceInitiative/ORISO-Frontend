@@ -231,7 +231,7 @@ export const ServerTooLarge: Story = {
 			canvasElement,
 			args,
 			'Der Server lehnt diese Datei als zu groß ab. Datei und Text bleiben hier.',
-			'retry'
+			'chooseAnother'
 		)
 };
 
