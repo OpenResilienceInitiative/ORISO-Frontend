@@ -36,7 +36,8 @@ const deferred = () => {
 	return { promise, resolve: (value: UserDataInterface) => resolve(value) };
 };
 const Consumer = () => {
-	const { userData, reloadUserData } = React.useContext(UserDataContext);
+	const { userData, reloadUserData, setUserData } =
+		React.useContext(UserDataContext);
 	return (
 		<>
 			<output>
@@ -47,6 +48,16 @@ const Consumer = () => {
 				onClick={() => void reloadUserData().catch(() => undefined)}
 			>
 				reload
+			</button>
+			<button
+				onClick={() =>
+					setUserData({
+						...userData,
+						isAskerEmailCollectionAllowed: false
+					})
+				}
+			>
+				write
 			</button>
 		</>
 	);
@@ -65,9 +76,9 @@ it('ignores A1 after A → B → A and keeps capability unavailable until the cu
 			<Consumer />
 		</UserDataProvider>
 	);
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	act(() => signIn('B'));
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	await act(async () =>
 		b.resolve(
 			accountPolicyUser({
@@ -78,7 +89,7 @@ it('ignores A1 after A → B → A and keeps capability unavailable until the cu
 	);
 	expect(screen.getByRole('status').textContent).toBe('B:true');
 	act(() => signIn('A'));
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	expect(screen.getByRole('status').textContent).toBe('pending:undefined');
 	await act(async () =>
 		a1.resolve(
@@ -108,7 +119,7 @@ it('treats a tenant change for the same subject as a new request lifetime', asyn
 			<Consumer />
 		</UserDataProvider>
 	);
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	act(() => signIn('A', 2));
 	await act(async () =>
 		old.resolve(
@@ -121,7 +132,7 @@ it('treats a tenant change for the same subject as a new request lifetime', asyn
 	expect(screen.getByRole('status').textContent).toBe('pending:undefined');
 });
 
-it('withdraws capability during reload and ignores an older same-account reply', async () => {
+it('keeps the confirmed capability during reload and ignores an older same-account reply', async () => {
 	const initial = deferred(),
 		old = deferred(),
 		fresh = deferred();
@@ -135,7 +146,7 @@ it('withdraws capability during reload and ignores an older same-account reply',
 			<Consumer />
 		</UserDataProvider>
 	);
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	await act(async () =>
 		initial.resolve(
 			accountPolicyUser({
@@ -144,9 +155,9 @@ it('withdraws capability during reload and ignores an older same-account reply',
 			})
 		)
 	);
-	fireEvent.click(screen.getByRole('button'));
-	expect(screen.getByRole('status').textContent).toBe('A:undefined');
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	expect(screen.getByRole('status').textContent).toBe('A:true');
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	await act(async () =>
 		fresh.resolve(
 			accountPolicyUser({
@@ -181,8 +192,40 @@ it('withdraws eligibility after a failed reload without discarding existing acco
 			<Consumer />
 		</UserDataProvider>
 	);
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	await screen.findByText('A:true');
-	fireEvent.click(screen.getByRole('button'));
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
 	expect(await screen.findByText('A:false')).toBeTruthy();
+});
+
+it('does not let a reload started earlier overwrite a newer direct write', async () => {
+	const stale = deferred();
+	vi.mocked(apiGetUserData)
+		.mockResolvedValueOnce(
+			accountPolicyUser({
+				userId: 'A',
+				isAskerEmailCollectionAllowed: true
+			})
+		)
+		.mockReturnValueOnce(stale.promise);
+	signIn('A');
+	render(
+		<UserDataProvider>
+			<Consumer />
+		</UserDataProvider>
+	);
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	await screen.findByText('A:true');
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	fireEvent.click(screen.getByRole('button', { name: 'write' }));
+	expect(screen.getByRole('status').textContent).toBe('A:false');
+	await act(async () =>
+		stale.resolve(
+			accountPolicyUser({
+				userId: 'A',
+				isAskerEmailCollectionAllowed: true
+			})
+		)
+	);
+	expect(screen.getByRole('status').textContent).toBe('A:false');
 });

@@ -32,7 +32,7 @@ export function UserDataProvider(props) {
 			}),
 		[currentScope]
 	);
-	const setUserData = useCallback(
+	const applyUserData = useCallback(
 		(data: UserDataInterface) => {
 			const active = currentScope();
 			const subject = parseJwt(getValueFromCookie('keycloak') ?? '')?.sub;
@@ -41,32 +41,27 @@ export function UserDataProvider(props) {
 		},
 		[currentScope]
 	);
+	// A direct write is newer than any reload already in flight.
+	const setUserData = useCallback(
+		(data: UserDataInterface) => {
+			latestRequest.current = null;
+			applyUserData(data);
+		},
+		[applyUserData]
+	);
 	const reloadUserData = useCallback(() => {
 		const requestScope = currentScope();
 		const request = {};
 		latestRequest.current = request;
-		setSnapshot((previous) =>
-			previous?.scope === requestScope
-				? {
-						...previous,
-						data: {
-							...previous.data,
-							isAskerEmailCollectionAllowed:
-								previous.data.isAskerEmailCollectionAllowed ===
-								false
-									? false
-									: undefined
-						}
-					}
-				: previous
-		);
+		// The last confirmed capability stays while the request is pending, so an
+		// unrelated reload cannot interrupt email flows; failure withdraws it.
 		return apiGetUserData()
 			.then((data: UserDataInterface) => {
 				if (
 					currentScope() === requestScope &&
 					latestRequest.current === request
 				)
-					setUserData(data);
+					applyUserData(data);
 				return data;
 			})
 			.catch((error) => {
@@ -87,7 +82,7 @@ export function UserDataProvider(props) {
 					);
 				throw error;
 			});
-	}, [currentScope, setUserData]);
+	}, [currentScope, applyUserData]);
 	return (
 		<UserDataContext.Provider
 			value={{

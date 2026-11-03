@@ -192,9 +192,8 @@ it('preserves BOTH through its own real provider capability refresh and a fresh 
 	setup();
 	await act(async () => initial.resolve(account()));
 	await chooseBoth();
-	await waitFor(() =>
-		expect(screen.getByTestId('capability').textContent).toBe('undefined')
-	);
+	await waitFor(() => expect(apiGetUserData).toHaveBeenCalledTimes(2));
+	expect(screen.getByTestId('capability').textContent).toBe('true');
 	expect(requestPermission).not.toHaveBeenCalled();
 	await act(async () => refresh.resolve(account(true, true)));
 	fireEvent.click(
@@ -265,9 +264,7 @@ it('closes the actual accepted first-reply email form across its real provider r
 		})
 	);
 	await waitFor(() => expect(apiPutEmail).toHaveBeenCalledOnce());
-	await waitFor(() =>
-		expect(screen.getByTestId('capability').textContent).toBe('undefined')
-	);
+	await waitFor(() => expect(apiGetUserData).toHaveBeenCalledTimes(2));
 	await act(async () =>
 		refresh.resolve({ ...account(), email: 'new@example.test' })
 	);
@@ -290,6 +287,28 @@ const openFirstReplyEmail = async () => {
 		})
 	);
 };
+it('keeps a pending first-reply email save through an unrelated account reload', async () => {
+	const write = deferred<void>();
+	const unrelated = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockResolvedValueOnce({ ...account(), email: undefined })
+		.mockReturnValueOnce(unrelated.promise)
+		.mockResolvedValueOnce({ ...account(), email: 'new@example.test' });
+	vi.mocked(apiPutEmail).mockReturnValueOnce(write.promise);
+	setup(true);
+	await openFirstReplyEmail();
+	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	expect(screen.getByTestId('capability').textContent).toBe('true');
+	await act(async () => write.resolve());
+	expect(
+		await screen.findByText('furtherSteps.email.success.overlay.headline')
+	).toBeTruthy();
+	await act(async () =>
+		unrelated.resolve({ ...account(), email: undefined })
+	);
+	expect(apiPutEmail).toHaveBeenCalledOnce();
+});
 it('keeps a rejected first-reply email form retryable until the server accepts it', async () => {
 	vi.mocked(apiGetUserData)
 		.mockReset()
