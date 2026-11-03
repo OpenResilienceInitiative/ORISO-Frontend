@@ -719,3 +719,58 @@ it('hands a knock it still waits on back to the knock gate when it goes (#2016)'
 	expect(announced).toHaveBeenCalledTimes(1);
 	forgetPendingKnock();
 });
+
+it('hands a knock that arrives after the window closed to the knock gate (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const knock = {
+		token: 'tok',
+		knockId: 42,
+		sessionId: 9,
+		medium: 'VIDEO' as const,
+		joinExisting: true
+	};
+	let knockSent: () => void = () => undefined;
+	const sent = new Promise<void>((resolve) => {
+		knockSent = resolve;
+	});
+	let hooksSeen: CallJoinHooks | undefined;
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		hooksSeen = hooks;
+		await sent;
+		return 'joined' as const;
+	});
+	const view = render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	// Closed while the knock is still on its way.
+	view.unmount();
+
+	const announced = vi.fn();
+	window.addEventListener(PENDING_KNOCK_EVENT, announced);
+	await act(async () => {
+		// What `joinOrKnock` does once the server answers.
+		rememberPendingKnock(knock);
+		claimKnock(knock.knockId);
+		hooksSeen?.onKnock?.(knock, async () => 'joined' as const);
+		knockSent();
+	});
+	window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	expect(isKnockClaimed(42)).toBe(false);
+	expect(announced).toHaveBeenCalledTimes(1);
+	forgetPendingKnock();
+});

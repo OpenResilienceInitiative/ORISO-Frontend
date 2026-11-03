@@ -55,6 +55,15 @@ export interface CallPrejoinDialogProps {
 	sheet?: boolean;
 }
 
+/**
+ * Lets go of a knock this window held. One still stored goes back to the
+ * knock gate, which shows it at once.
+ */
+const handBackToGate = (knockId: number) => {
+	releaseKnock(knockId);
+	if (readPendingKnock()?.knockId === knockId) announcePendingKnock();
+};
+
 /** Reports the knock's state up; renders nothing. */
 const KnockWatch = ({
 	knock,
@@ -124,6 +133,13 @@ export const CallPrejoinDialog = ({
 	keepChoiceRef.current = keepChoice;
 	const onCloseRef = useRef(onClose);
 	onCloseRef.current = onClose;
+	const mounted = useRef(true);
+	useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
 
 	const join = () => {
 		if (busy || knock) return;
@@ -137,6 +153,13 @@ export const CallPrejoinDialog = ({
 			onJoin({
 				beforeJoin: onClose,
 				onKnock: (pending, joinLater) => {
+					/* Closed while the knock was on its way: nobody waits
+					   here, so the knock gate takes it (no orphaned knock
+					   the counsellor sees and nobody answers). */
+					if (!mounted.current) {
+						handBackToGate(pending.knockId);
+						return;
+					}
 					joinOnceAdmitted.current = joinLater;
 					setKnock(pending);
 				}
@@ -191,12 +214,7 @@ export const CallPrejoinDialog = ({
 	useEffect(() => {
 		if (heldKnock === undefined) return;
 		claimKnock(heldKnock);
-		return () => {
-			releaseKnock(heldKnock);
-			if (readPendingKnock()?.knockId === heldKnock) {
-				announcePendingKnock();
-			}
-		};
+		return () => handBackToGate(heldKnock);
 	}, [heldKnock]);
 
 	const waiting = Boolean(knock) && (!phase || phase === 'waiting');
