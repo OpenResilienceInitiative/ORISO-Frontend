@@ -58,6 +58,12 @@ export interface KnockWaitDialogProps {
 	/** `ready` only: the check could not run, ask the browser again. */
 	onRetry?: () => void;
 	/**
+	 * `ready` only (#2016, product owner 2026-11-03): the knock is out and
+	 * this same window waits. The preview and switches stay; the main button
+	 * says so with a spinner, "Nicht mehr warten" (`onCancel`) withdraws.
+	 */
+	knocking?: boolean;
+	/**
 	 * Bottom sheet instead of a centred dialog. Defaults to phones (< 600px);
 	 * stories may force either.
 	 */
@@ -100,6 +106,7 @@ export const KnockWaitDialog = ({
 	onJoin,
 	purpose = 'join',
 	onRetry,
+	knocking = false,
 	sheet
 }: KnockWaitDialogProps) => {
 	const { t } = useTranslation();
@@ -125,7 +132,7 @@ export const KnockWaitDialog = ({
 	/* While waiting, every way out (✕ is hidden, Escape, backdrop) stops the
 	   knock, so nobody keeps waiting unseen. Once admitted there is none. */
 	const handleClose = () => {
-		if (phase === 'waiting') onCancel();
+		if (phase === 'waiting' || (phase === 'ready' && knocking)) onCancel();
 		else if (phase !== 'admitted') onClose();
 	};
 
@@ -156,6 +163,25 @@ export const KnockWaitDialog = ({
 					? t('knockWait.ready.descriptionCheck')
 					: t('knockWait.ready.description');
 			body = media ? <CallDeviceCheck {...media} /> : null;
+			if (knocking) {
+				announcement = t('knockWait.waiting.statusCall');
+				actions = [
+					{
+						label: t('knockWait.waiting.cancel'),
+						onClick: onCancel,
+						testId: 'knock-wait-cancel'
+					},
+					{
+						label: t('knockWait.ready.knocking'),
+						onClick: () => undefined,
+						primary: true,
+						disabled: true,
+						busy: true,
+						testId: 'knock-wait-join'
+					}
+				];
+				break;
+			}
 			actions = [
 				...(media?.blocker && onRetry
 					? [

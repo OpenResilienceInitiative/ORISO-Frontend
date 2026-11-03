@@ -354,12 +354,13 @@ export const JoinGroupChatView = ({
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
-	/* #2016: the circle's pre-lobby offers the call's device check as an
-	   option; the choice waits for the group's next call. */
+	/* #2016: a video circle's pre-lobby offers the call's device check as
+	   an option; the choice waits for the group's next call. */
 	const offerDeviceCheck = shouldShowDeviceCheck({
 		surface: 'circleLobby',
 		mediaSupported: Boolean(navigator.mediaDevices?.getUserMedia),
-		roomRef: activeSession.rid
+		roomRef: activeSession.rid,
+		circleModality: activeSession.item.modality
 	});
 	const overlays = (
 		<>
@@ -368,7 +369,6 @@ export const JoinGroupChatView = ({
 					modality="video"
 					purpose="check"
 					roomRef={activeSession.rid}
-					onDone={() => setCheckingDevices(false)}
 					onClose={() => setCheckingDevices(false)}
 				/>
 			)}

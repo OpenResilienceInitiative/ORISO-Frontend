@@ -42,25 +42,44 @@ describe('shouldShowDeviceCheck (#2016)', () => {
 			shouldShowDeviceCheck({
 				surface: 'circleLobby',
 				mediaSupported: false,
-				roomRef: '!circle:example'
+				roomRef: '!circle:example',
+				circleModality: 'VIDEO'
 			})
 		).toBe(false);
 	});
 
-	it('offers the option in the circle pre-lobby when the room is known', () => {
+	it('offers the option in the pre-lobby of a video circle only', () => {
+		expect(
+			shouldShowDeviceCheck({
+				surface: 'circleLobby',
+				mediaSupported: true,
+				roomRef: '!circle:example',
+				circleModality: 'VIDEO'
+			})
+		).toBe(true);
+		// Product owner, 2026-11-03: text (and audio) circles get no button.
+		expect(
+			shouldShowDeviceCheck({
+				surface: 'circleLobby',
+				mediaSupported: true,
+				roomRef: '!circle:example',
+				circleModality: 'TEXT'
+			})
+		).toBe(false);
 		expect(
 			shouldShowDeviceCheck({
 				surface: 'circleLobby',
 				mediaSupported: true,
 				roomRef: '!circle:example'
 			})
-		).toBe(true);
+		).toBe(false);
 		// Without the room nothing could be carried into its call.
 		expect(
 			shouldShowDeviceCheck({
 				surface: 'circleLobby',
 				mediaSupported: true,
-				roomRef: null
+				roomRef: null,
+				circleModality: 'VIDEO'
 			})
 		).toBe(false);
 	});

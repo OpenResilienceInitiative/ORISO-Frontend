@@ -22,6 +22,22 @@ import { useGroupChatInfoFixture } from '../../groupChat/groupChatInfoStoryFixtu
 import type { GroupChatItemInterface } from '../../../globalState/interfaces';
 import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
 import { forgetAllJoinMedia, peekJoinMedia } from './callPrejoin';
+import {
+	DIRECT_LINK_ADMITTED_KEY,
+	joinOrKnock
+} from '../../directLinkEntry/callMessageKnock';
+import type { CallKnockStatus } from '../../../api/apiDirectLinks';
+import {
+	forgetPendingKnock,
+	PendingKnock,
+	rememberDirectLinkSession,
+	rememberPendingKnock
+} from '../../directLinkEntry/directLinkEntryFlow';
+import { DirectLinkKnockGate } from '../../directLinkEntry/DirectLinkKnockGate';
+import {
+	directLinkMock,
+	installDirectLinkMockApi
+} from '../../directLinkEntry/__storybook__/directLinkMockApi';
 
 /* ---------- The browser's devices, faked ---------- */
 
@@ -139,7 +155,9 @@ const FromCallMessage = ({ onJoin }: { onJoin: () => void }) => {
 					<CallTimelineMessage
 						call={runningCall}
 						deviceCheck={() => true}
-						onJoin={() => {
+						onJoin={(hooks) => {
+							// As `joinOrKnock` does: the check closes first.
+							hooks?.beforeJoin?.();
 							onJoin();
 							return Promise.resolve('joined' as const);
 						}}
@@ -159,14 +177,23 @@ const FUTURE_SECONDS = 2 * 86400 + 3 * 3600 + 21 * 60 + 50;
  * time, "Mehr erfahren", locked "Beitreten"), as `JoinGroupChatView` renders
  * it, now with "Kamera & Mikrofon" in its quiet row.
  */
-const CircleLobby = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
+const CircleLobby = ({
+	layout,
+	modality = 'VIDEO'
+}: {
+	layout: 'desktop' | 'mobile';
+	/** How the circle meets (`UserChatDTO.modality`). */
+	modality?: GroupChatItemInterface['modality'];
+}) => {
 	const listItem = React.useMemo(() => {
 		const item = buildGroupStageListItem(FUTURE_SECONDS);
-		(item.chat as GroupChatItemInterface).assignedAgencies = [
+		const chat = item.chat as GroupChatItemInterface;
+		chat.assignedAgencies = [
 			{ id: 0, name: 'Beratungsstelle Lichtenberg' }
 		] as GroupChatItemInterface['assignedAgencies'];
+		chat.modality = modality;
 		return item;
-	}, []);
+	}, [modality]);
 	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
 		<GroupChatStage
@@ -298,6 +325,12 @@ export const CallDevicesOk: Story = {
 		await expectLivePreview(canvasElement);
 		// Not joined yet: the check comes first.
 		await expect(args.onJoin).not.toHaveBeenCalled();
+		// The pickers stay, and say what the call uses (ORISO-ElementCall#116).
+		await expect(
+			page(canvasElement).getByText(
+				'Der Anruf nutzt vorerst das Standardgerät Ihres Browsers.'
+			)
+		).toBeVisible();
 	}
 };
 
@@ -428,7 +461,7 @@ export const CallNoMicrophone: Story = {
 /* ----- Circle ----- */
 
 export const CircleLobbyOption: Story = {
-	name: 'Circle · pre-lobby offers the check · desktop 1440',
+	name: 'Circle · video circle: pre-lobby offers the check · desktop 1440',
 	globals: desktop1440Globals,
 	parameters: circleParameters,
 	beforeEach: withDevices('ok'),
@@ -522,5 +555,218 @@ export const CircleNoCameraPhone: Story = {
 				page(canvasElement).getByTestId('toggle-camera')
 			).toBeDisabled()
 		);
+	}
+};
+
+export const CircleTextNoOption: Story = {
+	name: 'Circle · text circle: no device check',
+	globals: desktop1440Globals,
+	parameters: circleParameters,
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="desktop" modality="TEXT" />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+		await expect(
+			page(canvasElement).queryByTestId('group-entry-devices')
+		).toBeNull();
+	}
+};
+
+/* ----- Knock: one window (product owner, 2026-11-03) ----- */
+
+const SESSION = 4711;
+const knockCall: CallLifecycleMessage = {
+	...runningCall,
+	callId: 'call-direct',
+	roomRef: '!direct:oriso.org',
+	callRoomId: '!media:oriso.org'
+};
+const joinRunningCall = fn(async () => 'joined' as const);
+
+/**
+ * A direct-link conversation (#1893): "Beitreten" knocks. The device check
+ * is the one window — it waits in place and joins once let in. The knock
+ * gate is mounted too, as in the app, and must stay out of it.
+ */
+const KnockFromCallMessage = () => {
+	const phone = useMediaQuery('(max-width: 599.95px)');
+	return (
+		<>
+			<MessageStoryShell compact={phone}>
+				<CallTimelineMessage
+					call={knockCall}
+					deviceCheck={() => true}
+					onJoin={(hooks) =>
+						joinOrKnock(SESSION, joinRunningCall, {
+							...hooks,
+							call: knockCall
+						})
+					}
+				/>
+			</MessageStoryShell>
+			<DirectLinkKnockGate pollMs={400} />
+		</>
+	);
+};
+
+const knockStory = (answers: CallKnockStatus[]): Partial<Story> => ({
+	parameters: { router: { initialPath: `/sessions/user/view/${SESSION}` } },
+	beforeEach: () => {
+		const devicesCleanup = withDevices('ok')();
+		joinRunningCall.mockClear();
+		forgetPendingKnock();
+		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
+		rememberDirectLinkSession(SESSION, { token: 'tok7', medium: 'VIDEO' });
+		const apiCleanup = installDirectLinkMockApi({ knockAnswers: answers });
+		return () => {
+			apiCleanup?.();
+			devicesCleanup();
+			forgetPendingKnock();
+		};
+	},
+	render: () => <KnockFromCallMessage />
+});
+
+const knockAndWait = async (canvasElement: HTMLElement) => {
+	const p = page(canvasElement);
+	await userEvent.click(await callJoin(canvasElement));
+	await expectSettled(canvasElement);
+	await expectLivePreview(canvasElement);
+	await userEvent.click(p.getByTestId('knock-wait-join'));
+	await waitFor(() =>
+		expect(p.getByTestId('knock-wait-join')).toHaveTextContent(
+			'Anfrage gesendet, bitte warten …'
+		)
+	);
+};
+
+export const KnockOneWindow: Story = {
+	...knockStory(['PENDING']),
+	name: 'Knock · one window: waiting keeps preview and switches · 1440',
+	globals: desktop1440Globals,
+	parameters: {
+		...knockStory([]).parameters,
+		...textOnThePicture
+	},
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await knockAndWait(canvasElement);
+		await expect(p.getByTestId('knock-wait-join')).toBeDisabled();
+		await expect(p.getByTestId('video-check')).toBeVisible();
+		await expect(p.getByTestId('toggle-mic')).toBeEnabled();
+		// No second dialog from the knock gate.
+		await expect(p.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+		await expect(joinRunningCall).not.toHaveBeenCalled();
+	}
+};
+
+export const KnockOneWindowPhone: Story = {
+	...knockStory(['PENDING']),
+	name: 'Knock · one window · phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...knockStory([]).parameters,
+		...textOnThePicture
+	},
+	play: async ({ canvasElement }) => {
+		await knockAndWait(canvasElement);
+		await expectBottomSheet(canvasElement);
+	}
+};
+
+export const KnockStopWaiting: Story = {
+	...knockStory(['PENDING']),
+	name: 'Knock · "Nicht mehr warten" turns the button back',
+	globals: desktop1440Globals,
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await knockAndWait(canvasElement);
+		await userEvent.click(p.getByTestId('knock-wait-cancel'));
+		await waitFor(() =>
+			expect(p.getByTestId('knock-wait-join')).toHaveTextContent(
+				'Jetzt beitreten'
+			)
+		);
+		await expect(p.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+		await waitFor(() =>
+			expect(
+				directLinkMock().requests.some(
+					(request) => request.method === 'DELETE'
+				)
+			).toBe(true)
+		);
+	}
+};
+
+export const KnockLetInJoins: Story = {
+	...knockStory(['PENDING', 'ADMITTED']),
+	name: 'Knock · let in: joins with exactly the switches from the check',
+	globals: desktop1440Globals,
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.click(p.getByTestId('knock-wait-join'));
+		// Switched while waiting: the switches stay the one truth.
+		await waitFor(() =>
+			expect(p.getByTestId('knock-wait-join')).toBeDisabled()
+		);
+		await userEvent.click(p.getByTestId('toggle-camera'));
+		await waitFor(() => expect(joinRunningCall).toHaveBeenCalledOnce(), {
+			timeout: 8000
+		});
+		await expectClosed(canvasElement);
+		await expect(peekJoinMedia(knockCall.roomRef)).toEqual({
+			audio_enabled: true,
+			video_enabled: false
+		});
+	}
+};
+
+const joinAfterReload = fn(async (_knock: PendingKnock) => undefined);
+
+export const KnockReloadThenLetIn: Story = {
+	name: 'Knock · page reloaded while waiting: let in joins at once',
+	globals: desktop1440Globals,
+	parameters: {
+		router: { initialPath: `/sessions/user/view/${SESSION}` },
+		...textOnThePicture
+	},
+	beforeEach: () => {
+		const devicesCleanup = withDevices('ok')();
+		joinAfterReload.mockClear();
+		// What the knock left in the tab before the reload.
+		rememberPendingKnock({
+			token: 'tok7',
+			knockId: 501,
+			sessionId: SESSION,
+			medium: 'VIDEO',
+			status: 'PENDING',
+			joinExisting: true,
+			joinCall: knockCall
+		});
+		const apiCleanup = installDirectLinkMockApi({
+			knockAnswers: ['PENDING', 'ADMITTED']
+		});
+		return () => {
+			apiCleanup?.();
+			devicesCleanup();
+			forgetPendingKnock();
+		};
+	},
+	render: () => (
+		<DirectLinkKnockGate
+			pollMs={400}
+			deps={{ joinRunningCall: joinAfterReload }}
+		/>
+	),
+	play: async () => {
+		await waitFor(() => expect(joinAfterReload).toHaveBeenCalledOnce(), {
+			timeout: 8000
+		});
+		await expect(joinAfterReload.mock.calls[0][0]).toMatchObject({
+			joinCall: { callId: 'call-direct' }
+		});
 	}
 };

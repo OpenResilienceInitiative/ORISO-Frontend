@@ -6338,7 +6338,8 @@
 			"microphone": "Microphone",
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
-			"micMeter": "Your microphone volume"
+			"micMeter": "Your microphone volume",
+			"defaultDeviceHint": "For now, the call uses your browser's default device."
 		},
 		"ready": {
 			"title": "Check camera and microphone",
@@ -6346,7 +6347,8 @@
 			"descriptionCheck": "Your setting applies when you join a call in this group. Only you see the preview.",
 			"join": "Join now",
 			"done": "Done",
-			"retry": "Check again"
+			"retry": "Check again",
+			"knocking": "Request sent, please wait …"
 		}
 	},
 	"furtherCounselling": {

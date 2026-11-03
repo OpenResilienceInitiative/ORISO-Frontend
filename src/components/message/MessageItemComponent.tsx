@@ -45,6 +45,7 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
@@ -2730,8 +2731,9 @@ export const MessageItemComponent = ({
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
-							: () =>
-									/* FE#1893: a direct-link call conversation knocks first. */
+							: (hooks?: CallJoinHooks) =>
+									/* FE#1893: a direct-link call conversation knocks first;
+									   #2016: the open device check waits for it. */
 									joinOrKnock(
 										activeSession?.item?.id,
 										() =>
@@ -2759,6 +2761,8 @@ export const MessageItemComponent = ({
 													)
 											),
 										{
+											...hooks,
+											call: callLifecycle,
 											// Direct links are 1:1; a group has no own knock to look up.
 											asker:
 												!activeSession?.isGroup &&
