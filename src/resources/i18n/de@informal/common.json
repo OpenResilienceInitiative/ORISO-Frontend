@@ -1307,6 +1307,9 @@
 				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
+			},
+			"displayName": {
+				"optional": "Anzeigename (optional). Ohne Angabe wird deine User-ID angezeigt."
 			}
 		},
 		"errors": {
@@ -2691,7 +2694,6 @@
 			},
 			"access": {
 				"headline": "Dein Name für heute.",
-				"subline": "Anonym, ohne Konto. Wähle eine User-ID — oder würfle neue.",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleib in diesem Fenster, bis du dran bist."
 			},
 			"waiting": {

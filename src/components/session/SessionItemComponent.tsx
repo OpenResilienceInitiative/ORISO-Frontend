@@ -1,3 +1,4 @@
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
@@ -24,7 +25,7 @@ import {
 	isMyMessage,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
-import { getModality, Modality } from './getModality';
+import { getModality, getModalityIfKnown, Modality } from './getModality';
 import {
 	isComposerBusy,
 	isTimelineAtBottom,
@@ -205,6 +206,7 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { readConfirmedEntryName } from '../anonymousChat/entryRoom/entryRoomIdentity';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
@@ -304,6 +306,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		tenantData?.settings,
+		getModalityIfKnown(activeSession)
+	);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -378,7 +384,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return false;
 		}
 	});
-	const [pseudonymSaving, setPseudonymSaving] = useState(false);
+	const aliasView = useRef({
+		active: true,
+		sessionId: activeSession.item.id,
+		generation: 0
+	});
+	// Returning to the same session starts a new view lifetime (A → B → A).
+	if (aliasView.current.sessionId !== activeSession.item.id) {
+		aliasView.current.sessionId = activeSession.item.id;
+		aliasView.current.generation += 1;
+	}
+	useEffect(() => {
+		const view = aliasView.current;
+		view.active = true;
+		return () => {
+			view.active = false;
+		};
+	}, []);
+	const savingAliasRequest = useRef<{
+		sessionId: number;
+		generation: number;
+	} | null>(null);
+	const [pendingAliasRequest, setPendingAliasRequest] =
+		useState<typeof savingAliasRequest.current>(null);
+	const pseudonymSaving =
+		pendingAliasRequest?.sessionId === activeSession.item.id &&
+		pendingAliasRequest?.generation === aliasView.current.generation;
 	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
 		null
 	);
@@ -456,8 +487,36 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
 		generatePseudonym(locale)
 	);
+	const [customPseudonymName, setCustomPseudonymName] = useState<{
+		sessionId: number;
+		value: string;
+	} | null>(null);
+	const selectedPseudonym = useMemo(
+		() =>
+			nameEditable &&
+			customPseudonymName?.sessionId === activeSession.item.id
+				? {
+						...currentPseudonym,
+						displayName: customPseudonymName.value
+					}
+				: currentPseudonym,
+		[
+			nameEditable,
+			customPseudonymName,
+			activeSession.item.id,
+			currentPseudonym
+		]
+	);
+	const confirmedPseudonymName = pseudonymConfirmed
+		? (activeSession.user?.displayName ??
+			readConfirmedEntryName(activeSession.item.id))
+		: null;
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+		setCustomPseudonymName(null);
+		setCurrentPseudonym((prev) => ({
+			...regeneratePseudonym(prev, locale),
+			avatar: prev.avatar
+		}));
 	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
@@ -1194,22 +1253,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * The login User-ID is left unchanged so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
-		if (pseudonymSaving) return;
-		setPseudonymSaving(true);
-		apiPutSessionData(activeSession.item.id, {
-			displayName: currentPseudonym.displayName
-		})
-			.then(() =>
-				apiPatchUserData({ displayName: currentPseudonym.displayName })
-			)
-			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
+		const alias = selectedPseudonym.displayName.trim();
+		const sessionId = activeSession.item.id;
+		if (
+			(savingAliasRequest.current?.generation ===
+				aliasView.current.generation &&
+				savingAliasRequest.current?.sessionId === sessionId) ||
+			!alias ||
+			alias.length > 255
+		)
+			return;
+		const request = { sessionId, generation: aliasView.current.generation };
+		savingAliasRequest.current = request;
+		setPendingAliasRequest(request);
+		const isCurrentView = () =>
+			aliasView.current.active &&
+			aliasView.current.sessionId === sessionId &&
+			aliasView.current.generation === request.generation;
+		apiPutSessionData(sessionId, { displayName: alias })
+			.then(() => (isCurrentView() ? reloadActiveSession?.() : undefined))
 			.then(() => {
+				if (!isCurrentView()) return;
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
 					sessionStorage.setItem(
-						`anonymous-pseudonym-name-${activeSession.item.id}`,
-						currentPseudonym.displayName
+						`anonymous-pseudonym-name-${sessionId}`,
+						alias
 					);
 				} catch {
 					/* ignore storage errors */
@@ -1218,13 +1288,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.catch(() => {
 				/* keep card visible on failure so user can retry */
 			})
-			.finally(() => setPseudonymSaving(false));
+			.finally(() => {
+				if (savingAliasRequest.current !== request) return;
+				savingAliasRequest.current = null;
+				if (aliasView.current.active) setPendingAliasRequest(null);
+			});
 	}, [
 		activeSession.item.id,
-		currentPseudonym,
-		pseudonymSaving,
-		pseudonymStorageKey,
-		setUserData
+		selectedPseudonym,
+		reloadActiveSession,
+		pseudonymStorageKey
 	]);
 
 	/**
@@ -3290,7 +3363,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
-								pseudonym={currentPseudonym}
+								pseudonym={
+									confirmedPseudonymName
+										? {
+												...selectedPseudonym,
+												displayName:
+													confirmedPseudonymName
+											}
+										: selectedPseudonym
+								}
+								editable={nameEditable && !pseudonymConfirmed}
+								disabled={pseudonymSaving || pseudonymConfirmed}
+								onNameChange={(value) => {
+									if (nameEditable)
+										setCustomPseudonymName({
+											sessionId: activeSession.item.id,
+											value
+										});
+								}}
 								skipTyping={pseudonymConfirmed}
 							/>
 							{pseudonymConfirmed && <PrivacyMessageCard />}
@@ -3425,16 +3515,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											'sessionList.user.consultantUnknown'
 										)
 									}
-									askerMatrixUserIdFor={(message) =>
-										!activeSession.rid &&
-										message.userId &&
-										!message.userId.includes(
-											activeSession.consultant
-												?.username || ''
-										)
-											? message.userId
-											: activeSession.item
-													.askerMatrixUserId
+									askerMatrixUserIdFor={() =>
+										activeSession.item.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
 									hideSystemMessages={
@@ -3641,6 +3723,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onRegenerate={handleRegeneratePseudonym}
 							onConfirm={handleConfirmPseudonym}
 							disabled={pseudonymSaving}
+							confirmDisabled={
+								!selectedPseudonym.displayName.trim()
+							}
 						/>
 					</div>
 				)}
@@ -4125,12 +4210,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			onBack={closeChannel}
 		/>
 	) : undefined;
-	const askerMatrixUserIdFor = (message: MessageItem) =>
-		!activeSession.rid &&
-		message.userId &&
-		!message.userId.includes(activeSession.consultant?.username || '')
-			? message.userId
-			: activeSession.item.askerMatrixUserId;
+	// Assignment can change; a former consultant is never proof of asker identity.
+	const askerMatrixUserIdFor = () => activeSession.item.askerMatrixUserId;
 	const e2eeParams = { key, keyID, encrypted, subscriptionKeyLost };
 	const panelComposerFlush = desktopPanelOpen ? 'bottom-right' : undefined;
 

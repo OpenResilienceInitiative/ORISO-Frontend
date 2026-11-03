@@ -12,7 +12,8 @@ vi.mock('../../../api/apiPatchUserData', () => ({ apiPatchUserData: vi.fn() }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 const tenant = vi.hoisted(() => ({ current: null as unknown }));
 vi.mock('../../../globalState/provider/TenantProvider', () => ({
-	useTenant: () => tenant.current
+	useTenant: () => tenant.current,
+	useTenantState: () => ({ tenant: tenant.current, isLoading: false })
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
