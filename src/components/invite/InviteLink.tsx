@@ -272,15 +272,27 @@ export const InviteLink = () => {
 					   "Beitreten" (#2012). A signed-in asker and a counsellor keep
 					   their flow above; the server decides for them. */
 					if (directMedium !== 'CHAT') {
-						if (!(await directLinkCallsAllowed(context))) {
-							if (!mountedRef.current) return;
+						const callsAllowed =
+							await directLinkCallsAllowed(context);
+						if (!mountedRef.current) return;
+						/* Someone may have signed in in another tab meanwhile; the
+						   call entry would register a guest over that session. */
+						if (holdsCounsellorSession()) {
+							setStatus('staff');
+							return;
+						}
+						if (hasActiveAuthSession()) {
+							setStatus('directOpening');
+							await openDirectLinkConversation(token);
+							return;
+						}
+						if (!callsAllowed) {
 							setStatus('error');
 							setErrorMessage(
 								t('directLink.entry.callsDisabled')
 							);
 							return;
 						}
-						if (!mountedRef.current) return;
 						setStatus('directCall');
 						return;
 					}

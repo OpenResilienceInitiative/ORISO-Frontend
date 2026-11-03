@@ -534,6 +534,30 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
 	});
 
+	/* Someone signs in in another tab while the page reads the form of
+	   counselling: the call entry would register a guest over that session. */
+	it('takes a person who signed in during the call read to their own conversation', async () => {
+		vi.mocked(apiGetConsultingType).mockImplementationOnce(async () => {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+			return { id: 3, isVideoCallAllowed: true } as any;
+		});
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('VIDEO') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 46,
+			medium: 'VIDEO',
+			admission: 'DIRECT',
+			created: true
+		} as any);
+		renderInvite();
+
+		await waitFor(() =>
+			expect(apiStartDirectLinkConversation).toHaveBeenCalled()
+		);
+		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+	});
+
 	it('does not offer a call link when the flag is missing from a successful read', async () => {
 		vi.mocked(apiGetConsultingType).mockResolvedValueOnce({
 			id: 3
