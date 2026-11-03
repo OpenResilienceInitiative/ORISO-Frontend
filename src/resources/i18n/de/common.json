@@ -2171,6 +2171,12 @@
 		"success": "Erfolg",
 		"warning": "Warnung",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Erwähnung im Chat",
+				"from": "Von {{name}}",
+				"several": "{{count}} neue Erwähnungen",
+				"open": "Chat öffnen"
+			},
 			"mention": {
 				"title": "Erwähnung in der Team-Besprechung",
 				"from": "Von {{name}}",

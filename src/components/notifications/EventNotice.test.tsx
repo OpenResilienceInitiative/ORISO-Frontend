@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	act,
 	cleanup,
 	configure,
 	fireEvent,
@@ -18,12 +19,17 @@ import {
 	EventNotice,
 	EventNoticeProps,
 	eventNoticeActor,
+	eventNoticeId,
 	eventNoticeKindFor,
 	isConversationOpen,
+	isEventNoticeTargetOpen,
 	isTeamDiscussionOpen,
 	NOTIFICATION_TYPE_EVENT_NOTICE,
 	upsertEventNotice
 } from './EventNotice';
+
+import { reportShownChannel } from '../session/notificationActiveView';
+import { SessionChannel } from '../../utils/channelRoute';
 
 // The component tags nodes with data-cy (Cypress convention).
 configure({ testIdAttribute: 'data-cy' });
@@ -59,6 +65,13 @@ const notice = (
 	...overrides
 });
 
+const initialWidth = window.innerWidth;
+const setWidth = (value: number) =>
+	Object.defineProperty(window, 'innerWidth', {
+		configurable: true,
+		value
+	});
+
 const Where = () => <div data-cy="where">{useLocation().pathname}</div>;
 const GoTo = ({ to }: { to: string }) => {
 	const navigate = useNavigate();
@@ -86,7 +99,11 @@ const renderNotice = (
 };
 
 describe('EventNotice', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		reportShownChannel(null);
+		setWidth(initialWidth);
+	});
 
 	it.each(['mention', 'handover'] as const)(
 		'names the actor, never message text, and opens the target (%s)',
@@ -158,6 +175,75 @@ describe('EventNotice', () => {
 		);
 		fireEvent.click(screen.getByText('go'));
 		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('settles a chat-mention card when that chat is opened', () => {
+		const remove = renderNotice(
+			notice({ kind: 'chatMention', id: 'event-notice:chatMention:42' }),
+			'/',
+			'/sessions/consultant/sessionView/!main42/42'
+		);
+		fireEvent.click(screen.getByText('go'));
+		expect(remove).toHaveBeenCalledWith(
+			'event-notice:chatMention:42',
+			'eventNotice'
+		);
+	});
+
+	it('keeps a thread-mention card while the parent chat is opened', () => {
+		const remove = renderNotice(
+			notice({
+				kind: 'chatMention',
+				id: 'event-notice:chatMention:42:thread:$root1',
+				threadRootId: '$root1'
+			}),
+			'/',
+			'/sessions/consultant/sessionView/!room42/42'
+		);
+		fireEvent.click(screen.getByText('go'));
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('settles a thread-mention card only when the chat card reports that thread', () => {
+		const remove = renderNotice(
+			notice({
+				kind: 'chatMention',
+				id: 'event-notice:chatMention:42:thread:$root1',
+				threadRootId: '$root1'
+			}),
+			'/',
+			'/sessions/consultant/sessionView/!room42/42?channel=thread:$root1'
+		);
+		fireEvent.click(screen.getByText('go'));
+		expect(remove).not.toHaveBeenCalled();
+		act(() => reportShownChannel({ kind: 'thread', rootId: '$root1' }));
+		expect(remove).toHaveBeenCalledWith(
+			'event-notice:chatMention:42:thread:$root1',
+			'eventNotice'
+		);
+	});
+
+	it('settles a main-chat card when the window grows past the phone layout', () => {
+		setWidth(899);
+		reportShownChannel({ kind: 'thread', rootId: '$other' });
+		const remove = renderNotice(
+			notice({ kind: 'chatMention', id: 'event-notice:chatMention:42' }),
+			'/sessions/consultant/sessionView/!room42/42'
+		);
+		expect(remove).not.toHaveBeenCalled();
+
+		// Still a phone: the side panel keeps hiding the main chat.
+		setWidth(600);
+		fireEvent(window, new Event('resize'));
+		expect(remove).not.toHaveBeenCalled();
+
+		// Both panes now sit side by side, with route and panel unchanged.
+		setWidth(900);
+		fireEvent(window, new Event('resize'));
+		expect(remove).toHaveBeenCalledWith(
+			'event-notice:chatMention:42',
+			NOTIFICATION_TYPE_EVENT_NOTICE
+		);
 	});
 
 	it('names no one on the consent card and shows its neutral text', () => {
@@ -247,13 +333,36 @@ describe('event pop-up rules', () => {
 			}),
 			'consent'
 		],
-		// A post without a mention, and every message.new, earn no card.
+		// A post without a mention earns no card.
 		[row('team.discussion.new', TEAM, { mentioned: false }), null],
 		[row('team.discussion.new', TEAM), null],
+		// ORISO-UserService#1510: a mention in an ordinary chat or its thread.
 		[
 			row('message.new', '/sessions/consultant/sessionView/!room42/42', {
 				mentioned: true,
 				recipientRole: 'consultant'
+			}),
+			'chatMention'
+		],
+		[
+			row(
+				'thread.reply.new',
+				'/sessions/consultant/sessionView/!room42/42',
+				{ mentioned: true, recipientRole: 'consultant' }
+			),
+			'chatMention'
+		],
+		[
+			row('message.new', '/sessions/consultant/sessionView/!room42/42', {
+				recipientRole: 'consultant'
+			}),
+			null
+		],
+		// Only ever a counsellor's row.
+		[
+			row('message.new', '/sessions/user/view/!room42/42', {
+				mentioned: true,
+				recipientRole: 'user'
 			}),
 			null
 		],
@@ -368,7 +477,193 @@ describe('event pop-up rules', () => {
 });
 
 describe('where the target is open', () => {
+	afterEach(() => reportShownChannel(null));
+
+	it('treats a stray percent sign in the route as a plain character', () => {
+		expect(
+			isConversationOpen(
+				{ sessionId: '42' },
+				'/sessions/consultant/sessionView/100%',
+				'',
+				true
+			)
+		).toBe(false);
+		expect(
+			isConversationOpen(
+				{ sessionId: '100%' },
+				'/sessions/consultant/sessionView/100%',
+				'',
+				true
+			)
+		).toBe(true);
+	});
+
 	const target = { sessionId: '42', roomRef: '!room42' };
+
+	it.each<[string, SessionChannel | null, boolean]>([
+		['the parent chat', null, false],
+		['another thread', { kind: 'thread', rootId: '$other' }, false],
+		['the team discussion', { kind: 'team' }, false],
+		['that thread', { kind: 'thread', rootId: '$root1' }, true]
+	])('a thread mention with %s shown', (_label, shown, open) => {
+		const pathname = '/sessions/consultant/sessionView/!room42/42';
+		const thread = { ...target, threadRootId: '$root1' };
+		reportShownChannel(shown);
+		expect(
+			isEventNoticeTargetOpen('chatMention', thread, pathname, '', true)
+		).toBe(open);
+		expect(
+			isEventNoticeTargetOpen(
+				'chatMention',
+				thread,
+				'/sessions/consultant/sessionView/!room43/43',
+				'',
+				true
+			)
+		).toBe(false);
+		expect(
+			isEventNoticeTargetOpen('chatMention', thread, pathname, '', false)
+		).toBe(false);
+	});
+
+	it('does not take the URL for the thread: its root may not be loaded', () => {
+		expect(
+			isEventNoticeTargetOpen(
+				'chatMention',
+				{ ...target, threadRootId: '$root1' },
+				'/sessions/consultant/sessionView/!room42/42',
+				'?channel=thread:$root1',
+				true
+			)
+		).toBe(false);
+	});
+
+	describe('with a side panel over the main chat on a phone', () => {
+		const pathname = '/sessions/consultant/sessionView/!room42/42';
+		afterEach(() => setWidth(initialWidth));
+
+		it.each<[string, SessionChannel]>([
+			['a thread', { kind: 'thread', rootId: '$other' }],
+			['the supervision panel', { kind: 'supervision' }],
+			['the team panel', { kind: 'team' }]
+		])('a main-chat mention is not seen behind %s', (_label, shown) => {
+			reportShownChannel(shown);
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					'',
+					true
+				)
+			).toBe(false);
+			// The desktop shows both panes side by side.
+			setWidth(900);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					'',
+					true
+				)
+			).toBe(true);
+		});
+
+		it('sees a main-chat mention with no panel open', () => {
+			setWidth(899);
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					target,
+					pathname,
+					'',
+					true
+				)
+			).toBe(true);
+		});
+
+		it.each([
+			['a side channel', '?channel=team'],
+			['a thread by its feed link', '?threadRootId=%24other']
+		])(
+			'does not see a main-chat mention while %s is still loading',
+			(_label, search) => {
+				setWidth(899);
+				expect(
+					isEventNoticeTargetOpen(
+						'chatMention',
+						target,
+						pathname,
+						search,
+						true
+					)
+				).toBe(false);
+				setWidth(900);
+				expect(
+					isEventNoticeTargetOpen(
+						'chatMention',
+						target,
+						pathname,
+						search,
+						true
+					)
+				).toBe(true);
+			}
+		);
+
+		it('keeps a main-chat card when a phone goes straight to a side channel', () => {
+			setWidth(899);
+			const remove = renderNotice(
+				notice({
+					kind: 'chatMention',
+					id: 'event-notice:chatMention:42'
+				}),
+				'/',
+				'/sessions/consultant/sessionView/!room42/42?channel=team'
+			);
+			fireEvent.click(screen.getByText('go'));
+			expect(remove).not.toHaveBeenCalled();
+			act(() => reportShownChannel({ kind: 'team' }));
+			expect(remove).not.toHaveBeenCalled();
+			cleanup();
+		});
+
+		it('sees a thread mention with that thread filling the screen', () => {
+			setWidth(899);
+			reportShownChannel({ kind: 'thread', rootId: '$root1' });
+			expect(
+				isEventNoticeTargetOpen(
+					'chatMention',
+					{ ...target, threadRootId: '$root1' },
+					pathname,
+					'',
+					true
+				)
+			).toBe(true);
+		});
+
+		it('leaves the other kinds on the conversation check', () => {
+			setWidth(899);
+			reportShownChannel({ kind: 'thread', rootId: '$other' });
+			expect(
+				isEventNoticeTargetOpen('handover', target, pathname, '', true)
+			).toBe(true);
+		});
+	});
+
+	it('gives a thread its own card, apart from the chat and other threads', () => {
+		expect(eventNoticeId('chatMention', '42')).toBe(
+			'event-notice:chatMention:42'
+		);
+		expect(eventNoticeId('chatMention', '42', '$root1')).toBe(
+			'event-notice:chatMention:42:thread:$root1'
+		);
+		expect(eventNoticeId('chatMention', '42', '$root2')).not.toBe(
+			eventNoticeId('chatMention', '42', '$root1')
+		);
+	});
 
 	it.each([
 		['/sessions/consultant/sessionView/!room42/42', '', true],

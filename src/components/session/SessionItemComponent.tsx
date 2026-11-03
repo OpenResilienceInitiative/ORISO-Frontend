@@ -189,7 +189,10 @@ import {
 	type SupervisionRoomLookup
 } from './supervisionRoomLookup';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
-import { isNotificationActiveViewRoute } from './notificationActiveView';
+import {
+	isNotificationActiveViewRoute,
+	reportShownChannel
+} from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -2374,8 +2377,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const reportChatStagePanel = useReportChatStagePanel();
 	useEffect(() => {
 		reportChatStagePanel(openPanel);
-		return () => reportChatStagePanel(null);
-	}, [openPanel, reportChatStagePanel]);
+		reportShownChannel(
+			openPanel === 'thread' && activeThreadRootId
+				? { kind: 'thread', rootId: activeThreadRootId }
+				: openPanel === 'supervision' || openPanel === 'team'
+					? { kind: openPanel }
+					: null
+		);
+		return () => {
+			reportChatStagePanel(null);
+			reportShownChannel(null);
+		};
+	}, [activeThreadRootId, openPanel, reportChatStagePanel]);
 
 	// `?at=<eventId>` (review D-6): once the bubble is in the DOM — main
 	// chat or the open pane — scroll it into view and consume the param
@@ -3071,6 +3084,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		apiRegisterMatrixRoomForSync(sessionId);
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
+	// Phone: a side panel fills the screen instead of the main chat.
+	const mainChatHidden = isPhoneLayout && openPanel !== null;
+	const shownThreadRootId =
+		openPanel === 'thread' ? activeThreadRootId : null;
 	useEffect(() => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
@@ -3102,8 +3119,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				document.visibilityState === 'visible' && document.hasFocus();
 			apiPatchNotificationActiveView({
 				roomId,
-				threadRootId: active ? activeThreadRootId : null,
-				active
+				threadRootId: active ? shownThreadRootId : null,
+				active,
+				mainChatHidden: (active && mainChatHidden) || undefined
 			}).catch(() => undefined);
 		};
 
@@ -3131,11 +3149,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
-		activeThreadRootId,
 		isAskerUser,
 		isConsultantUser,
 		location.pathname,
-		location.search
+		location.search,
+		mainChatHidden,
+		shownThreadRootId
 	]);
 
 	// Track the decryption success because we have a short timing issue when
