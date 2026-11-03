@@ -14,9 +14,15 @@ const statusOf = (error: unknown) =>
 		? (error as Response).status
 		: undefined;
 
+const isAccount = (value: unknown): value is TemporaryAccountState =>
+	typeof (value as TemporaryAccountState | null)?.messageRetention ===
+	'string';
+
 /**
  * The signed-in guest's temporary account (ORISO-UserService#1486), or
- * `null` when the person has none (404: a normal account).
+ * `null` when the person has none (404: a normal account). An answer
+ * without an account in it (an empty body or object, a 204) is a failed
+ * lookup, never "no account" (#2009).
  */
 export const apiGetTemporaryAccount =
 	async (): Promise<TemporaryAccountState | null> => {
@@ -26,9 +32,10 @@ export const apiGetTemporaryAccount =
 				method: FETCH_METHODS.GET,
 				responseHandling: handled
 			});
-			return value && typeof value === 'object'
-				? (value as TemporaryAccountState)
-				: null;
+			if (!isAccount(value)) {
+				throw new Error('temporary account lookup returned no account');
+			}
+			return value;
 		} catch (error) {
 			if (statusOf(error) === 404) return null;
 			throw error;

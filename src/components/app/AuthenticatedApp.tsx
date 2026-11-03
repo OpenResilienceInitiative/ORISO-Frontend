@@ -76,11 +76,16 @@ import { withTimeout } from '../../utils/promiseTimeout';
 interface AuthenticatedAppProps {
 	onAppReady: Function;
 	onLogout: Function;
+	/** An authenticated surface outside the counselling app, e.g. a call guest. */
+	content?: React.ReactNode;
+	loginPath?: string;
 }
 
 export const AuthenticatedApp = ({
 	onLogout,
-	onAppReady
+	onAppReady,
+	content,
+	loginPath
 }: AuthenticatedAppProps) => {
 	const { releaseToggles } = useAppConfig();
 	const { setConsultingTypes } = useContext(ConsultingTypesContext);
@@ -410,6 +415,13 @@ export const AuthenticatedApp = ({
 			);
 		}
 
+		if (content)
+			return (
+				<AuthenticatedBuildIdentityBoundary>
+					{content}
+				</AuthenticatedBuildIdentityBoundary>
+			);
+
 		return (
 			<AuthenticatedBuildIdentityBoundary>
 				<E2EEncryptionSupportBanner />
@@ -430,9 +442,12 @@ export const AuthenticatedApp = ({
 
 	return (
 		<Navigate
-			to={loginPathForEmailPreferences(
-				window.location.pathname + window.location.search
-			)}
+			to={
+				loginPath ??
+				loginPathForEmailPreferences(
+					window.location.pathname + window.location.search
+				)
+			}
 			replace
 		/>
 	);

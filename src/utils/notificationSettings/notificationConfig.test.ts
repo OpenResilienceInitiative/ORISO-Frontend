@@ -14,9 +14,11 @@ import {
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
-	it('defaults: sounds off, email on for new/standard and off for mention', () => {
+	it('defaults: only a new enquiry rings, email on for new/standard and off for mention', () => {
 		const r = DEFAULT_NOTIFICATION_CONFIG.requests;
-		expect(r.new.sound).toBe('none');
+		// FE#1435: "Neue Anfrage" rings out of the box; the rest stay silent.
+		expect(r.new.sound).toBe('ton-1');
+		expect(r.standard.sound).toBe('none');
 		expect(r.new.email).toBe(true);
 		expect(r.standard.email).toBe(true);
 		expect(r.mention.email).toBe(false);
@@ -49,7 +51,7 @@ describe('notificationConfig', () => {
 
 	it('parse tolerates garbage', () => {
 		const parsed = parseNotificationConfig({ requests: { new: 42 } });
-		expect(parsed.requests.new.sound).toBe('none');
+		expect(parsed.requests.new.sound).toBe('ton-1');
 		expect(parsed.requests.new.email).toBe(true);
 	});
 
@@ -66,7 +68,7 @@ describe('notificationConfig', () => {
 			DEFAULT_NOTIFICATION_CONFIG.requests.new.email
 		);
 		// original untouched
-		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('none');
+		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.sound).toBe('ton-1');
 	});
 
 	it('setKindField toggles email independently per area', () => {
