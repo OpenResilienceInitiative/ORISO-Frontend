@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {
 	isRedeemInviteLinkSessionResponse,
+	isPausedInvite,
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
@@ -91,19 +92,6 @@ const withdrawDiscardedGuest = (data: {
 }) => {
 	void apiFinishAnonymousConversation(data.sessionId, data.accessToken).catch(
 		() => undefined
-	);
-};
-
-const isPausedInvite = async (error: unknown): Promise<boolean> => {
-	if (!(error instanceof Response) || !isInactiveDirectLinkError(error))
-		return false;
-	const body = await error
-		.clone()
-		.json()
-		.catch(() => null);
-	return (
-		body?.reason === 'INVITE_LINK_PAUSED' ||
-		body?.reason === 'DIRECT_LINK_INACTIVE'
 	);
 };
 
