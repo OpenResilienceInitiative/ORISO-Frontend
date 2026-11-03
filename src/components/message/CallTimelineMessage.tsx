@@ -7,7 +7,14 @@ import { formatMessagePersonName } from './messageNameUtils';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
 import { useCallTimelineState } from './useCallTimelineState';
 import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
-import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
+import type {
+	CallJoinHooks,
+	CallJoinResult
+} from '../directLinkEntry/callMessageKnock';
+
+/** Dismissing the device check is the person's choice, not a failure. */
+const joinFailedFor = (result: CallJoinResult) =>
+	result !== 'joined' && result !== 'cancelled';
 
 /** A durable room notice, independent of the current browser's call window. */
 export const CallTimelineMessage = ({
@@ -21,9 +28,7 @@ export const CallTimelineMessage = ({
 	 * The join. From the device check it gets the check's hooks (#2016): it
 	 * closes the check before joining, or hands it a knock to wait on.
 	 */
-	onJoin?: (
-		hooks?: CallJoinHooks
-	) => Promise<'joined' | 'busy' | 'ended' | 'unavailable'>;
+	onJoin?: (hooks?: CallJoinHooks) => Promise<CallJoinResult>;
 	loadState?: (
 		call: CallLifecycleMessage
 	) => Promise<CallLifecycleMessage | null>;
@@ -46,7 +51,7 @@ export const CallTimelineMessage = ({
 		setJoinFailed(false);
 		try {
 			const result = await onJoin(hooks);
-			setJoinFailed(result !== 'joined');
+			setJoinFailed(joinFailedFor(result));
 			return result;
 		} catch {
 			setJoinFailed(true);
@@ -248,6 +253,9 @@ export const CallTimelineMessage = ({
 					roomRef={call.roomRef}
 					onJoin={(hooks) => join(hooks)}
 					onClose={() => setChecking(false)}
+					onJoinResult={(result) =>
+						setJoinFailed(joinFailedFor(result))
+					}
 				/>
 			)}
 		</>

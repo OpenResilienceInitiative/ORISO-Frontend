@@ -342,6 +342,14 @@ describe('one window for knocking from the call message (#2016)', () => {
 		);
 	});
 
+	it('starts no call when the check was dismissed during the lookup (#2016)', async () => {
+		const join = vi.fn().mockResolvedValue('joined');
+		await expect(
+			joinOrKnock(9, join, { mine, beforeJoin: () => false })
+		).resolves.toBe('cancelled');
+		expect(join).not.toHaveBeenCalled();
+	});
+
 	it('lets the check close before a join that needs no knock', async () => {
 		const order: string[] = [];
 		const join = vi.fn(async () => {

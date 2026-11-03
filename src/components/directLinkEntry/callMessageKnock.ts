@@ -15,7 +15,16 @@ import { knockJoinCallOf } from './directLinkEntryFlow';
 import type { PendingKnock } from './directLinkEntryFlow';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 
-export type CallJoinResult = 'joined' | 'busy' | 'ended' | 'unavailable';
+/**
+ * `cancelled`: the person dismissed the device check before the join went
+ * out (#2016). Not a failure; nothing was started.
+ */
+export type CallJoinResult =
+	| 'joined'
+	| 'busy'
+	| 'ended'
+	| 'unavailable'
+	| 'cancelled';
 
 /*
  * FE#1893: in a conversation that came through an audio or video direct
@@ -60,8 +69,12 @@ export const callCardMayKnock = ({
  * one window: it waits for the counsellor itself, so no second dialog.
  */
 export interface CallJoinHooks {
-	/** Right before the join: the check closes and lets go of the camera. */
-	beforeJoin?: () => void;
+	/**
+	 * Right before the join: the check closes and lets go of the camera.
+	 * `false`: the check is already gone (dismissed while this was looked
+	 * up), so no call is started at all.
+	 */
+	beforeJoin?: () => boolean | void;
 	/** A knock is out: the check waits in place and joins once let in. */
 	onKnock?: (
 		knock: PendingKnock,
@@ -177,8 +190,10 @@ export const joinOrKnock = async (
 		asker = true,
 		beforeJoin
 	} = deps;
-	const join = () => {
-		beforeJoin?.();
+	const join = (): Promise<CallJoinResult> => {
+		/* Dismissed meanwhile: "Niemand sieht oder hört Sie, bevor Sie
+		   beitreten" — so nobody is put into the call. */
+		if (beforeJoin?.() === false) return Promise.resolve('cancelled');
 		return joinCall();
 	};
 	if (sessionId == null || !asker) return join();

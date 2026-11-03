@@ -311,7 +311,13 @@ export const KnockWaitDialog = ({
 		<M3Dialog
 			open={open}
 			onClose={handleClose}
-			closable={phase !== 'waiting' && phase !== 'admitted'}
+			/* While a knock is out the ✕ would withdraw it, not "close": no ✕
+			   then (Escape and "Nicht mehr warten" still withdraw). */
+			closable={
+				phase !== 'waiting' &&
+				phase !== 'admitted' &&
+				!(phase === 'ready' && knocking)
+			}
 			closeLabel={t('app.close')}
 			width={480}
 			icon={HERO[phase]}
