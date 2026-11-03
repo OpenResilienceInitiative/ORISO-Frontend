@@ -1,3 +1,5 @@
+import { apiGetPublicTenantById } from '../../../api/apiGetTenantTheming';
+import type { TenantDataInterface } from '../../../globalState/interfaces';
 import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { isAskerDisplayNameTypingAllowed } from '../../../utils/askerAccountPolicy';
 import * as React from 'react';
@@ -61,6 +63,7 @@ export interface LiveChatEntryRoomProps {
 	invite?: {
 		/** Unknown while the page still reads the link; the room keeps looking. */
 		topicId?: number;
+		tenantId?: number | null;
 		consultingTypeId?: number;
 		/** Redeems the link, sets its tokens, and returns the new session. */
 		redeem: () => Promise<number>;
@@ -190,8 +193,30 @@ const LiveChatEntryRoomContent = ({
 	const localeContext = useContext(LocaleContext);
 	const locale = localeContext?.locale ?? 'de';
 	const tenant = useTenant();
+	const inviteTenantId = invite?.tenantId;
+	const [inviteTenant, setInviteTenant] =
+		useState<TenantDataInterface | null>(null);
+	useEffect(() => {
+		if (!inviteTenantId || inviteTenantId === tenant?.id) return;
+		let current = true;
+		void apiGetPublicTenantById(inviteTenantId)
+			.then((resolved) => {
+				if (current && resolved?.id === inviteTenantId)
+					setInviteTenant(resolved);
+			})
+			.catch(() => undefined);
+		return () => {
+			current = false;
+		};
+	}, [inviteTenantId, tenant?.id]);
+	const nameSettings =
+		!invite || inviteTenantId === tenant?.id
+			? tenant?.settings
+			: inviteTenant?.id === inviteTenantId
+				? inviteTenant?.settings
+				: undefined;
 	const nameEditable = isAskerDisplayNameTypingAllowed(
-		tenant?.settings,
+		nameSettings,
 		'LIVE_CHAT'
 	);
 	const legalLinks = useContext(LegalLinksContext);

@@ -414,6 +414,7 @@ describe('InviteLink asks who is live before anything is created', () => {
 			)
 		);
 		expect(roomProps.current.invite.consultingTypeId).toBe(1);
+		expect(roomProps.current.invite.tenantId).toBe(1);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
 		expect(
