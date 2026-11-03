@@ -86,6 +86,23 @@ export const isInactiveDirectLinkError = (error: unknown): boolean =>
 	typeof (error as Response)?.status === 'number' &&
 	(error as Response).status === 410;
 
+/**
+ * The backend answers 403 with `X-Reason: FEATURE_DISABLED` when the link's
+ * form of counselling has no calls (ORISO-UserService#1573).
+ */
+export const isCallsDisabledError = (error: unknown): boolean =>
+	typeof (error as Response)?.status === 'number' &&
+	(error as Response).status === 403 &&
+	(error as Response).headers?.get?.('X-Reason') === 'FEATURE_DISABLED';
+
+/** The text a refused direct-link request deserves, or `null` for any other failure. */
+export const directLinkRefusalKey = (error: unknown): string | null =>
+	isInactiveDirectLinkError(error)
+		? 'directLink.entry.inactive'
+		: isCallsDisabledError(error)
+			? 'directLink.entry.callsDisabled'
+			: null;
+
 /* The server answers a relative URL when APP_BASE_URL is unset; a copied
    link must still open from another device. */
 const absoluteUrl = (url: string) =>

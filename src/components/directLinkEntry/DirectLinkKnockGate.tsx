@@ -1,7 +1,12 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { UserDataContext } from '../../globalState';
+import {
+	NOTIFICATION_TYPE_ERROR,
+	NotificationsContext,
+	UserDataContext
+} from '../../globalState';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
 import { useLiveCallDevices } from '../waitingRoom/callEntry/useLiveCallDevices';
 import {
@@ -90,7 +95,11 @@ export const DirectLinkKnock = ({
 	deps = {},
 	pollMs
 }: DirectLinkKnockProps) => {
+	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext) ?? ({} as never);
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
 	const state = useDirectLinkKnock(knock, deps, pollMs);
 	const modality = modalityOf(knock);
 	const [controls, setControls] = useState<CallDeviceControls>({
@@ -102,8 +111,21 @@ export const DirectLinkKnock = ({
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
-		if (state.gone) onDone();
-	}, [onDone, state.gone]);
+		if (!state.gone) return;
+		/* Knocking again was refused (link switched off, or no calls in this
+		   counselling): say so, rather than let the dialog vanish (#2012). */
+		if (state.refusalKey) {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t(state.refusalKey),
+				text: '',
+				closeable: true,
+				timeout: 5000
+			});
+		}
+		onDone();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the dialog goes
+	}, [state.gone]);
 
 	useEffect(() => {
 		if (state.phase !== 'admitted' || admittedOnce.current) return;

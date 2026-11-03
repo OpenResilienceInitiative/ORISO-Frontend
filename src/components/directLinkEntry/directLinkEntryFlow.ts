@@ -4,6 +4,7 @@ import {
 	DirectLinkConversation
 } from '../../api/apiDirectLinks';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+import { apiGetConsultingType } from '../../api/apiGetConsultingType';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import { redirectToApp } from '../registration/autoLogin';
 
@@ -33,6 +34,22 @@ export const directLinkMediumOf = (
 	if (!context?.admission) return null;
 	const medium = context.chatType as DirectLinkMedium;
 	return DIRECT_LINK_MEDIA_TYPES.includes(medium) ? medium : null;
+};
+
+/**
+ * Whether the link's form of counselling has calls (#2012): an audio or video
+ * link of one that has none would only end in a 403 `FEATURE_DISABLED` at
+ * "Beitreten", so the page says so on arrival. A form of counselling that
+ * cannot be read counts as allowed — the server decides then.
+ */
+export const directLinkCallsAllowed = async (
+	context: InviteLinkContext
+): Promise<boolean> => {
+	if (context.consultingTypeId == null) return true;
+	const consultingType = await apiGetConsultingType({
+		consultingTypeId: context.consultingTypeId
+	}).catch(() => null);
+	return consultingType?.isVideoCallAllowed !== false;
 };
 
 export const PENDING_KNOCK_KEY = 'oriso.directLinkKnock';

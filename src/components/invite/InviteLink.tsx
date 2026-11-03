@@ -54,10 +54,14 @@ import {
 	registrationScreenTitleSx
 } from '../registration/registrationDesign/registrationDesign';
 import type { Pseudonym } from '../../utils/anonName/engine';
-import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
+import {
+	directLinkRefusalKey,
+	isInactiveDirectLinkError
+} from '../../api/apiDirectLinks';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import {
+	directLinkCallsAllowed,
 	directLinkMediumOf,
 	loginPathForDirectLink,
 	openDirectLinkConversation
@@ -98,6 +102,11 @@ const inviteErrorText = (
 	error: unknown,
 	translate: (key: string) => string
 ) => {
+	/* ORISO-UserService#1563/#1573: a link switched off (410) or a call link
+	   of a counselling without calls (403) is refused on the registration
+	   and the conversation start too, not only on the context lookup. */
+	const refusal = directLinkRefusalKey(error);
+	if (refusal) return translate(refusal);
 	const failure = getCounsellingDpaFailure(error);
 	if (failure) {
 		return translate(
@@ -240,6 +249,17 @@ export const InviteLink = () => {
 				}
 				const directMedium = directLinkMediumOf(context);
 				if (context && directMedium) {
+					/* An audio or video link of a counselling without calls:
+					   say so now instead of at "Beitreten" (#2012). */
+					if (
+						directMedium !== 'CHAT' &&
+						!(await directLinkCallsAllowed(context))
+					) {
+						if (!mountedRef.current) return;
+						setStatus('error');
+						setErrorMessage(t('directLink.entry.callsDisabled'));
+						return;
+					}
 					if (!mountedRef.current) return;
 					if (holdsCounsellorSession()) {
 						setStatus('staff');
@@ -332,11 +352,7 @@ export const InviteLink = () => {
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(
-					isInactiveDirectLinkError(err)
-						? t('directLink.entry.inactive')
-						: inviteErrorText(err, t)
-				);
+				setErrorMessage(inviteErrorText(err, t));
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);

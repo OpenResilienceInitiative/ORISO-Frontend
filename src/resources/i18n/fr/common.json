@@ -6512,6 +6512,7 @@
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans ce conseil.",
 			"haveAccount": "Vous avez déjà un compte ? Se connecter",
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},

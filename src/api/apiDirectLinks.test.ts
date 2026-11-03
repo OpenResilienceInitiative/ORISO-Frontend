@@ -9,6 +9,8 @@ import {
 	apiStartDirectLinkConversation,
 	apiUpdateDirectLink,
 	DIRECT_LINKS_CHANGED_EVENT,
+	directLinkRefusalKey,
+	isCallsDisabledError,
 	isInactiveDirectLinkError,
 	notifyDirectLinksChanged,
 	toDirectLink
@@ -191,6 +193,41 @@ describe('the person’s side', () => {
 			isInactiveDirectLinkError(new Response('', { status: 404 }))
 		).toBe(false);
 		expect(isInactiveDirectLinkError(new Error('CATCH_ALL'))).toBe(false);
+	});
+
+	it('recognises a form of counselling without calls by its 403 reason', () => {
+		const refused = (status: number, reason?: string) =>
+			new Response('', {
+				status,
+				headers: reason ? { 'X-Reason': reason } : {}
+			});
+		expect(isCallsDisabledError(refused(403, 'FEATURE_DISABLED'))).toBe(
+			true
+		);
+		expect(isCallsDisabledError(refused(403))).toBe(false);
+		expect(isCallsDisabledError(refused(403, 'OTHER'))).toBe(false);
+		expect(isCallsDisabledError(refused(404, 'FEATURE_DISABLED'))).toBe(
+			false
+		);
+		expect(isCallsDisabledError(new Error('FORBIDDEN'))).toBe(false);
+	});
+
+	it('names the text a refusal deserves', () => {
+		expect(directLinkRefusalKey(new Response('', { status: 410 }))).toBe(
+			'directLink.entry.inactive'
+		);
+		expect(
+			directLinkRefusalKey(
+				new Response('', {
+					status: 403,
+					headers: { 'X-Reason': 'FEATURE_DISABLED' }
+				})
+			)
+		).toBe('directLink.entry.callsDisabled');
+		expect(directLinkRefusalKey(new Response('', { status: 500 }))).toBe(
+			null
+		);
+		expect(directLinkRefusalKey(undefined)).toBe(null);
 	});
 });
 

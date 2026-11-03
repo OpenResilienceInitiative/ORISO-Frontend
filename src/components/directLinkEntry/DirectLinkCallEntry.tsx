@@ -17,6 +17,7 @@ import {
 	CallDeviceControls,
 	CallModality
 } from '../waitingRoom/callEntry/callEntryTypes';
+import { directLinkRefusalKey } from '../../api/apiDirectLinks';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
 import { directLinkRegistration } from './directLinkRegistration';
@@ -87,11 +88,14 @@ export const DirectLinkCallEntry = ({
 			await register(account);
 			await open(token);
 			return true;
-		} catch {
+		} catch (error) {
 			setJoining(false);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: t('directLink.entry.joinFailed'),
+				/* A switched-off link or a counselling without calls cannot work on a retry. */
+				title: t(
+					directLinkRefusalKey(error) ?? 'directLink.entry.joinFailed'
+				),
 				text: '',
 				closeable: true,
 				timeout: 5000
