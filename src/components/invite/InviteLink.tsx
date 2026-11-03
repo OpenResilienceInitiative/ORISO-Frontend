@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {
 	isRedeemInviteLinkSessionResponse,
+	isPausedInvite,
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
@@ -127,6 +128,7 @@ export const InviteLink = () => {
 		| 'identity'
 		| 'registering'
 		| 'error'
+		| 'paused'
 		| 'room'
 		| 'invite'
 		| 'staff'
@@ -187,20 +189,22 @@ export const InviteLink = () => {
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
 
-		/* A counsellor signed in in this browser must not be turned into a guest.
-		   Redeeming writes the guest's tokens where hers are; her next heartbeat
-		   then goes out as the guest, is refused, and she silently drops out of
-		   the live count while her switch still reads live (Dev, 2026-09-21). */
-		/* Only a session that is still alive: the invite route runs outside the
-		   app that tears an expired one down, and a stale cookie signs nobody
-		   out, so it must not lock anyone out either. */
-		if (holdsCounsellorSession()) {
-			setStatus('staff');
-			return;
-		}
-
 		(async () => {
 			try {
+				// The public context can report a paused link without creating an
+				// account or showing an existing waiting room or staff notice.
+				const context = await apiGetInviteLinkContext(token).catch(
+					async (error) => {
+						if (await isPausedInvite(error)) throw error;
+						return null;
+					}
+				);
+				if (!mountedRef.current) return;
+				if (holdsCounsellorSession()) {
+					setStatus('staff');
+					return;
+				}
+
 				/* A reload must not cost a second place in the queue. Redeem
 				   mints a fresh anonymous account and a fresh queue entry
 				   every time it is called — right for a second guest, wrong
@@ -210,8 +214,7 @@ export const InviteLink = () => {
 				const reusableSessionId =
 					await resolveReusableInviteSession(token);
 				if (reusableSessionId !== null) {
-					/* The lookup can take a moment; a counsellor who signed in
-					   meanwhile gets the lock, not a guest room under her login. */
+					if (!mountedRef.current) return;
 					if (holdsCounsellorSession()) {
 						setStatus('staff');
 						return;
@@ -221,24 +224,6 @@ export const InviteLink = () => {
 					return;
 				}
 
-				/* Who is live is asked before anything is created: the room
-				   gets the link's topic, offers names only if somebody is
-				   there, and redeems once a name is chosen. The context is
-				   public and redeems nothing. Without it — a link kind that
-				   has none, or a failed lookup — the page redeems on arrival
-				   as before, rather than leave the guest at a dead door. */
-				let inactive = false;
-				const context = await apiGetInviteLinkContext(token).catch(
-					(error) => {
-						inactive = isInactiveDirectLinkError(error);
-						return null;
-					}
-				);
-				if (inactive) {
-					setStatus('error');
-					setErrorMessage(t('directLink.entry.inactive'));
-					return;
-				}
 				if (context?.linkKind === 'CALL') {
 					if (!mountedRef.current) return;
 					if (holdsCounsellorSession()) {
@@ -351,6 +336,10 @@ export const InviteLink = () => {
 				setPassword(minted.password);
 				setStatus('identity');
 			} catch (err: unknown) {
+				if (await isPausedInvite(err)) {
+					if (mountedRef.current) setStatus('paused');
+					return;
+				}
 				const failure = getCounsellingDpaFailure(err);
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
@@ -379,6 +368,10 @@ export const InviteLink = () => {
 				throw new Error('Invite link did not open a live-chat session');
 			}
 		} catch (err) {
+			if (await isPausedInvite(err)) {
+				if (mountedRef.current) setStatus('paused');
+				throw err;
+			}
 			const failure = getCounsellingDpaFailure(err);
 			setDpaFailure(failure);
 			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
@@ -457,6 +450,10 @@ export const InviteLink = () => {
 			}
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
+			if (await isPausedInvite(err)) {
+				if (mountedRef.current) setStatus('paused');
+				return;
+			}
 			if (registerThenLogin.accountCreated()) {
 				setLoginRetry(true);
 				setStatus('identity');
@@ -482,10 +479,7 @@ export const InviteLink = () => {
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
-	/* While it looks, and for a live-chat link after that, the room itself is
-	   on screen — the same element throughout, so on a desktop the stage stays
-	   and only the column changes. */
-	if (status === 'loading' || status === 'invite') {
+	if (status === 'invite') {
 		return (
 			<LiveChatEntryRoom
 				invite={{
@@ -498,7 +492,7 @@ export const InviteLink = () => {
 		);
 	}
 
-	if (status === 'directOpening') {
+	if (status === 'loading' || status === 'directOpening') {
 		return <Loading />;
 	}
 
@@ -529,6 +523,15 @@ export const InviteLink = () => {
 			showRegistrationLink={false}
 		>
 			<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
+				{status === 'paused' && (
+					<Typography
+						component="h1"
+						role="alert"
+						sx={registrationScreenTitleSx}
+					>
+						{t('inviteLink.paused')}
+					</Typography>
+				)}
 				{status === 'staff' && (
 					<Box role="alert" data-cy="invite-staff-session">
 						<Typography
