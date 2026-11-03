@@ -354,7 +354,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						display: none;
 					}
 
-					&--ready {
+					&--ready:not(.textarea__wrapper-send-message--expanded) {
 						min-height: var(
 							--composer-height,
 							var(--composer-phone-rest-height)
@@ -2089,5 +2089,66 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 @media screen and (width <= 899px) {
 	.textarea:has(.messageSubmit__contextBar) {
 		padding-top: 54px;
+	}
+
+	.textarea:has(.messageSubmit__formatTray) {
+		padding-top: 70px;
+	}
+
+	.textarea:has(.messageSubmit__contextBar):has(.messageSubmit__formatTray) {
+		padding-top: 108px;
+	}
+}
+
+// Frank (03.11.): the phone's format tools, in the reply bar's shape and
+// colour, resting just above the card. With a reply open, they stack above it.
+.messageSubmit__formatTray {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: calc(100% + 6px);
+	z-index: 8;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	border-radius: 16px 4px 4px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.messageSubmit__contextBar ~ .messageSubmit__formatTray {
+	bottom: calc(100% + 44px);
+}
+
+// Maximised, there is no room above the card and the card clips its children,
+// so the tray moves inside it and the editor starts below it.
+.textarea__wrapper-send-message--expanded .messageSubmit__formatTray {
+	top: 8px;
+	right: 8px;
+	bottom: auto;
+	left: 8px;
+	box-shadow: none;
+}
+
+.textarea
+	.textarea__wrapper-send-message--expanded:has(.messageSubmit__formatTray)
+	.textarea__inputWrapper {
+	top: 76px;
+}
+
+.textarea
+	.textarea__wrapper-send-message--expanded:has(.messageSubmit__formatTray)
+	.textarea__buttons {
+	top: 76px;
+	right: 8px;
+}
+
+// The narrower inset leaves the five phone buttons room beside the send button.
+@media screen and (width <= 899px) {
+	.textarea
+		.textarea__wrapper-send-message--expanded
+		.textarea__inputWrapper {
+		right: 8px;
+		left: 8px;
 	}
 }

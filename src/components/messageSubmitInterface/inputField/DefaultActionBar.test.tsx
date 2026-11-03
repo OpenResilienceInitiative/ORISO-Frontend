@@ -230,4 +230,84 @@ describe('DefaultActionBar', () => {
 			arrow.querySelector('.composerToolbar__badge')?.textContent
 		).toBe('99+');
 	});
+	describe('on the phone', () => {
+		it('keeps five buttons in the row and the rest in the plus menu', async () => {
+			render(
+				<DefaultActionBar
+					{...baseProps}
+					showBack
+					onBack={vi.fn()}
+					showMic
+					isMobile
+				/>
+			);
+			expect(screen.getAllByRole('button')).toHaveLength(5);
+			expect(
+				screen.queryByRole('button', { name: 'Mention' })
+			).toBeNull();
+
+			await userEvent.click(
+				screen.getByRole('button', {
+					name: 'message.submit.toolbar.more'
+				})
+			);
+			const items = screen.getAllByRole('menuitem');
+			expect(items.map((item) => item.textContent)).toEqual([
+				'Add attachment',
+				'Emoji panel',
+				'Mention',
+				'message.submit.toolbar.maximize'
+			]);
+		});
+
+		it('runs the chosen action from the plus menu and closes it', async () => {
+			const onEmojiClick = vi.fn();
+			render(
+				<DefaultActionBar
+					{...baseProps}
+					onEmojiClick={onEmojiClick}
+					showMic
+					isMobile
+				/>
+			);
+			await userEvent.click(
+				screen.getByRole('button', {
+					name: 'message.submit.toolbar.more'
+				})
+			);
+			await userEvent.click(
+				screen.getByRole('menuitem', { name: 'Emoji panel' })
+			);
+			expect(onEmojiClick).toHaveBeenCalledTimes(1);
+			expect(screen.queryByRole('menu')).toBeNull();
+		});
+
+		it('hides the attachment entry when uploads are off', async () => {
+			render(
+				<DefaultActionBar
+					{...baseProps}
+					showAttachment={false}
+					showMic
+					isMobile
+				/>
+			);
+			await userEvent.click(
+				screen.getByRole('button', {
+					name: 'message.submit.toolbar.more'
+				})
+			);
+			expect(
+				screen.queryByRole('menuitem', { name: 'Add attachment' })
+			).toBeNull();
+		});
+	});
+
+	it('marks the mic while recording', () => {
+		render(<DefaultActionBar {...baseProps} showMic isRecording />);
+		expect(
+			screen
+				.getByRole('button', { name: 'Voice recording' })
+				.classList.contains('composerToolbar__button--recording')
+		).toBe(true);
+	});
 });

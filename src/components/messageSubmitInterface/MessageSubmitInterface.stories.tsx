@@ -902,14 +902,7 @@ export const MaximisedMobileKeyboardOpen: Story = {
 		});
 		await userEvent.click(input);
 
-		const maximise = await waitFor(() =>
-			within(canvasElement).getByRole('button', {
-				// Exact: 'Ziehen, um den Editor zu vergrößern' (the drag
-				// handle) would also match a loose pattern.
-				name: 'Editor vergrößern'
-			})
-		);
-		await userEvent.click(maximise);
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
 
 		// The overlay portals out of `canvasElement`, so query the document.
 		const editor = await waitFor(() => {
@@ -1106,16 +1099,13 @@ export const RepeatedMaximiseToggle: Story = {
 		});
 		await userEvent.click(editor);
 
-		const toggle = () =>
-			within(canvasElement).getByRole('button', {
-				name: /^Editor (vergrößern|verkleinern)$/
-			});
-
 		for (let cycle = 1; cycle <= 10; cycle += 1) {
 			// The control has to still exist — if a toggle leaves the toolbar in
 			// a state without it, the user is stranded.
-			const button = await waitFor(toggle);
-			await userEvent.click(button);
+			await choosePlusMenuItem(
+				canvasElement,
+				cycle % 2 === 1 ? 'Editor vergrößern' : 'Editor verkleinern'
+			);
 
 			// …and the editor has to still take input after every single cycle.
 			const live = await waitFor(() => {
@@ -1139,7 +1129,14 @@ export const RepeatedMaximiseToggle: Story = {
 		}
 
 		// The toggle survives all ten cycles.
-		await expect(toggle()).toBeTruthy();
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
+		await waitFor(() =>
+			expect(
+				document.querySelector(
+					'.textarea__wrapper-send-message--expanded'
+				)
+			).not.toBeNull()
+		);
 	}
 };
 
@@ -1301,8 +1298,12 @@ async function recipientLayoutJourney(
 				button.getAttribute('aria-label') || ''
 			)
 		);
-	expect(expand).toBeTruthy();
-	await userEvent.click(expand!);
+	// Up to 899 px the control lives in the plus menu (Frank, 03.11.).
+	if (expand) {
+		await userEvent.click(expand);
+	} else {
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
+	}
 	await waitFor(() =>
 		expect(
 			canvasElement.querySelector(
@@ -1356,8 +1357,11 @@ async function recipientLayoutJourney(
 		).find((button) =>
 			/minim|verkleiner/i.test(button.getAttribute('aria-label') || '')
 		);
-		expect(collapse).toBeTruthy();
-		await userEvent.click(collapse!);
+		if (collapse) {
+			await userEvent.click(collapse);
+		} else {
+			await choosePlusMenuItem(canvasElement, 'Editor verkleinern');
+		}
 		await waitFor(() =>
 			expect(
 				canvasElement.querySelector(
@@ -1752,6 +1756,195 @@ export const MentionSeveralPeople: Story = {
 		expect(
 			canvasElement.querySelectorAll('.ProseMirror .messageItem__mention')
 		).toHaveLength(2);
+	}
+};
+
+/** Up to 899 px, emoji, mention, attachment and maximize live in the plus menu. */
+async function choosePlusMenuItem(canvasElement: HTMLElement, name: string) {
+	await userEvent.click(
+		await within(canvasElement).findByRole('button', {
+			name: 'Weitere Werkzeuge'
+		})
+	);
+	await userEvent.click(
+		await within(document.body).findByRole('menuitem', { name })
+	);
+}
+
+const favouriteProps = {
+	onMobileNavigateBack: () => {},
+	mobileUnreadCount: 3
+};
+
+/** Frank (03.11.): round, calm buttons; the arrow calls when new messages wait. */
+export const FavouritePhone: Story = {
+	name: 'Favorit — Telefon, neue Nachricht',
+	globals: phone390Globals,
+	render: () => <ComposerShell {...favouriteProps} />,
+	play: async ({ canvasElement }) => {
+		const bar = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="composer-action-bar"]'
+		)!;
+		await waitFor(() =>
+			expect(bar.querySelectorAll('button')).toHaveLength(5)
+		);
+		expect(
+			bar.querySelector(
+				'.composerToolbar__button--scrollToNewest--unread'
+			)
+		).toBeTruthy();
+	}
+};
+
+export const FavouritePhoneFormatBox: Story = {
+	name: 'Favorit — Telefon, graue Format-Box',
+	globals: phone390Globals,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const toggle = await canvas.findByRole('button', {
+			name: /Zurück zu allen Werkzeugen|all tools/i
+		});
+		await userEvent.click(toggle);
+		const tray = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="composer-format-tray"]'
+		)!;
+		expect(tray).toBeTruthy();
+		// The action bar stays below the box, the T-pen lit.
+		expect(
+			canvasElement.querySelector('[data-cy="composer-action-bar"]')
+		).toBeTruthy();
+		expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		expect(
+			within(tray).getByRole('button', { name: 'Textstil' })
+		).toBeTruthy();
+	}
+};
+
+export const FavouritePhoneFormatBoxOverReply: Story = {
+	name: 'Favorit — Telefon, Format-Box über der Antwort',
+	globals: phone390Globals,
+	render: () => (
+		<ComposerShell
+			onMobileNavigateBack={() => {}}
+			replyTo={{
+				eventId: '$orig:matrix.example.org',
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		const tray = canvasElement
+			.querySelector('[data-cy="composer-format-tray"]')!
+			.getBoundingClientRect();
+		const reply = canvasElement
+			.querySelector('.messageSubmit__contextBar')!
+			.getBoundingClientRect();
+		expect(tray.bottom).toBeLessThanOrEqual(reply.top);
+	}
+};
+
+export const FavouritePhonePlusMenu: Story = {
+	name: 'Favorit — Telefon, Plus-Menü',
+	globals: phone390Globals,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: 'Weitere Werkzeuge'
+			})
+		);
+		const menu = within(document.body).getByRole('menu');
+		for (const name of [
+			'Anhang hinzufügen',
+			'Emoji-Auswahl',
+			'Person erwähnen',
+			'Editor vergrößern'
+		]) {
+			expect(within(menu).getByText(name)).toBeTruthy();
+		}
+	}
+};
+
+export const FavouritePhoneMaximisedFormatBox: Story = {
+	name: 'Favorit — Telefon, Format-Box im maximierten Editor',
+	globals: phone390Globals,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		await choosePlusMenuItem(canvasElement, 'Editor vergrößern');
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		const card = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('composer did not maximise');
+			}
+			return node;
+		});
+		const tray = card.querySelector<HTMLElement>(
+			'[data-cy="composer-format-tray"]'
+		)!;
+		expect(tray).toBeTruthy();
+		// The card clips its children: the box has to sit inside it, and the
+		// text must start below the box.
+		const cardBox = card.getBoundingClientRect();
+		const trayBox = tray.getBoundingClientRect();
+		expect(trayBox.top).toBeGreaterThanOrEqual(cardBox.top);
+		expect(trayBox.right).toBeLessThanOrEqual(cardBox.right);
+		expect(
+			card.querySelector('.ProseMirror')!.getBoundingClientRect().top
+		).toBeGreaterThanOrEqual(trayBox.bottom);
+		expect(
+			within(tray).getByRole('button', { name: 'Textstil' })
+		).toBeTruthy();
+		// Typing must not shrink the maximised card back to one line.
+		await userEvent.type(card.querySelector('.ProseMirror')!, 'Hallo');
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		expect(card.getBoundingClientRect().height).toBeGreaterThan(
+			window.innerHeight * 0.5
+		);
+	}
+};
+
+export const FavouritePhoneRecording: Story = {
+	name: 'Favorit — Telefon, Aufnahme läuft',
+	globals: phone390Globals,
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell onMobileNavigateBack={() => {}} />,
+	play: async ({ canvasElement }) => {
+		await startVoiceNote(canvasElement);
+		expect(
+			canvasElement.querySelector('.composerToolbar__button--recording')
+		).toBeTruthy();
+	}
+};
+
+export const FavouriteDesktop: Story = {
+	name: 'Favorit — Desktop, neue Nachricht',
+	globals: desktop1440Globals,
+	render: () => <ComposerShell mobileUnreadCount={3} />
+};
+
+export const FavouriteDesktopRecording: Story = {
+	name: 'Favorit — Desktop, Aufnahme läuft',
+	globals: desktop1440Globals,
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		await startVoiceNote(canvasElement);
 	}
 };
 
