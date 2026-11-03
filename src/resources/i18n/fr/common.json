@@ -6423,8 +6423,7 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro",
-			"defaultDeviceHint": "Pour l'instant, l'appel utilise l'appareil par défaut de votre navigateur."
+			"micMeter": "Volume de votre micro"
 		},
 		"ready": {
 			"title": "Vérifier la caméra et le micro",

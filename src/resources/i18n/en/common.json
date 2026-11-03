@@ -6338,8 +6338,7 @@
 			"microphone": "Microphone",
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
-			"micMeter": "Your microphone volume",
-			"defaultDeviceHint": "For now, the call uses your browser's default device."
+			"micMeter": "Your microphone volume"
 		},
 		"ready": {
 			"title": "Check camera and microphone",

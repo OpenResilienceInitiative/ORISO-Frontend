@@ -18,11 +18,3 @@
 	gap: 8px;
 }
 
-/* Until ORISO-ElementCall#116: the call uses the browser's default device. */
-.callDeviceCheck__hint {
-	margin: 0;
-	color: var(--m3-on-surface-variant, #444748);
-	font-size: 12px;
-	line-height: 16px;
-	text-align: center;
-}

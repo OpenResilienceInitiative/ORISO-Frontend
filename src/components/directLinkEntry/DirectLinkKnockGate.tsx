@@ -19,7 +19,11 @@ import {
 	takeAdmittedJoin
 } from './callMessageKnock';
 import { callManager } from '../../services/CallManager';
-import { joinMediaFrom, rememberJoinMedia } from '../call/prejoin/callPrejoin';
+import {
+	chosenDeviceLabel,
+	joinMediaFrom,
+	rememberJoinMedia
+} from '../call/prejoin/callPrejoin';
 
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
 
@@ -137,7 +141,16 @@ export const DirectLinkKnock = ({
 					modality: modalityOf(knock),
 					micOn: device.controls.micOn,
 					cameraOn: device.controls.cameraOn,
-					cameraAvailable: device.cameraAvailable
+					cameraAvailable: device.cameraAvailable,
+					// By label: the call runs on another origin (ElementCall#116).
+					microphoneLabel: chosenDeviceLabel(
+						device.check.devices.microphone,
+						device.controls.selection.microphone
+					),
+					cameraLabel: chosenDeviceLabel(
+						device.check.devices.camera,
+						device.controls.selection.camera
+					)
 				})
 			);
 		}
