@@ -2172,11 +2172,44 @@
 		"info": "Information",
 		"success": "Erfolg",
 		"warning": "Warnung",
+		"eventNotice": {
+			"chatMention": {
+				"title": "Erwähnung im Chat",
+				"from": "Von {{name}}",
+				"several": "{{count}} neue Erwähnungen",
+				"open": "Chat öffnen"
+			},
+			"mention": {
+				"title": "Erwähnung in der Team-Besprechung",
+				"from": "Von {{name}}",
+				"several": "{{count}} neue Erwähnungen",
+				"open": "Team-Besprechung öffnen"
+			},
+			"handover": {
+				"title": "Neue Fallübergabe",
+				"from": "Von {{name}}",
+				"several": "{{count}} Hinweise zur Fallübergabe",
+				"open": "Fall ansehen"
+			},
+			"consent": {
+				"title": "Zustimmung zur Fallübergabe nötig",
+				"text": "Die Übergabe wartet auf eine Antwort.",
+				"several": "{{count}} Anfragen zur Fallübergabe warten auf eine Antwort.",
+				"open": "Anfrage ansehen"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Neue Nachricht im Live-Chat",
 			"from": "Von {{name}}",
 			"several": "{{count}} neue Nachrichten",
 			"open": "Chat öffnen"
+		},
+		"newEnquiry": {
+			"title": "Neue Anfrage",
+			"waiting": "Eine ratsuchende Person wartet auf Antwort.",
+			"several": "{{count}} neue Anfragen warten auf Antwort.",
+			"openOne": "Anfrage ansehen",
+			"openList": "Anfragen ansehen"
 		}
 	},
 	"notifications": {
@@ -2788,7 +2821,7 @@
 						"dialogLabel": "Neues Passwort wiederholen"
 					},
 					"insecure": "Ihr Passwort ist nicht sicher.",
-					"instructions": "<span class=\"text--bold\">Ihr Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 9 Zeichen</li></ul>",
+					"instructions": "<span class=\"text--bold\">Ihr Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 16 Zeichen</li></ul>",
 					"new": {
 						"label": "Neues Passwort"
 					},
@@ -2817,7 +2850,7 @@
 						"mixedCase": "Groß- und Kleinbuchstaben",
 						"number": "mindestens eine Zahl",
 						"specialChar": "ein Sonderzeichen (?, !, +, # …)",
-						"minLength": "mindestens 9 Zeichen",
+						"minLength": "mindestens 16 Zeichen",
 						"met": "erfüllt"
 					},
 					"submitAndContinue": "Passwort speichern und weiter"
@@ -3440,7 +3473,7 @@
 			"criteria": {
 				"fulfilled": "Erfüllt",
 				"open": "Offen",
-				"length": "mindestens 9 Zeichen",
+				"length": "mindestens 16 Zeichen",
 				"number": "mindestens eine Zahl",
 				"specialChar": "mindestens ein Sonderzeichen",
 				"upperLowerCase": "Groß-/Kleinschreibung"
@@ -3578,6 +3611,11 @@
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
 				"note": "Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück."
+			},
+			"displayName": {
+				"optional": "Anzeigename (optional). Ohne Angabe wird Ihre User-ID angezeigt.",
+				"suggest": "Würfeln",
+				"useUsername": "User-ID nutzen"
 			}
 		},
 		"back": "Zurück",
@@ -4495,7 +4533,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} neue Nachrichten",
-			"unreadCount_one": "{{count}} neue Nachricht"
+			"unreadCount_one": "{{count}} neue Nachricht",
+			"openEnquiries": "{{count}} offene Anfragen",
+			"openEnquiries_one": "{{count}} offene Anfrage"
 		},
 		"timeline": {
 			"now": "Jetzt",
@@ -4784,8 +4824,10 @@
 			},
 			"decision": {
 				"app": "Sicher per App verbinden",
+				"appActive": "Die Authenticator-App ist bereits als zweiter Faktor aktiv. Zum Wechseln wählen Sie die andere Methode.",
 				"copy": "Schützen Sie Ihr Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ können Sie Codes per E-Mail erhalten.",
 				"email": "E-Mail-Code verwenden (weniger sicher)",
+				"emailActive": "E-Mail-Codes sind bereits als zweiter Faktor aktiv. Zum Wechseln wählen Sie die App.",
 				"title": "Zweiten Faktor wählen"
 			},
 			"email": {
@@ -5559,6 +5601,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Dieser Link ist aktuell pausiert.",
 		"error": {
 			"title": "Dieser Einladungslink kann nicht mehr verwendet werden",
 			"generic": "Der Einladungslink konnte nicht verwendet werden",
@@ -5602,7 +5645,9 @@
 			"browserSilenced": "Browser-Benachrichtigungen sind in Ihren Benachrichtigungseinstellungen stummgeschaltet.",
 			"channelBoth": "E-Mail und Browser auf diesem Gerät",
 			"channelEmail": "E-Mail",
-			"channelBrowser": "Browser auf diesem Gerät"
+			"channelBrowser": "Browser auf diesem Gerät",
+			"emailAccepted": "Die Änderung der E-Mail-Benachrichtigungen wurde angenommen.",
+			"refreshFailed": "Die Änderung wurde angenommen. Die aktuellen Einstellungen konnten nicht geladen werden."
 		},
 		"notificationSummary": {
 			"label": "Benachrichtigung: {{state}}",
@@ -5648,7 +5693,9 @@
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
-			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support."
+			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.",
+			"refreshFailed": "Ihre E-Mail-Adresse ist gespeichert. Die aktuellen Einstellungen konnten nicht geladen werden.",
+			"retryRefresh": "Erneut laden"
 		},
 		"accountProtection": {
 			"headline": "Ihr Zugang, zusätzlich geschützt",
@@ -6038,7 +6085,7 @@
 			},
 			"access": {
 				"headline": "Ihr Name für heute.",
-				"subline": "Anonym, ohne Konto. Wählen Sie eine User-ID — oder würfeln Sie neue.",
+				"subline": "Anonym, ohne Konto.",
 				"label": "Ihre User-ID",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleiben Sie in diesem Fenster, bis Sie dran sind.",
 				"reroll": "Neu würfeln",
@@ -6162,25 +6209,6 @@
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
 		},
-		"notes": {
-			"title": "Gesprächsnotizen",
-			"privacy": "Privat. Nur für Sie und nur für die Dauer des Gesprächs.",
-			"type": "Art der Notiz",
-			"text": "Notiz",
-			"add": "Notiz hinzufügen",
-			"remove": "Notiz entfernen",
-			"copy": "Alles kopieren",
-			"copied": "Kopiert",
-			"empty": "Noch nichts notiert.",
-			"collapse": "Notizen einklappen",
-			"expand": "Notizen ausklappen",
-			"open": "Gesprächsnotizen",
-			"types": {
-				"frage": "Frage",
-				"anmerkung": "Anmerkung",
-				"aufgabe": "Aufgabe"
-			}
-		},
 		"states": {
 			"encrypted": "Verschlüsselt",
 			"endsCurrent": "Wenn Sie annehmen, endet Ihr Gespräch mit {{name}}.",
@@ -6194,6 +6222,10 @@
 			"endsCurrentUnnamed": "Wenn Sie annehmen, endet Ihr laufendes Gespräch."
 		},
 		"share": {
+			"signInToJoin": "Melden Sie sich an, um diesem Anruf beizutreten.",
+			"conversationMember": "Sie gehören bereits zu diesem Gespräch. Treten Sie dem Anruf im zugehörigen Chat bei.",
+			"openConversations": "Meine Gespräche öffnen",
+			"joinForbidden": "Sie können diesem Anruf über diesen Link nicht beitreten.",
 			"open": "Anruf teilen",
 			"title": "Anruf teilen",
 			"close": "Schließen",
@@ -6563,6 +6595,10 @@
 			"confirm": "Weiter",
 			"cancel": "Abbrechen",
 			"failed": "Ihre Antwort konnte nicht gespeichert werden. Ihre Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten Ihr Konto nicht prüfen",
+			"text": "Ihre Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfen Sie Ihre Verbindung und senden Sie erneut."
 		}
 	}
 }
