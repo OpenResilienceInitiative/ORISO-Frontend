@@ -13,9 +13,14 @@
 	background: var(--m3-surface-container-lowest, #fff);
 	color: var(--m3-on-surface, #1b1b1c);
 
+	// A tint of the surface, so the text keeps its contrast in every scheme.
 	&--failed {
-		border-color: #b00020;
-		background: #fff7f7;
+		border-color: var(--m3-error, #b1005e);
+		background: color-mix(
+			in srgb,
+			var(--m3-error, #b1005e) 5%,
+			var(--m3-surface-container-lowest, #fff)
+		);
 	}
 
 	&__main {
@@ -54,8 +59,12 @@
 	}
 
 	&--failed &__tile {
-		background: #fde7e9;
-		color: #b00020;
+		background: color-mix(
+			in srgb,
+			var(--m3-error, #b1005e) 12%,
+			var(--m3-surface-container-lowest, #fff)
+		);
+		color: var(--m3-error, #b1005e);
 	}
 
 	&__text {
@@ -91,7 +100,7 @@
 		min-width: 0;
 		font-size: 13px;
 		line-height: 18px;
-		color: #93001a;
+		color: var(--m3-error, #b1005e);
 	}
 
 	&__failure {
@@ -147,7 +156,7 @@
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 20px;
-		color: var(--m3-primary-container, #cc1e1c);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	&__progressLabel {

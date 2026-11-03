@@ -919,7 +919,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const {
 		onChange: onDraftMessageChange,
 		loaded: draftLoaded,
-		clearDraftMessage
+		clearDraftMessage,
+		draftScope,
+		retireDraftScope
 	} = useDraftMessage(
 		!isRequestInProgress && !isAnonymousEnquiryComposer,
 		loadDraftIntoComposer,
@@ -1178,8 +1180,23 @@ export const MessageSubmitInterfaceComponent = ({
 		// send keeps the room it started with.
 		if (!isAttachmentSendingRef.current) {
 			cleanupAttachment();
+			return;
 		}
-	}, [voiceDestinationKey, stopVoiceRecording, cleanupAttachment]);
+		// Its text belongs to the chat it started in, and the next chat replaces
+		// the editor only if it has a draft of its own. An edit brings its own
+		// text.
+		if (!editingMessage && !editingMessageId) {
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+		}
+	}, [
+		voiceDestinationKey,
+		stopVoiceRecording,
+		cleanupAttachment,
+		editingMessage,
+		editingMessageId
+	]);
 
 	const scrollEditorToBottom = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
@@ -1915,6 +1932,9 @@ export const MessageSubmitInterfaceComponent = ({
 			} else {
 				// Matrix file upload already sent the message
 				onSendButton && onSendButton();
+				if (leftChatDuringSend && !preserveComposerOnSuccess) {
+					void retireDraftScope(draftScope);
+				}
 				handleMessageSendSuccess(
 					preserveComposerOnSuccess || leftChatDuringSend
 				);
@@ -1924,6 +1944,7 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession,
 			cleanupAttachment,
+			draftScope,
 			encryptRoom,
 			hasMessageContent,
 			handleAttachmentSendFailure,
@@ -1934,6 +1955,7 @@ export const MessageSubmitInterfaceComponent = ({
 			onSendButton,
 			onSendError,
 			resolvedChatSession,
+			retireDraftScope,
 			setE2EEState,
 			supervisionRoomId,
 			targetRoomId,

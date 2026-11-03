@@ -28,6 +28,7 @@ import { apiSendMatrixAttachmentMessage, apiSendMessage } from '../../api';
 
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
+	retireDraft: vi.fn().mockResolvedValue(undefined),
 	draftChange: vi.fn(),
 	encryptRoom: vi.fn().mockResolvedValue(undefined),
 	translate: (key: string) => key,
@@ -90,10 +91,12 @@ vi.mock('../../hooks/useTimeoutOverlay', () => ({
 	useTimeoutOverlay: () => ({ visible: false })
 }));
 vi.mock('./useDraftMessage', () => ({
-	useDraftMessage: () => ({
+	useDraftMessage: (_enabled: boolean, _load: unknown, options: any) => ({
 		loaded: true,
 		onChange: mocks.draftChange,
-		clearDraftMessage: mocks.clearDraft
+		clearDraftMessage: mocks.clearDraft,
+		draftScope: `draft-of-${options.sessionId}`,
+		retireDraftScope: mocks.retireDraft
 	})
 }));
 vi.mock('./TipTapComposer', async () => {
@@ -554,6 +557,7 @@ describe('a file on its way when the person moves to another chat', () => {
 			}) as any
 		);
 		const { container, rerender } = render(<Composer />);
+		act(() => mocks.typeDraft(DRAFT));
 		await pickFile(container, makeFile());
 		await clickSend();
 		rerender(<Composer activeSession={otherChat} />);
@@ -573,10 +577,21 @@ describe('a file on its way when the person moves to another chat', () => {
 			})
 		).toBeNull();
 		expect(sendMock()).toHaveBeenCalledTimes(1);
+		// The text stays the first chat's draft, for when the person returns.
+		expect(mocks.retireDraft).not.toHaveBeenCalled();
 	});
 
-	it('leaves the draft of that chat alone when it succeeds', async () => {
+	it('does not carry the caption into that chat', async () => {
+		await sendThenMove();
+
+		expect(sendMock().mock.calls[0][2]).toMatchObject({ caption: DRAFT });
+		expect(draftText()).toBe('');
+	});
+
+	it('leaves what is written in that chat alone when it succeeds', async () => {
 		const send = await sendThenMove();
+		act(() => mocks.typeDraft('For the other chat'));
+		mocks.composerClear.mockClear();
 		await act(async () => {
 			send.resolve();
 		});
@@ -584,7 +599,18 @@ describe('a file on its way when the person moves to another chat', () => {
 		await waitFor(() =>
 			expect(screen.queryByText('befund.pdf')).toBeNull()
 		);
+		expect(draftText()).toBe('For the other chat');
 		expect(mocks.composerClear).not.toHaveBeenCalled();
 		expect(mocks.clearDraft).not.toHaveBeenCalled();
+	});
+
+	it('retires the sent caption from the draft of the first chat', async () => {
+		const send = await sendThenMove();
+		await act(async () => {
+			send.resolve();
+		});
+
+		await waitFor(() => expect(mocks.retireDraft).toHaveBeenCalledTimes(1));
+		expect(mocks.retireDraft).toHaveBeenCalledWith('draft-of-360');
 	});
 });
