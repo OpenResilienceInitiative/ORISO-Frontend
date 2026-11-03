@@ -48,6 +48,11 @@ export interface CallPrejoinDialogProps {
 	onJoin?: (hooks: CallJoinHooks) => unknown;
 	/** ✕, Escape, "Fertig", or let in: the caller unmounts the dialog. */
 	onClose: () => void;
+	/**
+	 * How the join after admission went; it runs once this dialog is gone,
+	 * so the card says it when it fails (#2016).
+	 */
+	onJoinResult?: (result: CallJoinResult) => void;
 	/** Stories: stand in for `navigator.mediaDevices` and the knock API. */
 	mediaDevices?: MediaDevices;
 	knockDeps?: Partial<DirectLinkKnockDeps>;
@@ -99,6 +104,7 @@ export const CallPrejoinDialog = ({
 	purpose = 'join',
 	onJoin,
 	onClose,
+	onJoinResult,
 	mediaDevices,
 	knockDeps,
 	pollMs,
@@ -133,6 +139,8 @@ export const CallPrejoinDialog = ({
 	keepChoiceRef.current = keepChoice;
 	const onCloseRef = useRef(onClose);
 	onCloseRef.current = onClose;
+	const onJoinResultRef = useRef(onJoinResult);
+	onJoinResultRef.current = onJoinResult;
 	const mounted = useRef(true);
 	useEffect(() => {
 		mounted.current = true;
@@ -151,7 +159,12 @@ export const CallPrejoinDialog = ({
 		setBusy(true);
 		Promise.resolve(
 			onJoin({
-				beforeJoin: onClose,
+				// Dismissed during the lookup: no call (see `joinOrKnock`).
+				beforeJoin: () => {
+					if (!mounted.current) return false;
+					onCloseRef.current();
+					return true;
+				},
 				onKnock: (pending, joinLater) => {
 					/* Closed while the knock was on its way: nobody waits
 					   here, so the knock gate takes it (no orphaned knock
@@ -168,7 +181,11 @@ export const CallPrejoinDialog = ({
 			.then((result) => {
 				// Refused without a knock (e.g. withdrawn, no link here): the
 				// card says it; nothing is left to wait for in this window.
-				if (result !== undefined && result !== 'joined') {
+				if (
+					result !== undefined &&
+					result !== 'joined' &&
+					result !== 'cancelled'
+				) {
 					onCloseRef.current();
 				}
 			})
@@ -197,7 +214,14 @@ export const CallPrejoinDialog = ({
 			rememberAdmittedConversation(knock.sessionId);
 			keepChoiceRef.current();
 			onCloseRef.current();
-			void joinOnceAdmitted.current?.().catch(() => undefined);
+			const joinLater = joinOnceAdmitted.current;
+			if (joinLater) {
+				const report = onJoinResultRef.current;
+				void joinLater().then(
+					(result) => report?.(result),
+					() => report?.('unavailable')
+				);
+			}
 		}, ADMITTED_PAUSE_MS);
 		return () => window.clearTimeout(timer);
 	}, [phase, knock]);

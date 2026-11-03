@@ -5,15 +5,18 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import {
 	claimKnock,
 	isKnockClaimed,
+	joinOrKnock,
 	type CallJoinHooks
 } from '../directLinkEntry/callMessageKnock';
+import { apiGetOwnCallKnock } from '../../api/apiDirectLinks';
 import {
 	forgetPendingKnock,
 	PENDING_KNOCK_EVENT,
@@ -773,4 +776,93 @@ it('hands a knock that arrives after the window closed to the knock gate (#2016)
 	expect(isKnockClaimed(42)).toBe(false);
 	expect(announced).toHaveBeenCalledTimes(1);
 	forgetPendingKnock();
+});
+
+it('starts no call when the check is dismissed while the join is looked up (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	let answer: (value: null) => void = () => undefined;
+	const mine = vi.fn(
+		() =>
+			new Promise<null>((resolve) => {
+				answer = resolve;
+			})
+	);
+	const joinCall = vi.fn(async () => 'joined' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={(hooks) => joinOrKnock(9, joinCall, { ...hooks, mine })}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	// Dismissed while the server is still asked whether to knock.
+	await act(async () => {
+		fireEvent.keyDown(screen.getByTestId('knock-wait-dialog'), {
+			key: 'Escape'
+		});
+	});
+	await act(async () => answer(null));
+
+	expect(joinCall).not.toHaveBeenCalled();
+	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+	// Not a failed join: the person chose not to.
+	expect(screen.queryByText('videoCall.timeline.joinFailed')).toBeNull();
+});
+
+it('says so on the card when the call after admission cannot be joined (#2016)', async () => {
+	vi.mocked(apiGetOwnCallKnock).mockResolvedValueOnce({
+		status: 'ADMITTED'
+	} as never);
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const joinOnceAdmitted = vi.fn(async () => 'ended' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={async (hooks) => {
+				hooks?.onKnock?.(
+					{
+						token: 'tok',
+						knockId: 51,
+						sessionId: 9,
+						medium: 'VIDEO',
+						joinExisting: true
+					},
+					joinOnceAdmitted
+				);
+				return 'joined';
+			}}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	// Waiting: the ✕ would withdraw the knock, so it is not offered as "close".
+	expect(screen.queryByTestId('m3-dialog-close')).toBeNull();
+
+	await waitFor(() => expect(joinOnceAdmitted).toHaveBeenCalledTimes(1), {
+		timeout: 4000
+	});
+	expect(
+		await screen.findByText('videoCall.timeline.joinFailed')
+	).toBeTruthy();
 });
