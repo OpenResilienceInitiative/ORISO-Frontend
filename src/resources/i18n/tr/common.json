@@ -5570,6 +5570,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Bu bağlantı şu anda duraklatılmıştır.",
 		"error": {
 			"title": "Bu davet bağlantısı artık kullanılamıyor",
 			"generic": "Davet bağlantısı kullanılamadı",

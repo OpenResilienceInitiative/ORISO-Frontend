@@ -437,17 +437,14 @@ describe('InviteLink asks who is live before anything is created', () => {
 		expect(assignInviteSessionDisplayName).not.toHaveBeenCalled();
 	});
 
-	it('shows the live-chat loader, not the bare registration text, while it looks', async () => {
+	it('shows a neutral loader while checking the invitation', async () => {
 		vi.mocked(apiGetInviteLinkContext).mockReturnValue(
 			new Promise(() => undefined)
 		);
 		renderInvite();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
-				'room invite ?'
-			)
-		);
+		await screen.findByRole('status');
+		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
 		expect(screen.queryByText('Registrierung läuft...')).toBeNull();
 	});
 });

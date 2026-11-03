@@ -5517,6 +5517,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "This link is currently paused.",
 		"error": {
 			"title": "This invite link can no longer be used",
 			"generic": "Invite link could not be used",
