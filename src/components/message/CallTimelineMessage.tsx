@@ -7,6 +7,7 @@ import { formatMessagePersonName } from './messageNameUtils';
 import { CallTimelineSystemMessage } from './CallTimelineSystemMessage';
 import { useCallTimelineState } from './useCallTimelineState';
 import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 
 /** A durable room notice, independent of the current browser's call window. */
 export const CallTimelineMessage = ({
@@ -16,7 +17,13 @@ export const CallTimelineMessage = ({
 	deviceCheck
 }: {
 	call: CallLifecycleMessage;
-	onJoin?: () => Promise<'joined' | 'busy' | 'ended' | 'unavailable'>;
+	/**
+	 * The join. From the device check it gets the check's hooks (#2016): it
+	 * closes the check before joining, or hands it a knock to wait on.
+	 */
+	onJoin?: (
+		hooks?: CallJoinHooks
+	) => Promise<'joined' | 'busy' | 'ended' | 'unavailable'>;
 	loadState?: (
 		call: CallLifecycleMessage
 	) => Promise<CallLifecycleMessage | null>;
@@ -32,13 +39,13 @@ export const CallTimelineMessage = ({
 	const [joinFailed, setJoinFailed] = React.useState(false);
 	const joinPending = React.useRef(false);
 	const [checking, setChecking] = React.useState(false);
-	const join = async () => {
+	const join = async (hooks?: CallJoinHooks) => {
 		if (!onJoin || joinPending.current) return;
 		joinPending.current = true;
 		setJoining(true);
 		setJoinFailed(false);
 		try {
-			setJoinFailed((await onJoin()) !== 'joined');
+			setJoinFailed((await onJoin(hooks)) !== 'joined');
 		} catch {
 			setJoinFailed(true);
 		} finally {
@@ -236,10 +243,7 @@ export const CallTimelineMessage = ({
 				<CallPrejoinDialog
 					modality={call.callType}
 					roomRef={call.roomRef}
-					onDone={() => {
-						setChecking(false);
-						void join();
-					}}
+					onJoin={(hooks) => join(hooks)}
 					onClose={() => setChecking(false)}
 				/>
 			)}

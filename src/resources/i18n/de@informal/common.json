@@ -2789,11 +2789,13 @@
 			"descriptionGroup": "Die Gruppenleitung kann dich im Moment nicht reinlassen. Versuch es später noch einmal."
 		},
 		"devices": {
-			"micMeter": "Lautstärke deines Mikrofons"
+			"micMeter": "Lautstärke deines Mikrofons",
+			"defaultDeviceHint": "Der Anruf nutzt vorerst das Standardgerät deines Browsers."
 		},
 		"ready": {
 			"description": "Niemand sieht oder hört dich, bevor du beitrittst. Die Vorschau siehst nur du.",
-			"descriptionCheck": "Deine Einstellung gilt, wenn du in dieser Gruppe einem Gespräch beitrittst. Die Vorschau siehst nur du."
+			"descriptionCheck": "Deine Einstellung gilt, wenn du in dieser Gruppe einem Gespräch beitrittst. Die Vorschau siehst nur du.",
+			"knocking": "Anfrage gesendet, bitte warte …"
 		}
 	},
 	"furtherCounselling": {

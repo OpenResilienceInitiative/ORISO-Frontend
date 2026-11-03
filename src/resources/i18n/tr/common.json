@@ -6423,7 +6423,8 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
-			"micMeter": "Mikrofonunuzun ses düzeyi"
+			"micMeter": "Mikrofonunuzun ses düzeyi",
+			"defaultDeviceHint": "Görüşme şimdilik tarayıcınızın varsayılan cihazını kullanır."
 		},
 		"ready": {
 			"title": "Kamerayı ve mikrofonu kontrol edin",
@@ -6431,7 +6432,8 @@
 			"descriptionCheck": "Ayarınız bu gruptaki bir görüşmeye katıldığınızda geçerli olur. Önizlemeyi yalnızca siz görürsünüz.",
 			"join": "Şimdi katıl",
 			"done": "Tamam",
-			"retry": "Tekrar kontrol et"
+			"retry": "Tekrar kontrol et",
+			"knocking": "İstek gönderildi, lütfen bekleyin …"
 		}
 	},
 	"furtherCounselling": {

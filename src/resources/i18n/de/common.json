@@ -6413,7 +6413,8 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons"
+			"micMeter": "Lautstärke Ihres Mikrofons",
+			"defaultDeviceHint": "Der Anruf nutzt vorerst das Standardgerät Ihres Browsers."
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",
@@ -6421,7 +6422,8 @@
 			"descriptionCheck": "Ihre Einstellung gilt, wenn Sie in dieser Gruppe einem Gespräch beitreten. Die Vorschau sehen nur Sie.",
 			"join": "Jetzt beitreten",
 			"done": "Fertig",
-			"retry": "Erneut prüfen"
+			"retry": "Erneut prüfen",
+			"knocking": "Anfrage gesendet, bitte warten …"
 		}
 	},
 	"furtherCounselling": {

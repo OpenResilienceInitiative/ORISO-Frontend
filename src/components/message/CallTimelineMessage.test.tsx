@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import {
 	ActiveSessionContext,
@@ -30,6 +31,12 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
+vi.mock('../../api/apiDirectLinks', () => ({
+	apiGetOwnCallKnock: vi.fn(() => new Promise(() => {})),
+	apiCancelOwnCallKnock: vi.fn(async () => undefined),
+	apiStartDirectLinkConversation: vi.fn(),
+	apiGetOwnCallKnockForSession: vi.fn()
+}));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
 afterEach(() => {
 	cleanup();
@@ -560,7 +567,11 @@ it('checks camera and microphone before joining, and joins only on "Jetzt beitre
 		state: 'running',
 		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
 	};
-	const onJoin = vi.fn(async () => 'joined' as const);
+	// The app's join closes the check right before joining (`beforeJoin`).
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		hooks?.beforeJoin?.();
+		return 'joined' as const;
+	});
 	render(
 		<CallTimelineMessage
 			call={call}
@@ -602,4 +613,56 @@ it('joins at once where no device check is asked for (#2016)', async () => {
 	});
 	expect(onJoin).toHaveBeenCalledTimes(1);
 	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+});
+
+it('waits for the counsellor in the same window when the join knocks (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const joinOnceAdmitted = vi.fn(async () => 'joined' as const);
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		hooks?.onKnock?.(
+			{
+				token: 'tok',
+				knockId: 31,
+				sessionId: 9,
+				medium: 'VIDEO',
+				joinExisting: true
+			},
+			joinOnceAdmitted
+		);
+		return 'joined' as const;
+	});
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+
+	// Still the one dialog, now waiting; nothing joined yet.
+	expect(screen.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+	expect(screen.getByTestId('knock-wait-join').textContent).toContain(
+		'knockWait.ready.knocking'
+	);
+	expect(joinOnceAdmitted).not.toHaveBeenCalled();
+
+	// "Nicht mehr warten": back to "Jetzt beitreten" in the same dialog.
+	await act(async () => {
+		fireEvent.click(screen.getByTestId('knock-wait-cancel'));
+	});
+	expect(screen.getByTestId('knock-wait-join').textContent).toContain(
+		'knockWait.ready.join'
+	);
+	expect(screen.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
 });

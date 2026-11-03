@@ -6,6 +6,7 @@ import {
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import { redirectToApp } from '../registration/autoLogin';
+import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 
 /**
  * Counsellor direct links on the person's side (#1795, ORISO-UserService#1479):
@@ -49,6 +50,11 @@ export interface PendingKnock {
 	 * once let in, the person joins that call instead of starting one.
 	 */
 	joinExisting?: boolean;
+	/**
+	 * Which running call that is (#2016), so a person let in after a reload
+	 * joins it at once instead of tapping the call message again.
+	 */
+	joinCall?: CallLifecycleMessage;
 }
 
 const isPendingKnock = (value: unknown): value is PendingKnock => {

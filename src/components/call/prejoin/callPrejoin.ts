@@ -29,23 +29,32 @@ export interface DeviceCheckContext {
 	alreadyInCall?: boolean;
 	/** Circle: the group's room, where its calls take place. */
 	roomRef?: string | null;
+	/**
+	 * Circle: how the group meets, as the group chat says
+	 * (`UserChatDTO.modality`, ORISO-UserService `chat.modality`).
+	 */
+	circleModality?: 'TEXT' | 'AUDIO' | 'VIDEO' | null;
 }
 
 /**
  * - Call message: before every join, unless this browser is already in the
  *   call (the camera is the call's then, and a second preview would fight
  *   it for the device).
- * - Circle pre-lobby: as an option, when the group's room is known — the
- *   choice is kept for that room's next call.
+ * - Circle pre-lobby: as an option, only in a video circle (product owner,
+ *   2026-11-03), when the group's room is known — the choice is kept for
+ *   that room's next call.
  */
 export const shouldShowDeviceCheck = ({
 	surface,
 	mediaSupported,
 	alreadyInCall = false,
-	roomRef
+	roomRef,
+	circleModality
 }: DeviceCheckContext): boolean => {
 	if (!mediaSupported) return false;
-	return surface === 'callMessage' ? !alreadyInCall : Boolean(roomRef);
+	return surface === 'callMessage'
+		? !alreadyInCall
+		: Boolean(roomRef) && circleModality === 'VIDEO';
 };
 
 /** What the person left the check with. */

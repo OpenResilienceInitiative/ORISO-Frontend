@@ -1,7 +1,11 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	admissionAction,
+	claimKnock,
+	isKnockClaimed,
 	joinOrKnock,
+	releaseKnock,
 	rememberAdmittedConversation,
 	wasAdmittedTo,
 	takeAdmittedJoin
@@ -196,5 +200,81 @@ describe('joinOrKnock (FE#1893)', () => {
 		await joinOrKnock(9, join, { start: vi.fn(), mine, asker: false });
 		expect(mine).not.toHaveBeenCalled();
 		expect(join).toHaveBeenCalledOnce();
+	});
+});
+
+describe('one window for knocking from the call message (#2016)', () => {
+	const call = {
+		callId: 'c-1',
+		roomRef: '!room:oriso',
+		callRoomId: '!media:oriso',
+		state: 'running' as const,
+		callType: 'video' as const,
+		participants: []
+	};
+
+	it('hands the knock to the open check instead of a second dialog', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		const join = vi.fn().mockResolvedValue('joined');
+		const onKnock = vi.fn();
+		const announced = vi.fn();
+		window.addEventListener(PENDING_KNOCK_EVENT, announced);
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+
+		await expect(
+			joinOrKnock(9, join, { start, mine, onKnock, call })
+		).resolves.toBe('joined');
+
+		expect(onKnock).toHaveBeenCalledTimes(1);
+		expect(onKnock.mock.calls[0][0]).toMatchObject({ knockId: 31 });
+		expect(announced).not.toHaveBeenCalled();
+		expect(join).not.toHaveBeenCalled();
+		// Kept for a reload: which call to join once let in.
+		expect(readPendingKnock()).toMatchObject({
+			knockId: 31,
+			joinExisting: true,
+			joinCall: { callId: 'c-1', roomRef: '!room:oriso' }
+		});
+		window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	});
+
+	it('lets the check close before a join that needs no knock', async () => {
+		const order: string[] = [];
+		const join = vi.fn(async () => {
+			order.push('join');
+			return 'joined' as const;
+		});
+		await joinOrKnock(9, join, {
+			mine,
+			beforeJoin: () => order.push('beforeJoin')
+		});
+		expect(order).toEqual(['beforeJoin', 'join']);
+	});
+
+	it('after a reload, joins the running call once let in', () => {
+		const knock = {
+			token: 'tok',
+			knockId: 31,
+			sessionId: 9,
+			medium: 'VIDEO' as const,
+			joinExisting: true,
+			joinCall: call
+		};
+		expect(admissionAction(knock, undefined)).toBe('joinRunningCall');
+		expect(admissionAction(knock, () => undefined)).toBe('storedJoin');
+		expect(
+			admissionAction({ ...knock, joinExisting: false }, undefined)
+		).toBe('startCall');
+		// From the card, but nothing on record to join: the card's next tap.
+		expect(
+			admissionAction({ ...knock, joinCall: undefined }, undefined)
+		).toBe('none');
+	});
+
+	it('keeps a knock the open check holds away from the knock gate', () => {
+		claimKnock(31);
+		expect(isKnockClaimed(31)).toBe(true);
+		releaseKnock(31);
+		expect(isKnockClaimed(31)).toBe(false);
 	});
 });

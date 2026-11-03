@@ -6423,7 +6423,8 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro"
+			"micMeter": "Volume de votre micro",
+			"defaultDeviceHint": "Pour l'instant, l'appel utilise l'appareil par défaut de votre navigateur."
 		},
 		"ready": {
 			"title": "Vérifier la caméra et le micro",
@@ -6431,7 +6432,8 @@
 			"descriptionCheck": "Votre réglage s'applique lorsque vous rejoignez un appel dans ce groupe. Vous seul voyez l'aperçu.",
 			"join": "Rejoindre maintenant",
 			"done": "Terminé",
-			"retry": "Vérifier à nouveau"
+			"retry": "Vérifier à nouveau",
+			"knocking": "Demande envoyée, veuillez patienter …"
 		}
 	},
 	"furtherCounselling": {
