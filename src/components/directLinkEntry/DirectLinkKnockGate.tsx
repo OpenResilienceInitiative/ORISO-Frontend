@@ -112,12 +112,12 @@ export const DirectLinkKnock = ({
 
 	useEffect(() => {
 		if (!state.gone) return;
-		/* Knocking again was refused (link switched off, or no calls in this
-		   counselling): say so, rather than let the dialog vanish (#2012). */
-		if (state.refusalKey) {
+		/* Knocking again hit a switched-off link: say so, rather than let the
+		   dialog vanish without a word (#2012). */
+		if (state.inactive) {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: t(state.refusalKey),
+				title: t('directLink.entry.inactive'),
 				text: '',
 				closeable: true,
 				timeout: 5000

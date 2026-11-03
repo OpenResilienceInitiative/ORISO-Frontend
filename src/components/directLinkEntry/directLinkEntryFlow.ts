@@ -36,20 +36,39 @@ export const directLinkMediumOf = (
 	return DIRECT_LINK_MEDIA_TYPES.includes(medium) ? medium : null;
 };
 
+/** How long the arrival page waits for the form of counselling before it lets the server decide. */
+export const CALLS_ALLOWED_READ_MS = 5_000;
+
 /**
- * Whether the link's form of counselling has calls (#2012): an audio or video
- * link of one that has none would only end in a 403 `FEATURE_DISABLED` at
- * "Beitreten", so the page says so on arrival. A form of counselling that
- * cannot be read counts as allowed — the server decides then.
+ * Whether the link's form of counselling has calls (#2012), for a person who
+ * has no session yet: the server allows a call only where the consulting type
+ * says `isVideoCallAllowed === true`, so an audio or video link of any other
+ * one would end in a refusal at "Beitreten". A link without a form of
+ * counselling, a read that fails or a read that does not answer in time counts
+ * as allowed — the server decides then.
  */
 export const directLinkCallsAllowed = async (
-	context: InviteLinkContext
+	context: InviteLinkContext,
+	timeoutMs = CALLS_ALLOWED_READ_MS
 ): Promise<boolean> => {
 	if (context.consultingTypeId == null) return true;
-	const consultingType = await apiGetConsultingType({
-		consultingTypeId: context.consultingTypeId
-	}).catch(() => null);
-	return consultingType?.isVideoCallAllowed !== false;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const gaveUp = new Promise<null>((resolve) => {
+		timer = setTimeout(() => resolve(null), timeoutMs);
+	});
+	try {
+		const consultingType = await Promise.race([
+			apiGetConsultingType({
+				consultingTypeId: context.consultingTypeId
+			}).catch(() => null),
+			gaveUp
+		]);
+		return consultingType
+			? consultingType.isVideoCallAllowed === true
+			: true;
+	} finally {
+		clearTimeout(timer);
+	}
 };
 
 export const PENDING_KNOCK_KEY = 'oriso.directLinkKnock';

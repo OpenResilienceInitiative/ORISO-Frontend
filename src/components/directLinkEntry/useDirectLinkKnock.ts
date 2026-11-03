@@ -4,7 +4,7 @@ import {
 	apiGetOwnCallKnock,
 	apiStartDirectLinkConversation,
 	CallKnockStatus,
-	directLinkRefusalKey
+	isInactiveDirectLinkError
 } from '../../api/apiDirectLinks';
 import {
 	KnockWaitPhase,
@@ -46,8 +46,8 @@ export interface DirectLinkKnockState {
 	phase: KnockWaitPhase;
 	/** The knock was withdrawn (here or elsewhere): the dialog goes. */
 	gone: boolean;
-	/** Knocking again was refused for a reason worth a text: the link is off, or its counselling has no calls. */
-	refusalKey: string | null;
+	/** Knocking again was refused because the link was switched off (410). */
+	inactive: boolean;
 	cancel: () => void;
 	knockAgain: () => void;
 	close: () => void;
@@ -70,7 +70,7 @@ export const useDirectLinkKnock = (
 		phaseForKnockStatus(knock.status)
 	);
 	const [gone, setGone] = useState(false);
-	const [refusalKey, setRefusalKey] = useState<string | null>(null);
+	const [inactive, setInactive] = useState(false);
 	const knockingAgain = useRef(false);
 
 	useEffect(() => {
@@ -154,8 +154,8 @@ export const useDirectLinkKnock = (
 				});
 			})
 			.catch((error) => {
-				/* The dialog goes either way; a refused link says why. */
-				setRefusalKey(directLinkRefusalKey(error));
+				/* The dialog goes either way; a switched-off link says why. */
+				setInactive(isInactiveDirectLinkError(error));
 				close();
 			})
 			.finally(() => {
@@ -163,5 +163,5 @@ export const useDirectLinkKnock = (
 			});
 	}, [close, current.joinExisting, current.token, start]);
 
-	return { phase, gone, refusalKey, cancel, knockAgain, close };
+	return { phase, gone, inactive, cancel, knockAgain, close };
 };

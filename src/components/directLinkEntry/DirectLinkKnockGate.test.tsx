@@ -22,10 +22,9 @@ vi.mock('../waitingRoom/callEntry/useLiveCallDevices', () => ({
 }));
 vi.mock('react-i18next', () => {
 	const t = (key: string) =>
-		({
-			'directLink.entry.inactive': 'Dieser Link ist nicht mehr aktiv.',
-			'directLink.entry.callsDisabled': 'Anrufe sind nicht möglich.'
-		})[key] ?? key;
+		key === 'directLink.entry.inactive'
+			? 'Dieser Link ist nicht mehr aktiv.'
+			: key;
 	return { useTranslation: () => ({ t }) };
 });
 
@@ -43,7 +42,7 @@ const knock = {
 const state = (over: object) => ({
 	phase: 'declined',
 	gone: false,
-	refusalKey: null,
+	inactive: false,
 	cancel: vi.fn(),
 	knockAgain: vi.fn(),
 	close: vi.fn(),
@@ -73,10 +72,7 @@ describe('DirectLinkKnock when the dialog goes', () => {
 	});
 
 	it('says the link is no longer active when it was switched off (#2012)', () => {
-		knockState.current = state({
-			gone: true,
-			refusalKey: 'directLink.entry.inactive'
-		});
+		knockState.current = state({ gone: true, inactive: true });
 		const { addNotification, onDone } = mount();
 		expect(addNotification).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -84,17 +80,6 @@ describe('DirectLinkKnock when the dialog goes', () => {
 			})
 		);
 		expect(onDone).toHaveBeenCalled();
-	});
-
-	it('says calls are not possible when the form of counselling has none', () => {
-		knockState.current = state({
-			gone: true,
-			refusalKey: 'directLink.entry.callsDisabled'
-		});
-		const { addNotification } = mount();
-		expect(addNotification).toHaveBeenCalledWith(
-			expect.objectContaining({ title: 'Anrufe sind nicht möglich.' })
-		);
 	});
 
 	it('closes silently for any other reason', () => {

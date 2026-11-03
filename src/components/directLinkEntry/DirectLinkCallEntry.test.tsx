@@ -28,7 +28,6 @@ vi.mock('../waitingRoom/callEntry/useLiveCallDevices', () => ({
 const i18nMock = vi.hoisted(() => {
 	const catalogue: Record<string, string> = {
 		'directLink.entry.inactive': 'Dieser Link ist nicht mehr aktiv.',
-		'directLink.entry.callsDisabled': 'Anrufe sind nicht möglich.',
 		'directLink.entry.joinFailed':
 			'Das hat nicht geklappt. Bitte versuchen Sie es erneut.'
 	};
@@ -75,20 +74,6 @@ describe('DirectLinkCallEntry join failure', () => {
 			expect.objectContaining({
 				title: 'Dieser Link ist nicht mehr aktiv.'
 			})
-		);
-	});
-
-	it('says calls are not possible on 403 FEATURE_DISABLED (#2012)', async () => {
-		const addNotification = await join(() =>
-			Promise.reject(
-				new Response('', {
-					status: 403,
-					headers: { 'X-Reason': 'FEATURE_DISABLED' }
-				})
-			)
-		);
-		expect(addNotification).toHaveBeenCalledWith(
-			expect.objectContaining({ title: 'Anrufe sind nicht möglich.' })
 		);
 	});
 

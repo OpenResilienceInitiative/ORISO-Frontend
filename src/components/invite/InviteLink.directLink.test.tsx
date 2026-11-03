@@ -208,7 +208,12 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
 		/* clearAllMocks keeps queued one-time results of an unused mock. */
 		vi.mocked(apiStartDirectLinkConversation).mockReset();
-		vi.mocked(apiGetConsultingType).mockClear();
+		vi.mocked(apiGetInviteLinkContext)
+			.mockReset()
+			.mockImplementation(() => Promise.reject(new Error('none')));
+		vi.mocked(apiGetConsultingType)
+			.mockReset()
+			.mockResolvedValue({ id: 3, isVideoCallAllowed: true } as any);
 	});
 
 	afterEach(cleanup);
@@ -453,6 +458,8 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		).toBeNull();
 	});
 
+	/* The server allows a call only where the consulting type says so
+	   (`=== true`); the page mirrors that for a person without a session. */
 	it('does not offer a call link of a form of counselling without calls (#2012)', async () => {
 		vi.mocked(apiGetConsultingType).mockResolvedValueOnce({
 			id: 3,
@@ -468,6 +475,20 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		).toBeTruthy();
 		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
 		expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+	});
+
+	it('does not offer a call link when the flag is missing from a successful read', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValueOnce({
+			id: 3
+		} as any);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('AUDIO') as any
+		);
+		renderInvite();
+
+		expect(
+			await screen.findByText('Anrufe sind nicht möglich.')
+		).toBeTruthy();
 	});
 
 	it('still offers a chat link where calls are not allowed', async () => {
@@ -493,22 +514,100 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		).toBeTruthy();
 	});
 
-	it('says calls are not possible when the server answers 403 FEATURE_DISABLED', async () => {
-		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
-		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
-			directContext('AUDIO') as any
-		);
-		vi.mocked(apiStartDirectLinkConversation).mockRejectedValueOnce(
-			new Response('', {
-				status: 403,
-				headers: { 'X-Reason': 'FEATURE_DISABLED' }
-			})
-		);
+	it('lets the server decide when the link names no form of counselling', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+			...directContext('VIDEO'),
+			consultingTypeId: null
+		} as any);
 		renderInvite();
 
 		expect(
-			await screen.findByText('Anrufe sind nicht möglich.')
+			await screen.findByTestId('direct-link-call-entry')
 		).toBeTruthy();
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+	});
+
+	it('keeps the old flow for a signed-in asker, without reading the form of counselling', async () => {
+		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+		vi.mocked(apiGetConsultingType).mockResolvedValue({
+			id: 3,
+			isVideoCallAllowed: false
+		} as any);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('VIDEO') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 42,
+			medium: 'VIDEO',
+			admission: 'KNOCK',
+			created: true,
+			knockId: 5,
+			knockStatus: 'PENDING'
+		});
+		renderInvite();
+
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+		expect(apiStartDirectLinkConversation).toHaveBeenCalledWith(
+			'token-123'
+		);
+	});
+
+	it('keeps the old flow for a signed-in counsellor, without reading the form of counselling', async () => {
+		const jwt = [
+			btoa(JSON.stringify({ alg: 'none' })),
+			btoa(JSON.stringify({ realm_access: { roles: ['consultant'] } })),
+			'sig'
+		].join('.');
+		document.cookie = `keycloak=${jwt}; path=/`;
+		try {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+			vi.mocked(apiGetConsultingType).mockResolvedValue({
+				id: 3,
+				isVideoCallAllowed: false
+			} as any);
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+				directContext('VIDEO') as any
+			);
+			renderInvite();
+
+			expect(
+				await screen.findByText('Sie sind als Beraterin angemeldet.')
+			).toBeTruthy();
+			expect(apiGetConsultingType).not.toHaveBeenCalled();
+			expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+		} finally {
+			document.cookie =
+				'keycloak=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		}
+	});
+
+	/* The account exists and is signed in; only the conversation start is
+	   refused. Sending the person back to the identity step would offer a
+	   login retry that can never work. */
+	it('says a link switched off after the account was created is no longer active (#2012)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		vi.mocked(apiPostRegistration).mockImplementation((async (
+			...args: any[]
+		) => {
+			args[4]?.();
+		}) as any);
+		vi.mocked(apiStartDirectLinkConversation).mockRejectedValueOnce(
+			new Response('{"reason":"DIRECT_LINK_INACTIVE"}', { status: 410 })
+		);
+		renderInvite();
+
+		await screen.findByLabelText('User-ID');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		expect(
+			await screen.findByText('Dieser Link ist nicht mehr aktiv.')
+		).toBeTruthy();
+		expect(screen.queryByLabelText('User-ID')).toBeNull();
 		expect(redirectToApp).not.toHaveBeenCalled();
 	});
 });

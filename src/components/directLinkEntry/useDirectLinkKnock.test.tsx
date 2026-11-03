@@ -100,32 +100,10 @@ describe('useDirectLinkKnock', () => {
 				10
 			)
 		);
-		expect(result.current.refusalKey).toBeNull();
+		expect(result.current.inactive).toBe(false);
 		act(() => result.current.knockAgain());
 		await waitFor(() => expect(result.current.gone).toBe(true));
-		expect(result.current.refusalKey).toBe('directLink.entry.inactive');
-	});
-
-	it('reports a form of counselling without calls when knocking again gets 403 FEATURE_DISABLED', async () => {
-		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
-		const start = vi.fn().mockRejectedValue(
-			new Response('', {
-				status: 403,
-				headers: { 'X-Reason': 'FEATURE_DISABLED' }
-			})
-		);
-		const { result } = renderHook(() =>
-			useDirectLinkKnock(
-				{ ...knock, status: 'DECLINED' as const },
-				{ getKnock, start },
-				10
-			)
-		);
-		act(() => result.current.knockAgain());
-		await waitFor(() => expect(result.current.gone).toBe(true));
-		expect(result.current.refusalKey).toBe(
-			'directLink.entry.callsDisabled'
-		);
+		expect(result.current.inactive).toBe(true);
 	});
 
 	it('does not report an inactive link for another refusal', async () => {
@@ -142,7 +120,7 @@ describe('useDirectLinkKnock', () => {
 		);
 		act(() => result.current.knockAgain());
 		await waitFor(() => expect(result.current.gone).toBe(true));
-		expect(result.current.refusalKey).toBeNull();
+		expect(result.current.inactive).toBe(false);
 	});
 
 	it('lets the person in when the link no longer asks for a knock', async () => {

@@ -17,7 +17,7 @@ import {
 	CallDeviceControls,
 	CallModality
 } from '../waitingRoom/callEntry/callEntryTypes';
-import { directLinkRefusalKey } from '../../api/apiDirectLinks';
+import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
 import { directLinkRegistration } from './directLinkRegistration';
@@ -92,9 +92,11 @@ export const DirectLinkCallEntry = ({
 			setJoining(false);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				/* A switched-off link or a counselling without calls cannot work on a retry. */
+				/* A switched-off link (410) cannot work on a retry. */
 				title: t(
-					directLinkRefusalKey(error) ?? 'directLink.entry.joinFailed'
+					isInactiveDirectLinkError(error)
+						? 'directLink.entry.inactive'
+						: 'directLink.entry.joinFailed'
 				),
 				text: '',
 				closeable: true,
