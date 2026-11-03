@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@mui/material';
 import {
 	LocaleContext,
 	NOTIFICATION_TYPE_ERROR,
@@ -21,6 +22,22 @@ import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
 import { directLinkRegistration } from './directLinkRegistration';
+import { apiGetConsentText } from '../../api/apiGetConsentText';
+import { useConsentSentences } from '../waitingRoom/useConsentSentences';
+import { useConsentContext } from '../waitingRoom/useConsentContext';
+import {
+	resolveEntryRoomConsent,
+	type DepartmentConsentState
+} from '../anonymousChat/entryRoom/entryRoomConsent';
+import { loadAuthenticatedApp } from '../app/appChunks';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
+import { Loading } from '../app/Loading';
+import { loginPathForDirectLink } from '../../utils/directLinkReturn';
+import { SharedCallGuest } from './SharedCallGuest';
+import { EntryRoomShell } from '../anonymousChat/entryRoom/EntryRoomShell';
+import { hasActiveAuthSession } from '../auth/auth';
+
+const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 
 export interface DirectLinkCallEntryDeps {
 	/** Creates the account and signs in. */
@@ -34,22 +51,68 @@ interface DirectLinkCallEntryProps {
 	token: string;
 	context: InviteLinkContext;
 	modality: CallModality;
+	signedIn?: boolean;
 	deps?: Partial<DirectLinkCallEntryDeps>;
 }
 
 /**
- * An audio or video direct link opened without an account: the call entry
- * (#1386) as built — identity, device check, consent — on real devices.
- * "Beitreten" creates the account with the chosen User-ID and password,
- * opens the person's own conversation and enters the app on it, where the
- * knock dialog waits for the counsellor (`DirectLinkKnockGate`).
+ * The device and consent check shared by both kinds of call link. A running
+ * call guest opens the call-only surface. A counsellor direct link opens
+ * the person's own conversation and its knock gate.
  */
-export const DirectLinkCallEntry = ({
+export const DirectLinkCallEntry = (props: DirectLinkCallEntryProps) => {
+	const { t } = useTranslation();
+	const [sharedCallAccepted, setSharedCallAccepted] = useState(false);
+	if (sharedCallAccepted) {
+		return (
+			<React.Suspense fallback={<Loading />}>
+				<AuthenticatedApp
+					onAppReady={() => undefined}
+					onLogout={() => undefined}
+					loginPath={loginPathForDirectLink(props.token)}
+					content={
+						<SharedCallGuest
+							token={props.token}
+							modality={props.modality}
+						/>
+					}
+				/>
+			</React.Suspense>
+		);
+	}
+	if (
+		props.context.linkKind === 'CALL' &&
+		!props.signedIn &&
+		(props.context.agencyId == null ||
+			props.context.consultingTypeId == null)
+	) {
+		return (
+			<EntryRoomShell
+				kicker={t('calls.share.shareTitle')}
+				statusLine={t('calls.share.signInToJoin')}
+			>
+				<Button href={loginPathForDirectLink(props.token)}>
+					{t('directLink.entry.haveAccount')}
+				</Button>
+			</EntryRoomShell>
+		);
+	}
+	return (
+		<DirectLinkCallEntryForm
+			{...props}
+			onSharedCallAccepted={() => setSharedCallAccepted(true)}
+		/>
+	);
+};
+
+const DirectLinkCallEntryForm = ({
 	token,
 	context,
 	modality,
-	deps = {}
-}: DirectLinkCallEntryProps) => {
+	signedIn = false,
+	deps = {},
+	onSharedCallAccepted
+}: DirectLinkCallEntryProps & { onSharedCallAccepted: () => void }) => {
 	const { t } = useTranslation();
 	const { tenant } = useContext(TenantContext) ?? ({} as never);
 	const { locale } = useContext(LocaleContext) ?? { locale: 'de' };
@@ -64,6 +127,43 @@ export const DirectLinkCallEntry = ({
 	});
 	const live = useLiveCallDevices(modality, controls, deps.mediaDevices);
 	const [joining, setJoining] = useState(false);
+	const isSharedCall = context.linkKind === 'CALL';
+	const agencyId = context.agencyId;
+	const topicId = context.topicId;
+	const department =
+		agencyId != null && topicId != null ? { agencyId, topicId } : null;
+	const consentDepartment = isSharedCall ? department : null;
+	const { context: consentNames, pending: namesPending } =
+		useConsentContext(consentDepartment);
+	const sentences = useConsentSentences(consentDepartment?.agencyId);
+	const [departmentConsent, setDepartmentConsent] =
+		useState<DepartmentConsentState>({ status: 'idle' });
+	useEffect(() => {
+		if (!isSharedCall || agencyId == null || topicId == null) return;
+		let active = true;
+		void apiGetConsentText(agencyId, topicId).then((result) => {
+			if (!active) return;
+			setDepartmentConsent(
+				result.status === 'ok'
+					? {
+							status: 'ok',
+							sentence: result.consentText?.sentence ?? null,
+							versionId: result.consentText?.versionId ?? null
+						}
+					: { status: 'unavailable' }
+			);
+		});
+		return () => {
+			active = false;
+		};
+	}, [isSharedCall, agencyId, topicId]);
+	const consent = resolveEntryRoomConsent({
+		...sentences,
+		hasDepartment: consentDepartment !== null,
+		department: departmentConsent,
+		locale,
+		context: consentNames
+	});
 
 	const register =
 		deps.register ??
@@ -85,18 +185,32 @@ export const DirectLinkCallEntry = ({
 	const handleJoin = async (account: CallEntryAccount) => {
 		setJoining(true);
 		try {
-			await register(account);
-			await open(token);
+			if (!signedIn) {
+				// Registration resets auth cookies. Never replace a session that
+				// was opened in another tab while the consent room was on screen.
+				if (isSharedCall && hasActiveAuthSession()) {
+					window.location.reload();
+					return false;
+				}
+				await register(account);
+			}
+			if (isSharedCall) onSharedCallAccepted();
+			else await open(token);
 			return true;
 		} catch (error) {
 			setJoining(false);
+			const status = isSharedCall
+				? (error as Response | undefined)?.status
+				: undefined;
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				/* A switched-off link (410) cannot work on a retry. */
 				title: t(
 					isInactiveDirectLinkError(error)
 						? 'directLink.entry.inactive'
-						: 'directLink.entry.joinFailed'
+						: status === 403
+							? 'calls.share.joinForbidden'
+							: 'directLink.entry.joinFailed'
 				),
 				text: '',
 				closeable: true,
@@ -105,6 +219,8 @@ export const DirectLinkCallEntry = ({
 			return false;
 		}
 	};
+
+	if (isSharedCall && (!consent.readable || namesPending)) return <Loading />;
 
 	return (
 		<CallEntryRoom
@@ -118,16 +234,16 @@ export const DirectLinkCallEntry = ({
 			onBlockerAction={live.retry}
 			onDeviceStateChange={setControls}
 			joining={joining}
-			consent={{
-				html: '',
-				department:
-					context.agencyId != null && context.topicId != null
-						? {
-								agencyId: context.agencyId,
-								topicId: context.topicId
-							}
-						: null
-			}}
+			closing={isSharedCall ? null : 'call'}
+			consent={{ html: isSharedCall ? consent.html : '', department }}
+			signedIn={signedIn}
+			loginLink={
+				isSharedCall && !signedIn ? (
+					<a href={loginPathForDirectLink(token)}>
+						{t('directLink.entry.haveAccount')}
+					</a>
+				) : undefined
+			}
 			onJoin={handleJoin}
 			hidePassword={Boolean(
 				context.temporaryAccount && context.hidePasswordField

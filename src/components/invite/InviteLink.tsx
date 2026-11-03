@@ -144,6 +144,7 @@ export const InviteLink = () => {
 	const [directLink, setDirectLink] = useState<{
 		context: InviteLinkContext;
 		medium: DirectLinkMedium;
+		signedIn?: boolean;
 	} | null>(null);
 	/* A live-chat link the room opens before it is redeemed. */
 	const [liveTopic, setLiveTopic] = useState<{
@@ -242,6 +243,28 @@ export const InviteLink = () => {
 				if (inactive) {
 					setStatus('error');
 					setErrorMessage(t('directLink.entry.inactive'));
+					return;
+				}
+				if (context?.linkKind === 'CALL') {
+					if (!mountedRef.current) return;
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
+					if (
+						context.chatType !== 'AUDIO' &&
+						context.chatType !== 'VIDEO'
+					) {
+						setStatus('error');
+						setErrorMessage(t('directLink.entry.inactive'));
+						return;
+					}
+					setDirectLink({
+						context,
+						medium: context.chatType,
+						signedIn: hasActiveAuthSession()
+					});
+					setStatus('directCall');
 					return;
 				}
 				const directMedium = directLinkMediumOf(context);
@@ -506,6 +529,7 @@ export const InviteLink = () => {
 				token={token}
 				context={directLink.context}
 				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
+				signedIn={directLink.signedIn}
 			/>
 		);
 	}

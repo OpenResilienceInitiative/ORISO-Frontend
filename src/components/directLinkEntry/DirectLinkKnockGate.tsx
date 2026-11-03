@@ -171,7 +171,9 @@ export const DirectLinkKnock = ({
 					}))
 			}}
 			onCancel={state.cancel}
-			onKnockAgain={state.knockAgain}
+			/* Knocking again goes through the link; without it on this
+			   device the refusal offers only "Schließen" (FE#1893). */
+			onKnockAgain={knock.token ? state.knockAgain : undefined}
 			onClose={state.close}
 		/>
 	);
