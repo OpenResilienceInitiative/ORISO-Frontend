@@ -283,9 +283,12 @@ const argv = process.argv.slice(2);
 const shard = Number(argv.find(a => a.startsWith('--shard='))?.split('=')[1].split('/')[0] || 1);
 const log = event => appendFileSync(process.env.ORISO_SHARD_EVENTS, JSON.stringify({ event, shard, pid: process.pid, argv, nodeOptions: process.env.NODE_OPTIONS, sentinel: process.env.ORISO_SHARD_SENTINEL }) + '\\n');
 const plan = plans[shard - 1];
+// Listen before announcing 'start': the test signals as soon as it sees it, and
+// a SIGTERM before the listener exists kills the child with no 'end' event.
+if (plan.waitForParent)
+  process.once('SIGTERM', () => { log('signal:SIGTERM'); log('end'); process.exit(143); });
 log('start');
 if (plan.waitForParent) {
-  process.once('SIGTERM', () => { log('signal:SIGTERM'); log('end'); process.exit(143); });
   setTimeout(() => { log('end'); process.exit(0); }, 1000);
 } else {
   setTimeout(() => process.stdout.write(plan.output || '', () => {
