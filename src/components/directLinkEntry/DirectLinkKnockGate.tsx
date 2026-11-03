@@ -1,19 +1,14 @@
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
 	NOTIFICATION_TYPE_ERROR,
-	NotificationsContext,
-	UserDataContext
+	NotificationsContext
 } from '../../globalState';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
-import { useLiveCallDevices } from '../waitingRoom/callEntry/useLiveCallDevices';
-import {
-	CallDeviceControls,
-	CallModality
-} from '../waitingRoom/callEntry/callEntryTypes';
-import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
+import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
 import { startRoomCall } from '../call/startRoomCall';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import {
@@ -23,10 +18,25 @@ import {
 	readPendingKnock
 } from './directLinkEntryFlow';
 import {
+	admissionAction,
+	isKnockClaimed,
 	rememberAdmittedConversation,
 	takeAdmittedJoin
 } from './callMessageKnock';
+import { callManager } from '../../services/CallManager';
+import {
+	chosenDeviceLabel,
+	joinMediaFrom,
+	rememberJoinMedia
+} from '../call/prejoin/callPrejoin';
+
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
+
+/** The open device check over the call message waits for its own knock. */
+const unclaimedPendingKnock = () => {
+	const knock = readPendingKnock();
+	return knock && !isKnockClaimed(knock.knockId) ? knock : null;
+};
 
 /** How long the app may take to join the conversation's Matrix room. */
 const ROOM_WAIT_MS = 20_000;
@@ -56,6 +66,8 @@ export const waitForJoinedRoom = (
 export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	/** Starts the call once the person was let in. */
 	startCall: (knock: PendingKnock) => Promise<void>;
+	/** Joins the running call recorded with the knock (after a reload). */
+	joinRunningCall: (knock: PendingKnock) => Promise<unknown>;
 	mediaDevices?: MediaDevices;
 }
 
@@ -66,6 +78,26 @@ const defaultStartCall = async (knock: PendingKnock) => {
 		isVideo: knock.medium === 'VIDEO'
 	});
 };
+
+/*
+ * #2016: let in after a reload, the person joins the running call the card
+ * knocked for at once; they never tap "Beitreten" a second time. Direct
+ * links are 1:1, so the call is a group call only if its card says so.
+ */
+const defaultJoinRunningCall = async (knock: PendingKnock) => {
+	const call = knock.joinCall;
+	if (!call) return;
+	await waitForJoinedRoom(call.roomRef);
+	// The card's people are not stored with the knock; the join reads none.
+	await callManager.joinExistingCall(
+		{ ...call, participants: [] },
+		call.isGroup ?? false
+	);
+};
+
+/** The room whose call takes the switches (`GroupCallWidget`). */
+const callRoomOf = (knock: PendingKnock) =>
+	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
 
 const modalityOf = (knock: PendingKnock): CallModality =>
 	knock.medium === 'VIDEO' ? 'video' : 'audio';
@@ -96,18 +128,13 @@ export const DirectLinkKnock = ({
 	pollMs
 }: DirectLinkKnockProps) => {
 	const { t } = useTranslation();
-	const { userData } = useContext(UserDataContext) ?? ({} as never);
 	const { addNotification } = useContext(NotificationsContext) ?? {
 		addNotification: () => undefined
 	};
 	const state = useDirectLinkKnock(knock, deps, pollMs);
-	const modality = modalityOf(knock);
-	const [controls, setControls] = useState<CallDeviceControls>({
-		micOn: true,
-		cameraOn: modality === 'video',
-		selection: {}
+	const device = useCallDeviceCheck(modalityOf(knock), {
+		mediaDevices: deps.mediaDevices
 	});
-	const live = useLiveCallDevices(modality, controls, deps.mediaDevices);
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
@@ -131,6 +158,28 @@ export const DirectLinkKnock = ({
 		if (state.phase !== 'admitted' || admittedOnce.current) return;
 		admittedOnce.current = true;
 		forgetPendingKnock();
+		/* The switches in this window go into the call (#2016). */
+		const room = callRoomOf(knock);
+		if (room) {
+			rememberJoinMedia(
+				room,
+				joinMediaFrom({
+					modality: modalityOf(knock),
+					micOn: device.controls.micOn,
+					cameraOn: device.controls.cameraOn,
+					cameraAvailable: device.cameraAvailable,
+					// By label: the call runs on another origin (ElementCall#116).
+					microphoneLabel: chosenDeviceLabel(
+						device.check.devices.microphone,
+						device.controls.selection.microphone
+					),
+					cameraLabel: chosenDeviceLabel(
+						device.check.devices.camera,
+						device.controls.selection.camera
+					)
+				})
+			);
+		}
 		const timer = window.setTimeout(
 			() => onAdmitted(knock),
 			ADMITTED_PAUSE_MS
@@ -139,37 +188,13 @@ export const DirectLinkKnock = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per admission
 	}, [state.phase]);
 
-	const name = userData?.userName ?? '';
-	const avatar = useMemo(
-		() => generateAvatarForUser(userData?.userId || name || 'guest'),
-		[name, userData?.userId]
-	);
-
 	return (
 		<KnockWaitDialog
 			variant="call"
 			phase={state.phase}
-			media={{
-				modality,
-				name,
-				avatar,
-				devices: live.devices,
-				selection: controls.selection,
-				stream: live.stream,
-				micLevel: live.micLevel,
-				micOn: controls.micOn,
-				cameraOn: controls.cameraOn,
-				cameraAvailable: !live.cameraMissing,
-				onToggleMic: () =>
-					setControls((now) => ({ ...now, micOn: !now.micOn })),
-				onToggleCamera: () =>
-					setControls((now) => ({ ...now, cameraOn: !now.cameraOn })),
-				onSelectDevice: (kind, id) =>
-					setControls((now) => ({
-						...now,
-						selection: { ...now.selection, [kind]: id }
-					}))
-			}}
+			/* While waiting there is no retry to offer: the preview stays,
+			   with the camera off, as before. */
+			media={{ ...device.check, blocker: undefined }}
 			onCancel={state.cancel}
 			/* Knocking again goes through the link; without it on this
 			   device the refusal offers only "Schließen" (FE#1893). */
@@ -195,18 +220,19 @@ export const DirectLinkKnockGate = ({
 }) => {
 	const location = useLocation();
 	const [knock, setKnock] = useState<PendingKnock | null>(() =>
-		readPendingKnock()
+		unclaimedPendingKnock()
 	);
 	useEffect(() => {
-		setKnock((now) => now ?? readPendingKnock());
+		setKnock((now) => now ?? unclaimedPendingKnock());
 	}, [location.pathname]);
 	/* A knock from a running call's card (FE#1893) arrives without a route change. */
 	useEffect(() => {
-		const pick = () => setKnock((now) => now ?? readPendingKnock());
+		const pick = () => setKnock((now) => now ?? unclaimedPendingKnock());
 		window.addEventListener(PENDING_KNOCK_EVENT, pick);
 		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
 	}, []);
 	const startCall = deps.startCall ?? defaultStartCall;
+	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
 
 	/* Only over the person's own conversations: not on the invite page,
 	   the login or anywhere a counsellor works. */
@@ -225,13 +251,20 @@ export const DirectLinkKnockGate = ({
 				setKnock(null);
 				/* Let in once: later calls here join without a knock. */
 				rememberAdmittedConversation(admitted.sessionId);
-				if (admitted.joinExisting) {
-					/* Join the call that is already running; never start a
-					   second one. After a reload the card's next tap joins. */
-					takeAdmittedJoin(admitted.sessionId)?.();
-					return;
+				/* Join the call that is already running, never a second one;
+				   after a reload the one recorded with the knock (#2016). */
+				const storedJoin = takeAdmittedJoin(admitted.sessionId);
+				switch (admissionAction(admitted, storedJoin)) {
+					case 'storedJoin':
+						storedJoin?.();
+						return;
+					case 'joinRunningCall':
+						void joinRunningCall(admitted).catch(() => undefined);
+						return;
+					case 'startCall':
+						void startCall(admitted).catch(() => undefined);
+						return;
 				}
-				void startCall(admitted).catch(() => undefined);
 			}}
 		/>
 	);

@@ -151,6 +151,7 @@ export const InviteLink = () => {
 	/* A live-chat link the room opens before it is redeemed. */
 	const [liveTopic, setLiveTopic] = useState<{
 		topicId: number;
+		tenantId: number | null;
 		consultingTypeId?: number;
 	} | null>(null);
 	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
@@ -302,6 +303,7 @@ export const InviteLink = () => {
 				) {
 					setLiveTopic({
 						topicId: context.topicId,
+						tenantId: context.tenantId,
 						consultingTypeId: context.consultingTypeId ?? undefined
 					});
 					setStatus('invite');
@@ -505,6 +507,7 @@ export const InviteLink = () => {
 			<LiveChatEntryRoom
 				invite={{
 					topicId: liveTopic?.topicId,
+					tenantId: liveTopic?.tenantId,
 					consultingTypeId: liveTopic?.consultingTypeId,
 					redeem: redeemForRoom
 				}}

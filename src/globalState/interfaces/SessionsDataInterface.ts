@@ -184,6 +184,8 @@ export interface GroupChatItemInterface {
 }
 
 export interface SessionUserInterface {
+	/** Read-only SessionMapper tombstone; retained session aliases may still exist. */
+	deleted?: boolean;
 	avatarId?: string | null;
 	username: string;
 	displayName?: string;

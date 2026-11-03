@@ -1252,7 +1252,8 @@
 			"rules": {
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
-			}
+			},
+			"devices": "Camera & microphone"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -3637,6 +3638,11 @@
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",
 				"note": "Until then you write as usual, and your messages stay for the others. You yourself cannot come back into this conversation afterwards."
+			},
+			"displayName": {
+				"optional": "Display name (optional). Leave blank to show your User-ID.",
+				"suggest": "New name",
+				"useUsername": "Use User-ID"
 			}
 		},
 		"back": "Back",
@@ -5556,7 +5562,9 @@
 			"browserSilenced": "Browser notifications are silenced in your notification settings.",
 			"channelBoth": "Email and browser on this device",
 			"channelEmail": "Email",
-			"channelBrowser": "Browser on this device"
+			"channelBrowser": "Browser on this device",
+			"emailAccepted": "The email notification change was accepted.",
+			"refreshFailed": "The change was accepted. Your current settings could not be loaded."
 		},
 		"notificationSummary": {
 			"label": "Notifications: {{state}}",
@@ -5602,7 +5610,9 @@
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
 			"saveFailed": "Saving failed. Please try again.",
-			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support."
+			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support.",
+			"refreshFailed": "Your email address is saved. Your current settings could not be loaded.",
+			"retryRefresh": "Reload settings"
 		},
 		"accountProtection": {
 			"headline": "Your access, additionally protected",
@@ -5992,7 +6002,7 @@
 			},
 			"access": {
 				"headline": "Your name for today.",
-				"subline": "Anonymous, no account. Pick a user ID — or roll new ones.",
+				"subline": "Anonymous, no account.",
 				"label": "Your user ID",
 				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
 				"reroll": "Roll again",
@@ -6349,6 +6359,15 @@
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
+		},
+		"ready": {
+			"title": "Check camera and microphone",
+			"description": "Nobody can see or hear you before you join. Only you see the preview.",
+			"descriptionCheck": "Your setting applies when you join a call in this group. Only you see the preview.",
+			"join": "Join now",
+			"done": "Done",
+			"retry": "Check again",
+			"knocking": "Request sent, please wait …"
 		}
 	},
 	"furtherCounselling": {

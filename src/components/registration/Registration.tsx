@@ -1,3 +1,4 @@
+import { isContextEmailCollectionAllowed } from '../../utils/askerAccountPolicy';
 import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { Avatar, Box, Button, Chip, Link, Typography } from '@mui/material';
 import * as React from 'react';
@@ -744,6 +745,15 @@ export const Registration = () => {
 		}
 		const data = {
 			...mergedData,
+			email: isContextEmailCollectionAllowed(
+				tenant?.settings,
+				groupJoin ? 'SELF_HELP' : 'AGENCY_COUNSELLING'
+			)
+				? mergedData.email
+				: undefined,
+			displayName: groupJoin
+				? undefined
+				: mergedData.displayName?.trim() || undefined,
 			mainTopicId: selectedTopic?.id?.toString(),
 			topicId: selectedTopic?.id?.toString(),
 			topicIds: selectedTopic?.id ? [selectedTopic.id] : [],
@@ -1130,6 +1140,20 @@ export const Registration = () => {
 																}
 																nextStepUrl={
 																	nextStepUrl
+																}
+																conversationType={
+																	getGroupJoin(
+																		{
+																			gcid: groupChatId,
+																			aid: inviteAgencyId,
+																			agencyId:
+																				registrationData
+																					?.agency
+																					?.id
+																		}
+																	)
+																		? 'SELF_HELP'
+																		: 'AGENCY_COUNSELLING'
 																}
 																temporary={
 																	temporaryJoin

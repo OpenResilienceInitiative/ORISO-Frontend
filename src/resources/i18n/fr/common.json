@@ -1275,7 +1275,8 @@
 			"rules": {
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
-			}
+			},
+			"devices": "Caméra et micro"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -3655,6 +3656,11 @@
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
 				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
+			},
+			"displayName": {
+				"optional": "Nom affiché (facultatif). Si vous ne le précisez pas, votre User-ID sera affiché.",
+				"suggest": "Proposer un nom",
+				"useUsername": "Utiliser le User-ID"
 			}
 		},
 		"back": "Retour",
@@ -5638,7 +5644,9 @@
 			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
-			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support."
+			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
+			"retryRefresh": "Recharger"
 		},
 		"accountProtection": {
 			"headline": "Votre accès, protégé en plus",
@@ -5687,7 +5695,9 @@
 			"channelBrowser": "Navigateur sur cet appareil",
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
-			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
+			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},
 		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
 		"faq": {
@@ -6077,7 +6087,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
-				"subline": "Anonyme, sans compte. Choisissez un identifiant — ou relancez les dés.",
+				"subline": "Anonyme, sans compte.",
 				"label": "Votre identifiant",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
@@ -6434,6 +6444,15 @@
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
+		},
+		"ready": {
+			"title": "Vérifier la caméra et le micro",
+			"description": "Personne ne vous voit ni ne vous entend avant que vous ne rejoigniez. Vous seul voyez l'aperçu.",
+			"descriptionCheck": "Votre réglage s'applique lorsque vous rejoignez un appel dans ce groupe. Vous seul voyez l'aperçu.",
+			"join": "Rejoindre maintenant",
+			"done": "Terminé",
+			"retry": "Vérifier à nouveau",
+			"knocking": "Demande envoyée, veuillez patienter …"
 		}
 	},
 	"furtherCounselling": {

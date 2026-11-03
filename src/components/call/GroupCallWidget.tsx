@@ -17,6 +17,13 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
+import {
+	callStartFor,
+	devicesForCall,
+	type JoinMedia,
+	switchDevicesOnReady
+} from './prejoin/callPrejoin';
+import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -216,6 +223,27 @@ export const GroupCallWidget: React.FC = () => {
 		[isConsultantUser, callKnocks.people.length, shareLinkKnock.knock]
 	);
 
+	/*
+	 * #2016 / ElementCall#116: what the person chose in the device check
+	 * before joining (the call message, or the circle's pre-lobby). Held for
+	 * the whole call and put on the widget URL, so the call starts with it:
+	 * a camera switched off there is never captured, and the microphone and
+	 * camera picked there are used (by label — the call runs on another
+	 * origin, where the device ids differ).
+	 */
+	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
+	const joinMediaIsVideo = !!callData?.isVideo;
+	const joinMedia = useJoinMediaForCall(
+		joinMediaRoom,
+		shouldPrepareWidget && callData
+			? `${callData.callId ?? ''}|${callRoomId ?? ''}`
+			: null
+	);
+	const callStart = useMemo(
+		() => callStartFor(joinMediaIsVideo, joinMedia),
+		[joinMediaIsVideo, joinMedia]
+	);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
@@ -225,7 +253,8 @@ export const GroupCallWidget: React.FC = () => {
 			skipLobby: !callData?.sharedCallGuest,
 			onClose: closeCallSurface,
 			knockState,
-			onSetKnock: shareLinkKnock.setKnock
+			onSetKnock: shareLinkKnock.setKnock,
+			callStart
 		}
 	);
 
@@ -283,6 +312,30 @@ export const GroupCallWidget: React.FC = () => {
 	 * Becoming ready therefore forces one more publish.
 	 */
 	const lastReady = useRef(widget.ready);
+
+	/*
+	 * The same on/off choice once more when the call is ready, through
+	 * `io.element.device_mute`: for an Element Call image that does not yet
+	 * read the start parameters (ElementCall#116). A no-op for one that does.
+	 * Once per call, counted as done only when the call took it.
+	 */
+	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	const switchedOnReady = useRef<JoinMedia | null>(null);
+	useEffect(() => {
+		if (!widgetReady || !joinMedia) return;
+		if (switchedOnReady.current === joinMedia) return;
+		const media = devicesForCall(joinMediaIsVideo, joinMedia);
+		if (!media) return;
+		let current = true;
+		void switchDevicesOnReady(setWidgetDevices, media, {
+			isCurrent: () => current
+		}).then((took) => {
+			if (took) switchedOnReady.current = joinMedia;
+		});
+		return () => {
+			current = false;
+		};
+	}, [widgetReady, joinMedia, joinMediaIsVideo, setWidgetDevices]);
 
 	useEffect(() => {
 		// Recorded before the guard, so that closing the surface — which sets

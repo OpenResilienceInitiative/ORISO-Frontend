@@ -1270,7 +1270,8 @@
 			"rules": {
 				"headline": "So gehen wir miteinander um",
 				"subline": "Einmal kurz lesen – dann sind Sie dabei."
-			}
+			},
+			"devices": "Kamera & Mikrofon"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -3609,6 +3610,11 @@
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
 				"note": "Bis dahin schreiben Sie ganz normal, und Ihre Nachrichten bleiben für die anderen erhalten. Sie selbst können danach nicht mehr in dieses Gespräch zurück."
+			},
+			"displayName": {
+				"optional": "Anzeigename (optional). Ohne Angabe wird Ihre User-ID angezeigt.",
+				"suggest": "Würfeln",
+				"useUsername": "User-ID nutzen"
 			}
 		},
 		"back": "Zurück",
@@ -5631,7 +5637,9 @@
 			"browserSilenced": "Browser-Benachrichtigungen sind in Ihren Benachrichtigungseinstellungen stummgeschaltet.",
 			"channelBoth": "E-Mail und Browser auf diesem Gerät",
 			"channelEmail": "E-Mail",
-			"channelBrowser": "Browser auf diesem Gerät"
+			"channelBrowser": "Browser auf diesem Gerät",
+			"emailAccepted": "Die Änderung der E-Mail-Benachrichtigungen wurde angenommen.",
+			"refreshFailed": "Die Änderung wurde angenommen. Die aktuellen Einstellungen konnten nicht geladen werden."
 		},
 		"notificationSummary": {
 			"label": "Benachrichtigung: {{state}}",
@@ -5677,7 +5685,9 @@
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
-			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support."
+			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.",
+			"refreshFailed": "Ihre E-Mail-Adresse ist gespeichert. Die aktuellen Einstellungen konnten nicht geladen werden.",
+			"retryRefresh": "Erneut laden"
 		},
 		"accountProtection": {
 			"headline": "Ihr Zugang, zusätzlich geschützt",
@@ -6067,7 +6077,7 @@
 			},
 			"access": {
 				"headline": "Ihr Name für heute.",
-				"subline": "Anonym, ohne Konto. Wählen Sie eine User-ID — oder würfeln Sie neue.",
+				"subline": "Anonym, ohne Konto.",
 				"label": "Ihre User-ID",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleiben Sie in diesem Fenster, bis Sie dran sind.",
 				"reroll": "Neu würfeln",
@@ -6424,6 +6434,15 @@
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
 			"micMeter": "Lautstärke Ihres Mikrofons"
+		},
+		"ready": {
+			"title": "Kamera und Mikrofon prüfen",
+			"description": "Niemand sieht oder hört Sie, bevor Sie beitreten. Die Vorschau sehen nur Sie.",
+			"descriptionCheck": "Ihre Einstellung gilt, wenn Sie in dieser Gruppe einem Gespräch beitreten. Die Vorschau sehen nur Sie.",
+			"join": "Jetzt beitreten",
+			"done": "Fertig",
+			"retry": "Erneut prüfen",
+			"knocking": "Anfrage gesendet, bitte warten …"
 		}
 	},
 	"furtherCounselling": {
