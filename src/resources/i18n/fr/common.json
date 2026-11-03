@@ -6222,6 +6222,10 @@
 			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		},
 		"share": {
+			"signInToJoin": "Connectez-vous pour rejoindre cet appel.",
+			"conversationMember": "Vous participez déjà à cette conversation. Rejoignez l’appel depuis la discussion.",
+			"openConversations": "Ouvrir mes conversations",
+			"joinForbidden": "Vous ne pouvez pas rejoindre cet appel avec ce lien.",
 			"open": "Partager l’appel",
 			"title": "Partager l’appel",
 			"close": "Fermer",
@@ -6591,6 +6595,10 @@
 			"confirm": "Continuer",
 			"cancel": "Annuler",
 			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
+		},
+		"lookupFailed": {
+			"title": "Nous n'avons pas pu vérifier votre compte",
+			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
 	}
 }

@@ -118,6 +118,9 @@ export interface CallEntryRoomProps {
 	 * but the field and its suggest button are not shown.
 	 */
 	hidePassword?: boolean;
+	/** An existing account only needs the device and consent checks. */
+	signedIn?: boolean;
+	loginLink?: React.ReactNode;
 }
 
 /**
@@ -157,7 +160,9 @@ export const CallEntryRoom = ({
 	onBlockerAction,
 	playTone,
 	checkUsername,
-	hidePassword = false
+	hidePassword = false,
+	signedIn = false,
+	loginLink
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -215,7 +220,7 @@ export const CallEntryRoom = ({
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
 	const availability = useUsernameAvailability(
 		username,
-		usernameValid,
+		usernameValid && !signedIn,
 		checkUsername
 	);
 	const [usernameBlurred, setUsernameBlurred] = useState(false);
@@ -227,7 +232,7 @@ export const CallEntryRoom = ({
 		availabilityCheckFailed: availability.failed
 	});
 
-	const conditions = [
+	const accountConditions = [
 		{
 			done:
 				usernameValid &&
@@ -238,7 +243,10 @@ export const CallEntryRoom = ({
 		{
 			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
-		},
+		}
+	];
+	const conditions = [
+		...(signedIn ? [] : accountConditions),
 		{ done: micHeard || !micOn, missing: copy.missingMicrophone }
 	];
 	const doneCount = conditions.filter((condition) => condition.done).length;
@@ -312,30 +320,35 @@ export const CallEntryRoom = ({
 						alignItems: 'start',
 						gridTemplateColumns: {
 							xs: 'minmax(0, 1fr)',
-							lg: 'minmax(0, 1.3fr) minmax(0, 1fr)'
+							lg: signedIn
+								? 'minmax(0, 1fr)'
+								: 'minmax(0, 1.3fr) minmax(0, 1fr)'
 						}
 					}}
 				>
 					{/* Identity first: a guest confirms who they are before
 					    anything else (Frank, 2026-10-16). First on the phone and
 					    for screen readers; the right column on a desktop. */}
-					<Box
-						data-testid="call-entry-identity-column"
-						sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
-					>
-						<CallEntryIdentity
-							modality={modality}
-							identity={identity}
-							onIdentityChange={setIdentity}
-							username={username}
-							onUsernameChange={setUsername}
-							password={password}
-							onPasswordChange={setPassword}
-							hidePassword={hidePassword}
-							usernameFeedback={usernameFeedback}
-							onUsernameBlur={() => setUsernameBlurred(true)}
-						/>
-					</Box>
+					{!signedIn && (
+						<Box
+							data-testid="call-entry-identity-column"
+							sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
+						>
+							<CallEntryIdentity
+								modality={modality}
+								identity={identity}
+								onIdentityChange={setIdentity}
+								username={username}
+								onUsernameChange={setUsername}
+								password={password}
+								onPasswordChange={setPassword}
+								hidePassword={hidePassword}
+								usernameFeedback={usernameFeedback}
+								onUsernameBlur={() => setUsernameBlurred(true)}
+							/>
+							{loginLink}
+						</Box>
+					)}
 					{/* Picture or voice, then the devices right under it. */}
 					<Box
 						data-testid="call-entry-media-column"
