@@ -1,7 +1,13 @@
 // @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { redeemInviteLink } from '../../api/apiRedeemInviteLink';
@@ -93,7 +99,7 @@ const i18nMock = vi.hoisted(() => {
 		'anonymousChat.pseudonym.continueWithSelection': 'Weiter mit Auswahl',
 		'liveChat.entry.staff.headline': 'Sie sind als Beraterin angemeldet.',
 		'inviteLink.error.title': 'This invite link can no longer be used',
-		'directLink.entry.inactive': 'Dieser Link ist nicht mehr aktiv.',
+		'inviteLink.paused': 'Dieser Link ist aktuell pausiert.',
 		'directLink.entry.haveAccount': 'Sie haben schon ein Konto? Anmelden',
 		'inviteLink.resume.retry': 'Erneut versuchen',
 		'registration.accountCreated.retry':
@@ -365,15 +371,40 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		expect(screen.getByLabelText('Passwort')).toBeTruthy();
 	});
 
-	it('says a switched-off link is no longer active', async () => {
-		vi.mocked(apiGetInviteLinkContext).mockRejectedValueOnce(
-			new Response('{"reason":"DIRECT_LINK_INACTIVE"}', { status: 410 })
-		);
-		renderInvite();
+	it.each([false, true])(
+		'puts a paused direct link first (signed in: %s)',
+		async (signedIn) => {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(signedIn);
+			vi.mocked(apiGetInviteLinkContext).mockRejectedValueOnce(
+				new Response('{"reason":"DIRECT_LINK_INACTIVE"}', {
+					status: 410
+				})
+			);
+			renderInvite();
 
-		expect(
-			await screen.findByText('Dieser Link ist nicht mehr aktiv.')
-		).toBeTruthy();
-		expect(redeemInviteLink).not.toHaveBeenCalled();
-	});
+			expect(
+				await screen.findByText('Dieser Link ist aktuell pausiert.')
+			).toBeTruthy();
+			expect(redeemInviteLink).not.toHaveBeenCalled();
+		}
+	);
+	it.each([false, true])(
+		'puts a paused live-chat link first (signed in: %s)',
+		async (signedIn) => {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(signedIn);
+			vi.mocked(apiGetInviteLinkContext).mockRejectedValueOnce(
+				new Response('{"reason":"INVITE_LINK_PAUSED"}', { status: 410 })
+			);
+			const view = within(renderInvite().container);
+			expect((await view.findByRole('alert')).textContent).toContain(
+				'Dieser Link ist aktuell pausiert.'
+			);
+			expect(view.queryByLabelText('User-ID')).toBeNull();
+			expect(view.queryByTestId('live-chat-entry-room')).toBeNull();
+			expect(
+				view.queryByText('This invite link can no longer be used')
+			).toBeNull();
+			expect(redeemInviteLink).not.toHaveBeenCalled();
+		}
+	);
 });

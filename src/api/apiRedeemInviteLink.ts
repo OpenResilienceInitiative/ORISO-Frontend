@@ -41,7 +41,8 @@ export const redeemInviteLink = async (
 	});
 
 	if (!response.ok) {
-		if (getCounsellingDpaFailure(response)) throw response;
+		if (response.status === 410 || getCounsellingDpaFailure(response))
+			throw response;
 		const body = await response.text().catch(() => '');
 		throw new Error(body || `Redeem failed (HTTP ${response.status})`);
 	}
