@@ -20,7 +20,8 @@ import { CallShareForCall } from './share/CallShareForCall';
 import {
 	callStartFor,
 	devicesForCall,
-	type JoinMedia
+	type JoinMedia,
+	switchDevicesOnReady
 } from './prejoin/callPrejoin';
 import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
 import { useElementCallWidget } from './widget/useElementCallWidget';
@@ -316,16 +317,24 @@ export const GroupCallWidget: React.FC = () => {
 	 * The same on/off choice once more when the call is ready, through
 	 * `io.element.device_mute`: for an Element Call image that does not yet
 	 * read the start parameters (ElementCall#116). A no-op for one that does.
-	 * Once per call.
+	 * Once per call, counted as done only when the call took it.
 	 */
 	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
 	const switchedOnReady = useRef<JoinMedia | null>(null);
 	useEffect(() => {
 		if (!widgetReady || !joinMedia) return;
 		if (switchedOnReady.current === joinMedia) return;
-		switchedOnReady.current = joinMedia;
 		const media = devicesForCall(joinMediaIsVideo, joinMedia);
-		if (media) void setWidgetDevices(media).catch(() => undefined);
+		if (!media) return;
+		let current = true;
+		void switchDevicesOnReady(setWidgetDevices, media, {
+			isCurrent: () => current
+		}).then((took) => {
+			if (took) switchedOnReady.current = joinMedia;
+		});
+		return () => {
+			current = false;
+		};
 	}, [widgetReady, joinMedia, joinMediaIsVideo, setWidgetDevices]);
 
 	useEffect(() => {

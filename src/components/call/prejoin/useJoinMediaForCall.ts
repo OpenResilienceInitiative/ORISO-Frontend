@@ -29,7 +29,13 @@ export const useJoinMediaForCall = (
 	const taken = useRef<Held | null>(null);
 
 	useEffect(() => {
-		if (!callKey) return;
+		if (!callKey) {
+			// Left (or never joined): a later join of the same call — a group
+			// call keeps its id — takes the choice made for that join.
+			taken.current = null;
+			setHeld(null);
+			return;
+		}
 		if (taken.current?.key !== callKey) {
 			taken.current = { key: callKey, media: takeJoinMedia(roomRef) };
 		}

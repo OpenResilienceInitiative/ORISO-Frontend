@@ -196,3 +196,31 @@ export const callStartFor = (
 			: {})
 	};
 };
+
+/**
+ * The ready-time fallback (`devicesForCall`), sent until the call takes it:
+ * for an Element Call image that ignores the start parameters, this is the
+ * only way a camera switched off in the check goes off, so one lost message
+ * must not leave it on. A few tries, and only while that call is still there.
+ * Resolves `true` once the call took it.
+ */
+export const switchDevicesOnReady = async (
+	send: (media: Partial<CallDeviceState>) => Promise<void>,
+	media: Partial<CallDeviceState>,
+	{
+		attempts = 3,
+		delayMs = 1000,
+		isCurrent = () => true
+	}: { attempts?: number; delayMs?: number; isCurrent?: () => boolean } = {}
+): Promise<boolean> => {
+	for (let attempt = 1; attempt <= attempts && isCurrent(); attempt++) {
+		try {
+			await send(media);
+			return true;
+		} catch {
+			if (attempt < attempts && isCurrent())
+				await new Promise((resolve) => setTimeout(resolve, delayMs));
+		}
+	}
+	return false;
+};
