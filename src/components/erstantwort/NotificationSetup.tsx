@@ -1,6 +1,13 @@
 import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
@@ -79,15 +86,18 @@ export const NotificationSetup = ({
 		setError(null);
 		setFailedEmailReadback(null);
 	}, []);
-	useEffect(() => {
+	// Layout effects: a scope change must cancel older operations in the same
+	// commit that shows the new controls. A passive effect runs later and would
+	// also cancel a choice clicked on those controls in between.
+	useLayoutEffect(() => {
 		reset();
 		return () => {
 			continuation.current += 1;
 			acceptedEmailOperation.current = null;
 		};
 	}, [isBrowserEnabled, tenant?.id, userData?.userId, reset]);
-	useEffect(() => {
-		// A successful subscription's own reload temporarily withdraws capability.
+	useLayoutEffect(() => {
+		// A failed readback after a successful subscription withdraws capability.
 		// It must not erase the requested, independently permitted browser step.
 		if (acceptedEmailOperation.current !== continuation.current) reset();
 	}, [isEmailEnabled, reset]);
