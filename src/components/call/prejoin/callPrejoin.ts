@@ -1,4 +1,5 @@
 import type { CallDeviceState } from '../widget/useElementCallWidget';
+import type { CallData } from '../../../services/CallManager';
 import type {
 	CallDeviceControls,
 	CallEntryBlocker,
@@ -52,6 +53,15 @@ export const shouldShowDeviceCheck = ({
 		? !alreadyInCall
 		: Boolean(roomRef) && circleModality === 'VIDEO';
 };
+
+/**
+ * This browser is in that call now. A group call that was left stays on record
+ * so it can be reopened, but joining it again is a new join and gets the check.
+ */
+export const isInCall = (
+	current: Pick<CallData, 'callId' | 'state'> | null | undefined,
+	callId: string
+): boolean => current?.callId === callId && current.state !== 'left';
 
 /** What the person left the check with. */
 export interface DeviceCheckOutcome {

@@ -6,9 +6,27 @@ import {
 	joinMediaFrom,
 	peekJoinMedia,
 	rememberJoinMedia,
+	isInCall,
 	shouldShowDeviceCheck,
 	takeJoinMedia
 } from './callPrejoin';
+
+describe('isInCall (#2016)', () => {
+	it('is true while this browser is in that call', () => {
+		expect(isInCall({ callId: 'c1', state: 'connected' }, 'c1')).toBe(true);
+	});
+
+	it('is false once that call was left, so a rejoin gets the check', () => {
+		expect(isInCall({ callId: 'c1', state: 'left' }, 'c1')).toBe(false);
+	});
+
+	it('is false for another call or none', () => {
+		expect(isInCall({ callId: 'c2', state: 'connected' }, 'c1')).toBe(
+			false
+		);
+		expect(isInCall(null, 'c1')).toBe(false);
+	});
+});
 
 describe('shouldShowDeviceCheck (#2016)', () => {
 	it('shows before joining from the call message', () => {
