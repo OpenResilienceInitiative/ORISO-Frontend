@@ -146,6 +146,7 @@ export const DirectLinkKnock = ({
 					micOn: device.controls.micOn,
 					cameraOn: device.controls.cameraOn,
 					cameraAvailable: device.cameraAvailable,
+					blocker: device.blocker,
 					// By label: the call runs on another origin (ElementCall#116).
 					microphoneLabel: chosenDeviceLabel(
 						device.check.devices.microphone,
