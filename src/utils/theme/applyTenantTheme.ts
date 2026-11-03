@@ -80,6 +80,45 @@ export const computeOrisoSchemes = (
 	inverted: computeOrisoPalette(seeds, 'inverted').tokens
 });
 
+/**
+ * Custom properties a tenant palette put on a root, so they can be taken off
+ * again. Theme Builder preview tokens are deliberately not tracked: the
+ * preview is independent of tenant resolution and must survive a reset (#1788).
+ */
+const appliedTokens = new WeakMap<HTMLElement, Set<string>>();
+
+const setPaletteTokens = (
+	root: HTMLElement,
+	tokens: Record<string, string>,
+	track: boolean
+) => {
+	Object.entries(tokens).forEach(([name, value]) =>
+		root.style.setProperty(name, value)
+	);
+	if (!track) {
+		return;
+	}
+	const names = appliedTokens.get(root) ?? new Set<string>();
+	Object.keys(tokens).forEach((name) => names.add(name));
+	appliedTokens.set(root, names);
+};
+
+/**
+ * Takes back what `applyTenantPalette` set, so the compiled default palette
+ * applies again (#1788). A Theme Builder preview palette stays.
+ */
+export const resetTenantPalette = (
+	root: HTMLElement = document.documentElement
+): void => {
+	const names = appliedTokens.get(root);
+	if (!names?.size) {
+		return;
+	}
+	names.forEach((name) => root.style.removeProperty(name));
+	appliedTokens.delete(root);
+	window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
+};
+
 const tryComputePalette = (
 	seeds: OrisoSeeds,
 	onError: (error: unknown) => void
@@ -176,9 +215,7 @@ export const applyTenantPalette = (
 			? primaryResult
 			: computeOrisoPalette(resolved, 'light');
 
-	Object.entries(tokens).forEach(([name, value]) => {
-		root.style.setProperty(name, value);
-	});
+	setPaletteTokens(root, tokens, true);
 	window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
 	return true;
 };
@@ -252,9 +289,7 @@ export const applyPreviewFromLocation = (
 				`Theme preview: seed ${seeds.primary} is too pale (chroma < 12); a stored tenant seed like this would be ignored.`
 			);
 		}
-		Object.entries(tokens).forEach(([name, value]) => {
-			root.style.setProperty(name, value);
-		});
+		setPaletteTokens(root, tokens, false);
 		window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
 		return true;
 	} catch (error) {

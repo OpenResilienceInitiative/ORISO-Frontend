@@ -9,7 +9,7 @@ import type { GroupChatAccess } from '../useGroupChatAccess';
  * `getModality`'s guess, which counts any repeat count — the app must never
  * offer a knock the server refuses with 400.
  */
-const isSelfHelp = (chat: GroupChatItemInterface) =>
+export const isSelfHelp = (chat: GroupChatItemInterface) =>
 	chat.conversationType
 		? chat.conversationType === 'SELF_HELP'
 		: Boolean(chat.repetitive) ||

@@ -1,13 +1,24 @@
 // @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { NewRequestDialog } from './NewRequestDialog';
 
 const apiGetTenantAgenciesTopicsMock = vi.fn();
 const apiGetTopicsDataMock = vi.fn();
 const apiPostAdditionalEnquiryMock = vi.fn();
+const apiPutSessionConsentMock = vi.fn();
+const navigateMock = vi.fn();
+// What the consent label reports for the selected centre × topic.
+let consentTextForLabel: { versionId: number | null } | null = null;
+let traegerRenderable = true;
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -17,14 +28,52 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
-	useNavigate: () => vi.fn()
+	useNavigate: () => navigateMock
 }));
+
+vi.mock('../../../api/apiPutSessionConsent', () => ({
+	apiPutSessionConsent: (...args: unknown[]) =>
+		apiPutSessionConsentMock(...args)
+}));
+
+vi.mock('../../registration/accountData/DataProtectionConsentLabel', () => ({
+	DataProtectionConsentLabel: ({
+		agency,
+		topic,
+		onResolutionChange
+	}: any) => {
+		React.useEffect(() => {
+			onResolutionChange({
+				status: 'resolved',
+				consentText: consentTextForLabel,
+				inputKey: `${agency?.id ?? 'none'}:${topic?.id ?? 'none'}`
+			});
+		}, [agency?.id, topic?.id, onResolutionChange]);
+		return <span>consent sentence</span>;
+	}
+}));
+
+vi.mock('../../registration/accountData/useTraegerSentenceHtml', () => ({
+	useTraegerSentenceHtml: (consentText: unknown) =>
+		consentText && traegerRenderable
+			? { html: 'träger', authored: 'träger' }
+			: null
+}));
+
+vi.mock('../../../globalState/provider/LegalLinksProvider', async () => {
+	const ReactModule = await import('react');
+	return {
+		LegalLinksContext: ReactModule.createContext([
+			{ registration: true, label: 'privacy', getUrl: () => '/privacy' }
+		])
+	};
+});
 
 vi.mock('../../../globalState', async () => {
 	const ReactModule = await import('react');
 	return {
 		UserDataContext: ReactModule.createContext({
-			reloadUserData: vi.fn()
+			reloadUserData: () => Promise.resolve()
 		})
 	};
 });
@@ -61,7 +110,7 @@ vi.mock('../../form/OrisoSelect', () => ({
 }));
 
 vi.mock('../../button/Button', () => ({
-	BUTTON_TYPES: { LINK: 'link', PRIMARY: 'primary' },
+	BUTTON_TYPES: { LINK: 'link', PRIMARY: 'primary', SECONDARY: 'secondary' },
 	Button: ({ item, disabled, buttonHandle }: any) => (
 		<button type="button" disabled={disabled} onClick={buttonHandle}>
 			{item.label}
@@ -115,6 +164,8 @@ describe('NewRequestDialog', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
+		consentTextForLabel = null;
+		traegerRenderable = true;
 	});
 
 	it('selects the only available topic and continues to agency selection', async () => {
@@ -196,36 +247,118 @@ describe('NewRequestDialog', () => {
 		});
 	});
 
-	// #1655: the success message is portalled below the MUI dialog, so the
-	// advice seeker never saw it while the dialog stayed open.
-	it('shows the success message instead of keeping it behind the dialog', async () => {
+	const renderReadyDialog = (props: Record<string, unknown> = {}) => {
 		apiGetTopicsDataMock.mockResolvedValue([
 			{ id: 7, name: 'Sozialberatung' }
 		]);
-		apiPostAdditionalEnquiryMock.mockResolvedValue({ sessionId: 5 });
-
 		render(
 			<NewRequestDialog
 				open={true}
 				onClose={() => {}}
 				preselectedTopicId={7}
 				prefilledPostcode="10115"
+				{...props}
 			/>
 		);
-
-		const register = await screen.findByRole('button', {
+	};
+	const requestButton = () =>
+		screen.findByRole('button', {
 			name: 'profile.data.register.button.label'
 		});
-		await waitFor(() => expect(register).toHaveProperty('disabled', false));
-		register.click();
 
-		expect((await screen.findByTestId('overlay')).textContent).toBe(
-			'profile.data.registerSuccess.overlay.headline'
-		);
+	it('shows the same-topic info above the request button', async () => {
+		renderReadyDialog();
+		await requestButton();
+		expect(
+			screen.getByText('furtherCounselling.request.sameTopicInfo')
+		).toBeTruthy();
+	});
+
+	// FE#1876 / ADR-022 gate 2 moved forward.
+	it('slides up the consent first and creates nothing before it is confirmed', async () => {
+		renderReadyDialog();
+		const request = await requestButton();
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+
+		expect(screen.queryByRole('checkbox')).toBeNull();
+		fireEvent.click(request);
+
+		const checkbox = await screen.findByRole('checkbox');
+		expect(screen.getByText('consent sentence')).toBeTruthy();
+		expect(apiPostAdditionalEnquiryMock).not.toHaveBeenCalled();
+		await waitFor(() => expect(request).toHaveProperty('disabled', true));
+		fireEvent.click(request);
+		expect(apiPostAdditionalEnquiryMock).not.toHaveBeenCalled();
+
+		fireEvent.click(checkbox);
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		expect(apiPostAdditionalEnquiryMock).not.toHaveBeenCalled();
+	});
+
+	it('creates the enquiry after consent and goes straight into it', async () => {
+		apiPostAdditionalEnquiryMock.mockResolvedValue({ sessionId: 5 });
+		const onClose = vi.fn();
+		const onRequestCreated = vi.fn();
+		renderReadyDialog({ onClose, onRequestCreated });
+		const request = await requestButton();
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		fireEvent.click(request);
+		fireEvent.click(await screen.findByRole('checkbox'));
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		fireEvent.click(request);
+
 		await waitFor(() =>
-			expect(
-				screen.queryByText('profile.data.register.dialog.title')
-			).toBeNull()
+			expect(navigateMock).toHaveBeenCalledWith({
+				pathname: '/sessions/user/view/session/5'
+			})
 		);
+		expect(apiPostAdditionalEnquiryMock).toHaveBeenCalledWith(
+			1,
+			42,
+			'10115',
+			7
+		);
+		expect(onRequestCreated).toHaveBeenCalledWith(5);
+		expect(onClose).toHaveBeenCalled();
+		// No intermediate success overlay any more.
+		expect(screen.queryByTestId('overlay')).toBeNull();
+		// Platform wording carries no version, so there is nothing to pin.
+		expect(apiPutSessionConsentMock).not.toHaveBeenCalled();
+	});
+
+	it('pins the consent to the department version that was on screen', async () => {
+		consentTextForLabel = { versionId: 31 };
+		apiPostAdditionalEnquiryMock.mockResolvedValue({ sessionId: 8 });
+		apiPutSessionConsentMock.mockResolvedValue(undefined);
+		renderReadyDialog();
+		const request = await requestButton();
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		fireEvent.click(request);
+		fireEvent.click(await screen.findByRole('checkbox'));
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		fireEvent.click(request);
+
+		await waitFor(() =>
+			expect(apiPutSessionConsentMock).toHaveBeenCalledWith(8, 31)
+		);
+		await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+	});
+
+	it('keeps the request closed while the legal text is unavailable', async () => {
+		renderReadyDialog();
+		const request = await requestButton();
+		await waitFor(() => expect(request).toHaveProperty('disabled', false));
+		// A configured department whose Träger text cannot be rendered.
+		consentTextForLabel = { versionId: 4 };
+		traegerRenderable = false;
+		fireEvent.click(request);
+		const checkbox = await screen.findByRole('checkbox');
+		expect(
+			await screen.findByText('registration.dataProtection.unrenderable')
+		).toBeTruthy();
+		expect(checkbox).toHaveProperty('disabled', true);
+		fireEvent.click(checkbox);
+		fireEvent.click(request);
+		expect(apiPostAdditionalEnquiryMock).not.toHaveBeenCalled();
 	});
 });

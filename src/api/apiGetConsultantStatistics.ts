@@ -12,11 +12,14 @@ export interface ConsultantStatisticsDTO {
 export interface ApiGetConsultantStatisticsInterface {
 	startDate: string;
 	endDate: string;
+	/** Without it an error status leaves for the error page. */
+	responseHandling?: string[];
 }
 
 export const apiGetConsultantStatistics = async ({
 	startDate,
-	endDate
+	endDate,
+	responseHandling
 }: ApiGetConsultantStatisticsInterface): Promise<ConsultantStatisticsDTO> => {
 	const url =
 		endpoints.consultantStatistics +
@@ -24,6 +27,7 @@ export const apiGetConsultantStatistics = async ({
 
 	return fetchData({
 		url: url,
-		method: FETCH_METHODS.GET
+		method: FETCH_METHODS.GET,
+		...(responseHandling ? { responseHandling } : {})
 	});
 };

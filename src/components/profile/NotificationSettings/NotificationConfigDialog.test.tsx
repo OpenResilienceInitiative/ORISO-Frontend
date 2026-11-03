@@ -345,9 +345,13 @@ describe('NotificationConfigView', () => {
 	});
 
 	it('shows the muted icon and no play button when no sound is chosen', () => {
+		// "Standard" stays silent by default ("Neue Anfrage" rings, FE#1435).
 		render(<NotificationConfigView {...baseProps} />);
-		expect(screen.queryByTestId('notif-muted-requests-new')).toBeTruthy();
-		expect(screen.queryByTestId('notif-play-requests-new')).toBeNull();
+		expect(
+			screen.queryByTestId('notif-muted-requests-standard')
+		).toBeTruthy();
+		expect(screen.queryByTestId('notif-play-requests-standard')).toBeNull();
+		expect(screen.queryByTestId('notif-play-requests-new')).toBeTruthy();
 	});
 
 	it('shows a play button (not the muted icon) when a tone is chosen, and previews at volume', () => {
@@ -388,5 +392,48 @@ describe('NotificationConfigView', () => {
 			'volume',
 			0.25
 		);
+	});
+});
+
+describe('Live-Chat row (FE#1470)', () => {
+	afterEach(cleanup);
+
+	it('shows counsellors the Live-Chat row in Gespräche, with its tone preselected', () => {
+		render(
+			<MemoryRouter>
+				<NotificationConfigView
+					{...baseProps}
+					activeArea="conversations"
+					showLiveChatRow
+				/>
+			</MemoryRouter>
+		);
+		expect(
+			screen.getByTestId('notif-row-conversations-liveChat')
+		).toBeTruthy();
+		// The play button only shows while a tone is chosen.
+		expect(
+			screen.getByTestId('notif-play-conversations-liveChat')
+		).toBeTruthy();
+		expect(
+			screen.queryByTestId('notif-play-conversations-standard')
+		).toBeNull();
+	});
+
+	it('hides the row from everyone else, where it could never fire', () => {
+		render(
+			<MemoryRouter>
+				<NotificationConfigView
+					{...baseProps}
+					activeArea="conversations"
+				/>
+			</MemoryRouter>
+		);
+		expect(
+			screen.queryByTestId('notif-row-conversations-liveChat')
+		).toBeNull();
+		expect(
+			screen.getByTestId('notif-row-conversations-standard')
+		).toBeTruthy();
 	});
 });

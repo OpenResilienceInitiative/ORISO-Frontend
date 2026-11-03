@@ -42,3 +42,8 @@ export const resolveAnonymousChatDisplayName = (
 	const last = (participant?.displayName || fallbackDisplayName || '').trim();
 	return last || null;
 };
+
+/** A saved session alias is literal text, not a Matrix/login identifier. */
+export const resolveAssignedAskerDisplayName = (
+	participant?: NameSource | null
+): string | null => participant?.displayName?.trim() || null;

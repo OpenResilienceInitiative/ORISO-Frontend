@@ -8,6 +8,9 @@ import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
 import { ErstantwortMessage } from './ErstantwortMessage';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
+import { TenantContext } from '../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../test/fixtures/askerAccountPolicyFixtures';
+import type { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 
 vi.hoisted(() => {
@@ -39,14 +42,17 @@ vi.mock('lottie-web', () => ({
 
 function setup(
 	emailActive = false,
-	conversationType?: string,
+	conversationType: string = 'AGENCY_COUNSELLING',
 	isAskerEmailEnabled?: boolean,
 	rawMessage?: string,
 	messageId?: string,
+	settings: Partial<TenantDataSettingsInterface> = {},
+	capability?: boolean,
 	passSkipAnimation = true
 ) {
 	const userData = {
 		email: 'asker@example.org',
+		isAskerEmailCollectionAllowed: capability,
 		emailNotifications: {
 			emailNotificationsEnabled: emailActive,
 			settings: { newChatMessageNotificationEnabled: emailActive }
@@ -61,16 +67,26 @@ function setup(
 					setUserData: vi.fn()
 				}}
 			>
-				<ModalProvider>
-					<ErstantwortMessage
-						trigger="AFTER_ENQUIRY_DISPATCHED"
-						rawMessage={rawMessage}
-						messageId={messageId}
-						conversationType={conversationType}
-						isAskerEmailEnabled={isAskerEmailEnabled}
-						{...(passSkipAnimation ? { skipAnimation: true } : {})}
-					/>
-				</ModalProvider>
+				<TenantContext.Provider
+					value={{
+						tenant: accountPolicyTenant(settings),
+						setTenant: vi.fn(),
+						updateTenantSettings: vi.fn()
+					}}
+				>
+					<ModalProvider>
+						<ErstantwortMessage
+							trigger="AFTER_ENQUIRY_DISPATCHED"
+							rawMessage={rawMessage}
+							messageId={messageId}
+							conversationType={conversationType}
+							isAskerEmailEnabled={isAskerEmailEnabled}
+							{...(passSkipAnimation
+								? { skipAnimation: true }
+								: {})}
+						/>
+					</ModalProvider>
+				</TenantContext.Provider>
 			</UserDataContext.Provider>
 		</MemoryRouter>
 	);
@@ -264,6 +280,8 @@ it('draws a persisted first answer as one block on first render and after a remo
 			undefined,
 			raw,
 			'$first-answer',
+			{},
+			undefined,
 			false
 		);
 		expect(screen.getByText('Body whoReadsAlong')).toBeTruthy();
@@ -280,6 +298,8 @@ it('draws a persisted first answer as one block on first render and after a remo
 			undefined,
 			raw,
 			'$first-answer',
+			{},
+			undefined,
 			false
 		);
 		expect(screen.getByText('Body whoReadsAlong')).toBeTruthy();
@@ -347,5 +367,30 @@ it('shows no summary on a persisted message when the tenant offers no channel at
 		screen.queryByRole('button', {
 			name: 'erstantwort.notificationSummary.changeLabel'
 		})
+	).toBeNull();
+});
+
+it('silences collection in a denied conversation even when delivery remains enabled', () => {
+	setup(false, 'AGENCY_COUNSELLING', true, undefined, undefined, {
+		featureAskerEmailCollectionAgencyCounsellingEnabled: false
+	});
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	).toBeTruthy();
+});
+it('does not infer an email collection context for an unknown modality', () => {
+	setup(false, 'UNKNOWN', true);
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+});
+
+it('does not offer a dead email action after the server denies collection', () => {
+	setup(false, 'AGENCY_COUNSELLING', true, undefined, undefined, {}, false);
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
 	).toBeNull();
 });
