@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../../hooks/useConversationFeatureSettings';
 import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -286,7 +287,7 @@ export const GroupChatHeader = ({
 		featureAudioCallsGroupChatsEnabled = true,
 		featureVideoCallsEnabled = true,
 		featureVideoCallsGroupChatsEnabled = true
-	} = getTenantSettings();
+	} = useConversationFeatureSettings(getTenantSettings());
 
 	const isCallsEnabled = featureCallsEnabled !== false;
 	const modalityCalls = groupChatCallCapabilities(
