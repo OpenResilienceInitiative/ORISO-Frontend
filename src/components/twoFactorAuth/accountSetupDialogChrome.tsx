@@ -186,6 +186,7 @@ interface AccountSetupFieldProps {
 	successMessage?: string;
 	type?: string;
 	value: string;
+	readOnly?: boolean;
 }
 
 /**
@@ -193,6 +194,7 @@ interface AccountSetupFieldProps {
  * state in the border, and the reason underneath it.
  */
 export const AccountSetupField = ({
+	readOnly = false,
 	adornment,
 	autoComplete = 'off',
 	autoFocus,
@@ -234,6 +236,7 @@ export const AccountSetupField = ({
 					.join(' ')}
 			>
 				<input
+					readOnly={readOnly}
 					aria-describedby={describedBy || undefined}
 					aria-invalid={state === 'error' || undefined}
 					autoComplete={autoComplete}

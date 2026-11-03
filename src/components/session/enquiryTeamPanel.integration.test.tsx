@@ -315,6 +315,8 @@ function openEnquiry(
 		reloadedStatus?: number;
 		teamChannel?: boolean;
 		threadChannel?: boolean;
+		askerAlias?: string;
+		consultantUsername?: string;
 		threadRootId?: string;
 		width?: number;
 		supervisionChannel?: boolean;
@@ -337,13 +339,17 @@ function openEnquiry(
 		isEmptyEnquiry: status === 0,
 		isNonEmptyEnquiry: status === 1,
 		isRejected: status === 5,
-		user: { username: 'Ratsuchende', userId: 'asker' },
-		...(options.assigned
+		user: {
+			username: 'Ratsuchende',
+			userId: 'asker',
+			displayName: options.askerAlias
+		},
+		...(options.assigned || options.consultantUsername
 			? {
 					consultant: {
-						id: 'colleague',
-						consultantId: 'colleague',
-						username: 'colleague'
+						id: options.consultantUsername ?? 'colleague',
+						consultantId: options.consultantUsername ?? 'colleague',
+						username: options.consultantUsername ?? 'colleague'
 					}
 				}
 			: {}),
@@ -1497,4 +1503,64 @@ it.each([
 		expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
 		await waitFor(() => expect(boundary.reload).toHaveBeenCalledTimes(1));
 	}
+);
+
+it.each([false, true])(
+	'keeps a former consultant distinct from the session asker in the actual %s thread timeline',
+	async (threadChannel) => {
+		boundary.rooms.set(
+			MAIN,
+			room(MAIN, [
+				new MatrixEvent({
+					event_id: '$original',
+					room_id: MAIN,
+					sender: '@asker:test',
+					type: 'm.room.message',
+					origin_server_ts: 1000,
+					content: { msgtype: 'm.text', body: TEXT }
+				}),
+				new MatrixEvent({
+					event_id: '$former',
+					room_id: MAIN,
+					sender: '@former:test',
+					type: 'm.room.message',
+					origin_server_ts: 2000,
+					content: {
+						msgtype: 'm.text',
+						body: 'Former consultant advice',
+						...(threadChannel
+							? {
+									'm.relates_to': {
+										rel_type: 'm.thread',
+										event_id: '$original'
+									}
+								}
+							: {})
+					}
+				})
+			])
+		);
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+			status: 2,
+			threadChannel,
+			askerAlias: 'Chosen session alias',
+			consultantUsername: 'consultant'
+		});
+		const pane = threadChannel
+			? '.chatStage__panel'
+			: '.chatStage__mainPane';
+		await waitFor(() => {
+			const surface = view.container.querySelector(pane);
+			expect(surface).not.toBeNull();
+			const former = Array.from(
+				surface!.querySelectorAll('.messageItem')
+			).find((row) =>
+				row.textContent?.includes('Former consultant advice')
+			);
+			expect(former).toBeTruthy();
+			expect(former!.textContent).not.toContain('Chosen session alias');
+			expect(surface!.textContent).toContain('Chosen session alias');
+		});
+	},
+	20000
 );

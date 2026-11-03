@@ -14,7 +14,7 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { SurveillanceConsentIcon } from '../../resources/img/icons';
 import { StandingAccessPreference } from './StandingAccessPreference';
 import { useTenant } from '../../globalState/provider/TenantProvider';
-import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from '../erstantwort/notificationChannelPolicy';
 import { useNotificationChannels } from '../erstantwort/useNotificationChannels';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { Button, BUTTON_TYPES } from '../button/Button';
@@ -39,7 +39,7 @@ export const StandingAccessSettings = ({
 	const { t } = useTranslation();
 	const tenant = useTenant();
 	const { userData } = useContext(UserDataContext);
-	const policy = notificationChannelPolicy(
+	const policy = emailCollectionSetupPolicy(
 		tenant?.settings,
 		conversationType
 	);
