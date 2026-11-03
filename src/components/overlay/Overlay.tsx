@@ -107,19 +107,9 @@ export const Overlay: FC<OverlayProps> = ({ name, ...overlayProps }) => {
 const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	const { t: translate } = useTranslation();
 	const [activeStep, setActiveStep] = useState<number>(0);
-	const [activeOverlay, setActiveOverlay] = useState<OverlayItem>(
-		props.item
-			? { ...props.item, ...props.handleOverlay }
-			: props.items[activeStep]
-	);
-
-	useEffect(() => {
-		setActiveOverlay(
-			props.item
-				? { ...props.item, ...props.handleOverlay }
-				: props.items[activeStep]
-		);
-	}, [props.item, props.items]); // eslint-disable-line react-hooks/exhaustive-deps
+	// Derived during render: a copy synced by an effect showed the previous
+	// item for one commit after every change (e.g. a late error alert).
+	const activeOverlay: OverlayItem = props.item ?? props.items[activeStep];
 
 	useEffect(() => {
 		document.querySelector('.app')?.classList.add('app--blur');
@@ -128,12 +118,6 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 			document.querySelector('.app')?.classList.remove('app--blur');
 		};
 	}, []);
-
-	useEffect(() => {
-		if (props.items) {
-			setActiveOverlay(props.items[activeStep]);
-		}
-	}, [activeStep, props.items]);
 
 	const handleButtonClick = (
 		buttonFunction: string,
