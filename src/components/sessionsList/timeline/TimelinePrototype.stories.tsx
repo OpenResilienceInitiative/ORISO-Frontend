@@ -827,9 +827,9 @@ export const CardRowPreviewOneLine: Story = {
 		free.textContent = 'Sehr langer Text. '.repeat(20);
 		await expect(free.getBoundingClientRect().height).toBeGreaterThan(16);
 		// The faces keep their full height (48): only the text ends early.
+		// offsetHeight ignores the entrance transform, which shrinks the rect.
 		await expect(
-			card.querySelector('.sessionCard__flow')!.getBoundingClientRect()
-				.height
+			(card.querySelector('.sessionCard__flow') as HTMLElement).offsetHeight
 		).toBeGreaterThanOrEqual(48);
 	}
 };
