@@ -253,6 +253,7 @@ export const CallTimelineMessage = ({
 					roomRef={call.roomRef}
 					onJoin={(hooks) => join(hooks)}
 					onClose={() => setChecking(false)}
+					callEnded={call.state !== 'running'}
 					onJoinResult={(result) =>
 						setJoinFailed(joinFailedFor(result))
 					}

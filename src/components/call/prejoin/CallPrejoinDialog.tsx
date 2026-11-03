@@ -55,6 +55,12 @@ export interface CallPrejoinDialogProps {
 	 * so the card says it when it fails (#2016).
 	 */
 	onJoinResult?: (result: CallJoinResult) => void;
+	/**
+	 * The call this window was opened for has ended. The window closes and
+	 * releases the preview, unless the person was just let in: that hand-over
+	 * finishes here, so its join still reports back to the card.
+	 */
+	callEnded?: boolean;
 	/** Stories: stand in for `navigator.mediaDevices` and the knock API. */
 	mediaDevices?: MediaDevices;
 	knockDeps?: Partial<DirectLinkKnockDeps>;
@@ -114,6 +120,7 @@ export const CallPrejoinDialog = ({
 	onJoin,
 	onClose,
 	onJoinResult,
+	callEnded = false,
 	mediaDevices,
 	knockDeps,
 	pollMs,
@@ -243,6 +250,11 @@ export const CallPrejoinDialog = ({
 		}, ADMITTED_PAUSE_MS);
 		return () => window.clearTimeout(timer);
 	}, [phase, knock]);
+
+	// A knock still waiting goes back to the gate on the way out, as on ✕.
+	useEffect(() => {
+		if (callEnded && phase !== 'admitted') onCloseRef.current();
+	}, [callEnded, phase]);
 
 	/*
 	 * The knock this window waits on is its own, the replacement after
