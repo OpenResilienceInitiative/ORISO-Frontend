@@ -216,7 +216,8 @@ export const switchDevicesOnReady = async (
 	for (let attempt = 1; attempt <= attempts && isCurrent(); attempt++) {
 		try {
 			await send(media);
-			return true;
+			// Took it — but only counts for the call that is still there.
+			return isCurrent();
 		} catch {
 			if (attempt < attempts && isCurrent())
 				await new Promise((resolve) => setTimeout(resolve, delayMs));
