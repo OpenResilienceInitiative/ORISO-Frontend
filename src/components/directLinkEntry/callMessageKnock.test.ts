@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	admissionAction,
+	callCardMayKnock,
 	claimKnock,
 	isKnockClaimed,
 	joinOrKnock,
@@ -12,6 +13,7 @@ import {
 } from './callMessageKnock';
 import {
 	PENDING_KNOCK_EVENT,
+	PENDING_KNOCK_KEY,
 	readPendingKnock,
 	rememberDirectLinkSession
 } from './directLinkEntryFlow';
@@ -201,6 +203,87 @@ describe('joinOrKnock (FE#1893)', () => {
 		expect(mine).not.toHaveBeenCalled();
 		expect(join).toHaveBeenCalledOnce();
 	});
+	it('shows the turn-down, and opens no call, when this device has no link', async () => {
+		// The server refuses the call while the latest knock is not admitted
+		// (KNOCK_NOT_ADMITTED); without the link nothing can knock again.
+		mine.mockResolvedValue({
+			id: 30,
+			sessionId: 9,
+			status: 'DECLINED',
+			medium: 'AUDIO'
+		});
+		const join = vi.fn();
+		const start = vi.fn();
+		const announced = vi.fn();
+		window.addEventListener(PENDING_KNOCK_EVENT, announced);
+
+		await expect(joinOrKnock(9, join, { start, mine })).resolves.toBe(
+			'joined'
+		);
+
+		window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+		expect(join).not.toHaveBeenCalled();
+		expect(start).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toMatchObject({
+			knockId: 30,
+			sessionId: 9,
+			medium: 'AUDIO',
+			status: 'DECLINED',
+			token: ''
+		});
+		expect(announced).toHaveBeenCalledOnce();
+		// Nothing waits for an admission that cannot come.
+		expect(takeAdmittedJoin(9)).toBeUndefined();
+	});
+
+	it('opens no call the server refuses after a knock withdrawn elsewhere', async () => {
+		mine.mockResolvedValue({
+			id: 30,
+			sessionId: 9,
+			status: 'CANCELLED',
+			medium: 'VIDEO'
+		});
+		const join = vi.fn();
+		const start = vi.fn();
+		await expect(joinOrKnock(9, join, { start, mine })).resolves.toBe(
+			'unavailable'
+		);
+		expect(join).not.toHaveBeenCalled();
+		expect(start).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toBeNull();
+	});
+
+	it('knocks again through the link after a knock withdrawn elsewhere', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		mine.mockResolvedValue({
+			id: 30,
+			sessionId: 9,
+			status: 'CANCELLED',
+			medium: 'VIDEO'
+		});
+		const join = vi.fn();
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+		await joinOrKnock(9, join, { start, mine });
+		expect(start).toHaveBeenCalledWith('tok');
+		expect(join).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toMatchObject({ knockId: 31 });
+	});
+});
+
+describe('callCardMayKnock (FE#1893): who can be sent to the lobby', () => {
+	it('only an advice seeker in a 1:1 conversation', () => {
+		expect(callCardMayKnock({ isAsker: true, isGroup: false })).toBe(true);
+	});
+
+	it('never a counsellor', () => {
+		expect(callCardMayKnock({ isAsker: false, isGroup: false })).toBe(
+			false
+		);
+	});
+
+	it('never in a group: its members join the call directly', () => {
+		expect(callCardMayKnock({ isAsker: true, isGroup: true })).toBe(false);
+	});
 });
 
 describe('one window for knocking from the call message (#2016)', () => {
@@ -210,7 +293,9 @@ describe('one window for knocking from the call message (#2016)', () => {
 		callRoomId: '!media:oriso',
 		state: 'running' as const,
 		callType: 'video' as const,
-		participants: []
+		actorUserId: '@berger:oriso',
+		participants: [{ userId: '@berger:oriso', displayName: 'Frau Berger' }],
+		present: [{ userId: '@berger:oriso', displayName: 'Frau Berger' }]
 	};
 
 	it('hands the knock to the open check instead of a second dialog', async () => {
@@ -236,6 +321,25 @@ describe('one window for knocking from the call message (#2016)', () => {
 			joinCall: { callId: 'c-1', roomRef: '!room:oriso' }
 		});
 		window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	});
+
+	it('keeps no participant data in the tab, only what the reload join needs', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+		await joinOrKnock(9, vi.fn(), { start, mine, onKnock: vi.fn(), call });
+		const stored = JSON.parse(
+			sessionStorage.getItem(PENDING_KNOCK_KEY) ?? '{}'
+		);
+		expect(stored.joinCall).toEqual({
+			callId: 'c-1',
+			state: 'running',
+			roomRef: '!room:oriso',
+			callRoomId: '!media:oriso',
+			callType: 'video'
+		});
+		expect(JSON.stringify(stored)).not.toMatch(
+			/berger|participants|present/i
+		);
 	});
 
 	it('lets the check close before a join that needs no knock', async () => {

@@ -45,9 +45,12 @@ export const CallTimelineMessage = ({
 		setJoining(true);
 		setJoinFailed(false);
 		try {
-			setJoinFailed((await onJoin(hooks)) !== 'joined');
+			const result = await onJoin(hooks);
+			setJoinFailed(result !== 'joined');
+			return result;
 		} catch {
 			setJoinFailed(true);
+			return 'unavailable' as const;
 		} finally {
 			joinPending.current = false;
 			setJoining(false);

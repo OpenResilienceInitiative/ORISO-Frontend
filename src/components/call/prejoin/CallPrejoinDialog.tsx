@@ -15,6 +15,7 @@ import type {
 	CallJoinResult
 } from '../../directLinkEntry/callMessageKnock';
 import {
+	claimKnock,
 	releaseKnock,
 	rememberAdmittedConversation
 } from '../../directLinkEntry/callMessageKnock';
@@ -24,8 +25,10 @@ import {
 	useDirectLinkKnock
 } from '../../directLinkEntry/useDirectLinkKnock';
 import {
+	announcePendingKnock,
 	forgetPendingKnock,
-	PendingKnock
+	PendingKnock,
+	readPendingKnock
 } from '../../directLinkEntry/directLinkEntryFlow';
 
 /** How long "Sie wurden hereingelassen" stays before the call takes over. */
@@ -53,6 +56,15 @@ export interface CallPrejoinDialogProps {
 	sheet?: boolean;
 }
 
+/**
+ * Lets go of a knock this window held. One still stored goes back to the
+ * knock gate, which shows it at once.
+ */
+const handBackToGate = (knockId: number) => {
+	releaseKnock(knockId);
+	if (readPendingKnock()?.knockId === knockId) announcePendingKnock();
+};
+
 /** Reports the knock's state up; renders nothing. */
 const KnockWatch = ({
 	knock,
@@ -65,14 +77,11 @@ const KnockWatch = ({
 	pollMs?: number;
 	onState: (state: DirectLinkKnockState) => void;
 }) => {
-	const { phase, gone, cancel, knockAgain, close } = useDirectLinkKnock(
-		knock,
-		deps,
-		pollMs
-	);
+	const { knockId, phase, gone, cancel, knockAgain, close } =
+		useDirectLinkKnock(knock, deps, pollMs);
 	useEffect(
-		() => onState({ phase, gone, cancel, knockAgain, close }),
-		[onState, phase, gone, cancel, knockAgain, close]
+		() => onState({ knockId, phase, gone, cancel, knockAgain, close }),
+		[onState, knockId, phase, gone, cancel, knockAgain, close]
 	);
 	return null;
 };
@@ -134,6 +143,13 @@ export const CallPrejoinDialog = ({
 	keepChoiceRef.current = keepChoice;
 	const onCloseRef = useRef(onClose);
 	onCloseRef.current = onClose;
+	const mounted = useRef(true);
+	useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
 
 	const join = () => {
 		if (busy || knock) return;
@@ -147,11 +163,25 @@ export const CallPrejoinDialog = ({
 			onJoin({
 				beforeJoin: onClose,
 				onKnock: (pending, joinLater) => {
+					/* Closed while the knock was on its way: nobody waits
+					   here, so the knock gate takes it (no orphaned knock
+					   the counsellor sees and nobody answers). */
+					if (!mounted.current) {
+						handBackToGate(pending.knockId);
+						return;
+					}
 					joinOnceAdmitted.current = joinLater;
 					setKnock(pending);
 				}
 			})
 		)
+			.then((result) => {
+				// Refused without a knock (e.g. withdrawn, no link here): the
+				// card says it; nothing is left to wait for in this window.
+				if (result !== undefined && result !== 'joined') {
+					onCloseRef.current();
+				}
+			})
 			.catch(() => undefined)
 			.finally(() => setBusy(false));
 	};
@@ -164,7 +194,6 @@ export const CallPrejoinDialog = ({
 	const gone = Boolean(knockState?.gone);
 	useEffect(() => {
 		if (!gone || !knock) return;
-		releaseKnock(knock.knockId);
 		setKnock(null);
 		setKnockState(null);
 	}, [gone, knock]);
@@ -175,7 +204,6 @@ export const CallPrejoinDialog = ({
 		if (phase !== 'admitted' || !knock) return;
 		const timer = window.setTimeout(() => {
 			forgetPendingKnock();
-			releaseKnock(knock.knockId);
 			rememberAdmittedConversation(knock.sessionId);
 			keepChoiceRef.current();
 			onCloseRef.current();
@@ -184,14 +212,20 @@ export const CallPrejoinDialog = ({
 		return () => window.clearTimeout(timer);
 	}, [phase, knock]);
 
-	// A knock left behind (the chat closed) goes back to the knock gate.
-	const heldKnock = knock?.knockId;
-	useEffect(
-		() => () => {
-			if (heldKnock !== undefined) releaseKnock(heldKnock);
-		},
-		[heldKnock]
-	);
+	/*
+	 * The knock this window waits on is its own, the replacement after
+	 * "Erneut anklopfen" included, so the knock gate opens no second dialog.
+	 * Let go of on every way out; one still stored (the chat closed while
+	 * waiting) goes back to the gate, which shows it at once.
+	 */
+	const heldKnock = knock
+		? (knockState?.knockId ?? knock.knockId)
+		: undefined;
+	useEffect(() => {
+		if (heldKnock === undefined) return;
+		claimKnock(heldKnock);
+		return () => handBackToGate(heldKnock);
+	}, [heldKnock]);
 
 	const waiting = Boolean(knock) && (!phase || phase === 'waiting');
 	const shownPhase =
@@ -223,7 +257,11 @@ export const CallPrejoinDialog = ({
 					if (knock) knockState?.close();
 					onClose();
 				}}
-				onKnockAgain={() => knockState?.knockAgain()}
+				/* Knocking again goes through the link; without it on this
+				   device the refusal offers only "Schließen" (FE#1893). */
+				onKnockAgain={
+					knock?.token ? () => knockState?.knockAgain() : undefined
+				}
 				sheet={sheet}
 			/>
 		</>

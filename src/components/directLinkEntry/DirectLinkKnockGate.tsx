@@ -83,7 +83,11 @@ const defaultJoinRunningCall = async (knock: PendingKnock) => {
 	const call = knock.joinCall;
 	if (!call) return;
 	await waitForJoinedRoom(call.roomRef);
-	await callManager.joinExistingCall(call, call.isGroup ?? false);
+	// The card's people are not stored with the knock; the join reads none.
+	await callManager.joinExistingCall(
+		{ ...call, participants: [] },
+		call.isGroup ?? false
+	);
 };
 
 /** The room whose call takes the switches (`GroupCallWidget`). */
@@ -170,7 +174,9 @@ export const DirectLinkKnock = ({
 			   with the camera off, as before. */
 			media={{ ...device.check, blocker: undefined }}
 			onCancel={state.cancel}
-			onKnockAgain={state.knockAgain}
+			/* Knocking again goes through the link; without it on this
+			   device the refusal offers only "Schließen" (FE#1893). */
+			onKnockAgain={knock.token ? state.knockAgain : undefined}
 			onClose={state.close}
 		/>
 	);
