@@ -47,7 +47,10 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
-import { joinOrKnock } from '../directLinkEntry/callMessageKnock';
+import {
+	callCardMayKnock,
+	joinOrKnock
+} from '../directLinkEntry/callMessageKnock';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -2744,13 +2747,16 @@ export const MessageItemComponent = ({
 													)
 											),
 										{
-											// Direct links are 1:1; a group has no own knock to look up.
-											asker:
-												!activeSession?.isGroup &&
-												hasUserAuthority(
+											// Who the server can gate at all: an advice seeker in a 1:1.
+											asker: callCardMayKnock({
+												isAsker: hasUserAuthority(
 													AUTHORITIES.ASKER_DEFAULT,
 													userData
+												),
+												isGroup: Boolean(
+													activeSession?.isGroup
 												)
+											})
 										}
 									)
 					}
