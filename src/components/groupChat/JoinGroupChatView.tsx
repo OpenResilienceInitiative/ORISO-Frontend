@@ -97,6 +97,7 @@ export const JoinGroupChatView = ({
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+	const [removedByServer, setRemovedByServer] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -270,6 +271,19 @@ export const JoinGroupChatView = ({
 		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
+				// #1923: the server refuses a banned member with a reason.
+				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT) {
+					setRemovedByServer(true);
+					setOverlayItem({
+						...bannedUserOverlay,
+						headline: translate(
+							'groupChat.removed.overlay.headline'
+						),
+						copy: undefined
+					});
+					setOverlayActive(true);
+					return false;
+				}
 				const notice = getCounsellingDpaNotification(error, translate, {
 					groupJoin: groupChatApiCall === GROUP_CHAT_API.JOIN
 				});
@@ -393,7 +407,10 @@ export const JoinGroupChatView = ({
 					welcomeText={authorContent.hintMessage || undefined}
 					rules={groupChatRules}
 					active={Boolean(item.active)}
-					joinBlocked={bannedUsers.includes(userData.userName)}
+					joinBlocked={
+						removedByServer ||
+						bannedUsers.includes(userData.userName)
+					}
 					onJoin={handleButtonClick}
 					joinBusy={isRequestInProgress}
 				/>

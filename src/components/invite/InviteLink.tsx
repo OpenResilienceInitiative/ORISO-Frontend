@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {
 	isRedeemInviteLinkSessionResponse,
+	isPausedInvite,
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
@@ -44,6 +45,7 @@ import {
 	resolveReusableInviteSession
 } from './inviteSessionReuse';
 import { StageLayout } from '../stageLayout/StageLayout';
+import { Loading } from '../app/Loading';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { OrisoTextField } from '../form/OrisoTextField';
 import genDiceIcon from '../../resources/img/registration-md3/icons/gen-dice.svg';
@@ -53,6 +55,16 @@ import {
 	registrationScreenTitleSx
 } from '../registration/registrationDesign/registrationDesign';
 import type { Pseudonym } from '../../utils/anonName/engine';
+import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
+import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+import {
+	directLinkMediumOf,
+	loginPathForDirectLink,
+	openDirectLinkConversation
+} from '../directLinkEntry/directLinkEntryFlow';
+import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import { directLinkRegistration } from '../directLinkEntry/directLinkRegistration';
 
 /**
  * Landing page for invite links.
@@ -116,13 +128,24 @@ export const InviteLink = () => {
 		| 'identity'
 		| 'registering'
 		| 'error'
+		| 'paused'
 		| 'room'
 		| 'invite'
 		| 'staff'
+		| 'directCall'
+		| 'directOpening'
 	>('loading');
+	/* #1795: a counsellor's direct link. Chat guests use the identity step
+	   below; call guests the call entry; signed-in people go straight in. */
+	const [directLink, setDirectLink] = useState<{
+		context: InviteLinkContext;
+		medium: DirectLinkMedium;
+		signedIn?: boolean;
+	} | null>(null);
 	/* A live-chat link the room opens before it is redeemed. */
 	const [liveTopic, setLiveTopic] = useState<{
 		topicId: number;
+		tenantId: number | null;
 		consultingTypeId?: number;
 	} | null>(null);
 	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
@@ -139,6 +162,10 @@ export const InviteLink = () => {
 	   identity stays on screen as it was — it is now the account's — and
 	   "continue" only tries the login again. */
 	const [loginRetry, setLoginRetry] = useState(false);
+	const hidePasswordField = Boolean(
+		directLink?.context.temporaryAccount &&
+			directLink.context.hidePasswordField
+	);
 	const hasRunRef = useRef(false);
 	/* Whether the page is still on screen. The lookups before a redeem can take
 	   seconds; leaving meanwhile must not create a guest behind the person's
@@ -163,20 +190,22 @@ export const InviteLink = () => {
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
 
-		/* A counsellor signed in in this browser must not be turned into a guest.
-		   Redeeming writes the guest's tokens where hers are; her next heartbeat
-		   then goes out as the guest, is refused, and she silently drops out of
-		   the live count while her switch still reads live (Dev, 2026-09-21). */
-		/* Only a session that is still alive: the invite route runs outside the
-		   app that tears an expired one down, and a stale cookie signs nobody
-		   out, so it must not lock anyone out either. */
-		if (holdsCounsellorSession()) {
-			setStatus('staff');
-			return;
-		}
-
 		(async () => {
 			try {
+				// The public context can report a paused link without creating an
+				// account or showing an existing waiting room or staff notice.
+				const context = await apiGetInviteLinkContext(token).catch(
+					async (error) => {
+						if (await isPausedInvite(error)) throw error;
+						return null;
+					}
+				);
+				if (!mountedRef.current) return;
+				if (holdsCounsellorSession()) {
+					setStatus('staff');
+					return;
+				}
+
 				/* A reload must not cost a second place in the queue. Redeem
 				   mints a fresh anonymous account and a fresh queue entry
 				   every time it is called — right for a second guest, wrong
@@ -186,8 +215,7 @@ export const InviteLink = () => {
 				const reusableSessionId =
 					await resolveReusableInviteSession(token);
 				if (reusableSessionId !== null) {
-					/* The lookup can take a moment; a counsellor who signed in
-					   meanwhile gets the lock, not a guest room under her login. */
+					if (!mountedRef.current) return;
 					if (holdsCounsellorSession()) {
 						setStatus('staff');
 						return;
@@ -197,21 +225,66 @@ export const InviteLink = () => {
 					return;
 				}
 
-				/* Who is live is asked before anything is created: the room
-				   gets the link's topic, offers names only if somebody is
-				   there, and redeems once a name is chosen. The context is
-				   public and redeems nothing. Without it — a link kind that
-				   has none, or a failed lookup — the page redeems on arrival
-				   as before, rather than leave the guest at a dead door. */
-				const context = await apiGetInviteLinkContext(token).catch(
-					() => null
-				);
+				if (context?.linkKind === 'CALL') {
+					if (!mountedRef.current) return;
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
+					if (
+						context.chatType !== 'AUDIO' &&
+						context.chatType !== 'VIDEO'
+					) {
+						setStatus('error');
+						setErrorMessage(t('directLink.entry.inactive'));
+						return;
+					}
+					setDirectLink({
+						context,
+						medium: context.chatType,
+						signedIn: hasActiveAuthSession()
+					});
+					setStatus('directCall');
+					return;
+				}
+				const directMedium = directLinkMediumOf(context);
+				if (context && directMedium) {
+					if (!mountedRef.current) return;
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
+					setDirectLink({ context, medium: directMedium });
+					if (hasActiveAuthSession()) {
+						/* Signed in: the own conversation, then the app. */
+						setStatus('directOpening');
+						await openDirectLinkConversation(token);
+						return;
+					}
+					if (directMedium !== 'CHAT') {
+						setStatus('directCall');
+						return;
+					}
+					const minted = mintInviteGuestCredentials(locale);
+					setLegacyRedeem({
+						tenantId: context.tenantId ?? 0,
+						agencyId: context.agencyId ?? 0,
+						consultingTypeId: context.consultingTypeId,
+						topicId: context.topicId
+					});
+					setIdentity(minted.identity);
+					setUsername(minted.username);
+					setPassword(minted.password);
+					setStatus('identity');
+					return;
+				}
 				if (
 					context?.chatType === 'LIVE_CHAT' &&
 					typeof context.topicId === 'number'
 				) {
 					setLiveTopic({
 						topicId: context.topicId,
+						tenantId: context.tenantId,
 						consultingTypeId: context.consultingTypeId ?? undefined
 					});
 					setStatus('invite');
@@ -265,11 +338,19 @@ export const InviteLink = () => {
 				setPassword(minted.password);
 				setStatus('identity');
 			} catch (err: unknown) {
+				if (await isPausedInvite(err)) {
+					if (mountedRef.current) setStatus('paused');
+					return;
+				}
 				const failure = getCounsellingDpaFailure(err);
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(inviteErrorText(err, t));
+				setErrorMessage(
+					isInactiveDirectLinkError(err)
+						? t('directLink.entry.inactive')
+						: inviteErrorText(err, t)
+				);
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);
@@ -289,6 +370,10 @@ export const InviteLink = () => {
 				throw new Error('Invite link did not open a live-chat session');
 			}
 		} catch (err) {
+			if (await isPausedInvite(err)) {
+				if (mountedRef.current) setStatus('paused');
+				throw err;
+			}
 			const failure = getCounsellingDpaFailure(err);
 			setDpaFailure(failure);
 			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
@@ -331,26 +416,46 @@ export const InviteLink = () => {
 		setStatus('registering');
 		try {
 			await registerThenLogin.submit(
-				{
-					username,
-					password,
-					agencyId: String(legacyRedeem.agencyId),
-					postcode: '00000',
-					termsAccepted: 'true',
-					preferredLanguage: locale,
-					consultingType:
-						legacyRedeem.consultingTypeId != null
-							? String(legacyRedeem.consultingTypeId)
-							: '0',
-					...(legacyRedeem.topicId != null
-						? { mainTopicId: String(legacyRedeem.topicId) }
-						: {})
-				} as any,
+				/* ORISO-UserService#1486: a direct-link registration carries the
+				   link and its temporary flag (one builder for chat and call);
+				   the server then creates no enquiry. */
+				(directLink && token
+					? directLinkRegistration(
+							directLink.context,
+							{ username, password },
+							locale,
+							token
+						)
+					: {
+							username,
+							password,
+							agencyId: String(legacyRedeem.agencyId),
+							postcode: '00000',
+							termsAccepted: 'true',
+							preferredLanguage: locale,
+							consultingType:
+								legacyRedeem.consultingTypeId != null
+									? String(legacyRedeem.consultingTypeId)
+									: '0',
+							...(legacyRedeem.topicId != null
+								? { mainTopicId: String(legacyRedeem.topicId) }
+								: {})
+						}) as any,
 				false,
 				tenant as any
 			);
+			if (directLink && token) {
+				/* The account exists and is signed in: the own conversation
+				   with the counsellor, not a new enquiry. */
+				await openDirectLinkConversation(token);
+				return;
+			}
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
+			if (await isPausedInvite(err)) {
+				if (mountedRef.current) setStatus('paused');
+				return;
+			}
 			if (registerThenLogin.accountCreated()) {
 				setLoginRetry(true);
 				setStatus('identity');
@@ -369,23 +474,38 @@ export const InviteLink = () => {
 		tenant,
 		navigate,
 		t,
-		registerThenLogin
+		registerThenLogin,
+		directLink,
+		token
 	]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
-	/* While it looks, and for a live-chat link after that, the room itself is
-	   on screen — the same element throughout, so on a desktop the stage stays
-	   and only the column changes. */
-	if (status === 'loading' || status === 'invite') {
+	if (status === 'invite') {
 		return (
 			<LiveChatEntryRoom
 				invite={{
 					topicId: liveTopic?.topicId,
+					tenantId: liveTopic?.tenantId,
 					consultingTypeId: liveTopic?.consultingTypeId,
 					redeem: redeemForRoom
 				}}
 				topicSlug={topicSlug}
+			/>
+		);
+	}
+
+	if (status === 'loading' || status === 'directOpening') {
+		return <Loading />;
+	}
+
+	if (status === 'directCall' && directLink && token) {
+		return (
+			<DirectLinkCallEntry
+				token={token}
+				context={directLink.context}
+				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
+				signedIn={directLink.signedIn}
 			/>
 		);
 	}
@@ -406,6 +526,15 @@ export const InviteLink = () => {
 			showRegistrationLink={false}
 		>
 			<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
+				{status === 'paused' && (
+					<Typography
+						component="h1"
+						role="alert"
+						sx={registrationScreenTitleSx}
+					>
+						{t('inviteLink.paused')}
+					</Typography>
+				)}
 				{status === 'staff' && (
 					<Box role="alert" data-cy="invite-staff-session">
 						<Typography
@@ -498,24 +627,28 @@ export const InviteLink = () => {
 								)
 							}}
 						/>
-						<OrisoTextField
-							value={password}
-							placeholder={t(
-								'registration.account.password.label'
-							)}
-							helperText={t('anonymousChat.password.warning')}
-							fullWidth
-							autoComplete="new-password"
-							inputProps={{
-								'aria-label': t(
+						{/* #1486: the platform may hide a temporary guest's
+						    password; the account still gets the generated one. */}
+						{!hidePasswordField && (
+							<OrisoTextField
+								value={password}
+								placeholder={t(
 									'registration.account.password.label'
-								),
-								'readOnly': true
-							}}
-							InputProps={{
-								readOnly: true
-							}}
-						/>
+								)}
+								helperText={t('anonymousChat.password.warning')}
+								fullWidth
+								autoComplete="new-password"
+								inputProps={{
+									'aria-label': t(
+										'registration.account.password.label'
+									),
+									'readOnly': true
+								}}
+								InputProps={{
+									readOnly: true
+								}}
+							/>
+						)}
 						{loginRetry && (
 							<Typography
 								role="status"
@@ -547,6 +680,20 @@ export const InviteLink = () => {
 						>
 							{t('anonymousChat.pseudonym.continueWithSelection')}
 						</Button>
+						{directLink && token && !loginRetry && (
+							<Button
+								fullWidth
+								href={loginPathForDirectLink(token)}
+								data-cy="direct-link-login"
+								sx={{
+									mt: 1,
+									textTransform: 'none',
+									color: registrationMd3.primary
+								}}
+							>
+								{t('directLink.entry.haveAccount')}
+							</Button>
+						)}
 					</Box>
 				)}
 				{status === 'error' && (

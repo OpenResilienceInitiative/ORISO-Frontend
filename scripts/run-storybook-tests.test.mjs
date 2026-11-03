@@ -41,6 +41,15 @@ const pr1297ImportCrash = [
 	disconnect
 ].join('\n');
 
+const pr1946BrowserDisconnect = [
+	' FAIL   storybook (chromium)  src/components/askerInfo/AskerInfo.stories.ts [ src/components/askerInfo/AskerInfo.stories.ts ]',
+	'Error: Failed to run the test /home/runner/work/ORISO-Frontend/ORISO-Frontend/src/components/askerInfo/AskerInfo.stories.ts.',
+	'Caused by: BrowserConnectionError: [vitest] Browser connection was closed while running tests. Was the page closed unexpectedly?',
+	'Test Files  1 failed | 67 passed (75)',
+	'Tests  1 failed | 555 passed (556)',
+	'Errors  1 error'
+].join('\n');
+
 test('retries when the browser disconnect is the only reported failure', () => {
 	assert.equal(shouldRetryStorybookRun(1, disconnect), true);
 });
@@ -76,6 +85,14 @@ test('retries when Chrome dies mid-import and Vitest marks that file FAIL', () =
 		}),
 		true
 	);
+});
+
+test('retries when a browser disconnect is reported as a failed story file', () => {
+	// PR #1946: every completed assertion passed, but Vitest attributed the
+	// closed browser connection to whichever story file was being collected.
+	// That synthetic failed test must not turn the disconnect into product code.
+	assert.equal(looksLikeBrowserDisconnect(pr1946BrowserDisconnect), true);
+	assert.equal(shouldRetryStorybookRun(1, pr1946BrowserDisconnect), true);
 });
 
 test('does not retry and mask a failed assertion reported before the disconnect', () => {
@@ -183,11 +200,45 @@ test('uses the supported worker cap without the removed minWorkers option', () =
 test('splits the suite into sequential shards so one browser session never drives the whole queue', () => {
 	// Every full-suite attempt in ORISO-Frontend#1316 run 34016457101 died at
 	// ~95-107 of 175 files; a shard keeps each orchestrator tab well below that.
-	assert.equal(DEFAULT_STORYBOOK_SHARDS, 4);
+	// Since #1864 four shards of ~76 files each lost Chrome ~0.35 times per
+	// shard attempt again (#1988): eight shards.
+	assert.equal(DEFAULT_STORYBOOK_SHARDS, 8);
 	assert.deepEqual(storybookShardArgs(2, 4), [
 		...storybookVitestArgs,
 		'--shard=2/4'
 	]);
+});
+
+test('the CI Storybook step makes Vitest collect Chromium garbage after every file', async () => {
+	// Vitest only asks Chrome for a GC when /tmp has less free space than the
+	// threshold (default 4 GB, never reached on a GitHub runner). A threshold
+	// above any runner disk makes it run after every test file (#1988).
+	const workflow = await readFile(
+		fileURLToPath(
+			new URL('../.github/workflows/ci-pull-request.yml', import.meta.url)
+		),
+		'utf8'
+	);
+	const step = workflow.match(
+		/- name: Run Storybook component tests\n([\s\S]*?)(?=\n\s*- name:)/
+	);
+	assert.ok(step, 'Storybook step not found in ci-pull-request.yml');
+	// Only a key of the step's own env mapping counts, not a mention in a
+	// comment or in the run command.
+	const env = step[1].match(/^(\s+)env:\n((?:\1\s+.*\n?)*)/m);
+	assert.ok(env, 'Storybook step has no env mapping');
+	const keys = env[2]
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line && !line.startsWith('#'));
+	assert.ok(
+		keys.some((line) =>
+			/^VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB:\s*["']?1000["']?$/.test(
+				line
+			)
+		),
+		'VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB=1000 is not set in the step env'
+	);
 });
 
 test('runs unsharded when a single shard is requested', () => {

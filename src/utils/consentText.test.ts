@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { hasLegalLinksToken, substituteLegalLinks } from './consentText';
+import {
+	fillConsentPlaceholders,
+	hasLegalLinksToken,
+	substituteLegalLinks
+} from './consentText';
 
 const LINKS =
 	'<a href="https://oriso.test/datenschutz">Datenschutzerklärung</a>, <a href="https://oriso.test/impressum">Impressum</a>';
@@ -63,5 +67,40 @@ describe('consentText — the client half of the split substitution', () => {
 		// every second call answer `false` for the same input.
 		expect(hasLegalLinksToken('a {{legal_links}} b')).toBe(true);
 		expect(hasLegalLinksToken('a {{legal_links}} b')).toBe(true);
+	});
+});
+
+describe('fillConsentPlaceholders — no raw token ever reaches a reader', () => {
+	it('fills the topic the public endpoint leaves standing', () => {
+		// Measured on dev 28.10.: '…Impressum{{Thema}}Advice center Lichteberg'.
+		expect(
+			fillConsentPlaceholders(
+				'Ich stimme {{legal_links}} zu, {{Thema}} bei {{Beratungsstelle}}.',
+				{ agencyName: 'Lichteberg', topicName: 'Schulden' }
+			)
+		).toBe('Ich stimme {{legal_links}} zu, Schulden bei Lichteberg.');
+	});
+
+	it('drops a token whose value is not known instead of printing it', () => {
+		expect(
+			fillConsentPlaceholders(
+				'Ich stimme {{legal_links}} zu, {{Thema}} bei {{Adresse}}.',
+				{}
+			)
+		).toBe('Ich stimme {{legal_links}} zu, bei .');
+	});
+
+	it('keeps {{legal_links}} for the links step', () => {
+		expect(fillConsentPlaceholders('{{ legal_links }}', {})).toBe(
+			'{{ legal_links }}'
+		);
+	});
+
+	it('escapes names, which are inserted into HTML', () => {
+		expect(
+			fillConsentPlaceholders('{{Thema}}', {
+				topicName: 'Sucht & <b>Drogen</b>'
+			})
+		).toBe('Sucht &amp; &lt;b&gt;Drogen&lt;/b&gt;');
 	});
 });

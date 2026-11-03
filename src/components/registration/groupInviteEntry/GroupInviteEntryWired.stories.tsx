@@ -265,3 +265,45 @@ export const LoginKeepsTheLink: Story = {
 		).toBeNull();
 	}
 };
+
+const BROKEN_LINK = '/login?gcid=15.&aid=88';
+
+/* #921: a cut-off link explains itself instead of registering an account. */
+const expectBrokenLinkExplained = async (canvasElement: HTMLElement) => {
+	const alert = await page(canvasElement).findByRole(
+		'alert',
+		{},
+		{ timeout: 8000 }
+	);
+	await expect(where(canvasElement)).toContain('gcid=15.&aid=88');
+	await expect(
+		page(canvasElement).getByRole('heading', {
+			name: 'Dieser Einladungslink funktioniert nicht.'
+		})
+	).toBeVisible();
+	await expect(alert).toHaveTextContent(
+		'Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen.'
+	);
+	await expect(
+		page(canvasElement).queryByTestId('registration-footer-primary')
+	).toBeNull();
+	await expect(
+		canvasElement.ownerDocument.querySelector('input[type="password"]')
+	).toBeNull();
+	const box = alert.getBoundingClientRect();
+	await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+};
+
+export const BrokenLinkDesktop: Story = {
+	name: 'Broken link → explanation · 1366',
+	globals: { viewport: { value: 'desktop1366' } },
+	parameters: { router: { initialPath: BROKEN_LINK } },
+	play: async ({ canvasElement }) => expectBrokenLinkExplained(canvasElement)
+};
+
+export const BrokenLinkMobile: Story = {
+	name: 'Broken link → explanation · 390',
+	globals: phone390Globals,
+	parameters: { router: { initialPath: BROKEN_LINK } },
+	play: async ({ canvasElement }) => expectBrokenLinkExplained(canvasElement)
+};

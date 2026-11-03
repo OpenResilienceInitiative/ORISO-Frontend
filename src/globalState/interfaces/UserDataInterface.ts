@@ -1,3 +1,7 @@
+import type {
+	AgencyFeaturePolicies,
+	ConversationFeatureKey
+} from './ConversationFeatureSettings';
 import { ConsultingTypeInterface } from './ConsultingTypeInterface';
 import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/twoFactorAuthConstants';
 
@@ -20,6 +24,8 @@ export interface UserDataInterface {
 	grantedAuthorities: [string];
 	hasArchive: boolean;
 	isDisplayNameEditable: boolean;
+	/** Read-only server decision from fresh account policy and actual owned seeker contexts. */
+	isAskerEmailCollectionAllowed?: boolean;
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
@@ -95,17 +101,19 @@ export interface AgencyDataInterface {
 	departments?: AgencyDepartmentDataInterface[];
 	/**
 	 * The agency's feature settings from the public agency response. The
-	 * group-chat flags are the effective values (Träger AND Beratungsstelle
-	 * combined, AgencyService #293); `null` means no restriction from this
-	 * agency. Older backends omit them.
+	 * canonical permissionPolicies map contains server-resolved values. Older
+	 * flat-only responses retain their restriction-only compatibility semantics.
 	 */
 	settings?: AgencySettingsInterface | null;
 }
 
-export interface AgencySettingsInterface {
-	featureGroupChatV2Enabled?: boolean | null;
-	featureInternalGroupChatEnabled?: boolean | null;
-	featureSelfHelpGroupsEnabled?: boolean | null;
+export interface AgencySettingsInterface
+	extends Partial<Record<ConversationFeatureKey, boolean | null>> {
+	permissionPolicies?: AgencyFeaturePolicies | null;
+	/** "Direkteinladung erlauben" per medium (TenantService#332, AgencyService#347). */
+	featureDirectInviteChatEnabled?: boolean | null;
+	featureDirectInviteAudioEnabled?: boolean | null;
+	featureDirectInviteVideoEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {

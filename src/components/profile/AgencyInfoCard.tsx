@@ -11,6 +11,7 @@ import {
 } from '../../globalState/interfaces';
 import { DepartmentLegalSection } from '../departmentLegal/DepartmentLegalSection';
 import { buildOsmSearchUrl } from '../../utils/osmLink';
+import { formatOpeningHours } from '../../utils/openingHours';
 
 export interface AgencyInfoCardProps {
 	item: ListItemInterface;
@@ -49,6 +50,10 @@ export const AgencyInfoCard = ({ item }: AgencyInfoCardProps) => {
 		.filter(Boolean)
 		.join(' ');
 	const cityLine = [agency?.postcode, agency?.city].filter(Boolean).join(' ');
+	// Structured slots (Admin "Option A" JSON) become readable text; free text stays as entered.
+	const openingHours = formatOpeningHours(agency?.openingHours, (key) =>
+		translate(key)
+	);
 	const mapUrl = buildOsmSearchUrl({
 		street: agency?.street,
 		houseNumber: agency?.houseNumber,
@@ -108,7 +113,7 @@ export const AgencyInfoCard = ({ item }: AgencyInfoCardProps) => {
 						/>
 					</div>
 				)}
-				{agency?.openingHours && (
+				{openingHours && (
 					<div className="profile__data__item">
 						<p className="profile__data__label">
 							{translate(
@@ -119,7 +124,7 @@ export const AgencyInfoCard = ({ item }: AgencyInfoCardProps) => {
 							className="profile__data__content"
 							style={{ whiteSpace: 'pre-line' }}
 						>
-							{agency.openingHours}
+							{openingHours}
 						</p>
 					</div>
 				)}

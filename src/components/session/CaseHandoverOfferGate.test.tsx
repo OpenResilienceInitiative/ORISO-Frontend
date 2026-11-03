@@ -150,6 +150,87 @@ describe('CaseHandoverOfferGate', () => {
 		expect(screen.getByText('caseHandover.offer.declined')).toBeTruthy();
 	});
 
+	it('tells the recipient the offer was withdrawn and offers no decision', async () => {
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+			status({ status: 'WITHDRAWN' })
+		);
+		render(
+			<CaseHandoverOfferGate
+				actorId="recipient-a"
+				sessionId={41}
+				requestId={501}
+				onClose={vi.fn()}
+			>
+				<div>private</div>
+			</CaseHandoverOfferGate>
+		);
+
+		expect(
+			await screen.findByText('caseHandover.offer.withdrawn')
+		).toBeTruthy();
+		expect(screen.queryByTestId('case-handover-offer-accept')).toBeNull();
+		expect(screen.queryByTestId('case-handover-offer-decline')).toBeNull();
+	});
+
+	it.each([
+		'PENDING_RECIPIENT_ACCEPTANCE',
+		'RECIPIENT_DECLINED',
+		'WITHDRAWN'
+	] as const)(
+		'shows the offering counsellor their conversation, not the decision, for %s',
+		async (offerStatus) => {
+			vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+				status({
+					status: offerStatus,
+					direction: 'PUSH',
+					initiatorConsultantId: 'offerer-a',
+					recipientConsultantId: 'recipient-a'
+				})
+			);
+			render(
+				<CaseHandoverOfferGate
+					actorId="offerer-a"
+					sessionId={41}
+					requestId={501}
+					onClose={vi.fn()}
+				>
+					<div data-testid="normal-session">own conversation</div>
+				</CaseHandoverOfferGate>
+			);
+
+			expect(await screen.findByTestId('normal-session')).toBeTruthy();
+			expect(screen.queryByText('caseHandover.offer.title')).toBeNull();
+			expect(
+				screen.queryByTestId('case-handover-offer-accept')
+			).toBeNull();
+		}
+	);
+
+	it('still asks the recipient of a colleague offer to decide', async () => {
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+			status({
+				direction: 'PUSH',
+				initiatorConsultantId: 'offerer-a',
+				recipientConsultantId: 'recipient-a'
+			})
+		);
+		render(
+			<CaseHandoverOfferGate
+				actorId="recipient-a"
+				sessionId={41}
+				requestId={501}
+				onClose={vi.fn()}
+			>
+				<div data-testid="normal-session">private</div>
+			</CaseHandoverOfferGate>
+		);
+
+		expect(
+			await screen.findByTestId('case-handover-offer-accept')
+		).toBeTruthy();
+		expect(screen.queryByTestId('normal-session')).toBeNull();
+	});
+
 	it('isolates A to B request churn and ignores reverse-order stale responses', async () => {
 		const requestA = deferred<CaseHandoverStatus>();
 		const requestB = deferred<CaseHandoverStatus>();

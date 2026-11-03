@@ -286,6 +286,16 @@ $setup-disabled-text: #5f6368;
 		gap: 12px;
 	}
 
+	&__activeHint {
+		margin: 0;
+		padding: 12px 16px;
+		border-radius: 10px;
+		background: var(--m3-surface-container, #f1edee);
+		color: var(--m3-on-surface, #1d1b1c);
+		font-size: 14px;
+		line-height: 1.4;
+	}
+
 	&__choiceButton {
 		min-height: 56px !important;
 		border-radius: 10px !important;

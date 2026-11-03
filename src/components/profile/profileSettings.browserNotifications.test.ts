@@ -9,6 +9,9 @@ import type {
 } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 
+vi.mock('../directLinks/MyDirectLinksPanel', () => ({
+	MyLinksSettings: () => null
+}));
 vi.mock('./SecurityPrivacySettings', () => ({
 	SecurityPrivacySettings: () => null
 }));

@@ -12,8 +12,12 @@ const ANIMATION: Record<SlideFrom, string> = {
 	below: 'slideInFromBelow'
 };
 
+/* `backwards`, not `both`: holding the last frame keeps a transform on the
+   view, and a transformed view becomes the containing block of every fixed
+   bar inside it — the entry room's bottom bar then stood 40px left of the
+   screen edge, under the red stage. */
 const animationFor = (from: SlideFrom, ms: number) =>
-	`${ANIMATION[from]} ${ms}ms ${transitionMotion.easeIn} both`;
+	`${ANIMATION[from]} ${ms}ms ${transitionMotion.easeIn} backwards`;
 
 export interface SlideInProps {
 	'from': SlideFromProp;

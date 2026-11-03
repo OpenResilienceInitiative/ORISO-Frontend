@@ -195,6 +195,24 @@ describe('DataProtectionConsentLabel — fallback is today, unchanged', () => {
 });
 
 describe('DataProtectionConsentLabel — the Träger sentence', () => {
+	it('never shows a placeholder it cannot fill', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(
+			ok({
+				sentence:
+					'Ich willige ein ({{Thema}}, {{Adresse}}) nach {{legal_links}}.',
+				versionId: 7
+			})
+		);
+
+		const { container } = renderLabel(agencyWith(true));
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
+		);
+		expect(container.textContent).toContain('Suchtberatung');
+		expect(container.textContent).not.toMatch(/\{\{|\}\}/);
+	});
+
 	it('renders the server-substituted sentence with real, clickable links', async () => {
 		vi.mocked(apiGetConsentText).mockResolvedValue(
 			ok({

@@ -1370,6 +1370,16 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: #e1dedf;
 	}
 
+	// The tablist groups the three tabs for assistive technology. It takes three
+	// of the row's four equal shares plus the three tabs' side padding (3 x 16px),
+	// so the tabs and the archive toggle keep their widths (#1338).
+	&__searchModalTabList {
+		display: flex;
+		flex: 3 1 48px;
+		min-width: 0;
+		align-items: stretch;
+	}
+
 	&__searchModalTab {
 		border: none;
 		background: transparent;
