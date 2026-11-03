@@ -325,12 +325,13 @@ export const CallDevicesOk: Story = {
 		await expectLivePreview(canvasElement);
 		// Not joined yet: the check comes first.
 		await expect(args.onJoin).not.toHaveBeenCalled();
-		// The pickers stay, and say what the call uses (ORISO-ElementCall#116).
+		// The call now takes the picked devices (ORISO-ElementCall#116), so
+		// the interim "the call uses your browser's default device" is gone.
 		await expect(
-			page(canvasElement).getByText(
+			page(canvasElement).queryByText(
 				'Der Anruf nutzt vorerst das Standardgerät Ihres Browsers.'
 			)
-		).toBeVisible();
+		).toBeNull();
 	}
 };
 
@@ -758,7 +759,9 @@ export const KnockLetInJoins: Story = {
 		await expectClosed(canvasElement);
 		await expect(peekJoinMedia(knockCall.roomRef)).toEqual({
 			audio_enabled: true,
-			video_enabled: false
+			video_enabled: false,
+			microphoneLabel: 'MacBook Pro-Mikrofon',
+			cameraLabel: 'FaceTime HD-Kamera'
 		});
 	}
 };
