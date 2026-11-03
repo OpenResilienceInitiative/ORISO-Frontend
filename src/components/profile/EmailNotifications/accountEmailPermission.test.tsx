@@ -159,7 +159,10 @@ describe('account email collection entry points', () => {
 			})
 		);
 		await waitFor(() =>
-			expect(apiPutEmail).toHaveBeenCalledWith('consultant@example.test')
+			expect(apiPutEmail).toHaveBeenCalledWith(
+				'consultant@example.test',
+				expect.objectContaining({ id: expect.any(String) })
+			)
 		);
 	});
 	it('withdraws an already-open email dialog when permission changes', () => {
