@@ -60,13 +60,14 @@ export const useGuestRetentionGate = (enabled: boolean) => {
 					if (own.status !== 'ready') {
 						// Unknown is not "no account": hold the message.
 						pending.current = null;
+						// Fixed id: repeated tries show one notice, not a stack.
 						addNotification({
+							id: 'temporaryAccount.lookupFailed',
 							notificationType: NOTIFICATION_TYPE_ERROR,
 							title: t('temporaryAccount.lookupFailed.title'),
 							text: t('temporaryAccount.lookupFailed.text'),
 							closeable: true,
-							announce: 'alert',
-							timeout: 10000
+							announce: 'alert'
 						});
 						return;
 					}

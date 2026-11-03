@@ -50,7 +50,7 @@ const Inner = ({ enabled }: { enabled: boolean }) => {
 		<>
 			<button
 				onClick={() => {
-					gated = gate(send);
+					gated = gate(() => send());
 					if (!gated) send();
 				}}
 			>
@@ -164,12 +164,19 @@ describe('useGuestRetentionGate', () => {
 		const lookupNotice = () =>
 			expect.objectContaining({
 				notificationType: 'error',
+				// A fixed id: repeated failed sends do not stack notices.
+				id: 'temporaryAccount.lookupFailed',
 				title: 'temporaryAccount.lookupFailed.title',
 				text: 'temporaryAccount.lookupFailed.text',
-				announce: 'alert'
+				announce: 'alert',
+				closeable: true
 			});
 
-		it('holds the send and says so when the lookup fails twice', async () => {
+		// Closeable, not auto-dismissed: the person may be typing elsewhere.
+		const noticeHasNoTimeout = () =>
+			expect(addNotification.mock.calls[0][0].timeout).toBeUndefined();
+
+		it('holds the send and says so when the lookup fails again', async () => {
 			resetTemporaryAccount(null, 'failed');
 			vi.mocked(apiGetTemporaryAccount).mockRejectedValue(
 				new Error('503')
@@ -180,6 +187,7 @@ describe('useGuestRetentionGate', () => {
 			await waitFor(() =>
 				expect(addNotification).toHaveBeenCalledWith(lookupNotice())
 			);
+			noticeHasNoTimeout();
 			expect(send).not.toHaveBeenCalled();
 			expect(screen.queryByTestId('keep-messages-dialog')).toBeNull();
 		});
@@ -200,6 +208,7 @@ describe('useGuestRetentionGate', () => {
 				});
 				expect(send).not.toHaveBeenCalled();
 				expect(addNotification).toHaveBeenCalledWith(lookupNotice());
+				noticeHasNoTimeout();
 				expect(screen.queryByTestId('keep-messages-dialog')).toBeNull();
 			} finally {
 				vi.useRealTimers();
@@ -228,7 +237,7 @@ describe('useGuestRetentionGate', () => {
 			expect(addNotification).toHaveBeenCalledOnce();
 		});
 
-		it('does not send when the lookup lands after the wait ran out and says so', async () => {
+		it('says so when the wait ran out, and sends the next try once the late answer landed', async () => {
 			vi.useFakeTimers();
 			try {
 				resetTemporaryAccount();
@@ -244,6 +253,8 @@ describe('useGuestRetentionGate', () => {
 					await vi.advanceTimersByTimeAsync(LOOKUP_WAIT_MS);
 				});
 				expect(send).not.toHaveBeenCalled();
+				expect(addNotification).toHaveBeenCalledOnce();
+				expect(addNotification).toHaveBeenCalledWith(lookupNotice());
 				// The late answer is kept: the next try needs no new wait.
 				await act(async () => {
 					land(null);
@@ -251,12 +262,13 @@ describe('useGuestRetentionGate', () => {
 				fireEvent.click(screen.getByText('send'));
 				expect(gated).toBe(false);
 				expect(send).toHaveBeenCalledOnce();
+				expect(addNotification).toHaveBeenCalledOnce();
 			} finally {
 				vi.useRealTimers();
 			}
 		});
 
-		it('sends one message per try, never twice', async () => {
+		it('holds two quick sends with one notice and sends nothing', async () => {
 			resetTemporaryAccount(null, 'failed');
 			vi.mocked(apiGetTemporaryAccount).mockRejectedValue(
 				new Error('503')
@@ -265,6 +277,11 @@ describe('useGuestRetentionGate', () => {
 			fireEvent.click(screen.getByText('send'));
 			fireEvent.click(screen.getByText('send'));
 			await waitFor(() => expect(addNotification).toHaveBeenCalled());
+			// Let any second notice land before counting.
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 20));
+			});
+			expect(addNotification).toHaveBeenCalledTimes(1);
 			expect(send).not.toHaveBeenCalled();
 		});
 	});
