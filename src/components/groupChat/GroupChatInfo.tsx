@@ -42,6 +42,7 @@ import { decodeUsername } from '../../utils/encryptionHelpers';
 import './groupChatInfo.styles';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { BanUserOverlay } from '../banUser/BanUser';
+import { BanUserConfirmDialog } from '../banUser/BanUserConfirmDialog';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -620,6 +621,11 @@ const GroupChatInfoM3Connected = ({
 		anchor: HTMLElement;
 		participant: GroupChatInfoParticipant;
 	} | null>(null);
+	// Outlives the member menu: the question opens after the menu closes.
+	const [pendingBan, setPendingBan] = useState<{
+		anchor: HTMLElement;
+		participant: GroupChatInfoParticipant;
+	} | null>(null);
 	useEffect(() => {
 		if (activeSession.item.active) {
 			apiGetGroupChatInfo(activeSession.item.id).then((response) => {
@@ -653,8 +659,24 @@ const GroupChatInfoM3Connected = ({
 		if (!menu) {
 			return;
 		}
-		const { participant } = menu;
+		setPendingBan(menu);
 		setMenu(null);
+	};
+
+	const cancelBan = () => {
+		const anchor = pendingBan?.anchor;
+		setPendingBan(null);
+		// The menu item that opened the dialog is gone; return focus to ⋮.
+		requestAnimationFrame(() => anchor?.focus());
+	};
+
+	const confirmBan = () => {
+		if (!pendingBan) {
+			return;
+		}
+		const { participant, anchor } = pendingBan;
+		setPendingBan(null);
+		requestAnimationFrame(() => anchor.focus());
 		apiPostBanUser({
 			matrixUserId: participant.id,
 			chatId: activeSession.item.id
@@ -694,6 +716,11 @@ const GroupChatInfoM3Connected = ({
 					{translate('banUser.ban.trigger')}
 				</MenuItem>
 			</Menu>
+			<BanUserConfirmDialog
+				name={pendingBan?.participant.name ?? null}
+				onCancel={cancelBan}
+				onConfirm={confirmBan}
+			/>
 		</>
 	);
 };

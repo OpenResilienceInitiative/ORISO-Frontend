@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	LEGACY_MATRIX_HOMESERVER_SUFFIX,
 	isSystemMatrixUser,

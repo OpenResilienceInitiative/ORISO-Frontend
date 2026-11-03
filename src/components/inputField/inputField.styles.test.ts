@@ -1,7 +1,7 @@
 // @vitest-environment node
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const scss = () =>
 	fs.readFileSync(

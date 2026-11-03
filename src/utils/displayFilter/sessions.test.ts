@@ -3,7 +3,7 @@
  * (spec §5.2 order and asker rule, §5.3).
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { DEFAULT_DISPLAY_FILTER, DisplayFilter } from './model';
 import {
 	applyRequestsFilter,

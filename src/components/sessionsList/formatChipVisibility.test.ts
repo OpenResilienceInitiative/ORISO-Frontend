@@ -1,7 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getFormatChipVisibility } from './formatChipVisibility';
 
 const consultantOnMySessions = true;
+
+/* "Direkteinladung erlauben" off for every medium (TenantService#332). */
+const noDirectLinks = {
+	featureDirectInviteChatEnabled: false,
+	featureDirectInviteAudioEnabled: false,
+	featureDirectInviteVideoEnabled: false
+};
 
 describe('getFormatChipVisibility', () => {
 	// Tenant 14 on dev: supervision on, group chats off. The "Interna" filter
@@ -13,7 +20,8 @@ describe('getFormatChipVisibility', () => {
 				{
 					settings: {
 						featureGroupChatV2Enabled: false,
-						featureSupervisionEnabled: true
+						featureSupervisionEnabled: true,
+						...noDirectLinks
 					}
 				},
 				consultantOnMySessions
@@ -100,7 +108,8 @@ describe('getFormatChipVisibility', () => {
 					id: 1,
 					settings: {
 						featureSelfHelpGroupsEnabled: false,
-						featureInternalGroupChatEnabled: false
+						featureInternalGroupChatEnabled: false,
+						...noDirectLinks
 					}
 				}
 			])
@@ -131,6 +140,25 @@ describe('getFormatChipVisibility', () => {
 		).toEqual({
 			createGroupChat: true,
 			groups: true,
+			internalGroup: false
+		});
+	});
+
+	// #1795: a direct link is created in the same flow, so it keeps the entry.
+	it('keeps the create entry for direct links when group chats are off', () => {
+		expect(
+			getFormatChipVisibility(
+				{
+					settings: {
+						featureGroupChatV2Enabled: false,
+						featureDirectInviteVideoEnabled: true
+					}
+				},
+				consultantOnMySessions
+			)
+		).toEqual({
+			createGroupChat: true,
+			groups: false,
 			internalGroup: false
 		});
 	});

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -8,7 +8,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { Registration } from './Registration';
 import {
 	AppConfigContext,
@@ -397,5 +404,30 @@ describe('registration — the preselected topic while the account is created', 
 			preselected(),
 			'the handover is not interrupted by the topic box'
 		).toBeNull();
+	});
+});
+
+describe('registration — the login button while the account is created', () => {
+	const stageLayouts = () =>
+		Array.from(document.querySelectorAll('[data-testid="stage-layout"]'));
+
+	/* The handover brings its own frame, so the form's page is replaced, not
+	   left standing with the button sliding out (Codex on #1766). */
+	it('stays with the form and goes with the page when the handover takes over', async () => {
+		renderAccountStep();
+		await waitFor(() => expect(form()).toBeTruthy());
+		expect(
+			stageLayouts().map((l) => l.getAttribute('data-show-login'))
+		).toEqual(['true']);
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		const layouts = stageLayouts();
+		expect(layouts, 'one page: the handover’s').toHaveLength(1);
+		expect(layouts[0].contains(handover())).toBe(true);
+		expect(layouts[0].contains(form()), 'the form’s page is gone').toBe(
+			false
+		);
 	});
 });

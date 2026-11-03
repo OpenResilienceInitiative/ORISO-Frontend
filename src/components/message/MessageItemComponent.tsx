@@ -1,4 +1,9 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
+import {
+	retentionOf,
+	useOwnTemporaryAccount
+} from '../temporaryAccount/temporaryAccountStore';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
@@ -41,6 +46,7 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
+import { joinOrKnock } from '../directLinkEntry/callMessageKnock';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -87,6 +93,7 @@ import { ReactComponent as ShieldPersonIcon } from '../../resources/img/icons/ti
 import { ReactComponent as KeyboardArrowUpIcon } from '../../resources/img/icons/keyboard_arrow_up.svg';
 import {
 	chatEndedTextKey,
+	isClientWordedTakeover,
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
 	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
@@ -94,6 +101,12 @@ import {
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
+import { FurtherCounsellingNoticeBody } from '../furtherCounselling/FurtherCounsellingNoticeBody';
+import {
+	FURTHER_COUNSELLING_RECOMMENDED,
+	TOPIC_DUPLICATE_STARTED
+} from '../furtherCounselling/furtherCounsellingNotices';
+import { isTrustedRecommendationSender } from '../furtherCounselling/furtherCounsellingRules';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
@@ -253,6 +266,8 @@ export interface MessageItem {
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
 	isEdited?: boolean;
+	/** #1869: sent by a temporary account and deleted together with it. */
+	isTemporary?: boolean;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -344,6 +359,7 @@ export const MessageItemComponent = ({
 	replyToEventId,
 	threadRootEventId,
 	isEdited,
+	isTemporary,
 	replyQuote,
 	onReplyDirect,
 	onEditDirect,
@@ -701,6 +717,22 @@ export const MessageItemComponent = ({
 	   that happened to post it. Laid out as "mine", the takeover notice lost
 	   its header and sat on the right for the counsellor who took the case. */
 	const isMyMessage = isOwnEvent && !parsedMessage.isSystemNotification;
+	/* #1869 / ORISO-UserService#1486: messages that go with a temporary
+	   account carry the "Temporär" pill — the guest's own, and on the
+	   counsellor's side the guest's in a 1:1 conversation. */
+	const viewerIsAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const { account: ownTemporaryAccount } = useOwnTemporaryAccount(
+		viewerIsAsker && !activeSession?.isGroup
+	);
+	const showTemporaryMarker =
+		Boolean(isTemporary) ||
+		(!parsedMessage.isSystemNotification &&
+			!activeSession?.isGroup &&
+			(isMyMessage
+				? viewerIsAsker && retentionOf(ownTemporaryAccount) === 'delete'
+				: !viewerIsAsker &&
+					retentionOf(activeSession?.user?.temporaryAccount) ===
+						'delete'));
 	const roomUser = useMemo(() => {
 		if (!matrixRoomUsersContext?.users?.length) {
 			return null;
@@ -1201,6 +1233,28 @@ export const MessageItemComponent = ({
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	/* FE#1876. The recommendation card carries a button, so it is drawn only
+	   for the assigned counsellor's event; anything else renders nothing. The two
+	   same-topic notices are plain text for everyone. */
+	const furtherCounsellingNotice =
+		parsedMessage.systemNotificationFurtherCounselling;
+	const isFurtherCounsellingNotice = Boolean(furtherCounsellingNotice);
+	const isUntrustedRecommendation =
+		furtherCounsellingNotice?.type === FURTHER_COUNSELLING_RECOMMENDED &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const furtherCounsellingTitle = furtherCounsellingNotice
+		? translate(
+				furtherCounsellingNotice.type ===
+					FURTHER_COUNSELLING_RECOMMENDED
+					? 'furtherCounselling.card.title'
+					: furtherCounsellingNotice.type === TOPIC_DUPLICATE_STARTED
+						? 'furtherCounselling.duplicate.startedTitle'
+						: 'furtherCounselling.duplicate.endedTitle'
+			)
+		: '';
 	/* T49: the supervision side room's notice is drawn with the SAME organism
 	   as the main chat's Carimat message (ErstantwortSequence → pseudonymCard),
 	   under the room's name — never with the generic chrome below. */
@@ -1233,13 +1287,19 @@ export const MessageItemComponent = ({
 				explanation: systemNotificationExplanation
 			}
 		);
-	const systemNotificationRawDescription =
-		parsedMessage.systemNotificationDescription;
 	/* The stored description is frozen in the server's language; the header is
-	   translated here, so the body must be too or the bubble mixes languages. */
+	   translated here, so the body must be too or the bubble mixes languages.
+	   That holds for the counsellor's view as well (#1844). */
 	const acceptedDescription = translate(
 		'notifications.events.inquiryAccepted.text'
 	);
+	const systemNotificationBody = isInquiryAcceptedEvent
+		? acceptedDescription
+		: isClientWordedTakeover(parsedMessage)
+			? translate('caseHandover.systemMessage.tookOverBody', {
+					advisor: parsedMessage.systemNotificationUsername
+				})
+			: parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -1974,7 +2034,9 @@ export const MessageItemComponent = ({
 						)
 					: isInquiryAcceptedEvent
 						? translate('caseHandover.accepted.title')
-						: systemNotificationTitle,
+						: isFurtherCounsellingNotice
+							? furtherCounsellingTitle
+							: systemNotificationTitle,
 				topicIcon: isCaseHandoverGrantedEvent ? (
 					<HandoverTopicIcon />
 				) : isInquiryAcceptedEvent ? (
@@ -2190,7 +2252,7 @@ export const MessageItemComponent = ({
 												}
 												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
 												description={
-													systemNotificationRawDescription
+													systemNotificationBody
 												}
 												sessionId={
 													activeSession.item.id
@@ -2208,11 +2270,9 @@ export const MessageItemComponent = ({
 												}
 											/>
 										) : (
-											systemNotificationRawDescription && (
+											systemNotificationBody && (
 												<p className="messageItem__systemNotificationDescription">
-													{
-														systemNotificationRawDescription
-													}
+													{systemNotificationBody}
 												</p>
 											)
 										)}
@@ -2227,8 +2287,23 @@ export const MessageItemComponent = ({
 							 * notice wore three labels. See ORISO-Frontend#892.
 							 */}
 							{isSystemNotification &&
+								furtherCounsellingNotice && (
+									<FurtherCounsellingNoticeBody
+										notice={furtherCounsellingNotice}
+										viewerIsAsker={
+											!readOnly &&
+											hasUserAuthority(
+												AUTHORITIES.ASKER_DEFAULT,
+												userData
+											)
+										}
+										messageId={_id}
+									/>
+								)}
+							{isSystemNotification &&
 								!isCaseHandoverGrantedEvent &&
 								!isInquiryAcceptedEvent &&
+								!isFurtherCounsellingNotice &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
 										{systemNotificationDescription}
@@ -2491,6 +2566,8 @@ export const MessageItemComponent = ({
 							 * like every other bubble in the stream.
 							 */}
 							{timeRailInBubble}
+							{/* #1869: own row under the time, never in the time line. */}
+							{showTemporaryMarker && <TemporaryMessageMarker />}
 						</MessageBubble>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2603,26 +2680,42 @@ export const MessageItemComponent = ({
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
 							: () =>
-									callManager.joinExistingCall(
-										callLifecycle,
-										/*
-										 * The card's own answer first.
-										 *
-										 * `activeSession.isGroup` describes
-										 * the CLIENT session, which is false
-										 * for a supervision call inside a 1:1
-										 * one — and a call rejoined as
-										 * non-group is ended for everybody
-										 * when one person leaves, because
-										 * `endCall` publishes a remote hangup
-										 * and finalises the lifecycle. The
-										 * side that started the call wrote
-										 * what it is; cards from before that
-										 * field existed fall back to the old
-										 * guess.
-										 */
-										callLifecycle.isGroup ??
-											Boolean(activeSession?.isGroup)
+									/* FE#1893: a direct-link call conversation knocks first. */
+									joinOrKnock(
+										activeSession?.item?.id,
+										() =>
+											callManager.joinExistingCall(
+												callLifecycle,
+												/*
+												 * The card's own answer first.
+												 *
+												 * `activeSession.isGroup` describes
+												 * the CLIENT session, which is false
+												 * for a supervision call inside a 1:1
+												 * one — and a call rejoined as
+												 * non-group is ended for everybody
+												 * when one person leaves, because
+												 * `endCall` publishes a remote hangup
+												 * and finalises the lifecycle. The
+												 * side that started the call wrote
+												 * what it is; cards from before that
+												 * field existed fall back to the old
+												 * guess.
+												 */
+												callLifecycle.isGroup ??
+													Boolean(
+														activeSession?.isGroup
+													)
+											),
+										{
+											// Direct links are 1:1; a group has no own knock to look up.
+											asker:
+												!activeSession?.isGroup &&
+												hasUserAuthority(
+													AUTHORITIES.ASKER_DEFAULT,
+													userData
+												)
+										}
 									)
 					}
 				/>
@@ -2694,6 +2787,10 @@ export const MessageItemComponent = ({
 				/>
 			</div>
 		);
+	}
+
+	if (isUntrustedRecommendation) {
+		return null;
 	}
 
 	if (isUserLeftChatEvent) {

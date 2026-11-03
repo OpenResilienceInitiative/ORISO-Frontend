@@ -2,7 +2,7 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const repositoryRoot = process.cwd();
 const scanRoots = ['src', 'cypress', 'package.json', 'package-lock.json'];

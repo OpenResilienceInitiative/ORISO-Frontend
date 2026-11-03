@@ -1,8 +1,15 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { AdditionalAgencySelection } from './AdditionalAgencySelection';
 
 const apiGetAgenciesByTenant = vi.fn();
@@ -109,6 +116,38 @@ describe('AdditionalAgencySelection', () => {
 		expect(onAgencyChange).not.toHaveBeenCalledWith(
 			expect.objectContaining({ id: agencyForSuicidePrevention.id })
 		);
+	});
+
+	// #1655: every topic is offered now, so "no centre here" is a normal answer.
+	it('says that no centre was found when none serves the topic here', async () => {
+		apiGetAgenciesByTenant.mockResolvedValue([agencyForSuicidePrevention]);
+
+		const { rerender, findByTestId, findByText, queryByText } = render(
+			<AdditionalAgencySelection
+				selectedTopicId={SUICIDE_PREVENTION_TOPIC}
+				initialPostcode="21212"
+				onAgencyChange={vi.fn()}
+				onPostcodeChange={vi.fn()}
+			/>
+		);
+		await findByTestId(`agency-${agencyForSuicidePrevention.id}`);
+		expect(
+			queryByText('registration.agencySelection.noAgencies')
+		).toBeNull();
+
+		apiGetAgenciesByTenant.mockResolvedValue([]);
+		rerender(
+			<AdditionalAgencySelection
+				selectedTopicId={SOCIAL_COUNSELLING_TOPIC}
+				initialPostcode="21212"
+				onAgencyChange={vi.fn()}
+				onPostcodeChange={vi.fn()}
+			/>
+		);
+
+		expect(
+			await findByText('registration.agencySelection.noAgencies')
+		).toBeTruthy();
 	});
 
 	it('selects the first agency the newly picked topic offers', async () => {

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -7,7 +7,14 @@ import {
 	renderHook,
 	screen
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { SlideOutPresence } from './SlideOutPresence';
 import { StepTransition } from './StepTransition';
 import { transitionMotion } from './transitionMotion';

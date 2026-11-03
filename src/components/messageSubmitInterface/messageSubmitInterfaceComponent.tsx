@@ -174,6 +174,8 @@ import {
 	matchesShortcut
 } from '../../features/keyboard-shortcuts/utils/match';
 
+import { useGuestRetentionGate } from '../temporaryAccount/useGuestRetentionGate';
+
 type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
 const MESSAGE_LENGTH_WARNING_THRESHOLD = Math.floor(INPUT_MAX_LENGTH * 0.9);
@@ -2045,8 +2047,20 @@ export const MessageSubmitInterfaceComponent = ({
 		]
 	);
 
+	/* #1869 / ORISO-UserService#1486: a temporary guest whose platform lets
+	   them decide answers "keep my messages?" once, before the first message
+	   or file (uploads and pasted files go out through this button too). */
+	const retentionGate = useGuestRetentionGate(
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			!activeSession.isGroup
+	);
+	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
+
 	const handleButtonClick = useCallback(() => {
 		if (uploadProgress || isRequestInProgress) {
+			return null;
+		}
+		if (retentionGate.gate(() => handleButtonClickRef.current())) {
 			return null;
 		}
 		if (isVoiceRecording) {
@@ -2101,10 +2115,12 @@ export const MessageSubmitInterfaceComponent = ({
 		listPath,
 		prepareAndSendMessage,
 		reloadActiveSession,
+		retentionGate,
 		stopVoiceRecording,
 		uploadProgress,
 		userData
 	]);
+	handleButtonClickRef.current = handleButtonClick;
 
 	const handleFormSubmit = useCallback(
 		(event: React.FormEvent<HTMLFormElement>) => {
@@ -3796,6 +3812,7 @@ export const MessageSubmitInterfaceComponent = ({
 			emptyLabel: translate('message.mention.empty'),
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
+			listLabel: translate('message.submit.toolbar.mention'),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -4579,6 +4596,9 @@ export const MessageSubmitInterfaceComponent = ({
 										'textarea__input--editing'
 								)}
 								ref={textareaInputRef}
+								// Where the closing animation of a waiting room ends
+								// (ORISO-Frontend#1737).
+								data-closing-focal="message-field"
 								onKeyUp={(e) => {
 									resizeTextarea();
 									// Auto-scroll on Enter key or any key press
@@ -5010,6 +5030,7 @@ export const MessageSubmitInterfaceComponent = ({
 			{e2eeOverlayVisible && (
 				<Overlay item={e2eeOverlay} name={OVERLAY_E2EE} />
 			)}
+			{retentionGate.dialog}
 		</div>
 	);
 };

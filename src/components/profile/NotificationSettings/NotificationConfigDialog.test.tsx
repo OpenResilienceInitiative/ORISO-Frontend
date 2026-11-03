@@ -1,10 +1,10 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #576 — Figma "Configure your notifications" dialog body: three area tabs
  * (Termine disabled), per-kind sound dropdown + send-by-email, tab switching.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	cleanup,
 	configure,

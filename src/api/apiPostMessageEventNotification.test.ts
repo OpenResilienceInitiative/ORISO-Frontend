@@ -1,10 +1,10 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * FE#514 — the message-event producer carries team-discussion metadata
  * (teamDiscussion flag + mentionedUserIds) so the backend hybrid fan-out
  * (US#473) can route it. Never any message content (FE-H01 privacy boundary).
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	apiPostMessageEventNotification,
 	buildMessageEventNotificationBody

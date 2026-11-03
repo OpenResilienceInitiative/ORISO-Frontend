@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #200: an "advice needed" handover grants CO_ACCESS — the colleague may read
  * the case but must never write into the advice seeker's room. The composer
@@ -8,7 +8,7 @@
 import React from 'react';
 import { render, screen, cleanup, configure } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionItemComponent } from './SessionItemComponent';
 import {
 	ActiveSessionContext,

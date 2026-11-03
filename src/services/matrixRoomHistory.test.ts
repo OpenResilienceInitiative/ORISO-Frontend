@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vite-plus/test';
 import { createClient, Direction, MatrixEvent, Room } from 'matrix-js-sdk';
 import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 

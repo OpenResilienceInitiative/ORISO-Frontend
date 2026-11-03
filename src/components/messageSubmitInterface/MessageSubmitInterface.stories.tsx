@@ -12,6 +12,7 @@ import {
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
+import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import {
 	phone390Globals,
@@ -208,6 +209,33 @@ export const Default: Story = {
 	render: () => <ComposerShell />
 };
 
+/**
+ * Where the closing animation of every waiting room ends (ORISO-Frontend#1737).
+ * The rooms find it by this mark alone, so the composer has to keep carrying it
+ * around the field a person types in.
+ */
+export const MarksTheClosingFocal: Story = {
+	name: 'Marks where the closing animation ends',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const focal = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[data-closing-focal="message-field"]'
+			);
+			if (!node || !node.getBoundingClientRect().width) {
+				throw new Error('composer focal not on screen yet');
+			}
+			return node;
+		});
+		await expect(
+			focal.querySelector('[contenteditable="true"]')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelectorAll('[data-closing-focal]')
+		).toHaveLength(1);
+	}
+};
+
 /** Desktop chat card contract: the composer card rests on the session's inner edge. */
 export const DesktopBottomAnchored: Story = {
 	name: 'Desktop — composer anchored to session bottom',
@@ -337,6 +365,73 @@ export const ReadyToSend: Story = {
 			});
 			await expect(sendButton).toBeEnabled();
 		});
+	}
+};
+
+/**
+ * #1869 / ORISO-UserService#1486: a temporary guest whose platform lets them
+ * decide is asked once, before the first message leaves, whether their
+ * messages stay after the guest account is deleted.
+ */
+export const TemporaryGuestAskedBeforeFirstMessage: Story = {
+	name: 'Temporary guest — asked once before the first message',
+	beforeEach: () => {
+		resetTemporaryAccount({
+			medium: 'CHAT',
+			messageRetention: 'GUEST_DECIDES',
+			keepMessages: null
+		});
+		return () => resetTemporaryAccount();
+	},
+	render: () => <ComposerShell userData={mockComposerAskerData} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) throw new Error('composer editor not mounted yet');
+			return node;
+		});
+		await userEvent.click(editor);
+		await userEvent.type(editor, 'Hallo');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /senden|send/i })
+		);
+
+		const dialog = await body.findByTestId('keep-messages-dialog');
+		// Nothing left yet: the draft waits for the answer.
+		await expect(editor).toHaveTextContent('Hallo');
+		await expect(
+			within(dialog).getByRole('button', { name: 'Weiter' })
+		).toBeDisabled();
+		await userEvent.click(
+			within(dialog).getByText('Auch nach dem Löschen behalten')
+		);
+		await expect(
+			within(dialog).getByRole('button', { name: 'Weiter' })
+		).toBeEnabled();
+
+		// Cancel sends nothing and keeps the draft; the next send asks again.
+		// (Confirm → PUT → send is covered by useGuestRetentionGate.test.)
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Abbrechen' })
+		);
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
+		await expect(editor).toHaveTextContent('Hallo');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /senden|send/i })
+		);
+		const again = await body.findByTestId('keep-messages-dialog');
+		await userEvent.click(
+			within(again).getByRole('button', { name: 'Abbrechen' })
+		);
+		await waitFor(() =>
+			expect(body.queryByTestId('keep-messages-dialog')).toBeNull()
+		);
 	}
 };
 

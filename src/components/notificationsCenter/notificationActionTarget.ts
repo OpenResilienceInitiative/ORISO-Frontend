@@ -281,3 +281,13 @@ export const resolveNotificationActionPath = (
 		? target.path
 		: null;
 };
+
+/** A started call that is already over opens like its `call.ended` card: its conversation. */
+export const resolveEndedCallConversationPath = (
+	item: NotificationActionInput,
+	sessionsBasePath: string
+): string | null =>
+	resolveNotificationActionPath(
+		{ ...item, eventType: 'call.ended' },
+		sessionsBasePath
+	);

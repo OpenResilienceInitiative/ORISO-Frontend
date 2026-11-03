@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { callManager } from './CallManager';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';
 import { parseCallLifecycleMessage } from '../utils/callLifecycleMessage';

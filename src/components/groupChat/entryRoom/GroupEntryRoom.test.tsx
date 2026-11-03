@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -9,7 +9,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 vi.mock('lottie-web', () => ({ default: {} }));
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -47,7 +54,8 @@ vi.mock('../../../api', () => ({
 		Promise.resolve({ active: false, id: 15, matrixRoomId: '!room:oriso' })
 	),
 	apiPutGroupChat: vi.fn(() => Promise.resolve()),
-	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' }
+	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' },
+	FETCH_ERRORS: { USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT' }
 }));
 vi.mock('../../../api/apiGetChatRoomById', () => ({
 	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
@@ -63,17 +71,28 @@ vi.mock('../../waitingRoom/WaitingRoomFrame', () => ({
 		<>{children}</>
 	)
 }));
+/* What the room's onJoin hands back: the closing animation holds the screen
+   covered for it (ORISO-Frontend#1737). */
+const joinResult = vi.hoisted(() => ({ value: undefined as unknown }));
 vi.mock('./GroupWaitingRoom', () => ({
 	GroupWaitingRoom: (props: {
 		topicName?: string;
 		agencyName?: string;
 		active: boolean;
-		onJoin: () => void;
+		joinBlocked?: boolean;
+		joinNotice?: string;
+		onJoin: () => unknown;
 	}) => (
 		<div data-testid="waiting-room">
+			{props.joinNotice && <p role="alert">{props.joinNotice}</p>}
 			<span>{props.topicName}</span>
 			<span>{props.agencyName}</span>
-			<button onClick={props.onJoin} disabled={!props.active}>
+			<button
+				onClick={() => {
+					joinResult.value = props.onJoin();
+				}}
+				disabled={!props.active || props.joinBlocked}
+			>
 				join
 			</button>
 		</div>
@@ -195,6 +214,55 @@ describe('GroupEntryRoom', () => {
 				{ replace: true }
 			)
 		);
+	});
+
+	it('hands the join request back to the room, so the closing animation can hold the screen for it', async () => {
+		let settle: () => void = () => undefined;
+		vi.mocked(apiPutGroupChat).mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					settle = resolve;
+				}) as never
+		);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+
+		const handed = joinResult.value as Promise<unknown>;
+		expect(handed).toBeInstanceOf(Promise);
+		expect(
+			navigate,
+			'not before the request settles'
+		).not.toHaveBeenCalled();
+		settle();
+		await handed;
+		expect(navigate).toHaveBeenCalledTimes(1);
+	});
+
+	it('tells the room the person stays when the join fails, so the closing animation does not wait for a chat', async () => {
+		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(new Error('full'));
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+
+		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
+		expect(navigate).not.toHaveBeenCalled();
+	});
+
+	// #1923: a banned asker got "an error occurred" and could press join again.
+	it('says the person was removed and blocks joining when the server refuses a banned member', async () => {
+		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(
+			new Error('USER_BANNED_FROM_CHAT')
+		);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+
+		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'groupChat.removed.overlay.headline'
+		);
+		expect(screen.getByText('join').hasAttribute('disabled')).toBe(true);
 	});
 
 	it('says so when the chat is gone', async () => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { groupCardParticipants } from './groupCardMemberParticipants';
 
 describe('group-card human participants (#1806)', () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { isEventMutedByKind, soundOverrideForEvent } from './soundMask';
 import { sessionKindRegistry } from './sessionKindRegistry';
 import { DEFAULT_DISPLAY_FILTERS, withSectionOverride } from './model';

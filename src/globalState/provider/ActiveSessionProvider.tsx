@@ -5,7 +5,8 @@ import { ExtendedSessionInterface } from '..';
 type ActiveSessionContextProps = {
 	children?: React.ReactNode;
 	activeSession: ExtendedSessionInterface | null;
-	reloadActiveSession?: () => void;
+	/** The reload's promise, when the provider has one to hand back. */
+	reloadActiveSession?: () => void | Promise<unknown>;
 	readActiveSession?: () => void;
 	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
 };

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1270 — the legacy "Live-Chat ist zurzeit leider geschlossen" dialog in
  * `SessionItemComponent`.
@@ -19,7 +19,14 @@ import {
 	fireEvent
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import { SessionItemComponent } from './SessionItemComponent';
 import {

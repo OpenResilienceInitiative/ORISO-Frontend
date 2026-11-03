@@ -6,7 +6,7 @@
  * a legible tone, `--oriso-primary-text`.
  */
 import { Hct, argbFromHex } from '@material/material-color-utilities';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { computeOrisoPalette } from './orisoScheme';
 import { wcagContrast } from './wcagContrast';
 

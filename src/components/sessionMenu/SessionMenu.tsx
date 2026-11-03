@@ -22,6 +22,7 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
+import { STATUS_REJECTED } from '../../globalState/interfaces/SessionsDataInterface';
 import { startRoomCall } from '../call/startRoomCall';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
@@ -38,6 +39,9 @@ import { getModality, Modality } from '../session/getModality';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import {
 	archiveSessionSuccessOverlayItem,
+	endTopicDuplicateConfirmOverlayItem,
+	endTopicDuplicateErrorOverlayItem,
+	recommendFurtherCounsellingSuccessOverlayItem,
 	groupChatErrorOverlayItem,
 	leaveGroupChatSecurityOverlayItem,
 	leaveGroupChatSuccessOverlayItem,
@@ -95,6 +99,14 @@ import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
+import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
+import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
+import {
+	canEndTopicDuplicate,
+	canRecommendFurtherCounselling
+} from '../furtherCounselling/furtherCounsellingRules';
+import { RecommendFurtherCounsellingDialog } from '../furtherCounselling/RecommendFurtherCounsellingDialog';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -137,11 +149,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		settings: currentTenantSettings,
 		isLoading: isLoadingTenantSettings
 	} = useSessionTenantSettings(activeSession.item?.id);
-	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
+	const { dispatch: sessionsDispatch, sessions: sessionList } =
+		useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
 	const supervisionPanel = useSupervisionPanel();
 	// Practice: no calls, no booking (they would start real network traffic).
 	const isPracticing = usePracticeActive();
+	const isRejectedCase =
+		Number(activeSession.item?.status) === STATUS_REJECTED;
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
@@ -200,13 +215,31 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const isSessionOwner =
 		Boolean(activeSession.consultant?.id) &&
 		String(activeSession.consultant.id) === String(userData.userId);
-	const showRequestAdvice =
-		isSessionOwner &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		type !== SESSION_LIST_TYPES.ENQUIRY &&
-		Boolean(activeSession.isSession) &&
+	// FE#1876: the recommend item shares this audience (furtherCounsellingRules).
+	const showRequestAdvice = canRecommendFurtherCounselling({
+		isRejectedCase,
+		isSessionOwner,
+		isConsultant: !!hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		),
+		isEnquiryList: type === SESSION_LIST_TYPES.ENQUIRY,
+		isSession: Boolean(activeSession.isSession),
+		isGroup: Boolean(activeSession.isGroup),
+		isSupervisor: Boolean(props.isSupervisor)
+	});
+	const showRecommendFurtherCounselling = showRequestAdvice;
+	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
+	const showEndTopicDuplicate =
 		!activeSession.isGroup &&
-		!props.isSupervisor;
+		Boolean(activeSession.isSession) &&
+		canEndTopicDuplicate({
+			isAsker: !!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData),
+			current: activeSession.item as Parameters<
+				typeof canEndTopicDuplicate
+			>[0]['current'],
+			sessions: Array.isArray(sessionList) ? sessionList : []
+		});
 
 	useEffect(() => {
 		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
@@ -298,6 +331,17 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		setOverlayActive(true);
 	};
 
+	const handleRecommendFurtherCounselling = () => {
+		closeMenu();
+		setRecommendDialogOpen(true);
+	};
+
+	const handleEndTopicDuplicate = () => {
+		closeMenu();
+		setOverlayItem(endTopicDuplicateConfirmOverlayItem);
+		setOverlayActive(true);
+	};
+
 	const handleArchiveSession = () => {
 		closeMenu();
 		menuTriggerRef.current?.focus();
@@ -370,6 +414,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setIsRequestInProgress(false);
 				});
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			// A left group must not linger in the list until the next reload (#1923).
+			if (overlayItem === leaveGroupChatSuccessOverlayItem) {
+				sessionsDispatch({
+					type: REMOVE_SESSIONS,
+					ids: activeSession.item.matrixRoomId
+						? [activeSession.item.matrixRoomId]
+						: [activeSession.item.id]
+				});
+			}
 			setRedirectToSessionsList(true);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
@@ -396,6 +449,27 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setOverlayItem(null);
 					setIsRequestInProgress(false);
 					closeMenu();
+				});
+		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
+			const sessionId = activeSession.item.id;
+			const sessionGroupId = activeSession.item.matrixRoomId;
+			apiPutEndTopicDuplicate(sessionId)
+				.then(() => {
+					setOverlayActive(false);
+					setOverlayItem(null);
+					sessionsDispatch({
+						type: REMOVE_SESSIONS,
+						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
+					});
+					mobileListView();
+					// The archive tab exists only for counsellors.
+					navigate(listPath);
+				})
+				.catch(() => {
+					setOverlayItem(endTopicDuplicateErrorOverlayItem);
+				})
+				.finally(() => {
+					setIsRequestInProgress(false);
 				});
 		} else if (buttonFunction === 'GOTO_MANUAL') {
 			navigate('/profile/hilfe/videoCall');
@@ -487,12 +561,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const isVideoCallsEnabled = callGates.video && !isPracticing;
 
 	const hasVideoCallFeatures = () =>
+		!isRejectedCase &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 		(activeSession.isSession || activeSession.isGroup) && // 🎯 Enable for both 1-on-1 AND group chats
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
 		consultingType.isVideoCallAllowed;
 
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
+		if (isRejectedCase) return;
 		// The trigger lives in `call/startRoomCall.ts` because the side room needs
 		// the same steps against a different Matrix room. One implementation
 		// serves both callers.
@@ -541,7 +617,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					</div>
 				)}
 
-			{!activeSession.isEnquiry &&
+			{!isRejectedCase &&
+				!activeSession.isEnquiry &&
 				appointmentFeatureEnabled &&
 				!isPracticing &&
 				!activeSession.isGroup && (
@@ -899,11 +976,67 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</div>
 							)}
 
+							{showRecommendFurtherCounselling && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleRecommendFurtherCounselling}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-recommend-further-counselling"
+								>
+									<SessionMenuItemContent
+										icon={<RecommendIcon />}
+										title={translate(
+											'furtherCounselling.menu.recommend'
+										)}
+									/>
+								</div>
+							)}
+
+							{showEndTopicDuplicate && (
+								<div
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={handleEndTopicDuplicate}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									data-cy="session-menu-end-topic-duplicate"
+								>
+									<SessionMenuItemContent
+										icon={<EndDuplicateIcon />}
+										title={translate(
+											'furtherCounselling.menu.endDuplicate'
+										)}
+										description={translate(
+											'furtherCounselling.menu.endDuplicateDescription'
+										)}
+									/>
+								</div>
+							)}
+
 							{!hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
 							) &&
 								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								!isRejectedCase &&
 								activeSession.isSession &&
 								!props.isSupervisor && (
 									<>
@@ -973,6 +1106,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								userData
 							) &&
 								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								!isRejectedCase &&
 								activeSession.isSession &&
 								!props.isSupervisor && (
 									<DeleteSession
@@ -1094,6 +1228,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					handleOverlay={handleOverlayAction}
 				/>
 			)}
+			{recommendDialogOpen && (
+				<RecommendFurtherCounsellingDialog
+					open
+					sessionId={activeSession.item.id}
+					onClose={() => setRecommendDialogOpen(false)}
+					onSent={() => {
+						setRecommendDialogOpen(false);
+						setOverlayItem(
+							recommendFurtherCounsellingSuccessOverlayItem
+						);
+						setOverlayActive(true);
+					}}
+				/>
+			)}
 			<NotificationConfigDialog
 				open={notifConfigOpen}
 				config={notifSettings.notificationConfig}
@@ -1135,13 +1283,18 @@ const SessionMenuFlyoutGroup = ({
 	// the waiting room and the join view show this menu on phones too (#1499).
 	const isRunning =
 		Boolean(activeSession.item.active) && !isJoinGroupChatView;
+	// A sole moderator must not orphan the group; askers may always leave (#1923).
+	const isCounsellor = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 
 	return (
 		<>
 			{isRunning &&
 				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
-				moderators.length > 1 && (
+				(!isCounsellor || moderators.length > 1) && (
 					<div
 						onClick={handleLeaveGroupChat}
 						role="button"

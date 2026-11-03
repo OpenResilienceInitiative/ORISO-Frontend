@@ -43,7 +43,8 @@ const profileRoutes = (
 	settings: AppConfigInterface,
 	tenant: TenantDataInterface,
 	selectableLocales: string[],
-	isFirstVisit: boolean
+	isFirstVisit: boolean,
+	directLinksAllowed = true
 ): TabsType =>
 	[
 		{
@@ -230,7 +231,11 @@ const profileRoutes = (
 				!settings?.releaseToggles?.enableNewNotifications &&
 				!!isBrowserNotificationSupported() &&
 				!browserNotificationsSettings().visited,
-			elements: profileRoutesSettings(selectableLocales, settings)
+			elements: profileRoutesSettings(
+				selectableLocales,
+				settings,
+				directLinksAllowed
+			)
 		},
 		{
 			title: 'profile.routes.help.title',

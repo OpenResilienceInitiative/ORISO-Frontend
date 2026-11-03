@@ -1,5 +1,5 @@
 import { encodeUsername } from '../../utils/encryptionHelpers';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	formatAgencyLine,
 	formatAgencyLineWithI18n,

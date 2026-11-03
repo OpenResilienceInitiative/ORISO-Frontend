@@ -7,7 +7,7 @@
  * separate roles and must be listed as such.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	buildSearchPeopleResults,

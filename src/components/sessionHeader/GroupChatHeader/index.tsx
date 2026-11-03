@@ -318,15 +318,23 @@ export const GroupChatHeader = ({
 					to={listPath + sessionTabPath}
 					onClick={mobileListView}
 					className="sessionInfo__backButton"
+					aria-label={t('app.back')}
 				>
 					<BackIcon />
 				</Link>
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow" ref={titleRowRef}>
 						<div className="sessionInfo__memberStack">
+							{/* #1338: the disabled "+" needs a name; supervision
+							    is not available in a group chat. Screen readers
+							    only: the header keeps its look (product decision). */}
 							<ChatroomMainInteractionIcon
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
+								addLabel={t(
+									'sessionHeader.supervisor.add.disabledUnavailable'
+								)}
+								addTooltip={false}
 							/>
 							<MemberAvatarStack
 								members={stackMembers}

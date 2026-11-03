@@ -696,6 +696,8 @@ function SupervisionChipFilterDemo({
 				<div
 					data-cy="supervision-filter-demo-list"
 					className="sessionsList__scrollContainer"
+					role="list"
+					aria-label="Conversations"
 					style={{ margin: '12px 0 0' }}
 				>
 					{visibleRows.map((row, index) => (

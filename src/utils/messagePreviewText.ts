@@ -4,7 +4,9 @@
  */
 
 import {
+	isClientWordedTakeover,
 	parseMessagePrefixes,
+	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
 } from '../components/message/messageConstants';
 
@@ -108,12 +110,21 @@ export const toMessagePreviewText = (rawMessage?: string | null): string => {
  */
 export const getSystemNotificationPreview = (
 	rawMessage?: string | null
-): 'user_left_chat' | 'system_notification' | null => {
+):
+	| 'user_left_chat'
+	| 'inquiry_accepted'
+	| 'case_handover_taken_over'
+	| 'system_notification'
+	| null => {
 	const parsed = parseMessagePrefixes(rawMessage);
 	if (!parsed.isSystemNotification) return null;
 	// The chat always draws this one as a fixed line (MessageItemComponent).
 	if (parsed.systemNotificationType === SYSTEM_NOTIFICATION_USER_LEFT_CHAT)
 		return 'user_left_chat';
+	// Their stored text is frozen in the session's language (#1844).
+	if (parsed.systemNotificationType === SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED)
+		return 'inquiry_accepted';
+	if (isClientWordedTakeover(parsed)) return 'case_handover_taken_over';
 	return parsed.systemNotificationTitle ||
 		parsed.systemNotificationDescription
 		? null

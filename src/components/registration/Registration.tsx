@@ -32,7 +32,7 @@ import {
 	markHandoverMilestone,
 	resetHandoverProgress
 } from '../app/registrationLoader/handoverProgress';
-import { warmAppChunks } from '../app/appChunks';
+import { warmAppChunks, warmWhenIdle } from '../app/appChunks';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import {
 	RegistrationContext,
@@ -97,11 +97,13 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import {
+	GroupInviteInvalid,
 	GroupInviteLoadError,
 	GroupInviteLoading
 } from './groupInviteEntry/GroupInviteLoadError';
 import {
 	getGroupJoin,
+	isGroupInviteRefusal,
 	resolveGroupInviteEntry
 } from './groupInviteEntry/groupInviteEntryState';
 import { parseGroupChatInviteId } from '../groupChat/groupChatInviteLink';
@@ -285,6 +287,7 @@ export const Registration = () => {
 	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	const [inviteRefused, setInviteRefused] = useState<boolean>(false);
 	/* The minted password is never shown, so nobody can log in again once the
 	   browser is closed; the backend deletes such an account later
 	   (ORISO-UserService#1001). */
@@ -400,15 +403,10 @@ export const Registration = () => {
 	   person types, so the waiting room after the document load is not held
 	   up by downloads (#1219). Idle time only: the form comes first. */
 	const onLastStep = inviteEntry === 'entry' || !nextStepUrl;
-	useEffect(() => {
-		if (!onLastStep) return undefined;
-		if (typeof window.requestIdleCallback === 'function') {
-			const handle = window.requestIdleCallback(warmAppChunks);
-			return () => window.cancelIdleCallback(handle);
-		}
-		const timer = window.setTimeout(warmAppChunks, 1000);
-		return () => window.clearTimeout(timer);
-	}, [onLastStep]);
+	useEffect(
+		() => (onLastStep ? warmWhenIdle(warmAppChunks) : undefined),
+		[onLastStep]
+	);
 
 	const mergedRegistrationData = useMemo(
 		() => ({
@@ -800,6 +798,10 @@ export const Registration = () => {
 						addNotification(dpaNotice);
 						return;
 					}
+					if (groupJoin && isGroupInviteRefusal(error)) {
+						setInviteRefused(true);
+						return;
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
@@ -872,6 +874,17 @@ export const Registration = () => {
 				onEnter={() => undefined}
 				department={handoverDepartment}
 				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
+				closing={joinsTheGroup ? null : undefined}
+			/>
+		);
+	}
+
+	if (inviteEntry === 'invalid' || inviteRefused) {
+		return (
+			<GroupInviteInvalid
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
 			/>
 		);
 	}
@@ -905,6 +918,7 @@ export const Registration = () => {
 				onJoin={onRegisterClick}
 				joinDisabled={Boolean(disabledNextButton) || isRegistering}
 				busy={isRegistering}
+				agencyName={urlParamsAgency?.name}
 			/>
 		);
 	}

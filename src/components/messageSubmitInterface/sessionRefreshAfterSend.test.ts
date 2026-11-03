@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { vi } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+import { vi } from 'vite-plus/test';
 import {
 	reloadSessionAfterSendIfNeeded,
 	shouldReloadSessionAfterSend

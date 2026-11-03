@@ -2,7 +2,7 @@ import {
 	bundledAppLocales,
 	missingMailLocales
 } from './scripts/appLocaleCoverage';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import manifest from './content/translationManifest.json';
 import review from './content/translationReview.json';
 import {

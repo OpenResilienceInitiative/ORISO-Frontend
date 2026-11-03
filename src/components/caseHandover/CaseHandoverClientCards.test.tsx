@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	cleanup,
@@ -8,7 +8,7 @@ import {
 	waitFor,
 	within
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { CaseHandoverInformationalBody } from './CaseHandoverInformationalBody';
 import { UserDataContext } from '../../globalState/context/UserDataContext';

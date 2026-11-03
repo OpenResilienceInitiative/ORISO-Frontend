@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 /**
  * The handle's keyboard contract, tested where `userEvent` is reliable.
@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { cleanup, render, screen, fireEvent } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ResizableHandle } from './ResizableHandle';
 
 afterEach(cleanup);

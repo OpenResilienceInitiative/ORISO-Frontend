@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /** #1595 — a failed preferredLanguage PATCH must not be retried forever. */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { LocaleSwitch } from './LocaleSwitch';
 import { UserDataContext, LocaleContext } from '../../globalState';

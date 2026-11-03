@@ -30,12 +30,9 @@ import { apiGetAskerSessionList } from '../../api';
 import { useTranslation } from 'react-i18next';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
+import { loadMessageComposer } from '../app/appChunks';
 
-const MessageSubmitInterfaceComponent = lazyWithReload(() =>
-	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
-		(m) => ({ default: m.MessageSubmitInterfaceComponent })
-	)
-);
+const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 /**
  * ADR-018 §10: the send confirmation closes when the first Erstantwort bubble

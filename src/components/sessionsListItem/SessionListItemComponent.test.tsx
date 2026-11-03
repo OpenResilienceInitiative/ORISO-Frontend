@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #1189 — reachability tests for the "Chat settings" entry in the group-chat
  * list-row menu. These tests MUST fail if the <SessionListItemMenu> is removed
@@ -6,7 +6,7 @@
  * cannot be reintroduced silently.
  */
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { generatePath, MemoryRouter } from 'react-router-dom';
 import {
@@ -255,7 +255,9 @@ const makeUserData = (userId = OWNER_USER_ID) => ({
 const makeGroupSession = ({
 	consultantId = OWNER_USER_ID,
 	active = false,
-	matrixRoomId = '!abc:matrix.example.org'
+	matrixRoomId = '!abc:matrix.example.org',
+	topic = 'Test group chat',
+	repetitive = false
 } = {}) => ({
 	item: {
 		id: 101,
@@ -263,11 +265,11 @@ const makeGroupSession = ({
 		active,
 		messageDate: 1700000000,
 		createDate: '2023-11-14T12:00:00Z',
-		topic: 'Test group chat',
+		topic,
 		moderators: [],
 		consultingType: 1,
 		subscribed: true,
-		repetitive: false,
+		repetitive,
 		startDate: '2023-11-14',
 		startTime: '12:00',
 		createdAt: '2023-11-14T12:00:00Z',
@@ -745,5 +747,31 @@ describe('SessionListItemComponent — real group participants (#1806)', () => {
 		expect(
 			container.querySelector('[data-cy="participant-overflow"]')
 		).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — group card topic chip (#1913)', () => {
+	const chip = (container: HTMLElement) =>
+		container.querySelector('.sessionsListItem__topic');
+
+	it('shows the topic of a Gesprächskreis instead of "no topic"', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: 'Schulden', repetitive: true })
+		);
+		expect(chip(container)?.textContent).toBe('Schulden');
+	});
+
+	it('falls back to "no topic" for a Gesprächskreis without a topic', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: '', repetitive: true })
+		);
+		expect(chip(container)?.textContent).toBe('groupChat.noTopicSpecified');
+	});
+
+	it('shows no topic chip on an Interna card', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: 'Teamrunde', repetitive: false })
+		);
+		expect(chip(container)).toBeNull();
 	});
 });

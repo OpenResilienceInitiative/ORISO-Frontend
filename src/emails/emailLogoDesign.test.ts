@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { emailLogoCell, emailLogoLockup } from './kit/emailAtoms';
 import { emailHeaderBar } from './kit/emailMolecules';
 import { emailDocument } from './kit/emailDocument';

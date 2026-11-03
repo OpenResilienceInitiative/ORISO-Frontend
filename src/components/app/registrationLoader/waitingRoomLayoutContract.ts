@@ -102,7 +102,16 @@ const checkGate = (doc: Document, footer: HTMLElement): string | null => {
 	if (!gate) return 'no gate button inside the bar';
 	// Paddings and at most one round exit (56px) beside it.
 	const button = gate.getBoundingClientRect();
-	if (button.width < bar.width - 140) {
+	/* A room may stand one quiet control beside the gate in the same row —
+	   the self-help group's calendar pill (Frank, 2026-10-19). It marks
+	   itself; the gate keeps everything else. */
+	const side = footer.querySelector<HTMLElement>('[data-bar-side]');
+	const sideRect = side?.getBoundingClientRect();
+	const beside =
+		sideRect && Math.abs(sideRect.top - button.top) < button.height
+			? sideRect.width + 16
+			: 0;
+	if (button.width < bar.width - 140 - beside) {
 		return `gate button is ${button.width}px in a ${bar.width}px bar`;
 	}
 	if (!gate.hasAttribute('disabled') && !reachable(doc, gate)) {
@@ -177,6 +186,21 @@ const checkFrame = (canvasElement: HTMLElement): string | null => {
 	}
 	const gateProblem = checkGate(doc, footer);
 	if (gateProblem) return gateProblem;
+	const columnLegalRows = [
+		...doc.querySelectorAll<HTMLElement>('.stageLayout__legalLinks')
+	].filter((row) => row.getClientRects().length > 0);
+	if (columnLegalRows.length > 0) {
+		// It stood behind the fixed bar between 900 and 1199 px (#1895).
+		return 'legal links are printed under the column, behind the bar';
+	}
+	if (viewport < STAGE_SPLIT_PX) {
+		const menu = doc.querySelector<HTMLElement>(
+			'[data-cy="group-entry-legal-menu"]'
+		);
+		if (!menu || !reachable(doc, menu)) {
+			return 'no reachable "Rechtliches" menu in the header';
+		}
+	}
 	if (viewport >= STAGE_SPLIT_PX) {
 		const stage = doc.querySelector<HTMLElement>('.stage');
 		if (!stage) return 'the red stage is missing beside the column';
@@ -220,7 +244,8 @@ const check = (
  * - The bar is fixed to the bottom edge: the full width on a phone, the
  *   white column (60vw) on a desktop, ending at the right edge.
  * - The gate button spans the bar's row and nothing covers it.
- * - On a desktop the legal links stand once, on the stage.
+ * - On a desktop the legal links stand once, on the stage; below 1200 px in
+ * the header's "Rechtliches" menu, never behind the bar (#1895).
  * - Cards, wherever shown, have the live chat's size.
  *
  * Plain DOM and plain errors, like `waitingClockStoryChecks.ts`, so this file

@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { fetchAgencyConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 

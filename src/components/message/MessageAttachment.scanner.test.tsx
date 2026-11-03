@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Encrypted-media scanning (epic ORISO-Admin#366 phase 2, issue #1072).
  *
@@ -8,7 +8,14 @@
  */
 import * as React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { MessageAttachment } from './MessageAttachment';
 import { NotificationsContext } from '../../globalState';

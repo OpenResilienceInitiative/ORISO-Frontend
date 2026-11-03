@@ -144,9 +144,9 @@ export const TogglePillRemovesChip: Story = {
 			canvas.getByRole('button', { name: 'Anzeige-Filter' })
 		);
 		await userEvent.click(
-			body.getByRole('button', { name: 'Anzeige wählen: System' })
+			body.getByRole('button', { name: 'Im Filter wählen: System' })
 		);
-		await userEvent.click(body.getByRole('menuitem', { name: 'Aus' }));
+		await userEvent.click(body.getByRole('menuitemradio', { name: 'Aus' }));
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
 		// MUI keeps the canvas `aria-hidden` until the dialog has faded out.
 		await waitFor(() =>
@@ -182,6 +182,9 @@ export const TriggerControlsDialog: Story = {
 		).not.toBeNull();
 		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
+		await waitFor(() =>
+			expect(body.queryByRole('dialog')).not.toBeInTheDocument()
+		);
 	}
 };
 
@@ -199,9 +202,9 @@ export const PillOffClearsActiveKind: Story = {
 			canvas.getByRole('button', { name: 'Anzeige-Filter' })
 		);
 		await userEvent.click(
-			body.getByRole('button', { name: 'Anzeige wählen: Nachrichten' })
+			body.getByRole('button', { name: 'Im Filter wählen: Nachrichten' })
 		);
-		await userEvent.click(body.getByRole('menuitem', { name: 'Aus' }));
+		await userEvent.click(body.getByRole('menuitemradio', { name: 'Aus' }));
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
 		await waitFor(() =>
 			expect(body.queryByRole('dialog')).not.toBeInTheDocument()

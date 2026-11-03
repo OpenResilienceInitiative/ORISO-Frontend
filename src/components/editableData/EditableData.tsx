@@ -140,6 +140,8 @@ export const EditableData = ({
 				type={type}
 				onFocus={handleFocus}
 				id={initialLabel}
+				// #1338: the visible label stays empty while editing; keep the field named
+				aria-label={label || initialLabel}
 				name={initialLabel}
 				value={inputValue}
 				onChange={handleInputValueChange}

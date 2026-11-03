@@ -6,7 +6,10 @@ import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
 import { WaitingRoomBar } from '../WaitingRoomBar';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
+import { ClosingFocal } from '../../transition/closing/closingFocal';
+import { ClosingSwapResult } from '../../transition/closing/playClosingAnimation';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import { generatePassword } from '../../../utils/pseudonymGenerator';
 import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
 import { getUsernameFeedback } from '../../registration/accountData/usernameFeedback';
 import { REGISTRATION_DATA_VALIDATION } from '../../registration/registrationDataValidation';
@@ -40,6 +43,13 @@ import {
 	CallEntryBlocker,
 	CallModality
 } from './callEntryTypes';
+
+/** What the person chose at the door; the caller creates the account from it. */
+export interface CallEntryAccount {
+	username: string;
+	password: string;
+	identity: Pseudonym;
+}
 
 /** A level above this once means the microphone demonstrably hears. */
 const HEARD_LEVEL = 0.15;
@@ -86,11 +96,28 @@ export interface CallEntryRoomProps {
 		  };
 	/** Starts with the consent sheet open, as after a click on "Beitreten". */
 	initialConsentOpen?: boolean;
-	onJoin?: () => void;
+	/**
+	 * Runs once the screen is covered (the platform's closing animation plays
+	 * on the way, ORISO-Frontend#1737). `false`, or a promise of it, says the
+	 * join failed and the person stays.
+	 */
+	onJoin?: (account: CallEntryAccount) => ClosingSwapResult;
+	/**
+	 * Where the person arrives: the call's main area, which the room that
+	 * swaps in marks with `data-closing-focal="call"`. `null` plays no closing
+	 * animation.
+	 */
+	closing?: ClosingFocal | null;
 	onBlockerAction?: () => void;
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
 	checkUsername?: (username: string) => Promise<boolean>;
+	/**
+	 * Temporary direct-link guests where the platform hides the password
+	 * (ORISO-UserService#1486): the account still gets one, generated here,
+	 * but the field and its suggest button are not shown.
+	 */
+	hidePassword?: boolean;
 }
 
 /**
@@ -126,9 +153,11 @@ export const CallEntryRoom = ({
 	consent: consentOption,
 	initialConsentOpen = false,
 	onJoin,
+	closing = 'call',
 	onBlockerAction,
 	playTone,
-	checkUsername
+	checkUsername,
+	hidePassword = false
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -138,7 +167,9 @@ export const CallEntryRoom = ({
 	const [username, setUsername] = useState(
 		() => initialUsername ?? toRegistrationUsername(identity)
 	);
-	const [password, setPassword] = useState(initialPassword);
+	const [password, setPassword] = useState(() =>
+		hidePassword && !initialPassword ? generatePassword() : initialPassword
+	);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -218,15 +249,17 @@ export const CallEntryRoom = ({
 		.join(', ');
 
 	/* "Beitreten" first opens the consent; with the sheet open it joins once
-	   the box is ticked (the live chat's flow). */
-	const handleJoin = () => {
+	   the box is ticked (the live chat's flow). Asked before anything starts,
+	   so the screen never closes on a "no". */
+	const mayJoin = () => {
 		if (!askConsent) {
-			onJoin?.();
-		} else if (!consentOpen) {
-			setConsentOpen(true);
-		} else {
-			consent.guard(() => onJoin?.());
+			return true;
 		}
+		if (!consentOpen) {
+			setConsentOpen(true);
+			return false;
+		}
+		return consent.check();
 	};
 
 	const kicker = topic
@@ -298,6 +331,7 @@ export const CallEntryRoom = ({
 							onUsernameChange={setUsername}
 							password={password}
 							onPasswordChange={setPassword}
+							hidePassword={hidePassword}
 							usernameFeedback={usernameFeedback}
 							onUsernameBlur={() => setUsernameBlurred(true)}
 						/>
@@ -416,7 +450,11 @@ export const CallEntryRoom = ({
 								? undefined
 								: (doneCount / conditions.length) * 100
 						}
-						onEnter={handleJoin}
+						beforeEnter={mayJoin}
+						onEnter={() =>
+							onJoin?.({ username, password, identity })
+						}
+						closing={closing ?? undefined}
 						label={copy.join[modality]}
 						status={
 							joining

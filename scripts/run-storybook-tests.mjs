@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { constants } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
 const BROWSER_DISCONNECT_SIGNATURE =
@@ -26,8 +27,7 @@ export const storybookVitestArgs = [
 	// tabs and makes the disconnect flake more likely. Two workers matched the
 	// last stable local run (#1127) without funneling all ~170 files through one
 	// tab (which --maxWorkers=1 provokes).
-	'--maxWorkers=2',
-	'--minWorkers=1'
+	'--maxWorkers=2'
 ];
 
 /**
@@ -215,6 +215,9 @@ export const runStorybookTests = (
 		let stderrDone = false;
 		let closed = false;
 		let settled = false;
+		let childSignal = null;
+		let cancelledSignal = null;
+		let spawnError = null;
 		const child = spawn(process.execPath, args, {
 			env: {
 				...process.env,
@@ -223,17 +226,30 @@ export const runStorybookTests = (
 			stdio: ['inherit', 'pipe', 'pipe']
 		});
 
+		const forwardSignal = (signal) => {
+			cancelledSignal ??= signal;
+			child.kill(signal);
+		};
+		const onInterrupt = () => forwardSignal('SIGINT');
+		const onTerminate = () => forwardSignal('SIGTERM');
+		process.once('SIGINT', onInterrupt);
+		process.once('SIGTERM', onTerminate);
+
 		const settle = () => {
 			if (settled || !closed || !stdoutDone || !stderrDone) {
 				return;
 			}
 			settled = true;
+			process.removeListener('SIGINT', onInterrupt);
+			process.removeListener('SIGTERM', onTerminate);
 			failureDetected ||= suiteFailures.finish();
 			resolve({
 				code: exitCode,
 				capturedOutput,
 				failureDetected,
-				outputTruncated
+				outputTruncated,
+				signal: cancelledSignal || childSignal,
+				spawnError
 			});
 		};
 
@@ -259,14 +275,19 @@ export const runStorybookTests = (
 		});
 		child.on('error', (error) => {
 			console.error(error);
+			spawnError = error.message;
 			exitCode = 1;
 			closed = true;
 			stdoutDone = true;
 			stderrDone = true;
 			settle();
 		});
-		child.on('close', (code) => {
-			exitCode = code ?? 1;
+		child.on('close', (code, signal) => {
+			childSignal = signal;
+			const terminationSignal = cancelledSignal || signal;
+			exitCode = terminationSignal
+				? 128 + constants.signals[terminationSignal]
+				: (code ?? 1);
 			closed = true;
 			settle();
 		});
@@ -280,13 +301,15 @@ const runShardWithRetries = async (index, count) => {
 
 	while (lastRun.code !== 0 && attempt < MAX_BROWSER_DISCONNECT_RETRIES) {
 		if (
+			lastRun.signal ||
+			lastRun.spawnError ||
 			!shouldRetryStorybookRun(
 				lastRun.code,
 				lastRun.capturedOutput,
 				lastRun
 			)
 		) {
-			return lastRun.code ?? 1;
+			return lastRun;
 		}
 
 		attempt += 1;
@@ -300,23 +323,32 @@ const runShardWithRetries = async (index, count) => {
 		lastRun = await runStorybookTests(args);
 	}
 
-	return lastRun.code ?? 0;
+	return lastRun;
 };
 
 const main = async () => {
 	const shardCount = resolveShardCount();
+	let firstFailure = 0;
 	for (let index = 1; index <= shardCount; index += 1) {
 		if (shardCount > 1) {
 			console.log(
 				`Storybook component tests: shard ${index}/${shardCount}`
 			);
 		}
-		const code = await runShardWithRetries(index, shardCount);
-		if (code !== 0) {
-			return code;
+		const run = await runShardWithRetries(index, shardCount);
+		const code = run.code ?? 1;
+		// Signals, spawn/setup failures and exhausted infrastructure aborts do
+		// not become ordinary test failures or launch more owned browsers.
+		if (
+			run.signal ||
+			run.spawnError ||
+			(code !== 0 && !run.failureDetected)
+		) {
+			return firstFailure || code;
 		}
+		if (code !== 0 && firstFailure === 0) firstFailure = code;
 	}
-	return 0;
+	return firstFailure;
 };
 
 if (

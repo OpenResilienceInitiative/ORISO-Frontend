@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolveTenantStageEffect } from './tenantStageEffect';
 import { TenantDataInterface } from '../../../globalState/interfaces';
 
@@ -25,11 +25,15 @@ describe('resolveTenantStageEffect', () => {
 		// still render, it simply gets no decoration.
 		expect(resolveTenantStageEffect(undefined)).toBe('none');
 		expect(resolveTenantStageEffect(null)).toBe('none');
-		expect(resolveTenantStageEffect({} as TenantDataInterface)).toBe('none');
+		expect(resolveTenantStageEffect({} as TenantDataInterface)).toBe(
+			'none'
+		);
 	});
 
 	it('falls back to none for a value this frontend does not know', () => {
 		// A newer Admin could offer an effect this build has no chunk for.
-		expect(resolveTenantStageEffect(tenantWith('KALEIDOSCOPE'))).toBe('none');
+		expect(resolveTenantStageEffect(tenantWith('KALEIDOSCOPE'))).toBe(
+			'none'
+		);
 	});
 });

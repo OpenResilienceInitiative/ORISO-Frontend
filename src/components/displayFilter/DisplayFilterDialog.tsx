@@ -13,7 +13,10 @@ import {
 	resolveKindSetting,
 	setKindSetting
 } from './displayFilterTypes';
-import { DisplayFilterKindTable } from './DisplayFilterKindTable';
+import {
+	DisplayFilterEmailColumn,
+	DisplayFilterKindTable
+} from './DisplayFilterKindTable';
 import './displayFilter.styles.scss';
 
 /** Every string the dialog renders, already translated (the dialog never calls `t`). */
@@ -72,6 +75,26 @@ export interface DisplayFilterDialogLabels {
 	autoSortDescription: string;
 	/** Row hint of a kind the Träger switched off while rows still exist. */
 	deactivatedHint: string;
+	/** Redesign 2026-10-15: visible first column title ("Art"). */
+	kindColumn: string;
+	/** One-line meaning of each column, shown in the legend row. */
+	legendShow: string;
+	legendPill: string;
+	legendSound: string;
+	legendEmail: string;
+	/** Section headings: the area's kinds, the filter-only buttons, their look. */
+	kindsHeading: string;
+	quickHeading: string;
+	quickNote: string;
+	presentationHeading: string;
+	soundWithTone: string;
+	soundSilent: string;
+	soundSilentDescription: string;
+	emailColumn: string;
+	emailKind: (kindLabel: string) => string;
+	emailMenu: (kindLabel: string) => string;
+	channelUnavailable: string;
+	emailUnavailableReason: string;
 }
 
 export interface DisplayFilterDialogProps {
@@ -106,6 +129,12 @@ export interface DisplayFilterDialogProps {
 	columns?: DisplayFilterColumns;
 	/** Hero icon of the dialog: the list's own icon (Frank 2026-09-16), default `tune`. */
 	icon?: React.ReactNode;
+	/** The E-Mail column; omitted where the area offers none. */
+	email?: DisplayFilterEmailColumn;
+	/** Set while no pop-up can show: the Browser cells' unavailable reason. */
+	browserUnavailableReason?: string;
+	/** Set while delivery holds pop-ups back (mute, DND): a notice, cells stay editable. */
+	browserMutedNotice?: string;
 }
 
 export interface DisplayFilterColumns {
@@ -123,11 +152,12 @@ export const SESSION_COLUMNS: DisplayFilterColumns = {
 };
 
 /**
- * The display-filter dialog (#1377, spec §3): one row per kind with two
- * independent switches — **show** (rows of this kind appear at all) and
- * **pill** (a chip while the kind has unread items) — the auto-read rule and
- * a reset to the profile defaults. Presentational: the caller owns the value
- * (slice 2 store) and the list integration (slices 3–5).
+ * The display-filter dialog (#1377; redesign 2026-10-15, approved by Frank):
+ * a legend that names the columns, then the area's kinds ("Gesprächsarten"),
+ * the filter-only buttons ("Weitere Filter-Knöpfe", only where the area has
+ * them), and how the filter buttons look. Each area shows only the columns
+ * and sections it really has. Presentational: the caller owns the value
+ * (slice 2 store), the e-mail column and the list integration.
  */
 export const DisplayFilterDialog = ({
 	open,
@@ -144,17 +174,42 @@ export const DisplayFilterDialog = ({
 	fullScreen = false,
 	id,
 	columns = TIMELINE_COLUMNS,
-	icon
+	icon,
+	email,
+	browserUnavailableReason,
+	browserMutedNotice
 }: DisplayFilterDialogProps) => {
 	// Show-only kinds (the future timeline panel) have no row in the sound
 	// mode table; they keep a plain switch so the panel stays toggleable.
 	const panelKinds = columns.show
 		? []
 		: kinds.filter((kind) => kind.showOnly);
+	// Filter-only buttons (Ungelesen, Entwürfe, Chat erstellen, Archiv) sort
+	// the list and notify nobody: their own section, only "Im Filter".
+	const mainKinds = kinds.filter((kind) => !kind.pillOnly);
+	const quickKinds = kinds.filter((kind) => kind.pillOnly);
 	const generatedId = useId();
 	const dialogId = id ?? generatedId;
 	const presentation = resolveChipPresentation(value);
 	const setView = (view: ChipView) => onChange({ ...value, view });
+	const legend = [
+		columns.show && {
+			key: 'show',
+			title: labels.showColumn,
+			text: labels.legendShow
+		},
+		{ key: 'pill', title: labels.pillColumn, text: labels.legendPill },
+		columns.sound && {
+			key: 'sound',
+			title: labels.soundColumn,
+			text: labels.legendSound
+		},
+		email && {
+			key: 'email',
+			title: labels.emailColumn,
+			text: labels.legendEmail
+		}
+	].filter(Boolean) as { key: string; title: string; text: string }[];
 
 	return (
 		<M3Dialog
@@ -164,9 +219,8 @@ export const DisplayFilterDialog = ({
 			description={labels.description}
 			icon={icon ?? <TuneIcon />}
 			closeLabel={labels.close}
-			// The tone/mode pickers need room: 560 px in the sound mode (Frank:
-			// "auf dem Desktop breiter ist überhaupt nicht schlimm").
-			width={560}
+			// Four columns with one-line kind names ("Interner Gruppenchat").
+			width={760}
 			fullScreen={fullScreen}
 			className="displayFilterDialog"
 			id={dialogId}
@@ -185,170 +239,254 @@ export const DisplayFilterDialog = ({
 					{labels.readOnlyHint}
 				</p>
 			)}
-			<DisplayFilterKindTable
-				kinds={kinds}
-				value={value}
-				onChange={onChange}
-				readOnly={readOnly}
-				labels={labels}
-				idPrefix={dialogId}
-				columns={columns}
-			/>
-
-			<fieldset
-				className="displayFilterDialog__view"
-				data-cy="display-filter-view"
+			<dl
+				className="displayFilterDialog__legend"
+				data-cy="display-filter-legend"
 			>
-				<legend className="displayFilterDialog__viewTitle">
-					{labels.viewTitle}
-				</legend>
-				<div
-					className="displayFilterDialog__viewOptions"
-					role="radiogroup"
-					aria-label={labels.viewTitle}
-				>
-					{CHIP_VIEWS.map((view) => (
-						<label
-							key={view}
-							className={clsx(
-								'displayFilterDialog__viewOption',
-								presentation.view === view &&
-									'displayFilterDialog__viewOption--selected'
-							)}
-						>
-							<input
-								type="radio"
-								name={`${dialogId}-view`}
-								value={view}
-								checked={presentation.view === view}
-								disabled={readOnly}
-								onChange={() => setView(view)}
-								data-cy={`display-filter-view-${view}`}
-							/>
-							<span>
-								{view === 'icons'
-									? labels.viewIcons
-									: view === 'labels'
-										? labels.viewLabels
-										: labels.viewText}
-							</span>
-						</label>
-					))}
-				</div>
-			</fieldset>
-
-			<div className="displayFilterDialog__autoRead">
-				<div className="displayFilterDialog__autoReadText">
-					<span
-						className="displayFilterDialog__autoReadTitle"
-						id={`${dialogId}-autosort`}
+				{legend.map((entry) => (
+					<div
+						className="displayFilterDialog__legendItem"
+						key={entry.key}
 					>
-						{labels.autoSort}
-					</span>
-					<span
-						className="displayFilterDialog__autoReadDescription"
-						id={`${dialogId}-autosort-desc`}
-					>
-						{labels.autoSortDescription}
-					</span>
-				</div>
-				<Switch
-					checked={presentation.autoSort}
-					disabled={readOnly}
-					aria-labelledby={`${dialogId}-autosort`}
-					aria-describedby={`${dialogId}-autosort-desc`}
-					data-cy="display-filter-autosort"
-					onChange={(checked) =>
-						onChange({ ...value, autoSort: checked })
-					}
-				/>
-			</div>
-
-			{panelKinds.map((kind) => (
-				<div className="displayFilterDialog__autoRead" key={kind.id}>
-					<div className="displayFilterDialog__autoReadText">
-						<span
-							className="displayFilterDialog__autoReadTitle"
-							id={`${dialogId}-panel-${kind.id}`}
-						>
-							{labels.showKind(kind.label)}
-						</span>
+						<dt className="displayFilterDialog__legendTitle">
+							{entry.title}
+						</dt>
+						<dd className="displayFilterDialog__legendText">
+							{entry.text}
+						</dd>
 					</div>
-					<Switch
-						checked={resolveKindSetting(value, kind.id).show}
-						disabled={readOnly}
-						aria-labelledby={`${dialogId}-panel-${kind.id}`}
-						data-cy={`display-filter-panel-${kind.id}`}
-						onChange={(checked) =>
-							onChange(
-								setKindSetting(value, kind.id, {
-									show: checked
-								})
-							)
-						}
-					/>
-				</div>
-			))}
+				))}
+			</dl>
 
-			{showAutoRead && (
+			<section
+				className="displayFilterDialog__section"
+				aria-labelledby={`${dialogId}-kinds`}
+			>
+				<h3
+					className="displayFilterDialog__sectionTitle"
+					id={`${dialogId}-kinds`}
+				>
+					{labels.kindsHeading}
+				</h3>
+				{columns.sound && browserMutedNotice && (
+					<p
+						className="displayFilterDialog__sectionNote"
+						role="status"
+						data-cy="display-filter-browser-muted"
+					>
+						{browserMutedNotice}
+					</p>
+				)}
+				<DisplayFilterKindTable
+					kinds={mainKinds}
+					value={value}
+					onChange={onChange}
+					readOnly={readOnly}
+					labels={labels}
+					idPrefix={dialogId}
+					columns={columns}
+					email={email}
+					browserUnavailableReason={browserUnavailableReason}
+				/>
+			</section>
+
+			{quickKinds.length > 0 && (
+				<section
+					className="displayFilterDialog__section"
+					aria-labelledby={`${dialogId}-quick`}
+					aria-describedby={`${dialogId}-quick-note`}
+				>
+					<h3
+						className="displayFilterDialog__sectionTitle"
+						id={`${dialogId}-quick`}
+					>
+						{labels.quickHeading}
+					</h3>
+					<p
+						className="displayFilterDialog__sectionNote"
+						id={`${dialogId}-quick-note`}
+					>
+						{labels.quickNote}
+					</p>
+					<DisplayFilterKindTable
+						kinds={quickKinds}
+						value={value}
+						onChange={onChange}
+						readOnly={readOnly}
+						labels={labels}
+						idPrefix={`${dialogId}-quick`}
+						columns={columns}
+						variant="quick"
+					/>
+				</section>
+			)}
+
+			<section
+				className="displayFilterDialog__section"
+				aria-labelledby={`${dialogId}-presentation`}
+			>
+				<h3
+					className="displayFilterDialog__sectionTitle"
+					id={`${dialogId}-presentation`}
+				>
+					{labels.presentationHeading}
+				</h3>
+				<fieldset
+					className="displayFilterDialog__view"
+					data-cy="display-filter-view"
+				>
+					<legend className="sr-only">{labels.viewTitle}</legend>
+					<div
+						className="displayFilterDialog__viewOptions"
+						role="radiogroup"
+						aria-label={labels.viewTitle}
+					>
+						{CHIP_VIEWS.map((view) => (
+							<label
+								key={view}
+								className={clsx(
+									'displayFilterDialog__viewOption',
+									presentation.view === view &&
+										'displayFilterDialog__viewOption--selected'
+								)}
+							>
+								<input
+									type="radio"
+									name={`${dialogId}-view`}
+									value={view}
+									checked={presentation.view === view}
+									disabled={readOnly}
+									onChange={() => setView(view)}
+									data-cy={`display-filter-view-${view}`}
+								/>
+								<span>
+									{view === 'icons'
+										? labels.viewIcons
+										: view === 'labels'
+											? labels.viewLabels
+											: labels.viewText}
+								</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
+
 				<div className="displayFilterDialog__autoRead">
 					<div className="displayFilterDialog__autoReadText">
 						<span
 							className="displayFilterDialog__autoReadTitle"
-							id={`${dialogId}-autoread`}
+							id={`${dialogId}-autosort`}
 						>
-							{labels.autoRead}
+							{labels.autoSort}
 						</span>
 						<span
 							className="displayFilterDialog__autoReadDescription"
-							id={`${dialogId}-autoread-desc`}
+							id={`${dialogId}-autosort-desc`}
 						>
-							{labels.autoReadDescription}
+							{labels.autoSortDescription}
 						</span>
 					</div>
 					<Switch
-						checked={value.autoReadHidden}
+						checked={presentation.autoSort}
 						disabled={readOnly}
-						aria-labelledby={`${dialogId}-autoread`}
-						aria-describedby={`${dialogId}-autoread-desc`}
-						data-cy="display-filter-autoread"
+						aria-labelledby={`${dialogId}-autosort`}
+						aria-describedby={`${dialogId}-autosort-desc`}
+						data-cy="display-filter-autosort"
 						onChange={(checked) =>
-							onChange({ ...value, autoReadHidden: checked })
+							onChange({ ...value, autoSort: checked })
 						}
 					/>
 				</div>
-			)}
 
-			{/* One footer line (Frank 2026-09-16): the deviation notice with
-			    its reset while this list overrides the standards, and the link
-			    to the standards. No second dialog action. */}
-			<div className="displayFilterDialog__footerLine">
-				{canReset && (
-					<span className="displayFilterDialog__override">
-						<span>{labels.overrideNotice}</span>
+				{panelKinds.map((kind) => (
+					<div
+						className="displayFilterDialog__autoRead"
+						key={kind.id}
+					>
+						<div className="displayFilterDialog__autoReadText">
+							<span
+								className="displayFilterDialog__autoReadTitle"
+								id={`${dialogId}-panel-${kind.id}`}
+							>
+								{labels.showKind(kind.label)}
+							</span>
+						</div>
+						<Switch
+							checked={resolveKindSetting(value, kind.id).show}
+							disabled={readOnly}
+							aria-labelledby={`${dialogId}-panel-${kind.id}`}
+							data-cy={`display-filter-panel-${kind.id}`}
+							onChange={(checked) =>
+								onChange(
+									setKindSetting(value, kind.id, {
+										show: checked
+									})
+								)
+							}
+						/>
+					</div>
+				))}
+
+				{showAutoRead && (
+					<div className="displayFilterDialog__autoRead">
+						<div className="displayFilterDialog__autoReadText">
+							<span
+								className="displayFilterDialog__autoReadTitle"
+								id={`${dialogId}-autoread`}
+							>
+								{labels.autoRead}
+							</span>
+							<span
+								className="displayFilterDialog__autoReadDescription"
+								id={`${dialogId}-autoread-desc`}
+							>
+								{labels.autoReadDescription}
+							</span>
+						</div>
+						<Switch
+							checked={value.autoReadHidden}
+							disabled={readOnly}
+							aria-labelledby={`${dialogId}-autoread`}
+							aria-describedby={`${dialogId}-autoread-desc`}
+							data-cy="display-filter-autoread"
+							onChange={(checked) =>
+								onChange({ ...value, autoReadHidden: checked })
+							}
+						/>
+					</div>
+				)}
+
+				{/* One footer line (Frank 2026-09-16): the deviation notice with
+				    its reset while this list overrides the standards, and the
+				    link to the standards. No second dialog action. */}
+				<div className="displayFilterDialog__footerLine">
+					{canReset && (
+						<span className="displayFilterDialog__override">
+							<span>{labels.overrideNotice}</span>
+							<button
+								type="button"
+								className="displayFilterDialog__profileLink"
+								onClick={onReset}
+								disabled={readOnly}
+								data-cy="display-filter-reset"
+								data-testid="display-filter-reset"
+							>
+								{labels.resetShort}
+							</button>
+						</span>
+					)}
+					{onOpenProfile && (
 						<button
 							type="button"
 							className="displayFilterDialog__profileLink"
-							onClick={onReset}
-							disabled={readOnly}
-							data-cy="display-filter-reset"
-							data-testid="display-filter-reset"
+							onClick={onOpenProfile}
+							data-cy="display-filter-profile-link"
 						>
-							{labels.resetShort}
+							{labels.profileLink}
 						</button>
-					</span>
-				)}
-				{onOpenProfile && (
-					<button
-						type="button"
-						className="displayFilterDialog__profileLink"
-						onClick={onOpenProfile}
-						data-cy="display-filter-profile-link"
-					>
-						{labels.profileLink}
-					</button>
-				)}
-			</div>
+					)}
+				</div>
+			</section>
 		</M3Dialog>
 	);
 };

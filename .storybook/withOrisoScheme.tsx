@@ -50,9 +50,9 @@ export const orisoSchemeGlobalType: GlobalTypes = {
 const isScheme = (value: unknown): value is OrisoSchemeName =>
 	value === 'light' || value === 'dark' || value === 'inverted';
 
-export const withOrisoScheme = (
+export const withOrisoScheme = function OrisoSchemeDecorator(
 	Story: React.ComponentType
-): React.ReactElement => {
+): React.ReactElement {
 	const [{ scheme }] = useGlobals();
 	const active: OrisoSchemeName = isScheme(scheme) ? scheme : 'light';
 	const seed = useParameter<string>(ORISO_SEED_PARAMETER, STORYBOOK_SEED);

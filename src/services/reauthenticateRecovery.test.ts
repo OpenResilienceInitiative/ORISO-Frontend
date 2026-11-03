@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vite-plus/test';
 import { reauthenticateRecovery } from './reauthenticateRecovery';
 const mocks = vi.hoisted(() => ({ login: vi.fn(), cookie: vi.fn() }));
 vi.mock('../components/sessionCookie/getKeycloakAccessToken', () => ({

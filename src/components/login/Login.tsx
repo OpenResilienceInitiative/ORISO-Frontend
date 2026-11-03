@@ -36,6 +36,7 @@ import {
 	LocaleContext
 } from '../../globalState';
 import { UserDataInterface } from '../../globalState/interfaces';
+import { getChosenLocale } from '../../globalState/provider/LocaleProvider';
 import '../../resources/styles/styles';
 import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
@@ -330,11 +331,17 @@ export const Login = () => {
 	const postLogin = useCallback(
 		() =>
 			reloadUserData().then(async (userData: UserDataInterface) => {
-				// If user has changed language from default but the profile has different language in profile override it
+				// A language the person chose on the login screen wins over the
+				// stored profile language, which the app applies after the
+				// redirect. A choice that equals the browser default counts too
+				// (#1844); a merely detected language never overwrites the profile.
+				const chosenOnScreen =
+					locale !== initLocale || getChosenLocale() === locale;
 				let patchedUserData = {};
 				if (
-					userData.preferredLanguage !== locale &&
-					locale !== initLocale
+					locale &&
+					chosenOnScreen &&
+					userData.preferredLanguage !== locale
 				) {
 					patchedUserData['preferredLanguage'] = locale;
 				}

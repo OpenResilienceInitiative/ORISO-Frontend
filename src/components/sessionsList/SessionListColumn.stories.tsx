@@ -12,7 +12,6 @@ import {
 	STAGE_LAYOUT
 } from '../chatStage/stageLayout';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
-import { SessionListCreateChat } from './SessionListCreateChat';
 import { EmptyState } from '../emptyState/EmptyState';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -268,9 +267,7 @@ function ToolbarCreateChatColumn() {
 				createGroupChatActive
 			/>
 			<CardScroll>
-				<SessionListCreateChat />
 				<DemoCard
-					afterActive
 					topic="Familienberatung"
 					postcode="10115"
 					user="other.user"
@@ -282,7 +279,28 @@ function ToolbarCreateChatColumn() {
 }
 
 export const ToolbarCreateChatAndCards: Story = {
-	render: () => <ToolbarCreateChatColumn />
+	render: () => <ToolbarCreateChatColumn />,
+	play: async ({ canvasElement }) => {
+		const createActions = canvasElement.querySelectorAll(
+			'a[href="/sessions/consultant/sessionView/createGroupChat"]'
+		);
+		await expect(createActions).toHaveLength(1);
+		await expect(createActions[0]).toBeVisible();
+		await expect(
+			canvasElement
+				.querySelector('.sessionsList__scrollContainer')!
+				.getBoundingClientRect().height
+		).toBeGreaterThan(0);
+		await expect(canvasElement.querySelector('.createChatItem')).toBeNull();
+		const card = canvasElement.querySelector('.sessionsListItem')!;
+		await waitFor(() => expect(getComputedStyle(card).opacity).toBe('1'));
+		await expect(card).toBeVisible();
+	}
+};
+
+export const ToolbarCreateChatOnPhone: Story = {
+	...ToolbarCreateChatAndCards,
+	globals: { viewport: { value: 'phone390', isRotated: false } }
 };
 
 /**

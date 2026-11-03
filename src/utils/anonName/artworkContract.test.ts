@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * The artwork contract, from the host's side.
  *
@@ -20,7 +20,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { LANGUAGE_DATA } from './data';
 import { AVATAR_ART_REVISION, renderAvatarSvg } from '../pseudonymGenerator';

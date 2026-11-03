@@ -4,14 +4,31 @@
 // config at import time.
 import './testPreviewBootstrap';
 
-import { beforeAll } from 'vitest';
-import { setProjectAnnotations } from '@storybook/react-vite';
+// addon-vitest installs renderer, preview and accessibility annotations automatically.
+// Keep only this required bootstrap; a manual override can silently drop addon hooks.
 
-// Reuse the exact preview the Storybook UI renders with (M3 scheme decorator,
-// i18n, router, realtime mocks) so a component test can never pass against a
-// different environment than the one a human reviews in the browser.
-import * as previewAnnotations from './preview';
+import { afterEach } from 'vite-plus/test';
+import { finishStoryVerification } from './verification';
+import { a11yVerification } from './a11yVerification';
 
-const annotations = setProjectAnnotations([previewAnnotations]);
-
-beforeAll(annotations.beforeAll);
+// Storybook's returned cleanup runs before the next story. Assert and restore
+// in the current test so failures and transient fallbacks keep their identity.
+afterEach(async ({ task }) => {
+	const errors: unknown[] = [];
+	try {
+		a11yVerification.finish((evidence) =>
+			Object.assign(task.meta, { verificationA11y: evidence })
+		);
+	} catch (error) {
+		errors.push(error);
+	}
+	try {
+		await finishStoryVerification((evidence) =>
+			Object.assign(task.meta, { verificationIntegrity: evidence })
+		);
+	} catch (error) {
+		errors.push(error);
+	}
+	if (errors.length)
+		throw new AggregateError(errors, errors.map(String).join('\n'));
+});

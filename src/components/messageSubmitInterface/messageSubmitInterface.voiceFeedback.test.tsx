@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -9,7 +9,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceComponent';
 import {
 	ActiveSessionContext,
@@ -62,6 +69,11 @@ vi.mock('../../api', () => ({
 	fetchAgencyConsultantList: vi.fn().mockResolvedValue([]),
 	apiPutDearchive: vi.fn().mockResolvedValue(undefined),
 	apiSendEnquiry: vi.fn().mockResolvedValue(undefined)
+}));
+// Asker sends wait for the temporary-account lookup (#1869): no network here.
+vi.mock('../../api/apiTemporaryAccount', () => ({
+	apiGetTemporaryAccount: vi.fn(() => Promise.resolve(null)),
+	apiPutMessageRetention: vi.fn()
 }));
 vi.mock('../../api/apiPostError', () => ({
 	apiPostError: vi.fn().mockResolvedValue(undefined),

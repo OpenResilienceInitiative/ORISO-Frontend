@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import {
 	act,
@@ -8,7 +8,14 @@ import {
 	screen
 } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import type { TourDefinition } from '../components/productTour/types';
 import {
