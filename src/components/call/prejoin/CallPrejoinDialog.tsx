@@ -4,6 +4,7 @@ import { KnockWaitDialog } from '../../knockWaitDialog/KnockWaitDialog';
 import { useCallDeviceCheck } from '../../waitingRoom/callEntry/useCallDeviceCheck';
 import type { CallModality } from '../../waitingRoom/callEntry/callEntryTypes';
 import {
+	chosenDeviceLabel,
 	initialControlsFor,
 	joinMediaFrom,
 	peekJoinMedia,
@@ -56,7 +57,16 @@ export const CallPrejoinDialog = ({
 				micOn: device.controls.micOn,
 				cameraOn: device.controls.cameraOn,
 				cameraAvailable: device.cameraAvailable,
-				blocker: device.blocker
+				blocker: device.blocker,
+				// By label: the call runs on another origin (ElementCall#116).
+				microphoneLabel: chosenDeviceLabel(
+					device.check.devices.microphone,
+					device.controls.selection.microphone
+				),
+				cameraLabel: chosenDeviceLabel(
+					device.check.devices.camera,
+					device.controls.selection.camera
+				)
 			})
 		);
 		onDone();

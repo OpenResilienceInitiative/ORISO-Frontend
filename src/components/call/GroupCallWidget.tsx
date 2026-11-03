@@ -17,7 +17,12 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
-import { devicesForCall, takeJoinMedia } from './prejoin/callPrejoin';
+import {
+	callStartFor,
+	devicesForCall,
+	type JoinMedia
+} from './prejoin/callPrejoin';
+import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -217,6 +222,27 @@ export const GroupCallWidget: React.FC = () => {
 		[isConsultantUser, callKnocks.people.length, shareLinkKnock.knock]
 	);
 
+	/*
+	 * #2016 / ElementCall#116: what the person chose in the device check
+	 * before joining (the call message, or the circle's pre-lobby). Held for
+	 * the whole call and put on the widget URL, so the call starts with it:
+	 * a camera switched off there is never captured, and the microphone and
+	 * camera picked there are used (by label — the call runs on another
+	 * origin, where the device ids differ).
+	 */
+	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
+	const joinMediaIsVideo = !!callData?.isVideo;
+	const joinMedia = useJoinMediaForCall(
+		joinMediaRoom,
+		shouldPrepareWidget && callData
+			? `${callData.callId ?? ''}|${callRoomId ?? ''}`
+			: null
+	);
+	const callStart = useMemo(
+		() => callStartFor(joinMediaIsVideo, joinMedia),
+		[joinMediaIsVideo, joinMedia]
+	);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
@@ -224,7 +250,8 @@ export const GroupCallWidget: React.FC = () => {
 			isVideo: callData?.isVideo ?? true,
 			onClose: closeCallSurface,
 			knockState,
-			onSetKnock: shareLinkKnock.setKnock
+			onSetKnock: shareLinkKnock.setKnock,
+			callStart
 		}
 	);
 
@@ -284,23 +311,20 @@ export const GroupCallWidget: React.FC = () => {
 	const lastReady = useRef(widget.ready);
 
 	/*
-	 * #2016: what the person chose in the device check before joining (the
-	 * call message, or the circle's pre-lobby), once, as soon as the call can
-	 * be told. Element Call starts with `skipLobby`, so this is the only
-	 * way the choice reaches it: `io.element.device_mute`. Which camera or
-	 * microphone was picked cannot be passed — see `joinMediaFrom`.
+	 * The same on/off choice once more when the call is ready, through
+	 * `io.element.device_mute`: for an Element Call image that does not yet
+	 * read the start parameters (ElementCall#116). A no-op for one that does.
+	 * Once per call.
 	 */
-	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
-	const joinMediaIsVideo = !!callData?.isVideo;
 	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	const switchedOnReady = useRef<JoinMedia | null>(null);
 	useEffect(() => {
-		if (!widgetReady) return;
-		const media = devicesForCall(
-			joinMediaIsVideo,
-			takeJoinMedia(joinMediaRoom)
-		);
+		if (!widgetReady || !joinMedia) return;
+		if (switchedOnReady.current === joinMedia) return;
+		switchedOnReady.current = joinMedia;
+		const media = devicesForCall(joinMediaIsVideo, joinMedia);
 		if (media) void setWidgetDevices(media).catch(() => undefined);
-	}, [widgetReady, joinMediaRoom, joinMediaIsVideo, setWidgetDevices]);
+	}, [widgetReady, joinMedia, joinMediaIsVideo, setWidgetDevices]);
 
 	useEffect(() => {
 		// Recorded before the guard, so that closing the surface — which sets

@@ -1,5 +1,9 @@
-import type { CallDeviceState } from '../widget/useElementCallWidget';
 import type {
+	CallDeviceState,
+	ElementCallStart
+} from '../widget/useElementCallWidget';
+import type {
+	CallDevice,
 	CallDeviceControls,
 	CallEntryBlocker,
 	CallModality
@@ -53,54 +57,77 @@ export interface DeviceCheckOutcome {
 	cameraAvailable: boolean;
 	/** The check could not run at all. */
 	blocker?: CallEntryBlocker;
+	/** The microphone the check showed, by label (`chosenDeviceLabel`). */
+	microphoneLabel?: string;
+	/** The camera the check showed, by label. */
+	cameraLabel?: string;
 }
 
 /**
- * Microphone and camera for the call, in Element Call's own words
- * (`io.element.device_mute`). A check that could not run passes nothing:
- * the call then asks the browser itself, as it did before.
- *
- * Not passed: which camera or microphone was picked. Device ids belong to
- * the page that asked for them, and the call runs on another origin; the
- * widget API has no action to choose an input device either.
+ * What the call is started with: on/off, and the devices by label
+ * (ElementCall#116). By label, because device ids belong to the page that
+ * asked for them and the call runs on another origin; labels are the same
+ * on both once the browser has granted access.
+ */
+export interface JoinMedia extends CallDeviceState {
+	microphoneLabel?: string;
+	cameraLabel?: string;
+}
+
+/**
+ * The label of the device the check showed: the one picked, or — nothing
+ * picked — the first, which is the one the picker shows as chosen and the
+ * stream uses.
+ */
+export const chosenDeviceLabel = (
+	devices: readonly CallDevice[],
+	selectedId: string | undefined
+): string | undefined =>
+	(devices.find((device) => device.id === selectedId) ?? devices[0])?.label;
+
+/**
+ * Microphone and camera for the call: on/off, and which ones by label. A
+ * check that could not run passes nothing: the call then asks the browser
+ * itself, as it did before. No camera label where the call has no camera.
  */
 export const joinMediaFrom = ({
 	modality,
 	micOn,
 	cameraOn,
 	cameraAvailable,
-	blocker
-}: DeviceCheckOutcome): CallDeviceState | null =>
-	blocker
-		? null
-		: {
-				audio_enabled: micOn,
-				video_enabled:
-					modality === 'video' && cameraOn && cameraAvailable
-			};
+	blocker,
+	microphoneLabel,
+	cameraLabel
+}: DeviceCheckOutcome): JoinMedia | null => {
+	if (blocker) return null;
+	const hasCamera = modality === 'video' && cameraAvailable;
+	return {
+		audio_enabled: micOn,
+		video_enabled: hasCamera && cameraOn,
+		...(microphoneLabel ? { microphoneLabel } : {}),
+		...(hasCamera && cameraLabel ? { cameraLabel } : {})
+	};
+};
 
 /**
  * The choice waits here, per room, until that room's call is ready to take
  * it (`GroupCallWidget`). In memory only: a reload starts afresh.
  */
-const chosen = new Map<string, CallDeviceState>();
+const chosen = new Map<string, JoinMedia>();
 
-export const rememberJoinMedia = (
-	roomRef: string,
-	media: CallDeviceState | null
-) => {
+export const rememberJoinMedia = (roomRef: string, media: JoinMedia | null) => {
 	if (media) chosen.set(roomRef, media);
 	else chosen.delete(roomRef);
 };
 
 export const peekJoinMedia = (
 	roomRef: string | null | undefined
-): CallDeviceState | null => (roomRef && chosen.get(roomRef)) || null;
+): JoinMedia | null => (roomRef && chosen.get(roomRef)) || null;
 
 /** Once: a later call in the same room starts as calls always did. */
 export const takeJoinMedia = (
 	roomRef: string | null | undefined
-): CallDeviceState | null => {
+): JoinMedia | null => {
 	const media = peekJoinMedia(roomRef);
 	if (roomRef) chosen.delete(roomRef);
 	return media;
@@ -120,13 +147,43 @@ export const initialControlsFor = (
 });
 
 /**
- * What the call is asked to switch once it is ready. A phone call has no
- * camera to switch, so it is only told about the microphone.
+ * What the call is asked to switch once it is ready
+ * (`io.element.device_mute`). A phone call has no camera to switch, so it is
+ * only told about the microphone.
+ *
+ * Redundant with `callStartFor` for an Element Call that reads the start
+ * parameters (ElementCall#116); kept for one that does not, until the image
+ * that does runs everywhere.
  */
 export const devicesForCall = (
 	callIsVideo: boolean,
-	media: CallDeviceState | null
+	media: JoinMedia | null
 ): Partial<CallDeviceState> | null => {
 	if (!media) return null;
-	return callIsVideo ? media : { audio_enabled: media.audio_enabled };
+	return callIsVideo
+		? {
+				audio_enabled: media.audio_enabled,
+				video_enabled: media.video_enabled
+			}
+		: { audio_enabled: media.audio_enabled };
+};
+
+/**
+ * The choice as the call reads it at start (ElementCall#116): before any
+ * track exists, so a camera switched off here is never captured, not even
+ * for a moment. A phone call is only told about the microphone.
+ */
+export const callStartFor = (
+	callIsVideo: boolean,
+	media: JoinMedia | null
+): ElementCallStart | null => {
+	if (!media) return null;
+	return {
+		audioEnabled: media.audio_enabled,
+		...(callIsVideo ? { videoEnabled: media.video_enabled } : {}),
+		...(media.microphoneLabel ? { audioInput: media.microphoneLabel } : {}),
+		...(callIsVideo && media.cameraLabel
+			? { videoInput: media.cameraLabel }
+			: {})
+	};
 };
