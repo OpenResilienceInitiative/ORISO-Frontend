@@ -6207,6 +6207,10 @@
 			"endsCurrentUnnamed": "እንተ መሊስኩም፡ ዘሎኩም ዝርርብ ይውዳእ።"
 		},
 		"share": {
+			"signInToJoin": "ነዚ ጻውዒት ክትጽንበሩ ናብ ሕሳብኩም እተዉ።",
+			"conversationMember": "ኣብዚ ዕላል ድሮ ተሳታፊ ኢኹም። ካብቲ ዕላል ናብቲ ጻውዒት ተጸንበሩ።",
+			"openConversations": "ዕላላተይ ክፈት",
+			"joinForbidden": "በዚ ሊንክ ናብዚ ጻውዒት ክትጽንበሩ ኣይትኽእሉን።",
 			"open": "ጻውዒት ኣካፍል",
 			"title": "ጻውዒት ኣካፍል",
 			"close": "ዕጸው",

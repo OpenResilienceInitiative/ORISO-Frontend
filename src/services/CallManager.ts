@@ -12,11 +12,13 @@ import type { MatrixClient } from 'matrix-js-sdk';
 import { getMatrixClientService } from './matrixClientRegistry';
 import {
 	assertMatrixRoomEncrypted,
+	isMatrixRoomEncrypted,
 	buildMatrixRoomEncryptionInitialState
 } from '../utils/matrixRoomEncryption';
 import { releaseAllCallWarmupStreams } from '../utils/callMediaStreamCleanup';
 import { getMatrixRtcMembershipReaderUserId } from '../resources/scripts/runtimeConfig';
 import { callLifecycleTracker } from './callLifecycleTracker';
+import type { SharedCallSeat } from '../api/apiJoinSharedCall';
 import type { CallLifecycleMessage } from '../utils/callLifecycleMessage';
 
 export type CallState =
@@ -68,6 +70,8 @@ export interface CallData {
 	 * For 1:1 calls this is identical to `roomId`.
 	 */
 	signalRoomId?: string;
+	/** A guest has membership only in the dedicated media room. */
+	sharedCallGuest?: string;
 }
 
 type CallStateChangeListener = (callData: CallData | null) => void;
@@ -139,6 +143,76 @@ class CallManager {
 				// console.error('❌ Error in call state listener:', error);
 			}
 		});
+	}
+
+	/** Use a seat issued by the call-share join endpoint, never a timeline target. */
+	public async joinSharedCall(
+		seat: SharedCallSeat,
+		signal?: AbortSignal
+	): Promise<'joined' | 'busy' | 'unavailable'> {
+		const { callId, callRoomId, sourceRoomId, guestMatrixUserId, medium } =
+			seat;
+		const getOwnClient = () => {
+			const client = getMatrixClientService()?.getClient?.();
+			return client?.getUserId() === guestMatrixUserId ? client : null;
+		};
+		const initialClient = getOwnClient();
+		if (signal?.aborted || !initialClient || callRoomId === sourceRoomId)
+			return 'unavailable';
+		if (this.hasActiveCall() || this.pendingStart || this.pendingJoin)
+			return 'busy';
+
+		const join = {};
+		this.pendingJoin = join;
+		let joinedHere = false;
+		let installed = false;
+		try {
+			if (
+				initialClient.getRoom(callRoomId)?.getMyMembership() !== 'join'
+			) {
+				await initialClient.joinRoom(callRoomId);
+				joinedHere = true;
+			}
+			// joinRoom can return before sync has hydrated the encryption and RTC state.
+			const deadline = Date.now() + 12_000;
+			while (this.pendingJoin === join && !signal?.aborted) {
+				const client = getOwnClient();
+				if (!client) break;
+				const room = client.getRoom(callRoomId);
+				if (
+					room?.getMyMembership() === 'join' &&
+					isMatrixRoomEncrypted(client, callRoomId) &&
+					client.matrixRTC?.getRoomSession(room).memberships.length
+				) {
+					this.currentCall = {
+						callId,
+						roomId: callRoomId,
+						elementCallRoomId: callRoomId,
+						sharedCallGuest: guestMatrixUserId,
+						isVideo: medium === 'VIDEO',
+						isIncoming: false,
+						isGroup: true,
+						usesElementCall: true,
+						state: 'connecting'
+					};
+					installed = true;
+					this.notifyListeners();
+					return 'joined';
+				}
+				if (Date.now() >= deadline) break;
+				await new Promise((resolve) => setTimeout(resolve, 250));
+			}
+			return 'unavailable';
+		} catch {
+			return 'unavailable';
+		} finally {
+			if (this.pendingJoin === join) this.pendingJoin = null;
+			if (joinedHere && !installed)
+				void this.leaveCallRoomAfterRefusedJoin(
+					getOwnClient() ?? initialClient,
+					callRoomId
+				);
+		}
 	}
 
 	/** Reopen the room named by a durable call, without producing another invite. */
@@ -1317,7 +1391,11 @@ class CallManager {
 		// local call surface. Broadcasting the legacy ORISO hangup event here
 		// used to make every other participant tear down the same active call.
 		// One-to-one Element Call still needs the remote hangup notification.
-		if (!call.isGroup) callLifecycleTracker.finish(call.callId);
+		if (call.sharedCallGuest) {
+			const client = getMatrixClientService()?.getClient?.();
+			if (client?.getUserId() === call.sharedCallGuest)
+				void this.leaveCallRoomAfterRefusedJoin(client, call.roomId);
+		} else if (!call.isGroup) callLifecycleTracker.finish(call.callId);
 		// A group call outlives the person who started it — but only once
 		// somebody has actually arrived. Leaving one nobody ever joined ends
 		// it, rather than leaving a card that says "running" for good.
@@ -1350,6 +1428,10 @@ class CallManager {
 	 * lets the normal room call button rejoin the exact same call room.
 	 */
 	public leaveCall(): void {
+		if (this.currentCall?.sharedCallGuest) {
+			this.endCall(false);
+			return;
+		}
 		if (this.currentCall?.usesElementCall && this.currentCall.isGroup) {
 			/*
 			 * This — not `endCall` — is the group leave path.
