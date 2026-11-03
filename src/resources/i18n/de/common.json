@@ -943,7 +943,8 @@
 			},
 			"scope": {
 				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
-				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen."
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen.",
+				"PLATFORM": "Sie können Kolleg:innen Ihres Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",

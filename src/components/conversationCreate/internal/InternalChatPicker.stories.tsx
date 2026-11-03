@@ -19,8 +19,8 @@ import '../conversationCreate.styles.scss';
 
 /**
  * Picker of "Interna besprechen" with the Träger's recipient scope (#1772,
- * ORISO-Frontend#1269). The people shown are what `filterColleaguesForScope`
- * lets through for the chosen scope, and the selection is the recipient
+ * ORISO-Frontend#1269). The people shown represent the directory response
+ * for the chosen scope, and the selection is the recipient
  * list: nothing — no "everyone", no moderators, no groups — is added. A chat
  * with the chosen colleagues becomes a dedicated, encrypted room for exactly
  * them (ORISO-UserService#1426); every refusal of that endpoint has its own
@@ -188,14 +188,24 @@ export const ScopePlatform: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'The directory the Frontend can read is the Träger\u2019s, so the platform scope lists the same people as the Träger scope and uses the Träger wording until a platform-wide directory exists (follow-up issue in ORISO-UserService). The UserService accepts the wider choice.'
+				story: 'The picker includes colleagues from other participating organisations and shows their organisation next to their name.'
 			}
 		}
 	},
-	render: () => <Flow scope="PLATFORM" />,
+	render: () => (
+		<Flow
+			scope="PLATFORM"
+			people={[
+				...toPeople('TENANT'),
+				{ id: 'c-5', label: 'Elena Fischer (Another organisation)' }
+			]}
+		/>
+	),
 	play: async ({ canvasElement }) => {
 		const list = await openPersonList(canvasElement);
-		await expect(optionNames(list)).toHaveLength(4);
+		await expect(optionNames(list)).toContain(
+			'Elena Fischer (Another organisation)'
+		);
 	}
 };
 

@@ -1167,7 +1167,8 @@
 			},
 			"scope": {
 				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
-				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
+				"PLATFORM": "Vous pouvez choisir des collègues de votre organisme et des autres organismes participants."
 			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",

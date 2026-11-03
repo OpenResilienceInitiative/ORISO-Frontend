@@ -931,7 +931,8 @@
 			},
 			"scope": {
 				"AGENCY": "You can pick colleagues from your counselling centre.",
-				"TENANT": "You can pick colleagues from your organisation."
+				"TENANT": "You can pick colleagues from your organisation.",
+				"PLATFORM": "You can choose colleagues from your own organisation and other participating organisations."
 			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
