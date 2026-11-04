@@ -1631,6 +1631,10 @@
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Ein anderer Gast ist zuerst an der Reihe",
+				"text": "Nimm zuerst die frühere Anfrage in dieser Warteschlange an."
+			},
 			"tag": "Anonymous"
 		},
 		"supervision": {

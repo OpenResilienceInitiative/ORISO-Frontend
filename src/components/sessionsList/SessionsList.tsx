@@ -198,6 +198,15 @@ const normalizeTimestamp = (value?: string | number | null): number => {
 	return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+const liveChatArrivalTime = (createDate?: string): number => {
+	if (!createDate) return Number.POSITIVE_INFINITY;
+	// Some API responses omit the UTC suffix on a server timestamp.
+	const withoutTimezone =
+		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(createDate);
+	const arrival = Date.parse(withoutTimezone ? `${createDate}Z` : createDate);
+	return Number.isFinite(arrival) ? arrival : Number.POSITIVE_INFINITY;
+};
+
 const formatDraftTime = (timestamp?: string | null) => {
 	const time = normalizeTimestamp(timestamp);
 	if (!time) {
@@ -2016,13 +2025,35 @@ export const SessionsList = ({
 	);
 	// Sorted as pairs so the rendered row and the hidden-active lookup use
 	// the same id (`sessionPairId`), whatever `item` the extended row holds.
-	const sortedSessionPairs = useMemo(
-		() =>
-			[...sessionToolbarFilteredPairs].sort((left, right) =>
-				sortSessions(left.extended, right.extended)
-			),
-		[sessionToolbarFilteredPairs, sortSessions]
-	);
+	const sortedSessionPairs = useMemo(() => {
+		const sorted = [...sessionToolbarFilteredPairs].sort((left, right) =>
+			sortSessions(left.extended, right.extended)
+		);
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) return sorted;
+
+		// Replace only the Live Chat slots in a mixed view. Mail keeps its
+		// existing order without a comparator that changes direction by pair.
+		const isLiveChatRequest = ({
+			raw,
+			extended
+		}: (typeof sorted)[number]) =>
+			extended.isEnquiry && classifyRequest(raw, extended) === 'liveChat';
+		const liveChats = sorted
+			.filter(isLiveChatRequest)
+			.sort((left, right) => {
+				const a = left.extended.item;
+				const b = right.extended.item;
+				const arrivalA = liveChatArrivalTime(a?.createDate);
+				const arrivalB = liveChatArrivalTime(b?.createDate);
+				return arrivalA === arrivalB
+					? (a?.id ?? 0) - (b?.id ?? 0)
+					: arrivalA - arrivalB;
+			});
+		let liveChatIndex = 0;
+		return sorted.map((pair) =>
+			isLiveChatRequest(pair) ? liveChats[liveChatIndex++] : pair
+		);
+	}, [sessionToolbarFilteredPairs, sortSessions, type]);
 	const sortedSessions = useMemo(
 		() => sortedSessionPairs.map(({ extended }) => extended),
 		[sortedSessionPairs]
