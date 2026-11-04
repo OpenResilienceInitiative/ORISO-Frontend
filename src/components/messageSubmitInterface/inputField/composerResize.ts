@@ -24,6 +24,10 @@ const MIN_HEIGHT_COMPACT_DESKTOP = 138;
 // field border + 66 px toolbar strip + one 20 px line + 18 px editor inset
 // + 1 px border = 106 px. Flush implies the one-line rule.
 const MIN_HEIGHT_FLUSH_DESKTOP = 106;
+// Reply/edit bar in a flush composer: 16 px inset + 32 px bar + 4 px gap. The
+// stylesheet adds this on top of `--composer-height`, so auto-grow must not
+// count it as chrome too (`--withContextBar` in the composer styles).
+export const FLUSH_CONTEXT_BAR_RESERVE = 52;
 
 /**
  * T41 (Frank, 14.09.): whatever the composer grows to, this much of the

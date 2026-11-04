@@ -227,6 +227,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Prüfen und öffnen",
+			"checking": "Wird auf Viren geprüft …",
+			"checkingImage": "Bild wird geprüft …",
+			"checkVirus": "Virenprüfung",
+			"checkImage": "Bildanalyse: sicher und ohne Richtlinienverstoß?",
+			"decrypt": "Entschlüsseln",
+			"decrypting": "Wird entschlüsselt …",
+			"encryptedHint": "Ende-zu-Ende-verschlüsselt",
+			"loadFailed": "Die Datei konnte nicht geladen werden",
+			"retry": "Erneut versuchen"
+		},
 		"mediaCheck": {
 			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
 			"reveal": "Bild anzeigen",
@@ -942,6 +954,8 @@
 			},
 			"nameLabel": "Name Interna",
 			"noColleagues": "Keine Kolleg:innen zur Auswahl",
+			"searchPeople": "Person suchen",
+			"noMatchingPeople": "Keine passende Person gefunden.",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
 			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",
@@ -952,7 +966,8 @@
 			},
 			"scope": {
 				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
-				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen."
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen.",
+				"PLATFORM": "Sie können Kolleg:innen Ihres Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
@@ -1279,7 +1294,8 @@
 			"rules": {
 				"headline": "So gehen wir miteinander um",
 				"subline": "Einmal kurz lesen – dann sind Sie dabei."
-			}
+			},
+			"devices": "Kamera & Mikrofon"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -2003,6 +2019,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} zusätzlich auswählen",
+			"checked": "Ausgewählt: {{value}}. Daneben klicken fügt ein.",
 			"notInChat": "nicht im Chat",
 			"empty": "Niemand gefunden",
 			"unavailable": "Liste konnte nicht geladen werden",
@@ -5136,6 +5154,7 @@
 		"label": "Sprachnachricht",
 		"play": "Sprachnachricht abspielen",
 		"pause": "Sprachnachricht anhalten",
+		"loading": "Sprachnachricht wird geladen",
 		"timeline": "Zeitachse",
 		"jumpTo": "Zu {{time}} springen",
 		"aria": "Sprachnachricht, {{duration}}, abspielen",
@@ -6449,6 +6468,16 @@
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
 			"micMeter": "Lautstärke Ihres Mikrofons"
+		},
+		"ready": {
+			"title": "Kamera und Mikrofon prüfen",
+			"description": "Niemand sieht oder hört Sie, bevor Sie beitreten. Die Vorschau sehen nur Sie.",
+			"descriptionCheck": "Ihre Einstellung gilt, wenn Sie in dieser Gruppe einem Gespräch beitreten. Die Vorschau sehen nur Sie.",
+			"join": "Jetzt beitreten",
+			"done": "Fertig",
+			"retry": "Erneut prüfen",
+			"knocking": "Anfrage gesendet, bitte warten …",
+			"notApplied": "Ihre Einstellung für Kamera und Mikrofon wurde nicht übernommen. Bitte prüfen Sie beide im Anruf."
 		}
 	},
 	"furtherCounselling": {
@@ -6538,6 +6567,7 @@
 		},
 		"entry": {
 			"inactive": "Dieser Link ist nicht mehr aktiv.",
+			"callsDisabled": "In dieser Beratung sind Anrufe nicht möglich.",
 			"haveAccount": "Sie haben schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 		},
