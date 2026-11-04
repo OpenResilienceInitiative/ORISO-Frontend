@@ -3,7 +3,9 @@ import {
 	apiCancelOwnCallKnock,
 	apiGetOwnCallKnock,
 	apiStartDirectLinkConversation,
-	CallKnockStatus
+	CallKnockStatus,
+	isInactiveDirectLinkError,
+	isPausedDirectLinkError
 } from '../../api/apiDirectLinks';
 import {
 	KnockWaitPhase,
@@ -42,9 +44,15 @@ export const phaseForKnockStatus = (
 			: 'waiting';
 
 export interface DirectLinkKnockState {
+	/** The knock waited on now; "Erneut anklopfen" replaces it. */
+	knockId: number;
 	phase: KnockWaitPhase;
 	/** The knock was withdrawn (here or elsewhere): the dialog goes. */
 	gone: boolean;
+	/** Knocking again was refused because the link was switched off (410). */
+	inactive: boolean;
+	/** That refusal named the direct link as paused (`DIRECT_LINK_INACTIVE`). */
+	paused: boolean;
 	cancel: () => void;
 	knockAgain: () => void;
 	close: () => void;
@@ -67,6 +75,8 @@ export const useDirectLinkKnock = (
 		phaseForKnockStatus(knock.status)
 	);
 	const [gone, setGone] = useState(false);
+	const [inactive, setInactive] = useState(false);
+	const [paused, setPaused] = useState(false);
 	const knockingAgain = useRef(false);
 
 	useEffect(() => {
@@ -139,7 +149,11 @@ export const useDirectLinkKnock = (
 					);
 					return;
 				}
-				const next = { ...fresh, joinExisting: current.joinExisting };
+				const next = {
+					...fresh,
+					joinExisting: current.joinExisting,
+					joinCall: current.joinCall
+				};
 				rememberPendingKnock(next);
 				setCurrent(next);
 				setPhase((now) => {
@@ -149,11 +163,27 @@ export const useDirectLinkKnock = (
 						: waiting;
 				});
 			})
-			.catch(close)
+			.catch(async (error) => {
+				/* The dialog goes either way; a switched-off link says why,
+				   so the reason is read before it goes. */
+				const refusedAsPaused = await isPausedDirectLinkError(error);
+				setInactive(isInactiveDirectLinkError(error));
+				setPaused(refusedAsPaused);
+				close();
+			})
 			.finally(() => {
 				knockingAgain.current = false;
 			});
-	}, [close, current.joinExisting, current.token, start]);
+	}, [close, current.joinCall, current.joinExisting, current.token, start]);
 
-	return { phase, gone, cancel, knockAgain, close };
+	return {
+		knockId: current.knockId,
+		phase,
+		gone,
+		inactive,
+		paused,
+		cancel,
+		knockAgain,
+		close
+	};
 };

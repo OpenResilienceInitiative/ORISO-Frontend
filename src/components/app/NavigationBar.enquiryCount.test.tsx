@@ -152,10 +152,13 @@ describe('NavigationBar "Anfragen" count (FE#1435)', () => {
 				)
 			).toBeNull()
 		);
-		// Nothing left to take: the new-enquiry pop-up goes as well.
-		expect(removeNotification).toHaveBeenCalledWith(
-			NEW_ENQUIRY_NOTICE_ID,
-			NOTIFICATION_TYPE_NEW_ENQUIRY
+		// Nothing left to take: the new-enquiry pop-up goes as well. It goes in
+		// the effect after the commit that drops the count, not in that commit.
+		await waitFor(() =>
+			expect(removeNotification).toHaveBeenCalledWith(
+				NEW_ENQUIRY_NOTICE_ID,
+				NOTIFICATION_TYPE_NEW_ENQUIRY
+			)
 		);
 	});
 

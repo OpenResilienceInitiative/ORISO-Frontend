@@ -79,7 +79,10 @@ import {
 } from './circle/CircleSettingsView';
 import { useInternalSubsetChatSubmit } from './useInternalSubsetChatSubmit';
 import { resolveRecipientScope } from './internal/recipientScope';
-import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
+import {
+	InternalChatColleague,
+	loadInternalChatColleagues
+} from './internal/loadInternalChatColleagues';
 import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
 import './conversationCreate.styles.scss';
 
@@ -298,9 +301,9 @@ const CreateConversationFlow = ({
 	>([]);
 	// The colleagues the Interna picker may offer, narrowed to the recipient
 	// scope (#1772).
-	const [internalColleagues, setInternalColleagues] = useState<Consultant[]>(
-		[]
-	);
+	const [internalColleagues, setInternalColleagues] = useState<
+		InternalChatColleague[]
+	>([]);
 	const [consultantsLoadFailed, setConsultantsLoadFailed] = useState(false);
 
 	// Once the edited series has loaded, preselect its agency so the settings
@@ -436,11 +439,7 @@ const CreateConversationFlow = ({
 			return;
 		}
 		const isCurrent = () => colleaguesLoadRef.current === load;
-		loadInternalChatColleagues({
-			scope: recipientScope,
-			agencyId: selectedAgency,
-			currentUserId: userData?.userId
-		})
+		loadInternalChatColleagues(selectedAgency)
 			.then((colleagues) => {
 				if (isCurrent()) {
 					setInternalColleagues(colleagues);
@@ -451,17 +450,17 @@ const CreateConversationFlow = ({
 					setConsultantsLoadFailed(true);
 				}
 			});
-	}, [
-		availability.internal,
-		recipientScope,
-		selectedAgency,
-		userData?.userId
-	]);
+	}, [availability.internal, selectedAgency]);
 
 	useEffect(() => {
 		loadInternalColleagues();
 		return invalidateColleaguesLoad;
-	}, [invalidateColleaguesLoad, loadInternalColleagues]);
+	}, [
+		invalidateColleaguesLoad,
+		loadInternalColleagues,
+		recipientScope,
+		userData?.userId
+	]);
 
 	const loadTopics = useCallback(() => {
 		if (!availability.circle && !directLinkOffered) {
@@ -505,7 +504,15 @@ const CreateConversationFlow = ({
 		[availableConsultants]
 	);
 	const internalPeople = useMemo(
-		() => toPeople(internalColleagues),
+		() =>
+			internalColleagues.map(
+				({ consultantId, displayName, tenantName }) => ({
+					id: consultantId,
+					label: tenantName
+						? `${displayName} (${tenantName})`
+						: displayName
+				})
+			),
 		[internalColleagues]
 	);
 

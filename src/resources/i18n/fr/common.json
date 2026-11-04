@@ -227,6 +227,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Vérifier et ouvrir",
+			"checking": "Recherche de virus …",
+			"checkingImage": "Vérification de l'image …",
+			"checkVirus": "Analyse antivirus",
+			"checkImage": "Analyse de l'image : sûre et conforme aux règles ?",
+			"decrypt": "Déchiffrer",
+			"decrypting": "Déchiffrement …",
+			"encryptedHint": "Chiffré de bout en bout",
+			"loadFailed": "Impossible de charger le fichier",
+			"retry": "Réessayer"
+		},
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
@@ -1166,6 +1178,8 @@
 			},
 			"nameLabel": "Nom de l'échange interne",
 			"noColleagues": "Aucun collègue à sélectionner",
+			"searchPeople": "Rechercher une personne",
+			"noMatchingPeople": "Aucune personne correspondante.",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
 			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
@@ -1176,7 +1190,8 @@
 			},
 			"scope": {
 				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
-				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
+				"PLATFORM": "Vous pouvez choisir des collègues de votre organisme et des autres organismes participants."
 			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
@@ -1284,7 +1299,8 @@
 			"rules": {
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
-			}
+			},
+			"devices": "Caméra et micro"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1982,6 +1998,8 @@
 			}
 		},
 		"mention": {
+			"check": "Sélectionner aussi {{name}}",
+			"checked": "Sélection : {{value}}. Cliquez à côté pour insérer.",
 			"notInChat": "pas dans le chat",
 			"empty": "Aucune personne trouvée",
 			"unavailable": "La liste n'a pas pu être chargée",
@@ -5152,6 +5170,7 @@
 		"label": "Message vocal",
 		"play": "Lire le message vocal",
 		"pause": "Mettre le message vocal en pause",
+		"loading": "Chargement du message vocal",
 		"timeline": "Barre de progression",
 		"jumpTo": "Aller à {{time}}",
 		"aria": "Message vocal, {{duration}}, lire",
@@ -6492,6 +6511,16 @@
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
+		},
+		"ready": {
+			"title": "Vérifier la caméra et le micro",
+			"description": "Personne ne vous voit ni ne vous entend avant que vous ne rejoigniez. Vous seul voyez l'aperçu.",
+			"descriptionCheck": "Votre réglage s'applique lorsque vous rejoignez un appel dans ce groupe. Vous seul voyez l'aperçu.",
+			"join": "Rejoindre maintenant",
+			"done": "Terminé",
+			"retry": "Vérifier à nouveau",
+			"knocking": "Demande envoyée, veuillez patienter …",
+			"notApplied": "Votre réglage de la caméra et du micro n’a pas été appliqué. Veuillez vérifier les deux dans l’appel."
 		}
 	},
 	"furtherCounselling": {
@@ -6581,6 +6610,7 @@
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans cette consultation.",
 			"haveAccount": "Vous avez déjà un compte ? Se connecter",
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},

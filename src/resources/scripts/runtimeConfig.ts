@@ -197,6 +197,17 @@ export const getMediaScannerUrl = (): string =>
 		pickValue('REACT_APP_MEDIA_SCANNER_URL', 'VITE_MEDIA_SCANNER_URL') || ''
 	);
 
+/**
+ * Whether the deployed scanner also runs the AI image check (ADR-019). The
+ * scanner does not tell the client, so the deployment has to. Unset means no:
+ * the chat must never say an image was analysed when only a virus scan ran.
+ */
+export const isMediaImageCheckConfigured = (): boolean =>
+	pickValue(
+		'REACT_APP_MEDIA_SCANNER_IMAGE_CHECK',
+		'VITE_MEDIA_SCANNER_IMAGE_CHECK'
+	)?.toLowerCase() === 'true';
+
 const isLocalServiceOrigin = (value?: string | null): boolean =>
 	/^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(
 		String(value || '').trim()
