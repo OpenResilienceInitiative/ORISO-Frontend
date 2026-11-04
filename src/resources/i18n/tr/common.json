@@ -4549,7 +4549,40 @@
 			"now": "Şimdi",
 			"running": "devam ediyor",
 			"upcoming": "Gelecekteki randevular",
-			"nextAppointment": "Sonraki randevu: {{date}}"
+			"nextAppointment": "Sonraki randevu: {{date}}",
+			"appointment": {
+				"create": "Randevu oluştur",
+				"dialog": {
+					"createTitle": "Randevu oluştur",
+					"moveTitle": "Randevuyu ertele",
+					"description": "Randevu bu danışmanlığa aittir. Sohbette bir bildirim görünür.",
+					"createAction": "Oluştur",
+					"moveAction": "Ertele",
+					"date": "Tarih",
+					"start": "Başlangıç",
+					"end": "Bitiş",
+					"error": {
+						"incomplete": "Lütfen tarih ve saat seçin.",
+						"past": "Randevu gelecekte olmalıdır.",
+						"order": "Bitiş, başlangıçtan sonra olmalıdır.",
+						"conflict": "Bu randevu artık değiştirilemez: iptal edilmiş veya danışmanlık sona ermiştir.",
+						"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
+					}
+				},
+				"notice": {
+					"created": "Randevu belirlendi: {{date}}",
+					"moved": "Randevu şu tarihe ertelendi: {{date}}",
+					"cancelled": "Randevu iptal edildi: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Bildirim gönderilmedi",
+					"text": "Randevu kaydedildi ancak sohbetteki bildirim gönderilemedi."
+				},
+				"cancelFailed": {
+					"title": "Randevu iptal edilmedi",
+					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				}
+			}
 		}
 	},
 	"statusOverlay": {

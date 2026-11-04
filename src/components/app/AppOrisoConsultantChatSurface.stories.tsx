@@ -513,24 +513,17 @@ const installAppOrisoRoutingFetchMocks = () => {
 
 		if (
 			runtimeTimelineFixtures &&
-			/^\/service\/appointservice\/consultants\/[^/]+\/bookings$/.test(
-				pathname
-			)
+			pathname === '/service/users/appointments/upcoming'
 		) {
 			return storybookJsonResponse([
 				{
-					id: 77,
-					uid: 'storybook-booking-77',
+					id: 'storybook-appointment-77',
+					// A conversation the list has not loaded: no room of its own.
+					sessionId: 7777,
 					startTime: inDays(4, 10),
 					endTime: inDays(4, 11),
-					eventTypeId: 1,
-					location: 'VIDEO_CALL',
-					description: '',
-					userId: 1,
-					askerId: 'asker-77',
-					askerName: 'Ratsuchende Lena',
-					title: 'Beratung',
-					videoAppointmentId: ''
+					status: 'SCHEDULED',
+					counterpart: { displayName: 'Ratsuchende Lena' }
 				}
 			]);
 		}
@@ -1467,16 +1460,18 @@ export const RuntimeRoutingShellFutureZone: Story = {
 			},
 			{ timeout: 8000 }
 		);
-		// Two group dates (real room card) and the booking without a room.
+		// Two group dates (real room card) and the 1:1 appointment.
 		await waitFor(() =>
 			expect(
 				zone.querySelectorAll('[data-cy="timeline-future"] .tlp__row')
 			).toHaveLength(3)
 		);
+		// The 1:1 appointment of a conversation the list has not loaded yet.
 		expect(
-			zone.querySelector(
-				'[data-cy="timeline-entry"][data-unmapped="true"]'
-			)?.textContent
+			Array.from(
+				zone.querySelectorAll('[data-cy="timeline-entry"]'),
+				(entry) => entry.textContent
+			).join('\n')
 		).toContain('Ratsuchende Lena');
 		expect(zone.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
 		// The group's past card carries the clock circle.

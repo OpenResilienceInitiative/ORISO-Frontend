@@ -101,10 +101,12 @@ import {
 import { AppointmentSplitButton } from './timeline/AppointmentSplitButton';
 import { useFutureEntries } from './timeline/useFutureEntries';
 import { useAppointmentActions } from './timeline/useAppointmentActions';
+import { AppointmentDateDialog } from './timeline/AppointmentDateDialog';
 import {
 	entriesForList,
 	formatEntryDate,
 	nextEntryBySession,
+	roomKey,
 	type FutureEntry,
 	type TimelineSession
 } from './timeline/timelineModel';
@@ -2403,34 +2405,63 @@ export const SessionsList = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[sessionToolbarPairs, userData]
 	);
+	const timelineConversations = React.useMemo<TimelineSession[]>(
+		() =>
+			sessionToolbarPairs
+				.map(({ extended }) => extended)
+				.filter((session) => !session.isGroup)
+				.map((session) => {
+					const topic =
+						typeof session.item.topic === 'string'
+							? session.item.topic
+							: session.item.topic?.name || '';
+					return {
+						sessionId: session.item.id,
+						title:
+							session.consultant?.displayName ||
+							session.user?.username ||
+							session.consultant?.username ||
+							topic,
+						kind: 'one-to-one' as const,
+						topic,
+						lastActivity: 0,
+						lastMessage: '',
+						matrixRoomId:
+							session.item.matrixRoomId ||
+							session.rid ||
+							undefined
+					};
+				}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[sessionToolbarPairs]
+	);
 	const { entries: futureEntries, markCancelled } = useFutureEntries({
 		series: timelineSeries,
-		userId: userData?.userId,
-		isAsker: isAskerList,
+		conversations: timelineConversations,
 		enabled: timelineApplies
 	});
+	const [movingEntry, setMovingEntry] = useState<FutureEntry | null>(null);
 	const onAppointmentAction = useAppointmentActions({
-		onCancelled: markCancelled
+		onCancelled: markCancelled,
+		onMove: setMovingEntry
 	});
-	const visibleGroupById = React.useMemo(
+	const visibleRooms = React.useMemo(
 		() =>
-			new Map(
-				sortedSessions
-					.filter((session) => session.isGroup)
-					.map((session) => [session.item.id, session])
+			new Set(
+				sortedSessions.map((session) =>
+					roomKey(
+						session.isGroup ? 'group' : 'one-to-one',
+						session.item.id
+					)
+				)
 			),
 		[sortedSessions]
 	);
 	const hasAnyListFilter =
 		hasHidingFilter || sessionToolbarSearch.trim() !== '';
 	const zoneEntries = React.useMemo(
-		() =>
-			entriesForList(
-				futureEntries,
-				new Set(visibleGroupById.keys()),
-				hasAnyListFilter
-			),
-		[futureEntries, visibleGroupById, hasAnyListFilter]
+		() => entriesForList(futureEntries, visibleRooms, hasAnyListFilter),
+		[futureEntries, visibleRooms, hasAnyListFilter]
 	);
 	// Every planned date counts for the clock, whatever the filter shows above.
 	const nextGroupAppointment = React.useMemo(
@@ -2440,10 +2471,20 @@ export const SessionsList = ({
 			),
 		[futureEntries]
 	);
+	const nextConversationAppointment = React.useMemo(
+		() =>
+			nextEntryBySession(
+				futureEntries.filter((entry) => entry.kind === 'one-to-one')
+			),
+		[futureEntries]
+	);
+	const nextAppointmentOf = (session: ExtendedSessionInterface) =>
+		(session.isGroup
+			? nextGroupAppointment
+			: nextConversationAppointment
+		).get(session.item.id);
 	const upcomingLabelOf = (session: ExtendedSessionInterface) => {
-		const next = session.isGroup
-			? nextGroupAppointment.get(session.item.id)
-			: undefined;
+		const next = nextAppointmentOf(session);
 		return next
 			? translate('sessionList.timeline.nextAppointment', {
 					date: formatEntryDate(next.start)
@@ -2452,9 +2493,7 @@ export const SessionsList = ({
 	};
 	const timelineRole = isAskerList ? 'asker' : 'counsellor';
 	const appointmentActionOf = (session: ExtendedSessionInterface) => {
-		const next = session.isGroup
-			? nextGroupAppointment.get(session.item.id)
-			: undefined;
+		const next = nextAppointmentOf(session);
 		return next
 			? ({
 					openRoom,
@@ -3002,12 +3041,8 @@ export const SessionsList = ({
 												activeSession
 											)}
 											upcomingAppointmentModality={
-												activeSession.isGroup
-													? nextGroupAppointment.get(
-															activeSession.item
-																.id
-														)?.modality
-													: undefined
+												nextAppointmentOf(activeSession)
+													?.modality
 											}
 											appointmentAction={appointmentActionOf(
 												activeSession
@@ -3141,6 +3176,14 @@ export const SessionsList = ({
 						onCancel={handleCloseCaseHandoverBatch}
 					/>
 				)}
+			{movingEntry?.sessionId !== undefined && (
+				<AppointmentDateDialog
+					sessionId={movingEntry.sessionId}
+					matrixRoomId={movingEntry.matrixRoomId}
+					entry={movingEntry}
+					onClose={() => setMovingEntry(null)}
+				/>
+			)}
 		</div>
 	);
 };

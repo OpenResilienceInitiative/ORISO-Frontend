@@ -4549,7 +4549,40 @@
 			"now": "Maintenant",
 			"running": "en cours",
 			"upcoming": "Rendez-vous à venir",
-			"nextAppointment": "Prochain rendez-vous : {{date}}"
+			"nextAppointment": "Prochain rendez-vous : {{date}}",
+			"appointment": {
+				"create": "Créer un rendez-vous",
+				"dialog": {
+					"createTitle": "Créer un rendez-vous",
+					"moveTitle": "Déplacer le rendez-vous",
+					"description": "Le rendez-vous fait partie de cette consultation. Un avis apparaît dans la conversation.",
+					"createAction": "Créer",
+					"moveAction": "Déplacer",
+					"date": "Date du rendez-vous",
+					"start": "Début",
+					"end": "Fin",
+					"error": {
+						"incomplete": "Veuillez choisir une date et une heure.",
+						"past": "Le rendez-vous doit se situer dans le futur.",
+						"order": "La fin doit être postérieure au début.",
+						"conflict": "Ce rendez-vous ne peut plus être modifié : il a été annulé ou la consultation est terminée.",
+						"failed": "Le rendez-vous n’a pas pu être enregistré. Veuillez réessayer."
+					}
+				},
+				"notice": {
+					"created": "Rendez-vous fixé : {{date}}",
+					"moved": "Rendez-vous déplacé au : {{date}}",
+					"cancelled": "Rendez-vous annulé : {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Avis non envoyé",
+					"text": "Le rendez-vous est enregistré, mais l’avis n’a pas pu être envoyé dans la conversation."
+				},
+				"cancelFailed": {
+					"title": "Rendez-vous non annulé",
+					"text": "Le rendez-vous n’a pas pu être annulé. Veuillez réessayer."
+				}
+			}
 		}
 	},
 	"statusOverlay": {

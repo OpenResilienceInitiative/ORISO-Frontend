@@ -22,7 +22,9 @@ export interface TimelineOccurrence {
 }
 
 export interface TimelineBooking {
-	id: number;
+	id: number | string;
+	/** Set on an appointment stored on its conversation (FE#1960): cancel and move use it. */
+	appointmentId?: string;
 	startTime: string;
 	endTime?: string;
 	location:
@@ -32,7 +34,7 @@ export interface TimelineBooking {
 		| 'IN_PERSON'
 		| 'LINK'
 		| 'USER_PHONE';
-	/** New field the appointment service has to store (ADR-021 follow-up). */
+	/** The conversation the appointment belongs to. */
 	sessionId?: number;
 	/** cal.com booking uid (cancel). */
 	uid?: string;
@@ -80,7 +82,8 @@ export interface FutureEntry {
 		modality: TimelineOccurrence['modality'];
 	};
 	booking?: {
-		id: number;
+		id: number | string;
+		appointmentId?: string;
 		uid?: string;
 		rescheduleLink?: string;
 		askerId?: string;
@@ -125,7 +128,13 @@ export const buildFutureEntries = ({
 	seriesToSession: Record<number, number>;
 	sessions: TimelineSession[];
 }): FutureEntry[] => {
-	const byId = new Map(sessions.map((s) => [s.sessionId, s]));
+	// Group and 1:1 ids come from different tables and may be equal.
+	const byId = new Map(
+		sessions.filter((s) => s.kind === 'group').map((s) => [s.sessionId, s])
+	);
+	const conversationById = new Map(
+		sessions.filter((s) => s.kind !== 'group').map((s) => [s.sessionId, s])
+	);
 	const fromOccurrences = occurrences.map<FutureEntry>((o) => {
 		const sessionId = seriesToSession[o.seriesId];
 		const session =
@@ -152,7 +161,9 @@ export const buildFutureEntries = ({
 	});
 	const fromBookings = bookings.map<FutureEntry>((b) => {
 		const session =
-			b.sessionId === undefined ? undefined : byId.get(b.sessionId);
+			b.sessionId === undefined
+				? undefined
+				: conversationById.get(b.sessionId);
 		return {
 			key: `booking-${b.id}`,
 			kind: 'one-to-one',
@@ -164,9 +175,11 @@ export const buildFutureEntries = ({
 			end: b.endTime ? new Date(b.endTime) : undefined,
 			modality: MODALITY_BY_LOCATION[b.location] ?? 'video',
 			canDuplicate: false,
+			canModerate: session?.canModerate,
 			matrixRoomId: session?.matrixRoomId,
 			booking: {
 				id: b.id,
+				appointmentId: b.appointmentId,
 				uid: b.uid,
 				rescheduleLink: b.rescheduleLink,
 				askerId: b.askerId
@@ -190,21 +203,30 @@ export const filterEntries = (
 					entry.sessionId !== undefined && entry.kind === filter
 			);
 
+/** Group and 1:1 ids may be equal: a room is its kind plus its id. */
+export const roomKey = (kind: EntryKind, sessionId: number) =>
+	`${kind}:${sessionId}`;
+
 /**
  * What the real list shows above "Jetzt": a filter applies to both sides of
- * the handle, so a group twin shows only while its room is a visible row; an
- * appointment without a room only while no filter or search is active.
+ * the handle, so a twin shows only while its room is a visible row. A group
+ * date always has its row. A 1:1 appointment may belong to a conversation the
+ * list has not loaded yet, so without its row (like an appointment without a
+ * room) it shows only while no filter or search is active.
  */
 export const entriesForList = (
 	entries: FutureEntry[],
-	visibleGroupIds: ReadonlySet<number>,
+	visibleRooms: ReadonlySet<string>,
 	hasFilter: boolean
 ): FutureEntry[] =>
-	entries.filter((entry) =>
-		entry.sessionId !== undefined
-			? entry.kind === 'group' && visibleGroupIds.has(entry.sessionId)
-			: !hasFilter
-	);
+	entries.filter((entry) => {
+		if (
+			entry.sessionId !== undefined &&
+			visibleRooms.has(roomKey(entry.kind, entry.sessionId))
+		)
+			return true;
+		return entry.kind === 'one-to-one' && !hasFilter;
+	});
 
 /**
  * The nearest appointment of every room: drives the clock circle on the
@@ -341,8 +363,8 @@ export const entryMenu = (
 					}
 		];
 	}
-	if (isGroup && entry.canModerate === false) {
-		// Not this counsellor's group: only what is open to every member.
+	if (entry.canModerate === false) {
+		// Not this counsellor's room: only what is open to every member.
 		return [
 			{
 				key: 'reminder',
