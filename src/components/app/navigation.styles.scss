@@ -798,7 +798,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	--oriso-nav-bar-on-pill: var(--m3-on-secondary, #ffffff);
 	--oriso-nav-bar-label: var(--m3-on-surface-variant, #444748);
 	--oriso-nav-bar-active-label: var(--oriso-on-primary-fixed, #410001);
-	--oriso-nav-bar-badge: var(--m3-error, #b1005e);
+
+	/* 10% black keeps white 11px counts at AA (4.5:1) on the tenant's error color. */
+	--oriso-nav-bar-badge: color-mix(
+		in srgb,
+		var(--m3-error, #b1005e) 90%,
+		#000
+	);
 
 	/* White count on the badge: ignore the tenant's computed on-error. */
 	--oriso-nav-bar-on-badge: var(--m3-surface-container-lowest, #ffffff);

@@ -251,6 +251,11 @@
 		display: none;
 	}
 
+	/* A fullscreen composer must survive the viewport shrinking under 1200px. */
+	.draftsCenter__detail:has(.draftsCenter__embeddedSession--fullscreen) {
+		display: flex;
+	}
+
 	.draftsCenter__detailTitle {
 		font-size: 22px;
 	}

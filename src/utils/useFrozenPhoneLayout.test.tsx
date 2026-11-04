@@ -1,5 +1,5 @@
 // @vitest-environment oriso-jsdom
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import {
 	setEmbeddedComposerExpanded,
@@ -45,5 +45,22 @@ describe('useFrozenPhoneLayout', () => {
 		expect(result.current).toBe(true);
 		rerender({ phone: false }); // released: follows live again
 		expect(result.current).toBe(false);
+	});
+
+	it('releases the freeze after the settle delay when the frame came back at another breakpoint', () => {
+		vi.useFakeTimers();
+		const { result, rerender } = renderHook(
+			({ phone }) => useFrozenPhoneLayout(phone),
+			{ initialProps: { phone: true } }
+		);
+		act(() => setEmbeddedComposerExpanded(true));
+		rerender({ phone: false }); // window enlarged while expanded
+		act(() => setEmbeddedComposerExpanded(false));
+		expect(result.current).toBe(true);
+		act(() => {
+			vi.advanceTimersByTime(400);
+		});
+		expect(result.current).toBe(false); // frame is wide again: desktop layout
+		vi.useRealTimers();
 	});
 });

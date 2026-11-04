@@ -1,4 +1,4 @@
-import { useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 /**
  * The Drafts center shows a chat inside an iframe, where the composer's
@@ -61,12 +61,16 @@ export const isComposerFullscreenMessage = (
  * the embedded composer expanded until the frame is back at its original width,
  * so widening the frame never remounts the composer.
  */
+/** Time for the embedding page to shrink the frame back after a collapse. */
+const FREEZE_SETTLE_MS = 400;
+
 export const useFrozenPhoneLayout = (livePhoneLayout: boolean): boolean => {
 	const expanded = useSyncExternalStore(
 		subscribeEmbeddedComposerExpanded,
 		getEmbeddedComposerExpanded
 	);
 	const frozen = useRef<boolean | null>(null);
+	const [, settle] = useState(0);
 	if (expanded) {
 		if (frozen.current === null) {
 			frozen.current = livePhoneLayout;
@@ -74,5 +78,17 @@ export const useFrozenPhoneLayout = (livePhoneLayout: boolean): boolean => {
 	} else if (frozen.current === livePhoneLayout) {
 		frozen.current = null;
 	}
+	// The window may have been resized while expanded, so the frame can come
+	// back at a different breakpoint than it left: release after it settled.
+	useEffect(() => {
+		if (expanded || frozen.current === null) {
+			return undefined;
+		}
+		const timer = setTimeout(() => {
+			frozen.current = null;
+			settle((tick) => tick + 1);
+		}, FREEZE_SETTLE_MS);
+		return () => clearTimeout(timer);
+	}, [expanded]);
 	return frozen.current ?? livePhoneLayout;
 };

@@ -93,6 +93,12 @@ export const DraftsCenter = () => {
 	const embeddedFrameRef = useRef<HTMLIFrameElement>(null);
 	const [embeddedFullscreen, setEmbeddedFullscreen] = useState(false);
 
+	// A replaced frame (other draft) starts collapsed and never posts `false`.
+	const embeddedFrameKey = selectedDraftKey;
+	useEffect(() => {
+		setEmbeddedFullscreen(false);
+	}, [embeddedFrameKey]);
+
 	useEffect(() => {
 		const onMessage = (event: MessageEvent) => {
 			if (
@@ -332,6 +338,9 @@ export const DraftsCenter = () => {
 										)}
 										src={embeddedChatPath}
 										className="draftsCenter__embeddedSessionFrame"
+										onLoad={() =>
+											setEmbeddedFullscreen(false)
+										}
 									/>
 								</div>
 							)}
