@@ -1,4 +1,5 @@
 import { getModality, Modality } from '../session/getModality';
+import { getDirectLinkMedium } from '../session/directLinkOrigin';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
@@ -7,6 +8,8 @@ import {
 	getSupervisionListState,
 	hasSupervisionMarker
 } from '../sessionsListItem/supervisionListState';
+import { OTHER_KIND_ID } from '../displayFilter/displayFilterTypes';
+import type { SessionKindId } from '../../utils/displayFilter/sessions';
 import {
 	SessionSearchTextOptions,
 	sessionMatchesPeople,
@@ -17,6 +20,8 @@ export type SessionToolbarChipFilter =
 	| 'unread'
 	| 'drafts'
 	| 'nearby'
+	// FE#1952: conversations that came in through a counsellor direct link.
+	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'groups'
@@ -44,6 +49,8 @@ export const normalizeSessionToolbarChip = (
 			return 'nearby';
 		case 'drafts':
 			return 'drafts';
+		case 'directLinks':
+			return 'directLinks';
 		case 'other':
 			return 'other';
 		case 'liveChat':
@@ -72,6 +79,15 @@ export const isInternalGroupChatSession = (
 ): boolean => Boolean(session.isGroup && !isConversationCircleSession(session));
 
 /**
+ * FE#1952 (Frank, 2026-10-30): a conversation that came in through a
+ * counsellor direct link has its own "Direktlinks" chip and leaves "Mail".
+ * Same reading as the row's label (`getDirectLinkMedium`): agency counselling
+ * with a direct-link medium.
+ */
+export const isDirectLinkSession = (raw: ListItemInterface): boolean =>
+	getDirectLinkMedium(raw) !== undefined;
+
+/**
  * Live-chat / anonymous asker sessions on the registered-enquiry feed.
  */
 export function isAnonymousAskerSession(
@@ -80,6 +96,62 @@ export function isAnonymousAskerSession(
 ): boolean {
 	return getModality(raw) === Modality.LIVE_CHAT;
 }
+
+const isSupervisedByMe = (
+	extended: ExtendedSessionInterface,
+	currentUserId: string | undefined
+): boolean =>
+	getSupervisionListState(extended, currentUserId) === 'supervisedByMe';
+
+/**
+ * Exactly one kind per row, evaluated in the spec's order (§5.2): supervision
+ * by backend marker (only if the viewer can supervise) → circle → internal
+ * group → live chat → supervision by legacy fallback (no marker, row owned
+ * by another consultant, only if the viewer can supervise) → one-to-one.
+ * The legacy heuristic runs after the structural group kinds because it
+ * cannot tell a supervised case from a group an eligible consultant merely
+ * subscribes to; and never for askers, whose ordinary chats it would
+ * otherwise call "supervision".
+ *
+ * The display filter (`utils/displayFilter/sessions`) and the Supervision
+ * chip below both use this one function, so they cannot disagree (#1703).
+ */
+export const classifySession = (
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface,
+	currentUserId: string | undefined,
+	canSupervise: boolean
+): SessionKindId => {
+	if (!raw?.session && !raw?.chat) {
+		return OTHER_KIND_ID;
+	}
+	const marker = hasSupervisionMarker(extended);
+	if (canSupervise && marker && isSupervisedByMe(extended, currentUserId)) {
+		return 'supervision';
+	}
+	if (isConversationCircleSession(extended)) {
+		return 'circle';
+	}
+	if (isInternalGroupChatSession(extended)) {
+		return 'internalGroup';
+	}
+	if (isAnonymousAskerSession(raw, extended)) {
+		return 'liveChat';
+	}
+	if (
+		canSupervise &&
+		!marker &&
+		raw.consultant?.id &&
+		String(raw.consultant.id) !== String(currentUserId || '')
+	) {
+		return 'supervision';
+	}
+	// FE#1952: a 1:1 conversation that came in through a direct link.
+	if (isDirectLinkSession(raw)) {
+		return 'directLinks';
+	}
+	return 'oneToOne';
+};
 
 /**
  * The chat item behind a list entry (group chat wins over 1:1 session) —
@@ -202,6 +274,14 @@ export function sessionMatchesToolbar(
 	if (effectiveChip === 'nearby' && (isAnonymous || extended.isGroup)) {
 		return false;
 	}
+	// FE#1952: direct-link conversations have their own chip, not "Mail".
+	const isDirectLink = isDirectLinkSession(raw);
+	if (effectiveChip === 'nearby' && isDirectLink) {
+		return false;
+	}
+	if (effectiveChip === 'directLinks' && !isDirectLink) {
+		return false;
+	}
 
 	if (effectiveChip === 'unread') {
 		// Derived from the Matrix client (#1147) — the DTO's `messagesRead`
@@ -224,25 +304,14 @@ export function sessionMatchesToolbar(
 			return false;
 		}
 	} else if (effectiveChip === 'supervision') {
-		if (hasSupervisionMarker(extended)) {
-			// ADR-008 list marker: the backend says whether I supervise this row.
-			if (
-				getSupervisionListState(extended, currentUserId) !==
-				'supervisedByMe'
-			) {
-				return false;
-			}
-		} else {
-			// Older backend without the marker: fall back to the heuristic
-			// "any row owned by another consultant". Remove once every
-			// environment sends `session.supervision`.
-			if (!raw.consultant?.id) {
-				return false;
-			}
-			if (String(raw.consultant.id) === String(currentUserId || '')) {
-				// Assigned consultant chats are excluded; only supervised chats remain.
-				return false;
-			}
+		// Same rule as the display filter (#1703): a colleague's group chat
+		// is never supervision, whatever the marker fallback says. The chip
+		// is only listed for consultants who can supervise.
+		if (
+			classifySession(raw, extended, currentUserId, true) !==
+			'supervision'
+		) {
+			return false;
 		}
 	}
 

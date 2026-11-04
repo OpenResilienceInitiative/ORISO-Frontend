@@ -4,7 +4,9 @@ import { useTheme } from '@mui/material/styles';
 import i18n from 'i18next';
 import iconUrl, { ReactComponent as Illustration } from '../../src/resources/img/illustrations/not-found.svg';
 
-export default { title: 'VerificationControls/Temporary', parameters: { a11y: { test: 'error' } } };
+// Colour contrast is off for product stories (#1338); these controls prove the
+// gate still fails on it, so they turn it back on.
+export default { title: 'VerificationControls/Temporary', parameters: { a11y: { test: 'error', options: { rules: { 'color-contrast': { enabled: true } } } } } };
 export const Healthy = {
     render: () => <><p>Accessible provider control</p><Illustration role="img" aria-label="Real illustration" /></>,
     play: async ({ canvasElement, reporting }) => {

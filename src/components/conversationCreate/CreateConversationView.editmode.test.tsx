@@ -21,9 +21,11 @@ import {
 } from '../../api/apiGroupChatSettings';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
+import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { conversationAgency } from '../../test/fixtures/conversationPolicyFixtures';
 import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
@@ -73,6 +75,9 @@ vi.mock('../../hooks/useSession', () => ({ useSession: vi.fn() }));
 vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetTenantConsultantList: vi.fn().mockResolvedValue([])
 }));
+vi.mock('./internal/loadInternalChatColleagues', () => ({
+	loadInternalChatColleagues: vi.fn().mockResolvedValue([])
+}));
 vi.mock('../../resources/img/icons/group-chat-avatar.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
@@ -81,9 +86,11 @@ vi.mock('../../resources/img/illustrations/Team.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
-// The create view waits for the agencies' settings (#1440); none known here.
+// Confirmed legacy agencies without settings preserve tenant hard caps.
 vi.mock('../../api/apiGetAgenciesByIds', () => ({
-	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
+	apiGetAgenciesByIds: vi.fn(async (ids: number[]) =>
+		ids.map((id) => ({ ...conversationAgency(id), settings: null }))
+	)
 }));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])
@@ -432,17 +439,17 @@ describe('CreateConversationView internal card (finding 2)', () => {
 			read: vi.fn(),
 			ready: false
 		});
-		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
-			{ consultantId: 'p1', firstName: 'Pat', lastName: 'One' },
-			{ consultantId: 'p2', firstName: 'Sam', lastName: 'Two' }
-		] as any);
+		vi.mocked(loadInternalChatColleagues).mockResolvedValue([
+			{ consultantId: 'p1', displayName: 'Pat One', agencies: [] },
+			{ consultantId: 'p2', displayName: 'Sam Two', agencies: [] }
+		]);
 	});
 
 	it('loads colleagues when the selected agency id is zero', async () => {
 		renderInUserContext([{ id: 0, name: 'Agency Zero' }]);
 
 		await waitFor(() =>
-			expect(apiGetTenantConsultantList).toHaveBeenCalledTimes(1)
+			expect(loadInternalChatColleagues).toHaveBeenCalledTimes(1)
 		);
 	});
 
@@ -450,7 +457,7 @@ describe('CreateConversationView internal card (finding 2)', () => {
 		renderInUserContext([]);
 
 		await waitFor(() =>
-			expect(apiGetTenantConsultantList).not.toHaveBeenCalled()
+			expect(loadInternalChatColleagues).not.toHaveBeenCalled()
 		);
 	});
 
@@ -468,7 +475,7 @@ describe('CreateConversationView internal card (finding 2)', () => {
 
 		// Wait for the colleague list to load for the picked agency.
 		await waitFor(() =>
-			expect(apiGetTenantConsultantList).toHaveBeenCalled()
+			expect(loadInternalChatColleagues).toHaveBeenCalled()
 		);
 		// Open the person list and select the first colleague.
 		fireEvent.click(

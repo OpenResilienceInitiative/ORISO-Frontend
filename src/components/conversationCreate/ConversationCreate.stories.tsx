@@ -229,7 +229,12 @@ const PersonMenuDemo = () => {
 	];
 	return (
 		<div style={{ width: 320 }} ref={anchorRef}>
+			{/* Stands in for the split button that names the list in the card (#1338). */}
+			<span id="storyPersonMenuLabel" hidden>
+				Personen hinzufügen
+			</span>
 			<PersonSelectMenu
+				labelledBy="storyPersonMenuLabel"
 				options={options}
 				onToggle={(id) =>
 					setSelected((prev) =>
@@ -274,6 +279,7 @@ const CardMenuOverlayDemo = () => {
 			</p>
 			<SplitButton
 				ref={splitButtonRef}
+				id="storyCardPersonButton"
 				fullWidth
 				label={`${selected.length} Personen hinzugefügt`}
 				variant={selected.length > 0 ? 'primary' : 'outlined'}
@@ -297,6 +303,7 @@ const CardMenuOverlayDemo = () => {
 					}
 					anchorRef={splitButtonRef}
 					onClose={() => setOpen(false)}
+					labelledBy="storyCardPersonButton"
 					vacatedHint="nicht mehr in der Beratungsstelle"
 					toggleLabel={(label, isSelected) =>
 						isSelected ? `${label} entfernen` : `${label} auswählen`

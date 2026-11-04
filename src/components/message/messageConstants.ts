@@ -1,3 +1,12 @@
+import {
+	FurtherCounsellingNotice,
+	parseFurtherCounsellingNotice
+} from '../furtherCounselling/furtherCounsellingNotices';
+import {
+	ConsultantRenamedNotice,
+	parseConsultantRenamedNotice
+} from './consultantRenamedNotice';
+
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
 export const SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED = 'INQUIRY_ACCEPTED';
@@ -115,6 +124,10 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				null as InquiryAcceptanceMetadata | null,
 			systemNotificationHandoverGrant:
 				null as HandoverGrantMetadata | null,
+			systemNotificationFurtherCounselling:
+				null as FurtherCounsellingNotice | null,
+			systemNotificationConsultantRenamed:
+				null as ConsultantRenamedNotice | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -131,6 +144,10 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationExplanation = '';
 	let systemNotificationAcceptance: InquiryAcceptanceMetadata | null = null;
 	let systemNotificationHandoverGrant: HandoverGrantMetadata | null = null;
+	let systemNotificationFurtherCounselling: FurtherCounsellingNotice | null =
+		null;
+	let systemNotificationConsultantRenamed: ConsultantRenamedNotice | null =
+		null;
 	let visibleToUserIds: string[] = [];
 
 	let keepParsingPrefixes = true;
@@ -212,6 +229,10 @@ export const parseMessagePrefixes = (message?: string | null) => {
 					parsed?.acceptance
 				);
 			}
+			systemNotificationFurtherCounselling =
+				parseFurtherCounsellingNotice(parsed);
+			systemNotificationConsultantRenamed =
+				parseConsultantRenamedNotice(parsed);
 			if (
 				systemNotificationType ===
 				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
@@ -245,6 +266,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationExplanation,
 		systemNotificationHandoverGrant,
 		systemNotificationAcceptance,
+		systemNotificationFurtherCounselling,
+		systemNotificationConsultantRenamed,
 		visibleToUserIds
 	};
 };

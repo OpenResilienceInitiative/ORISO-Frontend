@@ -21,6 +21,8 @@ interface RowMenuProps {
 	anchorRef: React.RefObject<HTMLElement>;
 	onClose: () => void;
 	labelledBy?: string;
+	/** Accessible name when no element labels the menu (#1338). */
+	label?: string;
 	/** Free-form content instead of an option list (e.g. the calendar). */
 	children?: React.ReactNode;
 	preferredHeight?: number;
@@ -58,6 +60,7 @@ export const RowMenu = ({
 	anchorRef,
 	onClose,
 	labelledBy,
+	label,
 	children,
 	preferredHeight = DEFAULT_MENU_HEIGHT
 }: RowMenuProps) => {
@@ -151,6 +154,7 @@ export const RowMenu = ({
 				style={style}
 				role={children ? 'dialog' : 'listbox'}
 				aria-labelledby={labelledBy}
+				aria-label={labelledBy ? undefined : label}
 				onKeyDown={handleKeyDown}
 			>
 				{children ??

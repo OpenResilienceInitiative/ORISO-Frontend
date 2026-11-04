@@ -1,7 +1,14 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { rememberConfirmedEntryName } from './entryRoomIdentity';
@@ -24,6 +31,12 @@ vi.mock('./LiveChatWaitingRoom', () => ({
 vi.mock('../../legalLinks/LegalLinks', () => ({
 	__esModule: true,
 	default: () => <span />
+}));
+vi.mock('../../../api/apiGetPublicTopicName', () => ({
+	apiGetPublicTopicName: () => Promise.resolve(undefined)
+}));
+vi.mock('../../../api/apiGetAgencyId', () => ({
+	apiGetAgencyById: () => Promise.resolve(null)
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../../api/apiGetAnonymousEnquiryDetails', () => ({

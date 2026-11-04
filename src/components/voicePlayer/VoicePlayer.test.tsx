@@ -183,6 +183,23 @@ describe('VoicePlayer, ring variant', () => {
 	});
 });
 
+describe('VoicePlayer while the bytes load', () => {
+	it('announces loading outside the button', () => {
+		const { container } = render(
+			<VoicePlayer durationSec={12} onRequestSource={() => {}} />
+		);
+		const status = screen.getByRole('status');
+		expect(status.textContent).toBe('');
+
+		fireEvent.click(
+			container.querySelector('.voicePlayer__toggle') as HTMLElement
+		);
+
+		expect(status.textContent).toBe('voicePlayer.loading');
+		expect(status.closest('button')).toBeNull();
+	});
+});
+
 describe('VoicePlayer bubble', () => {
 	it.each([
 		['incoming', 'voicePlayer--bubble-incoming'],

@@ -1,4 +1,5 @@
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
+import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import * as React from 'react';
 import { useContext, useEffect, useId, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
@@ -8,6 +9,11 @@ import { useSessionListRail } from '../sessionsList/SessionListRailContext';
 import { SessionRailPill } from '../sessionsList/SessionRailPill';
 import { getSessionRailMarks } from '../sessionsList/sessionRailState';
 import { getModality, Modality } from '../session/getModality';
+import {
+	directLinkLabelKey,
+	getDirectLinkMedium
+} from '../session/directLinkOrigin';
+import { DirectLinkGlyph } from '../session/DirectLinkGlyph';
 import {
 	convertISO8601ToMSSinceEpoch,
 	getPrettyDateFromMessageDate,
@@ -23,7 +29,13 @@ import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
-import { GroupCardParticipants } from './GroupCardParticipants';
+import {
+	GroupCardParticipants,
+	groupCardStackWidth
+} from './GroupCardParticipants';
+import { groupCardParticipants } from './groupCardMemberParticipants';
+import { useGroupCardMembers } from '../../hooks/useGroupCardMembers';
+import { SESSION_CARD_GEOMETRY } from './SessionCardBody/sessionCardGeometry';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
@@ -32,11 +44,14 @@ import { config } from '../../resources/scripts/config';
 import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
 import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
 import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
-import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
-import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
+import mailConversationIcon from '../../resources/img/icons/chatroom/nearby_counselling_200_32.svg';
+import mailConversationHoverIcon from '../../resources/img/icons/chatroom/nearby_counselling_400_32.svg';
+import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200_32.svg';
+import internalConversationHoverIcon from '../../resources/img/icons/chatroom/internal_conversation_400_24.svg';
+import selfHelpHoverIcon from '../../resources/img/icons/chatroom/self_help_group_400_24.svg';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 // Self-help consulting-type icon (not the supervision marker).
-import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
+import selfHelpIcon from '../../resources/img/icons/chatroom/self_help_group_200_32.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -89,15 +104,26 @@ import {
 	apiGetCaseHandoverStatus,
 	apiPutArchive,
 	apiPutDearchive,
+	apiPutGroupChat,
+	GROUP_CHAT_API,
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
-import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
+import {
+	archiveSessionSuccessOverlayItem,
+	groupChatErrorOverlayItem,
+	leaveGroupChatSecurityOverlayItem,
+	leaveGroupChatSuccessOverlayItem
+} from '../sessionMenu/sessionMenuHelpers';
+import { logout } from '../logout/logout';
+import { clearSelfLeave, markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { TopicTag } from '../topicTag/TopicTag';
+import { UpcomingAppointmentClock } from './UpcomingAppointmentClock';
+import type { EntryModality } from '../sessionsList/timeline/timelineModel';
 import { useMatrixSessionEvents } from '../../hooks/useMatrixSessionPreview';
 import {
 	filterVisibleMatrixPreviewEvents,
@@ -124,20 +150,74 @@ import {
 	CaseHandoverActionButton,
 	CaseHandoverActionState
 } from './CaseHandoverActionButton';
-interface SessionListItemProps {
+export interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
 	handleKeyDownLisItemContent?: Function;
 	index: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	/** Card sits in the grouped list (`SessionsList`): flush with its
+	 * neighbours, rounded only at the group ends. */
+	grouped?: boolean;
+	/** First card of a group: top of the list or right below the active card. */
+	isGroupStart?: boolean;
+	/** Last card of a group: end of the list or right above the active card. */
+	isGroupEnd?: boolean;
 	caseHandoverBatchMode?: boolean;
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
 	onCaseHandoverBatchStart?: () => void;
 	onCaseHandoverBatchConfirm?: () => void;
 	onCaseHandoverBatchClose?: () => void;
+	/**
+	 * Label of the room's next appointment (ADR-021). Set: a grey clock circle
+	 * joins the avatar stack. Timeline prototype only until it ships.
+	 */
+	upcomingAppointment?: string;
+	/** What kind that appointment is: the symbol shows it where the date has no room. */
+	upcomingAppointmentModality?: EntryModality;
+	/**
+	 * The room's next appointment as a row below the card's text, in full
+	 * width (ADR-021). Above it the clock circle stays hidden; a card too narrow
+	 * for the row (<= 340px) shows the circle instead.
+	 */
+	appointmentAction?: (card: {
+		openRoom: () => void;
+		active: boolean;
+	}) => React.ReactNode;
+	/**
+	 * Where a conversation card shows its date (ADR-021 display setting):
+	 * `corner` as on dev, `tag` as a segment of the topic tag, `line` in its
+	 * own line below the tag, `off` not at all.
+	 */
+	datePlacement?: SessionCardDatePlacement;
 }
+
+export type SessionCardDatePlacement = 'corner' | 'line' | 'off';
+
+/**
+ * The card's kind icon, worn as a mask so CSS colours it per card state; a
+ * hovered card shows the heavier asset. The visible word next to it is the name.
+ */
+const ConsultingKindIcon = ({
+	src,
+	hoverSrc
+}: {
+	src: string;
+	hoverSrc: string;
+}) => (
+	<span
+		className="sessionsListItem__consultingTypeIcon--kindIcon"
+		aria-hidden="true"
+		style={
+			{
+				'--kind-icon-url': `url("${src}")`,
+				'--kind-icon-hover-url': `url("${hoverSrc}")`
+			} as React.CSSProperties
+		}
+	/>
+);
 
 export const SessionListItemComponent = ({
 	defaultLanguage,
@@ -146,12 +226,19 @@ export const SessionListItemComponent = ({
 	index,
 	isBeforeActive = false,
 	isAfterActive = false,
+	grouped = false,
+	isGroupStart = true,
+	isGroupEnd = true,
 	caseHandoverBatchMode = false,
 	caseHandoverSelected = false,
 	onCaseHandoverSelect,
 	onCaseHandoverBatchStart,
 	onCaseHandoverBatchConfirm,
-	onCaseHandoverBatchClose
+	onCaseHandoverBatchClose,
+	upcomingAppointment,
+	upcomingAppointmentModality,
+	appointmentAction,
+	datePlacement = 'corner'
 }: SessionListItemProps) => {
 	const { t: translate } = useTranslation(['common']);
 	const location = useLocation();
@@ -287,6 +374,15 @@ export const SessionListItemComponent = ({
 		matrixRoomId,
 		isMatrixBackedSession && !caseHandoverContentLocked
 	);
+	// The card's text wraps the group's stack, so it needs the stack's width.
+	const groupCardMembers = useGroupCardMembers(
+		matrixRoomId,
+		Boolean(activeSession?.isGroup) && !isRail
+	);
+	const groupParticipantCount =
+		groupCardMembers.status === 'ready'
+			? groupCardParticipants(groupCardMembers.members).length
+			: 1;
 	const visibleMatrixPreviewEvents = useMemo(
 		() =>
 			filterVisibleMatrixPreviewEvents(matrixPreviewEvents, [
@@ -516,7 +612,8 @@ export const SessionListItemComponent = ({
 		isGroupChatOwner:
 			!!activeSession && isGroupChatOwner(activeSession, userData),
 		isGroupChatActive: !!activeSession?.item?.active,
-		hasMatrixRoom: !!activeSession?.item?.matrixRoomId
+		hasMatrixRoom: !!activeSession?.item?.matrixRoomId,
+		isGroupChatSubscribed: !!activeSession?.item?.subscribed
 	});
 	// Every flag below requires `!isAsker`, so this stays false for askers —
 	// their menu is gated separately on the legal-links branch.
@@ -795,15 +892,30 @@ export const SessionListItemComponent = ({
 		}
 	};
 
+	// The "archived" confirmation is shown only once the server accepted; a
+	// refusal shows the error and leaves the chat where it is.
 	const handleArchiveSession = () => {
 		setFlyoutOpen(false);
-		setOverlayItem(archiveSessionSuccessOverlayItem);
-		setOverlayActive(true);
+		if (isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		apiPutArchive(activeSession.item.id)
+			.then(() => {
+				// The overlay lives in this card: removing the card now would
+				// unmount it before the confirmation is ever seen.
+				setOverlayItem(archiveSessionSuccessOverlayItem);
+			})
+			.catch(() => setOverlayItem(groupChatErrorOverlayItem))
+			.finally(() => {
+				setOverlayActive(true);
+				setIsRequestInProgress(false);
+			});
 	};
 
 	const handleDearchiveSession = () => {
 		setFlyoutOpen(false);
-		apiPutDearchive(activeSession.item.id)
+		apiPutDearchive(activeSession.item.id, [
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		])
 			.then(() => {
 				reloadActiveSession?.();
 				setTimeout(() => {
@@ -817,9 +929,17 @@ export const SessionListItemComponent = ({
 					}
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
+			.catch(() => {
+				setOverlayItem(groupChatErrorOverlayItem);
+				setOverlayActive(true);
 			});
+	};
+
+	// #1923: the asker confirms first; the overlay offers Leave and Cancel.
+	const handleLeaveGroup = () => {
+		setFlyoutOpen(false);
+		setOverlayItem(leaveGroupChatSecurityOverlayItem);
+		setOverlayActive(true);
 	};
 
 	// Closes the menu first, then opens the confirmation that lives outside it.
@@ -868,38 +988,62 @@ export const SessionListItemComponent = ({
 		);
 	};
 
+	const removeArchivedSession = () =>
+		sessionsDispatch({
+			type: REMOVE_SESSIONS,
+			ids: activeSession.item.matrixRoomId
+				? [activeSession.item.matrixRoomId]
+				: [activeSession.item.id]
+		});
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (isRequestInProgress) {
 			return null;
 		}
 		setIsRequestInProgress(true);
 		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+			const wasArchived =
+				overlayItem === archiveSessionSuccessOverlayItem;
 			setOverlayActive(false);
 			setOverlayItem(null);
 			setIsRequestInProgress(false);
+			// Dismissing the confirmation must not leave the archived chat listed.
+			if (wasArchived) removeArchivedSession();
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.LEAVE_GROUP_CHAT) {
+			const roomId = activeSession.item.matrixRoomId;
+			if (roomId) markSelfLeave(roomId);
+			apiPutGroupChat(activeSession.item.id, GROUP_CHAT_API.LEAVE)
+				.then(() => setOverlayItem(leaveGroupChatSuccessOverlayItem))
+				.catch(() => {
+					if (roomId) clearSelfLeave(roomId);
+					setOverlayItem(groupChatErrorOverlayItem);
+				})
+				.finally(() => setIsRequestInProgress(false));
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			// Removing the card unmounts this overlay, so it is the last step.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			sessionsDispatch({
+				type: REMOVE_SESSIONS,
+				ids: activeSession.item.matrixRoomId
+					? [activeSession.item.matrixRoomId]
+					: [activeSession.item.id]
+			});
+			mobileListView();
+			navigate(listPath + getSessionListTab());
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
+			logout();
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
-			const sessionId = activeSession.item.id;
-			const sessionGroupId = activeSession.item.matrixRoomId;
-
-			apiPutArchive(sessionId)
-				.then(() => {
-					sessionsDispatch({
-						type: REMOVE_SESSIONS,
-						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
-					});
-
-					mobileListView();
-					navigate(listPath);
-				})
-				.catch((error) => {
-					// console.error(error);
-				})
-				.finally(() => {
-					setOverlayActive(false);
-					setOverlayItem(null);
-					setIsRequestInProgress(false);
-					setFlyoutOpen(false);
-				});
+			// The request already succeeded; this only leaves the archived chat.
+			// Removing the card unmounts this overlay, so it is the last step.
+			setOverlayActive(false);
+			setOverlayItem(null);
+			setIsRequestInProgress(false);
+			setFlyoutOpen(false);
+			mobileListView();
+			navigate(listPath);
+			removeArchivedSession();
 		}
 	};
 
@@ -952,6 +1096,12 @@ export const SessionListItemComponent = ({
 		} else {
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
+	} else if (
+		!activeSession.isGroup &&
+		isDeletedGuest(activeSession.user?.temporaryAccount)
+	) {
+		// ORISO-UserService#1486: the guest's temporary account is gone.
+		sessionTopic = translate('temporaryAccount.deletedGuest');
 	} else {
 		sessionTopic =
 			resolveAnonymousChatDisplayName(activeSession.user) ||
@@ -1012,6 +1162,10 @@ export const SessionListItemComponent = ({
 			? getRoomUnreadCount(supervisionSideRoomId)
 			: 0;
 		const railUnreadCount = mainUnreadCount + supervisionUnreadCount;
+		const railMainTooltip = {
+			body: previewBody(railChannelPreviews?.main ?? null),
+			meta: previewWhen(railChannelPreviews?.main ?? null)
+		};
 		const railTooltips = {
 			pill: {
 				title: railName,
@@ -1028,10 +1182,12 @@ export const SessionListItemComponent = ({
 					body: previewBody(railChannelPreviews?.thread ?? null),
 					meta: previewWhen(railChannelPreviews?.thread ?? null)
 				},
-				mail: {
-					body: previewBody(railChannelPreviews?.main ?? null),
-					meta: previewWhen(railChannelPreviews?.main ?? null)
-				},
+				mail: railMainTooltip,
+				// FE#1952: a direct-link conversation's origin mark stands in the
+				// mail's slot and previews the same main channel.
+				videoCall: railMainTooltip,
+				audioCall: railMainTooltip,
+				directLink: railMainTooltip,
 				supervision: {
 					body: previewBody(railSupervisionPreview),
 					meta: previewWhen(railSupervisionPreview)
@@ -1114,6 +1270,8 @@ export const SessionListItemComponent = ({
 						previewChannel: matrixSessionPreview?.channel,
 						supervisionState,
 						modality: getModality(activeSession),
+						directLinkMedium: getDirectLinkMedium(activeSession),
+						appointment: Boolean(upcomingAppointment),
 						unread: isItemUnread || supervisionUnreadCount > 0
 					})}
 					markLabels={{
@@ -1122,8 +1280,15 @@ export const SessionListItemComponent = ({
 							'sessionList.toolbar.chips.supervision'
 						),
 						mail: translate('sessionList.toolbar.chips.nearby'),
+						videoCall: translate(directLinkLabelKey('VIDEO')),
+						audioCall: translate(directLinkLabelKey('AUDIO')),
+						directLink: translate(directLinkLabelKey('CHAT')),
+						appointment:
+							upcomingAppointment ||
+							translate('sessionList.timeline.upcoming'),
 						unread: translate('sessionList.toolbar.chips.unread')
 					}}
+					appointmentModality={upcomingAppointmentModality}
 					tooltips={railTooltips}
 					unreadCount={railUnreadCount}
 					active={isChatActive}
@@ -1144,6 +1309,32 @@ export const SessionListItemComponent = ({
 		);
 	}
 
+	// Its own keys and clicks: only the main part opens the room.
+	const appointmentRowWith = (kind?: React.ReactNode) =>
+		appointmentAction && (
+			<div
+				className="sessionsListItem__appointment"
+				data-cy="session-card-appointment"
+				onClick={(e) => e.stopPropagation()}
+				onKeyDown={(e) => e.stopPropagation()}
+			>
+				<div className="sessionsListItem__appointmentButton">
+					{appointmentAction({
+						openRoom: handleOnClick,
+						active: Boolean(isChatActive)
+					})}
+				</div>
+				{kind && (
+					<div
+						className="sessionsListItem__appointmentKind"
+						data-cy="session-card-appointment-kind"
+					>
+						{kind}
+					</div>
+				)}
+			</div>
+		);
+
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
 			activeSession.consultant &&
@@ -1152,192 +1343,259 @@ export const SessionListItemComponent = ({
 			? translate('groupChat.listItem.subjectEmpty.self')
 			: translate('groupChat.listItem.subjectEmpty.other');
 		const groupModality = getModality(activeSession);
-		return (
-			<div
-				onClick={handleOnClick}
-				className={clsx(
-					'sessionsListItem',
-					'sessionsListItem--groupChat',
-					isChatActive && 'sessionsListItem--active',
-					flyoutOpen && 'sessionsListItem--menuOpen',
-					!isChatActive && !isItemUnread && 'sessionsListItem--read',
-					isBeforeActive && 'sessionsListItem--beforeActive',
-					isAfterActive && 'sessionsListItem--afterActive'
-				)}
-				data-group-id={activeSession.rid ? activeSession.rid : ''}
-				data-cy="session-list-item"
-				data-search-keep-open
-			>
-				<div
-					className={clsx(
-						'sessionsListItem__content',
-						isChatActive && 'sessionsListItem__content--active'
-					)}
-					onKeyDown={(e) => handleKeyDownListItem(e)}
-					ref={setCardRef}
-					tabIndex={index === 0 ? 0 : -1}
-					role="tab"
-					aria-selected={isChatActive}
-				>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__rowLeft">
-							{activeSession.isGroup && (
-								<TopicTag className="sessionsListItem__topic">
-									{translate('groupChat.noTopicSpecified')}
-								</TopicTag>
-							)}
-						</div>
-						<div className="sessionsListItem__rowRight">
-							{/*
-							 * Only `showChatSettings` can be true here: the other
-							 * flags need `isSession`, which `buildExtendedSession`
-							 * never sets alongside `isGroup`. That invariant is
-							 * load-bearing — Overlay, LegalLinkModal and
-							 * DeleteSession all live in the main return below, so
-							 * an archive or delete entry surfacing on a group row
-							 * would fire with no confirmation behind it (the
-							 * delete ref would simply be null). Widen the helper
-							 * for group chats only together with those.
-							 */}
-							{hasChatroomSettingsActions && (
-								<SessionListItemMenu
-									flyoutOpen={flyoutOpen}
-									menuIconRef={menuIconRef}
-									surfaceRef={cardRef}
-									dropdownRef={dropdownRef}
-									dropdownId={dropdownId}
-									dropdownLabel={dropdownLabel}
-									translate={translate}
-									onMenuClick={handleMenuClick}
-									onClose={() => setFlyoutOpen(false)}
-									onMenuKeyDown={handleMenuKeyDown}
-									onDropdownKeyDown={handleDropdownKeyDown}
-									isAsker={isAsker}
-									visibility={chatroomSettingsMenu}
-									onChatSettings={handleChatSettings}
-									onArchive={handleArchiveSession}
-									onDearchive={handleDearchiveSession}
-									onDelete={handleDeleteSession}
-									onRequestHelp={handleRequestHelp}
-									legalLinks={legalLinks}
-									agencyId={activeSession?.agency?.id}
-									onLegalLinkClick={(title, url) => {
-										setFlyoutOpen(false);
-										setLegalModal({ title, url });
-									}}
-								/>
-							)}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__participants">
-							<GroupCardParticipants
-								roomId={matrixRoomId}
-								enabled={
-									Boolean(activeSession?.isGroup) &&
-									!caseHandoverContentLocked
-								}
-							/>
-						</div>
-						<div
-							className={clsx(
-								'sessionsListItem__username',
-								!isItemUnread &&
-									'sessionsListItem__username--readLabel'
-							)}
-						>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<SessionListItemLastMessage
-							lastMessage={
-								displayLastMessage
-									? displayLastMessage
-									: defaultSubjectText
-							}
+		// A group stores only `topic`; for a Gesprächskreis it is the chosen topic.
+		const groupName =
+			typeof activeSession.item.topic === 'string'
+				? activeSession.item.topic
+				: activeSession.item.topic?.name || '';
+		const groupKind = (
+			<>
+				{groupModality === Modality.INTERNAL_GROUP && (
+					<div
+						className={clsx(
+							'sessionsListItem__consultingTypeIcon',
+							'sessionsListItem__consultingTypeIcon--internal'
+						)}
+					>
+						<ConsultingKindIcon
+							src={internalConversationIcon}
+							hoverSrc={internalConversationHoverIcon}
 						/>
-						{activeSession.item.attachment && (
-							<SessionListItemAttachment
-								attachment={activeSession.item.attachment}
+						<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+							{translate('sessionList.item.sessionType.internal')}
+						</span>
+					</div>
+				)}
+				{groupModality === Modality.SELF_HELP && (
+					<div
+						className={clsx(
+							'sessionsListItem__consultingTypeIcon',
+							'sessionsListItem__consultingTypeIcon--selfHelp'
+						)}
+					>
+						<ConsultingKindIcon
+							src={selfHelpIcon}
+							hoverSrc={selfHelpHoverIcon}
+						/>
+						<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+							{translate('sessionList.item.sessionType.selfHelp')}
+						</span>
+					</div>
+				)}
+				{groupModality !== Modality.INTERNAL_GROUP &&
+					groupModality !== Modality.SELF_HELP && (
+						<div className="sessionsListItem__consultingTypeIcon">
+							<img
+								src={teamImage}
+								alt={translate(
+									'sessionList.item.sessionType.team'
+								)}
+								className="sessionsListItem__consultingTypeIcon--team"
 							/>
+						</div>
+					)}
+			</>
+		);
+
+		return (
+			<>
+				<div
+					onClick={handleOnClick}
+					className={clsx(
+						'sessionsListItem',
+						'sessionsListItem--groupChat',
+						appointmentAction &&
+							'sessionsListItem--withAppointment',
+						appointmentAction && 'sessionsListItem--kindInRow',
+						isChatActive && 'sessionsListItem--active',
+						flyoutOpen && 'sessionsListItem--menuOpen',
+						!isChatActive &&
+							!isItemUnread &&
+							'sessionsListItem--read',
+						isBeforeActive && 'sessionsListItem--beforeActive',
+						isAfterActive && 'sessionsListItem--afterActive',
+						grouped && 'sessionsListItem--grouped',
+						grouped &&
+							isGroupStart &&
+							'sessionsListItem--groupStart',
+						grouped && isGroupEnd && 'sessionsListItem--groupEnd'
+					)}
+					data-group-id={activeSession.rid ? activeSession.rid : ''}
+					data-cy="session-list-item"
+					data-search-keep-open
+				>
+					<div
+						className={clsx(
+							'sessionsListItem__content',
+							'sessionsListItem__content--flow',
+							isChatActive && 'sessionsListItem__content--active'
 						)}
-						{groupModality === Modality.INTERNAL_GROUP && (
-							<div
-								className={clsx(
-									'sessionsListItem__consultingTypeIcon',
-									'sessionsListItem__consultingTypeIcon--internal'
+						onKeyDown={(e) => handleKeyDownListItem(e)}
+						ref={setCardRef}
+						tabIndex={index === 0 ? 0 : -1}
+						role="listitem"
+						aria-current={isChatActive ? 'true' : undefined}
+					>
+						<div className="sessionsListItem__row">
+							<div className="sessionsListItem__rowLeft">
+								{groupModality !== Modality.INTERNAL_GROUP && (
+									<TopicTag className="sessionsListItem__topic">
+										{(groupModality ===
+											Modality.SELF_HELP &&
+											groupName) ||
+											translate(
+												'groupChat.noTopicSpecified'
+											)}
+									</TopicTag>
 								)}
-							>
-								<img
-									src={internalConversationIcon}
-									alt={translate(
-										'sessionList.item.sessionType.internal'
-									)}
-									className="sessionsListItem__consultingTypeIcon--internalIcon"
-								/>
-								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
-									{translate(
-										'sessionList.item.sessionType.internal'
-									)}
-								</span>
 							</div>
-						)}
-						{groupModality === Modality.SELF_HELP && (
-							<div
-								className={clsx(
-									'sessionsListItem__consultingTypeIcon',
-									'sessionsListItem__consultingTypeIcon--selfHelp'
-								)}
-							>
-								<img
-									src={selfHelpIcon}
-									alt={translate(
-										'sessionList.item.sessionType.selfHelp'
-									)}
-									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
-								/>
-								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
-									{translate(
-										'sessionList.item.sessionType.selfHelp'
-									)}
-								</span>
-							</div>
-						)}
-						{groupModality !== Modality.INTERNAL_GROUP &&
-							groupModality !== Modality.SELF_HELP && (
-								<div className="sessionsListItem__consultingTypeIcon">
-									<img
-										src={teamImage}
-										alt={translate(
-											'sessionList.item.sessionType.team'
-										)}
-										className="sessionsListItem__consultingTypeIcon--team"
+							<div className="sessionsListItem__rowRight">
+								{/*
+								 * Only `showChatSettings` can be true here: the other
+								 * flags need `isSession`, which `buildExtendedSession`
+								 * never sets alongside `isGroup`. That invariant is
+								 * load-bearing — Overlay, LegalLinkModal and
+								 * DeleteSession all live in the main return below, so
+								 * an archive or delete entry surfacing on a group row
+								 * would fire with no confirmation behind it (the
+								 * delete ref would simply be null). Widen the helper
+								 * for group chats only together with those.
+								 */}
+								{(hasChatroomSettingsActions ||
+									chatroomSettingsMenu.showLeaveGroup) && (
+									<SessionListItemMenu
+										flyoutOpen={flyoutOpen}
+										menuIconRef={menuIconRef}
+										surfaceRef={cardRef}
+										dropdownRef={dropdownRef}
+										dropdownId={dropdownId}
+										dropdownLabel={dropdownLabel}
+										translate={translate}
+										onMenuClick={handleMenuClick}
+										onClose={() => setFlyoutOpen(false)}
+										onMenuKeyDown={handleMenuKeyDown}
+										onDropdownKeyDown={
+											handleDropdownKeyDown
+										}
+										isAsker={isAsker}
+										visibility={chatroomSettingsMenu}
+										onChatSettings={handleChatSettings}
+										onArchive={handleArchiveSession}
+										onDearchive={handleDearchiveSession}
+										onDelete={handleDeleteSession}
+										onRequestHelp={handleRequestHelp}
+										onLeaveGroup={handleLeaveGroup}
+										legalLinks={legalLinks}
+										agencyId={activeSession?.agency?.id}
+										onLegalLinkClick={(title, url) => {
+											setFlyoutOpen(false);
+											setLegalModal({ title, url });
+										}}
 									/>
+								)}
+							</div>
+						</div>
+						<SessionCardBody
+							geometry={{
+								...SESSION_CARD_GEOMETRY,
+								avatarWidth: groupCardStackWidth(
+									groupParticipantCount
+								)
+							}}
+							name={
+								<div
+									className={clsx(
+										'sessionsListItem__username',
+										!isItemUnread &&
+											'sessionsListItem__username--readLabel'
+									)}
+								>
+									{groupName}
 								</div>
-							)}
+							}
+							avatar={
+								<div className="sessionsListItem__participants">
+									<GroupCardParticipants
+										roomId={matrixRoomId}
+										enabled={
+											Boolean(activeSession?.isGroup) &&
+											!caseHandoverContentLocked
+										}
+									/>
+									{upcomingAppointment && (
+										<UpcomingAppointmentClock
+											label={upcomingAppointment}
+											modality={
+												upcomingAppointmentModality
+											}
+											overlay
+										/>
+									)}
+								</div>
+							}
+							preview={
+								<>
+									<SessionListItemLastMessage
+										lastMessage={
+											displayLastMessage
+												? displayLastMessage
+												: defaultSubjectText
+										}
+									/>
+									{activeSession.item.attachment && (
+										<SessionListItemAttachment
+											attachment={
+												activeSession.item.attachment
+											}
+										/>
+									)}
+								</>
+							}
+							trailing={groupKind}
+						/>
+						{appointmentRowWith(groupKind)}
 					</div>
 				</div>
-			</div>
+				{/* Siblings of the card, so overlay clicks never open the group. */}
+				{overlayActive && overlayItem && (
+					<Overlay
+						item={overlayItem}
+						handleOverlay={handleOverlayAction}
+					/>
+				)}
+				{legalModal && (
+					<LegalLinkModal
+						title={legalModal.title}
+						url={legalModal.url}
+						onClose={() => setLegalModal(null)}
+					/>
+				)}
+			</>
 		);
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
 	const modality = getModality(activeSession);
+	// FE#1952: a conversation opened through a direct link names its medium
+	// where every other agency-counselling conversation says "Mail".
+	const directLinkMedium = getDirectLinkMedium(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
 		!autoSelectPostcode &&
 		!isAnonymousChat &&
 		Boolean(postcodeLabel);
+	const cardDate = prettyPrintDate(
+		activeSession.item.messageDate,
+		activeSession.item.createDate
+	);
 
 	return (
 		<div
 			onClick={handleOnClick}
 			className={clsx(
 				`sessionsListItem`,
+				appointmentAction && 'sessionsListItem--withAppointment',
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
@@ -1345,7 +1603,10 @@ export const SessionListItemComponent = ({
 				caseHandoverContentLocked &&
 					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
-				isAfterActive && 'sessionsListItem--afterActive'
+				isAfterActive && 'sessionsListItem--afterActive',
+				grouped && 'sessionsListItem--grouped',
+				grouped && isGroupStart && 'sessionsListItem--groupStart',
+				grouped && isGroupEnd && 'sessionsListItem--groupEnd'
 			)}
 			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"
@@ -1369,8 +1630,8 @@ export const SessionListItemComponent = ({
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={setCardRef}
 				tabIndex={index === 0 ? 0 : -1}
-				role="tab"
-				aria-selected={isChatActive}
+				role="listitem"
+				aria-current={isChatActive ? 'true' : undefined}
 			>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__rowLeft">
@@ -1418,12 +1679,11 @@ export const SessionListItemComponent = ({
 						)}
 					</div>
 					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">
-							{prettyPrintDate(
-								activeSession.item.messageDate,
-								activeSession.item.createDate
-							)}
-						</div>
+						{datePlacement === 'corner' && (
+							<div className="sessionsListItem__date">
+								{cardDate}
+							</div>
+						)}
 						{(isAsker || hasChatroomSettingsActions) && (
 							<SessionListItemMenu
 								flyoutOpen={flyoutOpen}
@@ -1454,6 +1714,14 @@ export const SessionListItemComponent = ({
 						)}
 					</div>
 				</div>
+				{datePlacement === 'line' && (
+					<div
+						className="sessionsListItem__dateLine"
+						data-cy="session-card-date-line"
+					>
+						{cardDate}
+					</div>
+				)}
 				{/* Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout */}
 				<SessionCardBody
 					name={
@@ -1566,6 +1834,13 @@ export const SessionListItemComponent = ({
 									size="48px"
 									ring={false}
 									outline={false}
+								/>
+							)}
+							{upcomingAppointment && (
+								<UpcomingAppointmentClock
+									label={upcomingAppointment}
+									modality={upcomingAppointmentModality}
+									overlay
 								/>
 							)}
 						</div>
@@ -1758,33 +2033,49 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{modality ===
-										Modality.AGENCY_COUNSELLING && (
-										<div
-											className={clsx(
-												'sessionsListItem__consultingTypeIcon',
-												'sessionsListItem__consultingTypeIcon--nearby'
-											)}
-										>
-											{/* The SVG has a grey fill baked in, so it is worn as a mask
-											    and takes the primary colour from CSS. */}
-											<span
-												className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-												// The visible word next to it is the name.
-												aria-hidden="true"
-												style={
-													{
-														'--nearby-icon-url': `url("${mailConversationIcon}")`
-													} as React.CSSProperties
-												}
-											/>
-											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-												{translate(
-													'sessionList.toolbar.chips.nearby'
+									{modality === Modality.AGENCY_COUNSELLING &&
+										directLinkMedium && (
+											<div
+												className={clsx(
+													'sessionsListItem__consultingTypeIcon',
+													'sessionsListItem__consultingTypeIcon--directLink'
 												)}
-											</span>
-										</div>
-									)}
+												data-medium={directLinkMedium}
+											>
+												<DirectLinkGlyph
+													medium={directLinkMedium}
+													className="sessionsListItem__consultingTypeIcon--directLinkIcon"
+												/>
+												<span className="sessionsListItem__consultingTypeIcon--directLinkLabel">
+													{translate(
+														directLinkLabelKey(
+															directLinkMedium
+														)
+													)}
+												</span>
+											</div>
+										)}
+									{modality === Modality.AGENCY_COUNSELLING &&
+										!directLinkMedium && (
+											<div
+												className={clsx(
+													'sessionsListItem__consultingTypeIcon',
+													'sessionsListItem__consultingTypeIcon--nearby'
+												)}
+											>
+												<ConsultingKindIcon
+													src={mailConversationIcon}
+													hoverSrc={
+														mailConversationHoverIcon
+													}
+												/>
+												<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+													{translate(
+														'sessionList.toolbar.chips.nearby'
+													)}
+												</span>
+											</div>
+										)}
 									{modality === Modality.INTERNAL_GROUP && (
 										<div
 											className={clsx(
@@ -1792,12 +2083,11 @@ export const SessionListItemComponent = ({
 												'sessionsListItem__consultingTypeIcon--internal'
 											)}
 										>
-											<img
+											<ConsultingKindIcon
 												src={internalConversationIcon}
-												alt={translate(
-													'sessionList.item.sessionType.internal'
-												)}
-												className="sessionsListItem__consultingTypeIcon--internalIcon"
+												hoverSrc={
+													internalConversationHoverIcon
+												}
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 												{translate(
@@ -1826,12 +2116,9 @@ export const SessionListItemComponent = ({
 												'sessionsListItem__consultingTypeIcon--selfHelp'
 											)}
 										>
-											<img
+											<ConsultingKindIcon
 												src={selfHelpIcon}
-												alt={translate(
-													'sessionList.item.sessionType.selfHelp'
-												)}
-												className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+												hoverSrc={selfHelpHoverIcon}
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 												{translate(
@@ -1845,6 +2132,7 @@ export const SessionListItemComponent = ({
 						</>
 					}
 				/>
+				{appointmentRowWith()}
 			</div>
 			{overlayActive && overlayItem && (
 				<Overlay

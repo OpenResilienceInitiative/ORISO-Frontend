@@ -115,6 +115,8 @@ export const KeyboardShortcutsSettings = () => {
 	const errorId = useId();
 	const warningId = useId();
 	const liveId = useId();
+	// The settings can render twice on one page (desktop and phone panes).
+	const accordionId = useId();
 
 	const sendBinding =
 		resolveEffectiveBinding(preferences, 'chat.sendMessage', platform) ??
@@ -228,7 +230,7 @@ export const KeyboardShortcutsSettings = () => {
 		return (
 			<div className="keyboardShortcutsSettings__controlCluster">
 				<OrisoSelect
-					id={`shortcut-${def.id.replace(/\./g, '-')}`}
+					id={`${accordionId}-shortcut-${def.id.replace(/\./g, '-')}`}
 					label={translate(def.labelTranslationKey)}
 					options={selectOptions}
 					value={selectValue}
@@ -310,8 +312,8 @@ export const KeyboardShortcutsSettings = () => {
 			<div className="keyboardShortcutsSettings__panel">
 				{rowsByCategory.map(({ category, rows }) => {
 					const isExpanded = expanded === category;
-					const panelId = `shortcuts-panel-${category}`;
-					const headerId = `shortcuts-header-${category}`;
+					const panelId = `${accordionId}-panel-${category}`;
+					const headerId = `${accordionId}-header-${category}`;
 					return (
 						<Accordion
 							key={category}
@@ -347,12 +349,10 @@ export const KeyboardShortcutsSettings = () => {
 									{rows.length}
 								</span>
 							</AccordionSummary>
-							<AccordionDetails
-								id={panelId}
-								className="keyboardShortcutsSettings__details"
-								role="region"
-								aria-labelledby={headerId}
-							>
+							{/* MUI's Accordion already wraps the details in the
+							    region named by the summary; a second one repeated
+							    its id (#1338). */}
+							<AccordionDetails className="keyboardShortcutsSettings__details">
 								{isExpanded && (
 									<ul className="keyboardShortcutsSettings__list">
 										{rows.map((def) => (

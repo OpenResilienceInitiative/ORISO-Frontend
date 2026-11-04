@@ -1,3 +1,4 @@
+import { a11yExcept } from './a11yExceptions';
 import { a11yVerification } from './a11yVerification';
 import { createTenantPublicStoryFetch } from './tenantPublicFixture';
 // Force MUI styled-engine init before any @mui/* prebundles run.
@@ -458,6 +459,28 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(storybookTopics);
 	}
 
+	// A centre with no legal text of its own: the client shows its catalogue
+	// consent sentence. A story about authored or missing text sets its own.
+	if (/^\/service\/agencies\/\d+\/topics\/\d+\/legal$/.test(url.pathname)) {
+		return storybookJsonResponse({ dpp: null, imprint: null });
+	}
+
+	// Every username a story types is free; a taken name is the story's own fixture.
+	if (url.pathname.startsWith('/service/users/availability/')) {
+		return storybookJsonResponse({});
+	}
+
+	// `/service/agencies/101` or `/service/agencies/101,102`: the fixture centres by id.
+	const agencyIds = url.pathname.match(
+		/^\/service\/agencies\/(\d+(?:,\d+)*)$/
+	);
+	if (agencyIds) {
+		const ids = agencyIds[1].split(',').map(Number);
+		return storybookJsonResponse(
+			storybookAgencies.filter((agency) => ids.includes(agency.id))
+		);
+	}
+
 	if (url.pathname.match(/\/service\/agencies(?:\?|$)/)) {
 		return storybookJsonResponse(storybookAgencies);
 	}
@@ -470,10 +493,30 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse({ languages: ['en', 'ar', 'uk'] });
 	}
 
+	// The "Anfragen" nav badge (FE#1435) asks both enquiry feeds for a total;
+	// by default there is nothing open (204), so no badge appears.
+	if (
+		url.pathname.includes('/service/conversations/consultants/enquiries/')
+	) {
+		return storybookEmptyResponse();
+	}
+
 	if (
 		url.pathname.includes('/service/conversations/consultants/availability')
 	) {
 		return storybookJsonResponse({ available: true });
+	}
+
+	// ORISO-UserService#1486: story people are normal accounts (404), so asker
+	// messages carry no guest label and the composer asks nothing.
+	if (url.pathname === '/service/users/temporary-account') {
+		return new Response(null, { status: 404 });
+	}
+
+	// #1894: the counsellor's own direct links (settings "Meine Links"); stories
+	// that show links install their own mock on top.
+	if (url.pathname === '/service/users/directlinks' && method === 'GET') {
+		return storybookJsonResponse([]);
 	}
 
 	if (url.pathname === '/service/users/data') {
@@ -890,8 +933,19 @@ const preview: Preview = {
 						'wcag21aa',
 						'wcag22aa'
 					]
+				},
+				rules: {
+					// A plain repeated id (one SVG icon rendered twice) fails only
+					// WCAG 4.1.1, which 2.2 removed. Ids that a label or ARIA
+					// points at stay checked by duplicate-id-aria (#1338).
+					'duplicate-id': { enabled: false },
+					// The palette is a product decision: colours stay as designed
+					// and contrast is handled by the optional high-contrast
+					// appearance (#1134), not by this gate (#1338).
+					'color-contrast': { enabled: false }
 				}
 			},
+			...a11yExcept(),
 			test: 'error'
 		},
 		controls: {
@@ -931,6 +985,11 @@ const preview: Preview = {
 				phone390: {
 					name: 'Phone 390 (iPhone 12/13/14)',
 					styles: { width: '390px', height: '844px' },
+					type: 'mobile'
+				},
+				phone412: {
+					name: 'Phone 412 (Pixel / Galaxy)',
+					styles: { width: '412px', height: '915px' },
 					type: 'mobile'
 				},
 				phone390Landscape: {

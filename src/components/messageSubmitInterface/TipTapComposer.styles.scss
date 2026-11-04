@@ -119,6 +119,13 @@
 				line-height: 1.4;
 			}
 
+			// #996: the voice dot would sit on top of the placeholder.
+			p.is-editor-empty:first-child:has(
+					.composerInsertionMarker
+				)::before {
+				content: none;
+			}
+
 			p.is-editor-empty:first-child::before {
 				content: attr(data-placeholder);
 

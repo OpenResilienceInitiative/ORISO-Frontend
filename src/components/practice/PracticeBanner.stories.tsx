@@ -9,7 +9,7 @@ import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeProvider } from '../../practice/PracticeProvider';
 import { isPracticeMode } from '../../practice/practiceMode';
 import { PRACTICE_BANNER_RESTING } from '../../practice/practiceBannerPlacement';
-import { InPracticeMode } from './practiceStoryHelpers';
+import { InPracticeMode, ScopedProgressFetch } from './practiceStoryHelpers';
 import { practiceTourProgressAtom } from '../../practice/usePracticeTourProgress';
 
 /** What the tour host receives from the banner. */
@@ -42,19 +42,24 @@ const Stage = () => {
 		return created;
 	}, []);
 
+	// #1338: leaving practice saves the tour progress (PUT); the fixture answers it.
 	return (
-		<Provider store={store}>
-			<PracticeProvider>
-				<InPracticeMode>
-					<main style={{ minHeight: '100vh', padding: 24 }}>
-						<h1 style={{ margin: 0 }}>Anfragen</h1>
-						<p>Die echte Oberfläche liegt hinter dem Hinweis.</p>
-						<PracticeBanner />
-						<HostRequest />
-					</main>
-				</InPracticeMode>
-			</PracticeProvider>
-		</Provider>
+		<ScopedProgressFetch>
+			<Provider store={store}>
+				<PracticeProvider>
+					<InPracticeMode>
+						<main style={{ minHeight: '100vh', padding: 24 }}>
+							<h1 style={{ margin: 0 }}>Anfragen</h1>
+							<p>
+								Die echte Oberfläche liegt hinter dem Hinweis.
+							</p>
+							<PracticeBanner />
+							<HostRequest />
+						</main>
+					</InPracticeMode>
+				</PracticeProvider>
+			</Provider>
+		</ScopedProgressFetch>
 	);
 };
 

@@ -24,7 +24,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
-import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
+import { TopicIcon } from './TopicIcon';
 import {
 	getTopicCardArtwork,
 	INTERNAL_CHAT_ARTWORK
@@ -56,7 +56,11 @@ import {
 	isGroupChatTranslationAvailable,
 	resolveInitialStep
 } from './formatAvailability';
-import { filterTopicsForAgencies } from './agencyTopics';
+import { filterTopicsForAgencies, getAgencyTopicIds } from './agencyTopics';
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
+import { FORMAT_ARTWORK } from '../../resources/img/formats';
+import { DirectLinkCreateCard } from './directLink/DirectLinkCreateCard';
+import { getDirectLinkMedia } from './directLink/directLinkAvailability';
 import { RowMenu } from './RowMenu';
 import { FormatCard } from './FormatCard';
 import { PanelHeader } from './PanelHeader';
@@ -75,7 +79,10 @@ import {
 } from './circle/CircleSettingsView';
 import { useInternalSubsetChatSubmit } from './useInternalSubsetChatSubmit';
 import { resolveRecipientScope } from './internal/recipientScope';
-import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
+import {
+	InternalChatColleague,
+	loadInternalChatColleagues
+} from './internal/loadInternalChatColleagues';
 import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
 import './conversationCreate.styles.scss';
 
@@ -142,6 +149,25 @@ const CreateConversationFlow = ({
 		agencyFormats
 	);
 	const availableFormats = getAvailableFormats(availability);
+	/* #1795: the direct link is a format of its own, offered where
+	   "Direkteinladung erlauben" allows at least one medium. Never in edit
+	   mode, which only edits a circle. */
+	const directLinkMedia = useMemo(
+		() => getDirectLinkMedia(tenantData, agencyFormats),
+		[tenantData, agencyFormats]
+	);
+	const directLinkOffered = !isEditMode && directLinkMedia.length > 0;
+	const formatCount = availableFormats.length + (directLinkOffered ? 1 : 0);
+	/* The group formats decide as before; a direct link next to a single
+	   one keeps the picker, and alone it opens straight on its card. */
+	const withDirectLink = (
+		base: CreateStep,
+		formats: ConversationFormat[],
+		forcedByDuplicate: boolean
+	): CreateStep => {
+		if (!directLinkOffered || forcedByDuplicate) return base;
+		return formats.length === 0 ? 'directLink' : 'picker';
+	};
 	const agencyIdsOffering = useMemo(
 		() => ({
 			internal: getAgenciesOfferingFormat(
@@ -200,10 +226,14 @@ const CreateConversationFlow = ({
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode
 			? 'circle'
-			: resolveInitialStep(
-					availability,
+			: withDirectLink(
+					resolveInitialStep(
+						availability,
+						availableFormats,
+						Boolean(duplicateOccurrence)
+					),
 					availableFormats,
-					Boolean(duplicateOccurrence)
+					Boolean(duplicateOccurrence) && availability.circle
 				)
 	);
 
@@ -216,24 +246,31 @@ const CreateConversationFlow = ({
 			circle: availability.circle
 		};
 		setStep((current) => {
+			const nextFormats = getAvailableFormats(nextAvailability);
 			const stillValid =
 				(current === 'internal' && nextAvailability.internal) ||
 				(current === 'circle' && nextAvailability.circle) ||
+				(current === 'directLink' && directLinkOffered) ||
 				(current === 'picker' &&
-					nextAvailability.internal &&
-					nextAvailability.circle);
+					nextFormats.length + (directLinkOffered ? 1 : 0) > 1);
 			if (stillValid) {
 				return current;
 			}
-			return resolveInitialStep(
-				nextAvailability,
-				getAvailableFormats(nextAvailability),
-				Boolean(duplicateOccurrence)
+			return withDirectLink(
+				resolveInitialStep(
+					nextAvailability,
+					nextFormats,
+					Boolean(duplicateOccurrence)
+				),
+				nextFormats,
+				Boolean(duplicateOccurrence) && nextAvailability.circle
 			);
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- withDirectLink only reads directLinkOffered
 	}, [
 		availability.circle,
 		availability.internal,
+		directLinkOffered,
 		duplicateOccurrence,
 		isEditMode
 	]);
@@ -264,9 +301,9 @@ const CreateConversationFlow = ({
 	>([]);
 	// The colleagues the Interna picker may offer, narrowed to the recipient
 	// scope (#1772).
-	const [internalColleagues, setInternalColleagues] = useState<Consultant[]>(
-		[]
-	);
+	const [internalColleagues, setInternalColleagues] = useState<
+		InternalChatColleague[]
+	>([]);
 	const [consultantsLoadFailed, setConsultantsLoadFailed] = useState(false);
 
 	// Once the edited series has loaded, preselect its agency so the settings
@@ -402,11 +439,7 @@ const CreateConversationFlow = ({
 			return;
 		}
 		const isCurrent = () => colleaguesLoadRef.current === load;
-		loadInternalChatColleagues({
-			scope: recipientScope,
-			agencyId: selectedAgency,
-			currentUserId: userData?.userId
-		})
+		loadInternalChatColleagues(selectedAgency)
 			.then((colleagues) => {
 				if (isCurrent()) {
 					setInternalColleagues(colleagues);
@@ -417,20 +450,20 @@ const CreateConversationFlow = ({
 					setConsultantsLoadFailed(true);
 				}
 			});
-	}, [
-		availability.internal,
-		recipientScope,
-		selectedAgency,
-		userData?.userId
-	]);
+	}, [availability.internal, selectedAgency]);
 
 	useEffect(() => {
 		loadInternalColleagues();
 		return invalidateColleaguesLoad;
-	}, [invalidateColleaguesLoad, loadInternalColleagues]);
+	}, [
+		invalidateColleaguesLoad,
+		loadInternalColleagues,
+		recipientScope,
+		userData?.userId
+	]);
 
 	const loadTopics = useCallback(() => {
-		if (!availability.circle) {
+		if (!availability.circle && !directLinkOffered) {
 			return;
 		}
 		setTopicsLoadFailed(false);
@@ -440,7 +473,7 @@ const CreateConversationFlow = ({
 				setTopics([]);
 				setTopicsLoadFailed(true);
 			});
-	}, [availability.circle]);
+	}, [availability.circle, directLinkOffered]);
 
 	useEffect(() => {
 		loadTopics();
@@ -471,7 +504,15 @@ const CreateConversationFlow = ({
 		[availableConsultants]
 	);
 	const internalPeople = useMemo(
-		() => toPeople(internalColleagues),
+		() =>
+			internalColleagues.map(
+				({ consultantId, displayName, tenantName }) => ({
+					id: consultantId,
+					label: tenantName
+						? `${displayName} (${tenantName})`
+						: displayName
+				})
+			),
 		[internalColleagues]
 	);
 
@@ -488,13 +529,46 @@ const CreateConversationFlow = ({
 	);
 
 	const handleBackButton = useCallback(() => {
-		if (step !== 'picker' && availableFormats.length > 1) {
+		if (step !== 'picker' && formatCount > 1) {
 			setStep('picker');
 			clearError();
 			return;
 		}
 		navigate('/sessions/consultant/sessionView');
-	}, [availableFormats.length, clearError, navigate, step]);
+	}, [formatCount, clearError, navigate, step]);
+
+	/* The direct link offers every topic of the counsellor's
+	   Beratungsstellen; the id goes to the backend, the name is shown. */
+	const directLinkTopics = useMemo(
+		() =>
+			filterTopicsForAgencies(topics, agencies, null)
+				.filter((topic) => topic.id !== undefined)
+				.map((topic) => ({
+					value: String(topic.id),
+					label: topic.name
+				})),
+		[agencies, topics]
+	);
+	const directLinkAgencies = useMemo(
+		() =>
+			agencies.map((agency) => ({
+				id: agency.id,
+				topicIds: getAgencyTopicIds([agency], agency.id) ?? []
+			})),
+		[agencies]
+	);
+	const renderDirectLinkCard = () => (
+		<DirectLinkCreateCard
+			topics={directLinkTopics}
+			agencies={directLinkAgencies}
+			media={directLinkMedia}
+			compact={!fromL}
+			topicsLoadFailed={topicsLoadFailed}
+			onRetryTopics={loadTopics}
+			/* "Fertig": the link now lives in "Gespräche". */
+			onDone={() => navigate('/sessions/consultant/sessionView')}
+		/>
+	);
 
 	const handleInternalCreate = () => {
 		if (selectedAgency === null) {
@@ -606,7 +680,7 @@ const CreateConversationFlow = ({
 						<SplitButton
 							ref={pickerSplitButtonRef}
 							fullWidth
-							icon={<CategorySearchIcon />}
+							icon={<TopicIcon filled={Boolean(pickerTopic)} />}
 							label={
 								pickerTopic ||
 								translate('groupChat.circle.topicLabel')
@@ -687,6 +761,7 @@ const CreateConversationFlow = ({
 					<div className="conversationCreate__cards">
 						{availability.circle && circleCard}
 						{availability.internal && renderInternalCard()}
+						{directLinkOffered && renderDirectLinkCard()}
 					</div>
 				) : (
 					<div className="conversationCreate__rows">
@@ -710,6 +785,15 @@ const CreateConversationFlow = ({
 								)}
 								image={getTopicCardArtwork(null)}
 								onSelect={() => setStep('circle')}
+							/>
+						)}
+						{directLinkOffered && (
+							<CompactFormatRow
+								icon={<LinkOutlinedIcon />}
+								title={translate('directLink.card.title')}
+								subtitle={translate('directLink.card.subtitle')}
+								image={FORMAT_ARTWORK.VIDEO}
+								onSelect={() => setStep('directLink')}
 							/>
 						)}
 					</div>
@@ -748,6 +832,14 @@ const CreateConversationFlow = ({
 						compact={!fromL}
 					/>
 				)
+			) : step === 'directLink' ? (
+				<div
+					className={`conversationCreate__single${
+						fromL ? '' : ' conversationCreate__single--compact'
+					}`}
+				>
+					{renderDirectLinkCard()}
+				</div>
 			) : step === 'internal' ? (
 				<div
 					className={`conversationCreate__single${
@@ -790,7 +882,11 @@ export const CreateConversationView = () => {
 		tenantData,
 		agencyFormats
 	);
-	if (!availability.internal && !availability.circle) {
+	if (
+		!availability.internal &&
+		!availability.circle &&
+		getDirectLinkMedia(tenantData, agencyFormats).length === 0
+	) {
 		return <Navigate to="/sessions/consultant/sessionView" replace />;
 	}
 

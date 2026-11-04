@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import {
 	BLUE_TENANT,
 	HighContrastComparison,
@@ -18,22 +19,17 @@ const meta = {
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
 		},
-		// Two axe rules fire on the real session row itself, identically in its own
-		// stories (SessionListItem): nested-interactive (the row is role=tab and
-		// holds a menu button) and duplicate-id (one SVG mask id per rendered
-		// message, here four columns). Neither is part of this proposal.
 		// The Standard column is the thing being measured: its date-divider pill
 		// reads 4.39:1 (AA needs 4.5), which axe would report and fail this page
 		// on. That number is in the contrast table and the PR; the candidates
-		// stay under axe.
+		// stay under axe, so colour contrast, off for the other stories, is on
+		// here (#1338). The comparison table scrolls sideways without a tab stop.
 		a11y: {
 			context: { exclude: ['[data-candidate="standard"]'] },
-			config: {
-				rules: [
-					{ id: 'nested-interactive', enabled: false },
-					{ id: 'duplicate-id', enabled: false }
-				]
-			}
+			options: { rules: { 'color-contrast': { enabled: true } } },
+			...a11yExcept({
+				'scrollable-region-focusable': ['.hcCompare__tableWrap']
+			})
 		},
 		docs: {
 			description: {
