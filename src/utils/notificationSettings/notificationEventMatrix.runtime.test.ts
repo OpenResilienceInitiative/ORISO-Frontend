@@ -157,7 +157,7 @@ describe('event table vs runtime predicates', () => {
 		}
 	);
 
-	it('gives a mention card only to a team-discussion post that mentions a counsellor', () => {
+	it('gives the matching mention card only to events that mention a counsellor', () => {
 		const post = feedRow(
 			EVENT_CASES.find(
 				(c) => caseId(c) === 'team.discussion.new+mentioned'
@@ -174,7 +174,6 @@ describe('event table vs runtime predicates', () => {
 		expect(
 			eventNoticeKindFor({ ...post, params: { mentioned: undefined } })
 		).toBeNull();
-		// An ordinary message never gets a mention card, whatever its flags say.
 		expect(
 			eventNoticeKindFor({
 				...post,
@@ -185,7 +184,18 @@ describe('event table vs runtime predicates', () => {
 					recipientRole: 'consultant'
 				}
 			})
-		).toBeNull();
+		).toBe('chatMention');
+		expect(
+			eventNoticeKindFor({
+				...post,
+				eventType: 'thread.reply.new',
+				params: {
+					...post.params,
+					mentioned: true,
+					recipientRole: 'consultant'
+				}
+			})
+		).toBe('chatMention');
 	});
 
 	it('gives the consent card only for OPT_IN to the advice seeker, never to a counsellor', () => {

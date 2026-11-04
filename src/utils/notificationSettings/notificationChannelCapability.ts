@@ -41,12 +41,12 @@ export interface EventCase {
 	/**
 	 * UserService writes this event type. Hand-flagged: the source of truth is
 	 * the event-type literals passed to `createEvent*` in UserService `src/main`
-	 * (read on origin/dev 44f4517c2, 2026-10-28). Re-check when UserService changes.
+	 * (read on origin/dev 20fad8c84, 2026-11-04). Re-check when UserService changes.
 	 */
 	emitted: boolean;
 	/**
-	 * Roles that get an in-app pop-up card: live chat, new enquiry, mention (team
-	 * discussion), counsellor handover offer, advice seeker's opt-in consent.
+	 * Roles that get an in-app pop-up card: live chat, new enquiry, mention,
+	 * counsellor handover offer, advice seeker's opt-in consent.
 	 */
 	popupFor?: ReadonlyArray<NotificationRole>;
 	/**
@@ -111,20 +111,30 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: `${ES}.createMessageNotificationFromRoom`
 	},
 	{
-		// Mentions in ordinary chats: the row exists but nothing sets
-		// params.mentioned on message.new yet (ORISO-UserService#1510), so the
-		// Gespräche -> @ Erwähnung row is shown disabled until then.
+		// ORISO-UserService#1510 marks the counsellor's ordinary-message row.
 		eventType: 'message.new',
 		variant: 'mentioned',
 		recipients: CONSULTANT,
-		emitted: false,
-		source: 'ORISO-UserService#1510 (no producer yet)'
+		emitted: true,
+		popupFor: CONSULTANT,
+		silentWhenOpen: true,
+		source: `${ES}.createMentionNotifications`
 	},
 	{
 		eventType: 'thread.reply.new',
 		recipients: BOTH,
 		emitted: true,
 		source: `${ES}.createThreadReplyNotificationFromRoom`
+	},
+	{
+		// ORISO-UserService#1510 marks the counsellor's mentioned thread row.
+		eventType: 'thread.reply.new',
+		variant: 'mentioned',
+		recipients: CONSULTANT,
+		emitted: true,
+		popupFor: CONSULTANT,
+		silentWhenOpen: true,
+		source: `${ES}.createMentionNotifications`
 	},
 	{
 		eventType: 'first_response.received',
@@ -145,8 +155,7 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: 'TeamDiscussionNotificationService'
 	},
 	{
-		// The only producer that sets params.mentioned (team discussions), so
-		// the mention pop-up exists for this event alone.
+		// Team-discussion mentions use the enquiry-specific mention card.
 		eventType: 'team.discussion.new',
 		variant: 'mentioned',
 		recipients: CONSULTANT,

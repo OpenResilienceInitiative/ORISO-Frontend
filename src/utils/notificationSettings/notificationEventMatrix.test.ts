@@ -48,6 +48,7 @@ const EXPECTED_ROW: Record<
 		consultant: 'conversations/standard',
 		asker: 'conversations/standard'
 	},
+	'thread.reply.new+mentioned': { consultant: 'conversations/mention' },
 	'first_response.received': { asker: 'conversations/standard' },
 	'conversation.finished': {
 		consultant: 'conversations/standard',
@@ -131,9 +132,8 @@ const EXPECTED_ROW: Record<
 	'draft.created': { consultant: NONE }
 };
 
-/** Event types UserService origin/dev does NOT write (checked 2026-10-28). */
+/** Event types UserService origin/dev does NOT write (checked 2026-11-04). */
 const NOT_EMITTED = [
-	'message.new+mentioned',
 	'handover.requested',
 	'handover.partial',
 	'handover.all_confirmed',
@@ -147,8 +147,7 @@ const NOT_EMITTED = [
 ];
 
 /**
- * Cases with an in-app pop-up card (Frank, 28 Oct): live chat, new enquiry,
- * mention (team discussions only: the one producer of params.mentioned), the
+ * Cases with an in-app pop-up card: live chat, new enquiry, mentions, the
  * handover offer a counsellor must act on, and the advice seeker's consent
  * request when their yes is needed (OPT_IN). Handover status steps get none.
  */
@@ -156,6 +155,8 @@ const POPUP_CASES = [
 	'request.new',
 	'waiting_room.client.joined',
 	'message.new+liveChat',
+	'message.new+mentioned',
+	'thread.reply.new+mentioned',
 	'team.discussion.new+mentioned',
 	'case.handover.offer.received',
 	'case.handover.consent.requested+optIn'
@@ -230,12 +231,10 @@ const EXPECTED_ROW_CAPABILITY: Record<
 	'requests/new': { consultant: 'all', asker: 'notForRole' },
 	'requests/teamDiscussion': { consultant: 'all', asker: 'notForRole' },
 	'requests/standard': { consultant: 'notForRole', asker: 'all' },
-	// Team-discussion mentions are the only mentions that exist today.
 	'requests/mention': { consultant: 'all', asker: 'notForRole' },
 	'conversations/standard': { consultant: 'all', asker: 'all' },
 	'conversations/liveChat': { consultant: 'all', asker: 'notForRole' },
-	// Ordinary-chat mentions have no producer yet (UserService#1510).
-	'conversations/mention': { consultant: 'notSentYet', asker: 'notForRole' },
+	'conversations/mention': { consultant: 'all', asker: 'notForRole' },
 	'conversations/handover': { consultant: 'all', asker: 'all' },
 	'timeCritical/call': { consultant: 'all', asker: 'all' },
 	'timeCritical/appointment': { consultant: 'all', asker: 'all' }
@@ -247,6 +246,7 @@ const EXPECTED_POPUP_ROWS: Record<NotificationRole, Row[]> = {
 		'requests/new',
 		'conversations/liveChat',
 		'requests/mention',
+		'conversations/mention',
 		'conversations/handover'
 	],
 	asker: ['conversations/handover']
@@ -344,7 +344,7 @@ const EXPECTED_VISIBILITY: Record<
 	'requests/mention': { consultant: 'visible', asker: 'hidden' },
 	'conversations/standard': { consultant: 'visible', asker: 'visible' },
 	'conversations/liveChat': { consultant: 'visible', asker: 'hidden' },
-	'conversations/mention': { consultant: 'disabled', asker: 'hidden' },
+	'conversations/mention': { consultant: 'visible', asker: 'hidden' },
 	'conversations/handover': { consultant: 'visible', asker: 'visible' },
 	'timeCritical/call': { consultant: 'visible', asker: 'visible' },
 	'timeCritical/appointment': { consultant: 'visible', asker: 'visible' }
@@ -430,6 +430,8 @@ describe('target conversation open and visible', () => {
 		).toEqual(
 			[
 				'message.new+liveChat',
+				'message.new+mentioned',
+				'thread.reply.new+mentioned',
 				'team.discussion.new+mentioned',
 				'case.handover.offer.received',
 				'case.handover.consent.requested+optIn'
