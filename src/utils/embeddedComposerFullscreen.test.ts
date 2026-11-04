@@ -62,8 +62,21 @@ describe('embeddedComposerFullscreen', () => {
 		it('hands the expansion to the replacement composer without releasing the frame', () => {
 			vi.useFakeTimers();
 			const post = inFrame();
-			releaseExpandedComposerOnUnmount();
-			expect(claimRemountedComposerExpansion()).toBe(true);
+			releaseExpandedComposerOnUnmount('|thread-1');
+			expect(claimRemountedComposerExpansion('|thread-1')).toBe(true);
+			vi.runAllTimers();
+			expect(post).not.toHaveBeenCalled();
+			vi.useRealTimers();
+			vi.unstubAllGlobals();
+		});
+
+		it('does not hand the expansion to a different composer', () => {
+			vi.useFakeTimers();
+			const post = inFrame();
+			releaseExpandedComposerOnUnmount('|thread-1');
+			// The main-chat composer mounts first and must not take it.
+			expect(claimRemountedComposerExpansion('|')).toBe(false);
+			expect(claimRemountedComposerExpansion('|thread-1')).toBe(true);
 			vi.runAllTimers();
 			expect(post).not.toHaveBeenCalled();
 			vi.useRealTimers();
@@ -73,13 +86,13 @@ describe('embeddedComposerFullscreen', () => {
 		it('releases the frame when no composer takes over', () => {
 			vi.useFakeTimers();
 			const post = inFrame();
-			releaseExpandedComposerOnUnmount();
+			releaseExpandedComposerOnUnmount('|thread-1');
 			vi.runAllTimers();
 			expect(post).toHaveBeenCalledWith(
 				{ type: COMPOSER_FULLSCREEN_MESSAGE, expanded: false },
 				'https://app.test'
 			);
-			expect(claimRemountedComposerExpansion()).toBe(false);
+			expect(claimRemountedComposerExpansion('|thread-1')).toBe(false);
 			vi.useRealTimers();
 			vi.unstubAllGlobals();
 		});

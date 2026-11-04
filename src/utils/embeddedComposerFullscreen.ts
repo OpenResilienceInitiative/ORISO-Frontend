@@ -32,24 +32,27 @@ export const isComposerFullscreenMessage = (
 /**
  * Widening the frame can cross the 900px layout breakpoint, which remounts the
  * composer (thread panel moves into the card). An expanded composer that
- * unmounts leaves a claim for its successor in the same commit; only when no
+ * unmounts leaves a claim for its successor (same composer key) in the same commit; only when no
  * successor takes it is the frame released.
  */
-let expandedUnmountPending = false;
+let pendingExpansionKey: string | null = null;
 
-export const releaseExpandedComposerOnUnmount = () => {
-	expandedUnmountPending = true;
+/** `key` names the composer (room + thread) so only its twin can take over. */
+export const releaseExpandedComposerOnUnmount = (key: string) => {
+	pendingExpansionKey = key;
 	setTimeout(() => {
-		if (expandedUnmountPending) {
-			expandedUnmountPending = false;
+		if (pendingExpansionKey === key) {
+			pendingExpansionKey = null;
 			postComposerFullscreen(false);
 		}
 	}, 0);
 };
 
-/** True once for the composer that replaces an expanded one. */
-export const claimRemountedComposerExpansion = (): boolean => {
-	const claimed = expandedUnmountPending;
-	expandedUnmountPending = false;
-	return claimed;
+/** True once, and only for the composer with the released composer's key. */
+export const claimRemountedComposerExpansion = (key: string): boolean => {
+	if (pendingExpansionKey !== key) {
+		return false;
+	}
+	pendingExpansionKey = null;
+	return true;
 };
