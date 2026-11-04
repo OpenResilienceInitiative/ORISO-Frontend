@@ -14,6 +14,11 @@ export interface CallDeviceCheckState {
 	check: CallDeviceCheckProps;
 	controls: CallDeviceControls;
 	cameraAvailable: boolean;
+	/**
+	 * The browser has answered (`useLiveCallDevices`). Before that,
+	 * `cameraAvailable` is the optimistic default, not a finding.
+	 */
+	settled: boolean;
 	blocker?: CallEntryBlocker;
 	/** Ask the browser again ("Erneut prüfen"). */
 	retry: () => void;
@@ -77,6 +82,7 @@ export const useCallDeviceCheck = (
 		},
 		controls,
 		cameraAvailable,
+		settled: live.settled,
 		blocker: live.blocker,
 		retry: live.retry
 	};

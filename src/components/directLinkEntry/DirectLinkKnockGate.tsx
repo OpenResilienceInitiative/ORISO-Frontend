@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import {
 	NOTIFICATION_TYPE_ERROR,
 	NotificationsContext
-} from '../../globalState';
+} from '../../globalState/provider/NotificationsProvider';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
 import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
 import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
@@ -19,14 +19,15 @@ import {
 } from './directLinkEntryFlow';
 import {
 	admissionAction,
+	CallJoinResult,
 	isKnockClaimed,
 	rememberAdmittedConversation,
 	takeAdmittedJoin
 } from './callMessageKnock';
 import { callManager } from '../../services/CallManager';
 import {
-	chosenDeviceLabel,
-	joinMediaFrom,
+	keepDeviceChoice,
+	peekJoinMedia,
 	rememberJoinMedia
 } from '../call/prejoin/callPrejoin';
 
@@ -67,15 +68,27 @@ export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	/** Starts the call once the person was let in. */
 	startCall: (knock: PendingKnock) => Promise<void>;
 	/** Joins the running call recorded with the knock (after a reload). */
-	joinRunningCall: (knock: PendingKnock) => Promise<unknown>;
+	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>;
 	mediaDevices?: MediaDevices;
 }
 
-const defaultStartCall = async (knock: PendingKnock) => {
+/** The room whose call takes the switches (`GroupCallWidget`). */
+const callRoomOf = (knock: PendingKnock) =>
+	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
+
+/**
+ * Let in after a knock: starts the call. The camera choice from the device
+ * check (#2016) also decides whether the permission request asks for the
+ * camera; the choice itself stays for the call to take (`GroupCallWidget`).
+ */
+export const defaultStartCall = async (knock: PendingKnock) => {
 	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
+	const isVideo = knock.medium === 'VIDEO';
+	const chosen = peekJoinMedia(callRoomOf(knock));
 	await startRoomCall({
 		roomId: knock.matrixRoomId,
-		isVideo: knock.medium === 'VIDEO'
+		isVideo,
+		requestCamera: isVideo && (chosen?.video_enabled ?? true)
 	});
 };
 
@@ -84,20 +97,20 @@ const defaultStartCall = async (knock: PendingKnock) => {
  * knocked for at once; they never tap "Beitreten" a second time. Direct
  * links are 1:1, so the call is a group call only if its card says so.
  */
-const defaultJoinRunningCall = async (knock: PendingKnock) => {
+export const defaultJoinRunningCall = async (
+	knock: PendingKnock
+): Promise<CallJoinResult> => {
 	const call = knock.joinCall;
-	if (!call) return;
+	/* No mode on record: never guess 1:1, whose leave ends a group call for
+	   everybody. The card's next tap joins with the mode resolved there. */
+	if (!call || call.isGroup === undefined) return 'unavailable';
 	await waitForJoinedRoom(call.roomRef);
 	// The card's people are not stored with the knock; the join reads none.
-	await callManager.joinExistingCall(
+	return callManager.joinExistingCall(
 		{ ...call, participants: [] },
-		call.isGroup ?? false
+		call.isGroup
 	);
 };
-
-/** The room whose call takes the switches (`GroupCallWidget`). */
-const callRoomOf = (knock: PendingKnock) =>
-	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
 
 const modalityOf = (knock: PendingKnock): CallModality =>
 	knock.medium === 'VIDEO' ? 'video' : 'audio';
@@ -135,6 +148,7 @@ export const DirectLinkKnock = ({
 	const device = useCallDeviceCheck(modalityOf(knock), {
 		mediaDevices: deps.mediaDevices
 	});
+	const admitted = state.phase === 'admitted';
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
@@ -154,48 +168,53 @@ export const DirectLinkKnock = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the dialog goes
 	}, [state.gone]);
 
+	/* Let in: the knock is done; the call takes over after a short pause. */
 	useEffect(() => {
-		if (state.phase !== 'admitted' || admittedOnce.current) return;
+		if (!admitted || admittedOnce.current) return;
 		admittedOnce.current = true;
 		forgetPendingKnock();
-		/* The switches in this window go into the call (#2016). */
-		const room = callRoomOf(knock);
-		if (room) {
-			rememberJoinMedia(
-				room,
-				joinMediaFrom({
-					modality: modalityOf(knock),
-					micOn: device.controls.micOn,
-					cameraOn: device.controls.cameraOn,
-					cameraAvailable: device.cameraAvailable,
-					blocker: device.blocker,
-					// By label: the call runs on another origin (ElementCall#116).
-					microphoneLabel: chosenDeviceLabel(
-						device.check.devices.microphone,
-						device.controls.selection.microphone
-					),
-					cameraLabel: chosenDeviceLabel(
-						device.check.devices.camera,
-						device.controls.selection.camera
-					)
-				})
-			);
-		}
 		const timer = window.setTimeout(
 			() => onAdmitted(knock),
 			ADMITTED_PAUSE_MS
 		);
 		return () => window.clearTimeout(timer);
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per admission
-	}, [state.phase]);
+	}, [admitted]);
+
+	/* The switches in this window go into the call (#2016), kept current
+	   until the hand-over. A knock let in before the check has settled
+	   (persisted, or admitted on the first poll) has no camera yet: it is
+	   not asked for until the check finds one, so a device without a
+	   camera still starts the call. */
+	const room = callRoomOf(knock);
+	const { controls } = device;
+	const cameraFound = device.settled && device.cameraAvailable;
+	useEffect(() => {
+		if (!admitted || !room) return;
+		keepDeviceChoice(room, modalityOf(knock), {
+			controls,
+			cameraAvailable: cameraFound,
+			blocker: device.blocker,
+			check: device.check
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- the knock is fixed per mount
+	}, [
+		admitted,
+		room,
+		controls,
+		cameraFound,
+		device.blocker,
+		device.check.devices
+	]);
 
 	return (
 		<KnockWaitDialog
 			variant="call"
 			phase={state.phase}
-			/* While waiting there is no retry to offer: the preview stays,
-			   with the camera off, as before. */
-			media={{ ...device.check, blocker: undefined }}
+			/* A check that failed says why and can run again while the
+			   knock waits. */
+			media={device.check}
+			onRetry={device.retry}
 			onCancel={state.cancel}
 			/* Knocking again goes through the link; without it on this
 			   device the refusal offers only "Schließen" (FE#1893). */
@@ -220,6 +239,10 @@ export const DirectLinkKnockGate = ({
 	pollMs?: number;
 }) => {
 	const location = useLocation();
+	const { t } = useTranslation();
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
 	const [knock, setKnock] = useState<PendingKnock | null>(() =>
 		unclaimedPendingKnock()
 	);
@@ -234,6 +257,22 @@ export const DirectLinkKnockGate = ({
 	}, []);
 	const startCall = deps.startCall ?? defaultStartCall;
 	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
+	/* No call took the switches, so no later call in this room may. */
+	const forgetSwitches = (admitted: PendingKnock) => {
+		const room = callRoomOf(admitted);
+		if (room) rememberJoinMedia(room, null);
+	};
+	/* The card is not there to say it: the window that was open has gone. */
+	const runningCallJoinFailed = (admitted: PendingKnock) => {
+		forgetSwitches(admitted);
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_ERROR,
+			title: t('videoCall.timeline.joinFailed'),
+			text: '',
+			closeable: true,
+			timeout: 5000
+		});
+	};
 
 	/* Only over the person's own conversations: not on the invite page,
 	   the login or anywhere a counsellor works. */
@@ -260,11 +299,20 @@ export const DirectLinkKnockGate = ({
 						storedJoin?.();
 						return;
 					case 'joinRunningCall':
-						void joinRunningCall(admitted).catch(() => undefined);
+						void joinRunningCall(admitted).then(
+							(result) => {
+								if (result !== 'joined') {
+									runningCallJoinFailed(admitted);
+								}
+							},
+							() => runningCallJoinFailed(admitted)
+						);
 						return;
 					case 'startCall':
 						void startCall(admitted).catch(() => undefined);
 						return;
+					case 'none':
+						forgetSwitches(admitted);
 				}
 			}}
 		/>

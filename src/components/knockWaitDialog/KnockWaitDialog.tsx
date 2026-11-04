@@ -60,7 +60,10 @@ export interface KnockWaitDialogProps {
 	 * the action says "Fertig".
 	 */
 	purpose?: 'join' | 'check';
-	/** `ready` only: the check could not run, ask the browser again. */
+	/**
+	 * `ready`, and `waiting` with a call's check: the check could not run,
+	 * ask the browser again.
+	 */
 	onRetry?: () => void;
 	/**
 	 * `ready` only (#2016, product owner 2026-11-03): the knock is out and
@@ -68,6 +71,8 @@ export interface KnockWaitDialogProps {
 	 * says so with a spinner, "Nicht mehr warten" (`onCancel`) withdraws.
 	 */
 	knocking?: boolean;
+	/** `ready` only: the join is being looked up, the main button waits. */
+	joining?: boolean;
 	/**
 	 * Bottom sheet instead of a centred dialog. Defaults to phones (< 600px);
 	 * stories may force either.
@@ -112,6 +117,7 @@ export const KnockWaitDialog = ({
 	purpose = 'join',
 	onRetry,
 	knocking = false,
+	joining = false,
 	sheet
 }: KnockWaitDialogProps) => {
 	const { t } = useTranslation();
@@ -208,6 +214,8 @@ export const KnockWaitDialog = ({
 										: t('knockWait.ready.join'),
 								onClick: onJoin,
 								primary: true,
+								disabled: joining,
+								busy: joining,
 								testId: 'knock-wait-join'
 							}
 						]
@@ -280,6 +288,15 @@ export const KnockWaitDialog = ({
 				</>
 			);
 			actions = [
+				...(isCall && media?.blocker && onRetry
+					? [
+							{
+								label: t('knockWait.ready.retry'),
+								onClick: onRetry,
+								testId: 'knock-wait-retry'
+							}
+						]
+					: []),
 				{
 					label: t('knockWait.waiting.cancel'),
 					onClick: onCancel,

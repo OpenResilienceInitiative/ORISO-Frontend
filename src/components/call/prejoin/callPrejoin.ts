@@ -1,4 +1,3 @@
-import type { CallData } from '../../../services/CallManager';
 import type {
 	CallDeviceState,
 	ElementCallStart
@@ -6,6 +5,7 @@ import type {
 import type {
 	CallDevice,
 	CallDeviceControls,
+	CallDevices,
 	CallEntryBlocker,
 	CallModality
 } from '../../waitingRoom/callEntry/callEntryTypes';
@@ -26,7 +26,7 @@ export interface DeviceCheckContext {
 	surface: PrejoinSurface;
 	/** The browser can ask for camera and microphone at all. */
 	mediaSupported: boolean;
-	/** Call message: this browser is already in that very call. */
+	/** Call message: this browser is in a call, this one or another. */
 	alreadyInCall?: boolean;
 	/** Circle: the group's room, where its calls take place. */
 	roomRef?: string | null;
@@ -38,9 +38,9 @@ export interface DeviceCheckContext {
 }
 
 /**
- * - Call message: before every join, unless this browser is already in the
- *   call (the camera is the call's then, and a second preview would fight
- *   it for the device).
+ * - Call message: before every join, unless this browser is in a call (the
+ *   camera is that call's then, and a second preview would fight it for the
+ *   device). The join itself then says "already in it" or "busy".
  * - Circle pre-lobby: as an option, only in a video circle (product owner,
  *   2026-11-03), when the group's room is known — the choice is kept for
  *   that room's next call.
@@ -57,15 +57,6 @@ export const shouldShowDeviceCheck = ({
 		? !alreadyInCall
 		: Boolean(roomRef) && circleModality === 'VIDEO';
 };
-
-/**
- * This browser is in that call now. A group call that was left stays on record
- * so it can be reopened, but joining it again is a new join and gets the check.
- */
-export const isInCall = (
-	current: Pick<CallData, 'callId' | 'state'> | null | undefined,
-	callId: string
-): boolean => current?.callId === callId && current.state !== 'left';
 
 /** What the person left the check with. */
 export interface DeviceCheckOutcome {
@@ -106,8 +97,9 @@ export const chosenDeviceLabel = (
 
 /**
  * Microphone and camera for the call: on/off, and which ones by label. A
- * check that could not run passes nothing: the call then asks the browser
- * itself, as it did before. No camera label where the call has no camera.
+ * check that could not run passes nothing, and the call asks the browser
+ * itself, as it did before; unless the person switched something off: that
+ * is still theirs to decide. No camera label where the call has no camera.
  */
 export const joinMediaFrom = ({
 	modality,
@@ -118,8 +110,9 @@ export const joinMediaFrom = ({
 	microphoneLabel,
 	cameraLabel
 }: DeviceCheckOutcome): JoinMedia | null => {
-	if (blocker) return null;
-	const hasCamera = modality === 'video' && cameraAvailable;
+	const video = modality === 'video';
+	if (blocker && micOn && (cameraOn || !video)) return null;
+	const hasCamera = video && cameraAvailable;
 	return {
 		audio_enabled: micOn,
 		video_enabled: hasCamera && cameraOn,
@@ -132,16 +125,73 @@ export const joinMediaFrom = ({
  * The choice waits here, per room, until that room's call is ready to take
  * it (`GroupCallWidget`). In memory only: a reload starts afresh.
  */
-const chosen = new Map<string, JoinMedia>();
+const chosen = new Map<string, { media: JoinMedia; cameraSwitch?: boolean }>();
 
-export const rememberJoinMedia = (roomRef: string, media: JoinMedia | null) => {
-	if (media) chosen.set(roomRef, media);
+/**
+ * @param cameraSwitch The camera switch itself, in a video check. `media` says
+ * what the call gets, which is "off" for a camera that was not available too.
+ */
+export const rememberJoinMedia = (
+	roomRef: string,
+	media: JoinMedia | null,
+	cameraSwitch?: boolean
+) => {
+	if (media) chosen.set(roomRef, { media, cameraSwitch });
 	else chosen.delete(roomRef);
 };
 
 export const peekJoinMedia = (
 	roomRef: string | null | undefined
-): JoinMedia | null => (roomRef && chosen.get(roomRef)) || null;
+): JoinMedia | null => (roomRef && chosen.get(roomRef)?.media) || null;
+
+/** Where the camera switch was left; an audio check never touched it. */
+export const peekCameraSwitch = (
+	roomRef: string | null | undefined
+): boolean | undefined => {
+	const entry = roomRef ? chosen.get(roomRef) : undefined;
+	return entry && (entry.cameraSwitch ?? true);
+};
+
+/** Keeps what a device check (`useCallDeviceCheck`) says now for that room. */
+export const keepDeviceChoice = (
+	roomRef: string,
+	modality: CallModality,
+	{
+		controls,
+		cameraAvailable,
+		blocker,
+		check
+	}: {
+		controls: CallDeviceControls;
+		cameraAvailable: boolean;
+		blocker?: CallEntryBlocker;
+		/** What the check found, for the devices by label (ElementCall#116). */
+		check?: { devices: CallDevices };
+	}
+) =>
+	rememberJoinMedia(
+		roomRef,
+		joinMediaFrom({
+			modality,
+			micOn: controls.micOn,
+			cameraOn: controls.cameraOn,
+			cameraAvailable,
+			blocker,
+			microphoneLabel:
+				check &&
+				chosenDeviceLabel(
+					check.devices.microphone,
+					controls.selection.microphone
+				),
+			cameraLabel:
+				check &&
+				chosenDeviceLabel(
+					check.devices.camera,
+					controls.selection.camera
+				)
+		}),
+		modality === 'video' ? controls.cameraOn : undefined
+	);
 
 /** Once: a later call in the same room starts as calls always did. */
 export const takeJoinMedia = (
@@ -158,10 +208,13 @@ export const forgetAllJoinMedia = () => chosen.clear();
 /** A second check in the same room opens where the first one left off. */
 export const initialControlsFor = (
 	modality: CallModality,
-	remembered: CallDeviceState | null
+	remembered: CallDeviceState | null,
+	cameraSwitch?: boolean
 ): CallDeviceControls => ({
 	micOn: remembered?.audio_enabled ?? true,
-	cameraOn: modality === 'video' && (remembered?.video_enabled ?? true),
+	cameraOn:
+		modality === 'video' &&
+		(cameraSwitch ?? remembered?.video_enabled ?? true),
 	selection: {}
 });
 
@@ -207,30 +260,39 @@ export const callStartFor = (
 	};
 };
 
+const confirms = (
+	wanted: Partial<CallDeviceState>,
+	reported: CallDeviceState | null
+) =>
+	reported !== null &&
+	(wanted.audio_enabled === undefined ||
+		wanted.audio_enabled === reported.audio_enabled) &&
+	(wanted.video_enabled === undefined ||
+		wanted.video_enabled === reported.video_enabled);
+
 /**
- * The ready-time fallback (`devicesForCall`), sent until the call takes it:
- * for an Element Call image that ignores the start parameters, this is the
- * only way a camera switched off in the check goes off, so one lost message
- * must not leave it on. A few tries, and only while that call is still there.
- * Resolves `true` once the call took it.
+ * Sends the choice until the call's own answer confirms it: the ready-time
+ * fallback (`devicesForCall`). For an Element Call image that ignores the
+ * start parameters this is the only way a camera switched off in the check
+ * goes off, and such a call starts with both on: a person must not stay on
+ * camera because one message got lost. `false`: not confirmed by a call that
+ * is still there.
  */
-export const switchDevicesOnReady = async (
-	send: (media: Partial<CallDeviceState>) => Promise<void>,
-	media: Partial<CallDeviceState>,
+export const deliverJoinMedia = async (
+	send: (media: Partial<CallDeviceState>) => Promise<CallDeviceState | null>,
+	wanted: Partial<CallDeviceState>,
 	{
 		attempts = 3,
-		delayMs = 1000,
-		isCurrent = () => true
-	}: { attempts?: number; delayMs?: number; isCurrent?: () => boolean } = {}
+		waitMs = 1_000,
+		stopped = () => false
+	}: { attempts?: number; waitMs?: number; stopped?: () => boolean } = {}
 ): Promise<boolean> => {
-	for (let attempt = 1; attempt <= attempts && isCurrent(); attempt++) {
-		try {
-			await send(media);
-			// Took it — but only counts for the call that is still there.
-			return isCurrent();
-		} catch {
-			if (attempt < attempts && isCurrent())
-				await new Promise((resolve) => setTimeout(resolve, delayMs));
+	for (let attempt = 1; attempt <= attempts; attempt += 1) {
+		if (stopped()) return false;
+		const reported = await send(wanted).catch(() => null);
+		if (confirms(wanted, reported)) return !stopped();
+		if (attempt < attempts) {
+			await new Promise((resolve) => setTimeout(resolve, waitMs));
 		}
 	}
 	return false;
