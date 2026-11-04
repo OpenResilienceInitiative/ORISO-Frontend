@@ -117,7 +117,11 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 		useImperativeHandle(ref, () => ({
 			onKeyDown: (event: KeyboardEvent) => {
 				if (!rows.length) {
-					return false;
+					// The list says it is loading: Enter must not send the
+					// half-typed name past it.
+					return (
+						event.key === 'Enter' && directoryState === 'loading'
+					);
 				}
 				if (event.key === 'ArrowUp') {
 					setActiveIndex(

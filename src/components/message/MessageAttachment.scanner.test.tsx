@@ -94,6 +94,7 @@ describe('MessageAttachment with a content scanner deployed', () => {
 	beforeEach(() => {
 		isMediaContentScannerEnabled.mockReturnValue(true);
 		isMediaImageCheckEnabled.mockReturnValue(false);
+		window.URL.revokeObjectURL = vi.fn();
 		if (!window.URL.createObjectURL) {
 			window.URL.createObjectURL = vi.fn();
 		}

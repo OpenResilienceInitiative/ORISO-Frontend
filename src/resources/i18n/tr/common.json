@@ -212,6 +212,7 @@
 			"decrypt": "Şifreyi çöz",
 			"decrypting": "Şifre çözülüyor …",
 			"encryptedHint": "Uçtan uca şifreli",
+			"loadFailed": "Dosya yüklenemedi",
 			"retry": "Tekrar dene"
 		},
 		"mediaCheck": {

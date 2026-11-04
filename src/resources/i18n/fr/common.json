@@ -212,6 +212,7 @@
 			"decrypt": "Déchiffrer",
 			"decrypting": "Déchiffrement …",
 			"encryptedHint": "Chiffré de bout en bout",
+			"loadFailed": "Impossible de charger le fichier",
 			"retry": "Réessayer"
 		},
 		"mediaCheck": {

@@ -212,6 +212,7 @@
 			"decrypt": "ምስጢር ፍታሕ",
 			"decrypting": "ምስጢር ይፍታሕ ኣሎ …",
 			"encryptedHint": "ካብ ጫፍ ናብ ጫፍ ምስጢራዊ",
+			"loadFailed": "ፋይል ክጽዓን ኣይከኣለን",
 			"retry": "እንደገና ፈትን"
 		},
 		"mediaCheck": {

@@ -73,6 +73,15 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		props.t === 'e2e' || isMatrixEncryptedAttachment;
 
 	const [encryptedFile, setEncryptedFile] = React.useState(null);
+	// The decrypted bytes stay in memory for as long as this URL lives.
+	React.useEffect(
+		() => () => {
+			if (encryptedFile) {
+				window.URL.revokeObjectURL(encryptedFile);
+			}
+		},
+		[encryptedFile]
+	);
 	const [attachmentStatus, setAttachmentStatus] = React.useState(
 		isEncryptedAttachment ? ENCRYPTED : NOT_ENCRYPTED
 	);
@@ -95,6 +104,21 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		}
 
 		setAttachmentStatus(IS_DECRYPTING);
+
+		// Voice loads without being asked and says so in place, so a chat of
+		// unavailable recordings must not stack one notification per message.
+		const notifyFailure = () => {
+			if (props.file.type?.startsWith('audio/')) {
+				return;
+			}
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: translate('e2ee.attachment.error.title'),
+				text: translate('e2ee.attachment.error.text'),
+				closeable: true,
+				timeout: 60000
+			});
+		};
 
 		// With a content scanner deployed (ADR-019), an encrypted file is
 		// never fetched and decrypted here. The client seals the file keys
@@ -135,13 +159,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		const data = await fetchAuthenticatedMatrixMedia(ciphertextUri).catch(
 			(error) => {
 				setAttachmentStatus(DECRYPTION_ERROR);
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: translate('e2ee.attachment.error.title'),
-					text: translate('e2ee.attachment.error.text'),
-					closeable: true,
-					timeout: 60000
-				});
+				notifyFailure();
 				apiPostError({
 					name: error?.name,
 					message: error?.message,
@@ -169,14 +187,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				matrixEncryptedFile
 			).catch((error) => {
 				setAttachmentStatus(DECRYPTION_ERROR);
-
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: translate('e2ee.attachment.error.title'),
-					text: translate('e2ee.attachment.error.text'),
-					closeable: true,
-					timeout: 60000
-				});
+				notifyFailure();
 
 				apiPostError({
 					name: error.name,
@@ -257,11 +268,16 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		props.attachment.mxcUrl ??
 		props.attachment.downloadUrl;
 	const [isVoiceWanted, setIsVoiceWanted] = React.useState(false);
+	const [isVoiceLoadFailed, setIsVoiceLoadFailed] = React.useState(false);
+	// Read once: the list is parsed from storage and only matters before loading.
+	const [wasVoiceHeard] = React.useState(
+		() => Boolean(isAudio) && isVoiceMessageHeard(voiceMediaUrl)
+	);
 	const voicePlayerRef = React.useRef<HTMLDivElement>(null);
 	const isVoiceWaiting = isAudio && !isVoiceWanted;
 	const loadVoiceInView =
 		durationFromFileName === null ||
-		(!props.isOwnMessage && !isVoiceMessageHeard(voiceMediaUrl));
+		(!props.isOwnMessage && !wasVoiceHeard);
 
 	React.useEffect(() => {
 		const player = voicePlayerRef.current;
@@ -311,11 +327,14 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		needsAuthenticatedMedia &&
 			!isAwaitingReveal &&
 			!isVoiceWaiting &&
+			!isVoiceLoadFailed &&
 			effectiveMediaState !== 'blocked' &&
 			effectiveMediaState !== 'error'
 			? props.attachment.mxcUrl
 			: null,
-		props.file.type
+		props.file.type,
+		// Without this Play would keep saying it is loading.
+		isAudio ? () => setIsVoiceLoadFailed(true) : undefined
 	);
 	// One resolved source for every plain consumer below: the image preview,
 	// the download anchor and the voice player.
@@ -491,6 +510,22 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					actionLabel: translate('attachments.mediaCheck.reveal'),
 					hint: translate('attachments.mediaCheck.unchecked'),
 					onAction: revealUncheckedImage
+				}}
+			/>
+		);
+	}
+
+	if (isVoiceLoadFailed) {
+		return (
+			<AttachmentGate
+				mimeType={props.file.type}
+				fileName={props.attachment.title}
+				meta={fileMeta}
+				status={{
+					kind: 'error',
+					label: translate('attachments.gate.loadFailed'),
+					retryLabel: translate('attachments.gate.retry'),
+					onRetry: () => setIsVoiceLoadFailed(false)
 				}}
 			/>
 		);
