@@ -730,7 +730,80 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		}
 	);
 
-	it.each(['caller', 'other-sender', 'other-media-room', 'earlier'] as const)(
+	it.each(['rejection', 'message'] as const)(
+		'waits for a same-account encrypted %s before ringing a delayed one-to-one invite',
+		(kind) => {
+			vi.useFakeTimers();
+			try {
+				const sentAt = Date.now();
+				const content = {
+					call_id: 'delayed-own-rejection',
+					call_room_id: '!element:matrix.example.org'
+				};
+				const invite = makeEvent({
+					type: 'm.room.encrypted',
+					ts: sentAt
+				});
+				const rejection = makeEvent({
+					type: 'm.room.encrypted',
+					sender: MY_USER_ID,
+					ts: sentAt + 1
+				});
+				const sourceRoom = {
+					...room,
+					getLiveTimeline: () => ({
+						getEvents: () => [invite, rejection]
+					})
+				};
+				Object.assign(client, { isInitialSyncComplete: () => true });
+				for (const event of [invite, rejection])
+					client.emit(
+						'Room.timeline',
+						event,
+						sourceRoom,
+						false,
+						false,
+						{
+							liveEvent: true
+						}
+					);
+				vi.setSystemTime(sentAt + 15_000);
+				invite.emitDecrypted({
+					type: 'org.oriso.call.invite',
+					content: {
+						...content,
+						is_element_call: true,
+						lifetime: 60_000
+					}
+				});
+				expect(receiveCall).not.toHaveBeenCalled();
+				rejection.emitDecrypted({
+					type:
+						kind === 'rejection'
+							? 'org.oriso.call.hangup'
+							: 'm.room.message',
+					content: { ...content, reason: 'user_rejected' }
+				});
+				expect(receiveCall).toHaveBeenCalledTimes(
+					kind === 'rejection' ? 0 : 1
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		}
+	);
+
+	it.each([
+		'caller',
+		'own-rejection',
+		'own-same-time',
+		'own-other-room',
+		'own-group',
+		'own-hangup',
+		'other-sender',
+		'other-media-room',
+		'earlier'
+	] as const)(
 		'checks an active RTC invite against a known later hangup (%s)',
 		(kind) => {
 			const sentAt = Date.now() - 15_000;
@@ -741,23 +814,39 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			};
 			const invite = makeEvent({
 				type: 'org.oriso.call.invite',
-				content: { ...content, is_element_call: true },
+				content: {
+					...content,
+					is_element_call: true,
+					is_group_call: kind === 'own-group'
+				},
 				ts: sentAt
 			});
 			const hangup = makeEvent({
 				type: 'org.oriso.call.hangup',
 				content: {
 					...content,
+					reason: [
+						'own-rejection',
+						'own-same-time',
+						'own-other-room',
+						'own-group'
+					].includes(kind)
+						? 'user_rejected'
+						: 'user_hangup',
 					call_room_id:
-						kind === 'other-media-room'
+						kind === 'other-media-room' || kind === 'own-other-room'
 							? '!other:matrix.example.org'
 							: callRoomId
 				},
-				sender:
-					kind === 'other-sender'
+				sender: kind.startsWith('own-')
+					? MY_USER_ID
+					: kind === 'other-sender'
 						? '@other:matrix.example.org'
 						: OTHER_USER_ID,
-				ts: kind === 'earlier' ? sentAt : sentAt + 1
+				ts:
+					kind === 'earlier' || kind === 'own-same-time'
+						? sentAt
+						: sentAt + 1
 			});
 			const sourceRoom = {
 				...room,
@@ -776,11 +865,19 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			try {
 				client.emit('sync', 'SYNCING', null);
 				expect(receiveCall).toHaveBeenCalledTimes(
-					kind === 'caller' ? 0 : 1
+					kind === 'caller' ||
+						kind === 'own-rejection' ||
+						kind === 'own-same-time'
+						? 0
+						: 1
 				);
 				client.emit('Room.timeline', invite, sourceRoom, false);
 				expect(receiveCall).toHaveBeenCalledTimes(
-					kind === 'caller' ? 0 : 1
+					kind === 'caller' ||
+						kind === 'own-rejection' ||
+						kind === 'own-same-time'
+						? 0
+						: 1
 				);
 			} finally {
 				membership.mockRestore();

@@ -54,17 +54,27 @@ const isElementOrGroupCallInvite = (
 ): boolean =>
 	content.is_element_call === true || content.is_group_call === true;
 
-const orisoCallKey = (event: MatrixEvent): string | undefined => {
+const orisoCallKey = (
+	event: MatrixEvent,
+	includeSender = true
+): string | undefined => {
 	const { call_id: callId, call_room_id: callRoomId } = event.getContent();
 	const sender = event.getSender();
-	if (!sender || typeof callId !== 'string' || typeof callRoomId !== 'string')
+	if (
+		(includeSender && !sender) ||
+		typeof callId !== 'string' ||
+		typeof callRoomId !== 'string'
+	)
 		return;
-	return JSON.stringify([sender, callId, callRoomId]);
+	return JSON.stringify(
+		includeSender ? [sender, callId, callRoomId] : [callId, callRoomId]
+	);
 };
 
-const laterCallerEvents = (
+const laterRelevantEvents = (
 	invite: MatrixEvent,
-	timeline: MatrixEvent[]
+	timeline: MatrixEvent[],
+	ownUserId?: string | null
 ): MatrixEvent[] => {
 	const sender = invite.getSender();
 	if (!sender) return [];
@@ -72,7 +82,13 @@ const laterCallerEvents = (
 	const inviteIndex = timeline.indexOf(invite);
 	return timeline.filter(
 		(event, index) =>
-			event.getSender() === sender &&
+			(event.getSender() === sender ||
+				(invite.getContent().is_group_call !== true &&
+					!!ownUserId &&
+					event.getSender() === ownUserId &&
+					(event.getType() === 'm.room.encrypted' ||
+						(event.getType() === 'org.oriso.call.hangup' &&
+							event.getContent().reason === 'user_rejected')))) &&
 			(event.getTs() > sentAt ||
 				(event.getTs() === sentAt && index > inviteIndex))
 	);
@@ -240,16 +256,32 @@ export class MatrixLiveEventBridge {
 					string,
 					{ timestamp: number; index: number }
 				>();
+				const ownRejections = new Map<
+					string,
+					{ timestamp: number; index: number }
+				>();
 				events.forEach((event, index) => {
 					if (event.getType() === 'org.oriso.call.hangup') {
-						const key = orisoCallKey(event);
 						const timestamp = event.getTs();
+						const key = orisoCallKey(event);
 						if (
 							key &&
 							(orisoHangups.get(key)?.timestamp ?? -Infinity) <=
 								timestamp
-						) {
+						)
 							orisoHangups.set(key, { timestamp, index });
+						if (
+							this.client?.getUserId() &&
+							event.getSender() === this.client.getUserId() &&
+							event.getContent().reason === 'user_rejected'
+						) {
+							const ownKey = orisoCallKey(event, false);
+							if (
+								ownKey &&
+								(ownRejections.get(ownKey)?.timestamp ??
+									-Infinity) <= timestamp
+							)
+								ownRejections.set(ownKey, { timestamp, index });
 						}
 					}
 					if (
@@ -282,16 +314,28 @@ export class MatrixLiveEventBridge {
 						const endedAt = callId
 							? hangups.get(callId)
 							: undefined;
-						const orisoKey = orisoCallKey(event);
-						const orisoEnd = orisoKey
-							? orisoHangups.get(orisoKey)
+						const callerKey = orisoCallKey(event);
+						const ownKey = orisoCallKey(event, false);
+						const callerEnd = callerKey
+							? orisoHangups.get(callerKey)
 							: undefined;
+						const ownEnd =
+							content.is_group_call !== true && ownKey
+								? ownRejections.get(ownKey)
+								: undefined;
+						const isLater = (
+							end:
+								| { timestamp: number; index: number }
+								| false
+								| undefined
+						) =>
+							!!end &&
+							(end.timestamp > event.getTs() ||
+								(end.timestamp === event.getTs() &&
+									end.index > index));
 						const ended =
 							event.getType() === 'org.oriso.call.invite'
-								? !!orisoEnd &&
-									(orisoEnd.timestamp > event.getTs() ||
-										(orisoEnd.timestamp === event.getTs() &&
-											orisoEnd.index > index))
+								? isLater(callerEnd) || isLater(ownEnd)
 								: endedAt !== undefined &&
 									endedAt >= event.getTs();
 						if (isElementOrGroupCallInvite(content) && !ended) {
@@ -519,7 +563,11 @@ export class MatrixLiveEventBridge {
 			(wasFreshAndLive || hasActiveMatrixRtcMembership)
 				? (room.getLiveTimeline?.().getEvents() ?? [])
 				: [];
-		const later = laterCallerEvents(event, timeline);
+		const later = laterRelevantEvents(
+			event,
+			timeline,
+			this.client?.getUserId()
+		);
 		if (isOrisoInvite && hasMatchingOrisoHangup(event, later)) return;
 		if (this.deferredCallInvites.has(event)) return;
 
@@ -527,7 +575,7 @@ export class MatrixLiveEventBridge {
 			isOld && wasFreshAndLive
 				? this.delayedInviteDeadline(event, timeline, now)
 				: undefined;
-		// An encrypted event from the same caller may be the hangup. Wait
+		// A later encrypted event from the caller or this account may be a hangup. Wait
 		// for its decryption rather than presenting an already ended call.
 		if (
 			delayedDeadline &&
@@ -675,7 +723,10 @@ export class MatrixLiveEventBridge {
 		for (const [invite, pending] of [...this.deferredCallInvites]) {
 			if (
 				pending.room !== room ||
-				invite.getSender() !== decoded.getSender()
+				(invite.getSender() !== decoded.getSender() &&
+					(invite.getContent().is_group_call === true ||
+						!this.client?.getUserId() ||
+						decoded.getSender() !== this.client.getUserId()))
 			)
 				continue;
 			clearTimeout(pending.timeout);
