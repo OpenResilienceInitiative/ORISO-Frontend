@@ -12,6 +12,9 @@ import type {
 	MatrixActivityPreviewKind,
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
+import { parseChannel } from '../../utils/channelRoute';
+import { useSideRoomPreviewGate, type SideRoom } from './sideRoomPreviewGate';
+import { useGroupPreviewGate } from './groupPreviewGate';
 import { chatEndedTextKey } from '../message/messageConstants';
 import { activityEventSessionId, describeActivityEvent } from './activityEvent';
 import {
@@ -109,12 +112,33 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 							: String(eventSessionId),
 						sessions || []
 					);
+				// A numeric id can collide between cases and groups. Until the room
+				// resolves, its authorization policy is unknown.
+				if (!session) return [];
+				const channel = parseChannel(
+					(item.actionPath || '').split('?')[1] || ''
+				).channel;
+				const differentRoom =
+					!!item.params?.roomRef &&
+					session.rid !== item.params.roomRef;
+				const side: SideRoom | null =
+					differentRoom &&
+					session.isSession &&
+					session.item?.id &&
+					item.params?.roomRef &&
+					(channel?.kind === 'supervision' ||
+						channel?.kind === 'team')
+						? {
+								sessionId: session.item.id,
+								room: item.params.roomRef,
+								kind: channel.kind
+							}
+						: null;
+				if (differentRoom && !side) return [];
 				const sessionId =
-					eventSessionId !== null
-						? String(eventSessionId)
-						: session?.isSession && session.item?.id != null
-							? String(session.item.id)
-							: null;
+					session.isSession && session.item?.id != null
+						? String(session.item.id)
+						: null;
 				const roomRef = item.params?.roomRef || session?.rid;
 				if (!matrixEventId || !roomRef) {
 					return [];
@@ -132,6 +156,15 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 						).text,
 						labels: previewLabels,
 						sessionId,
+						side,
+						group: session?.isGroup
+							? {
+									id: session.item?.id,
+									room: session.rid,
+									active: session.item?.active,
+									subscribed: session.item?.subscribed
+								}
+							: null,
 						needsCaseHandoverCheck: requiresCaseHandoverCheck(
 							session,
 							userData?.userId
@@ -160,10 +193,40 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 	);
 	const isCaseHandoverPreviewAllowed =
 		useCaseHandoverPreviewGate(checkedSessionIds);
+	const groups = useMemo(() => {
+		const byId = new Map();
+		candidatePreviewSources.forEach(({ group }) => {
+			if (group?.id && group.room) byId.set(group.id, group);
+		});
+		return Array.from(byId.values()).sort((a, b) => a.id - b.id);
+	}, [candidatePreviewSources]);
+	const isGroupAllowed = useGroupPreviewGate(groups, userData?.userName);
+	const sides = useMemo(() => {
+		const unique = new Map<string, SideRoom>();
+		candidatePreviewSources.forEach(({ side }) => {
+			if (side)
+				unique.set(`${side.sessionId}:${side.kind}:${side.room}`, side);
+		});
+		return Array.from(unique.values()).sort((a, b) =>
+			`${a.sessionId}:${a.kind}:${a.room}`.localeCompare(
+				`${b.sessionId}:${b.kind}:${b.room}`
+			)
+		);
+	}, [candidatePreviewSources]);
+	const isSideAllowed = useSideRoomPreviewGate(sides);
 	const messagePreviewSources = useMemo(
 		() =>
 			candidatePreviewSources
 				.filter((source) => {
+					if (source.side && !isSideAllowed(source.side))
+						return false;
+					if (
+						source.group &&
+						(!source.group.id ||
+							source.group.room !== source.roomRef ||
+							!isGroupAllowed(source.roomRef))
+					)
+						return false;
 					if (!source.needsCaseHandoverCheck) {
 						return true;
 					}
@@ -177,11 +240,18 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 				.map(
 					({
 						needsCaseHandoverCheck: _needsCheck,
+						group: _group,
+						side: _side,
 						sessionId: _sessionId,
 						...source
 					}) => source
 				),
-		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
+		[
+			candidatePreviewSources,
+			isCaseHandoverPreviewAllowed,
+			isGroupAllowed,
+			isSideAllowed
+		]
 	);
 	// Previews are dropped again the moment their card stops being allowed —
 	// a session arriving late in SessionsDataContext can turn a hydrated card
