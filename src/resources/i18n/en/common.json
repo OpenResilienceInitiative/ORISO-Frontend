@@ -4227,7 +4227,7 @@
 		"anonymous": {
 			"queueNotFirst": {
 				"headline": "Another guest is first in line",
-				"text": "Accept the earlier request in this queue first."
+				"text": "An earlier request in this queue must be accepted first."
 			},
 			"takenByOtherConsultant": {
 				"button": {

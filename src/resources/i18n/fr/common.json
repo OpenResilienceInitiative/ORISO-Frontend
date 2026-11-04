@@ -4261,7 +4261,7 @@
 		"anonymous": {
 			"queueNotFirst": {
 				"headline": "Une autre personne est prioritaire",
-				"text": "Acceptez d’abord la demande arrivée plus tôt dans cette file d’attente."
+				"text": "Une demande arrivée plus tôt dans cette file d’attente doit être acceptée en premier."
 			},
 			"takenByOtherConsultant": {
 				"button": {

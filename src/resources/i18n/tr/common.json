@@ -4261,7 +4261,7 @@
 		"anonymous": {
 			"queueNotFirst": {
 				"headline": "Sırada önce başka bir misafir var",
-				"text": "Önce bu sıraya daha erken giren isteği kabul edin."
+				"text": "Bu sıradaki daha önce gelen bir istek önce kabul edilmelidir."
 			},
 			"takenByOtherConsultant": {
 				"button": {
