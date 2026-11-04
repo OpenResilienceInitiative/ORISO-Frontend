@@ -269,11 +269,10 @@ export const AcceptedFirstReplyEmailStaysClosed: Story = {
 			})
 		);
 		await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
-		await waitFor(() =>
-			expect(
-				canvas.getByTestId('collection-capability')
-			).toHaveTextContent('undefined')
-		);
+		// The last confirmed capability stays while the refresh is pending.
+		await expect(
+			canvas.getByTestId('collection-capability')
+		).toHaveTextContent('true');
 		await expect(page.queryByRole('textbox')).toBeNull();
 		releaseRefresh!();
 		await waitFor(() =>
@@ -300,10 +299,9 @@ const acceptedFailure = async (canvasElement: HTMLElement) => {
 		})
 	);
 	await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
-	await waitFor(() =>
-		expect(canvas.getByTestId('collection-capability')).toHaveTextContent(
-			'undefined'
-		)
+	// The last confirmed capability stays while the refresh is pending.
+	await expect(canvas.getByTestId('collection-capability')).toHaveTextContent(
+		'true'
 	);
 	releaseRefresh!();
 	await waitFor(() =>
@@ -363,11 +361,10 @@ export const AcceptedEmailOnlyRefreshFailure: Story = {
 			})
 		);
 		await waitFor(() => expect(typeof releaseRefresh).toBe('function'));
-		await waitFor(() =>
-			expect(
-				canvas.getByTestId('collection-capability')
-			).toHaveTextContent('undefined')
-		);
+		// The last confirmed capability stays while the refresh is pending.
+		await expect(
+			canvas.getByTestId('collection-capability')
+		).toHaveTextContent('true');
 		releaseRefresh!();
 		await waitFor(() =>
 			expect(

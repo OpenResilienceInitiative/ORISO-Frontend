@@ -1,0 +1,34 @@
+name: PR base check
+
+# Feature work lands on `dev`. Only `dev` itself may go to `main` (release).
+# `pre-dev` is the Pre-Dev server's branch and never a PR target.
+# GitHub's default branch is still `main`, so a PR opened without choosing a
+# base silently targets the wrong branch — this check makes that visible.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR targets dev (or dev → main for a release)
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          THIS_REPO: ${{ github.repository }}
+        run: |
+          if [ "$BASE" = "dev" ]; then
+            echo "Base is dev — ok."
+            exit 0
+          fi
+          if [ "$BASE" = "main" ] && [ "$HEAD" = "dev" ] && [ "$HEAD_REPO" = "$THIS_REPO" ]; then
+            echo "Release PR dev → main — ok."
+            exit 0
+          fi
+          echo "::error title=Wrong base branch::This PR targets '$BASE'. Feature PRs go to 'dev'; only this repository's own 'dev' may go to 'main', and 'pre-dev' is never a target. Change the base branch in the PR header (Edit → base: dev)."
+          exit 1

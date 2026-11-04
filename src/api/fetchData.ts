@@ -16,6 +16,7 @@ import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
 import { recordAccountOperationResponse } from '../utils/accountOperationIntent';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
 const isLocalDevelopment = nodeEnv === 'development';
@@ -234,6 +235,7 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
+			...traceHeaders(url),
 			...localDevelopmentHeader
 		};
 
