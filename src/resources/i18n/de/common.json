@@ -6433,8 +6433,7 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons",
-			"defaultDeviceHint": "Der Anruf nutzt vorerst das Standardgerät Ihres Browsers."
+			"micMeter": "Lautstärke Ihres Mikrofons"
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",

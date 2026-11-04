@@ -2791,8 +2791,7 @@
 			"descriptionGroup": "Die Gruppenleitung kann dich im Moment nicht reinlassen. Versuch es später noch einmal."
 		},
 		"devices": {
-			"micMeter": "Lautstärke deines Mikrofons",
-			"defaultDeviceHint": "Der Anruf nutzt vorerst das Standardgerät deines Browsers."
+			"micMeter": "Lautstärke deines Mikrofons"
 		},
 		"ready": {
 			"description": "Niemand sieht oder hört dich, bevor du beitrittst. Die Vorschau siehst nur du.",

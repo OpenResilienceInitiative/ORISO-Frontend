@@ -6443,8 +6443,7 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
-			"micMeter": "Mikrofonunuzun ses düzeyi",
-			"defaultDeviceHint": "Görüşme şimdilik tarayıcınızın varsayılan cihazını kullanır."
+			"micMeter": "Mikrofonunuzun ses düzeyi"
 		},
 		"ready": {
 			"title": "Kamerayı ve mikrofonu kontrol edin",

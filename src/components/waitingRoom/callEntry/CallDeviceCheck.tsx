@@ -119,26 +119,18 @@ export const CallDeviceCheck = ({
 				</div>
 			)}
 			{pickers.length > 0 && (
-				<>
-					<div className="callDeviceCheck__pickers">
-						{pickers.map((kind) => (
-							<DevicePicker
-								key={kind}
-								kind={kind}
-								kindLabel={t(`knockWait.devices.${kind}`)}
-								devices={devices[kind]}
-								selectedId={selection[kind]}
-								onSelect={(id) => onSelectDevice(kind, id)}
-							/>
-						))}
-					</div>
-					{/* TODO(ORISO-ElementCall#116): remove once the call takes
-				    the chosen device; until then the pickers only steer the
-				    preview (product owner, 2026-11-03). */}
-					<p className="callDeviceCheck__hint">
-						{t('knockWait.devices.defaultDeviceHint')}
-					</p>
-				</>
+				<div className="callDeviceCheck__pickers">
+					{pickers.map((kind) => (
+						<DevicePicker
+							key={kind}
+							kind={kind}
+							kindLabel={t(`knockWait.devices.${kind}`)}
+							devices={devices[kind]}
+							selectedId={selection[kind]}
+							onSelect={(id) => onSelectDevice(kind, id)}
+						/>
+					))}
+				</div>
 			)}
 		</div>
 	);
