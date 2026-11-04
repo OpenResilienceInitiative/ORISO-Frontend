@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import clsx from 'clsx';
 import type { TFunction } from 'i18next';
 import MicIcon from '@mui/icons-material/Mic';
@@ -11,7 +11,9 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import { ToolbarButton } from './ToolbarButton';
+import { ToolbarMenu, ToolbarMenuItem } from './ToolbarMenu';
 import { useScrollableBar } from './useScrollableBar';
+import type { MenuDirection } from './menuDirection';
 import './composerToolbar.styles.scss';
 
 /** Figma "SVG - Text formatieren": T glyph with pen, opens the full tools. */
@@ -46,6 +48,16 @@ export interface DefaultActionBarProps {
 	/** Unread messages below the fold, badged on the scroll arrow. */
 	unreadCount?: number;
 	onOpenTools: () => void;
+	/** Phone: the format box above the composer is open, the T-pen stays lit. */
+	isToolsOpen?: boolean;
+	/**
+	 * Phone (Frank, 03.11.): five buttons with room between them. Emoji,
+	 * mention, attachment and maximize move into the plus menu; `false` shows
+	 * every button in the row.
+	 */
+	isMobile?: boolean;
+	/** Which way the phone's plus menu opens. */
+	menuDirection?: MenuDirection;
 	/** Mic is hidden entirely when voice messages are disabled for this chat. */
 	showMic: boolean;
 	/**
@@ -80,6 +92,9 @@ export const DefaultActionBar = ({
 	onScrollToNewest,
 	unreadCount = 0,
 	onOpenTools,
+	isToolsOpen = false,
+	isMobile = false,
+	menuDirection = 'up',
 	showMic,
 	micUnavailableReason,
 	isRecording,
@@ -99,97 +114,178 @@ export const DefaultActionBar = ({
 	// let a mouse wheel travel along it.
 	const barRef = useRef<HTMLDivElement | null>(null);
 	useScrollableBar(barRef);
+	const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+	const plusAnchorRef = useRef<HTMLSpanElement | null>(null);
+	const emojiLabel = translate('message.submit.toolbar.emoji');
+	const mentionLabel = translate('message.submit.toolbar.mention');
+	const attachmentLabel = translate('message.submit.toolbar.attachment');
+	const expandLabel = translate(
+		isExpanded
+			? 'message.submit.toolbar.minimize'
+			: 'message.submit.toolbar.maximize'
+	);
+	const expandIcon = isExpanded ? (
+		<CloseFullscreenIcon fontSize="inherit" />
+	) : (
+		<OpenInFullIcon fontSize="inherit" />
+	);
+	const plusItems: ToolbarMenuItem[] = [
+		...(showAttachment
+			? [
+					{
+						key: 'attachment',
+						label: attachmentLabel,
+						glyph: <AddIcon fontSize="inherit" />,
+						onSelect: onAttachmentClick
+					}
+				]
+			: []),
+		{
+			key: 'emoji',
+			label: emojiLabel,
+			glyph: <AddReactionOutlinedIcon fontSize="inherit" />,
+			onSelect: onEmojiClick
+		},
+		{
+			key: 'mention',
+			label: mentionLabel,
+			glyph: <AlternateEmailIcon fontSize="inherit" />,
+			onSelect: onMentionClick
+		},
+		{
+			key: 'expand',
+			label: expandLabel,
+			glyph: expandIcon,
+			onSelect: onExpandToggle
+		}
+	];
 	return (
 		<div
 			className="composerToolbar composerToolbar--default"
 			ref={barRef}
 			data-cy="composer-action-bar"
 		>
-			{showBack && (
-				<ToolbarButton
-					label={translate('message.mobileNav.back')}
-					onClick={onBack}
-					className="composerToolbar__button--back"
-					data-cy="composer-back"
-				>
-					<ArrowBackIcon fontSize="inherit" />
-				</ToolbarButton>
-			)}
-			<ToolbarButton
-				label={unread > 0 ? `${scrollLabel} – ${unread}` : scrollLabel}
-				onClick={onScrollToNewest}
-				className={clsx(
-					'composerToolbar__button--scrollToNewest',
-					unread > 0 &&
-						'composerToolbar__button--scrollToNewest--unread'
+			<div className="composerToolbar__group">
+				{showBack && (
+					<ToolbarButton
+						label={translate('message.mobileNav.back')}
+						onClick={onBack}
+						className="composerToolbar__button--back"
+						data-cy="composer-back"
+					>
+						<ArrowBackIcon fontSize="inherit" />
+					</ToolbarButton>
 				)}
-				data-cy="composer-scroll-to-newest"
-			>
-				<ArrowDownwardIcon fontSize="inherit" />
-				{unread > 0 && (
-					<span className="composerToolbar__badge" aria-hidden="true">
-						{unread > 99 ? '99+' : unread}
+				<ToolbarButton
+					label={
+						unread > 0 ? `${scrollLabel} – ${unread}` : scrollLabel
+					}
+					onClick={onScrollToNewest}
+					className={clsx(
+						'composerToolbar__button--scrollToNewest',
+						unread > 0 &&
+							'composerToolbar__button--scrollToNewest--unread'
+					)}
+					data-cy="composer-scroll-to-newest"
+				>
+					<ArrowDownwardIcon fontSize="inherit" />
+					{unread > 0 && (
+						<span
+							className="composerToolbar__badge"
+							aria-hidden="true"
+						>
+							{unread > 99 ? '99+' : unread}
+						</span>
+					)}
+				</ToolbarButton>
+			</div>
+			<div className="composerToolbar__group">
+				<ToolbarButton
+					label={translate('message.submit.toolbar.openTools')}
+					onClick={onOpenTools}
+					selected={isToolsOpen}
+					expanded={isMobile ? isToolsOpen : undefined}
+				>
+					<TextFormatIcon />
+				</ToolbarButton>
+				{showMic && (
+					<ToolbarButton
+						label={translate(
+							'message.submit.toolbar.voiceRecording.label'
+						)}
+						title={translate(
+							'message.submit.toolbar.voiceRecording.tooltip'
+						)}
+						unavailableReason={micUnavailableReason}
+						onClick={onMicClick}
+						selected={isRecording}
+						className={clsx(
+							isRecording && 'composerToolbar__button--recording'
+						)}
+					>
+						<MicIcon fontSize="inherit" />
+					</ToolbarButton>
+				)}
+				{isMobile ? (
+					<span
+						className="composerToolbar__menuAnchor"
+						ref={plusAnchorRef}
+					>
+						<ToolbarButton
+							label={translate('message.submit.toolbar.more')}
+							onClick={() => setIsPlusMenuOpen((open) => !open)}
+							selected={isPlusMenuOpen || isEmojiOpen}
+							expanded={isPlusMenuOpen}
+							data-emoji-picker-toggle=""
+						>
+							<AddIcon fontSize="inherit" />
+						</ToolbarButton>
+						{isPlusMenuOpen && (
+							<ToolbarMenu
+								items={plusItems}
+								direction={menuDirection}
+								onClose={() => setIsPlusMenuOpen(false)}
+								ariaLabel={translate(
+									'message.submit.toolbar.more'
+								)}
+								anchorEl={plusAnchorRef.current}
+							/>
+						)}
 					</span>
-				)}
-			</ToolbarButton>
-			<ToolbarButton
-				label={translate('message.submit.toolbar.openTools')}
-				onClick={onOpenTools}
-			>
-				<TextFormatIcon />
-			</ToolbarButton>
-			{showMic && (
-				<ToolbarButton
-					label={translate(
-						'message.submit.toolbar.voiceRecording.label'
-					)}
-					title={translate(
-						'message.submit.toolbar.voiceRecording.tooltip'
-					)}
-					unavailableReason={micUnavailableReason}
-					onClick={onMicClick}
-					selected={isRecording}
-				>
-					<MicIcon fontSize="inherit" />
-				</ToolbarButton>
-			)}
-			<ToolbarButton
-				label={translate('message.submit.toolbar.emoji')}
-				onClick={onEmojiClick}
-				selected={isEmojiOpen}
-				expanded={isEmojiOpen}
-				data-emoji-picker-toggle=""
-			>
-				<AddReactionOutlinedIcon fontSize="inherit" />
-			</ToolbarButton>
-			<ToolbarButton
-				label={translate('message.submit.toolbar.mention')}
-				onClick={onMentionClick}
-			>
-				<AlternateEmailIcon fontSize="inherit" />
-			</ToolbarButton>
-			{showAttachment && (
-				<ToolbarButton
-					label={translate('message.submit.toolbar.attachment')}
-					onClick={onAttachmentClick}
-				>
-					<AddIcon fontSize="inherit" />
-				</ToolbarButton>
-			)}
-			<ToolbarButton
-				label={translate(
-					isExpanded
-						? 'message.submit.toolbar.minimize'
-						: 'message.submit.toolbar.maximize'
-				)}
-				onClick={onExpandToggle}
-			>
-				{isExpanded ? (
-					<CloseFullscreenIcon fontSize="inherit" />
 				) : (
-					<OpenInFullIcon fontSize="inherit" />
+					<>
+						<ToolbarButton
+							label={emojiLabel}
+							onClick={onEmojiClick}
+							selected={isEmojiOpen}
+							expanded={isEmojiOpen}
+							data-emoji-picker-toggle=""
+						>
+							<AddReactionOutlinedIcon fontSize="inherit" />
+						</ToolbarButton>
+						<ToolbarButton
+							label={mentionLabel}
+							onClick={onMentionClick}
+						>
+							<AlternateEmailIcon fontSize="inherit" />
+						</ToolbarButton>
+						{showAttachment && (
+							<ToolbarButton
+								label={attachmentLabel}
+								onClick={onAttachmentClick}
+							>
+								<AddIcon fontSize="inherit" />
+							</ToolbarButton>
+						)}
+						<ToolbarButton
+							label={expandLabel}
+							onClick={onExpandToggle}
+						>
+							{expandIcon}
+						</ToolbarButton>
+					</>
 				)}
-			</ToolbarButton>
+			</div>
 		</div>
 	);
 };

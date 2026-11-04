@@ -201,6 +201,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Check and open",
+			"checking": "Checking for viruses …",
+			"checkingImage": "Checking the image …",
+			"checkVirus": "Virus scan",
+			"checkImage": "Image analysis: safe and within the guidelines?",
+			"decrypt": "Decrypt",
+			"decrypting": "Decrypting …",
+			"encryptedHint": "End-to-end encrypted",
+			"loadFailed": "The file could not be loaded",
+			"retry": "Try again"
+		},
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
@@ -923,6 +935,8 @@
 			},
 			"nameLabel": "Internal name",
 			"noColleagues": "No colleagues to choose from",
+			"searchPeople": "Search for a person",
+			"noMatchingPeople": "No matching people found.",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
 			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
@@ -933,7 +947,8 @@
 			},
 			"scope": {
 				"AGENCY": "You can pick colleagues from your counselling centre.",
-				"TENANT": "You can pick colleagues from your organisation."
+				"TENANT": "You can pick colleagues from your organisation.",
+				"PLATFORM": "You can choose colleagues from your own organisation and other participating organisations."
 			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
@@ -1254,7 +1269,8 @@
 			"rules": {
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
-			}
+			},
+			"devices": "Camera & microphone"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1981,6 +1997,8 @@
 			}
 		},
 		"mention": {
+			"check": "Also select {{name}}",
+			"checked": "Selected: {{value}}. Click beside the list to insert.",
 			"notInChat": "not in chat",
 			"empty": "No one found",
 			"unavailable": "The list could not be loaded",
@@ -5077,6 +5095,7 @@
 		"label": "Voice message",
 		"play": "Play voice message",
 		"pause": "Pause voice message",
+		"loading": "Loading voice message",
 		"timeline": "Timeline",
 		"jumpTo": "Jump to {{time}}",
 		"aria": "Voice message, {{duration}}, play",
@@ -6367,6 +6386,16 @@
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
+		},
+		"ready": {
+			"title": "Check camera and microphone",
+			"description": "Nobody can see or hear you before you join. Only you see the preview.",
+			"descriptionCheck": "Your setting applies when you join a call in this group. Only you see the preview.",
+			"join": "Join now",
+			"done": "Done",
+			"retry": "Check again",
+			"knocking": "Request sent, please wait …",
+			"notApplied": "Your camera and microphone setting was not applied. Please check both in the call."
 		}
 	},
 	"furtherCounselling": {
@@ -6456,6 +6485,7 @@
 		},
 		"entry": {
 			"inactive": "This link is no longer active.",
+			"callsDisabled": "Calls are not available in this counselling.",
 			"haveAccount": "Already have an account? Sign in",
 			"joinFailed": "That did not work. Please try again."
 		},

@@ -44,8 +44,14 @@ import {
  * group member and an advice seeker in an ordinary conversation join
  * directly.
  *
+ * Since #2016 "Beitreten" opens the camera and microphone check first, and
+ * it is the one window (product owner, 2026-11-03): "Jetzt beitreten"
+ * either joins, or knocks and waits right there — "Anfrage gesendet, bitte
+ * warten …", preview and switches kept — until the person is let in.
+ *
  * The API is an in-memory stand-in for ORISO-UserService#1479 on `fetch`;
- * `callManager.joinExistingCall` (opening the call window) is a spy.
+ * `callManager.joinExistingCall` (opening the call window) is a spy, and
+ * `navigator.mediaDevices` is scripted (a microphone, no camera).
  */
 const SESSION_ID = 4711;
 const ROOM = '!direct:oriso.org';
@@ -157,6 +163,10 @@ const setUp = ({ api = {}, linkOnThisDevice = true }: LobbySetup = {}) => {
 			medium: 'VIDEO'
 		});
 	}
+	Object.defineProperty(navigator, 'mediaDevices', {
+		value: scriptedDevices(),
+		configurable: true
+	});
 	const restoreApi = installDirectLinkMockApi(api);
 	const restoreState = installRunningCallState();
 	joinSpy = spyOnJoin();
@@ -165,6 +175,7 @@ const setUp = ({ api = {}, linkOnThisDevice = true }: LobbySetup = {}) => {
 		joinSpy = null;
 		restoreState();
 		restoreApi();
+		delete (navigator as { mediaDevices?: MediaDevices }).mediaDevices;
 		forgetPendingKnock();
 		localStorage.removeItem(DIRECT_LINK_ADMITTED_KEY);
 		localStorage.removeItem(DIRECT_LINK_SESSIONS_KEY);
@@ -237,7 +248,31 @@ const pressJoin = async (canvasElement: HTMLElement) =>
 		})
 	);
 
-const WAITING = 'Kurz warten, bis Sie hereingelassen werden';
+const CHECK = 'Kamera und Mikrofon prüfen';
+const KNOCKING = 'Anfrage gesendet, bitte warten …';
+
+/** "Beitreten" → the device check → "Jetzt beitreten" in that window. */
+const checkThenJoin = async (canvasElement: HTMLElement) => {
+	const body = page(canvasElement);
+	await pressJoin(canvasElement);
+	await expectVisible(await body.findByRole('heading', { name: CHECK }));
+	// Not joined, not knocked: the check comes first.
+	await expect(joinCalls()).toHaveLength(0);
+	await expect(knockRequests()).toHaveLength(0);
+	await userEvent.click(await body.findByTestId('knock-wait-join'));
+};
+
+/** The same window now waits: the button says so, the switches stay. */
+const expectKnocking = async (canvasElement: HTMLElement) => {
+	const body = page(canvasElement);
+	await waitFor(() =>
+		expect(body.getByTestId('knock-wait-join')).toHaveTextContent(KNOCKING)
+	);
+	await expect(body.getByTestId('knock-wait-join')).toBeDisabled();
+	await expectVisible(body.getByTestId('toggle-mic'));
+	// One window: the knock gate opens no second dialog.
+	await expect(body.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+};
 
 const lobby = (canvasElement: HTMLElement) =>
 	page(canvasElement).findByTestId('knock-wait-dialog');
@@ -281,21 +316,18 @@ const knockRequests = () =>
 	);
 
 export const WaitThenLetIn: Story = {
-	name: '1 · Beitreten → lobby → let in → the call opens (desktop)',
+	name: '1 · Beitreten → check → knock in the same window → let in → the call opens (desktop)',
 	globals: desktop1440Globals,
 	beforeEach: () =>
 		setUp({ api: { knockAnswers: ['PENDING', 'PENDING', 'ADMITTED'] } }),
 	play: async ({ canvasElement }) => {
 		const body = page(canvasElement);
-		await pressJoin(canvasElement);
-		await expectVisible(
-			await body.findByRole('heading', { name: WAITING })
-		);
+		await checkThenJoin(canvasElement);
+		await expectKnocking(canvasElement);
 		// Desktop: a centred dialog, not the phone's bottom sheet.
 		await expectSettled(canvasElement);
 		await expectCentred(canvasElement);
 		// Minimal controls: mic and camera, nothing else.
-		await expectVisible(body.getByTestId('toggle-mic'));
 		await expect(body.getByTestId('toggle-camera')).toBeInTheDocument();
 		await expect(joinCalls()).toHaveLength(0);
 		await waitFor(
@@ -305,7 +337,8 @@ export const WaitThenLetIn: Story = {
 						name: 'Sie wurden hereingelassen'
 					})
 				).toBeVisible(),
-			{ timeout: 5000 }
+			// The window polls at the app's own pace (KNOCK_POLL_MS, 3 s).
+			{ timeout: 10000 }
 		);
 		await waitFor(() => expect(joinCalls()).toHaveLength(1), {
 			timeout: 4000
@@ -318,27 +351,25 @@ export const WaitThenLetIn: Story = {
 };
 
 export const WaitPhone: Story = {
-	name: '2 · Beitreten → lobby as a bottom sheet (phone 390)',
+	name: '2 · Beitreten → check, then waiting, as a bottom sheet (phone 390)',
 	globals: phone390Globals,
 	parameters: { compactShell: true },
 	beforeEach: () => setUp(),
 	play: async ({ canvasElement }) => {
-		await pressJoin(canvasElement);
-		await expectVisible(
-			await page(canvasElement).findByRole('heading', { name: WAITING })
-		);
+		await checkThenJoin(canvasElement);
+		await expectKnocking(canvasElement);
 		await expectSettled(canvasElement);
 		await expectBottomSheet(canvasElement);
 	}
 };
 
 export const TurnedDown: Story = {
-	name: '3 · Beitreten → lobby → turned down → clear message, no call',
+	name: '3 · Beitreten → check → knock → turned down → clear message, no call',
 	globals: desktop1440Globals,
 	beforeEach: () => setUp({ api: { knockAnswers: ['PENDING', 'DECLINED'] } }),
 	play: async ({ canvasElement }) => {
 		const body = page(canvasElement);
-		await pressJoin(canvasElement);
+		await checkThenJoin(canvasElement);
 		await waitFor(
 			() =>
 				expect(
@@ -361,22 +392,32 @@ export const TurnedDown: Story = {
 };
 
 export const StopWaiting: Story = {
-	name: '4 · "Nicht mehr warten" closes the lobby; the call message stays',
+	name: '4 · "Nicht mehr warten" withdraws and turns the button back; the call message stays',
 	globals: phone390Globals,
 	parameters: { compactShell: true },
 	beforeEach: () => setUp(),
 	play: async ({ canvasElement }) => {
 		const body = page(canvasElement);
-		await pressJoin(canvasElement);
+		await checkThenJoin(canvasElement);
+		await expectKnocking(canvasElement);
 		await userEvent.click(
 			await body.findByRole('button', { name: 'Nicht mehr warten' })
 		);
+		// Same window, back to the start: "Jetzt beitreten" again.
 		await waitFor(() =>
-			expect(body.queryByTestId('knock-wait-dialog')).toBeNull()
+			expect(body.getByTestId('knock-wait-join')).toHaveTextContent(
+				'Jetzt beitreten'
+			)
 		);
+		await expect(body.getByTestId('knock-wait-join')).toBeEnabled();
 		await expect(joinCalls()).toHaveLength(0);
 		await expect(knockRequests()).toContainEqual(
 			expect.stringMatching(/^DELETE .*\/call-knocks\/mine\/\d+$/)
+		);
+		// Closing the window leaves the chat as it was.
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(body.queryByTestId('knock-wait-dialog')).toBeNull()
 		);
 		await expectVisible(
 			within(canvasElement).getByRole('button', {
@@ -393,10 +434,11 @@ export const TurnedDownBeforeOnAnotherDevice: Story = {
 		setUp({ api: { ownKnock: 'DECLINED' }, linkOnThisDevice: false }),
 	play: async ({ canvasElement }) => {
 		const body = page(canvasElement);
-		await pressJoin(canvasElement);
+		await checkThenJoin(canvasElement);
 		await expectVisible(
 			await body.findByRole('heading', { name: 'Gerade geht es nicht' })
 		);
+		await expect(body.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
 		// Without the link this device cannot knock again: only "Schließen".
 		await expect(body.queryByTestId('knock-wait-again')).toBeNull();
 		// The server would refuse the call: it is never opened.
@@ -415,7 +457,7 @@ export const WithdrewBeforeOnAnotherDevice: Story = {
 	beforeEach: () =>
 		setUp({ api: { ownKnock: 'CANCELLED' }, linkOnThisDevice: false }),
 	play: async ({ canvasElement }) => {
-		await pressJoin(canvasElement);
+		await checkThenJoin(canvasElement);
 		// The card says it cannot join instead of opening a call the server refuses.
 		await expectVisible(
 			await within(canvasElement).findByText(
@@ -430,12 +472,12 @@ export const WithdrewBeforeOnAnotherDevice: Story = {
 };
 
 export const CounsellorJoinsDirectly: Story = {
-	name: '7 · Counsellor → joins directly, no lobby',
+	name: '7 · Counsellor → check → joins directly, no knock',
 	globals: desktop1440Globals,
 	parameters: { userData: counsellor },
 	beforeEach: () => setUp(),
 	play: async ({ canvasElement }) => {
-		await pressJoin(canvasElement);
+		await checkThenJoin(canvasElement);
 		await waitFor(() => expect(joinCalls()).toHaveLength(1));
 		await expect(knockRequests()).toHaveLength(0);
 		await expect(
@@ -445,12 +487,12 @@ export const CounsellorJoinsDirectly: Story = {
 };
 
 export const OrdinaryConversationJoinsDirectly: Story = {
-	name: '8 · Advice seeker, never knocked here → joins directly, no lobby',
+	name: '8 · Advice seeker, never knocked here → check → joins directly, no knock',
 	globals: phone390Globals,
 	parameters: { compactShell: true },
 	beforeEach: () => setUp({ linkOnThisDevice: false }),
 	play: async ({ canvasElement }) => {
-		await pressJoin(canvasElement);
+		await checkThenJoin(canvasElement);
 		await waitFor(() => expect(joinCalls()).toHaveLength(1));
 		await expect(knockRequests()).toEqual([
 			expect.stringMatching(/^GET .*\/call-knocks\/mine$/)
