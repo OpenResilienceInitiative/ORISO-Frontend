@@ -271,12 +271,9 @@ export const BodyRoleStillLoading: BodyStory = {
 	}
 };
 
-/**
- * #778: a mention in an ordinary chat has no producer yet (UserService#1510),
- * so a counsellor's Gespräche row is disabled and says why.
- */
-export const BodyCounsellorMentionNotYetAvailable: BodyStory = {
-	name: 'Body – Berater:in, Erwähnung im Chat noch nicht verfügbar',
+/** #778 / UserService#1510: ordinary-chat mentions can notify counsellors. */
+export const BodyCounsellorMentionAvailable: BodyStory = {
+	name: 'Body – Berater:in, Erwähnung im Chat verfügbar',
 	render: () => (
 		<InteractiveBody initialArea="conversations" role="consultant" />
 	),
@@ -284,12 +281,13 @@ export const BodyCounsellorMentionNotYetAvailable: BodyStory = {
 		const banner = canvasElement.querySelector<HTMLSelectElement>(
 			'[data-cy="notif-banner-conversations-mention"]'
 		)!;
-		const reason = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="notif-reason-conversations-mention"]'
-		)!;
-		await expect(banner.disabled).toBe(true);
-		await expect(banner.getAttribute('aria-describedby')).toBe(reason.id);
-		await expect(reason.textContent!.trim()).not.toBe('');
+		await expect(banner.disabled).toBe(false);
+		await expect(banner.hasAttribute('aria-describedby')).toBe(false);
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="notif-reason-conversations-mention"]'
+			)
+		).toBeNull();
 		await expect(rowIds(canvasElement)).not.toContain(
 			'notif-row-conversations-new'
 		);

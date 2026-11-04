@@ -665,17 +665,16 @@ describe('Rows that never fire are hidden, rows without a producer yet are disab
 		]);
 	});
 
-	it('shows the ordinary-chat mention row disabled for a counsellor until UserService#1510, with its reason', () => {
+	it('shows the ordinary-chat mention row enabled for a counsellor', () => {
 		renderRows('consultant', 'conversations');
 		const banner = screen.getByTestId(
 			'notif-banner-conversations-mention'
 		) as HTMLSelectElement;
-		const reason = screen.getByTestId('notif-reason-conversations-mention');
-		expect(banner.disabled).toBe(true);
-		expect(banner.getAttribute('aria-describedby')).toBe(reason.id);
-		expect(reason.textContent).toBe(
-			'profile.notifications.config.unavailable.notSentYet'
-		);
+		expect(banner.disabled).toBe(false);
+		expect(banner.hasAttribute('aria-describedby')).toBe(false);
+		expect(
+			screen.queryByTestId('notif-reason-conversations-mention')
+		).toBeNull();
 		// The Gespräche → "Neue Anfrage" row is gone for everyone.
 		expect(screen.queryByTestId('notif-row-conversations-new')).toBeNull();
 	});

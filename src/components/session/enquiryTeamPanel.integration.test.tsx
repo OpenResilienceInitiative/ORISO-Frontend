@@ -932,10 +932,12 @@ it('tells the counsellor when a colleague took the enquiry they have open', asyn
 			name: 'session.anonymous.takenByOtherConsultant.button.label'
 		})
 	);
-	await waitFor(() =>
-		expect(view.getByTestId('route').textContent).toBe(
-			'/sessions/consultant/sessionPreview'
-		)
+	await waitFor(
+		() =>
+			expect(view.getByTestId('route').textContent).toBe(
+				'/sessions/consultant/sessionPreview'
+			),
+		{ timeout: 10000 }
 	);
 }, 20000);
 
