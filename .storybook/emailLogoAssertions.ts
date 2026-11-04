@@ -23,10 +23,16 @@ export const verifyEmailLogoVariants = async ({
 			image.naturalWidth / image.naturalHeight,
 			2
 		);
+		// The name is never hidden (#135): beside the logo, or under a wide
+		// (above 3:1) logo on phones, where both do not fit side by side.
 		const name = doc.querySelector('.logo-wordmark')!;
-		const hidden =
-			doc.defaultView!.getComputedStyle(name).display === 'none';
-		expect(hidden).toBe(
+		expect(doc.defaultView!.getComputedStyle(name).display).not.toBe(
+			'none'
+		);
+		const nameBounds = name.getBoundingClientRect();
+		expect(nameBounds.height).toBeGreaterThan(0);
+		const stacked = nameBounds.top >= bounds.bottom - 1;
+		expect(stacked, `fixture ${index}: name stacked under logo`).toBe(
 			index === 3 && doc.documentElement.clientWidth <= 620
 		);
 		expect(

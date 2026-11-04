@@ -22,3 +22,24 @@ export const readTimelineListWidth = (saved: string | null): number =>
 	saved?.trim() && Number.isFinite(Number(saved))
 		? normalizeTimelineListWidth(Number(saved))
 		: TIMELINE_DEFAULT_WIDTH;
+
+export const loadTimelineListWidth = (): number => {
+	try {
+		return readTimelineListWidth(
+			window.localStorage.getItem(TIMELINE_WIDTH_STORAGE_KEY)
+		);
+	} catch {
+		return TIMELINE_DEFAULT_WIDTH;
+	}
+};
+
+export const saveTimelineListWidth = (width: number): void => {
+	try {
+		window.localStorage.setItem(
+			TIMELINE_WIDTH_STORAGE_KEY,
+			width.toString()
+		);
+	} catch {
+		// The in-memory width remains usable when storage is unavailable.
+	}
+};

@@ -281,7 +281,11 @@ const prepareHistory = async (
 	});
 	await page.route('**/service/**', async (route) => {
 		const path = new URL(route.request().url()).pathname;
-		if (path.endsWith('/supervisors') || path.endsWith('/consultants'))
+		if (
+			path.endsWith('/supervisors') ||
+			path.endsWith('/consultants') ||
+			/\/sessions\/\d+\/appointments$/.test(path)
+		)
 			return route.fulfill({ json: [] });
 		if (path.includes('/sessions/room'))
 			return route.fulfill({ json: { sessions: [] } });

@@ -243,6 +243,76 @@ describe('useElementCallWidget', () => {
 		).toBe(false);
 	});
 
+	describe('starting with the pre-join choice (ElementCall#116)', () => {
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		it('puts the on/off choice and the device labels on the widget URL', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true,
+					callStart: {
+						audioEnabled: true,
+						videoEnabled: false,
+						audioInput: 'Jabra Evolve2 Headset',
+						videoInput: 'Logitech C920 & Co'
+					}
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('audioEnabled')).toBe('true');
+			expect(fragment.get('videoEnabled')).toBe('false');
+			expect(fragment.get('audioInput')).toBe('Jabra Evolve2 Headset');
+			expect(fragment.get('videoInput')).toBe('Logitech C920 & Co');
+		});
+
+		it('leaves them off the URL without a check', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			for (const name of [
+				'audioEnabled',
+				'videoEnabled',
+				'audioInput',
+				'videoInput'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('does not rebuild the URL for an equal choice in a new object', async () => {
+			// A rebuilt URL with any difference navigates the running call.
+			const client = createClient();
+			const { result, rerender } = renderHook(
+				({ start }) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						callStart: start
+					}),
+				{
+					initialProps: {
+						start: { audioEnabled: false, videoEnabled: false }
+					}
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			rerender({ start: { audioEnabled: false, videoEnabled: false } });
+			expect(result.current.url).toBe(first);
+		});
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });
@@ -446,6 +516,54 @@ describe('useElementCallWidget', () => {
 
 		await act(() => result.current.hangup());
 		expect(api.transport.send).toHaveBeenCalledWith('im.vector.hangup', {});
+	});
+
+	it('tracks the call’s microphone and camera and switches them from the host', async () => {
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+		expect(result.current.devices).toBeNull();
+
+		// The call reports each change of its own.
+		act(() =>
+			api.emit(
+				'action:io.element.device_mute',
+				new CustomEvent('io.element.device_mute', {
+					cancelable: true,
+					detail: {
+						action: 'io.element.device_mute',
+						requestId: 'report-1',
+						widgetId: 'widget',
+						data: { audio_enabled: true, video_enabled: true }
+					}
+				})
+			)
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: true,
+			video_enabled: true
+		});
+
+		// The dock asks for a change; the call answers with its new state.
+		api.transport.send.mockResolvedValueOnce({
+			audio_enabled: false,
+			video_enabled: true
+		});
+		await act(() => result.current.setDevices({ audio_enabled: false }));
+		expect(api.transport.send).toHaveBeenCalledWith(
+			'io.element.device_mute',
+			{ audio_enabled: false }
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: false,
+			video_enabled: true
+		});
 	});
 
 	it('forwards local echoes, state updates, and allowed to-device events', async () => {
@@ -858,5 +976,156 @@ describe('useElementCallWidget', () => {
 		act(() => result.current.attachIframe(replacement));
 		expect(iframe.src).toBe('about:blank');
 		expect(replacement.src).toBe(result.current.url);
+	});
+
+	describe('knocking in the call (ElementCall#109)', () => {
+		const KNOCK_STATE = 'org.oriso.call.knock_state';
+		const SET_KNOCK = 'org.oriso.call.set_knock';
+
+		const mount = async (initial: {
+			knockState: { waiting: number; knock: boolean | null } | null;
+			onSetKnock?: (knock: boolean) => Promise<boolean>;
+		}) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: typeof initial) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const knockStateSends = (api: any) =>
+			api.transport.send.mock.calls.filter(
+				(call: unknown[]) => call[0] === KNOCK_STATE
+			);
+
+		const setKnock = (api: any, data: unknown) => {
+			const request = {
+				action: SET_KNOCK,
+				requestId: 'set-knock-1',
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(SET_KNOCK, {
+				cancelable: true,
+				detail: request
+			});
+			act(() => api.emit(`action:${SET_KNOCK}`, event));
+			return { request, event };
+		};
+
+		it('sends the state once the call is ready, and again when the count changes', async () => {
+			const { api, rerender } = await mount({
+				knockState: { waiting: 0, knock: true }
+			});
+			// Before capability negotiation the call would drop it.
+			expect(knockStateSends(api)).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 0, knock: true }]
+			]);
+
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 2, knock: true }
+			]);
+
+			// Same state again: nothing new to tell.
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api)).toHaveLength(2);
+		});
+
+		it('sends knock null when the call has no link, and refuses set_knock', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 1, knock: null },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 1, knock: null }]
+			]);
+
+			const { request, event } = setKnock(api, { knock: false });
+			expect(event.defaultPrevented).toBe(true);
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('sends nothing for somebody who may not see knocks', async () => {
+			const { api } = await mount({ knockState: null });
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toHaveLength(0);
+		});
+
+		it('changes the link on set_knock, answers, and confirms the stored state', async () => {
+			const onSetKnock = vi.fn().mockResolvedValue(false);
+			const { api } = await mount({
+				knockState: { waiting: 3, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			expect(onSetKnock).toHaveBeenCalledWith(false);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {})
+			);
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 3, knock: false }
+			]);
+		});
+
+		it('answers with an error when the change did not land, so the call flips back', async () => {
+			const onSetKnock = vi
+				.fn()
+				.mockRejectedValue(new Error('CATCH_ALL'));
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {
+					error: { message: expect.any(String) }
+				})
+			);
+			expect(api.transport.reply).not.toHaveBeenCalledWith(request, {});
+			// And the truth again, in case the call lost track.
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 0, knock: true }
+			]);
+		});
+
+		it('refuses a set_knock without a boolean', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			const { request } = setKnock(api, { knock: 'yes' });
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
 	});
 });

@@ -24,6 +24,7 @@ import type {
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { JoinGroupChatView } from './JoinGroupChatView';
+import { useGroupChatInfoFixture } from './groupChatInfoStoryFixture';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import './joinChat.styles';
 
@@ -208,107 +209,116 @@ const StoryProviders = ({
 	fullHeight?: boolean;
 	/** Pins the chat column to the width it really has next to the lists. */
 	columnWidth?: number;
-}) => (
-	<div
-		style={{
-			...(columnWidth
-				? { width: columnWidth }
-				: { maxWidth: 920, margin: '0 auto' }),
-			...(fullHeight
-				? { height: '100vh', display: 'flex', flexDirection: 'column' }
-				: {}),
-			background: '#fcf9f9'
-		}}
-	>
-		{fullHeight && (
-			// The app's session.styles.scss makes the panel a flex column of the
-			// window's height; this story does not load it.
-			<style>
-				{
-					'.session.joinChat{flex:1;display:flex;flex-direction:column;min-height:0}'
-				}
-			</style>
-		)}
-		<UserDataContext.Provider
-			value={{
-				userData,
-				setUserData: () => {},
-				reloadUserData: async () => userData
+}) => {
+	useGroupChatInfoFixture(session.item as GroupChatItemInterface);
+	return (
+		<div
+			style={{
+				...(columnWidth
+					? { width: columnWidth }
+					: { maxWidth: 920, margin: '0 auto' }),
+				...(fullHeight
+					? {
+							height: '100vh',
+							display: 'flex',
+							flexDirection: 'column'
+						}
+					: {}),
+				background: '#fcf9f9'
 			}}
 		>
-			<SessionTypeContext.Provider
+			{fullHeight && (
+				// The app's session.styles.scss makes the panel a flex column of the
+				// window's height; this story does not load it.
+				<style>
+					{
+						'.session.joinChat{flex:1;display:flex;flex-direction:column;min-height:0}'
+					}
+				</style>
+			)}
+			<UserDataContext.Provider
 				value={{
-					type: SESSION_LIST_TYPES.MY_SESSION,
-					path: '/sessions/user/view'
+					userData,
+					setUserData: () => {},
+					reloadUserData: async () => userData
 				}}
 			>
-				<ConsultingTypesContext.Provider
+				<SessionTypeContext.Provider
 					value={{
-						consultingTypes: [storyConsultingType],
-						setConsultingTypes: () => {}
+						type: SESSION_LIST_TYPES.MY_SESSION,
+						path: '/sessions/user/view'
 					}}
 				>
-					<TopicsContext.Provider
+					<ConsultingTypesContext.Provider
 						value={{
-							topics: [storyTopic],
-							refreshTopics: () => {}
+							consultingTypes: [storyConsultingType],
+							setConsultingTypes: () => {}
 						}}
 					>
-						<SessionsDataContext.Provider
+						<TopicsContext.Provider
 							value={{
-								ready: true,
-								sessions: [],
-								dispatch: () => {}
+								topics: [storyTopic],
+								refreshTopics: () => {}
 							}}
 						>
-							<E2EEContext.Provider
+							<SessionsDataContext.Provider
 								value={{
-									key: '',
-									reloadPrivateKey: () => {},
-									isE2eeEnabled: false,
-									e2EEReady: true
+									ready: true,
+									sessions: [],
+									dispatch: () => {}
 								}}
 							>
-								<ConsultantListContext.Provider
+								<E2EEContext.Provider
 									value={{
-										consultantList: [],
-										setConsultantList: () => {}
+										key: '',
+										reloadPrivateKey: () => {},
+										isE2eeEnabled: false,
+										e2EEReady: true
 									}}
 								>
-									<ServerSettingsContext.Provider
+									<ConsultantListContext.Provider
 										value={{
-											settings: [],
-											settingsReady: true,
-											getSetting: () => null
+											consultantList: [],
+											setConsultantList: () => {}
 										}}
 									>
-										<MatrixClientContext.Provider
+										<ServerSettingsContext.Provider
 											value={{
-												matrixClientService,
-												setMatrixClientService: () => {}
+												settings: [],
+												settingsReady: true,
+												getSetting: () => null
 											}}
 										>
-											<ActiveSessionContext.Provider
+											<MatrixClientContext.Provider
 												value={{
-													activeSession: session,
-													reloadActiveSession:
-														() => {},
-													readActiveSession: () => {}
+													matrixClientService,
+													setMatrixClientService:
+														() => {}
 												}}
 											>
-												{children}
-											</ActiveSessionContext.Provider>
-										</MatrixClientContext.Provider>
-									</ServerSettingsContext.Provider>
-								</ConsultantListContext.Provider>
-							</E2EEContext.Provider>
-						</SessionsDataContext.Provider>
-					</TopicsContext.Provider>
-				</ConsultingTypesContext.Provider>
-			</SessionTypeContext.Provider>
-		</UserDataContext.Provider>
-	</div>
-);
+												<ActiveSessionContext.Provider
+													value={{
+														activeSession: session,
+														reloadActiveSession:
+															() => {},
+														readActiveSession:
+															() => {}
+													}}
+												>
+													{children}
+												</ActiveSessionContext.Provider>
+											</MatrixClientContext.Provider>
+										</ServerSettingsContext.Provider>
+									</ConsultantListContext.Provider>
+								</E2EEContext.Provider>
+							</SessionsDataContext.Provider>
+						</TopicsContext.Provider>
+					</ConsultingTypesContext.Provider>
+				</SessionTypeContext.Provider>
+			</UserDataContext.Provider>
+		</div>
+	);
+};
 
 /* ------------------------------------------------------------------ *
  * Meta + stories

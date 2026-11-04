@@ -1,0 +1,165 @@
+/* #1894: "Meine Direktlinks" (clock entry) and Settings → "Meine Links". ORISO M3 tokens only. */
+.myDirectLinksPage {
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	height: 100%;
+	margin: 0 auto;
+	max-width: 1080px;
+	overflow-y: auto;
+	padding: 24px 16px;
+	width: 100%;
+
+	@media (width >= 900px) {
+		padding: 32px 40px;
+	}
+
+	&--settings {
+		background: transparent;
+		height: auto;
+		max-width: none;
+		overflow: visible;
+		padding: 0;
+	}
+
+	.myDirectLinks__headerAction {
+		margin-left: auto;
+	}
+
+	&__create {
+		align-items: center;
+		background: var(--m3-primary, #a5000a);
+		border: none;
+		border-radius: 50%;
+		color: var(--m3-on-primary, #ffffff);
+		cursor: pointer;
+		display: flex;
+		height: 48px;
+		justify-content: center;
+		width: 48px;
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__empty {
+		align-items: center;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		display: flex;
+		flex-direction: column;
+		padding: 48px 16px;
+		text-align: center;
+	}
+
+	&__illustration {
+		height: 160px;
+		max-width: 100%;
+		width: 160px;
+	}
+
+	&__emptyHeadline {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		margin: 24px 0 0;
+		max-width: 335px;
+	}
+
+	&__emptyText {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+		margin: 8px 0 0;
+		max-width: 335px;
+	}
+
+	&__status {
+		align-items: center;
+		color: var(--m3-on-surface-variant, #444748);
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 48px 16px;
+		text-align: center;
+	}
+
+	&__retry {
+		background: transparent;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 20px;
+		color: var(--m3-primary, #a5000a);
+		cursor: pointer;
+		font: inherit;
+		font-weight: 500;
+		height: 40px;
+		padding: 0 24px;
+	}
+
+	&__error {
+		color: var(--m3-error, #b3261e);
+		font-size: 14px;
+		margin: 0;
+	}
+}
+
+.directLinkEditDialog {
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		padding-top: 8px;
+	}
+
+	&__medium {
+		align-items: center;
+		color: var(--m3-on-surface, #1b1b1c);
+		display: flex;
+		gap: 8px;
+	}
+
+	&__fixed {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		margin-left: auto;
+	}
+
+	&__switchRow {
+		align-items: center;
+		display: flex;
+		gap: 16px;
+		justify-content: space-between;
+
+		> div {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+	}
+
+	&__switchLabel {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px;
+		line-height: 24px;
+	}
+
+	&__hint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__error {
+		color: var(--m3-error, #b3261e);
+		font-size: 14px;
+		margin: 0;
+	}
+}

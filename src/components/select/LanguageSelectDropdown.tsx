@@ -43,6 +43,8 @@ export interface SelectDropdownItem {
 	id: string;
 	selectedOptions: SelectOption[];
 	selectInputLabel?: string;
+	/** Accessible name of the input when no visible label names it. */
+	ariaLabel?: string;
 	placeholder?: string;
 	handleDropdownSelect: Function;
 	useIconOption?: boolean;
@@ -521,6 +523,7 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 		>
 			<Select
 				id={props.id}
+				aria-label={props.ariaLabel}
 				className={`language-select__input ${
 					props.hasError ? 'language-select__input--error' : ''
 				}`}

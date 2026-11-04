@@ -291,6 +291,7 @@
 		flex: 1;
 		min-width: 0;
 		font-size: 13px;
+
 		// Figma muted text fails AA on the gray group surface (4.27:1).
 		color: var(--m3-on-surface-variant, #444748);
 		overflow: hidden;
@@ -301,6 +302,7 @@
 
 	&__cardTime {
 		font-size: 12px;
+
 		// Use the accessible neutral role on gray; selected white cards use Figma muted text.
 		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;

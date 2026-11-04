@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	loadTimelineListWidth,
 	normalizeTimelineListWidth,
-	readTimelineListWidth
+	readTimelineListWidth,
+	saveTimelineListWidth
 } from './timelineListWidth';
 
 describe('Activity desktop list width', () => {
@@ -34,5 +36,53 @@ describe('Activity desktop list width', () => {
 		expect(readTimelineListWidth('220')).toBe(80);
 		expect(readTimelineListWidth('300')).toBe(80);
 		expect(readTimelineListWidth('420')).toBe(420);
+	});
+});
+
+describe('Activity width storage', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('uses the default when accessing storage fails', () => {
+		vi.stubGlobal('window', {
+			get localStorage() {
+				throw new Error('storage unavailable');
+			}
+		});
+		expect(loadTimelineListWidth()).toBe(400);
+	});
+
+	it('uses the default when reading fails', () => {
+		vi.stubGlobal('window', {
+			localStorage: {
+				getItem: () => {
+					throw new Error('blocked');
+				}
+			}
+		});
+		expect(loadTimelineListWidth()).toBe(400);
+	});
+
+	it('ignores write failures', () => {
+		vi.stubGlobal('window', {
+			localStorage: {
+				setItem: () => {
+					throw new Error('quota');
+				}
+			}
+		});
+		expect(() => saveTimelineListWidth(420)).not.toThrow();
+	});
+
+	it('reads and writes a preference when storage works', () => {
+		const setItem = vi.fn();
+		vi.stubGlobal('window', {
+			localStorage: { getItem: () => '420', setItem }
+		});
+		expect(loadTimelineListWidth()).toBe(420);
+		saveTimelineListWidth(560);
+		expect(setItem).toHaveBeenCalledWith(
+			'notificationsTimeline_width',
+			'560'
+		);
 	});
 });

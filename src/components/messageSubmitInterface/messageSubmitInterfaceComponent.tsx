@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
@@ -40,7 +41,6 @@ import {
 	type SideRoomChannelKind
 } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
@@ -49,12 +49,14 @@ import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	FLUSH_CONTEXT_BAR_RESERVE,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
 } from './inputField/composerResize';
 import {
 	getExplicitAudienceValues,
+	retainsGroupAudienceSelection,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
 import { useComposerDock } from './useComposerDock';
@@ -69,13 +71,13 @@ import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
-import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
+	buildAudienceOptions,
 	classifyAudienceKind,
 	unmatchedMemberKind,
 	createAudienceCollector,
@@ -83,6 +85,7 @@ import {
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
+	hasUnresolvedAudienceSelection,
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
@@ -108,6 +111,7 @@ import {
 	apiSendMatrixAttachmentMessage,
 	apiSendMessage
 } from '../../api';
+import { ComposerContextBar } from './ComposerContextBar';
 import {
 	MessageSubmitInfo,
 	MessageSubmitInfoInterface
@@ -155,7 +159,7 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
-import { VoicePlayer } from '../voicePlayer/VoicePlayer';
+import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
@@ -173,6 +177,8 @@ import {
 	isImeComposing,
 	matchesShortcut
 } from '../../features/keyboard-shortcuts/utils/match';
+
+import { useGuestRetentionGate } from '../temporaryAccount/useGuestRetentionGate';
 
 type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
@@ -212,6 +218,8 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	AUDIENCE_UNRESOLVED: 'AUDIENCE_UNRESOLVED',
+	AUDIENCE_ATTACHMENT_BLOCKED: 'AUDIENCE_ATTACHMENT_BLOCKED',
 	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
 	DPA_RESTRICTED: 'DPA_RESTRICTED',
 	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
@@ -443,6 +451,8 @@ const AudienceModeratorIcon = () => (
 	</svg>
 );
 
+const VOICE_RECORDING_MIN_HEIGHT = 144;
+
 export const MessageSubmitInterfaceComponent = ({
 	className,
 	onSendButton,
@@ -642,7 +652,9 @@ export const MessageSubmitInterfaceComponent = ({
 	 * restore effect would re-run on every option rebuild and overwrite what the
 	 * user just picked — see #894 rule D.
 	 */
-	const restoredAudienceKeyRef = useRef<string | null>(null);
+	const [restoredAudienceKey, setRestoredAudienceKey] = useState<
+		string | null
+	>(null);
 	const [selectedAudienceValues, setSelectedAudienceValues] = useState<
 		string[]
 	>([AUDIENCE_ALL]);
@@ -773,6 +785,31 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
+	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
+		isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+	const isClientUser = useMemo(() => {
+		const hasAskerAuthority = hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		);
+		const hasConsultantAuthority = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
+		return hasAskerAuthority && !hasConsultantAuthority;
+	}, [userData]);
+	const retainsGroupAudience = retainsGroupAudienceSelection({
+		chatType: currentChatType,
+		isClientUser,
+		isGroupSession: !!activeSession?.isGroup
+	});
 
 	const draftTitle = useMemo(() => {
 		const topicName =
@@ -1213,7 +1250,9 @@ export const MessageSubmitInterfaceComponent = ({
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
 		// Figma-locked composer uses fixed geometry; avoid runtime inline style overrides.
-		if (composerRef.current) {
+		// With an attachment the editor is not mounted at all, and these styles
+		// took the field's bottom edge away.
+		if (composerRef.current || attachmentSelected) {
 			return;
 		}
 
@@ -1583,7 +1622,7 @@ export const MessageSubmitInterfaceComponent = ({
 				// An aside with no side room must never leak into the client
 				// room — abort the send and surface an error instead.
 				setIsRequestInProgress(false);
-				handleAttachmentUploadError(INFO_TYPES.ATTACHMENT_OTHER_ERROR);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
 				apiPostError({
 					name: 'SupervisionAsideRoutingError',
 					message:
@@ -1889,6 +1928,20 @@ export const MessageSubmitInterfaceComponent = ({
 				: isRecordedVoiceSend
 					? ''
 					: composerHtmlToTransportMarkup(currentTypedMessage);
+			if (
+				!retryContext &&
+				retainsGroupAudience &&
+				((audienceSelectionStorageKey &&
+					restoredAudienceKey !== audienceSelectionStorageKey) ||
+					hasUnresolvedAudienceSelection(
+						selectedAudienceValues,
+						audienceOptions
+					))
+			) {
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.AUDIENCE_UNRESOLVED);
+				return null;
+			}
 			let isAside = retryContext?.isAside || false;
 			const sentFeedbackMailIntent =
 				isRecordedVoiceSend && recordedVoice
@@ -1913,19 +1966,10 @@ export const MessageSubmitInterfaceComponent = ({
 				const humanTargetCount = audienceOptions.filter(
 					(option) => option.value !== AUDIENCE_ALL
 				).length;
-				const sendChatType = isSupervisor
-					? 'supervision'
-					: activeSession.isGroup
-						? 'group'
-						: isAnonymousChat
-							? 'anonymous'
-							: 'oneOnOne';
-				const sendIsClientUser =
-					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-					!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 				const explicitAudience = getExplicitAudienceValues({
-					chatType: sendChatType,
-					isClientUser: sendIsClientUser,
+					chatType: currentChatType,
+					isClientUser,
+					isGroupSession: !!activeSession.isGroup,
 					targetCount: humanTargetCount,
 					hasAllOption: audienceOptions.some(
 						(option) => option.value === AUDIENCE_ALL
@@ -1933,6 +1977,14 @@ export const MessageSubmitInterfaceComponent = ({
 					selectedValues: selectedAudienceValues
 				});
 				const hasExplicitAudience = explicitAudience.length > 0;
+				// An attachment (a voice note too) carries no VISIBLE_TO: in
+				// the side room every member would receive it. Keep it for a
+				// retry instead of widening the chosen audience.
+				if (hasExplicitAudience && attachment) {
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.AUDIENCE_ATTACHMENT_BLOCKED);
+					return null;
+				}
 				if (hasExplicitAudience) {
 					prefixParts.push(buildVisibleToPrefix(explicitAudience));
 				}
@@ -2023,6 +2075,9 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			activeSession.isGroup,
+			retainsGroupAudience,
+			audienceSelectionStorageKey,
+			restoredAudienceKey,
 			attachmentSelected,
 			feedbackMailIntent,
 			teamDiscussion,
@@ -2031,7 +2086,8 @@ export const MessageSubmitInterfaceComponent = ({
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
-			isAnonymousChat,
+			currentChatType,
+			isClientUser,
 			isSupervisor,
 			matrixClientService,
 			onLocalMessageEdit,
@@ -2040,13 +2096,24 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues,
 			sendEnquiry,
 			sendMessage,
-			targetRoomId,
-			userData
+			targetRoomId
 		]
 	);
 
+	/* #1869 / ORISO-UserService#1486: a temporary guest whose platform lets
+	   them decide answers "keep my messages?" once, before the first message
+	   or file (uploads and pasted files go out through this button too). */
+	const retentionGate = useGuestRetentionGate(
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			!activeSession.isGroup
+	);
+	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
+
 	const handleButtonClick = useCallback(() => {
 		if (uploadProgress || isRequestInProgress) {
+			return null;
+		}
+		if (retentionGate.gate(() => handleButtonClickRef.current())) {
 			return null;
 		}
 		if (isVoiceRecording) {
@@ -2101,10 +2168,12 @@ export const MessageSubmitInterfaceComponent = ({
 		listPath,
 		prepareAndSendMessage,
 		reloadActiveSession,
+		retentionGate,
 		stopVoiceRecording,
 		uploadProgress,
 		userData
 	]);
+	handleButtonClickRef.current = handleButtonClick;
 
 	const handleFormSubmit = useCallback(
 		(event: React.FormEvent<HTMLFormElement>) => {
@@ -2340,6 +2409,19 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
 			};
+		} else if (
+			activeInfo === INFO_TYPES.AUDIENCE_UNRESOLVED ||
+			activeInfo === INFO_TYPES.AUDIENCE_ATTACHMENT_BLOCKED
+		) {
+			const key =
+				activeInfo === INFO_TYPES.AUDIENCE_UNRESOLVED
+					? 'message.audience.unresolved'
+					: 'message.audience.attachmentBlocked';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.headline`),
+				infoMessage: translate(`${key}.text`)
+			};
 		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
 			infoData = {
 				isInfo: false,
@@ -2371,28 +2453,21 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate('/booking/');
 	}, [navigate]);
 
-	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
-		isSupervisor
-			? 'supervision'
-			: activeSession.isGroup
-				? 'group'
-				: isAnonymousChat
-					? 'anonymous'
-					: 'oneOnOne';
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const hasUploadFunctionality =
 		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
-		hasMediaUploadFeature(tenant?.settings, currentChatType);
+		hasMediaUploadFeature(effectiveFeatures, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
 		featureVoiceMessagesOneOnOneChatsEnabled = true,
 		featureVoiceMessagesGroupChatsEnabled = true,
 		featureVoiceMessagesSupervisionChatsEnabled = true
-	} = tenant?.settings || {};
+	} = effectiveFeatures;
 	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
 		(currentChatType === 'anonymous'
@@ -2725,14 +2800,6 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!memberId) {
 				return;
 			}
-			if (
-				isSystemMatrixUser(memberId) ||
-				// Agency provisioning/service bots (@agency-<id>-service) are not
-				// human recipients — never offer them as an audience target.
-				/^@agency-\d+-service:/.test(memberId)
-			) {
-				return;
-			}
 			if (audience.isSelf(memberId)) {
 				return;
 			}
@@ -2859,18 +2926,18 @@ export const MessageSubmitInterfaceComponent = ({
 						option.kind === 'supervisor'
 					)
 			);
-		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
-		// group/supervision conversations with more than one human counterpart.
-		// A 1:1 conversation has no real targets here (the asker is filtered out
-		// by their enc.* member name), so it collapses to zero options and the
-		// selector stays hidden (showAudienceSelector: audienceTargetCount <= 1).
-		const includeAllOption = mapped.length > 1;
-		const nextOptions = includeAllOption
-			? [defaultOption, ...mapped]
-			: mapped;
+		const nextOptions = buildAudienceOptions(
+			mapped,
+			defaultOption,
+			retainsGroupAudience
+		);
 		setAudienceOptions(nextOptions);
 		setSelectedAudienceValues((currentValues) =>
-			reconcileAudienceSelection(currentValues, nextOptions)
+			reconcileAudienceSelection(
+				currentValues,
+				nextOptions,
+				retainsGroupAudience
+			)
 		);
 	}, [
 		type,
@@ -2893,6 +2960,7 @@ export const MessageSubmitInterfaceComponent = ({
 		currentChatType,
 		isSelfHelpGroup,
 		activeSession?.isGroup,
+		retainsGroupAudience,
 		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
@@ -2911,30 +2979,27 @@ export const MessageSubmitInterfaceComponent = ({
 	 */
 	useEffect(() => {
 		setIsAudienceMenuOpen(false);
-		restoredAudienceKeyRef.current = null;
+		setRestoredAudienceKey(null);
 	}, [activeSession?.item?.id, threadRootId]);
 
 	/**
-	 * Restore this chat's stored recipients — once, and only once the option
-	 * list is real.
+	 * Restore this chat's stored recipients once. Groups retain restrictions
+	 * before any human member arrives; a partial roster must never broaden them.
 	 *
 	 * `audienceOptions` starts as a lone `__all__` placeholder and gains the
-	 * actual recipients when the Matrix members load. Restoring against the
-	 * placeholder would match nothing, fall back to "everyone", mark the chat
-	 * as restored, and then skip the real list when it arrives — losing the
-	 * saved selection exactly as the old code did.
+	 * actual recipients when the Matrix members load. Other chat kinds still
+	 * wait for the real list before matching their stored recipients.
 	 */
 	useEffect(() => {
 		if (
 			!audienceSelectionStorageKey ||
-			!audienceOptionsReady(audienceOptions)
+			(!retainsGroupAudience && !audienceOptionsReady(audienceOptions))
 		) {
 			return;
 		}
-		if (restoredAudienceKeyRef.current === audienceSelectionStorageKey) {
+		if (restoredAudienceKey === audienceSelectionStorageKey) {
 			return;
 		}
-		restoredAudienceKeyRef.current = audienceSelectionStorageKey;
 		let saved: string | null = null;
 		try {
 			saved = window.localStorage.getItem(audienceSelectionStorageKey);
@@ -2942,10 +3007,21 @@ export const MessageSubmitInterfaceComponent = ({
 			// Storage can be unavailable (private mode, blocked cookies).
 		}
 		setSelectedAudienceValues(
-			restoreAudienceSelection(saved, audienceOptions) ??
-				defaultAudienceSelection(audienceOptions)
+			restoreAudienceSelection(
+				saved,
+				audienceOptions,
+				retainsGroupAudience
+			) ?? defaultAudienceSelection(audienceOptions)
 		);
-	}, [audienceOptions, audienceSelectionStorageKey]);
+		// Commit the restored key with the selection, so persistence cannot
+		// overwrite a restricted saved choice with the initial Everyone state.
+		setRestoredAudienceKey(audienceSelectionStorageKey);
+	}, [
+		retainsGroupAudience,
+		audienceOptions,
+		audienceSelectionStorageKey,
+		restoredAudienceKey
+	]);
 
 	/**
 	 * Persist the selection — but never before the restore above has run for
@@ -2954,7 +3030,7 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		if (
 			!audienceSelectionStorageKey ||
-			restoredAudienceKeyRef.current !== audienceSelectionStorageKey
+			restoredAudienceKey !== audienceSelectionStorageKey
 		) {
 			return;
 		}
@@ -2966,7 +3042,11 @@ export const MessageSubmitInterfaceComponent = ({
 		} catch (_error) {
 			// Ignore quota/storage exceptions.
 		}
-	}, [audienceSelectionStorageKey, selectedAudienceValues]);
+	}, [
+		audienceSelectionStorageKey,
+		selectedAudienceValues,
+		restoredAudienceKey
+	]);
 
 	useAudienceMenuDismissal(
 		isAudienceMenuOpen,
@@ -3025,19 +3105,15 @@ export const MessageSubmitInterfaceComponent = ({
 			.filter(Boolean);
 		return Array.from(new Set(labels));
 	}, [audienceOptions, selectedAudienceValues, translate]);
-	const isClientUser = useMemo(() => {
-		const hasAskerAuthority = hasUserAuthority(
-			AUTHORITIES.ASKER_DEFAULT,
-			userData
-		);
-		const hasConsultantAuthority = hasUserAuthority(
-			AUTHORITIES.CONSULTANT_DEFAULT,
-			userData
-		);
-		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
-		return hasAskerAuthority && !hasConsultantAuthority;
-	}, [userData]);
 	const selectedAudienceChipLabel = useMemo(() => {
+		if (
+			hasUnresolvedAudienceSelection(
+				selectedAudienceValues,
+				audienceOptions
+			)
+		) {
+			return translate('message.audience.menuHeading');
+		}
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
@@ -3050,7 +3126,12 @@ export const MessageSubmitInterfaceComponent = ({
 		return translate('message.audience.multiCount', {
 			count: selectedAudienceLabels.length
 		});
-	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
+	}, [
+		audienceOptions,
+		selectedAudienceLabels,
+		selectedAudienceValues,
+		translate
+	]);
 	const audienceTargetCount = useMemo(
 		() =>
 			audienceOptions.filter((option) => option.value !== AUDIENCE_ALL)
@@ -3061,14 +3142,23 @@ export const MessageSubmitInterfaceComponent = ({
 		return shouldShowAudienceSelector({
 			chatType: currentChatType,
 			isClientUser,
+			isGroupSession: !!activeSession?.isGroup,
 			targetCount: audienceTargetCount,
+			selectedValues: selectedAudienceValues,
 			hasAllOption: audienceOptions.some(
 				(option) => option.value === AUDIENCE_ALL
 			)
 		});
-	}, [audienceOptions, audienceTargetCount, currentChatType, isClientUser]);
+	}, [
+		activeSession?.isGroup,
+		audienceOptions,
+		audienceTargetCount,
+		currentChatType,
+		isClientUser,
+		selectedAudienceValues
+	]);
 	useEffect(() => {
-		if (showAudienceSelector) {
+		if (showAudienceSelector || retainsGroupAudience) {
 			return;
 		}
 		setIsAudienceMenuOpen(false);
@@ -3080,7 +3170,11 @@ export const MessageSubmitInterfaceComponent = ({
 				// Storage may be disabled; in-memory reset still keeps routing safe.
 			}
 		}
-	}, [audienceSelectionStorageKey, showAudienceSelector]);
+	}, [
+		retainsGroupAudience,
+		audienceSelectionStorageKey,
+		showAudienceSelector
+	]);
 	/**
 	 * #894 rule C: the symbol follows the recipient's actual role, taken from
 	 * the option that was built for them. It used to be inferred by searching
@@ -3155,23 +3249,30 @@ export const MessageSubmitInterfaceComponent = ({
 		[]
 	);
 
-	const toggleAudienceSelection = useCallback((value: string) => {
-		setSelectedAudienceValues((previousValues) => {
-			if (value === AUDIENCE_ALL) {
-				return [AUDIENCE_ALL];
-			}
-			const withoutAll = previousValues.filter(
-				(entry) => entry !== AUDIENCE_ALL
-			);
-			if (withoutAll.includes(value)) {
-				const nextValues = withoutAll.filter(
-					(entry) => entry !== value
+	// A deliberate pick replaces restored recipients who are no longer in
+	// the room; keeping them would block every send (#1805).
+	const toggleAudienceSelection = useCallback(
+		(value: string) => {
+			setSelectedAudienceValues((previousValues) => {
+				if (value === AUDIENCE_ALL) {
+					return [AUDIENCE_ALL];
+				}
+				const withoutAll = previousValues.filter(
+					(entry) =>
+						entry !== AUDIENCE_ALL &&
+						audienceOptions.some((option) => option.value === entry)
 				);
-				return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
-			}
-			return [...withoutAll, value];
-		});
-	}, []);
+				if (withoutAll.includes(value)) {
+					const nextValues = withoutAll.filter(
+						(entry) => entry !== value
+					);
+					return nextValues.length > 0 ? nextValues : [AUDIENCE_ALL];
+				}
+				return [...withoutAll, value];
+			});
+		},
+		[audienceOptions]
+	);
 	const toggleAudienceSectionExpanded = useCallback(
 		(sectionKey: 'clients' | 'counsellors' | 'moderators') => {
 			setExpandedAudienceSections((previousValue) => ({
@@ -3199,7 +3300,13 @@ export const MessageSubmitInterfaceComponent = ({
 					.map((entry) => entry.value);
 				const withoutAll = previousValues.includes(AUDIENCE_ALL)
 					? allVisibleValues
-					: previousValues.filter((value) => value !== AUDIENCE_ALL);
+					: previousValues.filter(
+							(value) =>
+								value !== AUDIENCE_ALL &&
+								audienceOptions.some(
+									(option) => option.value === value
+								)
+						);
 				const hasAllSelected = sectionValues.every((value) =>
 					withoutAll.includes(value)
 				);
@@ -3220,7 +3327,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return isEverythingSelected ? [AUDIENCE_ALL] : nextValues;
 			});
 		},
-		[audienceGroupedSections]
+		[audienceGroupedSections, audienceOptions]
 	);
 
 	const startVoiceRecording = useCallback(async () => {
@@ -3434,11 +3541,6 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
 	}, [isVoiceInsertionPending]);
-	const formatRecordingDuration = useCallback((totalSeconds: number) => {
-		const minutes = Math.floor(totalSeconds / 60);
-		const seconds = totalSeconds % 60;
-		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
-	}, []);
 	const typedMessage = getTypedMarkdownMessage();
 	const typedMessageLength =
 		getPlainTextFromComposerValue(typedMessage).length;
@@ -3796,6 +3898,11 @@ export const MessageSubmitInterfaceComponent = ({
 			emptyLabel: translate('message.mention.empty'),
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
+			listLabel: translate('message.submit.toolbar.mention'),
+			getCheckLabel: (name: string) =>
+				translate('message.mention.check', { name }),
+			getCheckedLabel: (count: number) =>
+				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -3884,6 +3991,13 @@ export const MessageSubmitInterfaceComponent = ({
 		autoComposerHeight,
 		composerMinHeight
 	);
+	// While recording: one line of text above the voice row, on a phone too.
+	const composerCardHeight = isVoiceRecording
+		? Math.max(
+				effectiveComposerHeight || composerMinHeight,
+				VOICE_RECORDING_MIN_HEIGHT
+			)
+		: effectiveComposerHeight;
 
 	// A dragged height belongs to one conversation only. Keeping the component
 	// mounted while routing between sessions must not carry that geometry over.
@@ -3895,6 +4009,11 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
+	const hasContextBar = Boolean(replyTo || editingMessage);
+	const flushContextBarReserve =
+		flushCorner && hasContextBar && !isMobileViewport
+			? FLUSH_CONTEXT_BAR_RESERVE
+			: 0;
 	useLayoutEffect(() => {
 		if (isExpandedComposer) {
 			return;
@@ -3917,7 +4036,8 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		const composerChromeHeight =
 			shell.getBoundingClientRect().height -
-			editor.getBoundingClientRect().height;
+			editor.getBoundingClientRect().height -
+			flushContextBarReserve;
 		const bounds = getComposerHeightBounds();
 		const nextHeight = calculateAutoComposerHeight({
 			contentHeight,
@@ -3932,6 +4052,7 @@ export const MessageSubmitInterfaceComponent = ({
 		attachmentSelected,
 		composerSettleTick,
 		composerText,
+		flushContextBarReserve,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport
@@ -4066,7 +4187,13 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 			style={expandedComposerStyle}
 		>
-			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{activeInfo && (
+				<MessageSubmitInfo
+					{...getMessageSubmitInfo()}
+					onClose={() => setActiveInfo(null)}
+					closeLabel={translate('app.close')}
+				/>
+			)}
 			{threadRootId && (
 				<div
 					className="messageSubmit__target"
@@ -4095,53 +4222,6 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 
 			<form className="textarea" onSubmit={handleFormSubmit}>
-				{/* Relations foundation (#435): cancelable reply-quote preview,
-				    docked inside the composer box above the input. */}
-				{replyTo && (
-					<div className="messageSubmit__replyPreview" role="status">
-						<div className="messageSubmit__replyPreviewContent">
-							<span className="messageSubmit__replyPreviewLabel">
-								{translate('message.reply.previewLabel')}{' '}
-								<strong>{replyTo.author}</strong>
-							</span>
-							<span className="messageSubmit__replyPreviewText">
-								{replyTo.text}
-							</span>
-						</div>
-						<button
-							type="button"
-							className="messageSubmit__replyPreviewCancel"
-							onClick={() => onCancelReply && onCancelReply()}
-							aria-label={translate('message.reply.cancel')}
-						>
-							×
-						</button>
-					</div>
-				)}
-				{/* Editing (m.replace, #435): cancelable edit-in-progress banner.
-				    Figma "Reply Bar_v2" (9354:206458 desktop / 18:6713 mobile):
-				    a full-width 32px bar — cancel glyph, emphasized lead, then
-				    the message itself on one ellipsized line. */}
-				{editingMessage && (
-					<div className="messageSubmit__editPreview" role="status">
-						<button
-							type="button"
-							className="messageSubmit__editPreviewCancel"
-							onClick={() => onCancelEdit && onCancelEdit()}
-							aria-label={translate('message.edit.cancel')}
-						>
-							<HighlightOffIcon fontSize="inherit" />
-						</button>
-						<span className="messageSubmit__editPreviewText">
-							<span className="messageSubmit__editPreviewLabel">
-								{translate('message.edit.previewLabel')}
-							</span>{' '}
-							<span className="messageSubmit__editPreviewQuote">
-								{editingMessage.text}
-							</span>
-						</span>
-					</div>
-				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -4154,8 +4234,10 @@ export const MessageSubmitInterfaceComponent = ({
 							'textarea__wrapper-send-message',
 							canSendMessage &&
 								'textarea__wrapper-send-message--ready',
-							isComposerSelected &&
+							(isComposerSelected || isVoiceRecording) &&
 								'textarea__wrapper-send-message--selected',
+							(replyTo || editingMessage) &&
+								'textarea__wrapper-send-message--withContextBar',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
@@ -4177,13 +4259,55 @@ export const MessageSubmitInterfaceComponent = ({
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
-							!isExpandedComposer && effectiveComposerHeight
+							!isExpandedComposer && composerCardHeight
 								? ({
-										'--composer-height': `${effectiveComposerHeight}px`
+										'--composer-height': `${composerCardHeight}px`
 									} as React.CSSProperties)
 								: undefined
 						}
 					>
+						{/* Relations foundation (#435): what the next send refers to.
+						    Inside the card, between drag handle and editor. */}
+						{replyTo && (
+							<ComposerContextBar
+								kind="reply"
+								lead={replyTo.author}
+								quote={replyTo.text}
+								statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
+								cancelLabel={translate('message.reply.cancel')}
+								onCancel={onCancelReply}
+							/>
+						)}
+						{editingMessage && (
+							<ComposerContextBar
+								kind="edit"
+								lead={translate('message.edit.previewLabel')}
+								quote={editingMessage.text}
+								cancelLabel={translate('message.edit.cancel')}
+								onCancel={onCancelEdit}
+							/>
+						)}
+						{/* Frank (03.11.): on the phone the format tools rest in a
+						    grey box above the card, built like the reply bar. */}
+						{isMobileViewport && !isCompactActionStripOpen && (
+							<div
+								className="messageSubmit__formatTray"
+								data-cy="composer-format-tray"
+								onMouseDown={handleToolbarMouseDown}
+							>
+								<ComposerToolbar
+									direction={composerMenuDirection}
+									isMobile
+									inTray
+									isExpanded={isExpandedComposer}
+									onAction={handleToolbarAction}
+									isActionSelected={isToolbarActionSelected}
+									onCollapse={openCompactActionStrip}
+									onExpandToggle={toggleExpandedComposer}
+									translate={translate}
+								/>
+							</div>
+						)}
 						{/* T6/T16: the drag pill belongs to every docked composer —
 						    main chat, supervision room and thread panel, on the
 						    phone too (the navigator row that carried it is gone). */}
@@ -4192,14 +4316,10 @@ export const MessageSubmitInterfaceComponent = ({
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
 								touched={isComposerResizing}
-								// T31: phone — pill on the card's top edge; T40:
-								// the flush desktop field has no frame above the
-								// field either, so the pill sits on its edge too.
-								position={
-									isMobileViewport || flushCorner
-										? 'edge'
-										: 'inside'
-								}
+								// T31: the pill sits on the card's top edge at every
+								// width; Frank (03.11.): the desktop must not differ
+								// from the phone or from an open side panel (T40).
+								position="edge"
 								ariaLabel={translate(
 									'message.mobileNav.dragToExpand'
 								)}
@@ -4575,6 +4695,8 @@ export const MessageSubmitInterfaceComponent = ({
 									'textarea__input',
 									attachmentSelected &&
 										'textarea__input--attachmentMode',
+									isVoiceRecording &&
+										'textarea__input--voiceRecording',
 									editingMessageId &&
 										'textarea__input--editing'
 								)}
@@ -4631,55 +4753,35 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
+								{hasUploadFunctionality && isVoiceRecording && (
+									<VoiceNoteRow
+										mode="recording"
+										durationSec={voiceRecordingDurationSec}
+										onStop={() => stopVoiceRecording()}
+										onDiscard={() =>
+											stopVoiceRecording({
+												discard: true
+											})
+										}
+										className="textarea__voiceNoteRow"
+									/>
+								)}
 								{attachmentSelected &&
 								isVoiceAttachmentSelected &&
 								voicePreviewUrl ? (
-									<div className="textarea__attachmentMode textarea__attachmentMode--voice">
-										<div
-											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"
-											role="group"
-											ref={voiceReviewRef}
-											tabIndex={-1}
-											aria-label={translate(
-												'voice.recording.preview'
-											)}
-										>
-											<div className="textarea__attachmentModeInfo">
-												{voicePreviewUrl && (
-													// #996: the same player the
-													// sent message uses, so what
-													// you check before sending
-													// looks like what the other
-													// side gets.
-													<VoicePlayer
-														src={voicePreviewUrl}
-														durationSec={
-															voiceAttachmentDurationSec ||
-															null
-														}
-														size="sm"
-														showMeta={false}
-													/>
-												)}
-											</div>
-											<button
-												type="button"
-												className="textarea__voicePreview__discard"
-												onClick={handleVoiceDiscard}
-												title={translate(
-													'voice.recording.discard'
-												)}
-												aria-label={translate(
-													'voice.recording.discard'
-												)}
-											>
-												<RemoveIcon
-													aria-hidden="true"
-													focusable="false"
-												/>
-											</button>
-										</div>
-									</div>
+									// #996: the same player the sent message uses, so what
+									// you check before sending looks like what the other
+									// side gets.
+									<VoiceNoteRow
+										ref={voiceReviewRef}
+										mode="review"
+										src={voicePreviewUrl}
+										durationSec={
+											voiceAttachmentDurationSec || null
+										}
+										onDiscard={handleVoiceDiscard}
+										className="textarea__voiceNoteRow"
+									/>
 								) : attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
@@ -4757,7 +4859,8 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
 										>
-											{isCompactActionStripOpen ? (
+											{isCompactActionStripOpen ||
+											isMobileViewport ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
 														showBack={
@@ -4776,7 +4879,18 @@ export const MessageSubmitInterfaceComponent = ({
 															unreadMobileBadgeCount
 														}
 														onOpenTools={
-															closeCompactActionStrip
+															isCompactActionStripOpen
+																? closeCompactActionStrip
+																: openCompactActionStrip
+														}
+														isToolsOpen={
+															!isCompactActionStripOpen
+														}
+														isMobile={
+															isMobileViewport
+														}
+														menuDirection={
+															composerMenuDirection
 														}
 														showMic={
 															hasUploadFunctionality &&
@@ -4919,49 +5033,6 @@ export const MessageSubmitInterfaceComponent = ({
 									</>
 								)}
 							</div>
-							{hasUploadFunctionality &&
-								(isVoiceRecording ? (
-									<span
-										className={clsx(
-											'textarea__attachmentSelect',
-											'textarea__attachmentSelect--recording'
-										)}
-									>
-										<span className="textarea__voiceRecordingBar">
-											<span className="textarea__voiceRecordingDot"></span>
-											<span className="textarea__voiceRecordingLabel">
-												{translate(
-													'voice.recording.active'
-												)}
-											</span>
-											<span className="textarea__voiceRecordButton__timer">
-												{formatRecordingDuration(
-													voiceRecordingDurationSec
-												)}
-											</span>
-											<button
-												type="button"
-												className="textarea__voiceActionButton textarea__voiceActionButton--cancel"
-												onClick={() =>
-													stopVoiceRecording({
-														discard: true
-													})
-												}
-											>
-												{translate('app.cancel')}
-											</button>
-											<button
-												type="button"
-												className="textarea__voiceActionButton textarea__voiceActionButton--stop"
-												onClick={() =>
-													stopVoiceRecording()
-												}
-											>
-												{translate('app.stop')}
-											</button>
-										</span>
-									</span>
-								) : null)}
 						</span>
 						<div className="textarea__buttons">
 							<SendButton
@@ -5013,6 +5084,7 @@ export const MessageSubmitInterfaceComponent = ({
 			{e2eeOverlayVisible && (
 				<Overlay item={e2eeOverlay} name={OVERLAY_E2EE} />
 			)}
+			{retentionGate.dialog}
 		</div>
 	);
 };
