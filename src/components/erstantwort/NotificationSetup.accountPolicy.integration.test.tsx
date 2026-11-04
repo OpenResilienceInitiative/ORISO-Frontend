@@ -208,6 +208,51 @@ it('preserves BOTH through its own real provider capability refresh and a fresh 
 	);
 	expect(onDone).toHaveBeenCalledOnce();
 });
+/** Clicks a control in the task in which React commits it, before React's
+ * passive effects for that commit run (a real browser can dispatch a click
+ * there; under load RTL's waitFor polling lands there too). */
+const clickOnCommit = (find: () => HTMLElement | null) =>
+	new Promise<void>((resolve) => {
+		const observer = new MutationObserver(() => {
+			const element = find();
+			if (!element) return;
+			observer.disconnect();
+			fireEvent.click(element);
+			resolve();
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+	});
+it('keeps a BOTH choice clicked in the commit that loaded the account', async () => {
+	const initial = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData)
+		.mockReset()
+		.mockReturnValueOnce(initial.promise)
+		.mockResolvedValueOnce(account(true, true));
+	setup();
+	const clicked = clickOnCommit(() =>
+		screen.queryByRole('button', { name: /notificationChoice.both/ })
+	);
+	initial.resolve(account());
+	await clicked;
+	await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
+	await waitFor(() => expect(apiGetUserData).toHaveBeenCalledTimes(2));
+	expect(await screen.findByRole('button', { name: /enableBrowser/ })).toBe(
+		continueBrowser()
+	);
+});
+it('keeps the first-reply email form opened in the commit that loaded the account', async () => {
+	const initial = deferred<UserDataInterface>();
+	vi.mocked(apiGetUserData).mockReset().mockReturnValueOnce(initial.promise);
+	setup(true);
+	const clicked = clickOnCommit(() =>
+		screen.queryByRole('button', {
+			name: 'erstantwort.emailNotification.action'
+		})
+	);
+	initial.resolve({ ...account(), email: undefined });
+	await clicked;
+	expect(await screen.findByRole('textbox')).toBeTruthy();
+});
 it('does not continue an email subscription revoked while the server write is pending', async () => {
 	const write = deferred<void>();
 	vi.mocked(apiPatchUserData).mockReturnValueOnce(write.promise);
