@@ -142,6 +142,31 @@ describe('useDirectLinkKnock', () => {
 		expect(result.current.inactive).toBe(true);
 	});
 
+	it.each([
+		['DIRECT_LINK_INACTIVE', true],
+		['INVITE_LINK_PAUSED', false]
+	])(
+		'tells a paused link from a 410 by its reason: %s',
+		async (reason, paused) => {
+			const start = vi
+				.fn()
+				.mockRejectedValue(
+					new Response(JSON.stringify({ reason }), { status: 410 })
+				);
+			const { result } = renderHook(() =>
+				useDirectLinkKnock({ ...knock, status: 'DECLINED' }, {
+					getKnock: vi.fn(() => new Promise(() => undefined)),
+					cancelKnock: vi.fn(),
+					start
+				} as never)
+			);
+			act(() => result.current.knockAgain());
+			await waitFor(() => expect(result.current.gone).toBe(true));
+			expect(result.current.inactive).toBe(true);
+			expect(result.current.paused).toBe(paused);
+		}
+	);
+
 	it('does not report an inactive link for another refusal', async () => {
 		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
 		const start = vi

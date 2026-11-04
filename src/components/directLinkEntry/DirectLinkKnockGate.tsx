@@ -158,7 +158,11 @@ export const DirectLinkKnock = ({
 		if (state.inactive) {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: t('directLink.entry.inactive'),
+				title: t(
+					state.paused
+						? 'inviteLink.paused'
+						: 'directLink.entry.inactive'
+				),
 				text: '',
 				closeable: true,
 				timeout: 5000

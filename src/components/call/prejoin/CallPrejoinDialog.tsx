@@ -101,8 +101,16 @@ const KnockWatch = ({
 	pollMs?: number;
 	onState: (state: DirectLinkKnockState) => void;
 }) => {
-	const { knockId, phase, gone, inactive, cancel, knockAgain, close } =
-		useDirectLinkKnock(knock, deps, pollMs);
+	const {
+		knockId,
+		phase,
+		gone,
+		inactive,
+		paused,
+		cancel,
+		knockAgain,
+		close
+	} = useDirectLinkKnock(knock, deps, pollMs);
 	useEffect(
 		() =>
 			onState({
@@ -110,11 +118,22 @@ const KnockWatch = ({
 				phase,
 				gone,
 				inactive,
+				paused,
 				cancel,
 				knockAgain,
 				close
 			}),
-		[onState, knockId, phase, gone, inactive, cancel, knockAgain, close]
+		[
+			onState,
+			knockId,
+			phase,
+			gone,
+			inactive,
+			paused,
+			cancel,
+			knockAgain,
+			close
+		]
 	);
 	return null;
 };
@@ -241,6 +260,7 @@ export const CallPrejoinDialog = ({
 	// Withdrawn (here or elsewhere) or closed after "no": back to the check.
 	const gone = Boolean(knockState?.gone);
 	const linkInactive = Boolean(knockState?.inactive);
+	const linkPaused = Boolean(knockState?.paused);
 	useEffect(() => {
 		if (!gone || !knock) return;
 		/* Knocking again hit a switched-off link: say so, rather than drop
@@ -248,7 +268,11 @@ export const CallPrejoinDialog = ({
 		if (linkInactive) {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: t('directLink.entry.inactive'),
+				title: t(
+					linkPaused
+						? 'inviteLink.paused'
+						: 'directLink.entry.inactive'
+				),
 				text: '',
 				closeable: true,
 				timeout: 5000

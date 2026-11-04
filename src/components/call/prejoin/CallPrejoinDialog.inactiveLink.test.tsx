@@ -48,7 +48,7 @@ const pending = {
 	status: 'DECLINED' as const
 };
 
-const knockAgainRefusedWith = async (status: number) => {
+const knockAgainRefusedWith = async (refusal: unknown) => {
 	const addNotification = vi.fn();
 	render(
 		<NotificationsContext.Provider
@@ -62,7 +62,7 @@ const knockAgainRefusedWith = async (status: number) => {
 				knockDeps={{
 					getKnock: vi.fn(() => new Promise(() => undefined)),
 					cancelKnock: vi.fn(),
-					start: vi.fn(() => Promise.reject({ status }))
+					start: vi.fn(() => Promise.reject(refusal))
 				}}
 				pollMs={60_000}
 			/>
@@ -87,7 +87,9 @@ describe('CallPrejoinDialog when knocking again is refused', () => {
 	});
 
 	it('says the link is no longer active when it was switched off (#2012)', async () => {
-		const addNotification = await knockAgainRefusedWith(410);
+		const addNotification = await knockAgainRefusedWith({
+			status: 410
+		});
 		expect(addNotification).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: 'Dieser Link ist nicht mehr aktiv.'
@@ -95,8 +97,17 @@ describe('CallPrejoinDialog when knocking again is refused', () => {
 		);
 	});
 
+	it('says the link is paused when the server says so', async () => {
+		const addNotification = await knockAgainRefusedWith(
+			new Response('{"reason":"DIRECT_LINK_INACTIVE"}', { status: 410 })
+		);
+		expect(addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ title: 'inviteLink.paused' })
+		);
+	});
+
 	it('goes back to the check silently for any other refusal', async () => {
-		const addNotification = await knockAgainRefusedWith(500);
+		const addNotification = await knockAgainRefusedWith({ status: 500 });
 		expect(addNotification).not.toHaveBeenCalled();
 	});
 });

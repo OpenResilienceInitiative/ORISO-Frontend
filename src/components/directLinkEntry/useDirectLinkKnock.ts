@@ -4,7 +4,8 @@ import {
 	apiGetOwnCallKnock,
 	apiStartDirectLinkConversation,
 	CallKnockStatus,
-	isInactiveDirectLinkError
+	isInactiveDirectLinkError,
+	isPausedDirectLinkError
 } from '../../api/apiDirectLinks';
 import {
 	KnockWaitPhase,
@@ -50,6 +51,8 @@ export interface DirectLinkKnockState {
 	gone: boolean;
 	/** Knocking again was refused because the link was switched off (410). */
 	inactive: boolean;
+	/** That refusal named the direct link as paused (`DIRECT_LINK_INACTIVE`). */
+	paused: boolean;
 	cancel: () => void;
 	knockAgain: () => void;
 	close: () => void;
@@ -73,6 +76,7 @@ export const useDirectLinkKnock = (
 	);
 	const [gone, setGone] = useState(false);
 	const [inactive, setInactive] = useState(false);
+	const [paused, setPaused] = useState(false);
 	const knockingAgain = useRef(false);
 
 	useEffect(() => {
@@ -159,9 +163,12 @@ export const useDirectLinkKnock = (
 						: waiting;
 				});
 			})
-			.catch((error) => {
-				/* The dialog goes either way; a switched-off link says why. */
+			.catch(async (error) => {
+				/* The dialog goes either way; a switched-off link says why,
+				   so the reason is read before it goes. */
+				const refusedAsPaused = await isPausedDirectLinkError(error);
 				setInactive(isInactiveDirectLinkError(error));
+				setPaused(refusedAsPaused);
 				close();
 			})
 			.finally(() => {
@@ -174,6 +181,7 @@ export const useDirectLinkKnock = (
 		phase,
 		gone,
 		inactive,
+		paused,
 		cancel,
 		knockAgain,
 		close

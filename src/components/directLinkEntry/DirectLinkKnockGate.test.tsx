@@ -43,6 +43,7 @@ const state = (over: object) => ({
 	phase: 'declined',
 	gone: false,
 	inactive: false,
+	paused: false,
 	cancel: vi.fn(),
 	knockAgain: vi.fn(),
 	close: vi.fn(),
@@ -80,6 +81,18 @@ describe('DirectLinkKnock when the dialog goes', () => {
 			})
 		);
 		expect(onDone).toHaveBeenCalled();
+	});
+
+	it('says the link is paused when the server says so', () => {
+		knockState.current = state({
+			gone: true,
+			inactive: true,
+			paused: true
+		});
+		const { addNotification } = mount();
+		expect(addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ title: 'inviteLink.paused' })
+		);
 	});
 
 	it('closes silently for any other reason', () => {
