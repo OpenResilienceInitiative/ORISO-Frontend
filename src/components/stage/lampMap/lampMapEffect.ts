@@ -8,6 +8,7 @@ import {
 	type MapProjection,
 	type PointGrid
 } from './lampMapGeometry';
+import { createStageTint, StageTint } from '../stageTint';
 
 /**
  * The stage lamp map (design 5b) as a plain canvas module.
@@ -24,15 +25,6 @@ const HERO_RADIUS = 92;
 const TORCH_RADIUS = 150;
 const HERO_SPEED = 17;
 const MAX_HELD = 12;
-
-/** Light tints, as light shades of the brand colour rather than lamp amber. */
-const TINT = {
-	core: 'rgba(255, 237, 235, 0.95)',
-	mid: 'rgba(255, 218, 213, 0.5)',
-	edge: 'rgba(255, 180, 168, 0.15)',
-	out: 'rgba(255, 180, 168, 0)',
-	dot: '255, 240, 238'
-};
 
 export interface LampMapHandle {
 	/** Highlight one carrier's locations, or none. */
@@ -55,7 +47,7 @@ export interface LampMapOptions {
 	onFirstFrame?: () => void;
 }
 
-const createGlowSprite = (): HTMLCanvasElement => {
+const createGlowSprite = (tint: StageTint): HTMLCanvasElement => {
 	const sprite = document.createElement('canvas');
 	sprite.width = GLOW_SPRITE_SIZE;
 	sprite.height = GLOW_SPRITE_SIZE;
@@ -72,10 +64,10 @@ const createGlowSprite = (): HTMLCanvasElement => {
 		half,
 		half
 	);
-	gradient.addColorStop(0, TINT.core);
-	gradient.addColorStop(0.18, TINT.mid);
-	gradient.addColorStop(0.5, TINT.edge);
-	gradient.addColorStop(1, TINT.out);
+	gradient.addColorStop(0, tint(255, 237, 235, 0.95));
+	gradient.addColorStop(0.18, tint(255, 218, 213, 0.5));
+	gradient.addColorStop(0.5, tint(255, 180, 168, 0.15));
+	gradient.addColorStop(1, tint(255, 180, 168, 0));
 	context.fillStyle = gradient;
 	context.fillRect(0, 0, GLOW_SPRITE_SIZE, GLOW_SPRITE_SIZE);
 	return sprite;
@@ -102,7 +94,8 @@ export const createLampMap = async (
 	}
 
 	const projection: MapProjection = createProjection();
-	const sprite = createGlowSprite();
+	const tint = createStageTint(container);
+	const sprite = createGlowSprite(tint);
 
 	/*
 	 * Everything that depends on the panel's size lives behind `fit()`, because
@@ -249,7 +242,7 @@ export const createLampMap = async (
 			to.x,
 			to.y
 		);
-		ctx.strokeStyle = `rgba(226, 152, 142, ${alpha.toFixed(3)})`;
+		ctx.strokeStyle = tint(226, 152, 142, alpha);
 		ctx.lineWidth = 0.8 + 0.7 * ease;
 		ctx.stroke();
 	};
@@ -304,7 +297,7 @@ export const createLampMap = async (
 		const targetDim = carrier ? Math.max(0.25, litFraction) : litFraction;
 		dim += (targetDim - dim) * Math.min(1, delta * 1.6);
 		if (dim > 0.01) {
-			ctx.fillStyle = `rgba(52, 2, 7, ${(0.62 * dim).toFixed(3)})`;
+			ctx.fillStyle = tint(52, 2, 7, 0.62 * dim);
 			ctx.fillRect(0, 0, width, height);
 		}
 
@@ -443,23 +436,24 @@ export const createLampMap = async (
 			);
 			// Resting dots darken along with the surface.
 			const shade = 1 - 0.55 * dim;
-			ctx.fillStyle = `rgba(${Math.round(158 * shade)}, ${Math.round(
-				4 * shade
-			)}, ${Math.round(16 * shade)}, ${(0.66 + 0.2 * (1 - lit)).toFixed(
-				2
-			)})`;
+			ctx.fillStyle = tint(
+				158 * shade,
+				4 * shade,
+				16 * shade,
+				0.66 + 0.2 * (1 - lit)
+			);
 			ctx.fill();
 
 			if (lit > 0.02) {
 				ctx.beginPath();
 				ctx.arc(point.x, point.y, 1.2 + 0.9 * lit, 0, Math.PI * 2);
-				ctx.fillStyle = `rgba(255, 224, 218, ${(0.85 * lit).toFixed(3)})`;
+				ctx.fillStyle = tint(255, 224, 218, 0.85 * lit);
 				ctx.fill();
 			}
 			if (glow > 0.02) {
 				ctx.beginPath();
 				ctx.arc(point.x, point.y, 0.8 + 0.9 * glow, 0, Math.PI * 2);
-				ctx.fillStyle = `rgba(${TINT.dot}, ${(0.92 * glow).toFixed(3)})`;
+				ctx.fillStyle = tint(255, 240, 238, 0.92 * glow);
 				ctx.fill();
 			}
 		}
@@ -468,7 +462,7 @@ export const createLampMap = async (
 			held.forEach((entry) => {
 				ctx.beginPath();
 				ctx.arc(entry.x, entry.y, 3.2, 0, Math.PI * 2);
-				ctx.fillStyle = 'rgba(255, 232, 226, 0.65)';
+				ctx.fillStyle = tint(255, 232, 226, 0.65);
 				ctx.fill();
 			});
 
@@ -480,8 +474,8 @@ export const createLampMap = async (
 				hero.y,
 				HERO_RADIUS
 			);
-			halo.addColorStop(0, 'rgba(255, 236, 228, 0.15)');
-			halo.addColorStop(1, 'rgba(255, 236, 228, 0)');
+			halo.addColorStop(0, tint(255, 236, 228, 0.15));
+			halo.addColorStop(1, tint(255, 236, 228, 0));
 			ctx.fillStyle = halo;
 			ctx.fillRect(
 				hero.x - HERO_RADIUS,

@@ -11,6 +11,16 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-09-05 — Storybook FAIL-on-import is a disconnect, not a broken story
+
+- Context: PR #1297 Storybook CI (`scripts/run-storybook-tests.mjs`)
+- Lesson: When Chromium dies mid-collect, Vitest marks the file that was importing `.storybook/vitest.setup.ts` as FAIL (`Failed to fetch dynamically imported module`) even though every `play()` that ran passed. Treat that as infrastructure and retry. Do not latch `FAIL` / `Test Files n failed` as an assertion. The `url.pathToFileURL` Vite lines are noise on every run.
+
+## 2026-09-04 — do not run Frontend `test:unit` and `build` together
+
+- Context: #1194 enquiry phase (`docs/agent-tasks/2026-09-04_1194-enquiry-phase/`)
+- Lesson: `test:unit` (6GB) plus `build` (8GB) in parallel can stall the last Vitest worker (TipTap `emojiInsert.test.tsx` GC thrash). Isolated, that file is 47ms. Run the two gates sequentially. Use `./node_modules/.bin/vitest`, not `npx vitest` (npx may fetch Vitest 5).
+
 ## 2026-08-31 — positional t() second args hide leftover English
 
 - Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
@@ -36,7 +46,7 @@ Format:
 ## 2026-07-14 — orchestration docs must match git-workflow base
 
 - Context: `docs/cursor-orchestrator/2026-07-14_pr-385-review-cursor-docs/` (PR #385 review)
-- Lesson: Keep `goal-loop`, `pr-prep`, `AGENTS.md`, and `git-workflow.mdc` on the same base (`pre-dev`). If orchestration writes under `docs/cursor-orchestrator/`, add a `.gitignore` negation or the trail cannot be committed.
+- Lesson: Keep `goal-loop`, `pr-prep`, `AGENTS.md`, and `git-workflow.mdc` on the same base (`dev`). (Corrected 2026-10-28: `pre-dev` is the Pre-Dev _server's_ branch, never a PR base; `.github/workflows/pr-base-check.yml` enforces it.) If orchestration writes under `docs/cursor-orchestrator/`, add a `.gitignore` negation or the trail cannot be committed.
 
 ## 2026-07-14 — Storybook Vite + MUI `styled_default`
 

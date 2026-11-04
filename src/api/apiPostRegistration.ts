@@ -49,16 +49,20 @@ export const autoLoginWithDeadline = (
  * After a timeout only the server knows whether the account exists. A taken
  * User-ID means it does, and the person must be sent to the login, never back
  * to the form. Any doubt (other error, failed check) keeps today's behaviour.
+ *
+ * The gateway can give up before we do: on Dev it answered 504 after 60 s
+ * while the server went on and created the account (13 Oct 2026), and the
+ * form came back with "This User-ID is already taken". That is a timeout too.
  */
+const isTimeout = (error: unknown): boolean =>
+	(error instanceof Error && error.message === FETCH_ERRORS.TIMEOUT) ||
+	(error as { status?: unknown } | null)?.status === 504;
+
 export const accountExistsAfterTimeout = async (
 	error: unknown,
 	username: string | undefined
 ): Promise<boolean> => {
-	if (
-		!(error instanceof Error) ||
-		error.message !== FETCH_ERRORS.TIMEOUT ||
-		!username
-	) {
+	if (!isTimeout(error) || !username) {
 		return false;
 	}
 	try {
@@ -71,6 +75,7 @@ export const accountExistsAfterTimeout = async (
 type RegistrationPayload = {
 	agencyId?: string;
 	username?: string;
+	displayName?: string;
 	password?: string;
 } & Record<string, unknown>;
 
@@ -90,8 +95,16 @@ export const apiPostRegistration = (
 	onAccountCreated?: () => void
 ): Promise<any> => {
 	removeAllCookies([COOKIE_KEY]);
+	const { displayName, ...registrationData } = data;
+	const trimmedDisplayName =
+		typeof displayName === 'string' ? displayName.trim() : '';
 	const requestData: RegistrationPayload = {
-		...data,
+		...registrationData,
+		...(trimmedDisplayName &&
+		data.groupChatId == null &&
+		data.directLinkToken == null
+			? { displayName: trimmedDisplayName }
+			: {}),
 		...(typeof data.password === 'string' && {
 			password: encodeURIComponent(data.password)
 		}),

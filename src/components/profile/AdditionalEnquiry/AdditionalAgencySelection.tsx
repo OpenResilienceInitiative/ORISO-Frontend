@@ -168,7 +168,9 @@ export const AdditionalAgencySelection = (
 								'registration.agencySelection.title.end'
 							)}
 						</h3>
-						{proposedAgencies ? (
+						{/* An empty list says no centre serves the topic here
+						    (ORISO-Frontend#1655), the same as no list. */}
+						{proposedAgencies?.length ? (
 							proposedAgencies.map(
 								(proposedAgency: AgencyDataInterface) => (
 									<div key={`agency-${proposedAgency.id}`}>

@@ -1,0 +1,1253 @@
+// @vitest-environment oriso-jsdom
+
+import React from 'react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	waitFor
+} from '@testing-library/react';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
+
+import { createInstance } from 'i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import englishCatalogue from '../../../resources/i18n/en/common.json';
+
+import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
+import { UserDataContext } from '../../../globalState';
+import { callManager } from '../../../services/CallManager';
+import { GroupCallWidget } from '../GroupCallWidget';
+import { CALL_IDENTITY_EVENT_TYPE } from '../callIdentity';
+import { forgetPublishedIdentity } from '../publishCallIdentity';
+import { rememberJoinMedia } from '../prejoin/callPrejoin';
+import { NotificationsContext } from '../../../globalState/provider/NotificationsProvider';
+import {
+	FAKE_CALL_ID,
+	FAKE_CURRENT_USER_ID,
+	FAKE_ELEMENT_CALL_ROOM_ID,
+	FAKE_SIGNAL_ROOM_ID,
+	GroupCallStoryHarness,
+	makeFakeMatrixClientService,
+	resetCallManager,
+	seedIncomingElementCall
+} from './groupCallHarness';
+
+const widgetApiMocks = vi.hoisted(() => ({
+	instances: [] as Array<{
+		stop: ReturnType<typeof vi.fn>;
+		transport: { send: ReturnType<typeof vi.fn> };
+	}>
+}));
+
+vi.mock('matrix-widget-api', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('matrix-widget-api')>();
+	return {
+		...actual,
+		MatrixWidgetType: { Custom: 'm.custom' },
+		Widget: class {},
+		ClientWidgetApi: class {
+			public readonly transport = {
+				reply: vi.fn(),
+				send: vi.fn().mockResolvedValue({})
+			};
+			public readonly setViewedRoomId = vi.fn();
+			public readonly updateTheme = vi.fn().mockResolvedValue({});
+			public readonly feedEvent = vi.fn().mockResolvedValue(undefined);
+			public readonly feedToDevice = vi.fn().mockResolvedValue(undefined);
+			public readonly feedStateUpdate = vi
+				.fn()
+				.mockResolvedValue(undefined);
+			public readonly on = vi.fn();
+			public readonly stop = vi.fn();
+
+			public constructor() {
+				widgetApiMocks.instances.push(this);
+			}
+		}
+	};
+});
+
+const knockApi = vi.hoisted(() => ({
+	pending: vi.fn().mockResolvedValue([]),
+	shareLink: vi.fn().mockResolvedValue(null)
+}));
+
+vi.mock('../../../api/apiCallKnocks', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../../api/apiCallKnocks')>()),
+	apiGetPendingCallKnocks: knockApi.pending
+}));
+
+vi.mock('../../../api/apiCallShareLinkKnock', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../api/apiCallShareLinkKnock')
+	>()),
+	apiGetCallShareLinkKnock: knockApi.shareLink
+}));
+
+vi.mock('../../../resources/scripts/runtimeConfig', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../resources/scripts/runtimeConfig')
+	>()),
+	getElementCallBaseUrl: () => 'https://call.storybook.test'
+}));
+
+const testI18n = createInstance();
+const renderTranslated = (ui: React.ReactElement) =>
+	render(ui, {
+		wrapper: ({ children }) => (
+			<I18nextProvider i18n={testI18n}>{children}</I18nextProvider>
+		)
+	});
+
+describe('GroupCallWidget Storybook harness', () => {
+	const listenerCount = (matrixClientService: unknown) =>
+		(
+			matrixClientService as {
+				getHarnessListenerCount(): number;
+			}
+		).getHarnessListenerCount();
+
+	beforeAll(async () => {
+		await testI18n.use(initReactI18next).init({
+			lng: 'en',
+			fallbackLng: 'en',
+			defaultNS: 'common',
+			resources: { en: { common: englishCatalogue } },
+			interpolation: { escapeValue: false }
+		});
+	});
+
+	beforeEach(() => {
+		widgetApiMocks.instances.length = 0;
+		resetCallManager();
+	});
+
+	afterEach(() => {
+		cleanup();
+		callManager.endCall(false);
+	});
+
+	it('leaves locally, tears down listeners and widget API, then clears retained metadata', async () => {
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+
+		await waitFor(() => {
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
+		expect(listenerCount(matrixClientService)).toBe(4);
+
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+
+		// Awaited, not immediate: the surface now waits for the call's own
+		// goodbye before its document is destroyed. See `HANGUP_HANDSHAKE_MS`.
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: FAKE_CALL_ID,
+					roomId: FAKE_ELEMENT_CALL_ROOM_ID,
+					signalRoomId: FAKE_SIGNAL_ROOM_ID,
+					isGroup: true,
+					state: 'left'
+				})
+			)
+		);
+		expect(callManager.hasActiveCall()).toBe(false);
+
+		view.unmount();
+
+		expect(listenerCount(matrixClientService)).toBe(0);
+		expect(widgetApiMocks.instances).toHaveLength(1);
+		expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled();
+
+		resetCallManager();
+		expect(callManager.getCurrentCall()).toBeNull();
+	});
+
+	it('leaves browser full screen when a second call rings, so its card can be seen', async () => {
+		/*
+		 * The full-screen element sits in the browser's top layer; the ringing
+		 * card is portalled to <body> outside it, and no z-index reaches above
+		 * the top layer (FE#1904 review).
+		 */
+		const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(document, 'exitFullscreen', {
+			configurable: true,
+			value: exitFullscreen
+		});
+		Object.defineProperty(document, 'fullscreenElement', {
+			configurable: true,
+			get: () => document.body
+		});
+		try {
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+			const view = renderTranslated(
+				<MatrixClientContext.Provider
+					value={{
+						matrixClientService,
+						setMatrixClientService: () => {}
+					}}
+				>
+					<GroupCallWidget />
+				</MatrixClientContext.Provider>
+			);
+			await waitFor(() =>
+				expect(
+					view.container.querySelector('.element-call-iframe')
+				).toBeTruthy()
+			);
+			expect(exitFullscreen).not.toHaveBeenCalled();
+
+			act(() =>
+				callManager.receiveCall(
+					'!second-call:matrix.storybook.test',
+					false,
+					'second-call',
+					'@second:matrix.storybook.test',
+					true,
+					'!second-session:matrix.storybook.test',
+					true
+				)
+			);
+
+			await waitFor(() =>
+				expect(exitFullscreen).toHaveBeenCalledTimes(1)
+			);
+		} finally {
+			callManager.rejectWaitingCall();
+			delete (document as unknown as Record<string, unknown>)
+				.fullscreenElement;
+			delete (document as unknown as Record<string, unknown>)
+				.exitFullscreen;
+		}
+	});
+
+	const renderActiveCall = async () => {
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		const iframe = await waitFor(() => {
+			const found = view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement | null;
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		return { view, iframe };
+	};
+
+	const ringSecondCall = () =>
+		act(() =>
+			callManager.receiveCall(
+				'!second-call:matrix.storybook.test',
+				false,
+				'second-call',
+				'@second:matrix.storybook.test',
+				true,
+				'!second-session:matrix.storybook.test',
+				true
+			)
+		);
+
+	it('keeps the second call ringing when the call closes itself during the hangup', async () => {
+		/*
+		 * Element Call may answer the hangup with its own close, which closes
+		 * the surface and moves the waiting call up. The end button's own
+		 * teardown after the handshake must then leave that call alone.
+		 */
+		const { view } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			on: ReturnType<typeof vi.fn>;
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		api.transport.send.mockImplementation(async (action: string) => {
+			if (action !== 'im.vector.hangup') return {};
+			const close = api.on.mock.calls.find(
+				([name]) => name === 'action:io.element.close'
+			)?.[1] as (event: unknown) => void;
+			close({ detail: {}, preventDefault: () => undefined });
+			return {};
+		});
+
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: 'second-call',
+					state: 'ringing'
+				})
+			)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(callManager.getCurrentCall()).toEqual(
+			expect.objectContaining({ callId: 'second-call', state: 'ringing' })
+		);
+	});
+
+	it('still ends the running call when the second caller gives up during the hangup', async () => {
+		const { view, iframe } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		api.transport.send.mockImplementation(async (action: string) => {
+			if (action !== 'im.vector.hangup') return {};
+			callManager.endCallIfMatching(
+				'second-call',
+				'!second-session:matrix.storybook.test'
+			);
+			return {};
+		});
+
+		fireEvent.click(
+			await view.findByRole('button', { name: 'End call and answer' })
+		);
+
+		// The person asked for this call to end; it does, with nothing to answer.
+		await waitFor(() => expect(callManager.hasActiveCall()).toBe(false));
+		expect(iframe.src).toBe('about:blank');
+		expect(callManager.getCurrentCall()?.callId).not.toBe('second-call');
+	});
+
+	it('answers only once when "End call and answer" is pressed twice', async () => {
+		const { view } = await renderActiveCall();
+		ringSecondCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+		let finishHangup: () => void = () => undefined;
+		api.transport.send.mockImplementation((action: string) =>
+			action === 'im.vector.hangup'
+				? new Promise((resolve) => {
+						finishHangup = () => resolve({});
+					})
+				: Promise.resolve({})
+		);
+
+		const answer = await view.findByRole('button', {
+			name: 'End call and answer'
+		});
+		fireEvent.click(answer);
+		fireEvent.click(answer);
+		finishHangup();
+
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: 'second-call',
+					state: 'connecting'
+				})
+			)
+		);
+		const hangups = api.transport.send.mock.calls.filter(
+			([action]) => action === 'im.vector.hangup'
+		);
+		expect(hangups).toHaveLength(1);
+	});
+
+	it('leaves full screen entered while a second call is already ringing', async () => {
+		let fullscreen: Element | null = null;
+		const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(document, 'exitFullscreen', {
+			configurable: true,
+			value: exitFullscreen
+		});
+		Object.defineProperty(document, 'fullscreenElement', {
+			configurable: true,
+			get: () => fullscreen
+		});
+		try {
+			await renderActiveCall();
+			ringSecondCall();
+			expect(exitFullscreen).not.toHaveBeenCalled();
+
+			fullscreen = document.body;
+			act(() => {
+				document.dispatchEvent(new Event('fullscreenchange'));
+			});
+
+			await waitFor(() =>
+				expect(exitFullscreen).toHaveBeenCalledTimes(1)
+			);
+		} finally {
+			delete (document as unknown as Record<string, unknown>)
+				.fullscreenElement;
+			delete (document as unknown as Record<string, unknown>)
+				.exitFullscreen;
+		}
+	});
+
+	it('mutes on the first press in the dock, before the call reported its devices', async () => {
+		const { view } = await renderActiveCall();
+		const api = widgetApiMocks.instances.at(-1)! as unknown as {
+			transport: { send: ReturnType<typeof vi.fn> };
+		};
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+		fireEvent.click(
+			await view.findByRole('button', { name: 'Mute', pressed: false })
+		);
+
+		await waitFor(() =>
+			expect(api.transport.send).toHaveBeenCalledWith(
+				'io.element.device_mute',
+				{ audio_enabled: false }
+			)
+		);
+	});
+
+	describe('the choice from the device check (#2016)', () => {
+		const wanted = { audio_enabled: true, video_enabled: false };
+		const lastApi = () =>
+			widgetApiMocks.instances.at(-1)! as unknown as {
+				on: ReturnType<typeof vi.fn>;
+				transport: { send: ReturnType<typeof vi.fn> };
+			};
+
+		const renderReadyCall = async (
+			reply: unknown,
+			addNotification: ReturnType<typeof vi.fn>
+		) => {
+			rememberJoinMedia(FAKE_SIGNAL_ROOM_ID, wanted);
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+			renderTranslated(
+				<NotificationsContext.Provider
+					value={{ addNotification } as never}
+				>
+					<MatrixClientContext.Provider
+						value={{
+							matrixClientService,
+							setMatrixClientService: () => {}
+						}}
+					>
+						<GroupCallWidget />
+					</MatrixClientContext.Provider>
+				</NotificationsContext.Provider>
+			);
+			await waitFor(() =>
+				expect(
+					lastApi().on.mock.calls.some(([name]) => name === 'ready')
+				).toBe(true)
+			);
+			const api = lastApi();
+			api.transport.send.mockResolvedValue(reply);
+			const [, ready] = api.on.mock.calls.find(
+				([name]) => name === 'ready'
+			)!;
+			act(() => ready());
+			return api;
+		};
+
+		const mutes = (api: ReturnType<typeof lastApi>) =>
+			api.transport.send.mock.calls.filter(
+				([action]) => action === 'io.element.device_mute'
+			);
+
+		it('stops once the call confirms it', async () => {
+			const addNotification = vi.fn();
+			const api = await renderReadyCall(wanted, addNotification);
+			await waitFor(() => expect(mutes(api)).toHaveLength(1));
+			await act(() => new Promise((done) => setTimeout(done, 1_200)));
+			expect(mutes(api)).toHaveLength(1);
+			expect(addNotification).not.toHaveBeenCalled();
+		});
+
+		it('warns when the call never confirms it', async () => {
+			const addNotification = vi.fn();
+			const api = await renderReadyCall(
+				{ audio_enabled: true, video_enabled: true },
+				addNotification
+			);
+			await waitFor(
+				() => expect(addNotification).toHaveBeenCalledTimes(1),
+				{ timeout: 4_000 }
+			);
+			expect(mutes(api)).toHaveLength(3);
+			expect(addNotification.mock.calls[0][0].notificationType).toBe(
+				'warning'
+			);
+		});
+	});
+
+	it('moves keyboard focus into the dock when the call is minimized', async () => {
+		const { view } = await renderActiveCall();
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+
+		const back = await view.findByRole('button', {
+			name: 'Back to the full call'
+		});
+		await waitFor(() => expect(document.activeElement).toBe(back));
+	});
+
+	it('takes keyboard focus back into the call when the dock expands', async () => {
+		const { view, iframe } = await renderActiveCall();
+
+		fireEvent.click(view.getByRole('button', { name: 'Minimize call' }));
+		fireEvent.click(
+			await view.findByRole('button', { name: 'Back to the full call' })
+		);
+
+		await waitFor(() => expect(document.activeElement).toBe(iframe));
+	});
+
+	it('waits for the call to say goodbye before destroying its document', async () => {
+		/*
+		 * `hangup()` is a widget action and the MatrixRTC leave happens INSIDE
+		 * the iframe, once it has processed the message. Firing it and blanking
+		 * the iframe in the same tick raced that: the document went away before
+		 * the membership left, so everybody else went on seeing this person in
+		 * the call — and the durable card went on saying `running` — until the
+		 * delayed leave expired. That net is for a browser that crashes, not
+		 * for a button somebody pressed.
+		 */
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		const iframe = await waitFor(() => {
+			const found = view.container.querySelector(
+				'.element-call-iframe'
+			) as HTMLIFrameElement | null;
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		const callUrl = iframe.src;
+		expect(callUrl).not.toBe('about:blank');
+
+		// The call takes its time replying.
+		let replied!: () => void;
+		widgetApiMocks.instances
+			.at(-1)!
+			.transport.send.mockImplementation(async (action: string) => {
+				if (action !== 'im.vector.hangup') return {};
+				await new Promise<void>((resolve) => {
+					replied = resolve;
+				});
+				return {};
+			});
+
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+		await Promise.resolve();
+
+		// Still here, and still holding the call: nothing has been torn down
+		// under the iframe's feet.
+		expect(iframe.src).toBe(callUrl);
+		expect(callManager.hasActiveCall()).toBe(true);
+
+		replied();
+		await waitFor(() => expect(callManager.hasActiveCall()).toBe(false));
+		expect(iframe.src).toBe('about:blank');
+	});
+
+	it('closes anyway when the call never answers', async () => {
+		// The cap. A wedged iframe must not trap anybody in a surface that
+		// will not close; past it the teardown goes ahead and the delayed
+		// leave does its job after all.
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+
+			const view = renderTranslated(
+				<MatrixClientContext.Provider
+					value={{
+						matrixClientService,
+						setMatrixClientService: () => {}
+					}}
+				>
+					<GroupCallWidget />
+				</MatrixClientContext.Provider>
+			);
+			await waitFor(() => {
+				expect(
+					view.container.querySelector('.element-call-iframe')
+				).toBeTruthy();
+			});
+
+			widgetApiMocks.instances
+				.at(-1)!
+				.transport.send.mockImplementation(async (action: string) =>
+					action === 'im.vector.hangup' ? new Promise(() => {}) : {}
+				);
+
+			fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(callManager.hasActiveCall()).toBe(false);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('resizes the stage from the keyboard, not only from a pointer', async () => {
+		/*
+		 * These handles were `role="separator"` with an `aria-label` and
+		 * nothing but `onPointerDown`: they announced a control a keyboard
+		 * could neither reach nor operate. On this surface that also means no
+		 * way to make room for the Gesprächsnotizen panel without a mouse,
+		 * since the panel moves beside the stage only past a width.
+		 */
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		await waitFor(() => {
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
+
+		const handle = view.container.querySelector(
+			'.call-resize-handle--e'
+		) as HTMLElement | null;
+		expect(handle).toBeTruthy();
+		// Reachable at all, and it says where it sits in its range.
+		expect(handle!.getAttribute('tabindex')).toBe('0');
+		const before = Number(handle!.getAttribute('aria-valuenow'));
+		expect(before).toBeGreaterThan(0);
+		expect(
+			Number(handle!.getAttribute('aria-valuemin'))
+		).toBeLessThanOrEqual(before);
+
+		handle!.focus();
+		expect(document.activeElement).toBe(handle);
+
+		const widthNow = (): number =>
+			Number(
+				view.container
+					.querySelector('.call-resize-handle--e')!
+					.getAttribute('aria-valuenow')
+			);
+
+		// Inwards first: the stage opens at the width the window allows, so
+		// `ArrowRight` is correctly clamped and would prove nothing.
+		fireEvent.keyDown(handle!, { key: 'ArrowLeft' });
+		await waitFor(() => expect(widthNow()).toBeLessThan(before));
+		const narrowed = widthNow();
+
+		// And back out again, so this is a resize rather than a one-way trip.
+		fireEvent.keyDown(
+			view.container.querySelector('.call-resize-handle--e')!,
+			{ key: 'ArrowRight' }
+		);
+		await waitFor(() => expect(widthNow()).toBeGreaterThan(narrowed));
+
+		// Shift takes bigger strides than a bare arrow.
+		const fromHere = widthNow();
+		fireEvent.keyDown(
+			view.container.querySelector('.call-resize-handle--e')!,
+			{ key: 'ArrowLeft', shiftKey: true }
+		);
+		await waitFor(() =>
+			expect(fromHere - widthNow()).toBeGreaterThan(before - narrowed)
+		);
+	});
+
+	it('moves all subscriptions to a fresh client and cleans up on unmount', async () => {
+		const firstService = makeFakeMatrixClientService('active');
+		const nextService = makeFakeMatrixClientService('connecting');
+		seedIncomingElementCall();
+		callManager.answerCall();
+
+		const renderWidget = (matrixClientService: typeof firstService) => (
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		const view = renderTranslated(renderWidget(firstService));
+
+		await waitFor(() => {
+			expect(listenerCount(firstService)).toBe(4);
+			expect(widgetApiMocks.instances).toHaveLength(1);
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
+		view.rerender(renderWidget(nextService));
+		await waitFor(() => {
+			expect(listenerCount(firstService)).toBe(0);
+			expect(listenerCount(nextService)).toBe(4);
+		});
+		await waitFor(() =>
+			expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled()
+		);
+
+		view.unmount();
+
+		expect(listenerCount(nextService)).toBe(0);
+		resetCallManager();
+		expect(callManager.getCurrentCall()).toBeNull();
+	});
+
+	it('clears retained local-leave metadata when the actual harness unmounts', async () => {
+		const view = renderTranslated(<GroupCallStoryHarness mode="active" />);
+
+		await waitFor(() => {
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
+		fireEvent.click(view.getByRole('button', { name: 'Close call' }));
+		await waitFor(() =>
+			expect(callManager.getCurrentCall()).toEqual(
+				expect.objectContaining({
+					callId: FAKE_CALL_ID,
+					state: 'left',
+					isGroup: true
+				})
+			)
+		);
+
+		view.unmount();
+
+		expect(callManager.getCurrentCall()).toBeNull();
+	});
+
+	it('reseeds the actual harness without carrying active UI across modes', async () => {
+		const view = renderTranslated(<GroupCallStoryHarness mode="active" />);
+
+		await waitFor(() => {
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
+		view.rerender(<GroupCallStoryHarness mode="connecting" />);
+		await waitFor(() => {
+			expect(
+				view.container.querySelector('.connecting-popup')
+			).toBeTruthy();
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeFalsy();
+		});
+		await waitFor(() =>
+			expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled()
+		);
+
+		view.unmount();
+		expect(callManager.getCurrentCall()).toBeNull();
+	});
+});
+
+describe('what the host adds around the call', () => {
+	beforeEach(() => {
+		resetCallManager();
+		widgetApiMocks.instances.length = 0;
+	});
+	afterEach(() => {
+		resetCallManager();
+		cleanup();
+	});
+
+	const withUser = (
+		userData: Record<string, unknown> | null,
+		matrixClientService: unknown
+	) =>
+		render(
+			<I18nextProvider i18n={testI18n}>
+				<UserDataContext.Provider
+					value={
+						userData === null
+							? null
+							: ({
+									userData,
+									setUserData: () => {},
+									reloadUserData: () => {}
+								} as never)
+					}
+				>
+					<MatrixClientContext.Provider
+						value={
+							{
+								matrixClientService,
+								setMatrixClientService: () => {}
+							} as never
+						}
+					>
+						<GroupCallWidget />
+					</MatrixClientContext.Provider>
+				</UserDataContext.Provider>
+			</I18nextProvider>
+		);
+
+	const activeCall = () => {
+		seedIncomingElementCall();
+		callManager.answerCall();
+	};
+
+	const counsellor = {
+		userId: '@berater:matrix.storybook.test',
+		grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+	};
+
+	it("asks for knocks in a counsellor's Element Call call", async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		activeCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await waitFor(() => expect(knockApi.pending).toHaveBeenCalled());
+		expect(knockApi.shareLink).toHaveBeenCalled();
+	});
+
+	it('asks for no knocks in a legacy call, which shows no widget', async () => {
+		knockApi.pending.mockClear();
+		knockApi.shareLink.mockClear();
+		resetCallManager();
+		callManager.receiveCall(
+			FAKE_ELEMENT_CALL_ROOM_ID,
+			true,
+			FAKE_CALL_ID,
+			'@caller:matrix.storybook.test',
+			true,
+			FAKE_SIGNAL_ROOM_ID,
+			false
+		);
+		callManager.answerCall();
+		withUser(counsellor, makeFakeMatrixClientService('active'));
+		await act(async () => {});
+		expect(knockApi.pending).not.toHaveBeenCalled();
+		expect(knockApi.shareLink).not.toHaveBeenCalled();
+	});
+
+	it('keeps no notepad of its own beside the call', async () => {
+		// "Meine Gesprächsnotiz" lives inside the call now (ElementCall#112);
+		// a second, older notepad in the host would show two of them.
+		const service = makeFakeMatrixClientService('active');
+		activeCall();
+		const view = withUser(
+			{
+				userId: '@berater:matrix.storybook.test',
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			},
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+		expect(view.container.querySelector('.element-call-notes')).toBeFalsy();
+	});
+
+	it('keeps announcing who it is until the send can be encrypted', async () => {
+		/*
+		 * A replacement client is announced BEFORE `initRustCrypto()` has
+		 * finished, so the identity send can fail to encrypt —
+		 * `publishCallIdentity` turns that into `null`, rightly, because the
+		 * record must not leave the room unencrypted. The refusal used to end
+		 * there: nothing re-ran the publication, so somebody arriving in that
+		 * gap saw this person as initials for the rest of the call.
+		 *
+		 * The first two sends fail here, exactly as a pre-crypto client's do.
+		 */
+		forgetPublishedIdentity();
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn> & {
+				mock: { calls: unknown[][] };
+			};
+		};
+		client.sendEvent
+			.mockRejectedValueOnce(new Error('crypto is not ready yet'))
+			.mockRejectedValueOnce(new Error('crypto is not ready yet'));
+		activeCall();
+
+		const identitySends = (): number =>
+			client.sendEvent.mock.calls.filter(
+				(call) => call[1] === CALL_IDENTITY_EVENT_TYPE
+			).length;
+
+		const view = withUser(
+			{ userId: '@berater:matrix.storybook.test' },
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+		await waitFor(() => expect(identitySends()).toBe(1));
+
+		// The ladder keeps going until one of them gets through.
+		await waitFor(() => expect(identitySends()).toBeGreaterThan(2), {
+			timeout: 8000
+		});
+	}, 20000);
+
+	it('is still announcing after a crypto window longer than the ladder', async () => {
+		/*
+		 * Seven seconds was a guess about somebody else's machine.
+		 *
+		 * The ladder had three rungs — 1s, 2s, 4s — and then stopped for
+		 * good. `initRustCrypto()` plus a first sync on a cold profile can
+		 * outlast that, and nothing re-runs this publication afterwards: an
+		 * arrival makes the OTHER participants re-announce, and whoever was
+		 * already in the call was seeded into the arrival set at mount. The
+		 * person sat there as initials for the rest of the call.
+		 *
+		 * Four refusals is one more than the old ladder could answer, so the
+		 * fifth send only happens if the last rung repeats.
+		 */
+		forgetPublishedIdentity();
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn> & {
+				mock: { calls: unknown[][] };
+			};
+		};
+		const notReady = (): Error => new Error('crypto is not ready yet');
+		client.sendEvent
+			.mockRejectedValueOnce(notReady())
+			.mockRejectedValueOnce(notReady())
+			.mockRejectedValueOnce(notReady())
+			.mockRejectedValueOnce(notReady());
+		activeCall();
+
+		const identitySends = (): number =>
+			client.sendEvent.mock.calls.filter(
+				(call) => call[1] === CALL_IDENTITY_EVENT_TYPE
+			).length;
+
+		const view = withUser(
+			{ userId: '@berater:matrix.storybook.test' },
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+
+		// 1 + 2 + 4 seconds of ladder, then the repeated rung.
+		await waitFor(() => expect(identitySends()).toBeGreaterThan(4), {
+			timeout: 20000
+		});
+	}, 40000);
+
+	it('announces the own identity to the call room, in the timeline', async () => {
+		/*
+		 * Not into room state, which is the point.
+		 *
+		 * Matrix room encryption covers message events; state events travel
+		 * in the clear in an encrypted room exactly as in any other, so an
+		 * identity in state is a durable record the homeserver and every
+		 * server it federates to can read — here, which advice seeker chose
+		 * which animal. As a timeline event in a Megolm room the server
+		 * stores ciphertext.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+			sendStateEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() =>
+			expect(client.sendEvent).toHaveBeenCalledWith(
+				FAKE_ELEMENT_CALL_ROOM_ID,
+				'org.oriso.call.identity',
+				expect.objectContaining({ kind: 'animal' })
+			)
+		);
+		// And never as room state again.
+		expect(client.sendStateEvent).not.toHaveBeenCalled();
+	});
+
+	it('says it again when the same call is reopened', async () => {
+		/*
+		 * The gap the re-announce does NOT cover.
+		 *
+		 * Leaving a group call keeps the room: `leaveCall` sets the state to
+		 * `left` and holds on to `currentCall`, so `callRoomId` never changes
+		 * and the room-keyed `forgetPublishedIdentity` cleanup does not fire.
+		 * `lastSent` therefore still held this client's identity when the
+		 * surface was opened again, and the publish was a no-op.
+		 *
+		 * Everybody who was already in the call still has the first event, so
+		 * the gap is invisible to them. Somebody who joined while this client
+		 * was away does not: `history_visibility` is `joined`, so they cannot
+		 * read it from the room's history, and an arrival makes the OTHERS
+		 * resend their own identities rather than this one. They would go on
+		 * seeing the returner as initials.
+		 *
+		 * Note this cannot be shown by unmounting and rendering again — the
+		 * unmount runs the cleanup and clears `lastSent`, so that version
+		 * passes against the unfixed code. The component stays mounted here
+		 * and only the widget session changes, which is the real case.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		const announcements = (): number =>
+			client.sendEvent.mock.calls.filter(
+				(call: unknown[]) => call[1] === 'org.oriso.call.identity'
+			).length;
+		await waitFor(() => expect(announcements()).toBe(1));
+
+		// Close the surface, then open it again. Same call, same room.
+		await act(async () => {
+			callManager.leaveCall();
+		});
+		await act(async () => {
+			callManager.answerCall();
+		});
+
+		await waitFor(() => expect(announcements()).toBe(2));
+	});
+
+	it('says it again when somebody joins the CALL, including on a rejoin', async () => {
+		/*
+		 * What replaces a state event's "always current", and the signal it
+		 * has to listen to.
+		 *
+		 * Room state is there for whoever reads it next; a timeline event
+		 * reaches whoever was listening at the time, and the call room's
+		 * history is closed to non-members — so a newcomer is handed nothing
+		 * and everybody already in the call re-announces instead.
+		 *
+		 * The signal is the MatrixRTC session, not room membership. The widget
+		 * host never leaves the Matrix room, so somebody who closes the call
+		 * surface and reopens it stays a joined room member throughout and
+		 * only their RTC membership goes away and comes back. Watching room
+		 * membership never fired for them, nobody re-announced, and the
+		 * returning participant sat looking at initials where the animals had
+		 * been.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const setCallMemberships = (
+			service as unknown as {
+				setCallMemberships(senders: string[]): void;
+			}
+		).setCallMemberships;
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(1));
+
+		// Our own membership churning is not an arrival.
+		setCallMemberships([]);
+		setCallMemberships([FAKE_CURRENT_USER_ID]);
+		expect(client.sendEvent).toHaveBeenCalledTimes(1);
+
+		// Somebody else joining is.
+		setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(2));
+
+		// Staying is not.
+		setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
+		expect(client.sendEvent).toHaveBeenCalledTimes(2);
+
+		// And leaving and coming back IS, which room membership could not see.
+		setCallMemberships([FAKE_CURRENT_USER_ID]);
+		setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(3));
+	});
+
+	it('treats a second device of somebody already here as an arrival', async () => {
+		/*
+		 * MatrixRTC memberships are per device. Collapsing them to a set of
+		 * user ids made a familiar face on a new device look like nothing
+		 * happening — so nobody re-announced, and that device, which had
+		 * received none of the identities sent before it existed, showed
+		 * everybody as initials for the rest of the call.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const harness = service as unknown as {
+			setCallMemberships(
+				senders: Array<string | { sender: string; deviceId?: string }>
+			): void;
+		};
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(1));
+
+		harness.setCallMemberships([
+			FAKE_CURRENT_USER_ID,
+			{ sender: '@newcomer:x.test', deviceId: 'LAPTOP' }
+		]);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(2));
+
+		// The same person, a second device: still an arrival.
+		harness.setCallMemberships([
+			FAKE_CURRENT_USER_ID,
+			{ sender: '@newcomer:x.test', deviceId: 'LAPTOP' },
+			{ sender: '@newcomer:x.test', deviceId: 'PHONE' }
+		]);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(3));
+
+		// And nothing changing is still nothing changing.
+		harness.setCallMemberships([
+			FAKE_CURRENT_USER_ID,
+			{ sender: '@newcomer:x.test', deviceId: 'LAPTOP' },
+			{ sender: '@newcomer:x.test', deviceId: 'PHONE' }
+		]);
+		expect(client.sendEvent).toHaveBeenCalledTimes(3);
+	});
+
+	it('keeps announcing through the client a token refresh put in place', async () => {
+		/*
+		 * A token refresh swaps the client inside `MatrixClientService` and
+		 * takes the old client's listeners with it — but the service object,
+		 * which is what the context holds and what the identity effect
+		 * depends on, is the same object before and after. So the effect sat
+		 * on a dead MatrixRTC listener until some unrelated render happened,
+		 * and nobody arriving after the refresh was re-announced to: they saw
+		 * this person as initials for the rest of the call.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const harness = service as unknown as {
+			setCallMemberships(senders: string[]): void;
+			replaceClient(): { sendEvent: ReturnType<typeof vi.fn> };
+		};
+		const before = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() => expect(before.sendEvent).toHaveBeenCalledTimes(1));
+
+		const after = harness.replaceClient();
+
+		/*
+		 * The replacement says it again by itself. Waiting for an arrival to
+		 * prompt it would leave anybody who arrived between the old client
+		 * going away and the new one being listened to looking at initials
+		 * for the rest of the call, and nothing else closes that window.
+		 *
+		 * How MANY times is deliberately not pinned. Swapping the client also
+		 * rebuilds the widget, so its URL goes through `null` and back, and that
+		 * round trip is itself a session boundary that announces — one
+		 * announcement or two, depending on how the renders fall. Pinning the
+		 * count made this test pass alone and fail in the full suite, which is a
+		 * property of the harness and not of the host.
+		 */
+		await waitFor(() => expect(after.sendEvent).toHaveBeenCalled());
+		const afterTheSwap = after.sendEvent.mock.calls.length;
+
+		// And the listeners moved with it: an arrival is still an arrival.
+		harness.setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
+		await waitFor(() =>
+			expect(after.sendEvent.mock.calls.length).toBeGreaterThan(
+				afterTheSwap
+			)
+		);
+
+		// The dead client was not asked to send anything more.
+		expect(before.sendEvent).toHaveBeenCalledTimes(1);
+	});
+
+	it('says nothing when there is no user data to say it from', async () => {
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(null, service);
+		await waitFor(() =>
+			expect(widgetApiMocks.instances.length).toBeGreaterThan(0)
+		);
+		expect(client.sendEvent).not.toHaveBeenCalled();
+	});
+});

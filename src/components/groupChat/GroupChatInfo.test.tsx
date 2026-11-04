@@ -1,8 +1,15 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	desktopView,
 	mobileDetailView,
@@ -26,6 +33,9 @@ vi.mock('../../globalState', async () => {
 		UserDataContext: react.createContext({ userData: {} }),
 		SessionTypeContext: react.createContext({ path: '/sessions' }),
 		ActiveSessionContext: react.createContext({}),
+		NotificationsContext: react.createContext({}),
+		SessionsDataContext: react.createContext({ dispatch: () => undefined }),
+		REMOVE_SESSIONS: 'REMOVE_SESSIONS',
 		ActiveSessionProvider: ({ children }: any) => children
 	};
 });
@@ -41,7 +51,9 @@ vi.mock('../../hooks/useResponsive', () => ({
 vi.mock('../../hooks/useSession', () => ({
 	useSession: () => ({ session: null, ready: false })
 }));
-vi.mock('../../hooks/useAppConfig', () => ({ useAppConfig: () => ({}) }));
+vi.mock('../../hooks/useAppConfig', () => ({
+	useAppConfig: () => ({ urls: { toLogin: '' } })
+}));
 
 const renderInfo = (props: { dialog?: boolean }) =>
 	render(

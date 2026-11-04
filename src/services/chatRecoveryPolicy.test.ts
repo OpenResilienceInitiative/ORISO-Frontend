@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import { getChatRecoveryPolicy } from './chatRecoveryPolicy';
 it('keeps legacy and anonymous accounts on key recovery independently of defaults', () => {
 	expect(getChatRecoveryPolicy({})).toEqual({ mode: 'RECOVERY_KEY' });

@@ -1,12 +1,10 @@
 .orbitalTrails {
-	--orbital-trails-background: var(--m3-background, #fcf9f9);
 	--orbital-trails-color-1: var(--m3-primary, #b3261e);
 	--orbital-trails-color-2: var(--m3-primary, #b3261e);
 	--orbital-trails-color-3: var(--m3-primary, #b3261e);
 	--orbital-trails-color-4: var(--m3-primary, #b3261e);
 
 	width: min(100%, 520px);
-	background: var(--orbital-trails-background);
 	aspect-ratio: 1;
 
 	&--mixed {

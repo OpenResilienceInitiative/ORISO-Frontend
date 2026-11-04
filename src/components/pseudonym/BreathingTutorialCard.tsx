@@ -1,7 +1,7 @@
 import {
-	CarimatRobotIcon,
-	useAssistantIdentity
-} from '../carimat/AssistantIdentity';
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './PseudonymCard.styles.scss';
@@ -200,7 +200,6 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 	onConfirm
 }) => {
 	const { t } = useTranslation();
-	const { name } = useAssistantIdentity();
 
 	const phaseContent: Record<
 		BreathingTutorialPhase,
@@ -238,39 +237,29 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 			className={`breathingTutorialCard breathingTutorialCard--${phase}`}
 			role="group"
 		>
-			<div className="breathingTutorialCard__wrap">
-				<div className="pseudonymCard__avatarCol">
-					<div className="pseudonymCard__avatarFrame">
-						<div className="pseudonymCard__avatarIcon">
-							<CarimatRobotIcon />
-						</div>
-					</div>
-					<div className="pseudonymCard__menuIcon">
+			<CarimatMessageFrame
+				className="breathingTutorialCard__message"
+				subtitle={t(
+					'session.waitingMiniGame.tutorialCard.carimatSubtitle'
+				)}
+				menu={
+					<span
+						className="pseudonymCard__menuIcon"
+						aria-hidden="true"
+					>
 						<VerticalMenuIcon />
-					</div>
-				</div>
-
-				<div className="pseudonymCard__contentCol breathingTutorialCard__contentCol">
-					<div className="pseudonymCard__header">
-						<span className="pseudonymCard__headerName">
-							{name}
-						</span>
-						<span className="pseudonymCard__headerSubtitle">
-							{t(
-								'session.waitingMiniGame.tutorialCard.carimatSubtitle'
-							)}
-						</span>
-					</div>
-					<div className="breathingTutorialCard__bubble">
-						<p className="breathingTutorialCard__bubbleText">
-							<TerminalTypewriter
-								key={`${phase}-${bubble}`}
-								text={bubble}
-							/>
-						</p>
-					</div>
-				</div>
-			</div>
+					</span>
+				}
+			>
+				<CarimatMessageBubble className="breathingTutorialCard__bubble">
+					<p className="breathingTutorialCard__bubbleText">
+						<TerminalTypewriter
+							key={`${phase}-${bubble}`}
+							text={bubble}
+						/>
+					</p>
+				</CarimatMessageBubble>
+			</CarimatMessageFrame>
 
 			<div className="breathingTutorialCard__phaseBlock">
 				<div className="breathingTutorialCard__phaseIcon">{icon}</div>

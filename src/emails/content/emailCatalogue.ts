@@ -69,6 +69,21 @@ export const EMAIL_IDS = [
 export type EmailId = (typeof EMAIL_IDS)[number];
 
 /**
+ * Ordinary internal chat shares the neutral counsellor message template, but
+ * has its own recipient preference and unsubscribe occasion (UserService#1375).
+ * This mapping is a producer contract, not an additional rendered template.
+ */
+export const INTERNAL_CHAT_EMAIL = {
+	occasion: 'interne-nachricht',
+	template: 'neue-nachricht-beratung',
+	audience: 'consultant'
+} as const;
+
+export type NotificationEmailOccasion =
+	| EmailId
+	| typeof INTERNAL_CHAT_EMAIL.occasion;
+
+/**
  * The variants every occasion ships in.
  *
  * Two orthogonal things are folded into one flat id, because a template file

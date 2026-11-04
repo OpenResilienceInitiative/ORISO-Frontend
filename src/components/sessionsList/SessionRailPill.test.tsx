@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { SessionRailPill } from './SessionRailPill';
 
 describe('SessionRailPill accessibility', () => {
@@ -9,6 +9,9 @@ describe('SessionRailPill accessibility', () => {
 		thread: 'Thread',
 		supervision: 'Supervision',
 		mail: 'Mail',
+		videoCall: 'Video call',
+		audioCall: 'Audio call',
+		directLink: 'Direct link',
 		unread: 'Unread'
 	};
 

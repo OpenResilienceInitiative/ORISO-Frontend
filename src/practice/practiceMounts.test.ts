@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const appRoot = resolve(
 	dirname(fileURLToPath(import.meta.url)),

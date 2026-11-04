@@ -26,6 +26,9 @@ export const apiPutGroupChat = async (
 		responseHandling: [
 			FETCH_ERRORS.CONFLICT,
 			FETCH_ERRORS.CATCH_ALL,
+			...(groupChatApi === GROUP_CHAT_API.JOIN
+				? [FETCH_ERRORS.USER_BANNED_FROM_CHAT]
+				: []),
 			...([
 				GROUP_CHAT_API.START,
 				GROUP_CHAT_API.JOIN,

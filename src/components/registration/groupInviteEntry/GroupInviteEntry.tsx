@@ -1,15 +1,14 @@
 import * as React from 'react';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
-import { Box } from '@mui/material';
+import { Alert, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { AccountData } from '../accountData/AccountData';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
-import { RegistrationHandover } from '../../app/registrationLoader/RegistrationHandover';
 import type { RegistrationData } from '../../../globalState';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
-import { useGroupJoinHandoverCopy } from '../../groupChat/groupJoinHandoverCopy';
 import { RegistrationCompletionProvider } from '../consentCompletion/RegistrationCompletionContext';
+import { GroupHeading } from '../../groupChat/entryRoom/GroupHeading';
 
 /**
  * The newcomer entry of a self-help group link, as designed in Storybook
@@ -26,7 +25,9 @@ export const GroupInviteEntry = ({
 	onChange,
 	onJoin,
 	joinDisabled,
-	busy
+	busy,
+	agencyName,
+	loginRetry = false
 }: {
 	stage: ReactElement;
 	gcid: string;
@@ -37,9 +38,19 @@ export const GroupInviteEntry = ({
 	onJoin: () => void;
 	joinDisabled: boolean;
 	busy: boolean;
+	/** The agency the link names; the waiting room shows the same (#1689). */
+	agencyName?: string;
+	/**
+	 * The temporary account exists, only signing in failed (#1941). The name
+	 * is no longer asked — it belongs to that account now — and the button
+	 * tries the sign-in again.
+	 */
+	loginRetry?: boolean;
 }) => {
 	const { t } = useTranslation();
-	const handoverCopy = useGroupJoinHandoverCopy();
+	/* Only the agency: the topic stays hidden until the privacy agreement
+	   is recorded, as in the waiting room (#1499). */
+	const heading = <GroupHeading agencyName={agencyName} textAlign="left" />;
 
 	return (
 		<RegistrationCompletionProvider>
@@ -52,61 +63,78 @@ export const GroupInviteEntry = ({
 				loginState={INVITE_LOGIN_STATE}
 				stage={stage}
 				mobileHero="bar"
+				headerStart={heading}
 			>
-				{busy ? (
-					<RegistrationHandover
-						ready={false}
-						forcedState="preparing"
-						variant="inline"
-						onEnter={() => undefined}
-						copy={handoverCopy}
-					/>
-				) : (
-					<Box
-						data-cy="group-invite-entry"
-						sx={{
-							width: '100%',
-							minWidth: 0,
-							maxWidth: '100%',
-							px: { xs: 2.5, sm: 5 },
-							pt: { xs: 3, sm: 4 },
-							pb: 2
-						}}
-					>
+				{/* Once `busy`, `Registration` swaps this whole screen for the
+				    shared waiting room (`WaitingRoomFrame`, #1219). */}
+				<Box
+					data-cy="group-invite-entry"
+					sx={{
+						width: '100%',
+						minWidth: 0,
+						maxWidth: '100%',
+						px: { xs: 2.5, sm: 5 },
+						pt: { xs: 3, sm: 4 },
+						pb: 2
+					}}
+				>
+					{agencyName && (
+						<Box
+							sx={{
+								display: { xs: 'block', lg: 'none' },
+								mb: 1.5
+							}}
+						>
+							{heading}
+						</Box>
+					)}
+					{loginRetry ? (
+						<Alert
+							severity="warning"
+							data-cy="group-invite-login-retry"
+						>
+							{t('registration.accountCreated.retry')}
+						</Alert>
+					) : (
 						<AccountData
 							onChange={onChange}
 							entry="link"
+							conversationType="SELF_HELP"
 							temporary={temporary}
 						/>
-						<RegistrationFooter
-							secondary={{
-								compact: true,
-								label: temporary
-									? t(
-											'registration.account.temporary.toggleOff',
-											'Konto anlegen'
-										)
-									: t(
-											'registration.account.temporary.toggleOn',
-											'Ohne Konto beitreten'
-										),
-								onClick: onToggleTemporary
-							}}
-							primary={{
-								label: temporary
-									? t(
-											'registration.account.temporary.joinGroup',
-											'Der Gruppe beitreten'
-										)
-									: t('registration.register'),
-								onClick: () => {
-									if (!joinDisabled && !busy) onJoin();
-								},
-								disabled: joinDisabled || busy
-							}}
-						/>
-					</Box>
-				)}
+					)}
+					<RegistrationFooter
+						secondary={
+							loginRetry
+								? undefined
+								: {
+										compact: true,
+										label: temporary
+											? t(
+													'registration.account.temporary.toggleOff',
+													'Konto anlegen'
+												)
+											: t(
+													'registration.account.temporary.toggleOn',
+													'Ohne Konto beitreten'
+												),
+										onClick: onToggleTemporary
+									}
+						}
+						primary={{
+							label: temporary
+								? t(
+										'registration.account.temporary.joinGroup',
+										'Der Gruppe beitreten'
+									)
+								: t('registration.register'),
+							onClick: () => {
+								if (!joinDisabled && !busy) onJoin();
+							},
+							disabled: joinDisabled || busy
+						}}
+					/>
+				</Box>
 			</StageLayout>
 		</RegistrationCompletionProvider>
 	);

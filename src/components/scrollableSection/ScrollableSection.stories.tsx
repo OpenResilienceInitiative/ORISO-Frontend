@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Meta, StoryObj } from '@storybook/react';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { ScrollableSection } from './ScrollableSection';
 
 const meta = {
@@ -8,6 +9,10 @@ const meta = {
 	component: ScrollableSection,
 	tags: ['autodocs'],
 	parameters: {
+		// #1338: the body scrolls but takes no focus: keyboard users cannot scroll it; the real fix is a tab stop, left for a product decision.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': ['.scrollableSection__body']
+		}),
 		docs: {
 			description: {
 				component:

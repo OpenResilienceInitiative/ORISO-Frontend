@@ -1,66 +1,66 @@
 name: Frontend Build and Publish
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-      - pre-dev
+    push:
+        branches:
+            - main
+            - dev
+            - pre-dev
 
 env:
-  REGISTRY: ghcr.io
-  ORG: openresilienceinitiative
+    REGISTRY: ghcr.io
+    ORG: openresilienceinitiative
 
 # A publishing run must finish: cancelling one halfway is worse
 # than paying for it.
 concurrency:
-  group: frontend-main-${{ github.ref }}
-  cancel-in-progress: false
+    group: frontend-main-${{ github.ref }}
+    cancel-in-progress: false
 
 jobs:
-  publish:
-    name: lint, type-check, build and publish image
-    runs-on: ubuntu-latest
-    # Multi-arch build + Trivy + attestation; success median is ~29 min.
-    # No cancel-in-progress here — this produces the deployed image.
-    timeout-minutes: 60
+    publish:
+        name: lint, type-check, build and publish image
+        runs-on: ubuntu-latest
+        # Multi-arch build + Trivy + attestation; success median is ~29 min.
+        # No cancel-in-progress here — this produces the deployed image.
+        timeout-minutes: 60
 
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-      packages: write
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            packages: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
 
-      - name: Run frontend validation and build
-        uses: ./.github/actions/node-build
-        with:
-          node_version: '22'
+            - name: Run frontend validation and build
+              uses: ./.github/actions/node-build
+              with:
+                  node_version: '22.23.3'
 
-      - name: Publish frontend Docker image
-        id: image
-        uses: ./.github/actions/docker-build-push
-        with:
-          push_to_ghcr: true
-          image_name: oriso-frontend
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Trivy runs inside the action, against a locally built image, and
-          # before anything reaches GHCR. It used to run as a separate step
-          # after this one, which could only redden the run — the vulnerable
-          # image was already published and deployable by then
-          # (OpenResilienceInitiative/ORISO-Docs#88).
-          scan_before_push: true
+            - name: Publish frontend Docker image
+              id: image
+              uses: ./.github/actions/docker-build-push
+              with:
+                  push_to_ghcr: true
+                  image_name: oriso-frontend
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  # Trivy runs inside the action, against a locally built image, and
+                  # before anything reaches GHCR. It used to run as a separate step
+                  # after this one, which could only redden the run — the vulnerable
+                  # image was already published and deployable by then
+                  # (OpenResilienceInitiative/ORISO-Docs#88).
+                  scan_before_push: true
 
-      - name: Sign and publish the image provenance attestation
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend
-          subject-digest: ${{ steps.image.outputs.digest }}
-          push-to-registry: true
+            - name: Sign and publish the image provenance attestation
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.1.0
+              with:
+                  subject-name: ${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend
+                  subject-digest: ${{ steps.image.outputs.digest }}
+                  push-to-registry: true
 
-      - name: Record immutable release digest
-        run: echo '${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend@${{ steps.image.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"
+            - name: Record immutable release digest
+              run: echo '${{ env.REGISTRY }}/${{ env.ORG }}/oriso-frontend@${{ steps.image.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"

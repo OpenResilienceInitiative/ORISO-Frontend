@@ -1,7 +1,14 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import React, { PropsWithChildren } from 'react';
 import { cleanup, renderHook, waitFor, act } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { ActiveSessionContext } from '../globalState';
 import { useMatrixRoomUsers } from './useMatrixRoomUsers';
 
@@ -101,6 +108,23 @@ describe('useMatrixRoomUsers', () => {
 			}
 		]);
 		expect(result.current.moderators).toEqual(['@mod:x']);
+	});
+
+	// #107: a supervisor reads along at a power level of her own; the role
+	// badges need it.
+	it("passes on each member's power level in the room", async () => {
+		mocks.loadMatrixRoomMembers.mockResolvedValue([
+			{ userId: '@supervisor:x', name: 'Supervisor', powerLevel: 10 },
+			{ userId: '@asker:x', name: 'Asker' }
+		]);
+
+		const { result } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await waitFor(() => {
+			expect(result.current.users).toHaveLength(2);
+		});
+		expect(result.current.users[0].powerLevel).toBe(10);
+		expect(result.current.users[1].powerLevel).toBeUndefined();
 	});
 
 	it('updates the member set when a membership event arrives', async () => {

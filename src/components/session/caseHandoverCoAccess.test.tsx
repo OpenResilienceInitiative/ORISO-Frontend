@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #200: an "advice needed" handover grants CO_ACCESS — the colleague may read
  * the case but must never write into the advice seeker's room. The composer
@@ -8,7 +8,7 @@
 import React from 'react';
 import { render, screen, cleanup, configure } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionItemComponent } from './SessionItemComponent';
 import {
 	ActiveSessionContext,
@@ -189,6 +189,7 @@ const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
 									current: false
 								}}
 								caseHandoverStatus={caseHandoverStatus}
+								onCaseHandoverStatusChange={vi.fn()}
 							/>
 						</ActiveSessionContext.Provider>
 					</SessionTypeContext.Provider>
@@ -223,6 +224,12 @@ describe('SessionItemComponent — case handover co-access is read-only', () => 
 			expect(screen.queryByTestId('composer')).toBeNull();
 		}
 	);
+
+	it('offers the co-access viewer an extension when the server allows one', async () => {
+		renderSession({ ...grant('CO_ACCESS'), canExtend: true });
+
+		expect(await screen.findByTestId('case-handover-extend')).toBeTruthy();
+	});
 
 	it('keeps the composer for the case owner', async () => {
 		renderSession(null);

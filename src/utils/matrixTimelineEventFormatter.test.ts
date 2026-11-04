@@ -2,7 +2,11 @@
  * Relations foundation (#435) — timeline formatter reply coverage.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
+import {
+	buildCallLifecycleContent,
+	type CallLifecycleMessage
+} from './callLifecycleMessage';
 import {
 	formatMatrixTimelineEvent,
 	extractReactionEvents
@@ -14,6 +18,36 @@ const makeEvent = (content: Record<string, unknown>) => ({
 	getSender: () => '@anna:hs',
 	getId: () => '$msg:hs',
 	getTs: () => 1700000000000
+});
+
+describe('call lifecycle room messages', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'call-1',
+		roomRef: '!conversation:hs',
+		callRoomId: '!media:hs',
+		callType: 'video',
+		state: 'running',
+		participants: []
+	};
+	it('exposes the call payload to the actual conversation renderer', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent(buildCallLifecycleContent(call)),
+			null,
+			'encrypted'
+		);
+		expect(formatted.callLifecycle).toEqual(call);
+	});
+	it('exposes replacement payload and revision time for a terminal call', () => {
+		const ended = { ...call, state: 'ended' as const };
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent(buildCallLifecycleContent(ended, '$initial')),
+			null,
+			'encrypted'
+		);
+		expect(formatted.editedCallLifecycle).toEqual(ended);
+		expect(formatted.callLifecycleRevisionTs).toBe(1700000000000);
+		expect(formatted.replaceTargetId).toBe('$initial');
+	});
 });
 
 const makeEncryptedEvent = (
@@ -351,5 +385,43 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 		expect(selfAssertedSafe.attachments[0]).not.toHaveProperty(
 			'mediaCheckState'
 		);
+	});
+});
+
+describe('formatMatrixTimelineEvent missing-key marker (#1827)', () => {
+	const failure = (reason: string | null) => ({
+		...makeEncryptedEvent(
+			{ msgtype: 'm.bad.encrypted', body: '** Unable to decrypt **' },
+			true
+		),
+		decryptionFailureReason: reason
+	});
+
+	it('marks a message whose key is missing on this device', () => {
+		const formatted = formatMatrixTimelineEvent(
+			failure('MEGOLM_UNKNOWN_INBOUND_SESSION_ID'),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBe('missing-key');
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+	});
+
+	it('leaves other failures unmarked', () => {
+		const formatted = formatMatrixTimelineEvent(
+			failure('UNKNOWN_ERROR'),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBeUndefined();
+	});
+
+	it('leaves readable messages unmarked', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({ msgtype: 'm.text', body: 'Hallo' }),
+			null,
+			'Nachricht verschlüsselt'
+		);
+		expect(formatted.undecryptableReason).toBeUndefined();
 	});
 });

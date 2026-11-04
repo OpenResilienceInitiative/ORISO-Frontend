@@ -1,4 +1,5 @@
 import { RefObject, useEffect, useRef, useState } from 'react';
+import { useThemeVersion } from '../../../utils/theme/useThemeVersion';
 import { loadStageEffect } from './loadStageEffect';
 import { StageEffect, StageEffectName } from './types';
 
@@ -161,6 +162,7 @@ export const useStageEffect = (
 ): StageEffectPhase => {
 	const [phase, setPhase] = useState<StageEffectPhase>('idle');
 	const effectRef = useRef<StageEffect | null>(null);
+	const themeVersion = useThemeVersion();
 
 	useEffect(() => {
 		if (!enabled || name === 'none') {
@@ -267,7 +269,7 @@ export const useStageEffect = (
 			effectRef.current?.destroy?.();
 			effectRef.current = null;
 		};
-	}, [name, hostRef, canvasRef, intensity, enabled]);
+	}, [name, hostRef, canvasRef, intensity, enabled, themeVersion]);
 
 	return phase;
 };

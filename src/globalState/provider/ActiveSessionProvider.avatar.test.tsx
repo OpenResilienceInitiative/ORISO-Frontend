@@ -1,7 +1,7 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { render, cleanup } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { ActiveSessionProvider } from './ActiveSessionProvider';
 import { UserDataContext } from '..';
 import { apiGetChatMembers } from '../../api/apiGetChatMembers';

@@ -265,11 +265,9 @@
 		"join": {
 			"waitingArea": {
 				"countdown": {
-					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
 					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
-					"overdueHeadline": "Wir sind gleich für dich da.",
-					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
+					"overdueSubtitle": "Die Moderation öffnet die Gruppe gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
 				}
 			},
@@ -324,7 +322,23 @@
 			"nameLabel": "Name Interna",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"scope": {
+				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen.",
+				"PLATFORM": "Du kannst Kolleg:innen deines Trägers und anderer teilnehmender Träger auswählen."
+			},
+			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
+			"error": {
+				"recipientsRequired": "Bitte wähle mindestens eine Kollegin oder einen Kollegen aus.",
+				"recipientUnknown": "Mindestens eine ausgewählte Person kann noch nicht hinzugefügt werden, weil sie noch kein Chat-Konto hat. Entferne die Person oder versuche es später erneut.",
+				"outOfScope": "Mindestens eine ausgewählte Person darf nicht ausgewählt werden: Sie liegt außerhalb des Bereichs, den deine Organisation für Interna erlaubt, oder ist nicht auffindbar. Es wurde nichts erstellt.",
+				"membershipFailed": "Der Raum konnte nicht mit allen ausgewählten Personen eingerichtet werden. Es wurde nichts erstellt. Bitte versuche es erneut.",
+				"disabled": "Interna mit ausgewählten Personen sind für dich nicht verfügbar: Sie sind nicht freigeschaltet, dir fehlt die Berechtigung, oder diese Installation unterstützt sie noch nicht. Bitte wende dich an deine Administration.",
+				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut.",
+				"busy": "Dieser Raum wird gerade erstellt. Bitte warte einen Moment und versuche es dann erneut.",
+				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wende dich an den Support."
+			}
 		},
 		"circle": {
 			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",
@@ -363,7 +377,16 @@
 		"entry": {
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
-			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang.",
+			"dates": {
+				"subline": "Tipp auf einen Termin, um ihn einzutragen."
+			},
+			"running": {
+				"subline": "Du kannst jederzeit dazukommen – niemand muss etwas sagen."
+			},
+			"rules": {
+				"subline": "Einmal kurz lesen – dann bist du dabei."
+			}
 		},
 		"info": {
 			"gallery": {
@@ -414,8 +437,14 @@
 		"consent": {
 			"headline": "Bevor du schreibst",
 			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"descriptionNamed": "Diese Gruppe wird von {{agency}} geleitet. Bitte stimme der Datenschutzerklärung dieser Beratungsstelle zu, bevor du in der Gruppe schreibst.",
 			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
 			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Du wurdest aus dieser Gruppe entfernt."
+			}
 		}
 	},
 	"help": {
@@ -566,7 +595,13 @@
 			"counsellorsEmpty": "In diesem Raum sind keine Beratenden",
 			"moderatorsEmpty": "In diesem Raum sind keine Moderierenden",
 			"toggleSection": "Bereich umschalten",
-			"selectAllBottom": "Alle auswählen"
+			"selectAllBottom": "Alle auswählen",
+			"unresolved": {
+				"text": "Die gewählten Adressaten konnten für diesen Chat nicht bestätigt werden. Wähle die Adressaten erneut aus und sende dann. Dein Text bleibt in diesem Feld erhalten."
+			},
+			"attachmentBlocked": {
+				"text": "Dateien und Sprachnachrichten lassen sich nicht auf ausgewählte Kolleg:innen beschränken. Wähle „Alle“, um sie mit allen zu teilen, oder sende stattdessen eine Textnachricht. Deine Datei oder Aufnahme bleibt erhalten."
+			}
 		},
 		"delete": {
 			"deleted": {
@@ -625,6 +660,10 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"browserOff": "Pop-ups sind in deinem Profil ausgeschaltet",
+			"emailMasterOff": "E-Mail-Benachrichtigungen sind in deinem Profil ausgeschaltet"
+		},
 		"enquiry": {
 			"new": "Du hast eine neue Live-Chat Anfrage!"
 		},
@@ -693,6 +732,26 @@
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
 				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
+			},
+			"caseHandoverGranted": {
+				"generic": {
+					"text": "Die berechtigte Freigabe wurde protokolliert. Den aktuellen Stand siehst du im Gespräch."
+				}
+			},
+			"caseHandoverOfferReceived": {
+				"text": "{{fromConsultantName}} möchte diese Beratung an dich übergeben. Prüfe die Anfrage, bevor du das Gespräch öffnest.",
+				"coAccess": {
+					"text": "{{fromConsultantName}} bietet dir vorübergehenden Zugriff auf diese Beratung an. Die bisherige Beratungsperson bleibt verantwortlich."
+				}
+			},
+			"callKnockRequested": {
+				"text": "Eine Person möchte in deinen Anruf. Tritt dem Anruf bei, um sie einzulassen.",
+				"video": {
+					"text": "Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
+				},
+				"audio": {
+					"text": "Eine Person möchte über deinen Direktlink in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
+				}
 			}
 		}
 	},
@@ -741,7 +800,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Verwende nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"info": "Verwende nur Kleinbuchstaben und Ziffern, getrennt durch einzelne Bindestriche (z. B. team-2), höchstens {{max}} Zeichen. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
 				"notification": {
 					"error": "Der Name des Kontakt-Links konnte nicht gespeichert werden. Bitte prüfe das Format oder wähle einen anderen Namen."
 				}
@@ -791,6 +850,10 @@
 					"sessionExpired": "Deine Anmeldung ist abgelaufen. Melde Dich neu an und schalte den Live-Chat danach wieder ein.",
 					"leaseLost": "Der Server führt Dich nicht mehr als verfügbar. Schalte den Live-Chat wieder ein, um erreichbar zu sein.",
 					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalte den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				},
+				"dpaRestricted": {
+					"title": "Ratsuchende können gerade keinen Live-Chat mit Dir beginnen",
+					"text": "Dein Träger hat die aktuelle Auftragsverarbeitungsvereinbarung noch nicht bestätigt. Bis dahin können neue Ratsuchende weder einen Live-Chat noch eine Anfrage beginnen. Bereits begonnene Beratungen laufen weiter."
 				}
 			},
 			"masterKey": {
@@ -799,7 +862,7 @@
 			"password": {
 				"reset": {
 					"insecure": "Dein Passwort ist nicht sicher.",
-					"instructions": "<span class=\"text--bold\">Dein Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 9 Zeichen</li></ul>",
+					"instructions": "<span class=\"text--bold\">Dein Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 16 Zeichen</li></ul>",
 					"not": {
 						"same": "Dein Passwort ist nicht identisch."
 					},
@@ -1244,6 +1307,9 @@
 				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
+			},
+			"displayName": {
+				"optional": "Anzeigename (optional). Ohne Angabe wird deine User-ID angezeigt."
 			}
 		},
 		"errors": {
@@ -1303,6 +1369,9 @@
 		"groupInvite": {
 			"loadError": {
 				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			},
+			"invalid": {
+				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte frag die Person, die dir den Link geschickt hat, nach einem neuen."
 			}
 		}
 	},
@@ -1525,6 +1594,9 @@
 				"close": "Suche schließen",
 				"clear": "Suche leeren",
 				"emptyPeople": "Keine passenden Personen gefunden.",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuche es später erneut.",
+				"handoverPeopleHint": "Hier siehst du nur Kolleg:innen, deren Fälle du über „Zugriff anfragen“ übernehmen kannst. Das hängt von deiner Abteilung und deinen Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenze die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
@@ -1532,7 +1604,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -1719,8 +1792,10 @@
 			},
 			"decision": {
 				"app": "Sicher per App verbinden",
+				"appActive": "Die Authenticator-App ist bereits als zweiter Faktor aktiv. Zum Wechseln wähle die andere Methode.",
 				"copy": "Schütze Dein Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ kannst Du Codes per E-Mail erhalten.",
-				"email": "E-Mail-Code verwenden (weniger sicher)"
+				"email": "E-Mail-Code verwenden (weniger sicher)",
+				"emailActive": "E-Mail-Codes sind bereits als zweiter Faktor aktiv. Zum Wechseln wähle die App."
 			},
 			"email": {
 				"connect": {
@@ -2253,7 +2328,15 @@
 		},
 		"warning": {
 			"failed": {
-				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut.",
+				"tooManyRequestsWaitSecond": "Zu viele Versuche. Bitte warte etwa eine Sekunde und versuch es dann erneut.",
+				"tooManyRequestsWaitSeconds": "Zu viele Versuche. Bitte warte etwa {{seconds}} Sekunden und versuch es dann erneut.",
+				"tooManyRequestsWaitMinute": "Zu viele Versuche. Bitte warte etwa eine Minute und versuch es dann erneut.",
+				"tooManyRequestsWaitMinutes": "Zu viele Versuche. Bitte warte etwa {{minutes}} Minuten und versuch es dann erneut.",
+				"tooManyRequestsWaitHour": "Zu viele Versuche. Bitte warte etwa eine Stunde und versuch es dann erneut.",
+				"tooManyRequestsWaitHours": "Zu viele Versuche. Bitte warte etwa {{hours}} Stunden und versuch es dann erneut.",
+				"tooManyRequestsWaitDay": "Zu viele Versuche. Bitte warte etwa einen Tag und versuch es dann erneut.",
+				"tooManyRequestsWaitDays": "Zu viele Versuche. Bitte warte etwa {{days}} Tage und versuch es dann erneut."
 			}
 		}
 	},
@@ -2315,7 +2398,12 @@
 		"displayName": {
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
-			"action": "Namen ändern"
+			"action": "Namen ändern",
+			"overlay": {
+				"headline": "Dein angezeigter Name",
+				"copy": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
+				"saveFailed": "Speichern fehlgeschlagen. Bitte versuch es erneut."
+			}
 		},
 		"notificationChoice": {
 			"email": "Schreib mir eine E-Mail",
@@ -2327,6 +2415,11 @@
 		}
 	},
 	"caseHandover": {
+		"systemMessage": {
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"tookOverBody": "{{advisor}} führt deine Beratung ab jetzt weiter.",
+			"noActionNeeded": "Du musst nichts weiter tun"
+		},
 		"offer": {
 			"pending": "Eine Kolleg:in möchte diese Beratung an dich übergeben.",
 			"awaitingClientConsent": "Du hast angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
@@ -2341,6 +2434,14 @@
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"curtain": {
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			},
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
+			}
 		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
@@ -2372,7 +2473,11 @@
 		},
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
-			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+			"description": "Gilt nur für künftige Anfragen in diesem Gespräch innerhalb deiner Beratungsstelle. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert."
+		},
+		"bulkBar": {
+			"emptyHint": "Wähle mindestens einen Fall aus."
 		}
 	},
 	"supervisorDialog": {
@@ -2432,7 +2537,20 @@
 			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
 			"enrollmentExplanation": "Schütze deinen vorhandenen Ersatzschlüssel zusätzlich mit deinem aktuellen Passwort. Dein gespeicherter Ersatzschlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
-			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"notEnrolled": "Passwort-Wiederherstellung nicht eingerichtet: Dein Passwort entsperrt deinen Gesprächsverlauf auf einem neuen Gerät noch nicht. Gib einmal deinen Ersatzschlüssel ein, um das einzurichten.",
+			"afterChange": {
+				"title": "Dein Passwort wurde geändert.",
+				"explanation": "Damit dein neues Passwort deine Chats auf neuen Geräten entsperrt, gib einmal deinen Ersatzschlüssel ein.",
+				"laterHint": "Ohne diesen Schritt entsperrt dein neues Passwort deinen Verlauf auf neuen Geräten nicht. Du kannst ihn jederzeit in den Sicherheitseinstellungen nachholen."
+			},
+			"stale": {
+				"explanation": "Dein aktuelles Passwort öffnet die Sicherung deines Gesprächsverlaufs nicht. Das passiert, wenn dein Passwort außerhalb dieser App geändert wurde, zum Beispiel im Verwaltungsbereich unter „Mein Konto“ oder über „Passwort vergessen“. Sichere deinen Verlauf auf einem dieser Wege mit deinem aktuellen Passwort, damit er sich auf neuen Geräten wieder mit deinem Passwort öffnet.",
+				"choose": "Wie möchtest du deinen Verlauf neu sichern?",
+				"previousPasswordHint": "Gib das Passwort ein, das du vor der Änderung verwendet hast. Danach öffnet nur noch dein aktuelles Passwort deinen Verlauf.",
+				"recoveryKeyHint": "Gib deinen gespeicherten Ersatzschlüssel ein. Die alte Sicherung wird danach durch eine Sicherung mit deinem aktuellen Passwort ersetzt. Dein Ersatzschlüssel bleibt gültig.",
+				"previousPasswordRejected": "Mit diesem vorherigen Passwort lässt sich die Sicherung nicht öffnen. Prüfe die Eingabe oder verwende deinen Ersatzschlüssel."
+			}
 		}
 	},
 	"accountInvite": {
@@ -2576,11 +2694,11 @@
 			},
 			"access": {
 				"headline": "Dein Name für heute.",
-				"subline": "Anonym, ohne Konto. Wähle eine User-ID — oder würfle neue.",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleib in diesem Fenster, bis du dran bist."
 			},
 			"waiting": {
 				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden dich, sobald jemand verfügbar ist.",
 				"aheadNone": "Du bist als Nächstes dran.",
 				"aheadOne": "Eine Person vor dir",
 				"aheadMany": "{{count}} Personen vor dir",
@@ -2598,7 +2716,8 @@
 			},
 			"steps": {
 				"wait": {
-					"title": "Du wartest, bis jemand frei ist"
+					"title": "Du wartest, bis jemand frei ist",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für dich los."
 				},
 				"consent": {
 					"title": "Dann stimmst du einmal zu",
@@ -2655,6 +2774,112 @@
 				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",
 				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuche es erneut."
 			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Kurz warten, bis du reingelassen wirst",
+			"descriptionCall": "Bis dahin sieht und hört dich niemand. Mikrofon und Kamera kannst du hier schon einstellen.",
+			"descriptionGroup": "Sobald du reingelassen wirst, kannst du in der Gruppe mitschreiben.",
+			"statusCall": "Angeklopft – deine Beratung sieht, dass du wartest.",
+			"statusGroup": "Angeklopft – die Gruppenleitung sieht, dass du wartest."
+		},
+		"admitted": {
+			"title": "Du wurdest reingelassen"
+		},
+		"declined": {
+			"descriptionCall": "Deine Beratung kann dich im Moment nicht reinlassen. Versuch es später noch einmal oder schreib eine Nachricht.",
+			"descriptionGroup": "Die Gruppenleitung kann dich im Moment nicht reinlassen. Versuch es später noch einmal."
+		},
+		"devices": {
+			"micMeter": "Lautstärke deines Mikrofons"
+		},
+		"ready": {
+			"description": "Niemand sieht oder hört dich, bevor du beitrittst. Die Vorschau siehst nur du.",
+			"descriptionCheck": "Deine Einstellung gilt, wenn du in dieser Gruppe einem Gespräch beitrittst. Die Vorschau siehst nur du.",
+			"knocking": "Anfrage gesendet, bitte warte …",
+			"notApplied": "Deine Einstellung für Kamera und Mikrofon wurde nicht übernommen. Bitte prüfe beide im Anruf."
+		}
+	},
+	"furtherCounselling": {
+		"recommend": {
+			"intro": "Die ratsuchende Person sieht deine Empfehlung als Karte im Chat und kann von dort eine passende Beratungsstelle finden.",
+			"successHeadline": "Deine Empfehlung wurde gesendet.",
+			"error": "Die Empfehlung konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"topicsUnavailable": "Die Themen konnten nicht geladen werden. Bitte versuche es später erneut."
+		},
+		"duplicate": {
+			"confirm": {
+				"copy": "Diese Beratung wird beendet und ins Archiv verschoben. Deine andere Beratung zum gleichen Thema läuft weiter."
+			},
+			"error": "Die Beratung konnte nicht beendet werden. Bitte versuche es erneut."
+		},
+		"request": {
+			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Startest du eine Beratung zu einem Thema, das du schon besprichst, wird deine bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet."
+		}
+	},
+	"calls": {
+		"admission": {
+			"on": "Gäste warten, bis du sie einlässt."
+		},
+		"states": {
+			"endsCurrent": "Wenn du annimmst, endet dein Gespräch mit {{name}}.",
+			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
+		},
+		"share": {
+			"signInToJoin": "Melde dich an, um diesem Anruf beizutreten.",
+			"conversationMember": "Du gehörst bereits zu diesem Gespräch. Tritt dem Anruf im zugehörigen Chat bei.",
+			"joinForbidden": "Du kannst diesem Anruf über diesen Link nicht beitreten.",
+			"knock": {
+				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
+			},
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte markiere den Link und kopiere ihn selbst.",
+			"lifetime": "Der Link gilt nur für diesen Anruf. Sobald du auflegst, funktioniert er nicht mehr."
+		}
+	},
+	"directLink": {
+		"card": {
+			"headline": "Ein Link direkt zu dir",
+			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
+		},
+		"share": {
+			"title": "Dein Direktlink ist bereit",
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+		},
+		"entry": {
+			"haveAccount": "Du hast schon ein Konto? Anmelden",
+			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
+		},
+		"page": {
+			"loadFailed": "Deine Direktlinks konnten nicht geladen werden.",
+			"emptyText": "Einen Direktlink erstellst du unter „Chat erstellen“. Er erscheint danach hier.",
+			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuche es erneut."
+		},
+		"edit": {
+			"nameRequired": "Bitte gib einen Namen ein.",
+			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		}
+	},
+	"dashboard": {
+		"title": "Dein Überblick"
+	},
+	"temporaryAccount": {
+		"keepDialog": {
+			"title": "Sollen deine Nachrichten bleiben?",
+			"description": "Dein Gastkonto wird nach dem Gespräch gelöscht. Was soll mit deinen Nachrichten passieren?",
+			"keep": {
+				"hint": "Deine Nachrichten bleiben, wenn dein Konto gelöscht wird."
+			},
+			"delete": {
+				"hint": "Deine Nachrichten werden mit deinem Konto gelöscht."
+			},
+			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
+			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten dein Konto nicht prüfen",
+			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
 	}
 }

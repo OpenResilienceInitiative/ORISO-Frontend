@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { DecryptionFailureCode } from 'matrix-js-sdk/lib/crypto-api';
 
 // vi.mock factories are hoisted above imports, so referenced variables must

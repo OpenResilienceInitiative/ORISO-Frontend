@@ -3,8 +3,8 @@ import {
 	consumeLoginRecoveryPassword,
 	stageLoginRecoveryPassword
 } from '../../services/loginRecoveryHandoff';
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	autoLogin,
 	buildAppRedirectPath,
@@ -409,6 +409,21 @@ describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
 				undefined,
 				null,
 				'https://evil.example/profile/einstellungen/email'
+			)
+		).toBe('/sessions');
+	});
+
+	// #1795: signed in from a direct link, back to that link.
+	it('returns to the direct link the person signed in from', () => {
+		expect(
+			buildAppRedirectPath(undefined, undefined, null, '/invite/Ab_9-x')
+		).toBe('/invite/Ab_9-x');
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'//evil.example/invite/x'
 			)
 		).toBe('/sessions');
 	});

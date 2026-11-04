@@ -50,7 +50,7 @@ RUN apk upgrade --no-cache libssl3 libcrypto3
 # still 6.28.0, so bumping npm alone cannot clear the gate.
 #   brace-expansion 5.0.11 - CVE-2026-102276, CVE-2026-102278
 #   ip-address     10.3.1  - CVE-2026-69192
-#   undici          6.28.1 - CVE-2026-19534
+#   undici          6.29.1 - CVE-2026-19534, CVE-2026-109869
 RUN npm install -g npm@11.18.0 \
 	&& cd /tmp \
 	&& npm pack brace-expansion@5.0.11 \
@@ -75,12 +75,13 @@ RUN npm install -g npm@11.18.0 \
 	&& rm -rf /tmp/tar-patch /tmp/tar-7.5.21.tgz \
 	# CVE-2026-19534: undici DoS via an unrequested WebSocket subprotocol.
 	# npm vendors 6.28.0 up to and including npm@12.1.0; 6.28.1 is the fix.
-	&& npm pack undici@6.28.1 \
+	# CVE-2026-109869: undici DoS via an unhandled stream error; fixed in 6.29.1.
+	&& npm pack undici@6.29.1 \
 	&& mkdir -p /tmp/undici-patch \
-	&& tar -xzf undici-6.28.1.tgz -C /tmp/undici-patch \
+	&& tar -xzf undici-6.29.1.tgz -C /tmp/undici-patch \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/undici \
 	&& mv /tmp/undici-patch/package /usr/local/lib/node_modules/npm/node_modules/undici \
-	&& rm -rf /tmp/undici-patch /tmp/undici-6.28.1.tgz \
+	&& rm -rf /tmp/undici-patch /tmp/undici-6.29.1.tgz \
 	&& npm cache clean --force
 
 USER node

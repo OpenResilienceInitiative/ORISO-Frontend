@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { apiGetChatMembers } from './apiGetChatMembers';
 import { fetchData } from './fetchData';
 vi.mock('../resources/scripts/endpoints', () => ({

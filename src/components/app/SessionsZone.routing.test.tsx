@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
@@ -11,7 +11,7 @@ import {
 	useParams,
 	generatePath
 } from 'react-router-dom';
-import { afterEach, describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vite-plus/test';
 import { SessionsZone } from './SessionsZone';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';

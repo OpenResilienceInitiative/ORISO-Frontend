@@ -24,9 +24,11 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
-import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
-import internalTeamImage from '../../resources/img/illustrations/conversation/internal-team.png';
-import { getTopicCardImage } from '../../resources/img/topics';
+import { TopicIcon } from './TopicIcon';
+import {
+	getTopicCardArtwork,
+	INTERNAL_CHAT_ARTWORK
+} from '../../resources/img/topics';
 import {
 	apiGetTenantConsultantList,
 	Consultant
@@ -38,8 +40,6 @@ import {
 import {
 	buildGroupChatEditDraft,
 	buildOneOffDuplicateFields,
-	getValidDateFormatForSelectedDate,
-	getValidTimeFormatForSelectedTime,
 	GroupChatEditSource
 } from '../groupChat/createChatHelpers';
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
@@ -56,7 +56,11 @@ import {
 	isGroupChatTranslationAvailable,
 	resolveInitialStep
 } from './formatAvailability';
-import { filterTopicsForAgencies } from './agencyTopics';
+import { filterTopicsForAgencies, getAgencyTopicIds } from './agencyTopics';
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
+import { FORMAT_ARTWORK } from '../../resources/img/formats';
+import { DirectLinkCreateCard } from './directLink/DirectLinkCreateCard';
+import { getDirectLinkMedia } from './directLink/directLinkAvailability';
 import { RowMenu } from './RowMenu';
 import { FormatCard } from './FormatCard';
 import { PanelHeader } from './PanelHeader';
@@ -73,7 +77,13 @@ import {
 	CircleSettingsView,
 	CircleSettingsPrefill
 } from './circle/CircleSettingsView';
-import { useCreateChatSubmit } from './useCreateChatSubmit';
+import { useInternalSubsetChatSubmit } from './useInternalSubsetChatSubmit';
+import { resolveRecipientScope } from './internal/recipientScope';
+import {
+	InternalChatColleague,
+	loadInternalChatColleagues
+} from './internal/loadInternalChatColleagues';
+import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
 import './conversationCreate.styles.scss';
 
 /**
@@ -106,8 +116,9 @@ const CreateConversationFlow = ({
 		userData: { agencies = [] }
 	} = useContext(UserDataContext);
 	const { fromL } = useResponsive();
-	const { submit, isSubmitting, hasError, clearError } =
-		useCreateChatSubmit();
+	const { submit, isSubmitting, errorReason, clearError } =
+		useInternalSubsetChatSubmit();
+	const recipientScope = resolveRecipientScope(tenantData);
 
 	// Edit mode is driven by the route params: the create route has none, the
 	// edit route (RouterConfig) carries /:groupId/:sessionId/editGroupChat.
@@ -138,6 +149,25 @@ const CreateConversationFlow = ({
 		agencyFormats
 	);
 	const availableFormats = getAvailableFormats(availability);
+	/* #1795: the direct link is a format of its own, offered where
+	   "Direkteinladung erlauben" allows at least one medium. Never in edit
+	   mode, which only edits a circle. */
+	const directLinkMedia = useMemo(
+		() => getDirectLinkMedia(tenantData, agencyFormats),
+		[tenantData, agencyFormats]
+	);
+	const directLinkOffered = !isEditMode && directLinkMedia.length > 0;
+	const formatCount = availableFormats.length + (directLinkOffered ? 1 : 0);
+	/* The group formats decide as before; a direct link next to a single
+	   one keeps the picker, and alone it opens straight on its card. */
+	const withDirectLink = (
+		base: CreateStep,
+		formats: ConversationFormat[],
+		forcedByDuplicate: boolean
+	): CreateStep => {
+		if (!directLinkOffered || forcedByDuplicate) return base;
+		return formats.length === 0 ? 'directLink' : 'picker';
+	};
 	const agencyIdsOffering = useMemo(
 		() => ({
 			internal: getAgenciesOfferingFormat(
@@ -196,10 +226,14 @@ const CreateConversationFlow = ({
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode
 			? 'circle'
-			: resolveInitialStep(
-					availability,
+			: withDirectLink(
+					resolveInitialStep(
+						availability,
+						availableFormats,
+						Boolean(duplicateOccurrence)
+					),
 					availableFormats,
-					Boolean(duplicateOccurrence)
+					Boolean(duplicateOccurrence) && availability.circle
 				)
 	);
 
@@ -212,24 +246,31 @@ const CreateConversationFlow = ({
 			circle: availability.circle
 		};
 		setStep((current) => {
+			const nextFormats = getAvailableFormats(nextAvailability);
 			const stillValid =
 				(current === 'internal' && nextAvailability.internal) ||
 				(current === 'circle' && nextAvailability.circle) ||
+				(current === 'directLink' && directLinkOffered) ||
 				(current === 'picker' &&
-					nextAvailability.internal &&
-					nextAvailability.circle);
+					nextFormats.length + (directLinkOffered ? 1 : 0) > 1);
 			if (stillValid) {
 				return current;
 			}
-			return resolveInitialStep(
-				nextAvailability,
-				getAvailableFormats(nextAvailability),
-				Boolean(duplicateOccurrence)
+			return withDirectLink(
+				resolveInitialStep(
+					nextAvailability,
+					nextFormats,
+					Boolean(duplicateOccurrence)
+				),
+				nextFormats,
+				Boolean(duplicateOccurrence) && nextAvailability.circle
 			);
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- withDirectLink only reads directLinkOffered
 	}, [
 		availability.circle,
 		availability.internal,
+		directLinkOffered,
 		duplicateOccurrence,
 		isEditMode
 	]);
@@ -254,8 +295,14 @@ const CreateConversationFlow = ({
 		name: '',
 		selectedIds: []
 	});
+	// Co-moderator candidates of the Gesprächskreis: the Träger's directory.
 	const [availableConsultants, setAvailableConsultants] = useState<
 		Consultant[]
+	>([]);
+	// The colleagues the Interna picker may offer, narrowed to the recipient
+	// scope (#1772).
+	const [internalColleagues, setInternalColleagues] = useState<
+		InternalChatColleague[]
 	>([]);
 	const [consultantsLoadFailed, setConsultantsLoadFailed] = useState(false);
 
@@ -343,26 +390,23 @@ const CreateConversationFlow = ({
 		});
 	}, [isEditMode, offeringAgencyIds]);
 
-	// People for the internal card: agency colleagues without the current
-	// user, deduplicated by consultantId.
-	const loadConsultants = useCallback(() => {
+	// Co-moderator candidates for the Gesprächskreis: the Träger's other active
+	// consultants without the current user, deduplicated by consultantId.
+	useEffect(() => {
 		if (
+			step !== 'circle' ||
 			selectedAgency === null ||
-			(!availability.internal && !availability.circle)
+			!availability.circle
 		) {
 			setAvailableConsultants([]);
-			setConsultantsLoadFailed(false);
 			return;
 		}
-		setConsultantsLoadFailed(false);
 		apiGetTenantConsultantList()
 			.then((consultants) => {
 				const currentUserId = userData?.userId;
 				const unique = consultants.reduce((acc, consultant) => {
-					if (consultant.consultantId === currentUserId) {
-						return acc;
-					}
 					if (
+						consultant.consultantId === currentUserId ||
 						acc.some(
 							(existing) =>
 								existing.consultantId ===
@@ -375,18 +419,51 @@ const CreateConversationFlow = ({
 				}, [] as Consultant[]);
 				setAvailableConsultants(unique);
 			})
+			.catch(() => setAvailableConsultants([]));
+	}, [availability.circle, selectedAgency, step, userData?.userId]);
+
+	// People for the internal card: only colleagues inside the recipient scope
+	// of the Träger (#1772), without the current user. Every load gets a
+	// number; an answer that is not for the latest load (another centre was
+	// chosen meanwhile, the view went away) is dropped, and the previous list
+	// is cleared when a load starts so it can never be picked from.
+	const colleaguesLoadRef = useRef(0);
+	const invalidateColleaguesLoad = useCallback(() => {
+		colleaguesLoadRef.current += 1;
+	}, []);
+	const loadInternalColleagues = useCallback(() => {
+		const load = ++colleaguesLoadRef.current;
+		setInternalColleagues([]);
+		setConsultantsLoadFailed(false);
+		if (selectedAgency === null || !availability.internal) {
+			return;
+		}
+		const isCurrent = () => colleaguesLoadRef.current === load;
+		loadInternalChatColleagues(selectedAgency)
+			.then((colleagues) => {
+				if (isCurrent()) {
+					setInternalColleagues(colleagues);
+				}
+			})
 			.catch(() => {
-				setAvailableConsultants([]);
-				setConsultantsLoadFailed(true);
+				if (isCurrent()) {
+					setConsultantsLoadFailed(true);
+				}
 			});
-	}, [availability.circle, availability.internal, selectedAgency, userData]);
+	}, [availability.internal, selectedAgency]);
 
 	useEffect(() => {
-		loadConsultants();
-	}, [loadConsultants]);
+		loadInternalColleagues();
+		return invalidateColleaguesLoad;
+	}, [
+		invalidateColleaguesLoad,
+		loadInternalColleagues,
+		recipientScope,
+		userData?.userId
+	]);
 
 	const loadTopics = useCallback(() => {
-		if (!availability.circle) {
+		if (!availability.circle && !directLinkOffered) {
 			return;
 		}
 		setTopicsLoadFailed(false);
@@ -396,7 +473,7 @@ const CreateConversationFlow = ({
 				setTopics([]);
 				setTopicsLoadFailed(true);
 			});
-	}, [availability.circle]);
+	}, [availability.circle, directLinkOffered]);
 
 	useEffect(() => {
 		loadTopics();
@@ -417,13 +494,26 @@ const CreateConversationFlow = ({
 		[agencies, agencyIdsOffering, editPrefill?.agencyId, isEditMode]
 	);
 
+	const toPeople = (consultants: Consultant[]) =>
+		consultants.map((consultant) => ({
+			id: consultant.consultantId,
+			label: `${consultant.firstName} ${consultant.lastName}`.trim()
+		}));
 	const people = useMemo(
-		() =>
-			availableConsultants.map((consultant) => ({
-				id: consultant.consultantId,
-				label: `${consultant.firstName} ${consultant.lastName}`.trim()
-			})),
+		() => toPeople(availableConsultants),
 		[availableConsultants]
+	);
+	const internalPeople = useMemo(
+		() =>
+			internalColleagues.map(
+				({ consultantId, displayName, tenantName }) => ({
+					id: consultantId,
+					label: tenantName
+						? `${displayName} (${tenantName})`
+						: displayName
+				})
+			),
+		[internalColleagues]
 	);
 
 	// Only the topics this counselling centre offers (see agencyTopics).
@@ -439,39 +529,69 @@ const CreateConversationFlow = ({
 	);
 
 	const handleBackButton = useCallback(() => {
-		if (step !== 'picker' && availableFormats.length > 1) {
+		if (step !== 'picker' && formatCount > 1) {
 			setStep('picker');
 			clearError();
 			return;
 		}
 		navigate('/sessions/consultant/sessionView');
-	}, [availableFormats.length, clearError, navigate, step]);
+	}, [formatCount, clearError, navigate, step]);
+
+	/* The direct link offers every topic of the counsellor's
+	   Beratungsstellen; the id goes to the backend, the name is shown. */
+	const directLinkTopics = useMemo(
+		() =>
+			filterTopicsForAgencies(topics, agencies, null)
+				.filter((topic) => topic.id !== undefined)
+				.map((topic) => ({
+					value: String(topic.id),
+					label: topic.name
+				})),
+		[agencies, topics]
+	);
+	const directLinkAgencies = useMemo(
+		() =>
+			agencies.map((agency) => ({
+				id: agency.id,
+				topicIds: getAgencyTopicIds([agency], agency.id) ?? []
+			})),
+		[agencies]
+	);
+	const renderDirectLinkCard = () => (
+		<DirectLinkCreateCard
+			topics={directLinkTopics}
+			agencies={directLinkAgencies}
+			media={directLinkMedia}
+			compact={!fromL}
+			topicsLoadFailed={topicsLoadFailed}
+			onRetryTopics={loadTopics}
+			/* "Fertig": the link now lives in "Gespräche". */
+			onDone={() => navigate('/sessions/consultant/sessionView')}
+		/>
+	);
 
 	const handleInternalCreate = () => {
 		if (selectedAgency === null) {
 			return;
 		}
-		// No repeatCount here: sending one would make getModality classify
-		// the chat as SELF_HELP (ADR-006 fallback heuristic).
+		// The selection is the recipient list: no moderators, groups or
+		// "everyone" are added, and a refusal never falls back to a broader
+		// room. The UserService creates (or reuses) a members-only room.
 		submit({
-			topic: internalDraft.name.trim(),
-			startDate: getValidDateFormatForSelectedDate(new Date()),
-			startTime: getValidTimeFormatForSelectedTime(new Date()),
-			duration: 60,
+			selectedIds: internalDraft.selectedIds,
 			agencyId: selectedAgency,
-			hintMessage: '',
-			repetitive: false,
-			consultantIds: internalDraft.selectedIds,
-			featureGroupChatV2Enabled: true
+			name: internalDraft.name
 		});
 	};
 
 	// Switching agency must drop the previously picked colleagues: they belong
 	// to the old agency and would otherwise leak across agencies into the new
-	// internal chat (the consultant list reloads for the new agency).
+	// internal chat (the consultant list reloads for the new agency). A refusal
+	// belongs to the previous centre's request and goes with it.
 	const handleInternalAgencyChange = (value: string) => {
 		setSelectedAgency(parseInt(value));
 		setInternalDraft((draft) => ({ ...draft, selectedIds: [] }));
+		clearError();
 	};
 
 	const openCircleSettings = () => {
@@ -498,16 +618,29 @@ const CreateConversationFlow = ({
 			{consultantsLoadFailed && (
 				<p role="alert" className="conversationCreate__error">
 					{translate('groupChat.loadError.consultants')}
-					<button type="button" onClick={loadConsultants}>
+					<button type="button" onClick={loadInternalColleagues}>
 						{translate('groupChat.loadError.retry')}
 					</button>
 				</p>
 			)}
 			<InternalChatCreateCard
-				people={people}
+				people={internalPeople}
 				draft={internalDraft}
-				onDraftChange={setInternalDraft}
+				onDraftChange={(draft) => {
+					// A refusal stays while the name is typed (a screen reader
+					// may still be reading it); it goes with a new selection.
+					if (draft.selectedIds !== internalDraft.selectedIds) {
+						clearError();
+					}
+					setInternalDraft(draft);
+				}}
 				onCreate={handleInternalCreate}
+				scope={recipientScope}
+				errorMessage={
+					errorReason
+						? translate(internalSubsetErrorKey(errorReason))
+						: undefined
+				}
 				isSubmitting={isSubmitting}
 				agencyOptions={agencyOptionsFor('internal')}
 				selectedAgency={selectedAgency?.toString()}
@@ -547,7 +680,7 @@ const CreateConversationFlow = ({
 						<SplitButton
 							ref={pickerSplitButtonRef}
 							fullWidth
-							icon={<CategorySearchIcon />}
+							icon={<TopicIcon filled={Boolean(pickerTopic)} />}
 							label={
 								pickerTopic ||
 								translate('groupChat.circle.topicLabel')
@@ -628,6 +761,7 @@ const CreateConversationFlow = ({
 					<div className="conversationCreate__cards">
 						{availability.circle && circleCard}
 						{availability.internal && renderInternalCard()}
+						{directLinkOffered && renderDirectLinkCard()}
 					</div>
 				) : (
 					<div className="conversationCreate__rows">
@@ -638,7 +772,7 @@ const CreateConversationFlow = ({
 								subtitle={translate(
 									'groupChat.internal.subtitle'
 								)}
-								image={internalTeamImage}
+								image={INTERNAL_CHAT_ARTWORK}
 								onSelect={() => setStep('internal')}
 							/>
 						)}
@@ -649,8 +783,17 @@ const CreateConversationFlow = ({
 								subtitle={translate(
 									'groupChat.circle.subtitle'
 								)}
-								image={getTopicCardImage(null)}
+								image={getTopicCardArtwork(null)}
 								onSelect={() => setStep('circle')}
+							/>
+						)}
+						{directLinkOffered && (
+							<CompactFormatRow
+								icon={<LinkOutlinedIcon />}
+								title={translate('directLink.card.title')}
+								subtitle={translate('directLink.card.subtitle')}
+								image={FORMAT_ARTWORK.VIDEO}
+								onSelect={() => setStep('directLink')}
 							/>
 						)}
 					</div>
@@ -666,14 +809,6 @@ const CreateConversationFlow = ({
 				menuLabel={translate('groupChat.format.panelMenu')}
 				menuDisabled
 			/>
-			{hasError && step !== 'circle' && (
-				<p role="alert" className="conversationCreate__error">
-					{translate('groupChat.createError.overlay.headline')}
-					<button type="button" onClick={clearError}>
-						{translate('groupChat.createError.overlay.buttonLabel')}
-					</button>
-				</p>
-			)}
 			{step === 'circle' ? (
 				isEditMode && !editPrefill ? (
 					// Never render the settings form before the series has
@@ -697,6 +832,14 @@ const CreateConversationFlow = ({
 						compact={!fromL}
 					/>
 				)
+			) : step === 'directLink' ? (
+				<div
+					className={`conversationCreate__single${
+						fromL ? '' : ' conversationCreate__single--compact'
+					}`}
+				>
+					{renderDirectLinkCard()}
+				</div>
 			) : step === 'internal' ? (
 				<div
 					className={`conversationCreate__single${
@@ -739,7 +882,11 @@ export const CreateConversationView = () => {
 		tenantData,
 		agencyFormats
 	);
-	if (!availability.internal && !availability.circle) {
+	if (
+		!availability.internal &&
+		!availability.circle &&
+		getDirectLinkMedia(tenantData, agencyFormats).length === 0
+	) {
 		return <Navigate to="/sessions/consultant/sessionView" replace />;
 	}
 

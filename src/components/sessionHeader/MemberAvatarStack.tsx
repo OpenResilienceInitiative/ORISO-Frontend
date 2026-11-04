@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { UserAvatar } from '../message/UserAvatar';
-import { ReactComponent as PeopleIcon } from '../../resources/img/icons/persons-two.svg';
+import { Link } from 'react-router-dom';
+import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import {
 	AVATAR_STACK_METRICS,
 	AvatarStackMetrics,
@@ -24,8 +24,10 @@ interface MemberAvatarStackProps {
 	/** Width in px of the measured element taken by siblings (icon, title). */
 	reservedWidth?: number;
 	metrics?: AvatarStackMetrics;
-	/** Accessible label for the "+N" chip, receives the hidden count. */
-	countLabel?: (hidden: number) => string;
+	/** Opens the member view when set (#107); the stack is then a link. */
+	to?: string;
+	/** Accessible name of that link, e.g. "Teilnehmende". */
+	label?: string;
 }
 
 /**
@@ -38,7 +40,8 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 	measureRef,
 	reservedWidth = 0,
 	metrics = AVATAR_STACK_METRICS,
-	countLabel
+	to,
+	label
 }) => {
 	const [availableWidth, setAvailableWidth] = useState<number | null>(null);
 
@@ -56,47 +59,33 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 		return () => observer.disconnect();
 	}, [measureRef, reservedWidth]);
 
+	const uniqueCount = new Set(
+		members.map((member) => member.userId).filter(Boolean)
+	).size;
 	const visibleCount = useMemo(
-		() =>
-			computeVisibleAvatarCount(members.length, availableWidth, metrics),
-		[members.length, availableWidth, metrics]
+		() => computeVisibleAvatarCount(uniqueCount, availableWidth, metrics),
+		[uniqueCount, availableWidth, metrics]
 	);
-	const visible = members.slice(0, visibleCount);
-	const hidden = members.length - visibleCount;
-
-	return (
-		<span
-			className="sessionInfo__memberAvatars"
-			data-testid="member-avatar-stack"
+	const stack = (
+		<ParticipantAvatarStack
+			participants={[...members]}
+			maxVisible={visibleCount}
+			size={metrics.avatarSize}
+			overlap={metrics.overlap}
+			className="sessionInfo__participants"
+			data-cy="group-header-participants"
+		/>
+	);
+	return to ? (
+		<Link
+			to={to}
+			aria-label={label}
+			className="sessionInfo__participantsLink"
+			data-cy="group-header-participants-link"
 		>
-			{visible.map((member, index) => (
-				<span
-					key={member.userId || `${member.username}-${index}`}
-					className="sessionInfo__memberBubble"
-					style={{ zIndex: 20 - index }}
-				>
-					<UserAvatar
-						username={member.username}
-						displayName={member.displayName}
-						userId={member.userId || member.username}
-						size={`${metrics.avatarSize}px`}
-					/>
-				</span>
-			))}
-			{hidden > 0 && (
-				<span
-					className="sessionInfo__memberCount"
-					role="img"
-					aria-label={countLabel?.(hidden)}
-					title={countLabel?.(hidden)}
-					data-testid="member-avatar-overflow"
-				>
-					<span className="sessionInfo__memberCountNumber">
-						+{hidden}
-					</span>
-					<PeopleIcon className="sessionInfo__memberCountIcon" />
-				</span>
-			)}
-		</span>
+			{stack}
+		</Link>
+	) : (
+		stack
 	);
 };

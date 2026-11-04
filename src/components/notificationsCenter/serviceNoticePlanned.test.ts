@@ -1,5 +1,5 @@
 import { createInstance } from 'i18next';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
 	getEventDescriptor,
 	isKnownEventType

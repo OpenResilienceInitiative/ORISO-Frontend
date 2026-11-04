@@ -39,6 +39,12 @@ export const EVENT_PARAM_KEYS = [
 	'conversationType',
 	'clientConsent',
 	'caseHandoverRequestId',
+	// #1714: handover display names (CaseHandoverService producers).
+	'requesterName',
+	'initiatorName',
+	// #1714: accepted before the backend emits it, like `matrixEventId`;
+	// absent today, so the wording stays neutral.
+	'accessType',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -56,7 +62,9 @@ export const EVENT_PARAM_KEYS = [
 	'maintenanceDate',
 	'maintenanceStart',
 	'maintenanceEnd',
-	'statusUrl'
+	'statusUrl',
+	// FE#1952: which call a direct-link knock is for (call.knock.requested).
+	'medium'
 ] as const;
 
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -124,6 +132,9 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.forcedScopeKey = asNullableString(source.forcedScopeKey);
 	params.threadRootId = asNullableString(source.threadRootId);
 	params.callRoomId = asNullableString(source.callRoomId);
+	if (source.medium === 'AUDIO' || source.medium === 'VIDEO') {
+		params.medium = source.medium;
+	}
 	if (typeof source.isVideo === 'boolean' || source.isVideo === null) {
 		params.isVideo = source.isVideo as boolean | null;
 	}
@@ -137,6 +148,12 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
 	params.conversationType = asNullableString(source.conversationType);
+	// #1714: counsellor display names, metadata only (ADR-AT-01).
+	params.requesterName = asNullableString(source.requesterName);
+	params.initiatorName = asNullableString(source.initiatorName);
+	if (source.accessType === 'CO_ACCESS' || source.accessType === 'TAKEOVER') {
+		params.accessType = source.accessType;
+	}
 	const clientConsent = asNullableString(source.clientConsent);
 	if (
 		clientConsent === 'OPT_IN' ||
@@ -265,7 +282,19 @@ export const resolveNotificationActionPath = (
 	return target.kind === 'conversation' ||
 		target.kind === 'groupChatJoin' ||
 		target.kind === 'request' ||
-		target.kind === 'draft'
+		target.kind === 'draft' ||
+		// FE#1952: where a knock lands once its call is started (or cannot be).
+		target.kind === 'callRoom'
 		? target.path
 		: null;
 };
+
+/** A started call that is already over opens like its `call.ended` card: its conversation. */
+export const resolveEndedCallConversationPath = (
+	item: NotificationActionInput,
+	sessionsBasePath: string
+): string | null =>
+	resolveNotificationActionPath(
+		{ ...item, eventType: 'call.ended' },
+		sessionsBasePath
+	);

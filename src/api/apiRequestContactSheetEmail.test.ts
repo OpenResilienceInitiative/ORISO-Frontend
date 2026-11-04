@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { beforeEach, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, expect, it, vi } from 'vite-plus/test';
 import { fetchData, FETCH_METHODS } from './fetchData';
 import { apiRequestContactSheetEmail } from './apiRequestContactSheetEmail';
 

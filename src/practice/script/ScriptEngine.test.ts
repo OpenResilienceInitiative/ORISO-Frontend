@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { PRACTICE_CAST } from '../fixtures/practiceCast';
 import {
 	PRACTICE_MAIN_ROOM_ID,

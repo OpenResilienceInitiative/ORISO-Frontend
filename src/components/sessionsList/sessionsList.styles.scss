@@ -221,6 +221,11 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		justify-content: center;
 		padding: 16px;
 		background: rgba(27, 27, 28, 0.4);
+
+		// Focus lands here programmatically; the shell is the visible frame.
+		&:focus {
+			outline: none;
+		}
 	}
 
 	&__caseHandoverWizardShell {
@@ -1365,6 +1370,16 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		background: #e1dedf;
 	}
 
+	// The tablist groups the three tabs for assistive technology. It takes three
+	// of the row's four equal shares plus the three tabs' side padding (3 x 16px),
+	// so the tabs and the archive toggle keep their widths (#1338).
+	&__searchModalTabList {
+		display: flex;
+		flex: 3 1 48px;
+		min-width: 0;
+		align-items: stretch;
+	}
+
 	&__searchModalTab {
 		border: none;
 		background: transparent;
@@ -1562,6 +1577,24 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 14px;
 		line-height: 20px;
 		color: #444748;
+	}
+
+	/* FE#1152: why a colleague may be missing, or why none could be loaded. */
+	&__searchNotice {
+		padding: 12px 16px;
+		font-size: 12px;
+		line-height: 16px;
+		color: #444748;
+		border-top: 1px solid #d8d6d6;
+
+		/* Stays in view when the list is long and the menu scrolls. */
+		position: sticky;
+		bottom: 0;
+		background: $sessionShellSurface;
+
+		&--error {
+			color: var(--m3-error, #ba1a1a);
+		}
 	}
 }
 

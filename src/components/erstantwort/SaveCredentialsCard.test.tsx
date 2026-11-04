@@ -1,7 +1,14 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => {
@@ -132,6 +139,16 @@ describe('SaveCredentialsCard', () => {
 		expect(navigate).toHaveBeenCalledWith(
 			'/profile/einstellungen/sicherheit'
 		);
+	});
+
+	it('keeps the login name but drops every action in the read-only preview (#420)', () => {
+		renderCard({ readOnly: true });
+
+		expect(screen.getByDisplayValue('katze_mika_1234')).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /kopieren/i })).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'Passwort jetzt setzen' })
+		).toBeNull();
 	});
 
 	it('marks the login name field so a password manager can pick it up', () => {

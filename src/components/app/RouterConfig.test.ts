@@ -1,9 +1,9 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 const Stub = () => React.createElement('div');
 // Distinct stubs so the profile-icon assertions below can tell the
@@ -49,6 +49,9 @@ vi.mock('../notificationsCenter/NotificationsCenter', () => ({
 	NotificationsCenter: Stub
 }));
 vi.mock('../draftsCenter/DraftsCenter', () => ({ DraftsCenter: Stub }));
+vi.mock('../directLinks/MyDirectLinksPanel', () => ({
+	MyDirectLinksPage: Stub
+}));
 vi.mock('../../resources/img/icons/overview_outline.svg', () => ({
 	ReactComponent: Stub
 }));
@@ -125,6 +128,28 @@ describe('RouterConfigConsultant navigation', () => {
 		);
 		expect(notificationIndex).toBeGreaterThanOrEqual(0);
 		expect(profileIndex).toBeGreaterThan(notificationIndex);
+	});
+});
+
+describe('"My direct links" clock entry (#1894)', () => {
+	it('is a rail item with its own page route for counsellors', () => {
+		const routerConfig = RouterConfigConsultant(settings);
+
+		expect(routerConfig.navigation.map((item) => item.to)).toContain(
+			'/direct-links'
+		);
+		expect(routerConfig.profileRoutes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ path: '/direct-links', exact: true })
+			])
+		);
+	});
+
+	it('is not offered to askers', () => {
+		const navigation = RouterConfigUser(settings, false).navigation;
+		expect(navigation.map((item) => item.to)).not.toContain(
+			'/direct-links'
+		);
 	});
 });
 

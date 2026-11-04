@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -43,7 +44,8 @@ import {
 } from '../../globalState/interfaces';
 import {
 	STATUS_ENQUIRY,
-	STATUS_ACTIVE
+	STATUS_ACTIVE,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	getViewPathForType,
@@ -65,10 +67,14 @@ import { appConfig } from '../../utils/appConfig';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
 	isAnonymousMatrixUsername,
-	resolveAnonymousChatDisplayName
+	resolveAnonymousChatDisplayName,
+	resolveAssignedAskerDisplayName
 } from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
+import {
+	HEADER_STACK_PROPS,
+	ParticipantAvatarStack
+} from '../message/ParticipantAvatarStack';
 import { type StackParticipant } from '../message/participantStack';
 import {
 	bumpLastActivity,
@@ -107,6 +113,10 @@ import {
 } from './ChatroomMainInteractionIcon';
 import { getSupervisorAddState } from './getSupervisorAddState';
 import { resolveSupervisorDirectoryAgencyId } from './supervisorDirectory';
+import {
+	buildSupervisorSystemMessagePayload,
+	type SupervisorSystemMessageKind
+} from './supervisorSystemMessage';
 import {
 	getConsultantLabel,
 	SupervisorConsultantPicker
@@ -212,6 +222,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
+		Number(activeSession.item.status) !== STATUS_REJECTED &&
 		(isAnonymousChat
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);
@@ -410,19 +421,21 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		);
 	};
 
-	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
+	const postSupervisorSystemMessage = async (
+		kind: SupervisorSystemMessageKind,
+		supervisorName: string
+	) => {
 		const matrixRoomId = isMatrixRoom(activeSession.rid)
 			? activeSession.rid
 			: activeSession.item?.matrixRoomId;
 		if (!matrixRoomId || !activeSession.item.id) {
 			return;
 		}
-		const payload = JSON.stringify({
-			title: translate('message.supervisionEnabledTitle'),
-			description: translate('message.supervisionEnabledDescription', {
-				name: supervisorName
-			})
-		});
+		const payload = buildSupervisorSystemMessagePayload(
+			kind,
+			supervisorName,
+			translate
+		);
 		try {
 			const client = matrixClientService?.getClient?.();
 			if (client) {
@@ -476,7 +489,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				selectedConsultantIdForRequest,
 				supervisionReason
 			);
-			await postSupervisorAddedSystemMessage(selectedSupervisorName);
+			await postSupervisorSystemMessage('added', selectedSupervisorName);
 			await loadSupervisors();
 			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
@@ -540,6 +553,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			await apiRemoveSessionSupervisor(
 				activeSession.item.id,
 				supervisorId
+			);
+			await postSupervisorSystemMessage(
+				'removed',
+				supervisorToRemoveName
 			);
 			await loadSupervisors();
 			addNotification({
@@ -611,7 +628,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		!isChatFinished;
 
 	const headerContactName = (() => {
+		/* ORISO-UserService#1486: the guest's temporary account is gone. */
+		if (
+			isConsultantUser &&
+			!activeSession.isGroup &&
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		) {
+			return translate('temporaryAccount.deletedGuest');
+		}
 		if (isAnonymousAsker) {
+			const sessionAlias = resolveAssignedAskerDisplayName(
+				activeSession.user
+			);
+			if (sessionAlias) return sessionAlias;
 			let storedPseudonym: string | null = null;
 			try {
 				storedPseudonym =
@@ -621,13 +650,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			} catch {
 				storedPseudonym = null;
 			}
-			const ownPseudonym = resolveAnonymousChatDisplayName(
-				{
-					username: userData?.userName,
-					displayName: userData?.displayName || storedPseudonym
-				},
-				userData?.displayName || storedPseudonym || undefined
-			);
+			const cachedAlias = resolveAssignedAskerDisplayName({
+				displayName: storedPseudonym || undefined
+			});
+			if (cachedAlias) return cachedAlias;
+			const ownPseudonym = resolveAnonymousChatDisplayName({
+				username: activeSession.user?.username || userData?.userName
+			});
 			if (ownPseudonym) {
 				return ownPseudonym;
 			}
@@ -1063,6 +1092,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						to={listPath + getSessionListTab()}
 						onClick={handleBackButton}
 						className="sessionInfo__backButton"
+						aria-label={translate('app.back')}
 					>
 						<BackIcon />
 					</Link>
@@ -1133,6 +1163,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								/>
 								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
+										{...HEADER_STACK_PROPS}
 										participants={headerParticipants}
 										/* Phone (< 900 px): one avatar + a
 										   compact "+N" — the title keeps the
@@ -1285,7 +1316,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
 					activeSession.item.status
 				) &&
-				activeSession.item.agencyId && (
+				activeSession.item.agencyId > 0 && (
 					<ContactSheetRequest
 						key={activeSession.item.id}
 						sessionId={activeSession.item.id}

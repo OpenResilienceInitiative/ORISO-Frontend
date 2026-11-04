@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 vi.mock('../../api/apiLogoutKeycloak', () => ({
 	apiKeycloakLogout: vi.fn().mockResolvedValue(undefined)
@@ -29,7 +36,8 @@ vi.mock('../../utils/appConfig', () => ({
 	appConfig: { urls: { toEntry: '/' } }
 }));
 vi.mock('../../utils/eventHandler', () => ({
-	callEventListeners: vi.fn().mockResolvedValue(false)
+	callEventListeners: vi.fn().mockResolvedValue(false),
+	EVENT_SESSION_TEARDOWN: 'session_teardown'
 }));
 vi.mock('../../services/matrixClientRegistry', () => ({
 	getMatrixClientService: () => ({

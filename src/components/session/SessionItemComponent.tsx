@@ -1,3 +1,5 @@
+import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 import * as React from 'react';
@@ -23,7 +25,7 @@ import {
 	isMyMessage,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
-import { getModality, Modality } from './getModality';
+import { getModality, getModalityIfKnown, Modality } from './getModality';
 import {
 	isComposerBusy,
 	isTimelineAtBottom,
@@ -149,17 +151,23 @@ import {
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
-	STATUS_ENQUIRY
+	STATUS_ENQUIRY,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './session.styles';
 import { focusSessionChromeOnPointerDown } from './focusSessionChrome';
 import { useDebouncedCallback } from 'use-debounce';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
+import {
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
 import { AcceptAssign } from './AcceptAssign';
+import { EnquiryTakenNotice } from './EnquiryTakenNotice';
+import { isEnquiryTakenByColleague } from './enquiryTakenByColleague';
 import { useTranslation } from 'react-i18next';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
@@ -181,7 +189,10 @@ import {
 	type SupervisionRoomLookup
 } from './supervisionRoomLookup';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
-import { isNotificationActiveViewRoute } from './notificationActiveView';
+import {
+	isNotificationActiveViewRoute,
+	reportShownChannel
+} from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutSessionData } from '../../api/apiPutSessionData';
@@ -195,10 +206,16 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { readConfirmedEntryName } from '../anonymousChat/entryRoom/entryRoomIdentity';
 import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
 import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import {
+	createSingleFlightPoll,
+	isNobodyLiveConfirmed,
+	nextUnavailablePollCount
+} from '../anonymousChat/entryRoom/liveChatAvailability';
 import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
@@ -226,7 +243,7 @@ import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
 import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
@@ -236,11 +253,8 @@ import {
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
-const MessageSubmitInterfaceComponent = lazyWithReload(() =>
-	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
-		(m) => ({ default: m.MessageSubmitInterfaceComponent })
-	)
-);
+import { loadMessageComposer } from '../app/appChunks';
+const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
@@ -276,6 +290,7 @@ interface SessionItemProps {
 	onLoadEarlierMessages?: () => Promise<boolean>;
 	/** The viewer's case-handover grant; a CO_ACCESS grant is read-only (#200). */
 	caseHandoverStatus?: CaseHandoverStatus | null;
+	onCaseHandoverStatusChange?: (status: CaseHandoverStatus) => void;
 }
 
 let initMessageCount: number;
@@ -285,9 +300,16 @@ const ROBOT_MESSAGE_REVEAL_GAP_MS = 3500;
 export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
+	const effectiveFeatures = useConversationFeatureSettings(
+		tenantData?.settings
+	);
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
+	const nameEditable = isAskerDisplayNameTypingAllowed(
+		tenantData?.settings,
+		getModalityIfKnown(activeSession)
+	);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -362,7 +384,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return false;
 		}
 	});
-	const [pseudonymSaving, setPseudonymSaving] = useState(false);
+	const aliasView = useRef({
+		active: true,
+		sessionId: activeSession.item.id,
+		generation: 0
+	});
+	// Returning to the same session starts a new view lifetime (A → B → A).
+	if (aliasView.current.sessionId !== activeSession.item.id) {
+		aliasView.current.sessionId = activeSession.item.id;
+		aliasView.current.generation += 1;
+	}
+	useEffect(() => {
+		const view = aliasView.current;
+		view.active = true;
+		return () => {
+			view.active = false;
+		};
+	}, []);
+	const savingAliasRequest = useRef<{
+		sessionId: number;
+		generation: number;
+	} | null>(null);
+	const [pendingAliasRequest, setPendingAliasRequest] =
+		useState<typeof savingAliasRequest.current>(null);
+	const pseudonymSaving =
+		pendingAliasRequest?.sessionId === activeSession.item.id &&
+		pendingAliasRequest?.generation === aliasView.current.generation;
 	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
 		null
 	);
@@ -387,6 +434,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [numAvailableConsultants, setNumAvailableConsultants] = useState<
 		number | null
 	>(null);
+	/**
+	 * Consecutive answered zeros of that poll. The endpoint reports its own
+	 * failed availability lookup as zero, so the dialog needs the same
+	 * confirmation the entry room uses (`isNobodyLiveConfirmed`, #1270).
+	 */
+	const [consecutiveUnavailablePolls, setConsecutiveUnavailablePolls] =
+		useState(0);
 	/**
 	 * Set when the asker manually dismisses the no-availability modal while
 	 * the count is still 0, so the poll doesn't immediately reopen it. Reset
@@ -433,8 +487,36 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
 		generatePseudonym(locale)
 	);
+	const [customPseudonymName, setCustomPseudonymName] = useState<{
+		sessionId: number;
+		value: string;
+	} | null>(null);
+	const selectedPseudonym = useMemo(
+		() =>
+			nameEditable &&
+			customPseudonymName?.sessionId === activeSession.item.id
+				? {
+						...currentPseudonym,
+						displayName: customPseudonymName.value
+					}
+				: currentPseudonym,
+		[
+			nameEditable,
+			customPseudonymName,
+			activeSession.item.id,
+			currentPseudonym
+		]
+	);
+	const confirmedPseudonymName = pseudonymConfirmed
+		? (activeSession.user?.displayName ??
+			readConfirmedEntryName(activeSession.item.id))
+		: null;
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+		setCustomPseudonymName(null);
+		setCurrentPseudonym((prev) => ({
+			...regeneratePseudonym(prev, locale),
+			avatar: prev.avatar
+		}));
 	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
@@ -471,6 +553,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousChat && isAskerUser && !isConsultantUser;
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
+	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
 			String(userData.dataPrivacyConfirmation).trim() !== ''
@@ -525,8 +608,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isInAnonymousWaitingQueuePhase &&
 		!consultantAccepted &&
 		!enquiryClosed &&
-		numAvailableConsultants === 0 &&
+		isNobodyLiveConfirmed(
+			numAvailableConsultants,
+			consecutiveUnavailablePolls
+		) &&
 		!liveChatClosedDismissed;
+	/**
+	 * "Come back later" only dismisses the dialog; the asker stays in the
+	 * queue, so say — without blocking anything — that nobody is live right
+	 * now. Gone as soon as somebody is (the dismissal resets then).
+	 */
+	const showNobodyLiveNote =
+		isInAnonymousWaitingQueuePhase &&
+		!consultantAccepted &&
+		!enquiryClosed &&
+		isNobodyLiveConfirmed(
+			numAvailableConsultants,
+			consecutiveUnavailablePolls
+		) &&
+		liveChatClosedDismissed;
 	const robotIncomingUsername = useMemo(() => {
 		const resolvedCandidates = [
 			contact?.displayName,
@@ -748,7 +848,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const handleReact = useCallback(
 		(messageId: string, key: string) => {
-			if (!resolvedMatrixRoomId) {
+			if (isRejectedSession || !resolvedMatrixRoomId) {
 				return;
 			}
 			chatTransportService
@@ -759,11 +859,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId]
+		[resolvedMatrixRoomId, isRejectedSession]
 	);
 	const handleUnreact = useCallback(
 		(reactionEventId: string) => {
-			if (!resolvedMatrixRoomId) {
+			if (isRejectedSession || !resolvedMatrixRoomId) {
 				return;
 			}
 			chatTransportService
@@ -773,7 +873,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId]
+		[resolvedMatrixRoomId, isRejectedSession]
 	);
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -1051,6 +1151,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		const canWrite =
+			!isRejectedSession &&
 			!isCoAccessViewer &&
 			(type !== SESSION_LIST_TYPES.ENQUIRY ||
 				(isAnonymousAskerExperience && waitingGateDismissed));
@@ -1058,6 +1159,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		isCoAccessViewer,
 		type,
+		isRejectedSession,
 		isAnonymousAskerExperience,
 		waitingGateDismissed,
 		userData,
@@ -1151,22 +1253,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * The login User-ID is left unchanged so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
-		if (pseudonymSaving) return;
-		setPseudonymSaving(true);
-		apiPutSessionData(activeSession.item.id, {
-			displayName: currentPseudonym.displayName
-		})
-			.then(() =>
-				apiPatchUserData({ displayName: currentPseudonym.displayName })
-			)
-			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
+		const alias = selectedPseudonym.displayName.trim();
+		const sessionId = activeSession.item.id;
+		if (
+			(savingAliasRequest.current?.generation ===
+				aliasView.current.generation &&
+				savingAliasRequest.current?.sessionId === sessionId) ||
+			!alias ||
+			alias.length > 255
+		)
+			return;
+		const request = { sessionId, generation: aliasView.current.generation };
+		savingAliasRequest.current = request;
+		setPendingAliasRequest(request);
+		const isCurrentView = () =>
+			aliasView.current.active &&
+			aliasView.current.sessionId === sessionId &&
+			aliasView.current.generation === request.generation;
+		apiPutSessionData(sessionId, { displayName: alias })
+			.then(() => (isCurrentView() ? reloadActiveSession?.() : undefined))
 			.then(() => {
+				if (!isCurrentView()) return;
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
 					sessionStorage.setItem(
-						`anonymous-pseudonym-name-${activeSession.item.id}`,
-						currentPseudonym.displayName
+						`anonymous-pseudonym-name-${sessionId}`,
+						alias
 					);
 				} catch {
 					/* ignore storage errors */
@@ -1175,13 +1288,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.catch(() => {
 				/* keep card visible on failure so user can retry */
 			})
-			.finally(() => setPseudonymSaving(false));
+			.finally(() => {
+				if (savingAliasRequest.current !== request) return;
+				savingAliasRequest.current = null;
+				if (aliasView.current.active) setPendingAliasRequest(null);
+			});
 	}, [
 		activeSession.item.id,
-		currentPseudonym,
-		pseudonymSaving,
-		pseudonymStorageKey,
-		setUserData
+		selectedPseudonym,
+		reloadActiveSession,
+		pseudonymStorageKey
 	]);
 
 	/**
@@ -1202,11 +1318,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
 		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
+		/* A request may outlive the 4 s interval and overlapping answers can
+		   land out of order, so only one poll is in flight: the zeros below
+		   are counted in the order they were asked (#1270). A hung request is
+		   aborted after 15 s and the next tick goes out normally. */
+		const pollOnce = createSingleFlightPoll();
 
-		const refresh = () => {
-			apiGetAnonymousEnquiryDetails(sessionId)
+		const fetchPoll = (signal: AbortSignal) => {
+			return apiGetAnonymousEnquiryDetails(sessionId, signal)
 				.then((details) => {
-					if (cancelled) return;
+					/* A poll given up on after 15 s is stale: keep the last
+					   known state. */
+					if (cancelled || signal.aborted) return;
 					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
 					   Consultants can never see or accept it — stop polling
 					   and show the closed notice instead of queue position
@@ -1222,10 +1345,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
-					setNumAvailableConsultants(
+					const polledAvailable =
 						typeof details?.numAvailableConsultants === 'number'
 							? details.numAvailableConsultants
-							: null
+							: null;
+					setNumAvailableConsultants(polledAvailable);
+					setConsecutiveUnavailablePolls((previous) =>
+						nextUnavailablePollCount(previous, polledAvailable)
 					);
 					/* Only IN_PROGRESS means a consultant is handling this
 					   enquiry. DONE/IN_ARCHIVE must NOT flip the bar — a
@@ -1248,6 +1374,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/* swallow — UI falls back to "Wird verbunden …" */
 				});
 		};
+		const refresh = () => pollOnce(fetchPoll);
 
 		refresh();
 		/* Poll every 4s so acceptance feels real-time without reload. */
@@ -1332,26 +1459,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousEnquiryPhaseSession
 	]);
 
-	const preloadMessageComposer = useCallback(() => {
-		void import(
-			'../messageSubmitInterface/messageSubmitInterfaceComponent'
-		);
-	}, []);
-
 	useEffect(() => {
 		if (
 			shouldShowPseudonymGate &&
 			pseudonymConfirmed &&
 			consultantAccepted
 		) {
-			preloadMessageComposer();
+			void loadMessageComposer();
 		}
-	}, [
-		consultantAccepted,
-		preloadMessageComposer,
-		pseudonymConfirmed,
-		shouldShowPseudonymGate
-	]);
+	}, [consultantAccepted, pseudonymConfirmed, shouldShowPseudonymGate]);
 
 	/* Closing the companion unmounts whatever had focus, and focus would fall
 	   back to the document — a keyboard user lost their place in the room. So
@@ -1995,6 +2111,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const handleRetryFailedSend = useCallback(
 		(failedSendId: string) => {
+			if (isRejectedSession) return;
 			setRetryRequest((current) => {
 				if (current) {
 					return current;
@@ -2019,7 +2136,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: null;
 			});
 		},
-		[failedSends]
+		[failedSends, isRejectedSession]
 	);
 	const handleRetrySettled = useCallback(
 		(requestId: string, sessionIdentity: string) => {
@@ -2195,6 +2312,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const teamRoomId = props.teamRoomId;
 	const teamMessages = props.teamMessages;
 	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
+	// #1472: the notice covers the panel, so nothing in it counts as seen.
+	const isTakenByColleague = isEnquiryTakenByColleague(
+		type,
+		activeSession,
+		userData?.userId
+	);
 	// Creation is initiated by the list/deep-link contract, which first resolves
 	// the POST and then supplies this id. Do not expose an in-stage channel item
 	// until it can resolve to a real room, except for an eligible enquiry where
@@ -2254,8 +2377,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const reportChatStagePanel = useReportChatStagePanel();
 	useEffect(() => {
 		reportChatStagePanel(openPanel);
-		return () => reportChatStagePanel(null);
-	}, [openPanel, reportChatStagePanel]);
+		reportShownChannel(
+			openPanel === 'thread' && activeThreadRootId
+				? { kind: 'thread', rootId: activeThreadRootId }
+				: openPanel === 'supervision' || openPanel === 'team'
+					? { kind: openPanel }
+					: null
+		);
+		return () => {
+			reportChatStagePanel(null);
+			reportShownChannel(null);
+		};
+	}, [activeThreadRootId, openPanel, reportChatStagePanel]);
 
 	// `?at=<eventId>` (review D-6): once the bubble is in the DOM — main
 	// chat or the open pane — scroll it into view and consume the param
@@ -2346,18 +2479,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// supervision channel was on screen; 0 while it is.
 	const [supervisionSeenAt, setSupervisionSeenAt] = useState(0);
 	useEffect(() => {
-		if (hasSupervisionSideRoom) {
+		if (hasSupervisionSideRoom && !isTakenByColleague) {
 			setSupervisionSeenAt(Date.now());
 		}
-	}, [hasSupervisionSideRoom, activeSession.item?.id]);
+	}, [hasSupervisionSideRoom, activeSession.item?.id, isTakenByColleague]);
 	useEffect(() => {
-		if (openPanel === 'supervision') {
+		if (openPanel === 'supervision' && !isTakenByColleague) {
 			setSupervisionSeenAt(Date.now());
 			if (supervisionRoomId) {
 				void chatTransportService.markRoomAsRead(supervisionRoomId);
 			}
 		}
-	}, [openPanel, supervisionMessages, supervisionRoomId]);
+	}, [openPanel, supervisionMessages, supervisionRoomId, isTakenByColleague]);
 	const supervisionUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(
@@ -2379,18 +2512,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setTeamSeenAt(0);
 	}, [activeSession.item?.id]);
 	useEffect(() => {
-		if (hasTeamSideRoom) {
+		if (hasTeamSideRoom && !isTakenByColleague) {
 			setTeamSeenAt(Date.now());
 		}
-	}, [hasTeamSideRoom, activeSession.item?.id]);
+	}, [hasTeamSideRoom, activeSession.item?.id, isTakenByColleague]);
 	useEffect(() => {
-		if (openPanel === 'team') {
+		if (openPanel === 'team' && !isTakenByColleague) {
 			setTeamSeenAt(Date.now());
 			if (teamRoomId) {
 				void chatTransportService.markRoomAsRead(teamRoomId);
 			}
 		}
-	}, [openPanel, teamMessages, teamRoomId]);
+	}, [openPanel, teamMessages, teamRoomId, isTakenByColleague]);
 	const teamUnreadCount = useMemo(
 		() =>
 			countUnreadSideRoomMessages(
@@ -2695,8 +2828,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.
+	const supervisionFeatures =
+		useConversationFeatureSettings(getTenantSettings());
 	const supervisionCallGates =
-		resolveSupervisionCallFeatureGates(getTenantSettings());
+		resolveSupervisionCallFeatureGates(supervisionFeatures);
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
@@ -2875,19 +3010,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setEditingMessage(buildEditContext(message));
 	}, []);
 
-	const handleDeleteDirect = useCallback(
-		(message: MessageItem) => {
-			if (!resolvedMatrixRoomId || !message?._id) {
+	// Delete = Matrix redaction of the event in ITS room. The timeline only
+	// offers it on the viewer's own messages; the main chat and the
+	// Teamberatung panel share this one path.
+	const redactMessageInRoom = useCallback(
+		(matrixRoomId: string | undefined, message: MessageItem) => {
+			if (isRejectedSession || !matrixRoomId || !message?._id) {
 				return;
 			}
 			chatTransportService
 				.redactMessage({
-					matrixRoomId: resolvedMatrixRoomId,
+					matrixRoomId,
 					targetEventId: message._id
 				})
 				.catch(() => undefined);
 		},
-		[resolvedMatrixRoomId]
+		[isRejectedSession]
+	);
+	const handleDeleteDirect = useCallback(
+		(message: MessageItem) =>
+			redactMessageInRoom(resolvedMatrixRoomId, message),
+		[redactMessageInRoom, resolvedMatrixRoomId]
+	);
+	const handleDeleteTeamMessage = useCallback(
+		(message: MessageItem) => redactMessageInRoom(teamRoomId, message),
+		[redactMessageInRoom, teamRoomId]
 	);
 
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
@@ -2937,6 +3084,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		apiRegisterMatrixRoomForSync(sessionId);
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
+	// Phone: a side panel fills the screen instead of the main chat.
+	const mainChatHidden = isPhoneLayout && openPanel !== null;
+	const shownThreadRootId =
+		openPanel === 'thread' ? activeThreadRootId : null;
 	useEffect(() => {
 		if (isAskerUser && !isConsultantUser) {
 			return;
@@ -2957,29 +3108,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 
 		let disposed = false;
-		const markActive = () => {
+		const updateActiveView = () => {
 			// clearInterval cannot cancel a callback that is already queued. The
 			// guard prevents that stale heartbeat from racing after cleanup and
 			// re-enabling suppression while the user is on Notifications.
 			if (disposed) {
 				return;
 			}
+			const active =
+				document.visibilityState === 'visible' && document.hasFocus();
 			apiPatchNotificationActiveView({
 				roomId,
-				threadRootId: activeThreadRootId,
-				active: true
+				threadRootId: active ? shownThreadRootId : null,
+				active,
+				mainChatHidden: (active && mainChatHidden) || undefined
 			}).catch(() => undefined);
 		};
 
-		markActive();
+		updateActiveView();
+		document.addEventListener('visibilitychange', updateActiveView);
+		window.addEventListener('focus', updateActiveView);
+		window.addEventListener('blur', updateActiveView);
 
 		const heartbeat = window.setInterval(() => {
-			markActive();
+			updateActiveView();
 		}, 10000);
 
 		return () => {
 			disposed = true;
 			window.clearInterval(heartbeat);
+			document.removeEventListener('visibilitychange', updateActiveView);
+			window.removeEventListener('focus', updateActiveView);
+			window.removeEventListener('blur', updateActiveView);
 			apiPatchNotificationActiveView({
 				roomId,
 				threadRootId: null,
@@ -2989,11 +3149,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
-		activeThreadRootId,
 		isAskerUser,
 		isConsultantUser,
 		location.pathname,
-		location.search
+		location.search,
+		mainChatHidden,
+		shownThreadRootId
 	]);
 
 	// Track the decryption success because we have a short timing issue when
@@ -3167,6 +3328,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'session__content--gameFocus',
 						shouldShowConsentGate &&
 							'session__content--consentGate',
+						shouldShowGroupConsentGate &&
+							'session__content--groupConsentGate',
 						shouldShowPseudonymGate &&
 							'session__content--pseudonymGate'
 					)}
@@ -3186,6 +3349,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							agencyId={
 								activeSession.item?.assignedAgencies?.[0]?.id
 							}
+							agencyName={
+								activeSession.item?.assignedAgencies?.[0]?.name
+							}
 							onAccepted={() => {
 								setGroupConsentAccepted(true);
 								apiGetUserData()
@@ -3197,7 +3363,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
-								pseudonym={currentPseudonym}
+								pseudonym={
+									confirmedPseudonymName
+										? {
+												...selectedPseudonym,
+												displayName:
+													confirmedPseudonymName
+											}
+										: selectedPseudonym
+								}
+								editable={nameEditable && !pseudonymConfirmed}
+								disabled={pseudonymSaving || pseudonymConfirmed}
+								onNameChange={(value) => {
+									if (nameEditable)
+										setCustomPseudonymName({
+											sessionId: activeSession.item.id,
+											value
+										});
+								}}
 								skipTyping={pseudonymConfirmed}
 							/>
 							{pseudonymConfirmed && <PrivacyMessageCard />}
@@ -3240,97 +3423,62 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className={'message-holder'}>
 							{shouldShowRobotMessages &&
 								!showWaitingMiniGame &&
-								visibleRobotCards.map((card, index) => (
-									<div className="messageItem" key={card._id}>
-										<div className="messageItem__messageWrap">
-											{index === 0 && (
-												<div
-													className="messageItem__systemAvatar"
-													aria-hidden="true"
-												>
-													<NotificationBellIcon className="messageItem__systemAvatarIcon" />
-												</div>
-											)}
-											{index !== 0 && (
-												<div
-													className="session__robotIncomingAvatarSpacer"
-													aria-hidden="true"
-												/>
-											)}
-											<div className="messageItem__content">
-												{index === 0 && (
-													<div className="messageItem__header">
-														<div className="messageItem__username messageItem__username--system">
-															{translate(
-																'message.systemNotification'
-															)}
-														</div>
-														<span className="messageItem__headerTime">
-															5:00
-														</span>
-													</div>
-												)}
-												<div className="messageItem__message messageItem__message--systemNotification">
-													{index === 0 && (
-														<div className="messageItem__systemNotificationTag">
-															{translate(
-																'message.systemNotification'
-															)}
-														</div>
-													)}
-													<div className="messageItem__systemNotificationTitle">
-														{card.title}
-													</div>
-													{card.playLabel ? (
-														<div className="session__robotSystemActionRow">
-															<div className="messageItem__systemNotificationDescription">
-																{
-																	card.description
-																}
-															</div>
-															<button
-																type="button"
-																className="session__robotSystemInlinePlayButton"
-																onClick={(
-																	event
-																) => {
-																	event.preventDefault();
-																	event.stopPropagation();
-																	setShowWaitingMiniGame(
-																		true
-																	);
-																}}
-															>
-																{card.playLabel}
-															</button>
-														</div>
-													) : (
+								visibleRobotCards.length > 0 && (
+									<CarimatMessageFrame
+										subtitle={translate(
+											'message.systemNotification'
+										)}
+									>
+										{visibleRobotCards.map((card) => (
+											<CarimatMessageBubble
+												key={card._id}
+												topic={card.title}
+											>
+												{card.playLabel ? (
+													<div className="session__robotSystemActionRow">
 														<div className="messageItem__systemNotificationDescription">
 															{card.description}
 														</div>
-													)}
-													{card.cta && (
 														<button
 															type="button"
-															className="session__robotSystemRegistrationLink"
+															className="session__robotSystemInlinePlayButton"
 															onClick={(
 																event
 															) => {
 																event.preventDefault();
 																event.stopPropagation();
-																navigate(
-																	'/registration'
+																setShowWaitingMiniGame(
+																	true
 																);
 															}}
 														>
-															{card.cta}
+															{card.playLabel}
 														</button>
-													)}
-												</div>
-											</div>
-										</div>
-									</div>
-								))}
+													</div>
+												) : (
+													<div className="messageItem__systemNotificationDescription">
+														{card.description}
+													</div>
+												)}
+												{card.cta && (
+													<button
+														type="button"
+														className="session__robotSystemRegistrationLink"
+														onClick={(event) => {
+															event.preventDefault();
+															event.stopPropagation();
+															navigate(
+																'/registration'
+															);
+														}}
+													>
+														{card.cta}
+													</button>
+												)}
+											</CarimatMessageBubble>
+										))}
+									</CarimatMessageFrame>
+								)}
 							{shouldShowRobotTypingIndicator && (
 								<div className="messageItem session__robotTypingIndicator">
 									<div className="messageItem__messageWrap">
@@ -3367,16 +3515,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											'sessionList.user.consultantUnknown'
 										)
 									}
-									askerMatrixUserIdFor={(message) =>
-										!activeSession.rid &&
-										message.userId &&
-										!message.userId.includes(
-											activeSession.consultant
-												?.username || ''
-										)
-											? message.userId
-											: activeSession.item
-													.askerMatrixUserId
+									askerMatrixUserIdFor={() =>
+										activeSession.item.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
 									hideSystemMessages={
@@ -3420,20 +3560,28 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}
 									resolveReplyQuote={resolveReplyQuote}
 									onReplyDirect={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleReplyDirect
 									}
-									onEditDirect={handleEditDirect}
-									onDeleteDirect={handleDeleteDirect}
+									onEditDirect={
+										isRejectedSession
+											? undefined
+											: handleEditDirect
+									}
+									onDeleteDirect={
+										isRejectedSession
+											? undefined
+											: handleDeleteDirect
+									}
 									reactionsFor={getReactionsFor}
 									onReact={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleReact
 									}
 									onUnreact={
-										isCoAccessViewer
+										isRejectedSession || isCoAccessViewer
 											? undefined
 											: handleUnreact
 									}
@@ -3489,11 +3637,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											retryRequest?.failedSendId ===
 											failed.id
 										}
-										retryDisabled={Boolean(
-											retryRequest &&
-												retryRequest.failedSendId !==
-													failed.id
-										)}
+										retryDisabled={
+											isRejectedSession ||
+											Boolean(
+												retryRequest &&
+													retryRequest.failedSendId !==
+														failed.id
+											)
+										}
 									/>
 								))}
 							{shouldShowInlineTypingIndicator && (
@@ -3531,8 +3682,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					)}
 				</div>
 
+				{isRejectedSession && (
+					<div className="messageItem" role="status">
+						{translate('enquiry.rejection.closed')}
+					</div>
+				)}
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isEnquiry &&
+					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
 						<AcceptAssign
@@ -3567,6 +3723,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onRegenerate={handleRegeneratePseudonym}
 							onConfirm={handleConfirmPseudonym}
 							disabled={pseudonymSaving}
+							confirmDisabled={
+								!selectedPseudonym.displayName.trim()
+							}
 						/>
 					</div>
 				)}
@@ -3589,6 +3748,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					!enquiryClosed &&
 					!consultantAccepted && (
 						<div className="session__pseudonymActionBarSlot">
+							{showNobodyLiveNote && (
+								<div
+									className="session__nobodyLiveNote"
+									role="status"
+								>
+									{translate(
+										'anonymousChat.noAvailability.laterNotice'
+									)}
+								</div>
+							)}
 							<WaitingQueueActionBar
 								queuePosition={queuePeopleAhead}
 								onOpenCalmCompanion={handleOpenCalmCompanion}
@@ -3645,122 +3814,134 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{isCoAccessViewer && (
 					<CaseHandoverReadOnlyNotice
 						expiresAt={props.caseHandoverStatus?.expiresAt}
+						sessionId={activeSession.item?.id}
+						canExtend={props.caseHandoverStatus?.canExtend}
+						onStatusChange={props.onCaseHandoverStatusChange}
 					/>
 				)}
-
-				{canRenderClientComposer({
-					canWriteMessage,
-					isSupervisor: isSupervisorView,
-					shouldBlockAnonymousInquiryChat: blocksConversation
-				}) && (
-					<div
-						className={clsx(
-							'session__gameInputFadeTarget',
-							areRobotMessagesComplete &&
-								'session__gameInputFadeTarget--reveal',
-							!areRobotMessagesComplete &&
-								'session__gameInputFadeTarget--hidden'
-						)}
-					>
-						{areRobotMessagesComplete && (
-							<Suspense
-								fallback={
-									<MessageSubmitInterfaceSkeleton
-										placeholder={getPlaceholder()}
-										className={clsx(
-											'session__submit-interface'
-										)}
-									/>
-								}
-							>
-								<MessageSubmitErrorBoundary
-									onRetry={() =>
-										setComposerRemountKey((key) => key + 1)
+				{!isRejectedSession &&
+					canRenderClientComposer({
+						canWriteMessage,
+						isSupervisor: isSupervisorView,
+						shouldBlockAnonymousInquiryChat: blocksConversation
+					}) && (
+						<div
+							className={clsx(
+								'session__gameInputFadeTarget',
+								areRobotMessagesComplete &&
+									'session__gameInputFadeTarget--reveal',
+								!areRobotMessagesComplete &&
+									'session__gameInputFadeTarget--hidden'
+							)}
+						>
+							{areRobotMessagesComplete && (
+								<Suspense
+									fallback={
+										<MessageSubmitInterfaceSkeleton
+											placeholder={getPlaceholder()}
+											className={clsx(
+												'session__submit-interface'
+											)}
+										/>
 									}
 								>
-									<MessageSubmitInterfaceComponent
-										key={composerRemountKey}
-										isAnonymousLiveChat={
-											isAnonymousAskerExperience &&
-											waitingGateDismissed
+									<MessageSubmitErrorBoundary
+										onRetry={() =>
+											setComposerRemountKey(
+												(key) => key + 1
+											)
 										}
-										isTyping={props.isTyping}
-										className={clsx(
-											'session__submit-interface',
-											!isScrolledToBottom &&
-												'session__submit-interface--scrolled-up'
-										)}
-										placeholder={getPlaceholder()}
-										typingUsers={props.typingUsers}
-										preselectedFile={draggedFile}
-										handleMessageSendSuccess={
-											handleMessageSendSuccess
-										}
-										onSendError={handleComposerSendError}
-										retryRequest={
-											retryRequest &&
-											failedSendBelongsTo(retryRequest, {
-												kind: 'main'
-											})
-												? retryRequest
-												: null
-										}
-										onRetrySettled={
-											handleComposerRetrySettled
-										}
-										isSupervisor={isSupervisor}
-										supervisionRoomId={supervisionRoomId}
-										hideSupervisorAudience={
-											hasSupervisionSideRoom
-										}
-										replyTo={replyTo}
-										onCancelReply={handleCancelReply}
-										editingMessage={editingMessage}
-										onCancelEdit={handleCancelEdit}
-										mobileUnreadCount={newMessages}
-										mobileIsScrolledToBottom={
-											isScrolledToBottom
-										}
-										flushCorner={
-											desktopPanelOpen
-												? 'bottom-left'
-												: undefined
-										}
-										onMobileNavigateBack={
-											handleMobileNavigateToList
-										}
-										onMobileNavigateDown={
-											handleMobileNavigateStepDownClick
-										}
-										onMobileNavigateBottom={
-											handleScrollToBottomButtonClick
-										}
-										messages={messages}
-										onCloseThread={handleCloseThread}
-										isOwnMessage={isMyMessageMatrix}
-									/>
-								</MessageSubmitErrorBoundary>
-							</Suspense>
-						)}
-						{areRobotMessagesComplete &&
-							// Practice: no attachments; an upload would leave the page.
-							!isPracticing &&
-							hasMediaUploadFeature(
-								tenantData?.settings,
-								chatType
-							) && (
-								<DragAndDropArea
-									onFileDragged={onFileDragged}
-									isDragging={isDragging}
-									canDrop={isDragOverDropArea}
-									onDragLeave={onDragLeave}
-									styleOverride={{
-										top: headerBounds.height + 'px'
-									}}
-								/>
+									>
+										<MessageSubmitInterfaceComponent
+											key={composerRemountKey}
+											isAnonymousLiveChat={
+												isAnonymousAskerExperience &&
+												waitingGateDismissed
+											}
+											isTyping={props.isTyping}
+											className={clsx(
+												'session__submit-interface',
+												!isScrolledToBottom &&
+													'session__submit-interface--scrolled-up'
+											)}
+											placeholder={getPlaceholder()}
+											typingUsers={props.typingUsers}
+											preselectedFile={draggedFile}
+											handleMessageSendSuccess={
+												handleMessageSendSuccess
+											}
+											onSendError={
+												handleComposerSendError
+											}
+											retryRequest={
+												retryRequest &&
+												failedSendBelongsTo(
+													retryRequest,
+													{
+														kind: 'main'
+													}
+												)
+													? retryRequest
+													: null
+											}
+											onRetrySettled={
+												handleComposerRetrySettled
+											}
+											isSupervisor={isSupervisor}
+											supervisionRoomId={
+												supervisionRoomId
+											}
+											hideSupervisorAudience={
+												hasSupervisionSideRoom
+											}
+											replyTo={replyTo}
+											onCancelReply={handleCancelReply}
+											editingMessage={editingMessage}
+											onCancelEdit={handleCancelEdit}
+											mobileUnreadCount={newMessages}
+											mobileIsScrolledToBottom={
+												isScrolledToBottom
+											}
+											flushCorner={
+												desktopPanelOpen
+													? 'bottom-left'
+													: undefined
+											}
+											onMobileNavigateBack={
+												handleMobileNavigateToList
+											}
+											onMobileNavigateDown={
+												handleMobileNavigateStepDownClick
+											}
+											onMobileNavigateBottom={
+												handleScrollToBottomButtonClick
+											}
+											messages={messages}
+											onCloseThread={handleCloseThread}
+											isOwnMessage={isMyMessageMatrix}
+										/>
+									</MessageSubmitErrorBoundary>
+								</Suspense>
 							)}
-					</div>
-				)}
+							{areRobotMessagesComplete &&
+								// Practice: no attachments; an upload would leave the page.
+								!isPracticing &&
+								hasMediaUploadFeature(
+									effectiveFeatures,
+									chatType
+								) && (
+									<DragAndDropArea
+										onFileDragged={onFileDragged}
+										isDragging={isDragging}
+										canDrop={isDragOverDropArea}
+										onDragLeave={onDragLeave}
+										styleOverride={{
+											top: headerBounds.height + 'px'
+										}}
+									/>
+								)}
+						</div>
+					)}
 
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
@@ -3783,7 +3964,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			<Dialog
 				open={liveChatClosedModalOpen}
-				onClose={() => setLiveChatClosedDismissed(true)}
+				aria-labelledby="live-chat-closed-title"
+				aria-describedby="live-chat-closed-subtitle"
+				/* No `onClose`: a click beside the dialog or Esc must not walk
+				   the asker past "nobody is live" (#1270). Only its own buttons
+				   ("back", "come back later") and availability returning close it. */
 				fullWidth
 				maxWidth={false}
 				PaperProps={{
@@ -3821,6 +4006,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}}
 						/>
 						<MuiTypography
+							id="live-chat-closed-title"
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
@@ -3828,7 +4014,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</MuiTypography>
 					</MuiBox>
 
-					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
+					<MuiTypography
+						id="live-chat-closed-subtitle"
+						variant="body1"
+						sx={{ mb: '16px' }}
+					>
 						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
@@ -3981,7 +4171,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							fullWidth
 							variant="outlined"
 							onClick={() => setLiveChatClosedDismissed(true)}
-							startIcon={<CloseIcon />}
+							startIcon={
+								<CloseIcon width={20} height={20} aria-hidden />
+							}
 							sx={{
 								borderRadius: '8px',
 								borderColor: '#FFE2DE',
@@ -4018,12 +4210,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			onBack={closeChannel}
 		/>
 	) : undefined;
-	const askerMatrixUserIdFor = (message: MessageItem) =>
-		!activeSession.rid &&
-		message.userId &&
-		!message.userId.includes(activeSession.consultant?.username || '')
-			? message.userId
-			: activeSession.item.askerMatrixUserId;
+	// Assignment can change; a former consultant is never proof of asker identity.
+	const askerMatrixUserIdFor = () => activeSession.item.askerMatrixUserId;
 	const e2eeParams = { key, keyID, encrypted, subscriptionKeyLost };
 	const panelComposerFlush = desktopPanelOpen ? 'bottom-right' : undefined;
 
@@ -4075,9 +4263,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
-							onReact={isCoAccessViewer ? undefined : handleReact}
+							onReact={
+								isRejectedSession || isCoAccessViewer
+									? undefined
+									: handleReact
+							}
 							onUnreact={
-								isCoAccessViewer ? undefined : handleUnreact
+								isRejectedSession || isCoAccessViewer
+									? undefined
+									: handleUnreact
 							}
 						/>
 						{failedSends
@@ -4119,16 +4313,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									retryPending={
 										retryRequest?.failedSendId === failed.id
 									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
+									retryDisabled={
+										isRejectedSession ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
 								/>
 							))}
 					</>
 				}
 				composer={
+					!isRejectedSession &&
 					!isCoAccessViewer && (
 						<MessageSubmitInterfaceComponent
 							isTyping={props.isTyping}
@@ -4381,14 +4579,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
 							title={
-								props.teamDiscussionStatus === 'OPEN'
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
 									? teamText(
 											'chatStage.panel.team.empty.title'
 										)
 									: teamChannelTitle
 							}
 							text={
-								props.teamDiscussionStatus === 'OPEN'
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
 									? teamText(
 											'chatStage.panel.team.empty.text'
 										)
@@ -4416,6 +4616,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							handleDecryptionSuccess={handleDecryptionSuccess}
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
+							// An archived discussion is read-only in Matrix (ADR-016): a
+							// redaction there is refused, so it offers no delete either.
+							onDeleteDirect={
+								props.teamDiscussionStatus === 'OPEN' &&
+								!isRejectedSession
+									? handleDeleteTeamMessage
+									: undefined
+							}
 						/>
 						{failedSends
 							.filter((failed) =>
@@ -4456,6 +4664,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										retryRequest?.failedSendId === failed.id
 									}
 									retryDisabled={
+										isRejectedSession ||
 										props.teamDiscussionStatus !== 'OPEN' ||
 										Boolean(
 											retryRequest &&
@@ -4468,7 +4677,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					props.teamDiscussionStatus === 'OPEN' ? (
+					props.teamDiscussionStatus === 'OPEN' &&
+					!isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
 							isTyping={(isCleared: boolean) =>
 								props.isTypingInRoom?.(isCleared, teamRoomId)
@@ -4553,6 +4763,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	return (
 		<SupervisionPanelContext.Provider value={supervisionPanelContextValue}>
 			{isPhoneLayout && sidePanel ? sidePanel : cardWithPanel}
+			{/* Outside the phone switch: a full-screen panel hides the card. */}
+			{isTakenByColleague && <EnquiryTakenNotice />}
 		</SupervisionPanelContext.Provider>
 	);
 };

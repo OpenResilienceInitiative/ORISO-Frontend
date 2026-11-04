@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import * as React from 'react';
 import {
@@ -9,7 +9,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { redeemInviteLink } from '../../api/apiRedeemInviteLink';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
 import { LocaleContext, TenantContext } from '../../globalState';
@@ -407,6 +414,7 @@ describe('InviteLink asks who is live before anything is created', () => {
 			)
 		);
 		expect(roomProps.current.invite.consultingTypeId).toBe(1);
+		expect(roomProps.current.invite.tenantId).toBe(1);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
 		expect(
@@ -429,17 +437,14 @@ describe('InviteLink asks who is live before anything is created', () => {
 		expect(assignInviteSessionDisplayName).not.toHaveBeenCalled();
 	});
 
-	it('shows the live-chat loader, not the bare registration text, while it looks', async () => {
+	it('shows a neutral loader while checking the invitation', async () => {
 		vi.mocked(apiGetInviteLinkContext).mockReturnValue(
 			new Promise(() => undefined)
 		);
 		renderInvite();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
-				'room invite ?'
-			)
-		);
+		await screen.findByRole('status');
+		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
 		expect(screen.queryByText('Registrierung läuft...')).toBeNull();
 	});
 });

@@ -1,5 +1,6 @@
 import { trackStagePointer } from '../pointer';
 import { StageEffect, StageEffectContext } from '../types';
+import { createStageTint } from '../../stageTint';
 
 const LINE_COUNT = 13;
 /** Horizontal resolution of the heart silhouette lookup. */
@@ -57,6 +58,7 @@ export const createLinesEffect = ({
 	ctx.scale(dpr, dpr);
 
 	const tracker = trackStagePointer(host, { smoothing: 0.08 });
+	const tint = createStageTint(host);
 	const { top, bottom } = buildHeartProfile();
 
 	let previous = 0;
@@ -75,7 +77,8 @@ export const createLinesEffect = ({
 			const { pointer } = tracker;
 			const targetAmplitude = pointer.hovering ? 0.42 : 0;
 			amplitude +=
-				(targetAmplitude - amplitude) * (pointer.hovering ? 0.07 : 0.045);
+				(targetAmplitude - amplitude) *
+				(pointer.hovering ? 0.07 : 0.045);
 
 			const radius = Math.min(width, height) * 0.26;
 			const heartX = (pointer.hovering ? pointer.x : 0.5) * width;
@@ -155,9 +158,9 @@ export const createLinesEffect = ({
 				const beating = i === beatLine && beatX >= 0;
 				const peach = i % 3 === 1;
 				ctx.strokeStyle = beating
-					? `rgba(255,226,218,${(0.4 * intensity).toFixed(3)})`
+					? tint(255, 226, 218, 0.4 * intensity)
 					: peach
-						? `rgba(255,180,168,${(0.22 * intensity).toFixed(3)})`
+						? tint(255, 180, 168, 0.22 * intensity)
 						: `rgba(255,255,255,${((0.09 + (i % 2) * 0.04) * intensity).toFixed(3)})`;
 				ctx.lineWidth = beating ? 1.6 : peach ? 1.4 : 1.1;
 				ctx.stroke();

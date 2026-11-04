@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { CardArtwork } from '../../resources/img/topics';
+import { ArtworkImage } from './ArtworkImage';
 
 /**
  * Mobile format row (Figma 8482-30552, mobile column of screen 1). Instead of
@@ -11,7 +13,7 @@ interface CompactFormatRowProps {
 	icon: React.ReactNode;
 	title: string;
 	subtitle: string;
-	image: string;
+	image: CardArtwork;
 	onSelect: () => void;
 	selected?: boolean;
 }
@@ -39,9 +41,10 @@ export const CompactFormatRow = ({
 			<span className="compactFormatRow__title">{title}</span>
 			<span className="compactFormatRow__subtitle">{subtitle}</span>
 		</span>
-		<img
+		<ArtworkImage
 			className="compactFormatRow__thumb"
-			src={image}
+			artwork={image}
+			sizes="84px"
 			alt=""
 			aria-hidden
 		/>

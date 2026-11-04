@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -23,23 +24,25 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
+	apiGetCaseHandoverRequestStatus,
 	apiDecideCaseHandoverClientConsent,
 	apiGetSessionSupervisors,
 	CaseHandoverStatus,
-	FETCH_ERRORS
+	FETCH_ERRORS,
+	X_REASON
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
-import {
-	prepareMessages,
-	SESSION_LIST_TAB,
-	SESSION_LIST_TYPES
-} from './sessionHelpers';
+import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
+import { buildRoomTimeline } from './roomTimeline';
+import { counterpartReaders } from '../../utils/matrixReadReceipts';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { takeSelfLeave } from '../groupChat/selfLeaveGuard';
+import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -55,11 +58,7 @@ import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
 } from '../../services/chatTransportService';
-import {
-	formatMatrixTimelineEvent,
-	extractReactionEvents
-} from '../../utils/matrixTimelineEventFormatter';
-import { applyMessageEdits } from '../../utils/messageRelations';
+import { extractReactionEvents } from '../../utils/matrixTimelineEventFormatter';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import {
 	isCaseHandoverAccessControlled,
@@ -263,6 +262,33 @@ export const SessionStream = ({
 		[pendingCaseHandoverConsent?.actionPath]
 	);
 
+	// A late decision or fallback belongs only to the committed card that started it.
+	// Layout effects run synchronously at commit; a suspended render must not invalidate
+	// a decision on the still-visible card.
+	const consentScopeKey = JSON.stringify([
+		activeSession.item?.id,
+		pendingCaseHandoverConsent?.id,
+		pendingCaseHandoverRequestId,
+		userData.userId
+	]);
+	const consentScope = useRef({ key: consentScopeKey, generation: 0 });
+	useLayoutEffect(() => {
+		if (consentScope.current.key !== consentScopeKey) {
+			consentScope.current = {
+				key: consentScopeKey,
+				generation: consentScope.current.generation + 1
+			};
+		}
+		setCaseHandoverConsentSubmitting(false);
+		setCaseHandoverConsentError('');
+	}, [consentScopeKey]);
+	useLayoutEffect(
+		() => () => {
+			consentScope.current.generation += 1;
+		},
+		[]
+	);
+
 	const { setConsultantList } = useContext(ConsultantListContext);
 
 	const abortController = useRef<AbortController>(null);
@@ -445,6 +471,8 @@ export const SessionStream = ({
 		};
 	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
 
+	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
+	const consultantMatrixUserId = activeSession.item?.consultantMatrixUserId;
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
 			if (abortController.current) {
@@ -483,35 +511,6 @@ export const SessionStream = ({
 					);
 				};
 
-				const formatRoomMessages = (
-					events: any[],
-					roomId?: string | null,
-					stampRoomId = false
-				) => {
-					const matrixRoom = roomId
-						? chatTransportService.getMatrixRoom(roomId)
-						: null;
-					return (
-						events
-							.map((event: any) =>
-								formatMatrixTimelineEvent(
-									event,
-									matrixRoom,
-									encryptedFallbackText
-								)
-							)
-							.filter(Boolean)
-							// WP-B2: side-room items carry their room id so the
-							// client timeline can reject them as a safety net
-							// (`excludeSideRoomMessages`).
-							.map((item: any) =>
-								stampRoomId && roomId
-									? { ...item, rid: roomId }
-									: item
-							)
-					);
-				};
-
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
 				// ADR-008 / WP-B2: the supervision side room is loaded for
 				// members but kept as its own timeline (SupervisionPanel).
@@ -536,10 +535,36 @@ export const SessionStream = ({
 						}
 					});
 				}
-				const formattedMessages = formatRoomMessages(
-					clientEvents,
-					resolvedMatrixRoomId
-				);
+				// One pipeline for every room, shared with the Activity
+				// Timeline preview (#420) — see `buildRoomTimeline`.
+				const prepareRoomMessages = (
+					events: any[],
+					roomId?: string | null
+				): any[] => {
+					const matrixRoom = roomId
+						? chatTransportService.getMatrixRoom(roomId)
+						: null;
+					return buildRoomTimeline(
+						events,
+						roomId,
+						matrixRoom,
+						encryptedFallbackText,
+						// FE#1802: in the 1:1 room only the session
+						// counterpart's receipt makes an own message "read".
+						roomId === resolvedMatrixRoomId
+							? counterpartReaders(
+									{
+										isGroup: activeSession.isGroup,
+										item: {
+											askerMatrixUserId,
+											consultantMatrixUserId
+										}
+									},
+									(matrixRoom as any)?.myUserId
+								)
+							: undefined
+					);
+				};
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
 				// Side-room reactions stay out of the client timeline; the
@@ -547,21 +572,17 @@ export const SessionStream = ({
 				const reactionEvents = [...extractReactionEvents(clientEvents)];
 
 				setMessagesItem({
-					messages: prepareMessages(
-						applyMessageEdits(formattedMessages)
+					messages: prepareRoomMessages(
+						clientEvents,
+						resolvedMatrixRoomId
 					),
 					reactionEvents
 				});
 				setSupervisionMessages(
 					supervisionRoomId
-						? prepareMessages(
-								applyMessageEdits(
-									formatRoomMessages(
-										supervisionEvents,
-										supervisionRoomId,
-										true
-									)
-								)
+						? prepareRoomMessages(
+								supervisionEvents,
+								supervisionRoomId
 							)
 						: []
 				);
@@ -569,15 +590,7 @@ export const SessionStream = ({
 					sessionId: activeSession.item?.id,
 					roomId: teamRoomId,
 					messages: teamRoomId
-						? prepareMessages(
-								applyMessageEdits(
-									formatRoomMessages(
-										teamEvents,
-										teamRoomId,
-										true
-									)
-								)
-							)
+						? prepareRoomMessages(teamEvents, teamRoomId)
 						: []
 				});
 				setLoading(false);
@@ -601,6 +614,9 @@ export const SessionStream = ({
 			mayRequestHistoryKeys,
 			resolvedChatSession,
 			activeSession.item?.id,
+			activeSession.isGroup,
+			askerMatrixUserId,
+			consultantMatrixUserId,
 			supervisionRoomId,
 			teamRoomId,
 			translate
@@ -839,6 +855,7 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let receiptRefreshTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 		const refreshMessages = () => {
@@ -899,14 +916,56 @@ export const SessionStream = ({
 					)
 				)
 				.filter(Boolean) as Array<() => void>;
+			// A deletion (ours included) must show at once, not with the next
+			// unrelated event: refresh when the SDK marks the message redacted.
+			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// encrypted message arriving in the same sync batch.
+			const handleRedaction = () => {
+				fetchSessionMessages().catch(() => {
+					// keep UI stable if a redaction races with navigation
+				});
+			};
+			const redactionDetachers = watchedRoomIds
+				.map((roomId) =>
+					chatTransportService.onMatrixRedaction(
+						roomId,
+						handleRedaction
+					)
+				)
+				.filter(Boolean) as Array<() => void>;
 
 			// Only consider attach successful once every watched room is bound.
-			if (detachers.length !== watchedRoomIds.length) {
-				detachers.forEach((detach) => detach());
+			if (
+				detachers.length !== watchedRoomIds.length ||
+				redactionDetachers.length !== watchedRoomIds.length
+			) {
+				[...detachers, ...redactionDetachers].forEach((detach) =>
+					detach()
+				);
 				return false;
 			}
 
-			detachTimelineListeners = detachers;
+			// A peer's read receipt flips own messages to "read" (FE#1802).
+			const handleReadReceipt = () => {
+				if (receiptRefreshTimer !== null) return;
+				receiptRefreshTimer = window.setTimeout(() => {
+					receiptRefreshTimer = null;
+					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// reaction or redaction arriving in the next 120 ms.
+					fetchSessionMessages().catch(() => {
+						// keep UI stable if a receipt races with navigation
+					});
+				}, 0);
+			};
+			watchedRoomIds.forEach((roomId) => {
+				const detach = chatTransportService.onMatrixReadReceipt(
+					roomId,
+					handleReadReceipt
+				);
+				if (detach) detachers.push(detach);
+			});
+
+			detachTimelineListeners = [...detachers, ...redactionDetachers];
 			// Initial-sync events may already be cached before this listener attaches.
 			// Hydrate once after every successful attachment so late-join decryption
 			// failures can trigger their room-key request after the room exists.
@@ -959,6 +1018,8 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			if (receiptRefreshTimer !== null)
+				window.clearTimeout(receiptRefreshTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
@@ -993,6 +1054,17 @@ export const SessionStream = ({
 		[translate]
 	);
 
+	// #1923: a ban leaves the group running; say "removed", not "ended".
+	const groupChatRemovedOverlay: OverlayItem = useMemo(
+		() => ({
+			...groupChatStoppedOverlay,
+			svg: XIcon,
+			illustrationBackground: 'error',
+			headline: translate('groupChat.removed.overlay.headline')
+		}),
+		[groupChatStoppedOverlay, translate]
+	);
+
 	// Restores the "subscription removed" UX on
 	// Matrix signals (own membership -> leave/ban after a kick, ban or admin
 	// room purge; m.room.tombstone when a room is shut down/replaced):
@@ -1002,12 +1074,17 @@ export const SessionStream = ({
 	//   to the session list.
 	const handleMatrixRoomLifecycle = useUpdatingRef(
 		useCallback(
-			(_change: MatrixRoomLifecycleChange) => {
+			(change: MatrixRoomLifecycleChange) => {
 				if (activeSession.isGroup) {
 					if (hasUserInitiatedStopOrLeaveRequest.current) {
 						hasUserInitiatedStopOrLeaveRequest.current = false;
 					} else {
-						setOverlayItem(groupChatStoppedOverlay);
+						setOverlayItem(
+							change.type === 'myMembership' &&
+								change.membership === 'ban'
+								? groupChatRemovedOverlay
+								: groupChatStoppedOverlay
+						);
 						setIsOverlayActive(true);
 					}
 				} else if (type === SESSION_LIST_TYPES.MY_SESSION) {
@@ -1016,6 +1093,7 @@ export const SessionStream = ({
 			},
 			[
 				activeSession.isGroup,
+				groupChatRemovedOverlay,
 				groupChatStoppedOverlay,
 				listPath,
 				navigate,
@@ -1036,7 +1114,9 @@ export const SessionStream = ({
 			detachLifecycleListener =
 				chatTransportService.onMatrixRoomLifecycle(
 					matrixRoomId,
-					(change) => handleMatrixRoomLifecycle.current(change)
+					(change) =>
+						takeSelfLeave(matrixRoomId) ||
+						handleMatrixRoomLifecycle.current(change)
 				);
 			return Boolean(detachLifecycleListener);
 		};
@@ -1349,6 +1429,94 @@ export const SessionStream = ({
 	const caseHandoverTopic = useTopic(caseHandoverTopicId);
 	const caseHandoverTopicLabel = caseHandoverTopic?.name;
 
+	/**
+	 * Replaces the pending consent card with a server-confirmed outcome. A
+	 * still-pending status keeps the decision controls and the notification
+	 * unread; any other status ends the request for the asker, and marking its
+	 * notification read keeps the card from resurfacing on the next reload.
+	 */
+	const settleCaseHandoverConsent = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus
+	) => {
+		setConfirmedConsent({ notification, status });
+		if (isPendingCaseHandoverStatus(status.status)) return;
+		notificationsContext?.markNotificationAsRead(notification.id);
+		setResolvedCaseHandoverNotificationId(notification.id);
+		notificationsContext?.refreshNotificationFeed();
+	};
+
+	/**
+	 * A status answers this card when it names this session and does not name
+	 * another request. `requestId` is optional on CaseHandoverStatus and the
+	 * per-request URL already scopes the answer, so an absent id is accepted;
+	 * only a non-null id that differs is a mismatch.
+	 */
+	const isStatusOfConsentRequest = (
+		status: CaseHandoverStatus | undefined,
+		sessionId: number,
+		requestId: number
+	): status is CaseHandoverStatus =>
+		!!status?.status &&
+		status.sessionId === sessionId &&
+		(status.requestId == null || status.requestId === requestId);
+
+	/**
+	 * The server state of exactly this consent request, read through the
+	 * per-request endpoint an advice seeker is allowed to call (the session-level
+	 * status is consultant-only and answers 403). A status that names another
+	 * session or request is no answer for this card.
+	 */
+	const readCaseHandoverRequestStatus = (
+		sessionId: number,
+		requestId: number
+	) =>
+		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
+			if (!isStatusOfConsentRequest(status, sessionId, requestId)) {
+				throw new Error('Status does not belong to this request');
+			}
+			return status;
+		});
+
+	// A card whose request was closed elsewhere (takeover, decline on another
+	// device, expiry) stays visible until its unread notification is answered.
+	// Ask the server once per card on load so it settles without a click.
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		if (
+			!pendingCaseHandoverConsent ||
+			pendingCaseHandoverRequestId === null ||
+			sessionId === undefined
+		) {
+			return;
+		}
+		const notification = pendingCaseHandoverConsent;
+		const generation = consentScope.current.generation;
+		let cancelled = false;
+		readCaseHandoverRequestStatus(sessionId, pendingCaseHandoverRequestId)
+			.then((status) => {
+				if (
+					!cancelled &&
+					consentScope.current.generation === generation &&
+					!isPendingCaseHandoverStatus(status.status)
+				) {
+					settleCaseHandoverConsent(notification, status);
+				}
+			})
+			// Not readable or offline: the card keeps its controls, a later
+			// decision reports the real outcome.
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		activeSession.item?.id,
+		pendingCaseHandoverConsent?.id,
+		pendingCaseHandoverRequestId,
+		consentScopeKey
+	]);
+
 	if (caseHandoverCurtainNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
@@ -1379,43 +1547,73 @@ export const SessionStream = ({
 			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
 			return;
 		}
+		const notification = pendingCaseHandoverConsent;
+		const requestId = pendingCaseHandoverRequestId;
+		const sessionId = activeSession.item.id;
+		const generation = consentScope.current.generation;
+		const current = () => consentScope.current.generation === generation;
 		setCaseHandoverConsentSubmitting(true);
 		setCaseHandoverConsentError('');
-		apiDecideCaseHandoverClientConsent(
-			activeSession.item.id,
-			pendingCaseHandoverRequestId,
-			approved
-		)
+		apiDecideCaseHandoverClientConsent(sessionId, requestId, approved)
 			.then((confirmedStatus) => {
+				if (!current()) return;
 				if (
-					confirmedStatus?.status &&
-					confirmedStatus.sessionId === activeSession.item.id &&
-					confirmedStatus.requestId === pendingCaseHandoverRequestId
+					!isStatusOfConsentRequest(
+						confirmedStatus,
+						sessionId,
+						requestId
+					)
 				) {
-					setConfirmedConsent({
-						notification: pendingCaseHandoverConsent,
-						status: confirmedStatus
-					});
-				} else {
 					throw new Error(
 						'Consent response does not match the request'
 					);
 				}
-				if (isPendingCaseHandoverStatus(confirmedStatus.status)) return;
-				notificationsContext?.markNotificationAsRead(
-					pendingCaseHandoverConsent.id
+				settleCaseHandoverConsent(notification, confirmedStatus);
+			})
+			// The decision can be refused or already applied on the server. Never
+			// leave the stale approve/decline card behind with a "could not be
+			// sent" error (ORISO-Frontend#1705):
+			// - 409 with X-Reason CASE_OWNER_CHANGED: the case owner changed after
+			//   the request was created, so it can no longer be decided and is
+			//   settled for the asker (any other 409, e.g. a lock conflict, says
+			//   nothing about the request);
+			// - anything else: read this request's own status and only report a
+			//   failure while it is really still open.
+			.catch((error: Error | Response) => {
+				if (!current()) return;
+				if (
+					(error as Response)?.headers?.get(FETCH_ERRORS.X_REASON) ===
+					X_REASON.CASE_OWNER_CHANGED
+				) {
+					settleCaseHandoverConsent(notification, {
+						sessionId,
+						requestId,
+						status: 'OWNER_CHANGED',
+						canViewContent: false,
+						clientConsentRequired: true
+					});
+					return;
+				}
+				return readCaseHandoverRequestStatus(sessionId, requestId).then(
+					(currentStatus) => {
+						if (!current()) return;
+						if (isPendingCaseHandoverStatus(currentStatus.status)) {
+							throw new Error('Consent request is still open');
+						}
+						settleCaseHandoverConsent(notification, currentStatus);
+					}
 				);
-				setResolvedCaseHandoverNotificationId(
-					pendingCaseHandoverConsent.id
-				);
-				notificationsContext?.refreshNotificationFeed();
 			})
 			.catch(() => {
-				setCaseHandoverConsentError(
-					translate('caseHandover.error.failed')
-				);
+				if (current()) {
+					setCaseHandoverConsentError(
+						translate('caseHandover.error.failed')
+					);
+				}
 			})
-			.finally(() => setCaseHandoverConsentSubmitting(false));
+			.finally(() => {
+				if (current()) setCaseHandoverConsentSubmitting(false);
+			});
 	};
 
 	if (caseHandoverCurtainNeeded && !caseHandoverStatus?.canViewContent) {
@@ -1453,6 +1651,7 @@ export const SessionStream = ({
 						displayedConsent.actionPath
 					) !== null && (
 						<CaseHandoverConversation
+							sessionId={activeSession.item.id}
 							conversationType={notificationConversationType(
 								activeSession
 							)}
@@ -1524,6 +1723,7 @@ export const SessionStream = ({
 				refreshMessages={fetchSessionMessages}
 				onLoadEarlierMessages={loadEarlierMessages}
 				caseHandoverStatus={caseHandoverStatus}
+				onCaseHandoverStatusChange={setCaseHandoverStatus}
 			/>
 			{isOverlayActive && (
 				<Overlay

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
 	act,
@@ -7,11 +7,25 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { apiGetConsultantAvailability } from '../../../api/apiGetConsultantAvailability';
 import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
 import { LiveChatEntryRoom } from './LiveChatEntryRoom';
+import { apiGetPublicTenantById } from '../../../api/apiGetTenantTheming';
+import { TenantContext } from '../../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../../test/fixtures/askerAccountPolicyFixtures';
+
+vi.mock('../../../api/apiGetTenantTheming', () => ({
+	apiGetPublicTenantById: vi.fn()
+}));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -86,6 +100,36 @@ afterEach(() => {
 });
 
 describe('LiveChatEntryRoom — who is live, before anything is created', () => {
+	it('uses the link tenant for the name rule when the landing tenant differs', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		vi.mocked(apiGetPublicTenantById).mockResolvedValue({
+			...accountPolicyTenant({
+				featureDisplayNameEditableLiveChatEnabled: true
+			}),
+			id: 7
+		});
+		render(
+			<TenantContext.Provider
+				value={{
+					tenant: accountPolicyTenant({
+						featureDisplayNameEditableLiveChatEnabled: false
+					}),
+					setTenant: vi.fn(),
+					updateTenantSettings: vi.fn()
+				}}
+			>
+				<LiveChatEntryRoom
+					invite={{ tenantId: 7, topicId: 3, redeem }}
+				/>
+			</TenantContext.Provider>
+		);
+		await flush();
+		expect(apiGetPublicTenantById).toHaveBeenCalledWith(7);
+		expect(screen.getByRole<HTMLInputElement>('textbox').readOnly).toBe(
+			false
+		);
+	});
+
 	it('asks who is live first, with the loader, and creates nothing', async () => {
 		vi.mocked(apiGetConsultantAvailability).mockReturnValue(
 			new Promise(() => undefined)
@@ -128,7 +172,10 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(chosen).toContain(
 			vi.mocked(apiPutSessionData).mock.calls[0][1].displayName
 		);
-		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(42);
+		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(
+			42,
+			expect.any(AbortSignal)
+		);
 	});
 
 	/* The last positive sample can be seconds old. Right before an account and

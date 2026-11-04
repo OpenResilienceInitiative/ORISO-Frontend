@@ -1,8 +1,8 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Search refinement panel (#1195).
  *
- * JOB1 — agencies are multi-selectable in the counselling-centre tab.
+ * FE#1725 — one counselling centre at a time (radio), like "By type".
  * JOB3 — the result list scrolls inside the menu and auto-paginates 10 at a time.
  * JOB4 — rows use the generated animal avatars, not letter monograms.
  * JOB6 — rows use the MUI checkbox, not a hand-rolled span.
@@ -10,7 +10,14 @@
 
 import React from 'react';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	SessionSearchPanel,
 	SessionSearchPanelLabels,
@@ -178,44 +185,42 @@ describe('SessionSearchPanel — inside scroll and auto-pagination (JOB3)', () =
 	});
 });
 
-describe('SessionSearchPanel — two-agency filter (JOB1)', () => {
+describe('SessionSearchPanel — counselling centre is a single choice (FE#1725)', () => {
 	const agencies = [
 		{ id: '77', label: 'Beratungsstelle Mainz' },
 		{ id: '42', label: 'Beratungsstelle Berlin' }
 	];
 
-	it('lists the counsellor agencies in the counselling-centre tab', () => {
+	it('lists the agencies in the counselling-centre tab', () => {
 		renderPanel({ activeTab: 'centre', agencies });
 
 		expect(screen.getByText('Beratungsstelle Mainz')).toBeTruthy();
 		expect(screen.getByText('Beratungsstelle Berlin')).toBeTruthy();
 	});
 
-	it('lets both agencies be selected at once', () => {
-		renderPanel({
-			activeTab: 'centre',
-			agencies,
-			selectedAgencyIds: ['77', '42']
-		});
+	it('renders the agencies as radios with one checked', () => {
+		renderPanel({ activeTab: 'centre', agencies, selectedAgencyId: '77' });
 
-		const checked = screen
-			.getAllByRole('checkbox')
-			.filter((node) => node.getAttribute('aria-checked') === 'true');
-
-		expect(checked).toHaveLength(2);
+		const radios = within(
+			screen.getAllByRole('radiogroup')[0]
+		).getAllByRole('radio');
+		expect(radios.map((node) => node.getAttribute('aria-checked'))).toEqual(
+			['true', 'false']
+		);
 	});
 
-	it('toggles an agency without clearing the other', () => {
-		const onAgencyToggle = vi.fn();
+	it('switches to another agency, and clicking the chosen one clears it', () => {
+		const onAgencySelect = vi.fn();
 		renderPanel({
 			activeTab: 'centre',
 			agencies,
-			selectedAgencyIds: ['77'],
-			onAgencyToggle
+			selectedAgencyId: '77',
+			onAgencySelect
 		});
 
 		screen.getByTestId('session-search-agency-42').click();
+		screen.getByTestId('session-search-agency-77').click();
 
-		expect(onAgencyToggle).toHaveBeenCalledWith('42');
+		expect(onAgencySelect.mock.calls).toEqual([['42'], [null]]);
 	});
 });

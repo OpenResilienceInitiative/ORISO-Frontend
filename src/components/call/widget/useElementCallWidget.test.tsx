@@ -1,10 +1,17 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 
 import React from 'react';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 import { useElementCallWidget } from './useElementCallWidget';
 import { setAppConfig } from '../../../utils/appConfig';
@@ -196,6 +203,116 @@ describe('useElementCallWidget', () => {
 		expect(fragment.get('perParticipantE2EE')).toBeNull();
 	});
 
+	it('passes the counselling centre’s backdrop, when it set one', async () => {
+		setAppConfig({ calls: { atmosphere: 'nebel' } } as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).get(
+				'orisoAtmosphere'
+			)
+		).toBe('nebel');
+	});
+
+	it('leaves the backdrop off the URL entirely when no centre set one', async () => {
+		// An empty parameter is not the same as no parameter: the call falls
+		// back to the handoff's default only when it is told nothing at all.
+		setAppConfig({} as never);
+		const client = createClient();
+
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true
+			})
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+
+		expect(
+			new URLSearchParams(new URL(result.current.url!).hash.slice(2)).has(
+				'orisoAtmosphere'
+			)
+		).toBe(false);
+	});
+
+	describe('starting with the pre-join choice (ElementCall#116)', () => {
+		const fragmentOf = (url: string) =>
+			new URLSearchParams(new URL(url).hash.slice(2));
+
+		it('puts the on/off choice and the device labels on the widget URL', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true,
+					callStart: {
+						audioEnabled: true,
+						videoEnabled: false,
+						audioInput: 'Jabra Evolve2 Headset',
+						videoInput: 'Logitech C920 & Co'
+					}
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			expect(fragment.get('audioEnabled')).toBe('true');
+			expect(fragment.get('videoEnabled')).toBe('false');
+			expect(fragment.get('audioInput')).toBe('Jabra Evolve2 Headset');
+			expect(fragment.get('videoInput')).toBe('Logitech C920 & Co');
+		});
+
+		it('leaves them off the URL without a check', async () => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+
+			const fragment = fragmentOf(result.current.url!);
+			for (const name of [
+				'audioEnabled',
+				'videoEnabled',
+				'audioInput',
+				'videoInput'
+			])
+				expect(fragment.has(name)).toBe(false);
+		});
+
+		it('does not rebuild the URL for an equal choice in a new object', async () => {
+			// A rebuilt URL with any difference navigates the running call.
+			const client = createClient();
+			const { result, rerender } = renderHook(
+				({ start }) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						callStart: start
+					}),
+				{
+					initialProps: {
+						start: { audioEnabled: false, videoEnabled: false }
+					}
+				}
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const first = result.current.url;
+			rerender({ start: { audioEnabled: false, videoEnabled: false } });
+			expect(result.current.url).toBe(first);
+		});
+	});
+
 	it('fails closed when the host cannot join the call room', async () => {
 		const joinRoom = vi.fn().mockRejectedValue(new Error('join denied'));
 		const client = createClient({ membership: 'invite', joinRoom });
@@ -313,7 +430,11 @@ describe('useElementCallWidget', () => {
 		});
 		const api = widgetApiMocks.apiInstances[0];
 
+		// Events fed before capability negotiation are dropped, so callers
+		// wait for this before sending what the widget must see.
+		expect(result.current.ready).toBe(false);
 		act(() => api.emit('ready', new CustomEvent('ready')));
+		expect(result.current.ready).toBe(true);
 		// Must match the `theme=dark` pin in the widget URL — a ready-time
 		// update to any other scheme would flip the call after launch.
 		expect(api.updateTheme).toHaveBeenCalledWith({ name: 'dark' });
@@ -395,6 +516,54 @@ describe('useElementCallWidget', () => {
 
 		await act(() => result.current.hangup());
 		expect(api.transport.send).toHaveBeenCalledWith('im.vector.hangup', {});
+	});
+
+	it('tracks the call’s microphone and camera and switches them from the host', async () => {
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+		expect(result.current.devices).toBeNull();
+
+		// The call reports each change of its own.
+		act(() =>
+			api.emit(
+				'action:io.element.device_mute',
+				new CustomEvent('io.element.device_mute', {
+					cancelable: true,
+					detail: {
+						action: 'io.element.device_mute',
+						requestId: 'report-1',
+						widgetId: 'widget',
+						data: { audio_enabled: true, video_enabled: true }
+					}
+				})
+			)
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: true,
+			video_enabled: true
+		});
+
+		// The dock asks for a change; the call answers with its new state.
+		api.transport.send.mockResolvedValueOnce({
+			audio_enabled: false,
+			video_enabled: true
+		});
+		await act(() => result.current.setDevices({ audio_enabled: false }));
+		expect(api.transport.send).toHaveBeenCalledWith(
+			'io.element.device_mute',
+			{ audio_enabled: false }
+		);
+		expect(result.current.devices).toEqual({
+			audio_enabled: false,
+			video_enabled: true
+		});
 	});
 
 	it('forwards local echoes, state updates, and allowed to-device events', async () => {
@@ -502,6 +671,67 @@ describe('useElementCallWidget', () => {
 		expect(api.feedStateUpdate).toHaveBeenCalledTimes(1);
 		expect(api.feedToDevice).toHaveBeenCalledWith(rawEvent, true);
 		expect(api.feedToDevice).toHaveBeenCalledTimes(1);
+	});
+
+	it('feeds the widget an identity it may read but not send', async () => {
+		/*
+		 * The live wire of the whole transport.
+		 *
+		 * Identity moved out of room state — which Matrix does not encrypt —
+		 * into an encrypted timeline event. The feed below filtered by the
+		 * set of types the widget may SEND, so with the transport changed and
+		 * this line left alone the event would have been dropped here: every
+		 * test green, the capability granted, and every face in the call
+		 * showing initials. It is now the RECEIVE set, which is wider by
+		 * exactly this event.
+		 */
+		const client = createClient();
+		const { result } = renderHook(() =>
+			useElementCallWidget(client, { roomId: CALL_ROOM, isVideo: true })
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const iframe = document.createElement('iframe');
+		iframe.src = result.current.url!;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+
+		const identityRaw = {
+			type: 'org.oriso.call.identity',
+			content: {
+				kind: 'animal',
+				file: 'fox.svg',
+				bg: '#165E83',
+				ink: '#ffffff'
+			}
+		};
+		// It arrives sealed, as it must: that is the point of the move.
+		let type = 'm.room.encrypted';
+		const listeners = new Set<(event: unknown, error?: Error) => void>();
+		const identityEvent = {
+			getRoomId: () => CALL_ROOM,
+			getType: () => type,
+			getWireType: () => 'm.room.encrypted',
+			getEffectiveEvent: () => identityRaw,
+			on: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.add(listener);
+			},
+			off: (name: string, listener: (event: unknown) => void) => {
+				if (name === 'Event.decrypted') listeners.delete(listener);
+			}
+		};
+
+		act(() => {
+			client.emitTest('Room.timeline', identityEvent, {}, false);
+		});
+		// Nothing is fed while it is still ciphertext.
+		expect(api.feedEvent).not.toHaveBeenCalled();
+
+		act(() => {
+			type = 'org.oriso.call.identity';
+			listeners.forEach((listener) => listener(identityEvent));
+		});
+		expect(api.feedEvent).toHaveBeenCalledWith(identityRaw, CALL_ROOM);
+		expect(api.feedEvent).toHaveBeenCalledTimes(1);
 	});
 
 	it('reports, and does not silently swallow, a call event that never decrypts', async () => {
@@ -678,6 +908,51 @@ describe('useElementCallWidget', () => {
 		expect(replacement.src).toBe('about:blank');
 	});
 
+	it('keeps a live call running through the client refresh that blanks its URL', async () => {
+		/*
+		 * A token refresh hands this hook a new `client`, and the preparation
+		 * effect answers by setting `url` to null while it rebuilds. React
+		 * sees the ref callback's identity change, detaches with null and
+		 * re-attaches the SAME node — and the re-attachment happens while
+		 * `url` is still null.
+		 *
+		 * The re-attachment used to return before claiming the node, so the
+		 * microtask that decides whether an iframe has really gone found
+		 * nothing attached and navigated a RUNNING call to `about:blank`. The
+		 * rebuilt URL is byte-identical for the same account, so nothing
+		 * navigated it back.
+		 */
+		const client = createClient();
+		const { result, rerender } = renderHook(
+			({ c }: { c: ReturnType<typeof createClient> }) =>
+				useElementCallWidget(c, { roomId: CALL_ROOM, isVideo: true }),
+			{ initialProps: { c: client } }
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const source = result.current.url!;
+
+		const iframe = document.createElement('iframe');
+		iframe.src = source;
+		act(() => result.current.attachIframe(iframe));
+		const detach = result.current.attachIframe;
+
+		// The refresh: same account, new client object.
+		rerender({ c: createClient() });
+		expect(result.current.url).toBeNull();
+
+		// What React does in that one commit.
+		act(() => detach(null));
+		act(() => result.current.attachIframe(iframe));
+		await act(async () => {});
+
+		expect(iframe.src).toBe(source);
+
+		// And the rebuilt URL still finds a live iframe to talk to.
+		await waitFor(() => expect(result.current.url).toBe(source));
+		act(() => result.current.attachIframe(iframe));
+		expect(iframe.src).toBe(source);
+	});
+
 	it('keeps a live call running when the same iframe is re-attached', async () => {
 		const client = createClient();
 		const { result } = renderHook(() =>
@@ -701,5 +976,156 @@ describe('useElementCallWidget', () => {
 		act(() => result.current.attachIframe(replacement));
 		expect(iframe.src).toBe('about:blank');
 		expect(replacement.src).toBe(result.current.url);
+	});
+
+	describe('knocking in the call (ElementCall#109)', () => {
+		const KNOCK_STATE = 'org.oriso.call.knock_state';
+		const SET_KNOCK = 'org.oriso.call.set_knock';
+
+		const mount = async (initial: {
+			knockState: { waiting: number; knock: boolean | null } | null;
+			onSetKnock?: (knock: boolean) => Promise<boolean>;
+		}) => {
+			const client = createClient();
+			const hook = renderHook(
+				(props: typeof initial) =>
+					useElementCallWidget(client, {
+						roomId: CALL_ROOM,
+						isVideo: true,
+						...props
+					}),
+				{ initialProps: initial }
+			);
+			await waitFor(() => expect(hook.result.current.url).not.toBeNull());
+			const iframe = document.createElement('iframe');
+			iframe.src = hook.result.current.url!;
+			act(() => hook.result.current.attachIframe(iframe));
+			const api = widgetApiMocks.apiInstances[0];
+			return { ...hook, api };
+		};
+
+		const knockStateSends = (api: any) =>
+			api.transport.send.mock.calls.filter(
+				(call: unknown[]) => call[0] === KNOCK_STATE
+			);
+
+		const setKnock = (api: any, data: unknown) => {
+			const request = {
+				action: SET_KNOCK,
+				requestId: 'set-knock-1',
+				widgetId: 'widget',
+				data
+			};
+			const event = new CustomEvent(SET_KNOCK, {
+				cancelable: true,
+				detail: request
+			});
+			act(() => api.emit(`action:${SET_KNOCK}`, event));
+			return { request, event };
+		};
+
+		it('sends the state once the call is ready, and again when the count changes', async () => {
+			const { api, rerender } = await mount({
+				knockState: { waiting: 0, knock: true }
+			});
+			// Before capability negotiation the call would drop it.
+			expect(knockStateSends(api)).toHaveLength(0);
+
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 0, knock: true }]
+			]);
+
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 2, knock: true }
+			]);
+
+			// Same state again: nothing new to tell.
+			rerender({ knockState: { waiting: 2, knock: true } });
+			expect(knockStateSends(api)).toHaveLength(2);
+		});
+
+		it('sends knock null when the call has no link, and refuses set_knock', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 1, knock: null },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toEqual([
+				[KNOCK_STATE, { waiting: 1, knock: null }]
+			]);
+
+			const { request, event } = setKnock(api, { knock: false });
+			expect(event.defaultPrevented).toBe(true);
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
+
+		it('sends nothing for somebody who may not see knocks', async () => {
+			const { api } = await mount({ knockState: null });
+			act(() => api.emit('ready', new CustomEvent('ready')));
+			expect(knockStateSends(api)).toHaveLength(0);
+		});
+
+		it('changes the link on set_knock, answers, and confirms the stored state', async () => {
+			const onSetKnock = vi.fn().mockResolvedValue(false);
+			const { api } = await mount({
+				knockState: { waiting: 3, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			expect(onSetKnock).toHaveBeenCalledWith(false);
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {})
+			);
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 3, knock: false }
+			]);
+		});
+
+		it('answers with an error when the change did not land, so the call flips back', async () => {
+			const onSetKnock = vi
+				.fn()
+				.mockRejectedValue(new Error('CATCH_ALL'));
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			act(() => api.emit('ready', new CustomEvent('ready')));
+
+			const { request } = setKnock(api, { knock: false });
+			await waitFor(() =>
+				expect(api.transport.reply).toHaveBeenCalledWith(request, {
+					error: { message: expect.any(String) }
+				})
+			);
+			expect(api.transport.reply).not.toHaveBeenCalledWith(request, {});
+			// And the truth again, in case the call lost track.
+			expect(knockStateSends(api).at(-1)).toEqual([
+				KNOCK_STATE,
+				{ waiting: 0, knock: true }
+			]);
+		});
+
+		it('refuses a set_knock without a boolean', async () => {
+			const onSetKnock = vi.fn();
+			const { api } = await mount({
+				knockState: { waiting: 0, knock: true },
+				onSetKnock
+			});
+			const { request } = setKnock(api, { knock: 'yes' });
+			expect(onSetKnock).not.toHaveBeenCalled();
+			expect(api.transport.reply).toHaveBeenCalledWith(request, {
+				error: { message: expect.any(String) }
+			});
+		});
 	});
 });

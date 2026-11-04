@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { KindOptionPicker } from './KindOptionPicker';
 
@@ -33,7 +33,9 @@ describe('KindOptionPicker (#1377 small split button with menu)', () => {
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Ton wählen: Mail' })
 		);
-		fireEvent.click(screen.getByRole('menuitem', { name: 'Kein Ton' }));
+		fireEvent.click(
+			screen.getByRole('menuitemradio', { name: 'Kein Ton' })
+		);
 		expect(onSelect).toHaveBeenCalledWith('none');
 	});
 });

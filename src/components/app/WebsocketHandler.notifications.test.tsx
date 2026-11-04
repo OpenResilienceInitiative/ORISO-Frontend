@@ -1,9 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /** Matrix is the early trigger; persisted feed events own announcements. */
 import React from 'react';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { WebsocketHandler } from './WebsocketHandler';
 import { AppConfigContext, NotificationsProvider } from '../../globalState';
 import { setAppConfig } from '../../utils/appConfig';

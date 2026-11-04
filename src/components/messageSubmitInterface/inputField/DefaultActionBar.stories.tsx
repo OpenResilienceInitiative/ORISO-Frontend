@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import { DefaultActionBar } from './DefaultActionBar';
 import { phone390Globals } from '../../message/messageStoryShell';
@@ -15,10 +15,12 @@ const ACTION_BAR_FIGMA_URL =
  */
 function BarHarness({
 	width,
-	phone = false
+	phone = false,
+	micUnavailableReason
 }: {
 	width: number;
 	phone?: boolean;
+	micUnavailableReason?: string;
 }) {
 	const { t } = useTranslation();
 	return (
@@ -41,6 +43,7 @@ function BarHarness({
 					unreadCount={3}
 					onOpenTools={() => {}}
 					showMic
+					micUnavailableReason={micUnavailableReason}
 					isRecording={false}
 					onMicClick={() => {}}
 					isEmojiOpen={false}
@@ -103,6 +106,36 @@ export const Desktop: Story = {
 		});
 		await expect(getComputedStyle(bar(canvasElement)).maskImage).toBe(
 			'none'
+		);
+	}
+};
+
+/**
+ * Editing a message (#1142): the mic is unavailable but focusable. Keyboard
+ * focus shows the reason in the house tooltip, not only to assistive tech.
+ */
+export const EditModeMicFocused: Story = {
+	name: 'Edit mode — unavailable mic explains itself on keyboard focus',
+	render: () => (
+		<div style={{ paddingTop: 48 }}>
+			<BarHarness
+				width={640}
+				micUnavailableReason="Sprachnachrichten sind beim Bearbeiten nicht verfügbar."
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const mic = within(canvasElement).getByRole('button', {
+			name: /voice|sprach/i
+		});
+		for (let i = 0; i < 10 && document.activeElement !== mic; i++) {
+			await userEvent.tab();
+		}
+		await expect(mic).toHaveAttribute('aria-disabled', 'true');
+		await waitFor(() =>
+			expect(
+				within(document.body).getByRole('tooltip')
+			).toHaveTextContent('Sprachnachrichten sind beim Bearbeiten')
 		);
 	}
 };

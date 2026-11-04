@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { describe, it, expect } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { describe, it, expect } from 'vite-plus/test';
 import { buildAppointmentIcs } from './appointmentIcs';
 
 // A fixed reference instant so DTSTART/DTEND/DTSTAMP are deterministic

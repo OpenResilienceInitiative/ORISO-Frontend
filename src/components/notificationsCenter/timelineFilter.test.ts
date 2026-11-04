@@ -3,7 +3,7 @@
  * (Slice 1). Pure-logic vitest spec; runs in CI via `npm run test:unit`.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,

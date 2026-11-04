@@ -16,7 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
@@ -26,6 +26,7 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import {
+	resolveEndedCallConversationPath,
 	resolveNotificationActionPath,
 	resolveStatusPageAction,
 	toInterpolationValues
@@ -51,6 +52,7 @@ import {
 	orderChipKinds,
 	resolveChipPresentation,
 	kindsUnderOther,
+	useDisplayFilterEmailColumn,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -65,6 +67,8 @@ import {
 } from '../displayFilter/kindOptions';
 import {
 	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR,
+	NOTIFICATION_TYPE_INFO,
 	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES,
@@ -90,6 +94,7 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
@@ -98,6 +103,11 @@ import {
 	toNonEmbeddedPath
 } from './timelineDrafts';
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
+import { callManager } from '../../services/CallManager';
+import { startRoomCall } from '../call/startRoomCall';
+import { enterKnockCall } from './knockCallAction';
+import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
 	formatAbsoluteTime,
 	formatClockParts,
@@ -105,6 +115,7 @@ import {
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
+import { MISSING_KEY_COPY_KEY } from '../../utils/matrixDecryptionFailure';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -248,6 +259,69 @@ const parseNumericId = (value?: string | null): number | null => {
 	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
+type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
+
+/**
+ * Entries whose action goes in rather than opening a chat: a group chat that
+ * opened, and a knock on a direct-link call (FE#1952: the click joins the
+ * call, so "Chat öffnen" would promise the wrong thing).
+ */
+const joinsOnOpen = (eventType?: string | null): boolean =>
+	eventType === 'group_chat.opened' || eventType === 'call.knock.requested';
+
+/**
+ * Call cards join their existing authorized binding. A card that cannot join
+ * here (incomplete, or group topology not loaded yet) opens its conversation.
+ */
+const joinNotificationCall = (
+	item: NotificationFeedItem,
+	topologyReady: boolean,
+	isGroup: (roomRef: string) => boolean,
+	onOutcome: (outcome: JoinOutcome) => void,
+	onCannotJoin: () => void,
+	onStart: (callId: string) => void
+): boolean => {
+	const params = item.params || {};
+	if (
+		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
+		'join'
+	) {
+		return false;
+	}
+	if (
+		typeof params.callId !== 'string' ||
+		!params.callId.trim() ||
+		typeof params.roomRef !== 'string' ||
+		!params.roomRef.trim() ||
+		typeof params.callRoomId !== 'string' ||
+		!params.callRoomId.trim() ||
+		(params.callType !== 'audio' && params.callType !== 'video') ||
+		// An empty session list would store a group call as one-to-one.
+		!topologyReady ||
+		// FE#1893: a direct-link call knocks from its card in the conversation.
+		isDirectLinkCallRoom(params.roomRef)
+	) {
+		onCannotJoin();
+		return true;
+	}
+	onStart(params.callId);
+	// The feed carries no call topology: the conversation the call belongs to decides.
+	callManager
+		.joinExistingCall(
+			{
+				callId: params.callId,
+				roomRef: params.roomRef,
+				callRoomId: params.callRoomId,
+				callType: params.callType,
+				state: 'running',
+				participants: []
+			},
+			isGroup(params.roomRef)
+		)
+		.then(onOutcome, () => onOutcome('unavailable'));
+	return true;
+};
+
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -271,7 +345,8 @@ export const NotificationsCenter = () => {
 		loadOlderNotifications,
 		hasOlderNotifications,
 		isLoadingOlderNotifications,
-		olderNotificationsError
+		olderNotificationsError,
+		addNotification
 	} = useContext(NotificationsContext);
 	// #1535: unsent drafts join the list here only, not the provider feed.
 	const timelineDrafts = useTimelineDrafts();
@@ -295,6 +370,7 @@ export const NotificationsCenter = () => {
 		resetSection: resetTimelineOverride
 	} = useDisplayFilter('timeline');
 	const displayFilterLabels = useDisplayFilterLabels('timeline');
+	const displayFilterEmail = useDisplayFilterEmailColumn('timeline');
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	// The feed is reduced ONCE; chips and list both read `visibleFeed` so a
 	// hidden kind leaves both in the same render (AC2).
@@ -508,7 +584,37 @@ export const NotificationsCenter = () => {
 			audio: translate('notifications.center.preview.audio'),
 			video: translate('notifications.center.preview.video'),
 			notice: translate('notifications.center.preview.notice'),
+			// System notices read as the chat words them (MessageItemComponent).
+			userLeftChat: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+				? translate('message.userLeftChat')
+				: translate('message.consultantLeftChat'),
+			chatEndedText: (endedBy) =>
+				translate(
+					chatEndedTextKey(
+						endedBy,
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						)
+					)
+				),
+			inquiryAccepted: translate(
+				'notifications.events.inquiryAccepted.text'
+			),
+			caseHandoverTakenOver: translate(
+				'caseHandover.systemMessage.tookOverTitle'
+			),
+			systemNotification: translate('message.systemNotificationTitle'),
 			unsupported: translate('notifications.center.preview.unsupported'),
+			// The chat's own wording for a message this device cannot decrypt.
+			undecryptable: translate('e2ee.message.encryption.text'),
+			undecryptableMissingKey: translate(
+				`${MISSING_KEY_COPY_KEY}.title`,
+				{ count: 1 }
+			),
 			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
 				'notifications.center.preview.roomUnavailable'
@@ -517,7 +623,7 @@ export const NotificationsCenter = () => {
 				'notifications.center.preview.eventUnavailable'
 			)
 		}),
-		[translate]
+		[translate, userData]
 	);
 	const candidatePreviewSources = useMemo(
 		() =>
@@ -822,7 +928,7 @@ export const NotificationsCenter = () => {
 		? translate('notifications.center.openStatusPage')
 		: selectedNotification?.actionLabel ||
 			translate(
-				selectedNotification?.eventType === 'group_chat.opened'
+				joinsOnOpen(selectedNotification?.eventType)
 					? 'notifications.center.join'
 					: 'notifications.center.open'
 			);
@@ -887,8 +993,104 @@ export const NotificationsCenter = () => {
 		[canShowChatPreview, selectedNotification]
 	);
 
-	const openNotification = (item: (typeof notificationFeed)[number]) => {
+	const isGroupCallRoom = (roomRef: string) =>
+		Boolean(
+			sessions?.some(
+				(listItem) => listItem.chat?.matrixRoomId === roomRef
+			)
+		);
+	// A call card opens its conversation, never a guessed default list.
+	const openConversation = (
+		item: NotificationFeedItem,
+		fallbackText = translate('videoCall.timeline.endedElsewhere')
+	) => {
+		const path = toNonEmbeddedPath(
+			resolveEndedCallConversationPath(item, getDefaultSessionsPath())
+		);
+		if (path) {
+			navigate(path);
+			return;
+		}
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_INFO,
+			title: translate('notification.info'),
+			text: fallbackText,
+			closeable: true,
+			timeout: 10000
+		});
+	};
+	// A second click on a call that is still joining is not a busy line.
+	const joiningCallId = useRef<string | null>(null);
+	const joinCall = (item: NotificationFeedItem) => {
+		const callId = item.params?.callId;
+		if (callId && joiningCallId.current === callId) return true;
+		return joinNotificationCall(
+			item,
+			Boolean(sessionsContext?.ready),
+			isGroupCallRoom,
+			(outcome) => {
+				if (joiningCallId.current === callId)
+					joiningCallId.current = null;
+				if (outcome === 'joined') return;
+				if (outcome === 'ended') {
+					openConversation(item);
+					return;
+				}
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: translate('notification.error'),
+					text: translate('videoCall.timeline.joinFailed'),
+					closeable: true,
+					announce: 'alert',
+					timeout: 10000
+				});
+			},
+			() =>
+				openConversation(
+					item,
+					translate('videoCall.timeline.joinFailed')
+				),
+			(startedCallId) => {
+				joiningCallId.current = startedCallId;
+			}
+		);
+	};
+
+	// FE#1952: a knock takes the counsellor into the call of its conversation
+	// in one click (desktop card included), and the conversation opens with it.
+	// Only `false` for every entry that is no knock.
+	const openKnock = (item: NotificationFeedItem): boolean => {
+		const target = getEventDescriptor(item.eventType).resolveActionTarget(
+			item.params || {}
+		);
+		if (target.kind !== 'callRoom') return false;
+		const entered = enterKnockCall(target, {
+			start: startRoomCall,
+			currentCall: () => callManager.getCurrentCall()
+		});
+		if (!entered && target.roomId) {
+			// In a call elsewhere: "Beitreten" opens the conversation only, so
+			// say why the call did not start.
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_INFO,
+				title: translate('notification.info'),
+				text: translate('videoCall.timeline.joinFailed'),
+				closeable: true,
+				timeout: 10000
+			});
+		}
+		navigate(getNotificationActionPath(item) || getDefaultSessionsPath());
+		return true;
+	};
+
+	const openNotification = (
+		item: (typeof notificationFeed)[number],
+		// "Next notification" browses: it never starts a call (camera,
+		// microphone) behind the counsellor's back.
+		{ browsing = false }: { browsing?: boolean } = {}
+	) => {
 		markNotificationAsRead(item.id);
+		if (!browsing && openKnock(item)) return;
 		const statusPage = resolveStatusPageAction(item);
 		if (untilL && statusPage.linksToStatusPage) {
 			if (statusPage.url) {
@@ -897,6 +1099,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
+			if (joinCall(item)) return;
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
 				navigate(directPath);
@@ -926,6 +1129,8 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
+		if (openKnock(selectedNotification)) return;
+		if (joinCall(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
 			navigate(directPath);
@@ -947,7 +1152,7 @@ export const NotificationsCenter = () => {
 				(item) => item.id === nextUnreadId
 			);
 			if (nextItem) {
-				openNotification(nextItem);
+				openNotification(nextItem, { browsing: true });
 			}
 		}
 	};
@@ -1108,6 +1313,7 @@ export const NotificationsCenter = () => {
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
+					email={displayFilterEmail}
 					value={timelineFilter}
 					canReset={timelineOverride !== null}
 					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
@@ -1271,7 +1477,11 @@ export const NotificationsCenter = () => {
 													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
 													: item.actionLabel ||
 														translate(
-															'notifications.center.open'
+															joinsOnOpen(
+																item.eventType
+															)
+																? 'notifications.center.join'
+																: 'notifications.center.open'
 														)
 											}
 											onClick={handleOpenAction}

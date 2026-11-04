@@ -6,12 +6,16 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import { parseCallLifecycleMessage } from './callLifecycleMessage';
 import { getScannedMediaDownloadPath } from '../services/mediaContentScanner';
 import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
-import { isUndecryptedRoomEvent } from './matrixDecryptionFailure';
+import {
+	isMissingKeyDecryptionFailure,
+	isUndecryptedRoomEvent
+} from './matrixDecryptionFailure';
 
 /**
  * Where an attachment's bytes come from.
@@ -105,6 +109,16 @@ export const formatMatrixTimelineEvent = (
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
 	}
+	if (isUndecryptedEvent && isMissingKeyDecryptionFailure(event)) {
+		// #1827: lets the timeline show an honest "not on this device" notice
+		// instead of the generic encrypted-message text.
+		baseMessage.undecryptableReason = 'missing-key';
+	}
+	const callLifecycle = parseCallLifecycleMessage(content);
+	if (callLifecycle) {
+		baseMessage.callLifecycle = callLifecycle;
+		baseMessage.callLifecycleRevisionTs = event?.getTs?.();
+	}
 	const threadRootEventId = getThreadRootId(content);
 	if (threadRootEventId) {
 		baseMessage.threadRootEventId = threadRootEventId;
@@ -116,6 +130,9 @@ export const formatMatrixTimelineEvent = (
 	if (replaceTargetId) {
 		baseMessage.replaceTargetId = replaceTargetId;
 		baseMessage.editedBody = getEditedBody(content);
+		baseMessage.editedCallLifecycle = parseCallLifecycleMessage(
+			content?.['m.new_content']
+		);
 	}
 	// Intentional mentions (#435): exposed for downstream UI (e.g. the
 	// timeline @mentions filter chip, #420) to test membership against.

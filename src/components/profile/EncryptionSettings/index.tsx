@@ -1,11 +1,10 @@
 import { reauthenticateRecovery } from '../../../services/reauthenticateRecovery';
+import { hasPasswordRecoveryEvidence } from '../../../services/matrixPasswordRecoveryService';
 import {
-	enrollPasswordRecoveryAfterKeyRecovery,
-	PasswordRecoveryRepairBlockedError,
-	PasswordRecoveryWorkLimitError
-} from '../../../services/matrixPasswordRecoveryService';
+	passwordRecoveryEnrollmentErrorKey,
+	sealRecoveryKeyUnderPassword
+} from '../../../services/passwordRecoveryEnrollment';
 import { getChatRecoveryPolicy } from '../../../services/chatRecoveryPolicy';
-import { setRecoveryRuntimeStatus } from '../../../services/recoveryReminderState';
 import { UserDataContext } from '../../../globalState';
 import {
 	dismissRecoveryReminder,
@@ -22,7 +21,6 @@ import { Text } from '../../text/Text';
 import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
 import { OrisoTextField } from '../../form/OrisoTextField';
-import { M3Checkbox } from '../../M3Checkbox';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	EncryptionSetupStatus,
@@ -37,7 +35,6 @@ import {
 import {
 	clearPendingRecoveryKey,
 	loadPendingRecoveryKey,
-	markPendingRecoveryKeyPasswordProtected,
 	RecoverySetupBusyError,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
@@ -49,6 +46,9 @@ import {
 	executeWithReadyEncryptionClient,
 	resolveReadyEncryptionClient
 } from './encryptionClient';
+import { RecoveryKeySaveStep } from './RecoveryKeySaveStep';
+import { RecoveryKeyField } from './RecoveryKeyField';
+import { StalePasswordRecovery } from './StalePasswordRecovery';
 
 /**
  * #437 Key backup + recovery UX — profile "Sicherheit" panel.
@@ -100,15 +100,20 @@ export const EncryptionSettingsPanel = ({
 	const [recoveryKeyToShow, setRecoveryKeyToShow] = useState<string | null>(
 		null
 	);
-	const [keyStoredConfirmed, setKeyStoredConfirmed] = useState(false);
 	const [recoveryInput, setRecoveryInput] = useState('');
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
-	const [copied, setCopied] = useState(false);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [keyFromSilentSetup, setKeyFromSilentSetup] = useState(false);
 	const [loginPassword, setLoginPassword] = useState('');
 	const [confirmLoginPassword, setConfirmLoginPassword] = useState('');
 	const [recoveryOtp, setRecoveryOtp] = useState('');
+	/* The recovery key typed in to seal it under the password, when this
+	   device holds no parked copy of it. */
+	const [enrollmentKey, setEnrollmentKey] = useState('');
+	/* `true` only once the server confirmed no password envelope exists at
+	   all — then "set up" is the honest state, not "will be checked". */
+	const [passwordEnvelopeMissing, setPasswordEnvelopeMissing] =
+		useState(false);
 	const passwordMismatch =
 		confirmLoginPassword.length > 0 &&
 		loginPassword !== confirmLoginPassword;
@@ -119,6 +124,27 @@ export const EncryptionSettingsPanel = ({
 		'busy',
 		'ready'
 	].includes(passwordStatus);
+	/* Recovery works on this device but nothing is sealed under the password:
+	   enrolment takes the recovery key the person already holds. Without
+	   this, only a freshly generated key opened the form (#1917). */
+	const offerExistingKeyEnrollment =
+		passwordMode &&
+		passwordEnvelopeMissing &&
+		canOfferPasswordRecovery &&
+		phase === 'healthy' &&
+		!recoveryKeyToShow;
+
+	/* The sign-in password opened none of the existing password copies: it
+	   was changed outside this app (Admin "Mein Konto", forgot-password, a
+	   setup link), and the history is still sealed under the previous one.
+	   Offer the ways back to a seal under the current password (#1931). */
+	const offerStaleEnvelopeRepair =
+		passwordMode &&
+		!!userId &&
+		passwordStatus === 'needs-recovery-key' &&
+		!passwordEnvelopeMissing &&
+		(phase === 'healthy' || phase === 'outOfSync') &&
+		!recoveryKeyToShow;
 
 	const getReadyClient = useCallback(
 		(): Promise<MatrixClient | null> =>
@@ -148,6 +174,13 @@ export const EncryptionSettingsPanel = ({
 
 			const currentUserId = client.getUserId();
 			setUserId(currentUserId);
+			setPasswordEnvelopeMissing(
+				passwordMode &&
+					(await hasPasswordRecoveryEvidence(client).then(
+						(evidence) => !evidence,
+						() => false
+					))
+			);
 			const pendingKey = currentUserId
 				? await loadPendingRecoveryKey(currentUserId)
 				: null;
@@ -155,8 +188,6 @@ export const EncryptionSettingsPanel = ({
 			// panel is where the user finally gets to see and save it.
 			if (pendingKey && !nextStatus.keyStorageOutOfSync) {
 				setRecoveryKeyToShow(pendingKey);
-				setKeyStoredConfirmed(false);
-				setCopied(false);
 				setKeyFromSilentSetup(true);
 				setPhase('showKey');
 				return;
@@ -172,7 +203,7 @@ export const EncryptionSettingsPanel = ({
 			);
 			setPhase('unavailable');
 		}
-	}, [getReadyClient]);
+	}, [getReadyClient, passwordMode]);
 
 	useEffect(() => {
 		if (initialStatusOverride) {
@@ -216,8 +247,6 @@ export const EncryptionSettingsPanel = ({
 				savePendingRecoveryKey(userId, encodedKey);
 			}
 			setRecoveryKeyToShow(encodedKey);
-			setKeyStoredConfirmed(false);
-			setCopied(false);
 			setKeyFromSilentSetup(false);
 			setPhase('showKey');
 		} catch (setupError) {
@@ -246,22 +275,9 @@ export const EncryptionSettingsPanel = ({
 			dismissRecoveryReminder(userId);
 		}
 		setRecoveryKeyToShow(null);
-		setKeyStoredConfirmed(false);
 		setKeyFromSilentSetup(false);
 		void refreshStatus();
 	}, [refreshStatus, userId]);
-
-	const onCopyKey = useCallback(async () => {
-		if (!recoveryKeyToShow) {
-			return;
-		}
-		try {
-			await navigator.clipboard.writeText(recoveryKeyToShow);
-			setCopied(true);
-		} catch {
-			// Clipboard may be unavailable (permissions); manual copy remains.
-		}
-	}, [recoveryKeyToShow]);
 
 	const onRecover = useCallback(async () => {
 		if (!recoveryInput.trim()) {
@@ -414,143 +430,169 @@ export const EncryptionSettingsPanel = ({
 				>
 					<p role="status">
 						{t(
-							'encryption.passwordRecovery.' +
-								(passwordStatus === 'device-ready'
-									? 'deviceReady'
-									: passwordStatus)
+							offerExistingKeyEnrollment
+								? 'encryption.passwordRecovery.notEnrolled'
+								: offerStaleEnvelopeRepair
+									? 'encryption.passwordRecovery.stale.explanation'
+									: 'encryption.passwordRecovery.' +
+										passwordStatus
 						)}
 					</p>
-					{canOfferPasswordRecovery && recoveryKeyToShow && (
-						<form
-							ref={enrollmentForm}
-							onSubmit={async (event) => {
-								event.preventDefault();
-								if (
-									busy ||
-									!loginPassword ||
-									loginPassword !== confirmLoginPassword
-								)
-									return;
-								setBusy(true);
-								setError(null);
-								try {
-									await reauthenticateRecovery(
-										loginPassword,
-										recoveryOtp
-									);
-									const client = await getReadyClient();
-									const policy =
-										getChatRecoveryPolicy(userData);
+					{canOfferPasswordRecovery &&
+						(recoveryKeyToShow || offerExistingKeyEnrollment) && (
+							<form
+								ref={enrollmentForm}
+								onSubmit={async (event) => {
+									event.preventDefault();
+									const recoveryKey =
+										recoveryKeyToShow ??
+										enrollmentKey.trim();
 									if (
-										!client ||
-										!userId ||
-										client.getUserId() !== userId ||
-										policy.mode !== 'LOGIN_PASSWORD'
+										busy ||
+										!recoveryKey ||
+										!loginPassword ||
+										loginPassword !== confirmLoginPassword
 									)
-										throw new Error('Recovery unavailable');
-									await withRecoverySetupLock(userId, () =>
-										enrollPasswordRecoveryAfterKeyRecovery(
-											client,
+										return;
+									setBusy(true);
+									setError(null);
+									try {
+										await reauthenticateRecovery(
 											loginPassword,
-											recoveryKeyToShow,
+											recoveryOtp
+										);
+										const client = await getReadyClient();
+										const policy =
+											getChatRecoveryPolicy(userData);
+										if (
+											!client ||
+											!userId ||
+											client.getUserId() !== userId ||
+											policy.mode !== 'LOGIN_PASSWORD'
+										)
+											throw new Error(
+												'Recovery unavailable'
+											);
+										await sealRecoveryKeyUnderPassword(
+											client,
+											userId,
+											loginPassword,
+											recoveryKey,
 											policy.revision
-										)
-									);
-									markPendingRecoveryKeyPasswordProtected(
-										userId
-									);
-									setRecoveryRuntimeStatus(userId, 'ready');
-								} catch (error) {
-									setError(
-										t(
-											error instanceof
-												RecoverySetupBusyError
-												? 'profile.encryption.setup.busy'
-												: error instanceof
-													  PasswordRecoveryRepairBlockedError
-													? 'encryption.passwordRecovery.repairBlocked'
-													: error instanceof
-														  PasswordRecoveryWorkLimitError
-														? 'encryption.passwordRecovery.retryable-failure'
-														: 'encryption.passwordRecovery.enrollmentFailed'
-										)
-									);
-								} finally {
-									setLoginPassword('');
-									setConfirmLoginPassword('');
-									setRecoveryOtp('');
-									setBusy(false);
-								}
-							}}
-						>
-							<p>
-								{t(
-									'encryption.passwordRecovery.enrollmentExplanation'
-								)}
-							</p>
-							<OrisoTextField
-								label={t(
-									'encryption.passwordRecovery.loginPassword'
-								)}
-								type="password"
-								autoComplete="current-password"
-								value={loginPassword}
-								disabled={busy}
-								onChange={(event) =>
-									setLoginPassword(event.target.value)
-								}
-							/>
-							<OrisoTextField
-								label={t(
-									'encryption.passwordRecovery.repeatPassword'
-								)}
-								type="password"
-								autoComplete="current-password"
-								error={passwordMismatch}
-								helperText={
-									passwordMismatch
-										? t(
-												'registration.account.repeatPassword.error'
+										);
+										setEnrollmentKey('');
+										setPasswordEnvelopeMissing(false);
+									} catch (error) {
+										setError(
+											t(
+												passwordRecoveryEnrollmentErrorKey(
+													error
+												)
 											)
-										: undefined
-								}
-								value={confirmLoginPassword}
-								disabled={busy}
-								onChange={(event) =>
-									setConfirmLoginPassword(event.target.value)
-								}
-							/>
-							{userData?.twoFactorAuth?.isActive && (
+										);
+									} finally {
+										setLoginPassword('');
+										setConfirmLoginPassword('');
+										setRecoveryOtp('');
+										setBusy(false);
+									}
+								}}
+							>
+								<p>
+									{t(
+										'encryption.passwordRecovery.enrollmentExplanation'
+									)}
+								</p>
+								{!recoveryKeyToShow && (
+									<RecoveryKeyField
+										value={enrollmentKey}
+										disabled={busy}
+										onChange={setEnrollmentKey}
+									/>
+								)}
 								<OrisoTextField
-									label={t('encryption.passwordRecovery.otp')}
-									inputProps={{ inputMode: 'numeric' }}
-									autoComplete="one-time-code"
-									value={recoveryOtp}
+									label={t(
+										'encryption.passwordRecovery.loginPassword'
+									)}
+									type="password"
+									autoComplete="current-password"
+									value={loginPassword}
 									disabled={busy}
 									onChange={(event) =>
-										setRecoveryOtp(event.target.value)
+										setLoginPassword(event.target.value)
 									}
 								/>
-							)}
-							<Button
-								item={{
-									type: BUTTON_TYPES.PRIMARY,
-									label: t(
-										'encryption.passwordRecovery.enroll'
-									)
-								}}
-								disabled={
-									busy ||
-									!loginPassword ||
-									loginPassword !== confirmLoginPassword
-								}
-								buttonHandle={() =>
-									enrollmentForm.current?.requestSubmit()
-								}
-							/>
-						</form>
+								<OrisoTextField
+									label={t(
+										'encryption.passwordRecovery.repeatPassword'
+									)}
+									type="password"
+									autoComplete="current-password"
+									error={passwordMismatch}
+									helperText={
+										passwordMismatch
+											? t(
+													'registration.account.repeatPassword.error'
+												)
+											: undefined
+									}
+									value={confirmLoginPassword}
+									disabled={busy}
+									onChange={(event) =>
+										setConfirmLoginPassword(
+											event.target.value
+										)
+									}
+								/>
+								{userData?.twoFactorAuth?.isActive && (
+									<OrisoTextField
+										label={t(
+											'encryption.passwordRecovery.otp'
+										)}
+										inputProps={{ inputMode: 'numeric' }}
+										autoComplete="one-time-code"
+										value={recoveryOtp}
+										disabled={busy}
+										onChange={(event) =>
+											setRecoveryOtp(event.target.value)
+										}
+									/>
+								)}
+								<Button
+									item={{
+										type: BUTTON_TYPES.PRIMARY,
+										label: t(
+											'encryption.passwordRecovery.enroll'
+										)
+									}}
+									disabled={
+										busy ||
+										(!recoveryKeyToShow &&
+											!enrollmentKey.trim()) ||
+										!loginPassword ||
+										loginPassword !== confirmLoginPassword
+									}
+									buttonHandle={() =>
+										enrollmentForm.current?.requestSubmit()
+									}
+								/>
+							</form>
+						)}
+					{offerStaleEnvelopeRepair && (
+						<StalePasswordRecovery
+							userId={userId}
+							resolvePolicyRevision={() => {
+								const policy = getChatRecoveryPolicy(userData);
+								if (policy.mode !== 'LOGIN_PASSWORD')
+									throw new Error('Recovery unavailable');
+								return policy.revision;
+							}}
+							otpRequired={!!userData?.twoFactorAuth?.isActive}
+							getReadyClient={getReadyClient}
+							onError={setError}
+						/>
 					)}
-					{canOfferPasswordRecovery && (
+					{canOfferPasswordRecovery && !offerStaleEnvelopeRepair && (
 						<Button
 							item={{
 								type: BUTTON_TYPES.SECONDARY,
@@ -566,64 +608,28 @@ export const EncryptionSettingsPanel = ({
 			)}
 
 			{phase === 'showKey' && recoveryKeyToShow && (
-				<>
-					<Text
-						text={
-							keyFromSilentSetup
-								? t(
-										'profile.encryption.showKey.silentExplainer'
-									)
-								: t('profile.encryption.showKey.explainer')
-						}
-						type="standard"
-					/>
-					<div
-						className="encryptionSettings__key"
-						data-cy="recovery-key-display"
-					>
-						<code>{recoveryKeyToShow}</code>
-					</div>
-					<div className="encryptionSettings__keyActions">
-						<Button
-							item={{
-								label: copied
-									? t('profile.encryption.showKey.copied')
-									: t('profile.encryption.showKey.copy'),
-								type: BUTTON_TYPES.SECONDARY
-							}}
-							buttonHandle={onCopyKey}
-							className="encryptionSettings__fullWidthAction"
-						/>
-					</div>
-					<M3Checkbox
-						checked={keyStoredConfirmed}
-						onChange={setKeyStoredConfirmed}
-						label={t('profile.encryption.showKey.confirmLabel')}
-						dataCy="encryption-key-stored-confirmation"
-					/>
-					<Button
-						item={{
-							label: t('profile.encryption.showKey.done'),
-							type: BUTTON_TYPES.PRIMARY,
-							disabled: !keyStoredConfirmed
-						}}
-						buttonHandle={onConfirmKeyStored}
-						className="encryptionSettings__fullWidthAction"
-					/>
-				</>
+				<RecoveryKeySaveStep
+					fromSilentSetup={keyFromSilentSetup}
+					recoveryKey={recoveryKeyToShow}
+					onConfirm={onConfirmKeyStored}
+				/>
 			)}
 
 			{phase === 'healthy' && (
 				<>
-					<div
-						className="encryptionSettings__status encryptionSettings__status--ok"
-						data-cy="encryption-status-ok"
-					>
-						<Text
-							text={t('profile.encryption.status.ok')}
-							type="standard"
-						/>
-					</div>
+					{/* Not while the password no longer opens the history:
+					    "stays readable on new devices" would be untrue. */}
+					{!offerStaleEnvelopeRepair && (
+						<div
+							className="encryptionSettings__status encryptionSettings__status--ok"
+							data-cy="encryption-status-ok"
+						>
+							<Text
+								text={t('profile.encryption.status.ok')}
+								type="standard"
+							/>
+						</div>
+					)}
 					{recoveredCount !== null && (
 						<Text
 							text={t('profile.encryption.recover.success', {
@@ -675,20 +681,26 @@ export const EncryptionSettingsPanel = ({
 							type="standard"
 						/>
 					</div>
-					<InputField
-						item={recoveryInputItem}
-						inputHandle={(event) =>
-							setRecoveryInput(event.target.value)
-						}
-					/>
-					<Button
-						item={{
-							label: t('profile.encryption.recover.cta'),
-							type: BUTTON_TYPES.PRIMARY,
-							disabled: busy || !recoveryInput.trim()
-						}}
-						buttonHandle={onRecover}
-					/>
+					{/* The repair above takes the recovery key too, and
+					    re-seals it under the current password as well. */}
+					{!offerStaleEnvelopeRepair && (
+						<>
+							<InputField
+								item={recoveryInputItem}
+								inputHandle={(event) =>
+									setRecoveryInput(event.target.value)
+								}
+							/>
+							<Button
+								item={{
+									label: t('profile.encryption.recover.cta'),
+									type: BUTTON_TYPES.PRIMARY,
+									disabled: busy || !recoveryInput.trim()
+								}}
+								buttonHandle={onRecover}
+							/>
+						</>
+					)}
 					<hr />
 					<Text
 						text={t('profile.encryption.reset.explainer')}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { resolveEventChannelContract as resolve } from './occasionChannelContract';
 
 describe('event channel contract', () => {
@@ -71,4 +71,37 @@ describe('event channel contract', () => {
 			browser: { family: 'calls', area: 'timeCritical', kind: 'call' }
 		});
 	});
+});
+
+describe('live-chat messages (FE#1470)', () => {
+	it('routes a live-chat message to a counsellor onto the Live-Chat row', () => {
+		expect(
+			resolve('message.new', 'consultant', {
+				conversationType: 'LIVE_CHAT'
+			}).browser
+		).toEqual({
+			family: 'messages',
+			area: 'conversations',
+			kind: 'liveChat'
+		});
+	});
+
+	it.each([
+		['an advice seeker', 'user', 'LIVE_CHAT', false],
+		[
+			'an ordinary counselling chat',
+			'consultant',
+			'AGENCY_COUNSELLING',
+			false
+		],
+		['a mention', 'consultant', 'LIVE_CHAT', true]
+	] as const)(
+		'keeps %s on its existing row',
+		(_label, role, conversationType, mentioned) => {
+			expect(
+				resolve('message.new', role, { conversationType, mentioned })
+					.browser.kind
+			).toBe(mentioned ? 'mention' : 'standard');
+		}
+	);
 });

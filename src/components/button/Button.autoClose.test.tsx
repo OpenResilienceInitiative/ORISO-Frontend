@@ -1,7 +1,14 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 /* Button imports OVERLAY_RESET_TIME from Overlay, and Overlay's module graph
    reaches lottie-web, which throws on import under jsdom (no canvas context).

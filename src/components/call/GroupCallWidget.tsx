@@ -4,9 +4,30 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+	useRef
+} from 'react';
 import { useTranslation } from 'react-i18next';
+import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
+import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
+import { CallShareForCall } from './share/CallShareForCall';
+import {
+	callStartFor,
+	deliverJoinMedia,
+	devicesForCall,
+	type JoinMedia
+} from './prejoin/callPrejoin';
+import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
+import {
+	NOTIFICATION_TYPE_WARNING,
+	NotificationsContext
+} from '../../globalState/provider/NotificationsProvider';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -18,6 +39,26 @@ import {
 	type Size
 } from '../../utils/videoTileSizing';
 import { releaseWindowMediaStream } from '../../utils/callMediaStreamCleanup';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext
+} from '../../globalState';
+import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
+import {
+	forgetPublishedIdentity,
+	type IdentityClient,
+	publishCallIdentity,
+	republishCallIdentity
+} from './publishCallIdentity';
+import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
+import { CallKnockNoticeHost } from './knockNotice/CallKnockNoticeHost';
+import { callKnockScopeOf } from './knockNotice/callKnockModel';
+import { useCallKnocks } from './knockNotice/useCallKnocks';
+import { useCallShareLinkKnock } from './knockNotice/useCallShareLinkKnock';
+import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
+import { IncomingCallCard } from './states/IncomingCallCard';
+import { DockedCall } from './states/DockedCall';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -25,13 +66,87 @@ const GROUP_DEFAULT_HEIGHT = 320;
 const GROUP_ASPECT = GROUP_DEFAULT_WIDTH / GROUP_DEFAULT_HEIGHT;
 const GROUP_MIN = { width: 280, height: 180 };
 
+/**
+ * How long the surface waits for the call's own goodbye, in ms.
+ *
+ * Long enough for a postMessage round trip and the leave it triggers, short
+ * enough that a wedged iframe is not something the user has to sit through.
+ */
+const HANGUP_HANDSHAKE_MS = 1500;
+
+/*
+ * How long to wait between attempts to say who we are, in ms.
+ *
+ * The window is the one the lifecycle card waits out: a refreshed client is
+ * announced before its crypto is up and before its first sync has the room's
+ * encryption state, and both make an identity publication refuse.
+ *
+ * The ladder used to END — three delays, seven seconds, and then silence for
+ * the rest of the call. Seven seconds is a guess about somebody else's
+ * machine: `initRustCrypto()` plus a first sync on a cold profile can take
+ * longer, and nothing else re-runs this. The people already in the call were
+ * seeded into the arrival set at mount, so no membership change announces to
+ * them afterwards either; the person stayed initials for good.
+ *
+ * So the ladder no longer runs out: its last rung repeats until the publish
+ * gets through or the effect's cleanup cancels it. An attempt is a local
+ * encryption check and at most one state send that fails fast, every eight
+ * seconds — and in the only case where it can go on forever (a call room
+ * that is somehow not encrypted) the identity may never be published at all,
+ * which is the refusal working.
+ */
+const IDENTITY_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
+const IDENTITY_RETRY_CEILING_MS = 8000;
+
+/** Looks up the conversation a call belongs to; returns the effect cleanup. */
+const conversationOf = (
+	roomId: string,
+	found: (conversation: CallConversation | null) => void
+): (() => void) => {
+	const controller = new AbortController();
+	apiGetSessionRoomsByRoomIds([roomId], controller.signal)
+		.then(({ sessions }) => {
+			if (!controller.signal.aborted) found(sessions?.[0] ?? null);
+		})
+		.catch(() => undefined);
+	return () => controller.abort();
+};
+
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
+	// `null` until a provider is above us; the widget renders in places that
+	// do not guarantee one.
+	const userData = useContext(UserDataContext)?.userData;
+	const ownAvatarUserId = useOwnAvatarUserId();
 	const [callData, setCallData] = useState<CallData | null>(null);
+	/* The conversation the call belongs to, and a second call's (FE#1904). */
+	const [conversation, setConversation] = useState<CallConversation | null>(
+		null
+	);
+	const [waitingCall, setWaitingCall] = useState<CallData | null>(null);
+	const [waitingConversation, setWaitingConversation] =
+		useState<CallConversation | null>(null);
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
+	/*
+	 * Bumped whenever the service swaps its client out.
+	 *
+	 * A token refresh replaces the client inside `MatrixClientService` and
+	 * takes the old client's listeners with it, but the service object — which
+	 * is what the context holds and what the identity effect below depends on
+	 * — stays the same. Without this the effect kept a dead MatrixRTC listener
+	 * until some unrelated render happened, so nobody arriving after the
+	 * refresh was re-announced to and they saw this person as initials.
+	 */
+	const [clientGeneration, setClientGeneration] = useState(0);
+	useEffect(() => {
+		const unsubscribe = matrixClientService?.onClientChange?.(() =>
+			setClientGeneration((generation) => generation + 1)
+		);
+		return (): void => unsubscribe?.();
+	}, [matrixClientService]);
 
 	const closeCallSurface = useCallback(() => {
 		// Release camera and microphone while the iframe is still in the
@@ -64,14 +179,387 @@ export const GroupCallWidget: React.FC = () => {
 		(!callData.isIncoming ||
 			callState === 'connecting' ||
 			callState === 'in_call');
+	// Sharing the call and admitting knocks are the counsellor's.
+	const isConsultantUser = Boolean(
+		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+
+	// Only this call's knocks (#1892): never the counsellor's other conversations.
+	const knockScope = useMemo(
+		() => callKnockScopeOf(callData),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[callData?.signalRoomId, callData?.roomId, callData?.elementCallRoomId]
+	);
+
+	// A legacy call renders no widget (see below): nothing to knock on.
+	const knocksEnabled =
+		isConsultantUser && shouldPrepareWidget && !!callData?.usesElementCall;
+
+	// Polled once here: the notice and the call's own count show the same list.
+	const callKnocks = useCallKnocks({
+		enabled: knocksEnabled,
+		scope: knockScope
+	});
+	// The call link's "Anklopfen" (UserService#1488), for the switch in the
+	// call (ElementCall#109). Every counsellor in the call may change it.
+	const shareLinkCall = useMemo(
+		() =>
+			callData?.signalRoomId && callData.callId
+				? {
+						sourceRoomId: callData.signalRoomId,
+						callId: callData.callId
+					}
+				: null,
+		[callData?.signalRoomId, callData?.callId]
+	);
+	const shareLinkKnock = useCallShareLinkKnock({
+		enabled: knocksEnabled,
+		call: shareLinkCall
+	});
+	const knockState = useMemo(
+		() =>
+			isConsultantUser
+				? {
+						waiting: callKnocks.people.length,
+						knock: shareLinkKnock.knock
+					}
+				: null,
+		[isConsultantUser, callKnocks.people.length, shareLinkKnock.knock]
+	);
+
+	/*
+	 * #2016 / ElementCall#116: what the person chose in the device check
+	 * before joining (the call message, or the circle's pre-lobby). Held for
+	 * the whole call and put on the widget URL, so the call starts with it:
+	 * a camera switched off there is never captured, and the microphone and
+	 * camera picked there are used (by label — the call runs on another
+	 * origin, where the device ids differ).
+	 */
+	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
+	const joinMediaIsVideo = !!callData?.isVideo;
+	const joinMedia = useJoinMediaForCall(
+		joinMediaRoom,
+		shouldPrepareWidget && callData
+			? `${callData.callId ?? ''}|${callRoomId ?? ''}`
+			: null
+	);
+	const callStart = useMemo(
+		() => callStartFor(joinMediaIsVideo, joinMedia),
+		[joinMediaIsVideo, joinMedia]
+	);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
-			onClose: closeCallSurface
+			// Let the guest confirm devices in the iframe before it publishes media.
+			skipLobby: !callData?.sharedCallGuest,
+			onClose: closeCallSurface,
+			knockState,
+			onSetKnock: shareLinkKnock.setKnock,
+			callStart
 		}
 	);
+
+	/*
+	 * Tell the call who we are, before it opens — and tell it again for
+	 * whoever arrives later.
+	 *
+	 * The iframe cannot work this out: the animal is a stored choice from the
+	 * userservice, an advice seeker's colours come from the anonymous-name
+	 * engine, and a counsellor's from the tenant's brand pair. None of that is
+	 * visible inside the widget, and deriving a substitute there is the one
+	 * thing the design forbids. So each client publishes its own identity into
+	 * the call room and the fork reads what it is given.
+	 *
+	 * Own identity only. A client that announced somebody else's would be
+	 * guessing on their behalf, and the fork keys what it reads by the event's
+	 * sender, so it could not be believed anyway.
+	 *
+	 * It is an encrypted timeline event rather than room state, because room
+	 * state is not encrypted — see `publishCallIdentity`. The price of that is
+	 * paid here: a timeline event reaches whoever is listening at the time, so
+	 * when a new member joins, everybody already in the call says it again and
+	 * the newcomer learns the room from the people in it.
+	 *
+	 * After the join, not beside it. `useElementCallWidget` joins the call
+	 * room and only then produces a URL, so waiting for the URL is waiting
+	 * for the membership — an event sent to a room this client has not joined
+	 * yet is refused, and the first version of this raced it.
+	 */
+	/*
+	 * The widget URL this effect saw last time, `null` included.
+	 *
+	 * A ref rather than state: it must not cause a render, and it must survive
+	 * the effect re-running for a changed profile.
+	 */
+	const lastSessionUrl = useRef<string | null>(null);
+	/*
+	 * The client generation this effect last ran for.
+	 *
+	 * A swap re-runs the effect, which re-attaches the listeners — but an
+	 * arrival in the gap between the old client going away and the new one
+	 * being listened to is seen by nobody, and the newcomer would spend the
+	 * rest of the call looking at initials. So the run that follows a swap
+	 * announces again whether or not it saw an arrival: one event per token
+	 * refresh, against a window nothing else closes.
+	 */
+	const lastGeneration = useRef(clientGeneration);
+	/*
+	 * Whether the widget had negotiated its capabilities last time.
+	 *
+	 * The first publish goes out as soon as the URL exists, before the iframe
+	 * can receive anything, and `feedEvent` drops what the widget cannot take
+	 * yet. Everybody else gets the event; our own widget does not, and the
+	 * arrival re-announce skips our own id — so we saw ourselves as initials.
+	 * Becoming ready therefore forces one more publish.
+	 */
+	const lastReady = useRef(widget.ready);
+
+	/*
+	 * The same on/off choice once more when the call is ready, through
+	 * `io.element.device_mute`: for an Element Call image that does not yet
+	 * read the start parameters (ElementCall#116). A no-op for one that does.
+	 * Once per call, counted as done only when the call confirmed it. Such an
+	 * image starts with both on, so one that never confirms is said out loud.
+	 */
+	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	const notifications = useContext(NotificationsContext);
+	const warnJoinMedia = useRef<() => void>(() => undefined);
+	warnJoinMedia.current = () =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title: t('knockWait.ready.notApplied'),
+			text: '',
+			closeable: true,
+			timeout: 10_000
+		});
+	const switchedOnReady = useRef<JoinMedia | null>(null);
+	useEffect(() => {
+		if (!widgetReady || !joinMedia) return undefined;
+		if (switchedOnReady.current === joinMedia) return undefined;
+		const media = devicesForCall(joinMediaIsVideo, joinMedia);
+		if (!media) return undefined;
+		let stopped = false;
+		void deliverJoinMedia(setWidgetDevices, media, {
+			stopped: () => stopped
+		}).then((delivered) => {
+			if (delivered) switchedOnReady.current = joinMedia;
+			else if (!stopped) warnJoinMedia.current();
+		});
+		return () => {
+			stopped = true;
+		};
+	}, [widgetReady, joinMedia, joinMediaIsVideo, setWidgetDevices]);
+
+	useEffect(() => {
+		// Recorded before the guard, so that closing the surface — which sets
+		// the URL to null without this effect having anything to do — is seen.
+		const previousUrl = lastSessionUrl.current;
+		lastSessionUrl.current = widget.url;
+		const clientChanged = lastGeneration.current !== clientGeneration;
+		lastGeneration.current = clientGeneration;
+		const becameReady = widget.ready && !lastReady.current;
+		lastReady.current = widget.ready;
+
+		const client = matrixClientService?.getClient();
+		if (!client || !callRoomId || !widget.url || !userData) return;
+		const identityClient = client as unknown as IdentityClient;
+		const source = {
+			userId: ownAvatarUserId,
+			userData,
+			isConsultant: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+		};
+
+		/*
+		 * A new surface for the same call says it again.
+		 *
+		 * Leaving does not change `callRoomId` — `leaveCall` keeps the room
+		 * and only sets the state to `left` — so the room-keyed cleanup below
+		 * does NOT fire when somebody closes the call surface and opens it
+		 * again, and `lastSent` then made this publish a no-op. Everyone who
+		 * was already in the call still holds the returner's first event, so
+		 * the gap is invisible to them; anybody who joined while the returner
+		 * was away does not, because `history_visibility` is `joined` and they
+		 * cannot read it from the room's history. The re-announce does not
+		 * cover it either: an arrival makes the OTHERS resend their own
+		 * identities, not the returner's. The newcomer went on seeing the
+		 * returner as initials.
+		 *
+		 * The session boundary is the URL going through `null`, NOT the URL
+		 * changing. That was the first version of this and it was wrong:
+		 * `useElementCallWidget` keeps its instance nonce in a ref, and the
+		 * component stays mounted across a leave, so a reopened surface gets a
+		 * byte-identical URL. What does happen is `A -> null -> A`, since
+		 * `shouldPrepareWidget` is false while the state is `left`. So the
+		 * previous value is compared including `null`, and the test for this
+		 * drives the real sequence rather than remounting — a remount runs the
+		 * cleanup and clears `lastSent`, which would have passed either way.
+		 *
+		 * A changed profile keeps the URL and stays unforced, which is what
+		 * the comment on the cleanup below is about: forcing there would
+		 * resend identical content as a duplicate.
+		 */
+		/*
+		 * And it is tried again until it gets through.
+		 *
+		 * `publishCallIdentity` answers `null` for both of the things a
+		 * replacement client is briefly guilty of: a room whose encryption
+		 * state the first sync has not loaded, and a send that cannot be
+		 * encrypted because `initRustCrypto()` has not finished. Both are
+		 * right as refusals — the privacy guard is the point — and both used
+		 * to end there, because `onClientChange` fires BEFORE either is
+		 * ready and nothing else re-runs this. Somebody arriving in that gap
+		 * saw this person as initials for the rest of the call.
+		 *
+		 * So a refusal is retried for as long as this effect lives, and the
+		 * effect's cleanup cancels it — a closed surface or another refresh
+		 * must not leave a timer announcing into a call that has moved on.
+		 * Nothing else will do it instead: an arrival makes the OTHERS
+		 * re-announce, and the people already here were seeded into the
+		 * arrival set before anybody could arrive.
+		 */
+		let cancelled = false;
+		const announce = async (attempt: number): Promise<void> => {
+			const sent = await publishCallIdentity(
+				identityClient,
+				callRoomId,
+				source,
+				{
+					force:
+						previousUrl !== widget.url ||
+						clientChanged ||
+						becameReady
+				}
+			);
+			if (sent !== null || cancelled) return;
+			const delay =
+				IDENTITY_RETRY_DELAYS_MS[attempt] ?? IDENTITY_RETRY_CEILING_MS;
+			await new Promise((resolve) => setTimeout(resolve, delay));
+			if (!cancelled) await announce(attempt + 1);
+		};
+		void announce(0);
+
+		/*
+		 * Who is in the CALL, which is not who is in the room.
+		 *
+		 * `useElementCallWidget` never leaves the Matrix room, so somebody who
+		 * closes the call surface and opens it again stays a joined room
+		 * member throughout — only their MatrixRTC membership
+		 * (`org.matrix.msc3401.call.member`) goes away and comes back. A
+		 * listener on room membership therefore never fired for them, nobody
+		 * re-announced, and the returning participant sat looking at initials
+		 * where the animals had been.
+		 *
+		 * So the set is the RTC session's senders, and an arrival is somebody
+		 * entering it who was not in it a moment ago — which makes a rejoin an
+		 * arrival, as it should be. Seeding it before subscribing is what
+		 * stops the people already here from being re-announced to: they heard
+		 * the publish above live.
+		 *
+		 * Room membership stays as the fallback for a client with no
+		 * `matrixRTC` (an older SDK, or a test double), because losing the
+		 * re-announce silently is the failure mode this whole mechanism exists
+		 * to avoid.
+		 */
+		/*
+		 * Not there yet, right after a client swap.
+		 *
+		 * `getRoom` answers null until the replacement's first sync, and
+		 * capturing that left the listeners below attached to nothing for the
+		 * rest of the call. So a missing room is bound when the client learns
+		 * of it, and the first refresh then treats everybody as an arrival —
+		 * which is right: they may have come in during the gap.
+		 */
+		const sessionOf = (of: Room | null) =>
+			of && client.matrixRTC?.getRoomSession
+				? client.matrixRTC.getRoomSession(of)
+				: undefined;
+		let room = client.getRoom?.(callRoomId) ?? null;
+		let session = sessionOf(room);
+		const ownUserId = client.getUserId?.() ?? undefined;
+		/*
+		 * Keyed by DEVICE, not by person.
+		 *
+		 * MatrixRTC memberships are per device, and somebody already in the
+		 * call joining from a second one is an arrival like any other: that
+		 * device received none of the identities sent before it existed, and
+		 * collapsing the memberships to a set of user ids hid it. It saw
+		 * everybody as initials for the rest of the call. A user id cannot
+		 * contain `|`, so the first one separates the two halves.
+		 */
+		const inTheCall = (): Set<string> =>
+			new Set<string>(
+				(session
+					? session.memberships.map(
+							(membership: {
+								sender?: string | null;
+								deviceId?: string | null;
+							}) =>
+								typeof membership.sender === 'string'
+									? `${membership.sender}|${membership.deviceId ?? ''}`
+									: undefined
+						)
+					: (room?.getMembersWithMembership?.('join') ?? []).map(
+							(member: { userId: string }) => `${member.userId}|`
+						)
+				).filter((key): key is string => typeof key === 'string')
+			);
+
+		let present = inTheCall();
+		const refresh = (): void => {
+			const now = inTheCall();
+			const arrived = [...now].some(
+				(key) =>
+					key.slice(0, key.indexOf('|')) !== ownUserId &&
+					!present.has(key)
+			);
+			present = now;
+			if (arrived)
+				void republishCallIdentity(identityClient, callRoomId, source);
+		};
+
+		const onRoom = (joined: Room): void => {
+			if (room || joined?.roomId !== callRoomId) return;
+			room = joined;
+			session = sessionOf(room);
+			session?.on?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+			refresh();
+		};
+		session?.on?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+		if (!room) client.on?.(ClientEvent.Room, onRoom);
+		client.on?.(RoomStateEvent.Members, refresh as never);
+		return (): void => {
+			cancelled = true;
+			client.off?.(ClientEvent.Room, onRoom);
+			session?.off?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+			client.off?.(RoomStateEvent.Members, refresh as never);
+		};
+	}, [
+		matrixClientService,
+		clientGeneration,
+		callRoomId,
+		widget.url,
+		widget.ready,
+		ownAvatarUserId,
+		userData
+	]);
+
+	/*
+	 * A new call to the same room announces again.
+	 *
+	 * Keyed on the room alone, so it does not fire when the effect above
+	 * re-runs for a changed profile — that would clear the record and resend
+	 * identical content as a duplicate event.
+	 */
+	useEffect(() => {
+		if (!callRoomId) return;
+		return (): void => forgetPublishedIdentity(callRoomId);
+	}, [callRoomId]);
 
 	// Dragging / resize state
 	const [isDragging, setIsDragging] = useState(false);
@@ -82,7 +570,9 @@ export const GroupCallWidget: React.FC = () => {
 	});
 	const [position, setPosition] = useState({ x: 100, y: 100 });
 	const [isMobileView, setIsMobileView] = useState(false);
-	const [isMobileCompact, setIsMobileCompact] = useState(false);
+	/* Put aside into the dock; the iframe stays mounted, or the call drops. */
+	const [isMinimized, setIsMinimized] = useState(false);
+	const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
 	const dragRef = useRef<{
 		startX: number;
 		startY: number;
@@ -100,6 +590,7 @@ export const GroupCallWidget: React.FC = () => {
 	} | null>(null);
 	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
+	const answeringRef = useRef(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// React compares ref callbacks by function identity, not by DOM node: an
@@ -149,6 +640,7 @@ export const GroupCallWidget: React.FC = () => {
 	useEffect(() => {
 		const unsubscribe = callManager.subscribe((newCallData) => {
 			setCallData(newCallData);
+			setWaitingCall(callManager.getWaitingCall());
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
 				setIsDismissed(newCallData.state === 'left');
@@ -159,6 +651,7 @@ export const GroupCallWidget: React.FC = () => {
 		});
 		const currentCall = callManager.getCurrentCall();
 		setCallData(currentCall);
+		setWaitingCall(callManager.getWaitingCall());
 		setCallState(currentCall?.state || null);
 		setIsDismissed(currentCall?.state === 'left');
 		return () => unsubscribe();
@@ -166,12 +659,7 @@ export const GroupCallWidget: React.FC = () => {
 
 	useEffect(() => {
 		const updateViewport = () => {
-			const mobile = window.innerWidth <= 640;
-			setIsMobileView(mobile);
-			if (!mobile) {
-				// Compact mode is mobile-only; reset it on larger screens.
-				setIsMobileCompact(false);
-			}
+			setIsMobileView(window.innerWidth <= 640);
 		};
 
 		updateViewport();
@@ -238,6 +726,68 @@ export const GroupCallWidget: React.FC = () => {
 		widget.url
 	]);
 
+	/*
+	 * Who is ringing, and whom the call is with, looked up in the
+	 * conversation the call belongs to, so the card and the dock show names
+	 * and avatars from the session list instead of a fixed "G" (#780).
+	 * Unknown callers keep the generic line.
+	 */
+	const conversationRoomId = callData?.sharedCallGuest
+		? undefined
+		: callData?.signalRoomId || callData?.roomId;
+	const waitingRoomId = waitingCall?.signalRoomId || waitingCall?.roomId;
+	useEffect(() => {
+		setConversation(null);
+		if (!conversationRoomId) return;
+		return conversationOf(conversationRoomId, setConversation);
+	}, [conversationRoomId]);
+	useEffect(() => {
+		setWaitingConversation(null);
+		if (!waitingRoomId) return;
+		return conversationOf(waitingRoomId, setWaitingConversation);
+	}, [waitingRoomId]);
+	const incomingCaller = callPartyOf(conversation, callData?.callerUserId);
+	const waitingCaller = callPartyOf(
+		waitingConversation,
+		waitingCall?.callerUserId
+	);
+	// Whom the call is with; nobody for a group, which the dock names as such.
+	const knownParty = callData?.isGroup
+		? null
+		: callData?.isIncoming
+			? incomingCaller
+			: counterpartOf(
+					conversation,
+					matrixClientService?.getClient()?.getUserId() ?? undefined
+				);
+	const unnamedCall = callData?.isGroup
+		? t('calls.states.groupCall')
+		: t('calls.title');
+	const dockParty = knownParty ?? { name: unnamedCall };
+
+	// Back from the dock, keyboard focus follows the user into the call.
+	const wasMinimized = useRef(false);
+	useEffect(() => {
+		if (wasMinimized.current && !isMinimized) iframeRef.current?.focus();
+		wasMinimized.current = isMinimized;
+	}, [isMinimized]);
+
+	/*
+	 * A second call must never ring unseen. Browser full screen puts the call
+	 * in the top layer, where no z-index reaches, so leave it while it rings.
+	 */
+	const waitingCallId = waitingCall?.callId;
+	useEffect(() => {
+		if (waitingCallId && document.fullscreenElement)
+			void document.exitFullscreen?.().catch(() => undefined);
+	}, [waitingCallId, isFullscreen]);
+
+	// The dock's clock starts when the call surface opens; a new call resets it.
+	useEffect(() => {
+		setCallStartedAt(elementCallUrl ? Date.now() : null);
+		if (!elementCallUrl) setIsMinimized(false);
+	}, [elementCallUrl, callData?.callId]);
+
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
 		callManager.answerCall();
@@ -248,23 +798,86 @@ export const GroupCallWidget: React.FC = () => {
 		callManager.endCall();
 	};
 
-	const handleEndCall = () => {
-		void widget.hangup().catch(() => {
-			/* local teardown still completes if the iframe already closed */
+	/*
+	 * Answering a second call ends the running one first, through the same
+	 * hangup handshake as the end button, so the others see this person
+	 * leave before the next call opens.
+	 */
+	const handleAnswerWaiting = () => {
+		const next = waitingCall;
+		// A second press during the handshake would blank the answered call.
+		if (!next || answeringRef.current) return;
+		answeringRef.current = true;
+		const endingCallId = callData?.callId;
+		void (async () => {
+			try {
+				await Promise.race([
+					widget.hangup(),
+					new Promise<void>((resolve) =>
+						setTimeout(resolve, HANGUP_HANDSHAKE_MS)
+					)
+				]);
+			} catch {
+				/* the running call's iframe may already be gone */
+			}
+			const current = callManager.getCurrentCall();
+			const stillRinging =
+				callManager.getWaitingCall()?.callId === next.callId ||
+				(current?.callId === next.callId &&
+					current.state === 'ringing');
+			if (stillRinging) {
+				if (iframeRef.current) iframeRef.current.src = 'about:blank';
+				setElementCallUrl('');
+				callManager.answerWaitingCall(next.callId);
+			} else if (callManager.getCurrentCall()?.callId === endingCallId) {
+				// The second caller gave up meanwhile; the running call still ends,
+				// as asked.
+				closeCallSurface();
+			}
+		})().finally(() => {
+			answeringRef.current = false;
 		});
+	};
 
-		if (iframeRef.current) {
-			iframeRef.current.src = 'about:blank';
-		}
-		closeCallSurface();
+	const handleEndCall = () => {
+		/*
+		 * Let the call say goodbye before its document is destroyed.
+		 *
+		 * `hangup()` is a widget action: the leave happens INSIDE the iframe,
+		 * once it has processed the message, and `transport.send` resolves on
+		 * its reply. Firing it and blanking the iframe in the same tick raced
+		 * that — the document went away before the membership left, so
+		 * everybody else went on seeing this person in the call, and the
+		 * durable card went on saying `running`, until the delayed leave
+		 * expired. Which is a safety net for a browser that crashes, not for
+		 * a button somebody pressed.
+		 *
+		 * Capped, because a wedged iframe must not trap anybody in a call
+		 * surface that will not close: past the cap the teardown goes ahead
+		 * and the delayed leave does its job after all. `closeCallSurface`
+		 * blanks the iframe itself — doing it here as well was how the race
+		 * got in.
+		 */
+		const endingCallId = callData?.callId;
+		void (async () => {
+			try {
+				await Promise.race([
+					widget.hangup(),
+					new Promise<void>((resolve) =>
+						setTimeout(resolve, HANGUP_HANDSHAKE_MS)
+					)
+				]);
+			} catch {
+				/* local teardown still completes if the iframe already closed */
+			}
+			// The call may have closed itself meanwhile and moved a waiting
+			// second call up; that one is not ours to end.
+			const current = callManager.getCurrentCall();
+			if (!current || current.callId === endingCallId) closeCallSurface();
+		})();
 	};
 
 	const handleToggleFullscreen = () => {
-		if (isMobileView) {
-			setIsMobileCompact((value) => !value);
-			return;
-		}
-
 		const container = containerRef.current;
 		if (!container) return;
 
@@ -284,7 +897,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
+				'.btn-end-call, iframe, .element-call-close, .element-call-minimize, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -304,7 +917,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
+				'.btn-end-call, iframe, .element-call-close, .element-call-minimize, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -325,7 +938,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (e.button !== 0) return;
 		e.preventDefault();
 		e.stopPropagation();
-		if (isMobileView || isFullscreen || isMobileCompact) return;
+		if (isMobileView || isFullscreen || isMinimized) return;
 		(e.target as HTMLElement).setPointerCapture?.(e.pointerId);
 		setIsResizing(true);
 		setResizeCursor(resizeCursorForEdge(edge));
@@ -338,6 +951,55 @@ export const GroupCallWidget: React.FC = () => {
 			posX: position.x,
 			posY: position.y
 		};
+	};
+
+	/*
+	 * How far one arrow key moves a handle, in px.
+	 *
+	 * Enough to be worth a keypress and small enough to aim with; `Shift`
+	 * takes bigger strides, as it does in every other resizable thing.
+	 */
+	const RESIZE_STEP = 16;
+	const RESIZE_STEP_FAST = 64;
+
+	/*
+	 * The same resize, from the keyboard.
+	 *
+	 * These handles were `role="separator"` with an `aria-label` and nothing
+	 * but `onPointerDown`: they announced a control that a keyboard could not
+	 * reach or operate, which on this surface also means no way to make room
+	 * for the Gesprächsnotizen panel without a mouse.
+	 *
+	 * It goes through `resizeStageFromPointer` exactly as the pointer does,
+	 * with the arrow key standing in for the movement — so the edge
+	 * semantics, the aspect ratio and the bounds cannot drift between the two
+	 * ways of doing the same thing. A `w` handle growing leftwards is that
+	 * function's business, not this one's.
+	 */
+	const handleResizeKeyDown = (e: React.KeyboardEvent, edge: ResizeEdge) => {
+		if (isMobileView || isFullscreen || isMinimized) return;
+		const step = e.shiftKey ? RESIZE_STEP_FAST : RESIZE_STEP;
+		const move: Record<string, { dx: number; dy: number }> = {
+			ArrowLeft: { dx: -step, dy: 0 },
+			ArrowRight: { dx: step, dy: 0 },
+			ArrowUp: { dx: 0, dy: -step },
+			ArrowDown: { dx: 0, dy: step }
+		};
+		const delta = move[e.key];
+		if (!delta) return;
+		e.preventDefault();
+		e.stopPropagation();
+		const next = resizeStageFromPointer({
+			edge,
+			startSize: stageSize,
+			startPosition: position,
+			dx: delta.dx,
+			dy: delta.dy,
+			aspectRatio: stageSize.width / stageSize.height || GROUP_ASPECT,
+			bounds: getGroupBounds()
+		});
+		setStageSize(next.size);
+		setPosition(next.position);
 	};
 
 	const handlePointerMove = (e: PointerEvent) => {
@@ -414,13 +1076,77 @@ export const GroupCallWidget: React.FC = () => {
 	// Only render for group calls
 	if (isDismissed || !callData || !callData.usesElementCall) return null;
 
+	/*
+	 * Ringing: the card in the call language (FE#1904), with no backdrop, so
+	 * the app behind stays usable. It replaces the old black popup.
+	 */
+	if (callData.isIncoming && callData.state === 'ringing') {
+		return (
+			<IncomingCallCard
+				caller={incomingCaller}
+				isVideo={callData.isVideo}
+				onAnswer={handleAnswer}
+				onDecline={handleDecline}
+			/>
+		);
+	}
+
+	const isDocked = isMinimized && !!elementCallUrl;
+	// Until the call reports its devices, assume what it started with; the
+	// dock shows this and its toggles flip it.
+	const shownDevices = widget.devices ?? {
+		audio_enabled: true,
+		video_enabled: !!callData?.isVideo
+	};
+
 	return (
 		<>
-			{!isFullscreen && !isMobileView && (
+			{!isFullscreen && !isMobileView && !isDocked && (
 				<div className="call-modal-backdrop" aria-hidden="true" />
 			)}
+			{/* A second call rings above everything and says what it ends. */}
+			{waitingCall && (
+				<IncomingCallCard
+					caller={waitingCaller}
+					isVideo={waitingCall.isVideo}
+					ongoingCall={{
+						name: knownParty?.name ?? '',
+						avatars: knownParty ? [knownParty.avatar] : []
+					}}
+					onAnswer={handleAnswerWaiting}
+					onDecline={() => callManager.rejectWaitingCall()}
+				/>
+			)}
+			{isDocked && callStartedAt !== null && (
+				<DockedCall
+					party={dockParty}
+					isGroup={!!callData.isGroup}
+					startedAt={callStartedAt}
+					isMuted={!shownDevices.audio_enabled}
+					isVideo={callData.isVideo}
+					isCameraOff={!shownDevices.video_enabled}
+					onToggleMute={() =>
+						void widget
+							.setDevices({
+								audio_enabled: !shownDevices.audio_enabled
+							})
+							.catch(() => undefined)
+					}
+					onToggleCamera={() =>
+						void widget
+							.setDevices({
+								video_enabled: !shownDevices.video_enabled
+							})
+							.catch(() => undefined)
+					}
+					onHangUp={handleEndCall}
+					onExpand={() => setIsMinimized(false)}
+					autoFocus
+				/>
+			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isDocked ? 'group-call-widget--docked' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				aria-hidden={isDocked ? true : undefined}
 				style={{
 					left: `${position.x}px`,
 					top: `${position.y}px`,
@@ -429,37 +1155,7 @@ export const GroupCallWidget: React.FC = () => {
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
-				{/* Incoming call - show answer/decline buttons */}
-				{callData.isIncoming && callData.state === 'ringing' ? (
-					<div className="incoming-call-popup">
-						<button
-							className="element-call-close"
-							onClick={handleDecline}
-							aria-label={t('calls.group.close')}
-						>
-							×
-						</button>
-						<div className="incoming-call-content">
-							<div className="call-avatar-large">G</div>
-							<h2>{t('calls.group.incomingTitle')}</h2>
-							<p>{t('calls.group.incomingDescription')}</p>
-							<div className="incoming-call-actions">
-								<button
-									className="btn-answer"
-									onClick={handleAnswer}
-								>
-									{t('calls.answer')}
-								</button>
-								<button
-									className="btn-decline"
-									onClick={handleDecline}
-								>
-									{t('calls.decline')}
-								</button>
-							</div>
-						</div>
-					</div>
-				) : elementCallUrl ? (
+				{elementCallUrl ? (
 					/* Active call - show Element Call iframe */
 					<div
 						className="element-call-container"
@@ -495,36 +1191,66 @@ export const GroupCallWidget: React.FC = () => {
 								⛶
 							</button>
 						)}
+						{/* Into the dock (FE#1904); on a phone this replaces the small tile. */}
 						<button
-							className="element-call-fullscreen"
-							onClick={handleToggleFullscreen}
-							aria-label={
-								isMobileView
-									? isMobileCompact
-										? t('calls.group.openFullView')
-										: t('calls.group.switchToSmallView')
-									: isFullscreen
+							type="button"
+							className="element-call-minimize"
+							onClick={(e) => {
+								e.stopPropagation();
+								if (document.fullscreenElement)
+									void document.exitFullscreen?.();
+								setIsMinimized(true);
+							}}
+							aria-label={t('calls.states.minimize')}
+							title={t('calls.states.minimize')}
+						>
+							–
+						</button>
+						{!isMobileView && (
+							<button
+								className="element-call-fullscreen"
+								onClick={handleToggleFullscreen}
+								aria-label={
+									isFullscreen
 										? t('calls.group.exitFullScreen')
 										: t('calls.group.enterFullScreen')
-							}
-							title={
-								isMobileView
-									? isMobileCompact
-										? t('calls.group.fullView')
-										: t('calls.group.smallView')
-									: isFullscreen
+								}
+								title={
+									isFullscreen
 										? t('calls.group.exitFullScreen')
 										: t('calls.group.fullScreen')
-							}
-						>
-							{isMobileView
-								? isMobileCompact
-									? '⤢'
-									: '⤡'
-								: isFullscreen
-									? '⤡'
-									: '⤢'}
-						</button>
+								}
+							>
+								{isFullscreen ? '⤡' : '⤢'}
+							</button>
+						)}
+						{/* Host side: no widget capability needed (#1794). */}
+						{/* Element Call never sets CallData.state to connected; a
+						    ready widget is the joined call. */}
+						{isConsultantUser &&
+							widget.ready &&
+							callData?.signalRoomId && (
+								<div className="element-call-share">
+									<CallShareForCall
+										sourceRoomId={callData.signalRoomId}
+										callId={callData.callId}
+										layout={
+											isMobileView ? 'phone' : 'desktop'
+										}
+									/>
+								</div>
+							)}
+						{/*
+						 * Somebody knocking on a direct-link call (#1892):
+						 * let them in without leaving the call. Docked
+						 * above the call when it is minimised.
+						 */}
+						{isConsultantUser && (
+							<CallKnockNoticeHost
+								minimised={isMinimized}
+								knocks={callKnocks}
+							/>
+						)}
 						<iframe
 							ref={setIframeNode}
 							src={elementCallUrl}
@@ -549,8 +1275,35 @@ export const GroupCallWidget: React.FC = () => {
 									aria-label={t('calls.resizeAria', {
 										edge
 									})}
+									/*
+									 * Focusable, and it reports where it is.
+									 * A separator that can be moved is a
+									 * widget, so it needs a tab stop and a
+									 * value — without `aria-valuenow` a
+									 * screen reader announces a control with
+									 * no position in its range.
+									 */
+									tabIndex={0}
+									aria-valuenow={Math.round(
+										edge === 'n' || edge === 's'
+											? stageSize.height
+											: stageSize.width
+									)}
+									aria-valuemin={Math.round(
+										edge === 'n' || edge === 's'
+											? getGroupBounds().minHeight
+											: getGroupBounds().minWidth
+									)}
+									aria-valuemax={Math.round(
+										edge === 'n' || edge === 's'
+											? getGroupBounds().maxHeight
+											: getGroupBounds().maxWidth
+									)}
 									onPointerDown={(e) =>
 										handleResizePointerDown(e, edge)
+									}
+									onKeyDown={(e) =>
+										handleResizeKeyDown(e, edge)
 									}
 								/>
 							))}
@@ -566,7 +1319,6 @@ export const GroupCallWidget: React.FC = () => {
 							×
 						</button>
 						<div className="connecting-content">
-							<div className="call-avatar-large">G</div>
 							<h2>{t('calls.group.connecting')}</h2>
 							<p>{t('calls.group.settingUp')}</p>
 						</div>

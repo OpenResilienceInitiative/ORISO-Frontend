@@ -415,13 +415,26 @@ export const Supervision: Story = {
 		await expect(
 			panel.querySelector('.panelHeader')!.textContent
 		).not.toMatch(/Antworten auf|Replies to/);
-		// T49: the notice is the Carimat organism (`pseudonymCard`), not the
-		// generic system-notification chrome — no kebab next to it.
+		// The shared assistant sender and the recorded supervision topic are separate.
+		const notice = panel.querySelector<HTMLElement>(
+			'.messageItem--supervisionNotice'
+		)!;
+		await expect(notice).not.toBeNull();
+		const noticeContent = within(notice);
 		await expect(
-			panel.querySelector(
-				'.messageItem.pseudonymCard .pseudonymCard__headerName'
-			)?.textContent
-		).toBe('Supervision');
+			noticeContent.getByText('Carimat', { exact: true })
+		).toBeInTheDocument();
+		await expect(
+			noticeContent.getByText('Supervision', { exact: true })
+		).toBeInTheDocument();
+		for (const part of [
+			'.carimatMessageFrame',
+			'.carimatMessageFrame__avatar',
+			'.carimatMessageFrame__header',
+			'.carimatMessageFrame__bubble'
+		]) {
+			await expect(notice.querySelector(part), part).not.toBeNull();
+		}
 		await expect(
 			panel.querySelector('.messageItem__message--systemNotification')
 		).toBeNull();
@@ -439,12 +452,12 @@ export const Supervision: Story = {
 			'[data-cy="panel-header-participants"] [data-cy="participant-avatar"]'
 		);
 		await expect(avatars).toHaveLength(2);
-		// T14/T17: the same 40 px / 28 px stack as the room header (Figma
-		// 1320:38281), the title text 6 px after it.
+		// T14/T17: the approved room-header stack uses 48 px avatars with
+		// a 24 px step; the title text remains 6 px after it.
 		const a0 = avatars[0].getBoundingClientRect();
 		const a1 = avatars[1].getBoundingClientRect();
-		await expect(Math.round(a0.width)).toBe(40);
-		await expect(Math.round(a1.left - a0.left)).toBe(28);
+		await expect(Math.round(a0.width)).toBe(48);
+		await expect(Math.round(a1.left - a0.left)).toBe(24);
 		const stackBox = panel
 			.querySelector('[data-cy="panel-header-participants"]')!
 			.getBoundingClientRect();
@@ -651,10 +664,9 @@ export const EmptyWithSupervisionNotice: Story = {
 				canvasElement.querySelector('.textarea__wrapper-send-message')
 			).not.toBeNull()
 		);
-		// (T49: the Carimat organism nests its own `.messageItem` row inside
-		// the timeline item — count timeline items, not organism rows.)
+		// Count recorded timeline items; the assistant presentation is not another event.
 		await expect(
-			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+			canvasElement.querySelectorAll('.messageItem[data-message-id]')
 				.length
 		).toBe(1);
 		await expect(canvasElement.textContent).toContain(SUPERVISOR_NAME);

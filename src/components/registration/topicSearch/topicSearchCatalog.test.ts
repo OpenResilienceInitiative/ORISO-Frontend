@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 // @ts-expect-error — plain ESM build script without type declarations
 import { buildTopicSearchCatalog } from '../../../../scripts/generate-topic-search-catalog.mjs';
 import { topicSearchCatalog } from './topicSearchCatalog.generated';

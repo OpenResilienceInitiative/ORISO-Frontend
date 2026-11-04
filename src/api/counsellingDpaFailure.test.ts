@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { MatrixError } from 'matrix-js-sdk';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
 import { getCounsellingDpaNotification } from '../utils/counsellingDpaNotification';

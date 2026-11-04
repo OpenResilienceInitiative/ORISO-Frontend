@@ -203,6 +203,10 @@ $room-header-gap-top: 2px;
 	}
 
 	&__username {
+		// Align the 48px avatar bottom with the 44px menu outline while
+		// preserving the header row and shifting its title with the avatars.
+		position: relative;
+		top: -2px;
 		cursor: pointer;
 
 		// T4: the participant tooltips hang below the row; the h3 clips
@@ -364,6 +368,12 @@ $room-header-gap-top: 2px;
 		text-overflow: ellipsis;
 		max-width: 100%;
 		line-height: 1.4;
+
+		// Text participants truncate, but avatar stacks paint their white and
+		// keyboard-focus rings outside the box, including over the type pill.
+		&.participantStack {
+			overflow: visible;
+		}
 
 		&--loading {
 			min-height: 16px;
@@ -623,8 +633,29 @@ $room-header-gap-top: 2px;
 
 	// T14: the participant stack overlaps the type pill by 8 px (Figma
 	// 1320:38281) and paints above it (`.participantStack` is z-indexed).
-	&__memberStack--single &__participants {
+	&__memberStack &__participants {
 		margin-left: -$stack-pill-overlap;
+	}
+
+	// #107: the stack opens the member view. The link takes over the overlap
+	// so the avatars sit exactly where they sat before.
+	&__participantsLink {
+		display: inline-flex;
+		align-items: center;
+		margin-left: -$stack-pill-overlap;
+		border-radius: 24px;
+		color: inherit;
+		text-decoration: none;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
+	&__memberStack &__participantsLink &__participants {
+		margin-left: 0;
 	}
 
 	// Figma #430 / #1193: "+N" chip for the participants that do not fit the stack.

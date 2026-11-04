@@ -1,4 +1,18 @@
 import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
+import { decodeUsername } from '../../utils/encryptionHelpers';
+
+// Matrix names of anonymous askers are encoded ("enc.mfxg63s7gezte...");
+// humanising them as they are yields "enc mfxg63s7gezte" (#1839).
+const decodeEncodedName = (value: string) => {
+	if (!value.startsWith('enc.')) {
+		return value;
+	}
+	try {
+		return decodeUsername(value).trim() || value;
+	} catch {
+		return value;
+	}
+};
 
 const normalizeMatrixLikeValue = (rawValue?: string) => {
 	const value = (rawValue || '').trim();
@@ -17,7 +31,7 @@ const normalizeMatrixLikeValue = (rawValue?: string) => {
 	if (normalized.includes('@')) {
 		normalized = normalized.split('@')[0];
 	}
-	return normalized.trim();
+	return decodeEncodedName(normalized.trim());
 };
 
 // Technical usernames ("free_bee_frankie_821") must never surface in the chat
@@ -66,7 +80,9 @@ const resolvePreferredName = (
 ) => {
 	const normalizedDisplayName = normalizeMatrixLikeValue(rawDisplayName);
 	if (normalizedDisplayName) {
-		return humanizeTechnicalName(normalizedDisplayName);
+		return isAnonymousMatrixUsername(normalizedDisplayName)
+			? normalizedDisplayName
+			: humanizeTechnicalName(normalizedDisplayName);
 	}
 
 	// An anonymous User-ID is the platform's identity anchor (#1209), not a

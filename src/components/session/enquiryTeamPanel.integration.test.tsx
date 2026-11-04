@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * Public enquiry UI boundary: real session, timeline, side panel and composer.
  * Only network APIs, the Matrix SDK client and browser rendering are substituted.
@@ -10,10 +10,11 @@ import {
 	screen,
 	waitFor,
 	cleanup,
-	fireEvent
+	fireEvent,
+	act
 } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { Context as ResponsiveContext } from 'react-responsive';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { createInstance } from 'i18next';
@@ -23,6 +24,8 @@ import { SessionStream } from './SessionStream';
 // measure Vite's first compilation of this large module.
 import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
+import { getShownChannel } from './notificationActiveView';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import {
 	ActiveSessionContext,
 	UserDataContext,
@@ -38,8 +41,17 @@ import { LocaleContext } from '../../globalState/context/LocaleContext';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import { MatrixClientService } from '../../services/matrixClientService';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { enterPracticeMode, exitPracticeMode } from '../../practice';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { chatTransportService } from '../../services/chatTransportService';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import {
+	setValueInCookie,
+	deleteCookieByName
+} from '../sessionCookie/accessSessionCookie';
 import { setTenantSettings } from '../../utils/tenantSettingsHelper';
 
+const activeViewPatch = vi.hoisted(() => vi.fn(async () => undefined));
 const boundary = vi.hoisted(() => {
 	Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 		configurable: true,
@@ -58,14 +70,31 @@ const boundary = vi.hoisted(() => {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
 		getTeam: vi.fn(),
+		getSupervisors: vi.fn(),
 		sessionRoom: vi.fn(),
 		fetch: vi.fn(),
+		rejectEnquiry: vi.fn(),
+		reload: vi.fn(),
+		changeCase: null as ((id: number) => void) | null,
 		client: null as any
 	};
 });
+// jsdom has no layout, so the overlay's focus trap finds nothing tabbable.
+vi.mock('focus-trap-react', () => ({
+	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
+}));
+vi.mock('../../api', async (original) => ({
+	...(await original<any>()),
+	apiRejectEnquiry: (...args: any[]) => boundary.rejectEnquiry(...args)
+}));
 vi.mock('matrix-js-sdk', async (original) => ({
 	...(await original<any>()),
 	createClient: () => boundary.client
+}));
+// jsdom gives every node zero layout, so focus-trap sees no tabbable element
+// and throws on activate (the delete confirmation is the first overlay here).
+vi.mock('focus-trap-react', () => ({
+	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 // Browser-only animation implementation has no canvas renderer in jsdom.
 vi.mock('lottie-web', () => ({
@@ -82,8 +111,14 @@ vi.mock('../../api/apiTeamDiscussion', () => ({
 	apiGetTeamDiscussion: (...args: any[]) => boundary.getTeam(...args),
 	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args)
 }));
+// The seeker is a normal account, not a temporary guest (404).
+vi.mock('../../api/apiTemporaryAccount', () => ({
+	apiGetTemporaryAccount: async () => null,
+	apiPutMessageRetention: async () => 'saved'
+}));
 vi.mock('../../api/apiGetSessionSupervisors', () => ({
-	apiGetSessionSupervisors: async () => []
+	apiGetSessionSupervisors: (...args: any[]) =>
+		boundary.getSupervisors(...args)
 }));
 vi.mock('../../api/apiGetSessionRooms', () => ({
 	apiGetSessionRoomBySessionId: (...args: any[]) =>
@@ -96,7 +131,7 @@ vi.mock('../../api/apiGetAgencyConsultantList', () => ({
 	apiGetTenantConsultantList: async () => []
 }));
 vi.mock('../../api/apiPatchNotificationActiveView', () => ({
-	apiPatchNotificationActiveView: async () => undefined
+	apiPatchNotificationActiveView: activeViewPatch
 }));
 vi.mock('../../api/apiMatrixSyncRegister', () => ({
 	apiRegisterMatrixRoomForSync: async () => undefined
@@ -123,6 +158,7 @@ vi.mock('../../utils/pseudonymGenerator', async (original) => ({
 
 const MAIN = '!enquiry:test';
 const TEAM = '!team:test';
+const SUPERVISION = '!supervision:test';
 const TEXT =
 	'Meine vollständige Anfrage: ' +
 	'Dieser Absatz erklärt meine Situation ausführlich. '.repeat(24) +
@@ -151,7 +187,25 @@ beforeEach(async () => {
 	await translations.init({
 		lng: 'de',
 		fallbackLng: 'de',
-		resources: { de: { translation: {} } },
+		resources: {
+			de: {
+				translation: {
+					enquiry: {
+						rejection: {
+							action: 'Anfrage ablehnen',
+							confirmTitle: 'Diese Anfrage ablehnen?',
+							confirm: 'Anfrage ablehnen',
+							cancel: 'Abbrechen',
+							inProgress: 'Die Ablehnung wird abgeschlossen…',
+							error: 'Die Ablehnung konnte noch nicht vollständig abgeschlossen werden. Bitte versuchen Sie es erneut.',
+							conflict:
+								'Die Anfrage hat sich geändert. Bitte laden Sie die aktuelle Ansicht.',
+							closed: 'Diese Anfrage wurde abgelehnt.'
+						}
+					}
+				}
+			}
+		},
 		interpolation: { escapeValue: false }
 	});
 	localStorage.clear();
@@ -174,6 +228,13 @@ beforeEach(async () => {
 	} as any;
 	HTMLElement.prototype.scrollIntoView = vi.fn();
 	HTMLElement.prototype.scrollTo = vi.fn();
+	// The delete confirmation is an Overlay: it needs the #overlay mount point
+	// the app shell provides.
+	if (!document.getElementById('overlay')) {
+		const mount = document.createElement('div');
+		mount.id = 'overlay';
+		document.body.appendChild(mount);
+	}
 	boundary.rooms.clear();
 	boundary.rooms.set(
 		MAIN,
@@ -213,8 +274,11 @@ beforeEach(async () => {
 		.mockReset()
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	boundary.getTeam.mockReset().mockResolvedValue(null);
+	boundary.getSupervisors.mockReset().mockResolvedValue([]);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
+	boundary.reload.mockReset();
+	boundary.rejectEnquiry.mockReset().mockResolvedValue(undefined);
 	setTenantSettings({ featureTeamDiscussionEnabled: true } as any);
 	service = new MatrixClientService();
 	await service.initializeClient({
@@ -226,7 +290,9 @@ beforeEach(async () => {
 	setMatrixClientServiceRef(service);
 });
 afterEach(() => {
+	exitPracticeMode();
 	cleanup();
+	document.getElementById('overlay')?.remove();
 	service?.stopAndCleanup();
 	setMatrixClientServiceRef(null);
 	expect(boundary.fetch).not.toHaveBeenCalled();
@@ -235,37 +301,103 @@ afterEach(() => {
 });
 
 function RouteProbe() {
-	return <output data-testid="route">{useLocation().search}</output>;
+	return (
+		<output data-testid="route">
+			{useLocation().pathname + useLocation().search}
+		</output>
+	);
 }
-function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
+function openEnquiry(
+	type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY,
+	options: {
+		status?: number;
+		seeker?: boolean;
+		reloadedStatus?: number;
+		teamChannel?: boolean;
+		threadChannel?: boolean;
+		askerAlias?: string;
+		consultantUsername?: string;
+		threadRootId?: string;
+		width?: number;
+		supervisionChannel?: boolean;
+		id?: number;
+		registrationType?: string;
+		conversationType?: string | null;
+		agencyId?: number;
+		assigned?: boolean;
+		allowDeleting?: boolean;
+		/** Owner the reload reports once the case has left the enquiry state. */
+		reloadedConsultant?: string;
+		width?: number;
+	} = {}
+) {
+	const status = options.status ?? 1;
 	const activeSession = {
 		isGroup: false,
 		isSession: true,
-		isEnquiry: true,
-		user: { username: 'Ratsuchende', userId: 'asker' },
+		isEnquiry: status === 0 || status === 1,
+		isEmptyEnquiry: status === 0,
+		isNonEmptyEnquiry: status === 1,
+		isRejected: status === 5,
+		user: {
+			username: 'Ratsuchende',
+			userId: 'asker',
+			displayName: options.askerAlias
+		},
+		...(options.assigned || options.consultantUsername
+			? {
+					consultant: {
+						id: options.consultantUsername ?? 'colleague',
+						consultantId: options.consultantUsername ?? 'colleague',
+						username: options.consultantUsername ?? 'colleague'
+					}
+				}
+			: {}),
 		item: {
-			id: 4711,
+			id: options.id ?? 4711,
 			topic: {},
 			matrixRoomId: MAIN,
-			status: 1,
+			status,
+			registrationType: options.registrationType ?? 'REGISTERED',
 			active: true,
-			agencyId: 1,
+			agencyId: options.agencyId ?? 1,
 			consultingType: 0,
-			conversationType: 'AGENCY_COUNSELLING',
+			conversationType:
+				'conversationType' in options
+					? options.conversationType
+					: 'AGENCY_COUNSELLING',
 			askerMatrixUserId: '@asker:test'
 		}
 	};
 	function LiveSession({ children }: { children: React.ReactNode }) {
 		const [current, setCurrent] = React.useState(activeSession);
+		boundary.changeCase = (id) =>
+			setCurrent({
+				...activeSession,
+				item: { ...activeSession.item, id }
+			});
 		return (
 			<ActiveSessionContext.Provider
 				value={{
 					activeSession: current as any,
 					reloadActiveSession: () => {
+						boundary.reload();
+						const reloaded = options.reloadedStatus ?? 2;
 						setCurrent({
 							...activeSession,
+							...(options.reloadedConsultant
+								? {
+										consultant: {
+											id: options.reloadedConsultant,
+											consultantId:
+												options.reloadedConsultant,
+											username: options.reloadedConsultant
+										}
+									}
+								: {}),
 							isEnquiry: false,
-							item: { ...activeSession.item, status: 2 }
+							isRejected: reloaded === 5,
+							item: { ...activeSession.item, status: reloaded }
 						});
 					},
 					readActiveSession: vi.fn()
@@ -276,14 +408,18 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 		);
 	}
 	const providers: [React.Context<any>, any][] = [
-		[ResponsiveContext, { width: 1440 }],
+		[ResponsiveContext, { width: options.width ?? 1440 }],
 		[
 			UserDataContext,
 			{
 				userData: {
-					userId: 'consultant',
+					userId: options.seeker ? 'asker' : 'consultant',
 					userName: 'Beraterin',
-					grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'],
+					grantedAuthorities: [
+						options.seeker
+							? 'AUTHORIZATION_USER_DEFAULT'
+							: 'AUTHORIZATION_CONSULTANT_DEFAULT'
+					],
 					agencies: [{ id: 1 }]
 				},
 				setUserData: vi.fn()
@@ -308,7 +444,13 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 			ConsultantListContext,
 			{ consultantList: [], setConsultantList: vi.fn() }
 		],
-		[ServerSettingsContext, { getSetting: () => undefined }],
+		[
+			ServerSettingsContext,
+			{
+				getSetting: () =>
+					options.allowDeleting ? { value: true } : undefined
+			}
+		],
 		[SessionsDataContext, { sessionsData: {}, dispatch: vi.fn() }],
 		[TopicsContext, { topics: [], setTopics: vi.fn() }],
 		[
@@ -320,7 +462,11 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 		],
 		[
 			NotificationsContext,
-			{ notifications: [], addEventNotification: vi.fn() }
+			{
+				notifications: [],
+				notificationFeed: [],
+				addEventNotification: vi.fn()
+			}
 		],
 		[LocaleContext, { locale: 'de' }],
 		[
@@ -328,10 +474,25 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 			{ matrixClientService: service, setMatrixClientService: vi.fn() }
 		]
 	];
+	// Overlays portal into the app's #overlay host.
+	if (!document.getElementById('overlay')) {
+		const overlayHost = document.createElement('div');
+		overlayHost.id = 'overlay';
+		document.body.appendChild(overlayHost);
+	}
 	return render(
 		<I18nextProvider i18n={translations}>
 			<MemoryRouter
-				initialEntries={['/sessions/consultant/sessionPreview/4711']}
+				initialEntries={[
+					'/sessions/consultant/sessionPreview/4711' +
+						(options.teamChannel
+							? '?channel=team'
+							: options.supervisionChannel
+								? '?channel=supervision'
+								: options.threadChannel
+									? `?channel=thread:${encodeURIComponent(options.threadRootId ?? '$original')}`
+									: '')
+				]}
 			>
 				{providers.reduceRight(
 					(child, [Context, value]) => (
@@ -339,14 +500,16 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 							{child}
 						</Context.Provider>
 					),
-					<LiveSession>
-						<RouteProbe />
-						<SessionStream
-							readonly={false}
-							bannedUsers={[]}
-							checkMutedUserForThisSession={() => {}}
-						/>
-					</LiveSession>
+					<ModalProvider>
+						<LiveSession>
+							<RouteProbe />
+							<SessionStream
+								readonly={false}
+								bannedUsers={[]}
+								checkMutedUserForThisSession={() => {}}
+							/>
+						</LiveSession>
+					</ModalProvider>
 				)}
 			</MemoryRouter>
 		</I18nextProvider>
@@ -376,6 +539,58 @@ it('opens the enquiry with its complete original text and the shared team panel 
 		view.container.querySelector('.sidePanel')?.textContent
 	).not.toContain('notifications.center.preview.empty');
 }, 20000);
+
+it.each([
+	['a phone', 390, true],
+	['a desktop', 1440, undefined]
+])(
+	'tells the server whether the panel hides the main chat on %s',
+	async (_label, width, mainChatHidden) => {
+		vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+		openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true, width });
+		await waitFor(
+			() =>
+				expect(activeViewPatch).toHaveBeenLastCalledWith(
+					expect.objectContaining({ active: true, mainChatHidden })
+				),
+			{ timeout: 15000 }
+		);
+	}
+);
+
+it('reports a thread the card really shows, and not one only the URL asks for', async () => {
+	vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		threadChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(getShownChannel()).toEqual({
+				kind: 'thread',
+				rootId: '$original'
+			}),
+		{ timeout: 15000 }
+	);
+	expect(activeViewPatch).toHaveBeenLastCalledWith(
+		expect.objectContaining({ active: true, threadRootId: '$original' })
+	);
+	view.unmount();
+	expect(getShownChannel()).toBeNull();
+
+	activeViewPatch.mockClear();
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		threadChannel: true,
+		threadRootId: '$not-loaded'
+	});
+	await waitFor(
+		() =>
+			expect(activeViewPatch).toHaveBeenLastCalledWith(
+				expect.objectContaining({ active: true, threadRootId: null })
+			),
+		{ timeout: 15000 }
+	);
+	expect(getShownChannel()).toBeNull();
+}, 30000);
 
 it('shows the complete enquiry text when opened outside the enquiry list', async () => {
 	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION);
@@ -510,6 +725,110 @@ it('keeps archived team history readable without a composer when the server repo
 	).toContain(TEXT);
 }, 20000);
 
+it('lets the author delete their own team message through the same Matrix redaction as the main chat, and nobody else', async () => {
+	const mine = 'Meine Einschätzung zur Anfrage.';
+	const theirs = 'Die Einschätzung der Kollegin.';
+	const event = (id: string, sender: string, body: string) =>
+		new MatrixEvent({
+			event_id: id,
+			room_id: TEAM,
+			sender,
+			type: 'm.room.message',
+			origin_server_ts: Date.now(),
+			content: { msgtype: 'm.text', body }
+		});
+	boundary.rooms.set(
+		TEAM,
+		room(TEAM, [
+			event('$team-mine', '@consultant:test', mine),
+			event('$team-theirs', '@colleague:test', theirs)
+		])
+	);
+	boundary.client.redactEvent = vi
+		.fn()
+		.mockResolvedValue({ event_id: '$redaction' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		allowDeleting: true
+	});
+	const panelText = () =>
+		view.container.querySelector('.chatStage__panel .sidePanel')
+			?.textContent ?? '';
+	await waitFor(() => expect(panelText()).toContain(theirs), {
+		timeout: 15000
+	});
+	const menuItems = async (message: string) => {
+		const item = Array.from(
+			view.container.querySelectorAll('.chatStage__panel .messageItem')
+		).find((candidate) => candidate.textContent?.includes(message));
+		fireEvent.click(
+			item!.querySelector('button[aria-label="message.menu.open"]')!
+		);
+		return screen.findAllByRole('menuitem');
+	};
+
+	// A colleague's message offers no delete.
+	const foreign = await menuItems(theirs);
+	expect(foreign.map((el) => el.textContent)).not.toContain(
+		'message.menu.delete'
+	);
+	fireEvent.keyDown(document.body, { key: 'Escape' });
+
+	// Own message: delete → confirm → redaction in the TEAM room.
+	const own = await menuItems(mine);
+	fireEvent.click(
+		own.find((el) => el.textContent?.includes('message.menu.delete'))!
+	);
+	fireEvent.click(await screen.findByText('message.delete.overlay.confirm'));
+	await waitFor(() =>
+		expect(boundary.client.redactEvent).toHaveBeenCalledWith(
+			TEAM,
+			'$team-mine'
+		)
+	);
+}, 30000);
+
+it('offers no delete in an archived, read-only team discussion', async () => {
+	const mine = 'Meine Einschätzung vor der Annahme.';
+	boundary.rooms.set(
+		TEAM,
+		room(TEAM, [
+			new MatrixEvent({
+				event_id: '$team-archived-mine',
+				room_id: TEAM,
+				sender: '@consultant:test',
+				type: 'm.room.message',
+				origin_server_ts: Date.now(),
+				content: { msgtype: 'm.text', body: mine }
+			})
+		])
+	);
+	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		allowDeleting: true
+	});
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__panel .sidePanel')
+					?.textContent
+			).toContain(mine),
+		{ timeout: 15000 }
+	);
+	const item = Array.from(
+		view.container.querySelectorAll('.chatStage__panel .messageItem')
+	).find((candidate) => candidate.textContent?.includes(mine));
+	const menuButton = item?.querySelector(
+		'button[aria-label="message.menu.open"]'
+	);
+	if (menuButton) {
+		fireEvent.click(menuButton);
+		const entries = await screen.findAllByRole('menuitem');
+		expect(entries.map((el) => el.textContent)).not.toContain(
+			'message.menu.delete'
+		);
+	}
+}, 30000);
+
 it('keeps the consultant enquiry one-way and hides system notices while retaining asker messages', async () => {
 	const timeline = boundary.rooms.get(MAIN).timeline;
 	for (const [id, body] of [
@@ -587,6 +906,179 @@ it('updates an already open enquiry when another colleague accepts it', async ()
 	);
 }, 20000);
 
+// This fixture's i18n only carries the rejection copy; other keys render as-is.
+const TAKEN_HEADLINE =
+	'session.anonymous.takenByOtherConsultant.overlay.headline';
+
+// #1472: the case used to turn into a colleague's read-only case without a word.
+it('tells the counsellor when a colleague took the enquiry they have open', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		reloadedConsultant: 'colleague'
+	});
+	await waitFor(() =>
+		expect(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeTruthy()
+	);
+	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
+	boundary.sessionRoom.mockResolvedValue({
+		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
+	});
+	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy(), {
+		timeout: 10000
+	});
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'session.anonymous.takenByOtherConsultant.button.label'
+		})
+	);
+	await waitFor(() =>
+		expect(view.getByTestId('route').textContent).toBe(
+			'/sessions/consultant/sessionPreview'
+		)
+	);
+}, 20000);
+
+it('tells the counsellor when an enquiry link opens a case a colleague already took', async () => {
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { status: 2, assigned: true });
+	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy());
+});
+
+it.each([
+	['team', TEAM],
+	['supervision', SUPERVISION]
+] as const)(
+	'tells the counsellor on a phone even when the %s panel fills the screen',
+	async (channel, sideRoom) => {
+		// Phone width: the side panel replaces the case card.
+		if (channel === 'team') {
+			boundary.getTeam.mockResolvedValue({
+				matrixRoomId: TEAM,
+				status: 'OPEN'
+			});
+		} else {
+			boundary.rooms.set(SUPERVISION, room(SUPERVISION, []));
+			boundary.getSupervisors.mockResolvedValue([
+				{
+					supervisorConsultantId: 'supervisor',
+					matrixRoomId: SUPERVISION
+				}
+			]);
+		}
+		const markRead = vi
+			.spyOn(chatTransportService, 'markRoomAsRead')
+			.mockResolvedValue(undefined);
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			status: 2,
+			assigned: true,
+			teamChannel: channel === 'team',
+			supervisionChannel: channel === 'supervision',
+			width: 390
+		});
+		await waitFor(
+			() =>
+				expect(
+					view.container.querySelector('.sidePanel')
+				).not.toBeNull(),
+			{ timeout: 15000 }
+		);
+		expect(view.container.querySelector('.chatStage__card')).toBeNull();
+		expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
+		// The notice covers the panel: its messages were not seen.
+		expect(markRead).not.toHaveBeenCalledWith(sideRoom);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'session.anonymous.takenByOtherConsultant.button.label'
+			})
+		);
+		await waitFor(() =>
+			expect(view.getByTestId('route').textContent).toBe(
+				'/sessions/consultant/sessionPreview'
+			)
+		);
+	},
+	20000
+);
+
+it.each([
+	['team', TEAM],
+	['supervision', SUPERVISION]
+] as const)(
+	'keeps unseen %s messages unread while the taken notice shows',
+	async (channel, sideRoom) => {
+		// No panel open: only the mount-time guard keeps them unread.
+		boundary.rooms.set(
+			sideRoom,
+			room(sideRoom, [
+				new MatrixEvent({
+					event_id: `$${channel}-unseen`,
+					room_id: sideRoom,
+					sender: '@colleague:test',
+					type: 'm.room.message',
+					origin_server_ts: Date.now() - 60000,
+					content: { msgtype: 'm.text', body: 'Noch nicht gelesen.' }
+				})
+			])
+		);
+		if (channel === 'team') {
+			boundary.getTeam.mockResolvedValue({
+				matrixRoomId: TEAM,
+				status: 'OPEN'
+			});
+		} else {
+			boundary.getSupervisors.mockResolvedValue([
+				{
+					supervisorConsultantId: 'supervisor',
+					matrixRoomId: SUPERVISION
+				}
+			]);
+		}
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			status: 2,
+			assigned: true
+		});
+		await waitFor(() =>
+			expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy()
+		);
+		await waitFor(
+			() =>
+				expect(
+					view.container.querySelector('.channelSwitcher__badge')
+						?.textContent
+				).toBe('1'),
+			{ timeout: 10000 }
+		);
+	},
+	20000
+);
+
+it('stays silent when the counsellor accepted the enquiry themself', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		reloadedConsultant: 'consultant'
+	});
+	await waitFor(() =>
+		expect(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeTruthy()
+	);
+	boundary.sessionRoom.mockResolvedValue({
+		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
+	});
+	await waitFor(
+		() =>
+			expect(
+				screen.queryByRole('button', {
+					name: 'enquiry.acceptButton.known'
+				})
+			).toBeNull(),
+		{ timeout: 10000 }
+	);
+	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
+	expect(view.getByTestId('route').textContent).toMatch(
+		/^\/sessions\/consultant\/sessionPreview\/4711/
+	);
+}, 20000);
+
 it('keeps focus the reader moved away right after the panel composer focused itself', async () => {
 	// The desktop autofocus must not leave a focus behind for a later frame
 	// (#1443): TipTap's chain().focus() lands one frame after the call.
@@ -621,3 +1113,454 @@ it('keeps focus the reader moved away right after the panel composer focused its
 
 	expect(document.activeElement).toBe(elsewhere);
 }, 20000);
+
+it('declines an ordinary incoming enquiry only after explicit confirmation and refreshes its preview', async () => {
+	const view = openEnquiry();
+	await waitFor(() =>
+		expect(view.container.textContent).toContain('ENDE DER ORIGINALANFRAGE')
+	);
+	fireEvent.click(screen.getByRole('button', { name: 'Anfrage ablehnen' }));
+	const dialog = screen.getByRole('dialog', {
+		name: 'Diese Anfrage ablehnen?'
+	});
+	expect(dialog.querySelector('textarea')).toBeNull();
+	expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+	expect(screen.queryByRole('dialog')).toBeNull();
+	expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole('button', { name: 'Anfrage ablehnen' }));
+	fireEvent.click(
+		screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+	);
+	await waitFor(() =>
+		expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1)
+	);
+	expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
+	await waitFor(() =>
+		expect(
+			screen.queryByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeNull()
+	);
+}, 20000);
+
+it.each([2, 5])(
+	'retains the seeker history at status %s and permits writing only in the active state',
+	async (status) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+			status,
+			seeker: true
+		});
+		await waitFor(
+			() =>
+				expect(view.container.textContent).toContain(
+					'Meine vollständige Anfrage:'
+				),
+			{ timeout: 15000 }
+		);
+		if (status === 2) {
+			await waitFor(() =>
+				expect(
+					view.container.querySelector('[contenteditable="true"]')
+				).not.toBeNull()
+			);
+		} else {
+			expect(
+				view.container.querySelector('[contenteditable="true"]')
+			).toBeNull();
+			expect(view.container.textContent).toContain(
+				'Diese Anfrage wurde abgelehnt.'
+			);
+			expect(
+				screen.queryByRole('button', { name: 'Anfrage ablehnen' })
+			).toBeNull();
+		}
+	},
+	20000
+);
+
+it('blocks writing in retained team history immediately when its enquiry is rejected even before room lookup reconciles', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		status: 5,
+		teamChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__panel .sidePanel')
+			).not.toBeNull(),
+		{ timeout: 15000 }
+	);
+	expect(
+		view.container.querySelector(
+			'.chatStage__panel [contenteditable="true"]'
+		)
+	).toBeNull();
+	expect(
+		screen.queryByRole('button', { name: 'enquiry.acceptButton.known' })
+	).toBeNull();
+}, 20000);
+
+const deferredRejection = () => {
+	let resolve!: () => void;
+	let reject!: (error: Error) => void;
+	const promise = new Promise<void>((yes, no) => {
+		resolve = yes;
+		reject = no;
+	});
+	boundary.rejectEnquiry.mockReturnValueOnce(promise);
+	return { resolve, reject };
+};
+const confirmRejection = async () => {
+	fireEvent.click(
+		await screen.findByRole('button', { name: 'Anfrage ablehnen' })
+	);
+	fireEvent.click(
+		screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+	);
+};
+it('keeps a pending decision single and blocks simultaneous acceptance until confirmed', async () => {
+	const pending = deferredRejection();
+	openEnquiry();
+	await confirmRejection();
+	const confirm = screen
+		.getAllByRole('button', { name: 'Anfrage ablehnen' })
+		.at(-1)!;
+	expect((confirm as HTMLButtonElement).disabled).toBe(true);
+	expect(
+		(
+			screen.getByRole('button', {
+				name: 'enquiry.acceptButton.known',
+				hidden: true
+			}) as HTMLButtonElement
+		).disabled
+	).toBe(true);
+	fireEvent.click(confirm);
+	expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1);
+	expect(boundary.reload).not.toHaveBeenCalled();
+	expect(screen.getByTestId('route').textContent).toContain('/4711');
+	await act(async () => pending.resolve());
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	expect(screen.getByTestId('route').textContent).toBe(
+		'/sessions/consultant/sessionPreview'
+	);
+}, 20000);
+it.each([FETCH_ERRORS.CATCH_ALL])(
+	'resyncs durable rejection after incomplete closure, retains honest retry and confirms only a successful retry',
+	async (error) => {
+		boundary.rejectEnquiry.mockRejectedValueOnce(new Error(error));
+		const events = vi.spyOn(messageEventEmitter, 'emit');
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			reloadedStatus: 5
+		});
+		await confirmRejection();
+		await screen.findByRole('alert');
+		expect(screen.getByRole('alert').textContent).toContain(
+			'noch nicht vollständig'
+		);
+		expect(screen.getByRole('dialog')).toBeTruthy();
+		expect(screen.getByTestId('route').textContent).toContain('/4711');
+		expect(boundary.reload).toHaveBeenCalledTimes(1);
+		expect(events).toHaveBeenCalledWith(
+			expect.objectContaining({
+				changedSessionId: 4711,
+				refreshEnquiryList: true,
+				refreshSessionList: true
+			})
+		);
+		expect(
+			view.container.querySelector('[contenteditable="true"]')
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anfrage ablehnen' })
+		);
+		await waitFor(() =>
+			expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(2)
+		);
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(boundary.reload).toHaveBeenCalledTimes(2);
+	},
+	20000
+);
+it('keeps the retry reachable after an incomplete rejection dialog is dismissed', async () => {
+	boundary.rejectEnquiry.mockRejectedValueOnce(
+		new Error(FETCH_ERRORS.CATCH_ALL)
+	);
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { reloadedStatus: 5 });
+	await confirmRejection();
+	await screen.findByRole('alert');
+	fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+	await confirmRejection();
+	await waitFor(() =>
+		expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(2)
+	);
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+}, 20000);
+it('does not offer retry after a conflicting rejection by another counsellor', async () => {
+	boundary.rejectEnquiry.mockRejectedValueOnce(
+		new Error(FETCH_ERRORS.CONFLICT)
+	);
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { reloadedStatus: 5 });
+	await confirmRejection();
+	await screen.findByRole('alert');
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.getByRole('alert').textContent).toContain(
+		'hat sich geändert'
+	);
+	expect(
+		(
+			screen.getByRole('button', {
+				name: 'Anfrage ablehnen'
+			}) as HTMLButtonElement
+		).disabled
+	).toBe(true);
+	fireEvent.click(screen.getByRole('button', { name: 'Anfrage ablehnen' }));
+	expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1);
+}, 20000);
+it.each(['case change', 'case round trip', 'account change', 'unmount'])(
+	'discards an old completion after %s',
+	async (change) => {
+		const pending = deferredRejection();
+		const view = openEnquiry();
+		await confirmRejection();
+		if (change === 'case change') act(() => boundary.changeCase!(4712));
+		if (change === 'case round trip') {
+			act(() => boundary.changeCase!(4712));
+			act(() => boundary.changeCase!(4711));
+		}
+		if (change === 'account change')
+			act(() => setValueInCookie('keycloak', 'new-account'));
+		if (change === 'unmount') view.unmount();
+		await act(async () => pending.resolve());
+		expect(boundary.reload).not.toHaveBeenCalled();
+		if (change !== 'unmount')
+			expect(screen.getByTestId('route').textContent).toContain('/4711');
+		deleteCookieByName('keycloak');
+	},
+	20000
+);
+it('keeps practice enquiries free of the new real rejection command', async () => {
+	enterPracticeMode({ tourId: 'consultant-practice-accept' });
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { id: -4711 });
+	await screen.findByRole('button', { name: 'enquiry.acceptButton.known' });
+	expect(
+		screen.queryByRole('button', { name: 'Anfrage ablehnen' })
+	).toBeNull();
+	expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+}, 20000);
+
+it('preserves a pending confirmation through a token refresh for the same principal and auth session', async () => {
+	const token = (iat: number) =>
+		'e30.' +
+		btoa(
+			JSON.stringify({
+				sub: 'consultant',
+				sid: 'sessionA',
+				tenantId: 1,
+				iat
+			})
+		) +
+		'.signature';
+	setValueInCookie('keycloak', token(1));
+	const pending = deferredRejection();
+	openEnquiry();
+	await confirmRejection();
+	act(() => setValueInCookie('keycloak', token(2)));
+	await act(async () => pending.resolve());
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	deleteCookieByName('keycloak');
+}, 20000);
+
+it.each([2, 5])(
+	'retains the header supervision button but permits management only for active cases (status%s)',
+	async (status) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status });
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		const name =
+			status === 2
+				? 'sessionHeader.supervisor.modal.title'
+				: 'sessionHeader.supervisor.add.disabledUnavailable';
+		const button = await screen.findByRole('button', { name });
+		expect((button as HTMLButtonElement).disabled).toBe(status === 5);
+	},
+	20000
+);
+
+it.each([2, 5])(
+	'keeps message history menus but permits reply and reactions only in active cases (status%s)',
+	async (status) => {
+		openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status, seeker: true });
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'message.menu.open' })
+		);
+		if (status === 2) {
+			expect(
+				screen.getByRole('menuitem', {
+					name: 'message.menu.replyDirect'
+				})
+			).toBeTruthy();
+			expect(
+				screen.getByRole('group', { name: 'message.reaction.add' })
+			).toBeTruthy();
+		} else {
+			expect(
+				screen.queryByRole('menuitem', {
+					name: 'message.menu.replyDirect'
+				})
+			).toBeNull();
+			expect(
+				screen.queryByRole('group', { name: 'message.reaction.add' })
+			).toBeNull();
+		}
+		expect(
+			screen.getByRole('menuitem', { name: 'message.menu.markText' })
+		).toBeTruthy();
+	},
+	20000
+);
+it('keeps a rejected thread history readable without a thread composer even through its direct URL', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+		status: 5,
+		seeker: true,
+		threadChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__panel .sidePanel')
+			).not.toBeNull(),
+		{ timeout: 15000 }
+	);
+	expect(
+		view.container.querySelector('.chatStage__panel .sidePanel')
+			?.textContent
+	).toContain('Meine vollständige Anfrage:');
+	expect(
+		view.container.querySelector(
+			'.chatStage__panel [contenteditable="true"]'
+		)
+	).toBeNull();
+}, 20000);
+
+it.each([
+	['unsubmitted draft', { status: 0 }],
+	['unsupported modality', { conversationType: 'FUTURE_UNKNOWN' }],
+	['anonymous', { registrationType: 'ANONYMOUS' }],
+	['another agency', { agencyId: 2 }],
+	['already assigned', { assigned: true }]
+])(
+	'does not offer ordinary rejection for a %s enquiry',
+	async (_name, options) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, options);
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		expect(
+			screen.queryByRole('button', { name: 'Anfrage ablehnen' })
+		).toBeNull();
+		expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+	},
+	20000
+);
+
+it.each([
+	['absent', undefined],
+	['public legacy null', null]
+])(
+	'retains ordinary rejection for a legacy submitted enquiry with %s modality',
+	async (_name, conversationType) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			conversationType,
+			reloadedStatus: 5
+		});
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anfrage ablehnen' })
+		);
+		expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+		);
+		await waitFor(() =>
+			expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1)
+		);
+		expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
+		await waitFor(() => expect(boundary.reload).toHaveBeenCalledTimes(1));
+	}
+);
+
+it.each([false, true])(
+	'keeps a former consultant distinct from the session asker in the actual %s thread timeline',
+	async (threadChannel) => {
+		boundary.rooms.set(
+			MAIN,
+			room(MAIN, [
+				new MatrixEvent({
+					event_id: '$original',
+					room_id: MAIN,
+					sender: '@asker:test',
+					type: 'm.room.message',
+					origin_server_ts: 1000,
+					content: { msgtype: 'm.text', body: TEXT }
+				}),
+				new MatrixEvent({
+					event_id: '$former',
+					room_id: MAIN,
+					sender: '@former:test',
+					type: 'm.room.message',
+					origin_server_ts: 2000,
+					content: {
+						msgtype: 'm.text',
+						body: 'Former consultant advice',
+						...(threadChannel
+							? {
+									'm.relates_to': {
+										rel_type: 'm.thread',
+										event_id: '$original'
+									}
+								}
+							: {})
+					}
+				})
+			])
+		);
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+			status: 2,
+			threadChannel,
+			askerAlias: 'Chosen session alias',
+			consultantUsername: 'consultant'
+		});
+		const pane = threadChannel
+			? '.chatStage__panel'
+			: '.chatStage__mainPane';
+		await waitFor(() => {
+			const surface = view.container.querySelector(pane);
+			expect(surface).not.toBeNull();
+			const former = Array.from(
+				surface!.querySelectorAll('.messageItem')
+			).find((row) =>
+				row.textContent?.includes('Former consultant advice')
+			);
+			expect(former).toBeTruthy();
+			expect(former!.textContent).not.toContain('Chosen session alias');
+			expect(surface!.textContent).toContain('Chosen session alias');
+		});
+	},
+	20000
+);

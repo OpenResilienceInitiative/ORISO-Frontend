@@ -1,5 +1,5 @@
-// @vitest-environment jsdom
-import { beforeEach, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import { beforeEach, expect, it, vi } from 'vite-plus/test';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 import { apiGetInviteLinkContext } from './apiGetInviteLinkContext';
 
@@ -24,7 +24,7 @@ it('asks without credentials and gives up after a bounded time', async () => {
 			),
 			method: FETCH_METHODS.GET,
 			skipAuth: true,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL],
+			responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE],
 			timeout: expect.any(Number)
 		})
 	);

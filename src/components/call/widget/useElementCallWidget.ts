@@ -24,8 +24,8 @@ import {
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
 import {
+	ALLOWED_RECEIVE_ROOM_EVENT_TYPES,
 	ALLOWED_RECEIVE_STATE_EVENT_TYPES,
-	ALLOWED_ROOM_EVENT_TYPES,
 	ALLOWED_TO_DEVICE_EVENT_TYPES
 } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
@@ -42,18 +42,108 @@ export interface ElementCallWidgetOptions {
 	onClose?: () => void;
 	/** Keeps the floating host surface visible when Element Call requests it. */
 	onAlwaysOnScreenChange?: (alwaysOnScreen: boolean) => void;
+	/**
+	 * Who knocks on this call and its "Anklopfen" setting
+	 * (ORISO-ElementCall#109). Sent once the widget is ready and whenever it
+	 * changes. Leave it out where nobody may see knocks (advice seekers).
+	 */
+	knockState?: OrisoKnockState | null;
+	/**
+	 * The person flipped "Anklopfen" in the call. Resolves with the stored
+	 * setting; a rejection tells the call to flip back.
+	 */
+	onSetKnock?: (knock: boolean) => Promise<boolean>;
+	/**
+	 * How the call starts, from the pre-join check (ElementCall#116). On the
+	 * widget URL, so it holds before the call creates any track. Keep it the
+	 * same for the whole call: the URL is rebuilt from it on a token refresh,
+	 * and a different URL navigates the running call.
+	 */
+	callStart?: ElementCallStart | null;
+}
+
+/**
+ * Element Call's start parameters for the pre-join choice
+ * (ORISO-ElementCall#116, `docs/url-params.md` there). Left out, the call
+ * starts as `callIntent` implies, on the browser's default devices.
+ */
+export interface ElementCallStart {
+	/** `audioEnabled`: microphone on or off. */
+	audioEnabled?: boolean;
+	/** `videoEnabled`: camera on or off; `false` never captures the camera. */
+	videoEnabled?: boolean;
+	/** `audioInput`: the microphone, by label. Unknown: default + notice. */
+	audioInput?: string;
+	/** `videoInput`: the camera, by label. Two alike: the first. */
+	videoInput?: string;
+}
+
+/** The start parameters as URL entries, in a stable order. */
+const callStartParams = (start: ElementCallStart | null | undefined) => {
+	const params: Record<string, string> = {};
+	if (start?.audioEnabled !== undefined)
+		params.audioEnabled = String(start.audioEnabled);
+	if (start?.videoEnabled !== undefined)
+		params.videoEnabled = String(start.videoEnabled);
+	if (start?.audioInput) params.audioInput = start.audioInput;
+	if (start?.videoInput) params.videoInput = start.videoInput;
+	return params;
+};
+
+/** ORISO's own widget actions, as the fork names them (ORISO-ElementCall#109, `src/widget.ts`). */
+export const ORISO_WIDGET_ACTIONS = {
+	/** toWidget `{ waiting, knock }`; `knock: null` = no link, no switch. */
+	knockState: 'org.oriso.call.knock_state',
+	/** fromWidget `{ knock }`; always answered, with `error` when it did not land. */
+	setKnock: 'org.oriso.call.set_knock'
+} as const;
+
+export interface OrisoKnockState {
+	/** People waiting to join this call, >= 0. */
+	waiting: number;
+	/** The call link's "Anklopfen"; `null` when the call has no link to switch. */
+	knock: boolean | null;
 }
 
 export interface ElementCallWidget {
 	/** `null` until every precondition is met; render nothing before then. */
 	url: string | null;
+	/**
+	 * True once the widget has negotiated its capabilities. Events fed before
+	 * that are dropped by `ClientWidgetApi.feedEvent`, so anything the widget
+	 * must see from before — this person's own identity — is sent again then.
+	 */
+	ready: boolean;
 	/** Ref callback for the iframe. Pass `null` on unmount to tear down. */
 	attachIframe: (iframe: HTMLIFrameElement | null) => void;
 	/** Requests a clean MatrixRTC leave through the widget protocol. */
 	hangup: () => Promise<void>;
 	/** Set when the call cannot be embedded at all; surface it, do not swallow. */
 	error: Error | null;
+	/** Microphone and camera as the call last reported them; `null` before. */
+	devices: CallDeviceState | null;
+	/** Asks the call to switch the microphone or camera (`io.element.device_mute`). */
+	setDevices: (
+		change: Partial<CallDeviceState>
+	) => Promise<CallDeviceState | null>;
 }
+
+/** The call's own report of its devices, as Element Call sends it. */
+export interface CallDeviceState {
+	audio_enabled: boolean;
+	video_enabled: boolean;
+}
+
+const deviceStateOf = (data: unknown): CallDeviceState | null => {
+	const value = data as Partial<CallDeviceState> | null;
+	return typeof value?.audio_enabled === 'boolean' &&
+		typeof value.video_enabled === 'boolean'
+		? {
+				audio_enabled: value.audio_enabled,
+				video_enabled: value.video_enabled
+			}
+		: null;
+};
 
 const widgetIdForRoom = async (
 	roomId: string,
@@ -91,6 +181,17 @@ const releaseIframeDevices = (iframe: HTMLIFrameElement | null): void => {
 	}
 };
 
+const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
+	void api.transport
+		.send(ORISO_WIDGET_ACTIONS.knockState, {
+			waiting: Math.max(0, Math.floor(state.waiting)),
+			knock: state.knock
+		})
+		.catch(() => {
+			/* an older call without the knock switch, or it went away */
+		});
+};
+
 export const useElementCallWidget = (
 	client: MatrixClient | null,
 	{
@@ -98,11 +199,20 @@ export const useElementCallWidget = (
 		isVideo,
 		skipLobby = true,
 		onClose,
-		onAlwaysOnScreenChange
+		onAlwaysOnScreenChange,
+		knockState = null,
+		onSetKnock,
+		callStart = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
+	// By value: an equal choice in a new object must not rebuild the URL.
+	const callStartQuery = new URLSearchParams(
+		callStartParams(callStart)
+	).toString();
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
+	const [ready, setReady] = useState(false);
+	const [devices, setDeviceState] = useState<CallDeviceState | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
 	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -110,12 +220,18 @@ export const useElementCallWidget = (
 	const messageGuardRef = useRef<
 		((event: MessageEvent<unknown>) => void) | null
 	>(null);
+	// Read inside the widget's action handlers, which outlive a render.
+	const knockStateRef = useRef<OrisoKnockState | null>(knockState);
+	knockStateRef.current = knockState;
+	const onSetKnockRef = useRef(onSetKnock);
+	onSetKnockRef.current = onSetKnock;
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
 	// membership so Element Call never starts against an invited/unknown room.
 	useEffect(() => {
 		let cancelled = false;
 		setUrl(null);
+		setReady(false);
 		setError(null);
 
 		if (!client || !roomId) return undefined;
@@ -161,6 +277,12 @@ export const useElementCallWidget = (
 					baseUrl,
 					confineToRoom: 'true',
 					header: 'none',
+					// Ask for the ORISO design explicitly. The call must not
+					// infer it from `parentUrl`: that is the generic widget
+					// parameter every embedded Element Call carries, so a plain
+					// Element Web embedding of the same build would otherwise
+					// get our grove, our backdrop and our animals.
+					orisoDesign: 'true',
 					// The call UI is deliberately dark even though the app
 					// around it is light; app-wide dark is a separate decision
 					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element
@@ -175,8 +297,17 @@ export const useElementCallWidget = (
 					...(appConfig?.releaseToggles?.enableCallMediaE2EE === false
 						? {}
 						: { perParticipantE2EE: 'true' }),
+					// The counselling centre's backdrop, if it set one. Left off
+					// the URL entirely when it did not, so the call falls back
+					// to the handoff's default rather than to an empty string.
+					...(appConfig?.calls?.atmosphere
+						? { orisoAtmosphere: appConfig.calls.atmosphere }
+						: {}),
 					intent: 'start_call',
-					callIntent: isVideo ? 'video' : 'audio'
+					callIntent: isVideo ? 'video' : 'audio',
+					// The pre-join choice (ElementCall#116): on/off and the
+					// devices by label, read before any track exists.
+					...Object.fromEntries(new URLSearchParams(callStartQuery))
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
@@ -189,7 +320,7 @@ export const useElementCallWidget = (
 		return () => {
 			cancelled = true;
 		};
-	}, [client, roomId, isVideo, skipLobby]);
+	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
 
 	const attachIframe = useCallback(
 		(iframe: HTMLIFrameElement | null) => {
@@ -235,7 +366,26 @@ export const useElementCallWidget = (
 				messageGuardRef.current = null;
 			}
 
-			if (!iframe || !client || !roomId || !url) return;
+			if (!iframe) return;
+			/*
+			 * The node is still ours even when no channel can be opened for it
+			 * yet, and recording that here is what keeps a live call alive.
+			 *
+			 * A token refresh gives this hook a new `client`, and the effect
+			 * above answers by setting `url` to null for the moment it takes to
+			 * rebuild it. That changes this callback's identity, so React
+			 * detaches with null and re-attaches the SAME node — and the
+			 * re-attachment used to return below without claiming the node.
+			 * The microtask above then found nothing attached, concluded the
+			 * iframe had gone, and navigated a running call to `about:blank`.
+			 * The rebuilt URL is byte-identical for the same account, so
+			 * nothing ever navigated it back; what followed was an origin
+			 * mismatch and a closed call surface, from an ordinary refresh the
+			 * user cannot see or avoid.
+			 */
+			attachedIframeRef.current = iframe;
+
+			if (!client || !roomId || !url) return;
 
 			const userId = client.getUserId();
 			if (!userId) return;
@@ -286,12 +436,17 @@ export const useElementCallWidget = (
 			});
 
 			driverRef.current = driver;
+			// Already recorded above; repeated here so the channel setup
+			// reads as a whole.
 			attachedIframeRef.current = iframe;
 			const api = new ClientWidgetApi(widget, iframe, driver);
 			apiRef.current = api;
+			setReady(false);
+			setDeviceState(null);
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
+				if (apiRef.current === api) setReady(true);
 				// Re-assert the same scheme the URL pins (`theme=dark` above):
 				// the ready-time update guards against Element Call defaulting
 				// differently, and must never contradict the URL parameter.
@@ -314,6 +469,10 @@ export const useElementCallWidget = (
 				'action:io.element.device_mute',
 				(event: CustomEvent<IWidgetApiRequest>) => {
 					event.preventDefault();
+					// The call reports every change; the minimized dock shows it.
+					const reported = deviceStateOf(event.detail.data);
+					if (reported && apiRef.current === api)
+						setDeviceState(reported);
 					api.transport.reply(event.detail, event.detail.data);
 				}
 			);
@@ -339,14 +498,81 @@ export const useElementCallWidget = (
 			]) {
 				api.on(`action:${action}`, acknowledgeLifecycleAction);
 			}
+
+			// "Anklopfen" belongs to the host's call link (ElementCall#109):
+			// change it there, answer either way, then tell the call the truth.
+			api.on(
+				`action:${ORISO_WIDGET_ACTIONS.setKnock}`,
+				(event: CustomEvent<IWidgetApiRequest>) => {
+					event.preventDefault();
+					const knock = (event.detail.data as { knock?: unknown })
+						?.knock;
+					const handler = onSetKnockRef.current;
+					const fail = (message: string) =>
+						api.transport.reply(event.detail, {
+							error: { message }
+						});
+					if (typeof knock !== 'boolean') {
+						fail('knock must be a boolean');
+						return;
+					}
+					if (!handler || knockStateRef.current?.knock == null) {
+						fail('This call has no link to switch');
+						return;
+					}
+					handler(knock).then(
+						(stored) => {
+							api.transport.reply(event.detail, {});
+							sendKnockState(api, {
+								waiting: knockStateRef.current?.waiting ?? 0,
+								knock: stored
+							});
+						},
+						() => {
+							fail('Anklopfen was not changed');
+							const current = knockStateRef.current;
+							if (current) sendKnockState(api, current);
+						}
+					);
+				}
+			);
 		},
 		[client, onAlwaysOnScreenChange, onClose, roomId, url]
 	);
+
+	// The call keeps the last state it got, so send only on a change — and
+	// again to every newly ready widget.
+	const knockWaiting = knockState?.waiting;
+	const knockSetting = knockState?.knock;
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || knockWaiting === undefined) return;
+		sendKnockState(api, {
+			waiting: knockWaiting,
+			knock: knockSetting ?? null
+		});
+	}, [ready, knockWaiting, knockSetting]);
 
 	const hangup = useCallback(async (): Promise<void> => {
 		if (!apiRef.current) return;
 		await apiRef.current.transport.send('im.vector.hangup', {});
 	}, []);
+
+	const setDevices = useCallback(
+		async (
+			change: Partial<CallDeviceState>
+		): Promise<CallDeviceState | null> => {
+			const api = apiRef.current;
+			if (!api) return null;
+			const reply = await api.transport.send('io.element.device_mute', {
+				...change
+			});
+			const reported = deviceStateOf(reply);
+			if (reported && apiRef.current === api) setDeviceState(reported);
+			return reported;
+		},
+		[]
+	);
 
 	// Push room and to-device traffic into the widget. The widget API only
 	// *answers* requests; anything the widget needs to observe has to be fed.
@@ -369,7 +595,10 @@ export const useElementCallWidget = (
 		};
 		const feedAllowedRoomEvent = (event: MatrixEvent) => {
 			if (event.getRoomId() !== roomId) return;
-			if (!ALLOWED_ROOM_EVENT_TYPES.has(event.getType())) return;
+			// The RECEIVE set: this is the path that carries an identity into
+			// the call, and identity is readable by the widget but not
+			// writable by it, so the two sets differ by exactly that event.
+			if (!ALLOWED_RECEIVE_ROOM_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedEvent(event.getEffectiveEvent() as never, roomId)
 				.catch(() => {
@@ -502,5 +731,5 @@ export const useElementCallWidget = (
 		[]
 	);
 
-	return { url, attachIframe, hangup, error };
+	return { url, ready, attachIframe, hangup, error, devices, setDevices };
 };

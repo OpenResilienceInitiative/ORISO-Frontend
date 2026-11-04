@@ -1,5 +1,7 @@
+import * as React from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import './session.styles.scss';
 
@@ -30,3 +32,74 @@ export const WithExpiry: Story = {
 
 /** A legacy grant without a stored expiry. */
 export const WithoutExpiry: Story = {};
+
+/** The server allows the one extension: it adds the granted duration to the current end. */
+export const CanExtend: Story = {
+	args: {
+		expiresAt: '2026-09-25T07:36:21',
+		sessionId: 5,
+		canExtend: true,
+		onStatusChange: fn()
+	},
+	play: async ({ canvasElement }) => {
+		const button = within(canvasElement).getByRole('button');
+		await expect(button).toBeEnabled();
+	}
+};
+
+/**
+ * Click-through: the server answers with the end moved by the granted 180
+ * minutes and no second extension, so the new time shows and the button goes.
+ */
+export const AfterExtend: Story = {
+	args: { expiresAt: '2026-09-25T07:36:21', sessionId: 5, canExtend: true },
+	beforeEach: () => {
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) =>
+			String(input instanceof Request ? input.url : input).endsWith(
+				'/sessions/5/case-handover/extend'
+			)
+				? new Response(
+						JSON.stringify({
+							sessionId: 5,
+							status: 'GRANTED',
+							canViewContent: true,
+							clientConsentRequired: false,
+							accessType: 'CO_ACCESS',
+							auditOutcome: 'ACCESS_EXTENDED',
+							expiresAt: '2026-09-25T10:36:21',
+							canExtend: false
+						}),
+						{
+							status: 200,
+							headers: { 'content-type': 'application/json' }
+						}
+					)
+				: originalFetch(input, init);
+		return () => {
+			globalThis.fetch = originalFetch;
+		};
+	},
+	render: function AfterExtendRender(args) {
+		const [status, setStatus] = useState<{
+			expiresAt?: string;
+			canExtend?: boolean;
+		}>(args);
+		return (
+			<CaseHandoverReadOnlyNotice
+				{...args}
+				expiresAt={status.expiresAt}
+				canExtend={status.canExtend}
+				onStatusChange={setStatus}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(canvas.getByRole('button'));
+		await waitFor(() => expect(canvas.queryByRole('button')).toBeNull());
+	}
+};

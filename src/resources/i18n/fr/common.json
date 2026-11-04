@@ -1,4 +1,9 @@
 {
+	"groupCardParticipants": {
+		"loading": "Chargement des participants …",
+		"unavailable": "Les participants n’ont pas pu être chargés.",
+		"empty": "Aucun participant."
+	},
 	"menuEffects": {
 		"title": "Affichage des menus",
 		"label": "Voile et animations douces",
@@ -224,6 +229,11 @@
 		"banned": {
 			"headline": "Ils ont été bannis.",
 			"info": "Nous vous avons demandé de respecter les règles du chat.<br/><br/>Comme vous n'avez pas respecté les règles du chat à plusieurs reprises aujourd'hui, nous vous avons exclu du chat d'aujourd'hui.<br/><br/>Faites connaissance avec les règles du chat!</br></br>Si vous êtes prêt à respecter les règles du chat, vous serez à nouveau le bienvenu sur le chat dès demain !"
+		},
+		"confirm": {
+			"description": "Cette personne ne pourra plus écrire dans ce groupe et verra qu’elle en a été retirée.",
+			"submit": "Retirer",
+			"title": "Retirer {{name}} de ce groupe ?"
 		},
 		"is": {
 			"banned": " Captivé"
@@ -570,7 +580,13 @@
 		"message": {
 			"encryption": {
 				"error": "Message crypté - erreur lors du décryptage",
-				"text": "Message crypté"
+				"text": "Message crypté",
+				"missingKey": {
+					"title_one": "Message antérieur non disponible sur cet appareil",
+					"title_other": "{{count}} messages antérieurs non disponibles sur cet appareil",
+					"hint_one": "Il redeviendra lisible dès qu'un appareil disposant de la clé sera en ligne, par exemple celui d'un collègue ou de la personne qui demande conseil. Se connecter sur l'appareil utilisé auparavant peut aussi aider.",
+					"hint_other": "Ils redeviendront lisibles dès qu'un appareil disposant de la clé sera en ligne, par exemple celui d'un collègue ou de la personne qui demande conseil. Se connecter sur l'appareil utilisé auparavant peut aussi aider."
+				}
 			},
 			"showMore": "Voir plus",
 			"showLess": "Afficher moins"
@@ -655,6 +671,17 @@
 				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
+		},
+		"rejection": {
+			"action": "Refuser la demande",
+			"confirmTitle": "Refuser cette demande ?",
+			"description": "La demande sera refusée. La personne qui demande conseil pourra toujours lire la conversation existante.",
+			"confirm": "Refuser la demande",
+			"error": "Le refus n’a pas encore pu être entièrement confirmé. La décision est peut-être déjà enregistrée. Veuillez réessayer.",
+			"conflict": "La demande a changé ou n’est plus disponible. Veuillez recharger la vue actuelle.",
+			"closed": "Cette demande a été refusée.",
+			"inProgress": "Finalisation du refus…",
+			"cancel": "Annuler"
 		}
 	},
 	"error": {
@@ -738,12 +765,13 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda",
 			"copyGoogle": "Copier le lien Google Agenda",
 			"copyOutlook": "Copier le lien du calendrier Outlook",
 			"linkCopied": "Lien du calendrier copié.",
 			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
-			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique.",
+			"addThis": "Ajouter cette date au calendrier",
+			"shareHintSeries": "Liens pour votre site : toutes les dates en série, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -893,6 +921,7 @@
 		},
 		"loadError": {
 			"consultants": "Les collègues n'ont pas pu être chargés.",
+			"info": "Les informations du chat n'ont pas pu être chargées.",
 			"retry": "Réessayer",
 			"topics": "Les sujets n'ont pas pu être chargés."
 		},
@@ -910,6 +939,7 @@
 			"headline": "Infos sur le chat",
 			"settings": {
 				"agency": "Service de consultation",
+				"agencyLine": "Service de consultation : {{name}}",
 				"createDate": "Date de création",
 				"creator": "Créateur",
 				"duration": "Durée",
@@ -929,13 +959,17 @@
 			"subscribers": {
 				"empty": "pas de participants disponibles",
 				"headline": "Personnes participantes",
-				"menuLabel": "Options pour {{name}}"
+				"menuLabel": "Options pour {{name}}",
+				"role": {
+					"asker": "Personne en quête de conseil",
+					"consultant": "Conseiller·ère",
+					"supervisor": "Superviseur·e"
+				}
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
 				"headline": "Comment fonctionne le groupe",
 				"subline": "Trois choses utiles avant la première fois.",
-				"appointments": "Ajouter les dates au calendrier",
 				"steps": {
 					"formats": {
 						"title": "Comment le groupe se réunit",
@@ -952,8 +986,7 @@
 						"text": "L’espace des liens propose régulièrement de nouvelles rencontres et vous mène directement à la prochaine date.",
 						"alt": "De nouvelles cartes de rendez-vous apparaissent l’une après l’autre ; un symbole de lien clair mène la personne curieuse à la prochaine rencontre du groupe."
 					}
-				},
-				"upcoming": "Prochaines dates"
+				}
 			},
 			"status": {
 				"active": "En cours",
@@ -978,7 +1011,7 @@
 					"etaSoon": "dans un instant",
 					"flipAria": "{{label}} : {{value}}. Retourner pour lire.",
 					"flipHint": "cliquer pour retourner",
-					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
+					"greetingLabel": "Mot de bienvenue de la modération",
 					"headline": "Votre chat de groupe commence {{eta}}.",
 					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
 					"moderatorOverdueHeadline": "Le groupe vous attend.",
@@ -986,8 +1019,8 @@
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
-					"overdueHeadline": "Nous serons avec vous dans un instant.",
-					"overdueSubtitle": "Votre conseiller·ère va ouvrir la salle — merci de patienter encore un peu.",
+					"overdueHeadline": "Le groupe commence dans un instant.",
+					"overdueSubtitle": "La modération va ouvrir le groupe — merci de patienter encore un peu.",
 					"subtitle": "Cliquez sur un chiffre — le mot de bienvenue et la nétiquette vous attendent derrière.",
 					"subtitleCard": "Touchez l’horloge, bienvenue et nétiquette au dos.",
 					"subtitleStill": "Le mot de bienvenue et la nétiquette figurent sous les chiffres.",
@@ -1111,15 +1144,40 @@
 			"addPerson": "Ajouter une personne",
 			"createLabel": "Créer un échange interne",
 			"deselectPerson": "Retirer {{name}}",
+			"error": {
+				"recipientsRequired": "Veuillez sélectionner au moins un collègue.",
+				"recipientUnknown": "Au moins un collègue sélectionné ne peut pas encore être ajouté, car il n'a pas encore de compte de chat. Retirez-le ou réessayez plus tard.",
+				"outOfScope": "Au moins une personne sélectionnée ne peut pas être choisie : elle se trouve en dehors du périmètre autorisé par votre organisation pour les échanges internes, ou est introuvable. Rien n'a été créé.",
+				"membershipFailed": "L'espace n'a pas pu être configuré avec toutes les personnes sélectionnées. Rien n'a été créé. Veuillez réessayer.",
+				"encryptionRequired": "Les échanges internes avec des personnes sélectionnées ne sont possibles qu'avec chiffrement, et le chiffrement est actuellement indisponible. Rien n'a été créé.",
+				"disabled": "Les échanges internes avec des personnes sélectionnées ne sont pas disponibles pour vous : ils ne sont pas activés, il vous manque l'autorisation, ou cette installation ne les prend pas encore en charge. Veuillez contacter votre administration.",
+				"unknown": "L'espace n'a pas pu être créé. Veuillez réessayer.",
+				"busy": "Cet espace est en cours de création. Veuillez patienter un instant, puis réessayer.",
+				"notAvailable": "Les échanges internes avec des personnes sélectionnées ne sont pas encore disponibles sur cette installation. Rien n'a été créé. Veuillez contacter le support."
+			},
 			"nameLabel": "Nom de l'échange interne",
+			"noColleagues": "Aucun collègue à sélectionner",
+			"searchPeople": "Rechercher une personne",
+			"noMatchingPeople": "Aucune personne correspondante.",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
+			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
 			"removePerson": "Retirer {{name}}",
+			"reusedNotice": {
+				"title": "Espace existant ouvert",
+				"text": "Un espace avec exactement ces personnes existait déjà. Il a été ouvert, aucun nouvel espace n'a été créé."
+			},
+			"scope": {
+				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
+				"PLATFORM": "Vous pouvez choisir des collègues de votre organisme et des autres organismes participants."
+			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
 			"supportText": "Concertez-vous au sein de votre service de consultation. Que ce soit à deux ou en équipe, par audio, par vidéo, dans le chat ou tout à la fois, selon vos besoins.",
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
+			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
 			"vacatedHint": "ne fait plus partie du service de consultation"
 		},
 		"circle": {
@@ -1178,7 +1236,50 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours",
-			"legalMenu": "Mentions légales"
+			"legalMenu": "Mentions légales",
+			"dates": {
+				"headline": "Les prochaines rencontres",
+				"subline": "Touchez une date pour l’ajouter à votre calendrier.",
+				"none": "Aucune autre date n’est prévue pour le moment.",
+				"add": "Ajouter",
+				"addLabel": "Ajouter {{date}} au calendrier",
+				"next": "Prochaine",
+				"seriesTitle": "Toutes à la fois",
+				"seriesSub": "ajouter en série",
+				"seriesLong": "Tout ajouter en série",
+				"repeat": {
+					"DAILY": "Le groupe se réunit chaque jour à la même heure.",
+					"WEEKLY": "Le groupe se réunit chaque semaine à la même heure.",
+					"BIWEEKLY": "Le groupe se réunit toutes les deux semaines à la même heure.",
+					"MONTHLY": "Le groupe se réunit chaque mois à la même heure.",
+					"QUARTERLY": "Le groupe se réunit tous les trimestres à la même heure.",
+					"YEARLY": "Le groupe se réunit tous les ans à la même heure."
+				}
+			},
+			"addDate": "Ajouter au calendrier",
+			"allDates": "Toutes les dates",
+			"nextDates": "Prochaines dates",
+			"joinFrom": "à partir de {{time}}",
+			"rhythm": {
+				"DAILY": "chaque jour",
+				"WEEKLY": "chaque semaine",
+				"BIWEEKLY": "toutes les deux semaines",
+				"MONTHLY": "chaque mois",
+				"QUARTERLY": "tous les trimestres",
+				"YEARLY": "tous les ans"
+			},
+			"running": {
+				"since": "En cours depuis",
+				"status": "En cours",
+				"statusModerated": "En cours · la modération est là",
+				"headline": "Le groupe a commencé {{ago}}.",
+				"subline": "Vous pouvez rejoindre à tout moment – personne n’est obligé de parler."
+			},
+			"rules": {
+				"headline": "Comment nous nous comportons les uns envers les autres",
+				"subline": "Lisez-les une fois – et vous êtes des nôtres."
+			},
+			"devices": "Caméra et micro"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1276,10 +1377,16 @@
 		"consent": {
 			"headline": "Avant d'écrire",
 			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
+			"descriptionNamed": "Ce groupe est animé par {{agency}}. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
 			"reject": "Refuser",
 			"accept": "J'accepte",
 			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",
 			"saveFailed": "Votre accord n'a pas pu être enregistré. Veuillez réessayer."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Vous avez été retiré(e) de ce groupe."
+			}
 		}
 	},
 	"help": {
@@ -1725,7 +1832,15 @@
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
 				},
 				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici.",
-				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer."
+				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer.",
+				"tooManyRequestsWaitSecond": "Trop de tentatives. Veuillez patienter environ une seconde, puis réessayer.",
+				"tooManyRequestsWaitSeconds": "Trop de tentatives. Veuillez patienter environ {{seconds}} secondes, puis réessayer.",
+				"tooManyRequestsWaitMinute": "Trop de tentatives. Veuillez patienter environ une minute, puis réessayer.",
+				"tooManyRequestsWaitMinutes": "Trop de tentatives. Veuillez patienter environ {{minutes}} minutes, puis réessayer.",
+				"tooManyRequestsWaitHour": "Trop de tentatives. Veuillez patienter environ une heure, puis réessayer.",
+				"tooManyRequestsWaitHours": "Trop de tentatives. Veuillez patienter environ {{hours}} heures, puis réessayer.",
+				"tooManyRequestsWaitDay": "Trop de tentatives. Veuillez patienter environ une journée, puis réessayer.",
+				"tooManyRequestsWaitDays": "Trop de tentatives. Veuillez patienter environ {{days}} jours, puis réessayer."
 			}
 		},
 		"mobile": {
@@ -1854,7 +1969,8 @@
 				"mention": "Mentionner une personne",
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
-					"tooltip": "Enregistrer un message vocal"
+					"tooltip": "Enregistrer un message vocal",
+					"disabledWhileEditing": "Les messages vocaux ne sont pas disponibles pendant la modification d'un message"
 				},
 				"imageUrlPrompt": "URL de l'image",
 				"urlPrompt": "URL"
@@ -1889,7 +2005,15 @@
 			"counsellorsEmpty": "Aucun·e conseiller·ère dans cette salle",
 			"moderatorsEmpty": "Aucun·e modérateur·rice dans cette salle",
 			"toggleSection": "Basculer la section",
-			"selectAllBottom": "Tout sélectionner"
+			"selectAllBottom": "Tout sélectionner",
+			"unresolved": {
+				"headline": "Veuillez vérifier les destinataires",
+				"text": "Les destinataires sélectionnés n’ont pas pu être confirmés pour cette discussion. Choisissez à nouveau les destinataires, puis envoyez. Votre texte reste dans ce champ."
+			},
+			"attachmentBlocked": {
+				"headline": "Les fichiers sont envoyés à tout le monde",
+				"text": "Les fichiers et les messages vocaux ne peuvent pas être limités à certains collègues. Choisissez « Tous » pour les partager avec tout le monde, ou envoyez plutôt un message texte. Votre fichier ou enregistrement est conservé."
+			}
 		},
 		"edit": {
 			"cancel": "Annuler la modification",
@@ -1920,13 +2044,40 @@
 		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"callLifecycle": {
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			},
+			"state": {
+				"running": "En cours",
+				"ended": "Terminé",
+				"missed": "Manqué"
+			},
+			"description": {
+				"running": "L’appel est en cours depuis {{start}}.",
+				"ended": "L’appel a commencé à {{start}}.",
+				"missed": "L’appel n’a pas reçu de réponse."
+			},
+			"participants": {
+				"current": "Dans l’appel",
+				"attended": "A participé"
+			},
+			"startedBy": "Appel lancé par {{name}}."
+		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
 		"consultantLeftChat": "La personne consultante a quitté le chat",
+		"youEndedChat": "Vous avez mis fin au chat",
+		"chatEnded": "Le chat est terminé",
+		"consultantRenamedTitle": "Nom modifié",
+		"consultantRenamedDescription": "{{oldName}} s'appelle désormais {{newName}}.",
 		"anonymousUser": "Utilisateur",
 		"supervisionEnabledTitle": "Supervision activée !",
 		"supervisionEnabledDescription": "{{name}} a été ajouté·e à ce chat en tant que conseiller·ère superviseur·e.",
+		"supervisionDisabledTitle": "Supervision terminée !",
+		"supervisionDisabledDescription": "{{name}} a été retiré·e de ce chat en tant que conseiller·ère superviseur·e.",
 		"today": "Aujourd'hui",
 		"tomorrow": "Demain",
 		"unread": "non lu",
@@ -1981,7 +2132,8 @@
 				"large": "Mes consultations",
 				"nav": "Conversation",
 				"small": "Nouvelles"
-			}
+			},
+			"directLinks": "Mes liens directs"
 		},
 		"activity": "Chronologie",
 		"language": "Langue",
@@ -2000,7 +2152,46 @@
 		"error": "Erreur",
 		"info": "Information",
 		"success": "Succès",
-		"warning": "Avertissement"
+		"warning": "Avertissement",
+		"eventNotice": {
+			"chatMention": {
+				"title": "Mention dans une discussion",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion"
+			},
+			"mention": {
+				"title": "Mention dans la discussion d’équipe",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion d’équipe"
+			},
+			"handover": {
+				"title": "Nouveau transfert de dossier",
+				"from": "De {{name}}",
+				"several": "{{count}} avis de transfert de dossier",
+				"open": "Voir le dossier"
+			},
+			"consent": {
+				"title": "Consentement au transfert de dossier requis",
+				"text": "Le transfert attend une réponse.",
+				"several": "{{count}} demandes de transfert de dossier attendent une réponse.",
+				"open": "Voir la demande"
+			}
+		},
+		"liveChatMessage": {
+			"title": "Nouveau message dans le chat en direct",
+			"from": "De {{name}}",
+			"several": "{{count}} nouveaux messages",
+			"open": "Ouvrir le chat"
+		},
+		"newEnquiry": {
+			"title": "Nouvelle demande",
+			"waiting": "Une personne attend une réponse.",
+			"several": "{{count}} nouvelles demandes attendent une réponse.",
+			"openOne": "Voir la demande",
+			"openList": "Voir les demandes"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2009,21 +2200,21 @@
 			"title": "Filtre d’affichage",
 			"description": "Quels types apparaissent dans cette liste, lesquels reçoivent une pastille et quel son ils émettent.",
 			"showColumn": "Afficher",
-			"pillColumn": "Pastille",
-			"soundColumn": "Son",
+			"pillColumn": "Dans le filtre",
+			"soundColumn": "Navigateur",
 			"soundKind": "Écouter le son : {{kind}}",
-			"soundMenu": "Choisir le son : {{kind}}",
+			"soundMenu": "Notification du navigateur : {{kind}}",
 			"soundDefault": "Par défaut",
-			"pillMenu": "Choisir l’affichage : {{kind}}",
+			"pillMenu": "Choisir le filtre : {{kind}}",
 			"liveChatDynamic": "Dynamique",
 			"liveChatFixed": "Fixe",
 			"pillOff": "Désactivé",
 			"pillOn": "Activé",
 			"placeholderHint": "Bientôt disponible.",
 			"showKind": "Afficher : {{kind}}",
-			"pillKind": "Pastille : {{kind}}",
+			"pillKind": "Dans le filtre : {{kind}}",
 			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
-			"pillNotApplicable": "Pas de pastille pour ce type",
+			"pillNotApplicable": "Pas de bouton de filtre pour ce type",
 			"autoRead": "Marquer immédiatement les éléments masqués comme lus",
 			"autoReadDescription": "Ne concerne que cette liste. Aucun accusé de lecture n’est envoyé aux discussions.",
 			"autoReadSessions": "Ne pas compter les discussions masquées comme non lues",
@@ -2040,7 +2231,7 @@
 			"viewLabels": "Icônes + texte",
 			"viewText": "Texte",
 			"autoSort": "Placer les non lus à gauche",
-			"autoSortDescription": "Les pastilles avec des éléments non lus passent en tête de ligne.",
+			"autoSortDescription": "Les boutons avec des éléments non lus passent en tête.",
 			"deactivatedHint": "Désactivé par votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage.",
 			"deactivatedChip": "{{kind}} (désactivé par votre organisme)",
 			"deactivatedNotice": "{{kind}} est désactivé pour votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage ; aucune nouvelle ne peut être créée.",
@@ -2060,7 +2251,36 @@
 				"sessions": "Échanges",
 				"requests": "Demandes"
 			},
-			"liveChatSession": "Si ouvert"
+			"liveChatSession": "Si ouvert",
+			"kindColumn": "Type",
+			"legendShow": "Les éléments de ce type apparaissent dans la liste",
+			"legendPill": "Bouton au-dessus de la liste pour la limiter à ce type",
+			"legendSound": "Fenêtre sur cet appareil, avec ou sans son",
+			"legendEmail": "Avis dans votre boîte de réception, sans le contenu du message",
+			"quickHeading": "Autres boutons de filtre",
+			"quickNote": "Ces boutons filtrent la liste ou ouvrent une action. Ils ne déclenchent aucune notification.",
+			"presentationHeading": "Apparence des boutons de filtre",
+			"soundWithTone": "Fenêtre avec son",
+			"soundSilent": "Fenêtre sans son",
+			"soundSilentDescription": "Seulement la fenêtre, sans son",
+			"emailColumn": "Courriel",
+			"emailKind": "Courriel : {{kind}}",
+			"emailMenu": "Choisir le courriel : {{kind}}",
+			"channelUnavailable": "non disponible",
+			"emailUnavailableReason": "Les notifications par courriel ne sont pas encore disponibles pour ce type",
+			"emailMasterOff": "Les notifications par courriel sont désactivées dans votre profil",
+			"browserOff": "Les fenêtres contextuelles sont désactivées dans votre profil",
+			"descriptions": {
+				"sessions": "Choisissez pour chaque type d’échange s’il reçoit un bouton de filtre et comment vous êtes averti des nouveaux messages.",
+				"requests": "Choisissez pour chaque type de demande s’il reçoit un bouton de filtre et comment vous êtes averti des nouvelles demandes.",
+				"timeline": "Choisissez pour chaque type s’il apparaît dans la liste, reçoit un bouton de filtre et si vous recevez un courriel.",
+				"timelineWithoutEmail": "Choisissez pour chaque type s’il apparaît dans la liste et reçoit un bouton de filtre."
+			},
+			"kindsHeadings": {
+				"sessions": "Types d’échange",
+				"requests": "Types de demande",
+				"timeline": "Types d’événement"
+			}
 		},
 		"families": {
 			"all": "Toutes",
@@ -2139,15 +2359,39 @@
 			},
 			"caseHandoverGranted": {
 				"title": "Une nouvelle personne consultante a repris le dossier",
-				"text": "Le transfert de dossier autorisé a été consigné."
+				"text": "Le transfert de dossier autorisé a été consigné.",
+				"coAccess": {
+					"title": "Accès temporaire accordé",
+					"text": "Une personne consultante peut lire ce dossier pendant une durée limitée. La responsabilité reste à la personne consultante actuelle."
+				},
+				"generic": {
+					"title": "Accès au dossier accordé",
+					"text": "L’accès autorisé a été consigné. Vous trouverez l’état actuel dans la conversation."
+				}
 			},
 			"caseHandoverConsentDeclined": {
 				"title": "Transfert de dossier refusé",
 				"text": "Le consentement du·de la client·e a été refusé. Les contenus restent verrouillés."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Offre de transfert envoyée",
+				"text": "L'offre attend la réponse du collègue. Elle peut être retirée tant que la passation n'est pas terminée."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Offre de transfert refusée",
+				"text": "Le collègue a refusé l'offre. Le dossier reste chez la personne conseillère actuelle."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Offre de transfert retirée",
+				"text": "L'offre a été retirée. Le dossier reste chez la personne conseillère actuelle."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Proposition de transfert",
-				"text": "Un collègue souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation."
+				"text": "{{fromConsultantName}} souhaite vous transférer cette consultation. Examinez la demande avant d’ouvrir la conversation.",
+				"coAccess": {
+					"title": "Proposition d’accès temporaire",
+					"text": "{{fromConsultantName}} vous propose un accès temporaire à cette consultation. La personne consultante actuelle reste responsable."
+				}
 			},
 			"callStarted": {
 				"title": "Appel en cours",
@@ -2175,7 +2419,7 @@
 			},
 			"requestDenied": {
 				"title": "Demande refusée",
-				"text": "La demande du·de la client·e a été refusée."
+				"text": "Cette demande a été refusée."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client·e dans la salle d'attente",
@@ -2184,6 +2428,18 @@
 			"callInvited": {
 				"title": "Invitation à un appel de groupe interne",
 				"text": "Vous avez été invité·e à un appel de groupe interne."
+			},
+			"callKnockRequested": {
+				"title": "Une personne frappe",
+				"text": "Une personne souhaite rejoindre votre appel. Rejoignez l'appel pour la laisser entrer.",
+				"video": {
+					"title": "Une personne frappe – appel vidéo",
+					"text": "Une personne souhaite rejoindre votre appel vidéo via votre lien direct. Rejoignez l'appel pour la laisser entrer."
+				},
+				"audio": {
+					"title": "Une personne frappe – appel audio",
+					"text": "Une personne souhaite rejoindre votre appel audio via votre lien direct. Rejoignez l'appel pour la laisser entrer."
+				}
 			},
 			"appointmentRequested": {
 				"title": "Rendez-vous demandé pour un appel",
@@ -2252,6 +2508,7 @@
 			"showPreview": "Afficher l'aperçu de la conversation",
 			"showDetails": "Afficher les détails",
 			"preview": {
+				"authors": "Personnes dans cet aperçu",
 				"unavailable": "L'aperçu de la conversation n'est pas encore disponible — ouvrez le chat pour lire.",
 				"empty": "Pas encore de messages dans cette conversation.",
 				"image": "Image jointe",
@@ -2262,7 +2519,12 @@
 				"unsupported": "Message non pris en charge",
 				"pending": "Déchiffrement en cours",
 				"roomUnavailable": "Conversation indisponible sur cet appareil",
-				"eventUnavailable": "Message indisponible dans l’historique local"
+				"eventUnavailable": "Message indisponible dans l’historique local",
+				"loadOlder": "Charger les messages plus anciens",
+				"loadingOlder": "Chargement des messages plus anciens …",
+				"loadOlderFailed": "Les messages plus anciens n’ont pas pu être chargés.",
+				"retryLoadOlder": "Réessayer",
+				"historyStart": "Début de la conversation"
 			},
 			"loadOlder": "Charger les activités précédentes",
 			"loadingOlder": "Chargement des activités précédentes…",
@@ -2354,6 +2616,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Les administrateurs de ce centre de consultation n'ont pas pu être chargés. Veuillez réessayer plus tard.",
+					"fallbackName": "Admin du centre",
+					"link": "Contacter l'administrateur du centre de consultation",
+					"none": "Aucun administrateur n'est joignable par chat – veuillez vous adresser à l'administration de la plateforme.",
+					"supportEmail": "Adresse du support :"
+				},
 				"label": "Service de consultation",
 				"registrationLink": {
 					"notification": {
@@ -2400,7 +2669,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Utilisez uniquement des lettres minuscules et des traits d'union. Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
+				"info": "Utilisez uniquement des lettres minuscules et des chiffres, séparés par un seul trait d'union (p. ex. team-2), {{max}} caractères au maximum. Les nouveaux noms ne deviennent actifs qu'après validation par une administration.",
 				"input": "Nom du lien de contact public",
 				"label": "Lien de contact public",
 				"notification": {
@@ -2418,7 +2687,7 @@
 			"profileIcon": "Photo de profil",
 			"register": {
 				"button": {
-					"label": "S'inscrire"
+					"label": "Demander un accompagnement"
 				},
 				"consultingModeInfo": {
 					"groupChats": "Dans le cadre de l'entraide, les personnes concernées échangent entre elles sur un thème ou une préoccupation. Les personnes concernées parlent de leurs problèmes, de leurs sentiments et de leurs espoirs et apprennent ainsi comment d'autres ont surmonté des problèmes. Les groupes sont dirigés par des animateurs.",
@@ -2429,7 +2698,7 @@
 				},
 				"headline": "Avez-vous besoin de conseils ou d'aide sur d'autres sujets ?<br>Nous vous soutenons volontiers.",
 				"dialog": {
-					"openButton": "Demander un autre champ thématique",
+					"openButton": "Commencer un autre accompagnement",
 					"title": "Faire une nouvelle demande",
 					"close": "Fermer"
 				},
@@ -2508,6 +2777,10 @@
 					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
 					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
 					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
+				},
+				"dpaRestricted": {
+					"title": "Les personnes qui cherchent conseil ne peuvent pas démarrer de chat en direct avec vous",
+					"text": "Votre organisme n’a pas encore confirmé l’accord actuel de traitement des données. D’ici là, les nouvelles personnes ne peuvent démarrer ni chat en direct ni demande. Les consultations déjà commencées continuent."
 				}
 			},
 			"masterKey": {
@@ -2658,6 +2931,7 @@
 				"kind": {
 					"new": "Nouvelle demande",
 					"standard": "Notification standard",
+					"liveChat": "Message du chat en direct",
 					"mention": "Mention @",
 					"handover": "Transfert",
 					"call": "Appel entrant",
@@ -2729,6 +3003,10 @@
 					"feedback": {
 						"title": "Échange professionnel",
 						"description": "Une réponse vous attend dans l'échange professionnel protégé."
+					},
+					"internalChat": {
+						"title": "Messages internes",
+						"description": "Un nouveau message dans une discussion interne avec les autres conseillers."
 					}
 				},
 				"shared": {
@@ -2804,7 +3082,8 @@
 					"title": "Sécurité"
 				},
 				"title": "Réglages",
-				"keyboardShortcuts": "Raccourcis clavier"
+				"keyboardShortcuts": "Raccourcis clavier",
+				"myLinks": "Mes liens"
 			}
 		},
 		"spokenLanguages": {
@@ -2896,6 +3175,7 @@
 				"cta": "Configurer la clé de récupération"
 			},
 			"showKey": {
+				"headline": "Enregistrez votre clé de secours",
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
@@ -3379,6 +3659,11 @@
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
 				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
+			},
+			"displayName": {
+				"optional": "Nom affiché (facultatif). Si vous ne le précisez pas, votre User-ID sera affiché.",
+				"suggest": "Proposer un nom",
+				"useUsername": "Utiliser le User-ID"
 			}
 		},
 		"back": "Retour",
@@ -3518,7 +3803,11 @@
 				"headline": "L'invitation n'a pas pu être chargée pour le moment.",
 				"body": "Veuillez vérifier votre connexion et réessayer. Votre lien d'invitation reste valable."
 			},
-			"loading": "Chargement de l'invitation …"
+			"loading": "Chargement de l'invitation …",
+			"invalid": {
+				"headline": "Ce lien d'invitation ne fonctionne pas.",
+				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
+			}
 		}
 	},
 	"releaseNote": {
@@ -3541,6 +3830,10 @@
 			"declined": "Vous avez refusé ce transfert.",
 			"denied": "Ce transfert a été refusé.",
 			"clientConsentDeclined": "La personne conseillée a refusé ce transfert.",
+			"withdraw": "Retirer l'offre",
+			"withdrawn": "Cette offre de transfert a été retirée.",
+			"withdrawError": "L'offre n'a pas pu être retirée. Veuillez réessayer.",
+			"withdrawConflict": "L'offre a déjà reçu une réponse et ne peut plus être retirée.",
 			"noContent": "Cette demande ne vous autorise pas à lire la conversation.",
 			"forbidden": "Vous n’êtes pas autorisé à consulter cette demande.",
 			"notFound": "Cette demande n’existe plus.",
@@ -3557,7 +3850,8 @@
 				"GRANTED": "Le transfert est terminé.",
 				"RECIPIENT_DECLINED": "Le collègue sélectionné a refusé.",
 				"DENIED": "Le transfert a été refusé.",
-				"CLIENT_CONSENT_DECLINED": "Le client a refusé le transfert."
+				"CLIENT_CONSENT_DECLINED": "Le client a refusé le transfert.",
+				"WITHDRAWN": "L'offre a été retirée."
 			}
 		},
 		"copy": "Ce dossier n'est visible que sous forme de métadonnées. Choisissez un motif de transfert et expliquez pourquoi vous avez besoin d'y accéder.",
@@ -3648,7 +3942,8 @@
 			"retired": "Non précisé"
 		},
 		"history": {
-			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller"
+			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller",
+			"unknownColleague": "Un collègue"
 		},
 		"submit": "Demander l'accès",
 		"submitSending": "Envoi en cours",
@@ -3676,7 +3971,10 @@
 			},
 			"reason": {
 				"title": "Veuillez choisir un motif",
-				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande."
+				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande.",
+				"empty": "Aucun motif de transfert de dossier n'est configuré pour votre centre de conseil. Veuillez contacter votre administration.",
+				"loadFailed": "Les motifs de transfert de dossier n’ont pas pu être chargés.",
+				"retry": "Réessayer"
 			},
 			"describe": {
 				"title": "Veuillez décrire le motif",
@@ -3684,7 +3982,12 @@
 			},
 			"back": "Retour",
 			"next": "Continuer",
-			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé."
+			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé.",
+			"reclaim": {
+				"copy": "Un·e collègue a repris ce dossier pendant votre absence. Vous pouvez le reprendre maintenant.",
+				"cta": "Reprendre le dossier",
+				"unavailable": "Ce dossier ne peut plus être repris."
+			}
 		},
 		"accepted": {
 			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
@@ -3698,6 +4001,7 @@
 			"selectedReason": "Motif choisi : {{reason}}",
 			"explanation": "Explication : {{explanation}}",
 			"tookOverTitle": "Une nouvelle personne consultante a repris votre dossier",
+			"tookOverBody": "{{advisor}} poursuivra désormais votre accompagnement.",
 			"noActionNeeded": "Vous n'avez rien d'autre à faire",
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",
@@ -3705,16 +4009,24 @@
 		},
 		"readOnly": {
 			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
-			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages."
+			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
+			"extend": "Prolonger l'accès"
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
-			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
+			"description": "S’applique uniquement aux futures demandes dans cette conversation au sein de votre service de conseil. Les demandes en cours et les accès déjà accordés restent inchangés.",
 			"baselineDescription": "Si cette option est désactivée, les paramètres de votre service de conseil s’appliquent. Tout consentement requis par ce service reste nécessaire.",
 			"saving": "Enregistrement …",
 			"saved": "Paramètre enregistré.",
 			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
 			"loading": "Chargement du paramètre …"
+		},
+		"bulkBar": {
+			"label": "Sélection des dossiers",
+			"selected": "{{count}} sélectionné(s)",
+			"continue": "Continuer",
+			"cancel": "Annuler",
+			"emptyHint": "Sélectionnez au moins un dossier."
 		}
 	},
 	"supervisorDialog": {
@@ -4126,6 +4438,10 @@
 				"clear": "Effacer la recherche",
 				"removeSelectedPerson": "Retirer {{name}}",
 				"emptyPeople": "Aucune personne correspondante trouvée.",
+				"peopleLoading": "Chargement des collègues …",
+				"peopleLoadError": "Impossible de charger les collègues. Veuillez réessayer plus tard.",
+				"handoverPeopleHint": "Seuls les collègues dont vous pouvez reprendre les dossiers via « Demander l'accès » apparaissent ici. Cela dépend de votre département et de vos thèmes.",
+				"handoverPeopleCapped": "Il existe plus de dossiers que ceux chargés – veuillez affiner la recherche.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
 				"tabs": {
@@ -4138,7 +4454,15 @@
 				"role": {
 					"asker": "Personne en quête de conseil",
 					"consultant": "Conseiller·ère"
-				}
+				},
+				"internalName": "Nom interne",
+				"publicName": "Nom public",
+				"agencyGroup": "Service de consultation",
+				"topicGroup": "Sujet",
+				"agencyFallback": "Service de consultation {{id}}",
+				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
+				"removeFilters": "Supprimer les filtres",
+				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche"
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"
@@ -4151,6 +4475,7 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
+				"directLinks": "Liens directs",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4174,7 +4499,10 @@
 				"liveChat": "Live Chat",
 				"selfHelp": "Cercle de parole",
 				"internal": "Échange interne",
-				"team": "Conseil en équipe"
+				"team": "Conseil en équipe",
+				"directLinkVideo": "Appel vidéo",
+				"directLinkAudio": "Appel audio",
+				"directLinkChat": "Lien direct"
 			}
 		},
 		"supervision": {
@@ -4189,7 +4517,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
-			"unreadCount_one": "{{count}} nouveau message"
+			"unreadCount_one": "{{count}} nouveau message",
+			"openEnquiries": "{{count}} demandes ouvertes",
+			"openEnquiries_one": "{{count}} demande ouverte"
 		}
 	},
 	"statusOverlay": {
@@ -4472,8 +4802,10 @@
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
+				"appActive": "L'application d'authentification est déjà active comme second facteur. Pour changer, choisissez l'autre méthode.",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
 				"email": "Utiliser un code par e-mail (moins sûr)",
+				"emailActive": "Les codes par e-mail sont déjà actifs comme second facteur. Pour changer, choisissez l'application.",
 				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
@@ -4697,6 +5029,22 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Rejoindre l’appel",
+			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"endedElsewhere": "Cet appel est déjà terminé.",
+			"video": {
+				"running": "Appel vidéo en cours",
+				"ended": "Appel vidéo terminé",
+				"missed": "Appel vidéo manqué"
+			},
+			"audio": {
+				"running": "Appel audio en cours",
+				"ended": "Appel audio terminé",
+				"missed": "Appel audio manqué"
+			},
+			"duration": "Durée : {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accepter un appel vidéo",
 			"answerVideoCall": "Accepter un appel vidéo",
@@ -4751,6 +5099,7 @@
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
 	},
@@ -4934,6 +5283,7 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
+			"laterNotice": "Personne n'est en ligne pour le moment. Dès que quelqu'un le sera, le chat continuera ici.",
 			"title": "Le Live-Chat est malheureusement fermé pour le moment",
 			"topicLabel": "Thème demandé : {{topic}}",
 			"weekdays": {
@@ -5224,6 +5574,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Ce lien est actuellement en pause.",
 		"error": {
 			"title": "Ce lien d’invitation ne peut plus être utilisé",
 			"generic": "Le lien d’invitation n’a pas pu être utilisé",
@@ -5252,6 +5603,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Notification : {{state}}",
+			"change": "modifier",
+			"changeLabel": "Modifier la notification",
+			"dismiss": "Masquer la configuration",
+			"none": "non configurée",
+			"email": "e-mail activé",
+			"browser": "signal sur cet appareil activé",
+			"both": "e-mail et signal activés"
+		},
 		"subtitle": "Vos premières étapes",
 		"greeting": {
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
@@ -5286,7 +5647,9 @@
 			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
-			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support."
+			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
+			"retryRefresh": "Recharger"
 		},
 		"accountProtection": {
 			"headline": "Votre accès, protégé en plus",
@@ -5309,7 +5672,14 @@
 		"displayName": {
 			"headline": "Votre nom affiché",
 			"body": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
-			"action": "Changer de nom"
+			"action": "Changer de nom",
+			"overlay": {
+				"headline": "Votre nom affiché",
+				"copy": "Dans la conversation, vous apparaissez sous un nom généré aléatoirement. Vous pouvez en tirer un nouveau à tout moment.",
+				"reroll": "Tirer un nouveau nom",
+				"save": "Utiliser ce nom",
+				"saveFailed": "L'enregistrement a échoué. Veuillez réessayer."
+			}
 		},
 		"notificationChoice": {
 			"both": "Les deux, et je définis un mot de passe maintenant",
@@ -5328,7 +5698,9 @@
 			"channelBrowser": "Navigateur sur cet appareil",
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
-			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
+			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},
 		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
 		"faq": {
@@ -5368,6 +5740,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Imprimer / enregistrer en PDF",
+		"confirmedBy": "Confirmé par",
+		"confirmedAt": "Confirmé le (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "Vous pouvez enregistrer en PDF dans la fenêtre d’impression. Désactivez les en-têtes et pieds de page pour ne pas imprimer l’adresse du lien.",
+		"printUnavailable": "Votre confirmation a été enregistrée. La vue d’impression n’est pas disponible car les informations de confirmation sont incomplètes.",
 		"title": "Vérifier et confirmer les documents contractuels",
 		"subtitle": "Veuillez lire les documents contractuels dans leur intégralité, puis confirmez les informations concernant la personne signataire.",
 		"signerName": "Nom complet",
@@ -5441,7 +5819,26 @@
 			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
 			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
 			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié.",
-			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste."
+			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste.",
+			"notEnrolled": "Récupération par mot de passe non configurée : votre mot de passe ne déverrouille pas encore l'historique de vos conversations sur un nouvel appareil. Saisissez une fois votre clé de récupération pour la configurer.",
+			"afterChange": {
+				"title": "Votre mot de passe a été modifié.",
+				"explanation": "Pour que votre nouveau mot de passe déverrouille vos discussions sur de nouveaux appareils, saisissez une fois votre clé de récupération.",
+				"submit": "Protéger avec le nouveau mot de passe",
+				"later": "Plus tard",
+				"laterHint": "Sans cette étape, votre nouveau mot de passe ne déverrouille pas votre historique sur de nouveaux appareils. Vous pouvez la faire à tout moment dans les paramètres de sécurité."
+			},
+			"stale": {
+				"explanation": "Votre mot de passe actuel n’ouvre pas la sauvegarde de votre historique. Cela arrive lorsque votre mot de passe a été modifié en dehors de cette application, par exemple sous « Mon compte » dans l’espace d’administration ou via « Mot de passe oublié ». Sécurisez votre historique avec votre mot de passe actuel de l’une de ces façons, afin qu’il s’ouvre à nouveau avec votre mot de passe sur de nouveaux appareils.",
+				"choose": "Comment souhaitez-vous sécuriser à nouveau votre historique ?",
+				"usePreviousPassword": "Saisir l’ancien mot de passe",
+				"useRecoveryKey": "Saisir la clé de récupération",
+				"previousPasswordHint": "Saisissez le mot de passe que vous utilisiez avant la modification. Ensuite, seul votre mot de passe actuel ouvre votre historique.",
+				"recoveryKeyHint": "Saisissez votre clé de récupération enregistrée. L’ancienne sauvegarde est ensuite remplacée par une sauvegarde protégée par votre mot de passe actuel. Votre clé de récupération reste valable.",
+				"previousPassword": "Ancien mot de passe",
+				"submit": "Sécuriser avec le mot de passe actuel",
+				"previousPasswordRejected": "Cet ancien mot de passe n’ouvre pas la sauvegarde. Vérifiez votre saisie ou utilisez votre clé de récupération."
+			}
 		}
 	},
 	"accountInvite": {
@@ -5685,6 +6082,7 @@
 			"status": {
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
+				"nobodyLive": "Personne n'est en ligne pour le moment",
 				"accepted": "Une conseillère a pris votre conversation",
 				"closed": "Fermé pour le moment",
 				"checking": "Qui est en ligne ?",
@@ -5692,7 +6090,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
-				"subline": "Anonyme, sans compte. Choisissez un identifiant — ou relancez les dés.",
+				"subline": "Anonyme, sans compte.",
 				"label": "Votre identifiant",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
@@ -5701,6 +6099,8 @@
 			"waiting": {
 				"headline": "C'est bientôt à vous.",
 				"aheadUnknown": "Nous cherchons une conseillère disponible pour vous.",
+				"nobodyLiveHeadline": "Aucune conseillère n'est en ligne pour le moment.",
+				"nobodyLive": "Nous gardons un œil dessus et vous mettons en relation dès que quelqu'un est disponible.",
 				"aheadNone": "Vous êtes la prochaine personne.",
 				"aheadOne": "Une personne devant vous",
 				"aheadMany": "{{count}} personnes devant vous",
@@ -5732,7 +6132,8 @@
 			"steps": {
 				"wait": {
 					"title": "Vous attendez qu'une personne soit libre",
-					"text": "Les conseillères sont actuellement dans d'autres conversations."
+					"text": "Les conseillères sont actuellement dans d'autres conversations.",
+					"textNobodyLive": "Dès qu'une conseillère est en ligne, c'est à vous."
 				},
 				"consent": {
 					"title": "Puis vous acceptez une seule fois",
@@ -5780,6 +6181,7 @@
 		"group": {
 			"incomingTitle": "Appel entrant",
 			"incomingDescription": "Quelqu'un vous appelle…",
+			"incomingFrom": "{{name}} vous appelle…",
 			"close": "Fermer l'appel",
 			"autoFit": "Ajuster automatiquement",
 			"autoFitAria": "Ajuster la fenêtre d'appel",
@@ -5811,6 +6213,70 @@
 			"callFailed": "L'appel a échoué : {{message}}",
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		},
+		"states": {
+			"encrypted": "Chiffré",
+			"endsCurrent": "Si vous répondez, votre appel avec {{name}} prendra fin.",
+			"answerAndEnd": "Terminer et répondre",
+			"backToCall": "Revenir à l’appel en grand",
+			"speaking": "{{name}} parle",
+			"dockLabel": "Appel avec {{name}}",
+			"cameraHint": "Le son continue.",
+			"minimize": "Réduire l'appel",
+			"groupCall": "Appel de groupe",
+			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
+		},
+		"share": {
+			"signInToJoin": "Connectez-vous pour rejoindre cet appel.",
+			"conversationMember": "Vous participez déjà à cette conversation. Rejoignez l’appel depuis la discussion.",
+			"openConversations": "Ouvrir mes conversations",
+			"joinForbidden": "Vous ne pouvez pas rejoindre cet appel avec ce lien.",
+			"open": "Partager l’appel",
+			"title": "Partager l’appel",
+			"close": "Fermer",
+			"settingsLabel": "Pour les invités avec ce lien",
+			"knock": {
+				"label": "Frapper avant d’entrer",
+				"on": "Les invités attendent que vous les fassiez entrer. Si vous le désactivez, toutes les personnes en attente entrent aussitôt.",
+				"off": "Les invités rejoignent l’appel directement, sans attendre."
+			},
+			"temporaryAccount": {
+				"label": "Compte temporaire",
+				"on": "Les invités reçoivent un compte invité supprimé après l’appel.",
+				"off": "Les invités se connectent avec leur propre compte ou en créent un."
+			},
+			"linkLabel": "Lien vers l’appel",
+			"copy": "Copier",
+			"copied": "Copié",
+			"copiedStatus": "Le lien est dans le presse-papiers.",
+			"copyFailed": "La copie n’a pas fonctionné. Veuillez sélectionner le lien et le copier vous-même.",
+			"qrShow": "Code QR",
+			"qrHide": "Masquer le code QR",
+			"qrAlt": "Code QR avec le lien vers l’appel",
+			"share": "Partager",
+			"shareTitle": "Invitation à un appel",
+			"lifetime": "Le lien ne vaut que pour cet appel. Il ne fonctionne plus dès que vous raccrochez.",
+			"consent": "Avant d’entrer, les invités confirment d’un geste la protection des données et le consentement du centre de conseil.",
+			"qrHint": "Scannez avec l’appareil photo d’un téléphone pour y ouvrir l’appel.",
+			"settingsLive": "Les modifications s’appliquent immédiatement à ce lien, même s’il a déjà été partagé."
+		},
+		"knock": {
+			"region": "Personnes en attente",
+			"someone": "Une personne",
+			"wantsIn": "souhaite rejoindre l’appel",
+			"admit": "Laisser entrer",
+			"decline": "Refuser",
+			"admitAll": "Laisser entrer tout le monde",
+			"position": "{{current}} sur {{total}}",
+			"previous": "Personne précédente",
+			"next": "Personne suivante",
+			"participants": "Participant·es",
+			"participantsWaiting": "Participant·es – en attente : {{count}}"
+		},
+		"admission": {
+			"label": "Frapper avant d’entrer",
+			"on": "Les invités attendent que vous les fassiez entrer.",
+			"off": "Les invités rejoignent l’appel directement, sans attendre."
 		}
 	},
 	"form": {
@@ -5918,6 +6384,237 @@
 				"text": "Le statut de confirmation de l’accord n’a pas pu être vérifié. Réessayez. Vos saisies sont conservées.",
 				"inviteText": "La confirmation du contrat ne peut pas être vérifiée pour le moment. Veuillez réessayer."
 			}
+		}
+	},
+	"designTokens": {
+		"applied": {
+			"reference": "Composant de référence",
+			"title": "Jetons de conception appliqués",
+			"declaredExplanation": "Les détails de la source décrivent la correspondance déclarée. Les valeurs sont mesurées sur le composant de référence.",
+			"refresh": "Actualiser la vérification",
+			"empty": "Aucune mesure pour le moment.",
+			"unavailable": "Indisponible",
+			"scroll": "Faire défiler les mesures des jetons",
+			"caption": "Mesures des jetons appliqués",
+			"target": "Cible",
+			"token": "Jeton / propriété",
+			"expected": "Attendu (moteur)",
+			"calculated": "Calculé (jeton hérité)",
+			"applied": "Appliqué (composant)",
+			"result": "Résultat",
+			"source": "Source déclarée",
+			"status": {
+				"match": "Concordance",
+				"mismatch": "Écart",
+				"missing": "Manquant",
+				"unresolved": "Non résolu"
+			},
+			"issues": {
+				"missing-element": "L’élément cible est introuvable.",
+				"missing-expected": "Aucune valeur attendue indépendante n’est disponible.",
+				"missing-token": "Le jeton hérité est manquant ou invalide.",
+				"unresolved-token": "Le jeton hérité n’a pas pu être résolu.",
+				"missing-applied": "La valeur appliquée est manquante.",
+				"calculated-mismatch": "Le jeton hérité diffère de celui du moteur.",
+				"applied-mismatch": "La valeur appliquée diffère de celle du moteur."
+			}
+		}
+	},
+	"knockWait": {
+		"waiting": {
+			"title": "Patientez un instant, vous allez être admis",
+			"descriptionCall": "D'ici là, personne ne vous voit ni ne vous entend. Vous pouvez déjà régler votre micro et votre caméra ici.",
+			"descriptionGroup": "Dès que vous serez admis, vous pourrez écrire dans le groupe.",
+			"statusCall": "Vous avez frappé – votre conseiller voit que vous attendez.",
+			"statusGroup": "Vous avez frappé – l'animation du groupe voit que vous attendez.",
+			"openUntil": "Le chat de groupe est ouvert jusqu'à {{time}}.",
+			"cancel": "Ne plus attendre"
+		},
+		"admitted": {
+			"title": "Vous avez été admis",
+			"statusCall": "Connexion à l'appel …",
+			"statusGroup": "Ouverture du chat de groupe …"
+		},
+		"declined": {
+			"title": "Pas pour le moment",
+			"descriptionCall": "Votre conseiller ne peut pas vous admettre pour le moment. Réessayez plus tard ou envoyez un message.",
+			"descriptionGroup": "L'animation du groupe ne peut pas vous admettre pour le moment. Réessayez plus tard."
+		},
+		"knockAgain": "Frapper à nouveau",
+		"devices": {
+			"camera": "Caméra",
+			"microphone": "Micro",
+			"micOn": "Activer le micro",
+			"micOff": "Couper le micro",
+			"micMeter": "Volume de votre micro"
+		},
+		"ready": {
+			"title": "Vérifier la caméra et le micro",
+			"description": "Personne ne vous voit ni ne vous entend avant que vous ne rejoigniez. Vous seul voyez l'aperçu.",
+			"descriptionCheck": "Votre réglage s'applique lorsque vous rejoignez un appel dans ce groupe. Vous seul voyez l'aperçu.",
+			"join": "Rejoindre maintenant",
+			"done": "Terminé",
+			"retry": "Vérifier à nouveau",
+			"knocking": "Demande envoyée, veuillez patienter …",
+			"notApplied": "Votre réglage de la caméra et du micro n’a pas été appliqué. Veuillez vérifier les deux dans l’appel."
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Recommander un autre accompagnement",
+			"endDuplicate": "Mettre fin au doublon",
+			"endDuplicateDescription": "Met fin à ce second accompagnement sur le même thème"
+		},
+		"recommend": {
+			"title": "Recommander un autre accompagnement",
+			"intro": "La personne qui demande conseil voit votre recommandation sous forme de carte dans le chat et peut y trouver un centre de conseil adapté.",
+			"topicLabel": "Thème",
+			"noteLabel": "Remarque (facultatif)",
+			"noteHint": "La remarque apparaît sur la carte dans le chat.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Envoyer la recommandation",
+			"cancel": "Annuler",
+			"successHeadline": "Votre recommandation a été envoyée.",
+			"successButton": "Fermer",
+			"error": "La recommandation n’a pas pu être envoyée. Veuillez réessayer.",
+			"errorForbidden": "Seul·e le·la conseiller·ère responsable de cet échange peut recommander un autre accompagnement.",
+			"errorConflict": "Aucune recommandation n’est possible dans cet échange pour le moment.",
+			"topicsUnavailable": "Les thèmes n’ont pas pu être chargés. Veuillez réessayer plus tard."
+		},
+		"card": {
+			"title": "Recommandation : autre accompagnement",
+			"topic": "Thème : {{topic}}",
+			"defaultText": "Merci de ne suivre qu’un seul accompagnement par thème. Votre conseiller·ère actuel·le sera informé·e dès que le nouvel accompagnement commencera.",
+			"noteLabel": "Remarque du·de la conseiller·ère",
+			"findAgency": "Trouver un centre de conseil",
+			"requested": "Demande envoyée",
+			"topicUnknown": "un autre thème"
+		},
+		"duplicate": {
+			"startedTitle": "Autre accompagnement sur le même thème",
+			"started": "Un autre accompagnement sur le thème {{topic}} a commencé. Veuillez convenir ensemble de celui qui se poursuit. L’autre devrait être clôturé.",
+			"endedTitle": "Second accompagnement terminé",
+			"ended": "Le second accompagnement sur le thème {{topic}} a été clôturé.",
+			"confirm": {
+				"headline": "Mettre fin à ce doublon ?",
+				"copy": "Cet accompagnement sera clôturé et déplacé dans les archives. Votre autre accompagnement sur le même thème se poursuit.",
+				"confirm": "Clôturer l’accompagnement",
+				"cancel": "Annuler"
+			},
+			"error": "L’accompagnement n’a pas pu être clôturé. Veuillez réessayer."
+		},
+		"request": {
+			"sameTopicInfo": "Un seul accompagnement par thème est prévu à la fois. Si vous commencez un accompagnement sur un thème dont vous parlez déjà, votre conseiller·ère actuel·le sera informé·e dès que le nouveau sera accepté. L’un des deux sera alors clôturé.",
+			"consentAria": "Consentement à la protection des données du centre de conseil",
+			"cancel": "Annuler"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Lien direct",
+			"subtitle": "Pour les personnes en recherche de conseil",
+			"headline": "Un lien direct vers vous",
+			"text": "Toute personne qui ouvre le lien vous rejoint directement – par chat, appel audio ou appel vidéo.",
+			"topicLabel": "Choisir un thème",
+			"mediumLabel": "Type de contact",
+			"temporary": "Compte temporaire",
+			"temporaryHint": "Le compte est supprimé après l’entretien.",
+			"create": "Créer le lien",
+			"createFailed": "Le lien n'a pas pu être créé. Veuillez réessayer."
+		},
+		"medium": {
+			"chat": "Chat",
+			"audio": "Appel audio",
+			"video": "Appel vidéo"
+		},
+		"temporary": "Temporaire",
+		"copy": "Copier le lien",
+		"share": {
+			"title": "Votre lien direct est prêt",
+			"description": "Partagez le lien ou le code QR. Chaque personne obtient son propre entretien avec vous.",
+			"copied": "Copié",
+			"share": "Partager",
+			"qrAlt": "Code QR du lien direct",
+			"done": "Terminé",
+			"linkLabel": "Lien direct"
+		},
+		"list": {
+			"title": "Mes liens directs",
+			"qr": "Afficher le code QR",
+			"active": "{{name}} actif",
+			"edit": "Modifier {{name}}"
+		},
+		"entry": {
+			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans cette consultation.",
+			"haveAccount": "Vous avez déjà un compte ? Se connecter",
+			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
+		},
+		"page": {
+			"loadFailed": "Vos liens directs n’ont pas pu être chargés.",
+			"create": "Créer un nouveau lien direct dans « Créer un chat »",
+			"emptyHeadline": "Il n’y a pas encore de liens directs",
+			"emptyText": "Vous créez un lien direct dans « Créer un chat ». Il apparaît ensuite ici.",
+			"loading": "Chargement des liens directs",
+			"retry": "Réessayer",
+			"toggleFailed": "Le lien n’a pas pu être activé ou désactivé. Veuillez réessayer."
+		},
+		"edit": {
+			"title": "Modifier le lien direct",
+			"cancel": "Annuler",
+			"save": "Enregistrer",
+			"name": "Nom",
+			"nameRequired": "Veuillez saisir un nom.",
+			"topic": "Thème",
+			"mediumFixed": "Le type de contact ne peut pas être modifié",
+			"temporaryHint": "S’applique uniquement aux personnes qui ouvrent le lien à partir de maintenant.",
+			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer."
+		}
+	},
+	"dashboard": {
+		"title": "Votre aperçu",
+		"stats": {
+			"title": "Consultations",
+			"period": "30 derniers jours",
+			"assigned": "Nouvelles prises en charge",
+			"active": "Actives",
+			"archived": "Archivées",
+			"sentMessages": "Messages envoyés"
+		},
+		"circles": {
+			"title": "Prochains groupes d’entraide",
+			"participants": "{{count}} participant·e·s",
+			"participants_one": "{{count}} participant·e"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Temporaire",
+			"title": "Supprimé avec le compte invité"
+		},
+		"deletedGuest": "Invité (supprimé)",
+		"chip": {
+			"guest": "Compte invité"
+		},
+		"keepDialog": {
+			"title": "Vos messages doivent-ils rester ?",
+			"description": "Votre compte invité sera supprimé après l’entretien. Que doit-il advenir de vos messages ?",
+			"keep": {
+				"label": "Les conserver après la suppression",
+				"hint": "Vos messages restent lorsque votre compte est supprimé."
+			},
+			"delete": {
+				"label": "Temporaire",
+				"hint": "Vos messages sont supprimés avec votre compte."
+			},
+			"note": "Votre réponse vaut pour tout cet entretien.",
+			"confirm": "Continuer",
+			"cancel": "Annuler",
+			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
+		},
+		"lookupFailed": {
+			"title": "Nous n'avons pas pu vérifier votre compte",
+			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
 	}
 }

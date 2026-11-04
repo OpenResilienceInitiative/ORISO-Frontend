@@ -1,6 +1,5 @@
 import * as React from 'react';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import './recipientSplitButton.styles.scss';
+import { SplitButton } from '../../splitButton/SplitButton';
 
 export interface RecipientSplitButtonProps {
 	label: string;
@@ -9,22 +8,12 @@ export interface RecipientSplitButtonProps {
 	isMulti?: boolean;
 	onToggle: () => void;
 	chevronLabel: string;
-	/**
-	 * `all` — the message reaches everyone in the conversation: neutral grey.
-	 * `targeted` — the audience is restricted: the accent colour, so the
-	 * restriction is visible while it is in force (#894 rule B).
-	 *
-	 * Defaults to `targeted`, the safer of the two to show by mistake.
-	 */
+	/** Audience semantics stay with the composer; presentation uses the shared atom. */
 	variant?: 'all' | 'targeted';
+	disabled?: boolean;
 }
 
-/**
- * M3 split button (Figma 1168:23016) for choosing the message recipient(s).
- * Leading button shows the role icon + name; trailing button carries the
- * keyboard_arrow_up affordance. Only rendered when a chat has more than two
- * participants.
- */
+/** The composer adapter keeps audience routing independent of button geometry. */
 export const RecipientSplitButton = React.forwardRef<
 	HTMLDivElement,
 	RecipientSplitButtonProps
@@ -34,57 +23,29 @@ export const RecipientSplitButton = React.forwardRef<
 			label,
 			icon,
 			isOpen,
-			isMulti = false,
 			onToggle,
 			chevronLabel,
-			variant = 'targeted'
+			variant = 'targeted',
+			disabled = false
 		},
 		ref
 	) => (
-		<div
+		<SplitButton
 			ref={ref}
-			className={`recipientSplitButton recipientSplitButton--${variant}`}
-		>
-			<button
-				type="button"
-				className="recipientSplitButton__leading"
-				onClick={onToggle}
-				aria-haspopup="listbox"
-				aria-expanded={isOpen}
-			>
-				<span className="recipientSplitButton__icon" aria-hidden>
-					{icon}
-				</span>
-				<span
-					className={[
-						'recipientSplitButton__label',
-						isMulti && 'recipientSplitButton__label--multi'
-					]
-						.filter(Boolean)
-						.join(' ')}
-				>
-					{label}
-				</span>
-			</button>
-			<button
-				type="button"
-				className="recipientSplitButton__trailing"
-				onClick={onToggle}
-				aria-label={chevronLabel}
-				aria-haspopup="listbox"
-				aria-expanded={isOpen}
-			>
-				<KeyboardArrowUpIcon
-					className={[
-						'recipientSplitButton__chevron',
-						isOpen && 'recipientSplitButton__chevron--open'
-					]
-						.filter(Boolean)
-						.join(' ')}
-					fontSize="small"
-				/>
-			</button>
-		</div>
+			label={label}
+			mainLabel={label}
+			icon={icon}
+			size="small"
+			variant={
+				isOpen ? 'elevated' : variant === 'all' ? 'outlined' : 'tonal'
+			}
+			open={isOpen}
+			disabled={disabled}
+			onClick={onToggle}
+			onToggleMenu={onToggle}
+			menuLabel={chevronLabel}
+			menuRole="dialog"
+		/>
 	)
 );
 

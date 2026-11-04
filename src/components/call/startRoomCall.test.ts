@@ -1,5 +1,12 @@
-// @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment oriso-jsdom
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { startRoomCall } from './startRoomCall';
 
@@ -121,6 +128,49 @@ describe('startRoomCall', () => {
 		});
 		expect(stopAudio).toHaveBeenCalledOnce();
 		expect(stopVideo).toHaveBeenCalledOnce();
+	});
+
+	it('leaves the camera alone when told to, and the call stays a video call', async () => {
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			requestCamera: false,
+			notify,
+			getCallManager
+		});
+
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: false,
+			audio: true
+		});
+		expect(started).toEqual([[CLIENT_ROOM, true, undefined]]);
+	});
+
+	it('asks for the camera of a video call when no preview choice is passed', async () => {
+		await startRoomCall({
+			roomId: SIDE_ROOM,
+			isVideo: true,
+			notify,
+			getCallManager
+		});
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: true,
+			audio: true
+		});
+	});
+
+	it('never asks for a camera in a phone call', async () => {
+		await startRoomCall({
+			roomId: SIDE_ROOM,
+			isVideo: false,
+			requestCamera: true,
+			notify,
+			getCallManager
+		});
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: false,
+			audio: true
+		});
 	});
 
 	it('says so and starts nothing when the room is unknown', async () => {

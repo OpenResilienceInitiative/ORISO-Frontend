@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SessionListItemMenu } from './SessionListItemMenu';
@@ -23,6 +23,9 @@ vi.mock('../../resources/img/icons/i.svg', () => ({
 }));
 vi.mock('../../resources/img/icons/gear.svg', () => ({
 	ReactComponent: () => <span data-testid="edit-group-chat-icon" />
+}));
+vi.mock('../../resources/img/icons/out.svg', () => ({
+	ReactComponent: () => <span data-testid="leave-icon" />
 }));
 vi.mock('../legalLinks/LegalLinkMenuIcon', () => ({
 	LegalLinkMenuIcon: () => <span data-testid="legal-link-icon" />
@@ -60,7 +63,8 @@ const VISIBILITY_ALL_HIDDEN: ChatroomSettingsMenuVisibility = {
 	showArchive: false,
 	showDearchive: false,
 	showDelete: false,
-	showRequestHelp: false
+	showRequestHelp: false,
+	showLeaveGroup: false
 };
 
 const menuIconRef = { current: null } as React.RefObject<HTMLButtonElement>;
@@ -72,6 +76,7 @@ interface RenderProps {
 	visibility?: ChatroomSettingsMenuVisibility;
 	onChatSettings?: () => void;
 	onArchive?: () => void;
+	onLeaveGroup?: () => void;
 	legalLinks?: any[];
 }
 
@@ -81,6 +86,7 @@ const renderMenu = ({
 	visibility = VISIBILITY_ALL_HIDDEN,
 	onChatSettings = noop,
 	onArchive = noop,
+	onLeaveGroup = noop,
 	legalLinks = []
 }: RenderProps = {}) =>
 	render(
@@ -103,6 +109,7 @@ const renderMenu = ({
 				onDearchive={noop}
 				onDelete={noop}
 				onRequestHelp={noop}
+				onLeaveGroup={onLeaveGroup}
 				legalLinks={legalLinks}
 				agencyId={undefined}
 				onLegalLinkClick={noop}
@@ -222,6 +229,81 @@ describe('SessionListItemMenu', () => {
 			expect(
 				screen.queryAllByText('chatFlyout.privacyPolicy').length
 			).toBeGreaterThanOrEqual(1);
+		});
+	});
+
+	// #1923: askers had no way to leave a group from the list card.
+	describe('leave group (asker)', () => {
+		it('offers leave to the asker and calls onLeaveGroup once', () => {
+			const onLeaveGroup = vi.fn();
+			renderMenu({
+				flyoutOpen: true,
+				isAsker: true,
+				onLeaveGroup,
+				visibility: { ...VISIBILITY_ALL_HIDDEN, showLeaveGroup: true }
+			});
+
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="session-list-menu-leave-group"]'
+				) as HTMLElement
+			);
+
+			expect(onLeaveGroup).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not let the leave click reach the card, which would open the group', () => {
+			const onCardClick = vi.fn();
+			render(
+				<div onClick={onCardClick}>
+					<MemoryRouter>
+						<SessionListItemMenu
+							flyoutOpen
+							onClose={noop}
+							menuIconRef={menuIconRef}
+							dropdownRef={dropdownRef}
+							dropdownId="test-menu"
+							dropdownLabel="Chat options"
+							translate={((key: string) => key) as never}
+							onMenuClick={noop}
+							onMenuKeyDown={noop}
+							onDropdownKeyDown={noop}
+							isAsker
+							visibility={{
+								...VISIBILITY_ALL_HIDDEN,
+								showLeaveGroup: true
+							}}
+							onChatSettings={noop}
+							onArchive={noop}
+							onDearchive={noop}
+							onDelete={noop}
+							onRequestHelp={noop}
+							onLeaveGroup={noop}
+							legalLinks={[]}
+							agencyId={undefined}
+							onLegalLinkClick={noop}
+						/>
+					</MemoryRouter>
+				</div>
+			);
+
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="session-list-menu-leave-group"]'
+				) as HTMLElement
+			);
+
+			expect(onCardClick).not.toHaveBeenCalled();
+		});
+
+		it('hides leave when showLeaveGroup is false', () => {
+			renderMenu({ flyoutOpen: true, isAsker: true });
+
+			expect(
+				document.querySelector(
+					'[data-cy="session-list-menu-leave-group"]'
+				)
+			).toBeNull();
 		});
 	});
 });

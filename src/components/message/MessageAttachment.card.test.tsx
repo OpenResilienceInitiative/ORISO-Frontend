@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment oriso-jsdom
 /**
  * #994 — the four attachment states (plain, encrypted, awaiting media check,
  * blocked) used to build their own markup with their own inline styles, so
@@ -7,7 +7,7 @@
  */
 import * as React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MessageAttachment } from './MessageAttachment';
 import { NotificationsContext } from '../../globalState';
