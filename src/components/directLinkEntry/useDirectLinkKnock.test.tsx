@@ -69,6 +69,42 @@ describe('useDirectLinkKnock', () => {
 		await waitFor(() => expect(getKnock).toHaveBeenCalledWith(22));
 	});
 
+	it('keeps the running call and the new id across "Erneut anklopfen" (#2016)', async () => {
+		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
+		const start = vi.fn().mockResolvedValue({
+			sessionId: 9,
+			medium: 'VIDEO',
+			admission: 'KNOCK',
+			created: false,
+			knockId: 22,
+			knockStatus: 'PENDING'
+		});
+		const joinCall = {
+			callId: 'c-1',
+			state: 'running' as const,
+			roomRef: '!room:oriso',
+			callRoomId: '!media:oriso',
+			callType: 'video' as const
+		};
+		const { result } = renderHook(() =>
+			useDirectLinkKnock(
+				{ ...knock, joinExisting: true, joinCall },
+				{ getKnock, start },
+				10
+			)
+		);
+		await waitFor(() => expect(result.current.phase).toBe('declined'));
+		getKnock.mockResolvedValue({ ...answer('PENDING'), id: 22 });
+		act(() => result.current.knockAgain());
+		await waitFor(() => expect(result.current.knockId).toBe(22));
+		// A reload after this still knows which call to join.
+		expect(readPendingKnock()).toMatchObject({
+			knockId: 22,
+			joinExisting: true,
+			joinCall
+		});
+	});
+
 	it('closes the refusal when it cannot knock again', async () => {
 		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
 		const declined = { ...knock, status: 'DECLINED' as const };

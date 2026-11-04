@@ -1252,7 +1252,8 @@
 			"rules": {
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
-			}
+			},
+			"devices": "Camera & microphone"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -6358,6 +6359,16 @@
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
+		},
+		"ready": {
+			"title": "Check camera and microphone",
+			"description": "Nobody can see or hear you before you join. Only you see the preview.",
+			"descriptionCheck": "Your setting applies when you join a call in this group. Only you see the preview.",
+			"join": "Join now",
+			"done": "Done",
+			"retry": "Check again",
+			"knocking": "Request sent, please wait …",
+			"notApplied": "Your camera and microphone setting was not applied. Please check both in the call."
 		}
 	},
 	"furtherCounselling": {
