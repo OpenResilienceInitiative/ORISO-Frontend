@@ -288,6 +288,11 @@ export const VoicePlayer = ({
 				.filter(Boolean)
 				.join(' ')}
 		>
+			{/* Outside the button: its children are presentational, and a
+			    focused button is not announced when its label changes. */}
+			<span className="sr-only" role="status">
+				{isWaitingForSource ? translate('voicePlayer.loading') : ''}
+			</span>
 			{isRing ? (
 				<div className="voicePlayer__row">
 					<span className="voicePlayer__ringWrapper">

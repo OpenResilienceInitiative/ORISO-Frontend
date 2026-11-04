@@ -210,7 +210,7 @@ describe('MessageAttachment with a content scanner deployed', () => {
 		renderAttachment({ mediaCheckState: 'safe' });
 
 		await screen.findByRole('button', {
-			name: /e2ee\.attachment\.encrypted/
+			name: /^attachments\.gate\.decrypt: .*e2ee\.attachment\.encrypted$/
 		});
 		expect(screen.getByText('attachments.gate.decrypt')).toBeTruthy();
 		expect(downloadScannedEncryptedMedia).not.toHaveBeenCalled();

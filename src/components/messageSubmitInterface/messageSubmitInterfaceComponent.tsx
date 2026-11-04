@@ -49,6 +49,7 @@ import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	FLUSH_CONTEXT_BAR_RESERVE,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
@@ -4008,6 +4009,11 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
+	const hasContextBar = Boolean(replyTo || editingMessage);
+	const flushContextBarReserve =
+		flushCorner && hasContextBar && !isMobileViewport
+			? FLUSH_CONTEXT_BAR_RESERVE
+			: 0;
 	useLayoutEffect(() => {
 		if (isExpandedComposer) {
 			return;
@@ -4030,7 +4036,8 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		const composerChromeHeight =
 			shell.getBoundingClientRect().height -
-			editor.getBoundingClientRect().height;
+			editor.getBoundingClientRect().height -
+			flushContextBarReserve;
 		const bounds = getComposerHeightBounds();
 		const nextHeight = calculateAutoComposerHeight({
 			contentHeight,
@@ -4045,6 +4052,7 @@ export const MessageSubmitInterfaceComponent = ({
 		attachmentSelected,
 		composerSettleTick,
 		composerText,
+		flushContextBarReserve,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport

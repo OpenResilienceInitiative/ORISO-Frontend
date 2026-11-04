@@ -444,6 +444,11 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = plainMediaUrl;
+	const gateActionLabel = translate(
+		isMediaContentScannerEnabled()
+			? 'attachments.gate.check'
+			: 'attachments.gate.decrypt'
+	);
 
 	const renderVoiceAttachment = useCallback(
 		(src?: string) => (
@@ -608,12 +613,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 									}
 								: {
 										kind: 'gate',
-										actionLabel: translate(
-											isMediaContentScannerEnabled()
-												? 'attachments.gate.check'
-												: 'attachments.gate.decrypt'
-										),
-										ariaLabel: `${props.attachment.title} — ${translate(
+										actionLabel: gateActionLabel,
+										// Starts with the visible label so voice
+										// control can activate what it sees.
+										ariaLabel: `${gateActionLabel}: ${props.attachment.title} — ${translate(
 											'e2ee.attachment.encrypted'
 										)}`,
 										hint: translate(
