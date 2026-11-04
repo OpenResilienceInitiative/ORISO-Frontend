@@ -121,7 +121,7 @@ const PolicyFixture = ({ state }: { state: State }) => {
 					<MessageItemComponent
 						{...mockMessageItemComponentProps({
 							userId: CLIENT_MATRIX_ID,
-							readOnly: true,
+							previewMode: 'read',
 							message: '',
 							attachments: [
 								{
