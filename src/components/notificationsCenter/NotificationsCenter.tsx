@@ -89,7 +89,14 @@ import type {
 	MatrixActivityPreviewLabels
 } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
-import { activityEventCategory, activityEventRoomId } from './activityEvent';
+import {
+	activityEventCategory,
+	activityEventConversation,
+	activityEventRoomId
+} from './activityEvent';
+import { useSideRoomPreviewGate, type SideRoom } from './sideRoomPreviewGate';
+import { useGroupPreviewGate } from './groupPreviewGate';
+import { useActivityPreviewCache } from './useActivityPreviewCache';
 import { selectActivityEventsReadWithConversation } from './seenWhileReading';
 import { useConversationPreview } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
@@ -353,9 +360,7 @@ export const NotificationsCenter = () => {
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
-	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
-		Record<string, { text: string; kind: MatrixActivityPreviewKind }>
-	>({});
+
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
@@ -414,29 +419,6 @@ export const NotificationsCenter = () => {
 	// Preserve the first visible card when a live refresh prepends new events.
 	// Appending an older page naturally keeps the same anchor position.
 	//
-	// `hydratedMessagePreviews` belongs in the dependencies as much as the feed
-	// does: a card above the viewport growing from one line to two on
-	// decryption shifts the list by exactly as much as a prepended event would.
-	useLayoutEffect(() => {
-		const list = listScrollRef.current;
-		if (!list) return;
-		const rows = Array.from(
-			list.querySelectorAll<HTMLElement>('[data-notification-id]')
-		);
-		const previousAnchor = listAnchorRef.current;
-		if (previousAnchor) {
-			const anchoredRow = rows.find(
-				(row) => row.dataset.notificationId === previousAnchor.id
-			);
-			if (anchoredRow) {
-				list.scrollTop +=
-					anchoredRow.getBoundingClientRect().top -
-					previousAnchor.top;
-			}
-		}
-
-		captureListAnchor();
-	}, [captureListAnchor, notificationFeed, hydratedMessagePreviews]);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -596,12 +578,47 @@ export const NotificationsCenter = () => {
 					return [];
 				}
 				const matrixEventId = item.params?.matrixEventId;
-				const sessionId = resolveSessionId(item);
-				const session = getExtendedSession(
-					sessionId || undefined,
-					sessions || []
-				);
-				const roomRef = item.params?.roomRef || session?.rid;
+				// By room first: a numeric id can also be a group chat's (#1888).
+				const {
+					sessionId: eventSessionId,
+					roomId: eventRoom,
+					channelKind
+				} = activityEventConversation(item);
+				const session =
+					getExtendedSession(
+						eventRoom || undefined,
+						sessions || []
+					) ??
+					getExtendedSession(
+						eventSessionId === null
+							? undefined
+							: String(eventSessionId),
+						sessions || []
+					);
+				// A numeric id can collide between cases and groups. Until the room
+				// resolves, its authorization policy is unknown.
+				if (!session) return [];
+				const differentRoom = !!eventRoom && session.rid !== eventRoom;
+				const namesSideRoom =
+					channelKind === 'supervision' || channelKind === 'team';
+				const side: SideRoom | null =
+					differentRoom &&
+					session.isSession &&
+					session.item?.id &&
+					eventRoom &&
+					namesSideRoom
+						? {
+								sessionId: session.item.id,
+								room: eventRoom,
+								kind: channelKind
+							}
+						: null;
+				if ((differentRoom || namesSideRoom) && !side) return [];
+				const sessionId =
+					session.isSession && session.item?.id != null
+						? String(session.item.id)
+						: null;
+				const roomRef = eventRoom || session.rid;
 				if (!matrixEventId || !roomRef) {
 					return [];
 				}
@@ -618,6 +635,15 @@ export const NotificationsCenter = () => {
 						).text,
 						labels: previewLabels,
 						sessionId,
+						side,
+						group: session?.isGroup
+							? {
+									id: session.item?.id,
+									room: session.rid,
+									active: session.item?.active,
+									subscribed: session.item?.subscribed
+								}
+							: null,
 						needsCaseHandoverCheck: requiresCaseHandoverCheck(
 							session,
 							userData?.userId
@@ -651,12 +677,52 @@ export const NotificationsCenter = () => {
 			).sort(),
 		[candidatePreviewSources]
 	);
-	const isCaseHandoverPreviewAllowed =
-		useCaseHandoverPreviewGate(checkedSessionIds);
+	const isCaseHandoverPreviewAllowed = useCaseHandoverPreviewGate(
+		checkedSessionIds,
+		userData?.userId
+	);
+	const groups = useMemo(() => {
+		const byId = new Map();
+		candidatePreviewSources.forEach(({ group }) => {
+			if (group?.id && group.room) byId.set(group.id, group);
+		});
+		return Array.from(byId.values()).sort((a, b) => a.id - b.id);
+	}, [candidatePreviewSources]);
+	const isGroupAllowed = useGroupPreviewGate(
+		groups,
+		userData?.userName,
+		userData?.userId
+	);
+	const sides = useMemo(() => {
+		const unique = new Map<string, SideRoom>();
+		candidatePreviewSources.forEach(({ side }) => {
+			if (side)
+				unique.set(`${side.sessionId}:${side.kind}:${side.room}`, side);
+		});
+		return Array.from(unique.values()).sort((a, b) =>
+			`${a.sessionId}:${a.kind}:${a.room}`.localeCompare(
+				`${b.sessionId}:${b.kind}:${b.room}`
+			)
+		);
+	}, [candidatePreviewSources]);
+	const isSideAllowed = useSideRoomPreviewGate(
+		sides,
+		userData?.userId,
+		userData?.userName
+	);
 	const messagePreviewSources = useMemo(
 		() =>
 			candidatePreviewSources
 				.filter((source) => {
+					if (source.side && !isSideAllowed(source.side))
+						return false;
+					if (
+						source.group &&
+						(!source.group.id ||
+							source.group.room !== source.roomRef ||
+							!isGroupAllowed(source.roomRef))
+					)
+						return false;
 					if (!source.needsCaseHandoverCheck) {
 						return true;
 					}
@@ -670,69 +736,49 @@ export const NotificationsCenter = () => {
 				.map(
 					({
 						needsCaseHandoverCheck: _needsCheck,
+						group: _group,
+						side: _side,
 						sessionId: _sessionId,
 						...source
 					}) => source
 				),
-		[candidatePreviewSources, isCaseHandoverPreviewAllowed]
+		[
+			candidatePreviewSources,
+			isCaseHandoverPreviewAllowed,
+			isGroupAllowed,
+			isSideAllowed
+		]
 	);
-	// Previews are dropped again the moment their card stops being allowed —
-	// a session arriving late in SessionsDataContext can turn a hydrated card
-	// into a curtained one, and the decrypted text would otherwise survive in
-	// this map, still feeding the card body and the search index.
-	const allowedPreviewIds = useMemo(
-		() =>
-			new Set(
-				messagePreviewSources.map((source) => source.activityEventId)
-			),
-		[messagePreviewSources]
-	);
-	useEffect(() => {
-		setHydratedMessagePreviews((current) => {
-			const staleIds = Object.keys(current).filter(
-				(activityEventId) => !allowedPreviewIds.has(activityEventId)
+	const { visiblePreview, onPreviewChange: handlePreviewChange } =
+		useActivityPreviewCache(
+			messagePreviewSources,
+			userData?.userId,
+			userData?.userName
+		);
+
+	// `visiblePreview` belongs in the dependencies as much as the feed
+	// does: a card above the viewport growing from one line to two on
+	// decryption shifts the list by exactly as much as a prepended event would.
+	useLayoutEffect(() => {
+		const list = listScrollRef.current;
+		if (!list) return;
+		const rows = Array.from(
+			list.querySelectorAll<HTMLElement>('[data-notification-id]')
+		);
+		const previousAnchor = listAnchorRef.current;
+		if (previousAnchor) {
+			const anchoredRow = rows.find(
+				(row) => row.dataset.notificationId === previousAnchor.id
 			);
-			if (staleIds.length === 0) {
-				return current;
+			if (anchoredRow) {
+				list.scrollTop +=
+					anchoredRow.getBoundingClientRect().top -
+					previousAnchor.top;
 			}
-			const next = { ...current };
-			staleIds.forEach((activityEventId) => delete next[activityEventId]);
-			return next;
-		});
-	}, [allowedPreviewIds]);
-	/**
-	 * The only way a hydrated preview should ever be read.
-	 *
-	 * The purge above is state cleanup and lands one render late; in the render
-	 * where a card loses its allowance the decrypted text is still in the map.
-	 * Reading through this guard means a curtained card never shows it, not
-	 * even for a single paint.
-	 */
-	const visiblePreview = useCallback(
-		(activityEventId: string) =>
-			allowedPreviewIds.has(activityEventId)
-				? hydratedMessagePreviews[activityEventId]
-				: undefined,
-		[allowedPreviewIds, hydratedMessagePreviews]
-	);
-	const handlePreviewChange = useCallback(
-		(
-			activityEventId: string,
-			preview: string,
-			kind: MatrixActivityPreviewKind
-		) => {
-			setHydratedMessagePreviews((current) =>
-				current[activityEventId]?.text === preview &&
-				current[activityEventId]?.kind === kind
-					? current
-					: {
-							...current,
-							[activityEventId]: { text: preview, kind }
-						}
-			);
-		},
-		[]
-	);
+		}
+
+		captureListAnchor();
+	}, [captureListAnchor, notificationFeed, visiblePreview]);
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.

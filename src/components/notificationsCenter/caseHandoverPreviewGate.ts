@@ -65,12 +65,8 @@ export const requiresCaseHandoverCheck = (
 
 type GateState = 'allowed' | 'blocked';
 
-/**
- * Statuses live for the browser session: a handover decision does not change
- * from under the user while the timeline is open, and re-asking per render
- * would put one request per card on every poll.
- */
-const statusCache = new Map<string, GateState>();
+// The same case can be visible to one account and curtained for another.
+const statusCache = new Map<string, Map<string, GateState>>();
 
 /** Test seam — the cache is module state, so it outlives a single render tree. */
 export const resetCaseHandoverPreviewGateCache = () => statusCache.clear();
@@ -82,17 +78,22 @@ export const resetCaseHandoverPreviewGateCache = () => statusCache.clear();
  * blocked set" for "allowed" — an unknown id answers `false`.
  */
 export const useCaseHandoverPreviewGate = (
-	checkedSessionIds: readonly string[]
+	checkedSessionIds: readonly string[],
+	viewerId: string | undefined
 ): ((sessionId: string | null | undefined) => boolean) => {
 	const [resolvedCount, setResolvedCount] = useState(0);
 	const key = checkedSessionIds.join(',');
 
 	useEffect(() => {
+		if (!viewerId) return undefined;
 		let cancelled = false;
+		const statuses =
+			statusCache.get(viewerId) ?? new Map<string, GateState>();
+		statusCache.set(viewerId, statuses);
 		const pending = key
 			.split(',')
 			.filter(Boolean)
-			.filter((sessionId) => !statusCache.has(sessionId));
+			.filter((sessionId) => !statuses.has(sessionId));
 		if (pending.length === 0) {
 			return undefined;
 		}
@@ -101,14 +102,14 @@ export const useCaseHandoverPreviewGate = (
 			pending.map((sessionId) =>
 				apiGetCaseHandoverStatus(Number(sessionId))
 					.then((status) =>
-						statusCache.set(
+						statuses.set(
 							sessionId,
 							status?.canViewContent ? 'allowed' : 'blocked'
 						)
 					)
 					// A refused or failed status is a reason to show less, not
 					// more: 403 is exactly the curtained case.
-					.catch(() => statusCache.set(sessionId, 'blocked'))
+					.catch(() => statuses.set(sessionId, 'blocked'))
 			)
 		).then(() => {
 			if (!cancelled) {
@@ -119,16 +120,17 @@ export const useCaseHandoverPreviewGate = (
 		return () => {
 			cancelled = true;
 		};
-	}, [key]);
+	}, [key, viewerId]);
 
 	// Memoized so the caller's derived lists keep a stable identity between
 	// renders; `resolvedCount` is what makes a newly cached status visible,
 	// since the cache itself is module state React cannot observe.
 	return useCallback(
 		(sessionId: string | null | undefined) =>
-			Boolean(sessionId) &&
-			statusCache.get(String(sessionId)) === 'allowed',
+			!!sessionId &&
+			!!viewerId &&
+			statusCache.get(viewerId)?.get(String(sessionId)) === 'allowed',
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[resolvedCount, key]
+		[resolvedCount, key, viewerId]
 	);
 };
