@@ -206,7 +206,7 @@ export const resolveMentionCandidates = (
 ) => {
 	const inRoom = new Set<string>();
 	const memberIdsByFullId = new Set<string>();
-	const matrixUserIdByKey = new Map<string, string>();
+	const matrixIdsByKey = new Map<string, Set<string>>();
 	memberIds.forEach((memberId) => {
 		if (isMatrixUserId(memberId)) {
 			memberIdsByFullId.add(memberId);
@@ -218,7 +218,9 @@ export const resolveMentionCandidates = (
 		].forEach((key) => {
 			inRoom.add(key);
 			if (isMatrixUserId(memberId)) {
-				matrixUserIdByKey.set(key, memberId);
+				const matches = matrixIdsByKey.get(key) ?? new Set<string>();
+				matches.add(memberId);
+				matrixIdsByKey.set(key, matches);
 			}
 		});
 	});
@@ -238,14 +240,16 @@ export const resolveMentionCandidates = (
 			};
 		}
 		const keys = Array.from(audienceIdentityKeys(info.username));
+		const matches = new Set(
+			keys.flatMap((key) => [...(matrixIdsByKey.get(key) ?? [])])
+		);
 		return {
 			id: consultantId,
 			displayName: info.displayName,
 			username: info.username,
-			matrixUserId: keys
-				.map((key) => matrixUserIdByKey.get(key))
-				.find(Boolean),
-			isInRoom: keys.some((key) => inRoom.has(key))
+			matrixUserId:
+				matches.size === 1 ? matches.values().next().value : undefined,
+			isInRoom: matches.size <= 1 && keys.some((key) => inRoom.has(key))
 		};
 	});
 };

@@ -731,6 +731,16 @@ describe('resolveMentionCandidates', () => {
 		]);
 	});
 
+	it('does not pick a server for an ambiguous legacy directory name', () => {
+		const directory = new Map([['id-1', person('hans.meier')]]);
+		const [candidate] = resolveMentionCandidates(directory, [
+			'@hans.meier:dev.example',
+			'@hans.meier:other.example'
+		]);
+		expect(candidate.matrixUserId).toBeUndefined();
+		expect(candidate.isInRoom).toBe(false);
+	});
+
 	it('marks a supervisor known only by the stored name as in the chat', () => {
 		const directory = new Map([['id-1', person('hans.meier')]]);
 		const [candidate] = resolveMentionCandidates(directory, [
