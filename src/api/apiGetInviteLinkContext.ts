@@ -11,6 +11,8 @@ export interface InviteLinkContext {
 	consultingTypeId: number | null;
 	topicId: number | null;
 	chatType: string | null;
+	/** The public context marks a link to one already-running call. */
+	linkKind?: 'CALL';
 	/** Counsellor direct links only (ORISO-UserService#1479): new people get a temporary account. */
 	temporaryAccount?: boolean | null;
 	/** Counsellor direct links only: `KNOCK` for audio and video, `DIRECT` for chat. */

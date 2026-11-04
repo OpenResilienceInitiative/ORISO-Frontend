@@ -91,6 +91,7 @@ import {
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 /** Fallback base of a counsellor's chat links, as in the activity feed. */
 const CONSULTANT_SESSIONS_PATH = '/sessions/consultant/sessionPreview';
+const ASKER_SESSIONS_PATH = '/sessions/user/view';
 
 export const NOTIFICATION_TYPE_NONE = 'none';
 export type NotificationTypeNone = typeof NOTIFICATION_TYPE_NONE;
@@ -381,6 +382,14 @@ const notificationSessionKey = (token: string | null): string | null => {
 	]);
 };
 
+/**
+ * ORISO-UserService#1510: the Matrix listener often writes a message row before
+ * the mention marks it. The marked row counts as new, so the mention is still
+ * announced, once.
+ */
+const observedEventKey = (event: NotificationFeedItem) =>
+	event.params?.mentioned === true ? `${event.id}:mentioned` : event.id;
+
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
 	const [notificationFeed, setNotificationFeed] = useState<
@@ -536,7 +545,7 @@ export function NotificationsProvider(props) {
 								item.params?.matrixEventId
 							)
 					)
-					.map((item) => item.id)
+					.map(observedEventKey)
 			);
 			initialFeedTimeRef.current = Math.max(
 				Number.NEGATIVE_INFINITY,
@@ -546,8 +555,11 @@ export function NotificationsProvider(props) {
 		const observed = observedEventIdsRef.current;
 		const { settings, device } = notificationSettingsStore.getState();
 		for (const event of feed) {
-			if (observed.has(event.id)) continue;
-			observed.add(event.id);
+			const eventKey = observedEventKey(event);
+			if (observed.has(eventKey)) continue;
+			// A chat-mention row is marked after the plain row arrived.
+			const markedLate = observed.has(event.id);
+			observed.add(eventKey);
 			const pendingLive = pendingLiveEventIdsRef.current.delete(
 				event.params?.matrixEventId
 			);
@@ -563,7 +575,8 @@ export function NotificationsProvider(props) {
 			// FE#1470: a live-chat message to a counsellor also raises an
 			// in-app pop-up — unless that chat is already on screen, where
 			// the message itself is the signal and a tone would only nag.
-			const liveChat = isLiveChatMessageForCounsellor(event);
+			const liveChat =
+				!markedLate && isLiveChatMessageForCounsellor(event);
 			if (
 				liveChat &&
 				isLiveChatOpen(
@@ -656,12 +669,17 @@ export function NotificationsProvider(props) {
 			// live chat; elsewhere tone and OS banner follow their rows.
 			const noticeKind = eventNoticeKindFor(event);
 			if (noticeKind) {
+				const threadRootId =
+					noticeKind === 'chatMention'
+						? event.params?.threadRootId
+						: null;
 				if (
 					isEventNoticeTargetOpen(
 						noticeKind,
 						{
 							sessionId: event.sourceSessionId,
-							roomRef: event.params?.roomRef
+							roomRef: event.params?.roomRef,
+							threadRootId
 						},
 						window.location.pathname,
 						window.location.search,
@@ -689,17 +707,24 @@ export function NotificationsProvider(props) {
 					const sessionId = String(event.sourceSessionId);
 					setNotifications((list) =>
 						upsertEventNotice(list, {
-							id: eventNoticeId(noticeKind, sessionId),
+							id: eventNoticeId(
+								noticeKind,
+								sessionId,
+								threadRootId
+							),
 							notificationType: NOTIFICATION_TYPE_EVENT_NOTICE,
 							kind: noticeKind,
 							sessionId,
 							roomRef: event.params?.roomRef ?? null,
+							threadRootId: threadRootId ?? null,
 							actorName: eventNoticeActor(noticeKind, event),
 							count: 1,
 							path: toNonEmbeddedPath(
 								resolveNotificationActionPath(
 									event,
-									CONSULTANT_SESSIONS_PATH
+									noticeKind === 'consent'
+										? ASKER_SESSIONS_PATH
+										: CONSULTANT_SESSIONS_PATH
 								)
 							)
 						})

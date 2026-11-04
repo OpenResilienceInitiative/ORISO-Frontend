@@ -99,6 +99,7 @@ export const GroupInviteEntry = ({
 						<AccountData
 							onChange={onChange}
 							entry="link"
+							conversationType="SELF_HELP"
 							temporary={temporary}
 						/>
 					)}

@@ -28,6 +28,8 @@ import { callManager } from '../../../services/CallManager';
 import { GroupCallWidget } from '../GroupCallWidget';
 import { CALL_IDENTITY_EVENT_TYPE } from '../callIdentity';
 import { forgetPublishedIdentity } from '../publishCallIdentity';
+import { rememberJoinMedia } from '../prejoin/callPrejoin';
+import { NotificationsContext } from '../../../globalState/provider/NotificationsProvider';
 import {
 	FAKE_CALL_ID,
 	FAKE_CURRENT_USER_ID,
@@ -428,6 +430,81 @@ describe('GroupCallWidget Storybook harness', () => {
 				{ audio_enabled: false }
 			)
 		);
+	});
+
+	describe('the choice from the device check (#2016)', () => {
+		const wanted = { audio_enabled: true, video_enabled: false };
+		const lastApi = () =>
+			widgetApiMocks.instances.at(-1)! as unknown as {
+				on: ReturnType<typeof vi.fn>;
+				transport: { send: ReturnType<typeof vi.fn> };
+			};
+
+		const renderReadyCall = async (
+			reply: unknown,
+			addNotification: ReturnType<typeof vi.fn>
+		) => {
+			rememberJoinMedia(FAKE_SIGNAL_ROOM_ID, wanted);
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+			renderTranslated(
+				<NotificationsContext.Provider
+					value={{ addNotification } as never}
+				>
+					<MatrixClientContext.Provider
+						value={{
+							matrixClientService,
+							setMatrixClientService: () => {}
+						}}
+					>
+						<GroupCallWidget />
+					</MatrixClientContext.Provider>
+				</NotificationsContext.Provider>
+			);
+			await waitFor(() =>
+				expect(
+					lastApi().on.mock.calls.some(([name]) => name === 'ready')
+				).toBe(true)
+			);
+			const api = lastApi();
+			api.transport.send.mockResolvedValue(reply);
+			const [, ready] = api.on.mock.calls.find(
+				([name]) => name === 'ready'
+			)!;
+			act(() => ready());
+			return api;
+		};
+
+		const mutes = (api: ReturnType<typeof lastApi>) =>
+			api.transport.send.mock.calls.filter(
+				([action]) => action === 'io.element.device_mute'
+			);
+
+		it('stops once the call confirms it', async () => {
+			const addNotification = vi.fn();
+			const api = await renderReadyCall(wanted, addNotification);
+			await waitFor(() => expect(mutes(api)).toHaveLength(1));
+			await act(() => new Promise((done) => setTimeout(done, 1_200)));
+			expect(mutes(api)).toHaveLength(1);
+			expect(addNotification).not.toHaveBeenCalled();
+		});
+
+		it('warns when the call never confirms it', async () => {
+			const addNotification = vi.fn();
+			const api = await renderReadyCall(
+				{ audio_enabled: true, video_enabled: true },
+				addNotification
+			);
+			await waitFor(
+				() => expect(addNotification).toHaveBeenCalledTimes(1),
+				{ timeout: 4_000 }
+			);
+			expect(mutes(api)).toHaveLength(3);
+			expect(addNotification.mock.calls[0][0].notificationType).toBe(
+				'warning'
+			);
+		});
 	});
 
 	it('moves keyboard focus into the dock when the call is minimized', async () => {

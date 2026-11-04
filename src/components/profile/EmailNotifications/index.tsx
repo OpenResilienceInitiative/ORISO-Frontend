@@ -11,6 +11,7 @@ import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { EmailToggle } from './EmailToggle';
 import { NoEmailSet } from './NoEmailSet';
+import { useAccountEmailCollectionAllowed } from '../../../hooks/useAccountEmailCollectionAllowed';
 // This screen's styles live in the shared profile stylesheet, which until now
 // only reached it because a sibling profile component happened to import it
 // first. Carrying its own import means the screen is styled wherever it is
@@ -35,6 +36,7 @@ import { visibleEmailSwitches } from './emailNotificationAccess';
  */
 export const EmailNotification = () => {
 	const { userData } = React.useContext(UserDataContext);
+	const emailAllowed = useAccountEmailCollectionAllowed();
 	const { t } = useTranslation();
 	const { search, hash } = useLocation();
 	const rootRef = React.useRef<HTMLDivElement>(null);
@@ -85,7 +87,7 @@ export const EmailNotification = () => {
 				/>
 			</div>
 
-			{!userData.email && (
+			{!userData.email && emailAllowed && (
 				<div className="notifications__panel">
 					<NoEmailSet />
 				</div>

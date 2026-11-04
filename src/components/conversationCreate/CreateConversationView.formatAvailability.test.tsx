@@ -19,7 +19,7 @@ import {
 } from 'vite-plus/test';
 import { useSession } from '../../hooks/useSession';
 import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
-import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
+import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
 import { conversationAgency } from '../../test/fixtures/conversationPolicyFixtures';
@@ -82,8 +82,8 @@ vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ fromL: true })
 }));
 vi.mock('../../hooks/useSession', () => ({ useSession: vi.fn() }));
-vi.mock('../../api/apiGetAgencyConsultantList', () => ({
-	apiGetTenantConsultantList: vi.fn().mockResolvedValue([])
+vi.mock('./internal/loadInternalChatColleagues', () => ({
+	loadInternalChatColleagues: vi.fn().mockResolvedValue([])
 }));
 vi.mock('../../resources/img/icons/group-chat-avatar.svg', () => ({
 	ReactComponent: () => null,
@@ -436,14 +436,14 @@ describe('CreateConversationView – formats the Beratungsstelle has switched of
 		// picked — the colleague list loads for it.
 		expect(screen.queryByRole('combobox')).toBeNull();
 		await waitFor(() =>
-			expect(apiGetTenantConsultantList).toHaveBeenCalled()
+			expect(loadInternalChatColleagues).toHaveBeenCalled()
 		);
 	});
 
 	it('clears selected colleagues when a settings refresh changes the agency', async () => {
-		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
-			{ consultantId: 'p1', firstName: 'Pat', lastName: 'One' }
-		] as any);
+		vi.mocked(loadInternalChatColleagues).mockResolvedValue([
+			{ consultantId: 'p1', displayName: 'Pat One', agencies: [] }
+		]);
 		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
 			agencyResponse(1, {
 				featureInternalGroupChatEnabled: true,
@@ -480,7 +480,7 @@ describe('CreateConversationView – formats the Beratungsstelle has switched of
 			await screen.findByRole('option', { name: 'Agency One' })
 		);
 		await waitFor(() =>
-			expect(apiGetTenantConsultantList).toHaveBeenCalled()
+			expect(loadInternalChatColleagues).toHaveBeenCalled()
 		);
 		fireEvent.click(
 			screen.getByRole('button', {

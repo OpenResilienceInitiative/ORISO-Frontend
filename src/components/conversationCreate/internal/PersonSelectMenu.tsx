@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ReactComponent as CheckIcon } from '../../../resources/img/icons/check.svg';
 import { ReactComponent as CloseIcon } from '../../../resources/img/icons/close.svg';
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import { MenuPortal, useAnchoredMenuLayout } from '../anchoredMenu';
+import { OrisoTextField } from '../../form/OrisoTextField';
 import { resolveListboxKey } from '../listboxKeyboard';
 
 /**
@@ -26,6 +27,8 @@ export interface PersonOption {
 
 interface PersonSelectMenuProps {
 	options: PersonOption[];
+	searchLabel?: string;
+	noMatchesLabel?: string;
 	onToggle: (id: string) => void;
 	/** The element the menu is anchored to (the split button). */
 	anchorRef: React.RefObject<HTMLElement>;
@@ -48,6 +51,8 @@ const PREFERRED_MENU_HEIGHT = 420;
 
 export const PersonSelectMenu = ({
 	options,
+	searchLabel,
+	noMatchesLabel,
 	onToggle,
 	anchorRef,
 	onClose,
@@ -59,12 +64,23 @@ export const PersonSelectMenu = ({
 	onHelp
 }: PersonSelectMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
-	const isEmpty = options.length === 0;
-	const showHelp = isEmpty && Boolean(helpLabel && onHelp);
+	const searchRef = useRef<HTMLInputElement | null>(null);
+	const [query, setQuery] = useState('');
+	const search = query.trim().toLocaleLowerCase();
+	const visibleOptions = search
+		? options.filter(({ label }) =>
+				label.toLocaleLowerCase().includes(search)
+			)
+		: options;
+	const isEmpty = visibleOptions.length === 0;
+	const emptyMessage = search ? noMatchesLabel : emptyLabel;
+	const showHelp = !search && isEmpty && Boolean(helpLabel && onHelp);
 	const { direction, style } = useAnchoredMenuLayout(
 		anchorRef,
 		PREFERRED_MENU_HEIGHT,
-		isEmpty ? 1 + (showHelp ? 1 : 0) : options.length
+		Math.max(1, visibleOptions.length) +
+			Number(showHelp) +
+			(searchLabel && options.length > 0 ? 2 : 0)
 	);
 
 	useEffect(() => {
@@ -93,17 +109,15 @@ export const PersonSelectMenu = ({
 			) ?? []
 		);
 
-	// Move focus into the popup on open so the option list is operable by
-	// keyboard (WCAG listbox contract). The help command is not an option.
+	// The portal starts hidden until its anchor has been measured.
 	useEffect(() => {
-		const firstOption = optionButtons()[0];
-		if (firstOption) {
-			firstOption.focus();
-			return;
+		if (style.visibility !== 'hidden') {
+			const target =
+				searchRef.current ??
+				menuRef.current?.querySelector<HTMLButtonElement>('button');
+			target?.focus();
 		}
-		menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [style.visibility]);
 
 	const returnFocusToAnchor = () => {
 		const anchor = anchorRef.current;
@@ -111,6 +125,14 @@ export const PersonSelectMenu = ({
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		if (
+			event.target === searchRef.current &&
+			event.key !== 'Escape' &&
+			event.key !== 'ArrowDown' &&
+			event.key !== 'ArrowUp'
+		) {
+			return;
+		}
 		const buttons = optionButtons();
 		const currentIndex = buttons.findIndex(
 			(button) => button === document.activeElement
@@ -140,12 +162,25 @@ export const PersonSelectMenu = ({
 				style={style}
 				onKeyDown={handleKeyDown}
 			>
+				{searchLabel && options.length > 0 && (
+					<div className="personSelectMenu__search">
+						<OrisoTextField
+							inputRef={searchRef}
+							type="search"
+							size="small"
+							fullWidth
+							label={searchLabel}
+							value={query}
+							onChange={(event) => setQuery(event.target.value)}
+						/>
+					</div>
+				)}
 				<div
 					role="listbox"
 					aria-multiselectable
 					aria-labelledby={labelledBy}
 				>
-					{isEmpty && emptyLabel && (
+					{isEmpty && emptyMessage && (
 						<div
 							role="option"
 							aria-selected={false}
@@ -153,11 +188,11 @@ export const PersonSelectMenu = ({
 							className="personSelectMenu__row personSelectMenu__row--empty"
 						>
 							<span className="personSelectMenu__name">
-								{emptyLabel}
+								{emptyMessage}
 							</span>
 						</div>
 					)}
-					{options.map((option) => {
+					{visibleOptions.map((option) => {
 						const stateClass = option.vacated
 							? 'personSelectMenu__row--vacated'
 							: option.selected
