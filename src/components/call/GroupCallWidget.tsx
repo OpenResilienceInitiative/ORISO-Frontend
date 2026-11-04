@@ -17,6 +17,17 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
+import {
+	callStartFor,
+	deliverJoinMedia,
+	devicesForCall,
+	type JoinMedia
+} from './prejoin/callPrejoin';
+import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
+import {
+	NOTIFICATION_TYPE_WARNING,
+	NotificationsContext
+} from '../../globalState/provider/NotificationsProvider';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -216,14 +227,38 @@ export const GroupCallWidget: React.FC = () => {
 		[isConsultantUser, callKnocks.people.length, shareLinkKnock.knock]
 	);
 
+	/*
+	 * #2016 / ElementCall#116: what the person chose in the device check
+	 * before joining (the call message, or the circle's pre-lobby). Held for
+	 * the whole call and put on the widget URL, so the call starts with it:
+	 * a camera switched off there is never captured, and the microphone and
+	 * camera picked there are used (by label — the call runs on another
+	 * origin, where the device ids differ).
+	 */
+	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
+	const joinMediaIsVideo = !!callData?.isVideo;
+	const joinMedia = useJoinMediaForCall(
+		joinMediaRoom,
+		shouldPrepareWidget && callData
+			? `${callData.callId ?? ''}|${callRoomId ?? ''}`
+			: null
+	);
+	const callStart = useMemo(
+		() => callStartFor(joinMediaIsVideo, joinMedia),
+		[joinMediaIsVideo, joinMedia]
+	);
+
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
+			// Let the guest confirm devices in the iframe before it publishes media.
+			skipLobby: !callData?.sharedCallGuest,
 			onClose: closeCallSurface,
 			knockState,
-			onSetKnock: shareLinkKnock.setKnock
+			onSetKnock: shareLinkKnock.setKnock,
+			callStart
 		}
 	);
 
@@ -281,6 +316,42 @@ export const GroupCallWidget: React.FC = () => {
 	 * Becoming ready therefore forces one more publish.
 	 */
 	const lastReady = useRef(widget.ready);
+
+	/*
+	 * The same on/off choice once more when the call is ready, through
+	 * `io.element.device_mute`: for an Element Call image that does not yet
+	 * read the start parameters (ElementCall#116). A no-op for one that does.
+	 * Once per call, counted as done only when the call confirmed it. Such an
+	 * image starts with both on, so one that never confirms is said out loud.
+	 */
+	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	const notifications = useContext(NotificationsContext);
+	const warnJoinMedia = useRef<() => void>(() => undefined);
+	warnJoinMedia.current = () =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title: t('knockWait.ready.notApplied'),
+			text: '',
+			closeable: true,
+			timeout: 10_000
+		});
+	const switchedOnReady = useRef<JoinMedia | null>(null);
+	useEffect(() => {
+		if (!widgetReady || !joinMedia) return undefined;
+		if (switchedOnReady.current === joinMedia) return undefined;
+		const media = devicesForCall(joinMediaIsVideo, joinMedia);
+		if (!media) return undefined;
+		let stopped = false;
+		void deliverJoinMedia(setWidgetDevices, media, {
+			stopped: () => stopped
+		}).then((delivered) => {
+			if (delivered) switchedOnReady.current = joinMedia;
+			else if (!stopped) warnJoinMedia.current();
+		});
+		return () => {
+			stopped = true;
+		};
+	}, [widgetReady, joinMedia, joinMediaIsVideo, setWidgetDevices]);
 
 	useEffect(() => {
 		// Recorded before the guard, so that closing the surface — which sets
@@ -661,7 +732,9 @@ export const GroupCallWidget: React.FC = () => {
 	 * and avatars from the session list instead of a fixed "G" (#780).
 	 * Unknown callers keep the generic line.
 	 */
-	const conversationRoomId = callData?.signalRoomId || callData?.roomId;
+	const conversationRoomId = callData?.sharedCallGuest
+		? undefined
+		: callData?.signalRoomId || callData?.roomId;
 	const waitingRoomId = waitingCall?.signalRoomId || waitingCall?.roomId;
 	useEffect(() => {
 		setConversation(null);

@@ -17,6 +17,7 @@ export type RegistrationStep = {
 		/* Only the account-data step reads these, and only when an invitation
 		   link brought the person here. Every other step ignores them. */
 		entry?: 'registration' | 'link';
+		conversationType?: 'AGENCY_COUNSELLING' | 'SELF_HELP';
 		temporary?: boolean;
 	}>;
 	name: string;

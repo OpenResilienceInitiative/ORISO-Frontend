@@ -53,7 +53,42 @@ export interface ElementCallWidgetOptions {
 	 * setting; a rejection tells the call to flip back.
 	 */
 	onSetKnock?: (knock: boolean) => Promise<boolean>;
+	/**
+	 * How the call starts, from the pre-join check (ElementCall#116). On the
+	 * widget URL, so it holds before the call creates any track. Keep it the
+	 * same for the whole call: the URL is rebuilt from it on a token refresh,
+	 * and a different URL navigates the running call.
+	 */
+	callStart?: ElementCallStart | null;
 }
+
+/**
+ * Element Call's start parameters for the pre-join choice
+ * (ORISO-ElementCall#116, `docs/url-params.md` there). Left out, the call
+ * starts as `callIntent` implies, on the browser's default devices.
+ */
+export interface ElementCallStart {
+	/** `audioEnabled`: microphone on or off. */
+	audioEnabled?: boolean;
+	/** `videoEnabled`: camera on or off; `false` never captures the camera. */
+	videoEnabled?: boolean;
+	/** `audioInput`: the microphone, by label. Unknown: default + notice. */
+	audioInput?: string;
+	/** `videoInput`: the camera, by label. Two alike: the first. */
+	videoInput?: string;
+}
+
+/** The start parameters as URL entries, in a stable order. */
+const callStartParams = (start: ElementCallStart | null | undefined) => {
+	const params: Record<string, string> = {};
+	if (start?.audioEnabled !== undefined)
+		params.audioEnabled = String(start.audioEnabled);
+	if (start?.videoEnabled !== undefined)
+		params.videoEnabled = String(start.videoEnabled);
+	if (start?.audioInput) params.audioInput = start.audioInput;
+	if (start?.videoInput) params.videoInput = start.videoInput;
+	return params;
+};
 
 /** ORISO's own widget actions, as the fork names them (ORISO-ElementCall#109, `src/widget.ts`). */
 export const ORISO_WIDGET_ACTIONS = {
@@ -88,7 +123,9 @@ export interface ElementCallWidget {
 	/** Microphone and camera as the call last reported them; `null` before. */
 	devices: CallDeviceState | null;
 	/** Asks the call to switch the microphone or camera (`io.element.device_mute`). */
-	setDevices: (change: Partial<CallDeviceState>) => Promise<void>;
+	setDevices: (
+		change: Partial<CallDeviceState>
+	) => Promise<CallDeviceState | null>;
 }
 
 /** The call's own report of its devices, as Element Call sends it. */
@@ -164,9 +201,14 @@ export const useElementCallWidget = (
 		onClose,
 		onAlwaysOnScreenChange,
 		knockState = null,
-		onSetKnock
+		onSetKnock,
+		callStart = null
 	}: ElementCallWidgetOptions
 ): ElementCallWidget => {
+	// By value: an equal choice in a new object must not rebuild the URL.
+	const callStartQuery = new URLSearchParams(
+		callStartParams(callStart)
+	).toString();
 	const [error, setError] = useState<Error | null>(null);
 	const [url, setUrl] = useState<string | null>(null);
 	const [ready, setReady] = useState(false);
@@ -262,7 +304,10 @@ export const useElementCallWidget = (
 						? { orisoAtmosphere: appConfig.calls.atmosphere }
 						: {}),
 					intent: 'start_call',
-					callIntent: isVideo ? 'video' : 'audio'
+					callIntent: isVideo ? 'video' : 'audio',
+					// The pre-join choice (ElementCall#116): on/off and the
+					// devices by label, read before any track exists.
+					...Object.fromEntries(new URLSearchParams(callStartQuery))
 				}).toString()}`;
 
 				setUrl(elementCallUrl.toString());
@@ -275,7 +320,7 @@ export const useElementCallWidget = (
 		return () => {
 			cancelled = true;
 		};
-	}, [client, roomId, isVideo, skipLobby]);
+	}, [client, roomId, isVideo, skipLobby, callStartQuery]);
 
 	const attachIframe = useCallback(
 		(iframe: HTMLIFrameElement | null) => {
@@ -514,14 +559,17 @@ export const useElementCallWidget = (
 	}, []);
 
 	const setDevices = useCallback(
-		async (change: Partial<CallDeviceState>): Promise<void> => {
+		async (
+			change: Partial<CallDeviceState>
+		): Promise<CallDeviceState | null> => {
 			const api = apiRef.current;
-			if (!api) return;
+			if (!api) return null;
 			const reply = await api.transport.send('io.element.device_mute', {
 				...change
 			});
 			const reported = deviceStateOf(reply);
 			if (reported && apiRef.current === api) setDeviceState(reported);
+			return reported;
 		},
 		[]
 	);

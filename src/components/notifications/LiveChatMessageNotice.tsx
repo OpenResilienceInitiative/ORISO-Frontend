@@ -6,6 +6,7 @@ import {
 	NotificationsContext,
 	NotificationType
 } from '../../globalState/provider/NotificationsProvider';
+import { pathSegments } from '../session/notificationActiveView';
 import { ReactComponent as LiveChatIcon } from '../../resources/img/icons/modality-chat.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import './notification.styles';
@@ -55,9 +56,6 @@ export interface LiveChatFeedEvent {
 		mentioned?: boolean | null;
 	};
 }
-
-const pathSegments = (path: string) =>
-	path.split(/[?#]/)[0].split('/').filter(Boolean).map(decodeURIComponent);
 
 /**
  * Whether the counsellor is looking at this chat right now: its session view

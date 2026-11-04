@@ -161,7 +161,8 @@ describe('live-chat pop-up rules', () => {
 		['/sessions/consultant/sessionView/!room42/42', false, false],
 		['/sessions/consultant/sessionView/!room43/43', true, false],
 		['/sessions/consultant/sessionView/!room4/142', true, false],
-		['/sessions/consultant/sessionPreview/!room42/42', true, false]
+		['/sessions/consultant/sessionPreview/!room42/42', true, false],
+		['/sessions/consultant/sessionView/100%', true, false]
 	])('%s visible=%s → open=%s', (pathname, visible, open) => {
 		expect(isLiveChatOpen(event, pathname, visible)).toBe(open);
 	});
