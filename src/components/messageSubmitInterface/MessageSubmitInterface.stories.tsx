@@ -587,8 +587,8 @@ export const ReplyingToMessage: Story = {
 		<ComposerShell
 			replyTo={{
 				eventId: '$orig:matrix.example.org',
-				author: 'Maria K.',
-				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter.'
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter, weil er auf keinen meiner Briefe antwortet und nun auch noch die Kaution einbehalten möchte.'
 			}}
 			onCancelReply={() => {}}
 		/>
@@ -608,26 +608,85 @@ export const ReplyingToMessage: Story = {
 			?.querySelector('.textarea__input') as HTMLElement;
 		const editorRect = editor.getBoundingClientRect();
 
-		// The bar hugs the quote instead of spanning the composer — it should
-		// read like the bubble it quotes, not like a full-width banner.
-		expect(preview.getBoundingClientRect().width).toBeLessThan(
-			editorRect.width * 0.8
-		);
-		// …starting on the editor's left edge, not outside it.
+		// Figma "Reply Bar_v2": exactly as wide as the editor, one 32px line.
 		expect(Math.round(preview.getBoundingClientRect().left)).toBe(
 			Math.round(editorRect.left)
 		);
+		expect(Math.round(preview.getBoundingClientRect().right)).toBe(
+			Math.round(editorRect.right)
+		);
+		expect(Math.round(preview.getBoundingClientRect().height)).toBe(32);
 
-		// A very long quote grows to the editor's width and stops there.
+		// Inside the card, above the editor, never overlapping it.
+		expect(preview.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			editorRect.top
+		);
+
+		// A long quote ends in an ellipsis instead of growing the bar.
 		const text = preview.querySelector(
 			'.messageSubmit__replyPreviewText'
 		) as HTMLElement;
-		const original = text.textContent;
-		text.textContent = 'x'.repeat(600);
+		expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+		expect(getComputedStyle(text).whiteSpace).toBe('nowrap');
+
+		// The X is a real icon and takes the reply back.
 		expect(
-			Math.round(preview.getBoundingClientRect().right)
-		).toBeLessThanOrEqual(Math.round(editorRect.right));
-		text.textContent = original;
+			preview.querySelector('.messageSubmit__replyPreviewCancel svg')
+		).toBeTruthy();
+	}
+};
+
+/**
+ * Side panel open: the main composer is flush, and a reply still needs room.
+ * The flush field fills the shell, so without its own rule the bar would sit
+ * on top of the first line of text.
+ */
+export const ReplyingFlush: Story = {
+	name: 'Replying in a flush composer (bar above the field)',
+	globals: desktop1440Globals,
+	render: () => (
+		<ComposerShell
+			flushCorner="bottom-left"
+			replyTo={{
+				eventId: '$orig:matrix.example.org',
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'.messageSubmit__replyPreview'
+			) as HTMLElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		const form = bar.closest('form') as HTMLElement;
+
+		// The card animates between heights, so measure everything together.
+		await waitFor(() => {
+			const barRect = bar.getBoundingClientRect();
+			const editorRect = (
+				form.querySelector('.textarea__input') as HTMLElement
+			).getBoundingClientRect();
+			const cardRect = (
+				form.querySelector(
+					'.textarea__wrapper-send-message'
+				) as HTMLElement
+			).getBoundingClientRect();
+			expect(Math.round(barRect.bottom)).toBeLessThanOrEqual(
+				Math.round(editorRect.top)
+			);
+			// The field keeps its one-line flush height (MIN_HEIGHT_FLUSH_DESKTOP).
+			expect(Math.round(editorRect.height)).toBe(106);
+			expect(Math.round(cardRect.height)).toBe(158);
+			expect(Math.round(barRect.left)).toBe(Math.round(editorRect.left));
+			expect(Math.round(barRect.right)).toBe(
+				Math.round(editorRect.right)
+			);
+		});
 	}
 };
 
@@ -1478,7 +1537,7 @@ export const VoiceNoteIdle: Story = {
 };
 
 export const VoiceNoteRecording: Story = {
-	name: 'Voice note — recording (Cancel, Stop; Send disabled)',
+	name: 'Voice note — recording (Stop, Cancel; Send disabled)',
 	beforeEach: installFakeMicrophone,
 	render: () => <ComposerShell />,
 	play: async ({ canvasElement }) => {
@@ -1522,6 +1581,14 @@ export const VoiceNoteReview: Story = {
 		});
 		discard.focus();
 		expect(document.activeElement).toBe(discard);
+		discard.blur();
+
+		// The field keeps all four edges in review, and no extra red line.
+		const field = canvasElement.querySelector(
+			'.textarea__input'
+		) as HTMLElement;
+		expect(getComputedStyle(field).borderBottomStyle).toBe('solid');
+		expect(getComputedStyle(field, '::after').content).toBe('none');
 	}
 };
 
@@ -1561,9 +1628,8 @@ export const VoiceNoteReviewMobile: Story = {
 	render: () => <ComposerShell />,
 	play: async ({ canvasElement }) => {
 		const canvas = await recordVoiceNote(canvasElement);
-		const review = canvasElement.querySelector<HTMLElement>(
-			'.textarea__attachmentModeCard--voice'
-		);
+		const review =
+			canvasElement.querySelector<HTMLElement>('.voiceNoteRow');
 		const editor =
 			canvasElement.querySelector<HTMLElement>('.textarea__input');
 		expect(review).toBeTruthy();
@@ -1581,5 +1647,179 @@ export const VoiceNoteReviewMobile: Story = {
 				name: /Sprachnachricht verwerfen|Discard voice message/
 			})
 		).toBeTruthy();
+	}
+};
+
+const ReplyExperienceShell = () => {
+	const [replying, setReplying] = React.useState(true);
+	return (
+		<>
+			<ComposerShell
+				replyTo={
+					replying
+						? {
+								eventId: '$orig:matrix.example.org',
+								author: 'Kanguru Mika 554',
+								text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter, weil er auf keinen meiner Briefe antwortet und nun auch noch die Kaution einbehalten möchte.'
+							}
+						: null
+				}
+				onCancelReply={() => setReplying(false)}
+			/>
+			{!replying && (
+				<button type="button" onClick={() => setReplying(true)}>
+					Wieder antworten
+				</button>
+			)}
+		</>
+	);
+};
+
+/** X nimmt die Antwort zurück, darunter wieder der normale Composer. */
+export const ReplyExperience: Story = {
+	name: 'Erlebnis — Antworten und zurücknehmen',
+	render: () => <ReplyExperienceShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Antwort verwerfen|discard/i
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.messageSubmit__replyPreview')
+			).toBeNull()
+		);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Wieder antworten' })
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.messageSubmit__replyPreview')
+			).toBeTruthy()
+		);
+	}
+};
+
+/** Auf dem Telefon liegt die Leiste über der Karte, der Composer bleibt unverändert. */
+export const ReplyExperienceMobile: Story = {
+	name: 'Erlebnis — Antworten, Telefon',
+	render: () => <ReplyExperienceShell />,
+	globals: phone390Globals
+};
+
+/** Zu große Datei: dieselbe Meldung wie im Chat, jetzt als Fehler-Snackbar über dem Composer. */
+export const AttachmentErrorSnackbar: Story = {
+	name: 'Erlebnis — Datei zu groß, Fehler-Snackbar',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const input = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'.textarea__attachmentInput'
+			) as HTMLInputElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		const tooBig = new File([new ArrayBuffer(10_000_001)], 'scan.pdf', {
+			type: 'application/pdf'
+		});
+		await userEvent.upload(input, tooBig);
+		const alert = await canvas.findByRole('alert');
+		expect(alert.closest('.messageSubmitInfoDock')).toBeTruthy();
+		await userEvent.click(
+			within(alert).getByRole('button', { name: /Schließen|Close/ })
+		);
+		await waitFor(() => expect(canvas.queryByRole('alert')).toBeNull());
+		// Leave it open for whoever looks at the story.
+		await userEvent.upload(input, tooBig);
+		await canvas.findByRole('alert');
+	}
+};
+
+/** The @ button opens the list in the real composer, ready to click through. */
+export const MentionExperience: Story = {
+	name: 'Erlebnis — @ im echten Composer',
+	render: () => <ComposerShell />,
+	parameters: {
+		a11y: {
+			// The list opens at the caret, so it lies over the toolbar until it
+			// closes. Axe reads that as a target too small to hit.
+			context: { exclude: ['.composerToolbar__button--scrollToNewest'] }
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /erwähnen|mention/i })
+		);
+		await waitFor(() =>
+			expect(document.querySelector('.mentionList')).toBeTruthy()
+		);
+		// Speaks from the @: right above the caret, its corner square there.
+		const list = document.querySelector('.mentionList') as HTMLElement;
+		const paragraph = canvasElement.querySelector(
+			'.ProseMirror p'
+		) as HTMLElement;
+		await waitFor(() => {
+			const gap =
+				paragraph.getBoundingClientRect().top -
+				list.getBoundingClientRect().bottom;
+			expect(gap).toBeGreaterThanOrEqual(0);
+			expect(gap).toBeLessThan(12);
+			expect(getComputedStyle(list).borderBottomLeftRadius).toBe('0px');
+		});
+	}
+};
+
+/** Several people: tick them, search in between, click beside the list. */
+export const MentionSeveralPeople: Story = {
+	name: 'Erlebnis — @ mehrere Personen auswählen',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', { name: /erwähnen|mention/i })
+		);
+		const body = within(document.body);
+		const boxes = await body.findAllByRole('checkbox');
+		expect(boxes.length).toBeGreaterThan(1);
+
+		await userEvent.click(boxes[0]);
+		await userEvent.click(body.getAllByRole('checkbox')[1]);
+
+		// Still open, so a second person can be ticked.
+		expect(document.querySelector('.mentionList')).toBeTruthy();
+		expect(document.querySelector('.mentionList__hint')).toBeTruthy();
+		expect(
+			body
+				.getAllByRole('checkbox')
+				.filter((box) => (box as HTMLInputElement).checked)
+		).toHaveLength(2);
+
+		// A click into nothing inserts both and closes the list.
+		await userEvent.click(document.body);
+		await waitFor(() =>
+			expect(document.querySelector('.mentionList')).toBeNull()
+		);
+		expect(
+			canvasElement.querySelectorAll('.ProseMirror .messageItem__mention')
+		).toHaveLength(2);
+	}
+};
+
+/** The T-pen opens every format in the real composer, ready to click through. */
+export const FormatsExperience: Story = {
+	name: 'Erlebnis — Formate im echten Composer',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Zurück zu allen Werkzeugen|all tools/i
+			})
+		);
+		await canvas.findByRole('button', { name: 'Textstil' });
 	}
 };

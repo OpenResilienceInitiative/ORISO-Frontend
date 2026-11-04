@@ -200,6 +200,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Check and open",
+			"checking": "Checking for viruses …",
+			"checkingImage": "Checking the image …",
+			"checkVirus": "Virus scan",
+			"checkImage": "Image analysis: safe and within the guidelines?",
+			"decrypt": "Decrypt",
+			"decrypting": "Decrypting …",
+			"encryptedHint": "End-to-end encrypted",
+			"loadFailed": "The file could not be loaded",
+			"retry": "Try again"
+		},
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
@@ -1983,6 +1995,8 @@
 			}
 		},
 		"mention": {
+			"check": "Also select {{name}}",
+			"checked": "Selected: {{value}}. Click beside the list to insert.",
 			"notInChat": "not in chat",
 			"empty": "No one found",
 			"unavailable": "The list could not be loaded",
@@ -5072,6 +5086,7 @@
 		"label": "Voice message",
 		"play": "Play voice message",
 		"pause": "Pause voice message",
+		"loading": "Loading voice message",
 		"timeline": "Timeline",
 		"jumpTo": "Jump to {{time}}",
 		"aria": "Voice message, {{duration}}, play",

@@ -72,22 +72,22 @@
 		align-items: center;
 		justify-content: center;
 		gap: 2px;
-		width: 38px;
-		min-width: 38px;
-		height: 32px;
+		width: 40px;
+		min-width: 40px;
+		height: 40px;
 		padding: 0;
 		margin: 0;
 		border: 0;
 		border-radius: 12px;
 		background: transparent;
-		color: var(--m3-secondary, #4c555f);
-		font-size: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 20px;
 		cursor: pointer;
 		transition: background-color 120ms ease;
 
 		svg {
-			width: 16px;
-			height: 16px;
+			width: 20px;
+			height: 20px;
 		}
 
 		&:hover {
@@ -121,10 +121,10 @@
 	}
 
 	// Compact action bar (#1141): every icon uses the larger hit area,
-	// 20px glyph, and primary-tint hover. The expanded formatting toolbar
-	// keeps the Figma 38×32 / 16px spec above.
+	// 24px glyph, and primary-tint hover. The expanded formatting toolbar
+	// stays one step smaller, 40×40 / 20px above.
 	&--default {
-		min-height: 44px;
+		min-height: 48px;
 
 		// T23: no reserved space in front of the first arrow — the phone's
 		// back arrow renders nothing on the desktop, so the row starts at
@@ -132,13 +132,14 @@
 		padding-left: 4px;
 
 		.composerToolbar__button {
-			width: 40px;
-			min-width: 40px;
-			height: 36px;
+			width: 44px;
+			min-width: 44px;
+			height: 44px;
+			font-size: 24px;
 
 			> svg {
-				width: 20px;
-				height: 20px;
+				width: 24px;
+				height: 24px;
 			}
 
 			&:hover {

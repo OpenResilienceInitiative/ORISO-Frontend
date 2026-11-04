@@ -203,6 +203,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Prüfen und öffnen",
+			"checking": "Wird auf Viren geprüft …",
+			"checkingImage": "Bild wird geprüft …",
+			"checkVirus": "Virenprüfung",
+			"checkImage": "Bildanalyse: sicher und ohne Richtlinienverstoß?",
+			"decrypt": "Entschlüsseln",
+			"decrypting": "Wird entschlüsselt …",
+			"encryptedHint": "Ende-zu-Ende-verschlüsselt",
+			"loadFailed": "Die Datei konnte nicht geladen werden",
+			"retry": "Erneut versuchen"
+		},
 		"mediaCheck": {
 			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
 			"reveal": "Bild anzeigen",
@@ -1998,6 +2010,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} zusätzlich auswählen",
+			"checked": "Ausgewählt: {{value}}. Daneben klicken fügt ein.",
 			"notInChat": "nicht im Chat",
 			"empty": "Niemand gefunden",
 			"unavailable": "Liste konnte nicht geladen werden",
@@ -5124,6 +5138,7 @@
 		"label": "Sprachnachricht",
 		"play": "Sprachnachricht abspielen",
 		"pause": "Sprachnachricht anhalten",
+		"loading": "Sprachnachricht wird geladen",
 		"timeline": "Zeitachse",
 		"jumpTo": "Zu {{time}} springen",
 		"aria": "Sprachnachricht, {{duration}}, abspielen",
