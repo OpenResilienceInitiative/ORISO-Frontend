@@ -36,6 +36,7 @@ const RAIL_MARK_COPY: SessionRailMarkLabels = {
 	videoCall: 'Videoanruf',
 	audioCall: 'Audioanruf',
 	directLink: 'Direktlink',
+	appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 	unread: 'Ungelesen'
 };
 

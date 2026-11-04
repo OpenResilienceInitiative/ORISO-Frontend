@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "ተሳተፍቲ ይጽዓኑ ኣለዉ …",
 		"unavailable": "ተሳተፍቲ ክጽዓኑ ኣይከኣሉን።",
-		"empty": "ተሳተፍቲ የለዉን።"
+		"empty": "ተሳተፍቲ የለዉን።",
+		"crowd": "{{count}} ተሳተፍቲ"
 	},
 	"menuEffects": {
 		"title": "ኣቀራርባ ምናሌ",
@@ -4512,7 +4513,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "ክቢ ዝርርብ",
+				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ",
 				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
@@ -4528,13 +4529,20 @@
 			"ariaLabel": "ስፍሓት ዝርዝር ዝርርባት ቀይር፡ ንምቕያር ስሓብ፡ ንምዕጻው ወይ ንምኽፋት ተጻዒንካ ሓዝ ወይ ክልተ ግዜ ጠውቕ፡ ናይ ላዕሊ/ታሕቲ መልክዕ ንዝርዝር የንቀሳቕስ።",
 			"expand": "ዝርዝር ምኽሪ ኣርእይ",
 			"collapse": "ዝርዝር ምኽሪ ዕጸው",
-			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።"
+			"scrollAriaLabel": "ነቲ ዝርዝር ንምጥቅላል ጎተት።",
+			"futureAriaLabel": "ዝመጽእ ቆጸራታት፦ ንምርኣዮም ንታሕቲ ጎተት፣ ላዕሊን ታሕትን ኣብ መንጎ ደረጃታት የሰጋግሩ።"
 		},
 		"rail": {
 			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
 			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ",
 			"openEnquiries": "{{count}} ክፉታት ሕቶታት",
 			"openEnquiries_one": "{{count}} ክፉት ሕቶ"
+		},
+		"timeline": {
+			"now": "ሕጂ",
+			"running": "ይካየድ ኣሎ",
+			"upcoming": "መጻኢ ቆጸራታት",
+			"nextAppointment": "ቆጸራ: {{date}}"
 		}
 	},
 	"statusOverlay": {

@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants."
+		"empty": "No participants.",
+		"crowd": "{{count}} participants"
 	},
 	"menuEffects": {
 		"title": "Menu appearance",
@@ -4364,7 +4365,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group",
+				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling",
 				"directLinkVideo": "Video call",
@@ -4494,13 +4495,20 @@
 			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"expand": "Expand consultations list",
 			"collapse": "Collapse consultations list to enlarge the chat",
-			"scrollAriaLabel": "Drag to scroll the list."
+			"scrollAriaLabel": "Drag to scroll the list.",
+			"futureAriaLabel": "Upcoming appointments: drag down to show them, Up and Down move between stops."
 		},
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message",
 			"openEnquiries": "{{count}} open requests",
 			"openEnquiries_one": "{{count}} open request"
+		},
+		"timeline": {
+			"now": "Now",
+			"running": "in progress",
+			"upcoming": "Upcoming appointments",
+			"nextAppointment": "Next appointment: {{date}}"
 		}
 	},
 	"statusOverlay": {

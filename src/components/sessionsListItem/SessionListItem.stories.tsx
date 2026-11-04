@@ -2,7 +2,6 @@ import * as React from 'react';
 import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import {
 	ActiveSessionContext,
@@ -31,6 +30,8 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
 import { SessionListItemComponent } from './SessionListItemComponent';
+import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
+import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import './sessionsListItem.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
@@ -390,91 +391,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-/**
- * Unread axis (#1147): read state is derived from the Matrix room, not from
- * the DTO's hard-coded `messagesRead`. Seed the registry so the runtime
- * stories pin both visual states.
- */
-const seedMatrixRoom = (
-	unreadCount: number,
-	count = 3,
-	delayed = false,
-	failed = false
-) => {
-	let members = Array.from({ length: count }, (_, index) => ({
-		userId: `@group-person-${index}:matrix.example.org`,
-		name: `Teilnehmende ${index + 1}`,
-		membership: 'join'
-	}));
-	const rooms = new Map<string, ReturnType<typeof makeRoom>>();
-	const messages = new Map<string, ReturnType<typeof previewEvent>[]>();
-	function previewEvent(body: string) {
-		const content = { msgtype: 'm.text', body };
-		return {
-			getType: () => 'm.room.message',
-			getContent: () => content,
-			getClearContent: () => content,
-			getSender: () => '@group-person-0:matrix.example.org',
-			getTs: () => 1_773_736_500_000
-		};
-	}
-	const listeners = new Map<string, Set<(...args: any[]) => void>>();
-	let finish: () => void = () => {};
-	const hydration = delayed
-		? new Promise<boolean>((resolve) => {
-				finish = () => resolve(true);
-			})
-		: Promise.resolve(true);
-	function makeRoom(roomId: string) {
-		return {
-			roomId,
-			loadMembersIfNeeded: () =>
-				failed
-					? Promise.reject(new Error('Membership unavailable'))
-					: hydration,
-			getJoinedMembers: () => members,
-			getUnreadNotificationCount: () => unreadCount
-		};
-	}
-	const removeListener = (name: string, listener: (...args: any[]) => void) =>
-		listeners.get(name)?.delete(listener);
-	const client = {
-		getRoom: (roomId: string) => {
-			if (!rooms.has(roomId)) rooms.set(roomId, makeRoom(roomId));
-			return rooms.get(roomId);
-		},
-		getUserId: () => '@consultant-storybook:matrix.example.org',
-		on: (name: string, listener: (...args: any[]) => void) => {
-			if (!listeners.has(name)) listeners.set(name, new Set());
-			listeners.get(name)!.add(listener);
-		},
-		off: removeListener,
-		removeListener
-	};
-	setMatrixClientServiceRef({
-		getClient: () => client,
-		getRoom: client.getRoom,
-		getRoomMessages: (roomId: string) => messages.get(roomId) || []
-	} as any);
-	return {
-		finish,
-		setMessage: (roomId: string, body: string) =>
-			messages.set(roomId, [previewEvent(body)]),
-		setCount: (next: number) => {
-			members = Array.from({ length: next }, (_, index) => ({
-				userId: `@group-person-${index}:matrix.example.org`,
-				name: `Teilnehmende ${index + 1}`,
-				membership: 'join'
-			}));
-			rooms.forEach((room) =>
-				listeners
-					.get('RoomState.members')
-					?.forEach((listener) => listener({}, room))
-			);
-		}
-	};
-};
 
 export const RuntimeComponent: Story = {
 	render: () => {
@@ -1141,8 +1057,8 @@ const expectCardLayout = async (
 		await expect(Math.round(name.top)).toBe(Math.round(avatar.top));
 		await expect(Math.round(name.height)).toBe(CARD_NAME);
 
-		// Mail: its word ends under the pill's right edge, centred on the
-		// third line, 16 px above the card's bottom edge.
+		// Mail: its word ends under the pill's right edge, centred on the third
+		// line; the 32 px icon stands 4 px past the 24 px band above the edge.
 		const clip = at('.sessionCard__flow');
 		const mail = at(
 			'.sessionCard__trailing .sessionsListItem__consultingTypeIcon--nearby'
@@ -1162,7 +1078,7 @@ const expectCardLayout = async (
 			Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
 		).toBeLessThanOrEqual(1);
 		await expect(Math.round(box.bottom - CARD_BORDER - mail.bottom)).toBe(
-			CARD_INSET
+			CARD_INSET - 4
 		);
 
 		// The left edge: a steady diagonal, never back to the card's edge.
@@ -1352,6 +1268,7 @@ export const AskerSearchingRow: Story = {
  * ------------------------------------------------------------------ */
 
 const PRIMARY = 'rgb(165, 0, 10)';
+const KIND_GREY = 'rgb(77, 86, 96)'; // --m3-secondary: Mail, Kreis, Interna
 const PRIMARY_CONTAINER = 'rgb(204, 30, 28)';
 const ON_PRIMARY_CONTAINER = 'rgb(255, 226, 222)';
 
@@ -1392,14 +1309,15 @@ const expectGroupRow = async (
 			chip
 		);
 	}
+	// Up to four faces; above that one field with the count (Figma 316-16775).
 	await waitFor(() =>
 		expect(
 			row.querySelectorAll('[data-cy="participant-avatar"]')
-		).toHaveLength(Math.min(count, 2))
+		).toHaveLength(count > 3 ? 0 : count)
 	);
-	const overflow = row.querySelector('[data-cy="participant-overflow"]');
-	if (count > 2) await expect(overflow?.textContent).toBe(`+${count - 2}`);
-	else await expect(overflow).toBeNull();
+	const crowd = row.querySelector('[data-cy="group-card-crowd"]');
+	if (count > 3) await expect(crowd?.textContent).toBe(`${count}`);
+	else await expect(crowd).toBeNull();
 	await expect(
 		row.querySelector('[data-user-id^="placeholder-"]')
 	).toBeNull();
@@ -1562,7 +1480,7 @@ export const ConsultantSelected: Story = {
 			getComputedStyle(
 				part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 			).color
-		).toBe(PRIMARY);
+		).toBe(KIND_GREY);
 	}
 };
 
@@ -1686,7 +1604,7 @@ const cardStyle = (row: HTMLElement) =>
 const cardBox = (row: HTMLElement) =>
 	part(row, '.sessionsListItem__content').getBoundingClientRect();
 const REST_OUTLINE = 'rgb(255, 180, 170)'; // --m3-primary-fixed-dim
-const FOCUS_RING = 'rgb(204, 30, 28)'; // --m3-primary-container
+const FOCUS_RING = 'rgb(165, 0, 10)'; // --m3-primary
 
 /**
  * Grouped list (Figma 316-17441 / 8609-31260): unselected cards sit flush in
@@ -2045,11 +1963,8 @@ export const InternalCounsellorChat: Story = {
 				.textContent
 		).toBe('Interna');
 		await expect(
-			part(
-				row,
-				'.sessionsListItem__consultingTypeIcon--internalIcon'
-			).getAttribute('alt')
-		).toBe('Interna');
+			part(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
+		).toBeTruthy();
 	}
 };
 
@@ -2129,13 +2044,10 @@ export const GuidedSelfHelpGroup: Story = {
 		await expect(
 			part(row, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 				.textContent
-		).toBe('Gesprächskreis');
+		).toBe('Kreis');
 		await expect(
-			part(
-				row,
-				'.sessionsListItem__consultingTypeIcon--selfHelpIcon'
-			).getAttribute('alt')
-		).toBe('Gesprächskreis');
+			part(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
+		).toBeTruthy();
 	}
 };
 
@@ -2169,7 +2081,7 @@ const expectGroupTopicChips = async (canvasElement: HTMLElement) => {
 	await expect(
 		part(selfHelp, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
 			.textContent
-	).toBe('Gesprächskreis');
+	).toBe('Kreis');
 	await expectGroupRow(interna, 'Teamrunde', 3, null);
 	await expect(
 		part(interna, '.sessionsListItem__consultingTypeIcon--internalLabel')
@@ -2210,9 +2122,9 @@ const rgb = (hex: string) => {
 	return `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`;
 };
 
-/** Selected card, topic chip and Mail mark follow the tenant's palette instead of the default red. */
+/** Selected card and topic chip follow the tenant's palette; Mail stays grey (Figma 316-16775). */
 export const TenantPrimaryColour: Story = {
-	name: 'Träger-Farbe — Auswahl, Themen-Chip und Mail folgen ihr',
+	name: 'Träger-Farbe — Auswahl und Themen-Chip folgen ihr',
 	render: () => {
 		seedMatrixRoom(2);
 		return (
@@ -2264,7 +2176,7 @@ export const TenantPrimaryColour: Story = {
 		await expect(restingChip.color).toBe(tenant('--oriso-topic-tag-fg'));
 		const restingPostcode = style(resting, '.sessionsListItem__postcode');
 		await expect(restingPostcode.borderTopColor).toBe(
-			tenant('--m3-primary-fixed-dim')
+			tenant('--oriso-topic-tag-bg')
 		);
 		await expect(restingPostcode.color).toBe(
 			tenant('--m3-primary-container')
@@ -2274,11 +2186,11 @@ export const TenantPrimaryColour: Story = {
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 					.color
-			).toBe(tenant('--oriso-primary-text'));
+			).toBe(KIND_GREY);
 			await expect(
-				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
+				style(row, '.sessionsListItem__consultingTypeIcon--kindIcon')
 					.backgroundColor
-			).toBe(tenant('--oriso-primary-text'));
+			).toBe(KIND_GREY);
 		}
 	}
 };

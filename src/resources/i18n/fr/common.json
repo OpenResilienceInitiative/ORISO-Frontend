@@ -2,7 +2,8 @@
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
-		"empty": "Aucun participant."
+		"empty": "Aucun participant.",
+		"crowd": "{{count}} personnes"
 	},
 	"menuEffects": {
 		"title": "Affichage des menus",
@@ -4512,7 +4513,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Cercle de parole",
+				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe",
 				"directLinkVideo": "Appel vidéo",
@@ -4528,13 +4529,20 @@
 			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste.",
 			"expand": "Afficher la liste des consultations",
 			"collapse": "Réduire la liste des consultations pour agrandir le chat",
-			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
+			"scrollAriaLabel": "Faites glisser pour faire défiler la liste.",
+			"futureAriaLabel": "Rendez-vous à venir : faites glisser vers le bas pour les afficher, Haut et Bas passent d’un palier à l’autre."
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
 			"unreadCount_one": "{{count}} nouveau message",
 			"openEnquiries": "{{count}} demandes ouvertes",
 			"openEnquiries_one": "{{count}} demande ouverte"
+		},
+		"timeline": {
+			"now": "Maintenant",
+			"running": "en cours",
+			"upcoming": "Rendez-vous à venir",
+			"nextAppointment": "Prochain rendez-vous : {{date}}"
 		}
 	},
 	"statusOverlay": {
