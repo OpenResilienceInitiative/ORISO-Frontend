@@ -316,6 +316,22 @@ const firstResponseSession: ListItemInterface = {
 export const StructuredFirstResponse: Story = {
 	beforeEach: () => {
 		const originalService = getMatrixClientService();
+		const originalFetch = globalThis.fetch;
+		const candidatesUrl =
+			'https://api.storybook.test/service/users/case-handover/candidates?query=1117&offset=0&count=15&archived=false';
+		// The selected preview also resolves the session. This story exercises
+		// the activity card's Matrix message, not a handover candidate.
+		globalThis.fetch = (input, init) => {
+			const url = input instanceof Request ? input.url : String(input);
+			const method =
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET');
+			return url === candidatesUrl && method === 'GET'
+				? Promise.resolve(Response.json({ sessions: [] }))
+				: originalFetch(input, init);
+		};
+
+		const restoreDrafts = installNotificationDraftFixture([]);
 		const event = new MatrixEvent({
 			event_id: firstResponseEventId,
 			room_id: firstResponseRoomId,
@@ -341,7 +357,11 @@ export const StructuredFirstResponse: Story = {
 				off: noop
 			})
 		} as any);
-		return () => setMatrixClientServiceRef(originalService);
+		return () => {
+			restoreDrafts();
+			globalThis.fetch = originalFetch;
+			setMatrixClientServiceRef(originalService);
+		};
 	},
 	decorators: [
 		withTimelineData([

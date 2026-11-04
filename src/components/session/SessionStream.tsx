@@ -68,6 +68,10 @@ import {
 } from './caseHandoverHelpers';
 import { normalizeServerTimestamp } from '../notificationsCenter/timelineTime';
 import {
+	activityEventCaseHandoverRequestId,
+	activityEventSessionId
+} from '../notificationsCenter/activityEvent';
+import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	isUndecryptedRoomEvent,
 	matrixRoomHistoryKeyTransfer
@@ -92,20 +96,6 @@ const requestHistoryKeys = (roomId: string) => {
 	if (!isPracticeRoomId(roomId)) {
 		void matrixRoomHistoryKeyTransfer.requestKeys(roomId);
 	}
-};
-
-const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
-	if (!actionPath?.includes('?')) {
-		return null;
-	}
-	const value = new URLSearchParams(actionPath.split('?')[1]).get(
-		'caseHandoverRequestId'
-	);
-	if (!value || !/^\d+$/.test(value)) {
-		return null;
-	}
-	const requestId = Number(value);
-	return Number.isSafeInteger(requestId) ? requestId : null;
 };
 
 interface SessionStreamProps {
@@ -229,7 +219,7 @@ export const SessionStream = ({
 				) {
 					return false;
 				}
-				return String(item.sourceSessionId) === String(sessionId);
+				return activityEventSessionId(item) === sessionId;
 			}) || null
 		);
 	}, [
@@ -255,10 +245,10 @@ export const SessionStream = ({
 
 	const pendingCaseHandoverRequestId = useMemo(
 		() =>
-			caseHandoverRequestIdFromPath(
-				pendingCaseHandoverConsent?.actionPath
-			),
-		[pendingCaseHandoverConsent?.actionPath]
+			pendingCaseHandoverConsent
+				? activityEventCaseHandoverRequestId(pendingCaseHandoverConsent)
+				: null,
+		[pendingCaseHandoverConsent]
 	);
 
 	// A late decision or fallback belongs only to the committed card that started it.
@@ -1580,9 +1570,8 @@ export const SessionStream = ({
 			<SessionItemComponent
 				mainTimelineSupplement={
 					displayedConsent &&
-					caseHandoverRequestIdFromPath(
-						displayedConsent.actionPath
-					) !== null && (
+					activityEventCaseHandoverRequestId(displayedConsent) !==
+						null && (
 						<CaseHandoverConversation
 							sessionId={activeSession.item.id}
 							conversationType={notificationConversationType(
