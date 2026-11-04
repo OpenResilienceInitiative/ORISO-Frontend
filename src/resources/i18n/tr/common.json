@@ -1,9 +1,9 @@
 {
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
+		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
-		"empty": "Katılımcı yok.",
-		"crowd": "{{count}} katılımcı"
+		"empty": "Katılımcı yok."
 	},
 	"timelineSettings": {
 		"title": "Görüşme listesinde randevular",
@@ -22,9 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "Geçmiş görüşmelerde tarih",
+			"corner": "Kartın köşesinde",
 			"line": "Ayrı bir satırda",
-			"off": "Gösterme",
-			"corner": "Kartın köşesinde"
+			"off": "Gösterme"
 		},
 		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
 	},
@@ -809,22 +809,6 @@
 			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez.",
 			"addThis": "Bu randevuyu takvime ekle",
 			"shareHintSeries": "Web siteniz için takvim bağlantıları: tüm randevular seri olarak; davet bağlantısı veya otomatik güncelleme içermez."
-		},
-		"futureTimeline": {
-			"appointmentFallback": "Randevu",
-			"ariaLabel": "Gelecekteki randevular",
-			"commandError": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
-			"duplicate": "Tek seferlik randevu olarak çoğalt",
-			"empty": "Yaklaşan randevu yok.",
-			"groupChatFallback": "Grup sohbeti",
-			"hide": "Gelecekteki randevuları gizle",
-			"loadMore": "Üç ay daha yükle",
-			"loadError": "Gelecekteki bazı randevular yüklenemedi.",
-			"loading": "Gelecekteki randevular yükleniyor…",
-			"now": "Şimdi",
-			"revealAriaLabel": "Gelecekteki randevuları göster",
-			"show": "Gelecekteki randevuları göster",
-			"skip": "Randevuyu atla"
 		},
 		"roles": {
 			"CO_MODERATOR": "Yardımcı moderatör",

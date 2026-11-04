@@ -1,9 +1,9 @@
 {
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
+		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants.",
-		"crowd": "{{count}} participants"
+		"empty": "No participants."
 	},
 	"timelineSettings": {
 		"title": "Appointments in the conversation list",
@@ -22,9 +22,9 @@
 		},
 		"pastDate": {
 			"legend": "Date on past conversations",
+			"corner": "In the corner of the card",
 			"line": "In its own line",
-			"off": "Do not show",
-			"corner": "In the corner of the card"
+			"off": "Do not show"
 		},
 		"writeFailed": "The setting could not be saved. Please try again."
 	},
@@ -792,22 +792,6 @@
 			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates.",
 			"addThis": "Add this date to your calendar",
 			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
-		},
-		"futureTimeline": {
-			"appointmentFallback": "Appointment",
-			"ariaLabel": "Future timeline",
-			"commandError": "The occurrence could not be changed. Please try again.",
-			"duplicate": "Duplicate as one-off",
-			"empty": "No upcoming events.",
-			"groupChatFallback": "Group chat",
-			"hide": "Hide future events",
-			"loadMore": "Load three more months",
-			"loadError": "Some future events could not be loaded.",
-			"loading": "Loading future events…",
-			"now": "Now",
-			"revealAriaLabel": "Reveal future timeline",
-			"show": "Show future events",
-			"skip": "Skip occurrence"
 		},
 		"roles": {
 			"CO_MODERATOR": "Co-moderator",
