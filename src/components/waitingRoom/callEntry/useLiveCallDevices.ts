@@ -20,6 +20,11 @@ export interface LiveCallDevices {
 	 * microphone, the camera stays off.
 	 */
 	cameraMissing: boolean;
+	/**
+	 * The browser has answered at least once (a stream or a blocker). Until
+	 * then `cameraMissing` is only the optimistic default, not a finding.
+	 */
+	settled: boolean;
 	/** Ask the browser again ("Erneut prüfen"). */
 	retry: () => void;
 }
@@ -93,7 +98,8 @@ export const useLiveCallDevices = (
 		devices: EMPTY,
 		stream: null,
 		micLevel: 0,
-		cameraMissing: false
+		cameraMissing: false,
+		settled: false
 	});
 	const [attempt, setAttempt] = useState(0);
 	const retry = useCallback(() => setAttempt((count) => count + 1), []);
@@ -166,7 +172,7 @@ export const useLiveCallDevices = (
 
 		const start = async () => {
 			if (!mediaDevices?.getUserMedia) {
-				setState((s) => ({ ...s, blocker: 'noDevice' }));
+				setState((s) => ({ ...s, blocker: 'noDevice', settled: true }));
 				return;
 			}
 			let cameraMissing: boolean;
@@ -176,7 +182,8 @@ export const useLiveCallDevices = (
 				if (cancelled) return;
 				setState((s) => ({
 					...s,
-					blocker: blockerFor(error)
+					blocker: blockerFor(error),
+					settled: true
 				}));
 				return;
 			}
@@ -234,7 +241,13 @@ export const useLiveCallDevices = (
 					s.devices === devices &&
 					Math.abs(s.micLevel - micLevel) < LEVEL_STEP
 						? s
-						: { devices, stream: live, micLevel, cameraMissing }
+						: {
+								devices,
+								stream: live,
+								micLevel,
+								cameraMissing,
+								settled: true
+							}
 				);
 				frame = requestAnimationFrame(tick);
 			};

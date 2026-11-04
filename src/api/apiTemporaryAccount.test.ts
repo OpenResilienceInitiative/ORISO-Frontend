@@ -29,6 +29,16 @@ describe('temporary account API (ORISO-UserService#1486)', () => {
 		});
 	});
 
+	it.each([
+		['an empty object', {}],
+		['nothing at all (204)', undefined],
+		['an empty string', ''],
+		['an object without messageRetention', { keepMessages: null }]
+	])('fails the lookup on %s: that is not "no account"', async (_n, body) => {
+		vi.mocked(fetchData).mockResolvedValue(body);
+		await expect(apiGetTemporaryAccount()).rejects.toThrow();
+	});
+
 	it('treats 404 as a normal account', async () => {
 		vi.mocked(fetchData).mockRejectedValue(
 			new Response('', { status: 404 })

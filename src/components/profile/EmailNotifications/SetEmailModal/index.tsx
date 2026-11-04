@@ -17,9 +17,11 @@ import { NotificationsContext } from '../../../../globalState';
 import { Text } from '../../../text/Text';
 import { useUserMutate } from '../../../../hooks/useUserMutate';
 import { FETCH_ERRORS, X_REASON } from '../../../../api';
+import { useAccountEmailCollectionAllowed } from '../../../../hooks/useAccountEmailCollectionAllowed';
 
 export const SetEmailModal = ({ onClose }) => {
 	const { t } = useTranslation();
+	const emailAllowed = useAccountEmailCollectionAllowed();
 	const [email, setEmail] = useState<string>('');
 	const [emailLabel, setEmailLabel] = useState<string>(
 		t('profile.notifications.noEmail.modal.emailInput.label')
@@ -105,16 +107,17 @@ export const SetEmailModal = ({ onClose }) => {
 			if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 				onClose();
 			} else {
+				if (!emailAllowed || loading) return;
 				mutate({ email });
 			}
 		},
-		[email, mutate, onClose]
+		[email, emailAllowed, loading, mutate, onClose]
 	);
 
 	const emailOverlayItem: OverlayItem = {
 		buttonSet: [
 			{
-				disabled: false,
+				disabled: !emailAllowed || loading,
 				label: t('profile.notifications.noEmail.modal.confirm'),
 				type: BUTTON_TYPES.PRIMARY
 			}
@@ -134,6 +137,8 @@ export const SetEmailModal = ({ onClose }) => {
 			</>
 		)
 	};
+
+	if (!emailAllowed) return null;
 
 	return (
 		<Overlay

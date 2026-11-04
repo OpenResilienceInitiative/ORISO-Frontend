@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { UserDataContext } from '../../globalState';
-import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
-import { useLiveCallDevices } from '../waitingRoom/callEntry/useLiveCallDevices';
 import {
-	CallDeviceControls,
-	CallModality
-} from '../waitingRoom/callEntry/callEntryTypes';
-import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+	NOTIFICATION_TYPE_ERROR,
+	NotificationsContext
+} from '../../globalState/provider/NotificationsProvider';
+import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
+import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
+import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
 import { startRoomCall } from '../call/startRoomCall';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import {
@@ -18,10 +18,26 @@ import {
 	readPendingKnock
 } from './directLinkEntryFlow';
 import {
+	admissionAction,
+	CallJoinResult,
+	isKnockClaimed,
 	rememberAdmittedConversation,
 	takeAdmittedJoin
 } from './callMessageKnock';
+import { callManager } from '../../services/CallManager';
+import {
+	keepDeviceChoice,
+	peekJoinMedia,
+	rememberJoinMedia
+} from '../call/prejoin/callPrejoin';
+
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
+
+/** The open device check over the call message waits for its own knock. */
+const unclaimedPendingKnock = () => {
+	const knock = readPendingKnock();
+	return knock && !isKnockClaimed(knock.knockId) ? knock : null;
+};
 
 /** How long the app may take to join the conversation's Matrix room. */
 const ROOM_WAIT_MS = 20_000;
@@ -51,15 +67,49 @@ export const waitForJoinedRoom = (
 export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	/** Starts the call once the person was let in. */
 	startCall: (knock: PendingKnock) => Promise<void>;
+	/** Joins the running call recorded with the knock (after a reload). */
+	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>;
 	mediaDevices?: MediaDevices;
 }
 
-const defaultStartCall = async (knock: PendingKnock) => {
+/** The room whose call takes the switches (`GroupCallWidget`). */
+const callRoomOf = (knock: PendingKnock) =>
+	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
+
+/**
+ * Let in after a knock: starts the call. The camera choice from the device
+ * check (#2016) also decides whether the permission request asks for the
+ * camera; the choice itself stays for the call to take (`GroupCallWidget`).
+ */
+export const defaultStartCall = async (knock: PendingKnock) => {
 	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
+	const isVideo = knock.medium === 'VIDEO';
+	const chosen = peekJoinMedia(callRoomOf(knock));
 	await startRoomCall({
 		roomId: knock.matrixRoomId,
-		isVideo: knock.medium === 'VIDEO'
+		isVideo,
+		requestCamera: isVideo && (chosen?.video_enabled ?? true)
 	});
+};
+
+/*
+ * #2016: let in after a reload, the person joins the running call the card
+ * knocked for at once; they never tap "Beitreten" a second time. Direct
+ * links are 1:1, so the call is a group call only if its card says so.
+ */
+export const defaultJoinRunningCall = async (
+	knock: PendingKnock
+): Promise<CallJoinResult> => {
+	const call = knock.joinCall;
+	/* No mode on record: never guess 1:1, whose leave ends a group call for
+	   everybody. The card's next tap joins with the mode resolved there. */
+	if (!call || call.isGroup === undefined) return 'unavailable';
+	await waitForJoinedRoom(call.roomRef);
+	// The card's people are not stored with the knock; the join reads none.
+	return callManager.joinExistingCall(
+		{ ...call, participants: [] },
+		call.isGroup
+	);
 };
 
 const modalityOf = (knock: PendingKnock): CallModality =>
@@ -90,23 +140,41 @@ export const DirectLinkKnock = ({
 	deps = {},
 	pollMs
 }: DirectLinkKnockProps) => {
-	const { userData } = useContext(UserDataContext) ?? ({} as never);
+	const { t } = useTranslation();
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
 	const state = useDirectLinkKnock(knock, deps, pollMs);
-	const modality = modalityOf(knock);
-	const [controls, setControls] = useState<CallDeviceControls>({
-		micOn: true,
-		cameraOn: modality === 'video',
-		selection: {}
+	const device = useCallDeviceCheck(modalityOf(knock), {
+		mediaDevices: deps.mediaDevices
 	});
-	const live = useLiveCallDevices(modality, controls, deps.mediaDevices);
+	const admitted = state.phase === 'admitted';
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
-		if (state.gone) onDone();
-	}, [onDone, state.gone]);
+		if (!state.gone) return;
+		/* Knocking again hit a switched-off link: say so, rather than let the
+		   dialog vanish without a word (#2012). */
+		if (state.inactive) {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t(
+					state.paused
+						? 'inviteLink.paused'
+						: 'directLink.entry.inactive'
+				),
+				text: '',
+				closeable: true,
+				timeout: 5000
+			});
+		}
+		onDone();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the dialog goes
+	}, [state.gone]);
 
+	/* Let in: the knock is done; the call takes over after a short pause. */
 	useEffect(() => {
-		if (state.phase !== 'admitted' || admittedOnce.current) return;
+		if (!admitted || admittedOnce.current) return;
 		admittedOnce.current = true;
 		forgetPendingKnock();
 		const timer = window.setTimeout(
@@ -115,41 +183,40 @@ export const DirectLinkKnock = ({
 		);
 		return () => window.clearTimeout(timer);
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per admission
-	}, [state.phase]);
+	}, [admitted]);
 
-	const name = userData?.userName ?? '';
-	const avatar = useMemo(
-		() => generateAvatarForUser(userData?.userId || name || 'guest'),
-		[name, userData?.userId]
-	);
+	/* The switches in this window go into the call (#2016), kept current
+	   until the hand-over. A knock let in before the check has settled
+	   (persisted, or admitted on the first poll) has no camera yet: it is
+	   not asked for until the check finds one, so a device without a
+	   camera still starts the call. */
+	const room = callRoomOf(knock);
+	const { controls } = device;
+	const cameraFound = device.settled && device.cameraAvailable;
+	const { devices } = device.check;
+	useEffect(() => {
+		if (!admitted || !room) return;
+		keepDeviceChoice(room, modalityOf(knock), {
+			controls,
+			cameraAvailable: cameraFound,
+			blocker: device.blocker,
+			devices
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- the knock is fixed per mount
+	}, [admitted, room, controls, cameraFound, device.blocker, devices]);
 
 	return (
 		<KnockWaitDialog
 			variant="call"
 			phase={state.phase}
-			media={{
-				modality,
-				name,
-				avatar,
-				devices: live.devices,
-				selection: controls.selection,
-				stream: live.stream,
-				micLevel: live.micLevel,
-				micOn: controls.micOn,
-				cameraOn: controls.cameraOn,
-				cameraAvailable: !live.cameraMissing,
-				onToggleMic: () =>
-					setControls((now) => ({ ...now, micOn: !now.micOn })),
-				onToggleCamera: () =>
-					setControls((now) => ({ ...now, cameraOn: !now.cameraOn })),
-				onSelectDevice: (kind, id) =>
-					setControls((now) => ({
-						...now,
-						selection: { ...now.selection, [kind]: id }
-					}))
-			}}
+			/* A check that failed says why and can run again while the
+			   knock waits. */
+			media={device.check}
+			onRetry={device.retry}
 			onCancel={state.cancel}
-			onKnockAgain={state.knockAgain}
+			/* Knocking again goes through the link; without it on this
+			   device the refusal offers only "Schließen" (FE#1893). */
+			onKnockAgain={knock.token ? state.knockAgain : undefined}
 			onClose={state.close}
 		/>
 	);
@@ -170,19 +237,40 @@ export const DirectLinkKnockGate = ({
 	pollMs?: number;
 }) => {
 	const location = useLocation();
+	const { t } = useTranslation();
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
 	const [knock, setKnock] = useState<PendingKnock | null>(() =>
-		readPendingKnock()
+		unclaimedPendingKnock()
 	);
 	useEffect(() => {
-		setKnock((now) => now ?? readPendingKnock());
+		setKnock((now) => now ?? unclaimedPendingKnock());
 	}, [location.pathname]);
 	/* A knock from a running call's card (FE#1893) arrives without a route change. */
 	useEffect(() => {
-		const pick = () => setKnock((now) => now ?? readPendingKnock());
+		const pick = () => setKnock((now) => now ?? unclaimedPendingKnock());
 		window.addEventListener(PENDING_KNOCK_EVENT, pick);
 		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
 	}, []);
 	const startCall = deps.startCall ?? defaultStartCall;
+	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
+	/* No call took the switches, so no later call in this room may. */
+	const forgetSwitches = (admitted: PendingKnock) => {
+		const room = callRoomOf(admitted);
+		if (room) rememberJoinMedia(room, null);
+	};
+	/* The card is not there to say it: the window that was open has gone. */
+	const runningCallJoinFailed = (admitted: PendingKnock) => {
+		forgetSwitches(admitted);
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_ERROR,
+			title: t('videoCall.timeline.joinFailed'),
+			text: '',
+			closeable: true,
+			timeout: 5000
+		});
+	};
 
 	/* Only over the person's own conversations: not on the invite page,
 	   the login or anywhere a counsellor works. */
@@ -201,13 +289,29 @@ export const DirectLinkKnockGate = ({
 				setKnock(null);
 				/* Let in once: later calls here join without a knock. */
 				rememberAdmittedConversation(admitted.sessionId);
-				if (admitted.joinExisting) {
-					/* Join the call that is already running; never start a
-					   second one. After a reload the card's next tap joins. */
-					takeAdmittedJoin(admitted.sessionId)?.();
-					return;
+				/* Join the call that is already running, never a second one;
+				   after a reload the one recorded with the knock (#2016). */
+				const storedJoin = takeAdmittedJoin(admitted.sessionId);
+				switch (admissionAction(admitted, storedJoin)) {
+					case 'storedJoin':
+						storedJoin?.();
+						return;
+					case 'joinRunningCall':
+						void joinRunningCall(admitted).then(
+							(result) => {
+								if (result !== 'joined') {
+									runningCallJoinFailed(admitted);
+								}
+							},
+							() => runningCallJoinFailed(admitted)
+						);
+						return;
+					case 'startCall':
+						void startCall(admitted).catch(() => undefined);
+						return;
+					case 'none':
+						forgetSwitches(admitted);
 				}
-				void startCall(admitted).catch(() => undefined);
 			}}
 		/>
 	);

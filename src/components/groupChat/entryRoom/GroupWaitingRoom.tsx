@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../../Switch';
 import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
@@ -86,6 +87,12 @@ export interface GroupWaitingRoomProps {
 	 * the documents with their contract, not here.
 	 */
 	askConsent?: boolean;
+	/**
+	 * Offers the camera and microphone check (#2016) in the quiet row, as an
+	 * option beside "Mehr erfahren". The caller shows the check; without it
+	 * there is no button.
+	 */
+	onDeviceCheck?: () => void;
 }
 
 /**
@@ -120,7 +127,8 @@ export const GroupWaitingRoom = ({
 	joinNotice,
 	audience = 'participant',
 	primaryLabel,
-	askConsent = true
+	askConsent = true,
+	onDeviceCheck
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -511,6 +519,18 @@ export const GroupWaitingRoom = ({
 							}
 						}}
 					>
+						{onDeviceCheck && (
+							<Button
+								variant="outlined"
+								size="small"
+								startIcon={<VideocamRoundedIcon />}
+								sx={moreButtonSx}
+								onClick={onDeviceCheck}
+								data-testid="group-entry-devices"
+							>
+								{tr('devices', 'Kamera & Mikrofon')}
+							</Button>
+						)}
 						<Button
 							variant="outlined"
 							size="small"

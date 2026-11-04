@@ -27,7 +27,14 @@ const ICONS: Record<CallEntryBlocker, React.ReactNode> = {
  * happened and what to do next; the action itself is the gate in the bar,
  * so the page keeps the one bar every waiting room has.
  */
-export const CallNotice = ({ blocker }: { blocker: CallEntryBlocker }) => {
+export const CallNotice = ({
+	blocker,
+	compact = false
+}: {
+	blocker: CallEntryBlocker;
+	/** Inside a dialog (#2016): no top space, a sub-heading under its title. */
+	compact?: boolean;
+}) => {
 	const text = copy.blocker[blocker];
 	return (
 		<Box
@@ -38,7 +45,7 @@ export const CallNotice = ({ blocker }: { blocker: CallEntryBlocker }) => {
 				maxWidth: 520,
 				mx: 'auto',
 				textAlign: 'center',
-				pt: { xs: 2, lg: 8 }
+				pt: compact ? 0 : { xs: 2, lg: 8 }
 			}}
 		>
 			<Box
@@ -59,8 +66,12 @@ export const CallNotice = ({ blocker }: { blocker: CallEntryBlocker }) => {
 				{ICONS[blocker]}
 			</Box>
 			<Typography
-				component="h1"
-				sx={{ ...registrationScreenTitleSx, mt: 3 }}
+				component={compact ? 'h3' : 'h1'}
+				sx={{
+					...registrationScreenTitleSx,
+					mt: compact ? 2 : 3,
+					...(compact && { fontSize: 18, lineHeight: '24px' })
+				}}
 			>
 				{text.title}
 			</Typography>

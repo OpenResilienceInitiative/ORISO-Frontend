@@ -86,6 +86,22 @@ export const isInactiveDirectLinkError = (error: unknown): boolean =>
 	typeof (error as Response)?.status === 'number' &&
 	(error as Response).status === 410;
 
+/**
+ * That 410 with its reason: the invite page calls such a link paused, and a
+ * knock says the same (`isPausedInvite` also matches `INVITE_LINK_PAUSED`).
+ */
+export const isPausedDirectLinkError = async (
+	error: unknown
+): Promise<boolean> => {
+	if (!(error instanceof Response) || error.status !== 410) return false;
+	try {
+		const body = await error.clone().json();
+		return body?.reason === 'DIRECT_LINK_INACTIVE';
+	} catch {
+		return false;
+	}
+};
+
 /* The server answers a relative URL when APP_BASE_URL is unset; a copied
    link must still open from another device. */
 const absoluteUrl = (url: string) =>

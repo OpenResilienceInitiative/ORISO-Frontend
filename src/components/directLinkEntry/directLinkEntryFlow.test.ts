@@ -1,6 +1,7 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	directLinkCallsAllowed,
 	directLinkMediumOf,
 	directLinkSessionOf,
 	isDirectLinkCallRoom,
@@ -11,6 +12,10 @@ import {
 } from './directLinkEntryFlow';
 
 vi.mock('../registration/autoLogin', () => ({ redirectToApp: vi.fn() }));
+vi.mock('../../api/apiGetConsultingType', () => ({
+	apiGetConsultingType: vi.fn()
+}));
+const { apiGetConsultingType } = await import('../../api/apiGetConsultingType');
 
 beforeEach(() => {
 	sessionStorage.clear();
@@ -116,5 +121,41 @@ describe('sign-in return path', () => {
 		expect(directLinkReturnPath('/invite/x/../../profile')).toBeNull();
 		expect(directLinkReturnPath('https://evil.example')).toBeNull();
 		expect(directLinkReturnPath(null)).toBeNull();
+	});
+});
+
+describe('directLinkCallsAllowed (#2012)', () => {
+	const link = context('VIDEO', 'KNOCK');
+
+	it('allows calls only where the consulting type says so', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValue({
+			isVideoCallAllowed: true
+		} as never);
+		expect(await directLinkCallsAllowed(link)).toBe(true);
+		vi.mocked(apiGetConsultingType).mockResolvedValue({
+			isVideoCallAllowed: false
+		} as never);
+		expect(await directLinkCallsAllowed(link)).toBe(false);
+		vi.mocked(apiGetConsultingType).mockResolvedValue({} as never);
+		expect(await directLinkCallsAllowed(link)).toBe(false);
+	});
+
+	it('leaves the decision to the server when it cannot read', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValue(null as never);
+		expect(await directLinkCallsAllowed(link)).toBe(true);
+		vi.mocked(apiGetConsultingType).mockRejectedValue(new Error('down'));
+		expect(await directLinkCallsAllowed(link)).toBe(true);
+		vi.mocked(apiGetConsultingType).mockClear();
+		expect(
+			await directLinkCallsAllowed({ ...link, consultingTypeId: null })
+		).toBe(true);
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+	});
+
+	it('gives up on a read that does not answer', async () => {
+		vi.mocked(apiGetConsultingType).mockReturnValue(
+			new Promise(() => undefined)
+		);
+		expect(await directLinkCallsAllowed(link, 20)).toBe(true);
 	});
 });
