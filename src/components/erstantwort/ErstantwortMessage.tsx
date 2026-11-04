@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -187,11 +188,14 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		updateEmailRefreshStatus('editing');
 		setEmailOverlay(opening);
 	}, [emailScope, updateEmailRefreshStatus]);
-	useEffect(() => {
+	// Layout effects: the overlay of an older scope closes in the same commit that
+	// shows the new scope's action. A passive effect runs later and would also
+	// close an overlay opened from that action in between.
+	useLayoutEffect(() => {
 		closeEmailOverlay();
 		setAcceptedNotification(null);
 	}, [emailScope, closeEmailOverlay]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (!emailAllowed && latestEmailRefreshStatus.current === 'editing')
 			closeEmailOverlay();
 	}, [emailAllowed, closeEmailOverlay]);
