@@ -76,7 +76,7 @@ const decline = vi.fn();
 function setup(
 	initial = account,
 	isEmailEnabled?: boolean,
-	conversationType?: string,
+	conversationType: string = 'AGENCY_COUNSELLING',
 	contextSettings: Record<string, boolean> = {},
 	card: Partial<React.ComponentProps<typeof CaseHandoverConversation>> = {}
 ) {
@@ -714,7 +714,10 @@ it('serializes a pending future-preference HTTP mutation across close and reopen
 				}}
 			>
 				<ModalProvider>
-					<StandingAccessSettings sessionId={1} />
+					<StandingAccessSettings
+						conversationType="AGENCY_COUNSELLING"
+						sessionId={1}
+					/>
 				</ModalProvider>
 			</TenantContext.Provider>
 		</UserDataContext.Provider>

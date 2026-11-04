@@ -34,12 +34,15 @@ import {
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
+import { counterpartReaders } from '../../utils/matrixReadReceipts';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
+import { takeSelfLeave } from '../groupChat/selfLeaveGuard';
+import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -409,6 +412,8 @@ export const SessionStream = ({
 		};
 	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
 
+	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
+	const consultantMatrixUserId = activeSession.item?.consultantMatrixUserId;
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
 			if (abortController.current) {
@@ -476,15 +481,31 @@ export const SessionStream = ({
 				const prepareRoomMessages = (
 					events: any[],
 					roomId?: string | null
-				): any[] =>
-					buildRoomTimeline(
+				): any[] => {
+					const matrixRoom = roomId
+						? chatTransportService.getMatrixRoom(roomId)
+						: null;
+					return buildRoomTimeline(
 						events,
 						roomId,
-						roomId
-							? chatTransportService.getMatrixRoom(roomId)
-							: null,
-						encryptedFallbackText
+						matrixRoom,
+						encryptedFallbackText,
+						// FE#1802: in the 1:1 room only the session
+						// counterpart's receipt makes an own message "read".
+						roomId === resolvedMatrixRoomId
+							? counterpartReaders(
+									{
+										isGroup: activeSession.isGroup,
+										item: {
+											askerMatrixUserId,
+											consultantMatrixUserId
+										}
+									},
+									(matrixRoom as any)?.myUserId
+								)
+							: undefined
 					);
+				};
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
 				// Side-room reactions stay out of the client timeline; the
@@ -534,6 +555,9 @@ export const SessionStream = ({
 			mayRequestHistoryKeys,
 			resolvedChatSession,
 			activeSession.item?.id,
+			activeSession.isGroup,
+			askerMatrixUserId,
+			consultantMatrixUserId,
 			supervisionRoomId,
 			teamRoomId,
 			translate
@@ -772,6 +796,7 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let receiptRefreshTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 		const refreshMessages = () => {
@@ -832,14 +857,56 @@ export const SessionStream = ({
 					)
 				)
 				.filter(Boolean) as Array<() => void>;
+			// A deletion (ours included) must show at once, not with the next
+			// unrelated event: refresh when the SDK marks the message redacted.
+			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// encrypted message arriving in the same sync batch.
+			const handleRedaction = () => {
+				fetchSessionMessages().catch(() => {
+					// keep UI stable if a redaction races with navigation
+				});
+			};
+			const redactionDetachers = watchedRoomIds
+				.map((roomId) =>
+					chatTransportService.onMatrixRedaction(
+						roomId,
+						handleRedaction
+					)
+				)
+				.filter(Boolean) as Array<() => void>;
 
 			// Only consider attach successful once every watched room is bound.
-			if (detachers.length !== watchedRoomIds.length) {
-				detachers.forEach((detach) => detach());
+			if (
+				detachers.length !== watchedRoomIds.length ||
+				redactionDetachers.length !== watchedRoomIds.length
+			) {
+				[...detachers, ...redactionDetachers].forEach((detach) =>
+					detach()
+				);
 				return false;
 			}
 
-			detachTimelineListeners = detachers;
+			// A peer's read receipt flips own messages to "read" (FE#1802).
+			const handleReadReceipt = () => {
+				if (receiptRefreshTimer !== null) return;
+				receiptRefreshTimer = window.setTimeout(() => {
+					receiptRefreshTimer = null;
+					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// reaction or redaction arriving in the next 120 ms.
+					fetchSessionMessages().catch(() => {
+						// keep UI stable if a receipt races with navigation
+					});
+				}, 0);
+			};
+			watchedRoomIds.forEach((roomId) => {
+				const detach = chatTransportService.onMatrixReadReceipt(
+					roomId,
+					handleReadReceipt
+				);
+				if (detach) detachers.push(detach);
+			});
+
+			detachTimelineListeners = [...detachers, ...redactionDetachers];
 			// Initial-sync events may already be cached before this listener attaches.
 			// Hydrate once after every successful attachment so late-join decryption
 			// failures can trigger their room-key request after the room exists.
@@ -892,6 +959,8 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			if (receiptRefreshTimer !== null)
+				window.clearTimeout(receiptRefreshTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
@@ -926,6 +995,17 @@ export const SessionStream = ({
 		[translate]
 	);
 
+	// #1923: a ban leaves the group running; say "removed", not "ended".
+	const groupChatRemovedOverlay: OverlayItem = useMemo(
+		() => ({
+			...groupChatStoppedOverlay,
+			svg: XIcon,
+			illustrationBackground: 'error',
+			headline: translate('groupChat.removed.overlay.headline')
+		}),
+		[groupChatStoppedOverlay, translate]
+	);
+
 	// Restores the "subscription removed" UX on
 	// Matrix signals (own membership -> leave/ban after a kick, ban or admin
 	// room purge; m.room.tombstone when a room is shut down/replaced):
@@ -935,12 +1015,17 @@ export const SessionStream = ({
 	//   to the session list.
 	const handleMatrixRoomLifecycle = useUpdatingRef(
 		useCallback(
-			(_change: MatrixRoomLifecycleChange) => {
+			(change: MatrixRoomLifecycleChange) => {
 				if (activeSession.isGroup) {
 					if (hasUserInitiatedStopOrLeaveRequest.current) {
 						hasUserInitiatedStopOrLeaveRequest.current = false;
 					} else {
-						setOverlayItem(groupChatStoppedOverlay);
+						setOverlayItem(
+							change.type === 'myMembership' &&
+								change.membership === 'ban'
+								? groupChatRemovedOverlay
+								: groupChatStoppedOverlay
+						);
 						setIsOverlayActive(true);
 					}
 				} else if (type === SESSION_LIST_TYPES.MY_SESSION) {
@@ -949,6 +1034,7 @@ export const SessionStream = ({
 			},
 			[
 				activeSession.isGroup,
+				groupChatRemovedOverlay,
 				groupChatStoppedOverlay,
 				listPath,
 				navigate,
@@ -969,7 +1055,9 @@ export const SessionStream = ({
 			detachLifecycleListener =
 				chatTransportService.onMatrixRoomLifecycle(
 					matrixRoomId,
-					(change) => handleMatrixRoomLifecycle.current(change)
+					(change) =>
+						takeSelfLeave(matrixRoomId) ||
+						handleMatrixRoomLifecycle.current(change)
 				);
 			return Boolean(detachLifecycleListener);
 		};

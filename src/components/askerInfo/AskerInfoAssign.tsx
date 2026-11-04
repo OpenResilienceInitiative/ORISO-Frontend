@@ -19,6 +19,7 @@ import {
 	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverRequestStatus,
 	apiGetCaseHandoverStatus,
+	apiWithdrawCaseHandoverOffer,
 	CaseHandoverReason,
 	CaseHandoverStatus
 } from '../../api/apiCaseHandover';
@@ -63,7 +64,13 @@ const terminalOfferStatus = (status: string) =>
 	isGrantedCaseHandoverStatus(status) ||
 	status === 'RECIPIENT_DECLINED' ||
 	status === 'DENIED' ||
-	status === 'CLIENT_CONSENT_DECLINED';
+	status === 'CLIENT_CONSENT_DECLINED' ||
+	status === 'WITHDRAWN';
+
+// The two states in which the offering counsellor can still take the offer back.
+const isWithdrawableOfferStatus = (status: string) =>
+	status === 'PENDING_RECIPIENT_ACCEPTANCE' ||
+	status === 'PENDING_CLIENT_CONSENT';
 
 export const AskerInfoAssign = ({
 	title = 'userProfile.reassign.title',
@@ -87,6 +94,7 @@ export const AskerInfoAssign = ({
 	const generationRef = useRef(0);
 	const sequenceRef = useRef(0);
 	const submittingRef = useRef(false);
+	const withdrawSequenceRef = useRef(0);
 	const sessionId = activeSession?.item.id;
 	const actorId = userData?.userId;
 	const identity = useMemo(
@@ -143,6 +151,12 @@ export const AskerInfoAssign = ({
 			)
 				throw new Error('INVALID_CASE_HANDOVER_STATUS');
 			setStatus(nextStatus);
+			// An offer made before a reload (or on another device) is still open:
+			// show it, with its withdraw button, instead of a second offer form
+			// the server would refuse with 409.
+			if (nextStatus.openOffer?.requestId) {
+				setOfferStatus(nextStatus.openOffer);
+			}
 			// The server already dropped everyone the offer would reject —
 			// other departments, other tenants, absentees, previous owners and
 			// the owner themselves (FE #1262). Do not re-filter here: a second
@@ -226,7 +240,8 @@ export const AskerInfoAssign = ({
 
 	const refreshOfferStatus = useCallback(
 		async (requestId: number) => {
-			if (!sessionId) return;
+			// A withdrawal in flight owns the offer state until it answers.
+			if (!sessionId || submittingRef.current) return;
 			const generation = generationRef.current;
 			const sequence = ++sequenceRef.current;
 			try {
@@ -353,6 +368,59 @@ export const AskerInfoAssign = ({
 		}
 	};
 
+	const withdrawOffer = async () => {
+		const requestId = offerStatus?.requestId;
+		if (!sessionId || !requestId || submittingRef.current) return;
+		const generation = generationRef.current;
+		const withdrawSequence = ++withdrawSequenceRef.current;
+		submittingRef.current = true;
+		setBusy(true);
+		setError('');
+		try {
+			const response = await apiWithdrawCaseHandoverOffer(
+				sessionId,
+				requestId
+			);
+			if (
+				generation === generationRef.current &&
+				withdrawSequence === withdrawSequenceRef.current
+			) {
+				// Drop refreshes started before the answer; the response is newer.
+				sequenceRef.current += 1;
+				applyOfferStatus(
+					{ ...response, requestId: response.requestId ?? requestId },
+					requestId
+				);
+			}
+		} catch (withdrawError) {
+			if (
+				generation === generationRef.current &&
+				withdrawSequence === withdrawSequenceRef.current
+			) {
+				if (
+					withdrawError instanceof Error &&
+					withdrawError.message === FETCH_ERRORS.CONFLICT
+				) {
+					// The colleague answered first: say so and show how it ended.
+					setError(translate('caseHandover.offer.withdrawConflict'));
+					submittingRef.current = false;
+					setBusy(false);
+					await refreshOfferStatus(requestId);
+					return;
+				}
+				setError(translate('caseHandover.offer.withdrawError'));
+			}
+		} finally {
+			if (
+				generation === generationRef.current &&
+				withdrawSequence === withdrawSequenceRef.current
+			) {
+				submittingRef.current = false;
+				setBusy(false);
+			}
+		}
+	};
+
 	const copy = buildDialogCopy(translate);
 	const showOfferDialog = open && !loading && Boolean(status) && !offerStatus;
 	const showLegacy =
@@ -430,6 +498,18 @@ export const AskerInfoAssign = ({
 					)}
 				</p>
 			)}
+			{open &&
+				offerStatus?.requestId &&
+				isWithdrawableOfferStatus(offerStatus.status) && (
+					<Button
+						item={{
+							label: 'caseHandover.offer.withdraw',
+							type: BUTTON_TYPES.SECONDARY
+						}}
+						buttonHandle={() => void withdrawOffer()}
+						disabled={busy}
+					/>
+				)}
 		</>
 	);
 };

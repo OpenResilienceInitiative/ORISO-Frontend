@@ -8,6 +8,7 @@
  * story at 1280×820, 1440×900 and 390×844.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	ConsultantSessionStage,
@@ -53,6 +54,14 @@ const meta = {
 		}
 	},
 	parameters: {
+		// #1338: while the thread scrolls under the header, the call buttons and the
+		// menu icon are partly covered in these stories; their size is as designed.
+		a11y: a11yExcept({
+			'target-size': [
+				'.sessionMenu__videoCallButtons .button__item',
+				'.sessionMenu__icon'
+			]
+		}),
 		layout: 'fullscreen',
 		router: { initialPath: stageRoute },
 		design: [
@@ -2024,10 +2033,13 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		await expect(
 			barButtons[1].querySelector('[data-testid="ArrowDownwardIcon"]')
 		).not.toBeNull();
-		// T22: at 390 the bar scrolls; expand never hides under send.
+		// Frank (03.11.): at 390 the bar fits without scrolling, and its last
+		// button never hides under send.
 		await expectActionBarScrolls(
-			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!,
+			{ overflow: 'either' }
 		);
+		await expect(bar.scrollWidth).toBeLessThanOrEqual(bar.clientWidth);
 		const dragHandle = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .dragHandle'
 		)!;

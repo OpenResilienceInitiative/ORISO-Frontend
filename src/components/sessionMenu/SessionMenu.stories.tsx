@@ -40,7 +40,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const stageFrame = (Story: React.ComponentType) => (
+	<div style={{ position: 'relative', padding: 24, minHeight: 520 }}>
+		<Story />
+	</div>
+);
+
+const withStage = (Story: React.ComponentType) => (
+	<ChatStageProviders>{stageFrame(Story)}</ChatStageProviders>
+);
+
+// The menu reads the session and router; the stage provides them (#1338).
 export const Default: Story = {
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -87,7 +101,7 @@ function MenuTriggerShapeDemo() {
 }
 
 export const MenuTriggerShape: Story = {
-	tags: ['autodocs'],
+	tags: ['autodocs', '!needs-data'],
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -96,6 +110,9 @@ export const MenuTriggerShape: Story = {
 };
 
 export const AnonymousMobileActions: Story = {
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: false,
@@ -139,16 +156,6 @@ const openTheKebab = async (canvasElement: HTMLElement) => {
 	return document.querySelector<HTMLElement>('.sessionMenu__content--open')!;
 };
 
-const stageFrame = (Story: React.ComponentType) => (
-	<div style={{ position: 'relative', padding: 24, minHeight: 520 }}>
-		<Story />
-	</div>
-);
-
-const withStage = (Story: React.ComponentType) => (
-	<ChatStageProviders>{stageFrame(Story)}</ChatStageProviders>
-);
-
 const withGroupStage = (Story: React.ComponentType) => (
 	<ChatStageProviders activeSession={{ ...stageSession(), isGroup: true }}>
 		{stageFrame(Story)}
@@ -175,7 +182,9 @@ const withSupervisionStage = (Story: React.ComponentType) => (
 export const CallsInTheHeader: Story = {
 	name: 'Calls in the header row (desktop, D8 off)',
 	tags: ['autodocs', '!needs-data'],
-	parameters: { router: { initialPath: stageRoute } },
+	parameters: {
+		router: { initialPath: stageRoute }
+	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true
@@ -215,7 +224,9 @@ export const CallsInTheKebabMenu: Story = {
 	name: 'Calls in the kebab menu (phone, D8)',
 	tags: ['autodocs', '!needs-data'],
 	globals: phone390Globals,
-	parameters: { router: { initialPath: stageRoute } },
+	parameters: {
+		router: { initialPath: stageRoute }
+	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true,
@@ -321,7 +332,9 @@ export const GroupOmitsOneToOneAdvice: Story = {
 export const SupervisionUsesCatalogIcon: Story = {
 	name: 'Supervision — catalog icon',
 	tags: ['autodocs', '!needs-data'],
-	parameters: { router: { initialPath: stageRoute } },
+	parameters: {
+		router: { initialPath: stageRoute }
+	},
 	args: {
 		hasUserInitiatedStopOrLeaveRequest,
 		isAskerInfoAvailable: true

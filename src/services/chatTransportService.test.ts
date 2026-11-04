@@ -106,6 +106,10 @@ const createFakeEncryptedMatrixEvent = (failed = false) => {
 			if (name === 'Event.decrypted')
 				decryptionListeners.delete(listener);
 		},
+		markDecrypted: () => {
+			eventType = 'm.room.message';
+			decryptionFailure = false;
+		},
 		emitDecrypted: (error?: Error) => {
 			if (!error) {
 				eventType = 'm.room.message';
@@ -153,6 +157,26 @@ describe('chatTransportService Matrix timeline', () => {
 
 		detach?.();
 		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
+	});
+
+	it('reports the moment a message in the watched room is actually redacted', () => {
+		const listener = vi.fn();
+		const redaction = { getType: () => 'm.room.redaction' };
+		const detach = chatTransportService.onMatrixRedaction(
+			ROOM_ID,
+			listener
+		);
+
+		// Room.redaction fires when the SDK flips the target to "redacted",
+		// including the remote echo of our OWN redaction, which never
+		// produces a second Room.timeline event.
+		fakeClient.emit('Room.redaction', redaction, { roomId: OTHER_ROOM_ID });
+		expect(listener).not.toHaveBeenCalled();
+		fakeClient.emit('Room.redaction', redaction, { roomId: ROOM_ID });
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.redaction')).toBe(0);
 	});
 
 	it('refreshes an initial-sync historical event when decryption finishes later', () => {
@@ -260,6 +284,71 @@ describe('chatTransportService Matrix timeline', () => {
 		expect(listener).toHaveBeenCalledTimes(1);
 	});
 
+	/**
+	 * A retry after a key import, a backup restore or a sender-device update
+	 * can succeed long after the per-event watch expired, or for an event this
+	 * view never saw arrive (scrollback, a re-attached view). The client
+	 * re-emits every event's `Event.decrypted`; the chat must re-render on it,
+	 * or the message stays "Nachricht verschlüsselt" until the next reload.
+	 */
+	it('re-renders a late decryption of an untracked event in the watched room', () => {
+		const room = { roomId: ROOM_ID, timeline: [] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const { event } = createFakeEncryptedMatrixEvent();
+		(event as any).getRoomId = () => ROOM_ID;
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		event.emitDecrypted();
+		fakeClient.emit('Event.decrypted', event);
+
+		expect(listener).toHaveBeenCalledOnce();
+		expect(listener).toHaveBeenCalledWith(event, room, false);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Event.decrypted')).toBe(0);
+	});
+
+	it('ignores client-level decryptions of other rooms and failed retries', () => {
+		fakeClient = createFakeMatrixClient({ roomId: ROOM_ID, timeline: [] });
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const { event: other } = createFakeEncryptedMatrixEvent();
+		(other as any).getRoomId = () => OTHER_ROOM_ID;
+		other.emitDecrypted();
+		const { event: failed } = createFakeEncryptedMatrixEvent(true);
+		(failed as any).getRoomId = () => ROOM_ID;
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Event.decrypted', other);
+		fakeClient.emit('Event.decrypted', failed);
+		fakeClient.emit('Event.decrypted', failed, new Error('no key'));
+
+		expect(listener).not.toHaveBeenCalled();
+		detach?.();
+	});
+
+	it('does not notify twice when the per-event watch already handles the decryption', () => {
+		const { event } = createFakeEncryptedMatrixEvent();
+		(event as any).getRoomId = () => ROOM_ID;
+		const room = { roomId: ROOM_ID, timeline: [] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		fakeClient.emit('Room.timeline', event, room, false);
+		listener.mockClear();
+
+		// The SDK re-emits on the client before the event's own listeners run.
+		event.markDecrypted();
+		fakeClient.emit('Event.decrypted', event);
+		event.emitDecrypted();
+
+		expect(listener).toHaveBeenCalledOnce();
+		detach?.();
+	});
+
 	it('expires a pending decryption listener after five minutes', () => {
 		vi.useFakeTimers();
 		try {
@@ -280,6 +369,65 @@ describe('chatTransportService Matrix timeline', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe('chatTransportService Matrix read receipts (FE#1802)', () => {
+	const ME = '@me:example.org';
+	const receipt = (userId: string) => ({
+		getType: () => 'm.receipt',
+		getContent: () => ({
+			$event: { 'm.read': { [userId]: { ts: 1 } } }
+		})
+	});
+	let fakeClient: ReturnType<typeof createFakeMatrixClient> & {
+		getUserId: () => string;
+	};
+
+	beforeEach(() => {
+		fakeClient = { ...createFakeMatrixClient(), getUserId: () => ME };
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+	});
+
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	it('notifies on a peer receipt in the room, not on my own or another room', () => {
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixReadReceipt(
+			ROOM_ID,
+			listener
+		);
+
+		fakeClient.emit('Room.receipt', receipt(ME), { roomId: ROOM_ID });
+		fakeClient.emit('Room.receipt', receipt('@peer:example.org'), {
+			roomId: OTHER_ROOM_ID
+		});
+		expect(listener).not.toHaveBeenCalled();
+
+		fakeClient.emit('Room.receipt', receipt('@peer:example.org'), {
+			roomId: ROOM_ID
+		});
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		detach?.();
+		expect(fakeClient.listenerCount('Room.receipt')).toBe(0);
+	});
+	it('ignores a Room.receipt that carries no m.receipt event', () => {
+		// The practice fake emits the message itself; reading its body as a
+		// receipt looped refresh → mark read → refresh.
+		const listener = vi.fn();
+		chatTransportService.onMatrixReadReceipt(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.receipt',
+			{
+				getType: () => 'm.room.message',
+				getContent: () => ({ msgtype: 'm.text', body: 'Hallo' })
+			},
+			{ roomId: ROOM_ID }
+		);
+
+		expect(listener).not.toHaveBeenCalled();
 	});
 });
 

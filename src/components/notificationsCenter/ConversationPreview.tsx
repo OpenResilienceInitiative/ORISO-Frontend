@@ -1,3 +1,5 @@
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
 import * as React from 'react';
 import {
 	useCallback,
@@ -354,15 +356,20 @@ export const ConversationPreview = ({
 				: null),
 		[access?.session, roomId, sessionsContext?.sessions]
 	);
+	const agencyFeatures = useSessionAgencyPolicy(
+		roomId ?? undefined,
+		resolveConversationAgencyId(activeSession?.item)
+	);
 	const sessionContextValue = useMemo(
 		() => ({
 			activeSession,
 			avatarMembers: [],
 			// The composer reloads the session after a send; the preview's
 			// session comes from its own loader and needs no reload here.
-			reloadActiveSession: () => undefined
+			reloadActiveSession: () => undefined,
+			agencyFeaturePolicy: agencyFeatures.policy
 		}),
-		[activeSession]
+		[activeSession, agencyFeatures.policy]
 	);
 
 	const { messages, reactionEvents } = timeline;

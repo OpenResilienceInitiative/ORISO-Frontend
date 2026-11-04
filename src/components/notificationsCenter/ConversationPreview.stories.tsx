@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { ConversationPreview } from './ConversationPreview';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
@@ -80,6 +81,10 @@ const meta: Meta<typeof ConversationPreview> = {
 		)
 	],
 	parameters: {
+		// #1338: the message area scrolls but takes no focus: keyboard users cannot scroll it; the real fix is a tab stop, left for a product decision.
+		a11y: a11yExcept({
+			'scrollable-region-focusable': ['.conversationPreview__messages']
+		}),
 		docs: {
 			description: {
 				component:
@@ -521,6 +526,8 @@ const conversationEvents = () => [
 	fakeEvent('$5', '@lisa:oriso', 'Wann können wir weiterreden?', 12)
 ];
 
+const previewEmptyDraftScopes = ['scope:!preview:oriso|thread:main'];
+
 const writablePreview =
 	(
 		width: number | string = 640,
@@ -531,7 +538,10 @@ const writablePreview =
 		const [restore] = React.useState(watchActiveView);
 		React.useEffect(() => restore, [restore]);
 		return (
-			<ComposerStoryDecorator activeSession={session}>
+			<ComposerStoryDecorator
+				activeSession={session}
+				emptyDraftScopes={previewEmptyDraftScopes}
+			>
 				<div style={{ height: 640, width, display: 'flex' }}>
 					<StoryComponent />
 				</div>

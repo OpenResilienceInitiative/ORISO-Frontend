@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Button } from '@mui/material';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import {
+	actWarnings,
+	suspendedInAct
+} from '../../../../.storybook/actWarnings';
 import { RegistrationTopicSearch } from './RegistrationTopicSearch';
 import { buildTopicSearchIndex } from './topicSearchEngine';
 import { buildTopicSearchDocuments } from './topicSearchDocuments';
@@ -116,6 +120,19 @@ export const MobileBar: Story = {
 };
 
 export const OpenTypePick: Story = {
+	// #1338: picking a suggestion runs MUI ripples and the list transition
+	// under Storybook's act (see storyActWarnings).
+	parameters: {
+		verification: {
+			expectedErrors: [
+				...actWarnings({
+					'ForwardRef(ButtonBase)': 1,
+					'TransitionGroup': 1
+				}),
+				...suspendedInAct(1)
+			]
+		}
+	},
 	play: async ({ canvasElement, args }) => {
 		const canvas = within(canvasElement);
 		const body = within(canvasElement.ownerDocument.body);

@@ -12,7 +12,6 @@ import {
 	STAGE_LAYOUT
 } from '../chatStage/stageLayout';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
-import { SessionListCreateChat } from './SessionListCreateChat';
 import { EmptyState } from '../emptyState/EmptyState';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -130,10 +129,14 @@ function DemoCard({
 						</div>
 					) : (
 						<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-							<img
-								src={nearbyConversationIcon}
-								alt="Mail"
-								className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							<span
+								className="sessionsListItem__consultingTypeIcon--kindIcon"
+								aria-hidden="true"
+								style={
+									{
+										'--kind-icon-url': `url("${nearbyConversationIcon}")`
+									} as React.CSSProperties
+								}
 							/>
 							<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 								Mail
@@ -268,9 +271,7 @@ function ToolbarCreateChatColumn() {
 				createGroupChatActive
 			/>
 			<CardScroll>
-				<SessionListCreateChat />
 				<DemoCard
-					afterActive
 					topic="Familienberatung"
 					postcode="10115"
 					user="other.user"
@@ -282,7 +283,28 @@ function ToolbarCreateChatColumn() {
 }
 
 export const ToolbarCreateChatAndCards: Story = {
-	render: () => <ToolbarCreateChatColumn />
+	render: () => <ToolbarCreateChatColumn />,
+	play: async ({ canvasElement }) => {
+		const createActions = canvasElement.querySelectorAll(
+			'a[href="/sessions/consultant/sessionView/createGroupChat"]'
+		);
+		await expect(createActions).toHaveLength(1);
+		await expect(createActions[0]).toBeVisible();
+		await expect(
+			canvasElement
+				.querySelector('.sessionsList__scrollContainer')!
+				.getBoundingClientRect().height
+		).toBeGreaterThan(0);
+		await expect(canvasElement.querySelector('.createChatItem')).toBeNull();
+		const card = canvasElement.querySelector('.sessionsListItem')!;
+		await waitFor(() => expect(getComputedStyle(card).opacity).toBe('1'));
+		await expect(card).toBeVisible();
+	}
+};
+
+export const ToolbarCreateChatOnPhone: Story = {
+	...ToolbarCreateChatAndCards,
+	globals: { viewport: { value: 'phone390', isRotated: false } }
 };
 
 /**
@@ -350,6 +372,10 @@ const RAIL_DEMO_COPY = {
 	thread: 'Thread',
 	supervision: 'Supervision',
 	mail: 'Mail',
+	videoCall: 'Videoanruf',
+	audioCall: 'Audioanruf',
+	directLink: 'Direktlink',
+	appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 	unread: 'Ungelesen'
 };
 

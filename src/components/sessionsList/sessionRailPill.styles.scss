@@ -178,6 +178,13 @@ $rail-pill-padding: 3px;
 		}
 	}
 
+	// Carries the kind of the appointment, and stands out from the quiet marks:
+	// the colour of the split button it replaces in the ultra-thin list.
+	&__mark--appointment {
+		background: var(--m3-secondary-container, #646d78);
+		color: #fff;
+	}
+
 	// The house's unread language: a filled dot in the unread role — the same
 	// token the toolbar badge, the channel card, the FAB and the panel header
 	// use (supervisionPanel/README.md, "One unread role").

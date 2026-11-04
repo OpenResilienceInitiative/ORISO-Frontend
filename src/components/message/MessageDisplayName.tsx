@@ -11,6 +11,8 @@ interface MessageDisplayNameProps {
 	userId: string;
 	username: string;
 	displayName?: string;
+	/** Canonical session alias; retain its exact spelling and numeric suffix. */
+	resolvedDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
 	/**
@@ -26,6 +28,7 @@ export const MessageDisplayName = ({
 	type,
 	username,
 	displayName,
+	resolvedDisplayName,
 	firstName,
 	lastName,
 	subtitle
@@ -52,7 +55,7 @@ export const MessageDisplayName = ({
 			<div
 				className={`messageItem__username messageItem__username--${type}`}
 			>
-				{getUsernameWithPrefix()}
+				{resolvedDisplayName ?? getUsernameWithPrefix()}
 			</div>
 			{trimmedSubtitle && (
 				<div className="messageItem__usernameSubtitle">

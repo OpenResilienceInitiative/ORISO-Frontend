@@ -463,14 +463,18 @@ describe('case-handover search — people (FE#1725)', () => {
 			expect(personRowsNamed('Patty B.')).toHaveLength(2)
 		);
 		fireEvent.click(personRowsNamed('Patty B.')[1]);
+		// Picking a person returns the focus to the field on the next frame.
+		await new Promise((resolve) => requestAnimationFrame(resolve));
 		fireEvent.click(
 			screen.getByRole('button', {
 				name: 'sessionList.toolbar.search.confirm'
 			})
 		);
-		expect(
-			screen.queryByTestId('session-search-results-scroll')
-		).toBeNull();
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('session-search-results-scroll')
+			).toBeNull()
+		);
 		await waitFor(() =>
 			expect(listText(view)).toContain('Client fourteen')
 		);
@@ -878,9 +882,11 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 		fireEvent.mouseDown(
 			view.container.querySelector('.sessionsList__scrollContainer')!
 		);
-		expect(
-			screen.queryByTestId('session-search-results-scroll')
-		).toBeNull();
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('session-search-results-scroll')
+			).toBeNull()
+		);
 		expect(blankLoads()).toBe(1);
 
 		openSearch();
@@ -1499,9 +1505,11 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 		fireEvent.mouseDown(
 			view.container.querySelector('.sessionsList__scrollContainer')!
 		);
-		expect(
-			screen.queryByTestId('session-search-results-scroll')
-		).toBeNull();
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('session-search-results-scroll')
+			).toBeNull()
+		);
 	});
 
 	it('closes on a button outside the list, such as navigation', async () => {
@@ -1516,9 +1524,11 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 		);
 		fireEvent.mouseDown(navigation);
 
-		expect(
-			screen.queryByTestId('session-search-results-scroll')
-		).toBeNull();
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('session-search-results-scroll')
+			).toBeNull()
+		);
 		navigation.remove();
 	});
 
@@ -1558,9 +1568,11 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 		);
 
 		expect((searchbox() as HTMLInputElement).value).toBe('');
-		expect(
-			screen.queryByTestId('session-search-results-scroll')
-		).toBeNull();
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('session-search-results-scroll')
+			).toBeNull()
+		);
 		expect(
 			view.container.querySelectorAll(
 				'.sessionsListToolbar__searchInlinePill'

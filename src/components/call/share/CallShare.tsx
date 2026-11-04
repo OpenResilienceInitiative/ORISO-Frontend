@@ -1,0 +1,172 @@
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Drawer, Popover, PopoverActions } from '@mui/material';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
+import { CallSharePanel } from './CallSharePanel';
+import {
+	CallShareSettings,
+	defaultCallShareSettings,
+	detectWebShare,
+	effectiveCallShareSettings,
+	WebShare
+} from './callShareSettings';
+import './callShare.scss';
+
+/** Above `.group-call-widget` (10000): the surfaces are portalled to the body. */
+const CALL_SHARE_LAYER = 10001;
+/** In fullscreen only the fullscreen element is drawn; portal into it. */
+const portalTarget = () => document.fullscreenElement ?? document.body;
+
+export interface CallShareProps {
+	/** The guest link of this one call (backend later; #1794). */
+	link: string;
+	/**
+	 * Desktop: popover anchored at the toolbar button. Phone: bottom sheet.
+	 * The caller decides the breakpoint, like `M3Dialog.fullScreen`.
+	 */
+	layout: 'desktop' | 'phone';
+	defaultOpen?: boolean;
+	initialSettings?: CallShareSettings;
+	/** Controlled: what the link really has (server state); wins over local state. */
+	settings?: CallShareSettings;
+	onSettingsChange?: (settings: CallShareSettings) => void;
+	onCopy?: (link: string) => void | Promise<void>;
+	/** Omitted: the browser's own `navigator.share`, if any. `null`: hidden. */
+	webShare?: WebShare | null;
+	defaultQrOpen?: boolean;
+	/** `false` when the platform or Träger forbids temporary accounts. */
+	temporaryAccountAllowed?: boolean;
+}
+
+/**
+ * The share button of the call toolbar and what it opens (#1794): a popover
+ * above the button on desktop, a bottom sheet on phones. Host side, next to
+ * the Element Call iframe — no widget capability needed (Shazia, #1794).
+ */
+export const CallShare = ({
+	link,
+	layout,
+	defaultOpen = false,
+	initialSettings,
+	settings: controlled,
+	onSettingsChange,
+	onCopy,
+	webShare,
+	defaultQrOpen,
+	temporaryAccountAllowed = true
+}: CallShareProps) => {
+	const { t } = useTranslation();
+	const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+	const [open, setOpen] = useState(defaultOpen);
+	const [stored, setStored] = useState<CallShareSettings>(
+		() => initialSettings ?? defaultCallShareSettings()
+	);
+	// A new link is another call: start from its own settings again.
+	const [storedFor, setStoredFor] = useState(link);
+	if (storedFor !== link) {
+		setStoredFor(link);
+		setStored(initialSettings ?? defaultCallShareSettings());
+	}
+	const settings = effectiveCallShareSettings(
+		controlled ?? stored,
+		temporaryAccountAllowed
+	);
+	const [share] = useState<WebShare | null>(() =>
+		webShare === undefined ? detectWebShare() : webShare
+	);
+
+	const popoverActions = useRef<PopoverActions>(null);
+	// The popover grows upwards from the button: re-anchor when it grows.
+	const reanchor = useCallback(
+		() => popoverActions.current?.updatePosition(),
+		[]
+	);
+
+	const close = () => setOpen(false);
+	// The panel lives in the portal it opened in: a fullscreen change would
+	// leave it behind the new top layer.
+	useEffect(() => {
+		if (!open) return;
+		const onFullscreenChange = () => setOpen(false);
+		document.addEventListener('fullscreenchange', onFullscreenChange);
+		return () =>
+			document.removeEventListener(
+				'fullscreenchange',
+				onFullscreenChange
+			);
+	}, [open]);
+	const panel = (
+		<CallSharePanel
+			// Another link is another call: a fresh panel drops its QR code and
+			// ignores copy results that finish for the old link.
+			key={link}
+			link={link}
+			settings={settings}
+			onSettingsChange={(next) => {
+				const effective = effectiveCallShareSettings(
+					next,
+					temporaryAccountAllowed
+				);
+				setStored(effective);
+				onSettingsChange?.(effective);
+			}}
+			onClose={close}
+			webShare={share}
+			onCopy={onCopy}
+			defaultQrOpen={defaultQrOpen}
+			temporaryAccountAllowed={temporaryAccountAllowed}
+			onContentResize={layout === 'desktop' ? reanchor : undefined}
+		/>
+	);
+
+	return (
+		<>
+			<button
+				ref={setAnchor}
+				type="button"
+				className={`callShare__trigger${
+					open ? ' callShare__trigger--active' : ''
+				}`}
+				aria-label={t('calls.share.open')}
+				aria-haspopup="dialog"
+				aria-expanded={open}
+				onClick={() => setOpen((value) => !value)}
+			>
+				<span className="callShare__triggerInner">
+					<ShareOutlinedIcon aria-hidden />
+				</span>
+			</button>
+			{layout === 'desktop' ? (
+				<Popover
+					action={popoverActions}
+					open={open && anchor !== null}
+					anchorEl={anchor}
+					onClose={close}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					transformOrigin={{
+						vertical: 'bottom',
+						horizontal: 'center'
+					}}
+					slotProps={{ paper: { className: 'callShare__popover' } }}
+					sx={{ zIndex: CALL_SHARE_LAYER }}
+					container={portalTarget}
+				>
+					{panel}
+				</Popover>
+			) : (
+				<Drawer
+					anchor="bottom"
+					open={open}
+					onClose={close}
+					PaperProps={{ className: 'callShare__sheet' }}
+					sx={{ zIndex: CALL_SHARE_LAYER }}
+					container={portalTarget}
+				>
+					<span className="callShare__handle" aria-hidden />
+					{panel}
+				</Drawer>
+			)}
+		</>
+	);
+};

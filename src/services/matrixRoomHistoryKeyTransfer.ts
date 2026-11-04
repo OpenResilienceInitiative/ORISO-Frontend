@@ -1,11 +1,7 @@
-import {
-	ClientEvent,
-	EventTimeline,
-	MatrixClient,
-	MatrixEvent
-} from 'matrix-js-sdk';
+import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import type { IMegolmSessionData } from 'matrix-js-sdk/lib/@types/crypto';
 import { isInvisibleCryptoEnabledForClient } from './matrixDeviceIsolation';
+import { retryRoomDecryptionFailures } from './matrixDecryptionRetry';
 
 export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
 
@@ -346,58 +342,17 @@ export class MatrixRoomHistoryKeyTransfer {
 
 	private async retryFailedDecryptions(roomId: string): Promise<void> {
 		const client = this.client;
-		const crypto = client?.getCrypto();
-		const room = client?.getRoom(roomId);
-		if (!client || !crypto || !room) {
-			return;
-		}
-		// Walk every already-loaded timeline backwards from the live one:
-		// backfilled scrollback lives in neighbouring timelines, and its failed
-		// events must retry too, or a key import would fill the store while old
-		// history stays "Unable to decrypt".
-		const loadedEvents: MatrixEvent[] = [];
-		let timeline = room.getLiveTimeline?.() || null;
-		while (timeline) {
-			loadedEvents.unshift(...(timeline.getEvents?.() || []));
-			timeline =
-				timeline.getNeighbouringTimeline?.(EventTimeline.BACKWARDS) ||
-				null;
-		}
-		const failedEvents = loadedEvents.filter(
-			(timelineEvent) =>
-				timelineEvent.isEncrypted?.() &&
-				timelineEvent.isDecryptionFailure?.() &&
-				typeof timelineEvent.attemptDecryption === 'function'
+		if (!client) return;
+		// The SDK's own retry (onRoomKeysUpdated) only reaches events still on
+		// its pending list; walk every loaded timeline so backfilled scrollback
+		// retries too, or a key import fills the store while old history stays
+		// "Unable to decrypt".
+		const { attempted, rejected } = await retryRoomDecryptionFailures(
+			client,
+			roomId
 		);
-		if (failedEvents.length === 0) {
-			return;
-		}
-		// attemptDecryption() is the only retry path for a FAILED event: its
-		// clearEvent already holds the m.bad.encrypted placeholder, so
-		// shouldAttemptDecryption() returns false and the public
-		// decryptEventIfNeeded() is a guaranteed no-op. The SDK's automatic
-		// retry (onRoomKeysUpdated) only fires for keys arriving via sync,
-		// never for manual importRoomKeys(). attemptDecryption explicitly
-		// supports this case (`alreadyDecrypted = clearEvent &&
-		// !isDecryptionFailure()`), and the runtime guard above keeps an SDK
-		// upgrade that removes it from throwing.
-		// CryptoApi and CryptoBackend are the same rust-crypto object at
-		// runtime; the SDK only exposes the narrower type via getCrypto().
-		const cryptoBackend = crypto as unknown as Parameters<
-			MatrixEvent['attemptDecryption']
-		>[0];
-		const results = await Promise.allSettled(
-			failedEvents.map((timelineEvent) =>
-				timelineEvent.attemptDecryption(cryptoBackend, {
-					isRetry: true
-				})
-			)
-		);
-		emitDiagnostic('retry-decryption', {
-			roomId,
-			attempted: failedEvents.length,
-			rejected: results.filter((r) => r.status === 'rejected').length
-		});
+		if (attempted === 0) return;
+		emitDiagnostic('retry-decryption', { roomId, attempted, rejected });
 	}
 }
 

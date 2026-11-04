@@ -17,6 +17,13 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import { fetchData } from '../../api/fetchData';
+import { SessionsDataContext } from '../../globalState/provider/SessionsDataProvider';
+import {
+	conversationAgency,
+	canonicalAgencySettings,
+	conversationSessionListItem
+} from '../../test/fixtures/conversationPolicyFixtures';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
@@ -48,6 +55,17 @@ const transport = vi.hoisted(() => ({
 	removeReaction: vi.fn(async () => ({ success: true })),
 	sendTyping: vi.fn(async () => undefined)
 }));
+vi.mock('../../api/fetchData', async (original) => ({
+	...(await original<typeof import('../../api/fetchData')>()),
+	fetchData: vi.fn()
+}));
+vi.mock('../../globalState', async (original) => {
+	const react = await import('react');
+	return {
+		...(await original<typeof import('../../globalState')>()),
+		NotificationsContext: react.createContext({ addNotification: () => {} })
+	};
+});
 const activeView = vi.hoisted(() => vi.fn(async () => undefined));
 
 // The real chatTransportService imports matrix-js-sdk (heavyweight, hangs the
@@ -1282,4 +1300,64 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 			expect(screen.getByText(t('unavailable'))).toBeTruthy();
 		});
 	});
+});
+
+it('uses the preview session agency policy without registering an active conversation', async () => {
+	arrange([
+		matrixEvent({
+			id: '$image',
+			sender: OWN,
+			content: {
+				msgtype: 'm.image',
+				body: 'preview-photo.png',
+				url: 'https://fixture.invalid/photo.png',
+				info: { mimetype: 'image/png' }
+			}
+		})
+	]);
+	vi.mocked(fetchData).mockResolvedValueOnce([
+		conversationAgency(
+			101,
+			canonicalAgencySettings({ featureMediaInlineDisplayEnabled: false })
+		)
+	]);
+	render(
+		<MessageContextShell>
+			<SessionsDataContext.Provider
+				value={{
+					sessions: [
+						conversationSessionListItem('!room:matrix.example')
+					],
+					ready: true,
+					dispatch: () => {}
+				}}
+			>
+				<ConversationPreview roomId="!room:matrix.example" />
+			</SessionsDataContext.Provider>
+		</MessageContextShell>
+	);
+	await waitFor(() => expect(fetchData).toHaveBeenCalledTimes(1));
+	expect(screen.queryByRole('img', { name: 'preview-photo.png' })).toBeNull();
+	expect(screen.getByText('preview-photo.png')).toBeTruthy();
+	expect(activeView).not.toHaveBeenCalled();
+	expect(transport.markRoomAsRead).not.toHaveBeenCalled();
+});
+
+it('keeps inline media closed when an unknown preview room has no resolved agency', () => {
+	arrange([
+		matrixEvent({
+			id: '$unknown-image',
+			sender: OWN,
+			content: {
+				msgtype: 'm.image',
+				body: 'unknown-photo.png',
+				url: 'https://fixture.invalid/unknown-photo.png',
+				info: { mimetype: 'image/png' }
+			}
+		})
+	]);
+	renderPreview({ roomId: '!room:matrix.example' });
+	expect(screen.queryByRole('img', { name: 'unknown-photo.png' })).toBeNull();
+	expect(screen.getByText('unknown-photo.png')).toBeTruthy();
+	expect(fetchData).not.toHaveBeenCalled();
 });

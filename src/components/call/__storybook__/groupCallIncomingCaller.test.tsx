@@ -99,14 +99,15 @@ describe('GroupCallWidget incoming call', () => {
 
 		renderIncoming();
 
-		expect(
-			await screen.findByText('Bart Simpson is calling…')
-		).toBeTruthy();
+		// The card in the call language (FE#1904), named by the caller.
+		const card = await screen.findByRole('alertdialog', {
+			name: 'Bart Simpson'
+		});
 		expect(sessionRooms.byRoomIds).toHaveBeenCalledWith(
 			[FAKE_SIGNAL_ROOM_ID],
 			expect.anything()
 		);
-		expect(screen.getByRole('img', { name: 'Bart Simpson' })).toBeTruthy();
+		expect(card.querySelector('[data-testid="user-avatar"]')).toBeTruthy();
 		expect(screen.queryByText('G')).toBeNull();
 	});
 

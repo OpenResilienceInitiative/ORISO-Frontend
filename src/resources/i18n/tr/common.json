@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
+		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
 		"empty": "Katılımcı yok."
+	},
+	"timelineSettings": {
+		"title": "Görüşme listesinde randevular",
+		"description": "Listenin yaklaşan randevuları nasıl gösterdiği. Tüm cihazlarda geçerlidir.",
+		"scrollModel": {
+			"legend": "Kaydırma",
+			"panes": "İki alan: üstte gelecek, altta geçmiş",
+			"single": "Tek zaman çizelgesi: gelecek ancak „Şimdi“nin ötesine çekmeye devam edince açılır"
+		},
+		"reveal": {
+			"legend": "Randevular yaklaşırken göster",
+			"none": "Hiçbir şey",
+			"next": "Bir sonraki randevu",
+			"half": "Listenin yarısı",
+			"most": "Neredeyse hepsi"
+		},
+		"pastDate": {
+			"legend": "Geçmiş görüşmelerde tarih",
+			"corner": "Kartın köşesinde",
+			"line": "Ayrı bir satırda",
+			"off": "Gösterme"
+		},
+		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
 	},
 	"menuEffects": {
 		"title": "Menü görünümü",
@@ -203,6 +227,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Kontrol et ve aç",
+			"checking": "Virüs kontrolü yapılıyor …",
+			"checkingImage": "Görsel kontrol ediliyor …",
+			"checkVirus": "Virüs taraması",
+			"checkImage": "Görsel analizi: güvenli ve kurallara uygun mu?",
+			"decrypt": "Şifreyi çöz",
+			"decrypting": "Şifre çözülüyor …",
+			"encryptedHint": "Uçtan uca şifreli",
+			"loadFailed": "Dosya yüklenemedi",
+			"retry": "Tekrar dene"
+		},
 		"mediaCheck": {
 			"unchecked": "Anonim sohbetten görsel – henüz kontrol edilmedi",
 			"reveal": "Görseli göster",
@@ -229,6 +265,11 @@
 		"banned": {
 			"headline": "Yasaklandılar.",
 			"info": "Sizden sohbet kurallarına uymanızı istemiştik.<br/><br/>Bugün sohbet kurallarına defalarca uymadığınız için sizi bugünkü sohbetten çıkardık.<br/><br/>Sohbet kurallarını öğrenin!</br></br>Eğer sohbet kurallarına uymaya istekliyseniz, yarın sohbete tekrar hoş geldiniz!"
+		},
+		"confirm": {
+			"description": "Bu kişi artık bu grupta yazamaz ve gruptan çıkarıldığını görür.",
+			"submit": "Çıkar",
+			"title": "{{name}} bu gruptan çıkarılsın mı?"
 		},
 		"is": {
 			"banned": " Spellbound"
@@ -353,7 +394,8 @@
 		"participants": {
 			"label": "Katılımcılar: {{names}}",
 			"more": "{{count}} katılımcı daha",
-			"more_one": "1 kişi daha"
+			"more_one": "1 kişi daha",
+			"moreList": "Diğer katılımcılar ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal değiştir",
@@ -575,7 +617,13 @@
 		"message": {
 			"encryption": {
 				"error": "Mesaj şifrelendi - şifre çözme sırasında hata",
-				"text": "Şifrelenmiş mesaj"
+				"text": "Şifrelenmiş mesaj",
+				"missingKey": {
+					"title_one": "Önceki mesaj bu cihazda kullanılamıyor",
+					"title_other": "{{count}} önceki mesaj bu cihazda kullanılamıyor",
+					"hint_one": "Anahtara sahip bir cihaz, örneğin bir meslektaşın ya da danışan kişinin cihazı çevrimiçi olduğunda okunabilir hale gelir. Daha önce kullanılan cihazda oturum açmak da yardımcı olur.",
+					"hint_other": "Anahtara sahip bir cihaz, örneğin bir meslektaşın ya da danışan kişinin cihazı çevrimiçi olduğunda okunabilir hale gelir. Daha önce kullanılan cihazda oturum açmak da yardımcı olur."
+				}
 			},
 			"showMore": "Daha fazla göster",
 			"showLess": "Daha az göster"
@@ -762,22 +810,6 @@
 			"addThis": "Bu randevuyu takvime ekle",
 			"shareHintSeries": "Web siteniz için takvim bağlantıları: tüm randevular seri olarak; davet bağlantısı veya otomatik güncelleme içermez."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Randevu",
-			"ariaLabel": "Gelecekteki randevular",
-			"commandError": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
-			"duplicate": "Tek seferlik randevu olarak çoğalt",
-			"empty": "Yaklaşan randevu yok.",
-			"groupChatFallback": "Grup sohbeti",
-			"hide": "Gelecekteki randevuları gizle",
-			"loadMore": "Üç ay daha yükle",
-			"loadError": "Gelecekteki bazı randevular yüklenemedi.",
-			"loading": "Gelecekteki randevular yükleniyor…",
-			"now": "Şimdi",
-			"revealAriaLabel": "Gelecekteki randevuları göster",
-			"show": "Gelecekteki randevuları göster",
-			"skip": "Randevuyu atla"
-		},
 		"roles": {
 			"CO_MODERATOR": "Yardımcı moderatör",
 			"OWNER": "Sahip",
@@ -948,7 +980,12 @@
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
 				"headline": "Katılımcılar",
-				"menuLabel": "{{name}} için seçenekler"
+				"menuLabel": "{{name}} için seçenekler",
+				"role": {
+					"asker": "Danışan",
+					"consultant": "Danışman",
+					"supervisor": "Süpervizör"
+				}
 			},
 			"gallery": {
 				"back": "Geri sayıma dön",
@@ -1141,6 +1178,8 @@
 			},
 			"nameLabel": "Dahili sohbetin adı",
 			"noColleagues": "Seçilebilecek meslektaş yok",
+			"searchPeople": "Kişi ara",
+			"noMatchingPeople": "Eşleşen kişi bulunamadı.",
 			"personCount_one": "{{count}} kişi eklendi",
 			"personCount_other": "{{count}} kişi eklendi",
 			"privateRoomHint": "Yalnızca seçilen kişiler için ayrı, şifreli bir oda oluşturulur.",
@@ -1151,7 +1190,8 @@
 			},
 			"scope": {
 				"AGENCY": "Danışma merkezinizdeki meslektaşlarınızı seçebilirsiniz.",
-				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz."
+				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz.",
+				"PLATFORM": "Kendi kurumunuzdan ve katılan diğer kurumlardan çalışma arkadaşları seçebilirsiniz."
 			},
 			"selectPerson": "{{name}} kişisini seç",
 			"subtitle": "meslektaşlarınızla",
@@ -1259,7 +1299,8 @@
 			"rules": {
 				"headline": "Birbirimize nasıl davranırız",
 				"subline": "Bir kez okuyun – sonra siz de aramızdasınız."
-			}
+			},
+			"devices": "Kamera ve mikrofon"
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1362,6 +1403,11 @@
 			"accept": "Kabul ediyorum",
 			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz.",
 			"saveFailed": "Onayınız kaydedilemedi. Lütfen tekrar deneyin."
+		},
+		"removed": {
+			"overlay": {
+				"headline": "Bu gruptan çıkarıldınız."
+			}
 		}
 	},
 	"help": {
@@ -1952,6 +1998,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} kişisini de seç",
+			"checked": "Seçilen: {{value}}. Eklemek için yanına tıklayın.",
 			"notInChat": "sohbette değil",
 			"empty": "Kimse bulunamadı",
 			"unavailable": "Liste yüklenemedi",
@@ -1980,7 +2028,15 @@
 			"counsellorsEmpty": "Bu odada hiç danışman yok",
 			"moderatorsEmpty": "Bu odada hiç moderatör yok",
 			"toggleSection": "Bölümü aç/kapat",
-			"selectAllBottom": "Tümünü seç"
+			"selectAllBottom": "Tümünü seç",
+			"unresolved": {
+				"headline": "Lütfen alıcıları kontrol edin",
+				"text": "Seçilen alıcılar bu sohbet için doğrulanamadı. Alıcıları yeniden seçin ve ardından gönderin. Metniniz bu alanda kalır."
+			},
+			"attachmentBlocked": {
+				"headline": "Dosyalar yalnızca herkese gider",
+				"text": "Dosyalar ve sesli mesajlar seçilen meslektaşlarla sınırlandırılamaz. Herkesle paylaşmak için „Tümü“ seçeneğini seçin veya bunun yerine bir metin mesajı gönderin. Dosyanız veya kaydınız korunur."
+			}
 		},
 		"edit": {
 			"cancel": "Düzenlemeyi iptal et",
@@ -2038,9 +2094,13 @@
 		"consultantLeftChat": "Danışman sohbetten ayrıldı",
 		"youEndedChat": "Sohbeti sonlandırdınız",
 		"chatEnded": "Sohbet sona erdi",
+		"consultantRenamedTitle": "Ad değiştirildi",
+		"consultantRenamedDescription": "{{oldName}} artık {{newName}} adını kullanıyor.",
 		"anonymousUser": "Kullanıcı",
 		"supervisionEnabledTitle": "Süpervizyon etkinleştirildi!",
 		"supervisionEnabledDescription": "{{name}} bu sohbete süpervizör danışman olarak eklendi.",
+		"supervisionDisabledTitle": "Süpervizyon sona erdi!",
+		"supervisionDisabledDescription": "{{name}} bu sohbetten süpervizör danışman olarak çıkarıldı.",
 		"today": "Bugün",
 		"tomorrow": "Yarın",
 		"unread": "okunmamış",
@@ -2095,7 +2155,8 @@
 				"large": "İstişarelerim",
 				"nav": "Sohbetler",
 				"small": "Haberler"
-			}
+			},
+			"directLinks": "Doğrudan bağlantılarım"
 		},
 		"activity": "Zaman çizelgesi",
 		"language": "Dil",
@@ -2114,7 +2175,46 @@
 		"error": "Hata",
 		"info": "Bilgi",
 		"success": "Başarılı",
-		"warning": "Uyarı"
+		"warning": "Uyarı",
+		"eventNotice": {
+			"chatMention": {
+				"title": "Sohbette anıldınız",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} yeni anma",
+				"open": "Sohbeti aç"
+			},
+			"mention": {
+				"title": "Ekip görüşmesinde anıldınız",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} yeni anma",
+				"open": "Ekip görüşmesini aç"
+			},
+			"handover": {
+				"title": "Yeni vaka devri",
+				"from": "Gönderen: {{name}}",
+				"several": "{{count}} vaka devri bildirimi",
+				"open": "Vakayı görüntüle"
+			},
+			"consent": {
+				"title": "Vaka devri için onay gerekiyor",
+				"text": "Devir bir yanıt bekliyor.",
+				"several": "{{count}} vaka devri talebi yanıt bekliyor.",
+				"open": "Talebi görüntüle"
+			}
+		},
+		"liveChatMessage": {
+			"title": "Canlı sohbette yeni mesaj",
+			"from": "Gönderen: {{name}}",
+			"several": "{{count}} yeni mesaj",
+			"open": "Sohbeti aç"
+		},
+		"newEnquiry": {
+			"title": "Yeni talep",
+			"waiting": "Danışan bir kişi yanıt bekliyor.",
+			"several": "{{count}} yeni talep yanıt bekliyor.",
+			"openOne": "Talebi görüntüle",
+			"openList": "Talepleri görüntüle"
+		}
 	},
 	"notifications": {
 		"displayFilter": {
@@ -2296,6 +2396,18 @@
 				"title": "Vaka devri reddedildi",
 				"text": "Danışan onayı reddedildi. İçerikler kilitli kalır."
 			},
+			"caseHandoverOfferSent": {
+				"title": "Devir teklifi gönderildi",
+				"text": "Teklif meslektaşın yanıtını bekliyor. Devir tamamlanmadığı sürece geri çekilebilir."
+			},
+			"caseHandoverOfferDeclined": {
+				"title": "Devir teklifi reddedildi",
+				"text": "Meslektaş teklifi reddetti. Vaka mevcut danışmanda kalır."
+			},
+			"caseHandoverOfferWithdrawn": {
+				"title": "Devir teklifi geri çekildi",
+				"text": "Teklif geri çekildi. Vaka mevcut danışmanda kalır."
+			},
 			"caseHandoverOfferReceived": {
 				"title": "Vaka devri teklifi",
 				"text": "{{fromConsultantName}} bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin.",
@@ -2339,6 +2451,18 @@
 			"callInvited": {
 				"title": "Dahili grup aramasına davet",
 				"text": "Dahili bir grup aramasına davet edildiniz."
+			},
+			"callKnockRequested": {
+				"title": "Biri kapıyı çalıyor",
+				"text": "Biri aramanıza katılmak istiyor. İçeri almak için aramaya katılın.",
+				"video": {
+					"title": "Biri kapıyı çalıyor – görüntülü arama",
+					"text": "Biri doğrudan bağlantınız üzerinden görüntülü aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+				},
+				"audio": {
+					"title": "Biri kapıyı çalıyor – sesli arama",
+					"text": "Biri doğrudan bağlantınız üzerinden sesli aramanıza katılmak istiyor. İçeri almak için aramaya katılın."
+				}
 			},
 			"appointmentRequested": {
 				"title": "Arama için randevu talep edildi",
@@ -2529,6 +2653,13 @@
 		},
 		"data": {
 			"agency": {
+				"adminContact": {
+					"error": "Bu danışma merkezinin yöneticileri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+					"fallbackName": "Merkez yöneticisi",
+					"link": "Danışma merkezi yöneticisiyle iletişime geç",
+					"none": "Sohbet üzerinden ulaşılabilen bir yönetici yok – lütfen platform yönetimiyle iletişime geçin.",
+					"supportEmail": "Destek adresi:"
+				},
 				"label": "Danışma Merkezi",
 				"registrationLink": {
 					"notification": {
@@ -2575,7 +2706,7 @@
 				}
 			},
 			"publicSlug": {
-				"info": "Yalnızca küçük harf ve tire kullanın. Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
+				"info": "Yalnızca küçük harf ve rakam kullanın, aralarına tek tire koyun (ör. team-2), en fazla {{max}} karakter. Yeni adlar ancak bir yönetim tarafından onaylandıktan sonra etkinleşir.",
 				"input": "Herkese açık iletişim bağlantısının adı",
 				"label": "Herkese açık iletişim bağlantısı",
 				"notification": {
@@ -2593,7 +2724,7 @@
 			"profileIcon": "Profil resmi",
 			"register": {
 				"button": {
-					"label": "Kayıt Olun"
+					"label": "Danışmanlık talep et"
 				},
 				"consultingModeInfo": {
 					"groupChats": "Kendi kendine yardımda, etkilenenler bir konuyu veya endişeyi birbirleriyle tartışırlar. Etkilenenler sorunları, duyguları ve umutları hakkında konuşur ve başkalarının sorunların üstesinden nasıl geldiğini öğrenirler. Gruplar moderatörler tarafından yönetilir.",
@@ -2604,7 +2735,7 @@
 				},
 				"headline": "Başka konularda da tavsiye veya yardıma mı ihtiyacınız var? <br>Size destek olmaktan mutluluk duyarız.",
 				"dialog": {
-					"openButton": "Başka bir konu için talep gönder",
+					"openButton": "Başka bir danışmanlık başlat",
 					"title": "Yeni talep gönder",
 					"close": "Kapat"
 				},
@@ -2837,6 +2968,7 @@
 				"kind": {
 					"new": "Yeni talep",
 					"standard": "Standart bildirim",
+					"liveChat": "Canlı sohbet mesajı",
 					"mention": "@ Bahsetme",
 					"handover": "Devir",
 					"call": "Gelen arama",
@@ -2987,7 +3119,8 @@
 					"title": "Güvenlik"
 				},
 				"title": "Ayarlar",
-				"keyboardShortcuts": "Klavye Kısayolları"
+				"keyboardShortcuts": "Klavye Kısayolları",
+				"myLinks": "Bağlantılarım"
 			}
 		},
 		"spokenLanguages": {
@@ -3572,6 +3705,11 @@
 				"toggleOn": "Hesap açmadan katıl",
 				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
 				"note": "O ana kadar normal şekilde yazarsınız ve mesajlarınız diğerleri için kalır. Siz ise sonrasında bu görüşmeye geri dönemezsiniz."
+			},
+			"displayName": {
+				"optional": "Görünen ad (isteğe bağlı). Boş bırakırsanız User-ID gösterilir.",
+				"suggest": "Ad öner",
+				"useUsername": "User-ID kullan"
 			}
 		},
 		"back": "Geri",
@@ -3702,7 +3840,11 @@
 				"headline": "Davet şu anda yüklenemedi.",
 				"body": "Lütfen bağlantınızı kontrol edip tekrar deneyin. Davet bağlantınız geçerliliğini korur."
 			},
-			"loading": "Davet yükleniyor …"
+			"loading": "Davet yükleniyor …",
+			"invalid": {
+				"headline": "Bu davet bağlantısı çalışmıyor.",
+				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
+			}
 		}
 	},
 	"releaseNote": {
@@ -3725,6 +3867,10 @@
 			"declined": "Bu devri reddettiniz.",
 			"denied": "Bu devir reddedildi.",
 			"clientConsentDeclined": "Danışan bu devri reddetti.",
+			"withdraw": "Teklifi geri çek",
+			"withdrawn": "Bu devir teklifi geri çekildi.",
+			"withdrawError": "Teklif geri çekilemedi. Lütfen tekrar deneyin.",
+			"withdrawConflict": "Teklif zaten yanıtlandı ve artık geri çekilemez.",
 			"noContent": "Bu istek görüşmeyi okuma izni vermiyor.",
 			"forbidden": "Bu devir isteğini görme yetkiniz yok.",
 			"notFound": "Bu devir isteği artık mevcut değil.",
@@ -3741,7 +3887,8 @@
 				"GRANTED": "Devir tamamlandı.",
 				"RECIPIENT_DECLINED": "Seçilen meslektaş reddetti.",
 				"DENIED": "Devir reddedildi.",
-				"CLIENT_CONSENT_DECLINED": "Danışan devri reddetti."
+				"CLIENT_CONSENT_DECLINED": "Danışan devri reddetti.",
+				"WITHDRAWN": "Teklif geri çekildi."
 			}
 		},
 		"copy": "Bu vaka yalnızca üst veri olarak görünür. Bir devir nedeni seçin ve neden erişime ihtiyaç duyduğunuzu açıklayın.",
@@ -4365,6 +4512,7 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
+				"directLinks": "Doğrudan bağlantılar",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
@@ -4386,9 +4534,12 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Sohbet çemberi",
+				"selfHelp": "Çember",
 				"internal": "Dahili",
-				"team": "Ekip danışmanlığı"
+				"team": "Ekip danışmanlığı",
+				"directLinkVideo": "Görüntülü arama",
+				"directLinkAudio": "Sesli arama",
+				"directLinkChat": "Doğrudan bağlantı"
 			}
 		},
 		"supervision": {
@@ -4399,11 +4550,53 @@
 			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır.",
 			"expand": "Görüşme listesini genişlet",
 			"collapse": "Sohbeti büyütmek için görüşme listesini daralt",
-			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin.",
+			"futureAriaLabel": "Yaklaşan randevular: göstermek için aşağı sürükleyin, Yukarı ve Aşağı tuşları kademeler arasında geçer."
 		},
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
-			"unreadCount_one": "{{count}} yeni mesaj"
+			"unreadCount_one": "{{count}} yeni mesaj",
+			"openEnquiries": "{{count}} açık talep",
+			"openEnquiries_one": "{{count}} açık talep"
+		},
+		"timeline": {
+			"now": "Şimdi",
+			"running": "devam ediyor",
+			"upcoming": "Gelecekteki randevular",
+			"nextAppointment": "Sonraki randevu: {{date}}",
+			"appointment": {
+				"create": "Randevu oluştur",
+				"dialog": {
+					"createTitle": "Randevu oluştur",
+					"moveTitle": "Randevuyu ertele",
+					"description": "Randevu bu danışmanlığa aittir. Sohbette bir bildirim görünür.",
+					"createAction": "Oluştur",
+					"moveAction": "Ertele",
+					"date": "Tarih",
+					"start": "Başlangıç",
+					"end": "Bitiş",
+					"error": {
+						"incomplete": "Lütfen tarih ve saat seçin.",
+						"past": "Randevu gelecekte olmalıdır.",
+						"order": "Bitiş, başlangıçtan sonra olmalıdır.",
+						"conflict": "Bu randevu artık değiştirilemez: iptal edilmiş veya danışmanlık sona ermiştir.",
+						"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
+					}
+				},
+				"notice": {
+					"created": "Randevu belirlendi: {{date}}",
+					"moved": "Randevu şu tarihe ertelendi: {{date}}",
+					"cancelled": "Randevu iptal edildi: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Bildirim gönderilmedi",
+					"text": "Randevu kaydedildi ancak sohbetteki bildirim gönderilemedi."
+				},
+				"cancelFailed": {
+					"title": "Randevu iptal edilmedi",
+					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -4686,8 +4879,10 @@
 			},
 			"decision": {
 				"app": "Uygulama ile güvenli şekilde bağlan",
+				"appActive": "Kimlik doğrulama uygulaması ikinci faktör olarak zaten etkin. Değiştirmek için diğer yöntemi seçin.",
 				"copy": "Hesabınızı ikinci bir faktörle koruyun. Kimlik doğrulama uygulaması daha güvenli seçenektir; alternatif olarak kodları e-posta ile de alabilirsiniz.",
 				"email": "E-posta kodu kullan (daha az güvenli)",
+				"emailActive": "E-posta kodları ikinci faktör olarak zaten etkin. Değiştirmek için uygulamayı seçin.",
 				"title": "İkinci faktörü seçin"
 			},
 			"email": {
@@ -4989,6 +5184,7 @@
 		"label": "Sesli mesaj",
 		"play": "Sesli mesajı oynat",
 		"pause": "Sesli mesajı duraklat",
+		"loading": "Sesli mesaj yükleniyor",
 		"timeline": "Zaman çizelgesi",
 		"jumpTo": "{{time}} konumuna atla",
 		"aria": "Sesli mesaj, {{duration}}, oynat",
@@ -5456,6 +5652,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Bu bağlantı şu anda duraklatılmıştır.",
 		"error": {
 			"title": "Bu davet bağlantısı artık kullanılamıyor",
 			"generic": "Davet bağlantısı kullanılamadı",
@@ -5528,7 +5725,9 @@
 			"body": "İsteğe bağlı olarak bir e-posta adresi bırakabilirsiniz. Yanıt geldiğinde size haber veririz. Danışmanlığın içeriği bu e-postada asla yer almaz.",
 			"action": "E-posta adresi ekle",
 			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin.",
-			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin."
+			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin.",
+			"refreshFailed": "E-posta adresiniz kaydedildi. Güncel ayarlarınız yüklenemedi.",
+			"retryRefresh": "Yeniden yükle"
 		},
 		"accountProtection": {
 			"headline": "Erişiminiz, ek olarak korunur",
@@ -5577,7 +5776,9 @@
 			"channelBrowser": "Bu cihazdaki tarayıcı",
 			"channelEmail": "E-posta",
 			"enableBrowser": "Tarayıcı bildirimlerini etkinleştir",
-			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin."
+			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"emailAccepted": "E-posta bildirimi değişikliği kabul edildi.",
+			"refreshFailed": "Değişiklik kabul edildi. Güncel ayarlarınız yüklenemedi."
 		},
 		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor.",
 		"faq": {
@@ -5696,7 +5897,26 @@
 			"pending": "Kurtarma kontrol ediliyor. Uygulamayı kullanmaya devam edebilirsiniz.",
 			"busy": "Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor. Lütfen daha sonra tekrar deneyin.",
 			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi.",
-			"chatUnavailable": "Sohbet bağlantısı şu anda kullanılamıyor, bu nedenle şifreniz güvenli bir şekilde değiştirilemiyor. Şifreniz değiştirilmedi. Lütfen daha sonra tekrar deneyin; sorun devam ederse yöneticinizle iletişime geçin."
+			"chatUnavailable": "Sohbet bağlantısı şu anda kullanılamıyor, bu nedenle şifreniz güvenli bir şekilde değiştirilemiyor. Şifreniz değiştirilmedi. Lütfen daha sonra tekrar deneyin; sorun devam ederse yöneticinizle iletişime geçin.",
+			"notEnrolled": "Parola ile kurtarma ayarlanmadı: parolanız yeni bir cihazda konuşma geçmişinizin kilidini henüz açmıyor. Ayarlamak için kurtarma anahtarınızı bir kez girin.",
+			"afterChange": {
+				"title": "Parolanız değiştirildi.",
+				"explanation": "Yeni parolanızın yeni cihazlarda sohbetlerinizin kilidini açması için kurtarma anahtarınızı bir kez girin.",
+				"submit": "Yeni parolayla koru",
+				"later": "Daha sonra",
+				"laterHint": "Bu adım olmadan yeni parolanız yeni cihazlarda geçmişinizin kilidini açmaz. Bunu istediğiniz zaman güvenlik ayarlarından yapabilirsiniz."
+			},
+			"stale": {
+				"explanation": "Geçerli parolanız konuşma geçmişinizin yedeğini açmıyor. Bu, parolanız bu uygulamanın dışında değiştirildiğinde olur; örneğin yönetim alanındaki “Hesabım” bölümünde veya “Parolamı unuttum” ile. Geçmişinizin yeni cihazlarda yeniden parolanızla açılması için onu bu yollardan biriyle geçerli parolanızla güvenceye alın.",
+				"choose": "Geçmişinizi yeniden nasıl güvenceye almak istersiniz?",
+				"usePreviousPassword": "Önceki parolayı girin",
+				"useRecoveryKey": "Kurtarma anahtarını girin",
+				"previousPasswordHint": "Değişiklikten önce kullandığınız parolayı girin. Ardından geçmişinizi yalnızca geçerli parolanız açar.",
+				"recoveryKeyHint": "Kaydettiğiniz kurtarma anahtarını girin. Eski yedek ardından geçerli parolanızla korunan bir yedekle değiştirilir. Kurtarma anahtarınız geçerli kalır.",
+				"previousPassword": "Önceki parola",
+				"submit": "Geçerli parolayla güvenceye al",
+				"previousPasswordRejected": "Bu önceki parola yedeği açmıyor. Girişinizi kontrol edin veya kurtarma anahtarınızı kullanın."
+			}
 		}
 	},
 	"accountInvite": {
@@ -5948,7 +6168,7 @@
 			},
 			"access": {
 				"headline": "Bugünkü adınız.",
-				"subline": "Anonim, hesapsız. Bir kullanıcı kimliği seçin — ya da yeniden atın.",
+				"subline": "Anonim, hesapsız.",
 				"label": "Kullanıcı kimliğiniz",
 				"temporary": "Bu erişim yalnızca bu görüşme için geçerlidir. Sonrasında tüm mesajlarla birlikte en geç 48 saat içinde sileriz. Sıranız gelene kadar bu pencerede kalın.",
 				"reroll": "Yeniden at",
@@ -6072,24 +6292,69 @@
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
 		},
-		"notes": {
-			"title": "Görüşme notları",
-			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
-			"type": "Not türü",
-			"text": "Not",
-			"add": "Not ekle",
-			"remove": "Notu kaldır",
-			"copy": "Tümünü kopyala",
+		"states": {
+			"encrypted": "Şifreli",
+			"endsCurrent": "Yanıtlarsanız {{name}} ile görüşmeniz sona erer.",
+			"answerAndEnd": "Bitir ve yanıtla",
+			"backToCall": "Tam görünüme dön",
+			"speaking": "{{name}} konuşuyor",
+			"dockLabel": "{{name}} ile görüşme",
+			"cameraHint": "Ses devam eder.",
+			"minimize": "Aramayı küçült",
+			"groupCall": "Grup araması",
+			"endsCurrentUnnamed": "Yanıtlarsanız mevcut görüşmeniz sona erer."
+		},
+		"share": {
+			"signInToJoin": "Bu aramaya katılmak için oturum açın.",
+			"conversationMember": "Bu görüşmenin zaten bir katılımcısısınız. Aramaya görüşmenin sohbetinden katılın.",
+			"openConversations": "Görüşmelerimi aç",
+			"joinForbidden": "Bu bağlantıyla aramaya katılamazsınız.",
+			"open": "Aramayı paylaş",
+			"title": "Aramayı paylaş",
+			"close": "Kapat",
+			"settingsLabel": "Bu bağlantıyla gelen misafirler için",
+			"knock": {
+				"label": "Önce kapıyı çal",
+				"on": "Misafirler siz içeri alana kadar bekler. Kapatırsanız bekleyen herkes hemen içeri girer.",
+				"off": "Misafirler beklemeden doğrudan aramaya katılır."
+			},
+			"temporaryAccount": {
+				"label": "Geçici hesap",
+				"on": "Misafirler aramadan sonra silinen bir misafir hesabı alır.",
+				"off": "Misafirler kendi hesaplarıyla giriş yapar veya hesap oluşturur."
+			},
+			"linkLabel": "Aramanın bağlantısı",
+			"copy": "Kopyala",
 			"copied": "Kopyalandı",
-			"empty": "Henüz bir not yok.",
-			"collapse": "Notları daralt",
-			"expand": "Notları genişlet",
-			"open": "Görüşme notları",
-			"types": {
-				"frage": "Soru",
-				"anmerkung": "Açıklama",
-				"aufgabe": "Görev"
-			}
+			"copiedStatus": "Bağlantı panoda.",
+			"copyFailed": "Kopyalama başarısız oldu. Lütfen bağlantıyı seçip kendiniz kopyalayın.",
+			"qrShow": "QR kodu",
+			"qrHide": "QR kodunu gizle",
+			"qrAlt": "Aramanın bağlantısını içeren QR kodu",
+			"share": "Paylaş",
+			"shareTitle": "Aramaya davet",
+			"lifetime": "Bağlantı yalnızca bu arama için geçerlidir. Siz kapatır kapatmaz çalışmaz.",
+			"consent": "Misafirler girmeden önce danışma merkezinin gizlilik politikasını ve onayını tek dokunuşla onaylar.",
+			"qrHint": "Aramayı telefonda açmak için telefon kamerasıyla tarayın.",
+			"settingsLive": "Değişiklikler, paylaşılmış olsa bile bu bağlantı için hemen geçerli olur."
+		},
+		"knock": {
+			"region": "Bekleyen kişiler",
+			"someone": "Biri",
+			"wantsIn": "görüşmeye katılmak istiyor",
+			"admit": "İçeri al",
+			"decline": "Reddet",
+			"admitAll": "Herkesi içeri al",
+			"position": "{{current}} / {{total}}",
+			"previous": "Önceki kişi",
+			"next": "Sonraki kişi",
+			"participants": "Katılımcılar",
+			"participantsWaiting": "Katılımcılar – bekleyen: {{count}}"
+		},
+		"admission": {
+			"label": "Önce kapıyı çal",
+			"on": "Misafirler siz içeri alana kadar bekler.",
+			"off": "Misafirler beklemeden doğrudan aramaya katılır."
 		}
 	},
 	"form": {
@@ -6260,6 +6525,174 @@
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
 			"micMeter": "Mikrofonunuzun ses düzeyi"
+		},
+		"ready": {
+			"title": "Kamerayı ve mikrofonu kontrol edin",
+			"description": "Katılmadan önce kimse sizi görmez ve duymaz. Önizlemeyi yalnızca siz görürsünüz.",
+			"descriptionCheck": "Ayarınız bu gruptaki bir görüşmeye katıldığınızda geçerli olur. Önizlemeyi yalnızca siz görürsünüz.",
+			"join": "Şimdi katıl",
+			"done": "Tamam",
+			"retry": "Tekrar kontrol et",
+			"knocking": "İstek gönderildi, lütfen bekleyin …",
+			"notApplied": "Kamera ve mikrofon ayarınız uygulanamadı. Lütfen ikisini de görüşmede kontrol edin."
+		}
+	},
+	"furtherCounselling": {
+		"menu": {
+			"recommend": "Başka bir danışmanlık öner",
+			"endDuplicate": "Mükerrer danışmanlığı sonlandır",
+			"endDuplicateDescription": "Aynı konudaki bu ikinci danışmanlığı sonlandırır"
+		},
+		"recommend": {
+			"title": "Başka bir danışmanlık öner",
+			"intro": "Danışan kişi önerinizi sohbette bir kart olarak görür ve oradan uygun bir danışma merkezi bulabilir.",
+			"topicLabel": "Konu",
+			"noteLabel": "Not (isteğe bağlı)",
+			"noteHint": "Not, sohbetteki kartta görünür.",
+			"noteCounter": "{{count}} / {{max}}",
+			"submit": "Öneriyi gönder",
+			"cancel": "İptal",
+			"successHeadline": "Öneriniz gönderildi.",
+			"successButton": "Kapat",
+			"error": "Öneri gönderilemedi. Lütfen tekrar deneyin.",
+			"errorForbidden": "Başka bir danışmanlığı yalnızca bu görüşmeden sorumlu danışman önerebilir.",
+			"errorConflict": "Bu görüşmede şu anda öneri yapılamıyor.",
+			"topicsUnavailable": "Konular yüklenemedi. Lütfen daha sonra tekrar deneyin."
+		},
+		"card": {
+			"title": "Öneri: başka bir danışmanlık",
+			"topic": "Konu: {{topic}}",
+			"defaultText": "Lütfen aynı konuda yalnızca bir danışmanlık sürdürün. Yeni danışmanlık başlar başlamaz mevcut danışmanınız bilgilendirilecektir.",
+			"noteLabel": "Danışmanın notu",
+			"findAgency": "Danışma merkezi bul",
+			"requested": "Talep gönderildi",
+			"topicUnknown": "başka bir konu"
+		},
+		"duplicate": {
+			"startedTitle": "Aynı konuda başka bir danışmanlık",
+			"started": "{{topic}} konusunda başka bir danışmanlık başladı. Lütfen hangi danışmanlığın devam edeceğine birlikte karar verin. Diğeri sonlandırılmalıdır.",
+			"endedTitle": "İkinci danışmanlık sonlandırıldı",
+			"ended": "{{topic}} konusundaki ikinci danışmanlık sonlandırıldı.",
+			"confirm": {
+				"headline": "Mükerrer danışmanlık sonlandırılsın mı?",
+				"copy": "Bu danışmanlık sonlandırılacak ve arşive taşınacak. Aynı konudaki diğer danışmanlığınız devam eder.",
+				"confirm": "Danışmanlığı sonlandır",
+				"cancel": "İptal"
+			},
+			"error": "Danışmanlık sonlandırılamadı. Lütfen tekrar deneyin."
+		},
+		"request": {
+			"sameTopicInfo": "Aynı konuda aynı anda yalnızca bir danışmanlık öngörülmüştür. Zaten konuştuğunuz bir konuda danışmanlık başlatırsanız, yeni danışmanlık kabul edilir edilmez mevcut danışmanınız bilgilendirilir. Ardından ikisinden biri sonlandırılır.",
+			"consentAria": "Danışma merkezinin veri koruma koşullarına onay",
+			"cancel": "İptal"
+		}
+	},
+	"directLink": {
+		"card": {
+			"title": "Doğrudan bağlantı",
+			"subtitle": "Danışmanlık arayanlar için",
+			"headline": "Doğrudan size ulaşan bir bağlantı",
+			"text": "Bağlantıyı açan kişi size doğrudan ulaşır – sohbette, sesli veya görüntülü aramada.",
+			"topicLabel": "Konu seçin",
+			"mediumLabel": "İletişim türü",
+			"temporary": "Geçici hesap",
+			"temporaryHint": "Hesap görüşmeden sonra silinir.",
+			"create": "Bağlantı oluştur",
+			"createFailed": "Bağlantı oluşturulamadı. Lütfen tekrar deneyin."
+		},
+		"medium": {
+			"chat": "Sohbet",
+			"audio": "Sesli arama",
+			"video": "Görüntülü arama"
+		},
+		"temporary": "Geçici",
+		"copy": "Bağlantıyı kopyala",
+		"share": {
+			"title": "Doğrudan bağlantınız hazır",
+			"description": "Bağlantıyı veya QR kodunu paylaşın. Her kişi sizinle kendi görüşmesini alır.",
+			"copied": "Kopyalandı",
+			"share": "Paylaş",
+			"qrAlt": "Doğrudan bağlantının QR kodu",
+			"done": "Tamam",
+			"linkLabel": "Doğrudan bağlantı"
+		},
+		"list": {
+			"title": "Doğrudan bağlantılarım",
+			"qr": "QR kodunu göster",
+			"active": "{{name}} etkin",
+			"edit": "{{name}} düzenle"
+		},
+		"entry": {
+			"inactive": "Bu bağlantı artık etkin değil.",
+			"callsDisabled": "Bu danışmanlıkta aramalar mümkün değil.",
+			"haveAccount": "Zaten bir hesabınız var mı? Giriş yapın",
+			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
+		},
+		"page": {
+			"loadFailed": "Doğrudan bağlantılarınız yüklenemedi.",
+			"create": "“Sohbet oluştur” bölümünde yeni doğrudan bağlantı oluştur",
+			"emptyHeadline": "Henüz doğrudan bağlantı yok",
+			"emptyText": "Doğrudan bağlantıyı “Sohbet oluştur” bölümünde oluşturursunuz. Ardından burada görünür.",
+			"loading": "Doğrudan bağlantılar yükleniyor",
+			"retry": "Tekrar dene",
+			"toggleFailed": "Bağlantı açılıp kapatılamadı. Lütfen tekrar deneyin."
+		},
+		"edit": {
+			"title": "Doğrudan bağlantıyı düzenle",
+			"cancel": "İptal",
+			"save": "Kaydet",
+			"name": "Ad",
+			"nameRequired": "Lütfen bir ad girin.",
+			"topic": "Konu",
+			"mediumFixed": "İletişim türü değiştirilemez",
+			"temporaryHint": "Yalnızca bağlantıyı bundan sonra açan kişiler için geçerlidir.",
+			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin."
+		}
+	},
+	"dashboard": {
+		"title": "Genel bakışınız",
+		"stats": {
+			"title": "Danışmanlıklar",
+			"period": "Son 30 gün",
+			"assigned": "Yeni üstlenilen",
+			"active": "Aktif",
+			"archived": "Arşivlenen",
+			"sentMessages": "Gönderilen mesajlar"
+		},
+		"circles": {
+			"title": "Yaklaşan öz yardım grupları",
+			"participants": "{{count}} katılımcı",
+			"participants_one": "{{count}} katılımcı"
+		}
+	},
+	"temporaryAccount": {
+		"marker": {
+			"label": "Geçici",
+			"title": "Misafir hesabıyla birlikte silinir"
+		},
+		"deletedGuest": "Misafir (silindi)",
+		"chip": {
+			"guest": "Misafir hesabı"
+		},
+		"keepDialog": {
+			"title": "Mesajlarınız kalsın mı?",
+			"description": "Misafir hesabınız görüşmeden sonra silinir. Mesajlarınıza ne olsun?",
+			"keep": {
+				"label": "Silindikten sonra da sakla",
+				"hint": "Hesabınız silindiğinde mesajlarınız kalır."
+			},
+			"delete": {
+				"label": "Geçici",
+				"hint": "Mesajlarınız hesabınızla birlikte silinir."
+			},
+			"note": "Cevabınız bu görüşmenin tamamı için geçerlidir.",
+			"confirm": "Devam",
+			"cancel": "İptal",
+			"failed": "Yanıtınız kaydedilemedi. Mesajınız henüz gönderilmedi."
+		},
+		"lookupFailed": {
+			"title": "Hesabınız kontrol edilemedi",
+			"text": "Mesajınız henüz gönderilmedi ve yazı alanında duruyor. Lütfen bağlantınızı kontrol edip yeniden gönderin."
 		}
 	}
 }
