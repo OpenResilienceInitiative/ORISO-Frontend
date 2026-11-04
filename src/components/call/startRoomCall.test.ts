@@ -130,6 +130,22 @@ describe('startRoomCall', () => {
 		expect(stopVideo).toHaveBeenCalledOnce();
 	});
 
+	it('leaves the camera alone when told to, and the call stays a video call', async () => {
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			requestCamera: false,
+			notify,
+			getCallManager
+		});
+
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: false,
+			audio: true
+		});
+		expect(started).toEqual([[CLIENT_ROOM, true, undefined]]);
+	});
+
 	it('says so and starts nothing when the room is unknown', async () => {
 		await startRoomCall({
 			roomId: null,

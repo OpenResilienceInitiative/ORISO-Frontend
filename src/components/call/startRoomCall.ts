@@ -26,6 +26,12 @@ export interface StartRoomCallOptions {
 	roomId: string | null | undefined;
 	isVideo: boolean;
 	/**
+	 * Whether the permission request below opens the camera; `isVideo` unless
+	 * set. A video call that starts with the camera off, or on a device
+	 * without one, must not touch it here (ElementCall#116).
+	 */
+	requestCamera?: boolean;
+	/**
 	 * `true` forces the MatrixRTC group path, `false` forces 1:1,
 	 * `undefined` lets the CallManager count the room's members.
 	 */
@@ -72,6 +78,7 @@ const mediaErrorMessage = (error: any): string => {
 export const startRoomCall = async ({
 	roomId,
 	isVideo,
+	requestCamera = isVideo,
 	isGroup,
 	notify = (message: string) => window.alert(message),
 	confirm = (message: string) => window.confirm(message),
@@ -108,7 +115,7 @@ export const startRoomCall = async ({
 		// the outgoing call runs through Element Call, which opens its own.
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
-				video: isVideo,
+				video: requestCamera,
 				audio: true
 			});
 			stopMediaStreamTracks(stream);

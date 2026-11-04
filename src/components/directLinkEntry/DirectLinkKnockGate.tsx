@@ -22,6 +22,7 @@ import { callManager } from '../../services/CallManager';
 import {
 	chosenDeviceLabel,
 	joinMediaFrom,
+	peekJoinMedia,
 	rememberJoinMedia
 } from '../call/prejoin/callPrejoin';
 
@@ -66,11 +67,20 @@ export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	mediaDevices?: MediaDevices;
 }
 
-const defaultStartCall = async (knock: PendingKnock) => {
+/** The room whose call takes the switches (`GroupCallWidget`). */
+const callRoomOf = (knock: PendingKnock) =>
+	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
+
+export const defaultStartCall = async (knock: PendingKnock) => {
 	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
+	const isVideo = knock.medium === 'VIDEO';
 	await startRoomCall({
 		roomId: knock.matrixRoomId,
-		isVideo: knock.medium === 'VIDEO'
+		isVideo,
+		/* The switches of the knock dialog: a camera that is off, or that
+		   this device does not have, is not asked for (ElementCall#116). */
+		requestCamera:
+			peekJoinMedia(callRoomOf(knock))?.video_enabled ?? isVideo
 	});
 };
 
@@ -89,10 +99,6 @@ const defaultJoinRunningCall = async (knock: PendingKnock) => {
 		call.isGroup ?? false
 	);
 };
-
-/** The room whose call takes the switches (`GroupCallWidget`). */
-const callRoomOf = (knock: PendingKnock) =>
-	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
 
 const modalityOf = (knock: PendingKnock): CallModality =>
 	knock.medium === 'VIDEO' ? 'video' : 'audio';
