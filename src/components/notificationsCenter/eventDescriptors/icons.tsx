@@ -13,7 +13,7 @@ import { ReactComponent as RequestNewIcon } from '../../../resources/img/icons/t
 import { ReactComponent as RequestAcceptedIcon } from '../../../resources/img/icons/timeline-case-accepted.svg';
 import { ReactComponent as MessageIcon } from '../../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as ThreadReplyIcon } from '../../../resources/img/icons/corner-up-left.svg';
-import { ReactComponent as DraftIcon } from '../../../resources/img/icons/pen-paper.svg';
+import { DraftFilterIcon } from '../../sessionsList/SessionToolbarFilterIcons';
 import { ReactComponent as HandoverIcon } from '../../../resources/img/icons/case-handover/case-handover.svg';
 import { ReactComponent as HandoverDeniedIcon } from '../../../resources/img/icons/timeline-case-denied.svg';
 import { ReactComponent as CallStartedIcon } from '../../../resources/img/icons/timeline-add-call.svg';
@@ -39,6 +39,11 @@ import { ReactComponent as TeamDiscussionIcon } from '../../../resources/img/ico
 import { EventIconId } from './types';
 
 type SvgIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+// Same dashed-box glyph as the Drafts chip in the sessions toolbar.
+const DraftIcon: SvgIcon = ({ className }) => (
+	<DraftFilterIcon className={className} />
+);
 
 export const EVENT_ICONS: Record<EventIconId, SvgIcon> = {
 	requestNew: RequestNewIcon,

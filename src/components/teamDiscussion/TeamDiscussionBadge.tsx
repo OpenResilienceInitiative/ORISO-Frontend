@@ -12,18 +12,51 @@ import {
 	getCachedTeamDiscussion,
 	invalidateTeamDiscussionCache
 } from '../../services/teamDiscussionCache';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import './teamDiscussion.styles.scss';
 
 export { getCachedTeamDiscussion, invalidateTeamDiscussionCache };
 
+interface TeamDiscussionIconButtonProps {
+	onOpen?: () => void;
+}
+
+/** The pure view: one clickable icon, the word lives in name and tooltip. */
+export const TeamDiscussionIconButton = ({
+	onOpen
+}: TeamDiscussionIconButtonProps) => {
+	const { t: translate } = useTranslation();
+	const label = translate('teamDiscussion.title');
+
+	return (
+		<button
+			type="button"
+			className="teamDiscussionBadge"
+			data-cy="team-discussion-badge"
+			title={`${label} – ${translate('teamDiscussion.teamOnlyMarker')}`}
+			aria-label={label}
+			disabled={!onOpen}
+			onClick={(event) => {
+				// The list row is itself clickable: do not also open the chat.
+				event.stopPropagation();
+				onOpen?.();
+			}}
+		>
+			<TeamGlyph aria-hidden="true" focusable="false" />
+		</button>
+	);
+};
+
 interface TeamDiscussionBadgeProps {
 	sessionId: number;
+	/** Opens the team discussion; the icon is a button only when given. */
+	onOpen?: () => void;
 }
 
 export const TeamDiscussionBadge = ({
-	sessionId
+	sessionId,
+	onOpen
 }: TeamDiscussionBadgeProps) => {
-	const { t: translate } = useTranslation();
 	const [discussion, setDiscussion] = useState<TeamDiscussion | null>(null);
 
 	useEffect(() => {
@@ -42,13 +75,5 @@ export const TeamDiscussionBadge = ({
 		return null;
 	}
 
-	return (
-		<span
-			className="teamDiscussionBadge"
-			data-cy="team-discussion-badge"
-			title={translate('teamDiscussion.teamOnlyMarker')}
-		>
-			{translate('teamDiscussion.title')}
-		</span>
-	);
+	return <TeamDiscussionIconButton onOpen={onOpen} />;
 };

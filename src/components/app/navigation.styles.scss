@@ -799,7 +799,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	--oriso-nav-bar-label: var(--m3-on-surface-variant, #444748);
 	--oriso-nav-bar-active-label: var(--oriso-on-primary-fixed, #410001);
 	--oriso-nav-bar-badge: var(--m3-error, #b1005e);
-	--oriso-nav-bar-on-badge: var(--m3-on-error, #ffffff);
+
+	/* White count on the badge: ignore the tenant's computed on-error. */
+	--oriso-nav-bar-on-badge: var(--m3-surface-container-lowest, #ffffff);
 	--oriso-nav-bar-on-live: var(--m3-on-primary-container, #ffe2de);
 
 	width: 100%;

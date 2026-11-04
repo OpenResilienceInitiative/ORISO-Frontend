@@ -1,3 +1,4 @@
+import { postComposerFullscreen } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
@@ -615,6 +616,11 @@ export const MessageSubmitInterfaceComponent = ({
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
+	// Inside the Drafts center iframe the embedding page widens the frame.
+	useEffect(() => {
+		postComposerFullscreen(isExpandedComposer);
+		return () => postComposerFullscreen(false);
+	}, [isExpandedComposer]);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null

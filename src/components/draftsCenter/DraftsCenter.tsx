@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../../services/draftStore';
 import { useResponsive } from '../../hooks/useResponsive';
 import './draftsCenter.styles';
+import { isComposerFullscreenMessage } from '../../utils/embeddedComposerFullscreen';
 
 const formatRelativeTime = (timestamp?: string | null) => {
 	if (!timestamp) {
@@ -89,6 +90,23 @@ export const DraftsCenter = () => {
 		null
 	);
 	const [refreshToken, setRefreshToken] = useState(0);
+	const embeddedFrameRef = useRef<HTMLIFrameElement>(null);
+	const [embeddedFullscreen, setEmbeddedFullscreen] = useState(false);
+
+	useEffect(() => {
+		const onMessage = (event: MessageEvent) => {
+			if (
+				event.origin !== window.location.origin ||
+				event.source !== embeddedFrameRef.current?.contentWindow ||
+				!isComposerFullscreenMessage(event.data)
+			) {
+				return;
+			}
+			setEmbeddedFullscreen(event.data.expanded);
+		};
+		window.addEventListener('message', onMessage);
+		return () => window.removeEventListener('message', onMessage);
+	}, []);
 	const [drafts, setDrafts] = useState<IUserDraftItem[]>([]);
 
 	useEffect(() => {
@@ -299,8 +317,15 @@ export const DraftsCenter = () => {
 								</button>
 							</div>
 							{embeddedChatPath && (
-								<div className="draftsCenter__embeddedSession">
+								<div
+									className={`draftsCenter__embeddedSession ${
+										embeddedFullscreen
+											? 'draftsCenter__embeddedSession--fullscreen'
+											: ''
+									}`}
+								>
 									<iframe
+										ref={embeddedFrameRef}
 										key={selectedDraft.scopeKey}
 										title={translate(
 											'drafts.center.embeddedTitle'

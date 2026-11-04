@@ -1951,6 +1951,7 @@ export const SessionListItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
+												onOpen={handleRequestHelp}
 											/>
 										)}
 									{modality === Modality.SELF_HELP && (
