@@ -1,4 +1,4 @@
-import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
+import { MatrixClient, Room, MatrixEvent, RoomEvent } from 'matrix-js-sdk';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import {
 	parseMessagePrefixes,
@@ -17,6 +17,9 @@ export const FEED_UPDATE_EVENT_TYPE = 'org.oriso.feed.updated';
 
 /** Bridge-level event name consumers subscribe to via `bridge.on(...)`. */
 export const FEED_UPDATE_BRIDGE_EVENT = 'feedUpdated';
+
+const CALL_INVITE_FRESHNESS_SECONDS = 10;
+const MAX_LIVE_CALL_INVITE_LIFETIME_MS = 60_000;
 
 type CallManagerModule = typeof import('./CallManager');
 
@@ -50,6 +53,49 @@ const isElementOrGroupCallInvite = (
 	content: Record<string, unknown>
 ): boolean =>
 	content.is_element_call === true || content.is_group_call === true;
+
+const orisoCallKey = (event: MatrixEvent): string | undefined => {
+	const { call_id: callId, call_room_id: callRoomId } = event.getContent();
+	const sender = event.getSender();
+	if (!sender || typeof callId !== 'string' || typeof callRoomId !== 'string')
+		return;
+	return JSON.stringify([sender, callId, callRoomId]);
+};
+
+const laterCallerEvents = (
+	invite: MatrixEvent,
+	timeline: MatrixEvent[]
+): MatrixEvent[] => {
+	const sender = invite.getSender();
+	if (!sender) return [];
+	const sentAt = invite.getTs();
+	const inviteIndex = timeline.indexOf(invite);
+	return timeline.filter(
+		(event, index) =>
+			event.getSender() === sender &&
+			(event.getTs() > sentAt ||
+				(event.getTs() === sentAt && index > inviteIndex))
+	);
+};
+
+const hasMatchingOrisoHangup = (
+	invite: MatrixEvent,
+	later: MatrixEvent[]
+): boolean => {
+	const { call_id: callId, call_room_id: callRoomId } = invite.getContent();
+	return (
+		typeof callId === 'string' &&
+		typeof callRoomId === 'string' &&
+		later.some((event) => {
+			if (event.getType() !== 'org.oriso.call.hangup') return false;
+			const content = event.getContent();
+			return (
+				content.call_id === callId &&
+				content.call_room_id === callRoomId
+			);
+		})
+	);
+};
 
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
@@ -85,6 +131,10 @@ export class MatrixLiveEventBridge {
 			listener: (event: MatrixEvent, error?: Error) => void;
 			timeout: ReturnType<typeof setTimeout>;
 		}
+	>();
+	private deferredCallInvites = new Map<
+		MatrixEvent,
+		{ room: Room; timeout: ReturnType<typeof setTimeout> }
 	>();
 
 	/**
@@ -134,14 +184,17 @@ export class MatrixLiveEventBridge {
 
 		// Listen to Room.timeline events (new messages, state changes)
 		this.client.on(
-			'Room.timeline' as any,
-			(event: MatrixEvent, room: Room, toStartOfTimeline: boolean) => {
+			RoomEvent.Timeline,
+			(event, room, toStartOfTimeline, removed, data) => {
 				// Ignore historical events (when scrolling back)
-				if (toStartOfTimeline) {
+				if (!room || toStartOfTimeline || removed) {
 					return;
 				}
 
-				this.dispatchTimelineEvent(event, room);
+				const isLive =
+					data?.liveEvent === true &&
+					this.client?.isInitialSyncComplete?.() === true;
+				this.dispatchTimelineEvent(event, room, false, isLive);
 			}
 		);
 
@@ -183,7 +236,22 @@ export class MatrixLiveEventBridge {
 			.flatMap((room) => {
 				const events = room.getLiveTimeline().getEvents();
 				const hangups = new Map<string, number>();
-				events.forEach((event) => {
+				const orisoHangups = new Map<
+					string,
+					{ timestamp: number; index: number }
+				>();
+				events.forEach((event, index) => {
+					if (event.getType() === 'org.oriso.call.hangup') {
+						const key = orisoCallKey(event);
+						const timestamp = event.getTs();
+						if (
+							key &&
+							(orisoHangups.get(key)?.timestamp ?? -Infinity) <=
+								timestamp
+						) {
+							orisoHangups.set(key, { timestamp, index });
+						}
+					}
 					if (
 						event.getType() === 'm.call.hangup' ||
 						event.getType() === 'org.oriso.call.hangup'
@@ -202,7 +270,7 @@ export class MatrixLiveEventBridge {
 				});
 
 				return events.reduce<{ event: MatrixEvent; room: Room }[]>(
-					(candidatesForRoom, event) => {
+					(candidatesForRoom, event, index) => {
 						if (
 							event.getType() !== 'm.call.invite' &&
 							event.getType() !== 'org.oriso.call.invite'
@@ -214,10 +282,19 @@ export class MatrixLiveEventBridge {
 						const endedAt = callId
 							? hangups.get(callId)
 							: undefined;
-						if (
-							isElementOrGroupCallInvite(content) &&
-							(!endedAt || endedAt < event.getTs())
-						) {
+						const orisoKey = orisoCallKey(event);
+						const orisoEnd = orisoKey
+							? orisoHangups.get(orisoKey)
+							: undefined;
+						const ended =
+							event.getType() === 'org.oriso.call.invite'
+								? !!orisoEnd &&
+									(orisoEnd.timestamp > event.getTs() ||
+										(orisoEnd.timestamp === event.getTs() &&
+											orisoEnd.index > index))
+								: endedAt !== undefined &&
+									endedAt >= event.getTs();
+						if (isElementOrGroupCallInvite(content) && !ended) {
 							candidatesForRoom.push({ event, room });
 						}
 						return candidatesForRoom;
@@ -233,6 +310,7 @@ export class MatrixLiveEventBridge {
 			if (
 				event.getSender() !== this.client.getUserId() &&
 				!this.processedCallInvites.has(content.call_id) &&
+				!this.deferredCallInvites.has(event) &&
 				this.hasActiveMatrixRtcMembership(callRoomId)
 			) {
 				this.handleCallInvite(event, room);
@@ -246,7 +324,8 @@ export class MatrixLiveEventBridge {
 	private dispatchTimelineEvent(
 		event: MatrixEvent,
 		room: Room,
-		fromDecryptionRetry = false
+		fromDecryptionRetry = false,
+		isLive = false
 	): void {
 		switch (event.getType()) {
 			case 'm.room.message':
@@ -260,12 +339,23 @@ export class MatrixLiveEventBridge {
 				// Keep the existing metadata refresh, but also redispatch the clear
 				// event when a later decryption retry succeeds.
 				this.handleRoomMessage(event, room);
-				this.waitForSuccessfulDecryption(event, room);
+				const ageSeconds = Math.floor(
+					(Date.now() - event.getTs()) / 1000
+				);
+				this.waitForSuccessfulDecryption(
+					event,
+					room,
+					isLive && ageSeconds <= CALL_INVITE_FRESHNESS_SECONDS
+				);
 				break;
 
 			case 'm.call.invite':
 			case 'org.oriso.call.invite':
-				this.handleCallInvite(event, room, fromDecryptionRetry);
+				this.handleCallInvite(
+					event,
+					room,
+					fromDecryptionRetry && isLive
+				);
 				break;
 
 			case 'm.call.hangup':
@@ -284,7 +374,11 @@ export class MatrixLiveEventBridge {
 		}
 	}
 
-	private waitForSuccessfulDecryption(event: MatrixEvent, room: Room): void {
+	private waitForSuccessfulDecryption(
+		event: MatrixEvent,
+		room: Room,
+		wasFreshAndLive: boolean
+	): void {
 		if (this.pendingEncryptedEvents.has(event)) return;
 
 		let completed = false;
@@ -307,7 +401,13 @@ export class MatrixLiveEventBridge {
 
 			completed = true;
 			cleanup();
-			this.dispatchTimelineEvent(decryptedEvent, room, true);
+			this.dispatchTimelineEvent(
+				decryptedEvent,
+				room,
+				true,
+				wasFreshAndLive
+			);
+			this.retryDeferredCallInvites(decryptedEvent, room);
 		};
 
 		event.on('Event.decrypted' as any, listener as any);
@@ -333,6 +433,10 @@ export class MatrixLiveEventBridge {
 			clearTimeout(timeout);
 		});
 		this.pendingEncryptedEvents.clear();
+		this.deferredCallInvites.forEach(({ timeout }) =>
+			clearTimeout(timeout)
+		);
+		this.deferredCallInvites.clear();
 	}
 
 	/**
@@ -394,7 +498,7 @@ export class MatrixLiveEventBridge {
 	private handleCallInvite(
 		event: MatrixEvent,
 		room: Room,
-		_fromDecryptionRetry = false
+		wasFreshAndLive = false
 	): void {
 		const sender = event.getSender();
 		const content = event.getContent();
@@ -402,14 +506,39 @@ export class MatrixLiveEventBridge {
 		const eventTimestamp = event.getTs();
 		const now = Date.now();
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
+		const isOld = ageSeconds > CALL_INVITE_FRESHNESS_SECONDS;
 		const callRoomId = content.call_room_id || room.roomId;
 		const isGroupCall = content.is_group_call === true;
 		const isElementCall = isElementOrGroupCallInvite(content);
+		const isOrisoInvite = event.getType() === 'org.oriso.call.invite';
+		const hasActiveMatrixRtcMembership =
+			isElementCall && this.hasActiveMatrixRtcMembership(callRoomId);
+		const timeline =
+			isOrisoInvite &&
+			isOld &&
+			(wasFreshAndLive || hasActiveMatrixRtcMembership)
+				? (room.getLiveTimeline?.().getEvents() ?? [])
+				: [];
+		const later = laterCallerEvents(event, timeline);
+		if (isOrisoInvite && hasMatchingOrisoHangup(event, later)) return;
+		if (this.deferredCallInvites.has(event)) return;
+
+		const delayedDeadline =
+			isOld && wasFreshAndLive
+				? this.delayedInviteDeadline(event, timeline, now)
+				: undefined;
+		// An encrypted event from the same caller may be the hangup. Wait
+		// for its decryption rather than presenting an already ended call.
+		if (
+			delayedDeadline &&
+			later.some((item) => item.getType() === 'm.room.encrypted')
+		) {
+			this.deferCallInvite(event, room, delayedDeadline - now);
+			return;
+		}
 		const isVideo = isElementCall
 			? content.is_video !== false
 			: isVideoCallInvite(content);
-		const hasActiveMatrixRtcMembership =
-			isElementCall && this.hasActiveMatrixRtcMembership(callRoomId);
 
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🔔 CALL INVITE EVENT RECEIVED");
@@ -426,7 +555,7 @@ export class MatrixLiveEventBridge {
 		// though another participant is still publishing in the dedicated call
 		// room. The SDK's non-expired membership view is the authoritative active
 		// signal and avoids reviving calls whose invite merely remains in history.
-		if (ageSeconds > 10 && !hasActiveMatrixRtcMembership) {
+		if (isOld && !hasActiveMatrixRtcMembership && !delayedDeadline) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
 			// A partially synced Element Call room can gain active MatrixRTC
@@ -504,6 +633,55 @@ export class MatrixLiveEventBridge {
 			false,
 			room.roomId
 		);
+	}
+
+	private delayedInviteDeadline(
+		event: MatrixEvent,
+		timeline: MatrixEvent[],
+		now: number
+	): number | undefined {
+		const { call_id: callId, lifetime } = event.getContent();
+		// The normal freshness filter still applies to history, including initial
+		// sync. Only an invite seen live while fresh gets time to decrypt.
+		if (
+			event.getType() !== 'org.oriso.call.invite' ||
+			typeof callId !== 'string' ||
+			typeof lifetime !== 'number' ||
+			!Number.isFinite(lifetime) ||
+			!timeline.includes(event)
+		) {
+			return;
+		}
+		const deadline =
+			event.getTs() +
+			Math.min(lifetime, MAX_LIVE_CALL_INVITE_LIFETIME_MS);
+		return now < deadline ? deadline : undefined;
+	}
+
+	private deferCallInvite(
+		invite: MatrixEvent,
+		room: Room,
+		remaining: number
+	): void {
+		if (this.deferredCallInvites.has(invite)) return;
+		const timeout = setTimeout(
+			() => this.deferredCallInvites.delete(invite),
+			remaining
+		);
+		this.deferredCallInvites.set(invite, { room, timeout });
+	}
+
+	private retryDeferredCallInvites(decoded: MatrixEvent, room: Room): void {
+		for (const [invite, pending] of [...this.deferredCallInvites]) {
+			if (
+				pending.room !== room ||
+				invite.getSender() !== decoded.getSender()
+			)
+				continue;
+			clearTimeout(pending.timeout);
+			this.deferredCallInvites.delete(invite);
+			this.handleCallInvite(invite, room, true);
+		}
 	}
 
 	private hasActiveMatrixRtcMembership(callRoomId: string): boolean {
