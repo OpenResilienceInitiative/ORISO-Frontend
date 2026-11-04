@@ -135,6 +135,17 @@ export const resolvePreviewCapabilities = ({
 		// Fail closed: nothing of a case shows until it is known whose it is.
 		return readOnly('sessionUnknown', { contentHidden: true });
 	}
+	// The normal chat does not open a room for someone who cannot join it.
+	const isSideRoom = roomKind === 'team' || roomKind === 'supervision';
+	if (isSideRoom && !viewer.isConsultant) {
+		return readOnly('sessionUnknown', { contentHidden: true });
+	}
+	if (
+		(isSideRoom && !roomJoined) ||
+		(session.isGroup && (!roomJoined || groupJoinBlocked))
+	) {
+		return readOnly('notJoined', { contentHidden: true });
+	}
 	if (caseHandover !== 'notRequired') {
 		if (!caseHandover.canViewContent) {
 			return readOnly('curtained', { contentHidden: true });
@@ -146,25 +157,19 @@ export const resolvePreviewCapabilities = ({
 
 	// The internal rooms belong to counsellors only (ADR-008 / ADR-016).
 	if (roomKind === 'team') {
-		if (!viewer.isConsultant) {
-			return readOnly('sessionUnknown');
-		}
 		if (session.isArchive) {
 			return readOnly('archived');
 		}
 		if (!teamDiscussionOpen) {
 			return readOnly('teamClosed');
 		}
-		return roomJoined ? writable({}) : readOnly('notJoined');
+		return writable({});
 	}
 	if (roomKind === 'supervision') {
-		if (!viewer.isConsultant) {
-			return readOnly('sessionUnknown');
-		}
 		if (session.isArchive) {
 			return readOnly('archived');
 		}
-		return roomJoined ? writable({}) : readOnly('notJoined');
+		return writable({});
 	}
 
 	if (session.isArchive) {
@@ -176,9 +181,6 @@ export const resolvePreviewCapabilities = ({
 	// The chat gives a supervisor no composer, but lets them react.
 	if (isSupervisorOfSession) {
 		return readOnly('supervisor', { react: true });
-	}
-	if (session.isGroup && (!roomJoined || groupJoinBlocked)) {
-		return readOnly('notJoined');
 	}
 	// The chat's consent gates (group privacy statement, anonymous asker) rest
 	// on the recorded agreement; without it the Timeline cannot know the gate

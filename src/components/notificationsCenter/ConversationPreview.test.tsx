@@ -1287,6 +1287,19 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 			).toBeNull();
 		});
 
+		it('never reads cached room messages or subscribes when the viewer cannot join', () => {
+			conversation();
+			const { container } = open({
+				access: {
+					capabilities: readOnly('notJoined', { contentHidden: true })
+				}
+			});
+			expect(transport.getMatrixRoomMessages).not.toHaveBeenCalled();
+			expect(transport.onMatrixTimeline).not.toHaveBeenCalled();
+			expect(container.querySelector('.messageItem')).toBeNull();
+			expect(screen.getByText(t('notJoined'))).toBeTruthy();
+		});
+
 		it('unknown session: shows nothing of the conversation, neutrally', () => {
 			conversation();
 			const { container } = open({

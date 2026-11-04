@@ -244,12 +244,13 @@ export const ConversationPreview = ({
 			? { top: list.scrollTop, height: list.scrollHeight }
 			: null;
 	}, []);
+	const capabilities = access?.capabilities;
+	const readableRoomId = capabilities?.contentHidden ? null : roomId;
 	const { limit, status, loadOlder, refreshStatus } = usePreviewHistoryPaging(
-		roomId,
+		readableRoomId,
 		captureScroll
 	);
 
-	const capabilities = access?.capabilities;
 	// #1824: a thread opened from a main-room message stays inside the preview.
 	const [openedThreadRootId, setOpenedThreadRootId] = useState<string | null>(
 		null
@@ -307,20 +308,22 @@ export const ConversationPreview = ({
 	const typing = useMatrixTyping(capabilities?.composer ? roomId : null);
 
 	const loadMessages = useCallback(() => {
-		const room = roomId ? chatTransportService.getMatrixRoom(roomId) : null;
-		if (!roomId || !room) {
+		const room = readableRoomId
+			? chatTransportService.getMatrixRoom(readableRoomId)
+			: null;
+		if (!readableRoomId || !room) {
 			setRoomAvailable(false);
 			setTimeline(EMPTY_TIMELINE);
 			return;
 		}
 		setRoomAvailable(true);
 		const events = uniqueEvents(
-			chatTransportService.getMatrixRoomMessages(roomId, limit)
+			chatTransportService.getMatrixRoomMessages(readableRoomId, limit)
 		);
 		setTimeline({
 			messages: buildRoomTimeline(
 				events,
-				roomId,
+				readableRoomId,
 				room,
 				translateRef.current('e2ee.message.encryption.text')
 			),
@@ -330,22 +333,23 @@ export const ConversationPreview = ({
 			)
 		});
 		refreshStatus();
-	}, [roomId, limit, refreshStatus]);
+	}, [readableRoomId, limit, refreshStatus]);
 
 	useEffect(() => {
 		loadMessages();
-		if (!roomId) {
+		if (!readableRoomId) {
 			return;
 		}
 		// Live updates straight from the client's sync (decryption included);
 		// deliberately NO active-view registration and NO read receipts.
-		const detach = chatTransportService.onMatrixTimeline(roomId, () =>
-			loadMessages()
+		const detach = chatTransportService.onMatrixTimeline(
+			readableRoomId,
+			() => loadMessages()
 		);
 		return () => {
 			detach?.();
 		};
-	}, [roomId, loadMessages]);
+	}, [readableRoomId, loadMessages]);
 
 	const activeSession = useMemo(
 		() =>
@@ -493,16 +497,6 @@ export const ConversationPreview = ({
 		/>
 	);
 
-	if (!roomId || !roomAvailable || !activeSession) {
-		return (
-			<div className="conversationPreview conversationPreview--empty">
-				<p className="conversationPreview__notice">
-					{translate('notifications.center.preview.unavailable')}
-				</p>
-			</div>
-		);
-	}
-
 	const readOnlyReason = capabilities?.readOnlyReason ?? null;
 	const openButton = onOpenConversation &&
 		OPENS_TO_REPLY.has(readOnlyReason ?? '') && (
@@ -521,12 +515,21 @@ export const ConversationPreview = ({
 			<div className="conversationPreview conversationPreview--empty">
 				<p className="conversationPreview__notice">
 					{translate(
-						readOnlyReason === 'curtained'
-							? READ_ONLY_TEXT.curtained!
-							: 'notifications.center.preview.unavailable'
+						READ_ONLY_TEXT[readOnlyReason ?? ''] ??
+							'notifications.center.preview.unavailable'
 					)}
 				</p>
 				{openButton}
+			</div>
+		);
+	}
+
+	if (!roomId || !roomAvailable || !activeSession) {
+		return (
+			<div className="conversationPreview conversationPreview--empty">
+				<p className="conversationPreview__notice">
+					{translate('notifications.center.preview.unavailable')}
+				</p>
 			</div>
 		);
 	}
