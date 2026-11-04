@@ -15,7 +15,8 @@ import {
 	PENDING_KNOCK_EVENT,
 	PENDING_KNOCK_KEY,
 	readPendingKnock,
-	rememberDirectLinkSession
+	rememberDirectLinkSession,
+	knockJoinCallOf
 } from './directLinkEntryFlow';
 
 vi.mock('../registration/autoLogin', () => ({ redirectToApp: vi.fn() }));
@@ -370,7 +371,7 @@ describe('one window for knocking from the call message (#2016)', () => {
 			sessionId: 9,
 			medium: 'VIDEO' as const,
 			joinExisting: true,
-			joinCall: call
+			joinCall: { ...call, isGroup: false }
 		};
 		expect(admissionAction(knock, undefined)).toBe('joinRunningCall');
 		expect(admissionAction(knock, () => undefined)).toBe('storedJoin');
@@ -381,6 +382,53 @@ describe('one window for knocking from the call message (#2016)', () => {
 		expect(
 			admissionAction({ ...knock, joinCall: undefined }, undefined)
 		).toBe('none');
+	});
+
+	it('keeps the group mode the card joins with, also for a card without one', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+		// A card from before `isGroup` existed: the card resolves the mode.
+		await joinOrKnock(9, vi.fn(), {
+			start,
+			mine,
+			onKnock: vi.fn(),
+			call,
+			isGroup: true
+		});
+		expect(readPendingKnock()?.joinCall?.isGroup).toBe(true);
+	});
+
+	it('prefers the group mode the card itself wrote', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+		await joinOrKnock(9, vi.fn(), {
+			start,
+			mine,
+			onKnock: vi.fn(),
+			call: { ...call, isGroup: true },
+			isGroup: false
+		});
+		expect(readPendingKnock()?.joinCall?.isGroup).toBe(true);
+	});
+
+	it('after a reload, does not guess the mode of a call recorded without one', () => {
+		const knock = {
+			token: 'tok',
+			knockId: 31,
+			sessionId: 9,
+			medium: 'VIDEO' as const,
+			joinExisting: true,
+			joinCall: knockJoinCallOf(call)
+		};
+		// Joined as 1:1, leaving would end a group call for everybody: the
+		// card's next tap joins it, with the mode resolved there.
+		expect(admissionAction(knock, undefined)).toBe('none');
+		expect(
+			admissionAction(
+				{ ...knock, joinCall: { ...knock.joinCall, isGroup: false } },
+				undefined
+			)
+		).toBe('joinRunningCall');
 	});
 
 	it('keeps a knock the open check holds away from the knock gate', () => {

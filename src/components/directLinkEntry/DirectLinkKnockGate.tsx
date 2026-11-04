@@ -91,14 +91,16 @@ export const defaultStartCall = async (knock: PendingKnock) => {
  * knocked for at once; they never tap "Beitreten" a second time. Direct
  * links are 1:1, so the call is a group call only if its card says so.
  */
-const defaultJoinRunningCall = async (knock: PendingKnock) => {
+export const defaultJoinRunningCall = async (knock: PendingKnock) => {
 	const call = knock.joinCall;
-	if (!call) return;
+	/* No mode on record: never guess 1:1, whose leave ends a group call for
+	   everybody. The card's next tap joins with the mode resolved there. */
+	if (!call || call.isGroup === undefined) return;
 	await waitForJoinedRoom(call.roomRef);
 	// The card's people are not stored with the knock; the join reads none.
 	await callManager.joinExistingCall(
 		{ ...call, participants: [] },
-		call.isGroup ?? false
+		call.isGroup
 	);
 };
 
