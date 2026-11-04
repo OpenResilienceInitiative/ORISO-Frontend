@@ -11,10 +11,22 @@ export type SideRoom = {
 };
 
 /** Confirm each requested side room against its case and current membership. */
-export const useSideRoomPreviewGate = (rooms: SideRoom[]) => {
+export const useSideRoomPreviewGate = (
+	rooms: SideRoom[],
+	userId?: string,
+	username?: string
+) => {
 	const service = useContext(MatrixClientContext)?.matrixClientService;
+	const matrixClient = service?.getClient();
 	const [revision, setRevision] = useState(0);
-	const [answer, setAnswer] = useState<{ key: string; allowed: string[] }>({
+	const [answer, setAnswer] = useState<{
+		key: string;
+		allowed: string[];
+		service?: typeof service;
+		client?: typeof matrixClient;
+		userId?: string;
+		username?: string;
+	}>({
 		key: '',
 		allowed: []
 	});
@@ -23,7 +35,14 @@ export const useSideRoomPreviewGate = (rooms: SideRoom[]) => {
 	useEffect(() => {
 		let cancelled = false;
 		const [requested]: [SideRoom[], number] = JSON.parse(key);
-		setAnswer({ key, allowed: [] });
+		setAnswer({
+			key,
+			allowed: [],
+			service,
+			client: matrixClient,
+			userId,
+			username
+		});
 		const lookups = new Map<string, Promise<string[]>>();
 		for (const { sessionId, kind } of requested) {
 			const lookupKey = `${sessionId}:${kind}`;
@@ -59,6 +78,10 @@ export const useSideRoomPreviewGate = (rooms: SideRoom[]) => {
 			if (!cancelled)
 				setAnswer({
 					key,
+					service,
+					client: matrixClient,
+					userId,
+					username,
 					allowed: allowed.filter(
 						(item): item is string => item !== null
 					)
@@ -67,7 +90,7 @@ export const useSideRoomPreviewGate = (rooms: SideRoom[]) => {
 		return () => {
 			cancelled = true;
 		};
-	}, [key]);
+	}, [key, service, matrixClient, userId, username]);
 
 	useEffect(() => {
 		const [requested]: [SideRoom[], number] = JSON.parse(key);
@@ -93,11 +116,15 @@ export const useSideRoomPreviewGate = (rooms: SideRoom[]) => {
 	return useCallback(
 		(side: SideRoom) =>
 			answer.key === key &&
+			answer.service === service &&
+			answer.client === matrixClient &&
+			answer.userId === userId &&
+			answer.username === username &&
 			answer.allowed.includes(
 				`${side.sessionId}:${side.kind}:${side.room}`
 			) &&
 			service?.getClient()?.getRoom(side.room)?.getMyMembership() ===
 				'join',
-		[answer, key, service]
+		[answer, key, service, matrixClient, userId, username]
 	);
 };

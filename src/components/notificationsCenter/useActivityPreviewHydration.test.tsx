@@ -95,6 +95,95 @@ const hydrate = (feed: any[], sessions: any[]) => {
 };
 
 describe('useActivityPreviewHydration (#924 / #1888)', () => {
+	it.each([
+		['group', 'provider'],
+		['side', 'provider'],
+		['group', 'client'],
+		['side', 'client']
+	] as const)(
+		'does not reuse %s authorization during a Matrix %s replacement',
+		async (kind, mode) => {
+			const group = {
+				chat: {
+					id: 77,
+					matrixRoomId: '!g:x',
+					active: true,
+					subscribed: true
+				}
+			};
+			const item =
+				kind === 'group'
+					? card({
+							params: { roomRef: '!g:x', matrixEventId: '$e1' }
+						})
+					: card({
+							actionPath: '/session/13?channel=supervision',
+							params: { roomRef: '!side:x', matrixEventId: '$e1' }
+						});
+			const sessions = kind === 'group' ? [group] : [sessionOwnedBy(ME)];
+			const secondClient = { ...client };
+			let currentClient = client;
+			const listeners = new Set<(next: typeof client) => void>();
+			let service: any = {
+				getClient: () => currentClient,
+				onClientChange: (listener: (next: typeof client) => void) => {
+					listeners.add(listener);
+					return () => listeners.delete(listener);
+				}
+			};
+			const snapshots: boolean[] = [];
+			const wrapper = ({ children }: { children: React.ReactNode }) => (
+				<UserDataContext.Provider
+					value={{ userData: { userId: ME, userName: ME } } as any}
+				>
+					<MatrixClientContext.Provider
+						value={{ matrixClientService: service } as any}
+					>
+						<SessionsDataContext.Provider
+							value={{ sessions } as any}
+						>
+							{children}
+						</SessionsDataContext.Provider>
+					</MatrixClientContext.Provider>
+				</UserDataContext.Provider>
+			);
+			const { result, rerender } = renderHook(
+				() => {
+					const value = useActivityPreviewHydration([item]);
+					snapshots.push(value.sources.length > 0);
+					return value;
+				},
+				{ wrapper }
+			);
+			await waitFor(() => expect(result.current.sources).toHaveLength(1));
+			if (kind === 'group')
+				api.apiGetGroupChatInfo.mockReturnValueOnce(
+					new Promise(() => {})
+				);
+			else
+				api.apiGetSessionSupervisors.mockReturnValueOnce(
+					new Promise(() => {})
+				);
+			snapshots.length = 0;
+			if (mode === 'provider') {
+				service = {
+					getClient: () => secondClient,
+					onClientChange: () => () => {}
+				};
+				rerender();
+			} else {
+				act(() => {
+					currentClient = secondClient;
+					[...listeners].forEach((listener) =>
+						listener(secondClient)
+					);
+				});
+			}
+			expect(snapshots[0]).toBe(false);
+			expect(result.current.sources).toEqual([]);
+		}
+	);
+
 	it('hydrates a card of my own case without asking for a status', () => {
 		const { result } = hydrate([card()], [sessionOwnedBy(ME)]);
 		expect(result.current.sources).toEqual([

@@ -200,7 +200,11 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 		});
 		return Array.from(byId.values()).sort((a, b) => a.id - b.id);
 	}, [candidatePreviewSources]);
-	const isGroupAllowed = useGroupPreviewGate(groups, userData?.userName);
+	const isGroupAllowed = useGroupPreviewGate(
+		groups,
+		userData?.userName,
+		userData?.userId
+	);
 	const sides = useMemo(() => {
 		const unique = new Map<string, SideRoom>();
 		candidatePreviewSources.forEach(({ side }) => {
@@ -213,7 +217,11 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 			)
 		);
 	}, [candidatePreviewSources]);
-	const isSideAllowed = useSideRoomPreviewGate(sides);
+	const isSideAllowed = useSideRoomPreviewGate(
+		sides,
+		userData?.userId,
+		userData?.userName
+	);
 	const messagePreviewSources = useMemo(
 		() =>
 			candidatePreviewSources
