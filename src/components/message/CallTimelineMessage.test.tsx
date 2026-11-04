@@ -5,15 +5,39 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CallTimelineMessage } from './CallTimelineMessage';
+import {
+	claimKnock,
+	isKnockClaimed,
+	joinOrKnock,
+	type CallJoinHooks
+} from '../directLinkEntry/callMessageKnock';
+import { apiGetOwnCallKnock } from '../../api/apiDirectLinks';
+import {
+	forgetPendingKnock,
+	PENDING_KNOCK_EVENT,
+	readPendingKnock,
+	rememberPendingKnock
+} from '../directLinkEntry/directLinkEntryFlow';
+
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import {
 	ActiveSessionContext,
 	type ExtendedSessionInterface
 } from '../../globalState';
+
+/** The running call a knock from the card records for a reload. */
+const joinCallRef = {
+	callId: 'running-call',
+	state: 'running' as const,
+	roomRef: '!source:example',
+	callRoomId: '!media:example',
+	callType: 'video' as const
+};
 
 /** The interface language, switchable per test. */
 const ui = vi.hoisted(() => ({ language: '' }));
@@ -30,6 +54,12 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
+vi.mock('../../api/apiDirectLinks', () => ({
+	apiGetOwnCallKnock: vi.fn(() => new Promise(() => {})),
+	apiCancelOwnCallKnock: vi.fn(async () => undefined),
+	apiStartDirectLinkConversation: vi.fn(),
+	apiGetOwnCallKnockForSession: vi.fn()
+}));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
 afterEach(() => {
 	cleanup();
@@ -549,4 +579,306 @@ it('falls back to the profile name of a group-call caller when no display name i
 
 	// Pre-existing behaviour: the profile name is shown when it is all there is.
 	expect(screen.getByText(/startedBy: blinky2/)).toBeTruthy();
+});
+
+it('checks camera and microphone before joining, and joins only on "Jetzt beitreten" (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	// The app's join closes the check right before joining (`beforeJoin`).
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		hooks?.beforeJoin?.();
+		return 'joined' as const;
+	});
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+
+	fireEvent.click(screen.getByRole('button'));
+	expect(await screen.findByTestId('knock-wait-dialog')).toBeTruthy();
+	expect(onJoin).not.toHaveBeenCalled();
+
+	await act(async () => {
+		fireEvent.click(screen.getByTestId('knock-wait-join'));
+	});
+	expect(onJoin).toHaveBeenCalledTimes(1);
+	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+});
+
+it('joins at once where no device check is asked for (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const onJoin = vi.fn(async () => 'joined' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => false}
+		/>
+	);
+	await act(async () => {
+		fireEvent.click(screen.getByRole('button'));
+	});
+	expect(onJoin).toHaveBeenCalledTimes(1);
+	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+});
+
+it('waits for the counsellor in the same window when the join knocks (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const joinOnceAdmitted = vi.fn(async () => 'joined' as const);
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		hooks?.onKnock?.(
+			{
+				token: 'tok',
+				knockId: 31,
+				sessionId: 9,
+				medium: 'VIDEO',
+				joinExisting: true
+			},
+			joinOnceAdmitted
+		);
+		return 'joined' as const;
+	});
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+
+	// Still the one dialog, now waiting; nothing joined yet.
+	expect(screen.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+	expect(screen.getByTestId('knock-wait-join').textContent).toContain(
+		'knockWait.ready.knocking'
+	);
+	expect(joinOnceAdmitted).not.toHaveBeenCalled();
+
+	// "Nicht mehr warten": back to "Jetzt beitreten" in the same dialog.
+	await act(async () => {
+		fireEvent.click(screen.getByTestId('knock-wait-cancel'));
+	});
+	expect(screen.getByTestId('knock-wait-join').textContent).toContain(
+		'knockWait.ready.join'
+	);
+	expect(screen.getAllByTestId('knock-wait-dialog')).toHaveLength(1);
+});
+
+it('hands a knock it still waits on back to the knock gate when it goes (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const knock = {
+		token: 'tok',
+		knockId: 41,
+		sessionId: 9,
+		medium: 'VIDEO' as const,
+		joinExisting: true
+	};
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		rememberPendingKnock({ ...knock, joinCall: joinCallRef });
+		claimKnock(knock.knockId);
+		hooks?.onKnock?.(knock, async () => 'joined' as const);
+		return 'joined' as const;
+	});
+	const view = render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	expect(isKnockClaimed(41)).toBe(true);
+
+	const announced = vi.fn();
+	window.addEventListener(PENDING_KNOCK_EVENT, announced);
+	view.unmount();
+	window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	expect(isKnockClaimed(41)).toBe(false);
+	expect(announced).toHaveBeenCalledTimes(1);
+	expect(readPendingKnock()?.joinCall).toBeUndefined();
+	forgetPendingKnock();
+});
+
+it('hands a knock that arrives after the window closed to the knock gate (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const knock = {
+		token: 'tok',
+		knockId: 42,
+		sessionId: 9,
+		medium: 'VIDEO' as const,
+		joinExisting: true
+	};
+	let knockSent: () => void = () => undefined;
+	const sent = new Promise<void>((resolve) => {
+		knockSent = resolve;
+	});
+	let hooksSeen: CallJoinHooks | undefined;
+	const onJoin = vi.fn(async (hooks?: CallJoinHooks) => {
+		hooksSeen = hooks;
+		await sent;
+		return 'joined' as const;
+	});
+	const view = render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={onJoin}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	// Closed while the knock is still on its way.
+	view.unmount();
+
+	const announced = vi.fn();
+	window.addEventListener(PENDING_KNOCK_EVENT, announced);
+	await act(async () => {
+		// What `joinOrKnock` does once the server answers.
+		rememberPendingKnock({ ...knock, joinCall: joinCallRef });
+		claimKnock(knock.knockId);
+		hooksSeen?.onKnock?.(knock, async () => 'joined' as const);
+		knockSent();
+	});
+	window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+	expect(isKnockClaimed(42)).toBe(false);
+	expect(announced).toHaveBeenCalledTimes(1);
+	// Dismissed: once let in, the gate must not put the person into the
+	// call; the card's next "Beitreten" does (#2028 review).
+	expect(readPendingKnock()?.knockId).toBe(42);
+	expect(readPendingKnock()?.joinCall).toBeUndefined();
+	forgetPendingKnock();
+});
+
+it('starts no call when the check is dismissed while the join is looked up (#2016)', async () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	let answer: (value: null) => void = () => undefined;
+	const mine = vi.fn(
+		() =>
+			new Promise<null>((resolve) => {
+				answer = resolve;
+			})
+	);
+	const joinCall = vi.fn(async () => 'joined' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={(hooks) => joinOrKnock(9, joinCall, { ...hooks, mine })}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	// Dismissed while the server is still asked whether to knock.
+	await act(async () => {
+		fireEvent.keyDown(screen.getByTestId('knock-wait-dialog'), {
+			key: 'Escape'
+		});
+	});
+	await act(async () => answer(null));
+
+	expect(joinCall).not.toHaveBeenCalled();
+	expect(screen.queryByTestId('knock-wait-dialog')).toBeNull();
+	// Not a failed join: the person chose not to.
+	expect(screen.queryByText('videoCall.timeline.joinFailed')).toBeNull();
+});
+
+it('says so on the card when the call after admission cannot be joined (#2016)', async () => {
+	vi.mocked(apiGetOwnCallKnock).mockResolvedValueOnce({
+		status: 'ADMITTED'
+	} as never);
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	const joinOnceAdmitted = vi.fn(async () => 'ended' as const);
+	render(
+		<CallTimelineMessage
+			call={call}
+			onJoin={async (hooks) => {
+				hooks?.onKnock?.(
+					{
+						token: 'tok',
+						knockId: 51,
+						sessionId: 9,
+						medium: 'VIDEO',
+						joinExisting: true
+					},
+					joinOnceAdmitted
+				);
+				return 'joined';
+			}}
+			deviceCheck={() => true}
+		/>
+	);
+	fireEvent.click(screen.getByRole('button'));
+	await act(async () => {
+		fireEvent.click(await screen.findByTestId('knock-wait-join'));
+	});
+	// Waiting: the ✕ would withdraw the knock, so it is not offered as "close".
+	expect(screen.queryByTestId('m3-dialog-close')).toBeNull();
+
+	await waitFor(() => expect(joinOnceAdmitted).toHaveBeenCalledTimes(1), {
+		timeout: 4000
+	});
+	expect(
+		await screen.findByText('videoCall.timeline.joinFailed')
+	).toBeTruthy();
 });
