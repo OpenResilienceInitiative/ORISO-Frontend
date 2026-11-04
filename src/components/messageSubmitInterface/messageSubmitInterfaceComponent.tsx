@@ -1,8 +1,4 @@
-import {
-	claimRemountedComposerExpansion,
-	postComposerFullscreen,
-	releaseExpandedComposerOnUnmount
-} from '../../utils/embeddedComposerFullscreen';
+import { postComposerFullscreen } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
@@ -621,31 +617,10 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	// Inside the Drafts center iframe the embedding page widens the frame.
-	const isExpandedComposerRef = useRef(isExpandedComposer);
-	isExpandedComposerRef.current = isExpandedComposer;
-	// Main chat and thread composers can be mounted together: the handoff is
-	// keyed by which composer this is.
-	const composerKey = `${targetRoomId ?? ''}|${threadRootId ?? ''}`;
-	const composerKeyRef = useRef(composerKey);
-	composerKeyRef.current = composerKey;
-	const postedFullscreenRef = useRef(false);
 	useEffect(() => {
-		if (postedFullscreenRef.current !== isExpandedComposer) {
-			postedFullscreenRef.current = isExpandedComposer;
-			postComposerFullscreen(isExpandedComposer);
-		}
+		postComposerFullscreen(isExpandedComposer);
+		return () => postComposerFullscreen(false);
 	}, [isExpandedComposer]);
-	useEffect(() => {
-		// Survive the responsive remount that widening the frame can cause.
-		if (claimRemountedComposerExpansion(composerKeyRef.current)) {
-			setIsExpandedComposer(true);
-		}
-		return () => {
-			if (isExpandedComposerRef.current) {
-				releaseExpandedComposerOnUnmount(composerKeyRef.current);
-			}
-		};
-	}, []);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null

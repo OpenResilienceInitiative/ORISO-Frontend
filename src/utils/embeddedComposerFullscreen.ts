@@ -1,7 +1,14 @@
+import { useRef, useSyncExternalStore } from 'react';
+
 /**
  * The Drafts center shows a chat inside an iframe, where the composer's
  * "fullscreen" can only fill the frame. The composer reports its state to the
  * embedding page, which then lets the frame cover the whole viewport.
+ *
+ * Widening the frame can cross the 900px layout breakpoint, which would remount
+ * the composer and lose staged attachments, the draft buffer and the expansion.
+ * The session view therefore freezes its layout while the composer is expanded
+ * (`useFrozenPhoneLayout`), fed by the small store below.
  */
 export const COMPOSER_FULLSCREEN_MESSAGE = 'oriso:composer-fullscreen';
 
@@ -10,10 +17,30 @@ export interface ComposerFullscreenMessage {
 	expanded: boolean;
 }
 
+let embeddedComposerExpanded = false;
+const expandedListeners = new Set<() => void>();
+
+export const subscribeEmbeddedComposerExpanded = (listener: () => void) => {
+	expandedListeners.add(listener);
+	return () => {
+		expandedListeners.delete(listener);
+	};
+};
+
+export const getEmbeddedComposerExpanded = () => embeddedComposerExpanded;
+
+export const setEmbeddedComposerExpanded = (expanded: boolean) => {
+	if (embeddedComposerExpanded !== expanded) {
+		embeddedComposerExpanded = expanded;
+		expandedListeners.forEach((listener) => listener());
+	}
+};
+
 export const postComposerFullscreen = (expanded: boolean) => {
 	if (typeof window === 'undefined' || window.parent === window) {
 		return;
 	}
+	setEmbeddedComposerExpanded(expanded);
 	const message: ComposerFullscreenMessage = {
 		type: COMPOSER_FULLSCREEN_MESSAGE,
 		expanded
@@ -30,29 +57,22 @@ export const isComposerFullscreenMessage = (
 	typeof (data as ComposerFullscreenMessage).expanded === 'boolean';
 
 /**
- * Widening the frame can cross the 900px layout breakpoint, which remounts the
- * composer (thread panel moves into the card). An expanded composer that
- * unmounts leaves a claim for its successor (same composer key) in the same commit; only when no
- * successor takes it is the frame released.
+ * The phone/desktop decision of the session view, held at its value from before
+ * the embedded composer expanded until the frame is back at its original width,
+ * so widening the frame never remounts the composer.
  */
-let pendingExpansionKey: string | null = null;
-
-/** `key` names the composer (room + thread) so only its twin can take over. */
-export const releaseExpandedComposerOnUnmount = (key: string) => {
-	pendingExpansionKey = key;
-	setTimeout(() => {
-		if (pendingExpansionKey === key) {
-			pendingExpansionKey = null;
-			postComposerFullscreen(false);
+export const useFrozenPhoneLayout = (livePhoneLayout: boolean): boolean => {
+	const expanded = useSyncExternalStore(
+		subscribeEmbeddedComposerExpanded,
+		getEmbeddedComposerExpanded
+	);
+	const frozen = useRef<boolean | null>(null);
+	if (expanded) {
+		if (frozen.current === null) {
+			frozen.current = livePhoneLayout;
 		}
-	}, 0);
-};
-
-/** True once, and only for the composer with the released composer's key. */
-export const claimRemountedComposerExpansion = (key: string): boolean => {
-	if (pendingExpansionKey !== key) {
-		return false;
+	} else if (frozen.current === livePhoneLayout) {
+		frozen.current = null;
 	}
-	pendingExpansionKey = null;
-	return true;
+	return frozen.current ?? livePhoneLayout;
 };

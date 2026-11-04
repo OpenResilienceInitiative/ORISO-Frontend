@@ -11,7 +11,6 @@ import {
 } from 'vite-plus/test';
 import { ActiveSessionContext, E2EEContext } from '../../globalState';
 import { useDraftMessage } from './useDraftMessage';
-import { resetOutgoingDraftPersists } from './outgoingDraftPersists';
 import { getEventListeners } from '../../utils/eventHandler';
 import { EVENT_PRE_LOGOUT } from '../logout/logout';
 
@@ -134,7 +133,6 @@ describe('useDraftMessage', () => {
 	beforeEach(() => {
 		mocks.apiDeleteUserDraft.mockReset();
 		mocks.apiDeleteUserDraft.mockImplementation(() => Promise.resolve());
-		resetOutgoingDraftPersists();
 		mocks.apiGetUserDraft.mockReset();
 		mocks.apiGetUserDraft.mockImplementation(() =>
 			Promise.reject({ message: 'EMPTY' })

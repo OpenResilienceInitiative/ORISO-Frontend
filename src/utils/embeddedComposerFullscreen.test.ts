@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-	claimRemountedComposerExpansion,
 	COMPOSER_FULLSCREEN_MESSAGE,
 	isComposerFullscreenMessage,
-	postComposerFullscreen,
-	releaseExpandedComposerOnUnmount
+	postComposerFullscreen
 } from './embeddedComposerFullscreen';
 
 describe('embeddedComposerFullscreen', () => {
@@ -47,54 +45,5 @@ describe('embeddedComposerFullscreen', () => {
 			'https://app.test'
 		);
 		vi.unstubAllGlobals();
-	});
-
-	describe('expanded composer remount', () => {
-		const inFrame = () => {
-			const post = vi.fn();
-			vi.stubGlobal('window', {
-				location: { origin: 'https://app.test' },
-				parent: { postMessage: post }
-			});
-			return post;
-		};
-
-		it('hands the expansion to the replacement composer without releasing the frame', () => {
-			vi.useFakeTimers();
-			const post = inFrame();
-			releaseExpandedComposerOnUnmount('|thread-1');
-			expect(claimRemountedComposerExpansion('|thread-1')).toBe(true);
-			vi.runAllTimers();
-			expect(post).not.toHaveBeenCalled();
-			vi.useRealTimers();
-			vi.unstubAllGlobals();
-		});
-
-		it('does not hand the expansion to a different composer', () => {
-			vi.useFakeTimers();
-			const post = inFrame();
-			releaseExpandedComposerOnUnmount('|thread-1');
-			// The main-chat composer mounts first and must not take it.
-			expect(claimRemountedComposerExpansion('|')).toBe(false);
-			expect(claimRemountedComposerExpansion('|thread-1')).toBe(true);
-			vi.runAllTimers();
-			expect(post).not.toHaveBeenCalled();
-			vi.useRealTimers();
-			vi.unstubAllGlobals();
-		});
-
-		it('releases the frame when no composer takes over', () => {
-			vi.useFakeTimers();
-			const post = inFrame();
-			releaseExpandedComposerOnUnmount('|thread-1');
-			vi.runAllTimers();
-			expect(post).toHaveBeenCalledWith(
-				{ type: COMPOSER_FULLSCREEN_MESSAGE, expanded: false },
-				'https://app.test'
-			);
-			expect(claimRemountedComposerExpansion('|thread-1')).toBe(false);
-			vi.useRealTimers();
-			vi.unstubAllGlobals();
-		});
 	});
 });
