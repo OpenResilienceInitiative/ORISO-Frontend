@@ -6443,7 +6443,8 @@
 			"join": "Jetzt beitreten",
 			"done": "Fertig",
 			"retry": "Erneut prüfen",
-			"knocking": "Anfrage gesendet, bitte warten …"
+			"knocking": "Anfrage gesendet, bitte warten …",
+			"notApplied": "Ihre Einstellung für Kamera und Mikrofon wurde nicht übernommen. Bitte prüfen Sie beide im Anruf."
 		}
 	},
 	"furtherCounselling": {

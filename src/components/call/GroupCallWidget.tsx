@@ -17,7 +17,15 @@ import { ClientEvent, type Room, RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
-import { devicesForCall, takeJoinMedia } from './prejoin/callPrejoin';
+import {
+	deliverJoinMedia,
+	devicesForCall,
+	takeJoinMedia
+} from './prejoin/callPrejoin';
+import {
+	NOTIFICATION_TYPE_WARNING,
+	NotificationsContext
+} from '../../globalState/provider/NotificationsProvider';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -290,18 +298,38 @@ export const GroupCallWidget: React.FC = () => {
 	 * call message, or the circle's pre-lobby), once, as soon as the call can
 	 * be told. Element Call starts with `skipLobby`, so this is the only
 	 * way the choice reaches it: `io.element.device_mute`. Which camera or
-	 * microphone was picked cannot be passed — see `joinMediaFrom`.
+	 * microphone was picked cannot be passed — see `joinMediaFrom`. The call
+	 * starts with both on, so one that never confirms is said out loud.
 	 */
 	const joinMediaRoom = callData?.signalRoomId ?? callData?.roomId;
 	const joinMediaIsVideo = !!callData?.isVideo;
 	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	const notifications = useContext(NotificationsContext);
+	const warnJoinMedia = useRef<() => void>(() => undefined);
+	warnJoinMedia.current = () =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title: t('knockWait.ready.notApplied'),
+			text: '',
+			closeable: true,
+			timeout: 10_000
+		});
 	useEffect(() => {
-		if (!widgetReady) return;
+		if (!widgetReady) return undefined;
 		const media = devicesForCall(
 			joinMediaIsVideo,
 			takeJoinMedia(joinMediaRoom)
 		);
-		if (media) void setWidgetDevices(media).catch(() => undefined);
+		if (!media) return undefined;
+		let stopped = false;
+		void deliverJoinMedia(setWidgetDevices, media, {
+			stopped: () => stopped
+		}).then((delivered) => {
+			if (!delivered && !stopped) warnJoinMedia.current();
+		});
+		return () => {
+			stopped = true;
+		};
 	}, [widgetReady, joinMediaRoom, joinMediaIsVideo, setWidgetDevices]);
 
 	useEffect(() => {

@@ -1,6 +1,11 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import {
+	NOTIFICATION_TYPE_ERROR,
+	NotificationsContext
+} from '../../globalState/provider/NotificationsProvider';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
 import { useCallDeviceCheck } from '../waitingRoom/callEntry/useCallDeviceCheck';
 import { CallModality } from '../waitingRoom/callEntry/callEntryTypes';
@@ -14,13 +19,14 @@ import {
 } from './directLinkEntryFlow';
 import {
 	admissionAction,
+	CallJoinResult,
 	isKnockClaimed,
 	rememberAdmittedConversation,
 	takeAdmittedJoin
 } from './callMessageKnock';
 import { callManager } from '../../services/CallManager';
 import {
-	joinMediaFrom,
+	keepDeviceChoice,
 	peekJoinMedia,
 	rememberJoinMedia
 } from '../call/prejoin/callPrejoin';
@@ -62,7 +68,7 @@ export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	/** Starts the call once the person was let in. */
 	startCall: (knock: PendingKnock) => Promise<void>;
 	/** Joins the running call recorded with the knock (after a reload). */
-	joinRunningCall: (knock: PendingKnock) => Promise<unknown>;
+	joinRunningCall: (knock: PendingKnock) => Promise<CallJoinResult>;
 	mediaDevices?: MediaDevices;
 }
 
@@ -91,14 +97,16 @@ export const defaultStartCall = async (knock: PendingKnock) => {
  * knocked for at once; they never tap "Beitreten" a second time. Direct
  * links are 1:1, so the call is a group call only if its card says so.
  */
-export const defaultJoinRunningCall = async (knock: PendingKnock) => {
+export const defaultJoinRunningCall = async (
+	knock: PendingKnock
+): Promise<CallJoinResult> => {
 	const call = knock.joinCall;
 	/* No mode on record: never guess 1:1, whose leave ends a group call for
 	   everybody. The card's next tap joins with the mode resolved there. */
-	if (!call || call.isGroup === undefined) return;
+	if (!call || call.isGroup === undefined) return 'unavailable';
 	await waitForJoinedRoom(call.roomRef);
 	// The card's people are not stored with the knock; the join reads none.
-	await callManager.joinExistingCall(
+	return callManager.joinExistingCall(
 		{ ...call, participants: [] },
 		call.isGroup
 	);
@@ -162,22 +170,17 @@ export const DirectLinkKnock = ({
 	   not asked for until the check finds one, so a device without a
 	   camera still starts the call. */
 	const room = callRoomOf(knock);
-	const { micOn, cameraOn } = device.controls;
+	const { controls } = device;
 	const cameraFound = device.settled && device.cameraAvailable;
 	useEffect(() => {
 		if (!admitted || !room) return;
-		rememberJoinMedia(
-			room,
-			joinMediaFrom({
-				modality: modalityOf(knock),
-				micOn,
-				cameraOn,
-				cameraAvailable: cameraFound,
-				blocker: device.blocker
-			})
-		);
+		keepDeviceChoice(room, modalityOf(knock), {
+			controls,
+			cameraAvailable: cameraFound,
+			blocker: device.blocker
+		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- the knock is fixed per mount
-	}, [admitted, room, micOn, cameraOn, cameraFound, device.blocker]);
+	}, [admitted, room, controls, cameraFound, device.blocker]);
 
 	return (
 		<KnockWaitDialog
@@ -211,6 +214,10 @@ export const DirectLinkKnockGate = ({
 	pollMs?: number;
 }) => {
 	const location = useLocation();
+	const { t } = useTranslation();
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
 	const [knock, setKnock] = useState<PendingKnock | null>(() =>
 		unclaimedPendingKnock()
 	);
@@ -225,6 +232,22 @@ export const DirectLinkKnockGate = ({
 	}, []);
 	const startCall = deps.startCall ?? defaultStartCall;
 	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
+	/* No call took the switches, so no later call in this room may. */
+	const forgetSwitches = (admitted: PendingKnock) => {
+		const room = callRoomOf(admitted);
+		if (room) rememberJoinMedia(room, null);
+	};
+	/* The card is not there to say it: the window that was open has gone. */
+	const runningCallJoinFailed = (admitted: PendingKnock) => {
+		forgetSwitches(admitted);
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_ERROR,
+			title: t('videoCall.timeline.joinFailed'),
+			text: '',
+			closeable: true,
+			timeout: 5000
+		});
+	};
 
 	/* Only over the person's own conversations: not on the invite page,
 	   the login or anywhere a counsellor works. */
@@ -251,11 +274,20 @@ export const DirectLinkKnockGate = ({
 						storedJoin?.();
 						return;
 					case 'joinRunningCall':
-						void joinRunningCall(admitted).catch(() => undefined);
+						void joinRunningCall(admitted).then(
+							(result) => {
+								if (result !== 'joined') {
+									runningCallJoinFailed(admitted);
+								}
+							},
+							() => runningCallJoinFailed(admitted)
+						);
 						return;
 					case 'startCall':
 						void startCall(admitted).catch(() => undefined);
 						return;
+					case 'none':
+						forgetSwitches(admitted);
 				}
 			}}
 		/>

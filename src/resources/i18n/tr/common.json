@@ -6453,7 +6453,8 @@
 			"join": "Şimdi katıl",
 			"done": "Tamam",
 			"retry": "Tekrar kontrol et",
-			"knocking": "İstek gönderildi, lütfen bekleyin …"
+			"knocking": "İstek gönderildi, lütfen bekleyin …",
+			"notApplied": "Kamera ve mikrofon ayarınız uygulanamadı. Lütfen ikisini de görüşmede kontrol edin."
 		}
 	},
 	"furtherCounselling": {

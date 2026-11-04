@@ -5,7 +5,8 @@ import { useCallDeviceCheck } from '../../waitingRoom/callEntry/useCallDeviceChe
 import type { CallModality } from '../../waitingRoom/callEntry/callEntryTypes';
 import {
 	initialControlsFor,
-	joinMediaFrom,
+	keepDeviceChoice,
+	peekCameraSwitch,
 	peekJoinMedia,
 	rememberJoinMedia
 } from './callPrejoin';
@@ -126,7 +127,11 @@ export const CallPrejoinDialog = ({
 	sheet
 }: CallPrejoinDialogProps) => {
 	const [initial] = useState(() =>
-		initialControlsFor(modality, peekJoinMedia(roomRef))
+		initialControlsFor(
+			modality,
+			peekJoinMedia(roomRef),
+			peekCameraSwitch(roomRef)
+		)
 	);
 	const device = useCallDeviceCheck(modality, { initial, mediaDevices });
 	const [busy, setBusy] = useState(false);
@@ -139,21 +144,14 @@ export const CallPrejoinDialog = ({
 	);
 
 	// The switches are the one source of truth, up to the moment of joining.
-	const keepChoice = () =>
-		rememberJoinMedia(
-			roomRef,
-			joinMediaFrom({
-				modality,
-				micOn: device.controls.micOn,
-				cameraOn: device.controls.cameraOn,
-				cameraAvailable: device.cameraAvailable,
-				blocker: device.blocker
-			})
-		);
+	const keepChoice = () => keepDeviceChoice(roomRef, modality, device);
 	const keepChoiceRef = useRef(keepChoice);
 	keepChoiceRef.current = keepChoice;
 	const onCloseRef = useRef(onClose);
 	onCloseRef.current = onClose;
+	const knockStateRef = useRef(knockState);
+	knockStateRef.current = knockState;
+	const closedForEnd = useRef(false);
 	const onJoinResultRef = useRef(onJoinResult);
 	onJoinResultRef.current = onJoinResult;
 	const mounted = useRef(true);
@@ -166,17 +164,22 @@ export const CallPrejoinDialog = ({
 
 	const join = () => {
 		if (busy || knock) return;
-		keepChoice();
 		if (purpose === 'check' || !onJoin) {
+			keepChoice();
 			onClose();
 			return;
 		}
 		setBusy(true);
+		// Kept only for a join that really goes out: a choice no call took
+		// must not reach some later call in this room.
+		let kept = false;
 		Promise.resolve(
 			onJoin({
 				// Dismissed during the lookup: no call (see `joinOrKnock`).
 				beforeJoin: () => {
 					if (!mounted.current) return false;
+					keepChoiceRef.current();
+					kept = true;
 					onCloseRef.current();
 					return true;
 				},
@@ -201,6 +204,7 @@ export const CallPrejoinDialog = ({
 					result !== 'joined' &&
 					result !== 'cancelled'
 				) {
+					if (kept) rememberJoinMedia(roomRef, null);
 					onCloseRef.current();
 				}
 			})
@@ -232,18 +236,23 @@ export const CallPrejoinDialog = ({
 			const joinLater = joinOnceAdmitted.current;
 			if (joinLater) {
 				const report = onJoinResultRef.current;
-				void joinLater().then(
-					(result) => report?.(result),
-					() => report?.('unavailable')
-				);
+				const settle = (result: CallJoinResult) => {
+					if (result !== 'joined') rememberJoinMedia(roomRef, null);
+					report?.(result);
+				};
+				void joinLater().then(settle, () => settle('unavailable'));
 			}
 		}, ADMITTED_PAUSE_MS);
 		return () => window.clearTimeout(timer);
-	}, [phase, knock]);
+	}, [phase, knock, roomRef]);
 
-	// A knock still waiting goes back to the gate on the way out, as on ✕.
+	// There is no call left to be let into: a knock still waiting is
+	// withdrawn, so no second dialog waits on a call that is over.
 	useEffect(() => {
-		if (callEnded && phase !== 'admitted') onCloseRef.current();
+		if (!callEnded || phase === 'admitted' || closedForEnd.current) return;
+		closedForEnd.current = true;
+		if (phase === 'waiting') knockStateRef.current?.cancel();
+		onCloseRef.current();
 	}, [callEnded, phase]);
 
 	/*
@@ -281,6 +290,7 @@ export const CallPrejoinDialog = ({
 				purpose={purpose}
 				media={device.check}
 				knocking={waiting}
+				joining={busy}
 				onJoin={join}
 				onRetry={device.retry}
 				onCancel={() => {

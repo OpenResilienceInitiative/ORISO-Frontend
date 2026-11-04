@@ -724,7 +724,7 @@ export const KnockLetInJoins: Story = {
 	}
 };
 
-const joinAfterReload = fn(async (_knock: PendingKnock) => undefined);
+const joinAfterReload = fn(async (_knock: PendingKnock) => 'joined' as const);
 
 export const KnockReloadThenLetIn: Story = {
 	name: 'Knock · page reloaded while waiting: let in joins at once',
@@ -744,7 +744,7 @@ export const KnockReloadThenLetIn: Story = {
 			medium: 'VIDEO',
 			status: 'PENDING',
 			joinExisting: true,
-			joinCall: knockCall
+			joinCall: { ...knockCall, isGroup: false }
 		});
 		const apiCleanup = installDirectLinkMockApi({
 			knockAnswers: ['PENDING', 'ADMITTED']
