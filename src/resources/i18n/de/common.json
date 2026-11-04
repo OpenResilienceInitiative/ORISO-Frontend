@@ -533,7 +533,7 @@
 		},
 		"successOverlay": {
 			"button": "Schließen",
-			"headline": "Sie haben Ihren Account bei der Caritas Beratung erfolgreich gelöscht."
+			"headline": "Sie haben Ihren ORISO-Account erfolgreich gelöscht."
 		}
 	},
 	"deleteSession": {
@@ -3461,7 +3461,7 @@
 			"success": {
 				"button": "Nachricht verfassen",
 				"copy": "Sie haben sich erfolgreich registriert.",
-				"headline": "Herzlich willkommen<br>bei der Beratung der Caritas."
+				"headline": "Herzlich willkommen<br>bei ORISO."
 			}
 		},
 		"overline": "Willkommen bei der Online-Beratung",
@@ -3550,7 +3550,7 @@
 				"buttonLabel": "Registrieren",
 				"helperText": "Neu bei der Online-Beratung?"
 			},
-			"subline": "So läuft die Beratung der Caritas ab",
+			"subline": "So läuft die Beratung bei ORISO ab",
 			"login": {
 				"buttonLabel": "Einloggen",
 				"helperText": "Bereits registriert?"
@@ -5201,10 +5201,10 @@
 		}
 	},
 	"consultingTypes": {
-		"title": "Willkommen bei den Online-Beratungsangeboten der Caritas",
+		"title": "Willkommen bei den Online-Beratungsangeboten von ORISO",
 		"intro": "Ich suche Beratung für folgendes Thema:",
 		"selectGroup": "Bitte Thema auswählen",
-		"learnMore": "Mehr über den Ablauf bei der Beratung der Caritas erfahren",
+		"learnMore": "Mehr über den Ablauf der Beratung bei ORISO erfahren",
 		"info": "Info",
 		"details": {
 			"explanation": {
@@ -5213,7 +5213,7 @@
 			}
 		},
 		"overlay": {
-			"title": "So läuft die Beratung der Caritas ab",
+			"title": "So läuft die Beratung bei ORISO ab",
 			"close": "Schliessen"
 		},
 		"register": "Registrieren"
