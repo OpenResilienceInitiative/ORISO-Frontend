@@ -7,7 +7,14 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 /* The legal links open a dialog, which pulls in the lottie player; jsdom has
    no canvas for it. */

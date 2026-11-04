@@ -7,7 +7,13 @@
  */
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { generatePath, MemoryRouter } from 'react-router-dom';
 import {
 	UserDataContext,
@@ -23,16 +29,20 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-const { matrixPreviewMock, roomUnreadCountMock, groupMembersMock } = vi.hoisted(
-	() => ({
-		groupMembersMock: vi.fn(() => ({
-			status: 'ready',
-			members: [] as any[]
-		})),
-		matrixPreviewMock: vi.fn(),
-		roomUnreadCountMock: vi.fn(() => 0)
-	})
-);
+const {
+	matrixPreviewMock,
+	roomUnreadCountMock,
+	groupMembersMock,
+	apiPutArchiveMock
+} = vi.hoisted(() => ({
+	apiPutArchiveMock: vi.fn(),
+	groupMembersMock: vi.fn(() => ({
+		status: 'ready',
+		members: [] as any[]
+	})),
+	matrixPreviewMock: vi.fn(),
+	roomUnreadCountMock: vi.fn(() => 0)
+}));
 
 afterEach(() => {
 	cleanup();
@@ -41,6 +51,8 @@ afterEach(() => {
 	groupMembersMock.mockReturnValue({ status: 'ready', members: [] });
 	roomUnreadCountMock.mockReset();
 	roomUnreadCountMock.mockReturnValue(0);
+	apiPutArchiveMock.mockReset();
+	sessionsDispatch.mockClear();
 });
 
 // ---------------------------------------------------------------------------
@@ -92,7 +104,7 @@ vi.mock('../../hooks/useActiveListItem', () => ({
 vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<any>()),
 	apiGetCaseHandoverStatus: () => Promise.resolve(null),
-	apiPutArchive: () => Promise.resolve(),
+	apiPutArchive: (...args: unknown[]) => apiPutArchiveMock(...args),
 	apiPutDearchive: () => Promise.resolve()
 }));
 
@@ -208,8 +220,35 @@ vi.mock('../session/DeleteSession', () => ({
 	}
 }));
 vi.mock('../overlay/Overlay', () => ({
-	Overlay: () => <span />,
-	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE', ARCHIVE: 'ARCHIVE' }
+	Overlay: ({
+		item,
+		handleOverlay
+	}: {
+		item: { copy?: string; headline?: string; buttonSet?: any[] };
+		handleOverlay: (fn: string) => void;
+	}) => (
+		<div data-testid="overlay">
+			<span>{item.copy ?? item.headline}</span>
+			{(item.buttonSet ?? []).map((b) => (
+				<button
+					key={b.function}
+					onClick={() => handleOverlay(b.function)}
+				>
+					{b.label}
+				</button>
+			))}
+			<button onClick={() => handleOverlay('CLOSE')}>
+				close-overlay
+			</button>
+		</div>
+	),
+	OVERLAY_FUNCTIONS: {
+		CLOSE: 'CLOSE',
+		ARCHIVE: 'ARCHIVE',
+		LEAVE_GROUP_CHAT: 'LEAVE_GROUP_CHAT',
+		REDIRECT: 'REDIRECT',
+		LOGOUT: 'LOGOUT'
+	}
 }));
 vi.mock('../legalLinks/LegalLinkModal', () => ({
 	LegalLinkModal: () => <span />
@@ -255,7 +294,9 @@ const makeUserData = (userId = OWNER_USER_ID) => ({
 const makeGroupSession = ({
 	consultantId = OWNER_USER_ID,
 	active = false,
-	matrixRoomId = '!abc:matrix.example.org'
+	matrixRoomId = '!abc:matrix.example.org',
+	topic = 'Test group chat',
+	repetitive = false
 } = {}) => ({
 	item: {
 		id: 101,
@@ -263,11 +304,11 @@ const makeGroupSession = ({
 		active,
 		messageDate: 1700000000,
 		createDate: '2023-11-14T12:00:00Z',
-		topic: 'Test group chat',
+		topic,
 		moderators: [],
 		consultingType: 1,
 		subscribed: true,
-		repetitive: false,
+		repetitive,
 		startDate: '2023-11-14',
 		startTime: '12:00',
 		createdAt: '2023-11-14T12:00:00Z',
@@ -300,7 +341,8 @@ const makeGroupSession = ({
 const makeSession = ({
 	consultantId = OWNER_USER_ID,
 	supervision = undefined as any,
-	matrixRoomId = '!session:matrix.example.org'
+	matrixRoomId = '!session:matrix.example.org',
+	directLinkMedium = undefined as 'CHAT' | 'AUDIO' | 'VIDEO' | undefined
 } = {}) => ({
 	item: {
 		id: 202,
@@ -318,7 +360,8 @@ const makeSession = ({
 		attachment: null,
 		videoCallMessageDTO: null,
 		topic: { id: 1, name: 'Topic', description: '' },
-		...(supervision !== undefined ? { supervision } : {})
+		...(supervision !== undefined ? { supervision } : {}),
+		...(directLinkMedium !== undefined ? { directLinkMedium } : {})
 	},
 	rid: matrixRoomId,
 	type: 'singleChat' as const,
@@ -594,6 +637,64 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 		).toBeTruthy();
 	});
 
+	// FE#1952: a conversation opened through a direct link said "Mail".
+	it.each([
+		['VIDEO', 'videoCall', 'sessionList.item.sessionType.directLinkVideo'],
+		['AUDIO', 'audioCall', 'sessionList.item.sessionType.directLinkAudio'],
+		['CHAT', 'directLink', 'sessionList.item.sessionType.directLinkChat']
+	] as const)(
+		'marks a %s direct-link conversation by its medium instead of mail',
+		(directLinkMedium, mark, label) => {
+			renderItem(makeSession({ directLinkMedium }), makeUserData(), {
+				rail: true
+			});
+			const marks = Array.from(
+				document.querySelectorAll('.sessionRailPill__mark')
+			).map((element) => (element as HTMLElement).dataset.mark);
+			expect(marks).toEqual([mark]);
+			expect(screen.getByRole('img', { name: label })).toBeTruthy();
+			expect(
+				screen.queryByRole('img', {
+					name: 'sessionList.toolbar.chips.nearby'
+				})
+			).toBeNull();
+		}
+	);
+
+	it.each([
+		['VIDEO', 'sessionList.item.sessionType.directLinkVideo'],
+		['AUDIO', 'sessionList.item.sessionType.directLinkAudio'],
+		['CHAT', 'sessionList.item.sessionType.directLinkChat']
+	] as const)(
+		'labels a %s direct-link conversation by its medium on the card',
+		(directLinkMedium, label) => {
+			renderItem(makeSession({ directLinkMedium }));
+			const chip = document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--directLink'
+			);
+			expect(chip?.textContent).toBe(label);
+			expect(
+				document.querySelector(
+					'.sessionsListItem__consultingTypeIcon--nearby'
+				)
+			).toBeNull();
+		}
+	);
+
+	it('keeps the mail chip on the card for a conversation without a direct link', () => {
+		renderItem(makeSession());
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearby'
+			)?.textContent
+		).toBe('sessionList.toolbar.chips.nearby');
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--directLink'
+			)
+		).toBeNull();
+	});
+
 	it('adds the supervision mark only when the DTO carries the ADR-008 marker', () => {
 		renderItem(
 			makeSession({ supervision: { supervisedByMe: true } }),
@@ -718,16 +819,10 @@ describe('SessionListItemComponent — real group participants (#1806)', () => {
 			]
 		});
 		const { container } = renderItem(makeGroupSession());
+		// Five people: the count circle, not the technical owner as a sixth.
 		expect(
-			container.querySelectorAll('[data-cy="participant-avatar"]')
-		).toHaveLength(2);
-		expect(
-			container.querySelector('[data-cy="participant-overflow"]')
-				?.textContent
-		).toBe('+3');
-		expect(
-			container.querySelector('[data-user-id="@person-0:example.org"]')
-		).not.toBeNull();
+			container.querySelector('[data-cy="group-card-crowd"]')?.textContent
+		).toBe('5');
 		expect(
 			container.querySelector('[data-user-id^="placeholder-"]')
 		).toBeNull();
@@ -745,5 +840,98 @@ describe('SessionListItemComponent — real group participants (#1806)', () => {
 		expect(
 			container.querySelector('[data-cy="participant-overflow"]')
 		).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — group card topic chip (#1913)', () => {
+	const chip = (container: HTMLElement) =>
+		container.querySelector('.sessionsListItem__topic');
+
+	it('shows the topic of a Gesprächskreis instead of "no topic"', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: 'Schulden', repetitive: true })
+		);
+		expect(chip(container)?.textContent).toBe('Schulden');
+	});
+
+	it('falls back to "no topic" for a Gesprächskreis without a topic', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: '', repetitive: true })
+		);
+		expect(chip(container)?.textContent).toBe('groupChat.noTopicSpecified');
+	});
+
+	it('shows no topic chip on an Interna card', () => {
+		const { container } = renderItem(
+			makeGroupSession({ topic: 'Teamrunde', repetitive: false })
+		);
+		expect(chip(container)).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — list-card archive', () => {
+	const archivedIds = {
+		type: 'REMOVE_SESSIONS',
+		ids: ['!session:matrix.example.org']
+	};
+
+	const clickArchive = () => {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.info.settings.headline'
+			})
+		);
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="session-list-menu-archive"]'
+			) as HTMLElement
+		);
+	};
+
+	it('shows the confirmation first and removes the card only after the user leaves it', async () => {
+		apiPutArchiveMock.mockResolvedValue({});
+		renderItem(makeSession());
+
+		clickArchive();
+
+		const overlay = await screen.findByTestId('overlay');
+		expect(overlay.textContent).toContain(
+			'archive.overlay.session.success.copy'
+		);
+		expect(sessionsDispatch).not.toHaveBeenCalled();
+
+		fireEvent.click(
+			screen.getByText('archive.overlay.session.success.button')
+		);
+
+		expect(sessionsDispatch).toHaveBeenCalledWith(archivedIds);
+		expect(screen.queryByTestId('overlay')).toBeNull();
+	});
+
+	it('still removes the archived chat when the confirmation is closed', async () => {
+		apiPutArchiveMock.mockResolvedValue({});
+		renderItem(makeSession());
+
+		clickArchive();
+		await screen.findByTestId('overlay');
+		fireEvent.click(screen.getByText('close-overlay'));
+
+		expect(sessionsDispatch).toHaveBeenCalledWith(archivedIds);
+	});
+
+	it('shows the error and keeps the chat when the server refuses', async () => {
+		apiPutArchiveMock.mockRejectedValue(new Error('500'));
+		renderItem(makeSession());
+
+		clickArchive();
+
+		const overlay = await screen.findByTestId('overlay');
+		await waitFor(() =>
+			expect(overlay.textContent).toContain(
+				'groupChat.createError.overlay.headline'
+			)
+		);
+		fireEvent.click(screen.getByText('close-overlay'));
+		expect(sessionsDispatch).not.toHaveBeenCalled();
 	});
 });

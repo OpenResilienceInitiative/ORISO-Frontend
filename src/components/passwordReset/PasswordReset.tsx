@@ -1,15 +1,27 @@
 import { Link } from 'react-router-dom';
 import { getChatRecoveryPolicy } from '../../services/chatRecoveryPolicy';
+import type { MatrixClient } from 'matrix-js-sdk';
 import {
 	changePasswordWithRecovery,
+	hasCompleteKeyRecovery,
+	hasPasswordRecoveryEvidence,
 	PasswordRecoveryRepairBlockedError,
 	PasswordRecoveryRepairRequiredError,
 	PasswordRecoveryWorkLimitError
 } from '../../services/matrixPasswordRecoveryService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
-import { withRecoverySetupLock } from '../../services/pendingRecoveryKeyStore';
+import {
+	loadPendingRecoveryKey,
+	withRecoverySetupLock
+} from '../../services/pendingRecoveryKeyStore';
+import {
+	passwordRecoveryEnrollmentErrorKey,
+	sealRecoveryKeyUnderPassword
+} from '../../services/passwordRecoveryEnrollment';
+import { PasswordEnvelopeStep } from './PasswordEnvelopeStep';
+import { sealRecoveryUnderFirstPassword } from '../../services/authenticatedChatRecovery';
 import * as React from 'react';
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import { InputField, InputFieldItem } from '../inputField/InputField';
 import { apiUpdatePassword, FETCH_ERRORS } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -51,6 +63,17 @@ import {
  * credentials were never tried, and nothing changed.
  */
 class ChatRecoveryUnavailableError extends Error {}
+
+/**
+ * The password changed, but recovery was set up without a password envelope,
+ * so the new password does not yet unlock the chat history on a new device.
+ * What the follow-up step needs to seal the recovery key under it.
+ */
+type EnvelopeEnrollment = {
+	client: MatrixClient;
+	userId: string;
+	policyRevision: number;
+};
 
 /**
  * The Matrix client, or `null` when there is none to be had — no chat identity, the homeserver
@@ -174,6 +197,14 @@ export const PasswordReset = ({
 
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	/* The follow-up step after a change that left no password envelope. The
+	   new password is kept out of state: it is only needed for that step. */
+	const [envelopeStep, setEnvelopeStep] = useState<EnvelopeEnrollment | null>(
+		null
+	);
+	const changedPassword = useRef('');
+	const [envelopeRecoveryKey, setEnvelopeRecoveryKey] = useState('');
+	const [envelopeError, setEnvelopeError] = useState('');
 
 	const overlayItem: OverlayItem = {
 		svg: CheckAnimation,
@@ -331,13 +362,16 @@ export const PasswordReset = ({
 			setRepairRequired(false);
 			setOldPasswordErrorMessage('');
 
-			(async () => {
+			(async (): Promise<EnvelopeEnrollment | null> => {
 				const policy = getChatRecoveryPolicy(
 					userData,
 					hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData)
 				);
-				if (policy.mode === 'RECOVERY_KEY')
-					return apiUpdatePassword(oldPassword, newPassword);
+				const changeOnly = () =>
+					apiUpdatePassword(oldPassword, newPassword).then(
+						() => null
+					);
+				if (policy.mode === 'RECOVERY_KEY') return changeOnly();
 				/* The account-setup gate's own step. `passwordChangeRequired`
 				   is set exactly once — when an administrator provisions the
 				   account — so this is the account's FIRST password change:
@@ -357,8 +391,7 @@ export const PasswordReset = ({
 					   envelope would stay sealed under the old password and
 					   the counsellor's history would need a recovery key they
 					   may never have saved. Refuse, and say so. */
-					if (firstChange)
-						return apiUpdatePassword(oldPassword, newPassword);
+					if (firstChange) return changeOnly();
 					throw new ChatRecoveryUnavailableError();
 				}
 				try {
@@ -373,21 +406,71 @@ export const PasswordReset = ({
 								error.message === FETCH_ERRORS.BAD_REQUEST
 						)
 					);
+					return null;
 				} catch (error) {
+					if (!(error instanceof PasswordRecoveryRepairRequiredError))
+						throw error;
+					/* Recovery may be complete (secret storage, backup,
+					   recovery key) with no password envelope at all — set up
+					   with the recovery key, or enrolled while the setup gate
+					   dropped the password. Nothing is sealed under the old
+					   password then, so the change loses nothing, and the
+					   security settings offer no repair without a fresh
+					   recovery key: blocking would dead-end (OBP 2.1, #69).
+					   A partial envelope still blocks — it would be orphaned.
+					   The new password must still come to unlock the history,
+					   so the follow-up step seals the recovery key under it. */
+					const withoutEnvelope = await hasPasswordRecoveryEvidence(
+						client
+					).then(
+						(evidence) => !evidence,
+						() => false
+					);
+					const completeRecovery =
+						withoutEnvelope &&
+						(await hasCompleteKeyRecovery(client));
 					/* No envelope exists at all — thrown before the password
 					   API is ever called, so there is no double change to
-					   fear. Outside the gate this points at the security
-					   settings; behind it those are unreachable, and there is
-					   still nothing to rotate. */
-					if (
-						firstChange &&
-						error instanceof PasswordRecoveryRepairRequiredError
-					)
-						return apiUpdatePassword(oldPassword, newPassword);
+					   fear. Behind the gate the security settings are
+					   unreachable and there is nothing to rotate, so the
+					   change goes through — and, unless the account is being
+					   re-onboarded onto recovery it already has (the
+					   follow-up step below covers that), recovery is set up
+					   and sealed under the NEW password right here (#1917): a
+					   second factor still owed would otherwise make the next
+					   sign-in drop the password, and nothing would be sealed
+					   until a later one. Never under the old password — that
+					   is the administrator's (#1481). */
+					if (firstChange && !completeRecovery) {
+						await apiUpdatePassword(oldPassword, newPassword);
+						await sealRecoveryUnderFirstPassword(
+							client,
+							policy,
+							newPassword,
+							(operation) =>
+								getMatrixClientService()?.holdTokenRefreshDuring(
+									operation
+								) ?? operation()
+						).catch(() => undefined);
+						return null;
+					}
+					if (withoutEnvelope) {
+						await apiUpdatePassword(oldPassword, newPassword);
+						/* Without secret storage and a server backup there is
+						   no recovery key to ask for; the next password
+						   sign-in sets recovery up under the new password. */
+						return completeRecovery
+							? {
+									client,
+									userId: id,
+									policyRevision: policy.revision
+								}
+							: null;
+					}
 					throw error;
 				}
 			})()
-				.then(async () => {
+				.then(async (enrollment) => {
 					// Must complete BEFORE logout clears the auth cookies —
 					// otherwise the appointments-password update races the
 					// session invalidation and dies with a 401 (stale
@@ -403,12 +486,20 @@ export const PasswordReset = ({
 						});
 					}
 
+					const password = newPassword;
 					setOldPassword('');
 					setNewPassword('');
 					setConfirmPassword('');
-					setOverlayActive(true);
-					setIsRequestInProgress(false);
-					logout(false, settings.urls.toLogin);
+					if (
+						enrollment &&
+						!(await sealParkedKey(enrollment, password))
+					) {
+						changedPassword.current = password;
+						setEnvelopeStep(enrollment);
+						setIsRequestInProgress(false);
+						return;
+					}
+					finishPasswordChange();
 				})
 				.catch((error) => {
 					setRepairRequired(
@@ -428,9 +519,77 @@ export const PasswordReset = ({
 		}
 	};
 
+	const finishPasswordChange = () => {
+		changedPassword.current = '';
+		setEnvelopeStep(null);
+		setEnvelopeRecoveryKey('');
+		setOverlayActive(true);
+		setIsRequestInProgress(false);
+		logout(false, settings.urls.toLogin);
+	};
+
+	/* A recovery key still parked on this device (e.g. from the silent setup)
+	   needs no prompt: seal it right away. `false` sends the person to the
+	   follow-up step, which asks for it. */
+	const sealParkedKey = async (
+		{ client, userId, policyRevision }: EnvelopeEnrollment,
+		password: string
+	): Promise<boolean> => {
+		try {
+			const parkedKey = await loadPendingRecoveryKey(userId);
+			if (!parkedKey) return false;
+			await sealRecoveryKeyUnderPassword(
+				client,
+				userId,
+				password,
+				parkedKey,
+				policyRevision
+			);
+			return true;
+		} catch {
+			return false;
+		}
+	};
+
+	const handleEnvelopeSubmit = () => {
+		const recoveryKey = envelopeRecoveryKey.trim();
+		if (!envelopeStep || !recoveryKey || isRequestInProgress) return;
+		setIsRequestInProgress(true);
+		setEnvelopeError('');
+		sealRecoveryKeyUnderPassword(
+			envelopeStep.client,
+			envelopeStep.userId,
+			changedPassword.current,
+			recoveryKey,
+			envelopeStep.policyRevision
+		).then(finishPasswordChange, (error) => {
+			setEnvelopeError(
+				translate(passwordRecoveryEnrollmentErrorKey(error))
+			);
+			setIsRequestInProgress(false);
+		});
+	};
+
 	const handleSuccess = () => {
 		window.location.href = settings.urls.toLogin;
 	};
+
+	if (envelopeStep) {
+		return (
+			<PasswordEnvelopeStep
+				busy={isRequestInProgress}
+				errorMessage={envelopeError}
+				onRecoveryKeyChange={(value) => {
+					setEnvelopeError('');
+					setEnvelopeRecoveryKey(value);
+				}}
+				onSkip={finishPasswordChange}
+				onSubmit={handleEnvelopeSubmit}
+				recoveryKey={envelopeRecoveryKey}
+				variant={variant}
+			/>
+		);
+	}
 
 	if (variant === 'dialog') {
 		// Live checklist: each rule turns green as the typed password meets it.

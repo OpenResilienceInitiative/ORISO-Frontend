@@ -73,6 +73,22 @@ const installHttpBoundary = (status: ReviewArgs['failureStatus']) => {
 			if (url.pathname === '/service/users/data') {
 				return Response.json({ userId: 'storybook-asker' });
 			}
+			// FE#1876: the chosen centre's consent sentence (gate 2).
+			const legal = url.pathname.match(
+				/^\/service\/agencies\/(\d+)\/topics\/(\d+)\/legal$/
+			);
+			if (legal) {
+				return Response.json({
+					dpp: {
+						content: '<p>Datenschutzhinweise</p>',
+						consentText:
+							legal[1] === '43'
+								? 'Ich willige in die Datenschutzhinweise von Another centre ein.'
+								: 'Ich willige in die Datenschutzhinweise von Existing centre ein.',
+						versionId: 77
+					}
+				});
+			}
 		}
 		if (
 			request.method === 'POST' &&
@@ -169,6 +185,17 @@ const openFailure: Story['play'] = async ({ args }) => {
 			name: catalogue.profile.data.register.button.label
 		})
 	);
+	// FE#1876: consent first; nothing is sent before it is confirmed.
+	const consent = await view.findByRole('checkbox', {
+		name: /Another centre/
+	});
+	await expect(submittedRequests).toEqual([]);
+	await userEvent.click(consent);
+	await userEvent.click(
+		view.getByRole('button', {
+			name: catalogue.profile.data.register.button.label
+		})
+	);
 	const copy =
 		args.failureStatus === 403
 			? catalogue.counselling.dpa.restricted
@@ -188,6 +215,29 @@ const openFailure: Story['play'] = async ({ args }) => {
 };
 
 export const Ready: Story = {};
+
+/** "Beratung anfragen" slid the centre's consent up; the request waits for it. */
+export const ConsentStep: Story = {
+	play: async ({ args }) => {
+		const view = within(document.body);
+		const catalogue = catalogues[args.locale];
+		await view.findByRole('radio', { name: 'Existing centre' });
+		const request = view.getByRole('button', {
+			name: catalogue.profile.data.register.button.label
+		});
+		await waitFor(() => expect(request).toBeEnabled());
+		await userEvent.click(request);
+		const consent = await view.findByRole('checkbox', {
+			name: /Existing centre/
+		});
+		await expect(consent).not.toBeChecked();
+		await waitFor(() => expect(request).toBeDisabled());
+		await expect(
+			view.getByText(catalogue.furtherCounselling.request.sameTopicInfo)
+		).toBeVisible();
+		await expect(submittedRequests).toEqual([]);
+	}
+};
 
 export const Restricted: Story = { play: openFailure };
 

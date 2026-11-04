@@ -96,10 +96,15 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'case.handover.granted': 'conversation',
 	'case.handover.consent.declined': 'conversation',
 	'case.handover.offer.received': 'conversation',
+	'case.handover.offer.sent': 'conversation',
+	'case.handover.offer.declined': 'conversation',
+	'case.handover.offer.withdrawn': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
 	'call.invited': 'conversation',
+	// FE#1952: a knock on a direct-link call opens its conversation.
+	'call.knock.requested': 'callRoom',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
 	'group_chat.cancelled': 'conversation',
@@ -132,10 +137,11 @@ describe('WP-06 event-descriptor registry', () => {
 
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
-		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments
+		// + 8 handover + 5 call (incl. the FE#1952 direct-link knock)
+		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
-		// + planned service notice (#876) + deleted advice seeker (#1159) = 36.
-		expect(KNOWN_EVENT_TYPES.length).toBe(36);
+		// + service notice, three offer events and deleted advice seeker = 40.
+		expect(KNOWN_EVENT_TYPES.length).toBe(40);
 		[
 			'request.new',
 			'request.denied',
@@ -150,10 +156,14 @@ describe('WP-06 event-descriptor registry', () => {
 			'case.handover.granted',
 			'case.handover.consent.declined',
 			'case.handover.offer.received',
+			'case.handover.offer.sent',
+			'case.handover.offer.declined',
+			'case.handover.offer.withdrawn',
 			'call.started',
 			'call.ended',
 			'call.missed',
 			'call.invited',
+			'call.knock.requested',
 			'group_chat.reminder',
 			'group_chat.opened',
 			'group_chat.cancelled',
@@ -230,6 +240,20 @@ describe('WP-06 event-descriptor registry', () => {
 			expect(target).toEqual({
 				kind: 'conversation',
 				path: '/sessions/consultant/sessionView/session/42'
+			});
+		});
+
+		it("moves the team-discussion link's query session id into the path", () => {
+			const target = getEventDescriptor(
+				'team.discussion.new'
+			).resolveActionTarget({
+				actionPath:
+					'/sessions/consultant/sessionPreview?sessionId=42&teamDiscussion=1&roomId=!team42'
+			});
+			// The bare list route renders SessionViewEmpty, not the discussion.
+			expect(target).toEqual({
+				kind: 'conversation',
+				path: '/sessions/consultant/sessionPreview/session/42?teamDiscussion=1&roomId=%21team42'
 			});
 		});
 

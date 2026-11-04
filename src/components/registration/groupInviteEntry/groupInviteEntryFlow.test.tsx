@@ -27,7 +27,10 @@ import {
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
-import { clearRegistrationSubmitting } from '../registrationSubmission';
+import {
+	clearRegistrationSubmitting,
+	setTemporaryAccountAwaitingLogin
+} from '../registrationSubmission';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 
@@ -62,18 +65,24 @@ vi.mock('../accountData/AccountData', () => ({
 }));
 
 const apiPostRegistration = vi.fn(() => Promise.resolve());
+const autoLoginWithDeadline = vi.fn(() => Promise.resolve());
 vi.mock('../../../api', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	apiPostRegistration: (...args: unknown[]) =>
 		(apiPostRegistration as any)(...args),
+	autoLoginWithDeadline: (...args: unknown[]) =>
+		(autoLoginWithDeadline as any)(...args),
 	apiGetAskerSessionList: () =>
 		Promise.resolve({ sessions: [{ session: { id: 211 } }] })
 }));
 
 const redirectToApp = vi.fn();
+const redirectToLogin = vi.fn();
+const addNotification = vi.fn();
 vi.mock('../autoLogin', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
-	redirectToApp: (...args: unknown[]) => redirectToApp(...args)
+	redirectToApp: (...args: unknown[]) => redirectToApp(...args),
+	redirectToLogin: (...args: unknown[]) => redirectToLogin(...args)
 }));
 
 /**
@@ -135,7 +144,7 @@ const renderAt = (
 				value={{ Stage: () => <div /> } as any}
 			>
 				<NotificationsContext.Provider
-					value={{ addNotification: () => undefined } as any}
+					value={{ addNotification } as any}
 				>
 					<TenantContext.Provider value={{ tenant: null } as any}>
 						<LocaleContext.Provider value={{ locale: 'de' } as any}>
@@ -193,7 +202,12 @@ beforeEach(() => {
 	stepPick = null;
 	stageProps.length = 0;
 	apiPostRegistration.mockClear();
+	autoLoginWithDeadline.mockClear();
 	redirectToApp.mockClear();
+	redirectToLogin.mockClear();
+	addNotification.mockClear();
+	// Document-lived like the submit flag; the mocked redirects never end it.
+	setTemporaryAccountAwaitingLogin(null);
 });
 
 afterEach(() => {
@@ -577,5 +591,166 @@ describe('newcomer entry for a self-help group link', () => {
 		renderAt('');
 		expect(screen.queryByTestId('account-data')).toBeNull();
 		expect(screen.getByTestId('step-body')).toBeTruthy();
+	});
+});
+
+describe('a broken invite link fails safely (#921)', () => {
+	const refusal = (status: number, reason?: string) =>
+		new Response(null, {
+			status,
+			headers: reason ? { 'X-Reason': reason } : {}
+		});
+
+	it('a link whose gcid is not a group id opens no account step', () => {
+		renderAt('?gcid=19.&aid=19');
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		expect(screen.getByRole('alert').textContent).toContain(
+			'registration.groupInvite.invalid.headline'
+		);
+		expect(apiPostRegistration).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[403, undefined],
+		[404, undefined],
+		[400, 'GROUP_INVITE_INVALID']
+	])(
+		'a join the server refuses (%i %s) explains the link instead of a short generic error',
+		async (status, reason) => {
+			apiPostRegistration.mockImplementationOnce(() =>
+				Promise.reject(refusal(status, reason))
+			);
+			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+			fireEvent.click(primary());
+
+			await waitFor(() =>
+				expect(screen.getByRole('alert').textContent).toContain(
+					'registration.groupInvite.invalid.headline'
+				)
+			);
+			expect(screen.queryByTestId('account-data')).toBeNull();
+			expect(addNotification).not.toHaveBeenCalled();
+			expect(redirectToApp).not.toHaveBeenCalled();
+		}
+	);
+
+	it.each([500, 400])(
+		'a server failure or plain validation error (%i) keeps the form and the generic error',
+		async (status) => {
+			apiPostRegistration.mockImplementationOnce(() =>
+				Promise.reject(refusal(status))
+			);
+			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+			fireEvent.click(primary());
+
+			await waitFor(() => expect(addNotification).toHaveBeenCalled());
+			expect(screen.getByTestId('account-data')).toBeTruthy();
+			expect(screen.queryByRole('alert')).toBeNull();
+		}
+	);
+
+	it('the agency data-protection refusal keeps its own notice', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(403, 'DPA_NEW_COUNSELLING_NOT_ALLOWED'))
+		);
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(addNotification.mock.calls[0][0].id).toBe(
+			'counselling.dpa.restricted'
+		);
+		expect(screen.getByTestId('account-data')).toBeTruthy();
+	});
+
+	it('an ordinary registration refused by the server keeps the generic error', async () => {
+		apiPostRegistration.mockImplementationOnce(() =>
+			Promise.reject(refusal(400))
+		);
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, id: 7 },
+			mainTopic: grief,
+			zipcode: '10115',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(addNotification).toHaveBeenCalled());
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+});
+
+describe('a temporary join whose sign-in fails after the account exists (#1941)', () => {
+	/* `apiPostRegistration` reports the account through its callback, then
+	   the automatic sign-in gives up — on a slow connection after 20 s. */
+	const signInFailsAfterAccount = () =>
+		apiPostRegistration.mockImplementationOnce(((...args: unknown[]) => {
+			(args[4] as () => void)();
+			return Promise.reject(new Error('AUTO_LOGIN_TIMEOUT'));
+		}) as any);
+	const loginRetry = () =>
+		document.querySelector('[data-cy="group-invite-login-retry"]');
+
+	it('offers the sign-in again instead of a login that asks for a password nobody knows', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(loginRetry()).toBeTruthy());
+		expect(redirectToLogin).not.toHaveBeenCalled();
+		expect(
+			screen.queryByTestId('account-data'),
+			'the name belongs to the new account now; asking it again ends in "already taken"'
+		).toBeNull();
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		expect(primary().textContent).toBe('Der Gruppe beitreten');
+	});
+
+	it('the next press only signs in, with the same credentials, and enters the group', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+		fireEvent.click(primary());
+		await waitFor(() => expect(loginRetry()).toBeTruthy());
+
+		fireEvent.click(primary());
+
+		await waitFor(() =>
+			expect(redirectToApp).toHaveBeenCalledWith('19', {
+				sessionId: '211'
+			})
+		);
+		expect(autoLoginWithDeadline).toHaveBeenCalledWith(
+			expect.objectContaining({
+				username: 'ente_yuki_7984',
+				password: 'Minted-in-the-test-1'
+			})
+		);
+		expect(
+			apiPostRegistration,
+			'never a second account for the same person'
+		).toHaveBeenCalledTimes(1);
+	});
+
+	it('a permanent account still goes to the login — its owner knows the password', async () => {
+		signInFailsAfterAccount();
+		renderAt('?gcid=19&aid=19');
+		fireEvent.click(secondary());
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(redirectToLogin).toHaveBeenCalledTimes(1));
+		expect(loginRetry()).toBeNull();
 	});
 });
