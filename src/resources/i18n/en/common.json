@@ -5,6 +5,29 @@
 		"empty": "No participants.",
 		"crowd": "{{count}} participants"
 	},
+	"timelineSettings": {
+		"title": "Appointments in the conversation list",
+		"description": "How the list shows upcoming appointments. Applies on all devices.",
+		"scrollModel": {
+			"legend": "Scrolling",
+			"panes": "Two areas: the future above, the past below",
+			"single": "One timeline: the future opens only when you keep pulling past “Now”"
+		},
+		"reveal": {
+			"legend": "When appointments are coming up, show",
+			"none": "Nothing",
+			"next": "The next appointment",
+			"half": "Half the list",
+			"most": "Almost everything"
+		},
+		"pastDate": {
+			"legend": "Date on past conversations",
+			"line": "In its own line",
+			"off": "Do not show",
+			"corner": "In the corner of the card"
+		},
+		"writeFailed": "The setting could not be saved. Please try again."
+	},
 	"menuEffects": {
 		"title": "Menu appearance",
 		"label": "Backdrop and gentle menu animations",

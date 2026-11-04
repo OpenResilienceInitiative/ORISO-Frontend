@@ -5,6 +5,29 @@
 		"empty": "Aucun participant.",
 		"crowd": "{{count}} personnes"
 	},
+	"timelineSettings": {
+		"title": "Rendez-vous dans la liste des conversations",
+		"description": "Comment la liste affiche les rendez-vous à venir. S’applique sur tous les appareils.",
+		"scrollModel": {
+			"legend": "Défilement",
+			"panes": "Deux zones : l’avenir en haut, le passé en bas",
+			"single": "Une seule chronologie : l’avenir s’ouvre seulement si vous continuez à tirer au-delà de « Maintenant »"
+		},
+		"reveal": {
+			"legend": "Quand des rendez-vous approchent, afficher",
+			"none": "Rien",
+			"next": "Le prochain rendez-vous",
+			"half": "La moitié de la liste",
+			"most": "Presque tout"
+		},
+		"pastDate": {
+			"legend": "Date des conversations passées",
+			"line": "Sur une ligne à part",
+			"off": "Ne pas afficher",
+			"corner": "Dans le coin de la carte"
+		},
+		"writeFailed": "Le réglage n’a pas pu être enregistré. Veuillez réessayer."
+	},
 	"menuEffects": {
 		"title": "Affichage des menus",
 		"label": "Voile et animations douces",
