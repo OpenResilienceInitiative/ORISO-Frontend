@@ -9,6 +9,7 @@ import {
 	joinMediaFrom,
 	keepDeviceChoice,
 	peekCameraSwitch,
+	peekDeviceSelection,
 	peekJoinMedia,
 	rememberJoinMedia,
 	shouldShowDeviceCheck,
@@ -353,6 +354,68 @@ describe('the camera switch across checks (#2016)', () => {
 			microphoneLabel: 'Jabra Evolve2 Headset',
 			cameraLabel: 'Logitech C920'
 		});
+	});
+
+	it('opens a second check on the devices picked in the first', () => {
+		const selection = { microphone: 'mic-2', camera: 'cam-2' };
+		keepDeviceChoice('!r', 'video', {
+			controls: { micOn: true, cameraOn: true, selection },
+			cameraAvailable: true
+		});
+		expect(
+			initialControlsFor(
+				'video',
+				peekJoinMedia('!r'),
+				peekCameraSwitch('!r'),
+				peekDeviceSelection('!r')
+			).selection
+		).toEqual(selection);
+	});
+
+	it('keeps a picked device through a second check left as it opened', () => {
+		const devices = {
+			microphone: [
+				{ id: 'mic-1', label: 'MacBook Pro-Mikrofon' },
+				{ id: 'mic-2', label: 'Jabra Evolve2 Headset' }
+			],
+			camera: []
+		};
+		keepDeviceChoice('!r', 'audio', {
+			controls: {
+				micOn: true,
+				cameraOn: false,
+				selection: { microphone: 'mic-2' }
+			},
+			cameraAvailable: true,
+			devices
+		});
+		const reopened = initialControlsFor(
+			'audio',
+			peekJoinMedia('!r'),
+			peekCameraSwitch('!r'),
+			peekDeviceSelection('!r')
+		);
+		keepDeviceChoice('!r', 'audio', {
+			controls: reopened,
+			cameraAvailable: true,
+			devices
+		});
+		expect(peekJoinMedia('!r')?.microphoneLabel).toBe(
+			'Jabra Evolve2 Headset'
+		);
+	});
+
+	it('has no selection to open with once the choice is taken', () => {
+		keepDeviceChoice('!r', 'video', {
+			controls: {
+				micOn: true,
+				cameraOn: true,
+				selection: { microphone: 'mic-2' }
+			},
+			cameraAvailable: true
+		});
+		takeJoinMedia('!r');
+		expect(peekDeviceSelection('!r')).toEqual({});
 	});
 
 	it('keeps a camera the person did switch off', () => {

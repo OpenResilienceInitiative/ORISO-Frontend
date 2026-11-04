@@ -12,6 +12,7 @@ import {
 	initialControlsFor,
 	keepDeviceChoice,
 	peekCameraSwitch,
+	peekDeviceSelection,
 	peekJoinMedia,
 	rememberJoinMedia
 } from './callPrejoin';
@@ -167,7 +168,8 @@ export const CallPrejoinDialog = ({
 		initialControlsFor(
 			modality,
 			peekJoinMedia(roomRef),
-			peekCameraSwitch(roomRef)
+			peekCameraSwitch(roomRef),
+			peekDeviceSelection(roomRef)
 		)
 	);
 	const device = useCallDeviceCheck(modality, { initial, mediaDevices });
