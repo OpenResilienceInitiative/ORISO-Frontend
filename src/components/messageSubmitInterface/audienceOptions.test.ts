@@ -771,6 +771,23 @@ describe('resolveMentionCandidates', () => {
 			expect(candidate.matrixUserId).toBe('@hans.meier:dev.example');
 		});
 
+		it('does not match the same local part on a different homeserver', () => {
+			const [candidate] = resolveMentionCandidates(directory, [
+				'@hans.meier:other.example'
+			]);
+			expect(candidate.isInRoom).toBe(false);
+			expect(candidate.matrixUserId).toBeUndefined();
+		});
+
+		it('keeps the exact member when two servers have the same local part', () => {
+			const [candidate] = resolveMentionCandidates(directory, [
+				'@hans.meier:dev.example',
+				'@hans.meier:other.example'
+			]);
+			expect(candidate.isInRoom).toBe(true);
+			expect(candidate.matrixUserId).toBe('@hans.meier:dev.example');
+		});
+
 		it('gets no id in any other chat', () => {
 			const [candidate] = resolveMentionCandidates(directory, []);
 			expect(candidate.isInRoom).toBe(false);

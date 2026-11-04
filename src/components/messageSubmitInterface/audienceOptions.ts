@@ -205,8 +205,12 @@ export const resolveMentionCandidates = (
 	reachOutsideRoom = false
 ) => {
 	const inRoom = new Set<string>();
+	const memberIdsByFullId = new Set<string>();
 	const matrixUserIdByKey = new Map<string, string>();
 	memberIds.forEach((memberId) => {
+		if (isMatrixUserId(memberId)) {
+			memberIdsByFullId.add(memberId);
+		}
 		const localPart = memberId.replace(/^@/, '').split(':')[0];
 		[
 			...Array.from(audienceIdentityKeys(memberId)),
@@ -222,17 +226,25 @@ export const resolveMentionCandidates = (
 		const ownMatrixUserId = isMatrixUserId(info.matrixUserId || '')
 			? `${info.matrixUserId}`
 			: undefined;
-		const keys = [
-			...Array.from(audienceIdentityKeys(info.username)),
-			...Array.from(audienceIdentityKeys(ownMatrixUserId))
-		];
+		if (ownMatrixUserId) {
+			const isInRoom = memberIdsByFullId.has(ownMatrixUserId);
+			return {
+				id: consultantId,
+				displayName: info.displayName,
+				username: info.username,
+				matrixUserId:
+					isInRoom || reachOutsideRoom ? ownMatrixUserId : undefined,
+				isInRoom
+			};
+		}
+		const keys = Array.from(audienceIdentityKeys(info.username));
 		return {
 			id: consultantId,
 			displayName: info.displayName,
 			username: info.username,
-			matrixUserId:
-				keys.map((key) => matrixUserIdByKey.get(key)).find(Boolean) ||
-				(reachOutsideRoom ? ownMatrixUserId : undefined),
+			matrixUserId: keys
+				.map((key) => matrixUserIdByKey.get(key))
+				.find(Boolean),
 			isInRoom: keys.some((key) => inRoom.has(key))
 		};
 	});
