@@ -24,7 +24,15 @@ import { isPracticeMode } from '../../practice';
 export interface StartRoomCallOptions {
 	/** Matrix room the call belongs to (client room, group room or side room). */
 	roomId: string | null | undefined;
+	/** The call's modality: what the CallManager is asked to start. */
 	isVideo: boolean;
+	/**
+	 * Whether the permission request before the call includes the camera.
+	 * Defaults to `isVideo`. A device check that left the camera off (or
+	 * found none) passes `false`, so a video call opens no camera the person
+	 * switched off and does not fail for want of one (#2016).
+	 */
+	previewVideo?: boolean;
 	/**
 	 * `true` forces the MatrixRTC group path, `false` forces 1:1,
 	 * `undefined` lets the CallManager count the room's members.
@@ -72,6 +80,7 @@ const mediaErrorMessage = (error: any): string => {
 export const startRoomCall = async ({
 	roomId,
 	isVideo,
+	previewVideo = isVideo,
 	isGroup,
 	notify = (message: string) => window.alert(message),
 	confirm = (message: string) => window.confirm(message),
@@ -108,7 +117,7 @@ export const startRoomCall = async ({
 		// the outgoing call runs through Element Call, which opens its own.
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
-				video: isVideo,
+				video: isVideo && previewVideo,
 				audio: true
 			});
 			stopMediaStreamTracks(stream);

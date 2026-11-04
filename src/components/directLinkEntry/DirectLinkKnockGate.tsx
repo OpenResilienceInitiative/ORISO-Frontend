@@ -19,7 +19,11 @@ import {
 	takeAdmittedJoin
 } from './callMessageKnock';
 import { callManager } from '../../services/CallManager';
-import { joinMediaFrom, rememberJoinMedia } from '../call/prejoin/callPrejoin';
+import {
+	joinMediaFrom,
+	peekJoinMedia,
+	rememberJoinMedia
+} from '../call/prejoin/callPrejoin';
 
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
 
@@ -62,11 +66,23 @@ export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 	mediaDevices?: MediaDevices;
 }
 
-const defaultStartCall = async (knock: PendingKnock) => {
+/** The room whose call takes the switches (`GroupCallWidget`). */
+const callRoomOf = (knock: PendingKnock) =>
+	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
+
+/**
+ * Let in after a knock: starts the call. The camera choice from the device
+ * check (#2016) also decides whether the permission request asks for the
+ * camera; the choice itself stays for the call to take (`GroupCallWidget`).
+ */
+export const startAdmittedCall = async (knock: PendingKnock) => {
 	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
+	const isVideo = knock.medium === 'VIDEO';
+	const chosen = peekJoinMedia(callRoomOf(knock));
 	await startRoomCall({
 		roomId: knock.matrixRoomId,
-		isVideo: knock.medium === 'VIDEO'
+		isVideo,
+		previewVideo: isVideo && (chosen?.video_enabled ?? true)
 	});
 };
 
@@ -85,10 +101,6 @@ const defaultJoinRunningCall = async (knock: PendingKnock) => {
 		call.isGroup ?? false
 	);
 };
-
-/** The room whose call takes the switches (`GroupCallWidget`). */
-const callRoomOf = (knock: PendingKnock) =>
-	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
 
 const modalityOf = (knock: PendingKnock): CallModality =>
 	knock.medium === 'VIDEO' ? 'video' : 'audio';
@@ -197,7 +209,7 @@ export const DirectLinkKnockGate = ({
 		window.addEventListener(PENDING_KNOCK_EVENT, pick);
 		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
 	}, []);
-	const startCall = deps.startCall ?? defaultStartCall;
+	const startCall = deps.startCall ?? startAdmittedCall;
 	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
 
 	/* Only over the person's own conversations: not on the invite page,
