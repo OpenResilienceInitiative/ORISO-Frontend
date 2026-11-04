@@ -87,6 +87,10 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.pendingRooms.add(roomId);
 			return false;
 		}
+		// Lazy sync can omit joined peers that have not sent a recent event.
+		// Keep the cached members usable if the membership lookup fails.
+		await room.loadMembersIfNeeded().catch(() => undefined);
+		if (this.client !== client) return false;
 		if (room.getMember(userId)?.membership !== 'join') {
 			emitDiagnostic('request-membership-rejected');
 			this.pendingRooms.add(roomId);
@@ -109,6 +113,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 
 		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
+		if (this.client !== client) return false;
 		const targets = otherUsers.flatMap((memberUserId) =>
 			Array.from(deviceMap.get(memberUserId)?.values() || []).map(
 				(device) => ({

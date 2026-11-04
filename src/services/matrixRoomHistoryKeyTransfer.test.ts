@@ -103,6 +103,24 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 	});
 
+	it('discovers joined history donors missing from the lazy member cache', async () => {
+		const harness = buildHarness();
+		harness.memberships.delete(PEER);
+		harness.room.loadMembersIfNeeded.mockImplementation(async () => {
+			harness.memberships.set(PEER, member(PEER));
+			return true;
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		await expect(service.requestKeys(ROOM_ID)).resolves.toBe(true);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+			'org.oriso.room_history_key_request',
+			[{ userId: PEER, deviceId: 'ASKER1' }],
+			expect.any(Object)
+		);
+	});
+
 	it('throttles repeated outgoing room-key requests', async () => {
 		const harness = buildHarness();
 		const service = new MatrixRoomHistoryKeyTransfer();
