@@ -183,9 +183,10 @@ export const DirectLinkKnock = ({
 		<KnockWaitDialog
 			variant="call"
 			phase={state.phase}
-			/* While waiting there is no retry to offer: the preview stays,
-			   with the camera off, as before. */
-			media={{ ...device.check, blocker: undefined }}
+			/* A check that failed says why and can run again while the
+			   knock waits. */
+			media={device.check}
+			onRetry={device.retry}
 			onCancel={state.cancel}
 			/* Knocking again goes through the link; without it on this
 			   device the refusal offers only "Schließen" (FE#1893). */
