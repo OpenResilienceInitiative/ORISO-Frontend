@@ -33,7 +33,7 @@ vi.mock('../../services/CallManager', () => ({
 	callManager: { startCall, joinExistingCall: vi.fn() }
 }));
 
-const { startAdmittedCall } = await import('./DirectLinkKnockGate');
+const { defaultStartCall } = await import('./DirectLinkKnockGate');
 
 const videoKnock = {
 	token: 'tok',
@@ -68,7 +68,7 @@ describe('starting the call after a knock was let in', () => {
 	it('does not ask for the camera the person switched off in the check', async () => {
 		rememberJoinMedia(ROOM, { audio_enabled: true, video_enabled: false });
 
-		await startAdmittedCall(videoKnock);
+		await defaultStartCall(videoKnock);
 
 		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
 			video: false,
@@ -79,7 +79,7 @@ describe('starting the call after a knock was let in', () => {
 	it('asks for the camera when the check left it on', async () => {
 		rememberJoinMedia(ROOM, { audio_enabled: true, video_enabled: true });
 
-		await startAdmittedCall(videoKnock);
+		await defaultStartCall(videoKnock);
 
 		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
 			video: true,
@@ -88,7 +88,7 @@ describe('starting the call after a knock was let in', () => {
 	});
 
 	it('asks for the camera of a video call when no check ran', async () => {
-		await startAdmittedCall(videoKnock);
+		await defaultStartCall(videoKnock);
 
 		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
 			video: true,
@@ -99,7 +99,7 @@ describe('starting the call after a knock was let in', () => {
 	it('leaves the choice for the call itself to take', async () => {
 		rememberJoinMedia(ROOM, { audio_enabled: false, video_enabled: false });
 
-		await startAdmittedCall(videoKnock);
+		await defaultStartCall(videoKnock);
 
 		const { peekJoinMedia } = await import('../call/prejoin/callPrejoin');
 		expect(peekJoinMedia(ROOM)).toEqual({

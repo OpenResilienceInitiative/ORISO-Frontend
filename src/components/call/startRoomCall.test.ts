@@ -134,7 +134,7 @@ describe('startRoomCall', () => {
 		await startRoomCall({
 			roomId: SIDE_ROOM,
 			isVideo: true,
-			previewVideo: false,
+			requestCamera: false,
 			notify,
 			getCallManager
 		});
@@ -163,7 +163,7 @@ describe('startRoomCall', () => {
 		await startRoomCall({
 			roomId: SIDE_ROOM,
 			isVideo: false,
-			previewVideo: true,
+			requestCamera: true,
 			notify,
 			getCallManager
 		});

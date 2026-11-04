@@ -75,14 +75,14 @@ const callRoomOf = (knock: PendingKnock) =>
  * check (#2016) also decides whether the permission request asks for the
  * camera; the choice itself stays for the call to take (`GroupCallWidget`).
  */
-export const startAdmittedCall = async (knock: PendingKnock) => {
+export const defaultStartCall = async (knock: PendingKnock) => {
 	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
 	const isVideo = knock.medium === 'VIDEO';
 	const chosen = peekJoinMedia(callRoomOf(knock));
 	await startRoomCall({
 		roomId: knock.matrixRoomId,
 		isVideo,
-		previewVideo: isVideo && (chosen?.video_enabled ?? true)
+		requestCamera: isVideo && (chosen?.video_enabled ?? true)
 	});
 };
 
@@ -209,7 +209,7 @@ export const DirectLinkKnockGate = ({
 		window.addEventListener(PENDING_KNOCK_EVENT, pick);
 		return () => window.removeEventListener(PENDING_KNOCK_EVENT, pick);
 	}, []);
-	const startCall = deps.startCall ?? startAdmittedCall;
+	const startCall = deps.startCall ?? defaultStartCall;
 	const joinRunningCall = deps.joinRunningCall ?? defaultJoinRunningCall;
 
 	/* Only over the person's own conversations: not on the invite page,
