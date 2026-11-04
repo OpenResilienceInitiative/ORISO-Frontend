@@ -1,4 +1,9 @@
 import {
+	hasOutgoingDraftPersists,
+	trackOutgoingDraftPersist,
+	waitForOutgoingDraftPersists
+} from './outgoingDraftPersists';
+import {
 	useCallback,
 	useContext,
 	useEffect,
@@ -419,12 +424,18 @@ export const useDraftMessage = (
 		if (!pending && !hasDraftContent(text) && !hasRemoteDraftRef.current) {
 			return;
 		}
-		void persistDraftMessageRef.current(text, {
+		const persist = persistDraftMessageRef.current(text, {
 			...persistContextRef.current,
 			hasRemoteDraft: hasRemoteDraftRef.current,
 			clearVersion: clearVersionRef.current,
 			allowUnloaded: pending
 		});
+		// A replacement composer must not load the older server copy first.
+		trackOutgoingDraftPersist(
+			persistContextRef.current.remoteScopeKey,
+			persist
+		);
+		void persist;
 	}, []);
 
 	// Load the draft message from the api but do not show it because its encrypted
@@ -469,6 +480,10 @@ export const useDraftMessage = (
 		}
 
 		const loadDraft = async () => {
+			const outgoingScopes = [remoteScopeKey, ...scopeKeysToTry];
+			if (hasOutgoingDraftPersists(outgoingScopes)) {
+				await waitForOutgoingDraftPersists(outgoingScopes);
+			}
 			for (const scopeKey of scopeKeysToTry) {
 				try {
 					const remoteDraft = await apiGetUserDraft(
