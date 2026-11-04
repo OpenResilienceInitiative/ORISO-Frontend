@@ -636,6 +636,60 @@ export const ReplyingToMessage: Story = {
 	}
 };
 
+/**
+ * Side panel open: the main composer is flush, and a reply still needs room.
+ * The flush field fills the shell, so without its own rule the bar would sit
+ * on top of the first line of text.
+ */
+export const ReplyingFlush: Story = {
+	name: 'Replying in a flush composer (bar above the field)',
+	globals: desktop1440Globals,
+	render: () => (
+		<ComposerShell
+			flushCorner="bottom-left"
+			replyTo={{
+				eventId: '$orig:matrix.example.org',
+				author: 'Kanguru Mika 554',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(() => {
+			const found = canvasElement.querySelector(
+				'.messageSubmit__replyPreview'
+			) as HTMLElement;
+			expect(found).toBeTruthy();
+			return found;
+		});
+		const form = bar.closest('form') as HTMLElement;
+
+		// The card animates between heights, so measure everything together.
+		await waitFor(() => {
+			const barRect = bar.getBoundingClientRect();
+			const editorRect = (
+				form.querySelector('.textarea__input') as HTMLElement
+			).getBoundingClientRect();
+			const cardRect = (
+				form.querySelector(
+					'.textarea__wrapper-send-message'
+				) as HTMLElement
+			).getBoundingClientRect();
+			expect(Math.round(barRect.bottom)).toBeLessThanOrEqual(
+				Math.round(editorRect.top)
+			);
+			// The field keeps its one-line flush height (MIN_HEIGHT_FLUSH_DESKTOP).
+			expect(Math.round(editorRect.height)).toBe(106);
+			expect(Math.round(cardRect.height)).toBe(158);
+			expect(Math.round(barRect.left)).toBe(Math.round(editorRect.left));
+			expect(Math.round(barRect.right)).toBe(
+				Math.round(editorRect.right)
+			);
+		});
+	}
+};
+
 const EDITING_LONG_TEXT =
 	'When some text is written meaning their is something the user can send to the chat room, than onlyshow the red sending state and nothing else at all';
 

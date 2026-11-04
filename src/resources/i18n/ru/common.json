@@ -212,6 +212,7 @@
 			"decrypt": "Расшифровать",
 			"decrypting": "Расшифровка …",
 			"encryptedHint": "Сквозное шифрование",
+			"loadFailed": "Не удалось загрузить файл",
 			"retry": "Повторить"
 		},
 		"mediaCheck": {

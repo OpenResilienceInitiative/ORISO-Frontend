@@ -31,6 +31,9 @@ const isMediaContentScannerEnabled = vi.fn<() => boolean>();
 const downloadScannedEncryptedMedia = vi.fn();
 const fetchAuthenticatedMatrixMedia = vi.fn();
 const decryptMatrixAttachment = vi.fn();
+const addNotification = vi.fn();
+let requestedMediaUrl: string | null = null;
+let failAuthenticatedMedia: (() => void) | undefined;
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
@@ -51,7 +54,15 @@ vi.mock('../../utils/matrixEncryptedAttachment', () => ({
 vi.mock('../../utils/matrixAuthenticatedMedia', () => ({
 	fetchAuthenticatedMatrixMedia: (uri: string) =>
 		fetchAuthenticatedMatrixMedia(uri),
-	useAuthenticatedMatrixMediaUrl: () => null
+	useAuthenticatedMatrixMediaUrl: (
+		mxcUrl: string | null,
+		_mimeType: string,
+		onFailure?: () => void
+	) => {
+		requestedMediaUrl = mxcUrl;
+		failAuthenticatedMedia = onFailure;
+		return null;
+	}
 }));
 vi.mock('../../api/apiPostError', () => ({
 	apiPostError: () => Promise.resolve(),
@@ -99,9 +110,7 @@ const voiceFile = {
 
 const renderVoice = (extraProps: Record<string, unknown> = {}) =>
 	render(
-		<NotificationsContext.Provider
-			value={{ addNotification: vi.fn() } as never}
-		>
+		<NotificationsContext.Provider value={{ addNotification } as never}>
 			<MessageAttachment
 				attachment={voiceAttachment}
 				file={voiceFile}
@@ -130,6 +139,7 @@ describe('MessageAttachment voice message loading', () => {
 			window.URL.createObjectURL = vi.fn();
 		}
 		vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:voice');
+		window.URL.revokeObjectURL = vi.fn();
 		vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
 		vi.stubGlobal(
 			'IntersectionObserver',
@@ -262,5 +272,62 @@ describe('MessageAttachment voice message loading', () => {
 
 		await screen.findByText('e2ee.attachment.decryption_error');
 		expect(document.querySelector('audio')).toBeNull();
+		// It says so in place. Scrolling past many must not stack notifications.
+		expect(addNotification).not.toHaveBeenCalled();
+	});
+
+	it('frees the decrypted bytes when the message leaves', async () => {
+		const { unmount } = renderVoice();
+
+		act(() => reportVisible?.());
+		await waitFor(() => expect(audioSource()).toBe('blob:voice'));
+		expect(window.URL.revokeObjectURL).not.toHaveBeenCalled();
+
+		unmount();
+
+		expect(window.URL.revokeObjectURL).toHaveBeenCalledWith('blob:voice');
+	});
+
+	it('reads what was heard once, not on every render', () => {
+		const read = vi.spyOn(Storage.prototype, 'getItem');
+		const { rerender } = renderVoice();
+		const reads = read.mock.calls.length;
+
+		rerender(
+			<NotificationsContext.Provider value={{ addNotification } as never}>
+				<MessageAttachment
+					attachment={voiceAttachment}
+					file={voiceFile}
+					hasRenderedMessage
+					rid="room-1"
+				/>
+			</NotificationsContext.Provider>
+		);
+
+		expect(read.mock.calls.length).toBe(reads);
+	});
+
+	it('offers a retry instead of loading forever when plain media fails', () => {
+		const plainAttachment = {
+			...(voiceAttachment as object),
+			encryptedFile: undefined
+		} as never;
+		renderVoice({ attachment: plainAttachment });
+
+		act(() => reportVisible?.());
+		expect(requestedMediaUrl).toBe(MEDIA_URL);
+
+		act(() => failAuthenticatedMedia?.());
+
+		expect(screen.getByText('attachments.gate.loadFailed')).toBeTruthy();
+		expect(document.querySelector('audio')).toBeNull();
+		expect(requestedMediaUrl).toBeNull();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'attachments.gate.retry' })
+		);
+
+		expect(requestedMediaUrl).toBe(MEDIA_URL);
+		expect(document.querySelector('audio')).not.toBeNull();
 	});
 });

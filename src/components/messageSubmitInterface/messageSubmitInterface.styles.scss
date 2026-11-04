@@ -276,6 +276,29 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 							top: 0;
 							right: 0;
 						}
+
+						// Reply/edit bar: 16 inset + 32 bar + 4 gap above the
+						// field. The field runs to the card's bottom here, so
+						// the card grows by all 52px to keep the field's height
+						// (the framed card has a 16px bottom inset to spend).
+						&.textarea__wrapper-send-message--withContextBar {
+							min-height: calc(
+								var(--composer-height, 106px) + 52px
+							);
+							height: calc(var(--composer-height, 106px) + 52px);
+
+							.textarea__inputWrapper,
+							.textarea__buttons {
+								top: 52px;
+							}
+
+							// The field fills the shell, and the bar lines up
+							// with the field (Figma 18:1990).
+							.messageSubmit__contextBar {
+								left: 0;
+								right: 0;
+							}
+						}
 					}
 				}
 

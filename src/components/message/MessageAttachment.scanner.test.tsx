@@ -94,6 +94,7 @@ describe('MessageAttachment with a content scanner deployed', () => {
 	beforeEach(() => {
 		isMediaContentScannerEnabled.mockReturnValue(true);
 		isMediaImageCheckEnabled.mockReturnValue(false);
+		window.URL.revokeObjectURL = vi.fn();
 		if (!window.URL.createObjectURL) {
 			window.URL.createObjectURL = vi.fn();
 		}
@@ -209,7 +210,7 @@ describe('MessageAttachment with a content scanner deployed', () => {
 		renderAttachment({ mediaCheckState: 'safe' });
 
 		await screen.findByRole('button', {
-			name: /e2ee\.attachment\.encrypted/
+			name: /^attachments\.gate\.decrypt: .*e2ee\.attachment\.encrypted$/
 		});
 		expect(screen.getByText('attachments.gate.decrypt')).toBeTruthy();
 		expect(downloadScannedEncryptedMedia).not.toHaveBeenCalled();

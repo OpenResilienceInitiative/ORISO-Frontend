@@ -1,5 +1,6 @@
 import { Editor, Range, ReactRenderer } from '@tiptap/react';
 import Mention from '@tiptap/extension-mention';
+import { PluginKey } from '@tiptap/pm/state';
 import { exitSuggestion, SuggestionOptions } from '@tiptap/suggestion';
 import { computePosition, flip, offset, shift } from '@floating-ui/dom';
 import {
@@ -55,6 +56,12 @@ const MentionWithMatrixId = Mention.extend({
 	}
 });
 
+const toPills = (people: MentionPick[]) =>
+	people.flatMap((person) => [
+		{ type: 'mention', attrs: person },
+		{ type: 'text', text: ' ' }
+	]);
+
 /** Replaces the typed `@…` with one pill per person, each followed by a space. */
 const insertMentions = (
 	editor: Editor,
@@ -66,14 +73,26 @@ const insertMentions = (
 	editor
 		.chain()
 		.focus()
-		.insertContentAt(
-			{ from: range.from, to },
-			people.flatMap((person) => [
-				{ type: 'mention', attrs: person },
-				{ type: 'text', text: ' ' }
-			])
-		)
+		.insertContentAt({ from: range.from, to }, toPills(people))
 		.run();
+};
+
+/**
+ * The search ended by itself, for instance on the space in a full name. What
+ * was typed may be the message, so it stays, and the people ticked so far go
+ * in front of it with the caret left where it was.
+ */
+const insertMentionsBefore = (
+	editor: Editor,
+	from: number,
+	people: MentionPick[]
+) => {
+	if (editor.isDestroyed || from > editor.state.doc.content.size) {
+		return;
+	}
+	editor.commands.insertContentAt(from, toPills(people), {
+		updateSelection: false
+	});
 };
 
 /**
@@ -83,8 +102,11 @@ const insertMentions = (
  * layer can serialize m.mentions.
  */
 export const createMentionExtension = (provider: MentionProvider) => {
+	// Mention would make up its own key, and exitSuggestion needs to know it.
+	const pluginKey = new PluginKey('mentionSuggestion');
 	const suggestion: Omit<SuggestionOptions, 'editor'> = {
 		char: '@',
+		pluginKey,
 		items: ({ query }) =>
 			filterMentionCandidates(
 				provider.getCandidates(query),
@@ -97,6 +119,8 @@ export const createMentionExtension = (provider: MentionProvider) => {
 			// Always the newest: the range grows with every typed character.
 			let editor: Editor | null = null;
 			let range: Range | null = null;
+			// The person decided: what is ticked was inserted or thrown away.
+			let isSettled = false;
 
 			const statusProps = () => ({
 				directoryState: provider.getDirectoryState?.() ?? 'ready',
@@ -110,11 +134,12 @@ export const createMentionExtension = (provider: MentionProvider) => {
 
 			const close = () => {
 				if (editor) {
-					exitSuggestion(editor.view);
+					exitSuggestion(editor.view, pluginKey);
 				}
 			};
 
 			const commandMany = (people: MentionPick[]) => {
+				isSettled = true;
 				if (editor && range) {
 					insertMentions(editor, range, people);
 				}
@@ -171,10 +196,14 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				onStart: (props) => {
 					editor = props.editor;
 					range = props.range;
+					isSettled = false;
 					component = new ReactRenderer(MentionList, {
 						props: {
 							items: props.items,
-							command: props.command,
+							command: (item: MentionPick) => {
+								isSettled = true;
+								props.command(item);
+							},
 							commandMany,
 							onCheckedChange: clearQuery,
 							notInChatLabel: provider.notInChatLabel,
@@ -199,7 +228,10 @@ export const createMentionExtension = (provider: MentionProvider) => {
 					range = props.range;
 					component?.updateProps({
 						items: props.items,
-						command: props.command,
+						command: (item: MentionPick) => {
+							isSettled = true;
+							props.command(item);
+						},
 						notInChatLabel: provider.notInChatLabel,
 						...statusProps()
 					});
@@ -207,12 +239,24 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				},
 				onKeyDown: (props) => {
 					if (props.event.key === 'Escape') {
-						close();
+						// The plugin ends the suggestion itself after this.
+						isSettled = true;
 						return true;
 					}
 					return component?.ref?.onKeyDown(props.event) ?? false;
 				},
 				onExit: () => {
+					const leftBehind = isSettled
+						? []
+						: (component?.ref?.getChecked() ?? []);
+					if (leftBehind.length && editor && range) {
+						const target = editor;
+						const { from } = range;
+						// Not inside the update that ended the suggestion.
+						queueMicrotask(() =>
+							insertMentionsBefore(target, from, leftBehind)
+						);
+					}
 					document.removeEventListener(
 						'pointerdown',
 						onPointerDownOutside,

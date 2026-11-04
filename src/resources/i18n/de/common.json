@@ -212,6 +212,7 @@
 			"decrypt": "Entschlüsseln",
 			"decrypting": "Wird entschlüsselt …",
 			"encryptedHint": "Ende-zu-Ende-verschlüsselt",
+			"loadFailed": "Die Datei konnte nicht geladen werden",
 			"retry": "Erneut versuchen"
 		},
 		"mediaCheck": {

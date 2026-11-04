@@ -8,7 +8,7 @@ import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { MentionList } from './MentionList';
+import { MentionList, MentionListRef } from './MentionList';
 import type { MentionCandidate } from './mentionFiltering';
 
 afterEach(() => cleanup());
@@ -85,6 +85,39 @@ describe('MentionList empty states (#993)', () => {
 
 		const option = screen.getByRole('button', { name: /M\. Musterfrau/ });
 		expect(option.textContent).toContain('nicht im Chat');
+	});
+});
+
+describe('MentionList Enter on an empty list', () => {
+	const pressEnter = (
+		directoryState: 'loading' | 'ready' | 'unavailable'
+	): boolean => {
+		const ref = React.createRef<MentionListRef>();
+		render(
+			<MentionList
+				ref={ref}
+				items={[]}
+				command={vi.fn()}
+				directoryState={directoryState}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...labels}
+			/>
+		);
+		return (
+			ref.current?.onKeyDown(
+				new KeyboardEvent('keydown', { key: 'Enter' })
+			) ?? false
+		);
+	};
+
+	it('holds Enter while the list is loading, so nothing half-typed is sent', () => {
+		expect(pressEnter('loading')).toBe(true);
+	});
+
+	it('lets Enter through once nobody can be picked', () => {
+		expect(pressEnter('ready')).toBe(false);
+		cleanup();
+		expect(pressEnter('unavailable')).toBe(false);
 	});
 });
 

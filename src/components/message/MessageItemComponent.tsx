@@ -2075,6 +2075,9 @@ export const MessageItemComponent = ({
 			{isSupervisorFeedback && (
 				<div className="messageItem__feedbackTag">
 					<SupervisionGlyph aria-hidden="true" focusable="false" />
+					<span className="sr-only">
+						{translate('supervision.panel.kind.supervision')}{' '}
+					</span>
 					{translate('message.feedbackTag')}
 				</div>
 			)}
