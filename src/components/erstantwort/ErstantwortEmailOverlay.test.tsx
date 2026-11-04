@@ -151,6 +151,24 @@ describe('ErstantwortEmailOverlay', () => {
 		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
 	});
 
+	it('reports when the clipboard is unavailable', async () => {
+		vi.stubGlobal('navigator', {});
+		render(
+			<ErstantwortEmailOverlay
+				onClose={vi.fn()}
+				onSaved={vi.fn()}
+				userName="hugo.simpson"
+			/>
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
+		await waitFor(() =>
+			expect(
+				screen.getByText('Kopieren hat nicht geklappt.')
+			).toBeTruthy()
+		);
+		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
+	});
+
 	it('keeps saving disabled until the address is a valid one', () => {
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 
@@ -231,8 +249,9 @@ describe('ErstantwortEmailOverlay', () => {
 		/* The FurtherSteps overlay this replaces swallowed every error that was
 		   not EMAIL_NOT_AVAILABLE: `isRequestInProgress` stayed true, so the
 		   save button was dead for the rest of the session with no explanation. */
-		apiPutEmail.mockRejectedValue(new Error('CATCH_ALL'));
-		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+		apiPutEmail.mockRejectedValueOnce(new Error('CATCH_ALL'));
+		const onSaved = vi.fn();
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={onSaved} />);
 
 		type('jemand@example.test');
 		await act(async () => {
@@ -245,6 +264,11 @@ describe('ErstantwortEmailOverlay', () => {
 			).length
 		).toBeGreaterThan(0);
 		expect(saveButton().hasAttribute('disabled')).toBe(false);
+		await act(async () => {
+			saveButton().click();
+		});
+		expect(apiPutEmail).toHaveBeenCalledTimes(2);
+		expect(onSaved).toHaveBeenCalled();
 	});
 
 	it('closes on the close button', () => {
