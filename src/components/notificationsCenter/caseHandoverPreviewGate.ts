@@ -101,15 +101,18 @@ export const useCaseHandoverPreviewGate = (
 		Promise.all(
 			pending.map((sessionId) =>
 				apiGetCaseHandoverStatus(Number(sessionId))
-					.then((status) =>
-						statuses.set(
-							sessionId,
-							status?.canViewContent ? 'allowed' : 'blocked'
-						)
-					)
-					// A refused or failed status is a reason to show less, not
-					// more: 403 is exactly the curtained case.
-					.catch(() => statuses.set(sessionId, 'blocked'))
+					.then((status) => {
+						if (!cancelled) {
+							statuses.set(
+								sessionId,
+								status?.canViewContent ? 'allowed' : 'blocked'
+							);
+						}
+					})
+					// A refused or failed status is a reason to show less.
+					.catch(() => {
+						if (!cancelled) statuses.set(sessionId, 'blocked');
+					})
 			)
 		).then(() => {
 			if (!cancelled) {
