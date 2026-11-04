@@ -134,37 +134,48 @@ export const DirectLinkKnock = ({
 	const device = useCallDeviceCheck(modalityOf(knock), {
 		mediaDevices: deps.mediaDevices
 	});
+	const admitted = state.phase === 'admitted';
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
 		if (state.gone) onDone();
 	}, [onDone, state.gone]);
 
+	/* Let in: the knock is done; the call takes over after a short pause. */
 	useEffect(() => {
-		if (state.phase !== 'admitted' || admittedOnce.current) return;
+		if (!admitted || admittedOnce.current) return;
 		admittedOnce.current = true;
 		forgetPendingKnock();
-		/* The switches in this window go into the call (#2016). */
-		const room = callRoomOf(knock);
-		if (room) {
-			rememberJoinMedia(
-				room,
-				joinMediaFrom({
-					modality: modalityOf(knock),
-					micOn: device.controls.micOn,
-					cameraOn: device.controls.cameraOn,
-					cameraAvailable: device.cameraAvailable,
-					blocker: device.blocker
-				})
-			);
-		}
 		const timer = window.setTimeout(
 			() => onAdmitted(knock),
 			ADMITTED_PAUSE_MS
 		);
 		return () => window.clearTimeout(timer);
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per admission
-	}, [state.phase]);
+	}, [admitted]);
+
+	/* The switches in this window go into the call (#2016), kept current
+	   until the hand-over. A knock let in before the check has settled
+	   (persisted, or admitted on the first poll) has no camera yet: it is
+	   not asked for until the check finds one, so a device without a
+	   camera still starts the call. */
+	const room = callRoomOf(knock);
+	const { micOn, cameraOn } = device.controls;
+	const cameraFound = device.settled && device.cameraAvailable;
+	useEffect(() => {
+		if (!admitted || !room) return;
+		rememberJoinMedia(
+			room,
+			joinMediaFrom({
+				modality: modalityOf(knock),
+				micOn,
+				cameraOn,
+				cameraAvailable: cameraFound,
+				blocker: device.blocker
+			})
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- the knock is fixed per mount
+	}, [admitted, room, micOn, cameraOn, cameraFound, device.blocker]);
 
 	return (
 		<KnockWaitDialog
