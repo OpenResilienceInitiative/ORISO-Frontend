@@ -52,6 +52,7 @@ export const GroupCardParticipants = ({
 			participants={participants}
 			size={AVATAR_SIZES.default}
 			maxVisible={2}
+			overflowStyle="badge"
 			data-cy="group-card-participants"
 		/>
 	);

@@ -67,3 +67,67 @@ $list-item-active-menu-border-color: var(
 	outline: none;
 	box-shadow: 0 0 0 3px $list-item-focus-ring;
 }
+
+// --- Grouped list + "the ring follows the focus" ---
+// One definition for selectable card lists (Meine Gespräche, Anfragen; the
+// Activity Feed can adopt it). Unselected cards sit flush in ONE group: a single white
+// hairline between neighbours (never two), 24px corners only where the group
+// starts or ends — also next to the selected card and at the very last card.
+// The selected card leaves the group with a small gap and its own outline.
+
+// The 2px red ring sits only where the focus is:
+//   focus on the selected card        → 2px --m3-primary-container
+//   focus elsewhere (editor, ⋮ menu…) → 1px --m3-primary-fixed-dim
+//   keyboard focus on another card    → that card gets the 2px ring (inset),
+//                                       the selected card drops to 1px.
+// The 2px look is 1px border + 1px inset shadow, so switching between the
+// states never changes the card's size.
+
+$list-group-radius: 24px !default;
+$list-group-active-gap: 6px !default; // Figma 8609-31260
+$list-group-divider-color: #fff !default;
+$list-item-active-rest-border-color: var(
+	--m3-primary-fixed-dim,
+	#ffb4aa
+) !default;
+$list-item-focus-color: var(--m3-primary-container, #cc1e1c) !default;
+
+// Unselected card inside the group: hairline below only, square corners.
+@mixin list-group-member {
+	border: 1px solid $list-group-divider-color;
+	border-top-width: 0;
+	border-radius: 0;
+}
+
+// First card of a group (top of the list, or right below the selected card).
+@mixin list-group-start {
+	border-top-width: 1px;
+	border-top-left-radius: $list-group-radius;
+	border-top-right-radius: $list-group-radius;
+}
+
+// Last card of a group (end of the list, or right above the selected card).
+@mixin list-group-end {
+	border-bottom-left-radius: $list-group-radius;
+	border-bottom-right-radius: $list-group-radius;
+}
+
+// Selected card at rest (focus is somewhere else).
+@mixin list-group-active {
+	border: 1px solid $list-item-active-rest-border-color;
+	border-radius: $list-group-radius;
+	box-shadow: none;
+}
+
+// Selected card while it (or something inside it) holds the focus.
+@mixin list-group-active-focused {
+	border-color: $list-item-focus-color;
+	box-shadow: inset 0 0 0 1px $list-item-focus-color;
+}
+
+// Keyboard focus on a card that is not the selected one. Inset, so the card
+// stays in its group and nothing in the list moves while tabbing.
+@mixin list-group-keyboard-focus {
+	outline: none;
+	box-shadow: inset 0 0 0 2px $list-item-focus-color;
+}
