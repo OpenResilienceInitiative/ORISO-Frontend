@@ -1,5 +1,10 @@
 import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+	NOTIFICATION_TYPE_ERROR,
+	NotificationsContext
+} from '../../../globalState';
 import { KnockWaitDialog } from '../../knockWaitDialog/KnockWaitDialog';
 import { useCallDeviceCheck } from '../../waitingRoom/callEntry/useCallDeviceCheck';
 import type { CallModality } from '../../waitingRoom/callEntry/callEntryTypes';
@@ -7,8 +12,8 @@ import {
 	initialControlsFor,
 	keepDeviceChoice,
 	peekCameraSwitch,
+	peekDeviceSelection,
 	peekJoinMedia,
-	rememberedDeviceLabels,
 	rememberJoinMedia
 } from './callPrejoin';
 import type {
@@ -97,11 +102,39 @@ const KnockWatch = ({
 	pollMs?: number;
 	onState: (state: DirectLinkKnockState) => void;
 }) => {
-	const { knockId, phase, gone, cancel, knockAgain, close } =
-		useDirectLinkKnock(knock, deps, pollMs);
+	const {
+		knockId,
+		phase,
+		gone,
+		inactive,
+		paused,
+		cancel,
+		knockAgain,
+		close
+	} = useDirectLinkKnock(knock, deps, pollMs);
 	useEffect(
-		() => onState({ knockId, phase, gone, cancel, knockAgain, close }),
-		[onState, knockId, phase, gone, cancel, knockAgain, close]
+		() =>
+			onState({
+				knockId,
+				phase,
+				gone,
+				inactive,
+				paused,
+				cancel,
+				knockAgain,
+				close
+			}),
+		[
+			onState,
+			knockId,
+			phase,
+			gone,
+			inactive,
+			paused,
+			cancel,
+			knockAgain,
+			close
+		]
 	);
 	return null;
 };
@@ -127,23 +160,19 @@ export const CallPrejoinDialog = ({
 	pollMs,
 	sheet
 }: CallPrejoinDialogProps) => {
-	const [{ initial, preferredLabels }] = useState(() => {
-		const remembered = peekJoinMedia(roomRef);
-		return {
-			initial: initialControlsFor(
-				modality,
-				remembered,
-				peekCameraSwitch(roomRef)
-			),
-			// The switches come back at once; the devices once listed.
-			preferredLabels: rememberedDeviceLabels(modality, remembered)
-		};
-	});
-	const device = useCallDeviceCheck(modality, {
-		initial,
-		preferredLabels,
-		mediaDevices
-	});
+	const { t } = useTranslation();
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
+	const [initial] = useState(() =>
+		initialControlsFor(
+			modality,
+			peekJoinMedia(roomRef),
+			peekCameraSwitch(roomRef),
+			peekDeviceSelection(roomRef)
+		)
+	);
+	const device = useCallDeviceCheck(modality, { initial, mediaDevices });
 	const [busy, setBusy] = useState(false);
 	const [knock, setKnock] = useState<PendingKnock | null>(null);
 	const [knockState, setKnockState] = useState<DirectLinkKnockState | null>(
@@ -232,10 +261,28 @@ export const CallPrejoinDialog = ({
 
 	// Withdrawn (here or elsewhere) or closed after "no": back to the check.
 	const gone = Boolean(knockState?.gone);
+	const linkInactive = Boolean(knockState?.inactive);
+	const linkPaused = Boolean(knockState?.paused);
 	useEffect(() => {
 		if (!gone || !knock) return;
+		/* Knocking again hit a switched-off link: say so, rather than drop
+		   back to the check without a word (#2012). */
+		if (linkInactive) {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t(
+					linkPaused
+						? 'inviteLink.paused'
+						: 'directLink.entry.inactive'
+				),
+				text: '',
+				closeable: true,
+				timeout: 5000
+			});
+		}
 		setKnock(null);
 		setKnockState(null);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the knock goes
 	}, [gone, knock]);
 
 	// Let in: the call starts with exactly what the switches say now.

@@ -5,9 +5,9 @@ import type {
 import type {
 	CallDevice,
 	CallDeviceControls,
+	CallDeviceSelection,
 	CallEntryBlocker,
-	CallModality,
-	PreferredDeviceLabels
+	CallModality
 } from '../../waitingRoom/callEntry/callEntryTypes';
 
 /**
@@ -125,18 +125,28 @@ export const joinMediaFrom = ({
  * The choice waits here, per room, until that room's call is ready to take
  * it (`GroupCallWidget`). In memory only: a reload starts afresh.
  */
-const chosen = new Map<string, { media: JoinMedia; cameraSwitch?: boolean }>();
+const chosen = new Map<
+	string,
+	{
+		media: JoinMedia;
+		cameraSwitch?: boolean;
+		selection: CallDeviceSelection;
+	}
+>();
 
 /**
  * @param cameraSwitch The camera switch itself, in a video check. `media` says
  * what the call gets, which is "off" for a camera that was not available too.
+ * @param selection The devices picked in the check, for the next check to open
+ * on: by id, which holds here, in the page that asked for them.
  */
 export const rememberJoinMedia = (
 	roomRef: string,
 	media: JoinMedia | null,
-	cameraSwitch?: boolean
+	cameraSwitch?: boolean,
+	selection: CallDeviceSelection = {}
 ) => {
-	if (media) chosen.set(roomRef, { media, cameraSwitch });
+	if (media) chosen.set(roomRef, { media, cameraSwitch, selection });
 	else chosen.delete(roomRef);
 };
 
@@ -151,6 +161,11 @@ export const peekCameraSwitch = (
 	const entry = roomRef ? chosen.get(roomRef) : undefined;
 	return entry && (entry.cameraSwitch ?? true);
 };
+
+/** The devices the last check for that room picked. */
+export const peekDeviceSelection = (
+	roomRef: string | null | undefined
+): CallDeviceSelection => (roomRef && chosen.get(roomRef)?.selection) || {};
 
 /** Keeps what a device check (`useCallDeviceCheck`) says now for that room. */
 export const keepDeviceChoice = (
@@ -189,7 +204,8 @@ export const keepDeviceChoice = (
 				controls.selection.camera
 			)
 		}),
-		modality === 'video' ? controls.cameraOn : undefined
+		modality === 'video' ? controls.cameraOn : undefined,
+		controls.selection
 	);
 
 /** Once: a later call in the same room starts as calls always did. */
@@ -208,32 +224,15 @@ export const forgetAllJoinMedia = () => chosen.clear();
 export const initialControlsFor = (
 	modality: CallModality,
 	remembered: CallDeviceState | null,
-	cameraSwitch?: boolean
+	cameraSwitch?: boolean,
+	selection: CallDeviceSelection = {}
 ): CallDeviceControls => ({
 	micOn: remembered?.audio_enabled ?? true,
 	cameraOn:
 		modality === 'video' &&
 		(cameraSwitch ?? remembered?.video_enabled ?? true),
-	selection: {}
+	selection
 });
-
-/**
- * The devices of the same room's earlier check, by label: the reopened
- * check picks them once the browser lists its devices
- * (`useCallDeviceCheck`), so "Fertig" does not save the defaults over them.
- */
-export const rememberedDeviceLabels = (
-	modality: CallModality,
-	remembered: JoinMedia | null
-): PreferredDeviceLabels | undefined =>
-	remembered
-		? {
-				microphone: remembered.microphoneLabel,
-				...(modality === 'video'
-					? { camera: remembered.cameraLabel }
-					: {})
-			}
-		: undefined;
 
 /**
  * What the call is asked to switch once it is ready

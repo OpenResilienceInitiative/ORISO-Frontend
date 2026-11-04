@@ -21,24 +21,30 @@ const props = (knocking: boolean): KnockWaitDialogProps => ({
 	onClose: vi.fn()
 });
 
+/* The unit tests run without translations: buttons are named by key. */
+const stopWaiting = () =>
+	screen.queryByRole('button', { name: 'knockWait.waiting.cancel' });
+const joinNow = () =>
+	screen.getByRole('button', { name: 'knockWait.ready.join' });
+
 afterEach(cleanup);
 
 describe('KnockWaitDialog: the wait withdrawn', () => {
 	it('moves focus from "Nicht mehr warten" to "Jetzt beitreten"', () => {
 		const { rerender } = render(<KnockWaitDialog {...props(true)} />);
-		act(() => screen.getByTestId('knock-wait-cancel').focus());
+		act(() => stopWaiting()!.focus());
 
 		rerender(<KnockWaitDialog {...props(false)} />);
 
-		expect(screen.queryByTestId('knock-wait-cancel')).toBeNull();
-		expect(document.activeElement).toBe(
-			screen.getByTestId('knock-wait-join')
-		);
+		expect(stopWaiting()).toBeNull();
+		expect(document.activeElement).toBe(joinNow());
 	});
 
 	it('leaves focus where the person put it inside the dialog', () => {
 		const { rerender } = render(<KnockWaitDialog {...props(true)} />);
-		const join = screen.getByTestId('knock-wait-join');
+		const join = screen.getByRole('button', {
+			name: 'knockWait.ready.knocking'
+		});
 		const other = document.createElement('button');
 		join.parentElement!.appendChild(other);
 		act(() => other.focus());

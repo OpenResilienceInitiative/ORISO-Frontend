@@ -570,8 +570,8 @@ export const CircleHeadsetKeptOnReopen: Story = {
 		await userEvent.click(p.getByRole('button', { name: 'Fertig' }));
 		await expectClosed(canvasElement);
 
-		// Opened again: the check finds the headset by its label
-		// (CodeRabbit on #2028) instead of falling back to the default.
+		// Opened again: the check opens on the headset picked before
+		// (CodeRabbit on #2028, #2037), not on the default.
 		await userEvent.click(await circleOption(canvasElement));
 		await expectSettled(canvasElement);
 		await expect(

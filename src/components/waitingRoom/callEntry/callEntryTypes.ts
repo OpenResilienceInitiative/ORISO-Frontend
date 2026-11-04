@@ -35,11 +35,3 @@ export type CallEntryBlocker =
 	| 'notOpenYet'
 	| 'callEnded'
 	| 'linkInvalid';
-
-/**
- * Devices an earlier check chose, by label: ids differ between pages and
- * visits, labels do not once access is granted.
- */
-export type PreferredDeviceLabels = Partial<
-	Record<'microphone' | 'camera', string>
->;

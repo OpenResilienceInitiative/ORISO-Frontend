@@ -20,10 +20,10 @@ import {
 import type { CallDeviceCheckProps } from '../../waitingRoom/callEntry/CallDeviceCheck';
 
 /*
- * The device check reopened for the same room (CodeRabbit on #2028): it
- * opens on the headset and camera picked last time, found by label once the
- * browser lists its devices. The person's own pick in the reopened check
- * wins, and a device that is gone leaves the default.
+ * The device check reopened for the same room (CodeRabbit on #2028, #2037):
+ * it opens on the headset and camera picked last time, the person's own pick
+ * in the reopened check wins, and a device that is gone falls back to the
+ * default. Driven through the dialog itself: pick, "Fertig", open again.
  */
 
 vi.mock('../../knockWaitDialog/KnockWaitDialog', () => ({
@@ -42,8 +42,16 @@ vi.mock('../../knockWaitDialog/KnockWaitDialog', () => ({
 			<output data-testid="listed">
 				{String(media.devices.microphone.length)}
 			</output>
-			<button onClick={() => media.onSelectDevice('microphone', 'mic-1')}>
-				pick laptop microphone
+			{(['mic-1', 'mic-2'] as const).map((id) => (
+				<button
+					key={id}
+					onClick={() => media.onSelectDevice('microphone', id)}
+				>
+					{`pick ${id}`}
+				</button>
+			))}
+			<button onClick={() => media.onSelectDevice('camera', 'cam-2')}>
+				pick cam-2
 			</button>
 			<button onClick={onJoin}>done</button>
 		</div>
@@ -51,9 +59,7 @@ vi.mock('../../knockWaitDialog/KnockWaitDialog', () => ({
 }));
 
 const { CallPrejoinDialog } = await import('./CallPrejoinDialog');
-const { forgetAllJoinMedia, peekJoinMedia, rememberJoinMedia } = await import(
-	'./callPrejoin'
-);
+const { forgetAllJoinMedia, peekJoinMedia } = await import('./callPrejoin');
 
 const ROOM = '!circle:oriso';
 
@@ -71,12 +77,15 @@ const fakeStream = () =>
 		getVideoTracks: () => []
 	}) as unknown as MediaStream;
 
-const mediaDevices = () =>
+/** @param unplugged Device ids the browser no longer lists. */
+const mediaDevices = (unplugged: string[] = []) =>
 	({
 		getUserMedia: vi.fn(() => Promise.resolve(fakeStream())),
 		enumerateDevices: vi.fn(() =>
 			Promise.resolve(
-				LISTED.map(([kind, deviceId, label]) => ({
+				LISTED.filter(
+					([, deviceId]) => !unplugged.includes(deviceId)
+				).map(([kind, deviceId, label]) => ({
 					kind,
 					deviceId,
 					label,
@@ -88,7 +97,7 @@ const mediaDevices = () =>
 		removeEventListener: () => undefined
 	}) as unknown as MediaDevices & { getUserMedia: ReturnType<typeof vi.fn> };
 
-const open = (devices: MediaDevices) =>
+const open = (devices: MediaDevices = mediaDevices()) =>
 	render(
 		<CallPrejoinDialog
 			modality="video"
@@ -99,8 +108,21 @@ const open = (devices: MediaDevices) =>
 		/>
 	);
 
-const listed = () =>
-	waitFor(() => expect(screen.getByTestId('listed').textContent).toBe('2'));
+const listed = (count: number) =>
+	waitFor(() =>
+		expect(screen.getByTestId('listed').textContent).toBe(String(count))
+	);
+
+/** First check: headset and second camera, "Fertig", closed. */
+const pickHeadsetThenDone = async () => {
+	const first = open();
+	await listed(2);
+	fireEvent.click(screen.getByText('pick mic-2'));
+	fireEvent.click(screen.getByText('pick cam-2'));
+	await listed(2);
+	fireEvent.click(screen.getByText('done'));
+	first.unmount();
+};
 
 beforeEach(() => {
 	vi.stubGlobal(
@@ -129,23 +151,11 @@ afterEach(() => {
 
 describe('CallPrejoinDialog reopened for the same room', () => {
 	it('opens on the headset and camera picked last time', async () => {
-		rememberJoinMedia(
-			ROOM,
-			{
-				audio_enabled: true,
-				video_enabled: true,
-				microphoneLabel: 'Jabra Evolve2 Headset',
-				cameraLabel: 'Logitech C920'
-			},
-			true
-		);
+		await pickHeadsetThenDone();
 		const devices = mediaDevices();
 		open(devices);
-		await listed();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('microphone').textContent).toBe('mic-2')
-		);
+		expect(screen.getByTestId('microphone').textContent).toBe('mic-2');
 		expect(screen.getByTestId('camera').textContent).toBe('cam-2');
 		// The preview runs on them, not on the browser's default.
 		await waitFor(() =>
@@ -154,6 +164,7 @@ describe('CallPrejoinDialog reopened for the same room', () => {
 				video: { deviceId: { exact: 'cam-2' } }
 			})
 		);
+		await listed(2);
 		fireEvent.click(screen.getByText('done'));
 		expect(peekJoinMedia(ROOM)).toMatchObject({
 			microphoneLabel: 'Jabra Evolve2 Headset',
@@ -162,22 +173,11 @@ describe('CallPrejoinDialog reopened for the same room', () => {
 	});
 
 	it("keeps the person's own pick in the reopened check", async () => {
-		rememberJoinMedia(
-			ROOM,
-			{
-				audio_enabled: true,
-				video_enabled: true,
-				microphoneLabel: 'Jabra Evolve2 Headset'
-			},
-			true
-		);
-		open(mediaDevices());
-		await listed();
-		await waitFor(() =>
-			expect(screen.getByTestId('microphone').textContent).toBe('mic-2')
-		);
+		await pickHeadsetThenDone();
+		open();
+		await listed(2);
 
-		fireEvent.click(screen.getByText('pick laptop microphone'));
+		fireEvent.click(screen.getByText('pick mic-1'));
 		// The picked microphone restarts the preview and the list is read
 		// again; the saved headset does not come back.
 		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
@@ -188,24 +188,10 @@ describe('CallPrejoinDialog reopened for the same room', () => {
 		);
 	});
 
-	it('keeps the default when the saved device is not there any more', async () => {
-		rememberJoinMedia(
-			ROOM,
-			{
-				audio_enabled: true,
-				video_enabled: true,
-				microphoneLabel: 'Old USB Headset',
-				cameraLabel: 'Logitech C920'
-			},
-			true
-		);
-		const devices = mediaDevices();
-		open(devices);
-		await listed();
-		await waitFor(() =>
-			expect(screen.getByTestId('camera').textContent).toBe('cam-2')
-		);
-		expect(screen.getByTestId('microphone').textContent).toBe('');
+	it('falls back to the default when the saved headset is gone', async () => {
+		await pickHeadsetThenDone();
+		open(mediaDevices(['mic-2']));
+		await listed(1);
 		fireEvent.click(screen.getByText('done'));
 		expect(peekJoinMedia(ROOM)).toMatchObject({
 			microphoneLabel: 'MacBook Pro-Mikrofon',

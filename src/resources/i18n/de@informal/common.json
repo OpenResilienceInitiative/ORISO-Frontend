@@ -325,7 +325,8 @@
 			"vacatedHint": "nicht mehr in der Beratungsstelle",
 			"scope": {
 				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
-				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen.",
+				"PLATFORM": "Du kannst Kolleg:innen deines Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
 			"error": {

@@ -1157,6 +1157,8 @@
 			},
 			"nameLabel": "Nom de l'échange interne",
 			"noColleagues": "Aucun collègue à sélectionner",
+			"searchPeople": "Rechercher une personne",
+			"noMatchingPeople": "Aucune personne correspondante.",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
 			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
@@ -1167,7 +1169,8 @@
 			},
 			"scope": {
 				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
-				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
+				"PLATFORM": "Vous pouvez choisir des collègues de votre organisme et des autres organismes participants."
 			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
@@ -6543,6 +6546,7 @@
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans cette consultation.",
 			"haveAccount": "Vous avez déjà un compte ? Se connecter",
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},
