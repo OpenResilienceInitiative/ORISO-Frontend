@@ -8,6 +8,7 @@ import {
 	keepDeviceChoice,
 	peekCameraSwitch,
 	peekJoinMedia,
+	rememberedDeviceLabels,
 	rememberJoinMedia
 } from './callPrejoin';
 import type {
@@ -126,14 +127,23 @@ export const CallPrejoinDialog = ({
 	pollMs,
 	sheet
 }: CallPrejoinDialogProps) => {
-	const [initial] = useState(() =>
-		initialControlsFor(
-			modality,
-			peekJoinMedia(roomRef),
-			peekCameraSwitch(roomRef)
-		)
-	);
-	const device = useCallDeviceCheck(modality, { initial, mediaDevices });
+	const [{ initial, preferredLabels }] = useState(() => {
+		const remembered = peekJoinMedia(roomRef);
+		return {
+			initial: initialControlsFor(
+				modality,
+				remembered,
+				peekCameraSwitch(roomRef)
+			),
+			// The switches come back at once; the devices once listed.
+			preferredLabels: rememberedDeviceLabels(modality, remembered)
+		};
+	});
+	const device = useCallDeviceCheck(modality, {
+		initial,
+		preferredLabels,
+		mediaDevices
+	});
 	const [busy, setBusy] = useState(false);
 	const [knock, setKnock] = useState<PendingKnock | null>(null);
 	const [knockState, setKnockState] = useState<DirectLinkKnockState | null>(

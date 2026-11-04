@@ -6,7 +6,8 @@ import type {
 	CallDevice,
 	CallDeviceControls,
 	CallEntryBlocker,
-	CallModality
+	CallModality,
+	PreferredDeviceLabels
 } from '../../waitingRoom/callEntry/callEntryTypes';
 
 /**
@@ -215,6 +216,24 @@ export const initialControlsFor = (
 		(cameraSwitch ?? remembered?.video_enabled ?? true),
 	selection: {}
 });
+
+/**
+ * The devices of the same room's earlier check, by label: the reopened
+ * check picks them once the browser lists its devices
+ * (`useCallDeviceCheck`), so "Fertig" does not save the defaults over them.
+ */
+export const rememberedDeviceLabels = (
+	modality: CallModality,
+	remembered: JoinMedia | null
+): PreferredDeviceLabels | undefined =>
+	remembered
+		? {
+				microphone: remembered.microphoneLabel,
+				...(modality === 'video'
+					? { camera: remembered.cameraLabel }
+					: {})
+			}
+		: undefined;
 
 /**
  * What the call is asked to switch once it is ready

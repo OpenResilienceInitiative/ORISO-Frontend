@@ -552,6 +552,44 @@ export const CircleMicOffDone: Story = {
 	}
 };
 
+export const CircleHeadsetKeptOnReopen: Story = {
+	name: 'Circle · headset picked, "Fertig", reopened: still the headset',
+	globals: desktop1440Globals,
+	parameters: circleParameters,
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="desktop" />,
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await circleOption(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.click(p.getByTestId('device-picker-microphone'));
+		await userEvent.click(
+			await p.findByRole('menuitem', { name: 'Jabra Evolve2 Headset' })
+		);
+		await userEvent.click(p.getByRole('button', { name: 'Fertig' }));
+		await expectClosed(canvasElement);
+
+		// Opened again: the check finds the headset by its label
+		// (CodeRabbit on #2028) instead of falling back to the default.
+		await userEvent.click(await circleOption(canvasElement));
+		await expectSettled(canvasElement);
+		await expect(
+			await p.findByRole('button', {
+				name: 'Mikrofon: Jabra Evolve2 Headset'
+			})
+		).toBeVisible();
+		await userEvent.click(p.getByRole('button', { name: 'Fertig' }));
+		await expectClosed(canvasElement);
+		await expect(peekJoinMedia(GROUP_STAGE_ROOM_ID)).toEqual({
+			audio_enabled: true,
+			video_enabled: true,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'FaceTime HD-Kamera'
+		});
+	}
+};
+
 export const CircleDevicesOkPhone: Story = {
 	name: 'Circle · device check open · phone 390',
 	globals: phone390Globals,
