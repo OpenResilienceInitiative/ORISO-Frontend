@@ -6533,6 +6533,7 @@
 		},
 		"entry": {
 			"inactive": "Dieser Link ist nicht mehr aktiv.",
+			"callsDisabled": "In dieser Beratung sind Anrufe nicht möglich.",
 			"haveAccount": "Sie haben schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 		},

@@ -6543,6 +6543,7 @@
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans cette consultation.",
 			"haveAccount": "Vous avez déjà un compte ? Se connecter",
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},

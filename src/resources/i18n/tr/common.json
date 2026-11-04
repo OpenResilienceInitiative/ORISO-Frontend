@@ -6543,6 +6543,7 @@
 		},
 		"entry": {
 			"inactive": "Bu bağlantı artık etkin değil.",
+			"callsDisabled": "Bu danışmanlıkta aramalar mümkün değil.",
 			"haveAccount": "Zaten bir hesabınız var mı? Giriş yapın",
 			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 		},
