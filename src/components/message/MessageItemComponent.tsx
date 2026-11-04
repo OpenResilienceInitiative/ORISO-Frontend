@@ -2,11 +2,12 @@ import { useConversationFeatureSettings } from '../../hooks/useConversationFeatu
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
 import {
+	isDeletedGuest,
 	retentionOf,
 	useOwnTemporaryAccount
 } from '../temporaryAccount/temporaryAccountStore';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
-import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
@@ -47,7 +48,10 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
-import { joinOrKnock } from '../directLinkEntry/callMessageKnock';
+import {
+	callCardMayKnock,
+	joinOrKnock
+} from '../directLinkEntry/callMessageKnock';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -112,7 +116,7 @@ import {
 	TOPIC_DUPLICATE_STARTED
 } from '../furtherCounselling/furtherCounsellingNotices';
 import { isTrustedRecommendationSender } from '../furtherCounselling/furtherCounsellingRules';
-import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
+import { resolveAssignedAskerDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
@@ -379,8 +383,11 @@ export const MessageItemComponent = ({
 	readOnly = false
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession, avatarMembers = [] } =
-		useContext(ActiveSessionContext);
+	const {
+		activeSession,
+		reloadActiveSession,
+		avatarMembers = []
+	} = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -1203,7 +1210,7 @@ export const MessageItemComponent = ({
 		() => notificationConversationType(activeSession),
 		[activeSession]
 	);
-	const grantNotificationPolicy = notificationChannelPolicy(
+	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
 		erstantwortModality
 	);
@@ -1820,15 +1827,26 @@ export const MessageItemComponent = ({
 	 * the bubble, the chat header and the session list have in common, so the
 	 * bubble now uses exactly those and passes no name parts at all.
 	 */
-	// #1839: a live-chat guest's own messages carry the pseudonym the list and
-	// the header show, not their encoded Matrix name.
-	const liveChatGuestName =
-		!isMyMessage &&
-		isLiveChatModality &&
-		!!askerMatrixUserId &&
-		userId === askerMatrixUserId
-			? resolveAnonymousChatDisplayName(activeSession?.user)
-			: null;
+	// Session aliases belong only to the exact asker of this session. The
+	// Matrix event can still contain the login or a previous session's name.
+	const sessionAskerName = (() => {
+		if (
+			!activeSession?.item?.askerMatrixUserId ||
+			userId !== activeSession.item.askerMatrixUserId
+		)
+			return null;
+		const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
+		if (
+			activeSession.user?.deleted === true ||
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		)
+			return deletedGuestLabel;
+		// Preserve an already anonymized legacy event; it is never identity proof.
+		// The stored session owner above is the only basis for applying this alias.
+		if (username === deletedGuestLabel && displayName === deletedGuestLabel)
+			return displayName;
+		return resolveAssignedAskerDisplayName(activeSession.user);
+	})();
 	// Matrix profiles hold the login name, so after a reload the event only
 	// carries the username. The group's member list has the public display
 	// name for every participant (OBP 2.1 #12).
@@ -1838,17 +1856,17 @@ export const MessageItemComponent = ({
 					?.displayName || ''
 			).trim() || undefined
 		: undefined;
-	const resolvedIncomingDisplayName = askerIncomingConsultantName
-		? askerIncomingConsultantName.displayName
-		: !isMyMessage
-			? consultantMatch?.consultantDisplayName ||
-				liveChatGuestName ||
-				groupMemberDisplayName ||
-				roomUser?.displayName ||
-				displayName
-			: displayName;
-	// In a group every non-moderator counts as a "user message", but a
-	// counsellor viewing their own message is still a counsellor.
+	const resolvedIncomingDisplayName =
+		sessionAskerName ??
+		(askerIncomingConsultantName
+			? askerIncomingConsultantName.displayName
+			: !isMyMessage
+				? consultantMatch?.consultantDisplayName ||
+					groupMemberDisplayName ||
+					roomUser?.displayName ||
+					displayName
+				: displayName);
+	// A group viewer can still be a counsellor on their own message.
 	const ownConsultantName =
 		isMyMessage && (!isUserMessage() || !isAskerViewer)
 			? resolveOwnConsultantName({
@@ -1858,22 +1876,24 @@ export const MessageItemComponent = ({
 					username: userData?.userName || username
 				})
 			: null;
-	const formattedName = formatMessagePersonName(
-		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
-		username,
-		// Own messages may still fall back to the viewer's own name — it is
-		// their own screen. Incoming messages never carry one (#1486).
-		ownConsultantName
-			? ownConsultantName.firstName
-			: isMyMessage
-				? userData?.firstName
-				: undefined,
-		ownConsultantName
-			? ownConsultantName.lastName
-			: isMyMessage
-				? userData?.lastName
-				: undefined
-	);
+	const formattedName =
+		sessionAskerName ??
+		formatMessagePersonName(
+			ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
+			username,
+			// Own messages may still fall back to the viewer's own name — it is
+			// their own screen. Incoming messages never carry one (#1486).
+			ownConsultantName
+				? ownConsultantName.firstName
+				: isMyMessage
+					? userData?.firstName
+					: undefined,
+			ownConsultantName
+				? ownConsultantName.lastName
+				: isMyMessage
+					? userData?.lastName
+					: undefined
+		);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
 	 * header is gated by !isMyMessage), so the agency line has to be
@@ -2177,6 +2197,9 @@ export const MessageItemComponent = ({
 									<MessageDisplayName
 										isMyMessage={isMyMessage}
 										isUser={isUserMessage()}
+										resolvedDisplayName={
+											sessionAskerName ?? undefined
+										}
 										type={getUsernameType()}
 										subtitle={
 											getUsernameType() ===
@@ -2744,13 +2767,16 @@ export const MessageItemComponent = ({
 													)
 											),
 										{
-											// Direct links are 1:1; a group has no own knock to look up.
-											asker:
-												!activeSession?.isGroup &&
-												hasUserAuthority(
+											// Who the server can gate at all: an advice seeker in a 1:1.
+											asker: callCardMayKnock({
+												isAsker: hasUserAuthority(
 													AUTHORITIES.ASKER_DEFAULT,
 													userData
+												),
+												isGroup: Boolean(
+													activeSession?.isGroup
 												)
+											})
 										}
 									)
 					}
@@ -2777,6 +2803,9 @@ export const MessageItemComponent = ({
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
+					sessionId={activeSession?.item?.id}
+					displayName={activeSession?.user?.displayName}
+					onDisplayNameSaved={() => void reloadActiveSession?.()}
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
 					}
@@ -3047,6 +3076,7 @@ export const MessageItemComponent = ({
 										userId={userId}
 										username={username}
 										displayName={
+											sessionAskerName ??
 											ownConsultantName?.displayName ??
 											displayName
 										}

@@ -5,6 +5,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
+import {
+	mockActiveSession1on1,
+	mockUserData
+} from '../message/MessageItemComponent.mocks';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
 vi.mock('react-i18next', () => ({
@@ -82,4 +86,75 @@ describe('SessionHeaderComponent', () => {
 		expect(screen.getByText('Debt')).toBeTruthy();
 		expect(screen.queryByText('0')).toBeNull();
 	});
+});
+
+it('shows the active live-session alias instead of an account alias or stale local cache', () => {
+	const session = mockActiveSession1on1();
+	const userData = mockUserData({
+		userId: 'asker-1',
+		userName: 'unchanged_login_1234',
+		displayName: 'Account alias from another session',
+		grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
+	});
+	const renderSession = (id: number, displayName: string) => (
+		<MemoryRouter>
+			<UserDataContext.Provider
+				value={{
+					userData,
+					setUserData: () => {},
+					reloadUserData: async () => userData
+				}}
+			>
+				<ActiveSessionContext.Provider
+					value={{
+						activeSession: {
+							...session,
+							item: {
+								...session.item,
+								id,
+								conversationType: 'LIVE_CHAT'
+							},
+							user: {
+								...session.user,
+								username: 'unchanged_login_1234',
+								displayName
+							}
+						}
+					}}
+				>
+					<SessionHeaderComponent bannedUsers={[]} />
+				</ActiveSessionContext.Provider>
+			</UserDataContext.Provider>
+		</MemoryRouter>
+	);
+	sessionStorage.setItem(
+		'anonymous-pseudonym-name-3363',
+		'Stale cached alias'
+	);
+	try {
+		const view = render(renderSession(3363, 'First session alias'));
+		expect(
+			screen.getByRole('heading', { name: 'First session alias' })
+		).toBeTruthy();
+		view.rerender(renderSession(3364, 'Second session alias'));
+		expect(
+			screen.getByRole('heading', { name: 'Second session alias' })
+		).toBeTruthy();
+		expect(screen.queryByText('First session alias')).toBeNull();
+		expect(
+			screen.queryByText('Account alias from another session')
+		).toBeNull();
+		view.rerender(renderSession(3365, ' '));
+		expect(
+			screen.getByRole('heading', { name: 'unchanged_login_1234' })
+		).toBeTruthy();
+		sessionStorage.setItem('anonymous-pseudonym-name-3365', 'anon_chosen');
+		view.rerender(renderSession(3365, ''));
+		expect(
+			screen.getByRole('heading', { name: 'anon_chosen' })
+		).toBeTruthy();
+	} finally {
+		sessionStorage.removeItem('anonymous-pseudonym-name-3363');
+		sessionStorage.removeItem('anonymous-pseudonym-name-3365');
+	}
 });

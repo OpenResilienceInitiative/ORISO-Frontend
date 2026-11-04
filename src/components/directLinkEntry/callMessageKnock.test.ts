@@ -1,6 +1,7 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	callCardMayKnock,
 	joinOrKnock,
 	rememberAdmittedConversation,
 	wasAdmittedTo,
@@ -196,5 +197,86 @@ describe('joinOrKnock (FE#1893)', () => {
 		await joinOrKnock(9, join, { start: vi.fn(), mine, asker: false });
 		expect(mine).not.toHaveBeenCalled();
 		expect(join).toHaveBeenCalledOnce();
+	});
+	it('shows the turn-down, and opens no call, when this device has no link', async () => {
+		// The server refuses the call while the latest knock is not admitted
+		// (KNOCK_NOT_ADMITTED); without the link nothing can knock again.
+		mine.mockResolvedValue({
+			id: 30,
+			sessionId: 9,
+			status: 'DECLINED',
+			medium: 'AUDIO'
+		});
+		const join = vi.fn();
+		const start = vi.fn();
+		const announced = vi.fn();
+		window.addEventListener(PENDING_KNOCK_EVENT, announced);
+
+		await expect(joinOrKnock(9, join, { start, mine })).resolves.toBe(
+			'joined'
+		);
+
+		window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+		expect(join).not.toHaveBeenCalled();
+		expect(start).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toMatchObject({
+			knockId: 30,
+			sessionId: 9,
+			medium: 'AUDIO',
+			status: 'DECLINED',
+			token: ''
+		});
+		expect(announced).toHaveBeenCalledOnce();
+		// Nothing waits for an admission that cannot come.
+		expect(takeAdmittedJoin(9)).toBeUndefined();
+	});
+
+	it('opens no call the server refuses after a knock withdrawn elsewhere', async () => {
+		mine.mockResolvedValue({
+			id: 30,
+			sessionId: 9,
+			status: 'CANCELLED',
+			medium: 'VIDEO'
+		});
+		const join = vi.fn();
+		const start = vi.fn();
+		await expect(joinOrKnock(9, join, { start, mine })).resolves.toBe(
+			'unavailable'
+		);
+		expect(join).not.toHaveBeenCalled();
+		expect(start).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toBeNull();
+	});
+
+	it('knocks again through the link after a knock withdrawn elsewhere', async () => {
+		rememberDirectLinkSession(9, { token: 'tok', medium: 'VIDEO' });
+		mine.mockResolvedValue({
+			id: 30,
+			sessionId: 9,
+			status: 'CANCELLED',
+			medium: 'VIDEO'
+		});
+		const join = vi.fn();
+		const start = vi.fn().mockResolvedValue(conversation('PENDING'));
+		await joinOrKnock(9, join, { start, mine });
+		expect(start).toHaveBeenCalledWith('tok');
+		expect(join).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toMatchObject({ knockId: 31 });
+	});
+});
+
+describe('callCardMayKnock (FE#1893): who can be sent to the lobby', () => {
+	it('only an advice seeker in a 1:1 conversation', () => {
+		expect(callCardMayKnock({ isAsker: true, isGroup: false })).toBe(true);
+	});
+
+	it('never a counsellor', () => {
+		expect(callCardMayKnock({ isAsker: false, isGroup: false })).toBe(
+			false
+		);
+	});
+
+	it('never in a group: its members join the call directly', () => {
+		expect(callCardMayKnock({ isAsker: true, isGroup: true })).toBe(false);
 	});
 });

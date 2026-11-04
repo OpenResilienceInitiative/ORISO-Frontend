@@ -2150,6 +2150,12 @@
 		"success": "Succès",
 		"warning": "Avertissement",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Mention dans une discussion",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion"
+			},
 			"mention": {
 				"title": "Mention dans la discussion d’équipe",
 				"from": "De {{name}}",
@@ -3649,6 +3655,11 @@
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
 				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
+			},
+			"displayName": {
+				"optional": "Nom affiché (facultatif). Si vous ne le précisez pas, votre User-ID sera affiché.",
+				"suggest": "Proposer un nom",
+				"useUsername": "Utiliser le User-ID"
 			}
 		},
 		"back": "Retour",
@@ -5559,6 +5570,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Ce lien est actuellement en pause.",
 		"error": {
 			"title": "Ce lien d’invitation ne peut plus être utilisé",
 			"generic": "Le lien d’invitation n’a pas pu être utilisé",
@@ -5631,7 +5643,9 @@
 			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
-			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support."
+			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
+			"retryRefresh": "Recharger"
 		},
 		"accountProtection": {
 			"headline": "Votre accès, protégé en plus",
@@ -5680,7 +5694,9 @@
 			"channelBrowser": "Navigateur sur cet appareil",
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
-			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
+			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},
 		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
 		"faq": {
@@ -6070,7 +6086,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
-				"subline": "Anonyme, sans compte. Choisissez un identifiant — ou relancez les dés.",
+				"subline": "Anonyme, sans compte.",
 				"label": "Votre identifiant",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
@@ -6207,6 +6223,10 @@
 			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		},
 		"share": {
+			"signInToJoin": "Connectez-vous pour rejoindre cet appel.",
+			"conversationMember": "Vous participez déjà à cette conversation. Rejoignez l’appel depuis la discussion.",
+			"openConversations": "Ouvrir mes conversations",
+			"joinForbidden": "Vous ne pouvez pas rejoindre cet appel avec ce lien.",
 			"open": "Partager l’appel",
 			"title": "Partager l’appel",
 			"close": "Fermer",
@@ -6576,6 +6596,10 @@
 			"confirm": "Continuer",
 			"cancel": "Annuler",
 			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
+		},
+		"lookupFailed": {
+			"title": "Nous n'avons pas pu vérifier votre compte",
+			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
 	}
 }

@@ -2147,6 +2147,12 @@
 		"success": "Success",
 		"warning": "Warning",
 		"eventNotice": {
+			"chatMention": {
+				"title": "Mention in a chat",
+				"from": "From {{name}}",
+				"several": "{{count}} new mentions",
+				"open": "Open chat"
+			},
 			"mention": {
 				"title": "Mention in the team discussion",
 				"from": "From {{name}}",
@@ -3631,6 +3637,11 @@
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",
 				"note": "Until then you write as usual, and your messages stay for the others. You yourself cannot come back into this conversation afterwards."
+			},
+			"displayName": {
+				"optional": "Display name (optional). Leave blank to show your User-ID.",
+				"suggest": "New name",
+				"useUsername": "Use User-ID"
 			}
 		},
 		"back": "Back",
@@ -5506,6 +5517,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "This link is currently paused.",
 		"error": {
 			"title": "This invite link can no longer be used",
 			"generic": "Invite link could not be used",
@@ -5549,7 +5561,9 @@
 			"browserSilenced": "Browser notifications are silenced in your notification settings.",
 			"channelBoth": "Email and browser on this device",
 			"channelEmail": "Email",
-			"channelBrowser": "Browser on this device"
+			"channelBrowser": "Browser on this device",
+			"emailAccepted": "The email notification change was accepted.",
+			"refreshFailed": "The change was accepted. Your current settings could not be loaded."
 		},
 		"notificationSummary": {
 			"label": "Notifications: {{state}}",
@@ -5595,7 +5609,9 @@
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
 			"saveFailed": "Saving failed. Please try again.",
-			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support."
+			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support.",
+			"refreshFailed": "Your email address is saved. Your current settings could not be loaded.",
+			"retryRefresh": "Reload settings"
 		},
 		"accountProtection": {
 			"headline": "Your access, additionally protected",
@@ -5985,7 +6001,7 @@
 			},
 			"access": {
 				"headline": "Your name for today.",
-				"subline": "Anonymous, no account. Pick a user ID — or roll new ones.",
+				"subline": "Anonymous, no account.",
 				"label": "Your user ID",
 				"temporary": "This access is for this conversation only. Afterwards we delete it — with all messages, at the latest after 48 hours. Stay in this window until it is your turn.",
 				"reroll": "Roll again",
@@ -6122,6 +6138,10 @@
 			"endsCurrentUnnamed": "Answering ends your current call."
 		},
 		"share": {
+			"signInToJoin": "Sign in to join this call.",
+			"conversationMember": "You are already part of this conversation. Join the call from its chat.",
+			"openConversations": "Open my conversations",
+			"joinForbidden": "You cannot join this call through this link.",
 			"open": "Share call",
 			"title": "Share call",
 			"close": "Close",
@@ -6491,6 +6511,10 @@
 			"confirm": "Continue",
 			"cancel": "Cancel",
 			"failed": "Your answer could not be saved. Your message has not been sent yet."
+		},
+		"lookupFailed": {
+			"title": "We could not check your account",
+			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
 		}
 	}
 }
