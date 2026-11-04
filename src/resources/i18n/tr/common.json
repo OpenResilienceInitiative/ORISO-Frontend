@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",
+		"crowd": "{{count}} katılımcı",
 		"unavailable": "Katılımcılar yüklenemedi.",
 		"empty": "Katılımcı yok."
+	},
+	"timelineSettings": {
+		"title": "Görüşme listesinde randevular",
+		"description": "Listenin yaklaşan randevuları nasıl gösterdiği. Tüm cihazlarda geçerlidir.",
+		"scrollModel": {
+			"legend": "Kaydırma",
+			"panes": "İki alan: üstte gelecek, altta geçmiş",
+			"single": "Tek zaman çizelgesi: gelecek ancak „Şimdi“nin ötesine çekmeye devam edince açılır"
+		},
+		"reveal": {
+			"legend": "Randevular yaklaşırken göster",
+			"none": "Hiçbir şey",
+			"next": "Bir sonraki randevu",
+			"half": "Listenin yarısı",
+			"most": "Neredeyse hepsi"
+		},
+		"pastDate": {
+			"legend": "Geçmiş görüşmelerde tarih",
+			"corner": "Kartın köşesinde",
+			"line": "Ayrı bir satırda",
+			"off": "Gösterme"
+		},
+		"writeFailed": "Ayar kaydedilemedi. Lütfen tekrar deneyin."
 	},
 	"menuEffects": {
 		"title": "Menü görünümü",
@@ -203,6 +227,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Kontrol et ve aç",
+			"checking": "Virüs kontrolü yapılıyor …",
+			"checkingImage": "Görsel kontrol ediliyor …",
+			"checkVirus": "Virüs taraması",
+			"checkImage": "Görsel analizi: güvenli ve kurallara uygun mu?",
+			"decrypt": "Şifreyi çöz",
+			"decrypting": "Şifre çözülüyor …",
+			"encryptedHint": "Uçtan uca şifreli",
+			"loadFailed": "Dosya yüklenemedi",
+			"retry": "Tekrar dene"
+		},
 		"mediaCheck": {
 			"unchecked": "Anonim sohbetten görsel – henüz kontrol edilmedi",
 			"reveal": "Görseli göster",
@@ -358,7 +394,8 @@
 		"participants": {
 			"label": "Katılımcılar: {{names}}",
 			"more": "{{count}} katılımcı daha",
-			"more_one": "1 kişi daha"
+			"more_one": "1 kişi daha",
+			"moreList": "Diğer katılımcılar ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal değiştir",
@@ -773,22 +810,6 @@
 			"addThis": "Bu randevuyu takvime ekle",
 			"shareHintSeries": "Web siteniz için takvim bağlantıları: tüm randevular seri olarak; davet bağlantısı veya otomatik güncelleme içermez."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Randevu",
-			"ariaLabel": "Gelecekteki randevular",
-			"commandError": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
-			"duplicate": "Tek seferlik randevu olarak çoğalt",
-			"empty": "Yaklaşan randevu yok.",
-			"groupChatFallback": "Grup sohbeti",
-			"hide": "Gelecekteki randevuları gizle",
-			"loadMore": "Üç ay daha yükle",
-			"loadError": "Gelecekteki bazı randevular yüklenemedi.",
-			"loading": "Gelecekteki randevular yükleniyor…",
-			"now": "Şimdi",
-			"revealAriaLabel": "Gelecekteki randevuları göster",
-			"show": "Gelecekteki randevuları göster",
-			"skip": "Randevuyu atla"
-		},
 		"roles": {
 			"CO_MODERATOR": "Yardımcı moderatör",
 			"OWNER": "Sahip",
@@ -1157,6 +1178,8 @@
 			},
 			"nameLabel": "Dahili sohbetin adı",
 			"noColleagues": "Seçilebilecek meslektaş yok",
+			"searchPeople": "Kişi ara",
+			"noMatchingPeople": "Eşleşen kişi bulunamadı.",
 			"personCount_one": "{{count}} kişi eklendi",
 			"personCount_other": "{{count}} kişi eklendi",
 			"privateRoomHint": "Yalnızca seçilen kişiler için ayrı, şifreli bir oda oluşturulur.",
@@ -1167,7 +1190,8 @@
 			},
 			"scope": {
 				"AGENCY": "Danışma merkezinizdeki meslektaşlarınızı seçebilirsiniz.",
-				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz."
+				"TENANT": "Kuruluşunuzdaki meslektaşlarınızı seçebilirsiniz.",
+				"PLATFORM": "Kendi kurumunuzdan ve katılan diğer kurumlardan çalışma arkadaşları seçebilirsiniz."
 			},
 			"selectPerson": "{{name}} kişisini seç",
 			"subtitle": "meslektaşlarınızla",
@@ -1275,7 +1299,8 @@
 			"rules": {
 				"headline": "Birbirimize nasıl davranırız",
 				"subline": "Bir kez okuyun – sonra siz de aramızdasınız."
-			}
+			},
+			"devices": "Kamera ve mikrofon"
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1973,6 +1998,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} kişisini de seç",
+			"checked": "Seçilen: {{value}}. Eklemek için yanına tıklayın.",
 			"notInChat": "sohbette değil",
 			"empty": "Kimse bulunamadı",
 			"unavailable": "Liste yüklenemedi",
@@ -4493,7 +4520,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Sohbet çemberi",
+				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı",
 				"directLinkVideo": "Görüntülü arama",
@@ -4509,13 +4536,53 @@
 			"ariaLabel": "Görüşme listesinin genişliğini değiştir: boyutlandırmak için sürükleyin, daraltmak veya genişletmek için basılı tutun ya da çift tıklayın, yukarı/aşağı okları listeyi kaydırır.",
 			"expand": "Görüşme listesini genişlet",
 			"collapse": "Sohbeti büyütmek için görüşme listesini daralt",
-			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin."
+			"scrollAriaLabel": "Listeyi kaydırmak için sürükleyin.",
+			"futureAriaLabel": "Yaklaşan randevular: göstermek için aşağı sürükleyin, Yukarı ve Aşağı tuşları kademeler arasında geçer."
 		},
 		"rail": {
 			"unreadCount": "{{count}} yeni mesaj",
 			"unreadCount_one": "{{count}} yeni mesaj",
 			"openEnquiries": "{{count}} açık talep",
 			"openEnquiries_one": "{{count}} açık talep"
+		},
+		"timeline": {
+			"now": "Şimdi",
+			"running": "devam ediyor",
+			"upcoming": "Gelecekteki randevular",
+			"nextAppointment": "Sonraki randevu: {{date}}",
+			"appointment": {
+				"create": "Randevu oluştur",
+				"dialog": {
+					"createTitle": "Randevu oluştur",
+					"moveTitle": "Randevuyu ertele",
+					"description": "Randevu bu danışmanlığa aittir. Sohbette bir bildirim görünür.",
+					"createAction": "Oluştur",
+					"moveAction": "Ertele",
+					"date": "Tarih",
+					"start": "Başlangıç",
+					"end": "Bitiş",
+					"error": {
+						"incomplete": "Lütfen tarih ve saat seçin.",
+						"past": "Randevu gelecekte olmalıdır.",
+						"order": "Bitiş, başlangıçtan sonra olmalıdır.",
+						"conflict": "Bu randevu artık değiştirilemez: iptal edilmiş veya danışmanlık sona ermiştir.",
+						"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
+					}
+				},
+				"notice": {
+					"created": "Randevu belirlendi: {{date}}",
+					"moved": "Randevu şu tarihe ertelendi: {{date}}",
+					"cancelled": "Randevu iptal edildi: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Bildirim gönderilmedi",
+					"text": "Randevu kaydedildi ancak sohbetteki bildirim gönderilemedi."
+				},
+				"cancelFailed": {
+					"title": "Randevu iptal edilmedi",
+					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -5103,6 +5170,7 @@
 		"label": "Sesli mesaj",
 		"play": "Sesli mesajı oynat",
 		"pause": "Sesli mesajı duraklat",
+		"loading": "Sesli mesaj yükleniyor",
 		"timeline": "Zaman çizelgesi",
 		"jumpTo": "{{time}} konumuna atla",
 		"aria": "Sesli mesaj, {{duration}}, oynat",
@@ -6443,6 +6511,16 @@
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
 			"micMeter": "Mikrofonunuzun ses düzeyi"
+		},
+		"ready": {
+			"title": "Kamerayı ve mikrofonu kontrol edin",
+			"description": "Katılmadan önce kimse sizi görmez ve duymaz. Önizlemeyi yalnızca siz görürsünüz.",
+			"descriptionCheck": "Ayarınız bu gruptaki bir görüşmeye katıldığınızda geçerli olur. Önizlemeyi yalnızca siz görürsünüz.",
+			"join": "Şimdi katıl",
+			"done": "Tamam",
+			"retry": "Tekrar kontrol et",
+			"knocking": "İstek gönderildi, lütfen bekleyin …",
+			"notApplied": "Kamera ve mikrofon ayarınız uygulanamadı. Lütfen ikisini de görüşmede kontrol edin."
 		}
 	},
 	"furtherCounselling": {
@@ -6532,6 +6610,7 @@
 		},
 		"entry": {
 			"inactive": "Bu bağlantı artık etkin değil.",
+			"callsDisabled": "Bu danışmanlıkta aramalar mümkün değil.",
 			"haveAccount": "Zaten bir hesabınız var mı? Giriş yapın",
 			"joinFailed": "Bu işe yaramadı. Lütfen tekrar deneyin."
 		},

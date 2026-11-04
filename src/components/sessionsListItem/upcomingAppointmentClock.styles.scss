@@ -1,0 +1,33 @@
+// ADR-021: grey clock circle for a conversation with an upcoming appointment.
+// Same grey and white ring as the stack's "+N" bubble and avatars.
+.upcomingAppointmentClock {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: var(--participant-size, 40px);
+	height: var(--participant-size, 40px);
+	border-radius: 50%;
+	background: var(--m3-surface-container-high, #ece6e6);
+	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-surface-variant, #534341);
+
+	svg {
+		width: 60%;
+		height: 60%;
+		fill: currentcolor;
+	}
+
+	// A single avatar has no stack: the clock sits small at its corner.
+	&--overlay {
+		position: absolute;
+		right: -4px;
+		bottom: -4px;
+		width: 20px;
+		height: 20px;
+	}
+}
+
+.sessionsListItem__icon:has(> .upcomingAppointmentClock--overlay) {
+	position: relative;
+}

@@ -996,7 +996,13 @@ $message-avatar-overlap: -19px;
 			text-align: right;
 		}
 
-		span:not(.messageItem__highlight, .messageItem__messageTime) {
+		// Not inside an attachment card: its spans are its layout, and flattening
+		// them ran the file name and the status line together.
+		span:not(
+			.messageItem__highlight,
+			.messageItem__messageTime,
+			.attachmentCard *
+		) {
 			display: inline;
 		}
 
@@ -1186,17 +1192,49 @@ $message-avatar-overlap: -19px;
 		flex-shrink: 0;
 	}
 
+	// Supervisor feedback: the bubble's outline and this one quiet line say it.
+	// It shares the row with the time, so a short note stays a short note.
 	&__feedbackTag {
 		display: inline-flex;
 		align-items: center;
-		padding: 2px 8px;
-		border-radius: 12px;
-		background: rgba(30, 136, 229, 0.12);
-		color: #1e88e5;
+		align-self: flex-end;
+		gap: 4px;
+		margin-right: auto;
+		padding-top: 8px;
+		color: var(--m3-secondary, #4c555f);
 		font-size: 12px;
-		font-weight: 600;
-		margin-bottom: 6px;
-		border: 1px solid rgba(30, 136, 229, 0.35);
+		font-weight: 500;
+		line-height: 16px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			flex: 0 0 auto;
+
+			* {
+				fill: currentcolor;
+			}
+		}
+	}
+
+	&__supervisionAvatar {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 48px;
+		height: 48px;
+		border-radius: 50%;
+		background: var(--m3-secondary, #4c555f);
+		color: var(--m3-on-secondary, #fff);
+
+		svg {
+			width: 28px;
+			height: 28px;
+
+			* {
+				fill: currentcolor;
+			}
+		}
 	}
 
 	/*
@@ -1225,17 +1263,11 @@ $message-avatar-overlap: -19px;
 
 	&--feedback {
 		.messageItem__message {
-			border: 2px solid rgba(30, 136, 229, 0.6);
+			border: 2px solid var(--m3-secondary, #4c555f);
 		}
 	}
 
 	&--right {
-		.messageItem__feedbackTag {
-			color: $white;
-			background: rgba(255, 255, 255, 0.18);
-			border-color: rgba(255, 255, 255, 0.4);
-		}
-
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
 		}

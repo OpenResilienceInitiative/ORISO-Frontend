@@ -18,7 +18,9 @@
 	&__name {
 		position: absolute;
 		top: 0;
-		left: calc(var(--card-inset) + var(--card-avatar) + var(--card-gap));
+		left: calc(
+			var(--card-inset) + var(--card-avatar-width) + var(--card-gap)
+		);
 		right: calc(var(--card-inset) + var(--card-trailing, 0px));
 		line-height: var(--card-name-line);
 	}
@@ -54,7 +56,7 @@
 		position: relative;
 		top: calc(var(--card-name-line) * -1);
 		float: left;
-		width: var(--card-avatar);
+		width: var(--card-avatar-width);
 		height: var(--card-avatar);
 		margin: 0 var(--card-gap) 0 0;
 	}
@@ -118,7 +120,9 @@
 	}
 
 	&__action {
-		left: calc(var(--card-inset) + var(--card-avatar) + var(--card-gap));
+		left: calc(
+			var(--card-inset) + var(--card-avatar-width) + var(--card-gap)
+		);
 		right: calc(
 			var(--card-inset) + var(--card-trailing, 0px) +
 				var(--card-trailing-width, 0px) + var(--card-gap)

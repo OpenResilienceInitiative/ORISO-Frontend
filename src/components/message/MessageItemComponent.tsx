@@ -45,6 +45,8 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
@@ -91,6 +93,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
+import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import clsx from 'clsx';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -157,13 +160,6 @@ import {
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
-
-/* How recently an Erstantwort event must have arrived for its staged reveal to
-   play. Generous on purpose: the cost of skipping the animation on a genuinely
-   new event is that the person sees the text immediately, while the cost of
-   replaying it on old history is a wall of text re-typing itself every time the
-   list scrolls. */
-const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -1228,16 +1224,6 @@ export const MessageItemComponent = ({
 		isErstantwortEvent,
 		activeSession
 	);
-	/* Only a freshly arrived event plays the stagger. The message list mounts and
-	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
-	   `revealed` to 0 on every mount — so without this an event received days ago
-	   types itself out again each time it scrolls into view, and `onFirstReveal`
-	   fires again with it. */
-	const isRecentErstantwortEvent = useMemo(() => {
-		const timestamp = Number(messageTime);
-		if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
-		return Date.now() - timestamp < ERSTANTWORT_FRESH_WINDOW_MS;
-	}, [messageTime]);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -2069,6 +2055,15 @@ export const MessageItemComponent = ({
 				isMyMessage && 'messageItem__timeRail--outgoing'
 			)}
 		>
+			{isSupervisorFeedback && (
+				<div className="messageItem__feedbackTag">
+					<SupervisionGlyph aria-hidden="true" focusable="false" />
+					<span className="sr-only">
+						{translate('supervision.panel.kind.supervision')}{' '}
+					</span>
+					{translate('message.feedbackTag')}
+				</div>
+			)}
 			{!isMyMessage && reactionChips}
 			{messageTimeInBubble}
 			{isMyMessage && reactionChips}
@@ -2368,11 +2363,6 @@ export const MessageItemComponent = ({
 										{systemNotificationDescription}
 									</div>
 								)}
-							{isSupervisorFeedback && (
-								<div className="messageItem__feedbackTag">
-									{translate('message.feedbackTag')}
-								</div>
-							)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
 							{replyToEventId && !isSystemNotification && (
@@ -2617,6 +2607,7 @@ export const MessageItemComponent = ({
 										inlineDisplayEnabled={
 											attachmentInlineDisplayEnabled
 										}
+										isOwnMessage={isMyMessage}
 									/>
 								))}
 							{/*
@@ -2727,46 +2718,53 @@ export const MessageItemComponent = ({
 	}
 
 	if (callLifecycle && callLifecycle.roomRef === rid) {
+		/*
+		 * The card's own answer first. `activeSession.isGroup` describes the
+		 * CLIENT session, which is false for a supervision call inside a 1:1
+		 * one — and a call rejoined as non-group is ended for everybody when
+		 * one person leaves, because `endCall` publishes a remote hangup and
+		 * finalises the lifecycle. The side that started the call wrote what
+		 * it is; cards from before that field existed fall back to the old
+		 * guess. A knock keeps this answer for a join after a reload.
+		 */
+		const callIsGroup =
+			callLifecycle.isGroup ?? Boolean(activeSession?.isGroup);
 		return (
 			<div className="messageItem">
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallState}
+					/* #2016: camera and microphone first, as guests get. */
+					deviceCheck={() =>
+						shouldShowDeviceCheck({
+							surface: 'callMessage',
+							mediaSupported: Boolean(
+								navigator.mediaDevices?.getUserMedia
+							),
+							alreadyInCall: callManager.hasActiveCall()
+						})
+					}
 					onJoin={
 						readOnly ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
-							: () =>
-									/* FE#1893: a direct-link call conversation knocks first. */
+							: (hooks?: CallJoinHooks) =>
+									/* FE#1893: a direct-link call conversation knocks first;
+									   #2016: the open device check waits for it. */
 									joinOrKnock(
 										activeSession?.item?.id,
 										() =>
 											callManager.joinExistingCall(
 												callLifecycle,
-												/*
-												 * The card's own answer first.
-												 *
-												 * `activeSession.isGroup` describes
-												 * the CLIENT session, which is false
-												 * for a supervision call inside a 1:1
-												 * one — and a call rejoined as
-												 * non-group is ended for everybody
-												 * when one person leaves, because
-												 * `endCall` publishes a remote hangup
-												 * and finalises the lifecycle. The
-												 * side that started the call wrote
-												 * what it is; cards from before that
-												 * field existed fall back to the old
-												 * guess.
-												 */
-												callLifecycle.isGroup ??
-													Boolean(
-														activeSession?.isGroup
-													)
+												callIsGroup
 											),
 										{
+											...hooks,
+											call: callLifecycle,
+											// Kept with the knock: a reload joins in the same mode.
+											isGroup: callIsGroup,
 											// Who the server can gate at all: an advice seeker in a 1:1.
 											asker: callCardMayKnock({
 												isAsker: hasUserAuthority(
@@ -2809,7 +2807,6 @@ export const MessageItemComponent = ({
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
 					}
-					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
 		);
@@ -2931,17 +2928,28 @@ export const MessageItemComponent = ({
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
 								<div className="messageItem__avatar">
-									<MessageAvatar
-										isGroup={!!activeSession?.isGroup}
-										isSystemNotification={false}
-										userId={userId}
-										username={username}
-										choice={incomingAvatarChoice}
-										displayName={
-											resolvedIncomingDisplayName
-										}
-										size={AVATAR_SIZES.message}
-									/>
+									{isSupervisorFeedback ? (
+										// In supervision the role matters more than
+										// the face. The name still stands above.
+										<span className="messageItem__supervisionAvatar">
+											<SupervisionGlyph
+												aria-hidden="true"
+												focusable="false"
+											/>
+										</span>
+									) : (
+										<MessageAvatar
+											isGroup={!!activeSession?.isGroup}
+											isSystemNotification={false}
+											userId={userId}
+											username={username}
+											choice={incomingAvatarChoice}
+											displayName={
+												resolvedIncomingDisplayName
+											}
+											size={AVATAR_SIZES.message}
+										/>
+									)}
 								</div>
 								{!readOnly && (
 									<button

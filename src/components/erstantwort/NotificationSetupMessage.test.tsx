@@ -8,7 +8,14 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import type { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
