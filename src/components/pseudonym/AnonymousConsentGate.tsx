@@ -91,7 +91,7 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
 	const rejectLabel = t('anonymousChat.consent.reject');
-	const dialogRef = useRef<HTMLDivElement | null>(null);
+	const cardRef = useRef<HTMLDivElement | null>(null);
 
 	/* ADR-022 "Blocking dependency" / ORISO-UserService#927.
 	   This line used to go straight into `dangerouslySetInnerHTML`. That was
@@ -120,7 +120,10 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 	   not hold in jsdom — so relying on it alone would leave the very behaviour
 	   this exists for untested in CI. The trap still owns *containment*. */
 	useEffect(() => {
-		dialogRef.current?.focus();
+		// The dialog is the card's parent. It carries no ref itself: the trap
+		// (focus-trap-react 10) reads its child's `element.ref`, which React 19
+		// reports as an error (#1338).
+		cardRef.current?.parentElement?.focus();
 	}, []);
 
 	/* ORISO-UserService#927. The gate declares itself a modal dialog, and since
@@ -154,9 +157,8 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 				aria-labelledby={TITLE_ID}
 				aria-describedby={DESCRIPTION_ID}
 				tabIndex={-1}
-				ref={dialogRef}
 			>
-				<div className="anonymousConsentGate__card">
+				<div className="anonymousConsentGate__card" ref={cardRef}>
 					<div className="anonymousConsentGate__header">
 						<span
 							className="anonymousConsentGate__icon"

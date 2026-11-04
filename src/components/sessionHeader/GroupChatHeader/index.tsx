@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../../hooks/useConversationFeatureSettings';
 import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -30,6 +31,7 @@ import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
+import { getGroupChatInfoLink } from '../../groupChat/groupChatInfoLink';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -249,6 +251,19 @@ export const GroupChatHeader = ({
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
 
+	// #107: the member row opens the member view — for everyone who may open
+	// the Chat-Info from the menu (not before joining, never when banned).
+	const membersLink =
+		!isJoinGroupChatView &&
+		(isConsultant || !bannedUsers?.includes(userData.userName))
+			? getGroupChatInfoLink(
+					listPath,
+					matrixRoomId,
+					activeSession.item.id,
+					sessionTabPath
+				)
+			: '';
+
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,
@@ -271,7 +286,7 @@ export const GroupChatHeader = ({
 		featureAudioCallsGroupChatsEnabled = true,
 		featureVideoCallsEnabled = true,
 		featureVideoCallsGroupChatsEnabled = true
-	} = getTenantSettings();
+	} = useConversationFeatureSettings(getTenantSettings());
 
 	const isCallsEnabled = featureCallsEnabled !== false;
 	const modalityCalls = groupChatCallCapabilities(
@@ -318,20 +333,30 @@ export const GroupChatHeader = ({
 					to={listPath + sessionTabPath}
 					onClick={mobileListView}
 					className="sessionInfo__backButton"
+					aria-label={t('app.back')}
 				>
 					<BackIcon />
 				</Link>
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow" ref={titleRowRef}>
 						<div className="sessionInfo__memberStack">
+							{/* #1338: the disabled "+" needs a name; supervision
+							    is not available in a group chat. Screen readers
+							    only: the header keeps its look (product decision). */}
 							<ChatroomMainInteractionIcon
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
+								addLabel={t(
+									'sessionHeader.supervisor.add.disabledUnavailable'
+								)}
+								addTooltip={false}
 							/>
 							<MemberAvatarStack
 								members={stackMembers}
 								measureRef={titleRowRef}
 								reservedWidth={TITLE_ROW_RESERVED_WIDTH}
+								to={membersLink || undefined}
+								label={t('groupChat.info.subscribers.headline')}
 							/>
 						</div>
 						{!hideTopic && (

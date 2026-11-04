@@ -519,6 +519,41 @@ export const NormalMessage: Story = {
 export const EndedCall: Story = {
 	name: 'Ended call with durable attendance',
 	parameters: NormalMessage.parameters,
+	// #1338: the card asks the server whether the call really ended; it did.
+	beforeEach: () => {
+		const realFetch = window.fetch;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = String(
+				typeof input === 'string' || input instanceof URL
+					? input
+					: input.url
+			);
+			if (url.includes('/service/matrix/calls/state')) {
+				return new Response(
+					JSON.stringify({
+						sourceRoomId: '!conversation:example',
+						callId: 'call-story',
+						callRoomId: '!media:example',
+						callType: 'video',
+						invitedAt: Date.parse('2026-09-11T09:00:00Z'),
+						durationSeconds: 125,
+						state: 'ended'
+					}),
+					{
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					}
+				);
+			}
+			return realFetch(input, init);
+		}) as typeof window.fetch;
+		return () => {
+			window.fetch = realFetch;
+		};
+	},
 	args: {
 		...NormalMessage.args,
 		rid: '!conversation:example',

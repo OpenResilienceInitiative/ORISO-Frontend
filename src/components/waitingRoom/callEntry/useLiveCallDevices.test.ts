@@ -116,6 +116,40 @@ describe('useLiveCallDevices', () => {
 		});
 	});
 
+	it('says whether a camera is there only once the browser has answered', async () => {
+		let answer: (stream: MediaStream) => void = () => undefined;
+		const audioOnly = fakeStream(['audio']);
+		const media = devicesFor((constraints) =>
+			constraints.video
+				? Promise.reject(domError('NotFoundError'))
+				: new Promise<MediaStream>((resolve) => {
+						answer = resolve;
+					})
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		// Asked for the camera, then for the microphone alone: no answer yet.
+		await waitFor(() =>
+			expect(media.getUserMedia).toHaveBeenCalledTimes(2)
+		);
+		expect(result.current.settled).toBe(false);
+		act(() => answer(audioOnly));
+		await waitFor(() => expect(result.current.settled).toBe(true));
+		expect(result.current.cameraMissing).toBe(true);
+	});
+
+	it('is settled when the check cannot run at all', async () => {
+		const media = devicesFor(() =>
+			Promise.reject(domError('NotAllowedError'))
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		await waitFor(() => expect(result.current.blocker).toBeDefined());
+		expect(result.current.settled).toBe(true);
+	});
+
 	it('goes on with the microphone when only the camera is denied', async () => {
 		const audioOnly = fakeStream(['audio']);
 		const media = devicesFor((constraints) =>

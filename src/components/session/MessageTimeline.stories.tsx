@@ -17,6 +17,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 import { MessageTimeline } from './MessageTimeline';
 import { buildSupervisionTimeline } from './sessionHelpers';
+import { buildRoomTimeline } from './roomTimeline';
+import { createClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import type { MessageItem } from '../message/MessageItemComponent';
 import { FailedSendTimelineEntry } from '../message/FailedSendTimelineEntry';
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
@@ -591,5 +593,113 @@ export const Desktop1440: Story = {
 				bubble.getBoundingClientRect().width
 			).toBeLessThanOrEqual(BUBBLE_MAX_WIDTH + 1);
 		}
+	}
+};
+
+/**
+ * Read status from Matrix receipts (FE#1802). Built through the real chat
+ * pipeline (`buildRoomTimeline`) and a real matrix-js-sdk `Room`: the client
+ * sent a read receipt for the counsellor's second message, so messages up to
+ * it carry the double check ("gelesen") and the newer one the single check
+ * ("gesendet"). Before the fix every own message showed "gelesen".
+ */
+const receiptTimeline = async (): Promise<MessageItem[]> => {
+	const client = createClient({
+		baseUrl: 'https://matrix.oriso.invalid',
+		userId: COUNSELLOR_MATRIX_ID,
+		accessToken: 'storybook-read-status'
+	});
+	const room = new Room(CLIENT_ROOM_ID, client, COUNSELLOR_MATRIX_ID);
+	const event = (fields: Record<string, unknown>) =>
+		new MatrixEvent({ room_id: CLIENT_ROOM_ID, ...fields });
+	const join = (userId: string) =>
+		event({
+			event_id: `$join-${userId}`,
+			sender: userId,
+			state_key: userId,
+			type: 'm.room.member',
+			origin_server_ts: Date.parse('2026-09-04T08:00:00+02:00'),
+			content: { membership: 'join' }
+		});
+	const message = (id: string, sender: string, time: string, body: string) =>
+		event({
+			event_id: id,
+			sender,
+			type: 'm.room.message',
+			origin_server_ts: Date.parse(time),
+			content: { msgtype: 'm.text', body }
+		});
+	await room.addLiveEvents(
+		[
+			join(COUNSELLOR_MATRIX_ID),
+			join(CLIENT_MATRIX_ID),
+			message(
+				'$r1',
+				COUNSELLOR_MATRIX_ID,
+				'2026-09-04T09:00:00+02:00',
+				'Guten Morgen, schön, dass Sie sich melden.'
+			),
+			message(
+				'$r2',
+				COUNSELLOR_MATRIX_ID,
+				'2026-09-04T09:01:00+02:00',
+				'Erzählen Sie gern, was Sie gerade beschäftigt.'
+			),
+			message(
+				'$r3',
+				COUNSELLOR_MATRIX_ID,
+				'2026-09-04T09:20:00+02:00',
+				'Ich bin heute bis 16 Uhr erreichbar.'
+			)
+		],
+		{ addToState: true }
+	);
+	room.addReceipt(
+		event({
+			type: 'm.receipt',
+			content: {
+				$r2: {
+					'm.read': {
+						[CLIENT_MATRIX_ID]: {
+							ts: Date.parse('2026-09-04T09:05:00+02:00')
+						}
+					}
+				}
+			}
+		})
+	);
+	return buildRoomTimeline(
+		room.getLiveTimeline().getEvents(),
+		CLIENT_ROOM_ID,
+		room,
+		'',
+		[CLIENT_MATRIX_ID]
+	);
+};
+
+export const ReadStatusFromReceipts: Story = {
+	name: 'Read status from receipts (sent vs. read)',
+	args: baseArgs,
+	loaders: [async () => ({ messages: await receiptTimeline() })],
+	render: (_args, { loaded }) => (
+		<Host>
+			<Timeline messages={loaded.messages} />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		const statusOf = (id: string) =>
+			canvasElement.querySelector(
+				`[data-message-id="${id}"] .messageItem__deliveryStatus`
+			);
+		await waitFor(() => expect(statusOf('$r3')).not.toBeNull());
+		await expect(statusOf('$r1')?.classList).toContain(
+			'messageItem__deliveryStatus--read'
+		);
+		await expect(statusOf('$r2')?.classList).toContain(
+			'messageItem__deliveryStatus--read'
+		);
+		await expect(statusOf('$r3')?.classList).toContain(
+			'messageItem__deliveryStatus--sent'
+		);
 	}
 };

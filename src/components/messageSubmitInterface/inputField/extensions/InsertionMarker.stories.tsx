@@ -23,7 +23,9 @@ const MarkerHarness = ({
 	const editor = useEditor({
 		extensions: [StarterKit, InsertionMarker],
 		content: `<p>${text}</p>`,
-		editable: true
+		editable: true,
+		// Named like the real composer's editor (TipTapComposer) (#1338).
+		editorProps: { attributes: { 'aria-label': 'Nachricht' } }
 	});
 	const editorRef = useRef<Editor | null>(null);
 	editorRef.current = editor ?? null;

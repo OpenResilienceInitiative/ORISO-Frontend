@@ -1,4 +1,6 @@
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 import * as React from 'react';
+import { Alert } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
@@ -27,16 +29,22 @@ import { ReactComponent as SuccessIllustration } from '../../resources/img/illus
  * reaches the person and the form stays usable.
  */
 
+export type EmailRefreshStatus = 'pending' | 'failed' | 'confirmed';
+const RETRY_REFRESH = 'RETRY_REFRESH';
+
 export interface ErstantwortEmailOverlayProps {
 	onClose: () => void;
 	/** Called after the address was accepted, so the caller can reload userData. */
 	onSaved: () => void;
+	refreshStatus?: EmailRefreshStatus;
+	onRetryRefresh?: () => void;
 }
 
 export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
-> = ({ onClose, onSaved }) => {
+> = ({ onClose, onSaved, refreshStatus, onRetryRefresh }) => {
 	const { t } = useTranslation();
+	const emailAllowed = useAccountEmailCollectionAllowed();
 	const active = useRef(true);
 	useEffect(() => {
 		active.current = true;
@@ -74,7 +82,7 @@ export const ErstantwortEmailOverlay: React.FC<
 	};
 
 	const save = () => {
-		if (isSaving || !isValid) return;
+		if (!emailAllowed || isSaving || !isValid) return;
 		setIsSaving(true);
 		setErrorText(null);
 		apiPutEmail(email)
@@ -126,6 +134,17 @@ export const ErstantwortEmailOverlay: React.FC<
 
 	const successItem: OverlayItem = {
 		buttonSet: [
+			...(refreshStatus === 'failed' && onRetryRefresh
+				? [
+						{
+							label: t(
+								'erstantwort.emailNotification.retryRefresh'
+							),
+							function: RETRY_REFRESH,
+							type: BUTTON_TYPES.SECONDARY
+						}
+					]
+				: []),
 			{
 				label: t('furtherSteps.email.overlay.button2.label'),
 				function: OVERLAY_FUNCTIONS.CLOSE,
@@ -133,6 +152,12 @@ export const ErstantwortEmailOverlay: React.FC<
 			}
 		],
 		headline: t('furtherSteps.email.success.overlay.headline'),
+		nestedComponent:
+			refreshStatus === 'failed' ? (
+				<Alert severity="error">
+					{t('erstantwort.emailNotification.refreshFailed')}
+				</Alert>
+			) : undefined,
 		svg: SuccessIllustration
 	};
 
@@ -166,6 +191,8 @@ export const ErstantwortEmailOverlay: React.FC<
 		svg: EnvelopeIllustration
 	};
 
+	if (!emailAllowed && !isSaved) return null;
+
 	return (
 		<Overlay
 			item={isSaved ? successItem : formItem}
@@ -173,6 +200,14 @@ export const ErstantwortEmailOverlay: React.FC<
 				if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 					active.current = false;
 					onClose();
+					return;
+				}
+				if (isSaved) {
+					if (
+						buttonFunction === RETRY_REFRESH &&
+						refreshStatus === 'failed'
+					)
+						onRetryRefresh?.();
 					return;
 				}
 				save();

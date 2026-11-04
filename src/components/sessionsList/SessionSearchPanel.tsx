@@ -299,36 +299,40 @@ export const SessionSearchPanel = ({
 			<div className="sessionsListToolbar__searchRefineHint">
 				{labels.refineHint}
 			</div>
-			<div
-				className="sessionsListToolbar__searchModalTabs"
-				role="tablist"
-				aria-label={labels.refineHint}
-			>
-				{contentTabs.map(({ id, label, Icon }) => {
-					const isActive = activeTab === id;
-					return (
-						<button
-							type="button"
-							key={id}
-							role="tab"
-							aria-selected={isActive}
-							className={clsx(
-								'sessionsListToolbar__searchModalTab',
-								isActive &&
-									'sessionsListToolbar__searchModalTab--active'
-							)}
-							onClick={() => onTabChange(id)}
-							data-cy={`session-search-tab-${id}`}
-						>
-							<span className="sessionsListToolbar__searchModalTabIcon">
-								<Icon active={isActive} />
-							</span>
-							<span className="sessionsListToolbar__searchModalTabLabel">
-								{label}
-							</span>
-						</button>
-					);
-				})}
+			<div className="sessionsListToolbar__searchModalTabs">
+				{/* The tabs alone form the tablist; the archive toggle beside
+				    them is a pressed button, not a tab (#1338). */}
+				<div
+					className="sessionsListToolbar__searchModalTabList"
+					role="tablist"
+					aria-label={labels.refineHint}
+				>
+					{contentTabs.map(({ id, label, Icon }) => {
+						const isActive = activeTab === id;
+						return (
+							<button
+								type="button"
+								key={id}
+								role="tab"
+								aria-selected={isActive}
+								className={clsx(
+									'sessionsListToolbar__searchModalTab',
+									isActive &&
+										'sessionsListToolbar__searchModalTab--active'
+								)}
+								onClick={() => onTabChange(id)}
+								data-cy={`session-search-tab-${id}`}
+							>
+								<span className="sessionsListToolbar__searchModalTabIcon">
+									<Icon active={isActive} />
+								</span>
+								<span className="sessionsListToolbar__searchModalTabLabel">
+									{label}
+								</span>
+							</button>
+						);
+					})}
+				</div>
 				<button
 					type="button"
 					className={clsx(
