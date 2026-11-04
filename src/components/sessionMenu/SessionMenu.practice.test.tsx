@@ -1,4 +1,5 @@
 // @vitest-environment oriso-jsdom
+import { canonicalAgencySettings } from '../../test/fixtures/conversationPolicyFixtures';
 import * as React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -20,6 +21,8 @@ import {
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
+import type { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
+import type { AgencyConversationPolicy } from '../../globalState/interfaces/ConversationFeatureSettings';
 import { SessionMenu } from './SessionMenu';
 
 // Browser-only animation renderers have no canvas in jsdom.
@@ -28,8 +31,15 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
+const runtimeTenant = vi.hoisted(() => {
+	const settings: Partial<TenantDataSettingsInterface> = {};
+	return { settings };
+});
 vi.mock('../../hooks/useSessionTenantSettings', () => ({
-	useSessionTenantSettings: () => ({ settings: {}, isLoading: false })
+	useSessionTenantSettings: () => ({
+		settings: runtimeTenant.settings,
+		isLoading: false
+	})
 }));
 vi.mock('../../hooks/useNotificationSettings', () => ({
 	useNotificationSettings: () => ({
@@ -73,11 +83,15 @@ const counsellor = {
 const Menu = ({
 	callsInMenu = false,
 	userData = counsellor,
-	status = 2
+	status = 2,
+	conversationType = 'AGENCY_COUNSELLING',
+	agencyFeaturePolicy
 }: {
 	callsInMenu?: boolean;
 	userData?: object;
 	status?: number;
+	conversationType?: 'LIVE_CHAT' | 'AGENCY_COUNSELLING' | 'SELF_HELP';
+	agencyFeaturePolicy?: AgencyConversationPolicy;
 }) => (
 	<MemoryRouter>
 		<SessionTypeContext.Provider
@@ -94,9 +108,16 @@ const Menu = ({
 						{
 							activeSession: {
 								...activeSession,
-								item: { ...activeSession.item, status }
+								isGroup: conversationType === 'SELF_HELP',
+								item: {
+									...activeSession.item,
+									status,
+									agencyId: 101,
+									conversationType
+								}
 							},
-							reloadActiveSession: vi.fn()
+							reloadActiveSession: vi.fn(),
+							agencyFeaturePolicy
 						} as any
 					}
 				>
@@ -137,6 +158,7 @@ const callControls = () =>
 	);
 
 beforeEach(() => {
+	runtimeTenant.settings = {};
 	window.matchMedia = ((query: string) => ({
 		matches: false,
 		media: query,
@@ -220,3 +242,136 @@ describe('SessionMenu calls and practice mode (no calls)', () => {
 		expect(callControls()).toHaveLength(0);
 	});
 });
+
+for (const conversationType of [
+	'LIVE_CHAT',
+	'AGENCY_COUNSELLING'
+] satisfies Array<'LIVE_CHAT' | 'AGENCY_COUNSELLING' | 'SELF_HELP'>) {
+	it(`shows actual ${conversationType} calls from the canonical agency override`, () => {
+		runtimeTenant.settings = {
+			featureCallsEnabled: false,
+			featureAudioCallsEnabled: false,
+			featureVideoCallsEnabled: false,
+			featureAudioCallsAnonymousChatsEnabled: false,
+			featureAudioCallsOneOnOneChatsEnabled: false,
+			featureAudioCallsGroupChatsEnabled: false,
+			featureVideoCallsAnonymousChatsEnabled: false,
+			featureVideoCallsOneOnOneChatsEnabled: false,
+			featureVideoCallsGroupChatsEnabled: false
+		};
+		render(
+			<Menu
+				conversationType={conversationType}
+				agencyFeaturePolicy={{
+					agencyId: 101,
+					state: 'ready',
+					settings: canonicalAgencySettings()
+				}}
+			/>
+		);
+		expect(
+			document.querySelector(
+				'[data-cy="session-header-video-call-buttons"]'
+			)
+		).not.toBeNull();
+	});
+}
+for (const mode of ['ENFORCED', 'SUGGESTED'] satisfies Array<
+	'ENFORCED' | 'SUGGESTED'
+>) {
+	it(`keeps the actual call controls off for a canonical ${mode} off answer`, () => {
+		render(
+			<Menu
+				agencyFeaturePolicy={{
+					agencyId: 101,
+					state: 'ready',
+					settings: {
+						...canonicalAgencySettings(
+							{
+								featureAudioCallsEnabled: false,
+								featureVideoCallsEnabled: false
+							},
+							mode
+						),
+						featureAudioCallsEnabled: true,
+						featureVideoCallsEnabled: true
+					}
+				}}
+			/>
+		);
+		expect(callControls()).toHaveLength(0);
+	});
+}
+for (const state of ['loading', 'unavailable'] satisfies Array<
+	'loading' | 'unavailable'
+>) {
+	it(`keeps known-agency call actions off while ${state}`, () => {
+		render(
+			<Menu
+				agencyFeaturePolicy={{
+					agencyId: 101,
+					state,
+					settings: canonicalAgencySettings()
+				}}
+			/>
+		);
+		expect(callControls()).toHaveLength(0);
+	});
+}
+it('retains the parent hard cap for a legacy flat-only agency response', () => {
+	runtimeTenant.settings = { featureCallsEnabled: false };
+	render(
+		<Menu
+			agencyFeaturePolicy={{
+				agencyId: 101,
+				state: 'ready',
+				settings: {
+					featureCallsEnabled: true,
+					featureAudioCallsEnabled: true,
+					featureVideoCallsEnabled: true
+				}
+			}}
+		/>
+	);
+	expect(callControls()).toHaveLength(0);
+});
+
+it('leaves group call ownership with GroupChatHeader even when canonical calls are enabled', () => {
+	render(
+		<Menu
+			conversationType="SELF_HELP"
+			agencyFeaturePolicy={{
+				agencyId: 101,
+				state: 'ready',
+				settings: canonicalAgencySettings()
+			}}
+		/>
+	);
+	expect(callControls()).toHaveLength(0);
+});
+
+for (const mode of [undefined, 'UNKNOWN']) {
+	it(`does not render actual call actions from canonical mode ${String(mode)}`, () => {
+		const settings = canonicalAgencySettings();
+		// Deliberately malformed external JSON; no typed producer could construct it.
+		const malformed = JSON.parse(
+			JSON.stringify({
+				...settings,
+				permissionPolicies: {
+					...settings.permissionPolicies,
+					featureCallsEnabled: { value: true, mode }
+				}
+			})
+		);
+		render(
+			<Menu
+				agencyFeaturePolicy={{
+					agencyId: 101,
+					state: 'ready',
+					settings: malformed
+				}}
+			/>
+		);
+		expect(callControls()).toHaveLength(0);
+	});
+}

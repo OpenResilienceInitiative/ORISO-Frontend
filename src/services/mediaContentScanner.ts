@@ -23,7 +23,10 @@
  *
  * The module is inert until an environment configures a scanner URL.
  */
-import { getMediaScannerUrl } from '../resources/scripts/runtimeConfig';
+import {
+	getMediaScannerUrl,
+	isMediaImageCheckConfigured
+} from '../resources/scripts/runtimeConfig';
 import type { MatrixEncryptedFile } from '../utils/matrixEncryptedAttachment';
 
 /**
@@ -50,6 +53,10 @@ const scannerBaseUrl = (): string =>
 /** Whether this environment routes media through a content scanner at all. */
 export const isMediaContentScannerEnabled = (): boolean =>
 	Boolean(scannerBaseUrl());
+
+/** Whether images are also judged by the AI image check, not only for viruses. */
+export const isMediaImageCheckEnabled = (): boolean =>
+	isMediaContentScannerEnabled() && isMediaImageCheckConfigured();
 
 const parseMxcUri = (
 	contentUrl: string

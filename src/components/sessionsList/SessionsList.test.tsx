@@ -50,7 +50,10 @@ afterEach(() => {
 });
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string) => key,
+		i18n: { language: 'de' }
+	})
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('./useCaseHandoverBatch', () => ({
@@ -121,7 +124,14 @@ vi.mock('./SessionsListToolbar', () => ({
 	buildArchiveTabPath: () => '/archive',
 	buildCreateGroupChatPath: () => '/create'
 }));
-vi.mock('./FutureTimelinePanel', () => ({ FutureTimelinePanel: () => null }));
+const futureState = vi.hoisted(() => ({ entries: [] as any[] }));
+vi.mock('./timeline/useFutureEntries', () => ({
+	FUTURE_MONTHS: 3,
+	useFutureEntries: () => ({
+		entries: futureState.entries,
+		markCancelled: () => undefined
+	})
+}));
 vi.mock('../sessionsListItem/SessionListItemSkeleton', () => ({
 	SessionsListSkeleton: () => null
 }));
@@ -413,6 +423,31 @@ describe('Supervision filter over fetched pages (#1306)', () => {
 			0
 		]);
 	});
+	it('discovers an unmarked legacy case on a later page and retains the saved filter', async () => {
+		const total = SESSION_COUNT + 1;
+		const legacy = {
+			...ordinary(total),
+			consultant: { id: 'legacy-owner' }
+		};
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: [legacy], total });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		expect(screen.getByText('supervision-filter')).toBeTruthy();
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT
+		]);
+	});
 	it('loads beyond two full ordinary pages without scrolling and retains the bookmarked filter until its assignment arrives', async () => {
 		const total = SESSION_COUNT * 2 + 1;
 		let finish!: (
@@ -500,5 +535,46 @@ describe('Supervision filter over fetched pages (#1306)', () => {
 			SESSION_COUNT,
 			SESSION_COUNT
 		]);
+	});
+});
+
+describe('SessionsList future zone (ADR-021)', () => {
+	afterEach(() => {
+		cleanup();
+		futureState.entries = [];
+	});
+
+	it('shows no zone without planned appointments', async () => {
+		renderList();
+		await screen.findAllByText('start-batch');
+		expect(
+			document.querySelector('[data-cy="sessions-list-timeline"]')
+		).toBeNull();
+	});
+
+	it('shows a booking without a room as its own pill above "Jetzt"', async () => {
+		futureState.entries = [
+			{
+				key: 'booking-7',
+				kind: 'one-to-one',
+				title: 'Ratsuchende A',
+				start: new Date(Date.now() + 86_400_000),
+				modality: 'video',
+				canDuplicate: false,
+				booking: { id: 7, uid: 'uid-7' }
+			}
+		];
+		renderList();
+		await screen.findAllByText('start-batch');
+		const zone = document.querySelector(
+			'[data-cy="sessions-list-timeline"]'
+		);
+		expect(zone).not.toBeNull();
+		expect(
+			zone!.querySelector(
+				'[data-cy="timeline-entry"][data-unmapped="true"]'
+			)?.textContent
+		).toContain('Ratsuchende A');
+		expect(zone!.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
 	});
 });

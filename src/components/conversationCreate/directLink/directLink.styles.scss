@@ -1,0 +1,386 @@
+/* #1795: direct link card, share dialog and "Meine Direktlinks". M3 roles only. */
+
+@import '../pillButton';
+
+.directLinkCard {
+	&__fields {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	&__media {
+		display: flex;
+		gap: 0;
+	}
+
+	&__medium {
+		align-items: center;
+		background: transparent;
+		border: 1px solid var(--m3-outline, #747878);
+		color: var(--m3-on-surface, #1b1b1c);
+		cursor: pointer;
+		display: flex;
+		flex: 1;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 6px;
+		justify-content: center;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		min-height: 40px;
+		padding: 0 8px;
+
+		&:first-child {
+			border-radius: 20px 0 0 20px;
+		}
+
+		&:last-child {
+			border-radius: 0 20px 20px 0;
+		}
+
+		& + & {
+			border-left: none;
+		}
+
+		svg {
+			flex-shrink: 0;
+			height: 18px;
+			width: 18px;
+		}
+
+		/* Same pair as the tonal topic button above it; secondary-container
+		   with its on-colour misses 4.5:1 on the ORISO palette (4.45). */
+		&--selected {
+			background: var(--m3-secondary, #4c555f);
+			color: var(--m3-on-primary, #ffffff);
+		}
+	}
+
+	&__temporary {
+		align-items: center;
+		display: flex;
+		gap: 12px;
+		justify-content: space-between;
+	}
+
+	&__temporaryText {
+		color: var(--m3-on-surface, #1b1b1c);
+		display: flex;
+		flex-direction: column;
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__hint {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		line-height: 16px;
+	}
+
+	&__create {
+		@include cc-pill-button;
+
+		padding: 12px 24px;
+
+		&--ready {
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
+			cursor: pointer;
+			opacity: 1;
+		}
+	}
+}
+
+.directLinkChip {
+	background: var(--m3-secondary, #4c555f);
+	border-radius: 9999px;
+	color: var(--m3-on-secondary, #ffffff);
+	font-size: 12px;
+	line-height: 16px;
+	margin-left: 8px;
+	padding: 2px 8px;
+	white-space: nowrap;
+}
+
+.directLinkShareDialog {
+	&__summary {
+		align-items: center;
+		color: var(--m3-on-surface, #1b1b1c);
+		display: flex;
+		gap: 8px;
+
+		svg {
+			height: 20px;
+			width: 20px;
+		}
+
+		.directLinkChip {
+			margin-left: 0;
+		}
+	}
+
+	&__qr {
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 12px;
+		display: block;
+		margin: 16px auto;
+	}
+
+	&__linkRow {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	&__linkField {
+		background: var(--m3-surface-container-highest, #e4e2e2);
+		border: none;
+		border-radius: 8px;
+		color: var(--m3-on-surface, #1b1b1c);
+		flex: 1 1 200px;
+		font-size: 14px;
+		min-width: 0;
+		padding: 10px 12px;
+	}
+
+	&__action {
+		align-items: center;
+		background: transparent;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 20px;
+		color: var(--m3-primary, #a5000a);
+		cursor: pointer;
+		display: flex;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 6px;
+		padding: 8px 16px;
+
+		svg {
+			height: 18px;
+			width: 18px;
+		}
+	}
+}
+
+.myDirectLinks {
+	container-name: my-direct-links;
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	&__header {
+		align-items: center;
+		display: flex;
+		gap: 12px;
+	}
+
+	&__headerIcon {
+		color: var(--m3-on-surface-variant, #444748);
+		height: 24px;
+		width: 24px;
+	}
+
+	&__title {
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 22px;
+		font-weight: 400;
+		line-height: 28px;
+		margin: 0;
+	}
+
+	/* Column count follows the pane; a tile left alone in the last row widens (see .directLinkTile). */
+	&__grid {
+		display: grid;
+		gap: 16px;
+		grid-template-columns: minmax(0, 1fr);
+		list-style: none;
+		margin: 0;
+		padding: 0;
+
+		@container my-direct-links (width >= 440px) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		@container my-direct-links (width >= 680px) {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+	}
+
+	&__iconButton {
+		align-items: center;
+		background: transparent;
+		border: none;
+		border-radius: 50%;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		justify-content: center;
+		width: 40px;
+
+		&:hover:not(:disabled) {
+			background: var(--m3-surface-container-high, #eae7e8);
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+	}
+}
+
+@mixin wide-tile {
+	flex-direction: row;
+	grid-column: 1 / -1;
+
+	.directLinkTile__media {
+		aspect-ratio: auto;
+		flex: 0 0 min(45%, 420px);
+		min-height: 200px;
+	}
+
+	.directLinkTile__body {
+		gap: 4px;
+		padding: 24px 16px 16px 24px;
+	}
+
+	.directLinkTile__name {
+		font-size: 18px;
+		line-height: 24px;
+	}
+}
+
+/* One direct link: the medium's illustration on top, name and quick actions below. */
+.directLinkTile {
+	background: var(--m3-surface-container-lowest, #ffffff);
+	border-radius: 24px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	&__media {
+		aspect-ratio: 16 / 9;
+		position: relative;
+	}
+
+	&__image {
+		display: block;
+		height: 100%;
+		object-fit: cover;
+		width: 100%;
+	}
+
+	&--off &__image {
+		/* Image only: dimming the text would fail contrast. */
+		filter: grayscale(1);
+	}
+
+	&__badge {
+		align-items: center;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border-radius: 9999px;
+		color: var(--m3-on-surface, #1a1c1e);
+		display: flex;
+		font-size: 12px;
+		font-weight: 500;
+		gap: 4px;
+		left: 12px;
+		line-height: 16px;
+		padding: 4px 10px 4px 8px;
+		position: absolute;
+		top: 12px;
+		z-index: 1;
+
+		svg {
+			height: 16px;
+			width: 16px;
+		}
+	}
+
+	&__body {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 2px;
+		padding: 12px 8px 8px 16px;
+	}
+
+	&__name {
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 16px;
+		font-weight: 500;
+		hyphens: auto;
+		line-height: 24px;
+		overflow-wrap: break-word;
+	}
+
+	&__meta {
+		align-items: center;
+		color: var(--m3-on-surface-variant, #444748);
+		display: flex;
+		flex-wrap: wrap;
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__actions {
+		align-items: center;
+		display: flex;
+		gap: 4px;
+		margin-top: auto;
+		padding-top: 4px;
+
+		> :last-child {
+			margin-left: auto;
+		}
+	}
+
+	/* A tile alone in the last row spans it as a wide card instead of leaving a gap. */
+	@container my-direct-links (440px <= width < 680px) {
+		&:last-child:nth-child(odd) {
+			@include wide-tile;
+		}
+	}
+
+	@container my-direct-links (width >= 680px) {
+		&:last-child:nth-child(3n + 1) {
+			@include wide-tile;
+		}
+
+		&:last-child:nth-child(3n + 2) {
+			grid-column: span 2;
+		}
+	}
+}
+
+/* Three formats side by side: the cards share the row instead of wrapping. */
+.conversationCreate__picker:has(.directLinkCard) {
+	padding-inline: clamp(0px, calc((100% - 1146px) / 2), 128px);
+
+	.conversationCreate__cards {
+		flex-wrap: nowrap;
+		gap: 24px;
+	}
+
+	.formatCard {
+		flex: 1 1 0;
+		max-width: 360px;
+		min-width: 0;
+		width: auto;
+	}
+}
+
+/* The clipboard refused: list and share dialog say so in place. */
+.directLinkCopyError {
+	background: var(--m3-error-container, #ffdad6);
+	border-radius: 12px;
+	color: var(--m3-on-error-container, #410002);
+	font-size: 14px;
+	line-height: 20px;
+	margin: 8px 0 0;
+	padding: 12px 16px;
+}

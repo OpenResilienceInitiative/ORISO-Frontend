@@ -77,9 +77,9 @@ describe('classifySession (§5.2 order)', () => {
 		).toBe('oneToOne');
 	});
 
-	it('ownership without a supervisor marker remains ordinary one-to-one', () => {
+	it('retains legacy supervision fallback while keeping own cases one-to-one', () => {
 		const { raw, extended } = session({});
-		expect(classifySession(raw, extended, ME, true)).toBe('oneToOne');
+		expect(classifySession(raw, extended, ME, true)).toBe('supervision');
 		const mine = session({}, ME);
 		expect(classifySession(mine.raw, mine.extended, ME, true)).toBe(
 			'oneToOne'

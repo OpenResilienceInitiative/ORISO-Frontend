@@ -1,3 +1,4 @@
+import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
 import * as React from 'react';
 import {
 	PropsWithChildren,
@@ -60,6 +61,12 @@ import {
 	useLiveChatAvailabilityLossNotice
 } from './useLiveChatAvailabilityLossNotice';
 import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
+import { useOpenEnquiryCount } from './useOpenEnquiryCount';
+import {
+	ENQUIRY_LIST_PATH,
+	NEW_ENQUIRY_NOTICE_ID,
+	NOTIFICATION_TYPE_NEW_ENQUIRY
+} from '../notifications/NewEnquiryNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -122,7 +129,7 @@ export const NavigationBar = ({
 			error: liveChatError,
 			lostReason: liveChatLostReason
 		}
-	] = useLiveChatAvailable();
+	] = useLiveChatAvailable(isConsultant);
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
 	// #576: optional global notification-status button in the rail — flips the
 	// account-wide mute (the one switch that overrides everything). Placement
@@ -131,6 +138,7 @@ export const NavigationBar = ({
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
+	const directLinksAllowed = useDirectLinksAllowed(isConsultant);
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	// #1485: the one heartbeat owner is also the one that says why it stopped.
 	useLiveChatAvailabilityLossNotice(liveChatLostReason);
@@ -246,10 +254,30 @@ export const NavigationBar = ({
 	const visibleUnreadCount = notificationsContext?.visibleUnreadCount ?? 0;
 	const hiddenUnreadInLoadedPages =
 		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
+	// FE#1435: open enquiries on "Anfragen", visible from every section.
+	const openEnquiryCount = useOpenEnquiryCount(isConsultant);
+	const removeNotificationRef = useRef(
+		notificationsContext?.removeNotification
+	);
+	removeNotificationRef.current = notificationsContext?.removeNotification;
+	const previousEnquiryCount = useRef<number | null>(null);
+	useEffect(() => {
+		// The last open enquiry was taken: the new-enquiry pop-up has nothing
+		// left to offer. Only on that drop, never on a stale 0 that a new
+		// enquiry's pop-up meets before the count has reloaded.
+		const previous = previousEnquiryCount.current;
+		previousEnquiryCount.current = openEnquiryCount;
+		if (openEnquiryCount === 0 && previous !== null && previous > 0)
+			removeNotificationRef.current?.(
+				NEW_ENQUIRY_NOTICE_ID,
+				NOTIFICATION_TYPE_NEW_ENQUIRY
+			);
+	}, [openEnquiryCount]);
 	const pathsToShowUnreadMessageNotification = {
 		'/profile':
 			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
-		'/notifications': visibleUnreadCount
+		'/notifications': visibleUnreadCount,
+		[ENQUIRY_LIST_PATH]: openEnquiryCount ?? 0
 	};
 	const unreadNavTitle = (to: string): string | undefined =>
 		to === '/notifications' && hiddenUnreadInLoadedPages > 0
@@ -371,13 +399,15 @@ export const NavigationBar = ({
 						routerConfig.navigation
 							.filter(
 								(item: any) =>
-									!item.condition ||
-									item.condition(
-										userData,
-										consultingTypes,
-										sessions,
-										hasTools
-									)
+									(!item.requiresDirectInvite ||
+										directLinksAllowed) &&
+									(!item.condition ||
+										item.condition(
+											userData,
+											consultingTypes,
+											sessions,
+											hasTools
+										))
 							)
 							.map((item, index) => {
 								const Icon = item?.icon;
@@ -401,7 +431,9 @@ export const NavigationBar = ({
 								const label = translate(item.titleKeys.large);
 								const unreadLabel = showUnreadNav
 									? translate(
-											'sessionList.rail.unreadCount',
+											item.to === ENQUIRY_LIST_PATH
+												? 'sessionList.rail.openEnquiries'
+												: 'sessionList.rail.unreadCount',
 											{
 												count: unreadCount
 											}

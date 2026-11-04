@@ -31,8 +31,8 @@ const responsiveStyles = (): string =>
 	`${emailSpace.edgeMobile.bottom}px ${emailSpace.edgeMobile.side}px !important}` +
 	`.sp{padding-left:${emailSpace.gutterMobile}px !important;padding-right:${emailSpace.gutterMobile}px !important}` +
 	`.logo-header-wide{padding-left:${emailLayout.logoWideGutterMobile}px !important;padding-right:${emailLayout.logoWideGutterMobile}px !important}` +
-	'.logo-cell-wide{padding-right:0 !important}' +
-	'.logo-wordmark-wide{display:none !important}' +
+	'.logo-cell-wide{display:block !important;padding-right:0 !important;padding-bottom:8px !important}' +
+	'.logo-wordmark-wide{display:block !important}' +
 	`.h1{font-size:${emailType.headline.mobile.size}px !important;` +
 	`line-height:${emailType.headline.mobile.line}px !important}` +
 	'.btn table{width:100% !important}' +

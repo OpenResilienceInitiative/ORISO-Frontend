@@ -9,7 +9,10 @@ export interface EntryRoomShellProps {
 	/** Line 2 — what is happening right now, or who has taken the conversation. */
 	statusLine: string;
 	showLoginLink?: boolean;
-	/** The accepting centre's department, once known — the footer legal links open its documents. */
+	/**
+	 * The department the person registered for — the legal links open its
+	 * documents. Left out before anyone signs up: then the platform's apply.
+	 */
 	department?: { agencyId: number; topicId: number } | null;
 	children: React.ReactNode;
 }

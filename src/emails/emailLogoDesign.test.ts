@@ -27,7 +27,7 @@ describe('proportional e-mail logo design', () => {
 		}
 	);
 
-	it('keeps the wordmark at 3:1 and hides it only above 3:1 on phones', () => {
+	it('keeps the wordmark at 3:1 and stacks it under the logo only above 3:1 on phones', () => {
 		const normal = { ...emailSampleBrand, logoWidth: 3, logoHeight: 1 };
 		const wide = { ...normal, logoWidth: 3.01 };
 		expect(emailLogoLockup(normal)).not.toContain('logo-wordmark-wide');
@@ -41,7 +41,11 @@ describe('proportional e-mail logo design', () => {
 			body: emailHeaderBar(wide)
 		});
 		expect(doc).toContain('@media only screen and (max-width:620px)');
-		expect(doc).toContain('.logo-wordmark-wide{display:none !important}');
+		expect(doc).toContain(
+			'.logo-cell-wide{display:block !important;padding-right:0 !important;padding-bottom:8px !important}'
+		);
+		expect(doc).toContain('.logo-wordmark-wide{display:block !important}');
+		expect(doc).not.toMatch(/\.logo-wordmark[^{]*\{[^}]*display:none/);
 		expect(doc).toContain(
 			'.logo-header-wide{padding-left:8px !important;padding-right:8px !important}'
 		);

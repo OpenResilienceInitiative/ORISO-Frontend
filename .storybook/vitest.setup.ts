@@ -3,6 +3,8 @@
 // order. Moving it below the others breaks every story that reads the runtime
 // config at import time.
 import './testPreviewBootstrap';
+// Before any product module: the app-chunk warm-ups must already be replaced.
+import './noChunkWarming';
 
 // addon-vitest installs renderer, preview and accessibility annotations automatically.
 // Keep only this required bootstrap; a manual override can silently drop addon hooks.

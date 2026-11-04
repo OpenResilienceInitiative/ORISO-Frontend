@@ -55,11 +55,11 @@ const supervisedByOther = {
 describe('countUnreadSupervisedSessions', () => {
 	beforeEach(() => unreadRooms.clear());
 
-	it('counts a supervised row that is unread', () => {
+	it('does not count an explicitly supervised case when only its main room is unread', () => {
 		unreadRooms.add('!a:hs');
 		expect(
 			countUnreadSupervisedSessions([pair('!a:hs', supervisedByMe)], ME)
-		).toBe(1);
+		).toBe(0);
 	});
 
 	it.each([false, true])(
@@ -108,13 +108,18 @@ describe('countUnreadSupervisedSessions', () => {
 		).toBe(0);
 	});
 
-	it('does not count an unread row with no marker at all', () => {
-		// Neither filtering nor counting infers supervision from ownership.
-		// A row without an explicit marker is not supervision.
+	it('does not count an unread legacy unmarked row', () => {
 		unreadRooms.add('!c:hs');
 		expect(
 			countUnreadSupervisedSessions([pair('!c:hs', undefined)], ME)
 		).toBe(0);
+	});
+
+	it('does not count an unassigned case even if its side room has unread events', () => {
+		unreadRooms.add('!side:hs');
+		const unassigned = pair('!c:hs', undefined);
+		unassigned.extended.item.supervision = { sideRoomId: '!side:hs' };
+		expect(countUnreadSupervisedSessions([unassigned], ME)).toBe(0);
 	});
 
 	it('counts several and ignores the read ones in the same list', () => {
@@ -123,9 +128,9 @@ describe('countUnreadSupervisedSessions', () => {
 		expect(
 			countUnreadSupervisedSessions(
 				[
-					pair('!a:hs', supervisedByMe),
-					pair('!b:hs', supervisedByMe),
-					pair('!c:hs', supervisedByMe),
+					pair('!a:hs', { ...supervisedByMe, sideRoomId: '!a:hs' }),
+					pair('!b:hs', { ...supervisedByMe, sideRoomId: '!b:hs' }),
+					pair('!c:hs', { ...supervisedByMe, sideRoomId: '!c:hs' }),
 					pair('!d:hs', supervisedByOther)
 				],
 				ME

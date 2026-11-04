@@ -45,6 +45,8 @@ import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import {
 	getGroupSeries,
 	getGroupUpcomingDates,
@@ -94,9 +96,11 @@ export const JoinGroupChatView = ({
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
+	const [checkingDevices, setCheckingDevices] = useState(false);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+	const [removedByServer, setRemovedByServer] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -270,6 +274,19 @@ export const JoinGroupChatView = ({
 		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
+				// #1923: the server refuses a banned member with a reason.
+				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT) {
+					setRemovedByServer(true);
+					setOverlayItem({
+						...bannedUserOverlay,
+						headline: translate(
+							'groupChat.removed.overlay.headline'
+						),
+						copy: undefined
+					});
+					setOverlayActive(true);
+					return false;
+				}
 				const notice = getCounsellingDpaNotification(error, translate, {
 					groupJoin: groupChatApiCall === GROUP_CHAT_API.JOIN
 				});
@@ -337,8 +354,24 @@ export const JoinGroupChatView = ({
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
+	/* #2016: a video circle's pre-lobby offers the call's device check as
+	   an option; the choice waits for the group's next call. */
+	const offerDeviceCheck = shouldShowDeviceCheck({
+		surface: 'circleLobby',
+		mediaSupported: Boolean(navigator.mediaDevices?.getUserMedia),
+		roomRef: activeSession.rid,
+		circleModality: activeSession.item.modality
+	});
 	const overlays = (
 		<>
+			{checkingDevices && activeSession.rid && (
+				<CallPrejoinDialog
+					modality="video"
+					purpose="check"
+					roomRef={activeSession.rid}
+					onClose={() => setCheckingDevices(false)}
+				/>
+			)}
 			{requestOverlayVisible && (
 				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />
 			)}
@@ -393,9 +426,17 @@ export const JoinGroupChatView = ({
 					welcomeText={authorContent.hintMessage || undefined}
 					rules={groupChatRules}
 					active={Boolean(item.active)}
-					joinBlocked={bannedUsers.includes(userData.userName)}
+					joinBlocked={
+						removedByServer ||
+						bannedUsers.includes(userData.userName)
+					}
 					onJoin={handleButtonClick}
 					joinBusy={isRequestInProgress}
+					onDeviceCheck={
+						offerDeviceCheck
+							? () => setCheckingDevices(true)
+							: undefined
+					}
 				/>
 				{overlays}
 			</div>

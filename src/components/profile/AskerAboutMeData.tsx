@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import {
 	apiDeleteTwoFactorAuth,
 	apiPutEmail,
@@ -18,11 +18,13 @@ import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import { ProfileAvatarChoice } from './ProfileAvatarChoice';
+import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 
 export const AskerAboutMeData = () => {
 	const { t: translate } = useTranslation();
 
 	const { userData, reloadUserData } = useContext(UserDataContext);
+	const emailAllowed = useAccountEmailCollectionAllowed();
 
 	const [isEmailDisabled, setIsEmailDisabled] = useState<boolean>(true);
 	const [overlay, setOverlay] = useState<OverlayItem>(null);
@@ -175,6 +177,7 @@ export const AskerAboutMeData = () => {
 	};
 
 	const handleSaveEditButton = () => {
+		if (!emailAllowed) return;
 		if (isEmail2faActive) {
 			setOverlay(overlay2faEmailEdit);
 		} else if (!isRequestInProgress) {
@@ -205,27 +208,33 @@ export const AskerAboutMeData = () => {
 		setOverlay(overlayConfirm);
 	};
 
-	const handleDeleteEmail = useCallback(() => {
-		if (!isRequestInProgress) {
-			setIsRequestInProgress(true);
-			apiDeleteEmail()
-				.then((response) => {
-					setIsRequestInProgress(false);
-					reloadUserData().catch((error) => {
-						/* console.log(error); */
-					});
-					setEmail(null);
-					setOverlay(overlaySuccess);
-				})
-				.catch(() => {
-					setOverlay(overlayError);
-				});
+	const deletionInFlight = useRef(false);
+	const handleDeleteEmail = useCallback(async () => {
+		if (deletionInFlight.current) return;
+		deletionInFlight.current = true;
+		setIsRequestInProgress(true);
+		try {
+			// Removing an email must not leave an active factor pointing at it.
+			if (isEmail2faActive) await apiDeleteTwoFactorAuth();
+			await apiDeleteEmail();
+			setEmail(null);
+			setOverlay(overlaySuccess);
+			await Promise.resolve(reloadUserData()).catch(() => undefined);
+		} catch {
+			setOverlay(overlayError);
+		} finally {
+			deletionInFlight.current = false;
+			setIsRequestInProgress(false);
 		}
-	}, [overlaySuccess, overlayError, isRequestInProgress, reloadUserData]);
+	}, [isEmail2faActive, overlaySuccess, overlayError, reloadUserData]);
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		switch (buttonFunction) {
 			case OVERLAY_FUNCTIONS.CONFIRM_EDIT:
+				if (!emailAllowed) {
+					setOverlay(null);
+					return;
+				}
 				const handleConfirm = () => {
 					setIsEmailDisabled(false);
 					setOverlay(null);
@@ -246,13 +255,7 @@ export const AskerAboutMeData = () => {
 				setOverlay(null);
 				break;
 			case OVERLAY_FUNCTIONS.DELETE_EMAIL:
-				if (isEmail2faActive) {
-					apiDeleteTwoFactorAuth().then(() => {
-						handleDeleteEmail();
-					});
-				} else {
-					handleDeleteEmail();
-				}
+				void handleDeleteEmail();
 				break;
 		}
 	};
@@ -265,11 +268,13 @@ export const AskerAboutMeData = () => {
 					text={translate('profile.data.title.asker')}
 					semanticLevel="5"
 				/>
-				<Text
-					text={translate('profile.data.emailInfo')}
-					type="standard"
-					className="tertiary"
-				/>
+				{emailAllowed && (
+					<Text
+						text={translate('profile.data.emailInfo')}
+						type="standard"
+						className="tertiary"
+					/>
+				)}
 			</div>
 			<ProfileAvatarChoice />
 			<EditableData
@@ -278,25 +283,40 @@ export const AskerAboutMeData = () => {
 				type="text"
 				isDisabled
 			/>
-			<EditableData
-				label={emailLabel}
-				type="email"
-				initialValue={userData.email}
-				isDisabled={isEmailDisabled}
-				isSingleEdit
-				onSingleEditActive={() => {
-					if (isEmail2faActive) {
-						setOverlay(overlay2faEmailEdit);
-					} else {
-						setIsEmailDisabled(false);
-					}
-				}}
-				isSingleClearable={true}
-				onSingleClear={handleSingleClear}
-				onValueIsValid={handleEmailChange}
-				isEmailAlreadyInUse={isEmailNotAvailable}
-			/>
-			{!isEmailDisabled && (
+			{(emailAllowed || userData.email) && (
+				<EditableData
+					label={emailLabel}
+					type="email"
+					initialValue={userData.email}
+					isDisabled={!emailAllowed || isEmailDisabled}
+					isSingleEdit={emailAllowed}
+					onSingleEditActive={() => {
+						if (!emailAllowed) return;
+						if (isEmail2faActive) {
+							setOverlay(overlay2faEmailEdit);
+						} else {
+							setIsEmailDisabled(false);
+						}
+					}}
+					isSingleClearable={true}
+					onSingleClear={handleSingleClear}
+					onValueIsValid={handleEmailChange}
+					isEmailAlreadyInUse={isEmailNotAvailable}
+				/>
+			)}
+			{!emailAllowed && userData.email && (
+				<Button
+					item={{
+						label: translate(
+							'profile.unsetEmail.confirmOverlay.button.confirm'
+						),
+						type: BUTTON_TYPES.LINK,
+						disabled: isRequestInProgress
+					}}
+					buttonHandle={handleSingleClear}
+				/>
+			)}
+			{emailAllowed && !isEmailDisabled && (
 				<div className="editableData__buttonSet editableData__buttonSet--edit">
 					<Button
 						item={cancelEditButton}
@@ -308,13 +328,18 @@ export const AskerAboutMeData = () => {
 					/>
 				</div>
 			)}
-			{overlay && (
-				<Overlay
-					className="editableData__overlay"
-					item={overlay}
-					handleOverlay={handleOverlayAction}
-				/>
-			)}
+			{overlay &&
+				(emailAllowed ||
+					!overlay.buttonSet?.some(
+						(button) =>
+							button.function === OVERLAY_FUNCTIONS.CONFIRM_EDIT
+					)) && (
+					<Overlay
+						className="editableData__overlay"
+						item={overlay}
+						handleOverlay={handleOverlayAction}
+					/>
+				)}
 		</div>
 	);
 };

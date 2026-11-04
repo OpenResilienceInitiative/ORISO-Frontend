@@ -58,7 +58,12 @@ describe('isTechnicalMatrixUser', () => {
 		'@system-broadcast:matrix.example',
 		'@notification:caritas.local',
 		'@group-chat-system-40:matrix.example',
-		'@agency-12-service:matrix.example'
+		'@agency-12-service:matrix.example',
+		'group-chat-system',
+		'group-chat-system-40',
+		'group-chat-system-default',
+		'@group-chat-system:predev.oriso.org',
+		'@group-chat-system-default:dev.oriso.org'
 	])(
 		'excludes reserved technical identity %s from people lists',
 		(userId) => {
@@ -74,7 +79,11 @@ describe('isTechnicalMatrixUser', () => {
 		'@my-group-chat-system-40:matrix.example',
 		'@group-chat-system-40-person:matrix.example',
 		'@agency-12-service-user:matrix.example',
-		'@agency-help-service:matrix.example'
+		'@agency-help-service:matrix.example',
+		'group-chat-systematic',
+		'@group-chat-systematic:dev.oriso.org',
+		'@bart:group-chat-system-40.example.org',
+		'bart-group-chat-system-40'
 	])('preserves human identities and empty values: %s', (userId) => {
 		expect(isTechnicalMatrixUser(userId)).toBe(false);
 	});

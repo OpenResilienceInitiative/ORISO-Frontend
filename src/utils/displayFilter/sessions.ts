@@ -7,34 +7,29 @@
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import {
+	classifySession,
 	isAnonymousAskerSession,
-	isConversationCircleSession,
-	isInternalGroupChatSession,
 	SessionToolbarChipFilter
 } from '../../components/sessionsList/sessionToolbarFilters';
-import {
-	getSupervisionListState,
-	hasSupervisionMarker
-} from '../../components/sessionsListItem/supervisionListState';
 import {
 	OTHER_KIND_ID,
 	resolveKindSetting
 } from '../../components/displayFilter/displayFilterTypes';
 import { DisplayFilter } from './model';
 
-/** Gespräche kinds (§5.2). `futureTimeline` gates the panel, not rows. */
+/** Gespräche kinds (§5.2). */
 export type SessionKindId =
 	| 'create'
 	| 'unread'
 	| 'drafts'
 	| 'oneToOne'
+	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'circle'
 	| 'supervision'
 	| 'archive'
 	| 'appointments'
-	| 'futureTimeline'
 	| typeof OTHER_KIND_ID;
 
 /** Anfragen kinds (§5.3). */
@@ -48,6 +43,8 @@ export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
 	'unread',
 	'drafts',
 	'oneToOne',
+	// FE#1952: right after Mail, as in the toolbar.
+	'directLinks',
 	'liveChat',
 	'internalGroup',
 	'circle',
@@ -56,7 +53,6 @@ export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
 	// of its own); Termine is announced but not wired yet (placeholder).
 	'archive',
 	'appointments',
-	'futureTimeline',
 	OTHER_KIND_ID
 ];
 
@@ -86,6 +82,7 @@ export const SESSION_KIND_CHIP: Partial<
 	unread: 'unread',
 	drafts: 'drafts',
 	oneToOne: 'nearby',
+	directLinks: 'directLinks',
 	nearby: 'nearby',
 	liveChat: 'liveChat',
 	internalGroup: 'internalGroup',
@@ -94,42 +91,12 @@ export const SESSION_KIND_CHIP: Partial<
 	[OTHER_KIND_ID]: 'other'
 };
 
-const isSupervisedByMe = (
-	extended: ExtendedSessionInterface,
-	currentUserId: string | undefined
-): boolean =>
-	getSupervisionListState(extended, currentUserId) === 'supervisedByMe';
-
 /**
- * Exactly one kind per row: explicit supervisor marker for an eligible viewer,
- * then circle, internal group, live chat and one-to-one. Ordinary non-owner
- * rows are not supervision; ownership also describes handover candidates.
+ * Exactly one kind per row (§5.2). Lives next to the toolbar predicates so
+ * the Supervision chip can use the very same rule (#1703); re-exported here
+ * for the display filter.
  */
-export const classifySession = (
-	raw: ListItemInterface,
-	extended: ExtendedSessionInterface,
-	currentUserId: string | undefined,
-	canSupervise: boolean
-): SessionKindId => {
-	if (!raw?.session && !raw?.chat) {
-		return OTHER_KIND_ID;
-	}
-	const marker = hasSupervisionMarker(extended);
-	if (canSupervise && marker && isSupervisedByMe(extended, currentUserId)) {
-		return 'supervision';
-	}
-	if (isConversationCircleSession(extended)) {
-		return 'circle';
-	}
-	if (isInternalGroupChatSession(extended)) {
-		return 'internalGroup';
-	}
-	if (isAnonymousAskerSession(raw, extended)) {
-		return 'liveChat';
-	}
-
-	return 'oneToOne';
-};
+export { classifySession };
 
 /** Anfragen: live chat or nearby (assigned enquiries never reach this). */
 export const classifyRequest = (
