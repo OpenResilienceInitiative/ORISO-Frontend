@@ -60,7 +60,10 @@ export interface KnockWaitDialogProps {
 	 * the action says "Fertig".
 	 */
 	purpose?: 'join' | 'check';
-	/** `ready` only: the check could not run, ask the browser again. */
+	/**
+	 * `ready`, and `waiting` with a call's check: the check could not run,
+	 * ask the browser again.
+	 */
 	onRetry?: () => void;
 	/**
 	 * `ready` only (#2016, product owner 2026-11-03): the knock is out and
@@ -280,6 +283,15 @@ export const KnockWaitDialog = ({
 				</>
 			);
 			actions = [
+				...(isCall && media?.blocker && onRetry
+					? [
+							{
+								label: t('knockWait.ready.retry'),
+								onClick: onRetry,
+								testId: 'knock-wait-retry'
+							}
+						]
+					: []),
 				{
 					label: t('knockWait.waiting.cancel'),
 					onClick: onCancel,

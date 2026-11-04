@@ -89,6 +89,13 @@ export interface JoinOrKnockDeps extends CallJoinHooks {
 	asker?: boolean;
 	/** The running call the card shows, kept with the knock for a reload. */
 	call?: CallLifecycleMessage;
+	/**
+	 * The group mode the card joins `call` with. Kept with the knock where
+	 * the card itself wrote none (cards from before `isGroup`), so a reload
+	 * joins in the same mode: a group call joined as 1:1 is ended for
+	 * everybody when this person leaves.
+	 */
+	isGroup?: boolean;
 }
 
 /* Knocks the open check holds; the knock gate leaves them alone. */
@@ -133,12 +140,19 @@ const waitOn = (
 	sessionId: number,
 	knock: PendingKnock,
 	join: () => Promise<CallJoinResult>,
-	{ onKnock, call }: JoinOrKnockDeps
+	{ onKnock, call, isGroup }: JoinOrKnockDeps
 ): CallJoinResult => {
 	const pending: PendingKnock = {
 		...knock,
 		joinExisting: true,
-		...(call ? { joinCall: knockJoinCallOf(call) } : {})
+		...(call
+			? {
+					joinCall: knockJoinCallOf({
+						...call,
+						isGroup: call.isGroup ?? isGroup
+					})
+				}
+			: {})
 	};
 	rememberPendingKnock(pending);
 	if (onKnock) {
@@ -155,7 +169,8 @@ const waitOn = (
 /**
  * What a person let in does next.
  * - `storedJoin`: the card's own join is still in memory.
- * - `joinRunningCall`: after a reload, the call recorded with the knock.
+ * - `joinRunningCall`: after a reload, the call recorded with the knock,
+ *   when its group mode is on record too (never guessed: see `isGroup`).
  * - `startCall`: a knock from the direct link itself starts the call.
  * - `none`: from the card, with nothing on record; the card's next tap joins.
  */
@@ -165,7 +180,7 @@ export const admissionAction = (
 ): 'storedJoin' | 'joinRunningCall' | 'startCall' | 'none' => {
 	if (!knock.joinExisting) return 'startCall';
 	if (storedJoin) return 'storedJoin';
-	return knock.joinCall ? 'joinRunningCall' : 'none';
+	return knock.joinCall?.isGroup === undefined ? 'none' : 'joinRunningCall';
 };
 
 /**
