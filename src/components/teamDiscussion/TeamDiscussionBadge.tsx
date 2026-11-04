@@ -36,6 +36,12 @@ export const TeamDiscussionIconButton = ({
 			title={`${label} – ${translate('teamDiscussion.teamOnlyMarker')}`}
 			aria-label={label}
 			disabled={!onOpen}
+			onKeyDown={(event) => {
+				// Enter/Space activate this button, not the enclosing list row.
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.stopPropagation();
+				}
+			}}
 			onClick={(event) => {
 				// The list row is itself clickable: do not also open the chat.
 				event.stopPropagation();
