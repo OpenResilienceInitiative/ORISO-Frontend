@@ -4287,6 +4287,27 @@ export const MessageSubmitInterfaceComponent = ({
 								onCancel={onCancelEdit}
 							/>
 						)}
+						{/* Frank (03.11.): on the phone the format tools rest in a
+						    grey box above the card, built like the reply bar. */}
+						{isMobileViewport && !isCompactActionStripOpen && (
+							<div
+								className="messageSubmit__formatTray"
+								data-cy="composer-format-tray"
+								onMouseDown={handleToolbarMouseDown}
+							>
+								<ComposerToolbar
+									direction={composerMenuDirection}
+									isMobile
+									inTray
+									isExpanded={isExpandedComposer}
+									onAction={handleToolbarAction}
+									isActionSelected={isToolbarActionSelected}
+									onCollapse={openCompactActionStrip}
+									onExpandToggle={toggleExpandedComposer}
+									translate={translate}
+								/>
+							</div>
+						)}
 						{/* T6/T16: the drag pill belongs to every docked composer —
 						    main chat, supervision room and thread panel, on the
 						    phone too (the navigator row that carried it is gone). */}
@@ -4295,14 +4316,10 @@ export const MessageSubmitInterfaceComponent = ({
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
 								touched={isComposerResizing}
-								// T31: phone — pill on the card's top edge; T40:
-								// the flush desktop field has no frame above the
-								// field either, so the pill sits on its edge too.
-								position={
-									isMobileViewport || flushCorner
-										? 'edge'
-										: 'inside'
-								}
+								// T31: the pill sits on the card's top edge at every
+								// width; Frank (03.11.): the desktop must not differ
+								// from the phone or from an open side panel (T40).
+								position="edge"
 								ariaLabel={translate(
 									'message.mobileNav.dragToExpand'
 								)}
@@ -4842,7 +4859,8 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
 										>
-											{isCompactActionStripOpen ? (
+											{isCompactActionStripOpen ||
+											isMobileViewport ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
 														showBack={
@@ -4861,7 +4879,18 @@ export const MessageSubmitInterfaceComponent = ({
 															unreadMobileBadgeCount
 														}
 														onOpenTools={
-															closeCompactActionStrip
+															isCompactActionStripOpen
+																? closeCompactActionStrip
+																: openCompactActionStrip
+														}
+														isToolsOpen={
+															!isCompactActionStripOpen
+														}
+														isMobile={
+															isMobileViewport
+														}
+														menuDirection={
+															composerMenuDirection
 														}
 														showMic={
 															hasUploadFunctionality &&

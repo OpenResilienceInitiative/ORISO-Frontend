@@ -120,43 +120,142 @@
 		}
 	}
 
-	// Compact action bar (#1141): every icon uses the larger hit area,
-	// 24px glyph, and primary-tint hover. The expanded formatting toolbar
-	// stays one step smaller, 40×40 / 20px above.
+	// Compact action bar (#1141), Frank 03.11.: round, calm buttons with room
+	// between them. The hit area stays 44 px; the visible circle is 40 px
+	// (2 px padding, background clipped to it). The block padding, undone by
+	// the negative margin, keeps the pulse and the badge from being clipped by
+	// the row's sideways scrolling.
 	&--default {
+		gap: 12px;
 		min-height: 48px;
+		margin: -10px 0 -10px -8px;
+		padding: 12px 8px 12px 12px;
 
-		// T23: no reserved space in front of the first arrow — the phone's
-		// back arrow renders nothing on the desktop, so the row starts at
-		// the field's inset.
-		padding-left: 4px;
+		// Matches the start padding, or the row rests scrolled in by the gap.
+		scroll-padding-inline: 12px;
+
+		.composerToolbar__group {
+			display: flex;
+			flex: 0 0 auto;
+			align-items: center;
+			gap: 6px;
+			scroll-snap-align: none;
+
+			> * {
+				scroll-snap-align: start;
+			}
+		}
+
+		// Phones narrower than 390 px still hold all five buttons without
+		// scrolling, at the cost of some of the room between them.
+		@media screen and (width <= 389px) {
+			gap: 6px;
+			padding-right: 0;
+
+			.composerToolbar__group {
+				gap: 3px;
+			}
+		}
 
 		.composerToolbar__button {
+			position: relative;
 			width: 44px;
 			min-width: 44px;
 			height: 44px;
-			font-size: 24px;
+			padding: 2px;
+			border-radius: 50%;
+			background: var(--m3-surface-container-low, #f6f3f3);
+			background-clip: content-box;
+			font-size: 22px;
 
 			> svg {
-				width: 24px;
-				height: 24px;
+				width: 22px;
+				height: 22px;
 			}
 
 			&:hover {
 				color: var(--m3-primary-container, #cc1e1c);
-				background: var(--m3-primary-fixed, #ffdad5);
+				background-color: var(--m3-primary-fixed, #ffdad5);
+			}
+
+			&--selected {
+				color: var(--m3-primary-container, #cc1e1c);
+				background-color: var(--m3-primary-fixed, #ffdad5);
 			}
 
 			// An unavailable control must not light up like an active one.
 			&.composerToolbar__button--unavailable:hover {
 				color: var(--m3-secondary, #4c555f);
-				background: transparent;
+				background-color: var(--m3-surface-container-low, #f6f3f3);
+			}
+
+			// Frank (03.11.): the mic is unmistakably recording.
+			&--recording,
+			&--recording:hover {
+				color: var(--m3-on-primary, #fff);
+				background-color: var(--m3-primary, #a5000a);
+				animation: composer-button-pulse 1800ms ease-out infinite;
 			}
 		}
 
 		.composerToolbar__textFormatIcon {
 			display: inline-flex;
+			transform: scale(0.72);
 			transform-origin: center;
+		}
+
+		.composerToolbar__button--scrollToNewest--unread {
+			animation: composer-button-pulse 1800ms ease-out infinite;
+
+			> svg {
+				animation: composer-arrow-nudge 900ms ease-in-out infinite;
+			}
+
+			&,
+			&:hover,
+			&:focus-visible {
+				color: var(--m3-on-primary, #fff);
+				background-color: var(--m3-primary, #a5000a);
+			}
+		}
+	}
+
+	// The grey box above the phone composer: white circles on the grey.
+	&--tray {
+		gap: 4px;
+		width: 100%;
+		min-height: 48px;
+		padding: 2px 4px;
+
+		.composerToolbar__button {
+			width: 44px;
+			min-width: 44px;
+			height: 44px;
+			padding: 2px;
+			border-radius: 50%;
+			background: var(--m3-surface-container-lowest, #fff);
+			background-clip: content-box;
+			font-size: 22px;
+
+			> svg {
+				width: 22px;
+				height: 22px;
+			}
+
+			&--selected {
+				color: var(--m3-primary-container, #cc1e1c);
+				background-color: var(--m3-primary-fixed, #ffdad5);
+			}
+		}
+
+		// The close X rests on the grey, like the reply bar's cancel glyph.
+		> .composerToolbar__button:first-child {
+			background: transparent;
+		}
+
+		.composerToolbar__button > .composerToolbar__chevron {
+			width: 10px !important;
+			height: 10px !important;
 		}
 	}
 
@@ -177,12 +276,9 @@
 	// disappears. `primary-fixed` (#ffdad5) is the light tint of the same
 	// role, so the arrow stays the loud thing on the strip.
 	&__button--scrollToNewest--unread {
-		color: var(
-			--oriso-primary-text-on-fixed,
-			var(--oriso-primary-text, var(--m3-primary, #a5000a))
-		);
-		background: var(--m3-primary-fixed, #ffdad5);
-		box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
+		border-radius: 50%;
+		color: var(--m3-on-primary, #fff);
+		background: var(--m3-primary, #a5000a);
 
 		&:hover,
 		&:focus-visible {
@@ -207,8 +303,9 @@
 		// The badge follows the arrow into the primary role (Frank, 14.09.)
 		// so the composer speaks with one colour; the channel card, the FAB
 		// and the panel header keep the unread-indicator role.
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #fff);
+		background: var(--m3-surface-container-lowest, #fff);
+		box-shadow: 0 0 0 1px var(--m3-primary, #a5000a);
+		color: var(--m3-primary, #a5000a);
 		font-size: 10px;
 		font-weight: 500;
 		line-height: 1;
@@ -376,6 +473,39 @@
 @media (prefers-reduced-motion: reduce) {
 	.composerToolbar__menu--up,
 	.composerToolbar__menu--down {
+		animation: none;
+	}
+}
+
+@keyframes composer-button-pulse {
+	0% {
+		box-shadow: 0 0 0 -2px rgba(165, 0, 10, 0.45);
+	}
+
+	70%,
+	100% {
+		box-shadow: 0 0 0 10px rgba(165, 0, 10, 0);
+	}
+}
+
+@keyframes composer-arrow-nudge {
+	0%,
+	100% {
+		transform: translateY(-2px);
+	}
+
+	50% {
+		transform: translateY(2px);
+	}
+}
+
+// Without motion the red fill alone still says it.
+@media (prefers-reduced-motion: reduce) {
+	.composerToolbar--default .composerToolbar__button--recording,
+	.composerToolbar--default .composerToolbar__button--scrollToNewest--unread,
+	.composerToolbar--default
+		.composerToolbar__button--scrollToNewest--unread
+		> svg {
 		animation: none;
 	}
 }
