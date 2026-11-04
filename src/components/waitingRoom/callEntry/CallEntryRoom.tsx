@@ -213,6 +213,16 @@ export const CallEntryRoom = ({
 		onDeviceStateChange?.({ micOn, cameraOn, selection });
 	}, [onDeviceStateChange, micOn, cameraOn, selection]);
 
+	// Typing closed while the room is open: a typed User-ID would be refused
+	// at the end, and the field can no longer correct it.
+	const wasEditable = useRef(usernameEditable);
+	useEffect(() => {
+		if (wasEditable.current && !usernameEditable) {
+			setUsername(toRegistrationUsername(identity));
+		}
+		wasEditable.current = usernameEditable;
+	}, [usernameEditable, identity]);
+
 	const select = (kind: CallDeviceKind, id: string) => {
 		setSelection((current) => ({ ...current, [kind]: id }));
 		// A different microphone has not been heard yet.
