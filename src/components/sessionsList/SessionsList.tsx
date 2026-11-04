@@ -1743,14 +1743,21 @@ export const SessionsList = ({
 	// before the toolbar chip, so the chip refinement composes on top. The
 	// route-active row survives (dimmed) while its kind is hidden. All of it
 	// is memoised: unread/receipt events re-render this list often.
-	const canSupervise =
+	const isEligibleForSupervision =
 		showConsultantToolbarActions &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const canSupervise =
+		isEligibleForSupervision &&
 		sessionToolbarPairs.some(
 			({ raw, extended }) =>
 				classifySession(raw, extended, userData?.userId, true) ===
 				'supervision'
 		);
+	const showSupervisionChip =
+		canSupervise ||
+		(isEligibleForSupervision &&
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			hasMoreSessionPages);
 	const currentUserId = userData?.userId;
 	const displayFiltered = useMemo(
 		() =>
@@ -1903,7 +1910,7 @@ export const SessionsList = ({
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
 				case 'supervision':
-					return canSupervise;
+					return showSupervisionChip;
 				case 'directLinks':
 					return hasDirectLinkRow;
 				default:
@@ -1950,9 +1957,9 @@ export const SessionsList = ({
 			})
 		);
 	}, [
-		canSupervise,
 		hasDirectLinkRow,
 		rowsByKind,
+		showSupervisionChip,
 		showCreateGroupChatAction,
 		showGroupChip,
 		showInternalGroupChip,
@@ -2390,7 +2397,6 @@ export const SessionsList = ({
 			})),
 		[userData]
 	);
-	const showSupervisionChip = canSupervise;
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&

@@ -105,10 +105,12 @@ vi.mock('../../services/messageEventEmitter', () => ({
 vi.mock('./SessionsListToolbar', () => ({
 	SessionsListToolbar: ({
 		showSupervisionChip,
+		onChipToggle,
 		activeChip,
 		onSearchChange
 	}: {
 		showSupervisionChip: boolean;
+		onChipToggle: (chip: 'supervision') => void;
 		activeChip: string | null;
 		onSearchChange: (query: string) => void;
 	}) => (
@@ -118,7 +120,11 @@ vi.mock('./SessionsListToolbar', () => ({
 				aria-label="case-search"
 				onChange={(event) => onSearchChange(event.target.value)}
 			/>
-			{showSupervisionChip ? <button>supervision-filter</button> : null}
+			{showSupervisionChip ? (
+				<button onClick={() => onChipToggle('supervision')}>
+					supervision-filter
+				</button>
+			) : null}
 		</>
 	),
 	buildArchiveTabPath: () => '/archive',
@@ -421,6 +427,31 @@ describe('Supervision filter over fetched pages (#1306)', () => {
 		expect(screen.queryByTestId('case-1')).toBeNull();
 		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
 			0
+		]);
+	});
+	it('lets the counsellor select Supervision before its first case is loaded', async () => {
+		const total = SESSION_COUNT + 1;
+		const supervised = {
+			...ordinary(total),
+			session: {
+				...ordinary(total).session,
+				supervision: { supervisedByMe: true }
+			}
+		};
+		getList.mockResolvedValueOnce({ sessions: page(0), total });
+		getList.mockResolvedValueOnce({ sessions: [supervised], total });
+		render(<ListTree consultant fetched />);
+		expect(await screen.findByTestId('case-1')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'supervision-filter' })
+		);
+		expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+		expect(getList.mock.calls.map(([request]) => request.offset)).toEqual([
+			0,
+			SESSION_COUNT
 		]);
 	});
 	it('discovers an unmarked legacy case on a later page and retains the saved filter', async () => {
