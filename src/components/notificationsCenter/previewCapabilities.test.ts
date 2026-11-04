@@ -107,7 +107,11 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 		it('knock pending or not synced: read only with a notice', () => {
 			expect(
 				resolve(asker({ session: group(), roomJoined: false }))
-			).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+			).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'notJoined',
+				contentHidden: true
+			});
 		});
 
 		it('asker without recorded consent: the chat’s consent gate', () => {
@@ -158,7 +162,11 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 				resolve(
 					counsellor({ roomKind: 'supervision', roomJoined: false })
 				)
-			).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+			).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'notJoined',
+				contentHidden: true
+			});
 		});
 	});
 
@@ -328,7 +336,11 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 						groupJoinBlocked: true
 					})
 				)
-			).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+			).toMatchObject({
+				...NOTHING,
+				readOnlyReason: 'notJoined',
+				contentHidden: true
+			});
 		});
 
 		it('a main room that the event calls a side channel fails closed', () => {
@@ -387,6 +399,25 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 					roomJoined: false
 				})
 			)
-		).toMatchObject({ ...NOTHING, readOnlyReason: 'notJoined' });
+		).toMatchObject({
+			...NOTHING,
+			readOnlyReason: 'notJoined',
+			contentHidden: true
+		});
+	});
+	it('team room: case read access does not authorize an unjoined side room', () => {
+		expect(
+			resolve(
+				counsellor({
+					roomKind: 'team',
+					roomJoined: false,
+					caseHandover: { canViewContent: true, coAccess: true }
+				})
+			)
+		).toMatchObject({
+			...NOTHING,
+			readOnlyReason: 'notJoined',
+			contentHidden: true
+		});
 	});
 });
