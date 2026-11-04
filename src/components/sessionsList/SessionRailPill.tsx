@@ -38,6 +38,7 @@ import { createPortal } from 'react-dom';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { MailFilterIcon } from './MailFilterIcon';
+import { DirectLinkGlyph } from '../session/DirectLinkGlyph';
 import type {
 	SessionRailMark,
 	SessionRailMarkLabels
@@ -120,6 +121,11 @@ const MARK_GLYPHS: Record<SessionRailMark, React.ReactNode> = {
 	supervision: <SupervisionGlyph aria-hidden="true" focusable="false" />,
 	// The #1148 envelope, i.e. the Mail filter chip's own glyph.
 	mail: <MailFilterIcon />,
+	// FE#1952: a direct-link conversation's medium, in the mail's slot — the
+	// same glyph the expanded card draws next to "Videoanruf" & co.
+	videoCall: <DirectLinkGlyph medium="VIDEO" />,
+	audioCall: <DirectLinkGlyph medium="AUDIO" />,
+	directLink: <DirectLinkGlyph medium="CHAT" />,
 	// The house's unread language is a filled dot in the unread role
 	// (`session__threadListUnreadDot`, `sessionsListToolbar__chipBadge`), not
 	// a pictogram — drawn in CSS, so no icon was invented for it either.

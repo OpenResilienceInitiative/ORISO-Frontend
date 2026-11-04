@@ -3,6 +3,7 @@ import { useContext } from 'react';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { Stage as DefaultStage } from '../stage/stage';
+import { GroupLegalMenu } from '../groupChat/entryRoom/GroupLegalMenu';
 
 export interface WaitingRoomFrameProps {
 	children: React.ReactNode;
@@ -10,7 +11,10 @@ export interface WaitingRoomFrameProps {
 	headerStart?: React.ReactNode;
 	/** Legal links of the department behind this room, once known. */
 	legalDepartment?: { agencyId: number; topicId: number } | null;
-	/** Phone bar action; the group rooms put their legal menu here. */
+	/**
+	 * Phone bar action. Default: the "Rechtliches" menu, the only place the
+	 * legal links stand below the stage breakpoint (#1895).
+	 */
 	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => React.ReactNode;
 	showLoginLink?: boolean;
 	loginParams?: string;
@@ -41,6 +45,12 @@ export const WaitingRoomFrame = ({
 	loginParams,
 	loginState
 }: WaitingRoomFrameProps) => {
+	const headerAction =
+		renderHeaderAction ??
+		((tone: 'surface' | 'onPrimary') =>
+			tone === 'onPrimary' ? (
+				<GroupLegalMenu department={legalDepartment ?? null} />
+			) : null);
 	// The app always provides its stage; tests and stories without the app
 	// shell get the default one.
 	const Stage = useContext(GlobalComponentContext)?.Stage ?? DefaultStage;
@@ -58,7 +68,7 @@ export const WaitingRoomFrame = ({
 			}
 			mobileHero="bar"
 			headerStart={headerStart}
-			renderHeaderAction={renderHeaderAction}
+			renderHeaderAction={headerAction}
 		>
 			{children}
 		</StageLayout>

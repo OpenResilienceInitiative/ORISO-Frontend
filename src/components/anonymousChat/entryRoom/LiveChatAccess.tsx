@@ -5,12 +5,13 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useTranslation } from 'react-i18next';
 import type { GuestName } from './LiveChatEntryRoom';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import { AskerDisplayNameField } from '../../pseudonym/AskerDisplayNameField';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
 
 export interface LiveChatAccessProps {
-	/** The User-IDs on offer — four of them, already rolled by the room. */
+	/** Four generated session aliases, independent of the login credential. */
 	names: GuestName[];
 	/** Which one is taken; never -1, so „Zum Warteraum" always has a name. */
 	selectedIndex: number;
@@ -18,6 +19,9 @@ export interface LiveChatAccessProps {
 	onReroll: () => void;
 	onContinue: () => void;
 	busy?: boolean;
+	displayName?: string;
+	onDisplayNameChange?: (value: string) => void;
+	editable?: boolean;
 	/** The name could not be saved; the door stays open, with a reason. */
 	failed?: boolean;
 }
@@ -28,7 +32,7 @@ const LABEL_ID = 'live-chat-access-choice-label';
  * A — the door. A name for today, no password: an access that deletes itself
  * needs none (Frank, 2026-09-05). The sentence under the names says so.
  *
- * Four User-IDs at once, not one die. One rolled name in a left-aligned card left
+ * Four generated names at once, not one die. One rolled name in a left-aligned card left
  * the screen nearly empty, on a phone above all (Frank, 2026-09-08: „statt nur
  * dem würfeln … mehrere angebote sieht … dann kann man zwischen drei vier
  * varianten wählen … zentriert also im weißen bereich … und ein sofort auch
@@ -44,7 +48,10 @@ export const LiveChatAccess = ({
 	onReroll,
 	onContinue,
 	busy = false,
-	failed = false
+	failed = false,
+	displayName,
+	onDisplayNameChange,
+	editable = false
 }: LiveChatAccessProps) => {
 	const { t } = useTranslation();
 	const tr = (key: string, fallback: string) =>
@@ -100,10 +107,7 @@ export const LiveChatAccess = ({
 						color: registrationMd3.onSurfaceVariant
 					}}
 				>
-					{tr(
-						'subline',
-						'Anonym, ohne Konto. Wählen Sie eine User-ID — oder würfeln Sie neue.'
-					)}
+					{tr('subline', 'Anonym, ohne Konto.')}
 				</Typography>
 				<Typography
 					id={LABEL_ID}
@@ -116,7 +120,7 @@ export const LiveChatAccess = ({
 						color: registrationMd3.onSurfaceVariant
 					}}
 				>
-					{tr('label', 'Ihre User-ID')}
+					{t('profile.data.displayName')}
 				</Typography>
 				<Box
 					role="radiogroup"
@@ -223,6 +227,16 @@ export const LiveChatAccess = ({
 						);
 					})}
 				</Box>
+				{onDisplayNameChange && (
+					<Box sx={{ mt: 2, maxWidth: 560, mx: 'auto' }}>
+						<AskerDisplayNameField
+							value={displayName ?? ''}
+							onChange={onDisplayNameChange}
+							editable={editable}
+							disabled={busy}
+						/>
+					</Box>
+				)}
 				<Box
 					sx={{
 						display: 'flex',
@@ -275,7 +289,9 @@ export const LiveChatAccess = ({
 				primary={{
 					label: tr('continue', 'Zum Warteraum'),
 					onClick: onContinue,
-					disabled: busy
+					disabled:
+						busy ||
+						(displayName !== undefined && !displayName.trim())
 				}}
 			/>
 		</>

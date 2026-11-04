@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { actWarnings, suspendedInAct } from '../../../.storybook/actWarnings';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Registration } from './Registration';
 import { AgencySpecificContext, RegistrationProvider } from '../../globalState';
@@ -126,6 +127,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// #1338: the header topic search moves focus through MUI buttons; see
+// storyActWarnings for why these exact warnings are declared.
+const headerSearchActWarnings = actWarnings({
+	'ForwardRef(ButtonBase)': 9,
+	'TransitionGroup': 6,
+	'Transition': 1,
+	'TopicSelection': 1,
+	'RegistrationProvider': 1
+});
+
 export const TopicSelectionRoute: Story = {
 	// One viewport tall like the app root, so `.stageLayout` is the scroller.
 	render: () => (
@@ -196,6 +207,11 @@ export const LongTopicListKeepsStepHeader: Story = {
 
 /** A picked search suggestion selects the topic and enables "Weiter". */
 export const HeaderSearchSelectsTopic: Story = {
+	parameters: {
+		verification: {
+			expectedErrors: [...headerSearchActWarnings, ...suspendedInAct(1)]
+		}
+	},
 	globals: desktop1440Globals,
 	render: () => (
 		<div style={{ height: '100vh' }}>
@@ -244,6 +260,9 @@ export const HeaderSearchSelectsTopic: Story = {
  * through the stepper slides the step in from the left.
  */
 export const NextStepSlidesInAndTheFrameStays: Story = {
+	parameters: {
+		verification: { expectedErrors: headerSearchActWarnings }
+	},
 	globals: desktop1440Globals,
 	render: () => (
 		<div style={{ height: '100vh' }}>

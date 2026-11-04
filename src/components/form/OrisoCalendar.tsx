@@ -411,9 +411,12 @@ export const OrisoCalendar = ({
 								);
 								const isToday = day.isSame(today, 'day');
 
+								// A grid row holds cells: the day button is the cell, and
+								// its selection is the cell's (#1338).
 								return (
 									<ButtonBase
 										key={day.format('YYYY-MM-DD')}
+										role="gridcell"
 										focusRipple
 										autoFocus={Boolean(
 											autoFocus && isSelected
@@ -425,7 +428,7 @@ export const OrisoCalendar = ({
 										)}
 										onClick={() => handleSelectDay(day)}
 										aria-label={day.format('D MMMM YYYY')}
-										aria-pressed={isSelected}
+										aria-selected={isSelected}
 										className={
 											(isSelected
 												? 'orisoCalendarDay--selected '

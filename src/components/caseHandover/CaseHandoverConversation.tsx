@@ -16,7 +16,7 @@ import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useTranslation } from 'react-i18next';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
-import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from '../erstantwort/notificationChannelPolicy';
 import { NotificationSetupCollapse } from '../erstantwort/NotificationSetupMessage';
 
 /** The caller keys this continuation by session, so transient setup never moves
@@ -31,7 +31,7 @@ export const CaseHandoverConversation = ({
 }) => {
 	const { t } = useTranslation();
 	const tenant = useTenant();
-	const channels = notificationChannelPolicy(
+	const channels = emailCollectionSetupPolicy(
 		tenant?.settings,
 		conversationType
 	);

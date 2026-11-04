@@ -8,6 +8,7 @@
  * story at 1280×820, 1440×900 and 390×844.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	ConsultantSessionStage,
@@ -53,6 +54,14 @@ const meta = {
 		}
 	},
 	parameters: {
+		// #1338: while the thread scrolls under the header, the call buttons and the
+		// menu icon are partly covered in these stories; their size is as designed.
+		a11y: a11yExcept({
+			'target-size': [
+				'.sessionMenu__videoCallButtons .button__item',
+				'.sessionMenu__icon'
+			]
+		}),
 		layout: 'fullscreen',
 		router: { initialPath: stageRoute },
 		design: [

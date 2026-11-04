@@ -1,6 +1,13 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
+import {
+	isDeletedGuest,
+	retentionOf,
+	useOwnTemporaryAccount
+} from '../temporaryAccount/temporaryAccountStore';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
-import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
@@ -38,9 +45,15 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
+import {
+	callCardMayKnock,
+	joinOrKnock
+} from '../directLinkEntry/callMessageKnock';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -63,6 +76,10 @@ import { HistoricalReassignMessage } from './ReassignMessage';
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
+import {
+	consultantRenamedNoticeText,
+	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
+} from './consultantRenamedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
@@ -95,7 +112,13 @@ import {
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
-import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
+import { FurtherCounsellingNoticeBody } from '../furtherCounselling/FurtherCounsellingNoticeBody';
+import {
+	FURTHER_COUNSELLING_RECOMMENDED,
+	TOPIC_DUPLICATE_STARTED
+} from '../furtherCounselling/furtherCounsellingNotices';
+import { isTrustedRecommendationSender } from '../furtherCounselling/furtherCounsellingRules';
+import { resolveAssignedAskerDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
@@ -254,6 +277,10 @@ export interface MessageItem {
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
 	isEdited?: boolean;
+	/** #1827: this device has no room key for the message (not an error). */
+	undecryptableReason?: 'missing-key';
+	/** #1869: sent by a temporary account and deleted together with it. */
+	isTemporary?: boolean;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -345,6 +372,7 @@ export const MessageItemComponent = ({
 	replyToEventId,
 	threadRootEventId,
 	isEdited,
+	isTemporary,
 	replyQuote,
 	onReplyDirect,
 	onEditDirect,
@@ -357,8 +385,11 @@ export const MessageItemComponent = ({
 	readOnly = false
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession, avatarMembers = [] } =
-		useContext(ActiveSessionContext);
+	const {
+		activeSession,
+		reloadActiveSession,
+		avatarMembers = []
+	} = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -702,6 +733,22 @@ export const MessageItemComponent = ({
 	   that happened to post it. Laid out as "mine", the takeover notice lost
 	   its header and sat on the right for the counsellor who took the case. */
 	const isMyMessage = isOwnEvent && !parsedMessage.isSystemNotification;
+	/* #1869 / ORISO-UserService#1486: messages that go with a temporary
+	   account carry the "Temporär" pill — the guest's own, and on the
+	   counsellor's side the guest's in a 1:1 conversation. */
+	const viewerIsAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const { account: ownTemporaryAccount } = useOwnTemporaryAccount(
+		viewerIsAsker && !activeSession?.isGroup
+	);
+	const showTemporaryMarker =
+		Boolean(isTemporary) ||
+		(!parsedMessage.isSystemNotification &&
+			!activeSession?.isGroup &&
+			(isMyMessage
+				? viewerIsAsker && retentionOf(ownTemporaryAccount) === 'delete'
+				: !viewerIsAsker &&
+					retentionOf(activeSession?.user?.temporaryAccount) ===
+						'delete'));
 	const roomUser = useMemo(() => {
 		if (!matrixRoomUsersContext?.users?.length) {
 			return null;
@@ -1165,7 +1212,7 @@ export const MessageItemComponent = ({
 		() => notificationConversationType(activeSession),
 		[activeSession]
 	);
-	const grantNotificationPolicy = notificationChannelPolicy(
+	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
 		erstantwortModality
 	);
@@ -1202,6 +1249,28 @@ export const MessageItemComponent = ({
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	/* FE#1876. The recommendation card carries a button, so it is drawn only
+	   for the assigned counsellor's event; anything else renders nothing. The two
+	   same-topic notices are plain text for everyone. */
+	const furtherCounsellingNotice =
+		parsedMessage.systemNotificationFurtherCounselling;
+	const isFurtherCounsellingNotice = Boolean(furtherCounsellingNotice);
+	const isUntrustedRecommendation =
+		furtherCounsellingNotice?.type === FURTHER_COUNSELLING_RECOMMENDED &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const furtherCounsellingTitle = furtherCounsellingNotice
+		? translate(
+				furtherCounsellingNotice.type ===
+					FURTHER_COUNSELLING_RECOMMENDED
+					? 'furtherCounselling.card.title'
+					: furtherCounsellingNotice.type === TOPIC_DUPLICATE_STARTED
+						? 'furtherCounselling.duplicate.startedTitle'
+						: 'furtherCounselling.duplicate.endedTitle'
+			)
+		: '';
 	/* T49: the supervision side room's notice is drawn with the SAME organism
 	   as the main chat's Carimat message (ErstantwortSequence → pseudonymCard),
 	   under the room's name — never with the generic chrome below. */
@@ -1214,10 +1283,26 @@ export const MessageItemComponent = ({
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		)
 	);
+	/* OBP 2.1 #119: the rename notice carries names only; it is worded here,
+	   in the reader's language, and then drawn by the generic chrome. */
+	const consultantRenamedText =
+		parsedMessage.systemNotificationConsultantRenamed
+			? consultantRenamedNoticeText(
+					parsedMessage.systemNotificationConsultantRenamed,
+					translate
+				)
+			: null;
+	/* A rename event the parser rejected (blank or unchanged names) draws
+	   nothing — the generic chrome would otherwise show its raw JSON. */
+	const isRejectedConsultantRenamedEvent =
+		parsedMessage.systemNotificationType ===
+			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
 	const systemNotificationTitle =
+		consultantRenamedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
+		consultantRenamedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
 	const systemNotificationReasonLabel = neutralLegacyReasonLabel(
@@ -1325,8 +1410,9 @@ export const MessageItemComponent = ({
 			? 'unchecked'
 			: 'safe';
 	};
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
-		tenant?.settings,
+		effectiveFeatures,
 		mediaChatType
 	);
 
@@ -1743,25 +1829,48 @@ export const MessageItemComponent = ({
 	 * the bubble, the chat header and the session list have in common, so the
 	 * bubble now uses exactly those and passes no name parts at all.
 	 */
-	// #1839: a live-chat guest's own messages carry the pseudonym the list and
-	// the header show, not their encoded Matrix name.
-	const liveChatGuestName =
-		!isMyMessage &&
-		isLiveChatModality &&
-		!!askerMatrixUserId &&
-		userId === askerMatrixUserId
-			? resolveAnonymousChatDisplayName(activeSession?.user)
-			: null;
-	const resolvedIncomingDisplayName = askerIncomingConsultantName
-		? askerIncomingConsultantName.displayName
-		: !isMyMessage
-			? consultantMatch?.consultantDisplayName ||
-				liveChatGuestName ||
-				roomUser?.displayName ||
-				displayName
-			: displayName;
+	// Session aliases belong only to the exact asker of this session. The
+	// Matrix event can still contain the login or a previous session's name.
+	const sessionAskerName = (() => {
+		if (
+			!activeSession?.item?.askerMatrixUserId ||
+			userId !== activeSession.item.askerMatrixUserId
+		)
+			return null;
+		const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
+		if (
+			activeSession.user?.deleted === true ||
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		)
+			return deletedGuestLabel;
+		// Preserve an already anonymized legacy event; it is never identity proof.
+		// The stored session owner above is the only basis for applying this alias.
+		if (username === deletedGuestLabel && displayName === deletedGuestLabel)
+			return displayName;
+		return resolveAssignedAskerDisplayName(activeSession.user);
+	})();
+	// Matrix profiles hold the login name, so after a reload the event only
+	// carries the username. The group's member list has the public display
+	// name for every participant (OBP 2.1 #12).
+	const groupMemberDisplayName = activeSession?.isGroup
+		? (
+				avatarMembers.find((member) => member._id === userId)
+					?.displayName || ''
+			).trim() || undefined
+		: undefined;
+	const resolvedIncomingDisplayName =
+		sessionAskerName ??
+		(askerIncomingConsultantName
+			? askerIncomingConsultantName.displayName
+			: !isMyMessage
+				? consultantMatch?.consultantDisplayName ||
+					groupMemberDisplayName ||
+					roomUser?.displayName ||
+					displayName
+				: displayName);
+	// A group viewer can still be a counsellor on their own message.
 	const ownConsultantName =
-		isMyMessage && !isUserMessage()
+		isMyMessage && (!isUserMessage() || !isAskerViewer)
 			? resolveOwnConsultantName({
 					displayName: userData?.displayName,
 					firstName: userData?.firstName,
@@ -1769,22 +1878,24 @@ export const MessageItemComponent = ({
 					username: userData?.userName || username
 				})
 			: null;
-	const formattedName = formatMessagePersonName(
-		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
-		username,
-		// Own messages may still fall back to the viewer's own name — it is
-		// their own screen. Incoming messages never carry one (#1486).
-		ownConsultantName
-			? ownConsultantName.firstName
-			: isMyMessage
-				? userData?.firstName
-				: undefined,
-		ownConsultantName
-			? ownConsultantName.lastName
-			: isMyMessage
-				? userData?.lastName
-				: undefined
-	);
+	const formattedName =
+		sessionAskerName ??
+		formatMessagePersonName(
+			ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
+			username,
+			// Own messages may still fall back to the viewer's own name — it is
+			// their own screen. Incoming messages never carry one (#1486).
+			ownConsultantName
+				? ownConsultantName.firstName
+				: isMyMessage
+					? userData?.firstName
+					: undefined,
+			ownConsultantName
+				? ownConsultantName.lastName
+				: isMyMessage
+					? userData?.lastName
+					: undefined
+		);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
 	 * header is gated by !isMyMessage), so the agency line has to be
@@ -1981,7 +2092,9 @@ export const MessageItemComponent = ({
 						)
 					: isInquiryAcceptedEvent
 						? translate('caseHandover.accepted.title')
-						: systemNotificationTitle,
+						: isFurtherCounsellingNotice
+							? furtherCounsellingTitle
+							: systemNotificationTitle,
 				topicIcon: isCaseHandoverGrantedEvent ? (
 					<HandoverTopicIcon />
 				) : isInquiryAcceptedEvent ? (
@@ -2086,6 +2199,9 @@ export const MessageItemComponent = ({
 									<MessageDisplayName
 										isMyMessage={isMyMessage}
 										isUser={isUserMessage()}
+										resolvedDisplayName={
+											sessionAskerName ?? undefined
+										}
 										type={getUsernameType()}
 										subtitle={
 											getUsernameType() ===
@@ -2232,8 +2348,23 @@ export const MessageItemComponent = ({
 							 * notice wore three labels. See ORISO-Frontend#892.
 							 */}
 							{isSystemNotification &&
+								furtherCounsellingNotice && (
+									<FurtherCounsellingNoticeBody
+										notice={furtherCounsellingNotice}
+										viewerIsAsker={
+											!readOnly &&
+											hasUserAuthority(
+												AUTHORITIES.ASKER_DEFAULT,
+												userData
+											)
+										}
+										messageId={_id}
+									/>
+								)}
+							{isSystemNotification &&
 								!isCaseHandoverGrantedEvent &&
 								!isInquiryAcceptedEvent &&
+								!isFurtherCounsellingNotice &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
 										{systemNotificationDescription}
@@ -2496,6 +2627,8 @@ export const MessageItemComponent = ({
 							 * like every other bubble in the stream.
 							 */}
 							{timeRailInBubble}
+							{/* #1869: own row under the time, never in the time line. */}
+							{showTemporaryMarker && <TemporaryMessageMarker />}
 						</MessageBubble>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2596,38 +2729,64 @@ export const MessageItemComponent = ({
 	}
 
 	if (callLifecycle && callLifecycle.roomRef === rid) {
+		/*
+		 * The card's own answer first. `activeSession.isGroup` describes the
+		 * CLIENT session, which is false for a supervision call inside a 1:1
+		 * one — and a call rejoined as non-group is ended for everybody when
+		 * one person leaves, because `endCall` publishes a remote hangup and
+		 * finalises the lifecycle. The side that started the call wrote what
+		 * it is; cards from before that field existed fall back to the old
+		 * guess. A knock keeps this answer for a join after a reload.
+		 */
+		const callIsGroup =
+			callLifecycle.isGroup ?? Boolean(activeSession?.isGroup);
 		return (
 			<div className="messageItem">
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallState}
+					/* #2016: camera and microphone first, as guests get. */
+					deviceCheck={() =>
+						shouldShowDeviceCheck({
+							surface: 'callMessage',
+							mediaSupported: Boolean(
+								navigator.mediaDevices?.getUserMedia
+							),
+							alreadyInCall: callManager.hasActiveCall()
+						})
+					}
 					onJoin={
 						readOnly ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
-							: () =>
-									callManager.joinExistingCall(
-										callLifecycle,
-										/*
-										 * The card's own answer first.
-										 *
-										 * `activeSession.isGroup` describes
-										 * the CLIENT session, which is false
-										 * for a supervision call inside a 1:1
-										 * one — and a call rejoined as
-										 * non-group is ended for everybody
-										 * when one person leaves, because
-										 * `endCall` publishes a remote hangup
-										 * and finalises the lifecycle. The
-										 * side that started the call wrote
-										 * what it is; cards from before that
-										 * field existed fall back to the old
-										 * guess.
-										 */
-										callLifecycle.isGroup ??
-											Boolean(activeSession?.isGroup)
+							: (hooks?: CallJoinHooks) =>
+									/* FE#1893: a direct-link call conversation knocks first;
+									   #2016: the open device check waits for it. */
+									joinOrKnock(
+										activeSession?.item?.id,
+										() =>
+											callManager.joinExistingCall(
+												callLifecycle,
+												callIsGroup
+											),
+										{
+											...hooks,
+											call: callLifecycle,
+											// Kept with the knock: a reload joins in the same mode.
+											isGroup: callIsGroup,
+											// Who the server can gate at all: an advice seeker in a 1:1.
+											asker: callCardMayKnock({
+												isAsker: hasUserAuthority(
+													AUTHORITIES.ASKER_DEFAULT,
+													userData
+												),
+												isGroup: Boolean(
+													activeSession?.isGroup
+												)
+											})
+										}
 									)
 					}
 				/>
@@ -2653,6 +2812,9 @@ export const MessageItemComponent = ({
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
+					sessionId={activeSession?.item?.id}
+					displayName={activeSession?.user?.displayName}
+					onDisplayNameSaved={() => void reloadActiveSession?.()}
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
 					}
@@ -2699,6 +2861,10 @@ export const MessageItemComponent = ({
 				/>
 			</div>
 		);
+	}
+
+	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
+		return null;
 	}
 
 	if (isUserLeftChatEvent) {
@@ -2919,6 +3085,7 @@ export const MessageItemComponent = ({
 										userId={userId}
 										username={username}
 										displayName={
+											sessionAskerName ??
 											ownConsultantName?.displayName ??
 											displayName
 										}
