@@ -1157,6 +1157,8 @@
 			},
 			"nameLabel": "ስም ውሽጣዊ ዕላል",
 			"noColleagues": "ክምረጹ ዝኽእሉ መሳርሕቲ የለዉን",
+			"searchPeople": "ሰብ ድለዩ",
+			"noMatchingPeople": "ዝሰማማዕ ሰብ ኣይተረኽበን።",
 			"personCount_one": "{{count}} ሰብ ተወሲኹ",
 			"personCount_other": "{{count}} ሰባት ተወሲኾም",
 			"privateRoomHint": "ንዝተመርጹ ሰባት ጥራይ ብምስጢር ዝተሓለወ ፍሉይ ክፍሊ ይፈጠር።",
@@ -1167,7 +1169,8 @@
 			},
 			"scope": {
 				"AGENCY": "ካብ ማእከል ምኽርኩም መሳርሕትኹም ክትመርጹ ትኽእሉ።",
-				"TENANT": "ካብ ውዳበኹም መሳርሕትኹም ክትመርጹ ትኽእሉ።"
+				"TENANT": "ካብ ውዳበኹም መሳርሕትኹም ክትመርጹ ትኽእሉ።",
+				"PLATFORM": "ካብ ናትኩም ትካልን ካልኦት ተሳተፍቲ ትካላትን መሳርሕቲ ክትመርጹ ትኽእሉ።"
 			},
 			"selectPerson": "{{name}} ምረጽ",
 			"subtitle": "ምስ መሳርሕትኹም",

@@ -933,6 +933,8 @@
 			},
 			"nameLabel": "Name Interna",
 			"noColleagues": "Keine Kolleg:innen zur Auswahl",
+			"searchPeople": "Person suchen",
+			"noMatchingPeople": "Keine passende Person gefunden.",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
 			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",
@@ -943,7 +945,8 @@
 			},
 			"scope": {
 				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
-				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen."
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen.",
+				"PLATFORM": "Sie können Kolleg:innen Ihres Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
