@@ -1,11 +1,13 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { TemporaryMessageMarker } from '../temporaryAccount/TemporaryMessageMarker';
 import {
+	isDeletedGuest,
 	retentionOf,
 	useOwnTemporaryAccount
 } from '../temporaryAccount/temporaryAccountStore';
 import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
-import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { emailCollectionSetupPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
@@ -43,10 +45,15 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
-import { joinOrKnock } from '../directLinkEntry/callMessageKnock';
+import {
+	callCardMayKnock,
+	joinOrKnock
+} from '../directLinkEntry/callMessageKnock';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
@@ -86,6 +93,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
+import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import clsx from 'clsx';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -111,7 +119,7 @@ import {
 	TOPIC_DUPLICATE_STARTED
 } from '../furtherCounselling/furtherCounsellingNotices';
 import { isTrustedRecommendationSender } from '../furtherCounselling/furtherCounsellingRules';
-import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
+import { resolveAssignedAskerDisplayName } from '../../utils/anonymousChatDisplayName';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
 import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
@@ -378,8 +386,11 @@ export const MessageItemComponent = ({
 	readOnly = false
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession, avatarMembers = [] } =
-		useContext(ActiveSessionContext);
+	const {
+		activeSession,
+		reloadActiveSession,
+		avatarMembers = []
+	} = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -1202,7 +1213,7 @@ export const MessageItemComponent = ({
 		() => notificationConversationType(activeSession),
 		[activeSession]
 	);
-	const grantNotificationPolicy = notificationChannelPolicy(
+	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
 		erstantwortModality
 	);
@@ -1400,8 +1411,9 @@ export const MessageItemComponent = ({
 			? 'unchecked'
 			: 'safe';
 	};
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
-		tenant?.settings,
+		effectiveFeatures,
 		mediaChatType
 	);
 
@@ -1818,15 +1830,26 @@ export const MessageItemComponent = ({
 	 * the bubble, the chat header and the session list have in common, so the
 	 * bubble now uses exactly those and passes no name parts at all.
 	 */
-	// #1839: a live-chat guest's own messages carry the pseudonym the list and
-	// the header show, not their encoded Matrix name.
-	const liveChatGuestName =
-		!isMyMessage &&
-		isLiveChatModality &&
-		!!askerMatrixUserId &&
-		userId === askerMatrixUserId
-			? resolveAnonymousChatDisplayName(activeSession?.user)
-			: null;
+	// Session aliases belong only to the exact asker of this session. The
+	// Matrix event can still contain the login or a previous session's name.
+	const sessionAskerName = (() => {
+		if (
+			!activeSession?.item?.askerMatrixUserId ||
+			userId !== activeSession.item.askerMatrixUserId
+		)
+			return null;
+		const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
+		if (
+			activeSession.user?.deleted === true ||
+			isDeletedGuest(activeSession.user?.temporaryAccount)
+		)
+			return deletedGuestLabel;
+		// Preserve an already anonymized legacy event; it is never identity proof.
+		// The stored session owner above is the only basis for applying this alias.
+		if (username === deletedGuestLabel && displayName === deletedGuestLabel)
+			return displayName;
+		return resolveAssignedAskerDisplayName(activeSession.user);
+	})();
 	// Matrix profiles hold the login name, so after a reload the event only
 	// carries the username. The group's member list has the public display
 	// name for every participant (OBP 2.1 #12).
@@ -1836,17 +1859,17 @@ export const MessageItemComponent = ({
 					?.displayName || ''
 			).trim() || undefined
 		: undefined;
-	const resolvedIncomingDisplayName = askerIncomingConsultantName
-		? askerIncomingConsultantName.displayName
-		: !isMyMessage
-			? consultantMatch?.consultantDisplayName ||
-				liveChatGuestName ||
-				groupMemberDisplayName ||
-				roomUser?.displayName ||
-				displayName
-			: displayName;
-	// In a group every non-moderator counts as a "user message", but a
-	// counsellor viewing their own message is still a counsellor.
+	const resolvedIncomingDisplayName =
+		sessionAskerName ??
+		(askerIncomingConsultantName
+			? askerIncomingConsultantName.displayName
+			: !isMyMessage
+				? consultantMatch?.consultantDisplayName ||
+					groupMemberDisplayName ||
+					roomUser?.displayName ||
+					displayName
+				: displayName);
+	// A group viewer can still be a counsellor on their own message.
 	const ownConsultantName =
 		isMyMessage && (!isUserMessage() || !isAskerViewer)
 			? resolveOwnConsultantName({
@@ -1856,22 +1879,24 @@ export const MessageItemComponent = ({
 					username: userData?.userName || username
 				})
 			: null;
-	const formattedName = formatMessagePersonName(
-		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
-		username,
-		// Own messages may still fall back to the viewer's own name — it is
-		// their own screen. Incoming messages never carry one (#1486).
-		ownConsultantName
-			? ownConsultantName.firstName
-			: isMyMessage
-				? userData?.firstName
-				: undefined,
-		ownConsultantName
-			? ownConsultantName.lastName
-			: isMyMessage
-				? userData?.lastName
-				: undefined
-	);
+	const formattedName =
+		sessionAskerName ??
+		formatMessagePersonName(
+			ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
+			username,
+			// Own messages may still fall back to the viewer's own name — it is
+			// their own screen. Incoming messages never carry one (#1486).
+			ownConsultantName
+				? ownConsultantName.firstName
+				: isMyMessage
+					? userData?.firstName
+					: undefined,
+			ownConsultantName
+				? ownConsultantName.lastName
+				: isMyMessage
+					? userData?.lastName
+					: undefined
+		);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
 	 * header is gated by !isMyMessage), so the agency line has to be
@@ -2047,6 +2072,15 @@ export const MessageItemComponent = ({
 				isMyMessage && 'messageItem__timeRail--outgoing'
 			)}
 		>
+			{isSupervisorFeedback && (
+				<div className="messageItem__feedbackTag">
+					<SupervisionGlyph aria-hidden="true" focusable="false" />
+					<span className="sr-only">
+						{translate('supervision.panel.kind.supervision')}{' '}
+					</span>
+					{translate('message.feedbackTag')}
+				</div>
+			)}
 			{!isMyMessage && reactionChips}
 			{messageTimeInBubble}
 			{isMyMessage && reactionChips}
@@ -2175,6 +2209,9 @@ export const MessageItemComponent = ({
 									<MessageDisplayName
 										isMyMessage={isMyMessage}
 										isUser={isUserMessage()}
+										resolvedDisplayName={
+											sessionAskerName ?? undefined
+										}
 										type={getUsernameType()}
 										subtitle={
 											getUsernameType() ===
@@ -2343,11 +2380,6 @@ export const MessageItemComponent = ({
 										{systemNotificationDescription}
 									</div>
 								)}
-							{isSupervisorFeedback && (
-								<div className="messageItem__feedbackTag">
-									{translate('message.feedbackTag')}
-								</div>
-							)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
 							{replyToEventId && !isSystemNotification && (
@@ -2592,6 +2624,7 @@ export const MessageItemComponent = ({
 										inlineDisplayEnabled={
 											attachmentInlineDisplayEnabled
 										}
+										isOwnMessage={isMyMessage}
 									/>
 								))}
 							{/*
@@ -2702,53 +2735,63 @@ export const MessageItemComponent = ({
 	}
 
 	if (callLifecycle && callLifecycle.roomRef === rid) {
+		/*
+		 * The card's own answer first. `activeSession.isGroup` describes the
+		 * CLIENT session, which is false for a supervision call inside a 1:1
+		 * one — and a call rejoined as non-group is ended for everybody when
+		 * one person leaves, because `endCall` publishes a remote hangup and
+		 * finalises the lifecycle. The side that started the call wrote what
+		 * it is; cards from before that field existed fall back to the old
+		 * guess. A knock keeps this answer for a join after a reload.
+		 */
+		const callIsGroup =
+			callLifecycle.isGroup ?? Boolean(activeSession?.isGroup);
 		return (
 			<div className="messageItem">
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallState}
+					/* #2016: camera and microphone first, as guests get. */
+					deviceCheck={() =>
+						shouldShowDeviceCheck({
+							surface: 'callMessage',
+							mediaSupported: Boolean(
+								navigator.mediaDevices?.getUserMedia
+							),
+							alreadyInCall: callManager.hasActiveCall()
+						})
+					}
 					onJoin={
 						readOnly ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
-							: () =>
-									/* FE#1893: a direct-link call conversation knocks first. */
+							: (hooks?: CallJoinHooks) =>
+									/* FE#1893: a direct-link call conversation knocks first;
+									   #2016: the open device check waits for it. */
 									joinOrKnock(
 										activeSession?.item?.id,
 										() =>
 											callManager.joinExistingCall(
 												callLifecycle,
-												/*
-												 * The card's own answer first.
-												 *
-												 * `activeSession.isGroup` describes
-												 * the CLIENT session, which is false
-												 * for a supervision call inside a 1:1
-												 * one — and a call rejoined as
-												 * non-group is ended for everybody
-												 * when one person leaves, because
-												 * `endCall` publishes a remote hangup
-												 * and finalises the lifecycle. The
-												 * side that started the call wrote
-												 * what it is; cards from before that
-												 * field existed fall back to the old
-												 * guess.
-												 */
-												callLifecycle.isGroup ??
-													Boolean(
-														activeSession?.isGroup
-													)
+												callIsGroup
 											),
 										{
-											// Direct links are 1:1; a group has no own knock to look up.
-											asker:
-												!activeSession?.isGroup &&
-												hasUserAuthority(
+											...hooks,
+											call: callLifecycle,
+											// Kept with the knock: a reload joins in the same mode.
+											isGroup: callIsGroup,
+											// Who the server can gate at all: an advice seeker in a 1:1.
+											asker: callCardMayKnock({
+												isAsker: hasUserAuthority(
 													AUTHORITIES.ASKER_DEFAULT,
 													userData
+												),
+												isGroup: Boolean(
+													activeSession?.isGroup
 												)
+											})
 										}
 									)
 					}
@@ -2775,6 +2818,9 @@ export const MessageItemComponent = ({
 					rawMessage={decryptedMessage}
 					messageId={_id}
 					conversationType={erstantwortModality}
+					sessionId={activeSession?.item?.id}
+					displayName={activeSession?.user?.displayName}
+					onDisplayNameSaved={() => void reloadActiveSession?.()}
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
 					}
@@ -2900,17 +2946,28 @@ export const MessageItemComponent = ({
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
 								<div className="messageItem__avatar">
-									<MessageAvatar
-										isGroup={!!activeSession?.isGroup}
-										isSystemNotification={false}
-										userId={userId}
-										username={username}
-										choice={incomingAvatarChoice}
-										displayName={
-											resolvedIncomingDisplayName
-										}
-										size={AVATAR_SIZES.message}
-									/>
+									{isSupervisorFeedback ? (
+										// In supervision the role matters more than
+										// the face. The name still stands above.
+										<span className="messageItem__supervisionAvatar">
+											<SupervisionGlyph
+												aria-hidden="true"
+												focusable="false"
+											/>
+										</span>
+									) : (
+										<MessageAvatar
+											isGroup={!!activeSession?.isGroup}
+											isSystemNotification={false}
+											userId={userId}
+											username={username}
+											choice={incomingAvatarChoice}
+											displayName={
+												resolvedIncomingDisplayName
+											}
+											size={AVATAR_SIZES.message}
+										/>
+									)}
 								</div>
 								{!readOnly && (
 									<button
@@ -3045,6 +3102,7 @@ export const MessageItemComponent = ({
 										userId={userId}
 										username={username}
 										displayName={
+											sessionAskerName ??
 											ownConsultantName?.displayName ??
 											displayName
 										}

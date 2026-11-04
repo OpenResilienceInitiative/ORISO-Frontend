@@ -1,3 +1,4 @@
+import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
@@ -40,7 +41,6 @@ import {
 	type SideRoomChannelKind
 } from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
 import { composerHtmlToTransportMarkup } from './composerTransportEncoding';
 import { RecipientSplitButton } from './inputField/RecipientSplitButton';
@@ -49,6 +49,7 @@ import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	FLUSH_CONTEXT_BAR_RESERVE,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
 	stepComposerHeight
@@ -110,6 +111,7 @@ import {
 	apiSendMatrixAttachmentMessage,
 	apiSendMessage
 } from '../../api';
+import { ComposerContextBar } from './ComposerContextBar';
 import {
 	MessageSubmitInfo,
 	MessageSubmitInfoInterface
@@ -157,7 +159,7 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
-import { VoicePlayer } from '../voicePlayer/VoicePlayer';
+import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { hasMatrixSessionId, resolveMatrixSessionId } from './matrixSessionId';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
@@ -448,6 +450,8 @@ const AudienceModeratorIcon = () => (
 		/>
 	</svg>
 );
+
+const VOICE_RECORDING_MIN_HEIGHT = 144;
 
 export const MessageSubmitInterfaceComponent = ({
 	className,
@@ -1246,7 +1250,9 @@ export const MessageSubmitInterfaceComponent = ({
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
 		// Figma-locked composer uses fixed geometry; avoid runtime inline style overrides.
-		if (composerRef.current) {
+		// With an attachment the editor is not mounted at all, and these styles
+		// took the field's bottom edge away.
+		if (composerRef.current || attachmentSelected) {
 			return;
 		}
 
@@ -2450,17 +2456,18 @@ export const MessageSubmitInterfaceComponent = ({
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
+	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
 	const hasUploadFunctionality =
 		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
-		hasMediaUploadFeature(tenant?.settings, currentChatType);
+		hasMediaUploadFeature(effectiveFeatures, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
 		featureVoiceMessagesOneOnOneChatsEnabled = true,
 		featureVoiceMessagesGroupChatsEnabled = true,
 		featureVoiceMessagesSupervisionChatsEnabled = true
-	} = tenant?.settings || {};
+	} = effectiveFeatures;
 	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
 		(currentChatType === 'anonymous'
@@ -3534,11 +3541,6 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		composerRef.current?.setInsertionMarker(isVoiceInsertionPending);
 	}, [isVoiceInsertionPending]);
-	const formatRecordingDuration = useCallback((totalSeconds: number) => {
-		const minutes = Math.floor(totalSeconds / 60);
-		const seconds = totalSeconds % 60;
-		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
-	}, []);
 	const typedMessage = getTypedMarkdownMessage();
 	const typedMessageLength =
 		getPlainTextFromComposerValue(typedMessage).length;
@@ -3897,6 +3899,10 @@ export const MessageSubmitInterfaceComponent = ({
 			unavailableLabel: translate('message.mention.unavailable'),
 			loadingLabel: translate('message.mention.loading'),
 			listLabel: translate('message.submit.toolbar.mention'),
+			getCheckLabel: (name: string) =>
+				translate('message.mention.check', { name }),
+			getCheckedLabel: (count: number) =>
+				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -3985,6 +3991,13 @@ export const MessageSubmitInterfaceComponent = ({
 		autoComposerHeight,
 		composerMinHeight
 	);
+	// While recording: one line of text above the voice row, on a phone too.
+	const composerCardHeight = isVoiceRecording
+		? Math.max(
+				effectiveComposerHeight || composerMinHeight,
+				VOICE_RECORDING_MIN_HEIGHT
+			)
+		: effectiveComposerHeight;
 
 	// A dragged height belongs to one conversation only. Keeping the component
 	// mounted while routing between sessions must not carry that geometry over.
@@ -3996,6 +4009,11 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
+	const hasContextBar = Boolean(replyTo || editingMessage);
+	const flushContextBarReserve =
+		flushCorner && hasContextBar && !isMobileViewport
+			? FLUSH_CONTEXT_BAR_RESERVE
+			: 0;
 	useLayoutEffect(() => {
 		if (isExpandedComposer) {
 			return;
@@ -4018,7 +4036,8 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		const composerChromeHeight =
 			shell.getBoundingClientRect().height -
-			editor.getBoundingClientRect().height;
+			editor.getBoundingClientRect().height -
+			flushContextBarReserve;
 		const bounds = getComposerHeightBounds();
 		const nextHeight = calculateAutoComposerHeight({
 			contentHeight,
@@ -4033,6 +4052,7 @@ export const MessageSubmitInterfaceComponent = ({
 		attachmentSelected,
 		composerSettleTick,
 		composerText,
+		flushContextBarReserve,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport
@@ -4167,7 +4187,13 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 			style={expandedComposerStyle}
 		>
-			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{activeInfo && (
+				<MessageSubmitInfo
+					{...getMessageSubmitInfo()}
+					onClose={() => setActiveInfo(null)}
+					closeLabel={translate('app.close')}
+				/>
+			)}
 			{threadRootId && (
 				<div
 					className="messageSubmit__target"
@@ -4196,53 +4222,6 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 
 			<form className="textarea" onSubmit={handleFormSubmit}>
-				{/* Relations foundation (#435): cancelable reply-quote preview,
-				    docked inside the composer box above the input. */}
-				{replyTo && (
-					<div className="messageSubmit__replyPreview" role="status">
-						<div className="messageSubmit__replyPreviewContent">
-							<span className="messageSubmit__replyPreviewLabel">
-								{translate('message.reply.previewLabel')}{' '}
-								<strong>{replyTo.author}</strong>
-							</span>
-							<span className="messageSubmit__replyPreviewText">
-								{replyTo.text}
-							</span>
-						</div>
-						<button
-							type="button"
-							className="messageSubmit__replyPreviewCancel"
-							onClick={() => onCancelReply && onCancelReply()}
-							aria-label={translate('message.reply.cancel')}
-						>
-							×
-						</button>
-					</div>
-				)}
-				{/* Editing (m.replace, #435): cancelable edit-in-progress banner.
-				    Figma "Reply Bar_v2" (9354:206458 desktop / 18:6713 mobile):
-				    a full-width 32px bar — cancel glyph, emphasized lead, then
-				    the message itself on one ellipsized line. */}
-				{editingMessage && (
-					<div className="messageSubmit__editPreview" role="status">
-						<button
-							type="button"
-							className="messageSubmit__editPreviewCancel"
-							onClick={() => onCancelEdit && onCancelEdit()}
-							aria-label={translate('message.edit.cancel')}
-						>
-							<HighlightOffIcon fontSize="inherit" />
-						</button>
-						<span className="messageSubmit__editPreviewText">
-							<span className="messageSubmit__editPreviewLabel">
-								{translate('message.edit.previewLabel')}
-							</span>{' '}
-							<span className="messageSubmit__editPreviewQuote">
-								{editingMessage.text}
-							</span>
-						</span>
-					</div>
-				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -4255,8 +4234,10 @@ export const MessageSubmitInterfaceComponent = ({
 							'textarea__wrapper-send-message',
 							canSendMessage &&
 								'textarea__wrapper-send-message--ready',
-							isComposerSelected &&
+							(isComposerSelected || isVoiceRecording) &&
 								'textarea__wrapper-send-message--selected',
+							(replyTo || editingMessage) &&
+								'textarea__wrapper-send-message--withContextBar',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
@@ -4278,13 +4259,55 @@ export const MessageSubmitInterfaceComponent = ({
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
-							!isExpandedComposer && effectiveComposerHeight
+							!isExpandedComposer && composerCardHeight
 								? ({
-										'--composer-height': `${effectiveComposerHeight}px`
+										'--composer-height': `${composerCardHeight}px`
 									} as React.CSSProperties)
 								: undefined
 						}
 					>
+						{/* Relations foundation (#435): what the next send refers to.
+						    Inside the card, between drag handle and editor. */}
+						{replyTo && (
+							<ComposerContextBar
+								kind="reply"
+								lead={replyTo.author}
+								quote={replyTo.text}
+								statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
+								cancelLabel={translate('message.reply.cancel')}
+								onCancel={onCancelReply}
+							/>
+						)}
+						{editingMessage && (
+							<ComposerContextBar
+								kind="edit"
+								lead={translate('message.edit.previewLabel')}
+								quote={editingMessage.text}
+								cancelLabel={translate('message.edit.cancel')}
+								onCancel={onCancelEdit}
+							/>
+						)}
+						{/* Frank (03.11.): on the phone the format tools rest in a
+						    grey box above the card, built like the reply bar. */}
+						{isMobileViewport && !isCompactActionStripOpen && (
+							<div
+								className="messageSubmit__formatTray"
+								data-cy="composer-format-tray"
+								onMouseDown={handleToolbarMouseDown}
+							>
+								<ComposerToolbar
+									direction={composerMenuDirection}
+									isMobile
+									inTray
+									isExpanded={isExpandedComposer}
+									onAction={handleToolbarAction}
+									isActionSelected={isToolbarActionSelected}
+									onCollapse={openCompactActionStrip}
+									onExpandToggle={toggleExpandedComposer}
+									translate={translate}
+								/>
+							</div>
+						)}
 						{/* T6/T16: the drag pill belongs to every docked composer —
 						    main chat, supervision room and thread panel, on the
 						    phone too (the navigator row that carried it is gone). */}
@@ -4293,14 +4316,10 @@ export const MessageSubmitInterfaceComponent = ({
 								onPointerDown={handleComposerResizePointerDown}
 								onKeyDown={handleComposerResizeKeyDown}
 								touched={isComposerResizing}
-								// T31: phone — pill on the card's top edge; T40:
-								// the flush desktop field has no frame above the
-								// field either, so the pill sits on its edge too.
-								position={
-									isMobileViewport || flushCorner
-										? 'edge'
-										: 'inside'
-								}
+								// T31: the pill sits on the card's top edge at every
+								// width; Frank (03.11.): the desktop must not differ
+								// from the phone or from an open side panel (T40).
+								position="edge"
 								ariaLabel={translate(
 									'message.mobileNav.dragToExpand'
 								)}
@@ -4676,6 +4695,8 @@ export const MessageSubmitInterfaceComponent = ({
 									'textarea__input',
 									attachmentSelected &&
 										'textarea__input--attachmentMode',
+									isVoiceRecording &&
+										'textarea__input--voiceRecording',
 									editingMessageId &&
 										'textarea__input--editing'
 								)}
@@ -4732,55 +4753,35 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
+								{hasUploadFunctionality && isVoiceRecording && (
+									<VoiceNoteRow
+										mode="recording"
+										durationSec={voiceRecordingDurationSec}
+										onStop={() => stopVoiceRecording()}
+										onDiscard={() =>
+											stopVoiceRecording({
+												discard: true
+											})
+										}
+										className="textarea__voiceNoteRow"
+									/>
+								)}
 								{attachmentSelected &&
 								isVoiceAttachmentSelected &&
 								voicePreviewUrl ? (
-									<div className="textarea__attachmentMode textarea__attachmentMode--voice">
-										<div
-											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"
-											role="group"
-											ref={voiceReviewRef}
-											tabIndex={-1}
-											aria-label={translate(
-												'voice.recording.preview'
-											)}
-										>
-											<div className="textarea__attachmentModeInfo">
-												{voicePreviewUrl && (
-													// #996: the same player the
-													// sent message uses, so what
-													// you check before sending
-													// looks like what the other
-													// side gets.
-													<VoicePlayer
-														src={voicePreviewUrl}
-														durationSec={
-															voiceAttachmentDurationSec ||
-															null
-														}
-														size="sm"
-														showMeta={false}
-													/>
-												)}
-											</div>
-											<button
-												type="button"
-												className="textarea__voicePreview__discard"
-												onClick={handleVoiceDiscard}
-												title={translate(
-													'voice.recording.discard'
-												)}
-												aria-label={translate(
-													'voice.recording.discard'
-												)}
-											>
-												<RemoveIcon
-													aria-hidden="true"
-													focusable="false"
-												/>
-											</button>
-										</div>
-									</div>
+									// #996: the same player the sent message uses, so what
+									// you check before sending looks like what the other
+									// side gets.
+									<VoiceNoteRow
+										ref={voiceReviewRef}
+										mode="review"
+										src={voicePreviewUrl}
+										durationSec={
+											voiceAttachmentDurationSec || null
+										}
+										onDiscard={handleVoiceDiscard}
+										className="textarea__voiceNoteRow"
+									/>
 								) : attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
@@ -4858,7 +4859,8 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
 										>
-											{isCompactActionStripOpen ? (
+											{isCompactActionStripOpen ||
+											isMobileViewport ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
 														showBack={
@@ -4877,7 +4879,18 @@ export const MessageSubmitInterfaceComponent = ({
 															unreadMobileBadgeCount
 														}
 														onOpenTools={
-															closeCompactActionStrip
+															isCompactActionStripOpen
+																? closeCompactActionStrip
+																: openCompactActionStrip
+														}
+														isToolsOpen={
+															!isCompactActionStripOpen
+														}
+														isMobile={
+															isMobileViewport
+														}
+														menuDirection={
+															composerMenuDirection
 														}
 														showMic={
 															hasUploadFunctionality &&
@@ -5020,49 +5033,6 @@ export const MessageSubmitInterfaceComponent = ({
 									</>
 								)}
 							</div>
-							{hasUploadFunctionality &&
-								(isVoiceRecording ? (
-									<span
-										className={clsx(
-											'textarea__attachmentSelect',
-											'textarea__attachmentSelect--recording'
-										)}
-									>
-										<span className="textarea__voiceRecordingBar">
-											<span className="textarea__voiceRecordingDot"></span>
-											<span className="textarea__voiceRecordingLabel">
-												{translate(
-													'voice.recording.active'
-												)}
-											</span>
-											<span className="textarea__voiceRecordButton__timer">
-												{formatRecordingDuration(
-													voiceRecordingDurationSec
-												)}
-											</span>
-											<button
-												type="button"
-												className="textarea__voiceActionButton textarea__voiceActionButton--cancel"
-												onClick={() =>
-													stopVoiceRecording({
-														discard: true
-													})
-												}
-											>
-												{translate('app.cancel')}
-											</button>
-											<button
-												type="button"
-												className="textarea__voiceActionButton textarea__voiceActionButton--stop"
-												onClick={() =>
-													stopVoiceRecording()
-												}
-											>
-												{translate('app.stop')}
-											</button>
-										</span>
-									</span>
-								) : null)}
 						</span>
 						<div className="textarea__buttons">
 							<SendButton

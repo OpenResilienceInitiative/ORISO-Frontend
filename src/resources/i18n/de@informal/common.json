@@ -325,7 +325,8 @@
 			"vacatedHint": "nicht mehr in der Beratungsstelle",
 			"scope": {
 				"AGENCY": "Du kannst Kolleg:innen deiner Beratungsstelle auswählen.",
-				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen."
+				"TENANT": "Du kannst Kolleg:innen deines Trägers auswählen.",
+				"PLATFORM": "Du kannst Kolleg:innen deines Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"tooMany": "Du kannst bis zu {{max}} Personen auswählen.",
 			"error": {
@@ -861,7 +862,7 @@
 			"password": {
 				"reset": {
 					"insecure": "Dein Passwort ist nicht sicher.",
-					"instructions": "<span class=\"text--bold\">Dein Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 9 Zeichen</li></ul>",
+					"instructions": "<span class=\"text--bold\">Dein Passwort muss folgende Kriterien erfüllen, um eine geschützte Beratung zu garantieren:</span><ul class=\"pl--2 my--1\"><li>Groß-/Kleinschreibung</li><li>mind. eine Zahl</li><li>mind. ein Sonderzeichen (z.B.: ?, !, +, #, &, ...)</li><li>mind. 16 Zeichen</li></ul>",
 					"not": {
 						"same": "Dein Passwort ist nicht identisch."
 					},
@@ -1306,6 +1307,9 @@
 				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
+			},
+			"displayName": {
+				"optional": "Anzeigename (optional). Ohne Angabe wird deine User-ID angezeigt."
 			}
 		},
 		"errors": {
@@ -1788,8 +1792,10 @@
 			},
 			"decision": {
 				"app": "Sicher per App verbinden",
+				"appActive": "Die Authenticator-App ist bereits als zweiter Faktor aktiv. Zum Wechseln wähle die andere Methode.",
 				"copy": "Schütze Dein Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ kannst Du Codes per E-Mail erhalten.",
-				"email": "E-Mail-Code verwenden (weniger sicher)"
+				"email": "E-Mail-Code verwenden (weniger sicher)",
+				"emailActive": "E-Mail-Codes sind bereits als zweiter Faktor aktiv. Zum Wechseln wähle die App."
 			},
 			"email": {
 				"connect": {
@@ -2688,7 +2694,6 @@
 			},
 			"access": {
 				"headline": "Dein Name für heute.",
-				"subline": "Anonym, ohne Konto. Wähle eine User-ID — oder würfle neue.",
 				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleib in diesem Fenster, bis du dran bist."
 			},
 			"waiting": {
@@ -2788,6 +2793,12 @@
 		},
 		"devices": {
 			"micMeter": "Lautstärke deines Mikrofons"
+		},
+		"ready": {
+			"description": "Niemand sieht oder hört dich, bevor du beitrittst. Die Vorschau siehst nur du.",
+			"descriptionCheck": "Deine Einstellung gilt, wenn du in dieser Gruppe einem Gespräch beitrittst. Die Vorschau siehst nur du.",
+			"knocking": "Anfrage gesendet, bitte warte …",
+			"notApplied": "Deine Einstellung für Kamera und Mikrofon wurde nicht übernommen. Bitte prüfe beide im Anruf."
 		}
 	},
 	"furtherCounselling": {
@@ -2816,6 +2827,9 @@
 			"endsCurrentUnnamed": "Wenn du annimmst, endet dein laufendes Gespräch."
 		},
 		"share": {
+			"signInToJoin": "Melde dich an, um diesem Anruf beizutreten.",
+			"conversationMember": "Du gehörst bereits zu diesem Gespräch. Tritt dem Anruf im zugehörigen Chat bei.",
+			"joinForbidden": "Du kannst diesem Anruf über diesen Link nicht beitreten.",
 			"knock": {
 				"on": "Gäste warten, bis du sie einlässt. Schaltest du es aus, kommen alle Wartenden sofort herein."
 			},
@@ -2862,6 +2876,10 @@
 			},
 			"note": "Deine Antwort gilt für dieses ganze Gespräch.",
 			"failed": "Deine Antwort konnte nicht gespeichert werden. Deine Nachricht ist noch nicht gesendet."
+		},
+		"lookupFailed": {
+			"title": "Wir konnten dein Konto nicht prüfen",
+			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
 	}
 }

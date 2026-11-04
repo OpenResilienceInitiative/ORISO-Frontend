@@ -28,6 +28,8 @@ import { callManager } from '../../../services/CallManager';
 import { GroupCallWidget } from '../GroupCallWidget';
 import { CALL_IDENTITY_EVENT_TYPE } from '../callIdentity';
 import { forgetPublishedIdentity } from '../publishCallIdentity';
+import { rememberJoinMedia } from '../prejoin/callPrejoin';
+import { NotificationsContext } from '../../../globalState/provider/NotificationsProvider';
 import {
 	FAKE_CALL_ID,
 	FAKE_CURRENT_USER_ID,
@@ -430,6 +432,81 @@ describe('GroupCallWidget Storybook harness', () => {
 		);
 	});
 
+	describe('the choice from the device check (#2016)', () => {
+		const wanted = { audio_enabled: true, video_enabled: false };
+		const lastApi = () =>
+			widgetApiMocks.instances.at(-1)! as unknown as {
+				on: ReturnType<typeof vi.fn>;
+				transport: { send: ReturnType<typeof vi.fn> };
+			};
+
+		const renderReadyCall = async (
+			reply: unknown,
+			addNotification: ReturnType<typeof vi.fn>
+		) => {
+			rememberJoinMedia(FAKE_SIGNAL_ROOM_ID, wanted);
+			const matrixClientService = makeFakeMatrixClientService('active');
+			seedIncomingElementCall();
+			callManager.answerCall();
+			renderTranslated(
+				<NotificationsContext.Provider
+					value={{ addNotification } as never}
+				>
+					<MatrixClientContext.Provider
+						value={{
+							matrixClientService,
+							setMatrixClientService: () => {}
+						}}
+					>
+						<GroupCallWidget />
+					</MatrixClientContext.Provider>
+				</NotificationsContext.Provider>
+			);
+			await waitFor(() =>
+				expect(
+					lastApi().on.mock.calls.some(([name]) => name === 'ready')
+				).toBe(true)
+			);
+			const api = lastApi();
+			api.transport.send.mockResolvedValue(reply);
+			const [, ready] = api.on.mock.calls.find(
+				([name]) => name === 'ready'
+			)!;
+			act(() => ready());
+			return api;
+		};
+
+		const mutes = (api: ReturnType<typeof lastApi>) =>
+			api.transport.send.mock.calls.filter(
+				([action]) => action === 'io.element.device_mute'
+			);
+
+		it('stops once the call confirms it', async () => {
+			const addNotification = vi.fn();
+			const api = await renderReadyCall(wanted, addNotification);
+			await waitFor(() => expect(mutes(api)).toHaveLength(1));
+			await act(() => new Promise((done) => setTimeout(done, 1_200)));
+			expect(mutes(api)).toHaveLength(1);
+			expect(addNotification).not.toHaveBeenCalled();
+		});
+
+		it('warns when the call never confirms it', async () => {
+			const addNotification = vi.fn();
+			const api = await renderReadyCall(
+				{ audio_enabled: true, video_enabled: true },
+				addNotification
+			);
+			await waitFor(
+				() => expect(addNotification).toHaveBeenCalledTimes(1),
+				{ timeout: 4_000 }
+			);
+			expect(mutes(api)).toHaveLength(3);
+			expect(addNotification.mock.calls[0][0].notificationType).toBe(
+				'warning'
+			);
+		});
+	});
+
 	it('moves keyboard focus into the dock when the call is minimized', async () => {
 		const { view } = await renderActiveCall();
 
@@ -796,7 +873,9 @@ describe('what the host adds around the call', () => {
 		expect(knockApi.shareLink).not.toHaveBeenCalled();
 	});
 
-	it('gives a counsellor the private notepad beside the stage', async () => {
+	it('keeps no notepad of its own beside the call', async () => {
+		// "Meine Gesprächsnotiz" lives inside the call now (ElementCall#112);
+		// a second, older notepad in the host would show two of them.
 		const service = makeFakeMatrixClientService('active');
 		activeCall();
 		const view = withUser(
@@ -811,9 +890,7 @@ describe('what the host adds around the call', () => {
 				view.container.querySelector('.element-call-iframe')
 			).toBeTruthy()
 		);
-		expect(
-			view.container.querySelector('.element-call-notes')
-		).toBeTruthy();
+		expect(view.container.querySelector('.element-call-notes')).toBeFalsy();
 	});
 
 	it('keeps announcing who it is until the send can be encrypted', async () => {
@@ -910,90 +987,6 @@ describe('what the host adds around the call', () => {
 			timeout: 20000
 		});
 	}, 40000);
-
-	const counsellorWithStage = async (
-		innerWidth: number,
-		innerHeight: number
-	) => {
-		const was = {
-			width: window.innerWidth,
-			height: window.innerHeight
-		};
-		window.innerWidth = innerWidth;
-		window.innerHeight = innerHeight;
-		try {
-			const service = makeFakeMatrixClientService('active');
-			activeCall();
-			const view = withUser(
-				{
-					userId: '@berater:matrix.storybook.test',
-					grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
-				},
-				service
-			);
-			await waitFor(() =>
-				expect(
-					view.container.querySelector('.element-call-iframe')
-				).toBeTruthy()
-			);
-			return view.container.querySelector('.element-call-container');
-		} finally {
-			// Restored even when `waitFor` rejects: the enclosing cleanup does
-			// not touch the viewport, so a failure here would leak these
-			// dimensions into every later render in this file.
-			window.innerWidth = was.width;
-			window.innerHeight = was.height;
-		}
-	};
-
-	it('marks a stage too narrow to seat the notepad beside the call', async () => {
-		/*
-		 * The stage is a floating window, not the page.
-		 *
-		 * Opening the notepad made it a 320px flex sibling of the iframe, and
-		 * the only thing that decided whether to do that instead of laying it
-		 * over the stage was a VIEWPORT media query at 1280px. The stage's own
-		 * width is `stageSize` — autofit scales it to the screen and the
-		 * resize handles take it down to 280px — so a wide screen with a small
-		 * stage took the side-by-side branch and squeezed the call to a sliver,
-		 * or overflowed the panel out of a shell that clips.
-		 *
-		 * 700x300 is a desktop viewport (the mobile view starts at 640) whose
-		 * autofit stage is 436px wide: too narrow for 320 + the 280px minimum
-		 * the resizer allows for the call.
-		 */
-		const container = await counsellorWithStage(700, 300);
-		expect(container?.getAttribute('data-narrow-stage')).toBe('true');
-	});
-
-	it('leaves a stage with room for both alone', async () => {
-		// The other half of the test above: the marker has to be a
-		// measurement and not simply always on, or it would move the panel
-		// over the stage on every screen and undo the dock the handoff draws.
-		const container = await counsellorWithStage(1600, 900);
-		expect(container?.getAttribute('data-narrow-stage')).toBeNull();
-	});
-
-	it('never offers the notepad to an advice seeker', async () => {
-		// The panel is a counsellor's scratchpad. Offering it to a seeker
-		// would suggest the centre keeps notes on them, in a product whose
-		// whole promise is that it does not.
-		const service = makeFakeMatrixClientService('active');
-		activeCall();
-		const view = withUser(
-			{
-				userId: '@suchende:matrix.storybook.test',
-				grantedAuthorities: []
-			},
-			service
-		);
-		await waitFor(() =>
-			expect(
-				view.container.querySelector('.element-call-iframe')
-			).toBeTruthy()
-		);
-		expect(view.container.querySelector('.element-call-notes')).toBeFalsy();
-	});
 
 	it('announces the own identity to the call room, in the timeline', async () => {
 		/*

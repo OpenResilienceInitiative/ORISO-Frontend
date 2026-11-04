@@ -203,6 +203,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Vérifier et ouvrir",
+			"checking": "Recherche de virus …",
+			"checkingImage": "Vérification de l'image …",
+			"checkVirus": "Analyse antivirus",
+			"checkImage": "Analyse de l'image : sûre et conforme aux règles ?",
+			"decrypt": "Déchiffrer",
+			"decrypting": "Déchiffrement …",
+			"encryptedHint": "Chiffré de bout en bout",
+			"loadFailed": "Impossible de charger le fichier",
+			"retry": "Réessayer"
+		},
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
@@ -1158,6 +1170,8 @@
 			},
 			"nameLabel": "Nom de l'échange interne",
 			"noColleagues": "Aucun collègue à sélectionner",
+			"searchPeople": "Rechercher une personne",
+			"noMatchingPeople": "Aucune personne correspondante.",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
 			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
@@ -1168,7 +1182,8 @@
 			},
 			"scope": {
 				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
-				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
+				"PLATFORM": "Vous pouvez choisir des collègues de votre organisme et des autres organismes participants."
 			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
@@ -1276,7 +1291,8 @@
 			"rules": {
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
-			}
+			},
+			"devices": "Caméra et micro"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1974,6 +1990,8 @@
 			}
 		},
 		"mention": {
+			"check": "Sélectionner aussi {{name}}",
+			"checked": "Sélection : {{value}}. Cliquez à côté pour insérer.",
 			"notInChat": "pas dans le chat",
 			"empty": "Aucune personne trouvée",
 			"unavailable": "La liste n'a pas pu être chargée",
@@ -2150,11 +2168,44 @@
 		"info": "Information",
 		"success": "Succès",
 		"warning": "Avertissement",
+		"eventNotice": {
+			"chatMention": {
+				"title": "Mention dans une discussion",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion"
+			},
+			"mention": {
+				"title": "Mention dans la discussion d’équipe",
+				"from": "De {{name}}",
+				"several": "{{count}} nouvelles mentions",
+				"open": "Ouvrir la discussion d’équipe"
+			},
+			"handover": {
+				"title": "Nouveau transfert de dossier",
+				"from": "De {{name}}",
+				"several": "{{count}} avis de transfert de dossier",
+				"open": "Voir le dossier"
+			},
+			"consent": {
+				"title": "Consentement au transfert de dossier requis",
+				"text": "Le transfert attend une réponse.",
+				"several": "{{count}} demandes de transfert de dossier attendent une réponse.",
+				"open": "Voir la demande"
+			}
+		},
 		"liveChatMessage": {
 			"title": "Nouveau message dans le chat en direct",
 			"from": "De {{name}}",
 			"several": "{{count}} nouveaux messages",
 			"open": "Ouvrir le chat"
+		},
+		"newEnquiry": {
+			"title": "Nouvelle demande",
+			"waiting": "Une personne attend une réponse.",
+			"several": "{{count}} nouvelles demandes attendent une réponse.",
+			"openOne": "Voir la demande",
+			"openList": "Voir les demandes"
 		}
 	},
 	"notifications": {
@@ -3623,6 +3674,11 @@
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
 				"note": "Jusque-là, vous écrivez normalement et vos messages restent visibles pour les autres. Vous-même ne pourrez plus revenir dans cette conversation ensuite."
+			},
+			"displayName": {
+				"optional": "Nom affiché (facultatif). Si vous ne le précisez pas, votre User-ID sera affiché.",
+				"suggest": "Proposer un nom",
+				"useUsername": "Utiliser le User-ID"
 			}
 		},
 		"back": "Retour",
@@ -4476,7 +4532,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
-			"unreadCount_one": "{{count}} nouveau message"
+			"unreadCount_one": "{{count}} nouveau message",
+			"openEnquiries": "{{count}} demandes ouvertes",
+			"openEnquiries_one": "{{count}} demande ouverte"
 		}
 	},
 	"statusOverlay": {
@@ -4759,8 +4817,10 @@
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
+				"appActive": "L'application d'authentification est déjà active comme second facteur. Pour changer, choisissez l'autre méthode.",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
 				"email": "Utiliser un code par e-mail (moins sûr)",
+				"emailActive": "Les codes par e-mail sont déjà actifs comme second facteur. Pour changer, choisissez l'application.",
 				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
@@ -5062,6 +5122,7 @@
 		"label": "Message vocal",
 		"play": "Lire le message vocal",
 		"pause": "Mettre le message vocal en pause",
+		"loading": "Chargement du message vocal",
 		"timeline": "Barre de progression",
 		"jumpTo": "Aller à {{time}}",
 		"aria": "Message vocal, {{duration}}, lire",
@@ -5529,6 +5590,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "Ce lien est actuellement en pause.",
 		"error": {
 			"title": "Ce lien d’invitation ne peut plus être utilisé",
 			"generic": "Le lien d’invitation n’a pas pu être utilisé",
@@ -5601,7 +5663,9 @@
 			"body": "Vous pouvez laisser une adresse e-mail, de manière entièrement facultative. Nous vous préviendrons dès qu'une réponse sera disponible. Le contenu de la consultation n'apparaît jamais dans cet e-mail.",
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
-			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support."
+			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
+			"retryRefresh": "Recharger"
 		},
 		"accountProtection": {
 			"headline": "Votre accès, protégé en plus",
@@ -5650,7 +5714,9 @@
 			"channelBrowser": "Navigateur sur cet appareil",
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
-			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
+			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},
 		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
 		"faq": {
@@ -6040,7 +6106,7 @@
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
-				"subline": "Anonyme, sans compte. Choisissez un identifiant — ou relancez les dés.",
+				"subline": "Anonyme, sans compte.",
 				"label": "Votre identifiant",
 				"temporary": "Cet accès ne vaut que pour cette conversation. Ensuite nous le supprimons — avec tous les messages, au plus tard après 48 heures. Restez dans cette fenêtre jusqu'à votre tour.",
 				"reroll": "Relancer",
@@ -6164,25 +6230,6 @@
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
 		},
-		"notes": {
-			"title": "Notes d’entretien",
-			"privacy": "Privé. Seulement pour vous, et seulement pendant l’entretien.",
-			"type": "Type de note",
-			"text": "Note",
-			"add": "Ajouter une note",
-			"remove": "Supprimer la note",
-			"copy": "Tout copier",
-			"copied": "Copié",
-			"empty": "Rien de noté pour l’instant.",
-			"collapse": "Replier les notes",
-			"expand": "Déplier les notes",
-			"open": "Notes d’entretien",
-			"types": {
-				"frage": "Question",
-				"anmerkung": "Remarque",
-				"aufgabe": "Tâche"
-			}
-		},
 		"states": {
 			"encrypted": "Chiffré",
 			"endsCurrent": "Si vous répondez, votre appel avec {{name}} prendra fin.",
@@ -6196,6 +6243,10 @@
 			"endsCurrentUnnamed": "Si vous répondez, votre appel en cours prendra fin."
 		},
 		"share": {
+			"signInToJoin": "Connectez-vous pour rejoindre cet appel.",
+			"conversationMember": "Vous participez déjà à cette conversation. Rejoignez l’appel depuis la discussion.",
+			"openConversations": "Ouvrir mes conversations",
+			"joinForbidden": "Vous ne pouvez pas rejoindre cet appel avec ce lien.",
 			"open": "Partager l’appel",
 			"title": "Partager l’appel",
 			"close": "Fermer",
@@ -6412,6 +6463,16 @@
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
 			"micMeter": "Volume de votre micro"
+		},
+		"ready": {
+			"title": "Vérifier la caméra et le micro",
+			"description": "Personne ne vous voit ni ne vous entend avant que vous ne rejoigniez. Vous seul voyez l'aperçu.",
+			"descriptionCheck": "Votre réglage s'applique lorsque vous rejoignez un appel dans ce groupe. Vous seul voyez l'aperçu.",
+			"join": "Rejoindre maintenant",
+			"done": "Terminé",
+			"retry": "Vérifier à nouveau",
+			"knocking": "Demande envoyée, veuillez patienter …",
+			"notApplied": "Votre réglage de la caméra et du micro n’a pas été appliqué. Veuillez vérifier les deux dans l’appel."
 		}
 	},
 	"furtherCounselling": {
@@ -6501,6 +6562,7 @@
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans cette consultation.",
 			"haveAccount": "Vous avez déjà un compte ? Se connecter",
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},
@@ -6565,6 +6627,10 @@
 			"confirm": "Continuer",
 			"cancel": "Annuler",
 			"failed": "Votre réponse n'a pas pu être enregistrée. Votre message n'a pas encore été envoyé."
+		},
+		"lookupFailed": {
+			"title": "Nous n'avons pas pu vérifier votre compte",
+			"text": "Votre message n'a pas encore été envoyé et reste dans le champ de saisie. Vérifiez votre connexion et envoyez-le à nouveau."
 		}
 	}
 }

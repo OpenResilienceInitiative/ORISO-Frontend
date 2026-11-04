@@ -1,3 +1,5 @@
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
 import * as React from 'react';
 import {
 	useCallback,
@@ -239,9 +241,17 @@ export const ConversationPreview = ({
 				: null,
 		[roomId, sessionsContext?.sessions]
 	);
+	const agencyFeatures = useSessionAgencyPolicy(
+		roomId ?? undefined,
+		resolveConversationAgencyId(activeSession?.item)
+	);
 	const sessionContextValue = useMemo(
-		() => ({ activeSession, avatarMembers: [] }),
-		[activeSession]
+		() => ({
+			activeSession,
+			avatarMembers: [],
+			agencyFeaturePolicy: agencyFeatures.policy
+		}),
+		[activeSession, agencyFeatures.policy]
 	);
 
 	const { messages, reactionEvents } = timeline;

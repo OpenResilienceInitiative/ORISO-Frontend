@@ -40,11 +40,20 @@ describe('askerEmailNotificationsPermitted', () => {
 		).toBe(false);
 	});
 
-	it('allows e-mail while at least one conversation type permits it', () => {
+	it('ignores the legacy live-chat switch when the other channels are off', () => {
 		expect(
 			askerEmailNotificationsPermitted({
 				featureAskerEmailAgencyCounsellingEnabled: false,
 				featureAskerEmailLiveChatEnabled: true,
+				featureAskerEmailSelfHelpEnabled: false
+			})
+		).toBe(false);
+	});
+	it('allows e-mail while at least one conversation type permits it', () => {
+		expect(
+			askerEmailNotificationsPermitted({
+				featureAskerEmailAgencyCounsellingEnabled: true,
+				featureAskerEmailLiveChatEnabled: false,
 				featureAskerEmailSelfHelpEnabled: false
 			})
 		).toBe(true);

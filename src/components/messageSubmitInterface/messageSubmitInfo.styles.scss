@@ -64,22 +64,24 @@
 		overflow-wrap: anywhere;
 	}
 
-	&--error {
-		border-left-color: var(--m3-error, $form-error);
-		background: var(--m3-error-container, #ffdad6);
-		color: var(--m3-on-error-container, #410002);
-
-		.messageSubmitInfoWrapper__icon svg * {
-			fill: var(--m3-error, $form-error);
-		}
-
-		.messageSubmitInfoWrapper__headline,
-		.messageSubmitInfoWrapper__message {
-			color: var(--m3-on-error-container, #410002);
-		}
-	}
-
 	&--hidden {
 		display: none;
+	}
+}
+
+// Send and attachment errors: an M3 error snackbar, docked like the card above.
+.messageSubmitInfoDock {
+	box-sizing: border-box;
+	width: calc(100% - 2 * #{$grid-base-two});
+	max-width: var(--composer-max-width, 895px);
+	margin: 0 auto $grid-base;
+
+	@media screen and (width <= 899px) {
+		margin-bottom: 54px;
+	}
+
+	&__headline {
+		display: block;
+		font-weight: $font-weight-medium;
 	}
 }

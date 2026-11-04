@@ -1273,7 +1273,6 @@
 		"sourcePath": "src/resources/img/icons/arrow-right.svg",
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
-			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
@@ -1979,7 +1978,6 @@
 		"usageFiles": [
 			"src/components/animatedIllustration/AnimatedIllustration.tsx",
 			"src/components/banUser/BanUser.tsx",
-			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
@@ -3158,7 +3156,6 @@
 		"sourcePath": "src/resources/img/icons/lock.svg",
 		"exportNames": ["LockIcon"],
 		"usageFiles": [
-			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
 			"src/components/message/AttachmentCard.tsx",
@@ -4243,7 +4240,6 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
-			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/chatMenuDropdown/CompactActionMenu.tsx",
 			"src/components/chatStage/PanelCallActions.tsx",
@@ -4549,7 +4545,6 @@
 		"sourcePath": "src/resources/img/icons/trash.svg",
 		"exportNames": ["TrashIcon"],
 		"usageFiles": [
-			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/editableData/EditableData.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",

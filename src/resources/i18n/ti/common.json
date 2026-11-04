@@ -203,6 +203,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "መርሚርካ ክፈት",
+			"checking": "ቫይረስ ይምርመር ኣሎ …",
+			"checkingImage": "ስእሊ ይምርመር ኣሎ …",
+			"checkVirus": "መርመራ ቫይረስ",
+			"checkImage": "ትንተና ስእሊ፦ ውሑስን መምርሒታት ዘኽብርን ድዩ?",
+			"decrypt": "ምስጢር ፍታሕ",
+			"decrypting": "ምስጢር ይፍታሕ ኣሎ …",
+			"encryptedHint": "ካብ ጫፍ ናብ ጫፍ ምስጢራዊ",
+			"loadFailed": "ፋይል ክጽዓን ኣይከኣለን",
+			"retry": "እንደገና ፈትን"
+		},
 		"mediaCheck": {
 			"unchecked": "ስእሊ ካብ ስሙ ዘይተፈልጠ ቻት – ገና ኣይተመርመረን",
 			"reveal": "ስእሊ ኣርኢ",
@@ -1158,6 +1170,8 @@
 			},
 			"nameLabel": "ስም ውሽጣዊ ዕላል",
 			"noColleagues": "ክምረጹ ዝኽእሉ መሳርሕቲ የለዉን",
+			"searchPeople": "ሰብ ድለዩ",
+			"noMatchingPeople": "ዝሰማማዕ ሰብ ኣይተረኽበን።",
 			"personCount_one": "{{count}} ሰብ ተወሲኹ",
 			"personCount_other": "{{count}} ሰባት ተወሲኾም",
 			"privateRoomHint": "ንዝተመርጹ ሰባት ጥራይ ብምስጢር ዝተሓለወ ፍሉይ ክፍሊ ይፈጠር።",
@@ -1168,7 +1182,8 @@
 			},
 			"scope": {
 				"AGENCY": "ካብ ማእከል ምኽርኩም መሳርሕትኹም ክትመርጹ ትኽእሉ።",
-				"TENANT": "ካብ ውዳበኹም መሳርሕትኹም ክትመርጹ ትኽእሉ።"
+				"TENANT": "ካብ ውዳበኹም መሳርሕትኹም ክትመርጹ ትኽእሉ።",
+				"PLATFORM": "ካብ ናትኩም ትካልን ካልኦት ተሳተፍቲ ትካላትን መሳርሕቲ ክትመርጹ ትኽእሉ።"
 			},
 			"selectPerson": "{{name}} ምረጽ",
 			"subtitle": "ምስ መሳርሕትኹም",
@@ -1276,7 +1291,8 @@
 			"rules": {
 				"headline": "ከመይ ንሓድሕድና ንተሓላለ",
 				"subline": "ሓንሳብ ኣንብብዎ – ድሕሪኡ ምሳና ኢኹም።"
-			}
+			},
+			"devices": "ካሜራን ማይክሮፎንን"
 		},
 		"shareDialog": {
 			"title_text": "ክቢ ተፈጢሩ",
@@ -1974,6 +1990,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} ወስኺ ምረጽ",
+			"checked": "ዝተመርጹ፦ {{value}}። ንምእታው ኣብ ጎኒ ጠውቕ።",
 			"notInChat": "ኣብቲ ቻት የለን",
 			"empty": "ሓደ እኳ ኣይተረኽበን",
 			"unavailable": "እቲ ዝርዝር ክጽዕን ኣይከኣለን",
@@ -2150,11 +2168,44 @@
 		"info": "ሓበሬታ",
 		"success": "ዓወት",
 		"warning": "መጠንቀቕታ",
+		"eventNotice": {
+			"chatMention": {
+				"title": "ኣብ ዕላል ጥቕሲ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} ሓደሽቲ ጥቕስታት",
+				"open": "ዕላል ክፈት"
+			},
+			"mention": {
+				"title": "ኣብ ዕላል ጉጅለ ጥቕሲ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} ሓደሽቲ ጥቕስታት",
+				"open": "ዕላል ጉጅለ ክፈት"
+			},
+			"handover": {
+				"title": "ሓድሽ ምቕያር ጉዳይ",
+				"from": "ካብ {{name}}",
+				"several": "{{count}} መርኣያታት ምቕያር ጉዳይ",
+				"open": "ጉዳይ ርአይ"
+			},
+			"consent": {
+				"title": "ንምቕያር ጉዳይ ስምምዕ የድሊ",
+				"text": "እቲ ምቕያር መልሲ ይጽበ ኣሎ።",
+				"several": "{{count}} ሕቶታት ምቕያር ጉዳይ መልሲ ይጽበዩ ኣለዉ።",
+				"open": "ሕቶ ርአይ"
+			}
+		},
 		"liveChatMessage": {
 			"title": "ሓድሽ መልእኽቲ ኣብ ቀጥታ ዕላል",
 			"from": "ካብ {{name}}",
 			"several": "{{count}} ሓደስቲ መልእኽትታት",
 			"open": "ዕላል ክፈት"
+		},
+		"newEnquiry": {
+			"title": "ሓድሽ ሕቶ",
+			"waiting": "ሓደ ምኽሪ ዝደሊ ሰብ መልሲ ይጽበ ኣሎ።",
+			"several": "{{count}} ሓደስቲ ሕቶታት መልሲ ይጽበዩ ኣለዉ።",
+			"openOne": "ሕቶ ርአ",
+			"openList": "ሕቶታት ርአ"
 		}
 	},
 	"notifications": {
@@ -3623,6 +3674,11 @@
 				"toggleOn": "ብዘይ ኣካውንት ተጸምበር",
 				"title": "እዚ ክፍለ-ግዜ ንብሮዘር ምስ ዓጸኻዮ ይውዳእ።",
 				"note": "ክሳብ ሽዑ ከም ንቡር ትጽሕፍ፡ መልእኽትታትካ ድማ ንኻልኦት ይተርፍ። ንስኻ ግን ድሕሪኡ ናብዚ ዝርርብ ክትምለስ ኣይትኽእልን።"
+			},
+			"displayName": {
+				"optional": "ዝርአ ስም (ኣማራጺ)። ባዶ እንተ ገዲፍኩምዎ፡ User-ID ይርአ።",
+				"suggest": "ስም ምኽሪ",
+				"useUsername": "User-ID ተጠቐሙ"
 			}
 		},
 		"back": "ዝባን",
@@ -4476,7 +4532,9 @@
 		},
 		"rail": {
 			"unreadCount": "{{count}} ሓደስቲ መልእኽታት",
-			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ"
+			"unreadCount_one": "{{count}} ሓድሽ መልእኽቲ",
+			"openEnquiries": "{{count}} ክፉታት ሕቶታት",
+			"openEnquiries_one": "{{count}} ክፉት ሕቶ"
 		}
 	},
 	"statusOverlay": {
@@ -4759,8 +4817,10 @@
 			},
 			"decision": {
 				"app": "ብኣፕ ብውሑስ ተራኸቡ",
+				"appActive": "እታ Authenticator ኣፕ ድሮ ከም ካልኣይ ረቛሒ ንጡፍቲ እያ። ንምቕያር ነቲ ካልእ ኣገባብ ምረጹ።",
 				"copy": "ንኣካውንትኩም ብካልኣይ ረቛሒ ሓልውዎ። እታ Authenticator ኣፕ ዝያዳ ውሕስቲ እያ፤ ከም ኣማራጺ ድማ ኮድ ብኢመይል ክትቅበሉ ትኽእሉ።",
 				"email": "ናይ ኢመይል ኮድ ተጠቐሙ (ውሕስነቱ ትሑት)",
+				"emailActive": "ናይ ኢመይል ኮዳት ድሮ ከም ካልኣይ ረቛሒ ንጡፋት እዮም። ንምቕያር ነታ ኣፕ ምረጹ።",
 				"title": "ካልኣይ ረቛሒ ምረጹ"
 			},
 			"email": {
@@ -5062,6 +5122,7 @@
 		"label": "ናይ ድምጺ መልእኽቲ",
 		"play": "ናይ ድምጺ መልእኽቲ ኣስምዕ",
 		"pause": "ናይ ድምጺ መልእኽቲ ደው ኣብል",
+		"loading": "ናይ ድምጺ መልእኽቲ ይጽዓን ኣሎ",
 		"timeline": "መስመር ግዜ",
 		"jumpTo": "ናብ {{time}} ዘሊልካ ኺድ",
 		"aria": "ናይ ድምጺ መልእኽቲ፡ {{duration}}፡ ኣስምዕ",
@@ -5529,6 +5590,7 @@
 		}
 	},
 	"inviteLink": {
+		"paused": "እዚ መላግቦ ንግዚኡ ደው ኢሉ ኣሎ።",
 		"error": {
 			"title": "እዚ ናይ ዕድመ መላግቦ ድሕሪ ሕጂ ክትጥቀመሉ ኣይትኽእልን ኢኻ",
 			"generic": "እቲ ናይ ዕድመ መላግቦ ክትጥቀመሉ ኣይተኻእለን",
@@ -5601,7 +5663,9 @@
 			"body": "ብወለንታኹም ኢመይል ኣድራሻ ክተቐምጡ ትኽእሉ። ሽዑ መልሲ ምስ መጸ መልእኽቲ ክመጸኩም እዩ። ትሕዝቶ ናይቲ ምኽሪ ግና ፈጺሙ ኣብዚ ኢመይል ኣይጸሓፍን።",
 			"action": "ናይ ኢመይል ኣድራሻ ግለጽ",
 			"saveFailed": "ምዕቃብ ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
-			"notAllowed": "እዚ ሕሳብ እዚ ኢመይል ኣድራሻ ክዕቅብ ፍቓድ የብሉን። በጃኹም ንደገፍና ተወከሱ።"
+			"notAllowed": "እዚ ሕሳብ እዚ ኢመይል ኣድራሻ ክዕቅብ ፍቓድ የብሉን። በጃኹም ንደገፍና ተወከሱ።",
+			"refreshFailed": "ኢመይል ኣድራሻኹም ተዓቂቡ ኣሎ። ናይ ሕጂ ቅጥዕታትኩም ክጽዓኑ ኣይከኣሉን።",
+			"retryRefresh": "ደጊምኩም ጽዓኑ"
 		},
 		"accountProtection": {
 			"headline": "መእተዊኹም፡ ተወሳኺ ውሕስነት",
@@ -5650,7 +5714,9 @@
 			"channelBrowser": "መርበብ መርኣዪ ኣብዚ መሳርሒ",
 			"channelEmail": "ኢ-መይል",
 			"enableBrowser": "ናይ መርበብ መርኣዪ ምልክታታት ወልዑ",
-			"saveFailed": "እቲ ቅጥዒ ክረጋገጽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።"
+			"saveFailed": "እቲ ቅጥዒ ክረጋገጽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"emailAccepted": "ለውጢ ናይ ኢመይል ምልክታታት ተቐቢሉ ኣሎ።",
+			"refreshFailed": "እቲ ለውጢ ተቐቢሉ ኣሎ። ናይ ሕጂ ቅጥዕታትኩም ክጽዓኑ ኣይከኣሉን።"
 		},
 		"unavailableInRoom": "ናይ መጀመርታ መልሲ – ኣብዚ ክፍሊ ኣይርከብን።",
 		"faq": {
@@ -6040,7 +6106,7 @@
 			},
 			"access": {
 				"headline": "ናይ ሎሚ ስምካ።",
-				"subline": "ብስም-ሓባእ፡ ብዘይ ኣካውንት። ሓደ መለለዪ ተጠቃሚ ምረጽ — ወይ ሓደሽቲ ፍጠር።",
+				"subline": "ብስም-ሓባእ፡ ብዘይ ኣካውንት።",
 				"label": "መለለዪ ተጠቃሚኻ",
 				"temporary": "እዚ መእተዊ ነዚ ዝርርብ ጥራይ እዩ። ድሕሪኡ ምስ ኩሎም መልእኽትታት፣ እንተበዝሐ ድሕሪ 48 ሰዓታት ንድምስሶ። ተራኹም ክሳብ ዝበጽሕ ኣብዚ መስኮት ጽንሑ።",
 				"reroll": "ደጊምካ ፈትን",
@@ -6164,25 +6230,6 @@
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
 		},
-		"notes": {
-			"title": "መዝገብ ዝርርብ",
-			"privacy": "ብሕታዊ። ንዓኻ ጥራይ፣ ከምኡ’ውን ክሳብ እቲ ዝርርብ ዝጸንሕ ጥራይ።",
-			"type": "ዓይነት መዝገብ",
-			"text": "መዝገብ",
-			"add": "መዝገብ ወስኽ",
-			"remove": "መዝገብ ኣውጽእ",
-			"copy": "ኩሉ ቅዳሕ",
-			"copied": "ተቐድሐ",
-			"empty": "ክሳብ ሕጂ ዝተመዝገበ የለን።",
-			"collapse": "መዛግብቲ ዕጸው",
-			"expand": "መዛግብቲ ክፈት",
-			"open": "መዝገብ ዝርርብ",
-			"types": {
-				"frage": "ሕቶ",
-				"anmerkung": "መብርሂ",
-				"aufgabe": "ዕዮ"
-			}
-		},
 		"states": {
 			"encrypted": "ዝተመስጠረ",
 			"endsCurrent": "እንተ መሊስኩም፡ ምስ {{name}} ዘሎኩም ዝርርብ ይውዳእ።",
@@ -6196,6 +6243,10 @@
 			"endsCurrentUnnamed": "እንተ መሊስኩም፡ ዘሎኩም ዝርርብ ይውዳእ።"
 		},
 		"share": {
+			"signInToJoin": "ነዚ ጻውዒት ክትጽንበሩ ናብ ሕሳብኩም እተዉ።",
+			"conversationMember": "ኣብዚ ዕላል ድሮ ተሳታፊ ኢኹም። ካብቲ ዕላል ናብቲ ጻውዒት ተጸንበሩ።",
+			"openConversations": "ዕላላተይ ክፈት",
+			"joinForbidden": "በዚ ሊንክ ናብዚ ጻውዒት ክትጽንበሩ ኣይትኽእሉን።",
 			"open": "ጻውዒት ኣካፍል",
 			"title": "ጻውዒት ኣካፍል",
 			"close": "ዕጸው",
@@ -6412,6 +6463,13 @@
 			"micOn": "ማይክሮፎን ክፈት",
 			"micOff": "ማይክሮፎን ዕጸው",
 			"micMeter": "ድምጺ ማይክሮፎንኩም"
+		},
+		"ready": {
+			"title": "ካሜራን ማይክሮፎንን ፈትሹ",
+			"join": "ሕጂ ተጸንበሩ",
+			"done": "ተዛዚሙ",
+			"retry": "እንደገና ፈትሹ",
+			"knocking": "ሕቶ ተላኢኹ፣ በጃኹም ተጸበዩ …"
 		}
 	},
 	"furtherCounselling": {
@@ -6501,6 +6559,7 @@
 		},
 		"entry": {
 			"inactive": "እዚ ሊንክ ደጊም ንጡፍ ኣይኮነን።",
+			"callsDisabled": "ኣብዚ ምኽሪ ጻውዒት ኣይከኣልን።",
 			"haveAccount": "ሕሳብ ኣለካ ድዩ? እቶ",
 			"joinFailed": "ኣይሰለጠን። በጃኻ እንደገና ፈትን።"
 		},
@@ -6565,6 +6624,10 @@
 			"confirm": "ቀጽል",
 			"cancel": "ሰርዝ",
 			"failed": "መልስኹም ክዕቀብ ኣይከኣለን። መልእኽትኹም ገና ኣይተላእከን።"
+		},
+		"lookupFailed": {
+			"title": "ሕሳብኩም ክንምርምር ኣይከኣልናን",
+			"text": "መልእኽትኹም ገና ኣይተላእከን፣ ኣብ መእተዊ ቦታ ይጸንሕ። በጃኹም ርክብኩም ፈትሹ፣ ከም ሓድሽ ድማ ስደድዎ።"
 		}
 	}
 }

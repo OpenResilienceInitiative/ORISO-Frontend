@@ -1,48 +1,9 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { VoicePlayer } from './VoicePlayer';
-
-/**
- * Storybook needs audio that really plays and really seeks, so each story
- * builds a silent 8 kHz WAV of the requested length in memory. Nothing is
- * fetched and nothing ships — this helper lives in the story file only.
- */
-const createSilentWavUrl = (seconds: number): string => {
-	const sampleRate = 8000;
-	const sampleCount = Math.max(1, Math.round(seconds * sampleRate));
-	const buffer = new ArrayBuffer(44 + sampleCount);
-	const view = new DataView(buffer);
-	const writeAscii = (offset: number, text: string) => {
-		for (let i = 0; i < text.length; i++) {
-			view.setUint8(offset + i, text.charCodeAt(i));
-		}
-	};
-
-	writeAscii(0, 'RIFF');
-	view.setUint32(4, 36 + sampleCount, true);
-	writeAscii(8, 'WAVE');
-	writeAscii(12, 'fmt ');
-	view.setUint32(16, 16, true); // PCM chunk size
-	view.setUint16(20, 1, true); // PCM
-	view.setUint16(22, 1, true); // mono
-	view.setUint32(24, sampleRate, true);
-	view.setUint32(28, sampleRate, true); // byte rate
-	view.setUint16(32, 1, true); // block align
-	view.setUint16(34, 8, true); // bits per sample
-	writeAscii(36, 'data');
-	view.setUint32(40, sampleCount, true);
-	// 128 is silence for unsigned 8-bit PCM.
-	new Uint8Array(buffer, 44).fill(128);
-
-	return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
-};
-
-const useSilentAudio = (seconds: number) => {
-	const url = useMemo(() => createSilentWavUrl(seconds), [seconds]);
-	useEffect(() => () => URL.revokeObjectURL(url), [url]);
-	return url;
-};
+import { useSilentAudio } from './__storybook__/silentAudio';
 
 const Player = ({
 	seconds,
@@ -449,4 +410,45 @@ export const Responsive: Story = {
 	name: 'Mitschrumpfen',
 	args: { durationSec: 12 },
 	render: () => <ResponsiveStory />
+};
+
+/**
+ * An encrypted recording that is not on this device yet (#1140). The player
+ * stands at once because the length comes from the file name. Play fetches the
+ * bytes, shows that it is waiting, and starts when they arrive. The wait here
+ * is the story's own timer.
+ */
+const LoadsOnPlayDemo = () => {
+	const loaded = useSilentAudio(14);
+	const [src, setSrc] = useState<string | undefined>();
+	return (
+		<VoicePlayer
+			src={src}
+			durationSec={14}
+			onRequestSource={() => {
+				window.setTimeout(() => setSrc(loaded), 1500);
+			}}
+		/>
+	);
+};
+
+export const LoadsOnPlay: Story = {
+	render: () => <LoadsOnPlayDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: /abspielen|play/i })
+		);
+		const waiting = await canvas.findByRole('button', {
+			name: /geladen|loading/i
+		});
+		await expect(waiting).toHaveAttribute('aria-busy', 'true');
+		await waitFor(
+			() =>
+				expect(canvasElement.querySelector('audio')).toHaveAttribute(
+					'src'
+				),
+			{ timeout: 3000 }
+		);
+	}
 };

@@ -1,3 +1,5 @@
+import { TenantContext } from '../../globalState/provider/TenantProvider';
+import { accountPolicyTenant } from '../../test/fixtures/askerAccountPolicyFixtures';
 import * as React from 'react';
 import { accountConsentPlay } from '../../../.storybook/consentCompletionStoryPlay';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -51,7 +53,22 @@ import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLa
  * calendar export — they have no account to export to. The "plain" stories below
  * are the proposal for that; the "full" ones are what an account holder sees.
  */
+const editableTenant = accountPolicyTenant();
+
 const meta: Meta = {
+	decorators: [
+		(Story) => (
+			<TenantContext.Provider
+				value={{
+					tenant: editableTenant,
+					setTenant: () => {},
+					updateTenantSettings: () => {}
+				}}
+			>
+				<Story />
+			</TenantContext.Provider>
+		)
+	],
 	id: 'group-chat-self-help-entry-room',
 	title: 'Entry flows/Self-help groups/Entry room',
 	beforeEach: () => clearAccountDataDraft(),
