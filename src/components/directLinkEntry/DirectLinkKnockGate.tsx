@@ -71,16 +71,19 @@ export interface DirectLinkKnockGateDeps extends DirectLinkKnockDeps {
 const callRoomOf = (knock: PendingKnock) =>
 	knock.joinCall?.roomRef ?? knock.matrixRoomId ?? null;
 
+/**
+ * Let in after a knock: starts the call. The camera choice from the device
+ * check (#2016) also decides whether the permission request asks for the
+ * camera; the choice itself stays for the call to take (`GroupCallWidget`).
+ */
 export const defaultStartCall = async (knock: PendingKnock) => {
 	if (knock.matrixRoomId) await waitForJoinedRoom(knock.matrixRoomId);
 	const isVideo = knock.medium === 'VIDEO';
+	const chosen = peekJoinMedia(callRoomOf(knock));
 	await startRoomCall({
 		roomId: knock.matrixRoomId,
 		isVideo,
-		/* The switches of the knock dialog: a camera that is off, or that
-		   this device does not have, is not asked for (ElementCall#116). */
-		requestCamera:
-			peekJoinMedia(callRoomOf(knock))?.video_enabled ?? isVideo
+		requestCamera: isVideo && (chosen?.video_enabled ?? true)
 	});
 };
 

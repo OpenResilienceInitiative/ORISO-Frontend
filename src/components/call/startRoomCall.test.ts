@@ -146,6 +146,33 @@ describe('startRoomCall', () => {
 		expect(started).toEqual([[CLIENT_ROOM, true, undefined]]);
 	});
 
+	it('asks for the camera of a video call when no preview choice is passed', async () => {
+		await startRoomCall({
+			roomId: SIDE_ROOM,
+			isVideo: true,
+			notify,
+			getCallManager
+		});
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: true,
+			audio: true
+		});
+	});
+
+	it('never asks for a camera in a phone call', async () => {
+		await startRoomCall({
+			roomId: SIDE_ROOM,
+			isVideo: false,
+			requestCamera: true,
+			notify,
+			getCallManager
+		});
+		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+			video: false,
+			audio: true
+		});
+	});
+
 	it('says so and starts nothing when the room is unknown', async () => {
 		await startRoomCall({
 			roomId: null,
