@@ -2033,10 +2033,13 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 		await expect(
 			barButtons[1].querySelector('[data-testid="ArrowDownwardIcon"]')
 		).not.toBeNull();
-		// T22: at 390 the bar scrolls; expand never hides under send.
+		// Frank (03.11.): at 390 the bar fits without scrolling, and its last
+		// button never hides under send.
 		await expectActionBarScrolls(
-			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!
+			canvasElement.querySelector<HTMLElement>('[data-cy="stage-main"]')!,
+			{ overflow: 'either' }
 		);
+		await expect(bar.scrollWidth).toBeLessThanOrEqual(bar.clientWidth);
 		const dragHandle = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .dragHandle'
 		)!;

@@ -18,6 +18,7 @@ import {
 	CallDeviceControls,
 	CallModality
 } from '../waitingRoom/callEntry/callEntryTypes';
+import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { openDirectLinkConversation } from './directLinkEntryFlow';
 import { directLinkRegistration } from './directLinkRegistration';
@@ -203,8 +204,9 @@ const DirectLinkCallEntryForm = ({
 				: undefined;
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
+				/* A switched-off link (410) cannot work on a retry. */
 				title: t(
-					status === 410
+					isInactiveDirectLinkError(error)
 						? 'directLink.entry.inactive'
 						: status === 403
 							? 'calls.share.joinForbidden'

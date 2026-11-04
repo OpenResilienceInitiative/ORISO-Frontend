@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
+		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
 		"empty": "No participants."
+	},
+	"timelineSettings": {
+		"title": "Appointments in the conversation list",
+		"description": "How the list shows upcoming appointments. Applies on all devices.",
+		"scrollModel": {
+			"legend": "Scrolling",
+			"panes": "Two areas: the future above, the past below",
+			"single": "One timeline: the future opens only when you keep pulling past “Now”"
+		},
+		"reveal": {
+			"legend": "When appointments are coming up, show",
+			"none": "Nothing",
+			"next": "The next appointment",
+			"half": "Half the list",
+			"most": "Almost everything"
+		},
+		"pastDate": {
+			"legend": "Date on past conversations",
+			"corner": "In the corner of the card",
+			"line": "In its own line",
+			"off": "Do not show"
+		},
+		"writeFailed": "The setting could not be saved. Please try again."
 	},
 	"menuEffects": {
 		"title": "Menu appearance",
@@ -200,6 +224,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Check and open",
+			"checking": "Checking for viruses …",
+			"checkingImage": "Checking the image …",
+			"checkVirus": "Virus scan",
+			"checkImage": "Image analysis: safe and within the guidelines?",
+			"decrypt": "Decrypt",
+			"decrypting": "Decrypting …",
+			"encryptedHint": "End-to-end encrypted",
+			"loadFailed": "The file could not be loaded",
+			"retry": "Try again"
+		},
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
 			"reveal": "Show image",
@@ -353,7 +389,8 @@
 		"participants": {
 			"label": "Participants: {{names}}",
 			"more": "{{count}} more participants",
-			"more_one": "1 more participant"
+			"more_one": "1 more participant",
+			"moreList": "More participants ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Switch channel",
@@ -756,22 +793,6 @@
 			"addThis": "Add this date to your calendar",
 			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Appointment",
-			"ariaLabel": "Future timeline",
-			"commandError": "The occurrence could not be changed. Please try again.",
-			"duplicate": "Duplicate as one-off",
-			"empty": "No upcoming events.",
-			"groupChatFallback": "Group chat",
-			"hide": "Hide future events",
-			"loadMore": "Load three more months",
-			"loadError": "Some future events could not be loaded.",
-			"loading": "Loading future events…",
-			"now": "Now",
-			"revealAriaLabel": "Reveal future timeline",
-			"show": "Show future events",
-			"skip": "Skip occurrence"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-moderator",
 			"OWNER": "Owner",
@@ -921,6 +942,8 @@
 			},
 			"nameLabel": "Internal name",
 			"noColleagues": "No colleagues to choose from",
+			"searchPeople": "Search for a person",
+			"noMatchingPeople": "No matching people found.",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
 			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
@@ -931,7 +954,8 @@
 			},
 			"scope": {
 				"AGENCY": "You can pick colleagues from your counselling centre.",
-				"TENANT": "You can pick colleagues from your organisation."
+				"TENANT": "You can pick colleagues from your organisation.",
+				"PLATFORM": "You can choose colleagues from your own organisation and other participating organisations."
 			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
@@ -1252,7 +1276,8 @@
 			"rules": {
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
-			}
+			},
+			"devices": "Camera & microphone"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1979,6 +2004,8 @@
 			}
 		},
 		"mention": {
+			"check": "Also select {{name}}",
+			"checked": "Selected: {{value}}. Click beside the list to insert.",
 			"notInChat": "not in chat",
 			"empty": "No one found",
 			"unavailable": "The list could not be loaded",
@@ -4345,7 +4372,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group",
+				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling",
 				"directLinkVideo": "Video call",
@@ -4475,13 +4502,53 @@
 			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"expand": "Expand consultations list",
 			"collapse": "Collapse consultations list to enlarge the chat",
-			"scrollAriaLabel": "Drag to scroll the list."
+			"scrollAriaLabel": "Drag to scroll the list.",
+			"futureAriaLabel": "Upcoming appointments: drag down to show them, Up and Down move between stops."
 		},
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message",
 			"openEnquiries": "{{count}} open requests",
 			"openEnquiries_one": "{{count}} open request"
+		},
+		"timeline": {
+			"now": "Now",
+			"running": "in progress",
+			"upcoming": "Upcoming appointments",
+			"nextAppointment": "Next appointment: {{date}}",
+			"appointment": {
+				"create": "Add appointment",
+				"dialog": {
+					"createTitle": "Add appointment",
+					"moveTitle": "Move appointment",
+					"description": "The appointment belongs to this conversation. A notice appears in the conversation.",
+					"createAction": "Add",
+					"moveAction": "Move",
+					"date": "Date",
+					"start": "Start",
+					"end": "End",
+					"error": {
+						"incomplete": "Please choose a date and time.",
+						"past": "The appointment must be in the future.",
+						"order": "The end must be after the start.",
+						"conflict": "This appointment can no longer be changed: it was cancelled or the conversation has ended.",
+						"failed": "The appointment could not be saved. Please try again."
+					}
+				},
+				"notice": {
+					"created": "Appointment scheduled: {{date}}",
+					"moved": "Appointment moved to: {{date}}",
+					"cancelled": "Appointment cancelled: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Notice not sent",
+					"text": "The appointment is saved, but the notice in the conversation could not be sent."
+				},
+				"cancelFailed": {
+					"title": "Appointment not cancelled",
+					"text": "The appointment could not be cancelled. Please try again."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -5068,6 +5135,7 @@
 		"label": "Voice message",
 		"play": "Play voice message",
 		"pause": "Pause voice message",
+		"loading": "Loading voice message",
 		"timeline": "Timeline",
 		"jumpTo": "Jump to {{time}}",
 		"aria": "Voice message, {{duration}}, play",
@@ -6358,6 +6426,16 @@
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
 			"micMeter": "Your microphone volume"
+		},
+		"ready": {
+			"title": "Check camera and microphone",
+			"description": "Nobody can see or hear you before you join. Only you see the preview.",
+			"descriptionCheck": "Your setting applies when you join a call in this group. Only you see the preview.",
+			"join": "Join now",
+			"done": "Done",
+			"retry": "Check again",
+			"knocking": "Request sent, please wait …",
+			"notApplied": "Your camera and microphone setting was not applied. Please check both in the call."
 		}
 	},
 	"furtherCounselling": {
@@ -6447,6 +6525,7 @@
 		},
 		"entry": {
 			"inactive": "This link is no longer active.",
+			"callsDisabled": "Calls are not available in this counselling.",
 			"haveAccount": "Already have an account? Sign in",
 			"joinFailed": "That did not work. Please try again."
 		},

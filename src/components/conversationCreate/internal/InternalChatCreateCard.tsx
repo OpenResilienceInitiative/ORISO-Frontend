@@ -70,15 +70,6 @@ const PersonAddIcon = () => (
 	</svg>
 );
 
-const PlusIcon = () => (
-	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-		<path
-			d="M11 13H5V11H11V5H13V11H19V13H13V19H11V13Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
-
 export const InternalChatCreateCard = ({
 	people,
 	draft,
@@ -254,6 +245,12 @@ export const InternalChatCreateCard = ({
 					{menuOpen && (
 						<PersonSelectMenu
 							options={menuOptions}
+							searchLabel={translate(
+								'groupChat.internal.searchPeople'
+							)}
+							noMatchesLabel={translate(
+								'groupChat.internal.noMatchingPeople'
+							)}
 							onToggle={toggle}
 							anchorRef={splitButtonRef}
 							onClose={() => setMenuOpen(false)}
@@ -280,9 +277,8 @@ export const InternalChatCreateCard = ({
 					className="internalChatCreateCard__createButton"
 					disabled={!isReady}
 					onClick={onCreate}
-					aria-label={translate('groupChat.internal.createLabel')}
 				>
-					<PlusIcon />
+					{translate('groupChat.internal.createLabel')}
 				</button>
 			</div>
 		</FormatCard>

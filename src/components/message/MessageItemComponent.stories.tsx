@@ -13,6 +13,8 @@ import { ConsultantListContext } from '../../globalState/provider/ConsultantList
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import type { UserDataInterface } from '../../globalState/interfaces';
 import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import { SUPERVISOR_FEEDBACK_PREFIX } from './messageConstants';
+import { useSilentAudio } from '../voicePlayer/__storybook__/silentAudio';
 import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import {
 	MOCK_ASKER_MATRIX_ID,
@@ -2532,4 +2534,83 @@ export const CoAccessPreferenceDefaultLongestTranslation: Story = {
 export const GrantedPreferenceDefaultRussianLabelStress: Story = {
 	...GrantedPreferenceDefaultMobile,
 	globals: { ...phone390Globals, locale: 'ru' }
+};
+
+const SUPERVISION_NOTE =
+	'Du hast das gut eingeordnet. Frag beim nächsten Mal direkt nach dem Mietvertrag, dann sparst du dir den Umweg.';
+
+/** Feedback aus der Supervision: ruhige Outline, Supervisions-Icon, Kennzeichnung neben der Zeit. */
+export const SupervisorFeedback: Story = {
+	name: 'Feedback aus der Supervision',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			message: `${SUPERVISOR_FEEDBACK_PREFIX} ${SUPERVISION_NOTE}`
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const tag = canvasElement.querySelector(
+			'.messageItem__feedbackTag'
+		) as HTMLElement;
+		expect(tag?.textContent).toMatch(/Feedback/);
+		// On the time row, not above the text.
+		expect(tag.parentElement?.className).toContain('messageItem__timeRail');
+		expect(
+			canvasElement.querySelector('.messageItem__supervisionAvatar svg')
+		).toBeTruthy();
+	}
+};
+
+const VoiceNoteMessage = ({
+	seconds,
+	isMyMessage
+}: {
+	seconds: number;
+	isMyMessage: boolean;
+}) => {
+	const src = useSilentAudio(seconds);
+	const name = 'sprachnachricht.webm';
+	return (
+		<MessageItemComponent
+			{...(mockMessageItemComponentProps({
+				isMyMessage,
+				userId: MOCK_ASKER_MATRIX_ID,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+				message: ''
+			}) as React.ComponentProps<typeof MessageItemComponent>)}
+			{...baseHandlers}
+			attachments={[
+				{
+					title: name,
+					downloadUrl: src,
+					mediaType: 'audio/webm',
+					size: 48
+				} as never
+			]}
+			file={{ _id: 'voice', name, type: 'audio/webm' } as never}
+		/>
+	);
+};
+
+/** So sieht eine Sprachnachricht versendet im Chat aus, kurz und lang, ein- und ausgehend. */
+export const SentVoiceNotes: Story = {
+	name: 'Sprachnachricht, versendet',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	render: () => (
+		<>
+			<VoiceNoteMessage seconds={6} isMyMessage />
+			<VoiceNoteMessage seconds={14} isMyMessage={false} />
+			<VoiceNoteMessage seconds={95} isMyMessage />
+		</>
+	)
 };
