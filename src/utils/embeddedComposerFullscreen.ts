@@ -48,6 +48,33 @@ export const postComposerFullscreen = (expanded: boolean) => {
 	window.parent.postMessage(message, window.location.origin);
 };
 
+/**
+ * Several composers can be mounted at once (main chat plus a side panel). Each
+ * reports on its own; the frame stays fullscreen while ANY owner is expanded, so
+ * a collapsed composer mounting or unmounting never releases another's state.
+ */
+const expandedOwners = new Set<string>();
+let reportedExpanded = false;
+
+export const reportComposerExpanded = (owner: string, expanded: boolean) => {
+	if (expanded) {
+		expandedOwners.add(owner);
+	} else {
+		expandedOwners.delete(owner);
+	}
+	const anyExpanded = expandedOwners.size > 0;
+	if (anyExpanded !== reportedExpanded) {
+		reportedExpanded = anyExpanded;
+		postComposerFullscreen(anyExpanded);
+	}
+};
+
+/** Test isolation: owners are module state. */
+export const resetComposerExpandedOwners = () => {
+	expandedOwners.clear();
+	reportedExpanded = false;
+};
+
 export const isComposerFullscreenMessage = (
 	data: unknown
 ): data is ComposerFullscreenMessage =>

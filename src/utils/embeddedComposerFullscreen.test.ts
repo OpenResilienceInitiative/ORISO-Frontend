@@ -1,8 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	COMPOSER_FULLSCREEN_MESSAGE,
 	isComposerFullscreenMessage,
-	postComposerFullscreen
+	postComposerFullscreen,
+	reportComposerExpanded,
+	resetComposerExpandedOwners
 } from './embeddedComposerFullscreen';
 
 describe('embeddedComposerFullscreen', () => {
@@ -45,5 +47,41 @@ describe('embeddedComposerFullscreen', () => {
 			'https://app.test'
 		);
 		vi.unstubAllGlobals();
+	});
+
+	describe('reportComposerExpanded', () => {
+		const inFrame = () => {
+			const post = vi.fn();
+			vi.stubGlobal('window', {
+				location: { origin: 'https://app.test' },
+				parent: { postMessage: post }
+			});
+			return post;
+		};
+		const expandedValues = (post: ReturnType<typeof vi.fn>) =>
+			post.mock.calls.map(([message]) => message.expanded);
+
+		afterEach(() => {
+			resetComposerExpandedOwners();
+			vi.unstubAllGlobals();
+		});
+
+		it('keeps the frame fullscreen while another composer mounts and unmounts collapsed', () => {
+			const post = inFrame();
+			reportComposerExpanded('main', true);
+			reportComposerExpanded('side', false); // initial state of a new composer
+			reportComposerExpanded('side', false); // and its unmount
+			expect(expandedValues(post)).toEqual([true]);
+		});
+
+		it('releases the frame only when the last expanded owner collapses', () => {
+			const post = inFrame();
+			reportComposerExpanded('main', true);
+			reportComposerExpanded('side', true);
+			reportComposerExpanded('main', false);
+			expect(expandedValues(post)).toEqual([true]);
+			reportComposerExpanded('side', false);
+			expect(expandedValues(post)).toEqual([true, false]);
+		});
 	});
 });
