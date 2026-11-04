@@ -13,6 +13,8 @@
 
 import { isPracticeId } from '../../practice/practiceIds';
 import { isTechnicalMatrixUser } from '../../utils/systemMatrixUsers';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
+import { isMatrixUserId } from '../../utils/messageMentions';
 
 /** Sentinel option value meaning "everyone in this conversation". */
 export const AUDIENCE_ALL = '__all__';
@@ -47,33 +49,6 @@ export interface AudienceOption {
 	label: string;
 	kind: AudienceKind;
 }
-
-/**
- * Who can be @-mentioned in a room the composer writes to directly, such as
- * the team discussion (#1998): its joined and invited members.
- */
-export const roomMentionMembers = (
-	room:
-		| {
-				getMembers?: () => Array<{
-					userId?: string;
-					name?: string;
-					membership?: string;
-				}>;
-		  }
-		| null
-		| undefined
-): Array<{ value: string; label: string }> =>
-	(room?.getMembers?.() || [])
-		.filter(
-			(member) =>
-				!!member?.userId &&
-				(member.membership === 'join' || member.membership === 'invite')
-		)
-		.map((member) => ({
-			value: `${member.userId}`,
-			label: member.name || ''
-		}));
 
 /**
  * A group's roster can arrive one member at a time. Keep "everyone" available
@@ -139,14 +114,13 @@ export const restoreAudienceSelection = (
 /**
  * The identifiers of everyone whose role we actually know, grouped by role.
  *
- * Built with the strict normaliser below rather than the composer's fuzzy
- * `getComparableAudienceIds`, which splits an id into tokens of four or more
- * characters — so every participant on the same homeserver shares the
- * homeserver token (`example` for `example.org`), far too loose to decide
- * whether somebody is a moderator.
+ * Built with the strict normaliser below. The composer's old fuzzy matcher
+ * split an id into tokens of four or more characters, so every participant on
+ * the same homeserver shared the homeserver token (`example` for
+ * `example.org`), far too loose to decide whether somebody is a moderator.
  *
- * Recipient collection (`createAudienceCollector`) is strict for the same
- * reason; the fuzzy matcher now survives only in the @-mention provider.
+ * Recipient collection (`createAudienceCollector`) and the @-mention provider
+ * (`resolveMentionCandidates`) are strict for the same reason.
  */
 export interface AudienceRoster {
 	asker: Set<string>;
@@ -181,6 +155,87 @@ export const audienceIdentityKeys = (rawValue?: string | null): Set<string> => {
 	add(withoutAt);
 	add(withoutAt.split(':')[0]);
 	return keys;
+};
+
+/**
+ * Who can be @-mentioned in a room the composer writes to directly, such as
+ * the team discussion (#1998): its joined and invited members, minus the
+ * author.
+ */
+export const roomMentionMemberIds = (
+	room:
+		| {
+				getMembers?: () => Array<{
+					userId?: string;
+					membership?: string;
+				}>;
+		  }
+		| null
+		| undefined,
+	selfMatrixUserId?: string | null
+): string[] =>
+	(room?.getMembers?.() || [])
+		.filter(
+			(member) =>
+				!!member?.userId &&
+				member.userId !== selfMatrixUserId &&
+				(member.membership === 'join' || member.membership === 'invite')
+		)
+		.map((member) => `${member.userId}`);
+
+/**
+ * Pairs the agency directory with who is in the room. Exact identity only: a
+ * shared surname or homeserver must never mark somebody as in the chat, and
+ * above all must never put another person's Matrix id on their mention pill.
+ * Somebody who cannot be matched gets no id, so nobody is mentioned by mistake.
+ *
+ * Directory names are decoded; supervisors still arrive with the stored,
+ * encoded name ("enc.…"), so members are compared decoded as well.
+ *
+ * `reachOutsideRoom` is for the team discussion, where the server notifies a
+ * mentioned colleague of the agency who has not opened it yet (#1998): they
+ * stay marked as not in the chat, but their pill carries their own exact id.
+ */
+export const resolveMentionCandidates = (
+	directory: Map<
+		string,
+		{ displayName: string; username: string; matrixUserId?: string | null }
+	>,
+	memberIds: string[],
+	reachOutsideRoom = false
+) => {
+	const inRoom = new Set<string>();
+	const matrixUserIdByKey = new Map<string, string>();
+	memberIds.forEach((memberId) => {
+		const localPart = memberId.replace(/^@/, '').split(':')[0];
+		[
+			...Array.from(audienceIdentityKeys(memberId)),
+			...Array.from(audienceIdentityKeys(decodeUsernameSafely(localPart)))
+		].forEach((key) => {
+			inRoom.add(key);
+			if (isMatrixUserId(memberId)) {
+				matrixUserIdByKey.set(key, memberId);
+			}
+		});
+	});
+	return Array.from(directory.entries()).map(([consultantId, info]) => {
+		const ownMatrixUserId = isMatrixUserId(info.matrixUserId || '')
+			? `${info.matrixUserId}`
+			: undefined;
+		const keys = [
+			...Array.from(audienceIdentityKeys(info.username)),
+			...Array.from(audienceIdentityKeys(ownMatrixUserId))
+		];
+		return {
+			id: consultantId,
+			displayName: info.displayName,
+			username: info.username,
+			matrixUserId:
+				keys.map((key) => matrixUserIdByKey.get(key)).find(Boolean) ||
+				(reachOutsideRoom ? ownMatrixUserId : undefined),
+			isInRoom: keys.some((key) => inRoom.has(key))
+		};
+	});
 };
 
 const collectKeys = (values: (string | null | undefined)[]): Set<string> => {

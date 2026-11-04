@@ -71,7 +71,7 @@ import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
-import { decodeUsername } from '../../utils/encryptionHelpers';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -90,7 +90,8 @@ import {
 	audienceOptionsReady,
 	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
-	roomMentionMembers,
+	resolveMentionCandidates,
+	roomMentionMemberIds,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
@@ -143,6 +144,7 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
+import { useLoadRoomMembers } from '../../hooks/useLoadRoomMembers';
 import {
 	apiPostError,
 	ERROR_LEVEL_ERROR,
@@ -662,7 +664,14 @@ export const MessageSubmitInterfaceComponent = ({
 		Array<{ id: string; username: string }>
 	>([]);
 	const [agencyConsultantDirectory, setAgencyConsultantDirectory] = useState<
-		Map<string, { displayName: string; username: string }>
+		Map<
+			string,
+			{
+				displayName: string;
+				username: string;
+				matrixUserId?: string | null;
+			}
+		>
 	>(new Map());
 	/**
 	 * Why the mention directory looks the way it does (#993). Every failure
@@ -2525,59 +2534,6 @@ export const MessageSubmitInterfaceComponent = ({
 		[deriveLabelFromUserId]
 	);
 
-	/**
-	 * Fuzzy id expansion, kept only for the @-mention provider below.
-	 *
-	 * The audience selector no longer uses it: it splits an id on
-	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:example.org` yields `example` — a token every account on the
-	 * homeserver shares. As an identity test that is worthless, which is why
-	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
-	 *
-	 * The mention provider still matches on these tokens, and inherits the same
-	 * weakness one level down: two counsellors who merely share a surname
-	 * collide, so a pill for `hans.meier` can resolve to `@anna.meier`'s Matrix
-	 * id and mark him as in-room. That belongs to the mention feature (#435)
-	 * rather than to the Send-to selector, so it is reported separately instead
-	 * of being changed here.
-	 */
-	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
-		const compact = (rawValue || '').trim().toLowerCase();
-		if (!compact) {
-			return new Set<string>();
-		}
-		const ids = new Set<string>();
-		const addVariants = (value: string) => {
-			const normalized = (value || '').trim().toLowerCase();
-			if (!normalized) {
-				return;
-			}
-			ids.add(normalized);
-			ids.add(normalized.replace(/\s+/g, ''));
-			ids.add(normalized.replace(/[^a-z0-9]/gi, ''));
-			normalized
-				.split(/[^a-z0-9]+/gi)
-				.filter(Boolean)
-				.filter((token) => token.length >= 4 && token !== 'enc')
-				.forEach((token) => ids.add(token));
-			const consultantTokenMatches =
-				normalized.match(/consultant\d+/gi) || [];
-			consultantTokenMatches.forEach((token) =>
-				ids.add(token.toLowerCase())
-			);
-		};
-		addVariants(compact);
-		const withoutAt = compact.startsWith('@') ? compact.slice(1) : compact;
-		const localPart = withoutAt.split(':')[0];
-		addVariants(withoutAt);
-		addVariants(localPart);
-		ids.add(`@${withoutAt}`);
-		if (localPart) {
-			ids.add(`@${localPart}`);
-		}
-		return ids;
-	}, []);
-
 	useEffect(() => {
 		setAudienceRefreshTick((prev) => prev + 1);
 		const timeoutA = window.setTimeout(
@@ -2677,7 +2633,11 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 				const nextDirectory = new Map<
 					string,
-					{ displayName: string; username: string }
+					{
+						displayName: string;
+						username: string;
+						matrixUserId?: string | null;
+					}
 				>();
 				(Array.isArray(consultants) ? consultants : []).forEach(
 					(consultant) => {
@@ -2696,7 +2656,7 @@ export const MessageSubmitInterfaceComponent = ({
 						// #1998: the list sends the stored, encoded name
 						// ("enc.…"); room members carry the plain one in their
 						// Matrix id, so only the decoded name can match them.
-						const username = decodeUsername(
+						const username = decodeUsernameSafely(
 							`${consultant?.username || ''}`.trim()
 						);
 						nextDirectory.set(consultantId, {
@@ -2705,7 +2665,8 @@ export const MessageSubmitInterfaceComponent = ({
 								fallbackName ||
 								username ||
 								consultantId,
-							username
+							username,
+							matrixUserId: consultant?.matrixUserId
 						});
 					}
 				);
@@ -3853,7 +3814,8 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
-		readMembers: (): Array<{ value: string; label: string }> => [],
+		readMemberIds: (): string[] => [],
+		reachOutsideRoom: false,
 		selfId: userData?.userId as string | undefined
 	});
 	// #1998: the team discussion has its own room. The audience above belongs
@@ -3863,9 +3825,10 @@ export const MessageSubmitInterfaceComponent = ({
 	// component does not re-render while someone types, so a snapshot from
 	// the last render can predate the room's members.
 	const teamMentionRoomId = teamDiscussion ? targetRoomId : undefined;
-	const audienceMentionMembers = audienceOptions.filter(
-		(option) => option.value !== AUDIENCE_ALL
-	);
+	useLoadRoomMembers(teamMentionRoomId);
+	const audienceMentionMemberIds = audienceOptions
+		.filter((option) => option.value !== AUDIENCE_ALL)
+		.map((option) => option.value);
 	mentionDataRef.current = {
 		directory: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
@@ -3873,14 +3836,16 @@ export const MessageSubmitInterfaceComponent = ({
 		// members to their real Matrix user id (option.value is member.userId
 		// for room members — see the audience-options effect above), so only
 		// a *resolved* member id ends up in a mention.
-		readMembers: () =>
+		readMemberIds: () =>
 			teamMentionRoomId
-				? roomMentionMembers(
+				? roomMentionMemberIds(
 						matrixClientService
 							?.getClient?.()
-							?.getRoom?.(teamMentionRoomId)
+							?.getRoom?.(teamMentionRoomId),
+						getCurrentMatrixUserId()
 					)
-				: audienceMentionMembers,
+				: audienceMentionMemberIds,
+		reachOutsideRoom: !!teamMentionRoomId,
 		selfId: userData?.userId
 	};
 
@@ -3895,45 +3860,12 @@ export const MessageSubmitInterfaceComponent = ({
 			loadingLabel: translate('message.mention.loading'),
 			listLabel: translate('message.submit.toolbar.mention'),
 			getCandidates: () => {
-				const { directory, readMembers } = mentionDataRef.current;
-				const members = readMembers();
-				const idsOf = (member: { value: string; label: string }) => [
-					...Array.from(getComparableAudienceIds(member.value)),
-					// The directory holds decoded names (#1998), but supervisors
-					// still arrive with the stored, encoded one ("enc.…").
-					...Array.from(
-						getComparableAudienceIds(decodeUsername(member.value))
-					),
-					...Array.from(getComparableAudienceIds(member.label))
-				];
-				const inRoomValues = new Set(members.flatMap(idsOf));
-				const matrixUserIdByComparableId = new Map(
-					members
-						.filter((member) => /^@[^:@\s]+:.+$/.test(member.value))
-						.flatMap((member) =>
-							Array.from(new Set(idsOf(member))).map(
-								(id): [string, string] => [id, member.value]
-							)
-						)
-				);
-				return Array.from(directory.entries()).map(
-					([consultantId, info]) => {
-						const comparableIds = getComparableAudienceIds(
-							info.username
-						);
-						const matrixUserId = Array.from(comparableIds)
-							.map((id) => matrixUserIdByComparableId.get(id))
-							.find(Boolean);
-						return {
-							id: consultantId,
-							displayName: info.displayName,
-							username: info.username,
-							matrixUserId,
-							isInRoom: Array.from(comparableIds).some((id) =>
-								inRoomValues.has(id)
-							)
-						};
-					}
+				const { directory, readMemberIds, reachOutsideRoom } =
+					mentionDataRef.current;
+				return resolveMentionCandidates(
+					directory,
+					readMemberIds(),
+					reachOutsideRoom
 				);
 			}
 		}),
