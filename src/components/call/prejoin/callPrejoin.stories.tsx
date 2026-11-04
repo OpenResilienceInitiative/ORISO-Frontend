@@ -587,6 +587,8 @@ export const CircleHeadsetKeptOnReopen: Story = {
 			microphoneLabel: 'Jabra Evolve2 Headset',
 			cameraLabel: 'FaceTime HD-Kamera'
 		});
+		// Back in the unchanged pre-lobby.
+		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
 	}
 };
 
