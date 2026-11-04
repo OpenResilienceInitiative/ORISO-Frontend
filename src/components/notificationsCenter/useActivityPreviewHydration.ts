@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AUTHORITIES,
@@ -8,24 +8,19 @@ import {
 } from '../../globalState';
 import { getExtendedSession } from '../../globalState/helpers/stateHelpers';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import type {
-	MatrixActivityPreviewKind,
-	MatrixActivityPreviewLabels
-} from '../../utils/matrixActivityPreview';
-import { parseChannel } from '../../utils/channelRoute';
+import type { MatrixActivityPreviewLabels } from '../../utils/matrixActivityPreview';
+import { useActivityPreviewCache } from './useActivityPreviewCache';
 import { useSideRoomPreviewGate, type SideRoom } from './sideRoomPreviewGate';
 import { useGroupPreviewGate } from './groupPreviewGate';
 import { chatEndedTextKey } from '../message/messageConstants';
-import { activityEventSessionId, describeActivityEvent } from './activityEvent';
+import {
+	activityEventConversation,
+	describeActivityEvent
+} from './activityEvent';
 import {
 	requiresCaseHandoverCheck,
 	useCaseHandoverPreviewGate
 } from './caseHandoverPreviewGate';
-
-export interface HydratedActivityPreview {
-	text: string;
-	kind: MatrixActivityPreviewKind;
-}
 
 /**
  * #924 / #1888: the decrypted one-line previews of the Timeline's message
@@ -42,9 +37,6 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 	const language = i18n.language;
 	const { userData } = useContext(UserDataContext);
 	const sessions = useContext(SessionsDataContext)?.sessions;
-	const [hydratedMessagePreviews, setHydratedMessagePreviews] = useState<
-		Record<string, HydratedActivityPreview>
-	>({});
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
 			image: translate('notifications.center.preview.image'),
@@ -100,10 +92,14 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 				}
 				const matrixEventId = item.params?.matrixEventId;
 				// By room first: a numeric id can also be a group chat's (#1888).
-				const eventSessionId = activityEventSessionId(item);
+				const {
+					sessionId: eventSessionId,
+					roomId: eventRoom,
+					channelKind
+				} = activityEventConversation(item);
 				const session =
 					getExtendedSession(
-						item.params?.roomRef || undefined,
+						eventRoom || undefined,
 						sessions || []
 					) ??
 					getExtendedSession(
@@ -115,31 +111,27 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 				// A numeric id can collide between cases and groups. Until the room
 				// resolves, its authorization policy is unknown.
 				if (!session) return [];
-				const channel = parseChannel(
-					(item.actionPath || '').split('?')[1] || ''
-				).channel;
-				const differentRoom =
-					!!item.params?.roomRef &&
-					session.rid !== item.params.roomRef;
+				const differentRoom = !!eventRoom && session.rid !== eventRoom;
+				const namesSideRoom =
+					channelKind === 'supervision' || channelKind === 'team';
 				const side: SideRoom | null =
 					differentRoom &&
 					session.isSession &&
 					session.item?.id &&
-					item.params?.roomRef &&
-					(channel?.kind === 'supervision' ||
-						channel?.kind === 'team')
+					eventRoom &&
+					namesSideRoom
 						? {
 								sessionId: session.item.id,
-								room: item.params.roomRef,
-								kind: channel.kind
+								room: eventRoom,
+								kind: channelKind
 							}
 						: null;
-				if (differentRoom && !side) return [];
+				if ((differentRoom || namesSideRoom) && !side) return [];
 				const sessionId =
 					session.isSession && session.item?.id != null
 						? String(session.item.id)
 						: null;
-				const roomRef = item.params?.roomRef || session?.rid;
+				const roomRef = eventRoom || session.rid;
 				if (!matrixEventId || !roomRef) {
 					return [];
 				}
@@ -191,8 +183,10 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 			).sort(),
 		[candidatePreviewSources]
 	);
-	const isCaseHandoverPreviewAllowed =
-		useCaseHandoverPreviewGate(checkedSessionIds);
+	const isCaseHandoverPreviewAllowed = useCaseHandoverPreviewGate(
+		checkedSessionIds,
+		userData?.userId
+	);
 	const groups = useMemo(() => {
 		const byId = new Map();
 		candidatePreviewSources.forEach(({ group }) => {
@@ -261,62 +255,10 @@ export const useActivityPreviewHydration = (feed: NotificationFeedItem[]) => {
 			isSideAllowed
 		]
 	);
-	// Previews are dropped again the moment their card stops being allowed —
-	// a session arriving late in SessionsDataContext can turn a hydrated card
-	// into a curtained one, and the decrypted text would otherwise survive in
-	// this map, still feeding the card body and the search index.
-	const allowedPreviewIds = useMemo(
-		() =>
-			new Set(
-				messagePreviewSources.map((source) => source.activityEventId)
-			),
-		[messagePreviewSources]
-	);
-	useEffect(() => {
-		setHydratedMessagePreviews((current) => {
-			const staleIds = Object.keys(current).filter(
-				(activityEventId) => !allowedPreviewIds.has(activityEventId)
-			);
-			if (staleIds.length === 0) {
-				return current;
-			}
-			const next = { ...current };
-			staleIds.forEach((activityEventId) => delete next[activityEventId]);
-			return next;
-		});
-	}, [allowedPreviewIds]);
-	/**
-	 * The only way a hydrated preview should ever be read.
-	 *
-	 * The purge above is state cleanup and lands one render late; in the render
-	 * where a card loses its allowance the decrypted text is still in the map.
-	 * Reading through this guard means a curtained card never shows it, not
-	 * even for a single paint.
-	 */
-	const visiblePreview = useCallback(
-		(activityEventId: string) =>
-			allowedPreviewIds.has(activityEventId)
-				? hydratedMessagePreviews[activityEventId]
-				: undefined,
-		[allowedPreviewIds, hydratedMessagePreviews]
-	);
-	const onPreviewChange = useCallback(
-		(
-			activityEventId: string,
-			preview: string,
-			kind: MatrixActivityPreviewKind
-		) => {
-			setHydratedMessagePreviews((current) =>
-				current[activityEventId]?.text === preview &&
-				current[activityEventId]?.kind === kind
-					? current
-					: {
-							...current,
-							[activityEventId]: { text: preview, kind }
-						}
-			);
-		},
-		[]
+	const { onPreviewChange, visiblePreview } = useActivityPreviewCache(
+		messagePreviewSources,
+		userData?.userId,
+		userData?.userName
 	);
 
 	return {
