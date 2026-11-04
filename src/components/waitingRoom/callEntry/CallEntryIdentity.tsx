@@ -42,6 +42,8 @@ export interface CallEntryIdentityProps {
 	onUsernameBlur?: () => void;
 	/** No password field: the account's password is generated (#1486). */
 	hidePassword?: boolean;
+	/** `false`: only the suggest buttons change the User-ID. */
+	usernameEditable?: boolean;
 }
 
 /**
@@ -61,7 +63,8 @@ export const CallEntryIdentity = ({
 	onPasswordChange,
 	hidePassword = false,
 	usernameFeedback,
-	onUsernameBlur
+	onUsernameBlur,
+	usernameEditable = true
 }: CallEntryIdentityProps) => {
 	const { t, i18n } = useTranslation();
 	const locale = i18n.resolvedLanguage ?? 'de';
@@ -159,6 +162,7 @@ export const CallEntryIdentity = ({
 				onBlur={onUsernameBlur}
 				fullWidth
 				autoComplete="username"
+				inputProps={{ readOnly: !usernameEditable }}
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
