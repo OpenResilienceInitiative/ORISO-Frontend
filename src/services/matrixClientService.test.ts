@@ -991,7 +991,7 @@ describe('MatrixClientService', () => {
 			service.sendFileMessage('!room:matrix.localhost', stubTextFile(), {
 				abortController
 			})
-		).rejects.toBeDefined();
+		).rejects.toMatchObject({ name: 'AbortError' });
 		expect(uploadContent).not.toHaveBeenCalled();
 	});
 
@@ -1012,7 +1012,7 @@ describe('MatrixClientService', () => {
 			service.sendFileMessage('!room:matrix.localhost', stubTextFile(), {
 				abortController
 			})
-		).rejects.toBeDefined();
+		).rejects.toMatchObject({ name: 'AbortError' });
 		expect(sendMessage).not.toHaveBeenCalled();
 	});
 

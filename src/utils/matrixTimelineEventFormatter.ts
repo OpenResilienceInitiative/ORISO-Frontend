@@ -87,11 +87,16 @@ export const formatMatrixTimelineEvent = (
 	// The legacy Element quote-fallback in the body would duplicate the quote
 	// we render from the relation, so it is stripped for reply events.
 	const replyToEventId = getReplyToEventId(content);
+	const body = typeof content?.body === 'string' ? content.body : '';
+	const formattedBody =
+		typeof content?.formatted_body === 'string'
+			? content.formatted_body
+			: '';
 	const rawTextContent = isUndecryptedEvent
 		? encryptedFallbackText
 		: content?.msgtype === 'm.text'
-			? content?.formatted_body || content?.body || ''
-			: content?.body || '';
+			? formattedBody || body
+			: body;
 	const textMessageContent = replyToEventId
 		? stripReplyFallback(rawTextContent)
 		: rawTextContent;
@@ -146,12 +151,10 @@ export const formatMatrixTimelineEvent = (
 		const mediaRoute = getMatrixMediaRoute(mediaUrl);
 		const isEncryptedMedia = Boolean(content?.file?.url);
 		// MSC2530: a `filename` other than `body` makes `body` the caption.
-		const fileName = content.filename || content.body;
-		const hasCaption = Boolean(
-			content.body &&
-				content.filename &&
-				content.body !== content.filename
-		);
+		const filename =
+			typeof content.filename === 'string' ? content.filename : '';
+		const fileName = filename || body;
+		const hasCaption = Boolean(body && filename && body !== filename);
 		const attachment: ChatAttachment = {
 			title: fileName,
 			downloadUrl: mediaRoute.downloadUrl,

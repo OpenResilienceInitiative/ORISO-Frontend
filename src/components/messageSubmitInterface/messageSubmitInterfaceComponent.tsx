@@ -3654,7 +3654,8 @@ export const MessageSubmitInterfaceComponent = ({
 	// review (announced by its group label) instead of dropping it on <body>.
 	const isVoiceReviewOpen = isVoiceAttachmentSelected && !!voicePreviewUrl;
 	// An audio file from the disk is a file with a card, not a recording.
-	const isVoiceInsertionPending = isVoiceRecording || isVoiceReviewOpen;
+	const isVoiceInsertionPending =
+		isVoiceRecording || isVoiceAttachmentSelected;
 	useEffect(() => {
 		if (isVoiceReviewOpen) {
 			voiceReviewRef.current?.focus();

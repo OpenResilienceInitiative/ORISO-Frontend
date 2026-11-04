@@ -463,6 +463,18 @@ describe('a file with a caption (MSC2530)', () => {
 		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
 	});
 
+	it.each([
+		[{ filename: { bad: true }, body: 'safe.pdf' }, 'safe.pdf'],
+		[{ filename: 42, body: { bad: true } }, ''],
+		[{ filename: 'safe.pdf', body: 42 }, 'safe.pdf']
+	])('uses only string filenames and bodies: %j', (content, expected) => {
+		const message = fileEvent(content);
+		expect(message?.attachments?.[0].title).toBe(expected);
+		expect(message?.file?.name).toBe(expected);
+		expect(typeof message?.msg).toBe('string');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+
 	it('reads an older event without a filename as before', () => {
 		const message = fileEvent({ body: 'befund.pdf' });
 

@@ -300,11 +300,14 @@ class ChatTransportService {
 		options: SendFileMessageOptions = {}
 	): Promise<any> {
 		const matrixClientService = getMatrixClientService();
+		if (!matrixClientService) {
+			throw new Error('Matrix client not initialized');
+		}
 		const matrixSenderUserId =
 			options.feedbackMailIntent && !options.teamDiscussion
-				? matrixClientService?.getClient()?.getUserId() || null
+				? matrixClientService.getClient()?.getUserId() || null
 				: null;
-		const response = await matrixClientService?.sendFileMessage(
+		const response = await matrixClientService.sendFileMessage(
 			matrixRoomId,
 			file,
 			{
