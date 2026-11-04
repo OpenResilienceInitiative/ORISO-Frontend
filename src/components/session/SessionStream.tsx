@@ -1736,6 +1736,7 @@ export const SessionStream = ({
 							)}
 						{isConsultant && (
 							<HistoryRequestApprovals
+								key={resolvedChatSession.matrixRoomId}
 								roomId={resolvedChatSession.matrixRoomId}
 							/>
 						)}

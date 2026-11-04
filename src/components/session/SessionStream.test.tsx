@@ -259,7 +259,11 @@ vi.mock('../../services/recoveryReminderState', async (importOriginal) => ({
 }));
 vi.mock('../historyRequest/HistoryAskCard', () => ({
 	HistoryAskCard: (props: { roomId: string; unreadable?: boolean }) => (
-		<div data-testid="history-ask-card" data-room={props.roomId} />
+		<div
+			data-testid="history-ask-card"
+			data-room={props.roomId}
+			data-unreadable={String(props.unreadable)}
+		/>
 	)
 }));
 vi.mock('./CaseHandoverGate', () => ({
@@ -463,6 +467,33 @@ describe('SessionStream history request card', () => {
 		expect(
 			screen.getByTestId('history-ask-card').getAttribute('data-room')
 		).toBe(ROOM_ID);
+	});
+
+	it('marks the card readable when every loaded event can be read', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen
+				.getByTestId('history-ask-card')
+				.getAttribute('data-unreadable')
+		).toBe('false');
+	});
+
+	it('marks the card unreadable when a loaded event could not be decrypted', async () => {
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === ROOM_ID ? [{ isDecryptionFailure: () => true }] : []
+		);
+		try {
+			renderSessionStream({ isGroup: false });
+			await waitFor(() =>
+				expect(
+					screen
+						.getByTestId('history-ask-card')
+						.getAttribute('data-unreadable')
+				).toBe('true')
+			);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
 	});
 
 	it('hides it in a group chat, where the reason would reach every member', () => {

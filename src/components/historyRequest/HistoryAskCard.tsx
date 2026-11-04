@@ -68,7 +68,9 @@ export const HistoryAskCard: React.FC<HistoryAskCardProps> = ({
 						? t('historyRequest.ask.done')
 						: state === 'waiting'
 							? t('historyRequest.ask.waiting')
-							: t('historyRequest.ask.intro')}
+							: state === 'failed' && !open
+								? t('historyRequest.ask.failed')
+								: t('historyRequest.ask.intro')}
 				</p>
 				{!done && state !== 'sending' && (
 					<div className="historyRequestCard__actions">
@@ -76,7 +78,10 @@ export const HistoryAskCard: React.FC<HistoryAskCardProps> = ({
 							type="button"
 							className="historyRequestCard__approve"
 							data-testid="history-ask-open"
-							onClick={() => setOpen(true)}
+							onClick={() => {
+								if (state === 'failed') setState('idle');
+								setOpen(true);
+							}}
 						>
 							{t('historyRequest.ask.button')}
 						</button>
@@ -87,7 +92,9 @@ export const HistoryAskCard: React.FC<HistoryAskCardProps> = ({
 				<HistoryAskDialog
 					busy={state === 'sending'}
 					failed={state === 'failed'}
-					onClose={() => setOpen(false)}
+					onClose={() => {
+						if (state !== 'sending') setOpen(false);
+					}}
 					onSend={submit}
 				/>
 			)}

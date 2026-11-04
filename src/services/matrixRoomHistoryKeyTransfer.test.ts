@@ -893,6 +893,10 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			expect(service.getPendingApprovals()).toHaveLength(1);
 			release();
 			await expect(approval).resolves.toBe(true);
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(
+				1
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
 		});
 
 		it('throttles reason requests per sender, whatever device id they claim', async () => {

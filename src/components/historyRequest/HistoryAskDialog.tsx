@@ -43,6 +43,7 @@ export const HistoryAskDialog: React.FC<HistoryAskDialogProps> = ({
 					label: t('historyRequest.ask.dialog.send'),
 					onClick: () => onSend(trimmed),
 					disabled: busy || trimmed.length === 0,
+					busy,
 					primary: true,
 					testId: 'history-ask-send'
 				}

@@ -559,7 +559,7 @@
 			"title": "Frühere Nachrichten sind hier nicht lesbar",
 			"intro": "Sie haben sich auf einem neuen Gerät angemeldet, deshalb sind Ihre früheren Nachrichten in diesem Gespräch gesperrt. Sie können Ihre Beratung bitten, sie freizugeben.",
 			"button": "Frühere Nachrichten anfragen",
-			"waiting": "Anfrage gesendet. Ihre Beratung muss sie bestätigen; danach erscheinen die Nachrichten hier.",
+			"waiting": "Anfrage gesendet. Ihre Beratung muss sie bestätigen; danach erscheinen die Nachrichten hier. Passiert nichts, senden Sie die Anfrage erneut.",
 			"done": "Ihre früheren Nachrichten sind wieder lesbar.",
 			"failed": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
 			"dialog": {

@@ -547,12 +547,12 @@
 			"title": "Earlier messages are not readable here",
 			"intro": "You signed in on a new device, so your earlier messages in this conversation are locked. You can ask your counsellor to unlock them.",
 			"button": "Ask to read earlier messages",
-			"waiting": "Request sent. Your counsellor has to approve it; the messages appear here afterwards.",
+			"waiting": "Request sent. Your counsellor has to approve it; the messages appear here afterwards. If nothing happens, send the request again.",
 			"done": "Your earlier messages are readable again.",
 			"failed": "The request could not be sent. Please try again.",
 			"dialog": {
 				"title": "Ask to read earlier messages",
-				"description": "Your counsellor will see what you write and decides whether to unlock this conversation for you.",
+				"description": "Your counsellor will see what you write and will decide whether to unlock this conversation for you.",
 				"label": "What was in this conversation?",
 				"cancel": "Cancel",
 				"send": "Send request"
