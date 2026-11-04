@@ -4,7 +4,8 @@ import {
 	isComposerFullscreenMessage,
 	postComposerFullscreen,
 	reportComposerExpanded,
-	resetComposerExpandedOwners
+	resetComposerExpandedOwners,
+	announceComposerStateOnLoad
 } from './embeddedComposerFullscreen';
 
 describe('embeddedComposerFullscreen', () => {
@@ -82,6 +83,25 @@ describe('embeddedComposerFullscreen', () => {
 			expect(expandedValues(post)).toEqual([true]);
 			reportComposerExpanded('side', false);
 			expect(expandedValues(post)).toEqual([true, false]);
+		});
+
+		it('announces the current state when the frame has loaded', () => {
+			const post = inFrame();
+			const listeners: Record<string, () => void> = {};
+			vi.stubGlobal('window', {
+				location: { origin: 'https://app.test' },
+				parent: { postMessage: post },
+				addEventListener: (type: string, fn: () => void) => {
+					listeners[type] = fn;
+				}
+			});
+			vi.stubGlobal('document', { readyState: 'loading' });
+			announceComposerStateOnLoad();
+			reportComposerExpanded('main', true); // expanded before the load event
+			post.mockClear();
+			listeners.load();
+			expect(expandedValues(post)).toEqual([true]);
+			vi.unstubAllGlobals();
 		});
 	});
 });

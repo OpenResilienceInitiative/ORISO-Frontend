@@ -69,6 +69,26 @@ export const reportComposerExpanded = (owner: string, expanded: boolean) => {
 	}
 };
 
+/**
+ * A (re)loaded frame announces its own state once its document is complete, so
+ * the embedding page never has to guess: a reload resets a stale fullscreen
+ * (the new document starts collapsed), while an expansion reported before the
+ * load event survives because the frame reports it again here.
+ */
+export const announceComposerStateOnLoad = () => {
+	if (typeof window === 'undefined' || window.parent === window) {
+		return;
+	}
+	const announce = () => postComposerFullscreen(reportedExpanded);
+	if (document.readyState === 'complete') {
+		announce();
+	} else {
+		window.addEventListener('load', announce, { once: true });
+	}
+};
+
+announceComposerStateOnLoad();
+
 /** Test isolation: owners are module state. */
 export const resetComposerExpandedOwners = () => {
 	expandedOwners.clear();

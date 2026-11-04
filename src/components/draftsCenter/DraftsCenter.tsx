@@ -338,9 +338,6 @@ export const DraftsCenter = () => {
 										)}
 										src={embeddedChatPath}
 										className="draftsCenter__embeddedSessionFrame"
-										onLoad={() =>
-											setEmbeddedFullscreen(false)
-										}
 									/>
 								</div>
 							)}
