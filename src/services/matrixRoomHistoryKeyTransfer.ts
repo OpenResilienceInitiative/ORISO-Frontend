@@ -3,9 +3,15 @@ import type { IMegolmSessionData } from 'matrix-js-sdk/lib/@types/crypto';
 import type { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
 import type {
 	KeysQueryRequest,
-	OlmMachine
+	OlmMachine,
+	UserId as RustUserId
 } from '@matrix-org/matrix-sdk-crypto-wasm';
 import { isInvisibleCryptoEnabledForClient } from './matrixDeviceIsolation';
+import {
+	canSubmitRustKeysQuery,
+	RustKeysQueryCrypto,
+	submitRustKeysQuery
+} from './matrixRustKeysQuery';
 import { retryRoomDecryptionFailures } from './matrixDecryptionRetry';
 
 export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
@@ -52,34 +58,40 @@ const isNonEmptyString = (value: unknown): value is string =>
  * request processor so its response also reaches the Olm machine.
  */
 async function refreshHistoryDeviceKeys(crypto: CryptoApi, userIds: string[]) {
-	const rust = crypto as unknown as {
-		olmMachine?: Pick<
-			OlmMachine,
-			'updateTrackedUsers' | 'queryKeysForUsers'
-		>;
-		outgoingRequestProcessor?: {
-			makeOutgoingRequest?: (
-				request: KeysQueryRequest
-			) => Promise<unknown>;
-		};
+	const rust = crypto as unknown as RustKeysQueryCrypto<
+		RustUserId,
+		KeysQueryRequest
+	> & {
+		olmMachine?: Pick<OlmMachine, 'updateTrackedUsers'>;
 	};
-	const machine = rust.olmMachine;
-	const processor = rust.outgoingRequestProcessor;
 	if (
-		typeof machine?.updateTrackedUsers !== 'function' ||
-		typeof machine.queryKeysForUsers !== 'function' ||
-		typeof processor?.makeOutgoingRequest !== 'function'
-	)
+		typeof rust.olmMachine?.updateTrackedUsers !== 'function' ||
+		!canSubmitRustKeysQuery(rust)
+	) {
+		emitDiagnostic('device-refresh-skipped');
 		return;
+	}
 
 	const { UserId } = await import('@matrix-org/matrix-sdk-crypto-wasm');
-	await machine.updateTrackedUsers(
+	await rust.olmMachine.updateTrackedUsers(
 		userIds.map((userId) => new UserId(userId))
 	);
-	await processor.makeOutgoingRequest(
-		machine.queryKeysForUsers(userIds.map((userId) => new UserId(userId)))
+	await submitRustKeysQuery(
+		rust,
+		userIds.map((userId) => new UserId(userId))
 	);
 }
+
+// A failed refresh must not stop the transfer: known devices can still be used.
+const refreshHistoryDeviceKeysBestEffort = (
+	crypto: CryptoApi,
+	userIds: string[]
+) =>
+	refreshHistoryDeviceKeys(crypto, userIds).catch(() =>
+		emitDiagnostic('device-refresh-failed', {
+			reason: 'key-query-rejected'
+		})
+	);
 
 /**
  * Transfers only the Megolm sessions for one room, device-to-device over Olm.
@@ -152,9 +164,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		}
 
-		await refreshHistoryDeviceKeys(crypto, otherUsers).catch(
-			() => undefined
-		);
+		await refreshHistoryDeviceKeysBestEffort(crypto, otherUsers);
 		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
 		if (this.client !== client) return false;
 		const targets = otherUsers.flatMap((memberUserId) =>
@@ -274,11 +284,13 @@ export class MatrixRoomHistoryKeyTransfer {
 			emitDiagnostic('request-handler-throttled');
 			return;
 		}
+		// Set before the first await, so failing and concurrent requests count too.
+		this.lastHandledRequestAt.set(handledRequestKey, now);
 
 		// The requester may have logged in only seconds ago. Refresh its device
 		// list before Olm encryption; otherwise Rust Crypto can silently build an
 		// empty to-device batch for the not-yet-cached device.
-		await refreshHistoryDeviceKeys(crypto, [sender]).catch(() => undefined);
+		await refreshHistoryDeviceKeysBestEffort(crypto, [sender]);
 		if (
 			this.client !== client ||
 			room.getMember(sender)?.membership !== 'join'
@@ -306,8 +318,6 @@ export class MatrixRoomHistoryKeyTransfer {
 				return;
 			}
 		}
-
-		this.lastHandledRequestAt.set(handledRequestKey, now);
 
 		const keys = (await crypto.exportRoomKeys()).filter(
 			(key) => key.room_id === content.room_id
