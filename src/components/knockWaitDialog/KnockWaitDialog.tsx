@@ -71,6 +71,8 @@ export interface KnockWaitDialogProps {
 	 * says so with a spinner, "Nicht mehr warten" (`onCancel`) withdraws.
 	 */
 	knocking?: boolean;
+	/** `ready` only: the join is being looked up, the main button waits. */
+	joining?: boolean;
 	/**
 	 * Bottom sheet instead of a centred dialog. Defaults to phones (< 600px);
 	 * stories may force either.
@@ -115,6 +117,7 @@ export const KnockWaitDialog = ({
 	purpose = 'join',
 	onRetry,
 	knocking = false,
+	joining = false,
 	sheet
 }: KnockWaitDialogProps) => {
 	const { t } = useTranslation();
@@ -211,6 +214,8 @@ export const KnockWaitDialog = ({
 										: t('knockWait.ready.join'),
 								onClick: onJoin,
 								primary: true,
+								disabled: joining,
+								busy: joining,
 								testId: 'knock-wait-join'
 							}
 						]

@@ -45,7 +45,7 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
-import { isInCall, shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
@@ -2747,21 +2747,15 @@ export const MessageItemComponent = ({
 					call={callLifecycle}
 					loadState={apiCallState}
 					/* #2016: camera and microphone first, as guests get. */
-					deviceCheck={() => {
-						const mediaSupported = Boolean(
-							navigator.mediaDevices?.getUserMedia
-						);
-						return shouldShowDeviceCheck({
+					deviceCheck={() =>
+						shouldShowDeviceCheck({
 							surface: 'callMessage',
-							mediaSupported,
-							alreadyInCall:
-								mediaSupported &&
-								isInCall(
-									callManager.getCurrentCall(),
-									callLifecycle.callId
-								)
-						});
-					}}
+							mediaSupported: Boolean(
+								navigator.mediaDevices?.getUserMedia
+							),
+							alreadyInCall: callManager.hasActiveCall()
+						})
+					}
 					onJoin={
 						readOnly ||
 						isUserBanned ||

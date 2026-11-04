@@ -19,11 +19,15 @@ import { callManager, CallData } from '../../services/CallManager';
 import { CallShareForCall } from './share/CallShareForCall';
 import {
 	callStartFor,
+	deliverJoinMedia,
 	devicesForCall,
-	type JoinMedia,
-	switchDevicesOnReady
+	type JoinMedia
 } from './prejoin/callPrejoin';
 import { useJoinMediaForCall } from './prejoin/useJoinMediaForCall';
+import {
+	NOTIFICATION_TYPE_WARNING,
+	NotificationsContext
+} from '../../globalState/provider/NotificationsProvider';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -317,23 +321,35 @@ export const GroupCallWidget: React.FC = () => {
 	 * The same on/off choice once more when the call is ready, through
 	 * `io.element.device_mute`: for an Element Call image that does not yet
 	 * read the start parameters (ElementCall#116). A no-op for one that does.
-	 * Once per call, counted as done only when the call took it.
+	 * Once per call, counted as done only when the call confirmed it. Such an
+	 * image starts with both on, so one that never confirms is said out loud.
 	 */
 	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
+	const notifications = useContext(NotificationsContext);
+	const warnJoinMedia = useRef<() => void>(() => undefined);
+	warnJoinMedia.current = () =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title: t('knockWait.ready.notApplied'),
+			text: '',
+			closeable: true,
+			timeout: 10_000
+		});
 	const switchedOnReady = useRef<JoinMedia | null>(null);
 	useEffect(() => {
-		if (!widgetReady || !joinMedia) return;
-		if (switchedOnReady.current === joinMedia) return;
+		if (!widgetReady || !joinMedia) return undefined;
+		if (switchedOnReady.current === joinMedia) return undefined;
 		const media = devicesForCall(joinMediaIsVideo, joinMedia);
-		if (!media) return;
-		let current = true;
-		void switchDevicesOnReady(setWidgetDevices, media, {
-			isCurrent: () => current
-		}).then((took) => {
-			if (took) switchedOnReady.current = joinMedia;
+		if (!media) return undefined;
+		let stopped = false;
+		void deliverJoinMedia(setWidgetDevices, media, {
+			stopped: () => stopped
+		}).then((delivered) => {
+			if (delivered) switchedOnReady.current = joinMedia;
+			else if (!stopped) warnJoinMedia.current();
 		});
 		return () => {
-			current = false;
+			stopped = true;
 		};
 	}, [widgetReady, joinMedia, joinMediaIsVideo, setWidgetDevices]);
 

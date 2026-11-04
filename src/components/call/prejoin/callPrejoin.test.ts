@@ -4,32 +4,16 @@ import {
 	chosenDeviceLabel,
 	devicesForCall,
 	forgetAllJoinMedia,
+	deliverJoinMedia,
 	initialControlsFor,
 	joinMediaFrom,
+	keepDeviceChoice,
+	peekCameraSwitch,
 	peekJoinMedia,
 	rememberJoinMedia,
-	isInCall,
 	shouldShowDeviceCheck,
-	switchDevicesOnReady,
 	takeJoinMedia
 } from './callPrejoin';
-
-describe('isInCall (#2016)', () => {
-	it('is true while this browser is in that call', () => {
-		expect(isInCall({ callId: 'c1', state: 'connected' }, 'c1')).toBe(true);
-	});
-
-	it('is false once that call was left, so a rejoin gets the check', () => {
-		expect(isInCall({ callId: 'c1', state: 'left' }, 'c1')).toBe(false);
-	});
-
-	it('is false for another call or none', () => {
-		expect(isInCall({ callId: 'c2', state: 'connected' }, 'c1')).toBe(
-			false
-		);
-		expect(isInCall(null, 'c1')).toBe(false);
-	});
-});
 
 describe('shouldShowDeviceCheck (#2016)', () => {
 	it('shows before joining from the call message', () => {
@@ -296,52 +280,164 @@ describe('callStartFor: the choice on the widget URL (ElementCall#116)', () => {
 	});
 });
 
-describe('switchDevicesOnReady: the fallback for an older call (CodeRabbit 4457278942)', () => {
-	const media = { audio_enabled: true, video_enabled: false };
+describe('joinMediaFrom when the check could not run (#2016)', () => {
+	const outcome = {
+		modality: 'video' as const,
+		cameraAvailable: true,
+		blocker: 'permissionDenied' as const
+	};
 
-	it('tries again when the call did not take it', async () => {
+	it('passes nothing while every switch is on', () => {
+		expect(
+			joinMediaFrom({ ...outcome, micOn: true, cameraOn: true })
+		).toBeNull();
+	});
+
+	it('still honours a switch the person turned off', () => {
+		expect(
+			joinMediaFrom({ ...outcome, micOn: true, cameraOn: false })
+		).toEqual({ audio_enabled: true, video_enabled: false });
+	});
+
+	it('does not read an audio call as a camera switched off', () => {
+		expect(
+			joinMediaFrom({
+				...outcome,
+				modality: 'audio',
+				micOn: true,
+				cameraOn: false
+			})
+		).toBeNull();
+	});
+});
+
+describe('the camera switch across checks (#2016)', () => {
+	afterEach(forgetAllJoinMedia);
+
+	const device = (cameraOn: boolean, cameraAvailable: boolean) => ({
+		controls: { micOn: true, cameraOn, selection: {} },
+		cameraAvailable
+	});
+
+	it('does not read an unavailable camera as switched off', () => {
+		keepDeviceChoice('!r', 'video', device(true, false));
+		expect(peekJoinMedia('!r')?.video_enabled).toBe(false);
+		expect(
+			initialControlsFor(
+				'video',
+				peekJoinMedia('!r'),
+				peekCameraSwitch('!r')
+			).cameraOn
+		).toBe(true);
+	});
+
+	it('names the devices the check showed, by label (ElementCall#116)', () => {
+		keepDeviceChoice('!r', 'video', {
+			controls: {
+				micOn: true,
+				cameraOn: true,
+				selection: { microphone: 'mic-2' }
+			},
+			cameraAvailable: true,
+			devices: {
+				microphone: [
+					{ id: 'mic-1', label: 'MacBook Pro-Mikrofon' },
+					{ id: 'mic-2', label: 'Jabra Evolve2 Headset' }
+				],
+				camera: [{ id: 'cam-1', label: 'Logitech C920' }]
+			}
+		});
+		expect(peekJoinMedia('!r')).toEqual({
+			audio_enabled: true,
+			video_enabled: true,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'Logitech C920'
+		});
+	});
+
+	it('keeps a camera the person did switch off', () => {
+		keepDeviceChoice('!r', 'video', device(false, true));
+		expect(
+			initialControlsFor(
+				'video',
+				peekJoinMedia('!r'),
+				peekCameraSwitch('!r')
+			).cameraOn
+		).toBe(false);
+	});
+
+	it('does not carry an audio check over to a video call', () => {
+		keepDeviceChoice('!r', 'audio', device(false, true));
+		expect(
+			initialControlsFor(
+				'video',
+				peekJoinMedia('!r'),
+				peekCameraSwitch('!r')
+			).cameraOn
+		).toBe(true);
+	});
+});
+
+describe('deliverJoinMedia (#2016)', () => {
+	const wanted = { audio_enabled: true, video_enabled: false };
+	const options = { waitMs: 0 };
+
+	it('stops once the call confirms', async () => {
+		const send = vi.fn(() => Promise.resolve(wanted));
+		await expect(deliverJoinMedia(send, wanted, options)).resolves.toBe(
+			true
+		);
+		expect(send).toHaveBeenCalledTimes(1);
+	});
+
+	it('asks again after a failed send or a reply that did not apply it', async () => {
 		const send = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('timeout'))
-			.mockResolvedValueOnce(undefined);
-		await expect(
-			switchDevicesOnReady(send, media, { delayMs: 0 })
-		).resolves.toBe(true);
-		expect(send).toHaveBeenCalledTimes(2);
-		expect(send).toHaveBeenLastCalledWith(media);
-	});
-
-	it('gives up after a few tries', async () => {
-		const send = vi.fn().mockRejectedValue(new Error('gone'));
-		await expect(
-			switchDevicesOnReady(send, media, { attempts: 3, delayMs: 0 })
-		).resolves.toBe(false);
+			.mockResolvedValueOnce({ audio_enabled: true, video_enabled: true })
+			.mockResolvedValueOnce(wanted);
+		await expect(deliverJoinMedia(send, wanted, options)).resolves.toBe(
+			true
+		);
 		expect(send).toHaveBeenCalledTimes(3);
 	});
 
-	it('does not report success to a call that went away meanwhile (CodeRabbit 4457965169)', async () => {
-		let current = true;
-		const send = vi.fn().mockImplementation(async () => {
-			current = false;
-		});
-		await expect(
-			switchDevicesOnReady(send, media, {
-				delayMs: 0,
-				isCurrent: () => current
-			})
-		).resolves.toBe(false);
+	it('says so when the call never confirms', async () => {
+		const send = vi.fn(() => Promise.resolve(null));
+		await expect(deliverJoinMedia(send, wanted, options)).resolves.toBe(
+			false
+		);
+		expect(send).toHaveBeenCalledTimes(3);
 	});
 
-	it('stops once the call is no longer there', async () => {
-		let current = true;
-		const send = vi.fn().mockImplementation(async () => {
-			current = false;
-			throw new Error('closed');
+	it('asks only about what it sent', async () => {
+		const send = vi.fn(() =>
+			Promise.resolve({ audio_enabled: false, video_enabled: true })
+		);
+		await expect(
+			deliverJoinMedia(send, { audio_enabled: false }, options)
+		).resolves.toBe(true);
+	});
+
+	it('stops when the call has gone', async () => {
+		const send = vi.fn(() => Promise.resolve(null));
+		await deliverJoinMedia(send, wanted, {
+			...options,
+			stopped: () => true
+		});
+		expect(send).not.toHaveBeenCalled();
+	});
+
+	it('does not report success to a call that went away meanwhile (CodeRabbit 4457965169)', async () => {
+		let gone = false;
+		const send = vi.fn(async () => {
+			gone = true;
+			return wanted;
 		});
 		await expect(
-			switchDevicesOnReady(send, media, {
-				delayMs: 0,
-				isCurrent: () => current
+			deliverJoinMedia(send, wanted, {
+				...options,
+				stopped: () => gone
 			})
 		).resolves.toBe(false);
 		expect(send).toHaveBeenCalledTimes(1);

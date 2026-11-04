@@ -6452,7 +6452,8 @@
 			"join": "Rejoindre maintenant",
 			"done": "Terminé",
 			"retry": "Vérifier à nouveau",
-			"knocking": "Demande envoyée, veuillez patienter …"
+			"knocking": "Demande envoyée, veuillez patienter …",
+			"notApplied": "Votre réglage de la caméra et du micro n’a pas été appliqué. Veuillez vérifier les deux dans l’appel."
 		}
 	},
 	"furtherCounselling": {

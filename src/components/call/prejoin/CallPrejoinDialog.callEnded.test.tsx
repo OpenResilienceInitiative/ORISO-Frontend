@@ -29,6 +29,8 @@ vi.mock('../../waitingRoom/callEntry/useCallDeviceCheck', () => ({
 }));
 
 const { CallPrejoinDialog } = await import('./CallPrejoinDialog');
+const { PENDING_KNOCK_EVENT, readPendingKnock, rememberPendingKnock } =
+	await import('../../directLinkEntry/directLinkEntryFlow');
 
 const pending = {
 	token: 'tok',
@@ -42,7 +44,8 @@ const pending = {
 const dialog = (
 	onClose: () => void,
 	callEnded: boolean,
-	status: 'PENDING' | 'ADMITTED' = 'PENDING'
+	status: 'PENDING' | 'ADMITTED' = 'PENDING',
+	cancelKnock: () => Promise<void> = vi.fn(() => Promise.resolve())
 ) => (
 	<CallPrejoinDialog
 		modality="video"
@@ -52,7 +55,7 @@ const dialog = (
 		onJoin={({ onKnock }) => onKnock(pending, vi.fn())}
 		knockDeps={{
 			getKnock: vi.fn(() => Promise.resolve({ status })) as never,
-			cancelKnock: vi.fn(),
+			cancelKnock: cancelKnock as never,
 			start: vi.fn()
 		}}
 		pollMs={60_000}
@@ -84,6 +87,29 @@ describe('CallPrejoinDialog when the call ends', () => {
 		);
 		rerender(dialog(onClose, true));
 		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('withdraws that knock, so no second dialog waits on an ended call', async () => {
+		const cancelKnock = vi.fn(() => Promise.resolve());
+		const announced = vi.fn();
+		window.addEventListener(PENDING_KNOCK_EVENT, announced);
+		const onClose = vi.fn();
+		const { rerender, unmount } = render(
+			dialog(onClose, false, 'PENDING', cancelKnock)
+		);
+		await act(async () => {
+			fireEvent.click(screen.getByText('join'));
+		});
+		await waitFor(() =>
+			expect(screen.getByTestId('phase').textContent).toBe('waiting')
+		);
+		rememberPendingKnock(pending);
+		rerender(dialog(onClose, true, 'PENDING', cancelKnock));
+		unmount();
+		window.removeEventListener(PENDING_KNOCK_EVENT, announced);
+		expect(cancelKnock).toHaveBeenCalledWith(21);
+		expect(readPendingKnock()).toBeNull();
+		expect(announced).not.toHaveBeenCalled();
 	});
 
 	it('does not cut off the hand-over once the person was let in', async () => {

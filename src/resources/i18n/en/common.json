@@ -6367,7 +6367,8 @@
 			"join": "Join now",
 			"done": "Done",
 			"retry": "Check again",
-			"knocking": "Request sent, please wait …"
+			"knocking": "Request sent, please wait …",
+			"notApplied": "Your camera and microphone setting was not applied. Please check both in the call."
 		}
 	},
 	"furtherCounselling": {

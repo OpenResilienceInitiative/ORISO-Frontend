@@ -123,7 +123,9 @@ export interface ElementCallWidget {
 	/** Microphone and camera as the call last reported them; `null` before. */
 	devices: CallDeviceState | null;
 	/** Asks the call to switch the microphone or camera (`io.element.device_mute`). */
-	setDevices: (change: Partial<CallDeviceState>) => Promise<void>;
+	setDevices: (
+		change: Partial<CallDeviceState>
+	) => Promise<CallDeviceState | null>;
 }
 
 /** The call's own report of its devices, as Element Call sends it. */
@@ -557,14 +559,17 @@ export const useElementCallWidget = (
 	}, []);
 
 	const setDevices = useCallback(
-		async (change: Partial<CallDeviceState>): Promise<void> => {
+		async (
+			change: Partial<CallDeviceState>
+		): Promise<CallDeviceState | null> => {
 			const api = apiRef.current;
-			if (!api) return;
+			if (!api) return null;
 			const reply = await api.transport.send('io.element.device_mute', {
 				...change
 			});
 			const reported = deviceStateOf(reply);
 			if (reported && apiRef.current === api) setDeviceState(reported);
+			return reported;
 		},
 		[]
 	);
