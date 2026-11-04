@@ -25,6 +25,7 @@ import {
 	UserDataContext
 } from '../../globalState';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces';
+import { apiGetConsultantSessionList } from '../../api';
 import {
 	SESSION_LIST_TYPES,
 	SESSION_TYPE_SESSION
@@ -336,5 +337,57 @@ describe('SessionsList first enquiry order', () => {
 		render(<ListTree rows={rows} type={SESSION_LIST_TYPES.ENQUIRY} />);
 
 		expect(await renderedRowIds()).toEqual(['42', '41']);
+	});
+});
+
+describe('SessionsList enquiry pagination', () => {
+	afterEach(() => {
+		cleanup();
+		vi.mocked(apiGetConsultantSessionList).mockReset();
+		vi.mocked(apiGetConsultantSessionList).mockResolvedValue({
+			sessions: [],
+			total: 0,
+			count: 30,
+			offset: 0
+		});
+	});
+
+	it('advances the requested window and stops after ten pages when no Live Chat matches', async () => {
+		vi.mocked(apiGetConsultantSessionList).mockReset();
+		vi.mocked(apiGetConsultantSessionList).mockImplementation(
+			async ({ offset = 0, count = 30 }) => ({
+				sessions: Array.from({ length: 30 }, (_, i) => ({
+					session: {
+						id: offset + i + 1,
+						status: STATUS_ENQUIRY,
+						conversationType: 'AGENCY_COUNSELLING'
+					},
+					user: { id: `u${offset + i}` }
+				})) as any,
+				total: 900,
+				count,
+				offset
+			})
+		);
+		render(
+			<ListTree
+				rows={[]}
+				type={SESSION_LIST_TYPES.ENQUIRY}
+				chip="liveChat"
+			/>
+		);
+		await waitFor(() =>
+			expect(
+				vi
+					.mocked(apiGetConsultantSessionList)
+					.mock.calls.some(([arg]) => arg.offset === 270)
+			).toBe(true)
+		);
+		const offsets = vi
+			.mocked(apiGetConsultantSessionList)
+			.mock.calls.map(([arg]) => arg.offset);
+		expect([...new Set(offsets)]).toEqual([
+			0, 30, 60, 90, 120, 150, 180, 210, 240, 270
+		]);
 	});
 });

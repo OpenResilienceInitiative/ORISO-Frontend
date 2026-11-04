@@ -439,12 +439,20 @@ export const SessionsList = ({
 			initialID?: string,
 			count?: number,
 			signal?: AbortSignal
-		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+		): Promise<{
+			sessions: ListItemInterface[];
+			total: number;
+			nextOffset: number;
+		}> => {
 			const pageSize = count ?? SESSION_COUNT;
 
 			const fetchPage = (
 				pageOffset: number
-			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+			): Promise<{
+				sessions: ListItemInterface[];
+				total: number;
+				nextOffset: number;
+			}> =>
 				apiGetConsultantSessionList({
 					type,
 					offset: pageOffset,
@@ -457,13 +465,22 @@ export const SessionsList = ({
 							getExtendedSession(initialID, sessions) ||
 							total <= pageOffset + pageSize
 						) {
-							return { sessions, total };
+							return {
+								sessions,
+								total,
+								nextOffset: pageOffset + pageSize
+							};
 						}
 
 						return fetchPage(pageOffset + pageSize).then(
-							({ sessions: moreSessions, total: nextTotal }) => ({
+							({
+								sessions: moreSessions,
+								total: nextTotal,
+								nextOffset
+							}) => ({
 								sessions: [...sessions, ...moreSessions],
-								total: nextTotal
+								total: nextTotal,
+								nextOffset
 							})
 						);
 					}
@@ -471,14 +488,22 @@ export const SessionsList = ({
 					if (
 						type !== SESSION_LIST_TYPES.ENQUIRY ||
 						sessions.length === 0 ||
-						total <= pageOffset + sessions.length
+						total <= pageOffset + pageSize
 					) {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const chip = sessionToolbarChipRef.current;
 					if (chip !== 'nearby' && chip !== 'liveChat') {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const anyMatch = sessions.some((raw) => {
@@ -488,16 +513,26 @@ export const SessionsList = ({
 						);
 						return chip === 'liveChat' ? isAnon : !isAnon;
 					});
-					const pagesFetched =
-						(pageOffset + sessions.length) / SESSION_COUNT;
-					if (anyMatch || pagesFetched >= 10) {
-						return { sessions, total };
+					if (
+						anyMatch ||
+						pageOffset + pageSize >= 10 * SESSION_COUNT
+					) {
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
-					return fetchPage(pageOffset + sessions.length).then(
-						({ sessions: moreSessions, total: nextTotal }) => ({
+					return fetchPage(pageOffset + pageSize).then(
+						({
+							sessions: moreSessions,
+							total: nextTotal,
+							nextOffset
+						}) => ({
 							sessions: [...sessions, ...moreSessions],
-							total: nextTotal
+							total: nextTotal,
+							nextOffset
 						})
 					);
 				});
@@ -528,7 +563,7 @@ export const SessionsList = ({
 				count,
 				controller.signal
 			)
-				.then(({ sessions, total }) => {
+				.then(({ sessions, total, nextOffset }) => {
 					// A superseded transport may still resolve after abort. Do not
 					// let its pagination state or rows reach the caller.
 					if (
@@ -537,9 +572,10 @@ export const SessionsList = ({
 					) {
 						throw new Error(FETCH_ERRORS.ABORT);
 					}
-					const pageSize = count ?? SESSION_COUNT;
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
+					const lastLoadedOffset = Math.max(
+						0,
+						nextOffset - SESSION_COUNT
+					);
 					setCurrentOffset(lastLoadedOffset);
 					setTotalItems(total);
 					return { sessions, total };
