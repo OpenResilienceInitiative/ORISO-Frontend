@@ -1,5 +1,10 @@
 import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import type { IMegolmSessionData } from 'matrix-js-sdk/lib/@types/crypto';
+import type { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
+import type {
+	KeysQueryRequest,
+	OlmMachine
+} from '@matrix-org/matrix-sdk-crypto-wasm';
 import { isInvisibleCryptoEnabledForClient } from './matrixDeviceIsolation';
 import { retryRoomDecryptionFailures } from './matrixDecryptionRetry';
 
@@ -40,6 +45,41 @@ type KeyBundle = {
 
 const isNonEmptyString = (value: unknown): value is string =>
 	typeof value === 'string' && value.length > 0;
+
+/**
+ * Downloading untracked devices with getUserDeviceInfo does not populate the
+ * Rust crypto store used to encrypt to-device messages. Use the SDK's key
+ * request processor so its response also reaches the Olm machine.
+ */
+async function refreshHistoryDeviceKeys(crypto: CryptoApi, userIds: string[]) {
+	const rust = crypto as unknown as {
+		olmMachine?: Pick<
+			OlmMachine,
+			'updateTrackedUsers' | 'queryKeysForUsers'
+		>;
+		outgoingRequestProcessor?: {
+			makeOutgoingRequest?: (
+				request: KeysQueryRequest
+			) => Promise<unknown>;
+		};
+	};
+	const machine = rust.olmMachine;
+	const processor = rust.outgoingRequestProcessor;
+	if (
+		typeof machine?.updateTrackedUsers !== 'function' ||
+		typeof machine.queryKeysForUsers !== 'function' ||
+		typeof processor?.makeOutgoingRequest !== 'function'
+	)
+		return;
+
+	const { UserId } = await import('@matrix-org/matrix-sdk-crypto-wasm');
+	await machine.updateTrackedUsers(
+		userIds.map((userId) => new UserId(userId))
+	);
+	await processor.makeOutgoingRequest(
+		machine.queryKeysForUsers(userIds.map((userId) => new UserId(userId)))
+	);
+}
 
 /**
  * Transfers only the Megolm sessions for one room, device-to-device over Olm.
@@ -112,6 +152,9 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		}
 
+		await refreshHistoryDeviceKeys(crypto, otherUsers).catch(
+			() => undefined
+		);
 		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
 		if (this.client !== client) return false;
 		const targets = otherUsers.flatMap((memberUserId) =>
@@ -222,9 +265,25 @@ export class MatrixRoomHistoryKeyTransfer {
 			return;
 		}
 
+		const handledRequestKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
+		const now = Date.now();
+		if (
+			now - (this.lastHandledRequestAt.get(handledRequestKey) || 0) <
+			REQUEST_THROTTLE_MS
+		) {
+			emitDiagnostic('request-handler-throttled');
+			return;
+		}
+
 		// The requester may have logged in only seconds ago. Refresh its device
 		// list before Olm encryption; otherwise Rust Crypto can silently build an
 		// empty to-device batch for the not-yet-cached device.
+		await refreshHistoryDeviceKeys(crypto, [sender]).catch(() => undefined);
+		if (
+			this.client !== client ||
+			room.getMember(sender)?.membership !== 'join'
+		)
+			return;
 		const requesterDevices = await crypto.getUserDeviceInfo(
 			[content.requester_user_id],
 			true
@@ -248,15 +307,6 @@ export class MatrixRoomHistoryKeyTransfer {
 			}
 		}
 
-		const handledRequestKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
-		const now = Date.now();
-		if (
-			now - (this.lastHandledRequestAt.get(handledRequestKey) || 0) <
-			REQUEST_THROTTLE_MS
-		) {
-			emitDiagnostic('request-handler-throttled');
-			return;
-		}
 		this.lastHandledRequestAt.set(handledRequestKey, now);
 
 		const keys = (await crypto.exportRoomKeys()).filter(

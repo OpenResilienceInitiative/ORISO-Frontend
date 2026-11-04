@@ -9,6 +9,16 @@ import {
 } from './matrixRoomHistoryKeyTransfer';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 
+vi.mock('@matrix-org/matrix-sdk-crypto-wasm', () => ({
+	UserId: class {
+		constructor(private readonly id: string) {}
+
+		toString() {
+			return this.id;
+		}
+	}
+}));
+
 const ROOM_ID = '!case:matrix';
 const ME = '@new:matrix';
 const PEER = '@asker:matrix';
@@ -103,13 +113,33 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 	});
 
-	it('discovers joined history donors missing from the lazy member cache', async () => {
+	it('loads joined donors and hydrates their devices before requesting history keys', async () => {
 		const harness = buildHarness();
 		harness.memberships.delete(PEER);
 		harness.room.loadMembersIfNeeded.mockImplementation(async () => {
 			harness.memberships.set(PEER, member(PEER));
 			return true;
 		});
+		const keyQuery = {};
+		Object.assign(harness.crypto, {
+			olmMachine: {
+				updateTrackedUsers: vi.fn().mockResolvedValue(undefined),
+				queryKeysForUsers: vi.fn(() => keyQuery)
+			},
+			outgoingRequestProcessor: {
+				makeOutgoingRequest: vi.fn(async () => {
+					harness.crypto.getUserDeviceInfo.mockResolvedValue(
+						new Map([
+							[
+								PEER,
+								new Map([['ASKER1', { deviceId: 'ASKER1' }]])
+							]
+						])
+					);
+				})
+			}
+		});
+		harness.crypto.getUserDeviceInfo.mockResolvedValue(new Map());
 		const service = new MatrixRoomHistoryKeyTransfer();
 		service.initialize(harness.client as any);
 
