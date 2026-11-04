@@ -162,7 +162,11 @@ export const CallPrejoinDialog = ({
 	);
 
 	// The switches are the one source of truth, up to the moment of joining.
-	const keepChoice = () => keepDeviceChoice(roomRef, modality, device);
+	const keepChoice = () =>
+		keepDeviceChoice(roomRef, modality, {
+			...device,
+			devices: device.check.devices
+		});
 	const keepChoiceRef = useRef(keepChoice);
 	keepChoiceRef.current = keepChoice;
 	const onCloseRef = useRef(onClose);

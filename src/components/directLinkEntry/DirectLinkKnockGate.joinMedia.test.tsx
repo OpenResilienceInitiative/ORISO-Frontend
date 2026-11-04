@@ -10,6 +10,15 @@ import {
 } from '../call/prejoin/callPrejoin';
 
 const blocker = vi.hoisted(() => ({ current: undefined as unknown }));
+const startRoomCall = vi.hoisted(() => vi.fn(async () => undefined));
+vi.mock('../call/startRoomCall', () => ({ startRoomCall }));
+vi.mock('../../services/matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({
+		getClient: () => ({
+			getRoom: () => ({ getMyMembership: () => 'join' })
+		})
+	})
+}));
 /* The device check as the knock dialog sees it: `settled` once the browser
    answered, `cameraAvailable` optimistic (`true`) until then. */
 const devices = vi.hoisted(() => ({ settled: true, cameraAvailable: true }));
@@ -38,7 +47,9 @@ vi.mock('../waitingRoom/callEntry/useCallDeviceCheck', () => ({
 	})
 }));
 
-const { DirectLinkKnock } = await import('./DirectLinkKnockGate');
+const { DirectLinkKnock, defaultStartCall } = await import(
+	'./DirectLinkKnockGate'
+);
 
 const ROOM = '!room:oriso';
 const knock = {
@@ -136,6 +147,57 @@ describe('DirectLinkKnock when let in', () => {
 				audio_enabled: true,
 				video_enabled: false
 			});
+		});
+	});
+});
+
+describe('defaultStartCall after being let in', () => {
+	afterEach(() => {
+		forgetAllJoinMedia();
+		startRoomCall.mockClear();
+	});
+
+	it('does not ask for the camera that was switched off', async () => {
+		rememberJoinMedia(ROOM, { audio_enabled: true, video_enabled: false });
+
+		await defaultStartCall(knock);
+
+		expect(startRoomCall).toHaveBeenCalledWith({
+			roomId: ROOM,
+			isVideo: true,
+			requestCamera: false
+		});
+	});
+
+	it('asks for the camera that stayed on', async () => {
+		rememberJoinMedia(ROOM, { audio_enabled: true, video_enabled: true });
+
+		await defaultStartCall(knock);
+
+		expect(startRoomCall).toHaveBeenCalledWith({
+			roomId: ROOM,
+			isVideo: true,
+			requestCamera: true
+		});
+	});
+
+	it('follows the call when the check left no choice', async () => {
+		await defaultStartCall(knock);
+
+		expect(startRoomCall).toHaveBeenCalledWith({
+			roomId: ROOM,
+			isVideo: true,
+			requestCamera: true
+		});
+	});
+
+	it('never asks for a camera on a voice call', async () => {
+		await defaultStartCall({ ...knock, medium: 'AUDIO' });
+
+		expect(startRoomCall).toHaveBeenCalledWith({
+			roomId: ROOM,
+			isVideo: false,
+			requestCamera: false
 		});
 	});
 });

@@ -321,12 +321,10 @@ export const GroupCallWidget: React.FC = () => {
 	 * The same on/off choice once more when the call is ready, through
 	 * `io.element.device_mute`: for an Element Call image that does not yet
 	 * read the start parameters (ElementCall#116). A no-op for one that does.
-	 * Once per call, counted as done only when the call confirmed it; a call
-	 * that never confirms is said out loud (#2016), since such an image starts
-	 * with both on.
+	 * Once per call, counted as done only when the call confirmed it. Such an
+	 * image starts with both on, so one that never confirms is said out loud.
 	 */
 	const { ready: widgetReady, setDevices: setWidgetDevices } = widget;
-	const switchedOnReady = useRef<JoinMedia | null>(null);
 	const notifications = useContext(NotificationsContext);
 	const warnJoinMedia = useRef<() => void>(() => undefined);
 	warnJoinMedia.current = () =>
@@ -337,6 +335,7 @@ export const GroupCallWidget: React.FC = () => {
 			closeable: true,
 			timeout: 10_000
 		});
+	const switchedOnReady = useRef<JoinMedia | null>(null);
 	useEffect(() => {
 		if (!widgetReady || !joinMedia) return undefined;
 		if (switchedOnReady.current === joinMedia) return undefined;

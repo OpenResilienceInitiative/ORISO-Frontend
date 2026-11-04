@@ -5,7 +5,6 @@ import type {
 import type {
 	CallDevice,
 	CallDeviceControls,
-	CallDevices,
 	CallEntryBlocker,
 	CallModality
 } from '../../waitingRoom/callEntry/callEntryTypes';
@@ -160,13 +159,16 @@ export const keepDeviceChoice = (
 		controls,
 		cameraAvailable,
 		blocker,
-		check
+		devices
 	}: {
 		controls: CallDeviceControls;
 		cameraAvailable: boolean;
 		blocker?: CallEntryBlocker;
-		/** What the check found, for the devices by label (ElementCall#116). */
-		check?: { devices: CallDevices };
+		/** What the check found: the choice names its devices by label. */
+		devices?: {
+			microphone: readonly CallDevice[];
+			camera: readonly CallDevice[];
+		};
 	}
 ) =>
 	rememberJoinMedia(
@@ -177,18 +179,14 @@ export const keepDeviceChoice = (
 			cameraOn: controls.cameraOn,
 			cameraAvailable,
 			blocker,
-			microphoneLabel:
-				check &&
-				chosenDeviceLabel(
-					check.devices.microphone,
-					controls.selection.microphone
-				),
-			cameraLabel:
-				check &&
-				chosenDeviceLabel(
-					check.devices.camera,
-					controls.selection.camera
-				)
+			microphoneLabel: chosenDeviceLabel(
+				devices?.microphone ?? [],
+				controls.selection.microphone
+			),
+			cameraLabel: chosenDeviceLabel(
+				devices?.camera ?? [],
+				controls.selection.camera
+			)
 		}),
 		modality === 'video' ? controls.cameraOn : undefined
 	);
@@ -271,12 +269,11 @@ const confirms = (
 		wanted.video_enabled === reported.video_enabled);
 
 /**
- * Sends the choice until the call's own answer confirms it: the ready-time
- * fallback (`devicesForCall`). For an Element Call image that ignores the
- * start parameters this is the only way a camera switched off in the check
- * goes off, and such a call starts with both on: a person must not stay on
- * camera because one message got lost. `false`: not confirmed by a call that
- * is still there.
+ * The ready-time fallback (`devicesForCall`), sent until the call's own answer
+ * confirms it: an Element Call image that ignores the start parameters starts
+ * with both on, and a person who switched the camera off must not stay on
+ * camera because one message got lost. `false`: not confirmed, or confirmed by
+ * a call that has gone meanwhile.
  */
 export const deliverJoinMedia = async (
 	send: (media: Partial<CallDeviceState>) => Promise<CallDeviceState | null>,

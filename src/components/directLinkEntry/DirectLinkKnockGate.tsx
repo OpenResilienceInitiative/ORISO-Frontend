@@ -189,23 +189,17 @@ export const DirectLinkKnock = ({
 	const room = callRoomOf(knock);
 	const { controls } = device;
 	const cameraFound = device.settled && device.cameraAvailable;
+	const { devices } = device.check;
 	useEffect(() => {
 		if (!admitted || !room) return;
 		keepDeviceChoice(room, modalityOf(knock), {
 			controls,
 			cameraAvailable: cameraFound,
 			blocker: device.blocker,
-			check: device.check
+			devices
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- the knock is fixed per mount
-	}, [
-		admitted,
-		room,
-		controls,
-		cameraFound,
-		device.blocker,
-		device.check.devices
-	]);
+	}, [admitted, room, controls, cameraFound, device.blocker, devices]);
 
 	return (
 		<KnockWaitDialog

@@ -331,6 +331,30 @@ describe('the camera switch across checks (#2016)', () => {
 		).toBe(true);
 	});
 
+	it('names the devices the check showed, by label (ElementCall#116)', () => {
+		keepDeviceChoice('!r', 'video', {
+			controls: {
+				micOn: true,
+				cameraOn: true,
+				selection: { microphone: 'mic-2' }
+			},
+			cameraAvailable: true,
+			devices: {
+				microphone: [
+					{ id: 'mic-1', label: 'MacBook Pro-Mikrofon' },
+					{ id: 'mic-2', label: 'Jabra Evolve2 Headset' }
+				],
+				camera: [{ id: 'cam-1', label: 'Logitech C920' }]
+			}
+		});
+		expect(peekJoinMedia('!r')).toEqual({
+			audio_enabled: true,
+			video_enabled: true,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'Logitech C920'
+		});
+	});
+
 	it('keeps a camera the person did switch off', () => {
 		keepDeviceChoice('!r', 'video', device(false, true));
 		expect(
@@ -340,33 +364,6 @@ describe('the camera switch across checks (#2016)', () => {
 				peekCameraSwitch('!r')
 			).cameraOn
 		).toBe(false);
-	});
-
-	it('keeps the devices the check showed, by label (ElementCall#116)', () => {
-		keepDeviceChoice('!r', 'video', {
-			...device(true, true),
-			controls: {
-				micOn: true,
-				cameraOn: true,
-				selection: { microphone: 'mic-2' }
-			},
-			check: {
-				devices: {
-					microphone: [
-						{ id: 'mic-1', label: 'MacBook Pro-Mikrofon' },
-						{ id: 'mic-2', label: 'Jabra Evolve2 Headset' }
-					],
-					camera: [{ id: 'cam-1', label: 'Logitech C920' }],
-					speaker: []
-				}
-			}
-		});
-		expect(peekJoinMedia('!r')).toEqual({
-			audio_enabled: true,
-			video_enabled: true,
-			microphoneLabel: 'Jabra Evolve2 Headset',
-			cameraLabel: 'Logitech C920'
-		});
 	});
 
 	it('does not carry an audio check over to a video call', () => {
@@ -432,29 +429,30 @@ describe('deliverJoinMedia (#2016)', () => {
 	});
 
 	it('does not report success to a call that went away meanwhile (CodeRabbit 4457965169)', async () => {
-		let stopped = false;
+		let gone = false;
 		const send = vi.fn(async () => {
-			stopped = true;
+			gone = true;
 			return wanted;
 		});
 		await expect(
 			deliverJoinMedia(send, wanted, {
 				...options,
-				stopped: () => stopped
+				stopped: () => gone
 			})
 		).resolves.toBe(false);
+		expect(send).toHaveBeenCalledTimes(1);
 	});
 
 	it('does not try again once the call is no longer there', async () => {
-		let stopped = false;
+		let gone = false;
 		const send = vi.fn(async () => {
-			stopped = true;
+			gone = true;
 			throw new Error('closed');
 		});
 		await expect(
 			deliverJoinMedia(send, wanted, {
 				...options,
-				stopped: () => stopped
+				stopped: () => gone
 			})
 		).resolves.toBe(false);
 		expect(send).toHaveBeenCalledTimes(1);
