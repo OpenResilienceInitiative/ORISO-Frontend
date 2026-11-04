@@ -1270,7 +1270,8 @@
 			"rules": {
 				"headline": "So gehen wir miteinander um",
 				"subline": "Einmal kurz lesen – dann sind Sie dabei."
-			}
+			},
+			"devices": "Kamera & Mikrofon"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -6432,7 +6433,18 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons"
+			"micMeter": "Lautstärke Ihres Mikrofons",
+			"defaultDeviceHint": "Der Anruf nutzt vorerst das Standardgerät Ihres Browsers."
+		},
+		"ready": {
+			"title": "Kamera und Mikrofon prüfen",
+			"description": "Niemand sieht oder hört Sie, bevor Sie beitreten. Die Vorschau sehen nur Sie.",
+			"descriptionCheck": "Ihre Einstellung gilt, wenn Sie in dieser Gruppe einem Gespräch beitreten. Die Vorschau sehen nur Sie.",
+			"join": "Jetzt beitreten",
+			"done": "Fertig",
+			"retry": "Erneut prüfen",
+			"knocking": "Anfrage gesendet, bitte warten …",
+			"notApplied": "Ihre Einstellung für Kamera und Mikrofon wurde nicht übernommen. Bitte prüfen Sie beide im Anruf."
 		}
 	},
 	"furtherCounselling": {

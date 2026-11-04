@@ -45,6 +45,8 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
+import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { apiCallState } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
@@ -2727,46 +2729,53 @@ export const MessageItemComponent = ({
 	}
 
 	if (callLifecycle && callLifecycle.roomRef === rid) {
+		/*
+		 * The card's own answer first. `activeSession.isGroup` describes the
+		 * CLIENT session, which is false for a supervision call inside a 1:1
+		 * one — and a call rejoined as non-group is ended for everybody when
+		 * one person leaves, because `endCall` publishes a remote hangup and
+		 * finalises the lifecycle. The side that started the call wrote what
+		 * it is; cards from before that field existed fall back to the old
+		 * guess. A knock keeps this answer for a join after a reload.
+		 */
+		const callIsGroup =
+			callLifecycle.isGroup ?? Boolean(activeSession?.isGroup);
 		return (
 			<div className="messageItem">
 				{getMessageDate()}
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallState}
+					/* #2016: camera and microphone first, as guests get. */
+					deviceCheck={() =>
+						shouldShowDeviceCheck({
+							surface: 'callMessage',
+							mediaSupported: Boolean(
+								navigator.mediaDevices?.getUserMedia
+							),
+							alreadyInCall: callManager.hasActiveCall()
+						})
+					}
 					onJoin={
 						readOnly ||
 						isUserBanned ||
 						activeSession?.item?.status === STATUS_ARCHIVED
 							? undefined
-							: () =>
-									/* FE#1893: a direct-link call conversation knocks first. */
+							: (hooks?: CallJoinHooks) =>
+									/* FE#1893: a direct-link call conversation knocks first;
+									   #2016: the open device check waits for it. */
 									joinOrKnock(
 										activeSession?.item?.id,
 										() =>
 											callManager.joinExistingCall(
 												callLifecycle,
-												/*
-												 * The card's own answer first.
-												 *
-												 * `activeSession.isGroup` describes
-												 * the CLIENT session, which is false
-												 * for a supervision call inside a 1:1
-												 * one — and a call rejoined as
-												 * non-group is ended for everybody
-												 * when one person leaves, because
-												 * `endCall` publishes a remote hangup
-												 * and finalises the lifecycle. The
-												 * side that started the call wrote
-												 * what it is; cards from before that
-												 * field existed fall back to the old
-												 * guess.
-												 */
-												callLifecycle.isGroup ??
-													Boolean(
-														activeSession?.isGroup
-													)
+												callIsGroup
 											),
 										{
+											...hooks,
+											call: callLifecycle,
+											// Kept with the knock: a reload joins in the same mode.
+											isGroup: callIsGroup,
 											// Who the server can gate at all: an advice seeker in a 1:1.
 											asker: callCardMayKnock({
 												isAsker: hasUserAuthority(

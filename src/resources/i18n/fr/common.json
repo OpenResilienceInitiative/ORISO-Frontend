@@ -1275,7 +1275,8 @@
 			"rules": {
 				"headline": "Comment nous nous comportons les uns envers les autres",
 				"subline": "Lisez-les une fois – et vous êtes des nôtres."
-			}
+			},
+			"devices": "Caméra et micro"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -6442,7 +6443,18 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro"
+			"micMeter": "Volume de votre micro",
+			"defaultDeviceHint": "Pour l'instant, l'appel utilise l'appareil par défaut de votre navigateur."
+		},
+		"ready": {
+			"title": "Vérifier la caméra et le micro",
+			"description": "Personne ne vous voit ni ne vous entend avant que vous ne rejoigniez. Vous seul voyez l'aperçu.",
+			"descriptionCheck": "Votre réglage s'applique lorsque vous rejoignez un appel dans ce groupe. Vous seul voyez l'aperçu.",
+			"join": "Rejoindre maintenant",
+			"done": "Terminé",
+			"retry": "Vérifier à nouveau",
+			"knocking": "Demande envoyée, veuillez patienter …",
+			"notApplied": "Votre réglage de la caméra et du micro n’a pas été appliqué. Veuillez vérifier les deux dans l’appel."
 		}
 	},
 	"furtherCounselling": {
