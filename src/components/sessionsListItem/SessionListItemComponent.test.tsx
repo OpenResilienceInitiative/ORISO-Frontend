@@ -819,16 +819,10 @@ describe('SessionListItemComponent — real group participants (#1806)', () => {
 			]
 		});
 		const { container } = renderItem(makeGroupSession());
+		// Five people: the count circle, not the technical owner as a sixth.
 		expect(
-			container.querySelectorAll('[data-cy="participant-avatar"]')
-		).toHaveLength(2);
-		expect(
-			container.querySelector('[data-cy="participant-overflow"]')
-				?.textContent
-		).toBe('+3');
-		expect(
-			container.querySelector('[data-user-id="@person-0:example.org"]')
-		).not.toBeNull();
+			container.querySelector('[data-cy="group-card-crowd"]')?.textContent
+		).toBe('5');
 		expect(
 			container.querySelector('[data-user-id^="placeholder-"]')
 		).toBeNull();

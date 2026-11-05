@@ -93,6 +93,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
+import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import clsx from 'clsx';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
@@ -159,13 +160,6 @@ import {
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
-
-/* How recently an Erstantwort event must have arrived for its staged reveal to
-   play. Generous on purpose: the cost of skipping the animation on a genuinely
-   new event is that the person sees the text immediately, while the cost of
-   replaying it on old history is a wall of text re-typing itself every time the
-   list scrolls. */
-const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -1230,16 +1224,6 @@ export const MessageItemComponent = ({
 		isErstantwortEvent,
 		activeSession
 	);
-	/* Only a freshly arrived event plays the stagger. The message list mounts and
-	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
-	   `revealed` to 0 on every mount — so without this an event received days ago
-	   types itself out again each time it scrolls into view, and `onFirstReveal`
-	   fires again with it. */
-	const isRecentErstantwortEvent = useMemo(() => {
-		const timestamp = Number(messageTime);
-		if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
-		return Date.now() - timestamp < ERSTANTWORT_FRESH_WINDOW_MS;
-	}, [messageTime]);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -2071,6 +2055,15 @@ export const MessageItemComponent = ({
 				isMyMessage && 'messageItem__timeRail--outgoing'
 			)}
 		>
+			{isSupervisorFeedback && (
+				<div className="messageItem__feedbackTag">
+					<SupervisionGlyph aria-hidden="true" focusable="false" />
+					<span className="sr-only">
+						{translate('supervision.panel.kind.supervision')}{' '}
+					</span>
+					{translate('message.feedbackTag')}
+				</div>
+			)}
 			{!isMyMessage && reactionChips}
 			{messageTimeInBubble}
 			{isMyMessage && reactionChips}
@@ -2370,11 +2363,6 @@ export const MessageItemComponent = ({
 										{systemNotificationDescription}
 									</div>
 								)}
-							{isSupervisorFeedback && (
-								<div className="messageItem__feedbackTag">
-									{translate('message.feedbackTag')}
-								</div>
-							)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
 							{replyToEventId && !isSystemNotification && (
@@ -2619,8 +2607,21 @@ export const MessageItemComponent = ({
 										inlineDisplayEnabled={
 											attachmentInlineDisplayEnabled
 										}
+										isOwnMessage={isMyMessage}
 									/>
 								))}
+							{/* MSC2530: the text sent with the file, under it. */}
+							{attachments?.some(
+								(attachment) => attachment.hasCaption
+							) &&
+								renderedMessageWithoutPrefix && (
+									<span
+										className="messageItem__attachmentCaption"
+										dangerouslySetInnerHTML={{
+											__html: renderedMessageWithoutPrefix
+										}}
+									/>
+								)}
 							{/*
 							 * Figma App.Oriso 8498-32373 shows the time rail on system
 							 * notices too — they are messages, so they carry a timestamp
@@ -2818,7 +2819,6 @@ export const MessageItemComponent = ({
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
 					}
-					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
 		);
@@ -2940,17 +2940,28 @@ export const MessageItemComponent = ({
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
 								<div className="messageItem__avatar">
-									<MessageAvatar
-										isGroup={!!activeSession?.isGroup}
-										isSystemNotification={false}
-										userId={userId}
-										username={username}
-										choice={incomingAvatarChoice}
-										displayName={
-											resolvedIncomingDisplayName
-										}
-										size={AVATAR_SIZES.message}
-									/>
+									{isSupervisorFeedback ? (
+										// In supervision the role matters more than
+										// the face. The name still stands above.
+										<span className="messageItem__supervisionAvatar">
+											<SupervisionGlyph
+												aria-hidden="true"
+												focusable="false"
+											/>
+										</span>
+									) : (
+										<MessageAvatar
+											isGroup={!!activeSession?.isGroup}
+											isSystemNotification={false}
+											userId={userId}
+											username={username}
+											choice={incomingAvatarChoice}
+											displayName={
+												resolvedIncomingDisplayName
+											}
+											size={AVATAR_SIZES.message}
+										/>
+									)}
 								</div>
 								{!readOnly && (
 									<button

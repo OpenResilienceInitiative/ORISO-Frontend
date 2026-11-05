@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
+		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
 		"empty": "No participants."
+	},
+	"timelineSettings": {
+		"title": "Appointments in the conversation list",
+		"description": "How the list shows upcoming appointments. Applies on all devices.",
+		"scrollModel": {
+			"legend": "Scrolling",
+			"panes": "Two areas: the future above, the past below",
+			"single": "One timeline: the future opens only when you keep pulling past “Now”"
+		},
+		"reveal": {
+			"legend": "When appointments are coming up, show",
+			"none": "Nothing",
+			"next": "The next appointment",
+			"half": "Half the list",
+			"most": "Almost everything"
+		},
+		"pastDate": {
+			"legend": "Date on past conversations",
+			"corner": "In the corner of the card",
+			"line": "In its own line",
+			"off": "Do not show"
+		},
+		"writeFailed": "The setting could not be saved. Please try again."
 	},
 	"menuEffects": {
 		"title": "Menu appearance",
@@ -162,6 +186,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Attachment: {{name}}",
+			"remove": "Remove {{name}}",
+			"cancel": "Cancel",
+			"retry": "Send again",
+			"chooseAnother": "Choose another file",
+			"captionHint": "The text goes out as the file's caption.",
+			"progressLabel": "Sending {{name}}",
+			"status": {
+				"preparing": "Getting ready …",
+				"uploading": "Uploading",
+				"finishing": "Sending …"
+			},
+			"error": {
+				"tooLarge": "This file is {{size}}. The limit is {{limit}} MB. Nothing was uploaded.",
+				"format": "This file format is not allowed. You can use jpg, png, pdf, docx, xlsx, webm, ogg and mp3.",
+				"serverTooLarge": "The server refuses this file as too large. File and text stay here.",
+				"network": "The connection dropped. File and text stay here.",
+				"service": "The service is not available right now. File and text stay here.",
+				"cancelled": "Cancelled. File and text stay here.",
+				"other": "Sending did not work. File and text stay here."
+			}
+		},
 		"download": {
 			"label": "Download",
 			"aria": "Download {{name}}"
@@ -169,7 +216,7 @@
 		"error": {
 			"format": {
 				"headline": "Your file could not be sent.",
-				"message": "our file could not be sent. Allowed are images (jpg and png), and documents (docx and pdf). Please try again."
+				"message": "Your file could not be sent. Allowed are images (jpg and png), and documents (docx and pdf). Please try again."
 			},
 			"other": {
 				"headline": "There was an error uploading the file.",
@@ -199,6 +246,18 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"gate": {
+			"check": "Check and open",
+			"checking": "Checking for viruses …",
+			"checkingImage": "Checking the image …",
+			"checkVirus": "Virus scan",
+			"checkImage": "Image analysis: safe and within the guidelines?",
+			"decrypt": "Decrypt",
+			"decrypting": "Decrypting …",
+			"encryptedHint": "End-to-end encrypted",
+			"loadFailed": "The file could not be loaded",
+			"retry": "Try again"
 		},
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
@@ -353,7 +412,8 @@
 		"participants": {
 			"label": "Participants: {{names}}",
 			"more": "{{count}} more participants",
-			"more_one": "1 more participant"
+			"more_one": "1 more participant",
+			"moreList": "More participants ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Switch channel",
@@ -756,22 +816,6 @@
 			"addThis": "Add this date to your calendar",
 			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Appointment",
-			"ariaLabel": "Future timeline",
-			"commandError": "The occurrence could not be changed. Please try again.",
-			"duplicate": "Duplicate as one-off",
-			"empty": "No upcoming events.",
-			"groupChatFallback": "Group chat",
-			"hide": "Hide future events",
-			"loadMore": "Load three more months",
-			"loadError": "Some future events could not be loaded.",
-			"loading": "Loading future events…",
-			"now": "Now",
-			"revealAriaLabel": "Reveal future timeline",
-			"show": "Show future events",
-			"skip": "Skip occurrence"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-moderator",
 			"OWNER": "Owner",
@@ -921,6 +965,8 @@
 			},
 			"nameLabel": "Internal name",
 			"noColleagues": "No colleagues to choose from",
+			"searchPeople": "Search for a person",
+			"noMatchingPeople": "No matching people found.",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
 			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
@@ -931,7 +977,8 @@
 			},
 			"scope": {
 				"AGENCY": "You can pick colleagues from your counselling centre.",
-				"TENANT": "You can pick colleagues from your organisation."
+				"TENANT": "You can pick colleagues from your organisation.",
+				"PLATFORM": "You can choose colleagues from your own organisation and other participating organisations."
 			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
@@ -1980,6 +2027,8 @@
 			}
 		},
 		"mention": {
+			"check": "Also select {{name}}",
+			"checked": "Selected: {{value}}. Click beside the list to insert.",
 			"notInChat": "not in chat",
 			"empty": "No one found",
 			"unavailable": "The list could not be loaded",
@@ -2466,6 +2515,10 @@
 			"serviceNoticePlanned": {
 				"title": "Scheduled maintenance",
 				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
+			},
+			"sessionAskerDeleted": {
+				"title": "Deleted advice seeker",
+				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
 			}
 		},
 		"error": "failed",
@@ -4199,6 +4252,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Another guest is first in line",
+				"text": "An earlier request in this queue must be accepted first."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Close"
@@ -4346,7 +4403,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group",
+				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling",
 				"directLinkVideo": "Video call",
@@ -4476,13 +4533,57 @@
 			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"expand": "Expand consultations list",
 			"collapse": "Collapse consultations list to enlarge the chat",
-			"scrollAriaLabel": "Drag to scroll the list."
+			"scrollAriaLabel": "Drag to scroll the list.",
+			"futureAriaLabel": "Upcoming appointments: drag down to show them, Up and Down move between stops."
 		},
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message",
 			"openEnquiries": "{{count}} open requests",
 			"openEnquiries_one": "{{count}} open request"
+		},
+		"timeline": {
+			"now": "Now",
+			"running": "in progress",
+			"upcoming": "Upcoming appointments",
+			"nextAppointment": "Next appointment: {{date}}",
+			"appointment": {
+				"create": "Add appointment",
+				"dialog": {
+					"createTitle": "Add appointment",
+					"moveTitle": "Move appointment",
+					"description": "The appointment belongs to this conversation. A notice appears in the conversation.",
+					"createAction": "Add",
+					"moveAction": "Move",
+					"date": "Date",
+					"start": "Start",
+					"end": "End",
+					"error": {
+						"incomplete": "Please choose a date and time.",
+						"past": "The appointment must be in the future.",
+						"order": "The end must be after the start.",
+						"conflict": "This appointment can no longer be changed: it was cancelled or the conversation has ended.",
+						"failed": "The appointment could not be saved. Please try again."
+					}
+				},
+				"notice": {
+					"created": "Appointment scheduled: {{date}}",
+					"moved": "Appointment moved to: {{date}}",
+					"cancelled": "Appointment cancelled: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Notice not sent",
+					"text": "The appointment is saved, but the notice in the conversation could not be sent."
+				},
+				"cancelFailed": {
+					"title": "Appointment not cancelled",
+					"text": "The appointment could not be cancelled. Please try again."
+				}
+			}
+		},
+		"deletedAsker": {
+			"title": "Deleted advice seeker",
+			"hint": "This chat was deleted. Personal data and messages are no longer available."
 		}
 	},
 	"statusOverlay": {
@@ -5069,6 +5170,7 @@
 		"label": "Voice message",
 		"play": "Play voice message",
 		"pause": "Pause voice message",
+		"loading": "Loading voice message",
 		"timeline": "Timeline",
 		"jumpTo": "Jump to {{time}}",
 		"aria": "Voice message, {{duration}}, play",
@@ -5553,7 +5655,18 @@
 			"browser": "Give me a signal here",
 			"browserHint": "No address needed — but it only works on this device.",
 			"enableBrowser": "Enable browser notifications",
+			"dialog": {
+				"title": "Turn on browser notifications",
+				"description": "Pick the sound you will hear, then allow notifications in your browser.",
+				"stayInBrowser": "This works as long as ORISO stays open in this browser on this device.",
+				"toneLabel": "Notification sound",
+				"tone": "Sound {{number}}",
+				"noTone": "No sound"
+			},
 			"browserDenied": "Browser notifications are not enabled. Please check your browser permission.",
+			"optionActive": "Active",
+			"browserBlockedHelp": "Browser notifications are blocked for this site. Click the lock icon in the address bar, open the site settings, set Notifications to Allow or choose Reset, then try again.",
+			"emailSavedNext": "Your email address is saved. One step left: allow notifications in your browser.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"active": "Enabled: {{channel}}",
 			"bothSetup": "Set up both",
@@ -5609,6 +5722,8 @@
 			"headline": "Notification by e-mail",
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
+			"dialogTitle": "Secure your access",
+			"dialogDescription": "Leave an e-mail address so you can reset your password later and hear when a reply is there. The content of the counselling never appears in that e-mail.",
 			"saveFailed": "Saving failed. Please try again.",
 			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support.",
 			"refreshFailed": "Your email address is saved. Your current settings could not be loaded.",
@@ -6458,6 +6573,7 @@
 		},
 		"entry": {
 			"inactive": "This link is no longer active.",
+			"callsDisabled": "Calls are not available in this counselling.",
 			"haveAccount": "Already have an account? Sign in",
 			"joinFailed": "That did not work. Please try again."
 		},

@@ -29,6 +29,52 @@ vi.mock('./fetchData', () => ({
 }));
 
 describe('apiGetConsultantSessionList', () => {
+	it('retains further pages when the anonymous feed is longer', async () => {
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
+			url.includes('/anonymous')
+				? {
+						sessions: [{ session: { id: 2 } }],
+						total: 31,
+						offset: 0,
+						count: 15
+					}
+				: {
+						sessions: [{ session: { id: 1 } }],
+						total: 1,
+						offset: 0,
+						count: 15
+					}) as any);
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY
+		});
+		expect(result.total).toBeGreaterThan(15);
+	});
+
+	it('uses a shared requested offset for both feeds even when their pages overlap', async () => {
+		vi.mocked(fetchData).mockReset();
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
+			url.includes('/anonymous')
+				? {
+						sessions: [
+							{ session: { id: 7 } },
+							{ session: { id: 8 } }
+						],
+						total: 33
+					}
+				: { sessions: [{ session: { id: 7 } }], total: 16 }) as any);
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY,
+			offset: 15,
+			count: 15
+		});
+		expect(result.sessions.map((row) => row.session.id)).toEqual([7, 8]);
+		expect(result.total).toBe(33);
+		expect(
+			vi
+				.mocked(fetchData)
+				.mock.calls.every(([arg]) => arg.url.includes('offset=15'))
+		).toBe(true);
+	});
 	it('loads both registered and anonymous enquiries for the enquiry tab', async () => {
 		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
 			url.includes('/anonymous')

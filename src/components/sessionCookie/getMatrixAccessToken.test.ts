@@ -39,7 +39,10 @@ vi.mock('../../resources/scripts/runtimeConfig', () => ({
 }));
 
 vi.mock('../../api/fetchData', () => ({
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' },
+	FETCH_ERRORS: {
+		CATCH_ALL: 'CATCH_ALL',
+		CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE'
+	},
 	FETCH_METHODS: { GET: 'GET' },
 	fetchData: vi.fn()
 }));
@@ -149,6 +152,39 @@ describe('clearPersistedMatrixDeviceId', () => {
 });
 
 describe('getMatrixAccessToken', () => {
+	it('preserves the wait when the browser device login is throttled', async () => {
+		setAuthenticatedSubject('keycloak-user');
+		vi.mocked(fetchData).mockRejectedValueOnce(
+			new Response(null, {
+				status: 429,
+				headers: { 'Retry-After': '21' }
+			})
+		);
+
+		await expect(getMatrixAccessToken()).rejects.toMatchObject({
+			retryAfterMs: 21_000
+		});
+	});
+
+	it.each([
+		{ status: 503, delay: '21' },
+		{ status: 429, delay: 'bad-header' },
+		{ status: 429, delay: '3000000' }
+	])(
+		'keeps a generic failure for $status with Retry-After $delay',
+		async ({ status, delay }) => {
+			setAuthenticatedSubject('keycloak-user');
+			vi.mocked(fetchData).mockRejectedValueOnce(
+				new Response(null, {
+					status,
+					headers: { 'Retry-After': delay }
+				})
+			);
+
+			await expect(getMatrixAccessToken()).rejects.toThrow('CATCH_ALL');
+		}
+	);
+
 	it('skips the API call when local live websocket bootstrap is disabled', async () => {
 		vi.stubEnv('REACT_APP_DISABLE_LIVE_WEBSOCKET', '1');
 
@@ -542,7 +578,7 @@ describe('getMatrixAccessToken', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_WEB_EXISTING_DEVICE',
 			method: 'GET',
-			responseHandling: ['CATCH_ALL'],
+			responseHandling: ['CATCH_ALL_WITH_RESPONSE'],
 			recoverOnPublicAuthRoute: false
 		});
 	});
