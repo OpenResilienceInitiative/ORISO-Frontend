@@ -2107,6 +2107,11 @@ export const SessionListItemComponent = ({
 												sessionId={
 													activeSession.item.id
 												}
+												onOpen={
+													chatroomSettingsMenu.showRequestHelp
+														? handleRequestHelp
+														: undefined
+												}
 											/>
 										)}
 									{modality === Modality.SELF_HELP && (
