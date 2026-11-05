@@ -1138,6 +1138,37 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			).toHaveBeenCalledTimes(1);
 		});
 
+		it('accepts a reasoned retry once the requester window of 5 seconds has passed', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				const send = (id: string) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: ROOM_ID,
+							request_id: id,
+							requester_user_id: PEER,
+							requester_device_id: 'ASKER1',
+							reason: 'hello'
+						})
+					);
+				send('first');
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				service.declineRequest('first');
+				vi.setSystemTime(Date.now() + 6_000);
+				send('retry');
+				await vi.waitFor(() =>
+					expect(
+						service.getPendingApprovals().map((a) => a.requestId)
+					).toEqual(['retry'])
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it('sends nothing when the client was replaced during the approval', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));
