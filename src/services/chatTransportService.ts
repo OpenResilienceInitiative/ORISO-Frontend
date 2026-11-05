@@ -300,18 +300,23 @@ class ChatTransportService {
 		options: SendFileMessageOptions = {}
 	): Promise<any> {
 		const matrixClientService = getMatrixClientService();
+		if (!matrixClientService) {
+			throw new Error('Matrix client not initialized');
+		}
 		const matrixSenderUserId =
 			options.feedbackMailIntent && !options.teamDiscussion
-				? matrixClientService?.getClient()?.getUserId() || null
+				? matrixClientService.getClient()?.getUserId() || null
 				: null;
-		const response = await matrixClientService?.sendFileMessage(
+		const response = await matrixClientService.sendFileMessage(
 			matrixRoomId,
 			file,
 			{
 				abortController: options.abortController,
 				uploadProgress: options.uploadProgress,
 				threadRootId: options.threadRootId,
-				replyToEventId: options.replyToEventId
+				replyToEventId: options.replyToEventId,
+				caption: options.caption,
+				mentionedUserIds: options.mentionedUserIds
 			}
 		);
 
@@ -333,6 +338,9 @@ class ChatTransportService {
 				supervisorMessage: !!options.supervisorMessage,
 				teamDiscussion: !!options.teamDiscussion,
 				senderDisplayName: options.senderDisplayName || null,
+				mentionedUserIds: options.mentionedUserIds?.length
+					? options.mentionedUserIds
+					: null,
 				matrixEventId: response?.event_id || null
 			}).catch(() => undefined);
 

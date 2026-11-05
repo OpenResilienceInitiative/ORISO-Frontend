@@ -945,6 +945,12 @@ $message-avatar-overlap: -19px;
 			border-radius: 0 6px 6px 0;
 		}
 
+		.messageItem__attachmentCaption {
+			display: block;
+			margin-top: 8px;
+			overflow-wrap: anywhere;
+		}
+
 		.messageItem__inlineImage {
 			display: block;
 			max-width: 100%;

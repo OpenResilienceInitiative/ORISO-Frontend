@@ -829,7 +829,8 @@ export const CardRowPreviewOneLine: Story = {
 		// The faces keep their full height (48): only the text ends early.
 		// offsetHeight ignores the entrance transform, which shrinks the rect.
 		await expect(
-			(card.querySelector('.sessionCard__flow') as HTMLElement).offsetHeight
+			(card.querySelector('.sessionCard__flow') as HTMLElement)
+				.offsetHeight
 		).toBeGreaterThanOrEqual(48);
 	}
 };

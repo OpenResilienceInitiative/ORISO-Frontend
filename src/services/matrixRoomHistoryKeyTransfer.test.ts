@@ -9,6 +9,16 @@ import {
 } from './matrixRoomHistoryKeyTransfer';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 
+vi.mock('@matrix-org/matrix-sdk-crypto-wasm', () => ({
+	UserId: class {
+		constructor(private readonly id: string) {}
+
+		toString() {
+			return this.id;
+		}
+	}
+}));
+
 const ROOM_ID = '!case:matrix';
 const ME = '@new:matrix';
 const PEER = '@asker:matrix';
@@ -101,6 +111,51 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				requester_device_id: 'NEW1'
 			})
 		);
+	});
+
+	it('loads joined donors and hydrates their devices before requesting history keys', async () => {
+		const harness = buildHarness();
+		harness.memberships.delete(PEER);
+		harness.room.loadMembersIfNeeded.mockImplementation(async () => {
+			harness.memberships.set(PEER, member(PEER));
+			return true;
+		});
+		const keyQuery = {};
+		Object.assign(harness.crypto, {
+			olmMachine: {
+				updateTrackedUsers: vi.fn().mockResolvedValue(undefined),
+				queryKeysForUsers: vi.fn(() => keyQuery)
+			},
+			outgoingRequestProcessor: {
+				makeOutgoingRequest: vi.fn(async () => {
+					harness.crypto.getUserDeviceInfo.mockResolvedValue(
+						new Map([
+							[
+								PEER,
+								new Map([['ASKER1', { deviceId: 'ASKER1' }]])
+							]
+						])
+					);
+				})
+			}
+		});
+		harness.crypto.getUserDeviceInfo.mockResolvedValue(new Map());
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		await expect(service.requestKeys(ROOM_ID)).resolves.toBe(true);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+			'org.oriso.room_history_key_request',
+			[{ userId: PEER, deviceId: 'ASKER1' }],
+			expect.any(Object)
+		);
+		const rust = (harness.crypto as any).olmMachine;
+		for (const fn of [rust.updateTrackedUsers, rust.queryKeysForUsers]) {
+			expect(fn.mock.calls[0][0].map(String)).toEqual([PEER]);
+		}
+		expect(
+			(harness.crypto as any).outgoingRequestProcessor.makeOutgoingRequest
+		).toHaveBeenCalledWith(keyQuery);
 	});
 
 	it('throttles repeated outgoing room-key requests', async () => {
@@ -266,6 +321,188 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		await Promise.resolve();
 
 		expect(harness.crypto.exportRoomKeys).toHaveBeenCalledTimes(1);
+	});
+
+	describe('incoming request device refresh', () => {
+		const withRustInternals = (
+			harness: ReturnType<typeof buildHarness>,
+			onRefresh: () => void = () => undefined
+		) => {
+			const rust = {
+				olmMachine: {
+					updateTrackedUsers: vi.fn().mockResolvedValue(undefined),
+					queryKeysForUsers: vi.fn(() => ({}))
+				},
+				outgoingRequestProcessor: {
+					makeOutgoingRequest: vi.fn(async () => onRefresh())
+				}
+			};
+			Object.assign(harness.crypto, rust);
+			return rust;
+		};
+		const request = (requestId = 'request-1') =>
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: requestId,
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1'
+			});
+		const flush = () => new Promise((resolve) => setTimeout(resolve));
+
+		it('finds a requester device discovered by the refresh', async () => {
+			const harness = buildHarness();
+			harness.crypto.getUserDeviceInfo.mockResolvedValue(new Map());
+			withRustInternals(harness, () =>
+				harness.crypto.getUserDeviceInfo.mockResolvedValue(
+					new Map([
+						[PEER, new Map([['ASKER1', { deviceId: 'ASKER1' }]])]
+					])
+				)
+			);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+
+			await vi.waitFor(() =>
+				expect(
+					harness.client.encryptAndSendToDevice
+				).toHaveBeenCalledOnce()
+			);
+		});
+
+		it('sends no bundle when the requester leaves during the refresh', async () => {
+			const harness = buildHarness();
+			withRustInternals(harness, () =>
+				harness.memberships.set(PEER, member(PEER, 'leave'))
+			);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+			await flush();
+
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
+		it('sends no bundle when the client is replaced during the refresh', async () => {
+			const harness = buildHarness();
+			const service = new MatrixRoomHistoryKeyTransfer();
+			const replacement = buildHarness();
+			withRustInternals(harness, () =>
+				service.initialize(replacement.client as any)
+			);
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+			await flush();
+
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
+		it('skips both refresh and export for a repeated request', async () => {
+			const harness = buildHarness();
+			const rust = withRustInternals(harness);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+			await vi.waitFor(() =>
+				expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce()
+			);
+			harness.emitToDevice(request());
+			await flush();
+
+			expect(
+				rust.outgoingRequestProcessor.makeOutgoingRequest
+			).toHaveBeenCalledOnce();
+			expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce();
+		});
+
+		it('throttles a repeated request for an unknown device and a concurrent one', async () => {
+			const harness = buildHarness();
+			harness.crypto.getUserDeviceInfo.mockResolvedValue(new Map());
+			const rust = withRustInternals(harness);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+			harness.emitToDevice(request());
+			await flush();
+			harness.emitToDevice(request());
+			await flush();
+
+			expect(
+				rust.outgoingRequestProcessor.makeOutgoingRequest
+			).toHaveBeenCalledOnce();
+		});
+
+		it('reports a failed refresh without details and still answers', async () => {
+			const harness = buildHarness();
+			const rust = withRustInternals(harness);
+			rust.outgoingRequestProcessor.makeOutgoingRequest.mockRejectedValue(
+				new Error('sensitive refresh detail')
+			);
+			const diagnostic = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				diagnostic
+			);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+			await vi.waitFor(() =>
+				expect(
+					harness.client.encryptAndSendToDevice
+				).toHaveBeenCalledOnce()
+			);
+
+			const details = diagnostic.mock.calls.map(([e]) => e.detail);
+			expect(details).toContainEqual({
+				stage: 'device-refresh-failed',
+				reason: 'key-query-rejected'
+			});
+			expect(JSON.stringify(details)).not.toContain('sensitive');
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				diagnostic
+			);
+		});
+
+		it('reports a skipped refresh when the Rust internals are missing', async () => {
+			const harness = buildHarness();
+			const diagnostic = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				diagnostic
+			);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			harness.emitToDevice(request());
+			await vi.waitFor(() =>
+				expect(
+					harness.client.encryptAndSendToDevice
+				).toHaveBeenCalledOnce()
+			);
+
+			expect(diagnostic.mock.calls.map(([e]) => e.detail)).toContainEqual(
+				{
+					stage: 'device-refresh-skipped'
+				}
+			);
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+				diagnostic
+			);
+		});
 	});
 
 	it('does not send an oversized exported key bundle', async () => {

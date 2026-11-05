@@ -189,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Ek: {{name}}",
+			"remove": "{{name}} dosyasını kaldır",
+			"cancel": "İptal",
+			"retry": "Tekrar gönder",
+			"chooseAnother": "Başka dosya seç",
+			"captionHint": "Metin, dosyanın açıklaması olarak gönderilir.",
+			"progressLabel": "{{name}} gönderiliyor",
+			"status": {
+				"preparing": "Hazırlanıyor …",
+				"uploading": "Yükleniyor",
+				"finishing": "Gönderiliyor …"
+			},
+			"error": {
+				"tooLarge": "Bu dosyanın boyutu {{size}}. Sınır {{limit}} MB. Hiçbir şey yüklenmedi.",
+				"format": "Bu dosya biçimine izin verilmiyor. jpg, png, pdf, docx, xlsx, webm, ogg ve mp3 kullanılabilir.",
+				"serverTooLarge": "Sunucu bu dosyayı çok büyük olduğu için reddetti. Dosya ve metin burada kalır.",
+				"network": "Bağlantı kesildi. Dosya ve metin burada kalır.",
+				"service": "Hizmet şu anda kullanılamıyor. Dosya ve metin burada kalır.",
+				"cancelled": "İptal edildi. Dosya ve metin burada kalır.",
+				"other": "Gönderilemedi. Dosya ve metin burada kalır."
+			}
+		},
 		"download": {
 			"label": "İndir",
 			"aria": "{{name}} dosyasını indir"
@@ -208,7 +231,7 @@
 			},
 			"size": {
 				"headline": "Seçtiğiniz dosya çok büyük.",
-				"message": "{{attachment_filesize}}En fazla MB yükleyebilirsiniz."
+				"message": "En fazla {{attachment_filesize}} MB yükleyebilirsiniz."
 			}
 		},
 		"list": {
@@ -2495,6 +2518,10 @@
 			"serviceNoticePlanned": {
 				"title": "Planlı bakım",
 				"text": "{{maintenanceDate}} tarihinde platform, {{maintenanceStart}} ile {{maintenanceEnd}} arasında erişilemez olacak. Daha önce yazdığınız mesajlar kaybolmaz."
+			},
+			"sessionAskerDeleted": {
+				"title": "Silinmiş danışan",
+				"text": "Bir danışanla yapılan sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
 			}
 		},
 		"error": "Başarısız",
@@ -4259,6 +4286,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Sırada önce başka bir misafir var",
+				"text": "Bu sıradaki daha önce gelen bir istek önce kabul edilmelidir."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Kapat"
@@ -4583,6 +4614,10 @@
 					"text": "Randevu iptal edilemedi. Lütfen tekrar deneyin."
 				}
 			}
+		},
+		"deletedAsker": {
+			"title": "Silinmiş danışan",
+			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil."
 		}
 	},
 	"statusOverlay": {
@@ -5712,6 +5747,8 @@
 			"action": "E-posta adresi ekle",
 			"saveFailed": "Kaydetme başarısız oldu. Lütfen tekrar deneyin.",
 			"notAllowed": "Bu hesabın e-posta adresi kaydetme yetkisi bulunmamaktadır. Lütfen destek ekibimizle iletişime geçin.",
+			"dialogDescription": "Şifrenizi daha sonra sıfırlayabilmek ve yanıt geldiğinde haberdar olmak için bir e-posta adresi bırakın. Danışmanlığın içeriği bu e-postada asla yer almaz.",
+			"dialogTitle": "Erişiminizi güvence altına alın",
 			"refreshFailed": "E-posta adresiniz kaydedildi. Güncel ayarlarınız yüklenemedi.",
 			"retryRefresh": "Yeniden yükle"
 		},
@@ -5763,6 +5800,17 @@
 			"channelEmail": "E-posta",
 			"enableBrowser": "Tarayıcı bildirimlerini etkinleştir",
 			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"browserBlockedHelp": "Bu site için tarayıcı bildirimleri engellendi. Adres çubuğundaki kilit simgesine tıklayın, site ayarlarını açın, Bildirimler'i İzin ver olarak ayarlayın veya Sıfırla'yı seçin, ardından tekrar deneyin.",
+			"optionActive": "Etkin",
+			"emailSavedNext": "E-posta adresiniz kaydedildi. Bir adım kaldı: tarayıcınızda bildirimlere izin verin.",
+			"dialog": {
+				"description": "Duyacağınız sesi seçin, ardından tarayıcınızda bildirimlere izin verin.",
+				"noTone": "Ses yok",
+				"stayInBrowser": "Bu, ORISO bu cihazda bu tarayıcıda açık kaldığı sürece çalışır.",
+				"title": "Tarayıcı bildirimlerini aç",
+				"tone": "Ses {{number}}",
+				"toneLabel": "Bildirim sesi"
+			},
 			"emailAccepted": "E-posta bildirimi değişikliği kabul edildi.",
 			"refreshFailed": "Değişiklik kabul edildi. Güncel ayarlarınız yüklenemedi."
 		},
