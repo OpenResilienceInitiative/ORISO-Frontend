@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { isSupportedAttachment } from './attachmentHelpers';
+import {
+	formatAttachmentSize,
+	isSupportedAttachment
+} from './attachmentHelpers';
+
+describe('formatAttachmentSize', () => {
+	it('counts in thousands, like the limit check', () => {
+		expect(formatAttachmentSize(400, 'en')).toBe('1 KB');
+		expect(formatAttachmentSize(340_000, 'en')).toBe('340 KB');
+		expect(formatAttachmentSize(1_250_000, 'en')).toBe('1.3 MB');
+		expect(formatAttachmentSize(1_250_000, 'de')).toBe('1,3 MB');
+	});
+
+	it('never shows a file over the limit as exactly the limit', () => {
+		expect(formatAttachmentSize(10_000_001, 'en')).toBe('10 MB');
+		expect(formatAttachmentSize(10_000_001, 'en', { roundUp: true })).toBe(
+			'10.1 MB'
+		);
+	});
+});
 
 describe('isSupportedAttachment', () => {
 	it.each([

@@ -83,6 +83,21 @@ describe('filterVisibleMatrixPreviewEvents', () => {
 });
 
 describe('getLatestMatrixRoomPreview', () => {
+	it('names a captioned file by its file name, not by its caption', () => {
+		expect(
+			getLatestTimedMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.file',
+						body: 'Bitte Seite 2 lesen',
+						filename: 'befund.pdf'
+					},
+					42
+				)
+			])
+		).toEqual({ kind: 'file', text: 'befund.pdf', ts: 42 });
+	});
 	it('keeps the timestamp for a separately contracted side-room preview', () => {
 		expect(
 			getLatestTimedMatrixRoomPreview([

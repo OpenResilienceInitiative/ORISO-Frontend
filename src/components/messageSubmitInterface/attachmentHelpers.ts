@@ -77,3 +77,27 @@ export const isSupportedAttachment = (
 export const getAttachmentSizeMBForKB = (attachmentSizeKB: number) => {
 	return parseInt(Math.ceil(attachmentSizeKB / Math.pow(1000, 2)).toFixed(2));
 };
+
+/**
+ * Size for the composer's attachment card. Counts in 1000s like the limit
+ * check above, so a file over the limit never reads as exactly the limit:
+ * `roundUp` shows 10,000,001 bytes as 10.1 MB, not 10 MB.
+ */
+export const formatAttachmentSize = (
+	bytes: number,
+	locale?: string,
+	options?: { roundUp?: boolean }
+): string => {
+	const format = (value: number, fractionDigits: number) =>
+		new Intl.NumberFormat(locale, {
+			maximumFractionDigits: fractionDigits
+		}).format(value);
+	if (bytes < 1000 * 1000) {
+		return `${format(Math.max(1, Math.round(bytes / 1000)), 0)} KB`;
+	}
+	const megabytes = bytes / (1000 * 1000);
+	const shown = options?.roundUp
+		? Math.ceil(megabytes * 10) / 10
+		: Math.round(megabytes * 10) / 10;
+	return `${format(shown, 1)} MB`;
+};

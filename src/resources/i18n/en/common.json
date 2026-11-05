@@ -186,6 +186,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Attachment: {{name}}",
+			"remove": "Remove {{name}}",
+			"cancel": "Cancel",
+			"retry": "Send again",
+			"chooseAnother": "Choose another file",
+			"captionHint": "The text goes out as the file's caption.",
+			"progressLabel": "Sending {{name}}",
+			"status": {
+				"preparing": "Getting ready …",
+				"uploading": "Uploading",
+				"finishing": "Sending …"
+			},
+			"error": {
+				"tooLarge": "This file is {{size}}. The limit is {{limit}} MB. Nothing was uploaded.",
+				"format": "This file format is not allowed. You can use jpg, png, pdf, docx, xlsx, webm, ogg and mp3.",
+				"serverTooLarge": "The server refuses this file as too large. File and text stay here.",
+				"network": "The connection dropped. File and text stay here.",
+				"service": "The service is not available right now. File and text stay here.",
+				"cancelled": "Cancelled. File and text stay here.",
+				"other": "Sending did not work. File and text stay here."
+			}
+		},
 		"download": {
 			"label": "Download",
 			"aria": "Download {{name}}"
@@ -193,7 +216,7 @@
 		"error": {
 			"format": {
 				"headline": "Your file could not be sent.",
-				"message": "our file could not be sent. Allowed are images (jpg and png), and documents (docx and pdf). Please try again."
+				"message": "Your file could not be sent. Allowed are images (jpg and png), and documents (docx and pdf). Please try again."
 			},
 			"other": {
 				"headline": "There was an error uploading the file.",

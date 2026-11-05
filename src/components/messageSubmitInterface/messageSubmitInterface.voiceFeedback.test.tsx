@@ -41,6 +41,7 @@ const mocks = vi.hoisted(() => ({
 	translate: (key: string) => key,
 	composerClear: vi.fn(),
 	composerFocus: vi.fn(),
+	insertionMarker: vi.fn(),
 	typeDraft: (_text: string) => {},
 	matrixService: { getClient: () => null }
 }));
@@ -117,7 +118,7 @@ vi.mock('./TipTapComposer', async () => {
 				clear: () => mocks.composerClear(),
 				runAction: () => {},
 				isActionActive: () => false,
-				setInsertionMarker: () => {},
+				setInsertionMarker: mocks.insertionMarker,
 				setText: () => {},
 				focus: () => mocks.composerFocus()
 			}));
@@ -554,6 +555,9 @@ describe('voice note review before sending (#1142)', () => {
 		});
 
 		expect(await screen.findByText('interview.mp3')).toBeTruthy();
+		await waitFor(() =>
+			expect(mocks.insertionMarker).toHaveBeenLastCalledWith(true)
+		);
 		expect(
 			screen.queryByRole('group', { name: 'voice.recording.preview' })
 		).toBeNull();
