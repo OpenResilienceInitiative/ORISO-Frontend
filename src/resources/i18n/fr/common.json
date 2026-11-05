@@ -5716,6 +5716,8 @@
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
 			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"dialogDescription": "Laissez une adresse e-mail pour pouvoir réinitialiser votre mot de passe plus tard et savoir quand une réponse est arrivée. Le contenu du conseil n'apparaît jamais dans cet e-mail.",
+			"dialogTitle": "Sécuriser votre accès",
 			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
 			"retryRefresh": "Recharger"
 		},
@@ -5767,6 +5769,17 @@
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
 			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"browserBlockedHelp": "Les notifications du navigateur sont bloquées pour ce site. Cliquez sur le cadenas dans la barre d'adresse, ouvrez les paramètres du site, réglez Notifications sur Autoriser ou choisissez Réinitialiser, puis réessayez.",
+			"optionActive": "Actif",
+			"emailSavedNext": "Votre adresse e-mail est enregistrée. Il reste une étape : autorisez les notifications dans votre navigateur.",
+			"dialog": {
+				"description": "Choisissez le son que vous entendrez, puis autorisez les notifications dans votre navigateur.",
+				"noTone": "Aucun son",
+				"stayInBrowser": "Cela fonctionne tant qu'ORISO reste ouvert dans ce navigateur sur cet appareil.",
+				"title": "Activer les notifications du navigateur",
+				"tone": "Son {{number}}",
+				"toneLabel": "Son de notification"
+			},
 			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
 			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},

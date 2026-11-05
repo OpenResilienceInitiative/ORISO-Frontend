@@ -102,3 +102,30 @@ describe('NotificationChoiceCard (#825 post-dispatch)', () => {
 		).toBe('true');
 	});
 });
+
+describe('NotificationChoiceCard active check mark', () => {
+	afterEach(cleanup);
+
+	it('marks only the chosen option as active, visibly and for screen readers', () => {
+		render(
+			<NotificationChoiceCard
+				onChoose={() => undefined}
+				chosen="BROWSER"
+				controlled
+			/>
+		);
+		expect(screen.getAllByTestId('notificationChoice-check')).toHaveLength(
+			1
+		);
+		const active = screen.getByRole('button', { pressed: true });
+		expect(active.textContent).toMatch(/Geben Sie mir hier ein Signal/);
+		expect(
+			active.querySelector('[data-testid="notificationChoice-check"]')
+		).not.toBeNull();
+	});
+
+	it('shows no check mark while nothing is chosen', () => {
+		render(<NotificationChoiceCard onChoose={() => undefined} />);
+		expect(screen.queryByTestId('notificationChoice-check')).toBeNull();
+	});
+});

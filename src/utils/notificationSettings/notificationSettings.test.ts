@@ -107,6 +107,10 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 
 type Handler = (event: any) => void;
 
+/** Lets the write that attachClient starts for a fresh account finish. */
+const settleSeedWrite = () =>
+	new Promise<void>((resolve) => setTimeout(resolve, 0));
+
 const makeMockClient = (deviceId = 'DEVICE_A') => {
 	const accountData = new Map<string, any>();
 	const handlers: Handler[] = [];
@@ -176,9 +180,10 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 		);
 	});
 
-	it('updateSettings persists to account data and notifies subscribers', () => {
+	it('updateSettings persists to account data and notifies subscribers', async () => {
 		const client = makeMockClient();
 		notificationSettingsStore.attachClient(client as any);
+		await settleSeedWrite();
 		const listener = vi.fn();
 		notificationSettingsStore.subscribe(listener);
 		notificationSettingsStore.updateSettings({ globalMute: true });
@@ -187,6 +192,62 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 			NOTIFICATION_SETTINGS_EVENT_TYPE,
 			expect.objectContaining({ globalMute: true })
 		);
+	});
+
+	it('never lets an older settings write finish after a newer one', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		await settleSeedWrite();
+		client.setAccountData.mockClear();
+		const finishers: Array<() => void> = [];
+		client.setAccountData.mockImplementation(
+			(_type: string, _content: any) =>
+				new Promise<void>((resolve) => finishers.push(resolve))
+		);
+
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		notificationSettingsStore.updateSettings({ globalMute: false });
+		// Only one write runs at a time.
+		expect(client.setAccountData).toHaveBeenCalledTimes(1);
+		finishers[0]();
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		expect(client.setAccountData).toHaveBeenLastCalledWith(
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			expect.objectContaining({ globalMute: false })
+		);
+		finishers[1]();
+	});
+
+	it('keeps a queued change when the echo of an earlier write arrives', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		await settleSeedWrite();
+		client.setAccountData.mockClear();
+		const finishers: Array<() => void> = [];
+		client.setAccountData.mockImplementation(
+			(_type: string, _content: any) =>
+				new Promise<void>((resolve) => finishers.push(resolve))
+		);
+
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		notificationSettingsStore.updateSettings({ globalMute: false });
+		const first = client.setAccountData.mock.calls[0][1];
+		// Matrix echoes the first write before the second one is sent.
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, first);
+		expect(notificationSettingsStore.getState().settings.globalMute).toBe(
+			false
+		);
+		finishers[0]();
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		expect(client.setAccountData).toHaveBeenLastCalledWith(
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			expect.objectContaining({ globalMute: false })
+		);
+		finishers[1]();
 	});
 
 	it('device silence writes ONLY the device-scoped event type', () => {
