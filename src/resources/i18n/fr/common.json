@@ -20,7 +20,9 @@
 		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
 		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
 		"prepare": "Préparer la clé de récupération",
-		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité."
+		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
+		"expiredTitle": "Cette session de chat en direct a expiré",
+		"expiredHelp": "Cette conversation ne peut plus être transférée vers un compte dans ce navigateur. Une nouvelle inscription commence une conversation distincte."
 	},
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",

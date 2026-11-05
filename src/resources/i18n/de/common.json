@@ -20,7 +20,9 @@
 		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
 		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
 		"prepare": "Wiederherstellungsschlüssel vorbereiten",
-		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu."
+		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
+		"expiredTitle": "Diese Live-Chat-Sitzung ist abgelaufen",
+		"expiredHelp": "Dieses Gespräch kann in diesem Browser nicht mehr in ein Konto übernommen werden. Eine neue Registrierung beginnt ein separates Gespräch."
 	},
 	"groupCardParticipants": {
 		"loading": "Teilnehmende werden geladen …",

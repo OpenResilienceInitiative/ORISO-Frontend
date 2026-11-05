@@ -20,7 +20,9 @@
 		"recoveryError": "Kurtarma anahtarı henüz kullanılamıyor. Tekrar deneyin veya daha önce kaydettiğiniz anahtarı girin.",
 		"existingKey": "Daha önce kaydedilen kurtarma anahtarı (gerekirse)",
 		"prepare": "Kurtarma anahtarını hazırla",
-		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin."
+		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin.",
+		"expiredTitle": "Bu canlı sohbet oturumunun süresi doldu",
+		"expiredHelp": "Bu görüşme artık bu tarayıcıda hesaba aktarılamaz. Yeni kayıt ayrı bir görüşme başlatır."
 	},
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",

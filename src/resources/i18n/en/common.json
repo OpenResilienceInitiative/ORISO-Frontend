@@ -20,7 +20,9 @@
 		"recoveryError": "The recovery key is not available yet. Retry, or enter the key you saved previously.",
 		"existingKey": "Previously saved recovery key (if needed)",
 		"prepare": "Prepare recovery key",
-		"accountChanged": "The signed-in account changed. Reload to continue safely."
+		"accountChanged": "The signed-in account changed. Reload to continue safely.",
+		"expiredTitle": "This Live Chat session has expired",
+		"expiredHelp": "This conversation can no longer be converted in this browser. A new registration starts a separate conversation."
 	},
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
