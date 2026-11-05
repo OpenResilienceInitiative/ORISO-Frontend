@@ -8,6 +8,8 @@ import { endpoints } from '../../resources/scripts/endpoints';
 
 export type ConversionState =
 	| 'ELIGIBLE'
+	| 'FINISH_PENDING'
+	| 'ANONYMOUS_FINISHED'
 	| 'ALREADY_REGISTERED'
 	| 'NOT_ELIGIBLE'
 	| 'PROMOTION_PENDING'
@@ -18,9 +20,12 @@ export interface ConversionStatus {
 	username: string;
 	state: ConversionState;
 	intentId: string | null;
+	finishedOrigin: boolean;
 }
 const states: ConversionState[] = [
 	'ELIGIBLE',
+	'FINISH_PENDING',
+	'ANONYMOUS_FINISHED',
 	'ALREADY_REGISTERED',
 	'NOT_ELIGIBLE',
 	'PROMOTION_PENDING',
@@ -51,7 +56,8 @@ export const getConversionStatus = async (): Promise<ConversionStatus> => {
 		userId: data.userId,
 		username: data.username,
 		state: data.state,
-		intentId: data.intentId ?? null
+		intentId: data.intentId ?? null,
+		finishedOrigin: data.finishedOrigin === true
 	};
 };
 

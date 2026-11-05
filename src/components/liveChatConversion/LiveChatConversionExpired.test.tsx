@@ -21,6 +21,10 @@ describe('expired Live Chat conversion', () => {
 				/A new registration starts a separate conversation/
 			)
 		).toBeTruthy();
-		expect(screen.queryByRole('link')).toBeNull();
+		expect(
+			screen
+				.getByRole('link', { name: 'Start a new registration' })
+				.getAttribute('href')
+		).toBe('/registration');
 	});
 });

@@ -16,6 +16,7 @@ import { MATRIX_SESSION_SUBJECT_STORAGE_KEY } from '../../utils/matrixStorageKey
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { RecoveryKeySaveStep } from '../profile/EncryptionSettings/RecoveryKeySaveStep';
 import { NewRequestDialog } from '../profile/NewRequestDialog/NewRequestDialog';
+import { Loading } from '../app/Loading';
 import { LiveChatConversionForm } from './LiveChatConversionForm';
 import {
 	convertLiveChatAccount,
@@ -84,25 +85,27 @@ export const LiveChatConversionPage = () => {
 			)
 				throw new Error('Account changed');
 			const service = matrixClientService;
-			const client = service?.getClient();
-			if (
-				!service ||
-				!client ||
-				service.getAuthenticatedSubject() !== fresh.userId
-			)
-				throw new Error('Matrix not ready');
-			const result = await service.holdTokenRefreshDuring(async () => {
-				const prepared = await prepareGuestRecovery(
-					client,
-					suppliedKey
-				);
-				if (
-					service.getClient() !== client ||
-					service.getAuthenticatedSubject() !== fresh.userId
-				)
-					throw new Error('Matrix client changed');
-				return prepared;
-			});
+			if (!service) throw new Error('Matrix not ready');
+			const { client, result } = await service.holdTokenRefreshDuring(
+				async () => {
+					const client = service.getClient();
+					if (
+						!client ||
+						service.getAuthenticatedSubject() !== fresh.userId
+					)
+						throw new Error('Matrix not ready');
+					const result = await prepareGuestRecovery(
+						client,
+						suppliedKey
+					);
+					if (
+						service.getClient() !== client ||
+						service.getAuthenticatedSubject() !== fresh.userId
+					)
+						throw new Error('Matrix client changed');
+					return { client, result };
+				}
+			);
 			const after = await getConversionStatus();
 			if (
 				after.userId !== fresh.userId ||
@@ -154,7 +157,9 @@ export const LiveChatConversionPage = () => {
 				userId: status.userId,
 				username: loginName,
 				state: 'PROMOTED',
-				intentId: currentIntent
+				intentId: currentIntent,
+				finishedOrigin:
+					fresh.finishedOrigin || fresh.state === 'ANONYMOUS_FINISHED'
 			});
 			setKey(null);
 			setSuppliedKey('');
@@ -188,6 +193,8 @@ export const LiveChatConversionPage = () => {
 		}
 	};
 
+	if (!status && !error) return <Loading delayMs={0} />;
+
 	if (
 		status?.state === 'ALREADY_REGISTERED' ||
 		status?.state === 'PROMOTED'
@@ -218,9 +225,23 @@ export const LiveChatConversionPage = () => {
 							)}
 						</Alert>
 					)}
-					<Button variant="contained" onClick={startRequest}>
-						{tr('startRequest', 'Start a written request')}
-					</Button>
+					{status.finishedOrigin ? (
+						<>
+							<Typography>
+								{tr(
+									'signInAgain',
+									'Sign in again with this login name and your new password.'
+								)}
+							</Typography>
+							<Button variant="contained" href="/login">
+								{t('accountInvite.toLogin', 'Go to sign in')}
+							</Button>
+						</>
+					) : (
+						<Button variant="contained" onClick={startRequest}>
+							{tr('startRequest', 'Start a written request')}
+						</Button>
+					)}
 					<NewRequestDialog
 						preselectedTopicId={
 							typeof location.state?.topicId === 'number'
@@ -255,7 +276,9 @@ export const LiveChatConversionPage = () => {
 	}
 	if (
 		key &&
-		(status?.state === 'ELIGIBLE' || status?.state === 'PROMOTION_PENDING')
+		(status?.state === 'ELIGIBLE' ||
+			status?.state === 'ANONYMOUS_FINISHED' ||
+			status?.state === 'PROMOTION_PENDING')
 	) {
 		return (
 			<LiveChatConversionForm
@@ -288,6 +311,7 @@ export const LiveChatConversionPage = () => {
 					</Alert>
 				)}
 				{(status?.state === 'NOT_ELIGIBLE' ||
+					status?.state === 'FINISH_PENDING' ||
 					status?.state === 'CLEANUP_STARTED') && (
 					<Alert severity="error">
 						{tr(
@@ -297,6 +321,7 @@ export const LiveChatConversionPage = () => {
 					</Alert>
 				)}
 				{(status?.state === 'ELIGIBLE' ||
+					status?.state === 'ANONYMOUS_FINISHED' ||
 					status?.state === 'PROMOTION_PENDING') && (
 					<>
 						<Typography>

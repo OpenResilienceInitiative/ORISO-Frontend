@@ -1,7 +1,7 @@
 import { initializeChatRecovery } from '../../services/authenticatedChatRecovery';
 import { loadPendingRecoveryKey } from '../../services/pendingRecoveryKeyStore';
 import { recoverWithKey } from '../../services/matrixKeyBackupService';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prepareGuestRecovery } from './prepareGuestRecovery';
 
 vi.mock('../../services/authenticatedChatRecovery', () => ({
@@ -15,6 +15,14 @@ vi.mock('../../services/matrixKeyBackupService', () => ({
 }));
 
 describe('prepare guest recovery', () => {
+	beforeEach(() => vi.clearAllMocks());
+	it('does not load or recover keys while another setup holds the lock', async () => {
+		const client = { getUserId: () => '@guest:example.test' } as never;
+		vi.mocked(initializeChatRecovery).mockResolvedValue('busy');
+		await expect(prepareGuestRecovery(client)).rejects.toThrow('busy');
+		expect(loadPendingRecoveryKey).not.toHaveBeenCalled();
+		expect(recoverWithKey).not.toHaveBeenCalled();
+	});
 	it('verifies the existing key without replacing the user identity', async () => {
 		const client = { getUserId: () => '@guest:example.test' } as never;
 		vi.mocked(initializeChatRecovery).mockResolvedValue('ready');

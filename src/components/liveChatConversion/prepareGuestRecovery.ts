@@ -10,7 +10,12 @@ export const prepareGuestRecovery = async (
 ): Promise<string> => {
 	const userId = client.getUserId();
 	if (!userId) throw new Error('Matrix account is not ready');
-	await initializeChatRecovery(client, { mode: 'RECOVERY_KEY' }, null);
+	const state = await initializeChatRecovery(
+		client,
+		{ mode: 'RECOVERY_KEY' },
+		null
+	);
+	if (state === 'busy') throw new Error('Recovery setup is busy');
 	const key = suppliedKey?.trim() || (await loadPendingRecoveryKey(userId));
 	if (!key) throw new Error('The existing recovery key is required');
 	await recoverWithKey(client, key);

@@ -21,6 +21,12 @@ describe('Live Chat conversion API', () => {
 		vi.mocked(fetchData).mockResolvedValue({});
 		await expect(getConversionStatus()).rejects.toThrow();
 	});
+	it('rejects a conversion response without a usable login name', async () => {
+		vi.mocked(fetchData).mockResolvedValue({ username: ' ' });
+		await expect(
+			convertLiveChatAccount('guest-a', 'intent', 'chosen-password-123')
+		).rejects.toThrow('Missing login name');
+	});
 	it('posts a stable intent and accepts only a valid login name', async () => {
 		vi.mocked(fetchData).mockResolvedValue({ username: 'guest-name' });
 		await expect(

@@ -16,7 +16,8 @@ const mocks = vi.hoisted(() => ({
 	convert: vi.fn(),
 	prepare: vi.fn(),
 	client: { getUserId: () => '@guest:example.test' },
-	matrixSubject: 'guest-a'
+	matrixSubject: 'guest-a',
+	replacementOnHold: false
 }));
 vi.mock('react-router-dom', () => ({
 	useLocation: () => ({ state: { topicId: 17 } })
@@ -39,7 +40,11 @@ vi.mock('../../globalState/context/MatrixClientContext', () => ({
 		matrixClientService: {
 			getClient: () => mocks.client,
 			getAuthenticatedSubject: () => mocks.matrixSubject,
-			holdTokenRefreshDuring: (f: () => Promise<unknown>) => f()
+			holdTokenRefreshDuring: (f: () => Promise<unknown>) => {
+				if (mocks.replacementOnHold)
+					mocks.client = { getUserId: () => '@guest:example.test' };
+				return f();
+			}
 		}
 	})
 }));
@@ -81,8 +86,17 @@ describe('Live Chat conversion', () => {
 		vi.clearAllMocks();
 		mocks.client = { getUserId: () => '@guest:example.test' };
 		mocks.matrixSubject = 'guest-a';
+		mocks.replacementOnHold = false;
 		localStorage.setItem('matrix_session_subject', 'guest-a');
 		mocks.prepare.mockResolvedValue('synthetic-key');
+	});
+	it('shows a loading state while the account status is pending', () => {
+		mocks.status.mockReturnValue(new Promise(() => {}));
+		mount();
+		expect(screen.getByRole('status')).toBeTruthy();
+		expect(
+			screen.queryByRole('button', { name: 'Prepare recovery key' })
+		).toBeNull();
 	});
 	it('requires saved recovery key and reuses the pending conversion intent', async () => {
 		mocks.status.mockResolvedValue({
@@ -130,6 +144,58 @@ describe('Live Chat conversion', () => {
 			})
 		);
 		expect(await screen.findByText('Written request dialog')).toBeTruthy();
+	});
+	it('asks a finished guest to sign in again after promotion', async () => {
+		mocks.status.mockResolvedValue({
+			userId: 'guest-a',
+			username: 'guest-name',
+			state: 'ANONYMOUS_FINISHED',
+			intentId: null,
+			finishedOrigin: false
+		});
+		mocks.convert.mockResolvedValue('guest-name');
+		mount();
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Prepare recovery key' })
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Confirm saved key' })
+		);
+		fireEvent.change(screen.getByLabelText('Password'), {
+			target: { value: 'chosen-password-123' }
+		});
+		fireEvent.change(screen.getByLabelText('Repeat password'), {
+			target: { value: 'chosen-password-123' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Create my account' })
+		);
+		expect(
+			await screen.findByText(
+				'Sign in again with this login name and your new password.'
+			)
+		).toBeTruthy();
+		expect(
+			screen
+				.getByRole('link', { name: 'Go to sign in' })
+				.getAttribute('href')
+		).toBe('/login');
+		expect(screen.queryByText('Written request dialog')).toBeNull();
+	});
+	it('uses the current Matrix client after the token-refresh hold begins', async () => {
+		mocks.status.mockResolvedValue({
+			userId: 'guest-a',
+			username: 'guest-name',
+			state: 'ELIGIBLE',
+			intentId: null
+		});
+		mocks.replacementOnHold = true;
+		mount();
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Prepare recovery key' })
+		);
+		await screen.findByText('synthetic-key');
+		expect(mocks.prepare).toHaveBeenCalledWith(mocks.client, '');
 	});
 	it('never promotes if the existing recovery key cannot be verified', async () => {
 		mocks.status.mockResolvedValue({
