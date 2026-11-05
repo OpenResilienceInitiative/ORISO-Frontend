@@ -478,21 +478,22 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 
 		if (this.client !== client) return;
-		// A request that carries a reason waits for a person, so a device may
-		// send one only every 30 seconds; this runs before any lookup.
+		// A request that carries a reason waits for a person. The window matches
+		// the requester's own retry window, so an accepted retry is never dropped
+		// here; this runs before any lookup.
 		if (normalizeReason(content.reason)) {
 			const reasonKey = `${content.room_id}:${sender}`;
 			const at = Date.now();
 			if (
 				at - (this.lastReasonRequestAt.get(reasonKey) || 0) <
-				REQUEST_THROTTLE_MS
+				REASONED_REQUEST_THROTTLE_MS
 			) {
 				emitDiagnostic('request-handler-throttled');
 				return;
 			}
 			if (this.lastReasonRequestAt.size >= 500) {
 				for (const [key, time] of this.lastReasonRequestAt)
-					if (at - time >= REQUEST_THROTTLE_MS)
+					if (at - time >= REASONED_REQUEST_THROTTLE_MS)
 						this.lastReasonRequestAt.delete(key);
 			}
 			this.lastReasonRequestAt.set(reasonKey, at);
