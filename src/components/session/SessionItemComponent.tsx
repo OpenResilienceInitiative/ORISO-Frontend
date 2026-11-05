@@ -243,7 +243,10 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { canRenderClientComposer } from './clientComposerPolicy';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
-import { useConversationActions } from './useConversationActions';
+import {
+	conversationActionsResetKey,
+	useConversationActions
+} from './useConversationActions';
 import { anonymousGateKeys } from './anonymousGateStorage';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
@@ -863,7 +866,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		handleCancelEdit
 	} = useConversationActions({
 		roomId: isRejectedSession ? null : resolvedMatrixRoomId,
-		resetKey: activeSession?.rid
+		resetKey: conversationActionsResetKey(activeSession)
 	});
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
