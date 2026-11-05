@@ -102,6 +102,12 @@ class TreeBoundary(unittest.TestCase):
             guard.verify_release_tag(self.repo, git(self.repo, 'rev-parse', 'v2.0.15'))
             with self.assertRaises(ValueError): guard.verify_release_tag(self.repo, '0' * 40)
 
+    def test_tag_with_wrong_published_source_is_rejected(self):
+        git(self.repo, 'remote', 'add', 'origin', str(self.repo))
+        with patch.object(guard, 'SOURCE', self.maintenance):
+            with self.assertRaisesRegex(ValueError, 'does not identify the published source'):
+                guard.verify_release_tag(self.repo, git(self.repo, 'rev-parse', 'v2.0.15'))
+
 
 class DecisionAndProof(unittest.TestCase):
     def test_absent_tag_publishes_but_lookup_errors_fail(self):
