@@ -140,6 +140,10 @@ export const DirectLinkKnock = ({
 	deps = {},
 	pollMs
 }: DirectLinkKnockProps) => {
+	const { t } = useTranslation();
+	const { addNotification } = useContext(NotificationsContext) ?? {
+		addNotification: () => undefined
+	};
 	const state = useDirectLinkKnock(knock, deps, pollMs);
 	const device = useCallDeviceCheck(modalityOf(knock), {
 		mediaDevices: deps.mediaDevices
@@ -148,8 +152,25 @@ export const DirectLinkKnock = ({
 	const admittedOnce = useRef(false);
 
 	useEffect(() => {
-		if (state.gone) onDone();
-	}, [onDone, state.gone]);
+		if (!state.gone) return;
+		/* Knocking again hit a switched-off link: say so, rather than let the
+		   dialog vanish without a word (#2012). */
+		if (state.inactive) {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t(
+					state.paused
+						? 'inviteLink.paused'
+						: 'directLink.entry.inactive'
+				),
+				text: '',
+				closeable: true,
+				timeout: 5000
+			});
+		}
+		onDone();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the dialog goes
+	}, [state.gone]);
 
 	/* Let in: the knock is done; the call takes over after a short pause. */
 	useEffect(() => {
@@ -172,15 +193,17 @@ export const DirectLinkKnock = ({
 	const room = callRoomOf(knock);
 	const { controls } = device;
 	const cameraFound = device.settled && device.cameraAvailable;
+	const { devices } = device.check;
 	useEffect(() => {
 		if (!admitted || !room) return;
 		keepDeviceChoice(room, modalityOf(knock), {
 			controls,
 			cameraAvailable: cameraFound,
-			blocker: device.blocker
+			blocker: device.blocker,
+			devices
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- the knock is fixed per mount
-	}, [admitted, room, controls, cameraFound, device.blocker]);
+	}, [admitted, room, controls, cameraFound, device.blocker, devices]);
 
 	return (
 		<KnockWaitDialog

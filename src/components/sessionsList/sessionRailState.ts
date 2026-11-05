@@ -41,6 +41,11 @@
  *                derived from the Matrix room's notification count. The DTO's
  *                `messagesRead` is hard-coded `true` and must not be read.)
  *
+ *   appointment  the room has a next appointment (ADR-021,
+ *                `nextEntryBySession` over `useFutureEntries`). Frank,
+ *                02.11.2026: in the ultra-thin list only the calendar symbol,
+ *                with the date as its tooltip.
+ *
  * Frank named them in this order — "ob es dort Threads gibt, eine Supervision
  * … ob es eine Mailberatung ist, ob eine neue Nachricht gekommen ist" — and
  * the pill renders them in exactly that order, so the marks never dance
@@ -57,6 +62,7 @@ export type SessionRailMark =
 	| 'videoCall'
 	| 'audioCall'
 	| 'directLink'
+	| 'appointment'
 	| 'unread';
 
 /** Rendering order. Fixed, so a mark keeps its slot from row to row. */
@@ -67,6 +73,7 @@ export const SESSION_RAIL_MARK_ORDER: readonly SessionRailMark[] = [
 	'videoCall',
 	'audioCall',
 	'directLink',
+	'appointment',
 	'unread'
 ] as const;
 
@@ -79,6 +86,8 @@ export interface SessionRailMarkInput {
 	modality?: string | null;
 	/** `getDirectLinkMedium()` result (FE#1952); replaces the mail mark. */
 	directLinkMedium?: string | null;
+	/** Whether the room has a next appointment. */
+	appointment?: boolean | null;
 	/** `isChatItemUnread()` result. */
 	unread?: boolean | null;
 }
@@ -100,6 +109,7 @@ export const getSessionRailMarks = ({
 	supervisionState,
 	modality,
 	directLinkMedium,
+	appointment,
 	unread
 }: SessionRailMarkInput): SessionRailMark[] => {
 	const agencyCounselling = modality === MAIL_MODALITY;
@@ -121,6 +131,7 @@ export const getSessionRailMarks = ({
 		videoCall: directLink === 'videoCall',
 		audioCall: directLink === 'audioCall',
 		directLink: directLink === 'directLink',
+		appointment: appointment === true,
 		unread: unread === true
 	};
 	return SESSION_RAIL_MARK_ORDER.filter((mark) => present[mark]);
@@ -138,6 +149,7 @@ export const getSessionRailMarks = ({
  *   `sessionList.item.sessionType.directLinkVideo` → "Videoanruf"   (FE#1952)
  *   `sessionList.item.sessionType.directLinkAudio` → "Audioanruf"   (FE#1952)
  *   `sessionList.item.sessionType.directLinkChat`  → "Direktlink"   (FE#1952)
+ *   `sessionList.timeline.nextAppointment` → "Nächster Termin: …"
  *   `sessionList.toolbar.chips.unread`     → "Ungelesen"
  */
 export type SessionRailMarkLabels = Record<SessionRailMark, string>;

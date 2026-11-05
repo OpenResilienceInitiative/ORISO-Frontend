@@ -130,20 +130,20 @@ describe('startRoomCall', () => {
 		expect(stopVideo).toHaveBeenCalledOnce();
 	});
 
-	it('keeps the camera out of the permission request when the preview had it off', async () => {
+	it('leaves the camera alone when told to, and the call stays a video call', async () => {
 		await startRoomCall({
-			roomId: SIDE_ROOM,
+			roomId: CLIENT_ROOM,
 			isVideo: true,
 			requestCamera: false,
 			notify,
 			getCallManager
 		});
+
 		expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
 			video: false,
 			audio: true
 		});
-		// Still a video call: the camera can be switched on in it later.
-		expect(started).toEqual([[SIDE_ROOM, true, undefined]]);
+		expect(started).toEqual([[CLIENT_ROOM, true, undefined]]);
 	});
 
 	it('asks for the camera of a video call when no preview choice is passed', async () => {

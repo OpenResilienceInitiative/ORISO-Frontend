@@ -21,6 +21,7 @@ import { MessageAttachment } from './MessageAttachment';
 import { NotificationsContext } from '../../globalState';
 
 const isMediaContentScannerEnabled = vi.fn<() => boolean>();
+const isMediaImageCheckEnabled = vi.fn<() => boolean>();
 const downloadScannedEncryptedMedia = vi.fn();
 
 vi.mock('react-i18next', () => ({
@@ -31,6 +32,7 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 }));
 vi.mock('../../services/mediaContentScanner', () => ({
 	isMediaContentScannerEnabled: () => isMediaContentScannerEnabled(),
+	isMediaImageCheckEnabled: () => isMediaImageCheckEnabled(),
 	downloadScannedEncryptedMedia: (file: unknown) =>
 		downloadScannedEncryptedMedia(file)
 }));
@@ -91,6 +93,8 @@ const renderAttachment = (extraProps: Record<string, unknown> = {}) =>
 describe('MessageAttachment with a content scanner deployed', () => {
 	beforeEach(() => {
 		isMediaContentScannerEnabled.mockReturnValue(true);
+		isMediaImageCheckEnabled.mockReturnValue(false);
+		window.URL.revokeObjectURL = vi.fn();
 		if (!window.URL.createObjectURL) {
 			window.URL.createObjectURL = vi.fn();
 		}
@@ -103,6 +107,30 @@ describe('MessageAttachment with a content scanner deployed', () => {
 		cleanup();
 		vi.clearAllMocks();
 		vi.restoreAllMocks();
+	});
+
+	it('names the virus scan alone while no image check is deployed', async () => {
+		downloadScannedEncryptedMedia.mockReturnValue(new Promise(() => {}));
+
+		renderAttachment({ mediaCheckState: 'safe' });
+
+		await screen.findByRole('progressbar', {
+			name: 'attachments.gate.checking'
+		});
+		expect(screen.queryByText('attachments.gate.checkImage')).toBeNull();
+	});
+
+	it('names the image analysis beside the virus scan, neither ticked', async () => {
+		isMediaImageCheckEnabled.mockReturnValue(true);
+		downloadScannedEncryptedMedia.mockReturnValue(new Promise(() => {}));
+
+		renderAttachment({ mediaCheckState: 'safe' });
+
+		const image = await screen.findByText('attachments.gate.checkImage');
+		const virus = screen.getByText('attachments.gate.checkVirus');
+		// One answer comes back for the whole file, so nothing may look finished.
+		expect(virus.className).toContain('attachmentGate__check--running');
+		expect(image.className).toContain('attachmentGate__check--running');
 	});
 
 	it('forwards the file keys to the scanner without waiting for a click', async () => {
@@ -181,7 +209,10 @@ describe('MessageAttachment with a content scanner deployed', () => {
 
 		renderAttachment({ mediaCheckState: 'safe' });
 
-		await screen.findByText('e2ee.attachment.encrypted');
+		await screen.findByRole('button', {
+			name: /^attachments\.gate\.decrypt: .*e2ee\.attachment\.encrypted$/
+		});
+		expect(screen.getByText('attachments.gate.decrypt')).toBeTruthy();
 		expect(downloadScannedEncryptedMedia).not.toHaveBeenCalled();
 	});
 });

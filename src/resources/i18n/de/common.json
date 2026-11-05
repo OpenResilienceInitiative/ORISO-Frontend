@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Teilnehmende werden geladen …",
+		"crowd": "{{count}} Teilnehmende",
 		"unavailable": "Teilnehmende konnten nicht geladen werden.",
 		"empty": "Keine Teilnehmenden."
+	},
+	"timelineSettings": {
+		"title": "Termine in der Gesprächsliste",
+		"description": "Wie die Liste anstehende Termine zeigt. Gilt auf allen Geräten.",
+		"scrollModel": {
+			"legend": "Blättern",
+			"panes": "Zwei Bereiche: oben die Zukunft, unten die Vergangenheit",
+			"single": "Eine Zeitleiste: die Zukunft öffnet sich erst, wenn man über „Jetzt“ hinaus weiterzieht"
+		},
+		"reveal": {
+			"legend": "Bei anstehenden Terminen zeigen",
+			"none": "Nichts",
+			"next": "Den nächsten Termin",
+			"half": "Die halbe Liste",
+			"most": "Fast alles"
+		},
+		"pastDate": {
+			"legend": "Datum bei vergangenen Gesprächen",
+			"corner": "In der Kartenecke",
+			"line": "In einer eigenen Zeile",
+			"off": "Nicht anzeigen"
+		},
+		"writeFailed": "Die Einstellung konnte nicht gespeichert werden. Bitte versuche es noch einmal."
 	},
 	"menuEffects": {
 		"title": "Menüdarstellung",
@@ -203,6 +227,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Prüfen und öffnen",
+			"checking": "Wird auf Viren geprüft …",
+			"checkingImage": "Bild wird geprüft …",
+			"checkVirus": "Virenprüfung",
+			"checkImage": "Bildanalyse: sicher und ohne Richtlinienverstoß?",
+			"decrypt": "Entschlüsseln",
+			"decrypting": "Wird entschlüsselt …",
+			"encryptedHint": "Ende-zu-Ende-verschlüsselt",
+			"loadFailed": "Die Datei konnte nicht geladen werden",
+			"retry": "Erneut versuchen"
+		},
 		"mediaCheck": {
 			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
 			"reveal": "Bild anzeigen",
@@ -365,7 +401,8 @@
 		"participants": {
 			"label": "Beteiligte: {{names}}",
 			"more": "{{count}} weitere Beteiligte",
-			"more_one": "1 weitere Person"
+			"more_one": "1 weitere Person",
+			"moreList": "Weitere Beteiligte ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Kanal wechseln",
@@ -779,22 +816,6 @@
 			"addThis": "Diesen Termin zum Kalender hinzufügen",
 			"shareHintSeries": "Kalenderlinks für Ihre Webseite: alle Termine als Serie, ohne Einladungslink oder automatische Aktualisierung."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Termin",
-			"ariaLabel": "Zukünftige Termine",
-			"commandError": "Der Termin konnte nicht geändert werden. Bitte erneut versuchen.",
-			"duplicate": "Als Einzeltermin duplizieren",
-			"empty": "Keine bevorstehenden Termine.",
-			"groupChatFallback": "Gruppenchat",
-			"hide": "Zukünftige Termine ausblenden",
-			"loadMore": "Drei weitere Monate laden",
-			"loadError": "Einige zukünftige Termine konnten nicht geladen werden.",
-			"loading": "Zukünftige Termine werden geladen…",
-			"now": "Jetzt",
-			"revealAriaLabel": "Zukünftige Termine anzeigen",
-			"show": "Zukünftige Termine anzeigen",
-			"skip": "Termin überspringen"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-Moderator:in",
 			"OWNER": "Eigentümer:in",
@@ -944,6 +965,8 @@
 			},
 			"nameLabel": "Name Interna",
 			"noColleagues": "Keine Kolleg:innen zur Auswahl",
+			"searchPeople": "Person suchen",
+			"noMatchingPeople": "Keine passende Person gefunden.",
 			"personCount_one": "{{count}} Person hinzugefügt",
 			"personCount_other": "{{count}} Personen hinzugefügt",
 			"privateRoomHint": "Es entsteht ein eigener, verschlüsselter Raum nur für die ausgewählten Personen.",
@@ -954,7 +977,8 @@
 			},
 			"scope": {
 				"AGENCY": "Sie können Kolleg:innen Ihrer Beratungsstelle auswählen.",
-				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen."
+				"TENANT": "Sie können Kolleg:innen Ihres Trägers auswählen.",
+				"PLATFORM": "Sie können Kolleg:innen Ihres Trägers und anderer teilnehmender Träger auswählen."
 			},
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
@@ -2006,6 +2030,8 @@
 			}
 		},
 		"mention": {
+			"check": "{{name}} zusätzlich auswählen",
+			"checked": "Ausgewählt: {{value}}. Daneben klicken fügt ein.",
 			"notInChat": "nicht im Chat",
 			"empty": "Niemand gefunden",
 			"unavailable": "Liste konnte nicht geladen werden",
@@ -4411,7 +4437,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Gesprächskreis",
+				"selfHelp": "Kreis",
 				"internal": "Interna",
 				"team": "Team Beratung",
 				"directLinkVideo": "Videoanruf",
@@ -4538,13 +4564,53 @@
 			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste.",
 			"expand": "Beratungsliste einblenden",
 			"collapse": "Beratungsliste einklappen, um den Chatraum zu vergrößern",
-			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
+			"scrollAriaLabel": "Zum Scrollen der Liste ziehen.",
+			"futureAriaLabel": "Anstehende Termine: nach unten ziehen zum Einblenden, Pfeil hoch/runter springt zwischen den Stufen."
 		},
 		"rail": {
 			"unreadCount": "{{count}} neue Nachrichten",
 			"unreadCount_one": "{{count}} neue Nachricht",
 			"openEnquiries": "{{count}} offene Anfragen",
 			"openEnquiries_one": "{{count}} offene Anfrage"
+		},
+		"timeline": {
+			"now": "Jetzt",
+			"running": "läuft",
+			"upcoming": "Anstehende Termine",
+			"nextAppointment": "Nächster Termin: {{date}}",
+			"appointment": {
+				"create": "Termin anlegen",
+				"dialog": {
+					"createTitle": "Termin anlegen",
+					"moveTitle": "Termin verschieben",
+					"description": "Der Termin gehört zu dieser Beratung. In der Unterhaltung erscheint ein Hinweis.",
+					"createAction": "Anlegen",
+					"moveAction": "Verschieben",
+					"date": "Datum",
+					"start": "Beginn",
+					"end": "Ende",
+					"error": {
+						"incomplete": "Bitte Datum und Uhrzeit wählen.",
+						"past": "Der Termin muss in der Zukunft liegen.",
+						"order": "Das Ende muss nach dem Beginn liegen.",
+						"conflict": "Dieser Termin lässt sich nicht mehr ändern: Er wurde abgesagt oder die Beratung ist beendet.",
+						"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+					}
+				},
+				"notice": {
+					"created": "Termin vereinbart: {{date}}",
+					"moved": "Termin verschoben auf: {{date}}",
+					"cancelled": "Termin abgesagt: {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Hinweis nicht gesendet",
+					"text": "Der Termin ist gespeichert, der Hinweis in der Unterhaltung konnte aber nicht gesendet werden."
+				},
+				"cancelFailed": {
+					"title": "Termin nicht abgesagt",
+					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -5132,6 +5198,7 @@
 		"label": "Sprachnachricht",
 		"play": "Sprachnachricht abspielen",
 		"pause": "Sprachnachricht anhalten",
+		"loading": "Sprachnachricht wird geladen",
 		"timeline": "Zeitachse",
 		"jumpTo": "Zu {{time}} springen",
 		"aria": "Sprachnachricht, {{duration}}, abspielen",
@@ -6444,8 +6511,7 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons",
-			"defaultDeviceHint": "Der Anruf nutzt vorerst das Standardgerät Ihres Browsers."
+			"micMeter": "Lautstärke Ihres Mikrofons"
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",
@@ -6545,6 +6611,7 @@
 		},
 		"entry": {
 			"inactive": "Dieser Link ist nicht mehr aktiv.",
+			"callsDisabled": "In dieser Beratung sind Anrufe nicht möglich.",
 			"haveAccount": "Sie haben schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut."
 		},

@@ -10,6 +10,7 @@ import {
 	apiUpdateDirectLink,
 	DIRECT_LINKS_CHANGED_EVENT,
 	isInactiveDirectLinkError,
+	isPausedDirectLinkError,
 	notifyDirectLinksChanged,
 	toDirectLink
 } from './apiDirectLinks';
@@ -191,6 +192,36 @@ describe('the person’s side', () => {
 			isInactiveDirectLinkError(new Response('', { status: 404 }))
 		).toBe(false);
 		expect(isInactiveDirectLinkError(new Error('CATCH_ALL'))).toBe(false);
+	});
+
+	it('recognises a paused link by the reason of its 410', async () => {
+		const refused = (body: string, status = 410) =>
+			new Response(body, { status });
+		await expect(
+			isPausedDirectLinkError(
+				refused('{"reason":"DIRECT_LINK_INACTIVE"}')
+			)
+		).resolves.toBe(true);
+		await expect(
+			isPausedDirectLinkError(refused('{"reason":"INVITE_LINK_PAUSED"}'))
+		).resolves.toBe(false);
+		await expect(isPausedDirectLinkError(refused(''))).resolves.toBe(false);
+		await expect(
+			isPausedDirectLinkError(
+				refused('{"reason":"DIRECT_LINK_INACTIVE"}', 404)
+			)
+		).resolves.toBe(false);
+		await expect(
+			isPausedDirectLinkError(new Error('CATCH_ALL'))
+		).resolves.toBe(false);
+	});
+
+	it('reads the reason without using the response up', async () => {
+		const response = new Response('{"reason":"DIRECT_LINK_INACTIVE"}', {
+			status: 410
+		});
+		await isPausedDirectLinkError(response);
+		expect(response.bodyUsed).toBe(false);
 	});
 });
 

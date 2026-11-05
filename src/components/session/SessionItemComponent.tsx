@@ -1924,6 +1924,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		observer.observe(dock);
 		return () => observer.disconnect();
 	}, [activeSession?.rid]); // eslint-disable-line
+	// A bar appearing above the timeline (the header's appointment) shrinks it
+	// without any scroll event: a reader at the newest message stays there.
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		if (!container || typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		let previousHeight = container.clientHeight;
+		const observer = new ResizeObserver(() => {
+			const height = container.clientHeight;
+			const shrank = height < previousHeight;
+			previousHeight = height;
+			if (shrank && isScrolledToBottomRef.current) {
+				container.scrollTop = container.scrollHeight;
+			}
+		});
+		observer.observe(container);
+		return () => observer.disconnect();
+	}, [activeSession?.rid]); // eslint-disable-line
 
 	const handleScrollToBottomButtonClick = () => {
 		const scrollContainer = scrollContainerRef.current;
