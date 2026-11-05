@@ -52,6 +52,11 @@ const buildHarness = () => {
 			signedByOwner: true,
 			crossSigningVerified: true
 		}),
+		getUserVerificationStatus: vi.fn().mockResolvedValue({
+			needsUserApproval: false,
+			wasCrossSigningVerified: () => false,
+			isCrossSigningVerified: () => false
+		}),
 		getUserDeviceInfo: vi
 			.fn()
 			.mockResolvedValue(
@@ -237,6 +242,24 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
 		).toBe(false);
 		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+	});
+
+	it('does not send a written reason to a user whose identity changed', async () => {
+		const harness = buildHarness();
+		harness.crypto.getUserVerificationStatus.mockResolvedValue({
+			needsUserApproval: true,
+			wasCrossSigningVerified: () => false,
+			isCrossSigningVerified: () => false
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+		// The automatic request carries no reason and is unaffected.
+		expect(await service.requestKeys(ROOM_ID)).toBe(true);
 	});
 
 	it('lets the person retry at once when no device received the request', async () => {

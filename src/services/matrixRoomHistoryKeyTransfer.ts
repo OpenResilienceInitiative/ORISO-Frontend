@@ -382,10 +382,35 @@ export class MatrixRoomHistoryKeyTransfer {
 		// `signedByOwner` is the right test here: `crossSigningVerified` would
 		// also need this device to have verified the counsellor's identity,
 		// which a freshly signed-in asker has not.
+		// A user whose identity changed since we first saw it, and was not
+		// verified again, may be someone who reset their cross-signing with a
+		// stolen password; nothing about the conversation goes to them.
+		const changedUsers = new Set<string>();
+		if (reasoned) {
+			await Promise.all(
+				otherUsers.map(async (memberUserId) => {
+					try {
+						const identity =
+							await crypto.getUserVerificationStatus(
+								memberUserId
+							);
+						if (
+							identity.needsUserApproval ||
+							(identity.wasCrossSigningVerified() &&
+								!identity.isCrossSigningVerified())
+						)
+							changedUsers.add(memberUserId);
+					} catch {
+						changedUsers.add(memberUserId);
+					}
+				})
+			);
+		}
 		const targets = reasoned
 			? (
 					await Promise.all(
 						candidates.map(async (target) => {
+							if (changedUsers.has(target.userId)) return null;
 							try {
 								const status =
 									await crypto.getDeviceVerificationStatus(
