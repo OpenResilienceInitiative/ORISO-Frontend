@@ -89,8 +89,23 @@ def verify_images():
             raise ValueError(f'{name} provenance response is invalid')
         matches = []
         for item in verified:
-            cert = item.get('verificationResult', {}).get('signature', {}).get('certificate', {})
-            matches.append(cert.get('sourceRepositoryDigest') == SOURCE and
+            result = item.get('verificationResult') if isinstance(item, dict) else None
+            if not isinstance(result, dict):
+                continue
+            signature = result.get('signature')
+            statement = result.get('statement')
+            cert = signature.get('certificate') if isinstance(signature, dict) else None
+            subjects = statement.get('subject') if isinstance(statement, dict) else None
+            if not isinstance(cert, dict) or not isinstance(subjects, list):
+                continue
+            subject_matches = any(
+                isinstance(subject, dict) and subject.get('name') == image and
+                isinstance(subject.get('digest'), dict) and
+                subject['digest'].get('sha256') == digest.removeprefix('sha256:')
+                for subject in subjects
+            )
+            matches.append(subject_matches and
+                           cert.get('sourceRepositoryDigest') == SOURCE and
                            cert.get('sourceRepositoryURI') == 'https://github.com/' + REPOSITORY and
                            cert.get('subjectAlternativeName') == WORKFLOW)
         if not any(matches):

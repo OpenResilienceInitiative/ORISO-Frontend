@@ -14,6 +14,12 @@ guard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(guard)
 
 
+def attestation(cert, image, digest):
+    return {'verificationResult': {'signature': {'certificate': cert}, 'statement': {
+        'subject': [{'name': image, 'digest': {'sha256': digest.removeprefix('sha256:')}}]
+    }}}
+
+
 def git(repo, *args):
     return subprocess.check_output(['git', '-C', str(repo), *args], text=True).strip()
 
@@ -133,13 +139,31 @@ class DecisionAndProof(unittest.TestCase):
         expected = next(iter(guard.IMAGES.values()))
         second = list(guard.IMAGES.values())[1]
         cert = {'sourceRepositoryDigest': guard.SOURCE, 'sourceRepositoryURI': 'https://github.com/' + guard.REPOSITORY, 'subjectAlternativeName': guard.WORKFLOW}
-        result = json.dumps([{'verificationResult': {'signature': {'certificate': cert}}}])
-        with patch.object(guard, 'run', side_effect=[expected, result, second, result]): guard.verify_images()
+        frontend = attestation(cert, 'ghcr.io/openresilienceinitiative/oriso-frontend', expected)
+        storybook = attestation(cert, 'ghcr.io/openresilienceinitiative/oriso-storybook', second)
+        with patch.object(guard, 'run', side_effect=[expected, json.dumps([frontend]), second, json.dumps([storybook])]): guard.verify_images()
         with patch.object(guard, 'run', return_value='sha256:' + '0' * 64):
             with self.assertRaises(ValueError): guard.verify_images()
         cert['sourceRepositoryDigest'] = '0' * 40
         with patch.object(guard, 'run', side_effect=[expected, json.dumps([{'verificationResult': {'signature': {'certificate': cert}}}])]):
             with self.assertRaises(ValueError): guard.verify_images()
+
+    def test_subject_name_and_digest_must_match_the_same_signed_item(self):
+        digest = guard.IMAGES['oriso-frontend']
+        name = 'ghcr.io/openresilienceinitiative/oriso-frontend'
+        cert = {'sourceRepositoryDigest': guard.SOURCE, 'sourceRepositoryURI': 'https://github.com/' + guard.REPOSITORY, 'subjectAlternativeName': guard.WORKFLOW}
+        wrong_cert = dict(cert, sourceRepositoryDigest='0' * 40)
+        bad = {
+            'wrong name': [attestation(cert, 'ghcr.io/unrelated/wrong-image', digest)],
+            'missing subject': [{'verificationResult': {'signature': {'certificate': cert}, 'statement': {}}}],
+            'wrong digest': [attestation(cert, name, 'sha256:' + '0' * 64)],
+            'cross-item mixing': [attestation(cert, 'ghcr.io/unrelated/wrong-image', digest), attestation(wrong_cert, name, digest)],
+        }
+        second = guard.IMAGES['oriso-storybook']
+        second_item = attestation(cert, 'ghcr.io/openresilienceinitiative/oriso-storybook', second)
+        for label, items in bad.items():
+            with self.subTest(label=label), patch.object(guard, 'run', side_effect=[digest, json.dumps(items), second, json.dumps([second_item])]):
+                with self.assertRaises(ValueError): guard.verify_images()
 
     def test_missing_or_wrong_workflow_and_repository_provenance_fail(self):
         first = next(iter(guard.IMAGES.values()))
