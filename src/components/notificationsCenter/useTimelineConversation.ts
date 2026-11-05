@@ -7,6 +7,7 @@ import {
 	useConversationPreview
 } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
+import { usePreviewThreadSelection } from './usePreviewThreadSelection';
 
 export interface UseTimelineConversationInput {
 	/** The selected card while it shows its conversation, else null. */
@@ -21,6 +22,8 @@ export interface TimelineConversation {
 	preview: ConversationPreviewModel | null;
 	/** The preview's room, or the event's own while it is resolving. */
 	roomId: string | null;
+	openedThreadRootId: string | null;
+	setOpenedThreadRootId: (threadRootId: string | null) => void;
 	/** D2: the conversation was read in `roomId`. */
 	onConversationRead: (roomId: string) => void;
 }
@@ -42,9 +45,15 @@ export const useTimelineConversation = ({
 	markRead
 }: UseTimelineConversationInput): TimelineConversation => {
 	const preview = useConversationPreview(event, { visible: Boolean(event) });
+	const { openedThreadRootId, setOpenedThreadRootId } =
+		usePreviewThreadSelection(
+			Boolean(event),
+			preview?.roomId,
+			preview?.threadRootId
+		);
 	useSeenWhileReading({
 		roomId: preview?.roomId ?? null,
-		threadRootId: preview?.threadRootId,
+		threadRootId: preview?.threadRootId || openedThreadRootId,
 		enabled: Boolean(preview) && !preview?.capabilities.contentHidden,
 		feed,
 		unreadOnly,
@@ -64,6 +73,8 @@ export const useTimelineConversation = ({
 	return {
 		preview,
 		roomId: preview?.roomId ?? (event ? activityEventRoomId(event) : null),
+		openedThreadRootId,
+		setOpenedThreadRootId,
 		onConversationRead
 	};
 };

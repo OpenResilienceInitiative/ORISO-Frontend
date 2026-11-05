@@ -21,6 +21,7 @@ export type PreviewReadOnlyReason =
 	| 'coAccess'
 	| 'archived'
 	| 'enquiry'
+	| 'rejected'
 	| 'supervisor'
 	| 'notJoined'
 	| 'consentGate'
@@ -153,6 +154,9 @@ export const resolvePreviewCapabilities = ({
 		if (caseHandover.coAccess) {
 			return readOnly('coAccess');
 		}
+	}
+	if (session.isRejected) {
+		return readOnly('rejected');
 	}
 
 	// The internal rooms belong to counsellors only (ADR-008 / ADR-016).

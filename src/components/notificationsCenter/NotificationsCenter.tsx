@@ -786,6 +786,7 @@ export const NotificationsCenter = () => {
 	// own message events), with D1 and D2 (useTimelineConversation).
 	const conversation = useTimelineConversation({
 		event: showEmbeddedChat ? selectedNotification : null,
+
 		feed: notificationFeed,
 		unreadOnly,
 		markRead: markNotificationAsRead
@@ -1217,6 +1218,10 @@ export const NotificationsCenter = () => {
 							roomId={conversation.roomId}
 							threadRootId={conversation.preview?.threadRootId}
 							access={conversation.preview ?? undefined}
+							openedThreadRootId={conversation.openedThreadRootId}
+							onShownThreadChange={
+								conversation.setOpenedThreadRootId
+							}
 							conversationPath={
 								selectedNotification
 									? getNotificationActionPath(

@@ -161,7 +161,8 @@ const NO_RECEIPT = new Set([
 	'sessionUnknown',
 	'curtained',
 	'coAccess',
-	'notJoined'
+	'notJoined',
+	'rejected'
 ]);
 
 /** Read-only reasons the conversation itself can resolve (accept, consent,
@@ -175,6 +176,7 @@ const READ_ONLY_TEXT: Partial<Record<string, string>> = {
 	teamClosed: 'notifications.center.preview.teamClosed',
 	curtained: 'notifications.center.preview.curtained',
 	enquiry: 'notifications.center.preview.enquiryOpenToAccept',
+	rejected: 'enquiry.rejection.closed',
 	consentGate: 'notifications.center.preview.consentOpenToContinue'
 };
 
@@ -207,7 +209,9 @@ export const ConversationPreview = ({
 	access,
 	conversationPath,
 	onConversationRead,
-	onOpenConversation
+	onOpenConversation,
+	openedThreadRootId = null,
+	onShownThreadChange
 }: {
 	roomId: string | null;
 	threadRootId?: string | null;
@@ -218,6 +222,9 @@ export const ConversationPreview = ({
 	 * went out) — the room the write happened in, even if the view moved on. */
 	onConversationRead?: (roomId: string) => void;
 	onOpenConversation?: () => void;
+	openedThreadRootId?: string | null;
+	/** The thread opened locally, so Timeline seen tracking follows the view. */
+	onShownThreadChange?: (threadRootId: string | null) => void;
 }) => {
 	const { t: translate } = useTranslation();
 	const sessionsContext = useContext(SessionsDataContext);
@@ -252,10 +259,6 @@ export const ConversationPreview = ({
 	);
 
 	// #1824: a thread opened from a main-room message stays inside the preview.
-	const [openedThreadRootId, setOpenedThreadRootId] = useState<string | null>(
-		null
-	);
-	useEffect(() => setOpenedThreadRootId(null), [roomId, threadRootId]);
 	const shownThreadRootId = threadRootId || openedThreadRootId;
 
 	// D2: reading is explicit — a write, reaction, edit, deletion or the
@@ -443,8 +446,10 @@ export const ConversationPreview = ({
 		[ownUserId]
 	);
 	const openThread = useCallback(
-		(message: MessageItem) => setOpenedThreadRootId(message._id),
-		[]
+		(message: MessageItem) => {
+			onShownThreadChange?.(message._id);
+		},
+		[onShownThreadChange]
 	);
 
 	// Open at the newest message and follow new ones; when an older page is
@@ -566,7 +571,9 @@ export const ConversationPreview = ({
 							<button
 								type="button"
 								className="conversationPreview__button"
-								onClick={() => setOpenedThreadRootId(null)}
+								onClick={() => {
+									onShownThreadChange?.(null);
+								}}
 							>
 								{translate(
 									'notifications.center.preview.backToConversation'
