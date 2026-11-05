@@ -22,9 +22,9 @@ jobs:
               with:
                   fetch-depth: 0
                   persist-credentials: false
-            - name: Fetch the existing release ref and tag
+            - name: Fetch the reviewed pull-request ref and published tag
               run: |
-                  git fetch origin refs/heads/release/frontend-2.0.15:refs/remotes/origin/release/frontend-2.0.15
+                  git fetch origin refs/pull/2064/head:refs/release-proof/2064
                   git fetch origin refs/tags/v2.0.15:refs/tags/v2.0.15
             - name: Test verification failure cases
               run: python3 -m unittest discover -s scripts/release-verification -p 'test_*.py'
