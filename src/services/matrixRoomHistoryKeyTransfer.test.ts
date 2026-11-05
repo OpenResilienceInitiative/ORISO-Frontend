@@ -187,6 +187,70 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
 	});
 
+	it('sends the written reason only to cross-signed devices', async () => {
+		const harness = buildHarness();
+		harness.crypto.getUserDeviceInfo.mockResolvedValue(
+			new Map([
+				[
+					PEER,
+					new Map([
+						['TRUSTED', { deviceId: 'TRUSTED' }],
+						['PASSWORD_ONLY', { deviceId: 'PASSWORD_ONLY' }]
+					])
+				]
+			])
+		);
+		harness.crypto.getDeviceVerificationStatus.mockImplementation(
+			async (_userId: string, deviceId: string) => ({
+				isVerified: () => deviceId === 'TRUSTED',
+				crossSigningVerified: deviceId === 'TRUSTED'
+			})
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+			'org.oriso.room_history_key_request',
+			[{ userId: PEER, deviceId: 'TRUSTED' }],
+			expect.objectContaining({ reason: 'about my school' })
+		);
+	});
+
+	it('does not send a written reason when no device is cross-signed', async () => {
+		const harness = buildHarness();
+		harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
+			isVerified: () => false,
+			crossSigningVerified: false
+		});
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+	});
+
+	it('lets the person retry at once when no device received the request', async () => {
+		const harness = buildHarness();
+		harness.client.encryptAndSendToDevice.mockRejectedValueOnce(
+			new Error('offline')
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+	});
+
 	it('still requests from valid devices when another device has no Olm session', async () => {
 		const harness = buildHarness();
 		harness.crypto.getUserDeviceInfo.mockResolvedValue(

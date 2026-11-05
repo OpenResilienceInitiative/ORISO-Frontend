@@ -365,7 +365,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		await refreshHistoryDeviceKeysBestEffort(crypto, otherUsers);
 		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
 		if (this.client !== client) return false;
-		const targets = otherUsers.flatMap((memberUserId) =>
+		const candidates = otherUsers.flatMap((memberUserId) =>
 			Array.from(deviceMap.get(memberUserId)?.values() || []).map(
 				(device) => ({
 					userId: memberUserId,
@@ -373,6 +373,33 @@ export class MatrixRoomHistoryKeyTransfer {
 				})
 			)
 		);
+		// The written reason describes the conversation. An unverified device,
+		// such as a password-only sign-in, must not receive it: it cannot read
+		// the chat and cannot approve anything.
+		const targets = reasoned
+			? (
+					await Promise.all(
+						candidates.map(async (target) => {
+							try {
+								const status =
+									await crypto.getDeviceVerificationStatus(
+										target.userId,
+										target.deviceId
+									);
+								return status?.crossSigningVerified === true
+									? target
+									: null;
+							} catch {
+								return null;
+							}
+						})
+					)
+				).filter(
+					(target): target is (typeof candidates)[number] =>
+						target !== null
+				)
+			: candidates;
+		if (this.client !== client) return false;
 		if (targets.length === 0) {
 			emitDiagnostic('request-no-target-device');
 			return false;
@@ -405,6 +432,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			(result) => result.status === 'fulfilled'
 		).length;
 		if (deliveredTargetCount === 0) {
+			// Nothing arrived, so the person may retry at once.
+			const cooldown = reasoned
+				? this.lastReasonedRequestAt
+				: this.lastRequestAt;
+			if (cooldown.get(roomId) === now) cooldown.delete(roomId);
 			emitDiagnostic('request-delivery-failed');
 			return false;
 		}
