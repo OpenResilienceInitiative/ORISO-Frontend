@@ -93,6 +93,21 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 		).toMatchObject({ ...NOTHING, readOnlyReason: 'enquiry' });
 	});
 
+	it.each(['main', 'team', 'supervision'] as const)(
+		'rejected sessions cannot write in %s rooms',
+		(roomKind) => {
+			expect(
+				resolve(
+					counsellor({
+						session: session({ isRejected: true }),
+						roomKind,
+						teamDiscussionOpen: true
+					})
+				)
+			).toMatchObject(NOTHING);
+		}
+	);
+
 	describe('group / self-help group', () => {
 		const group = () => session({ isGroup: true, isSession: false });
 

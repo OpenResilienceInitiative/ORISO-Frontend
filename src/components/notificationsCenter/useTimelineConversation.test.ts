@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { useTimelineConversation } from './useTimelineConversation';
 
@@ -79,6 +79,20 @@ describe('useTimelineConversation (#1888: the selected card’s conversation)', 
 		setup(card('a'));
 		expect(mocks.useSeenWhileReading).toHaveBeenLastCalledWith(
 			expect.objectContaining({ enabled: false })
+		);
+	});
+
+	it('tracks the locally opened thread and returns to the main room', () => {
+		mocks.useConversationPreview.mockReturnValue(access());
+		const { result } = setup(card('a'));
+		act(() => result.current.setOpenedThreadRootId('$root'));
+		expect(result.current.openedThreadRootId).toBe('$root');
+		expect(mocks.useSeenWhileReading).toHaveBeenLastCalledWith(
+			expect.objectContaining({ threadRootId: '$root' })
+		);
+		act(() => result.current.setOpenedThreadRootId(null));
+		expect(mocks.useSeenWhileReading).toHaveBeenLastCalledWith(
+			expect.objectContaining({ threadRootId: null })
 		);
 	});
 
