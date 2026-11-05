@@ -18,7 +18,7 @@ import {
 	cleanup,
 	fireEvent
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import {
 	afterEach,
 	beforeEach,
@@ -29,6 +29,7 @@ import {
 } from 'vite-plus/test';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import { SessionItemComponent } from './SessionItemComponent';
+import { LiveChatConversionPage } from '../liveChatConversion/LiveChatConversionPage';
 import {
 	ActiveSessionContext,
 	NotificationsContext,
@@ -39,6 +40,36 @@ import { SESSION_LIST_TYPES } from './sessionHelpers';
 
 const SESSION_ID = 4711;
 const ROOM_ID = '!live-chat:matrix.example.org';
+const conversionFlow = vi.hoisted(() => ({
+	enabled: false,
+	submit: vi.fn(),
+	client: { getUserId: () => '@anon_7:matrix.example.org' }
+}));
+vi.mock('../liveChatConversion/liveChatConversionApi', () => ({
+	getConversionStatus: async () => ({
+		userId: 'asker-1',
+		username: 'anon_7',
+		state: 'PROMOTION_PENDING',
+		intentId: 'original-intent',
+		finishedOrigin: true
+	}),
+	convertLiveChatAccount: (...args: unknown[]) =>
+		conversionFlow.submit(...args)
+}));
+vi.mock('../liveChatConversion/prepareGuestRecovery', () => ({
+	prepareGuestRecovery: async () => 'synthetic-key'
+}));
+vi.mock('../sessionCookie/getMatrixAccessToken', () => ({
+	getCurrentAuthSubject: () => 'asker-1'
+}));
+vi.mock('../profile/EncryptionSettings/RecoveryKeySaveStep', () => ({
+	RecoveryKeySaveStep: ({ onConfirm }: { onConfirm: () => void }) => (
+		<button onClick={onConfirm}>Confirm saved key</button>
+	)
+}));
+vi.mock('../profile/NewRequestDialog/NewRequestDialog', () => ({
+	NewRequestDialog: () => null
+}));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -75,7 +106,15 @@ vi.mock('../../globalState', async () => {
 });
 
 vi.mock('../../globalState/context/MatrixClientContext', () => ({
-	useMatrixClient: () => ({ matrixClientService: undefined })
+	useMatrixClient: () => ({
+		matrixClientService: conversionFlow.enabled
+			? {
+					getClient: () => conversionFlow.client,
+					getAuthenticatedSubject: () => 'asker-1',
+					holdTokenRefreshDuring: (f: () => Promise<unknown>) => f()
+				}
+			: undefined
+	})
 }));
 
 vi.mock('../../globalState/provider/LegalLinksProvider', async () => {
@@ -213,9 +252,21 @@ const buildActiveSession = (status: number) =>
 		}
 	}) as any;
 
+const RouteProbe = () => (
+	<output data-testid="route">{useLocation().pathname}</output>
+);
+
+const ConversionRoute = () => {
+	const path = useLocation().pathname;
+	return conversionFlow.enabled && path === '/live-chat/convert' ? (
+		<LiveChatConversionPage />
+	) : null;
+};
+
 const renderSession = (status: number) =>
 	render(
 		<MemoryRouter>
+			<RouteProbe />
 			<NotificationsContext.Provider
 				value={{ addEventNotification: vi.fn() } as any}
 			>
@@ -224,6 +275,7 @@ const renderSession = (status: number) =>
 						{ userData: askerUserData, setUserData: vi.fn() } as any
 					}
 				>
+					<ConversionRoute />
 					<SessionTypeContext.Provider
 						value={{ type: SESSION_LIST_TYPES.MY_SESSION } as any}
 					>
@@ -277,6 +329,8 @@ const NO_AVAILABILITY = 'anonymousChat.noAvailability';
 describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		conversionFlow.enabled = false;
+		localStorage.setItem('matrix_session_subject', 'asker-1');
 		sessionStorage.clear();
 		sessionStorage.setItem(`anonymous-inquiry-consent-${SESSION_ID}`, '1');
 		sessionStorage.setItem(`anonymous-pseudonym-${SESSION_ID}`, '1');
@@ -289,6 +343,53 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 	});
 
 	/* The endpoint reports its own failed availability lookup as zero. */
+	it('offers conversion from the signed-in user’s finished Live Chat', async () => {
+		renderSession(3);
+		await tick(0);
+		const button = screen.getByRole('button', {
+			name: `${NO_AVAILABILITY}.startMailCounseling`
+		});
+		fireEvent.click(button);
+		expect(screen.getByTestId('route').textContent).toBe(
+			'/live-chat/convert'
+		);
+	});
+
+	it('retries the same pending intent from the signed-in finished conversation', async () => {
+		conversionFlow.enabled = true;
+		conversionFlow.submit.mockResolvedValue('anon_7');
+		renderSession(3);
+		await tick(0);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: `${NO_AVAILABILITY}.startMailCounseling`
+			})
+		);
+		await tick(0);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Prepare recovery key' })
+		);
+		await tick(0);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Confirm saved key' })
+		);
+		fireEvent.change(screen.getByLabelText('Password'), {
+			target: { value: 'chosen-password-123' }
+		});
+		fireEvent.change(screen.getByLabelText('Repeat password'), {
+			target: { value: 'chosen-password-123' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Create my account' })
+		);
+		await tick(0);
+		expect(conversionFlow.submit).toHaveBeenCalledWith(
+			'asker-1',
+			'original-intent',
+			'chosen-password-123'
+		);
+	});
+
 	it('does not open on a single zero poll', async () => {
 		vi.mocked(apiGetAnonymousEnquiryDetails)
 			.mockResolvedValueOnce(poll(0))

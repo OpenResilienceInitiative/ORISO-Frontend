@@ -22,9 +22,10 @@
 		"prepare": "Prepare recovery key",
 		"accountChanged": "The signed-in account changed. Reload to continue safely.",
 		"expiredTitle": "This Live Chat session has expired",
-		"expiredHelp": "This conversation can no longer be converted in this browser. A new registration starts a separate conversation.",
+		"expiredHelp": "If you already created a password, sign in with it. Otherwise this conversation can no longer be converted here; a new registration starts a separate conversation.",
 		"signInAgain": "Sign in again with this login name and your new password.",
-		"newRegistration": "Start a new registration"
+		"newRegistration": "Start a new registration",
+		"ownAccountHelp": "You can start a written request from this account."
 	},
 	"groupCardParticipants": {
 		"loading": "Loading participants …",

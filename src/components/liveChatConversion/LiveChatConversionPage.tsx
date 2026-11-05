@@ -39,6 +39,7 @@ export const LiveChatConversionPage = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [username, setUsername] = useState<string | null>(null);
 	const [newRequest, setNewRequest] = useState(false);
+	const [signInRequired, setSignInRequired] = useState(false);
 	const intent = useRef<string | null>(null);
 	const preparedClient =
 		useRef<
@@ -153,6 +154,9 @@ export const LiveChatConversionPage = () => {
 				password
 			);
 			setUsername(loginName);
+			setSignInRequired(
+				fresh.finishedOrigin || fresh.state === 'ANONYMOUS_FINISHED'
+			);
 			setStatus({
 				userId: status.userId,
 				username: loginName,
@@ -212,10 +216,15 @@ export const LiveChatConversionPage = () => {
 						</Typography>
 					)}
 					<Typography>
-						{tr(
-							'readyHelp',
-							'Your Live Chat stays in this account. You can now start a written request.'
-						)}
+						{status.state === 'ALREADY_REGISTERED'
+							? tr(
+									'ownAccountHelp',
+									'You can start a written request from this account.'
+								)
+							: tr(
+									'readyHelp',
+									'Your Live Chat stays in this account. You can now start a written request.'
+								)}
 					</Typography>
 					{error === 'account' && (
 						<Alert severity="error">
@@ -225,7 +234,7 @@ export const LiveChatConversionPage = () => {
 							)}
 						</Alert>
 					)}
-					{status.finishedOrigin ? (
+					{signInRequired ? (
 						<>
 							<Typography>
 								{tr(

@@ -22,9 +22,10 @@
 		"prepare": "Kurtarma anahtarını hazırla",
 		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin.",
 		"expiredTitle": "Bu canlı sohbet oturumunun süresi doldu",
-		"expiredHelp": "Bu görüşme artık bu tarayıcıda hesaba aktarılamaz. Yeni kayıt ayrı bir görüşme başlatır.",
+		"expiredHelp": "Daha önce bir parola oluşturduysanız onunla giriş yapın. Aksi takdirde bu görüşme burada artık aktarılamaz; yeni kayıt ayrı bir görüşme başlatır.",
 		"signInAgain": "Bu giriş adı ve yeni parolanızla tekrar giriş yapın.",
-		"newRegistration": "Yeni kayıt başlat"
+		"newRegistration": "Yeni kayıt başlat",
+		"ownAccountHelp": "Bu hesaptan yazılı bir başvuru başlatabilirsiniz."
 	},
 	"groupCardParticipants": {
 		"loading": "Katılımcılar yükleniyor …",

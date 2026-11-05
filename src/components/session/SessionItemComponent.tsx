@@ -3770,6 +3770,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</div>
 				)}
 
+				{isAnonymousAskerExperience && sessionStatusNum === 3 && (
+					<div className="session__pseudonymActionBarSlot">
+						<MuiButton
+							variant="contained"
+							onClick={() =>
+								navigate('/live-chat/convert', {
+									state: {
+										topicId: activeSession.item.mainTopicId
+									}
+								})
+							}
+						>
+							{translate(
+								'anonymousChat.noAvailability.startMailCounseling'
+							)}
+						</MuiButton>
+					</div>
+				)}
+
 				{shouldShowPseudonymGate &&
 					pseudonymConfirmed &&
 					enquiryClosed && (

@@ -22,9 +22,10 @@
 		"prepare": "Wiederherstellungsschlüssel vorbereiten",
 		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
 		"expiredTitle": "Diese Live-Chat-Sitzung ist abgelaufen",
-		"expiredHelp": "Dieses Gespräch kann in diesem Browser nicht mehr in ein Konto übernommen werden. Eine neue Registrierung beginnt ein separates Gespräch.",
+		"expiredHelp": "Wenn Sie bereits ein Passwort erstellt haben, melden Sie sich damit an. Andernfalls kann dieses Gespräch hier nicht mehr übernommen werden; eine neue Registrierung beginnt ein separates Gespräch.",
 		"signInAgain": "Melden Sie sich mit diesem Anmeldenamen und Ihrem neuen Passwort erneut an.",
-		"newRegistration": "Neue Registrierung beginnen"
+		"newRegistration": "Neue Registrierung beginnen",
+		"ownAccountHelp": "Sie können von diesem Konto aus eine schriftliche Anfrage starten."
 	},
 	"groupCardParticipants": {
 		"loading": "Teilnehmende werden geladen …",

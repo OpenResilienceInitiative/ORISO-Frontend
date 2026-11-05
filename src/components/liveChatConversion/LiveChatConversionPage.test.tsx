@@ -197,6 +197,46 @@ describe('Live Chat conversion', () => {
 		await screen.findByText('synthetic-key');
 		expect(mocks.prepare).toHaveBeenCalledWith(mocks.client, '');
 	});
+	it('does not ask for another login after the promoted user signs in again', async () => {
+		mocks.status.mockResolvedValue({
+			userId: 'guest-a',
+			username: 'guest-name',
+			state: 'PROMOTED',
+			intentId: 'intent',
+			finishedOrigin: true
+		});
+		mount();
+		expect(
+			await screen.findByRole('button', {
+				name: 'Start a written request'
+			})
+		).toBeTruthy();
+		expect(
+			screen.queryByText(
+				'Sign in again with this login name and your new password.'
+			)
+		).toBeNull();
+	});
+
+	it('does not promise a preserved chat to an unrelated registered account', async () => {
+		mocks.status.mockResolvedValue({
+			userId: 'guest-a',
+			username: 'regular-name',
+			state: 'ALREADY_REGISTERED',
+			intentId: null,
+			finishedOrigin: false
+		});
+		mount();
+		expect(
+			await screen.findByText(
+				'You can start a written request from this account.'
+			)
+		).toBeTruthy();
+		expect(
+			screen.queryByText(/Your Live Chat stays in this account/)
+		).toBeNull();
+		expect(mocks.convert).not.toHaveBeenCalled();
+	});
 	it('never promotes if the existing recovery key cannot be verified', async () => {
 		mocks.status.mockResolvedValue({
 			userId: 'guest-a',

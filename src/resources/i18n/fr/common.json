@@ -22,9 +22,10 @@
 		"prepare": "Préparer la clé de récupération",
 		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
 		"expiredTitle": "Cette session de chat en direct a expiré",
-		"expiredHelp": "Cette conversation ne peut plus être transférée vers un compte dans ce navigateur. Une nouvelle inscription commence une conversation distincte.",
+		"expiredHelp": "Si vous avez déjà créé un mot de passe, connectez-vous avec celui-ci. Sinon, cette conversation ne peut plus être transférée ici ; une nouvelle inscription commence une conversation distincte.",
 		"signInAgain": "Reconnectez-vous avec ce nom d’utilisateur et votre nouveau mot de passe.",
-		"newRegistration": "Commencer une nouvelle inscription"
+		"newRegistration": "Commencer une nouvelle inscription",
+		"ownAccountHelp": "Vous pouvez envoyer une demande écrite depuis ce compte."
 	},
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",

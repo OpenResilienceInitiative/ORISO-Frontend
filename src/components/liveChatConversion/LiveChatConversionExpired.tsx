@@ -17,9 +17,12 @@ export const LiveChatConversionExpired = () => {
 				<Typography>
 					{t(
 						'liveChatConversion.expiredHelp',
-						'This conversation can no longer be converted in this browser. A new registration starts a separate conversation.'
+						'If you already created a password, sign in with it. Otherwise this conversation can no longer be converted here; a new registration starts a separate conversation.'
 					)}
 				</Typography>
+				<Button href="/login" variant="outlined">
+					{t('accountInvite.toLogin', 'Go to sign in')}
+				</Button>
 				<Button href="/registration" variant="contained">
 					{t(
 						'liveChatConversion.newRegistration',

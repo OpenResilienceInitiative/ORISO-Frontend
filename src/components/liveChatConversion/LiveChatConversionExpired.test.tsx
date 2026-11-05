@@ -18,7 +18,7 @@ describe('expired Live Chat conversion', () => {
 		).toBeTruthy();
 		expect(
 			screen.getByText(
-				/A new registration starts a separate conversation/
+				/a new registration starts a separate conversation/
 			)
 		).toBeTruthy();
 		expect(
