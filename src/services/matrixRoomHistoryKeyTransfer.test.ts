@@ -262,6 +262,24 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(await service.requestKeys(ROOM_ID)).toBe(true);
 	});
 
+	it('keeps the written reason of a request queued before the client was ready', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		service.initialize(harness.client as any);
+
+		await vi.waitFor(() =>
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+				'org.oriso.room_history_key_request',
+				[{ userId: PEER, deviceId: 'ASKER1' }],
+				expect.objectContaining({ reason: 'about my school' })
+			)
+		);
+	});
+
 	it('lets the person retry at once when no device received the request', async () => {
 		const harness = buildHarness();
 		harness.client.encryptAndSendToDevice.mockRejectedValueOnce(
