@@ -8,6 +8,7 @@ import { MessageContextShell } from '../message/messageStoryShell';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
 import type { PreviewCapabilities } from './previewCapabilities';
 import type { ConversationPreviewAccess } from './ConversationPreview';
+import { installActiveViewWatcher } from './activeViewWatcher';
 import {
 	buildMockActiveSession,
 	ComposerStoryDecorator
@@ -39,6 +40,7 @@ const NAMES: Record<string, string> = {
 /* Every write the real chat performs on open. The story counts them so the
    play test can prove the preview performs none (#420). */
 const writeCalls: string[] = [];
+const activeViewCalls: string[] = [];
 const recordWrite = (name: string) => () => {
 	writeCalls.push(name);
 	return Promise.resolve({});
@@ -73,6 +75,7 @@ const seedRegistry = (events: any[], roomExists = true) => {
 const meta: Meta<typeof ConversationPreview> = {
 	title: 'Organisms/ConversationPreview',
 	component: ConversationPreview,
+	beforeEach: () => installActiveViewWatcher(activeViewCalls),
 	decorators: [
 		(StoryComponent) => (
 			<MessageContextShell>
@@ -451,22 +454,6 @@ export const ManyVisibleAuthorsPhone: Story = {
    leaves the Timeline. Every story proves that opening it writes nothing:
    no read receipt, no read marker, no event, and no active-view request
    (the PATCH that would silence the Timeline). */
-const activeViewCalls: string[] = [];
-const watchActiveView = () => {
-	activeViewCalls.length = 0;
-	const original = globalThis.fetch;
-	globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-		const url = typeof input === 'string' ? input : String(input);
-		if (url.includes('active-view')) {
-			activeViewCalls.push(url);
-		}
-		return original(input, init);
-	};
-	return () => {
-		globalThis.fetch = original;
-	};
-};
-
 const can = (
 	overrides: Partial<PreviewCapabilities> = {}
 ): PreviewCapabilities => ({
@@ -535,8 +522,6 @@ const writablePreview =
 	): Decorator =>
 	(StoryComponent) => {
 		seedRegistry(conversationEvents());
-		const [restore] = React.useState(watchActiveView);
-		React.useEffect(() => restore, [restore]);
 		return (
 			<ComposerStoryDecorator
 				activeSession={session}
