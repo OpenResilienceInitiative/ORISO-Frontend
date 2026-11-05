@@ -28,7 +28,7 @@ class ReleaseVerificationTest(unittest.TestCase):
         with patch.object(verify, 'run', side_effect=responses()):
             verify.verify()
 
-    def test_pull_ref_survives_deleted_branch_and_detects_changed_head(self):
+    def test_historical_sha_survives_deleted_branch_and_advanced_pr_head(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             def git(*args, cwd=root):
@@ -46,13 +46,14 @@ class ReleaseVerificationTest(unittest.TestCase):
             git('push', str(root / 'remote.git'), ':refs/heads/release/frontend-2.0.15', cwd=source)
             git('init', 'reader')
             reader = root / 'reader'
-            git('fetch', str(root / 'remote.git'), 'refs/pull/2064/head:refs/release-proof/2064', cwd=reader)
-            self.assertEqual(git('rev-parse', 'refs/release-proof/2064^{commit}', cwd=reader), reviewed)
+            git('fetch', str(root / 'remote.git'), f'{reviewed}:refs/release-proof/audited-2064', cwd=reader)
+            self.assertEqual(git('rev-parse', 'refs/release-proof/audited-2064^{commit}', cwd=reader), reviewed)
             (source / 'file').write_text('unreviewed')
             git('commit', '-am', 'changed', cwd=source)
             git('push', str(root / 'remote.git'), 'HEAD:refs/pull/2064/head', cwd=source)
-            git('fetch', str(root / 'remote.git'), '+refs/pull/2064/head:refs/release-proof/2064', cwd=reader)
-            self.assertNotEqual(git('rev-parse', 'refs/release-proof/2064^{commit}', cwd=reader), reviewed)
+            git('fetch', str(root / 'remote.git'), f'{reviewed}:refs/release-proof/audited-2064', cwd=reader)
+            self.assertEqual(git('rev-parse', 'refs/release-proof/audited-2064^{commit}', cwd=reader), reviewed)
+            self.assertNotEqual(git('rev-parse', 'refs/pull/2064/head', cwd=root / 'remote.git'), reviewed)
 
     def test_rejects_wrong_tag_head_product_change_digest_and_provenance(self):
         cases = [dict(tag='bad'), dict(head='bad'), dict(paths='src/app.tsx'), dict(paths=''), dict(digest='sha256:bad'), dict(provenance=[]), dict(provenance=[{'verificationResult': {'signature': {'certificate': {}}}}])]

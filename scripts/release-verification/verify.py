@@ -25,10 +25,10 @@ def verify():
     changed = run('git', 'diff', '--name-only', SOURCE, RELEASE_HEAD).splitlines()
     if changed != ['.github/workflows/pr-base-check.yml']:
         raise ValueError('release head includes a non-permitted change')
-    actual_head = run('git', 'rev-parse', 'refs/release-proof/2064^{commit}')
+    actual_head = run('git', 'rev-parse', 'refs/release-proof/audited-2064^{commit}')
     if actual_head != RELEASE_HEAD:
-        raise ValueError('release PR head changed; this exact exception requires a new review')
-    print(f'Published source: {SOURCE}\nReviewed release PR head: {RELEASE_HEAD}', flush=True)
+        raise ValueError('audited release snapshot does not match the reviewed commit')
+    print(f'Published release source: {SOURCE}\nAudited historical guard repair: {RELEASE_HEAD}\nThis historical audit does not validate the current pull request head or any later release.', flush=True)
     for name, digest in IMAGES.items():
         image = f'ghcr.io/openresilienceinitiative/{name}'
         actual = run('docker', 'buildx', 'imagetools', 'inspect', image + ':2.0.15', '--format', '{{.Manifest.Digest}}')
