@@ -1,4 +1,5 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
@@ -43,6 +44,7 @@ import { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from './MessageTimeline';
 import { useThreadFocusReturn } from './useThreadFocusReturn';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
+import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import {
 	FailedSend,
 	FailedSendTimelineEntry
@@ -330,6 +332,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const supervisionRoomId = roomIdForActiveSession(
 		supervisionRoomLookup,
 		activeSession.item.id
+	);
+	// Hydrate and observe the side room independently of message arrivals.
+	const { users: supervisionRoomUsers } = useMatrixRoomUsers(
+		supervisionRoomId ?? null
 	);
 	// WP-B2: the supervisor rows from the same call — identities for the
 	// participant stacks (`buildVisibleParticipantRules`) and, as usernames,
@@ -2356,7 +2362,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
 	const { fromL } = useResponsive();
-	const isPhoneLayout = !fromL;
+	const isPhoneLayout = useFrozenPhoneLayout(!fromL);
 
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
@@ -2822,7 +2828,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const supervisionParticipants = useMemo(
 		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
+		[
+			stackParticipantsOf,
+			supervisionRoomId,
+			supervisionMessages,
+			supervisionRoomUsers
+		]
 	);
 	// Teamberatung: the room's own members ARE the team — the `team` rule
 	// shows them all and drops only the advice seeker, who is never invited

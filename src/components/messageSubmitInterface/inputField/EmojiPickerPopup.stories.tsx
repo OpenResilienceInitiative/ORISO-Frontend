@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor, within } from 'storybook/test';
 import { a11yExcept } from '../../../../.storybook/a11yExceptions';
 import { EmojiPickerPopup } from './EmojiPickerPopup';
 
@@ -93,13 +94,36 @@ function PickerDemo({ direction }: { direction: 'up' | 'down' }) {
 	);
 }
 
+const waitForPickerKeyboardTarget: NonNullable<StoryObj['play']> = async ({
+	canvasElement
+}) => {
+	const popup = await within(canvasElement.ownerDocument.body).findByTestId(
+		'emoji-picker-popup'
+	);
+
+	// The library renders the scroll container before its lazy emoji buttons.
+	await waitFor(
+		() => {
+			const button = popup.querySelector<HTMLButtonElement>(
+				'button[data-unified]'
+			);
+			expect(button).toBeVisible();
+			expect(button).toBeEnabled();
+			expect(button?.tabIndex).toBe(0);
+		},
+		{ timeout: 10_000 }
+	);
+};
+
 /** #835: picker must stay fully visible above a clipping `.session` shell. */
 export const DockedUpInsideClippingSession: StoryObj = {
 	name: 'Docked up inside clipping session (#835)',
-	render: () => <PickerDemo direction="up" />
+	render: () => <PickerDemo direction="up" />,
+	play: waitForPickerKeyboardTarget
 };
 
 export const FullscreenDown: StoryObj = {
 	name: 'Fullscreen down',
-	render: () => <PickerDemo direction="down" />
+	render: () => <PickerDemo direction="down" />,
+	play: waitForPickerKeyboardTarget
 };

@@ -189,6 +189,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Pièce jointe : {{name}}",
+			"remove": "Retirer {{name}}",
+			"cancel": "Annuler",
+			"retry": "Renvoyer",
+			"chooseAnother": "Choisir un autre fichier",
+			"captionHint": "Le texte sera envoyé comme légende du fichier.",
+			"progressLabel": "Envoi de {{name}}",
+			"status": {
+				"preparing": "Préparation …",
+				"uploading": "Téléversement",
+				"finishing": "Envoi …"
+			},
+			"error": {
+				"tooLarge": "Ce fichier fait {{size}}. La limite est de {{limit}} Mo. Rien n'a été téléversé.",
+				"format": "Ce format de fichier n'est pas autorisé. Formats possibles : jpg, png, pdf, docx, xlsx, webm, ogg et mp3.",
+				"serverTooLarge": "Le serveur refuse ce fichier car il est trop volumineux. Le fichier et le texte restent ici.",
+				"network": "La connexion a été interrompue. Le fichier et le texte restent ici.",
+				"service": "Le service est momentanément indisponible. Le fichier et le texte restent ici.",
+				"cancelled": "Annulé. Le fichier et le texte restent ici.",
+				"other": "L'envoi n'a pas abouti. Le fichier et le texte restent ici."
+			}
+		},
 		"download": {
 			"label": "Télécharger",
 			"aria": "Télécharger {{name}}"
@@ -2495,6 +2518,10 @@
 			"serviceNoticePlanned": {
 				"title": "Maintenance prévue",
 				"text": "Le {{maintenanceDate}}, la plateforme sera indisponible entre {{maintenanceStart}} et {{maintenanceEnd}}. Les messages déjà écrits ne seront pas perdus."
+			},
+			"sessionAskerDeleted": {
+				"title": "Personne en quête de conseil supprimée",
+				"text": "Un chat avec une personne en quête de conseil a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
 			}
 		},
 		"error": "Échec",
@@ -4273,6 +4300,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Une autre personne est prioritaire",
+				"text": "Une demande arrivée plus tôt dans cette file d’attente doit être acceptée en premier."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Fermer"
@@ -4597,6 +4628,10 @@
 					"text": "Le rendez-vous n’a pas pu être annulé. Veuillez réessayer."
 				}
 			}
+		},
+		"deletedAsker": {
+			"title": "Personne en quête de conseil supprimée",
+			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles."
 		}
 	},
 	"statusOverlay": {
@@ -5726,6 +5761,8 @@
 			"action": "Indiquer une adresse e-mail",
 			"saveFailed": "L'enregistrement a échoué. Veuillez réessayer.",
 			"notAllowed": "Ce compte n'est pas autorisé à enregistrer une adresse e-mail. Veuillez contacter notre support.",
+			"dialogDescription": "Laissez une adresse e-mail pour pouvoir réinitialiser votre mot de passe plus tard et savoir quand une réponse est arrivée. Le contenu du conseil n'apparaît jamais dans cet e-mail.",
+			"dialogTitle": "Sécuriser votre accès",
 			"refreshFailed": "Votre adresse e-mail est enregistrée. Vos paramètres actuels n’ont pas pu être chargés.",
 			"retryRefresh": "Recharger"
 		},
@@ -5777,6 +5814,17 @@
 			"channelEmail": "E-mail",
 			"enableBrowser": "Activer le navigateur",
 			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer.",
+			"browserBlockedHelp": "Les notifications du navigateur sont bloquées pour ce site. Cliquez sur le cadenas dans la barre d'adresse, ouvrez les paramètres du site, réglez Notifications sur Autoriser ou choisissez Réinitialiser, puis réessayez.",
+			"optionActive": "Actif",
+			"emailSavedNext": "Votre adresse e-mail est enregistrée. Il reste une étape : autorisez les notifications dans votre navigateur.",
+			"dialog": {
+				"description": "Choisissez le son que vous entendrez, puis autorisez les notifications dans votre navigateur.",
+				"noTone": "Aucun son",
+				"stayInBrowser": "Cela fonctionne tant qu'ORISO reste ouvert dans ce navigateur sur cet appareil.",
+				"title": "Activer les notifications du navigateur",
+				"tone": "Son {{number}}",
+				"toneLabel": "Son de notification"
+			},
 			"emailAccepted": "La modification des notifications par e-mail a été acceptée.",
 			"refreshFailed": "La modification a été acceptée. Vos paramètres actuels n’ont pas pu être chargés."
 		},

@@ -2642,6 +2642,18 @@ export const MessageItemComponent = ({
 										isOwnMessage={isMyMessage}
 									/>
 								))}
+							{/* MSC2530: the text sent with the file, under it. */}
+							{attachments?.some(
+								(attachment) => attachment.hasCaption
+							) &&
+								renderedMessageWithoutPrefix && (
+									<span
+										className="messageItem__attachmentCaption"
+										dangerouslySetInnerHTML={{
+											__html: renderedMessageWithoutPrefix
+										}}
+									/>
+								)}
 							{/*
 							 * Figma App.Oriso 8498-32373 shows the time rail on system
 							 * notices too — they are messages, so they carry a timestamp

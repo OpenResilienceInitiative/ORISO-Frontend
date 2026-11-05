@@ -205,7 +205,9 @@ describe('MessageAttachment voice message loading', () => {
 		);
 
 		await waitFor(() => expect(audioSource()).toBe('blob:voice'));
-		expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+		await waitFor(() =>
+			expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1)
+		);
 	});
 
 	it('waits for Play on the sender’s own message', () => {

@@ -14,6 +14,9 @@
 // good enough to reject obviously-malformed values without a full parser).
 const MATRIX_USER_ID_PATTERN = /^@[^:@\s]+:.+$/;
 
+export const isMatrixUserId = (value: string): boolean =>
+	MATRIX_USER_ID_PATTERN.test(value);
+
 /** Reads every resolved mentioned user id out of composer HTML, deduped. */
 export const extractMentionedUserIds = (html: string | undefined): string[] => {
 	if (!html) {
@@ -25,7 +28,7 @@ export const extractMentionedUserIds = (html: string | undefined): string[] => {
 	let match: RegExpExecArray | null;
 	while ((match = pattern.exec(html)) !== null) {
 		const userId = match[1];
-		if (!MATRIX_USER_ID_PATTERN.test(userId) || seen.has(userId)) {
+		if (!isMatrixUserId(userId) || seen.has(userId)) {
 			continue;
 		}
 		seen.add(userId);
