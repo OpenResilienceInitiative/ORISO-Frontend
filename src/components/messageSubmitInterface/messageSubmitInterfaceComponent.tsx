@@ -349,6 +349,17 @@ export interface MessageSubmitInterfaceComponentProps {
 		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
+	/**
+	 * #1824: the conversation's own path, for a composer shown outside it
+	 * (the Activity Timeline preview) — the draft then resumes in the
+	 * conversation, not on the page the composer happened to be on.
+	 */
+	draftActionPath?: string | null;
+	/**
+	 * #1824: sending into an archived conversation re-opens it. The Timeline
+	 * preview must never do that (it leaves the Timeline), so it passes false.
+	 */
+	allowDearchive?: boolean;
 }
 
 /*
@@ -491,7 +502,9 @@ export const MessageSubmitInterfaceComponent = ({
 	isOwnMessage,
 	onSendError,
 	retryRequest,
-	onRetrySettled
+	onRetrySettled,
+	draftActionPath: draftActionPathOverride = null,
+	allowDearchive = true
 }: MessageSubmitInterfaceComponentProps) => {
 	const { t: translate } = useTranslation();
 
@@ -759,6 +772,16 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeSession, activeSession.item.status, userData]);
 
 	const draftActionPath = useMemo(() => {
+		if (draftActionPathOverride) {
+			return buildSessionChannelPath(
+				draftActionPathOverride,
+				resolveComposerChannel({
+					threadRootId,
+					targetRoomId,
+					targetChannelKind
+				})
+			);
+		}
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
 		params.delete('draftScopeKey');
@@ -776,6 +799,7 @@ export const MessageSubmitInterfaceComponent = ({
 			})
 		);
 	}, [
+		draftActionPathOverride,
 		location.pathname,
 		location.search,
 		targetChannelKind,
@@ -820,16 +844,14 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeSession, contact]);
 
 	const forcedDraftScopeKey = useMemo(() => {
+		// Both direct drafts and thread drafts belong to their target room.
+		// A stale deep link must not redirect a side-room draft to the case.
+		if (targetRoomId) {
+			return `scope:${targetRoomId}|thread:${threadRootId || 'main'}`;
+		}
 		const params = new URLSearchParams(location.search);
 		const allScopeKeys = params.getAll('draftScopeKey');
-		if (allScopeKeys.length) {
-			return allScopeKeys[allScopeKeys.length - 1];
-		}
-		// B2: the side room's composer keeps its own draft — scoped to the
-		// side room, never to the client room the main composer writes to.
-		return targetRoomId && !threadRootId
-			? `scope:${targetRoomId}|thread:main`
-			: null;
+		return allScopeKeys.at(-1) ?? null;
 	}, [location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
@@ -908,7 +930,9 @@ export const MessageSubmitInterfaceComponent = ({
 			sessionId: activeSession?.item?.id ?? null,
 			roomRef: activeSession?.rid ?? null,
 			title: draftTitle,
-			forcedScopeKey: forcedDraftScopeKey
+			forcedScopeKey: forcedDraftScopeKey,
+			// A side room's draft never mixes with the client room's (#1824).
+			isolateScope: Boolean(targetRoomId)
 		}
 	);
 
@@ -2130,6 +2154,10 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 
+		if (isSessionArchived && !allowDearchive) {
+			// #1824: never re-open a conversation from outside it.
+			return null;
+		}
 		if (isSessionArchived) {
 			apiPutDearchive(activeSession.item.id)
 				.then(prepareAndSendMessage)
@@ -2164,6 +2192,7 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
+		allowDearchive,
 		isSessionArchived,
 		listPath,
 		prepareAndSendMessage,

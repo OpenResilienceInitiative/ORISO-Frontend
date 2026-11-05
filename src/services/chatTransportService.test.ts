@@ -876,24 +876,26 @@ describe('chatTransportService markRoomAsRead', () => {
 		};
 		setClientWithRoom(room);
 
-		await chatTransportService.markRoomAsRead(ROOM_ID);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
 
 		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
 		expect(sendReadReceipt).toHaveBeenCalledWith(latestEvent);
 	});
 
-	it('is a safe no-op (no throw) when the Matrix client is missing', async () => {
+	it('is a safe no-op (false, no throw) when the Matrix client is missing', async () => {
 		setMatrixClientServiceRef(null);
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 
 	it('is a safe no-op when the room is unknown', async () => {
 		setClientWithRoom(null);
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 
 	it('is a safe no-op when the room has no events', async () => {
@@ -906,11 +908,11 @@ describe('chatTransportService markRoomAsRead', () => {
 
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 		expect(sendReadReceipt).not.toHaveBeenCalled();
 	});
 
-	it('swallows a failing read-receipt send (no throw)', async () => {
+	it('reports false for a failing read-receipt send (no throw)', async () => {
 		const room = {
 			getLiveTimeline: () => ({
 				getEvents: () => [{ id: 'latest' }]
@@ -921,7 +923,7 @@ describe('chatTransportService markRoomAsRead', () => {
 
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
-		).resolves.toBeUndefined();
+		).resolves.toBe(false);
 	});
 });
 

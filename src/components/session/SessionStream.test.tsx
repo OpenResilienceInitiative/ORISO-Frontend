@@ -475,6 +475,27 @@ describe('SessionStream history request card', () => {
 		).toBe(ROOM_ID);
 	});
 
+	it('shows history recovery alongside consent identified from event params', async () => {
+		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
+			new Error('NO_MATCH')
+		);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(screen.getByTestId('history-ask-card')).toBeTruthy();
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
+	});
+
 	it('marks the card readable when every loaded event can be read', () => {
 		renderSessionStream({ isGroup: false });
 		expect(
@@ -618,6 +639,23 @@ describe('SessionStream Matrix room lifecycle', () => {
 			})
 		).toBeTruthy();
 		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+	});
+
+	it('shows the consent card for an event that names its request and session in params (#1888)', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
 	});
 
 	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
