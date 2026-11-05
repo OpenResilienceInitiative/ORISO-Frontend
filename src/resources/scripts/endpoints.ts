@@ -154,6 +154,10 @@ export const endpoints = {
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
+	sessionAppointments: (sessionId: number) =>
+		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
+	upcomingAppointments:
+		userServiceOrigin + '/service/users/appointments/upcoming',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
 	teamDiscussion: (sessionId: number) =>
 		userServiceOrigin +

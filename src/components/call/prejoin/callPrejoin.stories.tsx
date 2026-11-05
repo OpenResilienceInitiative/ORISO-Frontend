@@ -325,12 +325,13 @@ export const CallDevicesOk: Story = {
 		await expectLivePreview(canvasElement);
 		// Not joined yet: the check comes first.
 		await expect(args.onJoin).not.toHaveBeenCalled();
-		// The pickers stay, and say what the call uses (ORISO-ElementCall#116).
+		// The call now takes the picked devices (ORISO-ElementCall#116), so
+		// the interim "the call uses your browser's default device" is gone.
 		await expect(
-			page(canvasElement).getByText(
+			page(canvasElement).queryByText(
 				'Der Anruf nutzt vorerst das Standardgerät Ihres Browsers.'
 			)
-		).toBeVisible();
+		).toBeNull();
 	}
 };
 
@@ -352,7 +353,43 @@ export const CallCameraOffThenJoin: Story = {
 		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
 		await expect(peekJoinMedia(runningCall.roomRef)).toEqual({
 			audio_enabled: true,
-			video_enabled: false
+			video_enabled: false,
+			// The devices the check showed go along (ElementCall#116).
+			microphoneLabel: 'MacBook Pro-Mikrofon',
+			cameraLabel: 'FaceTime HD-Kamera'
+		});
+	}
+};
+
+export const CallPickDevicesThenJoin: Story = {
+	...callMessage,
+	name: 'Call · headset and second camera picked, join: the call gets them',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('ok'),
+	play: async ({ canvasElement, args }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.click(p.getByTestId('device-picker-microphone'));
+		await userEvent.click(
+			await p.findByRole('menuitem', { name: 'Jabra Evolve2 Headset' })
+		);
+		await userEvent.click(p.getByTestId('device-picker-camera'));
+		await userEvent.click(
+			await p.findByRole('menuitem', { name: 'Logitech C920' })
+		);
+		await userEvent.click(p.getByTestId('knock-wait-join'));
+		await expectClosed(canvasElement);
+		await expectReleased();
+		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
+		// By label: the call runs on another origin, where these devices
+		// have other ids (ElementCall#116).
+		await expect(peekJoinMedia(runningCall.roomRef)).toEqual({
+			audio_enabled: true,
+			video_enabled: true,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'Logitech C920'
 		});
 	}
 };
@@ -439,7 +476,8 @@ export const CallNoCamera: Story = {
 		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
 		await expect(peekJoinMedia(runningCall.roomRef)).toEqual({
 			audio_enabled: true,
-			video_enabled: false
+			video_enabled: false,
+			microphoneLabel: 'MacBook Pro-Mikrofon'
 		});
 	}
 };
@@ -505,7 +543,9 @@ export const CircleMicOffDone: Story = {
 		await expectReleased();
 		await expect(peekJoinMedia(GROUP_STAGE_ROOM_ID)).toEqual({
 			audio_enabled: false,
-			video_enabled: true
+			video_enabled: true,
+			microphoneLabel: 'MacBook Pro-Mikrofon',
+			cameraLabel: 'FaceTime HD-Kamera'
 		});
 		// Back in the unchanged pre-lobby.
 		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
@@ -719,7 +759,9 @@ export const KnockLetInJoins: Story = {
 		await expectClosed(canvasElement);
 		await expect(peekJoinMedia(knockCall.roomRef)).toEqual({
 			audio_enabled: true,
-			video_enabled: false
+			video_enabled: false,
+			microphoneLabel: 'MacBook Pro-Mikrofon',
+			cameraLabel: 'FaceTime HD-Kamera'
 		});
 	}
 };

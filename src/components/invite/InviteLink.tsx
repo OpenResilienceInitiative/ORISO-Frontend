@@ -59,6 +59,7 @@ import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import {
+	directLinkCallsAllowed,
 	directLinkMediumOf,
 	loginPathForDirectLink,
 	openDirectLinkConversation
@@ -99,6 +100,11 @@ const inviteErrorText = (
 	error: unknown,
 	translate: (key: string) => string
 ) => {
+	/* ORISO-UserService#1563: a link switched off while the page was open
+	   answers 410 on the registration too, not only on the context lookup. */
+	if (isInactiveDirectLinkError(error)) {
+		return translate('directLink.entry.inactive');
+	}
 	const failure = getCounsellingDpaFailure(error);
 	if (failure) {
 		return translate(
@@ -261,7 +267,32 @@ export const InviteLink = () => {
 						await openDirectLinkConversation(token);
 						return;
 					}
+					/* A person without a session, at an audio or video link of a
+					   counselling without calls: say so now instead of at
+					   "Beitreten" (#2012). A signed-in asker and a counsellor keep
+					   their flow above; the server decides for them. */
 					if (directMedium !== 'CHAT') {
+						const callsAllowed =
+							await directLinkCallsAllowed(context);
+						if (!mountedRef.current) return;
+						/* Someone may have signed in in another tab meanwhile; the
+						   call entry would register a guest over that session. */
+						if (holdsCounsellorSession()) {
+							setStatus('staff');
+							return;
+						}
+						if (hasActiveAuthSession()) {
+							setStatus('directOpening');
+							await openDirectLinkConversation(token);
+							return;
+						}
+						if (!callsAllowed) {
+							setStatus('error');
+							setErrorMessage(
+								t('directLink.entry.callsDisabled')
+							);
+							return;
+						}
 						setStatus('directCall');
 						return;
 					}
@@ -346,11 +377,7 @@ export const InviteLink = () => {
 				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(
-					isInactiveDirectLinkError(err)
-						? t('directLink.entry.inactive')
-						: inviteErrorText(err, t)
-				);
+				setErrorMessage(inviteErrorText(err, t));
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);
@@ -456,7 +483,13 @@ export const InviteLink = () => {
 				if (mountedRef.current) setStatus('paused');
 				return;
 			}
-			if (registerThenLogin.accountCreated()) {
+			/* The account exists, so a failed login is retried on the identity
+			   step — but not when the link was switched off meanwhile (410):
+			   no retry can open it, and the person is told so (#2012). */
+			if (
+				registerThenLogin.accountCreated() &&
+				!isInactiveDirectLinkError(err)
+			) {
 				setLoginRetry(true);
 				setStatus('identity');
 				return;

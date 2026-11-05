@@ -1043,13 +1043,15 @@ export const SessionStream = ({
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
-		// matrixClientGeneration re-attaches after a token-refresh client swap.
+		// The first service can arrive after polling ends. Client generation
+		// also re-attaches listeners when token refresh replaces the SDK client.
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
 		teamRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
+		matrixClientService,
 		matrixClientGeneration,
 		mayRequestHistoryKeys
 	]);
@@ -1174,11 +1176,12 @@ export const SessionStream = ({
 			}
 			detachLifecycleListener?.();
 		};
-		// matrixClientGeneration re-attaches after a token-refresh client swap.
+		// Re-attach on the first service publication and on SDK client swaps.
 	}, [
 		isMatrixSession,
 		matrixRoomId,
 		handleMatrixRoomLifecycle,
+		matrixClientService,
 		matrixClientGeneration
 	]);
 

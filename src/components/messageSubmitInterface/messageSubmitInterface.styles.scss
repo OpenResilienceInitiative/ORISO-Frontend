@@ -276,6 +276,29 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 							top: 0;
 							right: 0;
 						}
+
+						// Reply/edit bar: 16 inset + 32 bar + 4 gap above the
+						// field. The field runs to the card's bottom here, so
+						// the card grows by all 52px to keep the field's height
+						// (the framed card has a 16px bottom inset to spend).
+						&.textarea__wrapper-send-message--withContextBar {
+							min-height: calc(
+								var(--composer-height, 106px) + 52px
+							);
+							height: calc(var(--composer-height, 106px) + 52px);
+
+							.textarea__inputWrapper,
+							.textarea__buttons {
+								top: 52px;
+							}
+
+							// The field fills the shell, and the bar lines up
+							// with the field (Figma 18:1990).
+							.messageSubmit__contextBar {
+								left: 0;
+								right: 0;
+							}
+						}
 					}
 				}
 
@@ -354,7 +377,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						display: none;
 					}
 
-					&--ready {
+					&--ready:not(.textarea__wrapper-send-message--expanded) {
 						min-height: var(
 							--composer-height,
 							var(--composer-phone-rest-height)
@@ -508,19 +531,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				color: $form-disabled;
 				opacity: 1;
 			}
+		}
 
-			&--attachmentMode::after {
-				content: '';
-				position: absolute;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				height: 2px;
-				background: var(--m3-primary-container, #cc1e1c);
-				border-bottom-right-radius: 30px;
-				pointer-events: none;
-				z-index: 7;
-			}
+		&__input--voiceRecording .tiptap-composer .ProseMirror {
+			bottom: 60px;
 		}
 
 		// #597: selected composer — text area gets the primary active border
@@ -1589,64 +1603,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__attachmentSelect--recording {
-			right: 64px;
-			top: auto;
-			bottom: 10px;
-			flex-direction: row;
-			gap: 10px;
-			max-width: calc(100% - 16px);
-		}
-
-		&__voiceRecordButton {
-			display: inline-flex;
-			align-items: center;
-			gap: 6px;
-			border: none;
-			background: transparent;
-			cursor: pointer;
-			padding: 0;
-			margin-bottom: 0;
-
-			svg {
-				width: $attachmentIconSize;
-				height: $attachmentIconSize;
-
-				* {
-					fill: var(--m3-on-surface-variant, $tertiary);
-				}
-			}
-
-			&:hover {
-				svg {
-					* {
-						fill: var(
-							--oriso-primary-text,
-							var(--m3-primary, $primary)
-						);
-					}
-				}
-			}
-
-			&--recording {
-				svg {
-					* {
-						fill: #d32f2f;
-					}
-				}
-			}
-
-			&__timer {
-				font-size: 11px;
-				font-weight: 700;
-				color: #d32f2f;
-				background: rgba(211, 47, 47, 0.12);
-				padding: 2px 6px;
-				border-radius: 999px;
-				line-height: 1.3;
-			}
-		}
-
 		&__clipButton {
 			width: $attachmentIconSize;
 			height: $attachmentIconSize;
@@ -1663,53 +1619,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						var(--m3-primary, $primary)
 					);
 				}
-			}
-		}
-
-		&__voiceRecordingBar {
-			display: inline-flex;
-			align-items: center;
-			gap: 8px;
-			padding: 6px 8px;
-			border-radius: 999px;
-			background: #fff5f5;
-			border: 1px solid rgba(211, 47, 47, 0.2);
-			margin-bottom: $grid-base;
-		}
-
-		&__voiceRecordingDot {
-			width: 8px;
-			height: 8px;
-			border-radius: 50%;
-			background: #d32f2f;
-			animation: voice-dot-pulse 1.2s infinite;
-		}
-
-		&__voiceRecordingLabel {
-			font-size: 11px;
-			font-weight: 600;
-			color: #d32f2f;
-			white-space: nowrap;
-		}
-
-		&__voiceActionButton {
-			border: none;
-			cursor: pointer;
-			font-size: 11px;
-			font-weight: 600;
-			padding: 4px 8px;
-			border-radius: 999px;
-			white-space: nowrap;
-
-			&--cancel {
-				background: #fff;
-				color: $text-low-emphasis;
-				border: 1px solid #e6e6e6;
-			}
-
-			&--stop {
-				background: #d32f2f;
-				color: #fff;
 			}
 		}
 
@@ -1739,13 +1648,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			padding: 16px 72px 52px 16px;
 			background: transparent;
 			z-index: 5;
-		}
-
-		// #1142: the voice review is taller than the editor strip on a phone,
-		// so it hangs from the top edge instead of being centred and clipped.
-		&__attachmentMode--voice {
-			align-items: flex-start;
-			padding-top: 4px;
 		}
 
 		&__attachmentModeCard {
@@ -1829,54 +1731,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		// #1142: the review of a recorded voice note lives inside the
-		// attachment card; this is its discard control.
-		&__voicePreview {
-			// #1142: a real button, so the reviewed take can be discarded
-			// from the keyboard and with a comfortable touch target.
-			&__discard {
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				width: 40px;
-				height: 40px;
-				padding: 0;
-				border: none;
-				border-radius: 50%;
-				background: transparent;
-				color: var(--m3-on-surface-variant, $tertiary);
-				cursor: pointer;
-
-				svg {
-					width: 14px;
-					height: 14px;
-
-					* {
-						fill: currentColor;
-					}
-				}
-
-				&:hover {
-					background: var(--m3-surface-container-high, #f0eded);
-				}
-
-				&:focus-visible {
-					outline: 2px solid var(--m3-primary, #a5000a);
-					outline-offset: 2px;
-				}
-			}
-		}
-
-		@keyframes voice-dot-pulse {
-			0% {
-				opacity: 1;
-			}
-			50% {
-				opacity: 0.45;
-			}
-			100% {
-				opacity: 1;
-			}
+		// A voice note in the composer, recording or in review. Both states
+		// share this spot, so Stop turns into Play without the row moving.
+		&__voiceNoteRow {
+			position: absolute;
+			left: 12px;
+			bottom: 8px;
+			z-index: 6;
+			max-width: calc(100% - 24px);
 		}
 
 		@keyframes toolbar-scroll-hint-pulse {
@@ -2101,8 +1963,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		display: none;
 	}
 
-	.messageSubmit__replyPreview,
-	.messageSubmit__editPreview {
+	.messageSubmit__contextBar {
 		display: none;
 	}
 }
@@ -2141,97 +2002,44 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 }
 
-// Relations foundation (#435): cancelable reply-quote preview above the input.
-.messageSubmit__replyPreview {
-	display: flex;
-	align-items: flex-start;
-	gap: 8px;
-
-	// Hugs the quoted message instead of spanning the whole composer: the bar
-	// should read like the chat bubble it quotes. It never sets a width of its
-	// own though — it starts on the editor's left edge and grows to at most the
-	// editor's width, so the two never drift apart.
-	width: fit-content;
-	max-width: var(--composer-inner-width);
-	margin: 0 auto 6px var(--composer-inner-offset);
-	padding: 8px 12px;
-	border-left: 3px solid var(--m3-primary, #a5000a);
-	border-radius: 6px;
-	background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
-	font-size: 13px;
-	line-height: 1.4;
-
-	.messageSubmit__replyPreviewContent {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		min-width: 0;
-		flex: 0 1 auto;
-	}
-
-	.messageSubmit__replyPreviewLabel {
-		color: var(--m3-on-surface-variant, #4c555f);
-	}
-
-	.messageSubmit__replyPreviewText {
-		display: -webkit-box;
-		-webkit-line-clamp: 1;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		opacity: 0.85;
-	}
-
-	.messageSubmit__replyPreviewCancel {
-		flex-shrink: 0;
-		border: none;
-		background: none;
-		font-size: 18px;
-		line-height: 1;
-		padding: 2px 6px;
-		cursor: pointer;
-		border-radius: 50%;
-		color: var(--m3-on-surface-variant, #4c555f);
-
-		&:hover,
-		&:focus-visible {
-			background: rgba(0, 0, 0, 0.08);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 1px;
-		}
-	}
-}
-
-// Editing (m.replace, #435): edit-in-progress banner above the input.
-// Figma "Reply Bar_v2" (9354:206458 desktop, 18:6713 mobile): a full-width
-// 32px bar above the composer — cancel glyph at 12px, 8px gap, then one
-// ellipsized line of M3 body-small. Same geometry on both breakpoints; only
-// the available width differs, which the ellipsis absorbs.
-.messageSubmit__editPreview {
+// Figma "Reply Bar_v2" (9354:206458 desktop, 18:6713 mobile), the bar for both
+// a reply (m.in_reply_to) and an edit (m.replace): cancel glyph, 8px gap, then
+// one ellipsized line of M3 body-small. On desktop it sits inside the card,
+// between drag handle and editor. On the phone there is no room inside the
+// card, so it rests just above it and `.textarea` reserves the space.
+.messageSubmit__contextBar {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	right: 16px;
+	z-index: 8;
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	min-height: 32px;
-
-	// Same box as the editor below it — no width of its own.
-	width: var(--composer-inner-width);
-	margin: 0 auto 6px;
+	box-sizing: border-box;
+	height: 32px;
 	padding: 8px 12px;
-	border-radius: 8px;
+	border-radius: 16px 4px 4px;
 
 	// Figma calls this fill "M3/sys/light/background" (#EAE7E8), but in the
 	// app's seeded scheme --m3-background is #FCF9F9; #EAE7E8 is
 	// surface-container-high. Match the hex, not the Figma variable name.
 	background: var(--m3-surface-container-high, #eae7e8);
 
-	// M3/body/small — Inter 12/16, tracking 0.4.
+	// M3/body/small: Inter 12/16, tracking 0.4.
 	font-size: 12px;
 	line-height: 16px;
 	letter-spacing: 0.4px;
 
-	.messageSubmit__editPreviewText {
+	@media screen and (width <= 899px) {
+		top: auto;
+		left: 0;
+		right: 0;
+		bottom: calc(100% + 6px);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	}
+
+	.messageSubmit__contextBarText {
 		flex: 1;
 		min-width: 0;
 		white-space: nowrap;
@@ -2240,16 +2048,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 
 	// "Weight-emphasized: Medium" on the lead, regular on the message.
-	.messageSubmit__editPreviewLabel {
+	.messageSubmit__contextBarLead {
 		font-weight: 500;
-		color: var(--m3-secondary, #4c555f);
+		color: var(--m3-on-surface, #141c25);
 	}
 
-	.messageSubmit__editPreviewQuote {
-		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+	.messageSubmit__contextBarQuote {
+		color: var(--m3-on-primary-fixed, #410001);
 	}
 
-	.messageSubmit__editPreviewCancel {
+	.messageSubmit__contextBarCancel {
+		position: relative;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -2270,12 +2079,99 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			height: 16px;
 		}
 
+		// The glyph is 16px in Figma, the finger needs 44px.
+		&::before {
+			content: '';
+			position: absolute;
+			inset: -14px;
+		}
+
 		&:focus-visible {
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 2px;
 		}
 	}
+}
 
-	// T16: the phone navigator row above the composer is gone, so the bar
-	// sits directly above the composer on every width.
+// Room for the bar: 16 inset + 32 bar + 4 gap above the editor, and the card
+// grows by the same 36px so the editor keeps its height.
+@media screen and (width >= 900px) {
+	.textarea__wrapper-send-message--withContextBar:not(
+		.textarea__wrapper-send-message--expanded
+	) {
+		height: calc(var(--composer-height, 196px) + 36px);
+		min-height: calc(var(--composer-height, 196px) + 36px);
+
+		.textarea__inputWrapper,
+		.textarea__buttons {
+			top: 52px;
+		}
+	}
+}
+
+@media screen and (width <= 899px) {
+	.textarea:has(.messageSubmit__contextBar) {
+		padding-top: 54px;
+	}
+
+	.textarea:has(.messageSubmit__formatTray) {
+		padding-top: 70px;
+	}
+
+	.textarea:has(.messageSubmit__contextBar):has(.messageSubmit__formatTray) {
+		padding-top: 108px;
+	}
+}
+
+// Frank (03.11.): the phone's format tools, in the reply bar's shape and
+// colour, resting just above the card. With a reply open, they stack above it.
+.messageSubmit__formatTray {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: calc(100% + 6px);
+	z-index: 8;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	border-radius: 16px 4px 4px;
+	background: var(--m3-surface-container-high, #eae7e8);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.messageSubmit__contextBar ~ .messageSubmit__formatTray {
+	bottom: calc(100% + 44px);
+}
+
+// Maximised, there is no room above the card and the card clips its children,
+// so the tray moves inside it and the editor starts below it.
+.textarea__wrapper-send-message--expanded .messageSubmit__formatTray {
+	top: 8px;
+	right: 8px;
+	bottom: auto;
+	left: 8px;
+	box-shadow: none;
+}
+
+.textarea
+	.textarea__wrapper-send-message--expanded:has(.messageSubmit__formatTray)
+	.textarea__inputWrapper {
+	top: 76px;
+}
+
+.textarea
+	.textarea__wrapper-send-message--expanded:has(.messageSubmit__formatTray)
+	.textarea__buttons {
+	top: 76px;
+	right: 8px;
+}
+
+// The narrower inset leaves the five phone buttons room beside the send button.
+@media screen and (width <= 899px) {
+	.textarea
+		.textarea__wrapper-send-message--expanded
+		.textarea__inputWrapper {
+		right: 8px;
+		left: 8px;
+	}
 }

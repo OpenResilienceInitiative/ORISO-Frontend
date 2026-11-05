@@ -32,7 +32,13 @@ export interface ParticipantStack {
 	visible: StackParticipant[];
 	/** Count folded into the "+N" chip; 0 when everyone fits. */
 	overflow: number;
+	/** The people behind the "+N" chip, in stack order (the list it opens). */
+	hidden: StackParticipant[];
 }
+
+/** "+12"; from 100 on "99+", so the chip never outgrows its place. */
+export const formatOverflowCount = (count: number) =>
+	count > 99 ? '99+' : `+${count}`;
 
 /** Legacy/default presentation, retained for existing consumers. */
 export const STACK_AVATAR_SIZE = 40;
@@ -89,10 +95,11 @@ export const resolveParticipantStack = (
 
 	const limit = Math.max(0, Math.floor(maxVisible));
 	if (ordered.length <= limit) {
-		return { visible: ordered, overflow: 0 };
+		return { visible: ordered, overflow: 0, hidden: [] };
 	}
 	return {
 		visible: ordered.slice(0, limit),
-		overflow: ordered.length - limit
+		overflow: ordered.length - limit,
+		hidden: ordered.slice(limit)
 	};
 };

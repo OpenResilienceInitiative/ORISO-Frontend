@@ -1,8 +1,32 @@
 {
 	"groupCardParticipants": {
 		"loading": "Chargement des participants …",
+		"crowd": "{{count}} personnes",
 		"unavailable": "Les participants n’ont pas pu être chargés.",
 		"empty": "Aucun participant."
+	},
+	"timelineSettings": {
+		"title": "Rendez-vous dans la liste des conversations",
+		"description": "Comment la liste affiche les rendez-vous à venir. S’applique sur tous les appareils.",
+		"scrollModel": {
+			"legend": "Défilement",
+			"panes": "Deux zones : l’avenir en haut, le passé en bas",
+			"single": "Une seule chronologie : l’avenir s’ouvre seulement si vous continuez à tirer au-delà de « Maintenant »"
+		},
+		"reveal": {
+			"legend": "Quand des rendez-vous approchent, afficher",
+			"none": "Rien",
+			"next": "Le prochain rendez-vous",
+			"half": "La moitié de la liste",
+			"most": "Presque tout"
+		},
+		"pastDate": {
+			"legend": "Date des conversations passées",
+			"corner": "Dans le coin de la carte",
+			"line": "Sur une ligne à part",
+			"off": "Ne pas afficher"
+		},
+		"writeFailed": "Le réglage n’a pas pu être enregistré. Veuillez réessayer."
 	},
 	"menuEffects": {
 		"title": "Affichage des menus",
@@ -203,6 +227,18 @@
 				"xlsx": "XLSX"
 			}
 		},
+		"gate": {
+			"check": "Vérifier et ouvrir",
+			"checking": "Recherche de virus …",
+			"checkingImage": "Vérification de l'image …",
+			"checkVirus": "Analyse antivirus",
+			"checkImage": "Analyse de l'image : sûre et conforme aux règles ?",
+			"decrypt": "Déchiffrer",
+			"decrypting": "Déchiffrement …",
+			"encryptedHint": "Chiffré de bout en bout",
+			"loadFailed": "Impossible de charger le fichier",
+			"retry": "Réessayer"
+		},
 		"mediaCheck": {
 			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
 			"reveal": "Afficher l'image",
@@ -358,7 +394,8 @@
 		"participants": {
 			"label": "Participants : {{names}}",
 			"more": "{{count}} autres participants",
-			"more_one": "1 autre personne"
+			"more_one": "1 autre personne",
+			"moreList": "Autres participants ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Changer de canal",
@@ -799,22 +836,6 @@
 			"addThis": "Ajouter cette date au calendrier",
 			"shareHintSeries": "Liens pour votre site : toutes les dates en série, sans lien d’invitation ni mise à jour automatique."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Rendez-vous",
-			"ariaLabel": "Rendez-vous à venir",
-			"commandError": "Le rendez-vous n'a pas pu être modifié. Veuillez réessayer.",
-			"duplicate": "Dupliquer comme rendez-vous unique",
-			"empty": "Aucun rendez-vous à venir.",
-			"groupChatFallback": "Chat de groupe",
-			"hide": "Masquer les rendez-vous à venir",
-			"loadMore": "Charger trois mois de plus",
-			"loadError": "Certains rendez-vous à venir n'ont pas pu être chargés.",
-			"loading": "Chargement des rendez-vous à venir…",
-			"now": "Maintenant",
-			"revealAriaLabel": "Afficher les rendez-vous à venir",
-			"show": "Afficher les rendez-vous à venir",
-			"skip": "Ignorer ce rendez-vous"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-modérateur·rice",
 			"OWNER": "Propriétaire",
@@ -1183,6 +1204,8 @@
 			},
 			"nameLabel": "Nom de l'échange interne",
 			"noColleagues": "Aucun collègue à sélectionner",
+			"searchPeople": "Rechercher une personne",
+			"noMatchingPeople": "Aucune personne correspondante.",
 			"personCount_one": "{{count}} personne ajoutée",
 			"personCount_other": "{{count}} personnes ajoutées",
 			"privateRoomHint": "Un espace chiffré distinct est créé uniquement pour les personnes sélectionnées.",
@@ -1193,7 +1216,8 @@
 			},
 			"scope": {
 				"AGENCY": "Vous pouvez choisir des collègues de votre service de consultation.",
-				"TENANT": "Vous pouvez choisir des collègues de votre organisation."
+				"TENANT": "Vous pouvez choisir des collègues de votre organisation.",
+				"PLATFORM": "Vous pouvez choisir des collègues de votre organisme et des autres organismes participants."
 			},
 			"selectPerson": "Sélectionner {{name}}",
 			"subtitle": "avec vos collègues",
@@ -2000,6 +2024,8 @@
 			}
 		},
 		"mention": {
+			"check": "Sélectionner aussi {{name}}",
+			"checked": "Sélection : {{value}}. Cliquez à côté pour insérer.",
 			"notInChat": "pas dans le chat",
 			"empty": "Aucune personne trouvée",
 			"unavailable": "La liste n'a pas pu être chargée",
@@ -4520,7 +4546,7 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Cercle de parole",
+				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe",
 				"directLinkVideo": "Appel vidéo",
@@ -4536,13 +4562,53 @@
 			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste.",
 			"expand": "Afficher la liste des consultations",
 			"collapse": "Réduire la liste des consultations pour agrandir le chat",
-			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
+			"scrollAriaLabel": "Faites glisser pour faire défiler la liste.",
+			"futureAriaLabel": "Rendez-vous à venir : faites glisser vers le bas pour les afficher, Haut et Bas passent d’un palier à l’autre."
 		},
 		"rail": {
 			"unreadCount": "{{count}} nouveaux messages",
 			"unreadCount_one": "{{count}} nouveau message",
 			"openEnquiries": "{{count}} demandes ouvertes",
 			"openEnquiries_one": "{{count}} demande ouverte"
+		},
+		"timeline": {
+			"now": "Maintenant",
+			"running": "en cours",
+			"upcoming": "Rendez-vous à venir",
+			"nextAppointment": "Prochain rendez-vous : {{date}}",
+			"appointment": {
+				"create": "Créer un rendez-vous",
+				"dialog": {
+					"createTitle": "Créer un rendez-vous",
+					"moveTitle": "Déplacer le rendez-vous",
+					"description": "Le rendez-vous fait partie de cette consultation. Un avis apparaît dans la conversation.",
+					"createAction": "Créer",
+					"moveAction": "Déplacer",
+					"date": "Date du rendez-vous",
+					"start": "Début",
+					"end": "Fin",
+					"error": {
+						"incomplete": "Veuillez choisir une date et une heure.",
+						"past": "Le rendez-vous doit se situer dans le futur.",
+						"order": "La fin doit être postérieure au début.",
+						"conflict": "Ce rendez-vous ne peut plus être modifié : il a été annulé ou la consultation est terminée.",
+						"failed": "Le rendez-vous n’a pas pu être enregistré. Veuillez réessayer."
+					}
+				},
+				"notice": {
+					"created": "Rendez-vous fixé : {{date}}",
+					"moved": "Rendez-vous déplacé au : {{date}}",
+					"cancelled": "Rendez-vous annulé : {{date}}"
+				},
+				"noticeFailed": {
+					"title": "Avis non envoyé",
+					"text": "Le rendez-vous est enregistré, mais l’avis n’a pas pu être envoyé dans la conversation."
+				},
+				"cancelFailed": {
+					"title": "Rendez-vous non annulé",
+					"text": "Le rendez-vous n’a pas pu être annulé. Veuillez réessayer."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -5130,6 +5196,7 @@
 		"label": "Message vocal",
 		"play": "Lire le message vocal",
 		"pause": "Mettre le message vocal en pause",
+		"loading": "Chargement du message vocal",
 		"timeline": "Barre de progression",
 		"jumpTo": "Aller à {{time}}",
 		"aria": "Message vocal, {{duration}}, lire",
@@ -6469,8 +6536,7 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro",
-			"defaultDeviceHint": "Pour l'instant, l'appel utilise l'appareil par défaut de votre navigateur."
+			"micMeter": "Volume de votre micro"
 		},
 		"ready": {
 			"title": "Vérifier la caméra et le micro",
@@ -6570,6 +6636,7 @@
 		},
 		"entry": {
 			"inactive": "Ce lien n'est plus actif.",
+			"callsDisabled": "Les appels ne sont pas disponibles dans cette consultation.",
 			"haveAccount": "Vous avez déjà un compte ? Se connecter",
 			"joinFailed": "Cela n'a pas fonctionné. Veuillez réessayer."
 		},
