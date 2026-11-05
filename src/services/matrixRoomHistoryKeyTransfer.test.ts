@@ -280,6 +280,22 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 	});
 
+	it('drops a queued reason when the service is torn down', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+
+		await service.requestKeys(ROOM_ID, { reason: 'about my school' });
+		service.detach();
+		service.initialize(harness.client as any);
+
+		await vi.waitFor(() =>
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalled()
+		);
+		expect(
+			harness.client.encryptAndSendToDevice.mock.calls[0][2]
+		).not.toHaveProperty('reason');
+	});
+
 	it('lets the person retry at once when no device received the request', async () => {
 		const harness = buildHarness();
 		harness.client.encryptAndSendToDevice.mockRejectedValueOnce(
