@@ -60,6 +60,8 @@ import { filterTopicsForAgencies, getAgencyTopicIds } from './agencyTopics';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import { FORMAT_ARTWORK } from '../../resources/img/formats';
 import { DirectLinkCreateCard } from './directLink/DirectLinkCreateCard';
+import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import { DirectLink } from './directLink/directLink';
 import { getDirectLinkMedia } from './directLink/directLinkAvailability';
 import { RowMenu } from './RowMenu';
 import { FormatCard } from './FormatCard';
@@ -284,6 +286,9 @@ const CreateConversationFlow = ({
 				}
 			: undefined
 	);
+	/* Lives here, not in the card: the card is remounted when the window
+	   crosses the phone breakpoint, and the link just made must stay up. */
+	const [createdDirectLink, setCreatedDirectLink] = useState<DirectLink>();
 	const [pickerTopic, setPickerTopic] = useState('');
 	const [pickerTopicMenuOpen, setPickerTopicMenuOpen] = useState(false);
 	const [topics, setTopics] = useState<TenantAgenciesTopicsInterface[]>([]);
@@ -559,6 +564,7 @@ const CreateConversationFlow = ({
 	);
 	const renderDirectLinkCard = () => (
 		<DirectLinkCreateCard
+			onCreated={setCreatedDirectLink}
 			topics={directLinkTopics}
 			agencies={directLinkAgencies}
 			media={directLinkMedia}
@@ -850,6 +856,17 @@ const CreateConversationFlow = ({
 				</div>
 			) : (
 				renderPicker()
+			)}
+			{createdDirectLink && (
+				<DirectLinkShareDialog
+					open
+					link={createdDirectLink}
+					fullScreen={!fromL}
+					onClose={() => {
+						setCreatedDirectLink(undefined);
+						navigate('/sessions/consultant/sessionView');
+					}}
+				/>
 			)}
 			{/* Figma: the back control is a mobile-only affordance. */}
 			{!fromL && (

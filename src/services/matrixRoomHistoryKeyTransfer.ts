@@ -1,6 +1,17 @@
 import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import type { IMegolmSessionData } from 'matrix-js-sdk/lib/@types/crypto';
+import type { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
+import type {
+	KeysQueryRequest,
+	OlmMachine,
+	UserId as RustUserId
+} from '@matrix-org/matrix-sdk-crypto-wasm';
 import { isInvisibleCryptoEnabledForClient } from './matrixDeviceIsolation';
+import {
+	canSubmitRustKeysQuery,
+	RustKeysQueryCrypto,
+	submitRustKeysQuery
+} from './matrixRustKeysQuery';
 import { retryRoomDecryptionFailures } from './matrixDecryptionRetry';
 
 export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
@@ -40,6 +51,47 @@ type KeyBundle = {
 
 const isNonEmptyString = (value: unknown): value is string =>
 	typeof value === 'string' && value.length > 0;
+
+/**
+ * Downloading untracked devices with getUserDeviceInfo does not populate the
+ * Rust crypto store used to encrypt to-device messages. Use the SDK's key
+ * request processor so its response also reaches the Olm machine.
+ */
+async function refreshHistoryDeviceKeys(crypto: CryptoApi, userIds: string[]) {
+	const rust = crypto as unknown as RustKeysQueryCrypto<
+		RustUserId,
+		KeysQueryRequest
+	> & {
+		olmMachine?: Pick<OlmMachine, 'updateTrackedUsers'>;
+	};
+	if (
+		typeof rust.olmMachine?.updateTrackedUsers !== 'function' ||
+		!canSubmitRustKeysQuery(rust)
+	) {
+		emitDiagnostic('device-refresh-skipped');
+		return;
+	}
+
+	const { UserId } = await import('@matrix-org/matrix-sdk-crypto-wasm');
+	await rust.olmMachine.updateTrackedUsers(
+		userIds.map((userId) => new UserId(userId))
+	);
+	await submitRustKeysQuery(
+		rust,
+		userIds.map((userId) => new UserId(userId))
+	);
+}
+
+// A failed refresh must not stop the transfer: known devices can still be used.
+const refreshHistoryDeviceKeysBestEffort = (
+	crypto: CryptoApi,
+	userIds: string[]
+) =>
+	refreshHistoryDeviceKeys(crypto, userIds).catch(() =>
+		emitDiagnostic('device-refresh-failed', {
+			reason: 'key-query-rejected'
+		})
+	);
 
 /**
  * Transfers only the Megolm sessions for one room, device-to-device over Olm.
@@ -87,6 +139,10 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.pendingRooms.add(roomId);
 			return false;
 		}
+		// Lazy sync can omit joined peers that have not sent a recent event.
+		// Keep the cached members usable if the membership lookup fails.
+		await room.loadMembersIfNeeded().catch(() => undefined);
+		if (this.client !== client) return false;
 		if (room.getMember(userId)?.membership !== 'join') {
 			emitDiagnostic('request-membership-rejected');
 			this.pendingRooms.add(roomId);
@@ -108,7 +164,9 @@ export class MatrixRoomHistoryKeyTransfer {
 			return false;
 		}
 
+		await refreshHistoryDeviceKeysBestEffort(crypto, otherUsers);
 		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
+		if (this.client !== client) return false;
 		const targets = otherUsers.flatMap((memberUserId) =>
 			Array.from(deviceMap.get(memberUserId)?.values() || []).map(
 				(device) => ({
@@ -217,9 +275,27 @@ export class MatrixRoomHistoryKeyTransfer {
 			return;
 		}
 
+		const handledRequestKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
+		const now = Date.now();
+		if (
+			now - (this.lastHandledRequestAt.get(handledRequestKey) || 0) <
+			REQUEST_THROTTLE_MS
+		) {
+			emitDiagnostic('request-handler-throttled');
+			return;
+		}
+		// Set before the first await, so failing and concurrent requests count too.
+		this.lastHandledRequestAt.set(handledRequestKey, now);
+
 		// The requester may have logged in only seconds ago. Refresh its device
 		// list before Olm encryption; otherwise Rust Crypto can silently build an
 		// empty to-device batch for the not-yet-cached device.
+		await refreshHistoryDeviceKeysBestEffort(crypto, [sender]);
+		if (
+			this.client !== client ||
+			room.getMember(sender)?.membership !== 'join'
+		)
+			return;
 		const requesterDevices = await crypto.getUserDeviceInfo(
 			[content.requester_user_id],
 			true
@@ -242,17 +318,6 @@ export class MatrixRoomHistoryKeyTransfer {
 				return;
 			}
 		}
-
-		const handledRequestKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
-		const now = Date.now();
-		if (
-			now - (this.lastHandledRequestAt.get(handledRequestKey) || 0) <
-			REQUEST_THROTTLE_MS
-		) {
-			emitDiagnostic('request-handler-throttled');
-			return;
-		}
-		this.lastHandledRequestAt.set(handledRequestKey, now);
 
 		const keys = (await crypto.exportRoomKeys()).filter(
 			(key) => key.room_id === content.room_id

@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import * as React from 'react';
 import { useMemo, useState } from 'react';
+import { getEventIcon } from '../notificationsCenter/eventDescriptors/icons';
+import { ReactComponent as PlaceholderIcon } from '../../resources/img/icons/placeholder.svg';
 import catalog from './iconCatalog.generated.json';
 import './iconCatalog.styles.scss';
 
@@ -350,3 +352,72 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Catalog: Story = {};
+
+/** The approved event assets and the supplied, currently unassigned placeholder. */
+export const ApprovedTimelineAssets: Story = {
+	render: () => {
+		const examples = [
+			{
+				label: 'Thread reply',
+				file: 'fab-menu-thread.svg',
+				Icon: getEventIcon('threadReply'),
+				note: 'Existing ORISO library asset; approved for thread replies.'
+			},
+			{
+				label: 'Message',
+				file: 'messages_outline.svg',
+				Icon: getEventIcon('message'),
+				note: 'Existing ORISO outline asset; shared message event glyph.'
+			},
+			{
+				label: 'Scheduled appointment',
+				file: 'calendar-check.svg',
+				Icon: getEventIcon('appointmentScheduled'),
+				note: 'Existing two-colour calendar asset. Preserve the contrasting check.'
+			},
+			{
+				label: 'Placeholder',
+				file: 'placeholder.svg',
+				Icon: PlaceholderIcon,
+				note: 'Supplied by Frank on 2026-10-27; original library provenance unverified. Catalogue example only. Account-deletion assignment remains open.'
+			}
+		];
+		return (
+			<main className="iconCatalog">
+				<header className="iconCatalog__header">
+					<div>
+						<h1>Approved timeline assets</h1>
+						<p>
+							Selected controls use Full; unselected controls use
+							Outline where the pair exists. Missing variants
+							remain later design work. Icons without a selection
+							state do not need a second variant.
+						</p>
+					</div>
+				</header>
+				<section
+					className="iconCatalog__grid"
+					aria-label="Approved icons and supplied placeholder"
+				>
+					{examples.map(({ label, file, Icon, note }) => (
+						<article className="iconCatalog__card" key={file}>
+							<div className="iconCatalog__preview">
+								<Icon aria-hidden="true" />
+							</div>
+							<h2>{label}</h2>
+							<code>{file}</code>
+							<p>{note}</p>
+						</article>
+					))}
+				</section>
+			</main>
+		);
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Confirmed in the interactive icon review. These examples resolve the same event components as the runtime timeline; the placeholder is deliberately not assigned to an event. See Organisms/NotificationsCenter/Approved Event Icons for row, selected and detail rendering.'
+			}
+		}
+	}
+};

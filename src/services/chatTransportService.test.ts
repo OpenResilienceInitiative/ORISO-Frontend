@@ -801,6 +801,19 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 describe('chatTransportService team attachment notifications', () => {
 	afterEach(() => setMatrixClientServiceRef(null));
 
+	it('rejects a file send without a Matrix service and sends no notification', async () => {
+		setMatrixClientServiceRef(null);
+		const notify = vi.fn();
+		await expect(
+			chatTransportService.sendFileMessage(
+				ROOM_ID,
+				new File(['x'], 'note.txt'),
+				{ postMessageEventNotification: notify }
+			)
+		).rejects.toThrow('Matrix client not initialized');
+		expect(notify).not.toHaveBeenCalled();
+	});
+
 	it('marks an attachment sent in the team room as teamDiscussion', async () => {
 		const postNotification = vi.fn(() => Promise.resolve({}));
 		setMatrixClientServiceRef({
