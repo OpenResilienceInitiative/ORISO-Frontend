@@ -105,19 +105,35 @@ export const useConversationActions = ({
 	);
 
 	// Relations foundation (#435): direct-reply context for the composer.
-	const [replyTo, setReplyTo] = useState<ReplyContext | null>(null);
-	const handleReplyDirect = useCallback((message: MessageItem) => {
-		setReplyTo(buildReplyQuoteContext(message));
-	}, []);
+	const [replyState, setReplyTo] = useState<{
+		key: unknown;
+		value: ReplyContext;
+	} | null>(null);
+	const handleReplyDirect = useCallback(
+		(message: MessageItem) => {
+			setReplyTo({
+				key: resetKey,
+				value: buildReplyQuoteContext(message)
+			});
+		},
+		[resetKey]
+	);
 	const handleCancelReply = useCallback(() => setReplyTo(null), []);
 
 	// Editing (m.replace, #435): edit-in-progress context for the composer.
-	const [editingMessage, setEditingMessage] = useState<EditContext | null>(
-		null
+	const [editState, setEditingMessage] = useState<{
+		key: unknown;
+		value: EditContext;
+	} | null>(null);
+	const handleEditDirect = useCallback(
+		(message: MessageItem) => {
+			setEditingMessage({
+				key: resetKey,
+				value: buildEditContext(message)
+			});
+		},
+		[resetKey]
 	);
-	const handleEditDirect = useCallback((message: MessageItem) => {
-		setEditingMessage(buildEditContext(message));
-	}, []);
 	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
 
 	// A reply or edit context never survives a conversation switch.
@@ -130,10 +146,16 @@ export const useConversationActions = ({
 		handleReact,
 		handleUnreact,
 		handleDeleteDirect,
-		replyTo,
+		replyTo:
+			replyState && Object.is(replyState.key, resetKey)
+				? replyState.value
+				: null,
 		handleReplyDirect,
 		handleCancelReply,
-		editingMessage,
+		editingMessage:
+			editState && Object.is(editState.key, resetKey)
+				? editState.value
+				: null,
 		handleEditDirect,
 		handleCancelEdit
 	};

@@ -28,6 +28,7 @@ import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { composerHtmlToTransportMarkup } from '../messageSubmitInterface/composerTransportEncoding';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
+import * as roomTimeline from '../session/roomTimeline';
 import type { PreviewCapabilities } from './previewCapabilities';
 
 const transport = vi.hoisted(() => ({
@@ -871,6 +872,32 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 			editingMessage: null,
 			autoFocusEditor: false
 		});
+	});
+
+	it('uses the actual counterpart, not a supervising reader, for main-room read status', async () => {
+		conversation();
+		transport.getMatrixRoom.mockReturnValue({ ...room, myUserId: OWN });
+		const build = vi.spyOn(roomTimeline, 'buildRoomTimeline');
+		const session = {
+			rid: ROOM,
+			isGroup: false,
+			item: {
+				id: 13,
+				matrixRoomId: ROOM,
+				askerMatrixUserId: LISA,
+				consultantMatrixUserId: OWN
+			}
+		};
+		open({ access: { capabilities: capabilities(), session } as any });
+		await waitFor(() => expect(build).toHaveBeenCalled());
+		expect(build).toHaveBeenLastCalledWith(
+			expect.anything(),
+			ROOM,
+			expect.anything(),
+			expect.anything(),
+			[LISA]
+		);
+		build.mockRestore();
 	});
 
 	it('sends side-room and team messages where the access says', () => {
