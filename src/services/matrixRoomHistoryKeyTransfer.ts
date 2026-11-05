@@ -376,9 +376,12 @@ export class MatrixRoomHistoryKeyTransfer {
 				})
 			)
 		);
-		// The written reason describes the conversation. An unverified device,
-		// such as a password-only sign-in, must not receive it: it cannot read
-		// the chat and cannot approve anything.
+		// The written reason describes the conversation. A device without the
+		// owner's cross-signing signature, such as a password-only sign-in, must
+		// not receive it: it cannot read the chat and cannot approve anything.
+		// `signedByOwner` is the right test here: `crossSigningVerified` would
+		// also need this device to have verified the counsellor's identity,
+		// which a freshly signed-in asker has not.
 		const targets = reasoned
 			? (
 					await Promise.all(
@@ -389,7 +392,7 @@ export class MatrixRoomHistoryKeyTransfer {
 										target.userId,
 										target.deviceId
 									);
-								return status?.crossSigningVerified === true
+								return status?.signedByOwner === true
 									? target
 									: null;
 							} catch {
