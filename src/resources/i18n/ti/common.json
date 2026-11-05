@@ -2518,6 +2518,10 @@
 			"serviceNoticePlanned": {
 				"title": "ብመደብ ዝተታሕዘ ጽገና",
 				"text": "ኣብ {{maintenanceDate}}፣ እቲ መድረኽ ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን። ቅድሚ ሕጂ ዝጸሓፍኩምዎም መልእኽትታት ኣይጠፍኡን።"
+			},
+			"sessionAskerDeleted": {
+				"title": "ዝተሰረዘ ደላዪ ምኽሪ",
+				"text": "ምስ ደላዪ ምኽሪ ዝነበረ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -4610,6 +4614,10 @@
 					"text": "እቲ ቆጸራ ክስረዝ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
 				}
 			}
+		},
+		"deletedAsker": {
+			"title": "ዝተሰረዘ ደላዪ ምኽሪ",
+			"hint": "እዚ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።"
 		}
 	},
 	"statusOverlay": {

@@ -2539,6 +2539,10 @@
 			"serviceNoticePlanned": {
 				"title": "Geplante Wartung",
 				"text": "Am {{maintenanceDate}} ist die Plattform zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar. Bereits geschriebene Nachrichten gehen nicht verloren."
+			},
+			"sessionAskerDeleted": {
+				"title": "Gelöschte:r Ratsuchende:r",
+				"text": "Ein Chat mit einer ratsuchenden Person wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -4627,6 +4631,10 @@
 					"text": "Der Termin konnte nicht abgesagt werden. Bitte versuchen Sie es erneut."
 				}
 			}
+		},
+		"deletedAsker": {
+			"title": "Gelöschte:r Ratsuchende:r",
+			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar."
 		}
 	},
 	"statusOverlay": {
