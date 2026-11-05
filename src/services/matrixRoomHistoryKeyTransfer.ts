@@ -19,7 +19,6 @@ export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
 const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
 const REQUEST_THROTTLE_MS = 30_000;
-const REASONED_REQUEST_THROTTLE_MS = 5_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
 const MAX_PENDING_APPROVALS = 20;
 const MAX_PENDING_PER_ROOM = 5;
@@ -340,12 +339,12 @@ export class MatrixRoomHistoryKeyTransfer {
 
 		const now = Date.now();
 		const reasoned = !!normalizeReason(options.reason);
-		// A request with a written reason replaces the automatic one that
-		// ran when the unreadable events were found; it only waits for the
-		// short window that stops double sends.
-		const throttleMs = reasoned
-			? REASONED_REQUEST_THROTTLE_MS
-			: REQUEST_THROTTLE_MS;
+		// A request with a written reason has its own window, so it replaces the
+		// automatic one that ran when the unreadable events were found. The
+		// counsellor's side uses the same 30 seconds: a person must not be
+		// prompted more often than that, and a retry is never accepted here
+		// only to be dropped there.
+		const throttleMs = REQUEST_THROTTLE_MS;
 		const lastAt = reasoned
 			? this.lastReasonedRequestAt.get(roomId) || 0
 			: this.lastRequestAt.get(roomId) || 0;
@@ -478,22 +477,22 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 
 		if (this.client !== client) return;
-		// A request that carries a reason waits for a person. The window matches
-		// the requester's own retry window, so an accepted retry is never dropped
-		// here; this runs before any lookup.
+		// A request that carries a reason waits for a person, so a device may
+		// send one only every 30 seconds, as the requester does; this runs
+		// before any lookup.
 		if (normalizeReason(content.reason)) {
 			const reasonKey = `${content.room_id}:${sender}`;
 			const at = Date.now();
 			if (
 				at - (this.lastReasonRequestAt.get(reasonKey) || 0) <
-				REASONED_REQUEST_THROTTLE_MS
+				REQUEST_THROTTLE_MS
 			) {
 				emitDiagnostic('request-handler-throttled');
 				return;
 			}
 			if (this.lastReasonRequestAt.size >= 500) {
 				for (const [key, time] of this.lastReasonRequestAt)
-					if (at - time >= REASONED_REQUEST_THROTTLE_MS)
+					if (at - time >= REQUEST_THROTTLE_MS)
 						this.lastReasonRequestAt.delete(key);
 			}
 			this.lastReasonRequestAt.set(reasonKey, at);

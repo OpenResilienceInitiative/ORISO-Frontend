@@ -1158,7 +1158,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			).toHaveBeenCalledTimes(1);
 		});
 
-		it('accepts a reasoned retry once the requester window of 5 seconds has passed', async () => {
+		it('accepts a reasoned retry once the 30 second window has passed', async () => {
 			vi.useFakeTimers({ toFake: ['Date'] });
 			try {
 				const { harness, service } = setup();
@@ -1177,7 +1177,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 					expect(service.getPendingApprovals()).toHaveLength(1)
 				);
 				service.declineRequest('first');
-				vi.setSystemTime(Date.now() + 6_000);
+				vi.setSystemTime(Date.now() + 31_000);
 				send('retry');
 				await vi.waitFor(() =>
 					expect(
