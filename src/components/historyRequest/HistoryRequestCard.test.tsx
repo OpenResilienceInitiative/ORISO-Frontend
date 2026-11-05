@@ -94,6 +94,11 @@ describe('HistoryRequestCard', () => {
 			/>
 		);
 
+		expect(
+			screen
+				.getByRole('button', { name: 'historyRequest.card.approve' })
+				.getAttribute('aria-busy')
+		).toBe('true');
 		for (const name of ['approve', 'decline']) {
 			expect(
 				(
