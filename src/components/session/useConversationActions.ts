@@ -18,6 +18,16 @@ type EditContext = ReturnType<typeof buildEditContext>;
  * failure. A reply or edit context never survives a change of
  * `resetKey` (the conversation).
  */
+/**
+ * The conversation a reply or edit context belongs to: its session and room.
+ * The room alone is not enough, since two sessions can both have none yet,
+ * and the chat view keeps its state across a session switch.
+ */
+export const conversationActionsResetKey = (session: {
+	rid?: string | null;
+	item?: { id?: string | number | null } | null;
+}): string => `${session?.item?.id ?? ''}|${session?.rid ?? ''}`;
+
 export const useConversationActions = ({
 	roomId,
 	resetKey,

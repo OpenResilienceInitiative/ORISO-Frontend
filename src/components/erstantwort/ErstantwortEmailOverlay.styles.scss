@@ -1,0 +1,28 @@
+@import '../../resources/styles/settings';
+
+.erstantwortEmailOverlay__userName {
+	display: grid;
+	gap: 8px;
+	margin-top: 16px;
+	font-family: $font-family-sans-serif;
+
+	p {
+		margin: 0;
+	}
+}
+
+.erstantwortEmailOverlay__copy {
+	justify-self: start;
+	padding: 8px 16px;
+	border: 1px solid var(--m3-outline-variant, currentColor);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface, inherit);
+	font: inherit;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, currentColor);
+		outline-offset: 2px;
+	}
+}

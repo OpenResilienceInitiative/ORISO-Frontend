@@ -1,0 +1,38 @@
+@import '../../resources/styles/settings';
+
+.notificationBrowserDialog__stay,
+.notificationBrowserDialog__blocked {
+	margin: 0 0 16px;
+	font-family: $font-family-sans-serif;
+}
+
+.notificationBrowserDialog__tones {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.notificationBrowserDialog__tone {
+	padding: 8px 16px;
+	border: 1px solid var(--m3-outline-variant, currentColor);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface, inherit);
+	font: inherit;
+	cursor: pointer;
+
+	&[aria-checked='true'] {
+		border-color: var(--m3-primary, currentColor);
+		background: color-mix(
+			in srgb,
+			var(--m3-primary, currentColor) 12%,
+			transparent
+		);
+		font-weight: 600;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, currentColor);
+		outline-offset: 2px;
+	}
+}

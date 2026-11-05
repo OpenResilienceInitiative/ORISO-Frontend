@@ -18,11 +18,14 @@ import {
 	vi
 } from 'vite-plus/test';
 import {
+	ActiveSessionContext,
 	SessionsDataContext,
 	SessionTypeContext,
 	TenantContext,
 	UserDataContext
 } from '../../globalState';
+import { STATUS_ENQUIRY } from '../../globalState/interfaces';
+import { apiGetConsultantSessionList } from '../../api';
 import {
 	SESSION_LIST_TYPES,
 	SESSION_TYPE_SESSION
@@ -121,9 +124,14 @@ vi.mock('../session/CaseHandoverCurtain', () => ({
 		</div>
 	)
 }));
+const SessionRowId = () => {
+	const { activeSession } = React.useContext(ActiveSessionContext);
+	return <span data-testid="session-row">{activeSession?.item?.id}</span>;
+};
 vi.mock('../sessionsListItem/SessionListItemComponent', () => ({
 	SessionListItemComponent: (props: any) => (
 		<div>
+			<SessionRowId />
 			<div data-testid={`selected-${props.index}`}>
 				{String(props.caseHandoverSelected)}
 			</div>
@@ -152,8 +160,25 @@ const sessions = [1, 2].map((id) => ({
 	user: { id: `u${id}` }
 })) as any;
 
-const ListTree = () => (
-	<MemoryRouter initialEntries={['/sessions/consultant/sessionView']}>
+const sessionListPaths = {
+	[SESSION_LIST_TYPES.MY_SESSION]: '/sessions/consultant/sessionView',
+	[SESSION_LIST_TYPES.ENQUIRY]: '/sessions/consultant/sessionPreview'
+};
+
+const ListTree = ({
+	rows = sessions,
+	type = SESSION_LIST_TYPES.MY_SESSION,
+	chip
+}: {
+	rows?: typeof sessions;
+	type?: SESSION_LIST_TYPES;
+	chip?: 'liveChat';
+}) => (
+	<MemoryRouter
+		initialEntries={[
+			sessionListPaths[type] + (chip ? `?chip=${chip}` : '')
+		]}
+	>
 		<TenantContext.Provider value={{ tenant: { settings: {} } } as any}>
 			<UserDataContext.Provider
 				value={
@@ -163,13 +188,14 @@ const ListTree = () => (
 				}
 			>
 				<SessionTypeContext.Provider
-					value={{
-						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: '/sessions/consultant/sessionView'
-					}}
+					value={{ type, path: sessionListPaths[type] }}
 				>
 					<SessionsDataContext.Provider
-						value={{ sessions, ready: true, dispatch: vi.fn() }}
+						value={{
+							sessions: rows,
+							ready: true,
+							dispatch: vi.fn()
+						}}
 					>
 						<SessionListViewStateProvider>
 							<SessionsList
@@ -269,5 +295,99 @@ describe('SessionsList future zone (ADR-021)', () => {
 			)?.textContent
 		).toContain('Ratsuchende A');
 		expect(zone!.querySelector('[data-cy="timeline-now"]')).not.toBeNull();
+	});
+});
+
+describe('SessionsList first enquiry order', () => {
+	afterEach(cleanup);
+
+	const firstRequest = (
+		id: number,
+		createDate: string,
+		conversationType: string
+	) => ({
+		session: { id, createDate, conversationType, status: STATUS_ENQUIRY },
+		user: { id: `u${id}` }
+	});
+	const rows = [
+		firstRequest(20, '2026-11-04T12:04:00Z', 'LIVE_CHAT'),
+		firstRequest(41, '2026-11-04T12:01:00Z', 'AGENCY_COUNSELLING'),
+		firstRequest(10, '2026-11-04T12:02:00.000', 'LIVE_CHAT'),
+		firstRequest(2, '2026-11-04T12:02:00Z', 'LIVE_CHAT'),
+		firstRequest(42, '2026-11-04T12:03:00Z', 'AGENCY_COUNSELLING')
+	];
+	const renderedRowIds = async () =>
+		(await screen.findAllByTestId('session-row')).map(
+			(row) => row.textContent
+		);
+
+	it('puts the oldest Live Chat first with numeric ID ties', async () => {
+		render(
+			<ListTree
+				rows={rows}
+				type={SESSION_LIST_TYPES.ENQUIRY}
+				chip="liveChat"
+			/>
+		);
+
+		expect(await renderedRowIds()).toEqual(['2', '10', '20']);
+	});
+
+	it('keeps the newest Mail enquiry first', async () => {
+		render(<ListTree rows={rows} type={SESSION_LIST_TYPES.ENQUIRY} />);
+
+		expect(await renderedRowIds()).toEqual(['42', '41']);
+	});
+});
+
+describe('SessionsList enquiry pagination', () => {
+	afterEach(() => {
+		cleanup();
+		vi.mocked(apiGetConsultantSessionList).mockReset();
+		vi.mocked(apiGetConsultantSessionList).mockResolvedValue({
+			sessions: [],
+			total: 0,
+			count: 30,
+			offset: 0
+		});
+	});
+
+	it('advances the requested window and stops after ten pages when no Live Chat matches', async () => {
+		vi.mocked(apiGetConsultantSessionList).mockReset();
+		vi.mocked(apiGetConsultantSessionList).mockImplementation(
+			async ({ offset = 0, count = 30 }) => ({
+				sessions: Array.from({ length: 30 }, (_, i) => ({
+					session: {
+						id: offset + i + 1,
+						status: STATUS_ENQUIRY,
+						conversationType: 'AGENCY_COUNSELLING'
+					},
+					user: { id: `u${offset + i}` }
+				})) as any,
+				total: 900,
+				count,
+				offset
+			})
+		);
+		render(
+			<ListTree
+				rows={[]}
+				type={SESSION_LIST_TYPES.ENQUIRY}
+				chip="liveChat"
+			/>
+		);
+		await waitFor(() =>
+			expect(
+				vi
+					.mocked(apiGetConsultantSessionList)
+					.mock.calls.some(([arg]) => arg.offset === 270)
+			).toBe(true)
+		);
+		const offsets = vi
+			.mocked(apiGetConsultantSessionList)
+			.mock.calls.map(([arg]) => arg.offset);
+		expect([...new Set(offsets)]).toEqual([
+			0, 30, 60, 90, 120, 150, 180, 210, 240, 270
+		]);
 	});
 });

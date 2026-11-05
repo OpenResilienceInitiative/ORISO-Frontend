@@ -2,13 +2,16 @@ name: Frontend PR Validation
 
 on:
     pull_request:
+    # Runs this workflow for GitHub merge queue groups. It does nothing until the
+    # merge queue is switched on for the branch.
+    merge_group:
 
 env:
     REGISTRY: ghcr.io
     ORG: openresilienceinitiative
 
 concurrency:
-    group: frontend-pr-${{ github.event.pull_request.number }}
+    group: frontend-pr-${{ github.event.pull_request.number || github.ref }}
     cancel-in-progress: true
 
 jobs:

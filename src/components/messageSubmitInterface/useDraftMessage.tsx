@@ -136,6 +136,10 @@ export const useDraftMessage = (
 		sessionScopeKey ||
 		`scope:unknown|thread:${threadKey}`;
 	const canUseRemoteApi = scopeKeysToTry.length > 0;
+	const draftScope = useMemo(
+		() => ({ remoteScopeKey, scopeKeys: scopeKeysToTry }),
+		[remoteScopeKey, scopeKeysToTry]
+	);
 
 	const setEditorWithDraftString = useCallback(
 		(draftString: string) => {
@@ -736,9 +740,29 @@ export const useDraftMessage = (
 		setMessage('');
 	}, [canUseRemoteApi, scopeKeysToTry, updateRemoteDraftIndex]);
 
+	/*
+	 * Review (Codex): a file with a caption can finish uploading after the
+	 * person has moved to another chat. `clearDraftMessage` would then empty the
+	 * chat they are in, so the sent text is retired from the scope it left.
+	 */
+	const retireDraftScope = useCallback(
+		async (scope: typeof draftScope) => {
+			await Promise.allSettled([...pendingDraftWritesRef.current]);
+			await Promise.allSettled([
+				...scope.scopeKeys.map((scopeKey) =>
+					apiDeleteUserDraft(scopeKey)
+				),
+				updateRemoteDraftIndex('', scope.remoteScopeKey)
+			]);
+		},
+		[updateRemoteDraftIndex]
+	);
+
 	return {
 		onChange,
 		loaded,
-		clearDraftMessage
+		clearDraftMessage,
+		draftScope,
+		retireDraftScope
 	};
 };

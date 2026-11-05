@@ -329,6 +329,25 @@ describe('useDraftMessage', () => {
 		);
 	});
 
+	it('retires the draft of a scope the composer has left', async () => {
+		const loadDraft = vi.fn();
+		const { result, rerender } = renderHook(
+			({ scope }) =>
+				useDraftMessage(true, loadDraft, { forcedScopeKey: scope }),
+			{ wrapper, initialProps: { scope: 'scope:room-a|thread:main' } }
+		);
+		const leftScope = result.current.draftScope;
+
+		rerender({ scope: 'scope:room-b|thread:main' });
+		await act(async () => {
+			await result.current.retireDraftScope(leftScope);
+		});
+
+		const deleted = mocks.apiDeleteUserDraft.mock.calls.map(([key]) => key);
+		expect(deleted).toContain('scope:room-a|thread:main');
+		expect(deleted).not.toContain('scope:room-b|thread:main');
+	});
+
 	// #976: a zero-content autosave used to upsert `text: ''`, which left a
 	// draft row the badge kept counting but no view could ever open.
 	it('deletes the remote draft instead of storing an empty one', async () => {

@@ -112,6 +112,8 @@ export interface SessionRailPillProps {
 	/** The list keeps its `role="tab"` semantics; the story uses a button. */
 	'role'?: string;
 	'aria-selected'?: boolean;
+	/** Current item when the host uses ordinary buttons rather than tabs. */
+	'aria-current'?: React.AriaAttributes['aria-current'];
 	'tabIndex'?: number;
 	'buttonRef'?: (element: HTMLButtonElement | null) => void;
 	'className'?: string;
@@ -198,6 +200,7 @@ export const SessionRailPill = ({
 	onKeyDown,
 	role,
 	'aria-selected': ariaSelected,
+	'aria-current': ariaCurrent,
 	tabIndex,
 	buttonRef,
 	className,
@@ -301,6 +304,7 @@ export const SessionRailPill = ({
 				}}
 				role={role}
 				aria-selected={ariaSelected}
+				aria-current={ariaCurrent}
 				aria-describedby={hasContent ? tooltipId : undefined}
 				tabIndex={tabIndex}
 				data-cy={dataCy}
