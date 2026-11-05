@@ -1,6 +1,7 @@
 import { CircularProgress } from '@mui/material';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import './HistoryRequestCard.styles.scss';
 
 /** i18next ids such as de@informal are not valid BCP-47 tags. */
@@ -79,32 +80,31 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 					)}
 				</p>
 			)}
-			<div className="historyRequestCard__actions">
-				<button
-					type="button"
-					className="historyRequestCard__decline"
-					disabled={busy}
-					onClick={onDecline}
-				>
-					{t('historyRequest.card.decline')}
-				</button>
-				<button
-					type="button"
-					className="historyRequestCard__approve"
-					disabled={busy}
-					aria-busy={busy || undefined}
-					onClick={onApprove}
-				>
-					{busy && (
-						<CircularProgress
-							size={14}
-							aria-hidden="true"
-							className="historyRequestCard__spinner"
-						/>
-					)}
-					{t('historyRequest.card.approve')}
-				</button>
-			</div>
+			<ButtonGroup
+				alignment="horizontal-flex"
+				items={[
+					{
+						label: t('historyRequest.card.decline'),
+						onClick: onDecline,
+						disabled: busy,
+						variant: 'outline'
+					},
+					{
+						label: t('historyRequest.card.approve'),
+						onClick: onApprove,
+						disabled: busy,
+						variant: 'primary',
+						ariaBusy: busy || undefined,
+						icon: busy ? (
+							<CircularProgress
+								size={14}
+								aria-hidden="true"
+								className="historyRequestCard__spinner"
+							/>
+						) : undefined
+					}
+				]}
+			/>
 		</section>
 	);
 };
