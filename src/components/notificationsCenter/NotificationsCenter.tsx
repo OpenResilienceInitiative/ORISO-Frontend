@@ -100,6 +100,7 @@ import { useActivityPreviewCache } from './useActivityPreviewCache';
 import { selectActivityEventsReadWithConversation } from './seenWhileReading';
 import { useConversationPreview } from './useConversationPreview';
 import { useSeenWhileReading } from './useSeenWhileReading';
+import { usePreviewThreadSelection } from './usePreviewThreadSelection';
 import { chatEndedTextKey } from '../message/messageConstants';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
@@ -1203,9 +1204,15 @@ export const NotificationsCenter = () => {
 		showEmbeddedChat ? selectedNotification : null,
 		{ visible: showEmbeddedChat }
 	);
+	const { openedThreadRootId, setOpenedThreadRootId } =
+		usePreviewThreadSelection(
+			showEmbeddedChat,
+			preview?.roomId,
+			preview?.threadRootId
+		);
 	useSeenWhileReading({
 		roomId: preview?.roomId ?? null,
-		threadRootId: preview?.threadRootId,
+		threadRootId: preview?.threadRootId || openedThreadRootId,
 		// Nothing is seen while the preview hides the conversation (#924).
 		enabled: Boolean(preview) && !preview?.capabilities.contentHidden,
 		feed: notificationFeed,
@@ -1655,6 +1662,8 @@ export const NotificationsCenter = () => {
 						<ConversationPreview
 							roomId={preview?.roomId ?? selectedRoomId}
 							threadRootId={preview?.threadRootId}
+							openedThreadRootId={openedThreadRootId}
+							onShownThreadChange={setOpenedThreadRootId}
 							access={preview ?? undefined}
 							conversationPath={
 								selectedNotification

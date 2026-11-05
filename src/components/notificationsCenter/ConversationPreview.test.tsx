@@ -815,20 +815,31 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 	) => {
 		const onConversationRead = vi.fn();
 		const onOpenConversation = vi.fn();
-		const view = render(
-			<MessageContextShell>
-				{wrap(
-					<ConversationPreview
-						roomId={ROOM}
-						access={{ capabilities: capabilities() }}
-						conversationPath="/sessions/consultant/sessionView/!room:matrix.example/13"
-						onConversationRead={onConversationRead}
-						onOpenConversation={onOpenConversation}
-						{...props}
-					/>
-				)}
-			</MessageContextShell>
-		);
+		const ControlledPreview = () => {
+			const [openedThreadRootId, setOpenedThreadRootId] = React.useState<
+				string | null
+			>(null);
+			return (
+				<MessageContextShell>
+					{wrap(
+						<ConversationPreview
+							openedThreadRootId={openedThreadRootId}
+							roomId={ROOM}
+							access={{ capabilities: capabilities() }}
+							conversationPath="/sessions/consultant/sessionView/!room:matrix.example/13"
+							onConversationRead={onConversationRead}
+							onOpenConversation={onOpenConversation}
+							{...props}
+							onShownThreadChange={(id) => {
+								setOpenedThreadRootId(id);
+								props.onShownThreadChange?.(id);
+							}}
+						/>
+					)}
+				</MessageContextShell>
+			);
+		};
+		const view = render(<ControlledPreview />);
 		return { ...view, onConversationRead, onOpenConversation };
 	};
 	const openMenuOf = (container: HTMLElement, id: string) => {
@@ -984,16 +995,19 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 				}
 			})
 		]);
-		const { container } = open();
+		const onShownThreadChange = vi.fn();
+		const { container } = open({ onShownThreadChange });
 		const entry = container.querySelector(
 			'[data-cy="thread-entry"]'
 		) as HTMLElement;
 		expect(entry.tagName).toBe('BUTTON');
 		fireEvent.click(entry);
+		expect(onShownThreadChange).toHaveBeenLastCalledWith('$theirs');
 		expect(composer.props.threadRootId).toBe('$theirs');
 		fireEvent.click(
 			screen.getByRole('button', { name: t('backToConversation') })
 		);
+		expect(onShownThreadChange).toHaveBeenLastCalledWith(null);
 		expect(composer.props.threadRootId).toBeNull();
 	});
 
