@@ -142,7 +142,13 @@ export class MatrixRoomHistoryKeyTransfer {
 
 	public initialize(client: MatrixClient): void {
 		if (this.client === client) return;
+		// Reasons queued before any client existed belong to the sign-in that
+		// is starting now; a client being replaced takes its reasons with it.
+		const queued = this.client ? null : new Map(this.pendingReasons);
 		this.detach();
+		queued?.forEach((reason, roomId) =>
+			this.pendingReasons.set(roomId, reason)
+		);
 		this.client = client;
 		client.on(
 			ClientEvent.ReceivedToDeviceMessage,
@@ -157,8 +163,9 @@ export class MatrixRoomHistoryKeyTransfer {
 	}
 
 	public detach(): void {
-		// A reason belongs to the account that wrote it.
-		if (this.client) this.pendingReasons.clear();
+		// A reason belongs to the account that wrote it: a teardown always
+		// drops them, so the next sign-in cannot send them.
+		this.pendingReasons.clear();
 		this.client?.off(
 			ClientEvent.ReceivedToDeviceMessage,
 			this.onReceivedToDeviceMessage
