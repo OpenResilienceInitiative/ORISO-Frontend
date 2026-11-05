@@ -4266,6 +4266,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Сначала очередь другого гостя",
+				"text": "Сначала должен быть принят запрос, поступивший раньше в этой очереди."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Закрыть"

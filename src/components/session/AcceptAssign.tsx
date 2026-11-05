@@ -420,6 +420,20 @@ export const AcceptAssign = ({
 						headline: translate(`${failure.key}.title`),
 						copy: translate(`${failure.key}.text`)
 					});
+				} else if (error instanceof Response && error.status === 409) {
+					const isQueueConflict =
+						error.headers.get('X-Reason') ===
+						'LIVE_CHAT_QUEUE_NOT_FIRST';
+					setOverlayItem(
+						isQueueConflict
+							? {
+									...enquiryTakenByOtherConsultantOverlayItem,
+									headline:
+										'session.anonymous.queueNotFirst.headline',
+									copy: 'session.anonymous.queueNotFirst.text'
+								}
+							: enquiryTakenByOtherConsultantOverlayItem
+					);
 				} else if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {

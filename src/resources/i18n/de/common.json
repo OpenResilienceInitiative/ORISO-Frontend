@@ -4279,6 +4279,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Ein anderer Gast ist zuerst an der Reihe",
+				"text": "Eine frühere Anfrage in dieser Warteschlange muss zuerst angenommen werden."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Schließen"

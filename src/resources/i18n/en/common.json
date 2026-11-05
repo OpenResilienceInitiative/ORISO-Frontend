@@ -4225,6 +4225,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Another guest is first in line",
+				"text": "An earlier request in this queue must be accepted first."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Close"

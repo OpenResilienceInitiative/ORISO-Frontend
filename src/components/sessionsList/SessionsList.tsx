@@ -200,6 +200,15 @@ const normalizeTimestamp = (value?: string | number | null): number => {
 	return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+const liveChatArrivalTime = (createDate?: string): number => {
+	if (!createDate) return Number.POSITIVE_INFINITY;
+	// Some API responses omit the UTC suffix on a server timestamp.
+	const withoutTimezone =
+		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(createDate);
+	const arrival = Date.parse(withoutTimezone ? `${createDate}Z` : createDate);
+	return Number.isFinite(arrival) ? arrival : Number.POSITIVE_INFINITY;
+};
+
 const formatDraftTime = (timestamp?: string | null) => {
 	const time = normalizeTimestamp(timestamp);
 	if (!time) {
@@ -437,12 +446,20 @@ export const SessionsList = ({
 			initialID?: string,
 			count?: number,
 			signal?: AbortSignal
-		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+		): Promise<{
+			sessions: ListItemInterface[];
+			total: number;
+			nextOffset: number;
+		}> => {
 			const pageSize = count ?? SESSION_COUNT;
 
 			const fetchPage = (
 				pageOffset: number
-			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+			): Promise<{
+				sessions: ListItemInterface[];
+				total: number;
+				nextOffset: number;
+			}> =>
 				apiGetConsultantSessionList({
 					type,
 					offset: pageOffset,
@@ -455,13 +472,22 @@ export const SessionsList = ({
 							getExtendedSession(initialID, sessions) ||
 							total <= pageOffset + pageSize
 						) {
-							return { sessions, total };
+							return {
+								sessions,
+								total,
+								nextOffset: pageOffset + pageSize
+							};
 						}
 
 						return fetchPage(pageOffset + pageSize).then(
-							({ sessions: moreSessions, total: nextTotal }) => ({
+							({
+								sessions: moreSessions,
+								total: nextTotal,
+								nextOffset
+							}) => ({
 								sessions: [...sessions, ...moreSessions],
-								total: nextTotal
+								total: nextTotal,
+								nextOffset
 							})
 						);
 					}
@@ -469,14 +495,22 @@ export const SessionsList = ({
 					if (
 						type !== SESSION_LIST_TYPES.ENQUIRY ||
 						sessions.length === 0 ||
-						total <= pageOffset + sessions.length
+						total <= pageOffset + pageSize
 					) {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const chip = sessionToolbarChipRef.current;
 					if (chip !== 'nearby' && chip !== 'liveChat') {
-						return { sessions, total };
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
 					const anyMatch = sessions.some((raw) => {
@@ -486,16 +520,26 @@ export const SessionsList = ({
 						);
 						return chip === 'liveChat' ? isAnon : !isAnon;
 					});
-					const pagesFetched =
-						(pageOffset + sessions.length) / SESSION_COUNT;
-					if (anyMatch || pagesFetched >= 10) {
-						return { sessions, total };
+					if (
+						anyMatch ||
+						pageOffset + pageSize >= 10 * SESSION_COUNT
+					) {
+						return {
+							sessions,
+							total,
+							nextOffset: pageOffset + pageSize
+						};
 					}
 
-					return fetchPage(pageOffset + sessions.length).then(
-						({ sessions: moreSessions, total: nextTotal }) => ({
+					return fetchPage(pageOffset + pageSize).then(
+						({
+							sessions: moreSessions,
+							total: nextTotal,
+							nextOffset
+						}) => ({
 							sessions: [...sessions, ...moreSessions],
-							total: nextTotal
+							total: nextTotal,
+							nextOffset
 						})
 					);
 				});
@@ -526,7 +570,7 @@ export const SessionsList = ({
 				count,
 				controller.signal
 			)
-				.then(({ sessions, total }) => {
+				.then(({ sessions, total, nextOffset }) => {
 					// A superseded transport may still resolve after abort. Do not
 					// let its pagination state or rows reach the caller.
 					if (
@@ -535,9 +579,10 @@ export const SessionsList = ({
 					) {
 						throw new Error(FETCH_ERRORS.ABORT);
 					}
-					const pageSize = count ?? SESSION_COUNT;
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
+					const lastLoadedOffset = Math.max(
+						0,
+						nextOffset - SESSION_COUNT
+					);
 					setCurrentOffset(lastLoadedOffset);
 					setTotalItems(total);
 					return { sessions, total };
@@ -2035,13 +2080,35 @@ export const SessionsList = ({
 	);
 	// Sorted as pairs so the rendered row and the hidden-active lookup use
 	// the same id (`sessionPairId`), whatever `item` the extended row holds.
-	const sortedSessionPairs = useMemo(
-		() =>
-			[...sessionToolbarFilteredPairs].sort((left, right) =>
-				sortSessions(left.extended, right.extended)
-			),
-		[sessionToolbarFilteredPairs, sortSessions]
-	);
+	const sortedSessionPairs = useMemo(() => {
+		const sorted = [...sessionToolbarFilteredPairs].sort((left, right) =>
+			sortSessions(left.extended, right.extended)
+		);
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) return sorted;
+
+		// Replace only the Live Chat slots in a mixed view. Mail keeps its
+		// existing order without a comparator that changes direction by pair.
+		const isLiveChatRequest = ({
+			raw,
+			extended
+		}: (typeof sorted)[number]) =>
+			extended.isEnquiry && classifyRequest(raw, extended) === 'liveChat';
+		const liveChats = sorted
+			.filter(isLiveChatRequest)
+			.sort((left, right) => {
+				const a = left.extended.item;
+				const b = right.extended.item;
+				const arrivalA = liveChatArrivalTime(a?.createDate);
+				const arrivalB = liveChatArrivalTime(b?.createDate);
+				return arrivalA === arrivalB
+					? (a?.id ?? 0) - (b?.id ?? 0)
+					: arrivalA - arrivalB;
+			});
+		let liveChatIndex = 0;
+		return sorted.map((pair) =>
+			isLiveChatRequest(pair) ? liveChats[liveChatIndex++] : pair
+		);
+	}, [sessionToolbarFilteredPairs, sortSessions, type]);
 	const sortedSessions = useMemo(
 		() => sortedSessionPairs.map(({ extended }) => extended),
 		[sortedSessionPairs]

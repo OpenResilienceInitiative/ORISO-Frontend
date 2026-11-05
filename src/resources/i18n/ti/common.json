@@ -4259,6 +4259,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "ካልእ ጋሻ ኣቐዲሙ ኣብ መስርዕ ኣሎ",
+				"text": "ኣብዚ መስርዕ ኣቐዲሙ ዝመጸ ሕቶ መጀመርታ ክቕበል ኣለዎ።"
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "ዕፁው"
