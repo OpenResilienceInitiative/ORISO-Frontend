@@ -188,6 +188,7 @@ describe('useConversationPreview (#1824)', () => {
 				'sessionUnknown'
 			)
 		);
+		expect(result.current?.capabilities.contentHidden).toBe(true);
 	});
 
 	it('asks the handover status for another counsellor’s case: co-access is read only', async () => {
@@ -363,6 +364,9 @@ describe('useConversationPreview (#1824)', () => {
 
 	it('stays read only when the supervisors cannot be loaded', async () => {
 		fakes.apiGetSessionSupervisors.mockRejectedValue(new Error('500'));
+		fakes.apiGetCaseHandoverStatus.mockResolvedValue({
+			canViewContent: false
+		});
 		const { result } = render(row());
 		await waitFor(() =>
 			expect(fakes.apiGetSessionSupervisors).toHaveBeenCalled()
@@ -372,6 +376,38 @@ describe('useConversationPreview (#1824)', () => {
 		expect(result.current?.capabilities.readOnlyReason).toBe(
 			'sessionUnknown'
 		);
+		expect(result.current?.capabilities.contentHidden).toBe(false);
+	});
+
+	it('does not expose another counsellor’s main room after supervisor lookup failure', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({ consultant: { id: 'someone-else' } }),
+			ready: true
+		});
+		fakes.apiGetSessionSupervisors.mockRejectedValue(new Error('500'));
+		fakes.apiGetCaseHandoverStatus.mockResolvedValue({
+			canViewContent: false
+		});
+		const { result } = render(row());
+		await waitFor(() =>
+			expect(fakes.apiGetSessionSupervisors).toHaveBeenCalled()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(result.current?.capabilities.contentHidden).toBe(true);
+		expect(result.current?.capabilities.composer).toBe(false);
+	});
+
+	it('keeps a side room hidden after supervisor lookup failure', async () => {
+		fakes.apiGetSessionSupervisors.mockRejectedValue(new Error('500'));
+		const { result } = render(
+			row({ params: { roomRef: SIDE, sourceSessionId: 13 } })
+		);
+		await waitFor(() =>
+			expect(fakes.apiGetSessionSupervisors).toHaveBeenCalled()
+		);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(result.current?.capabilities.contentHidden).toBe(true);
+		expect(result.current?.capabilities.composer).toBe(false);
 	});
 
 	it('stays read only when the group info cannot be loaded', async () => {

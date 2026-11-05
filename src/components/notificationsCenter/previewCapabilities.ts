@@ -69,6 +69,8 @@ export interface PreviewPolicyInput {
 	threadsEnabled: boolean;
 	/** A fact the decision needs is still loading (supervisors, group info). */
 	stillLoading: boolean;
+	/** The supervisor lookup settled unsuccessfully; room ownership may be unknown. */
+	supervisorLookupFailed?: boolean;
 	/** The chat's anonymous gates (consent, pseudonym, waiting room) are up
 	 * (`shouldBlockAnonymousInquiryChat`). */
 	anonymousGateBlocked: boolean;
@@ -117,6 +119,7 @@ export const resolvePreviewCapabilities = ({
 	teamDiscussionOpen,
 	threadsEnabled,
 	stillLoading,
+	supervisorLookupFailed = false,
 	anonymousGateBlocked,
 	groupJoinBlocked
 }: PreviewPolicyInput): PreviewCapabilities => {
@@ -154,6 +157,14 @@ export const resolvePreviewCapabilities = ({
 		if (caseHandover.coAccess) {
 			return readOnly('coAccess');
 		}
+	}
+	if (supervisorLookupFailed) {
+		const isOwnMainRoom =
+			roomKind === 'main' &&
+			viewer.isConsultant === true &&
+			Boolean(viewer.userId) &&
+			String(session.consultant?.id ?? '') === String(viewer.userId);
+		return readOnly('sessionUnknown', { contentHidden: !isOwnMainRoom });
 	}
 	if (session.isRejected) {
 		return readOnly('rejected');

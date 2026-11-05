@@ -33,6 +33,7 @@ import {
 import type { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from '../session/MessageTimeline';
 import { buildRoomTimeline } from '../session/roomTimeline';
+import { counterpartReaders } from '../../utils/matrixReadReceipts';
 import { buildReplyQuotePreview } from '../session/replyQuote';
 import {
 	CHAT_TYPE_SINGLE_CHAT,
@@ -310,6 +311,16 @@ export const ConversationPreview = ({
 	});
 	const typing = useMatrixTyping(capabilities?.composer ? roomId : null);
 
+	const activeSession = useMemo(
+		() =>
+			access?.session ||
+			(roomId
+				? getExtendedSession(roomId, sessionsContext?.sessions) ||
+					fallbackSession(roomId)
+				: null),
+		[access?.session, roomId, sessionsContext?.sessions]
+	);
+
 	const loadMessages = useCallback(() => {
 		const room = readableRoomId
 			? chatTransportService.getMatrixRoom(readableRoomId)
@@ -328,7 +339,11 @@ export const ConversationPreview = ({
 				events,
 				readableRoomId,
 				room,
-				translateRef.current('e2ee.message.encryption.text')
+				translateRef.current('e2ee.message.encryption.text'),
+				readableRoomId === activeSession?.rid ||
+					readableRoomId === activeSession?.item?.matrixRoomId
+					? counterpartReaders(activeSession, (room as any)?.myUserId)
+					: undefined
 			),
 			reactionEvents: extractReactionEvents(events),
 			activityByEvent: new Map(
@@ -336,7 +351,7 @@ export const ConversationPreview = ({
 			)
 		});
 		refreshStatus();
-	}, [readableRoomId, limit, refreshStatus]);
+	}, [readableRoomId, limit, refreshStatus, activeSession]);
 
 	useEffect(() => {
 		loadMessages();
@@ -354,15 +369,6 @@ export const ConversationPreview = ({
 		};
 	}, [readableRoomId, loadMessages]);
 
-	const activeSession = useMemo(
-		() =>
-			access?.session ||
-			(roomId
-				? getExtendedSession(roomId, sessionsContext?.sessions) ||
-					fallbackSession(roomId)
-				: null),
-		[access?.session, roomId, sessionsContext?.sessions]
-	);
 	const agencyFeatures = useSessionAgencyPolicy(
 		roomId ?? undefined,
 		resolveConversationAgencyId(activeSession?.item)
