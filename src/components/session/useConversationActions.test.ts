@@ -117,6 +117,31 @@ describe('useConversationActions (#1824 S1)', () => {
 		expect(result.current.replyTo).toBeNull();
 		expect(result.current.editingMessage).toBeNull();
 	});
+
+	it('never exposes the previous edit or reply during the first render of another thread', () => {
+		const renders: Array<{ reply: unknown; edit: unknown }> = [];
+		const { result, rerender } = renderHook(
+			({ resetKey }) => {
+				const actions = useConversationActions({
+					roomId: ROOM,
+					resetKey
+				});
+				renders.push({
+					reply: actions.replyTo,
+					edit: actions.editingMessage
+				});
+				return actions;
+			},
+			{ initialProps: { resetKey: 'main' } }
+		);
+		act(() => {
+			result.current.handleReplyDirect(message());
+			result.current.handleEditDirect(message());
+		});
+		renders.length = 0;
+		rerender({ resetKey: 'thread' });
+		expect(renders.every(({ reply, edit }) => !reply && !edit)).toBe(true);
+	});
 });
 
 describe('conversationActionsResetKey', () => {

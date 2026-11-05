@@ -279,10 +279,13 @@ export const useConversationPreview = (
 		subscribed: (session?.item as any)?.subscribed,
 		isBanned: bannedUsers.includes(userData?.userName)
 	});
-	// A failed lookup is no answer: it keeps the preview read only.
+	// A pending lookup hides content. A failed lookup may expose only the
+	// explicitly assigned counsellor's main room, and still forbids writes.
 	const stillLoading =
-		(supervisionLookup && !supervisors?.value) ||
+		(supervisionLookup && !supervisors) ||
 		(Boolean(session?.isGroup) && !groupInfo?.value);
+	const supervisorLookupFailed =
+		supervisionLookup && supervisors?.value === null;
 
 	const capabilities = resolvePreviewCapabilities({
 		session,
@@ -299,6 +302,7 @@ export const useConversationPreview = (
 		teamDiscussionOpen: discussion?.status === 'OPEN',
 		threadsEnabled,
 		stillLoading,
+		supervisorLookupFailed,
 		anonymousGateBlocked,
 		groupJoinBlocked
 	});

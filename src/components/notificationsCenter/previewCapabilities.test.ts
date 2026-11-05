@@ -93,6 +93,17 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 		).toMatchObject({ ...NOTHING, readOnlyReason: 'enquiry' });
 	});
 
+	it('hides content from a non-consultant even if their id matches the assigned consultant during lookup failure', () => {
+		expect(
+			resolve(
+				counsellor({
+					viewer: { userId: 'me', isConsultant: false },
+					supervisorLookupFailed: true
+				})
+			)
+		).toMatchObject({ ...NOTHING, contentHidden: true });
+	});
+
 	it.each(['main', 'team', 'supervision'] as const)(
 		'rejected sessions cannot write in %s rooms',
 		(roomKind) => {
