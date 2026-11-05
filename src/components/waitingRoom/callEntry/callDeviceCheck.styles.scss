@@ -1,0 +1,19 @@
+/* The device check in a dialog: preview, switches, pickers. Moved from the
+   knock wait dialog (#1834) so the pre-join check (#2016) shares it. */
+.callDeviceCheck {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.callDeviceCheck__voice {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+}
+
+.callDeviceCheck__pickers {
+	display: flex;
+	gap: 8px;
+}

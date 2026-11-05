@@ -52,6 +52,7 @@ Examples:
 
 ## Files In This Folder
 
+- [Storybook cleanup, 2026-10-27](../agent-tasks/2026-10-27_storybook-cleanup/02-implementation-plan.md): retire obsolete examples and reuse the canonical navigation shell.
 - `master-roadmap.md`: repo-wide priorities and sequencing guidance
 - `template-feature-plan.md`: the required template for new plans
 

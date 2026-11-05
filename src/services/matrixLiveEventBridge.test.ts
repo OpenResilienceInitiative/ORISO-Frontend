@@ -202,6 +202,46 @@ describe('MatrixLiveEventBridge initialize / timeline binding', () => {
 		expect(JSON.stringify(payload)).not.toContain('secret body');
 	});
 
+	// FE#1435: UserService posts this notice as the accepting counsellor into
+	// the enquiry room, where the agency's other counsellors sit as silent
+	// members (InquiryAcceptanceNoticeDelivery). It is their takeover signal.
+	it('flags the enquiry-accepted system notice, and nothing else', () => {
+		bridge.initialize(client as any);
+		const callback = vi.fn();
+		bridge.on('directMessage', callback);
+		const notice = (type: string) =>
+			makeEvent({
+				content: {
+					msgtype: 'm.text',
+					body: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+						type,
+						title: 'Anfrage angenommen',
+						acceptance: { sessionId: 262 }
+					})}`
+				}
+			});
+
+		client.emit('Room.timeline', notice('INQUIRY_ACCEPTED'), room, false);
+		client.emit('Room.timeline', notice('USER_LEFT_CHAT'), room, false);
+		client.emit(
+			'Room.timeline',
+			makeEvent({
+				content: { msgtype: 'm.text', body: 'INQUIRY_ACCEPTED' }
+			}),
+			room,
+			false
+		);
+
+		expect(callback.mock.calls.map(([p]) => p.enquiryAccepted)).toEqual([
+			true,
+			false,
+			false
+		]);
+		expect(JSON.stringify(callback.mock.calls[0][0])).not.toContain(
+			'Anfrage angenommen'
+		);
+	});
+
 	it('refreshes metadata only once when an encrypted message decrypts later', () => {
 		bridge.initialize(client as any);
 		const callback = vi.fn();

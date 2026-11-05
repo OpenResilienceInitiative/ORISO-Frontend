@@ -15,6 +15,8 @@ export type ChatroomConversationIconType =
 
 interface ChatroomMainInteractionIconProps {
 	addLabel?: string;
+	/** The disabled "+" also shows `addLabel` on hover; false names it for screen readers only. */
+	addTooltip?: boolean;
 	className?: string;
 	onAddClick?: () => void;
 	showAddIcon?: boolean;
@@ -38,6 +40,7 @@ const conversationIconSources: Partial<
 
 export const ChatroomMainInteractionIcon = ({
 	addLabel,
+	addTooltip = true,
 	className,
 	onAddClick,
 	showAddIcon = false,
@@ -87,7 +90,7 @@ export const ChatroomMainInteractionIcon = ({
 						type="button"
 						className="chatroomMainInteractionIcon__add chatroomMainInteractionIcon__add--disabled"
 						aria-label={addLabel}
-						title={addLabel}
+						title={addTooltip ? addLabel : undefined}
 						disabled
 					>
 						{addContent}

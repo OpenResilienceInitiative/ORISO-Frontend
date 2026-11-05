@@ -172,6 +172,7 @@ export const RepeatCountField = ({
 					}}
 					anchorRef={anchorRef}
 					onClose={() => onOpenChange(false)}
+					label={fieldLabel}
 					preferredHeight={seriesOnly ? undefined : FULL_MENU_HEIGHT}
 				/>
 			)}

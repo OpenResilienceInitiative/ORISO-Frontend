@@ -19,6 +19,7 @@ import {
 	TProvidedLegalLink
 } from '../../globalState/provider/LegalLinksProvider';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
+import { useGroupChatInfoFixture } from './groupChatInfoStoryFixture';
 
 /**
  * #1219 — the self-help group's waiting room as an advice seeker sees it in
@@ -78,6 +79,7 @@ const Stage = ({
 	variant: Variant;
 }) => {
 	const listItem = React.useMemo(() => buildItem(variant), [variant]);
+	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
 		<GroupChatStage
 			listItem={listItem}

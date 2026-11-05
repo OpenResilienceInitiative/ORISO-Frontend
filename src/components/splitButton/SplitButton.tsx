@@ -66,10 +66,11 @@ export interface SplitButtonProps {
 	id?: string;
 	className?: string;
 	/**
-	 * `small` = 32px control for dense rows (#1377 sound picker);
-	 * `compact` = 40px, the M3 small split button (case-handover card).
+	 * `xsmall` = 32px, Figma "Split button" XSmall (appointment row on a card);
+	 * `small` = 32px legacy control for dense rows (#1377 sound picker);
+	 * `compact` = 40px, Figma Small (case-handover card, room header).
 	 */
-	size?: 'medium' | 'small' | 'compact';
+	size?: 'medium' | 'xsmall' | 'small' | 'compact';
 	/** Accessible name of the main segment when the visible label is not enough. */
 	mainLabel?: string;
 	/** Renders the main segment as a checkbox instead of a button. */
@@ -124,6 +125,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 		const classes = [
 			'splitButton',
 			`splitButton--${variant}`,
+			size === 'xsmall' && 'splitButton--xsmall',
 			size === 'small' && 'splitButton--small',
 			size === 'compact' && 'splitButton--compact',
 			fullWidth && 'splitButton--fullWidth',

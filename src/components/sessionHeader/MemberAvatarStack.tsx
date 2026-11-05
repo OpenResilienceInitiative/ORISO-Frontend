@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ParticipantAvatarStack } from '../message/ParticipantAvatarStack';
 import {
 	AVATAR_STACK_METRICS,
@@ -23,6 +24,10 @@ interface MemberAvatarStackProps {
 	/** Width in px of the measured element taken by siblings (icon, title). */
 	reservedWidth?: number;
 	metrics?: AvatarStackMetrics;
+	/** Opens the member view when set (#107); the stack is then a link. */
+	to?: string;
+	/** Accessible name of that link, e.g. "Teilnehmende". */
+	label?: string;
 }
 
 /**
@@ -34,7 +39,9 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 	members,
 	measureRef,
 	reservedWidth = 0,
-	metrics = AVATAR_STACK_METRICS
+	metrics = AVATAR_STACK_METRICS,
+	to,
+	label
 }) => {
 	const [availableWidth, setAvailableWidth] = useState<number | null>(null);
 
@@ -59,7 +66,7 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 		() => computeVisibleAvatarCount(uniqueCount, availableWidth, metrics),
 		[uniqueCount, availableWidth, metrics]
 	);
-	return (
+	const stack = (
 		<ParticipantAvatarStack
 			participants={[...members]}
 			maxVisible={visibleCount}
@@ -68,5 +75,17 @@ export const MemberAvatarStack: React.FC<MemberAvatarStackProps> = ({
 			className="sessionInfo__participants"
 			data-cy="group-header-participants"
 		/>
+	);
+	return to ? (
+		<Link
+			to={to}
+			aria-label={label}
+			className="sessionInfo__participantsLink"
+			data-cy="group-header-participants-link"
+		>
+			{stack}
+		</Link>
+	) : (
+		stack
 	);
 };

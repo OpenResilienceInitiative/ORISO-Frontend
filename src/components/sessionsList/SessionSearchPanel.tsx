@@ -100,6 +100,8 @@ export interface SessionSearchPanelLabels {
 
 interface SessionSearchPanelProps {
 	labels: SessionSearchPanelLabels;
+	/** Folding back into the search bar: visible, no longer usable. */
+	closing?: boolean;
 	activeTab: SessionSearchTab;
 	onTabChange: (tab: SessionSearchTab) => void;
 	archiveOnly: boolean;
@@ -224,6 +226,7 @@ const PersonAvatar = ({ person }: { person: SessionSearchPersonOption }) => (
 
 export const SessionSearchPanel = ({
 	labels,
+	closing = false,
 	activeTab,
 	onTabChange,
 	archiveOnly,
@@ -293,42 +296,49 @@ export const SessionSearchPanel = ({
 
 	return (
 		<div
-			className="sessionsListToolbar__searchModal"
+			className={clsx('sessionsListToolbar__searchModal', {
+				'sessionsListToolbar__searchModal--closing': closing
+			})}
+			inert={closing}
 			data-cy="session-search-panel"
 		>
 			<div className="sessionsListToolbar__searchRefineHint">
 				{labels.refineHint}
 			</div>
-			<div
-				className="sessionsListToolbar__searchModalTabs"
-				role="tablist"
-				aria-label={labels.refineHint}
-			>
-				{contentTabs.map(({ id, label, Icon }) => {
-					const isActive = activeTab === id;
-					return (
-						<button
-							type="button"
-							key={id}
-							role="tab"
-							aria-selected={isActive}
-							className={clsx(
-								'sessionsListToolbar__searchModalTab',
-								isActive &&
-									'sessionsListToolbar__searchModalTab--active'
-							)}
-							onClick={() => onTabChange(id)}
-							data-cy={`session-search-tab-${id}`}
-						>
-							<span className="sessionsListToolbar__searchModalTabIcon">
-								<Icon active={isActive} />
-							</span>
-							<span className="sessionsListToolbar__searchModalTabLabel">
-								{label}
-							</span>
-						</button>
-					);
-				})}
+			<div className="sessionsListToolbar__searchModalTabs">
+				{/* The tabs alone form the tablist; the archive toggle beside
+				    them is a pressed button, not a tab (#1338). */}
+				<div
+					className="sessionsListToolbar__searchModalTabList"
+					role="tablist"
+					aria-label={labels.refineHint}
+				>
+					{contentTabs.map(({ id, label, Icon }) => {
+						const isActive = activeTab === id;
+						return (
+							<button
+								type="button"
+								key={id}
+								role="tab"
+								aria-selected={isActive}
+								className={clsx(
+									'sessionsListToolbar__searchModalTab',
+									isActive &&
+										'sessionsListToolbar__searchModalTab--active'
+								)}
+								onClick={() => onTabChange(id)}
+								data-cy={`session-search-tab-${id}`}
+							>
+								<span className="sessionsListToolbar__searchModalTabIcon">
+									<Icon active={isActive} />
+								</span>
+								<span className="sessionsListToolbar__searchModalTabLabel">
+									{label}
+								</span>
+							</button>
+						);
+					})}
+				</div>
 				<button
 					type="button"
 					className={clsx(

@@ -186,6 +186,21 @@ const checkFrame = (canvasElement: HTMLElement): string | null => {
 	}
 	const gateProblem = checkGate(doc, footer);
 	if (gateProblem) return gateProblem;
+	const columnLegalRows = [
+		...doc.querySelectorAll<HTMLElement>('.stageLayout__legalLinks')
+	].filter((row) => row.getClientRects().length > 0);
+	if (columnLegalRows.length > 0) {
+		// It stood behind the fixed bar between 900 and 1199 px (#1895).
+		return 'legal links are printed under the column, behind the bar';
+	}
+	if (viewport < STAGE_SPLIT_PX) {
+		const menu = doc.querySelector<HTMLElement>(
+			'[data-cy="group-entry-legal-menu"]'
+		);
+		if (!menu || !reachable(doc, menu)) {
+			return 'no reachable "Rechtliches" menu in the header';
+		}
+	}
 	if (viewport >= STAGE_SPLIT_PX) {
 		const stage = doc.querySelector<HTMLElement>('.stage');
 		if (!stage) return 'the red stage is missing beside the column';
@@ -229,7 +244,8 @@ const check = (
  * - The bar is fixed to the bottom edge: the full width on a phone, the
  *   white column (60vw) on a desktop, ending at the right edge.
  * - The gate button spans the bar's row and nothing covers it.
- * - On a desktop the legal links stand once, on the stage.
+ * - On a desktop the legal links stand once, on the stage; below 1200 px in
+ * the header's "Rechtliches" menu, never behind the bar (#1895).
  * - Cards, wherever shown, have the live chat's size.
  *
  * Plain DOM and plain errors, like `waitingClockStoryChecks.ts`, so this file

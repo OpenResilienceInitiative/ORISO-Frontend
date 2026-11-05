@@ -141,6 +141,9 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 				return json([]);
 			if (/\/team-discussion/.test(url))
 				return new Response(null, { status: 204 });
+			// #1338: opening the session registers its room for the sync listener.
+			if (/\/matrix\/sync\/register\/4711$/.test(url))
+				return new Response(null, { status: 204 });
 			return previous(input, init);
 		};
 		return () => {

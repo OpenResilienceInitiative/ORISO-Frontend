@@ -201,8 +201,9 @@ export const emailLogoIsWide = (brand: EmailBrand): boolean =>
 /**
  * Logos retain their intrinsic shape and are always 48px high. Known dimensions
  * produce an explicit width for mail clients; unknown dimensions use width:auto.
- * Wide logos carry the name as alt text because their adjacent wordmark is
- * hidden on phones. A missing logo leaves the wordmark visible on every screen.
+ * The name is never hidden: beside the logo on desktop, and under a wide logo
+ * (above 3:1) on phones, where there is no room for both side by side. Wide
+ * logos still carry the name as alt text. A missing logo leaves the name alone.
  * The plain dialect folds this fragment into {{logoCell}} for the sender.
  */
 export const emailLogoCell = (brand: EmailBrand): string => {
@@ -220,7 +221,7 @@ export const emailLogoCell = (brand: EmailBrand): string => {
 	);
 };
 
-/** Logo plus wordmark, with a responsive hook only for known wide logos. */
+/** Logo plus wordmark; known wide logos get a hook that stacks the name under them on phones. */
 export const emailLogoLockup = (brand: EmailBrand): string =>
 	'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
 	emailLogoCell(brand) +
