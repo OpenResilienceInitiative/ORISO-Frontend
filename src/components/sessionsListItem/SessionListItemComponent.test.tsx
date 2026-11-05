@@ -218,7 +218,13 @@ vi.mock('../sessionHeader/ConsultantSearchLoader', () => ({
 	ConsultantSearchLoader: () => <span />
 }));
 vi.mock('../teamDiscussion/TeamDiscussionBadge', () => ({
-	TeamDiscussionBadge: () => <span data-testid="team-discussion-badge" />,
+	TeamDiscussionBadge: ({ onOpen }: { onOpen?: () => void }) => (
+		<button
+			data-testid="team-discussion-badge"
+			disabled={!onOpen}
+			onClick={onOpen}
+		/>
+	),
 	getCachedTeamDiscussion: () => Promise.resolve(null)
 }));
 vi.mock('./SessionListItemLastMessage', () => ({
@@ -695,6 +701,22 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		);
 	});
 
+	it('shows one team discussion badge on a normal counsellor enquiry', async () => {
+		renderItem(
+			{ ...makeSession(), isEnquiry: true, isSession: false },
+			makeUserData()
+		);
+		await nextTick();
+		expect(screen.getAllByTestId('team-discussion-badge')).toHaveLength(1);
+		const badge = screen.getByTestId('team-discussion-badge');
+		expect(badge.hasAttribute('disabled')).toBe(false);
+		mockNavigate.mockClear();
+		fireEvent.click(badge);
+		expect(mockNavigate).toHaveBeenCalledWith(
+			expect.stringContaining('teamDiscussion=1')
+		);
+	});
+
 	it('keeps the existing team discussion badge on a supervised enquiry', async () => {
 		const session = {
 			...makeSession({
@@ -708,7 +730,10 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		};
 		renderItem(session, makeUserData(ME));
 		await nextTick();
-		expect(screen.getByTestId('team-discussion-badge')).toBeTruthy();
+		expect(screen.getAllByTestId('team-discussion-badge')).toHaveLength(1);
+		expect(
+			screen.getByTestId('team-discussion-badge').hasAttribute('disabled')
+		).toBe(true);
 	});
 
 	it('supervisedByMe → the icon travels with the word', async () => {

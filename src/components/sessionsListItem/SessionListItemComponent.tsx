@@ -2124,24 +2124,6 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{/* FE#514: team-only discussion exists on this
-								    enquiry (consultants only, ADR-016). */}
-									{!isAsker &&
-										activeSession.isEnquiry &&
-										modality ===
-											Modality.AGENCY_COUNSELLING &&
-										activeSession.item?.id && (
-											<TeamDiscussionBadge
-												sessionId={
-													activeSession.item.id
-												}
-												onOpen={
-													chatroomSettingsMenu.showRequestHelp
-														? handleRequestHelp
-														: undefined
-												}
-											/>
-										)}
 									{modality === Modality.SELF_HELP && (
 										<div
 											className={clsx(
@@ -2170,6 +2152,12 @@ export const SessionListItemComponent = ({
 								activeSession.item?.id && (
 									<TeamDiscussionBadge
 										sessionId={activeSession.item.id}
+										onOpen={
+											!isSupervisedByMe &&
+											chatroomSettingsMenu.showRequestHelp
+												? handleRequestHelp
+												: undefined
+										}
 									/>
 								)}
 						</>
