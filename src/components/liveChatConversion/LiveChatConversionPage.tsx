@@ -168,7 +168,47 @@ export const LiveChatConversionPage = () => {
 			setKey(null);
 			setSuppliedKey('');
 		} catch {
-			setError('save');
+			if (
+				preparedClient.current &&
+				(matrixClientService?.getClient() !== preparedClient.current ||
+					matrixClientService?.getAuthenticatedSubject() !==
+						status?.userId)
+			) {
+				preparedClient.current = null;
+				setKey(null);
+				setKeyConfirmed(false);
+				setError('recovery');
+			} else {
+				setError('save');
+			}
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	const retryFinishStatus = async () => {
+		if (
+			!status ||
+			!userData?.userId ||
+			!currentSubjectMatches(status.userId)
+		) {
+			setError('account');
+			return;
+		}
+		setBusy(true);
+		try {
+			const next = await getConversionStatus();
+			if (
+				next.userId !== status.userId ||
+				next.userId !== userData.userId ||
+				!currentSubjectMatches(next.userId)
+			)
+				throw new Error('Account changed');
+			intent.current = next.intentId;
+			setStatus(next);
+			setError(null);
+		} catch {
+			setError('status');
 		} finally {
 			setBusy(false);
 		}
@@ -320,7 +360,6 @@ export const LiveChatConversionPage = () => {
 					</Alert>
 				)}
 				{(status?.state === 'NOT_ELIGIBLE' ||
-					status?.state === 'FINISH_PENDING' ||
 					status?.state === 'CLEANUP_STARTED') && (
 					<Alert severity="error">
 						{tr(
@@ -328,6 +367,16 @@ export const LiveChatConversionPage = () => {
 							'This account cannot be converted. Please contact your counsellor.'
 						)}
 					</Alert>
+				)}
+				{status?.state === 'FINISH_PENDING' && (
+					<>
+						<Alert severity="info">
+							{t('app.wait', 'Please wait')}
+						</Alert>
+						<Button disabled={busy} onClick={retryFinishStatus}>
+							{t('attachments.gate.retry', 'Try again')}
+						</Button>
+					</>
 				)}
 				{(status?.state === 'ELIGIBLE' ||
 					status?.state === 'ANONYMOUS_FINISHED' ||

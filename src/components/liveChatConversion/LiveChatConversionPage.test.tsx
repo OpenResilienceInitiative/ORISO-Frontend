@@ -237,6 +237,30 @@ describe('Live Chat conversion', () => {
 		).toBeNull();
 		expect(mocks.convert).not.toHaveBeenCalled();
 	});
+	it('rechecks a pending finish and permits preparation only when finished', async () => {
+		mocks.status
+			.mockResolvedValueOnce({
+				userId: 'guest-a',
+				username: 'guest-name',
+				state: 'FINISH_PENDING',
+				intentId: null
+			})
+			.mockResolvedValue({
+				userId: 'guest-a',
+				username: 'guest-name',
+				state: 'ANONYMOUS_FINISHED',
+				intentId: null
+			});
+		mount();
+		expect(
+			await screen.findByRole('button', { name: 'Try again' })
+		).toBeTruthy();
+		expect(mocks.prepare).not.toHaveBeenCalled();
+		fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+		expect(
+			await screen.findByRole('button', { name: 'Prepare recovery key' })
+		).toBeTruthy();
+	});
 	it('never promotes if the existing recovery key cannot be verified', async () => {
 		mocks.status.mockResolvedValue({
 			userId: 'guest-a',
@@ -298,7 +322,10 @@ describe('Live Chat conversion', () => {
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Create my account' })
 		);
-		await screen.findByText(/could not be saved/i);
+		await screen.findByText(/recovery key is not available/i);
+		expect(
+			screen.getByRole('button', { name: 'Prepare recovery key' })
+		).toBeTruthy();
 		expect(mocks.convert).not.toHaveBeenCalled();
 	});
 	it('does not invoke recovery when the Matrix client belongs to another account', async () => {
