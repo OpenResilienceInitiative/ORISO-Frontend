@@ -2377,7 +2377,10 @@ export const MessageItemComponent = ({
 									<FurtherCounsellingNoticeBody
 										notice={furtherCounsellingNotice}
 										viewerIsAsker={
+											// The button opens a new enquiry, which leaves the
+											// Timeline: never offered in a preview (#1824).
 											!readOnly &&
+											!blocksLeavingActions &&
 											hasUserAuthority(
 												AUTHORITIES.ASKER_DEFAULT,
 												userData
