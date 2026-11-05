@@ -17,6 +17,18 @@ def run(*args):
     return subprocess.check_output(args, text=True).strip()
 
 
+def matches_provenance(item, image, digest):
+    result = item.get('verificationResult', {})
+    certificate = result.get('signature', {}).get('certificate', {})
+    subjects = result.get('statement', {}).get('subject', [])
+    return (
+        certificate.get('sourceRepositoryDigest') == SOURCE
+        and certificate.get('sourceRepositoryURI') == 'https://github.com/' + REPOSITORY
+        and certificate.get('subjectAlternativeName') == WORKFLOW
+        and any(subject.get('name') == image and subject.get('digest', {}).get('sha256') == digest.removeprefix('sha256:') for subject in subjects)
+    )
+
+
 def verify():
     tag = run('git', 'rev-parse', 'refs/tags/v2.0.15^{commit}')
     if tag != SOURCE:
@@ -37,12 +49,8 @@ def verify():
         verified = json.loads(run('gh', 'attestation', 'verify', f'oci://{image}@{digest}', '--repo', REPOSITORY, '--format', 'json'))
         if not verified:
             raise ValueError(f'{name} has no verified provenance')
-        for item in verified:
-            cert = item['verificationResult']['signature']['certificate']
-            if cert.get('sourceRepositoryDigest') == SOURCE and cert.get('sourceRepositoryURI') == 'https://github.com/' + REPOSITORY and cert.get('subjectAlternativeName') == WORKFLOW:
-                break
-        else:
-            raise ValueError(f'{name} provenance does not identify the published source and workflow')
+        if not any(matches_provenance(item, image, digest) for item in verified):
+            raise ValueError(f'{name} provenance does not identify the image, digest, published source and workflow')
         print(f'{name}: {digest} verified against published source', flush=True)
 
 

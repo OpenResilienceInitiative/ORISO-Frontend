@@ -19,7 +19,9 @@ def responses(*, tag=None, head=None, paths=None, digest=None, provenance=None):
             name = 'oriso-storybook' if 'storybook' in cmd[4] else 'oriso-frontend'
             return digest or verify.IMAGES[name]
         cert = {'sourceRepositoryDigest': verify.SOURCE, 'sourceRepositoryURI': 'https://github.com/' + verify.REPOSITORY, 'subjectAlternativeName': verify.WORKFLOW}
-        return json.dumps(provenance if provenance is not None else [{'verificationResult': {'signature': {'certificate': cert}}}])
+        image = cmd[3].removeprefix('oci://').split('@')[0]
+        expected = verify.IMAGES[image.rsplit('/', 1)[1]].removeprefix('sha256:')
+        return json.dumps(provenance if provenance is not None else [{'verificationResult': {'signature': {'certificate': cert}, 'statement': {'subject': [{'name': image, 'digest': {'sha256': expected}}]}}}])
     return execute
 
 
@@ -27,6 +29,22 @@ class ReleaseVerificationTest(unittest.TestCase):
     def test_exact_known_release_passes(self):
         with patch.object(verify, 'run', side_effect=responses()):
             verify.verify()
+
+    def test_subject_and_certificate_must_match_in_same_verified_item(self):
+        image = 'ghcr.io/openresilienceinitiative/oriso-frontend'
+        digest = verify.IMAGES['oriso-frontend']
+        cert = {'sourceRepositoryDigest': verify.SOURCE, 'sourceRepositoryURI': 'https://github.com/' + verify.REPOSITORY, 'subjectAlternativeName': verify.WORKFLOW}
+        def item(subject, certificate=cert):
+            return {'verificationResult': {'signature': {'certificate': certificate}, 'statement': {'subject': subject}}}
+        good = {'name': image, 'digest': {'sha256': digest.removeprefix('sha256:')}}
+        self.assertTrue(verify.matches_provenance(item([good]), image, digest))
+        for subject in ([{'name': image + '-other', 'digest': good['digest']}],
+                        [{'name': image, 'digest': {}}],
+                        [{'name': image, 'digest': {'sha256': 'bad'}}], []):
+            with self.subTest(subject=subject):
+                self.assertFalse(verify.matches_provenance(item(subject), image, digest))
+        split = [item([good], {}), item([], cert)]
+        self.assertFalse(any(verify.matches_provenance(entry, image, digest) for entry in split))
 
     def test_historical_sha_survives_deleted_branch_and_advanced_pr_head(self):
         with tempfile.TemporaryDirectory() as directory:
