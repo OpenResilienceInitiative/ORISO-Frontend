@@ -128,6 +128,7 @@ const refreshHistoryDeviceKeysBestEffort = (
 export class MatrixRoomHistoryKeyTransfer {
 	private client: MatrixClient | null = null;
 	private readonly lastRequestAt = new Map<string, number>();
+	private readonly lastReasonedRequestAt = new Map<string, number>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
 	private readonly lastReasonRequestAt = new Map<string, number>();
@@ -337,7 +338,17 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 
 		const now = Date.now();
-		if (now - (this.lastRequestAt.get(roomId) || 0) < REQUEST_THROTTLE_MS) {
+		const reasoned = !!normalizeReason(options.reason);
+		// A request with a written reason has its own window, so it replaces the
+		// automatic one that ran when the unreadable events were found. The
+		// counsellor's side uses the same 30 seconds: a person must not be
+		// prompted more often than that, and a retry is never accepted here
+		// only to be dropped there.
+		const throttleMs = REQUEST_THROTTLE_MS;
+		const lastAt = reasoned
+			? this.lastReasonedRequestAt.get(roomId) || 0
+			: this.lastRequestAt.get(roomId) || 0;
+		if (now - lastAt < throttleMs) {
 			emitDiagnostic('request-throttled');
 			return false;
 		}
@@ -372,6 +383,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				? globalThis.crypto.randomUUID()
 				: `${deviceId}-${now}`;
 		this.lastRequestAt.set(roomId, now);
+		if (reasoned) this.lastReasonedRequestAt.set(roomId, now);
 		const reason = normalizeReason(options.reason);
 		const requestContent = {
 			room_id: roomId,
@@ -465,22 +477,22 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 
 		if (this.client !== client) return;
-		// A request that carries a reason waits for a person. The window matches
-		// the requester's own retry window, so an accepted retry is never dropped
-		// here; this runs before any lookup.
+		// A request that carries a reason waits for a person, so a device may
+		// send one only every 30 seconds, as the requester does; this runs
+		// before any lookup.
 		if (normalizeReason(content.reason)) {
 			const reasonKey = `${content.room_id}:${sender}`;
 			const at = Date.now();
 			if (
 				at - (this.lastReasonRequestAt.get(reasonKey) || 0) <
-				REASONED_REQUEST_THROTTLE_MS
+				REQUEST_THROTTLE_MS
 			) {
 				emitDiagnostic('request-handler-throttled');
 				return;
 			}
 			if (this.lastReasonRequestAt.size >= 500) {
 				for (const [key, time] of this.lastReasonRequestAt)
-					if (at - time >= REASONED_REQUEST_THROTTLE_MS)
+					if (at - time >= REQUEST_THROTTLE_MS)
 						this.lastReasonRequestAt.delete(key);
 			}
 			this.lastReasonRequestAt.set(reasonKey, at);

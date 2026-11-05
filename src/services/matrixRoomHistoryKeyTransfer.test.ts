@@ -171,6 +171,22 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
 	});
 
+	it('lets a request with a reason follow the automatic one at once', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(await service.requestKeys(ROOM_ID)).toBe(true);
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(true);
+		// A second click on the same dialog is still held back.
+		expect(
+			await service.requestKeys(ROOM_ID, { reason: 'about my school' })
+		).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
+	});
+
 	it('still requests from valid devices when another device has no Olm session', async () => {
 		const harness = buildHarness();
 		harness.crypto.getUserDeviceInfo.mockResolvedValue(
@@ -1114,6 +1130,10 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			expect(service.getPendingApprovals()).toHaveLength(1);
 			release();
 			await expect(approval).resolves.toBe(true);
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(
+				1
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
 		});
 
 		it('throttles reason requests per sender, whatever device id they claim', async () => {
@@ -1138,7 +1158,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			).toHaveBeenCalledTimes(1);
 		});
 
-		it('accepts a reasoned retry once the requester window of 5 seconds has passed', async () => {
+		it('accepts a reasoned retry once the 30 second window has passed', async () => {
 			vi.useFakeTimers({ toFake: ['Date'] });
 			try {
 				const { harness, service } = setup();
@@ -1157,7 +1177,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 					expect(service.getPendingApprovals()).toHaveLength(1)
 				);
 				service.declineRequest('first');
-				vi.setSystemTime(Date.now() + 6_000);
+				vi.setSystemTime(Date.now() + 31_000);
 				send('retry');
 				await vi.waitFor(() =>
 					expect(
