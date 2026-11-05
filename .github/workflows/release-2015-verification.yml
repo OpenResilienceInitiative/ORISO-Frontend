@@ -1,0 +1,34 @@
+name: Verify existing frontend 2.0.15 artifacts
+
+on:
+    pull_request:
+        paths:
+            - '.github/workflows/release-2015-verification.yml'
+            - 'scripts/release-verification/**'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    packages: read
+    attestations: read
+
+jobs:
+    verify:
+        name: Verify published 2.0.15 provenance and approved source difference
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+                  persist-credentials: false
+            - name: Fetch the existing release ref and tag
+              run: |
+                  git fetch origin refs/heads/release/frontend-2.0.15:refs/remotes/origin/release/frontend-2.0.15
+                  git fetch origin refs/tags/v2.0.15:refs/tags/v2.0.15
+            - name: Test verification failure cases
+              run: python3 -m unittest discover -s scripts/release-verification -p 'test_*.py'
+            - name: Verify existing artifacts without publishing
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: python3 scripts/release-verification/verify.py
