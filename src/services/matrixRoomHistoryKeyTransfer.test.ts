@@ -49,6 +49,7 @@ const buildHarness = () => {
 		setDeviceIsolationMode: vi.fn(),
 		getDeviceVerificationStatus: vi.fn().mockResolvedValue({
 			isVerified: () => true,
+			signedByOwner: true,
 			crossSigningVerified: true
 		}),
 		getUserDeviceInfo: vi
@@ -187,7 +188,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(2);
 	});
 
-	it('sends the written reason only to cross-signed devices', async () => {
+	it('sends the written reason only to devices signed by their owner', async () => {
 		const harness = buildHarness();
 		harness.crypto.getUserDeviceInfo.mockResolvedValue(
 			new Map([
@@ -202,8 +203,10 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 		harness.crypto.getDeviceVerificationStatus.mockImplementation(
 			async (_userId: string, deviceId: string) => ({
-				isVerified: () => deviceId === 'TRUSTED',
-				crossSigningVerified: deviceId === 'TRUSTED'
+				isVerified: () => false,
+				signedByOwner: deviceId === 'TRUSTED',
+				// The asker has not verified the counsellor's identity.
+				crossSigningVerified: false
 			})
 		);
 		const service = new MatrixRoomHistoryKeyTransfer();
@@ -220,10 +223,11 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 	});
 
-	it('does not send a written reason when no device is cross-signed', async () => {
+	it('does not send a written reason when no device is signed by its owner', async () => {
 		const harness = buildHarness();
 		harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
 			isVerified: () => false,
+			signedByOwner: false,
 			crossSigningVerified: false
 		});
 		const service = new MatrixRoomHistoryKeyTransfer();
