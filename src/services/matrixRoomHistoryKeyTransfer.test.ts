@@ -1200,6 +1200,55 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			expect(service.getPendingApprovals()).toEqual([]);
 		});
 
+		it('sends nothing when a newer request replaced the one being approved', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				const send = (id: string) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: ROOM_ID,
+							request_id: id,
+							requester_user_id: PEER,
+							requester_device_id: 'ASKER1',
+							reason: 'hello'
+						})
+					);
+				send('first');
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				let finishExport: (keys: unknown[]) => void = () => undefined;
+				harness.crypto.exportRoomKeys.mockImplementationOnce(
+					() =>
+						new Promise<unknown[]>(
+							(resolve) => (finishExport = resolve)
+						)
+				);
+				const approval = service.approveRequest('first');
+				await vi.waitFor(() =>
+					expect(harness.crypto.exportRoomKeys).toHaveBeenCalled()
+				);
+
+				vi.setSystemTime(Date.now() + 31_000);
+				send('second');
+				await vi.waitFor(() =>
+					expect(
+						service.getPendingApprovals().map((a) => a.requestId)
+					).toEqual(['second'])
+				);
+				service.declineRequest('second');
+				finishExport([{ room_id: ROOM_ID, session_id: 'wanted' }]);
+
+				await expect(approval).resolves.toBe(false);
+				expect(
+					harness.client.encryptAndSendToDevice
+				).not.toHaveBeenCalled();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it('throttles reason requests per sender, whatever device id they claim', async () => {
 			const { harness, service } = setup();
 			for (const device of ['ASKER1', 'FAKE2', 'FAKE3']) {

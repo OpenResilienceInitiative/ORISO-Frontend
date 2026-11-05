@@ -227,10 +227,13 @@ export class MatrixRoomHistoryKeyTransfer {
 				request.requesterUserId,
 				request.requesterDeviceId,
 				request.requestId,
-				// The person may have left while the keys were being exported.
+				// The person may have left while the keys were being exported, and a
+				// newer request from the device, or a decision on it, takes this
+				// approval back: only the card the counsellor clicked may release.
 				() =>
+					this.pendingApprovals.get(requestId) === request &&
 					room?.getMember(request.requesterUserId)?.membership ===
-					'join'
+						'join'
 			);
 			if (!sent && this.pendingApprovals.get(requestId) === request) {
 				if (
